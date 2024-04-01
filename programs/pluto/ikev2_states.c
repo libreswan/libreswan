@@ -161,7 +161,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * half-open.
  */
 
-const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
+static const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
@@ -172,6 +172,10 @@ const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
 	.processor  = NULL, /* XXX: should be set */
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_exchange v2_IKE_SA_INIT_exchange = {
+	&initiate_v2_IKE_SA_INIT_transition,
 };
 
 static const struct v2_state_transition IKE_SA_INIT_I0_transitions[] = {
@@ -247,7 +251,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
 S(IKE_SA_INIT_I, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
-const struct v2_state_transition initiate_v2_IKE_AUTH_transition = {
+static const struct v2_state_transition initiate_v2_IKE_AUTH_transition = {
 	.story      = "initiating IKE_AUTH",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_AUTH_I,
@@ -255,6 +259,10 @@ const struct v2_state_transition initiate_v2_IKE_AUTH_transition = {
 	.processor  = initiate_v2_IKE_AUTH_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_exchange v2_IKE_AUTH_exchange = {
+	&initiate_v2_IKE_AUTH_transition,
 };
 
 static const struct v2_state_transition IKE_SA_INIT_IR_transitions[] = {
@@ -385,7 +393,7 @@ S(IKE_SA_INIT_R, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE
  * IKE_INTERMEDIATE
  */
 
-const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition = {
+static const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_INTERMEDIATE_I,
@@ -393,6 +401,10 @@ const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition = {
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_exchange v2_IKE_INTERMEDIATE_exchange = {
+	&initiate_v2_IKE_INTERMEDIATE_transition,
 };
 
 static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {

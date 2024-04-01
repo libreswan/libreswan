@@ -394,7 +394,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 struct v2_msgid_pending {
 	so_serial_t child;
 	so_serial_t who_for; /* for logging; either IKE or Child */
-	const struct v2_state_transition *transition;
+	const struct v2_exchange *exchange;
 	struct v2_msgid_pending *next;
 };
 
@@ -421,8 +421,8 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 	return ike->sa.st_v2_msgid_windows.pending_requests != NULL;
 }
 
-void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
-			      const struct v2_state_transition *transition)
+void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-be-null*/,
+			     const struct v2_exchange *exchange)
 {
 	/* for logging */
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno : ike->sa.st_serialno);
@@ -441,8 +441,8 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	unsigned ranking = 0;
 	struct v2_msgid_pending **pp = &ike->sa.st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
-		if (transition->exchange == ISAKMP_v2_INFORMATIONAL
-		    && (*pp)->transition->exchange != ISAKMP_v2_INFORMATIONAL) {
+		if (exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL
+		    && (*pp)->exchange->initiate->exchange != ISAKMP_v2_INFORMATIONAL) {
 			break;
 		}
 		ranking++;
@@ -468,7 +468,8 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	if (stream != NO_STREAM) {
 		LLOG_JAMBUF(stream, logger, buf) {
 			jam(buf, "adding %s request to IKE SA "PRI_SO"'s message queue",
-			    enum_name_short(&isakmp_xchg_type_names, transition->exchange),
+			    enum_name_short(&isakmp_xchg_type_names,
+					    exchange->initiate->exchange),
 			    pri_so(ike->sa.st_serialno));
 			if (ranking > 0) {
 				jam(buf, " at position %u", ranking);
@@ -476,7 +477,8 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			if ((*pp) != NULL) {
 				jam(buf, "; before "PRI_SO"'s %s exchange",
 				    pri_so((*pp)->who_for),
-				    enum_name_short(&isakmp_xchg_type_names, (*pp)->transition->exchange));
+				    enum_name_short(&isakmp_xchg_type_names,
+						    (*pp)->exchange->initiate->exchange));
 			}
 		}
 	}
@@ -485,7 +487,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	struct v2_msgid_pending new = {
 		.child = child != NULL ? child->sa.st_serialno : SOS_NOBODY,
 		.who_for = who_for,
-		.transition = transition,
+		.exchange = exchange,
 		.next = (*pp),
 	};
 	*pp = clone_thing(new, "struct initiate_list");
@@ -531,7 +533,8 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		if (pending.child != SOS_NOBODY && child == NULL) {
 			dbg_v2_msgid(ike,
 				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
-				     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
+				     enum_name(&isakmp_xchg_type_names,
+					       pending.exchange->initiate->exchange),
 				     pri_so(pending.child), unack);
 			continue;
 		}
@@ -544,10 +547,10 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		/*
 		 * try to check that the transition still applies ...
 		 */
-		if (!v2_transition_from(pending.transition, ike->sa.st_state)) {
+		if (!v2_transition_from(pending.exchange->initiate, ike->sa.st_state)) {
 			LLOG_JAMBUF(RC_LOG, who_for->logger, buf) {
 				jam(buf, "dropping transition ");
-				jam_v2_transition(buf, pending.transition);
+				jam_v2_transition(buf, pending.exchange->initiate);
 				jam(buf, " as IKE SA is in state %s",
 				    ike->sa.st_state->short_name);
 			}
@@ -569,10 +572,10 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		 * unassign it if the exchange is abandoned)?
 		 */
 
-		start_v2_transition(ike, pending.transition, /*md*/NULL, HERE);
+		start_v2_transition(ike, pending.exchange->initiate, /*md*/NULL, HERE);
 		/* pexpect(initiator->wip_sa == NULL); */
 		initiator->wip_sa = child;
-		stf_status status = pending.transition->processor(ike, child, NULL);
+		stf_status status = pending.exchange->initiate->processor(ike, child, NULL);
 		complete_v2_state_transition(ike, NULL/*initiate so no md*/, status);
 
 		/*

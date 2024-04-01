@@ -634,7 +634,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		return NULL;
 	}
 
-	start_v2_transition(ike, &initiate_v2_IKE_SA_INIT_transition,
+	start_v2_transition(ike, v2_IKE_SA_INIT_exchange.initiate,
 			    NULL/*md*/, HERE);
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
@@ -1701,12 +1701,12 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * and dispatch the next request.
 	 */
 
-	const struct v2_state_transition *next_transition;
+	const struct v2_exchange *next_exchange;
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		next_transition = &initiate_v2_IKE_INTERMEDIATE_transition;
+		next_exchange = &v2_IKE_INTERMEDIATE_exchange;
 	} else {
-		next_transition = &initiate_v2_IKE_AUTH_transition;
+		next_exchange = &v2_IKE_AUTH_exchange;
 	}
 
-	return next_v2_transition(ike, md, next_transition, HERE);
+	return next_v2_exchange(ike, md, next_exchange, HERE);
 }

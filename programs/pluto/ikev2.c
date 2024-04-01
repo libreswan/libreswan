@@ -1600,15 +1600,15 @@ void start_v2_transition(struct ike_sa *ike,
 	v2_msgid_start(ike, md, where);
 }
 
-stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
-			      const struct v2_state_transition *next_transition,
-			      where_t where)
+stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
+			    const struct v2_exchange *next_exchange,
+			    where_t where)
 {
 	PEXPECT_WHERE(ike->sa.logger, where, v2_msg_role(md) == MESSAGE_RESPONSE);
 	/* nothing ahead in the queue */
 	PEXPECT_WHERE(ike->sa.logger, where, v2_msgid_request_pending(ike) == false);
 	/* queue transition; it's at the front */
-	v2_msgid_queue_initiator(ike, /*child*/NULL, next_transition);
+	v2_msgid_queue_exchange(ike, /*child*/NULL, next_exchange);
 	/* complete current transition */
 	return STF_OK;
 }
@@ -1884,7 +1884,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	/*
 	 * Pretend to be running the initiate state transition.
 	 */
-	start_v2_transition(ike, &initiate_v2_IKE_SA_INIT_transition,
+	start_v2_transition(ike, v2_IKE_SA_INIT_exchange.initiate,
 			    /*md*/NULL, HERE); /* first */
 
 	/*

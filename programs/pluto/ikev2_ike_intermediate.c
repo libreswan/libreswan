@@ -424,6 +424,6 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 #if 0
 	return next_v2_transition(ike, md, &initiate_v2_IKE_INTERMEDIATE_transition, HERE);
 #else
-	return next_v2_transition(ike, md, &initiate_v2_IKE_AUTH_transition, HERE);
+	return next_v2_exchange(ike, md, &v2_IKE_AUTH_exchange, HERE);
 #endif
 }

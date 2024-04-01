@@ -287,10 +287,14 @@ static const struct v2_state_transition v2_liveness_probe = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
+static const struct v2_exchange v2_liveness_probe_exchange = {
+	&v2_liveness_probe,
+};
+
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
-	const struct v2_state_transition *transition = &v2_liveness_probe;
-	if (!v2_transition_from(transition, ike->sa.st_state)) {
+	const struct v2_exchange *exchange = &v2_liveness_probe_exchange;
+	if (!v2_transition_from(exchange->initiate, ike->sa.st_state)) {
 		llog_sa(RC_LOG, ike,
 			"liveness: IKE SA in state %s but should be in state ESTABLISHED_IKE_SA; liveness for "PRI_SO" ignored",
 			ike->sa.st_state->short_name,
@@ -298,6 +302,6 @@ void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 		return;
 	}
 
-	pexpect(transition->exchange == ISAKMP_v2_INFORMATIONAL);
-	v2_msgid_queue_initiator(ike, NULL, transition);
+	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+	v2_msgid_queue_exchange(ike, NULL, exchange);
 }

@@ -82,7 +82,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *i
 static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 					       struct dh_local_secret *local_secret,
 					       chunk_t *nonce,
-					       const struct v2_state_transition *transition)
+					       const struct v2_exchange *exchange)
 {
 	dbg("%s() for #%lu %s",
 	     __func__, larval_sa->st_serialno, larval_sa->st_state->name);
@@ -151,7 +151,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 
 	pexpect(larval->sa.st_state->nr_transitions == 1);
 	pexpect(larval->sa.st_state->v2.transitions->exchange == ISAKMP_v2_CREATE_CHILD_SA);
-	v2_msgid_queue_initiator(ike, larval, transition);
+	v2_msgid_queue_exchange(ike, larval, exchange);
 }
 
 /*
@@ -536,7 +536,7 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transition = {
+static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_child_transition = {
 	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -544,6 +544,10 @@ static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transitio
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
 	.llog_success = llog_v2_success_rekey_child_request,
 	.timeout_event = EVENT_RETAIN,
+};
+
+static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
+	&initiate_v2_CREATE_CHILD_SA_rekey_child_transition,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_child_sa,
@@ -563,7 +567,7 @@ stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_chi
 	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
 	queue_v2_CREATE_CHILD_SA_initiator(larval_child_sa, local_secret, nonce,
-					   &v2_CREATE_CHILD_SA_rekey_child_transition);
+					   &v2_CREATE_CHILD_SA_rekey_child_exchange);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
@@ -819,7 +823,7 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition = {
+static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_new_child_transition = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -827,6 +831,10 @@ static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition 
 	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
 	.llog_success = llog_v2_success_new_child_request,
 	.timeout_event = EVENT_RETAIN,
+};
+
+static const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
+	&initiate_v2_CREATE_CHILD_SA_new_child_transition,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child_sa,
@@ -846,7 +854,7 @@ stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child
 	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
 	queue_v2_CREATE_CHILD_SA_initiator(larval_child_sa, local_secret, nonce,
-					   &v2_CREATE_CHILD_SA_new_child_transition);
+					   &v2_CREATE_CHILD_SA_new_child_exchange);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
@@ -1477,7 +1485,7 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_ike_transition = {
+static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_ike_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -1485,6 +1493,10 @@ static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_ike_transition 
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
 	.llog_success = llog_v2_success_rekey_ike_request,
 	.timeout_event = EVENT_RETAIN,
+};
+
+static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
+	&initiate_v2_CREATE_CHILD_SA_rekey_ike_transition,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_sa,
@@ -1504,7 +1516,7 @@ stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_s
 	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
 	queue_v2_CREATE_CHILD_SA_initiator(larval_ike_sa, local_secret, nonce,
-					   &v2_CREATE_CHILD_SA_rekey_ike_transition);
+					   &v2_CREATE_CHILD_SA_rekey_ike_exchange);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 

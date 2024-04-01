@@ -96,6 +96,10 @@ struct v2_state_transition {
 	void (*llog_success)(struct ike_sa *ike);
 };
 
+struct v2_exchange {
+	const struct v2_state_transition *initiate;
+};
+
 extern void init_ikev2(void);
 
 void event_v2_rekey(struct state *st, bool detach_whack);
@@ -136,9 +140,9 @@ void start_v2_transition(struct ike_sa *ike,
 			 const struct v2_state_transition *transition,
 			 struct msg_digest *md, where_t where);
 
-stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
-			      const struct v2_state_transition *transition,
-			      where_t where);
+stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
+			    const struct v2_exchange *exchange,
+			    where_t where);
 
 extern void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition);
 extern bool v2_transition_from(const struct v2_state_transition *transition, const struct finite_state *state);

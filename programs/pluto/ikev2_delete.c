@@ -118,7 +118,7 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
 }
 
-static const struct v2_state_transition v2_delete_ike = {
+static const struct v2_state_transition initiate_v2_delete_ike_transition = {
 	.story = "delete IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_IKE_SA_DELETE,
@@ -126,6 +126,10 @@ static const struct v2_state_transition v2_delete_ike = {
 	.processor = initiate_v2_delete_ike_request,
 	.llog_success = llog_v2_success_delete_ike_request,
 	.timeout_event =  EVENT_RETAIN,
+};
+
+static const struct v2_exchange v2_delete_ike_exchange = {
+	&initiate_v2_delete_ike_transition,
 };
 
 static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
@@ -175,7 +179,7 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
-static const struct v2_state_transition v2_delete_child = {
+static const struct v2_state_transition initiate_v2_delete_child_transition = {
 	.story = "delete CHILD SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -185,12 +189,17 @@ static const struct v2_state_transition v2_delete_child = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
+static const struct v2_exchange v2_delete_child_exchange = {
+	&initiate_v2_delete_child_transition,
+};
+
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
-	const struct v2_state_transition *transition =
-		(child != NULL ? &v2_delete_child : &v2_delete_ike);
-	pexpect(transition->exchange == ISAKMP_v2_INFORMATIONAL);
-	v2_msgid_queue_initiator(ike, child, transition);
+	const struct v2_exchange *exchange =
+		(child != NULL ? &v2_delete_child_exchange :
+		 &v2_delete_ike_exchange);
+	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+	v2_msgid_queue_exchange(ike, child, exchange);
 }
 
 bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,

@@ -523,6 +523,10 @@ static const struct v2_state_transition v2_redirect_ike_transition = {
 	.timeout_event =  EVENT_RETAIN,
 };
 
+static const struct v2_exchange v2_redirect_ike_exchange = {
+	&v2_redirect_ike_transition,
+};
+
 void find_and_active_redirect_states(const char *conn_name,
 				     const char *active_redirect_dests,
 				     struct logger *logger)
@@ -547,8 +551,8 @@ void find_and_active_redirect_states(const char *conn_name,
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
 			cnt++;
-			pexpect(v2_redirect_ike_transition.exchange == ISAKMP_v2_INFORMATIONAL);
-			v2_msgid_queue_initiator(ike, NULL, &v2_redirect_ike_transition);
+			pexpect(v2_redirect_ike_exchange.initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+			v2_msgid_queue_exchange(ike, NULL, &v2_redirect_ike_exchange);
 		}
 	}
 

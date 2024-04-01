@@ -25,6 +25,7 @@ struct state;
 struct ike_sa;
 struct msg_digest;
 struct v2_state_transition;
+struct v2_exchange;
 enum message_role;
 
 /*
@@ -153,8 +154,9 @@ void v2_msgid_start_record_n_send(struct ike_sa *ike);
  * message id up front, but only when one was available?
  */
 
-void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child/*optional*/,
-			      const struct v2_state_transition *transition);
+void v2_msgid_queue_exchange(struct ike_sa *ike,
+			     struct child_sa *child/*optional*/,
+			     const struct v2_exchange *exchange);
 
 void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to);
 
