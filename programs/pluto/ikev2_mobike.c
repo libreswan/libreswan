@@ -508,7 +508,7 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	 */
 
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
-	v2_msgid_start(ike, NULL/*md*/, HERE);
+	v2_msgid_start_record_n_send(ike);
 	stf_status e = record_v2_informational_request("mobike informational request",
 						       ike, &ike->sa/*sender*/,
 						       add_mobike_payloads);
