@@ -64,7 +64,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 #define S(KIND, STORY, CAT, ...)					\
 	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
-		.name = "STATE_V2_"#KIND,				\
+		.name = #KIND,						\
 		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
 		.short_name = #KIND,					\
 		.story = STORY,						\
