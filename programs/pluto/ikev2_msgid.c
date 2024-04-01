@@ -22,6 +22,18 @@
 #include "log.h"
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 
+#define pexpect_v2_msgid(COND)			\
+	({								\
+		bool cond_ = COND; /* eval once, no paren */		\
+		if (!cond_) {						\
+			enum_buf eb;					\
+			llog_pexpect_v2_msgid_where(where, ike,		\
+						    "%s %zu: %s",	\
+						    str_enum_short(&message_role_names, role, &eb), \
+						    msgid, #COND);	\
+		}							\
+	})
+
 static callback_cb initiate_next;		/* type assertion */
 
 static const struct v2_msgid_windows empty_v2_msgid_windows = {
@@ -145,7 +157,7 @@ void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 	}
 }
 
-void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...)
+void llog_pexpect_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...)
 {
 	LLOG_PEXPECT_JAMBUF(ike->sa.logger, where, buf) {
 		va_list ap;
@@ -219,7 +231,7 @@ void v2_msgid_start_record_n_send(struct ike_sa *ike)
 	dbg_msgid_update("initiator record'n'send", NO_MESSAGE, msgid, ike, &old);
 }
 
-void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
+void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md, where_t where)
 {
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
@@ -232,9 +244,9 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	{
 		update_story = "initiator starting";
 		msgid = old.initiator.sent + 1;
-		pexpect_v2_msgid(ike, role, HERE, old.initiator.recv+1 == msgid);
-		pexpect_v2_msgid(ike, role, HERE, old.initiator.sent+1 == msgid);
-		pexpect_v2_msgid(ike, role, HERE, old.initiator.wip == -1);
+		pexpect_v2_msgid(old.initiator.recv+1 == msgid);
+		pexpect_v2_msgid(old.initiator.sent+1 == msgid);
+		pexpect_v2_msgid(old.initiator.wip == -1);
 		new->initiator.wip = msgid;
 		break;
 	}
@@ -243,9 +255,9 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 		/* extend msgid */
 		update_story = "responder starting";
 		msgid = md->hdr.isa_msgid;
-		pexpect_v2_msgid(ike, role, HERE, old.responder.wip == -1);
-		pexpect_v2_msgid(ike, role, HERE, old.responder.sent+1 == msgid);
-		pexpect_v2_msgid(ike, role, HERE, old.responder.recv+1 == msgid);
+		pexpect_v2_msgid(old.responder.wip == -1);
+		pexpect_v2_msgid(old.responder.sent+1 == msgid);
+		pexpect_v2_msgid(old.responder.recv+1 == msgid);
 		new->responder.wip = msgid;
 		break;
 	}
@@ -253,9 +265,9 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	{
 		update_story = "initiator starting";
 		msgid = md->hdr.isa_msgid;
-		pexpect_v2_msgid(ike, role, HERE, old.initiator.wip == -1);
-		pexpect_v2_msgid(ike, role, HERE, old.initiator.sent == msgid);
-		pexpect_v2_msgid(ike, role, HERE, old.initiator.recv+1 == msgid);
+		pexpect_v2_msgid(old.initiator.wip == -1);
+		pexpect_v2_msgid(old.initiator.sent == msgid);
+		pexpect_v2_msgid(old.initiator.recv+1 == msgid);
 		new->initiator.wip = msgid;
 		break;
 	}
@@ -265,10 +277,10 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	dbg_msgid_update(update_story, role, msgid, ike, &old);
 }
 
-void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
+void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md, where_t where)
 {
-	enum message_role msg_role = v2_msg_role(md);
-	switch (msg_role) {
+	enum message_role role = v2_msg_role(md);
+	switch (role) {
 	case NO_MESSAGE:
 		dbg_v2_msgid(ike, "initiator canceling new exchange");
 		break;
@@ -276,13 +288,9 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
 	{
 		/* extend msgid */
 		intmax_t msgid = md->hdr.isa_msgid;
-		if (ike->sa.st_v2_msgid_windows.responder.wip != msgid) {
-			fail_v2_msgid(ike,
-				      "responder.wip should be %jd, was %jd",
-				      msgid, ike->sa.st_v2_msgid_windows.responder.wip);
-		}
+		pexpect_v2_msgid(ike->sa.st_v2_msgid_windows.responder.wip == msgid);
 		ike->sa.st_v2_msgid_windows.responder.wip = -1;
-		dbg_msgid_update("responder cancelling", msg_role, msgid,
+		dbg_msgid_update("responder cancelling", role, msgid,
 				 ike, &ike->sa.st_v2_msgid_windows);
 		break;
 	}
@@ -292,17 +300,17 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
 	}
 }
 
-void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
+void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t where)
 {
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-	enum message_role receiving = v2_msg_role(md);
+	enum message_role role = v2_msg_role(md);
 
 	intmax_t msgid;
 	const char *update_story;
 	struct v2_msgid_window *update;
 
-	switch (receiving) {
+	switch (role) {
 	case NO_MESSAGE:
 	{
 		/*
@@ -313,7 +321,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		 */
 		msgid = old.initiator.sent + 1;
 		update_story = "initiator finishing";
-		pexpect_v2_msgid(ike, receiving, HERE, old.initiator.wip == msgid);
+		pexpect_v2_msgid(old.initiator.wip == msgid);
 		update = &new->initiator;
 		new->initiator.wip = -1;
 		new->initiator.sent = msgid;
@@ -340,7 +348,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		 */
 		update_story = "responder finishing";
 		msgid = md->hdr.isa_msgid;
-		pexpect_v2_msgid(ike, receiving, HERE, old.responder.wip == msgid);
+		pexpect_v2_msgid(old.responder.wip == msgid);
 		update = &new->responder;
 		new->responder.wip = -1;
 		/* for duplicate detection */
@@ -364,7 +372,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		update_story = "initiator finishing";
 		msgid = md->hdr.isa_msgid;
 		update = &new->initiator;
-		pexpect_v2_msgid(ike, receiving, HERE, old.initiator.wip == msgid);
+		pexpect_v2_msgid(old.initiator.wip == msgid);
 		new->initiator.recv = msgid;
 		new->initiator.wip = -1;
 		/*
@@ -375,12 +383,12 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 		break;
 	}
 	default:
-		bad_case(receiving);
+		bad_case(role);
 	}
 
 	/* should be backdated to when the message arrives? */
 	new->last_recv = update->last_recv = mononow(); /* close enough */
-	dbg_msgid_update(update_story, receiving, msgid, ike, &old);
+	dbg_msgid_update(update_story, role, msgid, ike, &old);
 }
 
 struct v2_msgid_pending {

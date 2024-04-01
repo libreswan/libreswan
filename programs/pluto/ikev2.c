@@ -520,10 +520,10 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 *   timeout of several minutes.
 		 */
 		if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments == NULL) {
-			fail_v2_msgid(ike,
-				      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
-				      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-				      msgid);
+			llog_pexpect_v2_msgid(ike,
+					      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
+					      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+					      msgid);
 			return true;
 		}
 
@@ -1382,7 +1382,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * new message.
 	 */
 
-	v2_msgid_finish(ike, md);
+	v2_msgid_finish(ike, md, HERE);
 
 	bool established_before = IS_IKE_SA_ESTABLISHED(&ike->sa);
 
@@ -1597,7 +1597,7 @@ void start_v2_transition(struct ike_sa *ike,
 			 where_t where)
 {
 	set_v2_transition(&ike->sa, next_transition, where);
-	v2_msgid_start(ike, md);
+	v2_msgid_start(ike, md, where);
 }
 
 stf_status next_v2_transition(struct ike_sa *ike, struct msg_digest *md,
@@ -1734,7 +1734,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * Logged earlier (where the decision to ignore
 		 * occurred).
 		 */
-		v2_msgid_cancel(ike, md);
+		v2_msgid_cancel(ike, md, HERE);
 		return;
 
 	case STF_OK:
@@ -1763,7 +1763,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		/* send the response */
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_RESPONDER_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_REQUEST);
-		v2_msgid_finish(ike, md);
+		v2_msgid_finish(ike, md, HERE);
 		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY",
 					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* do the deed */
@@ -1779,7 +1779,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 */
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_INITIATOR_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
-		v2_msgid_finish(ike, md);
+		v2_msgid_finish(ike, md, HERE);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
 		connection_delete_ike_family(&ike, HERE);
@@ -1803,7 +1803,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 */
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_INITIATOR_SEND_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
-		v2_msgid_finish(ike, md);
+		v2_msgid_finish(ike, md, HERE);
 		/* do the deed; record'n'send logs */
 		record_n_send_n_log_v2_delete(ike, HERE);
 		/* do the deed */
@@ -1818,16 +1818,16 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
 			dbg_v2_msgid(ike, "forcing a response received update (STF_FATAL)");
-			v2_msgid_finish(ike, md);
+			v2_msgid_finish(ike, md, HERE);
 			break;
 		case MESSAGE_REQUEST:
 			if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments != NULL) {
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
-				v2_msgid_finish(ike, md);
+				v2_msgid_finish(ike, md, HERE);
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			} else {
-				fail_v2_msgid(ike, "exchange zombie as no response?");
+				llog_pexpect_v2_msgid(ike, "exchange zombie as no response?");
 			}
 			break;
 		case NO_MESSAGE:

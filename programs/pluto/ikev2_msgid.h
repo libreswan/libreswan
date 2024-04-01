@@ -126,9 +126,9 @@ bool v2_msgid_request_pending(struct ike_sa *ike);
  * record 'n' send has been eliminated.
  */
 
-void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md);
-void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md);
-void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md);
+void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md, where_t where);
+void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md, where_t where);
+void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t where);
 
 /*
  * This is a hack for code that forces sending an additional request
@@ -161,18 +161,8 @@ void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to);
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *msg, ...) PRINTF_LIKE(2);
-void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...) PRINTF_LIKE(3);
-#define pexpect_v2_msgid(IKE, ROLE, WHERE, COND)				\
-	({								\
-		bool cond_ = COND; /* eval once, no paren */		\
-		if (!cond_) {						\
-			enum_buf eb;					\
-			fail_v2_msgid_where(WHERE, IKE, "%s %s",	\
-					    str_enum_short(&message_role_names, ROLE, &eb), \
-					    #COND);			\
-		}							\
-	})
-#define fail_v2_msgid(IKE, FMT, ...) fail_v2_msgid_where(HERE, IKE, FMT,##__VA_ARGS__)
+void llog_pexpect_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...) PRINTF_LIKE(3);
+#define llog_pexpect_v2_msgid(IKE, FMT, ...) llog_pexpect_v2_msgid_where(HERE, IKE, FMT, ##__VA_ARGS__)
 
 struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role);
 
