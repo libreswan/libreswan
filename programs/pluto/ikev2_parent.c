@@ -636,7 +636,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 
 void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 {
-	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+	if (!PEXPECT(md->logger, v2_msg_role(md) == MESSAGE_REQUEST)) {
 		/*
 		 * Responder only: on the initiator, SKEYSEED is
 		 * computed by the IKE_SA_INIT response processor.
@@ -645,10 +645,27 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
-	if (!pexpect(ix == ISAKMP_v2_IKE_INTERMEDIATE || ix == ISAKMP_v2_IKE_AUTH)) {
+	if (!PEXPECT(md->logger, (ix == ISAKMP_v2_IKE_INTERMEDIATE ||
+				  ix == ISAKMP_v2_IKE_AUTH))) {
 		/*
 		 * IKE_INTERMEDIATE and IKE_AUTH requests only.
 		 */
+		return;
+	}
+
+	if (!PEXPECT(ike->sa.logger, ike->sa.st_state == &state_v2_IKE_SA_INIT_R)) {
+		/*
+		 * Still in IKE_SA_INIT responder state.
+		 */
+		return;
+	}
+
+	/*
+	 * Not yet officially started on next message.
+	 */
+	if (!PEXPECT(ike->sa.logger, (ike->sa.st_v2_msgid_windows.responder.recv == 0 &&
+				      ike->sa.st_v2_msgid_windows.responder.sent == 0 &&
+				      ike->sa.st_v2_msgid_windows.responder.wip == -1))) {
 		return;
 	}
 
@@ -662,22 +679,34 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * between SK and SKF, repeated fragment; wrong or bad total;
 	 * ... then let it drop.  End result could be that no messages
 	 * accumulate and .st_v2_incomming remains NULL.
-	 *
-	 * XXX: as a hack, store the SK message in the exchange buffer.
 	 */
 
 	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
-	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
-		dbg("received IKE encrypted message");
-		if ((*frags) != NULL) {
-			if ((*frags)->total != 0) {
+	if ((*frags) != NULL) {
+		/*
+		 * Already accumulating fragments, keep going?
+		 */
+		if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
+			dbg("received IKE encrypted message");
+			if ((*frags)->total == 0) {
 				dbg("  ignoring message; collecting fragments");
-				return;
+			} else {
+				dbg("  ignoring message; already collected");
 			}
 			pexpect((*frags)->md != NULL);
-			dbg("  ignoring message; already collected");
-			return;
+		} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
+			collect_v2_incoming_fragment(ike, md, frags);
+		} else {
+			llog_pexpect(ike->sa.logger, HERE,
+				     "message has neither SK nor SKF payload");
 		}
+		return;
+	}
+
+	/*
+	 * First fragment, save it and start crypto.
+	 */
+	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
@@ -705,11 +734,8 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	 * If fragments are accumulating, and not already started,
 	 * kick off SKEYSEED.
 	 */
-	if (!ike->sa.st_offloaded_task_in_background) {
-		submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
-					/*no-md:in-background*/NULL,
-					ike->sa.st_gi/*responder needs initiator KE*/,
-					process_v2_request_no_skeyseed_continue, HERE);
-		ike->sa.st_offloaded_task_in_background = true;
-	}
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
+				/*no-md:in-background*/NULL,
+				ike->sa.st_gi/*responder needs initiator KE*/,
+				process_v2_request_no_skeyseed_continue, HERE);
 }

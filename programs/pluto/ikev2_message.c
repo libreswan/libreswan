@@ -844,7 +844,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 {
 	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
 		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as peer never proposed fragmentation");
-		return false;
+		return FRAGMENT_IGNORED;
 	}
 
 	struct ikev2_skf *skf_hdr = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
@@ -856,7 +856,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	if (why != NULL) {
 		llog_sa(RC_LOG_SERIOUS, ike, "dropping fragment %u of %u as %s",
 			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
-		return false;
+		return FRAGMENT_IGNORED;
 	}
 
 	/* locate what is interesting */
