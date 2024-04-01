@@ -634,8 +634,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		return NULL;
 	}
 
-	start_v2_transition(ike, v2_IKE_SA_INIT_exchange.initiate,
-			    NULL/*md*/, HERE);
+	start_v2_exchange(ike, &v2_IKE_SA_INIT_exchange, HERE);
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 

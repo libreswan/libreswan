@@ -90,6 +90,10 @@ struct v2_msgid_window {
 	struct v2_incoming_fragments *incoming_fragments;
 	struct v2_outgoing_fragment *outgoing_fragments;
 	/*
+	 * The exchange being worked on by the initiator.
+	 */
+	const struct v2_exchange *exchange;
+	/*
 	 * The SA being worked on by the exchange.
 	 *
 	 * For instance, the larval Child SA being established by an
@@ -127,7 +131,8 @@ bool v2_msgid_request_pending(struct ike_sa *ike);
  * record 'n' send has been eliminated.
  */
 
-void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md, where_t where);
+void v2_msgid_start(struct ike_sa *ike, const struct v2_exchange *,
+		    const struct msg_digest *md, where_t where);
 void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md, where_t where);
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t where);
 
@@ -136,7 +141,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
  * even though the request window is full.
  */
 
-void v2_msgid_start_record_n_send(struct ike_sa *ike);
+void v2_msgid_start_record_n_send(struct ike_sa *ike, const struct v2_exchange *exchange);
 
 /*
  * Handle multiple initiators trying to send simultaneously.

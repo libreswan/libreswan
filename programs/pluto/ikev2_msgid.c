@@ -63,6 +63,25 @@ static void jam_old_new_prefix(struct jambuf *buf,
 	jam_string(buf, "=");
 }
 
+static void jam_old_new_exchange(struct jambuf *buf,
+				 const char **prefix, const char *what,
+				 const struct v2_exchange *const *old,
+				 const struct v2_exchange *const *new)
+{
+	if (old == new || (*old) != (*new)) {
+		jam_old_new_prefix(buf, prefix, what);
+		if (*old != NULL) {
+			jam_string(buf, (*old)->initiate->story);
+		}
+		if (old != new) {
+			jam_string(buf, "->");
+			if (*new != NULL) {
+				jam_string(buf, (*new)->initiate->story);
+			}
+		}
+	}
+}
+
 static void jam_old_new_monotime(struct jambuf *buf,
 				 const char **prefix, const char *what,
 				 const monotime_t *old, const monotime_t *new)
@@ -116,6 +135,7 @@ static void jam_ike_window(struct jambuf *buf,
 	jam_old_new_intmax(buf, &prefix, ".wip", &old->wip, &new->wip);
 	jam_old_new_monotime(buf, &prefix, ".last_sent", &old->last_sent, &new->last_sent);
 	jam_old_new_monotime(buf, &prefix, ".last_recv", &old->last_recv, &new->last_recv);
+	jam_old_new_exchange(buf, &prefix, ".exchange", &old->exchange, &new->exchange);
 }
 
 static void jam_ike_windows(struct jambuf *buf,
@@ -218,7 +238,7 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	dbg_msgid_update("initializing", NO_MESSAGE, -1, ike, &old);
 }
 
-void v2_msgid_start_record_n_send(struct ike_sa *ike)
+void v2_msgid_start_record_n_send(struct ike_sa *ike, const struct v2_exchange *exchange)
 {
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
@@ -228,10 +248,14 @@ void v2_msgid_start_record_n_send(struct ike_sa *ike)
 	 */
 	intmax_t msgid = new->initiator.recv = old.initiator.sent;
 	new->initiator.wip = msgid + 1;
+	new->initiator.exchange = exchange;
 	dbg_msgid_update("initiator record'n'send", NO_MESSAGE, msgid, ike, &old);
 }
 
-void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md, where_t where)
+void v2_msgid_start(struct ike_sa *ike,
+		    const struct v2_exchange *exchange,
+		    const struct msg_digest *md,
+		    where_t where)
 {
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
@@ -247,7 +271,10 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md, where_t whe
 		pexpect_v2_msgid(old.initiator.recv+1 == msgid);
 		pexpect_v2_msgid(old.initiator.sent+1 == msgid);
 		pexpect_v2_msgid(old.initiator.wip == -1);
+		pexpect_v2_msgid(old.initiator.exchange == NULL);
+		pexpect_v2_msgid(exchange != NULL);
 		new->initiator.wip = msgid;
+		new->initiator.exchange = exchange;
 		break;
 	}
 	case MESSAGE_REQUEST:
@@ -268,6 +295,7 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md, where_t whe
 		pexpect_v2_msgid(old.initiator.wip == -1);
 		pexpect_v2_msgid(old.initiator.sent == msgid);
 		pexpect_v2_msgid(old.initiator.recv+1 == msgid);
+		pexpect_v2_msgid(old.initiator.exchange != NULL);
 		new->initiator.wip = msgid;
 		break;
 	}
@@ -322,6 +350,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		msgid = old.initiator.sent + 1;
 		update_story = "initiator finishing";
 		pexpect_v2_msgid(old.initiator.wip == msgid);
+		pexpect_v2_msgid(old.initiator.exchange != NULL);
 		update = &new->initiator;
 		new->initiator.wip = -1;
 		new->initiator.sent = msgid;
@@ -373,6 +402,8 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		msgid = md->hdr.isa_msgid;
 		update = &new->initiator;
 		pexpect_v2_msgid(old.initiator.wip == msgid);
+		pexpect_v2_msgid(old.initiator.exchange != NULL);
+		new->initiator.exchange = NULL;
 		new->initiator.recv = msgid;
 		new->initiator.wip = -1;
 		/*
@@ -572,7 +603,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		 * unassign it if the exchange is abandoned)?
 		 */
 
-		start_v2_transition(ike, pending.exchange->initiate, /*md*/NULL, HERE);
+		start_v2_exchange(ike, pending.exchange, HERE);
 		/* pexpect(initiator->wip_sa == NULL); */
 		initiator->wip_sa = child;
 		stf_status status = pending.exchange->initiate->processor(ike, child, NULL);

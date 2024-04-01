@@ -1597,7 +1597,15 @@ void start_v2_transition(struct ike_sa *ike,
 			 where_t where)
 {
 	set_v2_transition(&ike->sa, next_transition, where);
-	v2_msgid_start(ike, md, where);
+	v2_msgid_start(ike, NULL, md, HERE);
+}
+
+void start_v2_exchange(struct ike_sa *ike,
+		       const struct v2_exchange *exchange,
+		       where_t where)
+{
+	set_v2_transition(&ike->sa, exchange->initiate, where);
+	v2_msgid_start(ike, exchange, NULL, HERE);
 }
 
 stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
@@ -1884,8 +1892,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	/*
 	 * Pretend to be running the initiate state transition.
 	 */
-	start_v2_transition(ike, v2_IKE_SA_INIT_exchange.initiate,
-			    /*md*/NULL, HERE); /* first */
+	start_v2_exchange(ike, &v2_IKE_SA_INIT_exchange, HERE); /* first */
 
 	/*
 	 * Need to re-open TCP.
