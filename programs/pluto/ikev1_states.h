@@ -87,6 +87,8 @@
  * state_v1_microcode to use.
  */
 
+#define v1P(N) LELEM(ISAKMP_NEXT_##N)
+
 struct state_v1_microcode {
 	enum state_kind state, next_state;
 	lset_t flags;
