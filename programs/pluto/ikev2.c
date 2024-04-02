@@ -192,10 +192,6 @@ void llog_v2_success_state_story_to(struct ike_sa *ike)
 	}
 }
 
-/* Short forms for building payload type sets */
-
-#define P(N) LELEM(ISAKMP_NEXT_v2##N)
-
 /*
  * split an incoming message into payloads
  */
@@ -1149,7 +1145,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	passert(ike->sa.st_state->v2.secured);
 	passert(md != NULL);
 	passert(!md->encrypted_payloads.parsed);
-	passert(md->message_payloads.present & (P(SK) | P(SKF)));
+	passert(md->message_payloads.present & (v2P(SK) | v2P(SKF)));
 
 	/*
 	 * If the SKEYSEED is missing, compute it now (unless, of
@@ -1182,8 +1178,8 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
 	struct msg_digest *protected_md; /* MUST md_delref() */
-	switch (md->message_payloads.present & (P(SK) | P(SKF))) {
-	case P(SKF):
+	switch (md->message_payloads.present & (v2P(SK) | v2P(SKF))) {
+	case v2P(SKF):
 	{
 		struct v2_msgid_window *window = v2_msgid_window(ike, v2_msg_role(md));
 		struct v2_incoming_fragments **frags = &window->incoming_fragments;
@@ -1204,7 +1200,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		protected_md = reassemble_v2_incoming_fragments(frags);
 		break;
 	}
-	case P(SK):
+	case v2P(SK):
 		if (!ikev2_decrypt_msg(ike, md)) {
 			llog_sa(RC_LOG, ike,
 				"encrypted payload seems to be corrupt; dropping packet");

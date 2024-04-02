@@ -134,10 +134,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  *                            <--  HDR, SK {SA, Nr, KEr}
  */
 
-/* Short forms for building payload type sets */
-
-#define P(N) LELEM(ISAKMP_NEXT_v2##N)
-
 /*
  * IKEv2 State transitions (aka microcodes).
  *
@@ -148,11 +144,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * corresponding IKEv2 finite states.  While not the most efficient,
  * it seems to work.
  */
-
-#define req_clear_payloads message_payloads.required   /* required unencrypted payloads (allows just one) for received packet */
-#define opt_clear_payloads message_payloads.optional   /* optional unencrypted payloads (none or one) for received packet */
-#define req_enc_payloads   encrypted_payloads.required /* required encrypted payloads (allows just one) for received packet */
-#define opt_enc_payloads   encrypted_payloads.optional /* optional encrypted payloads (none or one) for received packet */
 
 /*
  * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
@@ -200,7 +191,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .to = &state_v2_IKE_SA_INIT_I0,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(N),
+	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_COOKIE,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
 	  .llog_success = ldbg_v2_success,
@@ -211,7 +202,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .to = &state_v2_IKE_SA_INIT_I0,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(N),
+	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
 	  .llog_success = ldbg_v2_success,
@@ -222,7 +213,7 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .to = &state_v2_IKE_SA_INIT_I0, /* XXX: never happens STF_SUSPEND */
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(N),
+	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
 	  .llog_success = ldbg_v2_success,
@@ -240,8 +231,8 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 	  .to = &state_v2_IKE_SA_INIT_IR, /* next exchange does IKE_AUTH | IKE_INTERMEDIATE */
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
-	  .opt_clear_payloads = P(CERTREQ),
+	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Nr),
+	  .message_payloads.optional = v2P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
 	  .llog_success = llog_v2_IKE_SA_INIT_success,
 	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
@@ -293,9 +284,9 @@ static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDr) | P(AUTH),
-	  .opt_enc_payloads = P(CERT) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDr) | v2P(AUTH),
+	  .encrypted_payloads.optional = v2P(CERT) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_response,
 	  .llog_success = ldbg_v2_success,/* logged mid transition */
 	  .timeout_event = EVENT_v2_REPLACE,
@@ -306,8 +297,8 @@ static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
 	  .to = &state_v2_IKE_AUTH_I,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = P(SK), },
-	  /* .encrypted_payloads = { .required = P(N), }, */
+	  .message_payloads = { .required = v2P(SK), },
+	  /* .encrypted_payloads = { .required = v2P(N), }, */
 	  .processor  = process_v2_IKE_AUTH_failure_response,
 	  .llog_success = llog_v2_success_state_story,
 	},
@@ -327,7 +318,7 @@ static const struct v2_state_transition IKE_SA_INIT_R0_transitions[] = {
 	  .to = &state_v2_IKE_SA_INIT_R,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
+	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
 	  .llog_success = llog_v2_IKE_SA_INIT_success,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -353,9 +344,9 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = LEMPTY,
-	  .opt_enc_payloads = LEMPTY,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = LEMPTY,
+	  .encrypted_payloads.optional = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -366,9 +357,9 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDi) | P(AUTH),
-	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
+	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
@@ -378,9 +369,9 @@ static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDi),
-	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi),
+	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -414,9 +405,9 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = LEMPTY,
-	  .opt_enc_payloads = LEMPTY,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = LEMPTY,
+	  .encrypted_payloads.optional = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -426,9 +417,9 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDi),
-	  .opt_enc_payloads = P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi),
+	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -439,9 +430,9 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(IDi) | P(AUTH),
-	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
+	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
@@ -456,8 +447,8 @@ static const struct v2_state_transition IKE_INTERMEDIATE_I_transitions[] = {
 	  .to = &state_v2_IKE_INTERMEDIATE_IR,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .opt_clear_payloads = LEMPTY,
+	  .message_payloads.required = v2P(SK),
+	  .message_payloads.optional = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -481,8 +472,8 @@ static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(EAP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(EAP),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -493,8 +484,8 @@ static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(AUTH),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(AUTH),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_REPLACE, },
@@ -543,9 +534,9 @@ static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
-	  .opt_enc_payloads = P(N),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
@@ -563,9 +554,9 @@ static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
-	  .opt_enc_payloads = P(N),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
@@ -609,9 +600,9 @@ static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = P(SK),
-	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .encrypted_payloads.notification = v2N_REKEY_SA,
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = ldbg_v2_success,
@@ -628,9 +619,9 @@ static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(SK),
-	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
 	  /* .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response, */
 	  .llog_success = ldbg_v2_success,
@@ -675,9 +666,9 @@ static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
@@ -693,9 +684,9 @@ static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
 	  /* .processor  = process_v2_CREATE_CHILD_SA_new_child_response, */
 	  .llog_success = ldbg_v2_success,
@@ -731,9 +722,9 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
-	  .opt_enc_payloads = P(N),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN },
@@ -743,9 +734,9 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
-	  .opt_enc_payloads = P(N),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -772,9 +763,9 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = P(SK),
-	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .encrypted_payloads.notification = v2N_REKEY_SA,
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = ldbg_v2_success,
@@ -802,9 +793,9 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -826,9 +817,9 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(SK),
-	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -839,7 +830,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = P(SK), },
+	  .message_payloads = { .required = v2P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
@@ -867,7 +858,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = P(SK),
+	  .message_payloads.required = v2P(SK),
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -878,7 +869,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(SK),
+	  .message_payloads.required = v2P(SK),
 	  .processor  = process_v2_INFORMATIONAL_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -888,8 +879,8 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -899,8 +890,8 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
 	  .processor  = process_v2_INFORMATIONAL_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
@@ -916,16 +907,11 @@ static const struct v2_state_transition IKE_SA_DELETE_transitions[] = {
 	  .to = &state_v2_IKE_SA_DELETE,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
 	  .processor  = IKE_SA_DEL_process_v2_INFORMATIONAL_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
-
-#undef req_clear_payloads
-#undef opt_clear_payloads
-#undef req_enc_payloads
-#undef opt_enc_payloads
 
 };
 
@@ -972,10 +958,6 @@ static const struct finite_state *v2_states[] = {
 #undef S
 };
 
-/* Short forms for building payload type sets */
-
-#define P(N) LELEM(ISAKMP_NEXT_v2##N)
-
 /* From RFC 5996:
  *
  * 3.10 "Notify Payload": N payload may appear in any message
@@ -1005,8 +987,8 @@ static const struct finite_state *v2_states[] = {
  *	containing the SA payloads.
  */
 
-static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any packet */
-static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
+static const lset_t everywhere_payloads = v2P(N) | v2P(V);	/* can appear in any packet */
+static const lset_t repeatable_payloads = v2P(N) | v2P(D) | v2P(CP) | v2P(V) | v2P(CERT) | v2P(CERTREQ);	/* if one can appear, many can appear */
 
 struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 						  const struct payload_summary *summary,
@@ -1017,9 +999,9 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	 * on its own).
 	 */
 	lset_t seen = summary->present;
-	if ((seen & (P(SKF)|P(SK))) == P(SKF)) {
-		seen &= ~P(SKF);
-		seen |= P(SK);
+	if ((seen & (v2P(SKF)|v2P(SK))) == v2P(SKF)) {
+		seen &= ~v2P(SKF);
+		seen |= v2P(SK);
 	}
 
 	lset_t req_payloads = payloads->required;
@@ -1100,7 +1082,7 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 		 * so checking is complete and things have matched.
 		 */
 		if (secured_payload_failed == NULL) {
-			PEXPECT(logger, (transition->message_payloads.required & P(SK)) == LEMPTY);
+			PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) == LEMPTY);
 			pdbg(logger, "    unsecured message matched");
 			return transition;
 		}
@@ -1111,7 +1093,7 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 		 * There there at least one plausible, and secured,
 		 * payload.
 		 */
-		PEXPECT(logger, (transition->message_payloads.required & P(SK)) != LEMPTY);
+		PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) != LEMPTY);
 		if (!check_secured_payloads) {
 			pdbg(logger, "    matching by ignoring secured payloads");
 			return transition;
@@ -1408,7 +1390,7 @@ void init_ikev2_states(struct logger *logger)
 			 * state require an SK payload.
 			 */
 			passert(t->recv_role == NO_MESSAGE ||
-				LIN(P(SK), t->message_payloads.required) == from->v2.secured);
+				LIN(v2P(SK), t->message_payloads.required) == from->v2.secured);
 
 			/*
 			 * Check that only IKE_SA_INIT transitions are

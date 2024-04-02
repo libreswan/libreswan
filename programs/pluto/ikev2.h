@@ -57,6 +57,10 @@ struct ikev2_expected_payloads {
 	v2_notification_t notification;
 };
 
+/* Short forms for building payload type sets */
+
+#define v2P(N) LELEM(ISAKMP_NEXT_v2##N)
+
 struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const struct finite_state *from[2];	/* grow as needed */
