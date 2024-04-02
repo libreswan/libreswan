@@ -639,6 +639,10 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		return true;
 	}
 
+	if (PBAD(ike->sa.logger, ike->sa.st_state == NULL)) {
+		return true;
+	}
+
 	/*
 	 * If the message is not a "duplicate", then what is it?
 	 * Following code gets to decide.
@@ -751,6 +755,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
 			"unexpected %s response with Message ID %jd (processing %jd); dropping packet",
 			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid,
 			ike->sa.st_v2_msgid_windows.initiator.wip);
+		return true;
+	}
+
+	if (PBAD(ike->sa.logger, ike->sa.st_v2_msgid_windows.initiator.exchange == NULL)) {
 		return true;
 	}
 
@@ -1128,7 +1136,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * about at most 7 transitions and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
 	 */
-	if (!sniff_v2_state_transition(ike->sa.logger, ike->sa.st_state, md)) {
+	if (!sniff_v2_state_transition(ike->sa.logger, v2_msgid_state(ike, md), md)) {
 		/* already logged */
 		/* drop packet on the floor */
 		return;
@@ -1265,8 +1273,8 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 
 	bool secured_payload_failed = false;
 	const struct v2_state_transition *svm =
-		find_v2_state_transition(ike->sa.logger, ike->sa.st_state, md,
-					 &secured_payload_failed);
+		find_v2_state_transition(ike->sa.logger, v2_msgid_state(ike, md),
+					 md, &secured_payload_failed);
 
 	/* no useful state microcode entry? */
 	if (svm == NULL) {

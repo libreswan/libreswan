@@ -46,6 +46,7 @@
 #include "ikev2_mobike.h"
 #include "orient.h"
 #include "ikev2.h"
+#include "ikev2_states.h"
 
 static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 					 struct pbs_out *pbs, struct ike_sa *ike);
@@ -511,6 +512,8 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
 	static const struct v2_state_transition v2_mobike_probe_transition = {
 		.story = "MOBIKE",
+		.from = { &state_v2_ESTABLISHED_IKE_SA, },
+		.to = &state_v2_ESTABLISHED_IKE_SA,
 	};
 	static const struct v2_exchange v2_mobike_probe_exchange = {
 		&v2_mobike_probe_transition,
