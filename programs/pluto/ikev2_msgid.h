@@ -25,6 +25,7 @@ struct state;
 struct ike_sa;
 struct msg_digest;
 struct v2_state_transition;
+struct v2_transitions;
 struct v2_exchange;
 enum message_role;
 
@@ -173,6 +174,6 @@ void llog_pexpect_v2_msgid_where(where_t where, struct ike_sa *ike, const char *
 
 struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role);
 
-const struct finite_state *v2_msgid_state(struct ike_sa *ike, const struct msg_digest *md);
+const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike, const struct msg_digest *md);
 
 #endif

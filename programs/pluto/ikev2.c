@@ -1136,7 +1136,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * about at most 7 transitions and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
 	 */
-	if (!sniff_v2_state_transition(ike->sa.logger, v2_msgid_state(ike, md), md)) {
+	if (!sniff_v2_secured_transition(ike->sa.logger, v2_msgid_transitions(ike, md), md)) {
 		/* already logged */
 		/* drop packet on the floor */
 		return;
@@ -1273,8 +1273,8 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 
 	bool secured_payload_failed = false;
 	const struct v2_state_transition *svm =
-		find_v2_state_transition(ike->sa.logger, v2_msgid_state(ike, md),
-					 md, &secured_payload_failed);
+		find_v2_transition(ike->sa.logger, v2_msgid_transitions(ike, md),
+				   md, &secured_payload_failed);
 
 	/* no useful state microcode entry? */
 	if (svm == NULL) {

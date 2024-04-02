@@ -1048,7 +1048,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 }
 
 static const struct v2_state_transition *v2_state_transition(struct logger *logger,
-							     const struct finite_state *state,
+							     const struct v2_transitions *transitions,
 							     struct msg_digest *md,
 							     bool check_secured_payloads,
 							     bool *secured_payload_failed)
@@ -1056,86 +1056,86 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "looking for transition from %s matching ",
-		    state->short_name);
-		jam_msg_digest(buf, md);
-		if (!check_secured_payloads) {
-			jam(buf, " (ignoring secured payloads)");
-		}
-	}
+	pdbg(logger, "looking for a transition%s",
+	     (check_secured_payloads ? "" : " (ignoring secured payloads)"));
 
-	FOR_EACH_ITEM(transition, &state->v2.transitions) {
+	FOR_EACH_ITEM(transition, transitions) {
 
-		dbg("  trying: %s", transition->story);
+		pdbg(logger, "  trying: %s", transition->story);
 
 		/* message type? */
 		if (transition->exchange != md->hdr.isa_xchg) {
 			enum_buf xb;
-			dbg("    exchange type does not match %s",
-			    str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
+			pdbg(logger, "    exchange type does not match %s",
+			     str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
 			continue;
 		}
 
 		/* role? */
 		if (transition->recv_role != v2_msg_role(md)) {
-			dbg("     message role does not match %s",
-			    (transition->recv_role == MESSAGE_REQUEST ? "request" :
-			     transition->recv_role == MESSAGE_RESPONSE ? "response" :
-			     "no-message"));
+			pdbg(logger, "     message role does not match %s",
+			     (transition->recv_role == MESSAGE_REQUEST ? "request" :
+			      transition->recv_role == MESSAGE_RESPONSE ? "response" :
+			      "no-message"));
 			continue;
 		}
 
 		/* message payloads */
-		if (!pexpect(md->message_payloads.parsed)) {
+		if (!PEXPECT(logger, md->message_payloads.parsed)) {
 			return NULL;
 		}
 		struct ikev2_payload_errors message_payload_errors
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
 		if (message_payload_errors.bad) {
-			dbg("    message payloads do not match");
+			pdbg(logger, "    message payloads do not match");
 			/* save error for last pattern!?! */
 			message_payload_status = message_payload_errors;
 			continue;
 		}
 
 		/*
-		 * If the transition isn't secured (there is no SK or
-		 * SKF payload) then checking is complete and things
-		 * have matched.
+		 * The caller isn't expecting secured payloads (i.e.,
+		 * it isn't secured).  There is no SK or SKF payload
+		 * so checking is complete and things have matched.
 		 */
-		if (!state->v2.secured) {
-			pexpect((transition->message_payloads.required & P(SK)) == LEMPTY);
-			dbg("    unsecured message matched");
+		if (secured_payload_failed == NULL) {
+			PEXPECT(logger, (transition->message_payloads.required & P(SK)) == LEMPTY);
+			pdbg(logger, "    unsecured message matched");
 			return transition;
 		}
 
 		/*
-		 * Sniff test; is there at least one plausible payload
-		 * without looking at the SK payload?
+		 * Sniff test.
+		 *
+		 * There there at least one plausible, and secured,
+		 * payload.
 		 */
+		PEXPECT(logger, (transition->message_payloads.required & P(SK)) != LEMPTY);
 		if (!check_secured_payloads) {
-			dbg("    matching by ignoring secured payloads");
+			pdbg(logger, "    matching by ignoring secured payloads");
 			return transition;
 		}
 
-		/* SK{} payloads */
-		if (!pexpect(md->encrypted_payloads.parsed) ||
-		    !pexpect(state->v2.secured)) {
+		/*
+		 * Since SK{} payloads are expected, the caller should
+		 * have parsed them.
+		 */
+		if (!PEXPECT(logger, md->encrypted_payloads.parsed)) {
 			return NULL;
 		}
+
 		struct ikev2_payload_errors encrypted_payload_errors
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
-			dbg("    secured payloads do not match");
+			pdbg(logger, "    secured payloads do not match");
 			/* save error for last pattern!?! */
 			encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
 
-		dbg("    secured message matched");
+		pdbg(logger, "    secured message matched");
 		return transition;
 	}
 
@@ -1160,7 +1160,7 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 		/*
 		 * Notify caller so that evasive action can be taken.
 		 */
-		passert(secured_payload_failed != NULL);
+		PASSERT(logger, secured_payload_failed != NULL);
 		*secured_payload_failed = true;
 	} else {
 		llog(RC_LOG/*RC_LOG_SERIOUS*/, logger,
@@ -1170,20 +1170,24 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 
 }
 
-bool sniff_v2_state_transition(struct logger *logger, const struct finite_state *state,
-			       struct msg_digest *md)
+bool sniff_v2_secured_transition(struct logger *logger,
+				 const struct v2_transitions *transitions,
+				 struct msg_digest *md)
 {
-	bool secured_payload_failed; /* ignored */
-	return v2_state_transition(logger, state, md, /*check-secured-payloads?*/false,
+	/* expect secured payloads but don't check them */
+	bool secured_payload_failed; /* ignored but needed */
+	return v2_state_transition(logger, transitions,
+				   md, /*check-secured-payloads?*/false,
 				   &secured_payload_failed) != NULL;
 }
 
-const struct v2_state_transition *find_v2_state_transition(struct logger *logger,
-							   const struct finite_state *state,
-							   struct msg_digest *md,
-							   bool *secured_payload_failed)
+const struct v2_state_transition *find_v2_transition(struct logger *logger,
+						     const struct v2_transitions *transitions,
+						     struct msg_digest *md,
+						     bool *secured_payload_failed)
 {
-	return v2_state_transition(logger, state, md, /*check-secured-payloads?*/true,
+	return v2_state_transition(logger, transitions,
+				   md, /*check-secured-payloads?*/true,
 				   secured_payload_failed);
 }
 

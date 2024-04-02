@@ -434,8 +434,9 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * transition?
 		 */
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(md->logger, &state_v2_IKE_SA_INIT_R0, md,
-						 /*secured_payload_failed?*/NULL);
+			find_v2_transition(md->logger,
+					   &state_v2_IKE_SA_INIT_R0.v2.transitions,
+					   md, /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
 			send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
@@ -581,8 +582,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 
 		/* transition? */
 		const struct v2_state_transition *transition =
-			find_v2_state_transition(ike->sa.logger, ike->sa.st_state, md,
-						 /*secured_payload_failed?*/NULL);
+			find_v2_transition(ike->sa.logger, v2_msgid_transitions(ike, md),
+					   md, /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */
 			return;
