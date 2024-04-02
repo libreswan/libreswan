@@ -286,25 +286,3 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 
 	return STF_OK;
 }
-
-stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
-							struct child_sa *null_child,
-							struct msg_digest *md)
-{
-	PEXPECT(ike->sa.logger, null_child == NULL);
-	PEXPECT(ike->sa.logger, md != NULL);
-	/*
-	 * This must be a response to our IKE SA delete request Even
-	 * if there are are other Delete Payloads, they cannot matter:
-	 * we delete the family.
-	 *
-	 * Danger!
-	 *
-	 * The call to delete_ike_family() deletes this IKE SA.
-	 * Signal this up the chain by returning
-	 * STF_SKIP_COMPLETE_STATE_TRANSITION.
-	 *
-	 * Killing .v1_st is an extra safety net.
-	 */
-	return STF_OK_INITIATOR_DELETE_IKE;
-}
