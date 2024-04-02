@@ -670,7 +670,7 @@ const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike,
 	case NO_MESSAGE:
 		break;
 	case MESSAGE_REQUEST:
-		return &ike->sa.st_state->v2.transitions;
+		return ike->sa.st_state->v2.transitions;
 	case MESSAGE_RESPONSE:
 	{
 		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
@@ -678,12 +678,13 @@ const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike,
 		const struct finite_state *state = exchange->initiate->to;
 		/* for now, but for how long? */
 		if (PBAD(ike->sa.logger, state == NULL)) {
-			return &ike->sa.st_state->v2.transitions;
+			return ike->sa.st_state->v2.transitions;
 		}
 		if (PBAD(ike->sa.logger, state != ike->sa.st_state)) {
-			return &ike->sa.st_state->v2.transitions;
+			return ike->sa.st_state->v2.transitions;
 		}
-		return &state->v2.transitions;
+		return state->v2.transitions;
+
 	}
 	}
 	bad_case(v2_msg_role(md));

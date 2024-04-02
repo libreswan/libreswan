@@ -435,7 +435,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 */
 		const struct v2_state_transition *transition =
 			find_v2_transition(md->logger,
-					   &state_v2_IKE_SA_INIT_R0.v2.transitions,
+					   state_v2_IKE_SA_INIT_R0.v2.transitions,
 					   md, /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {
 			/* already logged */

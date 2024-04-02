@@ -229,10 +229,7 @@ struct finite_state {
 			const struct state_v1_microcode *transitions;
 		} v1;
 		struct {
-			struct v2_transitions {
-				size_t len;
-				const struct v2_state_transition *list;
-			} transitions;
+			const struct v2_transitions *transitions;
 			bool secured; /* hence, exchanges must be integrity protected */
 		} v2;
 	};

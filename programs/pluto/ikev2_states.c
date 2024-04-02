@@ -62,6 +62,9 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct ikev2_expected_payloads *payloads);
 
 #define S(KIND, STORY, CAT, ...)					\
+	const struct v2_transitions v2_##KIND##_transitions = {		\
+		ARRAY_REF(KIND##_transitions),				\
+	};								\
 	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
 		.name = #KIND,						\
@@ -70,8 +73,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.transitions.len = elemsof(KIND##_transitions),	\
-		.v2.transitions.list = KIND##_transitions,		\
+		.v2.transitions = &v2_##KIND##_transitions,		\
 		##__VA_ARGS__,						\
 	}
 
@@ -146,38 +148,21 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  */
 
 /*
+ * Initiate IKE_SA_INIT
+ *
  * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
  * constructed, are in state.  Only once the packet has been sent out
- * does it transition to STATE_V2_IKE_SA_INIT_I and start being counted as
- * half-open.
+ * does it transition to STATE_V2_IKE_SA_INIT_I and start being
+ * counted as half-open.
+ *
+ * Count I1 as half-open too because with ondemand, a plaintext packet
+ * (that is spoofed) will trigger an outgoing IKE SA.
  */
-
-static const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
-	/* no state:   --> I1
-	 * HDR, SAi1, KEi, Ni -->
-	 */
-	.story      = "initiating IKE_SA_INIT",
-	.from = { &state_v2_IKE_SA_INIT_I0, },
-	.to = &state_v2_IKE_SA_INIT_I,
-	.exchange   = ISAKMP_v2_IKE_SA_INIT,
-	.processor  = NULL, /* XXX: should be set */
-	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
-};
-
-const struct v2_exchange v2_IKE_SA_INIT_exchange = {
-	&initiate_v2_IKE_SA_INIT_transition,
-};
 
 static const struct v2_state_transition IKE_SA_INIT_I0_transitions[] = {
 };
 
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
-
-/*
- * Count I1 as half-open too because with ondemand, a plaintext packet
- * (that is spoofed) will trigger an outgoing IKE SA.
- */
 
 static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
@@ -242,28 +227,30 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
 S(IKE_SA_INIT_I, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
-static const struct v2_state_transition initiate_v2_IKE_AUTH_transition = {
-	.story      = "initiating IKE_AUTH",
-	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
-	.to = &state_v2_IKE_AUTH_I,
-	.exchange   = ISAKMP_v2_IKE_AUTH,
-	.processor  = initiate_v2_IKE_AUTH_request,
-	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
-};
-
-const struct v2_exchange v2_IKE_AUTH_exchange = {
-	&initiate_v2_IKE_AUTH_transition,
-};
-
 static const struct v2_state_transition IKE_SA_INIT_IR_transitions[] = {
 };
 
 S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA);
 
+static const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
+	/* no state:   --> I1
+	 * HDR, SAi1, KEi, Ni -->
+	 */
+	.story      = "initiating IKE_SA_INIT",
+	.from = { &state_v2_IKE_SA_INIT_I0, },
+	.to = &state_v2_IKE_SA_INIT_I,
+	.exchange   = ISAKMP_v2_IKE_SA_INIT,
+	.processor  = NULL, /* XXX: should be set */
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_exchange v2_IKE_SA_INIT_exchange = {
+	&initiate_v2_IKE_SA_INIT_transition,
+};
+
 /*
- * All IKEv1 MAIN modes except the first (half-open) and last ones are
- * not authenticated.
+ * Initiate IKE_AUTH
  */
 
 static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
@@ -306,6 +293,20 @@ static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
 };
 
 S(IKE_AUTH_I, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition initiate_v2_IKE_AUTH_transition = {
+	.story      = "initiating IKE_AUTH",
+	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
+	.to = &state_v2_IKE_AUTH_I,
+	.exchange   = ISAKMP_v2_IKE_AUTH,
+	.processor  = initiate_v2_IKE_AUTH_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_exchange v2_IKE_AUTH_exchange = {
+	&initiate_v2_IKE_AUTH_transition,
+};
 
 static const struct v2_state_transition IKE_SA_INIT_R0_transitions[] = {
 
@@ -384,20 +385,6 @@ S(IKE_SA_INIT_R, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE
  * IKE_INTERMEDIATE
  */
 
-static const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition = {
-	.story      = "initiating IKE_INTERMEDIATE",
-	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
-	.to = &state_v2_IKE_INTERMEDIATE_I,
-	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
-	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
-	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
-};
-
-const struct v2_exchange v2_IKE_INTERMEDIATE_exchange = {
-	&initiate_v2_IKE_INTERMEDIATE_transition,
-};
-
 static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 
 	{ .story      = "processing IKE_INTERMEDIATE request",
@@ -460,6 +447,20 @@ const struct v2_state_transition IKE_INTERMEDIATE_IR_transitions[] = {
 };
 
 S(IKE_INTERMEDIATE_IR, "processed IKE_INTERMEDIATE response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_OPEN_IKE_SA, .v2.secured = true);
+
+static const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition = {
+	.story      = "initiating IKE_INTERMEDIATE",
+	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
+	.to = &state_v2_IKE_INTERMEDIATE_I,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+const struct v2_exchange v2_IKE_INTERMEDIATE_exchange = {
+	&initiate_v2_IKE_INTERMEDIATE_transition,
+};
 
 /*
  * EAP
@@ -1294,7 +1295,7 @@ void init_ikev2_states(struct logger *logger)
 		passert(from->kind == kind);
 		passert(from->ike_version == IKEv2);
 
-		FOR_EACH_ITEM(t, &from->v2.transitions) {
+		FOR_EACH_ITEM(t, from->v2.transitions) {
 
 			bool found_from = false;
 			FOR_EACH_ELEMENT(f, t->from) {
