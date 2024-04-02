@@ -70,8 +70,8 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.nr_transitions = elemsof(KIND##_transitions),		\
-		.v2.transitions = KIND##_transitions,			\
+		.v2.transitions.len = elemsof(KIND##_transitions),	\
+		.v2.transitions.list = KIND##_transitions,		\
 		##__VA_ARGS__,						\
 	}
 
@@ -1065,8 +1065,7 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 		}
 	}
 
-	for (unsigned i = 0; i < state->nr_transitions; i++) {
-		const struct v2_state_transition *transition = &state->v2.transitions[i];
+	FOR_EACH_ITEM(transition, &state->v2.transitions) {
 
 		dbg("  trying: %s", transition->story);
 
@@ -1309,8 +1308,7 @@ void init_ikev2_states(struct logger *logger)
 		passert(from->kind == kind);
 		passert(from->ike_version == IKEv2);
 
-		for (unsigned u = 0; u < from->nr_transitions; u++) {
-			const struct v2_state_transition *t = &from->v2.transitions[u];
+		FOR_EACH_ITEM(t, &from->v2.transitions) {
 
 			bool found_from = false;
 			FOR_EACH_ELEMENT(f, t->from) {

@@ -687,7 +687,7 @@ void init_ikev1_states(struct logger *logger)
 		passert(to != NULL);
 
 		if (DBGP(DBG_BASE)) {
-			if (from->nr_transitions == 0) {
+			if (from->v1.nr_transitions == 0) {
 				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 					jam_string(buf, "  ");
 					jam_finite_state(buf, from);
@@ -713,7 +713,7 @@ void init_ikev1_states(struct logger *logger)
 		} else {
 			passert(t[-1].state == t->state);
 		}
-		from->nr_transitions++;
+		from->v1.nr_transitions++;
 
 		if (t->message == NULL) {
 			llog_pexpect(logger, HERE, "transition %s -> %s missing .message",

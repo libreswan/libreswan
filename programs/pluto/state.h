@@ -214,6 +214,7 @@ enum delete_reason {
  *
  * IKEv1 and IKEv2 construct states using this as a base.
  */
+
 struct finite_state {
 	enum state_kind kind;
 	const char *name;
@@ -224,14 +225,17 @@ struct finite_state {
 	union {
 		struct {
 			lset_t flags;
+			size_t nr_transitions;
 			const struct state_v1_microcode *transitions;
 		} v1;
 		struct {
-			const struct v2_state_transition *transitions;
+			struct v2_transitions {
+				size_t len;
+				const struct v2_state_transition *list;
+			} transitions;
 			bool secured; /* hence, exchanges must be integrity protected */
 		} v2;
 	};
-	size_t nr_transitions;
 };
 
 void jam_finite_state(struct jambuf *buf, const struct finite_state *fs);

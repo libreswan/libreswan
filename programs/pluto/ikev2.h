@@ -96,6 +96,11 @@ struct v2_state_transition {
 	void (*llog_success)(struct ike_sa *ike);
 };
 
+struct v2_transition {
+	unsigned len;
+	const struct v2_state_transition *ptr;
+};
+
 struct v2_exchange {
 	const struct v2_state_transition *initiate;
 };

@@ -956,8 +956,8 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request.  Grab the last one.
 		 */
-		PASSERT(ike->sa.logger, state->nr_transitions > 0);
-		transition = &state->v2.transitions[state->nr_transitions - 1];
+		PASSERT(ike->sa.logger, state->v2.transitions.len > 0);
+		transition = &state->v2.transitions.list[state->v2.transitions.len - 1];
 		break;
 	case STATE_V2_IKE_AUTH_I:
 	{
@@ -967,8 +967,8 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * matches be better?
 		 */
 		unsigned transition_nr = 0;
-		pexpect(state->nr_transitions > transition_nr);
-		transition = &state->v2.transitions[transition_nr];
+		pexpect(state->v2.transitions.len > transition_nr);
+		transition = &state->v2.transitions.list[transition_nr];
 		pexpect(v2_transition_from(transition, &state_v2_IKE_AUTH_I));
 		pexpect(transition->to == &state_v2_ESTABLISHED_IKE_SA);
 		break;
@@ -978,14 +978,14 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * The transitions come in request/response pairs; the
 		 * last two are the most generic.
 		 */
-		passert(state->nr_transitions >= 2);
+		passert(state->v2.transitions.len >= 2);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_REQUEST:
-			transition = &state->v2.transitions[state->nr_transitions - 2];
+			transition = &state->v2.transitions.list[state->v2.transitions.len - 2];
 			pexpect(transition->recv_role == MESSAGE_REQUEST);
 			break;
 		case MESSAGE_RESPONSE:
-			transition = &state->v2.transitions[state->nr_transitions - 1];
+			transition = &state->v2.transitions.list[state->v2.transitions.len - 1];
 			pexpect(transition->recv_role == MESSAGE_RESPONSE);
 			break;
 		default:
@@ -993,8 +993,8 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		}
 		break;
 	default:
-		if (/*pexpect*/(state->nr_transitions > 0)) {
-			transition = &state->v2.transitions[state->nr_transitions - 1];
+		if (/*pexpect*/(state->v2.transitions.len > 0)) {
+			transition = &state->v2.transitions.list[state->v2.transitions.len - 1];
 		}
 		break;
 	}
