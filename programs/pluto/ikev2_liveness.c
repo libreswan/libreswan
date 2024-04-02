@@ -289,6 +289,7 @@ static const struct v2_state_transition v2_liveness_probe = {
 
 static const struct v2_exchange v2_liveness_probe_exchange = {
 	&v2_liveness_probe,
+	&v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)

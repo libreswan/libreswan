@@ -131,6 +131,7 @@ static const struct v2_state_transition initiate_v2_delete_ike_transition = {
 
 static const struct v2_exchange v2_delete_ike_exchange = {
 	&initiate_v2_delete_ike_transition,
+	&v2_IKE_SA_DELETE_transitions,
 };
 
 static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
@@ -192,6 +193,7 @@ static const struct v2_state_transition initiate_v2_delete_child_transition = {
 
 static const struct v2_exchange v2_delete_child_exchange = {
 	&initiate_v2_delete_child_transition,
+	&v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)

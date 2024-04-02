@@ -548,6 +548,7 @@ static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_child_
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
 	&initiate_v2_CREATE_CHILD_SA_rekey_child_transition,
+	&v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_child_sa,
@@ -835,6 +836,7 @@ static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_new_child_tr
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
 	&initiate_v2_CREATE_CHILD_SA_new_child_transition,
+	&v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child_sa,
@@ -1497,6 +1499,7 @@ static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_ike_tr
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
 	&initiate_v2_CREATE_CHILD_SA_rekey_ike_transition,
+	&v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_sa,

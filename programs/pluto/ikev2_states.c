@@ -247,6 +247,7 @@ static const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
 
 const struct v2_exchange v2_IKE_SA_INIT_exchange = {
 	&initiate_v2_IKE_SA_INIT_transition,
+	&v2_IKE_SA_INIT_I_transitions,
 };
 
 /*
@@ -306,6 +307,7 @@ static const struct v2_state_transition initiate_v2_IKE_AUTH_transition = {
 
 const struct v2_exchange v2_IKE_AUTH_exchange = {
 	&initiate_v2_IKE_AUTH_transition,
+	&v2_IKE_AUTH_I_transitions,
 };
 
 static const struct v2_state_transition IKE_SA_INIT_R0_transitions[] = {
@@ -460,6 +462,7 @@ static const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition 
 
 const struct v2_exchange v2_IKE_INTERMEDIATE_exchange = {
 	&initiate_v2_IKE_INTERMEDIATE_transition,
+	&v2_IKE_INTERMEDIATE_I_transitions,
 };
 
 /*

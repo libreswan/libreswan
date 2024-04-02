@@ -107,6 +107,7 @@ struct v2_transitions {
 
 struct v2_exchange {
 	const struct v2_state_transition *initiate;
+	const struct v2_transitions *response;
 };
 
 extern void init_ikev2(void);

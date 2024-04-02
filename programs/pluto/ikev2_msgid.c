@@ -683,8 +683,10 @@ const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike,
 		if (PBAD(ike->sa.logger, state != ike->sa.st_state)) {
 			return ike->sa.st_state->v2.transitions;
 		}
-		return state->v2.transitions;
-
+		if (PBAD(ike->sa.logger, state->v2.transitions != exchange->response)) {
+			return ike->sa.st_state->v2.transitions;
+		}
+		return exchange->response;
 	}
 	}
 	bad_case(v2_msg_role(md));

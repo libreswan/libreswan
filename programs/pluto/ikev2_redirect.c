@@ -525,6 +525,7 @@ static const struct v2_state_transition v2_redirect_ike_transition = {
 
 static const struct v2_exchange v2_redirect_ike_exchange = {
 	&v2_redirect_ike_transition,
+	&v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 void find_and_active_redirect_states(const char *conn_name,
