@@ -52,6 +52,7 @@ v5.0 (Unreleased)
   - reject non-numeric sourceip=<address> [Andrew]
   - fix crash when dpdtimeout= missing [Andrew]
 * building:
+  - remove dependency on libxz via libsystemd [Tuomo Andrew]
   - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem> [Andrew]
   - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al. [Andrew]
   - drop FINAL* make variables; see mk/config.mk for alternatives [Andrew]
