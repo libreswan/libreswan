@@ -61,7 +61,7 @@ BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
 BuildRequires: redhat-rpm-config
-BuildRequires: systemd-devel
+BuildRequires: systemd
 BuildRequires: xmlto
 %if 0%{with_efence}
 BuildRequires: ElectricFence

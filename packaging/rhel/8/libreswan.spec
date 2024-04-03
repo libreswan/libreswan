@@ -66,7 +66,7 @@ BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
 BuildRequires: redhat-rpm-config
-BuildRequires: systemd-devel
+BuildRequires: systemd-rpm-macros
 BuildRequires: unbound-devel >= %{unbound_version}
 BuildRequires: xmlto
 %if 0%{with_efence}

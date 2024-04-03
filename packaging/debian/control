@@ -26,7 +26,6 @@ Build-Depends:
  libnss3-tools,
  libpam0g-dev,
  libselinux1-dev [linux-any],
- libsystemd-dev,
  libunbound-dev (>= 1.6.5~),
  man2html,
  pkg-config,
