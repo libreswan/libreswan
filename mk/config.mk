@@ -739,7 +739,6 @@ endif
 
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 USERLAND_CFLAGS += -DUSE_SYSTEMD_WATCHDOG
-SYSTEMD_WATCHDOG_LDFLAGS ?= -lsystemd
 endif
 
 ifeq ($(USE_LDAP),true)

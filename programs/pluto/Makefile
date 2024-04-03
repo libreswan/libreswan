@@ -183,7 +183,6 @@ OBJS += pluto_seccomp.o
 endif
 
 OBJS += $(call if-enabled, USE_SYSTEMD_WATCHDOG, pluto_sd.o)
-USERLAND_LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 USERLAND_LDFLAGS += $(CURL_LDFLAGS)
 
