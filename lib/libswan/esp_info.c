@@ -60,11 +60,21 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 
 static const char default_v1_esp_proposals[] =
 	"AES_CBC" /*????*/
+	","
+	"AES_GCM_16_128"
+	","
+	"AES_GCM_16_256"
+	","
+	"3DES"
 	;
 
 static const struct ike_alg *default_v1_esp_integ[] = {
 #ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
+#endif
+#ifdef USE_SHA2
+	&ike_alg_integ_sha2_512.common,
+	&ike_alg_integ_sha2_256.common,
 #endif
 	NULL,
 };
