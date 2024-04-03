@@ -65,9 +65,10 @@
  * A macro to iterate over a list-like structure.
  */
 
-#define FOR_EACH_ITEM(ENTRY, LIST)				\
-	for (typeof((LIST)->list[0]) *ENTRY = (LIST)->list;	\
-	     ENTRY < (LIST)->list + (LIST)->len;		\
+#define FOR_EACH_ITEM(ENTRY, LIST)					\
+	for (typeof((LIST)->list[0]) *ENTRY =				\
+		     (LIST) != NULL ? (LIST)->list : NULL;		\
+	     ENTRY != NULL && ENTRY < (LIST)->list + (LIST)->len;	\
 	     ENTRY++)
 
 #define pfree_list(LIST) {			\
