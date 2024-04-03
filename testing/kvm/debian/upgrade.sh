@@ -27,7 +27,6 @@ libevent-dev
 libunbound-dev
 bison
 flex
-libsystemd-dev
 libcurl4-nss-dev
 libpam0g-dev
 libcap-ng-dev

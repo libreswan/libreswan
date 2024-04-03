@@ -178,7 +178,6 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     softhsm \
     sshpass \
     strace \
-    systemd-devel \
     systemd-networkd \
     tar \
     tcpdump \
@@ -235,7 +234,6 @@ KVM_FEDORA_DEBUGINFO_PACKAGES += \
 	pcre-debuginfo \
 	pcre2-debuginfo \
 	sqlite-libs-debuginfo \
-	systemd-libs-debuginfo \
 	unbound-libs-debuginfo \
 	xz-libs-debuginfo \
 	zlib-debuginfo \
