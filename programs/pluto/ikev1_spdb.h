@@ -122,8 +122,6 @@ struct ipsec_db_policy {
 	bool compress;
 };
 
-const struct db_sa *IKEv1_ipsec_db_sa(struct ipsec_db_policy policy);
-
 /* for db_sa */
 #define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = true
 #define AD_SAc(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = false
