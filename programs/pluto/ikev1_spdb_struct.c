@@ -434,27 +434,11 @@ static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
 	return ctx_new;
 }
 
-struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
-				   struct child_proposals proposals,
-				   struct logger *logger)
+static struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
+					  struct child_proposals proposals,
+					  struct logger *logger)
 {
-	if (proposals.p == NULL) {
-		struct ipsec_db_policy pm = {
-			.encrypt = (encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (encap_proto == ENCAP_PROTO_AH),
-		};
-		ldbg(logger,
-		     "empty esp_info, returning defaults for:%s%s",
-		     (pm.encrypt ? " encrypt" : ""),
-		     (pm.authenticate ? " authenticate" : ""));
-
-		/* make copy, to keep from freeing the static policies */
-		const struct db_sa *db = IKEv1_ipsec_db_sa(pm);
-		struct db_sa *sadb = sa_copy_sa(db, HERE);
-		sadb->parentSA = false;
-		return sadb;
-	}
-
+	PASSERT(logger, proposals.p != NULL);
 	struct db_context *dbnew = kernel_alg_db_new(encap_proto, proposals, logger);
 
 	if (dbnew == NULL) {
