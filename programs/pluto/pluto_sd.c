@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "constants.h"
+#include "lswsd.h"
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"
@@ -31,7 +32,7 @@ static global_timer_cb sd_watchdog_event;
 void pluto_sd_init(struct logger *logger)
 {
 	uint64_t sd_usecs;
-	int ret = sd_watchdog_enabled(0, &sd_usecs);
+	int ret = lswsd_watchdog_enabled(&sd_usecs);
 
 	if (ret == 0) {
 		llog(RC_LOG, logger, "systemd watchdog not enabled - not sending watchdog keepalives");
@@ -53,7 +54,7 @@ void pluto_sd_init(struct logger *logger)
 }
 
 /*
- * Interface for sd_notify(3) calls.
+ * Interface for lswsd_notify(3) calls.
  */
 void pluto_sd(int action, int status)
 {
@@ -62,23 +63,23 @@ void pluto_sd(int action, int status)
 
 	switch (action) {
 	case PLUTO_SD_WATCHDOG:
-		sd_notify(0, "WATCHDOG=1");
+		lswsd_notify("WATCHDOG=1");
 		break;
 	case PLUTO_SD_RELOADING:
-		sd_notify(0, "RELOADING=1");
+		lswsd_notify("RELOADING=1");
 		break;
 	case PLUTO_SD_READY:
-		sd_notify(0, "READY=1");
+		lswsd_notify("READY=1");
 		break;
 	case PLUTO_SD_STOPPING:
-		sd_notifyf(0, "STOPPING=1\nSTATUS=PLUTO_EXIT=%d", status);
+		lswsd_notifyf("STOPPING=1\nSTATUS=PLUTO_EXIT=%d", status);
 		break;
 	case PLUTO_SD_START:
-		sd_notifyf(0, "READY=1\nSTATUS=Startup completed.\nMAINPID=%lu",
+		lswsd_notifyf("READY=1\nSTATUS=Startup completed.\nMAINPID=%lu",
 			(unsigned long) getpid());
 		break;
 	case PLUTO_SD_EXIT:
-		sd_notifyf(0, "STATUS=Exited.\nERRNO=%i", status);
+		lswsd_notifyf("STATUS=Exited.\nERRNO=%i", status);
 		break;
 	default:
 		bad_case(action);

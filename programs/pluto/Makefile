@@ -182,8 +182,9 @@ ifeq ($(USE_SECCOMP),true)
 OBJS += pluto_seccomp.o
 endif
 
-OBJS += $(call if-enabled, USE_SYSTEMD_WATCHDOG, pluto_sd.o)
-USERLAND_LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
+OBJS += pluto_sd.o
+endif
 
 USERLAND_LDFLAGS += $(CURL_LDFLAGS)
 
@@ -302,6 +303,12 @@ OBJS += rekeyfuzz.o
 
 
 # Archives
+
+ifeq ($(USE_SYSTEMD_WATCHDOG),true)
+# uses stuff from libswan
+OBJS += $(LSWSDLIB)
+endif
+
 OBJS += $(LIBRESWANLIB)
 OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
