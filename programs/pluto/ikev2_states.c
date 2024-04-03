@@ -77,6 +77,53 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		##__VA_ARGS__,						\
 	}
 
+#define R(KIND, STORY, CAT, ...)					\
+	const struct v2_transitions v2_##KIND##_R_transitions = {	\
+		ARRAY_REF(KIND##_R_transitions),			\
+	};								\
+	const struct finite_state state_v2_##KIND##_R = {		\
+		.kind = STATE_V2_##KIND,				\
+		.name = #KIND"_R",					\
+		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
+		.short_name = #KIND"_R",				\
+		.story = STORY,						\
+		.category = CAT,					\
+		.ike_version = IKEv2,					\
+		.v2.transitions = &v2_##KIND##_transitions,		\
+		##__VA_ARGS__,						\
+	}
+
+#define E(KIND, NEXT_STORY, I_CAT, IR_CAT, SECURED)			\
+									\
+	const struct finite_state state_v2_##KIND##_I = {		\
+		.kind = STATE_V2_##KIND##_I,				\
+		.name = #KIND"_I",					\
+		.short_name = #KIND"_I",				\
+		.story = "sent "#KIND" request",			\
+		.category = I_CAT,					\
+		.ike_version = IKEv2,					\
+		.v2.secured = SECURED,					\
+	};								\
+									\
+	const struct finite_state state_v2_##KIND##_IR = {		\
+		.kind = STATE_V2_##KIND##_IR,				\
+		.name = #KIND"_IR",					\
+		.short_name = #KIND"_IR",				\
+		.story = "processed "#KIND" response"NEXT_STORY,	\
+		.category = IR_CAT,					\
+		.ike_version = IKEv2,					\
+		.v2.secured = SECURED,					\
+	};								\
+									\
+	const struct v2_transitions v2_##KIND##_response_transitions = { \
+		ARRAY_REF(v2_##KIND##_response_transition),		\
+	};								\
+									\
+	const struct v2_exchange v2_##KIND##_exchange = {		\
+		&initiate_v2_##KIND##_transition,			\
+		&v2_##KIND##_response_transitions,			\
+	}
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -164,7 +211,7 @@ static const struct v2_state_transition IKE_SA_INIT_I0_transitions[] = {
 
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
+static const struct v2_state_transition v2_IKE_SA_INIT_response_transition[] = {
 
 	/* STATE_V2_IKE_SA_INIT_I: R1B --> I1B
 	 *                     <--  HDR, N
@@ -225,13 +272,6 @@ static const struct v2_state_transition IKE_SA_INIT_I_transitions[] = {
 
 };
 
-S(IKE_SA_INIT_I, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
-
-static const struct v2_state_transition IKE_SA_INIT_IR_transitions[] = {
-};
-
-S(IKE_SA_INIT_IR, "processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA);
-
 static const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
@@ -245,10 +285,8 @@ static const struct v2_state_transition initiate_v2_IKE_SA_INIT_transition = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-const struct v2_exchange v2_IKE_SA_INIT_exchange = {
-	&initiate_v2_IKE_SA_INIT_transition,
-	&v2_IKE_SA_INIT_I_transitions,
-};
+E(IKE_SA_INIT, ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
+  CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
 
 /*
  * Initiate IKE_AUTH
@@ -430,7 +468,7 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 
 S(IKE_INTERMEDIATE_R, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition IKE_INTERMEDIATE_I_transitions[] = {
+static const struct v2_state_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
 	  .from = { &state_v2_IKE_INTERMEDIATE_I, },
 	  .to = &state_v2_IKE_INTERMEDIATE_IR,
@@ -443,13 +481,6 @@ static const struct v2_state_transition IKE_INTERMEDIATE_I_transitions[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
-S(IKE_INTERMEDIATE_I, "sent IKE_INTERMEDIATE request, waiting for response", CAT_OPEN_IKE_SA, .v2.secured = true);
-
-const struct v2_state_transition IKE_INTERMEDIATE_IR_transitions[] = {
-};
-
-S(IKE_INTERMEDIATE_IR, "processed IKE_INTERMEDIATE response, initiating IKE_INTERMEDIATE or IKE_AUTH", CAT_OPEN_IKE_SA, .v2.secured = true);
-
 static const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
@@ -460,10 +491,8 @@ static const struct v2_state_transition initiate_v2_IKE_INTERMEDIATE_transition 
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-const struct v2_exchange v2_IKE_INTERMEDIATE_exchange = {
-	&initiate_v2_IKE_INTERMEDIATE_transition,
-	&v2_IKE_INTERMEDIATE_I_transitions,
-};
+E(IKE_INTERMEDIATE, ", initiating IKE_INTERMEDIATE or IKE_AUTH",
+  CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
 
 /*
  * EAP
