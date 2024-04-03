@@ -479,6 +479,7 @@ LIBSWANDIR = ${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB = $(abs_top_builddir)/lib/libswan/libswan.a
 LSWTOOLLIB = $(abs_top_builddir)/lib/liblswtool/liblswtool.a
 BSDPFKEYLIB = $(abs_top_builddir)/lib/libbsdpfkey/libbsdpfkey.a
+LSWSDLIB = $(abs_top_builddir)/lib/liblswsd/liblswsd.a
 
 # XXX: $(LSWTOOLLIB) has circular references to $(LIBRESWANLIB).
 LSWTOOLLIBS = $(LSWTOOLLIB) $(LIBRESWANLIB)
@@ -646,7 +647,6 @@ endif
 
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 USERLAND_CFLAGS += -DUSE_SYSTEMD_WATCHDOG
-SYSTEMD_WATCHDOG_LDFLAGS ?= -lsystemd
 endif
 
 ifeq ($(USE_LDAP),true)

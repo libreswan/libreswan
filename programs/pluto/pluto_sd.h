@@ -19,8 +19,6 @@
 
 #ifdef USE_SYSTEMD_WATCHDOG
 
-#include <systemd/sd-daemon.h>		/* deb:libsystemd-dev */
-
 #define SD_REPORT_NO_STATUS 0
 
 extern void pluto_sd_init(struct logger *logger);
