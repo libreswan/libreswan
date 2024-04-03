@@ -1,8 +1,6 @@
-# Makefile for the interface utilities
-#
-# Copyright (C) 1998, 1999  Henry Spencer.
-# Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Libreswan library
+
+# Copyright (C) 2024  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,17 +13,14 @@
 # for more details.
 
 ifndef top_srcdir
-include ../mk/dirs.mk
+include ../../mk/dirs.mk
 endif
-
 include $(top_srcdir)/mk/config.mk
 
-SUBDIRS += libswan
-SUBDIRS += libwhack
-SUBDIRS += libipsecconf
-SUBDIRS += liblswtool
-ifeq ($(USE_SYSTEMD_WATCHDOG),true)
-SUBDIRS += liblswsd
-endif
+LIB = liblswsd.a
 
-include $(top_srcdir)/mk/targets.mk
+OBJS += lswsd_notify.o
+OBJS += lswsd_notifyf.o
+OBJS += lswsd_watchdog_enabled.o
+
+include $(top_srcdir)/mk/library.mk
