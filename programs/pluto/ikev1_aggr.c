@@ -1108,9 +1108,9 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	{
 		uint8_t *sa_start = rbody.cur;
 
-		if (!ikev1_out_sa(&rbody,
-				  IKEv1_oakley_aggr_mode_db_sa(c),
-				  st, true, true)) {
+		if (!ikev1_out_oakley_sa(&rbody,
+					 IKEv1_oakley_aggr_mode_db_sa(c),
+					 st, true)) {
 			return STF_INTERNAL_ERROR;
 		}
 

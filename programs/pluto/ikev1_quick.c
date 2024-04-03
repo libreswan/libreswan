@@ -805,8 +805,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		     (pm.authenticate ? " authenticate" : ""),
 		     (pm.compress ? " compress" : ""));
 
-		if (!ikev1_out_sa(&rbody, IKEv1_ipsec_db_sa(pm),
-				  st, false, false)) {
+		if (!ikev1_out_quick_sa(&rbody, st)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

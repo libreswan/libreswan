@@ -171,9 +171,9 @@ struct ike_sa *main_outI1(struct connection *c,
 	{
 		uint8_t *sa_start = rbody.cur;
 
-		if (!ikev1_out_sa(&rbody,
-				  IKEv1_oakley_main_mode_db_sa(c),
-				  &ike->sa, true, false)) {
+		if (!ikev1_out_oakley_sa(&rbody,
+					 IKEv1_oakley_main_mode_db_sa(c),
+					 &ike->sa, false)) {
 			llog(RC_LOG, ike->sa.logger, "outsa fail");
 			/* leak!?! */
 			return NULL;

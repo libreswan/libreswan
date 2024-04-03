@@ -138,11 +138,13 @@ const struct db_sa *IKEv1_ipsec_db_sa(struct ipsec_db_policy policy);
 /* for db_prop_conj */
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
-extern bool ikev1_out_sa(struct pbs_out *outs,
-		   const struct db_sa *sadb,
-		   struct state *st,
-		   bool oakley_mode,
-		   bool aggressive_mode);
+extern bool ikev1_out_quick_sa(struct pbs_out *outs,
+			       struct state *st);
+
+extern bool ikev1_out_oakley_sa(struct pbs_out *outs,
+				const struct db_sa *sadb,
+				struct state *st,
+				bool aggressive_mode);
 
 diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 			       struct authby *authby, bool *xauth);

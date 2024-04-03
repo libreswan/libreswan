@@ -861,46 +861,12 @@ static struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposa
 	}
 }
 
-bool ikev1_out_sa(struct pbs_out *outs,
-		  const struct db_sa *sadb,
-		  struct state *st,
-		  bool oakley_mode,
-		  bool aggressive_mode)
+static bool ikev1_out_sa(struct pbs_out *outs,
+			 const struct db_sa *sadb,
+			 struct state *st,
+			 bool oakley_mode)
 {
-	struct db_sa *revised_sadb;
 	struct connection *c = st->st_connection;
-
-	if (oakley_mode) {
-		/*
-		 * Construct the proposals by combining ALG_INFO_IKE
-		 * with the AUTH (proof of identity) extracted from
-		 * the (default?) SADB.  As if by magic, attrs[2] is
-		 * always the authentication method.
-		 *
-		 * XXX: Should replace SADB with a simple map to the
-		 * auth method.
-		 */
-		struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
-		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-		enum ikev1_auth_method auth_method = auth->val;
-		/*
-		 * Aggr-Mode - Max transforms == 2 - Multiple
-		 * transforms, 1 DH group
-		 */
-		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
-						    auth_method,
-						    aggressive_mode,
-						    st->logger);
-	} else {
-		revised_sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
-						    c->config->child_sa.proposals,
-						    (st->st_policy & POLICY_COMPRESS),
-						    st->logger);
-	}
-
-	/* more sanity */
-	if (revised_sadb != NULL)
-		sadb = revised_sadb;
 
 	/* SA header out */
 	struct pbs_out sa_pbs;
@@ -1257,12 +1223,63 @@ bool ikev1_out_sa(struct pbs_out *outs,
 		/* end of a conjunction of proposals */
 	}
 	close_output_pbs(&sa_pbs);
-	free_sa(&revised_sadb);
 	return true;
 
 fail:
-	free_sa(&revised_sadb);
 	return false;
+}
+
+bool ikev1_out_quick_sa(struct pbs_out *outs,
+			struct state *st)
+{
+	struct connection *c = st->st_connection;
+	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
+						  c->config->child_sa.proposals,
+						  (st->st_policy & POLICY_COMPRESS),
+						  st->logger);
+
+	bool ok = ikev1_out_sa(outs, sadb, st, /*oakley_mode*/false);
+	free_sa(&sadb);
+	return ok;
+}
+
+bool ikev1_out_oakley_sa(struct pbs_out *outs,
+			 const struct db_sa *sadb,
+			 struct state *st,
+			 bool aggressive_mode)
+{
+	struct connection *c = st->st_connection;
+
+	/*
+	 * Construct the proposals by combining ALG_INFO_IKE with the
+	 * AUTH (proof of identity) extracted from the (default?)
+	 * SADB.  As if by magic, attrs[2] is always the
+	 * authentication method.
+	 *
+	 * XXX: Should replace SADB with a simple map to the auth
+	 * method.
+	 */
+	struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
+	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+	enum ikev1_auth_method auth_method = auth->val;
+
+	/*
+	 * Aggr-Mode - Max transforms == 2 - Multiple
+	 * transforms, 1 DH group
+	 */
+	struct db_sa *revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
+							  auth_method,
+							  aggressive_mode,
+							  st->logger);
+
+	/* more sanity */
+	if (revised_sadb != NULL)
+		sadb = revised_sadb;
+
+	bool ok = ikev1_out_sa(outs, sadb, st, /*oakley_mode*/true);
+
+	free_sa(&revised_sadb);
+	return ok;
 }
 
 /**
