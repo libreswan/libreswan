@@ -436,6 +436,7 @@ static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
 
 static struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
 					  struct child_proposals proposals,
+					  bool compress,
 					  struct logger *logger)
 {
 	PASSERT(logger, proposals.p != NULL);
@@ -463,6 +464,46 @@ static struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
 	n->parentSA = false;
 
 	db_destroy(dbnew);
+
+	/* add IPcomp proposal if policy asks for it */
+
+	if (compress) {
+		struct db_trans *ipcomp_trans = alloc_thing(struct db_trans, "ipcomp_trans");
+
+		/* allocate space for 2 proposals */
+		struct db_prop *ipcomp_prop =
+			alloc_bytes(sizeof(struct db_prop) * 2,
+				    "ipcomp_prop");
+
+		passert(n->prop_conjs->prop_cnt == 1);
+
+		/* construct the IPcomp proposal */
+		ipcomp_trans->transid = IPCOMP_DEFLATE;
+		ipcomp_trans->attrs = NULL;
+		ipcomp_trans->attr_cnt = 0;
+
+		/* copy the original proposal */
+		ipcomp_prop[0].protoid   =
+			n->prop_conjs->props->
+			protoid;
+		ipcomp_prop[0].trans     =
+			n->prop_conjs->props->trans;
+		ipcomp_prop[0].trans_cnt =
+			n->prop_conjs->props->
+			trans_cnt;
+
+		/* and add our IPcomp proposal */
+		ipcomp_prop[1].protoid = PROTO_IPCOMP;
+		ipcomp_prop[1].trans = ipcomp_trans;
+		ipcomp_prop[1].trans_cnt = 1;
+
+		/* free the old proposal, and ... */
+		pfree(n->prop_conjs->props);
+
+		/* ... use our new one instead */
+		n->prop_conjs->props = ipcomp_prop;
+		n->prop_conjs->prop_cnt += 1;
+	}
 
 	dbg("returning new proposal from esp_info");
 	return n;
@@ -853,48 +894,8 @@ bool ikev1_out_sa(struct pbs_out *outs,
 	} else {
 		revised_sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
 						    c->config->child_sa.proposals,
+						    (st->st_policy & POLICY_COMPRESS),
 						    st->logger);
-
-		/* add IPcomp proposal if policy asks for it */
-
-		if (revised_sadb != NULL && (st->st_policy & POLICY_COMPRESS)) {
-			struct db_trans *ipcomp_trans = alloc_thing(
-				struct db_trans, "ipcomp_trans");
-
-			/* allocate space for 2 proposals */
-			struct db_prop *ipcomp_prop =
-				alloc_bytes(sizeof(struct db_prop) * 2,
-					     "ipcomp_prop");
-
-			passert(revised_sadb->prop_conjs->prop_cnt == 1);
-
-			/* construct the IPcomp proposal */
-			ipcomp_trans->transid = IPCOMP_DEFLATE;
-			ipcomp_trans->attrs = NULL;
-			ipcomp_trans->attr_cnt = 0;
-
-			/* copy the original proposal */
-			ipcomp_prop[0].protoid   =
-				revised_sadb->prop_conjs->props->
-				protoid;
-			ipcomp_prop[0].trans     =
-				revised_sadb->prop_conjs->props->trans;
-			ipcomp_prop[0].trans_cnt =
-				revised_sadb->prop_conjs->props->
-				trans_cnt;
-
-			/* and add our IPcomp proposal */
-			ipcomp_prop[1].protoid = PROTO_IPCOMP;
-			ipcomp_prop[1].trans = ipcomp_trans;
-			ipcomp_prop[1].trans_cnt = 1;
-
-			/* free the old proposal, and ... */
-			pfree(revised_sadb->prop_conjs->props);
-
-			/* ... use our new one instead */
-			revised_sadb->prop_conjs->props = ipcomp_prop;
-			revised_sadb->prop_conjs->prop_cnt += 1;
-		}
 	}
 
 	/* more sanity */
