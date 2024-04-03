@@ -546,11 +546,11 @@ endif
 
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
-SD_TYPE=notify
-SD_WATCHDOGSEC?=200
+SD_TYPE ?= notify
+SD_WATCHDOGSEC ?= 200
 else
+SD_TYPE ?= simple
 SD_WATCHDOGSEC ?= 0
-SD_TYPE=simple
 endif
 
 # Enable Labeled IPsec Functionality (requires SElinux)
