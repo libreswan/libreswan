@@ -1,12 +1,25 @@
 algparse -fips -v1 'esp'
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
+	AES_GCM_16_128-NONE
+	AES_GCM_16_256-NONE
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_512_256
+	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp='
 	ERROR: ESP proposal is empty
 algparse -fips -v1 'esp=aes'
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes;modp2048'
 algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1'
@@ -23,6 +36,8 @@ algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128'
 	AES_CBC_128-HMAC_SHA1_96
+	AES_CBC_128-HMAC_SHA2_512_256
+	AES_CBC_128-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
 algparse -fips -v1 'esp=3des-sha1;modp1024'
@@ -46,6 +61,8 @@ algparse -fips -v1 'esp=null-sha1'
 	ERROR: ESP encryption algorithm 'null' is not supported
 algparse -fips -v1 'esp=aes_cbc'
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes-sha'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1'
@@ -186,14 +203,24 @@ algparse -fips -v1 'esp=aes_gcm_16_256-null'
 	AES_GCM_16_256-NONE
 algparse -fips -v1 'esp=aes_ctr'
 	AES_CTR-HMAC_SHA1_96
+	AES_CTR-HMAC_SHA2_512_256
+	AES_CTR-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aesctr'
 	AES_CTR-HMAC_SHA1_96
+	AES_CTR-HMAC_SHA2_512_256
+	AES_CTR-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes_ctr128'
 	AES_CTR_128-HMAC_SHA1_96
+	AES_CTR_128-HMAC_SHA2_512_256
+	AES_CTR_128-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes_ctr192'
 	AES_CTR_192-HMAC_SHA1_96
+	AES_CTR_192-HMAC_SHA2_512_256
+	AES_CTR_192-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes_ctr256'
 	AES_CTR_256-HMAC_SHA1_96
+	AES_CTR_256-HMAC_SHA2_512_256
+	AES_CTR_256-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 	ERROR: ESP encryption algorithm 'camellia_cbc_256' is not supported
 algparse -fips -v1 'esp=null_auth_aes_gmac_256-null;modp8192'
