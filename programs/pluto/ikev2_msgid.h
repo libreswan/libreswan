@@ -24,7 +24,7 @@
 struct state;
 struct ike_sa;
 struct msg_digest;
-struct v2_state_transition;
+struct v2_transition;
 struct v2_transitions;
 struct v2_exchange;
 enum message_role;

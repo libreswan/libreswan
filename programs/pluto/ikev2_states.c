@@ -206,12 +206,12 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * (that is spoofed) will trigger an outgoing IKE SA.
  */
 
-static const struct v2_state_transition IKE_SA_INIT_I0_transitions[] = {
+static const struct v2_transition IKE_SA_INIT_I0_transitions[] = {
 };
 
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-static const struct v2_state_transition v2_IKE_SA_INIT_initiate_exchange = {
+static const struct v2_transition v2_IKE_SA_INIT_initiate_exchange = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
@@ -224,7 +224,7 @@ static const struct v2_state_transition v2_IKE_SA_INIT_initiate_exchange = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-static const struct v2_state_transition v2_IKE_SA_INIT_response_transition[] = {
+static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 	/* STATE_V2_IKE_SA_INIT_I: R1B --> I1B
 	 *                     <--  HDR, N
@@ -292,7 +292,7 @@ E(IKE_SA_INIT, ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
  * Initiate IKE_AUTH
  */
 
-static const struct v2_state_transition v2_IKE_AUTH_initiate_exchange = {
+static const struct v2_transition v2_IKE_AUTH_initiate_exchange = {
 	.story      = "initiating IKE_AUTH",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_AUTH_I,
@@ -302,7 +302,7 @@ static const struct v2_state_transition v2_IKE_AUTH_initiate_exchange = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-static const struct v2_state_transition IKE_AUTH_I_transitions[] = {
+static const struct v2_transition IKE_AUTH_I_transitions[] = {
 
 	/* STATE_V2_IKE_AUTH_I: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
@@ -348,7 +348,7 @@ const struct v2_exchange v2_IKE_AUTH_exchange = {
 	.response = &v2_IKE_AUTH_I_transitions,
 };
 
-static const struct v2_state_transition IKE_SA_INIT_R0_transitions[] = {
+static const struct v2_transition IKE_SA_INIT_R0_transitions[] = {
 
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni
@@ -368,7 +368,7 @@ static const struct v2_state_transition IKE_SA_INIT_R0_transitions[] = {
 
 S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
-static const struct v2_state_transition IKE_SA_INIT_R_transitions[] = {
+static const struct v2_transition IKE_SA_INIT_R_transitions[] = {
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -425,7 +425,7 @@ S(IKE_SA_INIT_R, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE
  * IKE_INTERMEDIATE
  */
 
-static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
+static const struct v2_transition IKE_INTERMEDIATE_R_transitions[] = {
 
 	{ .story      = "processing IKE_INTERMEDIATE request",
 	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
@@ -468,7 +468,7 @@ static const struct v2_state_transition IKE_INTERMEDIATE_R_transitions[] = {
 
 S(IKE_INTERMEDIATE_R, "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition v2_IKE_INTERMEDIATE_response_transition[] = {
+static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
 	  .from = { &state_v2_IKE_INTERMEDIATE_I, },
 	  .to = &state_v2_IKE_INTERMEDIATE_IR,
@@ -481,7 +481,7 @@ static const struct v2_state_transition v2_IKE_INTERMEDIATE_response_transition[
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
-static const struct v2_state_transition v2_IKE_INTERMEDIATE_initiate_exchange = {
+static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_exchange = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_INTERMEDIATE_I,
@@ -498,7 +498,7 @@ E(IKE_INTERMEDIATE, ", initiating IKE_INTERMEDIATE or IKE_AUTH",
  * EAP
  */
 
-static const struct v2_state_transition IKE_AUTH_EAP_R_transitions[] = {
+static const struct v2_transition IKE_AUTH_EAP_R_transitions[] = {
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
 	  .from = { &state_v2_IKE_AUTH_EAP_R, },
@@ -531,7 +531,7 @@ S(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) reques
  * CREATE_CHILD_SA exchanges.
  */
 
-static const struct v2_state_transition REKEY_IKE_I0_transitions[] = {
+static const struct v2_transition REKEY_IKE_I0_transitions[] = {
 
 	/*
 	 * Child transitions when rekeying an IKE SA using
@@ -559,7 +559,7 @@ static const struct v2_state_transition REKEY_IKE_I0_transitions[] = {
 
 S(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
 
-static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
+static const struct v2_transition REKEY_IKE_R0_transitions[] = {
 
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .from = { &state_v2_REKEY_IKE_R0, },
@@ -580,7 +580,7 @@ static const struct v2_state_transition REKEY_IKE_R0_transitions[] = {
 
 S(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
+static const struct v2_transition REKEY_IKE_I1_transitions[] = {
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .from = { &state_v2_REKEY_IKE_I1, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
@@ -597,7 +597,7 @@ static const struct v2_state_transition REKEY_IKE_I1_transitions[] = {
 
 S(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
-static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
+static const struct v2_transition REKEY_CHILD_I0_transitions[] = {
 
 	/*
 	 * Child transitions when rekeying a Child SA using
@@ -625,7 +625,7 @@ static const struct v2_state_transition REKEY_CHILD_I0_transitions[] = {
 
 S(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
 
-static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
+static const struct v2_transition REKEY_CHILD_R0_transitions[] = {
 
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	  .from = { &state_v2_REKEY_CHILD_R0, },
@@ -645,7 +645,7 @@ static const struct v2_state_transition REKEY_CHILD_R0_transitions[] = {
 
 S(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
-static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
+static const struct v2_transition REKEY_CHILD_I1_transitions[] = {
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .from = { &state_v2_REKEY_CHILD_I1, },
 	  .to = &state_v2_ESTABLISHED_CHILD_SA,
@@ -663,7 +663,7 @@ static const struct v2_state_transition REKEY_CHILD_I1_transitions[] = {
 
 S(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
-static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
+static const struct v2_transition NEW_CHILD_I0_transitions[] = {
 
 	/*
 	 * Child transitions when creating a new Child SA using
@@ -691,7 +691,7 @@ static const struct v2_state_transition NEW_CHILD_I0_transitions[] = {
 
 S(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
 
-static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
+static const struct v2_transition NEW_CHILD_R0_transitions[] = {
 
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
 	  .from = { &state_v2_NEW_CHILD_R0, },
@@ -710,7 +710,7 @@ static const struct v2_state_transition NEW_CHILD_R0_transitions[] = {
 
 S(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_OPEN_CHILD_SA, .v2.secured = true);
 
-static const struct v2_state_transition NEW_CHILD_I1_transitions[] = {
+static const struct v2_transition NEW_CHILD_I1_transitions[] = {
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .from = { &state_v2_NEW_CHILD_I1, },
 	  .to = &state_v2_ESTABLISHED_CHILD_SA,
@@ -732,7 +732,7 @@ S(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_
  * IKEv2 established states.
  */
 
-static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
+static const struct v2_transition ESTABLISHED_IKE_SA_transitions[] = {
 
 	/*
 	 * IKE SA's CREATE_CHILD_SA exchange to rekey IKE SA.
@@ -933,7 +933,7 @@ static const struct v2_state_transition ESTABLISHED_IKE_SA_transitions[] = {
 
 S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition IKE_SA_DELETE_transitions[] = {
+static const struct v2_transition IKE_SA_DELETE_transitions[] = {
 
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
 	  .from = { &state_v2_IKE_SA_DELETE, },
@@ -948,7 +948,7 @@ static const struct v2_state_transition IKE_SA_DELETE_transitions[] = {
 
 };
 
-static const struct v2_state_transition ESTABLISHED_CHILD_SA_transitions[] = {
+static const struct v2_transition ESTABLISHED_CHILD_SA_transitions[] = {
 };
 
 S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA);
@@ -956,7 +956,7 @@ S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA);
 /* ??? better story needed for these */
 S(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
 
-static const struct v2_state_transition CHILD_SA_DELETE_transitions[] = {
+static const struct v2_transition CHILD_SA_DELETE_transitions[] = {
 };
 
 S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
@@ -1062,7 +1062,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-static const struct v2_state_transition *v2_state_transition(struct logger *logger,
+static const struct v2_transition *v2_state_transition(struct logger *logger,
 							     const struct v2_transitions *transitions,
 							     struct msg_digest *md,
 							     bool check_secured_payloads,
@@ -1196,7 +1196,7 @@ bool sniff_v2_secured_transition(struct logger *logger,
 				   &secured_payload_failed) != NULL;
 }
 
-const struct v2_state_transition *find_v2_transition(struct logger *logger,
+const struct v2_transition *find_v2_transition(struct logger *logger,
 						     const struct v2_transitions *transitions,
 						     struct msg_digest *md,
 						     bool *secured_payload_failed)

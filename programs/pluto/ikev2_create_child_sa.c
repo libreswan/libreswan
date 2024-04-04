@@ -221,7 +221,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&new_ike->sa));
 
 	/* complete the state transition */
-	const struct v2_state_transition *transition = new_ike->sa.st_v2_transition;
+	const struct v2_transition *transition = new_ike->sa.st_v2_transition;
 	pexpect(v2_transition_from(transition, new_ike->sa.st_state));
 	pexpect(transition->to == &state_v2_ESTABLISHED_IKE_SA);
 	change_v2_state(&new_ike->sa); /* should trash .st_v2_transition */
@@ -536,7 +536,7 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition v2_CREATE_CHILD_SA_initiate_rekey_child_exchange = {
+static const struct v2_transition v2_CREATE_CHILD_SA_initiate_rekey_child_exchange = {
 	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -824,7 +824,7 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition v2_CREATE_CHILD_SA_initiate_new_child_exchange = {
+static const struct v2_transition v2_CREATE_CHILD_SA_initiate_new_child_exchange = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -1487,7 +1487,7 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange = {
+static const struct v2_transition v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,

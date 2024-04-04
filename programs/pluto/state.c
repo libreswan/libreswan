@@ -1258,13 +1258,13 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
 				 enum sa_type sa_type,
 				 enum sa_role sa_role,
-				 /* const struct v2_state_transition *transition */
+				 /* const struct v2_transition *transition */
 				 enum state_kind kind)
 {
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
 	passert(fs->v2.transitions->len == 1);
-	const struct v2_state_transition *transition = &fs->v2.transitions->list[0];
+	const struct v2_transition *transition = &fs->v2.transitions->list[0];
 	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
 	change_state(&child->sa, transition->from[0]->kind);
 	set_v2_transition(&child->sa, transition, HERE);
@@ -1912,7 +1912,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 }
 #endif
 
-void set_v2_transition(struct state *st, const struct v2_state_transition *transition,
+void set_v2_transition(struct state *st, const struct v2_transition *transition,
 		       where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {

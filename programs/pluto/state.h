@@ -62,7 +62,7 @@
 #include "state_category.h"
 
 struct whack_message;
-struct v2_state_transition;
+struct v2_transition;
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */
@@ -380,7 +380,7 @@ struct state {
 	/** IKEv2-only things **/
 	/* XXX: union { struct { .. } v1; struct {...} v2;} st? */
 
-	const struct v2_state_transition *st_v2_transition;
+	const struct v2_transition *st_v2_transition;
 
 	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_v2_accepted_proposal;
@@ -818,7 +818,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 				 enum state_kind kind);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
-void set_v2_transition(struct state *st, const struct v2_state_transition *transition, where_t where);
+void set_v2_transition(struct state *st, const struct v2_transition *transition, where_t where);
 void switch_md_st(struct msg_digest *md, struct state *st, where_t where);
 void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition);
 

@@ -510,7 +510,7 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	 */
 
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
-	static const struct v2_state_transition v2_INFORMATIONAL_initiate_mobike_probe_exchange = {
+	static const struct v2_transition v2_INFORMATIONAL_initiate_mobike_probe_exchange = {
 		.story = "MOBIKE",
 		.from = { &state_v2_ESTABLISHED_IKE_SA, },
 		.to = &state_v2_ESTABLISHED_IKE_SA,

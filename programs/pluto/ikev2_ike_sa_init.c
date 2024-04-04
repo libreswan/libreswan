@@ -433,7 +433,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * Does the message match the (only) expected
 		 * transition?
 		 */
-		const struct v2_state_transition *transition =
+		const struct v2_transition *transition =
 			find_v2_transition(md->logger,
 					   state_v2_IKE_SA_INIT_R0.v2.transitions,
 					   md, /*secured_payload_failed?*/NULL);
@@ -581,7 +581,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 
 		/* transition? */
-		const struct v2_state_transition *transition =
+		const struct v2_transition *transition =
 			find_v2_transition(ike->sa.logger, v2_msgid_transitions(ike, md),
 					   md, /*secured_payload_failed?*/NULL);
 		if (transition == NULL) {

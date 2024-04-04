@@ -932,14 +932,14 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	const struct finite_state *state = ike->sa.st_state;
 
 	/* starting point */
-	const struct v2_state_transition undefined_transition = {
+	const struct v2_transition undefined_transition = {
 		.story = "suspect message",
 		.from = { finite_states[STATE_UNDEFINED], },
 		.to = finite_states[STATE_UNDEFINED],
 		.recv_role = v2_msg_role(md),
 		.llog_success = ldbg_v2_success,
 	};
-	const struct v2_state_transition *transition = &undefined_transition;
+	const struct v2_transition *transition = &undefined_transition;
 
 	/*
 	 * Now try to find a better transition.
@@ -1268,7 +1268,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	 */
 
 	bool secured_payload_failed = false;
-	const struct v2_state_transition *svm =
+	const struct v2_transition *svm =
 		find_v2_transition(ike->sa.logger, v2_msgid_transitions(ike, md),
 				   md, &secured_payload_failed);
 
@@ -1305,7 +1305,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 }
 
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
-		 const struct v2_state_transition *svm)
+		 const struct v2_transition *svm)
 {
 	/*
 	 * Start the state transition, including any updates to
@@ -1353,7 +1353,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 
 static void success_v2_state_transition(struct ike_sa *ike,
 					struct msg_digest *md,
-					const struct v2_state_transition *transition)
+					const struct v2_transition *transition)
 {
 	passert(ike != NULL);
 
@@ -1596,7 +1596,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 }
 
 void start_v2_transition(struct ike_sa *ike,
-			 const struct v2_state_transition *next_transition,
+			 const struct v2_transition *next_transition,
 			 struct msg_digest *md,
 			 where_t where)
 {
@@ -1690,7 +1690,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		return;
 	}
 
-	const struct v2_state_transition *transition = ike->sa.st_v2_transition;
+	const struct v2_transition *transition = ike->sa.st_v2_transition;
 	if (!pexpect(transition != NULL)) {
 		return;
 	}
@@ -2036,7 +2036,7 @@ void event_v2_rekey(struct state *st, bool detach_whack)
 	     pri_so(ike->sa.st_serialno));
 }
 
-bool v2_transition_from(const struct v2_state_transition *transition, const struct finite_state *state)
+bool v2_transition_from(const struct v2_transition *transition, const struct finite_state *state)
 {
 	FOR_EACH_ELEMENT(from, transition->from) {
 		if (*from == state) {
@@ -2046,7 +2046,7 @@ bool v2_transition_from(const struct v2_state_transition *transition, const stru
 	return false;
 }
 
-void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition)
+void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transition)
 {
 	if (transition == NULL) {
 		jam_string(buf, "<null-transition>");

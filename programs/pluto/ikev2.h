@@ -61,7 +61,7 @@ struct ikev2_expected_payloads {
 
 #define v2P(N) LELEM(ISAKMP_NEXT_v2##N)
 
-struct v2_state_transition {
+struct v2_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const struct finite_state *from[2];	/* grow as needed */
 	const struct finite_state *to;
@@ -101,12 +101,12 @@ struct v2_state_transition {
 };
 
 struct v2_transitions {
-	const struct v2_state_transition *list;
+	const struct v2_transition *list;
 	size_t len;
 };
 
 struct v2_exchange {
-	const struct v2_state_transition *initiate;
+	const struct v2_transition *initiate;
 	const struct v2_transitions *respond;
 	const struct v2_transitions *response;
 };
@@ -126,7 +126,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     enum next_payload_types_ikev2 np);
 
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
-		 const struct v2_state_transition *transition);
+		 const struct v2_transition *transition);
 
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
@@ -154,14 +154,14 @@ bool accept_v2_notification(v2_notification_t n,
 
 void start_v2_exchange(struct ike_sa *ike, const struct v2_exchange *exchange, where_t where);
 void start_v2_transition(struct ike_sa *ike,
-			 const struct v2_state_transition *transition,
+			 const struct v2_transition *transition,
 			 struct msg_digest *md, where_t where);
 
 stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
 			    const struct v2_exchange *exchange,
 			    where_t where);
 
-extern void jam_v2_transition(struct jambuf *buf, const struct v2_state_transition *transition);
-extern bool v2_transition_from(const struct v2_state_transition *transition, const struct finite_state *state);
+extern void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transition);
+extern bool v2_transition_from(const struct v2_transition *transition, const struct finite_state *state);
 
 #endif

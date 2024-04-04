@@ -47,7 +47,7 @@ bool sniff_v2_secured_transition(struct logger *logger,
 				 const struct v2_transitions *transitions,
 				 struct msg_digest *md);
 
-const struct v2_state_transition *find_v2_transition(struct logger *logger,
+const struct v2_transition *find_v2_transition(struct logger *logger,
 						     const struct v2_transitions *transitions,
 						     struct msg_digest *md,
 						     bool *secured_payload_failed);

@@ -32,7 +32,7 @@
 #include "pluto_stats.h"
 #include "timer.h"
 #include "server.h"
-#include "ikev2.h"			/* for struct v2_state_transition */
+#include "ikev2.h"			/* for struct v2_transition */
 #include "ikev2_liveness.h"
 #include "ikev2_states.h"
 
@@ -277,7 +277,7 @@ void liveness_check(struct state *st)
  * XXX: where to put this?
  */
 
-static const struct v2_state_transition v2_INFORMATIONAL_initiate_liveness_probe_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_initiate_liveness_probe_exchange = {
 	.story = "liveness probe",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,

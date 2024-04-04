@@ -513,7 +513,7 @@ static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 					       ike, &ike->sa, add_redirect_payload);
 }
 
-static const struct v2_state_transition v2_INFORMATIONAL_initiate_redirect_ike_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_initiate_redirect_ike_exchange = {
 	.story = "redirect IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
