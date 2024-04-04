@@ -118,6 +118,7 @@ static const struct ike_alg *default_v1_ike_prfs[] = {
 static const struct ike_alg *default_v1_groups[] = {
 	&ike_alg_dh_modp2048.common,
 	&ike_alg_dh_modp1536.common,
+	&ike_alg_dh_secp256r1.common,
 	NULL,
 };
 
