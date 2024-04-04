@@ -119,7 +119,7 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
 }
 
-static const struct v2_state_transition initiate_v2_delete_ike_transition = {
+static const struct v2_state_transition v2_INFORMATIONAL_initiate_delete_ike_exchange = {
 	.story = "delete IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_IKE_SA_DELETE,
@@ -130,8 +130,8 @@ static const struct v2_state_transition initiate_v2_delete_ike_transition = {
 };
 
 static const struct v2_exchange v2_delete_ike_exchange = {
-	&initiate_v2_delete_ike_transition,
-	&v2_IKE_SA_DELETE_transitions,
+	.initiate = &v2_INFORMATIONAL_initiate_delete_ike_exchange,
+	.response = &v2_IKE_SA_DELETE_transitions,
 };
 
 static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
@@ -181,7 +181,7 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
-static const struct v2_state_transition initiate_v2_delete_child_transition = {
+static const struct v2_state_transition v2_INFORMATIONAL_initiate_delete_child_exchange = {
 	.story = "delete CHILD SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -192,8 +192,8 @@ static const struct v2_state_transition initiate_v2_delete_child_transition = {
 };
 
 static const struct v2_exchange v2_delete_child_exchange = {
-	&initiate_v2_delete_child_transition,
-	&v2_ESTABLISHED_IKE_SA_transitions,
+	.initiate = &v2_INFORMATIONAL_initiate_delete_child_exchange,
+	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)

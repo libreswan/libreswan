@@ -536,7 +536,7 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_child_transition = {
+static const struct v2_state_transition v2_CREATE_CHILD_SA_initiate_rekey_child_exchange = {
 	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -547,8 +547,8 @@ static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_child_
 };
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
-	&initiate_v2_CREATE_CHILD_SA_rekey_child_transition,
-	&v2_ESTABLISHED_IKE_SA_transitions,
+	.initiate = &v2_CREATE_CHILD_SA_initiate_rekey_child_exchange,
+	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_child_sa,
@@ -824,7 +824,7 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_new_child_transition = {
+static const struct v2_state_transition v2_CREATE_CHILD_SA_initiate_new_child_exchange = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -835,8 +835,8 @@ static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_new_child_tr
 };
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
-	&initiate_v2_CREATE_CHILD_SA_new_child_transition,
-	&v2_ESTABLISHED_IKE_SA_transitions,
+	.initiate = &v2_CREATE_CHILD_SA_initiate_new_child_exchange,
+	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child_sa,
@@ -1487,7 +1487,7 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 	}
 }
 
-static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_ike_transition = {
+static const struct v2_state_transition v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -1498,8 +1498,8 @@ static const struct v2_state_transition initiate_v2_CREATE_CHILD_SA_rekey_ike_tr
 };
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
-	&initiate_v2_CREATE_CHILD_SA_rekey_ike_transition,
-	&v2_ESTABLISHED_IKE_SA_transitions,
+	.initiate = &v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange,
+	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_sa,

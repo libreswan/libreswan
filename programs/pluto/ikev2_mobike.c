@@ -510,14 +510,14 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	 */
 
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
-	static const struct v2_state_transition v2_mobike_probe_transition = {
+	static const struct v2_state_transition v2_INFORMATIONAL_initiate_mobike_probe_exchange = {
 		.story = "MOBIKE",
 		.from = { &state_v2_ESTABLISHED_IKE_SA, },
 		.to = &state_v2_ESTABLISHED_IKE_SA,
 	};
 	static const struct v2_exchange v2_mobike_probe_exchange = {
-		&v2_mobike_probe_transition,
-		&v2_ESTABLISHED_IKE_SA_transitions,
+		.initiate = &v2_INFORMATIONAL_initiate_mobike_probe_exchange,
+		.response = &v2_ESTABLISHED_IKE_SA_transitions,
 	};
 
 	v2_msgid_start_record_n_send(ike, &v2_mobike_probe_exchange);
