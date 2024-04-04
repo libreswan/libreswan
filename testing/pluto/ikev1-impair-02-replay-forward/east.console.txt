@@ -98,7 +98,7 @@ packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 4 (332 bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 4
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 4 (492 bytes)
+packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 4 (748 bytes)
 "westnet-eastnet" #1: the peer proposed: 192.0.2.0/24 -<all>-> 192.0.1.0/24
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 4 of 4
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 5 (792 bytes)
@@ -111,7 +111,7 @@ packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 5 (332 bytes)
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 5
-packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 5 (492 bytes)
+packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 5 (748 bytes)
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 4 of 5
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 5 of 5 (76 bytes)
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}

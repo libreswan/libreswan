@@ -30,7 +30,11 @@ west #
 003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
+003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+003 "ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
+003 "ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits. No response (or no acceptable response) to our first IKEv1 message
 002 "ikev1-failtest" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
 002 "ikev1-failtest" #1: IMPAIR: skipping revival of connection that is supposed to remain up

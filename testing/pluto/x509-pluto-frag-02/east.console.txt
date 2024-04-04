@@ -53,5 +53,12 @@ east #
 | sending IKE fragment id '1', number '4'
 | sending IKE fragment id '1', number '5' (last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
+|    fragment id: 1 (00 01)
+|    fragment number: 1 (01)
+| received IKE fragment id '1', number '1'
+|    fragment id: 1 (00 01)
+|    fragment number: 2 (02)
+| received IKE fragment id '1', number '2'(last)
+|  updated IKE fragment state to respond using fragments without waiting for re-transmits
 east #
  

@@ -59,5 +59,7 @@ road #
 |    fragment number: 5 (05)
 | received IKE fragment id '1', number '5'(last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
+| sending IKE fragment id '1', number '1'
+| sending IKE fragment id '1', number '2' (last)
 road #
  
