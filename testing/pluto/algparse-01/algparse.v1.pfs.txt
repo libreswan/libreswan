@@ -1,11 +1,22 @@
 algparse -v1 -pfs 'esp'
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
+	AES_GCM_16_128-NONE
+	AES_GCM_16_256-NONE
+	3DES_CBC-HMAC_SHA1_96
+	3DES_CBC-HMAC_SHA2_512_256
+	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp='
 	ERROR: ESP proposal is empty
 algparse -v1 -pfs 'esp=aes'
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes;modp2048'
 	AES_CBC-HMAC_SHA1_96-MODP2048
+	AES_CBC-HMAC_SHA2_512_256-MODP2048
+	AES_CBC-HMAC_SHA2_256_128-MODP2048
 algparse -v1 -pfs 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 -pfs 'esp=aes-sha1'
@@ -20,6 +31,8 @@ algparse -v1 -pfs 'esp=aes-128-sha1-modp2048'
 	AES_CBC_128-HMAC_SHA1_96-MODP2048
 algparse -v1 -pfs 'esp=aes-128'
 	AES_CBC_128-HMAC_SHA1_96
+	AES_CBC_128-HMAC_SHA2_512_256
+	AES_CBC_128-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
 algparse -v1 -pfs 'esp=3des-sha1;modp1024'
@@ -42,6 +55,8 @@ algparse -v1 -pfs 'esp=null-sha1'
 	NULL-HMAC_SHA1_96
 algparse -v1 -pfs 'esp=aes_cbc'
 	AES_CBC-HMAC_SHA1_96
+	AES_CBC-HMAC_SHA2_512_256
+	AES_CBC-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes-sha'
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 -pfs 'esp=aes-sha1'
@@ -74,12 +89,20 @@ algparse -v1 -pfs 'esp=aes256-sha2_512'
 	AES_CBC_256-HMAC_SHA2_512_256
 algparse -v1 -pfs 'esp=camellia'
 	CAMELLIA_CBC-HMAC_SHA1_96
+	CAMELLIA_CBC-HMAC_SHA2_512_256
+	CAMELLIA_CBC-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=camellia128'
 	CAMELLIA_CBC_128-HMAC_SHA1_96
+	CAMELLIA_CBC_128-HMAC_SHA2_512_256
+	CAMELLIA_CBC_128-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=camellia192'
 	CAMELLIA_CBC_192-HMAC_SHA1_96
+	CAMELLIA_CBC_192-HMAC_SHA2_512_256
+	CAMELLIA_CBC_192-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=camellia256'
 	CAMELLIA_CBC_256-HMAC_SHA1_96
+	CAMELLIA_CBC_256-HMAC_SHA2_512_256
+	CAMELLIA_CBC_256-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_ccm'
 	AES_CCM_16-NONE
 algparse -v1 -pfs 'esp=aes_ccm_a-128-null'
@@ -182,14 +205,24 @@ algparse -v1 -pfs 'esp=aes_gcm_16_256-null'
 	AES_GCM_16_256-NONE
 algparse -v1 -pfs 'esp=aes_ctr'
 	AES_CTR-HMAC_SHA1_96
+	AES_CTR-HMAC_SHA2_512_256
+	AES_CTR-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aesctr'
 	AES_CTR-HMAC_SHA1_96
+	AES_CTR-HMAC_SHA2_512_256
+	AES_CTR-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_ctr128'
 	AES_CTR_128-HMAC_SHA1_96
+	AES_CTR_128-HMAC_SHA2_512_256
+	AES_CTR_128-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_ctr192'
 	AES_CTR_192-HMAC_SHA1_96
+	AES_CTR_192-HMAC_SHA2_512_256
+	AES_CTR_192-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_ctr256'
 	AES_CTR_256-HMAC_SHA1_96
+	AES_CTR_256-HMAC_SHA2_512_256
+	AES_CTR_256-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -v1 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192'
