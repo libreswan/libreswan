@@ -101,7 +101,7 @@ algorithm IKE DH Key Exchange: name=DH20, bits=768
 algorithm IKE DH Key Exchange: name=DH21, bits=1056
 algorithm IKE DH Key Exchange: name=DH31, bits=256
  
-stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,1,64} trans={0,1,2808} attrs={0,1,1872} 
  
 Connection list:
  
