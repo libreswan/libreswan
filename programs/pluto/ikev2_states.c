@@ -77,20 +77,31 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		##__VA_ARGS__,						\
 	}
 
-#define R(KIND, STORY, CAT, ...)					\
+#define R(KIND, STORY, CAT, SECURED, ...)				\
+									\
 	const struct v2_transitions v2_##KIND##_R_transitions = {	\
-		ARRAY_REF(KIND##_R_transitions),			\
+		ARRAY_REF(v2_##KIND##_R_transition),			\
 	};								\
+									\
+	static const struct v2_exchange *v2_##KIND##_responder_exchange[] = { \
+		__VA_ARGS__						\
+	};								\
+									\
+	static const struct v2_exchanges v2_##KIND##_responder_exchanges = { \
+		ARRAY_REF(v2_##KIND##_responder_exchange),		\
+	};								\
+									\
 	const struct finite_state state_v2_##KIND##_R = {		\
-		.kind = STATE_V2_##KIND,				\
+		.kind = STATE_V2_##KIND##_R,				\
 		.name = #KIND"_R",					\
 		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
 		.short_name = #KIND"_R",				\
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.transitions = &v2_##KIND##_transitions,		\
-		##__VA_ARGS__,						\
+		.v2.transitions = &v2_##KIND##_R_transitions,		\
+		.v2.exchanges = &v2_##KIND##_responder_exchanges,	\
+		.v2.secured = SECURED,					\
 	}
 
 #define E(KIND, NEXT_STORY, I_CAT, IR_CAT, SECURED)			\
@@ -370,7 +381,7 @@ static const struct v2_transition IKE_SA_INIT_R0_transitions[] = {
 
 S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA);
 
-static const struct v2_transition IKE_SA_INIT_R_transitions[] = {
+static const struct v2_transition v2_IKE_SA_INIT_R_transition[] = {
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -421,7 +432,9 @@ static const struct v2_transition IKE_SA_INIT_R_transitions[] = {
 
 };
 
-S(IKE_SA_INIT_R, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request", CAT_HALF_OPEN_IKE_SA, .v2.secured = true);
+R(IKE_SA_INIT, "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
+  CAT_HALF_OPEN_IKE_SA, /*secured*/true,
+  &v2_IKE_AUTH_exchange, &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_EAP_exchange);
 
 /*
  * IKE_INTERMEDIATE
@@ -500,7 +513,7 @@ E(IKE_INTERMEDIATE, ", initiating IKE_INTERMEDIATE or IKE_AUTH",
  * EAP
  */
 
-static const struct v2_transition IKE_AUTH_EAP_R_transitions[] = {
+static const struct v2_transition v2_IKE_AUTH_EAP_R_transition[] = {
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
 	  .from = { &state_v2_IKE_AUTH_EAP_R, },
@@ -527,7 +540,11 @@ static const struct v2_transition IKE_AUTH_EAP_R_transitions[] = {
 
 };
 
-S(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, .v2.secured = true);
+R(IKE_AUTH_EAP, "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request", CAT_OPEN_IKE_SA, /*secured*/true);
+
+const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
+	.type = ISAKMP_v2_IKE_AUTH,
+};
 
 /*
  * CREATE_CHILD_SA exchanges.

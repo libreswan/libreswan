@@ -113,7 +113,7 @@ struct v2_exchange {
 };
 
 struct v2_exchanges {
-	const struct v2_exchange *list;
+	const struct v2_exchange *const *list;
 	size_t len;
 };
 
