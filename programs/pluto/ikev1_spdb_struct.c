@@ -1191,10 +1191,10 @@ bool ikev1_out_quick_sa(struct pbs_out *outs,
 	return ok;
 }
 
-bool ikev1_out_oakley_sa(struct pbs_out *outs,
-			 const struct db_sa *sadb,
-			 struct state *st,
-			 bool aggressive_mode)
+static bool ikev1_out_oakley_sa(struct pbs_out *outs,
+				const struct db_sa *sadb,
+				struct state *st,
+				bool aggressive_mode)
 {
 	struct connection *c = st->st_connection;
 	if (PBAD(outs->logger, c->config->ike_proposals.p == NULL)) {
@@ -1231,6 +1231,20 @@ bool ikev1_out_oakley_sa(struct pbs_out *outs,
 
 	free_sa(&revised_sadb);
 	return ok;
+}
+
+bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
+{
+	return ikev1_out_oakley_sa(outs,
+				   IKEv1_oakley_main_mode_db_sa(ike->sa.st_connection),
+				   &ike->sa, false);
+}
+
+bool ikev1_out_aggr_sa(struct pbs_out *outs, struct ike_sa *ike)
+{
+	return ikev1_out_oakley_sa(outs,
+				   IKEv1_oakley_aggr_mode_db_sa(ike->sa.st_connection),
+				   &ike->sa, true);
 }
 
 /**

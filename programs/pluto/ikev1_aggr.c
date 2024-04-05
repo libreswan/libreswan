@@ -1070,12 +1070,13 @@ static stf_status aggr_outI1_continue(struct state *st,
 }
 
 static stf_status aggr_outI1_continue_tail(struct state *st,
-					   struct msg_digest *unused_md,
+					   struct msg_digest *null_md,
 					   struct dh_local_secret *local_secret,
 					   chunk_t *nonce)
 {
-	passert(unused_md == NULL); /* no packet */
-	struct connection *c = st->st_connection;
+	struct ike_sa *ike = pexpect_ike_sa(st);
+	PASSERT(ike->sa.logger, null_md == NULL); /* no packet */
+	struct connection *c = ike->sa.st_connection;
 	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 	bool send_cr = (mycert != NULL &&
 			!remote_has_preloaded_pubkey(st) &&
@@ -1108,9 +1109,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	{
 		uint8_t *sa_start = rbody.cur;
 
-		if (!ikev1_out_oakley_sa(&rbody,
-					 IKEv1_oakley_aggr_mode_db_sa(c),
-					 st, true)) {
+		if (!ikev1_out_aggr_sa(&rbody, ike)) {
 			return STF_INTERNAL_ERROR;
 		}
 

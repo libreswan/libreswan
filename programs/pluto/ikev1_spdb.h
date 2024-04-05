@@ -139,10 +139,11 @@ struct ipsec_db_policy {
 extern bool ikev1_out_quick_sa(struct pbs_out *outs,
 			       struct state *st);
 
-extern bool ikev1_out_oakley_sa(struct pbs_out *outs,
-				const struct db_sa *sadb,
-				struct state *st,
-				bool aggressive_mode);
+extern bool ikev1_out_main_sa(struct pbs_out *outs,
+			      struct ike_sa *ike);
+
+extern bool ikev1_out_aggr_sa(struct pbs_out *outs,
+			      struct ike_sa *ike);
 
 diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 			       struct authby *authby, bool *xauth);
