@@ -41,7 +41,7 @@ west #
 000 "westnet-eastnet-aggr":   dpd: passive; action:hold; delay:0s; timeout:0s
 000 "westnet-eastnet-aggr":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "westnet-eastnet-aggr":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
-000 "westnet-eastnet-aggr":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536
+000 "westnet-eastnet-aggr":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536, AES_CBC_128-HMAC_SHA1-DH19
 west #
  echo "initdone"
 initdone
@@ -49,9 +49,11 @@ west #
  ipsec auto --up westnet-eastnet-aggr
 003 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+003 "westnet-eastnet-aggr" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 128) ignored.
 002 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 003 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+003 "westnet-eastnet-aggr" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 128) ignored.
 1v1 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
 002 "westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-aggr" #1: authenticated peer '2nnn-bit RSA with SHA1' signature using preloaded certificate '@east'

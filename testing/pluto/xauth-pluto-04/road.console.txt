@@ -15,9 +15,11 @@ road #
 003 "xauth-road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 003 "xauth-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "xauth-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+003 "xauth-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
 002 "xauth-road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
 003 "xauth-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 003 "xauth-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+003 "xauth-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
 1v1 "xauth-road-eastnet-psk" #1: sent Aggressive Mode request
 002 "xauth-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 004 "xauth-road-eastnet-psk" #1: IKE SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
