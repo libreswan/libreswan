@@ -781,18 +781,6 @@ static const struct v2_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN },
 
-	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
-	  .encrypted_payloads.optional = v2P(N),
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
 	/*
 	 * IKE SA's CREATE_CHILD_SA request to rekey a Child SA.
 	 *
@@ -851,42 +839,6 @@ static const struct v2_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
-
-	/*
-	 * IKE SA's CREATE_CHILD_SA response to rekey or create a Child SA
-	 *
-	 * Both rekey and new Child SA share a common transition.  It
-	 * isn't immediately possible to differentiate between them.
-	 * Instead .st_v2_larval_initiator_sa is used.
-	 *
-	 *                                <--  HDR, SK {SA, Nr, [KEr,]
-	 *                                              TSi, TSr}
-	 */
-
-	{ .story      = "process Child SA response (new or rekey) (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "process CREATE_CHILD_SA failure response (new or rekey Child SA, rekey IKE SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = v2P(SK), },
-	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, /* no timeout really */
-	},
 
 	/* Informational Exchange */
 

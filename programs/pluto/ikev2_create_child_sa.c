@@ -546,10 +546,66 @@ static const struct v2_transition v2_CREATE_CHILD_SA_initiate_rekey_child_exchan
 	.timeout_event = EVENT_RETAIN,
 };
 
+/*
+ * IKE SA's CREATE_CHILD_SA response to rekey or create a Child SA
+ *
+ * Both rekey and new Child SA share a common transition.  It isn't
+ * immediately possible to differentiate between them.  Instead
+ * .st_v2_larval_initiator_sa is used.
+ *
+ *                                <--  HDR, SK {SA, Nr, [KEr,]
+ *                                              TSi, TSr}
+ */
+
+static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
+
+	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
+	  .encrypted_payloads.optional = v2P(N),
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "process Child SA response (new or rekey) (CREATE_CHILD_SA)",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
+	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "process CREATE_CHILD_SA failure response (new or rekey Child SA, rekey IKE SA)",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads = { .required = v2P(SK), },
+	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, /* no timeout really */
+	},
+
+};
+
+static const struct v2_transitions v2_CREATE_CHILD_SA_response_transitions = {
+	ARRAY_REF(v2_CREATE_CHILD_SA_response_transition)
+};
+
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.initiate = &v2_CREATE_CHILD_SA_initiate_rekey_child_exchange,
-	.response = &v2_ESTABLISHED_IKE_SA_transitions,
+	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_child_sa,
@@ -838,7 +894,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_initiate_new_child_exchange
 static const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.initiate = &v2_CREATE_CHILD_SA_initiate_new_child_exchange,
-	.response = &v2_ESTABLISHED_IKE_SA_transitions,
+	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child_sa,
@@ -1502,7 +1558,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.initiate = &v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange,
-	.response = &v2_ESTABLISHED_IKE_SA_transitions,
+	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_sa,
