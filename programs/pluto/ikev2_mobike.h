@@ -24,7 +24,6 @@ extern void record_deladdr(ip_address *ip, char *a_type);
 extern void record_newaddr(ip_address *ip, char *a_type);
 
 bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
-void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md);
 
 void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md);
 

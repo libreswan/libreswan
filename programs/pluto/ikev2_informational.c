@@ -69,12 +69,6 @@ static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
 	return true;
 }
 
-static bool process_v2N_responses(struct ike_sa *ike, struct msg_digest *md)
-{
-	process_v2N_mobike_responses(ike, md);
-	return true;
-}
-
 /*
  *
  ***************************************************************
@@ -245,16 +239,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 */
 	struct connection *c = ike->sa.st_connection;
 	bool do_unroute = ike->sa.st_sent_redirect && is_permanent(c);
-
-	/*
-	 * Process NOTIFY payloads
-	 */
-
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		if (!process_v2N_responses(ike, md)) {
-			return STF_FATAL;
-		}
-	}
 
 	/*
 	 * This is a special case. When we have site to site connection

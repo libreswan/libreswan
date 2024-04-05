@@ -298,7 +298,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 
 }
 
-void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
+static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 {
 	bool may_mobike = mobike_check_established(ike);
 	if (!may_mobike) {
@@ -472,6 +472,52 @@ void record_deladdr(ip_address *ip, char *a_type)
 	}
 }
 
+static stf_status process_v2_INFORMATIONAL_mobike_response(struct ike_sa *ike,
+							   struct child_sa *null_child,
+							   struct msg_digest *md)
+{
+	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	pexpect(null_child == NULL);
+
+	/*
+	 * Process NOTIFY payloads
+	 */
+
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		process_v2N_mobike_responses(ike, md);
+	}
+	return STF_OK;
+}
+
+static const struct v2_transition v2_INFORMATIONAL_mobike_initiate_transition = {
+	.story = "MOBIKE",
+	.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+};
+
+static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] = {
+	{ .story      = "Informational Response",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
+	  .processor  = process_v2_INFORMATIONAL_mobike_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_mobike_response_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_mobike_response_transition),
+};
+
+static const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
+	.type = ISAKMP_v2_INFORMATIONAL,
+	.initiate = &v2_INFORMATIONAL_mobike_initiate_transition,
+	.response = &v2_INFORMATIONAL_mobike_response_transitions,
+};
+
 static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 {
 	/*
@@ -510,16 +556,6 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	 */
 
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
-	static const struct v2_transition v2_INFORMATIONAL_mobike_initiate_transition = {
-		.story = "MOBIKE",
-		.from = { &state_v2_ESTABLISHED_IKE_SA, },
-		.to = &state_v2_ESTABLISHED_IKE_SA,
-	};
-	static const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
-		.type = ISAKMP_v2_INFORMATIONAL,
-		.initiate = &v2_INFORMATIONAL_mobike_initiate_transition,
-		.response = &v2_ESTABLISHED_IKE_SA_transitions,
-	};
 
 	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_mobike_exchange);
 	stf_status e = record_v2_informational_request("mobike informational request",
