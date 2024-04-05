@@ -116,8 +116,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta,
 			     struct logger *logger)
 {
-	if (c->config->child_sa.proposals.p == NULL) {
-		llog_pexpect(logger, HERE, "ESP IPsec configuration has no proposals to check against");
+	if (PBAD(logger, c->config->child_sa.proposals.p == NULL)) {
 		return false;
 	}
 
@@ -233,8 +232,7 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    const struct trans_attrs *ta,
 			    struct logger *logger)
 {
-	if (c->config->child_sa.proposals.p == NULL) {
-		llog_pexpect(logger, HERE, "ESP IPsec configuration has no proposals to check against");
+	if (PBAD(logger, c->config->child_sa.proposals.p == NULL)) {
 		return false;
 	}
 
@@ -551,33 +549,6 @@ static struct db_prop_conj oakley_props_empty[] =
 
 static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
 
-/*
- * Create an OAKLEY proposal based on alg_info and policy
- *
- * single_dh is for Aggressive Mode where we must have exactly
- * one DH group.
- */
-
-static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
-{
-	const struct proposal_policy policy = {
-		.version = IKEv1,
-		.check_pfs_vs_dh = false,
-		.alg_is_ok = ike_alg_is_ike,
-		.logger = logger,
-		.logger_rc_flags = ALL_STREAMS|RC_LOG,
-	};
-	struct proposal_parser *parser = ike_proposal_parser(&policy);
-	struct ike_proposals defaults = { .p = proposals_from_str(parser, NULL), };
-	if (defaults.p == NULL) {
-		llog_pexpect(logger, HERE,
-			     "Invalid IKEv1 default algorithms: %s",
-			     str_diag(parser->diag));
-	}
-	free_proposal_parser(&parser);
-	return defaults;
-}
-
 static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					enum ikev1_auth_method auth_method,
 					bool single_dh, struct logger *logger)
@@ -836,29 +807,6 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 	dbg("oakley_alg_makedb() returning %p", gsp);
 	return gsp;
-}
-
-static struct db_sa *v1_ike_alg_make_sadb(const struct ike_proposals ike_proposals,
-					  enum ikev1_auth_method auth_method,
-					  bool single_dh, struct logger *logger)
-{
-	/*
-	 * start by copying the proposal that would have been picked by
-	 * standard defaults.
-	 */
-
-	if (ike_proposals.p == NULL) {
-		dbg("no specific IKE algorithms specified - using defaults");
-		struct ike_proposals default_info = v1_default_ike_proposals(logger);
-		struct db_sa *new_db = oakley_alg_mergedb(default_info,
-							  auth_method,
-							  single_dh,
-							  logger);
-		free_proposals(&default_info.p);
-		return new_db;
-	} else {
-		return oakley_alg_mergedb(ike_proposals, auth_method, single_dh, logger);
-	}
 }
 
 static bool ikev1_out_sa(struct pbs_out *outs,
@@ -1249,6 +1197,9 @@ bool ikev1_out_oakley_sa(struct pbs_out *outs,
 			 bool aggressive_mode)
 {
 	struct connection *c = st->st_connection;
+	if (PBAD(outs->logger, c->config->ike_proposals.p == NULL)) {
+		return false;
+	}
 
 	/*
 	 * Construct the proposals by combining ALG_INFO_IKE with the
@@ -1267,10 +1218,10 @@ bool ikev1_out_oakley_sa(struct pbs_out *outs,
 	 * Aggr-Mode - Max transforms == 2 - Multiple
 	 * transforms, 1 DH group
 	 */
-	struct db_sa *revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
-							  auth_method,
-							  aggressive_mode,
-							  st->logger);
+	struct db_sa *revised_sadb = oakley_alg_mergedb(c->config->ike_proposals,
+							auth_method,
+							aggressive_mode,
+							st->logger);
 
 	/* more sanity */
 	if (revised_sadb != NULL)
@@ -2138,6 +2089,9 @@ rsasig_common:
 bool init_aggr_st_oakley(struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
+	if (PBAD(ike->sa.logger, c->config->ike_proposals.p == NULL)) {
+		return false;
+	}
 
 	/*
 	 * Construct the proposals by combining IKE_PROPOSALS with the
@@ -2148,23 +2102,20 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	 * XXX: Should replace IKEv1_oakley_am_sadb() with a simple
 	 * map to the auth method.
 	 */
-	struct db_sa *revised_sadb;
-	{
-		const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(c);
-		const struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
-		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-		enum ikev1_auth_method auth_method = auth->val;
-		/*
-		 * Max transforms == 2 - Multiple transforms, 1 DH
-		 * group
-		 */
-		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
-						    auth_method, true,
-						    ike->sa.logger);
-	}
-
-	if (revised_sadb == NULL)
+	const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(c);
+	const struct db_attr *sadb_auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
+	passert(sadb_auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
+	enum ikev1_auth_method sadb_auth_method = sadb_auth->val;
+	/*
+	 * Max transforms == 2 - Multiple transforms, 1 DH
+	 * group
+	 */
+	struct db_sa *revised_sadb = oakley_alg_mergedb(c->config->ike_proposals,
+							sadb_auth_method, true,
+							ike->sa.logger);
+	if (revised_sadb == NULL) {
 		return false;
+	}
 
 	passert(revised_sadb->prop_conj_cnt == 1);
 	const struct db_prop_conj *cprop = &revised_sadb->prop_conjs[0];
