@@ -1225,60 +1225,7 @@ static bool ikev1_out_oakley_sa(struct pbs_out *outs,
 	return ok;
 }
 
-static enum ikev1_auth_method main_auth_method(struct connection *c)
-{
-	/*
-	 * IKEv1 auth is symmetric
-	 *
-	 * Notice how MAIN and AGGR modes use slightly different code
-	 * to compute the index, and very different tables.
-	 */
-	struct authby authby = c->local->host.config->authby;
-	pexpect(authby_eq(authby, c->remote->host.config->authby));
-	unsigned index = ((authby.psk ? 1 : 0) |
-			  (authby.rsasig ? 2 : 0) |
-			  (c->local->host.config->xauth.server ? 4 : 0) |
-			  (c->local->host.config->xauth.client ? 8 : 0));
-
-	/*
-	 * XXX: I strongly suspect that proposing RSA+PSK is dead.
-	 */
-
-	static const enum ikev1_auth_method auth_method[16] = {
-		0,			/* none */
-		OAKLEY_PRESHARED_KEY,	/* PSK */
-		OAKLEY_RSA_SIG,		/* RSASIG */
-		OAKLEY_RSA_SIG,		/* PSK+RSASIG; suspect NA */
-
-		0,			/* XAUTHSERVER + none */
-		XAUTHRespPreShared,	/* XAUTHSERVER + PSK */
-		XAUTHRespRSA,		/* XAUTHSERVER + RSA */
-		XAUTHRespRSA,		/* XAUTHSERVER + RSA+PSK; suspect NA */
-
-		0,			/* XAUTHCLIENT + none */
-		XAUTHInitPreShared,	/* XAUTHCLIENT + PSK */
-		XAUTHInitRSA,		/* XAUTHCLIENT + RSA */
-		XAUTHInitRSA,		/* XAUTHCLIENT + RSA+PSK; suspect NA */
-
-		0,			/* XAUTHCLIENT+XAUTHSERVER + none */
-		0,			/* XAUTHCLIENT+XAUTHSERVER + PSK */
-		0,			/* XAUTHCLIENT+XAUTHSERVER + RSA */
-		0,			/* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
-	};
-
-	passert(index < elemsof(auth_method));
-	return auth_method[index];
-}
-
-bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
-{
-	struct connection *c = ike->sa.st_connection;
-	enum ikev1_auth_method auth_method = main_auth_method(c);
-
-	return ikev1_out_oakley_sa(outs, auth_method, ike, false);
-}
-
-static enum ikev1_auth_method aggr_auth_method(const struct connection *c)
+static enum ikev1_auth_method sa_auth_method(const struct connection *c)
 {
 	/*
 	 * IKEv1 auth is symmetric
@@ -1318,10 +1265,18 @@ static enum ikev1_auth_method aggr_auth_method(const struct connection *c)
 	return auth_method[index];
 }
 
+bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+	enum ikev1_auth_method auth_method = sa_auth_method(c);
+
+	return ikev1_out_oakley_sa(outs, auth_method, ike, false);
+}
+
 bool ikev1_out_aggr_sa(struct pbs_out *outs, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum ikev1_auth_method auth_method = aggr_auth_method(c);
+	enum ikev1_auth_method auth_method = sa_auth_method(c);
 
 	return ikev1_out_oakley_sa(outs, auth_method, ike, true);
 }
@@ -2190,7 +2145,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	 * Max transforms == 2 - Multiple transforms, 1 DH
 	 * group
 	 */
-	enum ikev1_auth_method sadb_auth_method = aggr_auth_method(c);
+	enum ikev1_auth_method sadb_auth_method = sa_auth_method(c);
 	struct db_sa *revised_sadb = oakley_alg_mergedb(c->config->ike_proposals,
 							sadb_auth_method, true,
 							ike->sa.logger);
