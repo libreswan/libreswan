@@ -1273,23 +1273,7 @@ static enum ikev1_auth_method main_auth_method(struct connection *c)
 bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-
-	/*
-	 * Construct the proposals by combining ALG_INFO_IKE with the
-	 * AUTH (proof of identity) extracted from the (default?)
-	 * SADB.  As if by magic, attrs[2] is always the
-	 * authentication method.
-	 *
-	 * XXX: Should replace SADB with a simple map to the auth
-	 * method.
-	 */
-	const struct db_sa *sadb = IKEv1_oakley_main_mode_db_sa(ike->sa.st_connection);
-	struct db_attr *sadb_auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
-	passert(sadb_auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-	enum ikev1_auth_method sadb_auth_method = sadb_auth->val;
-
 	enum ikev1_auth_method auth_method = main_auth_method(c);
-	PASSERT(ike->sa.logger, sadb_auth_method == auth_method);
 
 	return ikev1_out_oakley_sa(outs, auth_method, ike, false);
 }

@@ -109,7 +109,6 @@ struct db_sa {
 /*
  * ISAKMP policies.
  */
-extern struct db_sa *IKEv1_oakley_main_mode_db_sa(const struct connection *c);
 extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(const struct connection *c);
 
 /*
