@@ -25,7 +25,7 @@ east #
 000 "westnet-eastnet-aes256":   dpd: passive; action:hold; delay:0s; timeout:0s
 000 "westnet-eastnet-aes256":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
-000 "westnet-eastnet-aes256":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536, AES_CBC_128-HMAC_SHA1-DH19
+000 "westnet-eastnet-aes256":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536, AES_CBC_128-HMAC_SHA1-DH19, AES_CBC_128-HMAC_SHA1-DH31
 000 "westnet-eastnet-aes256":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
 east #
  echo "initdone"

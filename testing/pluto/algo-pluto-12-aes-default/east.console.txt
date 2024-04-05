@@ -33,10 +33,19 @@ east #
 |    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
 |    length/value: 256 (01 00)
 --
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
+--
 |    af+type: AF+KEY_LENGTH (0x8006)
 |    length/value: 128 (00 80)
 --
 |    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 128 (00 80)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
 |    length/value: 128 (00 80)
 --
 |    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
@@ -69,6 +78,30 @@ east #
 |    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
 |    length/value: 256 (01 00)
 --
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (01 00)
+--
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
+--
+|    af+type: AF+KEY_LENGTH (0x8006)
+|    length/value: 256 (01 00)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
+--
+|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (00 80)
+--
 |    af+type: AF+KEY_LENGTH (0x8006)
 |    length/value: 256 (01 00)
 --
@@ -76,21 +109,6 @@ east #
 |    length/value: 256 (01 00)
 --
 |    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (00 80)
---
-|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (00 80)
---
-|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (00 80)
---
-|    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
-|    length/value: 128 (00 80)
---
-|    af+type: AF+KEY_LENGTH (0x8006)
-|    length/value: 256 (01 00)
---
-|    af+type: AF+KEY_LENGTH (0x8006)
 |    length/value: 256 (01 00)
 --
 |    af+type: AF+OAKLEY_KEY_LENGTH (0x800e)
