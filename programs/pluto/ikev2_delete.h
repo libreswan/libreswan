@@ -20,10 +20,8 @@
 
 #include "where.h"
 
-struct state;
 struct ike_sa;
 struct child_sa;
-struct v2SK_payload;
 
 void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where);
 
@@ -31,6 +29,5 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st);
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child);
 
 bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
-bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
 
 #endif

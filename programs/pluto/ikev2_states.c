@@ -894,18 +894,6 @@ static const struct v2_transition ESTABLISHED_IKE_SA_transitions[] = {
 S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
 
 static const struct v2_transition IKE_SA_DELETE_transitions[] = {
-
-	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
-	  .from = { &state_v2_IKE_SA_DELETE, },
-	  .to = &state_v2_IKE_SA_DELETE,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
-	  .processor  = IKE_SA_DEL_process_v2_INFORMATIONAL_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
 };
 
 static const struct v2_transition ESTABLISHED_CHILD_SA_transitions[] = {

@@ -256,12 +256,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 		}
 	}
 
-	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
-		if (!process_v2D_responses(ike, md)) {
-			return STF_FATAL;
-		}
-	}
-
 	/*
 	 * This is a special case. When we have site to site connection
 	 * and one site redirects other in IKE_AUTH reply, he doesn't

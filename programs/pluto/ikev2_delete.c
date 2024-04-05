@@ -25,6 +25,8 @@
 #include "connections.h"
 #include "ikev2_informational.h"
 
+static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
+
 /*
  * Send an Informational Exchange announcing a deletion.
  *
@@ -119,6 +121,20 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
 }
 
+static stf_status process_v2_INFORMATIONAL_delete_ike_response(struct ike_sa *ike,
+							       struct child_sa *null_child,
+							       struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	PEXPECT(ike->sa.logger, md != NULL);
+	/*
+	 * This must be a response to our IKE SA delete request Even
+	 * if there are are other Delete Payloads, they cannot matter:
+	 * we delete the family.
+	 */
+	return STF_OK_INITIATOR_DELETE_IKE;
+}
+
 static const struct v2_transition v2_INFORMATIONAL_delete_ike_initiate_transition = {
 	.story = "delete IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
@@ -129,10 +145,30 @@ static const struct v2_transition v2_INFORMATIONAL_delete_ike_initiate_transitio
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_delete_ike_response_transition[] = {
+
+	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
+	  .from = { &state_v2_IKE_SA_DELETE, },
+	  .to = &state_v2_IKE_SA_DELETE,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
+	  .processor  = process_v2_INFORMATIONAL_delete_ike_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_delete_ike_response_transitions =
+{
+	ARRAY_REF(v2_INFORMATIONAL_delete_ike_response_transition),
+};
+
+const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.initiate = &v2_INFORMATIONAL_delete_ike_initiate_transition,
-	.response = &v2_IKE_SA_DELETE_transitions,
+	.response = &v2_INFORMATIONAL_delete_ike_response_transitions,
 };
 
 static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
@@ -182,6 +218,24 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
+static stf_status process_v2_INFORMATIONAL_delete_child_response(struct ike_sa *ike,
+								 struct child_sa *null_child,
+								 struct msg_digest *md)
+{
+	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	pexpect(null_child == NULL);
+
+	if (PBAD(ike->sa.logger, md->chain[ISAKMP_NEXT_v2D] == NULL)) {
+		return STF_FATAL;
+	}
+
+	if (!process_v2D_responses(ike, md)) {
+		return STF_FATAL;
+	}
+
+	return STF_OK;
+}
+
 static const struct v2_transition v2_INFORMATIONAL_delete_child_initiate_transition = {
 	.story = "delete CHILD SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
@@ -192,10 +246,28 @@ static const struct v2_transition v2_INFORMATIONAL_delete_child_initiate_transit
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_delete_child_response_transition[] = {
+	{ .story      = "Informational Response",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(D),
+	  .processor  = process_v2_INFORMATIONAL_delete_child_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_delete_child_response_transitions =
+{
+	ARRAY_REF(v2_INFORMATIONAL_delete_child_response_transition),
+};
+
+const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.initiate = &v2_INFORMATIONAL_delete_child_initiate_transition,
-	.response = &v2_ESTABLISHED_IKE_SA_transitions,
+	.response = &v2_INFORMATIONAL_delete_child_response_transitions,
 };
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
@@ -412,7 +484,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 	return true;
 }
 
-bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
+static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 {
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
 	     p != NULL; p = p->next) {
@@ -420,7 +492,8 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 
 		switch (v2del->isad_protoid) {
 		case PROTO_ISAKMP:
-			llog_passert(ike->sa.logger, HERE, "unexpected IKE delete");
+			llog_pexpect(ike->sa.logger, HERE, "unexpected IKE delete");
+			return false;
 
 		case PROTO_IPSEC_AH: /* Child SAs */
 		case PROTO_IPSEC_ESP: /* Child SAs */
@@ -504,28 +577,6 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 		}
 	}  /* for each Delete Payload */
 	return true;
-}
-
-stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
-							struct child_sa *null_child,
-							struct msg_digest *md)
-{
-	PEXPECT(ike->sa.logger, null_child == NULL);
-	PEXPECT(ike->sa.logger, md != NULL);
-	/*
-	 * This must be a response to our IKE SA delete request Even
-	 * if there are are other Delete Payloads, they cannot matter:
-	 * we delete the family.
-	 *
-	 * Danger!
-	 *
-	 * The call to delete_ike_family() deletes this IKE SA.
-	 * Signal this up the chain by returning
-	 * STF_SKIP_COMPLETE_STATE_TRANSITION.
-	 *
-	 * Killing .v1_st is an extra safety net.
-	 */
-	return STF_OK_INITIATOR_DELETE_IKE;
 }
 
 /*
