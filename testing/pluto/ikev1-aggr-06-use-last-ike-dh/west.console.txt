@@ -43,7 +43,7 @@ west #
 "westnet-eastnet-aggr":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-aggr":   routing: unrouted;
 "westnet-eastnet-aggr":   conn serial: $1;
-"westnet-eastnet-aggr":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536
+"westnet-eastnet-aggr":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536, AES_CBC_128-HMAC_SHA1-DH19
 west #
  echo "initdone"
 initdone
@@ -51,9 +51,11 @@ west #
  ipsec auto --up westnet-eastnet-aggr
 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"westnet-eastnet-aggr" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 128) ignored.
 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 "westnet-eastnet-aggr" #1: multiple DH groups in aggressive mode can cause interop failure
 "westnet-eastnet-aggr" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"westnet-eastnet-aggr" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 128) ignored.
 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
 "westnet-eastnet-aggr" #1: Peer ID is ID_FQDN: '@east'
 "westnet-eastnet-aggr" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
