@@ -41,7 +41,7 @@ road #
  # partial STATE
 road #
  ../../guestbin/wait-for.sh --match '#1:.*sent IKE_SA_INIT request' -- ipsec status
-#1: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
+#1: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23:500 IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 road #
  ipsec whack --shuntstatus
 Bare Shunt list:
