@@ -288,6 +288,7 @@ static const struct v2_transition v2_INFORMATIONAL_initiate_liveness_probe_excha
 };
 
 static const struct v2_exchange v2_liveness_probe_exchange = {
+	.type = ISAKMP_v2_INFORMATIONAL,
 	.initiate = &v2_INFORMATIONAL_initiate_liveness_probe_exchange,
 	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };

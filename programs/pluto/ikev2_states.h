@@ -54,6 +54,7 @@ const struct v2_transition *find_v2_transition(struct logger *logger,
 
 extern const struct v2_exchange v2_IKE_SA_INIT_exchange;
 extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;
+extern const struct v2_exchange v2_IKE_AUTH_EAP_exchange;
 extern const struct v2_exchange v2_IKE_AUTH_exchange;
 
 extern const struct v2_transitions v2_ESTABLISHED_IKE_SA_transitions;

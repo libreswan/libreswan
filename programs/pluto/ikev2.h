@@ -106,6 +106,7 @@ struct v2_transitions {
 };
 
 struct v2_exchange {
+	const enum isakmp_xchg_type type;
 	const struct v2_transition *initiate;
 	const struct v2_transitions *respond;
 	const struct v2_transitions *response;

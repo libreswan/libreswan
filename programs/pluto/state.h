@@ -230,6 +230,7 @@ struct finite_state {
 		} v1;
 		struct {
 			const struct v2_transitions *transitions;
+			const struct v2_exchanges *exchanges;
 			bool secured; /* hence, exchanges must be integrity protected */
 		} v2;
 	};

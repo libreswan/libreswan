@@ -524,6 +524,7 @@ static const struct v2_transition v2_INFORMATIONAL_initiate_redirect_ike_exchang
 };
 
 static const struct v2_exchange v2_redirect_ike_exchange = {
+	.type = ISAKMP_v2_INFORMATIONAL,
 	.initiate = &v2_INFORMATIONAL_initiate_redirect_ike_exchange,
 	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };

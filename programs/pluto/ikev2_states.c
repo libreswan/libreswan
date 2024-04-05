@@ -120,6 +120,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	};								\
 									\
 	const struct v2_exchange v2_##KIND##_exchange = {		\
+		.type = ISAKMP_v2_##KIND,				\
 		.initiate = &v2_##KIND##_initiate_exchange,		\
 		.response = &v2_##KIND##_response_transitions,		\
 	}
@@ -344,6 +345,7 @@ static const struct v2_transition IKE_AUTH_I_transitions[] = {
 S(IKE_AUTH_I, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
 const struct v2_exchange v2_IKE_AUTH_exchange = {
+	.type = ISAKMP_v2_IKE_AUTH,
 	.initiate = &v2_IKE_AUTH_initiate_exchange,
 	.response = &v2_IKE_AUTH_I_transitions,
 };

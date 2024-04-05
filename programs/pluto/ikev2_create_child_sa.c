@@ -547,6 +547,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_initiate_rekey_child_exchan
 };
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
+	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.initiate = &v2_CREATE_CHILD_SA_initiate_rekey_child_exchange,
 	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
@@ -835,6 +836,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_initiate_new_child_exchange
 };
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
+	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.initiate = &v2_CREATE_CHILD_SA_initiate_new_child_exchange,
 	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
@@ -1498,6 +1500,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange
 };
 
 static const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
+	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.initiate = &v2_CREATE_CHILD_SA_initiate_rekey_ike_exchange,
 	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
