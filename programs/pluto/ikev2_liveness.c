@@ -290,7 +290,7 @@ static stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
-static const struct v2_transition v2_INFORMATIONAL_initiate_liveness_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition = {
 	.story = "liveness probe",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -319,7 +319,7 @@ static const struct v2_transitions v2_INFORMATIONAL_liveness_response_transition
 
 const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.initiate = &v2_INFORMATIONAL_initiate_liveness_exchange,
+	.initiate = &v2_INFORMATIONAL_liveness_initiate_transition,
 	.response = &v2_INFORMATIONAL_liveness_response_transitions,
 };
 

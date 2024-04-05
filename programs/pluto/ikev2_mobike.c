@@ -510,18 +510,18 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	 */
 
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
-	static const struct v2_transition v2_INFORMATIONAL_initiate_mobike_probe_exchange = {
+	static const struct v2_transition v2_INFORMATIONAL_mobike_initiate_transition = {
 		.story = "MOBIKE",
 		.from = { &state_v2_ESTABLISHED_IKE_SA, },
 		.to = &state_v2_ESTABLISHED_IKE_SA,
 	};
-	static const struct v2_exchange v2_mobike_probe_exchange = {
+	static const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
 		.type = ISAKMP_v2_INFORMATIONAL,
-		.initiate = &v2_INFORMATIONAL_initiate_mobike_probe_exchange,
+		.initiate = &v2_INFORMATIONAL_mobike_initiate_transition,
 		.response = &v2_ESTABLISHED_IKE_SA_transitions,
 	};
 
-	v2_msgid_start_record_n_send(ike, &v2_mobike_probe_exchange);
+	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_mobike_exchange);
 	stf_status e = record_v2_informational_request("mobike informational request",
 						       ike, &ike->sa/*sender*/,
 						       add_mobike_payloads);

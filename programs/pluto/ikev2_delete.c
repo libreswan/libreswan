@@ -119,7 +119,7 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
 }
 
-static const struct v2_transition v2_INFORMATIONAL_initiate_delete_ike_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_delete_ike_initiate_transition = {
 	.story = "delete IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_IKE_SA_DELETE,
@@ -129,9 +129,9 @@ static const struct v2_transition v2_INFORMATIONAL_initiate_delete_ike_exchange 
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_exchange v2_delete_ike_exchange = {
+static const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.initiate = &v2_INFORMATIONAL_initiate_delete_ike_exchange,
+	.initiate = &v2_INFORMATIONAL_delete_ike_initiate_transition,
 	.response = &v2_IKE_SA_DELETE_transitions,
 };
 
@@ -182,7 +182,7 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
  * XXX: where to put this?
  */
 
-static const struct v2_transition v2_INFORMATIONAL_initiate_delete_child_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_delete_child_initiate_transition = {
 	.story = "delete CHILD SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -192,17 +192,17 @@ static const struct v2_transition v2_INFORMATIONAL_initiate_delete_child_exchang
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_exchange v2_delete_child_exchange = {
+static const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.initiate = &v2_INFORMATIONAL_initiate_delete_child_exchange,
+	.initiate = &v2_INFORMATIONAL_delete_child_initiate_transition,
 	.response = &v2_ESTABLISHED_IKE_SA_transitions,
 };
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
 	const struct v2_exchange *exchange =
-		(child != NULL ? &v2_delete_child_exchange :
-		 &v2_delete_ike_exchange);
+		(child != NULL ? &v2_INFORMATIONAL_delete_child_exchange :
+		 &v2_INFORMATIONAL_delete_ike_exchange);
 	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
 	v2_msgid_queue_exchange(ike, child, exchange);
 }
@@ -563,7 +563,7 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 		return;
 	}
 
-	v2_msgid_start_record_n_send(ike, &v2_delete_ike_exchange);
+	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_delete_ike_exchange);
 	record_v2_delete(ike, &ike->sa);
 	send_recorded_v2_message(ike, "delete notification",
 				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);

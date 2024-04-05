@@ -132,7 +132,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 									\
 	const struct v2_exchange v2_##KIND##_exchange = {		\
 		.type = ISAKMP_v2_##KIND,				\
-		.initiate = &v2_##KIND##_initiate_exchange,		\
+		.initiate = &v2_##KIND##_initiate_transition,		\
 		.response = &v2_##KIND##_response_transitions,		\
 	}
 
@@ -223,7 +223,7 @@ static const struct v2_transition IKE_SA_INIT_I0_transitions[] = {
 
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-static const struct v2_transition v2_IKE_SA_INIT_initiate_exchange = {
+static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
@@ -304,7 +304,7 @@ E(IKE_SA_INIT, ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
  * Initiate IKE_AUTH
  */
 
-static const struct v2_transition v2_IKE_AUTH_initiate_exchange = {
+static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.story      = "initiating IKE_AUTH",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_AUTH_I,
@@ -357,7 +357,7 @@ S(IKE_AUTH_I, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
 
 const struct v2_exchange v2_IKE_AUTH_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
-	.initiate = &v2_IKE_AUTH_initiate_exchange,
+	.initiate = &v2_IKE_AUTH_initiate_transition,
 	.response = &v2_IKE_AUTH_I_transitions,
 };
 
@@ -496,7 +496,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
-static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_exchange = {
+static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_INTERMEDIATE_I,
