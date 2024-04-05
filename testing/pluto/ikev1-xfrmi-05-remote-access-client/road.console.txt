@@ -16,10 +16,12 @@ road #
 "modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
+"modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
 "modecfg-road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
 "modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 "modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
+"modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
 "modecfg-road-eastnet-psk" #1: sent Aggressive Mode request
 "modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
