@@ -27,7 +27,7 @@ east #
 "westnet-eastnet-aes256":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-aes256":   routing: unrouted;
 "westnet-eastnet-aes256":   conn serial: $1;
-"westnet-eastnet-aes256":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536
+"westnet-eastnet-aes256":   IKE algorithms: AES_CBC_128-HMAC_SHA1-MODP2048, AES_CBC_128-HMAC_SHA1-MODP1536, AES_CBC_128-HMAC_SHA1-DH19
 "westnet-eastnet-aes256":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96
 east #
  echo "initdone"
