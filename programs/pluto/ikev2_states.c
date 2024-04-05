@@ -878,17 +878,6 @@ static const struct v2_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "Informational Response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
-	  .processor  = process_v2_INFORMATIONAL_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
 };
 
 S(ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);

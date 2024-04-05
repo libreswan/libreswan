@@ -21,8 +21,4 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 					    struct child_sa *null_child,
 					    struct msg_digest *md);
 
-stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
-					     struct child_sa *null_child,
-					     struct msg_digest *md);
-
 #endif
