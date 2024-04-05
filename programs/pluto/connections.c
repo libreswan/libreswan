@@ -2729,8 +2729,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			llog(RC_INFORMATIONAL, c->logger,
 			     "ignored ike= option for type=passthrough connection");
 		}
-	} else if (!wm->authby.never && (wm->ike != NULL ||
-					 wm->ike_version == IKEv2)) {
+	} else {
 		const struct proposal_policy proposal_policy = {
 			/* logic needs to match pick_initiator() */
 			.version = c->config->ike_version,
