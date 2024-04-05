@@ -513,7 +513,16 @@ static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 					       ike, &ike->sa, add_redirect_payload);
 }
 
-static const struct v2_transition v2_INFORMATIONAL_initiate_redirect_ike_exchange = {
+static stf_status process_v2_INFORMATIONAL_redirect_ike_response(struct ike_sa *ike,
+								 struct child_sa *null_child,
+								 struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, md != NULL);
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	return STF_OK;
+}
+
+static const struct v2_transition v2_INFORMATIONAL_redirect_ike_initiate_transition = {
 	.story = "redirect IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -523,10 +532,27 @@ static const struct v2_transition v2_INFORMATIONAL_initiate_redirect_ike_exchang
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_exchange v2_redirect_ike_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_redirect_ike_response_transition[] = {
+	{ .story      = "Informational Response",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N),
+	  .processor  = process_v2_INFORMATIONAL_redirect_ike_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_redirect_ike_response_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_redirect_ike_response_transition),
+};
+
+const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.initiate = &v2_INFORMATIONAL_initiate_redirect_ike_exchange,
-	.response = &v2_ESTABLISHED_IKE_SA_transitions,
+	.initiate = &v2_INFORMATIONAL_redirect_ike_initiate_transition,
+	.response = &v2_INFORMATIONAL_redirect_ike_response_transitions,
 };
 
 void find_and_active_redirect_states(const char *conn_name,
@@ -553,8 +579,8 @@ void find_and_active_redirect_states(const char *conn_name,
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
 			cnt++;
-			pexpect(v2_redirect_ike_exchange.initiate->exchange == ISAKMP_v2_INFORMATIONAL);
-			v2_msgid_queue_exchange(ike, NULL, &v2_redirect_ike_exchange);
+			pexpect(v2_INFORMATIONAL_redirect_ike_exchange.initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_redirect_ike_exchange);
 		}
 	}
 

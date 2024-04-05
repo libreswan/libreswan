@@ -57,6 +57,7 @@ extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;
 extern const struct v2_exchange v2_IKE_AUTH_EAP_exchange;
 extern const struct v2_exchange v2_IKE_AUTH_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_liveness_exchange;
+extern const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange;
 
 extern const struct v2_transitions v2_ESTABLISHED_IKE_SA_transitions;
 extern const struct v2_transitions v2_IKE_SA_DELETE_transitions;
