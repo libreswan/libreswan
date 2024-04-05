@@ -1296,6 +1296,76 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 	}
 }
 
+static void ldbg_transition(struct logger *logger, const char *indent,
+			    const struct v2_transition *t)
+{
+	if (DBGP(DBG_BASE)) {
+
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, indent);
+			jam_string(buf, "-> ");
+			jam_string(buf, (t->to == NULL ? "<NULL>" :
+					 t->to->short_name));
+			jam_string(buf, "; ");
+			jam_enum_short(buf, &event_type_names, t->timeout_event);
+		}
+
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, indent);
+			jam_string(buf, "   ");
+			switch (t->recv_role) {
+			case NO_MESSAGE:
+				/* reverse polarity */
+				jam_string(buf, "initiate");
+				break;
+			case MESSAGE_REQUEST:
+				jam_string(buf, "respond");
+				break;
+			case MESSAGE_RESPONSE:
+				jam_string(buf, "response");
+				break;
+			default:
+				bad_case(t->recv_role);
+			}
+			jam_string(buf, ": ");
+			jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
+			jam_string(buf, "; ");
+			jam_string(buf, "payloads: ");
+			FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
+				if (payloads->required == LEMPTY &&
+				    payloads->optional == LEMPTY) {
+					continue;
+				}
+				bool encrypted = (payloads == &t->encrypted_payloads);
+				/* assumes SK is last!!! */
+				if (encrypted) {
+					jam_string(buf, " {");
+				}
+				const char *sep = "";
+				FOR_EACH_THING(payload, &payloads->required, &payloads->optional) {
+					if (*payload == LEMPTY) continue;
+					bool optional = (payload == &payloads->optional);
+					jam_string(buf, sep); sep = " ";
+					if (optional) jam(buf, "[");
+					jam_lset_short(buf, &ikev2_payload_names, optional ? "] [" : " ", *payload);
+					if (optional) jam(buf, "]");
+				}
+				if (payloads->notification != 0) {
+					jam(buf, " N(");
+					jam_enum_short(buf, &v2_notification_names, payloads->notification);
+					jam(buf, ")");
+				}
+				if (encrypted) {
+					jam(buf, "}");
+				}
+			}
+		}
+
+		DBG_log("%s   story: %s", indent, t->story);
+	}
+}
+
+
 void init_ikev2_states(struct logger *logger)
 {
 	ldbg(logger, "checking IKEv2 state table");
@@ -1346,6 +1416,10 @@ void init_ikev2_states(struct logger *logger)
 		passert(from->kind == kind);
 		passert(from->ike_version == IKEv2);
 
+		/*
+		 * Validate transitions.
+		 */
+
 		FOR_EACH_ITEM(t, from->v2.transitions) {
 
 			bool found_from = false;
@@ -1362,67 +1436,7 @@ void init_ikev2_states(struct logger *logger)
 			passert(to->kind < STATE_IKEv2_ROOF);
 			passert(to->ike_version == IKEv2);
 
-			if (DBGP(DBG_BASE)) {
-
-				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-					jam_string(buf, "    -> ");
-					jam_string(buf, to->short_name);
-					jam_string(buf, "; ");
-					jam_enum_short(buf, &event_type_names, t->timeout_event);
-				}
-
-				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-					jam_string(buf, "       ");
-					switch (t->recv_role) {
-					case NO_MESSAGE:
-						/* reverse polarity */
-						jam_string(buf, "initiate");
-						break;
-					case MESSAGE_REQUEST:
-						jam_string(buf, "respond");
-						break;
-					case MESSAGE_RESPONSE:
-						jam_string(buf, "response");
-						break;
-					default:
-						bad_case(t->recv_role);
-					}
-					jam_string(buf, ": ");
-					jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
-					jam_string(buf, "; ");
-					jam_string(buf, "payloads: ");
-					FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
-						if (payloads->required == LEMPTY &&
-						    payloads->optional == LEMPTY) {
-							continue;
-						}
-						bool encrypted = (payloads == &t->encrypted_payloads);
-						/* assumes SK is last!!! */
-						if (encrypted) {
-							jam_string(buf, " {");
-						}
-						const char *sep = "";
-						FOR_EACH_THING(payload, &payloads->required, &payloads->optional) {
-							if (*payload == LEMPTY) continue;
-							bool optional = (payload == &payloads->optional);
-							jam_string(buf, sep); sep = " ";
-							if (optional) jam(buf, "[");
-							jam_lset_short(buf, &ikev2_payload_names, optional ? "] [" : " ", *payload);
-							if (optional) jam(buf, "]");
-						}
-						if (payloads->notification != 0) {
-							jam(buf, " N(");
-							jam_enum_short(buf, &v2_notification_names, payloads->notification);
-							jam(buf, ")");
-						}
-						if (encrypted) {
-							jam(buf, "}");
-						}
-					}
-				}
-
-				DBG_log("       story: %s", t->story);
-			}
+			ldbg_transition(logger, "     ", t);
 
 			/*
 			 * Check that the NOTIFY -> PBS ->
@@ -1458,6 +1472,33 @@ void init_ikev2_states(struct logger *logger)
 			 */
 			passert(t->llog_success != NULL);
 
+		}
+
+		/*
+		 * Validate exchanges.
+		 */
+
+		FOR_EACH_ITEM(exchange, from->v2.exchanges) {
+			const enum isakmp_xchg_type ix = (*exchange)->type;
+			enum_buf ixb;
+			ldbg(logger, "     => %s",
+			     str_enum_short(&ikev2_exchange_names, ix, &ixb));
+			if ((*exchange)->initiate != NULL) {
+				ldbg(logger, "        => initiator");
+				ldbg_transition(logger, "           ", (*exchange)->initiate);
+			}
+			if ((*exchange)->respond != NULL) {
+				ldbg(logger, "        => respond");
+				FOR_EACH_ITEM(t, (*exchange)->respond) {
+					ldbg_transition(logger, "           ", t);
+				}
+			}
+			if ((*exchange)->response != NULL) {
+				ldbg(logger, "        => response");
+				FOR_EACH_ITEM(t, (*exchange)->response) {
+					ldbg_transition(logger, "           ", t);
+				}
+			}
 		}
 
 	}
