@@ -35,6 +35,7 @@
 #include "ikev2.h"			/* for struct v2_transition */
 #include "ikev2_liveness.h"
 #include "ikev2_states.h"
+#include "demux.h"			/* for v2_msg_role() */
 
 static stf_status send_v2_liveness_request(struct ike_sa *ike,
 					   struct child_sa *child UNUSED,
@@ -273,11 +274,23 @@ void liveness_check(struct state *st)
 			  "backup for liveness probe");
 }
 
+static stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
+							     struct child_sa *null_child,
+							     struct msg_digest *md)
+{
+	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	PEXPECT(ike->sa.logger, null_child == NULL);
+
+	ldbg(ike->sa.logger, "received an INFORMATIONAL liveness check response");
+	pstats_ike_dpd_recv++;
+	return STF_OK;
+}
+
 /*
  * XXX: where to put this?
  */
 
-static const struct v2_transition v2_INFORMATIONAL_initiate_liveness_probe_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_initiate_liveness_exchange = {
 	.story = "liveness probe",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
@@ -287,15 +300,32 @@ static const struct v2_transition v2_INFORMATIONAL_initiate_liveness_probe_excha
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_exchange v2_liveness_probe_exchange = {
+static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[] = {
+	{ .story      = "Informational Response (liveness probe)",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .processor  = process_v2_INFORMATIONAL_liveness_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_liveness_response_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_liveness_response_transition),
+};
+
+const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.initiate = &v2_INFORMATIONAL_initiate_liveness_probe_exchange,
-	.response = &v2_ESTABLISHED_IKE_SA_transitions,
+	.initiate = &v2_INFORMATIONAL_initiate_liveness_exchange,
+	.response = &v2_INFORMATIONAL_liveness_response_transitions,
 };
 
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
-	const struct v2_exchange *exchange = &v2_liveness_probe_exchange;
+	const struct v2_exchange *exchange = &v2_INFORMATIONAL_liveness_exchange;
 	if (!v2_transition_from(exchange->initiate, ike->sa.st_state)) {
 		llog_sa(RC_LOG, ike,
 			"liveness: IKE SA in state %s but should be in state ESTABLISHED_IKE_SA; liveness for "PRI_SO" ignored",

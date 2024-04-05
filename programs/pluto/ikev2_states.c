@@ -867,17 +867,6 @@ static const struct v2_transition ESTABLISHED_IKE_SA_transitions[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "Informational Response (liveness probe)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .processor  = process_v2_INFORMATIONAL_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
 	{ .story      = "Informational Request",
 	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
