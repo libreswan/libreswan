@@ -1278,7 +1278,7 @@ bool ikev1_out_main_sa(struct pbs_out *outs, struct ike_sa *ike)
 	return ikev1_out_oakley_sa(outs, auth_method, ike, false);
 }
 
-static enum ikev1_auth_method aggr_auth_method(struct connection *c)
+static enum ikev1_auth_method aggr_auth_method(const struct connection *c)
 {
 	/*
 	 * IKEv1 auth is symmetric
@@ -1321,23 +1321,7 @@ static enum ikev1_auth_method aggr_auth_method(struct connection *c)
 bool ikev1_out_aggr_sa(struct pbs_out *outs, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-
-	/*
-	 * Construct the proposals by combining ALG_INFO_IKE with the
-	 * AUTH (proof of identity) extracted from the (default?)
-	 * SADB.  As if by magic, attrs[2] is always the
-	 * authentication method.
-	 *
-	 * XXX: Should replace SADB with a simple map to the auth
-	 * method.
-	 */
-	const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(ike->sa.st_connection);
-	struct db_attr *sadb_auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
-	passert(sadb_auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-	enum ikev1_auth_method sadb_auth_method = sadb_auth->val;
-
 	enum ikev1_auth_method auth_method = aggr_auth_method(c);
-	PASSERT(ike->sa.logger, sadb_auth_method == auth_method);
 
 	return ikev1_out_oakley_sa(outs, auth_method, ike, true);
 }
@@ -2203,22 +2187,10 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	}
 
 	/*
-	 * Construct the proposals by combining IKE_PROPOSALS with the
-	 * AUTH (proof of identity) extracted from the aggressive mode
-	 * SADB.  As if by magic, attrs[2] is always the
-	 * authentication method.
-	 *
-	 * XXX: Should replace IKEv1_oakley_am_sadb() with a simple
-	 * map to the auth method.
-	 */
-	const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(c);
-	const struct db_attr *sadb_auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
-	passert(sadb_auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
-	enum ikev1_auth_method sadb_auth_method = sadb_auth->val;
-	/*
 	 * Max transforms == 2 - Multiple transforms, 1 DH
 	 * group
 	 */
+	enum ikev1_auth_method sadb_auth_method = aggr_auth_method(c);
 	struct db_sa *revised_sadb = oakley_alg_mergedb(c->config->ike_proposals,
 							sadb_auth_method, true,
 							ike->sa.logger);

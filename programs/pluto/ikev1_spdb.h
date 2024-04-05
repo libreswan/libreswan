@@ -107,11 +107,6 @@ struct db_sa {
 };
 
 /*
- * ISAKMP policies.
- */
-extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(const struct connection *c);
-
-/*
  * The ipsec sadb is subscripted by a bitset with members from
  * POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS.
  */
