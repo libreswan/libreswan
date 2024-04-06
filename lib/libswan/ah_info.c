@@ -62,6 +62,10 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
 
 static const char default_v1_ah_proposals[] =
 	"SHA1_96" /*???*/
+	","
+	"SHA2_512"
+	","
+	"SHA2_256"
 	;
 
 const struct proposal_defaults v1_ah_defaults = {
