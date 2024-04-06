@@ -193,9 +193,9 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
 }
 
-stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
-						struct child_sa *null_child,
-						struct msg_digest *null_md)
+static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
+						       struct child_sa *null_child,
+						       struct msg_digest *null_md)
 {
 	PEXPECT(ike->sa.logger, null_child == NULL);
 	PEXPECT(ike->sa.logger, null_md == NULL);
@@ -320,9 +320,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
-						struct child_sa *unused_child UNUSED,
-						struct msg_digest *md)
+static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
+						       struct child_sa *unused_child UNUSED,
+						       struct msg_digest *md)
 {
 	/*
 	 * The function below always schedules a dh calculation - even
@@ -427,3 +427,31 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 	return next_v2_exchange(ike, md, &v2_IKE_AUTH_exchange, HERE);
 #endif
 }
+
+
+static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
+	{ .story      = "processing IKE_INTERMEDIATE response",
+	  .from = { &state_v2_IKE_INTERMEDIATE_I, },
+	  .to = &state_v2_IKE_INTERMEDIATE_IR,
+	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .message_payloads.optional = LEMPTY,
+	  .processor  = process_v2_IKE_INTERMEDIATE_response,
+	  .llog_success = llog_v2_success_exchange_processed,
+	  .timeout_event = EVENT_v2_DISCARD, },
+};
+
+static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
+	.story      = "initiating IKE_INTERMEDIATE",
+	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
+	.to = &state_v2_IKE_INTERMEDIATE_I,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+V2_EXCHANGE(IKE_INTERMEDIATE,
+	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
