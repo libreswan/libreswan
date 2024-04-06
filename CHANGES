@@ -7,9 +7,9 @@ v4.15 (Unreleased)
 * IKEv1: reject ESP proposal combining AEAD and non-empty INTEG [Andrew]
 * IKEv1: reject exchange when connection has no proposals [Andrew]
 * IKEv1: limit default cryptosuite [Andrew, Paul, Tuomo]
-  ike={AES_CBC,3DES_CBC}-{HMAC_SHA2_256,HMAC_SHA2_512HMAC_SHA1}-{MODP2048,MODP1536,DH19,DH31}
-  esp={AES_CBC,3DES_CBC}-{HMAC_SHA1_96,HMAC_SHA2_512_256,HMAC_SHA2_256_128}-{AES_GCM_16_128,AES_GCM_16_256}
-  ah=HMAC_SHA1_96
+  IKE={AES_CBC,3DES_CBC}-{HMAC_SHA2_256,HMAC_SHA2_512HMAC_SHA1}-{MODP2048,MODP1536,DH19,DH31}
+  ESP={AES_CBC,3DES_CBC}-{HMAC_SHA1_96,HMAC_SHA2_512_256,HMAC_SHA2_256_128}-{AES_GCM_16_128,AES_GCM_16_256}
+  AH=HMAC_SHA1_96+HMAC_SHA2_512_256+HMAC_SHA2_256_128
 
 v4.14 (March 11, 2024)
 * Fix compile error in 4.13 in gntoid() [Andrew]
