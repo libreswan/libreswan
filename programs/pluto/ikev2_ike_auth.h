@@ -21,11 +21,7 @@
 stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, struct msg_digest *md);
 
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
 
 bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirect);
-
-extern ikev2_state_transition_fn initiate_v2_IKE_AUTH_request;
 
 #endif

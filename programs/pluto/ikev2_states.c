@@ -191,67 +191,6 @@ static const struct v2_transition IKE_SA_INIT_I0_transitions[] = {
 
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-/*
- * Initiate IKE_AUTH
- */
-
-static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
-	.story      = "initiating IKE_AUTH",
-	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
-	.to = &state_v2_IKE_AUTH_I,
-	.exchange   = ISAKMP_v2_IKE_AUTH,
-	.processor  = initiate_v2_IKE_AUTH_request,
-	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
-};
-
-static const struct v2_transition IKE_AUTH_I_transitions[] = {
-
-	/* STATE_V2_IKE_AUTH_I: R2 -->
-	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
-	 *                               SAr2, TSi, TSr}
-	 * [Parent SA established]
-	 */
-
-	/*
-	 * This pair of state transitions should be merged?
-	 */
-
-	{ .story      = "Initiator: process IKE_AUTH response",
-	  .from = { &state_v2_IKE_AUTH_I, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDr) | v2P(AUTH),
-	  .encrypted_payloads.optional = v2P(CERT) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_response,
-	  .llog_success = ldbg_v2_success,/* logged mid transition */
-	  .timeout_event = EVENT_v2_REPLACE,
-	},
-
-	{ .story      = "Initiator: processing IKE_AUTH failure response",
-	  .from = { &state_v2_IKE_AUTH_I, },
-	  .to = &state_v2_IKE_AUTH_I,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads = { .required = v2P(SK), },
-	  /* .encrypted_payloads = { .required = v2P(N), }, */
-	  .processor  = process_v2_IKE_AUTH_failure_response,
-	  .llog_success = llog_v2_success_state_story,
-	},
-
-};
-
-S(IKE_AUTH_I, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true);
-
-const struct v2_exchange v2_IKE_AUTH_exchange = {
-	.type = ISAKMP_v2_IKE_AUTH,
-	.initiate = &v2_IKE_AUTH_initiate_transition,
-	.response = &v2_IKE_AUTH_I_transitions,
-};
-
 static const struct v2_transition IKE_SA_INIT_R0_transitions[] = {
 
 	/* no state: none I1 --> R1

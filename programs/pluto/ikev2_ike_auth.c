@@ -91,9 +91,9 @@ static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
-stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
-					struct child_sa *null_child_sa,
-					struct msg_digest *null_md)
+static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
+					       struct child_sa *null_child_sa,
+					       struct msg_digest *null_md)
 {
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	PEXPECT(ike->sa.logger, null_md == NULL);
@@ -992,8 +992,9 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *st, struct msg_digest *md);
 
-stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike, struct child_sa *unused_child UNUSED,
-					struct msg_digest *md)
+static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
+					       struct child_sa *unused_child UNUSED,
+					       struct msg_digest *md)
 {
 	/*
 	 * If the initiator rejects the responders authentication it
@@ -1209,9 +1210,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
  * the same response.
  */
 
-stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
-						struct child_sa *unused_child UNUSED,
-						struct msg_digest *md)
+static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
+						       struct child_sa *unused_child UNUSED,
+						       struct msg_digest *md)
 {
 	struct child_sa *child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 
@@ -1316,3 +1317,62 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 	return STF_FATAL;
 }
+
+#define STATE_V2_IKE_AUTH_IR STATE_V2_ESTABLISHED_IKE_SA
+
+/*
+ * Initiate IKE_AUTH
+ */
+
+static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
+	.story      = "initiating IKE_AUTH",
+	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
+	.to = &state_v2_IKE_AUTH_I,
+	.exchange   = ISAKMP_v2_IKE_AUTH,
+	.processor  = initiate_v2_IKE_AUTH_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
+
+	/* STATE_V2_IKE_AUTH_I: R2 -->
+	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
+	 *                               SAr2, TSi, TSr}
+	 * [Parent SA established]
+	 */
+
+	/*
+	 * This pair of state transitions should be merged?
+	 */
+
+	{ .story      = "Initiator: process IKE_AUTH response",
+	  .from = { &state_v2_IKE_AUTH_I, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDr) | v2P(AUTH),
+	  .encrypted_payloads.optional = v2P(CERT) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
+	  .processor  = process_v2_IKE_AUTH_response,
+	  .llog_success = ldbg_v2_success,/* logged mid transition */
+	  .timeout_event = EVENT_v2_REPLACE,
+	},
+
+	{ .story      = "Initiator: processing IKE_AUTH failure response",
+	  .from = { &state_v2_IKE_AUTH_I, },
+	  .to = &state_v2_IKE_AUTH_I,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads = { .required = v2P(SK), },
+	  /* .encrypted_payloads = { .required = v2P(N), }, */
+	  .processor  = process_v2_IKE_AUTH_failure_response,
+	  .llog_success = llog_v2_success_state_story,
+	},
+
+};
+
+V2_EXCHANGE(IKE_AUTH, "",
+	    CAT_OPEN_IKE_SA, CAT_ESTABLISHED_IKE_SA,
+	    /*secured*/true);
