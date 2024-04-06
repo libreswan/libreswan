@@ -1443,9 +1443,9 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
  * IKE_INTERMEDIATE paths.
  */
 
-stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
-					   struct child_sa *unused_child UNUSED,
-					   struct msg_digest *md)
+static stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
+						  struct child_sa *unused_child UNUSED,
+						  struct msg_digest *md)
 {
 	v2_notification_t n;
 	struct connection *c = ike->sa.st_connection;
@@ -1710,3 +1710,81 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 
 	return next_v2_exchange(ike, md, next_exchange, HERE);
 }
+
+static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
+	/* no state:   --> I1
+	 * HDR, SAi1, KEi, Ni -->
+	 */
+	.story      = "initiating IKE_SA_INIT",
+	.from = { &state_v2_IKE_SA_INIT_I0, },
+	.to = &state_v2_IKE_SA_INIT_I,
+	.exchange   = ISAKMP_v2_IKE_SA_INIT,
+	.processor  = NULL, /* XXX: should be set */
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
+
+static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
+
+	/* STATE_V2_IKE_SA_INIT_I: R1B --> I1B
+	 *                     <--  HDR, N
+	 * HDR, N, SAi1, KEi, Ni -->
+	 */
+
+	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
+	  .from = { &state_v2_IKE_SA_INIT_I, },
+	  .to = &state_v2_IKE_SA_INIT_I0,
+	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(N),
+	  .message_payloads.notification = v2N_COOKIE,
+	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
+	  .from = { &state_v2_IKE_SA_INIT_I, },
+	  .to = &state_v2_IKE_SA_INIT_I0,
+	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(N),
+	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
+	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
+	  .from = { &state_v2_IKE_SA_INIT_I, },
+	  .to = &state_v2_IKE_SA_INIT_I0, /* XXX: never happens STF_SUSPEND */
+	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(N),
+	  .message_payloads.notification = v2N_REDIRECT,
+	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_v2_DISCARD,
+	},
+
+	/* STATE_V2_IKE_SA_INIT_I: R1 --> I2
+	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
+	 * HDR, SK {IDi, [CERT,] [CERTREQ,]
+	 *      [IDr,] AUTH, SAi2,
+	 *      TSi, TSr}      -->
+	 */
+	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
+	  .from = { &state_v2_IKE_SA_INIT_I, },
+	  .to = &state_v2_IKE_SA_INIT_IR, /* next exchange does IKE_AUTH | IKE_INTERMEDIATE */
+	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Nr),
+	  .message_payloads.optional = v2P(CERTREQ),
+	  .processor  = process_v2_IKE_SA_INIT_response,
+	  .llog_success = llog_v2_IKE_SA_INIT_success,
+	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
+	},
+
+};
+
+V2_EXCHANGE(IKE_SA_INIT,
+	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);

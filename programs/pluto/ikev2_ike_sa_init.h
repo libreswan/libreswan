@@ -23,7 +23,6 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       bool background);
 
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
-extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
