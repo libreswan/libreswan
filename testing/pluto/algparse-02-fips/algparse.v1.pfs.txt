@@ -314,6 +314,8 @@ algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 	ERROR: more than one IKEv1 ESP DH algorithm (MODP8192, MODP2048) is not allowed in quick mode
 algparse -fips -v1 -pfs 'ah'
 	HMAC_SHA1_96
+	HMAC_SHA2_512_256
+	HMAC_SHA2_256_128
 algparse -fips -v1 -pfs 'ah='
 	ERROR: AH proposal is empty
 algparse -fips -v1 -pfs 'ah=md5'
