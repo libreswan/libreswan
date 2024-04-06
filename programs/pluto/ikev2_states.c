@@ -104,38 +104,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		.v2.secured = SECURED,					\
 	}
 
-#define E(KIND, NEXT_STORY, I_CAT, IR_CAT, SECURED)			\
-									\
-	const struct finite_state state_v2_##KIND##_I = {		\
-		.kind = STATE_V2_##KIND##_I,				\
-		.name = #KIND"_I",					\
-		.short_name = #KIND"_I",				\
-		.story = "sent "#KIND" request",			\
-		.category = I_CAT,					\
-		.ike_version = IKEv2,					\
-		.v2.secured = SECURED,					\
-	};								\
-									\
-	const struct finite_state state_v2_##KIND##_IR = {		\
-		.kind = STATE_V2_##KIND##_IR,				\
-		.name = #KIND"_IR",					\
-		.short_name = #KIND"_IR",				\
-		.story = "processed "#KIND" response"NEXT_STORY,	\
-		.category = IR_CAT,					\
-		.ike_version = IKEv2,					\
-		.v2.secured = SECURED,					\
-	};								\
-									\
-	const struct v2_transitions v2_##KIND##_response_transitions = { \
-		ARRAY_REF(v2_##KIND##_response_transition),		\
-	};								\
-									\
-	const struct v2_exchange v2_##KIND##_exchange = {		\
-		.type = ISAKMP_v2_##KIND,				\
-		.initiate = &v2_##KIND##_initiate_transition,		\
-		.response = &v2_##KIND##_response_transitions,		\
-	}
-
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -297,8 +265,8 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 };
 
-E(IKE_SA_INIT, ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
-  CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
+V2_EXCHANGE(IKE_SA_INIT, ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
 
 /*
  * Initiate IKE_AUTH
@@ -506,8 +474,8 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-E(IKE_INTERMEDIATE, ", initiating IKE_INTERMEDIATE or IKE_AUTH",
-  CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
+V2_EXCHANGE(IKE_INTERMEDIATE, ", initiating IKE_INTERMEDIATE or IKE_AUTH",
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
 
 /*
  * EAP

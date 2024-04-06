@@ -117,6 +117,39 @@ struct v2_exchanges {
 	size_t len;
 };
 
+#define V2_EXCHANGE(KIND, NEXT_STORY, I_CAT, IR_CAT, SECURED)		\
+									\
+	static const struct v2_transitions v2_##KIND##_response_transitions = { \
+		ARRAY_REF(v2_##KIND##_response_transition),		\
+	};								\
+									\
+	const struct finite_state state_v2_##KIND##_I = {		\
+		.kind = STATE_V2_##KIND##_I,				\
+		.name = #KIND"_I",					\
+		.short_name = #KIND"_I",				\
+		.story = "sent "#KIND" request",			\
+		.category = I_CAT,					\
+		.ike_version = IKEv2,					\
+		.v2.secured = SECURED,					\
+		.v2.transitions = &v2_##KIND##_response_transitions,	\
+	};								\
+									\
+	const struct finite_state state_v2_##KIND##_IR = {		\
+		.kind = STATE_V2_##KIND##_IR,				\
+		.name = #KIND"_IR",					\
+		.short_name = #KIND"_IR",				\
+		.story = "processed "#KIND" response"NEXT_STORY,	\
+		.category = IR_CAT,					\
+		.ike_version = IKEv2,					\
+		.v2.secured = SECURED,					\
+	};								\
+									\
+	const struct v2_exchange v2_##KIND##_exchange = {		\
+		.type = ISAKMP_v2_##KIND,				\
+		.initiate = &v2_##KIND##_initiate_transition,		\
+		.response = &v2_##KIND##_response_transitions,		\
+	}
+
 extern void init_ikev2(void);
 
 void event_v2_rekey(struct state *st, bool detach_whack);
