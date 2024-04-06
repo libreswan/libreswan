@@ -343,6 +343,8 @@ algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'ah'
 	HMAC_SHA1_96
+	HMAC_SHA2_512_256
+	HMAC_SHA2_256_128
 algparse -fips -v1 'ah='
 	ERROR: AH proposal is empty
 algparse -fips -v1 'ah=md5'
