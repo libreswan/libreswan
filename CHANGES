@@ -5,9 +5,9 @@ v5.0 (Unreleased)
 * IKEv1:
   - globally disabled by default (ikev1-policy=drop); see RFC9395 [Daniel]
   - limit default cryptosuite [Andrew, Paul, Tuomo]
-    ike={AES_CBC,3DES_CBC}-{HMAC_SHA2_256,HMAC_SHA2_512HMAC_SHA1}-{MODP2048,MODP1536,DH19,DH31}
-    esp={AES_CBC,3DES_CBC}-{HMAC_SHA1_96,HMAC_SHA2_512_256,HMAC_SHA2_256_128}-{AES_GCM_16_128,AES_GCM_16_256}
-    ah=HMAC_SHA1_96
+    IKE={AES_CBC,3DES_CBC}-{HMAC_SHA2_256,HMAC_SHA2_512HMAC_SHA1}-{MODP2048,MODP1536,DH19,DH31}
+    ESP={AES_CBC,3DES_CBC}-{HMAC_SHA1_96,HMAC_SHA2_512_256,HMAC_SHA2_256_128}-{AES_GCM_16_128,AES_GCM_16_256}
+    AH=HMAC_SHA1_96+HMAC_SHA2_512_256+HMAC_SHA2_256_128
   - remove support for Labeled IPsec [Andrew]
   - properly ignore dpdaction= [Andrew]
   - see also IKEv2 routing/revival changes
