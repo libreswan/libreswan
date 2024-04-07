@@ -928,71 +928,47 @@ void ikev2_process_packet(struct msg_digest *md)
 static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg_digest *md,
 						  v2_notification_t n, chunk_t *data)
 {
-	passert(md != NULL);
-	const struct finite_state *state = ike->sa.st_state;
+	PASSERT(ike->sa.logger, md != NULL);
+	enum message_role recv_role = v2_msg_role(md);
 
 	/* starting point */
 	const struct v2_transition undefined_transition = {
 		.story = "suspect message",
 		.from = { finite_states[STATE_UNDEFINED], },
 		.to = finite_states[STATE_UNDEFINED],
-		.recv_role = v2_msg_role(md),
+		.recv_role = recv_role,
 		.llog_success = ldbg_v2_success,
 	};
 	const struct v2_transition *transition = &undefined_transition;
 
-	/*
-	 * Now try to find a better transition.
-	 */
-	switch (state->kind) {
-	case STATE_V2_IKE_SA_INIT_R:
-	case STATE_V2_IKE_INTERMEDIATE_R:
-	case STATE_V2_IKE_AUTH_EAP_R:
+	switch (recv_role) {
+	case MESSAGE_REQUEST:
+	{
 		/*
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request.  Grab the last one.
 		 */
+		const struct finite_state *state = ike->sa.st_state;
+		PASSERT(ike->sa.logger, state->v2.transitions != NULL);
 		PASSERT(ike->sa.logger, state->v2.transitions->len > 0);
 		transition = &state->v2.transitions->list[state->v2.transitions->len - 1];
 		break;
-	case STATE_V2_IKE_AUTH_I:
+	}
+	case MESSAGE_RESPONSE:
 	{
 		/*
-		 * Receiving IKE_AUTH response: it is buried deep
-		 * down; would adding an extra transition that always
-		 * matches be better?
+		 * Responding to either an IKE_INTERMEDIATE or
+		 * IKE_AUTH request.  Grab the last one.
 		 */
-		unsigned transition_nr = 0;
-		pexpect(state->v2.transitions->len > transition_nr);
-		transition = &state->v2.transitions->list[transition_nr];
-		pexpect(v2_transition_from(transition, &state_v2_IKE_AUTH_I));
-		pexpect(transition->to == &state_v2_ESTABLISHED_IKE_SA);
+		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+		PASSERT(ike->sa.logger, exchange != NULL);
+		PASSERT(ike->sa.logger, exchange->response != NULL);
+		PASSERT(ike->sa.logger, exchange->response->len > 0);
+		transition = &exchange->response->list[exchange->response->len - 1];
 		break;
 	}
-	case STATE_V2_ESTABLISHED_IKE_SA:
-		/*
-		 * The transitions come in request/response pairs; the
-		 * last two are the most generic.
-		 */
-		passert(state->v2.transitions->len >= 2);
-		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST:
-			transition = &state->v2.transitions->list[state->v2.transitions->len - 2];
-			pexpect(transition->recv_role == MESSAGE_REQUEST);
-			break;
-		case MESSAGE_RESPONSE:
-			transition = &state->v2.transitions->list[state->v2.transitions->len - 1];
-			pexpect(transition->recv_role == MESSAGE_RESPONSE);
-			break;
-		default:
-			bad_case(v2_msg_role(md));
-		}
-		break;
-	default:
-		if (/*pexpect*/(state->v2.transitions->len > 0)) {
-			transition = &state->v2.transitions->list[state->v2.transitions->len - 1];
-		}
-		break;
+	case NO_MESSAGE:
+		bad_case(recv_role);
 	}
 
 	/*
