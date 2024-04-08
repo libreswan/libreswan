@@ -150,6 +150,33 @@ struct v2_exchanges {
 		.response = &v2_##KIND##_response_transitions,		\
 	}
 
+#define V2_RESPONDER(KIND, STORY, CAT, SECURED, ...)			\
+									\
+	static const struct v2_transitions v2_##KIND##_transitions = {	\
+		ARRAY_REF(v2_##KIND##_transition),			\
+	};								\
+									\
+	static const struct v2_exchange *v2_##KIND##_responder_exchange[] = { \
+		__VA_ARGS__						\
+	};								\
+									\
+	static const struct v2_exchanges v2_##KIND##_responder_exchanges = { \
+		ARRAY_REF(v2_##KIND##_responder_exchange),		\
+	};								\
+									\
+	const struct finite_state state_v2_##KIND = {			\
+		.kind = STATE_V2_##KIND,				\
+		.name = #KIND,						\
+		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
+		.short_name = #KIND,					\
+		.story = STORY,						\
+		.category = CAT,					\
+		.ike_version = IKEv2,					\
+		.v2.transitions = &v2_##KIND##_transitions,		\
+		.v2.exchanges = &v2_##KIND##_responder_exchanges,	\
+		.v2.secured = SECURED,					\
+	}
+
 extern void init_ikev2(void);
 
 void event_v2_rekey(struct state *st, bool detach_whack);
