@@ -174,6 +174,4 @@ void llog_pexpect_v2_msgid_where(where_t where, struct ike_sa *ike, const char *
 
 struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role message_role);
 
-const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike, const struct msg_digest *md);
-
 #endif

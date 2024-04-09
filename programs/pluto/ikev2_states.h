@@ -50,10 +50,9 @@ const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
 							 const struct v2_transitions *transitions,
 							 struct msg_digest *md);
 
-const struct v2_transition *find_v2_transition(struct logger *logger,
-					       const struct v2_transitions *transitions,
-					       struct msg_digest *md,
-					       bool *secured_payload_failed);
+const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
+						       struct msg_digest *md,
+						       bool *secured_payload_failed);
 
 extern const struct v2_exchange v2_IKE_SA_INIT_exchange;
 extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;

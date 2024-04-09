@@ -821,10 +821,10 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-const struct v2_transition *find_v2_transition(struct logger *logger,
-					       const struct v2_transitions *transitions,
-					       struct msg_digest *md,
-					       bool *secured_payload_failed)
+static const struct v2_transition *find_v2_transition(struct logger *logger,
+						      const struct v2_transitions *transitions,
+						      struct msg_digest *md,
+						      bool *secured_payload_failed)
 {
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
@@ -932,6 +932,28 @@ const struct v2_transition *find_v2_transition(struct logger *logger,
 	}
 	return NULL;
 
+}
+
+const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
+						       struct msg_digest *md,
+						       bool *secured_payload_failed)
+{
+	enum message_role role = v2_msg_role(md);
+	switch (role) {
+	case NO_MESSAGE:
+		break;
+	case MESSAGE_REQUEST:
+		return find_v2_transition(ike->sa.logger, ike->sa.st_state->v2.transitions,
+					  md, secured_payload_failed);
+	case MESSAGE_RESPONSE:
+	{
+		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+		PASSERT(ike->sa.logger, exchange != NULL);
+		return find_v2_transition(ike->sa.logger, exchange->response,
+					  md, secured_payload_failed);
+	}
+	}
+	bad_enum(md->logger, &message_role_names, role);
 }
 
 const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,

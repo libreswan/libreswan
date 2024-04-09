@@ -1254,8 +1254,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 
 	bool secured_payload_failed = false;
 	const struct v2_transition *svm =
-		find_v2_transition(ike->sa.logger, v2_msgid_transitions(ike, md),
-				   md, &secured_payload_failed);
+		find_v2_secured_transition(ike, md, &secured_payload_failed);
 
 	/* no useful state microcode entry? */
 	if (svm == NULL) {

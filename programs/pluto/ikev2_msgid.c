@@ -662,21 +662,3 @@ struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role me
 	}
 	bad_enum(ike->sa.logger, &message_role_names, message_role);
 }
-
-const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike,
-						  const struct msg_digest *md)
-{
-	switch (v2_msg_role(md)) {
-	case NO_MESSAGE:
-		break;
-	case MESSAGE_REQUEST:
-		return ike->sa.st_state->v2.transitions;
-	case MESSAGE_RESPONSE:
-	{
-		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
-		PASSERT(ike->sa.logger, exchange != NULL);
-		return exchange->response;
-	}
-	}
-	bad_case(v2_msg_role(md));
-}
