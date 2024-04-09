@@ -1066,6 +1066,112 @@ static void ldbg_transition(struct logger *logger, const char *indent,
 	}
 }
 
+static void validate_state_transition(struct logger *logger,
+				      const struct finite_state *from,
+				      const struct v2_transition *t)
+{
+	bool found_from = false;
+	FOR_EACH_ELEMENT(f, t->from) {
+		if (*f == from) {
+			found_from = true;
+		}
+	}
+	passert(found_from);
+
+	const struct finite_state *to = t->to;
+	passert(to != NULL);
+	passert(to->kind >= STATE_IKEv2_FLOOR);
+	passert(to->kind < STATE_IKEv2_ROOF);
+	passert(to->ike_version == IKEv2);
+
+	ldbg_transition(logger, "     ", t);
+
+	/*
+	 * Check that the NOTIFY -> PBS ->
+	 * MD.pbs[]!=NULL will work.
+	 */
+	if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
+		passert(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
+	}
+	if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
+		passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
+	}
+
+	passert(t->exchange != 0);
+
+	/*
+	 * Check that all transitions from a secured
+	 * state require an SK payload.
+	 */
+	passert(t->recv_role == NO_MESSAGE ||
+		LIN(v2P(SK), t->message_payloads.required) == from->v2.secured);
+
+	/*
+	 * Check that only IKE_SA_INIT transitions are
+	 * from an unsecured state.
+	 */
+	if (t->recv_role != 0) {
+		passert((t->exchange == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
+	}
+
+	/*
+	 * Check that everything has either a success story,
+	 * or suppressed logging.
+	 */
+	passert(t->llog_success != NULL);
+}
+
+static void validate_state_exchange(struct logger *logger,
+				    const struct finite_state *from UNUSED,
+				    const struct v2_exchange *exchange)
+{
+	const enum isakmp_xchg_type ix = exchange->type;
+	enum_buf ixb;
+	ldbg(logger, "     => %s",
+	     str_enum_short(&ikev2_exchange_names, ix, &ixb));
+	if (exchange->initiate != NULL) {
+		ldbg(logger, "        => initiator");
+		ldbg_transition(logger, "           ", exchange->initiate);
+	}
+	if (exchange->respond != NULL) {
+		ldbg(logger, "        => respond");
+		FOR_EACH_ITEM(t, exchange->respond) {
+			ldbg_transition(logger, "           ", t);
+		}
+	}
+	if (exchange->response != NULL) {
+		ldbg(logger, "        => response");
+		FOR_EACH_ITEM(t, exchange->response) {
+			ldbg_transition(logger, "           ", t);
+		}
+	}
+}
+
+static void validate_state(struct logger *logger, const struct finite_state *from)
+{
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "  ");
+			jam_finite_state(buf, from);
+		}
+	}
+
+	/*
+	 * Validate transitions.
+	 */
+
+	FOR_EACH_ITEM(t, from->v2.transitions) {
+		validate_state_transition(logger, from, t);
+	}
+
+	/*
+	 * Validate exchanges.
+	 */
+
+	FOR_EACH_ITEM(exchange, from->v2.exchanges) {
+		validate_state_exchange(logger, from, *exchange);
+	}
+}
 
 void init_ikev2_states(struct logger *logger)
 {
@@ -1089,6 +1195,7 @@ void init_ikev2_states(struct logger *logger)
 			llog_passert(logger, HERE, "entry %d is NULL", kind);
 		}
 		passert(fs->kind == kind);
+		passert(fs->ike_version == IKEv2);
 		passert(finite_states[kind] == NULL);
 		finite_states[kind] = fs;
 	}
@@ -1105,102 +1212,7 @@ void init_ikev2_states(struct logger *logger)
 	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
 		/* fill in using static struct */
 		const struct finite_state *from = finite_states[kind];
-
-		if (DBGP(DBG_BASE)) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "  ");
-				jam_finite_state(buf, from);
-			}
-		}
-
-		passert(from != NULL);
-		passert(from->kind == kind);
-		passert(from->ike_version == IKEv2);
-
-		/*
-		 * Validate transitions.
-		 */
-
-		FOR_EACH_ITEM(t, from->v2.transitions) {
-
-			bool found_from = false;
-			FOR_EACH_ELEMENT(f, t->from) {
-				if (*f == from) {
-					found_from = true;
-				}
-			}
-			passert(found_from);
-
-			const struct finite_state *to = t->to;
-			passert(to != NULL);
-			passert(to->kind >= STATE_IKEv2_FLOOR);
-			passert(to->kind < STATE_IKEv2_ROOF);
-			passert(to->ike_version == IKEv2);
-
-			ldbg_transition(logger, "     ", t);
-
-			/*
-			 * Check that the NOTIFY -> PBS ->
-			 * MD.pbs[]!=NULL will work.
-			 */
-			if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
-				passert(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
-			}
-			if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
-				passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
-			}
-
-			passert(t->exchange != 0);
-
-			/*
-			 * Check that all transitions from a secured
-			 * state require an SK payload.
-			 */
-			passert(t->recv_role == NO_MESSAGE ||
-				LIN(v2P(SK), t->message_payloads.required) == from->v2.secured);
-
-			/*
-			 * Check that only IKE_SA_INIT transitions are
-			 * from an unsecured state.
-			 */
-			if (t->recv_role != 0) {
-				passert((t->exchange == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
-			}
-
-			/*
-			 * Check that everything has either a success story,
-			 * or suppressed logging.
-			 */
-			passert(t->llog_success != NULL);
-
-		}
-
-		/*
-		 * Validate exchanges.
-		 */
-
-		FOR_EACH_ITEM(exchange, from->v2.exchanges) {
-			const enum isakmp_xchg_type ix = (*exchange)->type;
-			enum_buf ixb;
-			ldbg(logger, "     => %s",
-			     str_enum_short(&ikev2_exchange_names, ix, &ixb));
-			if ((*exchange)->initiate != NULL) {
-				ldbg(logger, "        => initiator");
-				ldbg_transition(logger, "           ", (*exchange)->initiate);
-			}
-			if ((*exchange)->respond != NULL) {
-				ldbg(logger, "        => respond");
-				FOR_EACH_ITEM(t, (*exchange)->respond) {
-					ldbg_transition(logger, "           ", t);
-				}
-			}
-			if ((*exchange)->response != NULL) {
-				ldbg(logger, "        => response");
-				FOR_EACH_ITEM(t, (*exchange)->response) {
-					ldbg_transition(logger, "           ", t);
-				}
-			}
-		}
+		validate_state(logger, from);
 
 	}
 
