@@ -261,18 +261,6 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
-	{ .story      = "Responder: process IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_SA_INIT_R, },
-	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi),
-	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
-	  .llog_success = llog_v2_success_state_story,
-	  .timeout_event = EVENT_v2_DISCARD, },
-
 };
 
 V2_RESPONDER(IKE_SA_INIT,
@@ -296,18 +284,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 	  .encrypted_payloads.optional = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_v2_success_exchange_processed,
-	  .timeout_event = EVENT_v2_DISCARD, },
-
-	{ .story      = "processing IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
-	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi),
-	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
-	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "processing IKE_AUTH request",

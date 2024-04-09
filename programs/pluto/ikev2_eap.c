@@ -52,6 +52,7 @@
 #include "crypt_prf.h"
 #include "ikev2_states.h"
 
+static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_start;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_final;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_continue;
 
@@ -822,6 +823,36 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
  * EAP responder transitions, there is no initiator code.
  */
 
+static const struct v2_transition v2_IKE_AUTH_EAP_exchange_responder_transition[] = {
+	{ .story      = "Responder: process IKE_AUTH(EAP) request",
+	  .from = { &state_v2_IKE_SA_INIT_R, },
+	  .to = &state_v2_IKE_AUTH_EAP_R,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi),
+	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
+	  .llog_success = llog_v2_success_state_story,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+	{ .story      = "processing IKE_AUTH(EAP) request",
+	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
+	  .to = &state_v2_IKE_AUTH_EAP_R,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi),
+	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
+	  .llog_success = llog_v2_success_state_story,
+	  .timeout_event = EVENT_v2_DISCARD, },
+};
+
+static const struct v2_transitions v2_IKE_AUTH_EAP_exchange_responder_transitions = {
+	ARRAY_REF(v2_IKE_AUTH_EAP_exchange_responder_transition),
+};
+
 static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
@@ -858,4 +889,5 @@ const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
 	.subplot = "EAP",
 	.secured = true,
+	.responder = &v2_IKE_AUTH_EAP_exchange_responder_transitions,
 };

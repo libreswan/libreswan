@@ -32,6 +32,4 @@ struct eap_state {
 
 extern void free_eap_state(struct eap_state **eap);
 
-extern ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_start;
-
 #endif
