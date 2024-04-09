@@ -131,7 +131,6 @@ struct v2_exchanges {
 		.category = I_CAT,					\
 		.ike_version = IKEv2,					\
 		.v2.secured = SECURED,					\
-		.v2.transitions = &v2_##KIND##_response_transitions,	\
 	};								\
 									\
 	const struct finite_state state_v2_##KIND##_IR = {		\
