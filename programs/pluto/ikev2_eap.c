@@ -50,6 +50,10 @@
 #include "secrets.h"
 #include "connections.h"
 #include "crypt_prf.h"
+#include "ikev2_states.h"
+
+static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_final;
+static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_continue;
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_EAP_start_signature_continue;
 
@@ -813,3 +817,43 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	md_delref(&ike->sa.st_eap_sa_md);
 	return STF_OK;
 }
+
+/*
+ * EAP responder transitions, there is no initiator code.
+ */
+
+static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
+
+	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
+	  .from = { &state_v2_IKE_AUTH_EAP_R, },
+	  .to = &state_v2_IKE_AUTH_EAP_R,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(EAP),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
+	  .llog_success = llog_v2_success_state_story,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
+	{ .story      = "Responder: process final IKE_AUTH/EAP",
+	  .from = { &state_v2_IKE_AUTH_EAP_R, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(AUTH),
+	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
+	  .llog_success = llog_v2_success_state_story,
+	  .timeout_event = EVENT_v2_REPLACE, },
+
+};
+
+V2_RESPONDER(IKE_AUTH_EAP,
+	     "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request",
+	     CAT_OPEN_IKE_SA, /*secured*/true,
+	     &v2_IKE_AUTH_EAP_exchange, &v2_IKE_AUTH_exchange);
+
+const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
+	.type = ISAKMP_v2_IKE_AUTH,
+};
