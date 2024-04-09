@@ -101,6 +101,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		.ike_version = IKEv2,					\
 		.v2.transitions = &v2_##KIND##_transitions,		\
 		.v2.exchanges = &KIND##_exchanges,			\
+		.v2.secured = true,					\
 		##__VA_ARGS__,						\
 	}
 
@@ -381,8 +382,7 @@ static const struct v2_transition REKEY_IKE_R0_transitions[] = {
 /* isn't this an ipsec state */
 
 C(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA,
-  &v2_CREATE_CHILD_SA_rekey_ike_exchange,
-  .v2.secured = true);
+  &v2_CREATE_CHILD_SA_rekey_ike_exchange);
 
 static const struct v2_transition REKEY_IKE_I1_transitions[] = {
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
@@ -400,8 +400,7 @@ static const struct v2_transition REKEY_IKE_I1_transitions[] = {
 };
 
 C(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA,
-  &v2_CREATE_CHILD_SA_rekey_ike_exchange,
-  .v2.secured = true);
+  &v2_CREATE_CHILD_SA_rekey_ike_exchange);
 
 static const struct v2_transition REKEY_CHILD_I0_transitions[] = {
 
@@ -450,8 +449,7 @@ static const struct v2_transition REKEY_CHILD_R0_transitions[] = {
 };
 
 C(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA,
-  &v2_CREATE_CHILD_SA_rekey_child_exchange,
-  .v2.secured = true);
+  &v2_CREATE_CHILD_SA_rekey_child_exchange);
 
 static const struct v2_transition REKEY_CHILD_I1_transitions[] = {
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
@@ -470,8 +468,7 @@ static const struct v2_transition REKEY_CHILD_I1_transitions[] = {
 };
 
 C(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA,
-  &v2_CREATE_CHILD_SA_rekey_child_exchange,
-  .v2.secured = true);
+  &v2_CREATE_CHILD_SA_rekey_child_exchange);
 
 static const struct v2_transition NEW_CHILD_I0_transitions[] = {
 
@@ -519,8 +516,7 @@ static const struct v2_transition NEW_CHILD_R0_transitions[] = {
 };
 
 C(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0", CAT_OPEN_CHILD_SA,
-  &v2_CREATE_CHILD_SA_new_child_exchange,
-  .v2.secured = true);
+  &v2_CREATE_CHILD_SA_new_child_exchange);
 
 static const struct v2_transition NEW_CHILD_I1_transitions[] = {
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
@@ -539,8 +535,7 @@ static const struct v2_transition NEW_CHILD_I1_transitions[] = {
 };
 
 C(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_SA,
-  &v2_CREATE_CHILD_SA_new_child_exchange,
-  .v2.secured = true);
+  &v2_CREATE_CHILD_SA_new_child_exchange);
 
 /*
  * IKEv2 established states.
@@ -711,7 +706,7 @@ const struct finite_state state_v2_ESTABLISHED_IKE_SA = {
 static const struct v2_transition ESTABLISHED_CHILD_SA_transitions[] = {
 };
 
-S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA);
+S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA, .v2.secured = true);
 
 /* ??? better story needed for these */
 
@@ -1151,6 +1146,11 @@ static void validate_state_transition(struct logger *logger,
 		LIN(v2P(SK), t->message_payloads.required) == from->v2.secured);
 
 	/*
+	 * Once secured, always secured.
+	 */
+	PASSERT(logger, to->v2.secured >= from->v2.secured);
+
+	/*
 	 * Check that only IKE_SA_INIT transitions are
 	 * from an unsecured state.
 	 */
@@ -1183,9 +1183,10 @@ static void validate_state_exchange(struct logger *logger,
 {
 	const enum isakmp_xchg_type ix = exchange->type;
 	enum_buf ixb;
-	ldbg(logger, "     => %s (%s)",
+	ldbg(logger, "     => %s (%s); secured: %s",
 	     str_enum_short(&ikev2_exchange_names, ix, &ixb),
-	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot));
+	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),
+	     bool_str(exchange->secured));
 
 	if (exchange->initiate != NULL) {
 		ldbg(logger, "        => initiator");
@@ -1207,6 +1208,7 @@ static void validate_state_exchange(struct logger *logger,
 	}
 
 	PASSERT(logger, exchange->subplot != NULL);
+	PASSERT(logger, from->v2.secured == exchange->secured);
 
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;

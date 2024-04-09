@@ -857,4 +857,5 @@ V2_RESPONDER(IKE_AUTH_EAP,
 const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
 	.subplot = "EAP",
+	.secured = true,
 };

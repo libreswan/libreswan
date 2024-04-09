@@ -552,6 +552,7 @@ static const struct v2_transitions v2_INFORMATIONAL_redirect_ike_response_transi
 const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "redirect IKE SA",
+	.secured = true,
 	.initiate = &v2_INFORMATIONAL_redirect_ike_initiate_transition,
 	.response = &v2_INFORMATIONAL_redirect_ike_response_transitions,
 };
