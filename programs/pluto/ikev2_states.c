@@ -393,7 +393,6 @@ static const struct v2_transition REKEY_IKE_I0_transitions[] = {
 	  .from = { &state_v2_REKEY_IKE_I0, },
 	  .to = &state_v2_REKEY_IKE_I1,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -464,7 +463,6 @@ static const struct v2_transition REKEY_CHILD_I0_transitions[] = {
 	  .from = { &state_v2_REKEY_CHILD_I0, },
 	  .to = &state_v2_REKEY_CHILD_I1,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -535,7 +533,6 @@ static const struct v2_transition NEW_CHILD_I0_transitions[] = {
 	  .from = { &state_v2_NEW_CHILD_I0, },
 	  .to = &state_v2_NEW_CHILD_I1,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
