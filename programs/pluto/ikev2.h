@@ -110,7 +110,7 @@ struct v2_exchange {
 	const char *subplot;
 	bool secured;
 	const struct v2_transition *initiate;
-	const struct v2_transitions *respond;
+	const struct v2_transitions *responder;
 	const struct v2_transitions *response;
 };
 

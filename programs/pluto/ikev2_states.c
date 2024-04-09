@@ -912,6 +912,7 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
+
 	enum message_role role = v2_msg_role(md);
 	switch (role) {
 	default:
@@ -920,6 +921,39 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		break;
 	case MESSAGE_REQUEST:
 	{
+		/*
+		 * Does the message match one of the responder state's
+		 * exchanges?
+		 *
+		 * For instance, the IKE_SA_INIT responder state
+		 * accepts a request for the IKE_AUTH and
+		 * IKE_INTERMEDIATE exchanges.  With a matching
+		 * exchange, look for a matching transition.
+		 */
+		FOR_EACH_ITEM(exchange, ike->sa.st_state->v2.exchanges) {
+			const struct v2_exchange *e = (*exchange);
+			if (e->type != md->hdr.isa_xchg) {
+				continue;
+			}
+			const struct v2_transition *t =
+				find_v2_transition(ike->sa.logger,
+						   e->responder,
+						   md, &message_payload_status,
+						   &encrypted_payload_status);
+			if (t != NULL) {
+				return t;
+			}
+		}
+		/*
+		 * Does the message one of the responder's
+		 * transitions.
+		 *
+		 * For instance, the IKE_AUTH(EAP) responder state has
+		 * transitions to process additional IKE_AUTH(EAP)
+		 * requests.
+		 *
+		 * XXX: but should those be merged into the above?
+		 */
 		const struct v2_transition *t =
 			find_v2_transition(ike->sa.logger,
 					   ike->sa.st_state->v2.transitions,
@@ -1289,10 +1323,9 @@ static void validate_state_exchange(struct logger *logger,
 				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
 {
-	const enum isakmp_xchg_type ix = exchange->type;
 	enum_buf ixb;
 	ldbg(logger, "     => %s (%s); secured: %s",
-	     str_enum_short(&ikev2_exchange_names, ix, &ixb),
+	     str_enum_short(&ikev2_exchange_names, exchange->type, &ixb),
 	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),
 	     bool_str(exchange->secured));
 
@@ -1301,10 +1334,12 @@ static void validate_state_exchange(struct logger *logger,
 		ldbg_transition(logger, "           ", exchange->initiate);
 	}
 
-	if (exchange->respond != NULL) {
-		ldbg(logger, "        => respond");
-		FOR_EACH_ITEM(t, exchange->respond) {
+	if (exchange->responder != NULL) {
+		ldbg(logger, "        => responder");
+		FOR_EACH_ITEM(t, exchange->responder) {
 			ldbg_transition(logger, "           ", t);
+			PASSERT(logger, t->exchange == exchange->type);
+			PASSERT(logger, t->recv_role == MESSAGE_REQUEST);
 		}
 	}
 
@@ -1321,12 +1356,18 @@ static void validate_state_exchange(struct logger *logger,
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;
 	FOR_EACH_ITEM(t, from->v2.transitions) {
-		if (t->exchange == ix) {
+		if (t->exchange == exchange->type) {
 			found_transition = true;
 			break;
 		}
 	}
-	passert(found_transition);
+	FOR_EACH_ITEM(t, exchange->responder) {
+		if (t->exchange == exchange->type) {
+			found_transition = true;
+			break;
+		}
+	}
+	PASSERT(logger, found_transition);
 }
 
 static void validate_state(struct logger *logger, const struct finite_state *from)
