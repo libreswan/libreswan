@@ -675,14 +675,6 @@ const struct v2_transitions *v2_msgid_transitions(struct ike_sa *ike,
 	{
 		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 		PASSERT(ike->sa.logger, exchange != NULL);
-		const struct finite_state *state = exchange->initiate->to;
-		/* for now, but for how long? */
-		if (PBAD(ike->sa.logger, state == NULL)) {
-			return ike->sa.st_state->v2.transitions;
-		}
-		if (PBAD(ike->sa.logger, state != ike->sa.st_state)) {
-			return ike->sa.st_state->v2.transitions;
-		}
 		return exchange->response;
 	}
 	}
