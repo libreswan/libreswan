@@ -223,7 +223,7 @@ S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request",
   .v2.secured = false,
   .v2.exchanges = &IKE_SA_INIT_exchanges);
 
-static const struct v2_transition v2_IKE_SA_INIT_R_transition[] = {
+static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -274,7 +274,7 @@ static const struct v2_transition v2_IKE_SA_INIT_R_transition[] = {
 
 };
 
-V2_RESPONDER(IKE_SA_INIT_R,
+V2_RESPONDER(IKE_SA_INIT,
 	     "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
 	     CAT_HALF_OPEN_IKE_SA, /*secured*/true,
 	     &v2_IKE_AUTH_exchange, &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_EAP_exchange);
@@ -283,7 +283,7 @@ V2_RESPONDER(IKE_SA_INIT_R,
  * IKE_INTERMEDIATE
  */
 
-static const struct v2_transition v2_IKE_INTERMEDIATE_R_transition[] = {
+static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 	{ .story      = "processing IKE_INTERMEDIATE request",
 	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
@@ -324,7 +324,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_R_transition[] = {
 
 };
 
-V2_RESPONDER(IKE_INTERMEDIATE_R,
+V2_RESPONDER(IKE_INTERMEDIATE,
 	     "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
 	     CAT_OPEN_IKE_SA, /*secured*/true,
 	     &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_exchange, &v2_IKE_AUTH_EAP_exchange);
@@ -333,7 +333,7 @@ V2_RESPONDER(IKE_INTERMEDIATE_R,
  * EAP
  */
 
-static const struct v2_transition v2_IKE_AUTH_EAP_R_transition[] = {
+static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
 	  .from = { &state_v2_IKE_AUTH_EAP_R, },
@@ -360,7 +360,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_R_transition[] = {
 
 };
 
-V2_RESPONDER(IKE_AUTH_EAP_R,
+V2_RESPONDER(IKE_AUTH_EAP,
 	     "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request",
 	     CAT_OPEN_IKE_SA, /*secured*/true,
 	     &v2_IKE_AUTH_EAP_exchange, &v2_IKE_AUTH_exchange);
@@ -586,7 +586,7 @@ C(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_
  * IKEv2 established states.
  */
 
-static const struct v2_transition v2_ESTABLISHED_IKE_SA_transition[] = {
+static const struct v2_transition v2_ESTABLISHED_IKE_SA_responder_transition[] = {
 
 	/*
 	 * IKE SA's CREATE_CHILD_SA exchange to rekey IKE SA.
@@ -715,18 +715,38 @@ static const struct v2_transition v2_ESTABLISHED_IKE_SA_transition[] = {
 
 };
 
-V2_RESPONDER(ESTABLISHED_IKE_SA, "established IKE SA",
-	     CAT_ESTABLISHED_IKE_SA, /*secured*/true,
-	     /* informational */
-	     &v2_INFORMATIONAL_liveness_exchange,
-	     &v2_INFORMATIONAL_redirect_ike_exchange,
-	     &v2_INFORMATIONAL_delete_ike_exchange,
-	     &v2_INFORMATIONAL_delete_child_exchange,
-	     &v2_INFORMATIONAL_mobike_exchange,
-	     /* child */
-	     &v2_CREATE_CHILD_SA_new_child_exchange,
-	     &v2_CREATE_CHILD_SA_rekey_child_exchange,
-	     &v2_CREATE_CHILD_SA_rekey_ike_exchange);
+static const struct v2_transitions v2_ESTABLISHED_IKE_SA_responder_transitions = {
+	ARRAY_REF(v2_ESTABLISHED_IKE_SA_responder_transition),
+};
+
+static const struct v2_exchange *v2_ESTABLISHED_IKE_SA_responder_exchange[] = {
+	/* informational */
+	&v2_INFORMATIONAL_liveness_exchange,
+	&v2_INFORMATIONAL_redirect_ike_exchange,
+	&v2_INFORMATIONAL_delete_ike_exchange,
+	&v2_INFORMATIONAL_delete_child_exchange,
+	&v2_INFORMATIONAL_mobike_exchange,
+	/* child */
+	&v2_CREATE_CHILD_SA_new_child_exchange,
+	&v2_CREATE_CHILD_SA_rekey_child_exchange,
+	&v2_CREATE_CHILD_SA_rekey_ike_exchange,
+};
+
+static const struct v2_exchanges v2_ESTABLISHED_IKE_SA_responder_exchanges = {
+	ARRAY_REF(v2_ESTABLISHED_IKE_SA_responder_exchange),
+};
+
+const struct finite_state state_v2_ESTABLISHED_IKE_SA = {
+	.kind = STATE_V2_ESTABLISHED_IKE_SA,
+	.name = "ESTABLISHED_IKE_SA",
+	.short_name = "ESTABLISHED_IKE_SA",
+	.story = "established IKE SA",
+	.category = CAT_ESTABLISHED_IKE_SA,
+	.ike_version = IKEv2,
+	.v2.transitions = &v2_ESTABLISHED_IKE_SA_responder_transitions,
+	.v2.exchanges = &v2_ESTABLISHED_IKE_SA_responder_exchanges,
+	.v2.secured = true,
+};
 
 static const struct v2_transition ESTABLISHED_CHILD_SA_transitions[] = {
 };
