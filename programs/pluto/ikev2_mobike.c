@@ -512,7 +512,7 @@ static const struct v2_transitions v2_INFORMATIONAL_mobike_response_transitions 
 	ARRAY_REF(v2_INFORMATIONAL_mobike_response_transition),
 };
 
-static const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
+const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.initiate = &v2_INFORMATIONAL_mobike_initiate_transition,
 	.response = &v2_INFORMATIONAL_mobike_response_transitions,

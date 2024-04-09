@@ -56,10 +56,16 @@ extern const struct v2_exchange v2_IKE_SA_INIT_exchange;
 extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;
 extern const struct v2_exchange v2_IKE_AUTH_EAP_exchange;
 extern const struct v2_exchange v2_IKE_AUTH_exchange;
+
 extern const struct v2_exchange v2_INFORMATIONAL_liveness_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange;
+extern const struct v2_exchange v2_INFORMATIONAL_mobike_exchange;
+
+extern const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange;
+extern const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange;
+extern const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange;
 
 void init_ikev2_states(struct logger *logger);
 
