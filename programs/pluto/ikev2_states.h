@@ -43,9 +43,7 @@ S(IKE_SA_DELETE);
 S(CHILD_SA_DELETE);
 #undef S
 
-bool sniff_v2_secured_transition(struct logger *logger,
-				 const struct v2_transitions *transitions,
-				 struct msg_digest *md);
+bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md);
 
 const struct v2_transition *find_v2_transition(struct logger *logger,
 						     const struct v2_transitions *transitions,

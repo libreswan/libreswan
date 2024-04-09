@@ -821,17 +821,16 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-static const struct v2_transition *v2_state_transition(struct logger *logger,
-							     const struct v2_transitions *transitions,
-							     struct msg_digest *md,
-							     bool check_secured_payloads,
-							     bool *secured_payload_failed)
+const struct v2_transition *find_v2_transition(struct logger *logger,
+					       const struct v2_transitions *transitions,
+					       struct msg_digest *md,
+					       bool *secured_payload_failed)
 {
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
 	pdbg(logger, "looking for a transition%s",
-	     (check_secured_payloads ? "" : " (ignoring secured payloads)"));
+	     (secured_payload_failed != NULL ? " with secured payloads" : ""));
 
 	FOR_EACH_ITEM(transition, transitions) {
 
@@ -880,21 +879,12 @@ static const struct v2_transition *v2_state_transition(struct logger *logger,
 		}
 
 		/*
-		 * Sniff test.
-		 *
-		 * There there at least one plausible, and secured,
-		 * payload.
-		 */
-		PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) != LEMPTY);
-		if (!check_secured_payloads) {
-			pdbg(logger, "    matching by ignoring secured payloads");
-			return transition;
-		}
-
-		/*
 		 * Since SK{} payloads are expected, the caller should
 		 * have parsed them.
 		 */
+		if (!PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) != LEMPTY)) {
+			continue;
+		}
 		if (!PEXPECT(logger, md->encrypted_payloads.parsed)) {
 			return NULL;
 		}
@@ -944,25 +934,64 @@ static const struct v2_transition *v2_state_transition(struct logger *logger,
 
 }
 
-bool sniff_v2_secured_transition(struct logger *logger,
-				 const struct v2_transitions *transitions,
-				 struct msg_digest *md)
+bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 {
-	/* expect secured payloads but don't check them */
-	bool secured_payload_failed; /* ignored but needed */
-	return v2_state_transition(logger, transitions,
-				   md, /*check-secured-payloads?*/false,
-				   &secured_payload_failed) != NULL;
-}
+	/*
+	 * See if the decrypted message payloads include the secured
+	 * SK|SKF payload.
+	 *
+	 * At this point, only the message payloads have been parsed.
+	 */
+	PASSERT(ike->sa.logger, md->message_payloads.parsed);
+	PEXPECT(ike->sa.logger, !md->encrypted_payloads.parsed);
+	if ((md->message_payloads.present & (v2P(SK) | v2P(SKF))) == LEMPTY) {
+		llog(RC_LOG, ike->sa.logger, "message is not secured (no SK or SKF payload)");
+		return false;
+	}
 
-const struct v2_transition *find_v2_transition(struct logger *logger,
-						     const struct v2_transitions *transitions,
-						     struct msg_digest *md,
-						     bool *secured_payload_failed)
-{
-	return v2_state_transition(logger, transitions,
-				   md, /*check-secured-payloads?*/true,
-				   secured_payload_failed);
+	/*
+	 * Is there a matching exchange?
+	 */
+	enum message_role role = v2_msg_role(md);
+	const struct v2_exchange *exchange = NULL;
+	switch (role) {
+	case NO_MESSAGE:
+		break;
+	case MESSAGE_REQUEST:
+		FOR_EACH_ITEM(e, ike->sa.st_state->v2.exchanges) {
+			if ((*e)->type == md->hdr.isa_xchg) {
+				exchange = (*e);
+				break;
+			}
+		}
+		break;
+	case MESSAGE_RESPONSE:
+		exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+		break;
+	}
+
+	if (exchange == NULL) {
+		enum_buf rb;
+		enum_buf xb;
+		llog(RC_LOG, ike->sa.logger, "%s %s message has no matching exchange",
+		     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&message_role_names, role, &rb));
+		return false;
+	}
+
+	/*
+	 * Is the matching exchange secured?
+	 */
+	if (!exchange->secured) {
+		enum_buf rb;
+		enum_buf xb;
+		llog(RC_LOG, ike->sa.logger, "exchange matching %s %s is not secured",
+		     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&message_role_names, role, &rb));
+		return false;
+	}
+
+	return true;
 }
 
 /*

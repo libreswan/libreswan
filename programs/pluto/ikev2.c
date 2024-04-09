@@ -1100,15 +1100,24 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 *   Any transition from a secured state must involve a
 	 *   protected payload.
 	 *
-	 * XXX:
+	 * - for a request, if the responder's state doesn't have the
+	 *   the exchange listed, then reject
 	 *
-	 * If the message is valid then state's transition's will be
+	 *   All responder transitions have an exchange and all
+	 *   exchanges have a responder transition.
+	 *
+	 * - for a response, if the exchange doesn't match the state's
+	 *   exchange, reject everything
+	 *
+	 *   Only accept current exchange's responses.
+	 *
+	 * If the message is valid then the states/exchanges are
 	 * scanned twice: first here and then, further down, when
 	 * looking for the real transition.  Fortunately we're talking
-	 * about at most 7 transitions and, in this case, a relatively
+	 * about at most 7 exchanges and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
 	 */
-	if (!sniff_v2_secured_transition(ike->sa.logger, v2_msgid_transitions(ike, md), md)) {
+	if (!is_secured_v2_exchange(ike, md)) {
 		/* already logged */
 		/* drop packet on the floor */
 		return;
