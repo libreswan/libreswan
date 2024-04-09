@@ -934,6 +934,13 @@ const struct v2_transition *find_v2_transition(struct logger *logger,
 
 }
 
+const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
+							 const struct v2_transitions *transitions,
+							 struct msg_digest *md)
+{
+	return find_v2_transition(logger, transitions, md, /*secured-payload-failed*/NULL);
+}
+
 bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 {
 	pdbg(ike->sa.logger, "looking for an exchange that matches:");

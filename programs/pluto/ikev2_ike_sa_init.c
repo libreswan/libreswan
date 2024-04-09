@@ -434,9 +434,9 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * transition?
 		 */
 		const struct v2_transition *transition =
-			find_v2_transition(md->logger,
-					   state_v2_IKE_SA_INIT_R0.v2.transitions,
-					   md, /*secured_payload_failed?*/NULL);
+			find_v2_unsecured_transition(md->logger,
+						     state_v2_IKE_SA_INIT_R0.v2.transitions,
+						     md);
 		if (transition == NULL) {
 			/* already logged */
 			send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
@@ -559,7 +559,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		if (ike->sa.st_state->kind != STATE_V2_IKE_SA_INIT_I ||
 		    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
 		    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
-		    ike->sa.st_v2_msgid_windows.initiator.wip != -1) {
+		    ike->sa.st_v2_msgid_windows.initiator.wip != -1 ||
+		    ike->sa.st_v2_msgid_windows.initiator.exchange == NULL) {
 			/*
 			 * This doesn't seem right; drop the
 			 * packet.
@@ -581,9 +582,9 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 
 		/* transition? */
+		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 		const struct v2_transition *transition =
-			find_v2_transition(ike->sa.logger, v2_msgid_transitions(ike, md),
-					   md, /*secured_payload_failed?*/NULL);
+			find_v2_unsecured_transition(ike->sa.logger, exchange->response, md);
 		if (transition == NULL) {
 			/* already logged */
 			return;
