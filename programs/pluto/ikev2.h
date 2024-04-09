@@ -107,6 +107,7 @@ struct v2_transitions {
 
 struct v2_exchange {
 	const enum isakmp_xchg_type type;
+	const char *subplot;
 	const struct v2_transition *initiate;
 	const struct v2_transitions *respond;
 	const struct v2_transitions *response;
@@ -117,7 +118,7 @@ struct v2_exchanges {
 	size_t len;
 };
 
-#define V2_EXCHANGE(KIND, NEXT_STORY, I_CAT, IR_CAT, SECURED)		\
+#define V2_EXCHANGE(KIND, SUBPLOT, NEXT_STORY, I_CAT, IR_CAT, SECURED)	\
 									\
 	static const struct v2_transitions v2_##KIND##_response_transitions = { \
 		ARRAY_REF(v2_##KIND##_response_transition),		\
@@ -145,6 +146,7 @@ struct v2_exchanges {
 									\
 	const struct v2_exchange v2_##KIND##_exchange = {		\
 		.type = ISAKMP_v2_##KIND,				\
+		.subplot = SUBPLOT,					\
 		.initiate = &v2_##KIND##_initiate_transition,		\
 		.response = &v2_##KIND##_response_transitions,		\
 	}

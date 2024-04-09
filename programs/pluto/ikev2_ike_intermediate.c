@@ -452,6 +452,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-V2_EXCHANGE(IKE_INTERMEDIATE,
+V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
 	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);

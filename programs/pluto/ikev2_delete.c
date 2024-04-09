@@ -167,6 +167,7 @@ static const struct v2_transitions v2_INFORMATIONAL_delete_ike_response_transiti
 
 const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.subplot = "delete IKE SA",
 	.initiate = &v2_INFORMATIONAL_delete_ike_initiate_transition,
 	.response = &v2_INFORMATIONAL_delete_ike_response_transitions,
 };
@@ -266,6 +267,7 @@ static const struct v2_transitions v2_INFORMATIONAL_delete_child_response_transi
 
 const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.subplot = "delete Child SA",
 	.initiate = &v2_INFORMATIONAL_delete_child_initiate_transition,
 	.response = &v2_INFORMATIONAL_delete_child_response_transitions,
 };

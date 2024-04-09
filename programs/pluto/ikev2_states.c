@@ -1183,24 +1183,30 @@ static void validate_state_exchange(struct logger *logger,
 {
 	const enum isakmp_xchg_type ix = exchange->type;
 	enum_buf ixb;
-	ldbg(logger, "     => %s",
-	     str_enum_short(&ikev2_exchange_names, ix, &ixb));
+	ldbg(logger, "     => %s (%s)",
+	     str_enum_short(&ikev2_exchange_names, ix, &ixb),
+	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot));
+
 	if (exchange->initiate != NULL) {
 		ldbg(logger, "        => initiator");
 		ldbg_transition(logger, "           ", exchange->initiate);
 	}
+
 	if (exchange->respond != NULL) {
 		ldbg(logger, "        => respond");
 		FOR_EACH_ITEM(t, exchange->respond) {
 			ldbg_transition(logger, "           ", t);
 		}
 	}
+
 	if (exchange->response != NULL) {
 		ldbg(logger, "        => response");
 		FOR_EACH_ITEM(t, exchange->response) {
 			ldbg_transition(logger, "           ", t);
 		}
 	}
+
+	PASSERT(logger, exchange->subplot != NULL);
 
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;

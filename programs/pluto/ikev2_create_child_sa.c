@@ -608,6 +608,7 @@ static const struct v2_transitions v2_CREATE_CHILD_SA_response_transitions = {
 
 const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
+	.subplot = "rekey Child SA",
 	.initiate = &v2_CREATE_CHILD_SA_rekey_child_initiate_transition,
 	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
@@ -897,6 +898,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_new_child_initiate_transiti
 
 const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
+	.subplot = "new Child SA",
 	.initiate = &v2_CREATE_CHILD_SA_new_child_initiate_transition,
 	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
@@ -1561,6 +1563,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_ike_initiate_transiti
 
 const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
+	.subplot = "rekey IKE SA",
 	.initiate = &v2_CREATE_CHILD_SA_rekey_ike_initiate_transition,
 	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };

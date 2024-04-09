@@ -1785,6 +1785,6 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 };
 
-V2_EXCHANGE(IKE_SA_INIT,
+V2_EXCHANGE(IKE_SA_INIT, "initiate IKE SA",
 	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);

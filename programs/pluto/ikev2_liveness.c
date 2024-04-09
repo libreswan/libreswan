@@ -319,6 +319,7 @@ static const struct v2_transitions v2_INFORMATIONAL_liveness_response_transition
 
 const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.subplot = "liveness probe",
 	.initiate = &v2_INFORMATIONAL_liveness_initiate_transition,
 	.response = &v2_INFORMATIONAL_liveness_response_transitions,
 };
