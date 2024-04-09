@@ -40,6 +40,7 @@ src 192.0.3.10/32 dst 0.0.0.0/0
 	tmpl src 192.1.33.209 dst 192.1.2.23
 east #
  grep "MOBIKE " /tmp/pluto.log | sed -e '/Message ID:/ s/;.*//'
+|      => INFORMATIONAL (MOBIKE probe); secured: yes
 | #2 pst=#1 MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
 "east-any"[1] 192.1.3.209 #1:  success MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
 "east-any"[1] 192.1.33.209 #1: MOBIKE request: updating IPsec SA by request

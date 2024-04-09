@@ -161,6 +161,7 @@ src 0.0.0.0/0 dst 192.0.3.10/32
 	tmpl src 192.1.2.23 dst 192.1.33.209
 road #
  grep "MOBIKE " /tmp/pluto.log | sed -e '/Message ID:/ s/;.*//'
+|      => INFORMATIONAL (MOBIKE probe); secured: yes
 | #1 MOBIKE new local 192.1.33.209:500 remote 192.1.2.23:500 and gateway 192.1.33.254
 | "road-eastnet"[1] 192.1.2.23 #1: Message ID: record'n'send MOBIKE probe request
 | TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response 
