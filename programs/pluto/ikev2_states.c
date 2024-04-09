@@ -824,13 +824,11 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 static const struct v2_transition *find_v2_transition(struct logger *logger,
 						      const struct v2_transitions *transitions,
 						      struct msg_digest *md,
-						      bool *secured_payload_failed)
+						      struct ikev2_payload_errors *message_payload_status,
+						      struct ikev2_payload_errors *encrypted_payload_status)
 {
-	struct ikev2_payload_errors message_payload_status = { .bad = false };
-	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
-
 	pdbg(logger, "looking for a transition%s",
-	     (secured_payload_failed != NULL ? " with secured payloads" : ""));
+	     (encrypted_payload_status != NULL ? " with secured payloads" : ""));
 
 	FOR_EACH_ITEM(transition, transitions) {
 
@@ -863,7 +861,7 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 		if (message_payload_errors.bad) {
 			pdbg(logger, "    message payloads do not match");
 			/* save error for last pattern!?! */
-			message_payload_status = message_payload_errors;
+			*message_payload_status = message_payload_errors;
 			continue;
 		}
 
@@ -872,7 +870,7 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 		 * it isn't secured).  There is no SK or SKF payload
 		 * so checking is complete and things have matched.
 		 */
-		if (secured_payload_failed == NULL) {
+		if (encrypted_payload_status == NULL) {
 			PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) == LEMPTY);
 			pdbg(logger, "    unsecured message matched");
 			return transition;
@@ -895,12 +893,55 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 		if (encrypted_payload_errors.bad) {
 			pdbg(logger, "    secured payloads do not match");
 			/* save error for last pattern!?! */
-			encrypted_payload_status = encrypted_payload_errors;
+			*encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
 
 		pdbg(logger, "    secured message matched");
 		return transition;
+	}
+
+	return NULL;
+}
+
+const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
+						       struct msg_digest *md,
+						       bool *secured_payload_failed)
+{
+	PASSERT(ike->sa.logger, secured_payload_failed != NULL);
+
+	struct ikev2_payload_errors message_payload_status = { .bad = false };
+	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
+	enum message_role role = v2_msg_role(md);
+	switch (role) {
+	default:
+	case NO_MESSAGE:
+		bad_enum(md->logger, &message_role_names, role);
+		break;
+	case MESSAGE_REQUEST:
+	{
+		const struct v2_transition *t =
+			find_v2_transition(ike->sa.logger,
+					   ike->sa.st_state->v2.transitions,
+					   md, &message_payload_status,
+					   &encrypted_payload_status);
+		if (t != NULL) {
+			return t;
+		}
+		break;
+	}
+	case MESSAGE_RESPONSE:
+	{
+		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+		PASSERT(ike->sa.logger, exchange != NULL);
+		const struct v2_transition *t =
+			find_v2_transition(ike->sa.logger, exchange->response,
+					   md, &message_payload_status,
+					   &encrypted_payload_status);
+		if (t != NULL) {
+			return t;
+		}
+	}
 	}
 
 	/*
@@ -916,51 +957,48 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 		 * A very messed up message - none of the state
 		 * transitions recognized it!.
 		 */
-		log_v2_payload_errors(logger, md,
+		log_v2_payload_errors(ike->sa.logger, md,
 				      &message_payload_status);
-	} else if (encrypted_payload_status.bad) {
-		log_v2_payload_errors(logger, md,
+		return NULL;
+	}
+
+	if (encrypted_payload_status.bad) {
+		log_v2_payload_errors(ike->sa.logger, md,
 				      &encrypted_payload_status);
 		/*
 		 * Notify caller so that evasive action can be taken.
 		 */
-		PASSERT(logger, secured_payload_failed != NULL);
 		*secured_payload_failed = true;
-	} else {
-		llog(RC_LOG/*RC_LOG_SERIOUS*/, logger,
-		     "no useful state microcode entry found for incoming packet");
+		return NULL;
 	}
+
+	llog(RC_LOG, ike->sa.logger, "no useful state microcode entry found for incoming secured packet");
 	return NULL;
-
-}
-
-const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
-						       struct msg_digest *md,
-						       bool *secured_payload_failed)
-{
-	enum message_role role = v2_msg_role(md);
-	switch (role) {
-	case NO_MESSAGE:
-		break;
-	case MESSAGE_REQUEST:
-		return find_v2_transition(ike->sa.logger, ike->sa.st_state->v2.transitions,
-					  md, secured_payload_failed);
-	case MESSAGE_RESPONSE:
-	{
-		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
-		PASSERT(ike->sa.logger, exchange != NULL);
-		return find_v2_transition(ike->sa.logger, exchange->response,
-					  md, secured_payload_failed);
-	}
-	}
-	bad_enum(md->logger, &message_role_names, role);
 }
 
 const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
 							 const struct v2_transitions *transitions,
 							 struct msg_digest *md)
 {
-	return find_v2_transition(logger, transitions, md, /*secured-payload-failed*/NULL);
+	struct ikev2_payload_errors message_payload_status = { .bad = false };
+	const struct v2_transition *t = find_v2_transition(logger, transitions, md,
+							   &message_payload_status, NULL);
+	if (t != NULL) {
+		return t;
+	}
+
+	/*
+	 * A very messed up message - none of the state
+	 * transitions recognized it!.
+	 */
+	if (message_payload_status.bad) {
+		log_v2_payload_errors(logger, md,
+				      &message_payload_status);
+		return NULL;
+	}
+
+	llog(RC_LOG, logger, "no useful state microcode entry found for incoming unsecured packet");
+	return NULL;
 }
 
 bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
