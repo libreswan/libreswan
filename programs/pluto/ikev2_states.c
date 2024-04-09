@@ -1182,6 +1182,18 @@ static void validate_state_transition(struct logger *logger,
 	}
 
 	/*
+	 * Check the exchange appears under the state.
+	 */
+	bool found_exchange = false;
+	FOR_EACH_ITEM(exchange, from->v2.exchanges) {
+		if ((*exchange)->type == t->exchange) {
+			found_exchange = true;
+			break;
+		}
+	}
+	passert(found_exchange);
+
+	/*
 	 * Check that everything has either a success story,
 	 * or suppressed logging.
 	 */
