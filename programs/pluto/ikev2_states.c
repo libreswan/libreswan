@@ -1201,7 +1201,7 @@ static void validate_state_transition(struct logger *logger,
 }
 
 static void validate_state_exchange(struct logger *logger,
-				    const struct finite_state *from UNUSED,
+				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
 {
 	const enum isakmp_xchg_type ix = exchange->type;
@@ -1224,6 +1224,16 @@ static void validate_state_exchange(struct logger *logger,
 			ldbg_transition(logger, "           ", t);
 		}
 	}
+
+	/* does the exchange appear in the state's transitions? */
+	bool found_transition = false;
+	FOR_EACH_ITEM(t, from->v2.transitions) {
+		if (t->exchange == ix) {
+			found_transition = true;
+			break;
+		}
+	}
+	passert(found_transition);
 }
 
 static void validate_state(struct logger *logger, const struct finite_state *from)
