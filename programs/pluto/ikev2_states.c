@@ -236,18 +236,6 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	 * [Parent SA established]
 	 */
 
-	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .from = { &state_v2_IKE_SA_INIT_R, },
-	  .to = &state_v2_IKE_INTERMEDIATE_R,
-	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = LEMPTY,
-	  .encrypted_payloads.optional = LEMPTY,
-	  .processor  = process_v2_IKE_INTERMEDIATE_request,
-	  .llog_success = llog_v2_success_exchange_processed,
-	  .timeout_event = EVENT_v2_DISCARD, },
-
 };
 
 V2_RESPONDER(IKE_SA_INIT,

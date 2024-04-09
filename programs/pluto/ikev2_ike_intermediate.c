@@ -429,6 +429,24 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 }
 
 
+static const struct v2_transition v2_IKE_INTERMEDIATE_exchange_responder_transition[] = {
+	{ .story      = "Responder: process IKE_INTERMEDIATE request",
+	  .from = { &state_v2_IKE_SA_INIT_R, },
+	  .to = &state_v2_IKE_INTERMEDIATE_R,
+	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = LEMPTY,
+	  .encrypted_payloads.optional = LEMPTY,
+	  .processor  = process_v2_IKE_INTERMEDIATE_request,
+	  .llog_success = llog_v2_success_exchange_processed,
+	  .timeout_event = EVENT_v2_DISCARD, },
+};
+
+static const struct v2_transitions v2_IKE_INTERMEDIATE_exchange_responder_transitions = {
+	ARRAY_REF(v2_IKE_INTERMEDIATE_exchange_responder_transition),
+};
+
 static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
 	  .from = { &state_v2_IKE_INTERMEDIATE_I, },
@@ -454,4 +472,5 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
-	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true,
+	    .responder = &v2_IKE_INTERMEDIATE_exchange_responder_transitions);
