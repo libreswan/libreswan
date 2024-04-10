@@ -36,6 +36,7 @@
 #include "ikev2_states.h"
 
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
+static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
 
 /*
  * Without this the code makes little sense.
@@ -428,8 +429,22 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 #endif
 }
 
+/*
+ * IKE_INTERMEDIATE exchange and transitions.
+ */
+
+static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
+	.story      = "initiating IKE_INTERMEDIATE",
+	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
+	.to = &state_v2_IKE_INTERMEDIATE_I,
+	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
+	.llog_success = llog_v2_success_exchange_sent_to,
+	.timeout_event = EVENT_RETRANSMIT,
+};
 
 static const struct v2_transition v2_IKE_INTERMEDIATE_exchange_responder_transition[] = {
+
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
 	  .from = { &state_v2_IKE_SA_INIT_R, },
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
@@ -441,6 +456,19 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_exchange_responder_transit
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
+
+	{ .story      = "processing IKE_INTERMEDIATE request",
+	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
+	  .to = &state_v2_IKE_INTERMEDIATE_R,
+	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = LEMPTY,
+	  .encrypted_payloads.optional = LEMPTY,
+	  .processor  = process_v2_IKE_INTERMEDIATE_request,
+	  .llog_success = llog_v2_success_exchange_processed,
+	  .timeout_event = EVENT_v2_DISCARD, },
+
 };
 
 static const struct v2_transitions v2_IKE_INTERMEDIATE_exchange_responder_transitions = {
@@ -460,15 +488,13 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
-static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
-	.story      = "initiating IKE_INTERMEDIATE",
-	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
-	.to = &state_v2_IKE_INTERMEDIATE_I,
-	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
-	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
-	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
+static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 };
+
+V2_RESPONDER(IKE_INTERMEDIATE,
+	     "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
+	     CAT_OPEN_IKE_SA, /*secured*/true,
+	     &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_exchange, &v2_IKE_AUTH_EAP_exchange);
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
