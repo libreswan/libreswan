@@ -16,20 +16,10 @@
 #ifndef IKEV2_EAP_H
 #define IKEV2_EAP_H
 
-#include "ikev2.h"
-
-struct eap_state {
-	struct logger    *logger;
-	uint8_t          eap_id;
-	uint8_t          eap_established;
-
-	PRFileDesc     *eaptls_desc;	/* EAP TLS */
-	struct pbs_out eaptls_outbuf;
-	shunk_t        eaptls_inbuf;
-	chunk_t        eaptls_chunk;
-	uint32_t       eaptls_pos;
-};
+struct eap_state;
 
 extern void free_eap_state(struct eap_state **eap);
+
+extern const struct v2_exchange v2_IKE_AUTH_EAP_exchange;
 
 #endif

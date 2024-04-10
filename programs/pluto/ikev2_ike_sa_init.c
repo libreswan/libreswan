@@ -64,6 +64,7 @@
 #include "revival.h"
 #include "ike_alg_integ.h"	/* for ike_alg_integ_none */
 #include "ikev2_parent.h"
+#include "ikev2_eap.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */

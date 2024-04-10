@@ -58,6 +58,18 @@ static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_continue;
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_EAP_start_signature_continue;
 
+struct eap_state {
+	struct logger    *logger;
+	uint8_t          eap_id;
+	uint8_t          eap_established;
+
+	PRFileDesc     *eaptls_desc;	/* EAP TLS */
+	struct pbs_out eaptls_outbuf;
+	shunk_t        eaptls_inbuf;
+	chunk_t        eaptls_chunk;
+	uint32_t       eaptls_pos;
+};
+
 #define llog_eap(RC_FLAGS, EAP, MSG, ...) llog(RC_FLAGS, (EAP)->logger, MSG, ##__VA_ARGS__)
 
 static PRStatus eaptls_io_close(PRFileDesc *fd)
@@ -824,8 +836,9 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
  */
 
 static const struct v2_transition v2_IKE_AUTH_EAP_exchange_responder_transition[] = {
-	{ .story      = "Responder: process IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_SA_INIT_R, },
+
+	{ .story      = "process initial IKE_AUTH(EAP) request",
+	  .from = { &state_v2_IKE_SA_INIT_R, &state_v2_IKE_INTERMEDIATE_R, },
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -836,26 +849,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_exchange_responder_transition[
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
-	{ .story      = "processing IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
-	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi),
-	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
-	  .llog_success = llog_v2_success_state_story,
-	  .timeout_event = EVENT_v2_DISCARD, },
-};
-
-static const struct v2_transitions v2_IKE_AUTH_EAP_exchange_responder_transitions = {
-	ARRAY_REF(v2_IKE_AUTH_EAP_exchange_responder_transition),
-};
-
-static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
-
-	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
+	{ .story      = "process continuing IKE_AUTH(EAP) request",
 	  .from = { &state_v2_IKE_AUTH_EAP_R, },
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -866,7 +860,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .llog_success = llog_v2_success_state_story,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
-	{ .story      = "Responder: process final IKE_AUTH/EAP",
+	{ .story      = "process final IKE_AUTH(EAP) request",
 	  .from = { &state_v2_IKE_AUTH_EAP_R, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
@@ -880,10 +874,17 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 };
 
+static const struct v2_transitions v2_IKE_AUTH_EAP_exchange_responder_transitions = {
+	ARRAY_REF(v2_IKE_AUTH_EAP_exchange_responder_transition),
+};
+
+static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
+};
+
 V2_RESPONDER(IKE_AUTH_EAP,
 	     "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request",
 	     CAT_OPEN_IKE_SA, /*secured*/true,
-	     &v2_IKE_AUTH_EAP_exchange, &v2_IKE_AUTH_exchange);
+	     &v2_IKE_AUTH_EAP_exchange);
 
 const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,

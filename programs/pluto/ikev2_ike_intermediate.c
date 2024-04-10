@@ -34,6 +34,7 @@
 #include "pluto_stats.h"
 #include "crypt_prf.h"
 #include "ikev2_states.h"
+#include "ikev2_eap.h"
 
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
