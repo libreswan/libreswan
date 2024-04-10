@@ -39,6 +39,7 @@
 #include "pending.h"
 #include "pluto_stats.h"
 #include "orient.h"
+#include "ikev2_message.h"
 
 static emit_v2_INFORMATIONAL_payload_fn add_redirect_payload; /* type check */
 
@@ -522,6 +523,103 @@ static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
+static stf_status process_v2_INFORMATIONAL_redirect_request(struct ike_sa *ike,
+							    struct child_sa *null_child,
+							    struct msg_digest *md)
+{
+	dbg("an informational request needing a response");
+	passert(v2_msg_role(md) == MESSAGE_REQUEST);
+	pexpect(null_child == NULL);
+
+	/*
+	 * we need connection and boolean below
+	 * in a separate variables because we
+	 * do something with them after we delete
+	 * the state.
+	 *
+	 * XXX: which is of course broken; code should return
+	 * STF_ZOMBIFY and and let state machine clean things up.
+	 */
+	struct connection *c = ike->sa.st_connection;
+	bool do_unroute = ike->sa.st_sent_redirect && is_permanent(c);
+
+	/*
+	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
+	 *
+	 * There can be at most one Delete Payload for an IKE SA.
+	 * It means that this very SA is to be deleted.
+	 *
+	 * For each non-IKE Delete Payload we receive,
+	 * we respond with a corresponding Delete Payload.
+	 * Note that that means we will have an empty response
+	 * if no Delete Payloads came in or if the only
+	 * Delete Payload is for an IKE SA.
+	 *
+	 * If we received NAT detection payloads as per MOBIKE, send answers
+	 */
+
+	struct v2_message response;
+	if (!open_v2_message("information exchange reply packet",
+			     ike, ike->sa.logger,
+			     md/*response*/, ISAKMP_v2_INFORMATIONAL,
+			     reply_buffer, sizeof(reply_buffer), &response,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* HDR out */
+
+	/*
+	 * This happens when we are original initiator, and we
+	 * received REDIRECT payload during the active session.
+	 *
+	 * It trumps everything else.  Should delete also be ignored?
+	 */
+	if (md->pd[PD_v2N_REDIRECT] != NULL) {
+		process_v2_INFORMATIONAL_request_v2N_REDIRECT(ike, md);
+		return true;
+	}
+
+	/*
+	 * We've now build up the content (if any) of the Response:
+	 *
+	 * - empty, if there were no Delete Payloads or if we are
+	 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
+	 *   Treat as a check for liveness.  Correct response is this
+	 *   empty Response.
+	 *
+	 * - if an ISAKMP SA is mentioned in input message, we are
+	 *   sending an empty Response, as per standard.
+	 *
+	 * - for IPsec SA mentioned, we are sending its mate.
+	 *
+	 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a
+         *   COOKIE2
+	 *
+	 * Close up the packet and send it.
+	 */
+
+	if (!close_and_record_v2_message(&response)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * This is a special case. When we have site to site connection
+	 * and one site redirects other in IKE_AUTH reply, he doesn't
+	 * unroute. It seems like it was easier to add here this part
+	 * than in delete_ipsec_sa() in kernel.c where it should be
+	 * (at least it seems like it should be there).
+	 *
+	 * The need for this special case was discovered by running
+	 * various test cases.
+	 */
+	if (do_unroute) {
+		connection_unroute(c, HERE);
+	}
+
+	return STF_OK;
+}
+
 static stf_status process_v2_INFORMATIONAL_redirect_ike_response(struct ike_sa *ike,
 								 struct child_sa *null_child,
 								 struct msg_digest *md)
@@ -539,6 +637,24 @@ static const struct v2_transition v2_INFORMATIONAL_redirect_ike_initiate_transit
 	.processor = send_v2_redirect_ike_request,
 	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
+};
+
+static const struct v2_transition v2_INFORMATIONAL_redirect_responder_transition[] = {
+	{ .story      = "Informational Request",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(N),
+	  .encrypted_payloads.notification = v2N_REDIRECT,
+	  .processor = process_v2_INFORMATIONAL_redirect_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_redirect_responder_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_redirect_responder_transition),
 };
 
 static const struct v2_transition v2_INFORMATIONAL_redirect_ike_response_transition[] = {
@@ -563,6 +679,7 @@ const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange = {
 	.subplot = "redirect IKE SA",
 	.secured = true,
 	.initiate = &v2_INFORMATIONAL_redirect_ike_initiate_transition,
+	.responder = &v2_INFORMATIONAL_redirect_responder_transitions,
 	.response = &v2_INFORMATIONAL_redirect_ike_response_transitions,
 };
 
