@@ -25,6 +25,7 @@
 #include "connections.h"
 #include "ikev2_informational.h"
 
+static bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
 static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
 
 /*
@@ -100,6 +101,79 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 	return true;
 }
 
+static stf_status process_v2_INFORMATIONAL_delete_request(struct ike_sa *ike,
+							  struct child_sa *null_child,
+							  struct msg_digest *md)
+{
+	dbg("an informational request needing a response");
+	passert(v2_msg_role(md) == MESSAGE_REQUEST);
+	pexpect(null_child == NULL);
+
+	/*
+	 * Response packet preparation: DELETE
+	 *
+	 * There can be at most one Delete Payload for an IKE SA.  It
+	 * means that this very SA is to be deleted.
+	 *
+	 * For each non-IKE Delete Payload we receive, we respond with
+	 * a corresponding Delete Payload.  Note that that means we
+	 * will have an empty response if no Delete Payloads came in
+	 * or if the only Delete Payload is for an IKE SA.
+	 */
+
+	struct v2_message response;
+	if (!open_v2_message("information exchange reply packet",
+			     ike, ike->sa.logger,
+			     md/*response*/, ISAKMP_v2_INFORMATIONAL,
+			     reply_buffer, sizeof(reply_buffer), &response,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* HDR out */
+
+	bool del_ike = false;
+	if (!process_v2D_requests(&del_ike, ike, md, response.pbs)) {
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
+		/*
+		 * STF_FATAL will send the recorded message
+		 * and then kill the IKE SA.  Should it
+		 * instead zombify the IKE SA so that
+		 * retransmits get a response?
+		 */
+		return STF_FATAL;
+	}
+
+	/*
+	 * We've now build up the content (if any) of the Response:
+	 *
+	 * - if an ISAKMP SA is mentioned in input message, we are
+	 *   sending an empty Response, as per standard.
+	 *
+	 * - for IPsec SA mentioned, we are sending its mate.
+	 *
+	 * Close up the packet and send it.
+	 */
+
+	if (!close_and_record_v2_message(&response)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * ... now we can delete the IKE SA if we want to.  The
+	 * response is hopefully empty.
+	 */
+	if (del_ike) {
+		/*
+		 * Complete the transition; but then wipe us out.
+		 */
+		return STF_OK_RESPONDER_DELETE_IKE;
+	}
+
+	return STF_OK;
+}
+
 static stf_status initiate_v2_delete_ike_request(struct ike_sa *ike,
 						 struct child_sa *unused_child UNUSED,
 						 struct msg_digest *md)
@@ -145,6 +219,24 @@ static const struct v2_transition v2_INFORMATIONAL_delete_ike_initiate_transitio
 	.timeout_event =  EVENT_RETAIN,
 };
 
+static const struct v2_transition v2_INFORMATIONAL_delete_responder_transition[] = {
+	{ .story      = "Informational Request",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(D),
+	  .encrypted_payloads.optional = v2P(N),
+	  .processor  = process_v2_INFORMATIONAL_delete_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_delete_responder_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_delete_responder_transition),
+};
+
 static const struct v2_transition v2_INFORMATIONAL_delete_ike_response_transition[] = {
 
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
@@ -170,6 +262,7 @@ const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
 	.subplot = "delete IKE SA",
 	.secured = true,
 	.initiate = &v2_INFORMATIONAL_delete_ike_initiate_transition,
+	.responder = &v2_INFORMATIONAL_delete_responder_transitions,
 	.response = &v2_INFORMATIONAL_delete_ike_response_transitions,
 };
 

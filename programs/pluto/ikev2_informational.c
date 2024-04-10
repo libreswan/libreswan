@@ -145,21 +145,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		}
 	}
 
-	bool del_ike = false;
-	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
-		if (!process_v2D_requests(&del_ike, ike, md, response.pbs)) {
-			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
-			/*
-			 * STF_FATAL will send the recorded message
-			 * and then kill the IKE SA.  Should it
-			 * instead zombify the IKE SA so that
-			 * retransmits get a response?
-			 */
- 			return STF_FATAL;
-		}
-	}
-
 	/*
 	 * We've now build up the content (if any) of the Response:
 	 *
@@ -181,17 +166,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
-	}
-
-	/*
-	 * ... now we can delete the IKE SA if we want to.  The
-	 * response is hopefully empty.
-	 */
-	if (del_ike) {
-		/*
-		 * Complete the transition; but then wipe us out.
-		 */
-		return STF_OK_RESPONDER_DELETE_IKE;
 	}
 
 	mobike_possibly_send_recorded(ike, md);
