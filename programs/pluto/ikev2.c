@@ -931,10 +931,12 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	PASSERT(ike->sa.logger, md != NULL);
 	enum message_role recv_role = v2_msg_role(md);
 
+	const struct finite_state *state = ike->sa.st_state;
+
 	/* starting point */
 	const struct v2_transition undefined_transition = {
 		.story = "suspect message",
-		.from = { finite_states[STATE_UNDEFINED], },
+		.from = { state, },
 		.to = finite_states[STATE_UNDEFINED],
 		.recv_role = recv_role,
 		.llog_success = ldbg_v2_success,
@@ -948,10 +950,26 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request.  Grab the last one.
 		 */
-		const struct finite_state *state = ike->sa.st_state;
-		PASSERT(ike->sa.logger, state->v2.transitions != NULL);
-		PASSERT(ike->sa.logger, state->v2.transitions->len > 0);
-		transition = &state->v2.transitions->list[state->v2.transitions->len - 1];
+		{
+			const struct v2_transitions *transitions = state->v2.transitions;
+			if (transitions != NULL &&
+			    transitions->len > 0) {
+				transition = &transitions->list[transitions->len - 1];
+				break;
+			}
+		}
+		{
+			const struct v2_exchanges *exchanges = state->v2.exchanges;
+			if (exchanges != NULL &&
+			    exchanges->len > 0) {
+				const struct v2_transitions *transitions = exchanges->list[0]->responder;
+				if (transitions != NULL &&
+				    transitions->len > 0) {
+					transition = &transitions->list[transitions->len - 1];
+					break;
+				}
+			}
+		}
 		break;
 	}
 	case MESSAGE_RESPONSE:
@@ -960,11 +978,17 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request.  Grab the last one.
 		 */
-		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
-		PASSERT(ike->sa.logger, exchange != NULL);
-		PASSERT(ike->sa.logger, exchange->response != NULL);
-		PASSERT(ike->sa.logger, exchange->response->len > 0);
-		transition = &exchange->response->list[exchange->response->len - 1];
+		{
+			const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+			if (exchange != NULL) {
+				const struct v2_transitions *transitions = exchange->response;
+				if (transitions != NULL &&
+				    transitions->len > 0) {
+					transition = &transitions->list[transitions->len - 1];
+					break;
+				}
+			}
+		}
 		break;
 	}
 	case NO_MESSAGE:
