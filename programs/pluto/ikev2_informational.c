@@ -194,3 +194,44 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	return STF_OK;
 }
+
+/*
+ * Construct and send an informational request.
+ *
+ * XXX: This and record_v2_delete() should be merged.  However, there
+ * are annoying differences.  For instance, record_v2_delete() updates
+ * st->st_msgid but the below doesn't.
+ *
+ * XXX: but st_msgid isn't used so have things changed?
+ */
+bool record_v2_INFORMATIONAL_request(const char *name,
+				     struct logger *logger,
+				     struct ike_sa *ike,
+				     struct child_sa *child,
+				     emit_v2_INFORMATIONAL_payload_fn *emit_payloads)
+{
+	/*
+	 * Buffer in which to marshal our informational message.
+	 */
+	uint8_t buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
+
+	struct v2_message request;
+	if (!open_v2_message(name, ike, logger,
+			     /*md(request)*/NULL, ISAKMP_v2_INFORMATIONAL,
+			     buffer, sizeof(buffer), &request,
+			     ENCRYPTED_PAYLOAD)) {
+		return false;
+	}
+
+	if (emit_payloads != NULL) {
+		if (!emit_payloads(ike, child, &request.sk.pbs)) {
+			return false;
+		}
+	}
+
+	if (!close_and_record_v2_message(&request)) {
+		return false;
+	}
+
+	return true;
+}

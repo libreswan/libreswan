@@ -30,6 +30,7 @@
 #include "ipsec_doi.h"
 #include "ikev2.h"
 #include "ikev2_send.h"
+#include "ikev2_informational.h"
 #include "ikev2_states.h"
 #include "ip_info.h"
 #include "ikev2_redirect.h"
@@ -38,6 +39,8 @@
 #include "pending.h"
 #include "pluto_stats.h"
 #include "orient.h"
+
+static emit_v2_INFORMATIONAL_payload_fn add_redirect_payload; /* type check */
 
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
@@ -500,17 +503,23 @@ bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *re
 
 /* helper function for send_v2_informational_request() */
 
-static bool add_redirect_payload(struct state *st, struct pbs_out *pbs)
+static bool add_redirect_payload(struct ike_sa *ike, struct child_sa *null_child, struct pbs_out *pbs)
 {
-	return emit_redirect_notification(HUNK_AS_SHUNK(st->st_active_redirect_gw), pbs);
+	PASSERT(ike->sa.logger, null_child == NULL);
+	return emit_redirect_notification(HUNK_AS_SHUNK(ike->sa.st_active_redirect_gw), pbs);
 }
 
 static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 					       struct child_sa *child UNUSED,
 					       struct msg_digest *null_md UNUSED)
 {
-	return record_v2_informational_request("active REDIRECT informational request",
-					       ike, &ike->sa, add_redirect_payload);
+	if (!record_v2_INFORMATIONAL_request("active REDIRECT informational request",
+					     ike->sa.logger, ike, /*child*/NULL,
+					     add_redirect_payload)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	return STF_OK;
 }
 
 static stf_status process_v2_INFORMATIONAL_redirect_ike_response(struct ike_sa *ike,

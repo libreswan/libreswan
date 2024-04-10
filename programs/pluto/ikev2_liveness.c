@@ -28,7 +28,7 @@
 #include "connections.h"
 #include "iface.h"
 #include "kernel.h"
-#include "ikev2_send.h"
+#include "ikev2_informational.h"
 #include "pluto_stats.h"
 #include "timer.h"
 #include "server.h"
@@ -42,12 +42,12 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 					   struct msg_digest *md UNUSED)
 {
 	pstats_ike_dpd_sent++;
-	stf_status e = record_v2_informational_request("liveness probe informational request",
-						       ike, &ike->sa/*sender*/,
-						       NULL/*no payloads to emit*/);
-	if (e != STF_OK) {
+	if (!record_v2_INFORMATIONAL_request("liveness probe informational request",
+					     ike->sa.logger, ike, /*child*/NULL,
+					     NULL/*no payloads to emit*/)) {
 		return STF_INTERNAL_ERROR;
 	}
+
 	return STF_OK;
 }
 

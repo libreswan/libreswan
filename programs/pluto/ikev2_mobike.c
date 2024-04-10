@@ -47,6 +47,9 @@
 #include "orient.h"
 #include "ikev2.h"
 #include "ikev2_states.h"
+#include "ikev2_informational.h"
+
+static emit_v2_INFORMATIONAL_payload_fn add_mobike_payloads; /* type check */
 
 static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 					 struct pbs_out *pbs, struct ike_sa *ike);
@@ -365,14 +368,22 @@ bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 		(cookie2.len == 0 || emit_v2N_hunk(v2N_COOKIE2, cookie2, pbs)));
 }
 
-static payload_emitter_fn add_mobike_payloads; /* type check */
-static bool add_mobike_payloads(struct state *st, struct pbs_out *pbs)
+static bool add_mobike_payloads(struct ike_sa *ike,
+				struct child_sa *null_child,
+				struct pbs_out *pbs)
 {
-	ip_endpoint local_endpoint = st->st_v2_mobike.local_endpoint;
-	ip_endpoint remote_endpoint = st->st_remote_endpoint;
-	return emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs) &&
-		ikev2_out_natd(&local_endpoint, &remote_endpoint,
-			       &st->st_ike_spis, pbs);
+	PASSERT(ike->sa.logger, null_child == NULL);
+
+	ip_endpoint local_endpoint = ike->sa.st_v2_mobike.local_endpoint;
+	ip_endpoint remote_endpoint = ike->sa.st_remote_endpoint;
+	if (!emit_v2N(v2N_UPDATE_SA_ADDRESSES, pbs)) {
+		return false;
+	}
+	if (!ikev2_out_natd(&local_endpoint, &remote_endpoint,
+			    &ike->sa.st_ike_spis, pbs)) {
+		return false;
+	}
+	return true;
 }
 
 void record_newaddr(ip_address *ip, char *a_type)
@@ -560,12 +571,13 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
 
 	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_mobike_exchange);
-	stf_status e = record_v2_informational_request("mobike informational request",
-						       ike, &ike->sa/*sender*/,
-						       add_mobike_payloads);
-	if (e != STF_OK) {
+	if (!record_v2_INFORMATIONAL_request("mobike informational request",
+					     ike->sa.logger, ike, /*child*/NULL,
+					     add_mobike_payloads)) {
+		/* already logged? */
 		return;
 	}
+
 	v2_msgid_finish(ike, NULL/*md*/, HERE);
 	send_recorded_v2_message(ike, "mobike informational request",
 				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);

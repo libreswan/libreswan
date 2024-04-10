@@ -464,44 +464,6 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
-/*
- * Construct and send an informational request.
- *
- * XXX: This and record_v2_delete() should be merged.  However, there
- * are annoying differences.  For instance, record_v2_delete() updates
- * st->st_msgid but the below doesn't.
- *
- * XXX: but st_msgid isn't used so have things changed?
- */
-stf_status record_v2_informational_request(const char *name,
-					   struct ike_sa *ike,
-					   struct state *sender,
-					   payload_emitter_fn *emit_payloads)
-{
-	/*
-	 * Buffer in which to marshal our informational message.
-	 */
-	uint8_t buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
-
-	struct v2_message request;
-	if (!open_v2_message(name, ike, sender->logger,
-			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
-			     buffer, sizeof(buffer), &request,
-			     ENCRYPTED_PAYLOAD)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	if (emit_payloads != NULL && !emit_payloads(sender, &request.sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	if (!close_and_record_v2_message(&request)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	return STF_OK;
-}
-
 void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
 {
 	if (*frags != NULL) {

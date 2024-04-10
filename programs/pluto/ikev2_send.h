@@ -111,12 +111,6 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
 			       const shunk_t *data);
 
-typedef bool payload_emitter_fn(struct state *st, struct pbs_out *pbs);
-
-extern stf_status record_v2_informational_request(const char *name,
-						  struct ike_sa *owner,
-						  struct state *sender,
-						  payload_emitter_fn *emit_payloads);
 void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 const char *what,
 				 struct v2_outgoing_fragment **frags);

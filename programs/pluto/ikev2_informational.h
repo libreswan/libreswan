@@ -21,4 +21,14 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 					    struct child_sa *null_child,
 					    struct msg_digest *md);
 
+typedef bool emit_v2_INFORMATIONAL_payload_fn(struct ike_sa *ike,
+					      struct child_sa *child,
+					      struct pbs_out *pbs);
+
+extern bool record_v2_INFORMATIONAL_request(const char *name,
+					    struct logger *logger,
+					    struct ike_sa *ike,
+					    struct child_sa *child,
+					    emit_v2_INFORMATIONAL_payload_fn *emit_payloads);
+
 #endif
