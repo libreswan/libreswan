@@ -224,25 +224,6 @@ S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request",
   .v2.secured = false,
   .v2.exchanges = &IKE_SA_INIT_exchanges);
 
-static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
-
-	/* STATE_V2_PARENT_R1: I2 --> R2
-	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
-	 *                             [IDr,] AUTH, SAi2,
-	 *                             TSi, TSr}
-	 * HDR, SK {IDr, [CERT,] AUTH,
-	 *      SAr2, TSi, TSr} -->
-	 *
-	 * [Parent SA established]
-	 */
-
-};
-
-V2_RESPONDER(IKE_SA_INIT,
-	     "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
-	     CAT_HALF_OPEN_IKE_SA, /*secured*/true,
-	     &v2_IKE_AUTH_exchange, &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_EAP_exchange);
-
 /*
  * IKE_INTERMEDIATE
  */

@@ -68,6 +68,7 @@
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
 static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;		/* forward decl and type assertion */
+static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
 void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike)
 {
@@ -1785,6 +1786,14 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	},
 
 };
+
+static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
+};
+
+V2_RESPONDER(IKE_SA_INIT,
+	     "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
+	     CAT_HALF_OPEN_IKE_SA, /*secured*/true,
+	     &v2_IKE_AUTH_exchange, &v2_IKE_INTERMEDIATE_exchange, &v2_IKE_AUTH_EAP_exchange);
 
 V2_EXCHANGE(IKE_SA_INIT, "initiate IKE SA",
 	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
