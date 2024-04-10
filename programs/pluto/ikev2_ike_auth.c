@@ -1334,6 +1334,40 @@ static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
+static const struct v2_transition v2_IKE_AUTH_exchange_responder_transition[] = {
+
+	{ .story      = "Responder: process IKE_AUTH request",
+	  .from = { &state_v2_IKE_SA_INIT_R, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
+	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_v2_REPLACE, },
+
+	{ .story      = "processing IKE_AUTH request",
+	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .flags = { .release_whack = true, },
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
+	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
+	  .processor  = process_v2_IKE_AUTH_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_v2_REPLACE, },
+
+};
+
+static const struct v2_transitions v2_IKE_AUTH_exchange_responder_transitions = {
+	ARRAY_REF(v2_IKE_AUTH_exchange_responder_transition),
+};
+
 static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
 	/* STATE_V2_IKE_AUTH_I: R2 -->
@@ -1375,4 +1409,5 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
 V2_EXCHANGE(IKE_AUTH, "authenticate IKE SA", "",
 	    CAT_OPEN_IKE_SA, CAT_ESTABLISHED_IKE_SA,
-	    /*secured*/true);
+	    /*secured*/true,
+	    .responder = &v2_IKE_AUTH_exchange_responder_transitions);

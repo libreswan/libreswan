@@ -248,19 +248,6 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
-	{ .story      = "Responder: process IKE_AUTH request",
-	  .from = { &state_v2_IKE_SA_INIT_R, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
-	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_v2_REPLACE, },
-
 };
 
 V2_RESPONDER(IKE_SA_INIT,
@@ -285,19 +272,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_v2_success_exchange_processed,
 	  .timeout_event = EVENT_v2_DISCARD, },
-
-	{ .story      = "processing IKE_AUTH request",
-	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
-	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_v2_REPLACE, },
 
 };
 
