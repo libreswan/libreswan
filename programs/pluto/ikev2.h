@@ -156,10 +156,6 @@ struct v2_exchanges {
 
 #define V2_RESPONDER(KIND, STORY, CAT, SECURED, ...)			\
 									\
-	static const struct v2_transitions v2_##KIND##_responder_transitions = { \
-		ARRAY_REF(v2_##KIND##_responder_transition),		\
-	};								\
-									\
 	static const struct v2_exchange *v2_##KIND##_responder_exchange[] = { \
 		__VA_ARGS__						\
 	};								\
@@ -175,7 +171,6 @@ struct v2_exchanges {
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.transitions = &v2_##KIND##_responder_transitions,	\
 		.v2.exchanges = &v2_##KIND##_responder_exchanges,	\
 		.v2.secured = SECURED,					\
 	}

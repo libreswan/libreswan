@@ -1788,9 +1788,6 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 };
 
-static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
-};
-
 V2_RESPONDER(IKE_SA_INIT,
 	     "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
 	     CAT_HALF_OPEN_IKE_SA, /*secured*/true,

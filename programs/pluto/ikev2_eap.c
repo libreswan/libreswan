@@ -835,7 +835,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
  * EAP responder transitions, there is no initiator code.
  */
 
-static const struct v2_transition v2_IKE_AUTH_EAP_exchange_responder_transition[] = {
+static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "process initial IKE_AUTH(EAP) request",
 	  .from = { &state_v2_IKE_SA_INIT_R, &state_v2_IKE_INTERMEDIATE_R, },
@@ -874,11 +874,8 @@ static const struct v2_transition v2_IKE_AUTH_EAP_exchange_responder_transition[
 
 };
 
-static const struct v2_transitions v2_IKE_AUTH_EAP_exchange_responder_transitions = {
-	ARRAY_REF(v2_IKE_AUTH_EAP_exchange_responder_transition),
-};
-
-static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
+static const struct v2_transitions v2_IKE_AUTH_EAP_responder_transitions = {
+	ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),
 };
 
 V2_RESPONDER(IKE_AUTH_EAP,
@@ -890,5 +887,5 @@ const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
 	.subplot = "EAP",
 	.secured = true,
-	.responder = &v2_IKE_AUTH_EAP_exchange_responder_transitions,
+	.responder = &v2_IKE_AUTH_EAP_responder_transitions,
 };

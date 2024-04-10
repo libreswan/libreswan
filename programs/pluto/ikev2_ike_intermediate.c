@@ -444,7 +444,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.timeout_event = EVENT_RETRANSMIT,
 };
 
-static const struct v2_transition v2_IKE_INTERMEDIATE_exchange_responder_transition[] = {
+static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
 	  .from = { &state_v2_IKE_SA_INIT_R, },
@@ -472,8 +472,8 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_exchange_responder_transit
 
 };
 
-static const struct v2_transitions v2_IKE_INTERMEDIATE_exchange_responder_transitions = {
-	ARRAY_REF(v2_IKE_INTERMEDIATE_exchange_responder_transition),
+static const struct v2_transitions v2_IKE_INTERMEDIATE_responder_transitions = {
+	ARRAY_REF(v2_IKE_INTERMEDIATE_responder_transition),
 };
 
 static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
@@ -489,9 +489,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
-static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
-};
-
 V2_RESPONDER(IKE_INTERMEDIATE,
 	     "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
 	     CAT_OPEN_IKE_SA, /*secured*/true,
@@ -500,4 +497,4 @@ V2_RESPONDER(IKE_INTERMEDIATE,
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
 	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true,
-	    .responder = &v2_IKE_INTERMEDIATE_exchange_responder_transitions);
+	    .responder = &v2_IKE_INTERMEDIATE_responder_transitions);
