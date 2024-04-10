@@ -26,6 +26,8 @@
 #include "ikev2_informational.h"
 
 static bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
+static emit_v2_INFORMATIONAL_payload_fn emit_v2D_ike_sa;
+static emit_v2_INFORMATIONAL_payload_fn emit_v2D_child_sa;
 static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
 
 /*
@@ -38,63 +40,30 @@ static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
  * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
  */
 
-bool record_v2_delete(struct ike_sa *ike, struct state *st)
+bool emit_v2D_ike_sa(struct ike_sa *ike, struct child_sa *null_child, struct pbs_out *pbs)
 {
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	PASSERT(ike->sa.logger, null_child == NULL);
 
-	struct v2_message request;
-	if (!open_v2_message("informational exchange delete request",
-			     ike, st->logger,
-			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
-			     buf, sizeof(buf), &request,
-			     ENCRYPTED_PAYLOAD)) {
-		return false;
+	struct ikev2_delete v2del = {
+		.isad_protoid = PROTO_ISAKMP,
+		.isad_spisize = 0,
+		.isad_nrspi = 0,
+	};
+
+	if (impair.v2_delete_protoid.enabled) {
+		enum_buf ebo, ebn;
+		enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid.value;
+		llog(RC_LOG, ike->sa.logger,
+		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
+		     str_enum_short(&ikev2_delete_protocol_id_names, v2del.isad_protoid, &ebo),
+		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
+		     protoid);
+		v2del.isad_protoid = protoid;
 	}
 
-	{
-		struct pbs_out del_pbs;
-		struct ikev2_delete v2del_tmp;
-		if (IS_CHILD_SA(st)) {
-			v2del_tmp = (struct ikev2_delete) {
-				.isad_protoid = PROTO_IPSEC_ESP,
-				.isad_spisize = sizeof(ipsec_spi_t),
-				.isad_nrspi = 1,
-			};
-		} else {
-			v2del_tmp = (struct ikev2_delete) {
-				.isad_protoid = PROTO_ISAKMP,
-				.isad_spisize = 0,
-				.isad_nrspi = 0,
-			};
-		}
-
-		if (impair.v2_delete_protoid.enabled) {
-			enum_buf ebo, ebn;
-			enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid.value;
-			llog(RC_LOG, st->logger, "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
-			     str_enum_short(&ikev2_delete_protocol_id_names, v2del_tmp.isad_protoid, &ebo),
-			     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
-			     protoid);
-			v2del_tmp.isad_protoid = protoid;
-		}
-
-		/* Emit delete payload header out */
-		if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
-				request.pbs, &del_pbs))
-			return false;
-
-		/* Emit values of spi to be sent to the peer */
-		if (IS_CHILD_SA(st)) {
-			if (!pbs_out_thing(&del_pbs, st->st_esp.inbound.spi, "local spis")) {
-				/* already logged */
-				return false;
-			}
-		}
-
-		close_output_pbs(&del_pbs);
-	}
-
-	if (!close_and_record_v2_message(&request)) {
+	/* Emit delete payload header out */
+	if (!pbs_out_struct(pbs, &ikev2_delete_desc,
+			    &v2del, sizeof(v2del), /*sub-pbs*/NULL)) {
 		return false;
 	}
 
@@ -175,11 +144,15 @@ static stf_status process_v2_INFORMATIONAL_delete_request(struct ike_sa *ike,
 }
 
 static stf_status initiate_v2_delete_ike_request(struct ike_sa *ike,
-						 struct child_sa *unused_child UNUSED,
-						 struct msg_digest *md)
+						 struct child_sa *null_child,
+						 struct msg_digest *null_md)
 {
-	pexpect(md == NULL);
-	if (!record_v2_delete(ike, &ike->sa)) {
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	PEXPECT(ike->sa.logger, null_md == NULL);
+
+	if (!record_v2_INFORMATIONAL_request("delete IKE SA",
+					     ike->sa.logger, ike, /*child*/NULL,
+					     emit_v2D_ike_sa)) {
 		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
@@ -266,6 +239,43 @@ const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
 	.response = &v2_INFORMATIONAL_delete_ike_response_transitions,
 };
 
+bool emit_v2D_child_sa(struct ike_sa *ike UNUSED, struct child_sa *child, struct pbs_out *pbs)
+{
+	struct ikev2_delete v2del = {
+		.isad_protoid = PROTO_IPSEC_ESP,
+		.isad_spisize = sizeof(ipsec_spi_t),
+		.isad_nrspi = 1,
+	};
+
+	if (impair.v2_delete_protoid.enabled) {
+		enum_buf ebo, ebn;
+		enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid.value;
+		llog(RC_LOG, child->sa.logger,
+		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
+		     str_enum_short(&ikev2_delete_protocol_id_names, v2del.isad_protoid, &ebo),
+		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
+		     protoid);
+		v2del.isad_protoid = protoid;
+	}
+
+	/* Emit delete payload header out */
+	struct pbs_out del_pbs;
+	if (!pbs_out_struct(pbs, &ikev2_delete_desc,
+			    &v2del, sizeof(v2del), &del_pbs)) {
+		return false;
+	}
+
+	/* Emit values of spi to be sent to the peer */
+	if (!pbs_out_thing(&del_pbs, child->sa.st_esp.inbound.spi, "local spis")) {
+		/* already logged */
+		return false;
+	}
+
+	close_output_pbs(&del_pbs);
+
+	return true;
+}
+
 static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 						   struct child_sa *child,
 						   struct msg_digest *md)
@@ -273,7 +283,9 @@ static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
 	pexpect(md == NULL);
 	pexpect(child != NULL);
 
-	if (!record_v2_delete(ike, &child->sa)) {
+	if (!record_v2_INFORMATIONAL_request("delete Child SA",
+					     ike->sa.logger, ike, child,
+					     emit_v2D_child_sa)) {
 		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
@@ -712,7 +724,8 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	}
 
 	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_delete_ike_exchange);
-	record_v2_delete(ike, &ike->sa);
+	/* hack; this call records the delete */
+	initiate_v2_delete_ike_request(ike, /*child*/NULL, /*md*/NULL);
 	send_recorded_v2_message(ike, "delete notification",
 				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 	v2_msgid_finish(ike, NULL/*MD*/, HERE);
