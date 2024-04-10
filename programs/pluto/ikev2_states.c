@@ -936,6 +936,8 @@ const struct v2_transition *find_v2_transition(struct logger *logger,
 
 bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 {
+	pdbg(ike->sa.logger, "looking for an exchange that matches:");
+
 	/*
 	 * See if the decrypted message payloads include the secured
 	 * SK|SKF payload.
@@ -945,7 +947,7 @@ bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	PASSERT(ike->sa.logger, md->message_payloads.parsed);
 	PEXPECT(ike->sa.logger, !md->encrypted_payloads.parsed);
 	if ((md->message_payloads.present & (v2P(SK) | v2P(SKF))) == LEMPTY) {
-		llog(RC_LOG, ike->sa.logger, "message is not secured (no SK or SKF payload)");
+		llog(RC_LOG, ike->sa.logger, "missing SK or SKF payload; message dropped");
 		return false;
 	}
 
@@ -964,33 +966,43 @@ bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 				break;
 			}
 		}
+		if (exchange == NULL) {
+			enum_buf xb;
+			llog(RC_LOG, ike->sa.logger, "unexpected %s request; message dropped",
+			     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb));
+			return false;
+		}
 		break;
 	case MESSAGE_RESPONSE:
 		exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+		if (PBAD(ike->sa.logger, exchange == NULL)) {
+			return false;
+		}
+		if (exchange->type != md->hdr.isa_xchg) {
+			enum_buf xb, eb;
+			llog(RC_LOG, ike->sa.logger, "unexpected %s response, expecting %s (%s); message dropped",
+			     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb),
+			     str_enum_short(&isakmp_xchg_type_names, exchange->type, &eb),
+			     exchange->subplot);
+			return false;
+		}
 		break;
 	}
 
-	if (exchange == NULL) {
-		enum_buf rb;
-		enum_buf xb;
-		llog(RC_LOG, ike->sa.logger, "%s %s message has no matching exchange",
-		     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb),
-		     str_enum_short(&message_role_names, role, &rb));
-		return false;
-	}
-
 	/*
-	 * Is the matching exchange secured?
+	 * Cross check that the matching exchange is secured.
 	 */
 	if (!exchange->secured) {
 		enum_buf rb;
 		enum_buf xb;
-		llog(RC_LOG, ike->sa.logger, "exchange matching %s %s is not secured",
-		     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb),
-		     str_enum_short(&message_role_names, role, &rb));
+		llog_pexpect(ike->sa.logger, HERE, "%s %s (%s) exchange should be secured",
+			     str_enum_short(&isakmp_xchg_type_names, exchange->type, &xb),
+			     str_enum_short(&message_role_names, role, &rb),
+			     exchange->subplot);
 		return false;
 	}
 
+	pdbg(ike->sa.logger, "  found %s", exchange->subplot);
 	return true;
 }
 
