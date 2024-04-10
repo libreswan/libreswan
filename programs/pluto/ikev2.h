@@ -119,7 +119,7 @@ struct v2_exchanges {
 	size_t len;
 };
 
-#define V2_EXCHANGE(KIND, SUBPLOT, NEXT_STORY, I_CAT, IR_CAT, SECURED)	\
+#define V2_EXCHANGE(KIND, SUBPLOT, NEXT_STORY, I_CAT, IR_CAT, SECURED, ...) \
 									\
 	static const struct v2_transitions v2_##KIND##_response_transitions = { \
 		ARRAY_REF(v2_##KIND##_response_transition),		\
@@ -151,6 +151,7 @@ struct v2_exchanges {
 		.secured = SECURED,					\
 		.initiate = &v2_##KIND##_initiate_transition,		\
 		.response = &v2_##KIND##_response_transitions,		\
+		##__VA_ARGS__,						\
 	}
 
 #define V2_RESPONDER(KIND, STORY, CAT, SECURED, ...)			\
