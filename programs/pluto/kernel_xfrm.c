@@ -1583,7 +1583,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 	req.p.reqid = sa->reqid;
-	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
+	ldbg(logger, "%s() adding %s IPsec SA with reqid %d", __func__,
+	     sa->direction == DIRECTION_OUTBOUND ? "output" : "input",
+	     sa->reqid);
 
 	if (sa->nic_offload.dev == NULL /* i.e., no offload */ ||
 	    sa->nic_offload.type != KERNEL_OFFLOAD_PACKET) {
@@ -1632,7 +1634,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			ldbg(logger, "%s() enabling Decap DSCP", __func__);
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
-		if (!sa->encap_dscp) {
+		if (!sa->encap_dscp && sa->direction ==  DIRECTION_OUTBOUND) {
 			ldbg(logger, "%s() disabling Encap DSCP", __func__);
 			__u32 extra_flags = XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
 			attr->rta_type = XFRMA_SA_EXTRA_FLAGS;
@@ -1654,6 +1656,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		} else {
 			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
 				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
+			bmp_size = sa->replay_window == 0 ? 0 : bmp_size;
 			/* this is where we could fill in sequence numbers for this SA */
 			struct xfrm_replay_state_esn xre = {
 				/* replay_window must be multiple of 8 */
@@ -1870,6 +1873,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 	}
 #endif
+
+	uint8_t sa_dir = sa->direction ==  DIRECTION_OUTBOUND ? XFRM_SA_DIR_OUT : XFRM_SA_DIR_IN;
+	nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, sa_dir);
 
 	if (sa->nic_offload.dev != NULL) {
 		struct xfrm_user_offload xuo = {
@@ -2620,6 +2626,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userspi_info spi;
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct nlm_resp rsp;
 
@@ -2638,6 +2645,8 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	req.spi.min = min;
 	req.spi.max = max;
+
+	nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, XFRM_SA_DIR_IN);
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
