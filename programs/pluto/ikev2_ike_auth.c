@@ -72,6 +72,8 @@
 #include "ikev2_parent.h"
 #include "ikev2_states.h"
 
+static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
+
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 						   struct msg_digest *md,
 						   bool pam_status);
