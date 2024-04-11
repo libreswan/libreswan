@@ -51,17 +51,6 @@
 static bool process_v2N_requests(struct ike_sa *ike, struct msg_digest *md,
 				 struct pbs_out *pbs)
 {
-	/*
-	 * This happens when we are original initiator, and we
-	 * received REDIRECT payload during the active session.
-	 *
-	 * It trumps everything else.  Should delete also be ignored?
-	 */
-	if (md->pd[PD_v2N_REDIRECT] != NULL) {
-		process_v2_INFORMATIONAL_request_v2N_REDIRECT(ike, md);
-		return true;
-	}
-
 	if (!process_v2N_mobike_requests(ike, md, pbs)) {
 		return false;
 	}

@@ -55,7 +55,6 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 						       bool *secured_payload_failed);
 
 extern const struct v2_exchange v2_INFORMATIONAL_liveness_exchange;
-extern const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange;
 extern const struct v2_exchange v2_INFORMATIONAL_mobike_exchange;

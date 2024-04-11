@@ -486,8 +486,8 @@ static const struct v2_transitions v2_ESTABLISHED_IKE_SA_responder_transitions =
 
 static const struct v2_exchange *v2_ESTABLISHED_IKE_SA_responder_exchange[] = {
 	/* informational */
+	&v2_INFORMATIONAL_v2N_REDIRECT_exchange,
 	&v2_INFORMATIONAL_liveness_exchange,
-	&v2_INFORMATIONAL_redirect_ike_exchange,
 	&v2_INFORMATIONAL_delete_ike_exchange,
 	&v2_INFORMATIONAL_delete_child_exchange,
 	&v2_INFORMATIONAL_mobike_exchange,

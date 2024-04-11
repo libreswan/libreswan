@@ -17,7 +17,6 @@
 
 #include <unistd.h>
 
-
 #include "constants.h"
 #include "defs.h"
 
@@ -510,10 +509,13 @@ static bool add_redirect_payload(struct ike_sa *ike, struct child_sa *null_child
 	return emit_redirect_notification(HUNK_AS_SHUNK(ike->sa.st_active_redirect_gw), pbs);
 }
 
-static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
-					       struct child_sa *child UNUSED,
-					       struct msg_digest *null_md UNUSED)
+static stf_status send_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *ike,
+							     struct child_sa *null_child,
+							     struct msg_digest *null_md)
 {
+	PASSERT(ike->sa.logger, null_child == NULL);
+	PASSERT(ike->sa.logger, null_md == NULL);
+
 	if (!record_v2_INFORMATIONAL_request("active REDIRECT informational request",
 					     ike->sa.logger, ike, /*child*/NULL,
 					     add_redirect_payload)) {
@@ -523,51 +525,12 @@ static stf_status send_v2_redirect_ike_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static stf_status process_v2_INFORMATIONAL_redirect_request(struct ike_sa *ike,
-							    struct child_sa *null_child,
-							    struct msg_digest *md)
+static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *ike,
+								struct child_sa *null_child,
+								struct msg_digest *md)
 {
-	dbg("an informational request needing a response");
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(null_child == NULL);
-
-	/*
-	 * we need connection and boolean below
-	 * in a separate variables because we
-	 * do something with them after we delete
-	 * the state.
-	 *
-	 * XXX: which is of course broken; code should return
-	 * STF_ZOMBIFY and and let state machine clean things up.
-	 */
-	struct connection *c = ike->sa.st_connection;
-	bool do_unroute = ike->sa.st_sent_redirect && is_permanent(c);
-
-	/*
-	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
-	 *
-	 * There can be at most one Delete Payload for an IKE SA.
-	 * It means that this very SA is to be deleted.
-	 *
-	 * For each non-IKE Delete Payload we receive,
-	 * we respond with a corresponding Delete Payload.
-	 * Note that that means we will have an empty response
-	 * if no Delete Payloads came in or if the only
-	 * Delete Payload is for an IKE SA.
-	 *
-	 * If we received NAT detection payloads as per MOBIKE, send answers
-	 */
-
-	struct v2_message response;
-	if (!open_v2_message("information exchange reply packet",
-			     ike, ike->sa.logger,
-			     md/*response*/, ISAKMP_v2_INFORMATIONAL,
-			     reply_buffer, sizeof(reply_buffer), &response,
-			     ENCRYPTED_PAYLOAD)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* HDR out */
 
 	/*
 	 * This happens when we are original initiator, and we
@@ -575,71 +538,90 @@ static stf_status process_v2_INFORMATIONAL_redirect_request(struct ike_sa *ike,
 	 *
 	 * It trumps everything else.  Should delete also be ignored?
 	 */
-	if (md->pd[PD_v2N_REDIRECT] != NULL) {
-		process_v2_INFORMATIONAL_request_v2N_REDIRECT(ike, md);
-		return true;
-	}
-
-	/*
-	 * We've now build up the content (if any) of the Response:
-	 *
-	 * - empty, if there were no Delete Payloads or if we are
-	 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
-	 *   Treat as a check for liveness.  Correct response is this
-	 *   empty Response.
-	 *
-	 * - if an ISAKMP SA is mentioned in input message, we are
-	 *   sending an empty Response, as per standard.
-	 *
-	 * - for IPsec SA mentioned, we are sending its mate.
-	 *
-	 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a
-         *   COOKIE2
-	 *
-	 * Close up the packet and send it.
-	 */
-
-	if (!close_and_record_v2_message(&response)) {
+	if (PBAD(ike->sa.logger, md->pd[PD_v2N_REDIRECT] == NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
 
+	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
+	ip_address redirect_to;
+	err_t e = parse_redirect_payload(&redirect_pbs,
+					 ike->sa.st_connection->config->redirect.accept_to,
+					 NULL, &redirect_to, ike->sa.logger);
+	if (e != NULL) {
+		/* XXX: parse_redirect_payload() also often logs! */
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"warning: parsing of v2N_REDIRECT payload failed: %s", e);
+#if 0
+		record_v2N_response(ike->sa.logger, ike, md,
+
+				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+#else
+		/*
+		 * Act like nothing went wrong happened; it isn't
+		 * clear when parse_redirect_payload() fails due to a
+		 * syntax error or just something else.
+		 */
+		if (!record_v2_INFORMATIONAL_response("redirect response", ike->sa.logger,
+						      ike, null_child, md,
+						      /*emit-function*/NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+		return STF_OK;
+#endif
+	}
+
 	/*
-	 * This is a special case. When we have site to site connection
-	 * and one site redirects other in IKE_AUTH reply, he doesn't
-	 * unroute. It seems like it was easier to add here this part
-	 * than in delete_ipsec_sa() in kernel.c where it should be
-	 * (at least it seems like it should be there).
-	 *
-	 * The need for this special case was discovered by running
-	 * various test cases.
+	 * MAGIC: the initiate_redirect() callback initiates a new SA
+	 * with the new IP, and then deletes the old IKE SA.
 	 */
-	if (do_unroute) {
-		connection_unroute(c, HERE);
+	save_redirect(ike, md, redirect_to);
+
+	/*
+	 * Schedule event to wipe this SA family and do it first.
+	 * Remember, it won't run until after this function returns,
+	 * however, it will run before any connections have had a
+	 * chance to initiate.
+	 *
+	 * XXX: should this initiate a delete?  EXPIRE doesn't send delete requests.
+	 *
+	 * Should this force a delete send?
+	 */
+	event_force(EVENT_v2_EXPIRE, &ike->sa);
+
+	/*
+	 * The response is always empty.
+	 */
+	if (!record_v2_INFORMATIONAL_response("redirect response", ike->sa.logger,
+					      ike, null_child, md,
+					      /*emit-function*/NULL)) {
+		return STF_INTERNAL_ERROR;
 	}
 
 	return STF_OK;
 }
 
-static stf_status process_v2_INFORMATIONAL_redirect_ike_response(struct ike_sa *ike,
-								 struct child_sa *null_child,
-								 struct msg_digest *md)
+static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_response(struct ike_sa *ike,
+							     struct child_sa *null_child,
+							     struct msg_digest *md)
 {
 	PEXPECT(ike->sa.logger, md != NULL);
 	PEXPECT(ike->sa.logger, null_child == NULL);
 	return STF_OK;
 }
 
-static const struct v2_transition v2_INFORMATIONAL_redirect_ike_initiate_transition = {
+static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition = {
 	.story = "redirect IKE SA",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.processor = send_v2_redirect_ike_request,
+	.processor = send_v2_INFORMATIONAL_v2N_REDIRECT_request,
 	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_transition v2_INFORMATIONAL_redirect_responder_transition[] = {
+static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transition[] = {
 	{ .story      = "Informational Request",
 	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
@@ -648,16 +630,16 @@ static const struct v2_transition v2_INFORMATIONAL_redirect_responder_transition
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(N),
 	  .encrypted_payloads.notification = v2N_REDIRECT,
-	  .processor = process_v2_INFORMATIONAL_redirect_request,
+	  .processor = process_v2_INFORMATIONAL_v2N_REDIRECT_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_redirect_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_redirect_responder_transition),
+static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
 };
 
-static const struct v2_transition v2_INFORMATIONAL_redirect_ike_response_transition[] = {
+static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transition[] = {
 	{ .story      = "Informational Response",
 	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
@@ -665,22 +647,22 @@ static const struct v2_transition v2_INFORMATIONAL_redirect_ike_response_transit
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N),
-	  .processor  = process_v2_INFORMATIONAL_redirect_ike_response,
+	  .processor  = process_v2_INFORMATIONAL_v2N_REDIRECT_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_redirect_ike_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_redirect_ike_response_transition),
+static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_response_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
 };
 
-const struct v2_exchange v2_INFORMATIONAL_redirect_ike_exchange = {
+const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "redirect IKE SA",
 	.secured = true,
-	.initiate = &v2_INFORMATIONAL_redirect_ike_initiate_transition,
-	.responder = &v2_INFORMATIONAL_redirect_responder_transitions,
-	.response = &v2_INFORMATIONAL_redirect_ike_response_transitions,
+	.initiate = &v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition,
+	.responder = &v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions,
+	.response = &v2_INFORMATIONAL_v2N_REDIRECT_response_transitions,
 };
 
 void find_and_active_redirect_states(const char *conn_name,
@@ -707,8 +689,8 @@ void find_and_active_redirect_states(const char *conn_name,
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
 			cnt++;
-			pexpect(v2_INFORMATIONAL_redirect_ike_exchange.initiate->exchange == ISAKMP_v2_INFORMATIONAL);
-			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_redirect_ike_exchange);
+			pexpect(v2_INFORMATIONAL_v2N_REDIRECT_exchange.initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
 		}
 	}
 
@@ -730,7 +712,7 @@ void find_and_active_redirect_states(const char *conn_name,
 	free_redirect_dests(&active_dests);
 }
 
-stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
+stf_status process_v2_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
 							struct child_sa *child,
 							struct msg_digest *md)
 {
@@ -760,33 +742,4 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 
 	save_redirect(ike, md, redirect_ip);
 	return STF_OK_INITIATOR_DELETE_IKE;
-}
-
-void process_v2_INFORMATIONAL_request_v2N_REDIRECT(struct ike_sa *ike, struct msg_digest *md)
-{
-	struct pbs_in pbs = md->pd[PD_v2N_REDIRECT]->pbs;
-	dbg("received v2N_REDIRECT in informational");
-	ip_address redirect_to;
-	err_t e = parse_redirect_payload(&pbs, ike->sa.st_connection->config->redirect.accept_to,
-					 NULL, &redirect_to, ike->sa.logger);
-	if (e != NULL) {
-		/* XXX: parse_redirect_payload() also often logs! */
-		llog_sa(RC_LOG_SERIOUS, ike,
-			"warning: parsing of v2N_REDIRECT payload failed: %s", e);
-		return;
-	}
-
-	/*
-	 * MAGIC: the initiate_redirect() callback initiates a new SA
-	 * with the new IP, and then deletes the old IKE SA.
-	 */
-	save_redirect(ike, md, redirect_to);
-
-	/*
-	 * Schedule event to wipe this SA family and do it first.
-	 * Remember, it won't run until after this function returns,
-	 * however, it will run before any connections have had a
-	 * chance to initiate.
-	 */
-	event_force(EVENT_v2_EXPIRE, &ike->sa);
 }

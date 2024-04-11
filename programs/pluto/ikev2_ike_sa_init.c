@@ -1763,7 +1763,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
-	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
+	  .processor  = process_v2_IKE_SA_INIT_v2N_REDIRECT_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
