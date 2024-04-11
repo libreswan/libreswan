@@ -1141,7 +1141,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * about at most 7 exchanges and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
 	 */
-	if (!is_secured_v2_exchange(ike, md)) {
+	if (!is_plausible_secured_v2_exchange(ike, md)) {
 		/* already logged */
 		/* drop packet on the floor */
 		return;

@@ -27,6 +27,9 @@
  *
  */
 
+#define ldbg_ft(LOGGER, FORMAT, ...)		\
+	ldbg(LOGGER, "ft: %*s"FORMAT, indent*2, "", ##__VA_ARGS__)
+
 #include "defs.h"
 #include "state.h"
 #include "ikev2_states.h"
@@ -631,33 +634,29 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	return errors;
 }
 
-static const struct v2_transition *find_v2_transition(struct logger *logger,
+static const struct v2_transition *find_v2_transition(struct logger *logger, unsigned indent,
 						      const struct v2_transitions *transitions,
 						      struct msg_digest *md,
 						      struct ikev2_payload_errors *message_payload_status,
 						      struct ikev2_payload_errors *encrypted_payload_status)
 {
-	pdbg(logger, "looking for a transition%s",
-	     (encrypted_payload_status != NULL ? " with secured payloads" : ""));
-
 	FOR_EACH_ITEM(transition, transitions) {
 
-		pdbg(logger, "  trying: %s", transition->story);
+		ldbg_ft(logger, "trying %s ...", transition->story);
 
 		/* message type? */
 		if (transition->exchange != md->hdr.isa_xchg) {
 			enum_buf xb;
-			pdbg(logger, "    exchange type does not match %s",
-			     str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
+			ldbg_ft(logger, "  exchange type does not match %s",
+				str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
 			continue;
 		}
 
 		/* role? */
 		if (transition->recv_role != v2_msg_role(md)) {
-			pdbg(logger, "     message role does not match %s",
-			     (transition->recv_role == MESSAGE_REQUEST ? "request" :
-			      transition->recv_role == MESSAGE_RESPONSE ? "response" :
-			      "no-message"));
+			enum_buf rb;
+			ldbg_ft(logger, "  message role does not match %s",
+				str_enum_short(&message_role_names, transition->recv_role, &rb));
 			continue;
 		}
 
@@ -669,7 +668,7 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
 		if (message_payload_errors.bad) {
-			pdbg(logger, "    message payloads do not match");
+			ldbg_ft(logger, "  message payloads do not match");
 			/* save error for last pattern!?! */
 			*message_payload_status = message_payload_errors;
 			continue;
@@ -682,7 +681,7 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 		 */
 		if (encrypted_payload_status == NULL) {
 			PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) == LEMPTY);
-			pdbg(logger, "    unsecured message matched");
+			ldbg_ft(logger, "  unsecured message matched");
 			return transition;
 		}
 
@@ -701,13 +700,13 @@ static const struct v2_transition *find_v2_transition(struct logger *logger,
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
-			pdbg(logger, "    secured payloads do not match");
+			ldbg_ft(logger, "  secured payloads do not match");
 			/* save error for last pattern!?! */
 			*encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
 
-		pdbg(logger, "    secured message matched");
+		ldbg_ft(logger, "  secured message matched");
 		return transition;
 	}
 
@@ -718,6 +717,12 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 						       struct msg_digest *md,
 						       bool *secured_payload_failed)
 {
+	enum_buf xb, rb;
+	unsigned indent = 0;
+	ldbg_ft(ike->sa.logger, "looking for secured transition matching exchange %s %s ...",
+		str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+	indent = 1;
 	PASSERT(ike->sa.logger, secured_payload_failed != NULL);
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
@@ -740,14 +745,16 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		 * IKE_INTERMEDIATE exchanges.  With a matching
 		 * exchange, look for a matching transition.
 		 */
-		FOR_EACH_ITEM(exchange, ike->sa.st_state->v2.exchanges) {
-			const struct v2_exchange *e = (*exchange);
-			if (e->type != md->hdr.isa_xchg) {
+		FOR_EACH_ITEM(exchangep, ike->sa.st_state->v2.exchanges) {
+			const struct v2_exchange *exchange = (*exchangep);
+			ldbg_ft(ike->sa.logger, "trying exchange %s ...", exchange->subplot);
+			if (exchange->type != md->hdr.isa_xchg) {
+				ldbg_ft(ike->sa.logger, "  wrong exchange type");
 				continue;
 			}
 			const struct v2_transition *t =
-				find_v2_transition(ike->sa.logger,
-						   e->responder,
+				find_v2_transition(ike->sa.logger, indent+1,
+						   exchange->responder,
 						   md, &message_payload_status,
 						   &encrypted_payload_status);
 			if (t != NULL) {
@@ -764,8 +771,9 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		 *
 		 * XXX: but should those be merged into the above?
 		 */
+		ldbg_ft(ike->sa.logger, "trying legacy transitions ...");
 		const struct v2_transition *t =
-			find_v2_transition(ike->sa.logger,
+			find_v2_transition(ike->sa.logger, indent+1,
 					   ike->sa.st_state->v2.transitions,
 					   md, &message_payload_status,
 					   &encrypted_payload_status);
@@ -778,8 +786,10 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 	{
 		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 		PASSERT(ike->sa.logger, exchange != NULL);
+		ldbg_ft(ike->sa.logger, "trying outstanding exchange %s", exchange->subplot);
 		const struct v2_transition *t =
-			find_v2_transition(ike->sa.logger, exchange->response,
+			find_v2_transition(ike->sa.logger, indent+1,
+					   exchange->response,
 					   md, &message_payload_status,
 					   &encrypted_payload_status);
 		if (t != NULL) {
@@ -824,8 +834,16 @@ const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
 							 const struct v2_transitions *transitions,
 							 struct msg_digest *md)
 {
+	unsigned indent = 0;
+	enum_buf xb, rb;
+	ldbg_ft(logger, "looking for an unsecured transition matching exchange %s %s ...",
+		str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+	indent = 1;
+
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
-	const struct v2_transition *t = find_v2_transition(logger, transitions, md,
+	const struct v2_transition *t = find_v2_transition(logger, indent,
+							   transitions, md,
 							   &message_payload_status, NULL);
 	if (t != NULL) {
 		return t;
@@ -845,9 +863,16 @@ const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
 	return NULL;
 }
 
-bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
+bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 {
-	pdbg(ike->sa.logger, "looking for an exchange that matches:");
+	enum message_role role = v2_msg_role(md);
+	unsigned indent = 0;
+
+	enum_buf xb, rb;
+	ldbg_ft(ike->sa.logger, "looking for plausible secured exchange matching %s %s ...",
+		str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+	indent = 1;
 
 	/*
 	 * See if the decrypted message payloads include the secured
@@ -863,13 +888,12 @@ bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	/*
-	 * Is there a matching exchange?
+	 * Is there an exchange with the same message type?
 	 */
-	enum message_role role = v2_msg_role(md);
 	const struct v2_exchange *exchange = NULL;
 	switch (role) {
 	case NO_MESSAGE:
-		break;
+		bad_case(role);
 	case MESSAGE_REQUEST:
 		FOR_EACH_ITEM(e, ike->sa.st_state->v2.exchanges) {
 			if ((*e)->type == md->hdr.isa_xchg) {
@@ -883,6 +907,8 @@ bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb));
 			return false;
 		}
+		ldbg_ft(ike->sa.logger, "plausible; exchange type matches responder %s exchange",
+		     exchange->subplot);
 		break;
 	case MESSAGE_RESPONSE:
 		exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
@@ -897,11 +923,13 @@ bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			     exchange->subplot);
 			return false;
 		}
+		ldbg_ft(ike->sa.logger, "plausible; exchange type matches outstanding %s exchange",
+		     exchange->subplot);
 		break;
 	}
 
 	/*
-	 * Cross check that the matching exchange is secured.
+	 * Double check that the matching exchange is secured.
 	 */
 	if (!exchange->secured) {
 		enum_buf rb;
@@ -913,7 +941,6 @@ bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 		return false;
 	}
 
-	pdbg(ike->sa.logger, "  found %s", exchange->subplot);
 	return true;
 }
 

@@ -43,7 +43,7 @@ S(IKE_SA_DELETE);
 S(CHILD_SA_DELETE);
 #undef S
 
-bool is_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md);
+bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md);
 
 /* used by the IKE_SA_INIT code to find initial transitions only */
 const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
