@@ -437,93 +437,6 @@ C(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_
 
 static const struct v2_transition v2_ESTABLISHED_IKE_SA_responder_transition[] = {
 
-	/*
-	 * IKE SA's CREATE_CHILD_SA exchange to rekey IKE SA.
-	 *
-	 * Note the lack of a TS (traffic selectors) payload.  Since
-	 * rekey and new Child SA exchanges contain TS they won't
-	 * match.
-	 *
-	 *   Initiator                         Responder
-	 *   --------------------------------------------------------
-	 *   HDR, SK {SA, Ni, KEi} -->
-	 *                                <--  HDR, SK {SA, Nr, KEr}
-	 *
-	 * XXX: see ikev2_create_child_sa.c for initiator state.
-	 */
-
-	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(KE),
-	  .encrypted_payloads.optional = v2P(N),
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN },
-
-	/*
-	 * IKE SA's CREATE_CHILD_SA request to rekey a Child SA.
-	 *
-	 * This transition expects both TS (traffic selectors) and
-	 * N(REKEY_SA)) payloads.  The rekey Child SA request will
-	 * match this, the new Child SA will not and match the weaker
-	 * transition that follows.
-	 *
-	 *   Initiator                         Responder
-	 *   ---------------------------------------------------------
-	 *   HDR, SK {N(REKEY_SA), SA, Ni, [KEi,]
-	 *            TSi, TSr}  -->
-	 *
-	 * XXX: see ikev2_create_child_sa.c for initiator state.
-	 */
-
-	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	  .encrypted_payloads.notification = v2N_REKEY_SA,
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
-	/*
-	 * IKE SA's CREATE_CHILD_SA request to create a new Child SA.
-	 *
-	 * Note the presence of just TS (traffic selectors) payloads.
-	 * Earlier rules will have weeded out both rekey IKE (no TS
-	 * payload) and rekey Child (has N(REKEY_SA)) leaving just
-	 * create new Child SA.
-	 *
-	 *   Initiator                         Responder
-	 *   ----------------------------------------------------------
-	 *   HDR, SK {SA, Ni, [KEi,]
-	 *            TSi, TSr}  -->
-	 *
-	 * XXX: see ikev2_create_child_sa.c for initiator state.
-	 */
-
-	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
 	/* Informational Exchange */
 
 	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
@@ -575,10 +488,13 @@ static const struct v2_exchange *v2_ESTABLISHED_IKE_SA_responder_exchange[] = {
 	&v2_INFORMATIONAL_delete_ike_exchange,
 	&v2_INFORMATIONAL_delete_child_exchange,
 	&v2_INFORMATIONAL_mobike_exchange,
-	/* child */
-	&v2_CREATE_CHILD_SA_new_child_exchange,
-	&v2_CREATE_CHILD_SA_rekey_child_exchange,
+	/*
+	 * Create/Rekey IKE/Child SAs.
+	 * Danger: order is important.
+	 */
 	&v2_CREATE_CHILD_SA_rekey_ike_exchange,
+	&v2_CREATE_CHILD_SA_rekey_child_exchange,
+	&v2_CREATE_CHILD_SA_new_child_exchange,
 };
 
 static const struct v2_exchanges v2_ESTABLISHED_IKE_SA_responder_exchanges = {
