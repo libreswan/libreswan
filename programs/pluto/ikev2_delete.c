@@ -25,54 +25,125 @@
 #include "connections.h"
 #include "ikev2_informational.h"
 
-static bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
-static emit_v2_INFORMATIONAL_request_payload_fn emit_v2D_ike_sa;
-static emit_v2_INFORMATIONAL_request_payload_fn emit_v2D_child_sa;
-static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
+static bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike,
+				      struct msg_digest *md, struct pbs_out *pbs);
+static emit_v2_INFORMATIONAL_request_payload_fn emit_v2DELETE;
+static ikev2_state_transition_fn initiate_v2_INFORMATIONAL_v2DELETE_request;
+static ikev2_state_transition_fn process_v2_INFORMATIONAL_v2DELETE_request;
+static ikev2_state_transition_fn process_v2_INFORMATIONAL_v2DELETE_response;
 
-/*
- * Send an Informational Exchange announcing a deletion.
- *
- * CURRENTLY SUPPRESSED:
- * If we fail to send the deletion, we just go ahead with deleting the state.
- * The code in delete_state would break if we actually did this.
- *
- * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
- */
-
-bool emit_v2D_ike_sa(struct ike_sa *ike, struct child_sa *null_child, struct pbs_out *pbs)
+bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *pbs)
 {
-	PASSERT(ike->sa.logger, null_child == NULL);
-
-	struct ikev2_delete v2del = {
-		.isad_protoid = PROTO_ISAKMP,
-		.isad_spisize = 0,
-		.isad_nrspi = 0,
-	};
+	enum ikev2_sec_proto_id protoid =
+		(child == NULL ? IKEv2_SEC_PROTO_IKE :
+		 child->sa.st_esp.protocol == &ip_protocol_esp ? IKEv2_SEC_PROTO_ESP :
+		 child->sa.st_ah.protocol == &ip_protocol_ah ? IKEv2_SEC_PROTO_AH :
+		 IKEv2_SEC_PROTO_NONE);
+	if (PBAD(ike->sa.logger, protoid == IKEv2_SEC_PROTO_NONE)) {
+		return false;
+	}
 
 	if (impair.v2_delete_protoid.enabled) {
 		enum_buf ebo, ebn;
-		enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid.value;
+		enum ikev2_sec_proto_id new_protoid = impair.v2_delete_protoid.value;
 		llog(RC_LOG, ike->sa.logger,
 		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
-		     str_enum_short(&ikev2_delete_protocol_id_names, v2del.isad_protoid, &ebo),
-		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
+		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebo),
+		     str_enum_short(&ikev2_delete_protocol_id_names, new_protoid, &ebn),
 		     protoid);
-		v2del.isad_protoid = protoid;
+		protoid = new_protoid;
 	}
 
+	struct ikev2_delete v2del = {
+		.isad_protoid = protoid,
+		.isad_spisize = (child != NULL ? sizeof(ipsec_spi_t) : 0),
+		.isad_nrspi = (child != NULL ? 1 : 0),
+	};
+
 	/* Emit delete payload header out */
+	struct pbs_out spi_pbs;
 	if (!pbs_out_struct(pbs, &ikev2_delete_desc,
-			    &v2del, sizeof(v2del), /*sub-pbs*/NULL)) {
+			    &v2del, sizeof(v2del), &spi_pbs)) {
 		return false;
 	}
+
+	if (child != NULL) {
+		/* Emit values of spi to be sent to the peer */
+		if (!pbs_out_thing(&spi_pbs, child->sa.st_esp.inbound.spi, "local spis")) {
+			/* already logged */
+			return false;
+		}
+	}
+
+	close_output_pbs(&spi_pbs);
 
 	return true;
 }
 
-static stf_status process_v2_INFORMATIONAL_delete_request(struct ike_sa *ike,
-							  struct child_sa *null_child,
-							  struct msg_digest *md)
+stf_status initiate_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
+						      struct child_sa *child,
+						      struct msg_digest *null_md)
+{
+	PEXPECT(ike->sa.logger, null_md == NULL);
+
+	if (!record_v2_INFORMATIONAL_request("delete IKE SA",
+					     ike->sa.logger, ike, child/*possibly-null*/,
+					     emit_v2DELETE)) {
+		/* already logged */
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (child == NULL) {
+		/*
+		 * Record the IKE's SO so that the response code knows
+		 * to expect an empty delete.
+		 */
+		ike->sa.st_v2_msgid_windows.initiator.dead_sa = ike->sa.st_serialno;
+	} else {
+		/*
+		 * XXX: just assume an SA that isn't established is
+		 * larval.
+		 *
+		 * Would be nice to have something indicating larval,
+		 * established, zombie.
+		 *
+		 * Should use .llog_success, but that code doesn't
+		 * know which Child SA the exchange was for.  Hence,
+		 * pretend that it was sent when it hasn't (but will
+		 * real soon, promise!)
+		 */
+		ike->sa.st_v2_msgid_windows.initiator.dead_sa = child->sa.st_serialno;
+		bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
+		/*
+		 * XXX: should be in success callback but that doesn't
+		 * have enough context.
+		 */
+		llog(RC_LOG, child->sa.logger,
+		     "sent INFORMATIONAL request to delete %s Child SA using IKE SA "PRI_SO,
+		     established ? "established" : "larval",
+		     pri_so(ike->sa.st_serialno));
+		if (!established) {
+			/*
+			 * Normally the responder would include it's
+			 * outgoing SA's SPI, and this end would use
+			 * that to find / delete the child.  Here,
+			 * however, the SA isn't established so we've
+			 * no clue as to what the responder will send
+			 * back.  If anything.
+			 *
+			 * Hence signal the Child SA that it should
+			 * delete itself.
+			 */
+			event_force(EVENT_v2_DISCARD, &child->sa);
+		}
+	}
+
+	return STF_OK;
+}
+
+static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
+							    struct child_sa *null_child,
+							    struct msg_digest *md)
 {
 	dbg("an informational request needing a response");
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
@@ -102,7 +173,7 @@ static stf_status process_v2_INFORMATIONAL_delete_request(struct ike_sa *ike,
 	/* HDR out */
 
 	bool del_ike = false;
-	if (!process_v2D_requests(&del_ike, ike, md, response.pbs)) {
+	if (!process_v2DELETE_requests(&del_ike, ike, md, response.pbs)) {
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
 		/*
@@ -143,22 +214,6 @@ static stf_status process_v2_INFORMATIONAL_delete_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static stf_status initiate_v2_delete_ike_request(struct ike_sa *ike,
-						 struct child_sa *null_child,
-						 struct msg_digest *null_md)
-{
-	PEXPECT(ike->sa.logger, null_child == NULL);
-	PEXPECT(ike->sa.logger, null_md == NULL);
-
-	if (!record_v2_INFORMATIONAL_request("delete IKE SA",
-					     ike->sa.logger, ike, /*child*/NULL,
-					     emit_v2D_ike_sa)) {
-		/* already logged */
-		return STF_INTERNAL_ERROR;
-	}
-	return STF_OK;
-}
-
 static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 {
 	/*
@@ -168,228 +223,52 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
 }
 
-static stf_status process_v2_INFORMATIONAL_delete_ike_response(struct ike_sa *ike,
-							       struct child_sa *null_child,
-							       struct msg_digest *md)
-{
-	PEXPECT(ike->sa.logger, null_child == NULL);
-	PEXPECT(ike->sa.logger, md != NULL);
-	/*
-	 * This must be a response to our IKE SA delete request Even
-	 * if there are are other Delete Payloads, they cannot matter:
-	 * we delete the family.
-	 */
-	return STF_OK_INITIATOR_DELETE_IKE;
-}
-
-static const struct v2_transition v2_INFORMATIONAL_delete_ike_initiate_transition = {
-	.story = "delete IKE SA",
+static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_initiate_transition = {
+	.story = "initiate Informational Delete IKE SA request",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_IKE_SA_DELETE,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.processor = initiate_v2_delete_ike_request,
+	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.llog_success = llog_v2_success_delete_ike_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
-static const struct v2_transition v2_INFORMATIONAL_delete_responder_transition[] = {
-	{ .story      = "Informational Request",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(D),
-	  .encrypted_payloads.optional = v2P(N),
-	  .processor  = process_v2_INFORMATIONAL_delete_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_delete_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_delete_responder_transition),
-};
-
-static const struct v2_transition v2_INFORMATIONAL_delete_ike_response_transition[] = {
-
-	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
+static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_response_transition[] = {
+	{ .story      = "process Informational Delete IKE SA response",
 	  .from = { &state_v2_IKE_SA_DELETE, },
 	  .to = &state_v2_IKE_SA_DELETE,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
-	  .processor  = process_v2_INFORMATIONAL_delete_ike_response,
+	  .processor  = process_v2_INFORMATIONAL_v2DELETE_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
-
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_delete_ike_response_transitions =
+static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_ike_response_transitions =
 {
-	ARRAY_REF(v2_INFORMATIONAL_delete_ike_response_transition),
+	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_ike_response_transition),
 };
 
-const struct v2_exchange v2_INFORMATIONAL_delete_ike_exchange = {
+static const struct v2_exchange v2_INFORMATIONAL_v2DELETE_ike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "delete IKE SA",
 	.secured = true,
-	.initiate = &v2_INFORMATIONAL_delete_ike_initiate_transition,
-	.responder = &v2_INFORMATIONAL_delete_responder_transitions,
-	.response = &v2_INFORMATIONAL_delete_ike_response_transitions,
-};
-
-bool emit_v2D_child_sa(struct ike_sa *ike UNUSED, struct child_sa *child, struct pbs_out *pbs)
-{
-	struct ikev2_delete v2del = {
-		.isad_protoid = PROTO_IPSEC_ESP,
-		.isad_spisize = sizeof(ipsec_spi_t),
-		.isad_nrspi = 1,
-	};
-
-	if (impair.v2_delete_protoid.enabled) {
-		enum_buf ebo, ebn;
-		enum ikev2_sec_proto_id protoid = impair.v2_delete_protoid.value;
-		llog(RC_LOG, child->sa.logger,
-		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
-		     str_enum_short(&ikev2_delete_protocol_id_names, v2del.isad_protoid, &ebo),
-		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebn),
-		     protoid);
-		v2del.isad_protoid = protoid;
-	}
-
-	/* Emit delete payload header out */
-	struct pbs_out del_pbs;
-	if (!pbs_out_struct(pbs, &ikev2_delete_desc,
-			    &v2del, sizeof(v2del), &del_pbs)) {
-		return false;
-	}
-
-	/* Emit values of spi to be sent to the peer */
-	if (!pbs_out_thing(&del_pbs, child->sa.st_esp.inbound.spi, "local spis")) {
-		/* already logged */
-		return false;
-	}
-
-	close_output_pbs(&del_pbs);
-
-	return true;
-}
-
-static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
-						   struct child_sa *child,
-						   struct msg_digest *md)
-{
-	pexpect(md == NULL);
-	pexpect(child != NULL);
-
-	if (!record_v2_INFORMATIONAL_request("delete Child SA",
-					     ike->sa.logger, ike, child,
-					     emit_v2D_child_sa)) {
-		/* already logged */
-		return STF_INTERNAL_ERROR;
-	}
-
-	/*
-	 * XXX: just assume an SA that isn't established is larval.
-	 *
-	 * Would be nice to have something indicating larval,
-	 * established, zombie.
-	 *
-	 * Should use .llog_success, but that code doesn't know which
-	 * Child SA the exchange was for.  Hence, pretend that it was
-	 * sent when it hasn't (but will real soon, promise!)
-	 */
-	bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
-	llog(RC_LOG, child->sa.logger,
-	     "sent INFORMATIONAL request to delete %s Child SA using IKE SA "PRI_SO,
-	     established ? "established" : "larval",
-	     pri_so(ike->sa.st_serialno));
-	if (!established) {
-		/*
-		 * Normally the responder would include it's outgoing
-		 * SA's SPI, and this end would use that to find /
-		 * delete the child.  Here, however, the SA isn't
-		 * established so we've no clue as to what the
-		 * responder will send back.  If anything.
-		 *
-		 * Hence signal the Child SA that it should delete
-		 * itself.
-		 */
-		event_force(EVENT_v2_DISCARD, &child->sa);
-	}
-	return STF_OK;
-}
-
-/*
- * XXX: where to put this?
- */
-
-static stf_status process_v2_INFORMATIONAL_delete_child_response(struct ike_sa *ike,
-								 struct child_sa *null_child,
-								 struct msg_digest *md)
-{
-	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
-	pexpect(null_child == NULL);
-
-	if (PBAD(ike->sa.logger, md->chain[ISAKMP_NEXT_v2D] == NULL)) {
-		return STF_FATAL;
-	}
-
-	if (!process_v2D_responses(ike, md)) {
-		return STF_FATAL;
-	}
-
-	return STF_OK;
-}
-
-static const struct v2_transition v2_INFORMATIONAL_delete_child_initiate_transition = {
-	.story = "delete CHILD SA",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
-	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.processor = initiate_v2_delete_child_request,
-	.llog_success = ldbg_v2_success,
-	.timeout_event =  EVENT_RETAIN,
-};
-
-static const struct v2_transition v2_INFORMATIONAL_delete_child_response_transition[] = {
-	{ .story      = "Informational Response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.optional = v2P(N) | v2P(D),
-	  .processor  = process_v2_INFORMATIONAL_delete_child_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_delete_child_response_transitions =
-{
-	ARRAY_REF(v2_INFORMATIONAL_delete_child_response_transition),
-};
-
-const struct v2_exchange v2_INFORMATIONAL_delete_child_exchange = {
-	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "delete Child SA",
-	.secured = true,
-	.initiate = &v2_INFORMATIONAL_delete_child_initiate_transition,
-	.response = &v2_INFORMATIONAL_delete_child_response_transitions,
+	.initiate = &v2_INFORMATIONAL_v2DELETE_ike_initiate_transition,
+	.response = &v2_INFORMATIONAL_v2DELETE_ike_response_transitions,
 };
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
 	const struct v2_exchange *exchange =
-		(child != NULL ? &v2_INFORMATIONAL_delete_child_exchange :
-		 &v2_INFORMATIONAL_delete_ike_exchange);
+		(child != NULL ? &v2_INFORMATIONAL_v2DELETE_exchange :
+		 &v2_INFORMATIONAL_v2DELETE_ike_exchange);
 	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
 	v2_msgid_queue_exchange(ike, child, exchange);
 }
 
-bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,
-			  struct pbs_out *pbs)
+bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,
+			       struct pbs_out *pbs)
 {
 	/*
 	 * Pass 1 over Delete Payloads:
@@ -405,36 +284,37 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 		struct ikev2_delete *v2del = &p->payload.v2delete;
 
 		switch (v2del->isad_protoid) {
-		case PROTO_ISAKMP:
+		case IKEv2_SEC_PROTO_IKE:
 			if (*del_ike) {
 				llog_sa(RC_LOG, ike,
-					  "Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
+					"Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
 				return false;
 			}
 
-			if (v2del->isad_nrspi != 0 || v2del->isad_spisize != 0) {
+			if (v2del->isad_nrspi != 0 ||
+			    v2del->isad_spisize != 0) {
 				llog_sa(RC_LOG, ike,
-					  "IKE SA Delete has non-zero SPI size or number of SPIs");
+					"IKE SA Delete has non-zero SPI size or number of SPIs");
 				return false;
 			}
 
 			*del_ike = true;
 			break;
 
-		case PROTO_IPSEC_AH:
-		case PROTO_IPSEC_ESP:
+		case IKEv2_SEC_PROTO_AH:
+		case IKEv2_SEC_PROTO_ESP:
 			if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
 				llog_sa(RC_LOG, ike,
-					  "IPsec Delete Notification has invalid SPI size %u",
-					  v2del->isad_spisize);
+					"Child SA Delete Notification has invalid SPI size %u",
+					v2del->isad_spisize);
 				return false;
 			}
 
 			if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
 				llog_sa(RC_LOG, ike,
-					  "IPsec Delete Notification payload size is %zu but %u is required",
-					  pbs_left(&p->pbs),
-					  v2del->isad_nrspi * v2del->isad_spisize);
+					"Child SA Delete Notification payload size is %zu but %u is required",
+					pbs_left(&p->pbs),
+					v2del->isad_nrspi * v2del->isad_spisize);
 				return false;
 			}
 
@@ -443,13 +323,13 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 
 		default:
 			llog_sa(RC_LOG, ike,
-				  "Ignored bogus delete protoid '%d'", v2del->isad_protoid);
+				"Ignored bogus delete protoid '%d'", v2del->isad_protoid);
 		}
 	}
 
 	if (*del_ike && ndp != 0) {
 		llog_sa(RC_LOG, ike,
-			  "Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
+			"Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 	}
 
 	/*
@@ -471,11 +351,11 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 		struct ikev2_delete *v2del = &p->payload.v2delete;
 
 		switch (v2del->isad_protoid) {
-		case PROTO_ISAKMP:
+		case IKEv2_SEC_PROTO_IKE:
 			llog_passert(ike->sa.logger, HERE, "unexpected IKE delete");
 
-		case PROTO_IPSEC_AH: /* Child SAs */
-		case PROTO_IPSEC_ESP: /* Child SAs */
+		case IKEv2_SEC_PROTO_AH: /* Child SAs */
+		case IKEv2_SEC_PROTO_ESP: /* Child SAs */
 		{
 			/*
 			 * Again two passes.
@@ -537,9 +417,9 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 				 * of packets inbound to us.
 				 */
 				struct ipsec_proto_info *pr =
-						(v2del->isad_protoid == PROTO_IPSEC_AH
-						 ? &child->sa.st_ah
-						 : &child->sa.st_esp);
+					(v2del->isad_protoid == IKEv2_SEC_PROTO_AH
+					 ? &child->sa.st_ah
+					 : &child->sa.st_esp);
 				ipsec_spi_t inbound_spi = pr->inbound.spi;
 
 				ldbg_sa(ike, "%s Child SA with outbound SPI "PRI_IPSEC_SPI" has inbound SPI "PRI_IPSEC_SPI,
@@ -593,99 +473,60 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 	return true;
 }
 
-static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
+static stf_status process_v2_INFORMATIONAL_v2DELETE_response(struct ike_sa *ike,
+							     struct child_sa *null_child,
+							     struct msg_digest *md)
 {
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2D];
-	     p != NULL; p = p->next) {
-		struct ikev2_delete *v2del = &p->payload.v2delete;
+	PEXPECT(ike->sa.logger, null_child == NULL);
+	PEXPECT(ike->sa.logger, md != NULL);
 
-		switch (v2del->isad_protoid) {
-		case PROTO_ISAKMP:
-			llog_pexpect(ike->sa.logger, HERE, "unexpected IKE delete");
-			return false;
+	so_serial_t dead_sa = ike->sa.st_v2_msgid_windows.initiator.dead_sa;
+	if (PBAD(ike->sa.logger, dead_sa == SOS_NOBODY)) {
+		return STF_FATAL;
+	}
 
-		case PROTO_IPSEC_AH: /* Child SAs */
-		case PROTO_IPSEC_ESP: /* Child SAs */
-		{
-			uint16_t i;
-
-			if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-				llog_sa(RC_LOG, ike,
-					  "IPsec Delete Notification has invalid SPI size %u",
-					  v2del->isad_spisize);
-				return false;
-			}
-
-			if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-				llog_sa(RC_LOG, ike,
-					  "IPsec Delete Notification payload size is %zu but %u is required",
-					  pbs_left(&p->pbs),
-					  v2del->isad_nrspi * v2del->isad_spisize);
-				return false;
-			}
-
-			for (i = 0; i < v2del->isad_nrspi; i++) {
-				ipsec_spi_t spi;
-
-				diag_t d = pbs_in_thing(&p->pbs, spi, "SPI");
-				if (d != NULL) {
-					llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
-					return false;
-				}
-
-				esb_buf b;
-				dbg("delete %s SA(0x%08" PRIx32 ")",
-				    enum_show(&ikev2_delete_protocol_id_names,
-					      v2del->isad_protoid, &b),
-				    ntohl((uint32_t) spi));
-
-				/*
-				 * From 3.11.  Delete Payload: [the
-				 * delete payload will] contain the
-				 * IPsec protocol ID of that protocol
-				 * (2 for AH, 3 for ESP), and the SPI
-				 * is the SPI the sending endpoint
-				 * would expect in inbound ESP or AH
-				 * packets.
-				 *
-				 * From our POV, that's the outbound
-				 * SPI.
-				 */
-				struct child_sa *dst = find_v2_child_sa_by_outbound_spi(ike,
-											v2del->isad_protoid,
-											spi);
-
-				if (dst == NULL) {
-					esb_buf b;
-					llog_sa(RC_LOG, ike,
-						  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-						  enum_show(&ikev2_delete_protocol_id_names,
-							    v2del->isad_protoid, &b),
-						  ntohl((uint32_t)spi));
-				} else {
-					esb_buf b;
-					ldbg_sa(dst, "our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-						enum_show(&ikev2_delete_protocol_id_names,
-							  v2del->isad_protoid, &b),
-						ntohl((uint32_t)spi));
-
-					/* we just received a delete, don't send another delete */
-					on_delete(&dst->sa, skip_send_delete);
-					/* st is a parent */
-					passert(&ike->sa != &dst->sa);
-					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
-					connection_delete_child(&dst, HERE);
-				}
-			} /* for each spi */
-			break;
+	if (dead_sa == ike->sa.st_serialno) {
+		/*
+		 * A response to our IKE SA delete request.  Any
+		 * Delete payloads are bogus (message should be empty)
+		 * and can be ignored.
+		 */
+		if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
+			ldbg(ike->sa.logger, "deleting IKE SA, ignoring delete payloads in response");
 		}
+		return STF_OK_INITIATOR_DELETE_IKE;
+	}
 
-		default:
-			/* ignore unrecognized protocol */
-			break;
-		}
-	}  /* for each Delete Payload */
-	return true;
+	struct child_sa *dead_child = child_sa_by_serialno(dead_sa);
+	if (dead_child == NULL) {
+		/* case of crossing deletes? */
+		llog(RC_LOG, ike->sa.logger, "Child SA "PRI_SO" no longer exists, ignoring delete response", pri_so(dead_sa));
+		return STF_OK;
+	}
+
+	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
+		/*
+		 * A Child SA delete response always contains a DELETE
+		 * payload, it's just that sometimes it is empty.
+		 */
+		llog(RC_LOG, ike->sa.logger, "delete response missing Delete Payload for Child SA "PRI_SO,
+		     pri_so(dead_sa));
+		return STF_FATAL;
+	}
+
+	/*
+	 * Don't even bother looking at the v2Delete payloads.
+	 */
+	on_delete(&dead_child->sa, skip_send_delete);
+	/*
+	 * IKE SA is a parent of dead Child SA.  Could a DELETE and
+	 * rekey exchange cross causing these pexpect()s to fail?
+	 */
+	PEXPECT(ike->sa.logger, &ike->sa != &dead_child->sa);
+	PEXPECT(ike->sa.logger, ike->sa.st_serialno == dead_child->sa.st_clonedfrom);
+	connection_delete_child(&dead_child, HERE);
+
+	return STF_OK;
 }
 
 /*
@@ -723,10 +564,66 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 		return;
 	}
 
-	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_delete_ike_exchange);
+	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_v2DELETE_exchange);
 	/* hack; this call records the delete */
-	initiate_v2_delete_ike_request(ike, /*child*/NULL, /*md*/NULL);
+	initiate_v2_INFORMATIONAL_v2DELETE_request(ike, /*child*/NULL, /*md*/NULL);
 	send_recorded_v2_message(ike, "delete notification",
 				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 	v2_msgid_finish(ike, NULL/*MD*/, HERE);
 }
+
+static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition = {
+	.story = "initiate Informational Delete IKE or Child SA",
+	.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = ISAKMP_v2_INFORMATIONAL,
+	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
+	.llog_success = ldbg_v2_success,
+	.timeout_event =  EVENT_RETAIN,
+};
+
+static const struct v2_transition v2_INFORMATIONAL_v2DELETE_responder_transition[] = {
+	{ .story      = "process Informational Delete IKE or Child SA request",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.required = v2P(D),
+	  .processor  = process_v2_INFORMATIONAL_v2DELETE_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_responder_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_responder_transition),
+};
+
+static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[] = {
+
+	{ .story      = "process Informational Delete IKE or Child SA response",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(D),
+	  .processor = process_v2_INFORMATIONAL_v2DELETE_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_response_transitions =
+{
+	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_response_transition),
+};
+
+const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange = {
+	.type = ISAKMP_v2_INFORMATIONAL,
+	.subplot = "delete IKE or Child SA",
+	.secured = true,
+	.initiate = &v2_INFORMATIONAL_v2DELETE_initiate_transition,
+	.responder = &v2_INFORMATIONAL_v2DELETE_responder_transitions,
+	.response = &v2_INFORMATIONAL_v2DELETE_response_transitions,
+};

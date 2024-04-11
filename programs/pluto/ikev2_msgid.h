@@ -102,6 +102,12 @@ struct v2_msgid_window {
 	 * rekeyd by a CREATE_CHILD_SA exchange.
 	 */
 	struct child_sa *wip_sa;
+	/*
+	 * The IKE or Child SA being deleted using a Delete exchange.
+	 * Crossing deletes and larval Child SAs mean that the
+	 * corresponding state may not exist.
+	 */
+	so_serial_t dead_sa;
 };
 
 struct v2_msgid_windows {

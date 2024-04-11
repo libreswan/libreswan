@@ -28,4 +28,6 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where);
 bool record_v2_delete(struct ike_sa *ike, struct state *st);
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child);
 
+extern const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange;
+
 #endif

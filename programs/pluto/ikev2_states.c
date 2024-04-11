@@ -48,6 +48,7 @@
 #include "ikev2_redirect.h"
 #include "ikev2_eap.h"
 #include "ikev2_create_child_sa.h"
+#include "ikev2_delete.h"
 
 struct ikev2_payload_errors {
 	bool bad;
@@ -486,10 +487,9 @@ static const struct v2_transitions v2_ESTABLISHED_IKE_SA_responder_transitions =
 
 static const struct v2_exchange *v2_ESTABLISHED_IKE_SA_responder_exchange[] = {
 	/* informational */
+	&v2_INFORMATIONAL_v2DELETE_exchange,
 	&v2_INFORMATIONAL_v2N_REDIRECT_exchange,
 	&v2_INFORMATIONAL_liveness_exchange,
-	&v2_INFORMATIONAL_delete_ike_exchange,
-	&v2_INFORMATIONAL_delete_child_exchange,
 	&v2_INFORMATIONAL_mobike_exchange,
 	/*
 	 * Create/Rekey IKE/Child SAs.
