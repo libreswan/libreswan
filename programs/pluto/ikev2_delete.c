@@ -26,8 +26,8 @@
 #include "ikev2_informational.h"
 
 static bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
-static emit_v2_INFORMATIONAL_payload_fn emit_v2D_ike_sa;
-static emit_v2_INFORMATIONAL_payload_fn emit_v2D_child_sa;
+static emit_v2_INFORMATIONAL_request_payload_fn emit_v2D_ike_sa;
+static emit_v2_INFORMATIONAL_request_payload_fn emit_v2D_child_sa;
 static bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md);
 
 /*

@@ -203,7 +203,7 @@ bool record_v2_INFORMATIONAL_request(const char *name,
 				     struct logger *logger,
 				     struct ike_sa *ike,
 				     struct child_sa *child,
-				     emit_v2_INFORMATIONAL_payload_fn *emit_payloads)
+				     emit_v2_INFORMATIONAL_request_payload_fn *emit_payloads)
 {
 	/*
 	 * Buffer in which to marshal our informational message.
@@ -236,7 +236,7 @@ bool record_v2_INFORMATIONAL_response(const char *name,
 				      struct ike_sa *ike,
 				      struct child_sa *child,
 				      struct msg_digest *md,
-				      emit_v2_INFORMATIONAL_payload_fn *emit_payloads)
+				      emit_v2_INFORMATIONAL_response_payload_fn *emit_payloads)
 {
 	/*
 	 * Buffer in which to marshal our informational message.
@@ -252,7 +252,7 @@ bool record_v2_INFORMATIONAL_response(const char *name,
 	}
 
 	if (emit_payloads != NULL) {
-		if (!emit_payloads(ike, child, &response.sk.pbs)) {
+		if (!emit_payloads(ike, child, md, &response.sk.pbs)) {
 			return false;
 		}
 	}

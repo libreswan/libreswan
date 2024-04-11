@@ -41,7 +41,7 @@
 #include "orient.h"
 #include "ikev2_message.h"
 
-static emit_v2_INFORMATIONAL_payload_fn add_redirect_payload; /* type check */
+static emit_v2_INFORMATIONAL_request_payload_fn add_redirect_payload; /* type check */
 
 enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 

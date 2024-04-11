@@ -49,7 +49,7 @@
 #include "ikev2_states.h"
 #include "ikev2_informational.h"
 
-static emit_v2_INFORMATIONAL_payload_fn add_mobike_payloads; /* type check */
+static emit_v2_INFORMATIONAL_request_payload_fn add_mobike_payloads; /* type check */
 
 static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 					 struct pbs_out *pbs, struct ike_sa *ike);
