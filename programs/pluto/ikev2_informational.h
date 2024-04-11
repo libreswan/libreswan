@@ -31,4 +31,11 @@ extern bool record_v2_INFORMATIONAL_request(const char *name,
 					    struct child_sa *child,
 					    emit_v2_INFORMATIONAL_payload_fn *emit_payloads);
 
+extern bool record_v2_INFORMATIONAL_response(const char *name,
+					     struct logger *logger,
+					     struct ike_sa *ike,
+					     struct child_sa *child,
+					     struct msg_digest *md,
+					     emit_v2_INFORMATIONAL_payload_fn *emit_payloads);
+
 #endif
