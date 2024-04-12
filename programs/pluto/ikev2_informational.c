@@ -41,6 +41,8 @@
 #include "ikev2_informational.h"
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"
+#include "ikev2.h"
+#include "ikev2_states.h"
 
 /*
  ***************************************************************
@@ -252,3 +254,56 @@ bool record_v2_INFORMATIONAL_response(const char *name,
 
 	return true;
 }
+
+static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
+
+	/* Informational Exchange */
+
+	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
+	 *
+	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
+	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
+	*
+	 * A liveness exchange is a special empty message.
+	 *
+	 * XXX: since these just generate an empty response, they
+	 * might as well have a dedicated liveness function.
+	 *
+	 * XXX: rather than all this transition duplication, the
+	 * established states should share common transition stored
+	 * outside of this table.
+	 */
+
+	{ .story      = "Informational Request (liveness probe)",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .processor  = process_v2_INFORMATIONAL_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "Informational Request",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
+	  .processor  = process_v2_INFORMATIONAL_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_responder_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_responder_transition),
+};
+
+const struct v2_exchange v2_INFORMATIONAL_exchange = {
+	.type = ISAKMP_v2_INFORMATIONAL,
+	.subplot = "informational exchange",
+	.secured = true,
+	.responder = &v2_INFORMATIONAL_responder_transitions,
+};

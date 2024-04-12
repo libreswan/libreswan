@@ -43,4 +43,6 @@ extern bool record_v2_INFORMATIONAL_response(const char *name,
 					     struct msg_digest *md,
 					     emit_v2_INFORMATIONAL_response_payload_fn *emit_payloads);
 
+extern const struct v2_exchange v2_INFORMATIONAL_exchange;
+
 #endif

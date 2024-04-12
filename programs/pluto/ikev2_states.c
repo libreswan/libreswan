@@ -439,58 +439,11 @@ C(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_
  * IKEv2 established states.
  */
 
-static const struct v2_transition v2_ESTABLISHED_IKE_SA_responder_transition[] = {
-
-	/* Informational Exchange */
-
-	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
-	 *
-	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
-	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
-	*
-	 * A liveness exchange is a special empty message.
-	 *
-	 * XXX: since these just generate an empty response, they
-	 * might as well have a dedicated liveness function.
-	 *
-	 * XXX: rather than all this transition duplication, the
-	 * established states should share common transition stored
-	 * outside of this table.
-	 */
-
-	{ .story      = "Informational Request (liveness probe)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .processor  = process_v2_INFORMATIONAL_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "Informational Request",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
-	  .processor  = process_v2_INFORMATIONAL_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
-};
-
-static const struct v2_transitions v2_ESTABLISHED_IKE_SA_responder_transitions = {
-	ARRAY_REF(v2_ESTABLISHED_IKE_SA_responder_transition),
-};
-
 static const struct v2_exchange *v2_ESTABLISHED_IKE_SA_responder_exchange[] = {
 	/* informational */
 	&v2_INFORMATIONAL_v2DELETE_exchange,
 	&v2_INFORMATIONAL_v2N_REDIRECT_exchange,
-	&v2_INFORMATIONAL_liveness_exchange,
-	&v2_INFORMATIONAL_mobike_exchange,
+	&v2_INFORMATIONAL_exchange,
 	/*
 	 * Create/Rekey IKE/Child SAs.
 	 * Danger: order is important.
@@ -511,7 +464,6 @@ const struct finite_state state_v2_ESTABLISHED_IKE_SA = {
 	.story = "established IKE SA",
 	.category = CAT_ESTABLISHED_IKE_SA,
 	.ike_version = IKEv2,
-	.v2.transitions = &v2_ESTABLISHED_IKE_SA_responder_transitions,
 	.v2.exchanges = &v2_ESTABLISHED_IKE_SA_responder_exchanges,
 	.v2.secured = true,
 };

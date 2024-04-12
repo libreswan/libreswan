@@ -54,9 +54,6 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 						       struct msg_digest *md,
 						       bool *secured_payload_failed);
 
-extern const struct v2_exchange v2_INFORMATIONAL_liveness_exchange;
-extern const struct v2_exchange v2_INFORMATIONAL_mobike_exchange;
-
 void init_ikev2_states(struct logger *logger);
 
 #endif
