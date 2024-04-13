@@ -66,9 +66,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct ikev2_expected_payloads *payloads);
 
 #define S(KIND, STORY, CAT, ...)					\
-	const struct v2_transitions v2_##KIND##_transitions = {		\
-		ARRAY_REF(KIND##_transitions),				\
-	};								\
+									\
 	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
 		.name = #KIND,						\
@@ -77,7 +75,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.transitions = &v2_##KIND##_transitions,		\
 		##__VA_ARGS__,						\
 	}
 
@@ -191,12 +188,9 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * (that is spoofed) will trigger an outgoing IKE SA.
  */
 
-static const struct v2_transition IKE_SA_INIT_I0_transitions[] = {
-};
-
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-static const struct v2_transition IKE_SA_INIT_R0_transitions[] = {
+static const struct v2_transition IKE_SA_INIT_R0_transition[] = {
 
 	/* no state: none I1 --> R1
 	 *                <-- HDR, SAi1, KEi, Ni
@@ -214,6 +208,10 @@ static const struct v2_transition IKE_SA_INIT_R0_transitions[] = {
 
 };
 
+const struct v2_transitions IKE_SA_INIT_R0_transitions = {
+	ARRAY_REF(IKE_SA_INIT_R0_transition),
+};
+
 static const struct v2_exchange *IKE_SA_INIT_exchange[] =
 {
 	&v2_IKE_SA_INIT_exchange,
@@ -226,6 +224,7 @@ static const struct v2_exchanges IKE_SA_INIT_exchanges = {
 S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request",
   CAT_HALF_OPEN_IKE_SA,
   .v2.secured = false,
+  .v2.transitions = &IKE_SA_INIT_R0_transitions,
   .v2.exchanges = &IKE_SA_INIT_exchanges);
 
 /*
@@ -468,20 +467,11 @@ const struct finite_state state_v2_ESTABLISHED_IKE_SA = {
 	.v2.secured = true,
 };
 
-static const struct v2_transition ESTABLISHED_CHILD_SA_transitions[] = {
-};
-
 S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA, .v2.secured = true);
 
 /* ??? better story needed for these */
 
-static const struct v2_transition IKE_SA_DELETE_transitions[] = {
-};
-
 S(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
-
-static const struct v2_transition CHILD_SA_DELETE_transitions[] = {
-};
 
 S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
 
