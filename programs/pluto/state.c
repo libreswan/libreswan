@@ -1263,8 +1263,8 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 {
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
-	passert(fs->v2.transitions->len == 1);
-	const struct v2_transition *transition = &fs->v2.transitions->list[0];
+	const struct v2_transition *transition = fs->v2.child_transition;
+	PASSERT(c->logger, transition != NULL);
 	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
 	change_state(&child->sa, transition->from[0]->kind);
 	set_v2_transition(&child->sa, transition, HERE);

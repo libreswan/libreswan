@@ -153,8 +153,8 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
 
-	pexpect(larval->sa.st_state->v2.transitions->len == 1);
-	pexpect(larval->sa.st_state->v2.transitions->list->exchange == ISAKMP_v2_CREATE_CHILD_SA);
+	PEXPECT(larval->sa.logger,
+		larval->sa.st_state->v2.child_transition->exchange == ISAKMP_v2_CREATE_CHILD_SA);
 	v2_msgid_queue_exchange(ike, larval, exchange);
 }
 

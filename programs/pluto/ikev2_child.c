@@ -82,9 +82,9 @@ void set_larval_v2_transition(struct child_sa *larval,
 			      const struct finite_state *to,
 			      where_t where)
 {
-	PASSERT_WHERE(larval->sa.logger, where, larval->sa.st_state->v2.transitions->len == 1);
 	const struct v2_transition *transition =
-		&larval->sa.st_state->v2.transitions->list[0];
+		larval->sa.st_state->v2.child_transition;
+	PASSERT_WHERE(larval->sa.logger, where, transition != NULL);
 	PEXPECT_WHERE(larval->sa.logger, where, v2_transition_from(transition, larval->sa.st_state));
 	PEXPECT_WHERE(larval->sa.logger, where, transition->to == to);
 	set_v2_transition(&larval->sa, transition, where);

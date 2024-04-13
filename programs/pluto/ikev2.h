@@ -176,7 +176,7 @@ struct v2_exchanges {
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.exchanges = &v2_##KIND##_responder_exchanges,	\
+		.v2.ike_exchanges = &v2_##KIND##_responder_exchanges,	\
 		.v2.secured = SECURED,					\
 	}
 

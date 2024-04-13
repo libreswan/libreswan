@@ -229,8 +229,8 @@ struct finite_state {
 			const struct state_v1_microcode *transitions;
 		} v1;
 		struct {
-			const struct v2_transitions *transitions;
-			const struct v2_exchanges *exchanges;
+			const struct v2_transition *child_transition;
+			const struct v2_exchanges *ike_exchanges;
 			bool secured; /* hence, exchanges must be integrity protected */
 		} v2;
 	};

@@ -946,28 +946,14 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	switch (recv_role) {
 	case MESSAGE_REQUEST:
 	{
-		/*
-		 * Responding to either an IKE_INTERMEDIATE or
-		 * IKE_AUTH request.  Grab the last one.
-		 */
-		{
-			const struct v2_transitions *transitions = state->v2.transitions;
+		const struct v2_exchanges *exchanges = state->v2.ike_exchanges;
+		if (exchanges != NULL &&
+		    exchanges->len > 0) {
+			const struct v2_transitions *transitions = exchanges->list[0]->responder;
 			if (transitions != NULL &&
 			    transitions->len > 0) {
 				transition = &transitions->list[transitions->len - 1];
 				break;
-			}
-		}
-		{
-			const struct v2_exchanges *exchanges = state->v2.exchanges;
-			if (exchanges != NULL &&
-			    exchanges->len > 0) {
-				const struct v2_transitions *transitions = exchanges->list[0]->responder;
-				if (transitions != NULL &&
-				    transitions->len > 0) {
-					transition = &transitions->list[transitions->len - 1];
-					break;
-				}
 			}
 		}
 		break;
