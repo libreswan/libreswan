@@ -262,8 +262,6 @@ V2_STATE(ESTABLISHED_CHILD_SA, "established Child SA",
 
 V2_STATE(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 
-V2_STATE(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL, /*secured*/false);
-
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
 	S(IKE_SA_INIT_I0),
@@ -288,7 +286,6 @@ static const struct finite_state *v2_states[] = {
 	S(ESTABLISHED_IKE_SA),
 	S(ESTABLISHED_CHILD_SA),
 	S(IKE_SA_DELETE),
-	S(CHILD_SA_DELETE),
 #undef S
 };
 

@@ -40,7 +40,6 @@ S(REKEY_IKE_R0);
 S(ESTABLISHED_IKE_SA);
 S(ESTABLISHED_CHILD_SA);
 S(IKE_SA_DELETE);
-S(CHILD_SA_DELETE);
 #undef S
 
 bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md);

@@ -596,7 +596,6 @@ enum state_kind {
 
 	/* IKEv2 Delete States */
 	STATE_V2_IKE_SA_DELETE,
-	STATE_V2_CHILD_SA_DELETE,
 
 	STATE_IKEv2_ROOF	/* not a state! */
 };
