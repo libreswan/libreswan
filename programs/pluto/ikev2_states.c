@@ -65,19 +65,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads);
 
-#define S(KIND, STORY, CAT, ...)					\
-									\
-	const struct finite_state state_v2_##KIND = {			\
-		.kind = STATE_V2_##KIND,				\
-		.name = #KIND,						\
-		/* Not using #KIND + 6 because of clang's -Wstring-plus-int */ \
-		.short_name = #KIND,					\
-		.story = STORY,						\
-		.category = CAT,					\
-		.ike_version = IKEv2,					\
-		##__VA_ARGS__,						\
-	}
-
 #define C(KIND, STORY, CAT, EXCHANGE, ...)				\
 									\
 	static const struct v2_exchange *KIND##_exchange[] = {		\
@@ -175,34 +162,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  * corresponding IKEv2 finite states.  While not the most efficient,
  * it seems to work.
  */
-
-/*
- * Initiate IKE_SA_INIT
- *
- * IKEv2 IKE SA initiator, while the the SA_INIT packet is being
- * constructed, are in state.  Only once the packet has been sent out
- * does it transition to STATE_V2_IKE_SA_INIT_I and start being
- * counted as half-open.
- *
- * Count I1 as half-open too because with ondemand, a plaintext packet
- * (that is spoofed) will trigger an outgoing IKE SA.
- */
-
-S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
-
-static const struct v2_exchange *IKE_SA_INIT_exchange[] =
-{
-	&v2_IKE_SA_INIT_exchange,
-};
-
-static const struct v2_exchanges IKE_SA_INIT_exchanges = {
-	ARRAY_REF(IKE_SA_INIT_exchange),
-};
-
-S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request",
-  CAT_HALF_OPEN_IKE_SA,
-  .v2.secured = false,
-  .v2.exchanges = &IKE_SA_INIT_exchanges);
 
 /*
  * CREATE_CHILD_SA exchanges.
@@ -415,44 +374,27 @@ C(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA", CAT_OPEN_CHILD_
  * IKEv2 established states.
  */
 
-static const struct v2_exchange *v2_ESTABLISHED_IKE_SA_responder_exchange[] = {
-	/* informational */
-	&v2_INFORMATIONAL_v2DELETE_exchange,
-	&v2_INFORMATIONAL_v2N_REDIRECT_exchange,
-	&v2_INFORMATIONAL_exchange,
-	/*
-	 * Create/Rekey IKE/Child SAs.
-	 * Danger: order is important.
-	 */
-	&v2_CREATE_CHILD_SA_rekey_ike_exchange,
-	&v2_CREATE_CHILD_SA_rekey_child_exchange,
-	&v2_CREATE_CHILD_SA_new_child_exchange,
-};
+V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
+	 CAT_ESTABLISHED_IKE_SA, /*secured*/true,
+	 /* informational */
+	 &v2_INFORMATIONAL_v2DELETE_exchange,
+	 &v2_INFORMATIONAL_v2N_REDIRECT_exchange,
+	 &v2_INFORMATIONAL_exchange,
+	 /*
+	  * Create/Rekey IKE/Child SAs.  Danger: order is important.
+	  */
+	 &v2_CREATE_CHILD_SA_rekey_ike_exchange,
+	 &v2_CREATE_CHILD_SA_rekey_child_exchange,
+	 &v2_CREATE_CHILD_SA_new_child_exchange);
 
-static const struct v2_exchanges v2_ESTABLISHED_IKE_SA_responder_exchanges = {
-	ARRAY_REF(v2_ESTABLISHED_IKE_SA_responder_exchange),
-};
-
-const struct finite_state state_v2_ESTABLISHED_IKE_SA = {
-	.kind = STATE_V2_ESTABLISHED_IKE_SA,
-	.name = "ESTABLISHED_IKE_SA",
-	.short_name = "ESTABLISHED_IKE_SA",
-	.story = "established IKE SA",
-	.category = CAT_ESTABLISHED_IKE_SA,
-	.ike_version = IKEv2,
-	.v2.exchanges = &v2_ESTABLISHED_IKE_SA_responder_exchanges,
-	.v2.secured = true,
-};
-
-S(ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA, .v2.secured = true);
+V2_STATE(ESTABLISHED_CHILD_SA, "established Child SA",
+	 CAT_ESTABLISHED_CHILD_SA, /*secured*/true);
 
 /* ??? better story needed for these */
 
-S(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, .v2.secured = true);
+V2_STATE(IKE_SA_DELETE, "STATE_IKESA_DEL", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 
-S(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL);
-
-#undef S
+V2_STATE(CHILD_SA_DELETE, "STATE_CHILDSA_DEL", CAT_INFORMATIONAL, /*secured*/false);
 
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
