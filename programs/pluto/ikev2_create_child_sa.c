@@ -234,7 +234,6 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
 
 	/* Schedule for whatever timeout is specified */
-	pexpect(transition->timeout_event == EVENT_v2_REPLACE);
 	delete_event(&new_ike->sa); /* relying on replace */
 	schedule_v2_replace_event(&new_ike->sa);
 

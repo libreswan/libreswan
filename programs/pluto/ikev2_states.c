@@ -76,7 +76,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
 		.v2.child_transition = &v2_##KIND##_transition,		\
-		.v2.secured = true,					\
 		##__VA_ARGS__,						\
 	}
 
@@ -140,41 +139,18 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
  */
 
 /*
- * IKEv2 State transitions (aka microcodes).
- *
- * This table contains all possible state transitions, some of which
- * involve a message.
- *
- * During initialization this table parsed populating the
- * corresponding IKEv2 finite states.  While not the most efficient,
- * it seems to work.
- */
-
-/*
  * CREATE_CHILD_SA exchanges.
  */
 
-static const struct v2_transition v2_REKEY_IKE_I0_transition = {
-	/*
-	 * Child transitions when rekeying an IKE SA using
-	 * CREATE_CHILD_SA.
-	 *
-	 *   Initiator                         Responder
-	 *   --------------------------------------------------------
-	 *   HDR, SK {SA, Ni, KEi} -->
-	 *                                <--  HDR, SK {SA, Nr, KEr}
-	 *
-	 * See also IKE SA's state transitions, below, that will
-	 * eventually drive these nested state transitions (currently
-	 * these are fudged).
-	 */
+/*
+ * Child states when rekeying an IKE SA using CREATE_CHILD_SA.
+ */
 
+static const struct v2_transition v2_REKEY_IKE_I0_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_REKEY_IKE_I0, },
 	.to = &state_v2_REKEY_IKE_I1,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.llog_success = llog_v2_success_state_story,
-	.timeout_event = EVENT_RETRANSMIT,
 };
 
 V2_CHILD(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
@@ -183,18 +159,8 @@ static const struct v2_transition v2_REKEY_IKE_R0_transition = {
 	.story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	.from = { &state_v2_REKEY_IKE_R0, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.recv_role  = MESSAGE_REQUEST,
-	.message_payloads.required = v2P(SK),
-	.encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(KE),
-	.encrypted_payloads.optional = v2P(N),
-	.processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
-	.llog_success = ldbg_v2_success,
-	.timeout_event = EVENT_v2_REPLACE,
 };
-
-/* isn't this an ipsec state */
 
 V2_CHILD(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA);
 
@@ -202,40 +168,20 @@ static const struct v2_transition v2_REKEY_IKE_I1_transition = {
 	.story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	.from = { &state_v2_REKEY_IKE_I1, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.recv_role  = MESSAGE_RESPONSE,
-	.message_payloads.required = v2P(SK),
-	.encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
-	.encrypted_payloads.optional = v2P(N),
-	.processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
-	.llog_success = ldbg_v2_success,
-	.timeout_event = EVENT_v2_REPLACE,
 };
 
 V2_CHILD(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA);
 
-static const struct v2_transition v2_REKEY_CHILD_I0_transition = {
-	/*
-	 * Child transitions when rekeying a Child SA using
-	 * CREATE_CHILD_SA.
-	 *
-	 *   Initiator                         Responder
-	 *   ---------------------------------------------------------
-	 *   HDR, SK {N(REKEY_SA), SA, Ni, [KEi,]
-	 *            TSi, TSr}  -->
-	 *
-	 * See also IKE SA's state transitions, below, that will
-	 * eventually drive these nested state transitions (currently
-	 * these are fudged).
-	 */
+/*
+ * Child states when rekeying a Child SA using CREATE_CHILD_SA.
+ */
 
+static const struct v2_transition v2_REKEY_CHILD_I0_transition = {
 	.story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_REKEY_CHILD_I0, },
 	.to = &state_v2_REKEY_CHILD_I1,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.llog_success = llog_v2_success_state_story,
-	.timeout_event = EVENT_RETRANSMIT,
 };
 
 V2_CHILD(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
@@ -244,16 +190,7 @@ static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
 	.story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	.from = { &state_v2_REKEY_CHILD_R0, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.recv_role  = MESSAGE_REQUEST,
-	.message_payloads.required = v2P(SK),
-	.encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	.encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	.encrypted_payloads.notification = v2N_REKEY_SA,
-	.processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
-	.llog_success = ldbg_v2_success,
-	.timeout_event = EVENT_v2_REPLACE,
 };
 
 V2_CHILD(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA);
@@ -264,38 +201,19 @@ static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.recv_role  = MESSAGE_RESPONSE,
-	.message_payloads.required = v2P(SK),
-	.encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	.encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	.processor  = process_v2_CREATE_CHILD_SA_child_response,
-	/* .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response, */
-	.llog_success = ldbg_v2_success,
-	.timeout_event = EVENT_v2_REPLACE,
 };
 
 V2_CHILD(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA);
 
+/*
+ * Child states when creating a new Child SA using CREATE_CHILD_SA.
+ */
+
 static const struct v2_transition v2_NEW_CHILD_I0_transition = {
-	/*
-	 * Child transitions when creating a new Child SA using
-	 * CREATE_CHILD_SA.
-	 *
-	 *   Initiator                         Responder
-	 *   ----------------------------------------------------------
-	 *   HDR, SK {SA, Ni, [KEi,]
-	 *            TSi, TSr}  -->
-	 *
-	 * See also IKE SA's state transitions, below, that will
-	 * eventually drive these nested state transitions (currently
-	 * these are fudged).
-	 */
 	.story      = "initiate create Child SA (CREATE_CHILD_SA)",
 	.from = { &state_v2_NEW_CHILD_I0, },
 	.to = &state_v2_NEW_CHILD_I1,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.llog_success = llog_v2_success_state_story,
-	.timeout_event = EVENT_RETRANSMIT,
 };
 
 V2_CHILD(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
@@ -304,15 +222,7 @@ static const struct v2_transition v2_NEW_CHILD_R0_transition = {
 	.story      = "process create Child SA request (CREATE_CHILD_SA)",
 	.from = { &state_v2_NEW_CHILD_R0, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.recv_role  = MESSAGE_REQUEST,
-	.message_payloads.required = v2P(SK),
-	.encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	.encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	.processor  = process_v2_CREATE_CHILD_SA_new_child_request,
-	.llog_success = ldbg_v2_success,
-	.timeout_event = EVENT_v2_REPLACE,
 };
 
 V2_CHILD(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
@@ -322,16 +232,7 @@ static const struct v2_transition v2_NEW_CHILD_I1_transition = {
 	.story      = "process create Child SA response (CREATE_CHILD_SA)",
 	.from = { &state_v2_NEW_CHILD_I1, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	.recv_role  = MESSAGE_RESPONSE,
-	.message_payloads.required = v2P(SK),
-	.encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
-	.encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
-	.processor  = process_v2_CREATE_CHILD_SA_child_response,
-	/* .processor  = process_v2_CREATE_CHILD_SA_new_child_response, */
-	.llog_success = ldbg_v2_success,
-	.timeout_event = EVENT_v2_REPLACE,
 };
 
 V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
@@ -910,47 +811,16 @@ static void validate_state_child_transition(struct logger *logger,
 	passert(to->kind >= STATE_IKEv2_FLOOR);
 	passert(to->kind < STATE_IKEv2_ROOF);
 	passert(to->ike_version == IKEv2);
-
 	ldbg_transition(logger, "     ", t);
-
-	/*
-	 * Check that the NOTIFY -> PBS ->
-	 * MD.pbs[]!=NULL will work.
-	 */
-	if (t->message_payloads.notification != v2N_NOTHING_WRONG) {
-		passert(v2_pd_from_notification(t->message_payloads.notification) != PD_v2_INVALID);
+	FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
+		passert(payloads->notification == 0);
+		passert(payloads->required == LEMPTY);
+		passert(payloads->optional == LEMPTY);
 	}
-	if (t->encrypted_payloads.notification != v2N_NOTHING_WRONG) {
-		passert(v2_pd_from_notification(t->encrypted_payloads.notification) != PD_v2_INVALID);
-	}
-
 	passert(t->exchange != 0);
-
-	/*
-	 * Check that all transitions from a secured
-	 * state require an SK payload.
-	 */
-	passert(t->recv_role == NO_MESSAGE ||
-		LIN(v2P(SK), t->message_payloads.required) == from->v2.secured);
-
-	/*
-	 * Once secured, always secured.
-	 */
-	PASSERT(logger, to->v2.secured >= from->v2.secured);
-
-	/*
-	 * Check that only IKE_SA_INIT transitions are
-	 * from an unsecured state.
-	 */
-	if (t->recv_role != 0) {
-		passert((t->exchange == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
-	}
-
-	/*
-	 * Check that everything has either a success story,
-	 * or suppressed logging.
-	 */
-	passert(t->llog_success != NULL);
+	passert(t->recv_role == 0);
+	passert(t->processor == NULL);
+	passert(t->llog_success == NULL);
 }
 
 static void validate_state_exchange(struct logger *logger,
