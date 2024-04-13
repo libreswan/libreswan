@@ -190,28 +190,6 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 
 S(IKE_SA_INIT_I0, "waiting for KE to finish", CAT_IGNORE);
 
-static const struct v2_transition IKE_SA_INIT_R0_transition[] = {
-
-	/* no state: none I1 --> R1
-	 *                <-- HDR, SAi1, KEi, Ni
-	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
-	 */
-	{ .story      = "Respond to IKE_SA_INIT",
-	  .from = { &state_v2_IKE_SA_INIT_R0, },
-	  .to = &state_v2_IKE_SA_INIT_R,
-	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
-	  .processor  = process_v2_IKE_SA_INIT_request,
-	  .llog_success = llog_v2_IKE_SA_INIT_success,
-	  .timeout_event = EVENT_v2_DISCARD, },
-
-};
-
-const struct v2_transitions IKE_SA_INIT_R0_transitions = {
-	ARRAY_REF(IKE_SA_INIT_R0_transition),
-};
-
 static const struct v2_exchange *IKE_SA_INIT_exchange[] =
 {
 	&v2_IKE_SA_INIT_exchange,
@@ -224,7 +202,6 @@ static const struct v2_exchanges IKE_SA_INIT_exchanges = {
 S(IKE_SA_INIT_R0, "processing IKE_SA_INIT request",
   CAT_HALF_OPEN_IKE_SA,
   .v2.secured = false,
-  .v2.transitions = &IKE_SA_INIT_R0_transitions,
   .v2.exchanges = &IKE_SA_INIT_exchanges);
 
 /*

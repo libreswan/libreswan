@@ -437,7 +437,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 */
 		const struct v2_transition *transition =
 			find_v2_unsecured_transition(md->logger,
-						     state_v2_IKE_SA_INIT_R0.v2.transitions,
+						     v2_IKE_SA_INIT_exchange.responder,
 						     md);
 		if (transition == NULL) {
 			/* already logged */
@@ -1725,6 +1725,22 @@ static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	.processor  = NULL, /* XXX: should be set */
 	.llog_success = llog_v2_success_exchange_sent_to,
 	.timeout_event = EVENT_RETRANSMIT,
+};
+
+static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
+	/* no state: none I1 --> R1
+	 *                <-- HDR, SAi1, KEi, Ni
+	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
+	 */
+	{ .story      = "Respond to IKE_SA_INIT",
+	  .from = { &state_v2_IKE_SA_INIT_R0, },
+	  .to = &state_v2_IKE_SA_INIT_R,
+	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
+	  .processor  = process_v2_IKE_SA_INIT_request,
+	  .llog_success = llog_v2_IKE_SA_INIT_success,
+	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
 static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {

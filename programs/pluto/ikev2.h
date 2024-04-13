@@ -125,6 +125,10 @@ struct v2_exchanges {
 		ARRAY_REF(v2_##KIND##_response_transition),		\
 	};								\
 									\
+	static const struct v2_transitions v2_##KIND##_responder_transitions = { \
+		ARRAY_REF(v2_##KIND##_responder_transition),		\
+	};								\
+									\
 	const struct finite_state state_v2_##KIND##_I = {		\
 		.kind = STATE_V2_##KIND##_I,				\
 		.name = #KIND"_I",					\
@@ -150,6 +154,7 @@ struct v2_exchanges {
 		.subplot = SUBPLOT,					\
 		.secured = SECURED,					\
 		.initiate = &v2_##KIND##_initiate_transition,		\
+		.responder = &v2_##KIND##_responder_transitions,	\
 		.response = &v2_##KIND##_response_transitions,		\
 		##__VA_ARGS__,						\
 	}

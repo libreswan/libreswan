@@ -472,10 +472,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 };
 
-static const struct v2_transitions v2_IKE_INTERMEDIATE_responder_transitions = {
-	ARRAY_REF(v2_IKE_INTERMEDIATE_responder_transition),
-};
-
 static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
 	  .from = { &state_v2_IKE_INTERMEDIATE_I, },
@@ -496,5 +492,4 @@ V2_RESPONDER(IKE_INTERMEDIATE,
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
-	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true,
-	    .responder = &v2_IKE_INTERMEDIATE_responder_transitions);
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
