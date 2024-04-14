@@ -44,6 +44,6 @@ up
 "udp": terminating SAs using this connection
 "udp" #1: sent INFORMATIONAL request to delete IKE SA
 "udp" #2: ESP traffic information: in=84B out=84B
-"udp" #1: deleting IKE SA (STATE_IKESA_DEL)
+"udp" #1: deleting IKE SA (established IKE SA)
 west #
  

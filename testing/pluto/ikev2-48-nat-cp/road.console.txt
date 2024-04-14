@@ -55,7 +55,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (STATE_IKESA_DEL)
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (established IKE SA)
 road #
  #check if the address, 192.0.2.1, is removed
 road #

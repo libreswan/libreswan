@@ -91,7 +91,7 @@ west #
 "ikev2-west-east": terminating SAs using this connection
 "ikev2-west-east" #1: sent INFORMATIONAL request to delete IKE SA
 "ikev2-west-east" #2: ESP traffic information: in=64B out=64B
-"ikev2-west-east" #1: deleting IKE SA (STATE_IKESA_DEL)
+"ikev2-west-east" #1: deleting IKE SA (established IKE SA)
 west #
  echo "done"
 done

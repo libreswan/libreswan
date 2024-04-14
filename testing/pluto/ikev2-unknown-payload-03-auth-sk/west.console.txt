@@ -30,7 +30,7 @@ up
 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (STATE_IKESA_DEL)
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (established IKE SA)
 west #
  : bad
 west #

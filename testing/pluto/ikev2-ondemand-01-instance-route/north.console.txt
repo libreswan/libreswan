@@ -95,7 +95,7 @@ north #
 "initiator": terminating SAs using this connection
 "initiator" #1: sent INFORMATIONAL request to delete IKE SA
 "initiator" #2: ESP traffic information: in=84B out=84B
-"initiator" #1: deleting IKE SA (STATE_IKESA_DEL)
+"initiator" #1: deleting IKE SA (established IKE SA)
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24

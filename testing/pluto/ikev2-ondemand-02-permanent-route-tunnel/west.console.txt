@@ -95,7 +95,7 @@ west #
 "initiator": terminating SAs using this connection
 "initiator" #1: sent INFORMATIONAL request to delete IKE SA
 "initiator" #2: ESP traffic information: in=84B out=84B
-"initiator" #1: deleting IKE SA (STATE_IKESA_DEL)
+"initiator" #1: deleting IKE SA (established IKE SA)
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32

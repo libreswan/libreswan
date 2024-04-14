@@ -93,7 +93,7 @@ west #
 west #
  ipsec whack --deletestate 1
 "west-east-delete1" #1: sent INFORMATIONAL request to delete IKE SA
-"west-east-delete1" #1: deleting IKE SA (STATE_IKESA_DEL)
+"west-east-delete1" #1: deleting IKE SA (established IKE SA)
 west #
  sleep 2
 west #

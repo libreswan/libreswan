@@ -36,7 +36,7 @@ up
 "westnet-eastnet-ipv4-psk-ikev2" #1: encrypted payload seems to be corrupt; dropping packet
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (STATE_IKESA_DEL)
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (established IKE SA)
 west #
  echo done
 done

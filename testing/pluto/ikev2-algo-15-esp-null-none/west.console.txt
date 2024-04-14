@@ -53,7 +53,7 @@ up
 "esp=null-none": terminating SAs using this connection
 "esp=null-none" #1: sent INFORMATIONAL request to delete IKE SA
 "esp=null-none" #2: ESP traffic information: in=84B out=84B
-"esp=null-none" #1: deleting IKE SA (STATE_IKESA_DEL)
+"esp=null-none" #1: deleting IKE SA (established IKE SA)
 west #
  # exclude INTEG=NONE in the proposal
 west #
@@ -73,7 +73,7 @@ up
 "esp=null-none": terminating SAs using this connection
 "esp=null-none" #3: sent INFORMATIONAL request to delete IKE SA
 "esp=null-none" #4: ESP traffic information: in=84B out=84B
-"esp=null-none" #3: deleting IKE SA (STATE_IKESA_DEL)
+"esp=null-none" #3: deleting IKE SA (established IKE SA)
 west #
  echo done
 done

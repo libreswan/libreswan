@@ -55,7 +55,7 @@ west #
 "old-west": terminating SAs using this connection
 "old-west" #1: sent INFORMATIONAL request to delete IKE SA
 "old-west" #2: ESP traffic information: in=0B out=0B
-"old-west" #1: deleting IKE SA (STATE_IKESA_DEL)
+"old-west" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec auto --up new-west
 "new-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -70,7 +70,7 @@ west #
 "new-west": terminating SAs using this connection
 "new-west" #3: sent INFORMATIONAL request to delete IKE SA
 "new-west" #4: ESP traffic information: in=0B out=0B
-"new-west" #3: deleting IKE SA (STATE_IKESA_DEL)
+"new-west" #3: deleting IKE SA (established IKE SA)
 west #
  ipsec auto --up old-west
 "old-west" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -85,7 +85,7 @@ west #
 "old-west": terminating SAs using this connection
 "old-west" #5: sent INFORMATIONAL request to delete IKE SA
 "old-west" #6: ESP traffic information: in=0B out=0B
-"old-west" #5: deleting IKE SA (STATE_IKESA_DEL)
+"old-west" #5: deleting IKE SA (established IKE SA)
 west #
  ipsec auto --up new-west
 "new-west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -100,6 +100,6 @@ west #
 "new-west": terminating SAs using this connection
 "new-west" #7: sent INFORMATIONAL request to delete IKE SA
 "new-west" #8: ESP traffic information: in=0B out=0B
-"new-west" #7: deleting IKE SA (STATE_IKESA_DEL)
+"new-west" #7: deleting IKE SA (established IKE SA)
 west #
  

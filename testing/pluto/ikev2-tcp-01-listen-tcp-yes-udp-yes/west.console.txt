@@ -40,7 +40,7 @@ up
 "tcp": terminating SAs using this connection
 "tcp" #1: sent INFORMATIONAL request to delete IKE SA
 "tcp" #2: ESP traffic information: in=84B out=84B
-"tcp" #1: deleting IKE SA (STATE_IKESA_DEL)
+"tcp" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec up udp && ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 && ipsec down udp || true
 "udp" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -53,6 +53,6 @@ up
 "udp": terminating SAs using this connection
 "udp" #3: sent INFORMATIONAL request to delete IKE SA
 "udp" #4: ESP traffic information: in=84B out=84B
-"udp" #3: deleting IKE SA (STATE_IKESA_DEL)
+"udp" #3: deleting IKE SA (established IKE SA)
 west #
  

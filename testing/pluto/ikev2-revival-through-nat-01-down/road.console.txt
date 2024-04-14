@@ -32,7 +32,7 @@ road #
 "road-eastnet-ikev2": terminating SAs using this connection
 "road-eastnet-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
-"road-eastnet-ikev2" #1: deleting IKE SA (STATE_IKESA_DEL)
+"road-eastnet-ikev2" #1: deleting IKE SA (established IKE SA)
 road #
  # confirm the revival
 road #

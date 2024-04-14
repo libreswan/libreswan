@@ -38,7 +38,7 @@ up
 "westnet-eastnet-esp-null-md5": terminating SAs using this connection
 "westnet-eastnet-esp-null-md5" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-esp-null-md5" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet-esp-null-md5" #1: deleting IKE SA (STATE_IKESA_DEL)
+"westnet-eastnet-esp-null-md5" #1: deleting IKE SA (established IKE SA)
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-esp-null-sha1 -I 192.0.1.254 192.0.2.254
 "westnet-eastnet-esp-null-sha1": added IKEv2 connection
@@ -52,7 +52,7 @@ up
 "westnet-eastnet-esp-null-sha1": terminating SAs using this connection
 "westnet-eastnet-esp-null-sha1" #3: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-esp-null-sha1" #4: ESP traffic information: in=84B out=84B
-"westnet-eastnet-esp-null-sha1" #3: deleting IKE SA (STATE_IKESA_DEL)
+"westnet-eastnet-esp-null-sha1" #3: deleting IKE SA (established IKE SA)
 west #
  echo done
 done
