@@ -226,7 +226,7 @@ static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_initiate_transition = {
 	.story = "initiate Informational Delete IKE SA request",
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
-	.to = &state_v2_IKE_SA_DELETE,
+	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.llog_success = llog_v2_success_delete_ike_request,
@@ -235,8 +235,8 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_initiate_transit
 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_response_transition[] = {
 	{ .story      = "process Informational Delete IKE SA response",
-	  .from = { &state_v2_IKE_SA_DELETE, },
-	  .to = &state_v2_IKE_SA_DELETE,
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ZOMBIE,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),

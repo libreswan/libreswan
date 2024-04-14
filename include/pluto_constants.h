@@ -594,8 +594,12 @@ enum state_kind {
 	STATE_V2_ESTABLISHED_IKE_SA,
 	STATE_V2_ESTABLISHED_CHILD_SA,
 
-	/* IKEv2 Delete States */
-	STATE_V2_IKE_SA_DELETE,
+	/*
+	 * (unimplemented) after a state is deleted it can lurk for a
+	 * while so that it still responds to retransmits and ignores
+	 * responses.
+	 */
+	STATE_V2_ZOMBIE,
 
 	STATE_IKEv2_ROOF	/* not a state! */
 };

@@ -902,8 +902,7 @@ void delete_state(struct state *st)
 	 * ipsec_delete_sa()
 	 */
 	if (IS_IKE_SA_ESTABLISHED(st) ||
-	    IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
-	    st->st_state == &state_v2_IKE_SA_DELETE)
+	    IS_V1_ISAKMP_SA_ESTABLISHED(st))
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||

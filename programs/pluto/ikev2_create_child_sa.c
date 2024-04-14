@@ -122,8 +122,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	 * also requesting an IKE SA delete is ignored (see: crossing
 	 * IKE SA delete ignored #1587).
 	 */
-	PEXPECT(logger, (ike->sa.st_state == &state_v2_ESTABLISHED_IKE_SA ||
-			 ike->sa.st_state == &state_v2_IKE_SA_DELETE));
+	PEXPECT(logger, ike->sa.st_state == &state_v2_ESTABLISHED_IKE_SA);
 
 	/*
 	 * Unpack the crypto material computed out-of-band.

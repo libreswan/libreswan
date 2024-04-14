@@ -197,8 +197,7 @@ void pstat_sa_deleted(struct state *st)
 	 */
 	if (IS_IKE_SA(st)) {
 		bool fail = (!IS_IKE_SA_ESTABLISHED(st) &&
-			     !IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
-			     st->st_state->kind != STATE_V2_IKE_SA_DELETE);
+			     !IS_V1_ISAKMP_SA_ESTABLISHED(st));
 		if (fail) {
 			if (st->st_ike_version == IKEv2)
 				pstats_ikev2_fail++;
