@@ -11,7 +11,6 @@ ipsec whack --no-impair block_outbound
 
 ../../guestbin/drip-inbound.sh 1 '#2: connection is supposed to remain up'
 ../../guestbin/wait-for-pluto.sh '#2: ESP traffic information'
-../../guestbin/wait-for-pluto.sh '#1: deleting IKE SA'
 
 # revived
 

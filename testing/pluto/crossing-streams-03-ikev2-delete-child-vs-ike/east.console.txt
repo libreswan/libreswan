@@ -13,7 +13,7 @@ east #
 east #
  # initiate delete; WEST will block the message leaving EAST hanging
 east #
- ipsec whack --delete-ike --name east-west --asynchronous
+ ipsec whack --delete-child --name east-west --asynchronous
 east #
  # now back to WEST
 east #

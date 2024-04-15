@@ -37,7 +37,7 @@ IMPAIR: block all outbound messages: no -> yes
 west #
  # initiate delete; but block it
 west #
- ipsec whack --delete-child --name east-west --asynchronous
+ ipsec whack --delete-ike --name east-west --asynchronous
 west #
  ../../guestbin/wait-for-outbound.sh 1
 "east-west" #1: IMPAIR: blocking outbound message 1
@@ -57,13 +57,7 @@ west #
  ipsec whack --no-impair block_outbound
 IMPAIR: block all outbound messages: yes -> no
 west #
- # Process EAST's delete IKE SA request
-west #
- #
-west #
- # It will delete WEST's IKE SA making the outstanding delete Child SA
-west #
- # request pointless.
+ # Process EAST's delete Child SA request
 west #
  ../../guestbin/drip-inbound.sh 1 '#2: connection is supposed to remain up'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
@@ -73,9 +67,6 @@ IMPAIR: stop processing inbound drip packet 1
 west #
  ../../guestbin/wait-for-pluto.sh '#2: ESP traffic information'
 "east-west" #2: ESP traffic information: in=84B out=84B
-west #
- ../../guestbin/wait-for-pluto.sh '#1: deleting IKE SA'
-"east-west" #1: deleting IKE SA (established IKE SA)
 west #
  # revived
 west #
