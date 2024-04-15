@@ -1,12 +1,20 @@
-peers delete the Child SA simultaneously
+WEST sending Child SA delete CROSSES EAST sending Child SA delete
 
-- west initiates delete but its outbound message is blocked
-- east initiates delete
-- west blocks east's inbound delete
+EAST and WEST establish IKE and Child SAs
+
+- WEST sends a Child SA delete which is blocked
+- EAST sends a Child SA delete which is blocked
 
 At this point both ends think they are the one deleting.
 
-- west sends it's blocked delete request
-- west receives east's blocked delete request
+- WEST processes EAST's Child SA delete, deleting the Child SA sending
+  back a response causing EAST to also delete the SA
 
-Since things are still +UP, revival should occur.
+- EAST processes WEST's Child SA delete but there is none so it
+  returns a NADA reply
+
+  because WEST recorded the SA being deleted it includes this in the
+  log message (even though it doesn't exist)
+
+Since things are still +UP, WEST will revive the connection using the
+still established IKE SA.

@@ -1,0 +1,15 @@
+WEST sending IKE SA delete CROSSES EAST sending Child SA delete
+
+WEST and EAST establish IKE and Child SA
+
+- WEST sends an IKE SA delete which is blocked
+- EAST sends a Child SA delete which is blocked
+
+At this point both ends think they are the one deleting.
+
+- WEST processes EAST's Child SA delete deleting the Child SA
+
+- Because the IKE SA is being deleted it is not viable and can't be
+  used to revive the connection!
+
+Since things are still +UP, WEST revives using a new IKE and Child SA.

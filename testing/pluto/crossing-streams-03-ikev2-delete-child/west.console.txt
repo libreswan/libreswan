@@ -39,14 +39,14 @@ west #
 west #
  ipsec whack --delete-child --name east-west --asynchronous
 west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 1'
+ ../../guestbin/wait-for-outbound.sh 1
 "east-west" #1: IMPAIR: blocking outbound message 1
 west #
  # now do same on east
 west #
  # wait for EAST's delete message to be blocked
 west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
+ ../../guestbin/wait-for-inbound.sh 1
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 west #
  # stop further blocking so revival can occur
@@ -57,7 +57,7 @@ west #
  ipsec whack --no-impair block_outbound
 IMPAIR: block all outbound messages: yes -> no
 west #
- # Process EAST's delete request before letting WEST's request go out.
+ # Process EAST's delete Child SA request.
 west #
  #
 west #
@@ -67,21 +67,26 @@ west #
 west #
  # inbound SPIs.
 west #
- ../../guestbin/drip-inbound.sh 1 '#2: ESP traffic information'
+ ../../guestbin/drip-inbound.sh 1 '#2: connection is supposed to remain up'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
+"east-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+west #
+ ../../guestbin/wait-for-pluto.sh '#2: ESP traffic information'
 "east-west" #2: ESP traffic information: in=84B out=84B
 west #
- # Let WEST's delete message to EAST go out. Since EAST has completed
+ # Now release WEST's delete Child SA request which is blocking WEST's
 west #
- # it's delete exchange it should respond with an empty notify instead
+ # attempt to revive the connection deleted above.  Since the Child
 west #
- # of outbound SPIs as they have been deleted.
+ # SA's already deleted the response is ignored.
 west #
- ipsec whack --impair drip_outbound:1
+ ../../guestbin/drip-outbound.sh 1 '#1: Child SA #2 no longer exists'
+"east-west" #1: IMPAIR: blocking outbound message 1
 IMPAIR: start processing outbound drip packet 1
 IMPAIR: stop processing outbound drip packet 1
+"east-west" #1: Child SA #2 no longer exists, ignoring delete response
 west #
  # revived
 west #

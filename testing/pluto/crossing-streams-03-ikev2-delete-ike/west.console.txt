@@ -39,14 +39,14 @@ west #
 west #
  ipsec whack --delete-ike --name east-west --asynchronous
 west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking outbound message 1'
+ ../../guestbin/wait-for-outbound.sh 1
 "east-west" #1: IMPAIR: blocking outbound message 1
 west #
  # now do same on east
 west #
  # wait for EAST's delete message to be blocked
 west #
- ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
+ ../../guestbin/wait-for-inbound.sh 1
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 west #
  # stop further blocking so revival can occur
@@ -57,19 +57,27 @@ west #
  ipsec whack --no-impair block_outbound
 IMPAIR: block all outbound messages: yes -> no
 west #
- # Process EAST's delete request before letting WEST's request go out.
+ # Process EAST's delete request
 west #
- ipsec whack --impair drip_inbound:1
+ #
+west #
+ # Even though WEST has a delete IKE SA request outstanding it will
+west #
+ # accept and act on EASTs delete request.
+west #
+ ../../guestbin/drip-inbound.sh 1 '#2: connection is supposed to remain up'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
+"east-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
- # Let WEST's delete message to EAST go out.  Since EAST has completed
+ ../../guestbin/wait-for-pluto.sh '#2: ESP traffic information'
+"east-west" #2: ESP traffic information: in=84B out=84B
 west #
- # it's delete exchange, IKE is gone.
+ ../../guestbin/wait-for-pluto.sh '#1: deleting IKE SA'
+"east-west" #1: deleting IKE SA (established IKE SA)
 west #
- ipsec whack --impair drip_outbound:1
-IMPAIR: start processing outbound drip packet 1
-IMPAIR: stop processing outbound drip packet 1
+ # Leave WEST's delete request hanging.  The IKE SA has gone.
 west #
  # revived
 west #

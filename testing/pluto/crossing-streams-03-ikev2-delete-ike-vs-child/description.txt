@@ -1,12 +1,12 @@
-one end deletes IKE SA and the other deletes the Child SA simultaneously
+WEST sending Child SA delete CROSSES EAST sending IKE SA delete
 
-- west initiates delete but its outbound message is blocked
-- east initiates delete
-- west blocks east's inbound delete
+EAST and WEST establish IKE and Child SAs
+
+- WEST sends Child SA delete but is blocked
+- EAST sends IKE SA delete but is blocked
 
 At this point both ends think they are the one deleting.
 
-- west sends it's blocked delete request
-- west receives east's blocked delete request
+- WEST processes EAST's IKE SA delete deleting everything
 
-Since things are still +UP, revival should occur.
+Since things are still +UP, WEST revives using a new IKE and Child SA.
