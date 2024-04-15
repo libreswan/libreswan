@@ -99,43 +99,36 @@ stf_status initiate_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 		 * to expect an empty delete.
 		 */
 		ike->sa.st_v2_msgid_windows.initiator.dead_sa = ike->sa.st_serialno;
-	} else {
+		return STF_OK;
+	}
+
+	/*
+	 * XXX: just assume an SA that isn't established is
+	 * larval.
+	 *
+	 * Would be nice to have something indicating larval,
+	 * established, zombie.
+	 *
+	 * Should use .llog_success, but that code doesn't
+	 * know which Child SA the exchange was for.  Hence,
+	 * pretend that it was sent when it hasn't (but will
+	 * real soon, promise!)
+	 */
+	ike->sa.st_v2_msgid_windows.initiator.dead_sa = child->sa.st_serialno;
+	bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
+	if (!established) {
 		/*
-		 * XXX: just assume an SA that isn't established is
-		 * larval.
+		 * Normally the responder would include it's
+		 * outgoing SA's SPI, and this end would use
+		 * that to find / delete the child.  Here,
+		 * however, the SA isn't established so we've
+		 * no clue as to what the responder will send
+		 * back.  If anything.
 		 *
-		 * Would be nice to have something indicating larval,
-		 * established, zombie.
-		 *
-		 * Should use .llog_success, but that code doesn't
-		 * know which Child SA the exchange was for.  Hence,
-		 * pretend that it was sent when it hasn't (but will
-		 * real soon, promise!)
+		 * Hence signal the Child SA that it should
+		 * delete itself.
 		 */
-		ike->sa.st_v2_msgid_windows.initiator.dead_sa = child->sa.st_serialno;
-		bool established = IS_CHILD_SA_ESTABLISHED(&child->sa);
-		/*
-		 * XXX: should be in success callback but that doesn't
-		 * have enough context.
-		 */
-		llog(RC_LOG, child->sa.logger,
-		     "sent INFORMATIONAL request to delete %s Child SA using IKE SA "PRI_SO,
-		     established ? "established" : "larval",
-		     pri_so(ike->sa.st_serialno));
-		if (!established) {
-			/*
-			 * Normally the responder would include it's
-			 * outgoing SA's SPI, and this end would use
-			 * that to find / delete the child.  Here,
-			 * however, the SA isn't established so we've
-			 * no clue as to what the responder will send
-			 * back.  If anything.
-			 *
-			 * Hence signal the Child SA that it should
-			 * delete itself.
-			 */
-			event_force(EVENT_v2_DISCARD, &child->sa);
-		}
+		event_force(EVENT_v2_DISCARD, &child->sa);
 	}
 
 	return STF_OK;
@@ -214,55 +207,31 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static void llog_v2_success_delete_ike_request(struct ike_sa *ike)
+static void llog_v2_success_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike)
 {
 	/*
 	 * XXX: should this, when there are children, also mention
 	 * that they are being deleted?
 	 */
-	llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
+	so_serial_t dead_sa = ike->sa.st_v2_msgid_windows.initiator.dead_sa;
+	if (dead_sa == ike->sa.st_serialno) {
+		llog(RC_LOG, ike->sa.logger, "sent INFORMATIONAL request to delete IKE SA");
+		return;
+	}
+
+	struct child_sa *child = child_sa_by_serialno(dead_sa);
+	if (PBAD(ike->sa.logger, child == NULL)) {
+		return;
+	}
+	llog(RC_LOG, child->sa.logger,
+	     "sent INFORMATIONAL request to delete %s Child SA using IKE SA "PRI_SO,
+	     (IS_CHILD_SA_ESTABLISHED(&child->sa) ? "established" : "larval"),
+	     pri_so(ike->sa.st_serialno));
 }
-
-static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_initiate_transition = {
-	.story = "initiate Informational Delete IKE SA request",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
-	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
-	.llog_success = llog_v2_success_delete_ike_request,
-	.timeout_event =  EVENT_RETAIN,
-};
-
-static const struct v2_transition v2_INFORMATIONAL_v2DELETE_ike_response_transition[] = {
-	{ .story      = "process Informational Delete IKE SA response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ZOMBIE,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = v2P(SK),
-	  .processor  = process_v2_INFORMATIONAL_v2DELETE_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-};
-
-static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_ike_response_transitions =
-{
-	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_ike_response_transition),
-};
-
-static const struct v2_exchange v2_INFORMATIONAL_v2DELETE_ike_exchange = {
-	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "delete IKE SA",
-	.secured = true,
-	.initiate = &v2_INFORMATIONAL_v2DELETE_ike_initiate_transition,
-	.response = &v2_INFORMATIONAL_v2DELETE_ike_response_transitions,
-};
 
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
-	const struct v2_exchange *exchange =
-		(child != NULL ? &v2_INFORMATIONAL_v2DELETE_exchange :
-		 &v2_INFORMATIONAL_v2DELETE_ike_exchange);
+	const struct v2_exchange *exchange = &v2_INFORMATIONAL_v2DELETE_exchange;
 	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
 	v2_msgid_queue_exchange(ike, child, exchange);
 }
@@ -578,7 +547,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition 
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
-	.llog_success = ldbg_v2_success,
+	.llog_success = llog_v2_success_v2_INFORMATIONAL_v2DELETE_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
