@@ -476,17 +476,15 @@ static void set_negotiating(struct connection *c,
 			      c->established_child_sa == SOS_NOBODY);
 		c->routing_sa = (*e->child)->sa.st_serialno;
 		c->negotiating_child_sa = (*e->child)->sa.st_serialno;
+		c->established_child_sa = SOS_NOBODY;
 		c->routing.state = new_routing;
 		return;
 	}
 
 	if ((e->ike) != NULL && (*e->ike) != NULL) {
-		PEXPECT_WHERE((*e->ike)->sa.logger, e->where,
-			      c->negotiating_ike_sa == SOS_NOBODY);
-		PEXPECT_WHERE((*e->ike)->sa.logger, e->where,
-			      c->established_ike_sa == SOS_NOBODY);
 		c->routing_sa = (*e->ike)->sa.st_serialno;
 		c->negotiating_ike_sa = (*e->ike)->sa.st_serialno;
+		c->established_ike_sa = SOS_NOBODY;
 		c->routing.state = new_routing;
 		return;
 	}
