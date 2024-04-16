@@ -375,22 +375,38 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                             for command in test.commands:
 
-                                guest_verbose_txt = verbose_files[command.guest_name]
-                                test_domain = test_domains[command.guest_name]
+                                # If the per-guest command has no
+                                # guest (i.e., blank or NULL), skip
+                                # executing it.
+                                #
+                                # It's a comment or blank line from
+                                # all.console.txt.  Just copy it to
+                                # the shared output file.
+
+                                if not command.guest_name:
+                                    last_was_comment = True
+                                    all_verbose_txt.write(command.line)
+                                    all_verbose_txt.write("\n");
+                                    all_verbose_txt.flush()
+                                    continue
 
                                 # If the per-guest command turns out
                                 # to be a comment, skip executing it.
+                                #
                                 # Instead write it directly to the
                                 # output (for GUEST also need to fake
                                 # up a new prompt).
+
+                                guest_verbose_txt = verbose_files[command.guest_name]
+                                test_domain = test_domains[command.guest_name]
 
                                 if command.line.startswith("#"):
                                     last_was_comment = True
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write(command.line)
                                         txt.write("\n");
-                                    if command.guest_name:
-                                        _write_guest_prompt(guest_verbose_txt, command, test)
+                                    # fudge the prompt
+                                    _write_guest_prompt(guest_verbose_txt, command, test)
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.flush()
                                     continue
