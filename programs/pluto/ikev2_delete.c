@@ -233,6 +233,13 @@ void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
 	const struct v2_exchange *exchange = &v2_INFORMATIONAL_v2DELETE_exchange;
 	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+	if (child == NULL) {
+		/*
+		 * IKE SA is no longer viable - reviving Child SA's
+		 * can't use it to initiate.
+		 */
+		ike->sa.st_viable_parent = false; /* just to be sure */
+	}
 	v2_msgid_queue_exchange(ike, child, exchange);
 }
 
