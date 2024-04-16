@@ -1,5 +1,0 @@
-both sides initiate and respond to each other
-
-this is done with --up in the init scripts, while
-a block on nic is in place. We remove the block
-and both will initiate + respond
