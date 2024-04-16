@@ -1,40 +1,124 @@
 <varlistentry>
   <term>
-    <emphasis>authby</emphasis>
+    <envar>authby=</envar>
   </term>
   <listitem>
     <para>
-      how the two security gateways should authenticate each other;
-      the default value is <emphasis>rsasig,ecdsa</emphasis>
-      which allows ECDSA with SHA-2 and RSA with SHA2 or SHA1. To
-      limit this further, there are the options of <emphasis>ecdsa</emphasis>
-      for ECDSA digital signatures using
-      SHA-2, <emphasis>rsa-sha2</emphasis> for RSASSA-PSS
-      digital signatures based authentication with SHA2-256,
-      <emphasis>rsa-sha2_384</emphasis> for RSASSA-PSS digital
-      signatures based authentication with SHA2-384,
-      <emphasis>rsa-sha2_512</emphasis> for RSASSA-PSS digital
-      signatures based authentication with SHA2-512, <emphasis>rsa-sha1</emphasis>
-      for RSA-PKCSv1.5 digital signatures based authentication with SHA1,
-      <emphasis>secret</emphasis> for shared secrets (PSK)
-      authentication, <emphasis>secret|rsasig</emphasis> for
-      either, <emphasis>never</emphasis> if negotiation is
-      never to be attempted or accepted (useful for shunt-only conns),
-      and <emphasis>null</emphasis> for null-authentication.
+      How the two security gateways should authenticate each other.  A
+      comma separated list of one or more of the following:
     </para>
-    <para>
-      If asymmetric authentication is requested, IKEv2 must be
-      enabled, and the options <emphasis>leftauth=</emphasis> and
-      <emphasis>rightauth=</emphasis> should be used instead of
-      authby.
-    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>
+	  <emphasis>ecdsa</emphasis>
+	</term>
+	<term>
+	  <emphasis>ecdsa-sha2</emphasis>
+	</term>
+	<listitem>
+	  <para>ECDSA digital signature based authentication with any
+	  of the hash algorithms SHA2_256, SHA2_385, or
+	  SHA2_512</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>ecdsa-sha2_256</emphasis>
+	</term>
+	<term>
+	  <emphasis>ecdsa-sha2_384</emphasis>
+	</term>
+	<term>
+	  <emphasis>ecdsa-sha2_512</emphasis>
+	</term>
+	<listitem>
+	  <para>ECDSA digital signature based authentication with the
+	  specified SHA2_256, SHA2_385, or SHA2_512 hash
+	  algorithm</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>rsa-sha1</emphasis>
+	</term>
+	<listitem>
+	  <para>RSA-PKCSv1.5 digital signature based authentication
+	  with SHA1</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>rsa-sha2</emphasis>
+	</term>
+	<listitem>
+	  <para>RSASSA-PSS digital signature based authentication with
+	  any of the hash algorithms SHA2_256, SHA2_385, or
+	  SHA2_512</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>rsa-sha2_256</emphasis>
+	</term>
+	<term>
+	  <emphasis>rsa-sha2_384</emphasis>
+	</term>
+	<term>
+	  <emphasis>rsa-sha2_512</emphasis>
+	</term>
+	<listitem>
+	  <para>RSASSA-PSS digital signature based authentication with
+	  the specified SHA2_256, SHA2_385, or SHA2_512 hash
+	  algorithm</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>secret</emphasis>
+	</term>
+	<listitem>
+	  <para>shared secrets (PSK) authentication; cannot be
+	  combined with other authentication methods</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>never</emphasis>
+	</term>
+	<listitem>
+	  <para>negotiation is never to be attempted or accepted;
+	  cannot be combined with other authentication methods</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>null</emphasis>
+	</term>
+	<listitem>
+	  <para>null-authentication; cannot be combined with other
+	  authentication methods</para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
     <para>
       For IKEv1, SHA2 based signatures are not defined and ECDSA is
-      not implemented, so the default authby= value is rsa-sha1. Using
-      authby=rsasig results in only rsa-sha1 as well.  For IKEv2,
-      using authby=rsasig means using rsa-sha2_512, rsa-sha2_384,
-      rsa-sha2_256 and rsa-sha1, where rsa-sha1 will used only if RFC
-      7427 is not supported by the peer.
+      not implemented, so the default <envar>authby</envar> value is
+      rsa-sha1.  Using <envar>authby</envar>=rsasig results in only
+      rsa-sha1 as well.
+    </para>
+    <para>
+      For IKEv2, <emphasis>rsasig,ecdsa</emphasis> which allows ECDSA
+      with SHA-2 and RSA with SHA2 or SHA1.  Using
+      <envar>authby</envar>=rsasig means using rsa-sha2_512,
+      rsa-sha2_384, rsa-sha2_256 and rsa-sha1, where rsa-sha1 will
+      used only if RFC 7427 is not supported by the peer.
+    </para>
+    <para>
+      Note that <envar>authby</envar> cannot be used for asymmetric
+      authentication.  Instead, IKEv2 must be enabled and the options
+      <envar>leftauth</envar> and <envar>rightauth</envar> used.
     </para>
     <para>
       As per RFC 8221, authby=rsa-sha1 is only supported in the old
@@ -48,13 +132,13 @@
       system.
     </para>
     <para>
-      Digital signatures are superior in every way to shared
-      secrets. Especially IKEv1 in Aggressive Mode is vulnerable to
-      offline dictionary attacks and is performed routinely by at
-      least the NSA on monitored internet traffic globally. The never
-      option is only used for connections that do not actually start
-      an IKE negotiation, such as type=passthrough connections. The
-      auth method null is used for "anonymous opportunistic IPsec" and
+      Digital signatures are superior in every way to shared secrets.
+      Especially IKEv1 in Aggressive Mode is vulnerable to offline
+      dictionary attacks and is performed routinely by at least the
+      NSA on monitored internet traffic globally.  The never option is
+      only used for connections that do not actually start an IKE
+      negotiation, such as type=passthrough connections. The auth
+      method null is used for "anonymous opportunistic IPsec" and
       should not be used for regular pre-configured IPsec VPNs.
     </para>
   </listitem>
