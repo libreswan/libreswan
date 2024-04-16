@@ -1509,9 +1509,8 @@ kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-sa-init	good	github/
 kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-auth	good	github/1635
 
 kvmplutotest	crossing-streams-21-second-child-crypto-ikev2	good
-
+kvmplutotest	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
 kvmplutotest	ikev2-crossing-streams-02		good
-kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557
 
 # uses the kernel-pfkeyv2.c code
 
