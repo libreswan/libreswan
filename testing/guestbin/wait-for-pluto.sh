@@ -4,7 +4,9 @@ if test $# -eq 0 ; then
     cat <<EOF
 Usage:
   $0 [ --timeout <seconds> ] <match>
+Wait for pluto's logs to contain <match>
 EOF
+    exit 1
 fi
 
 timeout=
