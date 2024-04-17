@@ -1500,10 +1500,15 @@ kvmplutotest	crossing-streams-03-ikev2-delete-child-vs-ike	good	github/1587,gith
 kvmplutotest	crossing-streams-04-ikev2-initiator-child-up-ike-down			good
 kvmplutotest	crossing-streams-04-ikev2-initiator-ike-rekey-responder-child-up	wip
 
-kvmplutotest	crossing-streams-11-wewe-ikev2-permanent	wip	github/557
-kvmplutotest	crossing-streams-12-weew-ikev2-permanent	wip	github/557
-kvmplutotest	crossing-streams-13-ewew-ikev2-permanent	wip	github/557
-kvmplutotest	crossing-streams-14-ewwe-ikev2-permanent	wip	github/557
+kvmplutotest	crossing-streams-11-eewww-ikev2-permanent	wip	github/557
+kvmplutotest	crossing-streams-11-eweww-ikev2-permanent	wip	github/557
+kvmplutotest	crossing-streams-11-ewwew-ikev2-permanent	good	github/557
+kvmplutotest	crossing-streams-11-ewwwe-ikev2-permanent	good	github/557
+kvmplutotest	crossing-streams-11-weeww-ikev2-permanent	wip	github/557
+kvmplutotest	crossing-streams-11-wewew-ikev2-permanent	good	github/557
+kvmplutotest	crossing-streams-11-wewwe-ikev2-permanent	good	github/557
+kvmplutotest	crossing-streams-11-wwewe-ikev2-permanent	wip	github/557
+kvmplutotest	crossing-streams-11-wwwee-ikev2-permanent	wip	github/557
 
 kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-sa-init	good	github/1635
 kvmplutotest	crossing-streams-20-peer-restarts-ondemand-ike-auth	good	github/1635

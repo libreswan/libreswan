@@ -1,8 +1,0 @@
-IKEv2 permanent crossing-streams WEWE
-
-West creates states in the following order:
-
-   west IKE SA
-   east IKE SA
-   west Child SA
-   east Child SA

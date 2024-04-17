@@ -1,0 +1,92 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair block_inbound:yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+west #
+ ipsec auto --add east-west
+"east-west": added IKEv2 connection
+west #
+ # First wait for EAST's IKE_SA_INIT request to arrive.
+west #
+ ../../guestbin/wait-for-inbound.sh 1
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+west #
+ # WEST: create IKE SA; send IKE_SA_INIT request; wait for response
+west #
+ ipsec up --asynchronous east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: sent IKE_SA_INIT request'
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+west #
+ ../../guestbin/wait-for-inbound.sh 2
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+west #
+ # EAST: process IKE_SA_INIT request; create and establish IKE SA; send
+west #
+ # IKE_SA_INIT response; wait for IKE_AUTH request
+west #
+ ../../guestbin/drip-inbound.sh 1 '#2: processed IKE_SA_INIT request'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+"east-west" #2: processed IKE_SA_INIT request from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+west #
+ ../../guestbin/wait-for-inbound.sh 3
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+west #
+ # WEST: process IKE_SA_INIT response; establish IKE SA; create Child
+west #
+ # SA; send IKE_AUTH request; wait for response
+west #
+ ../../guestbin/drip-inbound.sh 2 '#1: processed IKE_SA_INIT response'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: start processing inbound drip packet 2
+IMPAIR: stop processing inbound drip packet 2
+"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+west #
+ ../../guestbin/wait-for-inbound.sh 4
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
+west #
+ # WEST: process IKE_AUTH response; establish Child SA
+west #
+ ../../guestbin/drip-inbound.sh 4 '#3: initiator established Child SA using #1'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
+IMPAIR: start processing inbound drip packet 4
+IMPAIR: stop processing inbound drip packet 4
+"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ # EAST: process IKE_AUTH request; establish Child SA
+west #
+ ../../guestbin/drip-inbound.sh 3 '#4: responder established Child SA using #2'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+IMPAIR: start processing inbound drip packet 3
+IMPAIR: stop processing inbound drip packet 3
+"east-west" #4: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up  -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec showstates
+#1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
+#2: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #1; idle;
+#3: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
+#4: "east-west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
+west #
+ ipsec trafficstatus
+#3: "east-west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#4: "east-west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ 

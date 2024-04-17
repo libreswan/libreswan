@@ -1,3 +1,0 @@
-ipsec showstates
-ipsec trafficstatus
-

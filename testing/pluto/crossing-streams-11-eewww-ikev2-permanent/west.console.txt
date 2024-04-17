@@ -1,0 +1,51 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair block_inbound:yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
+west #
+ ipsec auto --add east-west
+"east-west": added IKEv2 connection
+west #
+ # First wait for EAST's IKE_SA_INIT request to arrive.
+west #
+ ../../guestbin/wait-for-inbound.sh 1
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+west #
+ # EAST: process IKE_SA_INIT request; create and establish IKE SA; send
+west #
+ # IKE_SA_INIT response; wait for IKE_AUTH request
+west #
+ ../../guestbin/drip-inbound.sh 1 '#1: processed IKE_SA_INIT request'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: start processing inbound drip packet 1
+IMPAIR: stop processing inbound drip packet 1
+"east-west" #1: processed IKE_SA_INIT request from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
+west #
+ ../../guestbin/wait-for-inbound.sh 2
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+west #
+ # EAST: process IKE_AUTH request; establish Child SA
+west #
+ ../../guestbin/drip-inbound.sh 2 '#2: responder established Child SA using #1'
+packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: start processing inbound drip packet 2
+IMPAIR: stop processing inbound drip packet 2
+"east-west" #2: responder established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ # WEST: create IKE SA; send IKE_SA_INIT request; wait for response
+west #
+ ipsec up --asynchronous east-west
+"east-west" #3: initiating Child SA using IKE SA #1
+west #
+ ../../guestbin/wait-for-pluto.sh '#3: sent IKE_SA_INIT request'
+timeout waiting 30 seconds for cat /tmp/pluto.log to match #3: sent IKE_SA_INIT request

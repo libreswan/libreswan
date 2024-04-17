@@ -1,0 +1,9 @@
+IKEv2 permanent crossing-streams EWWWE
+
+West processes things in the following order:
+
+   #1  East IKE SA
+   #2i West IKE SA
+   #3  East Child SA
+   #4i West Child SA
+   #4r West Child SA
