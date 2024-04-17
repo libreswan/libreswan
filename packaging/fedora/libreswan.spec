@@ -24,7 +24,7 @@
     USE_AUTHPAM=true \\\
 %{nil}
 
-%global prever rc2
+%global prever rc3
 
 Name: libreswan
 Summary: Internet Key Exchange (IKEv1 and IKEv2) implementation for IPsec
@@ -196,5 +196,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %doc %{_mandir}/*/*
 
 %changelog
-* Mon Mar 11 2024 Team Libreswan <team@libreswan.org> - 5.0-0.1.rc2
+* Wed Apr 17 2024 Team Libreswan <team@libreswan.org> - 5.0-0.1.rc3
 - Automated build from release tar ball
