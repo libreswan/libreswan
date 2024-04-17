@@ -1500,7 +1500,7 @@ kvmplutotest	crossing-streams-03-ikev2-delete-child-vs-ike	good	github/1587,gith
 kvmplutotest	crossing-streams-04-ikev2-initiator-child-up-ike-down			good
 kvmplutotest	crossing-streams-04-ikev2-initiator-ike-rekey-responder-child-up	wip
 
-kvmplutotest	crossing-streams-11-eewww-ikev2-permanent	wip	github/557
+kvmplutotest	crossing-streams-11-eewww-ikev2-permanent	wip	github/1684
 kvmplutotest	crossing-streams-11-eweww-ikev2-permanent	wip	github/557
 kvmplutotest	crossing-streams-11-ewwew-ikev2-permanent	good	github/557
 kvmplutotest	crossing-streams-11-ewwwe-ikev2-permanent	good	github/557
