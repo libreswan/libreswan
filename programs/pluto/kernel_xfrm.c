@@ -135,71 +135,75 @@ static int netlink_rtm_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
 #define NE(x) { #x, x }	/* Name Entry -- shorthand for sparse_names */
 
-static sparse_names xfrm_type_names = {
-	NE(NLMSG_NOOP),
-	NE(NLMSG_ERROR),
-	NE(NLMSG_DONE),
-	NE(NLMSG_OVERRUN),
+static const struct sparse_names xfrm_type_names = {
+	.list = {
+		NE(NLMSG_NOOP),
+		NE(NLMSG_ERROR),
+		NE(NLMSG_DONE),
+		NE(NLMSG_OVERRUN),
 
-	NE(XFRM_MSG_NEWSA),
-	NE(XFRM_MSG_DELSA),
-	NE(XFRM_MSG_GETSA),
+		NE(XFRM_MSG_NEWSA),
+		NE(XFRM_MSG_DELSA),
+		NE(XFRM_MSG_GETSA),
 
-	NE(XFRM_MSG_NEWPOLICY),
-	NE(XFRM_MSG_DELPOLICY),
-	NE(XFRM_MSG_GETPOLICY),
+		NE(XFRM_MSG_NEWPOLICY),
+		NE(XFRM_MSG_DELPOLICY),
+		NE(XFRM_MSG_GETPOLICY),
 
-	NE(XFRM_MSG_ALLOCSPI),
-	NE(XFRM_MSG_ACQUIRE),
-	NE(XFRM_MSG_EXPIRE),
+		NE(XFRM_MSG_ALLOCSPI),
+		NE(XFRM_MSG_ACQUIRE),
+		NE(XFRM_MSG_EXPIRE),
 
-	NE(XFRM_MSG_UPDPOLICY),
-	NE(XFRM_MSG_UPDSA),
+		NE(XFRM_MSG_UPDPOLICY),
+		NE(XFRM_MSG_UPDSA),
 
-	NE(XFRM_MSG_POLEXPIRE),
+		NE(XFRM_MSG_POLEXPIRE),
 
-	NE(XFRM_MSG_FLUSHSA),
-	NE(XFRM_MSG_FLUSHPOLICY),
+		NE(XFRM_MSG_FLUSHSA),
+		NE(XFRM_MSG_FLUSHPOLICY),
 
-	NE(XFRM_MSG_BASE),
-	NE(XFRM_MSG_MAX),
+		NE(XFRM_MSG_BASE),
+		NE(XFRM_MSG_MAX),
 
-	SPARSE_NULL
+		SPARSE_NULL
+	},
 };
 
-static sparse_names rtm_type_names = {
+static const struct sparse_names rtm_type_names = {
+	.list = {
 
-	NE(RTM_NEWLINK),
-	NE(RTM_NEWLINK),
-	NE(RTM_GETLINK),
-	NE(RTM_SETLINK),
+		NE(RTM_NEWLINK),
+		NE(RTM_NEWLINK),
+		NE(RTM_GETLINK),
+		NE(RTM_SETLINK),
 
-	NE(RTM_NEWADDR),
-	NE(RTM_DELADDR),
-	NE(RTM_GETADDR),
+		NE(RTM_NEWADDR),
+		NE(RTM_DELADDR),
+		NE(RTM_GETADDR),
 
-	NE(RTM_NEWLINK),
-	NE(RTM_DELLINK),
-	NE(RTM_GETLINK),
+		NE(RTM_NEWLINK),
+		NE(RTM_DELLINK),
+		NE(RTM_GETLINK),
 
-	NE(RTM_NEWROUTE),
-	NE(RTM_DELROUTE),
-	NE(RTM_GETROUTE),
+		NE(RTM_NEWROUTE),
+		NE(RTM_DELROUTE),
+		NE(RTM_GETROUTE),
 
-	NE(RTM_NEWNEIGH),
-	NE(RTM_DELNEIGH),
-	NE(RTM_GETNEIGH),
+		NE(RTM_NEWNEIGH),
+		NE(RTM_DELNEIGH),
+		NE(RTM_GETNEIGH),
 
-	NE(RTM_NEWRULE),
-	NE(RTM_DELRULE),
-	NE(RTM_GETRULE),
+		NE(RTM_NEWRULE),
+		NE(RTM_DELRULE),
+		NE(RTM_GETRULE),
 
-	/* and many more */
+		/* and many more */
 
-	NE(RTM_BASE),
-	NE(RTM_MAX),
+		NE(RTM_BASE),
+		NE(RTM_MAX),
 
-	SPARSE_NULL
+		SPARSE_NULL
+	},
 };
 #undef NE
 
@@ -422,7 +426,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		sparse_buf sb;
 		llog_error(logger, errno,
 			   "netlink write() of %s message for %s %s failed",
-			   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			   description, story);
 		return false;
 	}
@@ -431,7 +435,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		sparse_buf sb;
 		llog_error(logger, 0/*no-errno*/,
 			   "netlink write() of %s message for %s %s truncated: %zd instead of %zu",
-			   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			   description, story, r, len);
 		return false;
 	}
@@ -450,7 +454,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			llog_error(logger, errno,
 				   "netlink recvfrom() of response to our %s message for %s %s failed",
-				   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+				   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 				   description, story);
 			return false;
 		}
@@ -472,7 +476,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			ldbg(logger, "%s() ignoring %s message from process %u",
 			     __func__,
-			     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
+			     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb),
 			     addr.nl_pid);
 			continue;
 		}
@@ -481,7 +485,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			ldbg(logger, "%s() ignoring out of sequence (%u/%u) message %s",
 			     __func__, rsp.n.nlmsg_seq, seq,
-			     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb));
+			     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb));
 			continue;
 		}
 		break;
@@ -491,7 +495,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		sparse_buf sb;
 		llog(RC_LOG_SERIOUS, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
-		     str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+		     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 		     description, story,
 		     len, (size_t) rsp.n.nlmsg_len);
 		return false;
@@ -520,9 +524,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		sparse_buf sb1, sb2;
 		llog(RC_LOG_SERIOUS, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
-		     str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb1),
+		     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb1),
 		     description, story,
-		     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb2));
+		     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
 		return false;
 	}
 	memcpy(rbuf, &rsp, r);
@@ -565,7 +569,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had A policy",
-			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -574,7 +578,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had NO policy",
-			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -585,7 +589,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had A policy",
-			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -596,7 +600,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had NO policy",
-			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -605,7 +609,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			sparse_buf sb;
 			llog(RC_LOG, logger,
 			     "%s()   %s for flow %s %s encountered unexpected policy",
-			     func, str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -615,7 +619,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	sparse_buf sb;
 	llog_error(logger, error,
 		   "kernel: xfrm %s %s response for flow %s",
-		   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+		   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 		   story, adstory);
 	return false;
 }
@@ -1969,7 +1973,7 @@ static const void *nlmsg_data(struct nlmsghdr *n, size_t size, struct logger *lo
 		llog(RC_LOG, logger,
 		     "%s() got %s message with length %"PRIu32" < %zu bytes; ignore message",
 		     where->func,
-		     str_sparse(xfrm_type_names, n->nlmsg_type, &sb),
+		     str_sparse(&xfrm_type_names, n->nlmsg_type, &sb),
 		     n->nlmsg_len, size);
 		return NULL;
 	}
@@ -2213,7 +2217,7 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 
 	sparse_buf sb;
 	ldbg(logger, "%s() xfrm netlink address change %s msg len %zu",
-	     __func__, str_sparse(rtm_type_names, n->nlmsg_type, &sb),
+	     __func__, str_sparse(&rtm_type_names, n->nlmsg_type, &sb),
 	     (size_t) n->nlmsg_len);
 
 	while (RTA_OK(rta, msg_size)) {
@@ -2251,7 +2255,7 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 		{
 			sparse_buf sb;
 			ldbg(logger, "%s() IKEv2 received address %s type %u",
-			     __func__, str_sparse(rtm_type_names, n->nlmsg_type, &sb),
+			     __func__, str_sparse(&rtm_type_names, n->nlmsg_type, &sb),
 			     rta->rta_type);
 			break;
 		}
@@ -2460,7 +2464,7 @@ static bool netlink_get(int fd,
 		/* not for us: ignore */
 		sparse_buf sb;
 		ldbg(logger, "%s() ignoring %s message from process %u",
-		     __func__, str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
+		     __func__, str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb),
 		     addr.nl_pid);
 		return true;
 	}
@@ -2481,7 +2485,7 @@ static void netlink_xfrm_message_processor(struct nlm_resp *rsp, struct logger *
 	sparse_buf xfrmb;
 	ldbg(logger, "%s() got %s message with length %zu",
 	     __func__,
-	     str_sparse(xfrm_type_names, rsp->n.nlmsg_type, &xfrmb),
+	     str_sparse(&xfrm_type_names, rsp->n.nlmsg_type, &xfrmb),
 	     (size_t) rsp->n.nlmsg_len);
 
 	switch (rsp->n.nlmsg_type) {
@@ -2510,7 +2514,7 @@ static void netlink_rtm_message_processor(struct nlm_resp *rsp, struct logger *l
 	sparse_buf rtmb;
 	ldbg(logger, "%s() got %s message with length %zu",
 	     __func__,
-	     str_sparse(rtm_type_names, rsp->n.nlmsg_type, &rtmb),
+	     str_sparse(&rtm_type_names, rsp->n.nlmsg_type, &rtmb),
 	     (size_t) rsp->n.nlmsg_len);
 
 	switch (rsp->n.nlmsg_type) {

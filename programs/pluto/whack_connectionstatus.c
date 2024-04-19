@@ -658,7 +658,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		    deltasecs(c->config->retransmit_timeout));
 		/* tcp? */
 		jam_string(buf, " iketcp:");
-		jam_sparse(buf, tcp_option_names, c->local->config->host.iketcp);
+		jam_sparse(buf, &tcp_option_names, c->local->config->host.iketcp);
 		jam_string(buf, ";");
 		/* tcp-port */
 		jam_string(buf, " iketcp-port:");
@@ -788,7 +788,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 					    c->config->vti.interface));
 		jam(buf, " vti-routing:%s;", bool_str(c->config->vti.routing));
 		jam(buf, " vti-shared:%s;", bool_str(c->config->vti.shared));
-		jam(buf, " nic-offload:%s;", sparse_name(nic_offload_option_names, c->config->nic_offload));
+		jam(buf, " nic-offload:%s;", sparse_name(&nic_offload_option_names, c->config->nic_offload));
 	}
 
 
@@ -841,7 +841,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " nat-traversal:");
 		/* encapsulation= */
 		jam_string(buf, " encapsulation:");
-		jam_sparse(buf, yna_option_names, c->config->encapsulation);
+		jam_sparse(buf, &yna_option_names, c->config->encapsulation);
 		jam_string(buf, ";");
 		/* nat-keepalive= + keep-alive= */
 		jam_string(buf, " keepalive:");

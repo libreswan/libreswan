@@ -361,7 +361,7 @@ struct keyword_def {
 	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
-	const struct sparse_name *sparse_name;
+	const struct sparse_names *sparse_names;
 	const struct lmod_info *info;
 };
 

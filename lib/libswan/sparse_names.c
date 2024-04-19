@@ -27,9 +27,9 @@
 #include "jambuf.h"
 
 /* look up enum names in a sparse_names */
-const char *sparse_name(sparse_names sd, unsigned long val)
+const char *sparse_name(const struct sparse_names *sd, unsigned long val)
 {
-	for (const struct sparse_name *p = sd; p->name != NULL; p++) {
+	for (const struct sparse_name *p = sd->list; p->name != NULL; p++) {
 		if (p->value == val) {
 			return p->name;
 		}
@@ -38,9 +38,9 @@ const char *sparse_name(sparse_names sd, unsigned long val)
 	return NULL;
 }
 
-const struct sparse_name *sparse_lookup(const struct sparse_name *names, const char *name)
+const struct sparse_name *sparse_lookup(const struct sparse_names *names, const char *name)
 {
-	for (const struct sparse_name *sn = names; sn->name != NULL; sn++) {
+	for (const struct sparse_name *sn = names->list; sn->name != NULL; sn++) {
 		if (strcaseeq(name, sn->name)) {
 			return sn;
 		}
@@ -51,7 +51,7 @@ const struct sparse_name *sparse_lookup(const struct sparse_name *names, const c
 /*
  * find or construct a string to describe an sparse value
  */
-size_t jam_sparse(struct jambuf *buf, sparse_names sd, unsigned long val)
+size_t jam_sparse(struct jambuf *buf, const struct sparse_names *sd, unsigned long val)
 {
 	const char *p = sparse_name(sd, val);
 	if (p != NULL) {
@@ -61,7 +61,7 @@ size_t jam_sparse(struct jambuf *buf, sparse_names sd, unsigned long val)
 	return jam(buf, "%lu??", val);
 }
 
-const char *str_sparse(sparse_names sd, unsigned long val, sparse_buf *buf)
+const char *str_sparse(const struct sparse_names *sd, unsigned long val, sparse_buf *buf)
 {
 	const char *p = sparse_name(sd, val);
 	if (p != NULL) {
@@ -72,8 +72,9 @@ const char *str_sparse(sparse_names sd, unsigned long val, sparse_buf *buf)
 	return buf->buf;
 }
 
-const char *sparse_sparse_name(sparse_sparse_names ssd, unsigned long v1, unsigned long v2)
+const char *sparse_sparse_name(const struct sparse_sparse_names *ssn, unsigned long v1, unsigned long v2)
 {
+	const struct sparse_sparse_name *ssd = ssn->list;
 	while (ssd->names != NULL) {
 		if (ssd->value == v1) {
 			return sparse_name(ssd->names, v2);
@@ -83,12 +84,12 @@ const char *sparse_sparse_name(sparse_sparse_names ssd, unsigned long v1, unsign
 	return NULL;
 }
 
-size_t jam_sparse_names(struct jambuf *buf, const struct sparse_name *names, const char *separator)
+size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator)
 {
 	const char *sep = "";
 	size_t s = 0;
-	for (const struct sparse_name *i = names; i->name != NULL; i++) {
-		const struct sparse_name *j = names;
+	for (const struct sparse_name *i = names->list; i->name != NULL; i++) {
+		const struct sparse_name *j = names->list;
 		while (j < i && j->value != i->value) {
 			j++;
 		}

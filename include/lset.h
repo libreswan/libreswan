@@ -26,7 +26,7 @@
 
 struct enum_names;
 struct jambuf;
-struct sparse_name;
+struct sparse_names;
 
 /*
  * set type with room for at least 64 elements for ALG opts (was 32 in
@@ -60,7 +60,7 @@ extern bool test_lset(const struct enum_names *table, lset_t val);
 
 size_t jam_lset(struct jambuf *, const struct enum_names *sd, lset_t val);
 const char *str_lset(const struct enum_names *sd, lset_t val, lset_buf *buf);
-size_t jam_sparse_lset(struct jambuf *, const struct sparse_name *sd, lset_t val);
+size_t jam_sparse_lset(struct jambuf *, const struct sparse_names *sd, lset_t val);
 
 size_t jam_lset_short(struct jambuf *, const struct enum_names *sd,
 		      const char *separator, lset_t val);

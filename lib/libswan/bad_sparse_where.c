@@ -22,7 +22,7 @@
 #include "sparse_names.h"
 
 void bad_sparse_where(const struct logger *logger,
-		      const struct sparse_name *sn,
+		      const struct sparse_names *sn,
 		      unsigned long value, where_t where)
 {
 	sparse_buf sb;

@@ -184,7 +184,7 @@ static void LDBG_orient_end(struct connection *c, enum left_right end)
 		 pri_hport(end_host_port(this, that)),
 		 this->config->ikeport,
 		 bool_str(this->encap),
-		 str_sparse(tcp_option_names, c->local->config->host.iketcp, &tcpb));
+		 str_sparse(&tcp_option_names, c->local->config->host.iketcp, &tcpb));
 }
 
 static void jam_iface(struct jambuf *buf, const struct iface *iface)

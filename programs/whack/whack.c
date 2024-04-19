@@ -1044,7 +1044,7 @@ static uintmax_t optarg_uintmax(void)
  * optional=0 when required_argument).
  */
 
-static uintmax_t optarg_sparse(unsigned optional, const struct sparse_name names[])
+static uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names)
 {
 	if (optarg == NULL) {
 		passert(long_opts[long_index].has_arg == optional_argument);
@@ -1859,7 +1859,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
-			msg.compress = optarg_sparse(YN_YES, yn_option_names);
+			msg.compress = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
@@ -1887,7 +1887,7 @@ int main(int argc, char **argv)
 		case CD_ESN:
 			msg.esn = optarg_sparse((msg.esn == YNE_EITHER ? YNE_EITHER :
 						 msg.esn == YNE_NO ? YNE_EITHER : YNE_YES),
-						yne_option_names);
+						&yne_option_names);
 			continue;
 
 		/* --ikefrag-allow */
@@ -1905,27 +1905,27 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_FRAGMENTATION: /* --fragmentation {yes,no,force} */
-			msg.fragmentation = optarg_sparse(YNF_YES, ynf_option_names);
+			msg.fragmentation = optarg_sparse(YNF_YES, &ynf_option_names);
 			continue;
 
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
-			msg.nopmtudisc = optarg_sparse(YN_YES, yn_option_names);
+			msg.nopmtudisc = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --decap-dscp */
 		case CD_DECAP_DSCP:
-			msg.decap_dscp = optarg_sparse(YN_YES, yn_option_names);
+			msg.decap_dscp = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --encap-dscp */
 		case CD_ENCAP_DSCP:
-			msg.encap_dscp = optarg_sparse(YN_YES, yn_option_names);
+			msg.encap_dscp = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --aggressive | --aggrmode */
 		case CD_AGGRESSIVE:
-			msg.aggressive = optarg_sparse(YN_YES, yn_option_names);
+			msg.aggressive = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --modecfgpull */
@@ -1940,45 +1940,45 @@ int main(int argc, char **argv)
 
 		/* --no-ikepad */
 		case CD_IKEPAD:
-			msg.ikepad = optarg_sparse(YN_YES, yn_option_names);
+			msg.ikepad = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --ignore-peer-dns */
 		case CD_IGNORE_PEER_DNS:
-			msg.ignore_peer_dns = optarg_sparse(YN_YES, yn_option_names);
+			msg.ignore_peer_dns = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --dns-match-id */
 		case CD_DNS_MATCH_ID:
-			msg.dns_match_id = optarg_sparse(YN_YES, yn_option_names);
+			msg.dns_match_id = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --ms-dh-downgrade */
 		case CD_MS_DH_DOWNGRADE:
-			msg.ms_dh_downgrade = optarg_sparse(YN_YES, yn_option_names);
+			msg.ms_dh_downgrade = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[=yes] */
-			msg.pfs_rekey_workaround = optarg_sparse(YN_YES, yn_option_names);
+			msg.pfs_rekey_workaround = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --overlapip */
 		case CD_OVERLAPIP:
-			msg.overlapip = optarg_sparse(YN_YES, yn_option_names);
+			msg.overlapip = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --sha2-truncbug or --sha2_truncbug */
 		case CD_SHA2_TRUNCBUG:
-			msg.sha2_truncbug = optarg_sparse(YN_YES, yn_option_names);
+			msg.sha2_truncbug = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
-			msg.intermediate = optarg_sparse(YN_YES, yn_option_names);
+			msg.intermediate = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --mobike */
 		case CD_MOBIKE:
-			msg.mobike = optarg_sparse(YN_YES, yn_option_names);
+			msg.mobike = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
@@ -2059,11 +2059,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */
-			msg.encapsulation = optarg_sparse(YNA_YES, yna_option_names);
+			msg.encapsulation = optarg_sparse(YNA_YES, &yna_option_names);
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
-			msg.nic_offload = optarg_sparse(0, nic_offload_option_names);
+			msg.nic_offload = optarg_sparse(0, &nic_offload_option_names);
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
@@ -2071,7 +2071,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			msg.nat_ikev1_method = optarg_sparse(0, nat_ikev1_method_option_names);
+			msg.nat_ikev1_method = optarg_sparse(0, &nat_ikev1_method_option_names);
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initialcontact */
@@ -2100,11 +2100,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
-			msg.send_redirect = optarg_sparse(0, yna_option_names);
+			msg.send_redirect = optarg_sparse(0, &yna_option_names);
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-			msg.accept_redirect = optarg_sparse(0, yn_option_names);
+			msg.accept_redirect = optarg_sparse(0, &yn_option_names);
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
@@ -2133,7 +2133,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_NM
 		case CD_NM_CONFIGURED:		/* --nm-configured */
-			msg.nm_configured = optarg_sparse(YN_YES, yn_option_names);
+			msg.nm_configured = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 #endif
 
@@ -2336,10 +2336,10 @@ int main(int argc, char **argv)
 			msg.vti_interface = strdup(optarg);
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
-			msg.vti_routing = optarg_sparse(YN_YES, yn_option_names);
+			msg.vti_routing = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
-			msg.vti_shared = optarg_sparse(YN_YES, yn_option_names);
+			msg.vti_shared = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
@@ -2398,7 +2398,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_PFS:	/* --pfs */
-			msg.pfs = optarg_sparse(YN_YES, yn_option_names);
+			msg.pfs = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */

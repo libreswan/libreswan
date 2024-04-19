@@ -640,7 +640,7 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
 
 static unsigned extract_sparse(const char *leftright, const char *name,
 			       unsigned value, unsigned unset, unsigned never,
-			       const struct sparse_name *names,
+			       const struct sparse_names *names,
 			       const struct whack_message *wm,
 			       struct logger *logger)
 {
@@ -665,14 +665,13 @@ static bool extract_yn(const char *leftright, const char *name,
 {
 	/* note that 0 gets mapped to YN_UNSET(0) and then UNSET */
 	enum yn_options yn = extract_sparse(leftright, name, value, YN_UNSET, YN_NO,
-					    yn_option_names,
-					    wm, logger);
+					    &yn_option_names, wm, logger);
 	switch (yn) {
 	case YN_NO: return false;
 	case YN_YES: return true;
 	case YN_UNSET: return unset;
 	}
-	bad_sparse(logger, yn_option_names, yn);
+	bad_sparse(logger, &yn_option_names, yn);
 }
 
 static enum yna_options extract_yna(const char *leftright, const char *name,
@@ -682,7 +681,7 @@ static enum yna_options extract_yna(const char *leftright, const char *name,
 				    const struct whack_message *wm,
 				    struct logger *logger)
 {
-	return extract_sparse(leftright, name, yna, unset, never, yna_option_names, wm, logger);
+	return extract_sparse(leftright, name, yna, unset, never, &yna_option_names, wm, logger);
 }
 
 static char *extract_str(const char *leftright, const char *name,
@@ -2167,7 +2166,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			sparse_buf sb;
 			llog_pexpect(c->logger, HERE,
 				     "type=%s should be never-negotiate",
-				     str_sparse(type_option_names, wm->type, &sb));
+				     str_sparse(&type_option_names, wm->type, &sb));
 		}
 		encap_mode = ENCAP_MODE_UNSET;
 	}
@@ -2393,12 +2392,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->fragmentation != YNF_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: never-negotiate connection ignores fragmentation=%s",
-			     sparse_name(ynf_option_names, wm->fragmentation));
+			     sparse_name(&ynf_option_names, wm->fragmentation));
 		}
 	} else if (wm->ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
 		llog(RC_INFORMATIONAL, c->logger,
 		     "warning: IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
-		     sparse_name(ynf_option_names, wm->fragmentation));
+		     sparse_name(&ynf_option_names, wm->fragmentation));
 		config->ike_frag.allow = true;
 	} else {
 		switch (wm->fragmentation) {
@@ -2422,7 +2421,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			sparse_buf eb;
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: enable-tcp=%s ignored for type=passthrough connection",
-			     str_sparse(tcp_option_names, wm->enable_tcp, &eb));
+			     str_sparse(&tcp_option_names, wm->enable_tcp, &eb));
 		}
 		/* cleanup inherited default; XXX: ? */
 		iketcp = IKE_TCP_NO;
@@ -2463,7 +2462,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	default:
 		/* must  have been set */
-		bad_sparse(c->logger, tcp_option_names, iketcp);
+		bad_sparse(c->logger, &tcp_option_names, iketcp);
 	}
 
 
@@ -2534,7 +2533,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	case AUTOSTART_KEEP:
 	case AUTOSTART_UP:
 		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
-		     sparse_name(autostart_names, wm->autostart));
+		     sparse_name(&autostart_names, wm->autostart));
 		add_policy(c, policy.up);
 		break;
 	case AUTOSTART_IGNORE:
@@ -2613,7 +2612,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->esn != YNE_UNSET) {
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: ignoring esn=%s as connection is never-negotiate",
-			     sparse_name(yne_option_names, wm->esn));
+			     sparse_name(&yne_option_names, wm->esn));
 		}
 	} else if (wm->replay_window == 0) {
 		/*
@@ -2699,7 +2698,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			sparse_buf sb;
 			llog(RC_INFORMATIONAL, c->logger,
 			     "warning: ignoring ppk=%s as IKEv1",
-			     str_sparse(nppi_option_names, wm->ppk, &sb));
+			     str_sparse(&nppi_option_names, wm->ppk, &sb));
 		}
 	} else {
 		switch (wm->ppk) {
@@ -2870,7 +2869,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (never_negotiate_wm(wm)) {
 		if (wm->nic_offload != NIC_OFFLOAD_UNSET) {
 			llog(RC_LOG, c->logger, "nic-offload=%s ignored for never-negotiate connection",
-			     sparse_name(nic_offload_option_names, wm->nic_offload));
+			     sparse_name(&nic_offload_option_names, wm->nic_offload));
 		}
 		/* keep <<ipsec connectionstatus>> simple */
 		config->nic_offload = NIC_OFFLOAD_NO;
@@ -2884,7 +2883,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		case NIC_OFFLOAD_CRYPTO:
 			if (kernel_ops->nic_detect_offload == NULL) {
 				return diag("no kernel support for nic-offload[=%s]",
-					    sparse_name(nic_offload_option_names, wm->nic_offload));
+					    sparse_name(&nic_offload_option_names, wm->nic_offload));
 			}
 			config->nic_offload = wm->nic_offload;
 		}

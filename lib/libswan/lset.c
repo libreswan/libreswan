@@ -102,7 +102,7 @@ const char *str_lset_short(enum_names *en, const char *separator,
 	return out->buf;
 }
 
-size_t jam_sparse_lset(struct jambuf *buf, const struct sparse_name *sd, lset_t val)
+size_t jam_sparse_lset(struct jambuf *buf, const struct sparse_names *sd, lset_t val)
 {
 	if (val == LEMPTY) {
 		return jam(buf, "none");

@@ -44,18 +44,21 @@ struct sparse_name {
 	unsigned long value;
 };
 
-typedef const struct sparse_name sparse_names[];
+struct sparse_names {
+	size_t ignore_for_now;
+	struct sparse_name list[];
+};
 
-const struct sparse_name *sparse_lookup(const struct sparse_name *, const char *);
+const struct sparse_name *sparse_lookup(const struct sparse_names *, const char *);
 
 typedef struct {
 	char buf[16];/*how big?*/
 } sparse_buf;
 
-const char *sparse_name(sparse_names sd, unsigned long val);
-size_t jam_sparse(struct jambuf *buf, sparse_names sd, unsigned long val);
-const char *str_sparse(sparse_names sd, unsigned long val, sparse_buf *buf);
-size_t jam_sparse_names(struct jambuf *buf, const struct sparse_name *names, const char *separator);
+const char *sparse_name(const struct sparse_names *sd, unsigned long val);
+size_t jam_sparse(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
+const char *str_sparse(const struct sparse_names *sd, unsigned long val, sparse_buf *buf);
+size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
 
 /*
  * sparse_sparse_names is much like enum_enum_names, except, again the
@@ -66,11 +69,14 @@ size_t jam_sparse_names(struct jambuf *buf, const struct sparse_name *names, con
 
 struct sparse_sparse_name {
 	unsigned long value;
-	const struct sparse_name *names;
+	const struct sparse_names *names;
 };
 
-typedef const struct sparse_sparse_name sparse_sparse_names[];
+struct sparse_sparse_names {
+	size_t ignore_for_now;
+	const struct sparse_sparse_name list[];
+};
 
-extern const char *sparse_sparse_name(sparse_sparse_names sd, unsigned long v1, unsigned long v2);
+extern const char *sparse_sparse_name(const struct sparse_sparse_names *sd, unsigned long v1, unsigned long v2);
 
 #endif /* _CONSTANTS_H_ */

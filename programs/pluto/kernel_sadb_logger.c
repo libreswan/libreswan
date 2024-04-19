@@ -84,13 +84,13 @@ typedef uint64_t u64_t;
 #define JAM_HEADER_SADB(T)					\
 	JAM_HEADER(T);						\
 	JAM_LEN(T, len);					\
-	JAM_SPARSE(sadb_exttype_names, T, exttype);
+	JAM_SPARSE(&sadb_exttype_names, T, exttype);
 
 #define JAM_SADB(T, F)							\
-	JAM_SPARSE(sadb_##F##_names, T, F)
+	JAM_SPARSE(&sadb_##F##_names, T, F)
 
 #define JAM_IPSEC(T, F)							\
-	JAM_SPARSE(ipsec_##F##_names, T, F)
+	JAM_SPARSE(&ipsec_##F##_names, T, F)
 
 #define JAM_LEN_MULTIPLIER(T, F, LEN_MULTIPLIER)			\
 	jam(buf, " "#F"=%"PRIu16"(%zu)",				\
@@ -120,7 +120,7 @@ void llog_sadb_alg(lset_t rc_flags, struct logger *logger,
 {
 	JAM_HEADER(sadb_alg);
 
-	JAM_SPARSE_SPARSE(sadb_alg_names, exttype, sadb_alg, id);
+	JAM_SPARSE_SPARSE(&sadb_alg_names, exttype, sadb_alg, id);
 	JAM(u8, sadb_alg, ivlen);
 	JAM(u16, sadb_alg, minbits);
 	JAM(u16, sadb_alg, maxbits);
@@ -134,8 +134,8 @@ void llog_sadb_comb(lset_t rc_flags, struct logger *logger,
 {
 	JAM_HEADER(sadb_comb);
 
-	JAM_SPARSE(sadb_aalg_names, sadb_comb, auth);
-	JAM_SPARSE(sadb_ealg_names, sadb_comb, encrypt);
+	JAM_SPARSE(&sadb_aalg_names, sadb_comb, auth);
+	JAM_SPARSE(&sadb_ealg_names, sadb_comb, encrypt);
 	JAM(u16, sadb_comb, flags);
 	JAM(u16, sadb_comb, auth_minbits);
 	JAM(u16, sadb_comb, auth_maxbits);
@@ -160,7 +160,7 @@ void llog_sadb_ext(lset_t rc_flags, struct logger *logger,
 	JAM_HEADER(sadb_ext);
 
 	JAM_LEN(sadb_ext, len);
-	JAM_SPARSE(sadb_exttype_names, sadb_ext, type);
+	JAM_SPARSE(&sadb_exttype_names, sadb_ext, type);
 
 	JAM_FOOTER();
 }
@@ -241,10 +241,10 @@ void llog_sadb_sa(lset_t rc_flags, struct logger *logger,
 
 	jam(buf, " spi=%u(%x)", ntohl(m->sadb_sa_spi), ntohl(m->sadb_sa_spi));
 	JAM(u8, sadb_sa, replay);
-	JAM_SPARSE(sadb_sastate_names, sadb_sa, state);
-	JAM_SPARSE_SPARSE(sadb_satype_aalg_names, satype, sadb_sa, auth);
-	JAM_SPARSE_SPARSE(sadb_satype_ealg_names, satype, sadb_sa, encrypt);
-	JAM_SPARSE_LSET(sadb_saflag_names, sadb_sa, flags);
+	JAM_SPARSE(&sadb_sastate_names, sadb_sa, state);
+	JAM_SPARSE_SPARSE(&sadb_satype_aalg_names, satype, sadb_sa, auth);
+	JAM_SPARSE_SPARSE(&sadb_satype_ealg_names, satype, sadb_sa, encrypt);
+	JAM_SPARSE_LSET(&sadb_saflag_names, sadb_sa, flags);
 
 	JAM_FOOTER();
 }
@@ -353,7 +353,7 @@ void llog_sadb_x_policy(lset_t rc_flags, struct logger *logger,
 {
 	JAM_HEADER_SADB(sadb_x_policy);
 
-	JAM_SPARSE(ipsec_policy_names, sadb_x_policy, type); /* POLICY <> TYPE */
+	JAM_SPARSE(&ipsec_policy_names, sadb_x_policy, type); /* POLICY <> TYPE */
 	/* XXX: broken; needs sparse_sparse_names; */
 	JAM_IPSEC(sadb_x_policy, dir);
 #if defined sadb_x_policy_scope

@@ -102,7 +102,7 @@ enum autostart {
 	AUTOSTART_KEEP,
 };
 
-extern const struct sparse_name autostart_names[];
+extern const struct sparse_names autostart_names;
 
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remote_peer_type {
@@ -754,7 +754,7 @@ enum ikev1_natt_policy {
 	NATT_NONE = 4 /* Workaround for forcing non-encaps */
 };
 
-extern const struct sparse_name nat_ikev1_method_option_names[];
+extern const struct sparse_names nat_ikev1_method_option_names;
 
 enum nppi_options {
 	NPPI_UNSET = 0,
@@ -764,7 +764,7 @@ enum nppi_options {
 	NPPI_INSIST		/* propose, and only accept if peer agrees */
 };
 
-extern const struct sparse_name nppi_option_names[];
+extern const struct sparse_names nppi_option_names;
 
 enum ynf_options {
 	YNF_UNSET = 0,
@@ -773,7 +773,7 @@ enum ynf_options {
 	YNF_FORCE,
 };
 
-extern const struct sparse_name ynf_option_names[];
+extern const struct sparse_names ynf_option_names;
 
 enum yn_options {
 	YN_UNSET = 0,
@@ -782,9 +782,10 @@ enum yn_options {
 };
 
 /* includes things like 0/1 */
-extern const struct sparse_name yn_option_names[];
+extern const struct sparse_names yn_option_names;
+
 /* excludes 0/1 */
-extern const struct sparse_name yn_text_option_names[];
+extern const struct sparse_names yn_text_option_names;
 
 enum yna_options {
 	YNA_UNSET = 0,
@@ -793,7 +794,7 @@ enum yna_options {
 	YNA_YES = 3,
 };
 
-extern const struct sparse_name yna_option_names[];
+extern const struct sparse_names yna_option_names;
 
 enum yne_options {
 	YNE_UNSET,
@@ -802,7 +803,7 @@ enum yne_options {
 	YNE_EITHER,
 };
 
-extern const struct sparse_name yne_option_names[];
+extern const struct sparse_names yne_option_names;
 
 enum tcp_options {
        IKE_TCP_NO = 1,
@@ -810,7 +811,7 @@ enum tcp_options {
        IKE_TCP_FALLBACK = 3,
 };
 
-extern const struct sparse_name tcp_option_names[]; /* "no", "yes", "fallback" */
+extern const struct sparse_names tcp_option_names; /* "no", "yes", "fallback" */
 
 enum eap_options {
 	IKE_EAP_NONE = 0, /* default */
@@ -824,7 +825,7 @@ enum nic_offload_options {
 	NIC_OFFLOAD_PACKET,
 };
 
-extern const struct sparse_name nic_offload_option_names[];
+extern const struct sparse_names nic_offload_option_names;
 
 /*
  * Policies for establishing an SA
@@ -942,7 +943,7 @@ enum type_options {
 	KS_REJECT,
 };
 
-extern const struct sparse_name type_option_names[];
+extern const struct sparse_names type_option_names;
 
 /*
  * related(???) libunbound enumerated types

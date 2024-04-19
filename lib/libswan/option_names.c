@@ -43,112 +43,137 @@
        { "y",          YES },			\
        { "n",          NO }
 
-/* match <BOOLEAN_VALUE> in parser.lex; includes numbers 0/1 */
-const struct sparse_name yn_option_names[] = {
-	YES_NO(YN_YES, YN_NO),
-	/*
-	 * These are unique to YN, and probably should be dropped
-	 * completely.  Some keywords, such as ipsec-interface,
-	 * interpret "1" and "0".
-	 */
-	{ "1",          YN_YES, },
-	{ "0",          YN_NO, },
-	SPARSE_NULL,
+/*
+ * Match <BOOLEAN_VALUE> in parser.lex; includes numbers 0/1.
+ */
+
+const struct sparse_names yn_option_names = {
+	.list = {
+		YES_NO(YN_YES, YN_NO),
+		/*
+		 * These are unique to YN, and probably should be dropped
+		 * completely.  Some keywords, such as ipsec-interface,
+		 * interpret "1" and "0".
+		 */
+		{ "1",          YN_YES, },
+		{ "0",          YN_NO, },
+		SPARSE_NULL,
+	},
 };
 
-/* Values for no/yes; excludes numeric values */
-const struct sparse_name yn_text_option_names[] = {
-	YES_NO(YN_YES, YN_NO),
-	SPARSE_NULL
+/*
+ * Values for no/yes; excludes numeric values.
+ */
+
+const struct sparse_names yn_text_option_names = {
+	.list = {
+		YES_NO(YN_YES, YN_NO),
+		SPARSE_NULL
+	},
 };
 
 /*
  * Values for yes/no/force, used by fragmentation=
  */
-const struct sparse_name ynf_option_names[] = {
-	YES_NO(YNF_YES, YNF_NO),
-	{ "force",     YNF_FORCE },
-	{ "never",     YNF_NO },
-	{ "insist",    YNF_FORCE },
-	SPARSE_NULL
+
+const struct sparse_names ynf_option_names = {
+	.list = {
+		YES_NO(YNF_YES, YNF_NO),
+		{ "force",     YNF_FORCE },
+		{ "never",     YNF_NO },
+		{ "insist",    YNF_FORCE },
+		SPARSE_NULL
+	},
 };
 
 /*
  * Values for ESP
  */
 
-const struct sparse_name yne_option_names[] = {
-	YES_NO(YNE_YES, YNE_NO),
-	{ "either",	YNE_EITHER },
-	SPARSE_NULL
+const struct sparse_names yne_option_names = {
+	.list = {
+		YES_NO(YNE_YES, YNE_NO),
+		{ "either",	YNE_EITHER },
+		SPARSE_NULL
+	},
 };
 
 /*
  * Values for Four-State options, used for ppk=
  */
 
-const struct sparse_name nppi_option_names[] = {
-	{ "never",     NPPI_NEVER },
-	{ "permit",    NPPI_PERMIT },
-	{ "propose",   NPPI_PROPOSE },
-	{ "insist",    NPPI_INSIST },
-	{ "always",    NPPI_INSIST },
-	YES_NO(NPPI_PROPOSE, NPPI_NEVER),
-	SPARSE_NULL
+const struct sparse_names nppi_option_names = {
+	.list = {
+		{ "never",     NPPI_NEVER },
+		{ "permit",    NPPI_PERMIT },
+		{ "propose",   NPPI_PROPOSE },
+		{ "insist",    NPPI_INSIST },
+		{ "always",    NPPI_INSIST },
+		YES_NO(NPPI_PROPOSE, NPPI_NEVER),
+		SPARSE_NULL
+	},
 };
 
 /*
  * Values for nat-ikev1-method={drafts,rfc,both,none}
  */
 
-const struct sparse_name nat_ikev1_method_option_names[] = {
-	{ "both",       NATT_BOTH },
-	{ "rfc",        NATT_RFC },
-	{ "drafts",     NATT_DRAFTS },
-	{ "none",       NATT_NONE },
-	SPARSE_NULL
+const struct sparse_names nat_ikev1_method_option_names = {
+	.list = {
+		{ "both",       NATT_BOTH },
+		{ "rfc",        NATT_RFC },
+		{ "drafts",     NATT_DRAFTS },
+		{ "none",       NATT_NONE },
+		SPARSE_NULL
+	},
 };
 
 /*
  * Values for yes/no/auto, used by encapsulation.
  */
 
-const struct sparse_name yna_option_names[] = {
-	YES_NO(YNA_YES, YNA_NO),
-	{ "auto",	YNA_AUTO },
-	SPARSE_NULL,
+const struct sparse_names yna_option_names = {
+	.list = {
+		YES_NO(YNA_YES, YNA_NO),
+		{ "auto",	YNA_AUTO },
+		SPARSE_NULL,
+	},
 };
-
-
 
 /*
  * Values for enable-tcp={no, yes, fallback}
  */
 
-const struct sparse_name tcp_option_names[] = {
-	YES_NO(IKE_TCP_ONLY, IKE_TCP_NO),
-	{ "fallback", IKE_TCP_FALLBACK },
-	SPARSE_NULL
+const struct sparse_names tcp_option_names = {
+	.list = {
+		YES_NO(IKE_TCP_ONLY, IKE_TCP_NO),
+		{ "fallback", IKE_TCP_FALLBACK },
+		SPARSE_NULL
+	},
 };
 
-const struct sparse_name nic_offload_option_names[] = {
-	{ "no",         NIC_OFFLOAD_NO },
-	{ "crypto",     NIC_OFFLOAD_CRYPTO },
-	{ "packet",     NIC_OFFLOAD_PACKET },
-	{ "yes",        NIC_OFFLOAD_CRYPTO }, /* backwards compat */
-	SPARSE_NULL
+const struct sparse_names nic_offload_option_names = {
+	.list = {
+		{ "no",         NIC_OFFLOAD_NO },
+		{ "crypto",     NIC_OFFLOAD_CRYPTO },
+		{ "packet",     NIC_OFFLOAD_PACKET },
+		{ "yes",        NIC_OFFLOAD_CRYPTO }, /* backwards compat */
+		SPARSE_NULL
+	},
 };
 
 /*
  * Values for type={tunnel,transport,etc}
  */
 
-const struct sparse_name type_option_names[] = {
-	{ "tunnel",    KS_TUNNEL },
-	{ "transport", KS_TRANSPORT },
-	{ "pass",      KS_PASSTHROUGH },
-	{ "passthrough", KS_PASSTHROUGH },
-	{ "reject",    KS_REJECT },
-	{ "drop",      KS_DROP },
-	SPARSE_NULL
+const struct sparse_names type_option_names = {
+	.list = {
+		{ "tunnel",    KS_TUNNEL },
+		{ "transport", KS_TRANSPORT },
+		{ "pass",      KS_PASSTHROUGH },
+		{ "passthrough", KS_PASSTHROUGH },
+		{ "reject",    KS_REJECT },
+		{ "drop",      KS_DROP },
+		SPARSE_NULL
+	},
 };

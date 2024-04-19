@@ -41,7 +41,7 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 {
 	char *sep = "";
 
-	for (const struct sparse_name *kev  = k->sparse_name; kev->name != NULL; kev++) {
+	for (const struct sparse_name *kev  = k->sparse_names->list; kev->name != NULL; kev++) {
 		unsigned int mask = kev->value;
 
 		if (mask != 0 && (val & mask) == mask) {
@@ -114,7 +114,7 @@ static void confwrite_int(FILE *out,
 			if (options_set[k->field]) {
 				int val = options[k->field];
 				fprintf(out, "\t%s%s=", side, k->keyname);
-				for (const struct sparse_name *kev = k->sparse_name;
+				for (const struct sparse_name *kev = k->sparse_names->list;
 				     kev->name != NULL; kev++) {
 					/* XXX: INT vs UNSIGNED magic? */
 					if ((int)kev->value == val) {
@@ -363,12 +363,12 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 	if (conn->options[KNCF_AUTO] != 0) {
 		sparse_buf sb;
-		cwf("auto", str_sparse(autostart_names, conn->options[KNCF_AUTO], &sb));
+		cwf("auto", str_sparse(&autostart_names, conn->options[KNCF_AUTO], &sb));
 	}
 
 	if (conn->options[KNCF_PPK] != NPPI_UNSET) {
 		sparse_buf sb;
-		cwf("ppk", str_sparse(nppi_option_names, conn->options[KNCF_PPK], &sb));
+		cwf("ppk", str_sparse(&nppi_option_names, conn->options[KNCF_PPK], &sb));
 	}
 
 	if (conn->never_negotiate_shunt != SHUNT_UNSET ||
@@ -441,7 +441,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			/* esn= */
 			if (conn->options[KNCF_ESN] != YNE_UNSET) {
-				cwf("esn", sparse_name(yne_option_names,
+				cwf("esn", sparse_name(&yne_option_names,
 						       conn->options[KNCF_ESN]));
 			}
 

@@ -470,32 +470,32 @@ enum sadb_x_flow_type {
 
 #endif
 
-extern sparse_names sadb_aalg_names;
-extern sparse_names sadb_calg_names;
-extern sparse_names sadb_ealg_names;
-extern sparse_names sadb_exttype_names;
-extern sparse_names sadb_flow_type_names;
-extern sparse_names sadb_identtype_names;
-extern sparse_names sadb_lifetime_names;
-extern sparse_names sadb_policyflag_names;
-extern sparse_names sadb_saflag_names;
-extern sparse_names sadb_sastate_names;
-extern sparse_names sadb_satype_names;
-extern sparse_names sadb_type_names;
-extern sparse_sparse_names sadb_protocol_proto_names;
-extern sparse_names sadb_protocol_direction_names;
-extern sparse_names sadb_x_flow_type_names;
+extern const struct sparse_names sadb_aalg_names;
+extern const struct sparse_names sadb_calg_names;
+extern const struct sparse_names sadb_ealg_names;
+extern const struct sparse_names sadb_exttype_names;
+extern const struct sparse_names sadb_flow_type_names;
+extern const struct sparse_names sadb_identtype_names;
+extern const struct sparse_names sadb_lifetime_names;
+extern const struct sparse_names sadb_policyflag_names;
+extern const struct sparse_names sadb_saflag_names;
+extern const struct sparse_names sadb_sastate_names;
+extern const struct sparse_names sadb_satype_names;
+extern const struct sparse_names sadb_type_names;
+extern const struct sparse_sparse_names sadb_protocol_proto_names;
+extern const struct sparse_names sadb_protocol_direction_names;
+extern const struct sparse_names sadb_x_flow_type_names;
 
-extern sparse_names sadb_proto_names;
-extern sparse_sparse_names sadb_alg_names;
-extern sparse_sparse_names sadb_satype_ealg_names;
-extern sparse_sparse_names sadb_satype_aalg_names;
+extern const struct sparse_names sadb_proto_names;
+extern const struct sparse_sparse_names sadb_alg_names;
+extern const struct sparse_sparse_names sadb_satype_ealg_names;
+extern const struct sparse_sparse_names sadb_satype_aalg_names;
 
-extern sparse_names ipsec_proto_names;
-extern sparse_names ipsec_policy_names;
-extern sparse_names ipsec_dir_names;
-extern sparse_names ipsec_mode_names;
-extern sparse_names ipsec_level_names;
+extern const struct sparse_names ipsec_proto_names;
+extern const struct sparse_names ipsec_policy_names;
+extern const struct sparse_names ipsec_dir_names;
+extern const struct sparse_names ipsec_mode_names;
+extern const struct sparse_names ipsec_level_names;
 
 void llog_sadb(lset_t rc_flags, struct logger *logger, const void *ptr, size_t len, const char *fmt, ...) PRINTF_LIKE(5);
 
