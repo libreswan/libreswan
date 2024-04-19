@@ -2530,19 +2530,20 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->rekey = extract_yn("", "rekey", wm->rekey, true, wm, c->logger);
 	config->reauth = extract_yn("", "reauth", wm->reauth, false, wm, c->logger);
 
-	config->autostart = wm->autostart;
 	switch (wm->autostart) {
 	case AUTOSTART_KEEP:
 	case AUTOSTART_START:
 		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
-		     enum_name_short(&autostart_names, wm->autostart));
+		     sparse_name(autostart_names, wm->autostart));
 		add_policy(c, policy.up);
 		break;
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
 	case AUTOSTART_ONDEMAND:
+	case AUTOSTART_UNSET:
 		break;
 	}
+	config->autostart = wm->autostart;
 
 	/*
 	 * Extract configurable shunts, set hardwired shunts.

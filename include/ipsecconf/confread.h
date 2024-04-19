@@ -94,8 +94,6 @@ struct starter_conn {
 
 	const struct ip_info *clientaddrfamily;
 
-	enum autostart autostart; /*"auto" is a C reserved word*/
-
 	enum {
 		STATE_INVALID,
 		STATE_LOADED,

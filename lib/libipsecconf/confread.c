@@ -918,10 +918,6 @@ static bool load_conn(struct starter_conn *conn,
 	err |= validate_end(conn, &conn->left, logger);
 	err |= validate_end(conn, &conn->right, logger);
 
-	if (conn->options_set[KNCF_AUTO]) {
-		conn->autostart = conn->options[KNCF_AUTO];
-	}
-
 	return err;
 }
 
@@ -968,7 +964,6 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	copy_conn_default(conn, &cfg->conn_default);
 	assert(conn->name == NULL);
 	conn->name = clone_str(name, "add conn name");
-	conn->autostart = AUTOSTART_IGNORE;
 	conn->state = STATE_FAILED;
 
 	TAILQ_INIT(&conn->comments);

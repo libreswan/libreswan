@@ -411,7 +411,9 @@ int main(int argc, char *argv[])
 			printf("  Pass #1: Loading auto=add, auto=keep, auto=route and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
-			switch (conn->autostart) {
+			enum autostart autostart = conn->options[KNCF_AUTO];
+			switch (autostart) {
+			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:
 				break;
 			case AUTOSTART_ADD:
@@ -437,7 +439,8 @@ int main(int argc, char *argv[])
 			printf("  Pass #2: Routing auto=route connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
-			if (conn->autostart == AUTOSTART_ONDEMAND) {
+			enum autostart autostart = conn->options[KNCF_AUTO];
+			if (autostart == AUTOSTART_ONDEMAND) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_route_conn(ctlsocket, conn, logger);
@@ -448,7 +451,8 @@ int main(int argc, char *argv[])
 			printf("  Pass #3: Initiating auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
-			if (conn->autostart == AUTOSTART_START) {
+			enum autostart autostart = conn->options[KNCF_AUTO];
+			if (autostart == AUTOSTART_START) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_initiate_conn(ctlsocket, conn, logger);
@@ -542,7 +546,8 @@ int main(int argc, char *argv[])
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
 				conn = conn->link.tqe_next) {
-				if (conn->autostart == AUTOSTART_ADD)
+				enum autostart autostart = conn->options[KNCF_AUTO];
+				if (autostart == AUTOSTART_ADD)
 					printf("%s ", conn->name);
 			}
 		}
@@ -557,8 +562,9 @@ int main(int argc, char *argv[])
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
 				conn = conn->link.tqe_next) {
-				if (conn->autostart == AUTOSTART_START ||
-				    conn->autostart == AUTOSTART_ONDEMAND)
+				enum autostart autostart = conn->options[KNCF_AUTO];
+				if (autostart == AUTOSTART_START ||
+				    autostart == AUTOSTART_ONDEMAND)
 					printf("%s ", conn->name);
 			}
 		}
@@ -571,7 +577,8 @@ int main(int argc, char *argv[])
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
 				conn = conn->link.tqe_next) {
-				if (conn->autostart == AUTOSTART_START)
+				enum autostart autostart = conn->options[KNCF_AUTO];
+				if (autostart == AUTOSTART_START)
 					printf("%s ", conn->name);
 			}
 		}
@@ -584,7 +591,9 @@ int main(int argc, char *argv[])
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
 				conn = conn->link.tqe_next) {
-				if (conn->autostart == AUTOSTART_IGNORE)
+				enum autostart autostart = conn->options[KNCF_AUTO];
+				if (autostart == AUTOSTART_IGNORE ||
+				    autostart == AUTOSTART_UNSET)
 					printf("%s ", conn->name);
 			}
 			printf("\n");

@@ -356,7 +356,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.never_negotiate_shunt = conn->never_negotiate_shunt;
 	msg.negotiation_shunt = conn->negotiation_shunt;
 	msg.failure_shunt = conn->failure_shunt;
-	msg.autostart = conn->autostart;
+	msg.autostart = conn->options[KNCF_AUTO];
 
 	msg.connalias = conn->strings[KSCF_CONNALIAS];
 

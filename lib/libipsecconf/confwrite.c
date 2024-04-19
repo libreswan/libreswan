@@ -361,31 +361,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
 
-	{
-		const char *dsn = "UNKNOWN";
-
-		switch (conn->autostart) {
-		case AUTOSTART_IGNORE:
-			dsn = "ignore";
-			break;
-
-		case AUTOSTART_ADD:
-			dsn = "add";
-			break;
-
-		case AUTOSTART_ONDEMAND:
-			dsn = "ondemand";
-			break;
-
-		case AUTOSTART_START:
-			dsn = "start";
-			break;
-
-		case AUTOSTART_KEEP:
-			dsn = "keep";
-			break;
-		}
-		cwf("auto", dsn);
+	if (conn->options[KNCF_AUTO] != 0) {
+		sparse_buf sb;
+		cwf("auto", str_sparse(autostart_names, conn->options[KNCF_AUTO], &sb));
 	}
 
 	if (conn->options[KNCF_PPK] != NPPI_UNSET) {

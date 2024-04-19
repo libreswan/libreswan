@@ -94,14 +94,15 @@ enum send_ca_policy {
 /* values for auto={add,start,{route,ondemand},ignore} */
 
 enum autostart {
-	AUTOSTART_IGNORE = 0, /* aka unset */
+	AUTOSTART_UNSET,
+	AUTOSTART_IGNORE,
 	AUTOSTART_ADD,
 	AUTOSTART_ONDEMAND,
 	AUTOSTART_START,
 	AUTOSTART_KEEP,
 };
 
-extern const struct enum_names autostart_names;
+extern const struct sparse_name autostart_names[];
 
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remote_peer_type {

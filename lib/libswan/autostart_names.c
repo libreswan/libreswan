@@ -14,22 +14,16 @@
  */
 
 #include "lswcdefs.h"		/* for ARRAY_REF() */
-#include "enum_names.h"
+#include "sparse_names.h"
 #include "constants.h"		/* for enum autostart */
 
-static const char *autostart_name[] = {
-#define S(E) [E] = #E
-	S(AUTOSTART_IGNORE),
-	S(AUTOSTART_ADD),
-	S(AUTOSTART_ONDEMAND),
-	S(AUTOSTART_START),
-	S(AUTOSTART_KEEP),
-#undef S
-};
-
-const struct enum_names autostart_names = {
-	AUTOSTART_IGNORE,
-	AUTOSTART_KEEP,
-	ARRAY_REF(autostart_name),
-	"AUTOSTART_", NULL,
+const struct sparse_name autostart_names[] = {
+	{ "ignore", AUTOSTART_IGNORE },
+	{ "add",    AUTOSTART_ADD },
+	{ "ondemand",  AUTOSTART_ONDEMAND },
+	{ "route",  AUTOSTART_ONDEMAND }, /* backwards compatibility alias */
+	{ "start",  AUTOSTART_START },
+	{ "up",     AUTOSTART_START }, /* alias */
+	{ "keep",   AUTOSTART_KEEP }, /* add plus once up, keep up */
+	SPARSE_NULL
 };
