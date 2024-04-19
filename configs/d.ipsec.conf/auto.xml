@@ -5,26 +5,74 @@
   <listitem>
     <para>
       what operation, if any, should be done automatically at IPsec
-      startup; currently-accepted values are <emphasis>add</emphasis>
-      (signifying an <emphasis>ipsec</emphasis> <option>add</option>),
-      <command>ondemand</command> (signifying that plus an
-      <emphasis>ipsec</emphasis><option>--ondemand</option>),
-      <emphasis>start</emphasis> (signifying that plus an
-      <emphasis>ipsec</emphasis> <option>start</option>), and
-      <emphasis>ignore</emphasis> (also the default)
-      (signifying no automatic startup operation), and
-      <emphasis>keep</emphasis> (signifying an add plus an attempt to
-      keep the connection up once the remote peer brought it up).  See
-      the <emphasis>config setup</emphasis> discussion
-      below.  Relevant only locally, other end need not agree on it
-      (but in general, for an intended-to-be-permanent connection,
-      both ends should use <emphasis>auto=start</emphasis>
-      to ensure that any reboot causes immediate renegotiation).
+      startup; currently-accepted values are:
     </para>
+    <variablelist>
+      <varlistentry>
+	<term>
+	  <emphasis>add</emphasis>
+	</term>
+	<listitem>
+	  <para>
+	    equivalent to <command> ipsec add <replaceable> connection
+	    </replaceable> </command>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>ondemand</emphasis>
+	</term>
+	<listitem>
+	  <para>
+	    equivalent to <command> ipsec add <replaceable> connection
+	    </replaceable> </command> followed by <command> ipsec
+	    route <replaceable> connection </replaceable> </command>
+	    (<emphasis>route</emphasis> is an alias)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>up</emphasis>
+	</term>
+	<listitem>
+	  <para>
+	    equivalent to <command> ipsec add <replaceable> connection
+	    </replaceable> </command> followed by <command> ipsec up
+	    <replaceable> connection </replaceable> </command>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>ignore</emphasis>
+	</term>
+	<listitem>
+	  <para>
+	    signifying no automatic startup operation (also the
+	    default)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <emphasis>keep</emphasis>
+	</term>
+	<listitem>
+	  <para>
+	    signifying an add plus an attempt to keep the connection
+	    up once the remote peer brought it up
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
     <para>
-      The option <command>ondemand</command> used to be
-      called <command>route</command>
+      See the <emphasis>config setup</emphasis> discussion below.
+      Relevant only locally, other end need not agree on it (but in
+      general, for an intended-to-be-permanent connection, both ends
+      should use <envar>auto=up</envar> to ensure that any reboot
+      causes immediate renegotiation).
     </para>
   </listitem>
 </varlistentry>
-
