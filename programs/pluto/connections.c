@@ -2532,7 +2532,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	switch (wm->autostart) {
 	case AUTOSTART_KEEP:
-	case AUTOSTART_START:
+	case AUTOSTART_UP:
 		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
 		     sparse_name(autostart_names, wm->autostart));
 		add_policy(c, policy.up);

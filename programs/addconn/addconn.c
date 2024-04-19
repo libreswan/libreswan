@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
 			case AUTOSTART_ADD:
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
-			case AUTOSTART_START:
+			case AUTOSTART_UP:
 				if (verbose > 0)
 					printf(" %s\n", conn->name);
 				resolve_default_routes(conn, logger);
@@ -448,11 +448,11 @@ int main(int argc, char *argv[])
 		}
 
 		if (verbose > 0)
-			printf("  Pass #3: Initiating auto=start connections\n");
+			printf("  Pass #3: Initiating auto=up connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			enum autostart autostart = conn->options[KNCF_AUTO];
-			if (autostart == AUTOSTART_START) {
+			if (autostart == AUTOSTART_UP) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_initiate_conn(ctlsocket, conn, logger);
@@ -553,7 +553,7 @@ int main(int argc, char *argv[])
 		}
 		if (listroute) {
 			if (verbose > 0)
-				printf("listing all conns marked as auto=route and auto=start\n");
+				printf("listing all conns marked as auto=route and auto=up\n");
 
 			/*
 			 * list all conns marked as auto=route or start or
@@ -563,7 +563,7 @@ int main(int argc, char *argv[])
 				conn != NULL;
 				conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
-				if (autostart == AUTOSTART_START ||
+				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_ONDEMAND)
 					printf("%s ", conn->name);
 			}
@@ -571,14 +571,14 @@ int main(int argc, char *argv[])
 
 		if (liststart && !listroute) {
 			if (verbose > 0)
-				printf("listing all conns marked as auto=start\n");
+				printf("listing all conns marked as auto=up\n");
 
-			/* list all conns marked as auto=start */
+			/* list all conns marked as auto=up */
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
 				conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
-				if (autostart == AUTOSTART_START)
+				if (autostart == AUTOSTART_UP)
 					printf("%s ", conn->name);
 			}
 		}
@@ -587,7 +587,7 @@ int main(int argc, char *argv[])
 			if (verbose > 0)
 				printf("listing all conns marked as auto=ignore\n");
 
-			/* list all conns marked as auto=start */
+			/* list all conns marked as auto=up */
 			for (conn = cfg->conns.tqh_first;
 				conn != NULL;
 				conn = conn->link.tqe_next) {

@@ -22,8 +22,8 @@ const struct sparse_name autostart_names[] = {
 	{ "add",    AUTOSTART_ADD },
 	{ "ondemand",  AUTOSTART_ONDEMAND },
 	{ "route",  AUTOSTART_ONDEMAND }, /* backwards compatibility alias */
-	{ "start",  AUTOSTART_START },
-	{ "up",     AUTOSTART_START }, /* alias */
+	{ "up",     AUTOSTART_UP },
+	{ "start",  AUTOSTART_UP }, /* alias */
 	{ "keep",   AUTOSTART_KEEP }, /* add plus once up, keep up */
 	SPARSE_NULL
 };
