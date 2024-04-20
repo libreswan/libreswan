@@ -48,6 +48,7 @@
 #include "crypto.h"		/* for show_ike_alg_connection() */
 #include "plutoalg.h"	/* for show_kernel_alg_connection() */
 #include "kernel.h"		/* for enum direction */
+#include "sparse_names.h"
 
 /* Passed in to jam_end_client() */
 static const char END_SEPARATOR[] = "===";

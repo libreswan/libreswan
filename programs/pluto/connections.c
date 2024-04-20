@@ -100,6 +100,7 @@
 #include "timescale.h"
 #include "connection_event.h"
 #include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
+#include "sparse_names.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 

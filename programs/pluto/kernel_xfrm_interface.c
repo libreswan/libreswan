@@ -68,6 +68,7 @@
 #include "server.h" /* for struct iface_endpoint */
 #include "iface.h"
 #include "log.h"
+#include "sparse_names.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)

@@ -57,6 +57,7 @@
 #include "ip_info.h"
 #include "timescale.h"
 #include "lswalloc.h"
+#include "sparse_names.h"
 
 /*
  * Print the 'ipsec --whack help' message

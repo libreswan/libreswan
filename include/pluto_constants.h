@@ -28,7 +28,6 @@
 #define PLUTO_CONSTANTS_H
 
 #include "lset.h"
-#include "sparse_names.h"
 
 /*
  * Size of hash tables; a prime.

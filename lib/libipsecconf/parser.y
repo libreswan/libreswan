@@ -39,6 +39,7 @@
 #include "ipsecconf/confread.h"
 #include "lswlog.h"
 #include "lmod.h"
+#include "sparse_names.h"
 
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256

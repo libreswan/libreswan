@@ -33,6 +33,7 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 #include "terminate.h"
+#include "sparse_names.h"
 
 bool oriented(const struct connection *c)
 {
