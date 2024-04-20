@@ -21,8 +21,8 @@ const struct sparse_names autostart_names = {
 	.list = {
 		{ "ignore", AUTOSTART_IGNORE },
 		{ "add",    AUTOSTART_ADD },
-		{ "ondemand",  AUTOSTART_ONDEMAND },
-		{ "route",  AUTOSTART_ONDEMAND }, /* backwards compatibility alias */
+		{ "ondemand",  AUTOSTART_ROUTE },
+		{ "route",  AUTOSTART_ROUTE }, /* backwards compatibility alias */
 		{ "up",     AUTOSTART_UP },
 		{ "start",  AUTOSTART_UP }, /* alias */
 		{ "keep",   AUTOSTART_KEEP }, /* add plus once up, keep up */

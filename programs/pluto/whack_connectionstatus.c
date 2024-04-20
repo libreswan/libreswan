@@ -697,7 +697,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		switch (c->config->autostart) {
 		case AUTOSTART_IGNORE: break;
 		case AUTOSTART_ADD: jam(buf, "; auto:add"); break;
-		case AUTOSTART_ONDEMAND: jam(buf, "; auto:ondemand"); break;
+		case AUTOSTART_ROUTE: jam(buf, "; auto:ondemand"); break;
 		case AUTOSTART_KEEP: jam(buf, "; auto:keep"); break;
 		case AUTOSTART_START: jam(buf, "; auto:start"); break;
 		}

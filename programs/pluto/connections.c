@@ -2538,7 +2538,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
-	case AUTOSTART_ONDEMAND:
+	case AUTOSTART_ROUTE:
 	case AUTOSTART_UNSET:
 		break;
 	}
