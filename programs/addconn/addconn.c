@@ -418,8 +418,10 @@ int main(int argc, char *argv[])
 				break;
 			case AUTOSTART_ADD:
 			case AUTOSTART_ROUTE:
+			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
+			case AUTOSTART_START:
 				if (verbose > 0)
 					printf(" %s\n", conn->name);
 				resolve_default_routes(conn, logger);
@@ -440,7 +442,8 @@ int main(int argc, char *argv[])
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			enum autostart autostart = conn->options[KNCF_AUTO];
-			if (autostart == AUTOSTART_ROUTE) {
+			if (autostart == AUTOSTART_ROUTE ||
+			    autostart == AUTOSTART_ONDEMAND) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_route_conn(ctlsocket, conn, logger);
@@ -452,7 +455,8 @@ int main(int argc, char *argv[])
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			enum autostart autostart = conn->options[KNCF_AUTO];
-			if (autostart == AUTOSTART_UP) {
+			if (autostart == AUTOSTART_UP ||
+			    autostart == AUTOSTART_START) {
 				if (verbose > 0)
 					printf(" %s", conn->name);
 				starter_whack_initiate_conn(ctlsocket, conn, logger);
@@ -564,7 +568,9 @@ int main(int argc, char *argv[])
 				conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
 				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_ROUTE)
+				    autostart == AUTOSTART_START ||
+				    autostart == AUTOSTART_ROUTE ||
+				    autostart == AUTOSTART_ONDEMAND)
 					printf("%s ", conn->name);
 			}
 		}
@@ -578,7 +584,8 @@ int main(int argc, char *argv[])
 				conn != NULL;
 				conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
-				if (autostart == AUTOSTART_UP)
+				if (autostart == AUTOSTART_UP ||
+				    autostart == AUTOSTART_START)
 					printf("%s ", conn->name);
 			}
 		}
