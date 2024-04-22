@@ -2534,7 +2534,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->reauth = extract_yn("", "reauth", wm->reauth, false, wm, c->logger);
 
 	switch (wm->autostart) {
-	case AUTOSTART_KEEP:
 	case AUTOSTART_UP:
 	case AUTOSTART_START:
 		ldbg(c->logger, "autostart=%s implies +UP",
@@ -2547,6 +2546,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		     sparse_name(&autostart_names, wm->autostart));
 		add_policy(c, policy.route);
 		break;
+	case AUTOSTART_KEEP:
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
 	case AUTOSTART_UNSET:

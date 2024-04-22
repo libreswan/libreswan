@@ -34,6 +34,7 @@
 #include "orient.h"
 #include "terminate.h"
 #include "sparse_names.h"
+#include "initiate.h"
 
 bool oriented(const struct connection *c)
 {
@@ -365,6 +366,9 @@ bool orient(struct connection *c, struct logger *logger)
 		PEXPECT(c->logger, c->routing.state == RT_UNROUTED);
 		if (c->policy.route) {
 			connection_route(c, HERE);
+		}
+		if (c->policy.up) {
+			initiate_connection(c, /*REMOTE_HOST*/NULL, /*background*/true, logger);
 		}
 	}
 

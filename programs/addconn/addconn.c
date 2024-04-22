@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
 		 * This mimics behaviour of the old _plutoload
 		 */
 		if (verbose > 0)
-			printf("  Pass #1: Loading auto=add, auto=keep, auto=route and auto=start connections\n");
+			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			enum autostart autostart = conn->options[KNCF_AUTO];
@@ -423,7 +423,7 @@ int main(int argc, char *argv[])
 			case AUTOSTART_UP:
 			case AUTOSTART_START:
 				if (verbose > 0)
-					printf(" %s\n", conn->name);
+					printf("    %s\n", conn->name);
 				resolve_default_routes(conn, logger);
 				starter_whack_add_conn(ctlsocket,
 						       conn, logger);
@@ -439,24 +439,10 @@ int main(int argc, char *argv[])
 		 * Any connections that orient and have +ROUTE will be
 		 * routed.
 		 */
+		if (verbose > 0)
+			printf("  Step #2: Listening which will then orient, route, up connections\n");
+
 		starter_whack_listen(ctlsocket, logger);
-
-		if (verbose > 0)
-			/* handled by pluto */
-			printf("  Pass #2: Routing auto=route connections\n");
-
-		if (verbose > 0)
-			printf("  Pass #3: Initiating auto=up connections\n");
-
-		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
-			enum autostart autostart = conn->options[KNCF_AUTO];
-			if (autostart == AUTOSTART_UP ||
-			    autostart == AUTOSTART_START) {
-				if (verbose > 0)
-					printf(" %s", conn->name);
-				starter_whack_initiate_conn(ctlsocket, conn, logger);
-			}
-		}
 
 		if (verbose > 0)
 			printf("\n");
