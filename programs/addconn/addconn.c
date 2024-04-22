@@ -432,23 +432,18 @@ int main(int argc, char *argv[])
 		}
 
 		/*
-		 * We loaded all connections. Now tell pluto to listen,
-		 * then route the conns and resolve default route.
+		 * We loaded all connections. Now tell pluto to
+		 * listen, then route the conns and resolve default
+		 * route.
+		 *
+		 * Any connections that orient and have +ROUTE will be
+		 * routed.
 		 */
 		starter_whack_listen(ctlsocket, logger);
 
 		if (verbose > 0)
+			/* handled by pluto */
 			printf("  Pass #2: Routing auto=route connections\n");
-
-		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
-			enum autostart autostart = conn->options[KNCF_AUTO];
-			if (autostart == AUTOSTART_ROUTE ||
-			    autostart == AUTOSTART_ONDEMAND) {
-				if (verbose > 0)
-					printf(" %s", conn->name);
-				starter_whack_route_conn(ctlsocket, conn, logger);
-			}
-		}
 
 		if (verbose > 0)
 			printf("  Pass #3: Initiating auto=up connections\n");

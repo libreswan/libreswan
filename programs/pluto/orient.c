@@ -204,7 +204,7 @@ bool orient(struct connection *c, struct logger *logger)
 		LDBG_orient_end(c, RIGHT_END);
 	}
 
-	struct iface *old_iface = c->iface; /* for sanity checking */
+	struct iface *old_iface = c->iface; /* for sanity checking below */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -356,6 +356,17 @@ bool orient(struct connection *c, struct logger *logger)
 	 * Add a listen for any missing interface endpoints.
 	 */
 	add_iface_endpoints(c);
+
+	/*
+	 * If the connection was previously unoriented, route things
+	 * when needed.
+	 */
+	if (old_iface == NULL/*i.e., unoriented*/) {
+		PEXPECT(c->logger, c->routing.state == RT_UNROUTED);
+		if (c->policy.route) {
+			connection_route(c, HERE);
+		}
+	}
 
 	return true;
 }
