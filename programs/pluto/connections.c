@@ -431,6 +431,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 #endif
 
 	/* find and delete c from the host pair list */
+#if 0
+	PEXPECT(c->logger, !oriented(c));
+#endif
 	disorient(c);
 
 	remove_from_group(c);
@@ -3558,6 +3561,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 *
 	 * This function holds the just allocated reference.
 	 */
+	PASSERT(c->logger, !oriented(c));
 	orient(c, c->logger);
 
 	return NULL;

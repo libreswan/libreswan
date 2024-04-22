@@ -208,6 +208,7 @@ static void release_dead_interfaces(struct logger *logger)
 		 * pexpect()s to find the connection on one of those
 		 * lists.
 		 */
+		PEXPECT(c->logger, oriented(c)); /* per above */
 		disorient(c);
 
 		connection_detach(c, logger);

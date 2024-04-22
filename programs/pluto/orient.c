@@ -204,12 +204,7 @@ bool orient(struct connection *c, struct logger *logger)
 		LDBG_orient_end(c, RIGHT_END);
 	}
 
-	if (oriented(c)) {
-		ldbg(c->logger, "already oriented");
-		return true;
-	}
-
-	PASSERT(logger, c->iface == NULL); /* aka not oriented */
+	struct iface *old_iface = c->iface; /* for sanity checking */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -250,6 +245,7 @@ bool orient(struct connection *c, struct logger *logger)
 				jam_iface(buf, iface);
 			}
 			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
+			disorient(c);
 			connection_detach(c, logger);
 			return false;
 		}
@@ -295,6 +291,7 @@ bool orient(struct connection *c, struct logger *logger)
 				jam_iface(buf, iface);
 			}
 			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
+			disorient(c);
 			connection_detach(c, logger);
 			return false;
 		}
@@ -313,15 +310,23 @@ bool orient(struct connection *c, struct logger *logger)
 		matching_end = end;
 	}
 
+	PEXPECT(c->logger, c->iface == old_iface); /* wasn't updated */
+
 	if (matching_iface == NULL) {
+		disorient(c);
 		return false;
 	}
 
+	if (matching_iface == c->iface) {
+		/* well that was pointless */
+		return true;
+	}
+
 	/*
-	 * Attach the interface (still not properly oriented).
+	 * Switch interfaces (still not properly oriented).
 	 */
 	PASSERT(c->logger, matching_end != END_ROOF);
-	PEXPECT(c->logger, c->iface == NULL); /* wasn't updated */
+	disorient(c);
 	c->iface = iface_addref(matching_iface);
 
 	struct connection_end *local = &c->end[matching_end];
@@ -374,11 +379,8 @@ void check_orientations(struct logger *logger)
 	};
 	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *c = cf.c;
-		bool was_oriented = oriented(c);
-		if (was_oriented) {
-			disorient(c);
-		}
 		/* just try */
+		bool was_oriented = oriented(c);
 		bool is_oriented = orient(c, logger);
 		/* log when it becomes oriented */
 		if (!was_oriented && is_oriented) {
