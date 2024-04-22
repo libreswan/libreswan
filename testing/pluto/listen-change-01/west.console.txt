@@ -45,7 +45,6 @@ adding UDP interface eth1 192.1.2.23:4500
 "west-east": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.23
 "west-east": terminating SAs using this connection
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"west-east" #2: unroute-host output: Device "NULL" does not exist.
 "west-east" #2: ESP traffic information: in=0B out=0B
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 forgetting secrets
