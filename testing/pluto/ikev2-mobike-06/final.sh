@@ -1,3 +1,3 @@
 ipsec whack --trafficstatus
 ../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+../../guestbin/ipsec-kernel-policy.sh
