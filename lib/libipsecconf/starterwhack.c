@@ -538,27 +538,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	return 0;
 }
 
-int starter_whack_route_conn(const char *ctlsocket,
-			     struct starter_conn *conn,
-			     struct logger *logger)
-{
-	struct whack_message msg = empty_whack_message;
-	msg.whack_route = true;
-	msg.name = conn->name;
-	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
-}
-
-int starter_whack_initiate_conn(const char *ctlsocket,
-				struct starter_conn *conn,
-				struct logger *logger)
-{
-	struct whack_message msg = empty_whack_message;
-	msg.whack_initiate = true;
-	msg.whack_async = true;
-	msg.name = conn->name;
-	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
-}
-
 int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
