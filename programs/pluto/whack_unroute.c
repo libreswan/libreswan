@@ -29,9 +29,7 @@ static unsigned whack_unroute_connections(const struct whack_message *m UNUSED,
 	connection_addref(c, logger);
 	{
 		connection_attach(c, logger);
-		{
-			terminate_and_down_connections(c, /*strip-route-bit*/true, HERE);
-		}
+		terminate_and_down_and_unroute_connections(c, HERE);
 		connection_detach(c, logger);
 	}
 	connection_delref(&c, logger);

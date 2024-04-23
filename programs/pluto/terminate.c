@@ -278,9 +278,7 @@ void terminate_connection(struct connection *c, where_t where)
 	pmemory(c); /* should not disappear; caller holds ref */
 }
 
-void terminate_and_down_connection(struct connection *c,
-				   bool strip_route_bit,
-				   where_t where)
+static void terminate_and_unroute_connection(struct connection *c, where_t where)
 {
 	/*
 	 * Strip the +UP bit so that the connection (when its state is
@@ -292,22 +290,18 @@ void terminate_and_down_connection(struct connection *c,
 	 */
 	del_policy(c, policy.up);
 	del_policy(c, policy.keep);
-	if (strip_route_bit) {
-		del_policy(c, policy.route);
-	}
+	del_policy(c, policy.route);
 	terminate_connection(c, where);
 }
 
-void terminate_and_down_connections(struct connection *c,
-				    bool strip_route_bit,
-				    where_t where)
+void terminate_and_down_and_unroute_connections(struct connection *c, where_t where)
 {
 	switch (c->local->kind) {
 	case CK_INSTANCE:
 	case CK_PERMANENT:
 	case CK_LABELED_PARENT:
 		/* caller holds ref; whack already attached */
-		terminate_and_down_connection(c, strip_route_bit, where);
+		terminate_and_unroute_connection(c, where);
 		pmemory(c); /* should not disappear; caller holds ref */
 		return;
 
@@ -345,7 +339,7 @@ void terminate_and_down_connections(struct connection *c,
 			/* stop it disappearing */
 			connection_addref(cq.c, c->logger);
 			connection_attach(cq.c, c->logger);
-			terminate_and_down_connection(cq.c, strip_route_bit, where);
+			terminate_and_unroute_connection(cq.c, where);
 			/* leave whack attached during death */
 			delete_connection(&cq.c);
 		}
@@ -367,7 +361,7 @@ void terminate_and_down_connections(struct connection *c,
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
 				connection_attach(cq.c, c->logger); /* propagate whack */
-				terminate_and_down_connections(cq.c, strip_route_bit, where);
+				terminate_and_down_and_unroute_connections(cq.c, where);
 				pmemory(cq.c); /* should not disappear */
 				connection_detach(cq.c, c->logger); /* propagate whack */
 			} while (next_connection(OLD2NEW, &cq));
@@ -400,7 +394,7 @@ void terminate_and_delete_connections(struct connection **cp,
 		 * Hence, the keep getting first loop.
 		 */
 		connection_attach((*cp), logger);
-		terminate_and_down_connections((*cp), /*strip-route-bit*/true, where);
+		terminate_and_down_and_unroute_connections((*cp), where);
 		/* leave whack attached during death */
 		delete_connection(cp);
 		return;

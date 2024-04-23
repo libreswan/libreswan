@@ -35,25 +35,21 @@ void terminate_connection(struct connection *c, where_t where);
 void terminate_all_connection_states(struct connection *c, where_t where);
 
 /*
- * Traverse the connection tree DOWN-ing all connections (remove +UP
- * bit), delete states, and eliminate anything on either the pending
- * or revival queue.
+ * Traverse the connection tree stripping each connection of +UP,
+ * +KEEP, +ROUTE and +LISTEN bits and then terminating any states,
+ * pendings, or revivals.
  *
- * Caller must take a reference C to stop it being deleted - as will
- * happen when C is an INSTANCE or LABELED_PARENT.
+ * Caller must take a reference to C to stop it being deleted - as
+ * will happen when C is an INSTANCE or LABELED_PARENT.
  *
  * If C is a TEMPLATE or LABELED_TEMPLATE this will delete any
  * INSTANCE, LABELED_PARENT or LABELED_CHILD.
  *
- * Whack is attached to C; whack will be propagated to instances.
+ * If whack is attached to C's logger, then whack will be propagated
+ * to instances of the connection.
  */
-void terminate_and_down_connections(struct connection *c,
-				    bool strip_route,
-				    where_t where);
-/* ditto, but don't recurse; again, whack is attached to C */
-void terminate_and_down_connection(struct connection *c,
-				   bool strip_route_bit,
-				   where_t where);
+
+void terminate_and_down_and_unroute_connections(struct connection *c, where_t where);
 
 void terminate_and_delete_connections(struct connection **cp, struct logger *logger, where_t where);
 
