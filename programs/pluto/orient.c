@@ -323,7 +323,13 @@ bool orient(struct connection *c, struct logger *logger)
 	PEXPECT(c->logger, c->iface == old_iface); /* wasn't updated */
 
 	if (matching_iface == NULL) {
-		disorient(c);
+		if (old_iface != NULL) {
+			/* when there's no interface, there's nothing
+			 * to terminate */
+			connection_attach(c, logger);
+			terminate_and_disorient_connection(c, HERE);
+			connection_detach(c, logger);
+		}
 		return false;
 	}
 
