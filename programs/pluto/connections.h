@@ -704,24 +704,22 @@ struct connection {
 		bool keep;		/* try a single revival when
 					 * responder */
 	} policy;
+#define set_policy(C, POLICY, VALUE)				\
+	({							\
+		bool old_ = (C)->POLICY;			\
+		bool new_ = VALUE;				\
+		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
+		     #POLICY,					\
+		     bool_str(old_),				\
+		     bool_str(new_),				\
+		     pri_where(HERE));				\
+		(C)->POLICY = new_;				\
+		old_;						\
+	})
 #define add_policy(C, POLICY)					\
-	{							\
-		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
-		     #POLICY,					\
-		     bool_str((C)->POLICY),			\
-		     bool_str(true),				\
-		     pri_where(HERE));				\
-		(C)->POLICY = true;				\
-	}
+	set_policy(C, POLICY, true)
 #define del_policy(C, POLICY)					\
-	{							\
-		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
-		     #POLICY,					\
-		     bool_str((C)->POLICY),			\
-		     bool_str(false),				\
-		     pri_where(HERE));				\
-		(C)->POLICY = false;				\
-	}
+	set_policy(C, POLICY, false)
 
 	struct sa_marks sa_marks;	/* contains a MARK values and
 					 * MASK value for IPsec SA
