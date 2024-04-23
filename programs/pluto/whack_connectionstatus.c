@@ -694,18 +694,6 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			}
 		}
 		jam_string(buf, ";");
-#if 0
-		/* XXX: where should this go? */
-		switch (c->config->autostart) {
-		case AUTOSTART_IGNORE: break;
-		case AUTOSTART_ADD: jam(buf, " auto:add;"); break;
-		case AUTOSTART_ONDEMAND: jam(buf, " auto:ondemand;"); break;
-		case AUTOSTART_ROUTE: jam(buf, " auto:route;"); break;
-		case AUTOSTART_KEEP: jam(buf, " auto:keep;"); break;
-		case AUTOSTART_UP: jam(buf, " auto:up;"); break;
-		case AUTOSTART_START: jam(buf, " auto:start;"); break;
-		}
-#endif
 	}
 
 	if (c->config->ike_version == IKEv2) {

@@ -114,9 +114,8 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 	}
 #endif
 
-	/* inherit UP and ROUTE */
-	c->policy.up = t->policy.up;
-	c->policy.route = t->policy.route;
+	/* inherit UP, ROUTE, and KEEP */
+	c->policy = t->policy;
 
 	return c;
 }

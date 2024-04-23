@@ -2547,12 +2547,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 		add_policy(c, policy.route);
 		break;
 	case AUTOSTART_KEEP:
+		ldbg(c->logger, "autostart=%s implies +KEEP",
+		     sparse_name(&autostart_names, wm->autostart));
+		add_policy(c, policy.keep);
+		break;
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
 	case AUTOSTART_UNSET:
 		break;
 	}
-	config->autostart = wm->autostart;
 
 	/*
 	 * Extract configurable shunts, set hardwired shunts.

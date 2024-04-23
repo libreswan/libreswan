@@ -191,7 +191,6 @@ struct config {
 	unsigned long sa_rekey_fuzz;
 
 	lset_t sighash_policy;
-	enum autostart autostart;		/* aka auto */
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
@@ -702,6 +701,8 @@ struct connection {
 					 * connection up? */
 		bool route;		/* do we want to keep this
 					 * connection routed? */
+		bool keep;		/* try a single revival when
+					 * responder */
 	} policy;
 #define add_policy(C, POLICY)					\
 	{							\

@@ -68,8 +68,9 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if (!c->policy.up) {
-		ldbg(logger, "revival: skipping, POLICY_UP disabled");
+	if (!c->policy.up &&
+	    !c->policy.keep) {
+		ldbg(logger, "revival: skipping, POLICY_UP and/or POLICY_KEEP disabled");
 		return false;
 	}
 
@@ -97,12 +98,11 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if (c->config->autostart == AUTOSTART_KEEP &&
+	if (c->policy.keep &&
 	    c->revival.attempt == 1/*note: not yet incremented*/) {
 		ldbg(logger, "revival: skipping, auto=keep and made one attempt");
 		return false;
 	}
-
 
 	/*
 	 * XXX: should this be a pexpect()?
