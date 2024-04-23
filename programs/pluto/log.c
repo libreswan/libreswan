@@ -652,6 +652,9 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 
 void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
 {
+	if (src == dst) {
+		return;
+	}
 	attach_fd_where(dst, logger_fd(src), where);
 }
 
@@ -672,6 +675,11 @@ void state_attach_where(struct state *st, const struct logger *src, where_t wher
 
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
+	if (src == dst) {
+		pdbg(dst, "don't detach our own logger "PRI_WHERE, pri_where(where));
+		return;
+	}
+
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
