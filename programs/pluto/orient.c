@@ -36,6 +36,17 @@
 #include "sparse_names.h"
 #include "initiate.h"
 
+static void terminate_and_disorient_connection(struct connection *c,
+					       where_t where)
+{
+	bool route = del_policy(c, policy.route);
+	bool up = del_policy(c, policy.up);
+	terminate_and_down_connection(c, /*strip-route-bit*/false, where);
+	disorient(c);
+	set_policy(c, policy.route, route);
+	set_policy(c, policy.up, up);
+}
+
 bool oriented(const struct connection *c)
 {
 	if (!pexpect(c != NULL)) {
@@ -245,8 +256,7 @@ bool orient(struct connection *c, struct logger *logger)
 				jam_string(buf, " and right ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
-			disorient(c);
+			terminate_and_disorient_connection(c, HERE);
 			connection_detach(c, logger);
 			return false;
 		}
@@ -291,8 +301,7 @@ bool orient(struct connection *c, struct logger *logger)
 				jam_string(buf, " ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_down_connection(c, /*strip-route-bit*/false, HERE);
-			disorient(c);
+			terminate_and_disorient_connection(c, HERE);
 			connection_detach(c, logger);
 			return false;
 		}
