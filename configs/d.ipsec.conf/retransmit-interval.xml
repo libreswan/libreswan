@@ -1,7 +1,6 @@
 <varlistentry>
   <term>
-    <option>retransmit-interval
-    </option>
+    <option>retransmit-interval</option>
   </term>
   <listitem>
     <para>

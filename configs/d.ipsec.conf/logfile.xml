@@ -1,10 +1,12 @@
-  <varlistentry>
-
-  <term><option>logfile</option></term>
+<varlistentry>
+  <term>
+    <option>logfile</option>
+  </term>
   <listitem>
-<para>do not use syslog, but rather log to stderr, and direct stderr to the
-argument file. This option used to be called plutostderrlog=
-</para>
-
+    <para>
+      do not use syslog, but rather log to stderr, and direct stderr
+      to the argument file. This option used to be called
+      plutostderrlog=
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

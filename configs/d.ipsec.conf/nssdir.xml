@@ -1,9 +1,13 @@
-  <varlistentry>
-  <term><option>nssdir</option></term>
+<varlistentry>
+  <term>
+    <option>nssdir</option>
+  </term>
   <listitem>
-    <para>Specifies a directory for NSS database files. The default value is
-    <option>@@IPSEC_NSSDIR@@</option>.  It may contain
-    the following files:</para>
+    <para>
+      Specifies a directory for NSS database files. The default value
+      is <option>@@IPSEC_NSSDIR@@</option>.  It may contain the
+      following files:
+    </para>
     <variablelist>
       <varlistentry>
         <term>pkcs11.txt</term>
@@ -29,4 +33,4 @@
       change in the SELinux policy for the pluto daemon.
     </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

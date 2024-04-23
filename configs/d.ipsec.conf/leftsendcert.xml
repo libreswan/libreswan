@@ -1,22 +1,22 @@
-  <varlistentry>
-  <term><option>leftsendcert</option></term>
+<varlistentry>
+  <term>
+    <option>leftsendcert</option>
+  </term>
   <listitem>
-<para>This option configures when Libreswan will send X.509 certificates to the remote
-host. Acceptable values are
-<option>yes|always</option>
-(signifying that we should always send a certificate),
-<option>sendifasked</option>
-(signifying that we should send a certificate if the remote end asks for it), and
-<option>no|never</option>
-(signifying that we will never send a X.509 certificate).
-The default for this option is
-<option>sendifasked</option>
-which may break compatibility with other vendor's IPsec implementations, such as
-Cisco and SafeNet. If you find that you are getting errors about no ID/Key found,
-you likely need to set this to
-<option>always</option>.
-This per-conn option replaces the obsolete global <option>nocrsend</option>
-option.
-</para>
+    <para>
+      This option configures when Libreswan will send X.509
+      certificates to the remote host. Acceptable values are
+      <option>yes|always</option> (signifying that we should always
+      send a certificate), <option>sendifasked</option> (signifying
+      that we should send a certificate if the remote end asks for
+      it), and <option>no|never</option> (signifying that we will
+      never send a X.509 certificate).  The default for this option is
+      <option>sendifasked</option> which may break compatibility with
+      other vendor's IPsec implementations, such as Cisco and
+      SafeNet. If you find that you are getting errors about no ID/Key
+      found, you likely need to set this to <option>always</option>.
+      This per-conn option replaces the obsolete global
+      <option>nocrsend</option> option.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

@@ -1,11 +1,15 @@
-  <varlistentry>
-    <term><option>leftvti</option></term>
-    <listitem>
-      <para>
-	the address/mask to configure on the VTI interface when <option>vti-interface</option> is set.
-	It takes the form of <option>network</option><option>/</option><option>netmask</option>
-	Currently, IPv4 and IPv6 addresses with cidr netmask are supported.
-	This option is often used in combination with routed based VPNs.
-      </para>
-    </listitem>
-  </varlistentry>
+<varlistentry>
+  <term>
+    <option>leftvti</option>
+  </term>
+  <listitem>
+    <para>
+      the address/mask to configure on the VTI interface when
+      <option>vti-interface</option> is set.  It takes the form of
+      <option>network</option><option>/</option><option>netmask</option>
+      Currently, IPv4 and IPv6 addresses with cidr netmask are
+      supported.  This option is often used in combination with routed
+      based VPNs.
+    </para>
+  </listitem>
+</varlistentry>

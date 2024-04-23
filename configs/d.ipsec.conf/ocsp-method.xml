@@ -1,0 +1,16 @@
+<varlistentry>
+  <term>
+    <option>ocsp-method</option>
+  </term>
+  <listitem>
+    <para>
+      The HTTP methods used for fetching OCSP data. Valid options are
+      <option>get</option> (the default) and
+      <option>post</option>. Note that this behaviour depends on the
+      NSS crypto library that is actually performing the
+      fetching. When set to the get method, post is attempted only as
+      fallback in case of failure. When set to post, only the post
+      method is ever used.
+    </para>
+  </listitem>
+</varlistentry>

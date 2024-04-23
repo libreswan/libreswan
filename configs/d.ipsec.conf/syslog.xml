@@ -1,12 +1,14 @@
-  <varlistentry>
-  <term><option>syslog</option></term>
+<varlistentry>
+  <term>
+    <option>syslog</option>
+  </term>
   <listitem>
-<para>the
-<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-&ldquo;facility&rdquo; name and priority to use for
-startup/shutdown log messages,
-default
-<option>daemon.error</option>.</para>
-
+    <para>
+      the
+      <citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>
+      &ldquo;facility&rdquo; name and priority to use for
+      startup/shutdown log messages, default
+      <option>daemon.error</option>.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

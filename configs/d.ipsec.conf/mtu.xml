@@ -1,15 +1,19 @@
-  <varlistentry>
-  <term><option>mtu</option></term>
+<varlistentry>
+  <term>
+    <option>mtu</option>
+  </term>
   <listitem>
-<para>
-Set the MTU for the route(s) to the remote endpoint and/or subnets. This is sometimes
-required when the overhead of the IPsec encapsulation would cause the packet the become
-too big for a router on the path. Since IPsec cannot trust any unauthenticated ICMP
-messages, PATH MTU discovery does not work. This can also be needed when using "6to4"
-IPV6 deployments, which adds another header on the packet size.
-
-Acceptable values are positive numbers. There is no default.
-</para>
+    <para>
+      Set the MTU for the route(s) to the remote endpoint and/or
+      subnets. This is sometimes required when the overhead of the
+      IPsec encapsulation would cause the packet the become too big
+      for a router on the path. Since IPsec cannot trust any
+      unauthenticated ICMP messages, PATH MTU discovery does not
+      work. This can also be needed when using "6to4" IPV6
+      deployments, which adds another header on the packet size.
+    </para>
+    <para>
+      Acceptable values are positive numbers. There is no default.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

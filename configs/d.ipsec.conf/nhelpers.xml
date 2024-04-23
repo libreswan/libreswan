@@ -1,13 +1,17 @@
-  <varlistentry>
-  <term><option>nhelpers</option></term>
+<varlistentry>
+  <term>
+    <option>nhelpers</option>
+  </term>
   <listitem>
-<para>how many <option>pluto helpers</option> are started
-to help with cryptographic operations. Pluto will start as many helpers as
-the number of CPU's, minus 1 to dedicate to the main thread.  For machines
-with less than 4 CPU's, an equal number of helpers to CPU's are started.
-A value of 0 forces pluto to do all operations inline using the main
-process. A value of -1 tells pluto to perform the above calculation. Any
-other value forces the number to that amount.
-</para>
+    <para>
+      how many <option>pluto helpers</option> are started to help with
+      cryptographic operations. Pluto will start as many helpers as
+      the number of CPU's, minus 1 to dedicate to the main thread.
+      For machines with less than 4 CPU's, an equal number of helpers
+      to CPU's are started.  A value of 0 forces pluto to do all
+      operations inline using the main process. A value of -1 tells
+      pluto to perform the above calculation. Any other value forces
+      the number to that amount.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

@@ -1,15 +1,20 @@
-  <varlistentry>
-  <term><option>nflog-all</option></term>
+<varlistentry>
+  <term>
+    <option>nflog-all</option>
+  </term>
   <listitem>
-<para>If set, the NFLOG group number to log <option>all</option> pre-crypt and post-decrypt traffic to.
-The default value of <option>0</option> means no logging at all.
-This option is only available on linux kernel 2.6.14 and later. It allows
-common network utilities such as tcpdump, wireshark and dumpcap, to use
-nflog:XXX pseudo interfaces where XXX is the nflog group number. During
-startup and shutdown of the IPsec service, iptables commands will be used to
-add or remove the global NFLOG table rules. The rules are setup with the
-nflog-prefix <option>all-ipsec</option>. See also the per-connection
-<option>nflog</option> option.
-</para>
+    <para>
+      If set, the NFLOG group number to log <option>all</option>
+      pre-crypt and post-decrypt traffic to.  The default value of
+      <option>0</option> means no logging at all.  This option is only
+      available on linux kernel 2.6.14 and later. It allows common
+      network utilities such as tcpdump, wireshark and dumpcap, to use
+      nflog:XXX pseudo interfaces where XXX is the nflog group
+      number. During startup and shutdown of the IPsec service,
+      iptables commands will be used to add or remove the global NFLOG
+      table rules. The rules are setup with the nflog-prefix
+      <option>all-ipsec</option>. See also the per-connection
+      <option>nflog</option> option.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

@@ -6,22 +6,22 @@
     <para>
       Whether to perform an additional DNS lookup and confirm the
       remote ID payload with the DNS name in the reverse DNS PTR
-      record. Accepted values are <option>no</option>
-      (the default) or <option>yes</option>.  This check
-      should be enabled when Opportunistic IPsec is enabled in a mode
-      that is based on packet triggers (on-demand) using IPSECKEY
-      records in DNS. Since in that case the IKE daemon pluto does not
-      know the remote ID, it only knows the remote IP address, this
-      option forces it to confirm the peer's proposed ID (and thus its
-      public/private key) with its actual IP address as listed in the
-      DNS. This prevents attacks where mail.example.com's IP address
-      is taken over by a neighbour machine with a valid
-      web.example.com setup. This check is not needed for certificate
-      based Opportunistic IPsec, as "mail.example.com"s certificate
-      does not have an entry for "web.example.com". It is also not
-      needed for DNS server triggered Opportunistic IPsec, as in that
-      case the IKE daemon pluto is informed of both the IP address,
-      and the hostname/public key.
-  </para>
-</listitem>
+      record. Accepted values are <option>no</option> (the default) or
+      <option>yes</option>.  This check should be enabled when
+      Opportunistic IPsec is enabled in a mode that is based on packet
+      triggers (on-demand) using IPSECKEY records in DNS. Since in
+      that case the IKE daemon pluto does not know the remote ID, it
+      only knows the remote IP address, this option forces it to
+      confirm the peer's proposed ID (and thus its public/private key)
+      with its actual IP address as listed in the DNS. This prevents
+      attacks where mail.example.com's IP address is taken over by a
+      neighbour machine with a valid web.example.com setup. This check
+      is not needed for certificate based Opportunistic IPsec, as
+      "mail.example.com"s certificate does not have an entry for
+      "web.example.com". It is also not needed for DNS server
+      triggered Opportunistic IPsec, as in that case the IKE daemon
+      pluto is informed of both the IP address, and the
+      hostname/public key.
+    </para>
+  </listitem>
 </varlistentry>

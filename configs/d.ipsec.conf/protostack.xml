@@ -1,7 +1,15 @@
-  <varlistentry>
-  <term><option>protostack</option></term>
+<varlistentry>
+  <term>
+    <option>protostack</option>
+  </term>
   <listitem>
-<para>decide which protocol stack is going to be used. Valid values are "xfrm" and  "bsd". This option should no longer be set, as the stack is currently auto-detected. The values "klips, "mast", "netkey", "native", "kame" and "auto" are obsolete. The option is kept only because it is suspected that Linux and BSD will get userspace stacks with IPsec support soon (such as dpdk).
-</para>
+    <para>
+      decide which protocol stack is going to be used. Valid values
+      are "xfrm" and "bsd". This option should no longer be set, as
+      the stack is currently auto-detected. The values "klips, "mast",
+      "netkey", "native", "kame" and "auto" are obsolete. The option
+      is kept only because it is suspected that Linux and BSD will get
+      userspace stacks with IPsec support soon (such as dpdk).
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

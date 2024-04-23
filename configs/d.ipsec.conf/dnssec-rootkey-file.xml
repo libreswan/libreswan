@@ -1,0 +1,12 @@
+<varlistentry>
+  <term>
+    <option>dnssec-rootkey-file</option>
+  </term>
+  <listitem>
+    <para>
+      The location of the DNSSEC root zone public key file. The
+      default is <option>/var/lib/unbound/root.key</option> but this can be
+      changed at compile time.
+    </para>
+  </listitem>
+</varlistentry>

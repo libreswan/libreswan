@@ -1,55 +1,49 @@
-  <varlistentry>
-  <term><option>left</option></term>
+<varlistentry>
+  <term>
+    <option>left</option>
+  </term>
   <listitem>
-<para>(required)
-the IP address or DNS hostname of the left participant's public-network interface,
-Currently, IPv4 and IPv6 IP addresses are supported. If a DNS hostname is used,
-it will be resolved to an IP address on load time, and whenever a connection is
-rekeying or restarting (such as when restarted via a DPD failure detection). This
-allows one to use a DNS hostname when the endpoint is on a dynamic IP address.</para>
-<para>
-There are several magic values.  If it is
-<option>%defaultroute</option>,
-<option>left</option>
-will be filled in automatically with the local address
-of the default-route interface (as determined at IPsec startup time);
-this also overrides any value supplied for
-<option>leftnexthop</option>.
-(Either
-<option>left</option>
-or
-<option>right</option>
-may be
-<option>%defaultroute</option>,
-but not both.)
-The value
-<option>%any</option>
-signifies an address to be filled in (by automatic keying) during
-negotiation.
-The value
-<option>%opportunistic</option>
-signifies that both
-<option>left</option>
-and
-<option>leftnexthop</option>
-are to be filled in (by automatic keying) from DNS data for
-<option>left</option>'s
-client.
-The value can also contain the interface name, which will then later be
-used to obtain the IP address from to fill in. For example
-<option>%ppp0</option>.
-
-The values <option>%group</option> and
-<option>%opportunisticgroup</option>
-makes this a policy group conn: one that will be instantiated
-into a regular or opportunistic conn for each CIDR block listed in the
-policy group file with the same name as the conn.</para>
-<para>If using IP addresses in combination with NAT, always use the
-actual local machine's (NATed) IP address, and if the remote (eg right=)
-is NATed as well, the remote's public (<option>not</option>
-NATed) IP address. Note that this makes the configuration no longer
-symmetrical on both sides, so you cannot use an identical configuration
-file on both hosts.</para>
-
+    <para>
+      (required) the IP address or DNS hostname of the left
+      participant's public-network interface, Currently, IPv4 and IPv6
+      IP addresses are supported. If a DNS hostname is used, it will
+      be resolved to an IP address on load time, and whenever a
+      connection is rekeying or restarting (such as when restarted via
+      a DPD failure detection). This allows one to use a DNS hostname
+      when the endpoint is on a dynamic IP address.
+    </para>
+    <para>
+      There are several magic values.  If it is
+      <option>%defaultroute</option>, <option>left</option> will be
+      filled in automatically with the local address of the
+      default-route interface (as determined at IPsec startup time);
+      this also overrides any value supplied for
+      <option>leftnexthop</option>.  (Either <option>left</option> or
+      <option>right</option> may be <option>%defaultroute</option>,
+      but not both.)  The value <option>%any</option> signifies an
+      address to be filled in (by automatic keying) during
+      negotiation.  The value <option>%opportunistic</option>
+      signifies that both <option>left</option> and
+      <option>leftnexthop</option> are to be filled in (by automatic
+      keying) from DNS data for <option>left</option>'s client.  The
+      value can also contain the interface name, which will then later
+      be used to obtain the IP address from to fill in. For example
+      <option>%ppp0</option>.
+    </para>
+    <para>
+      The values <option>%group</option> and
+      <option>%opportunisticgroup</option> makes this a policy group
+      conn: one that will be instantiated into a regular or
+      opportunistic conn for each CIDR block listed in the policy
+      group file with the same name as the conn.
+    </para>
+    <para>
+      If using IP addresses in combination with NAT, always use the
+      actual local machine's (NATed) IP address, and if the remote (eg
+      right=) is NATed as well, the remote's public
+      (<option>not</option> NATed) IP address. Note that this makes
+      the configuration no longer symmetrical on both sides, so you
+      cannot use an identical configuration file on both hosts.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

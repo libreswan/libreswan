@@ -1,23 +1,28 @@
-  <varlistentry>
-  <term><option>narrowing</option></term>
+<varlistentry>
+  <term>
+    <option>narrowing</option>
+  </term>
   <listitem>
-<para>IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing options.
-Currently the accepted values are <option>no</option>,
-(the default) signifying no narrowing will be proposed or accepted, or
-<option>yes</option>, signifying IKEv2 negotiation may
-allow establishing an IPsec connection with narrowed down traffic
-selectors. This option is ignored for IKEv1.</para>
-<para>There are security implications in allowing narrowing down the
-proposal. For one, what should be done with packets that we hoped to
-tunnel, but cannot. Should these be dropped or send in the clear? Second,
-this could cause thousands of narrowed down Child SAs to be created
-if the conn has a broad policy (eg 0/0 to 0/0).  One possible good use
-case scenario is that a remote end (that you fully trust) allows you to
-define a 0/0 to them, while adjusting what traffic you route via them,
-and what traffic remains outside the tunnel. However, it is always
-preferred to setup the exact tunnel policy you want, as this will be
-much clearer to the user.
-</para>
+    <para>
+      IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing options.
+      Currently the accepted values are <option>no</option>, (the
+      default) signifying no narrowing will be proposed or accepted,
+      or <option>yes</option>, signifying IKEv2 negotiation may allow
+      establishing an IPsec connection with narrowed down traffic
+      selectors. This option is ignored for IKEv1.
+    </para>
+    <para>
+      There are security implications in allowing narrowing down the
+      proposal. For one, what should be done with packets that we
+      hoped to tunnel, but cannot. Should these be dropped or send in
+      the clear? Second, this could cause thousands of narrowed down
+      Child SAs to be created if the conn has a broad policy (eg 0/0
+      to 0/0).  One possible good use case scenario is that a remote
+      end (that you fully trust) allows you to define a 0/0 to them,
+      while adjusting what traffic you route via them, and what
+      traffic remains outside the tunnel. However, it is always
+      preferred to setup the exact tunnel policy you want, as this
+      will be much clearer to the user.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

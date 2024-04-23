@@ -1,9 +1,14 @@
-  <varlistentry>
-  <term><option>statsbin</option></term>
+<varlistentry>
+  <term>
+    <option>statsbin</option>
+  </term>
   <listitem>
-<para>This option specifies an optional external program to report tunnel state changes too.
-The default is not to report tunnel state changes. This program can be used to notify the
-user's desktop  (dbus, NetworkManager) or to report tunnel changes to a central logging server.
-</para>
+    <para>
+      This option specifies an optional external program to report
+      tunnel state changes too.  The default is not to report tunnel
+      state changes. This program can be used to notify the user's
+      desktop (dbus, NetworkManager) or to report tunnel changes to a
+      central logging server.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

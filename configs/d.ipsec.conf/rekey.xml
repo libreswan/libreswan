@@ -1,19 +1,16 @@
-  <varlistentry>
-  <term><option>rekey</option></term>
+<varlistentry>
+  <term>
+    <option>rekey</option>
+  </term>
   <listitem>
-<para>whether a connection should be renegotiated when it is about to expire;
-acceptable values are
-<option>yes</option>
-(the default)
-and
-<option>no</option>.
-The two ends need not agree,
-but while a value of
-<option>no</option>
-prevents Pluto from requesting renegotiation,
-it does not prevent responding to renegotiation requested from the other end,
-so
-<option>no</option>
-will be largely ineffective unless both ends agree on it.</para>
+    <para>
+      whether a connection should be renegotiated when it is about to
+      expire; acceptable values are <option>yes</option> (the default)
+      and <option>no</option>.  The two ends need not agree, but while
+      a value of <option>no</option> prevents Pluto from requesting
+      renegotiation, it does not prevent responding to renegotiation
+      requested from the other end, so <option>no</option> will be
+      largely ineffective unless both ends agree on it.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

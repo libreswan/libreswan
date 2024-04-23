@@ -1,13 +1,18 @@
-  <varlistentry>
-  <term><option>ppk-ids</option></term>
+<varlistentry>
+  <term>
+    <option>ppk-ids</option>
+  </term>
   <listitem>
-<para>EXPERIMENTAL: Specify which PPK_ID's to look for in .secrets file.
-The value must be a string (enclosed in quotes) containing a comma-separated 
-list with PPK_ID's. Whitespaces cannot be a part of PPK_ID, i.e., they will be
-seen as a delimiter. If some PPK_ID's are specified and PPK feature
-is enabled (<option>ppk=</option>), one of the PPK secrets must
-have an ID matching one of the specified PPK_ID's. If this option is not set and
-the PPK feature is enabled, any matching PPK secret will be used.
-</para>
+    <para>
+      EXPERIMENTAL: Specify which PPK_ID's to look for in .secrets
+      file.  The value must be a string (enclosed in quotes)
+      containing a comma-separated list with PPK_ID's. Whitespaces
+      cannot be a part of PPK_ID, i.e., they will be seen as a
+      delimiter. If some PPK_ID's are specified and PPK feature is
+      enabled (<option>ppk=</option>), one of the PPK secrets must
+      have an ID matching one of the specified PPK_ID's. If this
+      option is not set and the PPK feature is enabled, any matching
+      PPK secret will be used.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

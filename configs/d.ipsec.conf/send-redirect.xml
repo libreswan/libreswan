@@ -1,0 +1,18 @@
+<varlistentry>
+  <term>
+    <option>send-redirect</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to send requests for the remote peer to redirect
+      IKE/IPsec SA's during IKE_AUTH. Valid options are
+      <option>no</option> (the default) and <option>yes</option>. If
+      set, the option <option>redirect-to=</option> must also be set
+      to indicate where to redirect peers to. For redirection during
+      IKE_SA_INIT exchange, see the <option>global-redirect=</option>
+      and <option>global-redirect-to=</option> options. Runtime
+      redirects can be triggered via the <command>ipsec
+      redirect</command> command.
+    </para>
+  </listitem>
+</varlistentry>

@@ -1,0 +1,18 @@
+<varlistentry>
+  <term>
+    <option>accept-redirect-to</option>
+  </term>
+  <listitem>
+    <para>
+      Specify the comma separated list of addresses we accept being
+      redirected to. Both IPv4 and IPv6 addresses are supported as
+      well the FQDNs. The value <option>%any</option>, as well as not
+      specifying any address, signifes that we will redirect to any
+      address gateway sends us in REDIRECT notify payload.
+    </para>
+    <para>
+      The value of this option is not considered at all if
+      accept-redirect is set to no.
+    </para>
+  </listitem>
+</varlistentry>

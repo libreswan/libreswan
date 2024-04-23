@@ -1,0 +1,15 @@
+<varlistentry>
+  <term>
+    <option>ocsp-uri</option>
+  </term>
+  <listitem>
+    <para>
+      The URI to use for OCSP requests instead of the default OCSP URI
+      listed in the CA certificate. This requires the ocsp-trustname
+      option to be set to the nick (friendly name) of the OCSP server
+      certificate, which needs to be present in the NSS
+      database. These option combined with the next option sets the
+      OCSP <option>default responder</option>.
+    </para>
+  </listitem>
+</varlistentry>

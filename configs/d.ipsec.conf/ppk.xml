@@ -1,16 +1,19 @@
-  <varlistentry>
-  <term><option>ppk</option></term>
+<varlistentry>
+  <term>
+    <option>ppk</option>
+  </term>
   <listitem>
-<para>EXPERIMENTAL: Post-quantum preshared keys (PPKs) to be used. Currently the accepted values are
-<option>propose</option> or <option>yes</option>
-(the default), signifying we propose to use PPK for this connection;
-<option>insist</option>, signifying we allow communication
-only if PPK is used for key derivation;
-<option>never</option> or <option>no</option>,
-signifying that PPK should not be used for key derivation.
-PPKs can be used in connections that allow only IKEv2. In libreswan that would
-mean that ikev2 option must have value <option>insist</option>.
- This feature is based on RFC 8784.
-</para>
+    <para>
+      EXPERIMENTAL: Post-quantum preshared keys (PPKs) to be
+      used. Currently the accepted values are <option>propose</option>
+      or <option>yes</option> (the default), signifying we propose to
+      use PPK for this connection; <option>insist</option>, signifying
+      we allow communication only if PPK is used for key derivation;
+      <option>never</option> or <option>no</option>, signifying that
+      PPK should not be used for key derivation.  PPKs can be used in
+      connections that allow only IKEv2. In libreswan that would mean
+      that ikev2 option must have value <option>insist</option>.  This
+      feature is based on RFC 8784.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

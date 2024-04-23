@@ -1,0 +1,11 @@
+<varlistentry>
+  <term>
+    <option>ocsp-cache-min-age</option>
+  </term>
+  <listitem>
+    <para>
+      The minimum age (in seconds) before a new fetch will be
+      attempted. The default is 1 hour.
+    </para>
+  </listitem>
+</varlistentry>

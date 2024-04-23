@@ -7,12 +7,13 @@
       specify multiple private subnets behind the left participant,
       expressed as
       <option>networkA</option><option>/</option><option>netmaskA</option>,<option>networkB</option><option>/</option><option>netmaskB</option><option>[,...]</option>
-      If both a leftsubnets= and rightsubnets= are defined, all combinations of subnet
-      tunnels will be established as separate IPsec tunnels. You
-      cannot use leftsubnet= and leftsubnets= together. For examples
-      see <option>testing/pluto/multinet-*</option>. Be
-      aware that when using spaces as separator, that the entire
-      option value needs to be in double quotes.
+      If both a leftsubnets= and rightsubnets= are defined, all
+      combinations of subnet tunnels will be established as separate
+      IPsec tunnels. You cannot use leftsubnet= and leftsubnets=
+      together. For examples see
+      <option>testing/pluto/multinet-*</option>. Be aware that when
+      using spaces as separator, that the entire option value needs to
+      be in double quotes.
     </para>
   </listitem>
 </varlistentry>

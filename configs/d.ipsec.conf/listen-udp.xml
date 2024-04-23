@@ -1,14 +1,17 @@
-  <varlistentry>
-    <term><option>listen-udp</option></term>
-    <listitem>
-      <para>
-	Whether the pluto IKE daemon should listen on the standard
-	UDP ports of <option>500</option> and <option>4500</option>.
-	The value "yes" means to listen on these ports, and is the default.
-	This should almost never be disabled. In the rare case where it is
-	known that only ever TCP or non-standard UDP ports will be used,
-	this option can disable the standard UDP ports. Connections
-	can specify their own non-standard port using leftikeport=.
-      </para>
-    </listitem>
-  </varlistentry>
+<varlistentry>
+  <term>
+    <option>listen-udp</option>
+  </term>
+  <listitem>
+    <para>
+      Whether the pluto IKE daemon should listen on the standard UDP
+      ports of <option>500</option> and <option>4500</option>.  The
+      value "yes" means to listen on these ports, and is the default.
+      This should almost never be disabled. In the rare case where it
+      is known that only ever TCP or non-standard UDP ports will be
+      used, this option can disable the standard UDP
+      ports. Connections can specify their own non-standard port using
+      leftikeport=.
+    </para>
+  </listitem>
+</varlistentry>

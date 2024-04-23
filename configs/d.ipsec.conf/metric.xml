@@ -1,12 +1,16 @@
-  <varlistentry>
-  <term><option>metric</option></term>
+<varlistentry>
+  <term>
+    <option>metric</option>
+  </term>
   <listitem>
-<para>
-Set the metric for added routes. This value is passed to the _updown scripts as
-PLUTO_METRIC.
-
-Acceptable values are positive numbers, with the default being <option>1</option>.
-</para>
+    <para>
+      Set the metric for added routes. This value is passed to the
+      _updown scripts as PLUTO_METRIC.
+    </para>
+    <para>
+      Acceptable values are positive numbers, with the default being
+      <option>1</option>.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
 

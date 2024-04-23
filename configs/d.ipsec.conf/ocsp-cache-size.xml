@@ -1,0 +1,12 @@
+<varlistentry>
+  <term>
+    <option>ocsp-cache-size</option>
+  </term>
+  <listitem>
+    <para>
+      The maximum size (in number of certificates) of OCSP responses
+      that will be kept in the cache. The default is 1000. Setting
+      this value to 0 means the cache is disabled.
+    </para>
+  </listitem>
+</varlistentry>

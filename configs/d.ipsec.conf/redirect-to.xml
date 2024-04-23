@@ -1,0 +1,12 @@
+<varlistentry>
+  <term>
+    <option>redirect-to</option>
+  </term>
+  <listitem>
+    <para>
+      Where to send remote peers to via the
+      <option>send-redirect</option> option. This can be an IP address
+      or hostname (FQDN).
+    </para>
+  </listitem>
+</varlistentry>

@@ -1,0 +1,15 @@
+<varlistentry>
+  <term>
+    <option>dnssec-enable</option>
+  </term>
+  <listitem>
+    <para>
+      Whether pluto should perform dnssec validation using libunbound,
+      provided libreswan was compiled with USE_DNSSEC. A value of
+      <option>yes</option> (the default) means pluto
+      should perform DNSSEC validation. Note that pluto reads the file
+      <option>/etc/resolv.conf</option> to determine
+      which nameservers to use.
+    </para>
+  </listitem>
+</varlistentry>

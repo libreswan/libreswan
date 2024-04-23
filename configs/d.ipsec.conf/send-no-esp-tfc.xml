@@ -1,0 +1,12 @@
+<varlistentry>
+  <term><option>send-no-esp-tfc</option></term>
+  <listitem>
+    <para>
+      Whether or not to tell the remote peer that we do not support Traffic Flow Confidentiality ("TFC")
+      (RFC-4303). Possible values are <option>no</option> (the default) which allows the
+      peer to use TFC or <option>yes</option> which prevents to peer from using TFC.
+      This does not affect whether this endpoint uses TFC, which only depends on the
+      local <option>tfc</option> setting. This option is only valid for IKEv2.
+    </para>
+  </listitem>
+</varlistentry>

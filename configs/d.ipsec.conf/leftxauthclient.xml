@@ -1,20 +1,23 @@
-  <varlistentry>
-  <term><option>leftxauthclient</option></term>
+<varlistentry>
+  <term>
+    <option>leftxauthclient</option>
+  </term>
   <listitem>
-<para>Left is an XAUTH client. The xauth connection will have to be
-started interactively and cannot be configured using
-<option>auto=start</option>.  Instead, it has to be started from
-the commandline using <command>ipsec up
-<replaceable>connection</replaceable></command>.  You will then be
-prompted for the username and password. To setup an XAUTH connection
-non-interactively, which defeats the whole purpose of XAUTH, but is
-regularly requested by users, it is possible to use a whack command -
-<command>ipsec whack --name baduser --ipsecgroup-xauth --xauthname
-badusername --xauthpass password --initiate</command> The other side
-of the connection should be configured as
-<option>rightxauthserver</option>.  Acceptable values are
-<option>yes</option> or <option>no</option> (the
-default).</para>
+    <para>
+      Left is an XAUTH client. The xauth connection will have to be
+      started interactively and cannot be configured using
+      <option>auto=start</option>.  Instead, it has to be started from
+      the commandline using <command>ipsec up
+      <replaceable>connection</replaceable></command>.  You will then
+      be prompted for the username and password. To setup an XAUTH
+      connection non-interactively, which defeats the whole purpose of
+      XAUTH, but is regularly requested by users, it is possible to
+      use a whack command - <command>ipsec whack --name baduser
+      --ipsecgroup-xauth --xauthname badusername --xauthpass password
+      --initiate</command> The other side of the connection should be
+      configured as <option>rightxauthserver</option>.  Acceptable
+      values are <option>yes</option> or <option>no</option> (the
+      default).
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

@@ -16,21 +16,3 @@
     </para>
   </listitem>
 </varlistentry>
-
-<varlistentry>
-  <term>
-    <option>ike-socket-errqueue</option>
-  </term>
-  <listitem>
-    <para>
-      Whether to enable or disable receiving socket errors via
-      IP_RECVERR. The default is enabled. This will cause the socket
-      to receive, process and log socket errors, such as ICMP
-      unreachable messages or Connection Refused messages. Disabling
-      this only makes sense on very busy servers, and even then it
-      might not make much of a difference. This option can also be
-      toggled on a running system using <option>ipsec
-      whack --ike-socket-errqueue-toggle</option>.
-    </para>
-  </listitem>
-</varlistentry>

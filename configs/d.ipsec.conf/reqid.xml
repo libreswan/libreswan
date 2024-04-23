@@ -1,25 +1,30 @@
-  <varlistentry>
-  <term><option>reqid</option></term>
+<varlistentry>
+  <term>
+    <option>reqid</option>
+  </term>
   <listitem>
-<para>
-a unique identifier used to match IPsec SAs using iptables with
-XFRM. This identifier is normally automatically allocated in groups
-of 4. It is exported to the _updown script as REQID. On Linux, reqids are
-supported with IP Connection Tracking and NAT (iptables). Automatically
-generated values use the range 16380 and higher. Manually specified
-reqid values therefore must be between 1 and 16379.
-</para>
-<para>
-Automatically generated reqids use a range of 0-3 (eg 16380-16383 for the
-first reqid). These are used depending on the exact policy (AH, AH+ESP,
-IPCOMP, etc).
-</para>
-<para>
-WARNING: Manually assigned reqids are all identical. Instantiations of
-connections (those using %any wildcards) will all use the same reqid.
-If you use manual assigning you should make sure your connections
-only match single road warrior only or you break multiple road warriors
-behind same NAT router because this feature requires unique reqids to work.
-</para>
-</listitem>
-  </varlistentry>
+    <para>
+      a unique identifier used to match IPsec SAs using iptables with
+      XFRM. This identifier is normally automatically allocated in
+      groups of 4. It is exported to the _updown script as REQID. On
+      Linux, reqids are supported with IP Connection Tracking and NAT
+      (iptables). Automatically generated values use the range 16380
+      and higher. Manually specified reqid values therefore must be
+      between 1 and 16379.
+    </para>
+    <para>
+      Automatically generated reqids use a range of 0-3 (eg 16380-16383 for the
+      first reqid). These are used depending on the exact policy (AH, AH+ESP,
+      IPCOMP, etc).
+    </para>
+    <para>
+      WARNING: Manually assigned reqids are all
+      identical. Instantiations of connections (those using %any
+      wildcards) will all use the same reqid.  If you use manual
+      assigning you should make sure your connections only match
+      single road warrior only or you break multiple road warriors
+      behind same NAT router because this feature requires unique
+      reqids to work.
+    </para>
+  </listitem>
+</varlistentry>

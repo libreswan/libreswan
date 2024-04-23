@@ -1,14 +1,19 @@
-  <varlistentry>
-  <term><option>require-id-on-certificate</option></term>
+<varlistentry>
+  <term>
+    <option>require-id-on-certificate</option>
+  </term>
   <listitem>
-<para>When using certificates, check whether the IKE peer ID is present as a
-subjectAltName (SAN) on the peer certificate. Accepted values are
-<option>yes</option> (the default) or <option>no</option>.
-This check should only be disabled when intentionally using certificates that do not have
-their peer ID specified as a SAN on the certificate. These certificates violate RFC 4945
-Section 3.1 and are normally rejected to prevent a compromised host from assuming the
-IKE identity of another host. The SAN limits the IDs that the peer is able to assume.
-</para>
+    <para>
+      When using certificates, check whether the IKE peer ID is
+      present as a subjectAltName (SAN) on the peer
+      certificate. Accepted values are <option>yes</option> (the
+      default) or <option>no</option>.  This check should only be
+      disabled when intentionally using certificates that do not have
+      their peer ID specified as a SAN on the certificate. These
+      certificates violate RFC 4945 Section 3.1 and are normally
+      rejected to prevent a compromised host from assuming the IKE
+      identity of another host. The SAN limits the IDs that the peer
+      is able to assume.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

@@ -1,17 +1,21 @@
-  <varlistentry>
-  <term><option>leftxauthserver</option></term>
+<varlistentry>
+  <term>
+    <option>leftxauthserver</option>
+  </term>
   <listitem>
-<para>Left is an XAUTH server. This can use PAM for authentication or md5 passwords
-in <option>/etc/ipsec.d/passwd</option>. These are additional credentials
-to verify the user identity, and should not be confused with the XAUTH
-<option>group secret</option>, which is just a regular PSK defined in
-<option>ipsec.secrets</option>.  The other side of the connection
-should be configured as <option>rightxauthclient</option>. XAUTH
-connections cannot rekey, so <option>rekey=no</option> should be
-specified in this conn.  For further details on how to compile and use XAUTH, see README.XAUTH.
-Acceptable values are <option>yes</option> or <option>no</option>
-(the default).
-</para>
+    <para>
+      Left is an XAUTH server. This can use PAM for authentication or
+      md5 passwords in <option>/etc/ipsec.d/passwd</option>. These are
+      additional credentials to verify the user identity, and should
+      not be confused with the XAUTH <option>group secret</option>,
+      which is just a regular PSK defined in
+      <option>ipsec.secrets</option>.  The other side of the
+      connection should be configured as
+      <option>rightxauthclient</option>. XAUTH connections cannot
+      rekey, so <option>rekey=no</option> should be specified in this
+      conn.  For further details on how to compile and use XAUTH, see
+      README.XAUTH.  Acceptable values are <option>yes</option> or
+      <option>no</option> (the default).
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

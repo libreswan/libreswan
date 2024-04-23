@@ -1,9 +1,13 @@
-  <varlistentry>
-  <term><option>leftusername</option></term>
+<varlistentry>
+  <term>
+    <option>leftusername</option>
+  </term>
   <listitem>
-<para>The username associated with this connection. The username can be the
-IKEv2 XAUTH username, a GSSAPI username or IKEv2 CP username. For the XAUTH username,
-the XAUTH password can be configured in the <option>ipsec.secrets</option>
-file. This option was previously called leftxauthusername.</para>
+    <para>
+      The username associated with this connection. The username can
+      be the IKEv2 XAUTH username, a GSSAPI username or IKEv2 CP
+      username. For the XAUTH username, the XAUTH password can be
+      configured in the <option>ipsec.secrets</option> file. This
+      option was previously called leftxauthusername.</para>
   </listitem>
-  </varlistentry>
+</varlistentry>

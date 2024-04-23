@@ -1,18 +1,18 @@
-  <varlistentry>
-  <term><option>type</option></term>
+<varlistentry>
+  <term>
+    <option>type</option>
+  </term>
   <listitem>
-<para>the type of the connection; currently the accepted values
-are
-<option>tunnel</option>
-(the default)
-signifying a host-to-host, host-to-subnet, or subnet-to-subnet tunnel;
-<option>transport</option>,
-signifying host-to-host transport mode;
-<option>passthrough</option>,
-signifying that no IPsec processing should be done at all;
-<option>drop</option>,
-signifying that packets should be discarded; and
-<option>reject</option>,
-signifying that packets should be discarded and a diagnostic ICMP returned.</para>
+    <para>
+      the type of the connection; currently the accepted values are
+      <option>tunnel</option> (the default) signifying a host-to-host,
+      host-to-subnet, or subnet-to-subnet tunnel;
+      <option>transport</option>, signifying host-to-host transport
+      mode; <option>passthrough</option>, signifying that no IPsec
+      processing should be done at all; <option>drop</option>,
+      signifying that packets should be discarded; and
+      <option>reject</option>, signifying that packets should be
+      discarded and a diagnostic ICMP returned.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

@@ -1,14 +1,20 @@
-  <varlistentry>
+<varlistentry>
 
-  <term><option>logappend</option></term>
+  <term>
+    <option>logappend</option>
+  </term>
   <listitem>
-<para>If pluto is instructed to log to a file using  <option>logfile=</option>,
-this option determines whether the log file should be appended to or overwritten. Valid options are
-<option>yes</option> (the default) to append and <option>no</option>
-to overwrite. Since on modern systems, pluto is restarted by other daemons, such as systemd,
-this option should be left at its default yes value to preserve the log entries of previous
-runs of pluto. The option is mainly of use for running the test suite, which needs to create
-new log files from scratch.
-</para>
+    <para>
+      If pluto is instructed to log to a file using
+      <option>logfile=</option>, this option determines whether the
+      log file should be appended to or overwritten. Valid options are
+      <option>yes</option> (the default) to append and
+      <option>no</option> to overwrite. Since on modern systems, pluto
+      is restarted by other daemons, such as systemd, this option
+      should be left at its default yes value to preserve the log
+      entries of previous runs of pluto. The option is mainly of use
+      for running the test suite, which needs to create new log files
+      from scratch.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

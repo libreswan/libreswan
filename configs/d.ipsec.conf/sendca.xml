@@ -1,12 +1,15 @@
-  <varlistentry>
-  <term><option>sendca</option></term>
+<varlistentry>
+  <term>
+    <option>sendca</option>
+  </term>
   <listitem>
     <para>
-      How much of our available X.509 trust chain to send with the End certificate,
-      excluding any root CA's. Specifying <option>issuer</option>
-      sends just the issuing intermediate CA, while <option> all</option>
-      will send the entire chain of intermediate CA's.<option>none</option>
-      (the default) will not send any CA certs.
+      How much of our available X.509 trust chain to send with the End
+      certificate, excluding any root CA's. Specifying
+      <option>issuer</option> sends just the issuing intermediate CA,
+      while <option> all</option> will send the entire chain of
+      intermediate CA's.<option>none</option> (the default) will not
+      send any CA certs.
     </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

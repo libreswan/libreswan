@@ -1,0 +1,13 @@
+<refsect1 id='default_policy_groups'>
+  <title>
+    DEFAULT POLICY GROUPS
+  </title>
+  <para>
+    The standard Libreswan install includes several policy groups
+    which provide a way of classifying possible peers into IPsec
+    security classes: <option>private</option> (talk encrypted only),
+    <option>private-or-clear</option> (prefer encryption),
+    <option>clear-or-private</option> (respond to requests for
+    encryption), <option>clear</option> and <option>block</option>.
+  </para>
+</refsect1>

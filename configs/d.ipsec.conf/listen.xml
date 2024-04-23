@@ -1,8 +1,11 @@
-  <varlistentry>
-  <term><command>listen</command></term>
+<varlistentry>
+  <term>
+    <option>listen</option>
+  </term>
   <listitem>
-<para>IP address to listen on, defaults to ANY.
-Currently only accepts one IP address.
-</para>
+    <para>
+      IP address to listen on, defaults to ANY.  Currently only
+      accepts one IP address.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

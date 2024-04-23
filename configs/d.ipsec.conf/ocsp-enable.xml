@@ -1,0 +1,13 @@
+<varlistentry>
+  <term>
+    <option>ocsp-enable</option>
+  </term>
+  <listitem>
+    <para>
+      Whether to perform Online Certificate Store Protocol ("OCSP")
+      checks on those certificates that have an OCSP URI
+      defined. Acceptable values are <option>yes</option> or
+      <option>no</option> (the default).
+    </para>
+  </listitem>
+</varlistentry>

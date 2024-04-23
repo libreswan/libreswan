@@ -1,7 +1,11 @@
-  <varlistentry>
-  <term><option>myvendorid</option></term>
+<varlistentry>
+  <term>
+    <option>myvendorid</option>
+  </term>
   <listitem>
-<para>The string to use as our vendor id (VID) when send-vendorid=yes. The default is OE-Libreswan-VERSION.
-</para>
+    <para>
+      The string to use as our vendor id (VID) when
+      send-vendorid=yes. The default is OE-Libreswan-VERSION.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

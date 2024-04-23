@@ -1,35 +1,18 @@
-  <varlistentry>
-  <term><option>mark</option></term>
+<varlistentry>
+  <term>
+    <option>mark</option>
+  </term>
   <listitem>
-<para>
-If set, the MARK to set for the IPsec SA of this connection. The format of a CONNMARK is
-<option>mark/mask</option>. If the mask is left out,
-a default mask of 0xffffffff is used. A mark value of -1 means to assign a
-new global unique mark number for each instance of the connection. Global
-marks start at 1001.  This option is only available on linux XFRM
-kernels. It can be used with iptables to create custom iptables rules
-using CONNMARK. It can also be used with Virtual Tunnel Interfaces
-("VTI") to direct marked traffic to specific vtiXX devices.
-</para>
+    <para>
+      If set, the MARK to set for the IPsec SA of this connection. The
+      format of a CONNMARK is <option>mark/mask</option>. If the mask
+      is left out, a default mask of 0xffffffff is used. A mark value
+      of -1 means to assign a new global unique mark number for each
+      instance of the connection. Global marks start at 1001.  This
+      option is only available on linux XFRM kernels. It can be used
+      with iptables to create custom iptables rules using CONNMARK. It
+      can also be used with Virtual Tunnel Interfaces ("VTI") to
+      direct marked traffic to specific vtiXX devices.
+    </para>
   </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><option>mark-in</option></term>
-  <listitem>
-<para>
-The same as <option>mark</option>, but mark-in only applies to the inbound half
-of the IPsec SA. It overrides any mark= setting.
-</para>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><option>mark-out</option></term>
-  <listitem>
-<para>
-The same as <option>mark</option>, but mark-out only applies to the outbound half
-of the IPsec SA. It overrides any mark= setting.
-</para>
-  </listitem>
-  </varlistentry>
+</varlistentry>

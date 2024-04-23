@@ -1,0 +1,16 @@
+<varlistentry>
+  <term>
+    <option>vti-shared</option>
+  </term>
+  <listitem>
+    <para>
+      Whether or not the VTI device is shared amongst connections.
+      Valid values are <option>no</option> (the default) or
+      <option>yes</option>. When set to no, the VTI device is
+      automatically deleted if the connection is a single
+      non-instantiated connection. If a connection instantiates (eg
+      right=%any) then this option has no effect, as the VTI device is
+      not removed as it is shared with multiple roadwarriors.
+    </para>
+  </listitem>
+</varlistentry>

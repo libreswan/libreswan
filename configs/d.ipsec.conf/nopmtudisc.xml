@@ -1,10 +1,13 @@
-  <varlistentry>
-  <term><option>nopmtudisc</option></term>
+<varlistentry>
+  <term>
+    <option>nopmtudisc</option>
+  </term>
   <listitem>
-<para>
-Disable Path MTU discovery for the IPsec SA. Acceptable values are
-<option>no</option> (the default) or <option>yes</option>.
-Currently this feature is only implemented for the Linux XFRM stack.
-</para>
+    <para>
+      Disable Path MTU discovery for the IPsec SA. Acceptable values
+      are <option>no</option> (the default) or <option>yes</option>.
+      Currently this feature is only implemented for the Linux XFRM
+      stack.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

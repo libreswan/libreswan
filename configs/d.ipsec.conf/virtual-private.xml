@@ -1,34 +1,39 @@
-  <varlistentry>
-  <term><option>virtual-private</option></term>
+<varlistentry>
+  <term>
+    <option>virtual-private</option>
+  </term>
   <listitem>
-<para>contains the networks that are allowed as (left|right)subnet= for the remote
-clients when using the <option>vhost:</option> or <option>vnet:</option>
-keywords in the <option>(left|right)subnet=</option> parameters.
-In other words, the address ranges that may live behind a NAT
-router through which a client connects.  This value is usually set to
-all the RFC-1918 address space, excluding the space used in the local
-subnet behind the NAT (An IP address cannot live at two places at once).
-IPv4 address ranges are denoted as
-<option>%v4:a.b.c.d/mm</option>
-and IPv6 is denoted as
-<option>%v6:aaaa::bbbb:cccc:dddd:eeee/mm</option>. One
-can exclude subnets by using the <option>!</option>.
-For example, if the VPN server is giving access to 192.168.1.0/24,
-this option should be set to:
-<option>virtual-private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!192.168.1.0/24</option>.
-This parameter is only needed on the server side and not on the client side that resides behind the NAT router, as
-the client will just use its IP address for the inner IP setting.
-This parameter may eventually become per-connection. See also <option>leftsubnet=</option>
-</para>
-<para>Note: It seems that T-Mobile in the US and Rogers/Fido in Canada have
-started using 25.0.0.0/8 as their pre-NAT range. This range technically belongs
-to the Defence Interoperable Network Services Authority (DINSA), an agency of
-the Ministry of Defence of the United Kingdom. The network range seems to not
-have been announced for decades, which is probably why these organisations
-"borrowed" this range. To support roadwarriors on these 3G networks, you might
-have to add it to the virtual-private= line.
-</para>
-
+    <para>
+      contains the networks that are allowed as (left|right)subnet=
+      for the remote clients when using the <option>vhost:</option> or
+      <option>vnet:</option> keywords in the
+      <option>(left|right)subnet=</option> parameters.  In other
+      words, the address ranges that may live behind a NAT router
+      through which a client connects.  This value is usually set to
+      all the RFC-1918 address space, excluding the space used in the
+      local subnet behind the NAT (An IP address cannot live at two
+      places at once).  IPv4 address ranges are denoted as
+      <option>%v4:a.b.c.d/mm</option> and IPv6 is denoted as
+      <option>%v6:aaaa::bbbb:cccc:dddd:eeee/mm</option>. One can
+      exclude subnets by using the <option>!</option>.  For example,
+      if the VPN server is giving access to 192.168.1.0/24, this
+      option should be set to:
+      <option>virtual-private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!192.168.1.0/24</option>.
+      This parameter is only needed on the server side and not on the
+      client side that resides behind the NAT router, as the client
+      will just use its IP address for the inner IP setting.  This
+      parameter may eventually become per-connection. See also
+      <option>leftsubnet=</option>
+    </para>
+    <para>
+      Note: It seems that T-Mobile in the US and Rogers/Fido in Canada
+      have started using 25.0.0.0/8 as their pre-NAT range. This range
+      technically belongs to the Defence Interoperable Network
+      Services Authority (DINSA), an agency of the Ministry of Defence
+      of the United Kingdom. The network range seems to not have been
+      announced for decades, which is probably why these organisations
+      "borrowed" this range. To support roadwarriors on these 3G
+      networks, you might have to add it to the virtual-private= line.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

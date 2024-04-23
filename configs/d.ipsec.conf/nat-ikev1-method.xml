@@ -1,21 +1,30 @@
-  <varlistentry>
-  <term><option>nat-ikev1-method</option></term>
+<varlistentry>
+  <term>
+    <option>nat-ikev1-method</option>
+  </term>
   <listitem>
-<para>NAT Traversal in IKEv1 is negotiated via Vendor ID options as specified in RFC 3947.
-However, many implementations only support the draft version of the RFC. Libreswan sends
-both the RFC and the most common draft versions (02, 02_n and 03) to maximize interoperability.
-Unfortunately, there are known broken implementations of RFC 3947, notably Cisco routers that
-have not been updated to the latest firmware. As the NAT-T payload is sent in the very first
-packet of the initiator, there is no method to auto-detect this problem and initiate a workaround.
-</para>
-
-<para>This option allows fine tuning which of the NAT-T payloads to consider for sending and processing.
-Currently the accepted values are <option>drafts</option>,
-<option>rfc</option>, <option>both</option> (the default) and
-<option>none</option>. To interoperate with known broken devices, use nat-ikev1-method=drafts.
-To prevent the other end from triggering IKEv1 NAT-T encapsulation, set this to none. This will omit the
-NAT-T payloads used to determine NAT, forcing the other end not to use encapsulation.
-</para>
+    <para>
+      NAT Traversal in IKEv1 is negotiated via Vendor ID options as
+      specified in RFC 3947.  However, many implementations only
+      support the draft version of the RFC. Libreswan sends both the
+      RFC and the most common draft versions (02, 02_n and 03) to
+      maximize interoperability.  Unfortunately, there are known
+      broken implementations of RFC 3947, notably Cisco routers that
+      have not been updated to the latest firmware. As the NAT-T
+      payload is sent in the very first packet of the initiator, there
+      is no method to auto-detect this problem and initiate a
+      workaround.
+    </para>
+    <para>
+      This option allows fine tuning which of the NAT-T payloads to
+      consider for sending and processing.  Currently the accepted
+      values are <option>drafts</option>, <option>rfc</option>,
+      <option>both</option> (the default) and
+      <option>none</option>. To interoperate with known broken
+      devices, use nat-ikev1-method=drafts.  To prevent the other end
+      from triggering IKEv1 NAT-T encapsulation, set this to
+      none. This will omit the NAT-T payloads used to determine NAT,
+      forcing the other end not to use encapsulation.
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

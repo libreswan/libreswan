@@ -1,45 +1,52 @@
-  <varlistentry>
-  <term><option>seccomp</option></term>
+<varlistentry>
+  <term>
+    <option>seccomp</option>
+  </term>
   <listitem>
-<para>Set the seccomp kernel syscall whitelisting feature. When set to
-<option>enabled</option>, if pluto calls a syscall that is
-not on the compiled-in whitelist, the kernel will assume an exploit is
-attempting to use pluto for malicious access to the system and terminate
-the pluto daemon. When set to <option>tolerant</option>,
-the kernel will only block the rogue syscall and pluto will attempt to
-continue. If set to <option>disabled</option>, pluto is
-allowed to call any syscall offered by the kernel, although it might be
-restricted via other security mechanisms, such as capabilities, SElinux,
-AppArmor or other OS security features.</para>
-
-<para>By default, seccomp is disabled, as there is a significant performance
-penalty, custom updown scripts could trigger false positives, and
-system library updates could also trigger false positives. A false positive
-(or real malicious remote code execution of a bad syscall) will cause the
-pluto daemon to crash or hang.</para>
-
-<para><option>Warning:</option> The restrictions of pluto
-are inherited by the updown scripts, so these scripts are also not
-allowed to use syscalls that are forbidden for pluto.</para>
-
-<para>
-To see if a seccomp rule got triggered, you must run with seccomp=enabled,
-and keep an eye on <option>type=SECCOMP</option> messages in the
-audit log (usually <option>/var/log/audit/audit.log</option>. Note
-that logging can be delayed by many seconds.</para>
-
-<para>
-  This feature can be tested using <command>ipsec whack
-  --seccomp-crashtest</command>. <option>Warning: </option> With
-  seccomp=enabled, pluto will be terminated by the kernel. With
-  seccomp=tolerant or seccomp=disabled, pluto will report the results
-  of the seccomp test. SECCOMP will log the forbidden syscall numbers
-  to the audit log, but only with seccomp=enabled. The tool
-  scmp_sys_resolver from the libseccomp development package can be
-  used to translate the syscall number into a name. See
-  programs/pluto/pluto_seccomp.c for the list of allowed syscalls.
-  </para>
-
-
+    <para>
+      Set the seccomp kernel syscall whitelisting feature. When set to
+      <option>enabled</option>, if pluto calls a syscall that is not
+      on the compiled-in whitelist, the kernel will assume an exploit
+      is attempting to use pluto for malicious access to the system
+      and terminate the pluto daemon. When set to
+      <option>tolerant</option>, the kernel will only block the rogue
+      syscall and pluto will attempt to continue. If set to
+      <option>disabled</option>, pluto is allowed to call any syscall
+      offered by the kernel, although it might be restricted via other
+      security mechanisms, such as capabilities, SElinux, AppArmor or
+      other OS security features.
+    </para>
+    <para>
+      By default, seccomp is disabled, as there is a significant
+      performance penalty, custom updown scripts could trigger false
+      positives, and system library updates could also trigger false
+      positives. A false positive (or real malicious remote code
+      execution of a bad syscall) will cause the pluto daemon to crash
+      or hang.
+    </para>
+    <para>
+      <option>Warning:</option> The restrictions of pluto are
+      inherited by the updown scripts, so these scripts are also not
+      allowed to use syscalls that are forbidden for pluto.
+    </para>
+    <para>
+      To see if a seccomp rule got triggered, you must run with
+      seccomp=enabled, and keep an eye on
+      <option>type=SECCOMP</option> messages in the audit log (usually
+      <option>/var/log/audit/audit.log</option>. Note that logging can
+      be delayed by many seconds.
+    </para>
+    <para>
+      This feature can be tested using <command>ipsec whack
+      --seccomp-crashtest</command>. <option>Warning: </option> With
+      seccomp=enabled, pluto will be terminated by the kernel. With
+      seccomp=tolerant or seccomp=disabled, pluto will report the
+      results of the seccomp test. SECCOMP will log the forbidden
+      syscall numbers to the audit log, but only with
+      seccomp=enabled. The tool scmp_sys_resolver from the libseccomp
+      development package can be used to translate the syscall number
+      into a name. See programs/pluto/pluto_seccomp.c for the list of
+      allowed syscalls.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

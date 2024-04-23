@@ -1,10 +1,12 @@
-  <varlistentry>
-  <term><option>modecfgpull</option></term>
+<varlistentry>
+  <term>
+    <option>modecfgpull</option>
+  </term>
   <listitem>
-<para>Pull the Mode Config network information from the server.
-Acceptable values are <option>yes</option> or <option>no</option>
-(the default).
-</para>
+    <para>
+      Pull the Mode Config network information from the server.
+      Acceptable values are <option>yes</option> or
+      <option>no</option> (the default).
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

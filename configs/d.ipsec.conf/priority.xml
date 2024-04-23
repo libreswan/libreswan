@@ -1,24 +1,29 @@
-  <varlistentry>
-  <term><option>priority</option></term>
+<varlistentry>
+  <term>
+    <option>priority</option>
+  </term>
   <listitem>
-<para>The priority in the kernel SPD/SAD database, when matching up packets.
-Each kernel (XFRM, OSX, etc) has its own mechanism for setting the
-priority. Setting this option to non-zero passes the priority to the kernel
-stack unmodified. The maximum value depends on the stack. It is recommended
-not to exceed 65536</para>
-<para>
-XFRM use a priority system based on "most specific match
-first". It uses an internal algorithm to calculate these based on network
-prefix length, protocol and port selectors. A lower value means a higher
-priority.
-</para>
-<para>
-Typical values are about the 2000 range. These can be seen on the XFRM stack
-using
-<option>ip xfrm policy</option> when the connection is up.
-For "anonymous IPsec" or Opportunistic Encryption based connections, a much
-lower priority (65535) is used to ensure administrator configured IPsec
-always takes precedence over opportunistic IPsec.
-</para>
+    <para>
+      The priority in the kernel SPD/SAD database, when matching up
+      packets.  Each kernel (XFRM, OSX, etc) has its own mechanism
+      for setting the priority. Setting this option to non-zero
+      passes the priority to the kernel stack unmodified. The
+      maximum value depends on the stack. It is recommended not to
+      exceed 65536
+    </para>
+    <para>
+      XFRM use a priority system based on "most specific match
+      first". It uses an internal algorithm to calculate these based
+      on network prefix length, protocol and port selectors. A lower
+      value means a higher priority.
+    </para>
+    <para>
+      Typical values are about the 2000 range. These can be seen on
+      the XFRM stack using <option>ip xfrm policy</option> when the
+      connection is up.  For "anonymous IPsec" or Opportunistic
+      Encryption based connections, a much lower priority (65535) is
+      used to ensure administrator configured IPsec always takes
+      precedence over opportunistic IPsec.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

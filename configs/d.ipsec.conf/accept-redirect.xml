@@ -1,0 +1,13 @@
+<varlistentry>
+  <term>
+    <option>accept-redirect</option>
+  </term>
+  <listitem>
+    <para>
+      Whether requests of the remote peer to redirect IKE/IPsec SA's
+      are accepted. Valid options are <option>no</option> (the
+      default) and <option>yes</option>. See also
+      <option>accept-redirect-to</option>.
+    </para>
+  </listitem>
+</varlistentry>

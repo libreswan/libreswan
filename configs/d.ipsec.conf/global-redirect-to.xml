@@ -1,0 +1,17 @@
+<varlistentry>
+  <term>
+    <option>global-redirect-to</option>
+  </term>
+  <listitem>
+    <para>
+      Where to send remote peers to via the <option>global-redirect</option>
+      option. This can be a list, or a single entry, of IP addresses or hostnames
+      (FQDNs). If there is a list of entries, they must be separated with
+      comma's. One specified entry means all peers will be redirected
+      to it, while multiple specified entries means peers will be
+      evenly distributed across the specified servers. This
+      configuration can be changed at runtime via the
+      <command>ipsec whack --global-redirect-to</command> command.
+    </para>
+  </listitem>
+</varlistentry>

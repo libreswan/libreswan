@@ -1,25 +1,19 @@
-  <varlistentry>
-  <term><option>rekeyfuzz</option></term>
+<varlistentry>
+  <term>
+    <option>rekeyfuzz</option>
+  </term>
   <listitem>
-<para>maximum percentage by which
-<option>rekeymargin</option>
-should be randomly increased to randomize rekeying intervals
-(important for hosts with many connections);
-acceptable values are an integer,
-which may exceed 100,
-followed by a `%'
-(default set by
-<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-currently
-<option>100%</option>).
-The value of
-<option>rekeymargin</option>,
-after this random increase,
-must not exceed
-<option>salifetime</option>.
-The value
-<option>0%</option>
-will suppress time randomization.
-Relevant only locally, other end need not agree on it.</para>
+    <para>
+      maximum percentage by which <option>rekeymargin</option> should
+      be randomly increased to randomize rekeying intervals (important
+      for hosts with many connections); acceptable values are an
+      integer, which may exceed 100, followed by a `%' (default set by
+      <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      currently <option>100%</option>).  The value of
+      <option>rekeymargin</option>, after this random increase, must
+      not exceed <option>salifetime</option>.  The value
+      <option>0%</option> will suppress time randomization.  Relevant
+      only locally, other end need not agree on it.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

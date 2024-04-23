@@ -1,5 +1,7 @@
 <varlistentry>
-  <term><option>replay-window</option></term>
+  <term>
+    <option>replay-window</option>
+  </term>
   <listitem>
     <para>
       The size of the IPsec SA replay window protection in packets.

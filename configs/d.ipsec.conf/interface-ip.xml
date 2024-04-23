@@ -1,0 +1,16 @@
+<varlistentry>
+  <term>
+    <option>interface-ip=</option>
+  </term>
+  <listitem>
+    <para>
+      The IP address and netmask to configure on a virtual device (eg
+      ipsecXXX). This is often used when building Routing based IPsec
+      tunnels using transport mode and GRE, but can also be useful in
+      other scenarios. Currently requires
+      <option>ipsec-interface=</option>. See also
+      <option>leftvti=</option> for configuring IP addresses when
+      using deprecated VTI.
+    </para>
+  </listitem>
+</varlistentry>

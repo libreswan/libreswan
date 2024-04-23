@@ -1,20 +1,27 @@
-  <varlistentry>
-  <term><option>uniqueids</option></term>
+<varlistentry>
+  <term>
+    <option>uniqueids</option>
+  </term>
   <listitem>
-<para> Whether IDs should be considered identifying remote parties
-uniquely. Acceptable values are <option>yes</option> (the
-default) and <option>no</option>.  Participant IDs normally
-are unique, so a new connection instance using the same remote ID is
-almost invariably intended to replace an old existing connection.
-</para>
-<para> When the connection is defined to be a server (using xauthserver=)
-and the connection policy is authby=secret, this option is ignored (as
-of 3.20) and old connections will never be replaced.  This situation is
-commonly known as clients using a "Group ID".
-</para>
-<para> This option may disappear in the near future. People using identical
-X.509 certificates on multiple devices are urged to upgrade to use separate
-certificates per client and device.
-</para>
+    <para>
+      Whether IDs should be considered identifying remote parties
+      uniquely. Acceptable values are <option>yes</option> (the
+      default) and <option>no</option>.  Participant IDs normally are
+      unique, so a new connection instance using the same remote ID is
+      almost invariably intended to replace an old existing
+      connection.
+    </para>
+    <para>
+      When the connection is defined to be a server (using
+      xauthserver=) and the connection policy is authby=secret, this
+      option is ignored (as of 3.20) and old connections will never be
+      replaced.  This situation is commonly known as clients using a
+      "Group ID".
+    </para>
+    <para>
+      This option may disappear in the near future. People using
+      identical X.509 certificates on multiple devices are urged to
+      upgrade to use separate certificates per client and device.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>

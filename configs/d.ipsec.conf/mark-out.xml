@@ -1,0 +1,12 @@
+<varlistentry>
+  <term>
+    <option>mark-out</option>
+  </term>
+  <listitem>
+    <para>
+      The same as <option>mark</option>, but mark-out only applies to
+      the outbound half of the IPsec SA. It overrides any mark=
+      setting.
+    </para>
+  </listitem>
+</varlistentry>

@@ -1,13 +1,16 @@
-  <varlistentry>
-  <term><option>tcp-remoteport</option></term>
+<varlistentry>
+  <term>
+    <option>tcp-remoteport</option>
+  </term>
   <listitem>
-<para>
-Which remote TCP port to use when IKE over TCP is attempted. The default value is
-to use the NAT-T IKE port (4500). This value is not negotiated and should be configured
-properly on all endpoints. When opening a TCP socket to the remote host in this port,
-a regular ephemeral source port is obtained from the OS. For changing the UDP ports,
-see <option>leftikeport=</option>
-</para>
+    <para>
+      Which remote TCP port to use when IKE over TCP is attempted. The
+      default value is to use the NAT-T IKE port (4500). This value is
+      not negotiated and should be configured properly on all
+      endpoints. When opening a TCP socket to the remote host in this
+      port, a regular ephemeral source port is obtained from the
+      OS. For changing the UDP ports, see
+      <option>leftikeport=</option>
+    </para>
   </listitem>
-  </varlistentry>
-
+</varlistentry>

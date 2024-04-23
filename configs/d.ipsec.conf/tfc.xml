@@ -1,30 +1,18 @@
-  <varlistentry>
+<varlistentry>
   <term><option>tfc</option></term>
   <listitem>
-<para>
-Enable Traffic Flow Confidentiality ("TFC") (RFC-4303) for outgoing ESP
-packets in Tunnel Mode.  When enabled, ESP packets are padded to the
-specified size (up to the PMTU size) to prevent leaking information based
-on ESP packet size. This option is ignored for AH and for ESP in Transport
-Mode as those always leak traffic characteristics and applying TFC will
-not do anything. Acceptable values are positive numbers. The value 0 means
-TFC padding is not performed. Currently this feature is only implemented
-for the Linux XFRM stack. In IKEv2, when the notify payload
-ESP_TFC_PADDING_NOT_SUPPORTED is received, TFC padding is disabled. The
-default is not to do any TFC padding, but this might change in the near
-future.
-</para>
+    <para>
+      Enable Traffic Flow Confidentiality ("TFC") (RFC-4303) for outgoing ESP
+      packets in Tunnel Mode.  When enabled, ESP packets are padded to the
+      specified size (up to the PMTU size) to prevent leaking information based
+      on ESP packet size. This option is ignored for AH and for ESP in Transport
+      Mode as those always leak traffic characteristics and applying TFC will
+      not do anything. Acceptable values are positive numbers. The value 0 means
+      TFC padding is not performed. Currently this feature is only implemented
+      for the Linux XFRM stack. In IKEv2, when the notify payload
+      ESP_TFC_PADDING_NOT_SUPPORTED is received, TFC padding is disabled. The
+      default is not to do any TFC padding, but this might change in the near
+      future.
+    </para>
   </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>send-no-esp-tfc</option></term>
-  <listitem>
-<para>
-Whether or not to tell the remote peer that we do not support Traffic Flow Confidentiality ("TFC")
-(RFC-4303). Possible values are <option>no</option> (the default) which allows the
-peer to use TFC or <option>yes</option> which prevents to peer from using TFC.
-This does not affect whether this endpoint uses TFC, which only depends on the
-local <option>tfc</option> setting. This option is only valid for IKEv2.
-</para>
-  </listitem>
-  </varlistentry>
+</varlistentry>

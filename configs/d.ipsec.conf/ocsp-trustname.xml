@@ -1,0 +1,14 @@
+<varlistentry>
+  <term>
+    <option>ocsp-trustname</option>
+  </term>
+  <listitem>
+    <para>
+      The nickname of the certificate that has been imported into the
+      NSS database of the server handling the OCSP requests. This
+      requires the ocsp-uri option to be set as well. This option and
+      the previous options sets the OCSP <option>default
+      responder</option>.
+    </para>
+  </listitem>
+</varlistentry>
