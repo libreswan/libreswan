@@ -39,12 +39,14 @@
 static void terminate_and_disorient_connection(struct connection *c,
 					       where_t where)
 {
-	bool route = del_policy(c, policy.route);
+	/* Strip bits so connection shuts down.  */
 	bool up = del_policy(c, policy.up);
-	terminate_and_down_connection(c, /*strip-route-bit*/false, where);
+	bool keep = del_policy(c, policy.keep);
+	terminate_connection(c, where);
 	disorient(c);
-	set_policy(c, policy.route, route);
+	/* Restore bits so next orient recovers.  */
 	set_policy(c, policy.up, up);
+	set_policy(c, policy.up, keep);
 }
 
 bool oriented(const struct connection *c)

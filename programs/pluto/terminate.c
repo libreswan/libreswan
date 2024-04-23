@@ -215,11 +215,12 @@ void terminate_all_connection_states(struct connection *c, where_t where)
 
 /*
  * Caller must hold a reference; hence all the pmemory(C) calls.
+ *
+ * Caller must have stripped the +UP and +KEEP bits; else revival will
+ * happen only to then be stomped on.
  */
 
-void terminate_and_down_connection(struct connection *c,
-				   bool strip_route_bit,
-				   where_t where)
+void terminate_connection(struct connection *c, where_t where)
 {
 	if (never_negotiate(c)) {
 		/*
@@ -237,6 +238,50 @@ void terminate_and_down_connection(struct connection *c,
 			    c->local->kind == CK_PERMANENT ||
 			    c->local->kind == CK_LABELED_PARENT));
 
+	PEXPECT(c->logger, !c->policy.up);
+	PEXPECT(c->logger, !c->policy.keep);
+
+	/*
+	 * If there are states, delete them.
+	 *
+	 * Since the +UP and +KEEP bits have been stripped, deleting
+	 * states won't trigger a revival.  However, when there are no
+	 * states, the connection may be on the revival queue.  That
+	 * is handled below.
+	 */
+	terminate_all_connection_states(c, HERE);
+	pmemory(c); /* should not disappear; caller holds ref */
+
+	/*
+	 * Remove any kernel policy.
+	 *
+	 * For instance, a connection with no states that is on the
+	 * pending or revival queue can have on-demand or negotiating
+	 * kernel policy installed (else this call is a no-op).
+	 */
+	connection_unroute(c, where);
+	pmemory(c); /* should not disappear; caller holds ref */
+
+	/*
+	 * Remove connection from revival queue.
+	 */
+	flush_unrouted_revival(c);
+	pmemory(c); /* should not disappear; caller holds ref */
+
+	/*
+	 * Remove the connection from the pending queue.
+	 *
+	 * For instance, conn/1x1 and conn/1x2 where the latter is on
+	 * the former's pending queue (i.e., no states).
+	 */
+	remove_connection_from_pending(c);
+	pmemory(c); /* should not disappear; caller holds ref */
+}
+
+void terminate_and_down_connection(struct connection *c,
+				   bool strip_route_bit,
+				   where_t where)
+{
 	/*
 	 * Strip the +UP bit so that the connection (when its state is
 	 * deleted say) doesn't end up on the revival queue.
@@ -246,37 +291,11 @@ void terminate_and_down_connection(struct connection *c,
 	 * are deleted (although the order shouldn't matter)..
 	 */
 	del_policy(c, policy.up);
+	del_policy(c, policy.keep);
 	if (strip_route_bit) {
 		del_policy(c, policy.route);
 	}
-	/*
-	 * If there are states, delete them.  Since the +UP bit is
-	 * stripped, this won't trigger a revival.  However, this
-	 * doesn't preclude the connection already sitting on the
-	 * pending or revival queue.
-	 */
-	terminate_all_connection_states(c, HERE);
-	pmemory(c); /* should not disappear; caller holds ref */
-	/*
-	 * For instance, a connection with no states but waiting on
-	 * revival or pending can have on-demand or negotiating kernel
-	 * policy installed (else it is a no-op).
-	 */
-	connection_unroute(c, where);
-	pmemory(c); /* should not disappear; caller holds ref */
-	/*
-	 * For instance, a connection with no states when trying to
-	 * terminate a connection that is trying to revive (i.e., no
-	 * states).
-	 */
-	flush_unrouted_revival(c);
-	pmemory(c); /* should not disappear; caller holds ref */
-	/*
-	 * For instance, conn/1x1 and conn/1x2 where the latter is on
-	 * the former's pending queue (i.e., no states).
-	 */
-	remove_connection_from_pending(c);
-	pmemory(c); /* should not disappear; caller holds ref */
+	terminate_connection(c, where);
 }
 
 void terminate_and_down_connections(struct connection *c,

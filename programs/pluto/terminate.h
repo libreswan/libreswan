@@ -22,6 +22,16 @@ struct connection;
 struct logger;
 struct ike_sa;
 
+/*
+ * Terminate the connection.  Delete any states, pendings and
+ * revivals.  On return the connection can be deleted.
+ *
+ * Must be called with all revival bits cleared (which means caller
+ * needs to save/restore these bits across the call).
+ */
+
+void terminate_connection(struct connection *c, where_t where);
+
 void terminate_all_connection_states(struct connection *c, where_t where);
 
 /*
