@@ -3784,7 +3784,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 #define CP(P, N)				\
 	if (!never_negotiate(c) &&		\
 	    P) {				\
-		/* show when false */		\
+		/* show when true */		\
 		CS(#N);				\
 	}
 #define CNN(C,N)				\
@@ -3842,6 +3842,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CNN(is_group_instance(c), GROUPINSTANCE);
 	CNN(c->policy.route, ROUTE);
 	CP(c->policy.up, UP);
+	CP(c->policy.keep, KEEP);
 
 	CP(is_xauth(c), XAUTH);
 	CT(modecfg.pull, MODECFG_PULL);
