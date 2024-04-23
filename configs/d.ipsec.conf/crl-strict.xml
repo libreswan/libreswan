@@ -1,19 +1,20 @@
 <varlistentry>
   <term>
-    <emphasis>crl-strict</emphasis>
+    <option>crl-strict=</option>
   </term>
   <listitem>
     <para>
       if not set, pluto is tolerant about missing or expired X.509
       Certificate Revocation Lists (CRL's), and will allow peer
-      certificates as long as they do not appear on an expired
-      CRL. When this option is enabled, all connections with an
-      expired or missing CRL will be denied. Active connections will
-      be terminated at rekey time. This setup is more secure, but
-      vulnerable to downtime if the CRL expires. Acceptable values are
-      <emphasis>yes</emphasis> or <emphasis>no</emphasis> (the default).
-      This option used to be called strictcrlpolicy.
+      certificates as long as they do not appear on an expired CRL.
+      When this option is enabled, all connections with an expired or
+      missing CRL will be denied.  Active connections will be
+      terminated at rekey time.  This setup is more secure, but
+      vulnerable to downtime if the CRL expires.  Acceptable values
+      are <option>yes</option> or <option>no</option> (the default).
+    </para>
+    <para>
+      This option used to be called <option>strictcrlpolicy</option>.
     </para>
   </listitem>
 </varlistentry>
-

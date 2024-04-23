@@ -1,21 +1,21 @@
 <varlistentry>
   <term>
-    <emphasis>audit-log</emphasis>
+    <option>audit-log</option>
   </term>
   <listitem>
     <para>
       Whether pluto should produce Linux Auditing System log
-      messages. If enabled, pluto will log <emphasis>start</emphasis>,
-      <command>stop</command> and <emphasis>fail</emphasis> for the
+      messages. If enabled, pluto will log <option>start</option>,
+      <command>stop</command> and <option>fail</option> for the
       negotiation of IKE and IPsec SA's. The kernel will also log success
       and failures for actually adding and removing IPsec SA's from the
-      kernel's SADB.  Valid options are <emphasis>yes</emphasis>(the default)
-      and <emphasis>no</emphasis>.  On non-Linux systems, this option is
+      kernel's SADB.  Valid options are <option>yes</option>(the default)
+      and <option>no</option>.  On non-Linux systems, this option is
       ignored. If enabled but the kernel is lacking audit support,
       audit messages are not sent. If the kernel has audit support and
       using it fails, pluto will abort.  Note that for compliance
       reasons, audit log messages contain the relevant IP addresses,
-      even if <emphasis>logip=no</emphasis>.
+      even if <option>logip=no</option>.
     </para>
   </listitem>
 </varlistentry>

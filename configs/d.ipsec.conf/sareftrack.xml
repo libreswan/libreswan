@@ -1,11 +1,11 @@
   <varlistentry>
-  <term><emphasis>sareftrack</emphasis></term>
+  <term><option>sareftrack</option></term>
   <listitem>
 <para>Set the method of tracking reply packets with SArefs when using an
-SAref compatible stack. Currently only the <emphasis>mast</emphasis>
-stack supports this.  Acceptable values are <emphasis>yes</emphasis>
-(the default), <emphasis>no</emphasis> or <emphasis>conntrack</emphasis>. This option is ignored when SArefs are not supported. This option
-is passed as PLUTO_SAREF_TRACKING to the <emphasis>updown</emphasis>
+SAref compatible stack. Currently only the <option>mast</option>
+stack supports this.  Acceptable values are <option>yes</option>
+(the default), <option>no</option> or <option>conntrack</option>. This option is ignored when SArefs are not supported. This option
+is passed as PLUTO_SAREF_TRACKING to the <option>updown</option>
 script which makes the actual decisions whether to perform any iptables/ip_conntrack
 manipulation. A value of yes means that an IPSEC mangle table will be created. This table
 will be used to match reply packets. A value of conntrack means that
@@ -13,7 +13,7 @@ additionally, subsequent packets using this connection will be marked as
 well, reducing the lookups needed to find the proper SAref by using the
 ip_conntrack state. A value of no means no IPSEC mangle table is created,
 and SAref tracking is left to a third-party (kernel) module. In case of a third
-party module, the SArefs can be relayed using the <emphasis>statsbin=</emphasis> notification helper.
+party module, the SArefs can be relayed using the <option>statsbin=</option> notification helper.
 </para>
   </listitem>
   </varlistentry>

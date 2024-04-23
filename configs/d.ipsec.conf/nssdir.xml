@@ -1,8 +1,8 @@
   <varlistentry>
-  <term><emphasis>nssdir</emphasis></term>
+  <term><option>nssdir</option></term>
   <listitem>
     <para>Specifies a directory for NSS database files. The default value is
-    <emphasis>@@IPSEC_NSSDIR@@</emphasis>.  It may contain
+    <option>@@IPSEC_NSSDIR@@</option>.  It may contain
     the following files:</para>
     <variablelist>
       <varlistentry>

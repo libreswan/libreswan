@@ -23,17 +23,17 @@
 
   <para>
     <filename>ipsec.conf</filename> is a text file, consisting of one
-    or more <emphasis>sections</emphasis>.
+    or more <option>sections</option>.
   </para>
 
   <para>
-    Within the file, white space followed by <emphasis>#</emphasis>
+    Within the file, white space followed by <option>#</option>
     followed by anything to the end of the line is a comment and is
     ignored, as are empty lines that are not within a section.
   </para>
 
   <para>
-    A line that contains <emphasis>include</emphasis> and a file name,
+    A line that contains <option>include</option> and a file name,
     separated by white space, is replaced by the contents of that
     file.  If the file name is not a full pathname, it is considered
     to be relative to the directory that contains the including file.
@@ -45,7 +45,7 @@
   </para>
 
   <para>
-    <emphasis>include</emphasis> <filename>/etc/ipsec.d/*.conf</filename>
+    <option>include</option> <filename>/etc/ipsec.d/*.conf</filename>
   </para>
 
   <para>
@@ -55,7 +55,7 @@
     descriptions to be changed, copied to the other security gateways
     involved, etc., without having to constantly extract them from the
     configuration file and then insert them back into it.  Note also
-    the <emphasis>also</emphasis> parameters (described below) which
+    the <option>also</option> parameters (described below) which
     permit splitting a single logical section (e.g. a connection
     description) into several distinct sections.
   </para>
@@ -68,7 +68,7 @@
   </para>
 
   <para>
-    <emphasis>version 2</emphasis>
+    <option>version 2</option>
   </para>
 
   <para>
@@ -92,10 +92,10 @@
   </para>
 
   <para>
-    There are two types of section: a <emphasis>config</emphasis>
+    There are two types of section: a <option>config</option>
     section specifies general configuration information for
     <application>libreswan</application>, and a
-    <emphasis>conn</emphasis> section specifies an IPsec connection.
+    <option>conn</option> section specifies an IPsec connection.
   </para>
 
   <para>
@@ -108,7 +108,7 @@
 
   <para>
     (note the mandatory preceding white space).  There can be white
-    space on either side of the <emphasis>=</emphasis>.  Parameter
+    space on either side of the <option>=</option>.  Parameter
     names follow the same syntax as section names, and are specific to
     a section type.  Unless otherwise explicitly specified, no
     parameter name may appear more than once in a section.
@@ -118,7 +118,7 @@
     An empty <replaceable>value</replaceable> stands for the empty
     string.  A non-empty <replaceable>value</replaceable> may contain
     white space only if the entire <replaceable>value</replaceable> is
-    enclosed in double quotes (<emphasis>"</emphasis>); a
+    enclosed in double quotes (<option>"</option>); a
     <replaceable>value</replaceable> cannot itself contain a double
     quote, nor may it be continued across more than one line.
   </para>
@@ -136,7 +136,7 @@
 
   <variablelist>
     <varlistentry>
-      <term><envar>also</envar>=<replaceable>value</replaceable></term>
+      <term><option>also=<replaceable>value</replaceable></option></term>
       <listitem>
 	<para>
 	  The <replaceable>value</replaceable> is a section name.  The
@@ -144,31 +144,31 @@
 	  section (i.e., as if they had been written as part of and at
 	  that point in the section's definition).  The specified
 	  section must exist, and must have the same section type.
-	  Multiple and nested <envar>also</envar> are permitted
+	  Multiple and nested <option>also</option> are permitted
 	  (duplicate insertions of the same section are ignored).
-	  When the same <emphasis>parameter</emphasis> appears in
+	  When the same <option>parameter</option> appears in
 	  multiple sections, the first definition encountered is used.
 	  This allows, for example, keeping the encryption keys for a
 	  connection in a separate file from the rest of the
-	  description, by using both an <envar>also</envar> parameter
-	  and an <emphasis>include</emphasis> line.
+	  description, by using both an <option>also</option> parameter
+	  and an <option>include</option> line.
 	</para>
 	<para>
-	  Putting <envar>also</envar> at the end of the section after
-	  any <emphasis>parameter</emphasis> definitions is
+	  Putting <option>also</option> at the end of the section after
+	  any <option>parameter</option> definitions is
 	  recommended.  This way, the section's
-	  <emphasis>parameter</emphasis>
+	  <option>parameter</option>
 	  <replaceable>value</replaceable> overrides
-	  <envar>also</envar> sections.
+	  <option>also</option> sections.
 	</para>
       </listitem>
     </varlistentry>
   </variablelist>
 
   <para>
-    Parameter names beginning with <emphasis>x-</emphasis> (or
-    <emphasis>X-</emphasis>, or <emphasis>x_</emphasis>, or
-    <emphasis>X_</emphasis>) are reserved for user extensions and will
+    Parameter names beginning with <option>x-</option> (or
+    <option>X-</option>, or <option>x_</option>, or
+    <option>X_</option>) are reserved for user extensions and will
     never be assigned meanings by IPsec.  Parameters with such names
     must still observe the syntax rules (limits on characters used in
     the name; no white space in a non-quoted value; no newlines or
@@ -177,16 +177,16 @@
   </para>
 
   <para>
-    A section with name <emphasis>%default</emphasis> specifies
+    A section with name <option>%default</option> specifies
     defaults for sections of the same type.  For each parameter in it,
     any section of that type that does not have a parameter of the
     same name gets a copy of the one from the
-    <emphasis>%default</emphasis> section.  There may be multiple
-    <emphasis>%default</emphasis> sections of a given type and
+    <option>%default</option> section.  There may be multiple
+    <option>%default</option> sections of a given type and
     multiple default values for a given parameter (the last
-    <emphasis>value</emphasis> is used).
-    <emphasis>%default</emphasis> sections may not contain any
-    <envar>also</envar> parameters.
+    <option>value</option> is used).
+    <option>%default</option> sections may not contain any
+    <option>also</option> parameters.
   </para>
 
 </refsect1>

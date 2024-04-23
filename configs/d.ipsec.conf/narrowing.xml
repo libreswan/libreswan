@@ -1,10 +1,10 @@
   <varlistentry>
-  <term><emphasis>narrowing</emphasis></term>
+  <term><option>narrowing</option></term>
   <listitem>
 <para>IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing options.
-Currently the accepted values are <emphasis>no</emphasis>,
+Currently the accepted values are <option>no</option>,
 (the default) signifying no narrowing will be proposed or accepted, or
-<emphasis>yes</emphasis>, signifying IKEv2 negotiation may
+<option>yes</option>, signifying IKEv2 negotiation may
 allow establishing an IPsec connection with narrowed down traffic
 selectors. This option is ignored for IKEv1.</para>
 <para>There are security implications in allowing narrowing down the

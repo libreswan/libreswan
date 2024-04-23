@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <envar>plutodebug</envar>
+    <option>plutodebug</option>
   </term>
   <listitem>
     <para>

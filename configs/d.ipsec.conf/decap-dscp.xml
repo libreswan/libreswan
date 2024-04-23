@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>decap-dscp</emphasis>
+    <option>decap-dscp</option>
   </term>
   <listitem>
     <para>
@@ -8,7 +8,7 @@
       (DSCP, formerly known as Terms Of Service (TOS)) bits. If these
       bits are set on the inner (encrypted) IP packets, these bits are
       set on the decrypted IP packets.  Acceptable values are
-      <emphasis>no</emphasis> (the default) or <emphasis>yes</emphasis>.
+      <option>no</option> (the default) or <option>yes</option>.
       Currently this feature is only implemented for the Linux XFRM stack.
     </para>
   </listitem>

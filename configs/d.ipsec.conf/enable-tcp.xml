@@ -1,24 +1,24 @@
 <varlistentry>
   <term>
-    <emphasis>enable-tcp</emphasis>
+    <option>enable-tcp</option>
   </term>
   <listitem>
     <para>
       Normally, IKE negotiation and ESP encapsulation happens over
       UDP. This option enables support for IKE and ESP over TCP as per
-      RFC 8229. Acceptable values are <emphasis>no</emphasis>(the default),
-      <emphasis>yes</emphasis> meaning only TCP will be used, or
-      <emphasis>fallback</emphasis> meaning that TCP will be
+      RFC 8229. Acceptable values are <option>no</option>(the default),
+      <option>yes</option> meaning only TCP will be used, or
+      <option>fallback</option> meaning that TCP will be
       attempted only after negotiation over UDP failed. Since
       performance over TCP is much less, and TCP sessions are
       vulnerable to simply RST resets and MITM attacks causing the TCP
       connection to close, this option should really only be used in
       fallback mode.  If used in fallback mode, it is recommend to
-      reduce the <emphasis>retransmit-timeout</emphasis>
+      reduce the <option>retransmit-timeout</option>
       from the default 60s to a much shorter value such as 10s, so
       that one does not have to wait a minute for the TCP fallback to
       be attempted. To receive incoming TCP connections, the
-      <emphasis>config setup</emphasis> option <emphasis>listen-tcp</emphasis>
+      <option>config setup</option> option <option>listen-tcp</option>
       needs to be enabled.
     </para>
   </listitem>

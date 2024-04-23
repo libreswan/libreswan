@@ -1,27 +1,27 @@
   <varlistentry>
-  <term><emphasis>salifetime</emphasis></term>
+  <term><option>salifetime</option></term>
   <listitem>
 <para>how long a particular instance of a connection
 (a set of encryption/authentication keys for user packets) should last,
 from successful negotiation to expiry;
 acceptable values are an integer optionally followed by
-<emphasis>s</emphasis>
+<option>s</option>
 (a time in seconds)
 or a decimal number followed by
-<emphasis>m</emphasis>,
-<emphasis>h</emphasis>,
+<option>m</option>,
+<option>h</option>,
 or
-<emphasis>d</emphasis>
+<option>d</option>
 (a time
 in minutes, hours, or days respectively)
 (default
-<emphasis>8h</emphasis>,
+<option>8h</option>,
 maximum
-<emphasis>24h</emphasis>).
+<option>24h</option>).
 Normally, the connection is renegotiated (via the keying channel)
 before it expires.
 The two ends need not exactly agree on
-<emphasis>salifetime</emphasis>,
+<option>salifetime</option>,
 although if they do not,
 there will be some clutter of superseded connections on the end
 which thinks the lifetime is longer. </para>

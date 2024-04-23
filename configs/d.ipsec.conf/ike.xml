@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><emphasis>ike</emphasis></term>
+  <term><option>ike</option></term>
   <listitem>
     <para>
       IKE encryption/authentication algorithm to be used for the
@@ -15,24 +15,24 @@
       the INTEGRITY (hash) algorithm by design.
     </para>
     <para> 
-      The format is <emphasis>"cipher-hash-modpgroup,
-      cipher-hash-modpgroup, ..."</emphasis> Any omitited option will
-      be filled in with <emphasis>all</emphasis> allowed
+      The format is <option>"cipher-hash-modpgroup,
+      cipher-hash-modpgroup, ..."</option> Any omitited option will
+      be filled in with <option>all</option> allowed
       default values. Multiple proposals are separated by a comma. If
-      an <emphasis>ike=</emphasis> line is specified, no
+      an <option>ike=</option> line is specified, no
       other received proposals will be accepted than those specified
-      on the IKE line.  Some examples are <emphasis>ike=3des-sha1,aes-sha1</emphasis>,
-      <emphasis>ike=aes</emphasis>,
-      <emphasis>ike=aes_ctr</emphasis>,
-      <emphasis>ike=aes_gcm256;sha2_256</emphasis>,
-      <emphasis>ike=aes128-sha1;modp2048</emphasis>,
-      <emphasis>ike=aes256-sha2;dh19</emphasis>,
-      <emphasis>ike=aes128-sha1;dh22</emphasis>,
-      <emphasis>ike=3des-md5;modp1024,aes-sha1;modp1536</emphasis>.
+      on the IKE line.  Some examples are <option>ike=3des-sha1,aes-sha1</option>,
+      <option>ike=aes</option>,
+      <option>ike=aes_ctr</option>,
+      <option>ike=aes_gcm256;sha2_256</option>,
+      <option>ike=aes128-sha1;modp2048</option>,
+      <option>ike=aes256-sha2;dh19</option>,
+      <option>ike=aes128-sha1;dh22</option>,
+      <option>ike=3des-md5;modp1024,aes-sha1;modp1536</option>.
       </para><para> IKEv2 allows combining elements into a single
       proposal. These can be specified by using the + symbol. An
       example is:
-      <emphasis>ike=aes_gcm+chacha20_poly1305;dh14+dh19,aes+3des-sha2+sha1;dh14</emphasis>.
+      <option>ike=aes_gcm+chacha20_poly1305;dh14+dh19,aes+3des-sha2+sha1;dh14</option>.
       Note that AEAD algorithms (aes_gcm, aes_ccm, chacha20_poly1305)
       and non-AEAD algorithms (aes, 3des) cannot be combined into a
       single proposal. To support aes and aes_gcm, two proposals
@@ -80,7 +80,7 @@
     <para>
       For all Diffie-Hellman groups, the "dh" keyword can be used
       instead of the "modp" keyword. For example
-      <emphasis>ike=3des-sha1-dh19</emphasis>. Diffie-Hellman groups
+      <option>ike=3des-sha1-dh19</option>. Diffie-Hellman groups
       19,20 and 21 from RFC-5903 are supported. Curve25519 from
       RFC-8031 is supported as "dh31". Curve448 and GOST DH groups are
       not yet supported in libreswan because these are not supported

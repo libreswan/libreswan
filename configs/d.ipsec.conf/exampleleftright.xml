@@ -1,7 +1,7 @@
 
   <title>CONN SECTIONS</title>
   <para>
-    A <emphasis>conn</emphasis> section contains a <emphasis>connection specification</emphasis>,
+    A <option>conn</option> section contains a <option>connection specification</option>,
     defining a network connection to be made using IPsec.  The name given is arbitrary,
     and is used to identify the connection to
     <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -25,39 +25,39 @@
     To avoid trivial editing of the configuration file to suit it to each system
     involved in a connection,
     connection specifications are written in terms of
-    <emphasis>left</emphasis>
+    <option>left</option>
     and
-    <emphasis>right</emphasis>
+    <option>right</option>
     participants,
     rather than in terms of local and remote.
     Which participant is considered
-    <emphasis>left</emphasis>
+    <option>left</option>
     or
-    <emphasis>right</emphasis>
+    <option>right</option>
     is arbitrary;
     IPsec figures out which one it is being run on based on internal information.
     This permits using identical connection specifications on both ends.
     There are cases where there is no symmetry; a good convention is to
     use
-    <emphasis>left</emphasis>
+    <option>left</option>
     for the local side and
-    <emphasis>right</emphasis>
+    <option>right</option>
     for the remote side (the first letters are a good mnemonic).
   </para>
 
   <para>
     Many of the parameters relate to one participant or the other;
     only the ones for
-    <emphasis>left</emphasis>
+    <option>left</option>
     are listed here, but every parameter whose name begins with
-    <emphasis>left</emphasis>
+    <option>left</option>
     has a
-    <emphasis>right</emphasis>
+    <option>right</option>
     counterpart,
     whose description is the same but with
-    <emphasis>left</emphasis>
+    <option>left</option>
     and
-    <emphasis>right</emphasis>
+    <option>right</option>
     reversed.
   </para>
 

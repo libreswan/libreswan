@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis>reqid</emphasis></term>
+  <term><option>reqid</option></term>
   <listitem>
 <para>
 a unique identifier used to match IPsec SAs using iptables with

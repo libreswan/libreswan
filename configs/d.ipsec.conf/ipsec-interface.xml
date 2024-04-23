@@ -1,22 +1,22 @@
 <varlistentry>
   <term>
-    <emphasis>ipsec-interface</emphasis>
+    <option>ipsec-interface</option>
   </term>
   <listitem>
     <para>
-      Create or use an existing virtual interface <emphasis>ipsecXXX</emphasis>
+      Create or use an existing virtual interface <option>ipsecXXX</option>
       for "Routing based VPNs" (as opposed to "Policy based VPNs").
-      Valid options are <emphasis>yes</emphasis>, <emphasis>no</emphasis> or a
+      Valid options are <option>yes</option>, <option>no</option> or a
       number. When using a number, the IPsec interface created and/or
       used will use that number as part of the interface name. For
-      example setting <emphasis>ipsec-interface=5</emphasis>
-      will create and/or use the <emphasis>ipsec5</emphasis>
-      interface. The value <emphasis>0</emphasis> cannot be
-      used and is interpreted as <emphasis>no</emphasis>. The value
-      <emphasis>yes</emphasis> is interpreted as the number 1, and
+      example setting <option>ipsec-interface=5</option>
+      will create and/or use the <option>ipsec5</option>
+      interface. The value <option>0</option> cannot be
+      used and is interpreted as <option>no</option>. The value
+      <option>yes</option> is interpreted as the number 1, and
       thus will use the interface named
-      <emphasis>ipsec1</emphasis>. An IP address can be configured for
-      this interface via the <emphasis>interface-ip=</emphasis> option.
+      <option>ipsec1</option>. An IP address can be configured for
+      this interface via the <option>interface-ip=</option> option.
     </para>
     <para>
       The ipsec-interface is used to route outbound traffic that needs
@@ -27,17 +27,17 @@
       dropped. Tools such as tcpdump, iptables, ifconfig and tools
       that need traffic counters can be used on all cleartext
       pre-encrypt and post-decrypt traffic on the device. When
-      <emphasis>leftsubnet=</emphasis> is equal to
-      <emphasis>rightsubnet=</emphasis>, the routing needs to be
+      <option>leftsubnet=</option> is equal to
+      <option>rightsubnet=</option>, the routing needs to be
       managed by an external routing daemon or manually by the
       administrator.
     </para>
     <para>
       This option is currently only supported on Linux kernels 4.19 or
       later when compiled with XFRMi support
-      (<emphasis>CONFIG_XFRM_INTERFACE</emphasis>). The number of the
-      ipsecX device corresponds with the <emphasis>XFRM
-      IF_ID</emphasis> policy option of the IPsec SA in the Linux
+      (<option>CONFIG_XFRM_INTERFACE</option>). The number of the
+      ipsecX device corresponds with the <option>XFRM
+      IF_ID</option> policy option of the IPsec SA in the Linux
       kernel. On Linux, XFRMi interfaces can be managed by libreswan
       automatically or can be preconfigured on the system using the
       existing init system or via networking tools such as
@@ -59,7 +59,7 @@
 
 <varlistentry>
   <term>
-    <emphasis>interface-ip=</emphasis>
+    <option>interface-ip=</option>
   </term>
   <listitem>
     <para>
@@ -67,8 +67,8 @@
       ipsecXXX). This is often used when building Routing based IPsec
       tunnels using transport mode and GRE, but can also be useful in
       other scenarios. Currently requires
-      <emphasis>ipsec-interface=</emphasis>. See also
-      <emphasis>leftvti=</emphasis> for configuring IP addresses when
+      <option>ipsec-interface=</option>. See also
+      <option>leftvti=</option> for configuring IP addresses when
       using deprecated VTI.
     </para>
   </listitem>

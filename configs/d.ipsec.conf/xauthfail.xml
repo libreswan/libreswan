@@ -1,9 +1,9 @@
   <varlistentry>
-  <term><emphasis>xauthfail</emphasis></term>
+  <term><option>xauthfail</option></term>
   <listitem>
 <para>When XAUTH support is available, set the failure method desired when authentication has failed.
-The currently supported values are <emphasis>hard</emphasis> (the default) and
-<emphasis>soft</emphasis>. A soft failure means the IPsec SA is allowed to be established,
+The currently supported values are <option>hard</option> (the default) and
+<option>soft</option>. A soft failure means the IPsec SA is allowed to be established,
 as if authentication had passed successfully, but the XAUTH_FAILED environment variable will be set
 to 1 for the updown script, which can then be used to redirect the user into a walled garden, for example
 a payment portal.

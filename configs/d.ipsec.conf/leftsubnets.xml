@@ -1,16 +1,16 @@
 <varlistentry>
   <term>
-    <emphasis>leftsubnets</emphasis>
+    <option>leftsubnets</option>
   </term>
   <listitem>
     <para>
       specify multiple private subnets behind the left participant,
       expressed as
-      <emphasis>networkA</emphasis><emphasis>/</emphasis><emphasis>netmaskA</emphasis>,<emphasis>networkB</emphasis><emphasis>/</emphasis><emphasis>netmaskB</emphasis><emphasis>[,...]</emphasis>
+      <option>networkA</option><option>/</option><option>netmaskA</option>,<option>networkB</option><option>/</option><option>netmaskB</option><option>[,...]</option>
       If both a leftsubnets= and rightsubnets= are defined, all combinations of subnet
       tunnels will be established as separate IPsec tunnels. You
       cannot use leftsubnet= and leftsubnets= together. For examples
-      see <emphasis>testing/pluto/multinet-*</emphasis>. Be
+      see <option>testing/pluto/multinet-*</option>. Be
       aware that when using spaces as separator, that the entire
       option value needs to be in double quotes.
     </para>

@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><emphasis>curl-timeout</emphasis></term>
+  <term><option>curl-timeout</option></term>
   <listitem>
     <para>
       The timeout for the curl library calls used to fetch CRL and

@@ -1,19 +1,19 @@
 <varlistentry>
   <term>
-    <emphasis>global-redirect</emphasis>
+    <option>global-redirect</option>
   </term>
   <listitem>
     <para>
       Whether to send requests for the remote peer to redirect
       IKE/IPsec SA's during IKE_SA_INIT. Valid options are
-      <emphasis>no</emphasis> (the default),
-      <emphasis>yes</emphasis> and <emphasis>auto</emphasis>,
+      <option>no</option> (the default),
+      <option>yes</option> and <option>auto</option>,
       where auto means that the requests will be sent if DDoS mode
-      is active (see <emphasis>ddos-mode</emphasis>). If set,
-      the option <emphasis>global-redirect-to=</emphasis> must also be
+      is active (see <option>ddos-mode</option>). If set,
+      the option <option>global-redirect-to=</option> must also be
       set to indicate where to redirect peers to. For specific connection
       redirection after IKE SA authentication, see the
-      <emphasis>send-redirect=</emphasis> and <emphasis>redirect-to=</emphasis>
+      <option>send-redirect=</option> and <option>redirect-to=</option>
       options. This configuration can be changed at runtime via the
       <command>ipsec whack --global-redirect</command> command.
     </para>
@@ -21,11 +21,11 @@
 </varlistentry>
 <varlistentry>
   <term>
-    <emphasis>global-redirect-to</emphasis>
+    <option>global-redirect-to</option>
   </term>
   <listitem>
     <para>
-      Where to send remote peers to via the <emphasis>global-redirect</emphasis>
+      Where to send remote peers to via the <option>global-redirect</option>
       option. This can be a list, or a single entry, of IP addresses or hostnames
       (FQDNs). If there is a list of entries, they must be separated with
       comma's. One specified entry means all peers will be redirected

@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis>statsbin</emphasis></term>
+  <term><option>statsbin</option></term>
   <listitem>
 <para>This option specifies an optional external program to report tunnel state changes too.
 The default is not to report tunnel state changes. This program can be used to notify the

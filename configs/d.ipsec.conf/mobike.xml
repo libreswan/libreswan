@@ -1,11 +1,11 @@
   <varlistentry>
-  <term><emphasis>mobike</emphasis></term>
+  <term><option>mobike</option></term>
   <listitem>
 <para>Whether to allow MOBIKE (RFC 4555) to enable a connection to migrate
 its endpoint without needing to restart the connection from scratch. This
 is used on mobile devices that switch between wired, wireless or mobile
-data connections. Current values are <emphasis>no</emphasis> (the default)
-or <emphasis>yes</emphasis>, Only connection acting as modecfgclient
+data connections. Current values are <option>no</option> (the default)
+or <option>yes</option>, Only connection acting as modecfgclient
 will allow the initiator to migrate using mobike. Only connections acting as
 modecfgserver will allow clients to migrate.
 </para>

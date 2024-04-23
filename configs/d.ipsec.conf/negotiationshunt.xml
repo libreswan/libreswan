@@ -1,9 +1,9 @@
   <varlistentry>
-  <term><emphasis>negotiationshunt</emphasis></term>
+  <term><option>negotiationshunt</option></term>
   <listitem>
 <para>What to do with packets during the IKE negotiation.
-Valid options are <emphasis>hold</emphasis> (the default)
-or <emphasis>passthrough</emphasis>. This should almost
+Valid options are <option>hold</option> (the default)
+or <option>passthrough</option>. This should almost
 always be left to the default hold value to avoid cleartext packet
 leaking. The only reason to set this to passthrough is if plaintext
 service availability is more important than service security or privacy,

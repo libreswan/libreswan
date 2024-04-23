@@ -33,7 +33,7 @@
       </command> followed by <command>ipsec route
       <replaceable>connection</replaceable> </command>, having the
       same effect as the connection configuration option
-      <envar>auto=route</envar> or <envar>auto=ondemand</envar>.  This
+      <option>auto=route</option> or <option>auto=ondemand</option>.  This
       sets up connection to be <option>on demand</option>, causing
       connection to establish only when triggered by outbound traffic.
     </para>

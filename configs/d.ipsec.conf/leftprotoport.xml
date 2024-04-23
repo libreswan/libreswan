@@ -1,22 +1,22 @@
 <varlistentry>
   <term>
-    <emphasis>leftprotoport</emphasis>
+    <option>leftprotoport</option>
   </term>
   <listitem>
     <para>
       allowed protocols and ports over connection, also called Port
-      Selectors. The argument is in the form <emphasis>protocol</emphasis>,
+      Selectors. The argument is in the form <option>protocol</option>,
       which can be a number or a name
-      that will be looked up in <emphasis>/etc/protocols</emphasis>,
-      such as <emphasis>leftprotoport=icmp</emphasis>, or in the form of
-      <emphasis>protocol/port</emphasis>, such as <emphasis>tcp/smtp</emphasis>.
+      that will be looked up in <option>/etc/protocols</option>,
+      such as <option>leftprotoport=icmp</option>, or in the form of
+      <option>protocol/port</option>, such as <option>tcp/smtp</option>.
       Ports can be defined as a number
       (eg. 25) or as a name (eg smtp) which will be looked up in
-      <emphasis>/etc/services</emphasis>. A special keyword
-      <emphasis>%any</emphasis> can be used to allow all
+      <option>/etc/services</option>. A special keyword
+      <option>%any</option> can be used to allow all
       ports of a certain protocol. The most common use of this option
       is for L2TP connections to only allow l2tp packets (UDP port
-      1701), eg: <emphasis>leftprotoport=17/1701</emphasis>.
+      1701), eg: <option>leftprotoport=17/1701</option>.
     </para>
 
     <para>
@@ -24,31 +24,31 @@
       for type and the lower 8 bits for port. For example, to allow
       icmp echo packets (type 8, code 0) the 'port' would be 0x0800,
       or 2048 in decimal, so you configure
-      <emphasis>leftprotoport=icmp/2048</emphasis>. Similarly, to
+      <option>leftprotoport=icmp/2048</option>. Similarly, to
       allow ipv6-icmp Neighbour Discovery which has type 136 (0x88)
       and code 0(0x00) this becomes 0x8800 or in decimal 34816
-      resulting in <emphasis>leftprotoport=ipv6-icmp/34816</emphasis>.
+      resulting in <option>leftprotoport=ipv6-icmp/34816</option>.
     </para>
 
     <para>
       Some clients, notably older Windows XP and some Mac OSX clients,
       use a random high port as source port. In those cases
-      <emphasis>rightprotoport=17/%any</emphasis> can be used to allow
+      <option>rightprotoport=17/%any</option> can be used to allow
       all UDP traffic on the connection.  Note that this option is
       part of the proposal, so it cannot be arbitrarily left out if
       one end does not care about the traffic selection over this
       connection - both peers have to agree. The Port Selectors show
       up in the output of <command>ipsec status</command>
-      eg:<emphasis>"l2tp":
-      193.110.157.131[@aivd.libreswan.org]:7/1701...%any:17/1701</emphasis>
+      eg:<option>"l2tp":
+      193.110.157.131[@aivd.libreswan.org]:7/1701...%any:17/1701</option>
       This option only filters outbound traffic.  Inbound traffic
       selection must still be based on firewall rules activated by an
       updown script. The variables $PLUTO_MY_PROTOCOL,
       $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and $PLUTO_PEER_PORT are
-      available for use in <emphasis>updown</emphasis> scripts. Older
+      available for use in <option>updown</option> scripts. Older
       workarounds for bugs involved a setting of
-      <emphasis>17/0</emphasis> to denote <emphasis>any single UDP
-      port</emphasis> (not UDP port 0). Some clients, most notably
+      <option>17/0</option> to denote <option>any single UDP
+      port</option> (not UDP port 0). Some clients, most notably
       OSX, uses a random high port, instead of port 1701 for L2TP.
     </para>
 

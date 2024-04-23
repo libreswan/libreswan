@@ -1,11 +1,11 @@
 <varlistentry>
   <term>
-    <emphasis>hostaddrfamily</emphasis>
+    <option>hostaddrfamily</option>
   </term>
   <listitem>
     <para>
       the address family of the hosts; currently the accepted values
-      are <emphasis>ipv4</emphasis> and <emphasis>ipv6</emphasis>.
+      are <option>ipv4</option> and <option>ipv6</option>.
       The default is to detect this based on the IP addresses specified
       or the IP addresses resolved, so this option is not needed, unless
       you specify hostnames that resolve to both IPv4 and IPv6.

@@ -1,13 +1,13 @@
 <varlistentry>
   <term>
-    <emphasis>nat-keepalive</emphasis>
+    <option>nat-keepalive</option>
   </term>
   <listitem>
     <para>
       whether to send any NAT-T keep-alives. These one byte packets
       prevent the NAT router from closing its port when there is not
       enough traffic on the IPsec connection.  Acceptable values are:
-      <emphasis>yes</emphasis> (the default) and <emphasis>no</emphasis>.
+      <option>yes</option> (the default) and <option>no</option>.
     </para>
   </listitem>
 </varlistentry>

@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis>ipsecdir</emphasis>
+    <option>ipsecdir</option>
   </term>
   <listitem>
     <para>
       Specifies a directory for administrator-controlled configuration
       files and directories.  The default value is
-      <emphasis>@@IPSEC_CONFDDIR@@</emphasis>. It may contain the following
+      <option>@@IPSEC_CONFDDIR@@</option>. It may contain the following
       files and directories:
     </para>
     <variablelist>
@@ -42,8 +42,8 @@
         <listitem>
 	  <para>
             a directory containing policy group configuration
-            information.  See <emphasis>POLICY GROUP
-            FILES</emphasis> in this document for more information.
+            information.  See <option>POLICY GROUP
+            FILES</option> in this document for more information.
           </para>
 	</listitem>
       </varlistentry>

@@ -1,10 +1,10 @@
   <varlistentry>
-  <term><emphasis>logtime</emphasis></term>
+  <term><option>logtime</option></term>
   <listitem>
-<para>When pluto is directed to log to a file using <emphasis>logfile=</emphasis>,
+<para>When pluto is directed to log to a file using <option>logfile=</option>,
 this option determines whether or not to log the current timestamp as prefix.
-Values are <emphasis>yes</emphasis> (the default) or
-<emphasis>no</emphasis>. The no value can be used to create logs without
+Values are <option>yes</option> (the default) or
+<option>no</option>. The no value can be used to create logs without
 ephemeral timestamps, such as those created when running the test suite.
 This option used to be called plutostderrlogtime=
 </para>

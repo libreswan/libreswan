@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>ipsec-max-bytes</emphasis>
+    <option>ipsec-max-bytes</option>
   </term>
   <listitem>
     <para>
@@ -8,12 +8,12 @@
       an IPsec SA instance for a connection; acceptable values are an
       integer optionally followed by
 
-      <emphasis>KiB</emphasis>,
-      <emphasis>MiB</emphasis>,
-      <emphasis>GiB</emphasis>,
-      <emphasis>TiB</emphasis>,
-      <emphasis>PiB</emphasis> or
-      <emphasis>EiB</emphasis>
+      <option>KiB</option>,
+      <option>MiB</option>,
+      <option>GiB</option>,
+      <option>TiB</option>,
+      <option>PiB</option> or
+      <option>EiB</option>
 
       to signify kilobytes, megabytes, gigabytes, terabytes, petabytes
       or exabytes.

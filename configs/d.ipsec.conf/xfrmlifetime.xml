@@ -1,5 +1,5 @@
   <varlistentry>
-    <term><emphasis>xfrmlifetime</emphasis></term>
+    <term><option>xfrmlifetime</option></term>
     <listitem>
       <para>
 	The time in seconds until the XFRM acquire state times out. The
@@ -14,7 +14,7 @@
 	towards cloud instances that can quickly re-use IP addresses. This value
 	is only used during the libreswan startup process by the ipsec _stackmanager
 	helper. See also
-	<emphasis>failureshunt</emphasis> and <emphasis>negotiationshunt</emphasis>
+	<option>failureshunt</option> and <option>negotiationshunt</option>
       </para>
     </listitem>
   </varlistentry>

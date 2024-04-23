@@ -1,27 +1,26 @@
 <varlistentry>
   <term>
-    <emphasis>ikepad</emphasis>
+    <option>ikepad=</option>
   </term>
   <listitem>
     <para>
-      Whether or not to pad IKEv1 messages to a multiple of 4
-      bytes. Valid values are <emphasis>yes</emphasis>, (the
-      default) and <emphasis>no</emphasis>.
+      Whether or not to pad IKEv1 messages to a multiple of 4 bytes.
+      Valid values are <option>ikepad=yes</option>, (the default) and
+      <option>ikepad=no</option>.
     </para>
     <para>
       IKE padding is allowed in IKEv1 but has been known to cause
-      interoperability issues. The ikepad= option can be used to
-      disable IKEv1 padding. This used to be required for some devices
-      (such as Checkpoint in Aggressive Mode) that reject padded IKEv1
-      packets. A bug was fixed in libreswan 3.25 that applied wrong
-      IKE padding in XAUTH, so it is suspected that Checkpoint padding
-      issue bas been resolved. And this option should not be needed by
-      anyone. In IKEv2, no padding is allowed, and this option has no
-      effect. If you find a device that seems to require IKE padding,
-      please contact the libreswan developers.  This option should
-      almost never be enabled and might be removed in a future
-      version.
+      interoperability issues.  The ikepad= option can be used to
+      disable IKEv1 padding.  This used to be required for some
+      devices (such as Checkpoint in Aggressive Mode) that reject
+      padded IKEv1 packets.  A bug was fixed in libreswan 3.25 that
+      applied wrong IKE padding in XAUTH, so it is suspected that
+      Checkpoint padding issue bas been resolved.  And this option
+      should not be needed by anyone.  In IKEv2, no padding is
+      allowed, and this option has no effect.  If you find a device
+      that seems to require IKE padding, please contact the libreswan
+      developers.  This option should almost never be enabled and
+      might be removed in a future version.
   </para>
   </listitem>
 </varlistentry>
-

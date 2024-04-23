@@ -1,17 +1,17 @@
 <varlistentry>
   <term>
-    <emphasis>ikelifetime</emphasis>
+    <option>ikelifetime</option>
   </term>
   <listitem>
     <para>
       how long the keying channel of a connection (buzzphrase:
       &ldquo;IKE SA&rdquo; or &ldquo;ISAKMP SA&rdquo;) should last
       before being renegotiated; acceptable values as for
-      <emphasis>salifetime</emphasis>. The default as of version 4.2
-      is <emphasis>8h</emphasis>, before that it was 1h. The
-      maximum is <emphasis>24h</emphasis>. The
+      <option>salifetime</option>. The default as of version 4.2
+      is <option>8h</option>, before that it was 1h. The
+      maximum is <option>24h</option>. The
       two-ends-disagree case is similar to that of
-      <emphasis>salifetime</emphasis>.
+      <option>salifetime</option>.
     </para>
   </listitem>
 </varlistentry>

@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <envar>authby=</envar>
+    <option>authby=</option>
   </term>
   <listitem>
     <para>
@@ -11,10 +11,10 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <emphasis>ecdsa</emphasis>
+	  <option>ecdsa</option>
 	</term>
 	<term>
-	  <emphasis>ecdsa-sha2</emphasis>
+	  <option>ecdsa-sha2</option>
 	</term>
 	<listitem>
 	  <para>ECDSA digital signature based authentication with any
@@ -24,13 +24,13 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>ecdsa-sha2_256</emphasis>
+	  <option>ecdsa-sha2_256</option>
 	</term>
 	<term>
-	  <emphasis>ecdsa-sha2_384</emphasis>
+	  <option>ecdsa-sha2_384</option>
 	</term>
 	<term>
-	  <emphasis>ecdsa-sha2_512</emphasis>
+	  <option>ecdsa-sha2_512</option>
 	</term>
 	<listitem>
 	  <para>ECDSA digital signature based authentication with the
@@ -40,7 +40,7 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>rsa-sha1</emphasis>
+	  <option>rsa-sha1</option>
 	</term>
 	<listitem>
 	  <para>RSA-PKCSv1.5 digital signature based authentication
@@ -49,7 +49,7 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>rsa-sha2</emphasis>
+	  <option>rsa-sha2</option>
 	</term>
 	<listitem>
 	  <para>RSASSA-PSS digital signature based authentication with
@@ -59,13 +59,13 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>rsa-sha2_256</emphasis>
+	  <option>rsa-sha2_256</option>
 	</term>
 	<term>
-	  <emphasis>rsa-sha2_384</emphasis>
+	  <option>rsa-sha2_384</option>
 	</term>
 	<term>
-	  <emphasis>rsa-sha2_512</emphasis>
+	  <option>rsa-sha2_512</option>
 	</term>
 	<listitem>
 	  <para>RSASSA-PSS digital signature based authentication with
@@ -75,7 +75,7 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>secret</emphasis>
+	  <option>secret</option>
 	</term>
 	<listitem>
 	  <para>shared secrets (PSK) authentication; cannot be
@@ -84,7 +84,7 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>never</emphasis>
+	  <option>never</option>
 	</term>
 	<listitem>
 	  <para>negotiation is never to be attempted or accepted;
@@ -93,7 +93,7 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>null</emphasis>
+	  <option>null</option>
 	</term>
 	<listitem>
 	  <para>null-authentication; cannot be combined with other
@@ -104,21 +104,23 @@
 
     <para>
       For IKEv1, SHA2 based signatures are not defined and ECDSA is
-      not implemented, so the default <envar>authby</envar> value is
-      rsa-sha1.  Using <envar>authby</envar>=rsasig results in only
-      rsa-sha1 as well.
+      not implemented, so the default <option>authby</option> value is
+      <option>rsa-sha1</option>.  Using <option>authby=rsasig</option>
+      results in only <option>rsa-sha1</option> as well.
     </para>
     <para>
-      For IKEv2, <emphasis>rsasig,ecdsa</emphasis> which allows ECDSA
+      For IKEv2, <option>rsasig,ecdsa</option> which allows ECDSA
       with SHA-2 and RSA with SHA2 or SHA1.  Using
-      <envar>authby</envar>=rsasig means using rsa-sha2_512,
-      rsa-sha2_384, rsa-sha2_256 and rsa-sha1, where rsa-sha1 will
-      used only if RFC 7427 is not supported by the peer.
+      <option>authby=rsasig</option> means using
+      <option>rsa-sha2_512</option>, <option>rsa-sha2_384</option>,
+      <option>rsa-sha2_256</option> and <option>rsa-sha1</option>,
+      where <option>rsa-sha1</option> will used only if RFC 7427 is
+      not supported by the peer.
     </para>
     <para>
-      Note that <envar>authby</envar> cannot be used for asymmetric
+      Note that <option>authby</option> cannot be used for asymmetric
       authentication.  Instead, IKEv2 must be enabled and the options
-      <envar>leftauth</envar> and <envar>rightauth</envar> used.
+      <option>leftauth</option> and <option>rightauth</option> used.
     </para>
     <para>
       As per RFC 8221, authby=rsa-sha1 is only supported in the old

@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis>sha2-truncbug</emphasis></term>
+  <term><option>sha2-truncbug</option></term>
   <listitem>
 <para>The default ESP hash truncation for sha2_256 is 128 bits. Some
 IPsec implementations (Linux before 2.6.33, some Cisco (2811?) routers)
@@ -9,8 +9,8 @@ packets from each other.</para>
 
 <para>This option enables using the draft 96 bits version to interop
 with those implementations.  Currently the accepted values are
-<emphasis>no</emphasis>, (the default) signifying default RFC
-truncation of 128 bits, or <emphasis>yes</emphasis>, signifying
+<option>no</option>, (the default) signifying default RFC
+truncation of 128 bits, or <option>yes</option>, signifying
 the draft 96 bits truncation.  </para>
 <para>Another workaround is to switch from sha2_256 to sha2_128 or sha2_512.</para>
   </listitem>

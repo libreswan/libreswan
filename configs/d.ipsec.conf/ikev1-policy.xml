@@ -1,13 +1,13 @@
 <varlistentry>
   <term>
-    <emphasis>ikev1-policy</emphasis>
+    <option>ikev1-policy</option>
   </term>
   <listitem>
     <para>
       What to do with received IKEv1 packets. Valid options are
-      <emphasis>drop</emphasis> (default) which will
-      silently drop any received IKEv1 packet, <emphasis>accept</emphasis>,
-      and <emphasis>reject</emphasis> which will reply with an error. If
+      <option>drop</option> (default) which will
+      silently drop any received IKEv1 packet, <option>accept</option>,
+      and <option>reject</option> which will reply with an error. If
       this option is set to drop or reject, an attempt to load an
       IKEv1 connection will fail, as these connections would never be
       able to receive a packet for processing.

@@ -1,7 +1,7 @@
   <varlistentry>
-  <term><emphasis>modecfgdns</emphasis></term>
-  <term><emphasis>modecfgdomains</emphasis></term>
-  <term><emphasis>modecfgbanner</emphasis></term>
+  <term><option>modecfgdns</option></term>
+  <term><option>modecfgdomains</option></term>
+  <term><option>modecfgbanner</option></term>
   <listitem>
 <para>
 When configured as IKEv1 ModeCFG or IKEv2 server, specifying any of these options will

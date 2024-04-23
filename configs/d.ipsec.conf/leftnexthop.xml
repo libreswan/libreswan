@@ -1,18 +1,18 @@
 <varlistentry>
   <term>
-    <emphasis>leftnexthop</emphasis>
+    <option>leftnexthop</option>
   </term>
   <listitem>
     <para>
       next-hop gateway IP address for the left participant's
-      connection to the public network; defaults to <emphasis>%direct</emphasis>
-      (meaning <emphasis>right</emphasis>). If the value is to be overridden
-      by the <emphasis>left=%defaultroute</emphasis> method
-      (see above), an explicit value must <emphasis>not</emphasis> be given.
-      If that method is not being used, but <emphasis>leftnexthop</emphasis> is
-      <emphasis>%defaultroute</emphasis>, the next-hop
+      connection to the public network; defaults to <option>%direct</option>
+      (meaning <option>right</option>). If the value is to be overridden
+      by the <option>left=%defaultroute</option> method
+      (see above), an explicit value must <option>not</option> be given.
+      If that method is not being used, but <option>leftnexthop</option> is
+      <option>%defaultroute</option>, the next-hop
       gateway address of the default-route interface will be used.
-      The magic value <emphasis>%direct</emphasis> signifies
+      The magic value <option>%direct</option> signifies
       a value to be filled in (by automatic keying) with the peer's
       address.  Relevant only locally, other end need not agree on
       it.

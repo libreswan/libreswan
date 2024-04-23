@@ -1,14 +1,14 @@
 <varlistentry>
   <term>
-    <emphasis>pfs</emphasis>
+    <option>pfs</option>
   </term>
   <listitem>
     <para>
       whether Perfect Forward Secrecy of keys is desired on the
       connection's keying channel (with PFS, penetration of the
       key-exchange protocol does not compromise keys negotiated
-      earlier); Acceptable values are <emphasis>yes</emphasis>
-      (the default) and <emphasis>no</emphasis>.
+      earlier); Acceptable values are <option>yes</option>
+      (the default) and <option>no</option>.
     </para>
   </listitem>
 </varlistentry>

@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis>cisco-unity</emphasis>
+    <option>cisco-unity</option>
   </term>
   <listitem>
     <para>
       whether to send a CISCO_UNITY payload to the peer.  Acceptable
-      values are: <emphasis>no</emphasis> (the default) and
-      <emphasis>yes</emphasis>.
+      values are: <option>no</option> (the default) and
+      <option>yes</option>.
     </para>
     <para>
       It is recommended to leave this option unset, unless the remote

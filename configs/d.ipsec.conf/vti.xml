@@ -1,8 +1,8 @@
   <varlistentry>
-  <term><emphasis>vti-interface</emphasis></term>
+  <term><option>vti-interface</option></term>
   <listitem>
     <para>
-      This option is deprecated. See <emphasis>ipsec-interface</emphasis>
+      This option is deprecated. See <option>ipsec-interface</option>
       instead.
     </para>
     <para>
@@ -11,8 +11,8 @@
       that can be used to route traffic in for encryption/decryption. The Virtual
       Tunnel Interface ("VTI") interface name is used to for all IPsec SA's created by
       this connection. This requires that the connection also enables either
-      the <emphasis>mark=</emphasis> or <emphasis>mark-in= /
-      mark-out-</emphasis> option(s). All traffic marked with the proper MARKs
+      the <option>mark=</option> or <option>mark-in= /
+      mark-out-</option> option(s). All traffic marked with the proper MARKs
       will be automatically encrypted if there is an IPsec SA policy covering the
       source/destination traffic. Tools such as tcpdump and iptables can be
       used on all cleartext pre-encrypt and post-decrypt traffic on the device.
@@ -24,7 +24,7 @@
       required for proper functioning (disable_policy, rp_filter,
       forwarding, etc). Interface names are limited to 16 characters and
       may not allow all characters to be used. If marking and
-      <emphasis>vti-routing=yes</emphasis> is used, no manual iptables should
+      <option>vti-routing=yes</option> is used, no manual iptables should
       be required. However, administrators can use the iptables mangle table
       to mark traffic manually if desired.
     </para>
@@ -32,29 +32,29 @@
   </varlistentry>
 
   <varlistentry>
-    <term><emphasis>vti-routing</emphasis></term>
+    <term><option>vti-routing</option></term>
     <listitem>
       <para>
 	Whether or not to add network rules or routes for IPsec
 	SA's to the respective VTI devices. Valid values are
-	<emphasis>yes</emphasis> (the default) or <emphasis>no</emphasis>.
+	<option>yes</option> (the default) or <option>no</option>.
 	When using "routing based VPNs" with a subnets policy of 0.0.0.0/0,
-	this setting needs to set to <emphasis>no</emphasis> to prevent
+	this setting needs to set to <option>no</option> to prevent
 	imploding the tunnel, and the administrator is expected to manually
 	add ip rules and ip routes to configure what traffic must be encrypted.
-	When set to <emphasis>yes</emphasis>, the _updown script will
+	When set to <option>yes</option>, the _updown script will
 	automatically route the leftsubnet/rightsubnet traffic into the
-	VTI device specified with <emphasis>vti-interface</emphasis>
+	VTI device specified with <option>vti-interface</option>
       </para>
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis>vti-shared</emphasis></term>
+    <term><option>vti-shared</option></term>
     <listitem>
       <para>
 	Whether or not the VTI device is shared amongst connections.
-	Valid values are <emphasis>no</emphasis> (the default) or
-	<emphasis>yes</emphasis>. When set to no, the VTI device is automatically
+	Valid values are <option>no</option> (the default) or
+	<option>yes</option>. When set to no, the VTI device is automatically
 	deleted if the connection is a single non-instantiated connection. If a
 	connection instantiates (eg right=%any) then this option has no effect, as
 	the VTI device is not removed as it is shared with multiple roadwarriors.

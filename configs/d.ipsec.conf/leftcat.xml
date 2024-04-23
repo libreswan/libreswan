@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis>leftcat</emphasis>
+    <option>leftcat</option>
   </term>
   <listitem>
     <para>
       Whether to perform Client Address Translation ("CAT") when using
-      Opportunistic IPsec behind NAT.  Accepted values are <emphasis>no</emphasis>
-      (the default) and <emphasis>yes</emphasis>. This option should
+      Opportunistic IPsec behind NAT.  Accepted values are <option>no</option>
+      (the default) and <option>yes</option>. This option should
       only be enabled on the special Opportunistic IPsec connections,
       usually called "private" and "private-or-clear". When set, this
       option causes the given addresspool IP from the remote peer to be

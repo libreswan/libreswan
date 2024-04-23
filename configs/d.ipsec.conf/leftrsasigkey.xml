@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>leftrsasigkey</emphasis>
+    <option>leftrsasigkey</option>
   </term>
   <listitem>
     <para>
@@ -10,7 +10,7 @@
       <variablelist>
 	<varlistentry>
 	  <term>
-	    <emphasis>%none</emphasis>
+	    <option>%none</option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -21,7 +21,7 @@
 	</varlistentry>
 	<varlistentry>
 	  <term>
-	    <emphasis>%dnsondemand</emphasis>
+	    <option>%dnsondemand</option>
 	  </term>
 	  <listitem>
 	    <para>
@@ -32,41 +32,41 @@
 	</varlistentry>
 	<varlistentry>
 	  <term>
-	    <emphasis>%dnsonload</emphasis>
+	    <option>%dnsonload</option>
 	  </term>
 	  <listitem>
 	    <para>
 	      the key is to be fetched from DNS at the time the
 	      connection description is read from
-	      <emphasis>ipsec.conf</emphasis>; currently this will be
-	      treated as <emphasis>%none</emphasis> if
-	      <emphasis>right=%any</emphasis> or
-	      <emphasis>right=%opportunistic</emphasis>.
+	      <option>ipsec.conf</option>; currently this will be
+	      treated as <option>%none</option> if
+	      <option>right=%any</option> or
+	      <option>right=%opportunistic</option>.
 	    </para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term>
-	    <emphasis>%dns</emphasis>
+	    <option>%dns</option>
 	  </term>
 	  <listitem>
 	    <para>
-	      currently treated as <emphasis>%dnsonload</emphasis> but
-	      will change to <emphasis>%dnsondemand</emphasis> in the
+	      currently treated as <option>%dnsonload</option> but
+	      will change to <option>%dnsondemand</option> in the
 	      future.  The identity used for the left participant must
-	      be a specific host, not <emphasis>%any</emphasis> or
+	      be a specific host, not <option>%any</option> or
 	      another magic value.
 	    </para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term>
-	    <emphasis>%cert</emphasis>
+	    <option>%cert</option>
 	  </term>
 	  <listitem>
 	    <para>
 	      the information required from a certificate defined in
-	      <emphasis>%leftcert</emphasis> and automatically define
+	      <option>%leftcert</option> and automatically define
 	      leftid for you
 	    </para>
 	  </listitem>
@@ -76,7 +76,7 @@
     <caution>
       <para>
 	If two connection descriptions specify different public keys
-	for the same <emphasis>leftid</emphasis>, confusion and
+	for the same <option>leftid</option>, confusion and
 	madness will ensue.
       </para>
     </caution>

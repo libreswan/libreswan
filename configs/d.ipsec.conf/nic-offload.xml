@@ -1,19 +1,19 @@
 <varlistentry>
   <term>
-    <emphasis>nic-offload</emphasis>
+    <option>nic-offload</option>
   </term>
   <listitem>
     <para>
       Set the method of Network Interface Controller (NIC) hardware
       offload for ESP/AH packet processing.  Acceptable values are
-      <emphasis>no</emphasis> (the default),
-      <emphasis>crypto</emphasis> or <emphasis>packet</emphasis>.  The
-      value <emphasis>yes</emphasis> is a backwards compatible value
-      for <emphasis>crypto</emphasis>.  The nic-offload option is
+      <option>no</option> (the default),
+      <option>crypto</option> or <option>packet</option>.  The
+      value <option>yes</option> is a backwards compatible value
+      for <option>crypto</option>.  The nic-offload option is
       separate from any CPU hardware offload available.  When set to
-      <emphasis>crypto</emphasis>, only cryptographic operations are
+      <option>crypto</option>, only cryptographic operations are
       offloaded to the NIC card.  When set to
-      <emphasis>packet</emphasis>, the entire packet processing
+      <option>packet</option>, the entire packet processing
       including the encryption/decryption is offloaded to the NIC
       card.
     </para>
@@ -23,8 +23,8 @@
       Linux 6.3.  Both require that the Linux kernel is compiled with
       the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD and
       CONFIG_INET6_ESP_OFFLOAD.  Network card support can be seen by
-      the presence of the <emphasis>esp-hw-offload</emphasis>
-      capability using the <emphasis>ethtool -S</emphasis> command.
+      the presence of the <option>esp-hw-offload</option>
+      capability using the <option>ethtool -S</option> command.
       The Linux kernel attempts to fall back from crypto hardware
       offload to software, but only for some algorithms (AEADs only?).
       There is no fallback from packet offload to crypto offload.  At

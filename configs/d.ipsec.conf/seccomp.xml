@@ -1,13 +1,13 @@
   <varlistentry>
-  <term><emphasis>seccomp</emphasis></term>
+  <term><option>seccomp</option></term>
   <listitem>
 <para>Set the seccomp kernel syscall whitelisting feature. When set to
-<emphasis>enabled</emphasis>, if pluto calls a syscall that is
+<option>enabled</option>, if pluto calls a syscall that is
 not on the compiled-in whitelist, the kernel will assume an exploit is
 attempting to use pluto for malicious access to the system and terminate
-the pluto daemon. When set to <emphasis>tolerant</emphasis>,
+the pluto daemon. When set to <option>tolerant</option>,
 the kernel will only block the rogue syscall and pluto will attempt to
-continue. If set to <emphasis>disabled</emphasis>, pluto is
+continue. If set to <option>disabled</option>, pluto is
 allowed to call any syscall offered by the kernel, although it might be
 restricted via other security mechanisms, such as capabilities, SElinux,
 AppArmor or other OS security features.</para>
@@ -18,19 +18,19 @@ system library updates could also trigger false positives. A false positive
 (or real malicious remote code execution of a bad syscall) will cause the
 pluto daemon to crash or hang.</para>
 
-<para><emphasis>Warning:</emphasis> The restrictions of pluto
+<para><option>Warning:</option> The restrictions of pluto
 are inherited by the updown scripts, so these scripts are also not
 allowed to use syscalls that are forbidden for pluto.</para>
 
 <para>
 To see if a seccomp rule got triggered, you must run with seccomp=enabled,
-and keep an eye on <emphasis>type=SECCOMP</emphasis> messages in the
-audit log (usually <emphasis>/var/log/audit/audit.log</emphasis>. Note
+and keep an eye on <option>type=SECCOMP</option> messages in the
+audit log (usually <option>/var/log/audit/audit.log</option>. Note
 that logging can be delayed by many seconds.</para>
 
 <para>
   This feature can be tested using <command>ipsec whack
-  --seccomp-crashtest</command>. <emphasis>Warning: </emphasis> With
+  --seccomp-crashtest</command>. <option>Warning: </option> With
   seccomp=enabled, pluto will be terminated by the kernel. With
   seccomp=tolerant or seccomp=disabled, pluto will report the results
   of the seccomp test. SECCOMP will log the forbidden syscall numbers

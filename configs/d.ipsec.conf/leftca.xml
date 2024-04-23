@@ -1,14 +1,14 @@
 <varlistentry>
   <term>
-    <emphasis>leftca</emphasis>
+    <option>leftca</option>
   </term>
   <listitem>
     <para>
       specifies the authorized Certificate Authority (CA) that signed
       the certificate of the peer. If undefined, it defaults to the CA
-      that signed the certificate specified in <emphasis>leftcert</emphasis>.
-      The special <emphasis>rightca=%same</emphasis> is implied when not
-      specifying a <emphasis>rightca</emphasis> and means
+      that signed the certificate specified in <option>leftcert</option>.
+      The special <option>rightca=%same</option> is implied when not
+      specifying a <option>rightca</option> and means
       that only peers with certificates signed by the same CA as the
       leftca will be allowed. This option is only useful in complex
       multi CA certificate situations. When using a single CA, it can

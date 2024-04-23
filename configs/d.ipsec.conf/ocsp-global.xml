@@ -1,25 +1,25 @@
   <varlistentry>
-  <term><emphasis>ocsp-enable</emphasis></term>
+  <term><option>ocsp-enable</option></term>
   <listitem>
 <para>
 Whether to perform Online Certificate Store Protocol ("OCSP") checks on
 those certificates that have an OCSP URI defined. Acceptable values are
-<emphasis>yes</emphasis> or <emphasis>no</emphasis>
+<option>yes</option> or <option>no</option>
 (the default).
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-strict</emphasis></term>
+  <term><option>ocsp-strict</option></term>
   <listitem>
 <para>if set to no, pluto is tolerant about failing to obtain an OCSP
 responses and a certificate is not rejected when the OCSP request
 fails, only when the OCSP request succeeds and lists the certificate as
 revoked. If set to yes, any failure on obtaining an OCSP status for a
 certificate will be fatal and the certificate will be rejected.
-Acceptable values are <emphasis>yes</emphasis> or
-<emphasis>no</emphasis> (the default).
+Acceptable values are <option>yes</option> or
+<option>no</option> (the default).
 </para>
 <para>
 The strict mode refers to the NSS ocspMode_FailureIsVerificationFailure
@@ -30,12 +30,12 @@ ocspMode_FailureIsNotAVerificationFailure mode.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-method</emphasis></term>
+  <term><option>ocsp-method</option></term>
   <listitem>
 <para>
 The HTTP methods used for fetching OCSP data. Valid options are
-<emphasis>get</emphasis> (the default) and
-<emphasis>post</emphasis>. Note that this behaviour
+<option>get</option> (the default) and
+<option>post</option>. Note that this behaviour
 depends on the NSS crypto library that is actually performing
 the fetching. When set to the get method, post is attempted
 only as fallback in case of failure. When set to post, only
@@ -45,7 +45,7 @@ the post method is ever used.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-timeout</emphasis></term>
+  <term><option>ocsp-timeout</option></term>
   <listitem>
 <para>
 The time until an OCSP request is aborted and considered failed. The
@@ -55,32 +55,32 @@ default value is 2 seconds.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-uri</emphasis></term>
+  <term><option>ocsp-uri</option></term>
   <listitem>
 <para>
 The URI to use for OCSP requests instead of the default OCSP URI listed
 in the CA certificate. This requires the ocsp-trustname option to be set
 to the nick (friendly name) of the OCSP server certificate, which needs
 to be present in the NSS database. These option combined with the next
-option sets the OCSP <emphasis>default responder</emphasis>.
+option sets the OCSP <option>default responder</option>.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-trustname</emphasis></term>
+  <term><option>ocsp-trustname</option></term>
   <listitem>
 <para>
 The nickname of the certificate that has been imported into the NSS
 database of the server handling the OCSP requests. This requires the
 ocsp-uri option to be set as well. This option and the previous options
-sets the OCSP <emphasis>default responder</emphasis>.
+sets the OCSP <option>default responder</option>.
 </para>
   </listitem>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-cache-size</emphasis></term>
+  <term><option>ocsp-cache-size</option></term>
   <listitem>
 <para>
 The maximum size (in number of certificates) of OCSP responses that
@@ -91,7 +91,7 @@ to 0 means the cache is disabled.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-cache-min-age</emphasis></term>
+  <term><option>ocsp-cache-min-age</option></term>
   <listitem>
 <para>
 The minimum age (in seconds) before a new fetch will be attempted. The
@@ -101,7 +101,7 @@ default is 1 hour.
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis>ocsp-cache-max-age</emphasis></term>
+  <term><option>ocsp-cache-max-age</option></term>
   <listitem>
 <para>
 The maximum age (in seconds) before a new fetch will be attempted. The

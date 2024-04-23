@@ -4,7 +4,7 @@
   </title>
   <para>
     When choosing a connection to apply to an outbound packet caught
-    with a <emphasis>%trap,</emphasis> the system prefers
+    with a <option>%trap,</option> the system prefers
     the one with the most specific eroute that includes the packet's
     source and destination IP addresses.  Source subnets are examined
     before destination subnets.  For initiating, only routed

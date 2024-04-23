@@ -1,23 +1,23 @@
   <varlistentry>
-  <term><emphasis>xauthby</emphasis></term>
+  <term><option>xauthby</option></term>
   <listitem>
 <para>When IKEv1 XAUTH support is available, set the method used by XAUTH to authenticate
-the user with IKEv1. The currently supported values are <emphasis>file</emphasis> (the default),
- <emphasis>pam</emphasis> or  <emphasis>alwaysok</emphasis>.
-The password file is located at <emphasis>/etc/ipsec.d/passwd</emphasis>,
+the user with IKEv1. The currently supported values are <option>file</option> (the default),
+ <option>pam</option> or  <option>alwaysok</option>.
+The password file is located at <option>/etc/ipsec.d/passwd</option>,
 and follows a syntax similar to the Apache htpasswd file, except an additional connection
 name argument (and optional static IP address) are also present:
 </para>
-<para><emphasis>username:password:conname:ipaddress</emphasis></para>
+<para><option>username:password:conname:ipaddress</option></para>
 <para>For supported password hashing methods, see <citerefentry><refentrytitle>crypt</refentrytitle>
 <manvolnum>3</manvolnum></citerefentry>. If pluto is running in FIPS mode, some hash methods,
 such as MD5, might not be available. Threads are used
 to launch an xauth authentication helper for file as well as PAM methods.
 </para>
-<para>The <emphasis>alwaysok</emphasis> should only be used if the XAUTH user authentication is not really
+<para>The <option>alwaysok</option> should only be used if the XAUTH user authentication is not really
 used, but is required for interoperability, as it defeats the whole point of XAUTH which is to rely on a secret only
 known by a human.
-See also <emphasis>pam-authorize=yes</emphasis>
+See also <option>pam-authorize=yes</option>
 </para>
 </listitem>
   </varlistentry>

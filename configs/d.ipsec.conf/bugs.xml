@@ -8,9 +8,9 @@
   </para>
 
   <para>
-    When <emphasis>type</emphasis> or
-    <emphasis>failureshunt</emphasis> is set to
-    <emphasis>drop</emphasis> or <emphasis>reject,</emphasis>
+    When <option>type</option> or
+    <option>failureshunt</option> is set to
+    <option>drop</option> or <option>reject,</option>
     Libreswan blocks outbound packets using eroutes, but assumes
     inbound blocking is handled by the firewall. Libreswan offers
     firewall hooks via an &ldquo;updown&rdquo; script.  However, the
@@ -20,18 +20,18 @@
 
   <para>
     Including attributes of the keying channel (authentication
-    methods, <emphasis>ikelifetime</emphasis>, etc.) as an
+    methods, <option>ikelifetime</option>, etc.) as an
     attribute of a connection, rather than of a participant pair, is
     dubious and incurs limitations.
   </para>
 
   <para>
-    The use of <emphasis>%any</emphasis> with the <emphasis>protoport=</emphasis>
+    The use of <option>%any</option> with the <option>protoport=</option>
     option is ambiguous. Should the SA permits any port through or should
     the SA negotiate any single port through?  The first is a basic conn with
     a wildcard. The second is a template. The second is the current behaviour,
     and it's wrong for quite a number of uses involving TCP. The keyword
-    <emphasis>%one</emphasis> may be introduced in the
+    <option>%one</option> may be introduced in the
     future to separate these two cases.
   </para>
 
@@ -41,7 +41,7 @@
   </para>
 
   <para>
-    The ability to specify different identities, <emphasis>authby</emphasis>,
+    The ability to specify different identities, <option>authby</option>,
     and public keys for different automatic-keyed connections between
     the same participants is misleading; this doesn't work dependably
     because the identity of the participants is not known early enough.
@@ -52,9 +52,9 @@
   </para>
 
   <para>
-    If conns are to be added before DNS is available, <emphasis>left=</emphasis>
-    <emphasis>FQDN</emphasis>, <emphasis>leftnextop=</emphasis><emphasis>FQDN</emphasis>,
-    and <emphasis>leftrsasigkey=%dnsonload</emphasis> will fail.
+    If conns are to be added before DNS is available, <option>left=</option>
+    <option>FQDN</option>, <option>leftnextop=</option><option>FQDN</option>,
+    and <option>leftrsasigkey=%dnsonload</option> will fail.
     <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     does not actually use the public key for our side of a conn but it
     isn't generally known at a add-time which side is ours (Road

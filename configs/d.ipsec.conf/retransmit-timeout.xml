@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>retransmit-timeout</emphasis>
+    <option>retransmit-timeout</option>
   </term>
   <listitem>
     <para>
@@ -8,11 +8,11 @@
       may take before the IKE attempt is aborted. If rekeying is
       enabled, a new IKE attempt is started.  The default set by
       <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      currently is <emphasis>60s</emphasis>.
+      currently is <option>60s</option>.
     </para>
     <para>
-      See also: <emphasis>retransmit-interval</emphasis> and
-      <emphasis>rekey</emphasis>.
+      See also: <option>retransmit-interval</option> and
+      <option>rekey</option>.
     </para>
   </listitem>
 </varlistentry>

@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis>ddos-mode</emphasis>
+    <option>ddos-mode</option>
   </term>
   <listitem>
     <para>
       The startup mode of the DDoS defense mechanism.  Acceptable
-      values are <emphasis>busy</emphasis>, <emphasis>unlimited</emphasis>
-      or <emphasis>auto</emphasis> (the default). This option can also be
+      values are <option>busy</option>, <option>unlimited</option>
+      or <option>auto</option> (the default). This option can also be
       given to the IKE daemon while running, for example by issuing
       <command>ipsec whack --ddos--busy</command>.  When
       in busy mode, pluto activates anti-DDoS counter

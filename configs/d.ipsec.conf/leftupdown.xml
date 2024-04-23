@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><emphasis>leftupdown</emphasis></term>
+  <term><option>leftupdown</option></term>
   <listitem>
     <para>
       The script to run to adjust routing and/or firewalling when the

@@ -1,10 +1,10 @@
   <varlistentry>
-  <term><emphasis>send-vendorid</emphasis></term>
+  <term><option>send-vendorid</option></term>
   <listitem>
 <para>whether to send our Vendor ID during IKE.
-Acceptable values are: <emphasis>no</emphasis> (the default) and
-<emphasis>yes</emphasis>. The vendor id sent can be configured
-using the "config setup" option <emphasis>myvendorid=</emphasis>.
+Acceptable values are: <option>no</option> (the default) and
+<option>yes</option>. The vendor id sent can be configured
+using the "config setup" option <option>myvendorid=</option>.
 It defaults to OE-Libreswan-VERSION.</para>
 
 <para>Vendor ID's can be useful in tracking interoperability

@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><emphasis>replay-window</emphasis></term>
+  <term><option>replay-window</option></term>
   <listitem>
     <para>
       The size of the IPsec SA replay window protection in packets.
@@ -23,7 +23,7 @@
       /proc/net/xfrm_stat.
     </para>
     <para>
-      Note: the BSD <emphasis>setkey</emphasis> utility displays the
+      Note: the BSD <option>setkey</option> utility displays the
       replay window size in bytes (8 packets per byte) and not
       packets.
     </para>

@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis>nat-ikev1-method</emphasis></term>
+  <term><option>nat-ikev1-method</option></term>
   <listitem>
 <para>NAT Traversal in IKEv1 is negotiated via Vendor ID options as specified in RFC 3947.
 However, many implementations only support the draft version of the RFC. Libreswan sends
@@ -10,9 +10,9 @@ packet of the initiator, there is no method to auto-detect this problem and init
 </para>
 
 <para>This option allows fine tuning which of the NAT-T payloads to consider for sending and processing.
-Currently the accepted values are <emphasis>drafts</emphasis>,
-<emphasis>rfc</emphasis>, <emphasis>both</emphasis> (the default) and
-<emphasis>none</emphasis>. To interoperate with known broken devices, use nat-ikev1-method=drafts.
+Currently the accepted values are <option>drafts</option>,
+<option>rfc</option>, <option>both</option> (the default) and
+<option>none</option>. To interoperate with known broken devices, use nat-ikev1-method=drafts.
 To prevent the other end from triggering IKEv1 NAT-T encapsulation, set this to none. This will omit the
 NAT-T payloads used to determine NAT, forcing the other end not to use encapsulation.
 </para>

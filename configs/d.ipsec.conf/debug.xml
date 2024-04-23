@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <envar>debug</envar>
+    <option>debug</option>
   </term>
   <listitem>
     <para>

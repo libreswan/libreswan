@@ -1,6 +1,6 @@
   <varlistentry>
 
-  <term><emphasis>logfile</emphasis></term>
+  <term><option>logfile</option></term>
   <listitem>
 <para>do not use syslog, but rather log to stderr, and direct stderr to the
 argument file. This option used to be called plutostderrlog=

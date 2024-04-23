@@ -1,13 +1,13 @@
 <varlistentry>
   <term>
-    <emphasis>initial-contact</emphasis>
+    <option>initial-contact</option>
   </term>
   <listitem>
     <para>
       whether to send an INITIAL_CONTACT payload to the peer we are
       initiating to, if we currently have no IPsec SAs up with that
-      peer.  Acceptable values are: <emphasis>yes</emphasis>
-      (the default) and <emphasis>no</emphasis>.  It is
+      peer.  Acceptable values are: <option>yes</option>
+      (the default) and <option>no</option>.  It is
       recommended to leave this option set, unless multiple clients
       with the same identity are expected to connect using the same
       subnets and should operate at the same time. Or if a

@@ -1,15 +1,14 @@
 <varlistentry>
   <term>
-    <emphasis>dumpdir</emphasis>
+    <option>dumpdir=<filename><replaceable>directory</replaceable></filename></option>
   </term>
   <listitem>
     <para>
-      in what directory should things started by <emphasis>setup</emphasis>
-      (notably the Pluto daemon) be allowed to dump core?  The default value is
-      <emphasis>@@RUNDIR@@</emphasis>. When SELinux runs in enforced mode,
-      changing this requires a similar change in the SELinux policy for
-      the pluto daemon.
+      in what directory should things started by
+      <option>setup</option> (notably the Pluto daemon) be allowed to
+      dump core?  The default value is <filename>@@RUNDIR@@</filename>.
+      When SELinux runs in enforced mode, changing this requires a
+      similar change in the SELinux policy for the pluto daemon.
     </para>
-
   </listitem>
 </varlistentry>

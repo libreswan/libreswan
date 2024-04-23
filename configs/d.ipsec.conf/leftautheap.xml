@@ -1,14 +1,14 @@
 <varlistentry>
   <term>
-    <emphasis>leftautheap</emphasis>
+    <option>leftautheap</option>
   </term>
   <listitem>
     <para>
       Whether the security gateways will authenticate uing an EAP
-      method.  Acceptable values are <emphasis>none</emphasis>
-      (the default) and <emphasis>tls</emphasis> for EAPTLS. If EAP
-      is the only authentication method, set <emphasis>leftauth=none</emphasis>
-      in addition to <emphasis>leftautheap=tls=</emphasis>.
+      method.  Acceptable values are <option>none</option>
+      (the default) and <option>tls</option> for EAPTLS. If EAP
+      is the only authentication method, set <option>leftauth=none</option>
+      in addition to <option>leftautheap=tls=</option>.
     </para>
 
     <para>

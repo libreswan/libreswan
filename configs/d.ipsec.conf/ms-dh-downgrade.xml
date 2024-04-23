@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><emphasis>ms-dh-downgrade</emphasis></term>
+  <term><option>ms-dh-downgrade</option></term>
   <listitem>
     <para>
       Whether to allow a downgrade of Diffie-Hellman group during
@@ -10,14 +10,14 @@
       using the very weak modp1024 (DH2).  This can be changed using a
       Windows registry setting to use modp2048 (DH14).  However, at
       rekey times, it will shamelessly use modp1024 again and the
-      connection might fail.  Setting <emphasis>ms-dh-downgrade=yes</emphasis>
+      connection might fail.  Setting <option>ms-dh-downgrade=yes</option>
       (and adding modp1024 proposals to the ike line) will allow this
       downgrade attack to happen. This should only be used to support
       Windows that feature this bug.
     </para>
     <para>
-      The accepted values are <emphasis>no</emphasis>, (the
-      default) or <emphasis>yes</emphasis>.
+      The accepted values are <option>no</option>, (the
+      default) or <option>yes</option>.
     </para>
   </listitem>
 </varlistentry>

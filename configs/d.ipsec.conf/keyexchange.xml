@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis>keyexchange</emphasis>
+    <option>keyexchange</option>
   </term>
   <listitem>
     <para>
       Whether to use IKEv2 (RFC 7296) or IKEv1 (RFC 4301). Currently the
-      accepted values are <emphasis>ikev2</emphasis> (the default) and
-      <emphasis>ikev1</emphasis>.
+      accepted values are <option>ikev2</option> (the default) and
+      <option>ikev1</option>.
     </para>
     <para>
       This option replaces ikev2=yes|no. Old values yes, propose and instist

@@ -1,13 +1,13 @@
 <varlistentry>
   <term>
-    <emphasis>dns-match-id</emphasis>
+    <option>dns-match-id</option>
   </term>
   <listitem>
     <para>
       Whether to perform an additional DNS lookup and confirm the
       remote ID payload with the DNS name in the reverse DNS PTR
-      record. Accepted values are <emphasis>no</emphasis>
-      (the default) or <emphasis>yes</emphasis>.  This check
+      record. Accepted values are <option>no</option>
+      (the default) or <option>yes</option>.  This check
       should be enabled when Opportunistic IPsec is enabled in a mode
       that is based on packet triggers (on-demand) using IPSECKEY
       records in DNS. Since in that case the IKE daemon pluto does not

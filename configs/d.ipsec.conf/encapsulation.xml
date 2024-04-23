@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>encapsulation</emphasis>
+    <option>encapsulation</option>
   </term>
   <listitem>
     <para>
@@ -10,12 +10,12 @@
       IKE is NAT'ed but ESP packets can or should flow without
       encapsulation, it can be useful to ignore the NAT-Traversal
       auto-detection.
-      <emphasis>encapsulation=yes</emphasis> forces the NAT detection
+      <option>encapsulation=yes</option> forces the NAT detection
       code to lie and tell the remote peer that RFC-3948 encapsulation
       (ESP in port 4500 packets) is required.
-      <emphasis>encapsulation=no</emphasis> ignores the NAT detection
+      <option>encapsulation=no</option> ignores the NAT detection
       causing ESP packets to send send without encapsulation. The
-      default value of <emphasis>encapsulation=auto</emphasis> follows
+      default value of <option>encapsulation=auto</option> follows
       the regular outcome of the NAT auto-detection code performed in IKE.
       This option replaced the obsoleted forceencaps option.
     </para>

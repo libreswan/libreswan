@@ -2,8 +2,8 @@
     CONFIG SECTIONS
   </title>
   <para>
-    At present, the only <emphasis>config</emphasis> section
-    known to the IPsec software is the one named <emphasis>setup</emphasis>,
+    At present, the only <option>config</option> section
+    known to the IPsec software is the one named <option>setup</option>,
     which contains information used when the software is being started.
   </para>
 
@@ -15,7 +15,7 @@
   </para>
 
   <para>
-    The currently-accepted <emphasis>parameter</emphasis>
-    names in a <emphasis>config setup</emphasis> section
+    The currently-accepted <option>parameter</option>
+    names in a <option>config setup</option> section
     are:
   </para>

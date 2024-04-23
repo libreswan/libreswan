@@ -1,31 +1,31 @@
 <varlistentry>
   <term>
-    <emphasis>leftaddresspool</emphasis>
+    <option>leftaddresspool</option>
   </term>
   <listitem>
     <para>
       address pool from where the IKEv1 ModeCFG or IKEv2 server can
       assign IP addresses to clients.  When configured as a server,
-      using <emphasis>leftxauthserver=yes</emphasis> this
+      using <option>leftxauthserver=yes</option> this
       option specifies the address pool from which IP addresses are
       taken to assign the clients. The syntax of the address pool
       specifies a range (not a CIDR) for IPv4 and CIDR for IPv6, in
       the following syntax:
-      <emphasis>rightaddresspool=192.168.1.100-192.168.1.200</emphasis>
-      or <emphasis>rightaddresspool=2001:db8:0:3:1::/97</emphasis>
-      Generally, the <emphasis>rightaddresspool=</emphasis>
+      <option>rightaddresspool=192.168.1.100-192.168.1.200</option>
+      or <option>rightaddresspool=2001:db8:0:3:1::/97</option>
+      Generally, the <option>rightaddresspool=</option>
       option will be accompanied by
-      <emphasis>rightxauthclient=yes</emphasis>,
-      <emphasis>leftxauthserver=yes</emphasis> and
-      <emphasis>leftsubnet=0.0.0.0/0</emphasis> option.
+      <option>rightxauthclient=yes</option>,
+      <option>leftxauthserver=yes</option> and
+      <option>leftsubnet=0.0.0.0/0</option> option.
     </para>
     <para>
-      When <emphasis>leftaddresspool=</emphasis> is
+      When <option>leftaddresspool=</option> is
       specified, the connection may not specify either
-      <emphasis>leftsubnet=</emphasis> or <emphasis>leftsubnets=</emphasis>.
+      <option>leftsubnet=</option> or <option>leftsubnets=</option>.
       Address pools are fully allocated when the connection is loaded,
       so the ranges should be sane. For example, specifying a range
-      <emphasis>rightaddresspool=10.0.0.0-11.0.0.0</emphasis> will
+      <option>rightaddresspool=10.0.0.0-11.0.0.0</option> will
       lead to massive memory allocation. Address pools specifying the
       exact same range are shared between different
       connections. Different addresspools should not be defined to

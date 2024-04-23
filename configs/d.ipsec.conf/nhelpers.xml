@@ -1,7 +1,7 @@
   <varlistentry>
-  <term><emphasis>nhelpers</emphasis></term>
+  <term><option>nhelpers</option></term>
   <listitem>
-<para>how many <emphasis>pluto helpers</emphasis> are started
+<para>how many <option>pluto helpers</option> are started
 to help with cryptographic operations. Pluto will start as many helpers as
 the number of CPU's, minus 1 to dedicate to the main thread.  For machines
 with less than 4 CPU's, an equal number of helpers to CPU's are started.

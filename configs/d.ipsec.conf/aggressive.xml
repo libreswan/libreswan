@@ -1,22 +1,22 @@
 <varlistentry>
   <term>
-    <emphasis>aggressive</emphasis>
+    <option>aggressive</option>
   </term>
   <listitem>
 
     <para>
       Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode. This
       option has no effect when IKEv2 is used.  Acceptable values are
-      <emphasis>no</emphasis> (the default) or <emphasis>yes</emphasis>.
+      <option>no</option> (the default) or <option>yes</option>.
       When this option is enabled, IKEv1 Main Mode will no longer be
       allowed for this connection. The old name of this option was
-      <emphasis>aggrmode</emphasis>.
+      <option>aggrmode</option>.
     </para>
 
     <para>
       Aggressive Mode is less secure, and more vulnerable to Denial Of
       Service attacks. It is also vulnerable to brute force attacks
-      with software such as <emphasis>ikecrack</emphasis>.
+      with software such as <option>ikecrack</option>.
       It should not be used, and it should especially not be used with
       XAUTH and group secrets (PSK).  If the remote system administrator
       insists on staying irresponsible, enable this option.
@@ -26,7 +26,7 @@
       Aggressive Mode is further limited to only proposals with one DH
       group as there is no room to negotiate the DH group. Therefore
       it is mandatory for Aggressive Mode connections that both
-      <emphasis>ike=</emphasis> and <emphasis>esp=</emphasis> options
+      <option>ike=</option> and <option>esp=</option> options
       are specified with only one fully specified proposal using one DH group.
     </para>
 

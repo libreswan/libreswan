@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>dpddelay</emphasis>
+    <option>dpddelay</option>
   </term>
   <listitem>
     <para>
@@ -11,8 +11,8 @@
     </para>
     <para>
       If dpddelay is set, you might need to adjust
-      <emphasis>retransmit-timeout</emphasis> for IKEv2
-      and you must set <emphasis>dpdtimeout</emphasis> for IKEv1.
+      <option>retransmit-timeout</option> for IKEv2
+      and you must set <option>dpdtimeout</option> for IKEv1.
     </para>
   </listitem>
 </varlistentry>

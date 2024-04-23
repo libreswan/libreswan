@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>esp</emphasis>
+    <option>esp</option>
   </term>
   <listitem>
     <para>
@@ -27,14 +27,14 @@
     </para>
     <para>
       Specifying the DH algorithms explicitly is
-      <emphasis>not</emphasis> recommended.  When PFS is enabled, and
+      <option>not</option> recommended.  When PFS is enabled, and
       the DH algorithms are omitted, each PROPOSAL will automatically
       include the DH algorithm negotiated during the IKE exchange.
     </para>
     <para>
       AEAD algorithms such as AES_GCM and AES_CCM do not not require a
-      separate integrity algorithm.  For example <emphasis>esp=aes_gcm256</emphasis>
-      or <emphasis>esp=aes_ccm</emphasis>.
+      separate integrity algorithm.  For example <option>esp=aes_gcm256</option>
+      or <option>esp=aes_ccm</option>.
     </para>
     <para>
       Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte ICV versions.

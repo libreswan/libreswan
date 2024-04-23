@@ -1,13 +1,13 @@
 <varlistentry>
   <term>
-    <emphasis>failureshunt</emphasis>
+    <option>failureshunt</option>
   </term>
   <listitem>
     <para>
       what to do with packets when negotiation fails.  The default is
-      <emphasis>none</emphasis>: no shunt;
-      <emphasis>passthrough</emphasis>,
-      <emphasis>drop</emphasis>,
-      and <emphasis>reject</emphasis> have the obvious meanings.</para>
+      <option>none</option>: no shunt;
+      <option>passthrough</option>,
+      <option>drop</option>,
+      and <option>reject</option> have the obvious meanings.</para>
   </listitem>
 </varlistentry>

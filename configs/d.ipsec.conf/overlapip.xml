@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis>overlapip</emphasis></term>
+  <term><option>overlapip</option></term>
   <listitem>
 <para>a boolean (yes/no) that determines, when (left|right)subnet=vhost: is used, if
 the virtual IP claimed by this states created from this connection can with

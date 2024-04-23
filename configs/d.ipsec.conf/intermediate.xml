@@ -1,14 +1,14 @@
 <varlistentry>
   <term>
-    <emphasis>intermediate</emphasis>
+    <option>intermediate</option>
   </term>
   <listitem>
     <para>
       EXPERIMENTAL: Whether to enable the INTERMEDIATE exchange in
       IKEv2 (RFC 9242).  Currently the accepted values are
-      <emphasis>yes</emphasis>, signifying we propose to use the
+      <option>yes</option>, signifying we propose to use the
       INTERMEDIATE exchange for this connection;
-      <emphasis>no</emphasis> (the default), signifying we will not
+      <option>no</option> (the default), signifying we will not
       use the INTERMEDIATE exchange for this connection.
     </para>
   </listitem>

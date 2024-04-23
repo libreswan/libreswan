@@ -1,14 +1,14 @@
   <varlistentry>
-  <term><emphasis>phase2</emphasis></term>
+  <term><option>phase2</option></term>
   <listitem>
 <para>Sets the type of SA that will be produced. Valid options are:
-<emphasis>esp</emphasis> for encryption (the default),
-<emphasis>ah</emphasis> for authentication only.
+<option>esp</option> for encryption (the default),
+<option>ah</option> for authentication only.
 </para>
 <para>
 The very first IPsec designs called for use of AH plus ESP to offer authentication, integrity and confidentiality. That dual protocol
 use was a significant burden, so ESP was extended to offer all three services, and AH remained as an auth/integ. The old mode of
-<emphasis>ah+esp</emphasis> is no longer supported in compliance with RFC 8221 Section 4. Additionally, AH does not play
+<option>ah+esp</option> is no longer supported in compliance with RFC 8221 Section 4. Additionally, AH does not play
 well with NATs, so it is strongly recommended to use ESP with the null cipher if you require unencrypted authenticated transport.
 </para>
   </listitem>

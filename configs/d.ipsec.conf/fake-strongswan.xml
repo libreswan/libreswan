@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <emphasis>fake-strongswan</emphasis>
+    <option>fake-strongswan</option>
   </term>
   <listitem>
     <para>
       whether to send a STRONGSWAN Vendor ID payload to the peer.
-      Acceptable values are: <emphasis>no</emphasis> (the
-      default) and <emphasis>yes</emphasis>.  This used to
+      Acceptable values are: <option>no</option> (the
+      default) and <option>yes</option>.  This used to
       be required because strongswan rejects certain proposals with
       private use numbers such as esp=twofish or esp=serpent unless it
       receives a strongswan vendorid by the peer. This option sends

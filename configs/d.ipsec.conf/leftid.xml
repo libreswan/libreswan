@@ -1,25 +1,25 @@
 <varlistentry>
   <term>
-    <emphasis>leftid</emphasis>
+    <option>leftid</option>
   </term>
   <listitem>
     <para>
       how the left participant should be identified for
-      authentication; defaults to <emphasis>left</emphasis>.
+      authentication; defaults to <option>left</option>.
       Can be an IP address or a fully-qualified domain name which will
-      be resolved.  If preceded by <emphasis>@</emphasis>,
+      be resolved.  If preceded by <option>@</option>,
       the value is used as a literal string and will not be resolved.
 
       To support opaque identifiers (usually of type ID_KEY_ID, such
       as used by Cisco to specify Group Name, use square brackets, eg
-      <emphasis>rightid=@[GroupName]</emphasis>.
+      <option>rightid=@[GroupName]</option>.
 
-      The magic value <emphasis>%fromcert</emphasis> causes
+      The magic value <option>%fromcert</option> causes
       the ID to be set to a DN taken from a certificate that is
       loaded.  Prior to 2.5.16, this was the default if a certificate
       was specified.
 
-      The magic value <emphasis>%none</emphasis> sets the ID
+      The magic value <option>%none</option> sets the ID
       to no ID. This is included for completeness, as the ID may have
       been set in the default conn, and one wishes for it to default
       instead of being explicitly set.
