@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <emphasis>auto</emphasis>
+    <option>auto=</option>
   </term>
   <listitem>
     <para>
@@ -10,54 +10,74 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <emphasis>add</emphasis>
+	  <option>auto=add</option>
 	</term>
 	<listitem>
 	  <para>
-	    equivalent to <command> ipsec add <replaceable> connection
-	    </replaceable> </command>
+	    equivalent to:
+	    <simplelist>
+	      <member>
+		<command>ipsec add <replaceable>connection</replaceable></command>
+	      </member>
+	    </simplelist>
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>ondemand</emphasis>
+	  <option>auto=ondemand</option>
 	</term>
 	<listitem>
 	  <para>
-	    equivalent to <command> ipsec add <replaceable> connection
-	    </replaceable> </command> followed by <command> ipsec
-	    route <replaceable> connection </replaceable> </command>
-	    (<emphasis>route</emphasis> is an alias)
+	    equivalent to:
+	    <simplelist>
+	      <member>
+		<command>ipsec add <replaceable>connection</replaceable></command>
+	      </member>
+	      <member>
+		<command>ipsec route <replaceable>connection</replaceable></command>
+	      </member>
+	    </simplelist>
+	    (<option>auto=route</option> is an alias)
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>up</emphasis>
+	  <option>auto=up</option>
+	</term>
+	<term>
+	  <option>auto=start</option>
 	</term>
 	<listitem>
 	  <para>
-	    equivalent to <command> ipsec add <replaceable> connection
-	    </replaceable> </command> followed by <command> ipsec up
-	    <replaceable> connection </replaceable> </command>
+	    equivalent to:
+	    <simplelist>
+	      <member>
+		<command>ipsec add <replaceable>connection</replaceable></command>
+	      </member>
+	      <member>
+		<command>ipsec up <replaceable>connection</replaceable></command>
+	      </member>
+	    </simplelist>
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>ignore</emphasis>
+	  <option>auto=ignore</option>
 	</term>
 	<listitem>
 	  <para>
-	    signifying no automatic startup operation (also the
+	    signifying no automatic operation when
+	    <application>Libreswan</application> is starting (also the
 	    default)
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term>
-	  <emphasis>keep</emphasis>
+	  <option>auto=keep</option>
 	</term>
 	<listitem>
 	  <para>
@@ -68,11 +88,13 @@
       </varlistentry>
     </variablelist>
     <para>
-      See the <emphasis>config setup</emphasis> discussion below.
       Relevant only locally, other end need not agree on it (but in
       general, for an intended-to-be-permanent connection, both ends
-      should use <envar>auto=up</envar> to ensure that any reboot
+      should use <option>auto=up</option> to ensure that any reboot
       causes immediate renegotiation).
+    </para>
+    <para>
+      See the <option>config setup</option> discussion below.
     </para>
   </listitem>
 </varlistentry>
