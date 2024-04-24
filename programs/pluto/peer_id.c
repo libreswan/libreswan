@@ -167,6 +167,312 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 
 #define dbg_rhc(FORMAT, ...) dbg("rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
 
+struct score {
+	bool matching_peer_id;
+	int our_pathlen;
+	int peer_pathlen;
+	int wildcards;
+	struct connection *connection;
+};
+
+static bool score_host_connection(unsigned indent,
+				  const struct ike_sa *ike,
+				  lset_t proposed_authbys,
+				  const struct id *peer_id,
+				  const struct id *tarzan_id,
+				  asn1_t peer_ca,
+				  struct score *score)
+{
+	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
+	struct connection *c = ike->sa.st_connection;
+	struct connection *d = score->connection;
+
+	/*
+	 * First all the "easy" skips.
+	 */
+
+	/*
+	 * An instantiated connection with ID_NULL is never better.
+	 * (it's identity was never authenticated).
+	 *
+	 * The exception being the current connection instance which
+	 * is allowed to have no authentication.
+	 */
+
+	if (c != d && is_instance(d) && d->remote->host.id.kind == ID_NULL) {
+		connection_buf cb;
+		dbg_rhc("skipping ID_NULL instance "PRI_CONNECTION"",
+			pri_connection(d, &cb));
+		return false;
+	}
+
+	if (ike->sa.st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
+		connection_buf cb;
+		dbg_rhc("skipping non-groundhog instance "PRI_CONNECTION"",
+			pri_connection(d, &cb));
+		return false;
+	}
+
+	/*
+	 * An Opportunistic connection is never better.
+	 *
+	 * The exception being the current connection instance which
+	 * is allowed to be opportunistic.
+	 */
+
+	if (c != d && is_opportunistic(d)) {
+		connection_buf cb;
+		dbg_rhc("skipping opportunistic connection "PRI_CONNECTION"",
+			pri_connection(d, &cb));
+		return false;
+	}
+
+	/*
+	 * Only consider template and parent instances sec_label
+	 * connections.
+	 */
+
+	if (is_labeled_child(d)) {
+		connection_buf cb;
+		dbg_rhc("skipping labeled child "PRI_CONNECTION,
+			pri_connection(d, &cb));
+		return false;
+	}
+
+	/*
+	 * Ignore group connections.
+	 */
+
+	if (is_group(d)) {
+		connection_buf cb;
+		dbg_rhc("skipping group template connection "PRI_CONNECTION,
+			pri_connection(d, &cb));
+		return false;
+	}
+
+	/*
+	 * IKE version has to match
+	 */
+
+	if (d->config->ike_version != ike->sa.st_ike_version) {
+		dbg_rhc("skipping because mismatching IKE version");
+		return false;
+	}
+
+	/*
+	 * XXX: are these two bogus?
+	 *
+	 * C was chosen when only the address was known so there's no
+	 * reason to think that XAUTH_SERVER is correct.
+	 */
+
+	if (d->local->host.config->xauth.server != c->local->host.config->xauth.server) {
+		/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+		dbg_rhc("skipping because mismatched xauth_server");
+		return false;
+	}
+
+	if (d->local->host.config->xauth.client != c->local->host.config->xauth.client) {
+		/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+		dbg_rhc("skipping because mismatched xauth_client");
+		return false;
+	}
+
+	/*
+	 * 'You Tarzan, me Jane' check based on
+	 * received IDr (remember, this is the
+	 * responder).
+	 */
+	if (tarzan_id != NULL) {
+		id_buf tzb;
+		esb_buf tzesb;
+		dbg_rhc("peer expects us to be %s (%s) according to its IDr payload",
+			str_id(tarzan_id, &tzb),
+			enum_show(&ike_id_type_names, tarzan_id->kind, &tzesb));
+		id_buf usb;
+		esb_buf usesb;
+		dbg_rhc("this connection's local id is %s (%s)",
+			str_id(&d->local->host.id, &usb),
+			enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
+		/* ??? pexpect(d->spd->spd_next == NULL); */
+		if (!idr_wildmatch(&d->local->host, tarzan_id, ike->sa.logger)) {
+			dbg_rhc("skipping because peer IDr payload does not match our expected ID");
+			return false;
+		}
+	} else {
+		dbg_rhc("no IDr payload received from peer");
+	}
+
+	/*
+	 * The proposed authentication must match the
+	 * policy of this connection.
+	 */
+	switch (ike->sa.st_ike_version) {
+	case IKEv1:
+		if (d->config->aggressive) {
+			dbg_rhc("skipping because AGGRESSIVE isn't right");
+			return false;	/* differ about aggressive mode */
+		}
+		if (LHAS(proposed_authbys, AUTH_PSK)) {
+			if (!(d->remote->host.config->auth == AUTH_PSK)) {
+				/* there needs to be a key */
+				dbg_rhc("skipping because no PSK in POLICY");
+				return false;
+			}
+			if (get_connection_psk(d) == NULL) {
+				/* there needs to be a key */
+				dbg_rhc("skipping because PSK and no secret");
+				return false; /* no secret */
+			}
+		}
+		if (LHAS(proposed_authbys, AUTH_RSASIG)) {
+			if (!(d->remote->host.config->auth == AUTH_RSASIG)) {
+				dbg_rhc("skipping because not RSASIG in POLICY");
+				return false;	/* no key */
+			}
+			if (get_local_private_key(d, &pubkey_type_rsa,
+						  ike->sa.logger) == NULL) {
+				/*
+				 * We must at least be able to find
+				 * our private key.
+				 */
+				dbg_rhc("skipping because RSASIG and no private key");
+				return false;	/* no key */
+			}
+		}
+		break;
+	case IKEv2:
+		/*
+		 * We need to check if leftauth and
+		 * rightauth match, but we only know
+		 * what the remote end has sent in the
+		 * IKE_AUTH request.
+		 *
+		 * XXX: this is too strict.  For
+		 * instance, given a connection that
+		 * allows both both ECDSA and RSASIG
+		 * then because .auth=rsasig
+		 * (preferred) the below will reject
+		 * ECDSA?
+		 */
+		if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {
+			dbg_rhc("skipping because mismatched authby");
+			return false;
+		}
+		/* check that the chosen one has a key */
+		switch (d->remote->host.config->auth) {
+		case AUTH_PSK:
+			/*
+			 * XXX: This tries to find the
+			 * PSK for what is potentially
+			 * a template!
+			 */
+			if (get_connection_psk(d) == NULL) {
+				/* need a key */
+#if 0
+				dbg_rhc("skipping because PSK and no secret");
+				return false; /* no secret */
+#else
+				dbg_rhc("has no PSK; why?");
+			}
+#endif
+			break;
+		case AUTH_RSASIG:
+			if (get_local_private_key(d, &pubkey_type_rsa,
+						  ike->sa.logger) == NULL) {
+				dbg_rhc("skipping because RSASIG and no private key");
+				return false;	/* no key */
+			}
+			break;
+		case AUTH_ECDSA:
+			if (get_local_private_key(d, &pubkey_type_ecdsa,
+						  ike->sa.logger) == NULL) {
+				dbg_rhc("skipping because ECDSA and no private key");
+				return false;	/* no key */
+			}
+			break;
+		default:
+		{
+			lset_buf eb;
+			dbg_rhc("%s so no authby checks performed",
+				str_lset_short(&keyword_auth_names, "+",
+					       proposed_authbys, &eb));
+			break;
+		}
+		}
+		break;
+	}
+
+	/*
+	 * Does the ID match?
+	 *
+	 * WILDCARDS gives the match a score (smaller
+	 * is better): 0 for a perfect match, non-zero
+	 * when things like certificate wild cards
+	 * were used.
+	 */
+
+	score->matching_peer_id = match_id("rhc:       ", peer_id,
+					   &d->remote->host.id,
+					   &score->wildcards);
+
+	/*
+	 * Check if peer_id matches, exactly or after
+	 * instantiation.
+	 *
+	 * Check for the match but also check to see
+	 * if it's the %fromcert + peer id match
+	 * result. - matt
+	 */
+	if (!score->matching_peer_id) {
+		/* must be checking certs */
+		if (d->remote->host.id.kind != ID_FROMCERT) {
+			dbg_rhc("skipping because peer_id does not match and that.id.kind is not a cert");
+			return false;
+		}
+	}
+
+	/*
+	 * XXX: When there are no certificates at all
+	 * (PEER_CA and THAT.CA are NULL; REQUESTED_CA
+	 * is NULL), these lookups return TRUE and
+	 * *_pathlen==0 - a perfect match.
+	 */
+	bool matching_peer_ca = trusted_ca(peer_ca,
+					   ASN1(d->remote->host.config->ca),
+					   &score->peer_pathlen);
+	bool matching_requested_ca = match_requested_ca(requested_ca,
+							d->local->host.config->ca,
+							&score->our_pathlen);
+	dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
+		bool_str(matching_peer_ca), score->peer_pathlen,
+		bool_str(matching_requested_ca), score->our_pathlen);
+	indent++;
+
+	/*
+	 * Both matching_peer_ca and
+	 * matching_requested_ca are required.
+	 *
+	 * XXX: Remember, when there are no
+	 * certificates, both are forced to TRUE.
+	 */
+	if (!matching_peer_ca || !matching_requested_ca) {
+		dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
+		return false;
+	}
+
+	/*
+	 * Paul: We need to check all the other relevant policy bits,
+	 * like compression, pfs, etc.
+	 *
+	 * XXX: This is the IKE SA, so compression doesn't apply.
+	 * However the negotiated crypto suite does and should be
+	 * checked.
+	 */
+
+	return true;
+}
+
 static struct connection *refine_host_connection_on_responder(int indent,
 							      const struct ike_sa *ike,
 							      lset_t proposed_authbys,
@@ -177,8 +483,6 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	struct connection *c = ike->sa.st_connection;
 
 	indent = 1;
-
-	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
 
 	passert(!LHAS(proposed_authbys, AUTH_NEVER));
 	passert(!LHAS(proposed_authbys, AUTH_UNSET));
@@ -208,10 +512,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	 */
 	passert(c != NULL);
 
-	int best_our_pathlen = 0;
-	int best_peer_pathlen = 0;
-	struct connection *best_found = NULL;
-	int best_wildcards = 0;
+	struct score best = {0};
 
 	/*
 	 * PASS 1: Match anything with the exact same SRC->DST. This
@@ -243,286 +544,17 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			indent = 2;
 			dbg_rhc("checking "PRI_CONNECTION" against existing "PRI_CONNECTION"",
 				pri_connection(d, &b2), pri_connection(c, &b1));
-			indent = 3;
-
-			/*
-			 * First all the "easy" skips.
-			 */
-
-			/*
-			 * An instantiated connection with ID_NULL is
-			 * never better.  (it's identity was never
-			 * authenticated).
-			 *
-			 * The exception being the current connection
-			 * instance which is allowed to have no
-			 * authentication.
-			 */
-			if (c != d && is_instance(d) && d->remote->host.id.kind == ID_NULL) {
-				connection_buf cb;
-				dbg_rhc("skipping ID_NULL instance "PRI_CONNECTION"",
-					pri_connection(d, &cb));
-				continue;
-			}
-
-			if (ike->sa.st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
-				connection_buf cb;
-				dbg_rhc("skipping non-groundhog instance "PRI_CONNECTION"",
-					pri_connection(d, &cb));
-				continue;
-			}
-
-			/*
-			 * An Opportunistic connection is never
-			 * better.
-			 *
-			 * The exception being the current connection
-			 * instance which is allowed to be
-			 * opportunistic.
-			 */
-
-			if (c != d && is_opportunistic(d)) {
-				connection_buf cb;
-				dbg_rhc("skipping opportunistic connection "PRI_CONNECTION"",
-					pri_connection(d, &cb));
-				continue;
-			}
-
-			/*
-			 * Only consider template and parent instances
-			 * sec_label connections.
-			 */
-			if (is_labeled_child(d)) {
-				connection_buf cb;
-				dbg_rhc("skipping labeled child "PRI_CONNECTION,
-					pri_connection(d, &cb));
-				continue;
-			}
-
-			/* ignore group connections */
-			if (is_group(d)) {
-				connection_buf cb;
-				dbg_rhc("skipping group template connection "PRI_CONNECTION,
-					pri_connection(d, &cb));
-				continue;
-			}
-
-			/* IKE version has to match */
-			if (d->config->ike_version != ike->sa.st_ike_version) {
-				dbg_rhc("skipping because mismatching IKE version");
-				continue;
-			}
-
-			/*
-			 * XXX: are these two bogus?  C was chosen
-			 * when only the address was known so there's
-			 * no reason to think that XAUTH_SERVER is
-			 * correct.
-			 */
-
-			if (d->local->host.config->xauth.server != c->local->host.config->xauth.server) {
-				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg_rhc("skipping because mismatched xauth_server");
-				continue;
-			}
-
-			if (d->local->host.config->xauth.client != c->local->host.config->xauth.client) {
-				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-				dbg_rhc("skipping because mismatched xauth_client");
-				continue;
-			}
-
-			/*
-			 * 'You Tarzan, me Jane' check based on
-			 * received IDr (remember, this is the
-			 * responder).
-			 */
-			if (tarzan_id != NULL) {
-				id_buf tzb;
-				esb_buf tzesb;
-				dbg_rhc("peer expects us to be %s (%s) according to its IDr payload",
-					str_id(tarzan_id, &tzb),
-					enum_show(&ike_id_type_names, tarzan_id->kind, &tzesb));
-				id_buf usb;
-				esb_buf usesb;
-				dbg_rhc("this connection's local id is %s (%s)",
-				    str_id(&d->local->host.id, &usb),
-				    enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
-				/* ??? pexpect(d->spd->spd_next == NULL); */
-				if (!idr_wildmatch(&d->local->host, tarzan_id, ike->sa.logger)) {
-					dbg_rhc("skipping because peer IDr payload does not match our expected ID");
-					continue;
-				}
-			} else {
-				dbg_rhc("no IDr payload received from peer");
-			}
-
-			/*
-			 * The proposed authentication must match the
-			 * policy of this connection.
-			 */
-			switch (ike->sa.st_ike_version) {
-			case IKEv1:
-				if (d->config->aggressive) {
-					dbg_rhc("skipping because AGGRESSIVE isn't right");
-					continue;	/* differ about aggressive mode */
-				}
-				if (LHAS(proposed_authbys, AUTH_PSK)) {
-					if (!(d->remote->host.config->auth == AUTH_PSK)) {
-						/* there needs to be a key */
-						dbg_rhc("skipping because no PSK in POLICY");
-						continue;
-					}
-					if (get_connection_psk(d) == NULL) {
-						/* there needs to be a key */
-						dbg_rhc("skipping because PSK and no secret");
-						continue; /* no secret */
-					}
-				}
-				if (LHAS(proposed_authbys, AUTH_RSASIG)) {
-					if (!(d->remote->host.config->auth == AUTH_RSASIG)) {
-						dbg_rhc("skipping because not RSASIG in POLICY");
-						continue;	/* no key */
-					}
-					if (get_local_private_key(d, &pubkey_type_rsa,
-								  ike->sa.logger) == NULL) {
-						/*
-						 * We must at least be able to find
-						 * our private key.
-						 */
-						dbg_rhc("skipping because RSASIG and no private key");
-						continue;	/* no key */
-					}
-				}
-				break;
-			case IKEv2:
-				/*
-				 * We need to check if leftauth and
-				 * rightauth match, but we only know
-				 * what the remote end has sent in the
-				 * IKE_AUTH request.
-				 *
-				 * XXX: this is too strict.  For
-				 * instance, given a connection that
-				 * allows both both ECDSA and RSASIG
-				 * then because .auth=rsasig
-				 * (preferred) the below will reject
-				 * ECDSA?
-				 */
-				if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {
-					dbg_rhc("skipping because mismatched authby");
-					continue;
-				}
-				/* check that the chosen one has a key */
-				switch (d->remote->host.config->auth) {
-				case AUTH_PSK:
-					/*
-					 * XXX: This tries to find the
-					 * PSK for what is potentially
-					 * a template!
-					 */
-					if (get_connection_psk(d) == NULL) {
-						/* need a key */
-#if 0
-						dbg_rhc("skipping because PSK and no secret");
-						continue; /* no secret */
-#else
-						dbg_rhc("has no PSK; why?");
-					}
-#endif
-					break;
-				case AUTH_RSASIG:
-					if (get_local_private_key(d, &pubkey_type_rsa,
-								  ike->sa.logger) == NULL) {
-						dbg_rhc("skipping because RSASIG and no private key");
-						continue;	/* no key */
-					}
-					break;
-				case AUTH_ECDSA:
-					if (get_local_private_key(d, &pubkey_type_ecdsa,
-								  ike->sa.logger) == NULL) {
-						dbg_rhc("skipping because ECDSA and no private key");
-						continue;	/* no key */
-					}
-					break;
-				default:
-				{
-					lset_buf eb;
-					dbg_rhc("%s so no authby checks performed",
-						str_lset_short(&keyword_auth_names, "+",
-							       proposed_authbys, &eb));
-					break;
-				}
-				}
-				break;
-			}
-
-			/*
-			 * Does the ID match?
-			 *
-			 * WILDCARDS gives the match a score (smaller
-			 * is better): 0 for a perfect match, non-zero
-			 * when things like certificate wild cards
-			 * were used.
-			 */
-
-			int wildcards = 0;
-			bool matching_peer_id =
-				match_id("rhc:       ",
-					 peer_id, &d->remote->host.id, &wildcards);
-
-			/*
-			 * Check if peer_id matches, exactly or after
-			 * instantiation.
-			 *
-			 * Check for the match but also check to see
-			 * if it's the %fromcert + peer id match
-			 * result. - matt
-			 */
-			if (!matching_peer_id) {
-				/* must be checking certs */
-				if (d->remote->host.id.kind != ID_FROMCERT) {
-					dbg_rhc("skipping because peer_id does not match and that.id.kind is not a cert");
-					continue;
-				}
-			}
-
-			/*
-			 * XXX: When there are no certificates at all
-			 * (PEER_CA and THAT.CA are NULL; REQUESTED_CA
-			 * is NULL), these lookups return TRUE and
-			 * *_pathlen==0 - a perfect match.
-			 */
-			int peer_pathlen;
-			bool matching_peer_ca = trusted_ca(peer_ca,
-							   ASN1(d->remote->host.config->ca),
-							   &peer_pathlen);
-			int our_pathlen;
-			bool matching_requested_ca = match_requested_ca(requested_ca,
-									d->local->host.config->ca,
-									&our_pathlen);
-			dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
-				bool_str(matching_peer_ca), peer_pathlen,
-				bool_str(matching_requested_ca), our_pathlen);
 			indent++;
 
-			/*
-			 * Both matching_peer_ca and
-			 * matching_requested_ca are required.
-			 *
-			 * XXX: Remember, when there are no
-			 * certificates, both are forced to TRUE.
-			 */
-			if (!matching_peer_ca || !matching_requested_ca) {
-				dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
+			struct score score = {
+				.connection = d,
+			};
+			if (!score_host_connection(indent, ike,
+						   proposed_authbys,
+						   peer_id, tarzan_id, peer_ca,
+						   &score)) {
 				continue;
 			}
-
-			/*
-			 * Paul: We need to check all the other
-			 * relevant policy bits, like compression,
-			 * pfs, etc
-			 */
 
 			/*
 			 * D has passed all the tests.
@@ -531,10 +563,10 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * exact match (this includes an ID only
 			 * match).
 			 */
-			if (matching_peer_id &&
-			    wildcards == 0 &&
-			    peer_pathlen == 0 &&
-			    our_pathlen == 0) {
+			if (score.matching_peer_id &&
+			    score.wildcards == 0 &&
+			    score.peer_pathlen == 0 &&
+			    score.our_pathlen == 0) {
 				connection_buf dcb;
 				dbg_rhc("returning "PRI_CONNECTION" because exact peer id match",
 					pri_connection(d, &dcb));
@@ -549,23 +581,20 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * ??? the logic involving *_pathlen looks wrong.
 			 * ??? which matters more peer_pathlen or our_pathlen minimization?
 			 */
-			if (best_found == NULL ||
-			    (wildcards < best_wildcards) ||
-			    (wildcards == best_wildcards && peer_pathlen < best_peer_pathlen) ||
-			    (wildcards == best_wildcards && peer_pathlen == best_peer_pathlen && our_pathlen < best_our_pathlen)) {
+			if (best.connection == NULL ||
+			    (score.wildcards < best.wildcards) ||
+			    (score.wildcards == best.wildcards && score.peer_pathlen < best.peer_pathlen) ||
+			    (score.wildcards == best.wildcards && score.peer_pathlen == best.peer_pathlen && score.our_pathlen < best.our_pathlen)) {
 				connection_buf cib;
 				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
-					wildcards, peer_pathlen,
-					our_pathlen);
-				best_found = d;
-				best_wildcards = wildcards;
-				best_peer_pathlen = peer_pathlen;
-				best_our_pathlen = our_pathlen;
+					score.wildcards, score.peer_pathlen,
+					score.our_pathlen);
+				best = score;
 			}
 		}
 	}
-	return best_found;
+	return best.connection;
 }
 
 bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
