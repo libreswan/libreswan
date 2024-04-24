@@ -29,17 +29,14 @@
 #include "iface.h"
 #include "ikev1_spdb.h"
 #include "instantiate.h"
+#include "orient.h"
 
 static bool match_v1_connection(struct connection *c, struct authby authby,
 				bool policy_xauth, bool policy_aggressive,
 				const struct id *peer_id)
 {
-	if (c->config->ike_version != IKEv1) {
-		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", wrong IKE version",
-		    pri_connection(c, &cb));
-		return false;
-	}
+	PEXPECT(c->logger, c->config->ike_version == IKEv1);
+	PEXPECT(c->logger, oriented(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
@@ -200,6 +197,7 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 	struct connection_filter hpf = {
 		.local = &local_address,
 		.remote = &remote_address,
+		.ike_version = IKEv1,
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &hpf)) {
@@ -333,6 +331,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	struct connection_filter hpf = {
 		.local = &md->iface->ip_dev->local_address,
 		.remote = &unset_address,
+		.ike_version = IKEv1,
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &hpf)) {

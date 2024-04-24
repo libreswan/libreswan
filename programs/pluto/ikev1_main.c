@@ -881,7 +881,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 						     &rbody))
 				return STF_INTERNAL_ERROR;
 		} else {
-			generalName_t *ca = collect_rw_ca_candidates(md->iface->ip_dev->local_address);
+			generalName_t *ca = collect_rw_ca_candidates(md->iface->ip_dev->local_address, IKEv1);
 
 			if (ca != NULL) {
 				generalName_t *gn;

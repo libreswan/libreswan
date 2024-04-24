@@ -32,19 +32,13 @@
 #include "authby.h"
 #include "instantiate.h"
 
-static bool match_connection(const struct connection *c,
-			     struct authby remote_authby,
-			     bool *send_reject_response,
-			     struct logger *logger)
+static bool match_v2_connection(const struct connection *c,
+				struct authby remote_authby,
+				bool *send_reject_response,
+				struct logger *logger)
 {
-	pexpect(oriented(c)); /* searching oriented lists */
-
-	if (c->config->ike_version != IKEv2) {
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", not IKEv2",
-		     pri_connection(c, &cb));
-		return false;
-	}
+	PEXPECT(logger, c->config->ike_version == IKEv2);
+	PEXPECT(logger, oriented(c)); /* searching oriented lists */
 
 	if (is_group(c)) {
 		connection_buf cb;
@@ -136,13 +130,14 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	struct connection_filter hpf_remote = {
 		.local = &local_address,
 		.remote = &remote_address,
+		.ike_version = IKEv2,
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &hpf_remote)) {
 		struct connection *d = hpf_remote.c;
 
-		if (!match_connection(d, remote_authby, send_reject_response,
-				      md->logger)) {
+		if (!match_v2_connection(d, remote_authby, send_reject_response,
+					 md->logger)) {
 			continue;
 		}
 
@@ -211,13 +206,14 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	struct connection_filter hpf_unset = {
 		.local = &local_address,
 		.remote = &unset_address,
+		.ike_version = IKEv2,
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
-		if (!match_connection(d, remote_authby, send_reject_response,
-				      md->logger)) {
+		if (!match_v2_connection(d, remote_authby, send_reject_response,
+					 md->logger)) {
 			continue;
 		}
 

@@ -946,9 +946,14 @@ struct connection_filter {
 	const struct id *this_id_eq; /* strict; not same_id() */
 	const struct id *that_id_eq; /* strict; not same_id() */
 	struct connection *clonedfrom;
-	/* look for host-pair; set local=&unset_address to find
-	 * disoriented connections */
-	const ip_address *local, *remote;
+	enum ike_version ike_version;
+	/*
+	 * Look for host-pair; local=remote=&unset_address finds
+	 * disoriented connections; remote=&unset_address finds
+	 * templates.
+	 */
+	const ip_address *local;
+	const ip_address *remote;
 
 	/*
 	 * Current result (can be safely deleted).

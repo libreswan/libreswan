@@ -324,6 +324,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 		while (true) {
 			struct connection_filter cq = {
 				.clonedfrom = c,
+				.ike_version = c->config->ike_version,
 				.where = where,
 			};
 			if (!next_connection(OLD2NEW, &cq)) {
@@ -355,6 +356,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 		del_policy(c, policy.up);
 		struct connection_filter cq = {
 			.clonedfrom = c,
+			.ike_version = c->config->ike_version,
 			.where = where,
 		};
 		if (next_connection(OLD2NEW, &cq)) {
@@ -405,6 +407,7 @@ void terminate_and_delete_connections(struct connection **cp,
 		connection_attach((*cp), logger);
 		struct connection_filter cq = {
 			.clonedfrom = (*cp),
+			.ike_version = (*cp)->config->ike_version,
 			.where = where,
 		};
 		if (next_connection(OLD2NEW, &cq)) {

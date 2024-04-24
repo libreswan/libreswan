@@ -1789,7 +1789,10 @@ static bool is_virtual_net_used(struct connection *c,
 				const ip_selector *peer_net,
 				const struct id *peer_id)
 {
-	struct connection_filter cq = { .where = HERE, };
+	struct connection_filter cq = {
+		.ike_version = IKEv1,
+		.where = HERE,
+	};
 	while (next_connection(NEW2OLD, &cq)) {
 		struct connection *d = cq.c;
 		switch (d->local->kind) {
@@ -1968,6 +1971,7 @@ static struct connection *fc_try(const struct connection *c,
 	struct connection_filter hpf = {
 		.local = &local_address,
 		.remote = &remote_address,
+		.ike_version = IKEv1,
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &hpf)) {
@@ -2247,6 +2251,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			struct connection_filter hpf = {
 				.local = &spd->local->host->addr,
 				.remote = &unset_address,
+				.ike_version = IKEv1,
 				.where = HERE,
 			};
 			while (next_connection(NEW2OLD, &hpf)) {

@@ -1377,6 +1377,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 		struct connection_filter hpf = {
 			.local = &local,
 			.remote = &remote,
+			.ike_version = IKEv2,
 			.where = HERE,
 		};
 		while (next_connection(NEW2OLD, &hpf)) {
@@ -1392,13 +1393,6 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			       str_connection_policies(d, &pb));
 
 			indent.level = 3;
-
-			if (d->config->ike_version != IKEv2) {
-				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION", not IKEv2",
-				       pri_connection(d, &cb));
-				continue;
-			}
 
 			/*
 			 * Groups are like template templates?  They
@@ -1640,6 +1634,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 		struct connection_filter cf = {
 			.kind = CK_TEMPLATE /* require a template */,
+			.ike_version = IKEv2,
 			.where = HERE,
 		};
 		while (next_connection(NEW2OLD, &cf)) {

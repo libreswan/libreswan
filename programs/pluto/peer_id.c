@@ -251,15 +251,6 @@ static bool score_host_connection(unsigned indent,
 	}
 
 	/*
-	 * IKE version has to match
-	 */
-
-	if (d->config->ike_version != ike->sa.st_ike_version) {
-		dbg_rhc("skipping because mismatching IKE version");
-		return false;
-	}
-
-	/*
 	 * XXX: are these two bogus?
 	 *
 	 * C was chosen only when the address was known so there's no
@@ -576,6 +567,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 		struct connection_filter hpf = {
 			.local = &local,
 			.remote = &remote,
+			.ike_version = c->config->ike_version,
 			.where = HERE,
 		};
 		while (next_connection(NEW2OLD, &hpf)) {

@@ -342,6 +342,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	 */
 	struct connection_filter instance = {
 		.clonedfrom = c,
+		.ike_version = c->config->ike_version,
 		.where = HERE,
 	};
 	while (next_connection(OLD2NEW, &instance)) {
@@ -1994,9 +1995,11 @@ static char *alloc_connection_prefix(const char *name, const struct connection *
 	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
 }
 
-static struct config *alloc_config(void)
+static struct config *alloc_config(enum ike_version ike_version)
 {
 	struct config *config = alloc_thing(struct config, "root config");
+	/* stuff that can't fail! */
+	config->ike_version = ike_version;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		const char *leftright =
@@ -3584,7 +3587,7 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 	 * connection; connection instances (clones) inherit these
 	 * pointers.
 	 */
-	struct config *root_config = alloc_config();
+	struct config *root_config = alloc_config(wm->ike_version);
 	struct connection *c = alloc_connection(wm->name, NULL, root_config,
 						debugging | wm->conn_debug,
 						logger, HERE);

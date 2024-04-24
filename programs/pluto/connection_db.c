@@ -183,6 +183,9 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	if (filter->kind != 0 && filter->kind != c->local->kind) {
 		return false;
 	}
+	if (filter->ike_version != 0 && filter->ike_version != c->config->ike_version) {
+		return false;
+	}
 	if (filter->clonedfrom != NULL && filter->clonedfrom != c->clonedfrom) {
 		return false;
 	}
@@ -238,6 +241,23 @@ bool next_connection(enum chrono adv, struct connection_filter *filter)
 	/* try to stop all_connections() calls */
 	passert(filter->connections == NULL);
 	if (filter->internal == NULL) {
+		/*
+		 * First time.
+		 *
+		 * Some sanity checks.  Only simple and name checks
+		 * can leave out .ike_version.
+		 */
+		if (filter->ike_version == 0) {
+#if 0
+			/* foodgroups searches for just CK_GROUP */
+			PEXPECT_WHERE(&global_logger, filter->where, filter->kind == 0);
+#endif
+			PEXPECT_WHERE(&global_logger, filter->where, filter->clonedfrom == NULL);
+			PEXPECT_WHERE(&global_logger, filter->where, filter->local == NULL);
+			PEXPECT_WHERE(&global_logger, filter->where, filter->remote == NULL);
+			PEXPECT_WHERE(&global_logger, filter->where, filter->this_id_eq == NULL);
+			PEXPECT_WHERE(&global_logger, filter->where, filter->that_id_eq == NULL);
+		}
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no

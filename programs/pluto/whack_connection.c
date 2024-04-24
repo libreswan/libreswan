@@ -234,6 +234,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 	unsigned nr = 0;
 	struct connection_filter instances = {
 		.clonedfrom = c,
+		.ike_version = c->config->ike_version, /*redundant but meh*/
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &instances)) {
@@ -265,6 +266,7 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 	unsigned nr = 0;
 	struct connection_filter instances = {
 		.clonedfrom = c,
+		.ike_version = c->config->ike_version, /*redundant but meh*/
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &instances)) {
