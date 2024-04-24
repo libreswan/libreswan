@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v5.0 (Unreleased)
+v5.0 (Apr 24, 2024))
 * IKEv1:
   - globally disabled by default (ikev1-policy=drop); see RFC9395 [Daniel]
   - limit default cryptosuite [Andrew, Paul, Tuomo]
