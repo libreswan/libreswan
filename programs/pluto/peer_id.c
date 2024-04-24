@@ -165,7 +165,7 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  * as nothing already used is changed.
  */
 
-#define dbg_rhc(FORMAT, ...) dbg("rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
+#define dbg_rhc(FORMAT, ...) pdbg(ike->sa.logger, "rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
 
 struct score {
 	bool matching_peer_id;
@@ -262,7 +262,7 @@ static bool score_host_connection(unsigned indent,
 	/*
 	 * XXX: are these two bogus?
 	 *
-	 * C was chosen when only the address was known so there's no
+	 * C was chosen only when the address was known so there's no
 	 * reason to think that XAUTH_SERVER is correct.
 	 */
 
@@ -473,6 +473,20 @@ static bool score_host_connection(unsigned indent,
 	return true;
 }
 
+/*
+ * If the connection passes all tests and the Peer ID was an exact
+ * match (this includes an ID only match).
+ */
+
+static bool exact_id_match(struct score score)
+{
+	return (score.connection != NULL &&
+		score.matching_peer_id &&
+		score.wildcards == 0 &&
+		score.peer_pathlen == 0 &&
+		score.our_pathlen == 0);
+}
+
 static struct connection *refine_host_connection_on_responder(int indent,
 							      const struct ike_sa *ike,
 							      lset_t proposed_authbys,
@@ -482,39 +496,52 @@ static struct connection *refine_host_connection_on_responder(int indent,
 
 	struct connection *c = ike->sa.st_connection;
 
-	indent = 1;
+	PASSERT(ike->sa.logger, !LHAS(proposed_authbys, AUTH_NEVER));
+	PASSERT(ike->sa.logger, !LHAS(proposed_authbys, AUTH_UNSET));
 
-	passert(!LHAS(proposed_authbys, AUTH_NEVER));
-	passert(!LHAS(proposed_authbys, AUTH_UNSET));
+	/*
+	 * XXX: should, instead, C be a permanent or template as it
+	 * would avoid unnecessary instantiation.
+	 *
+	 * Remember is_instance() includes labeled_parent().
+	 */
+	PEXPECT(ike->sa.logger, is_instance(c) || is_permanent(c));
 
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
 	 */
-	pexpect(ike->sa.st_remote_certs.processed);
+	PEXPECT(ike->sa.logger, ike->sa.st_remote_certs.processed);
 	asn1_t peer_ca = get_peer_ca(&ike->sa.st_remote_certs.pubkey_db, peer_id);
-
 	if (hunk_isempty(peer_ca)) {
 		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
 	}
 
 	/*
-	 * The current connection won't do: search for one that will.
-	 * First search for one with the same pair of hosts.
-	 * If that fails, search for a suitable Road Warrior or Opportunistic
-	 * connection (i.e. wildcard peer IP).
+	 * Find a connection with that matches the peer based on
+	 * address, ID, and other bells and whistles.
+	 *
+	 * During IKE_SA_INIT the connection was chosen based on the
+	 * peer's address.  Now its time to refine that connection,
+	 * looking for something that also matches the information,
+	 * noteably the proof-of-identity, provided by IKE_AUTH (For
+	 * IKEv1 main mode, things are the same, just the exchange
+	 * names are changed).
+	 *
+	 * The preference is for an existing instance and then an
+	 * instantiated template.
+	 *
 	 * We need to match:
+	 *
 	 * - peer_id (slightly complicated by instantiation)
 	 * - if PSK auth, the key must not change (we used it to decode message)
 	 * - policy-as-used must be acceptable to new connection
 	 * - if initiator, also:
 	 *   + our ID must not change (we sent it in previous message)
 	 *   + our RSA key must not change (we used in in previous message)
-	 */
-	passert(c != NULL);
-
-	struct score best = {0};
-
-	/*
+	 *
+	 * PASS 0: Score the existing connection to kick-start the
+	 * search and check for an instant winner
+	 *
 	 * PASS 1: Match anything with the exact same SRC->DST. This
 	 * list contains instantiated templates and oriented permanent
 	 * connections.
@@ -523,6 +550,20 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	 * oriented template connections (since the remote address is
 	 * %any).
 	 */
+
+	struct score best = {0};
+
+	struct score c_score = { .connection = c, };
+	if (score_host_connection(indent, ike,
+				  proposed_authbys,
+				  peer_id, tarzan_id, peer_ca,
+				  &c_score)) {
+		best = c_score;
+		if (exact_id_match(best)) {
+			dbg_rhc("returning initial connection because exact (peer) ID match");
+			return best.connection;
+		}
+	}
 
 	ip_address local = c->iface->local_address;
 	FOR_EACH_THING(remote, endpoint_address(ike->sa.st_remote_endpoint), unset_address) {
@@ -539,11 +580,14 @@ static struct connection *refine_host_connection_on_responder(int indent,
 		};
 		while (next_connection(NEW2OLD, &hpf)) {
 			struct connection *d = hpf.c;
+			if (c == d) {
+				/* already scored above */
+				continue;
+			}
 
-			connection_buf b1, b2;
+			connection_buf b2;
 			indent = 2;
-			dbg_rhc("checking "PRI_CONNECTION" against existing "PRI_CONNECTION"",
-				pri_connection(d, &b2), pri_connection(c, &b1));
+			dbg_rhc("checking "PRI_CONNECTION, pri_connection(d, &b2));
 			indent++;
 
 			struct score score = {
@@ -563,12 +607,9 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * exact match (this includes an ID only
 			 * match).
 			 */
-			if (score.matching_peer_id &&
-			    score.wildcards == 0 &&
-			    score.peer_pathlen == 0 &&
-			    score.our_pathlen == 0) {
+			if (exact_id_match(score)) {
 				connection_buf dcb;
-				dbg_rhc("returning "PRI_CONNECTION" because exact peer id match",
+				dbg_rhc("returning "PRI_CONNECTION" because exact (peer) ID match",
 					pri_connection(d, &dcb));
 				return d;
 			}
