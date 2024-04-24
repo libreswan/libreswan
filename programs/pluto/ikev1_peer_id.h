@@ -30,10 +30,10 @@
 
 stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_payload);
 
-bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md);
+bool ikev1_decode_peer_id_initiator(struct ike_sa *ike, struct msg_digest *md);
 
-bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md);
+bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_digest *md);
 
-bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st, struct msg_digest *md);
+bool ikev1_decode_peer_id_aggr_mode_responder(struct ike_sa *ike, struct msg_digest *md);
 
 #endif

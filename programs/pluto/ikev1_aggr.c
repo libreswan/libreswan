@@ -209,7 +209,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * Note: Aggressive mode so this cannot change the connection.
 	 */
 
-	if (!ikev1_decode_peer_id_aggr_mode_responder(&ike->sa, md)) {
+	if (!ikev1_decode_peer_id_aggr_mode_responder(ike, md)) {
 		id_buf buf;
 		endpoint_buf b;
 		llog_sa(RC_LOG_SERIOUS, ike,
@@ -516,9 +516,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
  */
 static dh_shared_secret_cb aggr_inR1_outI2_crypto_continue;	/* forward decl and type assertion */
 
-stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
+stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 {
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	/*
 	 * With Aggressive Mode, we get an ID payload in this, the
 	 * second message (first response), so we can use it to index
@@ -532,7 +532,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 
 	if (!v1_decode_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
+		llog(RC_LOG, ike->sa.logger, "X509: CERT payload bogus or revoked");
 		return false;
 	}
 
@@ -541,43 +541,43 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * the connection.
 	 */
 
-	struct connection *c = st->st_connection;
-	if (!ikev1_decode_peer_id_initiator(st, md)) {
+	struct connection *c = ike->sa.st_connection;
+	if (!ikev1_decode_peer_id_initiator(ike, md)) {
 		id_buf buf;
 		endpoint_buf b;
-		log_state(RC_LOG_SERIOUS, st,
-			  "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
-			  str_id(&st->st_connection->remote->host.id, &buf),
-			  str_endpoint(&md->sender, &b));
+		llog(RC_LOG_SERIOUS, ike->sa.logger,
+		     "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
+		     str_id(&ike->sa.st_connection->remote->host.id, &buf),
+		     str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
-	passert(c == st->st_connection); /* no switch */
+	passert(c == ike->sa.st_connection); /* no switch */
 
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 		v1_notification_t r =
 			parse_isakmp_sa_body(&sapd->pbs, &sapd->payload.sa,
-					     NULL, true, st);
+					     NULL, true, &ike->sa);
 
 		if (r != v1N_NOTHING_WRONG)
 			return STF_FAIL_v1N + r;
 	}
 
-	merge_quirks(st, md);
+	merge_quirks(&ike->sa, md);
 
-	set_nat_traversal(st, md);
+	set_nat_traversal(&ike->sa, md);
 
 	/* KE in */
-	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], st->logger)) {
+	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(ike->sa.logger, md, &ike->sa.st_nr, "Nr"));
 
 	/*
 	 * Moved the following up as we need Rcookie for hash,
@@ -588,11 +588,11 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 */
 	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
-	ikev1_natd_init(st, md);
+	ikev1_natd_init(&ike->sa, md);
 
 	/* set up second calculation */
-	submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
-				st->st_gr/*initiator needs responder's KE*/,
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
+				ike->sa.st_gr/*initiator needs responder's KE*/,
 				aggr_inR1_outI2_crypto_continue, HERE);
 	return STF_SUSPEND;
 }

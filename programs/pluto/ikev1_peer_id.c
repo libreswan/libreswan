@@ -39,37 +39,37 @@
 #include "peer_id.h"
 #include "ikev1_cert.h"
 
-static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *peer);
+static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id *peer);
 
-bool ikev1_decode_peer_id_initiator(struct state *st, struct msg_digest *md)
+bool ikev1_decode_peer_id_initiator(struct ike_sa *ike, struct msg_digest *md)
 {
-	struct id peer[1]; /* hack for pointer */
-	if (!decode_peer_id(st, md, peer)) {
+	struct id peer;
+	if (!decode_peer_id(ike, md, &peer)) {
 		/* already logged */
 		return false;
 	}
 
-	diag_t d = update_peer_id(pexpect_ike_sa(st), peer, NULL/*tarzan*/);
+	diag_t d = update_peer_id(ike, &peer, NULL/*IKEv2:tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
 	return true;
 }
 
-bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
+bool ikev1_decode_peer_id_aggr_mode_responder(struct ike_sa *ike,
 					      struct msg_digest *md)
 {
 	struct id peer;
-	if (!decode_peer_id(st, md, &peer)) {
+	if (!decode_peer_id(ike, md, &peer)) {
 		/* already logged */
 		return false;
 	}
 
-	diag_t d = update_peer_id(pexpect_ike_sa(st),  &peer, NULL/*tarzan*/);
+	diag_t d = update_peer_id(ike,  &peer, NULL/*IKEv2:tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -81,10 +81,10 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct state *st,
  * But only if we are a Main Mode Responder.
  */
 
-bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_digest *md)
+bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_digest *md)
 {
 	struct id peer_id; /* pointer hack */
-	if (!decode_peer_id(st, md, &peer_id)) {
+	if (!decode_peer_id(ike, md, &peer_id)) {
 		/* already logged */
 		return false;
 	}
@@ -99,7 +99,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 */
 
 	/* Main Mode Responder */
-	uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
+	uint16_t auth = xauth_calcbaseauth(ike->sa.st_oakley.auth);
 
 	/*
 	 * Translate the IKEv1 policy onto IKEv2(?) auth enum.
@@ -143,25 +143,25 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 * Either way, !IS_MOST_REFINED leads to a same_id() and other
 	 * checks.
 	 *
-	 * This may change st->st_connection!
+	 * This may change ike->sa.st_connection!
 	 * Our caller might be surprised!
 	 */
-	refine_host_connection_of_state_on_responder(st, proposed_authbys, &peer_id,
+	refine_host_connection_of_state_on_responder(ike, proposed_authbys, &peer_id,
 						     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
 
-	diag_t d = update_peer_id(pexpect_ike_sa(st), &peer_id, NULL/*tarzan*/);
+	diag_t d = update_peer_id(ike, &peer_id, NULL/*tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
+		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
 	return true;
 }
 
-static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *peer)
+static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id *peer)
 {
 	/* check for certificate requests */
-	decode_v1_certificate_requests(st, md);
+	decode_v1_certificate_requests(&ike->sa, md);
 
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
@@ -176,7 +176,7 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-	if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY &&
 	    id->isaid_doi_specific_a == IPPROTO_UDP &&
 	    (id->isaid_doi_specific_b == 0 ||
 	     id->isaid_doi_specific_b == NAT_IKE_UDP_PORT)) {
@@ -186,11 +186,11 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
 		     id->isaid_doi_specific_b == 0) &&
 		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
 		     id->isaid_doi_specific_b == IKE_UDP_PORT)) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
-			  IPPROTO_UDP, IKE_UDP_PORT,
-			  id->isaid_doi_specific_a,
-			  id->isaid_doi_specific_b);
+		llog(RC_LOG_SERIOUS, ike->sa.logger,
+		     "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
+		     IPPROTO_UDP, IKE_UDP_PORT,
+		     id->isaid_doi_specific_a,
+		     id->isaid_doi_specific_b);
 		/*
 		 * We have turned this into a warning because of bugs
 		 * in other vendors' products. Specifically CISCO
@@ -201,7 +201,7 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
 
 	diag_t d = unpack_peer_id(id->isaid_idtype, peer, &id_pld->pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -209,14 +209,14 @@ static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *p
 	 * For interop with SoftRemote/aggressive mode we need to remember some
 	 * things for checking the hash
 	 */
-	st->st_peeridentity_protocol = id->isaid_doi_specific_a;
-	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
+	ike->sa.st_peeridentity_protocol = id->isaid_doi_specific_a;
+	ike->sa.st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
 
 	id_buf buf;
 	enum_buf b;
-	log_state(RC_LOG, st, "Peer ID is %s: '%s'",
-		  str_enum(&ike_id_type_names, id->isaid_idtype, &b),
-		  str_id(peer, &buf));
+	llog(RC_LOG, ike->sa.logger, "Peer ID is %s: '%s'",
+	     str_enum(&ike_id_type_names, id->isaid_idtype, &b),
+	     str_id(peer, &buf));
 
 	return true;
 }

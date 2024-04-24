@@ -152,8 +152,7 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 * Our caller might be surprised!
 	 */
        if (!LHAS(proposed_authbys, AUTH_NULL)) {
-	       refine_host_connection_of_state_on_responder(&ike->sa,
-							    proposed_authbys,
+	       refine_host_connection_of_state_on_responder(ike, proposed_authbys,
 							    &peer_id, tarzan_id);
        }
 

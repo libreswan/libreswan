@@ -168,17 +168,17 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 #define dbg_rhc(FORMAT, ...) dbg("rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
 
 static struct connection *refine_host_connection_on_responder(int indent,
-							      const struct state *st,
+							      const struct ike_sa *ike,
 							      lset_t proposed_authbys,
 							      const struct id *peer_id,
 							      const struct id *tarzan_id)
 {
 
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
 	indent = 1;
 
-	const generalName_t *requested_ca = st->st_v1_requested_ca;
+	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
 
 	passert(!LHAS(proposed_authbys, AUTH_NEVER));
 	passert(!LHAS(proposed_authbys, AUTH_UNSET));
@@ -186,8 +186,8 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
 	 */
-	pexpect(st->st_remote_certs.processed);
-	asn1_t peer_ca = get_peer_ca(&st->st_remote_certs.pubkey_db, peer_id);
+	pexpect(ike->sa.st_remote_certs.processed);
+	asn1_t peer_ca = get_peer_ca(&ike->sa.st_remote_certs.pubkey_db, peer_id);
 
 	if (hunk_isempty(peer_ca)) {
 		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
@@ -224,7 +224,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	 */
 
 	ip_address local = c->iface->local_address;
-	FOR_EACH_THING(remote, endpoint_address(st->st_remote_endpoint), unset_address) {
+	FOR_EACH_THING(remote, endpoint_address(ike->sa.st_remote_endpoint), unset_address) {
 
 		indent = 1;
 		address_buf lb, rb;
@@ -265,7 +265,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				continue;
 			}
 
-			if (st->st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
+			if (ike->sa.st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
 				connection_buf cb;
 				dbg_rhc("skipping non-groundhog instance "PRI_CONNECTION"",
 					pri_connection(d, &cb));
@@ -308,7 +308,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			}
 
 			/* IKE version has to match */
-			if (d->config->ike_version != st->st_ike_version) {
+			if (d->config->ike_version != ike->sa.st_ike_version) {
 				dbg_rhc("skipping because mismatching IKE version");
 				continue;
 			}
@@ -349,7 +349,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				    str_id(&d->local->host.id, &usb),
 				    enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
 				/* ??? pexpect(d->spd->spd_next == NULL); */
-				if (!idr_wildmatch(&d->local->host, tarzan_id, st->logger)) {
+				if (!idr_wildmatch(&d->local->host, tarzan_id, ike->sa.logger)) {
 					dbg_rhc("skipping because peer IDr payload does not match our expected ID");
 					continue;
 				}
@@ -361,7 +361,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * The proposed authentication must match the
 			 * policy of this connection.
 			 */
-			switch (st->st_ike_version) {
+			switch (ike->sa.st_ike_version) {
 			case IKEv1:
 				if (d->config->aggressive) {
 					dbg_rhc("skipping because AGGRESSIVE isn't right");
@@ -385,7 +385,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 						continue;	/* no key */
 					}
 					if (get_local_private_key(d, &pubkey_type_rsa,
-								  st->logger) == NULL) {
+								  ike->sa.logger) == NULL) {
 						/*
 						 * We must at least be able to find
 						 * our private key.
@@ -433,14 +433,14 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					break;
 				case AUTH_RSASIG:
 					if (get_local_private_key(d, &pubkey_type_rsa,
-								  st->logger) == NULL) {
+								  ike->sa.logger) == NULL) {
 						dbg_rhc("skipping because RSASIG and no private key");
 						continue;	/* no key */
 					}
 					break;
 				case AUTH_ECDSA:
 					if (get_local_private_key(d, &pubkey_type_ecdsa,
-								  st->logger) == NULL) {
+								  ike->sa.logger) == NULL) {
 						dbg_rhc("skipping because ECDSA and no private key");
 						continue;	/* no key */
 					}
@@ -568,7 +568,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	return best_found;
 }
 
-bool refine_host_connection_of_state_on_responder(struct state *st,
+bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  lset_t proposed_authbys,
 						  const struct id *peer_id,
 						  const struct id *tarzan_id)
@@ -576,11 +576,11 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 	int indent = 0;
 	connection_buf cib;
 	dbg_rhc("looking for an %s connection more refined than "PRI_CONNECTION"",
-		st->st_connection->config->ike_info->version_name,
-	    pri_connection(st->st_connection, &cib));
+		ike->sa.st_connection->config->ike_info->version_name,
+	    pri_connection(ike->sa.st_connection, &cib));
 	indent = 1;
 
-	struct connection *r = refine_host_connection_on_responder(indent, st,
+	struct connection *r = refine_host_connection_on_responder(indent, ike,
 								   proposed_authbys,
 								   peer_id, tarzan_id);
 	if (r == NULL) {
@@ -592,9 +592,9 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 	dbg_rhc("returning TRUE as "PRI_CONNECTION" is most refined",
 		pri_connection(r, &bfb));
 
-	if (r != st->st_connection) {
+	if (r != ike->sa.st_connection) {
 		/*
-		 * We are changing st->st_connection!  Our caller
+		 * We are changing ike->sa.st_connection!  Our caller
 		 * might be surprised!
 		 *
 		 * XXX: Code was trying to avoid instantiating the
@@ -623,22 +623,22 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 			 * ID.
 			 */
 			pexpect(is_template(r));
-			r = rw_responder_refined_instantiate(r, st->st_connection->remote->host.addr,
+			r = rw_responder_refined_instantiate(r, ike->sa.st_connection->remote->host.addr,
 							    NULL/*not-yet-known*/,
 							    peer_id, HERE);
 		} else {
-			r = connection_addref(r, st->logger);
+			r = connection_addref(r, ike->sa.logger);
 		}
 		/*
 		 * R is an improvement on .st_connection -- replace.
 		 */
-		connswitch_state_and_log(st, r);
-		connection_delref(&r, st->logger);
+		connswitch_state_and_log(&ike->sa, r);
+		connection_delref(&r, ike->sa.logger);
 	}
 
 	connection_buf bcb;
 	dbg_rhc("most refined is "PRI_CONNECTION,
-		pri_connection(st->st_connection, &bcb));
+		pri_connection(ike->sa.st_connection, &bcb));
 	return true;
 }
 

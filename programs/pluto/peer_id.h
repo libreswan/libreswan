@@ -23,7 +23,7 @@ struct state;
 struct id;
 struct ike_sa;
 
-bool refine_host_connection_of_state_on_responder(struct state *st,
+bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  lset_t proposed_authbys,
 						  const struct id *peer_id,
 						  const struct id *tarzan_id);
