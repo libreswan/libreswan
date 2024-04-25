@@ -70,6 +70,7 @@ static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type asserti
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
 static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;		/* forward decl and type assertion */
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
+static ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
 
 void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike)
 {
