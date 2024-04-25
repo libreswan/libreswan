@@ -475,10 +475,12 @@ static bool exact_id_match(struct score score)
 		score.matching_peer_id &&
 		score.wildcards == 0 &&
 		score.peer_pathlen == 0 &&
-		score.our_pathlen == 0);
+		score.our_pathlen == 0 &&
+		(is_permanent(score.connection) ||
+		 is_instance(score.connection)));
 }
 
-static bool better_score(struct score best, struct score score)
+static bool better_score(struct score best, struct score score, struct logger *logger)
 {
 	if (best.connection == NULL) {
 		return true;
@@ -507,6 +509,20 @@ static bool better_score(struct score best, struct score score)
 
 	if (score.our_pathlen != best.our_pathlen) {
 		return (score.our_pathlen < best.our_pathlen);
+	}
+
+	/*
+	 * Prefer an existing instance over a template and/or
+	 * permanent.  Presumably so that established connections are
+	 * re-used.  Also matches legacy behaviour where instances
+	 * were checked before templates.
+	 *
+	 * This leaves the question of permanent vs template open.
+	 */
+	if (is_instance(score.connection) && !is_instance(best.connection)) {
+		PEXPECT(logger, (is_permanent(best.connection) ||
+				 is_template(best.connection)));
+		return true;
 	}
 
 	/* equal scores is not better */
@@ -649,7 +665,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * ??? the logic involving *_pathlen looks wrong.
 			 * ??? which matters more peer_pathlen or our_pathlen minimization?
 			 */
-			if (better_score(best, score)) {
+			if (better_score(best, score, ike->sa.logger)) {
 				connection_buf cib;
 				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
