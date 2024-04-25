@@ -478,6 +478,41 @@ static bool exact_id_match(struct score score)
 		score.our_pathlen == 0);
 }
 
+static bool better_score(struct score best, struct score score)
+{
+	if (best.connection == NULL) {
+		return true;
+	}
+
+	/*
+	 * If it was a non-exact (wildcard) match, we'll remember it
+	 * as best_found in case an exact match doesn't come along.
+	 */
+	if (score.wildcards != best.wildcards) {
+		return (score.wildcards < best.wildcards);
+	}
+
+	/*
+	 * ??? the logic involving *_pathlen looks wrong.
+	 *
+	 * ??? which matters more peer_pathlen or our_pathlen
+	 * minimization?
+	 *
+	 * XXX: presumably peer as we're more worried about
+	 * authenticating the peer using the best match?
+	 */
+	if (score.peer_pathlen != best.peer_pathlen) {
+		return (score.peer_pathlen < best.peer_pathlen);
+	}
+
+	if (score.our_pathlen != best.our_pathlen) {
+		return (score.our_pathlen < best.our_pathlen);
+	}
+
+	/* equal scores is not better */
+	return false;
+}
+
 static struct connection *refine_host_connection_on_responder(int indent,
 							      const struct ike_sa *ike,
 							      lset_t proposed_authbys,
@@ -614,10 +649,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * ??? the logic involving *_pathlen looks wrong.
 			 * ??? which matters more peer_pathlen or our_pathlen minimization?
 			 */
-			if (best.connection == NULL ||
-			    (score.wildcards < best.wildcards) ||
-			    (score.wildcards == best.wildcards && score.peer_pathlen < best.peer_pathlen) ||
-			    (score.wildcards == best.wildcards && score.peer_pathlen == best.peer_pathlen && score.our_pathlen < best.our_pathlen)) {
+			if (better_score(best, score)) {
 				connection_buf cib;
 				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
