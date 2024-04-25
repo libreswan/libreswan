@@ -46,6 +46,7 @@ YY_DECL;
 #include "ipsecconf/parserlast.h"
 #include "lswlog.h"
 #include "lswglob.h"
+#include "lswalloc.h"
 
 #define MAX_INCLUDE_DEPTH	10
 
@@ -92,27 +93,23 @@ void parser_y_init (const char *name, FILE *f)
 	ic_private.stack[0].line = 1;
 	ic_private.stack[0].once = true;
 	ic_private.stack[0].file = f;
-	ic_private.stack[0].filename = strdup(name);
+	ic_private.stack[0].filename = clone_str(name, "filename");
 	stacktop = &ic_private.stack[0];
 	ic_private.stack_ptr = 0;
 }
 
 static void parser_y_close(struct ic_inputsource *iis)
 {
-	if (iis->filename != NULL) {
-		free(iis->filename);
-		iis->filename = NULL;
-	}
+	pfreeany(iis->filename);
 	if (iis->file != NULL) {
 		fclose(iis->file);
 		iis->file = NULL;
 	}
 	if (iis->fileglob != NULL) {
 		for (char **p = iis->fileglob; *p; p++) {
-			free(*p);
+			pfree(*p);
 		}
-		free(iis->fileglob);
-		iis->fileglob = NULL;
+		pfreeany(iis->fileglob);
 	}
 }
 
@@ -137,14 +134,11 @@ static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *log
 		fclose(iis->file);
 		iis->file = NULL;
 	}
-	if (iis->filename != NULL) {
-		free(iis->filename);
-		iis->filename = NULL;
-	}
+	pfreeany(iis->filename);
 
 	iis->line = 1;
 	iis->once = true;
-	iis->filename = strdup(iis->fileglob[fcnt]);
+	iis->filename = clone_str(iis->fileglob[fcnt], "fileglob");
 
 	/* open the file */
 	FILE *f = fopen(iis->filename, "r");
@@ -195,9 +189,9 @@ static void glob_include(unsigned count, char **files,
 	stacktop->filename = NULL;
 	stacktop->fileglobcnt = 0;
 
-	stacktop->fileglob = calloc(sizeof(char *), count + 1);
+	stacktop->fileglob = alloc_things(char *, count + 1, "globs");
 	for (unsigned i = 0; i < count; i++) {
-		stacktop->fileglob[i] = strdup(files[i]);
+		stacktop->fileglob[i] = clone_str(files[i], "glob");
 	}
 	stacktop->fileglob[count] = NULL;
 
