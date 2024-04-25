@@ -45,16 +45,18 @@
 #include "ip_info.h"
 #include "sparse_names.h"
 
-static const struct sparse_name rta_names[] = {
+static const struct sparse_names rta_names = {
+	.list = {
 #define E(N) { #N, N, }
-	E(RTA_DST),
-	E(RTA_IFP),
-	E(RTA_IFA),
-	E(RTA_GATEWAY),
-	E(RTA_NETMASK),
-	E(RTA_GENMASK),
+		E(RTA_DST),
+		E(RTA_IFP),
+		E(RTA_IFA),
+		E(RTA_GATEWAY),
+		E(RTA_NETMASK),
+		E(RTA_GENMASK),
 #undef E
-	SPARSE_NULL,
+		SPARSE_NULL,
+	},
 };
 
 void resolve_default_route(struct starter_end *host,
@@ -154,7 +156,7 @@ static enum route_status get_route_1(int s, ip_address dst,
 		unsigned m = 1 << b;
 		if (a & m) {
 			sparse_buf eb;
-			dbg("found %s", str_sparse(rta_names, m, &eb));
+			dbg("found %s", str_sparse(&rta_names, m, &eb));
 			a &= ~m;
 			struct sockaddr *sa = (void*)ap;
 			RT_ADVANCE(ap, sa);
