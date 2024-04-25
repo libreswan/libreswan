@@ -295,14 +295,13 @@ static void parser_free_kwlist(struct kw_list *list)
 void parser_free_conf(struct config_parsed *cfg)
 {
 	if (cfg != NULL) {
-		struct section_list *seci;
-
 		parser_free_kwlist(cfg->config_setup);
 
-		for (seci = cfg->sections.tqh_first; seci != NULL; ) {
+		for (struct section_list *seci = TAILQ_FIRST(&cfg->sections);
+		     seci != NULL; ) {
+			/* step off */
 			struct section_list *sec = seci;
-
-			seci = seci->link.tqe_next;
+			seci = TAILQ_NEXT(seci, link);
 
 			if (sec->name != NULL)
 				free(sec->name);

@@ -450,9 +450,9 @@ static bool translate_field(struct starter_conn *conn,
 	{
 		struct section_list *addin;
 		const char *seeking = kw->string;
-		for (addin = cfgp->sections.tqh_first;
+		for (addin = TAILQ_FIRST(&cfgp->sections);
 		     addin != NULL && !streq(seeking, addin->name);
-		     addin = addin->link.tqe_next)
+		     addin = TAILQ_NEXT(addin, link))
 			;
 		if (addin == NULL) {
 			llog(RC_LOG, logger,
@@ -692,8 +692,8 @@ static bool load_conn(struct starter_conn *conn,
 		      struct logger *logger)
 {
 	/* reset all of the "beenhere" flags */
-	for (struct section_list *s = cfgp->sections.tqh_first; s != NULL;
-	     s = s->link.tqe_next) {
+	for (struct section_list *s = TAILQ_FIRST(&cfgp->sections);
+	     s != NULL; s = TAILQ_NEXT(s, link)) {
 		s->beenhere = false;
 	}
 
@@ -1029,8 +1029,9 @@ struct starter_config *confread_load(const char *file,
 		 * Load %default conn
 		 * ??? is it correct to accept multiple %default conns?
 		 */
-		for (struct section_list *sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
-		     sconn = sconn->link.tqe_next) {
+		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
+		     (!err) && sconn != NULL;
+		     sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
 				ldbg(logger, "loading default conn");
 				err |= load_conn(&cfg->conn_default,
@@ -1044,8 +1045,8 @@ struct starter_config *confread_load(const char *file,
 		/*
 		 * Load other conns
 		 */
-		for (struct section_list *sconn = cfgp->sections.tqh_first; sconn != NULL;
-		     sconn = sconn->link.tqe_next) {
+		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
+		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
 			if (!streq(sconn->name, "%default"))
 				err |= init_load_conn(cfg, cfgp, sconn,
 						      false/*default conn*/,
@@ -1092,10 +1093,11 @@ void confread_free(struct starter_config *cfg)
 
 	confread_free_conn(&cfg->conn_default);
 
-	for (struct starter_conn *conn = cfg->conns.tqh_first; conn != NULL; ) {
+	for (struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
+	     conn != NULL; ) {
 		struct starter_conn *c = conn;
-
-		conn = conn->link.tqe_next;
+		/* step off */
+		conn = TAILQ_NEXT(conn, link);
 		confread_free_conn(c);
 		pfree(c);
 	}

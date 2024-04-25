@@ -326,13 +326,8 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 
 static void confwrite_comments(FILE *out, struct starter_conn *conn)
 {
-	struct starter_comments *sc, *scnext;
-
-	for (sc = conn->comments.tqh_first;
-	     sc != NULL;
-	     sc = scnext) {
-		scnext = sc->link.tqe_next;
-
+	for (struct starter_comments *sc = TAILQ_FIRST(&conn->comments);
+	     sc != NULL; sc = TAILQ_NEXT(sc, link)) {
 		fprintf(out, "\t%s=%s\n",
 			sc->x_comment, sc->commentvalue);
 	}
@@ -503,8 +498,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bool verbose)
 {
-	struct starter_conn *conn;
-
 	/* output version number */
 	/* fprintf(out, "\nversion 2.0\n\n"); */
 
@@ -523,10 +516,12 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	}
 
 	/* output connections */
-	for (conn = cfg->conns.tqh_first; conn != NULL;
-	     conn = conn->link.tqe_next)
-		if (name == NULL || streq(name, conn->name))
+	for (struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
+	     conn != NULL; conn = TAILQ_NEXT(conn, link)) {
+		if (name == NULL || streq(name, conn->name)) {
 			confwrite_conn(out, conn, verbose);
+		}
+	}
 	if (verbose)
 		fprintf(out, "# end of config\n");
 }
