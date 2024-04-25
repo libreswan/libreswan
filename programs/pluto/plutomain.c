@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
+#include <sys/utsname.h>	/* for uname() */
 
 #include "deltatime.h"
 #include "timescale.h"
@@ -1500,8 +1501,6 @@ int main(int argc, char **argv)
 			coredir, e, strerror(e));
 	}
 
-	oco = lsw_init_options();
-
 	if (selftest_only) {
 		llog(RC_LOG, logger, "selftest: skipping lock");
 		lockfd = 0;
@@ -1518,6 +1517,7 @@ int main(int argc, char **argv)
 
 	/*
 	 * create control socket.
+	 *
 	 * We must create it before the parent process returns so that
 	 * there will be no race condition in using it.  The easiest
 	 * place to do this is before the daemon fork.
@@ -1630,16 +1630,34 @@ int main(int argc, char **argv)
 
 	/*
 	 * Initialize logging then switch to the real logger.
-	 */
-	pluto_init_log(log_param);
-	/*
+	 *
 	 * The string_logger() dbg_alloc() message went down a rabbit
 	 * hole (aka the console) so fake one up here.
 	 */
+	pluto_init_log(log_param);
 	dbg_alloc("logger", logger, HERE);
 	free_logger(&logger, HERE);
 	struct logger local_logger = global_logger;
 	logger = &local_logger;
+
+	/*
+	 * Forking done; logging enabled.  Time to announce things to
+	 * the world.
+	 */
+	llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
+	     ipsec_version_code(), compile_time_interop_options, getpid());
+	struct utsname uts;
+	if (uname(&uts) >= 0) {
+		llog(RC_LOG, logger, "operating system: %s %s %s %s",
+		     uts.sysname, uts.release, uts.version, uts.machine);
+	} else {
+		llog(RC_LOG, logger, "host: unknown");
+	}
+
+	llog(RC_LOG, logger, "core dump dir: %s", coredir);
+	oco = lsw_init_options();
+	if (oco->secretsfile && *oco->secretsfile)
+		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
 
 	init_constants();
 	init_pluto_constants();
@@ -1786,18 +1804,8 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "Linux audit support [disabled]");
 #endif
 
-	{
-		const char *vc = ipsec_version_code();
-		llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
-			vc, compile_time_interop_options, getpid());
-	}
-
-	llog(RC_LOG, logger, "core dump dir: %s", coredir);
-	if (oco->secretsfile && *oco->secretsfile)
-		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
-
 	llog(RC_LOG, logger, leak_detective ?
-		"leak-detective enabled" : "leak-detective disabled");
+	     "leak-detective enabled" : "leak-detective disabled");
 
 	llog(RC_LOG, logger, "NSS crypto [enabled]");
 
