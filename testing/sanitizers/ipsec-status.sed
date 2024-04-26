@@ -20,3 +20,6 @@ s/comp\.[a-z0-9]\{2,8\}@/comp.COMPSPIi@/g
 
 # don't change seq number "0" entries
 s/seq in:[1-9][0-9]* out:[0-9]*/seq in:XXXXX out:YYYYY/g
+
+# XXX: this shouldn't be sanitizing out audit_log=yes
+/pluto_version=/d

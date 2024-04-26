@@ -1,7 +1,6 @@
 s/^pluto\[[0-9]*\]: /pluto[PID]: /
 s=^\(pluto\[PID\]: Starting Pluto (Libreswan Version \).*)=\1VERSION)=
 s/^\(Starting Pluto (Libreswan Version \).*$/\1)/
-/Using KLIPS IPsec interface code/d
 s/started helper pid=.* (fd:.*)/started helper pid=999 (fd:9)/
 s/Plutorun started on .*/Plutorun started on DATE/
 s/@(#) built on .* .* .* by .*@.*/@(#) built on DATE by PERSON/

@@ -3,4 +3,3 @@
 /^Starting pluto IKE daemon for IPsec.*$/d
 s/Redirecting to:.*$/Redirecting to: [initsystem]/
 /^.*nsenter --mount.*$/d
-/^002 shutting down$/d
