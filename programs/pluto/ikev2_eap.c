@@ -436,10 +436,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	 *
 	 * XXX: move this into ikev2.c?
 	 */
-	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam(buf, "processing decrypted ");
-		jam_msg_digest(buf, md);
-	}
+	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
 	/*
 	 * XXX: hack so that incoming certs are ignored; should update

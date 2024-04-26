@@ -242,7 +242,8 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
 
 void schedule_md_event(const char *story, struct msg_digest *md);
 
-void jam_msg_digest(struct jambuf *log, const struct msg_digest *md);
+void llog_msg_digest(lset_t rc_flags, struct logger *logger,
+		     const char *prefix, const struct msg_digest *md);
 
 void process_md(struct msg_digest *md);
 

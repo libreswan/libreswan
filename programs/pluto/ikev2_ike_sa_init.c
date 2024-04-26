@@ -1012,6 +1012,13 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 					  struct child_sa *child,
 					  struct msg_digest *md)
 {
+	/*
+	 * This log line establishes that resources (such as the state
+	 * structure) have been allocated and the packet is being
+	 * processed for real.
+	 */
+	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
+
 	v2_notification_t n;
 	pexpect(child == NULL);
 	struct connection *c = ike->sa.st_connection;

@@ -479,10 +479,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 *
 	 * XXX: move this into ikev2.c?
 	 */
-	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam(buf, "processing decrypted ");
-		jam_msg_digest(buf, md);
-	}
+	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
