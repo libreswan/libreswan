@@ -37,3 +37,5 @@ s/SN: 0x[a-f0-9]*/SN: 0xXX/
 
 # Hack: real fix is to cleanup the delete log line and use str_datetime()
 s/ aged [0-9]*\.[0-9]*s / /
+
+/ERROR: asynchronous network error report/d

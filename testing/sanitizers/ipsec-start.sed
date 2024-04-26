@@ -1,6 +1,7 @@
 # match: ipsec start
 
 / ipsec start/ b next-ipsec-start
+/ ipsec pluto/ b next-ipsec-start
 
 b end-ipsec-start
 
@@ -18,6 +19,9 @@ b end-ipsec-start
   # next command?
   /^[a-z][a-z]*#/ b end-ipsec-start
   /^[a-z][a-z]* #/ b end-ipsec-start
+
+  s/^\(Starting Pluto (Libreswan Version\) .* pid:.*$/\1 ...) pid:PID/
+  s/^\(operating system\): .*/\1: .../
 
   # no matter what you do linux sometimes emits these
   /Starting .*mipsec.service.* - Internet … (IKE) Protocol Daemon for IPsec/ {
