@@ -36,23 +36,23 @@ struct show;
 #include "passert.h"
 
 struct log_param {
+	bool log_to_stderr;
+	char *log_to_file;
 	bool log_with_timestamp;	/* testsuite requires no timestamps */
+	bool append;
 };
-
-/* start with this before parsing options */
-extern const struct log_param default_log_param;
 
 /*
  * Log 'cur' directly (without setting it first).
  */
 
-extern void pluto_init_log(struct log_param);
-extern void close_log(void);
+struct logger *init_log(const char *progname);
+void switch_log(struct log_param, struct logger **logger);
+void free_log(void);	/* call before report_leaks() */
+void close_log(void);	/* call after report_leaks() */
+void show_log(struct show *s);
 
 extern bool log_to_audit;
-extern bool log_append;
-extern bool log_to_syslog;          /* should log go to syslog? */
-extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
 extern bool whack_prompt_for(struct state *st,

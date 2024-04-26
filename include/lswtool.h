@@ -1,3 +1,4 @@
+#include <stdbool.h>
 
 /*
  * For stand-alone tools.
@@ -7,3 +8,4 @@
 struct logger;
 extern const char *progname;
 struct logger *tool_logger(int argc, char *argv[]);
+extern bool log_to_stderr;          /* should log go to stderr? */

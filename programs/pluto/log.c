@@ -29,6 +29,7 @@
 #include <string.h>
 #include <errno.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "defs.h"
 #include "log.h"
@@ -40,87 +41,96 @@
 #include "impair.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
+#include "show.h"
 
 static struct fd *logger_fd(const struct logger *logger);
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
-const struct log_param default_log_param = {
-	.log_with_timestamp = true,	/* but testsuite requires no timestamps */
-};
+static struct log_param log_param;	/* set during startup */
 
-static struct log_param log_param = {
-	.log_with_timestamp = false,	/* initial logger to stderr requires no timestamp */
-};
+bool log_to_audit = false;
 
-bool
-	log_to_stderr = true,		/* should log go to stderr? */
-	log_to_syslog = true,		/* should log go to syslog? */
-	log_append = true,
-	log_to_audit = false;
-
-char *pluto_log_file = NULL;	/* pathname */
-static FILE *pluto_log_fp = NULL;
+static FILE *pluto_log_file = NULL;	/* either a real file or stderr */
 
 char *pluto_stats_binary = NULL;
 
 /*
- * Initialization.
+ * Initialization of the real logger.
+ *
+ * Caller is using a scratch logger and relying on stderr being open.
  */
 
-void pluto_init_log(struct log_param param)
+struct logger *init_log(const char *progname)
 {
+	pluto_log_file = stderr;
+	return string_logger(HERE, "%s", progname);
+}
+
+void switch_log(struct log_param param, struct logger **logger)
+{
+	/* save parameters */
 	log_param = param;
 
-	if (log_to_stderr)
-		setbuf(stderr, NULL);
+	/*
+	 * NOTE: Can't touch global PLUTO_LOG_FILE as it is in use.
+	 * Hence save the new log file in LOG_FILE and switch at the
+	 * end.
+	 */
+	PASSERT((*logger), pluto_log_file == stderr);
+	FILE *log_file = NULL;
 
-	if (pluto_log_file != NULL) {
-		pluto_log_fp = fopen(pluto_log_file,
-			log_append ? "a" : "w");
-		if (pluto_log_fp == NULL) {
-			fprintf(stderr,
-				"Cannot open logfile '%s': %s\n",
-				pluto_log_file, strerror(errno));
+	if (param.log_to_file != NULL) {
+		log_file = fopen(param.log_to_file, param.append ? "a" : "w");
+		if (log_file == NULL) {
+			llog_errno(RC_LOG, (*logger), errno,
+				   "cannot open logfile '%s':", param.log_to_file);
+			/* keep logging but to stdout! */
+			pfree(param.log_to_file);
+			param.log_to_file = NULL;
+			param.log_to_stderr = true;
 		} else {
 			/*
-			 * buffer by line:
-			 * should be faster that no buffering
-			 * and yet safe since each message is probably a line.
+			 * buffer by line: should be faster that no
+			 * buffering; and yet safe since each message
+			 * is written from a buffer as a line.
 			 */
-			setvbuf(pluto_log_fp, NULL, _IOLBF, 0);
+			setvbuf(log_file, NULL, _IOLBF, 0);
 		}
 	}
 
-	if (log_to_syslog)
-		openlog("pluto", LOG_CONS | LOG_NDELAY | LOG_PID,
-			LOG_AUTHPRIV);
+	if (log_file == NULL && param.log_to_stderr) {
+		log_file = stderr;
+		setbuf(log_file, NULL);
+	}
+
+	if (log_file == NULL) {
+		openlog("pluto", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_AUTHPRIV);
+	}
+
+	/* finally; shutdown stderr */
+	if (log_file != stderr) {
+		close(STDERR_FILENO); /*stderr*/
+		/* stdin points at /dev/null from earlier */
+		PASSERT((*logger), dup2(0, STDERR_FILENO) == STDERR_FILENO);
+	}
+
+	/*
+	 * Finally switch.
+	 *
+	 * Close the tmp logger (need to fake a memory allocation so
+	 * that the refcnt checker doesn't get confused) and update
+	 * the log file and direct LOGGER at GLOBAL_LOGGER.
+	 */
+	dbg_alloc("logger", logger, HERE);
+	free_logger(logger, HERE);
+	*logger = &global_logger;
+	pluto_log_file = log_file;
 }
 
 /*
  * Wrap up the logic to decide if a particular output should occur.
  * The compiler will likely inline these.
  */
-
-static void stdlog_raw(const char *prefix, char *message, const struct realtm *t)
-{
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		FILE *out = log_to_stderr ? stderr : pluto_log_fp;
-
-		if (log_param.log_with_timestamp) {
-			char now[34] = "";
-			strftime(now, sizeof(now), "%b %e %T", &t->tm);
-			fprintf(out, "%s.%06ld: %s%s\n", now, t->microsec, prefix, message);
-		} else {
-			fprintf(out, "%s%s\n", prefix, message);
-		}
-	}
-}
-
-static void syslog_raw(int severity, const char *prefix, char *message)
-{
-	if (log_to_syslog)
-		syslog(severity, "%s%s", prefix, message);
-}
 
 static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc)
 {
@@ -212,21 +222,57 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 {
 	/* assume there's a logging prefix; normally there is */
 	struct realtm t = local_realtime(realnow());
-	stdlog_raw(prefix, buf->array, &t);
-	syslog_raw(severity, prefix, buf->array);
+	if (pluto_log_file != NULL) {
+		if (log_param.log_with_timestamp) {
+			char now[34] = "";
+			strftime(now, sizeof(now), "%b %e %T", &t.tm);
+			fprintf(pluto_log_file, "%s.%06ld: %s%s\n",
+				now, t.microsec, prefix, buf->array);
+		} else {
+			fprintf(pluto_log_file, "%s%s\n", prefix, buf->array);
+		}
+	} else {
+		syslog(severity, "%s%s", prefix, buf->array);
+	}
 	/* not whack */
+}
+
+void free_log(void)
+{
+	pfreeany(log_param.log_to_file);
 }
 
 void close_log(void)
 {
-	if (log_to_syslog)
+	/*
+	 * XXX: can't trust log_param.log_to_file as may have already
+	 * been freed.
+	 */
+	if (pluto_log_file != NULL) {
+		if (pluto_log_file != stderr) {
+			fclose(pluto_log_file);
+		}
+		pluto_log_file = NULL;
+	} else {
 		closelog();
-
-	if (pluto_log_fp != NULL) {
-		(void)fclose(pluto_log_fp);
-		pluto_log_fp = NULL;
 	}
 }
+
+void show_log(struct show *s)
+{
+	SHOW_JAMBUF(s, buf) {
+		jam(buf, "logfile='%s'", (log_param.log_to_file ? log_param.log_to_file :
+					  log_param.log_to_stderr ? "<stderr>" :
+					  "<syslog>"));
+		jam_string(buf, ", ");
+		jam(buf, "logappend=%s", bool_str(log_param.append));
+		jam_string(buf, ", ");
+		jam(buf, "logip=%s", bool_str(log_ip));
+		jam_string(buf, ", ");
+		jam(buf, "audit-log=%s", bool_str(log_to_audit));
+	}
+}
+
 
 void set_debugging(lset_t deb)
 {

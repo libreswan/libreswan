@@ -101,8 +101,6 @@
 
 static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
-static const char *pluto_name;	/* name (path) we were invoked with */
-
 static pthread_t main_thread;
 
 bool in_main_thread(void)
@@ -150,7 +148,6 @@ void free_pluto_main(void)
 	pfreeany(ocsp_uri);
 	pfreeany(ocsp_trust_name);
 	pfreeany(curl_iface);
-	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootkey_file);
 	pfreeany(pluto_dnssec_trusted);
 	pfreeany(rundir);
@@ -632,13 +629,13 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 }
 
 /* print full usage (from long_opts[]) */
-static void usage(FILE *stream)
+static void usage(FILE *stream, const char *progname)
 {
 	const struct option *opt;
 	char line[72];
 	size_t lw;
 
-	snprintf(line, sizeof(line), "Usage: %s", pluto_name);
+	snprintf(line, sizeof(line), "Usage: %s", progname);
 	lw = strlen(line);
 
 	for (opt = long_opts; opt->name != NULL; opt++) {
@@ -706,14 +703,11 @@ extern int EF_PROTECT_FREE;
 
 int main(int argc, char **argv)
 {
-	struct log_param log_param = default_log_param;
-
-	kernel_ops = kernel_stacks[0];
-	passert(kernel_ops != NULL);
-
 	/*
-	 * Some options should to be processed before the first
-	 * malloc() call, so scan for them here.
+	 * DANGER!
+	 *
+	 * Some options MUST be processed before the first malloc()
+	 * call, so scan for them here.
 	 *
 	 * - leak-detective is immutable, it must come before the
 	 *   first malloc()
@@ -733,6 +727,32 @@ int main(int argc, char **argv)
 	}
 
 	/*
+	 * Start with the program name as the logger prefix with
+	 * things going to stderr.
+	 *
+	 * At this point the global log structures are set up to log
+	 * to stdout/stderr.
+	 *
+	 * The next step is to read the intentions for how to log from
+	 * command line options and the config file. Then we prepare
+	 * to be able to log, but until then log to stderr (better
+	 * then nothing).  Once we are ready to actually do logging
+	 * according to the methods desired, we set the variables for
+	 * those methods
+	 */
+	struct logger *logger = init_log(argv[0]);	/* must free */
+
+	struct log_param log_param = {
+		.log_with_timestamp = true,
+	};
+
+	/*
+	 * More sanity checks.
+	 */
+	kernel_ops = kernel_stacks[0];
+	PASSERT(logger, kernel_ops != NULL);
+
+	/*
 	 * Identify the main thread.
 	 *
 	 * Also used as a reserved thread for code wanting to
@@ -740,24 +760,10 @@ int main(int argc, char **argv)
 	 */
 	main_thread = pthread_self();
 
-	int lockfd;
-
 	/*
-	 * We read the intentions for how to log from command line options
-	 * and the config file. Then we prepare to be able to log, but until
-	 * then log to stderr (better then nothing). Once we are ready to
-	 * actually do logging according to the methods desired, we set the
-	 * variables for those methods
+	 * Make memory management easier by always allocating some of
+	 * the globals.
 	 */
-	bool log_to_stderr_desired = false;
-	bool log_to_file_desired = false;
-
-	/*
-	 * Start with the program name logger.
-	 */
-	pluto_name = argv[0];
-	struct logger *logger = string_logger(HERE, "%s", pluto_name); /* must free */
-
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	coredir = clone_str(IPSEC_RUNDIR, "coredir in main()");
 	rundir = clone_str(IPSEC_RUNDIR, "rundir");
@@ -766,7 +772,6 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
-
 	deltatime_t keep_alive = DELTATIME_INIT(0);
 
 	/* handle arguments */
@@ -813,12 +818,12 @@ int main(int argc, char **argv)
 
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
-			fprintf(stderr, "For usage information: %s --help\n", pluto_name);
+			fprintf(stderr, "For usage information: %s --help\n", argv[0]);
 			fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
 			exit(PLUTO_EXIT_FAIL);
 
 		case 'h':	/* --help */
-			usage(stdout); /* so <<| more>> works */
+			usage(stdout, argv[0]); /* so <<| more>> works */
 			exit(PLUTO_EXIT_OK);
 
 		case 'X':	/* --leak-detective */
@@ -896,12 +901,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'e':	/* --stderrlog */
-			log_to_stderr_desired = true;
+			log_param.log_to_stderr = true;
 			continue;
 
 		case 'g':	/* --logfile */
-			replace_value(&pluto_log_file, optarg);
-			log_to_file_desired = true;
+			replace_value(&log_param.log_to_file, optarg);
 			continue;
 
 #ifdef USE_DNSSEC
@@ -930,7 +934,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case '7':	/* --log-no-append */
-			log_append = false;
+			log_param.append = false;
 			continue;
 
 		case '<':	/* --log-no-ip */
@@ -1215,7 +1219,7 @@ int main(int argc, char **argv)
 
 		case '5':	/* --selftest */
 			selftest_only = true;
-			log_to_stderr_desired = true;
+			log_param.log_to_stderr = true;
 			log_param.log_with_timestamp = false;
 			fork_desired = false;
 			continue;
@@ -1237,16 +1241,14 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, longindex, logger);
 
-			replace_when_cfg_setup(&pluto_log_file, cfg, KSF_LOGFILE);
-			if (pluto_log_file != NULL)
-				log_to_syslog = false;
+			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
 #ifdef USE_DNSSEC
 			set_dnssec_file_names(cfg);
 #endif
 
 			/* plutofork= no longer supported via config file */
 			log_param.log_with_timestamp = cfg->setup.options[KBF_LOGTIME];
-			log_append = cfg->setup.options[KBF_LOGAPPEND];
+			log_param.append = cfg->setup.options[KBF_LOGAPPEND];
 			log_ip = cfg->setup.options[KBF_LOGIP];
 			log_to_audit = cfg->setup.options[KBF_AUDIT_LOG];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
@@ -1492,15 +1494,14 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_FAIL);
 	}
 
-	/* set options set either using config and/or a param */
+	/*
+	 * Create the lock file before things fork.
+	 *
+	 * From now on fatal_error() needs to be called as that clears
+	 * out the locks.
+	 */
 
-	if (chdir(coredir) == -1) {
-		int e = errno;
-
-		llog(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
-			coredir, e, strerror(e));
-	}
-
+	int lockfd;
 	if (selftest_only) {
 		llog(RC_LOG, logger, "selftest: skipping lock");
 		lockfd = 0;
@@ -1508,15 +1509,11 @@ int main(int argc, char **argv)
 		lockfd = create_lock(logger);
 	}
 
-	/* select between logging methods */
-
-	if (log_to_stderr_desired || log_to_file_desired)
-		log_to_syslog = false;
-	if (!log_to_stderr_desired)
-		log_to_stderr = false;
-
 	/*
-	 * create control socket.
+	 * Create control socket before things fork.
+	 *
+	 * From now on fatal_error() needs to be called as that clears
+	 * out the socket.
 	 *
 	 * We must create it before the parent process returns so that
 	 * there will be no race condition in using it.  The easiest
@@ -1531,7 +1528,11 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* If not suppressed, do daemon fork */
+	/*
+	 * If not suppressed, do daemon fork.
+	 *
+	 * Use logger which points at stdout!
+	 */
 	if (selftest_only) {
 		llog(RC_LOG, logger, "selftest: skipping fork");
 	} else if (fork_desired) {
@@ -1554,8 +1555,7 @@ int main(int argc, char **argv)
 			pid_t pid = fork();
 
 			if (pid < 0) {
-				fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, errno,
-					    "fork failed");
+				fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, errno, "fork failed");
 			}
 
 			if (pid == 0) {
@@ -1584,36 +1584,32 @@ int main(int argc, char **argv)
 		/* no daemon fork: we have to fill in lock file */
 		(void) fill_lock(lockfd, getpid());
 
-		if (isatty(fileno(stdout))) {
-			fprintf(stdout, "Pluto initialized\n");
+		if (isatty(fileno(stdout)) && !log_param.log_to_stderr) {
+			/*
+			 * Last gasp; from now on everything goes to
+			 * the file/syslog.
+			 */
+			fprintf(stdout, "Pluto is starting ...\n");
 			fflush(stdout);
 		}
+
 	}
 
 	/*
-	 * Close stdin, stdout, and when not needed, stderr.  This
-	 * should just leave CTL_FD.
+	 * Detach STDIN/STDOUT and, when debugging, go through the
+	 * possibly large list of file descriptors and verify that
+	 * only the expected ones are open.  STDERR is detached later
+	 * when the logger is switched.
 	 *
-	 * Follow that by directing the closed file descriptors at
-	 * /dev/null.  UNIX always uses the lowest file descriptor
-	 * when opening a file.
+	 * (Debugging was set while loading the config file above).
 	 */
-	close(STDIN_FILENO);/*stdin*/
-	close(STDOUT_FILENO);/*stdout*/
-	if (!log_to_stderr) {
-		close(STDERR_FILENO); /*stderr*/
-	}
-	/* make sure that stdin, stdout, stderr are reserved */
-	passert(open("/dev/null", O_RDONLY) == STDIN_FILENO);
-	/* open("/dev/null", O_WRONLY) == STDOUT_FILENO? */
-	passert(dup2(0, STDOUT_FILENO) == STDOUT_FILENO);
-	/* dup2(STDOUT_FILENO, STDERR_FILENO) == STDERR_FILENO? */
-	passert(log_to_stderr || dup2(0, STDERR_FILENO) == STDERR_FILENO);
 
-	/*
-	 * Check for no unexpected file descriptors.
-	 */
-	if (DBGP(DBG_BASE)) {/* even set? */
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	PASSERT(logger, open("/dev/null", O_RDONLY) == STDIN_FILENO);
+	PASSERT(logger, dup2(0, STDOUT_FILENO) == STDOUT_FILENO);
+
+	if (DBGP(DBG_BASE)) {
 		for (int fd = getdtablesize() - 1; fd >= 0; fd--) {
 			if (fd == ctl_fd ||
 			    fd == STDIN_FILENO ||
@@ -1623,22 +1619,20 @@ int main(int argc, char **argv)
 			}
 			struct stat s;
 			if (fstat(fd, &s) == 0) {
-				llog(RC_LOG_SERIOUS, logger, "pluto: unexpected open file descriptor %d", fd);
+				/*
+				 * Not a pexpect(), this happens when
+				 * running under FAKETIME.
+				 */
+				llog(RC_LOG, logger, "unexpected open file descriptor %d", fd);
 			}
 		}
 	}
 
 	/*
-	 * Initialize logging then switch to the real logger.
-	 *
-	 * The string_logger() dbg_alloc() message went down a rabbit
-	 * hole (aka the console) so fake one up here.
+	 * Switch to the real FILE/STDERR/SYSLOG logger.
 	 */
-	pluto_init_log(log_param);
-	dbg_alloc("logger", logger, HERE);
-	free_logger(&logger, HERE);
-	struct logger local_logger = global_logger;
-	logger = &local_logger;
+
+	switch_log(log_param, &logger);
 
 	/*
 	 * Forking done; logging enabled.  Time to announce things to
@@ -1655,9 +1649,16 @@ int main(int argc, char **argv)
 	}
 
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
+	if (chdir(coredir) == -1) {
+		int e = errno;
+		llog(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
+		     coredir, e, strerror(e));
+	}
+
 	oco = lsw_init_options();
-	if (oco->secretsfile && *oco->secretsfile)
+	if (oco->secretsfile && *oco->secretsfile) {
 		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
+	}
 
 	init_constants();
 	init_pluto_constants();
@@ -1906,22 +1907,21 @@ void show_setup_plutomain(struct show *s)
 		IPSEC_SBINDIR,
 		IPSEC_EXECDIR);
 
-	show_comment(s, "pluto_version=%s, pluto_vendorid=%s, audit-log=%s",
+	show_comment(s, "pluto_version=%s, pluto_vendorid=%s",
 		ipsec_version_code(),
-		pluto_vendorid,
-		bool_str(log_to_audit));
+		pluto_vendorid);
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);
 		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
 		jam(buf, ", dnssec-enable=%s", bool_str(do_dnssec));
-		jam(buf, ", logappend=%s", bool_str(log_append));
-		jam(buf, ", logip=%s", bool_str(log_ip));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
 #ifdef XFRM_LIFETIME_DEFAULT
 		jam(buf, ", xfrmlifetime=%jds", (intmax_t) pluto_xfrmlifetime);
 #endif
 	}
+
+	show_log(s);
 
 	show_comment(s,
 		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",

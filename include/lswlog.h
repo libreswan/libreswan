@@ -35,9 +35,6 @@
 #include "pexpect.h"
 #include "fatal.h"
 
-extern bool log_to_stderr;          /* should log go to stderr? */
-
-
 /*
  * Codes for status messages returned to whack.
  *

@@ -223,6 +223,7 @@ void exit_epilogue(void)
 
 	free_virtual_ip();	/* virtual_private= */
 	free_pluto_main();	/* our static chars */
+	free_log();		/* call before report_leaks() */
 
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective) {
