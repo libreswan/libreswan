@@ -12,6 +12,7 @@ east #
  # faketime tree.
 east #
  LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
+PATH/libexec/ipsec/pluto: pluto: unexpected open file descriptor 3
 east #
  ../../guestbin/wait-until-pluto-started
 east #

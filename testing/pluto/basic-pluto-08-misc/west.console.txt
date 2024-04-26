@@ -7,7 +7,10 @@ west #
  # should abort, not crash, due to missing nss
 west #
  ipsec pluto --rundir /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
-Pluto initialized
+Starting Pluto (Libreswan Version ...) pid:PID
+operating system: ...
+core dump dir: /run/pluto
+secrets file: /etc/ipsec.secrets
 Initializing NSS using read-write database "sql:/etc/ipsec.d"
 FATAL ERROR: NSS: initialization using read-only database "sql:/etc/ipsec.d" failed: SEC_ERROR_BAD_DATABASE: security library: bad database.
 west #
