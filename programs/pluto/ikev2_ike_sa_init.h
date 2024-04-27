@@ -24,8 +24,6 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
 
-void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike);
-
 extern const struct v2_exchange v2_IKE_SA_INIT_exchange;
 
 #endif

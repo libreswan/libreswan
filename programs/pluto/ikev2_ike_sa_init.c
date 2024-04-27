@@ -72,57 +72,70 @@ static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;		/* forward decl
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
 
-void llog_v2_IKE_SA_INIT_success(struct ike_sa *ike)
-{
+static void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike);
+static void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike);
 
+static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
+{
+	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_encrypt != NULL);
+	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_prf != NULL);
+	PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_dh != NULL);
+
+	jam_string(buf, "{");
+
+	jam_string(buf, "cipher=");
+	jam_string(buf, ike->sa.st_oakley.ta_encrypt->common.fqn);
+	if (ike->sa.st_oakley.enckeylen > 0) {
+		/* XXX: also check omit key? */
+		jam(buf, "_%d", ike->sa.st_oakley.enckeylen);
+	}
+
+	jam_string(buf, " ");
+
+	jam_string(buf, "integ=");
+	jam_string(buf, (ike->sa.st_oakley.ta_integ == &ike_alg_integ_none ? "n/a" :
+			 ike->sa.st_oakley.ta_integ->common.fqn));
+
+	jam_string(buf, " ");
+
+	jam_string(buf, "prf=");
+	jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
+
+	jam_string(buf, " ");
+
+	jam_string(buf, "group=");
+	jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
+
+	jam_string(buf, "}");
+}
+
+void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike)
+{
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "sent IKE_SA_INIT response to ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_string(buf, " ");
+		jam_secured(buf, ike);
+	}
+
+}
+
+void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike)
+{
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 
-		jam_string(buf, "processed IKE_SA_INIT ");
-		jam_string(buf, ike->sa.st_sa_role == SA_INITIATOR ? "response" : "request");
-		jam_string(buf, " from ");
+		jam_string(buf, "processed IKE_SA_INIT response from ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_string(buf, " ");
 
-		PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_encrypt != NULL);
-		PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_prf != NULL);
-		PASSERT(ike->sa.logger, ike->sa.st_oakley.ta_dh != NULL);
+		jam_secured(buf, ike);
 
-		jam_string(buf, "{");
-
-		jam_string(buf, "cipher=");
-		jam_string(buf, ike->sa.st_oakley.ta_encrypt->common.fqn);
-		if (ike->sa.st_oakley.enckeylen > 0) {
-			/* XXX: also check omit key? */
-			jam(buf, "_%d", ike->sa.st_oakley.enckeylen);
-		}
-
-		jam_string(buf, " ");
-
-		jam_string(buf, "integ=");
-		jam_string(buf, (ike->sa.st_oakley.ta_integ == &ike_alg_integ_none ? "n/a" :
-				 ike->sa.st_oakley.ta_integ->common.fqn));
-
-		jam_string(buf, " ");
-
-		jam_string(buf, "prf=");
-		jam_string(buf, ike->sa.st_oakley.ta_prf->common.fqn);
-
-		jam_string(buf, " ");
-
-		jam_string(buf, "group=");
-		jam_string(buf, ike->sa.st_oakley.ta_dh->common.fqn);
-
-		jam_string(buf, "}");
-
-		if (ike->sa.st_sa_role == SA_INITIATOR) {
-			jam_string(buf, ", initiating ");
-			enum isakmp_xchg_type ix =
-				(ike->sa.st_v2_ike_intermediate.enabled ? ISAKMP_v2_IKE_INTERMEDIATE :
-				 ISAKMP_v2_IKE_AUTH);
-			jam_enum_short(buf, &ikev2_exchange_names, ix);
-		}
+		jam_string(buf, ", initiating ");
+		enum isakmp_xchg_type ix =
+			(ike->sa.st_v2_ike_intermediate.enabled ? ISAKMP_v2_IKE_INTERMEDIATE :
+			 ISAKMP_v2_IKE_AUTH);
+		jam_enum_short(buf, &ikev2_exchange_names, ix);
 	}
-
 }
 
 static void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
@@ -1747,7 +1760,7 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
-	  .llog_success = llog_v2_IKE_SA_INIT_success,
+	  .llog_success = llog_process_v2_IKE_SA_INIT_request_success,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
@@ -1806,7 +1819,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Nr),
 	  .message_payloads.optional = v2P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
-	  .llog_success = llog_v2_IKE_SA_INIT_success,
+	  .llog_success = llog_process_v2_IKE_SA_INIT_response_success,
 	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
 	},
 
