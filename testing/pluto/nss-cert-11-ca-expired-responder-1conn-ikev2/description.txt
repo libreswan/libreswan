@@ -1,21 +1,26 @@
-old expired CA overlapping a new CA using template connections
+old expired CA overlapping a new CA using template connections and groundhog
 
 (using templates avoids bug #1006 where the CA doesn't switch with
 <peer>id=%fromcert)
 
-East has one template connection with <peer>id=%fromcert and:
+East has one template connection with <peer>id=%fromcert and
+groundhog=yes:
 
-  old-ca that expires in a month, it uses that to sign old-west
+  - new-ca is valid (for 12 months starting 2 months ago, it is used
+    to sign new-west
 
-  new-ca that has a very long expiry, it uses that to sign new-west
+  - old-ca that expires in a month, it uses that to sign old-west that
+    is still valid
 
 West similarly has two connections:
 
-  old-west: tries to prove its identity using old-west certificate
-  (i.e., to the connection old-east)
+  - new-west: tries to prove its identity using new-west certificate
+   (i.e., to the connection new-ca)
 
-  new-west: tries to prove its identity using new-west certificate
-  (i.e., to the connection new-east)
+  - old-west: tries to prove its identity using old-west certificate
+    (i.e., to the connection old-ca)
 
-Since all CAs and certs are valid old-west and new-west should always
-establish.
+    EAST rejects this since the CA has expired
+
+    since groundhog=yes is set, EAST retries authentication using the
+    time that old-ca expired; this works

@@ -1,50 +1,59 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- NOW=$(date +%s)
+ # Generate two CA and certificate pairs:
 east #
- THEN=$((${NOW} - 45 * 24 * 60 * 60))
+ #
 east #
- # Generate a sane CA and a sane peer certificate, back-dated by two
+ # new-ca+new-west: the CA is valid for twelve months back-dated by two
 east #
- # months.  Export these then wipe so that peer has to send the cert
+ # months (-w 2 -v 12); same for the certificate (i.e., valid now and
 east #
- # back.
+ # 45 days ago).
 east #
- ipsec certutil -m 1 -S -k rsa -x        -w -2 -n new-ca   -s "CN=new-ca"   -v 12 -t "CT,C,C" -z ipsec.conf
+ #
+east #
+ # old-ca+old-west: this time the CA expired a month ago (-w -13 -v 12)
+east #
+ # and use this to sign a cert that is still valid (just) (-w -11 -v
+east #
+ # 12) (i.e., both are valid 45 days ago, and cert can't be verified).
+east #
+ ipsec certutil -m 1 -S -k rsa -x -w -2 -n new-ca -s CN=new-ca -v 12 -t CT,C,C -z ipsec.conf
 Generating key.  This may take a few moments...
 east #
- ipsec certutil -m 2 -S -k rsa -c new-ca       -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -z ipsec.conf
+ ipsec certutil -m 2 -S -k rsa -c new-ca -n new-west -s CN=new-west -v 12 -t u,u,u  -z ipsec.conf
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
 east #
- ipsec pk12util -W secret -o OUTPUT/new-west.p12   -n new-west
+ ipsec certutil -m 1 -S -k rsa -x -w -13 -v 12 -n old-ca -s CN=old-ca  -v 12 -t CT,C,C -z ipsec.conf
+Generating key.  This may take a few moments...
+east #
+ ipsec certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s CN=old-west -v 12 -t u,u,u  -z ipsec.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+east #
+ # Export the certs old-west and new-west both as p12s and as .crts
+east #
+ # (the latter is fed to verify) and then delete them so that the peer
+east #
+ # has to include them in the IKE_AUTH request.
+east #
+ ipsec pk12util -W secret -o OUTPUT/new-west.p12 -n new-west
+pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ ipsec pk12util -W secret -o OUTPUT/old-west.p12 -n old-west
 pk12util: PKCS12 EXPORT SUCCESSFUL
 east #
  ipsec certutil -L -n new-west -a > OUTPUT/new-west.crt
 east #
- ipsec certutil -F -n new-west
-east #
- # Now generate a CA that expired 1 month ago.  Use that to sign a
-east #
- # certificate (for west) that is valid.
-east #
- ipsec certutil -m 1 -S -k rsa -x -w -13 -v 12 -n old-ca  -s "CN=old-ca"  -v 12 -t "CT,C,C" -z ipsec.conf
-Generating key.  This may take a few moments...
-east #
- ipsec certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s "CN=old-west" -v 12 -t "u,u,u"  -z ipsec.conf
-Generating key.  This may take a few moments...
-Notice: Trust flag u is set automatically if the private key is present.
-east #
- ipsec pk12util -W secret -o OUTPUT/old-west.p12   -n old-west
-pk12util: PKCS12 EXPORT SUCCESSFUL
-east #
  ipsec certutil -L -n old-west -a > OUTPUT/old-west.crt
+east #
+ ipsec certutil -F -n new-west
 east #
  ipsec certutil -F -n old-west
 east #
- ipsec vfychain to confirm the above settings
-open of to failed, -5950 = File not found
+ # Use ipsec vfychain to confirm the above settings
 east #
  #
 east #
@@ -57,6 +66,16 @@ east #
  #
 east #
  # -b YYMMDDHHMMZ (yea, CC is magic)
+east #
+ #
+east #
+ # THEN is 45 days ago which is when everything was valid (just before
+east #
+ # old-ca expires).
+east #
+ NOW=$(date +%s)
+east #
+ THEN=$((${NOW} - 45 * 24 * 60 * 60))
 east #
  VFYDATE=$(date -d @${THEN} +%y%m%d000000Z)
 east #
