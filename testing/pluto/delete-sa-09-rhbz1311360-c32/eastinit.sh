@@ -1,6 +1,5 @@
 /testing/guestbin/swan-prep
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet
-ipsec auto --add west-east
+../../guestbin/ipsec-add.sh west-east westnet-eastnet
 echo "initdone"

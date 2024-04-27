@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add west-east
-ipsec auto --add west-east-b
-ipsec auto --add west-east-c
-ipsec auto --status | grep west-
+../../guestbin/ipsec-add.sh west-east-c west-east-b west-east
+ipsec status | sed -n -e '/west-/ { s/conn serial: [^;]*;/conn serial: .../; p; }'
 echo "initdone"

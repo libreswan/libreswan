@@ -6,8 +6,7 @@ ipsec pk12util -i /testing/x509/pkcs12/east.p12 -W "foobar"
 ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t "CT,,"
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add road-chain-B
-ipsec auto --add road-A
-ipsec auto --status |grep road
+../../guestbin/ipsec-add.sh road-A road-chain-B
+ipsec status | sed -n -e '/road/ { s/conn serial: [^;]*;/conn serial: .../; p; }'
 ipsec certutil -L
 echo "initdone"

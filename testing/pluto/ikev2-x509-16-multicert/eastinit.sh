@@ -4,6 +4,5 @@ ipsec certutil -D -n west
 ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/othereast.p12
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add other
-ipsec auto --add main
+../../guestbin/ipsec-add.sh main other
 echo "initdone"

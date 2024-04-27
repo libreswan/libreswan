@@ -17,13 +17,11 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add road-chain-B
+ ../../guestbin/ipsec-add.sh road-A road-chain-B
+"road-A": added IKEv2 connection
 "road-chain-B": added IKEv2 connection
 east #
- ipsec auto --add road-A
-"road-A": added IKEv2 connection
-east #
- ipsec auto --status |grep road
+ ipsec status | sed -n -e '/road/ { s/conn serial: [^;]*;/conn serial: .../; p; }'
 "road-A": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "road-A":   host: oriented; local: 192.1.2.23; remote: %any;
 "road-A":   mycert=east; my_updown=ipsec _updown;
@@ -43,7 +41,7 @@ east #
 "road-A":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-A":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-A":   routing: unrouted;
-"road-A":   conn serial: $2;
+"road-A":   conn serial: ...
 "road-chain-B": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "road-chain-B":   host: oriented; local: 192.1.2.23; remote: %any;
 "road-chain-B":   mycert=east; my_updown=ipsec _updown;
@@ -63,7 +61,7 @@ east #
 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-chain-B":   routing: unrouted;
-"road-chain-B":   conn serial: $1;
+"road-chain-B":   conn serial: ...
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes

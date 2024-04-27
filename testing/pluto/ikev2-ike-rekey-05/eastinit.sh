@@ -5,7 +5,5 @@ ip route show scope global | grep 192.0.100.0 || ip route add 192.0.100.0/24 via
 ip route show scope global | grep 192.0.101.0 || ip route add 192.0.101.0/24 via 192.1.2.45  dev eth1
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-a
-ipsec auto --add westnet-eastnet-b
-ipsec auto --add westnet-eastnet-c
+../../guestbin/ipsec-add.sh westnet-eastnet-c westnet-eastnet-b westnet-eastnet-a
 echo "initdone"
