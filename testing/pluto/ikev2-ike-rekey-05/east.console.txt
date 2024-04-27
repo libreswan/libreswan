@@ -42,5 +42,6 @@ east #
  # there should be only one IKE_SA_INIT exchange
 east #
  grep "sent IKE_SA_INIT" /tmp/pluto.log
+"westnet-eastnet-c" #1: sent IKE_SA_INIT response to 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 east #
  

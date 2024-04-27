@@ -5,7 +5,7 @@
 # EAST: process IKE_SA_INIT request; create and establish IKE SA; send
 # IKE_SA_INIT response; wait for IKE_AUTH request
 
-../../guestbin/drip-inbound.sh 1 '#1: processed IKE_SA_INIT request'
+../../guestbin/drip-inbound.sh 1 '#1: sent IKE_SA_INIT response'
 ../../guestbin/wait-for-inbound.sh 2
 
 # EAST: process IKE_AUTH request; establish Child SA
