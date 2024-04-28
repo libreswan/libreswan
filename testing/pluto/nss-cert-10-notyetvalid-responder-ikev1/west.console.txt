@@ -3,6 +3,17 @@ Preparing X.509 files
 west #
  ipsec certutil -D -n east
 west #
+ ipsec certutil -m 2 -S -k rsa -c west -n east-notyetvalid -s CN=east-notyetvalid -w 1 -v 12 -t u,u,u  -z east.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+west #
+ ipsec pk12util -W secret -o OUTPUT/east-notyetvalid.p12 -n east-notyetvalid
+pk12util: PKCS12 EXPORT SUCCESSFUL
+west #
+ ipsec certutil -L -n east-notyetvalid -a > OUTPUT/east-notyetvalid.crt
+west #
+ ipsec certutil -F -n east-notyetvalid
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
@@ -14,7 +25,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair timeout_on_retransmit
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec whack --impair revival
 west #
@@ -27,11 +38,11 @@ west #
 "nss-cert" #1: I am sending my cert
 "nss-cert" #1: I am sending a certificate request
 "nss-cert" #1: sent Main Mode I3
-"nss-cert" #1: NSS: ERROR: IPsec certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+"nss-cert" #1: NSS: ERROR: IPsec certificate CN=east-notyetvalid invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 "nss-cert" #1: X509: certificate rejected for this connection
 "nss-cert" #1: X509: CERT payload bogus or revoked
 "nss-cert" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
-"nss-cert" #1: IMPAIR: retransmit so timing out SA (may retry)
+"nss-cert" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "nss-cert" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert" #1: IMPAIR: revival: skip scheduling revival event
 "nss-cert" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
@@ -41,7 +52,6 @@ done
 west #
  # only expected to show failure on west
 west #
- grep "ERROR" /tmp/pluto.log
-"nss-cert" #1: NSS: ERROR: IPsec certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+ grep "certificate payload rejected" /tmp/pluto.log
 west #
  

@@ -3,6 +3,17 @@ Preparing X.509 files
 west #
  ipsec certutil -D -n east
 west #
+ ipsec certutil -m 2 -S -k rsa -c west -n east-notyetvalid -s CN=east-notyetvalid -w 1 -v 12 -t u,u,u  -z east.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+west #
+ ipsec pk12util -W secret -o OUTPUT/east-notyetvalid.p12 -n east-notyetvalid
+pk12util: PKCS12 EXPORT SUCCESSFUL
+west #
+ ipsec certutil -L -n east-notyetvalid -a > OUTPUT/east-notyetvalid.crt
+west #
+ ipsec certutil -F -n east-notyetvalid
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
@@ -25,7 +36,7 @@ west #
 "nss-cert" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "nss-cert" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "nss-cert" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"nss-cert" #1: NSS: ERROR: IPsec certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+"nss-cert" #1: NSS: ERROR: IPsec certificate CN=east-notyetvalid invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 "nss-cert" #1: X509: certificate payload rejected for this connection
 "nss-cert" #1: encountered fatal error in state IKE_AUTH_I
 "nss-cert" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

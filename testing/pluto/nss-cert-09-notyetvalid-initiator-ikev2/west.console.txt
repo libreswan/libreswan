@@ -1,7 +1,10 @@
-/testing/guestbin/swan-prep --x509 --x509name notyetvalid
+/testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
  ipsec certutil -D -n east
+west #
+ ipsec pk12util -i OUTPUT/west-notyetvalid.p12 -W secret
+pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  mkdir -p /var/run/pluto
 west #

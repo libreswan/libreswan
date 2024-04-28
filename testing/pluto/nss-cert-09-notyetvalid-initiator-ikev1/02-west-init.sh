@@ -1,5 +1,8 @@
-/testing/guestbin/swan-prep --x509 --x509name notyetvalid
-ipsec certutil -D -n west
+/testing/guestbin/swan-prep --x509
+
+ipsec certutil -D -n east
+ipsec pk12util -i OUTPUT/west-notyetvalid.p12 -W secret
+
 mkdir -p /var/run/pluto
 
 # Set a time in the future so notyetvalid and east certs are valid
