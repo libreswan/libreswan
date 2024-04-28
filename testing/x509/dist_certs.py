@@ -456,12 +456,8 @@ def create_mainca_end_certs(mainca_end_certs):
         if name == 'key4096':
             keysize = 4096
 
-        if name == 'notyetvalid':
-            startdate = dates['FUTURE']
-            enddate = dates['FUTURE_END']
-        else:
-            startdate = dates['OK_NOW']
-            enddate = dates['FUTURE_END']
+        startdate = dates['OK_NOW']
+        enddate = dates['FUTURE_END']
 
         if 'other' in name:
             signer = 'otherca'
@@ -890,7 +886,6 @@ def run_dist_certs():
                         'usage-server', 'usage-client', 'usage-both',
                         'nic-noext', 'nic-nourl',
                         'smallkey', 'mediumkey', 'key2032', 'key4096',
-                        'notyetvalid',
                         'signedbyother','otherwest','othereast','wrongdnorg',
                         'unwisechar','spaceincn','hashsha1',
                         'cnofca','revoked', 'badwest', 'badeast', 'semiroad')
