@@ -200,7 +200,7 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 		.ike_version = IKEv1,
 		.where = HERE,
 	};
-	while (next_connection(NEW2OLD, &hpf)) {
+	while (next_connection(OLD2NEW, &hpf)) {
 		struct connection *d = hpf.c;
 
 		if (!match_v1_connection(d, authby, policy_xauth,
@@ -334,7 +334,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		.ike_version = IKEv1,
 		.where = HERE,
 	};
-	while (next_connection(NEW2OLD, &hpf)) {
+	while (next_connection(OLD2NEW, &hpf)) {
 		struct connection *d = hpf.c;
 
 		if (!match_v1_connection(d, authby, policy_xauth,
