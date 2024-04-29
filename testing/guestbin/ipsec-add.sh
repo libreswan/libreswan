@@ -25,7 +25,7 @@ connection=( "$@" )
 declare -a output
 declare -a status
 
-for (( i=$# ; i>0; i--)) ; do
+for (( i=1 ; i<=$#; i++)) ; do
     c=${!i}
     output[$i]=$(ipsec add ${c} 2>&1)
     status[$i]=$?
