@@ -621,7 +621,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			.ike_version = c->config->ike_version,
 			.where = HERE,
 		};
-		while (next_connection(NEW2OLD, &hpf)) {
+		while (next_connection(OLD2NEW, &hpf)) {
 			struct connection *d = hpf.c;
 			if (c == d) {
 				/* already scored above */
