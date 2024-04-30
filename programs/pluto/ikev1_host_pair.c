@@ -30,25 +30,35 @@
 #include "ikev1_spdb.h"
 #include "instantiate.h"
 #include "orient.h"
+#include "host_pair.h"
 
-static bool match_v1_connection(struct connection *c, struct authby authby,
-				bool policy_xauth, bool policy_aggressive,
-				const struct id *peer_id)
+static match_host_pair_policy_fn match_v1_connection;
+
+struct host_pair_policy {
+	struct authby authby;
+	bool xauth;
+	bool aggressive;
+	const struct id *peer_id;
+};
+
+static bool match_v1_connection(const struct connection *c,
+				const struct host_pair_policy *hpc,
+				struct logger *logger)
 {
 	PEXPECT(c->logger, c->config->ike_version == IKEv1);
 	PEXPECT(c->logger, oriented(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", ID_NULL instance",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
 	if (never_negotiate(c)) {
 		/* are we a block or clear connection? */
 		enum shunt_policy shunt = c->config->never_negotiate_shunt;
-		passert(shunt != SHUNT_UNSET); /* since never-negotiate */
+		PASSERT(logger, shunt != SHUNT_UNSET); /* since never-negotiate */
 		/*
 		 * We need to match block/clear so we can send back
 		 * NO_PROPOSAL_CHOSEN, otherwise not match so we can
@@ -68,14 +78,14 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 		 */
 		if (is_group_instance(c)) {
 			connection_buf cb;
-			dbg("  choosing "PRI_CONNECTION", never negotiate + group instance",
-			    pri_connection(c, &cb));
+			ldbg(logger, "  choosing "PRI_CONNECTION", never negotiate + group instance",
+			     pri_connection(c, &cb));
 			return true;
 		}
 
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", never negotiate",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", never negotiate",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
@@ -88,24 +98,24 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	 * Each of our callers knows what is known so specifies
 	 * the policy_exact_mask.
 	 */
-	if (policy_xauth != is_xauth(c)) {
+	if (hpc->xauth != is_xauth(c)) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
+		     pri_connection(c, &cb));
 		return false;
 	}
-	if (policy_aggressive != c->config->aggressive) {
+	if (hpc->aggressive != c->config->aggressive) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", exact match POLICY_AGGRESSIVE failed",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", exact match POLICY_AGGRESSIVE failed",
+		     pri_connection(c, &cb));
 		return false;
 	}
 
-	if (peer_id != NULL && !same_id(peer_id, &c->remote->host.id) &&
+	if (hpc->peer_id != NULL && !same_id(hpc->peer_id, &c->remote->host.id) &&
 	    (c->remote->host.id.kind != ID_FROMCERT && !id_is_any(&c->remote->host.id))) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", peer_id failed",
-		    pri_connection(c, &cb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", peer_id failed",
+		     pri_connection(c, &cb));
 		return false; /* incompatible ID */
 	}
 
@@ -118,18 +128,18 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	 */
 	switch (c->remote->host.config->auth) {
 	case AUTH_RSASIG:
-		if (!authby.rsasig) {
+		if (!hpc->authby.rsasig) {
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION", RSASIG was not proposed",
-			    pri_connection(c, &cb));
+			ldbg(logger, "  skipping "PRI_CONNECTION", RSASIG was not proposed",
+			     pri_connection(c, &cb));
 			return false;
 		}
 		break;
 	case AUTH_PSK:
-		if (!authby.psk) {
+		if (!hpc->authby.psk) {
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION", PSK was not proposed",
-			    pri_connection(c, &cb));
+			ldbg(logger, "  skipping "PRI_CONNECTION", PSK was not proposed",
+			     pri_connection(c, &cb));
 			return false;
 		}
 		break;
@@ -137,9 +147,9 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	{
 		connection_buf cb;
 		enum_buf eb;
-		dbg("  skipping "PRI_CONNECTION", %s is never proposed",
-		    pri_connection(c, &cb),
-		    str_enum(&keyword_auth_names, c->remote->host.config->auth, &eb));
+		ldbg(logger, "  skipping "PRI_CONNECTION", %s is never proposed",
+		     pri_connection(c, &cb),
+		     str_enum(&keyword_auth_names, c->remote->host.config->auth, &eb));
 		return false;
 	}
 	}
@@ -175,57 +185,6 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
  * the exact value and has included it in req_policy.
  */
 
-static struct connection *find_v1_host_connection(const ip_address local_address,
-						  const ip_address remote_address,
-						  struct authby authby, bool policy_xauth,
-						  bool policy_aggressive,
-						  const struct id *peer_id)
-{
-	address_buf lb;
-	address_buf rb;
-	authby_buf pb;
-	dbg("%s() %s->%s authby=%s xauth=%s aggressive=%s but ignoring ports",
-	    __func__,
-	    str_address(&remote_address, &rb),
-	    str_address(&local_address, &lb),
-	    str_authby(authby, &pb),
-	    bool_str(policy_xauth),
-	    bool_str(policy_aggressive));
-
-	struct connection *c = NULL;
-
-	struct connection_filter hpf = {
-		.local = &local_address,
-		.remote = &remote_address,
-		.ike_version = IKEv1,
-		.where = HERE,
-	};
-	while (next_connection(OLD2NEW, &hpf)) {
-		struct connection *d = hpf.c;
-
-		if (!match_v1_connection(d, authby, policy_xauth,
-					 policy_aggressive, peer_id)) {
-			continue;
-		}
-
-		/*
-		 * This could be a shared ISAKMP SA connection, in
-		 * which case we prefer to find the connection that
-		 * has the ISAKMP SA.
-		 */
-		if (d->established_ike_sa != SOS_NOBODY) {
-			/* instant winner */
-			c = d;
-			break;
-		}
-		if (c == NULL) {
-			c = d;
-		}
-	}
-
-	return c;
-}
-
 /*
  * Always returns a new reference.
  */
@@ -236,25 +195,35 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 {
 	struct connection *c;
 
-	ip_address sender_address = endpoint_address(md->sender);
-	c = find_v1_host_connection(md->iface->ip_dev->local_address,
-				    sender_address, authby, policy_xauth,
-				    true/*POLICY_AGGRESSIVE*/,
-				    peer_id);
+	struct host_pair_policy host_pair_policy = {
+		.authby = authby,
+		.xauth = policy_xauth,
+		.aggressive = true,
+		.peer_id = peer_id,
+	};
+
+	ip_address local_address = md->iface->ip_dev->local_address;
+	ip_address remote_address = endpoint_address(md->sender);
+	c = find_host_pair_connection_on_responder(&ikev1_info,
+						   local_address, remote_address,
+						   match_v1_connection,
+						   &host_pair_policy,
+						   md->logger);
 	if (c != NULL) {
 		return connection_addref(c, md->logger);
 	}
 
-	c = find_v1_host_connection(md->iface->ip_dev->local_address,
-				    unset_address, authby, policy_xauth,
-				    true/*POLICY_AGGRESSIVE*/,
-				    peer_id);
+	c = find_host_pair_connection_on_responder(&ikev1_info,
+						   local_address, unset_address,
+						   match_v1_connection,
+						   &host_pair_policy,
+						   md->logger);
 	if (c != NULL) {
 		/*
 		 * Create a temporary connection that is a copy of
 		 * this one.  Peers ID isn't declared yet.
 		 */
-		return rw_responder_instantiate(c, sender_address, HERE);
+		return rw_responder_instantiate(c, remote_address, HERE);
 	}
 
 	endpoint_buf b;
@@ -269,7 +238,6 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 
 struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 {
-	ip_address sender_address = endpoint_address(md->sender);
 	struct connection *c;
 
 	/* random source ports are handled by find_host_connection */
@@ -293,10 +261,20 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Why?
 	 */
 
-	c = find_v1_host_connection(md->iface->ip_dev->local_address,
-				    sender_address, authby, policy_xauth,
-				    false/*POLICY_AGGRESSIVE*/,
-				    NULL /* peer ID not known yet */);
+	struct host_pair_policy host_pair_policy = {
+		.authby = authby,
+		.xauth = policy_xauth,
+		.aggressive = false,
+		.peer_id = NULL,  /* peer ID not known yet */
+	};
+
+	ip_address local_address = md->iface->ip_dev->local_address;
+	ip_address remote_address = endpoint_address(md->sender);
+	c = find_host_pair_connection_on_responder(&ikev1_info,
+						   local_address, remote_address,
+						   match_v1_connection,
+						   &host_pair_policy,
+						   md->logger);
 	if (c != NULL) {
 		/*
 		 * we found a non %any conn. double check if it needs
@@ -304,7 +282,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		 */
 		if (is_template(c)) {
 			ldbg(md->logger, "local endpoint needs instantiation");
-			return rw_responder_instantiate(c, sender_address, HERE);
+			return rw_responder_instantiate(c, remote_address, HERE);
 		}
 
 		return connection_addref(c, md->logger);
@@ -329,7 +307,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 */
 
 	struct connection_filter hpf = {
-		.local = &md->iface->ip_dev->local_address,
+		.local = &local_address,
 		.remote = &unset_address,
 		.ike_version = IKEv1,
 		.where = HERE,
@@ -337,9 +315,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	while (next_connection(OLD2NEW, &hpf)) {
 		struct connection *d = hpf.c;
 
-		if (!match_v1_connection(d, authby, policy_xauth,
-					 false/*POLICY_AGGRESSIVE*/,
-					 NULL /* peer ID not known yet */)) {
+		if (!match_v1_connection(d, &host_pair_policy, md->logger)) {
 			continue;
 		}
 
@@ -393,5 +369,5 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	connection_buf cib;
 	ldbg(md->logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 	     pri_connection(c, &cib));
-	return rw_responder_instantiate(c, sender_address, HERE);
+	return rw_responder_instantiate(c, remote_address, HERE);
 }

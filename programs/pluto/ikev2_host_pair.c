@@ -31,10 +31,15 @@
 #include "orient.h"		/* for oriented() */
 #include "authby.h"
 #include "instantiate.h"
+#include "host_pair.h"
+
+struct host_pair_policy {
+	struct authby remote_authby;
+	bool *send_reject_response;
+};
 
 static bool match_v2_connection(const struct connection *c,
-				struct authby remote_authby,
-				bool *send_reject_response,
+				const struct host_pair_policy *hpp,
 				struct logger *logger)
 {
 	PEXPECT(logger, c->config->ike_version == IKEv2);
@@ -57,13 +62,13 @@ static bool match_v2_connection(const struct connection *c,
 	/*
 	 * Require all the bits to match (there's actually only one).
 	 */
-	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
+	if (!authby_le(hpp->remote_authby, c->remote->host.config->authby)) {
 		connection_buf cb;
 		authby_buf ab, cab;
 		ldbg(logger, "  skipping "PRI_CONNECTION", %s missing required authby %s",
 		     pri_connection(c, &cb),
 		     str_authby(c->remote->host.config->authby, &cab),
-		     str_authby(remote_authby, &ab));
+		     str_authby(hpp->remote_authby, &ab));
 		return false;
 	}
 
@@ -86,8 +91,8 @@ static bool match_v2_connection(const struct connection *c,
 		if (shunt == SHUNT_PASS/*clear*/ ||
 		    shunt == SHUNT_REJECT/*block*/) {
 			if (is_group_instance(c)) {
-				pexpect(remote_authby.never);
-				*send_reject_response = false;
+				pexpect(hpp->remote_authby.never);
+				*(hpp->send_reject_response) = false;
 			}
 		}
 		connection_buf cb;
@@ -107,6 +112,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 						     struct authby remote_authby,
 						     bool *send_reject_response)
 {
+	struct connection *c;
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 
@@ -122,45 +128,21 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	     str_address(&local_address, &lb),
 	     str_authby(remote_authby, &pb));
 
+	struct host_pair_policy host_pair_policy = {
+		.remote_authby = remote_authby,
+		.send_reject_response = send_reject_response,
+	};
+
 	/*
 	 * Pass #1: look for "static" or established connections which
 	 * match.
 	 */
-	struct connection *c = NULL;
-	struct connection_filter hpf_remote = {
-		.local = &local_address,
-		.remote = &remote_address,
-		.ike_version = IKEv2,
-		.where = HERE,
-	};
-	while (next_connection(OLD2NEW, &hpf_remote)) {
-		struct connection *d = hpf_remote.c;
 
-		if (!match_v2_connection(d, remote_authby, send_reject_response,
-					 md->logger)) {
-			continue;
-		}
-
-		/*
-		 * This could be a shared IKE SA connection, in which
-		 * case we prefer to find the connection that has the
-		 * IKE SA
-		 */
-		if (d->established_ike_sa != SOS_NOBODY) {
-			/* instant winner */
-			connection_buf cb;
-			ldbg(md->logger, "  instant winner with "PRI_CONNECTION" IKE SA "PRI_SO,
-			     pri_connection(d, &cb),
-			     pri_so(d->established_ike_sa));
-			c = d;
-			break;
-		}
-		if (c == NULL) {
-			ldbg(md->logger, "  saving for later");
-			c = d;
-		}
-	}
-
+	c = find_host_pair_connection_on_responder(&ikev2_info,
+						   local_address, remote_address,
+						   match_v2_connection,
+						   &host_pair_policy,
+						   md->logger);
 	if (c != NULL) {
 		/*
 		 * We found a possibly non-wildcard connection.
@@ -212,8 +194,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	while (next_connection(OLD2NEW, &hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
-		if (!match_v2_connection(d, remote_authby, send_reject_response,
-					 md->logger)) {
+		if (!match_v2_connection(d, &host_pair_policy, md->logger)) {
 			continue;
 		}
 
