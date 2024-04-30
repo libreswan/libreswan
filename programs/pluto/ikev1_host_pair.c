@@ -47,6 +47,7 @@ static bool match_v1_connection(const struct connection *c,
 {
 	PEXPECT(c->logger, c->config->ike_version == IKEv1);
 	PEXPECT(c->logger, oriented(c));
+	PEXPECT(logger, !is_group(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
@@ -307,8 +308,10 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 */
 
 	struct connection_filter hpf = {
-		.local = &local_address,
-		.remote = &unset_address,
+		.host_pair = {
+			.local = &local_address,
+			.remote = &unset_address,
+		},
 		.ike_version = IKEv1,
 		.where = HERE,
 	};
@@ -316,10 +319,6 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		struct connection *d = hpf.c;
 
 		if (!match_v1_connection(d, &host_pair_policy, md->logger)) {
-			continue;
-		}
-
-		if (is_group(d)) {
 			continue;
 		}
 

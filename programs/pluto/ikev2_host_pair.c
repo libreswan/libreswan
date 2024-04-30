@@ -44,13 +44,7 @@ static bool match_v2_connection(const struct connection *c,
 {
 	PEXPECT(logger, c->config->ike_version == IKEv2);
 	PEXPECT(logger, oriented(c)); /* searching oriented lists */
-
-	if (is_group(c)) {
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", connection group",
-		     pri_connection(c, &cb));
-		return false;
-	}
+	PEXPECT(logger, !is_group(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
@@ -186,8 +180,10 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 */
 
 	struct connection_filter hpf_unset = {
-		.local = &local_address,
-		.remote = &unset_address,
+		.host_pair = {
+			.local = &local_address,
+			.remote = &unset_address,
+		},
 		.ike_version = IKEv2,
 		.where = HERE,
 	};

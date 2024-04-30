@@ -1969,26 +1969,20 @@ static struct connection *fc_try(const struct connection *c,
 
 	err_t virtualwhy = NULL;
 	struct connection_filter hpf = {
-		.local = &local_address,
-		.remote = &remote_address,
+		.host_pair = {
+			.local = &local_address,
+			.remote = &remote_address,
+		},
 		.ike_version = IKEv1,
 		.where = HERE,
 	};
 	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;
 
-		if (d->config->ike_version != IKEv1) {
-			continue;
-		}
-
 		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));
-			continue;
-		}
-
-		if (is_group(d)) {
 			continue;
 		}
 
@@ -2249,8 +2243,10 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				break;
 			}
 			struct connection_filter hpf = {
-				.local = &spd->local->host->addr,
-				.remote = &unset_address,
+				.host_pair = {
+					.local = &spd->local->host->addr,
+					.remote = &unset_address,
+				},
 				.ike_version = IKEv1,
 				.where = HERE,
 			};

@@ -44,6 +44,7 @@
 #include "nss_cert_verify.h"
 #include "pluto_x509.h"
 #include "instantiate.h"
+#include "orient.h"		/* for oriented()! */
 
 /*
  * This is to support certificates with SAN using wildcard, eg SAN
@@ -186,6 +187,8 @@ static bool score_host_connection(unsigned indent,
 	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
 	struct connection *c = ike->sa.st_connection;
 	struct connection *d = score->connection;
+	PEXPECT(ike->sa.logger, oriented(d));
+	PEXPECT(ike->sa.logger, !is_group(d));
 
 	/*
 	 * First all the "easy" skips.
@@ -616,8 +619,10 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			str_address(&local, &lb), str_address(&remote, &rb));
 
 		struct connection_filter hpf = {
-			.local = &local,
-			.remote = &remote,
+			.host_pair = {
+				.local = &local,
+				.remote = &remote,
+			},
 			.ike_version = c->config->ike_version,
 			.where = HERE,
 		};
@@ -721,7 +726,7 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 		 *
 		 * Should the ID be fully updated here?
 		 */
-		if (is_template(r) || is_group(r)) {
+		if (is_template(r)) {
 			/*
 			 * XXX: is r->kind == CK_GROUP ever
 			 * true?  refine_host_connection*()

@@ -288,8 +288,10 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 	generalName_t *top = NULL;
 	/* i.e., from anywhere to here - a host-pair search */
 	struct connection_filter hpf = {
-		.local = &local_address,
-		.remote = &unset_address,
+		.host_pair = {
+			.local = &local_address,
+			.remote = &unset_address,
+		},
 		.ike_version = ike_version,
 		.where = HERE,
 	};

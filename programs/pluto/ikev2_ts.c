@@ -1375,8 +1375,10 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 		       str_address(&remote, &rab), str_address(&local, &lab));
 
 		struct connection_filter hpf = {
-			.local = &local,
-			.remote = &remote,
+			.host_pair = {
+				.local = &local,
+				.remote = &remote,
+			},
 			.ike_version = IKEv2,
 			.where = HERE,
 		};
@@ -1393,22 +1395,6 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			       str_connection_policies(d, &pb));
 
 			indent.level = 3;
-
-			/*
-			 * Groups are like template templates?  They
-			 * get instantiated into CK_TEMPLATE +
-			 * GROUPINSTANCE?
-			 *
-			 * They also seem to be very like sec_labels
-			 * which start as templates, become hybrid
-			 * template instances, and finally instances.
-			 */
-			if (is_group(d)) {
-				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION", group policy",
-				       pri_connection(d, &cb));
-				continue;
-			}
 
 			/*
 			 * Normally OE instances are never considered

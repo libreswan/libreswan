@@ -942,7 +942,9 @@ ip_port local_host_port(const struct connection *c);
  */
 
 struct connection_filter {
-	/* filters */
+	/*
+	 * Filters.
+	 */
 	enum connection_kind kind;
 	const char *name;
 	const char *alias_root;
@@ -951,12 +953,17 @@ struct connection_filter {
 	struct connection *clonedfrom;
 	enum ike_version ike_version;
 	/*
-	 * Look for host-pair; local=remote=&unset_address finds
-	 * disoriented connections; remote=&unset_address finds
-	 * templates.
+	 * host-pair: matches is_template(), is_instance() and
+	 * is_permanent() (i.e., excludes is_group()) and:
+	 *
+	 * local=&unset: match unoriented(); else remote=&unset: match
+	 * oriented() + local + 0.0.0.0 or ::; else match oriented() +
+	 * local + remote.
 	 */
-	const ip_address *local;
-	const ip_address *remote;
+	struct {
+		const ip_address *local;
+		const ip_address *remote;
+	} host_pair;
 
 	/*
 	 * Current result (can be safely deleted).

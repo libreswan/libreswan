@@ -101,12 +101,11 @@ static hash_t hash_host_pair(const ip_address *local,
 {
 	hash_t hash = zero_hash;
 	FOR_EACH_THING(a, local, remote) {
-		if (a != NULL &&
-		    address_is_specified(*a)) {
-			/*
-			 * Don't include unset, ::0, and 0.0.0.0 in
-			 * the hash so that hash the same.
-			 */
+		/*
+		 * Don't include NULL, unset, ::0, and 0.0.0.0 in the
+		 * hash so that they all hash to the same bucket.
+		 */
+		if (a != NULL && address_is_specified(*a)) {
 			hash = hash_hunk(address_as_shunk(a), hash);
 		}
 	}
@@ -164,13 +163,15 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 		return hash_table_bucket(&connection_clonedfrom_hash_table, hash);
 	}
 
-	if (filter->local != NULL) {
+	if (filter->host_pair.local != NULL) {
+		passert(filter->host_pair.remote != NULL);
 		address_buf lb, rb;
 		dbg("FOR_EACH_CONNECTION[local=%s,remote=%s].... in "PRI_WHERE,
-		    str_address(filter->local, &lb),
-		    str_address(filter->remote, &rb),
+		    str_address(filter->host_pair.local, &lb),
+		    str_address(filter->host_pair.remote, &rb),
 		    pri_where(filter->where));
-		hash_t hash = hash_host_pair(filter->local, filter->remote);
+		hash_t hash = hash_host_pair(filter->host_pair.local,
+					     filter->host_pair.remote);
 		return hash_table_bucket(&connection_host_pair_hash_table, hash);
 	}
 
@@ -180,17 +181,25 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 
 static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
 {
-	if (filter->kind != 0 && filter->kind != c->local->kind) {
-		return false;
+	if (filter->kind != 0) {
+		if (filter->kind != c->local->kind) {
+			return false;
+		}
 	}
-	if (filter->ike_version != 0 && filter->ike_version != c->config->ike_version) {
-		return false;
+	if (filter->ike_version != 0) {
+		if (filter->ike_version != c->config->ike_version) {
+			return false;
+		}
 	}
-	if (filter->clonedfrom != NULL && filter->clonedfrom != c->clonedfrom) {
-		return false;
+	if (filter->clonedfrom != NULL) {
+		if (filter->clonedfrom != c->clonedfrom) {
+			return false;
+		}
 	}
-	if (filter->name != NULL && !streq(filter->name, c->name)) {
-		return false;
+	if (filter->name != NULL) {
+		if (!streq(filter->name, c->name)) {
+			return false;
+		}
 	}
 	if (filter->alias_root != NULL) {
 		if (c->root_config == NULL) {
@@ -200,14 +209,22 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 			return false;
 		}
 	}
-	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->local->host.id)) {
-		return false;
+	if (filter->this_id_eq != NULL) {
+		if (!id_eq(filter->this_id_eq, &c->local->host.id)) {
+			return false;
+		}
 	}
-	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->remote->host.id)) {
-		return false;
+	if (filter->that_id_eq != NULL) {
+		if (!id_eq(filter->that_id_eq, &c->remote->host.id)) {
+			return false;
+		}
 	}
-	if (filter->local != NULL) {
-		if (address_is_unset(filter->local)) {
+	if (filter->host_pair.local != NULL) {
+		passert(filter->host_pair.remote != NULL);
+		if (is_group(c)) {
+			return false;
+		}
+		if (address_is_unset(filter->host_pair.local)) {
 			if (oriented(c)) {
 				return false;
 			}
@@ -215,20 +232,19 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 			if (!oriented(c)) {
 				return false;
 			}
-			if (!address_eq_address(c->local->host.addr, *filter->local)) {
+			if (!address_eq_address(c->local->host.addr, *filter->host_pair.local)) {
 				return false;
 			}
-			if (filter->remote != NULL &&
-			    address_is_specified(*filter->remote)) {
-				/* not any */
-				if (!address_eq_address(c->remote->host.addr, *filter->remote)) {
-					return false;
-				}
-			} else {
-				/* %any */
-				if (address_is_specified(c->remote->host.addr)) {
-					return false;
-				}
+		}
+		if (address_is_specified(*filter->host_pair.remote)) {
+			/* not any */
+			if (!address_eq_address(c->remote->host.addr, *filter->host_pair.remote)) {
+				return false;
+			}
+		} else {
+			/* %any */
+			if (address_is_specified(c->remote->host.addr)) {
+				return false;
 			}
 		}
 	}
@@ -253,8 +269,8 @@ bool next_connection(enum chrono adv, struct connection_filter *filter)
 			PEXPECT_WHERE(&global_logger, filter->where, filter->kind == 0);
 #endif
 			PEXPECT_WHERE(&global_logger, filter->where, filter->clonedfrom == NULL);
-			PEXPECT_WHERE(&global_logger, filter->where, filter->local == NULL);
-			PEXPECT_WHERE(&global_logger, filter->where, filter->remote == NULL);
+			PEXPECT_WHERE(&global_logger, filter->where, filter->host_pair.local == NULL);
+			PEXPECT_WHERE(&global_logger, filter->where, filter->host_pair.remote == NULL);
 			PEXPECT_WHERE(&global_logger, filter->where, filter->this_id_eq == NULL);
 			PEXPECT_WHERE(&global_logger, filter->where, filter->that_id_eq == NULL);
 		}

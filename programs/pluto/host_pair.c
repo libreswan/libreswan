@@ -35,8 +35,10 @@ struct connection *find_host_pair_connection_on_responder(const struct ike_info 
 	struct connection *c = NULL;
 
 	struct connection_filter hpf = {
-		.local = &local_address,
-		.remote = &remote_address,
+		.host_pair = {
+			.local = &local_address,
+			.remote = &remote_address,
+		},
 		.ike_version = ike_info->version,
 		.where = HERE,
 	};
