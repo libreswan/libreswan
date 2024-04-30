@@ -1,6 +1,10 @@
 
 See also https://libreswan.org/
 
+v5.1 (unreleased)
+* building:
+  - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
+
 v5.0 (Apr 24, 2024)
 * IKEv1:
   - globally disabled by default (ikev1-policy=drop); see RFC9395 [Daniel]
