@@ -173,6 +173,9 @@ struct ike_info {
 	enum event_type replace_event;
 };
 
+extern const struct ike_info ikev1_info;
+extern const struct ike_info ikev2_info;
+
 struct config {
 	enum ike_version ike_version;
 	const struct ike_info *ike_info;

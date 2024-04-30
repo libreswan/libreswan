@@ -2107,6 +2107,35 @@ struct connection *alloc_connection(const char *name,
 	return c;
 }
 
+const struct ike_info ikev1_info = {
+	.version = IKEv1,
+	.version_name = "IKEv1",
+	.parent_name = "ISAKMP",
+	.child_name = "IPsec",
+	.parent_sa_name = "ISAKMP SA",
+	.child_sa_name = "IPsec SA",
+	.expire_event[SA_HARD_EXPIRED] = EVENT_v1_EXPIRE,
+	.expire_event[SA_SOFT_EXPIRED] = EVENT_v1_REPLACE,
+	.replace_event = EVENT_v1_REPLACE,
+};
+
+const struct ike_info ikev2_info = {
+	.version = IKEv2,
+	.version_name = "IKEv2",
+	.parent_name = "IKE",
+	.child_name = "Child",
+	.parent_sa_name = "IKE SA",
+	.child_sa_name = "Child SA",
+	.expire_event[SA_HARD_EXPIRED] = EVENT_v2_EXPIRE,
+	.expire_event[SA_SOFT_EXPIRED] = EVENT_v2_REKEY,
+	.replace_event = EVENT_v2_REPLACE,
+};
+
+static const struct ike_info *const ike_info[] = {
+	[IKEv1] = &ikev1_info,
+	[IKEv2] = &ikev2_info,
+};
+
 static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c,
 				 struct config *config)
@@ -2231,33 +2260,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->ike_version = wm->ike_version;
-	static const struct ike_info ike_info[] = {
-		[IKEv1] = {
-			.version = IKEv1,
-			.version_name = "IKEv1",
-			.parent_name = "ISAKMP",
-			.child_name = "IPsec",
-			.parent_sa_name = "ISAKMP SA",
-			.child_sa_name = "IPsec SA",
-			.expire_event[SA_HARD_EXPIRED] = EVENT_v1_EXPIRE,
-			.expire_event[SA_SOFT_EXPIRED] = EVENT_v1_REPLACE,
-			.replace_event = EVENT_v1_REPLACE,
-		},
-		[IKEv2] = {
-			.version = IKEv2,
-			.version_name = "IKEv2",
-			.parent_name = "IKE",
-			.child_name = "Child",
-			.parent_sa_name = "IKE SA",
-			.child_sa_name = "Child SA",
-			.expire_event[SA_HARD_EXPIRED] = EVENT_v2_EXPIRE,
-			.expire_event[SA_SOFT_EXPIRED] = EVENT_v2_REKEY,
-			.replace_event = EVENT_v2_REPLACE,
-		},
-	};
 	PASSERT(c->logger, wm->ike_version < elemsof(ike_info));
-	PASSERT(c->logger, ike_info[wm->ike_version].version > 0);
-	config->ike_info = &ike_info[wm->ike_version];
+	PASSERT(c->logger, ike_info[wm->ike_version] != NULL);
+	config->ike_info = ike_info[wm->ike_version];
+	PASSERT(c->logger, config->ike_info->version > 0);
 
 #if 0
 	PASSERT(c->logger,
