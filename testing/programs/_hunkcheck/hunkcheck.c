@@ -895,6 +895,9 @@ static void check_hunks(void)
 		const char *output[10];
 	} tests[] = {
 
+		{ "",     ",",  KEEP_EMPTY_SHUNKS, true,  { "", } },
+		{ "",     ",",  EAT_EMPTY_SHUNKS,  false, { } },
+
 		{ "1",    ",",  KEEP_EMPTY_SHUNKS, false, { "1", } },
 		{ "1",    ",",  EAT_EMPTY_SHUNKS,  false, { "1", } },
 
@@ -906,11 +909,15 @@ static void check_hunks(void)
 
 		{ "1, ",  ", ", KEEP_EMPTY_SHUNKS, true,  { "1", "", "", } },
 		{ "1, ",  ", ", EAT_EMPTY_SHUNKS,  false, { "1", } },
+
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT(" input=%s delims=%s", t->input, t->delims);
+		PRINT(" input=%s delims=%s %s", t->input, t->delims,
+		      (t->opt == KEEP_EMPTY_SHUNKS ? "KEEP_EMPTY_SHUNKS" :
+		       t->opt == EAT_EMPTY_SHUNKS ? "EAT_EMPTY_SHUNKS" :
+		       "???"));
 		shunk_t input = shunk1(t->input);
 
 		struct shunks *output = shunks(input, t->delims, t->opt, HERE);
