@@ -194,10 +194,14 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 			continue;
 		}
 
+		if (!PEXPECT(md->logger, is_template(d))) {
+			continue;
+		}
+
 		/*
 		 * Road Warrior: we have an instant winner.
 		 */
-		if (is_template(d) && !is_opportunistic(d)) {
+		if (!is_opportunistic(d)) {
 			connection_buf cb;
 			ldbg(md->logger,
 			     "  instant winner with non-opportunistic template "PRI_CONNECTION,

@@ -246,6 +246,7 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 			if (address_is_specified(c->remote->host.addr)) {
 				return false;
 			}
+			PEXPECT(&global_logger, is_template(c));
 		}
 	}
 

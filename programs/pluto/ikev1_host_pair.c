@@ -300,48 +300,14 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * See if a wildcarded connection can be found.  We cannot
 	 * pick the right connection, so we're making a guess.  All
 	 * Road Warrior connections are fair game: we pick the first
-	 * we come across (if any).  If we don't find any, we pick the
-	 * first opportunistic with the smallest subnet that includes
-	 * the peer.  There is, of course, no necessary relationship
-	 * between an Initiator's address and that of its client, but
-	 * Food Groups kind of assumes one.
+	 * we come across (if any).
 	 */
 
-	struct connection_filter hpf = {
-		.host_pair = {
-			.local = &local_address,
-			.remote = &unset_address,
-		},
-		.ike_version = IKEv1,
-		.where = HERE,
-	};
-	while (next_connection(OLD2NEW, &hpf)) {
-		struct connection *d = hpf.c;
-
-		if (!match_v1_connection(d, &host_pair_policy, md->logger)) {
-			continue;
-		}
-
-		if (is_template(d)) {
-			/*
-			 * must be Road Warrior: we have a
-			 * winner
-			 */
-			c = d;
-			break;
-		}
-
-		/*
-		 * Opportunistic or Shunt:
-		 * pick tightest match
-		 */
-		if (endpoint_in_selector(md->sender, d->spd->remote->client) &&
-		    (c == NULL || selector_in_selector(c->spd->remote->client,
-						       d->spd->remote->client))) {
-			c = d;
-		}
-	}
-
+	c = find_host_pair_connection_on_responder(&ikev1_info,
+						   local_address, unset_address,
+						   match_v1_connection,
+						   &host_pair_policy,
+						   md->logger);
 	if (c == NULL) {
 		authby_buf ab;
 		llog(RC_LOG_SERIOUS, md->logger,
@@ -351,19 +317,15 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		return NULL;
 	}
 
-	if (!is_template(c)) {
-		connection_buf cib;
-		llog(RC_LOG_SERIOUS, md->logger,
-		     "initial Main Mode message received but "PRI_CONNECTION" forbids connection",
-		     pri_connection(c, &cib));
-		/* XXX notification is in order! */
+	if (!PEXPECT(md->logger, is_template(c))) {
 		return NULL;
 	}
 
 	/*
-	 * Create a temporary connection that is a copy of this one.
+	 * Create a temporary connection that is a copy of this
+	 * template.
 	 *
-	 * Their ID isn't declared yet.
+	 * The initiator's ID isn't yet known.
 	 */
 	connection_buf cib;
 	ldbg(md->logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
