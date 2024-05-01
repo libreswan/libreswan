@@ -139,4 +139,13 @@ extern const struct ip_info *aftoinfo(int af);
 
 const struct ip_info *ip_version_info(unsigned version);
 
+/*
+ * Internal.
+ */
+
+diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
+		  void **ptr, unsigned *len,
+		  err_t (*parse_token)(shunk_t, const struct ip_info *,
+				       void **ptr, unsigned len));
+
 #endif

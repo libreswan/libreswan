@@ -129,4 +129,15 @@ uintmax_t subnet_size(const ip_subnet subnet);
 extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
 			   ip_subnet *dst, ip_address *nonzero_host);
 
+/* comma/space separated list */
+
+typedef struct {
+	unsigned len;
+	ip_subnet *list;
+} ip_subnets;
+
+diag_t ttosubnets_num(shunk_t input, const struct ip_info *afi, ip_subnets *output);
+
+size_t jam_subnets(struct jambuf *buf, const ip_subnets subnets);
+
 #endif
