@@ -21,7 +21,7 @@
 #include "ip_said.h"
 #include "ipcheck.h"
 
-static void check_str_said(void)
+static void check__ttosaid__str_said(void)
 {
 	static const struct test {
 		int line;
@@ -103,5 +103,5 @@ static void check_str_said(void)
 
 void ip_said_check(void)
 {
-	check_str_said();
+	check__ttosaid__str_said();
 }

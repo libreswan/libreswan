@@ -77,6 +77,7 @@ static void check_ttodeltatime(void)
 		{ "1d", (uintmax_t)1*1000*60*60*24, &timescale_milliseconds, true, },
 		{ "1w", (uintmax_t)1*1000*60*60*24*7, &timescale_milliseconds, true, },
 		/* error */
+		{ "", (uintmax_t)0, &timescale_seconds, false, },
 		{ "1x", (uintmax_t)0, &timescale_milliseconds, false, },
 		{ "x1", (uintmax_t)0, &timescale_milliseconds, false, },
 		{ "1mm", (uintmax_t)0, &timescale_milliseconds, false, },

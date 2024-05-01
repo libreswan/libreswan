@@ -18,7 +18,7 @@
 #include "ipcheck.h"
 #include "ip_protoport.h"
 
-void ip_protoport_check(void)
+static void check__ttoprotoport(void)
 {
 	static const struct test {
 		int line;
@@ -28,7 +28,7 @@ void ip_protoport_check(void)
 		unsigned hport;
 		bool ok;
 	} tests[] = {
-		/* { LN, "",      0, false,   0, false, }, */
+		{ LN, "",         0, false,   0, false, },
 		{ LN, "%any",     0, false,   0, true,  },
 		{ LN, "tcp/%any", 6,  true,   0, true,  },
 		{ LN, "tcp/0",    6, false,   0, true,  },
@@ -78,4 +78,9 @@ void ip_protoport_check(void)
 			     t->in, t->hport, out.hport);
 		}
 	}
+}
+
+void ip_protoport_check(void)
+{
+	check__ttoprotoport();
 }

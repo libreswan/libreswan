@@ -21,7 +21,7 @@
 #include "ipcheck.h"
 #include "ip_cidr.h"
 
-static void check_numeric_to_cidr(void)
+static void check__ttocidr_num(void)
 {
 	static const struct test {
 		int line;
@@ -48,8 +48,13 @@ static void check_numeric_to_cidr(void)
 		{ LN, 6, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:ffff/127", },
 		{ LN, 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff/128", },
 
+		/* empty */
+		{ LN, 4, "", NULL, },
+		{ LN, 6, "", NULL, },
+		/* no mask */
 		{ LN, 4, "1.2.3.4", NULL, },
 		{ LN, 6, "1:2:3:4:5:6:7:8", NULL, },
+		/* mask out-of-bounds */
 		{ LN, 4, "1.2.3.255/33", NULL, },
 		{ LN, 6, "1:2:3:4:5:6:7:ffff/129", NULL, },
 	};
@@ -118,6 +123,6 @@ static void check_cidr_is()
 
 void ip_cidr_check(void)
 {
-	check_numeric_to_cidr();
+	check__ttocidr_num();
 	check_cidr_is();
 }

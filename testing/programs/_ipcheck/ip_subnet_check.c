@@ -22,7 +22,7 @@
 #include "ip_subnet.h"
 #include "ip_selector.h"	/* should be in ip_selector_check.c */
 
-static void check_str_subnet(struct logger *logger UNUSED)
+static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 {
 	static const struct test {
 		int line;
@@ -31,6 +31,7 @@ static void check_str_subnet(struct logger *logger UNUSED)
 		char *str;	/* NULL means error expected */
 		bool zeroed;	/* true means host part was zeroed */
 	} tests[] = {
+		{ LN, 4, "", NULL, false, },
 		{ LN, 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24", false, },
 		{ LN, 4, "1.2.3.0/24", "1.2.3.0/24", false, },
 		{ LN, 4, "1.2.3.0/255.255.255.240", "1.2.3.0/28", false, },
@@ -439,7 +440,7 @@ static void check_address_mask_to_subnet(void)
 
 void ip_subnet_check(struct logger *logger)
 {
-	check_str_subnet(logger);
+	check__ttosubnet_num__str_subnet(logger);
 	check_subnet_prefix();
 	check_subnet_mask();
 	check_subnet_is();

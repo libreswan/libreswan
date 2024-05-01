@@ -228,6 +228,10 @@ static void check_ttoaddress_dns(void)
 		{ LN, 4, "nowhere.libreswan.org", NULL, true, },
 		{ LN, 6, "nowhere.libreswan.org", NULL, true, },
 
+		{ LN, 0, "", NULL, false, },
+		{ LN, 4, "", NULL, false, },
+		{ LN, 6, "", NULL, false, },
+
 	};
 
 	err_t err;

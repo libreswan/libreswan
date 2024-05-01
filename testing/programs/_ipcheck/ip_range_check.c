@@ -172,6 +172,7 @@ static void check_ttorange__to__str_range(void)
 		{ LN, 6, "::/0", "::/0", UINTMAX_MAX, },
 		/* nonsense */
 		{ LN, 4, "1.2.3.0-nonenone", NULL, -1, },
+		{ LN, 4, "", NULL, -1, },
 		{ LN, 4, "-", NULL, -1, },
 		{ LN, 4, "_/_", NULL, -1, },
 		{ LN, 6, "%default", NULL, -1, },

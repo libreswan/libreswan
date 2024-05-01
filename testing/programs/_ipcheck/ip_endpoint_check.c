@@ -24,7 +24,7 @@
 #include "ip_protocol.h"
 #include "ipcheck.h"
 
-void ip_endpoint_check()
+void ip_endpoint_check(void)
 {
 	/*
 	 * XXX: can't yet do invalid ports.
