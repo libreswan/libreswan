@@ -1325,6 +1325,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			     leftright, src->updown);
 		}
 	} else {
+		/* Note: "" disables updown; but no updown gets default */
 		child_config->updown =
 			(src->updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
 			 streq(src->updown, UPDOWN_DISABLED) ? NULL :

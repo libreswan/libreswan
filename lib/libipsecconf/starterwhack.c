@@ -216,17 +216,7 @@ static bool set_whack_end(struct whack_end *w,
 	else
 		w->eap = IKE_EAP_NONE;
 
-	/*
-	 * XXX: work-around the pickler turning the string '' into the
-	 * NULL at the other end.  %disabled is also a work-around for
-	 * that.
-	 */
-	if (l->strings[KSCF_UPDOWN] != NULL &&
-	    streq(l->strings[KSCF_UPDOWN], "")) {
-		w->updown = UPDOWN_DISABLED;
-	} else {
-		w->updown = l->strings[KSCF_UPDOWN];
-	}
+	w->updown = l->strings[KSCF_UPDOWN];
 
 	if (l->options_set[KNCF_XAUTHSERVER])
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
