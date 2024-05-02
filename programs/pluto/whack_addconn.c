@@ -43,16 +43,10 @@ static void llog_add_connection_failed(const struct whack_message *wm,
 struct subnets {
 	const char *leftright;
 	const char *name;
-	/* keep track */
-	const char *subnets;
-	int count;
+	unsigned start;
 	/* results */
-	ip_subnet subnet;
-	err_t error;
-	char *must_free;
+	ip_subnets subnets;
 };
-
-static bool next_subnet(struct subnets *sn, struct logger *logger);
 
 /*
  * The first combination is the current leftsubnet/rightsubnet value,
@@ -64,96 +58,106 @@ static bool next_subnet(struct subnets *sn, struct logger *logger);
  * will do the right thing, as will some combinations of also=
  */
 
-static bool first_subnet(struct subnets *sn,
-			 const struct whack_message *wm,
-			 const struct whack_end *end,
-			 struct logger *logger)
+static bool parse_subnets(struct subnets *sn,
+			  const struct whack_message *wm,
+			  const struct whack_end *end,
+			  struct logger *logger)
 {
-	char *subnets;
-	int count;
 	*sn = (struct subnets) {
 		.name = wm->name,
 		.leftright = end->leftright,
 	};
-	if (end->subnets != NULL &&
-	    end->subnet != NULL) {
-		subnets = alloc_printf("%s,%s",
-				       end->subnet,
-				       end->subnets);
-		count = -1; /* becomes 0 below */
-	} else if (end->subnets != NULL) {
-		subnets = clone_str(end->subnets, "subnets");
-		count = 0; /* becomes 1 below */
-	} else if (end->subnet != NULL) {
-		subnets = clone_str(end->subnet, "subnets");
-		count = -1; /* becomes 0 below */
-	} else {
-		/* neither subnet= subnets= presumably peer has values */
-		pexpect(sn->count == 0);
-		pexpect(sn->subnets == NULL);
-		return true;
+
+	unsigned len = 0;
+
+	ip_subnet subnet = unset_subnet;
+	if (end->subnet != NULL) {
+		ip_address nonzero_host;
+		err_t e = ttosubnet_num(shunk1(end->subnet), /*afi*/NULL,
+					&subnet, &nonzero_host);
+		if (e != NULL) {
+			llog_add_connection_failed(wm, logger, 
+						   "%ssubnet=%s invalid, %s",
+						   end->leftright, end->subnet, e);
+			return false;
+		}
+		if (nonzero_host.is_set) {
+			llog_add_connection_failed(wm, logger,
+						   "%ssubnet=%s contains non-zero host identifier",
+						   end->leftright, end->subnet);
+			return false;
+		}
+		/* make space */
+		len += 1;
 	}
-	sn->must_free = subnets;
-	sn->subnets = subnets;
-	sn->count = count;
-	/* advances .count to 0(subnet) or 1(subnets) */
-	return next_subnet(sn, logger);
+
+	ip_subnets subnets = {0};
+	if (end->subnets != NULL) {
+		diag_t d = ttosubnets_num(shunk1(end->subnets), /*afi*/NULL, &subnets);
+		if (d != NULL) {
+			llog_add_connection_failed(wm, logger,
+						   "%ssubnets=%s invalid, %s",
+						   end->leftright, end->subnets,
+						   str_diag(d));
+			pfree_diag(&d);
+			return false;
+		}
+		/* make space */
+		len += subnets.len;
+	}
+
+	/*
+	 * Merge lists.
+	 */
+	sn->start = (subnet.is_set ? 0 :
+		     subnets.len == 0 ? 0 :
+		     1);
+	sn->subnets.len = len;
+	sn->subnets.list = alloc_things(ip_subnet, len, "subnets");
+	unsigned pos = 0;
+	if (subnet.is_set) {
+		sn->subnets.list[pos++] = subnet;
+	}
+	FOR_EACH_ITEM(s, &subnets) {
+		sn->subnets.list[pos++] = *s;
+	}
+	pfreeany(subnets.list);
+	return true;
 }
 
-static bool next_subnet(struct subnets *sn, struct logger *logger)
+/*
+ * Determine the next_subnet.
+ *
+ * When subnet= and subnets= were both NULL, set .subnet to NULL so
+ * add_connection() will fill in valid, presumably from host.
+ */
+
+static const struct ip_info *next_subnet(struct whack_end *end,
+					 const ip_subnets *subnets,
+					 unsigned i)
 {
-	sn->subnet = unset_subnet; /* always */
-
-	const char *subnets = sn->subnets;
-	if (subnets == NULL) {
-		/* happens when both subnet= and subnets= */
-		return false;
+	if (subnets->len > 0) {
+		ip_subnet subnet = subnets->list[i];
+		subnet_buf b;
+		str_subnet(&subnet, &b);
+		/* freed by free_wam() */
+		end->subnet = clone_str(str_subnet(&subnet, &b), "subnet name");
+		return subnet_info(subnet);
 	}
 
-	/* find first non-space item */
-	while (*subnets != '\0' && (char_isspace(*subnets) || *subnets == ',')) {
-		subnets++;
-	}
+	/*
+	 * There's no subnet, clear things so that add_connection()
+	 * will fill it in using the host address.
+	 */
+	end->subnet = NULL;
+	return NULL; /* unknown */
+}
 
-	/* did we find something? */
-	if (*subnets == '\0') {
-		return false;	/* no more input */
-	}
-
-	/* save start */
-	const char *start = subnets;
-
-	/* find end of this item */
-	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ',')) {
-		subnets++;
-	}
-
-	shunk_t subnet = shunk2(start, subnets - start);
-	ip_address nonzero_host;
-	sn->error = ttosubnet_num(subnet, NULL/*any-AFI*/,
-				  &sn->subnet, &nonzero_host);
-	if (sn->error != NULL) {
-		llog(RC_LOG, logger,
-		     "\"%s\": warning: '"PRI_SHUNK"' is not a subnet declaration (%s%s): %s",
-		     sn->name,
-		     pri_shunk(subnet), sn->leftright,
-		     (sn->count == 0 ? "subnet" : "subnets"),
-		     sn->error);
-		return false;
-	}
-	if (nonzero_host.is_set) {
-		address_buf hb;
-		llog(RC_LOG, logger,
-		     "\"%s\": warning: zeroing non-zero host identifier %s in '"PRI_SHUNK"' (%s%s)",
-		     sn->name, str_address(&nonzero_host, &hb),
-		     pri_shunk(subnet),
-		     sn->leftright, (sn->count == 0 ? "subnet" : "subnets"));
-	}
-
-	/* update pointer ready for next call */
-	sn->subnets = subnets;
-	sn->count++;
-	return true;
+static void free_wam(struct whack_message *wam)
+{
+	pfreeany(wam->name);
+	pfreeany(wam->left.subnet);
+	pfreeany(wam->right.subnet);
 }
 
 /*
@@ -171,8 +175,8 @@ static bool next_subnet(struct subnets *sn, struct logger *logger)
  */
 
 static void permutate_connection_subnets(const struct whack_message *wm,
-					 const struct subnets *first_left,
-					 const struct subnets *first_right,
+					 const struct subnets *left,
+					 const struct subnets *right,
 					 struct logger *logger)
 {
 	/*
@@ -180,19 +184,19 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 	 * value, and then each iteration of rightsubnets, and then
 	 * each permutation of leftsubnets X rightsubnets.
 	 *
-	 * If both subnet= is set and subnets=, then it is as if an
-	 * extra element of subnets= has been added, so subnets= for
-	 * only one side will do the right thing, as will some
-	 * combinations of also=
+	 * Both loops execute at least once.  When an end has
+	 * subnet=NULL and subnets=NULL, the value unset_subnet is
+	 * used and .subnet is set to NULL so that add_connection()
+	 * will fill it in using the host address.
 	 */
 
-	struct subnets left = *first_left;
-	pexpect(left.count >= 0);
-	struct subnets right = *first_right;
-	pexpect(right.count >= 0);
+	for (unsigned left_i = 0;
+	     left_i == 0 || left_i < left->subnets.len;
+	     left_i++) {
 
-	do {
-		do {
+		for (unsigned right_i = 0;
+		     right_i == 0 || right_i < right->subnets.len;
+		     right_i++) {
 
 			/*
 			 * whack message --- we can borrow all
@@ -222,33 +226,21 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			 *
 			 * When the connection also contained subnet=,
 			 * that has NR==0.
-			 */
-			char tmpconnname[256];
-			snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
-				 wm->name, left.count, right.count);
-			ldbg(logger, "tmpconnname=%s", tmpconnname);
-			wam.name = tmpconnname;
-
-			/*
-			 * Fix up leftsubnet/rightsubnet
-			 * properly, make sure that has_client
-			 * is set.
 			 *
-			 * Danger: LB and RB must be the same scope as
-			 * WAM.
+			 * MUST FREE
 			 */
-			subnet_buf lb, rb;
-			str_subnet(&left.subnet, &lb);
-			str_subnet(&right.subnet, &rb);
-			wam.left.subnet = (left.subnet.is_set ? lb.buf : NULL);
-			wam.right.subnet = (right.subnet.is_set ? rb.buf : NULL);
+			wam.name = alloc_printf("%s/%ux%u",
+						wm->name,
+						left->start+left_i,
+						right->start+right_i);
 
 			/*
 			 * Either .subnet is !.is_set or is valid.
 			 * {left,right}_afi can be NULL.
 			 */
-			const struct ip_info *left_afi = subnet_info(left.subnet);
-			const struct ip_info *right_afi = subnet_info(right.subnet);
+			const struct ip_info *left_afi = next_subnet(&wam.left, &left->subnets, left_i);
+			const struct ip_info *right_afi = next_subnet(&wam.right, &right->subnets, right_i);
+
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
 			    right_afi == NULL) {
@@ -256,36 +248,19 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 				if (d != NULL) {
 					llog_add_connection_failed(&wam, logger, "%s", str_diag(d));
 					pfree_diag(&d);
+					free_wam(&wam);
 					return;
 				}
 			} else {
-				PASSERT(logger, (wam.left.subnet != NULL &&
+				PEXPECT(logger, (wam.left.subnet != NULL &&
 						 wam.right.subnet != NULL));
 				llog(RC_LOG, logger,
 				     "\"%s\": warning: skipping mismatched leftsubnets=%s rightsubnets=%s",
 				     wm->name, wam.left.subnet, wam.right.subnet);
 			}
 
-			/*
-			 * Try to advance right.
-			 */
-		} while (next_subnet(&right, logger));
-
-		if (right.error != NULL) {
-			/* really bad */
-			return;
+			free_wam(&wam);
 		}
-
-		/*
-		 * Right is out so rewind it and advance left.
-		 */
-		right = *first_right;
-
-	} while (next_subnet(&left, logger));
-
-	if (left.error != NULL) {
-		/* really bad */
-		return;
 	}
 
 }
@@ -329,22 +304,22 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 		return;
 	}
 
-	struct subnets first_left = {0};
-	if (!first_subnet(&first_left, wm, &wm->left, logger)) {
-		/* syntax error; already logged */
+	struct subnets left = {0};
+	if (!parse_subnets(&left, wm, &wm->left, logger)) {
+		pfreeany(left.subnets.list);
 		return;
 	}
 
-	struct subnets first_right = {0};
-	if (!first_subnet(&first_right, wm, &wm->right, logger)) {
-		/* syntax error; already logged */
-		pfreeany(first_left.must_free);
+	struct subnets right = {0};
+	if (!parse_subnets(&right, wm, &wm->right, logger)) {
+		pfreeany(left.subnets.list);
+		pfreeany(right.subnets.list);
 		return;
 	}
 
-	permutate_connection_subnets(wm, &first_left, &first_right, logger);
-	pfreeany(first_left.must_free);
-	pfreeany(first_right.must_free);
+	permutate_connection_subnets(wm, &left, &right, logger);
+	pfreeany(left.subnets.list);
+	pfreeany(right.subnets.list);
 }
 
 void whack_addconn(const struct whack_message *wm, struct show *s)
