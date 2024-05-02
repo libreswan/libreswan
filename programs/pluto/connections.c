@@ -3584,7 +3584,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	return NULL;
 }
 
-bool add_connection(const struct whack_message *wm, struct logger *logger)
+diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/* will inherit defaults */
 	lset_t debugging = lmod(LEMPTY, wm->debugging);
@@ -3602,11 +3602,10 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 
 	diag_t d = extract_connection(wm, c, root_config);
 	if (d != NULL) {
-		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 		struct connection *cp = c;
 		PASSERT(c->logger, delref_where(&cp, c->logger, HERE) == c);
 		discard_connection(&c, false/*not-valid*/, HERE);
-		return false;
+		return d;
 	}
 
 	/* log all about this connection */
@@ -3636,7 +3635,7 @@ bool add_connection(const struct whack_message *wm, struct logger *logger)
 	     c->config->sa_ipsec_max_bytes,
 	     c->config->sa_ipsec_max_packets);
 	release_whack(c->logger, HERE);
-	return true;
+	return NULL;
 }
 
 /* priority formatting */

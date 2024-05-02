@@ -857,10 +857,7 @@ struct connection {
 extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d);
 
-#define ADD_FAILED_PREFIX "failed to add connection: "
-#define CONNECTION_ADD_FAILED(WM, FMT)			\
-	"\"%s\": "ADD_FAILED_PREFIX""FMT, (WM)->name
-bool add_connection(const struct whack_message *wm, struct logger *logger);
+diag_t add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
 				     ip_address host_addr, where_t where);

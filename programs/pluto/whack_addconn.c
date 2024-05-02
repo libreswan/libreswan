@@ -22,6 +22,20 @@
 #include "connections.h"
 #include "whack_delete.h"
 
+PRINTF_LIKE(3)
+static void llog_add_connection_failed(const struct whack_message *wm,
+				       struct logger *logger,
+				       const char *fmt, ...)
+{
+	LLOG_JAMBUF(RC_FATAL, logger, buf) {
+		jam(buf, "\"%s\": failed to add connection: ", wm->name);
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+	}
+}
+
 /*
  * When false, should also check error.
  */
@@ -238,7 +252,10 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
 			    right_afi == NULL) {
-				if (!add_connection(&wam, logger)) {
+				diag_t d = add_connection(&wam, logger);
+				if (d != NULL) {
+					llog_add_connection_failed(&wam, logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return;
 				}
 			} else {
@@ -294,17 +311,21 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 				continue;
 			}
 			/* have subnets=.. and subnet=a,b... */
-			llog(RC_FATAL, logger,
-			     CONNECTION_ADD_FAILED(wm, "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\""),
-			     subnet->leftright, subnet->subnet,
-			     subnets->leftright, subnets->subnets);
+			llog_add_connection_failed(wm, logger,
+						   "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\"",
+						   subnet->leftright, subnet->subnet,
+						   subnets->leftright, subnets->subnets);
 			return;
 		}
 	}
 
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
-		add_connection(wm, logger);
+		diag_t d = add_connection(wm, logger);
+		if (d != NULL) {
+			llog_add_connection_failed(wm, logger, "%s", str_diag(d));
+			pfree_diag(&d);
+		}
 		return;
 	}
 
