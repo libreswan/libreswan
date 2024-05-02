@@ -1,0 +1,16 @@
+A routed host-to-host a.k.a. /32-to-/32 tunnel using xfrmi interface on road.
+
+This test checks that the XFRM interface is created correctly before routing the tunnel.
+
+xfrmi need CONFIG_XFRM_INTERFACE=y in the kernel.
+
+This also tests the normally unused ipsec0 device.
+
+road will have device ipsec0
+ip rule show
+ip route show table 50
+ip -s link show ipsec0
+
+
+it also tests if delete works, as it needs to specify the if_id as well
+

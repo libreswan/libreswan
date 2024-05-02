@@ -1,0 +1,118 @@
+/testing/guestbin/swan-prep
+road #
+ echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec whack --impair suppress_retransmits
+road #
+ ipsec auto --add road
+"road": added IKEv2 connection
+road #
+ ipsec auto --route road
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec auto --up road
+"road" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"road" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"road" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"road" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+road #
+ # ip rule add prio 100 to 192.1.2.23/32 not fwmark 1/0xffffffff lookup 50
+road #
+ # sleep 2
+road #
+ # ip route add table 50 192.1.2.23/32 dev ipsec0 src 192.1.3.209
+road #
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
+road #
+ ip -s link show ipsec0
+X: ipsec0@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX:  bytes packets errors dropped  missed   mcast           
+            84       1      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+            84       1      0       0       0       0 
+road #
+ ip rule show
+0:	from all lookup local
+100:	from all to 192.1.2.23 fwmark 0x4000 lookup 50
+32766:	from all lookup main
+32767:	from all lookup default
+road #
+ ip route show table 50
+192.1.2.23 via 192.1.3.254 dev eth0
+road #
+ ip route
+default via 192.1.3.254 dev eth0
+192.1.2.23 dev ipsec0 scope link
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+road #
+ # check if_id and mark in ip xfrm state
+road #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x4000/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x4000
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x4000/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x4000
+road #
+ ipsec trafficstatus
+#2: "road", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+road #
+ # check if delete removes all policies without errors
+road #
+ ipsec auto --delete road
+"road": terminating SAs using this connection
+"road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"road" #2: ESP traffic information: in=84B out=84B
+"road": delete ipsec-interface=ipsec0 if_id=16384 added by pluto
+road #
+ ../../guestbin/ipsec-kernel-state.sh
+road #
+ ip xfrm policy
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+road #
+ echo done
+done
+road #
+ 
