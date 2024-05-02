@@ -158,8 +158,6 @@ struct whack_message {
 	 * If you change anything earlier in this struct, update WHACK_BASIC_MAGIC.
 	 */
 
-	bool from_whack;		/* i.e., not addconn; they
-					 * have different semantics */
 
 	bool whack_processstatus; /* non-basic */
 
@@ -177,10 +175,14 @@ struct whack_message {
 		struct whack_impair *list;
 	} impairments;
 
-	/* for WHACK_CONNECTION */
-
-	bool whack_addconn;	/* addconn semantics */
-	bool whack_add;		/* whack semantics */
+	bool whack_add;			/* whack or addconn semantics;
+					 * see from; */
+	enum whack_from {
+		WHACK_FROM_WHACK = 1,
+		WHACK_FROM_ADDCONN,
+	} whack_from;			/* whack and addconn have
+					 * different .whack_add
+					 * semantics */
 	bool whack_async;
 
 	enum ike_version ike_version;	/* from keyexchange= */

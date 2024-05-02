@@ -58,7 +58,6 @@
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
 
-#include "whack_add.h"
 #include "whack_addconn.h"
 #include "whack_briefconnectionstatus.h"
 #include "whack_connection.h"
@@ -329,7 +328,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * => use show_*() because the good output is for whack
 	 */
 	struct logger *logger = show_logger(s);
-	ldbg(logger, "processing message from %s", m->from_whack ? "whack" : "addconn");
+	ldbg(logger, "processing message from %s",
+	     (m->whack_from == WHACK_FROM_WHACK ? "whack" :
+	      m->whack_from == WHACK_FROM_ADDCONN ? "addconn" :
+	      "???"));
 
 	/*
 	 * May be needed in future:
@@ -402,20 +404,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "add: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->whack_addconn) {
-		dbg_whack(s, "addconn: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_addconn(m, s);
-		dbg_whack(s, "addconn: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->redirect_to != NULL && !m->whack_add && !m->whack_addconn) {
+	if (m->redirect_to != NULL && !m->whack_add) {
 		/*
 		 * We are redirecting all peers of one or all
 		 * connections.
 		 *
 		 * Whack's --redirect-to is ambitious - is it part of
-		 * an ADD or a global op?  Checking .whack_add and/or
-		 * .whack_replace should help.
+		 * an ADD or a global op?  Checking .whack_add.
 		 */
 		dbg_whack(s, "redirect_to: start: '%s'", (m->name == NULL ? "<null>" : m->name));
 		find_and_active_redirect_states(m->name, m->redirect_to, logger);

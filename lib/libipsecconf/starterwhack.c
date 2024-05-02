@@ -305,7 +305,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   struct logger *logger)
 {
 	struct whack_message msg = empty_whack_message;
-	msg.whack_addconn = true;
+	msg.whack_add = true;
+	msg.whack_from = WHACK_FROM_ADDCONN;
 	msg.name = conn->name;
 
 	msg.host_afi = conn->left.host_family;

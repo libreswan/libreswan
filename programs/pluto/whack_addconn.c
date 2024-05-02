@@ -322,34 +322,45 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 	pfreeany(right.subnets.list);
 }
 
-void whack_addconn(const struct whack_message *wm, struct show *s)
+void whack_add(const struct whack_message *wm, struct show *s)
 {
 	if (wm->name == NULL) {
 		whack_log(RC_FATAL, s,
-			  "received command to delete a connection, but did not receive the connection name - ignored");
+			  "received command to add a connection, but did not receive the connection name - ignored");
 		return;
 	}
 
-	/*
-	 * "ipsec add" semantics.
-	 *
-	 * Any existing connection matching .name is purged before
-	 * this connection is added.
-	 *
-	 * In the case of subnets=, .name is NAME/NxM, and not NAME,
-	 * which means this call deletes a specific alias instance and
-	 * not all instances.  An earlier delete .name=NAME message
-	 * will have purged everything (see <<ipsec>>).
-	 */
-	whack_delete(wm, s, /*log_unknown_name*/false);
-
-	/*
-	 * Confirm above did its job.
-	 */
-	if (connection_with_name_exists(wm->name)) {
-		llog_pexpect(show_logger(s), HERE,
-			     "attempt to redefine connection \"%s\"", wm->name);
-		return;
+	switch (wm->whack_from) {
+	case WHACK_FROM_ADDCONN:
+		/*
+		 * "ipsec add" semantics.
+		 *
+		 * Any existing connection matching .name is purged
+		 * before this connection is added.  When no
+		 * connection matching name is found, it will delete
+		 * aliases.
+		 */
+		whack_delete(wm, s, /*log_unknown_name*/false);
+		/*
+		 * Confirm above did its job.
+		 */
+		if (connection_with_name_exists(wm->name)) {
+			llog_pexpect(show_logger(s), HERE,
+				     "attempt to redefine connection \"%s\"", wm->name);
+			return;
+		}
+		break;
+	case WHACK_FROM_WHACK:
+		/*
+		 * "ipsec whack" semantics: any attempt to add a
+		 * duplicate connection is rejected.
+		 */
+		if (connection_with_name_exists(wm->name)) {
+			whack_log(RC_DUPNAME, s,
+				  "attempt to redefine connection \"%s\"", wm->name);
+			return;
+		}
+		break;
 	}
 
 	add_connections(wm, show_logger(s));

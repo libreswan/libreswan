@@ -1,6 +1,6 @@
 /* <<ipsec add ...>> aka addconn, for libreswan
  *
- * Copyright (C) 2023 Andrew Cagney
+ * Copyright (C) 2023-2024 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,12 +14,12 @@
  *
  */
 
-#ifndef WHACK_ADDCONN_H
-#define WHACK_ADDCONN_H
+#ifndef WHACK_ADD_H
+#define WHACK_ADD_H
 
 struct whack_message;
 struct show;
 
-void whack_addconn(const struct whack_message *m, struct show *s);
+void whack_add(const struct whack_message *m, struct show *s);
 
 #endif

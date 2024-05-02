@@ -48,7 +48,7 @@ void whack_delete(const struct whack_message *m, struct show *s,
 	}
 
 	/*
-	 * This is new-to-old which means that instances are processed
+	 * This is old-to-new which means that aliases are processed
 	 * before templates.
 	 */
 	whack_connection(m, s, whack_delete_connections,
