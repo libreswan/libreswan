@@ -1458,7 +1458,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			}
 			bool within = false;
 			FOR_EACH_ITEM(sel, &child_config->selectors) {
-				if (address_in_selector(*sip, *sel)) {
+				/*
+				 * Only compare the address against
+				 * the selector's address range (not
+				 * the /protocol/port).  For instance
+				 * when the selector is
+				 * 1::/128/tcp/22, the sourceip=1:: is
+				 * still ok.
+				 */
+				if (address_in_selector_range(*sip, *sel)) {
 					within = true;
 					break;
 				}
