@@ -25,4 +25,9 @@ add sourceip-outside-subnets
 add sourceip-inside-subnets
 add sourceips-inside-subnets
 
+add sourceip-inside-subnet-protoport
+add sourceip-outside-subnet-protoport
+add sourceip-inside-selector-protocol-port
+add sourceip-outside-selector-protocol-port
+
 add sourceip-vs-interface-ip

@@ -59,6 +59,20 @@ west #
 "sourceips-inside-subnets/2x2": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; my_ip=1.0.0.1; their_ip=unset;
 "sourceips-inside-subnets/1x1": 1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2::/64; unrouted; my_ip=1::1; their_ip=unset;
 west #
+ add sourceip-inside-subnet-protoport
+"sourceip-inside-subnet-protoport": added IKEv2 connection
+"sourceip-inside-subnet-protoport": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+west #
+ add sourceip-outside-subnet-protoport
+"sourceip-outside-subnet-protoport": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=1.2.3.4/32
+west #
+ add sourceip-inside-selector-protocol-port
+"sourceip-inside-selector-protocol-port": added IKEv2 connection
+"sourceip-inside-selector-protocol-port": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+west #
+ add sourceip-outside-selector-protocol-port
+"sourceip-outside-selector-protocol-port": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=1.2.3.4/32/tcp/22
+west #
  add sourceip-vs-interface-ip
 "sourceip-vs-interface-ip": failed to add connection: leftsourceip=1.0.0.1 invalid, requires leftsubnet
 west #
