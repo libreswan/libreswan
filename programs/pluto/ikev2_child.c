@@ -472,7 +472,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 				     struct pbs_out *outpbs)
 {
 	pexpect(larval_child->sa.st_sa_type_when_established == CHILD_SA); /* never grow up */
-	enum isakmp_xchg_type isa_xchg = request_md->hdr.isa_xchg;
+	enum ikev2_exchange isa_xchg = request_md->hdr.isa_xchg;
 	struct connection *cc = larval_child->sa.st_connection;
 
 	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
@@ -563,7 +563,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 {
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
-	enum isakmp_xchg_type isa_xchg = md->hdr.isa_xchg;
+	enum ikev2_exchange isa_xchg = md->hdr.isa_xchg;
 	v2_notification_t n;
 
 	n = process_v2SA_payload(what,

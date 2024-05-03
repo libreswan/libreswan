@@ -808,7 +808,9 @@ enum isakmp_xchg_type {
 	 */
 	ISAKMP_XCHG_QUICK = 32, /* Oakley Quick Mode */
 	ISAKMP_XCHG_NGRP = 33, /* Oakley New Group Mode */
+};
 
+enum ikev2_exchange {
 	/* IKEv2 things */
 	ISAKMP_v2_IKE_SA_INIT = 34,
 	ISAKMP_v2_IKE_AUTH = 35,

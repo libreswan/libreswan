@@ -101,7 +101,7 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
 static bool open_v2_message_body(struct pbs_out *message,
 				 const struct ike_sa *ike,
 				 const struct msg_digest *md,
-				 enum isakmp_xchg_type exchange_type,
+				 enum ikev2_exchange exchange_type,
 				 struct pbs_out *body)
 {
 	*body = (struct pbs_out) {0};
@@ -1416,7 +1416,7 @@ struct ikev2_id build_v2_id_payload(const struct host_end *end, shunk_t *body,
 bool open_v2_message(const char *story,
 		     struct ike_sa *ike, struct logger *logger,
 		     struct msg_digest *request_md,
-		     enum isakmp_xchg_type exchange_type,
+		     enum ikev2_exchange exchange_type,
 		     uint8_t *buf, size_t sizeof_buf,
 		     struct v2_message *message,
 		     enum payload_security security)

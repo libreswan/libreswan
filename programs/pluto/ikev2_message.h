@@ -72,7 +72,8 @@ struct v2_message {
 
 bool open_v2_message(const char *story,
 		     struct ike_sa *ike, struct logger *logger,
-		     struct msg_digest *request_md, enum isakmp_xchg_type exchange_type,
+		     struct msg_digest *request_md,
+		     enum ikev2_exchange exchange_type,
 		     uint8_t *buffer, size_t sizeof_buffer,
 		     struct v2_message *message,
 		     enum payload_security security);

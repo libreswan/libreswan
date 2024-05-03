@@ -77,7 +77,7 @@ struct v2_transition {
 	 * When RECV_ROLE is NO_MESSAGE, the transition is for a new
 	 * exchange.
 	 */
-	const enum isakmp_xchg_type exchange;
+	const enum ikev2_exchange exchange;
 	enum message_role recv_role;
 
 	/*
@@ -106,7 +106,7 @@ struct v2_transitions {
 };
 
 struct v2_exchange {
-	const enum isakmp_xchg_type type;
+	const enum ikev2_exchange type;
 	const char *subplot;
 	bool secured;
 	const struct v2_transition *initiate;

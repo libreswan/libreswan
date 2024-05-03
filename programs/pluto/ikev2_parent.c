@@ -644,7 +644,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		return;
 	}
 
-	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
+	const enum ikev2_exchange ix = md->hdr.isa_xchg;
 	if (!PEXPECT(md->logger, (ix == ISAKMP_v2_IKE_INTERMEDIATE ||
 				  ix == ISAKMP_v2_IKE_AUTH))) {
 		/*

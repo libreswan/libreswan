@@ -131,7 +131,7 @@ void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike)
 		jam_secured(buf, ike);
 
 		jam_string(buf, ", initiating ");
-		enum isakmp_xchg_type ix =
+		enum ikev2_exchange ix =
 			(ike->sa.st_v2_ike_intermediate.enabled ? ISAKMP_v2_IKE_INTERMEDIATE :
 			 ISAKMP_v2_IKE_AUTH);
 		jam_enum_short(buf, &ikev2_exchange_names, ix);

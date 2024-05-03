@@ -799,7 +799,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * this can be checked against what is.
 	 */
 
-	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
+	const enum ikev2_exchange ix = md->hdr.isa_xchg;
 	LDBGP_JAMBUF(DBG_BASE, md->logger, buf) {
 		switch (expected_local_ike_role) {
 		case SA_RESPONDER:
@@ -1217,7 +1217,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 
 void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 {
-	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
+	const enum ikev2_exchange ix = md->hdr.isa_xchg;
 
 	/*
 	 * The message successfully decrypted and passed integrity

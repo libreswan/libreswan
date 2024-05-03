@@ -37,7 +37,7 @@ struct v2_incoming_fragment {
 struct v2_incoming_fragments {
 	unsigned total;
 	unsigned count;
-	enum isakmp_xchg_type xchg;
+	enum ikev2_exchange xchg;
 	/*
 	 * A fragment.
 	 *
@@ -131,7 +131,7 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
  */
 
 bool emit_v2UNKNOWN(const char *victim,
-		    enum isakmp_xchg_type exchange_type,
+		    enum ikev2_exchange exchange_type,
 		    const struct impair_unsigned *impair,
 		    struct pbs_out *outs);
 
