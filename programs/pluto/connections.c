@@ -213,7 +213,7 @@ bool connection_with_name_exists(const char *name)
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cq)) {
+	while (next_connection(&cq)) {
 		return true;
 	}
 	return false;
@@ -353,7 +353,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 			.where = HERE,
 		},
 	};
-	while (next_connection(OLD2NEW, &instance)) {
+	while (next_connection(&instance)) {
 		connection_buf cb;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still instantiated as "PRI_CONNECTION" [%p]",
@@ -3978,7 +3978,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cq)) {
+	while (next_connection(&cq)) {
 		struct connection *c = cq.c;
 
 		if (is_group(c)) {
@@ -4264,7 +4264,7 @@ struct connection **sort_connections(void)
 				.where = HERE,
 			},
 		};
-		while (next_connection(NEW2OLD, &cq)) {
+		while (next_connection(&cq)) {
 			nr_connections++;
 		}
 	}
@@ -4286,7 +4286,7 @@ struct connection **sort_connections(void)
 				.where = HERE,
 			},
 		};
-		while (next_connection(NEW2OLD, &cq)) {
+		while (next_connection(&cq)) {
 			connections[i++] = cq.c;
 		}
 		passert(i == nr_connections);

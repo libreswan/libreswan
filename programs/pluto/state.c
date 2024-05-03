@@ -2038,7 +2038,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cf)) {
+	while (next_connection(&cf)) {
 		struct connection *d = cf.c;
 
 		/*

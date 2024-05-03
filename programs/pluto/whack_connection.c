@@ -82,7 +82,7 @@ static bool whack_connections_by_name(const struct whack_message *m,
 			.where = HERE,
 		},
 	};
-	if (next_connection(OLD2NEW, &by_name)) {
+	if (next_connection(&by_name)) {
 		visit_connections(by_name.c, m, s,
 				  visit_connection);
 		return true; /* found something, stop */
@@ -134,7 +134,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	if (all_connections(alias_order, &by_alias_root, logger)) {
+	if (all_connections(&by_alias_root)) {
 		/* header */
 		if (each->future_tense != NULL) {
 			/*
@@ -150,7 +150,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		unsigned nr = 0;
 		do {
 			nr += visit_connections(by_alias_root.c, m, s, visit_connection);
-		} while (all_connections(alias_order, &by_alias_root, logger));
+		} while (all_connections(&by_alias_root));
 		/* footer */
 		if (each->past_tense != NULL) {
 			if (nr == 1) {
@@ -249,7 +249,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &instances)) {
+	while (next_connection(&instances)) {
 
 		connection_buf cqb;
 		ldbg(c->logger, "visiting instance "PRI_CONNECTION,
@@ -285,7 +285,7 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &instances)) {
+	while (next_connection(&instances)) {
 		/* abuse bool */
 		nr += visit_connections_bottom_up(instances.c, m, s, visit_connection);
 	}

@@ -165,7 +165,7 @@ static void release_dead_interfaces(struct logger *logger)
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cf)) {
+	while (next_connection(&cf)) {
 		struct connection *c = cf.c;
 
 		if (!oriented(c)) {

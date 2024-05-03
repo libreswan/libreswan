@@ -123,7 +123,7 @@ static void delete_every_connection(struct logger *logger)
 				.where = HERE,
 			},
 		};
-		if (!next_connection(OLD2NEW, &cq)) {
+		if (!next_connection(&cq)) {
 			break;
 		}
 

@@ -413,7 +413,7 @@ void check_orientations(struct logger *logger)
 			.where = HERE,
 		},
 	};
-	while (next_connection(OLD2NEW, &cq)) {
+	while (next_connection(&cq)) {
 		struct connection *c = cq.c;
 		/* just try */
 		bool was_oriented = oriented(c);

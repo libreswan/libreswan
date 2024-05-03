@@ -46,7 +46,7 @@ struct connection *find_host_pair_connection_on_responder(const struct ike_info 
 			.where = HERE,
 		},
 	};
-	while (next_connection(OLD2NEW, &hpf)) {
+	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 
 		if (!match_connection_policy(d, context, logger)){

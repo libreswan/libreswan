@@ -630,7 +630,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				.where = HERE,
 			},
 		};
-		while (next_connection(OLD2NEW, &hpf)) {
+		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
 			if (c == d) {
 				/* already scored above */

@@ -191,7 +191,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 			.where = HERE,
 		},
 	};
-	while (next_connection(OLD2NEW, &hpf_unset)) {
+	while (next_connection(&hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
 		if (!match_v2_connection(d, &host_pair_policy, md->logger)) {

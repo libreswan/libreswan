@@ -1386,7 +1386,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 				.where = HERE,
 			},
 		};
-		while (next_connection(NEW2OLD, &hpf)) {
+		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
 			indent.level = 2;
 
@@ -1631,7 +1631,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				.where = HERE,
 			},
 		};
-		while (next_connection(NEW2OLD, &cf)) {
+		while (next_connection(&cf)) {
 			struct connection *t = cf.c;
 			indent.level = 2;
 

@@ -255,10 +255,9 @@ static bool matches_connection_filter(struct connection *c,
 	return true; /* sure */
 }
 
-bool next_connection(enum chrono order, struct connection_filter *filter)
+bool next_connection(struct connection_filter *filter)
 {
 	struct logger *logger = filter->search.logger;
-	PASSERT_WHERE(logger, filter->search.where, order == filter->search.order);
 	/* try to stop all_connections() calls */
 	passert(filter->connections == NULL);
 	if (filter->internal == NULL) {
@@ -308,14 +307,9 @@ bool next_connection(enum chrono order, struct connection_filter *filter)
 	return false;
 }
 
-bool all_connections(enum chrono adv, struct connection_filter *filter,
-		     struct logger *logger)
+bool all_connections(struct connection_filter *filter)
 {
-#if 0
 	struct logger *logger = filter->search.logger;
-#endif
-	PASSERT_WHERE(logger, filter->search.where, logger == filter->search.logger);
-	PASSERT_WHERE(logger, filter->search.where, adv == filter->search.order);
 	/* try to stop next_connection() calls */
 	PASSERT_WHERE(logger, filter->search.where, filter->internal == NULL);
 
@@ -324,7 +318,7 @@ bool all_connections(enum chrono adv, struct connection_filter *filter,
 		unsigned count = 0;
 		{
 			struct connection_filter iterator = *filter;
-			while (next_connection(adv, &iterator)) {
+			while (next_connection(&iterator)) {
 				count++;
 			}
 		}
@@ -344,7 +338,7 @@ bool all_connections(enum chrono adv, struct connection_filter *filter,
 		{
 			struct connection_filter iterator = iterator = *filter;
 			unsigned i = 0;
-			while (next_connection(adv, &iterator)) {
+			while (next_connection(&iterator)) {
 				PASSERT(logger, refcnt_peek(iterator.c, logger) >= 1);
 				connections[i++] = connection_addref(iterator.c, logger);
 				PASSERT(logger, refcnt_peek(iterator.c, logger) > 1);

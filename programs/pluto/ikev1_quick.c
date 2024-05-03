@@ -1797,7 +1797,7 @@ static bool is_virtual_net_used(struct connection *c,
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cq)) {
+	while (next_connection(&cq)) {
 		struct connection *d = cq.c;
 		switch (d->local->kind) {
 		case CK_PERMANENT:
@@ -1984,7 +1984,7 @@ static struct connection *fc_try(const struct connection *c,
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &hpf)) {
+	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 
 		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
@@ -2262,7 +2262,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 					.where = HERE,
 				},
 			};
-			while (next_connection(NEW2OLD, &hpf)) {
+			while (next_connection(&hpf)) {
 				/* found something */
 				local_address = spd->local->host->addr;
 				selector_buf s2;

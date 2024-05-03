@@ -989,7 +989,7 @@ struct connection_filter {
 /*
  * Can bail early; beware of delete.  Should this be NEW2OLD only?
  */
-bool next_connection(enum chrono order, struct connection_filter *query);
+bool next_connection(struct connection_filter *query);
 
 /*
  * Must iterate over all matches (can't break from loop).
@@ -1007,7 +1007,8 @@ bool next_connection(enum chrono order, struct connection_filter *query);
  * all_connections() with the last reference the the connection is not
  * returned (it is delref()ed deleting it).
  */
-bool all_connections(enum chrono order, struct connection_filter *query, struct logger *logger);
+
+bool all_connections(struct connection_filter *query);
 
 /*
  * For iterating over the spd DB.

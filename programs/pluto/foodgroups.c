@@ -345,7 +345,7 @@ void load_groups(struct logger *logger)
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cf)) {
+	while (next_connection(&cf)) {
 		struct connection *g = cf.c;
 		if (oriented(g)) {
 			struct file_lex_position flp = {

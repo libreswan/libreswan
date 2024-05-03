@@ -85,7 +85,7 @@ void reread_cert_connections(struct logger *logger)
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &cf)) {
+	while (next_connection(&cf)) {
 		struct connection *c = cf.c;
 		if (c->root_config != NULL) {
 			reread_cert(c, logger);

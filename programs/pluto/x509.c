@@ -299,7 +299,7 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 			.where = HERE,
 		},
 	};
-	while (next_connection(NEW2OLD, &hpf)) {
+	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 
 #if 0

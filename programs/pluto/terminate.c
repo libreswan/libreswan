@@ -331,7 +331,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 					.where = where,
 				},
 			};
-			if (!next_connection(OLD2NEW, &cq)) {
+			if (!next_connection(&cq)) {
 				break;
 			}
 			/* log first actual delete */
@@ -367,14 +367,14 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 				.where = where,
 			},
 		};
-		if (next_connection(OLD2NEW, &cq)) {
+		if (next_connection(&cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
 				connection_attach(cq.c, c->logger); /* propagate whack */
 				terminate_and_down_and_unroute_connections(cq.c, where);
 				pmemory(cq.c); /* should not disappear */
 				connection_detach(cq.c, c->logger); /* propagate whack */
-			} while (next_connection(OLD2NEW, &cq));
+			} while (next_connection(&cq));
 		}
 		pmemory(c); /* should not disappear */
 		return;
@@ -422,11 +422,11 @@ void terminate_and_delete_connections(struct connection **cp,
 				.where = where,
 			},
 		};
-		if (next_connection(OLD2NEW, &cq)) {
+		if (next_connection(&cq)) {
 			llog(RC_LOG, (*cp)->logger, "deleting group instances");
 			do {
 				terminate_and_delete_connections(&cq.c, logger, where);
-			} while (next_connection(OLD2NEW, &cq));
+			} while (next_connection(&cq));
 		}
 		pmemory((*cp)); /* should not disappear */
 		/* leave whack attached during death */
