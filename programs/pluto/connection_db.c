@@ -248,7 +248,7 @@ static bool matches_connection_filter(struct connection *c,
 			if (address_is_specified(c->remote->host.addr)) {
 				return false;
 			}
-			PEXPECT(filter->search.logger, is_template(c));
+			PEXPECT_WHERE(c->logger, filter->search.where, is_template(c));
 		}
 	}
 
