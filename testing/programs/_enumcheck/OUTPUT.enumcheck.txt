@@ -915,22 +915,6 @@ IETF registry enum_names:
          jam_enum_short 6: MODE_CFG OK
          jam_enum_human 6: mode-cfg OK
          match MODE_CFG [short]: OK
-   30 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST
-         jam_enum 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
-         search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
-         match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
-         short_name 30: STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
-         jam_enum_short 30: STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
-         jam_enum_human 30: stolen-by-openswan-for-echorequest OK
-         match STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST [short]: OK
-   31 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY
-         jam_enum 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
-         search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
-         match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
-         short_name 31: STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
-         jam_enum_short 31: STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
-         jam_enum_human 31: stolen-by-openswan-for-echoreply OK
-         match STOLEN_BY_OPENSWAN_FOR_ECHOREPLY [short]: OK
    32 -> ISAKMP_XCHG_QUICK
          jam_enum 32: ISAKMP_XCHG_QUICK OK
          search ISAKMP_XCHG_QUICK: OK
@@ -947,22 +931,6 @@ IETF registry enum_names:
          jam_enum_short 33: NGRP OK
          jam_enum_human 33: ngrp OK
          match NGRP [short]: OK
-  244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
-         jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         search ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
-         match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
-         short_name 244: ECHOREQUEST_PRIVATE OK
-         jam_enum_short 244: ECHOREQUEST_PRIVATE OK
-         jam_enum_human 244: echorequest-private OK
-         match ECHOREQUEST_PRIVATE [short]: OK
-  245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
-         jam_enum 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         search ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
-         match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
-         short_name 245: ECHOREPLY_PRIVATE OK
-         jam_enum_short 245: ECHOREPLY_PRIVATE OK
-         jam_enum_human 245: echoreply-private OK
-         match ECHOREPLY_PRIVATE [short]: OK
 
   ikev2_exchange_names:
    34 -> ISAKMP_v2_IKE_SA_INIT
@@ -1045,20 +1013,6 @@ IETF registry enum_names:
          jam_enum_short 43: IKE_INTERMEDIATE OK
          jam_enum_human 43: ike-intermediate OK
          match IKE_INTERMEDIATE [short]: OK
-  244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
-         jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         search ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
-         match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
-         short_name 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         jam_enum_short 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         jam_enum_human 244: isakmp-xchg-echorequest-private OK
-  245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
-         jam_enum 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         search ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
-         match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
-         short_name 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         jam_enum_short 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         jam_enum_human 245: isakmp-xchg-echoreply-private OK
 
   isakmp_xchg_type_names:
     0 -> ISAKMP_XCHG_NONE
@@ -1110,20 +1064,6 @@ IETF registry enum_names:
          short_name 6: ISAKMP_XCHG_MODE_CFG OK
          jam_enum_short 6: ISAKMP_XCHG_MODE_CFG OK
          jam_enum_human 6: isakmp-xchg-mode-cfg OK
-   30 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST
-         jam_enum 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
-         search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
-         match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST: OK
-         short_name 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
-         jam_enum_short 30: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST OK
-         jam_enum_human 30: isakmp-xchg-stolen-by-openswan-for-echorequest OK
-   31 -> ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY
-         jam_enum 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
-         search ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
-         match ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY: OK
-         short_name 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
-         jam_enum_short 31: ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY OK
-         jam_enum_human 31: isakmp-xchg-stolen-by-openswan-for-echoreply OK
    32 -> ISAKMP_XCHG_QUICK
          jam_enum 32: ISAKMP_XCHG_QUICK OK
          search ISAKMP_XCHG_QUICK: OK
@@ -1218,20 +1158,6 @@ IETF registry enum_names:
          jam_enum_short 43: IKE_INTERMEDIATE OK
          jam_enum_human 43: ike-intermediate OK
          match IKE_INTERMEDIATE [short]: OK
-  244 -> ISAKMP_XCHG_ECHOREQUEST_PRIVATE
-         jam_enum 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         search ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
-         match ISAKMP_XCHG_ECHOREQUEST_PRIVATE: OK
-         short_name 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         jam_enum_short 244: ISAKMP_XCHG_ECHOREQUEST_PRIVATE OK
-         jam_enum_human 244: isakmp-xchg-echorequest-private OK
-  245 -> ISAKMP_XCHG_ECHOREPLY_PRIVATE
-         jam_enum 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         search ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
-         match ISAKMP_XCHG_ECHOREPLY_PRIVATE: OK
-         short_name 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         jam_enum_short 245: ISAKMP_XCHG_ECHOREPLY_PRIVATE OK
-         jam_enum_human 245: isakmp-xchg-echoreply-private OK
 
   ikev1_protocol_names:
     0 -> PROTO_RESERVED
