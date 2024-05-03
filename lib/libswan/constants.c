@@ -614,7 +614,7 @@ enum_names ikev2_last_transform_desc = {
 };
 
 /* Exchange types (note: two discontinuous ranges) */
-static const char *const exchange_name_ikev1[] = {
+static const char *const ikev1_exchange_name[] = {
 	"ISAKMP_XCHG_NONE",
 	"ISAKMP_XCHG_BASE",
 	"ISAKMP_XCHG_IDPROT",
@@ -624,16 +624,13 @@ static const char *const exchange_name_ikev1[] = {
 	"ISAKMP_XCHG_MODE_CFG",	/* 6 - draft, not RFC */
 };
 
-static const char *const exchange_name_doi[] = {
-	/* 30 - Echo request */
-	"ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST",
-	"ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY",	/* 31 - Echo reply */
+static const char *const ikev1_exchange_doi_name[] = {
 	"ISAKMP_XCHG_QUICK",	/* 32 */
 	"ISAKMP_XCHG_NGRP",
 };
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
-static const char *const exchange_name_ikev2[] = {
+static const char *const ikev2_exchange_name[] = {
 	"ISAKMP_v2_IKE_SA_INIT", /* RFC 7296 */
 	"ISAKMP_v2_IKE_AUTH",
 	"ISAKMP_v2_CREATE_CHILD_SA",
@@ -646,57 +643,44 @@ static const char *const exchange_name_ikev2[] = {
 	"ISAKMP_v2_IKE_INTERMEDIATE",
 };
 
-static const char *const exchange_name_private_use[] = {
-	"ISAKMP_XCHG_ECHOREQUEST_PRIVATE",	/* 244 - Used by libreswan */
-	"ISAKMP_XCHG_ECHOREPLY_PRIVATE",	/* 245 - Used by libreswan */
-};
-
-static enum_names exchange_names_private_use = {
-	ISAKMP_XCHG_ECHOREQUEST_PRIVATE,
-	ISAKMP_XCHG_ECHOREPLY_PRIVATE,
-	ARRAY_REF(exchange_name_private_use),
-	NULL, /* prefix */
-	NULL
-};
-
-static enum_names exchange_names_doi = {
-	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
+static enum_names ikev1_exchange_doi_names = {
+	ISAKMP_XCHG_QUICK,
 	ISAKMP_XCHG_NGRP,
-	ARRAY_REF(exchange_name_doi),
+	ARRAY_REF(ikev1_exchange_doi_name),
 	NULL, /* prefix */
-	&exchange_names_private_use
+	NULL,
 };
 
 enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
-	ARRAY_REF(exchange_name_ikev1),
+	ARRAY_REF(ikev1_exchange_name),
 	"ISAKMP_XCHG_", /* prefix */
-	&exchange_names_doi
+	&ikev1_exchange_doi_names
 };
 
 enum_names ikev2_exchange_names = {
 	ISAKMP_v2_IKE_SA_INIT,
 	ISAKMP_v2_IKE_INTERMEDIATE,
-	ARRAY_REF(exchange_name_ikev2),
+	ARRAY_REF(ikev2_exchange_name),
 	"ISAKMP_v2_", /* prefix */
-	&exchange_names_private_use
+	NULL,
 };
 
-static enum_names exchange_names_doi_and_v2 = {
-	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
+static enum_names isakmp_xchg_type_doi_and_v2_names = {
+	ISAKMP_XCHG_QUICK,
 	ISAKMP_XCHG_NGRP,
-	ARRAY_REF(exchange_name_doi),
+	ARRAY_REF(ikev1_exchange_doi_name),
 	NULL, /* prefix */
-	&ikev2_exchange_names
+	&ikev2_exchange_names,
 };
 
 enum_names isakmp_xchg_type_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
-	ARRAY_REF(exchange_name_ikev1),
+	ARRAY_REF(ikev1_exchange_name),
 	NULL, /* prefix */
-	&exchange_names_doi_and_v2
+	&isakmp_xchg_type_doi_and_v2_names,
 };
 
 static enum_names *const exchange_type_names_table[] = {

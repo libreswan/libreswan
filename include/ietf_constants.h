@@ -803,10 +803,6 @@ enum isakmp_xchg_type {
 	ISAKMP_XCHG_INFO = 5, /* Informational */
 	ISAKMP_XCHG_MODE_CFG = 6, /* Mode Config */
 
-	/* Private exchanges to pluto -- openswan mistakenly uses these */
-	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST = 30, /* Echo Request */
-	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREPLY = 31, /* Echo Reply */
-
 	/* Extra exchange types, defined by Oakley
 	 * RFC2409 "The Internet Key Exchange (IKE)", near end of Appendix A
 	 */
@@ -826,10 +822,6 @@ enum isakmp_xchg_type {
 	ISAKMP_v2_IKE_INTERMEDIATE = 43, /* draft-ietf-ipsecme-ikev2-intermediate */
 	/* 42, 44 - 239 Unassigned */
 	/* 240 - 255 Private Use */
-
-	/* libreswan private use */
-	ISAKMP_XCHG_ECHOREQUEST_PRIVATE = 244, /* Private Echo Request */
-	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
 
 /*
