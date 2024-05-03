@@ -1380,7 +1380,11 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 				.remote = &remote,
 			},
 			.ike_version = IKEv2,
-			.where = HERE,
+			.search = {
+				.order = NEW2OLD,
+				.logger = child->sa.logger,
+				.where = HERE,
+			},
 		};
 		while (next_connection(NEW2OLD, &hpf)) {
 			struct connection *d = hpf.c;
@@ -1621,7 +1625,11 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		struct connection_filter cf = {
 			.kind = CK_TEMPLATE /* require a template */,
 			.ike_version = IKEv2,
-			.where = HERE,
+			.search = {
+				.order = NEW2OLD,
+				.logger = child->sa.logger,
+				.where = HERE,
+			},
 		};
 		while (next_connection(NEW2OLD, &cf)) {
 			struct connection *t = cf.c;

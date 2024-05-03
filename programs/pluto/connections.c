@@ -207,7 +207,11 @@ bool connection_with_name_exists(const char *name)
 {
 	struct connection_filter cq = {
 		.name = name,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = &global_logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &cq)) {
 		return true;
@@ -343,7 +347,11 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	struct connection_filter instance = {
 		.clonedfrom = c,
 		.ike_version = c->config->ike_version,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(OLD2NEW, &instance)) {
 		connection_buf cb;
@@ -3963,7 +3971,13 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	struct connection *best_connection = NULL;
 	connection_priority_t best_priority = BOTTOM_PRIORITY;
 
-	struct connection_filter cq = { .where = HERE, };
+	struct connection_filter cq = {
+		.search = {
+			.order = NEW2OLD,
+			.logger = logger,
+			.where = HERE,
+		},
+	};
 	while (next_connection(NEW2OLD, &cq)) {
 		struct connection *c = cq.c;
 
@@ -4243,7 +4257,13 @@ struct connection **sort_connections(void)
 	/* count up the connections */
 	unsigned nr_connections = 0;
 	{
-		struct connection_filter cq = { .where = HERE, };
+		struct connection_filter cq = {
+			.search = {
+				.order = NEW2OLD,
+				.logger = &global_logger,
+				.where = HERE,
+			},
+		};
 		while (next_connection(NEW2OLD, &cq)) {
 			nr_connections++;
 		}
@@ -4259,7 +4279,13 @@ struct connection **sort_connections(void)
 						       "connection array");
 	{
 		unsigned i = 0;
-		struct connection_filter cq = { .where = HERE, };
+		struct connection_filter cq = {
+			.search = {
+				.order = NEW2OLD,
+				.logger = &global_logger,
+				.where = HERE,
+			},
+		};
 		while (next_connection(NEW2OLD, &cq)) {
 			connections[i++] = cq.c;
 		}

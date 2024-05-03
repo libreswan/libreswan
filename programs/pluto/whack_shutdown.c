@@ -116,7 +116,13 @@ static void delete_every_connection(struct logger *logger)
 	 */
 	const struct connection *last = NULL;
 	while (true) {
-		struct connection_filter cq = { .where = HERE, };
+		struct connection_filter cq = {
+			.search = {
+				.order = OLD2NEW,
+				.logger = logger,
+				.where = HERE,
+			},
+		};
 		if (!next_connection(OLD2NEW, &cq)) {
 			break;
 		}

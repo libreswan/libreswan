@@ -325,7 +325,11 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 			struct connection_filter cq = {
 				.clonedfrom = c,
 				.ike_version = c->config->ike_version,
-				.where = where,
+				.search = {
+					.order = OLD2NEW,
+					.logger = c->logger,
+					.where = where,
+				},
 			};
 			if (!next_connection(OLD2NEW, &cq)) {
 				break;
@@ -357,7 +361,11 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 		struct connection_filter cq = {
 			.clonedfrom = c,
 			.ike_version = c->config->ike_version,
-			.where = where,
+			.search = {
+				.order = OLD2NEW,
+				.logger = c->logger,
+				.where = where,
+			},
 		};
 		if (next_connection(OLD2NEW, &cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
@@ -408,7 +416,11 @@ void terminate_and_delete_connections(struct connection **cp,
 		struct connection_filter cq = {
 			.clonedfrom = (*cp),
 			.ike_version = (*cp)->config->ike_version,
-			.where = where,
+			.search = {
+				.order = OLD2NEW,
+				.logger = logger,
+				.where = where,
+			},
 		};
 		if (next_connection(OLD2NEW, &cq)) {
 			llog(RC_LOG, (*cp)->logger, "deleting group instances");

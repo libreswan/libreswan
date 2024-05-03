@@ -148,17 +148,18 @@ HASH_DB(connection,
 
 static struct list_head *connection_filter_head(struct connection_filter *filter)
 {
+	struct logger *logger = filter->search.logger;
 	if (filter->that_id_eq != NULL) {
 		id_buf idb;
-		dbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
-		    str_id(filter->that_id_eq, &idb), pri_where(filter->where));
+		ldbg(logger, "FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
+		     str_id(filter->that_id_eq, &idb), pri_where(filter->search.where));
 		hash_t hash = hash_connection_that_id(filter->that_id_eq);
 		return hash_table_bucket(&connection_that_id_hash_table, hash);
 	}
 
 	if (filter->clonedfrom != NULL) {
-		dbg("FOR_EACH_CONNECTION[clonedfrom="PRI_CO"].... in "PRI_WHERE,
-		    pri_connection_co(filter->clonedfrom), pri_where(filter->where));
+		ldbg(logger, "FOR_EACH_CONNECTION[clonedfrom="PRI_CO"].... in "PRI_WHERE,
+		     pri_connection_co(filter->clonedfrom), pri_where(filter->search.where));
 		hash_t hash = hash_connection_clonedfrom(&filter->clonedfrom);
 		return hash_table_bucket(&connection_clonedfrom_hash_table, hash);
 	}
@@ -166,20 +167,21 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 	if (filter->host_pair.local != NULL) {
 		passert(filter->host_pair.remote != NULL);
 		address_buf lb, rb;
-		dbg("FOR_EACH_CONNECTION[local=%s,remote=%s].... in "PRI_WHERE,
-		    str_address(filter->host_pair.local, &lb),
-		    str_address(filter->host_pair.remote, &rb),
-		    pri_where(filter->where));
+		ldbg(logger, "FOR_EACH_CONNECTION[local=%s,remote=%s].... in "PRI_WHERE,
+		     str_address(filter->host_pair.local, &lb),
+		     str_address(filter->host_pair.remote, &rb),
+		     pri_where(filter->search.where));
 		hash_t hash = hash_host_pair(filter->host_pair.local,
 					     filter->host_pair.remote);
 		return hash_table_bucket(&connection_host_pair_hash_table, hash);
 	}
 
-	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
+	ldbg(logger, "FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->search.where));
 	return &connection_db_list_head;
 }
 
-static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
+static bool matches_connection_filter(struct connection *c,
+				      struct connection_filter *filter)
 {
 	if (filter->kind != 0) {
 		if (filter->kind != c->local->kind) {
@@ -246,15 +248,17 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 			if (address_is_specified(c->remote->host.addr)) {
 				return false;
 			}
-			PEXPECT(&global_logger, is_template(c));
+			PEXPECT(filter->search.logger, is_template(c));
 		}
 	}
 
 	return true; /* sure */
 }
 
-bool next_connection(enum chrono adv, struct connection_filter *filter)
+bool next_connection(enum chrono order, struct connection_filter *filter)
 {
+	struct logger *logger = filter->search.logger;
+	PASSERT_WHERE(logger, filter->search.where, order == filter->search.order);
 	/* try to stop all_connections() calls */
 	passert(filter->connections == NULL);
 	if (filter->internal == NULL) {
@@ -267,32 +271,32 @@ bool next_connection(enum chrono adv, struct connection_filter *filter)
 		if (filter->ike_version == 0) {
 #if 0
 			/* foodgroups searches for just CK_GROUP */
-			PEXPECT_WHERE(&global_logger, filter->where, filter->kind == 0);
+			PEXPECT_WHERE(logger, filter->search.where, filter->kind == 0);
 #endif
-			PEXPECT_WHERE(&global_logger, filter->where, filter->clonedfrom == NULL);
-			PEXPECT_WHERE(&global_logger, filter->where, filter->host_pair.local == NULL);
-			PEXPECT_WHERE(&global_logger, filter->where, filter->host_pair.remote == NULL);
-			PEXPECT_WHERE(&global_logger, filter->where, filter->this_id_eq == NULL);
-			PEXPECT_WHERE(&global_logger, filter->where, filter->that_id_eq == NULL);
+			PEXPECT_WHERE(logger, filter->search.where, filter->clonedfrom == NULL);
+			PEXPECT_WHERE(logger, filter->search.where, filter->host_pair.local == NULL);
+			PEXPECT_WHERE(logger, filter->search.where, filter->host_pair.remote == NULL);
+			PEXPECT_WHERE(logger, filter->search.where, filter->this_id_eq == NULL);
+			PEXPECT_WHERE(logger, filter->search.where, filter->that_id_eq == NULL);
 		}
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		filter->internal = connection_filter_head(filter)->head.next[adv];
+		filter->internal = connection_filter_head(filter)->head.next[filter->search.order];
 	}
 	/* Walk list until an entry matches */
 	filter->c = NULL;
 	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->next[adv]) {
+	     entry = entry->next[filter->search.order]) {
 		struct connection *c = (struct connection *) entry->data;
 		if (matches_connection_filter(c, filter)) {
 			/* save connection; but step off current entry */
-			filter->internal = entry->next[adv];
+			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 				jam_string(buf, "  found ");
 				jam_connection(buf, c);
 			}
@@ -300,15 +304,20 @@ bool next_connection(enum chrono adv, struct connection_filter *filter)
 			return true;
 		}
 	}
-	dbg("  matches: %d", filter->count);
+	ldbg(logger, "  matches: %d", filter->count);
 	return false;
 }
 
 bool all_connections(enum chrono adv, struct connection_filter *filter,
 		     struct logger *logger)
 {
+#if 0
+	struct logger *logger = filter->search.logger;
+#endif
+	PASSERT_WHERE(logger, filter->search.where, logger == filter->search.logger);
+	PASSERT_WHERE(logger, filter->search.where, adv == filter->search.order);
 	/* try to stop next_connection() calls */
-	PASSERT_WHERE(logger, filter->where, filter->internal == NULL);
+	PASSERT_WHERE(logger, filter->search.where, filter->internal == NULL);
 
 	if (filter->connections == NULL) {
 

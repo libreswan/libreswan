@@ -76,7 +76,11 @@ static bool whack_connections_by_name(const struct whack_message *m,
 {
 	struct connection_filter by_name = {
 		.name = m->name,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.logger = show_logger(s),
+			.where = HERE,
+		},
 	};
 	if (next_connection(OLD2NEW, &by_name)) {
 		visit_connections(by_name.c, m, s,
@@ -112,7 +116,11 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 	struct logger *logger = show_logger(s);
 	struct connection_filter by_alias_root = {
 		.alias_root = m->name,
-		.where = HERE,
+		.search = {
+			.order = alias_order,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
 
 	/*
@@ -235,7 +243,11 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 	struct connection_filter instances = {
 		.clonedfrom = c,
 		.ike_version = c->config->ike_version, /*redundant but meh*/
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = show_logger(s),
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &instances)) {
 
@@ -267,7 +279,11 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 	struct connection_filter instances = {
 		.clonedfrom = c,
 		.ike_version = c->config->ike_version, /*redundant but meh*/
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &instances)) {
 		/* abuse bool */

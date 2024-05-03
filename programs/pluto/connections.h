@@ -974,8 +974,16 @@ struct connection_filter {
 	struct connection **connections; /* refcounted connections; used by all_connections() */
 	/* internal: total matches so far */
 	unsigned count;
-	/* .where MUST BE LAST (See GCC bug 102288) */
-	where_t where;
+
+	/*
+	 * Required fields.
+	 */
+	struct search {
+		enum chrono order;
+		struct logger *logger;
+		/* .where MUST BE LAST (See GCC bug 102288) */
+		where_t where;
+	} search;
 };
 
 /*
@@ -999,7 +1007,7 @@ bool next_connection(enum chrono order, struct connection_filter *query);
  * all_connections() with the last reference the the connection is not
  * returned (it is delref()ed deleting it).
  */
-bool all_connections(enum chrono adv, struct connection_filter *filter, struct logger *logger);
+bool all_connections(enum chrono order, struct connection_filter *query, struct logger *logger);
 
 /*
  * For iterating over the spd DB.

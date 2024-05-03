@@ -293,7 +293,11 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 			.remote = &unset_address,
 		},
 		.ike_version = ike_version,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = &global_logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;

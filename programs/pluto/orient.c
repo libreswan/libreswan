@@ -406,11 +406,15 @@ void check_orientations(struct logger *logger)
 	 * The list is emptied, then as each connection fails to
 	 * orient it goes back on the list.
 	 */
-	struct connection_filter cf = {
-		.where = HERE,
+	struct connection_filter cq = {
+		.search = {
+			.order = OLD2NEW,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
-	while (next_connection(OLD2NEW, &cf)) {
-		struct connection *c = cf.c;
+	while (next_connection(OLD2NEW, &cq)) {
+		struct connection *c = cq.c;
 		/* just try */
 		bool was_oriented = oriented(c);
 		bool is_oriented = orient(c, logger);

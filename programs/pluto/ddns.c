@@ -210,7 +210,11 @@ void connection_check_ddns(struct logger *logger)
 	threadtime_t start = threadtime_start();
 
 	struct connection_filter cf = {
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &cf)) {
 		/* addref, delref is probably over kill */

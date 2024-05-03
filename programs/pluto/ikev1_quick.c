@@ -1791,7 +1791,11 @@ static bool is_virtual_net_used(struct connection *c,
 {
 	struct connection_filter cq = {
 		.ike_version = IKEv1,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = c->logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &cq)) {
 		struct connection *d = cq.c;
@@ -1974,7 +1978,11 @@ static struct connection *fc_try(const struct connection *c,
 			.remote = &remote_address,
 		},
 		.ike_version = IKEv1,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = c->logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &hpf)) {
 		struct connection *d = hpf.c;
@@ -2248,7 +2256,11 @@ struct connection *find_v1_client_connection(struct connection *const c,
 					.remote = &unset_address,
 				},
 				.ike_version = IKEv1,
-				.where = HERE,
+				.search = {
+					.order = NEW2OLD,
+					.logger = &global_logger,
+					.where = HERE,
+				},
 			};
 			while (next_connection(NEW2OLD, &hpf)) {
 				/* found something */

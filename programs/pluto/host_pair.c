@@ -40,7 +40,11 @@ struct connection *find_host_pair_connection_on_responder(const struct ike_info 
 			.remote = &remote_address,
 		},
 		.ike_version = ike_info->version,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(OLD2NEW, &hpf)) {
 		struct connection *d = hpf.c;

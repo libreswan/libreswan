@@ -185,7 +185,11 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 			.remote = &unset_address,
 		},
 		.ike_version = IKEv2,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.logger = md->logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(OLD2NEW, &hpf_unset)) {
 		struct connection *d = hpf_unset.c;

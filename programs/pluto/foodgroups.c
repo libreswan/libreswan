@@ -339,7 +339,11 @@ void load_groups(struct logger *logger)
 	 */
 	struct connection_filter cf = {
 		.kind = CK_GROUP,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *g = cf.c;

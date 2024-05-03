@@ -624,7 +624,11 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				.remote = &remote,
 			},
 			.ike_version = c->config->ike_version,
-			.where = HERE,
+			.search = {
+				.order = OLD2NEW,
+				.logger = ike->sa.logger,
+				.where = HERE,
+			},
 		};
 		while (next_connection(OLD2NEW, &hpf)) {
 			struct connection *d = hpf.c;

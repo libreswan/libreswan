@@ -158,7 +158,13 @@ static void release_dead_interfaces(struct logger *logger)
 	 * The connections are scanned new-to-old so that instances
 	 * are deleted before templates are released.
 	 */
-	struct connection_filter cf = { .where = HERE, };
+	struct connection_filter cf = {
+		.search = {
+			.order = NEW2OLD,
+			.logger = logger,
+			.where = HERE,
+		},
+	};
 	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *c = cf.c;
 

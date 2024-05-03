@@ -2032,7 +2032,11 @@ void wipe_old_connections(const struct ike_sa *ike)
 		.ike_version = c->config->ike_version,
 		.this_id_eq = &c->local->host.id,
 		.that_id_eq = &c->remote->host.id,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.logger = ike->sa.logger,
+			.where = HERE,
+		},
 	};
 	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *d = cf.c;

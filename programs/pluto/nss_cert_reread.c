@@ -78,7 +78,13 @@ static void reread_cert(struct connection *c, struct logger *logger)
 /* reread all left/right certificates from NSS DB */
 void reread_cert_connections(struct logger *logger)
 {
-	struct connection_filter cf = { .where = HERE, };
+	struct connection_filter cf = {
+		.search = {
+			.order = NEW2OLD,
+			.logger = logger,
+			.where = HERE,
+		},
+	};
 	while (next_connection(NEW2OLD, &cf)) {
 		struct connection *c = cf.c;
 		if (c->root_config != NULL) {
