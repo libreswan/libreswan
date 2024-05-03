@@ -17,7 +17,7 @@
 #include "lswlog.h"	/* for RC_FATAL */
 #include "whack.h"
 
-#include "whack_addconn.h"
+#include "whack_add.h"
 #include "show.h"
 #include "connections.h"
 #include "whack_delete.h"

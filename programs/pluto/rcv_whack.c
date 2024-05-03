@@ -58,7 +58,7 @@
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
 
-#include "whack_addconn.h"
+#include "whack_add.h"
 #include "whack_briefconnectionstatus.h"
 #include "whack_connection.h"
 #include "whack_connectionstatus.h"

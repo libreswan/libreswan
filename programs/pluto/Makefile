@@ -93,7 +93,7 @@ OBJS += binlog.o
 OBJS += retransmit.o
 
 OBJS += rcv_whack.o
-OBJS += whack_addconn.o
+OBJS += whack_add.o
 OBJS += whack_connection.o
 OBJS += whack_connectionstatus.o
 OBJS += whack_crash.o
