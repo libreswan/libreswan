@@ -41,52 +41,7 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
-src 2001:db8:1:3::209 dst 2001:db8:1:2::23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 2001:db8:1:2::23 dst 2001:db8:1:3::209
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir fwd priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir in priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 135
-	dir out priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir fwd priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir in priority PRIORITY ptype main
-src ::/0 dst ::/0 proto ipv6-icmp type 136
-	dir out priority PRIORITY ptype main
-src 2001:db8:0:2::/64 dst 2001:db8:0:3:1::/128
-	dir fwd priority PRIORITY ptype main
-	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
-		proto esp reqid REQID mode tunnel
-src 2001:db8:0:2::/64 dst 2001:db8:0:3:1::/128
-	dir in priority PRIORITY ptype main
-	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
-		proto esp reqid REQID mode tunnel
-src 2001:db8:0:3:1::/128 dst 2001:db8:0:2::/64
-	dir out priority PRIORITY ptype main
-	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
-		proto esp reqid REQID mode tunnel
-road #
- if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
+ ipsec trafficstatus
+#2: "road"[1] 2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=208, outBytes=208, maxBytes=2^63B, id='@east', lease=2001:db8:0:3:1::/128
 road #
  

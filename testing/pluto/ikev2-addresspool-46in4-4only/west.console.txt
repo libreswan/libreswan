@@ -29,4 +29,7 @@ up
 west #
  #../../guestbin/ping-once.sh --up -I 2001:db8:0:3:1::0 2001:db8:0:2::254
 west #
+ ipsec trafficstatus
+#2: "west"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.3.1.0/32
+west #
  
