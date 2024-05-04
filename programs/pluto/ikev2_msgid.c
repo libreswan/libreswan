@@ -498,18 +498,22 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 			      NO_STREAM);
 	if (stream != NO_STREAM) {
 		LLOG_JAMBUF(stream, logger, buf) {
-			jam(buf, "adding %s request to IKE SA "PRI_SO"'s message queue",
-			    enum_name_short(&isakmp_xchg_type_names,
-					    exchange->initiate->exchange),
-			    pri_so(ike->sa.st_serialno));
+			jam_string(buf, "adding ");
+			jam_enum_short(buf, &ikev2_exchange_names,
+				       exchange->initiate->exchange);
+			jam_string(buf, " request to IKE SA ");
+			jam_so(buf, ike->sa.st_serialno);
+			jam_string(buf, "'s message queue");
 			if (ranking > 0) {
 				jam(buf, " at position %u", ranking);
 			}
 			if ((*pp) != NULL) {
-				jam(buf, "; before "PRI_SO"'s %s exchange",
-				    pri_so((*pp)->who_for),
-				    enum_name_short(&isakmp_xchg_type_names,
-						    (*pp)->exchange->initiate->exchange));
+				jam_string(buf, "; before ");
+				jam_so(buf, (*pp)->who_for);
+				jam_string(buf, "'s ");
+				jam_enum_short(buf, &ikev2_exchange_names,
+					       (*pp)->exchange->initiate->exchange);
+				jam_string(buf, " exchange");
 			}
 		}
 	}
@@ -564,7 +568,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		if (pending.child != SOS_NOBODY && child == NULL) {
 			dbg_v2_msgid(ike,
 				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
-				     enum_name(&isakmp_xchg_type_names,
+				     enum_name(&ikev2_exchange_names,
 					       pending.exchange->initiate->exchange),
 				     pri_so(pending.child), unack);
 			continue;

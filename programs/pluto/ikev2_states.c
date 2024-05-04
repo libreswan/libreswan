@@ -611,7 +611,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 		if (exchange == NULL) {
 			enum_buf xb;
 			llog(RC_LOG, ike->sa.logger, "unexpected %s request; message dropped",
-			     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb));
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb));
 			return false;
 		}
 		ldbg_ft(ike->sa.logger, "plausible; exchange type matches responder %s exchange",
@@ -625,8 +625,8 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 		if (exchange->type != md->hdr.isa_xchg) {
 			enum_buf xb, eb;
 			llog(RC_LOG, ike->sa.logger, "unexpected %s response, expecting %s (%s); message dropped",
-			     str_enum_short(&isakmp_xchg_type_names, md->hdr.isa_xchg, &xb),
-			     str_enum_short(&isakmp_xchg_type_names, exchange->type, &eb),
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+			     str_enum_short(&ikev2_exchange_names, exchange->type, &eb),
 			     exchange->subplot);
 			return false;
 		}
@@ -642,7 +642,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 		enum_buf rb;
 		enum_buf xb;
 		llog_pexpect(ike->sa.logger, HERE, "%s %s (%s) exchange should be secured",
-			     str_enum_short(&isakmp_xchg_type_names, exchange->type, &xb),
+			     str_enum_short(&ikev2_exchange_names, exchange->type, &xb),
 			     str_enum_short(&message_role_names, role, &rb),
 			     exchange->subplot);
 		return false;
