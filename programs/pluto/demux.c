@@ -142,6 +142,7 @@ void process_md(struct msg_digest *md)
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
+	{
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
 			llog_md(md,
 			     "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
@@ -175,17 +176,22 @@ void process_md(struct msg_digest *md)
 			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
 			return;
 		}
-		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
-		    vmaj, vmin,
-		    enum_name(&ikev1_exchange_names, md->hdr.isa_xchg),
-		    md->hdr.isa_xchg);
+		enum_buf xb;
+		ldbg(md->logger,
+		     " processing version=%u.%u packet with exchange type=%s (%d)",
+		     vmaj, vmin,
+		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &xb),
+		     md->hdr.isa_xchg);
 		process_v1_packet(md);
 		/* our caller will md_delref(mdp) */
+#else
+		ldbg(md->logger, "IKEv1 packet dropped"); /* dbg to prevent DoS */
 #endif
-		dbg("IKEv1 packet dropped"); /* dbg to prevent DoS */
 		break;
+	}
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
+	{
 		if (vmin != IKEv2_MINOR_VERSION) {
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
@@ -193,12 +199,15 @@ void process_md(struct msg_digest *md)
 			llog_md(md,
 			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
-		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
-		    vmaj, vmin,
-		    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-		    md->hdr.isa_xchg);
+		enum_buf xb;
+		pdbg(md->logger,
+		     " processing version=%u.%u packet with exchange type=%s (%d)",
+		     vmaj, vmin,
+		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     md->hdr.isa_xchg);
 		ikev2_process_packet(md);
 		break;
+	}
 
 	default:
 		llog_md(md, "message contains unsupported IKE major version '%d'", vmaj);
