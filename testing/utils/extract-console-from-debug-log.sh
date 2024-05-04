@@ -24,13 +24,10 @@ host=$1 ; shift
 {
     cat ${debug}
 } | {
-    grep -e "shell ${host} .* read <<" \
-	 -e "shell ${host} .* send <<"
-} | {
     # extract the text read from the host's console
-    sed -e "s/^.* read <*[\"']//" \
-	-e "s/^.* send <*[\"']//" \
-	-e "s/[\"']>*$//"
+    sed -n \
+	-e 's/^DEBUG .* '"${host}"' .*: read <<b.\(.*\)[^>]>>>*$/\1/p' \
+	-e 's/^DEBUG .* '"${host}"' .*: send <<b.\(.*\)[^>]>>>*$/\1/p'
 } | {
     # turn the text into a single very long line (the true \r\n were
     # escaped).
