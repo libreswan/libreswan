@@ -811,19 +811,24 @@ enum isakmp_xchg_type {
 };
 
 enum ikev2_exchange {
-	/* IKEv2 things */
+	/*
+	 * IKEv2 things.
+	 */
+#define IKEv2_EXCHANGE_FLOOR	(ISAKMP_v2_IKE_SA_INIT)
 	ISAKMP_v2_IKE_SA_INIT = 34,
 	ISAKMP_v2_IKE_AUTH = 35,
 	ISAKMP_v2_CREATE_CHILD_SA = 36,
 	ISAKMP_v2_INFORMATIONAL = 37,
-	ISAKMP_v2_IKE_SESSION_RESUME = 38, /* RFC 5723 */
-	ISAKMP_v2_GSA_AUTH = 39, /* draft-yeung-g-ikev2 */
-	ISAKMP_v2_GSA_REGISTRATION = 40, /* draft-yeung-g-ikev2 */
-	ISAKMP_v2_GSA_REKEY = 41, /* draft-yeung-g-ikev2 */
-	ISAKMP_v2_UNASSIGNED_42 = 42, /* avoid hole in enum */
-	ISAKMP_v2_IKE_INTERMEDIATE = 43, /* draft-ietf-ipsecme-ikev2-intermediate */
-	/* 42, 44 - 239 Unassigned */
-	/* 240 - 255 Private Use */
+	ISAKMP_v2_IKE_SESSION_RESUME = 38,	/* RFC-5723 */
+	ISAKMP_v2_GSA_AUTH = 39,		/* draft-yeung-g-ikev2 */
+	ISAKMP_v2_GSA_REGISTRATION = 40,	/* draft-yeung-g-ikev2 */
+	ISAKMP_v2_GSA_REKEY = 41,		/* draft-yeung-g-ikev2 */
+	/* 41 Unassigned */
+	ISAKMP_v2_IKE_INTERMEDIATE = 43,	/* RFC-9242 */
+	ISAKMP_v2_IKE_FOLLOWUP_KE = 44,		/* RFC-9370 */
+#define IKEv2_EXCHANGE_ROOF	(ISAKMP_v2_IKE_FOLLOWUP_KE+1)
+	/* 45-239 Unassigned */
+	/* 240-255 Private Use */
 };
 
 /*
@@ -1528,61 +1533,68 @@ typedef enum {
 } v1_notification_t;
 
 /*
- * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13
- * IKEv2 is very similar, but different. Let's not re-use and confuse
- **/
-typedef enum {
-	/* IKEv2 */
-	/* 0-8191 Reserved, ExpertReview */
-	v2N_NOTHING_WRONG = 0, /* Unofficial! Must be zero to match default C initial value. */
+ * IKEv2, while similar, is different.  Let's not re-use and confuse.
+ */
+
+typedef enum v2_notification {
+
+	/*
+	 * Unofficial!  Must be zero to match default C initial value.
+	 *
+	 * Used to indicate success rather than the notification that
+	 * should be sent back.
+	 */
+	v2N_NOTHING_WRONG = 0,
 
 	/*
 	 * Error notifications.
+	 *
+	 * 1-8191 Reserved, ExpertReview.
+	 * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-14
 	 */
+
 	v2N_ERROR_FLOOR = 1,
 	v2N_UNSUPPORTED_CRITICAL_PAYLOAD = 1,
-	/* Reserved = 2, */
-	/* Reserved = 3, */
+	/* 2-3 Reserved */
 	v2N_INVALID_IKE_SPI = 4,
-	v2N_INVALID_MAJOR_VERSION = 5, /* same as ikev1 */
-	/* Reserved = 6, */
+	v2N_INVALID_MAJOR_VERSION = 5,
+	/* 6 Reserved */
 	v2N_INVALID_SYNTAX = 7,
-	/* Reserved = 8, */
-	v2N_INVALID_MESSAGE_ID = 9, /* same as ikev1 */
-	/* Reserved = 10, */
-	v2N_INVALID_SPI = 11, /* same as ikev1 */
-	/* Reserved = 12, */
-	/* Reserved = 13, */
-	v2N_NO_PROPOSAL_CHOSEN = 14, /* same as ikev1 */
-	/* Reserved = 15, */
-	/* Reserved = 16, */
+	/* 8 Reserved */
+	v2N_INVALID_MESSAGE_ID = 9,
+	/* 10 Reserved */
+	v2N_INVALID_SPI = 11,
+	/* 12-13 Reserved */
+	v2N_NO_PROPOSAL_CHOSEN = 14,
+	/* 15-16 Reserved */
 	v2N_INVALID_KE_PAYLOAD = 17,
-	/* Reserved = 18 to 23, */
-	v2N_AUTHENTICATION_FAILED = 24, /* same as ikev1 */
-	/* Reserved = 25 to 33, */
+	/* 18-23 Reserved */
+	v2N_AUTHENTICATION_FAILED = 24,
+	/* 25-33 Reserved */
 	v2N_SINGLE_PAIR_REQUIRED = 34,
 	v2N_NO_ADDITIONAL_SAS = 35,
 	v2N_INTERNAL_ADDRESS_FAILURE = 36,
 	v2N_FAILED_CP_REQUIRED = 37,
 	v2N_TS_UNACCEPTABLE = 38,
 	v2N_INVALID_SELECTORS = 39,
-	v2N_UNACCEPTABLE_ADDRESSES = 40,
-	v2N_UNEXPECTED_NAT_DETECTED = 41,
-	v2N_USE_ASSIGNED_HoA = 42, /* RFC 5026 */
-	v2N_TEMPORARY_FAILURE = 43, /* RFC 7296 */
-	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
-	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
-	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
-	v2N_STATE_NOT_FOUND = 47, /* draft-ietf-ipsecme-ikev2-multiple-ke-12 */
+	v2N_UNACCEPTABLE_ADDRESSES = 40,	/* RFC-4555 */
+	v2N_UNEXPECTED_NAT_DETECTED = 41,	/* RFC-4555 */
+	v2N_USE_ASSIGNED_HoA = 42,		/* RFC-5026 */
+	v2N_TEMPORARY_FAILURE = 43,
+	v2N_CHILD_SA_NOT_FOUND = 44,
+	v2N_INVALID_GROUP_ID = 45,		/* draft-yeung-g-ikev2 */
+	v2N_AUTHORIZATION_FAILED = 46,		/* draft-yeung-g-ikev2 */
+	v2N_STATE_NOT_FOUND = 47,		/* RFC-9370 */
 
 	v2N_ERROR_PSTATS_ROOF, /* used to cap error statistics array */
 
 	/*
 	 * Status notifications.
+	 *
+	 * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-16
 	 */
 	v2N_STATUS_FLOOR = 16384,
 
-	/* old IKEv1 entries - might be in private use for IKEv2N */
 	v2N_INITIAL_CONTACT = 16384,
 	v2N_SET_WINDOW_SIZE = 16385,
 	v2N_ADDITIONAL_TS_POSSIBLE = 16386,
@@ -1596,54 +1608,54 @@ typedef enum {
 	v2N_ESP_TFC_PADDING_NOT_SUPPORTED = 16394,
 	v2N_NON_FIRST_FRAGMENTS_ALSO = 16395,
 
-	/* IKEv2N extensions */
-	v2N_MOBIKE_SUPPORTED = 16396, /* RFC-4555 */
-	v2N_ADDITIONAL_IP4_ADDRESS = 16397, /* RFC-4555 */
-	v2N_ADDITIONAL_IP6_ADDRESS = 16398, /* RFC-4555 */
-	v2N_NO_ADDITIONAL_ADDRESSES = 16399, /* RFC-4555 */
-	v2N_UPDATE_SA_ADDRESSES = 16400, /* RFC-4555 */
-	v2N_COOKIE2 = 16401, /* RFC-4555 */
-	v2N_NO_NATS_ALLOWED = 16402, /* RFC-4555 */
-	v2N_AUTH_LIFETIME = 16403, /* RFC-4478 */
-	v2N_MULTIPLE_AUTH_SUPPORTED = 16404, /* RFC-4739 */
-	v2N_ANOTHER_AUTH_FOLLOWS = 16405, /* RFC-4739 */
-	v2N_REDIRECT_SUPPORTED = 16406, /* RFC-5685 */
-	v2N_REDIRECT = 16407, /* RFC-5685 */
-	v2N_REDIRECTED_FROM = 16408, /* RFC-5685 */
-	v2N_TICKET_LT_OPAQUE = 16409, /* RFC-5723 */
-	v2N_TICKET_REQUEST = 16410, /* RFC-5723 */
-	v2N_TICKET_ACK = 16411, /* RFC-5723 */
-	v2N_TICKET_NACK = 16412, /* RFC-5723 */
-	v2N_TICKET_OPAQUE = 16413, /* RFC-5723 */
-	v2N_LINK_ID = 16414, /* RFC-5739 */
-	v2N_USE_WESP_MODE = 16415, /* RFC-5840 */
-	v2N_ROHC_SUPPORTED = 16416, /* RFC-5857 */
-	v2N_EAP_ONLY_AUTHENTICATION = 16417, /* RFC-5998 */
-	v2N_CHILDLESS_IKEV2_SUPPORTED = 16418, /* RFC-6023 */
-	v2N_QUICK_CRASH_DETECTION = 16419, /* RFC-6290 */
+	v2N_MOBIKE_SUPPORTED = 16396,		/* RFC-4555 */
+	v2N_ADDITIONAL_IP4_ADDRESS = 16397,	/* RFC-4555 */
+	v2N_ADDITIONAL_IP6_ADDRESS = 16398,	/* RFC-4555 */
+	v2N_NO_ADDITIONAL_ADDRESSES = 16399,	/* RFC-4555 */
+	v2N_UPDATE_SA_ADDRESSES = 16400,	/* RFC-4555 */
+	v2N_COOKIE2 = 16401,			/* RFC-4555 */
+	v2N_NO_NATS_ALLOWED = 16402,		/* RFC-4555 */
+	v2N_AUTH_LIFETIME = 16403,		/* RFC-4478 */
+	v2N_MULTIPLE_AUTH_SUPPORTED = 16404,	/* RFC-4739 */
+	v2N_ANOTHER_AUTH_FOLLOWS = 16405,	/* RFC-4739 */
+	v2N_REDIRECT_SUPPORTED = 16406,		/* RFC-5685 */
+	v2N_REDIRECT = 16407,			/* RFC-5685 */
+	v2N_REDIRECTED_FROM = 16408,		/* RFC-5685 */
+	v2N_TICKET_LT_OPAQUE = 16409,		/* RFC-5723 */
+	v2N_TICKET_REQUEST = 16410,		/* RFC-5723 */
+	v2N_TICKET_ACK = 16411,			/* RFC-5723 */
+	v2N_TICKET_NACK = 16412,		/* RFC-5723 */
+	v2N_TICKET_OPAQUE = 16413,		/* RFC-5723 */
+	v2N_LINK_ID = 16414,			/* RFC-5739 */
+	v2N_USE_WESP_MODE = 16415,		/* RFC-5840 */
+	v2N_ROHC_SUPPORTED = 16416,		/* RFC-5857 */
+	v2N_EAP_ONLY_AUTHENTICATION = 16417,	/* RFC-5998 */
+	v2N_CHILDLESS_IKEV2_SUPPORTED = 16418,	/* RFC-6023 */
+	v2N_QUICK_CRASH_DETECTION = 16419,	/* RFC-6290 */
 	v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED = 16420, /* RFC-6311 */
 	v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED = 16421, /* RFC-6311 */
-	v2N_IKEV2_MESSAGE_ID_SYNC = 16422, /* RFC-6311 */
-	v2N_IPSEC_REPLAY_COUNTER_SYNC = 16423, /* RFC-6311 */
-	v2N_SECURE_PASSWORD_METHODS = 16424, /* RFC-6467 */
-	v2N_PSK_PERSIST = 16425, /* RFC-6631 */
-	v2N_PSK_CONFIRM = 16426, /* RFC-6631 */
-	v2N_ERX_SUPPORTED = 16427, /* RFC-6867 */
-	v2N_IFOM_CAPABILITY = 16428, /* 3GPP TS 24.303 v10.6.0 annex B.2 */
-	v2N_SENDER_REQUEST_ID = 16429, /* draft-yeung-g-ikev2 */
+	v2N_IKEV2_MESSAGE_ID_SYNC = 16422,	/* RFC-6311 */
+	v2N_IPSEC_REPLAY_COUNTER_SYNC = 16423,	/* RFC-6311 */
+	v2N_SECURE_PASSWORD_METHODS = 16424,	/* RFC-6467 */
+	v2N_PSK_PERSIST = 16425,		/* RFC-6631 */
+	v2N_PSK_CONFIRM = 16426,		/* RFC-6631 */
+	v2N_ERX_SUPPORTED = 16427,		/* RFC-6867 */
+	v2N_IFOM_CAPABILITY = 16428,		/* 3GPP TS 24.303 v10.6.0 annex B.2 */
+	v2N_SENDER_REQUEST_ID = 16429,		/* draft-yeung-g-ikev2 */
 	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
-	v2N_SIGNATURE_HASH_ALGORITHMS = 16431, /* RFC-7427 */
-	v2N_CLONE_IKE_SA_SUPPORTED = 16432, /* RFC-7791 */
-	v2N_CLONE_IKE_SA = 16433, /* RFC-7791 */
-	v2N_PUZZLE = 16434, /* RFC-8019 */
-	v2N_USE_PPK = 16435, /* RFC 8784 */
-	v2N_PPK_IDENTITY = 16436, /* RFC 8784 */
-	v2N_NO_PPK_AUTH = 16437, /* RFC 8784 */
+	v2N_SIGNATURE_HASH_ALGORITHMS = 16431,	/* RFC-7427 */
+	v2N_CLONE_IKE_SA_SUPPORTED = 16432,	/* RFC-7791 */
+	v2N_CLONE_IKE_SA = 16433,		/* RFC-7791 */
+	v2N_PUZZLE = 16434,			/* RFC-8019 */
+	v2N_USE_PPK = 16435,			/* RFC-8784 */
+	v2N_PPK_IDENTITY = 16436,		/* RFC-8784 */
+	v2N_NO_PPK_AUTH = 16437,		/* RFC-8784 */
 	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED = 16438, /* draft-ietf-ipsecme-ikev2-intermediate-04 */
-	v2N_IP4_ALLOWED = 16439,
-	v2N_IP6_ALLOWED = 16440,
-	v2N_ADDITIONAL_KEY_EXCHANGE = 16441,
-	v2N_USE_AGGFRAG = 16442,
+	v2N_IP4_ALLOWED = 16439,		/* RFC-8983 */
+	v2N_IP6_ALLOWED = 16440,		/* RFC-8983 */
+	v2N_ADDITIONAL_KEY_EXCHANGE = 16441,	/* RFC-9370 */
+	v2N_USE_AGGFRAG = 16442,		/* RFC-9347 */
+	v2N_SUPPORTED_AUTH_METHODS = 16443,	/* draft-ietf-ipsecme-ikev2-auth-announce-10 */
 
 	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 

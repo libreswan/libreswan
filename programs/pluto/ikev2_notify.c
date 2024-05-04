@@ -36,8 +36,8 @@
 
 enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
-#define C(N) case v2N_##N: return PD_v2N_##N;
 	switch (n) {
+#define C(N) case v2N_##N: return PD_v2N_##N;
 	C(AUTHENTICATION_FAILED);
 	C(COOKIE);
 	C(COOKIE2);
@@ -70,9 +70,10 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(UPDATE_SA_ADDRESSES);
 	C(USE_PPK);
 	C(USE_TRANSPORT_MODE);
+	C(USE_AGGFRAG);
+#undef C
 	default: return PD_v2_INVALID;
 	}
-#undef C
 }
 
 void decode_v2N_payload(struct logger *logger, struct msg_digest *md,

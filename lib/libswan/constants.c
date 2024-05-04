@@ -629,20 +629,6 @@ static const char *const ikev1_exchange_doi_name[] = {
 	"ISAKMP_XCHG_NGRP",
 };
 
-/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
-static const char *const ikev2_exchange_name[] = {
-	"ISAKMP_v2_IKE_SA_INIT", /* RFC 7296 */
-	"ISAKMP_v2_IKE_AUTH",
-	"ISAKMP_v2_CREATE_CHILD_SA",
-	"ISAKMP_v2_INFORMATIONAL",
-	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
-	"ISAKMP_v2_GSA_AUTH", /* draft-yeung-g-ikev2 */
-	"ISAKMP_v2_GSA_REGISTRATION", /* draft-yeung-g-ikev2 */
-	"ISAKMP_v2_GSA_REKEY", /* draft-yeung-g-ikev2 */
-	"ISAKMP_v2_UNASSIGNED_42", /* avoid hole in enum */
-	"ISAKMP_v2_IKE_INTERMEDIATE",
-};
-
 static enum_names ikev1_exchange_doi_names = {
 	ISAKMP_XCHG_QUICK,
 	ISAKMP_XCHG_NGRP,
@@ -657,14 +643,6 @@ enum_names ikev1_exchange_names = {
 	ARRAY_REF(ikev1_exchange_name),
 	"ISAKMP_XCHG_", /* prefix */
 	&ikev1_exchange_doi_names
-};
-
-enum_names ikev2_exchange_names = {
-	ISAKMP_v2_IKE_SA_INIT,
-	ISAKMP_v2_IKE_INTERMEDIATE,
-	ARRAY_REF(ikev2_exchange_name),
-	"ISAKMP_v2_", /* prefix */
-	NULL,
 };
 
 static enum_names isakmp_xchg_type_doi_and_v2_names = {
@@ -683,13 +661,40 @@ enum_names isakmp_xchg_type_names = {
 	&isakmp_xchg_type_doi_and_v2_names,
 };
 
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
+static const char *const ikev2_exchange_name[] = {
+#define S(E) [E-IKEv2_EXCHANGE_FLOOR] = #E
+#define RESERVED(N) [N-IKEv2_EXCHANGE_FLOOR] = "Reserved "#N
+	S(ISAKMP_v2_IKE_SA_INIT),
+	S(ISAKMP_v2_IKE_AUTH),
+	S(ISAKMP_v2_CREATE_CHILD_SA),
+	S(ISAKMP_v2_INFORMATIONAL),
+	S(ISAKMP_v2_IKE_SESSION_RESUME),
+	S(ISAKMP_v2_GSA_AUTH),
+	RESERVED(42),
+	S(ISAKMP_v2_GSA_REGISTRATION),
+	S(ISAKMP_v2_GSA_REKEY),
+	S(ISAKMP_v2_IKE_INTERMEDIATE),
+	S(ISAKMP_v2_IKE_FOLLOWUP_KE),
+#undef RESERVED
+#undef S
+};
+
+const struct enum_names ikev2_exchange_names = {
+	IKEv2_EXCHANGE_FLOOR,
+	IKEv2_EXCHANGE_ROOF-1,
+	ARRAY_REF(ikev2_exchange_name),
+	"ISAKMP_v2_", /* prefix */
+	NULL,
+};
+
 static enum_names *const exchange_type_names_table[] = {
-	[IKEv1 - IKEv1] = &ikev1_exchange_names,
-	[IKEv2 - IKEv1] = &ikev2_exchange_names,
+	[IKEv1 - IKE_VERSION_FLOOR] = &ikev1_exchange_names,
+	[IKEv2 - IKE_VERSION_FLOOR] = &ikev2_exchange_names,
 };
 
 enum_enum_names exchange_type_names = {
-	IKEv1, IKEv2,
+	IKE_VERSION_FLOOR, IKE_VERSION_ROOF-1,
 	ARRAY_REF(exchange_type_names_table),
 };
 
@@ -1912,146 +1917,151 @@ enum_names v1_notification_names = {
 	&v1_notification_connected_names
 };
 
-static const char *const ikev2_notify_name_private[] = {
+static const char *const v2_notification_error_name[] = {
+#define S(E) [E] = #E
+#define RESERVED(N) [N] = "Reserved "#N
+	RESERVED(0),
+	S(v2N_UNSUPPORTED_CRITICAL_PAYLOAD),
+	RESERVED(2),
+	RESERVED(3),
+	S(v2N_INVALID_IKE_SPI),
+	S(v2N_INVALID_MAJOR_VERSION),
+	RESERVED(6),
+	S(v2N_INVALID_SYNTAX),
+	RESERVED(8),
+	S(v2N_INVALID_MESSAGE_ID),
+	RESERVED(10),
+	S(v2N_INVALID_SPI),
+	RESERVED(12),
+	RESERVED(13),
+	S(v2N_NO_PROPOSAL_CHOSEN),
+	RESERVED(15),
+	RESERVED(16),
+	S(v2N_INVALID_KE_PAYLOAD),
+	RESERVED(18),
+	RESERVED(19),
+	RESERVED(20),
+	RESERVED(21),
+	RESERVED(22),
+	RESERVED(23),
+	S(v2N_AUTHENTICATION_FAILED),
+	RESERVED(25),
+	RESERVED(26),
+	RESERVED(27),
+	RESERVED(28),
+	RESERVED(29),
+	RESERVED(30),
+	RESERVED(31),
+	RESERVED(32),
+	RESERVED(33),
+	S(v2N_SINGLE_PAIR_REQUIRED),
+	S(v2N_NO_ADDITIONAL_SAS),
+	S(v2N_INTERNAL_ADDRESS_FAILURE),
+	S(v2N_FAILED_CP_REQUIRED),
+	S(v2N_TS_UNACCEPTABLE),
+	S(v2N_INVALID_SELECTORS),
+	S(v2N_UNACCEPTABLE_ADDRESSES),
+	S(v2N_UNEXPECTED_NAT_DETECTED),
+	S(v2N_USE_ASSIGNED_HoA),
+	S(v2N_TEMPORARY_FAILURE),
+	S(v2N_CHILD_SA_NOT_FOUND),
+	S(v2N_INVALID_GROUP_ID),
+	S(v2N_AUTHORIZATION_FAILED),
+	S(v2N_STATE_NOT_FOUND),
+#undef S
+};
+
+/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
+static const char *const v2_notification_status_name[] = {
+#define S(E) [E-v2N_STATUS_FLOOR] = #E
+	S(v2N_INITIAL_CONTACT),    /* 16384 */
+	S(v2N_SET_WINDOW_SIZE),
+	S(v2N_ADDITIONAL_TS_POSSIBLE),
+	S(v2N_IPCOMP_SUPPORTED),
+	S(v2N_NAT_DETECTION_SOURCE_IP),
+	S(v2N_NAT_DETECTION_DESTINATION_IP),
+	S(v2N_COOKIE),
+	S(v2N_USE_TRANSPORT_MODE),
+	S(v2N_HTTP_CERT_LOOKUP_SUPPORTED),
+	S(v2N_REKEY_SA),
+	S(v2N_ESP_TFC_PADDING_NOT_SUPPORTED),
+	S(v2N_NON_FIRST_FRAGMENTS_ALSO),
+	S(v2N_MOBIKE_SUPPORTED),
+	S(v2N_ADDITIONAL_IP4_ADDRESS),
+	S(v2N_ADDITIONAL_IP6_ADDRESS),
+	S(v2N_NO_ADDITIONAL_ADDRESSES),
+	S(v2N_UPDATE_SA_ADDRESSES),
+	S(v2N_COOKIE2),
+	S(v2N_NO_NATS_ALLOWED),
+	S(v2N_AUTH_LIFETIME),
+	S(v2N_MULTIPLE_AUTH_SUPPORTED),
+	S(v2N_ANOTHER_AUTH_FOLLOWS),
+	S(v2N_REDIRECT_SUPPORTED),
+	S(v2N_REDIRECT),
+	S(v2N_REDIRECTED_FROM),
+	S(v2N_TICKET_LT_OPAQUE),
+	S(v2N_TICKET_REQUEST),
+	S(v2N_TICKET_ACK),
+	S(v2N_TICKET_NACK),
+	S(v2N_TICKET_OPAQUE),
+	S(v2N_LINK_ID),
+	S(v2N_USE_WESP_MODE),
+	S(v2N_ROHC_SUPPORTED),
+	S(v2N_EAP_ONLY_AUTHENTICATION),
+	S(v2N_CHILDLESS_IKEV2_SUPPORTED),
+	S(v2N_QUICK_CRASH_DETECTION),
+	S(v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED),
+	S(v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED),
+	S(v2N_IKEV2_MESSAGE_ID_SYNC),
+	S(v2N_IPSEC_REPLAY_COUNTER_SYNC),
+	S(v2N_SECURE_PASSWORD_METHODS),
+	S(v2N_PSK_PERSIST),
+	S(v2N_PSK_CONFIRM),
+	S(v2N_ERX_SUPPORTED),
+	S(v2N_IFOM_CAPABILITY),
+	S(v2N_SENDER_REQUEST_ID),
+	S(v2N_IKEV2_FRAGMENTATION_SUPPORTED),
+	S(v2N_SIGNATURE_HASH_ALGORITHMS),
+	S(v2N_CLONE_IKE_SA_SUPPORTED),
+	S(v2N_CLONE_IKE_SA),
+	S(v2N_PUZZLE),
+	S(v2N_USE_PPK),
+	S(v2N_PPK_IDENTITY),
+	S(v2N_NO_PPK_AUTH),
+	S(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED),
+	S(v2N_IP4_ALLOWED),
+	S(v2N_IP6_ALLOWED),
+	S(v2N_ADDITIONAL_KEY_EXCHANGE),
+	S(v2N_USE_AGGFRAG),
+#undef S
+};
+
+static const char *const v2_notification_private_name[] = {
 	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
 };
 
-static enum_names v2_notification_names_private = {
+static const struct enum_names v2_notification_private_names = {
 	v2N_NULL_AUTH,
 	v2N_NULL_AUTH,
-	ARRAY_REF(ikev2_notify_name_private),
+	ARRAY_REF(v2_notification_private_name),
 	"v2N_", /* prefix */
 	NULL
 };
 
-/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
-static const char *const ikev2_notify_name_16384[] = {
-	"v2N_INITIAL_CONTACT",    /* 16384 */
-	"v2N_SET_WINDOW_SIZE",
-	"v2N_ADDITIONAL_TS_POSSIBLE",
-	"v2N_IPCOMP_SUPPORTED",
-	"v2N_NAT_DETECTION_SOURCE_IP",
-	"v2N_NAT_DETECTION_DESTINATION_IP",
-	"v2N_COOKIE",
-	"v2N_USE_TRANSPORT_MODE",
-	"v2N_HTTP_CERT_LOOKUP_SUPPORTED",
-	"v2N_REKEY_SA",
-	"v2N_ESP_TFC_PADDING_NOT_SUPPORTED",
-	"v2N_NON_FIRST_FRAGMENTS_ALSO",
-	"v2N_MOBIKE_SUPPORTED",
-	"v2N_ADDITIONAL_IP4_ADDRESS",
-	"v2N_ADDITIONAL_IP6_ADDRESS",
-	"v2N_NO_ADDITIONAL_ADDRESSES",
-	"v2N_UPDATE_SA_ADDRESSES",
-	"v2N_COOKIE2",
-	"v2N_NO_NATS_ALLOWED",
-	"v2N_AUTH_LIFETIME",
-	"v2N_MULTIPLE_AUTH_SUPPORTED",
-	"v2N_ANOTHER_AUTH_FOLLOWS",
-	"v2N_REDIRECT_SUPPORTED",
-	"v2N_REDIRECT",
-	"v2N_REDIRECTED_FROM",
-	"v2N_TICKET_LT_OPAQUE",
-	"v2N_TICKET_REQUEST",
-	"v2N_TICKET_ACK",
-	"v2N_TICKET_NACK",
-	"v2N_TICKET_OPAQUE",
-	"v2N_LINK_ID",
-	"v2N_USE_WESP_MODE",
-	"v2N_ROHC_SUPPORTED",
-	"v2N_EAP_ONLY_AUTHENTICATION",
-	"v2N_CHILDLESS_IKEV2_SUPPORTED",
-	"v2N_QUICK_CRASH_DETECTION",
-	"v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED",
-	"v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED",
-	"v2N_IKEV2_MESSAGE_ID_SYNC",
-	"v2N_IPSEC_REPLAY_COUNTER_SYNC",
-	"v2N_SECURE_PASSWORD_METHODS",
-	"v2N_PSK_PERSIST",
-	"v2N_PSK_CONFIRM",
-	"v2N_ERX_SUPPORTED",
-	"v2N_IFOM_CAPABILITY",
-	"v2N_SENDER_REQUEST_ID",
-	"v2N_IKEV2_FRAGMENTATION_SUPPORTED",    /* 16430 */
-	"v2N_SIGNATURE_HASH_ALGORITHMS",
-	"v2N_CLONE_IKE_SA_SUPPORTED",
-	"v2N_CLONE_IKE_SA",
-	"v2N_PUZZLE",
-	"v2N_USE_PPK", /* 16435 */
-	"v2N_PPK_IDENTITY",
-	"v2N_NO_PPK_AUTH",
-	"v2N_INTERMEDIATE_EXCHANGE_SUPPORTED" /* 16438*/,
-	"v2N_IP4_ALLOWED",
-	"v2N_IP6_ALLOWED",
-	"v2N_ADDITIONAL_KEY_EXCHANGE",
-	"v2N_USE_AGGFRAG",
-};
-
-static enum_names v2_notification_names_16384 = {
+static const struct enum_names v2_notification_status_names = {
 	v2N_INITIAL_CONTACT,
 	v2N_USE_AGGFRAG,
-	ARRAY_REF(ikev2_notify_name_16384),
+	ARRAY_REF(v2_notification_status_name),
 	"v2N_", /* prefix */
-	&v2_notification_names_private
+	&v2_notification_private_names,
 };
 
-static const char *const ikev2_notify_name[] = {
-	"v2N_RESERVED",    /* unofficial "OK" */
-	"v2N_UNSUPPORTED_CRITICAL_PAYLOAD",
-	"v2N_UNUSED_2",
-	"v2N_UNUSED_3",
-	"v2N_INVALID_IKE_SPI",
-	"v2N_INVALID_MAJOR_VERSION",
-	"v2N_UNUSED_6",
-	"v2N_INVALID_SYNTAX",
-	"v2N_UNUSED_8",
-	"v2N_INVALID_MESSAGE_ID",
-	"v2N_UNUSED_10",
-	"v2N_INVALID_SPI",
-	"v2N_UNUSED_12",
-	"v2N_UNUSED_13",
-	"v2N_NO_PROPOSAL_CHOSEN",
-	"v2N_UNUSED_15",
-	"v2N_UNUSED_16",
-	"v2N_INVALID_KE_PAYLOAD",
-	"v2N_UNUSED_18",
-	"v2N_UNUSED_19",
-	"v2N_UNUSED_20",
-	"v2N_UNUSED_21",
-	"v2N_UNUSED_22",
-	"v2N_UNUSED_23",
-	"v2N_AUTHENTICATION_FAILED",
-	"v2N_UNUSED_25",
-	"v2N_UNUSED_26",
-	"v2N_UNUSED_27",
-	"v2N_UNUSED_28",
-	"v2N_UNUSED_29",
-	"v2N_UNUSED_30",
-	"v2N_UNUSED_31",
-	"v2N_UNUSED_32",
-	"v2N_UNUSED_33",
-	"v2N_SINGLE_PAIR_REQUIRED",
-	"v2N_NO_ADDITIONAL_SAS",
-	"v2N_INTERNAL_ADDRESS_FAILURE",
-	"v2N_FAILED_CP_REQUIRED",
-	"v2N_TS_UNACCEPTABLE",
-	"v2N_INVALID_SELECTORS",
-	"v2N_UNACCEPTABLE_ADDRESSES",
-	"v2N_UNEXPECTED_NAT_DETECTED",
-	"v2N_USE_ASSIGNED_HoA",
-	"v2N_TEMPORARY_FAILURE",
-	"v2N_CHILD_SA_NOT_FOUND",
-	"v2N_INVALID_GROUP_ID", /* 45 draft-yeung-g-ikev2 */
-	"v2N_AUTHORIZATION_FAILED",
-	"v2N_STATE_NOT_FOUND", /* draft-ietf-ipsecme-ikev2-multiple-ke-12 */
-};
-
-enum_names v2_notification_names = {
+const struct enum_names v2_notification_names = {
 	v2N_NOTHING_WRONG,
 	v2N_STATE_NOT_FOUND,
-	ARRAY_REF(ikev2_notify_name),
+	ARRAY_REF(v2_notification_error_name),
 	"v2N_", /* prefix */
-	&v2_notification_names_16384
+	&v2_notification_status_names
 };
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
