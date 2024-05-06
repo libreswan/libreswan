@@ -1,0 +1,13 @@
+IKEv2 ECDSA certificate based authentication
+
+This tests for authby=ecdsa-sha2_384,rsa which should still use
+ecdsa, as we only have ecdsa certificates.
+
+It should not fail with:
+
++"westnet-eastnet-ikev2" #1: NSS: RSA DSS sign function failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
+ "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+-"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CH, O=strongSwan, CN=strongEast' and P-384 ECDSA with SHA2_384 digital signature issued by 'C=CH, O=strongSwan, CN=strongSwan CA'
+-"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
++"westnet-eastnet-ikev2" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+
