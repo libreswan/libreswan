@@ -516,9 +516,10 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 *   timeout of several minutes.
 		 */
 		if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments == NULL) {
+			enum_buf xb;
 			llog_pexpect_v2_msgid(ike,
 					      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
-					      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+					      str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					      msgid);
 			return true;
 		}
@@ -723,9 +724,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
 		 */
+		enum_buf xb;
 		llog_sa(RC_LOG, ike,
 			"unexpected %s response with Message ID %jd (last sent was %jd); dropping packet",
-			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
 		return true;
 	}
@@ -735,9 +737,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * Initiator is already working on this response.
 		 * Presumably a re-transmit so quietly drop it.
 		 */
+		enum_buf xb;
 		dbg_v2_msgid(ike,
 			     "%s response with Message ID %jd is work-in-progress; dropping packet",
-			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			     msgid);
 		return true;
 	}
@@ -747,10 +750,11 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
 		 */
+		enum_buf xb;
 		llog_sa(RC_LOG, ike,
 			"unexpected %s response with Message ID %jd (processing %jd); dropping packet",
-			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid,
-			ike->sa.st_v2_msgid_windows.initiator.wip);
+			str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+			msgid, ike->sa.st_v2_msgid_windows.initiator.wip);
 		return true;
 	}
 

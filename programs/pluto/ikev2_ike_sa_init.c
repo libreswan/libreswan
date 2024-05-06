@@ -466,9 +466,10 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		struct connection *c = find_v2_host_pair_connection(md, &send_reject_response);
 		if (c == NULL) {
 			endpoint_buf b;
+			enum_buf xb;
 			llog(RC_LOG_SERIOUS, md->logger,
 			     "%s message received on %s but no suitable connection found with IKEv2 policy",
-			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			     str_endpoint(&md->iface->local_endpoint, &b));
 			if (send_reject_response) {
 				/*

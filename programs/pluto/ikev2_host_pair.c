@@ -267,9 +267,10 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	if (c == NULL) {
 		endpoint_buf b;
 		authby_buf pb;
+		enum_buf xb;
 		ldbg(md->logger,
 		     "  %s message received on %s but no connection has been authorized with policy %s, %s",
-		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     str_endpoint(local_endpoint, &b),
 		     str_authby(remote_authby, &pb),
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));

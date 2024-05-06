@@ -1118,9 +1118,10 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	bool ok = verify_and_decrypt_v2_message(ike, message, &plain, iv_offset);
 	md->chain[ISAKMP_NEXT_v2SK]->pbs = pbs_in_from_shunk(plain, "decrypted SK payload");
 
+	enum_buf xb;
 	ldbg(ike->sa.logger, PRI_SO" ikev2 %s decrypt %s",
 	     pri_so(ike->sa.st_serialno),
-	     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+	     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 	     ok ? "success" : "failed");
 
 	return ok;
