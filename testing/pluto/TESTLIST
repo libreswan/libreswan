@@ -553,6 +553,7 @@ kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
 kvmplutotest	ikev2-xfrmi-15-interface-ip		good
 kvmplutotest	ikev2-xfrmi-16-rekey			good
 kvmplutotest	ikev2-xfrmi-17-ipcomp			good
+kvmplutotest	ikev2-xfrmi-19-route-before-up		good
 
 kvmplutotest	ikev2-decap-dscp-01			good
 kvmplutotest	ikev2-dont-encap-dscp-01		good
