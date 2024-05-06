@@ -334,7 +334,9 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 		const char *nm = enum_name_short(stat->names, n + stat->floor);
 		unsigned long count = stat->count[n];
 		/* not logging "UNUSED" */
-		if (nm != NULL && strstr(nm, "UNUSED") == NULL) {
+		if (nm != NULL &&
+		    strstr(nm, "UNUSED") == NULL &&
+		    strstr(nm, "Reserved") == NULL) {
 			show_raw(s, "total.%s.%s=%lu",
 				 stat->what, nm, count);
 		} else {
@@ -365,7 +367,9 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 * that include UNUSED.  Skip them.
 		 */
 		const char *name = enum_name_short(names, e);
-		if (name != NULL && strstr(name, "UNUSED") == NULL) {
+		if (name != NULL &&
+		    strstr(name, "UNUSED") == NULL &&
+		    strstr(name, "Reserved") == NULL) {
 			show_raw(s, "total.%s.%s=%lu",
 				 what, name, count[e]);
 		}
