@@ -807,7 +807,7 @@ doroute() {
     fi
 
     if [ "${xfrmi_rule}" = "yes" ]; then
-	espipro="ip -${HOST_FAMILY} route ${cmd} ${PLUTO_PEER}/${HOST_MAX_CIDR} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
+	espipro="ip -${HOST_FAMILY} route ${cmd} ${PLUTO_PEER}/${HOST_MAX_CIDR} ${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
 	do_ip "${espipro}"
 
 	st=$?
