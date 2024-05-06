@@ -226,6 +226,9 @@ static bool matches_connection_filter(struct connection *c,
 		if (is_group(c)) {
 			return false;
 		}
+		if (never_negotiate(c)) {
+			return false;
+		}
 		if (address_is_unset(filter->host_pair.local)) {
 			if (oriented(c)) {
 				return false;
