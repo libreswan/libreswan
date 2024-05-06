@@ -1,0 +1,48 @@
+/testing/guestbin/swan-prep
+east #
+ ip addr add 192.0.21.254/24 dev eth0 2>/dev/null
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add north-east-gw
+"north-east-gw": added IKEv2 connection
+east #
+ ipsec auto --add north-east-sn
+"north-east-sn": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+east #
+ ip -s link show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX:  bytes packets errors dropped  missed   mcast           
+           252       3      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           252       3      0       0       0       0 
+east #
+ ip rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+east #
+ ip route show table 50
+192.1.3.33 via 192.1.2.254 dev eth1 metric 2049
+east #
+ ip route
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.0.21.0/24 dev eth0 proto kernel scope link src 192.0.21.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.1.3.33 dev ipsec1 scope link metric 2049
+east #
+ ip -d link show type xfrm
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    xfrm if_id 0x1 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+east #
+ 

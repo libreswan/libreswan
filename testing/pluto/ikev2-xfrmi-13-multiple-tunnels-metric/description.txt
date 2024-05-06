@@ -1,0 +1,31 @@
+This test verifies that routes in the routing table 50 are not deleted by other states when using multiple tunnels with xfrmi, mark-out and metric to the same peer.
+
+That can happen if you have a subnet and a gateway tunnel to the same peer without using different metric settings.
+
+north #
+ipsec briefconnectionstatus
+192.1.3.33 <==> 192.1.2.23      from 192.1.3.33 to 192.1.2.23 (84B/84B) "north-east-gw", reqid=16388
+192.1.3.33 <==> 192.0.21.0/24   from 192.1.3.33 to 192.1.2.23 (84B/84B) "north-east-sn", reqid=16392
+# Total IPsec connections: loaded 2, active 2
+
+north #
+ip r
+default via 192.1.3.254 dev eth1
+192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
+192.0.21.0/24 dev ipsec1 scope link metric 2050
+192.1.2.23 dev ipsec1 scope link metric 2049
+192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
+
+north #
+ip r list table 50
+192.1.2.23 via 192.1.3.254 dev eth1 metric 2049
+192.1.2.23 via 192.1.3.254 dev eth1 metric 2050
+
+north #
+ip ru
+0:      from all lookup local
+100:    from all to 192.1.2.23 fwmark 0x1 lookup 50
+100:    from all to 192.0.21.0/24 fwmark 0x1 lookup 50
+32766:  from all lookup main
+32767:  from all lookup default
+
