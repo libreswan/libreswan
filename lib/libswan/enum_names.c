@@ -155,7 +155,7 @@ static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val
 	return s;
 }
 
-size_t jam_enum(struct jambuf *buf, enum_names *en, unsigned long val)
+size_t jam_enum_long(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	size_t s = 0;
 	const char *name = enum_name(en, val);
@@ -196,7 +196,7 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
  *
  * Note: result may or may not be in b.
  */
-const char *str_enum(enum_names *ed, unsigned long val, enum_buf *b)
+const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 {
 	const char *p = enum_name(ed, val);
 

@@ -214,8 +214,10 @@ typedef const struct enum_names enum_names;
 extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_name_short(enum_names *ed, unsigned long val);
 
-size_t jam_enum(struct jambuf *, enum_names *en, unsigned long val);
 size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
+size_t jam_enum_long(struct jambuf *, enum_names *en, unsigned long val);
+
+#define jam_enum jam_enum_long
 /* drop prefix + transform [_A-Z]->[-a-z] */
 size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);
 
@@ -234,10 +236,11 @@ typedef struct {
 } enum_buf;
 typedef enum_buf esb_buf; /* XXX: TBD */
 
-extern const char *str_enum(enum_names *ed, unsigned long val, enum_buf *);
+extern const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *);
 extern const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *);
 
-#define enum_show str_enum /* XXX: TBD */
+#define str_enum str_enum_long
+#define enum_show str_enum_long /* XXX: TBD */
 
 /*
  * iterator
