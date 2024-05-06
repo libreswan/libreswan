@@ -484,7 +484,13 @@ struct host_end {
 	ip_address nexthop;		/* identifies interface to send packets */
 	struct id id;
 	ip_address addr;
-	ip_address first_addr;		/* for redirect */
+	ip_address first_addr;		/* The address to use when
+					 * first initiating or
+					 * reviving a connection; a
+					 * connection establised after
+					 * a redirect ends up with
+					 * .addr pointing at the
+					 * redirect. */
 };
 
 struct child_end {
