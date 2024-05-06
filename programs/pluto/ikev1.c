@@ -1540,10 +1540,10 @@ void process_packet_tail(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
 	     p != NULL; p = p->next) {
 
-		enum_buf nb; /*same scope as nname*/
-		const char *nname = str_enum_short(&v1_notification_names,
-						   p->payload.notification.isan_type,
-						   &nb);
+		enum_buf nname;
+		str_enum_short(&v1_notification_names,
+			       p->payload.notification.isan_type,
+			       &nname);
 		switch (p->payload.notification.isan_type) {
 		case v1N_R_U_THERE:
 		case v1N_R_U_THERE_ACK:
@@ -1562,7 +1562,7 @@ void process_packet_tail(struct msg_digest *md)
 
 		if (st == NULL) {
 			dbg("ignoring informational payload %s, no corresponding state",
-			    nname);
+			    nname.buf);
 		} else {
 			if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
 				ldbg(st->logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
@@ -1580,7 +1580,7 @@ void process_packet_tail(struct msg_digest *md)
 			}
 			LOG_PACKET(RC_LOG_SERIOUS,
 				   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
-				   nname, st->st_v1_msgid.id,
+				   nname.buf, st->st_v1_msgid.id,
 				   p->payload.notification.isan_length);
 		}
 		if (DBGP(DBG_BASE)) {
@@ -2199,12 +2199,13 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * NOTHING_WRONG, and even if it did "nothing wrong"
 		 * wouldn't exactly help here :-).
 		 */
-		enum_buf neb; /* same scope as notify_name */
-		const char *notify_name = (md->v1_note == v1N_NOTHING_WRONG ? "failed" :
-					   str_enum_short(&v1_notification_names, md->v1_note, &neb));
-		if (notify_name == NULL) {
-			notify_name = "internal error";
+		enum_buf notify_name;
+		if (md->v1_note == v1N_NOTHING_WRONG) {
+			notify_name.buf = "failed";
+		} else {
+			str_enum_short(&v1_notification_names, md->v1_note, &notify_name);
 		}
+
 		/*
 		 * ??? why no call of remember_received_packet?
 		 * Perhaps because the message hasn't been authenticated?
@@ -2215,11 +2216,11 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			/* this will log */
 			SEND_NOTIFICATION(md->v1_note);
 		} else {
-			log_state(RC_LOG, st, "state transition failed: %s", notify_name);
+			log_state(RC_LOG, st, "state transition failed: %s", notify_name.buf);
 		}
 
 		dbg("state transition function for %s failed: %s",
-		    st->st_state->name, notify_name);
+		    st->st_state->name, notify_name.buf);
 
 #ifdef HAVE_NM
 		if (st->st_connection->config->remote_peer_cisco &&

@@ -28,7 +28,9 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
 {
 	switch (mechanism) {
 		/* Not using #T + strlen("CKM_") because of clang's -Wstring-plus-int */
-#define CASE(T) case T: return &#T[strlen("CKM_")]
+#define CASE(T) case T:					\
+		buf->buf = &#T[strlen("CKM_")];		\
+		break
 
 		CASE(CKM_CONCATENATE_BASE_AND_DATA);
 		CASE(CKM_CONCATENATE_BASE_AND_KEY);
@@ -90,12 +92,11 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
 #undef CASE
 
 	default:
-	{
-		snprintf(buf->buf, sizeof(buf->buf),
+		snprintf(buf->tmp, sizeof(buf->tmp),
 			 "CKM_%08lx", (long)mechanism);
-		return buf->buf;
+		buf->buf = buf->tmp;
 	}
-	}
+	return buf->buf;
 }
 
 size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)

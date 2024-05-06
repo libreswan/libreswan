@@ -230,9 +230,14 @@ size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);
  * rounded up a little (instead of 2.40654...).  The addition of 99
  * ensures that the division rounds up to an integer rather than
  * truncates.
+ *
+ * The .name field points either at buf[] or some internal string.  It
+ * is never NULL.  DANGER: enum_buf can't be returned as that moves
+ * the struct invalidating the internal pointer.
  */
 typedef struct {
-	char buf[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
+	const char *buf;
+	char tmp[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
 } enum_buf;
 typedef enum_buf esb_buf; /* XXX: TBD */
 

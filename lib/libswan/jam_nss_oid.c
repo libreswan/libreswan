@@ -20,16 +20,17 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-const char *str_nss_oid(SECOidTag oidtag, enum_buf *buf)
+const char *str_nss_oid(SECOidTag oidtag, enum_buf *b)
 {
 	SECOidData *data = SECOID_FindOIDByTag(oidtag);
 	if (data != NULL) {
-		return data->desc;
+		b->buf = data->desc;
 	} else {
-		snprintf(buf->buf, sizeof(buf->buf),
+		snprintf(b->tmp, sizeof(b->tmp),
 			 "SEC_OID_%d", oidtag);
-		return buf->buf;
+		b->buf = b->tmp;
 	}
+	return b->tmp;
 }
 
 size_t jam_nss_oid(struct jambuf *buf, SECOidTag oidtag)

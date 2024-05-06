@@ -198,13 +198,12 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
  */
 const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 {
-	const char *p = enum_name(ed, val);
-
-	if (p == NULL) {
-		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
-		p = b->buf;
+	b->buf = enum_name(ed, val);
+	if (b->buf == NULL) {
+		snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
+		b->buf = b->tmp;
 	}
-	return p;
+	return b->buf;
 }
 
 const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
@@ -212,12 +211,12 @@ const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
 	const char *prefix;
 	const struct enum_names *range = enum_range(ed, val, &prefix);
 	/* could be NULL */
-	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
-	if (name == NULL) {
-		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
-		name = b->buf;
+	b->buf = enum_range_name(range, val, prefix, /*shorten?*/true);
+	if (b->buf == NULL) {
+		snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
+		b->buf = b->tmp;
 	}
-	return name;
+	return b->buf;
 }
 
 /*
@@ -323,7 +322,8 @@ const char *str_enum_enum(enum_enum_names *een, unsigned long table,
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* assume the log context implies the table name */
-		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		snprintf(b->tmp, sizeof(b->tmp), "%lu??_%lu", table, val);
+		b->buf = b->tmp;
 		return b->buf;
 	}
 
@@ -336,7 +336,8 @@ const char *str_enum_enum_short(enum_enum_names *een, unsigned long table,
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* assume the log context implies the table name */
-		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		snprintf(b->tmp, sizeof(b->tmp), "%lu??_%lu", table, val);
+		b->buf = b->tmp;
 		return b->buf;
 	}
 

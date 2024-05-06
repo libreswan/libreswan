@@ -884,7 +884,8 @@ const char *str_vendorid(enum known_vendorid id, enum_buf *eb)
 		return vid_tab[id].descr;
 	}
 
-	snprintf(eb->buf, sizeof(eb->buf), "VID_%u", id);
+	snprintf(eb->tmp, sizeof(eb->tmp), "VID_%u", id);
+	eb->buf = eb->tmp;
 	return eb->buf;
 }
 
