@@ -1393,8 +1393,9 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			/* XXX: sec_label connections all look a-like, include CO */
 			connection_buf cb;
 			policy_buf pb;
+			enum_buf kb;
 			dbg_ts("evaluating %s connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
-			       enum_name_short(&connection_kind_names, cc->local->kind),
+			       str_enum_short(&connection_kind_names, cc->local->kind, &kb),
 			       pri_connection(d, &cb), pri_co(d->serialno),
 			       str_connection_policies(d, &pb));
 

@@ -440,9 +440,10 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 * must have received up to SENT-1 responses.
 	 */
 	if (msgid < ike->sa.st_v2_msgid_windows.responder.sent) {
+		enum_buf xb;
 		llog_sa(RC_LOG, ike,
 			"%s request has duplicate Message ID %jd but it is older than last response (%jd); message dropped",
-			enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+			str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			msgid, ike->sa.st_v2_msgid_windows.responder.sent);
 		return true;
 	}
@@ -546,22 +547,25 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		case ISAKMP_NEXT_v2SK:
 			if (ike->sa.st_v2_msgid_windows.responder.recv_frags > 0 &&
 			    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
+				enum_buf xb;
 				llog_sa(RC_LOG, ike,
 					"%s request has duplicate Message ID %jd but original was fragmented; message dropped",
-					enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					msgid);
 				return true;
 			}
+			enum_buf xb;
 			llog_sa(RC_LOG, ike,
 				"%s request has duplicate Message ID %jd; retransmitting response",
-				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 				msgid);
 			break;
 		case ISAKMP_NEXT_v2SKF:
 			if (ike->sa.st_v2_msgid_windows.responder.recv_frags == 0) {
+				enum_buf xb;
 				llog_sa(RC_LOG, ike,
 					"%s request fragment has duplicate Message ID %jd but original was not fragmented; message dropped",
-					enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					msgid);
 				return true;
 			}
@@ -576,32 +580,38 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				return true;
 			}
 			if (skf.isaskf_total != ike->sa.st_v2_msgid_windows.responder.recv_frags) {
+				enum_buf xb;
 				dbg_v2_msgid(ike,
 					     "%s request fragment %u of %u has duplicate Message ID %jd but should have fragment total %u; message dropped",
-					     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					     skf.isaskf_number, skf.isaskf_total, msgid,
 					     ike->sa.st_v2_msgid_windows.responder.recv_frags);
 				return true;
 			}
 			if (skf.isaskf_number != 1) {
+				enum_buf xb;
 				dbg_v2_msgid(ike,
 					     "%s request fragment %u of %u has duplicate Message ID %jd but is not fragment 1; message dropped",
-					     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					     skf.isaskf_number, skf.isaskf_total, msgid);
 				return true;
 			}
+			enum_buf fxb;
 			llog_sa(RC_LOG, ike,
 				"%s request fragment %u of %u has duplicate Message ID %jd; retransmitting response",
-				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &fxb),
 				skf.isaskf_number, skf.isaskf_total, msgid);
 			break;
 		default:
+		{
 			/* until there's evidence that this is valid */
+			enum_buf xb;
 			llog_sa(RC_LOG, ike,
 				"%s request has duplicate Message ID %jd but does not start with SK or SKF payload; message dropped",
-				enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 				msgid);
 			return true;
+		}
 		}
 		send_recorded_v2_message(ike, "ikev2-responder-retransmit",
 					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
@@ -713,8 +723,9 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * to-old so doesn't expect there to be a matching
 		 * initiator, arrg
 		 */
+		enum_buf xb;
 		dbg_v2_msgid(ike, "unexpected %s response with Message ID %ju (last received was %jd); dropping packet",
-			     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			     msgid, ike->sa.st_v2_msgid_windows.initiator.recv);
 		return true;
 	}

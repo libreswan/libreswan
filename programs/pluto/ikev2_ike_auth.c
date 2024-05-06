@@ -1236,9 +1236,10 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		if (md->pd[pd] != NULL) {
 			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
 			pstat(ikev2_recv_notifies_e, n);
-			const char *why = enum_name_short(&v2_notification_names, n);
+			enum_buf wb;
 			llog_sa(RC_LOG_SERIOUS, ike,
-				  "IKE SA authentication request rejected by peer: %s", why);
+				"IKE SA authentication request rejected by peer: %s",
+				str_enum_short(&v2_notification_names, n, &wb));
 			logged_something_serious = true;
 			break;
 		}

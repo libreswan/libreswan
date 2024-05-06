@@ -575,9 +575,10 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 &child->sa.st_v2_accepted_proposal,
 				 child_proposals, child->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
+		enum_buf nb;
 		llog_sa(RC_LOG_SERIOUS, child,
 			"%s failed, responder SA processing returned %s",
-			what, enum_name_short(&v2_notification_names, n));
+			what, str_enum_short(&v2_notification_names, n, &nb));
 		return n;
 	}
 
@@ -1198,13 +1199,15 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	n = process_v2_child_response_payloads(ike, child, response_md);
 	if (n != v2N_NOTHING_WRONG) {
 		if (v2_notification_fatal(n)) {
+			enum_buf nb;
 			llog_sa(RC_LOG_SERIOUS, child,
 				"CHILD SA encountered fatal error: %s",
-				enum_name_short(&v2_notification_names, n));
+				str_enum_short(&v2_notification_names, n, &nb));
 		} else {
+			enum_buf nb;
 			llog_sa(RC_LOG_SERIOUS, child,
 				"CHILD SA failed: %s",
-				enum_name_short(&v2_notification_names, n));
+				str_enum_short(&v2_notification_names, n, &nb));
 		}
 		return n;
 	}

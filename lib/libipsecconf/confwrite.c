@@ -414,7 +414,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			if (encap_proto != ENCAP_PROTO_UNSET) {
 				/* story is lower-case */
-				cwf("phase2", enum_name_short(&encap_proto_story, encap_proto));
+				enum_buf eb;
+				cwf("phase2", str_enum_short(&encap_proto_story, encap_proto, &eb));
 			}
 
 			/* ikev2= */

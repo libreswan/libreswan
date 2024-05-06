@@ -126,13 +126,14 @@ void ldbg_connection(const struct connection *c, where_t where,
 			jam_string(buf, ": ");
 			jam_connection(buf, c);
 		}
+		enum_buf rb, kb;
 		LDBG_log(c->logger, "    routing+kind: %s %s",
-			 enum_name_short(&routing_names, c->routing.state),
-			 enum_name_short(&connection_kind_names, c->local->kind));
-		address_buf lb, rb;
+			 str_enum_short(&routing_names, c->routing.state, &rb),
+			 str_enum_short(&connection_kind_names, c->local->kind, &kb));
+		address_buf clb, crb;
 		LDBG_log(c->logger, "    host: %s->%s",
-			 str_address(&c->local->host.addr, &lb),
-			 str_address(&c->remote->host.addr, &rb));
+			 str_address(&c->local->host.addr, &clb),
+			 str_address(&c->remote->host.addr, &crb));
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 			jam_string(buf, "    selectors:");
 			const char *sep = " ->";

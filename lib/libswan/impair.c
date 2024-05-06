@@ -400,8 +400,8 @@ static void help(const char *prefix, const struct impairment *cr, FILE *file)
 			} else {
 				fprintf(file, ", ");
 			}
-			const char *sname = enum_name_short(cr->how_enum_names, e);
-			fprintf(file, "%s", sname);
+			enum_buf eb;
+			fprintf(file, "%s", str_enum_short(cr->how_enum_names, e, &eb));
 		}
 		fprintf(file, "\n");
 	}

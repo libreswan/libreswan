@@ -534,11 +534,12 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 		enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 
 		selector_pair_buf spb;
+		enum_buf rb, sb;
 		LDBG_log(logger,
 			 "%s: owners of %s routing >= %s[%s]",
 			 who, str_selector_pair(local, remote, &spb),
-			 enum_name_short(&routing_names, routing),
-			 enum_name_short(&shunt_kind_names, shunt_kind));
+			 str_enum_short(&routing_names, routing, &rb),
+			 str_enum_short(&shunt_kind_names, shunt_kind, &sb));
 
 		LDBG_owner(logger, "policy", owner->policy);
 		LDBG_owner(logger, "bare_route", owner->bare_route);
@@ -575,11 +576,12 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 	unsigned indent = 0;
 
 	selector_pair_buf spb;
+	enum_buf rb, sb;
 	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s[%s]",
 	     indent, "", __func__,
 	     str_selector_pair(c_local, c_remote, &spb),
-	     enum_name_short(&routing_names, c_routing),
-	     enum_name_short(&shunt_kind_names, c_shunt_kind));
+	     str_enum_short(&routing_names, c_routing, &rb),
+	     str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
 
 	struct spd_owner owner = {0};
 
@@ -724,16 +726,18 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 						  d_spd->local->client)) {
 				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
 			} else if (d_shunt_kind < c_shunt_kind) {
+				enum_buf rb, sb;
 				ldbg_spd(logger, indent, d_spd, "skipped %s; < %s[%s]",
 					 checking,
-					 enum_name_short(&routing_names, c_routing),
-					 enum_name_short(&shunt_kind_names, c_shunt_kind));
+					 str_enum_short(&routing_names, c_routing, &rb),
+					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
 			} else if (d_shunt_kind == c_shunt_kind && c->clonedfrom == d) {
-				enum_buf rb;
+				enum_buf rb, sb;
 				ldbg_spd(logger, indent, d_spd,
 					 "skipped %s; is connection parent with routing = %s[%s] %s",
-					 checking, str_enum_short(&routing_names, c_routing, &rb),
-					 enum_name_short(&shunt_kind_names, c_shunt_kind),
+					 checking,
+					 str_enum_short(&routing_names, c_routing, &rb),
+					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb),
 					 bool_str(d->routing.state >= c_routing));
 			} else if (c->config->overlapip && d->config->overlapip) {
 				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
@@ -1261,12 +1265,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	address_buf sab, dab;
 	selector_buf scb, dcb;
+	enum_buf dnb, rmb;
 	dbg("kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
-	    enum_name_short(&direction_names, said_boilerplate.direction),
+	    str_enum_short(&direction_names, said_boilerplate.direction, &dnb),
 	    str_selector(&said_boilerplate.src.route, &scb),
 	    str_address(&said_boilerplate.src.address, &sab),
-	    enum_name_short(&kernel_mode_names, route.mode),
+	    str_enum_short(&kernel_mode_names, route.mode, &rmb),
 	    str_address(&said_boilerplate.dst.address, &dab),
 	    str_selector(&said_boilerplate.dst.route, &dcb),
 	    /* see above */
@@ -1717,8 +1722,9 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 static bool uninstall_kernel_state(struct child_sa *child, enum direction direction)
 {
 	struct connection *const c = child->sa.st_connection;
+	enum_buf db;
 	ldbg_sa(child, "kernel: %s() deleting %s",
-		__func__, enum_name_short(&direction_names, direction));
+		__func__, str_enum_short(&direction_names, direction, &db));
 
 	/*
 	 * If we have a new address in c->remote->host.addr,
@@ -2247,9 +2253,10 @@ bool get_ipsec_traffic(struct child_sa *child,
 	}
 
 	if (flow->expired[SA_HARD_EXPIRED]) {
+		enum_buf db;
 		ldbg_sa(child,
 			"kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-			__func__, enum_name_short(&direction_names, direction),
+			__func__, str_enum_short(&direction_names, direction, &db),
 			pri_ipsec_spi(flow->spi));
 		return true; /* all is well use last known info */
 	}

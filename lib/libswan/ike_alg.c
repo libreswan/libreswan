@@ -221,17 +221,19 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
-			const char *name = enum_name_short(type->enum_names[key], id);
+			enum_buf eb;
 			DBGF(debug, "%s %s id: %s=%u, found %s",
 			     type->name, __func__,
-			     name ? name : "???",
+			     str_enum_short(type->enum_names[key], id, &eb),
 			     id, alg->fqn);
 			return alg;
 		}
  	}
-	const char *name = enum_name_short(type->enum_names[key], id);
+	enum_buf eb;
 	DBGF(debug, "%s %s id: %s=%u, not found",
-	     type->name, __func__, name ? name : "???", id);
+	     type->name, __func__,
+	     str_enum_short(type->enum_names[key], id, &eb),
+	     id);
 	return NULL;
 }
 

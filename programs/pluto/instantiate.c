@@ -285,10 +285,11 @@ static struct connection *instantiate(struct connection *t,
 {
 	address_buf ab;
 	id_buf idb;
+	enum_buf kb;
 	ldbg_connection(t, where, "%s: remote=%s id=%s kind=%s sec_label="PRI_SHUNK,
 			func, str_address(&remote_addr, &ab),
 			str_id(peer_id, &idb),
-			enum_name_short(&connection_kind_names, t->local->kind),
+			str_enum_short(&connection_kind_names, t->local->kind, &kb),
 			pri_shunk(sec_label));
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */

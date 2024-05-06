@@ -693,9 +693,9 @@ void init_ikev1_states(struct logger *logger)
 					jam_string(buf, ":");
 				}
 			}
+			enum_buf eb;
 			DBG_log("    -> %s %s (%s)", to->short_name,
-				enum_name_short(&event_type_names,
-						t->timeout_event),
+				str_enum_short(&event_type_names, t->timeout_event, &eb),
 				t->message);
 		}
 
