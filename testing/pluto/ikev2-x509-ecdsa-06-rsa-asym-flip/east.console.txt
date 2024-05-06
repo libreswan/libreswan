@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw
+pk12util: PKCS12 IMPORT SUCCESSFUL
+east #
+ # Tuomo: why doesn't ipsec checknss --settrust work here?
+east #
+ ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
+east #
+ #ipsec start
+east #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added IKEv2 connection
+east #
+ ipsec status | grep "our auth:"
+"westnet-eastnet-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:ecdsa, our autheap:none, their autheap:none;
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --shutdown
+east #
+ 

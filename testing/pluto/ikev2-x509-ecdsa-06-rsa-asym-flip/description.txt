@@ -1,0 +1,4 @@
+IKEv2 ECDSA and RSA certificate based authentication
+
+This tests auth for flipped situation where west using ECDSA and auth for east using RSA.
+
