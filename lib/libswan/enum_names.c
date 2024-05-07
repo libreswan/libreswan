@@ -125,14 +125,19 @@ const char *enum_range_name(const struct enum_names *range, unsigned long val,
 	}
 }
 
-/* look up enum names in an enum_names */
-const char *enum_name(enum_names *ed, unsigned long val)
+static const char *find_enum(const struct enum_names *en, unsigned long val, bool shorten)
 {
 	const char *prefix = NULL;
 	/* can be NULL */
-	const struct enum_names *range = enum_range(ed, val, &prefix);
+	const struct enum_names *range = enum_range(en, val, &prefix);
 	/* can be NULL */
-	return enum_range_name(range, val, prefix, /*shorten?*/false);
+	return enum_range_name(range, val, prefix, shorten);
+}
+
+/* look up enum names in an enum_names */
+const char *enum_name(enum_names *ed, unsigned long val)
+{
+	return find_enum(ed, val, /*shorten?*/false);
 }
 
 static void bad_enum_name(enum_buf *b, unsigned long val)
@@ -141,20 +146,40 @@ static void bad_enum_name(enum_buf *b, unsigned long val)
 	b->buf = b->tmp;
 }
 
-bool enum_name_short(enum_names *ed, unsigned long val, enum_buf *b)
+bool enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 {
-	const char *prefix = NULL;
-	/* can be NULL; handled by enum_range_name() */
-	const struct enum_names *range = enum_range(ed, val, &prefix);
 	/* can be NULL; handled here */
-	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
-	if (name == NULL) {
+	b->buf = find_enum(ed, val, /*shorten?*/false);
+	if (b->buf == NULL) {
 		bad_enum_name(b, val);
 		return false;
 	}
 
-	b->buf = name;
 	return true;
+}
+
+bool enum_short(enum_names *ed, unsigned long val, enum_buf *b)
+{
+	/* can be NULL; handled here */
+	b->buf = find_enum(ed, val, /*shorten?*/true);
+	if (b->buf == NULL) {
+		bad_enum_name(b, val);
+		return false;
+	}
+
+	return true;
+}
+
+const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *b)
+{
+	enum_long(ed, val, b);
+	return b->buf;
+}
+
+const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
+{
+	enum_short(ed, val, b);
+	return b->buf;
 }
 
 static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val)
@@ -171,7 +196,7 @@ static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val
 size_t jam_enum_long(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	size_t s = 0;
-	const char *name = enum_name(en, val);
+	const char *name = find_enum(en, val, /*shorten*/false);
 	if (name == NULL) {
 		s += jam_bad_enum(buf, en, val);
 	} else {
@@ -183,11 +208,8 @@ size_t jam_enum_long(struct jambuf *buf, enum_names *en, unsigned long val)
 size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	size_t s = 0;
-	const char *prefix = NULL;
-	/* can be NULL; handled by enum_range_name() */
- 	const struct enum_names *range = enum_range(en, val, &prefix);
 	/* can be NULL; handled here */
-	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
+	const char *name = find_enum(en, val, /*shorten*/true);
 	if (name == NULL) {
 		s += jam_bad_enum(buf, en, val);
 	} else {
@@ -199,43 +221,14 @@ size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	size_t s = 0;
-	const char *prefix = NULL;
-	/* can be NULL; handled by enum_range_name() */
- 	const struct enum_names *range = enum_range(en, val, &prefix);
 	/* can be NULL; handled here */
-	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
+	const char *name = find_enum(en, val, /*shorten?*/true);
 	if (name == NULL) {
 		s += jam_bad_enum(buf, en, val);
 	} else {
 		jam_string_human(buf, name);
 	}
 	return s;
-}
-
-/*
- * find or construct a string to describe an enum value
- *
- * Note: result may or may not be in b.
- */
-const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *b)
-{
-	b->buf = enum_name(ed, val);
-	if (b->buf == NULL) {
-		bad_enum_name(b, val);
-	}
-	return b->buf;
-}
-
-const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
-{
-	const char *prefix;
-	const struct enum_names *range = enum_range(ed, val, &prefix);
-	/* could be NULL */
-	b->buf = enum_range_name(range, val, prefix, /*shorten?*/true);
-	if (b->buf == NULL) {
-		bad_enum_name(b, val);
-	}
-	return b->buf;
 }
 
 /*
