@@ -79,8 +79,9 @@ void schedule_connection_event(struct connection *c,
 {
 	struct connection_event *d = alloc_thing(struct connection_event, "data");
 	connection_buf cb;
+	enum_buf kb;
 	d->logger = string_logger(HERE, "event %s for "PRI_CONNECTION,
-				  enum_name(&connection_event_kind_names, event_kind),
+				  str_enum(&connection_event_kind_names, event_kind, &kb),
 				  pri_connection(c, &cb));
 	d->kind = event_kind;
 	d->subplot = subplot;
@@ -94,7 +95,7 @@ void schedule_connection_event(struct connection *c,
 		return;
 	}
 
-	schedule_timeout(enum_name(&connection_event_kind_names, event_kind),
+	schedule_timeout(str_enum(&connection_event_kind_names, event_kind, &kb),
 			 &d->timeout, delay,
 			 connection_event_handler, d);
 }

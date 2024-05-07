@@ -668,8 +668,9 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 					      &subAltName);
 	if (rv != SECSuccess) {
 		id_buf idb;
+		enum_buf kb;
 		return diag("peer certificate contains no subjectAltName extension to match %s '%s'",
-			    enum_name(&ike_id_type_names, id->kind),
+			    str_enum(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
 	}
 
@@ -683,8 +684,9 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 	if (nameList == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
 		id_buf idb;
+		enum_buf kb;
 		return diag("peer certificate subjectAltName extension failed to decode while looking for %s '%s'",
-			    enum_name(&ike_id_type_names, id->kind),
+			    str_enum(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
 	}
 

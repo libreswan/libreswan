@@ -1964,9 +1964,12 @@ void show_setup_plutomain(struct show *s)
 		jam_string(buf, (ocsp_method == OCSP_METHOD_GET ? "get" : "post"));
 	}
 
-	show_comment(s,
-		"global-redirect=%s, global-redirect-to=%s",
-		enum_name(&allow_global_redirect_names, global_redirect),
-		strlen(global_redirect_to()) > 0 ? global_redirect_to() : "<unset>"
-		);
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "global-redirect=");
+		jam_enum(buf, &allow_global_redirect_names, global_redirect);
+		jam_string(buf, ", ");
+		jam_string(buf, "global-redirect-to=");
+		jam_string(buf, (strlen(global_redirect_to()) > 0 ? global_redirect_to() :
+				 "<unset>"));
+	}
 }

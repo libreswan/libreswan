@@ -1699,11 +1699,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	 */
 	pstat(stf_status, result);
 
+	/* DANGER: MD might be NULL; ST might be NULL */
 	enum_buf neb;
+	enum_buf rb;
 	dbg("complete v1 state transition with %s",
-	    result > STF_FAIL_v1N ?
-	    str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
-	    enum_name(&stf_status_names, result));
+	    (result > STF_FAIL_v1N ? str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
+	     str_enum(&stf_status_names, result, &rb)));
 
 	switch (result) {
 	case STF_SUSPEND:

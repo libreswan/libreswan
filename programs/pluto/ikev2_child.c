@@ -341,23 +341,26 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode == requested_mode) {
+		enum_buf mb;
 		ldbg_sa(larval_child, "local policy is %s and received matching notify",
-			enum_name(&kernel_mode_stories, required_mode));
+			str_enum(&kernel_mode_stories, required_mode, &mb));
 	} else if (required_mode == KERNEL_MODE_TUNNEL) {
 		/*
 		 * RFC allows us to ignore their (wrong) request for
 		 * transport mode.
 		 */
+		enum_buf dmb, rmb;
 		llog_sa(RC_LOG, larval_child,
 			"policy dictates %s, ignoring peer's request for %s",
-			enum_name(&kernel_mode_stories, required_mode),
-			enum_name(&kernel_mode_stories, requested_mode));
+			str_enum(&kernel_mode_stories, required_mode, &dmb),
+			str_enum(&kernel_mode_stories, requested_mode, &rmb));
 	} else {
 		/* we should have received a matching mode request */
+		enum_buf dmb, rmb;
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"policy dictates %s, but peer requested %s",
-			enum_name(&kernel_mode_stories, required_mode),
-			enum_name(&kernel_mode_stories, requested_mode));
+			str_enum(&kernel_mode_stories, required_mode, &dmb),
+			str_enum(&kernel_mode_stories, requested_mode, &rmb));
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
@@ -789,14 +792,16 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode != accepted_mode) {
 		/* we should have accepted a matching response */
+		enum_buf amb, rmb;
 		llog_sa(RC_LOG_SERIOUS, child,
 			"policy dictates %s, but peer requested %s",
-			enum_name(&kernel_mode_stories, required_mode),
-			enum_name(&kernel_mode_stories, accepted_mode));
+			str_enum(&kernel_mode_stories, required_mode, &rmb),
+			str_enum(&kernel_mode_stories, accepted_mode, &amb));
  		return v2N_NO_PROPOSAL_CHOSEN;
  	}
+	enum_buf rmb;
 	ldbg_sa(child, "local policy is %s and received matching notify",
-		enum_name(&kernel_mode_stories, required_mode));
+		str_enum(&kernel_mode_stories, required_mode, &rmb));
 	child->sa.st_kernel_mode = required_mode;
 
 	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
@@ -970,8 +975,9 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 					ike, child, md,
 					child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
 					/*expect-accepted-proposal?*/false);
+	enum_buf nb;
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
-	     enum_name(&v2_notification_names, n));
+	     str_enum(&v2_notification_names, n, &nb));
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged; caller, below, cleans up */
 		return n;
@@ -979,7 +985,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 
 	n = process_v2_child_request_payloads(ike, child, md, sk_pbs);
 	ldbg(child->sa.logger, "process_v2_child_request_payloads() returned %s",
-	     enum_name(&v2_notification_names, n));
+	     str_enum(&v2_notification_names, n, &nb));
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged; caller, below, cleans up */
 		return n;

@@ -1227,11 +1227,11 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	jam_said(&story_jb, &said);
 
 	endpoint_buf ra_old, ra_new;
-	jam(&story_jb, ":%s to %s reqid=%u %s",
+	jam(&story_jb, ":%s to %s reqid=%u ",
 	    str_endpoint(&old_ei->endpoint, &ra_old),
 	    str_endpoint(&new_ep, &ra_new),
-	    migrate->reqid,
-	    enum_name(&xfrm_policy_names, xfrm_policy_dir));
+	    migrate->reqid);
+	jam_enum(&story_jb, &xfrm_policy_names, xfrm_policy_dir);
 
 	ldbg_sa(child, "%s", migrate->story);
 	return true;

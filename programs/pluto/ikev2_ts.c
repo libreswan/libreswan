@@ -1580,8 +1580,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 * XXX: For SEC_LABEL, best should have been set back
 		 * to CC?!?
 		 */
+		enum_buf kb;
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
-		       enum_name(&connection_kind_names, cc->local->kind), cc->name);
+		       str_enum(&connection_kind_names, cc->local->kind, &kb), cc->name);
 		llog_sa(RC_LOG_SERIOUS, child, "no IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}

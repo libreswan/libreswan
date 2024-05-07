@@ -354,9 +354,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_sa) {
+		enum_buf tn;
 		dispatch(m, s, whack_sa, "whack_sa", "%s %s %s",
 			 whack_sa_name(m->whack_sa),
-			 enum_name(&sa_type_names, m->whack_sa_type),
+			 str_enum(&sa_type_names, m->whack_sa_type, &tn),
 			 (m->name == NULL ? "<null>" : m->name));
 	}
 
@@ -440,9 +441,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
 			global_redirect = m->global_redirect;
+			enum_buf rn;
 			llog(RC_LOG, logger,
-				"set global redirect to %s",
-				enum_name(&allow_global_redirect_names, global_redirect));
+			     "set global redirect to %s",
+			     str_enum(&allow_global_redirect_names, global_redirect, &rn));
 		}
 		dbg_whack(s, "global_redirect: stop: %d", m->global_redirect);
 	}

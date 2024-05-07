@@ -198,9 +198,10 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REPLY,
 	};
 
+	enum_buf cpb;
 	ldbg_cp(child->sa.logger, c,
 		"send %s Configuration Payload",
-		enum_name(&ikev2_cp_type_names, cp.isacp_type));
+		str_enum(&ikev2_cp_type_names, cp.isacp_type, &cpb));
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
@@ -246,9 +247,10 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REQUEST,
 	};
 
+	enum_buf cpb;
 	ldbg_cp(child->sa.logger, child->sa.st_connection,
 		"emit %s Configuration Payload",
-		enum_name(&ikev2_cp_type_names, cp.isacp_type));
+		str_enum(&ikev2_cp_type_names, cp.isacp_type, &cpb));
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
@@ -327,9 +329,10 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	ldbg_sa(child, "parsing ISAKMP_NEXT_v2CP payload");
 
 	if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
+		enum_buf cpb;
 		llog_sa(RC_LOG_SERIOUS, child,
 			"ERROR: expected IKEv2_CP_CFG_REQUEST got a %s",
-			enum_name(&ikev2_cp_type_names, cp->isacp_type));
+			str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
 		return false;
 	}
 
@@ -624,17 +627,19 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		if (cp->isacp_type != IKEv2_CP_CFG_REPLY) {
+			enum_buf cpb;
 			llog_sa(RC_LOG_SERIOUS, child,
-				  "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
-				  enum_name(&ikev2_cp_type_names, cp->isacp_type));
+				"ERROR expected IKEv2_CP_CFG_REPLY got a %s",
+				str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
 			return false;
 		}
 		break;
 	case SA_RESPONDER:
 		if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
+			enum_buf cpb;
 			llog_sa(RC_LOG_SERIOUS, child,
-				  "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
-				  enum_name(&ikev2_cp_type_names, cp->isacp_type));
+				"ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
+				str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
 			return false;
 		}
 		break;
@@ -705,11 +710,14 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			break;
 
 		default:
+		{
+			enum_buf tb;
 			llog_sa(RC_LOG, child,
-				  "unknown attribute %s length %u",
-				  enum_name(&ikev2_cp_attribute_type_names, cp_a.type),
-				  cp_a.len);
+				"unknown attribute %s length %u",
+				str_enum(&ikev2_cp_attribute_type_names, cp_a.type, &tb),
+				cp_a.len);
 			break;
+		}
 		}
 	}
 	return true;

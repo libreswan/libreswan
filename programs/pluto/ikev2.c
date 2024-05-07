@@ -1551,9 +1551,10 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		/* the previous lifetime event is retained */
 		if (pexpect(ike->sa.st_v2_lifetime_event != NULL)) {
 			delete_event(&ike->sa); /* relying on retained */
-			dbg("#%lu is retaining %s with is previously set timeout",
-			    ike->sa.st_serialno,
-			    enum_name(&event_type_names, ike->sa.st_v2_lifetime_event->ev_type));
+			enum_buf tb;
+			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
+			     ike->sa.st_serialno,
+			     str_enum(&event_type_names, ike->sa.st_v2_lifetime_event->ev_type, &tb));
 		}
 		break;
 
@@ -1872,10 +1873,11 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	/* default */
 	passert(result >= STF_FAIL_v1N);
 	v2_notification_t notification = result - STF_FAIL_v1N;
+	enum_buf nb;
 	llog_pexpect(ike->sa.logger, HERE,
 		     "state transition '%s' failed with %s",
 		     transition->story,
-		     enum_name(&v2_notification_names, notification));
+		     str_enum(&v2_notification_names, notification, &nb));
 	on_delete(&ike->sa, skip_send_delete);
 	connection_delete_ike_family(&ike, HERE);
 }

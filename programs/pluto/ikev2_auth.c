@@ -453,8 +453,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 	case IKEv2_AUTH_PSK:
 	{
 		if (that_auth != AUTH_PSK) {
+			enum_buf an;
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    enum_name(&keyword_auth_names, that_auth));
+				    str_enum(&keyword_auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
@@ -476,8 +477,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		 */
 		if (that_auth != AUTH_NULL &&
 		    !ike->sa.st_connection->remote->host.config->authby.null) {
+			enum_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    enum_name(&keyword_auth_names, that_auth));
+				    str_enum(&keyword_auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
@@ -495,8 +497,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 	{
 		if (that_auth != AUTH_ECDSA &&
 		    that_auth != AUTH_RSASIG) {
+			enum_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    enum_name(&keyword_auth_names, that_auth));
+				    str_enum(&keyword_auth_names, that_auth, &an));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -575,8 +578,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		}
 
 		dbg("digsig:   no match");
+		enum_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    enum_name(&keyword_auth_names, that_auth));
+			    str_enum(&keyword_auth_names, that_auth, &an));
 
 	}
 	default:

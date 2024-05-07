@@ -1261,12 +1261,15 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	case ISAKMP_CFG_ACK:
 		break;	/* OK */
 	default:
-		log_state(RC_LOG, st,
-			  "Expecting MODE_CFG_REPLY; got %s instead.",
-			  enum_name(&attr_msg_type_names,
-				    md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.
-				    mode_attribute.isama_type));
+	{
+		enum_buf mb;
+		llog(RC_LOG, st->logger,
+		     "Expecting MODE_CFG_REPLY; got %s instead.",
+		     str_enum(&attr_msg_type_names,
+			      md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type,
+			      &mb));
 		return STF_IGNORE;
+	}
 	}
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -1438,12 +1441,14 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		log_state(RC_LOG, st,
-			  "Expecting ISAKMP_CFG_REQUEST, got %s instead (ignored).",
-			  enum_name(&attr_msg_type_names,
-				    ma->isama_type));
+	{
+		enum_buf tb;
+		llog(RC_LOG, st->logger,
+		     "Expecting ISAKMP_CFG_REQUEST, got %s instead (ignored).",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
 		/* ??? what should we do here?  Pretend all is well? */
 		break;
+	}
 
 	case ISAKMP_CFG_REQUEST:
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -2227,12 +2232,14 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	switch (ma->isama_type) {
 	default:
-		log_state(RC_LOG, st,
-			"Expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead (ignored).",
-			enum_name(&attr_msg_type_names,
-				  ma->isama_type));
+	{
+		enum_buf tb;
+		llog(RC_LOG, st->logger,
+		     "Expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead (ignored).",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
 		/* ??? what are we supposed to do here?  Original code fell through to next case! */
 		return STF_FAIL_v1N;
+	}
 
 	case ISAKMP_CFG_SET:
 		gotset = true;
@@ -2352,9 +2359,10 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			st->st_oakley.doing_xauth = false;
 			return STF_OK;
 		} else {
-			log_state(RC_LOG, st, "xauth: xauth_client_ackstatus() returned %s",
-				      enum_name(&stf_status_names, stat));
-			log_state(RC_LOG, st, "XAUTH: aborting entire IKE Exchange");
+			enum_buf sb;
+			llog(RC_LOG, st->logger, "xauth: xauth_client_ackstatus() returned %s",
+			     str_enum(&stf_status_names, stat, &sb));
+			llog(RC_LOG, st->logger, "XAUTH: aborting entire IKE Exchange");
 			return STF_FATAL;
 		}
 	}

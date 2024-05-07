@@ -66,10 +66,11 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
 	enum_buf pb;
+	enum_buf an;
 	ldbg_sa(ike, "%s() called for %s to %s PSK with authby=%s",
 		__func__, ike->sa.st_state->name,
 		str_enum_short(&perspective_names, perspective, &pb),
-		enum_name(&keyword_auth_names, authby));
+		str_enum(&keyword_auth_names, authby, &an));
 
 	/* this is the IKE_AUTH exchange, so a given */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);

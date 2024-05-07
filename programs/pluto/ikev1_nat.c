@@ -129,8 +129,9 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md)
 		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
 
 		st->hidden_variables.st_nat_traversal = LELEM(v);
-		dbg("enabling possible NAT-traversal with method %s",
-		    enum_name(&natt_method_names, v));
+		enum_buf vb;
+		ldbg(st->logger, "enabling possible NAT-traversal with method %s",
+		    str_enum(&natt_method_names, v, &vb));
 	}
 }
 
@@ -374,13 +375,12 @@ static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 		str_lset(&natt_method_names, nt & NAT_T_DETECTED, &lb) :
 		"no NAT detected";
 
+	enum_buf nb;
 	dbg("NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
-	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ?
-	    enum_name(&natt_method_names,
-		      NAT_TRAVERSAL_METHOD_IETF_RFC) :
-	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ?
-	    enum_name(&natt_method_names,
-		      NAT_TRAVERSAL_METHOD_IETF_02_03) :
+	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ? str_enum(&natt_method_names,
+							       NAT_TRAVERSAL_METHOD_IETF_RFC, &nb) :
+	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ? str_enum(&natt_method_names,
+								 NAT_TRAVERSAL_METHOD_IETF_02_03, &nb) :
 	    "unknown or unsupported method",
 	    sport,
 	    rslt);

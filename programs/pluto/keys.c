@@ -481,11 +481,12 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	}
 
 	id_buf this_buf, that_buf;
-	dbg("%s() using IDs for %s->%s of kind %s",
-	    __func__,
-	    str_id(this_id, &this_buf),
-	    str_id(that_id, &that_buf),
-	    enum_name(&secret_kind_names, kind));
+	enum_buf kb;
+	ldbg(c->logger, "%s() using IDs for %s->%s of kind %s",
+	     __func__,
+	     str_id(this_id, &this_buf),
+	     str_id(that_id, &that_buf),
+	     str_enum(&secret_kind_names, kind, &kb));
 
 	return lsw_find_secret_by_id(pluto_secrets, kind,
 				     this_id, that_id, asym);

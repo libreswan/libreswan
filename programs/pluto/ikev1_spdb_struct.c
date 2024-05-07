@@ -688,14 +688,15 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 						    "multiple DH groups were set in aggressive mode. Only first one used.");
 				}
 
+				enum_buf eb, hb;
 				llog(RC_LOG_SERIOUS, logger,
-					    "transform (%s,%s,%s keylen %d) ignored.",
-					    enum_name(&oakley_enc_names,
-						      algs.encrypt->common.ikev1_oakley_id),
-					    enum_name(&oakley_hash_names,
-						      algs.prf->common.ikev1_oakley_id),
-					    algs.dh->common.fqn,
-					    algs.enckeylen);
+				     "transform (%s,%s,%s keylen %d) ignored.",
+				     str_enum(&oakley_enc_names,
+					      algs.encrypt->common.ikev1_oakley_id, &eb),
+				     str_enum(&oakley_hash_names,
+					      algs.prf->common.ikev1_oakley_id, &hb),
+				     algs.dh->common.fqn,
+				     algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
 				/*

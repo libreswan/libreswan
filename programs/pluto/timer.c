@@ -155,9 +155,10 @@ void delete_state_event(struct state_event **evp, where_t where)
 
 	passert(e->ev_state != NULL);
 
+	enum_buf tb;
 	dbg("#%lu deleting %s",
 	    e->ev_state->st_serialno,
-	    enum_name(&event_type_names, e->ev_type));
+	    str_enum(&event_type_names, e->ev_type, &tb));
 
 	/* first the event */
 	destroy_timeout(&e->timeout);
@@ -557,10 +558,11 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
+		enum_buf tb;
 		llog_pexpect(st->logger, where,
 			     "#%lu already has %s scheduled; forcing %s",
 			     st->st_serialno,
-			     enum_name(&event_type_names, (*evp)->ev_type),
+			     str_enum(&event_type_names, (*evp)->ev_type, &tb),
 			     event_name);
 		delete_state_event(evp, where);
 	}
@@ -588,14 +590,16 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 {
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
+		enum_buf tb;
 		llog_pexpect(st->logger, where,
 			     "#%lu has no .st_event field for %s",
-			     st->st_serialno, enum_name(&event_type_names, type));
+			     st->st_serialno, str_enum(&event_type_names, type, &tb));
 		return;
 	}
 	if (*evp != NULL) {
+		enum_buf tb;
 		ldbg(st->logger, "#%lu requesting %s-event@%p be deleted "PRI_WHERE,
-		     st->st_serialno, enum_name(&event_type_names, (*evp)->ev_type),
+		     st->st_serialno, str_enum(&event_type_names, (*evp)->ev_type, &tb),
 		     *evp, pri_where(where));
 		pexpect(st == (*evp)->ev_state);
 		delete_state_event(evp, where);
@@ -637,9 +641,10 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 		     "IMPAIR: no existing %s event to delete",
 		     event_name.buf);
 	} else if ((*evp)->ev_type != event_type) {
+		enum_buf tb;
 		llog(RC_COMMENT, logger,
 		     "IMPAIR: deleting existing %s event occupying the slot shared with %s",
-		     enum_name(&event_type_names, (*evp)->ev_type),
+		     str_enum(&event_type_names, (*evp)->ev_type, &tb),
 		     event_name.buf);
 		delete_state_event(evp, HERE);
 	} else {

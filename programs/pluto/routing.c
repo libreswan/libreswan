@@ -587,13 +587,14 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 						  where_t where)
 {
 	connection_buf cb;
+	enum_buf rsb;
 	ldbg(logger,
 	     "kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
 	     __func__,
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom),
 	     pri_connection(c, &cb),
-	     enum_name(&routing_names, c->routing.state),
+	     str_enum(&routing_names, c->routing.state, &rsb),
 	     pri_shunk(c->config->sec_label));
 
 	if (!PEXPECT(logger, is_labeled_template(c) || is_labeled_parent(c))) {
@@ -1320,9 +1321,10 @@ void state_disowns_connection(struct state *st)
 			llog_pexpect(st->logger, HERE,
 				     connection_owner_names[i]);
 #else
+			enum_buf ob;
 			pdbgf(DBG_ROUTING, st->logger,
 			      "routing: disown .%s",
-			      enum_name(&connection_owner_names, i));
+			      str_enum(&connection_owner_names, i, &ob));
 #endif
 			c->routing.owner[i] = SOS_NOBODY;
 		}
@@ -1352,10 +1354,11 @@ bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger,
 	bool ok_to_delete = true;
 	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
 		if (c->routing.owner[i] != SOS_NOBODY) {
+			enum_buf ob;
 			llog_pexpect(logger, where,
 				     "connection "PRI_CO" [%p] is owned by .%s "PRI_SO,
 				     pri_connection_co(c), c,
-				     enum_name(&connection_owner_names, i),
+				     str_enum(&connection_owner_names, i, &ob),
 				     pri_so(c->routing.owner[i]));
 			ok_to_delete = false;
 		}
