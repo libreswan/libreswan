@@ -25,26 +25,27 @@ static void test_enum(enum_names *enum_test, int i,
 	char scratch[100];
 
 	/* find a name, if any, for this value */
-	const char *name = enum_name(enum_test, i);
+	enum_buf name;
+	bool found = enum_long(enum_test, i, &name);
 	switch (expect) {
 	case OPTIONAL:
-		if (name == NULL) {
+		if (!found) {
 			return;
 		}
 		break;
 	case PRESENT:
-		if (name == NULL) {
+		if (!found) {
 			printf("name for %d missing (should be present)\n", i);
 			return;
 		}
 		break;
 	case ABSENT:
-		if (name != NULL) {
+		if (found) {
 			printf("name for %d present (should be absent)\n", i);
 		}
 		return;
 	}
-	printf("  %3d -> %s\n", i, name);
+	printf("  %3d -> %s\n", i, name.buf);
 
 	/*
 	 * So that it is easy to see what was tested, print something
@@ -62,7 +63,7 @@ static void test_enum(enum_names *enum_test, int i,
 		jam_enum(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		if (hunk_streq(s, name)) {
+		if (hunk_streq(s, name.buf)) {
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
@@ -71,8 +72,8 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	{
-		printf(PREFIX "search %s: ", name);
-		int e = enum_search(enum_test, name);
+		printf(PREFIX "search %s: ", name.buf);
+		int e = enum_search(enum_test, name.buf);
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -82,8 +83,8 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	{
-		printf(PREFIX "match %s: ", name);
-		int e = enum_match(enum_test, shunk1(name));
+		printf(PREFIX "match %s: ", name.buf);
+		int e = enum_match(enum_test, shunk1(name.buf));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -92,8 +93,8 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-	if (strchr(name, '(') != NULL) {
-		char *clone = clone_str(name, "trunc_name");
+	if (strchr(name.buf, '(') != NULL) {
+		char *clone = clone_str(name.buf, "trunc_name");
 		shunk_t trunc_name = shunk2(clone, strcspn(clone, "("));
 		passert(clone[trunc_name.len] == '(');
 		clone[trunc_name.len] = '*';
@@ -152,7 +153,7 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 
-	if (streq(short_name.buf, name)) {
+	if (streq(short_name.buf, name.buf)) {
 		/* remaining tests redundant */
 		return;
 	}
@@ -244,11 +245,22 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	printf(PREFIX "enum_name table %lu: ", val);
 	if (en == NULL) {
 		printf("N/A\n");
-	} else if (name == enum_name(en, val)) {
-		printf("OK\n");
 	} else {
-		printf("ERROR\n");
-		errors++;
+		enum_buf n;
+		if (enum_name(en, val, &n)) {
+			/*n.buf is never NULL */
+			if (name == n.buf) {
+				printf("OK\n");
+			} else {
+				printf("ERROR (pointer)\n");
+				errors++;
+			}
+		} else if (name == NULL) {
+			printf("OK\n");
+		} else {
+			printf("ERROR (lookup)\n");
+			errors++;
+		}
 	}
 
 	{

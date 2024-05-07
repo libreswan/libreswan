@@ -184,21 +184,20 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 	 */
 	struct state *st;
 	enum event_type event_type;
-	const char *event_name;
+	enum_buf event_name;
 	deltatime_t event_delay;
 
 	{
 		struct state_event *ev = arg;
 		passert(ev != NULL);
 		event_type = ev->ev_type;
-		event_name = enum_name(&event_type_names, event_type);
+		PASSERT(event->logger, enum_name(&event_type_names, event_type, &event_name));
 		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
-		passert(event_name != NULL);
 
 		ldbg(event->logger, "%s: processing %s-event@%p for %s SA "PRI_SO" in state %s",
-		     __func__, event_name, ev,
+		     __func__, event_name.buf, ev,
 		     IS_IKE_SA(st) ? "IKE" : "CHILD",
 		     pri_so(st->st_serialno), st->st_state->short_name);
 
@@ -206,14 +205,14 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 		if (evp == NULL) {
 			llog_pexpect(st->logger, HERE,
 				     ".st_event field is NULL for %s",
-				     event_name);
+				     event_name.buf);
 			return;
 		}
 
 		if (*evp != ev) {
 			llog_pexpect(st->logger, HERE,
 				     ".st_event is %p but should be %s-pe@%p",
-				     *evp, event_name, ev);
+				     *evp, event_name.buf, ev);
 			return;
 		}
 
@@ -225,7 +224,7 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 	statetime_t start = statetime_backdate(st, &event->inception);
 	dispatch_event(st, event_type, event_delay, event->logger,
 		       /*detach_whack*/false);
-	statetime_stop(&start, "%s() %s", __func__, event_name);
+	statetime_stop(&start, "%s() %s", __func__, event_name.buf);
 }
 
 static void dispatch_event(struct state *st, enum event_type event_type,
@@ -546,13 +545,14 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	 */
 	pexpect(deltasecs(delay) < secs_per_day * 31);
 
-	const char *event_name = enum_name(&event_type_names, type);
+	enum_buf event_name;
+	enum_name(&event_type_names, type, &event_name);
 
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
 		llog_pexpect(st->logger, where,
 			     "#%lu has no .st_*event field for %s",
-			     st->st_serialno, event_name);
+			     st->st_serialno, event_name.buf);
 		return;
 	}
 
@@ -563,11 +563,11 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 			     "#%lu already has %s scheduled; forcing %s",
 			     st->st_serialno,
 			     str_enum(&event_type_names, (*evp)->ev_type, &tb),
-			     event_name);
+			     event_name.buf);
 		delete_state_event(evp, where);
 	}
 
-	struct state_event *ev = alloc_thing(struct state_event, event_name);
+	struct state_event *ev = alloc_thing(struct state_event, __func__);
 	ev->ev_type = type;
 	ev->ev_state = st;
 	ev->ev_epoch = mononow();
@@ -577,10 +577,10 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 
 	deltatime_buf buf;
 	ldbg(st->logger, "%s: newref %s-pe@%p timeout in %s seconds for #%lu",
-	     __func__, event_name, ev, str_deltatime(delay, &buf),
+	     __func__, event_name.buf, ev, str_deltatime(delay, &buf),
 	     ev->ev_state->st_serialno);
 
-	schedule_timeout(event_name, &ev->timeout, delay, timer_event_cb, ev);
+	schedule_timeout(event_name.buf, &ev->timeout, delay, timer_event_cb, ev);
 }
 
 /*

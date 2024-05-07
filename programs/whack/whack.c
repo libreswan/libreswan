@@ -2492,10 +2492,10 @@ int main(int argc, char **argv)
 					JAMBUF(buf) {
 						jam(buf, "  ");
 						jam_enum_short(buf, &debug_names, e);
-						const char *help = enum_name(&debug_help, e);
-						if (help != NULL) {
+						enum_buf help;
+						if (enum_name(&debug_help, e, &help)) {
 							jam(buf, ": ");
-							jam_string(buf, help);
+							jam_string(buf, help.buf);
 						}
 						fprintf(stderr, PRI_SHUNK"\n",
 							pri_shunk(jambuf_as_shunk(buf)));

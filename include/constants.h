@@ -237,14 +237,13 @@ size_t jam_enum_long(struct jambuf *, const struct enum_names *en, unsigned long
 #define jam_enum jam_enum_long
 #define str_enum str_enum_long
 #define enum_show str_enum_long /* XXX: TBD */
+#define enum_name enum_long
 
 bool enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);
 const char *str_enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);
 size_t jam_enum_short(struct jambuf *, const struct enum_names *en, unsigned long val);
 
 #define enum_name_short enum_short
-
-extern const char *enum_name(enum_names *ed, unsigned long val);
 
 /* drop prefix + transform [_A-Z]->[-a-z] */
 size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);

@@ -1985,25 +1985,22 @@ static void DBG_print_struct(const char *label, unsigned level,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			{
-				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
-					     ISAKMP_ATTR_AF_TV);
-				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
 				/*
 				 * try to deal with fp->desc
 				 * containing a selection of
 				 * AF+<value> and <value> entries.
-				 *
-				 * NB and NAME must have same scope.
 				 */
+				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+					     ISAKMP_ATTR_AF_TV);
+				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
 				esb_buf nb;
-				const char *name = enum_name(fp->desc, last_enum);
-				if (name == NULL) {
-					name = enum_show(fp->desc, n, &nb);
+				if (!enum_name(fp->desc, last_enum, &nb)) {
+					enum_name(fp->desc, n, &nb);
 				}
 				DBG_log("   %s: %s%s (0x%jx)",
 					fp->name,
 					immediate ? "AF+" : "",
-					name, n);
+					nb.buf, n);
 				break;
 			}
 
@@ -2207,6 +2204,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 
 			case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
 			case ft_af_enum: /* Attribute Format + value from an enumeration */
+			{
 				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
 					     ISAKMP_ATTR_AF_TV);
 				/*
@@ -2215,22 +2213,27 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 				 * (value or AF+value) is
 				 * found is it acceptable.
 				 */
+				enum_buf b;
 				if (fp->field_type == ft_af_enum &&
-				    enum_name(fp->desc, n) == NULL) {
+				    !enum_name(fp->desc, n, &b)) {
 					return diag("%s of %s has an unknown value: %s%ju (0x%jx)",
 						    fp->name, sd->name,
 						    immediate ? "AF+" : "",
 						    n & ~ISAKMP_ATTR_AF_MASK, n);
 				}
 				break;
+			}
 
 			case ft_enum:   /* value from an enumeration */
-				if (enum_name(fp->desc, n) == NULL) {
+			{
+				enum_buf b;
+				if (!enum_name(fp->desc, n, &b)) {
 					return diag("%s of %s has an unknown value: %ju (0x%jx)",
 						    fp->name, sd->name,
 						    n, n);
 				}
 				break;
+			}
 
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_mnpc:
@@ -2567,9 +2570,11 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
 	case ft_af_enum: /* Attribute Format + value from an enumeration */
+	{
 		*immediate = ((n & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV);
+		enum_buf b;
 		if (fp->field_type == ft_af_enum &&
-		    enum_name(fp->desc, n) == NULL) {
+		    !enum_name(fp->desc, n, &b)) {
 #define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", \
 				fp->name,				\
 				sd->name,				\
@@ -2583,9 +2588,12 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 			llog(RC_LOG, outs->logger, "IMPAIR: emitting "MSG);
 		}
 		break;
+	}
 
 	case ft_enum:   /* value from an enumeration */
-		if (enum_name(fp->desc, n) == NULL) {
+	{
+		enum_buf b;
+		if (!enum_name(fp->desc, n, &b)) {
 			if (!impair.emitting) {
 				llog_pexpect(outs->logger, HERE,
 					     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
@@ -2598,6 +2606,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 			     fp->name, sd->name, n, n);
 		}
 		break;
+	}
 
 	case ft_loose_enum:     /* value from an enumeration with only some names known */
 		break;

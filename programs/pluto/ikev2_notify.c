@@ -118,23 +118,23 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		type = "status";
 	}
 
-	const char *name = enum_name(&v2_notification_names, n); /* might be NULL */
-	if (name == NULL) {
+	enum_buf name;
+	if (!enum_name(&v2_notification_names, n, &name)) {
 		dbg("%s notification %d is unknown", type, n);
 		return;
 	}
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
 	if (v2_pd == PD_v2_INVALID) {
 		/* if it was supported there'd be space to save it */
-		dbg("%s notification %s is not supported", type, name);
+		ldbg(logger, "%s notification %s is not supported", type, name.buf);
 		return;
 	}
 	if (md->pd[v2_pd] != NULL) {
-		dbg("%s duplicate notification %s ignored", type, name);
+		ldbg(logger, "%s duplicate notification %s ignored", type, name.buf);
 		return;
 	}
 	if (DBGP(DBG_TMI)) {
-		DBG_log("%s notification %s saved", type, name);
+		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
 	md->pd[v2_pd] = notify;
 }

@@ -29,8 +29,8 @@ bool test_lset(const struct enum_names *en, lset_t val)
 	for (unsigned e = 0; val != 0; e++) {
 		lset_t bit = LELEM(e);
 		if (val & bit) {
-			const char *n = enum_name(en, e);
-			if (n == NULL) {
+			enum_buf b;
+			if (!enum_name(en, e, &b)) {
 				return false;
 			}
 		}

@@ -134,12 +134,6 @@ static const char *find_enum(const struct enum_names *en, unsigned long val, boo
 	return enum_range_name(range, val, prefix, shorten);
 }
 
-/* look up enum names in an enum_names */
-const char *enum_name(enum_names *ed, unsigned long val)
-{
-	return find_enum(ed, val, /*shorten?*/false);
-}
-
 static void bad_enum_name(enum_buf *b, unsigned long val)
 {
 	snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
@@ -324,8 +318,11 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 			   unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		return NULL;
+	}
 
-	return en == NULL ? NULL : enum_name(en, val);
+	return find_enum(en, val, /*shorten?*/false);
 }
 
 const char *str_enum_enum(enum_enum_names *een, unsigned long table,
@@ -387,7 +384,8 @@ void check_enum_names(const struct enum_names **checklist)
 		 * a value that isn't covered.  -42 is probably not
 		 * covered.
 		 */
-		(void) enum_name(*e, -42UL);
+		enum_buf b;
+		enum_name(*e, -42UL, &b);
 	}
 }
 
@@ -401,7 +399,8 @@ void check_enum_enum_names(const struct enum_enum_names **checklist)
 		 * a value that isn't covered.  -42 is probably not
 		 * covered.
 		 */
-		(void) enum_name(*e, -42UL);
+		enum_buf b;
+		enum_name(*e, -42UL, &b);
 	}
 	/* check that enum_enum_names are well-formed */
 	for (const struct enum_enum_names **e = checklist; *e != NULL; e++) {

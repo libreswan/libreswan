@@ -1740,14 +1740,10 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					 ISAKMP_ATTR_RTYPE_MASK];
 
 				if (vdesc != NULL) {
-					const char *nm =
-						enum_name(vdesc,
-							  val);
-
-					if (nm != NULL) {
-						DBG_log("   [%u is %s]",
-							(unsigned)val,
-							nm);
+					enum_buf nm;
+					if (enum_name(vdesc, val, &nm)) {
+						LDBG_log(st->logger, "   [%u is %s]",
+							(unsigned)val, nm.buf);
 					}
 				}
 			}
@@ -2347,12 +2343,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		if (vdesc != NULL) {
 			/* reject unknown enum values */
-			if (enum_name(vdesc, val) == NULL) {
+			enum_buf b;
+			if (!enum_name(vdesc, val, &b)) {
 				esb_buf b;
-				log_state(RC_LOG_SERIOUS, st,
-					  "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
-					  val,
-					  enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
+				     val,
+				     enum_show(&ipsec_attr_names, a.isaat_af_type, &b));
 				return false;
 			}
 			if (DBGP(DBG_BASE)) {
