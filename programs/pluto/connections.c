@@ -3844,7 +3844,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(child_sa.ipcomp, COMPRESS);
 	if (!never_negotiate(c) &&
 	    c->config->child_sa.encap_mode != ENCAP_MODE_UNSET) {
-		CS(enum_name_short(&encap_mode_names, c->config->child_sa.encap_mode));
+		enum_buf eb;
+		CS(str_enum_short(&encap_mode_names, c->config->child_sa.encap_mode, &eb));
 	}
 	CT(child_sa.pfs, PFS);
 	CT(decap_dscp, DECAP_DSCP);

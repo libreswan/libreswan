@@ -110,13 +110,13 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	printf(PREFIX "short_name %d: ", i);
-	const char *short_name = enum_name_short(enum_test, i);
-	printf("%s ", short_name);
-	if (short_name == NULL) {
+	enum_buf short_name;
+	if (!enum_name_short(enum_test, i, &short_name)) {
 		printf("ERROR\n");
 		errors++;
 		return;
 	}
+	printf("%s ", short_name.buf);
 	printf("OK\n");
 
 	{
@@ -125,7 +125,7 @@ static void test_enum(enum_names *enum_test, int i,
 		jam_enum_short(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		if (hunk_streq(s, short_name)) {
+		if (hunk_streq(s, short_name.buf)) {
 			printf("OK\n");
 		} else {
 			printf("ERROR\n");
@@ -139,8 +139,8 @@ static void test_enum(enum_names *enum_test, int i,
 		jam_enum_human(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		if (strchr(short_name, '_') == NULL) {
-			if (hunk_strcaseeq(s, short_name)) {
+		if (strchr(short_name.buf, '_') == NULL) {
+			if (hunk_strcaseeq(s, short_name.buf)) {
 				printf("OK\n");
 			} else {
 				printf("ERROR\n");
@@ -152,14 +152,14 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 
-	if (streq(short_name, name)) {
+	if (streq(short_name.buf, name)) {
 		/* remaining tests redundant */
 		return;
 	}
 
 	{
-		printf(PREFIX "match %s [short]: ", short_name);
-		int e = enum_match(enum_test, shunk1(short_name));
+		printf(PREFIX "match %s [short]: ", short_name.buf);
+		int e = enum_match(enum_test, shunk1(short_name.buf));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -168,11 +168,11 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-	const char *bra = strchr(short_name, '(');
+	const char *bra = strchr(short_name.buf, '(');
 	if (bra != NULL) {
-		int tsl = bra - short_name;
-		printf(PREFIX "match %.*s [short+trunc]: ", tsl, short_name);
-		int e = enum_match(enum_test, shunk2(short_name, tsl));
+		int tsl = bra - short_name.buf;
+		printf(PREFIX "match %.*s [short+trunc]: ", tsl, short_name.buf);
+		int e = enum_match(enum_test, shunk2(short_name.buf, tsl));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -276,7 +276,8 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		jam_enum_enum_short(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		if (val_ok && hunk_streq(s, enum_name_short(en, val))) {
+		enum_buf enb;
+		if (val_ok && hunk_streq(s, str_enum_short(en, val, &enb))) {
 			printf("OK\n");
 		} else if (s.len > 0) {
 			printf("OK\n");

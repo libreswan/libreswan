@@ -442,27 +442,28 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 	dbg("checking for known CERT payloads");
 	for (struct payload_digest *p = cert_payloads; p != NULL; p = p->next) {
 		enum ike_cert_type cert_type;
-		const char *cert_name;
+		const struct enum_names *cert_names;
 		switch (ike_version) {
 		case IKEv2:
 			cert_type = p->payload.v2cert.isac_enc;
-			cert_name = enum_name_short(&ikev2_cert_type_names, cert_type);
+			cert_names = &ikev2_cert_type_names;
 			break;
 		case IKEv1:
 			cert_type = p->payload.cert.isacert_type;
-			cert_name = enum_name_short(&ike_cert_type_names, cert_type);
+			cert_names = &ike_cert_type_names;
 			break;
 		default:
 			bad_case(ike_version);
 		}
-		if (cert_name == NULL) {
+		enum_buf cert_name;
+		if (!enum_name_short(cert_names, cert_type, &cert_name)) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "ignoring certificate with unknown type %d",
 				    cert_type);
 			continue;
 		}
 
-		dbg("saving certificate of type '%s'", cert_name);
+		ldbg(logger, "saving certificate of type '%s'", cert_name.buf);
 		/* convert remaining buffer to something nss likes */
 		shunk_t payload_hunk = pbs_in_left(&p->pbs);
 		/* NSS doesn't do const */
@@ -500,7 +501,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		}
 		default:
 			llog(RC_LOG_SERIOUS, logger,
-				    "ignoring %s certificate payload", cert_name);
+			     "ignoring %s certificate payload", cert_name.buf);
 			break;
 		}
 	}

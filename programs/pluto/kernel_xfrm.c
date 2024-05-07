@@ -773,8 +773,10 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   deltatime_t use_lifetime UNUSED,
 				   struct logger *logger, const char *func)
 {
-	const char *op_str = enum_name_short(&kernel_policy_op_names, op);
-	const char *dir_str = enum_name_short(&direction_names, dir);
+	enum_buf op_str;
+	enum_name_short(&kernel_policy_op_names, op, &op_str);
+	enum_buf dir_str;
+	enum_name_short(&direction_names, dir, &dir_str);
 
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
@@ -827,7 +829,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		(op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND ? XFRM_POLICY_IN :
 		 XFRM_POLICY_OUT);
 	ldbg(logger, "%s()   policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
-	     func, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
+	     func, policy_name, xfrm_action, xfrm_dir, op_str.buf, dir_str.buf);
 
 	struct {
 		struct nlmsghdr n;

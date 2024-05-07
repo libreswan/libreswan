@@ -195,8 +195,8 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  *
  * Recommended for determining an enum's validity:
  *
- *   enum_name*() returns the name of an enum value, or NULL if
- *   unnamed.
+ *   enum_name*() returns true when known, and sets enum_buf to a
+ *   non-NULL string.
  *
  * Recommended for logging:
  *
@@ -207,22 +207,8 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  *   a mashup of the standard prefix and the numeric value.
  *
  * {*}_short() same as for root, but with any standard prefix removed.
- */
-
-typedef const struct enum_names enum_names;
-
-extern const char *enum_name(enum_names *ed, unsigned long val);
-extern const char *enum_name_short(enum_names *ed, unsigned long val);
-
-size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
-size_t jam_enum_long(struct jambuf *, enum_names *en, unsigned long val);
-
-#define jam_enum jam_enum_long
-/* drop prefix + transform [_A-Z]->[-a-z] */
-size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);
-
-/*
- * caller-allocated buffer for str_enum*().
+ *
+ * Caller-allocated buffer
  *
  * Enough space for decimal rep of any unsigned long + "??"  sizeof
  * yields log-base-256 of maximum value.  Multiplying by 241/100
@@ -235,11 +221,25 @@ size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);
  * is never NULL.  DANGER: enum_buf can't be returned as that moves
  * the struct invalidating the internal pointer.
  */
+
 typedef struct {
 	const char *buf;
 	char tmp[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
 } enum_buf;
 typedef enum_buf esb_buf; /* XXX: TBD */
+
+typedef const struct enum_names enum_names;
+
+extern const char *enum_name(enum_names *ed, unsigned long val);
+extern bool enum_name_short(enum_names *ed, unsigned long val, enum_buf *b);
+
+size_t jam_enum_short(struct jambuf *, enum_names *en, unsigned long val);
+size_t jam_enum_long(struct jambuf *, enum_names *en, unsigned long val);
+
+#define jam_enum jam_enum_long
+/* drop prefix + transform [_A-Z]->[-a-z] */
+size_t jam_enum_human(struct jambuf *, enum_names *en, unsigned long val);
+
 
 extern const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *);
 extern const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *);

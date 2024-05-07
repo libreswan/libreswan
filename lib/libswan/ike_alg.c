@@ -952,10 +952,13 @@ static void check_enum_name(const char *what,
 				     alg->algo_type->name,
 				     alg->fqn, what);
 		}
-		const char *enum_name = enum_name_short(enum_names, id);
+		enum_buf enum_name;
+		bool ok = enum_name_short(enum_names, id, &enum_name);
 		ldbgf(DBG_CRYPT, logger, "%s id: %d enum name: %s",
-		      what, id, enum_name);
-		pexpect_ike_alg_has_name(logger, HERE, alg, enum_name, "enum table name");
+		      what, id, enum_name.buf);
+		pexpect_ike_alg_has_name(logger, HERE, alg,
+					 (ok ? enum_name.buf : NULL),
+					 "enum table name");
 	} else {
 		ldbgf(DBG_CRYPT, logger, "%s id: %d enum name: N/A", what, id);
 	}

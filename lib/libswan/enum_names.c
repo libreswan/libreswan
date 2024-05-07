@@ -135,13 +135,26 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return enum_range_name(range, val, prefix, /*shorten?*/false);
 }
 
-const char *enum_name_short(enum_names *ed, unsigned long val)
+static void bad_enum_name(enum_buf *b, unsigned long val)
+{
+	snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
+	b->buf = b->tmp;
+}
+
+bool enum_name_short(enum_names *ed, unsigned long val, enum_buf *b)
 {
 	const char *prefix = NULL;
-	/* can be NULL */
+	/* can be NULL; handled by enum_range_name() */
 	const struct enum_names *range = enum_range(ed, val, &prefix);
-	/* can be NULL */
-	return enum_range_name(range, val, prefix, /*shorten?*/true);
+	/* can be NULL; handled here */
+	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
+	if (name == NULL) {
+		bad_enum_name(b, val);
+		return false;
+	}
+
+	b->buf = name;
+	return true;
 }
 
 static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val)
@@ -170,7 +183,11 @@ size_t jam_enum_long(struct jambuf *buf, enum_names *en, unsigned long val)
 size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	size_t s = 0;
-	const char *name = enum_name_short(en, val);
+	const char *prefix = NULL;
+	/* can be NULL; handled by enum_range_name() */
+ 	const struct enum_names *range = enum_range(en, val, &prefix);
+	/* can be NULL; handled here */
+	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
 	if (name == NULL) {
 		s += jam_bad_enum(buf, en, val);
 	} else {
@@ -182,7 +199,11 @@ size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
 {
 	size_t s = 0;
-	const char *name = enum_name_short(en, val);
+	const char *prefix = NULL;
+	/* can be NULL; handled by enum_range_name() */
+ 	const struct enum_names *range = enum_range(en, val, &prefix);
+	/* can be NULL; handled here */
+	const char *name = enum_range_name(range, val, prefix, /*shorten?*/true);
 	if (name == NULL) {
 		s += jam_bad_enum(buf, en, val);
 	} else {
@@ -200,8 +221,7 @@ const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 {
 	b->buf = enum_name(ed, val);
 	if (b->buf == NULL) {
-		snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
-		b->buf = b->tmp;
+		bad_enum_name(b, val);
 	}
 	return b->buf;
 }
@@ -213,8 +233,7 @@ const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
 	/* could be NULL */
 	b->buf = enum_range_name(range, val, prefix, /*shorten?*/true);
 	if (b->buf == NULL) {
-		snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
-		b->buf = b->tmp;
+		bad_enum_name(b, val);
 	}
 	return b->buf;
 }

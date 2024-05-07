@@ -442,13 +442,15 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address to)
 {
 	struct connection *c = ike->sa.st_connection;
-	const char *xchg = enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg);
+	enum_buf xchg;
+	enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xchg);
 
 	ike->sa.st_viable_parent = false; /* just to be sure */
 
 	c->redirect.attempt++;
 	if (c->redirect.attempt > MAX_REDIRECTS) {
-		llog_sa(RC_LOG_SERIOUS, ike, "%s redirect exceeds limit; assuming redirect loop", xchg);
+		llog_sa(RC_LOG_SERIOUS, ike, "%s redirect exceeds limit; assuming redirect loop",
+			xchg.buf);
 		/*
 		 * Clear redirect.counter, revival code will see this
 		 * and, instead, schedule a revival.
@@ -469,7 +471,7 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 
 	address_buf b;
 	llog_sa(RC_LOG, ike, "%s response redirects to new gateway %s",
-		xchg, str_address_sensitive(&to, &b));
+		xchg.buf, str_address_sensitive(&to, &b));
 }
 
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *redirect_status)

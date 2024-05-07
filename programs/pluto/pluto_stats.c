@@ -331,22 +331,23 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 {
 	unsigned long other = stat->count[stat->count_ceiling];
 	for (unsigned long n = 0; n < stat->count_ceiling; n++) {
-		const char *nm = enum_name_short(stat->names, n + stat->floor);
 		unsigned long count = stat->count[n];
-		/* not logging "UNUSED" */
-		if (nm != NULL &&
-		    strstr(nm, "UNUSED") == NULL &&
-		    strstr(nm, "Reserved") == NULL) {
+		enum_buf nm;
+		if (enum_name_short(stat->names, n + stat->floor, &nm) &&
+		    strstr(nm.buf, "UNUSED") == NULL &&
+		    strstr(nm.buf, "Reserved") == NULL) {
+			/* not logging "UNUSED" */
 			show_raw(s, "total.%s.%s=%lu",
-				 stat->what, nm, count);
+				 stat->what, nm.buf, count);
 		} else {
 			other += count;
 		}
 	}
 	/* prefer enum's name */
-	const char *nm = enum_name_short(stat->names, stat->count_ceiling + stat->floor);
+	enum_buf nm;
 	show_raw(s, "total.%s.%s=%lu", stat->what,
-		 (nm == NULL ? "other" : nm), other);
+		 (enum_name_short(stat->names, stat->count_ceiling + stat->floor, &nm) ? nm.buf : "other"),
+		 other);
 }
 
 static void clear_pluto_stat(const struct pluto_stat *stat)
@@ -366,12 +367,12 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 * XXX: the bug is that the enum table contains names
 		 * that include UNUSED.  Skip them.
 		 */
-		const char *name = enum_name_short(names, e);
-		if (name != NULL &&
-		    strstr(name, "UNUSED") == NULL &&
-		    strstr(name, "Reserved") == NULL) {
+		enum_buf nm;
+		if (enum_name_short(names, e, &nm) &&
+		    strstr(nm.buf, "UNUSED") == NULL &&
+		    strstr(nm.buf, "Reserved") == NULL) {
 			show_raw(s, "total.%s.%s=%lu",
-				 what, name, count[e]);
+				 what, nm.buf, count[e]);
 		}
 	}
 }

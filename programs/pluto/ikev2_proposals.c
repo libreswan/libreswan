@@ -282,9 +282,9 @@ static void jam_transform(struct jambuf *buf, enum ikev2_trans_type type,
 	}
 }
 
-static const char *trans_type_name(enum ikev2_trans_type type)
+static void jam_trans_type(struct jambuf *buf, enum ikev2_trans_type type)
 {
-	return enum_name_short(&ikev2_trans_type_names, type);
+	jam_enum_short(buf, &ikev2_trans_type_names, type);
 }
 
 static void jam_trans_types(struct jambuf *buf, lset_t types)
@@ -296,14 +296,14 @@ static void jam_trans_types(struct jambuf *buf, lset_t types)
 static void jam_type_transform(struct jambuf *buf, enum ikev2_trans_type type,
 			       const struct ikev2_transform *transform)
 {
-	jam_string(buf, trans_type_name(type));
+	jam_trans_type(buf, type);
 	jam_string(buf, "=");
 	jam_transform(buf, type, transform);
 }
 
-static const char *protoid_name(enum ikev2_sec_proto_id protoid)
+static void jam_protoid(struct jambuf *buf, enum ikev2_sec_proto_id protoid)
 {
-	return enum_name_short(&ikev2_proposal_protocol_id_names, protoid);
+	jam_enum_short(buf, &ikev2_proposal_protocol_id_names, protoid);
 }
 
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
@@ -324,7 +324,8 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 	if (propnum != 0) {
 		jam(buf, "%d:", propnum);
 	}
-	jam(buf, "%s=", protoid_name(proposal->protoid));
+	jam_protoid(buf, proposal->protoid);
+	jam_string(buf, "=");
 	const char *sep = "";
 	enum ikev2_trans_type type;
 	const struct ikev2_transforms *transforms;
@@ -616,9 +617,10 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 							jam(buf, "remote proposal %u transform %d (",
 							    remote_propnum, remote_transform_nr);
 							jam_type_transform(buf, type, &remote_transform);
-							jam(buf, ") matches local proposal %d type %d (%s) transform %td",
-							    local_propnum,
-							    type, trans_type_name(type),
+							jam(buf, ") matches local proposal %d type %d (",
+							    local_propnum, type);
+							jam_trans_type(buf, type);
+							jam(buf, ") transform %td",
 							    local_transform - local_transforms->transform);
 						}
 						/*
@@ -869,9 +871,12 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				/* save the sentinel */
 				passert(!sentinel_transform->valid);
 				matching_local_proposal->sentinel_transform[type] = sentinel_transform;
-				dbg("local proposal %d type %s has %td transforms",
-				    local_propnum, trans_type_name(type),
-				    sentinel_transform - local_transforms->transform);
+				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+					jam(buf, "local proposal %d type ", local_propnum);
+					jam_trans_type(buf, type);
+					jam(buf, " has %td transforms",
+					    sentinel_transform - local_transforms->transform);
+				}
 			}
 			/*
 			 * A proposal's transform type can't be both
@@ -928,7 +933,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 		jam_string(remote_jam_buf, remote_proposal_sep);
 		remote_proposal_sep = " ";
 		jam(remote_jam_buf, "%d:", remote_proposal.isap_propnum);
-		jam_string(remote_jam_buf, protoid_name(remote_proposal.isap_protoid));
+		jam_protoid(remote_jam_buf, remote_proposal.isap_protoid);
 		jam_string(remote_jam_buf, ":");
 
 		/*
@@ -1932,24 +1937,26 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				     unsigned keylen,
 				     struct logger *logger)
 {
-	const char *protocol = enum_name_short(&ikev2_proposal_protocol_id_names, proposal->protoid);
-	if (proposal->protoid == 0 || protocol == NULL) {
+	enum_buf protocol;
+	if (proposal->protoid == 0 ||
+	    !enum_name_short(&ikev2_proposal_protocol_id_names, proposal->protoid, &protocol)) {
 		llog_pexpect(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
 		return false;
 	}
 	if (encrypt == NULL) {
-		llog_pexpect(logger, HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
+		llog_pexpect(logger, HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm",
+			     protocol.buf);
 		return false;
 	}
 	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
 		llog(RC_LOG_SERIOUS, logger,
-			    "IKEv2 %s %s ENCRYPT transform is not supported",
-			    protocol, encrypt->common.fqn);
+		     "IKEv2 %s %s ENCRYPT transform is not supported",
+		     protocol.buf, encrypt->common.fqn);
 		return false;
 	}
 	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
 		llog_pexpect(logger, HERE, "IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
-			     protocol, encrypt->common.fqn, keylen);
+			     protocol.buf, encrypt->common.fqn, keylen);
 		return false;
 	}
 
@@ -1962,14 +1969,14 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * attribute - it's redundant as there is only one
 		 * valid key length.
 		 */
-		dbg("omitting IKEv2 %s %s ENCRYPT transform key-length",
-		    protocol, encrypt->common.fqn);
+		ldbg(logger, "omitting IKEv2 %s %s ENCRYPT transform key-length",
+		     protocol.buf, encrypt->common.fqn);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], 0);
 	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
 		passert(encrypt->keydeflen > 0);
-		dbg("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
-		    protocol, encrypt->common.fqn, encrypt->keydeflen);
+		ldbg(logger, "forcing IKEv2 %s %s ENCRYPT transform key length: %u",
+		     protocol.buf, encrypt->common.fqn, encrypt->keydeflen);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 	} else {
@@ -2007,18 +2014,18 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		passert(keymaxlen > encrypt->keydeflen);
 		switch (proposal->protoid) {
 		case IKEv2_SEC_PROTO_IKE:
-			dbg("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
-			    protocol, encrypt->common.fqn,
-			    keymaxlen, encrypt->keydeflen);
+			ldbg(logger, "forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
+			     protocol.buf, encrypt->common.fqn,
+			     keymaxlen, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			break;
 		case IKEv2_SEC_PROTO_ESP:
-			dbg("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
-			    protocol, encrypt->common.fqn,
-			    encrypt->keydeflen, keymaxlen);
+			ldbg(logger, "forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
+			     protocol.buf, encrypt->common.fqn,
+			     encrypt->keydeflen, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
@@ -2027,7 +2034,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		default:
 			/* presumably AH */
 			llog(RC_LOG, logger, "dropping local IKEv2 %s %s ENCRYPT transform with wrong protocol",
-				    protocol, encrypt->common.fqn);
+			     protocol.buf, encrypt->common.fqn);
 			break;
 		}
 	}
@@ -2142,9 +2149,9 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 						       const struct proposals *proposals,
 						       struct logger *logger)
 {
-	const char *name = enum_name_short(&ikev2_proposal_protocol_id_names, protoid);
-	PASSERT(logger, name != NULL);
-	dbg("generating IKEv2 %s proposals", name);
+	enum_buf name;
+	PASSERT(logger, enum_name_short(&ikev2_proposal_protocol_id_names, protoid, &name));
+	ldbg(logger, "generating IKEv2 %s proposals", name.buf);
 	PASSERT(logger, proposals != NULL);
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals, "v2 proposals");
 	/* +1 as proposal[0] is empty */
@@ -2156,7 +2163,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 
 	FOR_EACH_PROPOSAL(proposals, proposal) {
 		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
-			jam(buf, "converting %s proposal ", name);
+			jam(buf, "converting %s proposal ", name.buf);
 			jam_proposal(buf, proposal);
 			jam_string(buf, " to ikev2 ...");
 		}

@@ -278,10 +278,12 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 				  v2_notification_t ntype,
 				  const chunk_t *ndata /* optional */)
 {
-	const char *const notify_name = enum_name_short(&v2_notification_names, ntype);
+	enum_buf notify_name;
+	enum_name_short(&v2_notification_names, ntype, &notify_name);
 
 	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
-	const char *const exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
+	enum_buf exchange_name;
+	enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name);
 
 	/*
 	 * XXX: this will prefix with cur_state.  For this code path
@@ -290,10 +292,11 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 	endpoint_buf b;
 	llog(RC_LOG, response->logger,
 	     "responding to %s message (ID %u) from %s with %s notification %s",
-	     exchange_name, md->hdr.isa_msgid,
+	     exchange_name.buf,
+	     md->hdr.isa_msgid,
 	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
 	     response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
-	     notify_name);
+	     notify_name.buf);
 
 	/* actual data */
 
@@ -316,12 +319,12 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 		*/
 		llog_pexpect(response->logger, HERE,
 			     "trying to send unimplemented %s notification",
-			     notify_name);
+			     notify_name.buf);
 		return false;
 	case v2N_REKEY_SA:
 		llog_pexpect(response->logger, HERE,
 			     "%s notification cannot be part of a response",
-			     notify_name);
+			     notify_name.buf);
 		return false;
 	default:
 		break;
@@ -399,23 +402,23 @@ void send_v2N_response_from_md(struct msg_digest *md,
 {
 	passert(md != NULL); /* always a response */
 
-	const char *const notify_name = enum_name_short(&v2_notification_names, ntype);
-	passert(notify_name != NULL); /* must be known */
+	enum_buf notify_name;
+	PASSERT(md->logger, enum_name_short(&v2_notification_names, ntype, &notify_name));
 
 	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
-	const char *exchange_name = enum_name_short(&ikev2_exchange_names, exchange_type);
-	if (exchange_name == NULL) {
+	enum_buf exchange_name;
+	if (!enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
 		/* when responding to crud, name may not be known */
-		exchange_name = "UNKNOWN";
+		exchange_name.buf = "UNKNOWN";
 		dbg("message request contains unknown exchange type %d",
 		    exchange_type);
 	}
 
 	llog(RC_LOG, md->logger,
 	     "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-	     exchange_name, exchange_type,
+	     exchange_name.buf, exchange_type,
 	     md->hdr.isa_msgid,
-	     notify_name);
+	     notify_name.buf);
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -429,7 +432,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
-		dbg("normally exchange type %s is encrypted", exchange_name);
+		dbg("normally exchange type %s is encrypted", exchange_name.buf);
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
@@ -441,7 +444,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			     &response, UNENCRYPTED_PAYLOAD)) {
 		llog_pexpect(md->logger, HERE,
 			     "error building header for unencrypted %s %s notification with message ID %u",
-			     exchange_name, notify_name, md->hdr.isa_msgid);
+			     exchange_name.buf, notify_name.buf, md->hdr.isa_msgid);
 		return;
 	}
 
@@ -450,7 +453,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	if (!emit_v2N_hunk(ntype, nhunk, response.pbs)) {
 		llog_pexpect(md->logger, HERE,
 			     "error building unencrypted %s %s notification with message ID %u",
-			     exchange_name, notify_name, md->hdr.isa_msgid);
+			     exchange_name.buf, notify_name.buf, md->hdr.isa_msgid);
 		return;
 	}
 

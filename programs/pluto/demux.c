@@ -434,10 +434,11 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 		switch (pd->payload_type) {
 		case ISAKMP_NEXT_v2N:
 		{
-			const char *name = enum_name_short(&v2_notification_names,
-							   pd->payload.v2n.isan_type);
-			if (name != NULL) {
-				jam(buf, "(%s)", name);
+			enum_buf name;
+			if (enum_name_short(&v2_notification_names,
+					    pd->payload.v2n.isan_type,
+					    &name)) {
+				jam(buf, "(%s)", name.buf);
 			}
 			break;
 		}

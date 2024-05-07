@@ -716,9 +716,9 @@ static void jam_impairment_value(struct jambuf *buf,
 			jam(buf, "?%ju?", value);
 		}
 	} else if (impairment->how_enum_names != NULL) {
-		const char *sname = enum_name_short(impairment->how_enum_names, value);
-		if (sname != NULL) {
-			jam_string(buf, sname);
+		enum_buf sname;
+		if (enum_name_short(impairment->how_enum_names, value, &sname)) {
+			jam_string(buf, sname.buf);
 		} else {
 			jam(buf, "%ju", value);
 		}
