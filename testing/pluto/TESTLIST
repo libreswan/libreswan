@@ -581,10 +581,9 @@ kvmplutotest	ikev2-x509-ecdsa-01					good
 kvmplutotest	ikev2-x509-ecdsa-02-mismatch				good
 kvmplutotest	ikev2-x509-ecdsa-03-legacy-initiator			good
 kvmplutotest	ikev2-x509-ecdsa-03-legacy-responder			good
-kvmplutotest	ikev2-x509-ecdsa-04-also-rsa				github:789
-kvmplutotest	ikev2-x509-ecdsa-05-rsa-asym				good
-kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			good
-
+kvmplutotest	ikev2-x509-ecdsa-04-also-rsa				wip	github/789
+kvmplutotest	ikev2-x509-ecdsa-05-rsa-asym				wip	github/789
+kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			wip	github/789
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
