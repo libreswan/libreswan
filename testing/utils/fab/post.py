@@ -281,21 +281,21 @@ class TestResult:
 
         for guest_name in test.guest_names:
             pluto_log_filename = guest_name + ".pluto.log"
-            if self.grub(pluto_log_filename, "ASSERTION FAILED"):
+            if self._grub(pluto_log_filename, r"ASSERTION FAILED"):
                 self.issues.add(Issues.ASSERTION, guest_name)
                 self.resolution.failed()
-            if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
+            if self._grub(pluto_log_filename, r"EXPECTATION FAILED"):
                 self.issues.add(Issues.EXPECTATION, guest_name)
                 self.resolution.failed()
-            if self.grub(pluto_log_filename, "\(null\)"):
+            if self._grub(pluto_log_filename, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, guest_name)
                 self.resolution.failed()
-            if self.grub(pluto_log_filename, r"[^ -~\n]"):
+            if self._grub(pluto_log_filename, r"[^ -~\n]"):
                 # This won't detect a \n embedded in the middle of a
                 # log line.
                 self.issues.add(Issues.ISCNTRL, guest_name)
                 self.resolution.failed()
-            if self.grub(pluto_log_filename, r"leak detective found [0-9]+ leaks"):
+            if self._grub(pluto_log_filename, r"leak detective found [0-9]+ leaks"):
                 self.issues.add(Issues.LEAK, guest_name)
                 self.resolution.failed()
 
@@ -336,7 +336,7 @@ class TestResult:
             # Since things really screwed up, mark the test as
             # UNRESOLVED and give up.
 
-            if self.grub(raw_output_filename) is None:
+            if self._grub(raw_output_filename) is None:
                 self.issues.add(Issues.OUTPUT_MISSING, guest_name)
                 self.resolution.unresolved()
                 # With no raw console output, there's little point in
@@ -350,22 +350,22 @@ class TestResult:
             # command line utility that barfs.
 
             self.logger.debug("checking %s for signs of a crash", raw_output_filename)
-            if self.grub(raw_output_filename, r"[\r\n]CORE FOUND"):
+            if self._grub(raw_output_filename, r"[\r\n]CORE FOUND"):
                 self.issues.add(Issues.CORE, guest_name)
                 self.resolution.failed()
-            if self.grub(raw_output_filename, r"SEGFAULT"):
+            if self._grub(raw_output_filename, r"SEGFAULT"):
                 self.issues.add(Issues.SEGFAULT, guest_name)
                 self.resolution.failed()
-            if self.grub(raw_output_filename, r"GPFAULT"):
+            if self._grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, guest_name)
                 self.resolution.failed()
-            if self.grub(raw_output_filename, r"ASSERTION FAILED"):
+            if self._grub(raw_output_filename, r"ASSERTION FAILED"):
                 self.issues.add(Issues.ASSERTION, guest_name)
                 self.resolution.failed()
-            if self.grub(raw_output_filename, r"EXPECTATION FAILED"):
+            if self._grub(raw_output_filename, r"EXPECTATION FAILED"):
                 self.issues.add(Issues.EXPECTATION, guest_name)
                 self.resolution.failed()
-            if self.grub(raw_output_filename, "\(null\)"):
+            if self._grub(raw_output_filename, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, guest_name)
                 self.resolution.failed()
 
@@ -377,22 +377,22 @@ class TestResult:
 
             logger.debug("host %s checking if raw console output is complete");
 
-            if self.grub(raw_output_filename, LHS + " " + Issues.TIMEOUT):
+            if self._grub(raw_output_filename, LHS + " " + Issues.TIMEOUT):
                 # One of the test scripts hung; all the
                 self.issues.add(Issues.TIMEOUT, guest_name)
                 self.resolution.failed()
 
-            if self.grub(raw_output_filename, LHS + " " + Issues.EOF):
+            if self._grub(raw_output_filename, LHS + " " + Issues.EOF):
                 # One of the test scripts hung; all the
                 self.issues.add(Issues.EOF, guest_name)
                 self.resolution.unresolved()
 
-            if self.grub(raw_output_filename, LHS + " " + Issues.EXCEPTION):
+            if self._grub(raw_output_filename, LHS + " " + Issues.EXCEPTION):
                 # One of the test scripts hung; all the
                 self.issues.add(Issues.EXCEPTION, guest_name)
                 self.resolution.unresolved()
 
-            if self.grub(raw_output_filename, DONE) is None:
+            if self._grub(raw_output_filename, DONE) is None:
                 self.issues.add(Issues.OUTPUT_TRUNCATED, guest_name)
                 self.resolution.unresolved()
 
@@ -436,16 +436,16 @@ class TestResult:
             sanitized_output = self.sanitized_output[guest_name]
 
             self.logger.debug("checking %s for issues", sanitized_filename)
-            if self.grep(sanitized_output, r"\(null\)"):
+            if self._grep(sanitized_output, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, guest_name)
                 self.resolution.failed()
-            if self.grep(sanitized_output, r"[^ -~\r\n\t]"):
+            if self._grep(sanitized_output, r"[^ -~\r\n\t]"):
                 # Console contains \r\n; this won't detect \n embedded
                 # in the middle of a log line.  Audit emits embedded
                 # escapes!
                 self.issues.add(Issues.ISCNTRL, guest_name)
                 self.resolution.failed()
-            if self.grep(sanitized_output, r"\[ *\d+\.\d+\] Call Trace:"):
+            if self._grep(sanitized_output, r"\[ *\d+\.\d+\] Call Trace:"):
                 # the sanitizer strips out the bogus backtrace "failed
                 # to disable LRO"; hence checking the sanitized output
                 self.issues.add(Issues.KERNEL, guest_name)
@@ -468,7 +468,7 @@ class TestResult:
             if quick:
                 # Try to load the existing diff file.  Like _diff()
                 # save a list of lines.
-                diff_output = self.grub(diff_filename)
+                diff_output = self._grub(diff_filename)
                 if diff_output is not None:
                     diff_output = diff_output.splitlines()
             if diff_output is None:
@@ -530,20 +530,29 @@ class TestResult:
                         break
         return self._file_contents_cache[path]
 
-    def grub(self, filename, regex=None, cast=None):
+    def _grub(self, filename, regex=None, cast=None):
         """Grub around FILENAME to find regex"""
         self.logger.debug("grubbing '%s' for '%s'", filename, regex)
         path = os.path.join(self.output_directory, filename)
         contents = self._file_contents(path)
-        return self.grep(contents, regex, cast)
+        if regex is None:
+            return contents # could be None
+        matched = self._grep(contents, regex)
+        if matched is None:
+            return None
+        if cast:
+            # caller is matching valid utf-8, decode and cast
+            result = cast(matched.decode('utf-8'))
+        else:
+            # caller isn't interested in what matched, return success
+            result = True
+        self.logger.debug("grep() result %s", result)
+        return result
 
-    def grep(self, contents, regex=None, cast=None):
+    def _grep(self, contents, regex):
         if contents is None:
             return None
         self.logger.debug("grep() content type is %s", type(contents))
-        if regex is None:
-            # returns raw bytes
-            return contents
         # convert utf-8 regex to bytes
         self.logger.debug("grep() encoding regex type %s to raw bytes using utf-8", type(regex))
         byte_regex = regex.encode()
@@ -552,19 +561,12 @@ class TestResult:
             return None
         group = match.group(len(match.groups()))
         self.logger.debug("grep() '%s' matched '%s'", regex, group)
-        if cast:
-            # caller is matching valid utf-8, decode and cast
-            result = cast(group.decode('utf-8'))
-        else:
-            # caller isn't interested in what matched, return success
-            result = True
-        self.logger.debug("grep() result %s", result)
-        return result
+        return group	# truthy
 
     def start_time(self):
         if not self._start_time:
             # starting debug log at 2018-08-15 13:00:12.275358
-            self._start_time = self.grub("debug.log",
+            self._start_time = self._grub("debug.log",
                                          r"starting debug log at (.*)$",
                                          cast=jsonutil.ptime)
         return self._start_time
@@ -572,33 +574,33 @@ class TestResult:
     def stop_time(self):
         if not self._stop_time:
             # ending debug log at 2018-08-15 13:01:31.602533
-            self._stop_time = self.grub("debug.log",
-                                        r"ending debug log at (.*)$",
-                                        cast=jsonutil.ptime)
+            self._stop_time = self._grub("debug.log",
+                                         r"ending debug log at (.*)$",
+                                         cast=jsonutil.ptime)
         return self._stop_time
 
     def runtime(self):
         if not self._runtime:
             # stop testing basic-pluto-01 (test 2 of 756) after 79.3 seconds
-            self._runtime = self.grub("debug.log",
-                                      r": stop testing .* after ([0-9].*) second",
-                                      cast=float)
+            self._runtime = self._grub("debug.log",
+                                       r": stop testing .* after ([0-9].*) second",
+                                       cast=float)
         return self._runtime
 
     def boot_time(self):
         if not self._boot_time:
             # stop booting domains after 56.9 seconds
-            self._boot_time = self.grub("debug.log",
-                                        r": stop booting domains after ([0-9].*) second",
-                                        cast=float)
+            self._boot_time = self._grub("debug.log",
+                                         r": stop booting domains after ([0-9].*) second",
+                                         cast=float)
         return self._boot_time
 
     def script_time(self):
         if not self._script_time:
             # stop running scripts east:eastinit.sh ... after 22.4 seconds
-            self._script_time = self.grub("debug.log",
-                                          r": stop running scripts .* after ([0-9].*) second",
-                                          cast=float)
+            self._script_time = self._grub("debug.log",
+                                           r": stop running scripts .* after ([0-9].*) second",
+                                           cast=float)
         return self._script_time
 
 
