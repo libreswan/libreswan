@@ -1825,30 +1825,6 @@ IETF registry enum_names:
          jam_enum_short 5: RSA_REVISED_MODE OK
          jam_enum_human 5: rsa-revised-mode OK
          match RSA_REVISED_MODE [short]: OK
-    6 -> OAKLEY_RESERVED_6
-         jam_enum 6: OAKLEY_RESERVED_6 OK
-         search OAKLEY_RESERVED_6: OK
-         match OAKLEY_RESERVED_6: OK
-         short_name 6: RESERVED_6 OK
-         jam_enum_short 6: RESERVED_6 OK
-         jam_enum_human 6: reserved-6 OK
-         match RESERVED_6 [short]: OK
-    7 -> OAKLEY_RESERVED_7
-         jam_enum 7: OAKLEY_RESERVED_7 OK
-         search OAKLEY_RESERVED_7: OK
-         match OAKLEY_RESERVED_7: OK
-         short_name 7: RESERVED_7 OK
-         jam_enum_short 7: RESERVED_7 OK
-         jam_enum_human 7: reserved-7 OK
-         match RESERVED_7 [short]: OK
-    8 -> OAKLEY_RESERVED_8
-         jam_enum 8: OAKLEY_RESERVED_8 OK
-         search OAKLEY_RESERVED_8: OK
-         match OAKLEY_RESERVED_8: OK
-         short_name 8: RESERVED_8 OK
-         jam_enum_short 8: RESERVED_8 OK
-         jam_enum_human 8: reserved-8 OK
-         match RESERVED_8 [short]: OK
     9 -> OAKLEY_ECDSA_P256
          jam_enum 9: OAKLEY_ECDSA_P256 OK
          search OAKLEY_ECDSA_P256: OK
@@ -1947,34 +1923,6 @@ IETF registry enum_names:
          jam_enum_short 8: CAMELLIA_CBC OK
          jam_enum_human 8: camellia-cbc OK
          match CAMELLIA_CBC [short]: OK
-    9 -> UNUSED_9
-         jam_enum 9: UNUSED_9 OK
-         search UNUSED_9: OK
-         match UNUSED_9: OK
-         short_name 9: UNUSED_9 OK
-         jam_enum_short 9: UNUSED_9 OK
-         jam_enum_human 9: unused-9 OK
-   10 -> UNUSED_10
-         jam_enum 10: UNUSED_10 OK
-         search UNUSED_10: OK
-         match UNUSED_10: OK
-         short_name 10: UNUSED_10 OK
-         jam_enum_short 10: UNUSED_10 OK
-         jam_enum_human 10: unused-10 OK
-   11 -> UNUSED_11
-         jam_enum 11: UNUSED_11 OK
-         search UNUSED_11: OK
-         match UNUSED_11: OK
-         short_name 11: UNUSED_11 OK
-         jam_enum_short 11: UNUSED_11 OK
-         jam_enum_human 11: unused-11 OK
-   12 -> UNUSED_12
-         jam_enum 12: UNUSED_12 OK
-         search UNUSED_12: OK
-         match UNUSED_12: OK
-         short_name 12: UNUSED_12 OK
-         jam_enum_short 12: UNUSED_12 OK
-         jam_enum_human 12: unused-12 OK
    13 -> OAKLEY_AES_CTR
          jam_enum 13: OAKLEY_AES_CTR OK
          search OAKLEY_AES_CTR: OK
@@ -2007,13 +1955,6 @@ IETF registry enum_names:
          jam_enum_short 16: AES_CCM_16 OK
          jam_enum_human 16: aes-ccm-16 OK
          match AES_CCM_16 [short]: OK
-   17 -> UNUSED_17
-         jam_enum 17: UNUSED_17 OK
-         search UNUSED_17: OK
-         match UNUSED_17: OK
-         short_name 17: UNUSED_17 OK
-         jam_enum_short 17: UNUSED_17 OK
-         jam_enum_human 17: unused-17 OK
    18 -> OAKLEY_AES_GCM_A
          jam_enum 18: OAKLEY_AES_GCM_A OK
          search OAKLEY_AES_GCM_A: OK
@@ -2038,27 +1979,6 @@ IETF registry enum_names:
          jam_enum_short 20: AES_GCM_C OK
          jam_enum_human 20: aes-gcm-c OK
          match AES_GCM_C [short]: OK
-   21 -> UNUSED_21
-         jam_enum 21: UNUSED_21 OK
-         search UNUSED_21: OK
-         match UNUSED_21: OK
-         short_name 21: UNUSED_21 OK
-         jam_enum_short 21: UNUSED_21 OK
-         jam_enum_human 21: unused-21 OK
-   22 -> UNUSED_22
-         jam_enum 22: UNUSED_22 OK
-         search UNUSED_22: OK
-         match UNUSED_22: OK
-         short_name 22: UNUSED_22 OK
-         jam_enum_short 22: UNUSED_22 OK
-         jam_enum_human 22: unused-22 OK
-   23 -> UNUSED_23
-         jam_enum 23: UNUSED_23 OK
-         search UNUSED_23: OK
-         match UNUSED_23: OK
-         short_name 23: UNUSED_23 OK
-         jam_enum_short 23: UNUSED_23 OK
-         jam_enum_human 23: unused-23 OK
    24 -> OAKLEY_CAMELLIA_CTR
          jam_enum 24: OAKLEY_CAMELLIA_CTR OK
          search OAKLEY_CAMELLIA_CTR: OK
