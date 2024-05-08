@@ -282,12 +282,12 @@ static bool score_host_connection(unsigned indent,
 		esb_buf tzesb;
 		dbg_rhc("peer expects us to be %s (%s) according to its IDr payload",
 			str_id(tarzan_id, &tzb),
-			enum_show(&ike_id_type_names, tarzan_id->kind, &tzesb));
+			str_enum(&ike_id_type_names, tarzan_id->kind, &tzesb));
 		id_buf usb;
 		esb_buf usesb;
 		dbg_rhc("this connection's local id is %s (%s)",
 			str_id(&d->local->host.id, &usb),
-			enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
+			str_enum(&ike_id_type_names, d->local->host.id.kind, &usesb));
 		/* ??? pexpect(d->spd->spd_next == NULL); */
 		if (!idr_wildmatch(&d->local->host, tarzan_id, ike->sa.logger)) {
 			dbg_rhc("skipping because peer IDr payload does not match our expected ID");

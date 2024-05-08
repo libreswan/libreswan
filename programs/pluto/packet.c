@@ -2014,7 +2014,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 				esb_buf nb;
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
-					enum_show(fp->desc, n, &nb),
+					str_enum(fp->desc, n, &nb),
 					n);
 				break;
 			}
@@ -2379,11 +2379,11 @@ static void update_last_substructure(struct pbs_out *outs,
 		    outs->last_substructure.sd->name,
 		    outs->last_substructure.fp->name,
 		    /* containing ... */
-		    enum_show(outs->last_substructure.fp->desc,
+		    str_enum(outs->last_substructure.fp->desc,
 			      outs->last_substructure.loc[0], &locb),
 		    outs->last_substructure.loc[0],
 		    /* is ... */
-		    enum_show(outs->last_substructure.fp->desc,
+		    str_enum(outs->last_substructure.fp->desc,
 			      outs->desc->nsst, &nsstb),
 		    outs->desc->nsst);
 		pexpect(outs->last_substructure.loc[0] == outs->desc->nsst);
@@ -2435,7 +2435,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 		llog_pexpect(outs->logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
-			     enum_show(fp->desc, n, &npb));
+			     str_enum(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2456,7 +2456,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	if (outs->container == NULL) {
 		esb_buf npb;
 		dbg("next payload chain: no previous for current %s (%d:%s); assumed to be fake",
-		    sd->name, sd->pt, enum_show(fp->desc, sd->pt, &npb));
+		    sd->name, sd->pt, str_enum(fp->desc, sd->pt, &npb));
 		return;
 	}
 
@@ -2498,13 +2498,13 @@ static void update_next_payload_chain(struct pbs_out *outs,
 		esb_buf npb;
 		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
-		     enum_show(fp->desc, n, &npb));
+		     str_enum(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		esb_buf npb;
 		llog_pexpect(outs->logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
-			     enum_show(fp->desc, n, &npb));
+			     str_enum(fp->desc, n, &npb));
 		n = ISAKMP_NEXT_NONE;
 	}
 	*cur = n;
@@ -2514,7 +2514,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	dbg("next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
 	     message->next_payload_chain.sd->name,
 	     message->next_payload_chain.fp->name,
-	     sd->name, sd->pt, enum_show(fp->desc, sd->pt, &npb));
+	     sd->name, sd->pt, str_enum(fp->desc, sd->pt, &npb));
 	*message->next_payload_chain.loc = sd->pt;
 
 	/* save new */

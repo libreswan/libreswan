@@ -817,7 +817,7 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 	PORT_FreeArena(arena, PR_FALSE);
 	esb_buf esb;
 	return diag("peer certificate subjectAltName extension does not match %s '%s'",
-		    enum_show(&ike_id_type_names, id->kind, &esb), ascii_id);
+		    str_enum(&ike_id_type_names, id->kind, &esb), ascii_id);
 }
 
 SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain)

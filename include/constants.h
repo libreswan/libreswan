@@ -236,7 +236,6 @@ size_t jam_enum_long(struct jambuf *, const struct enum_names *en, unsigned long
 
 #define jam_enum jam_enum_long
 #define str_enum str_enum_long
-#define enum_show str_enum_long /* XXX: TBD */
 #define enum_name enum_long
 
 bool enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);

@@ -312,7 +312,7 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 		esb_buf b;
 		log_state(RC_LOG, st,
 			  "attempt to send unsupported mode cfg attribute %s.",
-			  enum_show(&modecfg_attr_names, attr_type, &b));
+			  str_enum(&modecfg_attr_names, attr_type, &b));
 		break;
 	}
 	}
@@ -1226,7 +1226,7 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 	dbg("Unsupported %s %s attribute %s received.",
 	    kind,
 	    (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-	    enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
+	    str_enum(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
 }
 
 /*
@@ -1291,7 +1291,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
 				esb_buf b;
 				dbg("unsupported XAUTH_TYPE value %s received",
-				    enum_show(&xauth_type_names, attr.isaat_lv, &b));
+				    str_enum(&xauth_type_names, attr.isaat_lv, &b));
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			break;
@@ -2163,7 +2163,7 @@ static stf_status xauth_client_resp(struct state *st,
 					esb_buf b;
 					log_state(RC_LOG, st,
 						"trying to send XAUTH reply, sending %s instead.",
-						  enum_show(&modecfg_attr_names, attr_type, &b));
+						  str_enum(&modecfg_attr_names, attr_type, &b));
 					break;
 				}
 				}
@@ -2518,7 +2518,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 				log_state(RC_LOG, st,
 					"while waiting for XAUTH_STATUS, got %s %s instead.",
 					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					enum_show(&modecfg_attr_names,
+					str_enum(&modecfg_attr_names,
 						  attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK, &b));
 				break;
 			}

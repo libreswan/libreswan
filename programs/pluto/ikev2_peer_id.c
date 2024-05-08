@@ -55,7 +55,7 @@ static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const i
 	id_buf idb;
 	esb_buf esb;
 	dbg("%s ID is %s: '%s'", peer,
-	    enum_show(&ike_id_type_names, peer_id->kind, &esb),
+	    str_enum(&ike_id_type_names, peer_id->kind, &esb),
 	    str_id(peer_id, &idb));
 
 	return NULL;

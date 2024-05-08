@@ -729,7 +729,7 @@ void process_v1_packet(struct msg_digest *md)
 			const struct spd_end *this = st->st_connection->spd->local;
 			esb_buf b;
 			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
-			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+			    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 			    this->host->config->xauth.server ? " xauthserver" : "",
 			    this->host->config->xauth.client ? " xauthclient" : "",
 			    this->host->config->modecfg.server ? " modecfgserver" : "",
@@ -798,7 +798,7 @@ void process_v1_packet(struct msg_digest *md)
 			} else {
 				esb_buf b;
 				dbg("received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
-				    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+				    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 				    st->st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
 				    st->st_connection->local->host.config->xauth.client ? " xauthclient" : "",
 				    st->st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
@@ -828,7 +828,7 @@ void process_v1_packet(struct msg_digest *md)
 	{
 		esb_buf b;
 		dbg("unsupported exchange type %s in message",
-		    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
+		    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
 		SEND_NOTIFICATION(v1N_UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
@@ -1318,7 +1318,7 @@ void process_packet_tail(struct msg_digest *md)
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 						   excuse,
-						   enum_show(&ikev1_payload_names, np, &b));
+						   str_enum(&ikev1_payload_names, np, &b));
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
 					}
@@ -1344,7 +1344,7 @@ void process_packet_tail(struct msg_digest *md)
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 						   excuse,
-						   enum_show(&ikev1_payload_names, np, &b),
+						   str_enum(&ikev1_payload_names, np, &b),
 						   finite_states[smc->state]->name);
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
@@ -1354,7 +1354,7 @@ void process_packet_tail(struct msg_digest *md)
 
 				esb_buf b;
 				dbg("got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
-				    s, enum_show(&ikev1_payload_names, np, &b),
+				    s, str_enum(&ikev1_payload_names, np, &b),
 				    needed, smc->opt_payloads);
 				needed &= ~s;
 			}
@@ -2280,12 +2280,12 @@ void doi_log_cert_thinking(uint16_t auth,
 		esb_buf oan;
 		esb_buf ictn;
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_show(&oakley_auth_names, auth, &oan),
-			enum_show(&ike_cert_type_names, certtype, &ictn));
+			str_enum(&oakley_auth_names, auth, &oan),
+			str_enum(&ike_cert_type_names, certtype, &ictn));
 
 		esb_buf cptn;
 		DBG_log("  sendcert: %s and I did%s get a certificate request ",
-			enum_show(&certpolicy_type_names, policy, &cptn),
+			str_enum(&certpolicy_type_names, policy, &cptn),
 			gotcertrequest ? "" : " not");
 
 		DBG_log("  so %ssend cert.", send_cert ? "" : "do not ");

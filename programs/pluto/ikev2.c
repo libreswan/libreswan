@@ -229,7 +229,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 	while (np != ISAKMP_NEXT_v2NONE) {
 		esb_buf b;
 		dbg("Now let's proceed with payload (%s)",
-		    enum_show(&ikev2_payload_names, np, &b));
+		    str_enum(&ikev2_payload_names, np, &b));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
 			llog(RC_LOG_SERIOUS, log,
@@ -289,7 +289,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 				esb_buf b;
 				llog(RC_LOG_SERIOUS, log,
 				     "message %s contained an unknown critical payload type (%s)",
-				     role, enum_show(&ikev2_payload_names, np, &b));
+				     role, str_enum(&ikev2_payload_names, np, &b));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				summary.data[0] = np;
 				summary.data_size = 1;
@@ -298,7 +298,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			esb_buf eb;
 			llog(RC_COMMENT, log,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
-			     enum_show(&ikev2_payload_names, np, &eb));
+			     str_enum(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
@@ -327,7 +327,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 		}
 
 		dbg("processing payload: %s (len=%zu)",
-		    enum_show(&ikev2_payload_names, np, &b),
+		    str_enum(&ikev2_payload_names, np, &b),
 		    pbs_left(&pd->pbs));
 
 		/*

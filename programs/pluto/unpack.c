@@ -116,7 +116,7 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 		if (memchr(name.ptr, '\0', name.len) != NULL) {
 			esb_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
-				    enum_show(&ike_id_type_names, kind, &b));
+				    str_enum(&ike_id_type_names, kind, &b));
 		}
 		/* ??? ought to do some more sanity check, but what? */
 		peer->name = name;
@@ -126,7 +126,7 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 		if (memchr(name.ptr, '\0', name.len) != NULL) {
 			esb_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
-				    enum_show(&ike_id_type_names, kind, &b));
+				    str_enum(&ike_id_type_names, kind, &b));
 		}
 		/* ??? ought to do some more sanity check, but what? */
 		peer->name = name;
@@ -158,7 +158,7 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 	{
 		esb_buf b;
 		return diag("Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
-			    enum_show(&ike_id_type_names, kind, &b));
+			    str_enum(&ike_id_type_names, kind, &b));
 	}
 	}
 

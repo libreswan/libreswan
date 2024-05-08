@@ -193,13 +193,13 @@ static bool initiate_connection_2_address(struct connection *c,
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-				     enum_show(&connection_kind_names, c->local->kind, &b),
+				     str_enum(&connection_kind_names, c->local->kind, &b),
 				     bool_str(c->config->ikev2_allow_narrowing));
 			} else {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-				     enum_show(&connection_kind_names, c->local->kind, &b));
+				     str_enum(&connection_kind_names, c->local->kind, &b));
 			}
 			add_policy(c, policy.up);
 			return true;
@@ -209,14 +209,14 @@ static bool initiate_connection_2_address(struct connection *c,
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			     enum_show(&connection_kind_names, c->local->kind, &b),
+			     str_enum(&connection_kind_names, c->local->kind, &b),
 			     bool_str(c->config->ikev2_allow_narrowing));
 		} else {
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
 			     pri_co(c->serialno),
-			     enum_show(&connection_kind_names, c->local->kind, &b));
+			     str_enum(&connection_kind_names, c->local->kind, &b));
 		}
 		return false;
 	}

@@ -276,7 +276,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 		    id.kind != ID_IPV4_ADDR &&
 		    id.kind != ID_IPV6_ADDR) {
 			err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-			err2 = enum_show(&ike_id_type_names, id.kind, &eb2);
+			err2 = str_enum(&ike_id_type_names, id.kind, &eb2);
 		}
 
 		id_buf thatid;

@@ -291,13 +291,13 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 		esb_buf b;
 		llog_sa(RC_LOG, ike,
 			"CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-			enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
+			str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		return false;
 	}
 
 	esb_buf b;
 	ldbg_sa(ike, "CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-		enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
+		str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 
 	/*
 	 * Get the SPI.
@@ -331,7 +331,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	esb_buf protoesb;
 	ldbg_sa(ike, "CREATE_CHILD_SA to rekey IPsec SA("PRI_IPSEC_SPI") Protocol %s",
 		pri_ipsec_spi(spi),
-		enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &protoesb));
+		str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &protoesb));
 
 	/*
 	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
@@ -349,7 +349,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 		llog_sa(RC_LOG, ike,
 			"CREATE_CHILD_SA no such IPsec SA to rekey SA("PRI_IPSEC_SPI") Protocol %s",
 			pri_ipsec_spi(spi),
-			enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
+			str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		record_v2N_spi_response(ike->sa.logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,

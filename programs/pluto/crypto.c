@@ -144,12 +144,12 @@ void show_ike_alg_status(struct show *s)
 			show_comment(s,
 				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 				  alg->common.ikev1_oakley_id,
-				  (alg->common.ikev1_oakley_id >= 0 ? enum_show(&oakley_enc_names,
+				  (alg->common.ikev1_oakley_id >= 0 ? str_enum(&oakley_enc_names,
 										alg->common.ikev1_oakley_id,
 										&v1namebuf)
 				   : "n/a"),
 				  alg->common.id[IKEv2_ALG_ID],
-				  (alg->common.id[IKEv2_ALG_ID] >= 0 ? enum_show(&ikev2_trans_type_encr_names,
+				  (alg->common.id[IKEv2_ALG_ID] >= 0 ? str_enum(&ikev2_trans_type_encr_names,
 										 alg->common.id[IKEv2_ALG_ID],
 										 &v2namebuf)
 				   : "n/a"),

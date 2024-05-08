@@ -858,7 +858,7 @@ static void show_pubkey(struct show *s, struct pubkey *pubkey, bool utc, const c
 	id_buf idb;
 	esb_buf b;
 	show_comment(s, "       %s '%s'",
-		     enum_show(&ike_id_type_names, pubkey->id.kind, &b),
+		     str_enum(&ike_id_type_names, pubkey->id.kind, &b),
 		     str_id(&pubkey->id, &idb));
 
 	if (pubkey->issuer.len > 0) {

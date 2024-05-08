@@ -258,7 +258,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		{
 			esb_buf b;
 			dbg("Not sending IDr payload for remote ID type %s",
-			    enum_show(&ike_id_type_names, pc->remote->host.id.kind, &b));
+			    str_enum(&ike_id_type_names, pc->remote->host.id.kind, &b));
 			break;
 		}
 		}

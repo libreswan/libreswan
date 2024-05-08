@@ -773,7 +773,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		esb_buf esb;
 		llog_sa(RC_LOG_SERIOUS, child, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
-			  enum_show(&v2_notification_names, md->v2N_error, &esb));
+			  str_enum(&v2_notification_names, md->v2N_error, &esb));
 		return md->v2N_error;
 	}
 
