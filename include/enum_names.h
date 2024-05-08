@@ -32,10 +32,21 @@ struct enum_enum_names {
 
 /* arrays are null terminated */
 
-extern const struct enum_names *enum_names_checklist[];
-extern const struct enum_enum_names *enum_enum_names_checklist[];
+struct enum_names_check {
+	const char *name;
+	const struct enum_names *enum_names;
+};
 
-extern void check_enum_names(const struct enum_names **checklist);
-extern void check_enum_enum_names(const struct enum_enum_names **checklist);
+extern const struct enum_names_check enum_names_checklist[]; /* NULL terminated*/
+
+struct enum_enum_names_check {
+	const char *name;
+	const struct enum_enum_names *enum_enum_names;
+};
+
+extern const struct enum_enum_names_check enum_enum_names_checklist[]; /* NULL terminated*/
+
+extern void check_enum_names(const struct enum_names_check *checklist);
+extern void check_enum_enum_names(const struct enum_enum_names_check *checklist);
 
 #endif

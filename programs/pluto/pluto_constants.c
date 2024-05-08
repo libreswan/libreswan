@@ -94,21 +94,22 @@ const char *str_policy(lset_t policy, policy_buf *dst)
 	return dst->buf;
 }
 
-static const enum_names *pluto_enum_names_checklist[] = {
-	&sd_action_names,
-	&natt_method_names,
-	&routing_tails,
-	&routing_names,
-	&stf_status_names,
-	&perspective_names,
-	&sa_policy_bit_names,
-	&kernel_policy_op_names,
-	&direction_names,
-	&shunt_kind_names,
-	&shunt_policy_names,
-	&keyword_auth_names,
-	&keyword_host_names,
-	NULL,
+static const struct enum_names_check pluto_enum_names_checklist[] = {
+#define S(V) { #V, &V, }
+	S(sd_action_names),
+	S(natt_method_names),
+	S(routing_tails),
+	S(routing_names),
+	S(stf_status_names),
+	S(perspective_names),
+	S(sa_policy_bit_names),
+	S(kernel_policy_op_names),
+	S(direction_names),
+	S(shunt_kind_names),
+	S(shunt_policy_names),
+	S(keyword_auth_names),
+	S(keyword_host_names),
+	{ NULL, NULL, },
 };
 
 void init_pluto_constants(void) {

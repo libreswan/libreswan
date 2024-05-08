@@ -4,7 +4,7 @@ set -eu
 
 # enum name checklist, for libreswan
 #
-# Copyright (C) 2023  Andrew Cagney
+# Copyright (C) 2023-2024  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -37,7 +37,7 @@ echo $(list "$@") 1>&2
 cat <<EOF
 /* enum name checklist, for libreswan
  *
- * Copyright (C) 2023  Andrew Cagney
+ * Copyright (C) 2023-2024  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -66,11 +66,11 @@ grep -e "^extern ${names} " -e "^extern const struct ${names} " "$@" | \
 
 echo
 
-echo "const struct ${names} *${names}_checklist[] = {"
+echo "const struct ${names}_check ${names}_checklist[] = {"
 list "$@" | while read name ifdef ; do
     test -z "${ifdef}" || echo "#ifdef ${ifdef}"
-    echo "  &${name},"
+    echo "  { \"${name}\", &${name}, },"
     test -z "${ifdef}" || echo "#endif"
 done
-echo "  NULL,"
+echo "  { NULL, NULL, }"
 echo "};"

@@ -375,36 +375,27 @@ size_t jam_enum_enum_short(struct jambuf *buf, enum_enum_names *een,
 	return jam_enum_short(buf, en, val);
 }
 
-void check_enum_names(const struct enum_names **checklist)
+void check_enum_names(const struct enum_names_check *checklist)
 {
 	/* check that enum_names are well-formed */
-	for (const struct enum_names **e = checklist; *e != NULL; e++) {
+	for (const struct enum_names_check *c = checklist;
+	     c->name != NULL && c->enum_names != NULL; c++) {
 		/*
 		 * enum_name will check all linked enum_names if given
 		 * a value that isn't covered.  -42 is probably not
 		 * covered.
 		 */
 		enum_buf b;
-		enum_name(*e, -42UL, &b);
+		enum_name(c->enum_names, -42UL, &b);
 	}
 }
 
-void check_enum_enum_names(const struct enum_enum_names **checklist)
+void check_enum_enum_names(const struct enum_enum_names_check *checklist)
 {
-	/* check that enum_names are well-formed */
-	for (const struct enum_names **e = enum_names_checklist;
-	     *e != NULL; e++) {
-		/*
-		 * enum_name will check all linked enum_names if given
-		 * a value that isn't covered.  -42 is probably not
-		 * covered.
-		 */
-		enum_buf b;
-		enum_name(*e, -42UL, &b);
-	}
 	/* check that enum_enum_names are well-formed */
-	for (const struct enum_enum_names **e = checklist; *e != NULL; e++) {
+	for (const struct enum_enum_names_check *c = checklist;
+	     c->name != NULL && c->enum_enum_names != NULL; c++) {
 		/* check v2_transform_ID_enums, the only enum_enum_names */
-		(void) enum_enum_table(*e, -42UL);
+		enum_enum_table(c->enum_enum_names, -42UL);
 	}
 }
