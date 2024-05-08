@@ -20,15 +20,19 @@ names=$1 ; shift
 
 list()
 {
-    # the special comment /* #ifdef MACRO */, at the end of a declaration is
-    # used to flag that the declaration should be wrapped in #ifdef
-    # MACRO.
-    sed -n \
-	-e "s/^extern ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
-	-e "s/^extern ${names} \([a-z0-9_]*\);.*$/\1/p" \
-	-e "s/^extern const struct ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
-	-e "s/^extern const struct ${names} \([a-z0-9_]*\);.*$/\1/p" \
-	"$@"
+    # The special comment /* #ifdef MACRO */, at the end of a
+    # declaration is used to flag that the declaration should be
+    # wrapped in #ifdef MACRO.  Just the macro name is included.
+    {
+	sed -n \
+	    -e "s/^extern ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
+	    -e "s/^extern ${names} \([a-z0-9_]*\);.*$/\1/p" \
+	    -e "s/^extern const struct ${names} \([a-z0-9_]*\);.* #ifdef \([A-Z0-9_]*\).*$/\1 \2/p" \
+	    -e "s/^extern const struct ${names} \([a-z0-9_]*\);.*$/\1/p" \
+	    "$@"
+    } | {
+	sort
+    }
 }
 
 echo $(list "$@") 1>&2
