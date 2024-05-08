@@ -664,19 +664,16 @@ enum_names isakmp_xchg_type_names = {
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const ikev2_exchange_name[] = {
 #define S(E) [E-IKEv2_EXCHANGE_FLOOR] = #E
-#define RESERVED(N) [N-IKEv2_EXCHANGE_FLOOR] = "Reserved "#N
 	S(ISAKMP_v2_IKE_SA_INIT),
 	S(ISAKMP_v2_IKE_AUTH),
 	S(ISAKMP_v2_CREATE_CHILD_SA),
 	S(ISAKMP_v2_INFORMATIONAL),
 	S(ISAKMP_v2_IKE_SESSION_RESUME),
 	S(ISAKMP_v2_GSA_AUTH),
-	RESERVED(42),
 	S(ISAKMP_v2_GSA_REGISTRATION),
 	S(ISAKMP_v2_GSA_REKEY),
 	S(ISAKMP_v2_IKE_INTERMEDIATE),
 	S(ISAKMP_v2_IKE_FOLLOWUP_KE),
-#undef RESERVED
 #undef S
 };
 
@@ -1919,41 +1916,15 @@ enum_names v1_notification_names = {
 
 static const char *const v2_notification_error_name[] = {
 #define S(E) [E] = #E
-#define RESERVED(N) [N] = "Reserved "#N
-	RESERVED(0),
 	S(v2N_UNSUPPORTED_CRITICAL_PAYLOAD),
-	RESERVED(2),
-	RESERVED(3),
 	S(v2N_INVALID_IKE_SPI),
 	S(v2N_INVALID_MAJOR_VERSION),
-	RESERVED(6),
 	S(v2N_INVALID_SYNTAX),
-	RESERVED(8),
 	S(v2N_INVALID_MESSAGE_ID),
-	RESERVED(10),
 	S(v2N_INVALID_SPI),
-	RESERVED(12),
-	RESERVED(13),
 	S(v2N_NO_PROPOSAL_CHOSEN),
-	RESERVED(15),
-	RESERVED(16),
 	S(v2N_INVALID_KE_PAYLOAD),
-	RESERVED(18),
-	RESERVED(19),
-	RESERVED(20),
-	RESERVED(21),
-	RESERVED(22),
-	RESERVED(23),
 	S(v2N_AUTHENTICATION_FAILED),
-	RESERVED(25),
-	RESERVED(26),
-	RESERVED(27),
-	RESERVED(28),
-	RESERVED(29),
-	RESERVED(30),
-	RESERVED(31),
-	RESERVED(32),
-	RESERVED(33),
 	S(v2N_SINGLE_PAIR_REQUIRED),
 	S(v2N_NO_ADDITIONAL_SAS),
 	S(v2N_INTERNAL_ADDRESS_FAILURE),
