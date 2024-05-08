@@ -915,7 +915,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 void show_connection_statuses(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "Connection list:");
+	show(s, "Connection list:");
 	show_separator(s);
 
 	int count = 0;
@@ -935,7 +935,7 @@ void show_connection_statuses(struct show *s)
 		show_separator(s);
 	}
 
-	show_comment(s, "Total IPsec connections: loaded %d, active %d",
+	show(s, "Total IPsec connections: loaded %d, active %d",
 		     count, active);
 }
 

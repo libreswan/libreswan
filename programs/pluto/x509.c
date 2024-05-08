@@ -831,38 +831,38 @@ static void show_cert_detail(struct show *s, CERTCertificate *cert)
 
 	KeyType pub_k_t = SECKEY_GetPublicKeyType(pub_k);
 
-	show_comment(s, "%s%s certificate \"%s\" - SN: %s",
+	show(s, "%s%s certificate \"%s\" - SN: %s",
 		     is_root ? "Root " : "",
 		     is_CA ? "CA" : "End",
 		     cert->nickname, print_sn);
 
 	{
 		dn_buf sbuf;
-		show_comment(s, "  subject: %s",
+		show(s, "  subject: %s",
 			     dntoasi(&sbuf, cert->derSubject));
 	}
 
 	{
 		dn_buf ibuf;
-		show_comment(s, "  issuer: %s",
+		show(s, "  issuer: %s",
 			     dntoasi(&ibuf, cert->derIssuer));
 	}
 
 	{
 		char before[256];
 		if (cert_detail_notbefore_to_str(before, sizeof(before), cert)) {
-			show_comment(s, "  not before: %s", before);
+			show(s, "  not before: %s", before);
 		}
 	}
 
 	{
 		char after[256];
 		if (cert_detail_notafter_to_str(after, sizeof(after), cert)) {
-			show_comment(s, "  not after: %s", after);
+			show(s, "  not after: %s", after);
 		}
 	}
 
-	show_comment(s, "  %d bit%s%s",
+	show(s, "  %d bit%s%s",
 		     SECKEY_PublicKeyStrengthInBits(pub_k),
 		     pub_k_t == rsaKey ? " RSA" : "(other)",
 		     has_priv ? ": has private key" : "");
@@ -886,7 +886,7 @@ static void crl_detail_to_whacklog(struct show *s, CERTCrl *crl)
 	{
 		dn_buf ibuf;
 
-		show_comment(s, "issuer: %s",
+		show(s, "issuer: %s",
 			dntoasi(&ibuf, crl->derName));
 	}
 
@@ -897,21 +897,21 @@ static void crl_detail_to_whacklog(struct show *s, CERTCrl *crl)
 			while (crl->entries[entries] != NULL)
 				entries++;
 		}
-		show_comment(s, "revoked certs: %d", entries);
+		show(s, "revoked certs: %d", entries);
 	}
 
 	{
 		char lu[256];
 
 		if (crl_time_to_str(lu, sizeof(lu), &crl->lastUpdate))
-			show_comment(s, "updates: this %s", lu);
+			show(s, "updates: this %s", lu);
 	}
 
 	{
 		char nu[256];
 
 		if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
-			show_comment(s, "         next %s", nu);
+			show(s, "         next %s", nu);
 	}
 }
 
@@ -927,7 +927,7 @@ static void crl_detail_list(struct show *s)
 	passert(handle != NULL);
 
 	show_blank(s);
-	show_comment(s, "List of CRLs:");
+	show(s, "List of CRLs:");
 	show_blank(s);
 
 	CERTCrlHeadNode *crl_list = NULL;
@@ -963,7 +963,7 @@ void list_crls(struct show *s)
 static void list_certs_header(struct show *s, const char *tstr)
 {
 	show_blank(s);
-	show_comment(s, "List of X.509 %s Certificates:", tstr);
+	show(s, "List of X.509 %s Certificates:", tstr);
 	show_blank(s);
 }
 

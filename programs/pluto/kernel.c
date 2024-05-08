@@ -1084,7 +1084,7 @@ unsigned shunt_count(void)
 void show_shunt_status(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "Bare Shunt list:");
+	show(s, "Bare Shunt list:");
 	show_separator(s);
 
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
@@ -2614,7 +2614,7 @@ void init_kernel(struct logger *logger)
 void show_kernel_interface(struct show *s)
 {
 	if (kernel_ops != NULL) {
-		show_comment(s, "using kernel interface: %s",
+		show(s, "using kernel interface: %s",
 			     kernel_ops->interface_name);
 	}
 }

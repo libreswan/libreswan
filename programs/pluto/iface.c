@@ -697,7 +697,7 @@ void show_ifaces_status(struct show *s)
 	show_separator(s); /* if needed */
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
 		endpoint_buf b;
-		show_comment(s, "interface %s %s %s",
+		show(s, "interface %s %s %s",
 			     p->ip_dev->real_device_name,
 			     p->io->protocol->name,
 			     str_endpoint(&p->local_endpoint, &b));

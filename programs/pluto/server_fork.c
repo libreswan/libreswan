@@ -115,7 +115,7 @@ void show_process_status(struct show *s)
 {
 	show_separator(s);
 	/* XXX: don't sort for now */
-	show_comment(s, "  PID  Process");
+	show(s, "  PID  Process");
 	const struct pid_entry *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &pid_entry_db_list_head) {
 		/*
@@ -123,7 +123,7 @@ void show_process_status(struct show *s)
 		 * wait-until-pluto-started greps to see if
 		 * the "addconn" line has disappeared.
 		 */
-		show_comment(s, "%5d  %s", e->pid, e->name);
+		show(s, "%5d  %s", e->pid, e->name);
 	}
 }
 

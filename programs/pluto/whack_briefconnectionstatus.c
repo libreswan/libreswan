@@ -170,7 +170,7 @@ static void show_brief_connection_statuses(struct show *s)
 		pfree(connections);
 	}
 
-	show_comment(s, "# Total IPsec connections: loaded %d, active %d",
+	show(s, "# Total IPsec connections: loaded %d, active %d",
 		     count, active);
 }
 

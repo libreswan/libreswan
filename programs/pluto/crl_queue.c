@@ -324,9 +324,9 @@ static void list_distribution_points(struct show *s, const struct crl_distributi
 {
 	for (const struct crl_distribution_point *gn = first_gn; gn != NULL; gn = gn->next) {
 		if (gn == first_gn) {
-			show_comment(s, "       distPts: '%s'", gn->url);
+			show(s, "       distPts: '%s'", gn->url);
 		} else {
-			show_comment(s, "                '%s'", gn->url);
+			show(s, "                '%s'", gn->url);
 		}
 	}
 }
@@ -337,15 +337,15 @@ void list_crl_fetch_requests(struct show *s, bool utc)
 	{
 		if (crl_fetch_queue != NULL) {
 			show_blank(s);
-			show_comment(s, "List of CRL fetch requests:");
+			show(s, "List of CRL fetch requests:");
 			show_blank(s);
 			for (struct crl_fetch_queue *req = crl_fetch_queue; req != NULL; req = req->next) {
 				realtime_buf rtb;
-				show_comment(s, "%s, trials: %d",
+				show(s, "%s, trials: %d",
 					     str_realtime(req->request_time, utc, &rtb),
 					     req->trials);
 				dn_buf buf;
-				show_comment(s, "       issuer:  '%s'",
+				show(s, "       issuer:  '%s'",
 					     str_dn(ASN1(req->issuer_dn), &buf));
 				list_distribution_points(s, req->distribution_points);
 			}

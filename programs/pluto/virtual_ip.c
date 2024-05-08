@@ -485,10 +485,10 @@ static void show_virtual_private_kind(struct show *s,
 				break;
 			}
 		}
-		show_comment(s, "- %s subnet%s: %s",
+		show(s, "- %s subnet%s: %s",
 			kind, i == 1? "" : "s", all);
 		if (i < private_net_len) {
-			show_comment(s, "showing only %d of %d!",
+			show(s, "showing only %d of %d!",
 				     i, private_net_len);
 		}
 	}
@@ -497,7 +497,7 @@ static void show_virtual_private_kind(struct show *s,
 void show_virtual_private(struct show *s)
 {
 	if (nat_traversal_enabled) {
-		show_comment(s, "virtual-private (%%priv):");
+		show(s, "virtual-private (%%priv):");
 		show_virtual_private_kind(s, "allowed",
 					  private_net_incl,
 					  private_net_incl_len);

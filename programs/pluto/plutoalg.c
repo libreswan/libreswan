@@ -46,14 +46,14 @@
 void show_kernel_alg_status(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "Kernel algorithms supported:");
+	show(s, "Kernel algorithms supported:");
 	show_separator(s);
 
 	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
 	     alg_p != NULL; alg_p = next_kernel_encrypt_desc(alg_p)) {
 		const struct encrypt_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack gives us no algos */
-			show_comment(s,
+			show(s,
 				"algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
 				alg->common.fqn,
 				encrypt_min_key_bit_length(alg),
@@ -64,7 +64,7 @@ void show_kernel_alg_status(struct show *s)
 	     alg_p != NULL; alg_p = next_kernel_integ_desc(alg_p)) {
 		const struct integ_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack doesn't give us algos */
-			show_comment(s,
+			show(s,
 				"algorithm AH/ESP auth: name=%s, key-length=%zu",
 				alg->common.fqn,
 				alg->integ_keymat_size * BITS_IN_BYTE);

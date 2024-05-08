@@ -1602,17 +1602,17 @@ void jam_humber_uintmax(struct jambuf *buf,
 void show_brief_status(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "State Information: DDoS cookies %s, %s new IKE connections",
+	show(s, "State Information: DDoS cookies %s, %s new IKE connections",
 		     require_ddos_cookies() ? "REQUIRED" : "not required",
 		     drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 
-	show_comment(s, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+	show(s, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  total_ike_sa(),
 		  cat_count[CAT_HALF_OPEN_IKE_SA],
 		  cat_count[CAT_OPEN_IKE_SA],
 		  cat_count_ike_sa[CAT_AUTHENTICATED],
 		  cat_count_ike_sa[CAT_ANONYMOUS]);
-	show_comment(s, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
+	show(s, "IPsec SAs: total("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  cat_count[CAT_ESTABLISHED_CHILD_SA],
 		  cat_count_child_sa[CAT_AUTHENTICATED],
 		  cat_count_child_sa[CAT_ANONYMOUS]);
@@ -1796,28 +1796,28 @@ void show_globalstate_status(struct show *s)
 {
 	unsigned shunts = shunt_count();
 
-	show_raw(s, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
-	show_raw(s, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
+	show(s, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
+	show(s, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	show_raw(s, "current.states.all="PRI_CAT, shunts + total_sa());
-	show_raw(s, "current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
-	show_raw(s, "current.states.ike="PRI_CAT, total_ike_sa());
-	show_raw(s, "current.states.shunts=%u", shunts);
-	show_raw(s, "current.states.iketype.anonymous="PRI_CAT, cat_count_ike_sa[CAT_ANONYMOUS]);
-	show_raw(s, "current.states.iketype.authenticated="PRI_CAT, cat_count_ike_sa[CAT_AUTHENTICATED]);
-	show_raw(s, "current.states.iketype.halfopen="PRI_CAT, cat_count[CAT_HALF_OPEN_IKE_SA]);
-	show_raw(s, "current.states.iketype.open="PRI_CAT, cat_count[CAT_OPEN_IKE_SA]);
+	show(s, "current.states.all="PRI_CAT, shunts + total_sa());
+	show(s, "current.states.ipsec="PRI_CAT, cat_count[CAT_ESTABLISHED_CHILD_SA]);
+	show(s, "current.states.ike="PRI_CAT, total_ike_sa());
+	show(s, "current.states.shunts=%u", shunts);
+	show(s, "current.states.iketype.anonymous="PRI_CAT, cat_count_ike_sa[CAT_ANONYMOUS]);
+	show(s, "current.states.iketype.authenticated="PRI_CAT, cat_count_ike_sa[CAT_AUTHENTICATED]);
+	show(s, "current.states.iketype.halfopen="PRI_CAT, cat_count[CAT_HALF_OPEN_IKE_SA]);
+	show(s, "current.states.iketype.open="PRI_CAT, cat_count[CAT_OPEN_IKE_SA]);
 #ifdef USE_IKEv1
 	for (enum state_kind sk = STATE_IKEv1_FLOOR; sk < STATE_IKEv1_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
-		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
+		show(s, "current.states.enumerate.%s="PRI_CAT,
 			 fs->name, state_count[sk]);
 	}
 #endif
 	for (enum state_kind sk = STATE_IKEv2_FLOOR; sk < STATE_IKEv2_ROOF; sk++) {
 		const struct finite_state *fs = finite_states[sk];
-		show_raw(s, "current.states.enumerate.%s="PRI_CAT,
+		show(s, "current.states.enumerate.%s="PRI_CAT,
 			 fs->name, state_count[sk]);
 	}
 }

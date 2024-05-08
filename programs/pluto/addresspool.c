@@ -824,7 +824,7 @@ void show_addresspool_status(struct show *s)
 	for (struct addresspool *pool = pluto_pools;
 	     pool != NULL; pool = pool->next) {
 		range_buf rb;
-		show_comment(s, "address pool %s: %u addresses, %u leases, %u in-use, %u free (%u reusable)",
+		show(s, "address pool %s: %u addresses, %u leases, %u in-use, %u free (%u reusable)",
 			     str_range(&pool->r, &rb),
 			     pool->size, pool->nr_leases, pool->nr_in_use,
 			     pool->free_list.nr,
@@ -847,7 +847,7 @@ void show_addresspool_status(struct show *s)
 			nr_reusable_names += lease->reusable_name != NULL ? 1 : 0;
 			{
 				/* fudge indent so show*() calls are aligned */
-				show_comment(s, "    %*s %s "PRI_CO" %s%s",
+				show(s, "    %*s %s "PRI_CO" %s%s",
 					     (int)strlen(lease_str), lease_str,
 					     IS_INSERTED(lease, free_entry) ? "free" : "assigned to",
 					     pri_co(lease->assigned_to),
@@ -856,11 +856,11 @@ void show_addresspool_status(struct show *s)
 			}
 			if (c != NULL) {
 				connection_buf cb;
-				show_comment(s, "    %*s "PRI_CONNECTION,
+				show(s, "    %*s "PRI_CONNECTION,
 					     (int)strlen(lease_str), "",
 					     pri_connection(c, &cb));
 			} else {
-				show_comment(s, "    %*s connection "PRI_CO" does not exist",
+				show(s, "    %*s connection "PRI_CO" does not exist",
 					     (int)strlen(lease_str), "",
 					     pri_co(lease->assigned_to));
 			}

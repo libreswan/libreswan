@@ -141,7 +141,7 @@ void list_psks(struct show *s)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 	show_blank(s);
-	show_comment(s, "List of Pre-shared secrets (from %s)",
+	show(s, "List of Pre-shared secrets (from %s)",
 		     oco->secretsfile);
 	show_blank(s);
 	foreach_secret(pluto_secrets, print_secrets, s);
@@ -857,13 +857,13 @@ static void show_pubkey(struct show *s, struct pubkey *pubkey, bool utc, const c
 
 	id_buf idb;
 	esb_buf b;
-	show_comment(s, "       %s '%s'",
+	show(s, "       %s '%s'",
 		     str_enum(&ike_id_type_names, pubkey->id.kind, &b),
 		     str_id(&pubkey->id, &idb));
 
 	if (pubkey->issuer.len > 0) {
 		dn_buf b;
-		show_comment(s, "       Issuer '%s'",
+		show(s, "       Issuer '%s'",
 			     str_dn(pubkey->issuer, &b));
 	}
 }
@@ -872,7 +872,7 @@ void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
 {
 	if (keys_to_show == SHOW_ALL_KEYS) {
 		show_blank(s);
-		show_comment(s, "List of Public Keys:");
+		show(s, "List of Public Keys:");
 		show_blank(s);
 	}
 

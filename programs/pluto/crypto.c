@@ -132,7 +132,7 @@ void show_ike_alg_connection(struct show *s,
 void show_ike_alg_status(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "IKE algorithms supported:");
+	show(s, "IKE algorithms supported:");
 	show_separator(s);
 
 	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
@@ -141,7 +141,7 @@ void show_ike_alg_status(struct show *s)
 		if (ike_alg_is_ike(&(alg)->common)) {
 			esb_buf v1namebuf, v2namebuf;
 			passert(alg->common.ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
-			show_comment(s,
+			show(s,
 				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 				  alg->common.ikev1_oakley_id,
 				  (alg->common.ikev1_oakley_id >= 0 ? str_enum(&oakley_enc_names,
@@ -162,7 +162,7 @@ void show_ike_alg_status(struct show *s)
 	     algp != NULL; algp = next_prf_desc(algp)) {
 		const struct prf_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
-			show_comment(s,
+			show(s,
 				  "algorithm IKE PRF: name=%s, hashlen=%zu",
 				  alg->common.fqn, alg->prf_output_size);
 		}
@@ -173,7 +173,7 @@ void show_ike_alg_status(struct show *s)
 		const struct dh_desc *gdesc = *gdescp;
 		if (gdesc->bytes > 0) {
 			/* nothing crazy like 'none' */
-			show_comment(s,
+			show(s,
 				  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
 				  gdesc->common.fqn,
 				  (int)gdesc->bytes * BITS_IN_BYTE);

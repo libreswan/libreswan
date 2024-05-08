@@ -87,9 +87,6 @@ void show_blank(struct show *s);
  */
 
 void show(struct show *s, const char *message, ...) PRINTF_LIKE(2);
-/* delay churn */
-#define show_raw show
-#define show_comment show
 
 /*
  * Whack only logging.

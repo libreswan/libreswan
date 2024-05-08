@@ -265,7 +265,7 @@ struct db_prop *db_prop_get(struct db_context *ctx)
 void show_db_ops_status(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "stats db_ops: "
+	show(s, "stats db_ops: "
 		     DB_OPS_STATS_DESC " :"
 		     DB_OPS_STATS_STR("context")
 		     DB_OPS_STATS_STR("trans")

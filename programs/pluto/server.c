@@ -378,7 +378,7 @@ static void list_global_timers(struct show *s, const monotime_t now)
 			const char *what = (event_get_events(&gt->ev) & EV_PERSIST) ? "periodic" : "one-shot";
 			deltatime_t delay = monotimediff(due, now);
 			deltatime_buf delay_buf;
-			show_comment(s, "global %s timer %s is scheduled for %jd (in %s seconds)",
+			show(s, "global %s timer %s is scheduled for %jd (in %s seconds)",
 				     what, gt->name,
 				     monosecs(due), /* XXX: useful? */
 				     str_deltatime(delay, &delay_buf));
@@ -455,7 +455,7 @@ static void list_signal_handlers(struct show *s)
 		struct signal_handler *se = &signal_handlers[i];
 		if (event_initialized(&se->ev) &&
 		    event_pending(&se->ev, EV_SIGNAL, NULL) > 0) {
-			show_comment(s, "signal event handler %s", se->name);
+			show(s, "signal event handler %s", se->name);
 		}
 	}
 }
@@ -900,7 +900,7 @@ void detach_fd_accept_listener(struct fd_accept_listener **fdl)
  */
 void list_timers(struct show *s, const monotime_t now)
 {
-	show_comment(s, "it is now: %jd seconds since monotonic epoch",
+	show(s, "it is now: %jd seconds since monotonic epoch",
 		     monosecs(now));
 
 	list_global_timers(s, now);
@@ -909,7 +909,7 @@ void list_timers(struct show *s, const monotime_t now)
 	for (struct fd_read_listener *ev = pluto_events_head;
 	     ev != NULL; ev = ev->next) {
 		SHOW_JAMBUF(s, buf) {
-			show_comment(s, "event %s is not timer based", ev->name);
+			show(s, "event %s is not timer based", ev->name);
 		}
 	}
 }
@@ -933,7 +933,7 @@ void show_debug_status(struct show *s)
 void show_fips_status(struct show *s)
 {
 	bool fips = is_fips_mode();
-	show_comment(s, "FIPS mode %s", !fips ?
+	show(s, "FIPS mode %s", !fips ?
 		"disabled" :
 		impair.force_fips ? "enabled [forced]" : "enabled");
 }

@@ -1884,30 +1884,30 @@ int main(int argc, char **argv)
 void show_setup_plutomain(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "config setup options:");
+	show(s, "config setup options:");
 	show_separator(s);
-	show_comment(s, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
+	show(s, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
 		oco->confdir,
 		conffile, /* oco contains only a copy of hardcoded default */
 		oco->secretsfile,
 		oco->confddir);
 
-	show_comment(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
+	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 		oco->nssdir,
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
 #ifdef USE_DNSSEC
-	show_comment(s, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
+	show(s, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
 		     pluto_dnssec_rootkey_file == NULL ? "<unset>" : pluto_dnssec_rootkey_file,
 		     pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
 #endif
 
-	show_comment(s, "sbindir=%s, libexecdir=%s",
+	show(s, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
 		IPSEC_EXECDIR);
 
-	show_comment(s, "pluto_version=%s, pluto_vendorid=%s",
+	show(s, "pluto_version=%s, pluto_vendorid=%s",
 		ipsec_version_code(),
 		pluto_vendorid);
 
@@ -1923,7 +1923,7 @@ void show_setup_plutomain(struct show *s)
 
 	show_log(s);
 
-	show_comment(s,
+	show(s,
 		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
 		pluto_ddos_threshold,
 		pluto_max_halfopen,
@@ -1932,7 +1932,7 @@ void show_setup_plutomain(struct show *s)
 		pluto_ikev1_pol == GLOBAL_IKEv1_ACCEPT ? "accept" :
 			pluto_ikev1_pol == GLOBAL_IKEv1_REJECT ? "reject" : "drop");
 
-	show_comment(s,
+	show(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_sock_bufsize,
 		bool_str(pluto_sock_errqueue),
@@ -1942,14 +1942,14 @@ void show_setup_plutomain(struct show *s)
 		pluto_nflog_group
 		);
 
-	show_comment(s,
+	show(s,
 		     "ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%ju, ocsp-uri=%s",
 		     bool_str(ocsp_enable),
 		     bool_str(ocsp_strict),
 		     deltasecs(ocsp_timeout),
 		     ocsp_uri != NULL ? ocsp_uri : "<unset>"
 		);
-	show_comment(s,
+	show(s,
 		"ocsp-trust-name=%s",
 		ocsp_trust_name != NULL ? ocsp_trust_name : "<unset>"
 		);

@@ -334,7 +334,7 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 		unsigned long count = stat->count[n];
 		enum_buf nm;
 		if (enum_name_short(stat->names, n + stat->floor, &nm)) {
-			show_raw(s, "total.%s.%s=%lu",
+			show(s, "total.%s.%s=%lu",
 				 stat->what, nm.buf, count);
 		} else {
 			other += count;
@@ -342,7 +342,7 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 	}
 	/* prefer enum's name */
 	enum_buf nm;
-	show_raw(s, "total.%s.%s=%lu", stat->what,
+	show(s, "total.%s.%s=%lu", stat->what,
 		 (enum_name_short(stat->names, stat->count_ceiling + stat->floor, &nm) ? nm.buf : "other"),
 		 other);
 }
@@ -366,7 +366,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 */
 		enum_buf nm;
 		if (enum_name_short(names, e, &nm)) {
-			show_raw(s, "total.%s.%s=%lu",
+			show(s, "total.%s.%s=%lu",
 				 what, nm.buf, count[e]);
 		}
 	}
@@ -381,7 +381,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		const struct TYPE##_desc *alg = *algp;			\
 		long id = alg->common.id[ID];				\
 		if (id >= 0 && id < (ssize_t) elemsof(COUNT)) {		\
-			show_raw(s, "total.%s.%s=%lu",			\
+			show(s, "total.%s.%s=%lu",			\
 				 WHAT, alg->common.fqn,			\
 				 COUNT[id]);				\
 		}							\
@@ -389,20 +389,20 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 
 static void show_bytes(struct show *s, const char *prefix, const struct pstats_bytes *bytes)
 {
-	show_raw(s, "%s.in=%"PRIu64, prefix, bytes->in);
-	show_raw(s, "%s.out=%"PRIu64, prefix, bytes->out);
+	show(s, "%s.in=%"PRIu64, prefix, bytes->in);
+	show(s, "%s.out=%"PRIu64, prefix, bytes->out);
 }
 
 void show_pluto_stats(struct show *s)
 {
-	show_raw(s, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
-	show_raw(s, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);
-	show_raw(s, "total.ipsec.type.ah=%lu", pstats_ipsec_ah);
-	show_raw(s, "total.ipsec.type.ipcomp=%lu", pstats_ipsec_ipcomp);
-	show_raw(s, "total.ipsec.type.esn=%lu", pstats_ipsec_esn);
-	show_raw(s, "total.ipsec.type.tfc=%lu", pstats_ipsec_tfc);
-	show_raw(s, "total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
-	show_raw(s, "total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
+	show(s, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
+	show(s, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);
+	show(s, "total.ipsec.type.ah=%lu", pstats_ipsec_ah);
+	show(s, "total.ipsec.type.ipcomp=%lu", pstats_ipsec_ipcomp);
+	show(s, "total.ipsec.type.esn=%lu", pstats_ipsec_esn);
+	show(s, "total.ipsec.type.tfc=%lu", pstats_ipsec_tfc);
+	show(s, "total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
+	show(s, "total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
 	/*
 	 * Total counts only total of traffic by terminated IPsec
 	 * SA's.  Should we call get_sa_bundle_info() for bytes of
@@ -414,23 +414,23 @@ void show_pluto_stats(struct show *s)
 	show_bytes(s, "total.ipsec.ipcomp.traffic", &pstats_ipcomp_bytes);
 
 	/* old */
-	show_raw(s, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
-	show_raw(s, "total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
-	show_raw(s, "total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
-	show_raw(s, "total.ike.ikev2.redirect.completed=%lu", pstats_ikev2_redirect_completed);
-	show_raw(s, "total.ike.ikev2.redirect.failed=%lu", pstats_ikev2_redirect_failed);
-	show_raw(s, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
-	show_raw(s, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
-	show_raw(s, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
+	show(s, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
+	show(s, "total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
+	show(s, "total.ike.ikev2.completed=%lu", pstats_ikev2_completed);
+	show(s, "total.ike.ikev2.redirect.completed=%lu", pstats_ikev2_redirect_completed);
+	show(s, "total.ike.ikev2.redirect.failed=%lu", pstats_ikev2_redirect_failed);
+	show(s, "total.ike.ikev1.established=%lu", pstats_ikev1_sa);
+	show(s, "total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
+	show(s, "total.ike.ikev1.completed=%lu", pstats_ikev1_completed);
 
 	/* new */
 	for (enum ike_version v = IKE_VERSION_FLOOR; v < IKE_VERSION_ROOF; v++) {
 		for (enum sa_type t = SA_TYPE_FLOOR; t < SA_TYPE_ROOF; t++) {
 			const char *name = pstats_sa_names[v][t];
 			pexpect(name != NULL);
-			show_raw(s, "total.%s.started=%lu",
+			show(s, "total.%s.started=%lu",
 				    name, pstats_sa_started[v][t]);
-			show_raw(s, "total.%s.established=%lu",
+			show(s, "total.%s.established=%lu",
 				    name, pstats_sa_established[v][t]);
 			unsigned long finished = 0;
 			for (enum delete_reason r = DELETE_REASON_FLOOR; r < DELETE_REASON_ROOF; r++) {
@@ -439,31 +439,31 @@ void show_pluto_stats(struct show *s)
 				unsigned long count = pstats_sa_finished[v][t][r];
 				finished += count;
 				if (count > 0) {
-					show_raw(s, "total.%s.finished.%s=%lu",
+					show(s, "total.%s.finished.%s=%lu",
 						    name, reason, count);
 				}
 			}
-			show_raw(s, "total.%s.finished=%lu",
+			show(s, "total.%s.finished=%lu",
 				    name, finished);
 		}
 	}
 
-	show_raw(s, "total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
-	show_raw(s, "total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
-	show_raw(s, "total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
+	show(s, "total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
+	show(s, "total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
+	show(s, "total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
 
 	show_bytes(s, "total.ike.traffic", &pstats_ike_bytes);
 
-	show_raw(s, "total.pamauth.started=%lu", pstats_pamauth_started);
-	show_raw(s, "total.pamauth.stopped=%lu", pstats_pamauth_stopped);
-	show_raw(s, "total.pamauth.aborted=%lu", pstats_pamauth_aborted);
+	show(s, "total.pamauth.started=%lu", pstats_pamauth_started);
+	show(s, "total.pamauth.stopped=%lu", pstats_pamauth_stopped);
+	show(s, "total.pamauth.aborted=%lu", pstats_pamauth_aborted);
 
-	show_raw(s, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
-	show_raw(s, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
-	show_raw(s, "total.iketcp.client.aborted=%lu", pstats_iketcp_aborted[false]);
-	show_raw(s, "total.iketcp.server.started=%lu", pstats_iketcp_started[true]);
-	show_raw(s, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
-	show_raw(s, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
+	show(s, "total.iketcp.client.started=%lu", pstats_iketcp_started[false]);
+	show(s, "total.iketcp.client.stopped=%lu", pstats_iketcp_stopped[false]);
+	show(s, "total.iketcp.client.aborted=%lu", pstats_iketcp_aborted[false]);
+	show(s, "total.iketcp.server.started=%lu", pstats_iketcp_started[true]);
+	show(s, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
+	show(s, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
 
 	ENUM_STATS(&oakley_enc_names, OAKLEY_3DES_CBC, "ikev1.encr", pstats_ikev1_encr);
 	ENUM_STATS(&oakley_hash_names, OAKLEY_MD5, "ikev1.integ", pstats_ikev1_integ);

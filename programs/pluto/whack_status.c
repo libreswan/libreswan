@@ -56,15 +56,15 @@ static void show_system_security(struct show *s)
 	bool fips = is_fips_mode();
 
 	show_separator(s);
-	show_comment(s, "fips mode=%s;", fips ? "enabled" : "disabled");
-	show_comment(s, "SElinux=%s",
+	show(s, "fips mode=%s;", fips ? "enabled" : "disabled");
+	show(s, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef USE_SECCOMP
-	show_comment(s, "seccomp=%s",
+	show(s, "seccomp=%s",
 		     pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
 		     pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
 #else
-	show_comment(s, "seccomp=unsupported");
+	show(s, "seccomp=unsupported");
 #endif
 }
 
