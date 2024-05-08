@@ -988,6 +988,7 @@ enum ikev2_trans_type_encr {
 	/* 1024 - 65535 Private Use */
 	IKEv2_ENCR_SERPENT_CBC = 65004,
 	IKEv2_ENCR_TWOFISH_CBC = 65005,
+	/**/
 	IKEv2_ENCR_TWOFISH_CBC_SSH = 65289,
 	IKEv2_ENCR_INVALID = 65536,
 };
