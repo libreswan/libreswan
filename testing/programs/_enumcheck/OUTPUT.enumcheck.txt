@@ -997,13 +997,6 @@ IETF registry enum_names:
          jam_enum_short 41: GSA_REKEY OK
          jam_enum_human 41: gsa-rekey OK
          match GSA_REKEY [short]: OK
-   42 -> Reserved 42
-         jam_enum 42: Reserved 42 OK
-         search Reserved 42: OK
-         match Reserved 42: OK
-         short_name 42: Reserved 42 OK
-         jam_enum_short 42: Reserved 42 OK
-         jam_enum_human 42: reserved 42 OK
    43 -> ISAKMP_v2_IKE_INTERMEDIATE
          jam_enum 43: ISAKMP_v2_IKE_INTERMEDIATE OK
          search ISAKMP_v2_IKE_INTERMEDIATE: OK
@@ -1149,13 +1142,6 @@ IETF registry enum_names:
          jam_enum_short 41: GSA_REKEY OK
          jam_enum_human 41: gsa-rekey OK
          match GSA_REKEY [short]: OK
-   42 -> Reserved 42
-         jam_enum 42: Reserved 42 OK
-         search Reserved 42: OK
-         match Reserved 42: OK
-         short_name 42: Reserved 42 OK
-         jam_enum_short 42: Reserved 42 OK
-         jam_enum_human 42: reserved 42 OK
    43 -> ISAKMP_v2_IKE_INTERMEDIATE
          jam_enum 43: ISAKMP_v2_IKE_INTERMEDIATE OK
          search ISAKMP_v2_IKE_INTERMEDIATE: OK
@@ -2687,13 +2673,6 @@ IETF registry enum_names:
          match UNEQUAL_PAYLOAD_LENGTHS [short]: OK
 
   v2_notification_names:
-    0 -> Reserved 0
-         jam_enum 0: Reserved 0 OK
-         search Reserved 0: OK
-         match Reserved 0: OK
-         short_name 0: Reserved 0 OK
-         jam_enum_short 0: Reserved 0 OK
-         jam_enum_human 0: reserved 0 OK
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
          jam_enum 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
          search v2N_UNSUPPORTED_CRITICAL_PAYLOAD: OK
@@ -2702,20 +2681,6 @@ IETF registry enum_names:
          jam_enum_short 1: UNSUPPORTED_CRITICAL_PAYLOAD OK
          jam_enum_human 1: unsupported-critical-payload OK
          match UNSUPPORTED_CRITICAL_PAYLOAD [short]: OK
-    2 -> Reserved 2
-         jam_enum 2: Reserved 2 OK
-         search Reserved 2: OK
-         match Reserved 2: OK
-         short_name 2: Reserved 2 OK
-         jam_enum_short 2: Reserved 2 OK
-         jam_enum_human 2: reserved 2 OK
-    3 -> Reserved 3
-         jam_enum 3: Reserved 3 OK
-         search Reserved 3: OK
-         match Reserved 3: OK
-         short_name 3: Reserved 3 OK
-         jam_enum_short 3: Reserved 3 OK
-         jam_enum_human 3: reserved 3 OK
     4 -> v2N_INVALID_IKE_SPI
          jam_enum 4: v2N_INVALID_IKE_SPI OK
          search v2N_INVALID_IKE_SPI: OK
@@ -2732,13 +2697,6 @@ IETF registry enum_names:
          jam_enum_short 5: INVALID_MAJOR_VERSION OK
          jam_enum_human 5: invalid-major-version OK
          match INVALID_MAJOR_VERSION [short]: OK
-    6 -> Reserved 6
-         jam_enum 6: Reserved 6 OK
-         search Reserved 6: OK
-         match Reserved 6: OK
-         short_name 6: Reserved 6 OK
-         jam_enum_short 6: Reserved 6 OK
-         jam_enum_human 6: reserved 6 OK
     7 -> v2N_INVALID_SYNTAX
          jam_enum 7: v2N_INVALID_SYNTAX OK
          search v2N_INVALID_SYNTAX: OK
@@ -2747,13 +2705,6 @@ IETF registry enum_names:
          jam_enum_short 7: INVALID_SYNTAX OK
          jam_enum_human 7: invalid-syntax OK
          match INVALID_SYNTAX [short]: OK
-    8 -> Reserved 8
-         jam_enum 8: Reserved 8 OK
-         search Reserved 8: OK
-         match Reserved 8: OK
-         short_name 8: Reserved 8 OK
-         jam_enum_short 8: Reserved 8 OK
-         jam_enum_human 8: reserved 8 OK
     9 -> v2N_INVALID_MESSAGE_ID
          jam_enum 9: v2N_INVALID_MESSAGE_ID OK
          search v2N_INVALID_MESSAGE_ID: OK
@@ -2762,13 +2713,6 @@ IETF registry enum_names:
          jam_enum_short 9: INVALID_MESSAGE_ID OK
          jam_enum_human 9: invalid-message-id OK
          match INVALID_MESSAGE_ID [short]: OK
-   10 -> Reserved 10
-         jam_enum 10: Reserved 10 OK
-         search Reserved 10: OK
-         match Reserved 10: OK
-         short_name 10: Reserved 10 OK
-         jam_enum_short 10: Reserved 10 OK
-         jam_enum_human 10: reserved 10 OK
    11 -> v2N_INVALID_SPI
          jam_enum 11: v2N_INVALID_SPI OK
          search v2N_INVALID_SPI: OK
@@ -2777,20 +2721,6 @@ IETF registry enum_names:
          jam_enum_short 11: INVALID_SPI OK
          jam_enum_human 11: invalid-spi OK
          match INVALID_SPI [short]: OK
-   12 -> Reserved 12
-         jam_enum 12: Reserved 12 OK
-         search Reserved 12: OK
-         match Reserved 12: OK
-         short_name 12: Reserved 12 OK
-         jam_enum_short 12: Reserved 12 OK
-         jam_enum_human 12: reserved 12 OK
-   13 -> Reserved 13
-         jam_enum 13: Reserved 13 OK
-         search Reserved 13: OK
-         match Reserved 13: OK
-         short_name 13: Reserved 13 OK
-         jam_enum_short 13: Reserved 13 OK
-         jam_enum_human 13: reserved 13 OK
    14 -> v2N_NO_PROPOSAL_CHOSEN
          jam_enum 14: v2N_NO_PROPOSAL_CHOSEN OK
          search v2N_NO_PROPOSAL_CHOSEN: OK
@@ -2799,20 +2729,6 @@ IETF registry enum_names:
          jam_enum_short 14: NO_PROPOSAL_CHOSEN OK
          jam_enum_human 14: no-proposal-chosen OK
          match NO_PROPOSAL_CHOSEN [short]: OK
-   15 -> Reserved 15
-         jam_enum 15: Reserved 15 OK
-         search Reserved 15: OK
-         match Reserved 15: OK
-         short_name 15: Reserved 15 OK
-         jam_enum_short 15: Reserved 15 OK
-         jam_enum_human 15: reserved 15 OK
-   16 -> Reserved 16
-         jam_enum 16: Reserved 16 OK
-         search Reserved 16: OK
-         match Reserved 16: OK
-         short_name 16: Reserved 16 OK
-         jam_enum_short 16: Reserved 16 OK
-         jam_enum_human 16: reserved 16 OK
    17 -> v2N_INVALID_KE_PAYLOAD
          jam_enum 17: v2N_INVALID_KE_PAYLOAD OK
          search v2N_INVALID_KE_PAYLOAD: OK
@@ -2821,48 +2737,6 @@ IETF registry enum_names:
          jam_enum_short 17: INVALID_KE_PAYLOAD OK
          jam_enum_human 17: invalid-ke-payload OK
          match INVALID_KE_PAYLOAD [short]: OK
-   18 -> Reserved 18
-         jam_enum 18: Reserved 18 OK
-         search Reserved 18: OK
-         match Reserved 18: OK
-         short_name 18: Reserved 18 OK
-         jam_enum_short 18: Reserved 18 OK
-         jam_enum_human 18: reserved 18 OK
-   19 -> Reserved 19
-         jam_enum 19: Reserved 19 OK
-         search Reserved 19: OK
-         match Reserved 19: OK
-         short_name 19: Reserved 19 OK
-         jam_enum_short 19: Reserved 19 OK
-         jam_enum_human 19: reserved 19 OK
-   20 -> Reserved 20
-         jam_enum 20: Reserved 20 OK
-         search Reserved 20: OK
-         match Reserved 20: OK
-         short_name 20: Reserved 20 OK
-         jam_enum_short 20: Reserved 20 OK
-         jam_enum_human 20: reserved 20 OK
-   21 -> Reserved 21
-         jam_enum 21: Reserved 21 OK
-         search Reserved 21: OK
-         match Reserved 21: OK
-         short_name 21: Reserved 21 OK
-         jam_enum_short 21: Reserved 21 OK
-         jam_enum_human 21: reserved 21 OK
-   22 -> Reserved 22
-         jam_enum 22: Reserved 22 OK
-         search Reserved 22: OK
-         match Reserved 22: OK
-         short_name 22: Reserved 22 OK
-         jam_enum_short 22: Reserved 22 OK
-         jam_enum_human 22: reserved 22 OK
-   23 -> Reserved 23
-         jam_enum 23: Reserved 23 OK
-         search Reserved 23: OK
-         match Reserved 23: OK
-         short_name 23: Reserved 23 OK
-         jam_enum_short 23: Reserved 23 OK
-         jam_enum_human 23: reserved 23 OK
    24 -> v2N_AUTHENTICATION_FAILED
          jam_enum 24: v2N_AUTHENTICATION_FAILED OK
          search v2N_AUTHENTICATION_FAILED: OK
@@ -2871,69 +2745,6 @@ IETF registry enum_names:
          jam_enum_short 24: AUTHENTICATION_FAILED OK
          jam_enum_human 24: authentication-failed OK
          match AUTHENTICATION_FAILED [short]: OK
-   25 -> Reserved 25
-         jam_enum 25: Reserved 25 OK
-         search Reserved 25: OK
-         match Reserved 25: OK
-         short_name 25: Reserved 25 OK
-         jam_enum_short 25: Reserved 25 OK
-         jam_enum_human 25: reserved 25 OK
-   26 -> Reserved 26
-         jam_enum 26: Reserved 26 OK
-         search Reserved 26: OK
-         match Reserved 26: OK
-         short_name 26: Reserved 26 OK
-         jam_enum_short 26: Reserved 26 OK
-         jam_enum_human 26: reserved 26 OK
-   27 -> Reserved 27
-         jam_enum 27: Reserved 27 OK
-         search Reserved 27: OK
-         match Reserved 27: OK
-         short_name 27: Reserved 27 OK
-         jam_enum_short 27: Reserved 27 OK
-         jam_enum_human 27: reserved 27 OK
-   28 -> Reserved 28
-         jam_enum 28: Reserved 28 OK
-         search Reserved 28: OK
-         match Reserved 28: OK
-         short_name 28: Reserved 28 OK
-         jam_enum_short 28: Reserved 28 OK
-         jam_enum_human 28: reserved 28 OK
-   29 -> Reserved 29
-         jam_enum 29: Reserved 29 OK
-         search Reserved 29: OK
-         match Reserved 29: OK
-         short_name 29: Reserved 29 OK
-         jam_enum_short 29: Reserved 29 OK
-         jam_enum_human 29: reserved 29 OK
-   30 -> Reserved 30
-         jam_enum 30: Reserved 30 OK
-         search Reserved 30: OK
-         match Reserved 30: OK
-         short_name 30: Reserved 30 OK
-         jam_enum_short 30: Reserved 30 OK
-         jam_enum_human 30: reserved 30 OK
-   31 -> Reserved 31
-         jam_enum 31: Reserved 31 OK
-         search Reserved 31: OK
-         match Reserved 31: OK
-         short_name 31: Reserved 31 OK
-         jam_enum_short 31: Reserved 31 OK
-         jam_enum_human 31: reserved 31 OK
-   32 -> Reserved 32
-         jam_enum 32: Reserved 32 OK
-         search Reserved 32: OK
-         match Reserved 32: OK
-         short_name 32: Reserved 32 OK
-         jam_enum_short 32: Reserved 32 OK
-         jam_enum_human 32: reserved 32 OK
-   33 -> Reserved 33
-         jam_enum 33: Reserved 33 OK
-         search Reserved 33: OK
-         match Reserved 33: OK
-         short_name 33: Reserved 33 OK
-         jam_enum_short 33: Reserved 33 OK
-         jam_enum_human 33: reserved 33 OK
    34 -> v2N_SINGLE_PAIR_REQUIRED
          jam_enum 34: v2N_SINGLE_PAIR_REQUIRED OK
          search v2N_SINGLE_PAIR_REQUIRED: OK
