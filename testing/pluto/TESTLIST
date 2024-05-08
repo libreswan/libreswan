@@ -542,6 +542,7 @@ kvmplutotest	ikev2-xfrmi-11-vti-default-route	good
 kvmplutotest	ikev2-xfrmi-11-default-route		good
 kvmplutotest	ikev2-xfrmi-12-two-default-routes	good
 kvmplutotest	ikev2-xfrmi-13-multiple-tunnels		good
+kvmplutotest	ikev2-xfrmi-13-multiple-tunnels-metric	good	github/1703
 kvmplutotest	ikev2-xfrmi-14-fwmark			wip
 kvmplutotest	ikev1-xfrmi-01				good
 kvmplutotest	ikev1-xfrmi-02				wip
