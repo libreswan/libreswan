@@ -50,36 +50,48 @@
 
 long next_enum(enum_names *en, long l)
 {
-	enum_names *p = en;
+	passert(l == -1 || l >= 0);
 	unsigned long e;
+
+	/*
+	 * Advance L by 1 giving a starting candidate.
+	 */
 	if (l < 0) {
-		e = en->en_first;
-		if (en->en_names[e - p->en_first] != NULL) {
-			return e;
-		}
+		e = 0;
 	} else {
-		e = l;
+		e = l+1;
 	}
 
 	while (true) {
-		while (true) {
+		/*
+		 * Find a range that puts an upper bound on E.  E may
+		 * fall within the range, but could also fall short.
+		 */
+		const struct enum_names *p = en;
+		while (e > p->en_last) {
+			p = p->en_next_range;
 			if (p == NULL) {
 				return -1;
 			}
-			passert(p->en_last - p->en_first + 1 == p->en_checklen);
-			if (p->en_first <= e && e < p->en_last) {
-				e++;
-				break;
-			} else if (e == p->en_last && p->en_next_range != NULL) {
-				p = p->en_next_range;
-				e = p->en_first;
-				break;
-			} else {
-				p = p->en_next_range;
-			}
 		}
-		if (p->en_names[e - p->en_first] != NULL) {
-			return e;
+		passert(p->en_last - p->en_first + 1 == p->en_checklen);
+
+		/*
+		 * If E isn't yet within the range, make it so.
+		 */
+		if (e < p->en_first) {
+			e = p->en_first;
+		}
+
+		/*
+		 * Find the first valid name within the range; if this
+		 * fails, iterate round looking for a new range.
+		 */
+		while (e <= p->en_last) {
+			if (p->en_names[e - p->en_first] != NULL) {
+				return e;
+			}
+			e++;
 		}
 	}
 }
