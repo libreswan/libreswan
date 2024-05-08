@@ -20,8 +20,14 @@ enum enum_name_expectation {
 	ABSENT,
 };
 
+struct clash {
+	int e;
+	int short_match; /* returned by match(short_name) */
+};
+
 static void test_enum(enum_names *enum_test, int i,
-		      enum enum_name_expectation expect)
+		      enum enum_name_expectation expect,
+		      const struct clash *clash)
 {
 	char scratch[100];
 
@@ -162,11 +168,17 @@ static void test_enum(enum_names *enum_test, int i,
 	{
 		printf(PREFIX "match %s [short]: ", short_name.buf);
 		int e = enum_match(enum_test, shunk1(short_name.buf));
-		if (e != i) {
+		int short_match = (clash == NULL ? -1 : clash->short_match);
+		if (short_match >= 0 && e == short_match) {
+			printf("OK (clashed with %d)\n", short_match);
+		} else if (short_match >= 0) {
+			printf("%d ERROR (should clash with %d)\n", e, short_match);
+			errors++;
+		} else if (e == i) {
+			printf("OK\n");
+		} else {
 			printf("%d ERROR\n", e);
 			errors++;
-		} else {
-			printf("OK\n");
 		}
 	}
 
@@ -184,34 +196,77 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 }
 
-static void test_enum_range(char *enumname, enum_names *enum_test, int floor, int long roof)
+struct bounds {
+	long int floor;
+	long int roof;
+};
+
+static struct bounds enum_bounds(const struct enum_names *en)
 {
-	printf("  %s:\n", enumname);
+	/* find lower and upper bounds; might contain gaps */
+	long int first = next_enum(en, -1);
+	struct bounds b = {
+		.floor = first,
+		.roof = first+1,
+	};
+	for (int e = next_enum(en, first);
+	     e >= 0; e = next_enum(en, e)) {
+		b.roof = e+1;
+	}
+	return b;
+}
+
+static void test_enum_range(char *enumname, enum_names *enum_test, long int floor, long int roof)
+{
+	struct bounds b = enum_bounds(enum_test);
+	printf("  %s: ", enumname);
+	printf("[%ld", b.floor);
+	if (b.floor != floor) {
+		printf("(%ld)", floor);
+	}
+	printf("..");
+	printf("%ld", b.roof);
+	if (b.roof != roof) {
+		printf("(%ld)", roof);
+	}
+	printf(")\n");
 	for (int i = floor; i < roof; i++) {
-		test_enum(enum_test, i, OPTIONAL);
+		test_enum(enum_test, i, OPTIONAL, NULL);
 	}
 	printf("\n");
 }
 
-static void test_enums(const char *enumname, enum_names *enum_test)
+static void test_enums(const char *enumname, enum_names *enum_test, const struct clash *clashes)
 {
-	printf("  %s:\n", enumname);
-	int first = -1;
-	int last = -1;
+	struct bounds b = enum_bounds(enum_test);
+	printf("  %s: [%ld..%ld)\n", enumname, b.floor, b.roof);
+
+	/* test those next_enum() returns */
+	int clashed = 0;
 	for (int i = next_enum(enum_test, -1);
 	     i >= 0; i = next_enum(enum_test, i)) {
-		if (first < 0) {
-			first = i;
-		} else if (i <= first) {
-			printf("enum %d <= first %d\n", i, first);
-		}
-		if (i <= last) {
-			printf("enum %d <= last %d\n", i, last);
-		}
-		last = i;
-		test_enum(enum_test, i, PRESENT);
+		const struct clash *clash = NULL;
+		for (const struct clash *c = clashes; c != NULL && c->e >= 0; c++) {
+ 			if (c->e == i) {
+				clashed++;
+				clash = c;
+ 				break;
+ 			}
+ 		}
+		test_enum(enum_test, i, PRESENT, clash);
 	}
-	test_enum(enum_test, last + 1, ABSENT);
+
+	test_enum(enum_test, b.floor-1, ABSENT, NULL);
+	test_enum(enum_test, b.roof, ABSENT, NULL);
+
+	for (const struct clash *c = clashes; c != NULL && c->e >= 0; c++) {
+		clashed--;
+	}
+	if (clashed != 0) {
+		printf("    ERROR missing clashes %d\n", clashed);
+		errors++;
+	}
+
 	printf("\n");
 }
 
@@ -326,6 +381,14 @@ int main(int argc UNUSED, char *argv[])
 	     c->name != NULL && c->enum_names != NULL; c++) {
 		if (c->enum_names == &encapsulation_mode_names) {
 			test_enum_range("encapsulation_mode_names", &encapsulation_mode_names, 0, 256);
+		} else if (c->enum_names == &event_type_names) {
+			static const struct clash clash[] = {
+				{ EVENT_v1_EXPIRE, EVENT_v2_EXPIRE, },
+				{ EVENT_v1_DISCARD, EVENT_v2_DISCARD, },
+				{ EVENT_v1_REPLACE, EVENT_v2_REPLACE, },
+				{ -1, -1, },
+			};
+			test_enums("event_type_names", &event_type_names, clash);
 		} else if (c->enum_names == &ike_id_type_names) {
 			test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
 		} else if (c->enum_names == &ikev2_trans_attr_descs) {
@@ -351,7 +414,7 @@ int main(int argc UNUSED, char *argv[])
 		} else if (c->enum_names == &xauth_attr_names) {
 			test_enum_range("xauth_attr_names", &xauth_attr_names, 0, 256);
 		} else {
-			test_enums(c->name, c->enum_names);
+			test_enums(c->name, c->enum_names, NULL);
 		}
 	}
 
