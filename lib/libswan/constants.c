@@ -1476,48 +1476,44 @@ static enum_names oakley_prf_names = {
  */
 
 static const char *const oakley_enc_name[] = {
-	"OAKLEY_DES_CBC(UNUSED)", /* obsoleted */
-	"OAKLEY_IDEA_CBC(UNUSED)",
-	"OAKLEY_BLOWFISH_CBC(UNUSED)", /* obsoleted */
-	"OAKLEY_RC5_R16_B64_CBC(UNUSED)",
-	"OAKLEY_3DES_CBC",
-	"OAKLEY_CAST_CBC",
-	"OAKLEY_AES_CBC",
-	"OAKLEY_CAMELLIA_CBC", /* 8 */
-	"UNUSED_9",
-	"UNUSED_10",
-	"UNUSED_11",
-	"UNUSED_12",
-	"OAKLEY_AES_CTR", /* stolen from IKEv2 */
-	"OAKLEY_AES_CCM_A",
-	"OAKLEY_AES_CCM_B",
-	"OAKLEY_AES_CCM_16",
-	"UNUSED_17",
-	"OAKLEY_AES_GCM_A",
-	"OAKLEY_AES_GCM_B",
-	"OAKLEY_AES_GCM_C",
-	"UNUSED_21",
-	"UNUSED_22",
-	"UNUSED_23",
-	"OAKLEY_CAMELLIA_CTR",
-	"OAKLEY_CAMELLIA_CCM_A",
-	"OAKLEY_CAMELLIA_CCM_B",
-	"OAKLEY_CAMELLIA_CCM_C",
-
+#define S(E, ...) [E] = #E __VA_ARGS__
+	S(OAKLEY_DES_CBC, "(UNUSED)"), /* obsoleted */
+	S(OAKLEY_IDEA_CBC, "(UNUSED)"),
+	S(OAKLEY_BLOWFISH_CBC, "(UNUSED)"), /* obsoleted */
+	S(OAKLEY_RC5_R16_B64_CBC, "(UNUSED)"),
+	S(OAKLEY_3DES_CBC),
+	S(OAKLEY_CAST_CBC),
+	S(OAKLEY_AES_CBC),
+	S(OAKLEY_CAMELLIA_CBC), /* 8 */
+	S(OAKLEY_AES_CTR), /* stolen from IKEv2 */
+	[OAKLEY_AES_CCM_8] = "OAKLEY_AES_CCM_A",
+	[OAKLEY_AES_CCM_12] = "OAKLEY_AES_CCM_B",
+	S(OAKLEY_AES_CCM_16),
+	[OAKLEY_AES_GCM_8] = "OAKLEY_AES_GCM_A",
+	[OAKLEY_AES_GCM_12] = "OAKLEY_AES_GCM_B",
+	[OAKLEY_AES_GCM_16] = "OAKLEY_AES_GCM_C",
+	S(OAKLEY_CAMELLIA_CTR),
+	S(OAKLEY_CAMELLIA_CCM_A),
+	S(OAKLEY_CAMELLIA_CCM_B),
+	S(OAKLEY_CAMELLIA_CCM_C),
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
+#undef S
 };
 
 static const char *const oakley_enc_name_private_use[] = {
-	"OAKLEY_MARS_CBC"	/* 65001 */,
-	"OAKLEY_RC6_CBC"	/* 65002 */,
-	"OAKLEY_ID_65003"	/* 65003 */,
-	"OAKLEY_SERPENT_CBC"	/* 65004 */,
-	"OAKLEY_TWOFISH_CBC"	/* 65005 */,
+#define S(E, ...) [E-OAKLEY_MARS_CBC] = #E __VA_ARGS__
+	S(OAKLEY_MARS_CBC),	/* 65001 */
+	S(OAKLEY_RC6_CBC),	/* 65002 */
+	S(OAKLEY_SERPENT_CBC),	/* 65004 */
+	S(OAKLEY_TWOFISH_CBC),	/* 65005 */
+#undef S
 };
 
 static const char *const oakley_enc_name_private_use_ssh[] = {
-	"OAKLEY_TWOFISH_CBC_SSH",	/* 65289 */
+#define S(E, ...) [E-OAKLEY_TWOFISH_CBC_SSH] = #E __VA_ARGS__
+	S(OAKLEY_TWOFISH_CBC_SSH),	/* 65289 */
+#undef S
 };
 
 static enum_names oakley_enc_names_private_use_ssh = {
@@ -1537,7 +1533,7 @@ static enum_names oakley_enc_names_private_use = {
 };
 
 enum_names oakley_enc_names = {
-	OAKLEY_DES_CBC,
+	0,
 	OAKLEY_CAMELLIA_CCM_C,
 	ARRAY_REF(oakley_enc_name),
 	"OAKLEY_", /* prefix */
@@ -1551,15 +1547,17 @@ enum_names oakley_enc_names = {
 
 /* these string names map via a lookup function to configuration strings */
 static const char *const oakley_hash_name[] = {
+#define S(E, ...) [E-OAKLEY_MD5] = #E __VA_ARGS__
 	/* 0 - RESERVED */
-	"OAKLEY_MD5",
-	"OAKLEY_SHA1",
-	"OAKLEY_TIGER(UNUSED)",
-	"OAKLEY_SHA2_256",	/* RFC 4878 */
-	"OAKLEY_SHA2_384",	/* RFC 4878 */
-	"OAKLEY_SHA2_512",	/* RFC 4878 */
+	S(OAKLEY_MD5),
+	S(OAKLEY_SHA1),
+	S(OAKLEY_TIGER, "(UNUSED)"),
+	S(OAKLEY_SHA2_256),	/* RFC 4878 */
+	S(OAKLEY_SHA2_384),	/* RFC 4878 */
+	S(OAKLEY_SHA2_512),	/* RFC 4878 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
+#undef S
 };
 
 enum_names oakley_hash_names = {
@@ -1572,17 +1570,16 @@ enum_names oakley_hash_names = {
 
 /* Oakley Authentication Method attribute */
 static const char *const oakley_auth_name[] = {
-	"OAKLEY_PRESHARED_KEY",
-	"OAKLEY_DSS_SIG",
-	"OAKLEY_RSA_SIG",
-	"OAKLEY_RSA_ENC",
-	"OAKLEY_RSA_REVISED_MODE",
-	"OAKLEY_RESERVED_6",
-	"OAKLEY_RESERVED_7",
-	"OAKLEY_RESERVED_8",
-	"OAKLEY_ECDSA_P256", /* RFC 4754 */
-	"OAKLEY_ECDSA_P384", /* RFC 4754 */
-	"OAKLEY_ECDSA_P521", /* RFC 4754 */
+#define S(E, ...) [E-OAKLEY_PRESHARED_KEY] = #E __VA_ARGS__
+	S(OAKLEY_PRESHARED_KEY),
+	S(OAKLEY_DSS_SIG),
+	S(OAKLEY_RSA_SIG),
+	S(OAKLEY_RSA_ENC),
+	S(OAKLEY_RSA_REVISED_MODE),
+	S(OAKLEY_ECDSA_P256), /* RFC 4754 */
+	S(OAKLEY_ECDSA_P384), /* RFC 4754 */
+	S(OAKLEY_ECDSA_P521), /* RFC 4754 */
+#undef S
 };
 
 static const char *const oakley_auth_name_private_use2[] = {
@@ -1719,41 +1716,43 @@ enum_names ikev2_auth_method_names = {
 
 /* these string names map via a lookup function to configuration strings */
 static const char *const oakley_group_name[] = {
-	"OAKLEY_GROUP_NONE", /* 0! RFC 7296 */
-	"OAKLEY_GROUP_MODP768",
-	"OAKLEY_GROUP_MODP1024",
-	"OAKLEY_GROUP_GP155(UNUSED)",
-	"OAKLEY_GROUP_GP185(UNUSED)",
-	"OAKLEY_GROUP_MODP1536", /* RFC 3526 */
-	"OAKLEY_GROUP_EC2N_2_1(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_2(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_3(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_4(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_5(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_6(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_7(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_EC2N_2_8(UNUSED)", /* draft-ietf-ipsec-ike-ecc-groups */
-	"OAKLEY_GROUP_MODP2048", /* RFC 3526 */
-	"OAKLEY_GROUP_MODP3072", /* RFC 3526 */
-	"OAKLEY_GROUP_MODP4096", /* RFC 3526 */
-	"OAKLEY_GROUP_MODP6144", /* RFC 3526 */
-	"OAKLEY_GROUP_MODP8192", /* RFC 3526 */
-	"OAKLEY_GROUP_ECP_256", /* RFC 5903 */
-	"OAKLEY_GROUP_ECP_384", /* RFC 5903 */
-	"OAKLEY_GROUP_ECP_521", /* RFC 5903 */
-	"OAKLEY_GROUP_DH22", /* RFC 5114 */
-	"OAKLEY_GROUP_DH23", /* RFC 5114 */
-	"OAKLEY_GROUP_DH24", /* RFC 5114 */
-	"OAKLEY_GROUP_ECP_192", /* RFC 5114 */
-	"OAKLEY_GROUP_ECP_224", /* RFC 5114 */
-	"OAKLEY_GROUP_BRAINPOOL_P224R1", /* RFC 6932 */
-	"OAKLEY_GROUP_BRAINPOOL_P256R1", /* RFC 6932 */
-	"OAKLEY_GROUP_BRAINPOOL_P384R1", /* RFC 6932 */
-	"OAKLEY_GROUP_BRAINPOOL_P512R1", /* RFC 6932 */
-	"OAKLEY_GROUP_CURVE25519", /* RFC-ietf-ipsecme-safecurves-05 */
-	"OAKLEY_GROUP_CURVE448", /* RFC-ietf-ipsecme-safecurves-05 */
+#define S(E, ...) [E-OAKLEY_GROUP_NONE] = #E __VA_ARGS__
+	S(OAKLEY_GROUP_NONE), /* 0! RFC 7296 */
+	S(OAKLEY_GROUP_MODP768),
+	S(OAKLEY_GROUP_MODP1024),
+	S(OAKLEY_GROUP_GP155, "(UNUSED)"),
+	S(OAKLEY_GROUP_GP185, "(UNUSED)"),
+	S(OAKLEY_GROUP_MODP1536), /* RFC 3526 */
+	S(OAKLEY_GROUP_EC2N_2_1, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_2, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_3, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_4, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_5, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_6, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_7, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_8, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_MODP2048), /* RFC 3526 */
+	S(OAKLEY_GROUP_MODP3072), /* RFC 3526 */
+	S(OAKLEY_GROUP_MODP4096), /* RFC 3526 */
+	S(OAKLEY_GROUP_MODP6144), /* RFC 3526 */
+	S(OAKLEY_GROUP_MODP8192), /* RFC 3526 */
+	S(OAKLEY_GROUP_ECP_256), /* RFC 5903 */
+	S(OAKLEY_GROUP_ECP_384), /* RFC 5903 */
+	S(OAKLEY_GROUP_ECP_521), /* RFC 5903 */
+	S(OAKLEY_GROUP_DH22), /* RFC 5114 */
+	S(OAKLEY_GROUP_DH23), /* RFC 5114 */
+	S(OAKLEY_GROUP_DH24), /* RFC 5114 */
+	S(OAKLEY_GROUP_ECP_192), /* RFC 5114 */
+	S(OAKLEY_GROUP_ECP_224), /* RFC 5114 */
+	S(OAKLEY_GROUP_BRAINPOOL_P224R1), /* RFC 6932 */
+	S(OAKLEY_GROUP_BRAINPOOL_P256R1), /* RFC 6932 */
+	S(OAKLEY_GROUP_BRAINPOOL_P384R1), /* RFC 6932 */
+	S(OAKLEY_GROUP_BRAINPOOL_P512R1), /* RFC 6932 */
+	S(OAKLEY_GROUP_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(OAKLEY_GROUP_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
+#undef S
 };
 
 enum_names oakley_group_names = {
@@ -1766,16 +1765,18 @@ enum_names oakley_group_names = {
 
 /* Oakley Group Type attribute */
 static const char *const oakley_group_type_name[] = {
-	"OAKLEY_GROUP_TYPE_MODP",
-	"OAKLEY_GROUP_TYPE_ECP",
-	"OAKLEY_GROUP_TYPE_EC2N",
+#define S(E, ...) [E-OAKLEY_GROUP_TYPE_MODP] = #E __VA_ARGS__
+	S(OAKLEY_GROUP_TYPE_MODP),
+	S(OAKLEY_GROUP_TYPE_ECP),
+	S(OAKLEY_GROUP_TYPE_EC2N),
+#undef S
 };
 
 static enum_names oakley_group_type_names = {
 	OAKLEY_GROUP_TYPE_MODP,
 	OAKLEY_GROUP_TYPE_EC2N,
 	ARRAY_REF(oakley_group_type_name),
-	NULL, /* prefix */
+	"OAKLEY_GROUP_TYPE_", /* prefix */
 	NULL
 };
 
