@@ -67,28 +67,43 @@ long next_enum(enum_names *en, long l)
 		 * Find a range that puts an upper bound on E.  E may
 		 * fall within the range, but could also fall short.
 		 */
-		const struct enum_names *p = en;
-		while (e > p->en_last) {
-			p = p->en_next_range;
-			if (p == NULL) {
-				return -1;
+		const struct enum_names *b = NULL;
+		for (const struct enum_names *p = en;
+		     p != NULL; p = p->en_next_range) {
+			if (e > p->en_last) {
+				continue;
+			}
+
+			if (e >= p->en_first) {
+				b = p;
+				break;
+			}
+
+			/* e < .en_first; save when closer */
+			if (b == NULL ||
+			    b->en_first > p->en_first) {
+				b = p;
 			}
 		}
-		passert(p->en_last - p->en_first + 1 == p->en_checklen);
+		if (b == NULL) {
+			return -1;
+		}
+
+		passert(b->en_last - b->en_first + 1 == b->en_checklen);
 
 		/*
 		 * If E isn't yet within the range, make it so.
 		 */
-		if (e < p->en_first) {
-			e = p->en_first;
+		if (e < b->en_first) {
+			e = b->en_first;
 		}
 
 		/*
 		 * Find the first valid name within the range; if this
 		 * fails, iterate round looking for a new range.
 		 */
-		while (e <= p->en_last) {
-			if (p->en_names[e - p->en_first] != NULL) {
+		while (e <= b->en_last) {
+			if (b->en_names[e - b->en_first] != NULL) {
 				return e;
 			}
 			e++;
