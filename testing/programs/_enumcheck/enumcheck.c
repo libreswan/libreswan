@@ -8,6 +8,7 @@
 #include "lswtool.h"
 #include "jambuf.h"
 #include "passert.h"
+#include "enum_names.h"
 
 #define PREFIX "         "
 
@@ -192,7 +193,7 @@ static void test_enum_range(char *enumname, enum_names *enum_test, int floor, in
 	printf("\n");
 }
 
-static void test_enums(char *enumname, enum_names *enum_test)
+static void test_enums(const char *enumname, enum_names *enum_test)
 {
 	printf("  %s:\n", enumname);
 	int first = -1;
@@ -321,58 +322,38 @@ int main(int argc UNUSED, char *argv[])
 	/* don't hold back */
 	setbuf(stdout, NULL);
 
-	test_enums("ah_transformid_names", &ah_transformid_names);
-	test_enums("attr_msg_type_names", &attr_msg_type_names);
-	test_enums("auth_alg_names", &auth_alg_names);
-	test_enums("certpolicy_type_names", &certpolicy_type_names);
-	test_enums("connection_kind_names", &connection_kind_names);
-	test_enums("doi_names", &doi_names);
-	test_enum_range("encapsulation_mode_names", &encapsulation_mode_names, 0, 256);
-	test_enums("esp_transformid_names", &esp_transformid_names);
-	test_enums("ike_cert_type_names", &ike_cert_type_names);
-	test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
-	test_enums("ikev1_exchange_names", &ikev1_exchange_names);
-	test_enums("ikev1_ike_id_type_names", &ikev1_ike_id_type_names);
-	test_enums("ikev1_payload_names", &ikev1_payload_names);
-	test_enums("ikev1_protocol_names", &ikev1_protocol_names);
-	test_enums("ikev2_auth_method_names", &ikev2_auth_method_names);
-	test_enums("ikev2_cert_type_names", &ikev2_cert_type_names);
-	test_enums("ikev2_cp_attribute_type_names", &ikev2_cp_attribute_type_names);
-	test_enums("ikev2_cp_type_names", &ikev2_cp_type_names);
-	test_enums("ikev2_delete_protocol_id_names", &ikev2_delete_protocol_id_names);
-	test_enums("ikev2_exchange_names", &ikev2_exchange_names);
-	test_enums("ikev2_ike_id_type_names", &ikev2_ike_id_type_names);
-	test_enums("ikev2_notify_protocol_id_names", &ikev2_notify_protocol_id_names);
-	test_enums("ikev2_payload_names", &ikev2_payload_names);
-	test_enums("ikev2_proposal_protocol_id_names", &ikev2_proposal_protocol_id_names);
-	test_enum_range("ikev2_trans_attr_descs", &ikev2_trans_attr_descs, 0, 256);
-	test_enum_range("ikev2_trans_type_encr_names", &ikev2_trans_type_encr_names, 0, 256);
-	test_enums("ikev2_trans_type_esn_names", &ikev2_trans_type_esn_names);
-	test_enums("ikev2_trans_type_integ_names", &ikev2_trans_type_integ_names);
-	test_enums("ikev2_trans_type_names", &ikev2_trans_type_names);
-	test_enums("ikev2_trans_type_prf_names", &ikev2_trans_type_prf_names);
-	test_enums("ikev2_ts_type_names", &ikev2_ts_type_names);
-	test_enum_range("ipsec_attr_names", &ipsec_attr_names, 0, 256);
-	test_enums("ipsec_ipcomp_algo_names", &ipsec_ipcomp_algo_names);
-	test_enums("ipseckey_algorithm_config_names", &ipseckey_algorithm_config_names);
-	test_enums("ipseckey_algorithm_type_names", &ipseckey_algorithm_type_names);
-	test_enums("isakmp_transformid_names", &isakmp_transformid_names);
-	test_enums("isakmp_xchg_type_names", &isakmp_xchg_type_names);
-	test_enum_range("modecfg_attr_names", &modecfg_attr_names, 0, 256);
-	test_enum_range("oakley_attr_names", &oakley_attr_names, 0, 256);
-	test_enum_range("oakley_auth_names", &oakley_auth_names, 0, 256);
-	test_enum_range("oakley_enc_names", &oakley_enc_names, 0, 256);
-	test_enums("oakley_group_names", &oakley_group_names);
-	test_enums("oakley_hash_names", &oakley_hash_names);
-	test_enums("oakley_lifetime_names", &oakley_lifetime_names);
-	test_enums("payload_names_ikev1orv2", &payload_names_ikev1orv2);
-	test_enums("sa_lifetime_names", &sa_lifetime_names);
-	test_enums("secret_kind_names", &secret_kind_names);
-	test_enum_range("v1_notification_names", &v1_notification_names, 0, 16384);
-	test_enum_range("v2_notification_names", &v2_notification_names, 0, 16384);
-	test_enum_range("version_names", &version_names, 0, 256);
-	test_enum_range("xauth_attr_names", &xauth_attr_names, 0, 256);
-	test_enums("xauth_type_names", &xauth_type_names);
+	for (const struct enum_names_check *c = enum_names_checklist;
+	     c->name != NULL && c->enum_names != NULL; c++) {
+		if (c->enum_names == &encapsulation_mode_names) {
+			test_enum_range("encapsulation_mode_names", &encapsulation_mode_names, 0, 256);
+		} else if (c->enum_names == &ike_id_type_names) {
+			test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
+		} else if (c->enum_names == &ikev2_trans_attr_descs) {
+			test_enum_range("ikev2_trans_attr_descs", &ikev2_trans_attr_descs, 0, 256);
+		} else if (c->enum_names == &ikev2_trans_type_encr_names) {
+			test_enum_range("ikev2_trans_type_encr_names", &ikev2_trans_type_encr_names, 0, 256);
+		} else if (c->enum_names == &ipsec_attr_names) {
+			test_enum_range("ipsec_attr_names", &ipsec_attr_names, 0, 256);
+		} else if (c->enum_names == &modecfg_attr_names) {
+			test_enum_range("modecfg_attr_names", &modecfg_attr_names, 0, 256);
+		} else if (c->enum_names == &oakley_attr_names) {
+			test_enum_range("oakley_attr_names", &oakley_attr_names, 0, 256);
+		} else if (c->enum_names == &oakley_auth_names) {
+			test_enum_range("oakley_auth_names", &oakley_auth_names, 0, 256);
+		} else if (c->enum_names == &oakley_enc_names) {
+			test_enum_range("oakley_enc_names", &oakley_enc_names, 0, 256);
+		} else if (c->enum_names == &v1_notification_names) {
+			test_enum_range("v1_notification_names", &v1_notification_names, 0, 16384);
+		} else if (c->enum_names == &v2_notification_names) {
+			test_enum_range("v2_notification_names", &v2_notification_names, 0, 16384);
+		} else if (c->enum_names == &version_names) {
+			test_enum_range("version_names", &version_names, 0, 256);
+		} else if (c->enum_names == &xauth_attr_names) {
+			test_enum_range("xauth_attr_names", &xauth_attr_names, 0, 256);
+		} else {
+			test_enums(c->name, c->enum_names);
+		}
+	}
 
 	/*
 	 * Some hard-wired checks of enum_enum_name.  If a lookup
