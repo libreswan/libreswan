@@ -219,6 +219,20 @@ static bool compute_proto_keymat(struct state *st,
 	 */
 	switch (protoid) {
 	case PROTO_IPSEC_ESP:
+	{
+		/*
+		 * If there is encryption, then ENCKEYLEN contains the
+		 * required number of bits.
+		 */
+		size_t encrypt_key_size = BYTES_FOR_BITS(pi->trans_attrs.enckeylen);
+		/*
+		 * Finally, some encryption algorithms such as AEAD
+		 * and CTR require "salt" as part of the "starting
+		 * variable".
+		 */
+		const struct encrypt_desc *encrypt = pi->trans_attrs.ta_encrypt;
+		size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
+
 		switch (pi->trans_attrs.ta_ikev1_encrypt) {
 		case ESP_NULL:
 			needed_len = 0;
@@ -306,9 +320,14 @@ static bool compute_proto_keymat(struct state *st,
 		}
 		}
 		dbg("compute_proto_keymat: needed_len (after ESP enc)=%d", (int)needed_len);
+		dbg("compute_proto_keymat: encrypt_key_size %zd encrypt_salt_size %zd",
+		    encrypt_key_size, encrypt_salt_size);
+		PEXPECT(st->logger, needed_len == encrypt_key_size + encrypt_salt_size);
+
 		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
 		dbg("compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
 		break;
+	}
 
 	case PROTO_IPSEC_AH:
 		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
