@@ -738,7 +738,7 @@ struct_desc isakmp_attr_desc = {
 	.name = "ISAKMP Mode Attribute",
 	.fields = isaattr_fields,
 	.size = sizeof(struct isakmp_mode_attr),
-	.pt = ISAKMP_NEXT_MCFG_ATTR,
+	.pt = ISAKMP_NEXT_MODECFG,
 };
 
 /*

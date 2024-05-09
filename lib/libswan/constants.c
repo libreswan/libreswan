@@ -458,7 +458,6 @@ enum_names connection_kind_names = {
 /* Payload types (RFC 2408 "ISAKMP" section 3.1) */
 static const char *const payload_name_ikev1[] = {
 #define S(E) [E - ISAKMP_NEXT_NONE] = #E
-#define R(E,S) [E - ISAKMP_NEXT_NONE] = #S
 	S(ISAKMP_NEXT_NONE),
 	S(ISAKMP_NEXT_SA),	/* 1 */
 	S(ISAKMP_NEXT_P),
@@ -473,7 +472,7 @@ static const char *const payload_name_ikev1[] = {
 	S(ISAKMP_NEXT_N),
 	S(ISAKMP_NEXT_D),
 	S(ISAKMP_NEXT_VID),
-	R(ISAKMP_NEXT_MCFG_ATTR, ISAKMP_NEXT_MODECFG),	/* 14 */
+	S(ISAKMP_NEXT_MODECFG),	/* 14 */
 	S(ISAKMP_NEXT_SAK),	/* 15 was ISAKMP_NEXT_NATD_BADDRAFTS */
 	S(ISAKMP_NEXT_TEK),
 	S(ISAKMP_NEXT_KD),
@@ -482,7 +481,6 @@ static const char *const payload_name_ikev1[] = {
 	S(ISAKMP_NEXT_NATD_RFC),
 	S(ISAKMP_NEXT_NATOA_RFC),
 	S(ISAKMP_NEXT_GAP),
-#undef R
 #undef S
 };
 

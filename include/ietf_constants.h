@@ -578,7 +578,9 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_N = 11, /* Notification */
 	ISAKMP_NEXT_D = 12, /* Delete */
 	ISAKMP_NEXT_VID = 13, /* Vendor ID */
-	ISAKMP_NEXT_MCFG_ATTR = 14, /* Mode config Attribute */
+	ISAKMP_NEXT_MODECFG = 14,	/* Mode config's Attribute
+					 * payload; was ATTR in RFC
+					 * draft */
 	/* NAT-Traversal: NAT-D (bad drafts) Conflicts with RFC 3547 (not 3947!) and RFC 6407 */
 	/* old value: ISAKMP_NEXT_NATD_BADDRAFTS = 15 */
 	ISAKMP_NEXT_SAK = 15, /* SA KEK Payload - RFC 6407 */

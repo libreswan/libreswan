@@ -1239,7 +1239,7 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
  */
 stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 {
-	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 
 	/*
 	 * There are many ways out of this routine
@@ -1256,7 +1256,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	name = shunk2(unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
 
 	/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
-	switch (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type) {
+	switch (md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_type) {
 	case ISAKMP_CFG_REPLY:
 	case ISAKMP_CFG_ACK:
 		break;	/* OK */
@@ -1266,7 +1266,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		llog(RC_LOG, st->logger,
 		     "Expecting MODE_CFG_REPLY; got %s instead.",
 		     str_enum(&attr_msg_type_names,
-			      md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type,
+			      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_type,
 			      &mb));
 		return STF_IGNORE;
 	}
@@ -1431,8 +1431,8 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->logger);
 
-	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	lset_t resp = LEMPTY;
 
 	dbg("arrived in modecfg_inR0");
@@ -1517,8 +1517,8 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 {
 	struct state *const st = md->v1_st;
-	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	uint16_t isama_id = ma->isama_identifier;
 	lset_t resp = LEMPTY;
 
@@ -1741,8 +1741,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 	struct connection *c = st->st_connection;
 
-	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	lset_t resp = LEMPTY;
 
 	dbg("modecfg_inR1: received mode cfg reply");
@@ -2006,7 +2006,7 @@ static stf_status xauth_client_resp(struct state *st,
 		return STF_INTERNAL_ERROR;
 	}
 
-	/* MCFG_ATTR out */
+	/* MODECFG out */
 	{
 		struct pbs_out strattr;
 
@@ -2208,8 +2208,8 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->logger);
 
-	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	lset_t xauth_resp = LEMPTY;
 
 	int status = 0;
@@ -2350,7 +2350,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		/* ACK whatever it was that we got */
 		stat = xauth_client_ackstatus(st, &rbody,
 					      md->chain[
-						      ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
+						      ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
 		/* must have gotten a status */
 		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
@@ -2386,7 +2386,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 		stat = xauth_client_resp(st, xauth_resp,
 					 &rbody,
-					 md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
+					 md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 	}
 
 	if (stat != STF_OK) {
@@ -2459,8 +2459,8 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->logger);
 
-	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
-	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	bool got_status = false;
 	unsigned int status = XAUTH_STATUS_FAIL;
 	stf_status stat;
@@ -2538,7 +2538,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 
 	/* ACK whatever it was that we got */
 	stat = xauth_client_ackstatus(st, &rbody,
-				      md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
+				      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
 	/* must have gotten a status */
 	if (status && stat == STF_OK) {
