@@ -208,13 +208,13 @@ enum_names shunt_policy_percent_names = {
 
 /* NAT methods */
 static const char *const natt_method_name[] = {
-	"none",
-	"draft-ietf-ipsec-nat-t-ike-02/03",
-	"draft-ietf-ipsec-nat-t-ike-05",
-	"RFC 3947 (NAT-Traversal)",
+	[NAT_TRAVERSAL_METHOD_none] = "none",
+	[NAT_TRAVERSAL_METHOD_IETF_02_03] = "draft-ietf-ipsec-nat-t-ike-02/03",
+	[NAT_TRAVERSAL_METHOD_IETF_05] = "draft-ietf-ipsec-nat-t-ike-05",
+	[NAT_TRAVERSAL_METHOD_IETF_RFC] = "RFC 3947 (NAT-Traversal)",
 
-	"I am behind NAT",
-	"peer behind NAT",
+	[NATED_HOST] = "I am behind NAT",
+	[NATED_PEER] = "peer behind NAT",
 };
 
 enum_names natt_method_names = {
@@ -225,9 +225,11 @@ enum_names natt_method_names = {
 };
 
 static const char *const allow_global_redirect_name[] = {
-	"no",
-	"yes",
-	"auto",
+#define R(E,S) [E - GLOBAL_REDIRECT_NO] = S
+	R(GLOBAL_REDIRECT_NO, "no"),
+	R(GLOBAL_REDIRECT_YES, "yes"),
+	R(GLOBAL_REDIRECT_AUTO, "auto"),
+#undef R
 };
 
 enum_names allow_global_redirect_names = {
@@ -287,12 +289,14 @@ enum_names sa_policy_bit_names = {
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
-	"action: exit", /* daemon exiting */
-	"action: start", /* daemon starting */
-	"action: watchdog", /* the keepalive watchdog ping */
-	"action: reloading", /* the keepalive watchdog ping */
-	"action: ready", /* the keepalive watchdog ping */
-	"action: stopping", /* the keepalive watchdog ping */
+#define R(E,S) [E - PLUTO_SD_EXIT] = S
+	R(PLUTO_SD_EXIT, "action: exit"), /* daemon exiting */
+	R(PLUTO_SD_START, "action: start"), /* daemon starting */
+	R(PLUTO_SD_WATCHDOG, "action: watchdog"), /* the keepalive watchdog ping */
+	R(PLUTO_SD_RELOADING, "action: reloading"), /* the keepalive watchdog ping */
+	R(PLUTO_SD_READY, "action: ready"), /* the keepalive watchdog ping */
+	R(PLUTO_SD_STOPPING, "action: stopping"), /* the keepalive watchdog ping */
+#undef R
 };
 enum_names sd_action_names = {
 	PLUTO_SD_EXIT, PLUTO_SD_STOPPING,
@@ -302,13 +306,15 @@ enum_names sd_action_names = {
 };
 
 static const char *const keyword_auth_name[] = {
-	"unset",
-	"never",
-	"secret",
-	"rsasig",
-	"ecdsa",
-	"null",
-	"eaponly",
+#define R(E,S) [E - AUTH_UNSET] = S
+	R(AUTH_UNSET, "unset"),
+	R(AUTH_NEVER, "never"),
+	R(AUTH_PSK, "secret"),
+	R(AUTH_RSASIG, "rsasig"),
+	R(AUTH_ECDSA, "ecdsa"),
+	R(AUTH_NULL, "null"),
+	R(AUTH_EAPONLY, "eaponly"),
+#undef R
 };
 
 enum_names keyword_auth_names = {
@@ -342,7 +348,7 @@ enum_names stf_status_names = {
 
 static const char *const keyword_host_name_ipaddr[] = {
 #define S(E) [E - KH_IPADDR] = #E
-	"KH_IPADDR",
+	S(KH_IPADDR),
 #undef S
 };
 
@@ -435,7 +441,7 @@ enum_names doi_names = {
 
 /* kind of struct connection */
 static const char *const connection_kind_name[] = {
-#define S(E) [E] = #E
+#define S(E) [E - CK_INVALID] = #E
 	S(CK_INVALID),
 	S(CK_GROUP),		/* policy group: instantiates to template */
 	S(CK_TEMPLATE),		/* abstract connection, with wildcard */
@@ -961,23 +967,25 @@ enum_names ikev2_hash_algorithm_names = {
 
 static const char *const ike_idtype_name[] = {
 	/* private to Pluto */
-	"%fromcert",	/* -1, ID_FROMCERT:taken from certificate */
-	"%none",	/* 0, ID_NONE */
+	[0] = "%fromcert",	/* -1, ID_FROMCERT:taken from certificate */
+	[1] = "%none",	/* 0, ID_NONE */
 
 	/* standardized */
-	"ID_IPV4_ADDR",	/* 1 */
-	"ID_FQDN",
-	"ID_USER_FQDN",
-	"ID_IPV4_ADDR_SUBNET", /* v1 only */
-	"ID_IPV6_ADDR",
-	"ID_IPV6_ADDR_SUBNET",	/* v1 only */
-	"ID_IPV4_ADDR_RANGE",	/* v1 only */
-	"ID_IPV6_ADDR_RANGE",	/* v1 only */
-	"ID_DER_ASN1_DN",
-	"ID_DER_ASN1_GN",
-	"ID_KEY_ID",
-	"ID_FC_NAME", /* RFC 3554 */
-	"ID_NULL", /* draft-ietf-ipsecme-ikev2-null-auth */
+#define S(E) [E + 1] = #E
+	S(ID_IPV4_ADDR),	/* 1 */
+	S(ID_FQDN),
+	S(ID_USER_FQDN),
+	S(ID_IPV4_ADDR_SUBNET), /* v1 only */
+	S(ID_IPV6_ADDR),
+	S(ID_IPV6_ADDR_SUBNET),	/* v1 only */
+	S(ID_IPV4_ADDR_RANGE),	/* v1 only */
+	S(ID_IPV6_ADDR_RANGE),	/* v1 only */
+	S(ID_DER_ASN1_DN),
+	S(ID_DER_ASN1_GN),
+	S(ID_KEY_ID),
+	S(ID_FC_NAME), /* RFC 3554 */
+	S(ID_NULL), /* draft-ietf-ipsecme-ikev2-null-auth */
+#undef S
 };
 
 /*
@@ -1120,17 +1128,19 @@ const struct enum_names oakley_attr_bit_names = {
 };
 
 static const char *const oakley_var_attr_name[] = {
-	"OAKLEY_GROUP_PRIME (variable length)",
-	"OAKLEY_GROUP_GENERATOR_ONE (variable length)",
-	"OAKLEY_GROUP_GENERATOR_TWO (variable length)",
-	"OAKLEY_GROUP_CURVE_A (variable length)",
-	"OAKLEY_GROUP_CURVE_B (variable length)",
+#define R(E,S) [E - OAKLEY_GROUP_PRIME] = #S
+	R(OAKLEY_GROUP_PRIME, OAKLEY_GROUP_PRIME (variable length)),
+	R(OAKLEY_GROUP_GENERATOR_ONE, OAKLEY_GROUP_GENERATOR_ONE (variable length)),
+	R(OAKLEY_GROUP_GENERATOR_TWO, OAKLEY_GROUP_GENERATOR_TWO (variable length)),
+	R(OAKLEY_GROUP_CURVE_A, OAKLEY_GROUP_CURVE_A (variable length)),
+	R(OAKLEY_GROUP_CURVE_B, OAKLEY_GROUP_CURVE_B (variable length)),
 	NULL,
-	"OAKLEY_LIFE_DURATION (variable length)",
+	R(OAKLEY_LIFE_DURATION, OAKLEY_LIFE_DURATION (variable length)),
 	NULL,
 	NULL,
 	NULL,
-	"OAKLEY_GROUP_ORDER (variable length)",
+	R(OAKLEY_GROUP_ORDER, OAKLEY_GROUP_ORDER (variable length)),
+#undef R
 };
 
 static enum_names oakley_attr_desc_tv = {
@@ -1203,21 +1213,23 @@ static const char *const ipsec_attr_name[] = {
  * The ones we actually support have non-NULL entries.
  */
 static const char *const ipsec_var_attr_name[] = {
+#define R(E,S) [E - SA_LIFE_TYPE] = #S
 	NULL,	/* SA_LIFE_TYPE */
-	"SA_LIFE_DURATION (variable length)",
+	R(SA_LIFE_DURATION, SA_LIFE_DURATION (variable length)),
 	NULL,	/* GROUP_DESCRIPTION */
 	NULL,	/* ENCAPSULATION_MODE */
 	NULL,	/* AUTH_ALGORITHM */
 	NULL,	/* KEY_LENGTH */
 	NULL,	/* KEY_ROUNDS */
 	NULL,	/* COMPRESS_DICT_SIZE */
-	"COMPRESS_PRIVATE_ALG (variable length)",
-	"NULL", /* ECN_TUNNEL_or_old_SECCTX */
+	R(COMPRESS_PRIVATE_ALG, COMPRESS_PRIVATE_ALG (variable length)),
+	R(ECN_TUNNEL, NULL), /* ECN_TUNNEL_or_old_SECCTX; yes "NULL" */
 	NULL, /* ESN_64BIT_SEQNUM */
 	NULL, /* IKEv1_IPSEC_ATTR_UNSPEC_12 */
 	NULL, /* SIG_ENC_ALGO_VAL */
 	NULL, /* ADDRESS_PRESERVATION */
 	NULL, /* SA_DIRECTION */
+#undef R
 };
 
 static const char *const ipsec_private_attr_name[] = {
@@ -1389,10 +1401,12 @@ enum_names auth_alg_names = {
 
 /* for XAUTH-TYPE attribute */
 static const char *const xauth_type_name[] = {
-	"Generic",
-	"RADIUS-CHAP",
-	"OTP",
-	"S/KEY",
+#define R(E,S) [E - XAUTH_TYPE_GENERIC] = #S
+	R(XAUTH_TYPE_GENERIC, Generic),
+	R(XAUTH_TYPE_CHAP, RADIUS-CHAP),
+	R(XAUTH_TYPE_OTP, OTP),
+	R(XAUTH_TYPE_SKEY, S/KEY),
+#undef R
 };
 enum_names xauth_type_names = {
 	XAUTH_TYPE_GENERIC,
@@ -1404,25 +1418,27 @@ enum_names xauth_type_names = {
 
 /* IKEv1 XAUTH-STATUS attribute names */
 static const char *const modecfg_attr_name_draft[] = {
-	"INTERNAL_IP4_ADDRESS",	/* 1 */
-	"INTERNAL_IP4_NETMASK",
-	"INTERNAL_IP4_DNS",
-	"INTERNAL_IP4_NBNS",
-	"INTERNAL_ADDRESS_EXPIRY",
-	"INTERNAL_IP4_DHCP",
-	"APPLICATION_VERSION",
-	"INTERNAL_IP6_ADDRESS",
-	"INTERNAL_IP6_NETMASK",
-	"INTERNAL_IP6_DNS",
-	"INTERNAL_IP6_NBNS",
-	"INTERNAL_IP6_DHCP",
-	"INTERNAL_IP4_SUBNET",	/* 13 */
-	"SUPPORTED_ATTRIBUTES",
-	"INTERNAL_IP6_SUBNET",
-	"MIP6_HOME_PREFIX",
-	"INTERNAL_IP6_LINK",
-	"INTERNAL_IP6_PREFIX",
-	"HOME_AGENT_ADDRESS",	/* 19 */
+#define R(E,S) [E - IKEv1_INTERNAL_IP4_ADDRESS] = #S
+	R(IKEv1_INTERNAL_IP4_ADDRESS, INTERNAL_IP4_ADDRESS),	/* 1 */
+	R(IKEv1_INTERNAL_IP4_NETMASK, INTERNAL_IP4_NETMASK),
+	R(IKEv1_INTERNAL_IP4_DNS, INTERNAL_IP4_DNS),
+	R(IKEv1_INTERNAL_IP4_NBNS, INTERNAL_IP4_NBNS),
+	R(IKEv1_INTERNAL_ADDRESS_EXPIRY, INTERNAL_ADDRESS_EXPIRY),
+	R(IKEv1_INTERNAL_IP4_DHCP, INTERNAL_IP4_DHCP),
+	R(IKEv1_APPLICATION_VERSION, APPLICATION_VERSION),
+	R(IKEv1_INTERNAL_IP6_ADDRESS, INTERNAL_IP6_ADDRESS),
+	R(IKEv1_INTERNAL_IP6_NETMASK, INTERNAL_IP6_NETMASK),
+	R(IKEv1_INTERNAL_IP6_DNS, INTERNAL_IP6_DNS),
+	R(IKEv1_INTERNAL_IP6_NBNS, INTERNAL_IP6_NBNS),
+	R(IKEv1_INTERNAL_IP6_DHCP, INTERNAL_IP6_DHCP),
+	R(IKEv1_INTERNAL_IP4_SUBNET, INTERNAL_IP4_SUBNET),	/* 13 */
+	R(IKEv1_SUPPORTED_ATTRIBUTES, SUPPORTED_ATTRIBUTES),
+	R(IKEv1_INTERNAL_IP6_SUBNET, INTERNAL_IP6_SUBNET),
+	R(IKEv1_MIP6_HOME_PREFIX, MIP6_HOME_PREFIX),
+	R(IKEv1_INTERNAL_IP6_LINK, INTERNAL_IP6_LINK),
+	R(IKEv1_INTERNAL_IP6_PREFIX, INTERNAL_IP6_PREFIX),
+	R(IKEv1_HOME_AGENT_ADDRESS, HOME_AGENT_ADDRESS),	/* 19 */
+#undef R
 };
 
 #if 0
@@ -1436,18 +1452,20 @@ static enum_names modecfg_attr_names_draft = {
 #endif
 
 static const char *const modecfg_cisco_attr_name[] = {
-	"MODECFG_BANNER",	/* 28672 */
-	"CISCO_SAVE_PW",
-	"MODECFG_DOMAIN",
-	"CISCO_SPLIT_DNS",
-	"CISCO_SPLIT_INC",
-	"CISCO_UDP_ENCAP_PORT",
-	"CISCO_SPLIT_EXCLUDE",
-	"CISCO_DO_PFS",
-	"CISCO_FW_TYPE",
-	"CISCO_BACKUP_SERVER",
-	"CISCO_DDNS_HOSTNAME",
-	"CISCO_UNKNOWN_SEEN_ON_IPHONE",	/* 28683 */
+#define S(E) [E - MODECFG_BANNER] = #E
+	S(MODECFG_BANNER),	/* 28672 */
+	S(CISCO_SAVE_PW),
+	S(MODECFG_DOMAIN),
+	S(CISCO_SPLIT_DNS),
+	S(CISCO_SPLIT_INC),
+	S(CISCO_UDP_ENCAP_PORT),
+	S(CISCO_SPLIT_EXCLUDE),
+	S(CISCO_DO_PFS),
+	S(CISCO_FW_TYPE),
+	S(CISCO_BACKUP_SERVER),
+	S(CISCO_DDNS_HOSTNAME),
+	S(CISCO_UNKNOWN_SEEN_ON_IPHONE),	/* 28683 */
+#undef S
 };
 
 static enum_names modecfg_cisco_attr_names = {
@@ -1459,8 +1477,10 @@ static enum_names modecfg_cisco_attr_names = {
 };
 
 static const char *const modecfg_microsoft_attr_name[] = {
-	"INTERNAL_IP4_SERVER",	/* 23456 */
-	"INTERNAL_IP6_SERVER",
+#define R(E,S) [E - IKEv1_INTERNAL_IP4_SERVER] = #S
+	R(IKEv1_INTERNAL_IP4_SERVER, INTERNAL_IP4_SERVER),	/* 23456 */
+	R(IKEv1_INTERNAL_IP6_SERVER, INTERNAL_IP6_SERVER),
+#undef R
 };
 static enum_names modecfg_microsoft_attr_names = {
 	IKEv1_INTERNAL_IP4_SERVER,
@@ -1479,16 +1499,18 @@ enum_names modecfg_attr_names = {
 };
 
 static const char *const xauth_attr_name[] = {
-	"XAUTH-TYPE", /* 16520 */
-	"XAUTH-USER-NAME",
-	"XAUTH-USER-PASSWORD",
-	"XAUTH-PASSCODE",
-	"XAUTH-MESSAGE",
-	"XAUTH-CHALLENGE",
-	"XAUTH-DOMAIN",
-	"XAUTH-STATUS",
-	"XAUTH-NEXT-PIN",
-	"XAUTH-ANSWER", /* 16529 */
+#define R(E,S) [E - XAUTH_TYPE] = #S
+	R(XAUTH_TYPE, XAUTH-TYPE), /* 16520 */
+	R(XAUTH_USER_NAME, XAUTH-USER-NAME),
+	R(XAUTH_USER_PASSWORD, XAUTH-USER-PASSWORD),
+	R(XAUTH_PASSCODE, XAUTH-PASSCODE),
+	R(XAUTH_MESSAGE, XAUTH-MESSAGE),
+	R(XAUTH_CHALLENGE, XAUTH-CHALLENGE),
+	R(XAUTH_DOMAIN, XAUTH-DOMAIN),
+	R(XAUTH_STATUS, XAUTH-STATUS),
+	R(XAUTH_NEXT_PIN, XAUTH-NEXT-PIN),
+	R(XAUTH_ANSWER, XAUTH-ANSWER), /* 16529 */
+#undef R
 };
 
 /*
@@ -1534,33 +1556,37 @@ static enum_names oakley_prf_names = {
  */
 
 static const char *const oakley_enc_name[] = {
-#define S(E, ...) [E] = #E __VA_ARGS__
-	S(OAKLEY_DES_CBC, "(UNUSED)"), /* obsoleted */
-	S(OAKLEY_IDEA_CBC, "(UNUSED)"),
-	S(OAKLEY_BLOWFISH_CBC, "(UNUSED)"), /* obsoleted */
-	S(OAKLEY_RC5_R16_B64_CBC, "(UNUSED)"),
+#define S(E) [E - 0] = #E
+#define R(E,S) [E - 0] = #S
+#define U(E) [E - 0] = #E"(UNUSED)"
+	U(OAKLEY_DES_CBC), /* obsoleted */
+	U(OAKLEY_IDEA_CBC),
+	U(OAKLEY_BLOWFISH_CBC), /* obsoleted */
+	U(OAKLEY_RC5_R16_B64_CBC),
 	S(OAKLEY_3DES_CBC),
 	S(OAKLEY_CAST_CBC),
 	S(OAKLEY_AES_CBC),
 	S(OAKLEY_CAMELLIA_CBC), /* 8 */
 	S(OAKLEY_AES_CTR), /* stolen from IKEv2 */
-	[OAKLEY_AES_CCM_8] = "OAKLEY_AES_CCM_A",
-	[OAKLEY_AES_CCM_12] = "OAKLEY_AES_CCM_B",
+	R(OAKLEY_AES_CCM_8, OAKLEY_AES_CCM_A),
+	R(OAKLEY_AES_CCM_12, OAKLEY_AES_CCM_B),
 	S(OAKLEY_AES_CCM_16),
-	[OAKLEY_AES_GCM_8] = "OAKLEY_AES_GCM_A",
-	[OAKLEY_AES_GCM_12] = "OAKLEY_AES_GCM_B",
-	[OAKLEY_AES_GCM_16] = "OAKLEY_AES_GCM_C",
+	R(OAKLEY_AES_GCM_8, OAKLEY_AES_GCM_A),
+	R(OAKLEY_AES_GCM_12, OAKLEY_AES_GCM_B),
+	R(OAKLEY_AES_GCM_16, OAKLEY_AES_GCM_C),
 	S(OAKLEY_CAMELLIA_CTR),
 	S(OAKLEY_CAMELLIA_CCM_A),
 	S(OAKLEY_CAMELLIA_CCM_B),
 	S(OAKLEY_CAMELLIA_CCM_C),
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
+#undef U
+#undef R
 #undef S
 };
 
 static const char *const oakley_enc_name_private_use[] = {
-#define S(E, ...) [E - OAKLEY_MARS_CBC] = #E __VA_ARGS__
+#define S(E) [E - OAKLEY_MARS_CBC] = #E
 	S(OAKLEY_MARS_CBC),	/* 65001 */
 	S(OAKLEY_RC6_CBC),	/* 65002 */
 	S(OAKLEY_SERPENT_CBC),	/* 65004 */
@@ -1569,7 +1595,7 @@ static const char *const oakley_enc_name_private_use[] = {
 };
 
 static const char *const oakley_enc_name_private_use_ssh[] = {
-#define S(E, ...) [E - OAKLEY_TWOFISH_CBC_SSH] = #E __VA_ARGS__
+#define S(E) [E - OAKLEY_TWOFISH_CBC_SSH] = #E
 	S(OAKLEY_TWOFISH_CBC_SSH),	/* 65289 */
 #undef S
 };
@@ -1605,16 +1631,18 @@ enum_names oakley_enc_names = {
 
 /* these string names map via a lookup function to configuration strings */
 static const char *const oakley_hash_name[] = {
-#define S(E, ...) [E - OAKLEY_MD5] = #E __VA_ARGS__
+#define S(E) [E - OAKLEY_MD5] = #E
+#define U(E) [E - OAKLEY_MD5] = #E"(UNUSED)"
 	/* 0 - RESERVED */
 	S(OAKLEY_MD5),
 	S(OAKLEY_SHA1),
-	S(OAKLEY_TIGER, "(UNUSED)"),
+	U(OAKLEY_TIGER),
 	S(OAKLEY_SHA2_256),	/* RFC 4878 */
 	S(OAKLEY_SHA2_384),	/* RFC 4878 */
 	S(OAKLEY_SHA2_512),	/* RFC 4878 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
+#undef U
 #undef S
 };
 
@@ -1628,7 +1656,7 @@ enum_names oakley_hash_names = {
 
 /* Oakley Authentication Method attribute */
 static const char *const oakley_auth_name[] = {
-#define S(E, ...) [E - OAKLEY_PRESHARED_KEY] = #E __VA_ARGS__
+#define S(E) [E - OAKLEY_PRESHARED_KEY] = #E
 	S(OAKLEY_PRESHARED_KEY),
 	S(OAKLEY_DSS_SIG),
 	S(OAKLEY_RSA_SIG),
@@ -1641,23 +1669,27 @@ static const char *const oakley_auth_name[] = {
 };
 
 static const char *const oakley_auth_name_private_use2[] = {
-	"HybridInitRSA", /* 64221 */
-	"HybridRespRSA",
-	"HybridInitDSS",
-	"HybridRespDSS",
+#define S(E) [E - HybridInitRSA] = #E
+	S(HybridInitRSA), /* 64221 */
+	S(HybridRespRSA),
+	S(HybridInitDSS),
+	S(HybridRespDSS),
+#undef S
 };
 
 static const char *const oakley_auth_name_private_use[] = {
-	"XAUTHInitPreShared", /* 65001 */
-	"XAUTHRespPreShared",
-	"XAUTHInitDSS",
-	"XAUTHRespDSS",
-	"XAUTHInitRSA",
-	"XAUTHRespRSA",
-	"XAUTHInitRSAEncryption",
-	"XAUTHRespRSAEncryption",
-	"XAUTHInitRSARevisedEncryption",
-	"XAUTHRespRSARevisedEncryption", /* 65010 */
+#define S(E) [E - XAUTHInitPreShared] = #E
+	S(XAUTHInitPreShared), /* 65001 */
+	S(XAUTHRespPreShared),
+	S(XAUTHInitDSS),
+	S(XAUTHRespDSS),
+	S(XAUTHInitRSA),
+	S(XAUTHRespRSA),
+	S(XAUTHInitRSAEncryption),
+	S(XAUTHRespRSAEncryption),
+	S(XAUTHInitRSARevisedEncryption),
+	S(XAUTHRespRSARevisedEncryption), /* 65010 */
+#undef S
 };
 
 static enum_names oakley_auth_names_private_use2 = {
@@ -1689,33 +1721,37 @@ enum_names oakley_auth_names = {
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
  */
 static const char *const ikev2_cp_attribute_type_name[] = {
-	"IKEv2_CP_ATTR_RESERVED",
-	"IKEv2_INTERNAL_IP4_ADDRESS",	/* 1 */
-	"IKEv2_INTERNAL_IP4_NETMASK",
-	"IKEv2_INTERNAL_IP4_DNS",
-	"IKEv2_INTERNAL_IP4_NBNS",
-	"IKEv2_CP_ATTRIBUTE_RESERVED_5",
-	"IKEv2_INTERNAL_IP4_DHCP",
-	"IKEv2_APPLICATION_VERSION",
-	"IKEv2_INTERNAL_IP6_ADDRESS",
-	"IKEv2_CP_ATTRIBUTE_RESERVED_9",
-	"IKEv2_INTERNAL_IP6_DNS",
-	"IKEv2_CP_ATTRIBUTE_RESERVED_11",
-	"IKEv2_INTERNAL_IP6_DHCP",
-	"IKEv2_INTERNAL_IP4_SUBNET",	/* 13 */
-	"IKEv2_SUPPORTED_ATTRIBUTES",
-	"IKEv2_INTERNAL_IP6_SUBNET",
-	"IKEv2_MIP6_HOME_PREFIX",
-	"IKEv2_INTERNAL_IP6_LINK",
-	"IKEv2_INTERNAL_IP6_PREFIX",
-	"IKEv2_HOME_AGENT_ADDRESS",
-	"IKEv2_P_CSCF_IP4_ADDRESS", /* 20 */
-	"IKEv2_P_CSCF_IP6_ADDRESS",
-	"IKEv2_FTT_KAT",
-	"IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO", /* 3gpp */
-	"IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK", /* 3gpp */
-	"IKEv2_INTERNAL_DNS_DOMAIN", /* draft-ietf-ipsecme-split-dns */
-	"IKEv2_INTERNAL_DNSSEC_TA", /* draft-ietf-ipsecme-split-dns */
+#define S(E) [E - IKEv2_CP_ATTR_RESERVED] = #E
+#define R(E,S) [E - IKEv2_CP_ATTR_RESERVED] = #S
+	S(IKEv2_CP_ATTR_RESERVED),
+	S(IKEv2_INTERNAL_IP4_ADDRESS),	/* 1 */
+	S(IKEv2_INTERNAL_IP4_NETMASK),
+	S(IKEv2_INTERNAL_IP4_DNS),
+	S(IKEv2_INTERNAL_IP4_NBNS),
+	R(IKEv2_RESERVED_5, IKEv2_CP_ATTRIBUTE_RESERVED_5),
+	S(IKEv2_INTERNAL_IP4_DHCP),
+	S(IKEv2_APPLICATION_VERSION),
+	S(IKEv2_INTERNAL_IP6_ADDRESS),
+	R(IKEv2_RESERVED_9, IKEv2_CP_ATTRIBUTE_RESERVED_9),
+	S(IKEv2_INTERNAL_IP6_DNS),
+	R(IKEv2_RESERVED_11, IKEv2_CP_ATTRIBUTE_RESERVED_11),
+	S(IKEv2_INTERNAL_IP6_DHCP),
+	S(IKEv2_INTERNAL_IP4_SUBNET),	/* 13 */
+	S(IKEv2_SUPPORTED_ATTRIBUTES),
+	S(IKEv2_INTERNAL_IP6_SUBNET),
+	S(IKEv2_MIP6_HOME_PREFIX),
+	S(IKEv2_INTERNAL_IP6_LINK),
+	S(IKEv2_INTERNAL_IP6_PREFIX),
+	S(IKEv2_HOME_AGENT_ADDRESS),
+	S(IKEv2_P_CSCF_IP4_ADDRESS), /* 20 */
+	S(IKEv2_P_CSCF_IP6_ADDRESS),
+	S(IKEv2_FTT_KAT),
+	S(IKEv2_EXTERNAL_SOURCE_IP4_NAT_INFO), /* 3gpp */
+	S(IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK), /* 3gpp */
+	S(IKEv2_INTERNAL_DNS_DOMAIN), /* draft-ietf-ipsecme-split-dns */
+	S(IKEv2_INTERNAL_DNSSEC_TA), /* draft-ietf-ipsecme-split-dns */
+#undef R
+#undef S
 };
 
 enum_names ikev2_cp_attribute_type_names = {
@@ -1727,10 +1763,12 @@ enum_names ikev2_cp_attribute_type_names = {
 };
 
 static const char *const ikev2_cp_type_name[] = {
-	"IKEv2_CP_CFG_REQUEST" , /* 1 */
-	"IKEv2_CP_CFG_REPLY" ,
-	"IKEv2_CP_CFG_SET" ,
-	"IKEv2_CP_CFG_ACK"
+#define S(E) [E - IKEv2_CP_CFG_REQUEST] = #E
+	S(IKEv2_CP_CFG_REQUEST), /* 1 */
+	S(IKEv2_CP_CFG_REPLY),
+	S(IKEv2_CP_CFG_SET),
+	S(IKEv2_CP_CFG_ACK),
+#undef S
 };
 
 enum_names ikev2_cp_type_names = {
@@ -1743,10 +1781,11 @@ enum_names ikev2_cp_type_names = {
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_method_name[] = {
-#define S(S) [S - IKEv2_AUTH_RESERVED] = #S
+#define S(E) [E - IKEv2_AUTH_RESERVED] = #E
+#define R(E,S) [E - IKEv2_AUTH_RESERVED] = #S
 	S(IKEv2_AUTH_RESERVED),
 	S(IKEv2_AUTH_RSA),
-	[IKEv2_AUTH_PSK] = "IKEv2_AUTH_SHARED",
+	R(IKEv2_AUTH_PSK, IKEv2_AUTH_SHARED),
 	S(IKEv2_AUTH_DSS_DIGITAL_SIGNATURE),
 	/* 4 - 8 unassigned */
 	S(IKEv2_AUTH_ECDSA_SHA2_256_P256),
@@ -1755,6 +1794,7 @@ static const char *const ikev2_auth_method_name[] = {
 	S(IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD), /* 12 - RFC 6467 */
 	S(IKEv2_AUTH_NULL),
 	S(IKEv2_AUTH_DIGSIG), /* 14 - RFC 7427 */
+#undef R
 #undef S
 };
 
@@ -1774,21 +1814,22 @@ enum_names ikev2_auth_method_names = {
 
 /* these string names map via a lookup function to configuration strings */
 static const char *const oakley_group_name[] = {
-#define S(E, ...) [E - OAKLEY_GROUP_NONE] = #E __VA_ARGS__
+#define S(E) [E - OAKLEY_GROUP_NONE] = #E
+#define U(E) [E - OAKLEY_GROUP_NONE] = #E"(UNUSED)"
 	S(OAKLEY_GROUP_NONE), /* 0! RFC 7296 */
 	S(OAKLEY_GROUP_MODP768),
 	S(OAKLEY_GROUP_MODP1024),
-	S(OAKLEY_GROUP_GP155, "(UNUSED)"),
-	S(OAKLEY_GROUP_GP185, "(UNUSED)"),
+	U(OAKLEY_GROUP_GP155),
+	U(OAKLEY_GROUP_GP185),
 	S(OAKLEY_GROUP_MODP1536), /* RFC 3526 */
-	S(OAKLEY_GROUP_EC2N_2_1, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_2, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_3, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_4, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_5, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_6, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_7, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
-	S(OAKLEY_GROUP_EC2N_2_8, "(UNUSED)"), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
+	U(OAKLEY_GROUP_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
 	S(OAKLEY_GROUP_MODP2048), /* RFC 3526 */
 	S(OAKLEY_GROUP_MODP3072), /* RFC 3526 */
 	S(OAKLEY_GROUP_MODP4096), /* RFC 3526 */
@@ -1810,6 +1851,7 @@ static const char *const oakley_group_name[] = {
 	S(OAKLEY_GROUP_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
+#undef U
 #undef S
 };
 
@@ -1823,7 +1865,7 @@ enum_names oakley_group_names = {
 
 /* Oakley Group Type attribute */
 static const char *const oakley_group_type_name[] = {
-#define S(E, ...) [E - OAKLEY_GROUP_TYPE_MODP] = #E __VA_ARGS__
+#define S(E) [E - OAKLEY_GROUP_TYPE_MODP] = #E
 	S(OAKLEY_GROUP_TYPE_MODP),
 	S(OAKLEY_GROUP_TYPE_ECP),
 	S(OAKLEY_GROUP_TYPE_EC2N),
@@ -1840,73 +1882,89 @@ static enum_names oakley_group_type_names = {
 
 /* Notify message type -- RFC2408 3.14.1 */
 static const char *const v1_notification_name[] = {
-	"v1N_INVALID_PAYLOAD_TYPE", /* 1 */
-	"v1N_DOI_NOT_SUPPORTED",
-	"v1N_SITUATION_NOT_SUPPORTED",
-	"v1N_INVALID_COOKIE",
-	"v1N_INVALID_MAJOR_VERSION",
-	"v1N_INVALID_MINOR_VERSION",
-	"v1N_INVALID_EXCHANGE_TYPE",
-	"v1N_INVALID_FLAGS",
-	"v1N_INVALID_MESSAGE_ID",
-	"v1N_INVALID_PROTOCOL_ID",
-	"v1N_INVALID_SPI",
-	"v1N_INVALID_TRANSFORM_ID",
-	"v1N_ATTRIBUTES_NOT_SUPPORTED",
-	"v1N_NO_PROPOSAL_CHOSEN",
-	"v1N_BAD_PROPOSAL_SYNTAX",
-	"v1N_PAYLOAD_MALFORMED",
-	"v1N_INVALID_KEY_INFORMATION",
-	"v1N_INVALID_ID_INFORMATION",
-	"v1N_INVALID_CERT_ENCODING",
-	"v1N_INVALID_CERTIFICATE",
-	"v1N_CERT_TYPE_UNSUPPORTED",
-	"v1N_INVALID_CERT_AUTHORITY",
-	"v1N_INVALID_HASH_INFORMATION",
-	"v1N_AUTHENTICATION_FAILED",
-	"v1N_INVALID_SIGNATURE",
-	"v1N_ADDRESS_NOTIFICATION",
-	"v1N_NOTIFY_SA_LIFETIME",
-	"v1N_CERTIFICATE_UNAVAILABLE",
-	"v1N_UNSUPPORTED_EXCHANGE_TYPE",
-	"v1N_UNEQUAL_PAYLOAD_LENGTHS",
+#define S(E) [E - v1N_INVALID_PAYLOAD_TYPE] = #E
+	S(v1N_INVALID_PAYLOAD_TYPE), /* 1 */
+	S(v1N_DOI_NOT_SUPPORTED),
+	S(v1N_SITUATION_NOT_SUPPORTED),
+	S(v1N_INVALID_COOKIE),
+	S(v1N_INVALID_MAJOR_VERSION),
+	S(v1N_INVALID_MINOR_VERSION),
+	S(v1N_INVALID_EXCHANGE_TYPE),
+	S(v1N_INVALID_FLAGS),
+	S(v1N_INVALID_MESSAGE_ID),
+	S(v1N_INVALID_PROTOCOL_ID),
+	S(v1N_INVALID_SPI),
+	S(v1N_INVALID_TRANSFORM_ID),
+	S(v1N_ATTRIBUTES_NOT_SUPPORTED),
+	S(v1N_NO_PROPOSAL_CHOSEN),
+	S(v1N_BAD_PROPOSAL_SYNTAX),
+	S(v1N_PAYLOAD_MALFORMED),
+	S(v1N_INVALID_KEY_INFORMATION),
+	S(v1N_INVALID_ID_INFORMATION),
+	S(v1N_INVALID_CERT_ENCODING),
+	S(v1N_INVALID_CERTIFICATE),
+	S(v1N_CERT_TYPE_UNSUPPORTED),
+	S(v1N_INVALID_CERT_AUTHORITY),
+	S(v1N_INVALID_HASH_INFORMATION),
+	S(v1N_AUTHENTICATION_FAILED),
+	S(v1N_INVALID_SIGNATURE),
+	S(v1N_ADDRESS_NOTIFICATION),
+	S(v1N_NOTIFY_SA_LIFETIME),
+	S(v1N_CERTIFICATE_UNAVAILABLE),
+	S(v1N_UNSUPPORTED_EXCHANGE_TYPE),
+	S(v1N_UNEQUAL_PAYLOAD_LENGTHS),
+#undef S
 };
 
 static const char *const v1_notification_connected_name[] = {
-	"v1N_CONNECTED", /* 16384 */
+#define S(E) [E - v1N_CONNECTED] = #E
+	S(v1N_CONNECTED), /* 16384 */
+#undef S
 };
 
 static const char *const v1_notification_ipsec_name[] = {
-	"v1N_IPSEC_RESPONDER_LIFETIME", /* 24576 */
-	"v1N_IPSEC_REPLAY_STATUS",
-	"v1N_IPSEC_INITIAL_CONTACT",
+#define S(E) [E - v1N_IPSEC_RESPONDER_LIFETIME] = #E
+	S(v1N_IPSEC_RESPONDER_LIFETIME), /* 24576 */
+	S(v1N_IPSEC_REPLAY_STATUS),
+	S(v1N_IPSEC_INITIAL_CONTACT),
+#undef S
 };
 
 static const char *const v1_notification_cisco_chatter_name[] = {
-	"v1N_ISAKMP_N_CISCO_HELLO", /* 30000 */
-	"v1N_ISAKMP_N_CISCO_WWTEBR",
-	"v1N_ISAKMP_N_CISCO_SHUT_UP",
+#define S(E) [E - v1N_ISAKMP_N_CISCO_HELLO] = #E
+	S(v1N_ISAKMP_N_CISCO_HELLO), /* 30000 */
+	S(v1N_ISAKMP_N_CISCO_WWTEBR),
+	S(v1N_ISAKMP_N_CISCO_SHUT_UP),
+#undef S
 };
 
 static const char *const v1_notification_ios_alives_name[] = {
-	"v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768 */
-	"v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK",
+#define S(E) [E - v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ] = #E
+	S(v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ), /* 32768 */
+	S(v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK),
+#undef S
 };
 
 static const char *const v1_notification_dpd_name[] = {
-	"v1N_R_U_THERE", /* 36136 */
-	"v1N_R_U_THERE_ACK",
+#define S(E) [E - v1N_R_U_THERE] = #E
+	S(v1N_R_U_THERE), /* 36136 */
+	S(v1N_R_U_THERE_ACK),
+#undef S
 };
 
 static const char *const v1_notification_juniper_name[] = {
+#define S(E) [E - v1N_NETSCREEN_NHTB_INFORM] = #E
 	/* Next Hop Tunnel Binding */
-	"v1N_NETSCREEN_NHTB_INFORM", /* 40001 */
+	S(v1N_NETSCREEN_NHTB_INFORM), /* 40001 */
+#undef S
 };
 
 static const char *const v1_notification_cisco_more_name[] = {
-	"v1N_ISAKMP_N_CISCO_LOAD_BALANCE", /* 40501 */
-	"v1N_ISAKMP_N_CISCO_UNKNOWN_40502",
-	"v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH",
+#define S(E) [E - v1N_ISAKMP_N_CISCO_LOAD_BALANCE] = #E
+	S(v1N_ISAKMP_N_CISCO_LOAD_BALANCE), /* 40501 */
+	S(v1N_ISAKMP_N_CISCO_UNKNOWN_40502),
+	S(v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH),
+#undef S
 };
 
 static enum_names v1_notification_cisco_more_names = {
@@ -1974,7 +2032,7 @@ enum_names v1_notification_names = {
 };
 
 static const char *const v2_notification_error_name[] = {
-#define S(E) [E] = #E
+#define S(E) [E - v2N_NOTHING_WRONG] = #E
 	S(v2N_UNSUPPORTED_CRITICAL_PAYLOAD),
 	S(v2N_INVALID_IKE_SPI),
 	S(v2N_INVALID_MAJOR_VERSION),
@@ -2067,7 +2125,9 @@ static const char *const v2_notification_status_name[] = {
 };
 
 static const char *const v2_notification_private_name[] = {
-	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
+#define S(E) [E - v2N_NULL_AUTH] = #E
+	S(v2N_NULL_AUTH),	/* 40960, used for mixed OE */
+#undef S
 };
 
 static const struct enum_names v2_notification_private_names = {
@@ -2096,10 +2156,12 @@ const struct enum_names v2_notification_names = {
 
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-19 */
 static const char *const ikev2_ts_type_name[] = {
-	"IKEv2_TS_IPV4_ADDR_RANGE",     /* 7 */
-	"IKEv2_TS_IPV6_ADDR_RANGE",     /* 8 */
-	"IKEv2_TS_FC_ADDR_RANGE",	/* 9; not implemented */
-	"IKEv2_TS_SECLABEL", /* 10; Early Code Point */
+#define S(E) [E - IKEv2_TS_IPV4_ADDR_RANGE] = #E
+	S(IKEv2_TS_IPV4_ADDR_RANGE),     /* 7 */
+	S(IKEv2_TS_IPV6_ADDR_RANGE),     /* 8 */
+	S(IKEv2_TS_FC_ADDR_RANGE),	/* 9; not implemented */
+	S(IKEv2_TS_SECLABEL), /* 10; Early Code Point */
+#undef S
 };
 
 enum_names ikev2_ts_type_names = {
@@ -2116,10 +2178,12 @@ enum_names ikev2_ts_type_names = {
  * From draft-dukes-ike-mode-cfg
  */
 static const char *const attr_msg_type_name[] = {
-	"ISAKMP_CFG_REQUEST",	/* 1 */
-	"ISAKMP_CFG_REPLY",
-	"ISAKMP_CFG_SET",
-	"ISAKMP_CFG_ACK",
+#define S(E) [E - ISAKMP_CFG_REQUEST] = #E
+	S(ISAKMP_CFG_REQUEST),	/* 1 */
+	S(ISAKMP_CFG_REPLY),
+	S(ISAKMP_CFG_SET),
+	S(ISAKMP_CFG_ACK),
+#undef S
 };
 
 enum_names attr_msg_type_names = {
@@ -2134,14 +2198,18 @@ enum_names attr_msg_type_names = {
  * IKEv2 Critical bit and RESERVED (7) bits
  */
 static const char *const payload_flag_name[] = {
-	"RESERVED bit 0",	/* bit 0 */
-	"RESERVED bit 1",	/* bit 1 */
-	"RESERVED bit 2",	/* bit 2 */
-	"RESERVED bit 3",	/* bit 3 */
-	"RESERVED bit 4",	/* bit 4 */
-	"RESERVED bit 5",	/* bit 5 */
-	"RESERVED bit 6",	/* bit 6 */
-	"PAYLOAD_CRITICAL",	/* bit 7 */
+#define S(E) [E - 0] = #E
+#define R(E,S) [E - 0] = #S
+	R(0, RESERVED bit 0),	/* bit 0 */
+	R(1, RESERVED bit 1),	/* bit 1 */
+	R(2, RESERVED bit 2),	/* bit 2 */
+	R(3, RESERVED bit 3),	/* bit 3 */
+	R(4, RESERVED bit 4),	/* bit 4 */
+	R(5, RESERVED bit 5),	/* bit 5 */
+	R(6, RESERVED bit 6),	/* bit 6 */
+	R(7, PAYLOAD_CRITICAL),	/* bit 7 */
+#undef R
+#undef S
 };
 
 const enum_names payload_flag_names = {
@@ -2159,13 +2227,15 @@ const enum_names payload_flag_names = {
 /* proposal payload allows IKE=1, AH=2, ESP=3 */
 
 static const char *const ikev2_proposal_protocol_id_name[] = {
-	"IKEv2_SEC_PROTO_IKE",
-	"IKEv2_SEC_PROTO_AH",
-	"IKEv2_SEC_PROTO_ESP",
-	"IKEv2_SEC_FC_ESP_HEADER",		/* RFC 4595 */
-	"IKEv2_SEC_FC_CT_AUTHENTICATION",	/* RFC 4595 */
+#define S(E) [E - IKEv2_SEC_PROTO_IKE] = #E
+	S(IKEv2_SEC_PROTO_IKE),
+	S(IKEv2_SEC_PROTO_AH),
+	S(IKEv2_SEC_PROTO_ESP),
+	S(IKEv2_SEC_FC_ESP_HEADER),		/* RFC 4595 */
+	S(IKEv2_SEC_FC_CT_AUTHENTICATION),	/* RFC 4595 */
 	/* 6 - 200 Unassigned */
 	/* 201 - 255 Private use */
+#undef S
 };
 
 enum_names ikev2_proposal_protocol_id_names = {
@@ -2178,9 +2248,11 @@ enum_names ikev2_proposal_protocol_id_names = {
 /* delete payload allows IKE=1, AH=2, ESP=3 */
 
 static const char *const ikev2_delete_protocol_id_name[] = {
-	"IKEv2_SEC_PROTO_IKE",
-	"IKEv2_SEC_PROTO_AH",
-	"IKEv2_SEC_PROTO_ESP",
+#define S(E) [E - IKEv2_SEC_PROTO_IKE] = #E
+	S(IKEv2_SEC_PROTO_IKE),
+	S(IKEv2_SEC_PROTO_AH),
+	S(IKEv2_SEC_PROTO_ESP),
+#undef S
 };
 
 enum_names ikev2_delete_protocol_id_names = {
@@ -2217,51 +2289,55 @@ enum_names ikev2_notify_protocol_id_names = {
 
 /* Transform-type Encryption */
 static const char *const ikev2_trans_type_encr_name_private_use2[] = {
-#define S(E) [E - IKEv2_ENCR_TWOFISH_CBC_SSH] = #E
-	"TWOFISH_CBC_SSH",	/* 65289 */
-#undef S
+#define R(E,S) [E - IKEv2_ENCR_TWOFISH_CBC_SSH] = #S
+	R(IKEv2_ENCR_TWOFISH_CBC_SSH, TWOFISH_CBC_SSH),	/* 65289 */
+#undef R
 };
 
 static const char *const ikev2_trans_type_encr_name_private_use1[] = {
 #define S(E) [E - IKEv2_ENCR_SERPENT_CBC] = #E
-	"SERPENT_CBC",	/* 65004 */
-	"TWOFISH_CBC",
+#define R(E,S) [E - IKEv2_ENCR_SERPENT_CBC] = #S
+	R(IKEv2_ENCR_SERPENT_CBC, SERPENT_CBC),	/* 65004 */
+	R(IKEv2_ENCR_TWOFISH_CBC, TWOFISH_CBC),
+#undef R
 #undef S
 };
 
 static const char *const ikev2_trans_type_encr_name[] = {
-#define S(E) [E - DES_IV64] = #E
-	"DES_IV64(UNUSED)",	/* 1 */
-	"DES(UNUSED)",
-	"3DES",
-	"RC5(UNUSED)",
-	"IDEA(UNUSED)",
-	"CAST",
-	"BLOWFISH(UNUSED)",
-	"3IDEA(UNUSED)",
-	"DES_IV32(UNUSED)",
-	"RES10(UNUSED)",
-	"NULL",
-	"AES_CBC",
-	"AES_CTR",
-	"AES_CCM_A",	/* AES-CCM_8 RFC 4309 */
-	"AES_CCM_B",	/* AES-CCM_12 */
-	"AES_CCM_C",	/* AES-CCM_16 */
-	"UNASSIGNED(UNUSED)",
-	"AES_GCM_A",	/* AES-GCM_8 RFC 4106 */
-	"AES_GCM_B",	/* AES-GCM_12 */
-	"AES_GCM_C",	/* AES-GCM_16 */
-	"NULL_AUTH_AES_GMAC",	/* RFC 4543 */
-	"RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED)",
-	"CAMELLIA_CBC",	/* RFC 5529 */
-	"CAMELLIA_CTR",	/* RFC 5529 */
-	"CAMELLIA_CCM_A",	/* CAMELLIA_CCM_8 RFC 5529 */
-	"CAMELLIA_CCM_B",	/* CAMELLIA_CCM_12 RFC 5529 */
-	"CAMELLIA_CCM_C",	/* CAMELLIA_CCM_16 RFC 5529 */
-	"CHACHA20_POLY1305", /* RFC 7634 */
-#undef S
+#define S(E) [E - IKEv2_ENCR_DES_IV64] = #E
+#define R(E,S) [E - IKEv2_ENCR_DES_IV64] = #S
+	R(IKEv2_ENCR_DES_IV64, DES_IV64(UNUSED)),	/* 1 */
+	R(IKEv2_ENCR_DES, DES(UNUSED)),
+	R(IKEv2_ENCR_3DES, 3DES),
+	R(IKEv2_ENCR_RC5, RC5(UNUSED)),
+	R(IKEv2_ENCR_IDEA, IDEA(UNUSED)),
+	R(IKEv2_ENCR_CAST, CAST),
+	R(IKEv2_ENCR_BLOWFISH, BLOWFISH(UNUSED)),
+	R(IKEv2_ENCR_3IDEA, 3IDEA(UNUSED)),
+	R(IKEv2_ENCR_DES_IV32, DES_IV32(UNUSED)),
+	R(IKEv2_ENCR_RES10, RES10(UNUSED)),
+	R(IKEv2_ENCR_NULL, NULL),
+	R(IKEv2_ENCR_AES_CBC, AES_CBC),
+	R(IKEv2_ENCR_AES_CTR, AES_CTR),
+	R(IKEv2_ENCR_AES_CCM_8, AES_CCM_A),	/* AES-CCM_8 RFC 4309 */
+	R(IKEv2_ENCR_AES_CCM_12, AES_CCM_B),	/* AES-CCM_12 */
+	R(IKEv2_ENCR_AES_CCM_16, AES_CCM_C),	/* AES-CCM_16 */
+	R(IKEv2_UNUSED_17, UNASSIGNED(UNUSED)),
+	R(IKEv2_ENCR_AES_GCM_8, AES_GCM_A),	/* AES-GCM_8 RFC 4106 */
+	R(IKEv2_ENCR_AES_GCM_12, AES_GCM_B),	/* AES-GCM_12 */
+	R(IKEv2_ENCR_AES_GCM_16, AES_GCM_C),	/* AES-GCM_16 */
+	R(IKEv2_ENCR_NULL_AUTH_AES_GMAC, NULL_AUTH_AES_GMAC),	/* RFC 4543 */
+	R(IKEv2_RESERVED_IEEE_P1619_XTS_AES, RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED)),
+	R(IKEv2_ENCR_CAMELLIA_CBC, CAMELLIA_CBC),	/* RFC 5529 */
+	R(IKEv2_ENCR_CAMELLIA_CTR, CAMELLIA_CTR),	/* RFC 5529 */
+	R(IKEv2_ENCR_CAMELLIA_CCM_A, CAMELLIA_CCM_A),	/* CAMELLIA_CCM_8 RFC 5529 */
+	R(IKEv2_ENCR_CAMELLIA_CCM_B, CAMELLIA_CCM_B),	/* CAMELLIA_CCM_12 RFC 5529 */
+	R(IKEv2_ENCR_CAMELLIA_CCM_C, CAMELLIA_CCM_C),	/* CAMELLIA_CCM_16 RFC 5529 */
+	R(IKEv2_ENCR_CHACHA20_POLY1305, CHACHA20_POLY1305), /* RFC 7634 */
 	/* 29 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
+#undef R
+#undef S
 };
 
 static enum_names ikev2_trans_type_encr_names_private_use2 = {
@@ -2290,16 +2366,18 @@ enum_names ikev2_trans_type_encr_names = {
 
 /* Transform-type PRF */
 static const char *const ikev2_trans_type_prf_name[] = {
-#define S(E) [E - PRF_HMAC_MD5] = #E
-	"PRF_HMAC_MD5",
-	"PRF_HMAC_SHA1",
-	"PRF_HMAC_TIGER",
-	"PRF_AES128_XCBC",
+#define S(E) [E - IKEv2_PRF_HMAC_MD5] = #E
+#define R(E,S) [E - IKEv2_PRF_HMAC_MD5] = #S
+	R(IKEv2_PRF_HMAC_MD5, PRF_HMAC_MD5),
+	R(IKEv2_PRF_HMAC_SHA1, PRF_HMAC_SHA1),
+	R(IKEv2_PRF_HMAC_TIGER, PRF_HMAC_TIGER),
+	R(IKEv2_PRF_AES128_XCBC, PRF_AES128_XCBC),
 	/* RFC 4868 Section 4 */
-	"PRF_HMAC_SHA2_256",
-	"PRF_HMAC_SHA2_384",
-	"PRF_HMAC_SHA2_512",
-	"PRF_AES128_CMAC"
+	R(IKEv2_PRF_HMAC_SHA2_256, PRF_HMAC_SHA2_256),
+	R(IKEv2_PRF_HMAC_SHA2_384, PRF_HMAC_SHA2_384),
+	R(IKEv2_PRF_HMAC_SHA2_512, PRF_HMAC_SHA2_512),
+	R(IKEv2_PRF_AES128_CMAC, PRF_AES128_CMAC)
+#undef R
 #undef S
 };
 
@@ -2314,23 +2392,26 @@ enum_names ikev2_trans_type_prf_names = {
 };
 
 /* Transform-type Integrity */
+
 static const char *const ikev2_trans_type_integ_name[] = {
-#define S(E) [E - AUTH_NONE] = #E
-	"AUTH_NONE",
-	"AUTH_HMAC_MD5_96",
-	"AUTH_HMAC_SHA1_96",
-	"AUTH_DES_MAC(UNUSED)",
-	"AUTH_KPDK_MD5(UNUSED)",
-	"AUTH_AES_XCBC_96",
-	"AUTH_HMAC_MD5_128",
-	"AUTH_HMAC_SHA1_160",
-	"AUTH_AES_CMAC_96",
-	"AUTH_AES_128_GMAC",
-	"AUTH_AES_192_GMAC",
-	"AUTH_AES_256_GMAC",
-	"AUTH_HMAC_SHA2_256_128",
-	"AUTH_HMAC_SHA2_384_192",
-	"AUTH_HMAC_SHA2_512_256",
+#define S(E) [E - IKEv2_INTEG_NONE] = #E
+#define R(E,S) [E - IKEv2_INTEG_NONE] = #S
+	R(IKEv2_INTEG_NONE, AUTH_NONE),
+	R(IKEv2_INTEG_HMAC_MD5_96, AUTH_HMAC_MD5_96),
+	R(IKEv2_INTEG_HMAC_SHA1_96, AUTH_HMAC_SHA1_96),
+	R(IKEv2_INTEG_DES_MAC, AUTH_DES_MAC(UNUSED)),
+	R(IKEv2_INTEG_KPDK_MD5, AUTH_KPDK_MD5(UNUSED)),
+	R(IKEv2_INTEG_AES_XCBC_96, AUTH_AES_XCBC_96),
+	R(IKEv2_INTEG_HMAC_MD5_128, AUTH_HMAC_MD5_128),
+	R(IKEv2_INTEG_HMAC_SHA1_160, AUTH_HMAC_SHA1_160),
+	R(IKEv2_INTEG_AES_CMAC_96, AUTH_AES_CMAC_96),
+	R(IKEv2_INTEG_AES_128_GMAC, AUTH_AES_128_GMAC),
+	R(IKEv2_INTEG_AES_192_GMAC, AUTH_AES_192_GMAC),
+	R(IKEv2_INTEG_AES_256_GMAC, AUTH_AES_256_GMAC),
+	R(IKEv2_INTEG_HMAC_SHA2_256_128, AUTH_HMAC_SHA2_256_128),
+	R(IKEv2_INTEG_HMAC_SHA2_384_192, AUTH_HMAC_SHA2_384_192),
+	R(IKEv2_INTEG_HMAC_SHA2_512_256, AUTH_HMAC_SHA2_512_256),
+#undef R
 #undef S
 };
 
@@ -2397,7 +2478,7 @@ enum_enum_names v2_transform_ID_enums = {
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {
 #define S(E) [E - IKEv2_KEY_LENGTH] = #E
-	"IKEv2_KEY_LENGTH",
+	S(IKEv2_KEY_LENGTH),
 #undef S
 };
 
@@ -2452,14 +2533,16 @@ enum_names ikev2_ppk_id_type_names = {
 
 /* IKEv2 Redirect Mechanism - RFC 5685 */
 static const char *const ikev2_redirect_gw_name[] = {
+#define S(E) [E - GW_IPV4] = #E
+#define R(E,S) [E - GW_IPV4] = #S
 	/* 0 - Reserved */
-#define S(E) [E - GW_IPv4] = #E
-	"GW_IPv4",
-	"GW_IPv6",
-	"GW_FQDN",
-#undef S
+	R(GW_IPV4, GW_IPv4),
+	R(GW_IPV6, GW_IPv6),
+	S(GW_FQDN),
 	/* 4 - 240	Unassigned */
 	/* 241 - 255	Private Use */
+#undef R
+#undef S
 };
 
 enum_names ikev2_redirect_gw_names = {
@@ -2504,10 +2587,12 @@ enum_names eap_type_names = {
 
 /* EAP-TLS Flag BITS */
 static const char *const eaptls_flag_name[] = {
-#define S(E) [E - EAPTLS_FLAG_START] = #E
-	"EAPTLS_FLAG_START",
-	"EAPTLS_FLAG_MORE",
-	"EAPTLS_FLAG_LENGTH",
+#define S(E) [E - EAPTLS_FLAGS_START_IX] = #E
+#define R(E,S) [E - EAPTLS_FLAGS_START_IX] = #S
+	R(EAPTLS_FLAGS_START_IX, EAPTLS_FLAG_START),
+	R(EAPTLS_FLAGS_MORE_IX, EAPTLS_FLAG_MORE),
+	R(EAPTLS_FLAGS_LENGTH_IX, EAPTLS_FLAG_LENGTH),
+#undef R
 #undef S
 };
 
