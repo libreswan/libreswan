@@ -74,44 +74,6 @@ struct eap_state;
  * Names are chosen to match corresponding names in state.
  */
 struct trans_attrs {
-	/*
-	 * Let me see, the IKEV1TA_ENCRYPT field, depending on which
-	 * balls are in the air at any one moment, is used for and
-	 * contains one of the following:
-	 *
-	 * IKEv1 IKE (aka Phase 1?): enum ikev1_encr_attribute
-	 *
-	 * IKEv1 ESP (aka Phase 2?): enum ipsec_cipher_algo
-	 *
-	 * IKEv1 AH (aka Phase 2?): enum ipsec_authentication_algo (a
-	 * scratch variable it seems so that the real integ algorithm
-	 * can be verified).
-
-	 * IKEv2 IKE: enum ikev2_trans_type_encr.
-	 *
-	 * IKEv2 ESP: initially ikev2_trans_type_encr, but then later
-	 * switched to enum ipsec_cipher_algo if the IKEv1 value is
-	 * available.
-	 *
-	 * IKEv1 IPCOMP: enum ipsec_comp_algo; at least that is what
-	 * I've been told; this code, along with the rest of IKEv1
-	 * should go away.
-	 *
-	 * What could possibly go wrong :-)
-	 */
-#define ta_ikev1_encrypt ta_encrypt->common.id[IKEv1_ESP_ID]
-
-	/*
-	 * IKEv1 IKE: N/A
-	 * IKEv1 ESP/AH: enum ikev1_auth_attribute.
-	 * IKEv2 IKE/ESP/AH: N/A.
-	 *
-	 * The only reason to use the expanded form of this macro is
-	 * when putting the value on, or getting the value off (i.e.,
-	 * lookup), the wire.
-	 */
-#define ta_ikev1_integ_hash ta_integ->common.id[IKEv1_ESP_ID]
-
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 
 	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
