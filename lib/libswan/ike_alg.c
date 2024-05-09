@@ -275,7 +275,7 @@ const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo id)
 	return ipcomp_desc(ikev1_oakley_lookup(&ike_alg_ipcomp, id));
 }
 
-const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo id)
+const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ikev1_esp_transform id)
 {
 	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_ESP_ID, id, DBG_CRYPT));
 }
@@ -738,13 +738,6 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg_has_name(logger, HERE, alg, encrypt->encrypt_ike_audit_name, ".encrypt_ike_audit_name");
 	}
 	pexpect_ike_alg_has_name(logger, HERE, alg, encrypt->encrypt_kernel_audit_name, ".encrypt_kernel_audit_name");
-	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
-		enum_buf esb;
-		pexpect_ike_alg_streq(logger, alg, encrypt->encrypt_kernel_audit_name,
-				      str_enum_short(&esp_transformid_names,
-						     encrypt->common.id[IKEv1_ESP_ID],
-						     &esb));
-	}
 
 	/*
 	 * Only implemented one way, if at all.
@@ -773,7 +766,7 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	 */
 	if (encrypt == &ike_alg_encrypt_null) {
 		pexpect_ike_alg(logger, alg, encrypt->keydeflen == 0);
-		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL);
+		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv1_ESP_ID] == IKEv1_ESP_NULL);
 		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
 		pexpect_ike_alg(logger, alg, encrypt->enc_blocksize == 1);
 		pexpect_ike_alg(logger, alg, encrypt->wire_iv_size == 0);

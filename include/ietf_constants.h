@@ -1785,32 +1785,32 @@ enum ike_cert_type {
  * IKEv1 and IKEv2 versions are very different :(
  * See: ikev2_trans_type_integ
  */
-enum ipsec_authentication_algo {
-	AH_NONE = 0, /* Internal use - IKEv1 is reserved */
+enum ikev1_ah_transform {
+	IKEv1_AH_NONE = 0, /* Internal use - IKEv1 is reserved */
 	/* 1 IKEv1 RESERVED, IKEv2 AUTH_HMAC_MD5_96 */
-	AH_MD5 = 2, /* IKEv2 AUTH_HMAC_SHA1_96 */
-	AH_SHA = 3, /* IKEv2 AUTH_DES_MAC */
-	AH_DES = 4, /* IKEv2 AUTH_KPDK_MD5 */
-	AH_SHA2_256 = 5, /* IKEv2 AUTH_AES_XCBC_96 */
-	AH_SHA2_384 = 6, /* IKEv2 AUTH_HMAC_MD5_128 */
-	AH_SHA2_512 = 7, /* IKEv2 AUTH_HMAC_SHA1_160 */
-	AH_RIPEMD = 8, /* IKEv2 AUTH_AES_CMAC_96 */
-	AH_AES_XCBC_MAC = 9, /* IKEv2 AUTH_AES_128_GMAC */
-	AH_RSA = 10, /* IKEv2 AUTH_AES_192_GMAC */
-	AH_AES_128_GMAC = 11, /* IKEv2 AUTH_AES_256_GMAC */
-	AH_AES_192_GMAC = 12, /* IKEv2 AUTH_HMAC_SHA2_256_128 */
-	AH_AES_256_GMAC = 13, /* IKEv2 AUTH_HMAC_SHA2_384_192 */
+	IKEv1_AH_MD5 = 2, /* IKEv2 AUTH_HMAC_SHA1_96 */
+	IKEv1_AH_SHA = 3, /* IKEv2 AUTH_DES_MAC */
+	IKEv1_AH_DES = 4, /* IKEv2 AUTH_KPDK_MD5 */
+	IKEv1_AH_SHA2_256 = 5, /* IKEv2 AUTH_AES_XCBC_96 */
+	IKEv1_AH_SHA2_384 = 6, /* IKEv2 AUTH_HMAC_MD5_128 */
+	IKEv1_AH_SHA2_512 = 7, /* IKEv2 AUTH_HMAC_SHA1_160 */
+	IKEv1_AH_RIPEMD = 8, /* IKEv2 AUTH_AES_CMAC_96 */
+	IKEv1_AH_AES_XCBC_MAC = 9, /* IKEv2 AUTH_AES_128_GMAC */
+	IKEv1_AH_RSA = 10, /* IKEv2 AUTH_AES_192_GMAC */
+	IKEv1_AH_AES_128_GMAC = 11, /* IKEv2 AUTH_AES_256_GMAC */
+	IKEv1_AH_AES_192_GMAC = 12, /* IKEv2 AUTH_HMAC_SHA2_256_128 */
+	IKEv1_AH_AES_256_GMAC = 13, /* IKEv2 AUTH_HMAC_SHA2_384_192 */
 
-	AH_PSTATS_ROOF,
+	IKEv1_AH_PSTATS_ROOF,
 
 	/* 14 IKEv1 unassigned, IKEv2 AUTH_HMAC_SHA2_512_256 */
 	/* IKEv1 14-248 Unassigned */
 	/* IKEv1 249 - 255 Reserved for private use */
 	/* IKEv2 15-1023 Unassigned */
 	/* IKEv2 1024 - 65535 Reserved for private use */
-	AH_AES_CMAC_96 = 250,      /* IKEv2=8 */
-	AH_NULL = 251,		/* comes from kame? */
-	AH_SHA2_256_TRUNCBUG = 252,	/* our own stolen value */
+	IKEv1_AH_AES_CMAC_96 = 250,      /* IKEv2=8 */
+	IKEv1_AH_NULL = 251,		/* comes from kame? */
+	IKEv1_AH_SHA2_256_TRUNCBUG = 252,	/* our own stolen value */
 };
 
 /*
@@ -1827,49 +1827,46 @@ enum ipsec_authentication_algo {
  * used (should these be dropped).
  */
 
-enum ipsec_cipher_algo {
-	ESP_reserved = 0,
-	ESP_DES_IV64 = 1,
-	ESP_DES = 2,	/* obsoleted */
-	ESP_3DES = 3,
-	ESP_RC5 = 4,
-	ESP_IDEA = 5,
-	ESP_CAST = 6,
-	ESP_BLOWFISH = 7,	/* obsoleyed */
-	ESP_3IDEA = 8,
-	ESP_DES_IV32 = 9,
-	ESP_RC4 = 10,
-	ESP_NULL = 11,
-	ESP_AES = 12,	/* CBC 128 bit AES */
-	ESP_AES_CTR = 13,
-	ESP_AES_CCM_8 = 14,
-	ESP_AES_CCM_12 = 15,
-	ESP_AES_CCM_16 = 16,
-	ESP_ID17 = 17,	/* unassigned=17 */
-	ESP_AES_GCM_8 = 18,
-	ESP_AES_GCM_12 = 19,
-	ESP_AES_GCM_16 = 20,
-	ESP_SEED_CBC = 21, /* IKEv1, IKEv2 is NULL_AUTH_AES_GMAC */
-	ESP_CAMELLIA = 22, /* IKEv1, IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
-	ESP_NULL_AUTH_AES_GMAC = 23, /* IKEv1, IKEv2 is CAMELLIA_CBC */
+enum ikev1_esp_transform {
+	IKEv1_ESP_reserved = 0,
+	IKEv1_ESP_DES_IV64 = 1,
+	IKEv1_ESP_DES = 2,	/* obsoleted */
+	IKEv1_ESP_3DES = 3,
+	IKEv1_ESP_RC5 = 4,
+	IKEv1_ESP_IDEA = 5,
+	IKEv1_ESP_CAST = 6,
+	IKEv1_ESP_BLOWFISH = 7,	/* obsoleyed */
+	IKEv1_ESP_3IDEA = 8,
+	IKEv1_ESP_DES_IV32 = 9,
+	IKEv1_ESP_RC4 = 10,
+	IKEv1_ESP_NULL = 11,
+	IKEv1_ESP_AES = 12,	/* CBC 128 bit AES */
+	IKEv1_ESP_AES_CTR = 13,
+	IKEv1_ESP_AES_CCM_8 = 14,
+	IKEv1_ESP_AES_CCM_12 = 15,
+	IKEv1_ESP_AES_CCM_16 = 16,
+	IKEv1_ESP_AES_GCM_8 = 18,
+	IKEv1_ESP_AES_GCM_12 = 19,
+	IKEv1_ESP_AES_GCM_16 = 20,
+	IKEv1_ESP_SEED_CBC = 21, /* IKEv1, IKEv2 is NULL_AUTH_AES_GMAC */
+	IKEv1_ESP_CAMELLIA = 22, /* IKEv1, IKEv2 is IKEv1_ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
+	IKEv1_ESP_NULL_AUTH_AES_GMAC = 23, /* IKEv1, IKEv2 is CAMELLIA_CBC */
 
-	ESP_PSTATS_ROOF,
+	IKEv1_ESP_PSTATS_ROOF,
 
-	ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
-	ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
-	ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
-	ESP_CAMELLIA_CCM_16 = 27, /* not assigned in/for IKEv1 */
+	IKEv1_ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
+	IKEv1_ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
+	IKEv1_ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
+	IKEv1_ESP_CAMELLIA_CCM_16 = 27, /* not assigned in/for IKEv1 */
 	/* IKEv1: 24-248 Unassigned */
 	/* IKEv1: 249-255 reserved for private use */
 	/* IKEv2: 28-1023 Unassigned */
 	/* IKEv2: 1024-65535 reserved for private use */
-	ESP_MARS = 249,
-	ESP_RC6 = 250,
-	ESP_KAME_NULL = 251,	/* kame? */
-	ESP_SERPENT = 252,
-	ESP_TWOFISH = 253,
-	ESP_ID254 = 254,
-	ESP_ID255 = 255,
+	IKEv1_ESP_MARS = 249,
+	IKEv1_ESP_RC6 = 250,
+	IKEv1_ESP_KAME_NULL = 251,	/* kame? */
+	IKEv1_ESP_SERPENT = 252,
+	IKEv1_ESP_TWOFISH = 253,
 };
 
 /*

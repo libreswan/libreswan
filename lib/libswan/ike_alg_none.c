@@ -37,7 +37,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_NULL,
+			[IKEv1_ESP_ID] = IKEv1_ESP_NULL,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_NULL,
 #ifdef SADB_EALG_NULL
 			[SADB_ALG_ID] = SADB_EALG_NULL,

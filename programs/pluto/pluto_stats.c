@@ -58,7 +58,7 @@ unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
 
-unsigned long pstats_ikev1_ipsec_encrypt[ESP_PSTATS_ROOF];
+unsigned long pstats_ikev1_ipsec_encrypt[IKEv1_ESP_PSTATS_ROOF];
 unsigned long pstats_ikev2_ipsec_encrypt[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];
 unsigned long pstats_ikev2_ipsec_integ[IKEv2_INTEG_PSTATS_ROOF];

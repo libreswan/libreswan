@@ -642,7 +642,7 @@ struct integ_desc {
 	 * Where the attrid and transid need to match.  Other than for
 	 * an MD5 edge case, this is entirely redundant.
 	 */
-	enum ipsec_authentication_algo integ_ikev1_ah_transform;
+	enum ikev1_ah_transform integ_ikev1_ah_transform;
 
 	/*
 	 * This integrity algorithm's SADB (pfkeyv2) value (>0 when
@@ -852,7 +852,7 @@ const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo);
  * kernel to provide an IPSEC tunnel.
  */
 
-const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo);
+const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ikev1_esp_transform);
 const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
 const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo);
 

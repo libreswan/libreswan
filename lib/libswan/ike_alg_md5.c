@@ -75,7 +75,7 @@ const struct integ_desc ike_alg_integ_hmac_md5_96 = {
 	},
 	.integ_keymat_size = MD5_DIGEST_SIZE,
 	.integ_output_size = MD5_DIGEST_SIZE_96,
-	.integ_ikev1_ah_transform = AH_MD5,
+	.integ_ikev1_ah_transform = IKEv1_AH_MD5,
 	.prf = &ike_alg_prf_hmac_md5,
 	.integ_netlink_xfrm_name = "md5",
 	.integ_tcpdump_name = "md5",

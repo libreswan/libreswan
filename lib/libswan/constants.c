@@ -802,49 +802,45 @@ enum_names isakmp_transformid_names = {
 /* IPsec AH transform values */
 
 static const char *const ah_transform_name_private_use[] = {
-#define S(E) [E - AH_AES_CMAC_96] = #E
-#define R(E,S) [E - AH_AES_CMAC_96] = #S
-	S(AH_AES_CMAC_96),
-	S(AH_NULL),	/* verify with kame source? 251 */
-	R(AH_SHA2_256_TRUNCBUG, AH_SHA2_256_TRUNC),	/* our own to signal bad truncation to kernel */
-#undef R
+#define S(E) [E - IKEv1_AH_AES_CMAC_96] = #E
+	S(IKEv1_AH_AES_CMAC_96),
+	S(IKEv1_AH_NULL),	/* verify with kame source? 251 */
+	S(IKEv1_AH_SHA2_256_TRUNCBUG),	/* our own to signal bad truncation to kernel */
 #undef S
 };
 
 static enum_names ah_transformid_names_private_use = {
-	AH_AES_CMAC_96,
-	AH_SHA2_256_TRUNCBUG,
+	IKEv1_AH_AES_CMAC_96,
+	IKEv1_AH_SHA2_256_TRUNCBUG,
 	ARRAY_REF(ah_transform_name_private_use),
-	NULL, /* prefix */
+	"IKEv1_AH_", /* prefix */
 	NULL
 };
 
 static const char *const ah_transform_name[] = {
 	/* 0-1 RESERVED */
-#define S(E) [E - AH_MD5] = #E
-#define U(E) [E - AH_MD5] = #E"(UNUSED)"
-	S(AH_MD5),
-	S(AH_SHA),
-	U(AH_DES),
-	S(AH_SHA2_256),
-	S(AH_SHA2_384),
-	S(AH_SHA2_512),
-	S(AH_RIPEMD),
-	S(AH_AES_XCBC_MAC),
-	U(AH_RSA),
-	S(AH_AES_128_GMAC),	/* RFC4543 Errata1821 */
-	S(AH_AES_192_GMAC),	/* RFC4543 Errata1821 */
-	S(AH_AES_256_GMAC),	/* RFC4543 Errata1821 */
-#undef U
+#define S(E) [E - IKEv1_AH_MD5] = #E
+	S(IKEv1_AH_MD5),
+	S(IKEv1_AH_SHA),
+	S(IKEv1_AH_DES),
+	S(IKEv1_AH_SHA2_256),
+	S(IKEv1_AH_SHA2_384),
+	S(IKEv1_AH_SHA2_512),
+	S(IKEv1_AH_RIPEMD),
+	S(IKEv1_AH_AES_XCBC_MAC),
+	S(IKEv1_AH_RSA),
+	S(IKEv1_AH_AES_128_GMAC),	/* RFC4543 Errata1821 */
+	S(IKEv1_AH_AES_192_GMAC),	/* RFC4543 Errata1821 */
+	S(IKEv1_AH_AES_256_GMAC),	/* RFC4543 Errata1821 */
 #undef S
 	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
 };
 
 enum_names ah_transformid_names = {
-	AH_MD5, AH_AES_256_GMAC,
+	IKEv1_AH_MD5, IKEv1_AH_AES_256_GMAC,
 	ARRAY_REF(ah_transform_name),
-	"AH_", /* prefix */
+	"IKEv1_AH_", /* prefix */
 	&ah_transformid_names_private_use
 };
 
@@ -856,61 +852,52 @@ enum_names ah_transformid_names = {
  */
 static const char *const esp_transform_name_private_use[] = {
 	/* id=249 */
-#define S(E) [E - ESP_MARS] = #E
-#define U(E) [E - ESP_MARS] = #E"(UNUSED)"
-	S(ESP_MARS),
-	U(ESP_RC6),
-	S(ESP_KAME_NULL),
-	S(ESP_SERPENT),
-	S(ESP_TWOFISH),
-	U(ESP_ID254),
-	U(ESP_ID255),
-#undef U
+#define S(E) [E - IKEv1_ESP_MARS] = #E
+	S(IKEv1_ESP_MARS),
+	S(IKEv1_ESP_RC6),
+	S(IKEv1_ESP_KAME_NULL),
+	S(IKEv1_ESP_SERPENT),
+	S(IKEv1_ESP_TWOFISH),
 #undef S
 };
 
 static enum_names esp_transformid_names_private_use = {
-	ESP_MARS,
-	ESP_ID255,
+	IKEv1_ESP_MARS,
+	IKEv1_ESP_TWOFISH,
 	ARRAY_REF(esp_transform_name_private_use),
-	NULL, /* prefix */
+	"IKEv1_ESP_", /* prefix */
 	NULL
 };
 
 /* This tracks the IKEv2 registry now! see ietf_constants.h */
 static const char *const esp_transform_name[] = {
-#define S(E) [E - ESP_DES_IV64] = #E
-#define U(E) [E - ESP_DES_IV64] = #E"(UNUSED)"
-#define R(E,S) [E - ESP_DES_IV64] = #S
-	U(ESP_DES_IV64),	/* 1 - old DES */
-	U(ESP_DES),	/* obsoleted */
-	S(ESP_3DES),
-	U(ESP_RC5),
-	U(ESP_IDEA),
-	S(ESP_CAST),
-	U(ESP_BLOWFISH),	/* obsoleted */
-	U(ESP_3IDEA),
-	U(ESP_DES_IV32),
-	U(ESP_RC4),
-	S(ESP_NULL),
-	S(ESP_AES),
-	S(ESP_AES_CTR),
-	R(ESP_AES_CCM_8, ESP_AES_CCM_A),
-	R(ESP_AES_CCM_12, ESP_AES_CCM_B),
-	R(ESP_AES_CCM_16, ESP_AES_CCM_C),
-	R(17, ESP_UNUSED_ID17),
-	R(ESP_AES_GCM_8, ESP_AES_GCM_A),
-	R(ESP_AES_GCM_12, ESP_AES_GCM_B),
-	R(ESP_AES_GCM_16, ESP_AES_GCM_C),
-	S(ESP_SEED_CBC), /* IKEv2 is NULL_AUTH_AES_GMAC */
-	S(ESP_CAMELLIA),
-	S(ESP_NULL_AUTH_AES_GMAC), /* IKEv2 is CAMELLIA_CBC */
-	S(ESP_CAMELLIA_CTR), /* not assigned in/for IKEv1 */
-	R(ESP_CAMELLIA_CCM_8, ESP_CAMELLIA_CCM_A), /* not assigned in/for IKEv1 */
-	R(ESP_CAMELLIA_CCM_12, ESP_CAMELLIA_CCM_B), /* not assigned in/for IKEv1 */
-	R(ESP_CAMELLIA_CCM_16, ESP_CAMELLIA_CCM_C), /* not assigned in/for IKEv1 */
-#undef R
-#undef U
+#define S(E) [E - IKEv1_ESP_DES_IV64] = #E
+	S(IKEv1_ESP_DES_IV64),	/* 1 - old DES */
+	S(IKEv1_ESP_DES),	/* obsoleted */
+	S(IKEv1_ESP_3DES),
+	S(IKEv1_ESP_RC5),
+	S(IKEv1_ESP_IDEA),
+	S(IKEv1_ESP_CAST),
+	S(IKEv1_ESP_BLOWFISH),	/* obsoleted */
+	S(IKEv1_ESP_3IDEA),
+	S(IKEv1_ESP_DES_IV32),
+	S(IKEv1_ESP_RC4),
+	S(IKEv1_ESP_NULL),
+	S(IKEv1_ESP_AES),
+	S(IKEv1_ESP_AES_CTR),
+	S(IKEv1_ESP_AES_CCM_8),
+	S(IKEv1_ESP_AES_CCM_12),
+	S(IKEv1_ESP_AES_CCM_16),
+	S(IKEv1_ESP_AES_GCM_8),
+	S(IKEv1_ESP_AES_GCM_12),
+	S(IKEv1_ESP_AES_GCM_16),
+	S(IKEv1_ESP_SEED_CBC), /* IKEv2 is NULL_AUTH_AES_GMAC */
+	S(IKEv1_ESP_CAMELLIA),
+	S(IKEv1_ESP_NULL_AUTH_AES_GMAC), /* IKEv2 is CAMELLIA_CBC */
+	S(IKEv1_ESP_CAMELLIA_CTR), /* not assigned in/for IKEv1 */
+	S(IKEv1_ESP_CAMELLIA_CCM_8), /* not assigned in/for IKEv1 */
+	S(IKEv1_ESP_CAMELLIA_CCM_12), /* not assigned in/for IKEv1 */
+	S(IKEv1_ESP_CAMELLIA_CCM_16), /* not assigned in/for IKEv1 */
 #undef S
 	/* IKEv1: 24-248 Unassigned */
 	/* IKEv1: 249-255 reserved for private use */
@@ -919,10 +906,10 @@ static const char *const esp_transform_name[] = {
 };
 
 enum_names esp_transformid_names = {
-	ESP_DES_IV64,
-	ESP_CAMELLIA_CCM_16,
+	IKEv1_ESP_DES_IV64,
+	IKEv1_ESP_CAMELLIA_CCM_16,
 	ARRAY_REF(esp_transform_name),
-	"ESP_", /* prefix */
+	"IKEv1_ESP_", /* prefix */
 	&esp_transformid_names_private_use
 };
 

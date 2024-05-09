@@ -234,16 +234,16 @@ static bool compute_proto_keymat(struct state *st,
 		size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
 		switch (pi->trans_attrs.ta_ikev1_encrypt) {
-		case ESP_NULL:
+		case IKEv1_ESP_NULL:
 			needed_len = 0;
 			break;
-		case ESP_DES:
+		case IKEv1_ESP_DES:
 			needed_len = DES_CBC_BLOCK_SIZE;
 			break;
-		case ESP_3DES:
+		case IKEv1_ESP_3DES:
 			needed_len = DES_CBC_BLOCK_SIZE * 3;
 			break;
-		case ESP_AES:
+		case IKEv1_ESP_AES:
 			needed_len = AES_CBC_BLOCK_SIZE;
 			/* if an attribute is set, then use that! */
 			if (st->st_esp.trans_attrs.enckeylen != 0) {
@@ -253,7 +253,7 @@ static bool compute_proto_keymat(struct state *st,
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
 			break;
-		case ESP_AES_CTR:
+		case IKEv1_ESP_AES_CTR:
 			if (st->st_esp.trans_attrs.enckeylen != 0) {
 				needed_len =
 					st->st_esp.trans_attrs.enckeylen /
@@ -266,9 +266,9 @@ static bool compute_proto_keymat(struct state *st,
 			/* AES_CTR requires an extra AES_CTR_SALT_BYTES (4) bytes of salt */
 			needed_len += AES_CTR_SALT_BYTES;
 			break;
-		case ESP_AES_GCM_8:
-		case ESP_AES_GCM_12:
-		case ESP_AES_GCM_16:
+		case IKEv1_ESP_AES_GCM_8:
+		case IKEv1_ESP_AES_GCM_12:
+		case IKEv1_ESP_AES_GCM_16:
 			/* valid keysize enforced before we get here */
 			if (st->st_esp.trans_attrs.enckeylen != 0) {
 				passert(st->st_esp.trans_attrs.enckeylen == 128 ||
@@ -282,9 +282,9 @@ static bool compute_proto_keymat(struct state *st,
 			/* AES_GCM requires an extra AES_GCM_SALT_BYTES (4) bytes of salt */
 			needed_len += AES_GCM_SALT_BYTES;
 			break;
-		case ESP_AES_CCM_8:
-		case ESP_AES_CCM_12:
-		case ESP_AES_CCM_16:
+		case IKEv1_ESP_AES_CCM_8:
+		case IKEv1_ESP_AES_CCM_12:
+		case IKEv1_ESP_AES_CCM_16:
 			/* valid keysize enforced before we get here */
 			if (st->st_esp.trans_attrs.enckeylen != 0) {
 				passert(st->st_esp.trans_attrs.enckeylen == 128 ||
@@ -299,7 +299,7 @@ static bool compute_proto_keymat(struct state *st,
 			needed_len += AES_CCM_SALT_BYTES;
 			break;
 
-		case ESP_CAMELLIA:
+		case IKEv1_ESP_CAMELLIA:
 			/* if an attribute is set, then use that! */
 			if (st->st_esp.trans_attrs.enckeylen == 0) {
 				needed_len = CAMELLIA_BLOCK_SIZE;

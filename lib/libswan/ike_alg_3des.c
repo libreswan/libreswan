@@ -29,7 +29,7 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 		.algo_type =     IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_3DES_CBC,
-			[IKEv1_ESP_ID] = ESP_3DES,
+			[IKEv1_ESP_ID] = IKEv1_ESP_3DES,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_3DES,
 #ifdef SADB_EALG_3DESCBC
 			[SADB_ALG_ID] = SADB_EALG_3DESCBC,

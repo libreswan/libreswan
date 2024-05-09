@@ -283,7 +283,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      const struct proposal *proposal,
 			      struct logger *logger)
 {
-	enum ipsec_cipher_algo ealg_i = ESP_reserved;
+	enum ikev1_esp_transform ealg_i = IKEv1_ESP_reserved;
 
 	struct v1_proposal algs = v1_proposal(proposal);
 	if (encap_proto == ENCAP_PROTO_ESP) {

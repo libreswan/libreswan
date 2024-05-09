@@ -40,7 +40,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CBC,
-			[IKEv1_ESP_ID] = ESP_AES,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CBC,
 #if defined SADB_X_EALG_AES
 			[SADB_ALG_ID] = SADB_X_EALG_AES, /* Orig, NetBSD, FreeBSD */
@@ -73,7 +73,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CTR,
-			[IKEv1_ESP_ID] = ESP_AES_CTR,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_CTR,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CTR,
 #ifdef SADB_X_EALG_AESCTR
 			[SADB_ALG_ID] = SADB_X_EALG_AESCTR,
@@ -106,7 +106,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_AES_GCM_8,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_GCM_8,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_8,
 #ifdef SADB_X_EALG_AES_GCM_ICV8
 			[SADB_ALG_ID] = SADB_X_EALG_AES_GCM_ICV8,
@@ -146,7 +146,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_AES_GCM_12,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_GCM_12,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_12,
 #ifdef SADB_X_EALG_AES_GCM_ICV12
 			[SADB_ALG_ID] = SADB_X_EALG_AES_GCM_ICV12,
@@ -187,7 +187,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 		.algo_type =  IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_AES_GCM_16,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_GCM_16,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_16,
 #ifdef SADB_X_EALG_AES_GCM_ICV16
 			[SADB_ALG_ID] = SADB_X_EALG_AES_GCM_ICV16,
@@ -234,7 +234,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_AES_CCM_8,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_CCM_8,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_8,
 #ifdef SADB_X_EALG_AES_CCM_ICV8
 			[SADB_ALG_ID] = SADB_X_EALG_AES_CCM_ICV8,
@@ -264,7 +264,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_AES_CCM_12,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_CCM_12,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_12,
 #ifdef SADB_X_EALG_AES_CCM_ICV12
 			[SADB_ALG_ID] = SADB_X_EALG_AES_CCM_ICV12,
@@ -294,7 +294,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_AES_CCM_16,
+			[IKEv1_ESP_ID] = IKEv1_ESP_AES_CCM_16,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_16,
 #ifdef SADB_X_EALG_AES_CCM_ICV16
 			[SADB_ALG_ID] = SADB_X_EALG_AES_CCM_ICV16,
@@ -358,7 +358,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 	},
 	.integ_keymat_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
-	.integ_ikev1_ah_transform = AH_AES_XCBC_MAC,
+	.integ_ikev1_ah_transform = IKEv1_AH_AES_XCBC_MAC,
 #ifdef USE_PRF_AES_XCBC
 	.prf = &ike_alg_prf_aes_xcbc,
 #endif
@@ -385,7 +385,7 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 	},
 	.integ_keymat_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
-	.integ_ikev1_ah_transform = AH_AES_CMAC_96,
+	.integ_ikev1_ah_transform = IKEv1_AH_AES_CMAC_96,
 	.integ_netlink_xfrm_name = "cmac(aes)",
 	.integ_tcpdump_name = "aes_cmac",
 	.integ_ike_audit_name = "aes_cmac",
@@ -403,7 +403,7 @@ const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = ESP_NULL_AUTH_AES_GMAC,
+			[IKEv1_ESP_ID] = IKEv1_ESP_NULL_AUTH_AES_GMAC,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_NULL_AUTH_AES_GMAC,
 #ifdef SADB_X_EALG_NULL_AUTH_AES_GMAC
 			[SADB_ALG_ID] = SADB_X_EALG_NULL_AUTH_AES_GMAC,

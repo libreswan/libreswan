@@ -179,7 +179,7 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	/*
 	 * Assume the two ENUMs are the same!
 	 */
-	enum ipsec_cipher_algo transid = encrypt->common.id[IKEv1_ESP_ID];
+	enum ikev1_esp_transform transid = encrypt->common.id[IKEv1_ESP_ID];
 	int sadb_ealg = transid;
 
 	/*
