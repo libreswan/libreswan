@@ -1,128 +1,124 @@
   ah_transformid_names: [2..253)
-    2 -> AH_MD5
-         jam_enum 2: AH_MD5 OK
-         search AH_MD5: OK
-         match AH_MD5: OK
+    2 -> IKEv1_AH_MD5
+         jam_enum 2: IKEv1_AH_MD5 OK
+         search IKEv1_AH_MD5: OK
+         match IKEv1_AH_MD5: OK
          short_name 2: MD5 OK
          jam_enum_short 2: MD5 OK
          jam_enum_human 2: md5 OK
          match MD5 [short]: OK
-    3 -> AH_SHA
-         jam_enum 3: AH_SHA OK
-         search AH_SHA: OK
-         match AH_SHA: OK
+    3 -> IKEv1_AH_SHA
+         jam_enum 3: IKEv1_AH_SHA OK
+         search IKEv1_AH_SHA: OK
+         match IKEv1_AH_SHA: OK
          short_name 3: SHA OK
          jam_enum_short 3: SHA OK
          jam_enum_human 3: sha OK
          match SHA [short]: OK
-    4 -> AH_DES(UNUSED)
-         jam_enum 4: AH_DES(UNUSED) OK
-         search AH_DES(UNUSED): OK
-         match AH_DES(UNUSED): OK
-         match AH_DES [trunc]: OK
-         short_name 4: DES(UNUSED) OK
-         jam_enum_short 4: DES(UNUSED) OK
-         jam_enum_human 4: des(unused) OK
-         match DES(UNUSED) [short]: OK
-         match DES [short+trunc]: OK
-    5 -> AH_SHA2_256
-         jam_enum 5: AH_SHA2_256 OK
-         search AH_SHA2_256: OK
-         match AH_SHA2_256: OK
+    4 -> IKEv1_AH_DES
+         jam_enum 4: IKEv1_AH_DES OK
+         search IKEv1_AH_DES: OK
+         match IKEv1_AH_DES: OK
+         short_name 4: DES OK
+         jam_enum_short 4: DES OK
+         jam_enum_human 4: des OK
+         match DES [short]: OK
+    5 -> IKEv1_AH_SHA2_256
+         jam_enum 5: IKEv1_AH_SHA2_256 OK
+         search IKEv1_AH_SHA2_256: OK
+         match IKEv1_AH_SHA2_256: OK
          short_name 5: SHA2_256 OK
          jam_enum_short 5: SHA2_256 OK
          jam_enum_human 5: sha2-256 OK
          match SHA2_256 [short]: OK
-    6 -> AH_SHA2_384
-         jam_enum 6: AH_SHA2_384 OK
-         search AH_SHA2_384: OK
-         match AH_SHA2_384: OK
+    6 -> IKEv1_AH_SHA2_384
+         jam_enum 6: IKEv1_AH_SHA2_384 OK
+         search IKEv1_AH_SHA2_384: OK
+         match IKEv1_AH_SHA2_384: OK
          short_name 6: SHA2_384 OK
          jam_enum_short 6: SHA2_384 OK
          jam_enum_human 6: sha2-384 OK
          match SHA2_384 [short]: OK
-    7 -> AH_SHA2_512
-         jam_enum 7: AH_SHA2_512 OK
-         search AH_SHA2_512: OK
-         match AH_SHA2_512: OK
+    7 -> IKEv1_AH_SHA2_512
+         jam_enum 7: IKEv1_AH_SHA2_512 OK
+         search IKEv1_AH_SHA2_512: OK
+         match IKEv1_AH_SHA2_512: OK
          short_name 7: SHA2_512 OK
          jam_enum_short 7: SHA2_512 OK
          jam_enum_human 7: sha2-512 OK
          match SHA2_512 [short]: OK
-    8 -> AH_RIPEMD
-         jam_enum 8: AH_RIPEMD OK
-         search AH_RIPEMD: OK
-         match AH_RIPEMD: OK
+    8 -> IKEv1_AH_RIPEMD
+         jam_enum 8: IKEv1_AH_RIPEMD OK
+         search IKEv1_AH_RIPEMD: OK
+         match IKEv1_AH_RIPEMD: OK
          short_name 8: RIPEMD OK
          jam_enum_short 8: RIPEMD OK
          jam_enum_human 8: ripemd OK
          match RIPEMD [short]: OK
-    9 -> AH_AES_XCBC_MAC
-         jam_enum 9: AH_AES_XCBC_MAC OK
-         search AH_AES_XCBC_MAC: OK
-         match AH_AES_XCBC_MAC: OK
+    9 -> IKEv1_AH_AES_XCBC_MAC
+         jam_enum 9: IKEv1_AH_AES_XCBC_MAC OK
+         search IKEv1_AH_AES_XCBC_MAC: OK
+         match IKEv1_AH_AES_XCBC_MAC: OK
          short_name 9: AES_XCBC_MAC OK
          jam_enum_short 9: AES_XCBC_MAC OK
          jam_enum_human 9: aes-xcbc-mac OK
          match AES_XCBC_MAC [short]: OK
-   10 -> AH_RSA(UNUSED)
-         jam_enum 10: AH_RSA(UNUSED) OK
-         search AH_RSA(UNUSED): OK
-         match AH_RSA(UNUSED): OK
-         match AH_RSA [trunc]: OK
-         short_name 10: RSA(UNUSED) OK
-         jam_enum_short 10: RSA(UNUSED) OK
-         jam_enum_human 10: rsa(unused) OK
-         match RSA(UNUSED) [short]: OK
-         match RSA [short+trunc]: OK
-   11 -> AH_AES_128_GMAC
-         jam_enum 11: AH_AES_128_GMAC OK
-         search AH_AES_128_GMAC: OK
-         match AH_AES_128_GMAC: OK
+   10 -> IKEv1_AH_RSA
+         jam_enum 10: IKEv1_AH_RSA OK
+         search IKEv1_AH_RSA: OK
+         match IKEv1_AH_RSA: OK
+         short_name 10: RSA OK
+         jam_enum_short 10: RSA OK
+         jam_enum_human 10: rsa OK
+         match RSA [short]: OK
+   11 -> IKEv1_AH_AES_128_GMAC
+         jam_enum 11: IKEv1_AH_AES_128_GMAC OK
+         search IKEv1_AH_AES_128_GMAC: OK
+         match IKEv1_AH_AES_128_GMAC: OK
          short_name 11: AES_128_GMAC OK
          jam_enum_short 11: AES_128_GMAC OK
          jam_enum_human 11: aes-128-gmac OK
          match AES_128_GMAC [short]: OK
-   12 -> AH_AES_192_GMAC
-         jam_enum 12: AH_AES_192_GMAC OK
-         search AH_AES_192_GMAC: OK
-         match AH_AES_192_GMAC: OK
+   12 -> IKEv1_AH_AES_192_GMAC
+         jam_enum 12: IKEv1_AH_AES_192_GMAC OK
+         search IKEv1_AH_AES_192_GMAC: OK
+         match IKEv1_AH_AES_192_GMAC: OK
          short_name 12: AES_192_GMAC OK
          jam_enum_short 12: AES_192_GMAC OK
          jam_enum_human 12: aes-192-gmac OK
          match AES_192_GMAC [short]: OK
-   13 -> AH_AES_256_GMAC
-         jam_enum 13: AH_AES_256_GMAC OK
-         search AH_AES_256_GMAC: OK
-         match AH_AES_256_GMAC: OK
+   13 -> IKEv1_AH_AES_256_GMAC
+         jam_enum 13: IKEv1_AH_AES_256_GMAC OK
+         search IKEv1_AH_AES_256_GMAC: OK
+         match IKEv1_AH_AES_256_GMAC: OK
          short_name 13: AES_256_GMAC OK
          jam_enum_short 13: AES_256_GMAC OK
          jam_enum_human 13: aes-256-gmac OK
          match AES_256_GMAC [short]: OK
-  250 -> AH_AES_CMAC_96
-         jam_enum 250: AH_AES_CMAC_96 OK
-         search AH_AES_CMAC_96: OK
-         match AH_AES_CMAC_96: OK
+  250 -> IKEv1_AH_AES_CMAC_96
+         jam_enum 250: IKEv1_AH_AES_CMAC_96 OK
+         search IKEv1_AH_AES_CMAC_96: OK
+         match IKEv1_AH_AES_CMAC_96: OK
          short_name 250: AES_CMAC_96 OK
          jam_enum_short 250: AES_CMAC_96 OK
          jam_enum_human 250: aes-cmac-96 OK
          match AES_CMAC_96 [short]: OK
-  251 -> AH_NULL
-         jam_enum 251: AH_NULL OK
-         search AH_NULL: OK
-         match AH_NULL: OK
+  251 -> IKEv1_AH_NULL
+         jam_enum 251: IKEv1_AH_NULL OK
+         search IKEv1_AH_NULL: OK
+         match IKEv1_AH_NULL: OK
          short_name 251: NULL OK
          jam_enum_short 251: NULL OK
          jam_enum_human 251: null OK
          match NULL [short]: OK
-  252 -> AH_SHA2_256_TRUNC
-         jam_enum 252: AH_SHA2_256_TRUNC OK
-         search AH_SHA2_256_TRUNC: OK
-         match AH_SHA2_256_TRUNC: OK
-         short_name 252: SHA2_256_TRUNC OK
-         jam_enum_short 252: SHA2_256_TRUNC OK
-         jam_enum_human 252: sha2-256-trunc OK
-         match SHA2_256_TRUNC [short]: OK
+  252 -> IKEv1_AH_SHA2_256_TRUNCBUG
+         jam_enum 252: IKEv1_AH_SHA2_256_TRUNCBUG OK
+         search IKEv1_AH_SHA2_256_TRUNCBUG: OK
+         match IKEv1_AH_SHA2_256_TRUNCBUG: OK
+         short_name 252: SHA2_256_TRUNCBUG OK
+         jam_enum_short 252: SHA2_256_TRUNCBUG OK
+         jam_enum_human 252: sha2-256-truncbug OK
+         match SHA2_256_TRUNCBUG [short]: OK
 
   allow_global_redirect_names: [1..4)
     1 -> no
@@ -705,301 +701,255 @@
          jam_enum_human 4: drop OK
          match DROP [short]: OK
 
-  esp_transformid_names: [1..256)
-    1 -> ESP_DES_IV64(UNUSED)
-         jam_enum 1: ESP_DES_IV64(UNUSED) OK
-         search ESP_DES_IV64(UNUSED): OK
-         match ESP_DES_IV64(UNUSED): OK
-         match ESP_DES_IV64 [trunc]: OK
-         short_name 1: DES_IV64(UNUSED) OK
-         jam_enum_short 1: DES_IV64(UNUSED) OK
-         jam_enum_human 1: des-iv64(unused) OK
-         match DES_IV64(UNUSED) [short]: OK
-         match DES_IV64 [short+trunc]: OK
-    2 -> ESP_DES(UNUSED)
-         jam_enum 2: ESP_DES(UNUSED) OK
-         search ESP_DES(UNUSED): OK
-         match ESP_DES(UNUSED): OK
-         match ESP_DES [trunc]: OK
-         short_name 2: DES(UNUSED) OK
-         jam_enum_short 2: DES(UNUSED) OK
-         jam_enum_human 2: des(unused) OK
-         match DES(UNUSED) [short]: OK
-         match DES [short+trunc]: OK
-    3 -> ESP_3DES
-         jam_enum 3: ESP_3DES OK
-         search ESP_3DES: OK
-         match ESP_3DES: OK
+  esp_transformid_names: [1..254)
+    1 -> IKEv1_ESP_DES_IV64
+         jam_enum 1: IKEv1_ESP_DES_IV64 OK
+         search IKEv1_ESP_DES_IV64: OK
+         match IKEv1_ESP_DES_IV64: OK
+         short_name 1: DES_IV64 OK
+         jam_enum_short 1: DES_IV64 OK
+         jam_enum_human 1: des-iv64 OK
+         match DES_IV64 [short]: OK
+    2 -> IKEv1_ESP_DES
+         jam_enum 2: IKEv1_ESP_DES OK
+         search IKEv1_ESP_DES: OK
+         match IKEv1_ESP_DES: OK
+         short_name 2: DES OK
+         jam_enum_short 2: DES OK
+         jam_enum_human 2: des OK
+         match DES [short]: OK
+    3 -> IKEv1_ESP_3DES
+         jam_enum 3: IKEv1_ESP_3DES OK
+         search IKEv1_ESP_3DES: OK
+         match IKEv1_ESP_3DES: OK
          short_name 3: 3DES OK
          jam_enum_short 3: 3DES OK
          jam_enum_human 3: 3des OK
          match 3DES [short]: OK
-    4 -> ESP_RC5(UNUSED)
-         jam_enum 4: ESP_RC5(UNUSED) OK
-         search ESP_RC5(UNUSED): OK
-         match ESP_RC5(UNUSED): OK
-         match ESP_RC5 [trunc]: OK
-         short_name 4: RC5(UNUSED) OK
-         jam_enum_short 4: RC5(UNUSED) OK
-         jam_enum_human 4: rc5(unused) OK
-         match RC5(UNUSED) [short]: OK
-         match RC5 [short+trunc]: OK
-    5 -> ESP_IDEA(UNUSED)
-         jam_enum 5: ESP_IDEA(UNUSED) OK
-         search ESP_IDEA(UNUSED): OK
-         match ESP_IDEA(UNUSED): OK
-         match ESP_IDEA [trunc]: OK
-         short_name 5: IDEA(UNUSED) OK
-         jam_enum_short 5: IDEA(UNUSED) OK
-         jam_enum_human 5: idea(unused) OK
-         match IDEA(UNUSED) [short]: OK
-         match IDEA [short+trunc]: OK
-    6 -> ESP_CAST
-         jam_enum 6: ESP_CAST OK
-         search ESP_CAST: OK
-         match ESP_CAST: OK
+    4 -> IKEv1_ESP_RC5
+         jam_enum 4: IKEv1_ESP_RC5 OK
+         search IKEv1_ESP_RC5: OK
+         match IKEv1_ESP_RC5: OK
+         short_name 4: RC5 OK
+         jam_enum_short 4: RC5 OK
+         jam_enum_human 4: rc5 OK
+         match RC5 [short]: OK
+    5 -> IKEv1_ESP_IDEA
+         jam_enum 5: IKEv1_ESP_IDEA OK
+         search IKEv1_ESP_IDEA: OK
+         match IKEv1_ESP_IDEA: OK
+         short_name 5: IDEA OK
+         jam_enum_short 5: IDEA OK
+         jam_enum_human 5: idea OK
+         match IDEA [short]: OK
+    6 -> IKEv1_ESP_CAST
+         jam_enum 6: IKEv1_ESP_CAST OK
+         search IKEv1_ESP_CAST: OK
+         match IKEv1_ESP_CAST: OK
          short_name 6: CAST OK
          jam_enum_short 6: CAST OK
          jam_enum_human 6: cast OK
          match CAST [short]: OK
-    7 -> ESP_BLOWFISH(UNUSED)
-         jam_enum 7: ESP_BLOWFISH(UNUSED) OK
-         search ESP_BLOWFISH(UNUSED): OK
-         match ESP_BLOWFISH(UNUSED): OK
-         match ESP_BLOWFISH [trunc]: OK
-         short_name 7: BLOWFISH(UNUSED) OK
-         jam_enum_short 7: BLOWFISH(UNUSED) OK
-         jam_enum_human 7: blowfish(unused) OK
-         match BLOWFISH(UNUSED) [short]: OK
-         match BLOWFISH [short+trunc]: OK
-    8 -> ESP_3IDEA(UNUSED)
-         jam_enum 8: ESP_3IDEA(UNUSED) OK
-         search ESP_3IDEA(UNUSED): OK
-         match ESP_3IDEA(UNUSED): OK
-         match ESP_3IDEA [trunc]: OK
-         short_name 8: 3IDEA(UNUSED) OK
-         jam_enum_short 8: 3IDEA(UNUSED) OK
-         jam_enum_human 8: 3idea(unused) OK
-         match 3IDEA(UNUSED) [short]: OK
-         match 3IDEA [short+trunc]: OK
-    9 -> ESP_DES_IV32(UNUSED)
-         jam_enum 9: ESP_DES_IV32(UNUSED) OK
-         search ESP_DES_IV32(UNUSED): OK
-         match ESP_DES_IV32(UNUSED): OK
-         match ESP_DES_IV32 [trunc]: OK
-         short_name 9: DES_IV32(UNUSED) OK
-         jam_enum_short 9: DES_IV32(UNUSED) OK
-         jam_enum_human 9: des-iv32(unused) OK
-         match DES_IV32(UNUSED) [short]: OK
-         match DES_IV32 [short+trunc]: OK
-   10 -> ESP_RC4(UNUSED)
-         jam_enum 10: ESP_RC4(UNUSED) OK
-         search ESP_RC4(UNUSED): OK
-         match ESP_RC4(UNUSED): OK
-         match ESP_RC4 [trunc]: OK
-         short_name 10: RC4(UNUSED) OK
-         jam_enum_short 10: RC4(UNUSED) OK
-         jam_enum_human 10: rc4(unused) OK
-         match RC4(UNUSED) [short]: OK
-         match RC4 [short+trunc]: OK
-   11 -> ESP_NULL
-         jam_enum 11: ESP_NULL OK
-         search ESP_NULL: OK
-         match ESP_NULL: OK
+    7 -> IKEv1_ESP_BLOWFISH
+         jam_enum 7: IKEv1_ESP_BLOWFISH OK
+         search IKEv1_ESP_BLOWFISH: OK
+         match IKEv1_ESP_BLOWFISH: OK
+         short_name 7: BLOWFISH OK
+         jam_enum_short 7: BLOWFISH OK
+         jam_enum_human 7: blowfish OK
+         match BLOWFISH [short]: OK
+    8 -> IKEv1_ESP_3IDEA
+         jam_enum 8: IKEv1_ESP_3IDEA OK
+         search IKEv1_ESP_3IDEA: OK
+         match IKEv1_ESP_3IDEA: OK
+         short_name 8: 3IDEA OK
+         jam_enum_short 8: 3IDEA OK
+         jam_enum_human 8: 3idea OK
+         match 3IDEA [short]: OK
+    9 -> IKEv1_ESP_DES_IV32
+         jam_enum 9: IKEv1_ESP_DES_IV32 OK
+         search IKEv1_ESP_DES_IV32: OK
+         match IKEv1_ESP_DES_IV32: OK
+         short_name 9: DES_IV32 OK
+         jam_enum_short 9: DES_IV32 OK
+         jam_enum_human 9: des-iv32 OK
+         match DES_IV32 [short]: OK
+   10 -> IKEv1_ESP_RC4
+         jam_enum 10: IKEv1_ESP_RC4 OK
+         search IKEv1_ESP_RC4: OK
+         match IKEv1_ESP_RC4: OK
+         short_name 10: RC4 OK
+         jam_enum_short 10: RC4 OK
+         jam_enum_human 10: rc4 OK
+         match RC4 [short]: OK
+   11 -> IKEv1_ESP_NULL
+         jam_enum 11: IKEv1_ESP_NULL OK
+         search IKEv1_ESP_NULL: OK
+         match IKEv1_ESP_NULL: OK
          short_name 11: NULL OK
          jam_enum_short 11: NULL OK
          jam_enum_human 11: null OK
          match NULL [short]: OK
-   12 -> ESP_AES
-         jam_enum 12: ESP_AES OK
-         search ESP_AES: OK
-         match ESP_AES: OK
+   12 -> IKEv1_ESP_AES
+         jam_enum 12: IKEv1_ESP_AES OK
+         search IKEv1_ESP_AES: OK
+         match IKEv1_ESP_AES: OK
          short_name 12: AES OK
          jam_enum_short 12: AES OK
          jam_enum_human 12: aes OK
          match AES [short]: OK
-   13 -> ESP_AES_CTR
-         jam_enum 13: ESP_AES_CTR OK
-         search ESP_AES_CTR: OK
-         match ESP_AES_CTR: OK
+   13 -> IKEv1_ESP_AES_CTR
+         jam_enum 13: IKEv1_ESP_AES_CTR OK
+         search IKEv1_ESP_AES_CTR: OK
+         match IKEv1_ESP_AES_CTR: OK
          short_name 13: AES_CTR OK
          jam_enum_short 13: AES_CTR OK
          jam_enum_human 13: aes-ctr OK
          match AES_CTR [short]: OK
-   14 -> ESP_AES_CCM_A
-         jam_enum 14: ESP_AES_CCM_A OK
-         search ESP_AES_CCM_A: OK
-         match ESP_AES_CCM_A: OK
-         short_name 14: AES_CCM_A OK
-         jam_enum_short 14: AES_CCM_A OK
-         jam_enum_human 14: aes-ccm-a OK
-         match AES_CCM_A [short]: OK
-   15 -> ESP_AES_CCM_B
-         jam_enum 15: ESP_AES_CCM_B OK
-         search ESP_AES_CCM_B: OK
-         match ESP_AES_CCM_B: OK
-         short_name 15: AES_CCM_B OK
-         jam_enum_short 15: AES_CCM_B OK
-         jam_enum_human 15: aes-ccm-b OK
-         match AES_CCM_B [short]: OK
-   16 -> ESP_AES_CCM_C
-         jam_enum 16: ESP_AES_CCM_C OK
-         search ESP_AES_CCM_C: OK
-         match ESP_AES_CCM_C: OK
-         short_name 16: AES_CCM_C OK
-         jam_enum_short 16: AES_CCM_C OK
-         jam_enum_human 16: aes-ccm-c OK
-         match AES_CCM_C [short]: OK
-   17 -> ESP_UNUSED_ID17
-         jam_enum 17: ESP_UNUSED_ID17 OK
-         search ESP_UNUSED_ID17: OK
-         match ESP_UNUSED_ID17: OK
-         short_name 17: UNUSED_ID17 OK
-         jam_enum_short 17: UNUSED_ID17 OK
-         jam_enum_human 17: unused-id17 OK
-         match UNUSED_ID17 [short]: OK
-   18 -> ESP_AES_GCM_A
-         jam_enum 18: ESP_AES_GCM_A OK
-         search ESP_AES_GCM_A: OK
-         match ESP_AES_GCM_A: OK
-         short_name 18: AES_GCM_A OK
-         jam_enum_short 18: AES_GCM_A OK
-         jam_enum_human 18: aes-gcm-a OK
-         match AES_GCM_A [short]: OK
-   19 -> ESP_AES_GCM_B
-         jam_enum 19: ESP_AES_GCM_B OK
-         search ESP_AES_GCM_B: OK
-         match ESP_AES_GCM_B: OK
-         short_name 19: AES_GCM_B OK
-         jam_enum_short 19: AES_GCM_B OK
-         jam_enum_human 19: aes-gcm-b OK
-         match AES_GCM_B [short]: OK
-   20 -> ESP_AES_GCM_C
-         jam_enum 20: ESP_AES_GCM_C OK
-         search ESP_AES_GCM_C: OK
-         match ESP_AES_GCM_C: OK
-         short_name 20: AES_GCM_C OK
-         jam_enum_short 20: AES_GCM_C OK
-         jam_enum_human 20: aes-gcm-c OK
-         match AES_GCM_C [short]: OK
-   21 -> ESP_SEED_CBC
-         jam_enum 21: ESP_SEED_CBC OK
-         search ESP_SEED_CBC: OK
-         match ESP_SEED_CBC: OK
+   14 -> IKEv1_ESP_AES_CCM_8
+         jam_enum 14: IKEv1_ESP_AES_CCM_8 OK
+         search IKEv1_ESP_AES_CCM_8: OK
+         match IKEv1_ESP_AES_CCM_8: OK
+         short_name 14: AES_CCM_8 OK
+         jam_enum_short 14: AES_CCM_8 OK
+         jam_enum_human 14: aes-ccm-8 OK
+         match AES_CCM_8 [short]: OK
+   15 -> IKEv1_ESP_AES_CCM_12
+         jam_enum 15: IKEv1_ESP_AES_CCM_12 OK
+         search IKEv1_ESP_AES_CCM_12: OK
+         match IKEv1_ESP_AES_CCM_12: OK
+         short_name 15: AES_CCM_12 OK
+         jam_enum_short 15: AES_CCM_12 OK
+         jam_enum_human 15: aes-ccm-12 OK
+         match AES_CCM_12 [short]: OK
+   16 -> IKEv1_ESP_AES_CCM_16
+         jam_enum 16: IKEv1_ESP_AES_CCM_16 OK
+         search IKEv1_ESP_AES_CCM_16: OK
+         match IKEv1_ESP_AES_CCM_16: OK
+         short_name 16: AES_CCM_16 OK
+         jam_enum_short 16: AES_CCM_16 OK
+         jam_enum_human 16: aes-ccm-16 OK
+         match AES_CCM_16 [short]: OK
+   18 -> IKEv1_ESP_AES_GCM_8
+         jam_enum 18: IKEv1_ESP_AES_GCM_8 OK
+         search IKEv1_ESP_AES_GCM_8: OK
+         match IKEv1_ESP_AES_GCM_8: OK
+         short_name 18: AES_GCM_8 OK
+         jam_enum_short 18: AES_GCM_8 OK
+         jam_enum_human 18: aes-gcm-8 OK
+         match AES_GCM_8 [short]: OK
+   19 -> IKEv1_ESP_AES_GCM_12
+         jam_enum 19: IKEv1_ESP_AES_GCM_12 OK
+         search IKEv1_ESP_AES_GCM_12: OK
+         match IKEv1_ESP_AES_GCM_12: OK
+         short_name 19: AES_GCM_12 OK
+         jam_enum_short 19: AES_GCM_12 OK
+         jam_enum_human 19: aes-gcm-12 OK
+         match AES_GCM_12 [short]: OK
+   20 -> IKEv1_ESP_AES_GCM_16
+         jam_enum 20: IKEv1_ESP_AES_GCM_16 OK
+         search IKEv1_ESP_AES_GCM_16: OK
+         match IKEv1_ESP_AES_GCM_16: OK
+         short_name 20: AES_GCM_16 OK
+         jam_enum_short 20: AES_GCM_16 OK
+         jam_enum_human 20: aes-gcm-16 OK
+         match AES_GCM_16 [short]: OK
+   21 -> IKEv1_ESP_SEED_CBC
+         jam_enum 21: IKEv1_ESP_SEED_CBC OK
+         search IKEv1_ESP_SEED_CBC: OK
+         match IKEv1_ESP_SEED_CBC: OK
          short_name 21: SEED_CBC OK
          jam_enum_short 21: SEED_CBC OK
          jam_enum_human 21: seed-cbc OK
          match SEED_CBC [short]: OK
-   22 -> ESP_CAMELLIA
-         jam_enum 22: ESP_CAMELLIA OK
-         search ESP_CAMELLIA: OK
-         match ESP_CAMELLIA: OK
+   22 -> IKEv1_ESP_CAMELLIA
+         jam_enum 22: IKEv1_ESP_CAMELLIA OK
+         search IKEv1_ESP_CAMELLIA: OK
+         match IKEv1_ESP_CAMELLIA: OK
          short_name 22: CAMELLIA OK
          jam_enum_short 22: CAMELLIA OK
          jam_enum_human 22: camellia OK
          match CAMELLIA [short]: OK
-   23 -> ESP_NULL_AUTH_AES_GMAC
-         jam_enum 23: ESP_NULL_AUTH_AES_GMAC OK
-         search ESP_NULL_AUTH_AES_GMAC: OK
-         match ESP_NULL_AUTH_AES_GMAC: OK
+   23 -> IKEv1_ESP_NULL_AUTH_AES_GMAC
+         jam_enum 23: IKEv1_ESP_NULL_AUTH_AES_GMAC OK
+         search IKEv1_ESP_NULL_AUTH_AES_GMAC: OK
+         match IKEv1_ESP_NULL_AUTH_AES_GMAC: OK
          short_name 23: NULL_AUTH_AES_GMAC OK
          jam_enum_short 23: NULL_AUTH_AES_GMAC OK
          jam_enum_human 23: null-auth-aes-gmac OK
          match NULL_AUTH_AES_GMAC [short]: OK
-   24 -> ESP_CAMELLIA_CTR
-         jam_enum 24: ESP_CAMELLIA_CTR OK
-         search ESP_CAMELLIA_CTR: OK
-         match ESP_CAMELLIA_CTR: OK
+   24 -> IKEv1_ESP_CAMELLIA_CTR
+         jam_enum 24: IKEv1_ESP_CAMELLIA_CTR OK
+         search IKEv1_ESP_CAMELLIA_CTR: OK
+         match IKEv1_ESP_CAMELLIA_CTR: OK
          short_name 24: CAMELLIA_CTR OK
          jam_enum_short 24: CAMELLIA_CTR OK
          jam_enum_human 24: camellia-ctr OK
          match CAMELLIA_CTR [short]: OK
-   25 -> ESP_CAMELLIA_CCM_A
-         jam_enum 25: ESP_CAMELLIA_CCM_A OK
-         search ESP_CAMELLIA_CCM_A: OK
-         match ESP_CAMELLIA_CCM_A: OK
-         short_name 25: CAMELLIA_CCM_A OK
-         jam_enum_short 25: CAMELLIA_CCM_A OK
-         jam_enum_human 25: camellia-ccm-a OK
-         match CAMELLIA_CCM_A [short]: OK
-   26 -> ESP_CAMELLIA_CCM_B
-         jam_enum 26: ESP_CAMELLIA_CCM_B OK
-         search ESP_CAMELLIA_CCM_B: OK
-         match ESP_CAMELLIA_CCM_B: OK
-         short_name 26: CAMELLIA_CCM_B OK
-         jam_enum_short 26: CAMELLIA_CCM_B OK
-         jam_enum_human 26: camellia-ccm-b OK
-         match CAMELLIA_CCM_B [short]: OK
-   27 -> ESP_CAMELLIA_CCM_C
-         jam_enum 27: ESP_CAMELLIA_CCM_C OK
-         search ESP_CAMELLIA_CCM_C: OK
-         match ESP_CAMELLIA_CCM_C: OK
-         short_name 27: CAMELLIA_CCM_C OK
-         jam_enum_short 27: CAMELLIA_CCM_C OK
-         jam_enum_human 27: camellia-ccm-c OK
-         match CAMELLIA_CCM_C [short]: OK
-  249 -> ESP_MARS
-         jam_enum 249: ESP_MARS OK
-         search ESP_MARS: OK
-         match ESP_MARS: OK
+   25 -> IKEv1_ESP_CAMELLIA_CCM_8
+         jam_enum 25: IKEv1_ESP_CAMELLIA_CCM_8 OK
+         search IKEv1_ESP_CAMELLIA_CCM_8: OK
+         match IKEv1_ESP_CAMELLIA_CCM_8: OK
+         short_name 25: CAMELLIA_CCM_8 OK
+         jam_enum_short 25: CAMELLIA_CCM_8 OK
+         jam_enum_human 25: camellia-ccm-8 OK
+         match CAMELLIA_CCM_8 [short]: OK
+   26 -> IKEv1_ESP_CAMELLIA_CCM_12
+         jam_enum 26: IKEv1_ESP_CAMELLIA_CCM_12 OK
+         search IKEv1_ESP_CAMELLIA_CCM_12: OK
+         match IKEv1_ESP_CAMELLIA_CCM_12: OK
+         short_name 26: CAMELLIA_CCM_12 OK
+         jam_enum_short 26: CAMELLIA_CCM_12 OK
+         jam_enum_human 26: camellia-ccm-12 OK
+         match CAMELLIA_CCM_12 [short]: OK
+   27 -> IKEv1_ESP_CAMELLIA_CCM_16
+         jam_enum 27: IKEv1_ESP_CAMELLIA_CCM_16 OK
+         search IKEv1_ESP_CAMELLIA_CCM_16: OK
+         match IKEv1_ESP_CAMELLIA_CCM_16: OK
+         short_name 27: CAMELLIA_CCM_16 OK
+         jam_enum_short 27: CAMELLIA_CCM_16 OK
+         jam_enum_human 27: camellia-ccm-16 OK
+         match CAMELLIA_CCM_16 [short]: OK
+  249 -> IKEv1_ESP_MARS
+         jam_enum 249: IKEv1_ESP_MARS OK
+         search IKEv1_ESP_MARS: OK
+         match IKEv1_ESP_MARS: OK
          short_name 249: MARS OK
          jam_enum_short 249: MARS OK
          jam_enum_human 249: mars OK
          match MARS [short]: OK
-  250 -> ESP_RC6(UNUSED)
-         jam_enum 250: ESP_RC6(UNUSED) OK
-         search ESP_RC6(UNUSED): OK
-         match ESP_RC6(UNUSED): OK
-         match ESP_RC6 [trunc]: OK
-         short_name 250: RC6(UNUSED) OK
-         jam_enum_short 250: RC6(UNUSED) OK
-         jam_enum_human 250: rc6(unused) OK
-         match RC6(UNUSED) [short]: OK
-         match RC6 [short+trunc]: OK
-  251 -> ESP_KAME_NULL
-         jam_enum 251: ESP_KAME_NULL OK
-         search ESP_KAME_NULL: OK
-         match ESP_KAME_NULL: OK
+  250 -> IKEv1_ESP_RC6
+         jam_enum 250: IKEv1_ESP_RC6 OK
+         search IKEv1_ESP_RC6: OK
+         match IKEv1_ESP_RC6: OK
+         short_name 250: RC6 OK
+         jam_enum_short 250: RC6 OK
+         jam_enum_human 250: rc6 OK
+         match RC6 [short]: OK
+  251 -> IKEv1_ESP_KAME_NULL
+         jam_enum 251: IKEv1_ESP_KAME_NULL OK
+         search IKEv1_ESP_KAME_NULL: OK
+         match IKEv1_ESP_KAME_NULL: OK
          short_name 251: KAME_NULL OK
          jam_enum_short 251: KAME_NULL OK
          jam_enum_human 251: kame-null OK
          match KAME_NULL [short]: OK
-  252 -> ESP_SERPENT
-         jam_enum 252: ESP_SERPENT OK
-         search ESP_SERPENT: OK
-         match ESP_SERPENT: OK
+  252 -> IKEv1_ESP_SERPENT
+         jam_enum 252: IKEv1_ESP_SERPENT OK
+         search IKEv1_ESP_SERPENT: OK
+         match IKEv1_ESP_SERPENT: OK
          short_name 252: SERPENT OK
          jam_enum_short 252: SERPENT OK
          jam_enum_human 252: serpent OK
          match SERPENT [short]: OK
-  253 -> ESP_TWOFISH
-         jam_enum 253: ESP_TWOFISH OK
-         search ESP_TWOFISH: OK
-         match ESP_TWOFISH: OK
+  253 -> IKEv1_ESP_TWOFISH
+         jam_enum 253: IKEv1_ESP_TWOFISH OK
+         search IKEv1_ESP_TWOFISH: OK
+         match IKEv1_ESP_TWOFISH: OK
          short_name 253: TWOFISH OK
          jam_enum_short 253: TWOFISH OK
          jam_enum_human 253: twofish OK
          match TWOFISH [short]: OK
-  254 -> ESP_ID254(UNUSED)
-         jam_enum 254: ESP_ID254(UNUSED) OK
-         search ESP_ID254(UNUSED): OK
-         match ESP_ID254(UNUSED): OK
-         match ESP_ID254 [trunc]: OK
-         short_name 254: ID254(UNUSED) OK
-         jam_enum_short 254: ID254(UNUSED) OK
-         jam_enum_human 254: id254(unused) OK
-         match ID254(UNUSED) [short]: OK
-         match ID254 [short+trunc]: OK
-  255 -> ESP_ID255(UNUSED)
-         jam_enum 255: ESP_ID255(UNUSED) OK
-         search ESP_ID255(UNUSED): OK
-         match ESP_ID255(UNUSED): OK
-         match ESP_ID255 [trunc]: OK
-         short_name 255: ID255(UNUSED) OK
-         jam_enum_short 255: ID255(UNUSED) OK
-         jam_enum_human 255: id255(unused) OK
-         match ID255(UNUSED) [short]: OK
-         match ID255 [short+trunc]: OK
 
   event_type_names: [0..17)
     0 -> EVENT_NULL
