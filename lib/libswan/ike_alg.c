@@ -219,39 +219,43 @@ bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc)
 
 static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 					  enum ike_alg_key key,
-					  int id, lset_t debug)
+					  int id, enum_buf *b,
+					  lset_t debug)
 {
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
-			enum_buf eb;
+			/* set b->buf */
+			bool known = enum_name(type->enum_names[key], id, b);
+			pexpect(known);
 			DBGF(debug, "%s %s id: %s=%u, found %s",
-			     type->name, __func__,
-			     str_enum_short(type->enum_names[key], id, &eb),
+			     type->name, __func__, b->buf,
 			     id, alg->fqn);
 			return alg;
 		}
  	}
-	enum_buf eb;
-	DBGF(debug, "%s %s id: %s=%u, not found",
-	     type->name, __func__,
-	     str_enum_short(type->enum_names[key], id, &eb),
-	     id);
+	/* set b->buf */
+	bool known = enum_name(type->enum_names[key], id, b);
+	DBGF(debug, "%s %s id: %s=%u, not found %s by enum_names/IETF",
+	     type->name, __func__, b->buf, id,
+	     (known ? " but known" : " and unknown"));
 	return NULL;
 }
 
 const struct ike_alg *ike_alg_by_key_id(const struct ike_alg_type *type,
 					enum ike_alg_key key, unsigned id)
 {
-	return lookup_by_id(type, key, id, DBG_CRYPT);
+	enum_buf b;
+	return lookup_by_id(type, key, id, &b, DBG_CRYPT);
 }
 
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,
 						 unsigned id)
 {
+	enum_buf b;
 	const struct ike_alg *alg = lookup_by_id(algorithms,
 						 IKEv1_OAKLEY_ID,
-						 id, DBG_CRYPT);
+						 id, &b, DBG_CRYPT);
 	if (alg == NULL || !ike_alg_is_ike(alg)) {
 		return NULL;
 	}
@@ -280,22 +284,26 @@ const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo id)
 
 const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ikev1_esp_transform id)
 {
-	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, DBG_CRYPT));
+	enum_buf b;
+	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, &b, DBG_CRYPT));
 }
 
 const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute id)
 {
-	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_IPSEC_ID, id, DBG_CRYPT));
+	enum_buf b;
+	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_IPSEC_ID, id, &b, DBG_CRYPT));
 }
 
 const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id)
 {
-	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, DBG_CRYPT));
+	enum_buf b;
+	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, &b, DBG_CRYPT));
 }
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
 {
-	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, DBG_CRYPT);
+	enum_buf b;
+	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, &b, DBG_CRYPT);
 }
 
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
@@ -330,17 +338,20 @@ const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo id)
 
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)
 {
-	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, DBG_CRYPT));
+	enum_buf b;
+	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, &b, DBG_CRYPT));
 }
 
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id)
 {
-	return integ_desc(lookup_by_id(&ike_alg_integ, SADB_ALG_ID, id, DBG_CRYPT));
+	enum_buf b;
+	return integ_desc(lookup_by_id(&ike_alg_integ, SADB_ALG_ID, id, &b, DBG_CRYPT));
 }
 
 const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id)
 {
-	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, SADB_ALG_ID, id, DBG_CRYPT));
+	enum_buf b;
+	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, SADB_ALG_ID, id, &b, DBG_CRYPT));
 }
 
 /*
@@ -1078,8 +1089,9 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 				if (id < 0) continue;
 				break;
 			}
+			enum_buf b;
 			pexpect_ike_alg_key(logger, alg, key,
-					    lookup_by_id(&scratch, key, id, LEMPTY) == NULL);
+					    lookup_by_id(&scratch, key, id, &b, LEMPTY) == NULL);
 		}
 
 		/*
