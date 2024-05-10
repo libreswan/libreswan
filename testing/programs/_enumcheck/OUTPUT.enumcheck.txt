@@ -4736,16 +4736,14 @@
          jam_enum_short 2: SHA1 OK
          jam_enum_human 2: sha1 OK
          match SHA1 [short]: OK
-    3 -> OAKLEY_TIGER(UNUSED)
-         jam_enum 3: OAKLEY_TIGER(UNUSED) OK
-         search OAKLEY_TIGER(UNUSED): OK
-         match OAKLEY_TIGER(UNUSED): OK
-         match OAKLEY_TIGER [trunc]: OK
-         short_name 3: TIGER(UNUSED) OK
-         jam_enum_short 3: TIGER(UNUSED) OK
-         jam_enum_human 3: tiger(unused) OK
-         match TIGER(UNUSED) [short]: OK
-         match TIGER [short+trunc]: OK
+    3 -> OAKLEY_TIGER
+         jam_enum 3: OAKLEY_TIGER OK
+         search OAKLEY_TIGER: OK
+         match OAKLEY_TIGER: OK
+         short_name 3: TIGER OK
+         jam_enum_short 3: TIGER OK
+         jam_enum_human 3: tiger OK
+         match TIGER [short]: OK
     4 -> OAKLEY_SHA2_256
          jam_enum 4: OAKLEY_SHA2_256 OK
          search OAKLEY_SHA2_256: OK

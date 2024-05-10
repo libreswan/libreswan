@@ -1349,24 +1349,22 @@ static enum_names auth_alg_names_stolen_use = {
 /* these string names map via a lookup function to configuration strings */
 static const char *const auth_alg_name[] = {
 #define S(E) [E - AUTH_ALGORITHM_NONE] = #E
-#define U(E) [E - AUTH_ALGORITHM_NONE] = #E"(UNUSED)"
 	S(AUTH_ALGORITHM_NONE),	/* our own value, not standard */
 	S(AUTH_ALGORITHM_HMAC_MD5),
 	S(AUTH_ALGORITHM_HMAC_SHA1),
-	U(AUTH_ALGORITHM_DES_MAC),
-	U(AUTH_ALGORITHM_KPDK),
+	S(AUTH_ALGORITHM_DES_MAC),
+	S(AUTH_ALGORITHM_KPDK),
 	S(AUTH_ALGORITHM_HMAC_SHA2_256),
 	S(AUTH_ALGORITHM_HMAC_SHA2_384),
 	S(AUTH_ALGORITHM_HMAC_SHA2_512),
 	S(AUTH_ALGORITHM_HMAC_RIPEMD),
 	S(AUTH_ALGORITHM_AES_XCBC),
-	U(AUTH_ALGORITHM_SIG_RSA),	/* RFC4359 */
+	S(AUTH_ALGORITHM_SIG_RSA),	/* RFC4359 */
 	S(AUTH_ALGORITHM_AES_128_GMAC),	/* RFC4543 [Errata1821] */
 	S(AUTH_ALGORITHM_AES_192_GMAC),	/* RFC4543 [Errata1821] */
 	S(AUTH_ALGORITHM_AES_256_GMAC),	/* RFC4543 [Errata1821] */
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
-#undef U
 #undef S
 };
 
@@ -1542,11 +1540,10 @@ static enum_names oakley_prf_names = {
 static const char *const oakley_enc_name[] = {
 #define S(E) [E - 0] = #E
 #define R(E,S) [E - 0] = #S
-#define U(E) [E - 0] = #E"(UNUSED)"
-	U(OAKLEY_DES_CBC), /* obsoleted */
-	U(OAKLEY_IDEA_CBC),
-	U(OAKLEY_BLOWFISH_CBC), /* obsoleted */
-	U(OAKLEY_RC5_R16_B64_CBC),
+	S(OAKLEY_DES_CBC), /* obsoleted */
+	S(OAKLEY_IDEA_CBC),
+	S(OAKLEY_BLOWFISH_CBC), /* obsoleted */
+	S(OAKLEY_RC5_R16_B64_CBC),
 	S(OAKLEY_3DES_CBC),
 	S(OAKLEY_CAST_CBC),
 	S(OAKLEY_AES_CBC),
@@ -1564,7 +1561,6 @@ static const char *const oakley_enc_name[] = {
 	S(OAKLEY_CAMELLIA_CCM_C),
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
-#undef U
 #undef R
 #undef S
 };
@@ -1616,17 +1612,15 @@ enum_names oakley_enc_names = {
 /* these string names map via a lookup function to configuration strings */
 static const char *const oakley_hash_name[] = {
 #define S(E) [E - OAKLEY_MD5] = #E
-#define U(E) [E - OAKLEY_MD5] = #E"(UNUSED)"
 	/* 0 - RESERVED */
 	S(OAKLEY_MD5),
 	S(OAKLEY_SHA1),
-	U(OAKLEY_TIGER),
+	S(OAKLEY_TIGER),
 	S(OAKLEY_SHA2_256),	/* RFC 4878 */
 	S(OAKLEY_SHA2_384),	/* RFC 4878 */
 	S(OAKLEY_SHA2_512),	/* RFC 4878 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
-#undef U
 #undef S
 };
 
@@ -1799,21 +1793,20 @@ enum_names ikev2_auth_method_names = {
 /* these string names map via a lookup function to configuration strings */
 static const char *const oakley_group_name[] = {
 #define S(E) [E - OAKLEY_GROUP_NONE] = #E
-#define U(E) [E - OAKLEY_GROUP_NONE] = #E"(UNUSED)"
 	S(OAKLEY_GROUP_NONE), /* 0! RFC 7296 */
 	S(OAKLEY_GROUP_MODP768),
 	S(OAKLEY_GROUP_MODP1024),
-	U(OAKLEY_GROUP_GP155),
-	U(OAKLEY_GROUP_GP185),
+	S(OAKLEY_GROUP_GP155),
+	S(OAKLEY_GROUP_GP185),
 	S(OAKLEY_GROUP_MODP1536), /* RFC 3526 */
-	U(OAKLEY_GROUP_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
-	U(OAKLEY_GROUP_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(OAKLEY_GROUP_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
 	S(OAKLEY_GROUP_MODP2048), /* RFC 3526 */
 	S(OAKLEY_GROUP_MODP3072), /* RFC 3526 */
 	S(OAKLEY_GROUP_MODP4096), /* RFC 3526 */
@@ -1835,7 +1828,6 @@ static const char *const oakley_group_name[] = {
 	S(OAKLEY_GROUP_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
-#undef U
 #undef S
 };
 
