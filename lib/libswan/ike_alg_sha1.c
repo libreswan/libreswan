@@ -39,7 +39,7 @@ const struct prf_desc ike_alg_prf_sha1 = {
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
-			[IKEv1_ESP_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA1,
 		},
 		.fips.approved = true,
@@ -68,7 +68,7 @@ const struct integ_desc ike_alg_integ_sha1 = {
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
-			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA1,
+			[IKEv1_IPSEC_ID] = AUTH_ALGORITHM_HMAC_SHA1,
 			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_SHA1_96,
 #ifdef SADB_AALG_SHA1HMAC
 			[SADB_ALG_ID] = SADB_AALG_SHA1HMAC,

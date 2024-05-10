@@ -30,7 +30,7 @@ const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CHACHA20_POLY1305,
 		},
 	},

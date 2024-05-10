@@ -100,7 +100,7 @@ const char *ike_alg_key_name(enum ike_alg_key key)
 {
 	static const char *names[IKE_ALG_KEY_ROOF] = {
 		[IKEv1_OAKLEY_ID] = "IKEv1 OAKLEY ID",
-		[IKEv1_ESP_ID] = "IKEv1 ESP ID",
+		[IKEv1_IPSEC_ID] = "IKEv1 ESP ID",
 		[IKEv2_ALG_ID] = "IKEv2 ID",
 		[SADB_ALG_ID] = "SADB ID",
 	};
@@ -277,17 +277,17 @@ const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo id)
 
 const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ikev1_esp_transform id)
 {
-	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_ESP_ID, id, DBG_CRYPT));
+	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, DBG_CRYPT));
 }
 
 const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute id)
 {
-	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_ESP_ID, id, DBG_CRYPT));
+	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_IPSEC_ID, id, DBG_CRYPT));
 }
 
 const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id)
 {
-	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_ESP_ID, id, DBG_CRYPT));
+	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, DBG_CRYPT));
 }
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
@@ -578,7 +578,7 @@ const struct ike_alg_type ike_alg_prf = {
 	.algorithms = &prf_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
-		[IKEv1_ESP_ID] = NULL, /* ESP/AH uses IKE PRF */
+		[IKEv1_IPSEC_ID] = NULL, /* ESP/AH uses IKE PRF */
 		[IKEv2_ALG_ID] = &ikev2_trans_type_prf_names,
 	},
 	.desc_check = prf_desc_check,
@@ -619,11 +619,11 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
-	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
+	if (integ->common.id[IKEv1_IPSEC_ID] >= 0) {
 		enum_buf esb;
 		pexpect_ike_alg_streq(logger, alg, integ->integ_kernel_audit_name,
 				      str_enum_short(&auth_alg_names,
-						     integ->common.id[IKEv1_ESP_ID],
+						     integ->common.id[IKEv1_IPSEC_ID],
 						     &esb));
 	}
 	if (integ->prf != NULL) {
@@ -648,7 +648,7 @@ const struct ike_alg_type ike_alg_integ = {
 	.algorithms = &integ_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
-		[IKEv1_ESP_ID] = &auth_alg_names,
+		[IKEv1_IPSEC_ID] = &auth_alg_names,
 		[IKEv2_ALG_ID] = &ikev2_trans_type_integ_names,
 	},
 	.desc_check = integ_desc_check,
@@ -766,7 +766,7 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	 */
 	if (encrypt == &ike_alg_encrypt_null) {
 		pexpect_ike_alg(logger, alg, encrypt->keydeflen == 0);
-		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv1_ESP_ID] == IKEv1_ESP_NULL);
+		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv1_IPSEC_ID] == IKEv1_ESP_NULL);
 		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
 		pexpect_ike_alg(logger, alg, encrypt->enc_blocksize == 1);
 		pexpect_ike_alg(logger, alg, encrypt->wire_iv_size == 0);
@@ -809,7 +809,7 @@ const struct ike_alg_type ike_alg_encrypt = {
 	.algorithms = &encrypt_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_enc_names,
-		[IKEv1_ESP_ID] = &esp_transformid_names,
+		[IKEv1_IPSEC_ID] = &esp_transformid_names,
 		[IKEv2_ALG_ID] = &ikev2_trans_type_encr_names,
 	},
 	.desc_check = encrypt_desc_check,
@@ -866,9 +866,9 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 		dh->dh_ops->check(dh, logger);
 		/* IKEv1 supports MODP groups but not ECC. */
 		pexpect_ike_alg(logger, alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
-				      ? dh->common.id[IKEv1_ESP_ID] == dh->group
+				      ? dh->common.id[IKEv1_IPSEC_ID] == dh->group
 				      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
-				      ? dh->common.id[IKEv1_ESP_ID] < 0
+				      ? dh->common.id[IKEv1_IPSEC_ID] < 0
 				      : false));
 	}
 }
@@ -887,7 +887,7 @@ const struct ike_alg_type ike_alg_dh = {
 	.algorithms = &dh_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
-		[IKEv1_ESP_ID] = &oakley_group_names,
+		[IKEv1_IPSEC_ID] = &oakley_group_names,
 		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
 	.desc_check = dh_desc_check,
@@ -924,7 +924,7 @@ const struct ike_alg_type ike_alg_ipcomp = {
 	.algorithms = &ipcomp_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &ipsec_ipcomp_algo_names,
-		[IKEv1_ESP_ID] = &ipsec_ipcomp_algo_names,
+		[IKEv1_IPSEC_ID] = &ipsec_ipcomp_algo_names,
 		[IKEv2_ALG_ID] = &ipsec_ipcomp_algo_names,
 	},
 	.desc_check = ipcomp_desc_check,
@@ -981,7 +981,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		      "%s algorithm %s, IKEv1 OAKLEY: %d, IKEv1 ESP_INFO: %d, IKEv2: %d SADB: %d",
 		      type->name, alg->fqn,
 		      alg->id[IKEv1_OAKLEY_ID],
-		      alg->id[IKEv1_ESP_ID],
+		      alg->id[IKEv1_IPSEC_ID],
 		      alg->id[IKEv2_ALG_ID],
 		      alg->id[SADB_ALG_ID]);
 
@@ -1185,20 +1185,20 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	    alg->algo_type == &ike_alg_prf) {
 		v1_esp = v2_esp = v1_ah = v2_ah = false;
 	} else if (alg->algo_type == &ike_alg_encrypt) {
-		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
+		v1_esp = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		v1_ah = false;
 		v2_ah = false;
 	} else if (alg->algo_type == &ike_alg_integ) {
-		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
+		v1_esp = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		/* NULL not allowed for AH */
 		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_transform > 0;
 	} else if (alg->algo_type == &ike_alg_dh) {
-		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
+		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else if (alg->algo_type == &ike_alg_ipcomp) {
-		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
+		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {
 		bad_case(0);

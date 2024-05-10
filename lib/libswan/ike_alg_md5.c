@@ -38,7 +38,7 @@ const struct prf_desc ike_alg_prf_hmac_md5 = {
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
-			[IKEv1_ESP_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_MD5,
 		},
 	},
@@ -66,7 +66,7 @@ const struct integ_desc ike_alg_integ_hmac_md5_96 = {
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
-			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_MD5,
+			[IKEv1_IPSEC_ID] = AUTH_ALGORITHM_HMAC_MD5,
 			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_MD5_96,
 #ifdef SADB_AALG_MD5HMAC
 			[SADB_ALG_ID] = SADB_AALG_MD5HMAC,

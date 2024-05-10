@@ -121,9 +121,9 @@ const char *ike_alg_type_Name(const struct ike_alg_type *type);
  * Different lookup KEYs used by IKEv1/IKEv2
  */
 enum ike_alg_key {
-	IKEv1_OAKLEY_ID,
-	IKEv1_ESP_ID,
-	IKEv2_ALG_ID,
+	IKEv1_OAKLEY_ID,	/* i.e., ISAKAMP/IKE */
+	IKEv1_IPSEC_ID,		/* either ESP or AH */
+	IKEv2_ALG_ID,		/* IKE or Child */
 	SADB_ALG_ID,
 };
 #define IKE_ALG_KEY_ROOF (SADB_ALG_ID+1)
@@ -188,7 +188,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * DH:       ike_trans_type_dh          oakley_group_name             OAKLEY
  * IPCOMP:   N/A
  *
- * id[IKEv1_ESP_ID]:
+ * id[IKEv1_IPSEC_ID]:
  *
  * Used by: ESP and AH; struct esp_info.transid; struct esp_info.auth:
  *
@@ -261,7 +261,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * Notes:
  *
  * For ESP/AH, since the PRF is not negotiated (the IKE SA's PRF is
- * used) the field "PRF.id[IKEv1_ESP_ID]" should be left blank.
+ * used) the field "PRF.id[IKEv1_IPSEC_ID]" should be left blank.
  * Since, for IKEv2, "PRF.id[IKEv2_ALG_ID]" is used by IKE, it should
  * be defined.
  *
@@ -301,7 +301,7 @@ struct ike_alg {
 	 * NULL integrity).
 	 */
 #define ikev1_oakley_id id[IKEv1_OAKLEY_ID]
-#define ikev1_esp_id id[IKEv1_ESP_ID]
+#define ikev1_ipsec_id id[IKEv1_IPSEC_ID]
 #define ikev2_alg_id id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
 	const struct ike_alg_type *algo_type;

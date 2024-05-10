@@ -282,10 +282,10 @@ static void pstat_child_sa_established(struct state *st)
 
 		pstats_ipsec_esp++;
 		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
-			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv1_ESP_ID],
+			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv1_IPSEC_ID],
 			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_esp.trans_attrs.ta_integ->common.id[IKEv1_ESP_ID],
+			st->st_esp.trans_attrs.ta_integ->common.id[IKEv1_IPSEC_ID],
 			st->st_esp.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(nat, tfc, esn);
 	}
@@ -294,7 +294,7 @@ static void pstat_child_sa_established(struct state *st)
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		pstats_ipsec_ah++;
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_ah.trans_attrs.ta_integ->common.id[IKEv1_ESP_ID],
+			st->st_ah.trans_attrs.ta_integ->common.id[IKEv1_IPSEC_ID],
 			st->st_ah.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats_sa(false, false, esn);
 	}
@@ -478,8 +478,8 @@ void show_pluto_stats(struct show *s)
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.sent.invalidke.using", pstats_invalidke_sent_u);
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.sent.invalidke.suggesting", pstats_invalidke_sent_s);
 
-	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_ESP_ID, pstats_ikev1_ipsec_encrypt);
-	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_ESP_ID, pstats_ikev1_ipsec_integ);
+	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_encrypt);
+	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_integ);
 	IKE_ALG_STATS("ikev2.ipsec.encr", encrypt, IKEv2_ALG_ID, pstats_ikev2_ipsec_encrypt);
 	IKE_ALG_STATS("ikev2.ipsec.integ", integ, IKEv2_ALG_ID, pstats_ikev2_ipsec_integ);
 

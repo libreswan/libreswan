@@ -103,7 +103,7 @@ const struct proposal_defaults v2_ah_defaults = {
 
 const struct proposal_protocol ah_proposal_protocol = {
 	.name = "AH",
-	.ikev1_alg_id = IKEv1_ESP_ID,
+	.ikev1_alg_id = IKEv1_IPSEC_ID,
 	.defaults = {
 		[IKEv1] = &v1_ah_defaults,
 		[IKEv2] = &v2_ah_defaults,

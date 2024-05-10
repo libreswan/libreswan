@@ -34,7 +34,7 @@ const struct hash_desc ike_alg_hash_md5 = {
 		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
-			[IKEv1_ESP_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
 			[IKEv2_ALG_ID] = -1,
 		},
 	},

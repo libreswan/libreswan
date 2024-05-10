@@ -49,7 +49,7 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CBC,
-			[IKEv1_ESP_ID] = IKEv1_ESP_CAMELLIA,
+			[IKEv1_IPSEC_ID] = IKEv1_ESP_CAMELLIA,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CBC,
 #ifdef SADB_X_EALG_CAMELLIACBC
 			[SADB_ALG_ID] = SADB_X_EALG_CAMELLIACBC,
@@ -79,7 +79,7 @@ const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CTR,
-			[IKEv1_ESP_ID] = IKEv1_ESP_CAMELLIA_CTR, /* not assigned in/for IKEv1 */
+			[IKEv1_IPSEC_ID] = IKEv1_ESP_CAMELLIA_CTR, /* not assigned in/for IKEv1 */
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CTR,
 		},
 	},

@@ -34,7 +34,7 @@ const struct ipcomp_desc ike_alg_ipcomp_deflate = {
 		.names = "deflate",
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = IPCOMP_DEFLATE,
+			[IKEv1_IPSEC_ID] = IPCOMP_DEFLATE,
 			[IKEv2_ALG_ID] = IPCOMP_DEFLATE,
 #ifdef SADB_X_CALG_DEFLATE
 			[SADB_ALG_ID] = SADB_X_CALG_DEFLATE,
@@ -54,7 +54,7 @@ const struct ipcomp_desc ike_alg_ipcomp_lzs = {
 		.names = "lzs",
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = -1, /*IPCOMP_LZS*/
+			[IKEv1_IPSEC_ID] = -1, /*IPCOMP_LZS*/
 			[IKEv2_ALG_ID] = IPCOMP_LZS,
 #ifdef SADB_X_CALG_LZS
 			[SADB_ALG_ID] = SADB_X_CALG_LZS,
@@ -75,7 +75,7 @@ const struct ipcomp_desc ike_alg_ipcomp_lzjh = {
 		.names = "lzjh",
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
-			[IKEv1_ESP_ID] = -1, /*IPCOMP_LZJH*/
+			[IKEv1_IPSEC_ID] = -1, /*IPCOMP_LZJH*/
 			[IKEv2_ALG_ID] = IPCOMP_LZJH,
 #ifdef SADB_X_CALG_LZJH
 			[SADB_ALG_ID] = SADB_X_CALG_LZJH,
