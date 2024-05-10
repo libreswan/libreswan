@@ -620,10 +620,6 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 				     const char *str)
 {
 	struct proposals *proposals = alloc_thing(struct proposals, "proposals");
-	unsigned parser_version = parser->policy->parser_version;
-	if (parser_version == 0) {
-		parser_version = parser->policy->version;
-	}
 	if (str == NULL) {
 		proposals->defaulted = true;
 		/* may still be null */
@@ -631,10 +627,12 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 		str = parser->protocol->defaults->proposals[fips_mode];
 		PASSERT(parser->policy->logger, str != NULL);
 	}
-	bool ok;
-	switch (parser_version) {
-	case 2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str)); break;
-	default: ok = v1_proposals_parse_str(parser, proposals, shunk1(str)); break;
+	bool ok = false;
+	switch (parser->policy->version) {
+	case IKEv1: ok = v1_proposals_parse_str(parser, proposals, shunk1(str)); break;
+	case IKEv2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str)); break;
+	default:
+		bad_case(parser->policy->version);
 	}
 	if (!ok) {
 		free_proposals(&proposals);

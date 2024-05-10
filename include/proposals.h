@@ -68,7 +68,6 @@ struct proposal_parser {
 
 struct proposal_policy {
 	enum ike_version version;
-	unsigned parser_version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
 	bool check_pfs_vs_dh;
 	bool ignore_parser_errors;

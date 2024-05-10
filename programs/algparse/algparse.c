@@ -17,7 +17,6 @@ static bool verbose = false;
 static bool debug = false;
 static bool impaired = false;
 static enum ike_version ike_version = IKEv2;
-static unsigned parser_version = 0;
 static bool ignore_parser_errors = false;
 static bool fips = false;
 static bool pfs = false;
@@ -30,7 +29,6 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 #define CHECK(CHECK,PARSE,OK) {						\
 		struct proposal_policy policy = {			\
 			.version = ike_version,				\
-			.parser_version = parser_version,		\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 			.logger_rc_flags = ERROR_STREAM|RC_LOG,		\
@@ -41,9 +39,6 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		printf("algparse ");					\
 		if (impaired) {						\
 			printf("-impair ");				\
-		}							\
-		if (parser_version > 0) {				\
-			printf("-p%d ", parser_version);		\
 		}							\
 		if (fips) {						\
 			printf("-fips ");				\
@@ -609,10 +604,6 @@ int main(int argc, char *argv[])
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
-		} else if (streq(arg, "p1")) {
-			parser_version = 1;
-		} else if (streq(arg, "p2")) {
-			parser_version = 2;
 		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
 			ike_version = IKEv1;
 		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
