@@ -244,11 +244,11 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	return NULL;
 }
 
-const struct ike_alg *ike_alg_by_key_id(const struct ike_alg_type *type,
-					enum ike_alg_key key, unsigned id)
+const struct ike_alg *ike_alg_by_sadb_alg_id(const struct ike_alg_type *algorithms,
+					     unsigned id)
 {
 	enum_buf b;
-	return lookup_by_id(type, key, id, &b, DBG_CRYPT);
+	return lookup_by_id(algorithms, SADB_ALG_ID, id, &b, DBG_CRYPT);
 }
 
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,

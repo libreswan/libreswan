@@ -506,8 +506,7 @@ static bool register_alg(shunk_t *msgext, const struct ike_alg_type *type,
 			llog_sadb_alg(DEBUG_STREAM, logger, exttype, alg, "get ");
 		}
 
-		const struct ike_alg *ike_alg = ike_alg_by_key_id(type, SADB_ALG_ID,
-								  alg->sadb_alg_id);
+		const struct ike_alg *ike_alg = ike_alg_by_sadb_id(type, alg->sadb_alg_id);
 		if (ike_alg != NULL) {
 			kernel_alg_add(ike_alg);
 		}

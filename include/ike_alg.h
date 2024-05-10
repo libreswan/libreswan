@@ -146,8 +146,6 @@ const char *ike_alg_key_name(enum ike_alg_key key);
  */
 const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 				     shunk_t name);
-const struct ike_alg *ike_alg_by_key_id(const struct ike_alg_type *type,
-					enum ike_alg_key key, unsigned id);
 bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name);
 
 /*
