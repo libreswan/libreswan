@@ -222,7 +222,7 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  * the struct invalidating the internal pointer.
  */
 
-typedef struct {
+typedef struct enum_buf {
 	const char *buf;
 	/* N_N? */
 	char tmp[((sizeof(unsigned long) * 241 + 99) / 100)*2 + sizeof("_??")];
