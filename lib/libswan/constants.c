@@ -1163,27 +1163,20 @@ enum_names oakley_attr_names = {
 static enum_names oakley_prf_names;	/* forward declaration */
 static enum_names oakley_group_type_names;	/* forward declaration */
 
-enum_names *const oakley_attr_val_descs[] = {
-	NULL,	/* (none) */
-	&oakley_enc_names,	/* OAKLEY_ENCRYPTION_ALGORITHM */
-	&oakley_hash_names,	/* OAKLEY_HASH_ALGORITHM */
-	&oakley_auth_names,	/* OAKLEY_AUTHENTICATION_METHOD */
-	&oakley_group_names,	/* OAKLEY_GROUP_DESCRIPTION */
-	&oakley_group_type_names,	/* OAKLEY_GROUP_TYPE */
-	NULL,	/* OAKLEY_GROUP_PRIME */
-	NULL,	/* OAKLEY_GROUP_GENERATOR_ONE */
-	NULL,	/* OAKLEY_GROUP_GENERATOR_TWO */
-	NULL,	/* OAKLEY_GROUP_CURVE_A */
-	NULL,	/* OAKLEY_GROUP_CURVE_B */
-	&oakley_lifetime_names,	/* OAKLEY_LIFE_TYPE */
-	NULL,	/* OAKLEY_LIFE_DURATION */
-	&oakley_prf_names,	/* OAKLEY_PRF */
-	NULL,	/* OAKLEY_KEY_LENGTH */
-	NULL,	/* OAKLEY_FIELD_SIZE */
-	NULL,	/* OAKLEY_GROUP_ORDER */
+static const struct enum_names *const ikev1_oakley_attr_value_name[] = {
+	[OAKLEY_ENCRYPTION_ALGORITHM] = &oakley_enc_names,
+	[OAKLEY_HASH_ALGORITHM] = &oakley_hash_names,
+	[OAKLEY_AUTHENTICATION_METHOD] = &oakley_auth_names,
+	[OAKLEY_GROUP_DESCRIPTION] = &oakley_group_names,
+	[OAKLEY_GROUP_TYPE] = &oakley_group_type_names,
+	[OAKLEY_LIFE_TYPE] = &oakley_lifetime_names,
+	[OAKLEY_PRF] = &oakley_prf_names,
 };
 
-const unsigned int oakley_attr_val_descs_roof = elemsof(oakley_attr_val_descs);
+const struct enum_enum_names ikev1_oakley_attr_value_names = {
+	0, OAKLEY_PRF,
+	ARRAY_REF(ikev1_oakley_attr_value_name),
+};
 
 /* IPsec DOI attributes (RFC 2407 "IPsec DOI" section 4.5) */
 static const char *const ipsec_attr_name[] = {
@@ -1269,25 +1262,16 @@ enum_names ipsec_attr_names = {
 };
 
 /* for each IPsec attribute, which enum_names describes its values? */
-enum_names *const ipsec_attr_val_descs[IPSEC_ATTR_VAL_DESCS_ROOF] = {
-	NULL,	/* (none) */
-	&sa_lifetime_names,	/* SA_LIFE_TYPE */
-	NULL,	/* SA_LIFE_DURATION */
-	&oakley_group_names,	/* GROUP_DESCRIPTION */
-	&encapsulation_mode_names,
-	&auth_alg_names,	/* AUTH_ALGORITHM */
-	NULL,	/* KEY_LENGTH */
-	NULL,	/* KEY_ROUNDS */
-	NULL,	/* COMPRESS_DICT_SIZE */
-	NULL,	/* COMPRESS_PRIVATE_ALG */
-#ifdef HAVE_LABELED_IPSEC
-	NULL,	/* ECN_TUNNEL_or_old_SECCTX */
-#endif
-	NULL, /* ESN_64BIT_SEQNUM */
-	NULL, /* IKEv1_IPSEC_ATTR_UNSPEC_12 */
-	NULL, /* SIG_ENC_ALGO_VAL */
-	NULL, /* ADDRESS_PRESERVATION */
-	NULL, /* SA_DIRECTION */
+static const struct enum_names *ikev1_ipsec_attr_value_name[] = {
+	[SA_LIFE_TYPE] = &sa_lifetime_names,
+	[GROUP_DESCRIPTION] = &oakley_group_names,
+	[ENCAPSULATION_MODE] = &encapsulation_mode_names,
+	[AUTH_ALGORITHM] = &auth_alg_names,
+};
+
+const struct enum_enum_names ikev1_ipsec_attr_value_names = {
+	0, AUTH_ALGORITHM,
+	ARRAY_REF(ikev1_ipsec_attr_value_name),
 };
 
 /* SA Lifetime Type attribute */

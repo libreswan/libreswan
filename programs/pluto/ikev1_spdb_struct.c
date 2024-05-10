@@ -59,10 +59,10 @@
 /** output an attribute (within an SA) */
 /* Note: ikev2_out_attr is a clone, with the same bugs */
 static bool out_attr(int type,
-	      unsigned long val,
-	      struct_desc *attr_desc,
-	      enum_names *const *attr_val_descs,
-	      struct pbs_out *pbs)
+		     unsigned long val,
+		     struct_desc *attr_desc,
+		     const struct enum_enum_names *attr_value_names,
+		     struct pbs_out *pbs)
 {
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
@@ -96,10 +96,9 @@ static bool out_attr(int type,
 		close_output_pbs(&val_pbs);
 	}
 	if (DBGP(DBG_BASE)) {
-		enum_names *d = attr_val_descs[type];
-		if (d != NULL) {
-			esb_buf b;
-			DBG_log("    [%lu is %s]", val, str_enum(d, val, &b));
+		enum_buf b;
+		if (enum_enum_name(attr_value_names, type, val, &b)) {
+			DBG_log("    [%lu is %s]", val, b.buf);
 		}
 	}
 	return true;
@@ -906,7 +905,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 			 */
 			const struct_desc *trans_desc;
 			const struct_desc *attr_desc;
-			enum_names *const *attr_val_descs;
+			const struct enum_enum_names *attr_value_names;
 
 			{
 				ipsec_spi_t *spi_ptr = NULL;
@@ -920,7 +919,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 						&isakmp_isakmp_transform_desc;
 					attr_desc =
 						&isakmp_oakley_attribute_desc;
-					attr_val_descs = oakley_attr_val_descs;
+					attr_value_names = &ikev1_oakley_attr_value_names;
 					/* no SPI needed */
 					break;
 
@@ -929,7 +928,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					trans_desc = &isakmp_ah_transform_desc;
 					attr_desc =
 						&isakmp_ipsec_attribute_desc;
-					attr_val_descs = ipsec_attr_val_descs;
+					attr_value_names = &ikev1_ipsec_attr_value_names;
 					spi_ptr = &st->st_ah.inbound.spi;
 					spi_generated = &ah_spi_generated;
 					proto = &ip_protocol_ah;
@@ -941,7 +940,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 						&isakmp_esp_transform_desc;
 					attr_desc =
 						&isakmp_ipsec_attribute_desc;
-					attr_val_descs = ipsec_attr_val_descs;
+					attr_value_names = &ikev1_ipsec_attr_value_names;
 					spi_ptr = &st->st_esp.inbound.spi;
 					spi_generated = &esp_spi_generated;
 					proto = &ip_protocol_esp;
@@ -949,11 +948,9 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 
 				case PROTO_IPCOMP:
 					passert(!oakley_mode);
-					trans_desc =
-						&isakmp_ipcomp_transform_desc;
-					attr_desc =
-						&isakmp_ipsec_attribute_desc;
-					attr_val_descs = ipsec_attr_val_descs;
+					trans_desc = &isakmp_ipcomp_transform_desc;
+					attr_desc = &isakmp_ipsec_attribute_desc;
+					attr_value_names = &ikev1_ipsec_attr_value_names;
 
 					/*
 					 * a CPI isn't quite the same as an SPI
@@ -1029,7 +1026,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					if (!out_attr(GROUP_DESCRIPTION,
 						      st->st_pfs_group->group,
 						      attr_desc,
-						      attr_val_descs,
+						      attr_value_names,
 						      &trans_pbs))
 						goto fail;
 				}
@@ -1041,12 +1038,12 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					if (!out_attr(OAKLEY_LIFE_TYPE,
 						      OAKLEY_LIFE_SECONDS,
 						      attr_desc,
-						      attr_val_descs,
+						      attr_value_names,
 						      &trans_pbs) ||
 					    !out_attr(OAKLEY_LIFE_DURATION,
 						      deltasecs(c->config->sa_ike_max_lifetime),
 						      attr_desc,
-						      attr_val_descs,
+						      attr_value_names,
 						      &trans_pbs))
 						goto fail;
 				} else {
@@ -1066,19 +1063,19 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 								    st,
 								    st->st_policy),
 							    attr_desc,
-							    attr_val_descs,
+							    attr_value_names,
 							    &trans_pbs))
 							goto fail;
 					}
 					if (!out_attr(SA_LIFE_TYPE,
 						      SA_LIFE_TYPE_SECONDS,
 						      attr_desc,
-						      attr_val_descs,
+						      attr_value_names,
 						      &trans_pbs) ||
 					    !out_attr(SA_LIFE_DURATION,
 						      deltasecs(c->config->sa_ipsec_max_lifetime),
 						      attr_desc,
-						      attr_val_descs,
+						      attr_value_names,
 						      &trans_pbs))
 						goto fail;
 				}
@@ -1116,7 +1113,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
 						      a->val,
 						      attr_desc,
-						      attr_val_descs,
+						      attr_value_names,
 						      &trans_pbs))
 						goto fail;
 				}
@@ -1144,7 +1141,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 							if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 								      key_length_to_impair,
 								      attr_desc,
-								      attr_val_descs,
+								      attr_value_names,
 								      &trans_pbs))
 								goto fail;
 						}
@@ -1159,7 +1156,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					log_state(RC_LOG, st, "IMPAIR: sending key-length attribute value %u",
 						  keylen);
 					if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
-						      keylen, attr_desc, attr_val_descs,
+						      keylen, attr_desc, attr_value_names,
 						      &trans_pbs))
 						goto fail;
 					break;
@@ -1735,16 +1732,12 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			val = a.isaat_lv;
 
 			if (DBGP(DBG_BASE)) {
-				enum_names *vdesc = oakley_attr_val_descs
-					[a.isaat_af_type &
-					 ISAKMP_ATTR_RTYPE_MASK];
-
-				if (vdesc != NULL) {
-					enum_buf nm;
-					if (enum_name(vdesc, val, &nm)) {
-						LDBG_log(st->logger, "   [%u is %s]",
-							(unsigned)val, nm.buf);
-					}
+				enum_buf nm;
+				if (enum_enum_name(&ikev1_oakley_attr_value_names,
+						   a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK,
+						   val, &nm)) {
+					LDBG_log(st->logger, "   [%u is %s]",
+						 (unsigned)val, nm.buf);
 				}
 			}
 
@@ -2312,9 +2305,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
 		struct pbs_in attr_pbs;
-		enum_names *vdesc;
-		uint16_t ty;
-		uint32_t val;                          /* room for larger value */
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
 		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
@@ -2324,41 +2314,53 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			return false;
 		}
 
-		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
-		val = a.isaat_lv;
+		/* strip TLV and TV bits */
+		enum ikev1_ipsec_attr type = (a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+		unsigned value = a.isaat_lv;               /* room for larger value */
 
-		passert(ty < LELEM_ROOF);
-		if (LHAS(seen_attrs, ty)) {
+		PASSERT(st->logger, type < LELEM_ROOF);
+		if (LHAS(seen_attrs, type)) {
 			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
 				  "repeated %s attribute in IPsec Transform %u",
-				  str_enum(&ipsec_attr_names, a.isaat_af_type, &b),
+				  str_enum(&ipsec_attr_names, type, &b),
 				  trans->isat_transnum);
 			return false;
 		}
 
-		seen_attrs |= LELEM(ty);
-		passert(ty < IPSEC_ATTR_VAL_DESCS_ROOF);
-		vdesc = ipsec_attr_val_descs[ty];
+		seen_attrs |= LELEM(type);
 
+		/*
+		 * Reject unknown enum values.  Kind of.
+		 *
+		 * This is a lame attempt at rejecting unknown values:
+		 *
+		 * + it doesn't check VALUE when TYPE has no enum_name
+		 * table; i.e., it is only looking up SA_LIFE_TYPE,
+		 * GROUP_DESCRIPTION, ENCAPSULATION_MODE and
+		 * AUTH_ALGORITHM.
+		 *
+		 * + having an enum name is no indicator that VALUE is
+		 * supported; especially for algorithms
+		 *
+		 * The real check for TYPE+VALUE happens when the code
+		 * tries to lookup the IKE_ALG.
+		 */
+		const struct enum_names *vdesc =
+			enum_enum_table(&ikev1_ipsec_attr_value_names, type);
 		if (vdesc != NULL) {
-			/* reject unknown enum values */
-			enum_buf b;
-			if (!enum_name(vdesc, val, &b)) {
-				esb_buf b;
+ 			enum_buf b;
+			if (!enum_name(vdesc, value, &b)) {
+				enum_buf b;
 				llog(RC_LOG_SERIOUS, st->logger,
 				     "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
-				     val,
-				     str_enum(&ipsec_attr_names, a.isaat_af_type, &b));
+				     value, str_enum(&ipsec_attr_names, type, &b));
 				return false;
 			}
 			if (DBGP(DBG_BASE)) {
-				if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) ==
-				    ISAKMP_ATTR_AF_TV) {
-					esb_buf b;
-					DBG_log("   [%" PRIu32 " is %s]",
-						val,
-						str_enum(vdesc, val, &b));
+				if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV) {
+					LDBG_log(st->logger,
+						 "   [%" PRIu32 " is %s]", value, b.buf);
 				}
 			}
 		}
@@ -2366,20 +2368,21 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		switch (a.isaat_af_type) {
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = false;
-			if (LHAS(seen_durations, val)) {
+			if (LHAS(seen_durations, value)) {
 				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "attribute SA_LIFE_TYPE value %s repeated in message",
-					  str_enum(&sa_lifetime_names, val, &b));
+					  str_enum(&sa_lifetime_names, value, &b));
 				return false;
 			}
-			seen_durations |= LELEM(val);
-			life_type = val;
+			seen_durations |= LELEM(value);
+			life_type = value;
 			break;
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 		{
+			/* DANGER: NOT VALUE! */
 			deltatime_t val = deltatime(decode_life_duration(&a, &attr_pbs));
 			ipcomp_inappropriate = false;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
@@ -2424,18 +2427,18 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				log_state(RC_COMMENT, st,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
-			pfs_group = ikev1_get_ike_dh_desc(val);
+			pfs_group = ikev1_get_ike_dh_desc(value);
 			if (pfs_group == NULL) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
-					  val);
+					  value);
 				return false;
 			}
 			break;
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = false;
-			switch (val) {
+			switch (value) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
 			{
@@ -2465,11 +2468,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 			default:
 				/* should already be filtered out by enum checker */
-				bad_case(val);
+				bad_case(value);
 			}
 
 			/* normalize the actual attribute value */
-			switch (val) {
+			switch (value) {
 			case ENCAPSULATION_MODE_TRANSPORT:
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
@@ -2485,7 +2488,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(val);
+			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(value);
 			if (attrs->transattrs.ta_integ == NULL) {
 				/*
 				 * Caller will also see NULL and
@@ -2499,7 +2502,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				log_state(RC_LOG_SERIOUS, st,
 					  "IKEv1 %s integrity algorithm %s not supported",
 					  (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
-					  str_enum(&ah_transformid_names, val, &b));
+					  str_enum(&ah_transformid_names, value, &b));
 			}
 			break;
 
@@ -2509,12 +2512,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  "IKEv1 key-length attribute without encryption algorithm");
 				return false;
 			}
-			if (!encrypt_has_key_bit_length(attrs->transattrs.ta_encrypt, val)) {
+			if (!encrypt_has_key_bit_length(attrs->transattrs.ta_encrypt, value)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IKEv1 key-length attribute without encryption algorithm");
 				return false;
 			}
-			attrs->transattrs.enckeylen = val;
+			attrs->transattrs.enckeylen = value;
 			break;
 
 		default:

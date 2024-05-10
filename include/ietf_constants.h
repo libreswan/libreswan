@@ -1100,6 +1100,9 @@ enum ikev1_oakley_attr {
 	/* 16384-32767 Reserved for private use */
 };
 
+extern const struct enum_enum_names ikev1_oakley_attr_value_names;
+
+
 /*
  * IPsec DOI attributes
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
@@ -1122,10 +1125,11 @@ enum ikev1_ipsec_attr {
 	SIG_ENC_ALGO_VAL = 13, /* RFC 4359 */
 	ADDRESS_PRESERVATION = 14, /* RFC 6407 */
 	SA_DIRECTION = 15, /* RFC 6407 */
-	IPSEC_ATTR_VAL_DESCS_ROOF,
 
 	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
+
+extern const struct enum_enum_names ikev1_ipsec_attr_value_names;
 
 /*
  * SA Lifetime Type attribute
