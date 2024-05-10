@@ -28,7 +28,6 @@ extern enum_names certpolicy_type_names;
 extern enum_names oakley_attr_names;
 extern enum_names oakley_attr_bit_names;
 extern enum_names ipsec_attr_names;
-extern enum_names sa_lifetime_names;
 extern enum_names encapsulation_mode_names;
 extern enum_names auth_alg_names;
 extern enum_names oakley_lifetime_names;

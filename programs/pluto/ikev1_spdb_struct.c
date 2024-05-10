@@ -2240,10 +2240,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				  uint8_t proto,
 				  struct state *st) /* current state object */
 {
-	lset_t seen_attrs = LEMPTY,
-	       seen_durations = LEMPTY;
-	uint16_t life_type = 0;	/* initialized to silence GCC */
-	const struct dh_desc *pfs_group = NULL;
 
 	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(*trans), trans_pbs);
 	if (d != NULL) {
@@ -2302,6 +2298,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		bad_case(proto);
 	}
 
+	lset_t seen_attrs = LEMPTY;
+	lset_t seen_durations = LEMPTY;
+	enum ikev1_sa_life_type life_type = 0;		/* 0 invalid */
+	const struct dh_desc *pfs_group = NULL;
+
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
 		struct pbs_in attr_pbs;
@@ -2333,7 +2334,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		/*
 		 * Reject unknown enum values.  Kind of.
 		 *
-		 * This is a lame attempt at rejecting unknown values:
+		 * This is a lame attempt at rejecting unknown values.
+		 * Don't trust it:
 		 *
 		 * + it doesn't check VALUE when TYPE has no enum_name
 		 * table; i.e., it is only looking up SA_LIFE_TYPE,
@@ -2368,15 +2370,43 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		switch (a.isaat_af_type) {
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = false;
+			/*
+			 * Only allow one SA_LIFE_TYPE_SECONDS and one
+			 * SA_LIFE_TYPE_KBYTES.
+			 */
 			if (LHAS(seen_durations, value)) {
 				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
-					  "attribute SA_LIFE_TYPE value %s repeated in message",
+					  "IPsec attribute SA_LIFE_TYPE with value %s was repeated in message",
 					  str_enum(&sa_lifetime_names, value, &b));
 				return false;
 			}
 			seen_durations |= LELEM(value);
+
+			/*
+			 * Should still have initial 0 value, or been
+			 * cleared after processing SA_LIFE_DURATION.
+			 */
+			if (life_type != 0) {
+				enum_buf b;
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "IPsec attribute SA_LIFE_TYPE with value %s was not followed by SA_LIFE_DURATION attribute",
+				     str_enum_short(&sa_lifetime_names, life_type, &b));
+				return false;
+			}
+
+			/* save and verify value is known */
 			life_type = value;
+			switch (life_type) {
+			case SA_LIFE_TYPE_SECONDS:
+			case SA_LIFE_TYPE_KBYTES:
+				break;
+			default:
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "IPsec attribute SA_LIFE_TYPE with value %u unrecognized",
+				     value);
+				return false;
+			}
 			break;
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
@@ -2385,14 +2415,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			/* DANGER: NOT VALUE! */
 			deltatime_t val = deltatime(decode_life_duration(&a, &attr_pbs));
 			ipcomp_inappropriate = false;
-			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
+			if (life_type == 0) {
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "IPsec attribute SA_LIFE_DURATION not preceded by SA_LIFE_TYPE attribute");
 				return false;
 			}
-			seen_attrs &=
-				~(LELEM(SA_LIFE_DURATION) |
-				  LELEM(SA_LIFE_TYPE));
 
 			switch (life_type) {
 			case SA_LIFE_TYPE_SECONDS:
@@ -2410,11 +2437,26 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 			}
 			case SA_LIFE_TYPE_KBYTES:
-				dbg("ignoring SA_LIFE_TYPE_KBYTES=%ju", deltasecs(val));
+			{
+				ldbg(st->logger, "ignoring SA_LIFE_TYPE_KBYTES=%ju", deltasecs(val));
 				break;
+			}
 			default:
+				/*
+				 * case SA_LIFE_TYPE: does not allow
+				 * other values; and 0 rejected above.
+				 */
 				bad_case(life_type);
 			}
+
+			/*
+			 * Reset things so that a second SA_LIFE_TYPE
+			 * (with different value) followed by a second
+			 * SA_LIFE_DURATION is allowed.
+			 */
+			seen_attrs &= ~(LELEM(SA_LIFE_DURATION) |
+					LELEM(SA_LIFE_TYPE));
+			life_type = 0;
 			break;
 		}
 
@@ -2437,6 +2479,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
+		{
 			ipcomp_inappropriate = false;
 			switch (value) {
 			case ENCAPSULATION_MODE_TUNNEL:
@@ -2486,6 +2529,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 
 			break;
+		}
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(value);
@@ -2555,9 +2599,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 	}
 
-	if (LHAS(seen_attrs, SA_LIFE_DURATION)) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "SA_LIFE_TYPE IPsec attribute not followed by SA_LIFE_DURATION attribute in message");
+	if (life_type != 0) {
+		/* left hanging */
+		enum_buf b;
+		llog(RC_LOG_SERIOUS, st->logger,
+		     "IPsec attribute SA_LIFE_TYPE with value %s was not followed by SA_LIFE_DURATION attribute",
+		     str_enum_short(&sa_lifetime_names, life_type, &b));
 		return false;
 	}
 

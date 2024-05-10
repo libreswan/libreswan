@@ -1143,8 +1143,12 @@ extern const struct enum_enum_names ikev1_ipsec_attr_value_names;
  * an ISAKMP negotiation does not explicitly specify a life duration.
  */
 
-#define SA_LIFE_TYPE_SECONDS 1
-#define SA_LIFE_TYPE_KBYTES 2
+enum ikev1_sa_life_type {
+	SA_LIFE_TYPE_SECONDS = 1,
+	SA_LIFE_TYPE_KBYTES = 2,
+};
+
+extern const struct enum_names sa_lifetime_names;
 
 /* Encapsulation Mode attribute */
 
