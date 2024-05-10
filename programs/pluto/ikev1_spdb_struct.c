@@ -2481,38 +2481,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
 		{
 			ipcomp_inappropriate = false;
-			switch (value) {
-			case ENCAPSULATION_MODE_TUNNEL:
-			case ENCAPSULATION_MODE_TRANSPORT:
-			{
-				lset_buf lb;
-				dbg("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
-				    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
-				break;
-			}
 
-			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
-			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
-			{
-				lset_buf lb;
-				dbg("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
-				    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
-				break;
-			}
-
-			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
-			{
-				lset_buf lb;
-				dbg("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
-				    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
-				break;
-			}
-
-			default:
-				/* should already be filtered out by enum checker */
-				bad_case(value);
-			}
+			lset_buf lb;
+			enum_buf mb;
+			ldbg(st->logger, "NAT-T: IPsec SA has %s, st->hidden_variables.st_nat_traversal is %s",
+			     str_enum(&encapsulation_mode_names, value, &mb),
+			     str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
 
 			/* normalize the actual attribute value */
 			switch (value) {
@@ -2526,6 +2500,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				attrs->kernel_mode = KERNEL_MODE_TUNNEL;
 				break;
+			default:
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "IPsec attribute ENCAPSULATION_MODE value %u unrecognized", value);
+				return false;
 			}
 
 			break;
@@ -2566,7 +2544,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		default:
 		{
-			esb_buf b;
+			enum_buf b;
 			log_state(RC_LOG_SERIOUS, st,
 				  "unsupported IPsec attribute %s",
 				  str_enum(&ipsec_attr_names, a.isaat_af_type, &b));
