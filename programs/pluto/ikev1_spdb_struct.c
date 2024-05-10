@@ -2332,37 +2332,20 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		seen_attrs |= LELEM(type);
 
 		/*
-		 * Reject unknown enum values.  Kind of.
+		 * Log TYPE+VALUE when name in table.
 		 *
-		 * This is a lame attempt at rejecting unknown values.
-		 * Don't trust it:
-		 *
-		 * + it doesn't check VALUE when TYPE has no enum_name
-		 * table; i.e., it is only looking up SA_LIFE_TYPE,
-		 * GROUP_DESCRIPTION, ENCAPSULATION_MODE and
-		 * AUTH_ALGORITHM.
-		 *
-		 * + having an enum name is no indicator that VALUE is
-		 * supported; especially for algorithms
-		 *
-		 * The real check for TYPE+VALUE happens when the code
-		 * tries to lookup the IKE_ALG.
+		 * Not being able to find the NAME doesn't say much so
+		 * don't try to use this as a check that a TYPE+VALUE
+		 * combination is valid.  For instance,
+		 * SA_LIFE_DURATION has no names and is supported.
 		 */
-		const struct enum_names *vdesc =
-			enum_enum_table(&ikev1_ipsec_attr_value_names, type);
-		if (vdesc != NULL) {
- 			enum_buf b;
-			if (!enum_name(vdesc, value, &b)) {
+		if (DBGP(DBG_BASE)) {
+			if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV) {
+				/* i.e., VALUE is real value */
 				enum_buf b;
-				llog(RC_LOG_SERIOUS, st->logger,
-				     "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
-				     value, str_enum(&ipsec_attr_names, type, &b));
-				return false;
-			}
-			if (DBGP(DBG_BASE)) {
-				if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV) {
+				if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {
 					LDBG_log(st->logger,
-						 "   [%" PRIu32 " is %s]", value, b.buf);
+						 "   [%u is %s]", value, b.buf);
 				}
 			}
 		}
