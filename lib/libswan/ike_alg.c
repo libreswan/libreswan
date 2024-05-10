@@ -298,40 +298,40 @@ const struct ipcomp_desc *ikev1_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id, en
 	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
-static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
+static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id,
+					  struct enum_buf *b)
 {
-	enum_buf b;
-	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, &b, DBG_CRYPT);
+	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, b, DBG_CRYPT);
 }
 
-const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
+const struct encrypt_desc *ikev2_encrypt_desc(enum ikev2_trans_type_encr id, struct enum_buf *b)
 {
-	return encrypt_desc(ikev2_lookup(&ike_alg_encrypt, id));
+	return encrypt_desc(ikev2_lookup(&ike_alg_encrypt, id, b));
 }
 
-const struct hash_desc *ikev2_get_hash_desc(enum ikev2_hash_algorithm id)
+const struct hash_desc *ikev2_hash_desc(enum ikev2_hash_algorithm id, struct enum_buf *b)
 {
-	return hash_desc(ikev2_lookup(&ike_alg_hash, id));
+	return hash_desc(ikev2_lookup(&ike_alg_hash, id, b));
 }
 
-const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf id)
+const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf id, struct enum_buf *b)
 {
-	return prf_desc(ikev2_lookup(&ike_alg_prf, id));
+	return prf_desc(ikev2_lookup(&ike_alg_prf, id, b));
 }
 
-const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ id)
+const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct enum_buf *b)
 {
-	return integ_desc(ikev2_lookup(&ike_alg_integ, id));
+	return integ_desc(ikev2_lookup(&ike_alg_integ, id, b));
 }
 
-const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
+const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh id, struct enum_buf *b)
 {
-	return dh_desc(ikev2_lookup(&ike_alg_dh, id));
+	return dh_desc(ikev2_lookup(&ike_alg_dh, id, b));
 }
 
-const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo id)
+const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo id, struct enum_buf *b)
 {
-	return ipcomp_desc(ikev2_lookup(&ike_alg_ipcomp, id));
+	return ipcomp_desc(ikev2_lookup(&ike_alg_ipcomp, id, b));
 }
 
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)

@@ -1649,15 +1649,15 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 		const struct ikev2_transform *transform = &transforms->transform[0];
 		if (transform->valid || transform->implied) {
 			switch (type) {
-			case IKEv2_TRANS_TYPE_ENCR: {
+			case IKEv2_TRANS_TYPE_ENCR:
+			{
+				enum_buf b;
 				const struct encrypt_desc *encrypt =
-					ikev2_get_encrypt_desc(transform->id);
+					ikev2_encrypt_desc(transform->id, &b);
 				if (encrypt == NULL) {
-					esb_buf buf;
 					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ENCRYPT %s",
-						     str_enum(&ikev2_trans_type_encr_names,
-							       transform->id, &buf));
+						     b.buf);
 					return false;
 				}
 				ta.ta_encrypt = encrypt;
@@ -1666,8 +1666,10 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 						: ta.ta_encrypt->keydeflen);
 				break;
 			}
-			case IKEv2_TRANS_TYPE_PRF: {
-				const struct prf_desc *prf = ikev2_get_prf_desc(transform->id);
+			case IKEv2_TRANS_TYPE_PRF:
+			{
+				enum_buf b;
+				const struct prf_desc *prf = ikev2_prf_desc(transform->id, &b);
 				if (prf == NULL) {
 					/*
 					 * Since we only propose
@@ -1675,11 +1677,9 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * the lookup should always
 					 * succeed.
 					 */
-					esb_buf buf;
 					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected PRF %s",
-						     str_enum(&ikev2_trans_type_prf_names,
-							       transform->id, &buf));
+						     b.buf);
 					return false;
 				}
 				ta.ta_prf = prf;
@@ -1687,7 +1687,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			}
 			case IKEv2_TRANS_TYPE_INTEG:
 			{
-				const struct integ_desc *integ = ikev2_get_integ_desc(transform->id);
+				enum_buf b;
+				const struct integ_desc *integ = ikev2_integ_desc(transform->id, &b);
 				if (integ == NULL) {
 					/*
 					 * Since we only propse
@@ -1695,19 +1696,18 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * the lookup should always
 					 * succeed.
 					 */
-					esb_buf buf;
 					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected INTEG %s",
-						     str_enum(&ikev2_trans_type_integ_names,
-							       transform->id, &buf));
+						     b.buf);
 					return false;
 				}
 				ta.ta_integ = integ;
 				break;
 			}
-			case IKEv2_TRANS_TYPE_DH: {
-				const struct dh_desc *group =
-					ikev2_get_dh_desc(transform->id);
+			case IKEv2_TRANS_TYPE_DH:
+			{
+				enum_buf b;
+				const struct dh_desc *group = ikev2_dh_desc(transform->id, &b);
 				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
@@ -1716,11 +1716,9 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * finding the DH group is
 					 * likely really bad.
 					 */
-					esb_buf buf;
 					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected DH %s",
-						     str_enum(&oakley_group_names,
-							       transform->id, &buf));
+						     b.buf);
 					return false;
 				}
 				ta.ta_dh = group;
@@ -2316,13 +2314,15 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
 		int groupnum = transforms->transform[t].id;
-		const struct dh_desc *group = ikev2_get_dh_desc(groupnum);
-		if (!pexpect(group != NULL)/*double-negative*/) {
+		enum_buf b;
+		const struct dh_desc *group = ikev2_dh_desc(groupnum, &b);
+		if (pbad(group == NULL)) {
 			/*
 			 * Things screwed up (this group should have
 			 * been pruned earlier), rather than crash,
 			 * continue looking for a valid group.
 			 */
+			dbg("unrecognized group %s", b.buf);
 			continue;
 		}
 

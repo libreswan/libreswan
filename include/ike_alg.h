@@ -826,12 +826,18 @@ const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg);
  * who knows).
  */
 
-const struct hash_desc *ikev2_get_hash_desc(enum ikev2_hash_algorithm);
-const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
-const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
-const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
-const struct dh_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
-const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo);
+const struct hash_desc *ikev2_hash_desc(enum ikev2_hash_algorithm,
+					struct enum_buf *b);
+const struct encrypt_desc *ikev2_encrypt_desc(enum ikev2_trans_type_encr,
+					      struct enum_buf *b);
+const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf,
+				      struct enum_buf *b);
+const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ,
+					  struct enum_buf *b);
+const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh,
+				    struct enum_buf *b);
+const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo,
+					    struct enum_buf *b);
 
 /*
  * Find the ENCRYPT / PRF / DH algorithm using IKEv1 IKE (aka OAKLEY)

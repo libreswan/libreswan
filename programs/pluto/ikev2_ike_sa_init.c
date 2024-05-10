@@ -1440,7 +1440,8 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * proposal, and sg.sg_group matches one of the local proposal
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
-	const struct dh_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
+	enum_buf ignore;
+	const struct dh_desc *new_group = ikev2_dh_desc(sg.sg_group, &ignore);
 	passert(new_group != NULL);
 	llog_sa(RC_LOG, ike,
 		  "Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",

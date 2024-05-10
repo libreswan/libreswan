@@ -402,8 +402,10 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 
 			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
 			//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
+			enum_buf ignore;
 			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-			larval_child->sa.st_ipcomp.trans_attrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
+			larval_child->sa.st_ipcomp.trans_attrs.ta_ipcomp =
+				ikev2_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans, &ignore);
 			larval_child->sa.st_ipcomp.inbound.last_used =
 			larval_child->sa.st_ipcomp.outbound.last_used =
 				realnow();
@@ -840,8 +842,9 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 		//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 		child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+		enum_buf ignore;
 		child->sa.st_ipcomp.trans_attrs.ta_ipcomp =
-			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
+			ikev2_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans, &ignore);
 		child->sa.st_ipcomp.inbound.last_used =
 		child->sa.st_ipcomp.outbound.last_used =
 			realnow();

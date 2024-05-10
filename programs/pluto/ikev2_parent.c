@@ -152,9 +152,10 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 		}
 		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
 
-		const struct hash_desc *hash = ikev2_get_hash_desc(h_value);
+		enum_buf b;
+		const struct hash_desc *hash = ikev2_hash_desc(h_value, &b);
 		if (hash == NULL) {
-			llog_sa(RC_LOG, ike, "received and ignored unknown hash algorithm %d", h_value);
+			llog_sa(RC_LOG, ike, "received and ignored unknown hash algorithm %s", b.buf);
 			continue;
 		}
 
