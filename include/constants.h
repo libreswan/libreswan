@@ -286,7 +286,6 @@ const char *enum_range_name(enum_names *range, unsigned long val, const char *pr
  *
  * Like above:
  *
- * enum_enum_table() returns TABLE's enum_names, or NULL.
  * enum_enum_name() returns TABLE VAL's enum, or NULL.
  *
  * jam_enum_enum() appends TABLE VAL's enum name; if unnamed, append a
@@ -299,7 +298,6 @@ const char *enum_range_name(enum_names *range, unsigned long val, const char *pr
 
 typedef const struct enum_enum_names enum_enum_names;
 
-enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 bool enum_enum_name(enum_enum_names *e, unsigned long table,
 		    unsigned long val, enum_buf *buf);
 

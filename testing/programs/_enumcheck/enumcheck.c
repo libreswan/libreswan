@@ -278,16 +278,6 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 
 	printf("%s:\n", title);
 
-	{
-		printf(PREFIX "enum_enum_table %lu: ", table);
-		if (en == enum_enum_table(een, table)) {
-			printf("OK\n");
-		} else {
-			printf("ERROR\n");
-			errors++;
-		}
-	}
-
 	printf(PREFIX "enum_enum_name %lu %lu: ", table, val);
 	enum_buf name;
 	bool name_ok = enum_enum_name(een, table, val, &name);

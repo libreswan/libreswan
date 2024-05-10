@@ -324,8 +324,8 @@ int enum_match(enum_names *ed, shunk_t string)
 }
 
 /* choose table from struct enum_enum_names */
-enum_names *enum_enum_table(enum_enum_names *een,
-			    unsigned long table)
+static const struct enum_names *enum_enum_table(enum_enum_names *een,
+						unsigned long table)
 {
 	if (!(een->een_last - een->een_first + 1 == een->een_checklen)) {
 		/* *_{last,first} are longs */
