@@ -1744,11 +1744,10 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			switch (a.isaat_af_type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			{
-				const struct encrypt_desc *encrypter = ikev1_get_ike_encrypt_desc(val);
+				enum_buf b;
+				const struct encrypt_desc *encrypter = ikev1_ike_encrypt_desc(val, &b);
 				if (encrypter == NULL) {
-					esb_buf b;
-					UGH("%s is not supported",
-					    str_enum(&oakley_enc_names, val, &b));
+					UGH("%s is not supported", b.buf);
 					break;
 				}
 				ta.ta_encrypt = encrypter;
@@ -1757,13 +1756,14 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			}
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				ta.ta_prf = ikev1_get_ike_prf_desc(val);
+			{
+				enum_buf b;
+				ta.ta_prf = ikev1_ike_prf_desc(val, &b);
 				if (ta.ta_prf == NULL) {
-					esb_buf b;
-					UGH("%s is not supported",
-					    str_enum(&oakley_hash_names, val, &b));
+					UGH("%s is not supported", b.buf);
 				}
 				break;
+			}
 
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
 			{
@@ -1889,12 +1889,15 @@ rsasig_common:
 			break;
 
 			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-				ta.ta_dh = ikev1_get_ike_dh_desc(val);
+			{
+				enum_buf b;
+				ta.ta_dh = ikev1_ike_dh_desc(val, &b);
 				if (ta.ta_dh == NULL) {
-					UGH("OAKLEY_GROUP %d not supported", val);
+					UGH("OAKLEY_GROUP %s not supported", b.buf);
 					break;
 				}
 				break;
+			}
 
 			case OAKLEY_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 				switch (val) {
@@ -2163,10 +2166,11 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 
+	enum_buf ignore;
 	struct trans_attrs ta = {
 		/* When this SA expires (seconds) */
 		.life_seconds = c->config->sa_ike_max_lifetime,
-		.ta_encrypt = ikev1_get_ike_encrypt_desc(enc->val)
+		.ta_encrypt = ikev1_ike_encrypt_desc(enc->val, &ignore)
 	};
 
 	passert(ta.ta_encrypt != NULL);
@@ -2180,14 +2184,14 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	}
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
-	ta.ta_prf = ikev1_get_ike_prf_desc(hash->val);
+	ta.ta_prf = ikev1_ike_prf_desc(hash->val, &ignore);
 	passert(ta.ta_prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 	ta.auth = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.ta_dh = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
+	ta.ta_dh = ikev1_ike_dh_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
 	passert(ta.ta_dh != NULL);
 
 	ike->sa.st_oakley = ta;
@@ -2285,13 +2289,29 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	switch (proto) {
 	case PROTO_IPCOMP:
+	{
 		/* could be NULL */
-		attrs->transattrs.ta_ipcomp = ikev1_get_kernel_ipcomp_desc(trans->isat_transid);
+		enum_buf b;
+		attrs->transattrs.ta_ipcomp = ikev1_kernel_ipcomp_desc(trans->isat_transid, &b);
+		if (attrs->transattrs.ta_ipcomp == NULL) {
+			llog(RC_LOG, st->logger, "unsupported IPsec IPcomp algorithm %s", b.buf);
+			pexpect(attrs->transattrs.ta_integ == NULL); /* implies skip */
+			return true;
+		}
 		break;
+	}
 	case PROTO_IPSEC_ESP:
+	{
 		/* could be NULL */
-		attrs->transattrs.ta_encrypt = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
+		enum_buf b;
+		attrs->transattrs.ta_encrypt = ikev1_kernel_encrypt_desc(trans->isat_transid, &b);
+		if (attrs->transattrs.ta_encrypt == NULL) {
+			llog(RC_LOG, st->logger, "unsupported IPsec encryption algorithm %s", b.buf);
+			pexpect(attrs->transattrs.ta_integ == NULL); /* implies skip */
+			return true;
+		}
 		break;
+	}
 	case PROTO_IPSEC_AH:
 		break;
 	default:
@@ -2444,6 +2464,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		case GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
+		{
 			if (proto == PROTO_IPCOMP) {
 				/* Accept reluctantly.  Should not happen, according to
 				 * draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
@@ -2452,14 +2473,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				log_state(RC_COMMENT, st,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
-			pfs_group = ikev1_get_ike_dh_desc(value);
+			enum_buf b;
+			pfs_group = ikev1_ike_dh_desc(value, &b);
 			if (pfs_group == NULL) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
-					  value);
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "OAKLEY_GROUP %s not supported for PFS", b.buf);
 				return false;
 			}
 			break;
+		}
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
 		{
@@ -2493,7 +2515,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(value);
+		{
+			enum_buf b;
+			attrs->transattrs.ta_integ = ikev1_kernel_integ_desc(value, &b);
 			if (attrs->transattrs.ta_integ == NULL) {
 				/*
 				 * Caller will also see NULL and
@@ -2503,13 +2527,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Either straight AH, or ESP
 				 * containing AUTH; or what?
 				 */
-				esb_buf b;
 				log_state(RC_LOG_SERIOUS, st,
 					  "IKEv1 %s integrity algorithm %s not supported",
-					  (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
-					  str_enum(&ah_transformid_names, value, &b));
+					  (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"), b.buf);
 			}
 			break;
+		}
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 			if (attrs->transattrs.ta_encrypt == NULL) {

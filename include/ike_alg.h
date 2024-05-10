@@ -25,6 +25,7 @@ struct ike_alg;
 struct jambuf;
 enum ike_alg_key;
 struct logger;
+struct enum_buf;
 
 /*
  * More meaningful passert.
@@ -839,21 +840,37 @@ const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo);
  * Unlike IKEv2, IKEv1 uses different wire-values for IKE, ESP, and
  * AH.  This just deals with IKE (well, ok, in the case of DH, it also
  * deals with ESP/AH as the value is the same).
+ *
+ * After the call b->buf is non-NULL. It is either the algorithms name
+ * (when known) or "NN??" when unknown.
  */
 
-const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
-const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
-const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
-const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo);
+const struct encrypt_desc *ikev1_ike_encrypt_desc(enum ikev1_encr_attribute,
+						  struct enum_buf *b);
+const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute,
+					  struct enum_buf *b);
+const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh,
+					struct enum_buf *b);
+const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo,
+						struct enum_buf *b);
 
 /*
  * Find the IKEv1 ENCRYPT / INTEG algorithm that will be fed into the
  * kernel to provide an IPSEC tunnel.
  */
 
-const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ikev1_esp_transform);
-const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
-const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo);
+const struct encrypt_desc *ikev1_kernel_encrypt_desc(enum ikev1_esp_transform,
+						     struct enum_buf *b);
+const struct integ_desc *ikev1_kernel_integ_desc(enum ikev1_auth_attribute,
+						 struct enum_buf *b);
+const struct ipcomp_desc *ikev1_kernel_ipcomp_desc(enum ipsec_ipcomp_algo,
+						   struct enum_buf *b);
+
+/*
+ * Find the IKE_ALG matching the PFKEYv2 SADB_ALG_ID.
+ */
+const struct ike_alg *ike_alg_by_sadb_alg_id(const struct ike_alg_type *type,
+					     unsigned id);
 
 /*
  * Find the ENCRYPT / INTEG algorithm using the SADB defined value.

@@ -231,9 +231,11 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 			DBGF(debug, "%s %s id: %s=%u, found %s",
 			     type->name, __func__, b->buf,
 			     id, alg->fqn);
+			b->buf = alg->fqn;
 			return alg;
 		}
  	}
+
 	/* set b->buf */
 	bool known = enum_name(type->enum_names[key], id, b);
 	DBGF(debug, "%s %s id: %s=%u, not found %s by enum_names/IETF",
@@ -250,54 +252,50 @@ const struct ike_alg *ike_alg_by_key_id(const struct ike_alg_type *type,
 }
 
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,
-						 unsigned id)
+						 unsigned id, enum_buf *b)
 {
-	enum_buf b;
-	const struct ike_alg *alg = lookup_by_id(algorithms,
-						 IKEv1_OAKLEY_ID,
-						 id, &b, DBG_CRYPT);
+	const struct ike_alg *alg = lookup_by_id(algorithms, IKEv1_OAKLEY_ID,
+						 id, b, DBG_CRYPT);
 	if (alg == NULL || !ike_alg_is_ike(alg)) {
 		return NULL;
 	}
+
 	return alg;
 }
 
-const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute id)
+const struct encrypt_desc *ikev1_ike_encrypt_desc(enum ikev1_encr_attribute id, enum_buf *b)
 {
-	return encrypt_desc(ikev1_oakley_lookup(&ike_alg_encrypt, id));
+	return encrypt_desc(ikev1_oakley_lookup(&ike_alg_encrypt, id, b));
 }
 
-const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute id)
+const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, enum_buf *b)
 {
-	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id));
+	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id, b));
 }
 
-const struct dh_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
+const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh id, enum_buf *b)
 {
-	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id));
+	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id, b));
 }
 
-const struct ipcomp_desc *ikev1_get_ike_ipcomp_desc(enum ipsec_ipcomp_algo id)
+const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo id, enum_buf *b)
 {
-	return ipcomp_desc(ikev1_oakley_lookup(&ike_alg_ipcomp, id));
+	return ipcomp_desc(ikev1_oakley_lookup(&ike_alg_ipcomp, id, b));
 }
 
-const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ikev1_esp_transform id)
+const struct encrypt_desc *ikev1_kernel_encrypt_desc(enum ikev1_esp_transform id, enum_buf *b)
 {
-	enum_buf b;
-	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, &b, DBG_CRYPT));
+	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
-const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute id)
+const struct integ_desc *ikev1_kernel_integ_desc(enum ikev1_auth_attribute id, enum_buf *b)
 {
-	enum_buf b;
-	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_IPSEC_ID, id, &b, DBG_CRYPT));
+	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
-const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id)
+const struct ipcomp_desc *ikev1_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id, enum_buf *b)
 {
-	enum_buf b;
-	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, &b, DBG_CRYPT));
+	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
