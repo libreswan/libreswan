@@ -161,7 +161,7 @@ static const char *find_enum(const struct enum_names *en, unsigned long val, boo
 	return enum_range_name(range, val, prefix, shorten);
 }
 
-static void bad_enum_name(enum_buf *b, unsigned long val)
+static void bad_enum_name(unsigned long val, enum_buf *b)
 {
 	snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
 	b->buf = b->tmp;
@@ -172,7 +172,7 @@ bool enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 	/* can be NULL; handled here */
 	b->buf = find_enum(ed, val, /*shorten?*/false);
 	if (b->buf == NULL) {
-		bad_enum_name(b, val);
+		bad_enum_name(val, b);
 		return false;
 	}
 
@@ -184,7 +184,7 @@ bool enum_short(enum_names *ed, unsigned long val, enum_buf *b)
 	/* can be NULL; handled here */
 	b->buf = find_enum(ed, val, /*shorten?*/true);
 	if (b->buf == NULL) {
-		bad_enum_name(b, val);
+		bad_enum_name(val, b);
 		return false;
 	}
 
@@ -341,29 +341,24 @@ enum_names *enum_enum_table(enum_enum_names *een,
 	return NULL;
 }
 
-const char *enum_enum_name(enum_enum_names *een, unsigned long table,
-			   unsigned long val)
+bool enum_enum_name(enum_enum_names *een, unsigned long table,
+		    unsigned long val, enum_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
-		return NULL;
+		snprintf(b->tmp, sizeof(b->tmp), "%lu??_%lu", table, val);
+		b->buf = b->tmp;
+		return false;
 	}
 
-	return find_enum(en, val, /*shorten?*/false);
+	return enum_name(en, val, b);
 }
 
 const char *str_enum_enum(enum_enum_names *een, unsigned long table,
 			  unsigned long val, enum_buf *b)
 {
-	enum_names *en = enum_enum_table(een, table);
-	if (en == NULL) {
-		/* assume the log context implies the table name */
-		snprintf(b->tmp, sizeof(b->tmp), "%lu??_%lu", table, val);
-		b->buf = b->tmp;
-		return b->buf;
-	}
-
-	return str_enum(en, val, b);
+	enum_enum_name(een, table, val, b);
+	return b->buf;
 }
 
 const char *str_enum_enum_short(enum_enum_names *een, unsigned long table,

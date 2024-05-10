@@ -289,9 +289,10 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	}
 
 	printf(PREFIX "enum_enum_name %lu %lu: ", table, val);
-	const char *name = enum_enum_name(een, table, val);
-	printf("%s ", name == NULL ? "NULL" : name);
-	if ((val_ok) == (name != NULL)) {
+	enum_buf name;
+	bool name_ok = enum_enum_name(een, table, val, &name);
+	printf("%s ", (name_ok ? name.buf : "NULL"));
+	if (name_ok == val_ok) {
 		printf("OK\n");
 	} else {
 		printf("ERROR\n");
@@ -304,14 +305,17 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	} else {
 		enum_buf n;
 		if (enum_name(en, val, &n)) {
-			/*n.buf is never NULL */
-			if (name == n.buf) {
+			/*
+			 * Should point to the same static string.
+			 * name.buf and n.buf are never NULL.
+			 */
+			if (name.buf == n.buf) {
 				printf("OK\n");
 			} else {
 				printf("ERROR (pointer)\n");
 				errors++;
 			}
-		} else if (name == NULL) {
+		} else if (!name_ok) {
 			printf("OK\n");
 		} else {
 			printf("ERROR (lookup)\n");
@@ -325,10 +329,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		jam_enum_enum(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		/* ??? clang says that name might be NULL */
-		if (val_ok && name == NULL) {
-			printf("name == NULL\n");
-		} else if (val_ok && hunk_streq(s, name)) {
+		if (val_ok && hunk_streq(s, name.buf)) {
 			printf("OK\n");
 		} else if (s.len > 0) {
 			printf("OK\n");

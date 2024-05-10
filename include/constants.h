@@ -224,7 +224,8 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
 
 typedef struct {
 	const char *buf;
-	char tmp[(sizeof(unsigned long) * 241 + 99) / 100 + sizeof("??")];
+	/* N_N? */
+	char tmp[((sizeof(unsigned long) * 241 + 99) / 100)*2 + sizeof("_??")];
 } enum_buf;
 typedef enum_buf esb_buf; /* XXX: TBD */
 
@@ -299,8 +300,8 @@ const char *enum_range_name(enum_names *range, unsigned long val, const char *pr
 typedef const struct enum_enum_names enum_enum_names;
 
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
-const char *enum_enum_name(enum_enum_names *e, unsigned long table,
-			   unsigned long val);
+bool enum_enum_name(enum_enum_names *e, unsigned long table,
+		    unsigned long val, enum_buf *buf);
 
 const char *str_enum_enum(enum_enum_names *e, unsigned long table,
 			  unsigned long val, enum_buf *buf);
