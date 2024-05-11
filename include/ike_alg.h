@@ -147,8 +147,7 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 				     shunk_t name);
 const struct ike_alg *ike_alg_by_key_id(const struct ike_alg_type *type,
 					enum ike_alg_key key, unsigned id);
-int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
-		       shunk_t name);
+bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name);
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct

@@ -27,31 +27,13 @@ bool alg_byname_ok(struct proposal_parser *parser,
 {
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct proposal_policy *policy = parser->policy;
-	/*
-	 * If the connection is IKEv1|IKEv2 then this code will
-	 * exclude anything not supported by both protocols.
-	 */
-	switch (policy->version) {
-	case IKEv1:
-		/* IKEv1 has different IDs for ESP/IKE/AH */
-		if (alg->id[protocol->ikev1_alg_id] < 0) {
-			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
-				       protocol->name, ike_alg_type_name(alg->algo_type),
-				       pri_shunk(print_name));
-			return false;
-		}
-		break;
-	case IKEv2:
-		if (alg->id[IKEv2_ALG_ID] < 0) {
-			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
-				       protocol->name, ike_alg_type_name(alg->algo_type),
-				       pri_shunk(print_name));
-			return false;
-		}
-		break;
-	default:
-		/* ignore */
-		break;
+	if (alg->id[protocol->alg_id] < 0) {
+		enum_buf vb;
+		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by %s",
+			       protocol->name, ike_alg_type_name(alg->algo_type),
+			       pri_shunk(print_name),
+			       str_enum(&ike_version_names, policy->version, &vb));
+		return false;
 	}
 	/*
 	 * According to parser policy, is the algorithm "implemented"?
@@ -98,8 +80,7 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 		 * Known at all?  Poke around in the enum tables to
 		 * see if it turns up.
 		 */
-		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0 ||
-		    ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
+		if (ike_alg_enum_matched(type, name)) {
 			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
 				       protocol->name, ike_alg_type_name(type),
 				       pri_shunk(print_name));

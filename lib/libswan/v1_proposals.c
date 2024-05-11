@@ -231,9 +231,7 @@ static bool merge_default_proposals(struct proposal_parser *parser,
 	 * has ikev2=never then, in aggressive mode, things don't
 	 * work.
 	 */
-	passert(parser->policy->version < elemsof(proposal->protocol->defaults));
-	const struct proposal_defaults *defaults =
-		proposal->protocol->defaults[parser->policy->version];
+	const struct proposal_defaults *defaults = proposal->protocol->defaults;
 	return add_proposal_defaults(parser, defaults,
 				     proposals, proposal);
 }

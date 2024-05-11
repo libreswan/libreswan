@@ -628,7 +628,7 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 		proposals->defaulted = true;
 		/* may still be null */
 		enum fips_mode fips_mode = get_fips_mode(parser->policy->logger);
-		str = parser->protocol->defaults[parser->policy->version]->proposals[fips_mode];
+		str = parser->protocol->defaults->proposals[fips_mode];
 		PASSERT(parser->policy->logger, str != NULL);
 	}
 	bool ok;

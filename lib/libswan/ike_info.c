@@ -98,13 +98,13 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
  * Do not assume that these hard wired algorithms are actually valid.
  */
 
-const char default_v1_ike_proposals[] =
+const char default_ikev1_ike_proposals[] =
 	"AES_CBC"
 	","
 	"3DES"
 	;
 
-static const struct ike_alg *default_v1_ike_prfs[] = {
+static const struct ike_alg *default_ikev1_ike_prfs[] = {
 #ifdef USE_SHA2
 	&ike_alg_prf_sha2_256.common,
 	&ike_alg_prf_sha2_512.common,
@@ -115,7 +115,7 @@ static const struct ike_alg *default_v1_ike_prfs[] = {
 	NULL,
 };
 
-static const struct ike_alg *default_v1_groups[] = {
+static const struct ike_alg *default_ikev1_groups[] = {
 	&ike_alg_dh_modp2048.common,
 	&ike_alg_dh_modp1536.common,
 	&ike_alg_dh_secp256r1.common,
@@ -123,11 +123,11 @@ static const struct ike_alg *default_v1_groups[] = {
 	NULL,
 };
 
-const struct proposal_defaults v1_ike_defaults = {
-	.proposals[FIPS_MODE_ON] = default_v1_ike_proposals,
-	.proposals[FIPS_MODE_OFF] = default_v1_ike_proposals,
-	.dh = default_v1_groups,
-	.prf = default_v1_ike_prfs,
+const struct proposal_defaults ikev1_ike_defaults = {
+	.proposals[FIPS_MODE_ON] = default_ikev1_ike_proposals,
+	.proposals[FIPS_MODE_OFF] = default_ikev1_ike_proposals,
+	.dh = default_ikev1_groups,
+	.prf = default_ikev1_ike_prfs,
 };
 
 /*
@@ -149,7 +149,7 @@ const struct proposal_defaults v1_ike_defaults = {
  * proposal) so, for moment, don't merge things.
  */
 
-static const char default_fips_on_v2_ike_proposals[] =
+static const char default_fips_on_ikev2_ike_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
@@ -159,7 +159,7 @@ static const char default_fips_on_v2_ike_proposals[] =
 	"AES_CBC_128"
 	;
 
-static const char default_fips_off_v2_ike_proposals[] =
+static const char default_fips_off_ikev2_ike_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
@@ -171,7 +171,7 @@ static const char default_fips_off_v2_ike_proposals[] =
 	"AES_CBC_128"
 	;
 
-static const struct ike_alg *default_v2_ike_prfs[] = {
+static const struct ike_alg *default_ikev2_ike_prfs[] = {
 #ifdef USE_SHA2
 	&ike_alg_prf_sha2_512.common,
 	&ike_alg_prf_sha2_256.common,
@@ -179,7 +179,7 @@ static const struct ike_alg *default_v2_ike_prfs[] = {
 	NULL,
 };
 
-static const struct ike_alg *default_v2_groups[] = {
+static const struct ike_alg *default_ikev2_groups[] = {
 	&ike_alg_dh_secp256r1.common,
 	&ike_alg_dh_secp384r1.common,
 	&ike_alg_dh_secp521r1.common,
@@ -193,24 +193,22 @@ static const struct ike_alg *default_v2_groups[] = {
 	NULL,
 };
 
-const struct proposal_defaults v2_ike_defaults = {
-	.proposals[FIPS_MODE_ON] = default_fips_on_v2_ike_proposals,
-	.proposals[FIPS_MODE_OFF] = default_fips_off_v2_ike_proposals,
-	.prf = default_v2_ike_prfs,
+const struct proposal_defaults ikev2_ike_defaults = {
+	.proposals[FIPS_MODE_ON] = default_fips_on_ikev2_ike_proposals,
+	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_ike_proposals,
+	.prf = default_ikev2_ike_prfs,
 	/* INTEG is derived from PRF when applicable */
-	.dh = default_v2_groups,
+	.dh = default_ikev2_groups,
 };
 
 /*
  * All together now ...
  */
-const struct proposal_protocol ike_proposal_protocol = {
+
+static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	.name = "IKE",
-	.ikev1_alg_id = IKEv1_OAKLEY_ID,
-	.defaults = {
-		[IKEv1] = &v1_ike_defaults,
-		[IKEv2] = &v2_ike_defaults,
-	},
+	.alg_id = IKEv1_OAKLEY_ID,
+	.defaults = &ikev1_ike_defaults,
 	.proposal_ok = ike_proposal_ok,
 	.encrypt = true,
 	.prf = true,
@@ -218,7 +216,23 @@ const struct proposal_protocol ike_proposal_protocol = {
 	.dh = true,
 };
 
+static const struct proposal_protocol ikev2_ike_proposal_protocol = {
+	.name = "IKE",
+	.alg_id = IKEv2_ALG_ID,
+	.defaults = &ikev2_ike_defaults,
+	.proposal_ok = ike_proposal_ok,
+	.encrypt = true,
+	.prf = true,
+	.integ = true,
+	.dh = true,
+};
+
+static const struct proposal_protocol *ike_proposal_protocol[] = {
+	[IKEv1] = &ikev1_ike_proposal_protocol,
+	[IKEv2] = &ikev2_ike_proposal_protocol,
+};
+
 struct proposal_parser *ike_proposal_parser(const struct proposal_policy *policy)
 {
-	return alloc_proposal_parser(policy, &ike_proposal_protocol);
+	return alloc_proposal_parser(policy, ike_proposal_protocol[policy->version]);
 }

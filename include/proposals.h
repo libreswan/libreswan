@@ -119,12 +119,8 @@ typedef const struct ike_alg *(alg_byname_fn)(struct proposal_parser *parser,
 
 struct proposal_protocol {
 	const char *name;
-	enum ike_alg_key ikev1_alg_id;
-
-	/*
-	 * Lists of defaults for both IKE version.
-	 */
-	const struct proposal_defaults *defaults[IKE_VERSION_ROOF];
+	enum ike_alg_key alg_id;
+	const struct proposal_defaults *defaults;
 
 	/*
 	 * Is the proposal OK?

@@ -58,7 +58,7 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
  * ignored.
  */
 
-static const char default_v1_esp_proposals[] =
+static const char default_ikev1_esp_proposals[] =
 	"AES_CBC" /*????*/
 	","
 	"AES_GCM_16_128"
@@ -68,7 +68,7 @@ static const char default_v1_esp_proposals[] =
 	"3DES"
 	;
 
-static const struct ike_alg *default_v1_esp_integ[] = {
+static const struct ike_alg *default_ikev1_esp_integ[] = {
 #ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
 #endif
@@ -79,17 +79,17 @@ static const struct ike_alg *default_v1_esp_integ[] = {
 	NULL,
 };
 
-static const struct proposal_defaults v1_esp_defaults = {
-	.proposals[FIPS_MODE_OFF] = default_v1_esp_proposals,
-	.proposals[FIPS_MODE_ON] = default_v1_esp_proposals,
-	.integ = default_v1_esp_integ,
+static const struct proposal_defaults ikev1_esp_defaults = {
+	.proposals[FIPS_MODE_OFF] = default_ikev1_esp_proposals,
+	.proposals[FIPS_MODE_ON] = default_ikev1_esp_proposals,
+	.integ = default_ikev1_esp_integ,
 };
 
 /*
  * IKEv2:
  */
 
-static const char default_fips_on_v2_esp_proposals[] =
+static const char default_fips_on_ikev2_esp_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
@@ -99,7 +99,7 @@ static const char default_fips_on_v2_esp_proposals[] =
 	"AES_CBC_128"
 	;
 
-static const char default_fips_off_v2_esp_proposals[] =
+static const char default_fips_off_ikev2_esp_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
@@ -111,7 +111,7 @@ static const char default_fips_off_v2_esp_proposals[] =
 	"AES_CBC_128"
 	;
 
-static const struct ike_alg *default_v2_esp_integ[] = {
+static const struct ike_alg *default_ikev2_esp_integ[] = {
 #ifdef USE_SHA2
 	&ike_alg_integ_sha2_512.common,
 	&ike_alg_integ_sha2_256.common,
@@ -119,27 +119,39 @@ static const struct ike_alg *default_v2_esp_integ[] = {
 	NULL,
 };
 
-static const struct proposal_defaults v2_esp_defaults = {
-	.proposals[FIPS_MODE_ON] = default_fips_on_v2_esp_proposals,
-	.proposals[FIPS_MODE_OFF] = default_fips_off_v2_esp_proposals,
-	.integ = default_v2_esp_integ,
+static const struct proposal_defaults ikev2_esp_defaults = {
+	.proposals[FIPS_MODE_ON] = default_fips_on_ikev2_esp_proposals,
+	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_esp_proposals,
+	.integ = default_ikev2_esp_integ,
 };
 
 /*
  * All together now ...
  */
 
-static const struct proposal_protocol esp_proposal_protocol = {
+static const struct proposal_protocol ikev1_esp_proposal_protocol = {
 	.name = "ESP",
-	.ikev1_alg_id = IKEv1_IPSEC_ID,
-	.defaults = {
-		[IKEv1] = &v1_esp_defaults,
-		[IKEv2] = &v2_esp_defaults,
-	},
+	.alg_id = IKEv1_IPSEC_ID,
+	.defaults = &ikev1_esp_defaults,
 	.proposal_ok = esp_proposal_ok,
 	.encrypt = true,
 	.integ = true,
 	.dh = true,
+};
+
+static const struct proposal_protocol ikev2_esp_proposal_protocol = {
+	.name = "ESP",
+	.alg_id = IKEv2_ALG_ID,
+	.defaults = &ikev2_esp_defaults,
+	.proposal_ok = esp_proposal_ok,
+	.encrypt = true,
+	.integ = true,
+	.dh = true,
+};
+
+static const struct proposal_protocol *esp_proposal_protocol[] = {
+	[IKEv1] = &ikev1_esp_proposal_protocol,
+	[IKEv2] = &ikev2_esp_proposal_protocol,
 };
 
 /*
@@ -156,5 +168,5 @@ static const struct proposal_protocol esp_proposal_protocol = {
 
 struct proposal_parser *esp_proposal_parser(const struct proposal_policy *policy)
 {
-	return alloc_proposal_parser(policy, &esp_proposal_protocol);
+	return alloc_proposal_parser(policy, esp_proposal_protocol[policy->version]);
 }

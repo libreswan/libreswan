@@ -169,13 +169,16 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 	return NULL;
 }
 
-int ike_alg_enum_match(const struct ike_alg_type *type,
-		       enum ike_alg_key key,
-		       shunk_t name)
+bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name)
 {
 	passert(type != NULL);
-	passert(key < IKE_ALG_KEY_ROOF);
-	return enum_match(type->enum_names[key], name);
+	for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR; key < IKE_ALG_KEY_ROOF; key++) {
+		if (type->enum_names[key] != NULL &&
+		    enum_match(type->enum_names[key], name) >= 0) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool ike_alg_is_valid(const struct ike_alg *alg)

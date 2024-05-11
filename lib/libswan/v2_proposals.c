@@ -82,9 +82,7 @@ static void merge_algorithms(struct proposal_parser *parser,
 static bool merge_defaults(struct proposal_parser *parser,
 			   struct proposal *proposal)
 {
-	passert(parser->policy->version < elemsof(parser->protocol->defaults));
-	const struct proposal_defaults *defaults =
-		parser->protocol->defaults[parser->policy->version];
+	const struct proposal_defaults *defaults = parser->protocol->defaults;
 	merge_algorithms(parser, proposal, PROPOSAL_encrypt, defaults->encrypt);
 	merge_algorithms(parser, proposal, PROPOSAL_prf, defaults->prf);
 	if (next_algorithm(proposal, PROPOSAL_integ, NULL) == NULL) {

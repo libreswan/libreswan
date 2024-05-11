@@ -60,7 +60,7 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
  * IKEv1:
  */
 
-static const char default_v1_ah_proposals[] =
+static const char default_ikev1_ah_proposals[] =
 	"SHA1_96" /*???*/
 	","
 	"SHA2_512"
@@ -68,22 +68,22 @@ static const char default_v1_ah_proposals[] =
 	"SHA2_256"
 	;
 
-const struct proposal_defaults v1_ah_defaults = {
-	.proposals[FIPS_MODE_ON] = default_v1_ah_proposals,
-	.proposals[FIPS_MODE_OFF] = default_v1_ah_proposals,
+const struct proposal_defaults ikev1_ah_defaults = {
+	.proposals[FIPS_MODE_ON] = default_ikev1_ah_proposals,
+	.proposals[FIPS_MODE_OFF] = default_ikev1_ah_proposals,
 };
 
 /*
  * IKEv2:
  */
 
-static const char default_v2_ah_proposals[] =
+static const char default_ikev2_ah_proposals[] =
 	"SHA2_512_256"
 	","
 	"SHA2_256_128"
 	;
 
-static const struct ike_alg *default_v2_ah_integ[] = {
+static const struct ike_alg *default_ikev2_ah_integ[] = {
 #ifdef USE_SHA2
 	&ike_alg_integ_sha2_512.common,
 	&ike_alg_integ_sha2_256.common,
@@ -91,26 +91,37 @@ static const struct ike_alg *default_v2_ah_integ[] = {
 	NULL,
 };
 
-const struct proposal_defaults v2_ah_defaults = {
-	.proposals[FIPS_MODE_ON] = default_v2_ah_proposals,
-	.proposals[FIPS_MODE_OFF] = default_v2_ah_proposals,
-	.integ = default_v2_ah_integ,
+const struct proposal_defaults ikev2_ah_defaults = {
+	.proposals[FIPS_MODE_ON] = default_ikev2_ah_proposals,
+	.proposals[FIPS_MODE_OFF] = default_ikev2_ah_proposals,
+	.integ = default_ikev2_ah_integ,
 };
 
 /*
  * All together now ...
  */
 
-const struct proposal_protocol ah_proposal_protocol = {
+static const struct proposal_protocol ikev1_ah_proposal_protocol = {
 	.name = "AH",
-	.ikev1_alg_id = IKEv1_IPSEC_ID,
-	.defaults = {
-		[IKEv1] = &v1_ah_defaults,
-		[IKEv2] = &v2_ah_defaults,
-	},
+	.alg_id = IKEv1_IPSEC_ID,
+	.defaults = &ikev1_ah_defaults,
 	.proposal_ok = ah_proposal_ok,
 	.integ = true,
 	.dh = true,
+};
+
+static const struct proposal_protocol ikev2_ah_proposal_protocol = {
+	.name = "AH",
+	.alg_id = IKEv2_ALG_ID,
+	.defaults = &ikev2_ah_defaults,
+	.proposal_ok = ah_proposal_ok,
+	.integ = true,
+	.dh = true,
+};
+
+static const struct proposal_protocol *ah_proposal_protocol[] = {
+	[IKEv1] = &ikev1_ah_proposal_protocol,
+	[IKEv2] = &ikev2_ah_proposal_protocol,
 };
 
 /*
@@ -131,5 +142,5 @@ const struct proposal_protocol ah_proposal_protocol = {
 
 struct proposal_parser *ah_proposal_parser(const struct proposal_policy *policy)
 {
-	return alloc_proposal_parser(policy, &ah_proposal_protocol);
+	return alloc_proposal_parser(policy, ah_proposal_protocol[policy->version]);
 }
