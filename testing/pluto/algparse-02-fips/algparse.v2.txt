@@ -283,7 +283,7 @@ algparse -fips -v2 'esp=id3'
 algparse -fips -v2 'esp=aes-id3'
 	ERROR: ESP integrity algorithm 'id3' is not recognized
 algparse -fips -v2 'esp=aes_gcm-md5'
-	ERROR: ESP integrity algorithm 'md5' is not recognized
+	ERROR: ESP integrity algorithm 'md5' is not supported
 algparse -fips -v2 'esp=mars'
 	ERROR: ESP encryption algorithm 'mars' is not supported
 algparse -fips -v2 'esp=aes_gcm-16'
@@ -333,7 +333,7 @@ algparse -fips -v2 'ah'
 algparse -fips -v2 'ah='
 	ERROR: AH proposal is empty
 algparse -fips -v2 'ah=md5'
-	ERROR: AH integrity algorithm 'md5' is not recognized
+	ERROR: AH integrity algorithm 'md5' is not supported
 algparse -fips -v2 'ah=sha'
 	HMAC_SHA1_96
 algparse -fips -v2 'ah=sha;modp2048'
