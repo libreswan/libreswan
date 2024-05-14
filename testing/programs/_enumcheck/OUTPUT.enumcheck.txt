@@ -2751,22 +2751,20 @@
   ikev2_trans_attr_descs: [32782(0)..32783(256))
 
   ikev2_trans_type_encr_names: [1(0)..65290(256))
-    1 -> DES_IV64(UNUSED)
-         jam_enum 1: DES_IV64(UNUSED) OK
-         search DES_IV64(UNUSED): OK
-         match DES_IV64(UNUSED): OK
-         match DES_IV64 [trunc]: OK
-         short_name 1: DES_IV64(UNUSED) OK
-         jam_enum_short 1: DES_IV64(UNUSED) OK
-         jam_enum_human 1: des-iv64(unused) OK
-    2 -> DES(UNUSED)
-         jam_enum 2: DES(UNUSED) OK
-         search DES(UNUSED): OK
-         match DES(UNUSED): OK
-         match DES [trunc]: OK
-         short_name 2: DES(UNUSED) OK
-         jam_enum_short 2: DES(UNUSED) OK
-         jam_enum_human 2: des(unused) OK
+    1 -> DES_IV64
+         jam_enum 1: DES_IV64 OK
+         search DES_IV64: OK
+         match DES_IV64: OK
+         short_name 1: DES_IV64 OK
+         jam_enum_short 1: DES_IV64 OK
+         jam_enum_human 1: des-iv64 OK
+    2 -> DES
+         jam_enum 2: DES OK
+         search DES: OK
+         match DES: OK
+         short_name 2: DES OK
+         jam_enum_short 2: DES OK
+         jam_enum_human 2: des OK
     3 -> 3DES
          jam_enum 3: 3DES OK
          search 3DES: OK
@@ -2774,22 +2772,20 @@
          short_name 3: 3DES OK
          jam_enum_short 3: 3DES OK
          jam_enum_human 3: 3des OK
-    4 -> RC5(UNUSED)
-         jam_enum 4: RC5(UNUSED) OK
-         search RC5(UNUSED): OK
-         match RC5(UNUSED): OK
-         match RC5 [trunc]: OK
-         short_name 4: RC5(UNUSED) OK
-         jam_enum_short 4: RC5(UNUSED) OK
-         jam_enum_human 4: rc5(unused) OK
-    5 -> IDEA(UNUSED)
-         jam_enum 5: IDEA(UNUSED) OK
-         search IDEA(UNUSED): OK
-         match IDEA(UNUSED): OK
-         match IDEA [trunc]: OK
-         short_name 5: IDEA(UNUSED) OK
-         jam_enum_short 5: IDEA(UNUSED) OK
-         jam_enum_human 5: idea(unused) OK
+    4 -> RC5
+         jam_enum 4: RC5 OK
+         search RC5: OK
+         match RC5: OK
+         short_name 4: RC5 OK
+         jam_enum_short 4: RC5 OK
+         jam_enum_human 4: rc5 OK
+    5 -> IDEA
+         jam_enum 5: IDEA OK
+         search IDEA: OK
+         match IDEA: OK
+         short_name 5: IDEA OK
+         jam_enum_short 5: IDEA OK
+         jam_enum_human 5: idea OK
     6 -> CAST
          jam_enum 6: CAST OK
          search CAST: OK
@@ -2797,38 +2793,34 @@
          short_name 6: CAST OK
          jam_enum_short 6: CAST OK
          jam_enum_human 6: cast OK
-    7 -> BLOWFISH(UNUSED)
-         jam_enum 7: BLOWFISH(UNUSED) OK
-         search BLOWFISH(UNUSED): OK
-         match BLOWFISH(UNUSED): OK
-         match BLOWFISH [trunc]: OK
-         short_name 7: BLOWFISH(UNUSED) OK
-         jam_enum_short 7: BLOWFISH(UNUSED) OK
-         jam_enum_human 7: blowfish(unused) OK
-    8 -> 3IDEA(UNUSED)
-         jam_enum 8: 3IDEA(UNUSED) OK
-         search 3IDEA(UNUSED): OK
-         match 3IDEA(UNUSED): OK
-         match 3IDEA [trunc]: OK
-         short_name 8: 3IDEA(UNUSED) OK
-         jam_enum_short 8: 3IDEA(UNUSED) OK
-         jam_enum_human 8: 3idea(unused) OK
-    9 -> DES_IV32(UNUSED)
-         jam_enum 9: DES_IV32(UNUSED) OK
-         search DES_IV32(UNUSED): OK
-         match DES_IV32(UNUSED): OK
-         match DES_IV32 [trunc]: OK
-         short_name 9: DES_IV32(UNUSED) OK
-         jam_enum_short 9: DES_IV32(UNUSED) OK
-         jam_enum_human 9: des-iv32(unused) OK
-   10 -> RES10(UNUSED)
-         jam_enum 10: RES10(UNUSED) OK
-         search RES10(UNUSED): OK
-         match RES10(UNUSED): OK
-         match RES10 [trunc]: OK
-         short_name 10: RES10(UNUSED) OK
-         jam_enum_short 10: RES10(UNUSED) OK
-         jam_enum_human 10: res10(unused) OK
+    7 -> BLOWFISH
+         jam_enum 7: BLOWFISH OK
+         search BLOWFISH: OK
+         match BLOWFISH: OK
+         short_name 7: BLOWFISH OK
+         jam_enum_short 7: BLOWFISH OK
+         jam_enum_human 7: blowfish OK
+    8 -> 3IDEA
+         jam_enum 8: 3IDEA OK
+         search 3IDEA: OK
+         match 3IDEA: OK
+         short_name 8: 3IDEA OK
+         jam_enum_short 8: 3IDEA OK
+         jam_enum_human 8: 3idea OK
+    9 -> DES_IV32
+         jam_enum 9: DES_IV32 OK
+         search DES_IV32: OK
+         match DES_IV32: OK
+         short_name 9: DES_IV32 OK
+         jam_enum_short 9: DES_IV32 OK
+         jam_enum_human 9: des-iv32 OK
+   10 -> RES10
+         jam_enum 10: RES10 OK
+         search RES10: OK
+         match RES10: OK
+         short_name 10: RES10 OK
+         jam_enum_short 10: RES10 OK
+         jam_enum_human 10: res10 OK
    11 -> NULL
          jam_enum 11: NULL OK
          search NULL: OK
@@ -2871,14 +2863,13 @@
          short_name 16: AES_CCM_C OK
          jam_enum_short 16: AES_CCM_C OK
          jam_enum_human 16: aes-ccm-c OK
-   17 -> UNASSIGNED(UNUSED)
-         jam_enum 17: UNASSIGNED(UNUSED) OK
-         search UNASSIGNED(UNUSED): OK
-         match UNASSIGNED(UNUSED): OK
-         match UNASSIGNED [trunc]: OK
-         short_name 17: UNASSIGNED(UNUSED) OK
-         jam_enum_short 17: UNASSIGNED(UNUSED) OK
-         jam_enum_human 17: unassigned(unused) OK
+   17 -> UNASSIGNED
+         jam_enum 17: UNASSIGNED OK
+         search UNASSIGNED: OK
+         match UNASSIGNED: OK
+         short_name 17: UNASSIGNED OK
+         jam_enum_short 17: UNASSIGNED OK
+         jam_enum_human 17: unassigned OK
    18 -> AES_GCM_A
          jam_enum 18: AES_GCM_A OK
          search AES_GCM_A: OK
@@ -2907,14 +2898,13 @@
          short_name 21: NULL_AUTH_AES_GMAC OK
          jam_enum_short 21: NULL_AUTH_AES_GMAC OK
          jam_enum_human 21: null-auth-aes-gmac OK
-   22 -> RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED)
-         jam_enum 22: RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED) OK
-         search RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED): OK
-         match RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED): OK
-         match RESERVED_FOR_IEEE_P1619_XTS_AES [trunc]: OK
-         short_name 22: RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED) OK
-         jam_enum_short 22: RESERVED_FOR_IEEE_P1619_XTS_AES(UNUSED) OK
-         jam_enum_human 22: reserved-for-ieee-p1619-xts-aes(unused) OK
+   22 -> RESERVED_FOR_IEEE_P1619_XTS_AES
+         jam_enum 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
+         search RESERVED_FOR_IEEE_P1619_XTS_AES: OK
+         match RESERVED_FOR_IEEE_P1619_XTS_AES: OK
+         short_name 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
+         jam_enum_short 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
+         jam_enum_human 22: reserved-for-ieee-p1619-xts-aes OK
    23 -> CAMELLIA_CBC
          jam_enum 23: CAMELLIA_CBC OK
          search CAMELLIA_CBC: OK
@@ -3001,26 +2991,22 @@
          jam_enum_short 2: HMAC_SHA1_96 OK
          jam_enum_human 2: hmac-sha1-96 OK
          match HMAC_SHA1_96 [short]: OK
-    3 -> AUTH_DES_MAC(UNUSED)
-         jam_enum 3: AUTH_DES_MAC(UNUSED) OK
-         search AUTH_DES_MAC(UNUSED): OK
-         match AUTH_DES_MAC(UNUSED): OK
-         match AUTH_DES_MAC [trunc]: OK
-         short_name 3: DES_MAC(UNUSED) OK
-         jam_enum_short 3: DES_MAC(UNUSED) OK
-         jam_enum_human 3: des-mac(unused) OK
-         match DES_MAC(UNUSED) [short]: OK
-         match DES_MAC [short+trunc]: OK
-    4 -> AUTH_KPDK_MD5(UNUSED)
-         jam_enum 4: AUTH_KPDK_MD5(UNUSED) OK
-         search AUTH_KPDK_MD5(UNUSED): OK
-         match AUTH_KPDK_MD5(UNUSED): OK
-         match AUTH_KPDK_MD5 [trunc]: OK
-         short_name 4: KPDK_MD5(UNUSED) OK
-         jam_enum_short 4: KPDK_MD5(UNUSED) OK
-         jam_enum_human 4: kpdk-md5(unused) OK
-         match KPDK_MD5(UNUSED) [short]: OK
-         match KPDK_MD5 [short+trunc]: OK
+    3 -> AUTH_DES_MAC
+         jam_enum 3: AUTH_DES_MAC OK
+         search AUTH_DES_MAC: OK
+         match AUTH_DES_MAC: OK
+         short_name 3: DES_MAC OK
+         jam_enum_short 3: DES_MAC OK
+         jam_enum_human 3: des-mac OK
+         match DES_MAC [short]: OK
+    4 -> AUTH_KPDK_MD5
+         jam_enum 4: AUTH_KPDK_MD5 OK
+         search AUTH_KPDK_MD5: OK
+         match AUTH_KPDK_MD5: OK
+         short_name 4: KPDK_MD5 OK
+         jam_enum_short 4: KPDK_MD5 OK
+         jam_enum_human 4: kpdk-md5 OK
+         match KPDK_MD5 [short]: OK
     5 -> AUTH_AES_XCBC_96
          jam_enum 5: AUTH_AES_XCBC_96 OK
          search AUTH_AES_XCBC_96: OK
