@@ -1459,16 +1459,17 @@ static enum_names modecfg_cisco_attr_names = {
 };
 
 static const char *const modecfg_microsoft_attr_name[] = {
-#define R(E,S) [E - IKEv1_INTERNAL_IP4_SERVER] = #S
-	R(IKEv1_INTERNAL_IP4_SERVER, INTERNAL_IP4_SERVER),	/* 23456 */
-	R(IKEv1_INTERNAL_IP6_SERVER, INTERNAL_IP6_SERVER),
-#undef R
+#define S(E) [E - IKEv1_INTERNAL_IP4_SERVER] = #E
+	S(IKEv1_INTERNAL_IP4_SERVER),	/* 23456 */
+	S(IKEv1_INTERNAL_IP6_SERVER),
+#undef S
 };
+
 static enum_names modecfg_microsoft_attr_names = {
 	IKEv1_INTERNAL_IP4_SERVER,
 	IKEv1_INTERNAL_IP6_SERVER,
 	ARRAY_REF(modecfg_microsoft_attr_name),
-	NULL, /* prefix */
+	"IKEv1_", /* prefix */
 	&modecfg_cisco_attr_names
 };
 
