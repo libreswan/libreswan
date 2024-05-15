@@ -1539,7 +1539,6 @@ static enum_names oakley_prf_names = {
 
 static const char *const oakley_enc_name[] = {
 #define S(E) [E - 0] = #E
-#define R(E,S) [E - 0] = #S
 	S(OAKLEY_DES_CBC), /* obsoleted */
 	S(OAKLEY_IDEA_CBC),
 	S(OAKLEY_BLOWFISH_CBC), /* obsoleted */
@@ -1549,19 +1548,18 @@ static const char *const oakley_enc_name[] = {
 	S(OAKLEY_AES_CBC),
 	S(OAKLEY_CAMELLIA_CBC), /* 8 */
 	S(OAKLEY_AES_CTR), /* stolen from IKEv2 */
-	R(OAKLEY_AES_CCM_8, OAKLEY_AES_CCM_A),
-	R(OAKLEY_AES_CCM_12, OAKLEY_AES_CCM_B),
+	S(OAKLEY_AES_CCM_8),
+	S(OAKLEY_AES_CCM_12),
 	S(OAKLEY_AES_CCM_16),
-	R(OAKLEY_AES_GCM_8, OAKLEY_AES_GCM_A),
-	R(OAKLEY_AES_GCM_12, OAKLEY_AES_GCM_B),
-	R(OAKLEY_AES_GCM_16, OAKLEY_AES_GCM_C),
+	S(OAKLEY_AES_GCM_8),
+	S(OAKLEY_AES_GCM_12),
+	S(OAKLEY_AES_GCM_16),
 	S(OAKLEY_CAMELLIA_CTR),
-	S(OAKLEY_CAMELLIA_CCM_A),
-	S(OAKLEY_CAMELLIA_CCM_B),
-	S(OAKLEY_CAMELLIA_CCM_C),
+	S(OAKLEY_CAMELLIA_CCM_8),
+	S(OAKLEY_CAMELLIA_CCM_12),
+	S(OAKLEY_CAMELLIA_CCM_16),
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
-#undef R
 #undef S
 };
 
@@ -1598,7 +1596,7 @@ static enum_names oakley_enc_names_private_use = {
 
 enum_names oakley_enc_names = {
 	0,
-	OAKLEY_CAMELLIA_CCM_C,
+	OAKLEY_CAMELLIA_CCM_16,
 	ARRAY_REF(oakley_enc_name),
 	"OAKLEY_", /* prefix */
 	&oakley_enc_names_private_use
@@ -2295,7 +2293,7 @@ static enum_names ikev2_trans_type_encr_names_private_use1 = {
 
 static const char *const ikev2_trans_type_encr_name[] = {
 #define S(E) [E - IKEv2_ENCR_DES_IV64] = #E
-#define R(E,S) [E - IKEv2_ENCR_DES_IV64] = S
+#define R(E,S) [E - IKEv2_ENCR_DES_IV64] = #S
 	S(IKEv2_ENCR_DES_IV64),	/* 1 */
 	S(IKEv2_ENCR_DES),
 	S(IKEv2_ENCR_3DES),
@@ -2309,20 +2307,20 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	S(IKEv2_ENCR_NULL),
 	S(IKEv2_ENCR_AES_CBC),
 	S(IKEv2_ENCR_AES_CTR),
-	R(IKEv2_ENCR_AES_CCM_8, "AES_CCM_A"),	/* AES-CCM_8 RFC 4309 */
-	R(IKEv2_ENCR_AES_CCM_12, "AES_CCM_B"),	/* AES-CCM_12 */
-	R(IKEv2_ENCR_AES_CCM_16, "AES_CCM_C"),	/* AES-CCM_16 */
-	R(IKEv2_UNUSED_17, "UNASSIGNED"),
-	R(IKEv2_ENCR_AES_GCM_8, "AES_GCM_A"),	/* AES-GCM_8 RFC 4106 */
-	R(IKEv2_ENCR_AES_GCM_12, "AES_GCM_B"),	/* AES-GCM_12 */
-	R(IKEv2_ENCR_AES_GCM_16, "AES_GCM_C"),	/* AES-GCM_16 */
+	S(IKEv2_ENCR_AES_CCM_8),	/* AES-CCM_8 RFC 4309 */
+	S(IKEv2_ENCR_AES_CCM_12),	/* AES-CCM_12 */
+	S(IKEv2_ENCR_AES_CCM_16),	/* AES-CCM_16 */
+	R(IKEv2_UNUSED_17, UNASSIGNED),
+	S(IKEv2_ENCR_AES_GCM_8),	/* AES-GCM_8 RFC 4106 */
+	S(IKEv2_ENCR_AES_GCM_12),	/* AES-GCM_12 */
+	S(IKEv2_ENCR_AES_GCM_16),	/* AES-GCM_16 */
 	S(IKEv2_ENCR_NULL_AUTH_AES_GMAC),	/* RFC 4543 */
-	R(IKEv2_RESERVED_IEEE_P1619_XTS_AES, "RESERVED_FOR_IEEE_P1619_XTS_AES"),
+	R(IKEv2_RESERVED_IEEE_P1619_XTS_AES, RESERVED_FOR_IEEE_P1619_XTS_AES),
 	S(IKEv2_ENCR_CAMELLIA_CBC),		/* RFC 5529 */
 	S(IKEv2_ENCR_CAMELLIA_CTR),		/* RFC 5529 */
-	S(IKEv2_ENCR_CAMELLIA_CCM_A),		/* CAMELLIA_CCM_8 RFC 5529 */
-	S(IKEv2_ENCR_CAMELLIA_CCM_B),		/* CAMELLIA_CCM_12 RFC 5529 */
-	S(IKEv2_ENCR_CAMELLIA_CCM_C),		/* CAMELLIA_CCM_16 RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CCM_8),		/* CAMELLIA_CCM_8 RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CCM_12),		/* CAMELLIA_CCM_12 RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CCM_16),		/* CAMELLIA_CCM_16 RFC 5529 */
 	S(IKEv2_ENCR_CHACHA20_POLY1305), /* RFC 7634 */
 	/* 29 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
