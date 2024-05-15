@@ -2862,27 +2862,30 @@
          jam_enum_short 13: AES_CTR OK
          jam_enum_human 13: aes-ctr OK
          match AES_CTR [short]: OK
-   14 -> AES_CCM_A
-         jam_enum 14: AES_CCM_A OK
-         search AES_CCM_A: OK
-         match AES_CCM_A: OK
-         short_name 14: AES_CCM_A OK
-         jam_enum_short 14: AES_CCM_A OK
-         jam_enum_human 14: aes-ccm-a OK
-   15 -> AES_CCM_B
-         jam_enum 15: AES_CCM_B OK
-         search AES_CCM_B: OK
-         match AES_CCM_B: OK
-         short_name 15: AES_CCM_B OK
-         jam_enum_short 15: AES_CCM_B OK
-         jam_enum_human 15: aes-ccm-b OK
-   16 -> AES_CCM_C
-         jam_enum 16: AES_CCM_C OK
-         search AES_CCM_C: OK
-         match AES_CCM_C: OK
-         short_name 16: AES_CCM_C OK
-         jam_enum_short 16: AES_CCM_C OK
-         jam_enum_human 16: aes-ccm-c OK
+   14 -> IKEv2_ENCR_AES_CCM_8
+         jam_enum 14: IKEv2_ENCR_AES_CCM_8 OK
+         search IKEv2_ENCR_AES_CCM_8: OK
+         match IKEv2_ENCR_AES_CCM_8: OK
+         short_name 14: AES_CCM_8 OK
+         jam_enum_short 14: AES_CCM_8 OK
+         jam_enum_human 14: aes-ccm-8 OK
+         match AES_CCM_8 [short]: OK
+   15 -> IKEv2_ENCR_AES_CCM_12
+         jam_enum 15: IKEv2_ENCR_AES_CCM_12 OK
+         search IKEv2_ENCR_AES_CCM_12: OK
+         match IKEv2_ENCR_AES_CCM_12: OK
+         short_name 15: AES_CCM_12 OK
+         jam_enum_short 15: AES_CCM_12 OK
+         jam_enum_human 15: aes-ccm-12 OK
+         match AES_CCM_12 [short]: OK
+   16 -> IKEv2_ENCR_AES_CCM_16
+         jam_enum 16: IKEv2_ENCR_AES_CCM_16 OK
+         search IKEv2_ENCR_AES_CCM_16: OK
+         match IKEv2_ENCR_AES_CCM_16: OK
+         short_name 16: AES_CCM_16 OK
+         jam_enum_short 16: AES_CCM_16 OK
+         jam_enum_human 16: aes-ccm-16 OK
+         match AES_CCM_16 [short]: OK
    17 -> UNASSIGNED
          jam_enum 17: UNASSIGNED OK
          search UNASSIGNED: OK
@@ -2890,27 +2893,30 @@
          short_name 17: UNASSIGNED OK
          jam_enum_short 17: UNASSIGNED OK
          jam_enum_human 17: unassigned OK
-   18 -> AES_GCM_A
-         jam_enum 18: AES_GCM_A OK
-         search AES_GCM_A: OK
-         match AES_GCM_A: OK
-         short_name 18: AES_GCM_A OK
-         jam_enum_short 18: AES_GCM_A OK
-         jam_enum_human 18: aes-gcm-a OK
-   19 -> AES_GCM_B
-         jam_enum 19: AES_GCM_B OK
-         search AES_GCM_B: OK
-         match AES_GCM_B: OK
-         short_name 19: AES_GCM_B OK
-         jam_enum_short 19: AES_GCM_B OK
-         jam_enum_human 19: aes-gcm-b OK
-   20 -> AES_GCM_C
-         jam_enum 20: AES_GCM_C OK
-         search AES_GCM_C: OK
-         match AES_GCM_C: OK
-         short_name 20: AES_GCM_C OK
-         jam_enum_short 20: AES_GCM_C OK
-         jam_enum_human 20: aes-gcm-c OK
+   18 -> IKEv2_ENCR_AES_GCM_8
+         jam_enum 18: IKEv2_ENCR_AES_GCM_8 OK
+         search IKEv2_ENCR_AES_GCM_8: OK
+         match IKEv2_ENCR_AES_GCM_8: OK
+         short_name 18: AES_GCM_8 OK
+         jam_enum_short 18: AES_GCM_8 OK
+         jam_enum_human 18: aes-gcm-8 OK
+         match AES_GCM_8 [short]: OK
+   19 -> IKEv2_ENCR_AES_GCM_12
+         jam_enum 19: IKEv2_ENCR_AES_GCM_12 OK
+         search IKEv2_ENCR_AES_GCM_12: OK
+         match IKEv2_ENCR_AES_GCM_12: OK
+         short_name 19: AES_GCM_12 OK
+         jam_enum_short 19: AES_GCM_12 OK
+         jam_enum_human 19: aes-gcm-12 OK
+         match AES_GCM_12 [short]: OK
+   20 -> IKEv2_ENCR_AES_GCM_16
+         jam_enum 20: IKEv2_ENCR_AES_GCM_16 OK
+         search IKEv2_ENCR_AES_GCM_16: OK
+         match IKEv2_ENCR_AES_GCM_16: OK
+         short_name 20: AES_GCM_16 OK
+         jam_enum_short 20: AES_GCM_16 OK
+         jam_enum_human 20: aes-gcm-16 OK
+         match AES_GCM_16 [short]: OK
    21 -> IKEv2_ENCR_NULL_AUTH_AES_GMAC
          jam_enum 21: IKEv2_ENCR_NULL_AUTH_AES_GMAC OK
          search IKEv2_ENCR_NULL_AUTH_AES_GMAC: OK
@@ -2942,30 +2948,30 @@
          jam_enum_short 24: CAMELLIA_CTR OK
          jam_enum_human 24: camellia-ctr OK
          match CAMELLIA_CTR [short]: OK
-   25 -> IKEv2_ENCR_CAMELLIA_CCM_A
-         jam_enum 25: IKEv2_ENCR_CAMELLIA_CCM_A OK
-         search IKEv2_ENCR_CAMELLIA_CCM_A: OK
-         match IKEv2_ENCR_CAMELLIA_CCM_A: OK
-         short_name 25: CAMELLIA_CCM_A OK
-         jam_enum_short 25: CAMELLIA_CCM_A OK
-         jam_enum_human 25: camellia-ccm-a OK
-         match CAMELLIA_CCM_A [short]: OK
-   26 -> IKEv2_ENCR_CAMELLIA_CCM_B
-         jam_enum 26: IKEv2_ENCR_CAMELLIA_CCM_B OK
-         search IKEv2_ENCR_CAMELLIA_CCM_B: OK
-         match IKEv2_ENCR_CAMELLIA_CCM_B: OK
-         short_name 26: CAMELLIA_CCM_B OK
-         jam_enum_short 26: CAMELLIA_CCM_B OK
-         jam_enum_human 26: camellia-ccm-b OK
-         match CAMELLIA_CCM_B [short]: OK
-   27 -> IKEv2_ENCR_CAMELLIA_CCM_C
-         jam_enum 27: IKEv2_ENCR_CAMELLIA_CCM_C OK
-         search IKEv2_ENCR_CAMELLIA_CCM_C: OK
-         match IKEv2_ENCR_CAMELLIA_CCM_C: OK
-         short_name 27: CAMELLIA_CCM_C OK
-         jam_enum_short 27: CAMELLIA_CCM_C OK
-         jam_enum_human 27: camellia-ccm-c OK
-         match CAMELLIA_CCM_C [short]: OK
+   25 -> IKEv2_ENCR_CAMELLIA_CCM_8
+         jam_enum 25: IKEv2_ENCR_CAMELLIA_CCM_8 OK
+         search IKEv2_ENCR_CAMELLIA_CCM_8: OK
+         match IKEv2_ENCR_CAMELLIA_CCM_8: OK
+         short_name 25: CAMELLIA_CCM_8 OK
+         jam_enum_short 25: CAMELLIA_CCM_8 OK
+         jam_enum_human 25: camellia-ccm-8 OK
+         match CAMELLIA_CCM_8 [short]: OK
+   26 -> IKEv2_ENCR_CAMELLIA_CCM_12
+         jam_enum 26: IKEv2_ENCR_CAMELLIA_CCM_12 OK
+         search IKEv2_ENCR_CAMELLIA_CCM_12: OK
+         match IKEv2_ENCR_CAMELLIA_CCM_12: OK
+         short_name 26: CAMELLIA_CCM_12 OK
+         jam_enum_short 26: CAMELLIA_CCM_12 OK
+         jam_enum_human 26: camellia-ccm-12 OK
+         match CAMELLIA_CCM_12 [short]: OK
+   27 -> IKEv2_ENCR_CAMELLIA_CCM_16
+         jam_enum 27: IKEv2_ENCR_CAMELLIA_CCM_16 OK
+         search IKEv2_ENCR_CAMELLIA_CCM_16: OK
+         match IKEv2_ENCR_CAMELLIA_CCM_16: OK
+         short_name 27: CAMELLIA_CCM_16 OK
+         jam_enum_short 27: CAMELLIA_CCM_16 OK
+         jam_enum_human 27: camellia-ccm-16 OK
+         match CAMELLIA_CCM_16 [short]: OK
    28 -> IKEv2_ENCR_CHACHA20_POLY1305
          jam_enum 28: IKEv2_ENCR_CHACHA20_POLY1305 OK
          search IKEv2_ENCR_CHACHA20_POLY1305: OK
@@ -4409,22 +4415,22 @@
          jam_enum_short 13: AES_CTR OK
          jam_enum_human 13: aes-ctr OK
          match AES_CTR [short]: OK
-   14 -> OAKLEY_AES_CCM_A
-         jam_enum 14: OAKLEY_AES_CCM_A OK
-         search OAKLEY_AES_CCM_A: OK
-         match OAKLEY_AES_CCM_A: OK
-         short_name 14: AES_CCM_A OK
-         jam_enum_short 14: AES_CCM_A OK
-         jam_enum_human 14: aes-ccm-a OK
-         match AES_CCM_A [short]: OK
-   15 -> OAKLEY_AES_CCM_B
-         jam_enum 15: OAKLEY_AES_CCM_B OK
-         search OAKLEY_AES_CCM_B: OK
-         match OAKLEY_AES_CCM_B: OK
-         short_name 15: AES_CCM_B OK
-         jam_enum_short 15: AES_CCM_B OK
-         jam_enum_human 15: aes-ccm-b OK
-         match AES_CCM_B [short]: OK
+   14 -> OAKLEY_AES_CCM_8
+         jam_enum 14: OAKLEY_AES_CCM_8 OK
+         search OAKLEY_AES_CCM_8: OK
+         match OAKLEY_AES_CCM_8: OK
+         short_name 14: AES_CCM_8 OK
+         jam_enum_short 14: AES_CCM_8 OK
+         jam_enum_human 14: aes-ccm-8 OK
+         match AES_CCM_8 [short]: OK
+   15 -> OAKLEY_AES_CCM_12
+         jam_enum 15: OAKLEY_AES_CCM_12 OK
+         search OAKLEY_AES_CCM_12: OK
+         match OAKLEY_AES_CCM_12: OK
+         short_name 15: AES_CCM_12 OK
+         jam_enum_short 15: AES_CCM_12 OK
+         jam_enum_human 15: aes-ccm-12 OK
+         match AES_CCM_12 [short]: OK
    16 -> OAKLEY_AES_CCM_16
          jam_enum 16: OAKLEY_AES_CCM_16 OK
          search OAKLEY_AES_CCM_16: OK
@@ -4433,30 +4439,30 @@
          jam_enum_short 16: AES_CCM_16 OK
          jam_enum_human 16: aes-ccm-16 OK
          match AES_CCM_16 [short]: OK
-   18 -> OAKLEY_AES_GCM_A
-         jam_enum 18: OAKLEY_AES_GCM_A OK
-         search OAKLEY_AES_GCM_A: OK
-         match OAKLEY_AES_GCM_A: OK
-         short_name 18: AES_GCM_A OK
-         jam_enum_short 18: AES_GCM_A OK
-         jam_enum_human 18: aes-gcm-a OK
-         match AES_GCM_A [short]: OK
-   19 -> OAKLEY_AES_GCM_B
-         jam_enum 19: OAKLEY_AES_GCM_B OK
-         search OAKLEY_AES_GCM_B: OK
-         match OAKLEY_AES_GCM_B: OK
-         short_name 19: AES_GCM_B OK
-         jam_enum_short 19: AES_GCM_B OK
-         jam_enum_human 19: aes-gcm-b OK
-         match AES_GCM_B [short]: OK
-   20 -> OAKLEY_AES_GCM_C
-         jam_enum 20: OAKLEY_AES_GCM_C OK
-         search OAKLEY_AES_GCM_C: OK
-         match OAKLEY_AES_GCM_C: OK
-         short_name 20: AES_GCM_C OK
-         jam_enum_short 20: AES_GCM_C OK
-         jam_enum_human 20: aes-gcm-c OK
-         match AES_GCM_C [short]: OK
+   18 -> OAKLEY_AES_GCM_8
+         jam_enum 18: OAKLEY_AES_GCM_8 OK
+         search OAKLEY_AES_GCM_8: OK
+         match OAKLEY_AES_GCM_8: OK
+         short_name 18: AES_GCM_8 OK
+         jam_enum_short 18: AES_GCM_8 OK
+         jam_enum_human 18: aes-gcm-8 OK
+         match AES_GCM_8 [short]: OK
+   19 -> OAKLEY_AES_GCM_12
+         jam_enum 19: OAKLEY_AES_GCM_12 OK
+         search OAKLEY_AES_GCM_12: OK
+         match OAKLEY_AES_GCM_12: OK
+         short_name 19: AES_GCM_12 OK
+         jam_enum_short 19: AES_GCM_12 OK
+         jam_enum_human 19: aes-gcm-12 OK
+         match AES_GCM_12 [short]: OK
+   20 -> OAKLEY_AES_GCM_16
+         jam_enum 20: OAKLEY_AES_GCM_16 OK
+         search OAKLEY_AES_GCM_16: OK
+         match OAKLEY_AES_GCM_16: OK
+         short_name 20: AES_GCM_16 OK
+         jam_enum_short 20: AES_GCM_16 OK
+         jam_enum_human 20: aes-gcm-16 OK
+         match AES_GCM_16 [short]: OK
    24 -> OAKLEY_CAMELLIA_CTR
          jam_enum 24: OAKLEY_CAMELLIA_CTR OK
          search OAKLEY_CAMELLIA_CTR: OK
@@ -4465,30 +4471,30 @@
          jam_enum_short 24: CAMELLIA_CTR OK
          jam_enum_human 24: camellia-ctr OK
          match CAMELLIA_CTR [short]: OK
-   25 -> OAKLEY_CAMELLIA_CCM_A
-         jam_enum 25: OAKLEY_CAMELLIA_CCM_A OK
-         search OAKLEY_CAMELLIA_CCM_A: OK
-         match OAKLEY_CAMELLIA_CCM_A: OK
-         short_name 25: CAMELLIA_CCM_A OK
-         jam_enum_short 25: CAMELLIA_CCM_A OK
-         jam_enum_human 25: camellia-ccm-a OK
-         match CAMELLIA_CCM_A [short]: OK
-   26 -> OAKLEY_CAMELLIA_CCM_B
-         jam_enum 26: OAKLEY_CAMELLIA_CCM_B OK
-         search OAKLEY_CAMELLIA_CCM_B: OK
-         match OAKLEY_CAMELLIA_CCM_B: OK
-         short_name 26: CAMELLIA_CCM_B OK
-         jam_enum_short 26: CAMELLIA_CCM_B OK
-         jam_enum_human 26: camellia-ccm-b OK
-         match CAMELLIA_CCM_B [short]: OK
-   27 -> OAKLEY_CAMELLIA_CCM_C
-         jam_enum 27: OAKLEY_CAMELLIA_CCM_C OK
-         search OAKLEY_CAMELLIA_CCM_C: OK
-         match OAKLEY_CAMELLIA_CCM_C: OK
-         short_name 27: CAMELLIA_CCM_C OK
-         jam_enum_short 27: CAMELLIA_CCM_C OK
-         jam_enum_human 27: camellia-ccm-c OK
-         match CAMELLIA_CCM_C [short]: OK
+   25 -> OAKLEY_CAMELLIA_CCM_8
+         jam_enum 25: OAKLEY_CAMELLIA_CCM_8 OK
+         search OAKLEY_CAMELLIA_CCM_8: OK
+         match OAKLEY_CAMELLIA_CCM_8: OK
+         short_name 25: CAMELLIA_CCM_8 OK
+         jam_enum_short 25: CAMELLIA_CCM_8 OK
+         jam_enum_human 25: camellia-ccm-8 OK
+         match CAMELLIA_CCM_8 [short]: OK
+   26 -> OAKLEY_CAMELLIA_CCM_12
+         jam_enum 26: OAKLEY_CAMELLIA_CCM_12 OK
+         search OAKLEY_CAMELLIA_CCM_12: OK
+         match OAKLEY_CAMELLIA_CCM_12: OK
+         short_name 26: CAMELLIA_CCM_12 OK
+         jam_enum_short 26: CAMELLIA_CCM_12 OK
+         jam_enum_human 26: camellia-ccm-12 OK
+         match CAMELLIA_CCM_12 [short]: OK
+   27 -> OAKLEY_CAMELLIA_CCM_16
+         jam_enum 27: OAKLEY_CAMELLIA_CCM_16 OK
+         search OAKLEY_CAMELLIA_CCM_16: OK
+         match OAKLEY_CAMELLIA_CCM_16: OK
+         short_name 27: CAMELLIA_CCM_16 OK
+         jam_enum_short 27: CAMELLIA_CCM_16 OK
+         jam_enum_human 27: camellia-ccm-16 OK
+         match CAMELLIA_CCM_16 [short]: OK
 
   oakley_group_names: [0..33)
     0 -> OAKLEY_GROUP_NONE

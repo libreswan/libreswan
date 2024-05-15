@@ -174,11 +174,11 @@ west #
  # excluded
 west #
  grep 'remote accepted' /tmp/pluto.log
-| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
-| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;DH=NONE;ESN=YES[first-match]
-| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
-| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=YES[first-match]
-| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
-| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;DH=NONE;ESN=YES[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;DH=NONE;ESN=YES[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;ESN=YES[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;DH=NONE;ESN=YES[first-match]
 west #
  
