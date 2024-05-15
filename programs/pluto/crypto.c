@@ -139,22 +139,27 @@ void show_ike_alg_status(struct show *s)
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
-			esb_buf v1namebuf, v2namebuf;
 			passert(alg->common.ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
-			show(s,
-				  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
-				  alg->common.ikev1_oakley_id,
-				  (alg->common.ikev1_oakley_id >= 0 ? str_enum(&oakley_enc_names,
-										alg->common.ikev1_oakley_id,
-										&v1namebuf)
-				   : "n/a"),
-				  alg->common.id[IKEv2_ALG_ID],
-				  (alg->common.id[IKEv2_ALG_ID] >= 0 ? str_enum(&ikev2_trans_type_encr_names,
-										 alg->common.id[IKEv2_ALG_ID],
-										 &v2namebuf)
-				   : "n/a"),
-				  alg->enc_blocksize,
-				  alg->keydeflen);
+			SHOW_JAMBUF(s, buf) {
+				jam_string(buf, "algorithm IKE encrypt:");
+				jam(buf, " v1id=%d, v1name=", alg->common.ikev1_oakley_id);
+				if (alg->common.id[IKEv1_OAKLEY_ID] >= 0) {
+					jam_enum(buf, &oakley_enc_names, alg->common.ikev1_oakley_id);
+				} else {
+					jam_string(buf, "n/a");
+				}
+				jam_string(buf, ",");
+				jam(buf, " v2id=%d, v2name=", alg->common.id[IKEv2_ALG_ID]);
+				if (alg->common.id[IKEv2_ALG_ID] >= 0) {
+					jam_enum_short(buf, &ikev2_trans_type_encr_names,
+						       alg->common.id[IKEv2_ALG_ID]);
+				} else {
+					jam_string(buf, "n/a");
+				}
+				jam_string(buf, ",");
+				jam(buf, " blocksize=%zu, keydeflen=%u",
+				    alg->enc_blocksize, alg->keydeflen);
+			}
 		}
 	}
 
@@ -163,8 +168,8 @@ void show_ike_alg_status(struct show *s)
 		const struct prf_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
 			show(s,
-				  "algorithm IKE PRF: name=%s, hashlen=%zu",
-				  alg->common.fqn, alg->prf_output_size);
+			     "algorithm IKE PRF: name=%s, hashlen=%zu",
+			     alg->common.fqn, alg->prf_output_size);
 		}
 	}
 
@@ -174,9 +179,9 @@ void show_ike_alg_status(struct show *s)
 		if (gdesc->bytes > 0) {
 			/* nothing crazy like 'none' */
 			show(s,
-				  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
-				  gdesc->common.fqn,
-				  (int)gdesc->bytes * BITS_IN_BYTE);
+			     "algorithm IKE DH Key Exchange: name=%s, bits=%d",
+			     gdesc->common.fqn,
+			     (int)gdesc->bytes * BITS_IN_BYTE);
 		}
 	}
 }
