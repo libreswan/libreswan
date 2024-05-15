@@ -2751,97 +2751,110 @@
   ikev2_trans_attr_descs: [32782(0)..32783(256))
 
   ikev2_trans_type_encr_names: [1(0)..65290(256))
-    1 -> DES_IV64
-         jam_enum 1: DES_IV64 OK
-         search DES_IV64: OK
-         match DES_IV64: OK
+    1 -> IKEv2_ENCR_DES_IV64
+         jam_enum 1: IKEv2_ENCR_DES_IV64 OK
+         search IKEv2_ENCR_DES_IV64: OK
+         match IKEv2_ENCR_DES_IV64: OK
          short_name 1: DES_IV64 OK
          jam_enum_short 1: DES_IV64 OK
          jam_enum_human 1: des-iv64 OK
-    2 -> DES
-         jam_enum 2: DES OK
-         search DES: OK
-         match DES: OK
+         match DES_IV64 [short]: OK
+    2 -> IKEv2_ENCR_DES
+         jam_enum 2: IKEv2_ENCR_DES OK
+         search IKEv2_ENCR_DES: OK
+         match IKEv2_ENCR_DES: OK
          short_name 2: DES OK
          jam_enum_short 2: DES OK
          jam_enum_human 2: des OK
-    3 -> 3DES
-         jam_enum 3: 3DES OK
-         search 3DES: OK
-         match 3DES: OK
+         match DES [short]: OK
+    3 -> IKEv2_ENCR_3DES
+         jam_enum 3: IKEv2_ENCR_3DES OK
+         search IKEv2_ENCR_3DES: OK
+         match IKEv2_ENCR_3DES: OK
          short_name 3: 3DES OK
          jam_enum_short 3: 3DES OK
          jam_enum_human 3: 3des OK
-    4 -> RC5
-         jam_enum 4: RC5 OK
-         search RC5: OK
-         match RC5: OK
+         match 3DES [short]: OK
+    4 -> IKEv2_ENCR_RC5
+         jam_enum 4: IKEv2_ENCR_RC5 OK
+         search IKEv2_ENCR_RC5: OK
+         match IKEv2_ENCR_RC5: OK
          short_name 4: RC5 OK
          jam_enum_short 4: RC5 OK
          jam_enum_human 4: rc5 OK
-    5 -> IDEA
-         jam_enum 5: IDEA OK
-         search IDEA: OK
-         match IDEA: OK
+         match RC5 [short]: OK
+    5 -> IKEv2_ENCR_IDEA
+         jam_enum 5: IKEv2_ENCR_IDEA OK
+         search IKEv2_ENCR_IDEA: OK
+         match IKEv2_ENCR_IDEA: OK
          short_name 5: IDEA OK
          jam_enum_short 5: IDEA OK
          jam_enum_human 5: idea OK
-    6 -> CAST
-         jam_enum 6: CAST OK
-         search CAST: OK
-         match CAST: OK
+         match IDEA [short]: OK
+    6 -> IKEv2_ENCR_CAST
+         jam_enum 6: IKEv2_ENCR_CAST OK
+         search IKEv2_ENCR_CAST: OK
+         match IKEv2_ENCR_CAST: OK
          short_name 6: CAST OK
          jam_enum_short 6: CAST OK
          jam_enum_human 6: cast OK
-    7 -> BLOWFISH
-         jam_enum 7: BLOWFISH OK
-         search BLOWFISH: OK
-         match BLOWFISH: OK
+         match CAST [short]: OK
+    7 -> IKEv2_ENCR_BLOWFISH
+         jam_enum 7: IKEv2_ENCR_BLOWFISH OK
+         search IKEv2_ENCR_BLOWFISH: OK
+         match IKEv2_ENCR_BLOWFISH: OK
          short_name 7: BLOWFISH OK
          jam_enum_short 7: BLOWFISH OK
          jam_enum_human 7: blowfish OK
-    8 -> 3IDEA
-         jam_enum 8: 3IDEA OK
-         search 3IDEA: OK
-         match 3IDEA: OK
+         match BLOWFISH [short]: OK
+    8 -> IKEv2_ENCR_3IDEA
+         jam_enum 8: IKEv2_ENCR_3IDEA OK
+         search IKEv2_ENCR_3IDEA: OK
+         match IKEv2_ENCR_3IDEA: OK
          short_name 8: 3IDEA OK
          jam_enum_short 8: 3IDEA OK
          jam_enum_human 8: 3idea OK
-    9 -> DES_IV32
-         jam_enum 9: DES_IV32 OK
-         search DES_IV32: OK
-         match DES_IV32: OK
+         match 3IDEA [short]: OK
+    9 -> IKEv2_ENCR_DES_IV32
+         jam_enum 9: IKEv2_ENCR_DES_IV32 OK
+         search IKEv2_ENCR_DES_IV32: OK
+         match IKEv2_ENCR_DES_IV32: OK
          short_name 9: DES_IV32 OK
          jam_enum_short 9: DES_IV32 OK
          jam_enum_human 9: des-iv32 OK
-   10 -> RES10
-         jam_enum 10: RES10 OK
-         search RES10: OK
-         match RES10: OK
+         match DES_IV32 [short]: OK
+   10 -> IKEv2_ENCR_RES10
+         jam_enum 10: IKEv2_ENCR_RES10 OK
+         search IKEv2_ENCR_RES10: OK
+         match IKEv2_ENCR_RES10: OK
          short_name 10: RES10 OK
          jam_enum_short 10: RES10 OK
          jam_enum_human 10: res10 OK
-   11 -> NULL
-         jam_enum 11: NULL OK
-         search NULL: OK
-         match NULL: OK
+         match RES10 [short]: OK
+   11 -> IKEv2_ENCR_NULL
+         jam_enum 11: IKEv2_ENCR_NULL OK
+         search IKEv2_ENCR_NULL: OK
+         match IKEv2_ENCR_NULL: OK
          short_name 11: NULL OK
          jam_enum_short 11: NULL OK
          jam_enum_human 11: null OK
-   12 -> AES_CBC
-         jam_enum 12: AES_CBC OK
-         search AES_CBC: OK
-         match AES_CBC: OK
+         match NULL [short]: OK
+   12 -> IKEv2_ENCR_AES_CBC
+         jam_enum 12: IKEv2_ENCR_AES_CBC OK
+         search IKEv2_ENCR_AES_CBC: OK
+         match IKEv2_ENCR_AES_CBC: OK
          short_name 12: AES_CBC OK
          jam_enum_short 12: AES_CBC OK
          jam_enum_human 12: aes-cbc OK
-   13 -> AES_CTR
-         jam_enum 13: AES_CTR OK
-         search AES_CTR: OK
-         match AES_CTR: OK
+         match AES_CBC [short]: OK
+   13 -> IKEv2_ENCR_AES_CTR
+         jam_enum 13: IKEv2_ENCR_AES_CTR OK
+         search IKEv2_ENCR_AES_CTR: OK
+         match IKEv2_ENCR_AES_CTR: OK
          short_name 13: AES_CTR OK
          jam_enum_short 13: AES_CTR OK
          jam_enum_human 13: aes-ctr OK
+         match AES_CTR [short]: OK
    14 -> AES_CCM_A
          jam_enum 14: AES_CCM_A OK
          search AES_CCM_A: OK
@@ -2891,13 +2904,14 @@
          short_name 20: AES_GCM_C OK
          jam_enum_short 20: AES_GCM_C OK
          jam_enum_human 20: aes-gcm-c OK
-   21 -> NULL_AUTH_AES_GMAC
-         jam_enum 21: NULL_AUTH_AES_GMAC OK
-         search NULL_AUTH_AES_GMAC: OK
-         match NULL_AUTH_AES_GMAC: OK
+   21 -> IKEv2_ENCR_NULL_AUTH_AES_GMAC
+         jam_enum 21: IKEv2_ENCR_NULL_AUTH_AES_GMAC OK
+         search IKEv2_ENCR_NULL_AUTH_AES_GMAC: OK
+         match IKEv2_ENCR_NULL_AUTH_AES_GMAC: OK
          short_name 21: NULL_AUTH_AES_GMAC OK
          jam_enum_short 21: NULL_AUTH_AES_GMAC OK
          jam_enum_human 21: null-auth-aes-gmac OK
+         match NULL_AUTH_AES_GMAC [short]: OK
    22 -> RESERVED_FOR_IEEE_P1619_XTS_AES
          jam_enum 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
          search RESERVED_FOR_IEEE_P1619_XTS_AES: OK
@@ -2905,48 +2919,54 @@
          short_name 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
          jam_enum_short 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
          jam_enum_human 22: reserved-for-ieee-p1619-xts-aes OK
-   23 -> CAMELLIA_CBC
-         jam_enum 23: CAMELLIA_CBC OK
-         search CAMELLIA_CBC: OK
-         match CAMELLIA_CBC: OK
+   23 -> IKEv2_ENCR_CAMELLIA_CBC
+         jam_enum 23: IKEv2_ENCR_CAMELLIA_CBC OK
+         search IKEv2_ENCR_CAMELLIA_CBC: OK
+         match IKEv2_ENCR_CAMELLIA_CBC: OK
          short_name 23: CAMELLIA_CBC OK
          jam_enum_short 23: CAMELLIA_CBC OK
          jam_enum_human 23: camellia-cbc OK
-   24 -> CAMELLIA_CTR
-         jam_enum 24: CAMELLIA_CTR OK
-         search CAMELLIA_CTR: OK
-         match CAMELLIA_CTR: OK
+         match CAMELLIA_CBC [short]: OK
+   24 -> IKEv2_ENCR_CAMELLIA_CTR
+         jam_enum 24: IKEv2_ENCR_CAMELLIA_CTR OK
+         search IKEv2_ENCR_CAMELLIA_CTR: OK
+         match IKEv2_ENCR_CAMELLIA_CTR: OK
          short_name 24: CAMELLIA_CTR OK
          jam_enum_short 24: CAMELLIA_CTR OK
          jam_enum_human 24: camellia-ctr OK
-   25 -> CAMELLIA_CCM_A
-         jam_enum 25: CAMELLIA_CCM_A OK
-         search CAMELLIA_CCM_A: OK
-         match CAMELLIA_CCM_A: OK
+         match CAMELLIA_CTR [short]: OK
+   25 -> IKEv2_ENCR_CAMELLIA_CCM_A
+         jam_enum 25: IKEv2_ENCR_CAMELLIA_CCM_A OK
+         search IKEv2_ENCR_CAMELLIA_CCM_A: OK
+         match IKEv2_ENCR_CAMELLIA_CCM_A: OK
          short_name 25: CAMELLIA_CCM_A OK
          jam_enum_short 25: CAMELLIA_CCM_A OK
          jam_enum_human 25: camellia-ccm-a OK
-   26 -> CAMELLIA_CCM_B
-         jam_enum 26: CAMELLIA_CCM_B OK
-         search CAMELLIA_CCM_B: OK
-         match CAMELLIA_CCM_B: OK
+         match CAMELLIA_CCM_A [short]: OK
+   26 -> IKEv2_ENCR_CAMELLIA_CCM_B
+         jam_enum 26: IKEv2_ENCR_CAMELLIA_CCM_B OK
+         search IKEv2_ENCR_CAMELLIA_CCM_B: OK
+         match IKEv2_ENCR_CAMELLIA_CCM_B: OK
          short_name 26: CAMELLIA_CCM_B OK
          jam_enum_short 26: CAMELLIA_CCM_B OK
          jam_enum_human 26: camellia-ccm-b OK
-   27 -> CAMELLIA_CCM_C
-         jam_enum 27: CAMELLIA_CCM_C OK
-         search CAMELLIA_CCM_C: OK
-         match CAMELLIA_CCM_C: OK
+         match CAMELLIA_CCM_B [short]: OK
+   27 -> IKEv2_ENCR_CAMELLIA_CCM_C
+         jam_enum 27: IKEv2_ENCR_CAMELLIA_CCM_C OK
+         search IKEv2_ENCR_CAMELLIA_CCM_C: OK
+         match IKEv2_ENCR_CAMELLIA_CCM_C: OK
          short_name 27: CAMELLIA_CCM_C OK
          jam_enum_short 27: CAMELLIA_CCM_C OK
          jam_enum_human 27: camellia-ccm-c OK
-   28 -> CHACHA20_POLY1305
-         jam_enum 28: CHACHA20_POLY1305 OK
-         search CHACHA20_POLY1305: OK
-         match CHACHA20_POLY1305: OK
+         match CAMELLIA_CCM_C [short]: OK
+   28 -> IKEv2_ENCR_CHACHA20_POLY1305
+         jam_enum 28: IKEv2_ENCR_CHACHA20_POLY1305 OK
+         search IKEv2_ENCR_CHACHA20_POLY1305: OK
+         match IKEv2_ENCR_CHACHA20_POLY1305: OK
          short_name 28: CHACHA20_POLY1305 OK
          jam_enum_short 28: CHACHA20_POLY1305 OK
          jam_enum_human 28: chacha20-poly1305 OK
+         match CHACHA20_POLY1305 [short]: OK
 
   ikev2_trans_type_esn_names: [0..2)
     0 -> IKEv2_ESN_NO
@@ -3131,66 +3151,66 @@
          match ESN [short]: OK
 
   ikev2_trans_type_prf_names: [1..9)
-    1 -> PRF_HMAC_MD5
-         jam_enum 1: PRF_HMAC_MD5 OK
-         search PRF_HMAC_MD5: OK
-         match PRF_HMAC_MD5: OK
+    1 -> IKEv2_PRF_HMAC_MD5
+         jam_enum 1: IKEv2_PRF_HMAC_MD5 OK
+         search IKEv2_PRF_HMAC_MD5: OK
+         match IKEv2_PRF_HMAC_MD5: OK
          short_name 1: HMAC_MD5 OK
          jam_enum_short 1: HMAC_MD5 OK
          jam_enum_human 1: hmac-md5 OK
          match HMAC_MD5 [short]: OK
-    2 -> PRF_HMAC_SHA1
-         jam_enum 2: PRF_HMAC_SHA1 OK
-         search PRF_HMAC_SHA1: OK
-         match PRF_HMAC_SHA1: OK
+    2 -> IKEv2_PRF_HMAC_SHA1
+         jam_enum 2: IKEv2_PRF_HMAC_SHA1 OK
+         search IKEv2_PRF_HMAC_SHA1: OK
+         match IKEv2_PRF_HMAC_SHA1: OK
          short_name 2: HMAC_SHA1 OK
          jam_enum_short 2: HMAC_SHA1 OK
          jam_enum_human 2: hmac-sha1 OK
          match HMAC_SHA1 [short]: OK
-    3 -> PRF_HMAC_TIGER
-         jam_enum 3: PRF_HMAC_TIGER OK
-         search PRF_HMAC_TIGER: OK
-         match PRF_HMAC_TIGER: OK
+    3 -> IKEv2_PRF_HMAC_TIGER
+         jam_enum 3: IKEv2_PRF_HMAC_TIGER OK
+         search IKEv2_PRF_HMAC_TIGER: OK
+         match IKEv2_PRF_HMAC_TIGER: OK
          short_name 3: HMAC_TIGER OK
          jam_enum_short 3: HMAC_TIGER OK
          jam_enum_human 3: hmac-tiger OK
          match HMAC_TIGER [short]: OK
-    4 -> PRF_AES128_XCBC
-         jam_enum 4: PRF_AES128_XCBC OK
-         search PRF_AES128_XCBC: OK
-         match PRF_AES128_XCBC: OK
+    4 -> IKEv2_PRF_AES128_XCBC
+         jam_enum 4: IKEv2_PRF_AES128_XCBC OK
+         search IKEv2_PRF_AES128_XCBC: OK
+         match IKEv2_PRF_AES128_XCBC: OK
          short_name 4: AES128_XCBC OK
          jam_enum_short 4: AES128_XCBC OK
          jam_enum_human 4: aes128-xcbc OK
          match AES128_XCBC [short]: OK
-    5 -> PRF_HMAC_SHA2_256
-         jam_enum 5: PRF_HMAC_SHA2_256 OK
-         search PRF_HMAC_SHA2_256: OK
-         match PRF_HMAC_SHA2_256: OK
+    5 -> IKEv2_PRF_HMAC_SHA2_256
+         jam_enum 5: IKEv2_PRF_HMAC_SHA2_256 OK
+         search IKEv2_PRF_HMAC_SHA2_256: OK
+         match IKEv2_PRF_HMAC_SHA2_256: OK
          short_name 5: HMAC_SHA2_256 OK
          jam_enum_short 5: HMAC_SHA2_256 OK
          jam_enum_human 5: hmac-sha2-256 OK
          match HMAC_SHA2_256 [short]: OK
-    6 -> PRF_HMAC_SHA2_384
-         jam_enum 6: PRF_HMAC_SHA2_384 OK
-         search PRF_HMAC_SHA2_384: OK
-         match PRF_HMAC_SHA2_384: OK
+    6 -> IKEv2_PRF_HMAC_SHA2_384
+         jam_enum 6: IKEv2_PRF_HMAC_SHA2_384 OK
+         search IKEv2_PRF_HMAC_SHA2_384: OK
+         match IKEv2_PRF_HMAC_SHA2_384: OK
          short_name 6: HMAC_SHA2_384 OK
          jam_enum_short 6: HMAC_SHA2_384 OK
          jam_enum_human 6: hmac-sha2-384 OK
          match HMAC_SHA2_384 [short]: OK
-    7 -> PRF_HMAC_SHA2_512
-         jam_enum 7: PRF_HMAC_SHA2_512 OK
-         search PRF_HMAC_SHA2_512: OK
-         match PRF_HMAC_SHA2_512: OK
+    7 -> IKEv2_PRF_HMAC_SHA2_512
+         jam_enum 7: IKEv2_PRF_HMAC_SHA2_512 OK
+         search IKEv2_PRF_HMAC_SHA2_512: OK
+         match IKEv2_PRF_HMAC_SHA2_512: OK
          short_name 7: HMAC_SHA2_512 OK
          jam_enum_short 7: HMAC_SHA2_512 OK
          jam_enum_human 7: hmac-sha2-512 OK
          match HMAC_SHA2_512 [short]: OK
-    8 -> PRF_AES128_CMAC
-         jam_enum 8: PRF_AES128_CMAC OK
-         search PRF_AES128_CMAC: OK
-         match PRF_AES128_CMAC: OK
+    8 -> IKEv2_PRF_AES128_CMAC
+         jam_enum 8: IKEv2_PRF_AES128_CMAC OK
+         search IKEv2_PRF_AES128_CMAC: OK
+         match IKEv2_PRF_AES128_CMAC: OK
          short_name 8: AES128_CMAC OK
          jam_enum_short 8: AES128_CMAC OK
          jam_enum_human 8: aes128-cmac OK
@@ -6281,9 +6301,9 @@
          match FWD [short]: OK
 
 IKEv2 transforms:
-         enum_enum_name 1 3: 3DES OK
+         enum_enum_name 1 3: IKEv2_ENCR_3DES OK
          enum_name table 3: OK
-         jam_enum_enum 1 3: 3DES OK
+         jam_enum_enum 1 3: IKEv2_ENCR_3DES OK
          jam_enum_enum_short 1 3: 3DES OK
 IKEv2 transforms:
          enum_enum_name 6 1: NULL OK
@@ -6293,8 +6313,8 @@ IKEv2 transforms:
 IKEv2 transforms:
          enum_enum_name 2 65536: NULL OK
          enum_name table 65536: OK
-         jam_enum_enum 2 65536: PRF__65536?? OK
-         jam_enum_enum_short 2 65536: PRF__65536?? OK
+         jam_enum_enum 2 65536: IKEv2_PRF__65536?? OK
+         jam_enum_enum_short 2 65536: IKEv2_PRF__65536?? OK
 
 jam_enum_lset_short:
 
