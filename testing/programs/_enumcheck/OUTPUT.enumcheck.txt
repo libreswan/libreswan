@@ -3018,122 +3018,122 @@
          match YES [short]: OK
 
   ikev2_trans_type_integ_names: [0..15)
-    0 -> AUTH_NONE
-         jam_enum 0: AUTH_NONE OK
-         search AUTH_NONE: OK
-         match AUTH_NONE: OK
+    0 -> IKEv2_INTEG_NONE
+         jam_enum 0: IKEv2_INTEG_NONE OK
+         search IKEv2_INTEG_NONE: OK
+         match IKEv2_INTEG_NONE: OK
          short_name 0: NONE OK
          jam_enum_short 0: NONE OK
          jam_enum_human 0: none OK
          match NONE [short]: OK
-    1 -> AUTH_HMAC_MD5_96
-         jam_enum 1: AUTH_HMAC_MD5_96 OK
-         search AUTH_HMAC_MD5_96: OK
-         match AUTH_HMAC_MD5_96: OK
+    1 -> IKEv2_INTEG_HMAC_MD5_96
+         jam_enum 1: IKEv2_INTEG_HMAC_MD5_96 OK
+         search IKEv2_INTEG_HMAC_MD5_96: OK
+         match IKEv2_INTEG_HMAC_MD5_96: OK
          short_name 1: HMAC_MD5_96 OK
          jam_enum_short 1: HMAC_MD5_96 OK
          jam_enum_human 1: hmac-md5-96 OK
          match HMAC_MD5_96 [short]: OK
-    2 -> AUTH_HMAC_SHA1_96
-         jam_enum 2: AUTH_HMAC_SHA1_96 OK
-         search AUTH_HMAC_SHA1_96: OK
-         match AUTH_HMAC_SHA1_96: OK
+    2 -> IKEv2_INTEG_HMAC_SHA1_96
+         jam_enum 2: IKEv2_INTEG_HMAC_SHA1_96 OK
+         search IKEv2_INTEG_HMAC_SHA1_96: OK
+         match IKEv2_INTEG_HMAC_SHA1_96: OK
          short_name 2: HMAC_SHA1_96 OK
          jam_enum_short 2: HMAC_SHA1_96 OK
          jam_enum_human 2: hmac-sha1-96 OK
          match HMAC_SHA1_96 [short]: OK
-    3 -> AUTH_DES_MAC
-         jam_enum 3: AUTH_DES_MAC OK
-         search AUTH_DES_MAC: OK
-         match AUTH_DES_MAC: OK
+    3 -> IKEv2_INTEG_DES_MAC
+         jam_enum 3: IKEv2_INTEG_DES_MAC OK
+         search IKEv2_INTEG_DES_MAC: OK
+         match IKEv2_INTEG_DES_MAC: OK
          short_name 3: DES_MAC OK
          jam_enum_short 3: DES_MAC OK
          jam_enum_human 3: des-mac OK
          match DES_MAC [short]: OK
-    4 -> AUTH_KPDK_MD5
-         jam_enum 4: AUTH_KPDK_MD5 OK
-         search AUTH_KPDK_MD5: OK
-         match AUTH_KPDK_MD5: OK
+    4 -> IKEv2_INTEG_KPDK_MD5
+         jam_enum 4: IKEv2_INTEG_KPDK_MD5 OK
+         search IKEv2_INTEG_KPDK_MD5: OK
+         match IKEv2_INTEG_KPDK_MD5: OK
          short_name 4: KPDK_MD5 OK
          jam_enum_short 4: KPDK_MD5 OK
          jam_enum_human 4: kpdk-md5 OK
          match KPDK_MD5 [short]: OK
-    5 -> AUTH_AES_XCBC_96
-         jam_enum 5: AUTH_AES_XCBC_96 OK
-         search AUTH_AES_XCBC_96: OK
-         match AUTH_AES_XCBC_96: OK
+    5 -> IKEv2_INTEG_AES_XCBC_96
+         jam_enum 5: IKEv2_INTEG_AES_XCBC_96 OK
+         search IKEv2_INTEG_AES_XCBC_96: OK
+         match IKEv2_INTEG_AES_XCBC_96: OK
          short_name 5: AES_XCBC_96 OK
          jam_enum_short 5: AES_XCBC_96 OK
          jam_enum_human 5: aes-xcbc-96 OK
          match AES_XCBC_96 [short]: OK
-    6 -> AUTH_HMAC_MD5_128
-         jam_enum 6: AUTH_HMAC_MD5_128 OK
-         search AUTH_HMAC_MD5_128: OK
-         match AUTH_HMAC_MD5_128: OK
+    6 -> IKEv2_INTEG_HMAC_MD5_128
+         jam_enum 6: IKEv2_INTEG_HMAC_MD5_128 OK
+         search IKEv2_INTEG_HMAC_MD5_128: OK
+         match IKEv2_INTEG_HMAC_MD5_128: OK
          short_name 6: HMAC_MD5_128 OK
          jam_enum_short 6: HMAC_MD5_128 OK
          jam_enum_human 6: hmac-md5-128 OK
          match HMAC_MD5_128 [short]: OK
-    7 -> AUTH_HMAC_SHA1_160
-         jam_enum 7: AUTH_HMAC_SHA1_160 OK
-         search AUTH_HMAC_SHA1_160: OK
-         match AUTH_HMAC_SHA1_160: OK
+    7 -> IKEv2_INTEG_HMAC_SHA1_160
+         jam_enum 7: IKEv2_INTEG_HMAC_SHA1_160 OK
+         search IKEv2_INTEG_HMAC_SHA1_160: OK
+         match IKEv2_INTEG_HMAC_SHA1_160: OK
          short_name 7: HMAC_SHA1_160 OK
          jam_enum_short 7: HMAC_SHA1_160 OK
          jam_enum_human 7: hmac-sha1-160 OK
          match HMAC_SHA1_160 [short]: OK
-    8 -> AUTH_AES_CMAC_96
-         jam_enum 8: AUTH_AES_CMAC_96 OK
-         search AUTH_AES_CMAC_96: OK
-         match AUTH_AES_CMAC_96: OK
+    8 -> IKEv2_INTEG_AES_CMAC_96
+         jam_enum 8: IKEv2_INTEG_AES_CMAC_96 OK
+         search IKEv2_INTEG_AES_CMAC_96: OK
+         match IKEv2_INTEG_AES_CMAC_96: OK
          short_name 8: AES_CMAC_96 OK
          jam_enum_short 8: AES_CMAC_96 OK
          jam_enum_human 8: aes-cmac-96 OK
          match AES_CMAC_96 [short]: OK
-    9 -> AUTH_AES_128_GMAC
-         jam_enum 9: AUTH_AES_128_GMAC OK
-         search AUTH_AES_128_GMAC: OK
-         match AUTH_AES_128_GMAC: OK
+    9 -> IKEv2_INTEG_AES_128_GMAC
+         jam_enum 9: IKEv2_INTEG_AES_128_GMAC OK
+         search IKEv2_INTEG_AES_128_GMAC: OK
+         match IKEv2_INTEG_AES_128_GMAC: OK
          short_name 9: AES_128_GMAC OK
          jam_enum_short 9: AES_128_GMAC OK
          jam_enum_human 9: aes-128-gmac OK
          match AES_128_GMAC [short]: OK
-   10 -> AUTH_AES_192_GMAC
-         jam_enum 10: AUTH_AES_192_GMAC OK
-         search AUTH_AES_192_GMAC: OK
-         match AUTH_AES_192_GMAC: OK
+   10 -> IKEv2_INTEG_AES_192_GMAC
+         jam_enum 10: IKEv2_INTEG_AES_192_GMAC OK
+         search IKEv2_INTEG_AES_192_GMAC: OK
+         match IKEv2_INTEG_AES_192_GMAC: OK
          short_name 10: AES_192_GMAC OK
          jam_enum_short 10: AES_192_GMAC OK
          jam_enum_human 10: aes-192-gmac OK
          match AES_192_GMAC [short]: OK
-   11 -> AUTH_AES_256_GMAC
-         jam_enum 11: AUTH_AES_256_GMAC OK
-         search AUTH_AES_256_GMAC: OK
-         match AUTH_AES_256_GMAC: OK
+   11 -> IKEv2_INTEG_AES_256_GMAC
+         jam_enum 11: IKEv2_INTEG_AES_256_GMAC OK
+         search IKEv2_INTEG_AES_256_GMAC: OK
+         match IKEv2_INTEG_AES_256_GMAC: OK
          short_name 11: AES_256_GMAC OK
          jam_enum_short 11: AES_256_GMAC OK
          jam_enum_human 11: aes-256-gmac OK
          match AES_256_GMAC [short]: OK
-   12 -> AUTH_HMAC_SHA2_256_128
-         jam_enum 12: AUTH_HMAC_SHA2_256_128 OK
-         search AUTH_HMAC_SHA2_256_128: OK
-         match AUTH_HMAC_SHA2_256_128: OK
+   12 -> IKEv2_INTEG_HMAC_SHA2_256_128
+         jam_enum 12: IKEv2_INTEG_HMAC_SHA2_256_128 OK
+         search IKEv2_INTEG_HMAC_SHA2_256_128: OK
+         match IKEv2_INTEG_HMAC_SHA2_256_128: OK
          short_name 12: HMAC_SHA2_256_128 OK
          jam_enum_short 12: HMAC_SHA2_256_128 OK
          jam_enum_human 12: hmac-sha2-256-128 OK
          match HMAC_SHA2_256_128 [short]: OK
-   13 -> AUTH_HMAC_SHA2_384_192
-         jam_enum 13: AUTH_HMAC_SHA2_384_192 OK
-         search AUTH_HMAC_SHA2_384_192: OK
-         match AUTH_HMAC_SHA2_384_192: OK
+   13 -> IKEv2_INTEG_HMAC_SHA2_384_192
+         jam_enum 13: IKEv2_INTEG_HMAC_SHA2_384_192 OK
+         search IKEv2_INTEG_HMAC_SHA2_384_192: OK
+         match IKEv2_INTEG_HMAC_SHA2_384_192: OK
          short_name 13: HMAC_SHA2_384_192 OK
          jam_enum_short 13: HMAC_SHA2_384_192 OK
          jam_enum_human 13: hmac-sha2-384-192 OK
          match HMAC_SHA2_384_192 [short]: OK
-   14 -> AUTH_HMAC_SHA2_512_256
-         jam_enum 14: AUTH_HMAC_SHA2_512_256 OK
-         search AUTH_HMAC_SHA2_512_256: OK
-         match AUTH_HMAC_SHA2_512_256: OK
+   14 -> IKEv2_INTEG_HMAC_SHA2_512_256
+         jam_enum 14: IKEv2_INTEG_HMAC_SHA2_512_256 OK
+         search IKEv2_INTEG_HMAC_SHA2_512_256: OK
+         match IKEv2_INTEG_HMAC_SHA2_512_256: OK
          short_name 14: HMAC_SHA2_512_256 OK
          jam_enum_short 14: HMAC_SHA2_512_256 OK
          jam_enum_human 14: hmac-sha2-512-256 OK
