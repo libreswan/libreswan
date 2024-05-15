@@ -2748,9 +2748,16 @@
          jam_enum_human 3: fqdn OK
          match FQDN [short]: OK
 
-  ikev2_trans_attr_descs: [32782(0)..32783(256))
+  ikev2_trans_attr_descs: [32782..32783)
+  32782 -> IKEv2_KEY_LENGTH
+         jam_enum 32782: IKEv2_KEY_LENGTH OK
+         search IKEv2_KEY_LENGTH: OK
+         match IKEv2_KEY_LENGTH: OK
+         short_name 32782: IKEv2_KEY_LENGTH OK
+         jam_enum_short 32782: IKEv2_KEY_LENGTH OK
+         jam_enum_human 32782: ikev2-key-length OK
 
-  ikev2_trans_type_encr_names: [1(0)..65290(256))
+  ikev2_trans_type_encr_names: [1..65290)
     1 -> IKEv2_ENCR_DES_IV64
          jam_enum 1: IKEv2_ENCR_DES_IV64 OK
          search IKEv2_ENCR_DES_IV64: OK
@@ -2967,6 +2974,30 @@
          jam_enum_short 28: CHACHA20_POLY1305 OK
          jam_enum_human 28: chacha20-poly1305 OK
          match CHACHA20_POLY1305 [short]: OK
+  65004 -> IKEv2_ENCR_SERPENT_CBC
+         jam_enum 65004: IKEv2_ENCR_SERPENT_CBC OK
+         search IKEv2_ENCR_SERPENT_CBC: OK
+         match IKEv2_ENCR_SERPENT_CBC: OK
+         short_name 65004: SERPENT_CBC OK
+         jam_enum_short 65004: SERPENT_CBC OK
+         jam_enum_human 65004: serpent-cbc OK
+         match SERPENT_CBC [short]: OK
+  65005 -> IKEv2_ENCR_TWOFISH_CBC
+         jam_enum 65005: IKEv2_ENCR_TWOFISH_CBC OK
+         search IKEv2_ENCR_TWOFISH_CBC: OK
+         match IKEv2_ENCR_TWOFISH_CBC: OK
+         short_name 65005: TWOFISH_CBC OK
+         jam_enum_short 65005: TWOFISH_CBC OK
+         jam_enum_human 65005: twofish-cbc OK
+         match TWOFISH_CBC [short]: OK
+  65289 -> IKEv2_ENCR_TWOFISH_CBC_SSH
+         jam_enum 65289: IKEv2_ENCR_TWOFISH_CBC_SSH OK
+         search IKEv2_ENCR_TWOFISH_CBC_SSH: OK
+         match IKEv2_ENCR_TWOFISH_CBC_SSH: OK
+         short_name 65289: TWOFISH_CBC_SSH OK
+         jam_enum_short 65289: TWOFISH_CBC_SSH OK
+         jam_enum_human 65289: twofish-cbc-ssh OK
+         match TWOFISH_CBC_SSH [short]: OK
 
   ikev2_trans_type_esn_names: [0..2)
     0 -> IKEv2_ESN_NO
@@ -6038,7 +6069,7 @@
          jam_enum_human 30: unequal-payload-lengths OK
          match UNEQUAL_PAYLOAD_LENGTHS [short]: OK
 
-  v2_notification_names: [1(0)..40961(16384))
+  v2_notification_names: [1..40961)
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
          jam_enum 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
          search v2N_UNSUPPORTED_CRITICAL_PAYLOAD: OK
@@ -6223,6 +6254,486 @@
          jam_enum_short 47: STATE_NOT_FOUND OK
          jam_enum_human 47: state-not-found OK
          match STATE_NOT_FOUND [short]: OK
+  16384 -> v2N_INITIAL_CONTACT
+         jam_enum 16384: v2N_INITIAL_CONTACT OK
+         search v2N_INITIAL_CONTACT: OK
+         match v2N_INITIAL_CONTACT: OK
+         short_name 16384: INITIAL_CONTACT OK
+         jam_enum_short 16384: INITIAL_CONTACT OK
+         jam_enum_human 16384: initial-contact OK
+         match INITIAL_CONTACT [short]: OK
+  16385 -> v2N_SET_WINDOW_SIZE
+         jam_enum 16385: v2N_SET_WINDOW_SIZE OK
+         search v2N_SET_WINDOW_SIZE: OK
+         match v2N_SET_WINDOW_SIZE: OK
+         short_name 16385: SET_WINDOW_SIZE OK
+         jam_enum_short 16385: SET_WINDOW_SIZE OK
+         jam_enum_human 16385: set-window-size OK
+         match SET_WINDOW_SIZE [short]: OK
+  16386 -> v2N_ADDITIONAL_TS_POSSIBLE
+         jam_enum 16386: v2N_ADDITIONAL_TS_POSSIBLE OK
+         search v2N_ADDITIONAL_TS_POSSIBLE: OK
+         match v2N_ADDITIONAL_TS_POSSIBLE: OK
+         short_name 16386: ADDITIONAL_TS_POSSIBLE OK
+         jam_enum_short 16386: ADDITIONAL_TS_POSSIBLE OK
+         jam_enum_human 16386: additional-ts-possible OK
+         match ADDITIONAL_TS_POSSIBLE [short]: OK
+  16387 -> v2N_IPCOMP_SUPPORTED
+         jam_enum 16387: v2N_IPCOMP_SUPPORTED OK
+         search v2N_IPCOMP_SUPPORTED: OK
+         match v2N_IPCOMP_SUPPORTED: OK
+         short_name 16387: IPCOMP_SUPPORTED OK
+         jam_enum_short 16387: IPCOMP_SUPPORTED OK
+         jam_enum_human 16387: ipcomp-supported OK
+         match IPCOMP_SUPPORTED [short]: OK
+  16388 -> v2N_NAT_DETECTION_SOURCE_IP
+         jam_enum 16388: v2N_NAT_DETECTION_SOURCE_IP OK
+         search v2N_NAT_DETECTION_SOURCE_IP: OK
+         match v2N_NAT_DETECTION_SOURCE_IP: OK
+         short_name 16388: NAT_DETECTION_SOURCE_IP OK
+         jam_enum_short 16388: NAT_DETECTION_SOURCE_IP OK
+         jam_enum_human 16388: nat-detection-source-ip OK
+         match NAT_DETECTION_SOURCE_IP [short]: OK
+  16389 -> v2N_NAT_DETECTION_DESTINATION_IP
+         jam_enum 16389: v2N_NAT_DETECTION_DESTINATION_IP OK
+         search v2N_NAT_DETECTION_DESTINATION_IP: OK
+         match v2N_NAT_DETECTION_DESTINATION_IP: OK
+         short_name 16389: NAT_DETECTION_DESTINATION_IP OK
+         jam_enum_short 16389: NAT_DETECTION_DESTINATION_IP OK
+         jam_enum_human 16389: nat-detection-destination-ip OK
+         match NAT_DETECTION_DESTINATION_IP [short]: OK
+  16390 -> v2N_COOKIE
+         jam_enum 16390: v2N_COOKIE OK
+         search v2N_COOKIE: OK
+         match v2N_COOKIE: OK
+         short_name 16390: COOKIE OK
+         jam_enum_short 16390: COOKIE OK
+         jam_enum_human 16390: cookie OK
+         match COOKIE [short]: OK
+  16391 -> v2N_USE_TRANSPORT_MODE
+         jam_enum 16391: v2N_USE_TRANSPORT_MODE OK
+         search v2N_USE_TRANSPORT_MODE: OK
+         match v2N_USE_TRANSPORT_MODE: OK
+         short_name 16391: USE_TRANSPORT_MODE OK
+         jam_enum_short 16391: USE_TRANSPORT_MODE OK
+         jam_enum_human 16391: use-transport-mode OK
+         match USE_TRANSPORT_MODE [short]: OK
+  16392 -> v2N_HTTP_CERT_LOOKUP_SUPPORTED
+         jam_enum 16392: v2N_HTTP_CERT_LOOKUP_SUPPORTED OK
+         search v2N_HTTP_CERT_LOOKUP_SUPPORTED: OK
+         match v2N_HTTP_CERT_LOOKUP_SUPPORTED: OK
+         short_name 16392: HTTP_CERT_LOOKUP_SUPPORTED OK
+         jam_enum_short 16392: HTTP_CERT_LOOKUP_SUPPORTED OK
+         jam_enum_human 16392: http-cert-lookup-supported OK
+         match HTTP_CERT_LOOKUP_SUPPORTED [short]: OK
+  16393 -> v2N_REKEY_SA
+         jam_enum 16393: v2N_REKEY_SA OK
+         search v2N_REKEY_SA: OK
+         match v2N_REKEY_SA: OK
+         short_name 16393: REKEY_SA OK
+         jam_enum_short 16393: REKEY_SA OK
+         jam_enum_human 16393: rekey-sa OK
+         match REKEY_SA [short]: OK
+  16394 -> v2N_ESP_TFC_PADDING_NOT_SUPPORTED
+         jam_enum 16394: v2N_ESP_TFC_PADDING_NOT_SUPPORTED OK
+         search v2N_ESP_TFC_PADDING_NOT_SUPPORTED: OK
+         match v2N_ESP_TFC_PADDING_NOT_SUPPORTED: OK
+         short_name 16394: ESP_TFC_PADDING_NOT_SUPPORTED OK
+         jam_enum_short 16394: ESP_TFC_PADDING_NOT_SUPPORTED OK
+         jam_enum_human 16394: esp-tfc-padding-not-supported OK
+         match ESP_TFC_PADDING_NOT_SUPPORTED [short]: OK
+  16395 -> v2N_NON_FIRST_FRAGMENTS_ALSO
+         jam_enum 16395: v2N_NON_FIRST_FRAGMENTS_ALSO OK
+         search v2N_NON_FIRST_FRAGMENTS_ALSO: OK
+         match v2N_NON_FIRST_FRAGMENTS_ALSO: OK
+         short_name 16395: NON_FIRST_FRAGMENTS_ALSO OK
+         jam_enum_short 16395: NON_FIRST_FRAGMENTS_ALSO OK
+         jam_enum_human 16395: non-first-fragments-also OK
+         match NON_FIRST_FRAGMENTS_ALSO [short]: OK
+  16396 -> v2N_MOBIKE_SUPPORTED
+         jam_enum 16396: v2N_MOBIKE_SUPPORTED OK
+         search v2N_MOBIKE_SUPPORTED: OK
+         match v2N_MOBIKE_SUPPORTED: OK
+         short_name 16396: MOBIKE_SUPPORTED OK
+         jam_enum_short 16396: MOBIKE_SUPPORTED OK
+         jam_enum_human 16396: mobike-supported OK
+         match MOBIKE_SUPPORTED [short]: OK
+  16397 -> v2N_ADDITIONAL_IP4_ADDRESS
+         jam_enum 16397: v2N_ADDITIONAL_IP4_ADDRESS OK
+         search v2N_ADDITIONAL_IP4_ADDRESS: OK
+         match v2N_ADDITIONAL_IP4_ADDRESS: OK
+         short_name 16397: ADDITIONAL_IP4_ADDRESS OK
+         jam_enum_short 16397: ADDITIONAL_IP4_ADDRESS OK
+         jam_enum_human 16397: additional-ip4-address OK
+         match ADDITIONAL_IP4_ADDRESS [short]: OK
+  16398 -> v2N_ADDITIONAL_IP6_ADDRESS
+         jam_enum 16398: v2N_ADDITIONAL_IP6_ADDRESS OK
+         search v2N_ADDITIONAL_IP6_ADDRESS: OK
+         match v2N_ADDITIONAL_IP6_ADDRESS: OK
+         short_name 16398: ADDITIONAL_IP6_ADDRESS OK
+         jam_enum_short 16398: ADDITIONAL_IP6_ADDRESS OK
+         jam_enum_human 16398: additional-ip6-address OK
+         match ADDITIONAL_IP6_ADDRESS [short]: OK
+  16399 -> v2N_NO_ADDITIONAL_ADDRESSES
+         jam_enum 16399: v2N_NO_ADDITIONAL_ADDRESSES OK
+         search v2N_NO_ADDITIONAL_ADDRESSES: OK
+         match v2N_NO_ADDITIONAL_ADDRESSES: OK
+         short_name 16399: NO_ADDITIONAL_ADDRESSES OK
+         jam_enum_short 16399: NO_ADDITIONAL_ADDRESSES OK
+         jam_enum_human 16399: no-additional-addresses OK
+         match NO_ADDITIONAL_ADDRESSES [short]: OK
+  16400 -> v2N_UPDATE_SA_ADDRESSES
+         jam_enum 16400: v2N_UPDATE_SA_ADDRESSES OK
+         search v2N_UPDATE_SA_ADDRESSES: OK
+         match v2N_UPDATE_SA_ADDRESSES: OK
+         short_name 16400: UPDATE_SA_ADDRESSES OK
+         jam_enum_short 16400: UPDATE_SA_ADDRESSES OK
+         jam_enum_human 16400: update-sa-addresses OK
+         match UPDATE_SA_ADDRESSES [short]: OK
+  16401 -> v2N_COOKIE2
+         jam_enum 16401: v2N_COOKIE2 OK
+         search v2N_COOKIE2: OK
+         match v2N_COOKIE2: OK
+         short_name 16401: COOKIE2 OK
+         jam_enum_short 16401: COOKIE2 OK
+         jam_enum_human 16401: cookie2 OK
+         match COOKIE2 [short]: OK
+  16402 -> v2N_NO_NATS_ALLOWED
+         jam_enum 16402: v2N_NO_NATS_ALLOWED OK
+         search v2N_NO_NATS_ALLOWED: OK
+         match v2N_NO_NATS_ALLOWED: OK
+         short_name 16402: NO_NATS_ALLOWED OK
+         jam_enum_short 16402: NO_NATS_ALLOWED OK
+         jam_enum_human 16402: no-nats-allowed OK
+         match NO_NATS_ALLOWED [short]: OK
+  16403 -> v2N_AUTH_LIFETIME
+         jam_enum 16403: v2N_AUTH_LIFETIME OK
+         search v2N_AUTH_LIFETIME: OK
+         match v2N_AUTH_LIFETIME: OK
+         short_name 16403: AUTH_LIFETIME OK
+         jam_enum_short 16403: AUTH_LIFETIME OK
+         jam_enum_human 16403: auth-lifetime OK
+         match AUTH_LIFETIME [short]: OK
+  16404 -> v2N_MULTIPLE_AUTH_SUPPORTED
+         jam_enum 16404: v2N_MULTIPLE_AUTH_SUPPORTED OK
+         search v2N_MULTIPLE_AUTH_SUPPORTED: OK
+         match v2N_MULTIPLE_AUTH_SUPPORTED: OK
+         short_name 16404: MULTIPLE_AUTH_SUPPORTED OK
+         jam_enum_short 16404: MULTIPLE_AUTH_SUPPORTED OK
+         jam_enum_human 16404: multiple-auth-supported OK
+         match MULTIPLE_AUTH_SUPPORTED [short]: OK
+  16405 -> v2N_ANOTHER_AUTH_FOLLOWS
+         jam_enum 16405: v2N_ANOTHER_AUTH_FOLLOWS OK
+         search v2N_ANOTHER_AUTH_FOLLOWS: OK
+         match v2N_ANOTHER_AUTH_FOLLOWS: OK
+         short_name 16405: ANOTHER_AUTH_FOLLOWS OK
+         jam_enum_short 16405: ANOTHER_AUTH_FOLLOWS OK
+         jam_enum_human 16405: another-auth-follows OK
+         match ANOTHER_AUTH_FOLLOWS [short]: OK
+  16406 -> v2N_REDIRECT_SUPPORTED
+         jam_enum 16406: v2N_REDIRECT_SUPPORTED OK
+         search v2N_REDIRECT_SUPPORTED: OK
+         match v2N_REDIRECT_SUPPORTED: OK
+         short_name 16406: REDIRECT_SUPPORTED OK
+         jam_enum_short 16406: REDIRECT_SUPPORTED OK
+         jam_enum_human 16406: redirect-supported OK
+         match REDIRECT_SUPPORTED [short]: OK
+  16407 -> v2N_REDIRECT
+         jam_enum 16407: v2N_REDIRECT OK
+         search v2N_REDIRECT: OK
+         match v2N_REDIRECT: OK
+         short_name 16407: REDIRECT OK
+         jam_enum_short 16407: REDIRECT OK
+         jam_enum_human 16407: redirect OK
+         match REDIRECT [short]: OK
+  16408 -> v2N_REDIRECTED_FROM
+         jam_enum 16408: v2N_REDIRECTED_FROM OK
+         search v2N_REDIRECTED_FROM: OK
+         match v2N_REDIRECTED_FROM: OK
+         short_name 16408: REDIRECTED_FROM OK
+         jam_enum_short 16408: REDIRECTED_FROM OK
+         jam_enum_human 16408: redirected-from OK
+         match REDIRECTED_FROM [short]: OK
+  16409 -> v2N_TICKET_LT_OPAQUE
+         jam_enum 16409: v2N_TICKET_LT_OPAQUE OK
+         search v2N_TICKET_LT_OPAQUE: OK
+         match v2N_TICKET_LT_OPAQUE: OK
+         short_name 16409: TICKET_LT_OPAQUE OK
+         jam_enum_short 16409: TICKET_LT_OPAQUE OK
+         jam_enum_human 16409: ticket-lt-opaque OK
+         match TICKET_LT_OPAQUE [short]: OK
+  16410 -> v2N_TICKET_REQUEST
+         jam_enum 16410: v2N_TICKET_REQUEST OK
+         search v2N_TICKET_REQUEST: OK
+         match v2N_TICKET_REQUEST: OK
+         short_name 16410: TICKET_REQUEST OK
+         jam_enum_short 16410: TICKET_REQUEST OK
+         jam_enum_human 16410: ticket-request OK
+         match TICKET_REQUEST [short]: OK
+  16411 -> v2N_TICKET_ACK
+         jam_enum 16411: v2N_TICKET_ACK OK
+         search v2N_TICKET_ACK: OK
+         match v2N_TICKET_ACK: OK
+         short_name 16411: TICKET_ACK OK
+         jam_enum_short 16411: TICKET_ACK OK
+         jam_enum_human 16411: ticket-ack OK
+         match TICKET_ACK [short]: OK
+  16412 -> v2N_TICKET_NACK
+         jam_enum 16412: v2N_TICKET_NACK OK
+         search v2N_TICKET_NACK: OK
+         match v2N_TICKET_NACK: OK
+         short_name 16412: TICKET_NACK OK
+         jam_enum_short 16412: TICKET_NACK OK
+         jam_enum_human 16412: ticket-nack OK
+         match TICKET_NACK [short]: OK
+  16413 -> v2N_TICKET_OPAQUE
+         jam_enum 16413: v2N_TICKET_OPAQUE OK
+         search v2N_TICKET_OPAQUE: OK
+         match v2N_TICKET_OPAQUE: OK
+         short_name 16413: TICKET_OPAQUE OK
+         jam_enum_short 16413: TICKET_OPAQUE OK
+         jam_enum_human 16413: ticket-opaque OK
+         match TICKET_OPAQUE [short]: OK
+  16414 -> v2N_LINK_ID
+         jam_enum 16414: v2N_LINK_ID OK
+         search v2N_LINK_ID: OK
+         match v2N_LINK_ID: OK
+         short_name 16414: LINK_ID OK
+         jam_enum_short 16414: LINK_ID OK
+         jam_enum_human 16414: link-id OK
+         match LINK_ID [short]: OK
+  16415 -> v2N_USE_WESP_MODE
+         jam_enum 16415: v2N_USE_WESP_MODE OK
+         search v2N_USE_WESP_MODE: OK
+         match v2N_USE_WESP_MODE: OK
+         short_name 16415: USE_WESP_MODE OK
+         jam_enum_short 16415: USE_WESP_MODE OK
+         jam_enum_human 16415: use-wesp-mode OK
+         match USE_WESP_MODE [short]: OK
+  16416 -> v2N_ROHC_SUPPORTED
+         jam_enum 16416: v2N_ROHC_SUPPORTED OK
+         search v2N_ROHC_SUPPORTED: OK
+         match v2N_ROHC_SUPPORTED: OK
+         short_name 16416: ROHC_SUPPORTED OK
+         jam_enum_short 16416: ROHC_SUPPORTED OK
+         jam_enum_human 16416: rohc-supported OK
+         match ROHC_SUPPORTED [short]: OK
+  16417 -> v2N_EAP_ONLY_AUTHENTICATION
+         jam_enum 16417: v2N_EAP_ONLY_AUTHENTICATION OK
+         search v2N_EAP_ONLY_AUTHENTICATION: OK
+         match v2N_EAP_ONLY_AUTHENTICATION: OK
+         short_name 16417: EAP_ONLY_AUTHENTICATION OK
+         jam_enum_short 16417: EAP_ONLY_AUTHENTICATION OK
+         jam_enum_human 16417: eap-only-authentication OK
+         match EAP_ONLY_AUTHENTICATION [short]: OK
+  16418 -> v2N_CHILDLESS_IKEV2_SUPPORTED
+         jam_enum 16418: v2N_CHILDLESS_IKEV2_SUPPORTED OK
+         search v2N_CHILDLESS_IKEV2_SUPPORTED: OK
+         match v2N_CHILDLESS_IKEV2_SUPPORTED: OK
+         short_name 16418: CHILDLESS_IKEV2_SUPPORTED OK
+         jam_enum_short 16418: CHILDLESS_IKEV2_SUPPORTED OK
+         jam_enum_human 16418: childless-ikev2-supported OK
+         match CHILDLESS_IKEV2_SUPPORTED [short]: OK
+  16419 -> v2N_QUICK_CRASH_DETECTION
+         jam_enum 16419: v2N_QUICK_CRASH_DETECTION OK
+         search v2N_QUICK_CRASH_DETECTION: OK
+         match v2N_QUICK_CRASH_DETECTION: OK
+         short_name 16419: QUICK_CRASH_DETECTION OK
+         jam_enum_short 16419: QUICK_CRASH_DETECTION OK
+         jam_enum_human 16419: quick-crash-detection OK
+         match QUICK_CRASH_DETECTION [short]: OK
+  16420 -> v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED
+         jam_enum 16420: v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED OK
+         search v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED: OK
+         match v2N_IKEV2_MESSAGE_ID_SYNC_SUPPORTED: OK
+         short_name 16420: IKEV2_MESSAGE_ID_SYNC_SUPPORTED OK
+         jam_enum_short 16420: IKEV2_MESSAGE_ID_SYNC_SUPPORTED OK
+         jam_enum_human 16420: ikev2-message-id-sync-supported OK
+         match IKEV2_MESSAGE_ID_SYNC_SUPPORTED [short]: OK
+  16421 -> v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED
+         jam_enum 16421: v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
+         search v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED: OK
+         match v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED: OK
+         short_name 16421: IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
+         jam_enum_short 16421: IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
+         jam_enum_human 16421: ipsec-replay-counter-sync-supported OK
+         match IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED [short]: OK
+  16422 -> v2N_IKEV2_MESSAGE_ID_SYNC
+         jam_enum 16422: v2N_IKEV2_MESSAGE_ID_SYNC OK
+         search v2N_IKEV2_MESSAGE_ID_SYNC: OK
+         match v2N_IKEV2_MESSAGE_ID_SYNC: OK
+         short_name 16422: IKEV2_MESSAGE_ID_SYNC OK
+         jam_enum_short 16422: IKEV2_MESSAGE_ID_SYNC OK
+         jam_enum_human 16422: ikev2-message-id-sync OK
+         match IKEV2_MESSAGE_ID_SYNC [short]: OK
+  16423 -> v2N_IPSEC_REPLAY_COUNTER_SYNC
+         jam_enum 16423: v2N_IPSEC_REPLAY_COUNTER_SYNC OK
+         search v2N_IPSEC_REPLAY_COUNTER_SYNC: OK
+         match v2N_IPSEC_REPLAY_COUNTER_SYNC: OK
+         short_name 16423: IPSEC_REPLAY_COUNTER_SYNC OK
+         jam_enum_short 16423: IPSEC_REPLAY_COUNTER_SYNC OK
+         jam_enum_human 16423: ipsec-replay-counter-sync OK
+         match IPSEC_REPLAY_COUNTER_SYNC [short]: OK
+  16424 -> v2N_SECURE_PASSWORD_METHODS
+         jam_enum 16424: v2N_SECURE_PASSWORD_METHODS OK
+         search v2N_SECURE_PASSWORD_METHODS: OK
+         match v2N_SECURE_PASSWORD_METHODS: OK
+         short_name 16424: SECURE_PASSWORD_METHODS OK
+         jam_enum_short 16424: SECURE_PASSWORD_METHODS OK
+         jam_enum_human 16424: secure-password-methods OK
+         match SECURE_PASSWORD_METHODS [short]: OK
+  16425 -> v2N_PSK_PERSIST
+         jam_enum 16425: v2N_PSK_PERSIST OK
+         search v2N_PSK_PERSIST: OK
+         match v2N_PSK_PERSIST: OK
+         short_name 16425: PSK_PERSIST OK
+         jam_enum_short 16425: PSK_PERSIST OK
+         jam_enum_human 16425: psk-persist OK
+         match PSK_PERSIST [short]: OK
+  16426 -> v2N_PSK_CONFIRM
+         jam_enum 16426: v2N_PSK_CONFIRM OK
+         search v2N_PSK_CONFIRM: OK
+         match v2N_PSK_CONFIRM: OK
+         short_name 16426: PSK_CONFIRM OK
+         jam_enum_short 16426: PSK_CONFIRM OK
+         jam_enum_human 16426: psk-confirm OK
+         match PSK_CONFIRM [short]: OK
+  16427 -> v2N_ERX_SUPPORTED
+         jam_enum 16427: v2N_ERX_SUPPORTED OK
+         search v2N_ERX_SUPPORTED: OK
+         match v2N_ERX_SUPPORTED: OK
+         short_name 16427: ERX_SUPPORTED OK
+         jam_enum_short 16427: ERX_SUPPORTED OK
+         jam_enum_human 16427: erx-supported OK
+         match ERX_SUPPORTED [short]: OK
+  16428 -> v2N_IFOM_CAPABILITY
+         jam_enum 16428: v2N_IFOM_CAPABILITY OK
+         search v2N_IFOM_CAPABILITY: OK
+         match v2N_IFOM_CAPABILITY: OK
+         short_name 16428: IFOM_CAPABILITY OK
+         jam_enum_short 16428: IFOM_CAPABILITY OK
+         jam_enum_human 16428: ifom-capability OK
+         match IFOM_CAPABILITY [short]: OK
+  16429 -> v2N_SENDER_REQUEST_ID
+         jam_enum 16429: v2N_SENDER_REQUEST_ID OK
+         search v2N_SENDER_REQUEST_ID: OK
+         match v2N_SENDER_REQUEST_ID: OK
+         short_name 16429: SENDER_REQUEST_ID OK
+         jam_enum_short 16429: SENDER_REQUEST_ID OK
+         jam_enum_human 16429: sender-request-id OK
+         match SENDER_REQUEST_ID [short]: OK
+  16430 -> v2N_IKEV2_FRAGMENTATION_SUPPORTED
+         jam_enum 16430: v2N_IKEV2_FRAGMENTATION_SUPPORTED OK
+         search v2N_IKEV2_FRAGMENTATION_SUPPORTED: OK
+         match v2N_IKEV2_FRAGMENTATION_SUPPORTED: OK
+         short_name 16430: IKEV2_FRAGMENTATION_SUPPORTED OK
+         jam_enum_short 16430: IKEV2_FRAGMENTATION_SUPPORTED OK
+         jam_enum_human 16430: ikev2-fragmentation-supported OK
+         match IKEV2_FRAGMENTATION_SUPPORTED [short]: OK
+  16431 -> v2N_SIGNATURE_HASH_ALGORITHMS
+         jam_enum 16431: v2N_SIGNATURE_HASH_ALGORITHMS OK
+         search v2N_SIGNATURE_HASH_ALGORITHMS: OK
+         match v2N_SIGNATURE_HASH_ALGORITHMS: OK
+         short_name 16431: SIGNATURE_HASH_ALGORITHMS OK
+         jam_enum_short 16431: SIGNATURE_HASH_ALGORITHMS OK
+         jam_enum_human 16431: signature-hash-algorithms OK
+         match SIGNATURE_HASH_ALGORITHMS [short]: OK
+  16432 -> v2N_CLONE_IKE_SA_SUPPORTED
+         jam_enum 16432: v2N_CLONE_IKE_SA_SUPPORTED OK
+         search v2N_CLONE_IKE_SA_SUPPORTED: OK
+         match v2N_CLONE_IKE_SA_SUPPORTED: OK
+         short_name 16432: CLONE_IKE_SA_SUPPORTED OK
+         jam_enum_short 16432: CLONE_IKE_SA_SUPPORTED OK
+         jam_enum_human 16432: clone-ike-sa-supported OK
+         match CLONE_IKE_SA_SUPPORTED [short]: OK
+  16433 -> v2N_CLONE_IKE_SA
+         jam_enum 16433: v2N_CLONE_IKE_SA OK
+         search v2N_CLONE_IKE_SA: OK
+         match v2N_CLONE_IKE_SA: OK
+         short_name 16433: CLONE_IKE_SA OK
+         jam_enum_short 16433: CLONE_IKE_SA OK
+         jam_enum_human 16433: clone-ike-sa OK
+         match CLONE_IKE_SA [short]: OK
+  16434 -> v2N_PUZZLE
+         jam_enum 16434: v2N_PUZZLE OK
+         search v2N_PUZZLE: OK
+         match v2N_PUZZLE: OK
+         short_name 16434: PUZZLE OK
+         jam_enum_short 16434: PUZZLE OK
+         jam_enum_human 16434: puzzle OK
+         match PUZZLE [short]: OK
+  16435 -> v2N_USE_PPK
+         jam_enum 16435: v2N_USE_PPK OK
+         search v2N_USE_PPK: OK
+         match v2N_USE_PPK: OK
+         short_name 16435: USE_PPK OK
+         jam_enum_short 16435: USE_PPK OK
+         jam_enum_human 16435: use-ppk OK
+         match USE_PPK [short]: OK
+  16436 -> v2N_PPK_IDENTITY
+         jam_enum 16436: v2N_PPK_IDENTITY OK
+         search v2N_PPK_IDENTITY: OK
+         match v2N_PPK_IDENTITY: OK
+         short_name 16436: PPK_IDENTITY OK
+         jam_enum_short 16436: PPK_IDENTITY OK
+         jam_enum_human 16436: ppk-identity OK
+         match PPK_IDENTITY [short]: OK
+  16437 -> v2N_NO_PPK_AUTH
+         jam_enum 16437: v2N_NO_PPK_AUTH OK
+         search v2N_NO_PPK_AUTH: OK
+         match v2N_NO_PPK_AUTH: OK
+         short_name 16437: NO_PPK_AUTH OK
+         jam_enum_short 16437: NO_PPK_AUTH OK
+         jam_enum_human 16437: no-ppk-auth OK
+         match NO_PPK_AUTH [short]: OK
+  16438 -> v2N_INTERMEDIATE_EXCHANGE_SUPPORTED
+         jam_enum 16438: v2N_INTERMEDIATE_EXCHANGE_SUPPORTED OK
+         search v2N_INTERMEDIATE_EXCHANGE_SUPPORTED: OK
+         match v2N_INTERMEDIATE_EXCHANGE_SUPPORTED: OK
+         short_name 16438: INTERMEDIATE_EXCHANGE_SUPPORTED OK
+         jam_enum_short 16438: INTERMEDIATE_EXCHANGE_SUPPORTED OK
+         jam_enum_human 16438: intermediate-exchange-supported OK
+         match INTERMEDIATE_EXCHANGE_SUPPORTED [short]: OK
+  16439 -> v2N_IP4_ALLOWED
+         jam_enum 16439: v2N_IP4_ALLOWED OK
+         search v2N_IP4_ALLOWED: OK
+         match v2N_IP4_ALLOWED: OK
+         short_name 16439: IP4_ALLOWED OK
+         jam_enum_short 16439: IP4_ALLOWED OK
+         jam_enum_human 16439: ip4-allowed OK
+         match IP4_ALLOWED [short]: OK
+  16440 -> v2N_IP6_ALLOWED
+         jam_enum 16440: v2N_IP6_ALLOWED OK
+         search v2N_IP6_ALLOWED: OK
+         match v2N_IP6_ALLOWED: OK
+         short_name 16440: IP6_ALLOWED OK
+         jam_enum_short 16440: IP6_ALLOWED OK
+         jam_enum_human 16440: ip6-allowed OK
+         match IP6_ALLOWED [short]: OK
+  16441 -> v2N_ADDITIONAL_KEY_EXCHANGE
+         jam_enum 16441: v2N_ADDITIONAL_KEY_EXCHANGE OK
+         search v2N_ADDITIONAL_KEY_EXCHANGE: OK
+         match v2N_ADDITIONAL_KEY_EXCHANGE: OK
+         short_name 16441: ADDITIONAL_KEY_EXCHANGE OK
+         jam_enum_short 16441: ADDITIONAL_KEY_EXCHANGE OK
+         jam_enum_human 16441: additional-key-exchange OK
+         match ADDITIONAL_KEY_EXCHANGE [short]: OK
+  16442 -> v2N_USE_AGGFRAG
+         jam_enum 16442: v2N_USE_AGGFRAG OK
+         search v2N_USE_AGGFRAG: OK
+         match v2N_USE_AGGFRAG: OK
+         short_name 16442: USE_AGGFRAG OK
+         jam_enum_short 16442: USE_AGGFRAG OK
+         jam_enum_human 16442: use-aggfrag OK
+         match USE_AGGFRAG [short]: OK
+  40960 -> v2N_NULL_AUTH
+         jam_enum 40960: v2N_NULL_AUTH OK
+         search v2N_NULL_AUTH: OK
+         match v2N_NULL_AUTH: OK
+         short_name 40960: NULL_AUTH OK
+         jam_enum_short 40960: NULL_AUTH OK
+         jam_enum_human 40960: null-auth OK
+         match NULL_AUTH [short]: OK
 
   version_names: [16(0)..33(256))
    16 -> ISAKMP Version 1.0 (rfc2407)
