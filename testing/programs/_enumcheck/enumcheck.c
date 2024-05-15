@@ -382,10 +382,6 @@ int main(int argc UNUSED, char *argv[])
 			test_enums("event_type_names", &event_type_names, clash);
 		} else if (c->enum_names == &ike_id_type_names) {
 			test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
-		} else if (c->enum_names == &ikev2_trans_attr_descs) {
-			test_enum_range("ikev2_trans_attr_descs", &ikev2_trans_attr_descs, 0, 256);
-		} else if (c->enum_names == &ikev2_trans_type_encr_names) {
-			test_enum_range("ikev2_trans_type_encr_names", &ikev2_trans_type_encr_names, 0, 256);
 		} else if (c->enum_names == &ipsec_attr_names) {
 			test_enum_range("ipsec_attr_names", &ipsec_attr_names, 0, 256);
 		} else if (c->enum_names == &modecfg_attr_names) {
@@ -398,8 +394,6 @@ int main(int argc UNUSED, char *argv[])
 			test_enum_range("oakley_enc_names", &oakley_enc_names, 0, 256);
 		} else if (c->enum_names == &v1_notification_names) {
 			test_enum_range("v1_notification_names", &v1_notification_names, 0, 16384);
-		} else if (c->enum_names == &v2_notification_names) {
-			test_enum_range("v2_notification_names", &v2_notification_names, 0, 16384);
 		} else if (c->enum_names == &version_names) {
 			test_enum_range("version_names", &version_names, 0, 256);
 		} else if (c->enum_names == &xauth_attr_names) {
