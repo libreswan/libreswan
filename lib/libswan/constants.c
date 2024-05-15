@@ -2265,105 +2265,99 @@ enum_names ikev2_notify_protocol_id_names = {
 
 /* Transform-type Encryption */
 static const char *const ikev2_trans_type_encr_name_private_use2[] = {
-#define R(E,S) [E - IKEv2_ENCR_TWOFISH_CBC_SSH] = #S
-	R(IKEv2_ENCR_TWOFISH_CBC_SSH, TWOFISH_CBC_SSH),	/* 65289 */
-#undef R
+#define S(E) [E - IKEv2_ENCR_TWOFISH_CBC_SSH] = #E
+	S(IKEv2_ENCR_TWOFISH_CBC_SSH),	/* 65289 */
+#undef S
+};
+
+static enum_names ikev2_trans_type_encr_names_private_use2 = {
+	IKEv2_ENCR_TWOFISH_CBC_SSH,
+	IKEv2_ENCR_TWOFISH_CBC_SSH,
+	ARRAY_REF(ikev2_trans_type_encr_name_private_use2),
+	NULL, /* prefix */
+	NULL
 };
 
 static const char *const ikev2_trans_type_encr_name_private_use1[] = {
 #define S(E) [E - IKEv2_ENCR_SERPENT_CBC] = #E
-#define R(E,S) [E - IKEv2_ENCR_SERPENT_CBC] = #S
-	R(IKEv2_ENCR_SERPENT_CBC, SERPENT_CBC),	/* 65004 */
-	R(IKEv2_ENCR_TWOFISH_CBC, TWOFISH_CBC),
-#undef R
+	S(IKEv2_ENCR_SERPENT_CBC),	/* 65004 */
+	S(IKEv2_ENCR_TWOFISH_CBC),
 #undef S
+};
+
+static enum_names ikev2_trans_type_encr_names_private_use1 = {
+	IKEv2_ENCR_SERPENT_CBC,
+	IKEv2_ENCR_TWOFISH_CBC,
+	ARRAY_REF(ikev2_trans_type_encr_name_private_use1),
+	NULL, /* prefix */
+	&ikev2_trans_type_encr_names_private_use2
 };
 
 static const char *const ikev2_trans_type_encr_name[] = {
 #define S(E) [E - IKEv2_ENCR_DES_IV64] = #E
-#define R(E,S) [E - IKEv2_ENCR_DES_IV64] = #S
-	R(IKEv2_ENCR_DES_IV64, DES_IV64),	/* 1 */
-	R(IKEv2_ENCR_DES, DES),
-	R(IKEv2_ENCR_3DES, 3DES),
-	R(IKEv2_ENCR_RC5, RC5),
-	R(IKEv2_ENCR_IDEA, IDEA),
-	R(IKEv2_ENCR_CAST, CAST),
-	R(IKEv2_ENCR_BLOWFISH, BLOWFISH),
-	R(IKEv2_ENCR_3IDEA, 3IDEA),
-	R(IKEv2_ENCR_DES_IV32, DES_IV32),
-	R(IKEv2_ENCR_RES10, RES10),
-	R(IKEv2_ENCR_NULL, NULL),
-	R(IKEv2_ENCR_AES_CBC, AES_CBC),
-	R(IKEv2_ENCR_AES_CTR, AES_CTR),
-	R(IKEv2_ENCR_AES_CCM_8, AES_CCM_A),	/* AES-CCM_8 RFC 4309 */
-	R(IKEv2_ENCR_AES_CCM_12, AES_CCM_B),	/* AES-CCM_12 */
-	R(IKEv2_ENCR_AES_CCM_16, AES_CCM_C),	/* AES-CCM_16 */
-	R(IKEv2_UNUSED_17, UNASSIGNED),
-	R(IKEv2_ENCR_AES_GCM_8, AES_GCM_A),	/* AES-GCM_8 RFC 4106 */
-	R(IKEv2_ENCR_AES_GCM_12, AES_GCM_B),	/* AES-GCM_12 */
-	R(IKEv2_ENCR_AES_GCM_16, AES_GCM_C),	/* AES-GCM_16 */
-	R(IKEv2_ENCR_NULL_AUTH_AES_GMAC, NULL_AUTH_AES_GMAC),	/* RFC 4543 */
-	R(IKEv2_RESERVED_IEEE_P1619_XTS_AES, RESERVED_FOR_IEEE_P1619_XTS_AES),
-	R(IKEv2_ENCR_CAMELLIA_CBC, CAMELLIA_CBC),	/* RFC 5529 */
-	R(IKEv2_ENCR_CAMELLIA_CTR, CAMELLIA_CTR),	/* RFC 5529 */
-	R(IKEv2_ENCR_CAMELLIA_CCM_A, CAMELLIA_CCM_A),	/* CAMELLIA_CCM_8 RFC 5529 */
-	R(IKEv2_ENCR_CAMELLIA_CCM_B, CAMELLIA_CCM_B),	/* CAMELLIA_CCM_12 RFC 5529 */
-	R(IKEv2_ENCR_CAMELLIA_CCM_C, CAMELLIA_CCM_C),	/* CAMELLIA_CCM_16 RFC 5529 */
-	R(IKEv2_ENCR_CHACHA20_POLY1305, CHACHA20_POLY1305), /* RFC 7634 */
+#define R(E,S) [E - IKEv2_ENCR_DES_IV64] = S
+	S(IKEv2_ENCR_DES_IV64),	/* 1 */
+	S(IKEv2_ENCR_DES),
+	S(IKEv2_ENCR_3DES),
+	S(IKEv2_ENCR_RC5),
+	S(IKEv2_ENCR_IDEA),
+	S(IKEv2_ENCR_CAST),
+	S(IKEv2_ENCR_BLOWFISH),
+	S(IKEv2_ENCR_3IDEA),
+	S(IKEv2_ENCR_DES_IV32),
+	S(IKEv2_ENCR_RES10),
+	S(IKEv2_ENCR_NULL),
+	S(IKEv2_ENCR_AES_CBC),
+	S(IKEv2_ENCR_AES_CTR),
+	R(IKEv2_ENCR_AES_CCM_8, "AES_CCM_A"),	/* AES-CCM_8 RFC 4309 */
+	R(IKEv2_ENCR_AES_CCM_12, "AES_CCM_B"),	/* AES-CCM_12 */
+	R(IKEv2_ENCR_AES_CCM_16, "AES_CCM_C"),	/* AES-CCM_16 */
+	R(IKEv2_UNUSED_17, "UNASSIGNED"),
+	R(IKEv2_ENCR_AES_GCM_8, "AES_GCM_A"),	/* AES-GCM_8 RFC 4106 */
+	R(IKEv2_ENCR_AES_GCM_12, "AES_GCM_B"),	/* AES-GCM_12 */
+	R(IKEv2_ENCR_AES_GCM_16, "AES_GCM_C"),	/* AES-GCM_16 */
+	S(IKEv2_ENCR_NULL_AUTH_AES_GMAC),	/* RFC 4543 */
+	R(IKEv2_RESERVED_IEEE_P1619_XTS_AES, "RESERVED_FOR_IEEE_P1619_XTS_AES"),
+	S(IKEv2_ENCR_CAMELLIA_CBC),		/* RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CTR),		/* RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CCM_A),		/* CAMELLIA_CCM_8 RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CCM_B),		/* CAMELLIA_CCM_12 RFC 5529 */
+	S(IKEv2_ENCR_CAMELLIA_CCM_C),		/* CAMELLIA_CCM_16 RFC 5529 */
+	S(IKEv2_ENCR_CHACHA20_POLY1305), /* RFC 7634 */
 	/* 29 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
 #undef R
 #undef S
 };
 
-static enum_names ikev2_trans_type_encr_names_private_use2 = {
-	OAKLEY_TWOFISH_CBC_SSH,
-	OAKLEY_TWOFISH_CBC_SSH,
-	ARRAY_REF(ikev2_trans_type_encr_name_private_use2),
-	NULL, /* prefix */
-	NULL
-};
-
-static enum_names ikev2_trans_type_encr_names_private_use1 = {
-	OAKLEY_SERPENT_CBC,
-	OAKLEY_TWOFISH_CBC,
-	ARRAY_REF(ikev2_trans_type_encr_name_private_use1),
-	NULL, /* prefix */
-	&ikev2_trans_type_encr_names_private_use2
-};
-
 enum_names ikev2_trans_type_encr_names = {
 	IKEv2_ENCR_DES_IV64,
 	IKEv2_ENCR_CHACHA20_POLY1305,
 	ARRAY_REF(ikev2_trans_type_encr_name),
-	NULL, /* prefix */
+	"IKEv2_ENCR_", /* prefix */
 	&ikev2_trans_type_encr_names_private_use1
 };
 
 /* Transform-type PRF */
 static const char *const ikev2_trans_type_prf_name[] = {
 #define S(E) [E - IKEv2_PRF_HMAC_MD5] = #E
-#define R(E,S) [E - IKEv2_PRF_HMAC_MD5] = #S
-	R(IKEv2_PRF_HMAC_MD5, PRF_HMAC_MD5),
-	R(IKEv2_PRF_HMAC_SHA1, PRF_HMAC_SHA1),
-	R(IKEv2_PRF_HMAC_TIGER, PRF_HMAC_TIGER),
-	R(IKEv2_PRF_AES128_XCBC, PRF_AES128_XCBC),
+	S(IKEv2_PRF_HMAC_MD5),
+	S(IKEv2_PRF_HMAC_SHA1),
+	S(IKEv2_PRF_HMAC_TIGER),
+	S(IKEv2_PRF_AES128_XCBC),
 	/* RFC 4868 Section 4 */
-	R(IKEv2_PRF_HMAC_SHA2_256, PRF_HMAC_SHA2_256),
-	R(IKEv2_PRF_HMAC_SHA2_384, PRF_HMAC_SHA2_384),
-	R(IKEv2_PRF_HMAC_SHA2_512, PRF_HMAC_SHA2_512),
-	R(IKEv2_PRF_AES128_CMAC, PRF_AES128_CMAC)
-#undef R
+	S(IKEv2_PRF_HMAC_SHA2_256),
+	S(IKEv2_PRF_HMAC_SHA2_384),
+	S(IKEv2_PRF_HMAC_SHA2_512),
+	S(IKEv2_PRF_AES128_CMAC)
 #undef S
 };
 
 enum_names ikev2_trans_type_prf_names = {
-#define S(E) [E - DES_IV64] = #E
 	IKEv2_PRF_HMAC_MD5,
 	IKEv2_PRF_AES128_CMAC,
 	ARRAY_REF(ikev2_trans_type_prf_name),
-	"PRF_", /* prefix */
-#undef S
+	"IKEv2_PRF_", /* prefix */
 	NULL
 };
 
