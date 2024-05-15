@@ -2004,13 +2004,6 @@
          short_name 4: IKEv2_INTERNAL_IP4_NBNS OK
          jam_enum_short 4: IKEv2_INTERNAL_IP4_NBNS OK
          jam_enum_human 4: ikev2-internal-ip4-nbns OK
-    5 -> IKEv2_CP_ATTRIBUTE_RESERVED_5
-         jam_enum 5: IKEv2_CP_ATTRIBUTE_RESERVED_5 OK
-         search IKEv2_CP_ATTRIBUTE_RESERVED_5: OK
-         match IKEv2_CP_ATTRIBUTE_RESERVED_5: OK
-         short_name 5: IKEv2_CP_ATTRIBUTE_RESERVED_5 OK
-         jam_enum_short 5: IKEv2_CP_ATTRIBUTE_RESERVED_5 OK
-         jam_enum_human 5: ikev2-cp-attribute-reserved-5 OK
     6 -> IKEv2_INTERNAL_IP4_DHCP
          jam_enum 6: IKEv2_INTERNAL_IP4_DHCP OK
          search IKEv2_INTERNAL_IP4_DHCP: OK
@@ -2032,13 +2025,6 @@
          short_name 8: IKEv2_INTERNAL_IP6_ADDRESS OK
          jam_enum_short 8: IKEv2_INTERNAL_IP6_ADDRESS OK
          jam_enum_human 8: ikev2-internal-ip6-address OK
-    9 -> IKEv2_CP_ATTRIBUTE_RESERVED_9
-         jam_enum 9: IKEv2_CP_ATTRIBUTE_RESERVED_9 OK
-         search IKEv2_CP_ATTRIBUTE_RESERVED_9: OK
-         match IKEv2_CP_ATTRIBUTE_RESERVED_9: OK
-         short_name 9: IKEv2_CP_ATTRIBUTE_RESERVED_9 OK
-         jam_enum_short 9: IKEv2_CP_ATTRIBUTE_RESERVED_9 OK
-         jam_enum_human 9: ikev2-cp-attribute-reserved-9 OK
    10 -> IKEv2_INTERNAL_IP6_DNS
          jam_enum 10: IKEv2_INTERNAL_IP6_DNS OK
          search IKEv2_INTERNAL_IP6_DNS: OK
@@ -2046,13 +2032,6 @@
          short_name 10: IKEv2_INTERNAL_IP6_DNS OK
          jam_enum_short 10: IKEv2_INTERNAL_IP6_DNS OK
          jam_enum_human 10: ikev2-internal-ip6-dns OK
-   11 -> IKEv2_CP_ATTRIBUTE_RESERVED_11
-         jam_enum 11: IKEv2_CP_ATTRIBUTE_RESERVED_11 OK
-         search IKEv2_CP_ATTRIBUTE_RESERVED_11: OK
-         match IKEv2_CP_ATTRIBUTE_RESERVED_11: OK
-         short_name 11: IKEv2_CP_ATTRIBUTE_RESERVED_11 OK
-         jam_enum_short 11: IKEv2_CP_ATTRIBUTE_RESERVED_11 OK
-         jam_enum_human 11: ikev2-cp-attribute-reserved-11 OK
    12 -> IKEv2_INTERNAL_IP6_DHCP
          jam_enum 12: IKEv2_INTERNAL_IP6_DHCP OK
          search IKEv2_INTERNAL_IP6_DHCP: OK
@@ -2830,14 +2809,6 @@
          jam_enum_short 9: DES_IV32 OK
          jam_enum_human 9: des-iv32 OK
          match DES_IV32 [short]: OK
-   10 -> IKEv2_ENCR_RES10
-         jam_enum 10: IKEv2_ENCR_RES10 OK
-         search IKEv2_ENCR_RES10: OK
-         match IKEv2_ENCR_RES10: OK
-         short_name 10: RES10 OK
-         jam_enum_short 10: RES10 OK
-         jam_enum_human 10: res10 OK
-         match RES10 [short]: OK
    11 -> IKEv2_ENCR_NULL
          jam_enum 11: IKEv2_ENCR_NULL OK
          search IKEv2_ENCR_NULL: OK
@@ -2886,13 +2857,6 @@
          jam_enum_short 16: AES_CCM_16 OK
          jam_enum_human 16: aes-ccm-16 OK
          match AES_CCM_16 [short]: OK
-   17 -> UNASSIGNED
-         jam_enum 17: UNASSIGNED OK
-         search UNASSIGNED: OK
-         match UNASSIGNED: OK
-         short_name 17: UNASSIGNED OK
-         jam_enum_short 17: UNASSIGNED OK
-         jam_enum_human 17: unassigned OK
    18 -> IKEv2_ENCR_AES_GCM_8
          jam_enum 18: IKEv2_ENCR_AES_GCM_8 OK
          search IKEv2_ENCR_AES_GCM_8: OK
@@ -2925,13 +2889,6 @@
          jam_enum_short 21: NULL_AUTH_AES_GMAC OK
          jam_enum_human 21: null-auth-aes-gmac OK
          match NULL_AUTH_AES_GMAC [short]: OK
-   22 -> RESERVED_FOR_IEEE_P1619_XTS_AES
-         jam_enum 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
-         search RESERVED_FOR_IEEE_P1619_XTS_AES: OK
-         match RESERVED_FOR_IEEE_P1619_XTS_AES: OK
-         short_name 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
-         jam_enum_short 22: RESERVED_FOR_IEEE_P1619_XTS_AES OK
-         jam_enum_human 22: reserved-for-ieee-p1619-xts-aes OK
    23 -> IKEv2_ENCR_CAMELLIA_CBC
          jam_enum 23: IKEv2_ENCR_CAMELLIA_CBC OK
          search IKEv2_ENCR_CAMELLIA_CBC: OK
