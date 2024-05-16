@@ -236,5 +236,4 @@ KVM_FEDORA_DEBUGINFO_PACKAGES += \
 	sqlite-libs-debuginfo \
 	unbound-libs-debuginfo \
 	xz-libs-debuginfo \
-	zlib-debuginfo \
 	$(NULL)
