@@ -1257,8 +1257,7 @@
          jam_enum_human 10: x509-attribute OK
          match X509_ATTRIBUTE [short]: OK
 
-  ike_id_type_names: [0(-10)..14(256))
-   -1 -> %fromcert
+  ike_id_type_names: [0..14)
     0 -> %none
          jam_enum 0: %none OK
          search %none: OK
@@ -1357,6 +1356,7 @@
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
          jam_enum_human 13: id-null OK
+name for -1 present (should be absent)
 
   ikev1_exchange_names: [0..34)
     0 -> ISAKMP_XCHG_NONE
@@ -1524,6 +1524,113 @@
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
          jam_enum_human 13: id-null OK
+
+  ikev1_ipsec_attr_names: [1..32002)
+    1 -> SA_LIFE_TYPE
+         jam_enum 1: SA_LIFE_TYPE OK
+         search SA_LIFE_TYPE: OK
+         match SA_LIFE_TYPE: OK
+         short_name 1: SA_LIFE_TYPE OK
+         jam_enum_short 1: SA_LIFE_TYPE OK
+         jam_enum_human 1: sa-life-type OK
+    2 -> SA_LIFE_DURATION
+         jam_enum 2: SA_LIFE_DURATION OK
+         search SA_LIFE_DURATION: OK
+         match SA_LIFE_DURATION: OK
+         short_name 2: SA_LIFE_DURATION OK
+         jam_enum_short 2: SA_LIFE_DURATION OK
+         jam_enum_human 2: sa-life-duration OK
+    3 -> GROUP_DESCRIPTION
+         jam_enum 3: GROUP_DESCRIPTION OK
+         search GROUP_DESCRIPTION: OK
+         match GROUP_DESCRIPTION: OK
+         short_name 3: GROUP_DESCRIPTION OK
+         jam_enum_short 3: GROUP_DESCRIPTION OK
+         jam_enum_human 3: group-description OK
+    4 -> ENCAPSULATION_MODE
+         jam_enum 4: ENCAPSULATION_MODE OK
+         search ENCAPSULATION_MODE: OK
+         match ENCAPSULATION_MODE: OK
+         short_name 4: ENCAPSULATION_MODE OK
+         jam_enum_short 4: ENCAPSULATION_MODE OK
+         jam_enum_human 4: encapsulation-mode OK
+    5 -> AUTH_ALGORITHM
+         jam_enum 5: AUTH_ALGORITHM OK
+         search AUTH_ALGORITHM: OK
+         match AUTH_ALGORITHM: OK
+         short_name 5: AUTH_ALGORITHM OK
+         jam_enum_short 5: AUTH_ALGORITHM OK
+         jam_enum_human 5: auth-algorithm OK
+    6 -> KEY_LENGTH
+         jam_enum 6: KEY_LENGTH OK
+         search KEY_LENGTH: OK
+         match KEY_LENGTH: OK
+         short_name 6: KEY_LENGTH OK
+         jam_enum_short 6: KEY_LENGTH OK
+         jam_enum_human 6: key-length OK
+    7 -> KEY_ROUNDS
+         jam_enum 7: KEY_ROUNDS OK
+         search KEY_ROUNDS: OK
+         match KEY_ROUNDS: OK
+         short_name 7: KEY_ROUNDS OK
+         jam_enum_short 7: KEY_ROUNDS OK
+         jam_enum_human 7: key-rounds OK
+    8 -> COMPRESS_DICT_SIZE
+         jam_enum 8: COMPRESS_DICT_SIZE OK
+         search COMPRESS_DICT_SIZE: OK
+         match COMPRESS_DICT_SIZE: OK
+         short_name 8: COMPRESS_DICT_SIZE OK
+         jam_enum_short 8: COMPRESS_DICT_SIZE OK
+         jam_enum_human 8: compress-dict-size OK
+    9 -> COMPRESS_PRIVATE_ALG
+         jam_enum 9: COMPRESS_PRIVATE_ALG OK
+         search COMPRESS_PRIVATE_ALG: OK
+         match COMPRESS_PRIVATE_ALG: OK
+         short_name 9: COMPRESS_PRIVATE_ALG OK
+         jam_enum_short 9: COMPRESS_PRIVATE_ALG OK
+         jam_enum_human 9: compress-private-alg OK
+   10 -> ECN_TUNNEL
+         jam_enum 10: ECN_TUNNEL OK
+         search ECN_TUNNEL: OK
+         match ECN_TUNNEL: OK
+         short_name 10: ECN_TUNNEL OK
+         jam_enum_short 10: ECN_TUNNEL OK
+         jam_enum_human 10: ecn-tunnel OK
+   11 -> ESN_64BIT_SEQNUM
+         jam_enum 11: ESN_64BIT_SEQNUM OK
+         search ESN_64BIT_SEQNUM: OK
+         match ESN_64BIT_SEQNUM: OK
+         short_name 11: ESN_64BIT_SEQNUM OK
+         jam_enum_short 11: ESN_64BIT_SEQNUM OK
+         jam_enum_human 11: esn-64bit-seqnum OK
+   13 -> SIG_ENC_ALGO_VAL
+         jam_enum 13: SIG_ENC_ALGO_VAL OK
+         search SIG_ENC_ALGO_VAL: OK
+         match SIG_ENC_ALGO_VAL: OK
+         short_name 13: SIG_ENC_ALGO_VAL OK
+         jam_enum_short 13: SIG_ENC_ALGO_VAL OK
+         jam_enum_human 13: sig-enc-algo-val OK
+   14 -> ADDRESS_PRESERVATION
+         jam_enum 14: ADDRESS_PRESERVATION OK
+         search ADDRESS_PRESERVATION: OK
+         match ADDRESS_PRESERVATION: OK
+         short_name 14: ADDRESS_PRESERVATION OK
+         jam_enum_short 14: ADDRESS_PRESERVATION OK
+         jam_enum_human 14: address-preservation OK
+   15 -> SA_DIRECTION
+         jam_enum 15: SA_DIRECTION OK
+         search SA_DIRECTION: OK
+         match SA_DIRECTION: OK
+         short_name 15: SA_DIRECTION OK
+         jam_enum_short 15: SA_DIRECTION OK
+         jam_enum_human 15: sa-direction OK
+  32001 -> SECCTX
+         jam_enum 32001: SECCTX OK
+         search SECCTX: OK
+         match SECCTX: OK
+         short_name 32001: SECCTX OK
+         jam_enum_short 32001: SECCTX OK
+         jam_enum_human 32001: secctx OK
 
   ikev1_payload_names: [0..133)
     0 -> ISAKMP_NEXT_NONE
@@ -3361,7 +3468,7 @@
          jam_enum_short 17: UDP OK
          jam_enum_human 17: udp OK
 
-  ipsec_attr_names: [2(0)..64770(256))
+  ipsec_attr_names: [2..64770)
     2 -> SA_LIFE_DURATION (variable length)
          jam_enum 2: SA_LIFE_DURATION (variable length) OK
          search SA_LIFE_DURATION (variable length): OK
@@ -3378,13 +3485,127 @@
          short_name 9: COMPRESS_PRIVATE_ALG (variable length) OK
          jam_enum_short 9: COMPRESS_PRIVATE_ALG (variable length) OK
          jam_enum_human 9: compress-private-alg (variable length) OK
-   10 -> NULL
-         jam_enum 10: NULL OK
-         search NULL: OK
-         match NULL: OK
-         short_name 10: NULL OK
-         jam_enum_short 10: NULL OK
-         jam_enum_human 10: null OK
+   10 -> ECN_TUNNEL (variable length)
+         jam_enum 10: ECN_TUNNEL (variable length) OK
+         search ECN_TUNNEL (variable length): OK
+         match ECN_TUNNEL (variable length): OK
+         match ECN_TUNNEL  [trunc]: OK
+         short_name 10: ECN_TUNNEL (variable length) OK
+         jam_enum_short 10: ECN_TUNNEL (variable length) OK
+         jam_enum_human 10: ecn-tunnel (variable length) OK
+  32001 -> SECCTX (variable length)
+         jam_enum 32001: SECCTX (variable length) OK
+         search SECCTX (variable length): OK
+         match SECCTX (variable length): OK
+         match SECCTX  [trunc]: OK
+         short_name 32001: SECCTX (variable length) OK
+         jam_enum_short 32001: SECCTX (variable length) OK
+         jam_enum_human 32001: secctx (variable length) OK
+  32769 -> SA_LIFE_TYPE
+         jam_enum 32769: SA_LIFE_TYPE OK
+         search SA_LIFE_TYPE: OK
+         match SA_LIFE_TYPE: OK
+         short_name 32769: SA_LIFE_TYPE OK
+         jam_enum_short 32769: SA_LIFE_TYPE OK
+         jam_enum_human 32769: sa-life-type OK
+  32770 -> SA_LIFE_DURATION
+         jam_enum 32770: SA_LIFE_DURATION OK
+         search SA_LIFE_DURATION: OK
+         match SA_LIFE_DURATION: OK
+         short_name 32770: SA_LIFE_DURATION OK
+         jam_enum_short 32770: SA_LIFE_DURATION OK
+         jam_enum_human 32770: sa-life-duration OK
+  32771 -> GROUP_DESCRIPTION
+         jam_enum 32771: GROUP_DESCRIPTION OK
+         search GROUP_DESCRIPTION: OK
+         match GROUP_DESCRIPTION: OK
+         short_name 32771: GROUP_DESCRIPTION OK
+         jam_enum_short 32771: GROUP_DESCRIPTION OK
+         jam_enum_human 32771: group-description OK
+  32772 -> ENCAPSULATION_MODE
+         jam_enum 32772: ENCAPSULATION_MODE OK
+         search ENCAPSULATION_MODE: OK
+         match ENCAPSULATION_MODE: OK
+         short_name 32772: ENCAPSULATION_MODE OK
+         jam_enum_short 32772: ENCAPSULATION_MODE OK
+         jam_enum_human 32772: encapsulation-mode OK
+  32773 -> AUTH_ALGORITHM
+         jam_enum 32773: AUTH_ALGORITHM OK
+         search AUTH_ALGORITHM: OK
+         match AUTH_ALGORITHM: OK
+         short_name 32773: AUTH_ALGORITHM OK
+         jam_enum_short 32773: AUTH_ALGORITHM OK
+         jam_enum_human 32773: auth-algorithm OK
+  32774 -> KEY_LENGTH
+         jam_enum 32774: KEY_LENGTH OK
+         search KEY_LENGTH: OK
+         match KEY_LENGTH: OK
+         short_name 32774: KEY_LENGTH OK
+         jam_enum_short 32774: KEY_LENGTH OK
+         jam_enum_human 32774: key-length OK
+  32775 -> KEY_ROUNDS
+         jam_enum 32775: KEY_ROUNDS OK
+         search KEY_ROUNDS: OK
+         match KEY_ROUNDS: OK
+         short_name 32775: KEY_ROUNDS OK
+         jam_enum_short 32775: KEY_ROUNDS OK
+         jam_enum_human 32775: key-rounds OK
+  32776 -> COMPRESS_DICT_SIZE
+         jam_enum 32776: COMPRESS_DICT_SIZE OK
+         search COMPRESS_DICT_SIZE: OK
+         match COMPRESS_DICT_SIZE: OK
+         short_name 32776: COMPRESS_DICT_SIZE OK
+         jam_enum_short 32776: COMPRESS_DICT_SIZE OK
+         jam_enum_human 32776: compress-dict-size OK
+  32777 -> COMPRESS_PRIVATE_ALG
+         jam_enum 32777: COMPRESS_PRIVATE_ALG OK
+         search COMPRESS_PRIVATE_ALG: OK
+         match COMPRESS_PRIVATE_ALG: OK
+         short_name 32777: COMPRESS_PRIVATE_ALG OK
+         jam_enum_short 32777: COMPRESS_PRIVATE_ALG OK
+         jam_enum_human 32777: compress-private-alg OK
+  32778 -> ECN_TUNNEL
+         jam_enum 32778: ECN_TUNNEL OK
+         search ECN_TUNNEL: OK
+         match ECN_TUNNEL: OK
+         short_name 32778: ECN_TUNNEL OK
+         jam_enum_short 32778: ECN_TUNNEL OK
+         jam_enum_human 32778: ecn-tunnel OK
+  32779 -> ESN_64BIT_SEQNUM
+         jam_enum 32779: ESN_64BIT_SEQNUM OK
+         search ESN_64BIT_SEQNUM: OK
+         match ESN_64BIT_SEQNUM: OK
+         short_name 32779: ESN_64BIT_SEQNUM OK
+         jam_enum_short 32779: ESN_64BIT_SEQNUM OK
+         jam_enum_human 32779: esn-64bit-seqnum OK
+  32781 -> SIG_ENC_ALGO_VAL
+         jam_enum 32781: SIG_ENC_ALGO_VAL OK
+         search SIG_ENC_ALGO_VAL: OK
+         match SIG_ENC_ALGO_VAL: OK
+         short_name 32781: SIG_ENC_ALGO_VAL OK
+         jam_enum_short 32781: SIG_ENC_ALGO_VAL OK
+         jam_enum_human 32781: sig-enc-algo-val OK
+  32782 -> ADDRESS_PRESERVATION
+         jam_enum 32782: ADDRESS_PRESERVATION OK
+         search ADDRESS_PRESERVATION: OK
+         match ADDRESS_PRESERVATION: OK
+         short_name 32782: ADDRESS_PRESERVATION OK
+         jam_enum_short 32782: ADDRESS_PRESERVATION OK
+         jam_enum_human 32782: address-preservation OK
+  32783 -> SA_DIRECTION
+         jam_enum 32783: SA_DIRECTION OK
+         search SA_DIRECTION: OK
+         match SA_DIRECTION: OK
+         short_name 32783: SA_DIRECTION OK
+         jam_enum_short 32783: SA_DIRECTION OK
+         jam_enum_human 32783: sa-direction OK
+  64769 -> SECCTX
+         jam_enum 64769: SECCTX OK
+         search SECCTX: OK
+         match SECCTX: OK
+         short_name 64769: SECCTX OK
+         jam_enum_short 64769: SECCTX OK
+         jam_enum_human 64769: secctx OK
 
   ipsec_ipcomp_algo_names: [0..5)
     0 -> IPCOMP_NONE
@@ -3881,7 +4102,7 @@
          jam_enum_human 2: response OK
          match RESPONSE [short]: OK
 
-  modecfg_attr_names: [1(0)..28684(256))
+  modecfg_attr_names: [1..28684)
     1 -> INTERNAL_IP4_ADDRESS
          jam_enum 1: INTERNAL_IP4_ADDRESS OK
          search INTERNAL_IP4_ADDRESS: OK
@@ -4015,6 +4236,176 @@
          short_name 19: HOME_AGENT_ADDRESS OK
          jam_enum_short 19: HOME_AGENT_ADDRESS OK
          jam_enum_human 19: home-agent-address OK
+  16520 -> XAUTH-TYPE
+         jam_enum 16520: XAUTH-TYPE OK
+         search XAUTH-TYPE: OK
+         match XAUTH-TYPE: OK
+         short_name 16520: XAUTH-TYPE OK
+         jam_enum_short 16520: XAUTH-TYPE OK
+         jam_enum_human 16520: xauth-type OK
+  16521 -> XAUTH-USER-NAME
+         jam_enum 16521: XAUTH-USER-NAME OK
+         search XAUTH-USER-NAME: OK
+         match XAUTH-USER-NAME: OK
+         short_name 16521: XAUTH-USER-NAME OK
+         jam_enum_short 16521: XAUTH-USER-NAME OK
+         jam_enum_human 16521: xauth-user-name OK
+  16522 -> XAUTH-USER-PASSWORD
+         jam_enum 16522: XAUTH-USER-PASSWORD OK
+         search XAUTH-USER-PASSWORD: OK
+         match XAUTH-USER-PASSWORD: OK
+         short_name 16522: XAUTH-USER-PASSWORD OK
+         jam_enum_short 16522: XAUTH-USER-PASSWORD OK
+         jam_enum_human 16522: xauth-user-password OK
+  16523 -> XAUTH-PASSCODE
+         jam_enum 16523: XAUTH-PASSCODE OK
+         search XAUTH-PASSCODE: OK
+         match XAUTH-PASSCODE: OK
+         short_name 16523: XAUTH-PASSCODE OK
+         jam_enum_short 16523: XAUTH-PASSCODE OK
+         jam_enum_human 16523: xauth-passcode OK
+  16524 -> XAUTH-MESSAGE
+         jam_enum 16524: XAUTH-MESSAGE OK
+         search XAUTH-MESSAGE: OK
+         match XAUTH-MESSAGE: OK
+         short_name 16524: XAUTH-MESSAGE OK
+         jam_enum_short 16524: XAUTH-MESSAGE OK
+         jam_enum_human 16524: xauth-message OK
+  16525 -> XAUTH-CHALLENGE
+         jam_enum 16525: XAUTH-CHALLENGE OK
+         search XAUTH-CHALLENGE: OK
+         match XAUTH-CHALLENGE: OK
+         short_name 16525: XAUTH-CHALLENGE OK
+         jam_enum_short 16525: XAUTH-CHALLENGE OK
+         jam_enum_human 16525: xauth-challenge OK
+  16526 -> XAUTH-DOMAIN
+         jam_enum 16526: XAUTH-DOMAIN OK
+         search XAUTH-DOMAIN: OK
+         match XAUTH-DOMAIN: OK
+         short_name 16526: XAUTH-DOMAIN OK
+         jam_enum_short 16526: XAUTH-DOMAIN OK
+         jam_enum_human 16526: xauth-domain OK
+  16527 -> XAUTH-STATUS
+         jam_enum 16527: XAUTH-STATUS OK
+         search XAUTH-STATUS: OK
+         match XAUTH-STATUS: OK
+         short_name 16527: XAUTH-STATUS OK
+         jam_enum_short 16527: XAUTH-STATUS OK
+         jam_enum_human 16527: xauth-status OK
+  16528 -> XAUTH-NEXT-PIN
+         jam_enum 16528: XAUTH-NEXT-PIN OK
+         search XAUTH-NEXT-PIN: OK
+         match XAUTH-NEXT-PIN: OK
+         short_name 16528: XAUTH-NEXT-PIN OK
+         jam_enum_short 16528: XAUTH-NEXT-PIN OK
+         jam_enum_human 16528: xauth-next-pin OK
+  16529 -> XAUTH-ANSWER
+         jam_enum 16529: XAUTH-ANSWER OK
+         search XAUTH-ANSWER: OK
+         match XAUTH-ANSWER: OK
+         short_name 16529: XAUTH-ANSWER OK
+         jam_enum_short 16529: XAUTH-ANSWER OK
+         jam_enum_human 16529: xauth-answer OK
+  23456 -> IKEv1_INTERNAL_IP4_SERVER
+         jam_enum 23456: IKEv1_INTERNAL_IP4_SERVER OK
+         search IKEv1_INTERNAL_IP4_SERVER: OK
+         match IKEv1_INTERNAL_IP4_SERVER: OK
+         short_name 23456: INTERNAL_IP4_SERVER OK
+         jam_enum_short 23456: INTERNAL_IP4_SERVER OK
+         jam_enum_human 23456: internal-ip4-server OK
+         match INTERNAL_IP4_SERVER [short]: OK
+  23457 -> IKEv1_INTERNAL_IP6_SERVER
+         jam_enum 23457: IKEv1_INTERNAL_IP6_SERVER OK
+         search IKEv1_INTERNAL_IP6_SERVER: OK
+         match IKEv1_INTERNAL_IP6_SERVER: OK
+         short_name 23457: INTERNAL_IP6_SERVER OK
+         jam_enum_short 23457: INTERNAL_IP6_SERVER OK
+         jam_enum_human 23457: internal-ip6-server OK
+         match INTERNAL_IP6_SERVER [short]: OK
+  28672 -> MODECFG_BANNER
+         jam_enum 28672: MODECFG_BANNER OK
+         search MODECFG_BANNER: OK
+         match MODECFG_BANNER: OK
+         short_name 28672: MODECFG_BANNER OK
+         jam_enum_short 28672: MODECFG_BANNER OK
+         jam_enum_human 28672: modecfg-banner OK
+  28673 -> CISCO_SAVE_PW
+         jam_enum 28673: CISCO_SAVE_PW OK
+         search CISCO_SAVE_PW: OK
+         match CISCO_SAVE_PW: OK
+         short_name 28673: CISCO_SAVE_PW OK
+         jam_enum_short 28673: CISCO_SAVE_PW OK
+         jam_enum_human 28673: cisco-save-pw OK
+  28674 -> MODECFG_DOMAIN
+         jam_enum 28674: MODECFG_DOMAIN OK
+         search MODECFG_DOMAIN: OK
+         match MODECFG_DOMAIN: OK
+         short_name 28674: MODECFG_DOMAIN OK
+         jam_enum_short 28674: MODECFG_DOMAIN OK
+         jam_enum_human 28674: modecfg-domain OK
+  28675 -> CISCO_SPLIT_DNS
+         jam_enum 28675: CISCO_SPLIT_DNS OK
+         search CISCO_SPLIT_DNS: OK
+         match CISCO_SPLIT_DNS: OK
+         short_name 28675: CISCO_SPLIT_DNS OK
+         jam_enum_short 28675: CISCO_SPLIT_DNS OK
+         jam_enum_human 28675: cisco-split-dns OK
+  28676 -> CISCO_SPLIT_INC
+         jam_enum 28676: CISCO_SPLIT_INC OK
+         search CISCO_SPLIT_INC: OK
+         match CISCO_SPLIT_INC: OK
+         short_name 28676: CISCO_SPLIT_INC OK
+         jam_enum_short 28676: CISCO_SPLIT_INC OK
+         jam_enum_human 28676: cisco-split-inc OK
+  28677 -> CISCO_UDP_ENCAP_PORT
+         jam_enum 28677: CISCO_UDP_ENCAP_PORT OK
+         search CISCO_UDP_ENCAP_PORT: OK
+         match CISCO_UDP_ENCAP_PORT: OK
+         short_name 28677: CISCO_UDP_ENCAP_PORT OK
+         jam_enum_short 28677: CISCO_UDP_ENCAP_PORT OK
+         jam_enum_human 28677: cisco-udp-encap-port OK
+  28678 -> CISCO_SPLIT_EXCLUDE
+         jam_enum 28678: CISCO_SPLIT_EXCLUDE OK
+         search CISCO_SPLIT_EXCLUDE: OK
+         match CISCO_SPLIT_EXCLUDE: OK
+         short_name 28678: CISCO_SPLIT_EXCLUDE OK
+         jam_enum_short 28678: CISCO_SPLIT_EXCLUDE OK
+         jam_enum_human 28678: cisco-split-exclude OK
+  28679 -> CISCO_DO_PFS
+         jam_enum 28679: CISCO_DO_PFS OK
+         search CISCO_DO_PFS: OK
+         match CISCO_DO_PFS: OK
+         short_name 28679: CISCO_DO_PFS OK
+         jam_enum_short 28679: CISCO_DO_PFS OK
+         jam_enum_human 28679: cisco-do-pfs OK
+  28680 -> CISCO_FW_TYPE
+         jam_enum 28680: CISCO_FW_TYPE OK
+         search CISCO_FW_TYPE: OK
+         match CISCO_FW_TYPE: OK
+         short_name 28680: CISCO_FW_TYPE OK
+         jam_enum_short 28680: CISCO_FW_TYPE OK
+         jam_enum_human 28680: cisco-fw-type OK
+  28681 -> CISCO_BACKUP_SERVER
+         jam_enum 28681: CISCO_BACKUP_SERVER OK
+         search CISCO_BACKUP_SERVER: OK
+         match CISCO_BACKUP_SERVER: OK
+         short_name 28681: CISCO_BACKUP_SERVER OK
+         jam_enum_short 28681: CISCO_BACKUP_SERVER OK
+         jam_enum_human 28681: cisco-backup-server OK
+  28682 -> CISCO_DDNS_HOSTNAME
+         jam_enum 28682: CISCO_DDNS_HOSTNAME OK
+         search CISCO_DDNS_HOSTNAME: OK
+         match CISCO_DDNS_HOSTNAME: OK
+         short_name 28682: CISCO_DDNS_HOSTNAME OK
+         jam_enum_short 28682: CISCO_DDNS_HOSTNAME OK
+         jam_enum_human 28682: cisco-ddns-hostname OK
+  28683 -> CISCO_UNKNOWN_SEEN_ON_IPHONE
+         jam_enum 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
+         search CISCO_UNKNOWN_SEEN_ON_IPHONE: OK
+         match CISCO_UNKNOWN_SEEN_ON_IPHONE: OK
+         short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
+         jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
+         jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
 
   natt_method_names: [0..6)
     0 -> none
@@ -4175,7 +4566,7 @@
          jam_enum_short 16: OAKLEY_GROUP_ORDER OK
          jam_enum_human 16: oakley-group-order OK
 
-  oakley_attr_names: [6(0)..32785(256))
+  oakley_attr_names: [6..32785)
     6 -> OAKLEY_GROUP_PRIME (variable length)
          jam_enum 6: OAKLEY_GROUP_PRIME (variable length) OK
          search OAKLEY_GROUP_PRIME (variable length): OK
@@ -4232,8 +4623,120 @@
          short_name 16: OAKLEY_GROUP_ORDER (variable length) OK
          jam_enum_short 16: OAKLEY_GROUP_ORDER (variable length) OK
          jam_enum_human 16: oakley-group-order (variable length) OK
+  32769 -> OAKLEY_ENCRYPTION_ALGORITHM
+         jam_enum 32769: OAKLEY_ENCRYPTION_ALGORITHM OK
+         search OAKLEY_ENCRYPTION_ALGORITHM: OK
+         match OAKLEY_ENCRYPTION_ALGORITHM: OK
+         short_name 32769: OAKLEY_ENCRYPTION_ALGORITHM OK
+         jam_enum_short 32769: OAKLEY_ENCRYPTION_ALGORITHM OK
+         jam_enum_human 32769: oakley-encryption-algorithm OK
+  32770 -> OAKLEY_HASH_ALGORITHM
+         jam_enum 32770: OAKLEY_HASH_ALGORITHM OK
+         search OAKLEY_HASH_ALGORITHM: OK
+         match OAKLEY_HASH_ALGORITHM: OK
+         short_name 32770: OAKLEY_HASH_ALGORITHM OK
+         jam_enum_short 32770: OAKLEY_HASH_ALGORITHM OK
+         jam_enum_human 32770: oakley-hash-algorithm OK
+  32771 -> OAKLEY_AUTHENTICATION_METHOD
+         jam_enum 32771: OAKLEY_AUTHENTICATION_METHOD OK
+         search OAKLEY_AUTHENTICATION_METHOD: OK
+         match OAKLEY_AUTHENTICATION_METHOD: OK
+         short_name 32771: OAKLEY_AUTHENTICATION_METHOD OK
+         jam_enum_short 32771: OAKLEY_AUTHENTICATION_METHOD OK
+         jam_enum_human 32771: oakley-authentication-method OK
+  32772 -> OAKLEY_GROUP_DESCRIPTION
+         jam_enum 32772: OAKLEY_GROUP_DESCRIPTION OK
+         search OAKLEY_GROUP_DESCRIPTION: OK
+         match OAKLEY_GROUP_DESCRIPTION: OK
+         short_name 32772: OAKLEY_GROUP_DESCRIPTION OK
+         jam_enum_short 32772: OAKLEY_GROUP_DESCRIPTION OK
+         jam_enum_human 32772: oakley-group-description OK
+  32773 -> OAKLEY_GROUP_TYPE
+         jam_enum 32773: OAKLEY_GROUP_TYPE OK
+         search OAKLEY_GROUP_TYPE: OK
+         match OAKLEY_GROUP_TYPE: OK
+         short_name 32773: OAKLEY_GROUP_TYPE OK
+         jam_enum_short 32773: OAKLEY_GROUP_TYPE OK
+         jam_enum_human 32773: oakley-group-type OK
+  32774 -> OAKLEY_GROUP_PRIME
+         jam_enum 32774: OAKLEY_GROUP_PRIME OK
+         search OAKLEY_GROUP_PRIME: OK
+         match OAKLEY_GROUP_PRIME: OK
+         short_name 32774: OAKLEY_GROUP_PRIME OK
+         jam_enum_short 32774: OAKLEY_GROUP_PRIME OK
+         jam_enum_human 32774: oakley-group-prime OK
+  32775 -> OAKLEY_GROUP_GENERATOR_ONE
+         jam_enum 32775: OAKLEY_GROUP_GENERATOR_ONE OK
+         search OAKLEY_GROUP_GENERATOR_ONE: OK
+         match OAKLEY_GROUP_GENERATOR_ONE: OK
+         short_name 32775: OAKLEY_GROUP_GENERATOR_ONE OK
+         jam_enum_short 32775: OAKLEY_GROUP_GENERATOR_ONE OK
+         jam_enum_human 32775: oakley-group-generator-one OK
+  32776 -> OAKLEY_GROUP_GENERATOR_TWO
+         jam_enum 32776: OAKLEY_GROUP_GENERATOR_TWO OK
+         search OAKLEY_GROUP_GENERATOR_TWO: OK
+         match OAKLEY_GROUP_GENERATOR_TWO: OK
+         short_name 32776: OAKLEY_GROUP_GENERATOR_TWO OK
+         jam_enum_short 32776: OAKLEY_GROUP_GENERATOR_TWO OK
+         jam_enum_human 32776: oakley-group-generator-two OK
+  32777 -> OAKLEY_GROUP_CURVE_A
+         jam_enum 32777: OAKLEY_GROUP_CURVE_A OK
+         search OAKLEY_GROUP_CURVE_A: OK
+         match OAKLEY_GROUP_CURVE_A: OK
+         short_name 32777: OAKLEY_GROUP_CURVE_A OK
+         jam_enum_short 32777: OAKLEY_GROUP_CURVE_A OK
+         jam_enum_human 32777: oakley-group-curve-a OK
+  32778 -> OAKLEY_GROUP_CURVE_B
+         jam_enum 32778: OAKLEY_GROUP_CURVE_B OK
+         search OAKLEY_GROUP_CURVE_B: OK
+         match OAKLEY_GROUP_CURVE_B: OK
+         short_name 32778: OAKLEY_GROUP_CURVE_B OK
+         jam_enum_short 32778: OAKLEY_GROUP_CURVE_B OK
+         jam_enum_human 32778: oakley-group-curve-b OK
+  32779 -> OAKLEY_LIFE_TYPE
+         jam_enum 32779: OAKLEY_LIFE_TYPE OK
+         search OAKLEY_LIFE_TYPE: OK
+         match OAKLEY_LIFE_TYPE: OK
+         short_name 32779: OAKLEY_LIFE_TYPE OK
+         jam_enum_short 32779: OAKLEY_LIFE_TYPE OK
+         jam_enum_human 32779: oakley-life-type OK
+  32780 -> OAKLEY_LIFE_DURATION
+         jam_enum 32780: OAKLEY_LIFE_DURATION OK
+         search OAKLEY_LIFE_DURATION: OK
+         match OAKLEY_LIFE_DURATION: OK
+         short_name 32780: OAKLEY_LIFE_DURATION OK
+         jam_enum_short 32780: OAKLEY_LIFE_DURATION OK
+         jam_enum_human 32780: oakley-life-duration OK
+  32781 -> OAKLEY_PRF
+         jam_enum 32781: OAKLEY_PRF OK
+         search OAKLEY_PRF: OK
+         match OAKLEY_PRF: OK
+         short_name 32781: OAKLEY_PRF OK
+         jam_enum_short 32781: OAKLEY_PRF OK
+         jam_enum_human 32781: oakley-prf OK
+  32782 -> OAKLEY_KEY_LENGTH
+         jam_enum 32782: OAKLEY_KEY_LENGTH OK
+         search OAKLEY_KEY_LENGTH: OK
+         match OAKLEY_KEY_LENGTH: OK
+         short_name 32782: OAKLEY_KEY_LENGTH OK
+         jam_enum_short 32782: OAKLEY_KEY_LENGTH OK
+         jam_enum_human 32782: oakley-key-length OK
+  32783 -> OAKLEY_FIELD_SIZE
+         jam_enum 32783: OAKLEY_FIELD_SIZE OK
+         search OAKLEY_FIELD_SIZE: OK
+         match OAKLEY_FIELD_SIZE: OK
+         short_name 32783: OAKLEY_FIELD_SIZE OK
+         jam_enum_short 32783: OAKLEY_FIELD_SIZE OK
+         jam_enum_human 32783: oakley-field-size OK
+  32784 -> OAKLEY_GROUP_ORDER
+         jam_enum 32784: OAKLEY_GROUP_ORDER OK
+         search OAKLEY_GROUP_ORDER: OK
+         match OAKLEY_GROUP_ORDER: OK
+         short_name 32784: OAKLEY_GROUP_ORDER OK
+         jam_enum_short 32784: OAKLEY_GROUP_ORDER OK
+         jam_enum_human 32784: oakley-group-order OK
 
-  oakley_auth_names: [1(0)..65011(256))
+  oakley_auth_names: [1..65011)
     1 -> OAKLEY_PRESHARED_KEY
          jam_enum 1: OAKLEY_PRESHARED_KEY OK
          search OAKLEY_PRESHARED_KEY: OK
@@ -4298,8 +4801,106 @@
          jam_enum_short 11: ECDSA_P521 OK
          jam_enum_human 11: ecdsa-p521 OK
          match ECDSA_P521 [short]: OK
+  64221 -> HybridInitRSA
+         jam_enum 64221: HybridInitRSA OK
+         search HybridInitRSA: OK
+         match HybridInitRSA: OK
+         short_name 64221: HybridInitRSA OK
+         jam_enum_short 64221: HybridInitRSA OK
+         jam_enum_human 64221: hybridinitrsa OK
+  64222 -> HybridRespRSA
+         jam_enum 64222: HybridRespRSA OK
+         search HybridRespRSA: OK
+         match HybridRespRSA: OK
+         short_name 64222: HybridRespRSA OK
+         jam_enum_short 64222: HybridRespRSA OK
+         jam_enum_human 64222: hybridresprsa OK
+  64223 -> HybridInitDSS
+         jam_enum 64223: HybridInitDSS OK
+         search HybridInitDSS: OK
+         match HybridInitDSS: OK
+         short_name 64223: HybridInitDSS OK
+         jam_enum_short 64223: HybridInitDSS OK
+         jam_enum_human 64223: hybridinitdss OK
+  64224 -> HybridRespDSS
+         jam_enum 64224: HybridRespDSS OK
+         search HybridRespDSS: OK
+         match HybridRespDSS: OK
+         short_name 64224: HybridRespDSS OK
+         jam_enum_short 64224: HybridRespDSS OK
+         jam_enum_human 64224: hybridrespdss OK
+  65001 -> XAUTHInitPreShared
+         jam_enum 65001: XAUTHInitPreShared OK
+         search XAUTHInitPreShared: OK
+         match XAUTHInitPreShared: OK
+         short_name 65001: XAUTHInitPreShared OK
+         jam_enum_short 65001: XAUTHInitPreShared OK
+         jam_enum_human 65001: xauthinitpreshared OK
+  65002 -> XAUTHRespPreShared
+         jam_enum 65002: XAUTHRespPreShared OK
+         search XAUTHRespPreShared: OK
+         match XAUTHRespPreShared: OK
+         short_name 65002: XAUTHRespPreShared OK
+         jam_enum_short 65002: XAUTHRespPreShared OK
+         jam_enum_human 65002: xauthresppreshared OK
+  65003 -> XAUTHInitDSS
+         jam_enum 65003: XAUTHInitDSS OK
+         search XAUTHInitDSS: OK
+         match XAUTHInitDSS: OK
+         short_name 65003: XAUTHInitDSS OK
+         jam_enum_short 65003: XAUTHInitDSS OK
+         jam_enum_human 65003: xauthinitdss OK
+  65004 -> XAUTHRespDSS
+         jam_enum 65004: XAUTHRespDSS OK
+         search XAUTHRespDSS: OK
+         match XAUTHRespDSS: OK
+         short_name 65004: XAUTHRespDSS OK
+         jam_enum_short 65004: XAUTHRespDSS OK
+         jam_enum_human 65004: xauthrespdss OK
+  65005 -> XAUTHInitRSA
+         jam_enum 65005: XAUTHInitRSA OK
+         search XAUTHInitRSA: OK
+         match XAUTHInitRSA: OK
+         short_name 65005: XAUTHInitRSA OK
+         jam_enum_short 65005: XAUTHInitRSA OK
+         jam_enum_human 65005: xauthinitrsa OK
+  65006 -> XAUTHRespRSA
+         jam_enum 65006: XAUTHRespRSA OK
+         search XAUTHRespRSA: OK
+         match XAUTHRespRSA: OK
+         short_name 65006: XAUTHRespRSA OK
+         jam_enum_short 65006: XAUTHRespRSA OK
+         jam_enum_human 65006: xauthresprsa OK
+  65007 -> XAUTHInitRSAEncryption
+         jam_enum 65007: XAUTHInitRSAEncryption OK
+         search XAUTHInitRSAEncryption: OK
+         match XAUTHInitRSAEncryption: OK
+         short_name 65007: XAUTHInitRSAEncryption OK
+         jam_enum_short 65007: XAUTHInitRSAEncryption OK
+         jam_enum_human 65007: xauthinitrsaencryption OK
+  65008 -> XAUTHRespRSAEncryption
+         jam_enum 65008: XAUTHRespRSAEncryption OK
+         search XAUTHRespRSAEncryption: OK
+         match XAUTHRespRSAEncryption: OK
+         short_name 65008: XAUTHRespRSAEncryption OK
+         jam_enum_short 65008: XAUTHRespRSAEncryption OK
+         jam_enum_human 65008: xauthresprsaencryption OK
+  65009 -> XAUTHInitRSARevisedEncryption
+         jam_enum 65009: XAUTHInitRSARevisedEncryption OK
+         search XAUTHInitRSARevisedEncryption: OK
+         match XAUTHInitRSARevisedEncryption: OK
+         short_name 65009: XAUTHInitRSARevisedEncryption OK
+         jam_enum_short 65009: XAUTHInitRSARevisedEncryption OK
+         jam_enum_human 65009: xauthinitrsarevisedencryption OK
+  65010 -> XAUTHRespRSARevisedEncryption
+         jam_enum 65010: XAUTHRespRSARevisedEncryption OK
+         search XAUTHRespRSARevisedEncryption: OK
+         match XAUTHRespRSARevisedEncryption: OK
+         short_name 65010: XAUTHRespRSARevisedEncryption OK
+         jam_enum_short 65010: XAUTHRespRSARevisedEncryption OK
+         jam_enum_human 65010: xauthresprsarevisedencryption OK
 
-  oakley_enc_names: [1(0)..65290(256))
+  oakley_enc_names: [1..65290)
     1 -> OAKLEY_DES_CBC
          jam_enum 1: OAKLEY_DES_CBC OK
          search OAKLEY_DES_CBC: OK
@@ -4452,6 +5053,46 @@
          jam_enum_short 27: CAMELLIA_CCM_16 OK
          jam_enum_human 27: camellia-ccm-16 OK
          match CAMELLIA_CCM_16 [short]: OK
+  65001 -> OAKLEY_MARS_CBC
+         jam_enum 65001: OAKLEY_MARS_CBC OK
+         search OAKLEY_MARS_CBC: OK
+         match OAKLEY_MARS_CBC: OK
+         short_name 65001: MARS_CBC OK
+         jam_enum_short 65001: MARS_CBC OK
+         jam_enum_human 65001: mars-cbc OK
+         match MARS_CBC [short]: OK
+  65002 -> OAKLEY_RC6_CBC
+         jam_enum 65002: OAKLEY_RC6_CBC OK
+         search OAKLEY_RC6_CBC: OK
+         match OAKLEY_RC6_CBC: OK
+         short_name 65002: RC6_CBC OK
+         jam_enum_short 65002: RC6_CBC OK
+         jam_enum_human 65002: rc6-cbc OK
+         match RC6_CBC [short]: OK
+  65004 -> OAKLEY_SERPENT_CBC
+         jam_enum 65004: OAKLEY_SERPENT_CBC OK
+         search OAKLEY_SERPENT_CBC: OK
+         match OAKLEY_SERPENT_CBC: OK
+         short_name 65004: SERPENT_CBC OK
+         jam_enum_short 65004: SERPENT_CBC OK
+         jam_enum_human 65004: serpent-cbc OK
+         match SERPENT_CBC [short]: OK
+  65005 -> OAKLEY_TWOFISH_CBC
+         jam_enum 65005: OAKLEY_TWOFISH_CBC OK
+         search OAKLEY_TWOFISH_CBC: OK
+         match OAKLEY_TWOFISH_CBC: OK
+         short_name 65005: TWOFISH_CBC OK
+         jam_enum_short 65005: TWOFISH_CBC OK
+         jam_enum_human 65005: twofish-cbc OK
+         match TWOFISH_CBC [short]: OK
+  65289 -> OAKLEY_TWOFISH_CBC_SSH
+         jam_enum 65289: OAKLEY_TWOFISH_CBC_SSH OK
+         search OAKLEY_TWOFISH_CBC_SSH: OK
+         match OAKLEY_TWOFISH_CBC_SSH: OK
+         short_name 65289: TWOFISH_CBC_SSH OK
+         jam_enum_short 65289: TWOFISH_CBC_SSH OK
+         jam_enum_human 65289: twofish-cbc-ssh OK
+         match TWOFISH_CBC_SSH [short]: OK
 
   oakley_group_names: [0..33)
     0 -> OAKLEY_GROUP_NONE
@@ -5790,7 +6431,7 @@
          jam_enum_short 9: STF_FAIL_v1N OK
          jam_enum_human 9: stf-fail-v1n OK
 
-  v1_notification_names: [1(0)..40504(16384))
+  v1_notification_names: [1..40504)
     1 -> v1N_INVALID_PAYLOAD_TYPE
          jam_enum 1: v1N_INVALID_PAYLOAD_TYPE OK
          search v1N_INVALID_PAYLOAD_TYPE: OK
@@ -6031,6 +6672,126 @@
          jam_enum_short 30: UNEQUAL_PAYLOAD_LENGTHS OK
          jam_enum_human 30: unequal-payload-lengths OK
          match UNEQUAL_PAYLOAD_LENGTHS [short]: OK
+  16384 -> v1N_CONNECTED
+         jam_enum 16384: v1N_CONNECTED OK
+         search v1N_CONNECTED: OK
+         match v1N_CONNECTED: OK
+         short_name 16384: CONNECTED OK
+         jam_enum_short 16384: CONNECTED OK
+         jam_enum_human 16384: connected OK
+         match CONNECTED [short]: OK
+  24576 -> v1N_IPSEC_RESPONDER_LIFETIME
+         jam_enum 24576: v1N_IPSEC_RESPONDER_LIFETIME OK
+         search v1N_IPSEC_RESPONDER_LIFETIME: OK
+         match v1N_IPSEC_RESPONDER_LIFETIME: OK
+         short_name 24576: IPSEC_RESPONDER_LIFETIME OK
+         jam_enum_short 24576: IPSEC_RESPONDER_LIFETIME OK
+         jam_enum_human 24576: ipsec-responder-lifetime OK
+         match IPSEC_RESPONDER_LIFETIME [short]: OK
+  24577 -> v1N_IPSEC_REPLAY_STATUS
+         jam_enum 24577: v1N_IPSEC_REPLAY_STATUS OK
+         search v1N_IPSEC_REPLAY_STATUS: OK
+         match v1N_IPSEC_REPLAY_STATUS: OK
+         short_name 24577: IPSEC_REPLAY_STATUS OK
+         jam_enum_short 24577: IPSEC_REPLAY_STATUS OK
+         jam_enum_human 24577: ipsec-replay-status OK
+         match IPSEC_REPLAY_STATUS [short]: OK
+  24578 -> v1N_IPSEC_INITIAL_CONTACT
+         jam_enum 24578: v1N_IPSEC_INITIAL_CONTACT OK
+         search v1N_IPSEC_INITIAL_CONTACT: OK
+         match v1N_IPSEC_INITIAL_CONTACT: OK
+         short_name 24578: IPSEC_INITIAL_CONTACT OK
+         jam_enum_short 24578: IPSEC_INITIAL_CONTACT OK
+         jam_enum_human 24578: ipsec-initial-contact OK
+         match IPSEC_INITIAL_CONTACT [short]: OK
+  30000 -> v1N_ISAKMP_N_CISCO_HELLO
+         jam_enum 30000: v1N_ISAKMP_N_CISCO_HELLO OK
+         search v1N_ISAKMP_N_CISCO_HELLO: OK
+         match v1N_ISAKMP_N_CISCO_HELLO: OK
+         short_name 30000: ISAKMP_N_CISCO_HELLO OK
+         jam_enum_short 30000: ISAKMP_N_CISCO_HELLO OK
+         jam_enum_human 30000: isakmp-n-cisco-hello OK
+         match ISAKMP_N_CISCO_HELLO [short]: OK
+  30001 -> v1N_ISAKMP_N_CISCO_WWTEBR
+         jam_enum 30001: v1N_ISAKMP_N_CISCO_WWTEBR OK
+         search v1N_ISAKMP_N_CISCO_WWTEBR: OK
+         match v1N_ISAKMP_N_CISCO_WWTEBR: OK
+         short_name 30001: ISAKMP_N_CISCO_WWTEBR OK
+         jam_enum_short 30001: ISAKMP_N_CISCO_WWTEBR OK
+         jam_enum_human 30001: isakmp-n-cisco-wwtebr OK
+         match ISAKMP_N_CISCO_WWTEBR [short]: OK
+  30002 -> v1N_ISAKMP_N_CISCO_SHUT_UP
+         jam_enum 30002: v1N_ISAKMP_N_CISCO_SHUT_UP OK
+         search v1N_ISAKMP_N_CISCO_SHUT_UP: OK
+         match v1N_ISAKMP_N_CISCO_SHUT_UP: OK
+         short_name 30002: ISAKMP_N_CISCO_SHUT_UP OK
+         jam_enum_short 30002: ISAKMP_N_CISCO_SHUT_UP OK
+         jam_enum_human 30002: isakmp-n-cisco-shut-up OK
+         match ISAKMP_N_CISCO_SHUT_UP [short]: OK
+  32768 -> v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ
+         jam_enum 32768: v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ OK
+         search v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ: OK
+         match v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ: OK
+         short_name 32768: ISAKMP_N_IOS_KEEP_ALIVE_REQ OK
+         jam_enum_short 32768: ISAKMP_N_IOS_KEEP_ALIVE_REQ OK
+         jam_enum_human 32768: isakmp-n-ios-keep-alive-req OK
+         match ISAKMP_N_IOS_KEEP_ALIVE_REQ [short]: OK
+  32769 -> v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK
+         jam_enum 32769: v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK OK
+         search v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK: OK
+         match v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK: OK
+         short_name 32769: ISAKMP_N_IOS_KEEP_ALIVE_ACK OK
+         jam_enum_short 32769: ISAKMP_N_IOS_KEEP_ALIVE_ACK OK
+         jam_enum_human 32769: isakmp-n-ios-keep-alive-ack OK
+         match ISAKMP_N_IOS_KEEP_ALIVE_ACK [short]: OK
+  36136 -> v1N_R_U_THERE
+         jam_enum 36136: v1N_R_U_THERE OK
+         search v1N_R_U_THERE: OK
+         match v1N_R_U_THERE: OK
+         short_name 36136: R_U_THERE OK
+         jam_enum_short 36136: R_U_THERE OK
+         jam_enum_human 36136: r-u-there OK
+         match R_U_THERE [short]: OK
+  36137 -> v1N_R_U_THERE_ACK
+         jam_enum 36137: v1N_R_U_THERE_ACK OK
+         search v1N_R_U_THERE_ACK: OK
+         match v1N_R_U_THERE_ACK: OK
+         short_name 36137: R_U_THERE_ACK OK
+         jam_enum_short 36137: R_U_THERE_ACK OK
+         jam_enum_human 36137: r-u-there-ack OK
+         match R_U_THERE_ACK [short]: OK
+  40001 -> v1N_NETSCREEN_NHTB_INFORM
+         jam_enum 40001: v1N_NETSCREEN_NHTB_INFORM OK
+         search v1N_NETSCREEN_NHTB_INFORM: OK
+         match v1N_NETSCREEN_NHTB_INFORM: OK
+         short_name 40001: NETSCREEN_NHTB_INFORM OK
+         jam_enum_short 40001: NETSCREEN_NHTB_INFORM OK
+         jam_enum_human 40001: netscreen-nhtb-inform OK
+         match NETSCREEN_NHTB_INFORM [short]: OK
+  40501 -> v1N_ISAKMP_N_CISCO_LOAD_BALANCE
+         jam_enum 40501: v1N_ISAKMP_N_CISCO_LOAD_BALANCE OK
+         search v1N_ISAKMP_N_CISCO_LOAD_BALANCE: OK
+         match v1N_ISAKMP_N_CISCO_LOAD_BALANCE: OK
+         short_name 40501: ISAKMP_N_CISCO_LOAD_BALANCE OK
+         jam_enum_short 40501: ISAKMP_N_CISCO_LOAD_BALANCE OK
+         jam_enum_human 40501: isakmp-n-cisco-load-balance OK
+         match ISAKMP_N_CISCO_LOAD_BALANCE [short]: OK
+  40502 -> v1N_ISAKMP_N_CISCO_UNKNOWN_40502
+         jam_enum 40502: v1N_ISAKMP_N_CISCO_UNKNOWN_40502 OK
+         search v1N_ISAKMP_N_CISCO_UNKNOWN_40502: OK
+         match v1N_ISAKMP_N_CISCO_UNKNOWN_40502: OK
+         short_name 40502: ISAKMP_N_CISCO_UNKNOWN_40502 OK
+         jam_enum_short 40502: ISAKMP_N_CISCO_UNKNOWN_40502 OK
+         jam_enum_human 40502: isakmp-n-cisco-unknown-40502 OK
+         match ISAKMP_N_CISCO_UNKNOWN_40502 [short]: OK
+  40503 -> v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH
+         jam_enum 40503: v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH OK
+         search v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH: OK
+         match v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH: OK
+         short_name 40503: ISAKMP_N_CISCO_PRESHARED_KEY_HASH OK
+         jam_enum_short 40503: ISAKMP_N_CISCO_PRESHARED_KEY_HASH OK
+         jam_enum_human 40503: isakmp-n-cisco-preshared-key-hash OK
+         match ISAKMP_N_CISCO_PRESHARED_KEY_HASH [short]: OK
 
   v2_notification_names: [1..40961)
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
@@ -6698,7 +7459,7 @@
          jam_enum_human 40960: null-auth OK
          match NULL_AUTH [short]: OK
 
-  version_names: [16(0)..33(256))
+  version_names: [16..33)
    16 -> ISAKMP Version 1.0 (rfc2407)
          jam_enum 16: ISAKMP Version 1.0 (rfc2407) OK
          search ISAKMP Version 1.0 (rfc2407): OK
@@ -6716,7 +7477,177 @@
          jam_enum_short 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_human 32: ikev2 version 2.0 (rfc4306/rfc5996) OK
 
-  xauth_attr_names: [16520(0)..28684(256))
+  xauth_attr_names: [16520..28684)
+  16520 -> XAUTH-TYPE
+         jam_enum 16520: XAUTH-TYPE OK
+         search XAUTH-TYPE: OK
+         match XAUTH-TYPE: OK
+         short_name 16520: XAUTH-TYPE OK
+         jam_enum_short 16520: XAUTH-TYPE OK
+         jam_enum_human 16520: xauth-type OK
+  16521 -> XAUTH-USER-NAME
+         jam_enum 16521: XAUTH-USER-NAME OK
+         search XAUTH-USER-NAME: OK
+         match XAUTH-USER-NAME: OK
+         short_name 16521: XAUTH-USER-NAME OK
+         jam_enum_short 16521: XAUTH-USER-NAME OK
+         jam_enum_human 16521: xauth-user-name OK
+  16522 -> XAUTH-USER-PASSWORD
+         jam_enum 16522: XAUTH-USER-PASSWORD OK
+         search XAUTH-USER-PASSWORD: OK
+         match XAUTH-USER-PASSWORD: OK
+         short_name 16522: XAUTH-USER-PASSWORD OK
+         jam_enum_short 16522: XAUTH-USER-PASSWORD OK
+         jam_enum_human 16522: xauth-user-password OK
+  16523 -> XAUTH-PASSCODE
+         jam_enum 16523: XAUTH-PASSCODE OK
+         search XAUTH-PASSCODE: OK
+         match XAUTH-PASSCODE: OK
+         short_name 16523: XAUTH-PASSCODE OK
+         jam_enum_short 16523: XAUTH-PASSCODE OK
+         jam_enum_human 16523: xauth-passcode OK
+  16524 -> XAUTH-MESSAGE
+         jam_enum 16524: XAUTH-MESSAGE OK
+         search XAUTH-MESSAGE: OK
+         match XAUTH-MESSAGE: OK
+         short_name 16524: XAUTH-MESSAGE OK
+         jam_enum_short 16524: XAUTH-MESSAGE OK
+         jam_enum_human 16524: xauth-message OK
+  16525 -> XAUTH-CHALLENGE
+         jam_enum 16525: XAUTH-CHALLENGE OK
+         search XAUTH-CHALLENGE: OK
+         match XAUTH-CHALLENGE: OK
+         short_name 16525: XAUTH-CHALLENGE OK
+         jam_enum_short 16525: XAUTH-CHALLENGE OK
+         jam_enum_human 16525: xauth-challenge OK
+  16526 -> XAUTH-DOMAIN
+         jam_enum 16526: XAUTH-DOMAIN OK
+         search XAUTH-DOMAIN: OK
+         match XAUTH-DOMAIN: OK
+         short_name 16526: XAUTH-DOMAIN OK
+         jam_enum_short 16526: XAUTH-DOMAIN OK
+         jam_enum_human 16526: xauth-domain OK
+  16527 -> XAUTH-STATUS
+         jam_enum 16527: XAUTH-STATUS OK
+         search XAUTH-STATUS: OK
+         match XAUTH-STATUS: OK
+         short_name 16527: XAUTH-STATUS OK
+         jam_enum_short 16527: XAUTH-STATUS OK
+         jam_enum_human 16527: xauth-status OK
+  16528 -> XAUTH-NEXT-PIN
+         jam_enum 16528: XAUTH-NEXT-PIN OK
+         search XAUTH-NEXT-PIN: OK
+         match XAUTH-NEXT-PIN: OK
+         short_name 16528: XAUTH-NEXT-PIN OK
+         jam_enum_short 16528: XAUTH-NEXT-PIN OK
+         jam_enum_human 16528: xauth-next-pin OK
+  16529 -> XAUTH-ANSWER
+         jam_enum 16529: XAUTH-ANSWER OK
+         search XAUTH-ANSWER: OK
+         match XAUTH-ANSWER: OK
+         short_name 16529: XAUTH-ANSWER OK
+         jam_enum_short 16529: XAUTH-ANSWER OK
+         jam_enum_human 16529: xauth-answer OK
+  23456 -> IKEv1_INTERNAL_IP4_SERVER
+         jam_enum 23456: IKEv1_INTERNAL_IP4_SERVER OK
+         search IKEv1_INTERNAL_IP4_SERVER: OK
+         match IKEv1_INTERNAL_IP4_SERVER: OK
+         short_name 23456: INTERNAL_IP4_SERVER OK
+         jam_enum_short 23456: INTERNAL_IP4_SERVER OK
+         jam_enum_human 23456: internal-ip4-server OK
+         match INTERNAL_IP4_SERVER [short]: OK
+  23457 -> IKEv1_INTERNAL_IP6_SERVER
+         jam_enum 23457: IKEv1_INTERNAL_IP6_SERVER OK
+         search IKEv1_INTERNAL_IP6_SERVER: OK
+         match IKEv1_INTERNAL_IP6_SERVER: OK
+         short_name 23457: INTERNAL_IP6_SERVER OK
+         jam_enum_short 23457: INTERNAL_IP6_SERVER OK
+         jam_enum_human 23457: internal-ip6-server OK
+         match INTERNAL_IP6_SERVER [short]: OK
+  28672 -> MODECFG_BANNER
+         jam_enum 28672: MODECFG_BANNER OK
+         search MODECFG_BANNER: OK
+         match MODECFG_BANNER: OK
+         short_name 28672: MODECFG_BANNER OK
+         jam_enum_short 28672: MODECFG_BANNER OK
+         jam_enum_human 28672: modecfg-banner OK
+  28673 -> CISCO_SAVE_PW
+         jam_enum 28673: CISCO_SAVE_PW OK
+         search CISCO_SAVE_PW: OK
+         match CISCO_SAVE_PW: OK
+         short_name 28673: CISCO_SAVE_PW OK
+         jam_enum_short 28673: CISCO_SAVE_PW OK
+         jam_enum_human 28673: cisco-save-pw OK
+  28674 -> MODECFG_DOMAIN
+         jam_enum 28674: MODECFG_DOMAIN OK
+         search MODECFG_DOMAIN: OK
+         match MODECFG_DOMAIN: OK
+         short_name 28674: MODECFG_DOMAIN OK
+         jam_enum_short 28674: MODECFG_DOMAIN OK
+         jam_enum_human 28674: modecfg-domain OK
+  28675 -> CISCO_SPLIT_DNS
+         jam_enum 28675: CISCO_SPLIT_DNS OK
+         search CISCO_SPLIT_DNS: OK
+         match CISCO_SPLIT_DNS: OK
+         short_name 28675: CISCO_SPLIT_DNS OK
+         jam_enum_short 28675: CISCO_SPLIT_DNS OK
+         jam_enum_human 28675: cisco-split-dns OK
+  28676 -> CISCO_SPLIT_INC
+         jam_enum 28676: CISCO_SPLIT_INC OK
+         search CISCO_SPLIT_INC: OK
+         match CISCO_SPLIT_INC: OK
+         short_name 28676: CISCO_SPLIT_INC OK
+         jam_enum_short 28676: CISCO_SPLIT_INC OK
+         jam_enum_human 28676: cisco-split-inc OK
+  28677 -> CISCO_UDP_ENCAP_PORT
+         jam_enum 28677: CISCO_UDP_ENCAP_PORT OK
+         search CISCO_UDP_ENCAP_PORT: OK
+         match CISCO_UDP_ENCAP_PORT: OK
+         short_name 28677: CISCO_UDP_ENCAP_PORT OK
+         jam_enum_short 28677: CISCO_UDP_ENCAP_PORT OK
+         jam_enum_human 28677: cisco-udp-encap-port OK
+  28678 -> CISCO_SPLIT_EXCLUDE
+         jam_enum 28678: CISCO_SPLIT_EXCLUDE OK
+         search CISCO_SPLIT_EXCLUDE: OK
+         match CISCO_SPLIT_EXCLUDE: OK
+         short_name 28678: CISCO_SPLIT_EXCLUDE OK
+         jam_enum_short 28678: CISCO_SPLIT_EXCLUDE OK
+         jam_enum_human 28678: cisco-split-exclude OK
+  28679 -> CISCO_DO_PFS
+         jam_enum 28679: CISCO_DO_PFS OK
+         search CISCO_DO_PFS: OK
+         match CISCO_DO_PFS: OK
+         short_name 28679: CISCO_DO_PFS OK
+         jam_enum_short 28679: CISCO_DO_PFS OK
+         jam_enum_human 28679: cisco-do-pfs OK
+  28680 -> CISCO_FW_TYPE
+         jam_enum 28680: CISCO_FW_TYPE OK
+         search CISCO_FW_TYPE: OK
+         match CISCO_FW_TYPE: OK
+         short_name 28680: CISCO_FW_TYPE OK
+         jam_enum_short 28680: CISCO_FW_TYPE OK
+         jam_enum_human 28680: cisco-fw-type OK
+  28681 -> CISCO_BACKUP_SERVER
+         jam_enum 28681: CISCO_BACKUP_SERVER OK
+         search CISCO_BACKUP_SERVER: OK
+         match CISCO_BACKUP_SERVER: OK
+         short_name 28681: CISCO_BACKUP_SERVER OK
+         jam_enum_short 28681: CISCO_BACKUP_SERVER OK
+         jam_enum_human 28681: cisco-backup-server OK
+  28682 -> CISCO_DDNS_HOSTNAME
+         jam_enum 28682: CISCO_DDNS_HOSTNAME OK
+         search CISCO_DDNS_HOSTNAME: OK
+         match CISCO_DDNS_HOSTNAME: OK
+         short_name 28682: CISCO_DDNS_HOSTNAME OK
+         jam_enum_short 28682: CISCO_DDNS_HOSTNAME OK
+         jam_enum_human 28682: cisco-ddns-hostname OK
+  28683 -> CISCO_UNKNOWN_SEEN_ON_IPHONE
+         jam_enum 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
+         search CISCO_UNKNOWN_SEEN_ON_IPHONE: OK
+         match CISCO_UNKNOWN_SEEN_ON_IPHONE: OK
+         short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
+         jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
+         jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
 
   xauth_type_names: [0..4)
     0 -> Generic
