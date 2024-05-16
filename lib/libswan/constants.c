@@ -1178,10 +1178,58 @@ const struct enum_enum_names ikev1_oakley_attr_value_names = {
 	ARRAY_REF(ikev1_oakley_attr_value_name),
 };
 
-/* IPsec DOI attributes (RFC 2407 "IPsec DOI" section 4.5) */
-static const char *const ipsec_attr_name[] = {
+/*
+ * IPsec DOI attributes (RFC 2407 "IPsec DOI" section 4.5)
+ *
+ * TLV == Type/Length/Value; TV == Type/Value!
+ */
+
+static const char *const ipsec_attr_name_secctx_vl[] = {
+#define V(E) [E - SECCTX] = #E" (variable length)"
+	V(SECCTX) /* 32001 */
+#undef V
+};
+
+static enum_names ikev1_ipsec_af_tlv_attr_names_secctx = {
+	SECCTX + ISAKMP_ATTR_AF_TLV,
+	SECCTX + ISAKMP_ATTR_AF_TLV,
+	ARRAY_REF(ipsec_attr_name_secctx_vl),
+	NULL, /* prefix */
+	NULL
+};
+
+static const char *const ipsec_attr_name_vl[] = {
+#define V(E) [E - SA_LIFE_DURATION] = #E" (variable length)"
+	V(SA_LIFE_DURATION),
+	V(COMPRESS_PRIVATE_ALG),
+	V(ECN_TUNNEL),
+#undef V
+};
+
+static const struct enum_names ikev1_ipsec_af_tlv_attr_names = {
+	SA_LIFE_DURATION + ISAKMP_ATTR_AF_TLV,
+	ECN_TUNNEL + ISAKMP_ATTR_AF_TLV,
+	ARRAY_REF(ipsec_attr_name_vl),
+	NULL, /* prefix */
+	&ikev1_ipsec_af_tlv_attr_names_secctx,
+};
+
+static const char *const ikev1_ipsec_attr_name_secctx[] = {
+#define S(E) [E - SECCTX] = #E
+	S(SECCTX) /* 32001 */
+#undef S
+};
+
+static enum_names ikev1_ipsec_af_tv_attr_names_secctx = {
+	SECCTX + ISAKMP_ATTR_AF_TV,
+	SECCTX + ISAKMP_ATTR_AF_TV,
+	ARRAY_REF(ikev1_ipsec_attr_name_secctx),
+	NULL, /* prefix */
+	&ikev1_ipsec_af_tlv_attr_names,
+};
+
+static const char *const ikev1_ipsec_attr_name[] = {
 #define S(E) [E - SA_LIFE_TYPE] = #E
-#define R(E,S) [E - SA_LIFE_TYPE] = #S
 	S(SA_LIFE_TYPE),
 	S(SA_LIFE_DURATION),
 	S(GROUP_DESCRIPTION),
@@ -1191,74 +1239,38 @@ static const char *const ipsec_attr_name[] = {
 	S(KEY_ROUNDS),
 	S(COMPRESS_DICT_SIZE),
 	S(COMPRESS_PRIVATE_ALG),
-	R(ECN_TUNNEL, ECN_TUNNEL or old SECCTX),
+	S(ECN_TUNNEL),
 	S(ESN_64BIT_SEQNUM),
-	S(IKEv1_IPSEC_ATTR_UNSPEC_12), /* Maybe Tero knows why it was skipped? */
 	S(SIG_ENC_ALGO_VAL),
 	S(ADDRESS_PRESERVATION),
 	S(SA_DIRECTION),
-#undef R
 #undef S
 };
 
-/*
- * These are attributes with variable length values (TLV).
- * The ones we actually support have non-NULL entries.
- */
-static const char *const ipsec_var_attr_name[] = {
-#define R(E,S) [E - SA_LIFE_TYPE] = #S
-	NULL,	/* SA_LIFE_TYPE */
-	R(SA_LIFE_DURATION, SA_LIFE_DURATION (variable length)),
-	NULL,	/* GROUP_DESCRIPTION */
-	NULL,	/* ENCAPSULATION_MODE */
-	NULL,	/* AUTH_ALGORITHM */
-	NULL,	/* KEY_LENGTH */
-	NULL,	/* KEY_ROUNDS */
-	NULL,	/* COMPRESS_DICT_SIZE */
-	R(COMPRESS_PRIVATE_ALG, COMPRESS_PRIVATE_ALG (variable length)),
-	R(ECN_TUNNEL, NULL), /* ECN_TUNNEL_or_old_SECCTX; yes "NULL" */
-	NULL, /* ESN_64BIT_SEQNUM */
-	NULL, /* IKEv1_IPSEC_ATTR_UNSPEC_12 */
-	NULL, /* SIG_ENC_ALGO_VAL */
-	NULL, /* ADDRESS_PRESERVATION */
-	NULL, /* SA_DIRECTION */
-#undef R
-};
-
-static const char *const ipsec_private_attr_name[] = {
-	"SECCTX" /* 32001 */
-};
-
-static enum_names ipsec_private_attr_names_tv = {
-	SECCTX + ISAKMP_ATTR_AF_TV,
-	SECCTX + ISAKMP_ATTR_AF_TV,
-	ARRAY_REF(ipsec_private_attr_name),
-	NULL, /* prefix */
-	NULL
-};
-
-static enum_names ipsec_private_attr_names = {
-	SECCTX,
-	SECCTX,
-	ARRAY_REF(ipsec_private_attr_name),
-	NULL, /* prefix */
-	&ipsec_private_attr_names_tv
-};
-
-static enum_names ipsec_attr_desc_tv = {
+enum_names ipsec_attr_names = {
 	SA_LIFE_TYPE + ISAKMP_ATTR_AF_TV,
 	SA_DIRECTION + ISAKMP_ATTR_AF_TV,
-	ARRAY_REF(ipsec_attr_name),
+	ARRAY_REF(ikev1_ipsec_attr_name),
 	NULL, /* prefix */
-	&ipsec_private_attr_names
+	&ikev1_ipsec_af_tv_attr_names_secctx,
 };
 
-enum_names ipsec_attr_names = {
+/* without TV|TLV; which has same values as TLV */
+
+enum_names ikev1_ipsec_attr_names_secctx = {
+	SECCTX,
+	SECCTX,
+	ARRAY_REF(ikev1_ipsec_attr_name_secctx),
+	NULL, /* prefix */
+	NULL,
+};
+
+enum_names ikev1_ipsec_attr_names = {
 	SA_LIFE_TYPE,
 	SA_DIRECTION,
-	ARRAY_REF(ipsec_var_attr_name),
+	ARRAY_REF(ikev1_ipsec_attr_name),
 	NULL, /* prefix */
-	&ipsec_attr_desc_tv
+	&ikev1_ipsec_attr_names_secctx,
 };
 
 /* for each IPsec attribute, which enum_names describes its values? */

@@ -1119,9 +1119,9 @@ enum ikev1_ipsec_attr {
 	COMPRESS_DICT_SIZE = 8,
 	COMPRESS_PRIVATE_ALG = 9, /* B/V */
 	ECN_TUNNEL = 10, /*B*/ /*RFC 3168*/ /* Originally mistakenly grabbed for SECCTX */
-		ECN_TUNNEL_or_old_SECCTX = ECN_TUNNEL,
+	ECN_TUNNEL_or_old_SECCTX = ECN_TUNNEL,
 	ESN_64BIT_SEQNUM = 11, /* RFC 4304 */
-	IKEv1_IPSEC_ATTR_UNSPEC_12 = 12, /* Maybe Tero knows why it was skipped? */
+	/* 12 Unused, Maybe Tero knows why it was skipped? */
 	SIG_ENC_ALGO_VAL = 13, /* RFC 4359 */
 	ADDRESS_PRESERVATION = 14, /* RFC 6407 */
 	SA_DIRECTION = 15, /* RFC 6407 */
@@ -1129,6 +1129,8 @@ enum ikev1_ipsec_attr {
 	SECCTX = 32001, /* B/V */ /* chosen from private range as in RFC 2407 */
 };
 
+extern const struct enum_names ipsec_attr_names;
+extern const struct enum_names ikev1_ipsec_attr_names;
 extern const struct enum_enum_names ikev1_ipsec_attr_value_names;
 
 /*
@@ -2114,6 +2116,8 @@ enum digital_signature_blob {
  * The AF is the high-order bit and the Type is the next 15 bits.
  * See RFC 2408 "ISAKMP" section 3.3.
  * The following definitions are used to pack and unpack these.
+ *
+ * TLV == Type/Length/Value; TV == Type/Value!
  */
 #define ISAKMP_ATTR_AF_MASK 0x8000
 #define ISAKMP_ATTR_AF_TV ISAKMP_ATTR_AF_MASK /* value in lv */

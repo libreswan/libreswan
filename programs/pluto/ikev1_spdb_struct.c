@@ -2338,13 +2338,16 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		/* strip TLV and TV bits */
 		enum ikev1_ipsec_attr type = (a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 		unsigned value = a.isaat_lv;               /* room for larger value */
+		const char *af = ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "TV" :
+				  (a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TLV ? "TLV" :
+				  "??");
 
 		PASSERT(st->logger, type < LELEM_ROOF);
 		if (LHAS(seen_attrs, type)) {
 			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
-				  "repeated %s attribute in IPsec Transform %u",
-				  str_enum(&ipsec_attr_names, type, &b),
+				  "repeated %s(%s) attribute in IPsec Transform %u",
+				  str_enum(&ikev1_ipsec_attr_names, type, &b), af,
 				  trans->isat_transnum);
 			return false;
 		}
@@ -2372,6 +2375,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		switch (a.isaat_af_type) {
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
+		{
 			ipcomp_inappropriate = false;
 			/*
 			 * Only allow one SA_LIFE_TYPE_SECONDS and one
@@ -2411,12 +2415,16 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				return false;
 			}
 			break;
+		}
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 		{
 			/* DANGER: NOT VALUE! */
 			deltatime_t val = deltatime(decode_life_duration(&a, &attr_pbs));
+			deltatime_buf vb;
+			ldbg(st->logger, "   [duration is %s]", str_deltatime(val, &vb));
+
 			ipcomp_inappropriate = false;
 			if (life_type == 0) {
 				llog(RC_LOG_SERIOUS, st->logger,
@@ -2535,6 +2543,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
+		{
 			if (attrs->transattrs.ta_encrypt == NULL) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IKEv1 key-length attribute without encryption algorithm");
@@ -2547,13 +2556,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 			attrs->transattrs.enckeylen = value;
 			break;
+		}
 
 		default:
 		{
 			enum_buf b;
 			log_state(RC_LOG_SERIOUS, st,
-				  "unsupported IPsec attribute %s",
-				  str_enum(&ipsec_attr_names, a.isaat_af_type, &b));
+				  "unsupported IPsec attribute %s+%s",
+				  str_enum(&ikev1_ipsec_attr_names, type, &b), af);
 			return false;
 		}
 		}
@@ -2561,8 +2571,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (ipcomp_inappropriate) {
 			esb_buf b;
 			log_state(RC_LOG_SERIOUS, st,
-				  "IPsec attribute %s inappropriate for IPCOMP",
-				  str_enum(&ipsec_attr_names, a.isaat_af_type, &b));
+				  "IPsec attribute %s+%s inappropriate for IPCOMP",
+				  str_enum(&ikev1_ipsec_attr_names, type, &b), af);
 			return false;
 		}
 	}

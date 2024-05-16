@@ -380,24 +380,6 @@ int main(int argc UNUSED, char *argv[])
 				{ -1, -1, },
 			};
 			test_enums("event_type_names", &event_type_names, clash);
-		} else if (c->enum_names == &ike_id_type_names) {
-			test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
-		} else if (c->enum_names == &ipsec_attr_names) {
-			test_enum_range("ipsec_attr_names", &ipsec_attr_names, 0, 256);
-		} else if (c->enum_names == &modecfg_attr_names) {
-			test_enum_range("modecfg_attr_names", &modecfg_attr_names, 0, 256);
-		} else if (c->enum_names == &oakley_attr_names) {
-			test_enum_range("oakley_attr_names", &oakley_attr_names, 0, 256);
-		} else if (c->enum_names == &oakley_auth_names) {
-			test_enum_range("oakley_auth_names", &oakley_auth_names, 0, 256);
-		} else if (c->enum_names == &oakley_enc_names) {
-			test_enum_range("oakley_enc_names", &oakley_enc_names, 0, 256);
-		} else if (c->enum_names == &v1_notification_names) {
-			test_enum_range("v1_notification_names", &v1_notification_names, 0, 16384);
-		} else if (c->enum_names == &version_names) {
-			test_enum_range("version_names", &version_names, 0, 256);
-		} else if (c->enum_names == &xauth_attr_names) {
-			test_enum_range("xauth_attr_names", &xauth_attr_names, 0, 256);
 		} else {
 			test_enums(c->name, c->enum_names, NULL);
 		}
