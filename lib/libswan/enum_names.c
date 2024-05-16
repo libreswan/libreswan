@@ -50,7 +50,10 @@
 
 long next_enum(enum_names *en, long l)
 {
-	passert(l == -1 || l >= 0);
+	if (l < -1) {
+		llog_passert(&global_logger, HERE, "%ld should be >= -1", l);
+	}
+
 	unsigned long e;
 
 	/*
@@ -70,6 +73,13 @@ long next_enum(enum_names *en, long l)
 		const struct enum_names *b = NULL;
 		for (const struct enum_names *p = en;
 		     p != NULL; p = p->en_next_range) {
+
+			if (p->en_last - p->en_first + 1 != p->en_checklen) {
+				llog_passert(&global_logger, HERE,
+					     "p->en_last(%zu) - p->en_first(%zu) + 1 == p->en_checklen(%zu)",
+					     p->en_last, p->en_first, p->en_checklen);
+			}
+
 			if (e > p->en_last) {
 				continue;
 			}
@@ -88,8 +98,6 @@ long next_enum(enum_names *en, long l)
 		if (b == NULL) {
 			return -1;
 		}
-
-		passert(b->en_last - b->en_first + 1 == b->en_checklen);
 
 		/*
 		 * If E isn't yet within the range, make it so.
