@@ -1280,47 +1280,48 @@ bool ikev1_out_aggr_sa(struct pbs_out *outs, struct ike_sa *ike)
 }
 
 /**
- * Handle long form of duration attribute.
+ * Handle short/long form of an attribute value.
  *
- * The code is can only handle values that can fit in unsigned long.
+ * The code is can only handle values that can fit in uintmax_t.
  * "Clamping" is probably an acceptable way to impose this limitation.
  *
  * @param pbs PB Stream
- * @return uint32_t duration, in seconds.
+ * @return uintmax_t value
  *
  * Technical nit, there's only one bit involved: ISAKMP_ATTR_AF_MASK
  * == ISAKMP_ATTR_AF_TV == 0x8000 and ISAKMP_ATTR_AF_TLV is zero.
  */
-static uint32_t decode_life_duration(const struct isakmp_attribute *a,
-				     struct pbs_in *pbs)
+
+static diag_t decode_attr_value(const struct isakmp_attribute *a,
+				struct pbs_in *pbs, const struct enum_names *type_names,
+				intmax_t *value)
 {
-	switch (a->isaat_af_type & ISAKMP_ATTR_AF_MASK) {
+	unsigned af = (a->isaat_af_type & ISAKMP_ATTR_AF_MASK);
+	enum ikev1_ipsec_attr type = (a->isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+
+	switch (af) {
+
 	case ISAKMP_ATTR_AF_TV:
-	{
-		uint32_t val = a->isaat_lv;
-		dbg("   basic duration: %" PRIu32 " (TV)", val);
-		return val;
-	}
+		(*value) = a->isaat_lv;
+		return NULL;
+
 	case ISAKMP_ATTR_AF_TLV:
 	{
-		/* ignore leading zeros */
-		while (pbs_left(pbs) != 0 && *pbs->cur == '\0') {
-			pbs->cur++;
+		shunk_t sval;
+		enum_buf tb;
+		diag_t d = pbs_in_shunk(pbs, a->isaat_lv, &sval, str_enum(type_names, type, &tb));
+		if (d != NULL) {
+			return d;
 		}
 
-		uint32_t val = 0;
-		if (pbs_left(pbs) > sizeof(val)) {
-			/* "clamp" too large value to max representable value */
-			val = UINT32_MAX;
-			dbg("   too large long duration clamped to: %" PRIu32, val);
-		} else {
-			/* decode number */
-			while (pbs_left(pbs) != 0) {
-				val = (val << BITS_IN_BYTE) | *pbs->cur++;
-			}
-			dbg("   long duration: %" PRIu32 " (TVL)", val);
+		/* ntoh_hunk() saturates to UINTMAX_MAX; cut that down
+		 * to INTMAX_MAX as returned value is signed.  */
+		uintmax_t val = ntoh_hunk(sval);
+		if (val > INTMAX_MAX) {
+			val = INTMAX_MAX;
 		}
-		return val;
+		*value = val;
+		return NULL;
 	}
 	}
 	bad_case(a->isaat_af_type);
@@ -1705,8 +1706,12 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
 			struct isakmp_attribute a;
 			struct pbs_in attr_pbs;
-			uint32_t val; /* room for larger values */
 
+			/*
+			 * Unpack the attribute, note that this call rejects
+			 * some AF+TYPE combinations; probably.  Code below
+			 * should handle things regardless.
+			 */
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
 						 &a, sizeof(a), &attr_pbs);
 			if (d != NULL) {
@@ -1714,38 +1719,51 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
-			passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) <
-				LELEM_ROOF);
+			/* strip TLV/TV bit */
+			enum ikev1_oakley_attr type = (a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			bool tlv = ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TLV);
+			const char *af = (tlv ? "TLV" : "TV");
 
-			if (LHAS(seen_attrs, a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)) {
-				esb_buf b;
-				log_state(RC_LOG_SERIOUS, st,
-					  "repeated %s attribute in Oakley Transform %u",
-					  str_enum(&oakley_attr_names, a.isaat_af_type, &b),
-					  trans.isat_transnum);
+			PASSERT(st->logger, type < LELEM_ROOF);
+			if (LHAS(seen_attrs, type)) {
+				enum_buf b;
+				llog(RC_LOG_SERIOUS, st->logger,
+				     "repeated %s(%s) attribute in Oakley Transform %u",
+				     str_enum(&oakley_attr_names, type, &b), af,
+				     trans.isat_transnum);
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
-			seen_attrs |= LELEM(
-				a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			seen_attrs |= LELEM(type);
 
-			val = a.isaat_lv;
+			/*
+			 * This silently clamps the unsigned network
+			 * byte ordered value to INTMAX_MAX.
+			 */
+			intmax_t value;
+			d = decode_attr_value(&a, &attr_pbs,
+					      &oakley_attr_names,
+					      &value);
+			if (d != NULL) {
+				llog_diag(RC_LOG, st->logger, &d, "invalid attribute in Oakley Transform %u",
+					  trans.isat_transnum);
+				return v1N_BAD_PROPOSAL_SYNTAX;
+			}
 
 			if (DBGP(DBG_BASE)) {
-				enum_buf nm;
-				if (enum_enum_name(&ikev1_oakley_attr_value_names,
-						   a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK,
-						   val, &nm)) {
-					LDBG_log(st->logger, "   [%u is %s]",
-						 (unsigned)val, nm.buf);
+				enum_buf b;
+				if (enum_enum_name(&ikev1_oakley_attr_value_names, type, value, &b)) {
+					LDBG_log(st->logger, "   [%s %jd is %s]", af, value, b.buf);
+				} else if (tlv) {
+					LDBG_log(st->logger, "   [%s is %jd]", af, value);
 				}
 			}
 
-			switch (a.isaat_af_type) {
-			case OAKLEY_ENCRYPTION_ALGORITHM | ISAKMP_ATTR_AF_TV:
+			switch (type) {
+			case OAKLEY_ENCRYPTION_ALGORITHM:
 			{
 				enum_buf b;
-				const struct encrypt_desc *encrypter = ikev1_ike_encrypt_desc(val, &b);
+				const struct encrypt_desc *encrypter = ikev1_ike_encrypt_desc(value, &b);
 				if (encrypter == NULL) {
 					UGH("%s is not supported", b.buf);
 					break;
@@ -1755,20 +1773,20 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 				break;
 			}
 
-			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
+			case OAKLEY_HASH_ALGORITHM:
 			{
 				enum_buf b;
-				ta.ta_prf = ikev1_ike_prf_desc(val, &b);
+				ta.ta_prf = ikev1_ike_prf_desc(value, &b);
 				if (ta.ta_prf == NULL) {
 					UGH("%s is not supported", b.buf);
 				}
 				break;
 			}
 
-			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
+			case OAKLEY_AUTHENTICATION_METHOD:
 			{
 				/* check that authentication method is acceptable */
-				switch (val) {
+				switch (value) {
 				case XAUTHInitPreShared:
 					if (!xauth_init) {
 						UGH("policy does not allow Extended Authentication (XAUTH) of initiator (we are %s)",
@@ -1881,17 +1899,17 @@ rsasig_common:
 				{
 					esb_buf b;
 					UGH("Pluto does not support %s authentication",
-					    str_enum(&oakley_auth_names, val, &b));
+					    str_enum(&oakley_auth_names, value, &b));
 					break;
 				}
 				}
 			}
 			break;
 
-			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
+			case OAKLEY_GROUP_DESCRIPTION:
 			{
 				enum_buf b;
-				ta.ta_dh = ikev1_ike_dh_desc(val, &b);
+				ta.ta_dh = ikev1_ike_dh_desc(value, &b);
 				if (ta.ta_dh == NULL) {
 					UGH("OAKLEY_GROUP %s not supported", b.buf);
 					break;
@@ -1899,33 +1917,31 @@ rsasig_common:
 				break;
 			}
 
-			case OAKLEY_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
-				switch (val) {
+			case OAKLEY_LIFE_TYPE:
+				switch (value) {
 				case OAKLEY_LIFE_SECONDS:
 				case OAKLEY_LIFE_KILOBYTES:
-					if (LHAS(seen_durations, val)) {
+					if (LHAS(seen_durations, value)) {
 						esb_buf b;
 						log_state(RC_LOG_SERIOUS, st,
 							  "attribute OAKLEY_LIFE_TYPE value %s repeated",
-							  str_enum(&oakley_lifetime_names, val, &b));
+							  str_enum(&oakley_lifetime_names, value, &b));
 						return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 					}
-					seen_durations |= LELEM(val);
-					life_type = val;
+					seen_durations |= LELEM(value);
+					life_type = value;
 					break;
 				default:
 				{
 					esb_buf b;
 					UGH("unknown value %s",
-					    str_enum(&oakley_lifetime_names, val, &b));
+					    str_enum(&oakley_lifetime_names, value, &b));
 					break;
 				}
 				}
 				break;
 
-			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
-			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
-				val = decode_life_duration(&a, &attr_pbs);
+			case OAKLEY_LIFE_DURATION:
 				if (!LHAS(seen_attrs, OAKLEY_LIFE_TYPE)) {
 					UGH("OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute");
 					break;
@@ -1936,23 +1952,23 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					if (val > deltasecs(IKE_SA_LIFETIME_MAXIMUM)) {
-						log_state(RC_LOG, st,
-							  "warning: peer requested IKE lifetime of %" PRIu32 " seconds which we capped at our limit of %ju seconds",
-							  val, deltasecs(IKE_SA_LIFETIME_MAXIMUM));
-						val = deltasecs(IKE_SA_LIFETIME_MAXIMUM);
+					ta.life_seconds = deltatime(value);
+					if (deltatime_cmp(ta.life_seconds, >, IKE_SA_LIFETIME_MAXIMUM)) {
+						llog(RC_LOG, st->logger,
+						     "warning: peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
+						     value, deltasecs(IKE_SA_LIFETIME_MAXIMUM));
+						ta.life_seconds = IKE_SA_LIFETIME_MAXIMUM;
 					}
-					ta.life_seconds = deltatime(val);
 					break;
 				case OAKLEY_LIFE_KILOBYTES:
-					dbg("ignoring OAKLEY_LIFE_KILOBYTES=%"PRIu32, val);
+					dbg("ignoring OAKLEY_LIFE_KILOBYTES=%jd", value);
 					break;
 				default:
 					bad_case(life_type);
 				}
 				break;
 
-			case OAKLEY_KEY_LENGTH | ISAKMP_ATTR_AF_TV:
+			case OAKLEY_KEY_LENGTH:
 				if (!LHAS(seen_attrs, OAKLEY_ENCRYPTION_ALGORITHM)) {
 					UGH("OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute");
 					break;
@@ -1966,12 +1982,12 @@ rsasig_common:
 				 * check if this keylen is compatible
 				 * with specified ike_proposals.
 				 */
-				if (!encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
+				if (!encrypt_has_key_bit_length(ta.ta_encrypt, value)) {
 					UGH("peer proposed key_len not valid for encrypt algo setup specified");
 					break;
 				}
 
-				ta.enckeylen = val;
+				ta.enckeylen = value;
 				break;
 
 			default:
@@ -2328,6 +2344,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		struct pbs_in attr_pbs;
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
+		/*
+		 * Unpack the attribute, note that this call rejects
+		 * some AF+TYPE combinations; probably.  Code below
+		 * should handle things regardless.
+		 */
 		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
 					 &a, sizeof(a), &attr_pbs);
 		if (d != NULL) {
@@ -2335,46 +2356,57 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			return false;
 		}
 
-		/* strip TLV and TV bits */
+		/* strip/decode TLV/TV bit */
 		enum ikev1_ipsec_attr type = (a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-		unsigned value = a.isaat_lv;               /* room for larger value */
-		const char *af = ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "TV" :
-				  (a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TLV ? "TLV" :
-				  "??");
+		bool tlv = ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TLV);
+		const char *af = (tlv ? "TLV" : "TV");
 
 		PASSERT(st->logger, type < LELEM_ROOF);
 		if (LHAS(seen_attrs, type)) {
-			esb_buf b;
-			log_state(RC_LOG_SERIOUS, st,
-				  "repeated %s(%s) attribute in IPsec Transform %u",
-				  str_enum(&ikev1_ipsec_attr_names, type, &b), af,
-				  trans->isat_transnum);
+			enum_buf b;
+			llog(RC_LOG_SERIOUS, st->logger,
+			     "repeated %s(%s) attribute in IPsec Transform %u",
+			     str_enum(&ikev1_ipsec_attr_names, type, &b), af,
+			     trans->isat_transnum);
 			return false;
 		}
 
 		seen_attrs |= LELEM(type);
 
 		/*
+		 * This silently clamps the unsigned network byte
+		 * ordered VALUE to INTMAX_MAX.
+		 */
+		intmax_t value;
+		d = decode_attr_value(&a, &attr_pbs, &ipsec_attr_names, &value);
+		if (d != NULL) {
+			llog_diag(RC_LOG, st->logger, &d, "invalid attribute in IPsec Transform: %u",
+				trans->isat_transnum);
+			return false;
+		}
+
+		/*
 		 * Log TYPE+VALUE when name in table.
 		 *
 		 * Not being able to find the NAME doesn't say much so
 		 * don't try to use this as a check that a TYPE+VALUE
-		 * combination is valid.  For instance,
-		 * SA_LIFE_DURATION has no names and is supported.
+		 * combination is valid.
+		 *
+		 * For instance, SA_LIFE_DURATION has no names and is
+		 * supported.
 		 */
 		if (DBGP(DBG_BASE)) {
-			if ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV) {
-				/* i.e., VALUE is real value */
-				enum_buf b;
-				if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {
-					LDBG_log(st->logger,
-						 "   [%u is %s]", value, b.buf);
-				}
+			/* i.e., VALUE is real value */
+			enum_buf b;
+			if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {
+				LDBG_log(st->logger, "   [%s %jd is %s]", af, value, b.buf);
+			} else if (tlv) {
+				LDBG_log(st->logger, "   [%s is %jd]", af, value);
 			}
 		}
 
-		switch (a.isaat_af_type) {
-		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
+		switch (type) {
+		case SA_LIFE_TYPE:
 		{
 			ipcomp_inappropriate = false;
 			/*
@@ -2410,21 +2442,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 			default:
 				llog(RC_LOG_SERIOUS, st->logger,
-				     "IPsec attribute SA_LIFE_TYPE with value %u unrecognized",
+				     "IPsec attribute SA_LIFE_TYPE with value %ju unrecognized",
 				     value);
 				return false;
 			}
 			break;
 		}
 
-		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
-		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
+		case SA_LIFE_DURATION:
 		{
-			/* DANGER: NOT VALUE! */
-			deltatime_t val = deltatime(decode_life_duration(&a, &attr_pbs));
-			deltatime_buf vb;
-			ldbg(st->logger, "   [duration is %s]", str_deltatime(val, &vb));
-
 			ipcomp_inappropriate = false;
 			if (life_type == 0) {
 				llog(RC_LOG_SERIOUS, st->logger,
@@ -2436,20 +2462,22 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case SA_LIFE_TYPE_SECONDS:
 			{
 				/*
-				 * Silently limit duration to our maximum.
+				 * Silently limit duration to FIPS,
+				 * default, and then configured
+				 * maximum.
 				 */
-				deltatime_t lifemax =
-					(is_fips_mode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
-					 IPSEC_SA_LIFETIME_MAXIMUM);
-				attrs->lifetime =
-					(deltatime_cmp(val, >, lifemax) ? lifemax :
-					 deltatime_cmp(val, >, st->st_connection->config->sa_ipsec_max_lifetime) ? st->st_connection->config->sa_ipsec_max_lifetime :
-					 val);
+				deltatime_t lifemax = (is_fips_mode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
+						       IPSEC_SA_LIFETIME_MAXIMUM);
+				if (deltatime_cmp(lifemax, >, st->st_connection->config->sa_ipsec_max_lifetime)) {
+					lifemax = st->st_connection->config->sa_ipsec_max_lifetime;
+				}
+				deltatime_t lifetime = deltatime(value);
+				attrs->lifetime = (deltatime_cmp(lifetime, >, lifemax) ? lifemax : lifetime);
 				break;
 			}
 			case SA_LIFE_TYPE_KBYTES:
 			{
-				ldbg(st->logger, "ignoring SA_LIFE_TYPE_KBYTES=%ju", deltasecs(val));
+				ldbg(st->logger, "ignoring SA_LIFE_TYPE_KBYTES=%ju", value);
 				break;
 			}
 			default:
@@ -2471,7 +2499,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 		}
 
-		case GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
+		case GROUP_DESCRIPTION:
 		{
 			if (proto == PROTO_IPCOMP) {
 				/* Accept reluctantly.  Should not happen, according to
@@ -2491,7 +2519,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 		}
 
-		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
+		case ENCAPSULATION_MODE:
 		{
 			ipcomp_inappropriate = false;
 
@@ -2515,14 +2543,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 			default:
 				llog(RC_LOG_SERIOUS, st->logger,
-				     "IPsec attribute ENCAPSULATION_MODE value %u unrecognized", value);
+				     "IPsec attribute ENCAPSULATION_MODE value %ju unrecognized", value);
 				return false;
 			}
 
 			break;
 		}
 
-		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
+		case AUTH_ALGORITHM:
 		{
 			enum_buf b;
 			attrs->transattrs.ta_integ = ikev1_kernel_integ_desc(value, &b);
@@ -2542,7 +2570,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 		}
 
-		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
+		case KEY_LENGTH:
 		{
 			if (attrs->transattrs.ta_encrypt == NULL) {
 				log_state(RC_LOG_SERIOUS, st,
