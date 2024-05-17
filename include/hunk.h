@@ -391,6 +391,8 @@ char  char_toupper(char c);
 
 /*
  * Convert between uintmax_t and network-byte-ordered data.
+ *
+ * Overflow is handed with staturation (returns UINTMAX_MAX).
  */
 
 void hton_bytes(uintmax_t h, void *bytes, size_t size);
