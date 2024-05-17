@@ -59,11 +59,35 @@ KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
 KVM_SNAPSHOTDIR ?=
 
-# While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
+#
+# Goal is to make KVM_PREFIXES non-empty, even if it ends up
+# containing only ''.  From that list KVM_FIRST_PREFIX is extracted.
+#
+# Compat values:
+#   KVM_PREFIX=                 -> KVM_PREFIXES=''
+#   KVM_PREFIX=a b c            -> KVM_PREFIXES=a b c
+#   KVM_PREFIX=a  KVM_WORKERS=1 -> KVM_PREFIXES=a
+#   KVM_PREFIX=a  KVM_WORKERS=2 -> KVM_PREFIXES=a  a2
+#   KVM_PREFIX=a. KVM_WORKERS=3 -> KVM_PREFIXES=a. a2 a3
+
 KVM_PREFIX ?=
-KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
-#KVM_WORKERS ?= $(shell awk 'BEGIN { c=1 } /cpu cores/ { c=$$4 } END { if (c>1) print c/2; }' /proc/cpuinfo)
+KVM_NUMBERS = $(wordlist 2, $(KVM_WORKERS), 1 2 3 4 5 6 7 8 9)
+KVM_PREFIXES ?= \
+	$(if $(wordlist 2, 2, $(KVM_PREFIX)), \
+		$(KVM_PREFIX), \
+	$(if $(wordlist 1, 1, $(KVM_PREFIX)), \
+		$(KVM_PREFIX) $(foreach n, $(KVM_NUMBERS), $(patsubst %., %, $(KVM_PREFIX))$(n)), \
+	''))
+
+strip-prefix = $(subst '',,$(subst "",,$(1)))
+# for-each-kvm-prefix = how?
+add-kvm-prefixes = \
+	$(foreach prefix, $(KVM_PREFIXES), \
+		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
+KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
+
+
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
 KVM_PIDFILE ?= $(KVM_BENCHDIR)/kvmrunner.pid
 # Current user's UID; and GID used by QEMU
@@ -262,13 +286,6 @@ KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $
 #      Note: make rules use $(notdir KVM_*_DOMAIN), $(notdir $@), and
 #      $* (matching % in pattern rules) to get the domain name from
 #      the target
-
-strip-prefix = $(subst '',,$(subst "",,$(1)))
-# for-each-kvm-prefix = how?
-add-kvm-prefixes = \
-	$(foreach prefix, $(KVM_PREFIXES), \
-		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
-KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
 # expand anything using $1 (such as make variable names and values)
 # immediately, but delay everything else by using $$.
