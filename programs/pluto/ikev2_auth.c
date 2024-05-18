@@ -155,7 +155,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 */
 		pexpect(authby_has_rsasig(c->local->host.config->authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGSIG;
+			return IKEv2_AUTH_DIGITAL_SIGNATURE;
 		}
 
 		/*
@@ -163,7 +163,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * RSASIG_v1_5.
 		 */
 		if (c->local->host.config->authby.rsasig_v1_5) {
-			return IKEv2_AUTH_RSA;
+			return IKEv2_AUTH_RSA_DIGITAL_SIGNATURE;
 		}
 
 		/*
@@ -187,7 +187,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 */
 		pexpect(authby_has_ecdsa(c->local->host.config->authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
-			return IKEv2_AUTH_DIGSIG;
+			return IKEv2_AUTH_DIGITAL_SIGNATURE;
 		}
 
 		/*
@@ -228,10 +228,10 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * bundled in PSK (it certainly isn't one of the
 		 * signature payloads)?
 		 */
-		return IKEv2_AUTH_PSK;
+		return IKEv2_AUTH_SHARED_KEY_MAC;
 
 	case AUTH_PSK:
-		return IKEv2_AUTH_PSK;
+		return IKEv2_AUTH_SHARED_KEY_MAC;
 
 	case AUTH_NULL:
 		return IKEv2_AUTH_NULL;
@@ -289,18 +289,18 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	}
 
 	switch (local_auth_method) {
-	case IKEv2_AUTH_RSA:
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
 		if (!out_hunk(*auth_sig, &auth_pbs, "signature")) {
 			return false;
 		}
 		break;
 
-	case IKEv2_AUTH_DIGSIG:
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/* saved during signing */
 		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
@@ -419,7 +419,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 	 */
 
 	switch (recv_auth) {
-	case IKEv2_AUTH_RSA:
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .rsasig_v1_5 = true, },
 							  ike, idhash_in,
 							  signature_pbs,
@@ -450,7 +450,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  &pubkey_signer_raw_ecdsa/*_p521*/,
 							  NULL/*legacy-signature-name*/);
 
-	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_SHARED_KEY_MAC:
 	{
 		if (that_auth != AUTH_PSK) {
 			enum_buf an;
@@ -493,7 +493,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		return NULL;
 	}
 
-	case IKEv2_AUTH_DIGSIG:
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		if (that_auth != AUTH_ECDSA &&
 		    that_auth != AUTH_RSASIG) {
@@ -619,7 +619,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 
-	case IKEv2_AUTH_RSA:
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
 							     &ike_alg_hash_sha1,
@@ -645,7 +645,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 							    &pubkey_signer_raw_ecdsa/*_p521*/,
 							    auth_cb);
 
-	case IKEv2_AUTH_DIGSIG:
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
 		/*
 		 * Prefer the HASH and SIGNER algorithms saved when
@@ -705,7 +705,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 							     ike->sa.st_v2_digsig.signer, auth_cb);
 	}
 
-	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
 	{
 		struct crypt_mac signed_octets = empty_mac;
@@ -772,7 +772,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 	enum keyword_auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
-	case IKEv2_AUTH_RSA:
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return submit_v2_IKE_AUTH_request_signature(ike, md,
 							    &ike->sa.st_v2_id_payload,
 							    &ike_alg_hash_sha1,
@@ -798,7 +798,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 							    &pubkey_signer_raw_ecdsa/*_p521*/,
 							    cb);
 
-	case IKEv2_AUTH_DIGSIG:
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		/*
 		 * Save the HASH and SIGNER for later - used when
 		 * emitting the siguature (should the signature
@@ -833,7 +833,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 							    ike->sa.st_v2_digsig.signer,
 							    cb);
 
-	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
 	{
 		struct crypt_mac signed_octets = empty_mac;

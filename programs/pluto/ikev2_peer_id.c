@@ -110,7 +110,7 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 	enum keyword_auth proposed_authbys;
 	switch (atype) {
-	case IKEv2_AUTH_RSA:
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		proposed_authbys = LELEM(AUTH_RSASIG);
 		break;
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
@@ -118,13 +118,13 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		proposed_authbys = LELEM(AUTH_ECDSA);
 		break;
-	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_SHARED_KEY_MAC:
 		proposed_authbys = LELEM(AUTH_PSK);
 		break;
 	case IKEv2_AUTH_NULL:
 		proposed_authbys = LELEM(AUTH_NULL);
 		break;
-	case IKEv2_AUTH_DIGSIG:
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 		proposed_authbys = LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA);
 		break;
 	default:

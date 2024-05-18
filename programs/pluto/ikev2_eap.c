@@ -769,7 +769,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	enum keyword_auth local_authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
 	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, local_authby);
-	if (!PEXPECT(ike->sa.logger, (local_auth_method == IKEv2_AUTH_PSK ||
+	if (!PEXPECT(ike->sa.logger, (local_auth_method == IKEv2_AUTH_SHARED_KEY_MAC ||
 				      local_auth_method == IKEv2_AUTH_NULL))) {
 		return STF_INTERNAL_ERROR;
 	}

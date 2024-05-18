@@ -1765,12 +1765,12 @@ enum_names ikev2_cp_type_names = {
 };
 
 /* ikev2 auth methods */
+
 static const char *const ikev2_auth_method_name[] = {
 #define S(E) [E - IKEv2_AUTH_RESERVED] = #E
-#define R(E,S) [E - IKEv2_AUTH_RESERVED] = #S
 	S(IKEv2_AUTH_RESERVED),
-	S(IKEv2_AUTH_RSA),
-	R(IKEv2_AUTH_PSK, IKEv2_AUTH_SHARED),
+	S(IKEv2_AUTH_RSA_DIGITAL_SIGNATURE),
+	S(IKEv2_AUTH_SHARED_KEY_MAC),
 	S(IKEv2_AUTH_DSS_DIGITAL_SIGNATURE),
 	/* 4 - 8 unassigned */
 	S(IKEv2_AUTH_ECDSA_SHA2_256_P256),
@@ -1778,14 +1778,13 @@ static const char *const ikev2_auth_method_name[] = {
 	S(IKEv2_AUTH_ECDSA_SHA2_512_P521),
 	S(IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD), /* 12 - RFC 6467 */
 	S(IKEv2_AUTH_NULL),
-	S(IKEv2_AUTH_DIGSIG), /* 14 - RFC 7427 */
-#undef R
+	S(IKEv2_AUTH_DIGITAL_SIGNATURE), /* 14 - RFC 7427 */
 #undef S
 };
 
 enum_names ikev2_auth_method_names = {
 	IKEv2_AUTH_RESERVED,
-	IKEv2_AUTH_DIGSIG,
+	IKEv2_AUTH_DIGITAL_SIGNATURE,
 	ARRAY_REF(ikev2_auth_method_name),
 	"IKEv2_AUTH_", /* prefix */
 	NULL
@@ -2302,7 +2301,6 @@ static enum_names ikev2_trans_type_encr_names_private_use1 = {
 
 static const char *const ikev2_trans_type_encr_name[] = {
 #define S(E) [E - IKEv2_ENCR_DES_IV64] = #E
-#define R(E,S) [E - IKEv2_ENCR_DES_IV64] = #S
 	S(IKEv2_ENCR_DES_IV64),	/* 1 */
 	S(IKEv2_ENCR_DES),
 	S(IKEv2_ENCR_3DES),
@@ -2330,7 +2328,6 @@ static const char *const ikev2_trans_type_encr_name[] = {
 	S(IKEv2_ENCR_CHACHA20_POLY1305), /* RFC 7634 */
 	/* 29 - 1023 Unassigned */
 	/* 1024 - 65535 Private use */
-#undef R
 #undef S
 };
 

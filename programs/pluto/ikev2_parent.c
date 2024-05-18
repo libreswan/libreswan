@@ -253,8 +253,8 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 {
 		switch (atype) {
 		case IKEv2_AUTH_RESERVED:
-		case IKEv2_AUTH_DIGSIG:
-		case IKEv2_AUTH_RSA:
+		case IKEv2_AUTH_DIGITAL_SIGNATURE:
+		case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 			return true; /* success */
 		default:
 			break;	/*  failure */
@@ -267,8 +267,8 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 		const char *err1 = "%dnsondemand";
 		const char *err2 = "";
 
-		if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA ||
-							atype == IKEv2_AUTH_DIGSIG)) {
+		if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA_DIGITAL_SIGNATURE ||
+							atype == IKEv2_AUTH_DIGITAL_SIGNATURE)) {
 			err1 = " initiator IKEv2 Auth Method mismatched ";
 			err2 = str_enum(&ikev2_auth_method_names, atype, &eb2);
 		}
