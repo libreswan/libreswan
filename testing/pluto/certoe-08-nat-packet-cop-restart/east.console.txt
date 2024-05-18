@@ -47,7 +47,7 @@ east #
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
 "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254 #1: responder established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
@@ -59,6 +59,6 @@ east #
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
 "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: responder established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #
  

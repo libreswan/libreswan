@@ -44,8 +44,8 @@ east #
 east #
  grep "auth method: IKEv2_AUTH_" /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #
 

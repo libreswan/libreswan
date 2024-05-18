@@ -1952,22 +1952,22 @@ name for -1 present (should be absent)
          jam_enum_short 0: RESERVED OK
          jam_enum_human 0: reserved OK
          match RESERVED [short]: OK
-    1 -> IKEv2_AUTH_RSA
-         jam_enum 1: IKEv2_AUTH_RSA OK
-         search IKEv2_AUTH_RSA: OK
-         match IKEv2_AUTH_RSA: OK
-         short_name 1: RSA OK
-         jam_enum_short 1: RSA OK
-         jam_enum_human 1: rsa OK
-         match RSA [short]: OK
-    2 -> IKEv2_AUTH_SHARED
-         jam_enum 2: IKEv2_AUTH_SHARED OK
-         search IKEv2_AUTH_SHARED: OK
-         match IKEv2_AUTH_SHARED: OK
-         short_name 2: SHARED OK
-         jam_enum_short 2: SHARED OK
-         jam_enum_human 2: shared OK
-         match SHARED [short]: OK
+    1 -> IKEv2_AUTH_RSA_DIGITAL_SIGNATURE
+         jam_enum 1: IKEv2_AUTH_RSA_DIGITAL_SIGNATURE OK
+         search IKEv2_AUTH_RSA_DIGITAL_SIGNATURE: OK
+         match IKEv2_AUTH_RSA_DIGITAL_SIGNATURE: OK
+         short_name 1: RSA_DIGITAL_SIGNATURE OK
+         jam_enum_short 1: RSA_DIGITAL_SIGNATURE OK
+         jam_enum_human 1: rsa-digital-signature OK
+         match RSA_DIGITAL_SIGNATURE [short]: OK
+    2 -> IKEv2_AUTH_SHARED_KEY_MAC
+         jam_enum 2: IKEv2_AUTH_SHARED_KEY_MAC OK
+         search IKEv2_AUTH_SHARED_KEY_MAC: OK
+         match IKEv2_AUTH_SHARED_KEY_MAC: OK
+         short_name 2: SHARED_KEY_MAC OK
+         jam_enum_short 2: SHARED_KEY_MAC OK
+         jam_enum_human 2: shared-key-mac OK
+         match SHARED_KEY_MAC [short]: OK
     3 -> IKEv2_AUTH_DSS_DIGITAL_SIGNATURE
          jam_enum 3: IKEv2_AUTH_DSS_DIGITAL_SIGNATURE OK
          search IKEv2_AUTH_DSS_DIGITAL_SIGNATURE: OK
@@ -2016,14 +2016,14 @@ name for -1 present (should be absent)
          jam_enum_short 13: NULL OK
          jam_enum_human 13: null OK
          match NULL [short]: OK
-   14 -> IKEv2_AUTH_DIGSIG
-         jam_enum 14: IKEv2_AUTH_DIGSIG OK
-         search IKEv2_AUTH_DIGSIG: OK
-         match IKEv2_AUTH_DIGSIG: OK
-         short_name 14: DIGSIG OK
-         jam_enum_short 14: DIGSIG OK
-         jam_enum_human 14: digsig OK
-         match DIGSIG [short]: OK
+   14 -> IKEv2_AUTH_DIGITAL_SIGNATURE
+         jam_enum 14: IKEv2_AUTH_DIGITAL_SIGNATURE OK
+         search IKEv2_AUTH_DIGITAL_SIGNATURE: OK
+         match IKEv2_AUTH_DIGITAL_SIGNATURE: OK
+         short_name 14: DIGITAL_SIGNATURE OK
+         jam_enum_short 14: DIGITAL_SIGNATURE OK
+         jam_enum_human 14: digital-signature OK
+         match DIGITAL_SIGNATURE [short]: OK
 
   ikev2_cert_type_names: [1..16)
     1 -> CERT_PKCS7_WRAPPED_X509

@@ -40,8 +40,8 @@ east #
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254 #1: responder established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #
  

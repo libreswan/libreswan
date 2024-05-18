@@ -77,9 +77,9 @@ OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_
 OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
 OUTPUT/east.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 OUTPUT/east.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer using preloaded certificate '@west' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
 OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
@@ -89,8 +89,8 @@ OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512:
 OUTPUT/west.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/west.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 OUTPUT/west.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 west #
  
