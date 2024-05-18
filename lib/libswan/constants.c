@@ -1394,19 +1394,20 @@ enum_names auth_alg_names = {
  */
 
 /* for XAUTH-TYPE attribute */
-static const char *const xauth_type_name[] = {
-#define R(E,S) [E - XAUTH_TYPE_GENERIC] = #S
-	R(XAUTH_TYPE_GENERIC, Generic),
-	R(XAUTH_TYPE_CHAP, RADIUS-CHAP),
-	R(XAUTH_TYPE_OTP, OTP),
-	R(XAUTH_TYPE_SKEY, S/KEY),
-#undef R
+static const char *const ikev1_xauth_type_name[] = {
+#define S(E) [E - IKEv1_XAUTH_TYPE_GENERIC] = #E
+	S(IKEv1_XAUTH_TYPE_GENERIC),
+	S(IKEv1_XAUTH_TYPE_CHAP),
+	S(IKEv1_XAUTH_TYPE_OTP),
+	S(IKEv1_XAUTH_TYPE_SKEY),
+#undef S
 };
-enum_names xauth_type_names = {
-	XAUTH_TYPE_GENERIC,
-	XAUTH_TYPE_SKEY,
-	ARRAY_REF(xauth_type_name),
-	NULL, /* prefix */
+
+enum_names ikev1_xauth_type_names = {
+	IKEv1_XAUTH_TYPE_GENERIC,
+	IKEv1_XAUTH_TYPE_SKEY,
+	ARRAY_REF(ikev1_xauth_type_name),
+	"IKEv1_XAUTH_TYPE_", /* prefix */
 	NULL
 };
 

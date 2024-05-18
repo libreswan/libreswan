@@ -43,7 +43,6 @@ extern enum_names ikev2_last_transform_desc;
 extern enum_names payload_names_ikev1orv2;
 extern enum_names attr_msg_type_names;
 extern enum_names modecfg_attr_names;
-extern enum_names xauth_type_names;
 extern enum_names xauth_attr_names;
 extern enum_names ikev1_exchange_names;
 extern enum_names ikev2_exchange_names;

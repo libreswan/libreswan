@@ -1287,11 +1287,12 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 		switch (attr.isaat_af_type) {
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
-			/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
-			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-				esb_buf b;
-				dbg("unsupported XAUTH_TYPE value %s received",
-				    str_enum(&xauth_type_names, attr.isaat_lv, &b));
+			/* since we only accept XAUTH_TYPE_GENERIC we
+			 * don't need to record this attribute */
+			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
+				enum_buf b;
+				ldbg(st->logger, "unsupported XAUTH_TYPE value %s received",
+				     str_enum(&ikev1_xauth_type_names, attr.isaat_lv, &b));
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			break;
@@ -2032,7 +2033,7 @@ static stf_status xauth_client_resp(struct state *st,
 				case XAUTH_TYPE:
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TV;
-					attr.isaat_lv = XAUTH_TYPE_GENERIC;
+					attr.isaat_lv = IKEv1_XAUTH_TYPE_GENERIC;
 					if (!out_struct(&attr,
 							&isakmp_xauth_attribute_desc,
 							&strattr,
@@ -2300,7 +2301,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		}
 
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
-			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
+			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
 				log_state(RC_LOG, st,
 					"XAUTH: Unsupported type: %d",
 					attr.isaat_lv);

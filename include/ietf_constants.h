@@ -743,11 +743,19 @@ enum next_payload_types_ikev2 {
 #define XAUTH_STATUS_FAIL	0
 #define XAUTH_STATUS_OK	1
 
-/* Values of XAUTH_TYPE attributes */
-#define XAUTH_TYPE_GENERIC 0
-#define XAUTH_TYPE_CHAP 1
-#define XAUTH_TYPE_OTP 2
-#define XAUTH_TYPE_SKEY 3
+/*
+ * From https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-xauth-06
+ * The draft did not make it to an RFC
+ */
+
+enum ikev1_xauth_type {
+	IKEv1_XAUTH_TYPE_GENERIC = 0,
+	IKEv1_XAUTH_TYPE_CHAP = 1,
+	IKEv1_XAUTH_TYPE_OTP = 2,
+	IKEv1_XAUTH_TYPE_SKEY = 3,
+};
+
+extern const struct enum_names ikev1_xauth_type_names;
 
 /* proprietary Microsoft attributes */
 #define IKEv1_INTERNAL_IP4_SERVER 23456
