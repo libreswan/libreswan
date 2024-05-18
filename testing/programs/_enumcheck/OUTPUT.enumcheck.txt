@@ -1879,6 +1879,70 @@ name for -1 present (should be absent)
          jam_enum_short 4: PROTO_IPCOMP OK
          jam_enum_human 4: proto-ipcomp OK
 
+  ikev1_xauth_type_names: [0..4)
+    0 -> IKEv1_XAUTH_TYPE_GENERIC
+         jam_enum 0: IKEv1_XAUTH_TYPE_GENERIC OK
+         search IKEv1_XAUTH_TYPE_GENERIC: OK
+         match IKEv1_XAUTH_TYPE_GENERIC: OK
+         short_name 0: GENERIC OK
+         jam_enum_short 0: GENERIC OK
+         jam_enum_human 0: generic OK
+         match GENERIC [short]: OK
+    1 -> IKEv1_XAUTH_TYPE_CHAP
+         jam_enum 1: IKEv1_XAUTH_TYPE_CHAP OK
+         search IKEv1_XAUTH_TYPE_CHAP: OK
+         match IKEv1_XAUTH_TYPE_CHAP: OK
+         short_name 1: CHAP OK
+         jam_enum_short 1: CHAP OK
+         jam_enum_human 1: chap OK
+         match CHAP [short]: OK
+    2 -> IKEv1_XAUTH_TYPE_OTP
+         jam_enum 2: IKEv1_XAUTH_TYPE_OTP OK
+         search IKEv1_XAUTH_TYPE_OTP: OK
+         match IKEv1_XAUTH_TYPE_OTP: OK
+         short_name 2: OTP OK
+         jam_enum_short 2: OTP OK
+         jam_enum_human 2: otp OK
+         match OTP [short]: OK
+    3 -> IKEv1_XAUTH_TYPE_SKEY
+         jam_enum 3: IKEv1_XAUTH_TYPE_SKEY OK
+         search IKEv1_XAUTH_TYPE_SKEY: OK
+         match IKEv1_XAUTH_TYPE_SKEY: OK
+         short_name 3: SKEY OK
+         jam_enum_short 3: SKEY OK
+         jam_enum_human 3: skey OK
+         match SKEY [short]: OK
+
+  ikev1_xauth_type_stories: [0..4)
+    0 -> Generic
+         jam_enum 0: Generic OK
+         search Generic: OK
+         match Generic: OK
+         short_name 0: Generic OK
+         jam_enum_short 0: Generic OK
+         jam_enum_human 0: generic OK
+    1 -> RADIUS-CHAP
+         jam_enum 1: RADIUS-CHAP OK
+         search RADIUS-CHAP: OK
+         match RADIUS-CHAP: OK
+         short_name 1: RADIUS-CHAP OK
+         jam_enum_short 1: RADIUS-CHAP OK
+         jam_enum_human 1: radius-chap OK
+    2 -> OTP
+         jam_enum 2: OTP OK
+         search OTP: OK
+         match OTP: OK
+         short_name 2: OTP OK
+         jam_enum_short 2: OTP OK
+         jam_enum_human 2: otp OK
+    3 -> S/KEY
+         jam_enum 3: S/KEY OK
+         search S/KEY: OK
+         match S/KEY: OK
+         short_name 3: S/KEY OK
+         jam_enum_short 3: S/KEY OK
+         jam_enum_human 3: s/key OK
+
   ikev2_auth_method_names: [0..15)
     0 -> IKEv2_AUTH_RESERVED
          jam_enum 0: IKEv2_AUTH_RESERVED OK
@@ -7648,36 +7712,6 @@ name for -1 present (should be absent)
          short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
-
-  xauth_type_names: [0..4)
-    0 -> Generic
-         jam_enum 0: Generic OK
-         search Generic: OK
-         match Generic: OK
-         short_name 0: Generic OK
-         jam_enum_short 0: Generic OK
-         jam_enum_human 0: generic OK
-    1 -> RADIUS-CHAP
-         jam_enum 1: RADIUS-CHAP OK
-         search RADIUS-CHAP: OK
-         match RADIUS-CHAP: OK
-         short_name 1: RADIUS-CHAP OK
-         jam_enum_short 1: RADIUS-CHAP OK
-         jam_enum_human 1: radius-chap OK
-    2 -> OTP
-         jam_enum 2: OTP OK
-         search OTP: OK
-         match OTP: OK
-         short_name 2: OTP OK
-         jam_enum_short 2: OTP OK
-         jam_enum_human 2: otp OK
-    3 -> S/KEY
-         jam_enum 3: S/KEY OK
-         search S/KEY: OK
-         match S/KEY: OK
-         short_name 3: S/KEY OK
-         jam_enum_short 3: S/KEY OK
-         jam_enum_human 3: s/key OK
 
   xfrm_policy_names: [0..3)
     0 -> XFRM_POLICY_IN
