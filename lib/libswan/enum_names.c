@@ -76,7 +76,7 @@ long next_enum(enum_names *en, long l)
 
 			if (p->en_last - p->en_first + 1 != p->en_checklen) {
 				llog_passert(&global_logger, HERE,
-					     "p->en_last(%zu) - p->en_first(%zu) + 1 == p->en_checklen(%zu)",
+					     "p->en_last(%lu) - p->en_first(%lu) + 1 == p->en_checklen(%zu)",
 					     p->en_last, p->en_first, p->en_checklen);
 			}
 
