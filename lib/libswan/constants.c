@@ -1494,19 +1494,19 @@ enum_names modecfg_attr_names = {
 	&xauth_attr_names
 };
 
-static const char *const xauth_attr_name[] = {
-#define R(E,S) [E - XAUTH_TYPE] = #S
-	R(XAUTH_TYPE, XAUTH-TYPE), /* 16520 */
-	R(XAUTH_USER_NAME, XAUTH-USER-NAME),
-	R(XAUTH_USER_PASSWORD, XAUTH-USER-PASSWORD),
-	R(XAUTH_PASSCODE, XAUTH-PASSCODE),
-	R(XAUTH_MESSAGE, XAUTH-MESSAGE),
-	R(XAUTH_CHALLENGE, XAUTH-CHALLENGE),
-	R(XAUTH_DOMAIN, XAUTH-DOMAIN),
-	R(XAUTH_STATUS, XAUTH-STATUS),
-	R(XAUTH_NEXT_PIN, XAUTH-NEXT-PIN),
-	R(XAUTH_ANSWER, XAUTH-ANSWER), /* 16529 */
-#undef R
+static const char *const ikev1_attr_xauth_name[] = {
+#define S(E) [E - IKEv1_ATTR_XAUTH_TYPE] = #E
+	S(IKEv1_ATTR_XAUTH_TYPE), /* 16520 */
+	S(IKEv1_ATTR_XAUTH_USER_NAME),
+	S(IKEv1_ATTR_XAUTH_USER_PASSWORD),
+	S(IKEv1_ATTR_XAUTH_PASSCODE),
+	S(IKEv1_ATTR_XAUTH_MESSAGE),
+	S(IKEv1_ATTR_XAUTH_CHALLENGE),
+	S(IKEv1_ATTR_XAUTH_DOMAIN),
+	S(IKEv1_ATTR_XAUTH_STATUS),
+	S(IKEv1_ATTR_XAUTH_NEXT_PIN),
+	S(IKEv1_ATTR_XAUTH_ANSWER), /* 16529 */
+#undef S
 };
 
 /*
@@ -1514,10 +1514,10 @@ static const char *const xauth_attr_name[] = {
  * but we treat these as two completely separate lists
  */
 enum_names xauth_attr_names = {
-	XAUTH_TYPE,
-	XAUTH_ANSWER,
-	ARRAY_REF(xauth_attr_name),
-	NULL, /* prefix */
+	IKEv1_ATTR_XAUTH_TYPE,
+	IKEv1_ATTR_XAUTH_ANSWER,
+	ARRAY_REF(ikev1_attr_xauth_name),
+	"IKEv1_ATTR_", /* prefix */
 	&modecfg_microsoft_attr_names
 };
 

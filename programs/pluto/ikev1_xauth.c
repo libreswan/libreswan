@@ -616,12 +616,12 @@ stf_status xauth_send_request(struct state *st)
 
 		/* Empty name attribute */
 		struct isakmp_attribute nm = {
-			.isaat_af_type = XAUTH_USER_NAME,
+			.isaat_af_type = IKEv1_ATTR_XAUTH_USER_NAME,
 		};
 
 		/* Empty password attribute */
 		struct isakmp_attribute pw = {
-			.isaat_af_type = XAUTH_USER_PASSWORD,
+			.isaat_af_type = IKEv1_ATTR_XAUTH_USER_PASSWORD,
 		};
 
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
@@ -813,7 +813,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 		struct pbs_out strattr;
 		/* ISAKMP attr out (status) */
 		struct isakmp_attribute attr = {
-			.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
+			.isaat_af_type = IKEv1_ATTR_XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
 			.isaat_lv = status,
 		};
 
@@ -1286,7 +1286,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		}
 
 		switch (attr.isaat_af_type) {
-		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
+		case IKEv1_ATTR_XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			/* since we only accept XAUTH_TYPE_GENERIC we
 			 * don't need to record this attribute */
 			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
@@ -1297,7 +1297,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			}
 			break;
 
-		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_ATTR_XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
 				dbg("XAUTH: two User Names!  Rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
@@ -1312,7 +1312,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			gotname = true;
 			break;
 
-		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_ATTR_XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
 			if (gotpassword) {
 				log_state(RC_LOG, st,
 					  "XAUTH: two User Passwords!  Rejected");
@@ -2023,14 +2023,15 @@ static stf_status xauth_client_resp(struct state *st,
 
 		/* lset_t xauth_resp is used as a secondary index variable */
 
-		for (int attr_type = XAUTH_TYPE; xauth_resp != LEMPTY; attr_type++) {
+		for (int attr_type = IKEv1_ATTR_XAUTH_TYPE;
+		     xauth_resp != LEMPTY; attr_type++) {
 			if (xauth_resp & 1) {
 				/* ISAKMP attr out */
 				struct isakmp_attribute attr;
 				struct pbs_out attrval;
 
 				switch (attr_type) {
-				case XAUTH_TYPE:
+				case IKEv1_ATTR_XAUTH_TYPE:
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TV;
 					attr.isaat_lv = IKEv1_XAUTH_TYPE_GENERIC;
@@ -2041,7 +2042,7 @@ static stf_status xauth_client_resp(struct state *st,
 						return STF_INTERNAL_ERROR;
 					break;
 
-				case XAUTH_USER_NAME:
+				case IKEv1_ATTR_XAUTH_USER_NAME:
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
@@ -2084,7 +2085,7 @@ static stf_status xauth_client_resp(struct state *st,
 
 					break;
 
-				case XAUTH_USER_PASSWORD:
+				case IKEv1_ATTR_XAUTH_USER_PASSWORD:
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
@@ -2188,7 +2189,7 @@ static stf_status xauth_client_resp(struct state *st,
 	return STF_OK;
 }
 
-#define XAUTHLELEM(x) (LELEM((x & ISAKMP_ATTR_RTYPE_MASK) - XAUTH_TYPE))
+#define XAUTHLELEM(x) (LELEM((x & ISAKMP_ATTR_RTYPE_MASK) - IKEv1_ATTR_XAUTH_TYPE))
 
 /*
  * STATE_XAUTH_I0:
@@ -2264,7 +2265,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		}
 
 		switch (attr.isaat_af_type) {
-		case XAUTH_STATUS | ISAKMP_ATTR_AF_TV:
+		case IKEv1_ATTR_XAUTH_STATUS | ISAKMP_ATTR_AF_TV:
 			got_status = true;
 			switch (attr.isaat_lv) {
 			case XAUTH_STATUS_FAIL:
@@ -2283,7 +2284,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			}
 			break;
 
-		case XAUTH_MESSAGE | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_ATTR_XAUTH_MESSAGE | ISAKMP_ATTR_AF_TLV:
 		{
 			/* ??? should the message be sanitized before logging? */
 			/* XXX check RFC for max length? */
@@ -2300,7 +2301,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			break;
 		}
 
-		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
+		case IKEv1_ATTR_XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
 				log_state(RC_LOG, st,
 					"XAUTH: Unsupported type: %d",
@@ -2308,17 +2309,17 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				return STF_IGNORE;
 			}
 			dbg("received Cisco XAUTH type: Generic");
-			xauth_resp |= XAUTHLELEM(XAUTH_TYPE);
+			xauth_resp |= XAUTHLELEM(IKEv1_ATTR_XAUTH_TYPE);
 			break;
 
-		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_ATTR_XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			dbg("received Cisco XAUTH username");
-			xauth_resp |= XAUTHLELEM(XAUTH_USER_NAME);
+			xauth_resp |= XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_NAME);
 			break;
 
-		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_ATTR_XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
 			dbg("received Cisco XAUTH password");
-			xauth_resp |= XAUTHLELEM(XAUTH_USER_PASSWORD);
+			xauth_resp |= XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_PASSWORD);
 			break;
 
 		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
@@ -2369,8 +2370,8 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	}
 
 	if (gotrequest) {
-		if (xauth_resp & (XAUTHLELEM(XAUTH_USER_NAME) |
-				  XAUTHLELEM(XAUTH_USER_PASSWORD))) {
+		if (xauth_resp & (XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_NAME) |
+				  XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_PASSWORD))) {
 			if (!st->st_connection->local->host.config->xauth.client) {
 				log_state(RC_LOG, st,
 					  "XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
@@ -2427,7 +2428,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		};
 		struct pbs_out strattr;
 		struct isakmp_attribute attr = {
-			.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
+			.isaat_af_type = IKEv1_ATTR_XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
 			.isaat_lv = XAUTH_STATUS_OK,
 		};
 
@@ -2498,7 +2499,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			}
 
 			switch (attr.isaat_af_type) {
-			case XAUTH_STATUS | ISAKMP_ATTR_AF_TV:
+			case IKEv1_ATTR_XAUTH_STATUS | ISAKMP_ATTR_AF_TV:
 				got_status = true;
 				switch (attr.isaat_lv) {
 				case XAUTH_STATUS_FAIL:
