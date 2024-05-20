@@ -1913,36 +1913,6 @@ name for -1 present (should be absent)
          jam_enum_human 3: skey OK
          match SKEY [short]: OK
 
-  ikev1_xauth_type_stories: [0..4)
-    0 -> Generic
-         jam_enum 0: Generic OK
-         search Generic: OK
-         match Generic: OK
-         short_name 0: Generic OK
-         jam_enum_short 0: Generic OK
-         jam_enum_human 0: generic OK
-    1 -> RADIUS-CHAP
-         jam_enum 1: RADIUS-CHAP OK
-         search RADIUS-CHAP: OK
-         match RADIUS-CHAP: OK
-         short_name 1: RADIUS-CHAP OK
-         jam_enum_short 1: RADIUS-CHAP OK
-         jam_enum_human 1: radius-chap OK
-    2 -> OTP
-         jam_enum 2: OTP OK
-         search OTP: OK
-         match OTP: OK
-         short_name 2: OTP OK
-         jam_enum_short 2: OTP OK
-         jam_enum_human 2: otp OK
-    3 -> S/KEY
-         jam_enum 3: S/KEY OK
-         search S/KEY: OK
-         match S/KEY: OK
-         short_name 3: S/KEY OK
-         jam_enum_short 3: S/KEY OK
-         jam_enum_human 3: s/key OK
-
   ikev2_auth_method_names: [0..15)
     0 -> IKEv2_AUTH_RESERVED
          jam_enum 0: IKEv2_AUTH_RESERVED OK
@@ -4300,76 +4270,86 @@ name for -1 present (should be absent)
          short_name 19: HOME_AGENT_ADDRESS OK
          jam_enum_short 19: HOME_AGENT_ADDRESS OK
          jam_enum_human 19: home-agent-address OK
-  16520 -> XAUTH-TYPE
-         jam_enum 16520: XAUTH-TYPE OK
-         search XAUTH-TYPE: OK
-         match XAUTH-TYPE: OK
-         short_name 16520: XAUTH-TYPE OK
-         jam_enum_short 16520: XAUTH-TYPE OK
+  16520 -> IKEv1_ATTR_XAUTH_TYPE
+         jam_enum 16520: IKEv1_ATTR_XAUTH_TYPE OK
+         search IKEv1_ATTR_XAUTH_TYPE: OK
+         match IKEv1_ATTR_XAUTH_TYPE: OK
+         short_name 16520: XAUTH_TYPE OK
+         jam_enum_short 16520: XAUTH_TYPE OK
          jam_enum_human 16520: xauth-type OK
-  16521 -> XAUTH-USER-NAME
-         jam_enum 16521: XAUTH-USER-NAME OK
-         search XAUTH-USER-NAME: OK
-         match XAUTH-USER-NAME: OK
-         short_name 16521: XAUTH-USER-NAME OK
-         jam_enum_short 16521: XAUTH-USER-NAME OK
+         match XAUTH_TYPE [short]: OK
+  16521 -> IKEv1_ATTR_XAUTH_USER_NAME
+         jam_enum 16521: IKEv1_ATTR_XAUTH_USER_NAME OK
+         search IKEv1_ATTR_XAUTH_USER_NAME: OK
+         match IKEv1_ATTR_XAUTH_USER_NAME: OK
+         short_name 16521: XAUTH_USER_NAME OK
+         jam_enum_short 16521: XAUTH_USER_NAME OK
          jam_enum_human 16521: xauth-user-name OK
-  16522 -> XAUTH-USER-PASSWORD
-         jam_enum 16522: XAUTH-USER-PASSWORD OK
-         search XAUTH-USER-PASSWORD: OK
-         match XAUTH-USER-PASSWORD: OK
-         short_name 16522: XAUTH-USER-PASSWORD OK
-         jam_enum_short 16522: XAUTH-USER-PASSWORD OK
+         match XAUTH_USER_NAME [short]: OK
+  16522 -> IKEv1_ATTR_XAUTH_USER_PASSWORD
+         jam_enum 16522: IKEv1_ATTR_XAUTH_USER_PASSWORD OK
+         search IKEv1_ATTR_XAUTH_USER_PASSWORD: OK
+         match IKEv1_ATTR_XAUTH_USER_PASSWORD: OK
+         short_name 16522: XAUTH_USER_PASSWORD OK
+         jam_enum_short 16522: XAUTH_USER_PASSWORD OK
          jam_enum_human 16522: xauth-user-password OK
-  16523 -> XAUTH-PASSCODE
-         jam_enum 16523: XAUTH-PASSCODE OK
-         search XAUTH-PASSCODE: OK
-         match XAUTH-PASSCODE: OK
-         short_name 16523: XAUTH-PASSCODE OK
-         jam_enum_short 16523: XAUTH-PASSCODE OK
+         match XAUTH_USER_PASSWORD [short]: OK
+  16523 -> IKEv1_ATTR_XAUTH_PASSCODE
+         jam_enum 16523: IKEv1_ATTR_XAUTH_PASSCODE OK
+         search IKEv1_ATTR_XAUTH_PASSCODE: OK
+         match IKEv1_ATTR_XAUTH_PASSCODE: OK
+         short_name 16523: XAUTH_PASSCODE OK
+         jam_enum_short 16523: XAUTH_PASSCODE OK
          jam_enum_human 16523: xauth-passcode OK
-  16524 -> XAUTH-MESSAGE
-         jam_enum 16524: XAUTH-MESSAGE OK
-         search XAUTH-MESSAGE: OK
-         match XAUTH-MESSAGE: OK
-         short_name 16524: XAUTH-MESSAGE OK
-         jam_enum_short 16524: XAUTH-MESSAGE OK
+         match XAUTH_PASSCODE [short]: OK
+  16524 -> IKEv1_ATTR_XAUTH_MESSAGE
+         jam_enum 16524: IKEv1_ATTR_XAUTH_MESSAGE OK
+         search IKEv1_ATTR_XAUTH_MESSAGE: OK
+         match IKEv1_ATTR_XAUTH_MESSAGE: OK
+         short_name 16524: XAUTH_MESSAGE OK
+         jam_enum_short 16524: XAUTH_MESSAGE OK
          jam_enum_human 16524: xauth-message OK
-  16525 -> XAUTH-CHALLENGE
-         jam_enum 16525: XAUTH-CHALLENGE OK
-         search XAUTH-CHALLENGE: OK
-         match XAUTH-CHALLENGE: OK
-         short_name 16525: XAUTH-CHALLENGE OK
-         jam_enum_short 16525: XAUTH-CHALLENGE OK
+         match XAUTH_MESSAGE [short]: OK
+  16525 -> IKEv1_ATTR_XAUTH_CHALLENGE
+         jam_enum 16525: IKEv1_ATTR_XAUTH_CHALLENGE OK
+         search IKEv1_ATTR_XAUTH_CHALLENGE: OK
+         match IKEv1_ATTR_XAUTH_CHALLENGE: OK
+         short_name 16525: XAUTH_CHALLENGE OK
+         jam_enum_short 16525: XAUTH_CHALLENGE OK
          jam_enum_human 16525: xauth-challenge OK
-  16526 -> XAUTH-DOMAIN
-         jam_enum 16526: XAUTH-DOMAIN OK
-         search XAUTH-DOMAIN: OK
-         match XAUTH-DOMAIN: OK
-         short_name 16526: XAUTH-DOMAIN OK
-         jam_enum_short 16526: XAUTH-DOMAIN OK
+         match XAUTH_CHALLENGE [short]: OK
+  16526 -> IKEv1_ATTR_XAUTH_DOMAIN
+         jam_enum 16526: IKEv1_ATTR_XAUTH_DOMAIN OK
+         search IKEv1_ATTR_XAUTH_DOMAIN: OK
+         match IKEv1_ATTR_XAUTH_DOMAIN: OK
+         short_name 16526: XAUTH_DOMAIN OK
+         jam_enum_short 16526: XAUTH_DOMAIN OK
          jam_enum_human 16526: xauth-domain OK
-  16527 -> XAUTH-STATUS
-         jam_enum 16527: XAUTH-STATUS OK
-         search XAUTH-STATUS: OK
-         match XAUTH-STATUS: OK
-         short_name 16527: XAUTH-STATUS OK
-         jam_enum_short 16527: XAUTH-STATUS OK
+         match XAUTH_DOMAIN [short]: OK
+  16527 -> IKEv1_ATTR_XAUTH_STATUS
+         jam_enum 16527: IKEv1_ATTR_XAUTH_STATUS OK
+         search IKEv1_ATTR_XAUTH_STATUS: OK
+         match IKEv1_ATTR_XAUTH_STATUS: OK
+         short_name 16527: XAUTH_STATUS OK
+         jam_enum_short 16527: XAUTH_STATUS OK
          jam_enum_human 16527: xauth-status OK
-  16528 -> XAUTH-NEXT-PIN
-         jam_enum 16528: XAUTH-NEXT-PIN OK
-         search XAUTH-NEXT-PIN: OK
-         match XAUTH-NEXT-PIN: OK
-         short_name 16528: XAUTH-NEXT-PIN OK
-         jam_enum_short 16528: XAUTH-NEXT-PIN OK
+         match XAUTH_STATUS [short]: OK
+  16528 -> IKEv1_ATTR_XAUTH_NEXT_PIN
+         jam_enum 16528: IKEv1_ATTR_XAUTH_NEXT_PIN OK
+         search IKEv1_ATTR_XAUTH_NEXT_PIN: OK
+         match IKEv1_ATTR_XAUTH_NEXT_PIN: OK
+         short_name 16528: XAUTH_NEXT_PIN OK
+         jam_enum_short 16528: XAUTH_NEXT_PIN OK
          jam_enum_human 16528: xauth-next-pin OK
-  16529 -> XAUTH-ANSWER
-         jam_enum 16529: XAUTH-ANSWER OK
-         search XAUTH-ANSWER: OK
-         match XAUTH-ANSWER: OK
-         short_name 16529: XAUTH-ANSWER OK
-         jam_enum_short 16529: XAUTH-ANSWER OK
+         match XAUTH_NEXT_PIN [short]: OK
+  16529 -> IKEv1_ATTR_XAUTH_ANSWER
+         jam_enum 16529: IKEv1_ATTR_XAUTH_ANSWER OK
+         search IKEv1_ATTR_XAUTH_ANSWER: OK
+         match IKEv1_ATTR_XAUTH_ANSWER: OK
+         short_name 16529: XAUTH_ANSWER OK
+         jam_enum_short 16529: XAUTH_ANSWER OK
          jam_enum_human 16529: xauth-answer OK
+         match XAUTH_ANSWER [short]: OK
   23456 -> IKEv1_INTERNAL_IP4_SERVER
          jam_enum 23456: IKEv1_INTERNAL_IP4_SERVER OK
          search IKEv1_INTERNAL_IP4_SERVER: OK
@@ -7542,76 +7522,86 @@ name for -1 present (should be absent)
          jam_enum_human 32: ikev2 version 2.0 (rfc4306/rfc5996) OK
 
   xauth_attr_names: [16520..28684)
-  16520 -> XAUTH-TYPE
-         jam_enum 16520: XAUTH-TYPE OK
-         search XAUTH-TYPE: OK
-         match XAUTH-TYPE: OK
-         short_name 16520: XAUTH-TYPE OK
-         jam_enum_short 16520: XAUTH-TYPE OK
+  16520 -> IKEv1_ATTR_XAUTH_TYPE
+         jam_enum 16520: IKEv1_ATTR_XAUTH_TYPE OK
+         search IKEv1_ATTR_XAUTH_TYPE: OK
+         match IKEv1_ATTR_XAUTH_TYPE: OK
+         short_name 16520: XAUTH_TYPE OK
+         jam_enum_short 16520: XAUTH_TYPE OK
          jam_enum_human 16520: xauth-type OK
-  16521 -> XAUTH-USER-NAME
-         jam_enum 16521: XAUTH-USER-NAME OK
-         search XAUTH-USER-NAME: OK
-         match XAUTH-USER-NAME: OK
-         short_name 16521: XAUTH-USER-NAME OK
-         jam_enum_short 16521: XAUTH-USER-NAME OK
+         match XAUTH_TYPE [short]: OK
+  16521 -> IKEv1_ATTR_XAUTH_USER_NAME
+         jam_enum 16521: IKEv1_ATTR_XAUTH_USER_NAME OK
+         search IKEv1_ATTR_XAUTH_USER_NAME: OK
+         match IKEv1_ATTR_XAUTH_USER_NAME: OK
+         short_name 16521: XAUTH_USER_NAME OK
+         jam_enum_short 16521: XAUTH_USER_NAME OK
          jam_enum_human 16521: xauth-user-name OK
-  16522 -> XAUTH-USER-PASSWORD
-         jam_enum 16522: XAUTH-USER-PASSWORD OK
-         search XAUTH-USER-PASSWORD: OK
-         match XAUTH-USER-PASSWORD: OK
-         short_name 16522: XAUTH-USER-PASSWORD OK
-         jam_enum_short 16522: XAUTH-USER-PASSWORD OK
+         match XAUTH_USER_NAME [short]: OK
+  16522 -> IKEv1_ATTR_XAUTH_USER_PASSWORD
+         jam_enum 16522: IKEv1_ATTR_XAUTH_USER_PASSWORD OK
+         search IKEv1_ATTR_XAUTH_USER_PASSWORD: OK
+         match IKEv1_ATTR_XAUTH_USER_PASSWORD: OK
+         short_name 16522: XAUTH_USER_PASSWORD OK
+         jam_enum_short 16522: XAUTH_USER_PASSWORD OK
          jam_enum_human 16522: xauth-user-password OK
-  16523 -> XAUTH-PASSCODE
-         jam_enum 16523: XAUTH-PASSCODE OK
-         search XAUTH-PASSCODE: OK
-         match XAUTH-PASSCODE: OK
-         short_name 16523: XAUTH-PASSCODE OK
-         jam_enum_short 16523: XAUTH-PASSCODE OK
+         match XAUTH_USER_PASSWORD [short]: OK
+  16523 -> IKEv1_ATTR_XAUTH_PASSCODE
+         jam_enum 16523: IKEv1_ATTR_XAUTH_PASSCODE OK
+         search IKEv1_ATTR_XAUTH_PASSCODE: OK
+         match IKEv1_ATTR_XAUTH_PASSCODE: OK
+         short_name 16523: XAUTH_PASSCODE OK
+         jam_enum_short 16523: XAUTH_PASSCODE OK
          jam_enum_human 16523: xauth-passcode OK
-  16524 -> XAUTH-MESSAGE
-         jam_enum 16524: XAUTH-MESSAGE OK
-         search XAUTH-MESSAGE: OK
-         match XAUTH-MESSAGE: OK
-         short_name 16524: XAUTH-MESSAGE OK
-         jam_enum_short 16524: XAUTH-MESSAGE OK
+         match XAUTH_PASSCODE [short]: OK
+  16524 -> IKEv1_ATTR_XAUTH_MESSAGE
+         jam_enum 16524: IKEv1_ATTR_XAUTH_MESSAGE OK
+         search IKEv1_ATTR_XAUTH_MESSAGE: OK
+         match IKEv1_ATTR_XAUTH_MESSAGE: OK
+         short_name 16524: XAUTH_MESSAGE OK
+         jam_enum_short 16524: XAUTH_MESSAGE OK
          jam_enum_human 16524: xauth-message OK
-  16525 -> XAUTH-CHALLENGE
-         jam_enum 16525: XAUTH-CHALLENGE OK
-         search XAUTH-CHALLENGE: OK
-         match XAUTH-CHALLENGE: OK
-         short_name 16525: XAUTH-CHALLENGE OK
-         jam_enum_short 16525: XAUTH-CHALLENGE OK
+         match XAUTH_MESSAGE [short]: OK
+  16525 -> IKEv1_ATTR_XAUTH_CHALLENGE
+         jam_enum 16525: IKEv1_ATTR_XAUTH_CHALLENGE OK
+         search IKEv1_ATTR_XAUTH_CHALLENGE: OK
+         match IKEv1_ATTR_XAUTH_CHALLENGE: OK
+         short_name 16525: XAUTH_CHALLENGE OK
+         jam_enum_short 16525: XAUTH_CHALLENGE OK
          jam_enum_human 16525: xauth-challenge OK
-  16526 -> XAUTH-DOMAIN
-         jam_enum 16526: XAUTH-DOMAIN OK
-         search XAUTH-DOMAIN: OK
-         match XAUTH-DOMAIN: OK
-         short_name 16526: XAUTH-DOMAIN OK
-         jam_enum_short 16526: XAUTH-DOMAIN OK
+         match XAUTH_CHALLENGE [short]: OK
+  16526 -> IKEv1_ATTR_XAUTH_DOMAIN
+         jam_enum 16526: IKEv1_ATTR_XAUTH_DOMAIN OK
+         search IKEv1_ATTR_XAUTH_DOMAIN: OK
+         match IKEv1_ATTR_XAUTH_DOMAIN: OK
+         short_name 16526: XAUTH_DOMAIN OK
+         jam_enum_short 16526: XAUTH_DOMAIN OK
          jam_enum_human 16526: xauth-domain OK
-  16527 -> XAUTH-STATUS
-         jam_enum 16527: XAUTH-STATUS OK
-         search XAUTH-STATUS: OK
-         match XAUTH-STATUS: OK
-         short_name 16527: XAUTH-STATUS OK
-         jam_enum_short 16527: XAUTH-STATUS OK
+         match XAUTH_DOMAIN [short]: OK
+  16527 -> IKEv1_ATTR_XAUTH_STATUS
+         jam_enum 16527: IKEv1_ATTR_XAUTH_STATUS OK
+         search IKEv1_ATTR_XAUTH_STATUS: OK
+         match IKEv1_ATTR_XAUTH_STATUS: OK
+         short_name 16527: XAUTH_STATUS OK
+         jam_enum_short 16527: XAUTH_STATUS OK
          jam_enum_human 16527: xauth-status OK
-  16528 -> XAUTH-NEXT-PIN
-         jam_enum 16528: XAUTH-NEXT-PIN OK
-         search XAUTH-NEXT-PIN: OK
-         match XAUTH-NEXT-PIN: OK
-         short_name 16528: XAUTH-NEXT-PIN OK
-         jam_enum_short 16528: XAUTH-NEXT-PIN OK
+         match XAUTH_STATUS [short]: OK
+  16528 -> IKEv1_ATTR_XAUTH_NEXT_PIN
+         jam_enum 16528: IKEv1_ATTR_XAUTH_NEXT_PIN OK
+         search IKEv1_ATTR_XAUTH_NEXT_PIN: OK
+         match IKEv1_ATTR_XAUTH_NEXT_PIN: OK
+         short_name 16528: XAUTH_NEXT_PIN OK
+         jam_enum_short 16528: XAUTH_NEXT_PIN OK
          jam_enum_human 16528: xauth-next-pin OK
-  16529 -> XAUTH-ANSWER
-         jam_enum 16529: XAUTH-ANSWER OK
-         search XAUTH-ANSWER: OK
-         match XAUTH-ANSWER: OK
-         short_name 16529: XAUTH-ANSWER OK
-         jam_enum_short 16529: XAUTH-ANSWER OK
+         match XAUTH_NEXT_PIN [short]: OK
+  16529 -> IKEv1_ATTR_XAUTH_ANSWER
+         jam_enum 16529: IKEv1_ATTR_XAUTH_ANSWER OK
+         search IKEv1_ATTR_XAUTH_ANSWER: OK
+         match IKEv1_ATTR_XAUTH_ANSWER: OK
+         short_name 16529: XAUTH_ANSWER OK
+         jam_enum_short 16529: XAUTH_ANSWER OK
          jam_enum_human 16529: xauth-answer OK
+         match XAUTH_ANSWER [short]: OK
   23456 -> IKEv1_INTERNAL_IP4_SERVER
          jam_enum 23456: IKEv1_INTERNAL_IP4_SERVER OK
          search IKEv1_INTERNAL_IP4_SERVER: OK
