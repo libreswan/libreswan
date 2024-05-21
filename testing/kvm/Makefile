@@ -43,6 +43,7 @@ endef
 #
 
 include fedora/kvm.mk
+include linux/kvm.mk
 
 #
 # where things live and what gets created
@@ -1039,17 +1040,17 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
 #
 # For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
-KVM_LINUX_RELEASE ?= $(KVM_FEDORA_RELEASE)
-KVM_LINUX_BUILD ?= $(KVM_FEDORA_BUILD)
+KVM_LINUX_RELEASE ?= 39
+KVM_LINUX_BUILD ?= 1.5
 
-KVM_LINUX_URL ?= $(KVM_FEDORA_URL)
+KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso/
 
-KVM_LINUX_ISO ?= $(KVM_FEDORA_ISO)
-KVM_LINUX_ISO_HASH ?= $(KVM_FEDORA_ISO_HASH)
-KVM_LINUX_ISO_CKSUM ?= $(KVM_FEDORA_ISO_CKSUM)
+KVM_LINUX_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_LINUX_RELEASE)-$(KVM_LINUX_BUILD).iso
+KVM_LINUX_ISO_HASH ?= SHA256
+KVM_LINUX_ISO_CKSUM ?= 2755cdff6ac6365c75be60334bf1935ade838fc18de53d4c640a13d3e904f6e9
 KVM_LINUX_ISO_URL ?= $(KVM_LINUX_URL)/$(notdir $(KVM_LINUX_ISO))
 
-KVM_LINUX_KICKSTART_FILE ?= $(KVM_FEDORA_KICKSTART_FILE)
+KVM_LINUX_KICKSTART_FILE ?= linux/base.ks
 
 ifneq ($(KVM_LINUX_ISO),$(KVM_FEDORA_ISO))
 $(KVM_LINUX_ISO): | $(KVM_POOLDIR)
@@ -1228,7 +1229,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: \
 	touch $@
 
 KVM_FEDORA_UPGRADE_FLAGS ?= $(KVM_FEDORA_INSTALL_PACKAGES) -- $(KVM_FEDORA_UPGRADE_PACKAGES)
-KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_FEDORA_UPGRADE_FLAGS)
+KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_PACKAGES)
 
 ##
 ## Create the os domain by transmogrifying the updated domain.
