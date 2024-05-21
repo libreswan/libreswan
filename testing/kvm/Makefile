@@ -962,14 +962,14 @@ KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 #
 # For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
-KVM_FEDORA_RELEASE ?= 39
-KVM_FEDORA_BUILD ?= 1.5
+KVM_FEDORA_RELEASE ?= 40
+KVM_FEDORA_BUILD ?= 1.14
 
-KVM_FEDORA_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso/
+KVM_FEDORA_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
 
 KVM_FEDORA_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_FEDORA_RELEASE)-$(KVM_FEDORA_BUILD).iso
 KVM_FEDORA_ISO_HASH = SHA256
-KVM_FEDORA_ISO_CKSUM ?= 2755cdff6ac6365c75be60334bf1935ade838fc18de53d4c640a13d3e904f6e9
+KVM_FEDORA_ISO_CKSUM ?= 32d9ab1798fc8106a0b06e873bdcd83a3efea8412c9401dfe4097347ed0cfc65
 KVM_FEDORA_ISO_URL ?= $(KVM_FEDORA_URL)/$(notdir $(KVM_FEDORA_ISO))
 
 KVM_FEDORA_KICKSTART_FILE ?= fedora/base.ks
@@ -1043,7 +1043,7 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
 KVM_LINUX_RELEASE ?= 39
 KVM_LINUX_BUILD ?= 1.5
 
-KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso/
+KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
 
 KVM_LINUX_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_LINUX_RELEASE)-$(KVM_LINUX_BUILD).iso
 KVM_LINUX_ISO_HASH ?= SHA256
