@@ -171,7 +171,7 @@ static const char *find_enum(const struct enum_names *en, unsigned long val, boo
 
 static void bad_enum_name(unsigned long val, enum_buf *b)
 {
-	snprintf(b->tmp, sizeof(b->tmp), "%lu??", val);
+	snprintf(b->tmp, sizeof(b->tmp), "%lu", val);
 	b->buf = b->tmp;
 }
 
@@ -216,9 +216,13 @@ static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val
 	size_t s = 0;
 	if (en->en_prefix != NULL) {
 		s += jam_string(buf, en->en_prefix);
-		s += jam_string(buf, "_");
+		const char c = en->en_prefix[strlen(en->en_prefix)-1];
+		/* typically .en_prefix has a trailing "_" */
+		if (c != '_' && c != '.') {
+			s += jam_string(buf, ".");
+		}
 	}
-	s += jam(buf, "%lu??", val);
+	s += jam(buf, "%lu", val);
 	return s;
 }
 
@@ -354,7 +358,7 @@ bool enum_enum_name(enum_enum_names *een, unsigned long table,
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
-		snprintf(b->tmp, sizeof(b->tmp), "%lu??_%lu", table, val);
+		snprintf(b->tmp, sizeof(b->tmp), "%lu.%lu", table, val);
 		b->buf = b->tmp;
 		return false;
 	}
@@ -375,7 +379,7 @@ const char *str_enum_enum_short(enum_enum_names *een, unsigned long table,
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* assume the log context implies the table name */
-		snprintf(b->tmp, sizeof(b->tmp), "%lu??_%lu", table, val);
+		snprintf(b->tmp, sizeof(b->tmp), "%lu.%lu", table, val);
 		b->buf = b->tmp;
 		return b->buf;
 	}
@@ -389,7 +393,7 @@ size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* XXX: dump something more meaningful */
-		return jam(buf, "%lu??%lu??", table, val);
+		return jam(buf, "%lu.%lu", table, val);
 	}
 	return jam_enum(buf, en, val);
 }
@@ -400,7 +404,7 @@ size_t jam_enum_enum_short(struct jambuf *buf, enum_enum_names *een,
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
 		/* XXX: dump something more meaningful */
-		return jam(buf, "%lu??%lu??", table, val);
+		return jam(buf, "%lu.%lu", table, val);
 	}
 	return jam_enum_short(buf, en, val);
 }
