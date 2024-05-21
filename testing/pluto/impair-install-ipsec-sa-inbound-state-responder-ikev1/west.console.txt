@@ -163,7 +163,7 @@ output: |    flags: ISAKMP_FLAG_v1_ENCRYPTION (0x1)
 output: |    Message ID: 0 (00 00 00 00)
 output: | next payload chain: saving message location 'ISAKMP Message'.'next payload type'
 output: | thinking about whether to send my certificate:
-output: |   I have RSA key: OAKLEY_PRESHARED_KEY cert.type: 0?? 
+output: |   I have RSA key: OAKLEY_PRESHARED_KEY cert.type: 0 
 output: |   sendcert: CERT_ALWAYSSEND and I did not get a certificate request 
 output: |   so do not send cert.
 output: | I did not send a certificate because digital signatures are not being used. (PSK)

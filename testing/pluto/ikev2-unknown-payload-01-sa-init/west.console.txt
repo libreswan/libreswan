@@ -23,7 +23,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to unencrypted IKE_SA_INIT message
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
+"westnet-eastnet-ipv4-psk-ikev2" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -52,7 +52,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to unencrypted IKE_SA_INIT message
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
+"westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
 "westnet-eastnet-ipv4-psk-ikev2" #3: dropping unexpected IKE_SA_INIT message containing UNSUPPORTED_CRITICAL_PAYLOAD notification; message payloads: N; missing payloads: SA,KE,Ni
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

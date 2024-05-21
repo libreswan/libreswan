@@ -7737,13 +7737,13 @@ IKEv2 transforms:
 IKEv2 transforms:
          enum_enum_name 6 1: NULL OK
          enum_name table 1: N/A
-         jam_enum_enum 6 1: 6??1?? OK
-         jam_enum_enum_short 6 1: 6??1?? OK
+         jam_enum_enum 6 1: 6.1 OK
+         jam_enum_enum_short 6 1: 6.1 OK
 IKEv2 transforms:
          enum_enum_name 2 65536: NULL OK
          enum_name table 65536: OK
-         jam_enum_enum 2 65536: IKEv2_PRF__65536?? OK
-         jam_enum_enum_short 2 65536: IKEv2_PRF__65536?? OK
+         jam_enum_enum 2 65536: IKEv2_PRF_65536 OK
+         jam_enum_enum_short 2 65536: IKEv2_PRF_65536 OK
 
 jam_enum_lset_short:
 
