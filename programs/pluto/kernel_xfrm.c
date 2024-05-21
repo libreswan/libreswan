@@ -332,6 +332,19 @@ static void kernel_xfrm_init(struct logger *logger)
 			    "socket() in init_netlink()");
 	}
 
+	static const int on = true;
+
+	if (setsockopt(nl_send_fd, SOL_NETLINK, NETLINK_CAP_ACK,
+		       (const void *)&on, sizeof(on)) < 0) {
+		llog_errno(DEBUG_STREAM, logger, errno,
+			   "setsockopt NETLINK_CAP_ACK in kernel_xfrm_init()");
+	}
+	if (setsockopt(nl_send_fd, SOL_NETLINK, NETLINK_EXT_ACK,
+		       (const void *)&on, sizeof(on)) < 0) {
+		llog_errno(DEBUG_STREAM, logger, errno,
+			   "setsockopt NETLINK_EXT_ACK in kernel_xfrm_init()");
+	}
+
 	init_netlink_rtm_fd(logger);
 	init_netlink_xfrm_fd(logger);
 
@@ -385,6 +398,32 @@ static void kernel_xfrm_flush(struct logger *logger)
 	sendrecv_xfrm_msg(&state.n, NLMSG_ERROR, &rsp,
 			  "flush", "state",
 			  &recv_errno, logger);
+}
+
+static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
+			 const struct nlmsghdr *n)
+{
+	if (n->nlmsg_type != NLMSG_ERROR ||
+	    !(n->nlmsg_flags & NLM_F_ACK_TLVS)) {
+		return;
+	}
+
+	struct nlmsgerr *err = (void *)n + NLMSG_HDRLEN;
+	size_t offset = sizeof(*err);
+	if (!(n->nlmsg_flags & NLM_F_CAPPED)) {
+		offset += err->msg.nlmsg_len - NLMSG_HDRLEN;
+	}
+
+	for (const struct nlattr *attr = nl_getattr(n, &offset);
+	     attr != NULL; attr = nl_getattr(n, &offset)) {
+		if ((attr->nla_type & NLA_TYPE_MASK) == NLMSGERR_ATTR_MSG) {
+			const char *msg = nl_getattrvalstrz(n, attr);
+			if (msg) {
+				llog(rc_flags, logger, "netlink ext_ack: %s",
+				     msg);
+			}
+		}
+	}
 }
 
 /*
@@ -505,6 +544,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		if (rsp.u.e.error != 0) {
 			llog_error(logger, -rsp.u.e.error,
 				   "netlink response for %s %s", description, story);
+			llog_ext_ack(RC_LOG, logger, &rsp.n);
 			return false;
 		}
 		/*
@@ -515,6 +555,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		 */
 		ldbg(logger, "%s() netlink response for %s %s included non-error error",
 		     __func__, description, story);
+		llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
 		/* ignore */
 	}
 	if (rbuf == NULL) {
