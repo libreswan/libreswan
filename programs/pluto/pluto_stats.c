@@ -465,18 +465,19 @@ void show_pluto_stats(struct show *s)
 	show(s, "total.iketcp.server.stopped=%lu", pstats_iketcp_stopped[true]);
 	show(s, "total.iketcp.server.aborted=%lu", pstats_iketcp_aborted[true]);
 
-	ENUM_STATS(&oakley_enc_names, OAKLEY_3DES_CBC, "ikev1.encr", pstats_ikev1_encr);
-	ENUM_STATS(&oakley_hash_names, OAKLEY_MD5, "ikev1.integ", pstats_ikev1_integ);
-	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev1.group", pstats_ikev1_groups);
+	IKE_ALG_STATS("ikev1.encr", encrypt, IKEv1_OAKLEY_ID, pstats_ikev1_encr);
+	IKE_ALG_STATS("ikev1.integ", integ, IKEv1_OAKLEY_ID, pstats_ikev1_integ);
+	IKE_ALG_STATS("ikev1.group", dh, IKEv1_OAKLEY_ID, pstats_ikev1_groups);
+
 	ENUM_STATS(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, "ikev2.encr", pstats_ikev2_encr);
 	ENUM_STATS(&ikev2_trans_type_integ_names, IKEv2_INTEG_HMAC_MD5_96, "ikev2.integ", pstats_ikev2_integ);
-	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.group", pstats_ikev2_groups);
+	IKE_ALG_STATS("ikev2.group", dh, IKEv2_ALG_ID, pstats_ikev2_groups);
 
 	/* we log the received invalid groups and the suggested valid groups */
-	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.recv.invalidke.using", pstats_invalidke_recv_u);
-	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.recv.invalidke.suggesting", pstats_invalidke_recv_s);
-	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.sent.invalidke.using", pstats_invalidke_sent_u);
-	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.sent.invalidke.suggesting", pstats_invalidke_sent_s);
+	IKE_ALG_STATS("ikev2.recv.invalidke.using", dh, IKEv2_ALG_ID, pstats_invalidke_recv_u);
+	IKE_ALG_STATS("ikev2.recv.invalidke.suggesting", dh, IKEv2_ALG_ID, pstats_invalidke_recv_s);
+	IKE_ALG_STATS("ikev2.sent.invalidke.using", dh, IKEv2_ALG_ID, pstats_invalidke_sent_u);
+	IKE_ALG_STATS("ikev2.sent.invalidke.suggesting", dh, IKEv2_ALG_ID, pstats_invalidke_sent_s);
 
 	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_encrypt);
 	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_IPSEC_ID, pstats_ikev1_ipsec_integ);
