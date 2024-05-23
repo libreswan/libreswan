@@ -26,7 +26,8 @@ road #
 road #
  #pkill pluto
 road #
- ipsec whack --shutdown --leave-state
+ ipsec whack --shutdown
+Pluto is shutting down --leave-state
 road #
  ipsec start
 Redirecting to: [initsystem]

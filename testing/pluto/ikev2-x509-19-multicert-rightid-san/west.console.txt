@@ -36,5 +36,6 @@ west #
  hostname | grep east > /dev/null && grep '^[^|].* switched ' /tmp/pluto.log
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

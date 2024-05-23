@@ -61,5 +61,6 @@ west #
  hostname | grep east > /dev/null && grep "PPK_ID not found" /tmp/pluto.log
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

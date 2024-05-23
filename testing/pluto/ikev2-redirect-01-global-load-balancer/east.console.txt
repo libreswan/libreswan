@@ -17,4 +17,5 @@ east #
  ipsec whack --trafficstatus
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 

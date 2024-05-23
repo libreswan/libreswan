@@ -15,6 +15,7 @@ east #
 XfrmInTmplMismatch      	1
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  # there should be no vti0 device left
 east #

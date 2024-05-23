@@ -53,7 +53,8 @@ packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
 west #
  # now restart
 west #
- ipsec whack --shutdown --leave-state
+ ipsec whack --shutdown
+Pluto is shutting down --leave-state
 west #
  ipsec start
 Redirecting to: [initsystem]

@@ -18,5 +18,6 @@ east #
  # if east was already down, the fuzzer crashed it
 east #
  hostname |grep east > /dev/null && ipsec whack --shutdown
+Pluto is shutting down
 east #
  

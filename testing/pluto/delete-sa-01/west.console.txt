@@ -46,6 +46,7 @@ west #
  # "Time to shut down my computer!"...
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  # ...but unless the delete SA is acknowledged, this ping will fail,
 west #

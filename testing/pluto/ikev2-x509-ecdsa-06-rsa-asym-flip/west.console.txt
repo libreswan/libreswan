@@ -77,5 +77,6 @@ west #
 done
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

@@ -18,5 +18,6 @@ east #
 initdone
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  

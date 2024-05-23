@@ -37,5 +37,6 @@ east #
 "westnet-eastnet-ipv4-psk-ppk" #1: Requested PPK_ID not found and connection requires a valid PPK
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  

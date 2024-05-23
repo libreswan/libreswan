@@ -33,5 +33,6 @@ east #
 "main-north"[1] 192.1.2.45 #1: switched to "main-east"[1] 192.1.2.45
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  

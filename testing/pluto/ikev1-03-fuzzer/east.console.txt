@@ -15,6 +15,7 @@ east #
  # if east was already down, we crashed it
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  sed -n -e 's/^.*: packet from /packet from /p' /tmp/pluto.log
 packet from 192.1.2.45:EPHEM: message ignored because it contains a payload type (ISAKMP_NEXT_SA) unexpected by state STATE_INFO

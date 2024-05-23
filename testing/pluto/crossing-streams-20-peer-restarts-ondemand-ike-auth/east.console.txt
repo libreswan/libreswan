@@ -29,6 +29,7 @@ east #
  # east initiates
 east #
  ipsec whack --shutdown --leave-state
+Pluto is shutting down (leaving state)
 east #
  ipsec start
 Redirecting to: [initsystem]

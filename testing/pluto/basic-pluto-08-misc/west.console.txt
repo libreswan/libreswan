@@ -52,6 +52,7 @@ west #
  # shut it down
 west #
  ipsec whack --rundir /var/cache/otheruser/var/run/pluto  --shutdown
+Pluto is shutting down
 west #
  echo "initdone"
 initdone

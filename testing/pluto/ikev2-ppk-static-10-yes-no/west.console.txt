@@ -73,5 +73,6 @@ west #
  grep "PPK AUTH calculated" /tmp/pluto.log
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

@@ -37,5 +37,6 @@ east #
 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as responder
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  

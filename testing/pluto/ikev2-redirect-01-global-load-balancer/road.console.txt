@@ -80,4 +80,5 @@ road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shutdown
+Pluto is shutting down
 

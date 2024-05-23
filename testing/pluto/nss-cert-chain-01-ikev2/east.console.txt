@@ -46,5 +46,6 @@ east #
  # catch any cert chain specific leaks
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  

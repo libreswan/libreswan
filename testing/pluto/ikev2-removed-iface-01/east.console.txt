@@ -74,6 +74,7 @@ east #
 "test3": 192.1.3.3...192.1.3.2; unrouted; my_ip=unset; their_ip=unset;
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  ip link set dev eth3 down
 east #

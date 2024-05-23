@@ -85,6 +85,7 @@ west #
  grep -v -P "\t0$" /proc/net/xfrm_stat
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  # there should be no vti0 device left
 west #

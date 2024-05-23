@@ -73,5 +73,6 @@ west #
  hostname | grep east > /dev/null &&  grep "NO_PPK_AUTH verified" /tmp/pluto.log
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

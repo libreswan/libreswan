@@ -43,5 +43,6 @@ west #
 "west" #1: deleting IKE SA (processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request)
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

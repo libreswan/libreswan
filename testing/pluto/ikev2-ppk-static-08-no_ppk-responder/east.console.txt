@@ -35,5 +35,6 @@ east #
 | NO_PPK_AUTH verified
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  

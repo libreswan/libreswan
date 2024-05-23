@@ -48,7 +48,8 @@ west #
 west #
  #pkill pluto
 west #
- ipsec whack --shutdown --leave-state
+ ipsec whack --shutdown
+Pluto is shutting down --leave-state
 west #
  ipsec start
 Redirecting to: [initsystem]

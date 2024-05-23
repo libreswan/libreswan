@@ -25,6 +25,7 @@ west #
 "longike": added IKEv2 connection
 west #
  ipsec whack --shutdown # stop will cause reading /etc/ipsec.conf
+Pluto is shutting down
 west #
  # rhbz#1625303 test
 west #

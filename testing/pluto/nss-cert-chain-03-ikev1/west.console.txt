@@ -68,5 +68,6 @@ west #
  # catch any cert chain specific leaks
 west #
  ipsec whack --shutdown
+Pluto is shutting down
 west #
  

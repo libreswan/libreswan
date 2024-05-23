@@ -19,5 +19,6 @@ east #
  ../../guestbin/ipsec-kernel-policy.sh
 east #
  ipsec whack --shutdown
+Pluto is shutting down
 east #
  
