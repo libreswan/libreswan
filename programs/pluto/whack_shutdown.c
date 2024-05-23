@@ -245,8 +245,7 @@ void exit_epilogue(void)
 void whack_shutdown(struct logger *logger, bool leave_state)
 {
 	pluto_leave_state = leave_state;
-	llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down%s",
-	     (leave_state ? " (leaving state)" : ""));
+	llog(RC_LOG, logger, "Pluto is shutting down%s", (leave_state ? " (leaving state)" : ""));
 
 	/*
 	 * Leak (unlink but don't close aka delref) the currently
