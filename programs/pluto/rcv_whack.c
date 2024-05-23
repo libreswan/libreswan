@@ -610,12 +610,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "down: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->whack_status) {
-		dbg_whack(s, "status: start:");
-		whack_status(s, now);
-		dbg_whack(s, "status: stop:");
-	}
-
 	if (m->whack_globalstatus) {
 		dbg_whack(s, "globalstatus: start:");
 		whack_globalstatus(s);
@@ -746,10 +740,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 #endif
 
 	/* luckly last !?! */
-	if (m->whack_shutdown) {
-		dbg_whack(s, "shutdown: start: leave-state=%s", bool_str(m->whack_leave_state));
-		whack_shutdown(logger, m->whack_leave_state);
-		dbg_whack(s, "shutdown: stop: leave-state=%s", bool_str(m->whack_leave_state));
+	if (m->whack_leave_state) {
+		dbg_whack(s, "leave_state: start");
+		whack_shutdown(logger, true);
+		dbg_whack(s, "leave_state: stop");
 	}
 
 	return;
@@ -796,7 +790,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 * properly initialize msg - needed because short reads are
 	 * sometimes OK
 	 */
-	struct whack_message msg = { .magic = 0, };
+	struct whack_message msg = {0};
 
 	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
@@ -808,68 +802,35 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	static uintmax_t msgnum;
 	ldbgf(DBG_TMI, whack_logger, "whack message %ju; size=%zd", msgnum++, n);
 
-	/* sanity check message */
-	if ((size_t)n < offsetof(struct whack_message, whack_shutdown) + sizeof(msg.whack_shutdown)) {
-		llog(RC_BADWHACKMESSAGE, whack_logger,
-			    "ignoring runt message from whack: got %zd bytes", n);
-		return;
-	}
-
 	/*
-	 * XXX:
-	 *
-	 * I'm guessing to ensure upgrades work and a new whack can
-	 * shutdown an old pluto, the code below reads .whack_shutdown
-	 * regardless of the value of .magic.
-	 *
-	 * The assumption seems to be that the opening stanza of
-	 * struct whack_message doesn't change so reading the
-	 * .whack_shutdown field is robust.
-	 *
-	 * Except it isn't.
-	 *
-	 * The opening stanza of struct whack_message has changed (for
-	 * instance adding FIPS status et.al.) moving
-	 * .whack_shutdown's offset.  There's even a comment in
-	 * comment in whack.h ("If you change anything earlier in this
-	 * struct, update WHACK_BASIC_MAGIC.").  So if .magic isn't
-	 * WHACK_MAGIC, .whack_shutdown is probably wrong, and when it
-	 * also isn't WHACK_BASIC_MAGIC, it is definitely wrong.
+	 * Try to unpack the message.  Will reject anything with
+	 * neither WHACK_BASIC_MAGIC nor whack_magic().
 	 */
-
-	if (msg.magic != whack_magic()) {
-
-		if (msg.whack_shutdown) {
-			whack_shutdown(whack_logger, PLUTO_EXIT_OK);
-			return; /* force shutting down */
-		}
-
-		if (msg.magic == WHACK_BASIC_MAGIC) {
-			/* Only basic commands.  Simpler inter-version compatibility. */
-			if (msg.whack_status) {
-				struct show *s = alloc_show(whack_logger);
-				whack_status(s, mononow());
-				free_show(&s);
-			}
-			/* bail early, but without complaint */
-			return; /* don't shutdown */
-		}
-
-		llog(RC_BADWHACKMESSAGE, whack_logger,
-		     "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
-		     msg.magic, whack_magic());
-		return; /* bail (but don't shutdown) */
-	}
 
 	struct whackpacker wp = {
 		.msg = &msg,
 		.n = n,
-		.str_next = msg.string,
-		.str_roof = (unsigned char *)&msg + n,
 	};
 
 	if (!unpack_whack_msg(&wp, whack_logger)) {
 		/* already logged */
+		return; /* don't shutdown */
+	}
+
+	/*
+	 * Handle basic commands here.
+	 */
+
+	if (msg.basic.whack_shutdown) {
+		whack_shutdown(whack_logger, false);
+		return; /* force shutting down */
+	}
+
+	if (msg.basic.whack_status) {
+		struct show *s = alloc_show(whack_logger);
+		whack_status(s, mononow());
+		free_show(&s);
+		/* bail early, but without complaint */
 		return; /* don't shutdown */
 	}
 

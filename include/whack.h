@@ -46,27 +46,10 @@
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
 #endif
 
-
-/* Since the message remains on one host, native representation is used.
- * Think of this as horizontal microcode: all selected operations are
- * to be done (in the order declared here).
- *
- * MAGIC is used to help detect version mismatches between whack and Pluto.
- * Whenever the interface (i.e. this struct) changes in form or
- * meaning, change this value (probably by changing the last number).
- *
- * If the command only requires basic actions (status or shutdown),
- * it is likely that the relevant part of the message changes less frequently.
- * Whack uses WHACK_BASIC_MAGIC in those cases.
- *
- * When you increment WHACK_BASIC_MAGIC, reset WHACK_MAGIC's last number to 0.
- * This allows for more WHACK_BASIC_MAGIC values.
- *
- * NOTE: no value of WHACK_BASIC_MAGIC may equal any value of WHACK_MAGIC.
- * Otherwise certain version mismatches will not be detected.
+/*
+ * Since the message remains on one host, native representation is
+ * used.
  */
-
-#define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -136,12 +119,49 @@ struct whack_impair {
 };
 
 struct whack_message {
-	unsigned int magic;
+	/*
+	 * Basic Commands: status and shutdown (NOTHING ELSE!!!)
+	 *
+	 * Whack (pickle.c) sets .magic == WHACK_BASIC_MAGIC IFF
+	 * either .whack_status or .whack_shutdown is valid.
+	 *
+	 * Whack/addconn (pickle.c) set .magic == whack_magic() for
+	 * all other cases.
+	 */
+	struct whack_basic {
+#define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
+		unsigned int magic;
+		/* DO NOT ADD BOOLS HERE */
+		bool whack_status;
+		/* NOR HERE */
+		bool whack_shutdown;
+		/* AND DON'T EVEN THINK ABOUT HERE */
+		/*
+		 * Alternative locations of .whack_shutdown.  Over the
+		 * years misplaced bool fields were inserted between
+		 * .whack_status and .whack_shutdown causing
+		 * .whack_shutdown's offset to change.  This array
+		 * should provide access to those old offsets and
+		 * values.  Since WHACK should only set .magic ==
+		 * WHACK_BASIC_MAGIC when setting either .whack_status
+		 * and/or .whack_shutdown one of these array entries
+		 * being TRUE should indicate a legacy whack
+		 * attempting a shutdown.  For instance v2.x had no
+		 * gap, but by v5.0 the gap had widened to 11 bools.
+		 */
+		bool whack_shutdown_legacy[11];
+	} basic;
 
-	bool whack_status;
+	/*
+	 * END OF BASIC COMMANDS
+	 *
+	 * If you change anything earlier in this struct, update
+	 * WHACK_BASIC_MAGIC so DO NOT DO THAT!
+	 */
+
 	bool whack_globalstatus;
 	bool whack_clear_stats;
-	bool whack_trafficstatus;	/* match name to option/command  */
+	bool whack_trafficstatus;
 	bool whack_shuntstatus;
 	bool whack_fipsstatus;
 	bool whack_briefstatus;
@@ -150,17 +170,11 @@ struct whack_message {
 	bool whack_briefconnectionstatus;
 	bool whack_showstates;
 	bool whack_seccomp_crashtest;
+	bool whack_processstatus;
+	bool whack_leave_state;		/* .basic.shutdown should not
+					 * send delete or clean kernel
+					 * state on shutdown */
 
-	bool whack_shutdown;
-
-	/* END OF BASIC COMMANDS
-	 * If you change anything earlier in this struct, update WHACK_BASIC_MAGIC.
-	 */
-
-
-	bool whack_processstatus; /* non-basic */
-
-	bool whack_leave_state; /* non-basic: dont send delete or  clean kernel state on shutdown */
 	/* name is used in connection and initiate */
 	char *name;
 
@@ -478,7 +492,7 @@ struct whackpacker {
 	struct whack_message *msg;
 	unsigned char *str_roof;
 	unsigned char *str_next;
-	int n;
+	size_t n;
 };
 
 extern err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger);

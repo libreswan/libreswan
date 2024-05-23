@@ -287,10 +287,6 @@ static void diagq(err_t ugh, const char *this)
 
 enum opt_seen_ix {
 
-#define BASIC_OPT_SEEN LELEM(BASIC_OPT_SEEN_IX)
-	BASIC_OPT_SEEN_IX,	/* indicates an option from the
-				 * {FIRST,LAST}_BASIC_OPT range was
-				 * seen */
 #define NORMAL_OPT_SEEN LELEM(NORMAL_OPT_SEEN_IX)
 	NORMAL_OPT_SEEN_IX,	/* indicates an option from the
 				 * {FIRST,LAST}_NORMAL_OPT range was
@@ -324,23 +320,14 @@ enum option_enums {
 #define OPT_START 356
 
 /*
- * Basic options - status and shutdown - are meant to work between
- * whack versions.  Look further down for where whack-magic is set.
- */
-
-#define FIRST_BASIC_OPT		OPT_STATUS	/* first "basic" option */
-
-	OPT_STATUS = OPT_START,	/* must be part of first group */
-	OPT_SHUTDOWN,		/* must be part of first group */
-
-#define LAST_BASIC_OPT		OPT_SHUTDOWN	/* last "basic" option */
-
-/*
  * Normal options don't fall into the connection category (better
  * description? global?).
  */
 
-#define FIRST_NORMAL_OPT	OPT_ASYNC	/* first "normal" option */
+#define FIRST_NORMAL_OPT	OPT_STATUS	/* first "normal" option */
+
+	OPT_STATUS = OPT_START,
+	OPT_SHUTDOWN,
 
 	OPT_ASYNC,
 
@@ -1149,18 +1136,7 @@ int main(int argc, char **argv)
 		 *
 		 * Mostly detection of repeated flags.
 		 */
-		if (FIRST_BASIC_OPT <= c && c <= LAST_BASIC_OPT) {
-			/*
-			 * OPT_* options get added to "opts_seen" and
-			 * "seen[]".  Any repeated options are
-			 * rejected.
-			 */
-			if (seen[c])
-				diagq("duplicated flag",
-				      long_opts[long_index].name);
-			seen[c] = true;
-			opts_seen |= BASIC_OPT_SEEN;
-		} else if (FIRST_NORMAL_OPT <= c && c <= LAST_NORMAL_OPT) {
+		if (FIRST_NORMAL_OPT <= c && c <= LAST_NORMAL_OPT) {
 			/*
 			 * OPT_* options in the above range get added
 			 * to "seen[]".  Any repeated options are
@@ -1486,7 +1462,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_STATUS:	/* --status */
-			msg.whack_status = true;
+			msg.basic.whack_status = true;
 			ignore_errors = true;
 			continue;
 
@@ -1550,10 +1526,12 @@ int main(int argc, char **argv)
 #endif
 
 		case OPT_SHUTDOWN:	/* --shutdown */
-			msg.whack_shutdown = true;
+			msg.basic.whack_shutdown = true;
 			continue;
 
 		case OPT_LEAVE_STATE:	/* --leave-state */
+			/* ignore --shutdown */
+			msg.basic.whack_shutdown = false;
 			msg.whack_leave_state = true;
 			continue;
 
@@ -2688,7 +2666,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!(msg.whack_add ||
+	if (!(msg.basic.whack_status ||
+	      msg.basic.whack_shutdown ||
+	      msg.whack_add ||
 	      msg.whack_key ||
 	      msg.whack_delete ||
 	      msg.whack_deleteid ||
@@ -2713,7 +2693,6 @@ int main(int argc, char **argv)
 	      msg.whack_rereadsecrets ||
 	      msg.whack_crash ||
 	      msg.whack_shuntstatus ||
-	      msg.whack_status ||
 	      msg.whack_globalstatus ||
 	      msg.whack_trafficstatus ||
 	      msg.whack_addresspoolstatus ||
@@ -2725,7 +2704,7 @@ int main(int argc, char **argv)
 	      msg.whack_clear_stats ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
-	      msg.whack_shutdown ||
+	      msg.whack_leave_state ||
 	      msg.whack_purgeocsp ||
 	      msg.whack_seccomp_crashtest ||
 	      msg.whack_showstates ||
@@ -2742,10 +2721,6 @@ int main(int argc, char **argv)
 			 msg.pfsgroup != NULL ? msg.pfsgroup : "");
 		msg.esp = esp_buf;
 	}
-
-	msg.magic = (msg.whack_status ? WHACK_BASIC_MAGIC :
-		     (msg.whack_shutdown && !msg.whack_leave_state) ? WHACK_BASIC_MAGIC :
-		     whack_magic());
 
 	int exit_status = whack_send_msg(&msg,
 					 (ctlsocket == NULL ? DEFAULT_CTL_SOCKET : ctlsocket),

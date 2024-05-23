@@ -243,7 +243,6 @@ static int starter_whack_add_pubkey(const char *leftright,
 				    struct logger *logger)
 {
 	struct whack_message msg = {
-		.magic = whack_magic(),
 		.whack_from = WHACK_FROM_ADDCONN,
 		.whack_key = true,
 		.pubkey_alg = pubkey_alg,
@@ -304,7 +303,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   struct logger *logger)
 {
 	struct whack_message msg = {
-		.magic = whack_magic(),
 		.whack_from = WHACK_FROM_ADDCONN,
 		.whack_add = true,
 		.name = conn->name,
@@ -533,7 +531,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
 	struct whack_message msg = {
-		.magic = whack_magic(),
 		.whack_from = WHACK_FROM_ADDCONN,
 		.whack_listen = true,
 	};

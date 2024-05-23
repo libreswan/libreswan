@@ -403,6 +403,22 @@ static bool pickle_whack_message(struct whackpacker *wp,
  */
 err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
+	PASSERT(logger, wp->msg->basic.magic == 0);
+	if (wp->msg->basic.whack_status ||
+	    wp->msg->basic.whack_shutdown) {
+		wp->msg->basic.magic = WHACK_BASIC_MAGIC;
+		/*
+		 * also set .whack_shutdown_legacy[] so that old
+		 * whacks will, hopefully, see .whack_shutdown where
+		 * they expected the value.
+		 */
+		FOR_EACH_ELEMENT(b, wp->msg->basic.whack_shutdown_legacy) {
+			(*b) = wp->msg->basic.whack_shutdown;
+		}
+	} else {
+		wp->msg->basic.magic = whack_magic();
+	}
+
 	/* Pack strings */
 
 	wp->str_next = wp->msg->string;
@@ -421,16 +437,57 @@ err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
  */
 bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
+	/* sanity check message */
+	if (wp->msg->basic.magic == WHACK_BASIC_MAGIC) {
+		/* must at least contain .whack_shutdown */
+		size_t min_bytes = (offsetof(struct whack_message, basic.whack_shutdown) +
+				    sizeof(wp->msg->basic.whack_shutdown));
+		if (wp->n < min_bytes) {
+			llog(RC_BADWHACKMESSAGE, logger,
+			     "ignoring runt message from whack: got %zu bytes", wp->n);
+			return false;
+		}
+
+		/*
+		 * OR in any old location values for .whack_shutdown.
+		 * An old whack trying to shutdown a newer libreswan
+		 * will have set .magic = WHACK_BASIC_MAGIC and one of
+		 * these fields.
+		 */
+		FOR_EACH_ELEMENT(b, wp->msg->basic.whack_shutdown_legacy) {
+			wp->msg->basic.whack_shutdown |= (*b);
+		}
+
+		/* wipe everything beyond basic values */
+		memset((unsigned char*)wp->msg + sizeof(struct whack_basic), 0,
+		       sizeof(struct whack_message) - sizeof(struct whack_basic));
+
+		return true;
+	}
+
+	if (wp->msg->basic.magic != whack_magic()) {
+		llog(RC_BADWHACKMESSAGE, logger,
+		     "ignoring message from whack with bad magic %u; should be %u; Mismatched versions of userland tools.",
+		     wp->msg->basic.magic, whack_magic());
+		return false;
+	}
+
+	/*
+	 * Determine the bounds of the trailing string array.  Message
+	 * must at least extend to strings array.
+	 */
+	wp->str_next = wp->msg->string;
+	wp->str_roof = (unsigned char *)wp->msg + wp->n;
 	if (wp->str_next > wp->str_roof) {
 		llog(RC_BADWHACKMESSAGE, logger,
-			    "ignoring truncated message from whack: got %d bytes; expected %zu",
-			    wp->n, sizeof(wp->msg));
+		     "ignoring truncated message from whack: got %zu bytes; expected %zu",
+		     wp->n, sizeof(wp->msg));
 		return false;
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {
 		llog(RC_BADWHACKMESSAGE, logger,
-			    "message from whack contains bad string or key");
+		     "message from whack contains bad string or key");
 		return false;
 	}
 
