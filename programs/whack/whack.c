@@ -2743,8 +2743,9 @@ int main(int argc, char **argv)
 		msg.esp = esp_buf;
 	}
 
-	msg.magic = ((opts_seen & ~BASIC_OPT_SEEN) != LEMPTY ? WHACK_MAGIC :
-		     WHACK_BASIC_MAGIC);
+	msg.magic = (msg.whack_status ? WHACK_BASIC_MAGIC :
+		     (msg.whack_shutdown && !msg.whack_leave_state) ? WHACK_BASIC_MAGIC :
+		     WHACK_MAGIC);
 
 	int exit_status = whack_send_msg(&msg,
 					 (ctlsocket == NULL ? DEFAULT_CTL_SOCKET : ctlsocket),

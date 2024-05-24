@@ -840,9 +840,6 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	if (msg.magic != WHACK_MAGIC) {
 
 		if (msg.whack_shutdown) {
-			llog(RC_LOG, whack_logger, "shutting down%s",
-			     (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
-			/* magic invalid; msg.whack_leave_state is untouchable */
 			whack_shutdown(whack_logger, PLUTO_EXIT_OK);
 			return; /* force shutting down */
 		}
