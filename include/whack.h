@@ -67,7 +67,6 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 49)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -493,5 +492,7 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 		   struct logger *logger);
 
 extern bool lsw_alias_cmp(const char *name, const char *aliases);
+
+extern unsigned whack_magic(void);
 
 #endif /* WHACK_H */

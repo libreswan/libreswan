@@ -15,6 +15,11 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
+include $(top_srcdir)/mk/config.mk
+
 LIB = libwhack.a
 
 OBJS += whacklib.o
@@ -22,8 +27,14 @@ OBJS += aliascomp.o
 OBJS += pickle.o
 OBJS += send.o
 
-ifdef top_srcdir
+OBJS += $(abs_builddir)/whack_magic.o
+
+# build whack_magic.c using whack_magic.in.c
+$(abs_builddir)/whack_magic.c: $(srcdir)/whack_magic.in.c
+	rm -f $@.tmp
+	sed -e "s/@@WHACK_MAGIC@@/$$(echo $(IPSECVERSION) | cksum | { read s e ; echo $$s; })/" \
+	    $(srcdir)/whack_magic.in.c \
+	    > $@.tmp
+	mv $@.tmp $@
+
 include ${top_srcdir}/mk/library.mk
-else
-include ../../mk/library.mk
-endif

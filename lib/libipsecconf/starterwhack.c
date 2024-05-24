@@ -47,10 +47,6 @@
 #include "ip_info.h"
 #include "lswlog.h"
 
-static const struct whack_message empty_whack_message = {
-	.magic = WHACK_MAGIC,
-};
-
 static bool set_whack_end(struct whack_end *w,
 			  const struct starter_end *l,
 			  struct logger *logger)
@@ -246,10 +242,13 @@ static int starter_whack_add_pubkey(const char *leftright,
 				    enum ipseckey_algorithm_type pubkey_alg,
 				    struct logger *logger)
 {
-	struct whack_message msg = empty_whack_message;
-	msg.whack_key = true;
-	msg.pubkey_alg = pubkey_alg;
-	msg.keyid = keyid;
+	struct whack_message msg = {
+		.magic = whack_magic(),
+		.whack_from = WHACK_FROM_ADDCONN,
+		.whack_key = true,
+		.pubkey_alg = pubkey_alg,
+		.keyid = keyid,
+	};
 
 	int base;
 	switch (pubkey_alg) {
@@ -304,10 +303,12 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger)
 {
-	struct whack_message msg = empty_whack_message;
-	msg.whack_add = true;
-	msg.whack_from = WHACK_FROM_ADDCONN;
-	msg.name = conn->name;
+	struct whack_message msg = {
+		.magic = whack_magic(),
+		.whack_from = WHACK_FROM_ADDCONN,
+		.whack_add = true,
+		.name = conn->name,
+	};
 
 	msg.host_afi = conn->left.host_family;
 	msg.child_afi = conn->clientaddrfamily;
@@ -531,7 +532,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
-	struct whack_message msg = empty_whack_message;
-	msg.whack_listen = true;
+	struct whack_message msg = {
+		.magic = whack_magic(),
+		.whack_from = WHACK_FROM_ADDCONN,
+		.whack_listen = true,
+	};
 	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }

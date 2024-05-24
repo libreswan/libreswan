@@ -837,7 +837,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 * also isn't WHACK_BASIC_MAGIC, it is definitely wrong.
 	 */
 
-	if (msg.magic != WHACK_MAGIC) {
+	if (msg.magic != whack_magic()) {
 
 		if (msg.whack_shutdown) {
 			whack_shutdown(whack_logger, PLUTO_EXIT_OK);
@@ -856,8 +856,8 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 		}
 
 		llog(RC_BADWHACKMESSAGE, whack_logger,
-			    "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
-			    msg.magic, WHACK_MAGIC);
+		     "ignoring message from whack with bad magic %d; should be %d; Mismatched versions of userland tools.",
+		     msg.magic, whack_magic());
 		return; /* bail (but don't shutdown) */
 	}
 
