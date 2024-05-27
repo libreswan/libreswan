@@ -5,7 +5,7 @@ v5.1 (unreleased)
 * building:
   - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
 * whack:
-  - ignore commands from old whack as could core dump pluto [Andrew]
+  - ignore older whack as could trigger core dump [Andrew, github/1709]
 
 v5.0 (Apr 24, 2024)
 * IKEv1:
