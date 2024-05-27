@@ -4,6 +4,8 @@ See also https://libreswan.org/
 v5.1 (unreleased)
 * building:
   - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
+* whack:
+  - ignore commands from old whack as could core dump pluto [Andrew]
 
 v5.0 (Apr 24, 2024)
 * IKEv1:
