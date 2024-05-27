@@ -631,7 +631,9 @@ enum option_enums {
 	DBGOPT_IMPAIR,
 	DBGOPT_NO_IMPAIR,
 
-#define LAST_DBGOPT		DBGOPT_NO_IMPAIR
+	DBGOPT_MAGIC,
+
+#define LAST_DBGOPT		DBGOPT_MAGIC
 
 #define	OPTION_ENUMS_LAST	LAST_DBGOPT
 #define OPTION_ENUMS_ROOF	(OPTION_ENUMS_LAST+1)
@@ -941,6 +943,7 @@ static const struct option long_opts[] = {
 	{ "no-debug", required_argument, NULL, DBGOPT_NO_DEBUG, },
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR, },
 	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR, },
+	{ "magic", required_argument, NULL, DBGOPT_MAGIC, },
 
 	{ 0, 0, 0, 0 }
 };
@@ -1005,7 +1008,8 @@ static char *ctlsocket = NULL;
 
 static deltatime_t optarg_deltatime(const struct timescale *timescale)
 {
-	passert(long_opts[long_index].has_arg == required_argument);
+	passert((long_opts[long_index].has_arg == required_argument) ||
+		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
 	deltatime_t deltatime;
 	diag_t diag = ttodeltatime(optarg, &deltatime, timescale);
 	if (diag != NULL) {
@@ -1016,7 +1020,8 @@ static deltatime_t optarg_deltatime(const struct timescale *timescale)
 
 static uintmax_t optarg_uintmax(void)
 {
-	passert(long_opts[long_index].has_arg == required_argument);
+	passert((long_opts[long_index].has_arg == required_argument) ||
+		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
 	uintmax_t val;
 	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, &val);
 	if (err != NULL) {
@@ -2505,6 +2510,20 @@ int main(int argc, char **argv)
 				/* parse_impair() printed the error */
 				exit(1);
 			}
+			continue;
+		}
+
+		case DBGOPT_MAGIC:	/* --magic <number> */
+		{
+			/*
+			 * Hack for testing:
+			 *
+			 * When <number> is zero, force .magic to the
+			 * build's WHACK_MAGIC number.  Else force
+			 * .magic to the given value.
+			 */
+			unsigned magic = optarg_uintmax();
+			msg.basic.magic = (magic == 0 ? whack_magic() : magic);
 			continue;
 		}
 		}

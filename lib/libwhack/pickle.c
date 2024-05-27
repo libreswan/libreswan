@@ -403,20 +403,15 @@ static bool pickle_whack_message(struct whackpacker *wp,
  */
 err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
-	PASSERT(logger, wp->msg->basic.magic == 0);
-	if (wp->msg->basic.whack_status ||
-	    wp->msg->basic.whack_shutdown) {
+	if (wp->msg->basic.magic != 0) {
+		ldbg(logger, "whack magic forced to %u", wp->msg->basic.magic);
+	} else if (wp->msg->basic.whack_status ||
+		   wp->msg->basic.whack_shutdown) {
 		wp->msg->basic.magic = WHACK_BASIC_MAGIC;
-		/*
-		 * also set .whack_shutdown_legacy[] so that old
-		 * whacks will, hopefully, see .whack_shutdown where
-		 * they expected the value.
-		 */
-		FOR_EACH_ELEMENT(b, wp->msg->basic.whack_shutdown_legacy) {
-			(*b) = wp->msg->basic.whack_shutdown;
-		}
+		ldbg(logger, "whack magic is %u (WHACK_BASIC_MAGIC)", wp->msg->basic.magic);
 	} else {
 		wp->msg->basic.magic = whack_magic();
+		ldbg(logger, "whack magic is %u (WHACK_MAGIC)", wp->msg->basic.magic);
 	}
 
 	/* Pack strings */
@@ -449,14 +444,17 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 		}
 
 		/*
-		 * OR in any old location values for .whack_shutdown.
-		 * An old whack trying to shutdown a newer libreswan
-		 * will have set .magic = WHACK_BASIC_MAGIC and one of
-		 * these fields.
+		 * Note: since old libreswans (4.x, 5.0) never set
+		 * .magic to WHACK_BASIC_MAGIC, a 5.1+ libreswan will
+		 * never see a non-zero .whack_shutdown_legacy[]
+		 * except when set by a 5.1+ whack.  Hence, there's no
+		 * point in checking its contents.
 		 */
+#if 0
 		FOR_EACH_ELEMENT(b, wp->msg->basic.whack_shutdown_legacy) {
 			wp->msg->basic.whack_shutdown |= (*b);
 		}
+#endif
 
 		/* wipe everything beyond basic values */
 		memset((unsigned char*)wp->msg + sizeof(struct whack_basic), 0,

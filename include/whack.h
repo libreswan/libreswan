@@ -136,20 +136,6 @@ struct whack_message {
 		/* NOR HERE */
 		bool whack_shutdown;
 		/* AND DON'T EVEN THINK ABOUT HERE */
-		/*
-		 * Alternative locations of .whack_shutdown.  Over the
-		 * years misplaced bool fields were inserted between
-		 * .whack_status and .whack_shutdown causing
-		 * .whack_shutdown's offset to change.  This array
-		 * should provide access to those old offsets and
-		 * values.  Since WHACK should only set .magic ==
-		 * WHACK_BASIC_MAGIC when setting either .whack_status
-		 * and/or .whack_shutdown one of these array entries
-		 * being TRUE should indicate a legacy whack
-		 * attempting a shutdown.  For instance v2.x had no
-		 * gap, but by v5.0 the gap had widened to 11 bools.
-		 */
-		bool whack_shutdown_legacy[11];
 	} basic;
 
 	/*
