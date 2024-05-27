@@ -1403,6 +1403,7 @@ kvmplutotest	whack-route-01-route-routed		good	github/1562
 kvmplutotest	whack-unroute-01-ikev1-quick-responder	good	github/1531
 kvmplutotest	whack-unroute-01-ikev1-quick-initiator	good	github/1531
 
+kvmplutotest	whack-shutdown-01-magic			good	github/1709
 
 # PPK
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good

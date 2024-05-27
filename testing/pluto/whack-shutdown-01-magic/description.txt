@@ -1,0 +1,24 @@
+shutdown pluto using various magic numbers
+
+The --shutdown and --status commands set .magic to WHACK_BASIC_MAGIC.
+This way they work regardless of the libreswan version.
+
+For instance:
+
+- after an upgrade, a 5.2 whack can shutdown the running 5.1 pluto
+- after a downgrade, a 5.1 whack can shutdown the running 5.2 pluto
+
+Prior to 5.1 this was all broken:
+
+- .magic was always WHACK_MAGIC
+- WHACK_MAGIC wasn't updated
+- .whack_shutdown kept moving
+
+consequently .whack_shutdown's location was only correct when whack
+and pluto matched.  For instance, a v4.x <<whack --shutdown>> would be
+interpreted by v5.0 as <<whack --showstates>> (because string encoding
+changed this would result in a core dump).
+
+See github/1709
+
+Note: init systems should use SIGTERM to shutdown pluto.

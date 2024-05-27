@@ -1,0 +1,36 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+west #
+ # default is to use WHACK_BASIC_MAGIC
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ # force shutdown with current WHACK_MAGIC (aka 0) and not
+west #
+ # WHACK_BASIC_MAGIC
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown --magic 0
+Pluto is shutting down
+west #
+ # try legacy WHACK_MAGIC=1869114161, should fail
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown --magic 1869114161
+ignoring message from whack with bad magic 1869114161; should be 1990353843; Mismatched versions of userland tools.
+west #
+ 
