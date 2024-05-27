@@ -1,7 +1,7 @@
 # ipsec - ipsec services and ike demon (pluto)
 #
 # IPsec provides encrypted and authenticated communications;
-# NETKEY/KLIPS is the kernel half of it, Pluto is the user-level
+# XFRM is the kernel half of it, Pluto is the user-level
 # management daemon.
 
 description	"libreswan ipsec services"
@@ -31,6 +31,4 @@ pre-stop script
     # do not run whack --shutdown in pre-stop, it confused stop into restarting
     # @@SBINDIR@@/ipsec whack --shutdown
     @@SBINDIR@@/ipsec stopnflog
-    ip xfrm policy flush
-    ip xfrm state flush
 end script
