@@ -223,7 +223,7 @@ case "$1" in
     status)
 	status -p ${plutopid} -l ${lockfile} ${IPSEC_EXECDIR}/pluto
 	RETVAL=$?
-	${IPSEC_EXECDIR}/whack --status | grep Total | sed 's/^000\ Total\ //'
+	${IPSEC_EXECDIR}/whack --status | grep Total
 	;;
     version)
 	version
