@@ -60,10 +60,30 @@ sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 : Install then upgrade
 :
 
-# "$@" contains: <install-package> ... -- <upgrade-package> ...
-install=$(echo "$@" | sed -e 's/--.*//')
-upgrade=$(echo "$@" | sed -e 's/..--//')
-dnf install -y ${install}
+# first time install; after that upgrade
+upgrade="
+systemd-networkd
+unbound
+unbound-devel
+nss-devel
+nss-tools
+nss-util-devel
+audit-libs-devel
+libcurl-devel
+pam-devel
+libseccomp-devel
+ldns-devel
+libselinux-devel
+xmlto
+"
+
+# only install
+install="
+kernel
+kernel-devel
+"
+
+dnf install -y ${upgrade} ${install}
 dnf upgrade -y ${upgrade}
 
 

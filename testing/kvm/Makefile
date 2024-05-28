@@ -42,7 +42,6 @@ endef
 # The guest operating system.
 #
 
-include fedora/kvm.mk
 include linux/kvm.mk
 
 #
@@ -1228,7 +1227,6 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
-KVM_FEDORA_UPGRADE_FLAGS ?= $(KVM_FEDORA_INSTALL_PACKAGES) -- $(KVM_FEDORA_UPGRADE_PACKAGES)
 KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_PACKAGES)
 
 ##
