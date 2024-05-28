@@ -332,17 +332,18 @@ static void kernel_xfrm_init(struct logger *logger)
 			    "socket() in init_netlink()");
 	}
 
-	static const int on = true;
-
+	const int on = true;
 	if (setsockopt(nl_send_fd, SOL_NETLINK, NETLINK_CAP_ACK,
 		       (const void *)&on, sizeof(on)) < 0) {
-		llog_errno(DEBUG_STREAM, logger, errno,
-			   "setsockopt NETLINK_CAP_ACK in kernel_xfrm_init()");
+		llog_errno(RC_LOG, logger, errno, "xfrm: setsockopt(NETLINK_CAP_ACK) failed: ");
+	} else {
+		ldbg(logger, "xfrm: setsockopt(NETLINK_CAP_ACK) ok");
 	}
 	if (setsockopt(nl_send_fd, SOL_NETLINK, NETLINK_EXT_ACK,
 		       (const void *)&on, sizeof(on)) < 0) {
-		llog_errno(DEBUG_STREAM, logger, errno,
-			   "setsockopt NETLINK_EXT_ACK in kernel_xfrm_init()");
+		llog_errno(RC_LOG, logger, errno, "xfrm: setsockopt(NETLINK_EXT_ACK) failed: ");
+	} else {
+		ldbg(logger, "xfrm: setsockopt(NETLINK_EXT_ACK) ok");
 	}
 
 	init_netlink_rtm_fd(logger);
@@ -553,9 +554,11 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		 * we'll let it pass.
 		 * This really happens for netlink_add_sa().
 		 */
-		ldbg(logger, "%s() netlink response for %s %s included non-error error",
-		     __func__, description, story);
-		llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
+		if (DBGP(DBG_BASE)) {
+			LDBG_log(logger, "%s() netlink response for %s %s included non-error error",
+				 __func__, description, story);
+			llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
+		}
 		/* ignore */
 	}
 	if (rbuf == NULL) {
