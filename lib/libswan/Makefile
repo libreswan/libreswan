@@ -297,7 +297,12 @@ OBJS += autostart_names.o
 
 OBJS += $(abs_builddir)/version.o
 
-# build version.c using version number from mk/version.mk
+#
+# Build version.c using version number from git repo or mk/version.mk
+#
+
+IPSECVIDVERSION ?= $(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
+
 $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
 	rm -f $@.tmp
 	sed -e '/"/s/@@IPSECVERSION@@/$(subst /,_,$(IPSECVERSION))/' \
@@ -305,6 +310,7 @@ $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
 	    $(srcdir)/version.in.c \
 	    > $@.tmp
 	mv $@.tmp $@
+
 
 # generate enum name checklists
 
