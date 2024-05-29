@@ -25,7 +25,7 @@ initdone
 road #
  #!/bin/sh
 road #
- ip -4 route
+ ../../guestbin/route.sh -4
 default via 192.1.3.254 dev eth0
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
@@ -44,7 +44,7 @@ road #
  ipsec whack --trafficstatus
 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
 road #
- ip -4 route
+ ../../guestbin/route.sh -4
 default via 192.1.3.254 dev eth0
 192.0.2.0/24 via 192.1.3.254 dev eth0 src 192.0.2.100
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
@@ -63,7 +63,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.1.254
 up
 road #
- ip -4 route
+ ../../guestbin/route.sh -4
 default via 192.1.3.254 dev eth0
 192.0.1.0/24 via 192.1.3.254 dev eth0 src 192.0.1.100
 192.0.2.0/24 via 192.1.3.254 dev eth0 src 192.0.2.100

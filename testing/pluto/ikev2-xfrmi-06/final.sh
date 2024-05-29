@@ -3,5 +3,5 @@ ip addr show dev eth0
 ip addr show dev ipsec1
 ip -s link show ipsec1
 ip rule show
-ip route show
-ip route show table 50
+../../guestbin/route.sh show
+../../guestbin/route.sh show table 50

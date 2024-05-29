@@ -33,7 +33,7 @@ west #
 west #
  # remove the regular route for 192.0.2.0/24
 west #
- ip route del 192.0.2.0/24
+ ../../guestbin/route.sh del 192.0.2.0/24
 west #
  echo "initdone"
 initdone
@@ -51,11 +51,11 @@ west #
 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
-"westnet-eastnet-vti-01" #2: route-client output: done ip route
+"westnet-eastnet-vti-01" #2: route-client output: done ../../guestbin/route.sh
 "westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 "westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
-"westnet-eastnet-vti-01" #2: up-client output: done ip route
+"westnet-eastnet-vti-01" #2: up-client output: done ../../guestbin/route.sh
 "westnet-eastnet-vti-01" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
@@ -71,17 +71,17 @@ west #
 "westnet-eastnet-vti-02" #4: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #4: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 "westnet-eastnet-vti-02" #4: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
-"westnet-eastnet-vti-02" #4: route-client output: done ip route
+"westnet-eastnet-vti-02" #4: route-client output: done ../../guestbin/route.sh
 "westnet-eastnet-vti-02" #4: up-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #4: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit key 2
 "westnet-eastnet-vti-02" #4: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
 "westnet-eastnet-vti-02" #4: up-client output: RTNETLINK answers: File exists
-"westnet-eastnet-vti-02" #4: up-client output: done ip route
+"westnet-eastnet-vti-02" #4: up-client output: done ../../guestbin/route.sh
 "westnet-eastnet-vti-02" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  # our two ranges should orute into the vti device
 west #
- ip route list
+ ../../guestbin/route.sh list
 default via 192.1.2.254 dev eth1
 10.0.2.0/24 dev ipsec0 scope link
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254

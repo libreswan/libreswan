@@ -1,2 +1,2 @@
 # after ISAKMP moved to TUNNEL-B
-ip -4 route
+../../guestbin/route.sh -4

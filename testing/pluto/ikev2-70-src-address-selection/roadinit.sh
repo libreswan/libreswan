@@ -5,7 +5,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down 192.0.2.254
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ip route get to 192.1.2.23
+../../guestbin/route.sh get to 192.1.2.23
 # this test need --verbose to see source address selection
 ipsec auto --add --verbose road
 echo "initdone"

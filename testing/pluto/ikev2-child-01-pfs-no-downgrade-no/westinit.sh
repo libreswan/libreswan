@@ -5,10 +5,10 @@ ip addr add 192.0.101.254/24 dev eth0:1
 ip addr add 192.0.110.254/24 dev eth0:1
 ip addr add 192.0.111.254/24 dev eth0:1
 
-ip route add 192.0.200.0/24 via 192.1.2.23  dev eth1
-ip route add 192.0.201.0/24 via 192.1.2.23  dev eth1
-ip route add 192.0.210.0/24 via 192.1.2.23  dev eth1
-ip route add 192.0.211.0/24 via 192.1.2.23  dev eth1
+../../guestbin/route.sh add 192.0.200.0/24 via 192.1.2.23  dev eth1
+../../guestbin/route.sh add 192.0.201.0/24 via 192.1.2.23  dev eth1
+../../guestbin/route.sh add 192.0.210.0/24 via 192.1.2.23  dev eth1
+../../guestbin/route.sh add 192.0.211.0/24 via 192.1.2.23  dev eth1
 
 # ensure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP

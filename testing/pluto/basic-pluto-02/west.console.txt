@@ -7,15 +7,15 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # adding some routes to sow confusion on purpose
 west #
- ip route add 192.168.1.1 via 192.0.1.254 dev eth0
+ ../../guestbin/route.sh add 192.168.1.1 via 192.0.1.254 dev eth0
 west #
- ip route add 192.168.1.2 via 192.1.2.45 dev eth1
+ ../../guestbin/route.sh add 192.168.1.2 via 192.1.2.45 dev eth1
 west #
- ip route add 192.168.1.16/28 via 192.1.2.45 dev eth1
+ ../../guestbin/route.sh add 192.168.1.16/28 via 192.1.2.45 dev eth1
 west #
- ip route add 25.1.0.0/16 via 192.0.1.254
+ ../../guestbin/route.sh add 25.1.0.0/16 via 192.0.1.254
 west #
- ip route add 25.2.0.0/16 via 192.1.2.45
+ ../../guestbin/route.sh add 25.2.0.0/16 via 192.1.2.45
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -25,7 +25,7 @@ west #
  ipsec auto --add westnet-all
 "westnet-all": added IKEv1 connection
 west #
- ip route list
+ ../../guestbin/route.sh list
 default via 192.1.2.254 dev eth1
 25.1.0.0/16 via 192.0.1.254 dev eth0
 25.2.0.0/16 via 192.1.2.45 dev eth1
@@ -88,7 +88,7 @@ west #
  ipsec trafficstatus
 #2: "westnet-all", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ip route list
+ ../../guestbin/route.sh list
 default via 192.1.2.254 dev eth1
 25.1.0.0/16 via 192.0.1.254 dev eth0
 25.2.0.0/16 via 192.1.2.45 dev eth1

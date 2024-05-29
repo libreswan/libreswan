@@ -62,28 +62,28 @@ sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 
 # first time install; after that upgrade
 upgrade="
-systemd-networkd
-unbound
-unbound-devel
+audit-libs-devel
+ldns-devel
+libcurl-devel
+libseccomp-devel
+libselinux-devel
 nss-devel
 nss-tools
 nss-util-devel
-audit-libs-devel
-libcurl-devel
 pam-devel
-libseccomp-devel
-ldns-devel
-libselinux-devel
+systemd-networkd
+unbound
+unbound-devel
 xmlto
 "
 
 # only install
-install="
+kernel="
 kernel
 kernel-devel
 "
 
-dnf install -y ${upgrade} ${install}
+dnf install -y ${upgrade} ${kernel}
 dnf upgrade -y ${upgrade}
 
 

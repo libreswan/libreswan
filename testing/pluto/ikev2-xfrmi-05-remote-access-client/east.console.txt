@@ -16,13 +16,13 @@ east #
 32766:	from all lookup main
 32767:	from all lookup default
 east #
- ip route
+ ../../guestbin/route.sh
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 east #
- ip route show table 50
+ ../../guestbin/route.sh show table 50
 Error: ipv4: FIB table does not exist.
 Dump terminated
 east #

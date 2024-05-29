@@ -5,8 +5,8 @@ ip -s link show ipsec1
 sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/
 ip rule show
-ip route show table 50
-ip route show table 1
+../../guestbin/route.sh show table 50
+../../guestbin/route.sh show table 1
 # expect if_id and output-mark to be different in ip xfrm state output
 # output-mark 0x6/0xffffff
 # if_id 1

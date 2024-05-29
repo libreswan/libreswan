@@ -1,3 +1,3 @@
 ip rule
-ip route
-ip route show table 50
+../../guestbin/route.sh
+../../guestbin/route.sh show table 50

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep  --x509
-ip route del default
-ip route add default via 192.9.2.1
+../../guestbin/route.sh del default
+../../guestbin/route.sh add default via 192.9.2.1
 ipsec certutil -D -n west
 cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 cp policies/* /etc/ipsec.d/policies/

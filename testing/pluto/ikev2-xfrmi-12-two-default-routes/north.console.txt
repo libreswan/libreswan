@@ -34,7 +34,7 @@ X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     TX:  bytes packets errors dropped carrier collsns           
              0       0      0       0       0       0 
 north #
- ip route add 192.0.1.0/24 dev ipsec2
+ ../../guestbin/route.sh add 192.0.1.0/24 dev ipsec2
 north #
  ping -n -q -w 4 -c 4 192.0.1.254
 PING 192.0.1.254 (192.0.1.254) 56(84) bytes of data.
@@ -69,7 +69,7 @@ X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     TX:  bytes packets errors dropped carrier collsns           
            336       4      0       0       0       0 
 north #
- ip route add 192.0.2.0/24 dev ipsec3
+ ../../guestbin/route.sh add 192.0.2.0/24 dev ipsec3
 north #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up

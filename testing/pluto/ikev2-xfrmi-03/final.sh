@@ -1,5 +1,5 @@
 ipsec whack --trafficstatus
 ip -s link show ipsec1
 ip rule show
-ip route show table 50
-ip route
+../../guestbin/route.sh show table 50
+../../guestbin/route.sh

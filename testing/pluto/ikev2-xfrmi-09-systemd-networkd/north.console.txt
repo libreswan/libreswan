@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 north #
- ip route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.3.254 dev eth1
+ ../../guestbin/route.sh get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.3.254 dev eth1
 192.0.2.254 via 192.1.3.254 dev eth1 src 192.1.3.33 uid 0
 RTNETLINK answers: No such process
 north #
@@ -63,13 +63,13 @@ north #
 32766:	from all lookup main
 32767:	from all lookup default
 north #
- ip route
+ ../../guestbin/route.sh
 default via 192.1.3.254 dev eth1
 192.0.2.0/24 dev ipsec2 scope link
 192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
 192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
 north #
- ip route show table 50
+ ../../guestbin/route.sh show table 50
 Error: ipv4: FIB table does not exist.
 Dump terminated
 north #

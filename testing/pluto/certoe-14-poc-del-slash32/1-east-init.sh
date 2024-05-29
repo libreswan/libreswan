@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep  --x509
-ip route del default
+../../guestbin/route.sh del default
 ip tuntap add mode tun tun0
 ifconfig tun0 10.13.13.13/24
-ip route add default via 10.13.13.1
-ip route add 192.1.3.0/24 via 192.1.2.254
+../../guestbin/route.sh add default via 10.13.13.1
+../../guestbin/route.sh add 192.1.3.0/24 via 192.1.2.254
 ipsec certutil -D -n road
 ipsec certutil -D -n east
 cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf

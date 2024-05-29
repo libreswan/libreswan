@@ -8,9 +8,9 @@ west #
 west #
  ip rule del pref 220 2> /dev/null > /dev/null
 west #
- ip route del 192.0.2.0/24
+ ../../guestbin/route.sh del 192.0.2.0/24
 west #
- ip route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
+ ../../guestbin/route.sh del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
 west #
  ip link add ipsec0 type xfrm if_id 2 dev eth0
 west #
@@ -81,7 +81,7 @@ src 192.1.2.23 dst 192.1.2.45
 west #
  ip link set up dev ipsec0
 west #
- ip route add 192.0.2.0/24 dev ipsec0
+ ../../guestbin/route.sh add 192.0.2.0/24 dev ipsec0
 west #
  ping -n -q -w 4 -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -101,13 +101,13 @@ west #
 32766:	from all lookup main
 32767:	from all lookup default
 west #
- ip route
+ ../../guestbin/route.sh
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 dev ipsec0 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 west #
- ip route show table 220
+ ../../guestbin/route.sh show table 220
 throw 192.0.1.0/24
 throw 192.0.2.0/24
 throw 192.1.2.0/24

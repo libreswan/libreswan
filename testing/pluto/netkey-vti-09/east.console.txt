@@ -42,7 +42,7 @@ east #
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default
     link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
 east #
- ip route show
+ ../../guestbin/route.sh show
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254

@@ -23,7 +23,7 @@ ip netns exec $name ip addr add 192.168.0.$num/24 dev $vhost
 ip netns exec $name ip addr add 127.0.0.1/8 dev lo
 ip netns exec $name ip link set dev lo up
 ip netns exec $name ip link set dev $vhost up
-ip netns exec $name ip route add 0.0.0.0/0 via 192.168.0.254
+ip netns exec $name ../../guestbin/route.sh add 0.0.0.0/0 via 192.168.0.254
 ip netns exec $name sysctl -w net.ipv4.conf.$vhost.rp_filter=0
 ip netns exec $name sysctl -w net.ipv4.conf.all.rp_filter=0
 

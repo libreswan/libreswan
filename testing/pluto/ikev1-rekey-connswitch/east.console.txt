@@ -24,7 +24,7 @@ initdone
 east #
  # after west up
 east #
- ip -4 route
+ ../../guestbin/route.sh -4
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.1.254 dev eth1 scope link src 192.0.2.254
@@ -33,7 +33,7 @@ default via 192.1.2.254 dev eth1
 east #
  # after ISAKMP moved to TUNNEL-B
 east #
- ip -4 route
+ ../../guestbin/route.sh -4
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.1.254 dev eth1 scope link src 192.0.2.254
@@ -42,7 +42,7 @@ default via 192.1.2.254 dev eth1
 east #
  # after TUNNEL-B down
 east #
- ip -4 route
+ ../../guestbin/route.sh -4
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
 192.0.1.254 dev eth1 scope link src 192.0.2.254

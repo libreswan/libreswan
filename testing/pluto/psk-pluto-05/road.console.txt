@@ -2,7 +2,7 @@
 road #
  ifconfig eth0 inet 192.1.3.174
 road #
- ip route add default via 192.1.3.254
+ ../../guestbin/route.sh add default via 192.1.3.254
 road #
  ipsec start
 Redirecting to: [initsystem]

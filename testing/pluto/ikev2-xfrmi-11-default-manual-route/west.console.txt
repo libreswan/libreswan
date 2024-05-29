@@ -4,7 +4,7 @@ west #
 west #
  # this route from /etc/sysconfig/network-scripts/route-eth1 interferes
 west #
- ip route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1
+ ../../guestbin/route.sh get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.0.2.254 via 192.1.2.23 dev eth1 src 192.1.2.45 uid 0
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
@@ -43,7 +43,7 @@ west #
 west #
  ip addr add 192.0.1.254/24 dev ipsec1
 west #
- ip route add 192.0.2.0/24 dev ipsec1
+ ../../guestbin/route.sh add 192.0.2.0/24 dev ipsec1
 west #
  ping -n -q -w 4 -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

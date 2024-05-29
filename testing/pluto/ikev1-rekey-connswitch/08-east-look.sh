@@ -1,2 +1,2 @@
 # after TUNNEL-B down
-ip -4 route
+../../guestbin/route.sh -4

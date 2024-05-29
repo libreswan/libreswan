@@ -5,14 +5,14 @@ destination 2001:db8:0:2::254 is alive
 road #
  # change the default route
 road #
- ip -6 route del default
+ ../../guestbin/route.sh -6 del default
 road #
  ../../guestbin/ping-once.sh --down 2001:db8:0:2::254
 down
 road #
  # add default via link local
 road #
- ip -6 route add default dev eth0 via fe80::1000:ff:fe32:64ba
+ ../../guestbin/route.sh -6 add default dev eth0 via fe80::1000:ff:fe32:64ba
 road #
  ../../guestbin/ping-once.sh --up 2001:db8:0:2::254
 up
@@ -29,7 +29,7 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ip route get to 2001:db8:1:2::23
+ ../../guestbin/route.sh get to 2001:db8:1:2::23
 2001:db8:1:2::23 from :: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:1:3::209 metric 1024 pref medium
 road #
  # this test need --verbose to see source address selection
@@ -110,14 +110,14 @@ eth0 inet 192.1.3.209/24
 eth0 inet6 2001:db8:1:3::209/64
 lo inet6 2001:db8:0:3:1::/128
 road #
- ip -6 route
+ ../../guestbin/route.sh -6
 2001:db8:0:3:1:: dev lo proto kernel metric 256 pref medium
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 2000::/3 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
 default via fe80::1000:ff:fe32:64ba dev eth0
 road #
- ip route get to 2001:db8:1:2::23
+ ../../guestbin/route.sh get to 2001:db8:1:2::23
 2001:db8:1:2::23 from :: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
 road #
  #
