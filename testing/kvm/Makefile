@@ -39,12 +39,6 @@ define crlf
 endef
 
 #
-# The guest operating system.
-#
-
-include linux/kvm.mk
-
-#
 # where things live and what gets created
 #
 # can be a separate directories; RUT == repo under test; bench ==
@@ -153,6 +147,7 @@ kvm-flag = \
 kvm-flag-name = $(call kvm-flag, $(patsubst KVM_%, %, $(1)))
 kvm-flag-value = $($(call kvm-flag, $(patsubst KVM_%, %, $(1))))
 
+# either KVM_${PLATFORM}_FLAG or KVM_FLAG
 KVM-MAKEFLAG = \
 	$(if $(call kvm-flag-name, $(1)), \
 		$(patsubst KVM_%, %, $(1))=$(call kvm-flag-value, $(1)))
@@ -1039,14 +1034,14 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
 #
 # For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
-KVM_LINUX_RELEASE ?= 39
-KVM_LINUX_BUILD ?= 1.5
+KVM_LINUX_RELEASE ?= 40
+KVM_LINUX_BUILD ?= 1.14
 
 KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
 
 KVM_LINUX_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_LINUX_RELEASE)-$(KVM_LINUX_BUILD).iso
 KVM_LINUX_ISO_HASH ?= SHA256
-KVM_LINUX_ISO_CKSUM ?= 2755cdff6ac6365c75be60334bf1935ade838fc18de53d4c640a13d3e904f6e9
+KVM_LINUX_ISO_CKSUM ?= 32d9ab1798fc8106a0b06e873bdcd83a3efea8412c9401dfe4097347ed0cfc65
 KVM_LINUX_ISO_URL ?= $(KVM_LINUX_URL)/$(notdir $(KVM_LINUX_ISO))
 
 KVM_LINUX_KICKSTART_FILE ?= linux/base.ks

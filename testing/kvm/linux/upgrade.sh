@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -xe ; exec < /dev/null
+exec </dev/null
+set -xe
+set -o pipefail
 
 PREFIX=@@PREFIX@@
 
@@ -60,11 +62,81 @@ sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 : Install then upgrade
 :
 
-# "$@" contains: <install-package> ... -- <upgrade-package> ...
-install=$(echo "$@" | sed -e 's/--.*//')
-upgrade=$(echo "$@" | sed -e 's/..--//')
-dnf install -y ${install}
-dnf upgrade -y ${upgrade}
+# stuff needed to build libreswan; this is first installed and then
+# constantly upgraded
+
+building() {
+    cat <<EOF | awk '{print $1}'
+ElectricFence
+audit-libs-devel
+make
+ldns-devel
+libcurl-devel
+libseccomp-devel
+libselinux-devel
+nss-devel
+nss-tools
+nss-util-devel
+pam-devel
+unbound
+unbound-devel
+xmlto
+EOF
+}
+
+# latest kernel; this is only installed (upgrading kernels is not a
+# fedora thing).  XL2TPD sucks in the latest kernel so is included in
+# the list.
+
+kernel() {
+    cat <<EOF | awk '{print $1}'
+kernel
+kernel-devel
+xl2tpd
+EOF
+}
+
+# utilities used to test libreswan; these are only installed for now
+# (so that there isn't too much version drift).
+
+testing() {
+    cat <<EOF | awk '{print $1}'
+bind-dnssec-utils
+bind-utils
+conntrack-tools
+fping
+gdb
+ike-scan
+iptables
+libcap-ng-utils
+libfaketime
+linux-system-roles
+nc
+net-tools
+nftables
+nsd
+ocspd
+openssl
+python3-netaddr
+python3-pexpect
+python3-pyOpenSSL
+rsync
+selinux-policy-devel
+socat
+sshpass					used by ansible-playbook
+strace
+strongswan
+strongswan-sqlite
+systemd-networkd
+tar
+tcpdump
+vim-enhanced
+wireshark-cli
+EOF
+}
+
+dnf install -y `building` `testing` `kernel`
+dnf upgrade -y `building`
 
 
 :
