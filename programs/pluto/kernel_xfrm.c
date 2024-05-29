@@ -332,6 +332,7 @@ static void kernel_xfrm_init(struct logger *logger)
 			    "socket() in init_netlink()");
 	}
 
+#ifdef SOL_NETLINK
 	const int on = true;
 	if (setsockopt(nl_send_fd, SOL_NETLINK, NETLINK_CAP_ACK,
 		       (const void *)&on, sizeof(on)) < 0) {
@@ -345,6 +346,7 @@ static void kernel_xfrm_init(struct logger *logger)
 	} else {
 		ldbg(logger, "xfrm: setsockopt(NETLINK_EXT_ACK) ok");
 	}
+#endif
 
 	init_netlink_rtm_fd(logger);
 	init_netlink_xfrm_fd(logger);
@@ -404,6 +406,7 @@ static void kernel_xfrm_flush(struct logger *logger)
 static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
 			 const struct nlmsghdr *n)
 {
+#ifdef SOL_NETLINK
 	if (n->nlmsg_type != NLMSG_ERROR ||
 	    !(n->nlmsg_flags & NLM_F_ACK_TLVS)) {
 		return;
@@ -425,6 +428,10 @@ static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
 			}
 		}
 	}
+#else
+	/* use the arguments */
+	ldbg(logger, "ignoring "PRI_LSET"%%p", rc_flags, p);
+#endif
 }
 
 /*
