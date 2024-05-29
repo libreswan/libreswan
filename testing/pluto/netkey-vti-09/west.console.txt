@@ -45,11 +45,11 @@ west #
 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
-"westnet-eastnet-vti-01" #2: route-client output: done ../../guestbin/route.sh
+"westnet-eastnet-vti-01" #2: route-client output: done ip route
 "westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 "westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-01" #2: up-client output: done ../../guestbin/route.sh
+"westnet-eastnet-vti-01" #2: up-client output: done ip route
 "westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
@@ -58,12 +58,12 @@ west #
 "westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-02" #3: route-client output: done ../../guestbin/route.sh
+"westnet-eastnet-vti-02" #3: route-client output: done ip route
 "westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 "westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
 "westnet-eastnet-vti-02" #3: up-client output: RTNETLINK answers: File exists
-"westnet-eastnet-vti-02" #3: up-client output: done ../../guestbin/route.sh
+"westnet-eastnet-vti-02" #3: up-client output: done ip route
 "westnet-eastnet-vti-02" #3: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
