@@ -104,6 +104,7 @@ OBJS += kernel_mode.o
 ifneq ($(LINUX_VARIANT),)
 OBJS += kernel_netlink_reply.o
 OBJS += kernel_netlink_query.o
+OBJS += linux_netlink.o
 ifeq ($(USE_XFRM_INTERFACE), true)
 OBJS += netlink_attrib.o
 endif

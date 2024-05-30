@@ -35,7 +35,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "ipsecconf/confread.h"
-#include "kernel_netlink_reply.h"
+#include "linux_netlink.h"
 #include "addr_lookup.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
@@ -43,21 +43,6 @@
 
 #include "ip_info.h"
 #include "lswlog.h"
-
-struct verbose {
-	struct logger *logger;
-	lset_t rc_flags;
-	int level;
-};
-
-#define vlog(FMT, ...)							\
-	{								\
-		if (verbose.rc_flags) {					\
-			llog(verbose.rc_flags, verbose.logger,		\
-			     "%*s"FMT,					\
-			     verbose.level * 2, "", ##__VA_ARGS__);	\
-		}							\
-	}
 
 static void resolve_point_to_point_peer(const char *interface,
 					const struct ip_info *afi,
@@ -112,7 +97,7 @@ static void resolve_point_to_point_peer(const char *interface,
  * will be truncated if it doesn't fit to buffer. Netlink returns up
  * to 16KiB of data so always keep that much free.
  */
-#define RTNL_BUFSIZE (NL_BUFMARGIN + 8192)
+#define RTNL_BUFSIZE (LINUX_NETLINK_BUFSIZE + 8192)
 
 /*
  * Initialize netlink query message.
@@ -122,13 +107,13 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 					   char type, int flags,
 					   struct verbose verbose)
 {
-	struct nlmsghdr *nlmsg = alloc_bytes(RTNL_BUFSIZE, "netlink query");
+	struct nlmsghdr *nlmsg = alloc_bytes(RTNL_BUFSIZE, "netlink query netlink_query_init()");
 	struct rtmsg *rtmsg;
 
 	nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
 	nlmsg->nlmsg_flags = flags;
 	nlmsg->nlmsg_type = type;
-	nlmsg->nlmsg_seq = 0;
+	nlmsg->nlmsg_seq = 1;
 	nlmsg->nlmsg_pid = getpid();
 
 	rtmsg = (struct rtmsg *)NLMSG_DATA(nlmsg);
@@ -192,45 +177,6 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
 }
 
 /*
- * Send netlink query message and read reply.
- */
-static ssize_t netlink_query(struct nlmsghdr **nlmsgp, size_t bufsize)
-{
-	int sock = cloexec_socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
-
-	if (sock < 0) {
-		int e = errno;
-
-		printf("create netlink socket failure: (%d: %s)\n", e, strerror(e));
-		return -1;
-	}
-
-	/* Send request */
-	struct nlmsghdr *nlmsg = *nlmsgp;
-
-	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
-		int e = errno;
-
-		printf("write netlink socket failure: (%d: %s)\n", e, strerror(e));
-		close(sock);
-		return -1;
-	}
-
-	/*
-	 * Read response; netlink_read_reply() may re-allocate buffer.
-	 */
-	errno = 0;	/* in case failure does not set it */
-	ssize_t len = netlink_read_reply(sock, (char**)nlmsgp, bufsize, 1, getpid());
-
-	if (len < 0)
-		printf("read netlink socket failure: (%d: %s)\n",
-			errno, strerror(errno));
-
-	close(sock);
-	return len;
-}
-
-/*
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 
@@ -257,176 +203,35 @@ enum resolve_status {
 	RESOLVE_PLEASE_CALL_AGAIN = 1,
 };
 
-static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
-						    struct starter_end *peer,
-						    struct verbose verbose)
+struct linux_netlink_context {
+	enum resolve_status status;
+	const struct ip_info *afi;
+	enum seeking { NOTHING, PREFSRC, GATEWAY, } seeking;
+	struct starter_end *host;
+	struct starter_end *peer;
+};
+
+static bool process_netlink_route(struct nlmsghdr *nlmsg,
+				  struct linux_netlink_context *context,
+				  struct verbose verbose)
 {
-	/*
-	 * "left="         == host->addrtype and host->addr
-	 * "leftnexthop="  == host->nexttype and host->nexthop
-	 */
-	const struct ip_info *afi = host->host_family;
+	const struct ip_info *const afi = context->afi;
+	if (context->status == RESOLVE_FAILURE) {
 
-	address_buf ab, gb, pb;
-	vlog("resolving family=%s src=%s gateway=%s peer %s",
-		(afi == NULL ? "<unset>" : afi->ip_name),
-		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
-		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb),
-		pa(peer->addrtype, peer->addr, peer->strings[KSCF_IP], &pb));
-	verbose.level = 1;
-
-	/*
-	 * Can only resolve one at a time.
-	 *
-	 * XXX: OLD comments:
-	 *
-	 * If we have for example host=%defaultroute + peer=%any
-	 * (no destination) the netlink reply will be full routing table.
-	 * We must do two queries:
-	 * 1) find out default gateway
-	 * 2) find out src for that default gateway
-	 *
-	 * If we have only peer IP and no gateway/src we must
-	 * do two queries:
-	 * 1) find out gateway for dst
-	 * 2) find out src for that gateway
-	 * Doing both in one query returns src for dst.
-	 */
-	enum seeking { NOTHING, PREFSRC, GATEWAY, } seeking
-		= (host->nexttype == KH_DEFAULTROUTE ? GATEWAY :
-		   host->addrtype == KH_DEFAULTROUTE ? PREFSRC :
-		   NOTHING);
-	vlog("seeking %s",
-		(seeking == NOTHING ? "NOTHING" :
-		 seeking == PREFSRC ? "PREFSRC" :
-		 seeking == GATEWAY ? "GATEWAY" :
-		 "?"));
-	verbose.level = 2;
-	if (seeking == NOTHING) {
-		return RESOLVE_SUCCESS;	/* this end already figured out */
-	}
-
-	/*
-	 * msgbuf is dynamically allocated since the buffer may need
-	 * to be grown.
-	 */
-	struct nlmsghdr *msgbuf =
-		netlink_query_init(afi, /*type*/RTM_GETROUTE,
-				   (/*flags*/NLM_F_REQUEST |
-				    (seeking == GATEWAY ? NLM_F_DUMP : 0)),
-				   verbose);
-
-	/*
-	 * If known, add a destination address.  Either the peer, or
-	 * the gateway.
-	 */
-
-	const bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
-	bool added_dst;
-	if (host->nexttype == KH_IPADDR && afi == &ipv4_info) {
-		pexpect(seeking == PREFSRC);
-		/*
-		 * My nexthop (gateway) is specified.
-		 * We need to figure out our source IP to get there.
-		 */
-
-		/*
-		 * AA_2019 Why use nexthop and not peer->addr to look up src address?
-		 * The lore is that there is an (old) bug when looking up IPv4 src
-		 * IPv6 with gateway link local address will return link local
-		 * address and not the global address.
-		 */
-		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
-				  "host->nexthop", verbose);
-	} else if (has_peer) {
-		/*
-		 * Peer IP is specified.
-		 * We may need to figure out source IP
-		 * and gateway IP to get there.
-		 *
-		 * XXX: should this also update peer->addrtype?
-		 */
-		pexpect(peer->host_family != NULL);
-		if (peer->addrtype == KH_IPHOSTNAME) {
-#ifdef USE_DNSSEC
-			/* try numeric first */
-			err_t er = ttoaddress_num(shunk1(peer->strings[KSCF_IP]),
-						  peer->host_family, &peer->addr);
-			if (er != NULL) {
-				/* not numeric, so resolve it */
-				if (!unbound_resolve(peer->strings[KSCF_IP],
-						     peer->host_family,
-						     &peer->addr,
-						     verbose.logger)) {
-					pfree(msgbuf);
-					return RESOLVE_FAILURE;
-				}
-			}
-#else
-			err_t er = ttoaddress_dns(shunk1(peer->strings[KSCF_IP]),
-						  peer->host_family, &peer->addr);
-			if (er != NULL) {
-				pfree(msgbuf);
-				return RESOLVE_FAILURE;
-			}
-#endif
-		} else {
-			pexpect(peer->addrtype == KH_IPADDR);
+		if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_DONE)) {
+			return false;
 		}
-		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &peer->addr,
-				  "peer->addr", verbose);
-	} else if (host->nexttype == KH_IPADDR &&
-		   (peer->addrtype == KH_GROUP ||
-		    peer->addrtype == KH_OPPOGROUP)) {
-		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
-				  "host->nexthop peer=group", verbose);
-	} else {
-		added_dst = false;
-	}
 
-	if (added_dst && host->addrtype == KH_IPADDR) {
-		/* SRC works only with DST */
-		pexpect(seeking == GATEWAY);
-		netlink_query_add(msgbuf, RTA_SRC, &host->addr,
-				  "host->addr", verbose);
-	}
-
-	/* Send netlink get_route request */
-	ssize_t len = netlink_query(&msgbuf, RTNL_BUFSIZE);
-	vlog("query returned %zd bytes", len);
-
-	if (len < 0) {
-		pfree(msgbuf);
-		return RESOLVE_FAILURE;
-	}
-
-	/* Parse reply */
-
-	verbose.level = 1;
-	vlog("processing response");
-
-	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
-	enum resolve_status status = RESOLVE_FAILURE; /* assume the worst */
-	for (; NLMSG_OK(nlmsg, (size_t)len) && status == RESOLVE_FAILURE;
-	     nlmsg = NLMSG_NEXT(nlmsg, len)) {
-		verbose.level = 2;
-
-		if (nlmsg->nlmsg_type == NLMSG_DONE)
-			break;
-
-		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
-			llog(RC_LOG, verbose.logger, "netlink error");
-			pfree(msgbuf);
-			return RESOLVE_FAILURE;
+		if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_ERROR)) {
+			context->status = RESOLVE_FAILURE;
+			return false;
 		}
 
 		/* ignore all but IPv4 and IPv6 */
 		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
 		if (rtmsg->rtm_family != afi->af) {
-			continue;
+			vlog("wrong family");
+			return true;
 		}
 
 		/* Parse one route entry */
@@ -447,7 +252,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		int rtlen = RTM_PAYLOAD(nlmsg);
 
 		vlog("parsing route entry (RTA payloads)");
-		verbose.level = 3;
+		verbose.level++;
 
 		while (RTA_OK(rtattr, rtlen)) {
 			const void *data = RTA_DATA(rtattr);
@@ -556,29 +361,28 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 			priority, pref,
 			rtmsg->rtm_table,
 			cacheinfo, uid);
-		verbose.level = 2;
 
 		if (rtmsg->rtm_table != RT_TABLE_MAIN) {
 			vlog("IGNORE: table %d is not main(%d)",
 				rtmsg->rtm_table, RT_TABLE_MAIN);
-			continue;
+			return true;
 		}
 
 		if (startswith(r_interface, "ipsec") ||
 		    startswith(r_interface, "mast")) {
 			vlog("IGNORE: interface %s", r_interface);
-			continue;
+			return true;
 		}
 
-		switch (seeking) {
+		switch (context->seeking) {
 		case PREFSRC:
 			if (!address_is_unset(&prefsrc)) {
-				status = RESOLVE_SUCCESS;
-				host->addrtype = KH_IPADDR;
-				host->addr = prefsrc;
+				context->status = RESOLVE_SUCCESS;
+				context->host->addrtype = KH_IPADDR;
+				context->host->addr = prefsrc;
 				address_buf ab;
 				vlog("found prefsrc(host_addr): %s",
-					str_address(&host->addr, &ab));
+					str_address(&context->host->addr, &ab));
 			}
 			break;
 		case GATEWAY:
@@ -589,7 +393,8 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 					 * "via IP".  Attempt to find gateway
 					 * as the IP address on the interface.
 					 */
-					resolve_point_to_point_peer(r_interface, host->host_family,
+					resolve_point_to_point_peer(r_interface,
+								    context->host->host_family,
 								    &gateway, verbose);
 				}
 				if (!address_is_unset(&gateway)) {
@@ -603,30 +408,185 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 					 * above will quickly return
 					 * when it isn't.
 					 */
-					status = RESOLVE_PLEASE_CALL_AGAIN;
-					host->nexttype = KH_IPADDR;
-					host->nexthop = gateway;
+					context->status = RESOLVE_PLEASE_CALL_AGAIN;
+					context->host->nexttype = KH_IPADDR;
+					context->host->nexthop = gateway;
 					address_buf ab;
 					vlog("found gateway(host_nexthop): %s",
-						str_address(&host->nexthop, &ab));
+						str_address(&context->host->nexthop, &ab));
 				}
 			}
 			break;
 		default:
-			bad_case(seeking);
+			bad_case(context->seeking);
 		}
 	}
-	pfree(msgbuf);
+	return true;
+}
+
+static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
+						    struct starter_end *peer,
+						    struct verbose verbose)
+{
+	/*
+	 * "left="         == host->addrtype and host->addr
+	 * "leftnexthop="  == host->nexttype and host->nexthop
+	 */
+	const struct ip_info *afi = host->host_family;
+
+	address_buf ab, gb, pb;
+	vlog("resolving family=%s src=%s gateway=%s peer %s",
+		(afi == NULL ? "<unset>" : afi->ip_name),
+		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
+		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb),
+		pa(peer->addrtype, peer->addr, peer->strings[KSCF_IP], &pb));
+	verbose.level++;
+
+	/*
+	 * Can only resolve one at a time.
+	 *
+	 * XXX: OLD comments:
+	 *
+	 * If we have for example host=%defaultroute + peer=%any
+	 * (no destination) the netlink reply will be full routing table.
+	 * We must do two queries:
+	 * 1) find out default gateway
+	 * 2) find out src for that default gateway
+	 *
+	 * If we have only peer IP and no gateway/src we must
+	 * do two queries:
+	 * 1) find out gateway for dst
+	 * 2) find out src for that gateway
+	 * Doing both in one query returns src for dst.
+	 */
+	enum seeking seeking = (host->nexttype == KH_DEFAULTROUTE ? GATEWAY :
+				host->addrtype == KH_DEFAULTROUTE ? PREFSRC :
+				NOTHING);
+	vlog("seeking %s", (seeking == NOTHING ? "NOTHING" :
+			    seeking == PREFSRC ? "PREFSRC" :
+			    seeking == GATEWAY ? "GATEWAY" :
+			    "?"));
+	verbose.level++;
+	if (seeking == NOTHING) {
+		return RESOLVE_SUCCESS;	/* this end already figured out */
+	}
+
+	/*
+	 * msgbuf is dynamically allocated since the buffer may need
+	 * to be grown.
+	 */
+	struct nlmsghdr *msgbuf =
+		netlink_query_init(afi, /*type*/RTM_GETROUTE,
+				   (/*flags*/NLM_F_REQUEST |
+				    (seeking == GATEWAY ? NLM_F_DUMP : 0)),
+				   verbose);
+
+	/*
+	 * If known, add a destination address.  Either the peer, or
+	 * the gateway.
+	 */
+
+	const bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
+	bool added_dst;
+	if (host->nexttype == KH_IPADDR && afi == &ipv4_info) {
+		pexpect(seeking == PREFSRC);
+		/*
+		 * My nexthop (gateway) is specified.
+		 * We need to figure out our source IP to get there.
+		 */
+
+		/*
+		 * AA_2019 Why use nexthop and not peer->addr to look up src address?
+		 * The lore is that there is an (old) bug when looking up IPv4 src
+		 * IPv6 with gateway link local address will return link local
+		 * address and not the global address.
+		 */
+		added_dst = true;
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
+				  "host->nexthop", verbose);
+	} else if (has_peer) {
+		/*
+		 * Peer IP is specified.
+		 * We may need to figure out source IP
+		 * and gateway IP to get there.
+		 *
+		 * XXX: should this also update peer->addrtype?
+		 */
+		pexpect(peer->host_family != NULL);
+		if (peer->addrtype == KH_IPHOSTNAME) {
+#ifdef USE_DNSSEC
+			/* try numeric first */
+			err_t er = ttoaddress_num(shunk1(peer->strings[KSCF_IP]),
+						  peer->host_family, &peer->addr);
+			if (er != NULL) {
+				/* not numeric, so resolve it */
+				if (!unbound_resolve(peer->strings[KSCF_IP],
+						     peer->host_family,
+						     &peer->addr,
+						     verbose.logger)) {
+					pfree(msgbuf);
+					return RESOLVE_FAILURE;
+				}
+			}
+#else
+			err_t er = ttoaddress_dns(shunk1(peer->strings[KSCF_IP]),
+						  peer->host_family, &peer->addr);
+			if (er != NULL) {
+				pfree(msgbuf);
+				return RESOLVE_FAILURE;
+			}
+#endif
+		} else {
+			pexpect(peer->addrtype == KH_IPADDR);
+		}
+		added_dst = true;
+		netlink_query_add(msgbuf, RTA_DST, &peer->addr,
+				  "peer->addr", verbose);
+	} else if (host->nexttype == KH_IPADDR &&
+		   (peer->addrtype == KH_GROUP ||
+		    peer->addrtype == KH_OPPOGROUP)) {
+		added_dst = true;
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
+				  "host->nexthop peer=group", verbose);
+	} else {
+		added_dst = false;
+	}
+
+	if (added_dst && host->addrtype == KH_IPADDR) {
+		/* SRC works only with DST */
+		pexpect(seeking == GATEWAY);
+		netlink_query_add(msgbuf, RTA_SRC, &host->addr,
+				  "host->addr", verbose);
+	}
+
+	/* Send netlink get_route request */
+	struct linux_netlink_context context = {
+		.status = RESOLVE_FAILURE,
+		.host = host,
+		.peer = peer,
+		.afi = afi,
+		.seeking = seeking,
+	};
+
+	verbose.level--;
+	bool ok = linux_netlink_query(msgbuf, NETLINK_ROUTE,
+				      process_netlink_route,
+				      &context, verbose);
+	if (!ok) {
+		pfree(msgbuf);
+		return RESOLVE_FAILURE;
+	}
 
 	verbose.level = 1;
 	vlog("%s: src=%s gateway=%s",
-	     (status == RESOLVE_FAILURE ? "failure" :
-	      status == RESOLVE_SUCCESS ? "success" :
-	      status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
+	     (context.status == RESOLVE_FAILURE ? "failure" :
+	      context.status == RESOLVE_SUCCESS ? "success" :
+	      context.status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
 	      "???"),
 	     pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
 	     pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb));
-	return status;
+	pfree(msgbuf);
+	return context.status;
 }
 
 enum route_status get_route(ip_address dest, struct ip_route *route, struct logger *logger)

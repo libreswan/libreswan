@@ -25,7 +25,7 @@
 
 /* ??? one caller thinks errno is meaningful after a failure */
 ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
-				  unsigned int seqnum, __u32 pid)
+			   unsigned int seqnum, __u32 pid)
 {
 	size_t msglen = 0;
 
@@ -69,7 +69,7 @@ ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 		/* Allocate more memory for buffer if needed. */
 		if (msglen >= bufsize - NL_BUFMARGIN) {
 			bufsize = bufsize * 2;
-			char *newbuf = alloc_bytes(bufsize, "netlink query");
+			char *newbuf = alloc_bytes(bufsize, "netlink query netlink query()");
 			memcpy(newbuf, *pbuf, msglen);
 			pfree(*pbuf);
 			*pbuf = newbuf;
