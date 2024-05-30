@@ -146,6 +146,7 @@ kvmplutotest	addconn-39-updown				good	github/1607
 kvmplutotest	addconn-40-id					good	github/544,github/1618
 kvmplutotest	addconn-41-ocsp-config				good
 kvmplutotest	addconn-41-ocsp-defaults			good
+kvmplutotest	addconn-42-empty				good
 
 #################################################################
 # IKEv2 tests

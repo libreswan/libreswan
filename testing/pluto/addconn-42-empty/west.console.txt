@@ -1,0 +1,7 @@
+/testing/guestbin/swan-prep
+west #
+ # this is enough to load the config file
+west #
+ ipsec pluto --debug all --stderrlog --selftest --leak-detective --config /etc/ipsec.conf > /tmp/pluto.log 2>&1
+west #
+ 
