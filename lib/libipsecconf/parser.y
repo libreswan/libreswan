@@ -40,6 +40,7 @@
 #include "lswlog.h"
 #include "lmod.h"
 #include "sparse_names.h"
+#include "lswalloc.h"
 
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256
@@ -243,11 +244,12 @@ void yyerror(struct logger *logger, const char *s)
 struct config_parsed *parser_load_conf(const char *file,
 				       struct logger *logger)
 {
-	parser.cfg = malloc(sizeof(struct config_parsed));
+	parser.cfg = alloc_thing(struct config_parsed, __func__);
 	PASSERT(logger, parser.cfg != NULL);
+	ldbg(logger, "allocated config %p", parser.cfg);
 
-	FILE *f = streq(file, "-") ?
-		fdopen(STDIN_FILENO, "r") : fopen(file, "r");
+	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") :
+		   fopen(file, "r"));
 
 	if (f == NULL) {
 		llog(RC_LOG, logger, "can't load file '%s'", file);
@@ -271,11 +273,11 @@ struct config_parsed *parser_load_conf(const char *file,
 	 */
 	struct config_parsed *cfg = parser.cfg;
 	parser.cfg = NULL;
+	ldbg(logger, "allocated config %p", cfg->conn_default.kw);
 	return cfg;
 
 err:
-	if (parser.cfg != NULL)
-		parser_free_conf(parser.cfg);
+	parser_freeany_config_parsed(&parser.cfg);
 
 	return NULL;
 }
@@ -292,9 +294,10 @@ static void parser_free_kwlist(struct kw_list *list)
 	}
 }
 
-void parser_free_conf(struct config_parsed *cfg)
+void parser_freeany_config_parsed(struct config_parsed **cfgp)
 {
-	if (cfg != NULL) {
+	if ((*cfgp) != NULL) {
+		struct config_parsed *cfg = (*cfgp);
 		parser_free_kwlist(cfg->config_setup);
 
 		for (struct section_list *seci = TAILQ_FIRST(&cfg->sections);
@@ -309,7 +312,7 @@ void parser_free_conf(struct config_parsed *cfg)
 			free(sec);
 		}
 
-		free(cfg);
+		pfreeany(*cfgp);
 	}
 }
 

@@ -122,7 +122,7 @@ struct starter_config {
 
 extern struct config_parsed *parser_load_conf(const char *file,
 					      struct logger *logger);
-extern void parser_free_conf(struct config_parsed *cfg);
+extern void parser_freeany_config_parsed(struct config_parsed **cfg);
 
 extern struct starter_config *confread_load(const char *file,
 					    bool setuponly,

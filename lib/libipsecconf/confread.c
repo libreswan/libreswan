@@ -1018,7 +1018,7 @@ struct starter_config *confread_load(const char *file,
 	 */
 	bool err = load_setup(cfg, cfgp);
 	if (err) {
-		parser_free_conf(cfgp);
+		parser_freeany_config_parsed(&cfgp);
 		confread_free(cfg);
 		return NULL;
 	}
@@ -1054,7 +1054,7 @@ struct starter_config *confread_load(const char *file,
 		}
 	}
 
-	parser_free_conf(cfgp);
+	parser_freeany_config_parsed(&cfgp);
 	return cfg;
 }
 
