@@ -430,7 +430,7 @@ static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
 	}
 #else
 	/* use the arguments */
-	ldbg(logger, "ignoring "PRI_LSET"%%p", rc_flags, p);
+	ldbg(logger, "ignoring "PRI_LSET" %p", rc_flags, n);
 #endif
 }
 
