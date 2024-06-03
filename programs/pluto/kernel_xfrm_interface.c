@@ -742,54 +742,30 @@ static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	return XFRMI_SUCCESS;
 }
 
-static void process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *ifi_rsp)
+struct linux_netlink_context {
+	struct ifinfo_response *ifi_rsp;
+};
+
+static bool process_nlmsg(struct nlmsghdr *nlmsg,
+			  struct linux_netlink_context *c,
+			  struct verbose verbose)
 {
-	int i = 0;
-	int ignored = 0;
-	int read_msg_size = 0;
-	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+	struct ifinfo_response *ifi_rsp = c->ifi_rsp;
+	switch (nlmsg->nlmsg_type) {
+	case RTM_NEWLINK:
+		if (parse_nl_newlink_msg(nlmsg, ifi_rsp) == XFRMI_SUCCESS &&
+		    ifi_rsp->result)
+			return true;
+		return true;
 
-	for (; NLMSG_OK(nlmsg, (size_t)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
-		switch (nlmsg->nlmsg_type) {
-		case NLMSG_DONE:
-			dbg("NLMSG_DONE: RTM_NEWLINK messages %d ignored %d. Bytes %d", i, ignored, read_msg_size);
-			return;
-
-		case NLMSG_ERROR:
-			dbg("ERROR: NLMSG_ERROR netlink %d ignored %d. Bytes %d",
-				i, ignored, read_msg_size);
-			return;
-
-		case RTM_NEWLINK:
-			i++;
-			read_msg_size += nlmsg->nlmsg_len;
-			dbg("RTM_NEWLINK: netlink %d ignored %d. Bytes %d", i, ignored, read_msg_size);
-			if (parse_nl_newlink_msg(nlmsg, ifi_rsp) == XFRMI_SUCCESS && ifi_rsp->result)
-				return;
-			break;
-
-		case RTM_NEWADDR:
-			i++;
-			read_msg_size += nlmsg->nlmsg_len;
-			dbg("RTM_NEWADDR: netlink %d ignored %d. Bytes %d", i, ignored, read_msg_size);
-			/* There can be multiple IPs per interface, so dont return until they are all read */
-			parse_nl_newaddr_msg(nlmsg, ifi_rsp);
-
-			break;
-
-		case 0:
-			dbg("INFO: NOOP? message type %d length %d", nlmsg->nlmsg_type,
-				nlmsg->nlmsg_len);
-			ignored++;
-			break;
-
-		default:
-			printf("INFO: ignored message type %d length %d", nlmsg->nlmsg_type,
-			nlmsg->nlmsg_len);
-			ignored++;
-			break;
-		}
+	case RTM_NEWADDR:
+		parse_nl_newaddr_msg(nlmsg, ifi_rsp);
+		return true;
 	}
+
+	vdbg("ignored message type %d length %d", nlmsg->nlmsg_type,
+	     nlmsg->nlmsg_len);
+	return true;
 }
 
 static int find_xfrmi_interface(const char *if_name, /* optional */
@@ -802,29 +778,7 @@ static int find_xfrmi_interface(const char *if_name, /* optional */
 	}
 
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_GETLINK,
-			(NLM_F_REQUEST | NLM_F_DUMP));
-
-	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE, logger);
-
-	if (nl_fd < 0) {
-		llog_error(logger, 0/*no-errno*/,
-			   "write to netlink socket failed");
-		return XFRMI_FAILURE;
-	}
-
-	char *resp_msgbuf = alloc_bytes(IFINFO_REPLY_BUFFER_SIZE,
-			"netlink ifiinfo query");
-	ssize_t len = netlink_read_reply(nl_fd, &resp_msgbuf,
-			IFINFO_REPLY_BUFFER_SIZE, 0, getpid());
-
-	close(nl_fd);
-
-	if (len < 0) {
-		llog_error(logger, 0/*no-errno*/,
-			   "netlink_read_reply() failed in find_any_xfrmi_interface()");
-		pfreeany(resp_msgbuf);
-		return XFRMI_FAILURE;
-	}
+						  (NLM_F_REQUEST | NLM_F_DUMP));
 
 	struct ifinfo_response ifi_rsp;
 	zero(&ifi_rsp);
@@ -835,8 +789,16 @@ static int find_xfrmi_interface(const char *if_name, /* optional */
 	}
 	ifi_rsp.filter_data.xfrm_if_id = xfrm_if_id;
 
-	process_nlmsgs(resp_msgbuf, len, &ifi_rsp);
-	pfreeany(resp_msgbuf);
+	struct linux_netlink_context ctx = {
+		.ifi_rsp = &ifi_rsp,
+	};
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
+	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
+		return XFRMI_FAILURE;
+	}
 
 	if (ifi_rsp.result) {
 		char if_name_buf[IF_NAMESIZE];
@@ -878,30 +840,7 @@ static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct pluto_xfrmi *xfr
 	req.ifa.ifa_index = if_nametoindex(xfrmi->name);
 	req.ifa.ifa_family = AF_UNSPEC;
 
-	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE, logger);
-
-	if (nl_fd < 0) {
-		llog_error(logger, 0/*no-errno*/,
-			   "write to netlink socket failed");
-		return NULL;
-	}
-
-	char *resp_msgbuf = alloc_bytes(IFINFO_REPLY_BUFFER_SIZE,
-			"netlink ifiaddr query");
-	ssize_t len = netlink_read_reply(nl_fd, &resp_msgbuf,
-			IFINFO_REPLY_BUFFER_SIZE, 0, getpid());
-
-	close(nl_fd);
-
-	if (len < 0) {
-		llog_error(logger, 0/*no-errno*/,
-			   "netlink_read_reply() failed in find_any_xfrmi_interface()");
-		pfreeany(resp_msgbuf);
-		return NULL;
-	}
-
-	struct ifinfo_response *ifi_rsp = alloc_bytes(
-			sizeof(struct ifinfo_response), "ifinfo_response");
+	struct ifinfo_response *ifi_rsp = alloc_bytes(sizeof(struct ifinfo_response), "ifinfo_response");
 	zero(ifi_rsp);
 
 	ifi_rsp->filter_data.if_name = xfrmi->name;
@@ -910,8 +849,17 @@ static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct pluto_xfrmi *xfr
 	}
 	ifi_rsp->filter_data.xfrm_if_id = xfrmi->if_id;
 
-	process_nlmsgs(resp_msgbuf, len, ifi_rsp);
-	pfreeany(resp_msgbuf);
+	struct linux_netlink_context ctx = {
+		.ifi_rsp = ifi_rsp,
+	};
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
+	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
+		pfree(ifi_rsp);
+		return NULL;
+	}
 
 	return ifi_rsp;
 }
