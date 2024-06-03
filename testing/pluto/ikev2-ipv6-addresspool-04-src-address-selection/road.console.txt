@@ -41,8 +41,10 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
     add RTA_DST 2001:db8:1:2::23 (peer->addr)
-    query returned 1064 bytes
-  processing response
+  opening non-blocking netlink socket
+  sent 48 byte netlink message
+  reading into 32768 byte buffer
+  processing 1044 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=2001:db8:1:3::
@@ -61,14 +63,19 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
       RTA_GATEWAY=fe80::1000:ff:fe32:64ba
       RTA_PREF=0
       using src=<unset-address> prefsrc=<unset-address> gateway=fe80::1000:ff:fe32:64ba dst=<unset-address> dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
-    found gateway(host_nexthop): fe80::1000:ff:fe32:64ba
+      found gateway(host_nexthop): fe80::1000:ff:fe32:64ba
+  reading into 32768 byte buffer
+  processing 20 byte response
+    DONE
   please-call-again: src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba
 resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 2001:db8:1:2::23
   seeking PREFSRC
     query GETROUTE+REQUEST
     add RTA_DST 2001:db8:1:2::23 (peer->addr)
-    query returned 176 bytes
-  processing response
+  opening non-blocking netlink socket
+  sent 48 byte netlink message
+  reading into 32768 byte buffer
+  processing 176 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=2001:db8:1:2::23
@@ -78,7 +85,7 @@ resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 20
       RTA_GATEWAY=fe80::1000:ff:fe32:64ba
       RTA_PREF=0
       using src=:: prefsrc=2001:db8:1:3::209 gateway=fe80::1000:ff:fe32:64ba dst=2001:db8:1:2::23 dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
-    found prefsrc(host_addr): 2001:db8:1:3::209
+      found prefsrc(host_addr): 2001:db8:1:3::209
   success: src=2001:db8:1:3::209 gateway=fe80::1000:ff:fe32:64ba
 resolving family=IPv6 src=2001:db8:1:2::23 gateway=<not-set> peer 2001:db8:1:3::209
   seeking NOTHING
@@ -137,8 +144,10 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
     add RTA_DST 2001:db8:1:2::23 (peer->addr)
-    query returned 1452 bytes
-  processing response
+  opening non-blocking netlink socket
+  sent 48 byte netlink message
+  reading into 32768 byte buffer
+  processing 1432 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=2001:db8:0:3:1::
@@ -171,14 +180,19 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
       RTA_GATEWAY=fe80::1000:ff:fe32:64ba
       RTA_PREF=0
       using src=<unset-address> prefsrc=<unset-address> gateway=fe80::1000:ff:fe32:64ba dst=<unset-address> dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
-    found gateway(host_nexthop): fe80::1000:ff:fe32:64ba
+      found gateway(host_nexthop): fe80::1000:ff:fe32:64ba
+  reading into 32768 byte buffer
+  processing 20 byte response
+    DONE
   please-call-again: src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba
 resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 2001:db8:1:2::23
   seeking PREFSRC
     query GETROUTE+REQUEST
     add RTA_DST 2001:db8:1:2::23 (peer->addr)
-    query returned 196 bytes
-  processing response
+  opening non-blocking netlink socket
+  sent 48 byte netlink message
+  reading into 32768 byte buffer
+  processing 196 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=2001:db8:1:2::23
@@ -189,7 +203,7 @@ resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 20
       RTA_GATEWAY=fe80::1000:ff:fe32:64ba
       RTA_PREF=0
       using src=:: prefsrc=2001:db8:0:3:1:: gateway=fe80::1000:ff:fe32:64ba dst=2001:db8:1:2::23 dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
-    found prefsrc(host_addr): 2001:db8:0:3:1::
+      found prefsrc(host_addr): 2001:db8:0:3:1::
   success: src=2001:db8:0:3:1:: gateway=fe80::1000:ff:fe32:64ba
 resolving family=IPv6 src=2001:db8:1:2::23 gateway=<not-set> peer 2001:db8:0:3:1::
   seeking NOTHING

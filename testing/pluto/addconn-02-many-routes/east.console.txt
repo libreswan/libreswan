@@ -25,26 +25,35 @@ loading named conns: test
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer <any>
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
-    query returned 34212 bytes
-  processing response
+  opening non-blocking netlink socket
+  sent 28 byte netlink message
+  reading into 32768 byte buffer
+  processing 3772 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_GATEWAY=178.62.192.1
       using src=<unset-address> prefsrc=<unset-address> gateway=178.62.192.1 dst=<unset-address> dev='eth1' priority=-1 pref=-1 table=254
-    found gateway(host_nexthop): 178.62.192.1
+      found gateway(host_nexthop): 178.62.192.1
+  reading into 32768 byte buffer
+  processing 30420 byte response
+  reading into 32768 byte buffer
+  processing 20 byte response
+    DONE
   please-call-again: src=<defaultroute> gateway=178.62.192.1
 resolving family=IPv4 src=<defaultroute> gateway=178.62.192.1 peer <any>
   seeking PREFSRC
     query GETROUTE+REQUEST
     add RTA_DST 178.62.192.1 (host->nexthop)
-    query returned 104 bytes
-  processing response
+  opening non-blocking netlink socket
+  sent 36 byte netlink message
+  reading into 32768 byte buffer
+  processing 104 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=178.62.192.1
       RTA_PREFSRC=178.62.253.21
       using src=<unset-address> prefsrc=178.62.253.21 gateway=<unset-address> dst=178.62.192.1 dev='eth1' priority=-1 pref=-1 table=254 +cacheinfo +uid
-    found prefsrc(host_addr): 178.62.253.21
+      found prefsrc(host_addr): 178.62.253.21
   success: src=178.62.253.21 gateway=178.62.192.1
 resolving family=IPv4 src=<any> gateway=<not-set> peer 178.62.253.21
   seeking NOTHING
