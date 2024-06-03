@@ -636,6 +636,9 @@ TRANSFORM_VARIABLES = $(SED) \
 			-e "s:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g" \
 			$(patsubst %, -e %, $(TRANSFORMS))
 
+# computing checksums; debian things different
+CKSUM ?= cksum
+
 # For KVM testing setup
 #POOL ?= ${LIBRESWANSRCDIR}/pool
 POOL ?= /vol/pool

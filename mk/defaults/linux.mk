@@ -37,6 +37,7 @@ endif
 
 ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
+  CKSUM ?= shasum
   ifeq ($(LINUX_VERSION_CODENAME),buster) # Debian 10 (Buster); until June 2024
     USE_NSS_KDF ?= false
   endif

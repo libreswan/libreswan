@@ -887,7 +887,7 @@ KVM_GET ?= \
 	{ \
 		set -ex ; \
 		curl --no-styled-output --location --continue-at - --output $@.tmp "$$1" ; \
-		echo "$$2 ($@.tmp) = $$3" | cksum -c ; \
+		echo "$$2 ($@.tmp) = $$3" | $(CKSUM) -c ; \
 		mv $@.tmp $@ ; \
 	} ; \
 	get
