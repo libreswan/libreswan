@@ -215,7 +215,7 @@ void unbound_sync_init(bool do_dnssec, const char *rootfile,
  * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */
 bool unbound_resolve(char *src, const struct ip_info *afi,
-		     ip_address *ipaddr, struct logger *logger)
+		     ip_address *ipaddr, const struct logger *logger)
 {
 	/* 28 = AAAA record, 1 = A record */
 	const int qtype = (afi == &ipv6_info) ? 28/*AAAA*/ : 1/*A*/;

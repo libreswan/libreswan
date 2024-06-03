@@ -18,7 +18,7 @@ extern diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
 				 struct logger *logger);
 
 extern bool unbound_resolve(char *src, const struct ip_info *afi,
-			    ip_address *ipaddr, struct logger *logger);
+			    ip_address *ipaddr, const struct logger *logger);
 
 extern struct ub_ctx *get_unbound_ctx(void);
 
