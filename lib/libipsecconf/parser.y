@@ -282,12 +282,12 @@ err:
 static void parser_free_kwlist(struct kw_list *list)
 {
 	while (list != NULL) {
+		/* advance */
 		struct kw_list *elt = list;
-
 		list = list->next;
-		if (elt->string != NULL)
-			free(elt->string);
-		free(elt);
+		/* free */
+		pfreeany(elt->string);
+		pfree(elt);
 	}
 }
 
@@ -370,8 +370,8 @@ static void new_parser_kw(struct keyword *kw,
 			parser_kw_warning(logger, kw, yytext,
 					  "overriding earlier %s keyword with new value", section);
 			/* ulgh; not pfree()/clone_str() */
-			free((*end)->string);
-			(*end)->string = (yytext != NULL ? strdup(yytext) : NULL);
+			pfreeany((*end)->string);
+			(*end)->string = clone_str(yytext, "yytext"); /*handles NULL*/
 			(*end)->number = number;
 			return;
 		}
@@ -383,11 +383,10 @@ static void new_parser_kw(struct keyword *kw,
 	 * fill the values into new
 	 * (either string or number might have a placeholder value
 	 */
-	struct kw_list *new = malloc(sizeof(struct kw_list));
-	PASSERT(logger, new != NULL);
+	struct kw_list *new = alloc_thing(struct kw_list, "kw_list");
 	(*new) = (struct kw_list) {
 		.keyword = *kw,
-		.string = (yytext != NULL ? strdup(yytext) : NULL),
+		.string = clone_str(yytext, "yytext"), /*handles NULL*/
 		.number = number,
 	};
 
