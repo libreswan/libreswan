@@ -357,7 +357,7 @@ static bool parser_y_eof(struct logger *logger)
 
 <VALUE>%forever		{
 				/* a number, really 0 */
-				yylval.s = strdup("0");
+				yylval.s = clone_str("0", "string");
 				BEGIN INITIAL;
 				return STRING;
 			}
@@ -381,7 +381,7 @@ static bool parser_y_eof(struct logger *logger)
 			}
 
 <COMMENT_VALUE>[^\n]*	{
-				yylval.s = strdup(yytext);
+				yylval.s = clone_str(yytext, "comment-value");
 				BEGIN INITIAL;
 				return STRING;
 			}
@@ -395,7 +395,7 @@ static bool parser_y_eof(struct logger *logger)
 
 				/* remove trailing " */
 				s[len-1] = '\0';
-				yylval.s = strdup(s);
+				yylval.s = clone_str(s, "yyval.s");
 				BEGIN INITIAL;
 				return STRING;
 			}
@@ -409,21 +409,21 @@ static bool parser_y_eof(struct logger *logger)
 
 				/* remove trailing } */
 				s[len-1] = '\0';
-				yylval.s = strdup(s);
+				yylval.s = clone_str(s, "yyval.s");
 				BEGIN INITIAL;
 				return STRING;
 			}
 
 <VALUE>[^\" \t\n]+	{
 				/* string-without-quotes-or-blanks */
-				yylval.s = strdup(yytext);
+				yylval.s = clone_str(yytext, "string-without-quotes-or-blanks");
 				BEGIN INITIAL;
 				return STRING;
 			}
 
 <VALUE>[^\{} \t\n]+	{
 				/* string-without-braces-or-blanks */
-				yylval.s = strdup(yytext);
+				yylval.s = clone_str(yytext, "string-without-braces-or-blanks");
 				BEGIN INITIAL;
 				return STRING;
 			}

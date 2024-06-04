@@ -94,7 +94,10 @@ config_file: blanklines versionstmt sections ;
 /* we have configs shipped with version 2 (UNSIGNED) and with version 2.0 (STRING, now  NUMBER/float was removed */
 
 versionstmt: /* NULL */
-	| VERSION STRING EOL blanklines
+	| VERSION STRING EOL blanklines {
+		/* free strings allocated by lexer */
+		pfreeany($2);
+	}
 	;
 
 blanklines: /* NULL */
@@ -116,7 +119,7 @@ section_or_include:
 		struct section_list *section = alloc_thing(struct section_list, "section list");
 		PASSERT(logger, section != NULL);
 
-		section->name = $2;
+		section->name = clone_str($2, "section->name");
 		section->kw = NULL;
 
 		TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
@@ -132,9 +135,14 @@ section_or_include:
 
 		ldbg(logger, "reading conn %s", section->name);
 
+		/* free strings allocated by lexer */
+		pfreeany($2);
+
 	} kw_sections
 	| INCLUDE STRING EOL {
 		parser_y_include($2, logger);
+		/* free strings allocated by lexer */
+		pfreeany($2)
 	}
 	;
 
@@ -160,14 +168,18 @@ statement_kw:
 	}
 	| COMMENT EQUAL STRING {
 		struct starter_comments *new = alloc_thing(struct starter_comments, "starter_comments");
-		new->x_comment = strdup($1.string);
-		new->commentvalue = strdup($3);
+		new->x_comment = clone_str($1.string, "string");
+		new->commentvalue = clone_str($3, "string");
 		TAILQ_INSERT_TAIL(parser.comments, new, link);
+		/* free strings allocated by lexer */
+		pfreeany($3);
 	}
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
 		const char *string = $3;
 		parser_kw(&kw, string, logger);
+		/* free strings allocated by lexer */
+		pfreeany($3);
 	}
 	| KEYWORD EQUAL {
 		struct keyword kw = $1;
@@ -303,8 +315,7 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 			struct section_list *sec = seci;
 			seci = TAILQ_NEXT(seci, link);
 
-			if (sec->name != NULL)
-				free(sec->name);
+			pfreeany(sec->name);
 			parser_free_kwlist(sec->kw);
 			pfree(sec);
 		}
@@ -369,9 +380,8 @@ static void new_parser_kw(struct keyword *kw,
 		if (parser.section == SECTION_CONFIG_SETUP) {
 			parser_kw_warning(logger, kw, yytext,
 					  "overriding earlier %s keyword with new value", section);
-			/* ulgh; not pfree()/clone_str() */
 			pfreeany((*end)->string);
-			(*end)->string = clone_str(yytext, "yytext"); /*handles NULL*/
+			(*end)->string = clone_str(yytext, "keyword.string"); /*handles NULL*/
 			(*end)->number = number;
 			return;
 		}
@@ -386,7 +396,7 @@ static void new_parser_kw(struct keyword *kw,
 	struct kw_list *new = alloc_thing(struct kw_list, "kw_list");
 	(*new) = (struct kw_list) {
 		.keyword = *kw,
-		.string = clone_str(yytext, "yytext"), /*handles NULL*/
+		.string = clone_str(yytext, "keyword.list"), /*handles NULL*/
 		.number = number,
 	};
 
