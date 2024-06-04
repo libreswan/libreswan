@@ -13,8 +13,8 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --shutdown --magic 0
 
-# try legacy WHACK_MAGIC=1869114161, should fail
+# try legacy WHACK_MAGIC=1869114161 from 4.x and 5.0, should fail
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec whack --shutdown --magic 1869114161
+ipsec whack --shutdown --magic 1869114161 | sed -e 's/should be [0-9]*/should be .../'

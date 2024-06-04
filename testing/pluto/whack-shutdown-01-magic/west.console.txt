@@ -23,14 +23,14 @@ west #
  ipsec whack --shutdown --magic 0
 Pluto is shutting down
 west #
- # try legacy WHACK_MAGIC=1869114161, should fail
+ # try legacy WHACK_MAGIC=1869114161 from 4.x and 5.0, should fail
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --shutdown --magic 1869114161
-ignoring message from whack with bad magic 1869114161; should be 1990353843; Mismatched versions of userland tools.
+ ipsec whack --shutdown --magic 1869114161 | sed -e 's/should be [0-9]*/should be .../'
+ignoring message from whack with bad magic 1869114161; should be ...; Mismatched versions of userland tools.
 west #
  
