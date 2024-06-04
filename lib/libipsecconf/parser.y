@@ -159,10 +159,7 @@ statement_kw:
 		parser_kw(&kw, value, logger);
 	}
 	| COMMENT EQUAL STRING {
-		struct starter_comments *new =
-			malloc(sizeof(struct starter_comments));
-		PASSERT(logger, new != NULL);
-
+		struct starter_comments *new = alloc_thing(struct starter_comments, "starter_comments");
 		new->x_comment = strdup($1.string);
 		new->commentvalue = strdup($3);
 		TAILQ_INSERT_TAIL(parser.comments, new, link);
