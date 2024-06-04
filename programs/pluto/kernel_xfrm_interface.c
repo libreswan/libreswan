@@ -50,6 +50,8 @@
 #include <netinet/in.h>
 #include "linux/xfrm.h"		/* local (if configured) or system copy */
 
+#include "linux_netlink.h"
+
 #include "netlink_attrib.h"
 #include "kernel_xfrm_interface.h"
 #include "kernel_netlink_reply.h"
@@ -118,62 +120,43 @@ static int xfrm_interface_support = 0;
 static bool stale_checked;
 static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
 
-/* Return 0 (XFRMI_SUCCESS) on success or non-zero (XFRMI_FAILURE) on failure.
- * Later, if necessary, more detailed failure codes can be returned. */
-static int nl_query_small_resp(const struct nlmsghdr *req,
-			       const char *context,
-			       const char *if_name,
-			       const struct logger *logger)
+/*
+ * Perform a simple netlink operation.  Send the request; and only
+ * look for immediate error responses (i.e., NLM_F_ACK is not set).
+ *
+ * Return 0 (XFRMI_SUCCESS) on success or non-zero (XFRMI_FAILURE) on
+ * failure.  Later, if necessary, more detailed failure codes can be
+ * returned.
+ */
+
+static bool ignore_response_processor(struct nlmsghdr *h,
+				      struct linux_netlink_context *c,
+				      struct verbose verbose)
 {
-	int nl_fd = nl_send_query(req, NETLINK_ROUTE, logger);
-	if (nl_fd < 0) {
-		/* errno already logged (without context, unfortunately) */
-		return XFRMI_FAILURE;
+	vdbg("ignoring %p %p", h, c);
+	return true;
+}
+
+static bool simple_netlink_op(const struct nlmsghdr *req,
+			     const char *context,
+			     const char *if_name,
+			     const struct logger *logger)
+{
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY,
+	};
+
+	vdbg("%s() %s %s", __func__, context, if_name);
+
+	if (!linux_netlink_query(req, NETLINK_ROUTE,
+				 ignore_response_processor,
+				 NULL, verbose)) {
+		return false;
 	}
 
-	int retval = XFRMI_SUCCESS;
-	struct sockaddr_nl addr;
-	socklen_t alen = sizeof(addr);
-	struct nlm_resp rsp;
-	ssize_t r = recvfrom(nl_fd, &rsp, sizeof(rsp), 0,
-			(struct sockaddr *)&addr, &alen);
-
-	if (r < 0) {
-		if (errno == EAGAIN) {
-			ldbg(logger,
-				"in nl_query_small_resp() ignoring EAGAIN for %s() dev %s",
-				context, if_name);
-		} else {
-			llog_error(logger, errno,
-				   "in nl_query_small_resp() for %s() dev %s",
-				   context, if_name);
-			passert(errno > 0);
-			retval = XFRMI_FAILURE;
-		}
-	} else if (r < (ssize_t)sizeof(struct nlmsghdr)) {
-		/* ??? this treatment looks suspect */
-		/* a runt packet. Odd. */
-		/* pretend all is well */
-		llog_error(logger, errno,
-					"in nl_query_small_resp() rcvd less bytes than expected %zd vs %zd for %s() dev %s",
-					r, sizeof(struct nlmsghdr), context, if_name);
-	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		/* The packet is an error packet: rsp.u.e.error is a negative errno value */
-		passert(rsp.u.e.error < 0);
-		llog_error(logger, -rsp.u.e.error,
-			   "NLMSG_ERROR in nl_query_small_resp() for %s() dev %s",
-			   context, if_name);
-		retval = XFRMI_FAILURE;
-	} else {
-		/* ??? this treatment looks suspect */
-		/* an ordinary message: ignore! */
-		ldbg(logger,
-			"in nl_query_small_resp() rcvd successful nl_send_query response for %s() dev %s",
-			context, if_name);
-	}
-
-	close(nl_fd);
-	return retval;
+	vdbg("%s() succeded for %s %s", __func__, context, if_name);
+	return true;
 }
 
 static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
@@ -257,7 +240,11 @@ static int ip_link_set_up(const char *if_name, struct logger *logger)
 		return XFRMI_FAILURE;
 	}
 
-	return nl_query_small_resp(&req.n, "ip_link_set_up", if_name, logger);
+	if (!simple_netlink_op(&req.n, "ip_link_set_up", if_name, logger)) {
+		return XFRMI_FAILURE;
+	}
+
+	return XFRMI_SUCCESS;
 }
 
 static int ip_link_del(const char *if_name, const struct logger *logger)
@@ -270,7 +257,11 @@ static int ip_link_del(const char *if_name, const struct logger *logger)
 		return XFRMI_FAILURE;
 	}
 
-	return nl_query_small_resp(&req.n, "ip_link_del", if_name, logger);
+	if (!simple_netlink_op(&req.n, "ip_link_del", if_name, logger)) {
+		return XFRMI_FAILURE;
+	}
+
+	return XFRMI_SUCCESS;
 }
 
 /* errno will be set on error: one caller will report it */
@@ -297,7 +288,11 @@ static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 		return XFRMI_FAILURE;
 	}
 
-	return nl_query_small_resp(&req.n, "ip_link_add_xfrmi", if_name, logger);
+	if (!simple_netlink_op(&req.n, "ip_link_add_xfrmi", if_name, logger)) {
+		return XFRMI_FAILURE;
+	}
+
+	return XFRMI_SUCCESS;
 }
 
 /* Add an IP address to an XFRMi interface using Netlink */
@@ -317,7 +312,11 @@ static int ip_addr_xfrmi_add(const char *if_name,
 	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
 	req.ifa.ifa_prefixlen = xfrmi_ipaddr->if_ip.prefix_len;
 
-	return nl_query_small_resp(&req.n, "ip_addr_xfrmi_add", if_name, logger);
+	if (!simple_netlink_op(&req.n, "ip_addr_xfrmi_add", if_name, logger)) {
+		return XFRMI_FAILURE;
+	}
+
+	return XFRMI_SUCCESS;
 }
 
 /* Delete an IP address from an XFRMi interface using Netlink */
@@ -337,7 +336,11 @@ static int ip_addr_xfrmi_del(const char *if_name,
 	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
 	req.ifa.ifa_prefixlen = xfrmi_ipaddr->if_ip.prefix_len;
 
-	return nl_query_small_resp(&req.n, "ip_addr_xfrmi_del", if_name, logger);
+	if (!simple_netlink_op(&req.n, "ip_addr_xfrmi_del", if_name, logger)) {
+		return XFRMI_FAILURE;
+	}
+
+	return XFRMI_SUCCESS;
 }
 
 /* Get the IP used for the XFRMi IF from the connection.
