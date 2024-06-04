@@ -113,7 +113,7 @@ section_or_include:
 		ldbg(logger, "reading config setup");
 	} kw_sections
 	| CONN STRING EOL {
-		struct section_list *section = malloc(sizeof(struct section_list));
+		struct section_list *section = alloc_thing(struct section_list, "section list");
 		PASSERT(logger, section != NULL);
 
 		section->name = $2;
@@ -306,7 +306,7 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 			if (sec->name != NULL)
 				free(sec->name);
 			parser_free_kwlist(sec->kw);
-			free(sec);
+			pfree(sec);
 		}
 
 		pfreeany(*cfgp);
