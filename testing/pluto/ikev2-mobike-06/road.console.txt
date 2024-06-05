@@ -2,11 +2,11 @@
 road #
  ../../guestbin/ip.sh route del default
 road #
- ip addr del 192.1.33.222/24 dev eth0 2>/dev/null
+ ../../guestbin/ip.sh address del 192.1.33.222/24 dev eth0 2>/dev/null
 road #
  sleep 2
 road #
- ip addr add 192.1.3.209/24 dev eth0 2>/dev/null
+ ../../guestbin/ip.sh address add 192.1.3.209/24 dev eth0 2>/dev/null
 road #
  ../../guestbin/ip.sh route add default via 192.1.3.254
 road #
@@ -102,21 +102,21 @@ road #
 road #
  # remove this end ip next one will take over
 road #
- ip addr show scope global dev eth0 | grep -v valid_lft
+ ../../guestbin/ip.sh address show scope global dev eth0 | grep -v valid_lft
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     inet 192.1.3.209/24 scope global eth0
 road #
  # delete the routes down to simulate WiFi link down.
 road #
- ip addr del 192.1.3.209/24 dev eth0
+ ../../guestbin/ip.sh address del 192.1.3.209/24 dev eth0
 road #
  ../../guestbin/ip.sh route del default via 192.1.3.254 dev eth0
 RTNETLINK answers: No such process
 road #
  sleep 2
 road #
- ip addr add 192.1.33.222/24 dev eth0
+ ../../guestbin/ip.sh address add 192.1.33.222/24 dev eth0
 road #
  sleep 2
 road #
@@ -130,9 +130,9 @@ road #
 road #
  sleep 10
 road #
- # ip addr show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
+ # ../../guestbin/ip.sh address show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
 road #
- ip addr show scope global dev eth0 | grep -v valid_lft
+ ../../guestbin/ip.sh address show scope global dev eth0 | grep -v valid_lft
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     inet 192.1.33.222/24 scope global eth0

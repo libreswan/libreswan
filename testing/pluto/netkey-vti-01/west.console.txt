@@ -89,7 +89,7 @@ Pluto is shutting down
 west #
  # there should be no vti0 device left
 west #
- ip addr show vti0
+ ../../guestbin/ip.sh address show vti0
 5: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
     link/ipip 192.1.2.45 peer 192.1.2.23
 west #

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-ip addr add 192.0.100.254/24 dev eth0:1
+../../guestbin/ip.sh address add 192.0.100.254/24 dev eth0:1
 ../../guestbin/ip.sh route add 192.0.200.0/24 via 192.1.2.23  dev eth1
 # ensure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP

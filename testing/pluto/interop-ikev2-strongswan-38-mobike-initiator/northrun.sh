@@ -6,7 +6,7 @@ strongswan status
 ip xfrm policy
 sleep 5
 # remove this end ip next one will take over
-ip addr del 192.1.3.33/24 dev eth1
+../../guestbin/ip.sh address del 192.1.3.33/24 dev eth1
 # let strongswan do a MOBIKE update
 sleep 10
 # both ends updated MOBIKE ping should work

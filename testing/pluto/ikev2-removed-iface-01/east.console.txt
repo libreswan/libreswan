@@ -2,7 +2,7 @@
 east #
  ip tunnel add eth3 mode gre local 192.1.2.23 remote 192.1.2.45
 east #
- ip addr add 192.1.3.1/24 dev eth3
+ ../../guestbin/ip.sh address add 192.1.3.1/24 dev eth3
 east #
  ip link set dev eth3 up
 east #
@@ -44,7 +44,7 @@ east #
 "test2": 192.1.3.1...192.1.3.3; unrouted; my_ip=unset; their_ip=unset;
 "test3": 192.1.3.3...192.1.3.2; unoriented; my_ip=unset; their_ip=unset;
 east #
- ip addr add 192.1.3.3/24 dev eth3
+ ../../guestbin/ip.sh address add 192.1.3.3/24 dev eth3
 east #
  ipsec auto --ready
 listening for IKE messages

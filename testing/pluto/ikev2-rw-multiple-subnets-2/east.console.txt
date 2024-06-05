@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- ip addr add 192.0.20.254/24 dev eth0
+ ../../guestbin/ip.sh address add 192.0.20.254/24 dev eth0
 east #
  ipsec start
 Redirecting to: [initsystem]

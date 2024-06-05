@@ -4,7 +4,7 @@ ipsec trafficstatus
 ../../guestbin/ipsec-kernel-state.sh
 ip xfrm policy
 # test packet flow
-ip addr add 192.0.1.254/24 dev eth0
+../../guestbin/ip.sh address add 192.0.1.254/24 dev eth0
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 # did it split over two IPsec SA's or not? just curious
 ipsec trafficstatus

@@ -30,7 +30,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
 up
 west #
- ip addr show dev ipsec1
+ ../../guestbin/ip.sh address show dev ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever

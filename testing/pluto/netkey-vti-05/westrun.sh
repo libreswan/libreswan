@@ -3,5 +3,5 @@ ipsec auto --up westnet-eastnet-vti
 sleep 1
 ../../guestbin/ping-once.sh --up -I 192.1.99.1 192.1.99.254
 ipsec whack --trafficstatus
-ip addr show dev vti0
+../../guestbin/ip.sh address show dev vti0
 echo done

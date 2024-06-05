@@ -61,7 +61,7 @@ north #
  echo quit | socat - TCP:192.0.2.254:7
 quit
 north #
- ip addr show dev ppp0 | sed "s/ qdisc.*$//"
+ ../../guestbin/ip.sh address show dev ppp0 | sed "s/ qdisc.*$//"
 4: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395
     link/ppp
     inet 192.0.2.128 peer 192.0.2.254/32 scope global ppp0

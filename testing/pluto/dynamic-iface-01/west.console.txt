@@ -29,7 +29,7 @@ west #
 "west-east" #2: sent Quick Mode request
 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ip addr add 192.1.2.66/24 dev eth1
+ ../../guestbin/ip.sh address add 192.1.2.66/24 dev eth1
 west #
  arping -c 1 -U -I eth1 192.1.2.66
 ARPING 192.1.2.66 from 192.1.2.66 eth1
@@ -57,7 +57,7 @@ west #
 "float-east" #4: sent Quick Mode request
 "float-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ip addr del 192.1.2.66/24 dev eth1
+ ../../guestbin/ip.sh address del 192.1.2.66/24 dev eth1
 west #
  # filter the error, it sometimes changes which network error happens (22 vs 101)
 west #

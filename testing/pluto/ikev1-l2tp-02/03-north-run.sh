@@ -10,5 +10,5 @@ ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
 : ==== cut ====
 cat /tmp/xl2tpd.log
 : ==== tuc ====
-ip addr show dev ppp0 | sed "s/ qdisc.*$//"
+../../guestbin/ip.sh address show dev ppp0 | sed "s/ qdisc.*$//"
 echo done

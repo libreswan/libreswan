@@ -15,7 +15,7 @@ west #
 west #
  # remove this address from eth0. It will come back on vti
 west #
- ip addr show dev eth0 | grep 192.0.1.254 && ip addr del 192.0.1.254/24 dev eth0
+ ../../guestbin/ip.sh address show dev eth0 | grep 192.0.1.254 && ../../guestbin/ip.sh address del 192.0.1.254/24 dev eth0
     inet 192.0.1.254/24 scope global eth0
 west #
  ipsec start
@@ -81,7 +81,7 @@ done
 west #
  grep -v -P "\t0$" /proc/net/xfrm_stat
 west #
- ip addr show
+ ../../guestbin/ip.sh address show
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo

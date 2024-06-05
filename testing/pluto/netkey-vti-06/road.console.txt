@@ -11,7 +11,7 @@ road #
  echo "initdone"
 initdone
 road #
- ip addr add 192.0.3.254/24 dev eth0
+ ../../guestbin/ip.sh address add 192.0.3.254/24 dev eth0
 road #
  ipsec auto --up road-east-vti
 "road-east-vti" #1: initiating IKEv1 Main Mode connection

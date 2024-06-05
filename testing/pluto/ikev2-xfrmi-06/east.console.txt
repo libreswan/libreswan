@@ -13,19 +13,19 @@ east #
  echo "initdone"
 initdone
 east #
- ip addr show dev lo
+ ../../guestbin/ip.sh address show dev lo
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
        valid_lft forever preferred_lft forever
 east #
- ip addr show dev eth0
+ ../../guestbin/ip.sh address show dev eth0
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
     inet 192.0.2.254/24 scope global eth0
        valid_lft forever preferred_lft forever
 east #
- ip addr show dev ipsec1
+ ../../guestbin/ip.sh address show dev ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 east #
  ip -s link show ipsec1

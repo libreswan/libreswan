@@ -20,8 +20,8 @@ ipsec restart
 # Now imitate a second independent client to east to show this 2nd
 # client doesn't kill 1st client
 killall -9 pluto
-ip addr del 192.1.3.209/24 dev eth0
-ip addr add 192.1.3.210/24 dev eth0
+../../guestbin/ip.sh address del 192.1.3.209/24 dev eth0
+../../guestbin/ip.sh address add 192.1.3.210/24 dev eth0
 ../../guestbin/ip.sh route add 0.0.0.0/0 via 192.1.3.254
 # wait on OE to load; give it a different byte count
 ipsec restart

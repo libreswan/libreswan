@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 road #
- ip addr add 192.0.4.254/32 dev eth0
+ ../../guestbin/ip.sh address add 192.0.4.254/32 dev eth0
 road #
  # ensure that clear text does not get through
 road #

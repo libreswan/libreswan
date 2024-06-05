@@ -71,7 +71,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 road #
  # test packet flow
 road #
- ip addr add 192.0.1.254/24 dev eth0
+ ../../guestbin/ip.sh address add 192.0.1.254/24 dev eth0
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

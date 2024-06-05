@@ -29,7 +29,7 @@ west #
  ipsec auto --status | grep westnet-eastnet-ikev2 | grep "[.][.][.]"
 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.46...192.1.2.24[@east]===192.0.2.0/24; unoriented; my_ip=unset; their_ip=unset;
 west #
- ip addr add 192.1.2.46/24 dev eth1
+ ../../guestbin/ip.sh address add 192.1.2.46/24 dev eth1
 west #
  ipsec whack --listen
 listening for IKE messages

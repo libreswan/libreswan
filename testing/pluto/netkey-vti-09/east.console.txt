@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 east #
- ip addr add 10.0.2.254 dev eth0
+ ../../guestbin/ip.sh address add 10.0.2.254 dev eth0
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -18,7 +18,7 @@ initdone
 east #
  grep -v -P "\t0$" /proc/net/xfrm_stat
 east #
- ip addr show
+ ../../guestbin/ip.sh address show
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo

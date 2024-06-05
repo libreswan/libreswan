@@ -3,7 +3,7 @@ iptables -F
 # NAT
 iptables -t nat -A POSTROUTING --source 192.1.3.208/32 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
 # NAT one differently
-ip addr add 192.1.2.222/24 dev eth1
+../../guestbin/ip.sh address add 192.1.2.222/24 dev eth1
 iptables -t nat -A POSTROUTING --source 192.1.3.209/32 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.222
 # make sure that we never acidentially let ESP through.
 #

@@ -16,7 +16,7 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ip addr add 192.0.11.254/24 dev eth1
+ ../../guestbin/ip.sh address add 192.0.11.254/24 dev eth1
 west #
  ipsec start
 Redirecting to: [initsystem]

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
-ip addr show dev eth0 | grep ip 192.0.100.254 || ip addr add 192.0.100.254/24 dev eth0
-ip addr show dev eth0 | grep ip 192.0.101.254 || ip addr add 192.0.101.254/24 dev eth0
+../../guestbin/ip.sh address show dev eth0 | grep ip 192.0.100.254 || ../../guestbin/ip.sh address add 192.0.100.254/24 dev eth0
+../../guestbin/ip.sh address show dev eth0 | grep ip 192.0.101.254 || ../../guestbin/ip.sh address add 192.0.101.254/24 dev eth0
 ../../guestbin/ip.sh route show scope global | grep 192.0.200.0 || ip route add 192.0.200.0/24 via 192.1.2.23  dev eth1
 ../../guestbin/ip.sh route show scope global | grep 192.0.201.0 || ip route add 192.0.201.0/24 via 192.1.2.23  dev eth1
 # ensure that clear text does not get through

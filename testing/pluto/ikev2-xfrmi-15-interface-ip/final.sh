@@ -6,5 +6,5 @@ ip rule show
 ../../guestbin/ipsec-kernel-policy.sh
 : ==== cut ====
 # this is global will be noisy and change based on host.
-ip addr show
+../../guestbin/ip.sh address show
 : ==== tuc ====

@@ -7,7 +7,7 @@ iptables -A INPUT -i eth1 -s 10.0.2.0/24 -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-ip addr add 10.0.1.254 dev eth0
+../../guestbin/ip.sh address add 10.0.1.254 dev eth0
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-vti-01

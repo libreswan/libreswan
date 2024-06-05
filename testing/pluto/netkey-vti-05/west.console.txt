@@ -59,7 +59,7 @@ west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ip addr show dev vti0
+ ../../guestbin/ip.sh address show dev vti0
 5: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
     link/ipip 192.1.2.45 peer 192.1.2.23
     inet 192.1.99.1/24 scope global vti0

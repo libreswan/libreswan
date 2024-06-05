@@ -1,12 +1,12 @@
 /testing/guestbin/swan-prep
 west #
- ip addr add 192.0.100.254/24 dev eth0:1
+ ../../guestbin/ip.sh address add 192.0.100.254/24 dev eth0:1
 west #
- ip addr add 192.0.101.254/24 dev eth0:1
+ ../../guestbin/ip.sh address add 192.0.101.254/24 dev eth0:1
 west #
- ip addr add 192.0.110.254/24 dev eth0:1
+ ../../guestbin/ip.sh address add 192.0.110.254/24 dev eth0:1
 west #
- ip addr add 192.0.111.254/24 dev eth0:1
+ ../../guestbin/ip.sh address add 192.0.111.254/24 dev eth0:1
 west #
  ../../guestbin/ip.sh route add 192.0.200.0/24 via 192.1.2.23  dev eth1
 west #

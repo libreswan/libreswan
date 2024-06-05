@@ -36,7 +36,7 @@ west #
 west #
  # add east's ip on west to shoot in foot
 west #
- ip addr add 192.1.2.23/24 dev eth1
+ ../../guestbin/ip.sh address add 192.1.2.23/24 dev eth1
 west #
  ipsec auto --ready
 listening for IKE messages

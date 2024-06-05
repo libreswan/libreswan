@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 west #
- ip addr add 192.1.2.46/24 dev eth1
+ ../../guestbin/ip.sh address add 192.1.2.46/24 dev eth1
 west #
  ipsec start
 Redirecting to: [initsystem]

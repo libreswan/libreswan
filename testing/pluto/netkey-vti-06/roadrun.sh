@@ -1,4 +1,4 @@
-ip addr add 192.0.3.254/24 dev eth0
+../../guestbin/ip.sh address add 192.0.3.254/24 dev eth0
 ipsec auto --up road-east-vti
 # since we have vti-routing=no, no marking, so unencrypted packets are dropped
 ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.0.2.254

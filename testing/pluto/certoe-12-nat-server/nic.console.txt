@@ -2,7 +2,7 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- ip addr add 192.1.3.130/24 dev eth2
+ ../../guestbin/ip.sh address add 192.1.3.130/24 dev eth2
 nic #
  # Destination NAT to east's address not the port
 nic #

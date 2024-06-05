@@ -19,7 +19,7 @@ Pluto is shutting down
 east #
  # there should be no vti0 device left
 east #
- ip addr show vti0
+ ../../guestbin/ip.sh address show vti0
 Device "vti0" does not exist.
 east #
  

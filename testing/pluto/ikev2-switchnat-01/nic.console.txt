@@ -8,7 +8,7 @@ nic #
 nic #
  # NAT one differently
 nic #
- ip addr add 192.1.2.222/24 dev eth1
+ ../../guestbin/ip.sh address add 192.1.2.222/24 dev eth1
 nic #
  iptables -t nat -A POSTROUTING --source 192.1.3.209/32 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.222
 nic #

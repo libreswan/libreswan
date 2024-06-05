@@ -6,7 +6,7 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
 iptables -A INPUT -i eth1 -s 10.0.2.0/24 -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # remove this address from eth0. It will come back on vti
-ip addr show dev eth0 | grep 192.0.1.254 && ip addr del 192.0.1.254/24 dev eth0
+../../guestbin/ip.sh address show dev eth0 | grep 192.0.1.254 && ../../guestbin/ip.sh address del 192.0.1.254/24 dev eth0
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-vti-01

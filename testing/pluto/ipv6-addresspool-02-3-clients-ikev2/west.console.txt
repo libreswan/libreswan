@@ -5,9 +5,9 @@ destination 2001:db8:0:2::254 is alive
 west #
  # add two extra IPv6 addresses
 west #
- ip addr show dev eth1 | grep 2001:db8:1:2::46  || ip addr add 2001:db8:1:2::46/64 dev eth1
+ ../../guestbin/ip.sh address show dev eth1 | grep 2001:db8:1:2::46  || ../../guestbin/ip.sh address add 2001:db8:1:2::46/64 dev eth1
 west #
- ip addr show dev eth1 | grep 2001:db8:1:2::47  || ip addr add 2001:db8:1:2::47/64 dev eth1
+ ../../guestbin/ip.sh address show dev eth1 | grep 2001:db8:1:2::47  || ../../guestbin/ip.sh address add 2001:db8:1:2::47/64 dev eth1
 west #
  ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -p ipv6-icmp -j DROP
 west #

@@ -9,5 +9,5 @@ cat /tmp/xl2tpd.log
 : ==== tuc ====
 # testing passthrough of non-l2tp/ipsec traffic
 echo quit | socat - TCP:192.0.2.254:7
-ip addr show dev ppp0 | sed "s/ qdisc.*$//"
+../../guestbin/ip.sh address show dev ppp0 | sed "s/ qdisc.*$//"
 echo done
