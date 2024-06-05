@@ -21,7 +21,7 @@ east #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@west'
 east #
- ip -s link show ipsec1
+ ../../guestbin/ip.sh -s link show ipsec1
 Device "ipsec1" does not exist.
 east #
  ip rule show

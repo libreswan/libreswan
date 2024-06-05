@@ -31,7 +31,7 @@ east #
  echo "initdone"
 initdone
 east #
- ip -s link show ipsec0
+ ../../guestbin/ip.sh -s link show ipsec0
 X: ipsec0@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped missed  mcast   
     336        4        0       0       0       0       

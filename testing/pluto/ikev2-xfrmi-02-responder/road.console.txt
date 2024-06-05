@@ -45,7 +45,7 @@ road #
 road #
  hostname | grep east > /dev/null && ../../guestbin/tcpdump.sh --stop -i eth1
 road #
- hostname | grep east > /dev/null && ip -s link show ipsec1
+ hostname | grep east > /dev/null && ../../guestbin/ip.sh -s link show ipsec1
 road #
  hostname | grep east > /dev/null && ip rule show
 road #

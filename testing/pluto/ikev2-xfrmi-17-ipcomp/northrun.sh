@@ -7,7 +7,7 @@ ipsec auto --up north
 sleep  2
 ip xfrm state
 ../../guestbin/ping-once.sh --up 192.0.2.254
-ip -s link show ipsec1
+../../guestbin/ip.sh -s link show ipsec1
 #kill -9 $(cat /tmp/tcpdump.pid)
 sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/

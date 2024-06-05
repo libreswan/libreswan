@@ -13,9 +13,9 @@ west #
 west #
  ../../guestbin/ip.sh link add ipsec17 type xfrm if_id 17 dev eth1
 west #
- ip -d link show dev ipsec17
-X: ipsec17@eth1: <NOARP> mtu 1500 qdisc state DOWN
-    xfrm if_id 0x11 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+ ../../guestbin/ip.sh -d link show dev ipsec17
+X: ipsec17@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+    xfrm if_id 0x11 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 west #
  ip address add 192.0.1.254/24 dev ipsec17
 west #
@@ -54,7 +54,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ip -s link show ipsec17
+ ../../guestbin/ip.sh -s link show ipsec17
 X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
             84       1      0       0       0       0 

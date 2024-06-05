@@ -31,7 +31,7 @@ road #
 road #
  # ping -w 4 -c 4 192.1.2.23
 road #
- ip -s link show ipsec1
+ ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX: bytes  packets  errors  dropped missed  mcast
     0          0        0       0       0       0

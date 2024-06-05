@@ -59,7 +59,7 @@ X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.2.1/32 scope global ipsec1
        valid_lft forever preferred_lft forever
 road #
- ip -s link show ipsec1
+ ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            168       2      0       0       0       0 

@@ -36,7 +36,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ip -s link show ipsec17
+ ../../guestbin/ip.sh -s link show ipsec17
 X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
             84       1      0       0       0       0 

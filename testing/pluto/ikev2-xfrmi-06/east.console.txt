@@ -30,7 +30,7 @@ east #
  ../../guestbin/ip.sh address show dev ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 east #
- ip -s link show ipsec1
+ ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            168       2      0       0       0       0 

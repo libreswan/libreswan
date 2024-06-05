@@ -34,7 +34,7 @@ east #
 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
 east #
- ip -s link show ipsec1
+ ../../guestbin/ip.sh -s link show ipsec1
 Device "ipsec1" does not exist.
 east #
  ip rule show
@@ -60,14 +60,14 @@ default via 192.1.2.254 dev eth1
 192.0.34.0/24 dev ipsec24 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 east #
- ip -d link show type xfrm
+ ../../guestbin/ip.sh -d link show type xfrm
 X: ipsec21@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    xfrm if_id 0x15 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+    xfrm if_id 0x15 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 X: ipsec22@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    xfrm if_id 0x16 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+    xfrm if_id 0x16 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 X: ipsec23@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    xfrm if_id 0x17 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+    xfrm if_id 0x17 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 X: ipsec24@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    xfrm if_id 0x18 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+    xfrm if_id 0x18 addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 east #
  

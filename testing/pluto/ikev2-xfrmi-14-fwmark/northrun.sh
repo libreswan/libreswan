@@ -1,6 +1,6 @@
 ipsec auto --up north
 ../../guestbin/ping-once.sh -I 192.0.3.254 192.0.2.254
-ip -s link show ipsec1
+../../guestbin/ip.sh -s link show ipsec1
 #kill -9 $(cat /tmp/tcpdump.pid)
 sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/

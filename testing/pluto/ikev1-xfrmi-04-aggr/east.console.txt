@@ -34,7 +34,7 @@ east #
 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@north'
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 east #
- ip -s link show ipsec1
+ ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            336       4      0       0       0       0 
