@@ -29,7 +29,7 @@ road #
 road #
  # sleep 2
 road #
- # ../../guestbin/route.sh add table 50 192.1.2.23/32 dev ipsec0 src 192.1.3.209
+ # ../../guestbin/ip.sh route add table 50 192.1.2.23/32 dev ipsec0 src 192.1.3.209
 road #
  ../../guestbin/ping-once.sh --up 192.1.2.23
 up
@@ -47,10 +47,10 @@ road #
 32766:	from all lookup main
 32767:	from all lookup default
 road #
- ../../guestbin/route.sh show table 50
+ ../../guestbin/ip.sh route show table 50
 192.1.2.23 via 192.1.3.254 dev eth0
 road #
- ../../guestbin/route.sh
+ ../../guestbin/ip.sh route
 default via 192.1.3.254 dev eth0
 192.1.2.23 dev ipsec0 scope link
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209

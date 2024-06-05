@@ -1,19 +1,19 @@
 /testing/guestbin/swan-prep --46
 
-../../guestbin/route.sh -4
-../../guestbin/route.sh -6
+../../guestbin/ip.sh -4 route
+../../guestbin/ip.sh -6 route
 
 # %any
-../../guestbin/route.sh -4 get to 0.0.0.0
-../../guestbin/route.sh -6 get to ::
+../../guestbin/ip.sh -4 route get to 0.0.0.0
+../../guestbin/ip.sh -6 route get to ::
 
 # gateway
-../../guestbin/route.sh -4 get to 192.1.3.254
-../../guestbin/route.sh -6 get to 2001:db8:1:3::254
+../../guestbin/ip.sh -4 route get to 192.1.3.254
+../../guestbin/ip.sh -6 route get to 2001:db8:1:3::254
 
 # peer
-../../guestbin/route.sh -4 get to 192.1.2.23
-../../guestbin/route.sh -6 get to 2001:db8:1:2::23
+../../guestbin/ip.sh -4 route get to 192.1.2.23
+../../guestbin/ip.sh -6 route get to 2001:db8:1:2::23
 
 # simple case, peer known
 
@@ -34,25 +34,25 @@ ipsec addconn --verbose ipv6-src-group 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
 
 ip -4 address add dev eth0     192.0.2.1/32
 ip -6 address add dev eth0  2001:db8:0:2::1 nodad
-../../guestbin/route.sh -4   add dev eth0       192.1.2.23 via       192.1.3.254 src       192.0.2.1
-../../guestbin/route.sh -6   add dev eth0 2001:db8:1:2::23 via 2001:db8:1:3::254 src 2001:db8:0:2::1
-../../guestbin/route.sh -4
-../../guestbin/route.sh -6
+../../guestbin/ip.sh -4 route   add dev eth0       192.1.2.23 via       192.1.3.254 src       192.0.2.1
+../../guestbin/ip.sh -6 route   add dev eth0 2001:db8:1:2::23 via 2001:db8:1:3::254 src 2001:db8:0:2::1
+../../guestbin/ip.sh -4 route
+../../guestbin/ip.sh -6 route
 
 ipsec addconn --verbose ipv4-src-group 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
 ipsec addconn --verbose ipv6-src-group 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
 
-../../guestbin/route.sh -4   del dev eth0       192.1.2.23 via       192.1.3.254 src       192.0.2.1
-../../guestbin/route.sh -6   del dev eth0 2001:db8:1:2::23 via 2001:db8:1:3::254 src 2001:db8:0:2::1
+../../guestbin/ip.sh -4 route   del dev eth0       192.1.2.23 via       192.1.3.254 src       192.0.2.1
+../../guestbin/ip.sh -6 route   del dev eth0 2001:db8:1:2::23 via 2001:db8:1:3::254 src 2001:db8:0:2::1
 ip -4 address del dev eth0     192.0.2.1/32
 ip -6 address del dev eth0  2001:db8:0:2::1
-../../guestbin/route.sh -4
-../../guestbin/route.sh -6
+../../guestbin/ip.sh -4 route
+../../guestbin/ip.sh -6 route
 
 # messed up default (see ipv6-addresspool-05-dual-stack)
 
-../../guestbin/route.sh -6 del default
-../../guestbin/route.sh -6 add default dev eth0 via fe80::1000:ff:fe32:64ba
-../../guestbin/route.sh -6
+../../guestbin/ip.sh -6 route del default
+../../guestbin/ip.sh -6 route add default dev eth0 via fe80::1000:ff:fe32:64ba
+../../guestbin/ip.sh -6 route
 
 ipsec addconn --verbose ipv6-src 2>&1 | grep -e '^resolving ' -e '^  [^ ]'

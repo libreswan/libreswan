@@ -1,15 +1,15 @@
 /testing/guestbin/swan-prep  --x509
 Preparing X.509 files
 east #
- ../../guestbin/route.sh del default
+ ../../guestbin/ip.sh route del default
 east #
  ip tuntap add mode tun tun0
 east #
  ifconfig tun0 10.13.13.13/24
 east #
- ../../guestbin/route.sh add default via 10.13.13.1
+ ../../guestbin/ip.sh route add default via 10.13.13.1
 east #
- ../../guestbin/route.sh add 192.1.3.0/24 via 192.1.2.254
+ ../../guestbin/ip.sh route add 192.1.3.0/24 via 192.1.2.254
 east #
  ipsec certutil -D -n road
 east #

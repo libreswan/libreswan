@@ -32,10 +32,10 @@ pipework br3 -i eth1 $dide 192.1.2.23/24
 pipework br1 -i eth1 $didn 192.1.3.254/24
 pipework br3 -i eth2 $didn 192.1.2.254/24
 sleep 2
-docker exec -it $dnamer ../../guestbin/route.sh add default via 192.1.3.254
-docker exec -it $dnamee ../../guestbin/route.sh add default via 192.1.2.254
-docker exec -it $dnamer ../../guestbin/route.sh
-docker exec -it $dnamee ../../guestbin/route.sh
+docker exec -it $dnamer ../../guestbin/ip.sh route add default via 192.1.3.254
+docker exec -it $dnamee ../../guestbin/ip.sh route add default via 192.1.2.254
+docker exec -it $dnamer ../../guestbin/ip.sh route
+docker exec -it $dnamee ../../guestbin/ip.sh route
 rm -fr OUTPUT
 mkdir OUTPUT
 eastc=OUTPUT/east.console.verbose.txt

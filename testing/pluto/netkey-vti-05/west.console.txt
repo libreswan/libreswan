@@ -26,7 +26,7 @@ west #
 west #
  # remove the regular route for 192.0.2.0/24
 west #
- #../../guestbin/route.sh del 192.0.2.0/24
+ #../../guestbin/ip.sh route del 192.0.2.0/24
 west #
  ipsec whack --impair suppress_retransmits
 west #

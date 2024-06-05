@@ -33,7 +33,7 @@ west #
 west #
  # remove the regular route for 192.0.2.0/24
 west #
- ../../guestbin/route.sh del 192.0.2.0/24
+ ../../guestbin/ip.sh route del 192.0.2.0/24
 west #
  echo "initdone"
 initdone
@@ -81,7 +81,7 @@ west #
 west #
  # our two ranges should orute into the vti device
 west #
- ../../guestbin/route.sh list
+ ../../guestbin/ip.sh route list
 default via 192.1.2.254 dev eth1
 10.0.2.0/24 dev ipsec0 scope link
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254

@@ -13,5 +13,5 @@ ipsec start
 ipsec auto --add westnet-eastnet-vti-01
 ipsec auto --add westnet-eastnet-vti-02
 # remove the regular route for 192.0.2.0/24
-../../guestbin/route.sh del 192.0.2.0/24
+../../guestbin/ip.sh route del 192.0.2.0/24
 echo "initdone"

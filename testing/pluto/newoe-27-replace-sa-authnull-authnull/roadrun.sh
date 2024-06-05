@@ -22,7 +22,7 @@ ipsec restart
 killall -9 pluto
 ip addr del 192.1.3.209/24 dev eth0
 ip addr add 192.1.3.210/24 dev eth0
-../../guestbin/route.sh add 0.0.0.0/0 via 192.1.3.254
+../../guestbin/ip.sh route add 0.0.0.0/0 via 192.1.3.254
 # wait on OE to load; give it a different byte count
 ipsec restart
 ../../guestbin/wait-until-pluto-started

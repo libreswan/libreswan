@@ -15,9 +15,9 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ../../guestbin/route.sh get to 192.1.2.23
+ ../../guestbin/ip.sh route get to 192.1.2.23
 192.1.2.23 via 192.1.3.254 dev eth0 src 192.1.3.209 uid 0
-  cache
+    cache
 road #
  # this test need --verbose to see source address selection
 road #
@@ -82,11 +82,11 @@ road #
 eth0 inet 192.1.3.209/24
 lo inet 192.0.3.1/32
 road #
- ../../guestbin/route.sh -6
+ ../../guestbin/ip.sh -6 route
 road #
- ../../guestbin/route.sh get to 192.1.2.23
+ ../../guestbin/ip.sh route get to 192.1.2.23
 192.1.2.23 via 192.1.3.254 dev eth0 src 192.0.3.1 uid 0
-  cache
+    cache
 road #
  #
 road #

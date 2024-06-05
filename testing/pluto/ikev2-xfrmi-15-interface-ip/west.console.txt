@@ -1,4 +1,4 @@
-../../guestbin/route.sh get to 192.0.2.254 | grep 192.1.2.23 > /dev/null 2> /dev/null && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1 || true
+../../guestbin/ip.sh route get to 192.0.2.254 | grep 192.1.2.23 > /dev/null 2> /dev/null && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1 || true
 west #
  /testing/guestbin/swan-prep
 west #
@@ -53,7 +53,7 @@ west #
 32766:	from all lookup main
 32767:	from all lookup default
 west #
- ../../guestbin/route.sh show table 50
+ ../../guestbin/ip.sh route show table 50
 Error: ipv4: FIB table does not exist.
 Dump terminated
 west #

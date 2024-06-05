@@ -1,2 +1,2 @@
 # after west up
-../../guestbin/route.sh -4
+../../guestbin/ip.sh -4 route

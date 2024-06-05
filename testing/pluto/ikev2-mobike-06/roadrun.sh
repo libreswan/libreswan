@@ -9,14 +9,14 @@ sleep 5
 ip addr show scope global dev eth0 | grep -v valid_lft
 # delete the routes down to simulate WiFi link down.
 ip addr del 192.1.3.209/24 dev eth0
-../../guestbin/route.sh del default via 192.1.3.254 dev eth0
+../../guestbin/ip.sh route del default via 192.1.3.254 dev eth0
 sleep 2
 ip addr add 192.1.33.222/24 dev eth0
 sleep 2
 # the client is still on the dev lo.
 # would the traffic leak in plain
 # let libreswan detect change and initiate MOBIKE update
-../../guestbin/route.sh add default via 192.1.33.254 dev eth0
+../../guestbin/ip.sh route add default via 192.1.33.254 dev eth0
 sleep 10
 # ip addr show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
 ip addr show scope global dev eth0 | grep -v valid_lft

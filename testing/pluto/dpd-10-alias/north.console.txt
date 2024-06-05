@@ -48,7 +48,7 @@ north #
 north #
  #
 north #
- ../../guestbin/route.sh add unreachable 192.1.2.23
+ ../../guestbin/ip.sh route add unreachable 192.1.2.23
 north #
  #sleep 40
 north #
@@ -101,7 +101,7 @@ north #
 #1: "north-dpd/0x2":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=30s(seq in:XXXXX out:YYYYY); idle;
 #4: "north-dpd/0x2":500 STATE_QUICK_I1 (sent Quick Mode request); RETRANSMIT in XXs; lastdpd=-1s(seq in:0 out:0); idle;
 north #
- ../../guestbin/route.sh del unreachable 192.1.2.23
+ ../../guestbin/ip.sh route del unreachable 192.1.2.23
 north #
  ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
 up

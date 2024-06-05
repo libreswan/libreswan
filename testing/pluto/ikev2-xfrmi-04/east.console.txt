@@ -1,7 +1,7 @@
-../../guestbin/route.sh get to 192.0.1.254 | grep eth1 && ip route del 192.0.1.0/24 via 192.1.2.45 dev eth1 2>/dev/null
+../../guestbin/ip.sh route get to 192.0.1.254 | grep eth1 && ip route del 192.0.1.0/24 via 192.1.2.45 dev eth1 2>/dev/null
 192.0.1.254 via 192.1.2.45 dev eth1 src 192.1.2.23 uid 0
 east #
- ../../guestbin/route.sh get to 192.0.3.254 | grep eth1 && ip route del 192.0.3.0/24 via 192.1.2.254 dev eth1 2>/dev/null
+ ../../guestbin/ip.sh route get to 192.0.3.254 | grep eth1 && ip route del 192.0.3.0/24 via 192.1.2.254 dev eth1 2>/dev/null
 192.0.3.254 via 192.1.2.254 dev eth1 src 192.1.2.23 uid 0
 east #
  #new subnet
@@ -40,11 +40,11 @@ east #
 32766:	from all lookup main
 32767:	from all lookup default
 east #
- ../../guestbin/route.sh show table 50
+ ../../guestbin/ip.sh route show table 50
 Error: ipv4: FIB table does not exist.
 Dump terminated
 east #
- ../../guestbin/route.sh
+ ../../guestbin/ip.sh route
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev ipsec1 scope link
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254

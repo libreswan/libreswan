@@ -7,11 +7,11 @@ road #
  dig +short east46.testing.libreswan.org AAAA
 2001:db8:1:2::23
 road #
- ../../guestbin/route.sh -4
+ ../../guestbin/ip.sh -4 route
 default via 192.1.3.254 dev eth0
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
- ../../guestbin/route.sh -6
+ ../../guestbin/ip.sh -6 route
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
 default via 2001:db8:1:3::254 dev eth0
@@ -22,12 +22,12 @@ road #
  ../../guestbin/wait-until-alive 2001:db8:1:2::23
 destination 2001:db8:1:2::23 is alive
 road #
- ../../guestbin/route.sh get to 2001:db8:1:2::23
+ ../../guestbin/ip.sh route get to 2001:db8:1:2::23
 2001:db8:1:2::23 from :: via 2001:db8:1:3::254 dev eth0
 road #
  # change the default route
 road #
- ../../guestbin/route.sh -6 del default
+ ../../guestbin/ip.sh -6 route del default
 road #
  ../../guestbin/ping-once.sh --down 2001:db8:1:2::23
 unexpected status 2
@@ -35,7 +35,7 @@ connect: Network is unreachable
 road #
  # add default via link local
 road #
- ../../guestbin/route.sh -6 add default dev eth0 via fe80::1000:ff:fe32:64ba
+ ../../guestbin/ip.sh -6 route add default dev eth0 via fe80::1000:ff:fe32:64ba
 road #
  ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
 up
@@ -121,14 +121,14 @@ eth0 inet 192.1.3.209/24
 eth0 inet6 2001:db8:1:3::209/64
 lo inet6 2001:db8:0:3:1::/128
 road #
- ../../guestbin/route.sh -6
+ ../../guestbin/ip.sh -6 route
 2001:db8:0:3:1:: dev lo proto kernel metric 256 pref medium
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 2000::/3 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
 default via fe80::1000:ff:fe32:64ba dev eth0
 road #
- ../../guestbin/route.sh get to 2001:db8:1:2::23
+ ../../guestbin/ip.sh route get to 2001:db8:1:2::23
 2001:db8:1:2::23 from :: via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
 road #
  #

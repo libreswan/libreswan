@@ -7,10 +7,10 @@ ip xfrm policy
 sleep 5
 # remove this end ip next one will take over
 ip addr del 192.1.3.33/24 dev eth1
-../../guestbin/route.sh show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
+../../guestbin/ip.sh route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
 # add new address and new default route
 ip addr add 192.1.8.22/24 dev eth1
-../../guestbin/route.sh show scope global | grep 192.1.8.254 || ip route add default via 192.1.8.254
+../../guestbin/ip.sh route show scope global | grep 192.1.8.254 || ip route add default via 192.1.8.254
 # let libreswan detect change and do a MOBIKE update
 sleep 8
 # MOBIKE update and ping should work

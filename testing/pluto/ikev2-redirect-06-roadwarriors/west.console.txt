@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509 --x509name east
 Preparing X.509 files
 west #
- ../../guestbin/route.sh del 192.0.2.0/24
+ ../../guestbin/ip.sh route del 192.0.2.0/24
 west #
  ifconfig eth0:1 192.0.2.254/24
 west #

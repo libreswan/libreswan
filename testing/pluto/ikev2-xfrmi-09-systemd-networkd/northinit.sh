@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-../../guestbin/route.sh get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.3.254 dev eth1
+../../guestbin/ip.sh route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.3.254 dev eth1
 ip link show ipsec2 || echo "ipsec2 should not exist"
 cp north.ipsec2.netdev  /etc/systemd/network/ipsec2.netdev
 : ==== cut ====

@@ -6,7 +6,7 @@ north #
 north #
  ip addr show dev eth1 | grep 192.1.8.22 && ip addr del 192.1.8.22/24 dev eth1
 north #
- ../../guestbin/route.sh show scope global | grep "192.1.8.254" && ip route del default via 192.1.8.254
+ ../../guestbin/ip.sh route show scope global | grep "192.1.8.254" && ip route del default via 192.1.8.254
 north #
  # add .33 for re-run
 north #
@@ -15,7 +15,7 @@ north #
 north #
  # add default gw, it could have been deleted due address changes
 north #
- ../../guestbin/route.sh | grep default || ip route add default via 192.1.3.254
+ ../../guestbin/ip.sh route | grep default || ip route add default via 192.1.3.254
 default via 192.1.3.254 dev eth1
 north #
  # routes and addresses setup for the test
@@ -80,13 +80,13 @@ north #
 north #
  ip addr del 192.1.3.33/24 dev eth1
 north #
- ../../guestbin/route.sh show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
+ ../../guestbin/ip.sh route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
 north #
  # add new address and new default route
 north #
  ip addr add 192.1.8.22/24 dev eth1
 north #
- ../../guestbin/route.sh show scope global | grep 192.1.8.254 || ip route add default via 192.1.8.254
+ ../../guestbin/ip.sh route show scope global | grep 192.1.8.254 || ip route add default via 192.1.8.254
 north #
  # let libreswan detect change and do a MOBIKE update
 north #

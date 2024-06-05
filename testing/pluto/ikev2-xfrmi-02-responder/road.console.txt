@@ -49,8 +49,8 @@ road #
 road #
  hostname | grep east > /dev/null && ip rule show
 road #
- hostname | grep east > /dev/null && ../../guestbin/route.sh show table 50
+ hostname | grep east > /dev/null && ../../guestbin/ip.sh route show table 50
 road #
- hostname | grep east > /dev/null && ../../guestbin/route.sh
+ hostname | grep east > /dev/null && ../../guestbin/ip.sh route
 road #
  

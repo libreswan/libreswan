@@ -17,7 +17,7 @@ road #
 road #
  # ipsec will configure 192.0.2.1->192.1.2.23 on eth0
 road #
- ../../guestbin/route.sh -4
+ ../../guestbin/ip.sh -4 route
 default via 192.1.3.254 dev eth0
 192.1.2.23 dev eth0 scope link src 192.0.2.1
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209

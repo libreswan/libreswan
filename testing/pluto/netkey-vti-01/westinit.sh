@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep
 # We want to test without a specific existing non-device route,
 # so we remove the regular route for 192.0.2.0/24, and add default route 
-../../guestbin/route.sh del 192.0.2.0/24
-../../guestbin/route.sh del default
-../../guestbin/route.sh add 0.0.0.0/0 via 192.1.2.23 dev eth1
+../../guestbin/ip.sh route del 192.0.2.0/24
+../../guestbin/ip.sh route del default
+../../guestbin/ip.sh route add 0.0.0.0/0 via 192.1.2.23 dev eth1
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

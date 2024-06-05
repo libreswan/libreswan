@@ -3,6 +3,6 @@ ipsec auto --up road
 # ../../guestbin/ping-once.sh --up 192.1.2.23
 ip -s link show ipsec1
 ip rule show
-../../guestbin/route.sh show table 50
-../../guestbin/route.sh
+../../guestbin/ip.sh route show table 50
+../../guestbin/ip.sh route
 echo done
