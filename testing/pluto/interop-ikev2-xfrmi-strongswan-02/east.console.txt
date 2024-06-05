@@ -4,9 +4,9 @@ east #
 east #
  ../../guestbin/strongswan-start.sh
 east #
- ip link set down dev ipsec0 2> /dev/null > /dev/null
+ ../../guestbin/ip.sh link set down dev ipsec0 2> /dev/null > /dev/null
 east #
- ip link del ipsec0 2> /dev/null > /dev/null
+ ../../guestbin/ip.sh link del ipsec0 2> /dev/null > /dev/null
 east #
  #shouldn't charon clean up these two rules ??
 east #
@@ -14,13 +14,13 @@ east #
 east #
  ../../guestbin/ip.sh route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
 east #
- ip link add ipsec0 type xfrm if_id 2 dev eth0
+ ../../guestbin/ip.sh link add ipsec0 type xfrm if_id 2 dev eth0
 east #
  # KVM and namespace has this route
 east #
  ../../guestbin/ip.sh route del 192.0.1.0/24
 east #
- ip link set up dev ipsec0
+ ../../guestbin/ip.sh link set up dev ipsec0
 east #
  ../../guestbin/ip.sh route add 192.0.1.0/24 dev ipsec0
 east #

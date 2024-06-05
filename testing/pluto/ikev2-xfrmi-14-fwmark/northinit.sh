@@ -1,8 +1,8 @@
 /testing/guestbin/swan-prep
-ip link show dev gre1 2>/dev/null > /dev/null && (ip link set down dev gre1 && ip link del gre1)
-ip link add dev gre1 type gretap remote 192.1.2.45 local 192.1.3.33 key 123
+../../guestbin/ip.sh link show dev gre1 2>/dev/null > /dev/null && (../../guestbin/ip.sh link set down dev gre1 && ../../guestbin/ip.sh link del gre1)
+../../guestbin/ip.sh link add dev gre1 type gretap remote 192.1.2.45 local 192.1.3.33 key 123
 ../../guestbin/ip.sh address add 192.1.7.33/24 dev gre1
-ip link set gre1 up
+../../guestbin/ip.sh link set gre1 up
 iptables -t mangle -I OUTPUT -p tcp --dport 8888 -j MARK --set-mark 0x0001
 ip rule add prio 1 fwmark 0x0601/0xffff table 1
 ../../guestbin/ip.sh route add 192.1.2.23 via 192.1.7.45 dev gre1 table 1

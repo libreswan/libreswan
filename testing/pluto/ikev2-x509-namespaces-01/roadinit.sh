@@ -7,7 +7,7 @@ sysctl -w net.ipv4.ip_forward=1
 sysctl -w net.ipv4.conf.all.rp_filter=0
 brctl addbr brrw
 ../../guestbin/ip.sh address add 192.168.0.254/24 brd + dev brrw
-ip link set brrw up
+../../guestbin/ip.sh link set brrw up
 sleep 10
 iptables -t nat -I POSTROUTING -s 192.168.0.0/16 -j MASQUERADE -o eth0
 for i in `seq 2 $num`; do ./netns.sh $i >/dev/null & done

@@ -4,7 +4,7 @@ west #
 west #
  ../../guestbin/ip.sh address add 192.1.3.2/24 dev eth3
 west #
- ip link set dev eth3 up
+ ../../guestbin/ip.sh link set dev eth3 up
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -154,7 +154,7 @@ west #
  ipsec whack --shutdown
 Pluto is shutting down
 west #
- ip link set dev eth3 down
+ ../../guestbin/ip.sh link set dev eth3 down
 west #
  ip tunnel del eth3
 west #

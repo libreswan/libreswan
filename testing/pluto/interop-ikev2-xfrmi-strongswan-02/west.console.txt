@@ -2,9 +2,9 @@
 west #
  ../../guestbin/strongswan-start.sh
 west #
- ip link set down dev ipsec0 2> /dev/null > /dev/null
+ ../../guestbin/ip.sh link set down dev ipsec0 2> /dev/null > /dev/null
 west #
- ip link del ipsec0 2> /dev/null > /dev/null
+ ../../guestbin/ip.sh link del ipsec0 2> /dev/null > /dev/null
 west #
  ip rule del pref 220 2> /dev/null > /dev/null
 west #
@@ -12,7 +12,7 @@ west #
 west #
  ../../guestbin/ip.sh route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
 west #
- ip link add ipsec0 type xfrm if_id 2 dev eth0
+ ../../guestbin/ip.sh link add ipsec0 type xfrm if_id 2 dev eth0
 west #
  swanctl  --load-conns
 loaded connection 'west'
@@ -79,7 +79,7 @@ src 192.1.2.45 dst 192.1.2.23
 src 192.1.2.23 dst 192.1.2.45
 	if_id 0x2
 west #
- ip link set up dev ipsec0
+ ../../guestbin/ip.sh link set up dev ipsec0
 west #
  ../../guestbin/ip.sh route add 192.0.2.0/24 dev ipsec0
 west #

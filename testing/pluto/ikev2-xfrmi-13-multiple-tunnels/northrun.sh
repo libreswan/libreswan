@@ -2,7 +2,7 @@ ipsec auto --up north-east-21
 ipsec auto --up north-east-22
 ipsec auto --up north-east-23
 ipsec auto --up north-east-24
-ip link show type xfrm
+../../guestbin/ip.sh link show type xfrm
 ../../guestbin/ip.sh address add 192.0.31.254/24 dev ipsec21 2>/dev/null
 ../../guestbin/ip.sh address add 192.0.32.254/24 dev ipsec22 2>/dev/null
 ../../guestbin/ip.sh address add 192.0.33.254/24 dev ipsec23 2>/dev/null

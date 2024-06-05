@@ -58,7 +58,7 @@ north #
 "north-east-24" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "north-east-24" #8: initiator established Child SA using #7; IPsec tunnel [192.0.34.0/24===192.0.24.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
- ip link show type xfrm
+ ../../guestbin/ip.sh link show type xfrm
 X: ipsec21@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 X: ipsec22@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 X: ipsec23@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

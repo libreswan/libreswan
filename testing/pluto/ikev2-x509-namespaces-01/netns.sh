@@ -7,22 +7,22 @@ vhost="veth$i"
 
 # host config
 ip netns add $name
-ip link add $vhost type veth peer name br-$vhost
+../../guestbin/ip.sh link add $vhost type veth peer name br-$vhost
 # ../../guestbin/ip.sh address add 192.168.$num.254/24 dev $vhost
-ip link set $vhost netns $name
+../../guestbin/ip.sh link set $vhost netns $name
 sysctl -w net.ipv4.conf.br-$vhost.rp_filter=0
 sysctl -w net.ipv4.conf.br-$vhost.forwarding=1
 sysctl -w net.ipv4.conf.br-$vhost.proxy_arp=1
 echo waiting on bridge to settle
 sleep 1
-ip link set br-$vhost up
-ip link set br-$vhost master brrw
+../../guestbin/ip.sh link set br-$vhost up
+../../guestbin/ip.sh link set br-$vhost master brrw
 
 # guest config
 ip netns exec $name ../../guestbin/ip.sh address add 192.168.0.$num/24 dev $vhost
 ip netns exec $name ../../guestbin/ip.sh address add 127.0.0.1/8 dev lo
-ip netns exec $name ip link set dev lo up
-ip netns exec $name ip link set dev $vhost up
+ip netns exec $name ../../guestbin/ip.sh link set dev lo up
+ip netns exec $name ../../guestbin/ip.sh link set dev $vhost up
 ip netns exec $name ../../guestbin/ip.sh route add 0.0.0.0/0 via 192.168.0.254
 ip netns exec $name sysctl -w net.ipv4.conf.$vhost.rp_filter=0
 ip netns exec $name sysctl -w net.ipv4.conf.all.rp_filter=0

@@ -1,3 +1,3 @@
 # road came up, east should now have an interface
-ip link show dev ipsec1
+../../guestbin/ip.sh link show dev ipsec1
 ipsec trafficstatus

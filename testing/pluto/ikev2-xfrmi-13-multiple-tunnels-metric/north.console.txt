@@ -29,7 +29,7 @@ north #
 "north-east-sn" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "north-east-sn" #3: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.0.21.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 north #
- ip link show type xfrm
+ ../../guestbin/ip.sh link show type xfrm
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 north #
  ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23

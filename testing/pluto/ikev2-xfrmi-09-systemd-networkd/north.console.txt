@@ -4,14 +4,14 @@ north #
 192.0.2.254 via 192.1.3.254 dev eth1 src 192.1.3.33 uid 0
 RTNETLINK answers: No such process
 north #
- ip link show ipsec2 || echo "ipsec2 should not exist"
+ ../../guestbin/ip.sh link show ipsec2 || echo "ipsec2 should not exist"
 Device "ipsec2" does not exist.
 ipsec2 should not exist
 north #
  cp north.ipsec2.netdev  /etc/systemd/network/ipsec2.netdev
 north #
- ip link show ipsec2
-X: ipsec2@lo: <NOARP> mtu 1500 qdisc state DOWN
+ ../../guestbin/ip.sh link show ipsec2
+X: ipsec2@lo: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 north #
  echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
 north #

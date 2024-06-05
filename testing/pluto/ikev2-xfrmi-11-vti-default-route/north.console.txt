@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 north #
- ip link set vti0 down 2>/dev/null && ip link del vti0 2>/dev/null
+ ../../guestbin/ip.sh link set vti0 down 2>/dev/null && ../../guestbin/ip.sh link del vti0 2>/dev/null
 north #
  ipsec start
 Redirecting to: [initsystem]

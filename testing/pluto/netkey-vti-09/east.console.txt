@@ -38,13 +38,17 @@ east #
     inet 192.1.2.23/24 scope global eth1
        valid_lft forever preferred_lft forever
 east #
- ip link show
+ ../../guestbin/ip.sh link show
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
-3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default
+    altname enp0s8
+    altname ens8
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
     link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
+    altname enp0s9
+    altname ens9
 east #
  ../../guestbin/ip.sh route show
 default via 192.1.2.254 dev eth1

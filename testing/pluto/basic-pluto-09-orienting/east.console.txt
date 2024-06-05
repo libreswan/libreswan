@@ -4,7 +4,7 @@ east #
 east #
  ../../guestbin/ip.sh address add 172.29.1.2/24 dev test0
 east #
- ip link set dev test0 up
+ ../../guestbin/ip.sh link set dev test0 up
 east #
  ipsec start
 Redirecting to: [initsystem]
