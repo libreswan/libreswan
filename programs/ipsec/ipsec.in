@@ -1053,6 +1053,7 @@ while [ ${#} -gt 0 ]; do
 	    IPSEC_CONF="${2}"
 	    export IPSEC_CONF
 	    shift
+	    shift
 	    ;;
 	--ctlsocket)
 	    CTLSOCKET="${2}"
