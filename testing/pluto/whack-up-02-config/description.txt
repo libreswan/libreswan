@@ -1,0 +1,6 @@
+up a connection while also specifying --config
+
+Since the --config code is generic; this should test all cases of
+--config.
+
+see #1736 ipsec up doesn't work with non-standard location of ipsec.conf
