@@ -103,8 +103,10 @@ road #
  # remove this end ip next one will take over
 road #
  ../../guestbin/ip.sh address show scope global dev eth0 | grep -v valid_lft
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
+    altname enp0s6
+    altname ens6
     inet 192.1.3.209/24 scope global eth0
 road #
  # delete the routes down to simulate WiFi link down.
@@ -133,8 +135,10 @@ road #
  # ../../guestbin/ip.sh address show scope global dev eth0 | grep -v -E '(valid_lft|ether|noqueue)'
 road #
  ../../guestbin/ip.sh address show scope global dev eth0 | grep -v valid_lft
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
+    altname enp0s6
+    altname ens6
     inet 192.1.33.222/24 scope global eth0
 road #
  # MOBIKE ping should work
