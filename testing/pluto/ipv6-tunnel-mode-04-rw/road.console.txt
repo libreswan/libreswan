@@ -3,7 +3,7 @@ road #
  # confirm that the network is alive
 road #
  ping6 -n -q -c 4 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
+PING 2001:db8:1:2::23 (2001:db8:1:2::23) 56 data bytes
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -17,7 +17,7 @@ road #
  # confirm clear text does not get through
 road #
  ping6 -n -q -c 4 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
+PING 2001:db8:1:2::23 (2001:db8:1:2::23) 56 data bytes
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
@@ -67,7 +67,7 @@ road #
 "v6-tunnel-east-road" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 road #
  ping6 -n -q -c 4 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
+PING 2001:db8:1:2::23 (2001:db8:1:2::23) 56 data bytes
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

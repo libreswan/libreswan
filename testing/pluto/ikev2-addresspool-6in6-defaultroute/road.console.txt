@@ -33,7 +33,7 @@ road #
 "road"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3:1::/128===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ping6 -n -q -w 5 -c 2 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes
 --- 2001:db8:0:2::254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

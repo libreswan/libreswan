@@ -44,7 +44,7 @@ CHILD_SA rw-eastnet-ipv6{1} established with SPIs SPISPI_i SPISPI_o and TS 2001:
 connection 'rw-eastnet-ipv6' established successfully
 west #
  ping6 -n -q -w 4 -c 4 -I 2001:db8:0:3:1::0 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:3:1:: : 56 data bytes
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

@@ -3,7 +3,7 @@ west #
  # confirm that the network is alive
 west #
  ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -17,7 +17,7 @@ west #
  # confirm clear text does not get through
 west #
  ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -64,7 +64,7 @@ west #
 "westnet-eastnet-6in4" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
 --- 2001:db8:0:2::254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms

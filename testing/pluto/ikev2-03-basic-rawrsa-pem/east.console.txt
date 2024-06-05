@@ -22,13 +22,13 @@ east #
  openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 east #
  openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}
-        Subject: CN = east
+        Subject: CN=east
 east #
  # ... create a self signed cert
 east #
  openssl x509 -req -days 365 -in OUTPUT/${key}.csr -signkey OUTPUT/${key}.key -out OUTPUT/${key}.crt
 Certificate request self-signature ok
-subject=CN = east
+subject=CN=east
 east #
  # turn that into a PKCS#12
 east #
@@ -50,13 +50,13 @@ east #
  openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 east #
  openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}
-        Subject: CN = west
+        Subject: CN=west
 east #
  # ... create a self signed cert
 east #
  openssl x509 -req -days 365 -in OUTPUT/${key}.csr -signkey OUTPUT/${key}.key -out OUTPUT/${key}.crt
 Certificate request self-signature ok
-subject=CN = west
+subject=CN=west
 east #
  # turn that into a PKCS#12
 east #
