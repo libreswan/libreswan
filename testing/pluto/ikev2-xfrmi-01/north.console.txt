@@ -62,7 +62,7 @@ north #
 north #
  #cp /tmp/ipsec1.pcap OUTPUT/
 north #
- ip rule show
+ ../../guestbin/ip.sh rule show
 0:	from all lookup local
 32766:	from all lookup main
 32767:	from all lookup default

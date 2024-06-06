@@ -6,7 +6,7 @@ west #
 west #
  ../../guestbin/ip.sh link del ipsec2 2> /dev/null > /dev/null
 west #
- ip rule del pref 220 2> /dev/null > /dev/null
+ ../../guestbin/ip.sh rule del pref 220 2> /dev/null > /dev/null
 west #
  ../../guestbin/ip.sh route del 192.0.2.0/24
 west #
@@ -115,7 +115,7 @@ X: ipsec2@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     TX:  bytes packets errors dropped carrier collsns           
            336       4      0       0       0       0 
 west #
- ip rule show
+ ../../guestbin/ip.sh rule show
 0:	from all lookup local
 32766:	from all lookup main
 32767:	from all lookup default

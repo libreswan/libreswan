@@ -37,7 +37,7 @@ east #
  ../../guestbin/ip.sh -s link show ipsec1
 Device "ipsec1" does not exist.
 east #
- ip rule show
+ ../../guestbin/ip.sh rule show
 0:	from all lookup local
 32766:	from all lookup main
 32767:	from all lookup default

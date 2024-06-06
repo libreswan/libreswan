@@ -58,7 +58,7 @@ X: ipsec2@lo: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     TX:  bytes packets errors dropped carrier collsns           
            336       4      0       0       0       0 
 north #
- ip rule show
+ ../../guestbin/ip.sh rule show
 0:	from all lookup local
 32766:	from all lookup main
 32767:	from all lookup default

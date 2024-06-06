@@ -47,7 +47,7 @@ road #
 road #
  hostname | grep east > /dev/null && ../../guestbin/ip.sh -s link show ipsec1
 road #
- hostname | grep east > /dev/null && ip rule show
+ hostname | grep east > /dev/null && ../../guestbin/ip.sh rule show
 road #
  hostname | grep east > /dev/null && ../../guestbin/ip.sh route show table 50
 road #

@@ -6,7 +6,7 @@ sleep  2 # why?
 ../../guestbin/ping-once.sh --up  192.0.2.254
 ../../guestbin/ping-once.sh --up  192.0.2.254
 ../../guestbin/ip.sh -s link show ipsec2
-ip rule show
+../../guestbin/ip.sh rule show
 ../../guestbin/ip.sh route
 ../../guestbin/ip.sh route show table 50
 sleep 20 # wait for tcpdump to collect all events

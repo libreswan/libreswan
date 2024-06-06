@@ -7,8 +7,9 @@ set -o pipefail
 } | {
     # some versions embed spaces in the middle and/or end of the
     # output (but not the beginning).
-    case "$*" in
-	*" link"* ) cat ;; # don't edit
+    case " $* " in
+	*" link "* ) cat ;; # don't edit
+	*" rule "* ) cat ;; # don't edit
 	*) sed -e 's/\([^ ]\)  /\1 /g' -e 's/ $//' ;;
     esac
 }

@@ -38,7 +38,7 @@ X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     TX: bytes  packets  errors  dropped carrier collsns
     0          0        0       0       0       0
 road #
- ip rule show
+ ../../guestbin/ip.sh rule show
 0:	from all lookup local
 100:	from all to 192.1.2.23 fwmark 0x1 lookup 50
 32766:	from all lookup main

@@ -4,7 +4,7 @@ ipsec auto --up north
 #kill -9 $(cat /tmp/tcpdump.pid)
 sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/
-ip rule show
+../../guestbin/ip.sh rule show
 ../../guestbin/ip.sh route show table 50
 ../../guestbin/ip.sh route show table 1
 # expect if_id and output-mark to be different in ip xfrm state output

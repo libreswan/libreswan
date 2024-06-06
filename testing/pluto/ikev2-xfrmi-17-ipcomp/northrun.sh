@@ -11,6 +11,6 @@ ip xfrm state
 #kill -9 $(cat /tmp/tcpdump.pid)
 sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/
-ip rule show
+../../guestbin/ip.sh rule show
 ../../guestbin/ip.sh route show table 50
 echo done
