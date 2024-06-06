@@ -2922,7 +2922,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			break;
 		case NIC_OFFLOAD_PACKET:
 		case NIC_OFFLOAD_CRYPTO:
-			if (kernel_ops->nic_detect_offload == NULL) {
+			if (kernel_ops->detect_nic_offload == NULL) {
 				return diag("no kernel support for nic-offload[=%s]",
 					    sparse_name(&nic_offload_option_names, wm->nic_offload));
 			}

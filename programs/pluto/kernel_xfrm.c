@@ -1472,9 +1472,8 @@ static void netlink_find_offload_feature(const char *ifname,
 	}
 }
 
-static bool xfrm_nic_detect_offload(const struct kernel_iface *ifp, struct logger *logger)
+static bool xfrm_detect_nic_offload(const char *ifname, struct logger *logger)
 {
-	const char *ifname = ifp->name;
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
 	 * capability, so we do it here on first invocation.
@@ -3125,6 +3124,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.overlap_supported = false,
 	.sha2_truncbug_support = true,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
-	.nic_detect_offload = xfrm_nic_detect_offload,
+	.detect_nic_offload = xfrm_detect_nic_offload,
 	.poke_ipsec_offload_policy_hole = netlink_poke_ipsec_offload_policy_hole,
 };

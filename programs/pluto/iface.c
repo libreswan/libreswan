@@ -84,9 +84,9 @@ static void add_iface(const struct kernel_iface *ifp, struct logger *logger)
 {
 	struct iface_device *ifd = refcnt_alloc(struct iface_device, HERE);
 	ifd->real_device_name = clone_str(ifp->name, "real device name");
-	ifd->nic_offload = kernel_ops_nic_detect_offload(ifp, logger);
 	ifd->local_address = ifp->addr;
 	ifd->ifd_change = IFD_ADD;
+	ifd->nic_offload = kernel_ops_detect_nic_offload(ifp->name, logger);
 	init_list_entry(&iface_info, ifd, &ifd->entry);
 	insert_list_entry(&interface_dev, &ifd->entry);
 	dbg("iface: marking %s add", ifd->real_device_name);
