@@ -29,7 +29,7 @@ struct fd;
 struct kernel_iface;
 struct iface_endpoint;
 struct show;
-struct iface;
+struct iface_device;
 struct logger;
 
 struct iface_packet {
@@ -73,7 +73,7 @@ extern const struct iface_io iketcp_iface_io; /*IKETCP specific*/
  * interface if they have the same iface_endpoint->iface_alias.
  */
 
-struct iface {
+struct iface_device {
 	struct list_entry entry;
 	refcnt_t refcnt;
 	char *real_device_name;
@@ -82,19 +82,19 @@ struct iface {
 	enum { IFD_ADD, IFD_KEEP, IFD_DELETE } ifd_change;
 };
 
-struct iface *next_iface(struct iface *);
+struct iface_device *next_iface_device(struct iface_device *);
 
-struct iface *find_iface_by_address(const ip_address *address);
+struct iface_device *find_iface_device_by_address(const ip_address *address);
 
-struct iface *iface_addref_where(struct iface *ifp, where_t where);
-#define iface_addref(IFP) iface_addref_where(IFP, HERE)
+struct iface_device *iface_device_addref_where(struct iface_device *ifp, where_t where);
+#define iface_addref(IFP) iface_device_addref_where(IFP, HERE)
 
-void iface_delref_where(struct iface **ifp, where_t where);
-#define iface_delref(IFP) iface_delref_where(IFP, HERE)
+void iface_device_delref_where(struct iface_device **ifp, where_t where);
+#define iface_device_delref(IFP) iface_device_delref_where(IFP, HERE)
 
 struct iface_endpoint {
 	refcnt_t refcnt;
-	struct iface *ip_dev;
+	struct iface_device *ip_dev;
 	const struct iface_io *io;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
 	int fd;                 /* file descriptor of socket for IKE UDP messages */
@@ -189,7 +189,7 @@ extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint 
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
 void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger);
-struct iface_endpoint *bind_iface_endpoint(struct iface *ifd, const struct iface_io *io,
+struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd, const struct iface_io *io,
 					   ip_port port,
 					   bool esp_encapsulation_enabled,
 					   bool float_nat_initiator,
@@ -197,7 +197,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface *ifd, const struct iface
 
 /* internal */
 struct iface_endpoint *alloc_iface_endpoint(int fd,
-					    struct iface *ifd,
+					    struct iface_device *ifd,
 					    const struct iface_io *io,
 					    bool esp_encapsulation_enabled,
 					    bool float_nat_initiator,

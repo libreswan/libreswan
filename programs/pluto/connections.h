@@ -759,7 +759,7 @@ struct connection {
 	unsigned long next_instance_serial;
 	unsigned long instance_serial;
 
-	struct iface *iface;			/* filled in iff oriented */
+	struct iface_device *iface;			/* filled in iff oriented */
 
 	struct {
 		/* RFC 5685 - IKEv2 Redirect Mechanism */

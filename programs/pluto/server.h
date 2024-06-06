@@ -36,7 +36,7 @@ struct state;
 struct msg_digest;
 struct bufferevent;
 struct iface_endpoint;
-struct iface;
+struct iface_device;
 struct show;
 struct fd_read_listener;
 struct fd_accept_listener;
@@ -53,7 +53,7 @@ extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 diag_t init_ctl_socket(struct logger *logger);
 extern void delete_ctl_socket(void);
 
-struct iface_endpoint *connect_to_tcp_endpoint(struct iface *local_dev,
+struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 					       ip_endpoint remote_endpoint,
 					       struct logger *logger); /* TCP: terrible name? */
 

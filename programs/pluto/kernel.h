@@ -35,7 +35,7 @@
 
 struct sa_marks;
 struct spd;
-struct iface;
+struct iface_device;
 struct kernel_iface;
 struct show;
 struct kernel_policy;

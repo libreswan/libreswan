@@ -61,7 +61,7 @@ bool oriented(const struct connection *c)
 void disorient(struct connection *c)
 {
 	if (oriented(c)) {
-		iface_delref(&c->iface);
+		iface_device_delref(&c->iface);
 		PASSERT(c->logger, !oriented(c));
 		/*
 		 * Move to a special disoriented hash.
@@ -172,7 +172,7 @@ static void add_iface_endpoints(struct connection *c)
 }
 
 static bool host_end_matches_iface(const struct connection *c, enum left_right end,
-				   const struct iface *iface)
+				   const struct iface_device *iface)
 {
 	const struct host_end *this = &c->end[end].host;
 
@@ -202,7 +202,7 @@ static void LDBG_orient_end(struct connection *c, enum left_right end)
 		 str_sparse(&tcp_option_names, c->local->config->host.iketcp, &tcpb));
 }
 
-static void jam_iface(struct jambuf *buf, const struct iface *iface)
+static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 {
 	jam_string(buf, iface->real_device_name);
 	jam_string(buf, " ");
@@ -218,7 +218,7 @@ bool orient(struct connection *c, struct logger *logger)
 		LDBG_orient_end(c, RIGHT_END);
 	}
 
-	struct iface *old_iface = c->iface; /* for sanity checking below */
+	struct iface_device *old_iface = c->iface; /* for sanity checking below */
 
 	/*
 	 * Save match; don't update the connection until all the
@@ -230,9 +230,10 @@ bool orient(struct connection *c, struct logger *logger)
 				(c->config->nic_offload == NIC_OFFLOAD_CRYPTO));
 
 	enum left_right matching_end = END_ROOF;/*invalid*/
-	struct iface *matching_iface = NULL;
+	struct iface_device *matching_iface = NULL;
 
-	for (struct iface *iface = next_iface(NULL); iface != NULL; iface = next_iface(iface)) {
+	for (struct iface_device *iface = next_iface_device(NULL);
+	     iface != NULL; iface = next_iface_device(iface)) {
 
 		/* XXX: check connection allows p->protocol? */
 		bool left = host_end_matches_iface(c, LEFT_END, iface);

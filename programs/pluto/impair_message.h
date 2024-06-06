@@ -54,7 +54,7 @@
 struct logger;
 struct msg_digest;
 enum impair_action;
-struct iface;
+struct iface_device;
 
 void add_message_impairment(enum impair_action impair_action,
 			    enum impair_message_direction impair_direction,

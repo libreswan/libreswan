@@ -70,19 +70,19 @@ static struct list_head iface_endpoints = INIT_LIST_HEAD(&iface_endpoints,
  * The interfaces - eth0 ...
  */
 
-static size_t jam_iface(struct jambuf *buf, const struct iface *ifd)
+static size_t jam_iface(struct jambuf *buf, const struct iface_device *ifd)
 {
 	return jam_string(buf, ifd->real_device_name);
 }
 
-LIST_INFO(iface, entry, iface_info, jam_iface);
+LIST_INFO(iface_device, entry, iface_info, jam_iface);
 
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev,
 						       &iface_info);
 
 static void add_iface(const struct kernel_iface *ifp, struct logger *logger)
 {
-	struct iface *ifd = refcnt_alloc(struct iface, HERE);
+	struct iface_device *ifd = refcnt_alloc(struct iface_device, HERE);
 	ifd->real_device_name = clone_str(ifp->name, "real device name");
 	ifd->nic_offload = kernel_ops_nic_detect_offload(ifp, logger);
 	ifd->local_address = ifp->addr;
@@ -92,19 +92,19 @@ static void add_iface(const struct kernel_iface *ifp, struct logger *logger)
 	dbg("iface: marking %s add", ifd->real_device_name);
 }
 
-struct iface *iface_addref_where(struct iface *iface, where_t where)
+struct iface_device *iface_device_addref_where(struct iface_device *iface, where_t where)
 {
 	return addref_where(iface, where);
 }
 
-struct iface *next_iface(struct iface *iface)
+struct iface_device *next_iface_device(struct iface_device *iface)
 {
 	return NEXT_LIST_ENTRY(&interface_dev, iface, entry, OLD2NEW);
 }
 
-struct iface *find_iface_by_address(const ip_address *address)
+struct iface_device *find_iface_device_by_address(const ip_address *address)
 {
-	struct iface *ifd;
+	struct iface_device *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (sameaddr(address, &ifd->local_address)) {
 			return iface_addref(ifd);
@@ -115,7 +115,7 @@ struct iface *find_iface_by_address(const ip_address *address)
 
 static void mark_ifaces_dead(void)
 {
-	struct iface *ifd;
+	struct iface_device *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		dbg("iface: marking %s dead", ifd->real_device_name);
 		ifd->ifd_change = IFD_DELETE;
@@ -125,7 +125,7 @@ static void mark_ifaces_dead(void)
 static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct logger *logger)
 {
 	/* find the iface */
-	struct iface *ifd;
+	struct iface_device *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (streq(ifd->real_device_name, ifp->name) &&
 		    sameaddr(&ifd->local_address, &ifp->addr)) {
@@ -137,10 +137,10 @@ static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct logger *logge
 	add_iface(ifp, logger);
 }
 
-void iface_delref_where(struct iface **ifdp, where_t where)
+void iface_device_delref_where(struct iface_device **ifdp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct iface *ifd = delref_where(ifdp, logger, where);
+	struct iface_device *ifd = delref_where(ifdp, logger, where);
 	if (ifd != NULL) {
 		/* i.e., last reference */
 		remove_list_entry(&ifd->entry);
@@ -274,10 +274,10 @@ static void free_dead_ifaces(struct logger *logger)
 		 * Finally, release the iface_dev, from its linked
 		 * list of iface devs.
 		 */
-		struct iface *ifd;
+		struct iface_device *ifd;
 		FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 			if (ifd->ifd_change == IFD_DELETE) {
-				iface_delref(&ifd);
+				iface_device_delref(&ifd);
 			}
 		}
 	}
@@ -296,7 +296,7 @@ static void free_dead_ifaces(struct logger *logger)
 }
 
 struct iface_endpoint *alloc_iface_endpoint(int fd,
-					    struct iface *ifd,
+					    struct iface_device *ifd,
 					    const struct iface_io *io,
 					    bool esp_encapsulation_enabled,
 					    bool float_nat_initiator,
@@ -324,7 +324,7 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 		remove_list_entry(&ifp->entry);
 		/* generic stuff */
 		ifp->io->cleanup(ifp);
-		iface_delref(&ifp->ip_dev);
+		iface_device_delref(&ifp->ip_dev);
 		/* XXX: after cleanup so code can log FD */
 		close(ifp->fd);
 		ifp->fd = -1;
@@ -337,7 +337,7 @@ struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, w
 	return addref_where(ifp, where);
 }
 
-struct iface_endpoint *bind_iface_endpoint(struct iface *ifd,
+struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 					   const struct iface_io *io,
 					   ip_port port,
 					   bool esp_encapsulation_enabled,
@@ -505,7 +505,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface *ifd,
 
 static void add_new_ifaces(struct logger *logger)
 {
-	struct iface *ifd;
+	struct iface_device *ifd;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (ifd->ifd_change != IFD_ADD)
 			continue;
@@ -715,8 +715,8 @@ void shutdown_ifaces(struct logger *logger)
 		iface_endpoint_delref(&ifp);
 	}
 	/* and remaining interfaces */
-	struct iface *iface;
+	struct iface_device *iface;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(iface, &interface_dev) {
-		iface_delref(&iface);
+		iface_device_delref(&iface);
 	}
 }

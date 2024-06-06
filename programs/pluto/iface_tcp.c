@@ -459,7 +459,7 @@ const struct iface_io iketcp_iface_io = {
  * sending the IKE-in-TCP magic word.
  */
 
-struct iface_endpoint *connect_to_tcp_endpoint(struct iface *local_dev,
+struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 					       ip_endpoint remote_endpoint,
 					       struct logger *logger)
 {
