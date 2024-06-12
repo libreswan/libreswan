@@ -136,7 +136,7 @@ EOF
 }
 
 dnf install -y `building` `testing` `kernel`
-dnf upgrade -y `building`
+dnf upgrade -y `building` `testing`
 
 
 :
