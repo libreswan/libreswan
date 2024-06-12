@@ -38,16 +38,17 @@ struct jambuf;
  * SPARSE_NULL in case that needs to change.
  */
 
-#define SPARSE_NULL { NULL, 0, }
+#define SPARSE_NULL { NULL, 0, NULL, }
 
 struct sparse_name {
 	/* field order (backwards?) dictated by started() */
 	const char *const name;
 	unsigned long value;
+	const char *help;
 };
 
 struct sparse_names {
-	size_t ignore_for_now;
+	size_t roof; /* when non-zero, limit on value */
 	struct sparse_name list[];
 };
 
