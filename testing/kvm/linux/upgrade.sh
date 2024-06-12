@@ -144,6 +144,6 @@ dnf upgrade -y `building` `testing`
 :
 
 kernel=$(ls /boot/vmlinuz-* | sort -V | tail -1)
-cp -v ${kernel} /pool/${PREFIX}fedora-upgrade.vmlinuz
+cp -vf ${kernel} /pool/${PREFIX}linux-upgrade.vmlinuz
 ramfs=$(ls /boot/initramfs-*.img | sort -V | tail -1)
-cp -v ${ramfs} /pool/${PREFIX}fedora-upgrade.initramfs
+cp -vf ${ramfs} /pool/${PREFIX}linux-upgrade.initramfs

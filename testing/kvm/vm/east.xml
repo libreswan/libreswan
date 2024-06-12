@@ -1,6 +1,5 @@
 <!--
-You can load this machine definition into libvirt using:
-	sudo virsh define east.xml
+./kvm install-linux will transmogrify and then load this .xml file
 -->
 
 <domain type='kvm'>
@@ -9,7 +8,9 @@ You can load this machine definition into libvirt using:
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>
-    <boot dev='hd'/>
+    <kernel>@@POOLDIR@@/@@PREFIX@@linux-upgrade.vmlinuz</kernel>
+    <initrd>@@POOLDIR@@/@@PREFIX@@linux-upgrade.initramfs</initrd>
+    <cmdline>root=/dev/vda2 ro console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200</cmdline>
   </os>
   <features>
     <acpi/>
