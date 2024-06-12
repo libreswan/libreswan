@@ -438,7 +438,7 @@ if hostname != "nic":
 
         # check version and spew all over test output
         output = subprocess.getoutput("strongswan version")
-        strongswan_version = "U5.9.11"
+        strongswan_version = "U5.9.14"
         if args.strongswan_version:
             strongswan_version = args.strongswan_version
         if not strongswan_version in output:
