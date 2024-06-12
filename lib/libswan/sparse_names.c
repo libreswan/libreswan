@@ -38,10 +38,10 @@ const char *sparse_name(const struct sparse_names *sd, unsigned long val)
 	return NULL;
 }
 
-const struct sparse_name *sparse_lookup(const struct sparse_names *names, const char *name)
+const struct sparse_name *sparse_lookup(const struct sparse_names *names, shunk_t name)
 {
 	for (const struct sparse_name *sn = names->list; sn->name != NULL; sn++) {
-		if (strcaseeq(name, sn->name)) {
+		if (hunk_strcaseeq(name, sn->name)) {
 			return sn;
 		}
 	}

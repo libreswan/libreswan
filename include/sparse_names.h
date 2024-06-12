@@ -26,6 +26,8 @@
 
 #include <stddef.h>		/* for size_t */
 
+#include "shunk.h"
+
 struct jambuf;
 
 /*
@@ -49,7 +51,7 @@ struct sparse_names {
 	struct sparse_name list[];
 };
 
-const struct sparse_name *sparse_lookup(const struct sparse_names *, const char *);
+const struct sparse_name *sparse_lookup(const struct sparse_names *, shunk_t);
 
 typedef struct {
 	char buf[16];/*how big?*/

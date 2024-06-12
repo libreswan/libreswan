@@ -1139,7 +1139,7 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 	 * Danger; yn_option_names includes "0" and "1" but that isn't
 	 * wanted here!  Hence yn_text_option_names.
 	 */
-	const struct sparse_name *yn = sparse_lookup(&yn_text_option_names, ipsec_interface);
+	const struct sparse_name *yn = sparse_lookup(&yn_text_option_names, shunk1(ipsec_interface));
 	if (yn != NULL && yn->value == YN_NO) {
 		/* well that was pointless */
 		ldbg(c->logger, "ipsec-interface=%s is no!", ipsec_interface);

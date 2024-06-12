@@ -422,7 +422,7 @@ static bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
 static bool parser_kw_bool(struct keyword *kw, const char *yytext,
 			   uintmax_t *number, struct logger *logger)
 {
-	const struct sparse_name *name = sparse_lookup(&yn_option_names, yytext);
+	const struct sparse_name *name = sparse_lookup(&yn_option_names, shunk1(yytext));
 	if (name == NULL) {
 		parser_kw_warning(logger, kw, yytext, "invalid boolean, keyword ignored");
 		return false;
@@ -573,7 +573,7 @@ static bool parser_kw_sparse_name(struct keyword *kw, const char *yytext,
 {
 	PASSERT(logger, kw->keydef->sparse_names != NULL);
 
-	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_names, yytext);
+	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_names, shunk1(yytext));
 	if (sn != NULL) {
 		(*number) = sn->value;
 		return true;
@@ -595,7 +595,7 @@ static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
 			 kw->keydef->type == kt_pubkey));
 	PASSERT(logger, kw->keydef->sparse_names != NULL);
 
-	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_names, yytext);
+	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_names, shunk1(yytext));
 	if (sn != NULL) {
 		PASSERT(logger, sn->value != LOOSE_ENUM_OTHER);
 		(*number) = sn->value;

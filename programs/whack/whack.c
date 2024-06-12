@@ -1045,7 +1045,7 @@ static uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *nam
 		return optional;
 	}
 
-	const struct sparse_name *name = sparse_lookup(names, optarg);
+	const struct sparse_name *name = sparse_lookup(names, shunk1(optarg));
 	if (name == NULL) {
 		JAMBUF(buf) {
 			const char *msg = jambuf_cursor(buf); /* hack */
