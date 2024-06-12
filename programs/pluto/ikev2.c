@@ -1481,7 +1481,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * XXX: are these guards sufficient?
 		 */
 		endpoint_buf sb, mb;
-		llog_sa(RC_LOG_SERIOUS, ike, "NAT: MOBKIE disabled, ignoring peer endpoint change from %s to %s",
+		llog_sa(RC_LOG_SERIOUS, ike, "NAT: MOBIKE disabled, ignoring peer endpoint change from %s to %s",
 			str_endpoint(&ike->sa.st_remote_endpoint, &sb),
 			str_endpoint(&md->sender, &mb));
 #if 0
