@@ -35,7 +35,7 @@ enum impair_emit {
 	IMPAIR_EMIT_OMIT,
 	IMPAIR_EMIT_EMPTY,
 	IMPAIR_EMIT_DUPLICATE,
-	IMPAIR_EMIT_ROOF, /* >= ROOF -> <number> */
+#define IMPAIR_EMIT_ROOF (IMPAIR_EMIT_DUPLICATE+1) /* >= ROOF -> <number> */
 };
 
 /*

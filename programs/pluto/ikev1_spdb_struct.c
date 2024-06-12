@@ -1149,7 +1149,6 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 						log_state(RC_LOG, st, "IMPAIR: no key-length to duplicate");
 					}
 					break;
-				case IMPAIR_EMIT_ROOF:
 				default:
 				{
 					unsigned keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF;

@@ -89,7 +89,6 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 		llog(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
 					       EMPTY_CHUNK, "empty KE");
-	case IMPAIR_EMIT_ROOF:
 	default:
 	{
 		struct pbs_out z;

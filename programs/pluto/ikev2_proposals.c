@@ -1310,7 +1310,6 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				}
 			}
 			break;
-		case IMPAIR_EMIT_ROOF:
 		default:
 		{
 			uint16_t keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF; /* remove bias */

@@ -159,9 +159,6 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 				close_output_pbs(&del_pbs);
 			}
 			break;
-		case IMPAIR_EMIT_ROOF:
-			bad_case(impair.v1_ipsec_delete_payload);
-
 		}
 
 	} else {
@@ -203,8 +200,6 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 					close_output_pbs(&del_pbs);
 				}
 				break;
-			case IMPAIR_EMIT_ROOF:
-				bad_case(impair.v1_ipsec_delete_payload);
 			}
 
 			if (impair.ikev1_del_with_notify) {
