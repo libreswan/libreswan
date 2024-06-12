@@ -6,6 +6,8 @@ v5.1 (unreleased)
   - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
 * whack:
   - ignore older whack as could trigger core dump [Andrew, github/1709]
+* linux:
+  - handle NLMSG_DONE at end of response (6.9.0-rc1) [Andrew, Ilya, github/1675]
 
 v5.0 (Apr 24, 2024)
 * IKEv1:
