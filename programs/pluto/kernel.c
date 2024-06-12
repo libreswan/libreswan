@@ -1231,6 +1231,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	uint64_t sa_ipsec_soft_bytes =  c->config->sa_ipsec_max_bytes;
 	uint64_t sa_ipsec_soft_packets = c->config->sa_ipsec_max_packets;
+	uint64_t sa_ipsec_keep_alive =  c->config->sa_keepalive;
 
 	if (c->config->rekey) {
 		sa_ipsec_soft_bytes = fuzz_soft_limit("ipsec-max-bytes",
@@ -1256,6 +1257,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.direction = direction,
 		.mode = route.mode,
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
+		.sa_keepalive = sa_ipsec_keep_alive,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
 		.sa_ipsec_max_bytes = c->config->sa_ipsec_max_bytes,
@@ -1405,7 +1407,15 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->proto = &ip_protocol_esp;
-		said_next->replay_window = c->config->child_sa.replay_window;
+		/*
+		 * linux kernel >= 6.10 need replay-window 0 on outbound sa
+		 * 0. older kernels does not support replay-window for
+		 *    outbound sa with esn. it support 1.
+		 * 1. do bsd varients support 0 on outbound? if not move next
+		 *    line to kernel_xfrm.c
+		 */
+		said_next->replay_window = (kernel_ops_detect_sa_direction(child->sa.logger) &&
+			direction == DIRECTION_OUTBOUND) ? 0 : c->config->child_sa.replay_window;
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 

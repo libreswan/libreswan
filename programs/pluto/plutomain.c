@@ -772,7 +772,7 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
-	deltatime_t keep_alive = DELTATIME_INIT(0);
+	deltatime_t pluto_keep_alive = DELTATIME_INIT(0);
 
 	/* handle arguments */
 	for (;; ) {
@@ -1210,9 +1210,9 @@ int main(int argc, char **argv)
 		}
 
 		case '2':	/* --keep-alive <delay_secs> */
-			check_diag(ttodeltatime(optarg, &keep_alive, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &pluto_keep_alive, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(keep_alive, >, deltatime(secs_per_day))) {
+			if (deltatime_cmp(pluto_keep_alive, >, deltatime(secs_per_day))) {
 				fatal_opt(longindex, logger, "exceeds 1 day");
 			}
 			continue;
@@ -1397,7 +1397,7 @@ int main(int argc, char **argv)
 			}
 
 			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
-			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
+			pluto_keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
@@ -1833,7 +1833,7 @@ int main(int argc, char **argv)
 
 	/* server initialized; timers can follow */
 	init_log_limiter();
-	init_nat_traversal_timer(keep_alive, logger);
+	init_nat_traversal_timer(pluto_keep_alive, logger);
 	init_ddns();
 
 	init_virtual_ip(virtual_private, logger);
@@ -1919,6 +1919,11 @@ void show_setup_plutomain(struct show *s)
 #ifdef XFRM_LIFETIME_DEFAULT
 		jam(buf, ", xfrmlifetime=%jds", (intmax_t) pluto_xfrmlifetime);
 #endif
+		if(kernel_ops_detect_sa_direction(NULL)) {
+			jam(buf, ", nat-keepalive=<per conn>");
+		} else {
+			jam(buf, ", nat-keepalive=%ds", pluto_keep_alive);
+		}
 	}
 
 	show_log(s);

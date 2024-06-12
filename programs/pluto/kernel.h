@@ -162,6 +162,7 @@ struct kernel_state {
 	uint64_t sa_max_soft_bytes;
 	uint64_t sa_ipsec_max_packets;
 	uint64_t sa_max_soft_packets;
+	uint64_t sa_keepalive; /* number of seconds for NATT keepalive */
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };
 
@@ -304,6 +305,7 @@ struct kernel_ops {
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
+	bool (*detect_sa_direction)(struct logger *logger);
 };
 
 extern int create_socket(const struct kernel_iface *ifp, const char *v_name, int port, int proto);
@@ -396,6 +398,7 @@ void shutdown_kernel(struct logger *logger);
 extern deltatime_t bare_shunt_interval;
 
 extern bool kernel_ops_detect_nic_offload(const char *name, struct logger *logger);
+extern bool kernel_ops_detect_sa_direction(struct logger *logger);
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 			     bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
 			     struct logger *logger);

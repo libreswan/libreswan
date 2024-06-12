@@ -514,3 +514,23 @@ bool kernel_ops_detect_nic_offload(const char *name, struct logger *logger)
 
 	return ok;
 }
+
+bool kernel_ops_detect_sa_direction(struct logger *logger)
+{
+	static bool sa_direction;
+	if (sa_direction) {
+		if (logger != NULL)
+			ldbg(logger, "%s() SA direction already detected", __func__);
+		return true;
+	}
+
+	if (kernel_ops->detect_sa_direction == NULL) {
+		if (logger != NULL)
+			ldbg(logger, "%s() kernel does not support or require SA direction",
+		     		__func__);
+		sa_direction = false;
+		return false;
+	}
+
+	return kernel_ops->detect_sa_direction(logger);
+}
