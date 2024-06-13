@@ -10,7 +10,7 @@
     <type arch='x86_64'>hvm</type>
     <kernel>@@POOLDIR@@/@@PREFIX@@linux-upgrade.vmlinuz</kernel>
     <initrd>@@POOLDIR@@/@@PREFIX@@linux-upgrade.initramfs</initrd>
-    <cmdline>root=/dev/vda2 ro console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200</cmdline>
+    <cmdline>root=/dev/vda2 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200</cmdline>
   </os>
   <features>
     <acpi/>
