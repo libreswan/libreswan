@@ -54,9 +54,9 @@ struct encrypt_ops {
 	 * All sizes are in 8-bit bytes.
 	 */
 	bool (*const do_aead)(const struct encrypt_desc *alg,
-			      uint8_t *salt, size_t salt_size,
-			      uint8_t *wire_iv, size_t wire_iv_size,
-			      uint8_t *aad, size_t aad_size,
+			      shunk_t salt,
+			      shunk_t wire_iv,
+			      shunk_t aad,
 			      uint8_t *text_and_tag,
 			      size_t text_size, size_t tag_size,
 			      PK11SymKey *key, bool enc,

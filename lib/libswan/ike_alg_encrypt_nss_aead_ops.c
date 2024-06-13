@@ -28,9 +28,9 @@
 #if defined(CKM_NSS_CHACHA20_POLY1305)
 
 static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
-			     uint8_t *salt, size_t salt_size,
-			     uint8_t *wire_iv, size_t wire_iv_size,
-			     uint8_t *aad, size_t aad_size,
+			     shunk_t salt,
+			     shunk_t wire_iv,
+			     shunk_t aad,
 			     uint8_t *text_and_tag,
 			     size_t text_size, size_t tag_size,
 			     PK11SymKey *sym_key, bool enc,
@@ -39,21 +39,13 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 	/* See pk11aeadtest.c */
 	bool ok = true;
 
-	chunk_t salt_chunk = {
-		.ptr = salt,
-		.len = salt_size,
-	};
-	chunk_t wire_iv_chunk = {
-		.ptr = wire_iv,
-		.len = wire_iv_size,
-	};
-	chunk_t iv = clone_hunk_hunk(salt_chunk, wire_iv_chunk, "IV");
+	chunk_t iv = clone_hunk_hunk(salt, wire_iv, "IV");
 
 	CK_NSS_AEAD_PARAMS aead_params = {
 		.pNonce = iv.ptr,
 		.ulNonceLen = iv.len,
-		.pAAD = aad,
-		.ulAADLen = aad_size,
+		.pAAD = (void*)aad.ptr,
+		.ulAADLen = aad.len,
 		.ulTagLen = alg->aead_tag_size,
 	};
 

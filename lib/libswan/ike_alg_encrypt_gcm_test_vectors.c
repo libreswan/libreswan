@@ -118,14 +118,15 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			DBG_dump_hunk("test_gcm_vector: text+tag on call", \
 				      text_and_tag);			\
 		}							\
-		if (!encrypt_desc->encrypt_ops->do_aead(encrypt_desc,	\
-							salt.ptr, salt.len, \
-							wire_iv.ptr, wire_iv.len, \
-							aad.ptr, aad.len, \
-							text_and_tag.ptr, \
-							len, tag.len,	\
-							sym_key, enc,	\
-							logger) ||	\
+		if (!encrypt_desc->encrypt_ops				\
+		    ->do_aead(encrypt_desc,				\
+			      HUNK_AS_SHUNK(salt),			\
+			      HUNK_AS_SHUNK(wire_iv),			\
+			      HUNK_AS_SHUNK(aad),			\
+			      text_and_tag.ptr,				\
+			      len, tag.len,				\
+			      sym_key, enc,				\
+			      logger) ||				\
 		    !verify_bytes("output ciphertext", to.ptr, to.len,	\
 				  text_and_tag.ptr, to.len) ||		\
 		    !verify_bytes("TAG", tag.ptr, tag.len,		\

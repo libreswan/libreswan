@@ -32,9 +32,9 @@
 #include "ike_alg_encrypt_ops.h"
 
 static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
-			    uint8_t *salt, size_t salt_size,
-			    uint8_t *wire_iv, size_t wire_iv_size,
-			    uint8_t *aad, size_t aad_size,
+			    shunk_t salt,
+			    shunk_t wire_iv,
+			    shunk_t aad,
 			    uint8_t *text_and_tag,
 			    size_t text_size, size_t tag_size,
 			    PK11SymKey *sym_key, bool enc,
@@ -43,21 +43,13 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 	/* See pk11gcmtest.c */
 	bool ok = true;
 
-	chunk_t salt_chunk = {
-		.ptr = salt,
-		.len = salt_size,
-	};
-	chunk_t wire_iv_chunk = {
-		.ptr = wire_iv,
-		.len = wire_iv_size,
-	};
-	chunk_t iv = clone_hunk_hunk(salt_chunk, wire_iv_chunk, "IV");
+	chunk_t iv = clone_hunk_hunk(salt, wire_iv, "IV");
 
 	CK_GCM_PARAMS gcm_params;
 	gcm_params.pIv = iv.ptr;
 	gcm_params.ulIvLen = iv.len;
-	gcm_params.pAAD = aad;
-	gcm_params.ulAADLen = aad_size;
+	gcm_params.pAAD = (void*)aad.ptr;
+	gcm_params.ulAADLen = aad.len;
 	gcm_params.ulTagBits = tag_size * 8;
 
 	SECItem param;

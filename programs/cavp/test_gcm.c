@@ -193,9 +193,9 @@ static void gcm_run_test(struct logger *logger)
 
 	bool result = gcm_alg->encrypt_ops
 		->do_aead(gcm_alg,
-			  salt.ptr, salt.len,
-			  iv.ptr, iv.len,
-			  aad.ptr, aad.len,
+			  HUNK_AS_SHUNK(salt),
+			  HUNK_AS_SHUNK(iv),
+			  HUNK_AS_SHUNK(aad),
 			  text_and_tag.ptr,
 			  ct.len, tag.len,
 			  gcm_key,
