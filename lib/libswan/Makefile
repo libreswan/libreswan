@@ -169,7 +169,6 @@ OBJS += ttorealtime.o
 OBJS += refcnt.o
 OBJS += debug.o
 OBJS += impair.o
-OBJS += keywords.o
 
 OBJS += ldbg.o
 OBJS += DBG_dump.o
