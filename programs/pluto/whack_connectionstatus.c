@@ -859,8 +859,14 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_connection_short(buf, c);
 			jam_string(buf, ":  ");
 			/* debug */
-			jam(buf, " debug: ");
+			jam_string(buf, " debug: ");
 			jam_lset_short(buf, &debug_names, "+", c->logger->debugging);
+			/* strip off connection debugging bits */
+			lset_t global_debugging = cur_debugging & ~c->logger->debugging;
+			if (global_debugging != LEMPTY) {
+				jam_string(buf, " + ");
+				jam_lset_short(buf, &debug_names, "+", global_debugging);
+			}
 		}
 	}
 
