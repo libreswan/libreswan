@@ -107,7 +107,7 @@ static bool set_whack_end(struct whack_end *w,
 		printf("Failed to load connection %s= is not set\n", lr);
 		return false;
 	}
-	w->host_addr_name = l->strings[KSCF_IP];
+	w->host_addr_name = l->strings[KW_IP];
 
 	switch (l->nexttype) {
 	case KH_IPADDR:
@@ -159,9 +159,9 @@ static bool set_whack_end(struct whack_end *w,
 		enum keywords kscf;
 		const char *name;
 	} keys[] = {
-		{ .alg = IPSECKEY_ALGORITHM_RSA, KSCF_RSASIGKEY, "rsasigkey", },
-		{ .alg = IPSECKEY_ALGORITHM_ECDSA, KSCF_ECDSAKEY, "ecdsakey", },
-		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KSCF_PUBKEY, "pubkey", },
+		{ .alg = IPSECKEY_ALGORITHM_RSA, KW_RSASIGKEY, "rsasigkey", },
+		{ .alg = IPSECKEY_ALGORITHM_ECDSA, KW_ECDSAKEY, "ecdsakey", },
+		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KW_PUBKEY, "pubkey", },
 	};
 	FOR_EACH_ELEMENT(key, keys) {
 		if (!l->options_set[key->kscf]) {
@@ -312,7 +312,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.child_afi = conn->clientaddrfamily;
 
 	if (conn->right.addrtype == KH_IPHOSTNAME)
-		msg.dnshostname = conn->right.strings[KSCF_IP];
+		msg.dnshostname = conn->right.strings[KW_IP];
 
 	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
 	if (conn->options_set[KNCF_IKELIFETIME_MS]) {

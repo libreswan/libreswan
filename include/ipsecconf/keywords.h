@@ -114,26 +114,34 @@ enum keywords {
 	KBF_roof,
 
 	/*
+	 * These are conn loose enums.
+	 *
+	 * Loose enums set .options to the numeric value of the enum,
+	 * or the enum's roof + the unsigned value.
+	 *
+	 * Indices for .option[], .options_set[] (and .strings[],
+	 * .strings_set[]) OR .{left|right}.option[],
+	 * .{left|right}.options_set[] (and .{left|right}.strings[],
+	 * .{left|right}.strings_set[]).
+	 */
+
+	KW_loose_enum_basement,
+
+	KW_IP,		/* loose_enum */ /* left/right */
+	KW_NEXTHOP,	/* loose_enum */ /* left/right */
+	KW_RSASIGKEY,	/* loose_enum */ /* left/right */
+	KW_ECDSAKEY,	/* loose_enum */ /* left/right */
+	KW_PUBKEY,	/* loose_enum */ /* left/right */
+
+	KW_loose_enum_roof,
+
+	/*
 	 * These are conn strings.  The initial ones come in
 	 * left/right variants.
-	 *
-	 * NOTE: loose_enum values have both string and integer types
-	 * WITH THE SAME INDEX!  They come in left and right=
-	 * variants.
 	 *
 	 * Indices for .strings[], .strings_set[] or
 	 * .{left|right}.strings[], .{left|right}.strings_set[]
 	 */
-
-	KSCF_loose_enum_basement,
-
-	KSCF_IP,	/* loose_enum */ /* left/right */
-	KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
-	KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
-	KSCF_ECDSAKEY,	/* loose_enum */ /* left/right */
-	KSCF_PUBKEY,	/* loose_enum */ /* left/right */
-
-	KSCF_loose_enum_roof,
 
 	KSCF_leftright_basement,
 
@@ -180,19 +188,11 @@ enum keywords {
 	 * conn numbers (or bool).  The initial ones come in
 	 * left/right variants.
 	 *
-	 * NOTE: loose_enum values have both string and integer types
-	 * WITH THE SAME INDEX!  They come in left and right=
-	 * variants.
-	 *
-	 * Indices for .option[], .options_set[] or
-	 * .{left|right}.option[], .{left|right}.options_set[]
+	 * Indices for .option[], .options_set[] (and .strings[],
+	 * .strings_set[]) OR .{left|right}.option[],
+	 * .{left|right}.options_set[] (and .{left|right}.strings[],
+	 * .{left|right}.strings_set[]).
 	 */
-
-	KNCF_IP		= KSCF_IP,	/* loose_enum */ /* left/right */
-	KNCF_NEXTHOP	= KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
-	KNCF_RSASIGKEY	= KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
-	KNCF_ECDSAKEY	= KSCF_ECDSAKEY,	/* loose_enum */ /* left/right */
-	KNCF_PUBKEY	= KSCF_PUBKEY,	/* loose_enum */ /* left/right */
 
 	KNCF_leftright_basement = KSCF_roof,
 

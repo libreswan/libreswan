@@ -249,8 +249,8 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 
 	case KH_IFACE:
-		if (end->strings_set[KSCF_IP])
-			fprintf(out, "\t%s=%s\n", side, end->strings[KSCF_IP]);
+		if (end->strings_set[KW_IP])
+			fprintf(out, "\t%s=%s\n", side, end->strings[KW_IP]);
 		break;
 
 	case KH_OPPO:
@@ -266,7 +266,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 
 	case KH_IPHOSTNAME:
-		fprintf(out, "\t%s=%s\n", side, end->strings[KSCF_IP]);
+		fprintf(out, "\t%s=%s\n", side, end->strings[KW_IP]);
 		break;
 
 	case KH_IPADDR:

@@ -387,7 +387,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /*
    * This is "left=" and "right="
    */
-  { "",  kv_conn | kv_leftright| kv_processed,  kt_host,  KSCF_IP, &kw_host_names, NULL, },
+  { "",  kv_conn | kv_leftright| kv_processed,  kt_host,  KW_IP, &kw_host_names, NULL, },
 
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
@@ -395,12 +395,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikeport",  kv_conn | kv_leftright,  kt_unsigned,  KNCF_IKEPORT, NULL, NULL, },
   { "interface-ip", kv_conn | kv_leftright,  kt_subnet, KSCF_INTERFACE_IP, NULL, NULL, },
   { "vti",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_VTI_IP, NULL, NULL, },
-  { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_NEXTHOP, NULL, NULL, },
+  { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KW_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
-  { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_RSASIGKEY, &kw_pubkey_names, NULL, },
-  { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_ECDSAKEY, &kw_pubkey_names, NULL, },
-  { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_PUBKEY, &kw_pubkey_names, NULL, },
+  { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &kw_pubkey_names, NULL, },
+  { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &kw_pubkey_names, NULL, },
+  { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &kw_pubkey_names, NULL, },
   { "cert",  kv_conn | kv_leftright,  kt_filename,  KSCF_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_SENDCERT, &kw_sendcert_names, NULL, },

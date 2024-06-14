@@ -281,11 +281,11 @@ static bool validate_end(struct starter_conn *conn_st,
 
 #  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); err = true; }
 
-	if (!end->options_set[KNCF_IP])
+	if (!end->options_set[KW_IP])
 		conn_st->state = STATE_INCOMPLETE;
 
 	/* validate the KSCF_IP/KNCF_IP */
-	end->addrtype = end->options[KNCF_IP];
+	end->addrtype = end->options[KW_IP];
 	switch (end->addrtype) {
 	case KH_ANY:
 		end->addr = unset_address;
@@ -297,10 +297,10 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_IPADDR:
-		assert(end->strings[KSCF_IP] != NULL);
+		assert(end->strings[KW_IP] != NULL);
 
-		if (end->strings[KSCF_IP][0] == '%') {
-			const char *iface = end->strings[KSCF_IP] + 1;
+		if (end->strings[KW_IP][0] == '%') {
+			const char *iface = end->strings[KW_IP] + 1;
 			if (!starter_iface_find(iface,
 						end->host_family,
 						&end->addr,
@@ -311,7 +311,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		err_t er = ttoaddress_num(shunk1(end->strings[KNCF_IP]),
+		err_t er = ttoaddress_num(shunk1(end->strings[KW_IP]),
 					  end->host_family, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
@@ -362,8 +362,8 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * something consistent, by default
 	 */
 	end->nexthop = end->host_family->address.unspec;
-	if (end->strings_set[KSCF_NEXTHOP]) {
-		char *value = end->strings[KSCF_NEXTHOP];
+	if (end->strings_set[KW_NEXTHOP]) {
+		char *value = end->strings[KW_NEXTHOP];
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
@@ -529,8 +529,8 @@ static bool translate_field(struct starter_conn *conn,
 
 	case kt_pubkey:
 	case kt_host:
-		assert(field > KSCF_loose_enum_basement);
-		assert(field < KSCF_loose_enum_roof);
+		assert(field > KW_loose_enum_basement);
+		assert(field < KW_loose_enum_roof);
 
 		if ((*set_options)[field] == k_set) {
 			llog(RC_LOG, logger,
@@ -893,8 +893,8 @@ static bool load_conn(struct starter_conn *conn,
 	if (afi == NULL) {
 		FOR_EACH_THING(end, &conn->left, &conn->right) {
 			FOR_EACH_THING(ips,
-				       end->strings[KNCF_IP],
-				       end->strings[KNCF_NEXTHOP]) {
+				       end->strings[KW_IP],
+				       end->strings[KW_NEXTHOP]) {
 				if (ips == NULL) {
 					continue;
 				}
