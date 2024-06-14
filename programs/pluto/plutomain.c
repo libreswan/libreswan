@@ -357,7 +357,7 @@ static void replace_value(char **target, const char *value)
 }
 
 static void replace_when_cfg_setup(char **target, const struct starter_config *cfg,
-				   enum keyword_string_config_field field)
+				   enum keywords field)
 {
 	/* Do nothing if value is unset. */
 	const char *value = cfg->setup.strings[field];

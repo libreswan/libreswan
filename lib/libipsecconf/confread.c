@@ -529,7 +529,8 @@ static bool translate_field(struct starter_conn *conn,
 
 	case kt_pubkey:
 	case kt_host:
-		assert(field <= KSCF_last_loose);
+		assert(field > KSCF_loose_enum_basement);
+		assert(field < KSCF_loose_enum_roof);
 
 		if ((*set_options)[field] == k_set) {
 			llog(RC_LOG, logger,
@@ -614,12 +615,12 @@ static bool translate_leftright(struct starter_conn *conn,
 			       /*leftright*/this->leftright,
 			       /*the_strings*/&this->strings,
 			       /*set_strings*/&this->strings_set,
-			       /*str_floor*/KSCF_last_loose + 1,
-			       /*str_roof*/KSCF_last_leftright + 1,
+			       /*str_floor*/KSCF_leftright_basement,
+			       /*str_roof*/KSCF_leftright_roof,
 			       /*the_options*/&this->options,
 			       /*set_options*/&this->options_set,
-			       /*opt_floor*/KSCF_last_loose + 1,
-			       /*opt_roof*/KNCF_last_leftright + 1,
+			       /*opt_floor*/KNCF_leftright_basement,
+			       /*opt_roof*/KNCF_leftright_roof,
 			       logger);
 }
 
@@ -658,12 +659,12 @@ static bool translate_conn(struct starter_conn *conn,
 						/*leftright*/"",
 						/*the_strings*/&conn->strings,
 						/*set_strings*/&conn->strings_set,
-						/*str_floor*/KSCF_last_leftright + 1,
-						/*str_roof*/KSCF_ROOF,
+						/*str_floor*/KSCF_leftright_roof,
+						/*str_roof*/KSCF_roof,
 						/*the_options*/&conn->options,
 						/*set_options*/&conn->options_set,
-						/*opt_floor*/KNCF_last_leftright + 1,
-						/*opt_roof*/KNCF_ROOF,
+						/*opt_floor*/KNCF_leftright_roof,
+						/*opt_roof*/KNCF_roof,
 						logger);
 		}
 	}

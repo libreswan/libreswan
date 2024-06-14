@@ -35,12 +35,15 @@
 #include "lset.h"
 #include "constants.h"
 
-/*
- * These are global configuration strings.
- * They only appear in "config setup" section.
- * Indices for .setup.strings[], .setup.strings_set[]
- */
-enum keyword_string_config_field {
+enum keywords {
+
+	/*
+	 * These are global configuration strings.  They only appear
+	 * in "config setup" section.
+	 *
+	 * Indices for .setup.strings[], .setup.strings_set[]
+	 */
+	KSF_basement,
 	KSF_CURLIFACE,
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
@@ -60,16 +63,15 @@ enum keyword_string_config_field {
 	KSF_LISTEN,
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
+	KSF_roof,
 
-	KSF_ROOF
-};
-
-/*
- * These are global config Bools (or numbers).
- * They only appear in "config setup" section.
- * Indices for .setup.option[], .setup.options_set[]
- */
-enum keyword_numeric_config_field {
+	/*
+	 * These are global config Bools (or numbers).  They only
+	 * appear in "config setup" section.
+	 *
+	 * Indices for .setup.option[], .setup.options_set[]
+	 */
+	KBF_basement,
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KBF_LOGTIME,
@@ -108,28 +110,32 @@ enum keyword_numeric_config_field {
 	KBF_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
 	KBF_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
-	KBF_ROOF
-};
 
-/*
- * These are conn strings.
- * The initial ones come in left/right variants.
- *
- * NOTE: loose_enum values have both string and integer types
- * WITH THE SAME INDEX!  They come in left and right= variants.
- *
- * Indices for .strings[], .strings_set[]
- * or .{left|right}.strings[], .{left|right}.strings_set[]
- */
+	KBF_roof,
 
-enum keyword_string_conn_field {
+	/*
+	 * These are conn strings.  The initial ones come in
+	 * left/right variants.
+	 *
+	 * NOTE: loose_enum values have both string and integer types
+	 * WITH THE SAME INDEX!  They come in left and right=
+	 * variants.
+	 *
+	 * Indices for .strings[], .strings_set[] or
+	 * .{left|right}.strings[], .{left|right}.strings_set[]
+	 */
+
+	KSCF_loose_enum_basement,
+
 	KSCF_IP,	/* loose_enum */ /* left/right */
 	KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
 	KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KSCF_ECDSAKEY,	/* loose_enum */ /* left/right */
 	KSCF_PUBKEY,	/* loose_enum */ /* left/right */
 
-	KSCF_last_loose = KSCF_PUBKEY,
+	KSCF_loose_enum_roof,
+
+	KSCF_leftright_basement,
 
 	KSCF_GROUNDHOG,	/* left/right */
 	KSCF_UPDOWN,	/* left/right */
@@ -146,7 +152,7 @@ enum keyword_string_conn_field {
 	KSCF_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
 
-	KSCF_last_leftright = KSCF_SUBNETS,
+	KSCF_leftright_roof,
 
 	KSCF_IPSEC_INTERFACE,
 	KSCF_AUTHBY,
@@ -168,26 +174,27 @@ enum keyword_string_conn_field {
 	KSCF_DPDDELAY,
 	KSCF_DPDTIMEOUT,
 
-	KSCF_ROOF
-};
+	KSCF_roof,
 
-/*
- * conn numbers (or bool).
- * The initial ones come in left/right variants.
- *
- * NOTE: loose_enum values have both string and integer types
- * WITH THE SAME INDEX!  They come in left and right= variants.
- *
- * Indices for .option[], .options_set[]
- * or .{left|right}.option[], .{left|right}.options_set[]
- */
+	/*
+	 * conn numbers (or bool).  The initial ones come in
+	 * left/right variants.
+	 *
+	 * NOTE: loose_enum values have both string and integer types
+	 * WITH THE SAME INDEX!  They come in left and right=
+	 * variants.
+	 *
+	 * Indices for .option[], .options_set[] or
+	 * .{left|right}.option[], .{left|right}.options_set[]
+	 */
 
-enum keyword_numeric_conn_field {
 	KNCF_IP		= KSCF_IP,	/* loose_enum */ /* left/right */
 	KNCF_NEXTHOP	= KSCF_NEXTHOP,	/* loose_enum */ /* left/right */
 	KNCF_RSASIGKEY	= KSCF_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KNCF_ECDSAKEY	= KSCF_ECDSAKEY,	/* loose_enum */ /* left/right */
 	KNCF_PUBKEY	= KSCF_PUBKEY,	/* loose_enum */ /* left/right */
+
+	KNCF_leftright_basement = KSCF_roof,
 
 	KNCF_XAUTHSERVER,	/* left/right */
 	KNCF_XAUTHCLIENT,	/* left/right */
@@ -199,7 +206,7 @@ enum keyword_numeric_conn_field {
 	KNCF_AUTH,	/* left/right */
 	KNCF_EAP,	/* left/right */
 
-		KNCF_last_leftright = KNCF_EAP,
+	KNCF_leftright_roof,
 
 	KNCF_PFS_REKEY_WORKAROUND,
 	KNCF_FIREWALL,
@@ -281,18 +288,13 @@ enum keyword_numeric_conn_field {
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 
-	KNCF_ROOF
+	KNCF_roof,
+
+	KW_roof,
 };
 
-/*
- * comparing members of two different enums draws warnings from GCC
- * so we cast one to int
- */
-#define KEY_STRINGS_ROOF ((int)KSF_ROOF > KSCF_ROOF ? \
-				KSF_ROOF : KSCF_ROOF)
-
-#define KEY_NUMERIC_ROOF ((int)KBF_ROOF > KNCF_ROOF ? \
-				KBF_ROOF : KNCF_ROOF)
+#define KEY_STRINGS_ROOF KW_roof
+#define KEY_NUMERIC_ROOF KW_roof
 
 /* these are bits set in a word */
 enum keyword_valid {

@@ -156,7 +156,7 @@ static bool set_whack_end(struct whack_end *w,
 
 	static const struct {
 		enum ipseckey_algorithm_type alg;
-		enum keyword_string_conn_field kscf;
+		enum keywords kscf;
 		const char *name;
 	} keys[] = {
 		{ .alg = IPSECKEY_ALGORITHM_RSA, KSCF_RSASIGKEY, "rsasigkey", },
