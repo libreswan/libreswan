@@ -50,8 +50,7 @@ enum keyword_set {
 
 typedef char *ksf[KW_roof];
 typedef intmax_t knf[KW_roof];
-typedef enum keyword_set str_set[KW_roof];
-typedef enum keyword_set int_set[KW_roof];
+typedef enum keyword_set keyword_set[KW_roof];
 
 /*
  * Note: string fields in struct starter_end and struct starter_conn
@@ -71,9 +70,7 @@ struct starter_end {
 
 	ksf strings;
 	knf options;
-
-	str_set strings_set;
-	int_set options_set;
+	keyword_set set;
 };
 
 /*
@@ -88,8 +85,7 @@ struct starter_conn {
 
 	ksf strings;
 	knf options;
-	str_set strings_set;
-	int_set options_set;
+	keyword_set set;
 
 	enum ike_version ike_version;
 	struct authby authby;
@@ -115,8 +111,7 @@ struct starter_config {
 	struct {
 		ksf strings;
 		knf options;
-		str_set strings_set;
-		int_set options_set;
+		keyword_set set;
 	} setup;
 
 	/* conn %default */

@@ -213,7 +213,7 @@ static bool load_setup(struct starter_config *cfg,
 			pfreeany(cfg->setup.strings[f]);
 			cfg->setup.strings[f] =
 				clone_str(kw->string, "kt_loose_enum kw->string");
-			cfg->setup.strings_set[f] = true;
+			cfg->setup.set[f] = true;
 			break;
 
 		case kt_lset:
@@ -229,7 +229,7 @@ static bool load_setup(struct starter_config *cfg,
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup.options));
 			cfg->setup.options[f] = kw->number;
-			cfg->setup.options_set[f] = true;
+			cfg->setup.set[f] = true;
 			break;
 
 		case kt_bitstring:
@@ -281,7 +281,7 @@ static bool validate_end(struct starter_conn *conn_st,
 
 #  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); err = true; }
 
-	if (!end->options_set[KW_IP])
+	if (!end->set[KW_IP])
 		conn_st->state = STATE_INCOMPLETE;
 
 	/* validate the KSCF_IP/KNCF_IP */
@@ -342,7 +342,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 	}
 
-	if (end->strings_set[KSCF_VTI_IP]) {
+	if (end->set[KSCF_VTI_IP]) {
 		const char *value = end->strings[KSCF_VTI_IP];
 		err_t oops = ttocidr_num(shunk1(value), NULL, &end->vti_ip);
 		if (oops != NULL) {
@@ -362,7 +362,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * something consistent, by default
 	 */
 	end->nexthop = end->host_family->address.unspec;
-	if (end->strings_set[KW_NEXTHOP]) {
+	if (end->set[KW_NEXTHOP]) {
 		char *value = end->strings[KW_NEXTHOP];
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
@@ -386,7 +386,7 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	/* copy certificate path name */
 
-	if (end->strings_set[KSCF_PROTOPORT]) {
+	if (end->set[KSCF_PROTOPORT]) {
 		char *value = end->strings[KSCF_PROTOPORT];
 		err_t ugh = ttoprotoport(value, &end->protoport);
 		if (ugh != NULL)
@@ -394,7 +394,7 @@ static bool validate_end(struct starter_conn *conn_st,
 				  ugh);
 	}
 
-	if (end->strings_set[KSCF_INTERFACE_IP]) {
+	if (end->set[KSCF_INTERFACE_IP]) {
 		const char *value = end->strings[KSCF_INTERFACE_IP];
 		err_t oops = ttocidr_num(shunk1(value), NULL, &end->ifaceip);
 		if (oops != NULL) {
@@ -431,9 +431,8 @@ static bool translate_field(struct starter_conn *conn,
 			    const struct kw_list *kw,
 			    const char *leftright,
 			    ksf *the_strings,
-			    str_set *set_strings,
 			    knf *the_options,
-			    int_set *set_options,
+			    keyword_set *set,
 			    struct logger *logger)
 {
 	bool serious_err = false;
@@ -470,7 +469,7 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_subnet:
 	case kt_idtype:
 		/* all treated as strings for now, even loose enums */
-		if ((*set_strings)[field] == k_set) {
+		if ((*set)[field] == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
 			     leftright, kw->keyword.keydef->keyname,
@@ -497,7 +496,7 @@ static bool translate_field(struct starter_conn *conn,
 		}
 
 		(*the_strings)[field] = clone_str(kw->string, "kt_idtype kw->string");
-		(*set_strings)[field] = assigned_value;
+		(*set)[field] = assigned_value;
 		break;
 
 	case kt_appendstring:
@@ -517,12 +516,12 @@ static bool translate_field(struct starter_conn *conn,
 			(*the_strings)[field] = n;
 			pfree(s);
 		}
-		(*set_strings)[field] = true;
+		(*set)[field] = true;
 		break;
 
 	case kt_pubkey:
 	case kt_host:
-		if ((*set_options)[field] == k_set) {
+		if ((*set)[field] == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
 			     leftright, kw->keyword.keydef->keyname,
@@ -551,7 +550,7 @@ static bool translate_field(struct starter_conn *conn,
 			(*the_strings)[field] = clone_str(
 				kw->string, "kt_loose_enum kw->keyword.string");
 		}
-		(*set_options)[field] = assigned_value;
+		(*set)[field] = assigned_value;
 		break;
 
 	case kt_lset:
@@ -565,7 +564,7 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_binary:
 	case kt_byte:
 		/* all treated as a number for now */
-		if ((*set_options)[field] == k_set) {
+		if ((*set)[field] == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
 			     leftright, kw->keyword.keydef->keyname,
@@ -580,7 +579,7 @@ static bool translate_field(struct starter_conn *conn,
 		}
 
 		(*the_options)[field] = kw->number;
-		(*set_options)[field] = assigned_value;
+		(*set)[field] = assigned_value;
 		break;
 
 	case kt_comment:
@@ -602,9 +601,8 @@ static bool translate_leftright(struct starter_conn *conn,
 	return translate_field(conn, cfgp, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
 			       /*the_strings*/&this->strings,
-			       /*set_strings*/&this->strings_set,
 			       /*the_options*/&this->options,
-			       /*set_options*/&this->options_set,
+			       /*set_options*/&this->set,
 			       logger);
 }
 
@@ -642,9 +640,8 @@ static bool translate_conn(struct starter_conn *conn,
 				translate_field(conn, cfgp, sl, assigned_value, kw,
 						/*leftright*/"",
 						/*the_strings*/&conn->strings,
-						/*set_strings*/&conn->strings_set,
 						/*the_options*/&conn->options,
-						/*set_options*/&conn->options_set,
+						/*set_options*/&conn->set,
 						logger);
 		}
 	}
@@ -695,7 +692,7 @@ static bool load_conn(struct starter_conn *conn,
 		return true;	/* error */
 	}
 
-	if (conn->options_set[KNCF_TYPE]) {
+	if (conn->set[KNCF_TYPE]) {
 		switch ((enum type_options)conn->options[KNCF_TYPE]) {
 		case KS_UNSET:
 			bad_case(KS_UNSET);
@@ -729,7 +726,7 @@ static bool load_conn(struct starter_conn *conn,
 	/* i.e., default is to have policy off */
 #define KW_POLICY_FLAG(val, fl)						\
 	{								\
-		if (conn->options_set[val])				\
+		if (conn->set[val])				\
 			conn->policy = (conn->policy & ~(fl)) |		\
 				(conn->options[val] ? (fl) : LEMPTY);	\
 	}
@@ -737,7 +734,7 @@ static bool load_conn(struct starter_conn *conn,
 	/* i.e., confusion rains */
 #define KW_POLICY_NEGATIVE_FLAG(val, fl)				\
 	{								\
-		if (conn->options_set[val]) {				\
+		if (conn->set[val]) {				\
 			conn->policy = (conn->policy & ~(fl)) |		\
 				(!conn->options[val] ? (fl) : LEMPTY);	\
 		}							\
@@ -749,20 +746,20 @@ static bool load_conn(struct starter_conn *conn,
 	 * When a conn sets it and then expands also=.
 	 */
 
-	if (conn->options_set[KNCF_KEYEXCHANGE]) {
+	if (conn->set[KNCF_KEYEXCHANGE]) {
 		if (conn->options[KNCF_KEYEXCHANGE] == IKE_VERSION_ROOF) {
 			/*
 			 * i.e., keyexchange=ike which was ignored.
 			 * Use ikev2= when specified.
 			 */
-			if (conn->options_set[KNCF_IKEv2]) {
+			if (conn->set[KNCF_IKEv2]) {
 				conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
 			}
 		} else {
 			/* IKEv1, IKEv2, ... */
 			conn->ike_version = conn->options[KNCF_KEYEXCHANGE];
 		}
-	} else if (conn->options_set[KNCF_IKEv2]) {
+	} else if (conn->set[KNCF_IKEv2]) {
 		conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
 	}
 
@@ -779,7 +776,7 @@ static bool load_conn(struct starter_conn *conn,
 	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
 	 * to avoid confusion with sha3_256
 	 */
-	if (conn->strings_set[KSCF_AUTHBY]) {
+	if (conn->set[KSCF_AUTHBY]) {
 
 		conn->sighash_policy = LEMPTY;
 		conn->authby = (struct authby) {0};

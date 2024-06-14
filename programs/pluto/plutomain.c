@@ -1277,18 +1277,18 @@ int main(int argc, char **argv)
 
 			ocsp_enable = cfg->setup.options[KBF_OCSP_ENABLE];
 			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
-			if (cfg->setup.options_set[KBF_OCSP_TIMEOUT_SECONDS]) {
+			if (cfg->setup.set[KBF_OCSP_TIMEOUT_SECONDS]) {
 				ocsp_timeout = deltatime(cfg->setup.options[KBF_OCSP_TIMEOUT_SECONDS]);
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
-			if (cfg->setup.options_set[KBF_OCSP_CACHE_MIN_AGE_SECONDS]) {
+			if (cfg->setup.set[KBF_OCSP_CACHE_MIN_AGE_SECONDS]) {
 				ocsp_cache_min_age = deltatime(cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_SECONDS]);
 				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
 			}
-			if (cfg->setup.options_set[KBF_OCSP_CACHE_MAX_AGE_SECONDS]) {
+			if (cfg->setup.set[KBF_OCSP_CACHE_MAX_AGE_SECONDS]) {
 				ocsp_cache_max_age = deltatime(cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_SECONDS]);
 				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
 			}
@@ -1365,7 +1365,7 @@ int main(int argc, char **argv)
 						       "curl-iface= via --config");
 			}
 
-			if (cfg->setup.options_set[KBF_CURL_TIMEOUT_SECONDS]) {
+			if (cfg->setup.set[KBF_CURL_TIMEOUT_SECONDS]) {
 				curl_timeout = deltatime(cfg->setup.options[KBF_CURL_TIMEOUT_SECONDS]);
 				check_conf(CURL_TIMEOUT_OK, "curl-timeout", logger);
 				/* checked below */

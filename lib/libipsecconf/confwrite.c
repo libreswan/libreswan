@@ -54,9 +54,8 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 static void confwrite_int(FILE *out,
 			  const char *side,
 			  unsigned int context,
-			  knf options,
-			  int_set options_set,
-			  ksf strings)
+			  knf options, ksf strings,
+			  keyword_set set)
 {
 	const struct keyword_def *k;
 
@@ -95,7 +94,7 @@ static void confwrite_int(FILE *out,
 
 		case kt_bool:
 			/* special enumeration */
-			if (options_set[k->field]) {
+			if (set[k->field]) {
 				fprintf(out, "\t%s%s=%s\n", side,
 					k->keyname, options[k->field] ? "yes" : "no");
 			}
@@ -103,7 +102,7 @@ static void confwrite_int(FILE *out,
 
 		case kt_host:
 			/* special enumeration */
-			if (options_set[k->field]) {
+			if (set[k->field]) {
 				fprintf(out, "\t%s%s=%s\n", side,
 					k->keyname, strings[k->field]);
 			}
@@ -111,7 +110,7 @@ static void confwrite_int(FILE *out,
 
 		case kt_sparse_name:
 			/* special enumeration */
-			if (options_set[k->field]) {
+			if (set[k->field]) {
 				int val = options[k->field];
 				fprintf(out, "\t%s%s=", side, k->keyname);
 				for (const struct sparse_name *kev = k->sparse_names->list;
@@ -125,7 +124,7 @@ static void confwrite_int(FILE *out,
 			break;
 
 		case kt_lset:
-			if (options_set[k->field]) {
+			if (set[k->field]) {
 				unsigned long val = options[k->field];
 
 				if (val != 0) {
@@ -149,7 +148,7 @@ static void confwrite_int(FILE *out,
 		case kt_binary:
 		case kt_byte:
 		case kt_unsigned:
-			if (options_set[k->field])
+			if (set[k->field])
 				fprintf(out, "\t%s%s=%jd\n", side, k->keyname,
 					options[k->field]);
 		}
@@ -160,7 +159,7 @@ static void confwrite_str(FILE *out,
 			  const char *side,
 			  unsigned int context,
 			  ksf strings,
-			  str_set strings_set)
+			  keyword_set set)
 {
 	const struct keyword_def *k;
 
@@ -175,7 +174,7 @@ static void confwrite_str(FILE *out,
 		switch (k->type) {
 		case kt_also:
 		case kt_appendlist:
-			if (strings_set[k->field])
+			if (set[k->field])
 				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
 					strings[k->field]);
 			break;
@@ -186,7 +185,7 @@ static void confwrite_str(FILE *out,
 		case kt_dirname:
 			/* these are strings */
 
-			if (strings_set[k->field]) {
+			if (set[k->field]) {
 				const char *quote =
 					strchr(strings[k->field], ' ') == NULL ?
 						"" : "\"";
@@ -249,7 +248,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 
 	case KH_IFACE:
-		if (end->strings_set[KW_IP])
+		if (end->set[KW_IP])
 			fprintf(out, "\t%s=%s\n", side, end->strings[KW_IP]);
 		break;
 
@@ -319,9 +318,9 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 
 	confwrite_int(out, side,
 		      kv_conn | kv_leftright,
-		      end->options, end->options_set, end->strings);
+		      end->options, end->strings, end->set);
 	confwrite_str(out, side, kv_conn | kv_leftright,
-		      end->strings, end->strings_set);
+		      end->strings, end->set);
 }
 
 static void confwrite_comments(FILE *out, struct starter_conn *conn)
@@ -348,11 +347,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	confwrite_side(out, &conn->left);
 	confwrite_side(out, &conn->right);
 	/* fprintf(out, "# confwrite_int:\n"); */
-	confwrite_int(out, "", kv_conn,
-		      conn->options, conn->options_set, conn->strings);
+	confwrite_int(out, "", kv_conn, conn->options, conn->strings, conn->set);
 	/* fprintf(out, "# confwrite_str:\n"); */
-	confwrite_str(out, "", kv_conn,
-		      conn->strings, conn->strings_set);
+	confwrite_str(out, "", kv_conn, conn->strings, conn->set);
 	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
 
@@ -505,13 +502,10 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	/* output config setup section */
 	if (setup) {
 		fprintf(out, "config setup\n");
-		confwrite_int(out, "",
-		      kv_config,
-		      cfg->setup.options, cfg->setup.options_set,
-		      cfg->setup.strings);
-		confwrite_str(out, "",
-		      kv_config,
-		      cfg->setup.strings, cfg->setup.strings_set);
+		confwrite_int(out, "", kv_config,
+			      cfg->setup.options, cfg->setup.strings, cfg->setup.set);
+		confwrite_str(out, "", kv_config,
+			      cfg->setup.strings, cfg->setup.set);
 
 		fprintf(out, "\n");
 	}

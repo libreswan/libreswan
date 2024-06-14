@@ -164,7 +164,7 @@ static bool set_whack_end(struct whack_end *w,
 		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KW_PUBKEY, "pubkey", },
 	};
 	FOR_EACH_ELEMENT(key, keys) {
-		if (!l->options_set[key->kscf]) {
+		if (!l->set[key->kscf]) {
 			continue;
 		}
 
@@ -199,35 +199,35 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->ca = l->strings[KSCF_CA];
-	if (l->options_set[KNCF_SENDCERT])
+	if (l->set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
 		w->sendcert = CERT_ALWAYSSEND;
 
-	if (l->options_set[KNCF_AUTH])
+	if (l->set[KNCF_AUTH])
 		w->auth = l->options[KNCF_AUTH];
 
-	if (l->options_set[KNCF_EAP])
+	if (l->set[KNCF_EAP])
 		w->eap = l->options[KNCF_EAP];
 	else
 		w->eap = IKE_EAP_NONE;
 
 	w->updown = l->strings[KSCF_UPDOWN];
 
-	if (l->options_set[KNCF_XAUTHSERVER])
+	if (l->set[KNCF_XAUTHSERVER])
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
-	if (l->options_set[KNCF_XAUTHCLIENT])
+	if (l->set[KNCF_XAUTHCLIENT])
 		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
-	if (l->strings_set[KSCF_USERNAME])
+	if (l->set[KSCF_USERNAME])
 		w->xauth_username = l->strings[KSCF_USERNAME];
-	if (l->strings_set[KSCF_GROUNDHOG])
+	if (l->set[KSCF_GROUNDHOG])
 		w->groundhog = l->strings[KSCF_GROUNDHOG];
 
-	if (l->options_set[KNCF_MODECONFIGSERVER])
+	if (l->set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
-	if (l->options_set[KNCF_MODECONFIGCLIENT])
+	if (l->set[KNCF_MODECONFIGCLIENT])
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
-	if (l->options_set[KNCF_CAT])
+	if (l->set[KNCF_CAT])
 		w->cat = l->options[KNCF_CAT];
 
 	w->addresspool = l->strings[KSCF_ADDRESSPOOL];
@@ -315,17 +315,17 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.dnshostname = conn->right.strings[KW_IP];
 
 	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
-	if (conn->options_set[KNCF_IKELIFETIME_MS]) {
+	if (conn->set[KNCF_IKELIFETIME_MS]) {
 		msg.ikelifetime = deltatime_ms(conn->options[KNCF_IKELIFETIME_MS]);
 	}
-	if (conn->options_set[KNCF_IPSEC_LIFETIME_MS]) {
+	if (conn->set[KNCF_IPSEC_LIFETIME_MS]) {
 		msg.ipsec_lifetime = deltatime_ms(conn->options[KNCF_IPSEC_LIFETIME_MS]);
 	}
 	msg.sa_rekey_margin = deltatime_ms(conn->options[KNCF_REKEYMARGIN_MS]);
 	msg.sa_ipsec_max_bytes = conn->options[KNCF_IPSEC_MAXBYTES];
 	msg.sa_ipsec_max_packets = conn->options[KNCF_IPSEC_MAXPACKETS];
 	msg.sa_rekeyfuzz_percent = conn->options[KNCF_REKEYFUZZ];
-	if (conn->options_set[KNCF_KEYINGTRIES]) {
+	if (conn->set[KNCF_KEYINGTRIES]) {
 		msg.keyingtries.set = true;
 		msg.keyingtries.value = conn->options[KNCF_KEYINGTRIES];
 	}
@@ -356,18 +356,18 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.rekey = conn->options[KNCF_REKEY];
 	msg.reauth = conn->options[KNCF_REAUTH];
 
-	if (conn->options_set[KNCF_MTU])
+	if (conn->set[KNCF_MTU])
 		msg.mtu = conn->options[KNCF_MTU];
-	if (conn->options_set[KNCF_PRIORITY])
+	if (conn->set[KNCF_PRIORITY])
 		msg.priority = conn->options[KNCF_PRIORITY];
-	if (conn->options_set[KNCF_TFC])
+	if (conn->set[KNCF_TFC])
 		msg.tfc = conn->options[KNCF_TFC];
-	if (conn->options_set[KNCF_NO_ESP_TFC])
+	if (conn->set[KNCF_NO_ESP_TFC])
 		msg.send_no_esp_tfc = conn->options[KNCF_NO_ESP_TFC];
-	if (conn->options_set[KNCF_NFLOG_CONN])
+	if (conn->set[KNCF_NFLOG_CONN])
 		msg.nflog_group = conn->options[KNCF_NFLOG_CONN];
 
-	if (conn->options_set[KNCF_REQID]) {
+	if (conn->set[KNCF_REQID]) {
 		if (conn->options[KNCF_REQID] <= 0 ||
 		    conn->options[KNCF_REQID] > IPSEC_MANUAL_REQID_MAX) {
 			llog_error(logger, 0,
@@ -378,11 +378,11 @@ int starter_whack_add_conn(const char *ctlsocket,
 		}
 	}
 
-	if (conn->options_set[KNCF_TCP_REMOTEPORT]) {
+	if (conn->set[KNCF_TCP_REMOTEPORT]) {
 		msg.tcp_remoteport = conn->options[KNCF_TCP_REMOTEPORT];
 	}
 
-	if (conn->options_set[KNCF_ENABLE_TCP]) {
+	if (conn->set[KNCF_ENABLE_TCP]) {
 		msg.enable_tcp = conn->options[KNCF_ENABLE_TCP];
 	}
 
@@ -390,7 +390,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.dpddelay = conn->strings[KSCF_DPDDELAY];
 	msg.dpdtimeout = conn->strings[KSCF_DPDTIMEOUT];
 
-	if (conn->options_set[KNCF_SEND_CA])
+	if (conn->set[KNCF_SEND_CA])
 		msg.send_ca = conn->options[KNCF_SEND_CA];
 	else
 		msg.send_ca = CA_SEND_NONE;
@@ -398,7 +398,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.encapsulation = conn->options[KNCF_ENCAPSULATION];
 
-	if (conn->options_set[KNCF_NAT_KEEPALIVE])
+	if (conn->set[KNCF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KNCF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = true;
@@ -407,18 +407,18 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.nat_ikev1_method = conn->options[KNCF_NAT_IKEv1_METHOD];
 
 	/* Activate sending out own vendorid */
-	if (conn->options_set[KNCF_SEND_VENDORID])
+	if (conn->set[KNCF_SEND_VENDORID])
 		msg.send_vendorid = conn->options[KNCF_SEND_VENDORID];
 
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
-	if (conn->options_set[KNCF_INITIAL_CONTACT])
+	if (conn->set[KNCF_INITIAL_CONTACT])
 		msg.initial_contact = conn->options[KNCF_INITIAL_CONTACT];
 
 	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
-	if (conn->options_set[KNCF_CISCO_UNITY])
+	if (conn->set[KNCF_CISCO_UNITY])
 		msg.cisco_unity = conn->options[KNCF_CISCO_UNITY];
 
-	if (conn->options_set[KNCF_VID_STRONGSWAN])
+	if (conn->set[KNCF_VID_STRONGSWAN])
 		msg.fake_strongswan = conn->options[KNCF_VID_STRONGSWAN];
 
 	/* Active our Cisco interop code if set */
@@ -474,9 +474,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.esn = conn->options[KNCF_ESN]; /* yne_options */
 	msg.ppk = conn->options[KNCF_PPK]; /* nppi_options */
 
-	if (conn->options_set[KNCF_XAUTHBY])
+	if (conn->set[KNCF_XAUTHBY])
 		msg.xauthby = conn->options[KNCF_XAUTHBY];
-	if (conn->options_set[KNCF_XAUTHFAIL])
+	if (conn->set[KNCF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KNCF_XAUTHFAIL];
 
 	if (!set_whack_end(&msg.left, &conn->left, logger))
