@@ -166,17 +166,6 @@
   </variablelist>
 
   <para>
-    Parameter names beginning with <option>x-</option> (or
-    <option>X-</option>, or <option>x_</option>, or
-    <option>X_</option>) are reserved for user extensions and will
-    never be assigned meanings by IPsec.  Parameters with such names
-    must still observe the syntax rules (limits on characters used in
-    the name; no white space in a non-quoted value; no newlines or
-    double quotes within the value).  All other as-yet-unused
-    parameter names are reserved for future IPsec improvements.
-  </para>
-
-  <para>
     A section with name <option>%default</option> specifies
     defaults for sections of the same type.  For each parameter in it,
     any section of that type that does not have a parameter of the
