@@ -63,7 +63,6 @@ enum keywords {
 	KSF_LISTEN,
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
-	KSF_roof,
 
 	/*
 	 * These are global config Bools (or numbers).  They only
@@ -71,7 +70,6 @@ enum keywords {
 	 *
 	 * Indices for .setup.option[], .setup.options_set[]
 	 */
-	KBF_basement,
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KBF_LOGTIME,
@@ -111,8 +109,6 @@ enum keywords {
 	KBF_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
 
-	KBF_roof,
-
 	/*
 	 * These are conn loose enums.
 	 *
@@ -125,15 +121,11 @@ enum keywords {
 	 * .{left|right}.strings_set[]).
 	 */
 
-	KW_loose_enum_basement,
-
 	KW_IP,		/* loose_enum */ /* left/right */
 	KW_NEXTHOP,	/* loose_enum */ /* left/right */
 	KW_RSASIGKEY,	/* loose_enum */ /* left/right */
 	KW_ECDSAKEY,	/* loose_enum */ /* left/right */
 	KW_PUBKEY,	/* loose_enum */ /* left/right */
-
-	KW_loose_enum_roof,
 
 	/*
 	 * These are conn strings.  The initial ones come in
@@ -142,8 +134,6 @@ enum keywords {
 	 * Indices for .strings[], .strings_set[] or
 	 * .{left|right}.strings[], .{left|right}.strings_set[]
 	 */
-
-	KSCF_leftright_basement,
 
 	KSCF_GROUNDHOG,	/* left/right */
 	KSCF_UPDOWN,	/* left/right */
@@ -159,8 +149,6 @@ enum keywords {
 	KSCF_ADDRESSPOOL,	/* left/right */
 	KSCF_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
-
-	KSCF_leftright_roof,
 
 	KSCF_IPSEC_INTERFACE,
 	KSCF_AUTHBY,
@@ -182,8 +170,6 @@ enum keywords {
 	KSCF_DPDDELAY,
 	KSCF_DPDTIMEOUT,
 
-	KSCF_roof,
-
 	/*
 	 * conn numbers (or bool).  The initial ones come in
 	 * left/right variants.
@@ -194,8 +180,6 @@ enum keywords {
 	 * .{left|right}.strings_set[]).
 	 */
 
-	KNCF_leftright_basement = KSCF_roof,
-
 	KNCF_XAUTHSERVER,	/* left/right */
 	KNCF_XAUTHCLIENT,	/* left/right */
 	KNCF_MODECONFIGSERVER,	/* left/right */
@@ -205,8 +189,6 @@ enum keywords {
 	KNCF_IKEPORT,		/* left/right: IKE Port that must be used */
 	KNCF_AUTH,	/* left/right */
 	KNCF_EAP,	/* left/right */
-
-	KNCF_leftright_roof,
 
 	KNCF_PFS_REKEY_WORKAROUND,
 	KNCF_FIREWALL,
@@ -288,13 +270,8 @@ enum keywords {
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 
-	KNCF_roof,
-
 	KW_roof,
 };
-
-#define KEY_STRINGS_ROOF KW_roof
-#define KEY_NUMERIC_ROOF KW_roof
 
 /* these are bits set in a word */
 enum keyword_valid {

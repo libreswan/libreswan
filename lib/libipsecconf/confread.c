@@ -432,12 +432,8 @@ static bool translate_field(struct starter_conn *conn,
 			    const char *leftright,
 			    ksf *the_strings,
 			    str_set *set_strings,
-			    unsigned str_floor,
-			    unsigned str_roof,
 			    knf *the_options,
 			    int_set *set_options,
-			    unsigned opt_floor,
-			    unsigned opt_roof,
 			    struct logger *logger)
 {
 	bool serious_err = false;
@@ -474,8 +470,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_subnet:
 	case kt_idtype:
 		/* all treated as strings for now, even loose enums */
-		assert(field < str_roof);
-
 		if ((*set_strings)[field] == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
@@ -509,7 +503,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_appendstring:
 	case kt_appendlist:
 		/* implicitly, this field can have multiple values */
-		assert(str_floor <= field && field < str_roof);
 		if ((*the_strings)[field] == NULL) {
 			(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
 		} else {
@@ -529,9 +522,6 @@ static bool translate_field(struct starter_conn *conn,
 
 	case kt_pubkey:
 	case kt_host:
-		assert(field > KW_loose_enum_basement);
-		assert(field < KW_loose_enum_roof);
-
 		if ((*set_options)[field] == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
@@ -575,8 +565,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_binary:
 	case kt_byte:
 		/* all treated as a number for now */
-		assert(opt_floor <= field && field < opt_roof);
-
 		if ((*set_options)[field] == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
@@ -615,12 +603,8 @@ static bool translate_leftright(struct starter_conn *conn,
 			       /*leftright*/this->leftright,
 			       /*the_strings*/&this->strings,
 			       /*set_strings*/&this->strings_set,
-			       /*str_floor*/KSCF_leftright_basement,
-			       /*str_roof*/KSCF_leftright_roof,
 			       /*the_options*/&this->options,
 			       /*set_options*/&this->options_set,
-			       /*opt_floor*/KNCF_leftright_basement,
-			       /*opt_roof*/KNCF_leftright_roof,
 			       logger);
 }
 
@@ -659,12 +643,8 @@ static bool translate_conn(struct starter_conn *conn,
 						/*leftright*/"",
 						/*the_strings*/&conn->strings,
 						/*set_strings*/&conn->strings_set,
-						/*str_floor*/KSCF_leftright_roof,
-						/*str_roof*/KSCF_roof,
 						/*the_options*/&conn->options,
 						/*set_options*/&conn->options_set,
-						/*opt_floor*/KNCF_leftright_roof,
-						/*opt_roof*/KNCF_roof,
 						logger);
 		}
 	}

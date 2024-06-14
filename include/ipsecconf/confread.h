@@ -37,15 +37,21 @@
 
 struct logger;
 
+/*
+ * Code tests <<set[flag] != k_set>> to detect either k_unset or
+ * k_default and allow an override.
+ */
+
 enum keyword_set {
 	k_unset   = false,
 	k_set     = true,
 	k_default = 2
 };
-typedef char *ksf[KEY_STRINGS_ROOF];
-typedef intmax_t knf[KEY_NUMERIC_ROOF];
-typedef enum keyword_set str_set[KEY_STRINGS_ROOF];
-typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
+
+typedef char *ksf[KW_roof];
+typedef intmax_t knf[KW_roof];
+typedef enum keyword_set str_set[KW_roof];
+typedef enum keyword_set int_set[KW_roof];
 
 /*
  * Note: string fields in struct starter_end and struct starter_conn
