@@ -1404,7 +1404,7 @@ int main(int argc, char **argv)
 			set_global_redirect_dests(cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
-			cur_debugging = cfg->setup.options[KBF_PLUTODEBUG];
+			cur_debugging = cfg->setup.options[KWO_DEBUG];
 
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			passert(kernel_ops == kernel_stacks[0]); /*default*/

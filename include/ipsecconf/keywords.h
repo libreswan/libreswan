@@ -38,6 +38,13 @@
 enum keywords {
 
 	/*
+	 * Keyword value is stored in .options[] and .set[] is
+	 * non-zero.  In addition, the original string, in .strings[],
+	 * should be used when logging errors.
+	 */
+	KWO_DEBUG,
+
+	/*
 	 * These are global configuration strings.  They only appear
 	 * in "config setup" section.
 	 *
@@ -95,7 +102,6 @@ enum keywords {
 	KBF_SEEDBITS,
 	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
-	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
 	KBF_SHUNTLIFETIME_MS,
 	KBF_FORCEBUSY, 		/* obsoleted for KBF_DDOS_MODE */
@@ -196,7 +202,6 @@ enum keywords {
 	KNCF_SPIBASE,
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
-	KNCF_DEBUG,
 
 	/* ??? these were once in keyword_numeric_config_field (KBF prefix) */
 	KNCF_FAILURESHUNT,
