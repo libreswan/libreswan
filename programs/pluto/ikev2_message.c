@@ -451,7 +451,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		 * data.
 		 */
 		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
-		chunk_t aad = chunk2(auth_start, enc.ptr - auth_start - sk->wire_iv.len);
+		shunk_t aad = shunk2(auth_start, enc.ptr - auth_start - sk->wire_iv.len);
+		chunk_t text_and_tag = chunk2(enc.ptr, enc.len + sk->integrity.len);
 
 		/* now, encrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -466,9 +467,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
 			      HUNK_AS_SHUNK(sk->wire_iv),
-			      HUNK_AS_SHUNK(aad),
-			      enc.ptr, enc.len,
-			      sk->integrity.len,
+			      aad, text_and_tag,
+			      enc.len, sk->integrity.len,
 			      cipherkey, true, sk->logger)) {
 			return false;
 		}
@@ -617,7 +617,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		 * fields [...] MUST NOT be included in the associated
 		 * data.
 		 */
-		chunk_t aad = chunk2(auth_start, enc.ptr - auth_start - wire_iv.len);
+		shunk_t aad = shunk2(auth_start, enc.ptr - auth_start - wire_iv.len);
+		chunk_t text_and_tag = chunk2(enc.ptr, enc.len + integ.len);
 
 		/* decrypt */
 		if (DBGP(DBG_CRYPT)) {
@@ -636,9 +637,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
 			      HUNK_AS_SHUNK(wire_iv),
-			      HUNK_AS_SHUNK(aad),
-			      enc.ptr, enc.len,
-			      integ.len,
+			      aad, text_and_tag,
+			      enc.len, integ.len,
 			      cipherkey, false, ike->sa.logger)) {
 			return false;
 		}

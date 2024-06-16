@@ -31,11 +31,14 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			     shunk_t salt,
 			     shunk_t wire_iv,
 			     shunk_t aad,
-			     uint8_t *text_and_tag,
-			     size_t text_size, size_t tag_size,
+			     chunk_t text_and_tag,
+			     size_t text_len, size_t tag_len,
 			     PK11SymKey *sym_key, bool enc,
 			     struct logger *logger)
 {
+	/* must be contigious */
+	PASSERT(logger, text_len + tag_len == text_and_tag.len);
+
 	/* See pk11aeadtest.c */
 	bool ok = true;
 
@@ -56,48 +59,51 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 	};
 
 	/* Output buffer for transformed data. */
-	size_t text_and_tag_size = text_size + tag_size;
-	uint8_t *out_buf = PR_Malloc(text_and_tag_size);
+	uint8_t *out_buf = PR_Malloc(text_and_tag.len);
 	unsigned int out_len = 0;
 
 	if (enc) {
 		SECStatus rv = PK11_Encrypt(sym_key, alg->nss.mechanism,
 					    &param, out_buf, &out_len,
-					    text_and_tag_size,
-					    text_and_tag, text_size);
+					    text_and_tag.len,
+					    text_and_tag.ptr, text_len);
 		if (rv != SECSuccess) {
 			llog_nss_error(RC_LOG, logger,
 				       "AEAD encryption using %s_%u and PK11_Encrypt() failed",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE);
+				       alg->common.fqn,
+				       PK11_GetKeyLength(sym_key) * BITS_IN_BYTE);
 			ok = false;
-		} else if (out_len != text_and_tag_size) {
+		} else if (out_len != text_and_tag.len) {
 			/* should this be a pexpect fail? */
 			llog_nss_error(RC_LOG_SERIOUS, logger,
 				       "AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
-				       out_len, text_and_tag_size);
+				       alg->common.fqn,
+				       PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
+				       out_len, text_and_tag.len);
 			ok = false;
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, alg->nss.mechanism, &param,
-					    out_buf, &out_len, text_and_tag_size,
-					    text_and_tag, text_and_tag_size);
+					    out_buf, &out_len, text_and_tag.len,
+					    text_and_tag.ptr, text_and_tag.len);
 		if (rv != SECSuccess) {
 			llog_nss_error(RC_LOG, logger,
 				       "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE);
+				       alg->common.fqn,
+				       PK11_GetKeyLength(sym_key) * BITS_IN_BYTE);
 			ok = false;
-		} else if (out_len != text_size) {
+		} else if (out_len != text_len) {
 			/* should this be a pexpect fail? */
 			llog_nss_error(RC_LOG_SERIOUS, logger,
 				       "AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
-				      alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
-				      out_len, text_size);
+				      alg->common.fqn,
+				       PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
+				      out_len, text_len);
 			ok = false;
 		}
 	}
 
-	memcpy(text_and_tag, out_buf, out_len);
+	memcpy(text_and_tag.ptr, out_buf, out_len);
 	PR_Free(out_buf);
 	free_chunk_content(&iv);
 

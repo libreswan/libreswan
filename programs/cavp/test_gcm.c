@@ -196,7 +196,7 @@ static void gcm_run_test(struct logger *logger)
 			  HUNK_AS_SHUNK(salt),
 			  HUNK_AS_SHUNK(iv),
 			  HUNK_AS_SHUNK(aad),
-			  text_and_tag.ptr,
+			  text_and_tag,
 			  ct.len, tag.len,
 			  gcm_key,
 			  false/*encrypt*/,

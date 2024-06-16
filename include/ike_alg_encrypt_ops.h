@@ -52,12 +52,14 @@ struct encrypt_ops {
 	 * tag (which is appended to the text).
 	 *
 	 * All sizes are in 8-bit bytes.
+	 *
+	 * Danger: TEXT and TAG are assumed to be contigious.
 	 */
 	bool (*const do_aead)(const struct encrypt_desc *alg,
 			      shunk_t salt,
 			      shunk_t wire_iv,
 			      shunk_t aad,
-			      uint8_t *text_and_tag,
+			      chunk_t text_and_tag,
 			      size_t text_size, size_t tag_size,
 			      PK11SymKey *key, bool enc,
 			      struct logger *logger);
