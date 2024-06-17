@@ -336,7 +336,6 @@ enum keyword_type {
 	kt_idtype,              /* an ID type */
 	kt_bitstring,           /* an encryption/authentication key */
 	kt_also,		/* i.e., #include */
-	kt_comment,             /* a value that is a cooked comment */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
 };
 
@@ -364,20 +363,11 @@ struct kw_list {
 	uintmax_t number;
 };
 
-struct starter_comments {
-	TAILQ_ENTRY(starter_comments) link;
-	char *x_comment;
-	char *commentvalue;
-};
-
-TAILQ_HEAD(starter_comments_list, starter_comments);
-
 struct section_list {
 	TAILQ_ENTRY(section_list) link;
 
 	char *name;
 	struct kw_list *kw;
-	struct starter_comments_list comments;
 	bool beenhere;
 };
 
@@ -386,8 +376,6 @@ struct config_parsed {
 
 	TAILQ_HEAD(sectionhead, section_list) sections;
 	int ipsec_conf_version;
-
-	struct starter_comments_list comments;
 
 	struct section_list conn_default;
 };

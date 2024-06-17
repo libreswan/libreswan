@@ -81,7 +81,7 @@ static void new_parser_kw(struct keyword *keyword, const char *string, uintmax_t
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
 %token <k>      KEYWORD
-%token <k>      COMMENT
+%token <s>      COMMENT
 %%
 
 /*
@@ -112,7 +112,6 @@ section_or_include:
 	CONFIG SETUP EOL {
 		parser.kw = &parser.cfg->config_setup;
 		parser.section = SECTION_CONFIG_SETUP;
-		parser.comments = &parser.cfg->comments;
 		ldbg(logger, "reading config setup");
 	} kw_sections
 	| CONN STRING EOL {
@@ -128,10 +127,6 @@ section_or_include:
 		parser.kw = &section->kw;
 		parser.section = (streq(section->name, "%default") ? SECTION_CONN_DEFAULT :
 				  SECTION_CONN);
-
-		/* and comments */
-		TAILQ_INIT(&section->comments);
-		parser.comments = &section->comments;
 
 		ldbg(logger, "reading conn %s", section->name);
 
@@ -167,11 +162,9 @@ statement_kw:
 		parser_kw(&kw, value, logger);
 	}
 	| COMMENT EQUAL STRING {
-		struct starter_comments *new = alloc_thing(struct starter_comments, "starter_comments");
-		new->x_comment = clone_str($1.string, "string");
-		new->commentvalue = clone_str($3, "string");
-		TAILQ_INSERT_TAIL(parser.comments, new, link);
+		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=%s", $1, $3);
 		/* free strings allocated by lexer */
+		pfreeany($1);
 		pfreeany($3);
 	}
 	| KEYWORD EQUAL STRING {
@@ -269,7 +262,6 @@ struct config_parsed *parser_load_conf(const char *file,
 	parser_y_init(file, f);
 	save_errors = true;
 	TAILQ_INIT(&parser.cfg->sections);
-	TAILQ_INIT(&parser.cfg->comments);
 
 	if (yyparse(logger) != 0) {
 		save_errors = false;
@@ -671,9 +663,6 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		/* drop it on the floor */
 		parser_kw_warning(logger, kw, string, "obsolete keyword ignored");
 		ok = false;
-		break;
-
-	case kt_comment:
 		break;
 
 	}

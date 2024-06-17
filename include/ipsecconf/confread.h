@@ -80,7 +80,6 @@ struct starter_end {
 
 struct starter_conn {
 	TAILQ_ENTRY(starter_conn) link;
-	struct starter_comments_list comments;
 	char *name;
 
 	ksf strings;

@@ -561,11 +561,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { NULL,  0,  0,  0, NULL, NULL, }
 };
 
-/* distinguished keyword */
-static const struct keyword_def ipsec_conf_keyword_comment =
-	{ "x-comment",      kv_conn,   kt_comment, 0, NULL, NULL, };
-
-
 /*
  * Look for one of the above tokens, and set the value up right.
  *
@@ -601,6 +596,8 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	bool right = false;
 	int keywordtype;
 
+	(*lval) = (YYSTYPE) {0};
+
 	const struct keyword_def *k;
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
 		if (strcaseeq(s, k->keyname)) {
@@ -630,12 +627,11 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		}
 	}
 
-	lval->s = NULL;
 	/* if we found nothing */
 	if (k->keyname == NULL &&
 	    (s[0] == 'x' || s[0] == 'X') && (s[1] == '-' || s[1] == '_')) {
-		k = &ipsec_conf_keyword_comment;
-		lval->k.string = clone_str(s, "k.string");
+		lval->s = clone_str(s, "X-s");
+		return COMMENT;
 	}
 
 	/* if we still found nothing */
@@ -645,9 +641,6 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	}
 
 	switch (k->type) {
-	case kt_comment:
-		keywordtype = COMMENT;
-		break;
 	case kt_byte:
 	case kt_binary:
 	case kt_percent:

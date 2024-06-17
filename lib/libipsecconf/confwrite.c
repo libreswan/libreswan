@@ -138,7 +138,6 @@ static void confwrite_int(FILE *out,
 			}
 			break;
 
-		case kt_comment:
 		case kt_obsolete:
 			break;
 
@@ -224,7 +223,6 @@ static void confwrite_str(FILE *out,
 		case kt_unsigned:
 			break;
 
-		case kt_comment:
 		case kt_obsolete:
 			break;
 		}
@@ -323,15 +321,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		      end->strings, end->set);
 }
 
-static void confwrite_comments(FILE *out, struct starter_conn *conn)
-{
-	for (struct starter_comments *sc = TAILQ_FIRST(&conn->comments);
-	     sc != NULL; sc = TAILQ_NEXT(sc, link)) {
-		fprintf(out, "\t%s=%s\n",
-			sc->x_comment, sc->commentvalue);
-	}
-}
-
 static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 {
 	/*
@@ -350,8 +339,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	confwrite_int(out, "", kv_conn, conn->options, conn->strings, conn->set);
 	/* fprintf(out, "# confwrite_str:\n"); */
 	confwrite_str(out, "", kv_conn, conn->strings, conn->set);
-	/* fprintf(out, "# confwrite_comments:\n"); */
-	confwrite_comments(out, conn);
 
 	if (conn->options[KNCF_AUTO] != 0) {
 		sparse_buf sb;

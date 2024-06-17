@@ -244,7 +244,6 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
-		case kt_comment:
 		case kt_obsolete:
 			break;
 
@@ -582,7 +581,6 @@ static bool translate_field(struct starter_conn *conn,
 		(*set)[field] = assigned_value;
 		break;
 
-	case kt_comment:
 	case kt_obsolete:
 		break;
 	}
@@ -648,20 +646,6 @@ static bool translate_conn(struct starter_conn *conn,
 	return serious_err;
 }
 
-static void move_comment_list(struct starter_comments_list *to,
-		       struct starter_comments_list *from)
-{
-	struct starter_comments *sc, *scnext;
-
-	for (sc = from->tqh_first;
-	     sc != NULL;
-	     sc = scnext) {
-		scnext = sc->link.tqe_next;
-		TAILQ_REMOVE(from, sc, link);
-		TAILQ_INSERT_TAIL(to, sc, link);
-	}
-}
-
 static bool load_conn(struct starter_conn *conn,
 		      const struct config_parsed *cfgp,
 		      struct section_list *sl,
@@ -679,8 +663,6 @@ static bool load_conn(struct starter_conn *conn,
 	bool err = translate_conn(conn, cfgp, sl,
 				  defaultconn ? k_default : k_set,
 				  logger);
-
-	move_comment_list(&conn->comments, &sl->comments);
 
 	if (err)
 		return err;
@@ -943,8 +925,6 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	assert(conn->name == NULL);
 	conn->name = clone_str(name, "add conn name");
 	conn->state = STATE_FAILED;
-
-	TAILQ_INIT(&conn->comments);
 
 	TAILQ_INSERT_TAIL(&cfg->conns, conn, link);
 	return conn;
