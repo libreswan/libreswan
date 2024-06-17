@@ -633,22 +633,36 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
  * not be determined.
  */
 
-#define EXTRACT_AFI(NAME, TYPE, FIELD)				\
+#define EXTRACT_AFI(NAME, FIELD)					\
 	{								\
-		const struct ip_info *wfi = TYPE##_type(&FIELD);	\
+		const struct ip_info *wfi = address_info(FIELD);	\
 		if (*afi == NULL) {					\
 			*afi = wfi;					\
 			leftright = w->leftright;			\
 			name = NAME;					\
 			struct jambuf buf = ARRAY_AS_JAMBUF(value);	\
-			jam_##TYPE(&buf, &FIELD);			\
+			jam_address(&buf, &FIELD);			\
 		} else if (wfi != NULL && wfi != *afi) {		\
-			TYPE##_buf tb;					\
+			address_buf tb;					\
 			return diag("host address family %s from %s%s=%s conflicts with %s%s=%s", \
 				    (*afi)->ip_name, leftright, name, value, \
-				    w->leftright, NAME, str_##TYPE(&FIELD, &tb)); \
+				    w->leftright, NAME, str_address(&FIELD, &tb)); \
 		}							\
 	}
+
+static diag_t extract_host_afi(const struct whack_message *wm,
+			       const struct ip_info **afi)
+{
+	*afi = NULL;
+	const char *leftright;
+	const char *name;
+	char value[sizeof(selector_buf)];
+	FOR_EACH_THING(w, &wm->left, &wm->right) {
+		EXTRACT_AFI(""/*left""=,right""=*/, w->host_addr);
+		EXTRACT_AFI("nexthop", w->host_nexthop);
+	}
+	return NULL;
+}
 
 /* assume 0 is unset */
 
@@ -711,20 +725,6 @@ static char *extract_str(const char *leftright, const char *name,
 		return NULL;
 	}
 	return clone_str(str, name);
-}
-
-static diag_t extract_host_afi(const struct whack_message *wm,
-			       const struct ip_info **afi)
-{
-	*afi = NULL;
-	const char *leftright;
-	const char *name;
-	char value[sizeof(selector_buf)];
-	FOR_EACH_THING(w, &wm->left, &wm->right) {
-		EXTRACT_AFI(""/*left""=,right""=*/, address, w->host_addr);
-		EXTRACT_AFI("nexthop", address, w->host_nexthop);
-	}
-	return NULL;
 }
 
 static diag_t extract_host_end(struct connection *c, /* for POOL */
