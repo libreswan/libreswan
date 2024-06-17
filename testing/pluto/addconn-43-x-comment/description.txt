@@ -1,0 +1,2 @@
+try legacy x- comments; should not crash
+
