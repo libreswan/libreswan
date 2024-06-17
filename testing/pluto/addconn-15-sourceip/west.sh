@@ -5,10 +5,10 @@ ipsec start
 # sourceip is shown as {my,their}_ip=
 add() { ipsec auto --add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
 
-# fails because there's no subnet=
+# sourceip=;host=;#subnet= ok
 
-add sourceip-without-selector
-add sourceips-without-selector
+add sourceip-inside-host
+add sourceip-outside-host
 
 # fails because sourceip is not within subnet
 add sourceip-outside-selector

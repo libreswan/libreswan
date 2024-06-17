@@ -9,23 +9,24 @@ west #
 west #
  add() { ipsec auto --add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
 west #
- # fails because there's no subnet=
+ # sourceip=;host=;#subnet= ok
 west #
- add sourceip-without-selector
-"sourceip-without-selector": failed to add connection: leftsourceip=1.0.0.1 invalid, requires leftsubnet
+ add sourceip-inside-host
+"sourceip-inside-host": added IKEv2 connection
+"sourceip-inside-host": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=192.1.2.45; their_ip=unset;
 west #
- add sourceips-without-selector
-"sourceips-without-selector": failed to add connection: leftsourceip=1.0.0.1,1::1 invalid, requires leftsubnet
+ add sourceip-outside-host
+"sourceip-outside-host": failed to add connection: leftsourceip=192.1.2.46 invalid, address 192.1.2.46 does not match left=192.1.2.45 and leftsubnet= was not specified
 west #
  # fails because sourceip is not within subnet
 west #
  add sourceip-outside-selector
-"sourceip-outside-selector": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=2.0.0.0/24
+"sourceip-outside-selector": failed to add connection: leftsourceip=1.0.0.1 invalid, address 1.0.0.1 is not within leftsubnet=2.0.0.0/24
 west #
  # fails because sourceip is not within subnet
 west #
  add sourceips-outside-selectors
-"sourceips-outside-selectors": failed to add connection: leftsourceip=1.0.0.1,1::1 address 1::1 is not within leftsubnet=2::/64,1.0.0.0/24
+"sourceips-outside-selectors": failed to add connection: leftsourceip=1.0.0.1,1::1 invalid, address 1::1 is not within leftsubnet=2::/64,1.0.0.0/24
 west #
  # all good
 west #
@@ -64,16 +65,16 @@ west #
 "sourceip-inside-subnet-protoport": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 west #
  add sourceip-outside-subnet-protoport
-"sourceip-outside-subnet-protoport": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=1.2.3.4/32
+"sourceip-outside-subnet-protoport": failed to add connection: leftsourceip=1.0.0.1 invalid, address 1.0.0.1 is not within leftsubnet=1.2.3.4/32
 west #
  add sourceip-inside-selector-protocol-port
 "sourceip-inside-selector-protocol-port": added IKEv2 connection
 "sourceip-inside-selector-protocol-port": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 west #
  add sourceip-outside-selector-protocol-port
-"sourceip-outside-selector-protocol-port": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=1.2.3.4/32/tcp/22
+"sourceip-outside-selector-protocol-port": failed to add connection: leftsourceip=1.0.0.1 invalid, address 1.0.0.1 is not within leftsubnet=1.2.3.4/32/tcp/22
 west #
  add sourceip-vs-interface-ip
-"sourceip-vs-interface-ip": failed to add connection: leftsourceip=1.0.0.1 invalid, requires leftsubnet
+"sourceip-vs-interface-ip": failed to add connection: cannot specify leftinterface-ip=1.2.3.4/32 and leftssourceip=1.0.0.1
 west #
  

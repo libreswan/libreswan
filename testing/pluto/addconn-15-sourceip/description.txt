@@ -1,7 +1,11 @@
 check sourceip= vs the subnet=...
 
-- sourceip is only allowed when there's also subnet=
+here's a table
+
+- subnet=host when not specified
 - sourceip must fall within at least one subnet= entry
+  which means matches host
 - sourceip conflicts with interface-ip
 
-see also, github #897
+see also, github #897 #1691 #1693 #1699
+
