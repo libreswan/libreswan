@@ -1431,24 +1431,19 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 	/*
 	 * Get the SOURCEIPs and check that they all fit within at
-	 * least one selector determined above.
+	 * least one selector determined above (remember, when the
+	 * selector isn't specified (i.e., subnet=), the selector is
+	 * set to the .host_addr).
 	 */
 
 	if (src->sourceip != NULL) {
-		if (src->subnet == NULL) {
-			return diag("%ssourceip=%s invalid, requires %ssubnet",
-				    leftright, src->sourceip, leftright);
-		}
 		if (src->ifaceip.is_set) {
 			cidr_buf cb;
 			return diag("cannot specify %sinterface-ip=%s and %sssourceip=%s",
 				    leftright, str_cidr(&src->ifaceip, &cb),
 				    leftright, src->sourceip);
 		}
-	}
 
-	if (src->sourceip != NULL) {
-		pexpect(child_config->selectors.len > 0);
 		diag_t d = ttoaddresses_num(shunk1(src->sourceip), ", ",
 					    NULL/*UNSPEC*/, &child_config->sourceip);
 		if (d != NULL) {
@@ -1456,39 +1451,55 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					 src->leftright, src->sourceip);
 		}
 		/* valid? */
-		FOR_EACH_ITEM(sip, &child_config->sourceip) {
-			if (!address_is_specified(*sip)) {
+		FOR_EACH_ITEM(sourceip, &child_config->sourceip) {
+			if (!address_is_specified(*sourceip)) {
 				return diag("%ssourceip=%s invalid, must be a valid address",
 					    leftright, src->sourceip);
 			}
-			/* skip aliases; they hide the selectors list */
-			if (wm->connalias != NULL) {
-				continue;
-			}
-			bool within = false;
-			FOR_EACH_ITEM(sel, &child_config->selectors) {
-				/*
-				 * Only compare the address against
-				 * the selector's address range (not
-				 * the /protocol/port).  For instance
-				 * when the selector is
-				 * 1::/128/tcp/22, the sourceip=1:: is
-				 * still ok.
-				 */
-				if (address_in_selector_range(*sip, *sel)) {
-					within = true;
-					break;
+			if (child_config->selectors.len > 0) {
+				/* skip aliases; they hide the selectors list */
+				if (wm->connalias != NULL) {
+					continue;
 				}
-			}
-			if (!within) {
-				address_buf sipb;
-				return diag("%ssourceip=%s address %s is not within %ssubnet=%s",
-					    leftright, src->sourceip, str_address(sip, &sipb),
-					    leftright, src->subnet);
+				bool within = false;
+				FOR_EACH_ITEM(sel, &child_config->selectors) {
+					/*
+					 * Only compare the address against
+					 * the selector's address range (not
+					 * the /protocol/port).  For instance
+					 * when the selector is
+					 * 1::/128/tcp/22, the sourceip=1:: is
+					 * still ok.
+					 */
+					if (address_in_selector_range(*sourceip, *sel)) {
+						within = true;
+						break;
+					}
+				}
+				if (!within) {
+					address_buf sipb;
+					return diag("%ssourceip=%s invalid, address %s is not within %ssubnet=%s",
+						    leftright, src->sourceip,
+						    str_address(sourceip, &sipb),
+						    leftright, src->subnet);
+				}
+			} else if (src->host_addr.is_set) {
+				if (!address_eq_address(*sourceip, src->host_addr)) {
+					address_buf sipb;
+					address_buf hab;
+					return diag("%ssourceip=%s invalid, address %s does not match %s=%s and %ssubnet= was not specified",
+						    leftright, src->sourceip,
+						    str_address(sourceip, &sipb),
+						    leftright, str_address(&src->host_addr, &hab),
+						    leftright);
+				}
+			} else {
+				return diag("%ssourceip=%s invalid, %ssubnet= unspecified and %s IP address unknown",
+					    leftright, src->sourceip,
+					    leftright/*subnet=*/, leftright/*host=*/);
 			}
 		}
 	}
-
 	return NULL;
 }
 
@@ -1529,7 +1540,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
-			secCertTimeValid) {
+	    secCertTimeValid) {
 		return diag("%s certificate '%s' is expired or not yet valid",
 			    leftright, nickname);
 	}
