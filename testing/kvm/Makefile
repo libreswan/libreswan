@@ -1434,10 +1434,12 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 #
 # After running the operation, kvm-install will:
 #
-# kvm-uninstall:            transmogrify,              install
-# kvm-clean-keys:                                keys, install
-# kvm-clean:                transmogrify, build, keys, install
-# kvm-purge:       upgrade, transmogrify, build, keys, install
+# kvm-clean-keys:                                               keys, install
+# kvm-clean:                               transmogrify, build, keys, install
+# kvm-uninstall:                           transmogrify, build,       install
+# kvm-downgrade:                  upgrade, transmogrify, build, keys, install
+# kvm-purge:                base, upgrade, transmogrify, build, keys, install
+# kvm-demolish:    gateway, base, upgrade, transmogrify, build, keys, install
 #
 # For kvm-uninstall, instead of trying to uninstall libreswan from the
 # build domain, delete both the clones and the build domain and
@@ -1447,67 +1449,61 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 # domains.
 
 .PHONY: kvm-shutdown
+
+kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES))
+
 $(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES)): \
 kvm-shutdown-%:
 	: $@
 	$(KVMSH) --shutdown $*
-kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES))
-
-.PHONY: kvm-uninstall
-kvm-uninstall: kvm-uninstall-test-networks
-kvm-uninstall: kvm-uninstall-test-domains
-kvm-uninstall: kvm-uninstall-build-domains
-
-.PHONY: kvm-uninstall-test-domains
-kvm-uninstall-test-domains:
-	./kvm-uninstall-domain.sh $(KVM_TEST_DOMAINS)
-.PHONY: kvm-uninstall-test-domains
-kvm-uninstall-build-domains:
-	./kvm-uninstall-domain.sh $(KVM_BUILD_DOMAINS)
-.PHONY: kvm-uninstall-upgrade-domains
-kvm-uninstall-upgrade-domains:
-	./kvm-uninstall-domain.sh $(KVM_UPGRADE_DOMAINS)
-.PHONY: kvm-uninstall-base-domains
-kvm-uninstall-base-domains:
-	./kvm-uninstall-domain.sh $(KVM_BASE_DOMAINS)
 
 .PHONY: kvm-clean
+
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
 kvm-clean: kvm-clean-check
 	rm -rf OBJ.kvm.*
 
-.PHONY: kvm-purge
-kvm-purge: kvm-clean
-kvm-purge: kvm-downgrade
-	rm -f $(KVM_HOST_OK)
+.PHONY: kvm-uninstall
 
-$(patsubst %, kvm-purge-%, $(KVM_PLATFORM)): \
-kvm-purge-%: kvm-clean kvm-downgrade-%
+kvm-uninstall: kvm-uninstall-test-networks
+kvm-uninstall: $(foreach os, $(KVM_OS), kvm-uninstall-$(os))
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
-	: $@
+	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 
 .PHONY: kvm-downgrade
+
+kvm-downgrade: kvm-clean
 kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
 
 $(patsubst %, kvm-downgrade-%, $(KVM_PLATFORM)): \
-kvm-downgrade-%:
-	: $@
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
-	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
+kvm-downgrade-%: kvm-uninstall-%
+	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
 
+.PHONY: kvm-purge
+
+kvm-purge: kvm-clean
+kvm-purge: $(foreach os, $(KVM_OS), kvm-purge-$(os))
+	rm -f $(KVM_HOST_OK)
+
+$(patsubst %, kvm-purge-%, $(KVM_PLATFORM)): \
+kvm-purge-%: kvm-downgrade-%
+	: $@=$*
+	./kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
+
 .PHONY: kvm-demolish
+
 kvm-demolish: kvm-uninstall-gateway
 kvm-demolish: $(foreach os, $(KVM_OS), kvm-demolish-$(os))
 
 $(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
-kvm-demolish-%: kvm-downgrade-%
-	./kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
+kvm-demolish-%: kvm-purge-%
+	: $@=$*
 
 
 #

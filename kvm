@@ -109,19 +109,19 @@ pass2help()
 
     recheck [ <test-directory> ... ]
 	re-run the testsuite
+    uninstall
+	deletes test domains
+	deletes build domains
+	leaves test results and keys alone
     clean
-	clean the test environment
-	- delete test and build domains
-	- delete test results
+	deletes test domains
+	deletes build domains
+	deletes test results
+	deletes test keys
     check-clean
 	delete the test results (leave the build trees and domains alone)
     keys
-	update the keys used for testing
-
-    purge[-PLATFORM]
-	delete all but base domains
-	delete any build trees
-	delete any keys
+	deletes test keys, and then rebuilds them
 
   Update the expected test results (and GIT repository):
 
@@ -165,14 +165,16 @@ pass2help()
     shutdown[-PLATFORM]
 	shutdown all domains
     uninstall[-PLATFORM]
-	delete test-domains, PLATFORM
-	leaves PLATFORM-base and PLATFORM-upgrade
+	delete test-domains, build domain
+	leaves base domains and upgrade domains alone
     downgrade[-PLATFORM]
-	delete test-domains, PLATFORM, PLATFORM-upgrade
-	leaves PLATFORM-base
+	also deletes upgrade domains
+	also deletes test keys
+	also deletes test results
+    purge[-PLATFORM]
+	also deletes base domains
     demolish[-PLATFORM]
-	delete test-domains, PLATFORM, PLATFORM.upgrade, PLATFORM.base
-	delete all domains and all builds
+	also deletes shared gateway
 
   Libvirt breakage:
 
