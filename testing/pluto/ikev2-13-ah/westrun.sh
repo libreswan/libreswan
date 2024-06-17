@@ -3,4 +3,6 @@ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 ipsec whack --trafficstatus
 # test rekey
 ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
+# test delete
+ipsec down westnet-eastnet-ipv4-psk-ikev2
 echo done
