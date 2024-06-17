@@ -581,7 +581,7 @@ const struct sparse_names ipsec_dir_names = {
 #ifdef SADB_X_EXT_POLICY
 const struct sparse_names ipsec_mode_names = {
 	.list = {
-		{ "any!?!", IPSEC_MODE_ANY, },
+		{ .name = "any!?!", .value = IPSEC_MODE_ANY, },
 		S(IPSEC_MODE_TRANSPORT),
 		S(IPSEC_MODE_TUNNEL),
 		SPARSE_NULL

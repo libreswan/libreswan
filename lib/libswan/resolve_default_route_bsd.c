@@ -47,7 +47,7 @@
 
 static const struct sparse_names rta_names = {
 	.list = {
-#define E(N) { #N, N, }
+#define E(N) { .name = #N, .value = N, }
 		E(RTA_DST),
 		E(RTA_IFP),
 		E(RTA_IFA),
