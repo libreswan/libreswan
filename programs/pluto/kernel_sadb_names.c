@@ -15,7 +15,7 @@
 
 #include "kernel_sadb.h"
 
-#define S(E) { #E, E }
+#define S(E) { .name = #E, .value = E, }
 
 const struct sparse_names sadb_proto_names = {
 	.list = {

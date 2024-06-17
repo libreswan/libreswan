@@ -39,6 +39,7 @@ struct jambuf;
  */
 
 #define SPARSE_NULL { NULL, 0, NULL, }
+#define SPARSE(N, V) { .name = N, .value = V, }
 
 struct sparse_name {
 	/* field order (backwards?) dictated by started() */

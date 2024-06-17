@@ -46,11 +46,11 @@
 
 static const struct sparse_names kw_failureshunt_names = {
 	.list = {
-		{ "none",        SHUNT_NONE },
-		{ "passthrough", SHUNT_PASS },
-		{ "drop",        SHUNT_DROP },
-		{ "hold",        SHUNT_DROP }, /* alias */
-		{ "reject",      SHUNT_REJECT },
+		SPARSE("none",        SHUNT_NONE),
+		SPARSE("passthrough", SHUNT_PASS),
+		SPARSE("drop",        SHUNT_DROP),
+		SPARSE("hold",        SHUNT_DROP), /* alias */
+		SPARSE("reject",      SHUNT_REJECT),
 		SPARSE_NULL
 	},
 };
@@ -61,9 +61,9 @@ static const struct sparse_names kw_failureshunt_names = {
 
 static const struct sparse_names kw_negotiationshunt_names = {
 	.list = {
-		{ "passthrough", SHUNT_PASS },
-		{ "drop",        SHUNT_HOLD }, /* alias */
-		{ "hold",        SHUNT_HOLD },
+		SPARSE("passthrough", SHUNT_PASS),
+		SPARSE("drop",        SHUNT_HOLD), /* alias */
+		SPARSE("hold",        SHUNT_HOLD),
 		SPARSE_NULL
 	},
 };
@@ -76,14 +76,14 @@ static const struct sparse_names kw_negotiationshunt_names = {
  * yndev have special meanings.
  */
 #define YES_NO(YES, NO)				\
-	{ "yes",        YES },                  \
-       { "no",         NO },			\
-       { "true",       YES },			\
-       { "false",      NO },			\
-       { "on",         YES },			\
-       { "off",        NO },			\
-       { "y",          YES },			\
-       { "n",          NO }
+	SPARSE("yes",        YES),		\
+		SPARSE("no",         NO),	\
+		SPARSE("true",       YES),	\
+		SPARSE("false",      NO),	\
+		SPARSE("on",         YES),	\
+		SPARSE("off",        NO),	\
+		SPARSE("y",          YES),	\
+		SPARSE("n",          NO)
 
 /*
  * Values for keyexchange= and ikev2=
@@ -95,9 +95,9 @@ static const struct sparse_names kw_negotiationshunt_names = {
 
 static const struct sparse_names kw_keyexchange_names = {
 	.list = {
-		{ "ike",  IKE_VERSION_ROOF },
-		{ "ikev1", IKEv1 },
-		{ "ikev2", IKEv2 },
+		SPARSE("ike",  IKE_VERSION_ROOF),
+		SPARSE("ikev1", IKEv1),
+		SPARSE("ikev2", IKEv2),
 		SPARSE_NULL
 	},
 };
@@ -105,27 +105,27 @@ static const struct sparse_names kw_keyexchange_names = {
 static const struct sparse_names kw_ikev2_names = {
 	.list = {
 		/* from fo_{never,permit,propose,insist} */
-		{ "never",     YN_NO },
-		{ "propose",   YN_YES },	/* originally: initiate IKEv2,
+		SPARSE("never",     YN_NO),
+		SPARSE("propose",   YN_YES),	/* originally: initiate IKEv2,
 						 * but allow downgrade to
 						 * IKEv1; accept IKEv1 or
 						 * IKEv2 */
-		{ "permit",    YN_NO },		/* reverse of propose:
+		SPARSE("permit",    YN_NO),		/* reverse of propose:
 						 * initiate IKEv1, but allow
 						 * upgrade to IKEv2; accept
 						 * IKEv1 or IKEv2? */
-		{ "insist",    YN_YES },
+		SPARSE("insist",    YN_YES),
 		YES_NO(YN_YES, YN_NO),
-		{ "always",    YN_YES },
+		SPARSE("always",    YN_YES),
 		SPARSE_NULL
 	},
 };
 
 static const struct sparse_names kw_ddos_names = {
 	.list = {
-		{ "auto",      DDOS_AUTO },
-		{ "busy",      DDOS_FORCE_BUSY },
-		{ "unlimited", DDOS_FORCE_UNLIMITED },
+		SPARSE("auto",      DDOS_AUTO),
+		SPARSE("busy",      DDOS_FORCE_BUSY),
+		SPARSE("unlimited", DDOS_FORCE_UNLIMITED),
 		SPARSE_NULL
 	},
 };
@@ -133,9 +133,9 @@ static const struct sparse_names kw_ddos_names = {
 #ifdef USE_SECCOMP
 static const struct sparse_names kw_seccomp_names = {
 	.list = {
-		{ "enabled", SECCOMP_ENABLED },
-		{ "disabled", SECCOMP_DISABLED },
-		{ "tolerant", SECCOMP_TOLERANT },
+		SPARSE("enabled", SECCOMP_ENABLED),
+		SPARSE("disabled", SECCOMP_DISABLED),
+		SPARSE("tolerant", SECCOMP_TOLERANT),
 		SPARSE_NULL
 	},
 };
@@ -143,13 +143,13 @@ static const struct sparse_names kw_seccomp_names = {
 
 static const struct sparse_names kw_auth_names = {
 	.list = {
-		{ "never",     AUTH_NEVER },
-		{ "secret",    AUTH_PSK },
-		{ "rsasig",    AUTH_RSASIG },
-		{ "rsa",       AUTH_RSASIG }, /* alias */
-		{ "ecdsa",     AUTH_ECDSA },
-		{ "null",      AUTH_NULL },
-		{ "eaponly",   AUTH_EAPONLY },
+		SPARSE("never",     AUTH_NEVER),
+		SPARSE("secret",    AUTH_PSK),
+		SPARSE("rsasig",    AUTH_RSASIG),
+		SPARSE("rsa",       AUTH_RSASIG), /* alias */
+		SPARSE("ecdsa",     AUTH_ECDSA),
+		SPARSE("null",      AUTH_NULL),
+		SPARSE("eaponly",   AUTH_EAPONLY),
 		SPARSE_NULL
 	},
 };
@@ -160,9 +160,9 @@ static const struct sparse_names kw_auth_names = {
 
 static const struct sparse_names kw_sendca_names = {
 	.list = {
-		{ "none",	CA_SEND_NONE },
-		{ "issuer",	CA_SEND_ISSUER },
-		{ "all",	CA_SEND_ALL },
+		SPARSE("none",	CA_SEND_NONE),
+		SPARSE("issuer",	CA_SEND_ISSUER),
+		SPARSE("all",	CA_SEND_ALL),
 		SPARSE_NULL
 	},
 };
@@ -172,13 +172,13 @@ static const struct sparse_names kw_sendca_names = {
  */
 static const struct sparse_names kw_addrfamily_names = {
 	.list = {
-		{ "ipv4",  AF_INET },
-		{ "ipv6",  AF_INET6 },
+		SPARSE("ipv4",  AF_INET),
+		SPARSE("ipv6",  AF_INET6),
 		/* aliases - undocumented on purpose */
-		{ "v4",    AF_INET },
-		{ "inet",  AF_INET },
-		{ "v6",    AF_INET6 },
-		{ "inet6", AF_INET6 },
+		SPARSE("v4",    AF_INET),
+		SPARSE("inet",  AF_INET),
+		SPARSE("v6",    AF_INET6),
+		SPARSE("inet6", AF_INET6),
 		SPARSE_NULL
 	},
 };
@@ -188,11 +188,11 @@ static const struct sparse_names kw_addrfamily_names = {
  */
 static const struct sparse_names kw_pubkey_names = {
 	.list = {
-		{ "",             PUBKEY_PREEXCHANGED },
-		{ "%cert",        PUBKEY_CERTIFICATE },
+		SPARSE("",             PUBKEY_PREEXCHANGED),
+		SPARSE("%cert",        PUBKEY_CERTIFICATE),
 #ifdef USE_DNSSEC
-		{ "%dns",         PUBKEY_DNSONDEMAND },
-		{ "%dnsondemand", PUBKEY_DNSONDEMAND },
+		SPARSE("%dns",         PUBKEY_DNSONDEMAND),
+		SPARSE("%dnsondemand", PUBKEY_DNSONDEMAND),
 #endif
 		SPARSE_NULL
 	},
@@ -204,26 +204,26 @@ static const struct sparse_names kw_pubkey_names = {
 
 static const struct sparse_names kw_remote_peer_type_names = {
 	.list = {
-		{ "cisco",         REMOTE_PEER_CISCO },
+		SPARSE("cisco",         REMOTE_PEER_CISCO),
 		SPARSE_NULL
 	},
 };
 
 static const struct sparse_names kw_xauthby_names = {
 	.list = {
-		{ "file",	XAUTHBY_FILE },
+		SPARSE("file",	XAUTHBY_FILE),
 #ifdef USE_PAM_AUTH
-		{ "pam",	XAUTHBY_PAM },
+		SPARSE("pam",	XAUTHBY_PAM),
 #endif
-		{ "alwaysok",	XAUTHBY_ALWAYSOK },
+		SPARSE("alwaysok",	XAUTHBY_ALWAYSOK),
 		SPARSE_NULL
 	},
 };
 
 static const struct sparse_names kw_xauthfail_names = {
 	.list = {
-		{ "hard",         XAUTHFAIL_HARD },
-		{ "soft",         XAUTHFAIL_SOFT },
+		SPARSE("hard",         XAUTHFAIL_HARD),
+		SPARSE("soft",         XAUTHFAIL_SOFT),
 		SPARSE_NULL
 	},
 };
@@ -234,15 +234,15 @@ static const struct sparse_names kw_xauthfail_names = {
 
 static struct sparse_names kw_host_names = {
 	.list = {
-		{ "%defaultroute",  KH_DEFAULTROUTE },
-		{ "%any",           KH_ANY },
-		{ "%",              KH_IFACE },
-		{ "%oppo",          KH_OPPO },
-		{ "%opportunistic", KH_OPPO },
-		{ "%opportunisticgroup", KH_OPPOGROUP },
-		{ "%oppogroup",     KH_OPPOGROUP },
-		{ "%group",         KH_GROUP },
-		{ "%hostname",      KH_IPHOSTNAME }, /* makes no sense on input */
+		SPARSE("%defaultroute",  KH_DEFAULTROUTE),
+		SPARSE("%any",           KH_ANY),
+		SPARSE("%",              KH_IFACE),
+		SPARSE("%oppo",          KH_OPPO),
+		SPARSE("%opportunistic", KH_OPPO),
+		SPARSE("%opportunisticgroup", KH_OPPOGROUP),
+		SPARSE("%oppogroup",     KH_OPPOGROUP),
+		SPARSE("%group",         KH_GROUP),
+		SPARSE("%hostname",      KH_IPHOSTNAME), /* makes no sense on input */
 		SPARSE_NULL
 	},
 };
@@ -251,9 +251,9 @@ static const struct sparse_names kw_phase2types_names = {
 	.list = {
 		/* note: these POLICY bits happen to fit in an unsigned int */
 		/* note2: ah+esp is no longer supported as per RFC-8221 Section 4 */
-		{ "esp",      ENCAP_PROTO_ESP },
-		{ "ah",       ENCAP_PROTO_AH },
-		{ "default",  ENCAP_PROTO_UNSET }, /* i.e., let pluto decide */
+		SPARSE("esp",      ENCAP_PROTO_ESP),
+		SPARSE("ah",       ENCAP_PROTO_AH),
+		SPARSE("default",  ENCAP_PROTO_UNSET), /* i.e., let pluto decide */
 		SPARSE_NULL
 	},
 };
@@ -264,10 +264,10 @@ static const struct sparse_names kw_phase2types_names = {
 
 static const struct sparse_names kw_sendcert_names = {
 	.list = {
-		{ "never",        CERT_NEVERSEND},
-		{ "sendifasked",  CERT_SENDIFASKED },
-		{ "alwayssend",   CERT_ALWAYSSEND },
-		{ "always",       CERT_ALWAYSSEND },
+		SPARSE("never",        CERT_NEVERSEND),
+		SPARSE("sendifasked",  CERT_SENDIFASKED),
+		SPARSE("alwayssend",   CERT_ALWAYSSEND),
+		SPARSE("always",       CERT_ALWAYSSEND),
 		SPARSE_NULL
 	},
 };
@@ -284,25 +284,25 @@ static const struct sparse_names kw_sendcert_names = {
 
 static const struct sparse_names kw_ocsp_method_names = {
 	.list = {
-		{ "get",      OCSP_METHOD_GET },
-		{ "post",     OCSP_METHOD_POST },
+		SPARSE("get",      OCSP_METHOD_GET),
+		SPARSE("post",     OCSP_METHOD_POST),
 		SPARSE_NULL
 	},
 };
 
 static const struct sparse_names kw_global_ikev1_names = {
 	.list = {
-		{ "accept",      GLOBAL_IKEv1_ACCEPT },
-		{ "reject",     GLOBAL_IKEv1_REJECT },
-		{ "drop",     GLOBAL_IKEv1_DROP },
+		SPARSE("accept",   GLOBAL_IKEv1_ACCEPT),
+		SPARSE("reject",   GLOBAL_IKEv1_REJECT),
+		SPARSE("drop",     GLOBAL_IKEv1_DROP),
 		SPARSE_NULL
 	},
 };
 
 static const struct sparse_names kw_eap_names = {
 	.list = {
-		{ "none", IKE_EAP_NONE }, /* default */
-		{ "tls", IKE_EAP_TLS },
+		SPARSE("none", IKE_EAP_NONE), /* default */
+		SPARSE("tls", IKE_EAP_TLS),
 		SPARSE_NULL
 	},
 };

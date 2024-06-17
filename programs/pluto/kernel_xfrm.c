@@ -133,7 +133,7 @@ static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int netlink_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int netlink_rtm_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
-#define NE(x) { #x, x }	/* Name Entry -- shorthand for sparse_names */
+#define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
 
 static const struct sparse_names xfrm_type_names = {
 	.list = {

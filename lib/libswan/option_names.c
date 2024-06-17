@@ -34,14 +34,14 @@
  */
 
 #define YES_NO(YES, NO)				\
-	{ "yes",        YES },                  \
-       { "no",         NO },			\
-       { "true",       YES },			\
-       { "false",      NO },			\
-       { "on",         YES },			\
-       { "off",        NO },			\
-       { "y",          YES },			\
-       { "n",          NO }
+		SPARSE("yes",        YES),	\
+		SPARSE("no",         NO),	\
+		SPARSE("true",       YES),	\
+		SPARSE("false",      NO),	\
+		SPARSE("on",         YES),	\
+		SPARSE("off",        NO),	\
+		SPARSE("y",          YES),	\
+		SPARSE("n",          NO)
 
 /*
  * Match <BOOLEAN_VALUE> in parser.lex; includes numbers 0/1.
@@ -55,8 +55,8 @@ const struct sparse_names yn_option_names = {
 		 * completely.  Some keywords, such as ipsec-interface,
 		 * interpret "1" and "0".
 		 */
-		{ "1",          YN_YES, },
-		{ "0",          YN_NO, },
+		SPARSE("1",          YN_YES),
+		SPARSE("0",          YN_NO),
 		SPARSE_NULL,
 	},
 };
@@ -79,9 +79,9 @@ const struct sparse_names yn_text_option_names = {
 const struct sparse_names ynf_option_names = {
 	.list = {
 		YES_NO(YNF_YES, YNF_NO),
-		{ "force",     YNF_FORCE },
-		{ "never",     YNF_NO },
-		{ "insist",    YNF_FORCE },
+		SPARSE("force",     YNF_FORCE),
+		SPARSE("never",     YNF_NO),
+		SPARSE("insist",    YNF_FORCE),
 		SPARSE_NULL
 	},
 };
@@ -93,7 +93,7 @@ const struct sparse_names ynf_option_names = {
 const struct sparse_names yne_option_names = {
 	.list = {
 		YES_NO(YNE_YES, YNE_NO),
-		{ "either",	YNE_EITHER },
+		SPARSE("either",	YNE_EITHER),
 		SPARSE_NULL
 	},
 };
@@ -104,11 +104,11 @@ const struct sparse_names yne_option_names = {
 
 const struct sparse_names nppi_option_names = {
 	.list = {
-		{ "never",     NPPI_NEVER },
-		{ "permit",    NPPI_PERMIT },
-		{ "propose",   NPPI_PROPOSE },
-		{ "insist",    NPPI_INSIST },
-		{ "always",    NPPI_INSIST },
+		SPARSE("never",     NPPI_NEVER),
+		SPARSE("permit",    NPPI_PERMIT),
+		SPARSE("propose",   NPPI_PROPOSE),
+		SPARSE("insist",    NPPI_INSIST),
+		SPARSE("always",    NPPI_INSIST),
 		YES_NO(NPPI_PROPOSE, NPPI_NEVER),
 		SPARSE_NULL
 	},
@@ -120,10 +120,10 @@ const struct sparse_names nppi_option_names = {
 
 const struct sparse_names nat_ikev1_method_option_names = {
 	.list = {
-		{ "both",       NATT_BOTH },
-		{ "rfc",        NATT_RFC },
-		{ "drafts",     NATT_DRAFTS },
-		{ "none",       NATT_NONE },
+		SPARSE("both",       NATT_BOTH),
+		SPARSE("rfc",        NATT_RFC),
+		SPARSE("drafts",     NATT_DRAFTS),
+		SPARSE("none",       NATT_NONE),
 		SPARSE_NULL
 	},
 };
@@ -135,7 +135,7 @@ const struct sparse_names nat_ikev1_method_option_names = {
 const struct sparse_names yna_option_names = {
 	.list = {
 		YES_NO(YNA_YES, YNA_NO),
-		{ "auto",	YNA_AUTO },
+		SPARSE("auto",	YNA_AUTO),
 		SPARSE_NULL,
 	},
 };
@@ -147,17 +147,17 @@ const struct sparse_names yna_option_names = {
 const struct sparse_names tcp_option_names = {
 	.list = {
 		YES_NO(IKE_TCP_ONLY, IKE_TCP_NO),
-		{ "fallback", IKE_TCP_FALLBACK },
+		SPARSE("fallback", IKE_TCP_FALLBACK),
 		SPARSE_NULL
 	},
 };
 
 const struct sparse_names nic_offload_option_names = {
 	.list = {
-		{ "no",         NIC_OFFLOAD_NO },
-		{ "crypto",     NIC_OFFLOAD_CRYPTO },
-		{ "packet",     NIC_OFFLOAD_PACKET },
-		{ "yes",        NIC_OFFLOAD_CRYPTO }, /* backwards compat */
+		SPARSE("no",         NIC_OFFLOAD_NO),
+		SPARSE("crypto",     NIC_OFFLOAD_CRYPTO),
+		SPARSE("packet",     NIC_OFFLOAD_PACKET),
+		SPARSE("yes",        NIC_OFFLOAD_CRYPTO), /* backwards compat */
 		SPARSE_NULL
 	},
 };
@@ -168,12 +168,12 @@ const struct sparse_names nic_offload_option_names = {
 
 const struct sparse_names type_option_names = {
 	.list = {
-		{ "tunnel",    KS_TUNNEL },
-		{ "transport", KS_TRANSPORT },
-		{ "pass",      KS_PASSTHROUGH },
-		{ "passthrough", KS_PASSTHROUGH },
-		{ "reject",    KS_REJECT },
-		{ "drop",      KS_DROP },
+		SPARSE("tunnel",      KS_TUNNEL),
+		SPARSE("transport",   KS_TRANSPORT),
+		SPARSE("pass",        KS_PASSTHROUGH),
+		SPARSE("passthrough", KS_PASSTHROUGH),
+		SPARSE("reject",      KS_REJECT),
+		SPARSE("drop",        KS_DROP),
 		SPARSE_NULL
 	},
 };
