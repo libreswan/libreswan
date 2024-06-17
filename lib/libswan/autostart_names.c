@@ -19,13 +19,13 @@
 
 const struct sparse_names autostart_names = {
 	.list = {
-		{ "ignore", AUTOSTART_IGNORE },
-		{ "add",    AUTOSTART_ADD },
-		{ "ondemand",  AUTOSTART_ONDEMAND },
-		{ "route",  AUTOSTART_ROUTE }, /* backwards compatibility alias */
-		{ "up",     AUTOSTART_UP },
-		{ "start",  AUTOSTART_START }, /* alias */
-		{ "keep",   AUTOSTART_KEEP }, /* add plus once up, keep up */
+		SPARSE("ignore", AUTOSTART_IGNORE),
+		SPARSE("add",    AUTOSTART_ADD),
+		SPARSE("ondemand",  AUTOSTART_ONDEMAND),
+		SPARSE("route",  AUTOSTART_ROUTE), /* backwards compatibility alias */
+		SPARSE("up",     AUTOSTART_UP),
+		SPARSE("start",  AUTOSTART_START), /* alias */
+		SPARSE("keep",   AUTOSTART_KEEP), /* add plus once up, keep up */
 		SPARSE_NULL
 	},
 };
