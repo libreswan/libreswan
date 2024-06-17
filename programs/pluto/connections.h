@@ -187,6 +187,7 @@ struct config {
 	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
+	uintmax_t sa_keepalive;
 
 	deltatime_t sa_ike_max_lifetime;
 	deltatime_t sa_ipsec_max_lifetime;

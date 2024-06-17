@@ -69,6 +69,11 @@ void nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data)
 	nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t));
 }
 
+void nl_addattr8(struct nlmsghdr *n, int maxlen, int type, const uint8_t data)
+{
+	nl_addattr_l(n, maxlen, type, &data, sizeof(uint8_t));
+}
+
 const struct nlattr *nl_getattr(const struct nlmsghdr *n, size_t *offset)
 {
 	struct nlattr *attr = (void *)n + NLMSG_HDRLEN + NLMSG_ALIGN(*offset);
