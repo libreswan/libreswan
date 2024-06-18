@@ -36,5 +36,5 @@ void log_error(const struct logger *logger, int error, const char *fmt, ...)
 		jam(buf, ": "); /* mimic perror() */
 		jam_errno(buf, error);
 	}
-	jambuf_to_logger(buf, logger, ERROR_FLAGS);
+	jambuf_to_logger(buf, logger, ERROR_STREAM);
 }

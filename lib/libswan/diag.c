@@ -135,7 +135,7 @@ void llog_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 void fatal_diag(enum pluto_exit_code rc, struct logger *logger, diag_t *diag,
 		const char *fmt, ...)
 {
-	LLOG_JAMBUF(FATAL_FLAGS, logger, buf) {
+	LLOG_JAMBUF(FATAL_STREAM, logger, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

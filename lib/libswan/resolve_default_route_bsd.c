@@ -114,37 +114,37 @@ static enum route_status get_route_1(int s, ip_address dst,
 	/* send */
 	int w = write(s, &msg, msg.hdr.rtm_msglen);
 	if (w < 0) {
-		llog_errno(ERROR_FLAGS, logger, errno, "write failed: ");
+		llog_errno(ERROR_STREAM, logger, errno, "write failed: ");
 		return ROUTE_FATAL;
 	}
 
 	/* recv */
 	int r = read(s, &msg, sizeof(msg));
 	if (r < 0) {
-		llog_errno(ERROR_FLAGS, logger, errno, "write failed: ");
+		llog_errno(ERROR_STREAM, logger, errno, "write failed: ");
 		return ROUTE_FATAL;
 	}
 
 	/* verify */
 	if (sizeof(msg.hdr.rtm_msglen) > (unsigned)r) {
-		llog(ERROR_FLAGS, logger, "response of %d bytes way too small", r);
+		llog(ERROR_STREAM, logger, "response of %d bytes way too small", r);
 		return ROUTE_FATAL;
 	}
 	if (msg.hdr.rtm_msglen > r) {
-		llog(ERROR_FLAGS, logger, "response of %d bytes was truncated", r);
+		llog(ERROR_STREAM, logger, "response of %d bytes was truncated", r);
 		return ROUTE_FATAL;
 	}
 	if (msg.hdr.rtm_version != RTM_VERSION) {
-		llog(ERROR_FLAGS, logger, "response version %d wrong",
+		llog(ERROR_STREAM, logger, "response version %d wrong",
 		     msg.hdr.rtm_version);
 		return ROUTE_FATAL;
 	}
 	if (msg.hdr.rtm_errno != 0) {
-		llog(ERROR_FLAGS, logger, "response failed: %s", strerror(errno));
+		llog(ERROR_STREAM, logger, "response failed: %s", strerror(errno));
 		return ROUTE_FATAL;
 	}
 	if (msg.hdr.rtm_type != RTM_GET) {
-		llog(ERROR_FLAGS, logger, "response type %d wrong",
+		llog(ERROR_STREAM, logger, "response type %d wrong",
 		     msg.hdr.rtm_type);
 		return ROUTE_FATAL;
 	}
@@ -187,7 +187,7 @@ static enum route_status get_route_1(int s, ip_address dst,
 				break;
 			}
 			if (e != NULL) {
-				llog(ERROR_FLAGS, logger,
+				llog(ERROR_STREAM, logger,
 				     "invalid %s", e);
 				return ROUTE_FATAL;
 			}
@@ -204,7 +204,7 @@ enum route_status get_route(ip_address dst, struct ip_route *route, struct logge
 	const struct ip_info *afi = address_type(&dst);
 	int s = cloexec_socket(PF_ROUTE, SOCK_RAW, afi->af);
 	if (s < 0) {
-		llog_errno(ERROR_FLAGS, logger, errno,
+		llog_errno(ERROR_STREAM, logger, errno,
 			   "cloexec_socket(PF_ROUTE, SOCK_RAW, %s) failed: ",
 			   afi->ip_name);
 		return ROUTE_FATAL;

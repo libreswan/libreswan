@@ -50,7 +50,7 @@ void fatal_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						 PEC, NULL, FATAL_FLAGS); \
+						PEC, NULL, FATAL_STREAM); \
 		     BUF != NULL;					\
 		     fatal_logjam_to_logger(&logjam_), BUF = NULL)
 

@@ -27,7 +27,7 @@ void fatal(enum pluto_exit_code pluto_exit_code,
 {
 	struct logjam logjam;
 	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pluto_exit_code,
-						NULL/*where*/, FATAL_FLAGS);
+						NULL/*where*/, FATAL_STREAM);
 	{
 		va_list ap;
 		va_start(ap, fmt);
@@ -42,7 +42,7 @@ void fatal_errno(enum pluto_exit_code pluto_exit_code, const struct logger *logg
 {
 	struct logjam logjam;
 	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pluto_exit_code,
-						NULL/*where*/, FATAL_FLAGS);
+						NULL/*where*/, FATAL_STREAM);
 	{
 		va_list ap;
 		va_start(ap, fmt);
