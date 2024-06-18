@@ -798,7 +798,7 @@ static void process_impair_list(struct logger *logger)
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
 		if (impairment_enabled(impairment)) {
-			LLOG_JAMBUF(RC_COMMENT, logger, buf) {
+			LLOG_JAMBUF(RC_LOG, logger, buf) {
 				jam_impairment(buf, impairment);
 			}
 		}

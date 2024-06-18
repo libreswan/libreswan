@@ -144,7 +144,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 			 * closer to connectionstatus which logs
 			 * "aliases: ...".
 			 */
-			llog(RC_COMMENT, logger, "%s all connections with alias \"%s\"",
+			llog(RC_LOG, logger, "%s all connections with alias \"%s\"",
 			     each->future_tense, m->name);
 		}
 		unsigned nr = 0;
@@ -154,10 +154,10 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		/* footer */
 		if (each->past_tense != NULL) {
 			if (nr == 1) {
-				llog(RC_COMMENT, logger, "%s %u connection",
+				llog(RC_LOG, logger, "%s %u connection",
 				     each->past_tense, nr);
 			} else {
-				llog(RC_COMMENT, logger, "%s %u connections",
+				llog(RC_LOG, logger, "%s %u connections",
 				     each->past_tense, nr);
 			}
 		}

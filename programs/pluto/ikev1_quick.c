@@ -321,7 +321,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		afi = &ipv6_info;
 		break;
 	case ID_FQDN:
-		llog(RC_COMMENT, logger, "%s type is FQDN", which);
+		llog(RC_LOG, logger, "%s type is FQDN", which);
 		return true;
 
 	default:

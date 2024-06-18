@@ -2505,7 +2505,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 				 */
 				ipcomp_inappropriate = false;
-				log_state(RC_COMMENT, st,
+				log_state(RC_LOG, st,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
 			enum_buf b;

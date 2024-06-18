@@ -39,7 +39,7 @@ static struct state *find_impaired_state(so_serial_t so, struct logger *logger)
 {
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		llog(RC_COMMENT, logger, "state #%lu not found", so);
+		llog(RC_LOG, logger, "state #%lu not found", so);
 		return NULL;
 	}
 	return st;
@@ -50,7 +50,7 @@ static struct connection *find_impaired_connection(co_serial_t co,
 {
 	struct connection *c = connection_by_serialno(co);
 	if (c == NULL) {
-		llog(RC_COMMENT, logger, "connection "PRI_CO" not found", co);
+		llog(RC_LOG, logger, "connection "PRI_CO" not found", co);
 		return NULL;
 	}
 	return c;
@@ -133,7 +133,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		struct logger *loggers = merge_loggers(ike->sa.logger, detach_whack, logger);
-		llog(RC_COMMENT, loggers, "IMPAIR: initiating liveness");
+		llog(RC_LOG, loggers, "IMPAIR: initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
 		free_logger(&loggers, HERE);
 		break;
@@ -148,7 +148,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* will log */
 		struct logger *loggers = merge_loggers(st->logger,
 						       true/*detach_whack*/, logger);
-		llog(RC_COMMENT, loggers, "IMPAIR: sending keepalive");
+		llog(RC_LOG, loggers, "IMPAIR: sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		free_logger(&loggers, HERE);
 		break;

@@ -41,7 +41,7 @@ struct logger *show_logger(struct show *s);
 struct jambuf *show_jambuf(struct show *s, enum rc_type rc);
 void show_to_logger(struct show *s);
 #define SHOW_JAMBUF(S, BUF)					\
-	for (struct jambuf *BUF = show_jambuf(S, RC_COMMENT);	\
+	for (struct jambuf *BUF = show_jambuf(S, RC_LOG);	\
 	     BUF != NULL;					\
 	     show_to_logger(S), BUF = NULL)
 
@@ -83,7 +83,7 @@ void show_blank(struct show *s);
  * If necessary show the separator (aka blank line), and then show the
  * message.  Suppress further separation.
  *
- * "comment" comes from RC_COMMENT, better name?
+ * "comment" comes from RC_LOG, better name?
  */
 
 void show(struct show *s, const char *message, ...) PRINTF_LIKE(2);

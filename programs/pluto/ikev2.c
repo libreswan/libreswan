@@ -295,7 +295,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 				break;
 			}
 			esb_buf eb;
-			llog(RC_COMMENT, log,
+			llog(RC_LOG, log,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 			     str_enum(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;

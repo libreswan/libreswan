@@ -3375,7 +3375,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
 						  host_afi, &addr);
 			if (er != NULL) {
-				llog(RC_COMMENT, c->logger,
+				llog(RC_LOG, c->logger,
 				     "failed to resolve '%s=%s' at load time: %s",
 				     we->leftright, we->host_addr_name, er);
 			} else {

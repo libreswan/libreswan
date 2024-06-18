@@ -156,7 +156,7 @@ void whack_impair_call_connection_event_handler(struct connection *c,
 		return;
 	}
 	enum_buf eb;
-	llog(RC_COMMENT, logger, "IMPAIR: no %s event for connection found",
+	llog(RC_LOG, logger, "IMPAIR: no %s event for connection found",
 	     str_enum_short(&connection_event_kind_names, event_kind, &eb));
 }
 

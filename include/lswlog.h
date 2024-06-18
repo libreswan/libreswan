@@ -50,9 +50,6 @@ enum rc_type {
 
 	RC_LOG = 2,			/* message aimed at log (does
 					 * not affect exit status) */
-#define RC_COMMENT RC_LOG		/* non-commital utterance with
-					 * 000 prefix(does not affect
-					 * exit status) */
 #define RC_LOG_SERIOUS RC_LOG		/* serious message aimed at
 					 * log (does not affect exit
 					 * status) */

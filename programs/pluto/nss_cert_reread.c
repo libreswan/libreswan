@@ -53,7 +53,7 @@ static void reread_end_cert(struct host_end *host_end,
 	CERT_DestroyCertificate(old_cert);
 	host_end_config->cert.nss_cert = new_cert;
 
-	llog(RC_COMMENT, logger,
+	llog(RC_LOG, logger,
 	     "reloaded %scert='%s'",
 	     host_end_config->leftright, cert_nickname(&host_end_config->cert));
 }
