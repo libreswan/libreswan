@@ -267,7 +267,7 @@ enum retransmit_action retransmit(struct state *st)
 	rt->nr_retransmits++;
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LLOG_JAMBUF(RC_RETRANSMISSION, st->logger, buf) {
+	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 		jam(buf, "%s: retransmission; will wait ",
 			st->st_state->name);
 		jam_deltatime(buf, rt->delay);

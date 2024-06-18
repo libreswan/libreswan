@@ -361,7 +361,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			 */
 			if (st->st_v1_last_transition->timeout_event == EVENT_v1_DISCARD ||
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
-				log_state(RC_RETRANSMISSION, st,
+				log_state(RC_LOG, st,
 					  "retransmitting in response to duplicate packet; already %s",
 					  st->st_state->name);
 				resend_recorded_v1_ike_msg(st, "retransmit in response to duplicate");
