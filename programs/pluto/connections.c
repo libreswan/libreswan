@@ -916,7 +916,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			enum_buf pkb;
-			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+			llog(LOG_STREAM/*not-whack-for-now*/, logger,
 			     "loaded private key matching %s%s CKAID %s",
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     str_ckaid(host_config->ckaid, &ckb));
@@ -959,7 +959,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 				    str_ckaid(host_config->ckaid, &ckb), err);
 			} else {
 				ckaid_buf ckb;
-				llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+				llog(LOG_STREAM/*not-whack-for-now*/, logger,
 				     "loaded private key matching %s CKAID %s",
 				     leftright,
 				     str_ckaid(host_config->ckaid, &ckb));
@@ -1583,7 +1583,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 		dbg("no private key matching %s certificate %s: %s",
 		    leftright, nickname, ugh);
 	} else if (load_needed) {
-		llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+		llog(LOG_STREAM/*not-whack-for-now*/, logger,
 		     "loaded private key matching %s certificate '%s'",
 		     leftright, nickname);
 	}
@@ -2788,7 +2788,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.alg_is_ok = ike_alg_is_ike,
 			.pfs = pfs,
 			.check_pfs_vs_dh = false,
-			.logger_rc_flags = ALL_STREAMS|RC_LOG,
+			.logger_rc_flags = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (wm->ike == NULL),
@@ -2818,7 +2818,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 				ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
 							       config->ike_proposals.p,
 							       c->logger);
-			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+			llog_v2_proposals(LOG_STREAM/*not-whack*/, c->logger,
 					  config->v2_ike_proposals,
 					  "IKE SA proposals (connection add)");
 		}
@@ -2847,7 +2847,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.alg_is_ok = kernel_alg_is_ok,
 			.pfs = pfs,
 			.check_pfs_vs_dh = true,
-			.logger_rc_flags = ALL_STREAMS|RC_LOG,
+			.logger_rc_flags = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (wm->esp == NULL),
@@ -2897,7 +2897,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (c->config->ike_version == IKEv2) {
 			config->child_sa.v2_ike_auth_proposals =
 				get_v2_IKE_AUTH_new_child_proposals(c);
-			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+			llog_v2_proposals(LOG_STREAM/*not-whack*/, c->logger,
 					  config->child_sa.v2_ike_auth_proposals,
 					  "Child SA proposals (connection add)");
 		}

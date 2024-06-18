@@ -1467,7 +1467,7 @@ static bool pending_dispatch_ok(struct connection *c,
 		 * acquires triggering simultaneously) or due to an
 		 * initiate being used to force a rekey.
 		 */
-		LLOG_JAMBUF(LOG_STREAM, logger, buf) {
+		LLOG_JAMBUF(LOG_STREAM/*not-whack*/, logger, buf) {
 			jam_string(buf, "connection is already in state ");
 			jam_enum_human(buf, &routing_names, c->routing.state);
 		}

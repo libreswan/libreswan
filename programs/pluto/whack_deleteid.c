@@ -41,7 +41,7 @@ void whack_deleteid(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	llog(LOG_STREAM|RC_LOG, show_logger(s),
+	llog(LOG_STREAM/*not-whack*/, show_logger(s),
 	     "received whack command to delete connections with peer ID '%s'", m->name);
 
 	struct state_filter sf = {

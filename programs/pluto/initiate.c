@@ -244,7 +244,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
 		 */
-		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
+		llog(LOG_STREAM/*not-whack*/, d->logger, "instantiated connection");
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 
@@ -262,7 +262,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
 		 */
-		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
+		llog(LOG_STREAM/*not-whack*/, d->logger, "instantiated connection");
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 

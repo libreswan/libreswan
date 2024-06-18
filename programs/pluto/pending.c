@@ -112,7 +112,7 @@ void append_pending(struct ike_sa *ike,
 	if (only != NO_STREAM) {
 		address_buf b;
 		state_buf sab;
-		llog(only | RC_LOG, p->logger,
+		llog(only, p->logger,
 		     "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
 		     /* "Child SA" or "IPsec SA" */
 		     c->config->ike_info->child_sa_name,
@@ -220,7 +220,7 @@ void release_pending_whacks(struct state *st, err_t story)
 
 		if (!same_whack(st->logger, p->logger)) {
 			/* XXX: why not the log file? */
-			llog(WHACK_STREAM|RC_LOG, p->logger,
+			llog(WHACK_STREAM, p->logger,
 			     "%s for IKE SA, but releasing whack for pending %s",
 			     story,
 			     /* "IPsec SA" or "CHILD SA" */

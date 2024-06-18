@@ -2448,7 +2448,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 						   logger);
 	}
 
-	llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, logger, proposals,
+	llog_v2_proposals(LOG_STREAM/*not-whack*/, logger, proposals,
 			  "Child SA proposals (new child)");
 	return proposals;
 }

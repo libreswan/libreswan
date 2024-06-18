@@ -645,7 +645,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 		 * XXX: preserve verify_end_cert()'s behaviour? only
 		 * send this to the file
 		 */
-		llog(RC_LOG|LOG_STREAM, logger, "NSS: end certificate invalid");
+		llog(LOG_STREAM/*not-whack*/, logger, "NSS: end certificate invalid");
 		release_certs(&result.cert_chain);
 		result.harmless = false;
 		return result;

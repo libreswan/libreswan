@@ -64,7 +64,7 @@ lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)
 		if (limiter->count > limit) {
 			is_limited = true;
 		} else if (limiter->count == limit) {
-			llog(LOG_STREAM, logger,
+			llog(LOG_STREAM/*not-whack*/, logger,
 			     "%s rate limited log reached limit of %u entries",
 			     limiter->what, limit);
 			limiter->count++;
@@ -80,7 +80,7 @@ lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)
 		return (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY);
 	}
 
-	return RC_LOG|LOG_STREAM;
+	return LOG_STREAM;
 }
 
 void llog_md(const struct msg_digest *md,

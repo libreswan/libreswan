@@ -748,7 +748,7 @@ static void process_impair_update(const struct impairment *impairment,
 				  const struct whack_impair *wc,
 				  struct logger *logger)
 {
-	LLOG_JAMBUF(LOG_STREAM, logger, buf) {
+	LLOG_JAMBUF(LOG_STREAM/*not-whack*/, logger, buf) {
 		/*
 		 * XXX: lower case "impair:" for updates; upper case
 		 * "IMPAIR:" for actions.
@@ -824,7 +824,7 @@ bool process_impair(const struct whack_impair *wc,
 		process_impair_list(logger);
 		return true;
 	} else if (wc->what >= elemsof(impairments)) {
-		llog(RC_LOG|ERROR_STREAM, logger,
+		llog(ERROR_STREAM, logger,
 			    "impairment %u out-of-range", wc->what);
 		return false;
 	}
@@ -845,7 +845,7 @@ bool process_impair(const struct whack_impair *wc,
 	case CALL_IMPAIR_MESSAGE_DUPLICATE:
 	case CALL_IMPAIR_MESSAGE_REPLAY:
 		if (action == NULL) {
-			llog(RC_LOG|DEBUG_STREAM, logger,
+			llog(DEBUG_STREAM, logger,
 				    "no action for impairment %s", impairment->what);
 			return false;
 		}

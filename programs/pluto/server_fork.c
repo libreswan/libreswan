@@ -199,7 +199,7 @@ static bool dump_fd(struct pid_entry *pid_entry)
 		if (line.ptr == NULL) {
 			break;
 		}
-		LLOG_JAMBUF(RC_LOG|LOG_STREAM, pid_entry->logger, buf) {
+		LLOG_JAMBUF(LOG_STREAM/*not-whack*/, pid_entry->logger, buf) {
 			jam_string(buf, pid_entry->name);
 			jam_string(buf, ": ");
 			jam_sanitized_hunk(buf, line);

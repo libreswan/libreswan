@@ -245,7 +245,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 			dbg("no private key: %s", err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
-			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
+			llog(LOG_STREAM/*not-whack-for-now*/, logger,
 				    "loaded private key matching CKAID %s",
 				    str_ckaid(ckaid, &ckb));
 		}

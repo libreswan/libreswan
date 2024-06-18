@@ -673,7 +673,7 @@ void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 		log_stream = ALL_STREAMS;
 	}
 
-	LLOG_JAMBUF(RC_LOG | log_stream, logger, buf) {
+	LLOG_JAMBUF(log_stream, logger, buf) {
 		const enum ikev2_exchange ix = md->hdr.isa_xchg;
 		jam(buf, "dropping unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);

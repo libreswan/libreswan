@@ -687,7 +687,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 			 * lacks a counted reference to the private
 			 * key.
 			 */
-			llog(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
+			llog(LOG_STREAM/*not-whack-grrr*/, logger,
 				    "reloaded private key matching %s certificate '%s'",
 				    c->local->config->leftright, nickname);
 		}
@@ -734,7 +734,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 			 * key.
 			 */
 			ckaid_buf ckb;
-			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
+			llog(LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
 				    c->local->config->leftright, str_ckaid(c->local->host.config->ckaid, &ckb));
 		}

@@ -686,7 +686,7 @@ void find_and_active_redirect_states(const char *conn_name,
 			/* cycle through the list of redirects */
 			shunk_t active_dest = next_redirect_dest(&active_dests);
 			/* not whack; there could be thousands? */
-			llog_sa(RC_LOG|LOG_STREAM, ike, "redirecting to: "PRI_SHUNK,
+			llog_sa(LOG_STREAM/*not-whack*/, ike, "redirecting to: "PRI_SHUNK,
 				pri_shunk(active_dest));
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");

@@ -31,7 +31,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.version = ike_version,				\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
-			.logger_rc_flags = ERROR_STREAM|RC_LOG,		\
+			.logger_rc_flags = ERROR_STREAM,		\
 			.logger = logger,				\
 			.check_pfs_vs_dh = CHECK,			\
 			.ignore_parser_errors = ignore_parser_errors,	\
