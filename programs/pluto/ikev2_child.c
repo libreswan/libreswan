@@ -111,7 +111,7 @@ static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 	dbg("calculated compression CPI=%d", h_ipcomp_cpi);
 	if (h_ipcomp_cpi < IPCOMP_FIRST_NEGOTIATED) {
 		/* get_my_cpi() failed */
-		llog_sa(RC_LOG_SERIOUS, larval_child,
+		llog_sa(RC_LOG, larval_child,
 			"kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
 		return false;
 	}
@@ -357,7 +357,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	} else {
 		/* we should have received a matching mode request */
 		enum_buf dmb, rmb;
-		llog_sa(RC_LOG_SERIOUS, larval_child,
+		llog_sa(RC_LOG, larval_child,
 			"policy dictates %s, but peer requested %s",
 			str_enum(&kernel_mode_stories, required_mode, &dmb),
 			str_enum(&kernel_mode_stories, requested_mode, &rmb));
@@ -388,14 +388,14 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			}
 
 			if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-				llog_sa(RC_LOG_SERIOUS, larval_child,
+				llog_sa(RC_LOG, larval_child,
 					"unsupported IPCOMP compression algorithm %d",
 					n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
 				return v2N_NO_PROPOSAL_CHOSEN;
 			}
 
 			if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-				llog_sa(RC_LOG_SERIOUS, larval_child,
+				llog_sa(RC_LOG, larval_child,
 					"illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
 				return v2N_NO_PROPOSAL_CHOSEN;
 			}
@@ -581,7 +581,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 child_proposals, child->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
 		enum_buf nb;
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			"%s failed, responder SA processing returned %s",
 			what, str_enum_short(&v2_notification_names, n, &nb));
 		return n;
@@ -605,7 +605,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	proto_info->protocol = protocol;
 	if (!ikev2_proposal_to_proto_info(child->sa.st_v2_accepted_proposal, proto_info,
 					  child->sa.logger)) {
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			"%s proposed/accepted a proposal we don't actually support!", what);
 		return v2N_NO_PROPOSAL_CHOSEN; /* lie */
 	}
@@ -628,7 +628,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	case SA_INITIATOR:
 		pexpect(expect_accepted_proposal);
 		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"expecting %s but remote's accepted proposal includes %s",
 				child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
 				accepted_dh->common.fqn);
@@ -773,7 +773,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	 */
 	if (md->v2N_error != v2N_NOTHING_WRONG) {
 		esb_buf esb;
-		llog_sa(RC_LOG_SERIOUS, child, "received ERROR NOTIFY (%d): %s ",
+		llog_sa(RC_LOG, child, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
 			  str_enum(&v2_notification_names, md->v2N_error, &esb));
 		return md->v2N_error;
@@ -795,7 +795,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	if (required_mode != accepted_mode) {
 		/* we should have accepted a matching response */
 		enum_buf amb, rmb;
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			"policy dictates %s, but peer requested %s",
 			str_enum(&kernel_mode_stories, required_mode, &rmb),
 			str_enum(&kernel_mode_stories, accepted_mode, &amb));
@@ -814,7 +814,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 		if (!c->config->child_sa.ipcomp) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
 			return v2N_NO_PROPOSAL_CHOSEN;
 		}
@@ -827,14 +827,14 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		}
 
 		if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				  "Unsupported IPCOMP compression method %d",
 			       n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
 
 		if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
@@ -1109,7 +1109,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 		 * didn't ask for?
 		 */
 		if (has_v2_IKE_AUTH_child_payloads(response_md)) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
@@ -1145,7 +1145,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			 * test changes.
 			 */
 			enum_buf esb;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"IKE_AUTH response rejected Child SA with %s",
 				str_enum_short(&v2_notification_names, n, &esb));
 			connection_buf cb;
@@ -1171,7 +1171,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 
 	/* Expect CHILD SA payloads. */
 	if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
 		return v2N_TS_UNACCEPTABLE;
 	}
@@ -1196,7 +1196,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			 * not really anything to here... but it would
 			 * be worth unpending again.
 			 */
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				  "missing v2CP reply, not attempting to setup child SA");
 			return v2N_TS_UNACCEPTABLE;
 		}
@@ -1209,12 +1209,12 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	if (n != v2N_NOTHING_WRONG) {
 		if (v2_notification_fatal(n)) {
 			enum_buf nb;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"CHILD SA encountered fatal error: %s",
 				str_enum_short(&v2_notification_names, n, &nb));
 		} else {
 			enum_buf nb;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"CHILD SA failed: %s",
 				str_enum_short(&v2_notification_names, n, &nb));
 		}

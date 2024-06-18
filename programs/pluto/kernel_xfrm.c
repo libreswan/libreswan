@@ -93,7 +93,7 @@
 #include "kernel_xfrm.h"
 #include "netlink_attrib.h"
 #include "log.h"
-#include "whack.h"	/* for RC_LOG_SERIOUS */
+#include "whack.h"	/* for RC_LOG */
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
@@ -540,7 +540,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 
 	if (rsp.n.nlmsg_len > (size_t) r) {
 		sparse_buf sb;
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
 		     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
 		     description, story,
@@ -573,7 +573,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	}
 	if (rsp.n.nlmsg_type != expected_resp_type) {
 		sparse_buf sb1, sb2;
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
 		     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb1),
 		     description, story,
@@ -1541,7 +1541,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 */
 	if (sa->encap_type != NULL && sa->nic_offload.dev != NULL &&
 	    sa->nic_offload.type == KERNEL_OFFLOAD_PACKET) {
-		llog(RC_LOG_SERIOUS, logger, "connection cannot be NAT'ed and use nic-offload=packet");
+		llog(RC_LOG, logger, "connection cannot be NAT'ed and use nic-offload=packet");
 		return false;
 	}
 
@@ -1674,7 +1674,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	if (sa->integ_key.len > 0) {
 		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "XFRM: unknown authentication algorithm: %s",
 				    sa->integ->common.fqn);
 			return false;
@@ -1729,7 +1729,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 		const char *calg_name = sa->ipcomp->kernel.xfrm_name;
 		if (calg_name == NULL) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "unsupported compression algorithm: %s",
 			     sa->ipcomp->common.fqn);
 			return false;
@@ -1750,7 +1750,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 
 		if (name == NULL) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "unknown encryption algorithm: %s",
 				    sa->encrypt->common.fqn);
 			return false;
@@ -1934,7 +1934,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 				     &recv_errno, logger);
 	if (!ret && recv_errno == ESRCH &&
 	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
 	return ret;
@@ -2321,7 +2321,7 @@ static void xfrm_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	struct xfrm_user_expire *ue = NLMSG_DATA(n);
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*ue))) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			"netlink_expire got message with length %zu < %zu bytes; ignore message",
 			(size_t) n->nlmsg_len, sizeof(*ue));
 		return;

@@ -537,7 +537,7 @@ static void set_established_outbound(struct connection *c,
 				if (ike->sa.st_serialno != c->routing.owner[owner]) {
 					/* child/ike have crossed streams */
 					enum_buf ob;
-					llog(RC_LOG_SERIOUS, child->sa.logger,
+					llog(RC_LOG, child->sa.logger,
 					     "Child SA with IKE SA "PRI_SO" share their connection, .%s "PRI_SO" should be the IKE SA, updating "PRI_WHERE,
 					     pri_so(ike->sa.st_serialno),
 					     str_enum(&connection_owner_names, owner, &ob),
@@ -2167,7 +2167,7 @@ static bool dispatch_1(enum routing_event event,
 			 * XXX: should install routing+policy!
 			 */
 			add_policy(c, policy.route);
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "policy ROUTE added to negotiating connection");
 			return true;
 		}
@@ -2175,7 +2175,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
 		add_policy(c, policy.route);
-		llog(RC_LOG_SERIOUS, logger, "connection already routed");
+		llog(RC_LOG, logger, "connection already routed");
 		return true;
 
 	case X(ROUTE, ROUTED_TUNNEL, PERMANENT):

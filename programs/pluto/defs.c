@@ -28,7 +28,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "log.h"
-#include "whack.h"      /* for RC_LOG_SERIOUS */
+#include "whack.h"      /* for RC_LOG */
 
 bool all_zero(const unsigned char *m, size_t len)
 {

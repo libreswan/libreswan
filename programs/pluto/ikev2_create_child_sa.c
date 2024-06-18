@@ -534,7 +534,7 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 		     pri_so(larval->sa.st_v2_rekey_pred),
 		     pri_so(ike->sa.st_serialno));
 	} else {
-		llog(RC_LOG_SERIOUS, ike->sa.logger, "rekey of Child SA abandoned");
+		llog(RC_LOG, ike->sa.logger, "rekey of Child SA abandoned");
 	}
 }
 
@@ -702,7 +702,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 * XXX: It isn't clear what happens when a rekey
 		 * responder also wants to initiate a child exchange.
 		 */
-		llog_sa(RC_LOG_SERIOUS, larval_child,
+		llog_sa(RC_LOG, larval_child,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
 		connection_delete_child(&larval_child, HERE);
@@ -919,7 +919,7 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 		     "sent CREATE_CHILD_SA request to create Child SA using IKE SA "PRI_SO,
 		     pri_so(ike->sa.st_serialno));
 	} else {
-		llog(RC_LOG_SERIOUS, ike->sa.logger, "create Child SA abandoned");
+		llog(RC_LOG, ike->sa.logger, "create Child SA abandoned");
 	}
 }
 
@@ -1030,7 +1030,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		 * XXX: It isn't clear what happens when a rekey
 		 * responder also wants to initiate a child exchange.
 		 */
-		llog_sa(RC_LOG_SERIOUS, larval_child,
+		llog_sa(RC_LOG, larval_child,
 			"IKE SA #%lu no longer viable for initiating a Child SA",
 			ike->sa.st_serialno);
 		connection_delete_child(&larval_child, HERE);
@@ -1370,7 +1370,7 @@ static stf_status reject_CREATE_CHILD_SA_response(struct ike_sa *ike,
 	 * v2N_NOTHING_WRONG.  After all, problem solved.
 	 */
 #if 0
-	llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but initiator rejected Child SA response");
+	llog_sa(RC_LOG, ike, "IKE SA established but initiator rejected Child SA response");
 #endif
 	ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
 	passert((*larval) != NULL);
@@ -1622,7 +1622,7 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 		     pri_so(larval->sa.st_v2_rekey_pred),
 		     pri_so(ike->sa.st_serialno));
 	} else {
-		llog(RC_LOG_SERIOUS, ike->sa.logger, "rekey of IKE SA abandoned");
+		llog(RC_LOG, ike->sa.logger, "rekey of IKE SA abandoned");
 	}
 }
 
@@ -1795,7 +1795,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.logger)) {
-		llog_sa(RC_LOG_SERIOUS, larval_ike,
+		llog_sa(RC_LOG, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
 		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1983,7 +1983,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	}
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.logger)) {
-		llog_sa(RC_LOG_SERIOUS, larval_ike,
+		llog_sa(RC_LOG, larval_ike,
 			"IKE responder accepted an unsupported algorithm");
 		/* free early return items */
 		free_ikev2_proposal(&larval_ike->sa.st_v2_accepted_proposal);
@@ -2100,7 +2100,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			{
 				if (ike->sa.st_oakley.ta_dh == NULL) {
 					enum_buf nb;
-					llog_sa(RC_LOG_SERIOUS, (*larval_child),
+					llog_sa(RC_LOG, (*larval_child),
 						"CREATE_CHILD_SA failed with error notification %s response but no KE was sent",
 						str_enum_short(&v2_notification_names, n, &nb));
 					status = STF_FATAL;
@@ -2129,7 +2129,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
 
 				enum_buf nb, sgb;
-				llog_sa(RC_LOG_SERIOUS, (*larval_child),
+				llog_sa(RC_LOG, (*larval_child),
 					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
 					str_enum_short(&v2_notification_names, n, &nb),
 					str_enum_short(&oakley_group_names, sg.sg_group, &sgb),
@@ -2140,7 +2140,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			default:
 			{
 				enum_buf esb;
-				llog_sa(RC_LOG_SERIOUS, (*larval_child),
+				llog_sa(RC_LOG, (*larval_child),
 					"CREATE_CHILD_SA failed with error notification %s",
 					str_enum_short(&v2_notification_names, n, &esb));
 				dbg("re-add child to pending queue with exponential back-off?");

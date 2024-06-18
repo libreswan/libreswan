@@ -126,7 +126,7 @@ bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 	 */
 
 	if (nonce.len < IKEv2_MINIMUM_NONCE_SIZE || nonce.len > IKEv2_MAXIMUM_NONCE_SIZE) {
-		llog(RC_LOG_SERIOUS, logger, "%s length %zu not between %d and %d",
+		llog(RC_LOG, logger, "%s length %zu not between %d and %d",
 			    name, nonce.len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return false;
 	}
@@ -147,7 +147,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 		diag_t d = pbs_in_thing(&pbs, nh_value,
 					"hash algorithm identifier (network ordered)");
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 			return false;
 		}
 		enum ikev2_hash_algorithm h_value = ntohs(nh_value);

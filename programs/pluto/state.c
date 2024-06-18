@@ -544,7 +544,7 @@ static bool get_initiator_endpoints(struct connection *c,
 
 		ldbg(c->logger, "TCP: using UDP endpoints");
 		if (!pluto_listen_udp) {
-			llog(RC_LOG_SERIOUS, c->logger,
+			llog(RC_LOG, c->logger,
 			     "initiating UDP requires listen-udp=yes");
 			return false;
 		}

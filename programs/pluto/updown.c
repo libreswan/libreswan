@@ -328,7 +328,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix, const char
 				return true;
 			}
 #endif
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "unable to popen %s%s command",
 				    verb, verb_suffix);
 			return false;
@@ -374,19 +374,19 @@ static bool invoke_command(const char *verb, const char *verb_suffix, const char
 				return false;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {
-					llog(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG, logger,
 						    "%s%s command exited with status %d",
 						    verb, verb_suffix,
 						    WEXITSTATUS(r));
 					return false;
 				}
 			} else if (WIFSIGNALED(r)) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "%s%s command exited with signal %d",
 					    verb, verb_suffix, WTERMSIG(r));
 				return false;
 			} else {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "%s%s command exited with unknown status %d",
 					    verb, verb_suffix, r);
 				return false;
@@ -449,7 +449,7 @@ static bool do_updown_verb(const char *verb,
 	if (!fmt_common_shell_out(common_shell_out_str,
 				  sizeof(common_shell_out_str), c, sr,
 				  child)) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "%s%s command too long!", verb,
 			    verb_suffix);
 		return false;
@@ -464,7 +464,7 @@ static bool do_updown_verb(const char *verb,
 				 common_shell_out_str,
 				 c->local->config->child.updown);
 	if (cmd == NULL) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "%s%s command too long!", verb,
 			    verb_suffix);
 		return false;

@@ -77,7 +77,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	uint8_t id_byte;
 	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d,
+		llog_diag(RC_LOG, ike->sa.logger, &d,
 			  "reading PPK ID: ");
 		return false;
 
@@ -93,7 +93,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	default:
 	{
 		enum_buf eb;
-		llog_sa(RC_LOG_SERIOUS, ike, "PPK_ID type %d (%s) not supported",
+		llog_sa(RC_LOG, ike, "PPK_ID type %d (%s) not supported",
 			id_type, str_enum(&ikev2_ppk_id_type_names, id_type, &eb));
 		return false;
 	}
@@ -102,12 +102,12 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	shunk_t data = pbs_in_left(&pbs);
 
 	if (data.len == 0) {
-		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID data must be at least 1 byte");
+		llog_sa(RC_LOG, ike, "PPK ID data must be at least 1 byte");
 		return false;
 	}
 
 	if (data.len > PPK_ID_MAXLEN) {
-		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID %zu byte length exceeds %u",
+		llog_sa(RC_LOG, ike, "PPK ID %zu byte length exceeds %u",
 			data.len, PPK_ID_MAXLEN);
 		return false;
 	}
@@ -193,7 +193,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				}
 				return true;
 			} else {
-				llog_sa(RC_LOG_SERIOUS, ike,
+				llog_sa(RC_LOG, ike,
 					  "no compatible hash algo");
 				return false;
 			}

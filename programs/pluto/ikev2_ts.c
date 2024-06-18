@@ -1134,7 +1134,7 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 			if (fit_ts_to_selector(&ns, ts, selector,
 						selector_fit, indent)) {
 				if (!append_ns_to_nsp(&ns, nsp, indent)) {
-					llog(RC_LOG_SERIOUS, indent.logger, "TS overflow");
+					llog(RC_LOG, indent.logger, "TS overflow");
 					return false;
 				}
 				match = matched = true;
@@ -1149,7 +1149,7 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 			 * about initiator?
 			 */
 			if (!append_block_to_nsp(selector, nsp)) {
-				llog(RC_LOG_SERIOUS, indent.logger, "TS overflow");
+				llog(RC_LOG, indent.logger, "TS overflow");
 				return false;
 			}
 		}
@@ -1513,7 +1513,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		PEXPECT(child->sa.logger, is_labeled_parent(cc));
 		struct narrowed_selector_payloads nsps = {0};
 		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, indent)) {
-			llog_sa(RC_LOG_SERIOUS, child, "proposed Traffic Selectors do not match labeled IKEv2 connection");
+			llog_sa(RC_LOG, child, "proposed Traffic Selectors do not match labeled IKEv2 connection");
 			return false;
 		}
 		best = (struct best) {
@@ -1583,7 +1583,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		enum_buf kb;
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		       str_enum(&connection_kind_names, cc->local->kind, &kb), cc->name);
-		llog_sa(RC_LOG_SERIOUS, child, "no IKEv2 connection found with compatible Traffic Selectors");
+		llog_sa(RC_LOG, child, "no IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}
 
@@ -1938,7 +1938,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	struct traffic_selector_payloads their_tsps = empty_traffic_selector_payloads;
 
 	if (!v2_parse_tsps(md, &their_tsps, child->sa.logger)) {
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			  "received malformed TSi/TSr payload(s)");
 		return false;
 	}
@@ -1967,7 +1967,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	if (!fit_tsps_to_ends(&best, &their_tsps, &ends,
 			      responder_selector_fit,
 			      responder_sec_label_fit, indent)) {
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			  "rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
 		return false;
 	}

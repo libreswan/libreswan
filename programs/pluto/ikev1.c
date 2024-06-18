@@ -191,7 +191,7 @@ void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *tran
 
 stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
 {
-	log_state(RC_LOG_SERIOUS, st, "unexpected message received in state %s",
+	log_state(RC_LOG, st, "unexpected message received in state %s",
 		  st->st_state->name);
 	return STF_IGNORE;
 }
@@ -282,7 +282,7 @@ stf_status informational(struct state *st, struct msg_digest *md)
 			struct logger *logger = st != NULL ? st->logger :
 							     md->logger;
 			enum_buf eb;
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "received and ignored notification payload: %s",
 			     str_enum_short(&v1_notification_names, n->isan_type, &eb));
 			return STF_IGNORE;
@@ -293,7 +293,7 @@ stf_status informational(struct state *st, struct msg_digest *md)
 		if (md->chain[ISAKMP_NEXT_D] == NULL) {
 			const struct logger *logger = (st != NULL ? st->logger :
 						 md->logger);
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "received and ignored empty informational notification payload");
 		}
 		return STF_IGNORE;
@@ -366,7 +366,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 					  st->st_state->name);
 				resend_recorded_v1_ike_msg(st, "retransmit in response to duplicate");
 			} else {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG, st,
 					  "discarding duplicate packet -- exhausted retransmission; already %s",
 					  st->st_state->name);
 			}
@@ -556,7 +556,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			if (!IS_V1_ISAKMP_ENCRYPTED(st->st_state->kind)) {
 				if (!quiet) {
-					log_state(RC_LOG_SERIOUS, st,
+					log_state(RC_LOG, st,
 						  "encrypted Informational Exchange message is invalid because no key is known");
 				}
 				/* XXX Could send notification back */
@@ -565,7 +565,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 				if (!quiet) {
-					log_state(RC_LOG_SERIOUS, st,
+					log_state(RC_LOG, st,
 						  "Informational Exchange message is invalid because it has a Message ID of 0");
 				}
 				/* XXX Could send notification back */
@@ -574,7 +574,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			if (!unique_msgid(st, md->hdr.isa_msgid)) {
 				if (!quiet) {
-					log_state(RC_LOG_SERIOUS, st,
+					log_state(RC_LOG, st,
 						  "Informational Exchange message is invalid because it has a previously used Message ID (0x%08" PRIx32 " )",
 						  md->hdr.isa_msgid);
 				}
@@ -590,7 +590,7 @@ void process_v1_packet(struct msg_digest *md)
 		} else {
 			if (st != NULL &&
 			    IS_V1_ISAKMP_AUTHENTICATED(st->st_state)) {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG, st,
 					  "Informational Exchange message must be encrypted");
 				/* XXX Could send notification back */
 				return;
@@ -658,14 +658,14 @@ void process_v1_packet(struct msg_digest *md)
 
 
 			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG, st,
 					  "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED /* XXX ? */);
 				return;
 			}
 
 			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG, st,
 					  "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08" PRIx32 " (perhaps this is a duplicated packet)",
 					  md->hdr.isa_msgid);
 				SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
@@ -1107,7 +1107,7 @@ void process_packet_tail(struct msg_digest *md)
 			return;
 		}
 		if (st->st_skeyid_e_nss == NULL) {
-			LOG_PACKET(RC_LOG_SERIOUS,
+			LOG_PACKET(RC_LOG,
 				   "discarding encrypted message because we haven't yet negotiated keying material");
 			return;
 		}
@@ -1133,7 +1133,7 @@ void process_packet_tail(struct msg_digest *md)
 		const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 
 		if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0) {
-			LOG_PACKET(RC_LOG_SERIOUS, "malformed message: not a multiple of encryption blocksize");
+			LOG_PACKET(RC_LOG, "malformed message: not a multiple of encryption blocksize");
 			return;
 		}
 
@@ -1183,7 +1183,7 @@ void process_packet_tail(struct msg_digest *md)
 		/* packet was not encrypted -- should it have been? */
 
 		if (smc->flags & SMF_INPUT_ENCRYPTED) {
-			LOG_PACKET(RC_LOG_SERIOUS,
+			LOG_PACKET(RC_LOG,
 				   "packet rejected: should have been encrypted");
 			SEND_NOTIFICATION(v1N_INVALID_FLAGS);
 			return;
@@ -1210,7 +1210,7 @@ void process_packet_tail(struct msg_digest *md)
 			struct_desc *sd = v1_payload_desc(np);
 
 			if (md->digest_roof >= elemsof(md->digest)) {
-				LOG_PACKET(RC_LOG_SERIOUS,
+				LOG_PACKET(RC_LOG,
 					   "more than %zu payloads in message; ignored",
 					   elemsof(md->digest));
 				if (!md->encrypted) {
@@ -1284,7 +1284,7 @@ void process_packet_tail(struct msg_digest *md)
 					 * We ignore (rather than reject) this in support of people
 					 * with crufty Cisco machines.
 					 */
-					LOG_PACKET(RC_LOG_SERIOUS,
+					LOG_PACKET(RC_LOG,
 						   "%smessage with unsupported payload ISAKMP_NEXT_SAK (or ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
 						   excuse);
 					/*
@@ -1300,7 +1300,7 @@ void process_packet_tail(struct msg_digest *md)
 								 &pd->payload, sizeof(pd->payload), &pd->pbs);
 					if (d != NULL) {
 						llog_diag(RC_LOG, LOGGER, &d, "%s", "");
-						LOG_PACKET(RC_LOG_SERIOUS,
+						LOG_PACKET(RC_LOG,
 							   "%smalformed payload in packet",
 							   excuse);
 						if (!md->encrypted) {
@@ -1315,7 +1315,7 @@ void process_packet_tail(struct msg_digest *md)
 				default:
 				{
 					esb_buf b;
-					LOG_PACKET(RC_LOG_SERIOUS,
+					LOG_PACKET(RC_LOG,
 						   "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 						   excuse,
 						   str_enum(&ikev1_payload_names, np, &b));
@@ -1341,7 +1341,7 @@ void process_packet_tail(struct msg_digest *md)
 					      LELEM(ISAKMP_NEXT_CR) |
 					      LELEM(ISAKMP_NEXT_CERT))) {
 					esb_buf b;
-					LOG_PACKET(RC_LOG_SERIOUS,
+					LOG_PACKET(RC_LOG,
 						   "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 						   excuse,
 						   str_enum(&ikev1_payload_names, np, &b),
@@ -1369,7 +1369,7 @@ void process_packet_tail(struct msg_digest *md)
 						 &pd->pbs);
 			if (d != NULL) {
 				llog_diag(RC_LOG, LOGGER, &d, "%s", "");
-				LOG_PACKET(RC_LOG_SERIOUS,
+				LOG_PACKET(RC_LOG,
 					   "%smalformed payload in packet",
 					   excuse);
 				if (!md->encrypted) {
@@ -1430,7 +1430,7 @@ void process_packet_tail(struct msg_digest *md)
 		/* check that all mandatory payloads appeared */
 
 		if (needed != 0) {
-			LOG_PACKET_JAMBUF(RC_LOG_SERIOUS, buf) {
+			LOG_PACKET_JAMBUF(RC_LOG, buf) {
 				jam(buf, "message for %s is missing payloads ",
 				    finite_states[from_state]->name);
 				jam_lset_short(buf, &ikev1_payload_names, "+", needed);
@@ -1455,7 +1455,7 @@ void process_packet_tail(struct msg_digest *md)
 		 */
 		if (md->chain[ISAKMP_NEXT_SA] != NULL &&
 		    md->hdr.isa_np != ISAKMP_NEXT_SA) {
-			LOG_PACKET(RC_LOG_SERIOUS,
+			LOG_PACKET(RC_LOG,
 				   "malformed Phase 1 message: does not start with an SA payload");
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
@@ -1479,7 +1479,7 @@ void process_packet_tail(struct msg_digest *md)
 		 */
 
 		if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
-			LOG_PACKET(RC_LOG_SERIOUS,
+			LOG_PACKET(RC_LOG,
 				   "malformed Quick Mode message: does not start with a HASH payload");
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
@@ -1495,7 +1495,7 @@ void process_packet_tail(struct msg_digest *md)
 			i = 1;
 			while (p != NULL) {
 				if (p != &md->digest[i]) {
-					LOG_PACKET(RC_LOG_SERIOUS,
+					LOG_PACKET(RC_LOG,
 						   "malformed Quick Mode message: SA payload is in wrong position");
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
@@ -1518,13 +1518,13 @@ void process_packet_tail(struct msg_digest *md)
 			if (id != NULL) {
 				if (id->next == NULL ||
 				    id->next->next != NULL) {
-					LOG_PACKET(RC_LOG_SERIOUS,
+					LOG_PACKET(RC_LOG,
 						   "malformed Quick Mode message: if any ID payload is present, there must be exactly two");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
-					LOG_PACKET(RC_LOG_SERIOUS,
+					LOG_PACKET(RC_LOG,
 						   "malformed Quick Mode message: the ID payloads are not adjacent");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
@@ -1578,7 +1578,7 @@ void process_packet_tail(struct msg_digest *md)
 				sleep(2);
 				resend_recorded_v1_ike_msg(st, "IMPAIR: retransmitting mangled packet");
 			}
-			LOG_PACKET(RC_LOG_SERIOUS,
+			LOG_PACKET(RC_LOG,
 				   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
 				   nname.buf, st->st_v1_msgid.id,
 				   p->payload.notification.isan_length);
@@ -2042,7 +2042,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			if (dpd_init(st) != STF_OK) {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG, st,
 					  "DPD initialization failed - continuing without DPD");
 			}
 		}

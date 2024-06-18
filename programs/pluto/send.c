@@ -124,7 +124,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
 		/* XXX: UDP centric? */
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "send_ike_msg(): really too big %zu bytes", len);
 		return false;
 	}

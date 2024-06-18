@@ -58,7 +58,7 @@ static void add_trust_anchors(unsigned count, char **files,
 		const char *file = files[i];
 		int ugh = ub_ctx_add_ta_file(dns_ctx, file);
 		if (ugh != 0) {
-			llog(RC_LOG_SERIOUS, logger, "ignored trusted key file %s: %s",
+			llog(RC_LOG, logger, "ignored trusted key file %s: %s",
 			     file,  ub_strerror(ugh));
 		} else {
 			ldbg(logger, "added contents of trusted key file %s to unbound resolver context", file);
@@ -80,7 +80,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
 	ugh = ub_ctx_hosts(dns_ctx, "/etc/hosts");
 	if (ugh != 0) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "error reading hosts: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
@@ -104,7 +104,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	if (ugh != 0) {
 		int e = errno;	/* protect value from ub_strerror */
 
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "error reading /etc/resolv.conf: %s: [errno: %s]",
 			    ub_strerror(ugh), strerror(e));
 	} else {
@@ -117,7 +117,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	errno = 0;
 	ugh = ub_ctx_set_option(dns_ctx, "outgoing-port-avoid:", "0-65535");
 	if (ugh != 0) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "error setting outgoing-port-avoid: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
@@ -127,7 +127,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	errno = 0;
 	ugh = ub_ctx_set_option(dns_ctx, "outgoing-port-permit:", "32768-60999");
 		if (ugh != 0) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "error setting outgoing-port-permit: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
@@ -143,13 +143,13 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	/* Only DNSSEC related configuration from here */
 	if (rootfile == NULL) {
 		if (trusted == NULL) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "WARNING: DNSSEC validation disabled");
 			return;
 		} else {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
@@ -159,10 +159,10 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 		if (ugh != 0) {
 			int e = errno;	/* protect value from ub_strerror */
 
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "error adding dnssec root key: %s [errno: %s]",
 				    ub_strerror(ugh), strerror(e));
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "WARNING: DNSSEC validation disabled");
 		}
 	}

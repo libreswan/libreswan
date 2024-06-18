@@ -411,7 +411,7 @@ static void check_crls(struct logger *logger)
 	struct crl_fetch_request *requests = NULL;
 
 	if (deltasecs(crl_check_interval) <= 0) {
-		llog(RC_LOG_SERIOUS, logger, "config crlcheckinterval= is unset");
+		llog(RC_LOG, logger, "config crlcheckinterval= is unset");
 		return;
 	}
 

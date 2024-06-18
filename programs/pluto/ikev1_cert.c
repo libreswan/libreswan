@@ -206,7 +206,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 		if (ca_name.len > 0) {
 			err_t e = asn1_ok(ca_name);
 			if (e != NULL) {
-				llog(RC_LOG_SERIOUS, st->logger,
+				llog(RC_LOG, st->logger,
 				     "ignoring CERTREQ payload that is not ASN1: %s", e);
 				return;
 			}
@@ -228,7 +228,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 	default:
 	{
 		enum_buf b;
-		llog(RC_LOG_SERIOUS, st->logger,
+		llog(RC_LOG, st->logger,
 		     "ignoring CERTREQ payload of unsupported type %s",
 		     str_enum(&ikev2_cert_type_names, cert_type, &b));
 	}

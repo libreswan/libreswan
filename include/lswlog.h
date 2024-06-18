@@ -50,9 +50,6 @@ enum rc_type {
 
 	RC_LOG = 2,			/* message aimed at log (does
 					 * not affect exit status) */
-#define RC_LOG_SERIOUS RC_LOG		/* serious message aimed at
-					 * log (does not affect exit
-					 * status) */
 #define RC_INFORMATIONAL RC_LOG		/* should get relayed to user
 					 * - if there is one */
 #define RC_RETRANSMISSION RC_LOG	/* failure, but not

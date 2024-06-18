@@ -105,7 +105,7 @@ void handle_v1_vendorid(struct msg_digest *md,
 		break;
 
 	case VID_SSH_SENTINEL_1_4_1:
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
 		md->quirks.xauth_ack_msgid = true;
 		break;

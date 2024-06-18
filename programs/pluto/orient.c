@@ -140,7 +140,7 @@ static void add_iface_endpoint(bool listening,
 							 c->logger);
 	if (ifp == NULL) {
 		address_buf ab;
-		llog(RC_LOG_SERIOUS, c->logger,
+		llog(RC_LOG, c->logger,
 		     "  skipping %s %s; bind of %s port "PRI_HPORT" failed",
 		     c->iface->real_device_name,
 		     str_address(&c->iface->local_address, &ab),
@@ -253,7 +253,7 @@ bool orient(struct connection *c, struct logger *logger)
 		if (left && right) {
 			/* too many choices */
 			connection_attach(c, logger);
-			LLOG_JAMBUF(RC_LOG_SERIOUS, c->logger, buf) {
+			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 				jam_string(buf, "connection matches both left ");
 				jam_iface(buf, iface);
 				jam_string(buf, " and right ");
@@ -292,7 +292,7 @@ bool orient(struct connection *c, struct logger *logger)
 			 */
 			pexpect(end != matching_end);
 			connection_attach(c, logger);
-			LLOG_JAMBUF(RC_LOG_SERIOUS, c->logger, buf) {
+			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 				jam_string(buf, "connection matches both ");
 				/*previous-match*/
 				jam_string(buf, c->end[matching_end].config->leftright);

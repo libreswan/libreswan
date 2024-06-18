@@ -245,14 +245,14 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		if (len < 0) {
 			/* too strict? */
 			int e = errno;
-			llog_iketcp(RC_LOG_SERIOUS, logger, (*ifp), e,
+			llog_iketcp(RC_LOG, logger, (*ifp), e,
 				    "error reading 'IKETCP' prefix; closing socket: ");
 			iketcp_shutdown(ifp); /* i.e., delete IFP */
 			return NULL;
 		}
 
 		if (len != sizeof(buf)) {
-			llog_iketcp(RC_LOG_SERIOUS, logger, (*ifp), /*no-error*/0,
+			llog_iketcp(RC_LOG, logger, (*ifp), /*no-error*/0,
 				    "reading 'IKETCP' prefix returned %zd bytes but expecting %zu; closing socket",
 				    len, sizeof(buf));
 			iketcp_shutdown(ifp); /* i.e., delete IFP */
@@ -262,7 +262,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		dbg_iketcp(*ifp, "verifying IKETCP prefix");
 		if (!memeq(buf, iketcp, len)) {
 			/* discard this tcp connection */
-			llog_iketcp(RC_LOG_SERIOUS, logger, (*ifp), /*no-error*/0,
+			llog_iketcp(RC_LOG, logger, (*ifp), /*no-error*/0,
 				    "prefix did not match 'IKETCP'; closing socket");
 			iketcp_shutdown(ifp); /* i.e., delete IFP */
 			return NULL;
@@ -369,12 +369,12 @@ static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 		flags = fcntl(ifp->fd, F_GETFL, 0);
 		if (flags == -1) {
 			int e = errno;
-			llog_iketcp(RC_LOG_SERIOUS, logger, ifp, e,
+			llog_iketcp(RC_LOG, logger, ifp, e,
 				    "fcntl(%d, F_GETFL, 0) failed: ", ifp->fd);
 		}
 		if (fcntl(ifp->fd, F_SETFL, flags & ~O_NONBLOCK) == -1) {
 			int e = errno;
-			llog_iketcp(RC_LOG_SERIOUS, logger, ifp, e,
+			llog_iketcp(RC_LOG, logger, ifp, e,
 				    "fcntl(%d, F_SETFL, 0%o) failed,: ",
 				    ifp->fd, flags);
 		}
@@ -386,7 +386,7 @@ static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 			    "IMPAIR: restoring flags 0%o after write", flags);
 		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
 			int e = errno;
-			llog_iketcp(RC_LOG_SERIOUS, logger, ifp, e,
+			llog_iketcp(RC_LOG, logger, ifp, e,
 				    "fcntl(%d, F_SETFL, 0%o) failed: ",
 				    ifp->fd, flags);
 		}

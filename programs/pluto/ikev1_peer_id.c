@@ -51,7 +51,7 @@ bool ikev1_decode_peer_id_initiator(struct ike_sa *ike, struct msg_digest *md)
 
 	diag_t d = update_peer_id(ike, &peer, NULL/*IKEv2:tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -69,7 +69,7 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct ike_sa *ike,
 
 	diag_t d = update_peer_id(ike,  &peer, NULL/*IKEv2:tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -151,7 +151,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 
 	diag_t d = update_peer_id(ike, &peer_id, NULL/*tarzan*/);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -186,7 +186,7 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
 		     id->isaid_doi_specific_b == 0) &&
 		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
 		     id->isaid_doi_specific_b == IKE_UDP_PORT)) {
-		llog(RC_LOG_SERIOUS, ike->sa.logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d but are %d/%d (attempting to continue)",
 		     IPPROTO_UDP, IKE_UDP_PORT,
 		     id->isaid_doi_specific_a,
@@ -257,7 +257,7 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_p
 				DBG_dump("received HASH:",
 					 hash_pbs->cur, pbs_left(hash_pbs));
 			}
-			log_state(RC_LOG_SERIOUS, st,
+			log_state(RC_LOG, st,
 				  "received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
 			r = STF_FAIL_v1N + v1N_INVALID_HASH_INFORMATION;
@@ -279,7 +279,7 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_p
 							&pubkey_signer_raw_rsa,
 							NULL/*legacy-signature-name*/);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			ldbg(st->logger, "received message SIG_%s data did not match computed value",
 			     (sa_role == SA_INITIATOR ? "I" :
 			      sa_role == SA_RESPONDER ? "R" :

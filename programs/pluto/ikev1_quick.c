@@ -123,20 +123,20 @@ static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
 
 	if (ke_pd == NULL) {
 		if (st->st_pfs_group != NULL) {
-			log_state(RC_LOG_SERIOUS, st,
+			log_state(RC_LOG, st,
 				  "missing KE payload in %s message", msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
 	} else {
 		if (st->st_pfs_group == NULL) {
-			log_state(RC_LOG_SERIOUS, st,
+			log_state(RC_LOG, st,
 				  "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
 				  msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		if (ke_pd->next != NULL) {
-			log_state(RC_LOG_SERIOUS, st,
+			log_state(RC_LOG, st,
 				  "%s message contains several KE payloads; we accept at most one",
 				  msg_name);
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
@@ -326,7 +326,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 
 	default:
 		/* XXX support more */
-		llog(RC_LOG_SERIOUS, logger, "unsupported ID type %s",
+		llog(RC_LOG, logger, "unsupported ID type %s",
 		     idtypename);
 		/* XXX Could send notification back */
 		return false;
@@ -346,7 +346,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		/* i.e., "zero" */
 		if (!address_is_specified(temp_address)) {
 			address_buf b;
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "%s ID payload %s is invalid (%s) in Quick I1",
 			     which, idtypename, str_address(&temp_address, &b));
 			/* XXX Could send notification back */
@@ -383,7 +383,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			ughmsg = "subnet contains no addresses";
 		}
 		if (ughmsg != NULL) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "%s ID payload %s bad subnet in Quick I1 (%s)",
 			     which, idtypename, ughmsg);
 			/* XXX Could send notification back */
@@ -417,7 +417,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 							   temp_address_to, &net);
 		if (ughmsg != NULL) {
 			address_buf a, b;
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
 			     which, idtypename,
 			     str_address_sensitive(&temp_address_from, &a),
@@ -471,19 +471,19 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	if (!subnet_eq_subnet(net, subnet_temp)) {
 		subnet_buf subrec;
 		subnet_buf subxmt;
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "%s subnet returned doesn't match my proposal - us: %s vs them: %s",
 			    which, str_subnet(&net, &subxmt),
 			    str_subnet(&subnet_temp, &subrec));
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "Allowing questionable (microsoft) proposal anyway");
 		bad_proposal = false;
 	}
 	if (protoid != id->isaiid_protoid) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "%s peer returned protocol id does not match my proposal - us: %d vs them: %d",
 		     which, protoid, id->isaiid_protoid);
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "Allowing questionable (microsoft) proposal anyway]");
 		bad_proposal = false;
 	}
@@ -492,11 +492,11 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	 * until such time as bug #849 is properly fixed.
 	 */
 	if (port != id->isaiid_port) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
 		     which, port, id->isaiid_port);
 		if (port != 0 && id->isaiid_port != 1701) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
 			bad_proposal = false;
 		} else {
@@ -637,7 +637,7 @@ static stf_status quick_outI1_continue(struct state *st,
 	 */
 	stf_status e = quick_outI1_continue_tail(st, unused_md, local_secret, nonce);
 	if (e == STF_INTERNAL_ERROR) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 			  "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
 			  __func__);
 	}
@@ -670,7 +670,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 			  "phase2 initiation failed because parent ISAKMP #%lu is gone",
 			  st->st_clonedfrom);
 		return STF_FATAL;
@@ -883,7 +883,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		 * type of ID."  ??? needs more complete description.
 		 */
 		if (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
-			log_state(RC_LOG_SERIOUS, p1st,
+			log_state(RC_LOG, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
 			remote_client = selector_from_address_protocol_port(c->remote->host.addr,
 									    remote_protocol,
@@ -921,7 +921,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 				remote_client = selector_from_address_protocol_port(hv.st_nat_oa,
 										    remote_protocol,
 										    remote_port);
-				LLOG_JAMBUF(RC_LOG_SERIOUS, p1st->logger, buf) {
+				LLOG_JAMBUF(RC_LOG, p1st->logger, buf) {
 					jam(buf, "IDci was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
@@ -1337,7 +1337,7 @@ static void terminate_conflicts(struct child_sa *child)
 
 			address_buf b;
 			connection_buf cib;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
 				pri_connection(co, &cib),
 				str_address_sensitive(&co->remote->host.addr, &b));
@@ -1410,7 +1410,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	passert(st->st_pfs_group != &unset_group);
 
 	if ((st->st_policy & POLICY_PFS) && st->st_pfs_group == NULL) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 			  "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */
 	}
@@ -1593,7 +1593,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
 				update_first_selector(st->st_connection, remote,
 						      selector_from_address(st->hidden_variables.st_nat_oa));
-				LLOG_JAMBUF(RC_LOG_SERIOUS, st->logger, buf) {
+				LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
@@ -1608,7 +1608,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 */
 			if (!selector_eq_address(c->spd->local->client, c->local->host.addr) ||
 			    !selector_eq_address(c->spd->remote->client, c->remote->host.addr)) {
-				log_state(RC_LOG_SERIOUS, st,
+				log_state(RC_LOG, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 			}
@@ -1787,7 +1787,7 @@ static bool is_virtual_net_used(struct connection *c,
 			if (!kernel_ops->overlap_supported) {
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
-				llog(RC_LOG_SERIOUS, c->logger,
+				llog(RC_LOG, c->logger,
 				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
 				     str_selector_subnet(peer_net, &pcb),
 				     str_selector_subnet(&d->spd->remote->client, &dcb),
@@ -1820,7 +1820,7 @@ static bool is_virtual_net_used(struct connection *c,
 				/* not C; must be D objecting */
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
-				llog(RC_LOG_SERIOUS, c->logger,
+				llog(RC_LOG, c->logger,
 				     "peer Virtual IP %s overlapping %s forbidden by "PRI_CONNECTION" policy",
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
@@ -1829,7 +1829,7 @@ static bool is_virtual_net_used(struct connection *c,
 				/* not D; must be C objecting */
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
-				llog(RC_LOG_SERIOUS, c->logger,
+				llog(RC_LOG, c->logger,
 				     "policy forbids peer Virtual IP %s overlapping %s from "PRI_CONNECTION"",
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
@@ -1838,7 +1838,7 @@ static bool is_virtual_net_used(struct connection *c,
 				/* must be both D and C objecting */
 				connection_buf cbuf;
 				subnet_buf pcb, dcb;
-				llog(RC_LOG_SERIOUS, c->logger,
+				llog(RC_LOG, c->logger,
 				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is forbidden (neither agrees)",
 				     str_selector_subnet(peer_net, &pcb),
 				     str_selector_subnet(&d->spd->remote->client, &dcb),

@@ -32,7 +32,7 @@
 #include "log.h"
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
-#include "whack.h"              /* for RC_LOG_SERIOUS */
+#include "whack.h"              /* for RC_LOG */
 #include "ike_alg.h"
 #include "pluto_stats.h"
 #include "nat_traversal.h"

@@ -186,7 +186,7 @@ bool whack_prompt_for(struct state *st,
 	/* find an fd */
 	struct fd *whack_fd = logger_fd(st->logger);
 	if (whack_fd == NULL) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 			  "XAUTH password requested, but no file descriptor available for prompt");
 		return false;
 	}
@@ -204,13 +204,13 @@ bool whack_prompt_for(struct state *st,
 
 	ssize_t n = fd_read(whack_fd, ansbuf, ansbuf_len);
 	if (n < 0) {
-		llog_errno(RC_LOG_SERIOUS, st->logger, (-(int)n),
+		llog_errno(RC_LOG, st->logger, (-(int)n),
 			   "read(whackfd) failed: ");
 		return false;
 	}
 
 	if (n == 0) {
-		log_state(RC_LOG_SERIOUS, st, "no %s entered, aborted", prompt);
+		log_state(RC_LOG, st, "no %s entered, aborted", prompt);
 		return false;
 	}
 

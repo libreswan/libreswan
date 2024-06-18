@@ -42,7 +42,7 @@
 #include "state.h"
 #include "keys.h"
 #include "log.h"
-#include "whack.h"      /* for RC_LOG_SERIOUS */
+#include "whack.h"      /* for RC_LOG */
 #include "timer.h"
 
 #include "fetch.h"
@@ -347,7 +347,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		if (!is_realtime_epoch(key->until_time) &&
 		    realtime_cmp(key->until_time, <, s.now)) {
 			id_buf printkid;
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				  "cached %s public key '%s' has expired and has been deleted",
 				  key->content.type->name, str_id(&key->id, &printkid));
 			*pp = free_public_keyentry(*(pp));
@@ -385,7 +385,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 
 	pexpect(s.key != NULL);
 	pexpect(s.tried_cnt > 0);
-	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		if (ike->sa.st_ike_version == IKEv2) {
 			/*
 			 * IKEv2 only; IKEv1 logs established as a
@@ -719,7 +719,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "private key matching CKAID '%s' not found: %s",
 				    str_ckaid(c->local->host.config->ckaid, &ckb), err);
 			return NULL;
@@ -755,7 +755,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 	    c->name, type->name);
 	struct secret *s = lsw_get_secret(c, type->private_key_kind, true);
 	if (s == NULL) {
-		llog(RC_LOG_SERIOUS, logger, "connection %s's %s private key not found",
+		llog(RC_LOG, logger, "connection %s's %s private key not found",
 		    c->name, type->name);
 		return NULL;
 	}

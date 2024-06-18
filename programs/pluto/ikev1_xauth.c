@@ -2296,7 +2296,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
 			msgbuf[len] = '\0';
-			log_state(RC_LOG_SERIOUS, st,
+			log_state(RC_LOG, st,
 			       "XAUTH Message: %s", msgbuf);
 			break;
 		}

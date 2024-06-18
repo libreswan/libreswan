@@ -54,7 +54,7 @@ static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 {
 	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
-	llog_sa(RC_LOG_SERIOUS, ike,
+	llog_sa(RC_LOG, ike,
 		"%s returned %s rr parse error %s elapsed time %s seconds",
 		dnsr->log_buf,
 		dnsr->rcode_name, err,
@@ -118,7 +118,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 					       NULL/*don't-return-pubkey*/, &pluto_pubkeys);
 		if (d != NULL) {
 			id_buf thatidbuf;
-			llog_diag(RC_LOG_SERIOUS, dnsr->logger, &d,
+			llog_diag(RC_LOG, dnsr->logger, &d,
 				  "add %s publickey failed, %s",
 				  str_id(&st->st_connection->remote->host.id, &thatidbuf),
 				  dnsr->log_buf);
@@ -222,7 +222,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	process_dns_resp(dnsr);
 
 	if (!dnsr->fwd_addr_valid) {
-		llog(RC_LOG_SERIOUS, dnsr->logger,
+		llog(RC_LOG, dnsr->logger,
 		     "forward address validation failed %s",
 		     dnsr->log_buf);
 	}
@@ -374,7 +374,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	err_t err = build_dns_name(&qbuf, &id);
 	if (err != NULL) {
 		/* is there qtype to name lookup function */
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			"could not build dns query name %s %d",
 			err, qtype);
 		return NULL;

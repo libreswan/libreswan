@@ -330,7 +330,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 
 	if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
 		enum_buf cpb;
-		llog_sa(RC_LOG_SERIOUS, child,
+		llog_sa(RC_LOG, child,
 			"ERROR: expected IKEv2_CP_CFG_REQUEST got a %s",
 			str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
 		return false;
@@ -343,7 +343,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 		diag_t d = pbs_in_struct(cp_pbs, &ikev2_cp_attribute_desc,
 					 &cp_attr, sizeof(cp_attr), &cp_attr_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, child->sa.logger, &d,
+			llog_diag(RC_LOG, child->sa.logger, &d,
 				 "ERROR: malformed CP attribute");
 			return false;
 		}
@@ -373,7 +373,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	}
 
 	if (nr_child_leases(cc->remote) == 0) {
-		llog_sa(RC_LOG_SERIOUS, child, "ERROR: no valid internal address request");
+		llog_sa(RC_LOG, child, "ERROR: no valid internal address request");
 		return false;
 	}
 
@@ -628,7 +628,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	case SA_INITIATOR:
 		if (cp->isacp_type != IKEv2_CP_CFG_REPLY) {
 			enum_buf cpb;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 				str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
 			return false;
@@ -637,7 +637,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	case SA_RESPONDER:
 		if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
 			enum_buf cpb;
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 				str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
 			return false;
@@ -667,7 +667,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
 					 &cp_a, sizeof(cp_a), &cp_a_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, child->sa.logger, &d,
+			llog_diag(RC_LOG, child->sa.logger, &d,
 				 "ERROR malformed CP attribute");
 			return false;
 		}
@@ -675,7 +675,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS:
 			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv4_info)) {
-				llog_sa(RC_LOG_SERIOUS, child,
+				llog_sa(RC_LOG, child,
 					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return false;
 			}
@@ -683,7 +683,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 
 		case IKEv2_INTERNAL_IP4_DNS:
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
-				llog_sa(RC_LOG_SERIOUS, child,
+				llog_sa(RC_LOG, child,
 					  "ERROR malformed INTERNAL_IP4_DNS attribute");
 				return false;
 			}
@@ -691,7 +691,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 
 		case IKEv2_INTERNAL_IP6_ADDRESS:
 			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv6_info)) {
-				llog_sa(RC_LOG_SERIOUS, child,
+				llog_sa(RC_LOG, child,
 					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return false;
 			}
@@ -699,7 +699,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 
 		case IKEv2_INTERNAL_IP6_DNS:
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
-				llog_sa(RC_LOG_SERIOUS, child,
+				llog_sa(RC_LOG, child,
 					  "ERROR malformed INTERNAL_IP6_DNS attribute");
 				return false;
 			}

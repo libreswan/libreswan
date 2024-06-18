@@ -151,7 +151,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	 * We need at least 2 NAT-D (1 for us, many for peer)
 	 */
 	if (i < 2) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 			  "NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
 			  i);
 		st->hidden_variables.st_nat_traversal = LEMPTY;
@@ -275,14 +275,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 
 	if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			    i);
 		return;
 	}
 
 	if (i > 1) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
 			    i);
 	}
@@ -307,7 +307,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		ipv = &ipv6_info;
 		break;
 	default:
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
 			    p->payload.nat_oa.isanoa_idtype);
 		return;
@@ -321,7 +321,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	if (!address_is_specified(ip)) {
 		address_buf b;
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "NAT-Traversal: received %s NAT-OA...",
 		     str_address(&ip, &b));
 	} else {
@@ -406,7 +406,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 			 * Probably in FIPS trying MD5 ?
 			 * Nothing will get send, so just do nothing
 			 */
-			log_state(RC_LOG_SERIOUS, st,
+			log_state(RC_LOG, st,
 				  "Cannot compute NATD payloads without valid PRF");
 			return;
 		}

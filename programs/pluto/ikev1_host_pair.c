@@ -229,7 +229,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 
 	endpoint_buf b;
 	authby_buf pb;
-	llog(RC_LOG_SERIOUS, md->logger,
+	llog(RC_LOG, md->logger,
 	     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with authby %s",
 	     str_endpoint(&md->sender, &b),
 	     str_authby(authby, &pb));
@@ -248,7 +248,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	bool policy_xauth = false;
 	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &policy_xauth);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, md->logger, &d,
+		llog_diag(RC_LOG, md->logger, &d,
 			  "initial Main Mode message has corrupt SA payload: ");
 		return NULL;
 	}
@@ -310,7 +310,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 						   md->logger);
 	if (c == NULL) {
 		authby_buf ab;
-		llog(RC_LOG_SERIOUS, md->logger,
+		llog(RC_LOG, md->logger,
 		     "initial Main Mode message received but no connection has been authorized with authby=%s and xauth=%s",
 		     str_authby(authby, &ab), bool_str(policy_xauth));
 		/* XXX notification is in order! */

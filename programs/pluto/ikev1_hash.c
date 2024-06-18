@@ -137,14 +137,14 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		return true;
 	}
 	if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
-		log_state(RC_LOG_SERIOUS, st, "received '%s' message is missing a HASH(%u) payload",
+		log_state(RC_LOG, st, "received '%s' message is missing a HASH(%u) payload",
 		       what, type);
 		return false;
 	}
 	struct pbs_in *hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 	shunk_t received_hash = pbs_in_left(hash_pbs);
 	if (received_hash.len != st->st_oakley.ta_prf->prf_output_size) {
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 		       "received '%s' message HASH(%u) data is the wrong length (received %zd bytes but expected %zd)",
 		       what, type, received_hash.len, st->st_oakley.ta_prf->prf_output_size);
 		return false;
@@ -170,7 +170,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 			DBG_log("received %s HASH_DATA:", what);
 			DBG_dump_hunk(NULL, received_hash);
 		}
-		log_state(RC_LOG_SERIOUS, st,
+		log_state(RC_LOG, st,
 		       "received '%s' message HASH(%u) data does not match computed value",
 		       what, type);
 		return false;

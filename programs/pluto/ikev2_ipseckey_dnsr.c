@@ -148,7 +148,7 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 
 	if (lerr != LDNS_STATUS_OK) {
 		ldns_lookup_table *lt = ldns_lookup_by_id(ldns_error_str, lerr);
-		llog(RC_LOG_SERIOUS, dnsr->logger,
+		llog(RC_LOG, dnsr->logger,
 		     "IPSECKEY rr parse error %s %s", lt->name, dnsr->log_buf);
 		ldns_buffer_free(ldns_pkey);
 		return false;
@@ -256,7 +256,7 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 	} while (false);
 
 	if (ugh != NULL) {
-		llog(RC_LOG_SERIOUS, dnsr->logger,
+		llog(RC_LOG, dnsr->logger,
 		     "ignoring IPSECKEY RR: %s", ugh);
 	}
 
@@ -425,7 +425,7 @@ void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 {
 	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
-	llog(RC_LOG_SERIOUS, dnsr->logger,
+	llog(RC_LOG, dnsr->logger,
 	     "the state is gone; %s returned %s elapsed time %s seconds",
 	     dnsr->log_buf, dnsr->rcode_name,
 	     str_deltatime(served_delta, &db));
@@ -493,7 +493,7 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 				  dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
 	if (ub_ret != 0) {
-		llog(RC_LOG_SERIOUS, dnsr->logger,
+		llog(RC_LOG, dnsr->logger,
 		     "unbound resolve call failed for %s", dnsr->log_buf);
 		free_ipseckey_dns(dnsr);
 		return DNS_FATAL;

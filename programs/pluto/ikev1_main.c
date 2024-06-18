@@ -308,7 +308,7 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 	const struct secret_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
 								    logger);
 	if (pks == NULL) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "unable to locate my private key for RSA Signature");
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
@@ -631,7 +631,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	}
 
 	if (is_fips_mode() && ike->sa.st_oakley.ta_prf == NULL) {
-		llog(RC_LOG_SERIOUS, ike->sa.logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
 		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
 	}
@@ -829,7 +829,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	passert(md != NULL);
 
 	if (is_fips_mode() && ike->sa.st_oakley.ta_prf == NULL) {
-		log_state(RC_LOG_SERIOUS, &ike->sa,
+		log_state(RC_LOG, &ike->sa,
 			  "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
 	}
@@ -1801,13 +1801,13 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 								  V1_ISAKMP_SA_ESTABLISHED_STATES,
 								  /*viable-parent*/false);
 		if (isakmp == NULL) {
-			llog(RC_LOG_SERIOUS, st->logger,
+			llog(RC_LOG, st->logger,
 			     "no ISAKMP SA for Quick mode notification");
 			return;
 		}
 		if (!IS_V1_ISAKMP_ENCRYPTED(isakmp->sa.st_state->kind)) {
 			/*passert?*/
-			llog(RC_LOG_SERIOUS, st->logger,
+			llog(RC_LOG, st->logger,
 			     "ISAKMP SA for Quick mode notification is not encrypted");
 			return;
 		}

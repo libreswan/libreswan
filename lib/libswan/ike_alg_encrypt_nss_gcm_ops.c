@@ -77,7 +77,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			ok = false;
 		} else if (out_len != text_and_tag.len) {
 			/* should this be a pexpect fail? */
-			llog_nss_error(RC_LOG_SERIOUS, logger,
+			llog_nss_error(RC_LOG, logger,
 				       "AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
 				       alg->common.fqn,
 				       PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
@@ -96,7 +96,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			ok = false;
 		} else if (out_len != text_len) {
 			/* should this be a pexpect fail? */
-			llog_nss_error(RC_LOG_SERIOUS, logger,
+			llog_nss_error(RC_LOG, logger,
 				       "AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
 				       alg->common.fqn,
 				       PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,

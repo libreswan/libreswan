@@ -137,7 +137,7 @@ static shunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 						       struct logger *logger)
 {
 	if (id.len > 0xFF) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "redirect destination longer than 255 octets; ignoring");
 		return empty_shunk;
 	}
@@ -266,7 +266,7 @@ bool redirect_global(struct msg_digest *md)
 							    logger);
 
 	if (data.len == 0) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "failed to construct REDIRECT notification data");
 		pstats_ikev2_redirect_failed++;
 		return true;
@@ -362,7 +362,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	diag_t d = pbs_in_struct(&input_pbs, &ikev2_redirect_desc,
 				 &gw_info, sizeof(gw_info), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+		llog_diag(RC_LOG, logger, &d, "%s", "");
 		return "received malformed REDIRECT payload";
 	}
 
@@ -396,7 +396,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		shunk_t gw_str;
 		diag_t d = pbs_in_shunk(&input_pbs, gw_info.gw_identity_len, &gw_str, "GW Identity");
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
 		}
 
@@ -449,7 +449,7 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 
 	c->redirect.attempt++;
 	if (c->redirect.attempt > MAX_REDIRECTS) {
-		llog_sa(RC_LOG_SERIOUS, ike, "%s redirect exceeds limit; assuming redirect loop",
+		llog_sa(RC_LOG, ike, "%s redirect exceeds limit; assuming redirect loop",
 			xchg.buf);
 		/*
 		 * Clear redirect.counter, revival code will see this
@@ -551,7 +551,7 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *i
 					 NULL, &redirect_to, ike->sa.logger);
 	if (e != NULL) {
 		/* XXX: parse_redirect_payload() also often logs! */
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			"warning: parsing of v2N_REDIRECT payload failed: %s", e);
 #if 0
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -737,7 +737,7 @@ stf_status process_v2_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
 					   &redirect_ip,
 					   ike->sa.logger);
 	if (err != NULL) {
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
 		return STF_IGNORE;
 	}

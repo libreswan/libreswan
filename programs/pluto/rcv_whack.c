@@ -174,7 +174,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	 * Adding must have a public key.
 	 */
 	if (msg->whack_addkey && !given_key) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "error: key to add is empty (needs DNS lookup?)");
 		return;
 	}
@@ -231,7 +231,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 					       &pubkey/*new-public-key:must-delref*/,
 					       &pluto_pubkeys);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+			llog_diag(RC_LOG, logger, &d, "%s", "");
 			free_id_content(&keyid);
 			return;
 		}
@@ -436,7 +436,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->global_redirect) {
 		dbg_whack(s, "global_redirect: start: %d", m->global_redirect);
 		if (m->global_redirect != GLOBAL_REDIRECT_NO && strlen(global_redirect_to()) == 0) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			    "ipsec whack: --global-redirect set to no as there are no active redirect targets");
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
@@ -690,22 +690,22 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		 * report the test results.
 		 */
 		if (pluto_seccomp_mode == SECCOMP_ENABLED)
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "pluto is running with seccomp=enabled! pluto is expected to die!");
-		llog(RC_LOG_SERIOUS, logger, "Performing seccomp security test using getsid() syscall");
+		llog(RC_LOG, logger, "Performing seccomp security test using getsid() syscall");
 		pid_t testpid = getsid(0);
 
 		/* We did not get shot by the kernel seccomp protection */
 		if (testpid == -1) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "pluto: seccomp test syscall was blocked");
 			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
 				break;
 			case SECCOMP_DISABLED:
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "OK: seccomp security was not enabled and the rogue syscall was blocked");
 				break;
 			case SECCOMP_ENABLED:
@@ -716,7 +716,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				bad_case(pluto_seccomp_mode);
 			}
 		} else {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "pluto: seccomp test syscall was not blocked");
 			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
@@ -724,7 +724,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 					   "pluto seccomp was tolerant but the rogue syscall was not blocked!");
 				break;
 			case SECCOMP_DISABLED:
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
 				break;
 			case SECCOMP_ENABLED:

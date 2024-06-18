@@ -259,7 +259,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 	ike->sa.st_v2_ike_intermediate.id = md->hdr.isa_msgid;
 	if (ike->sa.st_v2_ike_intermediate.id > 2/*magic!*/) {
-		llog_sa(RC_LOG_SERIOUS, ike, "too many IKE_INTERMEDIATE exchanges");
+		llog_sa(RC_LOG, ike, "too many IKE_INTERMEDIATE exchanges");
 		return STF_FATAL;
 	}
 

@@ -66,7 +66,7 @@
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "keys.h"
-#include "whack.h"              /* for RC_LOG_SERIOUS */
+#include "whack.h"              /* for RC_LOG */
 #include "monotime.h"
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */
@@ -148,7 +148,7 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "cannot chgrp ctl fd(%d) to gid=%d: %s",
 					    ctl_fd, g->gr_gid, strerror(errno));
 			}
@@ -951,7 +951,7 @@ static void termhandler_cb(struct logger *logger)
 #ifdef USE_SECCOMP
 static void syshandler_cb(struct logger *logger)
 {
-	llog(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
+	llog(RC_LOG, logger, "pluto received SIGSYS - possible SECCOMP violation!");
 	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
 		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp=enabled mandates daemon restart");
 	}

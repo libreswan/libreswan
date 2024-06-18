@@ -484,7 +484,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	if (esp_encapsulation_enabled &&
 	    io->enable_esp_encap != NULL &&
 	    !io->enable_esp_encap(ifp, logger)) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s; NAT-traversal is turned OFF", afi->af_name);
 		nat_traversal_enabled = false;
 	}
@@ -615,7 +615,7 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 				if (after) {
 					address_buf b;
 
-					llog(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG, logger,
 					            "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
 					       str_address(&ifp->addr, &b));
@@ -673,7 +673,7 @@ void find_ifaces(bool rm_dead, struct logger *logger)
 		free_dead_ifaces(logger); /* ditch remaining old entries */
 
 	if (interfaces == NULL)
-		llog(RC_LOG_SERIOUS, logger, "no public interfaces found");
+		llog(RC_LOG, logger, "no public interfaces found");
 
 	if (listening) {
 		for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {

@@ -748,7 +748,7 @@ void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, b
 		/*
 		 * Unknown Vendor ID. Log the beginning.
 		 */
-		LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "ignoring unknown Vendor ID payload [");
 			jam_dump_bytes(buf, vid.ptr, PMIN(vid.len, MAX_LOG_VID_LEN));
 			if (vid.len > MAX_LOG_VID_LEN) {

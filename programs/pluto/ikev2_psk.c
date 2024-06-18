@@ -237,7 +237,7 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		return false;
 	}
 
@@ -299,7 +299,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			    str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	}
 
-	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam(buf, "%s established IKE SA; ",
 		    (ike->sa.st_sa_role == SA_INITIATOR ? "initiator" :
 		     ike->sa.st_sa_role == SA_RESPONDER ? "responder" :

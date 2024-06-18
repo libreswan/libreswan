@@ -542,7 +542,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 			int thread_status = pthread_create(&w->pid, NULL,
 							   helper_thread, (void *)w);
 			if (thread_status != 0) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "failed to start child thread for helper %d, error = %d",
 					    n, thread_status);
 			} else {

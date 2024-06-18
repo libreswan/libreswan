@@ -1256,7 +1256,7 @@ int main(int argc, char **argv)
 			pluto_ikev1_pol = cfg->setup.options[KBF_GLOBAL_IKEv1];
 #ifndef USE_IKEv1
 			if (pluto_ikev1_pol != GLOBAL_IKEv1_DROP) {
-				llog(RC_LOG_SERIOUS, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
+				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
 				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			}
 #endif
@@ -1682,7 +1682,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_PRIVATE) {
 			cur_debugging &= ~DBG_PRIVATE;
-			llog(RC_LOG_SERIOUS, logger, "FIPS mode: debug-private disabled as such logging is not allowed");
+			llog(RC_LOG, logger, "FIPS mode: debug-private disabled as such logging is not allowed");
 		}
 		/*
 		 * clear out --debug-crypt if set
@@ -1692,7 +1692,7 @@ int main(int argc, char **argv)
 		 */
 		if (cur_debugging & DBG_CRYPT) {
 			cur_debugging &= ~DBG_CRYPT;
-			llog(RC_LOG_SERIOUS, logger, "FIPS mode: debug-crypt disabled as such logging is not allowed");
+			llog(RC_LOG, logger, "FIPS mode: debug-crypt disabled as such logging is not allowed");
 		}
 	}
 
@@ -1720,7 +1720,7 @@ int main(int argc, char **argv)
 	} else {
 		llog(RC_LOG, logger, "FIPS mode disabled for pluto daemon");
 		if (nss_fips_mode) {
-			llog(RC_LOG_SERIOUS, logger, "Warning: NSS library is running in FIPS mode");
+			llog(RC_LOG, logger, "Warning: NSS library is running in FIPS mode");
 		}
 	}
 
@@ -1760,7 +1760,7 @@ int main(int argc, char **argv)
 	 * CAP_SETGID, CAP_SETUID for pam / google authenticator
 	 */
 	if (capng_get_caps_process() == -1) {
-		llog(RC_LOG_SERIOUS, logger, "failed to query pluto process for capng capabilities");
+		llog(RC_LOG, logger, "failed to query pluto process for capng capabilities");
 	} else {
 		/* If we don't have CAP_SETPCAP, we cannot update the bounding set */
 		capng_select_t set = CAPNG_SELECT_CAPS;
@@ -1775,20 +1775,20 @@ int main(int argc, char **argv)
 			CAP_SETGID, CAP_SETUID,
 			CAP_DAC_READ_SEARCH,
 			-1) != 0) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					"libcap-ng capng_updatev() failed for CAPNG_EFFECTIVE | CAPNG_PERMITTED");
 		}
 
 		if (capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN,
 			CAP_NET_RAW, CAP_DAC_READ_SEARCH, CAP_SETPCAP,
 			-1) != 0) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					"libcap-ng capng_updatev() failed for CAPNG_BOUNDING_SET");
 		}
 
 		int ret = capng_apply(set);
 		if (ret != CAPNG_NONE) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				"libcap-ng capng_apply failed to apply changes, err=%d. see: man capng_apply",
 				ret);
 		}

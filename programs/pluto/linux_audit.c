@@ -81,7 +81,7 @@ void linux_audit_init(int do_audit, struct logger *logger)
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
 			errno == EAFNOSUPPORT) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "Warning: kernel has no audit support");
 			close(audit_fd);
 			log_to_audit = false;

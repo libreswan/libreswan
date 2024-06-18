@@ -1112,7 +1112,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 				    leftright, src->groundhog);
 		}
 		groundhogday |= host_config->groundhog;
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "WARNING: %s is a groundhog", leftright);
 	}
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
@@ -1611,7 +1611,7 @@ static void mark_parse(/*const*/ char *wmmark,
 		{
 			/* ??? should be detected and reported by confread and whack */
 			/* XXX: don't trust whack */
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "bad mark value \"%s\"", wmmark);
 		} else {
 			sa_mark->val = v;
@@ -1625,7 +1625,7 @@ static void mark_parse(/*const*/ char *wmmark,
 		if (errno != 0 || v > 0xffffffff || *mask_end != '\0') {
 			/* ??? should be detected and reported by confread and whack */
 			/* XXX: don't trust whack */
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				   "bad mark mask \"%s\"", mask_end);
 		} else {
 			sa_mark->mask = v;
@@ -1634,7 +1634,7 @@ static void mark_parse(/*const*/ char *wmmark,
 	if ((sa_mark->val & ~sa_mark->mask) != 0) {
 		/* ??? should be detected and reported by confread and whack */
 		/* XXX: don't trust whack */
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
 			    sa_mark->val, sa_mark->mask);
 	}
@@ -2614,7 +2614,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (is_fips_mode() && config->negotiation_shunt == SHUNT_PASS) {
 		enum_buf sb;
-		llog(RC_LOG_SERIOUS, c->logger,
+		llog(RC_LOG, c->logger,
 		     "FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_enum_short(&shunt_policy_names, config->negotiation_shunt, &sb));
 		config->negotiation_shunt = SHUNT_HOLD;
@@ -2633,7 +2633,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (is_fips_mode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;
-		llog(RC_LOG_SERIOUS, c->logger,
+		llog(RC_LOG, c->logger,
 		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_enum_short(&shunt_policy_names, config->failure_shunt, &eb));
 		config->failure_shunt = SHUNT_NONE;
@@ -3018,14 +3018,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 */
 		config->sa_ipsec_max_bytes = wm->sa_ipsec_max_bytes;
 		if (wm->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) {
-			llog(RC_LOG_SERIOUS, c->logger,
+			llog(RC_LOG, c->logger,
 			     "IPsec max bytes limited to the maximum allowed %s",
 			     IPSEC_SA_MAX_OPERATIONS_STRING);
 			config->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
 		}
 		config->sa_ipsec_max_packets = wm->sa_ipsec_max_packets;
 		if (wm->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) {
-			llog(RC_LOG_SERIOUS, c->logger,
+			llog(RC_LOG, c->logger,
 			     "IPsec max packets limited to the maximum allowed %s",
 			     IPSEC_SA_MAX_OPERATIONS_STRING);
 			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS;
@@ -3125,7 +3125,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
-			llog(RC_LOG_SERIOUS, c->logger,
+			llog(RC_LOG, c->logger,
 			     "IKEv1 only uses the first domain in modecfgdomain=%s",
 			     wm->modecfgdomains);
 			config->modecfg.domains[1] = null_shunk;
@@ -3161,7 +3161,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			mark_parse(wm->mark, &c->sa_marks.in, c->logger);
 			mark_parse(wm->mark, &c->sa_marks.out, c->logger);
 			if (wm->mark_in != NULL || wm->mark_out != NULL) {
-				llog(RC_LOG_SERIOUS, c->logger,
+				llog(RC_LOG, c->logger,
 				     "conflicting mark specifications");
 			}
 		}

@@ -523,7 +523,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 			if (errno == EAGAIN) {
 				/* 32 is picked from thin air */
 				if (again_count == 32) {
-					llog(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG, logger,
 						    "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
 					return false;
 				}

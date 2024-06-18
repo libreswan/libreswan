@@ -330,13 +330,13 @@ bool accept_delete(struct state **stp,
 	/* Need state for things to be encrypted */
 	if (*stp == NULL) {
 		/* should not be here */
-		llog(RC_LOG_SERIOUS, md->logger,
+		llog(RC_LOG, md->logger,
 		     "ignoring Delete SA payload: no state");
 		return false;
 	}
 
 	if (!IS_IKE_SA(*stp)) {
-		llog(RC_LOG_SERIOUS, (*stp)->logger,
+		llog(RC_LOG, (*stp)->logger,
 		     "ignoring Delete SA payload: not an ISAKMP SA");
 		return false;
 	}
@@ -346,20 +346,20 @@ bool accept_delete(struct state **stp,
 	/* If there is no SA related to this request, but it was encrypted */
 	if (!IS_V1_ISAKMP_SA_ESTABLISHED(&p1->sa)) {
 		/* can't happen (if msg is encrypt), but just to be sure */
-		llog_sa(RC_LOG_SERIOUS, p1,
+		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: ISAKMP SA not established");
 		return false;
 	}
 
 	if (d->isad_nospi == 0) {
-		llog_sa(RC_LOG_SERIOUS, p1,
+		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: no SPI");
 		return false;
 	}
 
 	/* We only listen to encrypted notifications */
 	if (!md->encrypted) {
-		llog_sa(RC_LOG_SERIOUS, p1,
+		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: not encrypted");
 		return false;
 	}
@@ -382,7 +382,7 @@ bool accept_delete(struct state **stp,
 	default:
 	{
 		esb_buf b;
-		llog_sa(RC_LOG_SERIOUS, p1,
+		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: unknown Protocol ID (%s)",
 			str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
@@ -391,7 +391,7 @@ bool accept_delete(struct state **stp,
 
 	if (d->isad_spisize != sizespi) {
 		esb_buf b;
-		llog_sa(RC_LOG_SERIOUS, p1,
+		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: bad SPI size (%d) for %s",
 			d->isad_spisize,
 			str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
@@ -399,7 +399,7 @@ bool accept_delete(struct state **stp,
 	}
 
 	if (pbs_left(&p->pbs) != d->isad_nospi * sizespi) {
-		llog_sa(RC_LOG_SERIOUS, p1,
+		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: invalid payload size");
 		return false;
 	}
@@ -428,7 +428,7 @@ bool accept_delete(struct state **stp,
 			/* this only finds ISAKMP SAs. Right!?! */
 			struct state *st = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
 			if (st == NULL) {
-				llog_sa(RC_LOG_SERIOUS, p1,
+				llog_sa(RC_LOG, p1,
 					"ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
 				continue;
 			}
@@ -448,13 +448,13 @@ bool accept_delete(struct state **stp,
 				 * we've not authenticated the relevant
 				 * identities
 				 */
-				llog_sa(RC_LOG_SERIOUS, p1,
+				llog_sa(RC_LOG, p1,
 					"ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
 				continue;
 			}
 
 			/* note: this code is cloned for handling self_delete */
-			llog_sa(RC_LOG_SERIOUS, p1,
+			llog_sa(RC_LOG, p1,
 				"received Delete SA payload: %sdeleting ISAKMP State "PRI_SO,
 				(dst == p1 ? "self-" : ""),
 				pri_so(dst->sa.st_serialno));
@@ -489,7 +489,7 @@ bool accept_delete(struct state **stp,
 									   &bogus);
 			if (p2d == NULL) {
 				esb_buf b;
-				llog_sa(RC_LOG_SERIOUS, p1,
+				llog_sa(RC_LOG, p1,
 					"ignoring Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" not found (maybe expired)",
 					str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
 					pri_ipsec_spi(spi));
@@ -499,7 +499,7 @@ bool accept_delete(struct state **stp,
 			passert(&p1->sa != &p2d->sa);	/* st is an IKE SA */
 			if (bogus) {
 				esb_buf b;
-				llog_sa(RC_LOG_SERIOUS, p1,
+				llog_sa(RC_LOG, p1,
 					"warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
 					str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
 					pri_ipsec_spi(spi));
@@ -511,7 +511,7 @@ bool accept_delete(struct state **stp,
 				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 			}
 
-			llog_sa(RC_LOG_SERIOUS, p2d,
+			llog_sa(RC_LOG, p2d,
 				"received Delete SA payload via "PRI_SO,
 				pri_so(p1->sa.st_serialno));
 			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/

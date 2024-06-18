@@ -41,7 +41,7 @@
 #include "keys.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
-#include "whack.h"	/* for RC_LOG_SERIOUS */
+#include "whack.h"	/* for RC_LOG */
 #include "plutoalg.h"
 #include "ikev2_proposals.h"
 #include "crypto.h"
@@ -1946,7 +1946,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		return false;
 	}
 	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "IKEv2 %s %s ENCRYPT transform is not supported",
 		     protocol.buf, encrypt->common.fqn);
 		return false;

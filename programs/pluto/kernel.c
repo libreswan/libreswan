@@ -65,7 +65,7 @@
 #include "secrets.h"
 #include "log.h"
 #include "server.h"
-#include "whack.h"      /* for RC_LOG_SERIOUS */
+#include "whack.h"      /* for RC_LOG */
 #include "keys.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
@@ -766,7 +766,7 @@ static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
 			      const struct spd *conflict)
 {
 	struct connection *d = conflict->connection;
-	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
 		jam_string(buf, "cannot install kernel policy ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		jam_string(buf, "; it is in use by the ");
@@ -1352,13 +1352,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * since the connection was loaded).
 		 */
 		if (!kernel_alg_integ_ok(ta->ta_integ)) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"ESP integrity algorithm %s is not implemented or allowed",
 				ta->ta_integ->common.fqn);
 			goto fail;
 		}
 		if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"ESP encryption algorithm %s is not implemented or allowed",
 				ta->ta_encrypt->common.fqn);
 			goto fail;
@@ -1370,7 +1370,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		size_t encrypt_keymat_size;
 		if (!kernel_alg_encrypt_key_size(ta->ta_encrypt, ta->enckeylen,
 						 &encrypt_keymat_size)) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"ESP encryption algorithm %s with key length %d not implemented or allowed",
 				ta->ta_encrypt->common.fqn, ta->enckeylen);
 			goto fail;
@@ -1441,7 +1441,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		    c->config->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
 				if (is_fips_mode() == 1) {
-					llog_sa(RC_LOG_SERIOUS, child,
+					llog_sa(RC_LOG, child,
 						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
 					goto fail;
 				}
@@ -1452,7 +1452,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 				 */
 				said_next->integ = &ike_alg_integ_hmac_sha2_256_truncbug;
 			} else {
-				llog_sa(RC_LOG_SERIOUS, child,
+				llog_sa(RC_LOG, child,
 					"Error: %s stack does not support sha2_truncbug=yes",
 					kernel_ops->interface_name);
 				goto fail;
@@ -1499,7 +1499,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		memset(esp_keymat.ptr, 0, esp_keymat.len);
 
 		if (!ret) {
-			llog_sa(RC_LOG_SERIOUS, child, "Warning: Adding IPsec SA to failed - %s",
+			llog_sa(RC_LOG, child, "Warning: Adding IPsec SA to failed - %s",
 				said_next->nic_offload.type == KERNEL_OFFLOAD_PACKET ?
 					"NIC packet esp-hw-offload possibly not available for the negotiated parameters" :
 					said_next->nic_offload.type == KERNEL_OFFLOAD_CRYPTO ?
@@ -1521,7 +1521,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 		const struct integ_desc *integ = child->sa.st_ah.trans_attrs.ta_integ;
 		if (integ->integ_ikev1_ah_transform <= 0) {
-			llog_sa(RC_LOG_SERIOUS, child,
+			llog_sa(RC_LOG, child,
 				"%s not implemented", integ->common.fqn);
 			goto fail;
 		}
@@ -1631,7 +1631,7 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     str_enum_short(&routing_names, c->routing.state, &eb));
 
 		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
-		    log_state(RC_LOG_SERIOUS, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
+		    log_state(RC_LOG, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
 			return false;
 		}
 	}

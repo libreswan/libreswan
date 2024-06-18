@@ -1017,7 +1017,7 @@ err_t xfrm_iface_supported(struct logger *logger)
 			 * may be more extensive checks?
 			 * such if it is a xfrmi device or something else
 			 */
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
 				    if_name);
 			xfrm_interface_support = -1;
@@ -1252,7 +1252,7 @@ void stale_xfrmi_interfaces(struct logger *logger)
 
 	unsigned int if_id = if_nametoindex(if_name);
 	if (if_id != 0) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "found an unexpected interface %s if_id=%u From previous pluto run?",
 			    if_name, if_id);
 		return; /* ERROR */

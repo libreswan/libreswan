@@ -64,11 +64,11 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 			if (rv != SECSuccess) {
 				int err = PORT_GetError();
 				if (err == SEC_ERROR_OCSP_RESPONDER_CERT_INVALID) {
-					llog(RC_LOG_SERIOUS, logger,
+					llog(RC_LOG, logger,
 						    "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
 						    trust_cert_name);
 				} else {
-					llog_nss_error(RC_LOG_SERIOUS, logger,
+					llog_nss_error(RC_LOG, logger,
 						       "error enabling OCSP default responder");
 				}
 			}
@@ -89,7 +89,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		dbg("OCSP timeout of %ju seconds", deltasecs(timeout));
 		if (CERT_SetOCSPTimeout(deltasecs(timeout)) != SECSuccess) {
 			/* don't shoot pluto over this */
-			llog_nss_error(RC_LOG_SERIOUS, logger, "error setting OCSP timeout to %ju", deltasecs(timeout));
+			llog_nss_error(RC_LOG, logger, "error setting OCSP timeout to %ju", deltasecs(timeout));
 		}
 	}
 
@@ -112,7 +112,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
-		llog_nss_error(RC_LOG_SERIOUS, logger, "error enabling OCSP POST method");
+		llog_nss_error(RC_LOG, logger, "error enabling OCSP POST method");
 	}
 
 	/*
@@ -128,7 +128,7 @@ diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
 		deltatime_buf minb, maxb;
-		llog_nss_error(RC_LOG_SERIOUS, logger,
+		llog_nss_error(RC_LOG, logger,
 			       "error setting OCSP cache parameters (size=%d, min=%s, max=%s)",
 			       cache_size,
 			       str_deltatime(cache_min, &minb),

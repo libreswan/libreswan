@@ -520,7 +520,7 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 	if (flp->quote == '"' || flp->quote == '\'') {
 		size_t len = strlen(flp->tok);
 		if (len < 8) {
-			llog(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG, flp->logger,
 			     "WARNING: using a weak secret (PSK)");
 		}
 		*psk = clone_bytes_as_chunk(flp->tok, len, "PSK");
@@ -721,7 +721,7 @@ static void process_secret(struct file_lex_position *flp,
 	}
 
 	if (ugh != NULL) {
-		llog(RC_LOG_SERIOUS, flp->logger,
+		llog(RC_LOG, flp->logger,
 			    "\"%s\" line %d: %s",
 			    flp->filename, s->stuff.line, ugh);
 		/* free id's that should have been allocated */
@@ -765,7 +765,7 @@ static void process_secret_records(struct file_lex_position *flp,
 			char *end_prefix = strrchr(flp->filename, '/');
 
 			if (!shift(flp)) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "\"%s\" line %d: unexpected end of include directive",
 					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
@@ -789,7 +789,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				p += pl;
 			}
 			if (flp->cur - flp->tok >= &fn[sizeof(fn)] - p) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "\"%s\" line %d: include pathname too long",
 					    flp->filename, flp->lino);
 				continue;	/* abandon this record */
@@ -847,7 +847,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				}
 
 				if (ugh != NULL) {
-					llog(RC_LOG_SERIOUS, flp->logger,
+					llog(RC_LOG, flp->logger,
 						    "ERROR \"%s\" line %d: index \"%s\" %s",
 						    flp->filename,
 						    flp->lino, flp->tok,
@@ -868,7 +868,7 @@ static void process_secret_records(struct file_lex_position *flp,
 				}
 				if (!shift(flp)) {
 					/* unexpected Record Boundary or EOF */
-					llog(RC_LOG_SERIOUS, flp->logger,
+					llog(RC_LOG, flp->logger,
 						    "\"%s\" line %d: unexpected end of id list",
 						    flp->filename, flp->lino);
 					pfree(s);
@@ -905,7 +905,7 @@ static void process_secrets_file(struct file_lex_position *oflp,
 				 struct secret **psecrets, const char *file_pat)
 {
 	if (oflp->depth > 10) {
-		llog(RC_LOG_SERIOUS, oflp->logger,
+		llog(RC_LOG, oflp->logger,
 			    "preshared secrets file \"%s\" nested too deeply",
 			    file_pat);
 		return;

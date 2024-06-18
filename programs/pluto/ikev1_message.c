@@ -63,7 +63,7 @@ v1_notification_t accept_v1_nonce(struct logger *logger,
 	size_t len = pbs_left(nonce_pbs);
 
 	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
-		llog(RC_LOG_SERIOUS, logger, "%s length not between %d and %d",
+		llog(RC_LOG, logger, "%s length not between %d and %d",
 			    name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
 		return v1N_PAYLOAD_MALFORMED; /* ??? */
 	}

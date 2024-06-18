@@ -231,7 +231,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 		    str_enum(&ikev2_payload_names, np, &b));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
-			llog(RC_LOG_SERIOUS, log,
+			llog(RC_LOG, log,
 				    "more than %zu payloads in message; ignored",
 				    elemsof(md->digest));
 			summary.n = v2N_INVALID_SYNTAX;
@@ -263,7 +263,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
 						 &pd->payload, sizeof(pd->payload), &pd->pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, log, &d,
+				llog_diag(RC_LOG, log, &d,
 					 "malformed payload in packet");
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
@@ -286,7 +286,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					bad_case(v2_msg_role(md));
 				}
 				esb_buf b;
-				llog(RC_LOG_SERIOUS, log,
+				llog(RC_LOG, log,
 				     "message %s contained an unknown critical payload type (%s)",
 				     role, str_enum(&ikev2_payload_names, np, &b));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
@@ -319,7 +319,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					 &pd->payload, sizeof(pd->payload),
 					 &pd->pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, log, &d,
+			llog_diag(RC_LOG, log, &d,
 				 "malformed payload in packet");
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
@@ -1480,7 +1480,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * XXX: are these guards sufficient?
 		 */
 		endpoint_buf sb, mb;
-		llog_sa(RC_LOG_SERIOUS, ike, "NAT: MOBIKE disabled, ignoring peer endpoint change from %s to %s",
+		llog_sa(RC_LOG, ike, "NAT: MOBIKE disabled, ignoring peer endpoint change from %s to %s",
 			str_endpoint(&ike->sa.st_remote_endpoint, &sb),
 			str_endpoint(&md->sender, &mb));
 #if 0

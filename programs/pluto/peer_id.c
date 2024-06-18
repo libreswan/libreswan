@@ -62,7 +62,7 @@ static bool idr_wildmatch(const struct host_end *this, const struct id *idr, str
 		if (d == NULL) {
 			return true;
 		}
-		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+		llog_diag(RC_LOG, logger, &d, "%s", "");
 	}
 
 	const struct id *wild = &this->id;
@@ -785,7 +785,7 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
 	       id_buf idb;
 	       ldbg_sa(ike, "X509: CERT '%s' and ID '%s' don't match but require-id-on-certificate=no",
 		       end_cert->subjectName, str_id(&c->remote->host.id, &idb));
-	       llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+	       llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 	       llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
 	       return NULL;
        }
@@ -806,7 +806,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 #if 0
 		if (peer_id->kind != ID_DER_ASN1_DN) {
 			id_buf idb;
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"peer ID '%s' is not a certificate type",
 				str_id(peer_id, &idb));
 			return false;

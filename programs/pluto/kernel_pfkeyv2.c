@@ -173,7 +173,7 @@ static bool recv_msg(struct inbuf *msg, const char *what, struct logger *logger)
 	*msg = (struct inbuf) { .what = what, };
 	ssize_t s = recv(pfkeyv2_fd, msg->buffer, sizeof(msg->buffer), /*flags*/0);
 	if (s < 0) {
-		llog_errno(RC_LOG_SERIOUS, logger, errno,
+		llog_errno(RC_LOG, logger, errno,
 			   "receiving %s response: ", what);
 		return false;
 	}
@@ -984,7 +984,7 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	 */
 	if (k->encap_type == &ip_encap_esp_in_udp) {
 		if (k->src.encap_port != 4500) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "SADB_X_EXT_UDPENCAP assumes the source port is 4500, not %d",
 			     k->src.encap_port);
 		}

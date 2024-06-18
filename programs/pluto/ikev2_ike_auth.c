@@ -137,7 +137,7 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 				  "PPK AUTH calculated as initiator");
 		} else {
 			if (pc->config->ppk.insist) {
-				llog_sa(RC_LOG_SERIOUS, ike,
+				llog_sa(RC_LOG, ike,
 					  "connection requires PPK, but we didn't find one");
 				return STF_FATAL;
 			} else {
@@ -400,7 +400,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				  "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
@@ -524,7 +524,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
@@ -607,7 +607,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	}
 
 	if (!found_ppk && c->config->ppk.insist) {
-		llog_sa(RC_LOG_SERIOUS, ike, "Requested PPK_ID not found and connection requires a valid PPK");
+		llog_sa(RC_LOG, ike, "Requested PPK_ID not found and connection requires a valid PPK");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -633,7 +633,7 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 		case DNS_SUSPEND:
 			return STF_SUSPEND;
 		case DNS_FATAL:
-			llog_sa(RC_LOG_SERIOUS, ike, "DNS: IPSECKEY not found or usable");
+			llog_sa(RC_LOG, ike, "DNS: IPSECKEY not found or usable");
 			return STF_FATAL;
 		case DNS_OK:
 			break;
@@ -689,7 +689,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 			dbg("no PPK auth failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -714,7 +714,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
 						 &pbs_null_auth, AUTH_NULL);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 			dbg("NULL_auth from Notify Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -729,7 +729,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 						 ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						 remote_auth);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 			dbg("I2 Auth Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -862,7 +862,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	     (!c->config->redirect.send_never &&
 	      require_ddos_cookies()))) {
 		if (c->config->redirect.to == NULL) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"redirect-to is not specified, can't redirect requests");
 		} else {
 			*send_redirection = true;
@@ -1021,7 +1021,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
@@ -1039,12 +1039,12 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		if (!c->config->ppk.allow) {
-			llog_sa(RC_LOG_SERIOUS, ike, "received PPK_IDENTITY but connection does not allow PPK");
+			llog_sa(RC_LOG, ike, "received PPK_IDENTITY but connection does not allow PPK");
 			return STF_FATAL;
 		}
 	} else {
 		if (c->config->ppk.insist) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"failed to receive PPK confirmation and connection has ppk=insist");
 			dbg("should be initiating a notify that kills the state");
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -1084,7 +1084,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
@@ -1164,7 +1164,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * have cleaned up the mess and return
 		 * v2N_NOTHING_WRONG.  After all, problem solved.
 		 */
-		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but initiator rejected Child SA response");
+		llog_sa(RC_LOG, ike, "IKE SA established but initiator rejected Child SA response");
 		struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
 		passert(larval_child != NULL);
@@ -1237,7 +1237,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
 			pstat(ikev2_recv_notifies_e, n);
 			enum_buf wb;
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"IKE SA authentication request rejected by peer: %s",
 				str_enum_short(&v2_notification_names, n, &wb));
 			logged_something_serious = true;
@@ -1258,7 +1258,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 			if (ntfy->payload.v2n.isan_spisize != 0) {
 				/* invalid-syntax, but can't do anything about it */
-				llog_sa(RC_LOG_SERIOUS, ike,
+				llog_sa(RC_LOG, ike,
 					"received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
 					name);
 				logged_something_serious = true;
@@ -1290,16 +1290,16 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 				case v2N_TS_UNACCEPTABLE:
 				case v2N_INVALID_SELECTORS:
 					if (child == NULL) {
-						llog_sa(RC_LOG_SERIOUS, ike,
+						llog_sa(RC_LOG, ike,
 							  "IKE_AUTH response contained the CHILD SA error notification '%s' but there is no child",
 							name);
 					} else {
-						llog_sa(RC_LOG_SERIOUS, child,
+						llog_sa(RC_LOG, child,
 							"IKE_AUTH response contained the error notification %s", name);
 					}
 					break;
 				default:
-					llog_sa(RC_LOG_SERIOUS, ike,
+					llog_sa(RC_LOG, ike,
 						"IKE_AUTH response contained the error notification %s",
 						name);
 					break;
@@ -1311,7 +1311,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 	}
 
 	if (!logged_something_serious) {
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			  "IKE SA authentication request rejected by peer: unrecognized response");
 	}
 

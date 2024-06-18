@@ -142,7 +142,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	struct authby authby = {0};
 	d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &xauth);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, md->logger, &d,
+		llog_diag(RC_LOG, md->logger, &d,
 			  "initial Aggressive Mode message has corrupt SA payload: ");
 		return STF_IGNORE;
 	}
@@ -183,7 +183,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 */
 	if (c->remote->host.config->auth == AUTH_PSK &&
 	    c->config->aggressive) {
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 
@@ -212,7 +212,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	if (!ikev1_decode_peer_id_aggr_mode_responder(ike, md)) {
 		id_buf buf;
 		endpoint_buf b;
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			"initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
 			str_id(&ike->sa.st_connection->remote->host.id, &buf),
 			str_endpoint(&md->sender, &b));
@@ -545,7 +545,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	if (!ikev1_decode_peer_id_initiator(ike, md)) {
 		id_buf buf;
 		endpoint_buf b;
-		llog(RC_LOG_SERIOUS, ike->sa.logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
 		     str_id(&ike->sa.st_connection->remote->host.id, &buf),
 		     str_endpoint(&md->sender, &b));
@@ -898,7 +898,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	if (new_certs_to_verify) {
 		diag_t d = update_peer_id_certs(pexpect_ike_sa(st));
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, st->logger, &d, "%s", "");
+			llog_diag(RC_LOG, st->logger, &d, "%s", "");
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 	}
@@ -1000,7 +1000,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 
 	if (c->local->host.config->auth == AUTH_PSK &&
 	    c->config->aggressive) {
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 

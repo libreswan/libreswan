@@ -843,7 +843,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 						     struct v2_incoming_fragments **frags)
 {
 	if (!ike->sa.st_v2_ike_fragmentation_enabled) {
-		llog_sa(RC_LOG_SERIOUS, ike, "ignoring fragment as peer never proposed fragmentation");
+		llog_sa(RC_LOG, ike, "ignoring fragment as peer never proposed fragmentation");
 		return FRAGMENT_IGNORED;
 	}
 
@@ -854,7 +854,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
 	if (why != NULL) {
-		llog_sa(RC_LOG_SERIOUS, ike, "dropping fragment %u of %u as %s",
+		llog_sa(RC_LOG, ike, "dropping fragment %u of %u as %s",
 			skf_hdr->isaskf_number, skf_hdr->isaskf_total, why);
 		return FRAGMENT_IGNORED;
 	}
@@ -883,7 +883,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 		 */
 		if (!verify_and_decrypt_v2_message(ike, text, &plain,
 						   iv_offset)) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"fragment %u of %u invalid",
 				skf_hdr->isaskf_number,
 				skf_hdr->isaskf_total);
@@ -987,7 +987,7 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 			if (!verify_and_decrypt_v2_message(ike, frag->text,
 							   &frag->plain,
 							   frag->iv_offset)) {
-				llog_sa(RC_LOG_SERIOUS, ike,
+				llog_sa(RC_LOG, ike,
 					"saved fragment %u of %u invalid; dropped",
 					i, (*frags)->total);
 				/* release the frag */
@@ -1291,7 +1291,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	unsigned int nfrags = (sk->cleartext.len + len - 1) / len;
 
 	if (nfrags > MAX_IKE_FRAGMENTS) {
-		llog(RC_LOG_SERIOUS, sk->logger,
+		llog(RC_LOG, sk->logger,
 			    "fragmenting this %zu byte message into %u byte chunks leads to too many frags",
 			    sk->cleartext.len, len);
 		return false;

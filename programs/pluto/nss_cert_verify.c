@@ -113,7 +113,7 @@ static void log_bad_cert(struct logger *logger, const char *prefix,
 		last_sn = node->cert->subjectName;
 		last_error = node->error;
 		/* ??? we ignore node->depth and node->arg */
-		llog_nss_error_code(RC_LOG_SERIOUS, logger, node->error,
+		llog_nss_error_code(RC_LOG, logger, node->error,
 				    "%s: %s certificate %s invalid",
 				    prefix, usage, node->cert->subjectName);
 	}
@@ -457,7 +457,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		}
 		enum_buf cert_name;
 		if (!enum_name_short(cert_names, cert_type, &cert_name)) {
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 				    "ignoring certificate with unknown type %d",
 				    cert_type);
 			continue;
@@ -482,12 +482,12 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&payload, NULL, NULL, NULL, NULL,
 									     NULL, NULL, NULL);
 			if (contents == NULL) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "Wrapped PKCS7 certificate payload could not be decoded");
 				continue;
 			}
 			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
-				llog(RC_LOG_SERIOUS, logger,
+				llog(RC_LOG, logger,
 					    "Wrapped PKCS7 certificate payload did not contain any certificates");
 				SEC_PKCS7DestroyContentInfo(contents);
 				continue;
@@ -500,7 +500,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			break;
 		}
 		default:
-			llog(RC_LOG_SERIOUS, logger,
+			llog(RC_LOG, logger,
 			     "ignoring %s certificate payload", cert_name.buf);
 			break;
 		}

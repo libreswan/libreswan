@@ -372,7 +372,7 @@ static struct hash_signature RSA_sign_hash_raw_rsa(const struct secret_stuff *pk
 	SECStatus s = PK11_Sign(pks->u.pubkey.private_key, &signature, &data);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		llog_nss_error(RC_LOG_SERIOUS, logger,
+		llog_nss_error(RC_LOG, logger,
 			       "PK11_Sign() function failed");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -507,7 +507,7 @@ static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct secret_stu
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
 		enum_buf tb;
-		llog_nss_error(RC_LOG_SERIOUS, logger,
+		llog_nss_error(RC_LOG, logger,
 			       "SGN_Digest(%s) function failed",
 			       str_nss_oid(hash_algo->nss.oid_tag, &tb));
 		return (struct hash_signature) { .len = 0, };
@@ -650,7 +650,7 @@ static struct hash_signature RSA_sign_hash_rsassa_pss(const struct secret_stuff 
 
 	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
 	if (mech == NULL) {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 		     "digital signature scheme not supported for hash algorithm %s",
 		     hash_algo->common.fqn);
 		return (struct hash_signature) { .len = 0, };
@@ -665,7 +665,7 @@ static struct hash_signature RSA_sign_hash_rsassa_pss(const struct secret_stuff 
 					     &mech_item, &signature, &data);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		llog_nss_error(RC_LOG_SERIOUS, logger,
+		llog_nss_error(RC_LOG, logger,
 			       "RSA DSS sign function failed");
 		return (struct hash_signature) { .len = 0, };
 	}

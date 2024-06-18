@@ -309,7 +309,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 				 &raw_signature, &hash_to_sign);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		llog_nss_error(RC_LOG_SERIOUS, logger,
+		llog_nss_error(RC_LOG, logger,
 			       "ECDSA SGN_Digest function failed");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -442,7 +442,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 	}
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		llog_nss_error(RC_LOG_SERIOUS, logger,
+		llog_nss_error(RC_LOG, logger,
 			       "ECDSA sign function failed");
 		return (struct hash_signature) { .len = 0, };
 	}

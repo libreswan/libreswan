@@ -170,10 +170,10 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Nothing acceptable, try to log something helpful.
 		 */
 		if (ike->sa.st_seen_hashnotify) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
 		} else {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"legacy RSA-SHA1 is not allowed but peer supports nothing else");
 		}
 		return IKEv2_AUTH_RESERVED;
@@ -213,12 +213,12 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Nothing acceptable, try to log something helpful.
 		 */
 		if (ike->sa.st_seen_hashnotify) {
-			llog_sa(RC_LOG_SERIOUS, ike,
+			llog_sa(RC_LOG, ike,
 				"local policy requires ECDSA but peer sent no acceptable signature hash algorithms");
 			return IKEv2_AUTH_RESERVED;
 		}
 
-		llog_sa(RC_LOG_SERIOUS, ike,
+		llog_sa(RC_LOG, ike,
 			"legacy ECDSA is not implemented");
 		return IKEv2_AUTH_RESERVED;
 
@@ -716,7 +716,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
@@ -844,7 +844,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 			return STF_FATAL;
 		}
 

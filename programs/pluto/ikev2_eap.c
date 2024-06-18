@@ -717,7 +717,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 						   &msk);
 	free_eap_state(&ike->sa.st_eap);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		dbg("EAP AUTH failed");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -782,7 +782,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 					ike->sa.st_firstpacket_me,
 					&signed_octets);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.logger, &d, "%s", "");
+		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);

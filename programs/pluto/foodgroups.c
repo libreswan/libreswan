@@ -171,7 +171,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			ip_address t;
 			err_t err = ttoaddress_num(shunk1(flp->tok), NULL, &t);
 			if (err != NULL) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "ignored, '%s' is not an address: %s",
 					    flp->tok, err);
 				flushline(flp, NULL/*shh*/);
@@ -184,7 +184,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			ip_address nonzero_host;
 			err_t err = ttosubnet_num(shunk1(flp->tok), afi, &snn, &nonzero_host);
 			if (err != NULL) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 				     "ignored, '%s' is not a subnet: %s",
 				     flp->tok, err);
 				flushline(flp, NULL/*shh*/);
@@ -201,7 +201,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 
 		const struct ip_info *afi = subnet_info(sn);
 		if (afi == NULL) {
-			llog(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG, flp->logger,
 				    "ignored, unsupported Address Family \"%s\"",
 				    flp->tok);
 			flushline(flp, NULL/*shh*/);
@@ -219,7 +219,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			const struct ip_protocol *protocol;
 			err = ttoprotocol(shunk1(flp->tok), &protocol);
 			if (err != NULL) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 				     "protocol '%s' invalid: %s",
 				     flp->tok, err);
 				break;
@@ -228,7 +228,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			if (protocol == &ip_protocol_all ||
 			    protocol == &ip_protocol_esp ||
 			    protocol == &ip_protocol_ah) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 				     "invalid protocol '%s' - mistakenly defined to be 0 or %u(esp) or %u(ah)",
 				     flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
@@ -236,33 +236,33 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			proto = protocol;
 			/* source port */
 			if (!shift(flp)) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "missing source_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(shunk1(flp->tok), &sport);
 			if (err != NULL) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "source port '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			/* dest port */
 			if (!shift(flp)) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "missing dest_port: either only specify CIDR, or specify CIDR protocol source_port dest_port");
 				break;
 			}
 			err = ttoport(shunk1(flp->tok), &dport);
 			if (err != NULL) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "destination port '%s' invalid: %s",
 					    flp->tok, err);
 				break;
 			}
 			/* more stuff? */
 			if (shift(flp)) {
-				llog(RC_LOG_SERIOUS, flp->logger,
+				llog(RC_LOG, flp->logger,
 					    "garbage '%s' at end of line: either only specify CIDR, or specify CIDR protocol source_port dest_port",
 					    flp->tok);
 				break;
@@ -298,7 +298,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		if (r == 0) {
 			subnet_buf source;
 			subnet_buf dest;
-			llog(RC_LOG_SERIOUS, flp->logger,
+			llog(RC_LOG, flp->logger,
 			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already \"%s\"",
 			     str_subnet(&sn, &dest),
 			     proto->ipproto, pri_hport(sport), pri_hport(dport),
@@ -318,7 +318,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		}
 	}
 	if (flp->bdry != B_file) {
-		llog(RC_LOG_SERIOUS, flp->logger, "rest of file ignored");
+		llog(RC_LOG, flp->logger, "rest of file ignored");
 	}
 	lexclose(&flp);
 }

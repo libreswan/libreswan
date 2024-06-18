@@ -184,7 +184,7 @@ void init_virtual_ip(const char *private_list,
 			str = *next != '\0' ? next + 1 : NULL;
 		}
 	} else {
-		llog(RC_LOG_SERIOUS, logger,
+		llog(RC_LOG, logger,
 			    "%d bad entries in virtual-private - none loaded", bad);
 		pfreeany(private_net_incl);
 		private_net_incl = NULL;
@@ -453,7 +453,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 
 	if (virt->flags & F_VIRTUAL_ALL) {
 		/* %all must only be used for testing - log it */
-		llog(RC_LOG_SERIOUS, c->logger,
+		llog(RC_LOG, c->logger,
 		     "WARNING: v%s:%%all must only be used for testing",
 		     (virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
 

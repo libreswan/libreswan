@@ -437,7 +437,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 
 	SECKEYPrivateKeyList *list = PK11_ListPrivateKeysInSlot(slot);
 	if (list == NULL) {
-		llog(RC_LOG_SERIOUS|ERROR_STREAM, logger, "no list");
+		llog(RC_LOG|ERROR_STREAM, logger, "no list");
 		PK11_FreeSlot(slot);
 		return NULL;
 	}
