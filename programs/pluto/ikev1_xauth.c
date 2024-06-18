@@ -1689,7 +1689,7 @@ static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
 			break;
 		}
 	}
-	llog(RC_INFORMATIONAL, logger,
+	llog(RC_LOG, logger,
 	     "Received %s%s%s: %s%s",
 	     ignore ? "and ignored " : "",
 	     jambuf_ok(&buf) ? "" : "overlong ",
@@ -1831,7 +1831,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				subnet_buf caddr;
 				str_selector_subnet(&c->spd->local->client, &caddr);
-				log_state(RC_INFORMATIONAL, st,
+				log_state(RC_LOG, st,
 					  "Received IPv4 address: %s",
 					  caddr.buf);
 
@@ -1866,7 +1866,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				address_buf a_buf;
 				const char *a_str = str_address(&a, &a_buf);
 				bool ignore = c->config->ignore_peer_dns;
-				log_state(RC_INFORMATIONAL, st, "Received %sDNS server %s",
+				log_state(RC_LOG, st, "Received %sDNS server %s",
 					  ignore ? "and ignored " : "",
 					  a_str);
 
@@ -1910,7 +1910,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
 								 &i, sizeof(i), NULL);
 					if (d != NULL) {
-						llog_diag(RC_INFORMATIONAL, st->logger, &d,
+						llog_diag(RC_LOG, st->logger, &d,
 							  "ignoring malformed CISCO_SPLIT_INC payload: ");
 						break;
 					}
@@ -1920,7 +1920,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					ip_subnet wire_subnet;
 					err_t ugh = address_mask_to_subnet(base, mask, &wire_subnet);
 					if (ugh != NULL) {
-						log_state(RC_INFORMATIONAL, st,
+						log_state(RC_LOG, st,
 							  "ignoring malformed CISCO_SPLIT_INC subnet: %s",
 							  ugh);
 						break;
@@ -1933,7 +1933,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						if (selector_range_eq_selector_range(wire_selector, spd->remote->client)) {
 							/* duplicate entry: ignore */
 							subnet_buf pretty_subnet;
-							log_state(RC_INFORMATIONAL, st,
+							log_state(RC_LOG, st,
 								  "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
 								  str_subnet(&wire_subnet, &pretty_subnet));
 							already_split = true;
@@ -1946,7 +1946,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					}
 #else
 					subnet_buf pretty_subnet;
-					log_state(RC_INFORMATIONAL, st,
+					log_state(RC_LOG, st,
 						  "received and ignored CISCO_SPLIT_INC subnet %s",
 						  str_subnet(&wire_subnet, &pretty_subnet));
 #endif

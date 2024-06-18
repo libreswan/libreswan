@@ -675,7 +675,7 @@ static unsigned extract_sparse(const char *leftright, const char *name,
 	if (never_negotiate_wm(wm)) {
 		if (value != 0) {
 			sparse_buf sb;
-			llog(RC_INFORMATIONAL, logger,
+			llog(RC_LOG, logger,
 			     "warning: %s%s=%s ignored for never-negotiate connection",
 			     leftright, name, str_sparse(names, value, &sb));
 		}
@@ -2208,7 +2208,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (never_negotiate_wm(wm)) {
 		if (wm->phase2 != ENCAP_PROTO_UNSET) {
 			enum_buf sb;
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: phase2=%s ignored for never-negotiate connection",
 			     str_enum(&encap_proto_story, wm->phase2, &sb));
 		}
@@ -2272,14 +2272,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if ((wm->ike_version == IKEv1 && wm->ikev2 == YN_YES) ||
 	    (wm->ike_version == IKEv2 && wm->ikev2 == YN_NO)) {
 		enum_buf vn;
-		llog(RC_INFORMATIONAL, c->logger,
+		llog(RC_LOG, c->logger,
 		     "ignoring ikev2=%s which conflicts with keyexchange=%s",
 		     (wm->ikev2 == YN_YES ? "yes" :
 		      wm->ikev2 == YN_NO ? "no" :
 		      "???"),
 		     str_enum(&ike_version_names, wm->ike_version, &vn));
 	} else if (wm->ikev2 != 0) {
-		llog(RC_INFORMATIONAL, c->logger,
+		llog(RC_LOG, c->logger,
 		     "ikev2=%s has been replaced by keyexchange=%s",
 		     (wm->ikev2 == YN_YES ? "yes" :
 		      wm->ikev2 == YN_NO ? "no" :
@@ -2387,14 +2387,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 	if (wm->ike_version == IKEv1) {
 		if (wm->send_redirect != YNA_UNSET) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: IKEv1 connection ignores send-redirect=");
 		}
 	} else {
 		switch (wm->send_redirect) {
 		case YNA_YES:
 			if (wm->redirect_to == NULL) {
-				llog(RC_INFORMATIONAL, c->logger,
+				llog(RC_LOG, c->logger,
 				     "warning: send-redirect=yes ignored, redirect-to= was not specified");
 			}
 			/* set it anyway!?!  the code checking it
@@ -2404,7 +2404,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		case YNA_NO:
 			if (wm->redirect_to != NULL) {
-				llog(RC_INFORMATIONAL, c->logger,
+				llog(RC_LOG, c->logger,
 				     "warning: send-redirect=no, redirect-to= is ignored");
 			}
 			config->redirect.send_never = true;
@@ -2418,7 +2418,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->ike_version == IKEv1) {
 		if (wm->accept_redirect != YN_UNSET) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: IKEv1 connection ignores accept-redirect=");
 		}
 	} else {
@@ -2433,12 +2433,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	if (never_negotiate_wm(wm)) {
 		if (wm->fragmentation != YNF_UNSET) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: never-negotiate connection ignores fragmentation=%s",
 			     sparse_name(&ynf_option_names, wm->fragmentation));
 		}
 	} else if (wm->ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
-		llog(RC_INFORMATIONAL, c->logger,
+		llog(RC_LOG, c->logger,
 		     "warning: IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
 		     sparse_name(&ynf_option_names, wm->fragmentation));
 		config->ike_frag.allow = true;
@@ -2462,7 +2462,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (never_negotiate_wm(wm)) {
 		if (wm->enable_tcp != 0) {
 			sparse_buf eb;
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: enable-tcp=%s ignored for type=passthrough connection",
 			     str_sparse(&tcp_option_names, wm->enable_tcp, &eb));
 		}
@@ -2484,7 +2484,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	switch (iketcp) {
 	case IKE_TCP_NO:
 		if (wm->tcp_remoteport != 0) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: tcp-remoteport=%ju ignored for non-TCP connections",
 			     wm->tcp_remoteport);
 		}
@@ -2662,7 +2662,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: ignoring esn=%s as connection is never-negotiate",
 			     sparse_name(&yne_option_names, wm->esn));
 		}
@@ -2681,7 +2681,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * anti-replay for an SA.
 		 */
 		if (wm->esn != YNE_UNSET && wm->esn != YNE_NO) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: forcing esn=no as replay-window=0");
 		} else {
 			dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
@@ -2710,7 +2710,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		dbg("ESN: ignored as not implemented with IKEv1");
 #if 0
 		if (wm->esn != YNE_UNSET) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: ignoring esn=%s as not implemented with IKEv1",
 			     sparse_name(yne_option_names, wm->esn));
 		}
@@ -2748,7 +2748,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (wm->ike_version == IKEv1) {
 		if (wm->ppk != NPPI_UNSET) {
 			sparse_buf sb;
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: ignoring ppk=%s as IKEv1",
 			     str_sparse(&nppi_option_names, wm->ppk, &sb));
 		}
@@ -2778,7 +2778,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->ike != NULL) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "ignored ike= option for type=passthrough connection");
 		}
 	} else {
@@ -2828,7 +2828,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->esp != NULL) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "ignored esp= option for type=passthrough connection");
 		}
 	} else  {
@@ -2911,7 +2911,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing, false,
 					 wm, c->logger);
 	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
-		llog(RC_INFORMATIONAL, c->logger,
+		llog(RC_LOG, c->logger,
 		     "warning: length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
 		     wm->vti_interface, (unsigned) IFNAMSIZ);
 	}
@@ -3175,7 +3175,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->ipsec_interface != NULL) {
-			llog(RC_INFORMATIONAL, c->logger,
+			llog(RC_LOG, c->logger,
 			     "warning: ipsec-interface=%s ignored for never-negotiate connection",
 			     wm->ipsec_interface);
 		}

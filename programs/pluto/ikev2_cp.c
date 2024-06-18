@@ -454,7 +454,7 @@ static char *broken_dns_stringify(shunk_t str, struct logger *logger)
 			break;
 		}
 	}
-	llog(RC_INFORMATIONAL, logger,
+	llog(RC_LOG, logger,
 	     "received INTERNAL_DNS_DOMAIN: %s%s",
 	     strbuf, (jambuf_ok(&buf) ? "" : " (truncated)"));
 	return clone_str(strbuf, "INTERNAL_DNS_NAME");
@@ -471,7 +471,7 @@ static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 
 	shunk_t str = pbs_in_left(cp_a_pbs);
 	if (child->sa.st_connection->config->ignore_peer_dns) {
-		LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.logger, buf) {
+		LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 			jam_string(buf, "received and ignored INTERNAL_DNS_DOMAIN: ");
 			jam_sanitized_hunk(buf, str);
 		}

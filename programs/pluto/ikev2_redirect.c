@@ -697,14 +697,14 @@ void find_and_active_redirect_states(const char *conn_name,
 	}
 
 	if (cnt == 0) {
-		LLOG_JAMBUF(RC_INFORMATIONAL, logger, buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "no active tunnels found");
 			if (conn_name != NULL) {
 				jam(buf, " for connection \"%s\"", conn_name);
 			}
 		}
 	} else {
-		LLOG_JAMBUF(RC_INFORMATIONAL, logger, buf) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "redirections sent for %d tunnels", cnt);
 			if (conn_name != NULL) {
 				jam(buf, " of connection \"%s\"", conn_name);

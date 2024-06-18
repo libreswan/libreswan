@@ -762,7 +762,7 @@ static void update_and_log_traffic(struct child_sa *child, const char *name,
 		llog_sa(RC_LOG, child, "failed to pull traffic counters from inbound IPsec SA");
 	}
 
-	LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 		jam(buf, "%s traffic information:", name);
 		/* in */
 		jam_string(buf, " in=");
