@@ -271,12 +271,22 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 		return false;
 	}
 
+	/*
+	 * Additional Authenticated Data - AAD - is everything so far:
+	 * i.e., the IKE header and payload headers.
+	 *
+	 * RFC5282 says: The Initialization Vector and Ciphertext
+	 * fields [...] MUST NOT be included in the associated data.
+	 */
+
+	sk->aad = chunk2(sk->pbs.container->start, sk->pbs.cur - sk->pbs.container->start);
+
 	/* emit IV and save location */
 
 	if (!emit_v2SK_iv(sk)) {
 		llog(RC_LOG, logger,
-			    "error initializing IV for encrypted %s message",
-			    container->name);
+		     "error initializing IV for encrypted %s message",
+		     container->name);
 		return false;
 	}
 
@@ -290,6 +300,13 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 	/* XXX: coverity thinks .container (set to E by out_struct()
 	 * above) can be NULL. */
 	passert(sk->pbs.container != NULL && sk->pbs.container->name == container->name);
+
+	ldbg(sk->logger, "%s() %s=[%zu,%zu) %s=[%zu,%zu)",
+	     __func__,
+#define R(N) #N, sk->N.ptr - sk->payload.ptr, sk->N.len
+	     R(aad),
+	     R(wire_iv));
+#undef R
 
 	return true;
 }
@@ -317,14 +334,15 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 	} else {
 		padding = 1;
 	}
-	dbg("adding %zd bytes of padding (including 1 byte padding-length)",
-	    padding);
+	sk->padding = chunk2(sk->pbs.cur, padding);
+	ldbg(sk->logger, "adding %zd bytes of padding (including 1 byte padding-length)", padding);
 	for (unsigned i = 0; i < padding; i++) {
 		if (!pbs_out_repeated_byte(&sk->pbs, i, 1, "padding and length")) {
 			/* already logged */
 			return false; /*fatal*/
 		}
 	}
+	PASSERT(sk->logger, sk->padding.ptr + sk->padding.len == sk->pbs.cur);
 
 	/* emit space for integrity checksum data; save location */
 
@@ -348,6 +366,15 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 	sk->payload.len = sk->pbs.cur - sk->payload.ptr;
 	close_output_pbs(&sk->pbs);
 
+	ldbg(sk->logger, "%s() payload=%zu bytes %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu)",
+	     __func__, sk->padding.len,
+#define R(N) #N, sk->N.ptr - sk->payload.ptr, sk->N.len
+	     R(aad),
+	     R(cleartext),
+	     R(wire_iv),
+	     R(padding),
+	     R(integrity));
+#undef R
 	return true;
 }
 
@@ -400,20 +427,21 @@ static void construct_enc_iv(const char *name,
 bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 {
 	struct ike_sa *ike = sk->ike;
-	uint8_t *auth_start = sk->pbs.container->start;
+
 	/*
-	 * Will encrypt .cleartext + [.]padding.  I.e.,
-	 * [.cleartext.ptr..[.]integrity.ptr)
+	 * Will encrypt .cleartext + .padding (they are assumed to be
+	 * contigious).
 	 *
 	 * Just note that .cleartext doesn't include the padding.
 	 * This is because when .cleartext gets chopped up into
 	 * fragments the last fragment does its own padding.
 	 */
-	chunk_t enc = chunk2(sk->cleartext.ptr, sk->integrity.ptr - sk->cleartext.ptr);
-
-	passert(auth_start <= sk->wire_iv.ptr);
-	passert(sk->wire_iv.ptr <= enc.ptr);
-	passert(enc.ptr <= sk->integrity.ptr);
+	ldbg(sk->logger, "%p %zu %p", sk->aad.ptr, sk->aad.len, sk->wire_iv.ptr);
+	PASSERT(sk->logger, sk->aad.ptr + sk->aad.len == sk->wire_iv.ptr);
+	PASSERT(sk->logger, sk->wire_iv.ptr + sk->wire_iv.len == sk->cleartext.ptr);
+	PASSERT(sk->logger, sk->cleartext.ptr + sk->cleartext.len == sk->padding.ptr);
+	PASSERT(sk->logger, sk->padding.ptr + sk->padding.len == sk->integrity.ptr);
+	chunk_t enc = chunk2(sk->cleartext.ptr, sk->cleartext.len + sk->padding.len);
 
 	chunk_t salt;
 	PK11SymKey *cipherkey;
@@ -444,14 +472,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 	/* encrypt and authenticate the block */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
-		/*
-		 * Additional Authenticated Data - AAD - size.
-		 * RFC5282 says: The Initialization Vector and Ciphertext
-		 * fields [...] MUST NOT be included in the associated
-		 * data.
-		 */
 		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
-		shunk_t aad = shunk2(auth_start, enc.ptr - auth_start - sk->wire_iv.len);
 		chunk_t text_and_tag = chunk2(enc.ptr, enc.len + sk->integrity.len);
 
 		/* now, encrypt */
@@ -460,14 +481,14 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		    LDBG_log(sk->logger, "IV before authenticated encryption:");
 		    LDBG_hunk(sk->logger, sk->wire_iv);
 		    LDBG_log(sk->logger, "AAD before authenticated encryption:");
-		    LDBG_hunk(sk->logger, aad);
+		    LDBG_hunk(sk->logger, sk->aad);
 		}
 
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
 			      HUNK_AS_SHUNK(sk->wire_iv),
-			      aad, text_and_tag,
+			      HUNK_AS_SHUNK(sk->aad), text_and_tag,
 			      enc.len, sk->integrity.len,
 			      cipherkey, true, sk->logger)) {
 			return false;
@@ -492,13 +513,15 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		/* okay, authenticate from beginning of IV */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("integ", ike->sa.st_oakley.ta_integ->prf,
 							      "authkey", authkey, sk->logger);
-		crypt_prf_update_bytes(ctx, "message", auth_start, sk->integrity.ptr - auth_start);
+		chunk_t message = chunk2(sk->aad.ptr, sk->integrity.ptr - sk->aad.ptr);
+		crypt_prf_update_bytes(ctx, "message", message.ptr, message.len);
 		passert(sk->integrity.len == ike->sa.st_oakley.ta_integ->integ_output_size);
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 		memcpy_hunk(sk->integrity.ptr, mac, sk->integrity.len);
 
 		if (DBGP(DBG_CRYPT)) {
-			DBG_dump("data being hmac:", auth_start, sk->integrity.ptr - auth_start);
+			LDBG_log(sk->logger, "data being hmac:");
+			LDBG_hunk(sk->logger, message);
 			LDBG_log(sk->logger, "out calculated auth:");
 			LDBG_hunk(sk->logger, sk->integrity);
 		}
@@ -1208,12 +1231,22 @@ static bool record_outbound_fragment(struct logger *logger,
 	if (!out_struct(&e, &ikev2_skf_desc, &body, &skf.pbs))
 		return false;
 
+	/*
+	 * Additional Authenticated Data - AAD - is everything so far:
+	 * i.e., the IKE header and payload headers.
+	 *
+	 * RFC5282 says: The Initialization Vector and Ciphertext
+	 * fields [...] MUST NOT be included in the associated data.
+	 */
+
+	skf.aad = chunk2(skf.pbs.container->start, skf.pbs.cur - skf.pbs.container->start);
+
 	/* emit IV and save location */
 
 	if (!emit_v2SK_iv(&skf)) {
 		llog(RC_LOG, logger,
-			    "error initializing IV for encrypted %s message",
-			    desc);
+		     "error initializing IV for encrypted %s message",
+		     desc);
 		return false;
 	}
 

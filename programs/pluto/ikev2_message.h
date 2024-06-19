@@ -40,11 +40,11 @@ struct v2SK_payload {
 	struct pbs_out pbs; /* within SK */
 	/* private */
 	/* pointers into SK header+contents */
-	chunk_t payload; /* header+iv+cleartext+padding+integrity */
-	/* chunk_t header; */
+	chunk_t payload; /* aad+wire_iv+cleartext+padding+integrity */
+	chunk_t aad;
 	chunk_t wire_iv;
 	chunk_t cleartext;
-	/* chunk_t padding; */
+	chunk_t padding;
 	chunk_t integrity;
 };
 
