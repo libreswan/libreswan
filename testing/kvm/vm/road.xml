@@ -1,6 +1,7 @@
 <!--
 ./kvm install-linux will transmogrify and then load this .xml file
 -->
+
 <domain type='kvm'>
   <name>@@DOMAIN@@</name>
   <memory unit='MiB'>512</memory>
@@ -53,15 +54,6 @@
     <console type='pty'>
       <target type='serial' port='0'/>
     </console>
-    <channel type='spicevmc'>
-      <target type='virtio' name='com.redhat.spice.0'/>
-    </channel>
-    <input type='tablet' bus='usb'/>
-    <input type='mouse' bus='ps2'/>
-    <graphics type='spice' autoport='yes'/>
-    <video>
-      <model type='qxl' vram='65536' heads='1'/>
-    </video>
     <memballoon model='virtio'>
     </memballoon>
     <rng model='virtio'>
