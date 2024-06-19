@@ -1193,8 +1193,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	/* HDR out */
 
 	struct pbs_out body;
-	if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
-			&body))
+	if (!pbs_out_struct(&frag_stream, &isakmp_hdr_desc, hdr, sizeof(*hdr), &body))
 		return false;
 
 	/*
@@ -1228,7 +1227,7 @@ static bool record_outbound_fragment(struct logger *logger,
 		.isaskf_number = number,
 		.isaskf_total = total,
 	};
-	if (!out_struct(&e, &ikev2_skf_desc, &body, &skf.pbs))
+	if (!pbs_out_struct(&body, &ikev2_skf_desc, &e, sizeof(e), &skf.pbs))
 		return false;
 
 	/*
