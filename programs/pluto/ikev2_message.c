@@ -495,6 +495,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	} else {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		struct iv iv;
+		fill_rnd_chunk(sk->wire_iv);
 		construct_enc_iv("encryption IV/starting-variable", &iv,
 				 sk->wire_iv, salt,
 				 ike->sa.st_oakley.ta_encrypt,
