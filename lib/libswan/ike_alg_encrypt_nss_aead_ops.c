@@ -29,7 +29,7 @@
 
 static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			     shunk_t salt,
-			     shunk_t wire_iv,
+			     chunk_t wire_iv,
 			     shunk_t aad,
 			     chunk_t text_and_tag,
 			     size_t text_len, size_t tag_len,

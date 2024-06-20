@@ -121,7 +121,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 		if (!encrypt_desc->encrypt_ops				\
 		    ->do_aead(encrypt_desc,				\
 			      HUNK_AS_SHUNK(salt),			\
-			      HUNK_AS_SHUNK(wire_iv),			\
+			      wire_iv,					\
 			      HUNK_AS_SHUNK(aad),			\
 			      text_and_tag,				\
 			      plaintext.len, tag.len,			\

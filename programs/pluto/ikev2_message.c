@@ -487,7 +487,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
-			      HUNK_AS_SHUNK(sk->wire_iv),
+			      sk->wire_iv,
 			      HUNK_AS_SHUNK(sk->aad), text_and_tag,
 			      enc.len, sk->integrity.len,
 			      cipherkey, ENCRYPT, sk->logger)) {
@@ -658,7 +658,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
-			      HUNK_AS_SHUNK(wire_iv),
+			      wire_iv,
 			      aad, text_and_tag,
 			      enc.len, integ.len,
 			      cipherkey, DECRYPT, ike->sa.logger)) {

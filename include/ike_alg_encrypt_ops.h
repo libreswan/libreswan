@@ -67,7 +67,7 @@ struct encrypt_ops {
 	 */
 	bool (*const do_aead)(const struct encrypt_desc *alg,
 			      shunk_t salt,
-			      shunk_t wire_iv,
+			      chunk_t wire_iv,
 			      shunk_t aad,
 			      chunk_t text_and_tag,
 			      size_t text_size, size_t tag_size,
