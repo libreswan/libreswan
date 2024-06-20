@@ -703,7 +703,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc, HUNK_AS_CHUNK(iv),
-				   cipherkey, false,
+				   cipherkey, DECRYPT,
 				   ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
