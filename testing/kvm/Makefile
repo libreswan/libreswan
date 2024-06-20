@@ -54,8 +54,8 @@ KVM_LOCALDIR ?= $(KVM_POOLDIR)
 KVM_SNAPSHOTDIR ?=
 
 #
-# Goal is to make KVM_PREFIXES non-empty, even if it ends up
-# containing only ''.  From that list KVM_FIRST_PREFIX is extracted.
+# Build KVM_PREFIXES from $(KVM_PREFIX) and $(KVM_WORKERS).  Goal is
+# to make KVM_PREFIXES non-empty, even if it ends up containing ''.
 #
 # Compat values:
 #   KVM_PREFIX=                 -> KVM_PREFIXES=''
@@ -79,7 +79,6 @@ strip-prefix = $(subst '',,$(subst "",,$(1)))
 add-kvm-prefixes = \
 	$(foreach prefix, $(KVM_PREFIXES), \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
-KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
 
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
@@ -100,7 +99,7 @@ KVM_TRANSMOGRIFY = \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
 	-e 's;@@GROUP@@;$(KVM_GID);' \
-	-e 's;@@PREFIX@@;$(KVM_FIRST_PREFIX);'
+	-e 's;@@PREFIX@@;$(KVM_PREFIX);'
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -296,10 +295,10 @@ KVM_$($(strip $1))_UPGRADE_HOST_NAME = $(strip $1)-upgrade
 KVM_$($(strip $1))_BUILD_HOST_NAME   = $(strip $1)
 KVM_$($(strip $1))_HOST_NAME         = $(strip $1)
 
-KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_BASE_HOST_NAME))
-KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_UPGRADE_HOST_NAME))
-KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_BUILD_HOST_NAME))
-KVM_$($(strip $1))_DOMAIN_NAME         = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_HOST_NAME))
+KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_BASE_HOST_NAME))
+KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_UPGRADE_HOST_NAME))
+KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_BUILD_HOST_NAME))
+KVM_$($(strip $1))_DOMAIN_NAME         = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_HOST_NAME))
 
 KVM_$($(strip $1))_BASE_DOMAIN    = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BASE_DOMAIN_NAME))
 KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME))
@@ -366,7 +365,7 @@ $(foreach platform, $(KVM_PLATFORM), $(eval $(call kvm-os-dir, $(platform))))
 print-kvm-variable:
 	@echo "$(strip $($(VARIABLE)))"
 
-KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
+KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
 	$(call strip-prefix, \
 		$(foreach prefix, $(KVM_PREFIXES), \
@@ -626,7 +625,7 @@ kvm-diffs:
 KVM_KEYS = $(KVM_TESTINGDIR)/x509/keys/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
 KVM_KEYS_EXPIRED = find $(KVM_TESTINGDIR)/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
-KVM_KEYS_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), linux)
+KVM_KEYS_DOMAIN = $(addprefix $(KVM_PREFIX), linux)
 
 .PHONY: kvm-keys
 kvm-keys:
@@ -664,7 +663,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
 	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) tar cf kvm-keys.tar '*/' nss-pw
-	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) cp kvm-keys.tar /pool/$(KVM_FIRST_PREFIX)kvm-keys.tar
+	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) cp kvm-keys.tar /pool/$(KVM_PREFIX)kvm-keys.tar
 	cd $(KVM_TESTINGDIR)/x509 && tar xf $(KVM_POOLDIR_PREFIX)kvm-keys.tar
 	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
 	:
@@ -1344,7 +1343,7 @@ kvm-install-%:
 	: $@
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-base-$*
-	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
+	$(KVMSH) --shutdown $(KVM_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 $(patsubst %, kvm-install-base-%, $(KVM_PLATFORM)): \
@@ -1352,7 +1351,7 @@ kvm-install-base-%:
 	: $@
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-base-$*
-	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
+	$(KVMSH) --shutdown $(KVM_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 $(patsubst %, kvm-install-all-%, $(KVM_PLATFORM)): \
@@ -1360,7 +1359,7 @@ kvm-install-all-%:
 	: $@
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-all-$*
-	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
+	$(KVMSH) --shutdown $(KVM_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 .PHONY: kvm-install
@@ -1556,7 +1555,7 @@ endif
 #
 
 $(patsubst %, kvmsh-%, $(filter-out $(KVM_DOMAIN_NAMES), $(KVM_HOST_NAMES))): \
-kvmsh-%: kvmsh-$(KVM_FIRST_PREFIX)%
+kvmsh-%: kvmsh-$(KVM_PREFIX)%
 
 $(patsubst %, kvmsh-%, $(KVM_BASE_DOMAIN_NAMES)) : \
 kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
@@ -1608,7 +1607,7 @@ $(call kvm-var-value,KVM_TESTINGDIR)
 $(call kvm-var-value,KVM_WORKERS)
 
 $(call kvm-var-value,KVM_PREFIX)
-$(call kvm-var-value,KVM_FIRST_PREFIX)
+$(call kvm-var-value,KVM_PREFIX)
 $(call kvm-var-value,KVM_PREFIXES)
 $(call kvm-var-value,KVM_POOLDIR_PREFIX)
 $(call kvm-var-value,KVM_LOCALDIR_PREFIXES)
@@ -1773,7 +1772,7 @@ Standard targets and operations:
     kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOST_NAMES)))
         - use 'virsh console' to login to the given domain
 	- for HOST login to the first domain vis:
-          $(addprefix $(KVM_FIRST_PREFIX), HOST)
+          $(addprefix $(KVM_PREFIX), HOST)
         - if necessary, create and boot the host
     $(addprefix kvmsh-, $(KVM_TEST_DOMAIN_NAMES))
         - login to the specific domain
