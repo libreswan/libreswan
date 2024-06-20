@@ -30,6 +30,16 @@ enum ike_alg_crypt {
 	 CRYPT == DECRYPT ? "decrypt" :					\
 	 "???")
 
+enum ike_alg_iv_source {
+	USE_IV,
+	FILL_IV,
+};
+
+#define str_ike_alg_iv_source(IV)		\
+	(IV == USE_IV ? "use IV" :		\
+	 IV == FILL_IV ? "fill IV" :		\
+	 "???")
+
 struct encrypt_ops {
 	const char *backend;
 
@@ -67,6 +77,7 @@ struct encrypt_ops {
 	 */
 	bool (*const do_aead)(const struct encrypt_desc *alg,
 			      shunk_t salt,
+			      enum ike_alg_iv_source iv_source,
 			      chunk_t wire_iv,
 			      shunk_t aad,
 			      chunk_t text_and_tag,

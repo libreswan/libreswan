@@ -239,8 +239,6 @@ static bool emit_v2SK_iv(struct v2SK_payload *sk)
 		/* already logged */
 		return false; /*fatal*/
 	}
-	/* scribble on it */
-	fill_rnd_chunk(sk->wire_iv);
 	return true;
 }
 
@@ -487,7 +485,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
-			      sk->wire_iv,
+			      FILL_IV, sk->wire_iv,
 			      HUNK_AS_SHUNK(sk->aad), text_and_tag,
 			      enc.len, sk->integrity.len,
 			      cipherkey, ENCRYPT, sk->logger)) {
@@ -658,7 +656,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
 		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      HUNK_AS_SHUNK(salt),
-			      wire_iv,
+			      USE_IV, wire_iv,
 			      aad, text_and_tag,
 			      enc.len, integ.len,
 			      cipherkey, DECRYPT, ike->sa.logger)) {

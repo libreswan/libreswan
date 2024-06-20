@@ -24,11 +24,13 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt_ops.h"
+#include "rnd.h"
 
 #if defined(CKM_NSS_CHACHA20_POLY1305)
 
 static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			     shunk_t salt,
+			     enum ike_alg_iv_source iv_source,
 			     chunk_t wire_iv,
 			     shunk_t aad,
 			     chunk_t text_and_tag,
@@ -42,6 +44,16 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 
 	/* See pk11aeadtest.c */
 	bool ok = true;
+
+	switch (iv_source) {
+	case USE_IV:
+		break;
+	case FILL_IV:
+		fill_rnd_chunk(wire_iv);
+		break;
+	default:
+		bad_case(iv_source);
+	}
 
 	chunk_t iv = clone_hunk_hunk(salt, wire_iv, "IV");
 
