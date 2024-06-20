@@ -529,7 +529,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				}
 			}
 #else
-			err_t er = ttoaddress_dns(shunk1(peer->strings[KSCF_IP]),
+			err_t er = ttoaddress_dns(shunk1(peer->strings[KW_IP]),
 						  peer->host_family, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);
