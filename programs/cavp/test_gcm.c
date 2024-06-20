@@ -199,7 +199,7 @@ static void gcm_run_test(struct logger *logger)
 			  text_and_tag,
 			  ct.len, tag.len,
 			  gcm_key,
-			  false/*encrypt*/,
+			  DECRYPT,
 			  logger);
 	if (result) {
 		/* plain text */

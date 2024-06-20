@@ -36,7 +36,8 @@
 
 static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 		       chunk_t buf, chunk_t counter_block,
-		       PK11SymKey *sym_key, bool encrypt,
+		       PK11SymKey *sym_key,
+		       enum ike_alg_crypt crypt,
 		       struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: enter");
@@ -59,20 +60,29 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	uint8_t *out_buf = PR_Malloc((PRUint32)buf.len);
 	unsigned int out_len = 0;
 
-	if (encrypt) {
+	switch (crypt) {
+	case ENCRYPT:
+	{
 		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_CTR, &param,
 					    out_buf, &out_len, buf.len,
 					    buf.ptr, buf.len);
 		if (rv != SECSuccess) {
 			passert_nss_error(logger, HERE, "PK11_Encrypt failure");
 		}
-	} else {
+		break;
+	}
+	case DECRYPT:
+	{
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
 					    out_buf, &out_len, buf.len,
 					    buf.ptr, buf.len);
 		if (rv != SECSuccess) {
 			passert_nss_error(logger, HERE, "PK11_Decrypt failure");
 		}
+		break;
+	}
+	default:
+		bad_case(crypt);
 	}
 
 	memcpy(buf.ptr, out_buf, buf.len);

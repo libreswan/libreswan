@@ -33,7 +33,8 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			     shunk_t aad,
 			     chunk_t text_and_tag,
 			     size_t text_len, size_t tag_len,
-			     PK11SymKey *sym_key, bool enc,
+			     PK11SymKey *sym_key,
+			     enum ike_alg_crypt crypt,
 			     struct logger *logger)
 {
 	/* must be contigious */
@@ -62,7 +63,9 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 	uint8_t *out_buf = PR_Malloc(text_and_tag.len);
 	unsigned int out_len = 0;
 
-	if (enc) {
+	switch (crypt) {
+	case ENCRYPT:
+	{
 		SECStatus rv = PK11_Encrypt(sym_key, alg->nss.mechanism,
 					    &param, out_buf, &out_len,
 					    text_and_tag.len,
@@ -82,7 +85,10 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 				       out_len, text_and_tag.len);
 			ok = false;
 		}
-	} else {
+		break;
+	}
+	case DECRYPT:
+	{
 		SECStatus rv = PK11_Decrypt(sym_key, alg->nss.mechanism, &param,
 					    out_buf, &out_len, text_and_tag.len,
 					    text_and_tag.ptr, text_and_tag.len);
@@ -101,6 +107,10 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 				      out_len, text_len);
 			ok = false;
 		}
+		break;
+	}
+	default:
+		bad_case(crypt);
 	}
 
 	memcpy(text_and_tag.ptr, out_buf, out_len);

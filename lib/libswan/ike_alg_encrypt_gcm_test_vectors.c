@@ -108,13 +108,13 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	 * from test_gcm_vector to be pleasant:
 	 *	text_and_tag, len, tag, aad, salt, wire_iv, sym_key
 	 */
-#	define try(enc, desc, from, to)					\
+#	define try(CRYPT, FROM, TO)					\
 	{								\
-		memcpy(text_and_tag.ptr, from.ptr, from.len);		\
+		memcpy(text_and_tag.ptr, FROM.ptr, FROM.len);		\
 		text_and_tag.len = len + tag.len;			\
 		if (DBGP(DBG_CRYPT)) {					\
 			DBG_log("test_gcm_vector: %s: aad-size=%zd salt-size=%zd wire-IV-size=%zd text-size=%zd tag-size=%zd", \
-				desc, aad.len, salt.len, wire_iv.len, len, tag.len); \
+				#CRYPT, aad.len, salt.len, wire_iv.len, len, tag.len); \
 			DBG_dump_hunk("test_gcm_vector: text+tag on call", \
 				      text_and_tag);			\
 		}							\
@@ -125,10 +125,12 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			      HUNK_AS_SHUNK(aad),			\
 			      text_and_tag,				\
 			      plaintext.len, tag.len,			\
-			      sym_key, enc,				\
+			      sym_key,					\
+			      CRYPT,					\
 			      logger) ||				\
-		    !verify_bytes("output ciphertext", to.ptr, to.len,	\
-				  text_and_tag.ptr, to.len) ||		\
+		    !verify_bytes("output ciphertext",			\
+				  TO.ptr, TO.len,			\
+				  text_and_tag.ptr, TO.len) ||		\
 		    !verify_bytes("TAG", tag.ptr, tag.len,		\
 				  text_and_tag.ptr + len, tag.len))	\
 			ok = false;					\
@@ -140,11 +142,11 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 
 	/* test decryption */
 	memcpy(text_and_tag.ptr + len, tag.ptr, tag.len);
-	try(false, "decrypt", ciphertext, plaintext);
+	try(DECRYPT, ciphertext, plaintext);
 
 	/* test encryption */
 	memset(text_and_tag.ptr + len, '\0', tag.len);
-	try(true, "encrypt", plaintext, ciphertext);
+	try(ENCRYPT, plaintext, ciphertext);
 
 #	undef try
 

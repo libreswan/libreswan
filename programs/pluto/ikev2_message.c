@@ -490,7 +490,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 			      HUNK_AS_SHUNK(sk->wire_iv),
 			      HUNK_AS_SHUNK(sk->aad), text_and_tag,
 			      enc.len, sk->integrity.len,
-			      cipherkey, true, sk->logger)) {
+			      cipherkey, ENCRYPT, sk->logger)) {
 			return false;
 		}
 
@@ -505,8 +505,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		ike->sa.st_oakley.ta_encrypt->encrypt_ops
 			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc, HUNK_AS_CHUNK(iv),
-				   cipherkey, true,
-				   sk->logger);
+				   cipherkey, ENCRYPT, sk->logger);
 
 		/* note: saved_iv's updated value is discarded */
 
@@ -662,7 +661,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			      HUNK_AS_SHUNK(wire_iv),
 			      aad, text_and_tag,
 			      enc.len, integ.len,
-			      cipherkey, false, ike->sa.logger)) {
+			      cipherkey, DECRYPT, ike->sa.logger)) {
 			return false;
 		}
 

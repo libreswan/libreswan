@@ -20,6 +20,16 @@
 
 struct logger;
 
+enum ike_alg_crypt {
+	DECRYPT = false,
+	ENCRYPT = true,
+};
+
+#define str_ike_alg_crypt(CRYPT)					\
+	(CRYPT == ENCRYPT ? "encrypt" :					\
+	 CRYPT == DECRYPT ? "decrypt" :					\
+	 "???")
+
 struct encrypt_ops {
 	const char *backend;
 
@@ -37,7 +47,7 @@ struct encrypt_ops {
 			       chunk_t data,
 			       chunk_t iv,
 			       PK11SymKey *key,
-			       bool enc,
+			       enum ike_alg_crypt crypt,
 			       struct logger *logger);
 
 	/*
@@ -61,7 +71,8 @@ struct encrypt_ops {
 			      shunk_t aad,
 			      chunk_t text_and_tag,
 			      size_t text_size, size_t tag_size,
-			      PK11SymKey *key, bool enc,
+			      PK11SymKey *key,
+			      enum ike_alg_crypt crypt,
 			      struct logger *logger);
 };
 

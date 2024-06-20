@@ -398,8 +398,7 @@ bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 	}
 
 	e->encrypt_ops->do_crypt(e, padded_encrypt, HUNK_AS_CHUNK(st->st_v1_new_iv),
-				 st->st_enc_key_nss, true,
-				 st->logger);
+				 st->st_enc_key_nss, ENCRYPT, st->logger);
 
 	update_iv(st);
 	if (DBGP(DBG_CRYPT)) {

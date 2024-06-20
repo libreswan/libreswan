@@ -31,7 +31,8 @@
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			    chunk_t in_buf, chunk_t iv,
-			    PK11SymKey *symkey, bool enc,
+			    PK11SymKey *symkey,
+			    enum ike_alg_crypt crypt,
 			    struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
@@ -56,7 +57,9 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 
 	PK11Context *enccontext;
 	enccontext = PK11_CreateContextBySymKey(alg->nss.mechanism,
-						enc ? CKA_ENCRYPT : CKA_DECRYPT,
+						(crypt == ENCRYPT ? CKA_ENCRYPT :
+						 crypt == DECRYPT ? CKA_DECRYPT :
+						 pexpect(0)),
 						symkey, secparam);
 	if (enccontext == NULL) {
 		passert_nss_error(logger, HERE,
@@ -81,18 +84,23 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	 * Update the IV ready for the next call to this function.
 	 */
 	uint8_t *new_iv;
-	if (enc) {
+	switch (crypt) {
+	case ENCRYPT:
 		/*
 		 * The IV for the next encryption call is the last
 		 * block of encrypted output data.
 		 */
 		new_iv = out_buf + out_buf_len - alg->enc_blocksize;
-	} else {
+		break;
+	case DECRYPT:
 		/*
 		 * The IV for the next decryption call is the last
 		 * block of the encrypted input data.
 		 */
 		new_iv = in_buf.ptr + in_buf.len - alg->enc_blocksize;
+		break;
+	default:
+		bad_case(crypt);
 	}
 	PEXPECT(logger, iv.len == alg->enc_blocksize);
 	memcpy(iv.ptr, new_iv, alg->enc_blocksize);

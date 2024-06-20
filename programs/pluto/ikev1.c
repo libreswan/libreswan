@@ -1170,8 +1170,7 @@ void process_packet_tail(struct msg_digest *md)
 		e->encrypt_ops->do_crypt(e, cipher_text,
 					 HUNK_AS_CHUNK(st->st_v1_new_iv),
 					 st->st_enc_key_nss,
-					 /*encrypt*/false,
-					 st->logger);
+					 DECRYPT, st->logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
 			DBG_log("decrypted payload (starts at offset %td):",

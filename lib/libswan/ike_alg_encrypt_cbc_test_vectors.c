@@ -123,13 +123,15 @@ static const struct cbc_test_vector camellia_cbc_test_vectors[] = {
 const struct cbc_test_vector *const camellia_cbc_tests = camellia_cbc_test_vectors;
 
 static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
-			const char *description, int encrypt,
+			const char *description,
+			enum ike_alg_crypt crypt,
 			PK11SymKey *sym_key, const char *encoded_iv,
 			const char *input_name, const char *input,
 			const char *output_name, const char *output,
 			struct logger *logger)
 {
-	const char *op = encrypt ? "encrypt" : "decrypt";
+	const char *op = str_ike_alg_crypt(crypt);
+
 	bool ok = true;
 	chunk_t iv = decode_to_chunk("IV: ", encoded_iv);
 
@@ -139,14 +141,15 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	 * last few bytes.
 	 */
 	chunk_t expected_iv =
-		decode_to_chunk("new IV: ", encrypt ? output : input);
+		decode_to_chunk("new IV: ", (crypt == ENCRYPT ? output :
+					     crypt == DECRYPT ? input :
+					     NULL));
 	chunk_t tmp = decode_to_chunk(input_name, input);
 	chunk_t expected = decode_to_chunk(output_name, output);
 
 	/* do_crypt modifies the data and IV in place. */
 	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp, iv,
-					    sym_key, encrypt,
-					    logger);
+					    sym_key, crypt, logger);
 
 	if (!verify_hunk(op, expected, tmp)) {
 		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: output does not match",

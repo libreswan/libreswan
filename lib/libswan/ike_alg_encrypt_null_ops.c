@@ -28,12 +28,14 @@
 static void ike_alg_encrypt_null_do_crypt(const struct encrypt_desc *alg,
 					  chunk_t in_buf, chunk_t iv,
 					  PK11SymKey *symkey,
-					  bool enc,
+					  enum ike_alg_crypt crypt,
 					  struct logger *logger)
 {
-	ldbgf(DBG_CRYPT, logger, "%s() %s - enter %p %zu bytes iv %p enc=%s key=%p",
+	ldbgf(DBG_CRYPT, logger, "%s() %s - enter %p %zu bytes iv %p %s key=%p",
 	      __func__, alg->common.fqn, in_buf.ptr, in_buf.len,
-	      iv.ptr, bool_str(enc), symkey);
+	      iv.ptr,
+	      str_ike_alg_crypt(crypt),
+	      symkey);
 	/* nothing happens */
 	ldbgf(DBG_CRYPT, logger, "%s() %s - exit", __func__, alg->common.fqn);
 }
