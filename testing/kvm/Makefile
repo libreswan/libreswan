@@ -54,31 +54,27 @@ KVM_LOCALDIR ?= $(KVM_POOLDIR)
 KVM_SNAPSHOTDIR ?=
 
 #
-# Build KVM_PREFIXES from $(KVM_PREFIX) and $(KVM_WORKERS).  Goal is
-# to make KVM_PREFIXES non-empty, even if it ends up containing ''.
+# Build KVM_TEST_PREFIXES from $(KVM_PREFIX) and $(KVM_WORKERS).  Goal
+# is to make KVM_TEST_PREFIXES non-empty.
 #
 # Compat values:
-#   KVM_PREFIX=                 -> KVM_PREFIXES=''
-#   KVM_PREFIX=a b c            -> KVM_PREFIXES=a b c
-#   KVM_PREFIX=a  KVM_WORKERS=1 -> KVM_PREFIXES=a
-#   KVM_PREFIX=a  KVM_WORKERS=2 -> KVM_PREFIXES=a  a2
-#   KVM_PREFIX=a. KVM_WORKERS=3 -> KVM_PREFIXES=a. a2 a3
+#   KVM_PREFIX=                 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/
+#   KVM_PREFIX=a b              -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a $(KVM_LOCALDIR)/b
+#   KVM_PREFIX=a  KVM_WORKERS=1 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a
+#   KVM_PREFIX=a  KVM_WORKERS=2 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a  $(KVM_LOCALDIR)/a2
+#   KVM_PREFIX=a. KVM_WORKERS=3 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a. $(KVM_LOCALDIR)/a2 $(KVM_LOCALDIR)/a3
 
 KVM_PREFIX ?=
 KVM_WORKERS ?= 1
 KVM_NUMBERS = $(wordlist 2, $(KVM_WORKERS), 1 2 3 4 5 6 7 8 9)
-KVM_PREFIXES ?= \
+KVM_TEST_PREFIXES ?= \
 	$(if $(wordlist 2, 2, $(KVM_PREFIX)), \
-		$(KVM_PREFIX), \
+		$(addprefix $(KVM_LOCALDIR)/, $(KVM_PREFIX)), \
 	$(if $(wordlist 1, 1, $(KVM_PREFIX)), \
-		$(KVM_PREFIX) $(foreach n, $(KVM_NUMBERS), $(patsubst %., %, $(KVM_PREFIX))$(n)), \
-	''))
+		$(addprefix $(KVM_LOCALDIR)/, $(KVM_PREFIX) $(foreach n, $(KVM_NUMBERS), $(patsubst %., %, $(KVM_PREFIX))$(n))), \
+	$(KVM_LOCALDIR)/))
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
-# for-each-kvm-prefix = how?
-add-kvm-prefixes = \
-	$(foreach prefix, $(KVM_PREFIXES), \
-		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 
 
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
@@ -181,8 +177,6 @@ KVM_MAKEFLAGS ?= $(strip \
 # Memory: a test typically requires two 512mb VMs. With $(KVM_WORKERS)
 # that makes at least $(KVM_WORKERS)*2*512mb of ram being used by
 # tests VMs.  Boost build's memory by that amount.
-#
-# XXX: Ignore KVM_PREFIXES, it is probably going away.
 
 VIRT_INSTALL ?= sudo virt-install
 VIRT_CPU ?= --cpu=host-passthrough
@@ -305,9 +299,8 @@ KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(st
 KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BUILD_DOMAIN_NAME))
 KVM_$($(strip $1))_DOMAIN         = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_DOMAIN_NAME))
 
-KVM_$($(strip $1))_TEST_HOST_NAMES   ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
-KVM_$($(strip $1))_TEST_DOMAIN_NAMES = $$(call add-kvm-prefixes, $$(KVM_$($(strip $1))_TEST_HOST_NAMES))
-KVM_$($(strip $1))_TEST_DOMAINS      = $$(addprefix $$(KVM_LOCALDIR)/, $$(KVM_$($(strip $1))_TEST_DOMAIN_NAMES))
+KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
+KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(KVM_$($(strip $1))_TEST_HOST_NAMES)))
 
 endef
 
@@ -327,7 +320,6 @@ KVM_BUILD_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform
 KVM_BUILD_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BUILD_DOMAIN))
 
 KVM_TEST_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_HOST_NAMES))
-KVM_TEST_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_DOMAIN_NAMES))
 KVM_TEST_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_DOMAINS))
 
 KVM_HOST_NAMES += $(KVM_BASE_HOST_NAMES)
@@ -338,7 +330,7 @@ KVM_HOST_NAMES += $(KVM_TEST_HOST_NAMES)
 KVM_DOMAIN_NAMES += $(KVM_BASE_DOMAIN_NAMES)
 KVM_DOMAIN_NAMES += $(KVM_UPGRADE_DOMAIN_NAMES)
 KVM_DOMAIN_NAMES += $(KVM_BUILD_DOMAIN_NAMES)
-KVM_DOMAIN_NAMES += $(KVM_TEST_DOMAIN_NAMES)
+KVM_DOMAIN_NAMES += $(notdir $(KVM_TEST_DOMAINS))
 
 KVM_DOMAINS += $(KVM_BASE_DOMAINS)
 KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
@@ -366,13 +358,6 @@ print-kvm-variable:
 	@echo "$(strip $($(VARIABLE)))"
 
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_PREFIX)
-KVM_LOCALDIR_PREFIXES = \
-	$(call strip-prefix, \
-		$(foreach prefix, $(KVM_PREFIXES), \
-			$(addprefix $(KVM_LOCALDIR)/, $(prefix))))
-add-kvm-localdir-prefixes = \
-	$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
-		$(patsubst %, $(prefix)%, $(1)))
 
 #
 # Other utilities and directories
@@ -568,7 +553,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
-		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
+		$(foreach prefix,$(KVM_TEST_PREFIXES), --prefix '$(notdir $(prefix))') \
 		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
 		$(if $(KVM_TESTINGDIR), --testing-directory $(KVM_TESTINGDIR)) \
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
@@ -1412,7 +1397,7 @@ define define-test-domain
 endef
 
 # generate rules for all combinations, including those not enabled
-$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
+$(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORM), \
 		$(foreach host, $(KVM_OS_TEST_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
@@ -1421,7 +1406,7 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 				$(host))))))
 
 # generate rules for "linux" hosts
-$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
+$(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach host, $(KVM_LINUX_TEST_HOST_NAMES), \
 		$(eval $(call define-test-domain, \
 			$(prefix), $(host), \
@@ -1569,7 +1554,7 @@ $(patsubst %, kvmsh-%, $(KVM_BUILD_DOMAIN_NAMES)) : \
 kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
 	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
 
-$(patsubst %, kvmsh-%, $(KVM_TEST_DOMAIN_NAMES)) : \
+$(patsubst %, kvmsh-%, $(notdir $(KVM_TEST_DOMAINS))) : \
 kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
 	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
 
@@ -1608,9 +1593,8 @@ $(call kvm-var-value,KVM_WORKERS)
 
 $(call kvm-var-value,KVM_PREFIX)
 $(call kvm-var-value,KVM_PREFIX)
-$(call kvm-var-value,KVM_PREFIXES)
+$(call kvm-var-value,KVM_TEST_PREFIXES)
 $(call kvm-var-value,KVM_POOLDIR_PREFIX)
-$(call kvm-var-value,KVM_LOCALDIR_PREFIXES)
 
 $(call kvm-var-value,KVM_GROUP)
 $(call kvm-var-value,KVM_PIDFILE)
@@ -1652,10 +1636,6 @@ $(call kvm-var-value,KVM_OS_TEST_HOST_NAMES)
 
 $(call kvm-var-value,KVM_HOST_NAMES)
 
-$(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
-
- $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAIN_NAMES)$(crlf))
-
 $(call kvm-var-value,KVM_TEST_DOMAINS)
 
  $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
@@ -1690,7 +1670,7 @@ KVM Domains:
     |  | gateway: $(KVM_GATEWAY_NAME)
     |  | directory: $(KVM_POOLDIR)
     |  |  \
-$(foreach prefix,$(KVM_PREFIXES), \
+$(foreach prefix,$(KVM_TEST_PREFIXES), \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| test group $(prefix) \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp) +-- \
@@ -1774,7 +1754,7 @@ Standard targets and operations:
 	- for HOST login to the first domain vis:
           $(addprefix $(KVM_PREFIX), HOST)
         - if necessary, create and boot the host
-    $(addprefix kvmsh-, $(KVM_TEST_DOMAIN_NAMES))
+    $(addprefix kvmsh-, $(notdir $(KVM_TEST_DOMAINS)))
         - login to the specific domain
         - if necessary, create and boot the domain
 
