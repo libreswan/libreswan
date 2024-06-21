@@ -1,0 +1,72 @@
+../../guestbin/ip.sh route get to 192.0.1.254 | grep eth1 && ip route del 192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.1.254 via 192.1.2.45 dev eth1 src 192.1.2.23 uid 0
+east #
+ ../../guestbin/ip.sh route get to 192.0.3.254 | grep eth1 && ip route del 192.0.3.0/24 via 192.1.2.254 dev eth1
+192.0.3.254 via 192.1.2.254 dev eth1 src 192.1.2.23 uid 0
+RTNETLINK answers: No such process
+east #
+ /testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+"westnet-eastnet": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@west'
+east #
+ ../../guestbin/ip.sh -s link show ipsec1
+Device "ipsec1" does not exist.
+east #
+ ../../guestbin/ip.sh rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+east #
+ ../../guestbin/ip.sh route show table 50
+Error: ipv4: FIB table does not exist.
+Dump terminated
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+east #
+ 
