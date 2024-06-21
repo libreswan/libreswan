@@ -688,37 +688,38 @@ static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	const char *local_addr = NULL;
 	int local_addr_len = 0;
 
-	for (attribute = IFLA_RTA(ifa); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
-		 void *attr_data = RTA_DATA(attribute);
-		 int attr_len = RTA_PAYLOAD(attribute);
 
-		switch (attribute->rta_type) {
-		case IFA_LOCAL:
-			/* Only parse the IP, if the if_name/label matches */
-			local_addr = attr_data;
-			local_addr_len = attr_len;
-			break;
+	/* Only parse the IP, if the interface index matches */
+	if (ifa->ifa_index == if_nametoindex(if_rsp->filter_data.if_name)) {
+		for (attribute = IFA_RTA(ifa); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
+			 void *attr_data = RTA_DATA(attribute);
+			 int attr_len = RTA_PAYLOAD(attribute);
 
-		case IFA_LABEL:
-			/* IFA_LABEL is the interface name */
-			if (memcmp(if_rsp->filter_data.if_name, attr_data, attr_len) != 0) {
-				 dbg("parse_nl_newaddr_msg() skipping non-matching message for label %s",
-				 (char*) attr_data);
-				return XFRMI_SUCCESS;
-			} else {
+			/*
+			 * since we only have broadcast interfaces, it is safe to only use IFA_ADDRESS to get
+			 * the local ip for ipv4 and ipv6 from the xfrm interface
+			 */
+			if (attribute->rta_type == IFA_ADDRESS)
+			{
+				local_addr = attr_data;
+				local_addr_len = attr_len;
 				if (if_rsp->result_if.name == NULL) {
-					if_rsp->result_if.name = alloc_bytes(attr_len, "parse_linkinfo_data");
-					memcpy(if_rsp->result_if.name, attr_data, attr_len);
-					if_rsp->result = true;
+					char if_name_buf[IF_NAMESIZE];
+					if_indextoname(ifa->ifa_index, if_name_buf);
+					if_rsp->result_if.name = clone_str(if_name_buf, "xfrmi name from netlink message");
 				}
 				dbg("parse_nl_newaddr_msg() matching message for if_name %s", if_rsp->result_if.name);
+				if_rsp->result = true;
+				break;
+			} else {
+				dbg("parse_nl_newaddr_msg() skipping attr type %d", attribute->rta_type);
 			}
-			break;
-
-		default:
-		    dbg("parse_nl_newaddr_msg() skipping attr type %d", attribute->rta_type);
-			break;
 		}
+	} else {
+		char if_name_buf[IF_NAMESIZE];
+		if_indextoname(ifa->ifa_index, if_name_buf);
+		dbg("parse_nl_newaddr_msg() skipping non-matching message for if_name %s", if_name_buf);
+		return XFRMI_SUCCESS;
 	}
 
 	if (local_addr != NULL) {
