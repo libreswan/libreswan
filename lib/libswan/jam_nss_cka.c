@@ -23,9 +23,22 @@
 
 size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute)
 {
-	switch (attribute) {
-		/* Not using #T + strlen("CKA_") because of clang's -Wstring-plus-int */
+	/* Not using #T + strlen("CKA_") because of clang's -Wstring-plus-int */
 #define CASE(T) case T: return jam_string(buf, &#T[strlen("CKA_")])
+
+	CK_ATTRIBUTE_TYPE cka_nss = (attribute & CKA_NSS_MESSAGE_MASK);
+	attribute &= ~CKA_NSS_MESSAGE_MASK;
+	if (cka_nss != 0) {
+		switch (cka_nss) {
+			CASE(CKA_NSS_MESSAGE);
+			CASE(CKA_DIGEST);
+		default:
+			return jam(buf, "CKA_%08lx", (long)attribute);
+		}
+		jam_string(buf, "|");
+	}
+
+	switch (attribute) {
 		CASE(CKA_DERIVE);
 		CASE(CKA_FLAGS_ONLY);
 		CASE(CKA_WRAP);
@@ -36,8 +49,8 @@ size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute)
 		CASE(CKA_SIGN_RECOVER);
 		CASE(CKA_VERIFY);
 		CASE(CKA_VERIFY_RECOVER);
-#undef CASE
 	default:
 		return jam(buf, "CKA_%08lx", (long)attribute);
 	}
+#undef CASE
 }
