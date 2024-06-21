@@ -695,46 +695,36 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			      struct ifinfo_response *if_rsp,
 			      const struct logger *logger)
 {
-	struct rtattr *attribute;
 	struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
 	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa));
-	shunk_t local_addr = null_shunk;
 
-	for (attribute = IFLA_RTA(ifa); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
-		shunk_t attr = shunk2(RTA_DATA(attribute), RTA_PAYLOAD(attribute));
-
-		switch (attribute->rta_type) {
-		case IFA_LOCAL:
-			/* Only parse the IP, if the if_name/label matches */
-			local_addr = attr;
-			break;
-
-		case IFA_LABEL:
-			/* IFA_LABEL is the interface name */
-			if (memcmp(if_rsp->filter_data.if_name, attr.ptr, attr.len) != 0) {
-				ldbg(logger, "%s() skipping non-matching message for label "PRI_SHUNK,
-				     __func__, pri_shunk(attr));
-				return;
-			}
-
-			if (if_rsp->result_if.name == NULL) {
-				if_rsp->result_if.name = clone_hunk_as_string(attr, "parse_linkinfo_data");
-				if_rsp->result = true;
-			}
-			ldbg(logger, "%s() matching message for if_name %s",
-			     __func__, if_rsp->result_if.name);
-			break;
-
-		default:
-			ldbg(logger, "%s() skipping attr type %d",
-			     __func__, attribute->rta_type);
-			break;
-		}
+	/* Only parse the IP, when the interface index matches */
+	if (ifa->ifa_index != if_nametoindex(if_rsp->filter_data.if_name)) {
+		char if_name_buf[IF_NAMESIZE];
+		if_indextoname(ifa->ifa_index, if_name_buf);
+		ldbg(logger, "%s() skipping non-matching message for if_name %s",
+		     __func__, if_name_buf);
+		return;
 	}
 
-	if (local_addr.len > 0) {
+	for (struct rtattr *attribute = IFA_RTA(ifa); RTA_OK(attribute, len);
+	     attribute = RTA_NEXT(attribute, len)) {
+		shunk_t attr = shunk2(RTA_DATA(attribute), RTA_PAYLOAD(attribute));
+
+		/*
+		 * Since we only have broadcast interfaces, it is safe
+		 * to only use IFA_ADDRESS to get the local IPv4 or
+		 * IPv6 address from the the xfrm interface.  Skip
+		 * anything else.
+		 */
+		if (attribute->rta_type != IFA_ADDRESS) {
+			ldbg(logger, "%s() skipping attr type %d",
+			     __func__, attribute->rta_type);
+		}
+
+
 		ip_cidr if_ip;
-		diag_t diag = hunk_to_cidr(local_addr, ifa->ifa_prefixlen,
+		diag_t diag = hunk_to_cidr(attr, ifa->ifa_prefixlen,
 					   aftoinfo(ifa->ifa_family), &if_ip);
 		if (diag != NULL) {
 			llog_pexpect(logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
@@ -742,7 +732,22 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			return;
 		}
 
+		if (if_rsp->result_if.name == NULL) {
+			/* Does if_indextoname() guarantee NUL
+			 * termination?  Perhaps.  It does assume
+			 * IF_NAMESIZE buffer.  */
+			char if_name_buf[IF_NAMESIZE];
+			if_indextoname(ifa->ifa_index, if_name_buf);
+			/* This works even when IF_NAME_BUF lacks a
+			 * terminating NUL. */
+			if_rsp->result_if.name = clone_thing_as_string(if_name_buf, "parse_linkinfo_data");
+		}
+
 		create_xfrmi_ipaddr(&if_rsp->result_if, if_ip);
+		ldbg(logger, "%s() matching message for if_name %s",
+		     __func__, if_rsp->result_if.name);
+		if_rsp->result = true;
+		return;
 	}
 
 	return;
