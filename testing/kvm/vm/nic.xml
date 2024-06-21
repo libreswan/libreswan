@@ -55,13 +55,13 @@
     <interface type='network'>
       <!-- eth1 -->
       <mac address='12:00:00:de:ad:ba'/>
-      <source network='192_1_2'/>
+      <source network='@@TEST_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
     <interface type='network'>
       <!-- eth2 -->
       <mac address='12:00:00:32:64:ba'/>
-      <source network='192_1_3'/>
+      <source network='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

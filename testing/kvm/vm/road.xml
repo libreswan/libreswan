@@ -45,7 +45,7 @@
     </filesystem>
     <interface type='network'>
       <mac address='12:00:00:AB:CD:02'/>
-      <source network='192_1_3'/>
+      <source network='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

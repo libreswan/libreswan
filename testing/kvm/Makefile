@@ -1381,7 +1381,7 @@ define define-test-domain
 	: define-test-domain
 	:  *=$$*
 	:  @=$$@
-	:  prefix=$(1)
+	:  test_prefix=$(1)
 	:  domain=$(2)
 	:  platform=$(3)
 	:  host=$(4)
@@ -1391,14 +1391,17 @@ define define-test-domain
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
 		-e 's;@@SOURCEDIR@@;$$(KVM_$($(strip $(3)))_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$$(KVM_$($(strip $(3)))_TESTINGDIR);' \
-		-e "s;network='192_;network='$(addprefix $(notdir $(1)), 192_);" \
+		-e "s;@@TEST_PREFIX@@;$(notdir $(1));" \
 		vm/$(strip $(4)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@
 endef
 
-# generate rules for all combinations, including those not enabled
+# Generate rules for all combinations, including those not enabled.
+# Need to pass platform|host and platform and host as, per below,
+# linux domains don't get the linux prefix.
+
 $(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORM), \
 		$(foreach host, $(KVM_OS_TEST_HOST_NAMES), \
