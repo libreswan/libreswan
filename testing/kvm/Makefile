@@ -736,9 +736,10 @@ $(KVM_GATEWAY): | $(KVM_POOLDIR)
 #
 
 KVM_TEST_NETWORK_NAMES = $(notdir $(wildcard net/192_*))
-KVM_TEST_NETWORKS = $(call add-kvm-localdir-prefixes, $(KVM_TEST_NETWORK_NAMES))
-
-.PRECIOUS: $(KVM_TEST_NETWORKS)
+KVM_TEST_NETWORKS = \
+	$(foreach test_prefix, $(KVM_TEST_PREFIXES), \
+		$(foreach test_network, $(KVM_TEST_NETWORK_NAMES), \
+			$(test_prefix)$(test_network)))
 
 # <prefix><network>; if <prefix> is blank call it swan<network>*
 KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
@@ -747,7 +748,8 @@ KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
 
 $(KVM_TEST_NETWORKS): \
 $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
-	: $@
+	: @=$@
+	: *=$*
 	./kvm-uninstall-network.sh $@
 	rm -f '$@.tmp'
 	echo "<network ipv6='yes'>" 					>> '$@.tmp'
