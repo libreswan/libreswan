@@ -69,6 +69,7 @@
 #include "connections.h"
 #include "server.h" /* for struct iface_endpoint */
 #include "iface.h"
+#include "ip_info.h"
 #include "log.h"
 #include "sparse_names.h"
 
@@ -369,7 +370,7 @@ static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *l
 			ldbg(logger,
 				 "get_xfrmi_ipaddr_from_conn() taking IP from sourceip param for xfrmi IF [%s] id [%d]",
 				 c->xfrmi->name, c->xfrmi->if_id);
-			return cidr_from_address_prefix_len(*sip, 32);
+			return cidr_from_address_prefix_len(*sip, (address_info(*sip) == &ipv4_info ? 32 : 128));
 		}
 	}
 
@@ -382,7 +383,7 @@ static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *l
 			ldbg(logger,
 				"get_xfrmi_ipaddr_from_conn() taking IP from spd_end_sourceip() for xfrmi IF [%s] id [%d]",
 				c->xfrmi->name, c->xfrmi->if_id);
-			return cidr_from_address_prefix_len(spd_sourceip, 32);
+			return cidr_from_address_prefix_len(spd_sourceip, (address_info(spd_sourceip) == &ipv4_info ? 32 : 128));
 		}
 	}
 
