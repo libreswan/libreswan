@@ -1,12 +1,11 @@
 ../../guestbin/swan-prep
 
 # Run the parser tests.
-#
-# The output is a patch showing differences so to update run something
-# like:
-#    algparse.sh ... | patch
 
-../../guestbin/algparse.sh 'ipsec algparse' algparse*.txt > /dev/null
+ipsec algparse -tp -v1
+ipsec algparse -tp -v1 -pfs
+ipsec algparse -tp -v2
+ipsec algparse -tp -v2 -pfs
 
 # Run the algorithm tests; there should be no fails.
 
