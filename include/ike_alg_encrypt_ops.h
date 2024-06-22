@@ -90,7 +90,6 @@ struct encrypt_ops {
 extern const struct encrypt_ops ike_alg_encrypt_nss_aead_ops;
 extern const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops;
 extern const struct encrypt_ops ike_alg_encrypt_nss_ctr_ops;
-extern const struct encrypt_ops ike_alg_encrypt_nss_gcm_ops;
 extern const struct encrypt_ops ike_alg_encrypt_null_ops;
 
 #endif
