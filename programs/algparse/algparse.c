@@ -52,10 +52,16 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			printf("-pfs ");				\
 		}							\
 		if (algstr == NULL) {					\
-			printf("'%s'\n", #PARSE);			\
+			printf("'%s'", #PARSE);				\
 		} else {						\
-			printf("'%s=%s'\n", #PARSE, algstr);		\
+			printf("'%s=%s'", #PARSE, algstr);		\
 		}							\
+		if (expected == PASS) {					\
+			printf(" (expect SUCCESS)");			\
+		} else {						\
+			printf(" (expect ERROR)");			\
+		}							\
+		printf("\n");						\
 		fflush(NULL);						\
 		struct proposal_parser *parser =			\
 			PARSE##_proposal_parser(&policy);		\
@@ -600,7 +606,7 @@ int main(int argc, char *argv[])
 		if (streq(arg, "?") || streq(arg, "h")) {
 			usage();
 			exit(0);
-		} else if (streq(arg, "t") || streq(arg, "tp")) {
+		} else if (streq(arg, "tp")) {
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
