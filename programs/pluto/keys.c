@@ -558,10 +558,11 @@ static shunk_t get_ppk_by_id(const chunk_t *ppk_id)
 }
 
 /*
- * Get connection PPK and store ppk_id in *ppk_id. If ppk-ids conn option
- * was set, one of the listed PPK_IDs needs to be found in .secrets
+ * Get connection PPK and store corresponding ppk_id in *ppk_id.
+ * If ppk-ids conn option was set, one of the listed PPK_IDs needs
+ * to be found in .secrets
  */
-shunk_t get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
+shunk_t get_connection_ppk_and_ppk_id(const struct connection *c, chunk_t **ppk_id)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
@@ -613,10 +614,10 @@ shunk_t get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_i
 }
 
 /*
- * Get connection PPK with PPK_ID ppk_id. If ppk-ids conn option was set,
- * ppk_id (that was received) needs to be in it. Used by responder.
+ * Get connection PPK with specified PPK_ID ppk_id. If ppk-ids
+ * conn option was set, ppk_id (that was received) needs to be in it.
  */
-shunk_t get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
+shunk_t get_connection_ppk(const struct connection *c, chunk_t *ppk_id)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 

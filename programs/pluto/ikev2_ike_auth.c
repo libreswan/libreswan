@@ -114,7 +114,7 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	if (ike->sa.st_v2_ike_ppk_enabled) {
 		chunk_t *ppk_id;
-		const shunk_t ppk = get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
+		const shunk_t ppk = get_connection_ppk_and_ppk_id(ike->sa.st_connection, &ppk_id);
 
 		if (ppk.ptr != NULL) {
 			dbg("found PPK and PPK_ID for our connection");
@@ -357,7 +357,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 */
 	if (ike->sa.st_v2_ike_ppk_enabled) {
 		chunk_t *ppk_id;
-		get_connection_ppk_initiator(ike->sa.st_connection, &ppk_id);
+		get_connection_ppk_and_ppk_id(ike->sa.st_connection, &ppk_id);
 		struct ppk_id_payload ppk_id_p = { .type = 0, };
 		create_ppk_id_payload(ppk_id, &ppk_id_p);
 		if (DBGP(DBG_BASE)) {
@@ -553,7 +553,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			return STF_FATAL;
 		}
 
-		const shunk_t ppk = get_connection_ppk_responder(ike->sa.st_connection,
+		const shunk_t ppk = get_connection_ppk(ike->sa.st_connection,
 								 &payl.ppk_id);
 		free_chunk_content(&payl.ppk_id);
 		if (ppk.ptr != NULL) {
