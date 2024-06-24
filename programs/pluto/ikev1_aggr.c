@@ -46,9 +46,6 @@
 #include "secrets.h"
 #include "crypt_ke.h"
 #include "crypt_dh.h"
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
 #include "unpack.h"
 #include "ikev1_host_pair.h"
 #include "ikev1_peer_id.h"
@@ -810,11 +807,6 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	set_ph1_iv_from_new(st);
 	dbg("phase 1 complete");
 
-#ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->logger))
-			return STF_FATAL;
-#endif
 	ISAKMP_SA_established(pexpect_ike_sa(st));
 	return STF_OK;
 }
@@ -959,11 +951,6 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	set_ph1_iv_from_new(st);
 	dbg("phase 1 complete");
 
-#ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, st->logger))
-			return STF_FATAL;
-#endif
 	ISAKMP_SA_established(pexpect_ike_sa(st));
 	return STF_OK;
 }

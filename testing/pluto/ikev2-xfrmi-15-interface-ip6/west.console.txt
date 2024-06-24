@@ -1,6 +1,4 @@
-../../guestbin/ip.sh route get to 192.0.2.254 | grep 192.1.2.23 > /dev/null 2> /dev/null && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1 || true
-west #
- /testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -14,39 +12,41 @@ west #
 initdone
 west #
  ipsec auto --up westnet-eastnet
-"westnet-eastnet" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet" #1: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
+"westnet-eastnet" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
+"westnet-eastnet" #1: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
 "westnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
 up
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
 up
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
 up
 west #
  ../../guestbin/ip.sh address show dev ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    inet 192.0.1.251/24 scope global ipsec1
+    inet6 2001:db8:0:1::251/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
        valid_lft forever preferred_lft forever
 west #
  echo done
 done
 west #
  ipsec whack --trafficstatus
-#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=312, outBytes=312, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
-           252       3      0       0       0       0 
+           312       3      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
-           252       3      0       0       0       0 
+           312       3      0       0       0       0 
 west #
  ../../guestbin/ip.sh rule show
 0:	from all lookup local
@@ -58,7 +58,7 @@ Error: ipv4: FIB table does not exist.
 Dump terminated
 west #
  ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.45 dst 192.1.2.23
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	output-mark 0x1/0xffffffff
@@ -69,7 +69,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	if_id 0x1
-src 192.1.2.23 dst 192.1.2.45
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	output-mark 0x1/0xffffffff
@@ -82,30 +82,42 @@ src 192.1.2.23 dst 192.1.2.45
 	if_id 0x1
 west #
  ../../guestbin/ipsec-kernel-policy.sh
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-	if_id 0x1
-src 192.0.2.0/24 dst 192.0.1.0/24
+src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir out priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
-src 192.0.2.0/24 dst 192.0.1.0/24
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir fwd priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
 west #
  ipsec auto --down westnet-eastnet
 "westnet-eastnet": terminating SAs using this connection
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
-"westnet-eastnet" #2: ESP traffic information: in=252B out=252B
+"westnet-eastnet" #2: ESP traffic information: in=312B out=312B
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec auto --delete westnet-eastnet
-"westnet-eastnet": delete ipsec-interface=ipsec1 if_id=1 IP [192.0.1.251/24] added by pluto
+"westnet-eastnet": delete ipsec-interface=ipsec1 if_id=1 IP [2001:db8:0:1::251/64] added by pluto
 "westnet-eastnet": delete ipsec-interface=ipsec1 if_id=1 added by pluto
 west #
  

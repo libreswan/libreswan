@@ -1,0 +1,128 @@
+/testing/guestbin/swan-prep --46
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet
+"westnet-eastnet": added IKEv1 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet
+"westnet-eastnet" #1: initiating IKEv1 Main Mode connection
+"westnet-eastnet" #1: sent Main Mode request
+"westnet-eastnet" #1: sent Main Mode I2
+"westnet-eastnet" #1: sent Main Mode I3
+"westnet-eastnet" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"westnet-eastnet" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet" #2: sent Quick Mode request
+"westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
+up
+west #
+ ../../guestbin/ip.sh address show dev ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    inet6 2001:db8:0:1::251/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+       valid_lft forever preferred_lft forever
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=312, outBytes=312, maxBytes=2^63B, id='@east'
+west #
+ ../../guestbin/ip.sh -s link show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX:  bytes packets errors dropped  missed   mcast           
+           312       3      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           312       3      0       0       0       0 
+west #
+ ../../guestbin/ip.sh rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+west #
+ ../../guestbin/ip.sh route show table 50
+Error: ipv4: FIB table does not exist.
+Dump terminated
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	output-mark 0x1/0xffffffff
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	output-mark 0x1/0xffffffff
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir out priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir fwd priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir in priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+west #
+ ipsec auto --down westnet-eastnet
+"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"westnet-eastnet" #2: ESP traffic information: in=312B out=312B
+"westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+west #
+ ipsec auto --delete westnet-eastnet
+"westnet-eastnet": delete ipsec-interface=ipsec1 if_id=1 IP [2001:db8:0:1::251/64] added by pluto
+"westnet-eastnet": delete ipsec-interface=ipsec1 if_id=1 added by pluto
+west #
+ 

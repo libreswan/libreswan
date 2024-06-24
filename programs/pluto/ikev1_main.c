@@ -91,9 +91,6 @@
 #include "nss_cert_verify.h"
 #include "iface.h"
 #include "crypt_dh.h"
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
 #include "unpack.h"
 #include "ikev1_host_pair.h"
 #include "ikev1_peer_id.h"
@@ -1438,11 +1435,6 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		}
 	}
 
-#ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, ike->sa.logger))
-			return STF_FATAL;
-#endif
 	ISAKMP_SA_established(ike);
 	return STF_OK;
 }
@@ -1506,11 +1498,6 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 		}
 	}
 
-#ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (!add_xfrm_interface(c, ike->sa.logger))
-			return STF_FATAL;
-#endif
 	ISAKMP_SA_established(ike);
 
 	passert((ike->sa.st_policy & POLICY_PFS) == 0 ||
