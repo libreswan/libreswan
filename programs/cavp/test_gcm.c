@@ -20,8 +20,9 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
-#include "ike_alg_encrypt_ops.h"
+#include "crypt_cipher.h"
 #include "crypt_symkey.h"
+#include "ike_alg_encrypt_ops.h"
 
 #include "cavp.h"
 #include "cavp_entry.h"
@@ -191,16 +192,15 @@ static void gcm_run_test(struct logger *logger)
 
 	chunk_t text_and_tag = clone_hunk_hunk(ct, tag, "text-and-tag");
 
-	bool result = gcm_alg->encrypt_ops
-		->do_aead(gcm_alg,
-			  HUNK_AS_SHUNK(salt),
-			  USE_IV, iv,
-			  HUNK_AS_SHUNK(aad),
-			  text_and_tag,
-			  ct.len, tag.len,
-			  gcm_key,
-			  DECRYPT,
-			  logger);
+	bool result = cipher_aead(gcm_alg,
+				  HUNK_AS_SHUNK(salt),
+				  USE_IV, iv,
+				  HUNK_AS_SHUNK(aad),
+				  text_and_tag,
+				  ct.len, tag.len,
+				  gcm_key,
+				  DECRYPT,
+				  logger);
 	if (result) {
 		/* plain text */
 		chunk_t pt = {

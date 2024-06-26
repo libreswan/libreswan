@@ -157,7 +157,7 @@
 #include "ikev1_dpd.h"
 #include "ip_address.h"
 #include "ikev1_hash.h"
-#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "crypt_cipher.h"
 #include "ikev1_states.h"
 #include "initiate.h"
 #include "iface.h"
@@ -1167,10 +1167,8 @@ void process_packet_tail(struct msg_digest *md)
 		size_t cipher_start = (md->message_pbs.cur - md->message_pbs.start);
 		chunk_t cipher_text = chunk2(md->message_pbs.start + cipher_start,
 					    pbs_left(&md->message_pbs));
-		e->encrypt_ops->do_crypt(e, cipher_text,
-					 HUNK_AS_CHUNK(st->st_v1_new_iv),
-					 st->st_enc_key_nss,
-					 DECRYPT, st->logger);
+		cipher_normal(e, cipher_text, HUNK_AS_CHUNK(st->st_v1_new_iv),
+			      st->st_enc_key_nss, DECRYPT, st->logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
 			DBG_log("decrypted payload (starts at offset %td):",

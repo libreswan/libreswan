@@ -19,26 +19,8 @@
 #include "chunk.h"
 
 struct logger;
-
-enum ike_alg_crypt {
-	DECRYPT = false,
-	ENCRYPT = true,
-};
-
-#define str_ike_alg_crypt(CRYPT)					\
-	(CRYPT == ENCRYPT ? "encrypt" :					\
-	 CRYPT == DECRYPT ? "decrypt" :					\
-	 "???")
-
-enum ike_alg_iv_source {
-	USE_IV,
-	FILL_IV,
-};
-
-#define str_ike_alg_iv_source(IV)		\
-	(IV == USE_IV ? "use IV" :		\
-	 IV == FILL_IV ? "fill IV" :		\
-	 "???")
+enum cipher_op;
+enum cipher_iv_source;
 
 struct encrypt_ops {
 	const char *backend;
@@ -57,7 +39,7 @@ struct encrypt_ops {
 			       chunk_t data,
 			       chunk_t iv,
 			       PK11SymKey *key,
-			       enum ike_alg_crypt crypt,
+			       enum cipher_op op,
 			       struct logger *logger);
 
 	/*
@@ -77,13 +59,13 @@ struct encrypt_ops {
 	 */
 	bool (*const do_aead)(const struct encrypt_desc *alg,
 			      shunk_t salt,
-			      enum ike_alg_iv_source iv_source,
+			      enum cipher_iv_source iv_source,
 			      chunk_t wire_iv,
 			      shunk_t aad,
 			      chunk_t text_and_tag,
 			      size_t text_size, size_t tag_size,
 			      PK11SymKey *key,
-			      enum ike_alg_crypt crypt,
+			      enum cipher_op op,
 			      struct logger *logger);
 };
 

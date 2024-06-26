@@ -21,7 +21,7 @@
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "ike_alg_test_gcm.h"
-#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "crypt_cipher.h"
 
 #include "pk11pub.h"
 #include "crypt_symkey.h"
@@ -118,16 +118,15 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			DBG_dump_hunk("test_gcm_vector: text+tag on call", \
 				      text_and_tag);			\
 		}							\
-		if (!encrypt_desc->encrypt_ops				\
-		    ->do_aead(encrypt_desc,				\
-			      HUNK_AS_SHUNK(salt),			\
-			      USE_IV, wire_iv,				\
-			      HUNK_AS_SHUNK(aad),			\
-			      text_and_tag,				\
-			      plaintext.len, tag.len,			\
-			      sym_key,					\
-			      CRYPT,					\
-			      logger) ||				\
+		if (!cipher_aead(encrypt_desc,				\
+				 HUNK_AS_SHUNK(salt),			\
+				 USE_IV, wire_iv,			\
+				 HUNK_AS_SHUNK(aad),			\
+				 text_and_tag,				\
+				 plaintext.len, tag.len,		\
+				 sym_key,				\
+				 CRYPT,					\
+				 logger) ||				\
 		    !verify_bytes("output ciphertext",			\
 				  TO.ptr, TO.len,			\
 				  text_and_tag.ptr, TO.len) ||		\

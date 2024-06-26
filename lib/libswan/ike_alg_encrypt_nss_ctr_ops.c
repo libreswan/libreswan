@@ -33,11 +33,12 @@
 #include "ike_alg.h"
 #include "lswnss.h"
 #include "ike_alg_encrypt_ops.h"
+#include "crypt_cipher.h"
 
 static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 		       chunk_t buf, chunk_t counter_block,
 		       PK11SymKey *sym_key,
-		       enum ike_alg_crypt crypt,
+		       enum cipher_op op,
 		       struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: enter");
@@ -60,7 +61,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	uint8_t *out_buf = PR_Malloc((PRUint32)buf.len);
 	unsigned int out_len = 0;
 
-	switch (crypt) {
+	switch (op) {
 	case ENCRYPT:
 	{
 		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_CTR, &param,
@@ -82,7 +83,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 		break;
 	}
 	default:
-		bad_case(crypt);
+		bad_case(op);
 	}
 
 	memcpy(buf.ptr, out_buf, buf.len);

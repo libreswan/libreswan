@@ -27,12 +27,13 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt_ops.h"
+#include "crypt_cipher.h"
 #include "lswnss.h"		/* for llog_nss_error() */
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			    chunk_t in_buf, chunk_t iv,
 			    PK11SymKey *symkey,
-			    enum ike_alg_crypt crypt,
+			    enum cipher_op op,
 			    struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
@@ -57,8 +58,8 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 
 	PK11Context *enccontext;
 	enccontext = PK11_CreateContextBySymKey(alg->nss.mechanism,
-						(crypt == ENCRYPT ? CKA_ENCRYPT :
-						 crypt == DECRYPT ? CKA_DECRYPT :
+						(op == ENCRYPT ? CKA_ENCRYPT :
+						 op == DECRYPT ? CKA_DECRYPT :
 						 pexpect(0)),
 						symkey, secparam);
 	if (enccontext == NULL) {
@@ -84,7 +85,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	 * Update the IV ready for the next call to this function.
 	 */
 	uint8_t *new_iv;
-	switch (crypt) {
+	switch (op) {
 	case ENCRYPT:
 		/*
 		 * The IV for the next encryption call is the last
@@ -100,7 +101,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 		new_iv = in_buf.ptr + in_buf.len - alg->enc_blocksize;
 		break;
 	default:
-		bad_case(crypt);
+		bad_case(op);
 	}
 	PEXPECT(logger, iv.len == alg->enc_blocksize);
 	memcpy(iv.ptr, new_iv, alg->enc_blocksize);

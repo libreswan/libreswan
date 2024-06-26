@@ -266,8 +266,9 @@ OBJS += ike_alg_encrypt_ctr_test_vectors.o
 OBJS += ike_alg_encrypt_gcm_test_vectors.o
 OBJS += ike_alg_prf_test_vectors.o
 
-OBJS += crypt_mac.o
+OBJS += crypt_cipher.o
 OBJS += crypt_hash.o
+OBJS += crypt_mac.o
 OBJS += crypt_prf.o
 OBJS += crypt_symkey.o
 

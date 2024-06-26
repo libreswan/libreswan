@@ -37,7 +37,7 @@
 #include "state.h"
 #include "connections.h"
 #include "ike_alg.h"
-#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "crypt_cipher.h"
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
@@ -482,13 +482,12 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		    LDBG_hunk(sk->logger, sk->aad);
 		}
 
-		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
-		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
-			      HUNK_AS_SHUNK(salt),
-			      FILL_IV, sk->wire_iv,
-			      HUNK_AS_SHUNK(sk->aad), text_and_tag,
-			      enc.len, sk->integrity.len,
-			      cipherkey, ENCRYPT, sk->logger)) {
+		if (!cipher_aead(ike->sa.st_oakley.ta_encrypt,
+				 HUNK_AS_SHUNK(salt),
+				 FILL_IV, sk->wire_iv,
+				 HUNK_AS_SHUNK(sk->aad), text_and_tag,
+				 enc.len, sk->integrity.len,
+				 cipherkey, ENCRYPT, sk->logger)) {
 			return false;
 		}
 
@@ -501,10 +500,9 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
 
-		ike->sa.st_oakley.ta_encrypt->encrypt_ops
-			->do_crypt(ike->sa.st_oakley.ta_encrypt,
-				   enc, HUNK_AS_CHUNK(iv),
-				   cipherkey, ENCRYPT, sk->logger);
+		cipher_normal(ike->sa.st_oakley.ta_encrypt,
+			      enc, HUNK_AS_CHUNK(iv),
+			      cipherkey, ENCRYPT, sk->logger);
 
 		/* note: saved_iv's updated value is discarded */
 
@@ -654,13 +652,12 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			LDBG_hunk(ike->sa.logger, enc);
 		}
 
-		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
-		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
-			      HUNK_AS_SHUNK(salt),
-			      USE_IV, wire_iv,
-			      aad, text_and_tag,
-			      enc.len, integ.len,
-			      cipherkey, DECRYPT, ike->sa.logger)) {
+		if (!cipher_aead(ike->sa.st_oakley.ta_encrypt,
+				 HUNK_AS_SHUNK(salt),
+				 USE_IV, wire_iv,
+				 aad, text_and_tag,
+				 enc.len, integ.len,
+				 cipherkey, DECRYPT, ike->sa.logger)) {
 			return false;
 		}
 
@@ -701,11 +698,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		/* decrypt */
 
-		ike->sa.st_oakley.ta_encrypt->encrypt_ops
-			->do_crypt(ike->sa.st_oakley.ta_encrypt,
-				   enc, HUNK_AS_CHUNK(iv),
-				   cipherkey, DECRYPT,
-				   ike->sa.logger);
+		cipher_normal(ike->sa.st_oakley.ta_encrypt, enc, HUNK_AS_CHUNK(iv),
+			      cipherkey, DECRYPT, ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
 			LDBG_log(ike->sa.logger, "payload after decryption:");

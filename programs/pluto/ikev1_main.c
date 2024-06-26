@@ -70,7 +70,7 @@
 #include "lswnss.h"
 
 #include "ike_alg.h"
-#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "crypt_cipher.h"
 #include "ike_alg_hash.h"		/* for ike_alg_hash_sha1 */
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -397,8 +397,8 @@ bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
 		DBG_dump_hunk("IV:", st->st_v1_new_iv);
 	}
 
-	e->encrypt_ops->do_crypt(e, padded_encrypt, HUNK_AS_CHUNK(st->st_v1_new_iv),
-				 st->st_enc_key_nss, ENCRYPT, st->logger);
+	cipher_normal(e, padded_encrypt, HUNK_AS_CHUNK(st->st_v1_new_iv),
+		      st->st_enc_key_nss, ENCRYPT, st->logger);
 
 	update_iv(st);
 	if (DBGP(DBG_CRYPT)) {

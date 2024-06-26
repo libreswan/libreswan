@@ -21,7 +21,7 @@
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "ike_alg_test_cbc.h"
-#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "crypt_cipher.h"
 
 #include "fips_mode.h"
 #include "pk11pub.h"
@@ -124,13 +124,13 @@ const struct cbc_test_vector *const camellia_cbc_tests = camellia_cbc_test_vecto
 
 static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 			const char *description,
-			enum ike_alg_crypt crypt,
+			enum cipher_op op,
 			PK11SymKey *sym_key, const char *encoded_iv,
 			const char *input_name, const char *input,
 			const char *output_name, const char *output,
 			struct logger *logger)
 {
-	const char *op = str_ike_alg_crypt(crypt);
+	const char *opstr = str_cipher_op(op);
 
 	bool ok = true;
 	chunk_t iv = decode_to_chunk("IV: ", encoded_iv);
@@ -141,25 +141,24 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	 * last few bytes.
 	 */
 	chunk_t expected_iv =
-		decode_to_chunk("new IV: ", (crypt == ENCRYPT ? output :
-					     crypt == DECRYPT ? input :
+		decode_to_chunk("new IV: ", (op == ENCRYPT ? output :
+					     op == DECRYPT ? input :
 					     NULL));
 	chunk_t tmp = decode_to_chunk(input_name, input);
 	chunk_t expected = decode_to_chunk(output_name, output);
 
 	/* do_crypt modifies the data and IV in place. */
-	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp, iv,
-					    sym_key, crypt, logger);
+	cipher_normal(encrypt_desc, tmp, iv, sym_key, op, logger);
 
-	if (!verify_hunk(op, expected, tmp)) {
+	if (!verify_hunk(opstr, expected, tmp)) {
 		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: output does not match",
-		      description, op);
+		      description, opstr);
 		ok = false;
 	}
 	if (!verify_bytes("updated CBC IV", iv.ptr, iv.len,
 			  expected_iv.ptr + expected_iv.len - iv.len, iv.len)) {
 		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: IV does not match",
-		      description, op);
+		      description, opstr);
 		ok = false;
 	}
 

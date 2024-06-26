@@ -20,7 +20,7 @@
 #include "ike_alg.h"
 #include "test_buffer.h"
 #include "ike_alg_test_ctr.h"
-#include "ike_alg_encrypt_ops.h"	/* XXX: oops */
+#include "crypt_cipher.h"
 
 #include "fips_mode.h"
 #include "pk11pub.h"
@@ -154,14 +154,14 @@ const struct ctr_test_vector *const aes_ctr_tests = aes_ctr_test_vectors;
 
 static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 			const char *description,
-			enum ike_alg_crypt crypt,
+			enum cipher_op op,
 			PK11SymKey *sym_key,
 			const char *encoded_cb, const char *output_cb,
 			const char *input_name, const char *input,
 			const char *output_name, const char *output,
 			struct logger *logger)
 {
-	const char *op = str_ike_alg_crypt(crypt);
+	const char *opstr = str_cipher_op(op);
 	bool ok = true;
 	chunk_t cb = decode_to_chunk("input counter-block: ", encoded_cb);
 	chunk_t tmp = decode_to_chunk(input_name, input);
@@ -169,18 +169,17 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb);
 
 	/* do_crypt modifies the data and IV in place. */
-	encrypt_desc->encrypt_ops->do_crypt(encrypt_desc, tmp, cb,
-					    sym_key, crypt, logger);
-	if (!verify_hunk(op, expected_output, tmp)) {
+	cipher_normal(encrypt_desc, tmp, cb, sym_key, op, logger);
+	if (!verify_hunk(opstr, expected_output, tmp)) {
 		ldbgf(DBG_CRYPT, logger,
 		      "test_ctr_op: %s: %s: output does not match",
-		      description, op);
+		      description, opstr);
 		ok = false;
 	}
 	if (!verify_hunk("counter-block", expected_cb, cb)) {
 		ldbgf(DBG_CRYPT, logger,
 		      "test_ctr_op: %s: %s: counter-block does not match",
-		      description, op);
+		      description, opstr);
 		ok = false;
 	}
 

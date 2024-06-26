@@ -23,18 +23,19 @@
 
 #include "constants.h"
 #include "ike_alg.h"
+#include "crypt_cipher.h"
 #include "ike_alg_encrypt_ops.h"
 #include "rnd.h"
 
 static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 			     shunk_t salt,
-			     enum ike_alg_iv_source iv_source,
+			     enum cipher_iv_source iv_source,
 			     chunk_t wire_iv,
 			     shunk_t aad,
 			     chunk_t text_and_tag,
 			     size_t text_len, size_t tag_len,
 			     PK11SymKey *symkey,
-			     enum ike_alg_crypt crypt,
+			     enum cipher_op op,
 			     struct logger *logger)
 {
 	/* must be contigious */
@@ -42,8 +43,8 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 
 	bool ok = true;
 
-	CK_ATTRIBUTE_TYPE mode = (crypt == ENCRYPT ? CKA_ENCRYPT :
-				  crypt == DECRYPT ? CKA_DECRYPT :
+	CK_ATTRIBUTE_TYPE mode = (op == ENCRYPT ? CKA_ENCRYPT :
+				  op == DECRYPT ? CKA_DECRYPT :
 				  pexpect(0));
 	SECItem dummy = {0};
 	PK11Context *context = PK11_CreateContextBySymKey(alg->nss.mechanism,
@@ -54,7 +55,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 		passert_nss_error(logger, HERE,
 				  "%s: PKCS11_CreateContextBySymKey(%s,%s) failed",
 				  alg->common.fqn,
-				  str_ike_alg_crypt(crypt),
+				  str_cipher_op(op),
 				  str_nss_ckm(alg->nss.mechanism, &ckm));
 	}
 
