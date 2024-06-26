@@ -21,6 +21,7 @@
 struct logger;
 enum cipher_op;
 enum cipher_iv_source;
+struct cipher_aead;
 
 struct encrypt_ops {
 	const char *backend;
@@ -57,16 +58,21 @@ struct encrypt_ops {
 	 *
 	 * Danger: TEXT and TAG are assumed to be contigious.
 	 */
-	bool (*const do_aead)(const struct encrypt_desc *alg,
-			      shunk_t salt,
-			      enum cipher_iv_source iv_source,
-			      chunk_t wire_iv,
-			      shunk_t aad,
-			      chunk_t text_and_tag,
-			      size_t text_size, size_t tag_size,
-			      PK11SymKey *key,
-			      enum cipher_op op,
-			      struct logger *logger);
+	struct cipher_aead_context *(*const aead_context_create)(const struct encrypt_desc *cipher,
+								 PK11SymKey *key,
+								 enum cipher_op op,
+								 struct logger *logger);
+	bool (*const aead_context_op)(const struct encrypt_desc *cipher,
+				      const struct cipher_aead_context *context,
+				      shunk_t salt,
+				      enum cipher_iv_source iv_source,
+				      chunk_t wire_iv,
+				      shunk_t aad,
+				      chunk_t text_and_tag,
+				      size_t text_size, size_t tag_size,
+				      struct logger *logger);
+	void (*const aead_context_destroy)(struct cipher_aead_context **context,
+					   struct logger *logger);
 };
 
 extern const struct encrypt_ops ike_alg_encrypt_nss_aead_ops;

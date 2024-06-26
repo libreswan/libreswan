@@ -26,23 +26,18 @@
 #include "crypt_cipher.h"
 #include "ike_alg_encrypt_ops.h"
 #include "rnd.h"
+#include "crypt_symkey.h"
 
-static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
-			     shunk_t salt,
-			     enum cipher_iv_source iv_source,
-			     chunk_t wire_iv,
-			     shunk_t aad,
-			     chunk_t text_and_tag,
-			     size_t text_len, size_t tag_len,
-			     PK11SymKey *symkey,
-			     enum cipher_op op,
-			     struct logger *logger)
+struct cipher_aead_context {
+	PK11SymKey *symkey;
+	PK11Context *context;
+};
+
+static struct cipher_aead_context *cipher_aead_context_create_nss(const struct encrypt_desc *alg,
+								  PK11SymKey *symkey,
+								  enum cipher_op op,
+								  struct logger *logger)
 {
-	/* must be contigious */
-	PASSERT(logger, text_len + tag_len == text_and_tag.len);
-
-	bool ok = true;
-
 	CK_ATTRIBUTE_TYPE mode = (op == ENCRYPT ? CKA_ENCRYPT :
 				  op == DECRYPT ? CKA_DECRYPT :
 				  pexpect(0));
@@ -59,6 +54,27 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 				  str_nss_ckm(alg->nss.mechanism, &ckm));
 	}
 
+	struct cipher_aead_context *aead = alloc_thing(struct cipher_aead_context, __func__);
+	aead->context = context;
+	aead->symkey = reference_symkey("", __func__, symkey);
+	return aead;
+}
+
+static bool cipher_aead_context_op_nss(const struct encrypt_desc *alg,
+				       const struct cipher_aead_context *aead,
+				       shunk_t salt,
+				       enum cipher_iv_source iv_source,
+				       chunk_t wire_iv,
+				       shunk_t aad,
+				       chunk_t text_and_tag,
+				       size_t text_len, size_t tag_len,
+				       struct logger *logger)
+{
+	/* must be contigious */
+	PASSERT(logger, text_len + tag_len == text_and_tag.len);
+
+	bool ok = true;
+
 	switch (iv_source) {
 	case USE_IV:
 		break;
@@ -74,7 +90,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 	uint8_t *out_ptr = PR_Malloc(text_and_tag.len); /* XXX: use normal malloc? */
 	int out_len = 0;
 
-	SECStatus rv = PK11_AEADOp(context,
+	SECStatus rv = PK11_AEADOp(aead->context,
 				   CKG_NO_GENERATE/*XXX: should be CKG_GENERATE_RANDOM*/,
 				   /*fixedbits*/alg->salt_size * 8,
 				   iv.ptr, iv.len,
@@ -88,25 +104,33 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 		llog_nss_error(RC_LOG, logger,
 			       "AEAD encryption using %s_%u and PK11_AEADOp() failed",
 			       alg->common.fqn,
-			       PK11_GetKeyLength(symkey) * BITS_IN_BYTE);
+			       PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE);
 		ok = false;
 	} else if ((unsigned)out_len != text_len) {
 		/* should this be a pexpect fail? */
 		llog_nss_error(RC_LOG, logger,
 			       "AEAD encryption using %s_%u and PK11_AEADOp() failed (output length of %u not the expected %zd)",
 			       alg->common.fqn,
-			       PK11_GetKeyLength(symkey) * BITS_IN_BYTE,
+			       PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE,
 			       out_len, text_and_tag.len);
 		ok = false;
 	}
 
 	memcpy(text_and_tag.ptr, out_ptr, out_len);
-	PK11_Finalize(context);
-	PK11_DestroyContext(context, PR_TRUE);
 	PR_Free(out_ptr);
 	free_chunk_content(&iv);
 
 	return ok;
+}
+
+static void cipher_aead_context_destroy_nss(struct cipher_aead_context **aead,
+					    struct logger *logger)
+{
+	PK11_Finalize((*aead)->context);
+	PK11_DestroyContext((*aead)->context, PR_TRUE);
+	release_symkey("", __func__, &(*aead)->symkey);
+	ldbg(logger, "destroyed");
+	pfreeany(*aead);
 }
 
 static void nss_aead_check(const struct encrypt_desc *encrypt, struct logger *logger)
@@ -118,5 +142,7 @@ static void nss_aead_check(const struct encrypt_desc *encrypt, struct logger *lo
 const struct encrypt_ops ike_alg_encrypt_nss_aead_ops = {
 	.backend = "NSS(AEAD)",
 	.check = nss_aead_check,
-	.do_aead = ike_alg_nss_aead,
+	.aead_context_create = cipher_aead_context_create_nss,
+	.aead_context_op = cipher_aead_context_op_nss,
+	.aead_context_destroy = cipher_aead_context_destroy_nss,
 };
