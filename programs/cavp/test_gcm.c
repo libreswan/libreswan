@@ -192,14 +192,12 @@ static void gcm_run_test(struct logger *logger)
 
 	chunk_t text_and_tag = clone_hunk_hunk(ct, tag, "text-and-tag");
 
-	bool result = cipher_aead(gcm_alg,
-				  HUNK_AS_SHUNK(salt),
-				  USE_IV, iv,
+	bool result = cipher_aead(gcm_alg, DECRYPT, USE_IV,
+				  HUNK_AS_SHUNK(salt), iv,
 				  HUNK_AS_SHUNK(aad),
 				  text_and_tag,
 				  ct.len, tag.len,
 				  gcm_key,
-				  DECRYPT,
 				  logger);
 	if (result) {
 		/* plain text */

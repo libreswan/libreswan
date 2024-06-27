@@ -1167,8 +1167,8 @@ void process_packet_tail(struct msg_digest *md)
 		size_t cipher_start = (md->message_pbs.cur - md->message_pbs.start);
 		chunk_t cipher_text = chunk2(md->message_pbs.start + cipher_start,
 					    pbs_left(&md->message_pbs));
-		cipher_normal(e, cipher_text, HUNK_AS_CHUNK(st->st_v1_new_iv),
-			      st->st_enc_key_nss, DECRYPT, st->logger);
+		cipher_normal(e, DECRYPT, cipher_text, HUNK_AS_CHUNK(st->st_v1_new_iv),
+			      st->st_enc_key_nss, st->logger);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
 			DBG_log("decrypted payload (starts at offset %td):",

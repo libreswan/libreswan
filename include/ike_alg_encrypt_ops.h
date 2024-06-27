@@ -17,6 +17,7 @@
 #define IKE_ALG_ENCRYPT_OPS_H
 
 #include "chunk.h"
+#include "shunk.h"
 
 struct logger;
 enum cipher_op;
@@ -58,14 +59,13 @@ struct encrypt_ops {
 	 *
 	 * Danger: TEXT and TAG are assumed to be contigious.
 	 */
-	struct cipher_aead_context *(*const aead_context_create)(const struct encrypt_desc *cipher,
+	struct cipher_aead_context *(*const aead_context_create)(const struct encrypt_desc *,
+								 enum cipher_op,
+								 enum cipher_iv_source,
 								 PK11SymKey *key,
-								 enum cipher_op op,
+								 shunk_t salt,
 								 struct logger *logger);
-	bool (*const aead_context_op)(const struct encrypt_desc *cipher,
-				      const struct cipher_aead_context *context,
-				      shunk_t salt,
-				      enum cipher_iv_source iv_source,
+	bool (*const aead_context_op)(const struct cipher_aead_context *context,
 				      chunk_t wire_iv,
 				      shunk_t aad,
 				      chunk_t text_and_tag,

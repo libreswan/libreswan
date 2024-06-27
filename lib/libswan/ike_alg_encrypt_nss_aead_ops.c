@@ -31,39 +31,46 @@
 struct cipher_aead_context {
 	PK11SymKey *symkey;
 	PK11Context *context;
+	enum cipher_op op;
+	enum cipher_iv_source iv_source;
+	chunk_t salt;
+	const struct encrypt_desc *cipher;
 };
 
-static struct cipher_aead_context *cipher_aead_context_create_nss(const struct encrypt_desc *alg,
-								  PK11SymKey *symkey,
+static struct cipher_aead_context *cipher_aead_context_create_nss(const struct encrypt_desc *cipher,
 								  enum cipher_op op,
+								  enum cipher_iv_source iv_source,
+								  PK11SymKey *symkey,
+								  shunk_t salt,
 								  struct logger *logger)
 {
 	CK_ATTRIBUTE_TYPE mode = (op == ENCRYPT ? CKA_ENCRYPT :
 				  op == DECRYPT ? CKA_DECRYPT :
 				  pexpect(0));
 	SECItem dummy = {0};
-	PK11Context *context = PK11_CreateContextBySymKey(alg->nss.mechanism,
+	PK11Context *context = PK11_CreateContextBySymKey(cipher->nss.mechanism,
 							  CKA_NSS_MESSAGE|mode,
 							  symkey, &dummy);
 	if (context == NULL) {
 		enum_buf ckm;
 		passert_nss_error(logger, HERE,
 				  "%s: PKCS11_CreateContextBySymKey(%s,%s) failed",
-				  alg->common.fqn,
+				  cipher->common.fqn,
 				  str_cipher_op(op),
-				  str_nss_ckm(alg->nss.mechanism, &ckm));
+				  str_nss_ckm(cipher->nss.mechanism, &ckm));
 	}
 
 	struct cipher_aead_context *aead = alloc_thing(struct cipher_aead_context, __func__);
 	aead->context = context;
 	aead->symkey = reference_symkey("", __func__, symkey);
+	aead->op = op;
+	aead->iv_source = iv_source;
+	aead->salt = clone_hunk(salt, __func__);
+	aead->cipher = cipher;
 	return aead;
 }
 
-static bool cipher_aead_context_op_nss(const struct encrypt_desc *alg,
-				       const struct cipher_aead_context *aead,
-				       shunk_t salt,
-				       enum cipher_iv_source iv_source,
+static bool cipher_aead_context_op_nss(const struct cipher_aead_context *aead,
 				       chunk_t wire_iv,
 				       shunk_t aad,
 				       chunk_t text_and_tag,
@@ -75,16 +82,16 @@ static bool cipher_aead_context_op_nss(const struct encrypt_desc *alg,
 
 	bool ok = true;
 
-	switch (iv_source) {
-	case USE_IV:
+	switch (aead->iv_source) {
+	case DECRYPT:
 		break;
-	case FILL_IV:
+	case ENCRYPT:
 		fill_rnd_chunk(wire_iv);
 		break;
 	default:
-		bad_case(iv_source);
+		bad_case(aead->op);
 	}
-	chunk_t iv = clone_hunk_hunk(salt, wire_iv, "IV");
+	chunk_t iv = clone_hunk_hunk(aead->salt, wire_iv, "IV");
 
 	/* Output buffer for transformed data. */
 	uint8_t *out_ptr = PR_Malloc(text_and_tag.len); /* XXX: use normal malloc? */
@@ -92,7 +99,7 @@ static bool cipher_aead_context_op_nss(const struct encrypt_desc *alg,
 
 	SECStatus rv = PK11_AEADOp(aead->context,
 				   CKG_NO_GENERATE/*XXX: should be CKG_GENERATE_RANDOM*/,
-				   /*fixedbits*/alg->salt_size * 8,
+				   /*fixedbits*/aead->cipher->salt_size * 8,
 				   iv.ptr, iv.len,
 				   aad.ptr, aad.len,
 				   out_ptr, &out_len,
@@ -103,14 +110,14 @@ static bool cipher_aead_context_op_nss(const struct encrypt_desc *alg,
 	if (rv != SECSuccess) {
 		llog_nss_error(RC_LOG, logger,
 			       "AEAD encryption using %s_%u and PK11_AEADOp() failed",
-			       alg->common.fqn,
+			       aead->cipher->common.fqn,
 			       PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE);
 		ok = false;
 	} else if ((unsigned)out_len != text_len) {
 		/* should this be a pexpect fail? */
 		llog_nss_error(RC_LOG, logger,
 			       "AEAD encryption using %s_%u and PK11_AEADOp() failed (output length of %u not the expected %zd)",
-			       alg->common.fqn,
+			       aead->cipher->common.fqn,
 			       PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE,
 			       out_len, text_and_tag.len);
 		ok = false;
@@ -129,6 +136,7 @@ static void cipher_aead_context_destroy_nss(struct cipher_aead_context **aead,
 	PK11_Finalize((*aead)->context);
 	PK11_DestroyContext((*aead)->context, PR_TRUE);
 	release_symkey("", __func__, &(*aead)->symkey);
+	free_chunk_content(&(*aead)->salt);
 	ldbg(logger, "destroyed");
 	pfreeany(*aead);
 }

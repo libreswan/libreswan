@@ -38,6 +38,12 @@ enum cipher_op {
 		 "???");			\
 	})
 
+/*
+ * Normally USE_IV:DECRYPT and FILL_IV:ENCRIPT each come as a pair.
+ * The exception is testing where encryption can't generate its own
+ * IV.
+ */
+
 enum cipher_iv_source {
 	USE_IV,
 	FILL_IV,
@@ -56,30 +62,30 @@ enum cipher_iv_source {
  */
 
 void cipher_normal(const struct encrypt_desc *alg,
+		   enum cipher_op op,
 		   chunk_t data,
 		   chunk_t iv,
 		   PK11SymKey *key,
-		   enum cipher_op op,
 		   struct logger *logger);
 
 bool cipher_aead(const struct encrypt_desc *alg,
-		 shunk_t salt,
+		 enum cipher_op op,
 		 enum cipher_iv_source iv_source,
+		 shunk_t salt,
 		 chunk_t wire_iv,
 		 shunk_t aad,
 		 chunk_t text_and_tag,
 		 size_t text_size, size_t tag_size,
 		 PK11SymKey *key,
-		 enum cipher_op op,
 		 struct logger *logger);
 
 struct cipher_aead *cipher_aead_create(const struct encrypt_desc *alg,
-				       PK11SymKey *key,
 				       enum cipher_op op,
+				       enum cipher_iv_source iv_source,
+				       PK11SymKey *key,
+				       shunk_t salt,
 				       struct logger *logger);
 bool cipher_aead_op(const struct cipher_aead *,
-		    shunk_t salt,
-		    enum cipher_iv_source iv_source,
 		    chunk_t wire_iv,
 		    shunk_t aad,
 		    chunk_t text_and_tag,

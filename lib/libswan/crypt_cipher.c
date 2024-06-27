@@ -20,32 +20,33 @@
 #include "lswalloc.h"
 
 void cipher_normal(const struct encrypt_desc *cipher,
+		   enum cipher_op op,
 		   chunk_t data,
 		   chunk_t iv,
 		   PK11SymKey *key,
-		   enum cipher_op op,
 		   struct logger *logger)
 {
 	cipher->encrypt_ops->do_crypt(cipher, data, iv, key, op, logger);
 }
 
 bool cipher_aead(const struct encrypt_desc *cipher,
-		 shunk_t salt,
+		 enum cipher_op op,
 		 enum cipher_iv_source iv_source,
+		 shunk_t salt,
 		 chunk_t wire_iv,
 		 shunk_t aad,
 		 chunk_t text_and_tag,
 		 size_t text_size, size_t tag_size,
 		 PK11SymKey *symkey,
-		 enum cipher_op op,
 		 struct logger *logger)
 {
-	struct cipher_aead *aead = cipher_aead_create(cipher, symkey, op, logger);
+	struct cipher_aead *aead = cipher_aead_create(cipher, op, iv_source,
+						      symkey, salt, logger);
 	if (aead == NULL) {
 		/* already logged */
 		return false;
 	}
-	bool ok = cipher_aead_op(aead, salt, iv_source, wire_iv, aad,
+	bool ok = cipher_aead_op(aead, wire_iv, aad,
 				 text_and_tag, text_size, tag_size,
 				 logger);
 	cipher_aead_destroy(&aead, logger);
@@ -58,12 +59,15 @@ struct cipher_aead {
 };
 
 struct cipher_aead *cipher_aead_create(const struct encrypt_desc *cipher,
-				       PK11SymKey *key,
 				       enum cipher_op op,
+				       enum cipher_iv_source iv_source,
+				       PK11SymKey *key,
+				       shunk_t salt,
 				       struct logger *logger)
 {
 	struct cipher_aead_context *context =
-		cipher->encrypt_ops->aead_context_create(cipher, key, op, logger);
+		cipher->encrypt_ops->aead_context_create(cipher, op, iv_source,
+							 key, salt, logger);
 	if (context == NULL) {
 		return NULL;
 	}
@@ -74,16 +78,14 @@ struct cipher_aead *cipher_aead_create(const struct encrypt_desc *cipher,
 }
 
 bool cipher_aead_op(const struct cipher_aead *aead,
-		    shunk_t salt,
-		    enum cipher_iv_source iv_source,
 		    chunk_t wire_iv,
 		    shunk_t aad,
 		    chunk_t text_and_tag,
 		    size_t text_size, size_t tag_size,
 		    struct logger *logger)
 {
-	return aead->cipher->encrypt_ops->aead_context_op(aead->cipher, aead->context,
-							  salt, iv_source, wire_iv, aad,
+	return aead->cipher->encrypt_ops->aead_context_op(aead->context,
+							  wire_iv, aad,
 							  text_and_tag, text_size, tag_size,
 							  logger);
 }

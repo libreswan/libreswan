@@ -149,7 +149,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected = decode_to_chunk(output_name, output, logger, HERE);
 
 	/* do_crypt modifies the data and IV in place. */
-	cipher_normal(encrypt_desc, tmp, iv, sym_key, op, logger);
+	cipher_normal(encrypt_desc, op, tmp, iv, sym_key, logger);
 
 	if (!verify_hunk(description, opstr, expected, tmp, logger, HERE)) {
 		ok = false;

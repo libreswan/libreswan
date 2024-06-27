@@ -483,11 +483,11 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		}
 
 		if (!cipher_aead(ike->sa.st_oakley.ta_encrypt,
-				 HUNK_AS_SHUNK(salt),
-				 FILL_IV, sk->wire_iv,
+				 ENCRYPT, FILL_IV,
+				 HUNK_AS_SHUNK(salt), sk->wire_iv,
 				 HUNK_AS_SHUNK(sk->aad), text_and_tag,
 				 enc.len, sk->integrity.len,
-				 cipherkey, ENCRYPT, sk->logger)) {
+				 cipherkey, sk->logger)) {
 			return false;
 		}
 
@@ -500,9 +500,9 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
 
-		cipher_normal(ike->sa.st_oakley.ta_encrypt,
+		cipher_normal(ike->sa.st_oakley.ta_encrypt, ENCRYPT,
 			      enc, HUNK_AS_CHUNK(iv),
-			      cipherkey, ENCRYPT, sk->logger);
+			      cipherkey, sk->logger);
 
 		/* note: saved_iv's updated value is discarded */
 
@@ -653,11 +653,12 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		}
 
 		if (!cipher_aead(ike->sa.st_oakley.ta_encrypt,
+				 DECRYPT, USE_IV,
 				 HUNK_AS_SHUNK(salt),
-				 USE_IV, wire_iv,
+				 wire_iv,
 				 aad, text_and_tag,
 				 enc.len, integ.len,
-				 cipherkey, DECRYPT, ike->sa.logger)) {
+				 cipherkey, ike->sa.logger)) {
 			return false;
 		}
 
@@ -698,8 +699,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		/* decrypt */
 
-		cipher_normal(ike->sa.st_oakley.ta_encrypt, enc, HUNK_AS_CHUNK(iv),
-			      cipherkey, DECRYPT, ike->sa.logger);
+		cipher_normal(ike->sa.st_oakley.ta_encrypt,
+			      DECRYPT, enc, HUNK_AS_CHUNK(iv),
+			      cipherkey, ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
 			LDBG_log(ike->sa.logger, "payload after decryption:");
