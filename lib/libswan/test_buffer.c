@@ -24,41 +24,37 @@
 
 #include "lswlog.h"
 
-static chunk_t zalloc_chunk(size_t length, const char *name)
-{
-	chunk_t chunk;
-	chunk.len = length;
-	chunk.ptr = alloc_bytes(length, name);
-	memset(chunk.ptr, 0, chunk.len);
-	return chunk;
-}
-
 /*
  * Given an ASCII string, convert it into a chunk of bytes.  If the
  * string is prefixed by 0x assume the contents are hex (with spaces)
  * and decode it; otherwise it is assumed that the ASCII (minus the
  * NUL) should be copied.
+ *
  * The caller must free the chunk.
  */
-chunk_t decode_to_chunk(const char *prefix, const char *original)
+chunk_t decode_to_chunk(const char *prefix, const char *original,
+			struct logger *logger, where_t where UNUSED)
 {
-	DBGF(DBG_CRYPT, "decode_to_chunk: %s: input \"%s\"",
-	     prefix, original);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "decode_to_chunk: %s: input \"%s\"",
+			 prefix, original);
+	}
 	chunk_t chunk;
 	if (startswith(original, "0x")) {
 		chunk = chunk_from_hex(original + strlen("0x"), original);
 	} else {
-		chunk = zalloc_chunk(strlen(original), original);
+		chunk = alloc_chunk(strlen(original), original);
 		memcpy(chunk.ptr, original, chunk.len);
 	}
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("decode_to_chunk: output: ", chunk);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "decode_to_chunk: output:");
+		LDBG_hunk(logger, chunk);
 	}
 	return chunk;
 }
 
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
-				 struct logger *logger)
+				 struct logger *logger, where_t where UNUSED)
 {
 	chunk_t chunk = chunk_from_hex(string, prefix);
 	PK11SymKey *symkey = symkey_from_hunk(prefix, chunk, logger);
@@ -70,13 +66,15 @@ PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
  * Verify that the chunk's data is the same as actual.
  */
 
-bool verify_bytes(const char *desc,
+bool verify_bytes(const char *desc, const char *verifying,
 		  const void *expected, size_t expected_size,
-		  const void *actual, size_t actual_size)
+		  const void *actual, size_t actual_size,
+		  struct logger *logger, where_t where)
 {
 	if (expected_size != actual_size) {
-		DBGF(DBG_CRYPT, "verify_chunk: %s: expected length %zd but got %zd",
-		     desc, expected_size, actual_size);
+		llog_pexpect(logger, where,
+			     "%s: %s: expected length %zd but got %zd",
+			     desc, verifying, expected_size, actual_size);
 		return false;
 	}
 
@@ -86,26 +84,30 @@ bool verify_bytes(const char *desc,
 		uint8_t a = ((const uint8_t*)actual)[i];
 		if (e != a) {
 			/* Caller should issue the real log message. */
-			DBGF(DBG_CRYPT, "verify_chunk_data: %s: bytes at %zd differ, expected %02x found %02x",
-			     desc, i, e, a);
+			llog_pexpect(logger, where,
+				     "%s: %s: bytes at %zd differ, expected %02x found %02x",
+				     desc, verifying, i, e, a);
 			return false;
 		}
 	}
-	DBGF(DBG_CRYPT, "verify_chunk_data: %s: ok", desc);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s() %s: %s: ok", __func__, desc, verifying);
+	}
 	return true;
 }
 
 /* verify that expected is the same as actual */
-bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual,
-		   struct logger *logger)
+bool verify_symkey(const char *desc, const char *verifying,
+		   chunk_t expected, PK11SymKey *actual,
+		   struct logger *logger, where_t where)
 {
 	if (expected.len != sizeof_symkey(actual)) {
-		ldbgf(DBG_CRYPT, logger, "%s: expected length %zd but got %zd",
-		      desc, expected.len, sizeof_symkey(actual));
+		llog_pexpect(logger, where, "%s: %s: expected length %zd but got %zd",
+			     desc, verifying, expected.len, sizeof_symkey(actual));
 		return false;
 	}
 	chunk_t chunk = chunk_from_symkey(desc, actual, logger);
-	bool ok = verify_hunk(desc, expected, chunk);
+	bool ok = verify_hunk(desc, verifying, expected, chunk, logger, where);
 	free_chunk_content(&chunk);
 	return ok;
 }
@@ -114,9 +116,10 @@ bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual,
  * Turn the raw key into SymKey.
  */
 PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
-			  const char *encoded_key, struct logger *logger)
+			  const char *encoded_key,
+			  struct logger *logger, where_t where)
 {
-	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
+	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key, logger, where);
 	PK11SymKey *symkey = encrypt_key_from_hunk("symkey", encrypt_desc, raw_key, logger);
 	free_chunk_content(&raw_key);
 	return symkey;

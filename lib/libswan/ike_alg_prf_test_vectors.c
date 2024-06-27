@@ -161,14 +161,13 @@ static bool test_prf_vector(const struct prf_desc *prf,
 			    const struct prf_test_vector *test,
 			    struct logger *logger)
 {
-	chunk_t chunk_key = decode_to_chunk(__func__, test->key);
+	chunk_t chunk_key = decode_to_chunk(__func__, test->key, logger, HERE);
 	passert(chunk_key.len == test->key_size);
-	chunk_t chunk_message = (test->message != NULL)
-		? decode_to_chunk(__func__, test->message)
-		: alloc_chunk(test->message_size, __func__);
-	chunk_t prf_output = decode_to_chunk(__func__, test->prf_output);
+	chunk_t chunk_message =
+		(test->message != NULL ? decode_to_chunk(__func__, test->message, logger, HERE) :
+		 alloc_chunk(test->message_size, __func__));
+	chunk_t prf_output = decode_to_chunk(__func__, test->prf_output, logger, HERE);
 	bool ok = true;
-
 
 	/* chunk interface */
 	struct crypt_prf *chunk_prf = crypt_prf_init_hunk("PRF chunk interface", prf,
@@ -176,10 +175,13 @@ static bool test_prf_vector(const struct prf_desc *prf,
 							  logger);
 	crypt_prf_update_hunk(chunk_prf, "message", chunk_message);
 	struct crypt_mac chunk_output = crypt_prf_final_mac(&chunk_prf, NULL);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("chunk output", chunk_output);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "chunk output");
+		LDBG_hunk(logger, chunk_output);
 	}
-	if (!verify_hunk(test->description, prf_output, chunk_output)) {
+	if (!verify_hunk(test->description, "prf OUT",
+			 prf_output, chunk_output,
+			 logger, HERE)) {
 		ok = false;
 	}
 
@@ -192,13 +194,15 @@ static bool test_prf_vector(const struct prf_desc *prf,
 						      chunk_message, logger);
 	crypt_prf_update_symkey(symkey_prf, "symkey message", symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		DBG_symkey(logger, "output", "symkey", symkey_output);
 	}
-	if (!verify_symkey(test->description, prf_output, symkey_output, logger)) {
+	if (!verify_symkey(test->description, "symkey",
+			   prf_output, symkey_output,
+			   logger, HERE)) {
 		ok = false;
 	}
-	ldbgf(DBG_CRYPT, logger, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
+	ldbg(logger, "%s: %s %s", __func__, test->description, (ok ? "passed" : "failed"));
 
 	free_chunk_content(&chunk_message);
 	free_chunk_content(&chunk_key);
@@ -262,20 +266,19 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 			    const struct kdf_test_vector *test,
 			    struct logger *logger)
 {
-	chunk_t chunk_ni = decode_to_chunk(__func__, test->ni);
+	chunk_t chunk_ni = decode_to_chunk(__func__, test->ni, logger, HERE);
 	passert(chunk_ni.len == test->ni_size);
-	chunk_t chunk_nr = decode_to_chunk(__func__, test->nr);
+	chunk_t chunk_nr = decode_to_chunk(__func__, test->nr, logger, HERE);
 	passert(chunk_nr.len == test->nr_size);
-	chunk_t chunk_spii = decode_to_chunk(__func__, test->spii);
-	chunk_t chunk_spir = decode_to_chunk(__func__, test->spir);
-	chunk_t chunk_gir = decode_to_chunk(__func__, test->gir);
+	chunk_t chunk_spii = decode_to_chunk(__func__, test->spii, logger, HERE);
+	chunk_t chunk_spir = decode_to_chunk(__func__, test->spir, logger, HERE);
+	chunk_t chunk_gir = decode_to_chunk(__func__, test->gir, logger, HERE);
 	passert(chunk_gir.len == test->gir_size);
-	chunk_t chunk_gir_new = decode_to_chunk(__func__, test->gir_new);
+	chunk_t chunk_gir_new = decode_to_chunk(__func__, test->gir_new, logger, HERE);
 	passert(chunk_gir_new.len == test->gir_size);
-	chunk_t chunk_skeyseed = decode_to_chunk(__func__, test->skeyseed);
-	chunk_t chunk_skeyseed_rekey =
-		decode_to_chunk(__func__, test->skeyseed_rekey);
-	chunk_t chunk_dkm = decode_to_chunk(__func__, test->dkm);
+	chunk_t chunk_skeyseed = decode_to_chunk(__func__, test->skeyseed, logger, HERE);
+	chunk_t chunk_skeyseed_rekey = decode_to_chunk(__func__, test->skeyseed_rekey, logger, HERE);
+	chunk_t chunk_dkm = decode_to_chunk(__func__, test->dkm, logger, HERE);
 	passert(chunk_dkm.len == test->dkm_size);
 	bool ok = true;
 
@@ -284,8 +287,9 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 	PK11SymKey *gir = symkey_from_hunk("gir symkey", chunk_gir, logger);
 	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, chunk_ni, chunk_nr,
 						     gir, logger);
-	if (!verify_symkey(test->description, chunk_skeyseed, skeyseed,
-			   logger)) {
+	if (!verify_symkey(test->description, "skeyseed",
+			   chunk_skeyseed, skeyseed,
+			   logger, HERE)) {
 		ok = false;
 	}
 
@@ -301,7 +305,9 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 					      test->dkm_size,
 					      logger);
 
-	if (!verify_symkey(test->description, chunk_dkm, dkm, logger)) {
+	if (!verify_symkey(test->description, "DKM",
+			   chunk_dkm, dkm,
+			   logger, HERE)) {
 		ok = false;
 	}
 
@@ -315,13 +321,11 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 		ikev2_ike_sa_rekey_skeyseed(prf, skd, gir_new,
 					    chunk_ni, chunk_nr,
 					    logger);
-	if (!verify_symkey(test->description, chunk_skeyseed_rekey,
-			   skeyseed_rekey, logger)) {
+	if (!verify_symkey(test->description, "skeyseed_rekey",
+			   chunk_skeyseed_rekey, skeyseed_rekey,
+			   logger, HERE)) {
 		ok = false;
 	}
-
-	ldbgf(DBG_CRYPT, logger, "%s: %s %s", __func__, test->description,
-	      ok ? "passed" : "failed");
 
 	release_symkey(__func__, "gir", &gir);
 	release_symkey(__func__, "gir_new", &gir_new);
@@ -339,6 +343,8 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 	free_chunk_content(&chunk_skeyseed);
 	free_chunk_content(&chunk_skeyseed_rekey);
 	free_chunk_content(&chunk_dkm);
+
+	ldbg(logger, "%s() %s: %s", __func__, test->description, (ok ? "passed" : "failed"));
 	return ok;
 }
 

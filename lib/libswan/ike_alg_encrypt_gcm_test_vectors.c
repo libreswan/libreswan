@@ -84,19 +84,19 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 
 	bool ok = true;
 
-	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger, HERE);
 
-	chunk_t salted_iv = decode_to_chunk("salted IV", test->salted_iv);
+	chunk_t salted_iv = decode_to_chunk("salted IV", test->salted_iv, logger, HERE);
 	passert(salted_iv.len == encrypt_desc->wire_iv_size + salt_size);
 	chunk_t salt = { .ptr = salted_iv.ptr, .len = salt_size };
 	chunk_t wire_iv = { .ptr = salted_iv.ptr + salt_size, .len = salted_iv.len - salt_size };
 
-	chunk_t aad = decode_to_chunk("AAD", test->aad);
-	chunk_t plaintext = decode_to_chunk("plaintext", test->plaintext);
-	chunk_t ciphertext = decode_to_chunk("ciphertext", test->ciphertext);
+	chunk_t aad = decode_to_chunk("AAD", test->aad, logger, HERE);
+	chunk_t plaintext = decode_to_chunk("plaintext", test->plaintext, logger, HERE);
+	chunk_t ciphertext = decode_to_chunk("ciphertext", test->ciphertext, logger, HERE);
 	passert(plaintext.len == ciphertext.len);
 	size_t len = plaintext.len;
-	chunk_t tag = decode_to_chunk("tag", test->tag);
+	chunk_t tag = decode_to_chunk("tag", test->tag, logger, HERE);
 
 	chunk_t text_and_tag;
 	text_and_tag.len = len + tag.len;
@@ -112,11 +112,10 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	{								\
 		memcpy(text_and_tag.ptr, FROM.ptr, FROM.len);		\
 		text_and_tag.len = len + tag.len;			\
-		if (DBGP(DBG_CRYPT)) {					\
-			DBG_log("test_gcm_vector: %s: aad-size=%zd salt-size=%zd wire-IV-size=%zd text-size=%zd tag-size=%zd", \
-				#CRYPT, aad.len, salt.len, wire_iv.len, len, tag.len); \
-			DBG_dump_hunk("test_gcm_vector: text+tag on call", \
-				      text_and_tag);			\
+		if (LDBGP(DBG_CRYPT, logger)) {				\
+			LDBG_log(logger, "%s() %s: aad-size=%zd salt-size=%zd wire-IV-size=%zd text-size=%zd tag-size=%zd text+tag in:", \
+				 __func__, #CRYPT, aad.len, salt.len, wire_iv.len, len, tag.len); \
+			LDBG_hunk(logger, text_and_tag);		\
 		}							\
 		if (!cipher_aead(encrypt_desc,				\
 				 HUNK_AS_SHUNK(salt),			\
@@ -127,15 +126,17 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 				 sym_key,				\
 				 CRYPT,					\
 				 logger) ||				\
-		    !verify_bytes("output ciphertext",			\
+		    !verify_bytes(test->description, "output ciphertext", \
 				  TO.ptr, TO.len,			\
-				  text_and_tag.ptr, TO.len) ||		\
-		    !verify_bytes("TAG", tag.ptr, tag.len,		\
-				  text_and_tag.ptr + len, tag.len))	\
+				  text_and_tag.ptr, TO.len,		\
+				  logger, HERE) ||			\
+		    !verify_bytes(test->description, "TAG", tag.ptr, tag.len, \
+				  text_and_tag.ptr + len, tag.len,	\
+				  logger, HERE))			\
 			ok = false;					\
-		if (DBGP(DBG_CRYPT)) {					\
-			DBG_dump_hunk("test_gcm_vector: text+tag on return", \
-				      text_and_tag);			\
+		if (LDBGP(DBG_CRYPT, logger)) {				\
+			LDBG_log(logger, "%s() text+tag out:", __func__); \
+			LDBG_hunk(logger, text_and_tag);		\
 		}							\
 	}
 
@@ -159,7 +160,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	ldbgf(DBG_CRYPT, logger, "test_gcm_vector: %s", ok ? "passed" : "failed");
+	ldbg(logger, "%s() %s", __func__, (ok ? "passed" : "failed"));
 	return ok;
 }
 

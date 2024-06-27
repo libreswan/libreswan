@@ -163,23 +163,21 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 {
 	const char *opstr = str_cipher_op(op);
 	bool ok = true;
-	chunk_t cb = decode_to_chunk("input counter-block: ", encoded_cb);
-	chunk_t tmp = decode_to_chunk(input_name, input);
-	chunk_t expected_output = decode_to_chunk(output_name, output);
-	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb);
+	chunk_t cb = decode_to_chunk("input counter-block: ", encoded_cb, logger, HERE);
+	chunk_t tmp = decode_to_chunk(input_name, input, logger, HERE);
+	chunk_t expected_output = decode_to_chunk(output_name, output, logger, HERE);
+	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb, logger, HERE);
 
 	/* do_crypt modifies the data and IV in place. */
 	cipher_normal(encrypt_desc, tmp, cb, sym_key, op, logger);
-	if (!verify_hunk(opstr, expected_output, tmp)) {
-		ldbgf(DBG_CRYPT, logger,
-		      "test_ctr_op: %s: %s: output does not match",
-		      description, opstr);
+	if (!verify_hunk(description, opstr,
+			 expected_output, tmp,
+			 logger, HERE)) {
 		ok = false;
 	}
-	if (!verify_hunk("counter-block", expected_cb, cb)) {
-		ldbgf(DBG_CRYPT, logger,
-		      "test_ctr_op: %s: %s: counter-block does not match",
-		      description, opstr);
+	if (!verify_hunk(description, "counter-block",
+			 expected_cb, cb,
+			 logger, HERE)) {
 		ok = false;
 	}
 
@@ -197,7 +195,7 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 {
 	bool ok = true;
 
-	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger, HERE);
 	if (!test_ctr_op(encrypt_desc, test->description, 1, sym_key,
 			 test->cb, test->output_cb,
 			 "Plaintext", test->plaintext,
@@ -216,8 +214,7 @@ static bool test_ctr_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	ldbgf(DBG_CRYPT, logger, "test_ctr_vector: %s %s",
-	      test->description, ok ? "passed" : "failed");
+	ldbg(logger, "%s() %s %s", __func__, test->description, (ok ? "passed" : "failed"));
 	return ok;
 }
 

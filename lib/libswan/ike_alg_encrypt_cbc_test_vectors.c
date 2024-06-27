@@ -133,7 +133,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	const char *opstr = str_cipher_op(op);
 
 	bool ok = true;
-	chunk_t iv = decode_to_chunk("IV: ", encoded_iv);
+	chunk_t iv = decode_to_chunk("IV: ", encoded_iv, logger, HERE);
 
 	/*
 	 * If encrypting, the new iv is in the output, if decrypting,
@@ -143,22 +143,20 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected_iv =
 		decode_to_chunk("new IV: ", (op == ENCRYPT ? output :
 					     op == DECRYPT ? input :
-					     NULL));
-	chunk_t tmp = decode_to_chunk(input_name, input);
-	chunk_t expected = decode_to_chunk(output_name, output);
+					     NULL),
+				logger, HERE);
+	chunk_t tmp = decode_to_chunk(input_name, input, logger, HERE);
+	chunk_t expected = decode_to_chunk(output_name, output, logger, HERE);
 
 	/* do_crypt modifies the data and IV in place. */
 	cipher_normal(encrypt_desc, tmp, iv, sym_key, op, logger);
 
-	if (!verify_hunk(opstr, expected, tmp)) {
-		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: output does not match",
-		      description, opstr);
+	if (!verify_hunk(description, opstr, expected, tmp, logger, HERE)) {
 		ok = false;
 	}
-	if (!verify_bytes("updated CBC IV", iv.ptr, iv.len,
-			  expected_iv.ptr + expected_iv.len - iv.len, iv.len)) {
-		ldbgf(DBG_CRYPT, logger, "test_cbc_op: %s: %s: IV does not match",
-		      description, opstr);
+	if (!verify_bytes(description, "updated CBC IV", iv.ptr, iv.len,
+			  expected_iv.ptr + expected_iv.len - iv.len, iv.len,
+			  logger, HERE)) {
 		ok = false;
 	}
 
@@ -181,7 +179,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 {
 	bool ok = true;
 
-	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger);
+	PK11SymKey *sym_key = decode_to_key(encrypt_desc, test->key, logger, HERE);
 	if (!test_cbc_op(encrypt_desc, test->description, 1,
 			 sym_key, test->iv,
 			 "plaintext: ", test->plaintext,
@@ -200,8 +198,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	/* Clean up. */
 	release_symkey(__func__, "sym_key", &sym_key);
 
-	ldbgf(DBG_CRYPT, logger, "test_ctr_vector: %s %s",
-	      test->description, ok ? "passed" : "failed");
+	ldbg(logger, "%s() %s: %s", __func__, test->description, (ok ? "passed" : "failed"));
 	return ok;
 }
 

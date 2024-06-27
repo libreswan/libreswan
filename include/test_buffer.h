@@ -13,33 +13,43 @@
  * for more details.
  */
 
+#ifndef TEST_BUFFER_H
+#define TEST_BUFFER_H
+
 #include <stdbool.h>
 #include <pk11pub.h>
 
 #include "chunk.h"
+#include "where.h"
 
 struct logger;
+struct encrypt_desc;
 
-chunk_t decode_to_chunk(const char *prefix, const char *string);
+chunk_t decode_to_chunk(const char *prefix, const char *string,
+			struct logger *logger, where_t where);
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
-				 struct logger *logger);
+				 struct logger *logger, where_t where);
 
-bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual,
-		   struct logger *logger);
+PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc, const char *string,
+			  struct logger *logger, where_t where);
 
-bool verify_bytes(const char *desc,
+bool verify_symkey(const char *desc, const char *verifying,
+		   chunk_t expected, PK11SymKey *actual,
+		   struct logger *logger, where_t where);
+
+bool verify_bytes(const char *desc, const char *verifying,
 		  const void *expected, size_t expected_size,
-		  const void *actual, size_t actual_size);
+		  const void *actual, size_t actual_size,
+		  struct logger *logger, where_t where);
 
-#define verify_hunk(DESC, EXPECTED, ACTUAL)				\
+#define verify_hunk(DESC, VERIFYING, EXPECTED, ACTUAL, LOGGER, WHERE)	\
 	({								\
 		typeof(EXPECTED) expected_ = EXPECTED; /* evaluate once */ \
 		typeof(ACTUAL) actual_ = ACTUAL; /* evaluate once */	\
-		verify_bytes(DESC, expected_.ptr, expected_.len,	\
-			     actual_.ptr, actual_.len);			\
+		verify_bytes(DESC, VERIFYING,				\
+			     expected_.ptr, expected_.len,		\
+			     actual_.ptr, actual_.len,			\
+			     LOGGER, WHERE);				\
 	})
 
-struct encrypt_desc;
-
-PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc, const char *string,
-			  struct logger *logger);
+#endif
