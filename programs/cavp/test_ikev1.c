@@ -42,7 +42,7 @@ void cavp_ikev1_skeyid_alphabet(const struct prf_desc *prf,
 					      logger);
 	print_symkey("SKEYID_e", "sKeyIdE", skeyid_e, 0, logger);
 
-	release_symkey(__func__, "skeyid_d", &skeyid_d);
-	release_symkey(__func__, "skeyid_e", &skeyid_e);
-	release_symkey(__func__, "skeyid_a", &skeyid_a);
+	symkey_delref(logger, "skeyid_d", &skeyid_d);
+	symkey_delref(logger, "skeyid_e", &skeyid_e);
+	symkey_delref(logger, "skeyid_a", &skeyid_a);
 }

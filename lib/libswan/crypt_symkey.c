@@ -46,30 +46,22 @@ void init_crypt_symkey(struct logger *logger)
 	}
 }
 
-void release_symkey(const char *prefix, const char *name,
-		    PK11SymKey **key)
+void symkey_delref_where(struct logger *logger, const char *name,
+			 PK11SymKey **key, where_t where)
 {
+	ldbg_delref_where(logger, name, (*key), where);
 	if (*key != NULL) {
-		DBGF(DBG_REFCNT, "%s: delref %s-key@%p",
-		     prefix, name, *key);
 		PK11_FreeSymKey(*key);
-	} else {
-		DBGF(DBG_REFCNT, "%s: delref %s-key@NULL",
-		     prefix, name);
 	}
 	*key = NULL;
 }
 
-PK11SymKey *reference_symkey(const char *prefix, const char *name,
-			     PK11SymKey *key)
+PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
+				PK11SymKey *key, where_t where)
 {
+	ldbg_addref_where(logger, name, key, where);
 	if (key != NULL) {
-		DBGF(DBG_REFCNT, "%s: addref %s-key@%p",
-		     prefix, name, key);
 		PK11_ReferenceSymKey(key);
-	} else {
-		DBGF(DBG_REFCNT, "%s: addref %s-key@NULL",
-		     prefix, name);
 	}
 	return key;
 }
@@ -317,7 +309,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	}
 	if (DBGP(DBG_REFCNT)) {
 	    if (slot_key == symkey) {
-		    /* output should mimic reference_symkey() */
+		    /* output should mimic symkey_addref() */
 		    DBG_log("%s: slot-key@%p: addref sym-key@%p",
 			    name, slot_key, symkey);
 	    } else {
@@ -346,7 +338,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 			      bytes, &out_len, wrapped_key.len,
 			      wrapped_key.data, wrapped_key.len);
 	pfreeany(wrapped_key.data);
-	release_symkey(name, "slot-key", &slot_key);
+	symkey_delref(logger, "slot-key", &slot_key);
 	passert(status == SECSuccess);
 	passert(out_len >= sizeof_bytes);
 
@@ -397,7 +389,7 @@ PK11SymKey *symkey_from_bytes(const char *name,
 	PK11SymKey *key = symkey_from_symkey(name, tmp, target, flags,
 					     0, sizeof_bytes, HERE, logger);
 	passert(key != NULL);
-	release_symkey(name, "tmp", &tmp);
+	symkey_delref(logger, "tmp", &tmp);
 	return key;
 }
 
@@ -416,7 +408,7 @@ PK11SymKey *encrypt_key_from_bytes(const char *name,
 							0, sizeof_bytes,
 							tmp, where, logger);
 	passert(key != NULL);
-	release_symkey(name, "tmp", &tmp);
+	symkey_delref(logger, "tmp", &tmp);
 	return key;
 }
 
@@ -434,7 +426,7 @@ PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
 						    0, sizeof_bytes,
 						    tmp, where, logger);
 	passert(key != NULL);
-	release_symkey(name, "tmp", &tmp);
+	symkey_delref(logger, "tmp", &tmp);
 	return key;
 }
 
@@ -452,7 +444,7 @@ void append_symkey_symkey(PK11SymKey **lhs, PK11SymKey *rhs,
 						 CKM_CONCATENATE_BASE_AND_KEY,
 						 PK11_GetMechanism(*lhs),
 						 logger);
-	release_symkey(__func__, "lhs", lhs);
+	symkey_delref(logger, "lhs", lhs);
 	*lhs = newkey;
 }
 
@@ -470,7 +462,7 @@ void append_symkey_bytes(const char *name,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						PK11_GetMechanism(*lhs),
 						logger);
-	release_symkey(__func__, "lhs", lhs);
+	symkey_delref(logger, "lhs", lhs);
 	*lhs = newkey;
 }
 
@@ -484,7 +476,7 @@ void prepend_bytes_to_symkey(const char *result,
 						CKM_CONCATENATE_DATA_AND_BASE,
 						PK11_GetMechanism(*rhs),
 						logger);
-	release_symkey(__func__, "rhs", rhs);
+	symkey_delref(logger, "rhs", rhs);
 	*rhs = newkey;
 }
 

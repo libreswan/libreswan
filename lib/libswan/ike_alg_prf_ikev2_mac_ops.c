@@ -53,7 +53,7 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_t = reference_symkey(__func__, "old_t[1]", concatenated);
+	PK11SymKey *old_t = symkey_addref(logger, "old_t[1]", concatenated);
 	while (sizeof_symkey(concatenated) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", prf_desc,
@@ -63,16 +63,16 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 		crypt_prf_update_byte(prf, "N++", count++);
 		PK11SymKey *new_t = crypt_prf_final_symkey(&prf);
 		append_symkey_symkey(&concatenated, new_t, logger);
-		release_symkey(__func__, "old_t[N]", &old_t);
+		symkey_delref(logger, "old_t[N]", &old_t);
 		old_t = new_t;
 	}
-	release_symkey(__func__, "old_t[final]", &old_t);
+	symkey_delref(logger, "old_t[final]", &old_t);
 
 	/* truncate the result to match the length with required_keymat */
 	PK11SymKey *result = key_from_symkey_bytes("result", concatenated,
 						   0, required_keymat,
 						   HERE, logger);
-	release_symkey(__func__, "concatenated", &concatenated);
+	symkey_delref(logger, "concatenated", &concatenated);
 	return result;
 }
 
@@ -175,7 +175,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 				     skeyseed, data,
 				     required_bytes,
 				     logger);
-	release_symkey(__func__, "data", &data);
+	symkey_delref(logger, "data", &data);
 	return result;
 }
 
@@ -204,7 +204,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	} else {
 		/* make a local "readonly copy" and manipulate that */
-		data = reference_symkey("prf", "data", new_dh_secret);
+		data = symkey_addref(logger, "new_dh_secret", new_dh_secret);
 		append_symkey_hunk("data+=Ni", &data, Ni, logger);
 		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	}
@@ -212,7 +212,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				     SK_d, data,
 				     required_bytes,
 				     logger);
-	release_symkey(__func__, "data", &data);
+	symkey_delref(logger, "data", &data);
 	return result;
 }
 
@@ -274,7 +274,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
-	release_symkey(__func__, "prf-psk", &prf_psk);
+	symkey_delref(logger, "prf-psk", &prf_psk);
 
 	return signed_octets;
 }

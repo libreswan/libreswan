@@ -125,16 +125,16 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 						 HERE, child->sa.logger);
 	ikeymat = chunk_from_symkey("initiator to responder keys", ikey,
 				    child->sa.logger);
-	release_symkey(__func__, "ikey", &ikey);
+	symkey_delref(child->sa.logger, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes("responder to initiator key",
 						 keymat, keymat_len, keymat_len,
 						 HERE, child->sa.logger);
 	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey,
 				    child->sa.logger);
-	release_symkey(__func__, "rkey", &rkey);
+	symkey_delref(child->sa.logger, "rkey", &rkey);
 
-	release_symkey(__func__, "keymat", &keymat);
+	symkey_delref(child->sa.logger, "keymat", &keymat);
 
 	/*
 	 * The initiator stores outgoing initiator-to-responder keymat

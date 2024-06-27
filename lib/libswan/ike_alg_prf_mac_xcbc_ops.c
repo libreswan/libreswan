@@ -168,7 +168,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		DBG_dump_hunk("XCBC: MAC", e);
 	}
 
-	release_symkey("xcbc", "k1", &k1);
+	symkey_delref(logger, "k1", &k1);
 	free_chunk_content(&t);
 	return e;
 }
@@ -197,14 +197,14 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		 * draft_key and manipulate that
 		 */
 		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - dkey_sz, "zeros");
-		PK11SymKey *local_draft_key = reference_symkey("xcbc", "local_draft_key", draft_key);
+		PK11SymKey *local_draft_key = symkey_addref(logger, "local_draft_key", draft_key);
 		append_symkey_hunk("local_draft_key+=0", &local_draft_key, zeros, logger);
 		key = prf_key_from_symkey_bytes(name, prf_desc,
 						0, prf_desc->prf_key_size,
 						local_draft_key,
 						HERE, logger);
 		/* free all in reverse order */
-		release_symkey(name, "local_draft_key", &local_draft_key);
+		symkey_delref(logger, "local_draft_key", &local_draft_key);
 		free_chunk_content(&zeros);
 	} else if (dkey_sz > prf_desc->prf_key_size) {
 		ldbgf(DBG_CRYPT, logger, "XCBC: Key %zd>%zd too big, rehashing to size",
@@ -221,7 +221,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 		/* free all in reverse order */
 		free_chunk_content(&key_chunk);
 		free_chunk_content(&draft_chunk);
-		release_symkey(name, "zero_key", &zero_key);
+		symkey_delref(logger, "zero_key", &zero_key);
 		free_chunk_content(&zeros);
 	} else {
 		ldbgf(DBG_CRYPT, logger, "XCBC: Key %zd=%zd just right",
@@ -254,7 +254,7 @@ static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
 	struct prf_context *context = nss_xcbc_init_symkey(prf_desc, name,
 							   key_name, clone,
 							   logger);
-	release_symkey(name, "clone", &clone);
+	symkey_delref(logger, "clone", &clone);
 	return context;
 }
 
@@ -283,7 +283,7 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 	memcpy(bytes, mac.ptr, sizeof_bytes);
 	free_chunk_content(&mac);
 	free_chunk_content(&(*prf)->bytes);
-	release_symkey((*prf)->name, "key", &(*prf)->key);
+	symkey_delref((*prf)->logger, "key", &(*prf)->key);
 	pfree(*prf);
 }
 
@@ -293,7 +293,7 @@ static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 	PK11SymKey *key = symkey_from_hunk("xcbc", mac, (*prf)->logger);
 	free_chunk_content(&mac);
 	free_chunk_content(&(*prf)->bytes);
-	release_symkey((*prf)->name, "key", &(*prf)->key);
+	symkey_delref((*prf)->logger, "key", &(*prf)->key);
 	pfree(*prf);
 	return key;
 }

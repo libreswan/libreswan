@@ -63,6 +63,24 @@ void ldbg_free(const struct logger *logger, const char *what, const void *pointe
 	ldbg_ref(logger, NULL, "del", what, pointer, where, 1, 0);
 }
 
+void ldbg_addref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
+{
+	if (DBGP(DBG_REFCNT)) {
+		LDBG_log(logger, "addref %s@%p "PRI_WHERE,
+			 what, pointer, pri_where(where));
+	}
+}
+
+void ldbg_delref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
+{
+	if (DBGP(DBG_REFCNT)) {
+		LDBG_log(logger, "delref %s@%p "PRI_WHERE,
+			 what, pointer, pri_where(where));
+	}
+}
+
 void dbg_alloc(const char *what, const void *pointer, where_t where)
 {
 	ldbg_alloc(NULL, what, pointer, where);

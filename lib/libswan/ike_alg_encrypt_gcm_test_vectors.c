@@ -157,7 +157,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 	free_chunk_content(&text_and_tag);
 
 	/* Clean up. */
-	release_symkey(__func__, "sym_key", &sym_key);
+	symkey_delref(logger, "sym_key", &sym_key);
 
 	ldbg(logger, "%s() %s", __func__, (ok ? "passed" : "failed"));
 	return ok;

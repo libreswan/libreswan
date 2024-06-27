@@ -79,12 +79,12 @@ static void cavp_acvp_ikev2(const struct prf_desc *prf,
 		exit(1);
 	}
 
-	release_symkey(__func__, "skeyseed", &skeyseed);
-	release_symkey(__func__, "dkm", &dkm);
-	release_symkey(__func__, "SK_d", &SK_d);
-	release_symkey(__func__, "child_sa_dkm", &child_sa_dkm);
-	release_symkey(__func__, "child_sa_dkm_dh", &child_sa_dkm_dh);
-	release_symkey(__func__, "skeyseed_rekey", &skeyseed_rekey);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	symkey_delref(logger, "dkm", &dkm);
+	symkey_delref(logger, "SK_d", &SK_d);
+	symkey_delref(logger, "child_sa_dkm", &child_sa_dkm);
+	symkey_delref(logger, "child_sa_dkm_dh", &child_sa_dkm_dh);
+	symkey_delref(logger, "skeyseed_rekey", &skeyseed_rekey);
 }
 
 static long int g_ir_length;

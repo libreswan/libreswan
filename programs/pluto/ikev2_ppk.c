@@ -249,7 +249,7 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 			   struct logger *logger)
 {
 	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size, logger);
-	release_symkey(__func__, name, sk);
+	symkey_delref(logger, name, sk);
 	*sk = t;
 	if (DBGP(DBG_CRYPT)) {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
@@ -275,5 +275,5 @@ void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
 	ppk_recalc_one(sk_pi, ppk_key, prf_desc, "sk_pi", logger);
 	ppk_recalc_one(sk_pr, ppk_key, prf_desc, "sk_pr", logger);
 
-	release_symkey(__func__, "PPK chunk", &ppk_key);
+	symkey_delref(logger, "PPK chunk", &ppk_key);
 }

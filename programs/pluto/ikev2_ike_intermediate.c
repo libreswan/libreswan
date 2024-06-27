@@ -334,7 +334,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 * So that things don't pexpect, blow away the old shared secret.
 	 */
 	dbg("HACK: blow away old shared secret as going to re-compute it");
-	release_symkey(__func__, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
+	symkey_delref(ike->sa.logger, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
 	struct connection *c = ike->sa.st_connection;
 
 	/* save the most recent ID */

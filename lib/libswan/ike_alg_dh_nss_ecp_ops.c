@@ -202,7 +202,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 					       0, sizeof_symkey(temp),
 					       HERE, logger);
 
-	release_symkey(__func__, "temp", &temp);
+	symkey_delref(logger, "temp", &temp);
 	SECITEM_FreeItem(&remote_pubk.u.ec.publicValue, PR_FALSE);
 
 	return NULL;

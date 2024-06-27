@@ -43,9 +43,14 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
 /*
  * Add/delete references to a reference-countered PK11SymKey.
  */
-void release_symkey(const char *prefix, const char *name, PK11SymKey **key);
-PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *key);
-void symkey_newref(const char *name, PK11SymKey *key);
+
+PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
+				PK11SymKey *key, where_t where);
+void symkey_delref_where(struct logger *logger, const char *name,
+			 PK11SymKey **key, where_t where);
+
+#define symkey_addref(LOGGER, NAME, KEY) symkey_addref_where(LOGGER, NAME, KEY, HERE)
+#define symkey_delref(LOGGER, NAME, KEY) symkey_delref_where(LOGGER, NAME, KEY, HERE)
 
 /*
  * Length of a symkey in bytes.

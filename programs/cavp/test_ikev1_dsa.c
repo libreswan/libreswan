@@ -96,7 +96,7 @@ static void ikev1_dsa_run_test(struct logger *logger)
 	const struct prf_desc *prf = prf_entry->prf;
 	PK11SymKey *skeyid = ikev1_signature_skeyid(prf, ni, nr, g_xy, logger);
 	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid, logger);
-	release_symkey(__func__, "skeyid", &skeyid);
+	symkey_delref(logger, "skeyid", &skeyid);
 }
 
 const struct cavp test_ikev1_dsa = {

@@ -106,7 +106,7 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf, skeyseed,
 						   ni, nr, ike_spis,
 						   total_keysize, logger);
-	release_symkey(__func__, "skeyseed", &skeyseed);
+	symkey_delref(logger, "skeyseed", &skeyseed);
 
 	size_t next_byte = 0;
 
@@ -143,7 +143,7 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 	*initiator_salt_out = chunk_from_symkey("initiator salt",
 						initiator_salt_key,
 						logger);
-	release_symkey(__func__, "initiator-salt-key", &initiator_salt_key);
+	symkey_delref(logger, "initiator-salt-key", &initiator_salt_key);
 
 	next_byte += salt_size;
 
@@ -164,7 +164,7 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 	*responder_salt_out = chunk_from_symkey("responder salt",
 						responder_salt_key,
 						logger);
-	release_symkey(__func__, "responder-salt-key", &responder_salt_key);
+	symkey_delref(logger, "responder-salt-key", &responder_salt_key);
 	next_byte += salt_size;
 
 	*SK_pi_out = key_from_symkey_bytes("SK_pi", finalkey,
@@ -182,7 +182,7 @@ static void calc_skeyseed_v2(PK11SymKey *shared,
 	*chunk_SK_pr_out = chunk_from_symkey("chunk_SK_pr", *SK_pr_out, logger);
 
 	ldbgf(DBG_CRYPT, logger, "NSS ikev2: finished computing individual keys for IKEv2 SA");
-	release_symkey(__func__, "finalkey", &finalkey);
+	symkey_delref(logger, "finalkey", &finalkey);
 }
 
 void calc_v2_keymat(struct state *st,

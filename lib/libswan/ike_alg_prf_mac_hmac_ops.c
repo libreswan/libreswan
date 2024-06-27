@@ -56,7 +56,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 {
 	struct prf_context *prf = prf_init(prf_desc, name, logger);
 	/* XXX: use an untyped key */
-	prf->key = symkey_from_bytes(name, key, sizeof_key, logger);
+	prf->key = symkey_from_bytes(name, key, sizeof_key, prf->logger);
 	prf_update(prf);
 	return prf;
 }
@@ -67,7 +67,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 				       struct logger *logger)
 {
 	struct prf_context *prf = prf_init(prf_desc, name, logger);
-	prf->key = reference_symkey(name, "key", key);
+	prf->key = symkey_addref(prf->logger, name, key);
 	prf_update(prf);
 	return prf;
 }
@@ -91,7 +91,7 @@ static void prf_update(struct prf_context *prf)
 						    prf->desc->hasher,
 						    "raw key", prf->key,
 						    prf->logger);
-		release_symkey(prf->name, "key", &prf->key);
+		symkey_delref(prf->logger, "key", &prf->key);
 		prf->key = new;
 	} else if (sizeof_symkey(prf->key) < prf->desc->hasher->hash_block_size) {
 		/*
@@ -144,7 +144,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 						     prf->desc->hasher,
 						     "inner", prf->inner,
 						     prf->logger);
-	release_symkey(prf->name, "inner", &prf->inner);
+	symkey_delref(prf->logger, "inner", &prf->inner);
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner. */
 	passert(prf->desc->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
@@ -153,8 +153,8 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	chunk_t hmac_opad = { op, prf->desc->hasher->hash_block_size };
 	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad, prf->logger);
 	append_symkey_symkey(&outer, hashed_inner, prf->logger);
-	release_symkey(prf->name, "hashed-inner", &hashed_inner);
-	release_symkey(prf->name, "key", &prf->key);
+	symkey_delref(prf->logger, "hashed-inner", &hashed_inner);
+	symkey_delref(prf->logger, "key", &prf->key);
 
 	return outer;
 }
@@ -168,7 +168,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 						     (*prfp)->desc->hasher,
 						     "outer", outer,
 						     (*prfp)->logger);
-	release_symkey((*prfp)->name, "outer", &outer);
+	symkey_delref((*prfp)->logger, "outer", &outer);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_symkey((*prfp)->logger, "    ", " hashed-outer", hashed_outer);
 	}
@@ -188,7 +188,7 @@ static void final_bytes(struct prf_context **prfp,
 						  (*prfp)->logger);
 	crypt_hash_digest_symkey(hash, "outer", outer);
 	crypt_hash_final_bytes(&hash, bytes, sizeof_bytes);
-	release_symkey((*prfp)->name, "outer", &outer);
+	symkey_delref((*prfp)->logger, "outer", &outer);
 	pfree(*prfp);
 	*prfp = NULL;
 }

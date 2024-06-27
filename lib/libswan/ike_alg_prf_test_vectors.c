@@ -207,9 +207,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	free_chunk_content(&chunk_message);
 	free_chunk_content(&chunk_key);
 
-	release_symkey(__func__, "message", &symkey_message);
-	release_symkey(__func__, "key", &symkey_key);
-	release_symkey(__func__, "output", &symkey_output);
+	symkey_delref(logger, "message", &symkey_message);
+	symkey_delref(logger, "key", &symkey_key);
+	symkey_delref(logger, "output", &symkey_output);
 
 	free_chunk_content(&prf_output);
 	return ok;
@@ -327,12 +327,12 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 		ok = false;
 	}
 
-	release_symkey(__func__, "gir", &gir);
-	release_symkey(__func__, "gir_new", &gir_new);
-	release_symkey(__func__, "skeyseed", &skeyseed);
-	release_symkey(__func__, "dkm", &dkm);
-	release_symkey(__func__, "skd", &skd);
-	release_symkey(__func__, "skeyseed_rekey", &skeyseed_rekey);
+	symkey_delref(logger, "gir", &gir);
+	symkey_delref(logger, "gir_new", &gir_new);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	symkey_delref(logger, "dkm", &dkm);
+	symkey_delref(logger, "skd", &skd);
+	symkey_delref(logger, "skeyseed_rekey", &skeyseed_rekey);
 
 	free_chunk_content(&chunk_ni);
 	free_chunk_content(&chunk_nr);

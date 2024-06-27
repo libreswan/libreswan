@@ -88,7 +88,7 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 			      "skeyid", CKM_NSS_IKE1_PRF_DERIVE, CKA_DERIVE,
 			      /*key_size*/0, /*flags*/0,
 			      HERE, logger);
-	release_symkey("SKEYID psk", "psk", &psk);
+	symkey_delref(logger, "psk", &psk);
 	return skeyid;
 }
 
@@ -291,7 +291,7 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				       HERE, logger);
 	chunk_t keymat = chunk_from_symkey("section 5 keymat", key, logger);
 	PASSERT(logger, keymat.len == required_keymat);
-	release_symkey("section 5 keymat", "keymat", &key);
+	symkey_delref(logger, "section 5 keymat", &key);
 	pfree(extra);
 	return keymat;
 }

@@ -1090,7 +1090,7 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_dcookie);
 	free_chunk_content(&st->st_v2_id_payload.data);
 
-#    define free_any_nss_symkey(p)  release_symkey(__func__, #p, &(p))
+#    define free_any_nss_symkey(p)  symkey_delref(st->logger, #p, &(p))
 	free_any_nss_symkey(st->st_dh_shared_secret);
 	free_any_nss_symkey(st->st_skeyid_nss);
 	free_any_nss_symkey(st->st_skey_d_nss);	/* aka st_skeyid_d_nss */
@@ -1214,7 +1214,9 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_ipcomp.inbound.spi = ike->sa.st_ipcomp.inbound.spi;
 
 	if (sa_type == CHILD_SA) {
-#   define clone_nss_symkey_field(field) child->sa.field = reference_symkey(__func__, #field, ike->sa.field)
+#   define clone_nss_symkey_field(field)				\
+		child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
+
 		clone_nss_symkey_field(st_skeyid_nss);
 		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
 		clone_nss_symkey_field(st_skey_ai_nss); /* aka st_skeyid_a_nss */
@@ -1224,6 +1226,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 		clone_nss_symkey_field(st_skey_pi_nss);
 		clone_nss_symkey_field(st_skey_pr_nss);
 		clone_nss_symkey_field(st_enc_key_nss);
+
 #   undef clone_nss_symkey_field
 
 		/* v2 duplication of state */

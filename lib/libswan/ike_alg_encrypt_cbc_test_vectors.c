@@ -196,7 +196,7 @@ static bool test_cbc_vector(const struct encrypt_desc *encrypt_desc,
 	}
 
 	/* Clean up. */
-	release_symkey(__func__, "sym_key", &sym_key);
+	symkey_delref(logger, "sym_key", &sym_key);
 
 	ldbg(logger, "%s() %s: %s", __func__, test->description, (ok ? "passed" : "failed"));
 	return ok;

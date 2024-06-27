@@ -168,7 +168,7 @@ static void cleanup_dh_shared_secret(struct task **task)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
-	release_symkey("DH", "secret", &(*task)->shared_secret);
+	symkey_delref(&global_logger, "DH secret", &(*task)->shared_secret);
 	pfreeany(*task);
 }
 
@@ -180,7 +180,7 @@ static stf_status complete_dh_shared_secret(struct state *task_st,
 	dbg("completing DH shared secret for "PRI_SO"/"PRI_SO,
 	    task_st->st_serialno, dh_st->st_serialno);
 	pexpect(dh_st->st_dh_shared_secret == NULL);
-	release_symkey(__func__, "st_dh_shared_secret", &dh_st->st_dh_shared_secret);
+	symkey_delref(dh_st->logger, "st_dh_shared_secret", &dh_st->st_dh_shared_secret);
 	/* transfer */
 	dh_st->st_dh_shared_secret = task->shared_secret;
 	task->shared_secret = NULL;

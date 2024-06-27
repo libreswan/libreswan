@@ -100,7 +100,7 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 						      0, sizeof_symkey(key),
 						      key, HERE, logger);
 	struct prf_context *prf = init(prf_desc, name, key_name, clone, logger);
-	release_symkey(name, "clone", &clone);
+	symkey_delref(prf->logger, "clone", &clone);
 	return prf;
 }
 
@@ -118,7 +118,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 	PK11SymKey *clone = prf_key_from_bytes(key_name, prf_desc,
 					       key, sizeof_key, HERE, logger);
 	struct prf_context *prf = init(prf_desc, name, key_name, clone, logger);
-	release_symkey(name, "clone", &clone);
+	symkey_delref(prf->logger, "clone", &clone);
 	return prf ;
 }
 

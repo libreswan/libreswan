@@ -63,7 +63,7 @@
 #include "asn1.h"
 #include "pending.h"
 #include "ikev1_hash.h"
-#include "crypt_symkey.h"		/* for release_symkey() */
+#include "crypt_symkey.h"		/* for symkey_delref() */
 
 #include "crypto.h"
 #include "secrets.h"
@@ -969,12 +969,12 @@ stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 	 * XXX: this seems lame, can the state machine detect and
 	 * rejected the duplicate packet?
 	 */
-	release_symkey(__func__, "DH shared secret", &ike->sa.st_dh_shared_secret);
-	release_symkey(__func__, "skeyid", &ike->sa.st_skeyid_nss);
-	release_symkey(__func__, "skeyid_d", &ike->sa.st_skeyid_d_nss);
-	release_symkey(__func__, "skeyid_a", &ike->sa.st_skeyid_a_nss);
-	release_symkey(__func__, "skeyid_e", &ike->sa.st_skeyid_e_nss);
-	release_symkey(__func__, "enc_key", &ike->sa.st_enc_key_nss);
+	symkey_delref(ike->sa.logger, "DH shared secret", &ike->sa.st_dh_shared_secret);
+	symkey_delref(ike->sa.logger, "skeyid", &ike->sa.st_skeyid_nss);
+	symkey_delref(ike->sa.logger, "skeyid_d", &ike->sa.st_skeyid_d_nss);
+	symkey_delref(ike->sa.logger, "skeyid_a", &ike->sa.st_skeyid_a_nss);
+	symkey_delref(ike->sa.logger, "skeyid_e", &ike->sa.st_skeyid_e_nss);
+	symkey_delref(ike->sa.logger, "enc_key", &ike->sa.st_enc_key_nss);
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,

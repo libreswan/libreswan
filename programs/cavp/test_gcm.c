@@ -209,7 +209,7 @@ static void gcm_run_test(struct logger *logger)
 	} else {
 		print_line("FAIL");
 	}
-	release_symkey(__func__, "GCM-key", &gcm_key);
+	symkey_delref(logger, "GCM-key", &gcm_key);
 	free_chunk_content(&text_and_tag);
 }
 

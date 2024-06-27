@@ -40,7 +40,7 @@ void op_symkey(const struct cavp_entry *entry,
 	       const char *value,
 	       struct logger *logger)
 {
-	release_symkey(__func__, "entry", entry->symkey);
+	symkey_delref(logger, "entry", entry->symkey);
 	chunk_t chunk = chunk_from_hex(value, entry->key);
 	*(entry->symkey) = symkey_from_hunk("symkey", chunk, logger);
 	free_chunk_content(&chunk);

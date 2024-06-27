@@ -226,7 +226,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 				       "prf(Shared Secret, \"Key Pad for IKEv2\")", prf_mech,
 				       CKA_SIGN, 0/*key-size*/, 0/*flags*/,
 				       HERE, logger);
-		release_symkey("psk pss_key", "pss_key", &pss_key);
+		symkey_delref(logger, "psk pss_key", &pss_key);
 	}
 
 	/* calculate outer prf */
@@ -255,7 +255,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
-	release_symkey(__func__, "prf-psk", &prf_psk);
+	symkey_delref(logger, "prf-psk", &prf_psk);
 
 	return signed_octets;
 }

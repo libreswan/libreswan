@@ -62,7 +62,7 @@ static struct cipher_aead_context *cipher_aead_context_create_nss(const struct e
 
 	struct cipher_aead_context *aead = alloc_thing(struct cipher_aead_context, __func__);
 	aead->context = context;
-	aead->symkey = reference_symkey("", __func__, symkey);
+	aead->symkey = symkey_addref(logger, __func__, symkey);
 	aead->op = op;
 	aead->iv_source = iv_source;
 	aead->salt = clone_hunk(salt, __func__);
@@ -135,7 +135,7 @@ static void cipher_aead_context_destroy_nss(struct cipher_aead_context **aead,
 {
 	PK11_Finalize((*aead)->context);
 	PK11_DestroyContext((*aead)->context, PR_TRUE);
-	release_symkey("", __func__, &(*aead)->symkey);
+	symkey_delref(logger, __func__, &(*aead)->symkey);
 	free_chunk_content(&(*aead)->salt);
 	ldbg(logger, "destroyed");
 	pfreeany(*aead);

@@ -120,13 +120,16 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 			dbg("found PPK and PPK_ID for our connection");
 
 			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
-			ike->sa.st_sk_d_no_ppk = reference_symkey(__func__, "sk_d_no_ppk", ike->sa.st_skey_d_nss);
+			ike->sa.st_sk_d_no_ppk = symkey_addref(ike->sa.logger, "sk_d_no_ppk",
+							       ike->sa.st_skey_d_nss);
 
 			pexpect(ike->sa.st_sk_pi_no_ppk == NULL);
-			ike->sa.st_sk_pi_no_ppk = reference_symkey(__func__, "sk_pi_no_ppk", ike->sa.st_skey_pi_nss);
+			ike->sa.st_sk_pi_no_ppk = symkey_addref(ike->sa.logger, "sk_pi_no_ppk",
+								ike->sa.st_skey_pi_nss);
 
 			pexpect(ike->sa.st_sk_pr_no_ppk == NULL);
-			ike->sa.st_sk_pr_no_ppk = reference_symkey(__func__, "sk_pr_no_ppk", ike->sa.st_skey_pr_nss);
+			ike->sa.st_sk_pr_no_ppk = symkey_addref(ike->sa.logger, "sk_pr_no_ppk",
+								ike->sa.st_skey_pr_nss);
 
 			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
 					&ike->sa.st_skey_d_nss,
@@ -1066,14 +1069,17 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 		llog_sa(RC_LOG, ike, "peer wants to continue without PPK - switching to NO_PPK");
 
-		release_symkey(__func__, "st_skey_d_nss",  &ike->sa.st_skey_d_nss);
-		ike->sa.st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", ike->sa.st_sk_d_no_ppk);
+		symkey_delref(ike->sa.logger, "st_skey_d_nss",  &ike->sa.st_skey_d_nss);
+		ike->sa.st_skey_d_nss = symkey_addref(ike->sa.logger, "used sk_d from no ppk",
+						      ike->sa.st_sk_d_no_ppk);
 
-		release_symkey(__func__, "st_skey_pi_nss", &ike->sa.st_skey_pi_nss);
-		ike->sa.st_skey_pi_nss = reference_symkey(__func__, "used sk_pi from no ppk", ike->sa.st_sk_pi_no_ppk);
+		symkey_delref(ike->sa.logger, "st_skey_pi_nss", &ike->sa.st_skey_pi_nss);
+		ike->sa.st_skey_pi_nss = symkey_addref(ike->sa.logger, "used sk_pi from no ppk",
+						       ike->sa.st_sk_pi_no_ppk);
 
-		release_symkey(__func__, "st_skey_pr_nss", &ike->sa.st_skey_pr_nss);
-		ike->sa.st_skey_pr_nss = reference_symkey(__func__, "used sk_pr from no ppk", ike->sa.st_sk_pr_no_ppk);
+		symkey_delref(ike->sa.logger, "st_skey_pr_nss", &ike->sa.st_skey_pr_nss);
+		ike->sa.st_skey_pr_nss = symkey_addref(ike->sa.logger, "used sk_pr from no ppk",
+						       ike->sa.st_sk_pr_no_ppk);
 	}
 
 	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "idhash auth R2", md);
