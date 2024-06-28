@@ -228,9 +228,10 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 			/* set b->buf */
 			bool known = enum_name(type->enum_names[key], id, b);
 			pexpect(known);
-			DBGF(debug, "%s %s id: %s=%u, found %s",
-			     type->name, __func__, b->buf,
-			     id, alg->fqn);
+			ldbgf(debug, &global_logger,
+			      "%s %s id: %s=%u, found %s",
+			      type->name, __func__, b->buf,
+			      id, alg->fqn);
 			b->buf = alg->fqn;
 			return alg;
 		}
@@ -238,9 +239,10 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 
 	/* set b->buf */
 	bool known = enum_name(type->enum_names[key], id, b);
-	DBGF(debug, "%s %s id: %s=%u, not found %s by enum_names/IETF",
-	     type->name, __func__, b->buf, id,
-	     (known ? " but known" : " and unknown"));
+	ldbgf(debug, &global_logger,
+	      "%s %s id: %s=%u, not found %s by enum_names/IETF",
+	      type->name, __func__, b->buf, id,
+	      (known ? " but known" : " and unknown"));
 	return NULL;
 }
 

@@ -251,8 +251,9 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 struct shunks *shunks(shunk_t input, const char *delims,
 		      enum shunks_opt opt, where_t where)
 {
-	DBGF(DBG_TMI, "%s() input=\""PRI_SHUNK"\" delims=\"%s\"",
-	     __func__, pri_shunk(input), delims);
+	ldbgf(DBG_TMI, &global_logger,
+	      "%s() input=\""PRI_SHUNK"\" delims=\"%s\"",
+	      __func__, pri_shunk(input), delims);
 
 	/*
 	 * Allocate a minimal buffer.  Will grow it as more tokens are
@@ -271,13 +272,15 @@ struct shunks *shunks(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			if (opt == EAT_EMPTY_SHUNKS) {
 				/* eat spaces when part of delims */
-				DBGF(DBG_TMI, "%s() pass 1 eat empty", __func__);
+				ldbgf(DBG_TMI, &global_logger,
+				      "%s() pass 1 eat empty", __func__);
 				continue;
 			}
 			tokens->kept_empty_shunks = true;
 		}
-		DBGF(DBG_TMI, "%s() [%u] \""PRI_SHUNK"\"",
-		     __func__, tokens->len, pri_shunk(token));
+		ldbgf(DBG_TMI, &global_logger,
+		      "%s() [%u] \""PRI_SHUNK"\"",
+		      __func__, tokens->len, pri_shunk(token));
 		/* grow by one shunk_t */
 		void *new = tokens;
 		size_t new_size = tokens_size + sizeof(shunk_t);

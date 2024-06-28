@@ -307,13 +307,6 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DBGP(cond)	(cur_debugging & (cond))
 #define LDBGP(COND, LOGGER) (COND & (cur_debugging | (LOGGER)->debugging))
 
-#define DBGF(COND, MESSAGE, ...)				\
-	{							\
-		if (DBGP(COND)) {				\
-			DBG_log(MESSAGE, ##__VA_ARGS__);	\
-		}						\
-	}
-
 #define dbg(MESSAGE, ...)					\
 	{							\
 		if (DBGP(DBG_BASE)) {				\

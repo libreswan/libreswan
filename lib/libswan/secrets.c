@@ -142,8 +142,9 @@ void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize)
 		 * - but wouldn't that be redundant?  The direct n==n
 		 * test would pick up the difference.
 		 */
-		DBGF(DBG_CRYPT, "XXX: adjusted modulus length %zu->%zu",
-		     n.len, n.len - 1);
+		ldbgf(DBG_CRYPT, &global_logger,
+		      "XXX: adjusted modulus length %zu->%zu",
+		      n.len, n.len - 1);
 		n.ptr++;
 		n.len--;
 	}

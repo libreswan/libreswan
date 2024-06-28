@@ -172,7 +172,7 @@ void remove_list_entry(struct list_entry *entry)
 	older->next[OLD2NEW] = newer;
 
 	if (older == newer) {
-		DBGF(DBG_TMI, "%s: empty", entry->info->name);
+		ldbgf(DBG_TMI, &global_logger, "%s: empty", entry->info->name);
 	} else {
 		log_entry("updated older", older);
 		log_entry("updated newer ", newer);

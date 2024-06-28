@@ -280,7 +280,8 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 {
 	SECStatus status;
 	if (symkey == NULL) {
-		DBGF(DBG_CRYPT, "%s NULL key has no bytes", name);
+		ldbgf(DBG_CRYPT, logger,
+		      "%s NULL key has no bytes", name);
 		return EMPTY_CHUNK;
 	}
 
@@ -321,7 +322,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	/* Round up the wrapped key length to a 16-byte boundary. */
 	wrapped_key.len = (sizeof_bytes + 15) & ~15;
 	wrapped_key.data = alloc_bytes(wrapped_key.len, name);
-	DBGF(DBG_CRYPT, "sizeof bytes %d", wrapped_key.len);
+	ldbgf(DBG_CRYPT, logger, "sizeof bytes %d", wrapped_key.len);
 	status = PK11_WrapSymKey(CKM_AES_ECB, NULL, ephemeral_key, slot_key,
 				 &wrapped_key);
 	passert(status == SECSuccess);
