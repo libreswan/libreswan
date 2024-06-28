@@ -33,6 +33,7 @@
 #include "ikev2_prf.h"
 #include "crypt_dh.h"
 #include "state.h"
+#include "crypt_cipher.h"
 
 /* MUST BE THREAD-SAFE */
 static void calc_skeyseed_v2(PK11SymKey *shared,
@@ -214,6 +215,43 @@ void calc_v2_keymat(struct state *st,
 			 &st->st_skey_chunk_SK_pi,
 			 &st->st_skey_chunk_SK_pr,
 			 st->logger);
+
+	switch (st->st_sa_role) {
+	case SA_INITIATOR:
+		/* encrypt outbound uses I */
+		st->st_ike_encrypt_cipher_context =
+			cipher_context_create(st->st_oakley.ta_encrypt,
+					      ENCRYPT, FILL_IV,
+					      st->st_skey_ei_nss,
+					      HUNK_AS_SHUNK(st->st_skey_initiator_salt),
+					      st->logger);
+		/* decrypt inbound uses R */
+		st->st_ike_decrypt_cipher_context =
+			cipher_context_create(st->st_oakley.ta_encrypt,
+					      DECRYPT, USE_IV,
+					      st->st_skey_er_nss,
+					      HUNK_AS_SHUNK(st->st_skey_responder_salt),
+					      st->logger);
+		break;
+	case SA_RESPONDER:
+		/* encrypt outbound uses R */
+		st->st_ike_encrypt_cipher_context =
+			cipher_context_create(st->st_oakley.ta_encrypt,
+					      ENCRYPT, FILL_IV,
+					      st->st_skey_er_nss,
+					      HUNK_AS_SHUNK(st->st_skey_responder_salt),
+					      st->logger);
+		/* decrypt inbound uses I */
+		st->st_ike_decrypt_cipher_context =
+			cipher_context_create(st->st_oakley.ta_encrypt,
+					      DECRYPT, USE_IV,
+					      st->st_skey_ei_nss,
+					      HUNK_AS_SHUNK(st->st_skey_initiator_salt),
+					      st->logger);
+		break;
+	default:
+		bad_case(st->st_sa_role);
+	}
 
 	st->hidden_variables.st_skeyid_calculated = true;
 }

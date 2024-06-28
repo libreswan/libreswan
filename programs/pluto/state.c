@@ -74,6 +74,7 @@
 #include "terminate.h"
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "ikev2_states.h"
+#include "crypt_cipher.h"		/* for cipher_context_destroy() */
 
 static void delete_state(struct state *st);
 
@@ -1090,7 +1091,11 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_dcookie);
 	free_chunk_content(&st->st_v2_id_payload.data);
 
+	cipher_context_destroy(&st->st_ike_encrypt_cipher_context, st->logger);
+	cipher_context_destroy(&st->st_ike_decrypt_cipher_context, st->logger);
+
 #    define free_any_nss_symkey(p)  symkey_delref(st->logger, #p, &(p))
+
 	free_any_nss_symkey(st->st_dh_shared_secret);
 	free_any_nss_symkey(st->st_skeyid_nss);
 	free_any_nss_symkey(st->st_skey_d_nss);	/* aka st_skeyid_d_nss */

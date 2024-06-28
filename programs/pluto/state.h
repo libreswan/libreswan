@@ -550,6 +550,8 @@ struct state {
 #define st_skeyid_a_nss st_skey_ai_nss	/* v1 IKE authentication KM */
 	PK11SymKey *st_skey_ai_nss;	/* v2 IKE authentication key for initiator */
 	PK11SymKey *st_skey_ar_nss;	/* v2 IKE authentication key for responder */
+	struct cipher_context *st_ike_encrypt_cipher_context;
+	struct cipher_context *st_ike_decrypt_cipher_context;
 
 #define st_skeyid_e_nss st_skey_ei_nss	/* v1 IKE encryption KM */
 	PK11SymKey *st_skey_ei_nss;	/* v2 IKE encryption key for initiator */
