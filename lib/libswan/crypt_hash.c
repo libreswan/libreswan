@@ -57,7 +57,7 @@ void crypt_hash_digest_symkey(struct crypt_hash *hash,
 		DBG_log("%s hash %s digest %s-key@%p (size %zu)",
 			hash->name, hash->desc->common.fqn,
 			name, symkey, sizeof_symkey(symkey));
-		DBG_symkey(hash->logger, hash->name, name, symkey);
+		LDBG_symkey(hash->logger, hash->name, name, symkey);
 	}
 	hash->desc->hash_ops->digest_symkey(hash->context, name, symkey);
 }

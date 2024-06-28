@@ -160,7 +160,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 			jam(buf, "computed shared DH secret key@%p",
 			    task->shared_secret);
 		}
-		DBG_symkey(logger, "dh-shared ", "g^ir", task->shared_secret);
+		LDBG_symkey(logger, "dh-shared ", "g^ir", task->shared_secret);
 	}
 }
 

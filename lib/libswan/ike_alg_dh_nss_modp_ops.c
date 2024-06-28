@@ -125,7 +125,7 @@ static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		DBG_symkey(logger, "newref ", "g_ir", *shared_secret);
+		LDBG_symkey(logger, "newref ", "g_ir", *shared_secret);
 	}
 	return NULL;
 }

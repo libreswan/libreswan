@@ -42,7 +42,7 @@ void init_crypt_symkey(struct logger *logger)
 				       NULL, 128/8, NULL);
 	PK11_FreeSlot(slot); /* reference counted */
 	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey(logger, SPACES, "ephemeral", ephemeral_symkey);
+		LDBG_symkey(logger, SPACES, "ephemeral", ephemeral_symkey);
 	}
 }
 
@@ -91,7 +91,7 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key)
 	}
 }
 
-void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key)
+void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key)
 {
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, "%s: ", prefix);
@@ -287,9 +287,9 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 
 	size_t sizeof_bytes = sizeof_symkey(symkey);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s extracting all %zd bytes of key@%p",
-			name, sizeof_bytes, symkey);
-		DBG_symkey(logger, name, "symkey", symkey);
+		LDBG_log(logger, "%s extracting all %zd bytes of key@%p",
+			 name, sizeof_bytes, symkey);
+		LDBG_symkey(logger, name, "symkey", symkey);
 	}
 
 	/* get a secret key */
@@ -311,10 +311,10 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	if (DBGP(DBG_REFCNT)) {
 	    if (slot_key == symkey) {
 		    /* output should mimic symkey_addref() */
-		    DBG_log("%s: slot-key@%p: addref sym-key@%p",
-			    name, slot_key, symkey);
+		    LDBG_log(logger, "%s: slot-key@%p: addref sym-key@%p",
+			     name, slot_key, symkey);
 	    } else {
-		    DBG_symkey(logger, name, "newref slot", slot_key);
+		    LDBG_symkey(logger, name, "newref slot", slot_key);
 	    }
 	}
 

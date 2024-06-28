@@ -37,7 +37,7 @@ void init_crypt_symkey(struct logger *logger);
  *
  * The format is <PREFIX>: <NAME>-key@...
  */
-void DBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key);
+void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK11SymKey *key);
 void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
 
 /*

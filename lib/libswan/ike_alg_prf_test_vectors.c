@@ -195,7 +195,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	crypt_prf_update_symkey(symkey_prf, "symkey message", symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		DBG_symkey(logger, "output", "symkey", symkey_output);
+		LDBG_symkey(logger, "output", "symkey", symkey_output);
 	}
 	if (!verify_symkey(test->description, "symkey",
 			   prf_output, symkey_output,

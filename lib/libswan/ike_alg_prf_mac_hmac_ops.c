@@ -170,7 +170,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 						     (*prfp)->logger);
 	symkey_delref((*prfp)->logger, "outer", &outer);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_symkey((*prfp)->logger, "    ", " hashed-outer", hashed_outer);
+		LDBG_symkey((*prfp)->logger, "    ", " hashed-outer", hashed_outer);
 	}
 	pfree(*prfp);
 	*prfp = NULL;

@@ -139,14 +139,18 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 			       struct logger *logger)
 {
 	if (DBGP(DBG_CRYPT)) {
-		DBG_log("calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
-		DBG_symkey(logger, __func__, "SKEYID_d:", SKEYID_d);
-		DBG_symkey(logger, __func__, "g_xy:", g_xy);
-		DBG_log("protocol: 0x%02"PRIx8, protocol);
-		DBG_dump_hunk("SPI", SPI);
-		DBG_dump_hunk("Ni_b", Ni_b);
-		DBG_dump_hunk("Ni_b", Nr_b);
-		DBG_log("required keymat: %u", required_keymat);
+		LDBG_log(logger, "calling %s.%s():",
+			 prf_desc->prf_ikev1_ops->backend, __func__);
+		LDBG_symkey(logger, __func__, "SKEYID_d:", SKEYID_d);
+		LDBG_symkey(logger, __func__, "g_xy:", g_xy);
+		LDBG_log(logger, "protocol: 0x%02"PRIx8, protocol);
+		LDBG_log(logger, "SPI");
+		LDBG_hunk(logger, SPI);
+		LDBG_log(logger, "Ni_b");
+		LDBG_hunk(logger, Ni_b);
+		LDBG_log(logger, "Ni_b");
+		LDBG_hunk(logger, Nr_b);
+		LDBG_log(logger, "required keymat: %u", required_keymat);
 	}
 	chunk_t result = prf_desc->prf_ikev1_ops->section_5_keymat(prf_desc, SKEYID_d,
 								   g_xy, protocol, SPI,
