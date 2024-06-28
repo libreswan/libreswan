@@ -354,6 +354,18 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	};
 }
 
+chunk_t chunk_from_symkey_bytes(const char *prefix, PK11SymKey *symkey,
+				size_t chunk_start, size_t sizeof_chunk,
+				struct logger *logger, where_t where)
+{
+	PK11SymKey *slice = key_from_symkey_bytes(prefix, symkey,
+						  chunk_start, sizeof_chunk,
+						  where, logger);
+	chunk_t chunk = chunk_from_symkey("initiator salt", slice, logger);
+	symkey_delref(logger, "slice", &slice);
+	return chunk;
+}
+
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as a generic
  * key.

@@ -125,9 +125,9 @@ PK11SymKey *encrypt_key_from_symkey_bytes(const char *result_name,
  */
 chunk_t chunk_from_symkey(const char *prefix, PK11SymKey *symkey,
 			  struct logger *logger);
-chunk_t chunk_from_symkey_bytes(const char *prefix,
-				PK11SymKey *symkey,
-				size_t chunk_start, size_t sizeof_chunk);
+chunk_t chunk_from_symkey_bytes(const char *prefix, PK11SymKey *symkey,
+				size_t chunk_start, size_t sizeof_chunk,
+				struct logger *logger, where_t where);
 
 /*
  * Create a key suitable for ALG.
