@@ -18,6 +18,7 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt_ops.h"
 #include "lswalloc.h"
+#include "lswlog.h"
 
 void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
@@ -40,61 +41,71 @@ bool cipher_aead(const struct encrypt_desc *cipher,
 		 PK11SymKey *symkey,
 		 struct logger *logger)
 {
-	struct cipher_aead *aead = cipher_aead_create(cipher, op, iv_source,
-						      symkey, salt, logger);
-	if (aead == NULL) {
+	struct cipher_context *context = cipher_context_create(cipher, op, iv_source,
+							       symkey, salt, logger);
+	if (context == NULL) {
 		/* already logged */
 		return false;
 	}
-	bool ok = cipher_aead_op(aead, wire_iv, aad,
-				 text_and_tag, text_size, tag_size,
-				 logger);
-	cipher_aead_destroy(&aead, logger);
+	bool ok = cipher_context_aead(context, wire_iv, aad,
+				      text_and_tag, text_size, tag_size,
+				      logger);
+	cipher_context_destroy(&context, logger);
 	return ok;
 }
 
-struct cipher_aead {
-	struct cipher_aead_context *context;
+struct cipher_context {
+	struct cipher_op_context *op;
 	const struct encrypt_desc *cipher;
 };
 
-struct cipher_aead *cipher_aead_create(const struct encrypt_desc *cipher,
+struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 				       enum cipher_op op,
 				       enum cipher_iv_source iv_source,
 				       PK11SymKey *key,
 				       shunk_t salt,
 				       struct logger *logger)
 {
-	struct cipher_aead_context *context =
-		cipher->encrypt_ops->aead_context_create(cipher, op, iv_source,
-							 key, salt, logger);
-	if (context == NULL) {
+	if (cipher->encrypt_ops->context_create == NULL) {
 		return NULL;
 	}
-	struct cipher_aead *aead = alloc_thing(struct cipher_aead, __func__);
-	aead->context = context;
-	aead->cipher = cipher;
-	return aead;
+
+	struct cipher_op_context *op_context =
+		cipher->encrypt_ops->context_create(cipher, op, iv_source,
+						    key, salt, logger);
+	if (op_context == NULL) {
+		return NULL;
+	}
+	struct cipher_context *context = alloc_thing(struct cipher_context, __func__);
+	context->op = op_context;
+	context->cipher = cipher;
+	return context;
 }
 
-bool cipher_aead_op(const struct cipher_aead *aead,
-		    chunk_t wire_iv,
-		    shunk_t aad,
-		    chunk_t text_and_tag,
-		    size_t text_size, size_t tag_size,
-		    struct logger *logger)
-{
-	return aead->cipher->encrypt_ops->aead_context_op(aead->context,
-							  wire_iv, aad,
-							  text_and_tag, text_size, tag_size,
-							  logger);
-}
-
-void cipher_aead_destroy(struct cipher_aead **aead,
+bool cipher_context_aead(const struct cipher_context *context,
+			 chunk_t wire_iv,
+			 shunk_t aad,
+			 chunk_t text_and_tag,
+			 size_t text_size, size_t tag_size,
 			 struct logger *logger)
 {
-	const struct encrypt_desc *cipher = (*aead)->cipher;
-	cipher->encrypt_ops->aead_context_destroy(&(*aead)->context, logger);
-	pfreeany(*aead);
+	return context->cipher->encrypt_ops->context_aead_op(context->op,
+							     wire_iv, aad,
+							     text_and_tag, text_size, tag_size,
+							     logger);
+}
+
+void cipher_context_destroy(struct cipher_context **context,
+			    struct logger *logger)
+{
+	if ((*context) == NULL) {
+		/* presumably an incomplete state */
+		ldbg(logger, "no cipher context to delete");
+		return;
+	}
+
+	const struct encrypt_desc *cipher = (*context)->cipher;
+	cipher->encrypt_ops->context_destroy(&(*context)->op, logger);
+	pfreeany(*context);
 	return;
 }

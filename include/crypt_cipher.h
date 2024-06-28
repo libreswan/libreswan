@@ -23,7 +23,7 @@
 
 struct encrypt_desc;
 struct logger;
-struct cipher_aead;
+struct cipher_context;
 
 enum cipher_op {
 	DECRYPT = false,
@@ -79,19 +79,19 @@ bool cipher_aead(const struct encrypt_desc *alg,
 		 PK11SymKey *key,
 		 struct logger *logger);
 
-struct cipher_aead *cipher_aead_create(const struct encrypt_desc *alg,
-				       enum cipher_op op,
-				       enum cipher_iv_source iv_source,
-				       PK11SymKey *key,
-				       shunk_t salt,
-				       struct logger *logger);
-bool cipher_aead_op(const struct cipher_aead *,
-		    chunk_t wire_iv,
-		    shunk_t aad,
-		    chunk_t text_and_tag,
-		    size_t text_size, size_t tag_size,
-		    struct logger *logger);
-void cipher_aead_destroy(struct cipher_aead **,
+struct cipher_context *cipher_context_create(const struct encrypt_desc *alg,
+					     enum cipher_op op,
+					     enum cipher_iv_source iv_source,
+					     PK11SymKey *key,
+					     shunk_t salt,
+					     struct logger *logger);
+bool cipher_context_aead(const struct cipher_context *,
+			 chunk_t wire_iv,
+			 shunk_t aad,
+			 chunk_t text_and_tag,
+			 size_t text_size, size_t tag_size,
 			 struct logger *logger);
+void cipher_context_destroy(struct cipher_context **,
+			    struct logger *logger);
 
 #endif

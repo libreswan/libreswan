@@ -28,7 +28,7 @@
 #include "rnd.h"
 #include "crypt_symkey.h"
 
-struct cipher_aead_context {
+struct cipher_op_context {
 	PK11SymKey *symkey;
 	PK11Context *context;
 	enum cipher_op op;
@@ -37,12 +37,12 @@ struct cipher_aead_context {
 	const struct encrypt_desc *cipher;
 };
 
-static struct cipher_aead_context *cipher_aead_context_create_nss(const struct encrypt_desc *cipher,
-								  enum cipher_op op,
-								  enum cipher_iv_source iv_source,
-								  PK11SymKey *symkey,
-								  shunk_t salt,
-								  struct logger *logger)
+static struct cipher_op_context *cipher_context_create_aead_nss(const struct encrypt_desc *cipher,
+								enum cipher_op op,
+								enum cipher_iv_source iv_source,
+								PK11SymKey *symkey,
+								shunk_t salt,
+								struct logger *logger)
 {
 	CK_ATTRIBUTE_TYPE mode = (op == ENCRYPT ? CKA_ENCRYPT :
 				  op == DECRYPT ? CKA_DECRYPT :
@@ -60,7 +60,7 @@ static struct cipher_aead_context *cipher_aead_context_create_nss(const struct e
 				  str_nss_ckm(cipher->nss.mechanism, &ckm));
 	}
 
-	struct cipher_aead_context *aead = alloc_thing(struct cipher_aead_context, __func__);
+	struct cipher_op_context *aead = alloc_thing(struct cipher_op_context, __func__);
 	aead->context = context;
 	aead->symkey = symkey_addref(logger, __func__, symkey);
 	aead->op = op;
@@ -70,7 +70,7 @@ static struct cipher_aead_context *cipher_aead_context_create_nss(const struct e
 	return aead;
 }
 
-static bool cipher_aead_context_op_nss(const struct cipher_aead_context *aead,
+static bool cipher_context_aead_op_nss(const struct cipher_op_context *aead,
 				       chunk_t wire_iv,
 				       shunk_t aad,
 				       chunk_t text_and_tag,
@@ -130,7 +130,7 @@ static bool cipher_aead_context_op_nss(const struct cipher_aead_context *aead,
 	return ok;
 }
 
-static void cipher_aead_context_destroy_nss(struct cipher_aead_context **aead,
+static void cipher_context_destroy_aead_nss(struct cipher_op_context **aead,
 					    struct logger *logger)
 {
 	PK11_Finalize((*aead)->context);
@@ -141,7 +141,7 @@ static void cipher_aead_context_destroy_nss(struct cipher_aead_context **aead,
 	pfreeany(*aead);
 }
 
-static void nss_aead_check(const struct encrypt_desc *encrypt, struct logger *logger)
+static void cipher_check_aead_nss(const struct encrypt_desc *encrypt, struct logger *logger)
 {
 	const struct ike_alg *alg = &encrypt->common;
 	pexpect_ike_alg(logger, alg, encrypt->nss.mechanism > 0);
@@ -149,8 +149,8 @@ static void nss_aead_check(const struct encrypt_desc *encrypt, struct logger *lo
 
 const struct encrypt_ops ike_alg_encrypt_nss_aead_ops = {
 	.backend = "NSS(AEAD)",
-	.check = nss_aead_check,
-	.aead_context_create = cipher_aead_context_create_nss,
-	.aead_context_op = cipher_aead_context_op_nss,
-	.aead_context_destroy = cipher_aead_context_destroy_nss,
+	.check = cipher_check_aead_nss,
+	.context_create = cipher_context_create_aead_nss,
+	.context_aead_op = cipher_context_aead_op_nss,
+	.context_destroy = cipher_context_destroy_aead_nss,
 };
