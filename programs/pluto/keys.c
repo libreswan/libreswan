@@ -559,10 +559,18 @@ static shunk_t get_ppk_by_id(const chunk_t *ppk_id)
 
 /*
  * Get connection PPK and store corresponding ppk_id in *ppk_id.
+ *
+ * If find_any is true, then ignore index and find first matching PPK_ID.
+ * Otherwise look for PPK_ID that's stored at index index in
+ * ppk_ids_shunks list.
+ *
  * If ppk-ids conn option was set, one of the listed PPK_IDs needs
  * to be found in .secrets
  */
-shunk_t get_connection_ppk_and_ppk_id(const struct connection *c, chunk_t **ppk_id)
+shunk_t get_connection_ppk_and_ppk_id(const struct connection *c,
+				      bool find_any,
+				      unsigned int index,
+				      chunk_t **ppk_id)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
@@ -587,8 +595,9 @@ shunk_t get_connection_ppk_and_ppk_id(const struct connection *c, chunk_t **ppk_
 			DBG_dump_hunk("PPK:", pks->ppk);
 		}
 		return HUNK_AS_SHUNK(pks->ppk);
-	} else {
-		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
+	} else if (find_any) {
+		ldbg(c->logger,
+		     "ppk-ids conn option specified, find any matching PPK_ID in list: %s",
 		     c->config->ppk_ids);
 		/*
 		 * iterate through PPK_ID (ppk-ids=) list and try to find
@@ -608,6 +617,20 @@ shunk_t get_connection_ppk_and_ppk_id(const struct connection *c, chunk_t **ppk_
 				*ppk_id = &chunk;
 				return ppk;
 			}
+		}
+	} else { /* find_any is false */
+		/* XXX cast away the const qualifier from shunk_t pointer... */
+		chunk_t chunk = chunk2((void *) ppk_ids_shunks->list[index].ptr,
+						ppk_ids_shunks->list[index].len);
+
+		ldbg(c->logger, "try to find PPK with PPK_ID:");
+		ldbg_hunk(c->logger, ppk_ids_shunks->list[index]);
+
+		const shunk_t ppk = get_ppk_by_id(&chunk);
+
+		if (ppk.ptr != NULL) {
+			*ppk_id = &chunk;
+			return ppk;
 		}
 	}
 	return null_shunk;
