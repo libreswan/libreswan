@@ -1,0 +1,222 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --status
+using kernel interface: xfrm
+ 
+interface lo TCP 127.0.0.1:4500
+interface lo UDP 127.0.0.1:4500
+interface lo UDP 127.0.0.1:500
+interface eth0 TCP 192.0.1.254:4500
+interface eth0 UDP 192.0.1.254:4500
+interface eth0 UDP 192.0.1.254:500
+interface eth1 TCP 192.1.2.45:4500
+interface eth1 UDP 192.1.2.45:4500
+interface eth1 UDP 192.1.2.45:500
+ 
+fips mode=disabled;
+SElinux=XXXXX
+seccomp=OFF
+ 
+config setup options:
+ 
+configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
+nhelpers=-1, uniqueids=yes, dnssec-enable=yes, shuntlifetime=900s, xfrmlifetime=30s
+logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
+ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=drop
+ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
+ocsp-trust-name=<unset>
+ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
+global-redirect=no, global-redirect-to=<unset>
+debug ...
+ 
+nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+virtual-private (%priv):
+ 
+Kernel algorithms supported:
+ 
+algorithm ESP encrypt: name=3DES_CBC, keysizemin=192, keysizemax=192
+algorithm ESP encrypt: name=AES_CBC, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_CCM_12, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_CCM_16, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_CCM_8, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_CTR, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_GCM_12, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_GCM_16, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=AES_GCM_8, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=CAMELLIA_CBC, keysizemin=128, keysizemax=256
+algorithm ESP encrypt: name=CHACHA20_POLY1305, keysizemin=256, keysizemax=256
+algorithm ESP encrypt: name=NULL, keysizemin=0, keysizemax=0
+algorithm ESP encrypt: name=NULL_AUTH_AES_GMAC, keysizemin=128, keysizemax=256
+algorithm AH/ESP auth: name=AES_CMAC_96, key-length=128
+algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
+algorithm AH/ESP auth: name=HMAC_MD5_96, key-length=128
+algorithm AH/ESP auth: name=HMAC_SHA1_96, key-length=160
+algorithm AH/ESP auth: name=HMAC_SHA2_256_128, key-length=256
+algorithm AH/ESP auth: name=HMAC_SHA2_256_TRUNCBUG, key-length=256
+algorithm AH/ESP auth: name=HMAC_SHA2_384_192, key-length=384
+algorithm AH/ESP auth: name=HMAC_SHA2_512_256, key-length=512
+algorithm AH/ESP auth: name=NONE, key-length=0
+ 
+IKE algorithms supported:
+ 
+algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=20, v2name=AES_GCM_16, blocksize=16, keydeflen=128
+algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=19, v2name=AES_GCM_12, blocksize=16, keydeflen=128
+algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=18, v2name=AES_GCM_8, blocksize=16, keydeflen=128
+algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
+algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=28, v2name=CHACHA20_POLY1305, blocksize=16, keydeflen=256
+algorithm IKE PRF: name=HMAC_MD5, hashlen=16
+algorithm IKE PRF: name=HMAC_SHA1, hashlen=20
+algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
+algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
+algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
+algorithm IKE PRF: name=AES_XCBC, hashlen=16
+algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
+algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
+algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
+algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
+algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
+algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
+algorithm IKE DH Key Exchange: name=DH19, bits=512
+algorithm IKE DH Key Exchange: name=DH20, bits=768
+algorithm IKE DH Key Exchange: name=DH21, bits=1056
+algorithm IKE DH Key Exchange: name=DH31, bits=256
+ 
+stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+ 
+Connection list:
+ 
+"west-east": 192.1.2.45:4500[ID_NULL]...192.1.2.23:4500[ID_NULL]; routed-ondemand; my_ip=unset; their_ip=unset;
+"west-east":   host: oriented; local: 192.1.2.45:4500; remote: 192.1.2.23:4500;
+"west-east":   my_updown=ipsec _updown;
+"west-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-east":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+"west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"west-east":   sec_label:unset;
+"west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:yes; iketcp-port:4500;
+"west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"west-east":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"west-east":   v2-auth-hash-policy: none;
+"west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"west-east":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
+"west-east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"west-east":   nat-traversal: encapsulation:auto; keepalive:20s
+"west-east":   routing: routed-ondemand;
+"west-east":   conn serial: $1;
+ 
+Total IPsec connections: loaded 1, active 0
+ 
+State Information: DDoS cookies not required, Accepting new IKE connections
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
+ 
+Bare Shunt list:
+ 
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 192.1.2.45 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data. --- 192.1.2.23 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec whack --trafficstatus
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espintcp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espintcp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+west #
+ ipsec down westnet-eastnet-route
+no connection or alias named "westnet-eastnet-route"'
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espintcp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espintcp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+west #
+ 
