@@ -37,7 +37,7 @@ west #
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 "westnet-eastnet-ipv4-psk": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk
@@ -56,10 +56,6 @@ west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
