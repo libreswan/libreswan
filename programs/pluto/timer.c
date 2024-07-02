@@ -126,6 +126,13 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		 */
 		return &st->st_event;
 
+	case EVENT_v2_TIMEOUT_INITIATOR:
+		return &st->st_v2_timeout_initiator_event;
+	case EVENT_v2_TIMEOUT_RESPONDER:
+		return &st->st_v2_timeout_responder_event;
+	case EVENT_v2_TIMEOUT_RESPONSE:
+		return &st->st_v2_timeout_response_event;
+
 	case EVENT_v2_RETRANSMIT:
 		return &st->st_v2_retransmit_event;
 	case EVENT_v2_LIVENESS:
@@ -463,6 +470,26 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		}
 		st = NULL;
 		break;
+
+	case EVENT_v2_TIMEOUT_INITIATOR:
+	case EVENT_v2_TIMEOUT_RESPONDER:
+	case EVENT_v2_TIMEOUT_RESPONSE:
+	{
+		/*
+		 * The IKE SA failed to process an initiate, request,
+		 * or response within a reasonable time.  Time to
+		 * delete it.
+		 */
+		state_attach(st, logger);
+		deltatime_buf dtb;
+		llog(RC_LOG, st->logger,
+		     "initiator/responder/response processor timeout after %s seconds",
+		     str_deltatime(event_delay, &dtb));
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		connection_timeout_ike_family(&ike, HERE);
+		st = NULL;
+		break;
+	}
 
 #ifdef USE_IKEv1
 	case EVENT_v1_DPD:

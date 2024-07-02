@@ -608,6 +608,10 @@ struct state {
 	struct state_event *st_v1_retransmit_event;
 	struct state_event *st_v1_send_xauth_event;
 
+	struct state_event *st_v2_timeout_initiator_event;
+	struct state_event *st_v2_timeout_responder_event;
+	struct state_event *st_v2_timeout_response_event;
+
 	struct state_event *st_v2_retransmit_event;
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;

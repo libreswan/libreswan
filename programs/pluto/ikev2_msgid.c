@@ -275,6 +275,7 @@ void v2_msgid_start(struct ike_sa *ike,
 		pexpect_v2_msgid(exchange != NULL);
 		new->initiator.wip = msgid;
 		new->initiator.exchange = exchange;
+		event_schedule(EVENT_v2_TIMEOUT_INITIATOR, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
 		break;
 	}
 	case MESSAGE_REQUEST:
@@ -286,6 +287,7 @@ void v2_msgid_start(struct ike_sa *ike,
 		pexpect_v2_msgid(old.responder.sent+1 == msgid);
 		pexpect_v2_msgid(old.responder.recv+1 == msgid);
 		new->responder.wip = msgid;
+		event_schedule(EVENT_v2_TIMEOUT_RESPONDER, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
 		break;
 	}
 	case MESSAGE_RESPONSE:
@@ -297,6 +299,7 @@ void v2_msgid_start(struct ike_sa *ike,
 		pexpect_v2_msgid(old.initiator.recv+1 == msgid);
 		pexpect_v2_msgid(old.initiator.exchange != NULL);
 		new->initiator.wip = msgid;
+		event_schedule(EVENT_v2_TIMEOUT_RESPONSE, EVENT_CRYPTO_TIMEOUT_DELAY, &ike->sa);
 		break;
 	}
 	default:
@@ -311,6 +314,7 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 	switch (role) {
 	case NO_MESSAGE:
 		dbg_v2_msgid(ike, "initiator canceling new exchange");
+		event_delete(EVENT_v2_TIMEOUT_INITIATOR, &ike->sa);
 		break;
 	case MESSAGE_REQUEST:
 	{
@@ -320,10 +324,12 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		ike->sa.st_v2_msgid_windows.responder.wip = -1;
 		dbg_msgid_update("responder cancelling", role, msgid,
 				 ike, &ike->sa.st_v2_msgid_windows);
+		event_delete(EVENT_v2_TIMEOUT_RESPONDER, &ike->sa);
 		break;
 	}
 	case MESSAGE_RESPONSE:
 		dbg_v2_msgid(ike, "initiator canceling processing of response to existing exchange");
+		event_delete(EVENT_v2_TIMEOUT_RESPONSE, &ike->sa);
 		break;
 	}
 }
@@ -360,6 +366,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		} else {
 			dbg_v2_msgid(ike, "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
 		}
+		event_delete(EVENT_v2_TIMEOUT_INITIATOR, &ike->sa);
 		break;
 	}
 	case MESSAGE_REQUEST:
@@ -384,6 +391,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		new->responder.recv = msgid;
 		new->responder.recv_frags = md->v2_frags_total;
 		new->responder.sent = msgid;
+		event_delete(EVENT_v2_TIMEOUT_RESPONDER, &ike->sa);
 		break;
 	}
 	case MESSAGE_RESPONSE:
@@ -411,6 +419,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		 */
 		dbg_v2_msgid(ike, "clearing EVENT_RETRANSMIT as response received");
 		clear_retransmits(&ike->sa);
+		event_delete(EVENT_v2_TIMEOUT_RESPONSE, &ike->sa);
 		break;
 	}
 	default:

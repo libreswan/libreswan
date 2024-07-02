@@ -254,6 +254,9 @@ enum event_type {
 	EVENT_v2_REPLACE,		/* v2 IKE/Child SA replacement event */
 	EVENT_v2_EXPIRE,		/* v2 SA expiration (drop-dead) event */
 	EVENT_v2_DISCARD,		/* v2 discard unfinished state object */
+	EVENT_v2_TIMEOUT_INITIATOR,
+	EVENT_v2_TIMEOUT_RESPONDER,
+	EVENT_v2_TIMEOUT_RESPONSE,
 	EVENT_v2_LIVENESS,		/* v2 for dead peer detection */
 	EVENT_v2_RETRANSMIT,
 	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
