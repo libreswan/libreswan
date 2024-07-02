@@ -97,3 +97,8 @@ const char *nl_getattrvalstrz(const struct nlmsghdr *n,
 
 	return (void *)attr + NLA_HDRLEN;
 }
+
+void nl_addattr8(struct nlmsghdr *n, int maxlen, int type, const uint8_t data)
+{
+	nl_addattr_l(n, maxlen, type, &data, sizeof(uint8_t));
+}
