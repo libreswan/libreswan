@@ -171,6 +171,7 @@ struct ike_info {
 	const char *child_sa_name;		/* Child SA | IPsec SA */
 	enum event_type expire_event[SA_EXPIRE_KIND_ROOF];
 	enum event_type replace_event;
+	enum event_type retransmit_event;
 };
 
 extern const struct ike_info ikev1_info;

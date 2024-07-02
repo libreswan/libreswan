@@ -1337,7 +1337,7 @@ static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.processor  = initiate_v2_IKE_AUTH_request,
 	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
+	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
 static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {

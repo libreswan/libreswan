@@ -354,7 +354,7 @@ void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md, where_t wh
 		update = &new->initiator;
 		new->initiator.wip = -1;
 		new->initiator.sent = msgid;
-		if (ike->sa.st_retransmit_event == NULL) {
+		if (ike->sa.st_v2_retransmit_event == NULL) {
 			dbg_v2_msgid(ike, "scheduling EVENT_RETRANSMIT");
 			start_retransmits(&ike->sa);
 		} else {

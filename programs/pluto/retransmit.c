@@ -105,7 +105,7 @@ void clear_retransmits(struct state *st)
 	rt->delay = deltatime(0);
 	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
-	event_delete(EVENT_RETRANSMIT, st);
+	event_delete(st->st_connection->config->ike_info->retransmit_event, st);
 	dbg_retransmit(st, "cleared");
 }
 
@@ -135,7 +135,7 @@ void start_retransmits(struct state *st)
 	}
 	rt->start = mononow();
 	rt->delays = rt->delay;
-	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
+	event_schedule(st->st_connection->config->ike_info->retransmit_event, rt->delay, st);
 	deltatime_buf db, tb;
 	monotime_buf mb;
 	dbg_retransmit(st, "first event in %s seconds; timeout in %s seconds; limit of %lu retransmits; current time is %s",
@@ -266,7 +266,7 @@ enum retransmit_action retransmit(struct state *st)
 	double_delay(rt, nr_retransmits);
 	rt->nr_retransmits++;
 	rt->delays = deltatime_add(rt->delays, rt->delay);
-	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
+	event_schedule(st->st_connection->config->ike_info->retransmit_event, rt->delay, st);
 	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 		jam(buf, "%s: retransmission; will wait ",
 			st->st_state->name);

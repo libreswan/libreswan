@@ -954,9 +954,10 @@ void delete_state(struct state *st)
 
 	/* delete any pending timer event */
 	delete_state_event(&st->st_event, HERE);
-	delete_state_event(&st->st_retransmit_event, HERE);
+	delete_state_event(&st->st_v1_retransmit_event, HERE);
 	delete_state_event(&st->st_v1_send_xauth_event, HERE);
 	delete_state_event(&st->st_v1_dpd_event, HERE);
+	delete_state_event(&st->st_v2_retransmit_event, HERE);
 	delete_state_event(&st->st_v2_liveness_event, HERE);
 	delete_state_event(&st->st_v2_addr_change_event, HERE);
 	delete_state_event(&st->st_v2_refresh_event, HERE);

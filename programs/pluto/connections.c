@@ -2146,6 +2146,7 @@ const struct ike_info ikev1_info = {
 	.expire_event[SA_HARD_EXPIRED] = EVENT_v1_EXPIRE,
 	.expire_event[SA_SOFT_EXPIRED] = EVENT_v1_REPLACE,
 	.replace_event = EVENT_v1_REPLACE,
+	.retransmit_event = EVENT_v1_RETRANSMIT,
 };
 
 const struct ike_info ikev2_info = {
@@ -2158,6 +2159,7 @@ const struct ike_info ikev2_info = {
 	.expire_event[SA_HARD_EXPIRED] = EVENT_v2_EXPIRE,
 	.expire_event[SA_SOFT_EXPIRED] = EVENT_v2_REKEY,
 	.replace_event = EVENT_v2_REPLACE,
+	.retransmit_event = EVENT_v2_RETRANSMIT,
 };
 
 static const struct ike_info *const ike_info[] = {

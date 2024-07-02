@@ -107,9 +107,8 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	 */
 	switch (type) {
 
-	case EVENT_RETRANSMIT:
-		return &st->st_retransmit_event;
-
+	case EVENT_v1_RETRANSMIT:
+		return &st->st_v1_retransmit_event;
 	case EVENT_v1_SEND_XAUTH:
 		return &st->st_v1_send_xauth_event;
 	case EVENT_v1_DPD:
@@ -127,6 +126,8 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		 */
 		return &st->st_event;
 
+	case EVENT_v2_RETRANSMIT:
+		return &st->st_v2_retransmit_event;
 	case EVENT_v2_LIVENESS:
 		return &st->st_v2_liveness_event;
 	case EVENT_v2_ADDR_CHANGE:
@@ -248,20 +249,16 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		ikev2_addr_change(st);
 		break;
 
-	case EVENT_RETRANSMIT:
+	case EVENT_v1_RETRANSMIT:
 		ldbg(st->logger, "IKEv%d retransmit event", st->st_ike_version);
-		switch (st->st_ike_version) {
-		case IKEv2:
-			event_v2_retransmit(st, now);
-			break;
 #ifdef USE_IKEv1
-		case IKEv1:
-			event_v1_retransmit(st, now);
-			break;
+		event_v1_retransmit(st, now);
 #endif
-		default:
-			bad_case(st->st_ike_version);
-		}
+		break;
+
+	case EVENT_v2_RETRANSMIT:
+		ldbg(st->logger, "IKEv%d retransmit event", st->st_ike_version);
+		event_v2_retransmit(st, now);
 		break;
 
 #ifdef USE_IKEv1

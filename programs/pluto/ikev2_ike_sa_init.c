@@ -1747,7 +1747,7 @@ static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	.exchange   = ISAKMP_v2_IKE_SA_INIT,
 	.processor  = NULL, /* XXX: should be set */
 	.llog_success = llog_v2_success_exchange_sent_to,
-	.timeout_event = EVENT_RETRANSMIT,
+	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
 static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {

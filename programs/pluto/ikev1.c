@@ -1902,7 +1902,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		switch (event_type) {
-		case EVENT_RETRANSMIT: /* Retransmit packet */
+		case EVENT_v1_RETRANSMIT: /* Retransmit packet */
 			start_retransmits(st);
 			break;
 

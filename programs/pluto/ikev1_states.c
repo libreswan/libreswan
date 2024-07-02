@@ -188,7 +188,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_I1, STATE_MAIN_I2,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_REPLY,
 	  v1P(SA), v1P(VID) | v1P(CR),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(main_inR1_outI2),
 	  .hash_type = V1_HASH_NONE, },
 
@@ -203,21 +203,21 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  v1P(KE) | v1P(NONCE), v1P(VID) | v1P(CR) | v1P(NATD_RFC),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(main_inI2_outR2),
 	  .hash_type = V1_HASH_NONE, },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  v1P(KE) | v1P(ID) | v1P(NONCE), v1P(VID) | v1P(CR) | v1P(HASH),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(unexpected) /* ??? not yet implemented */,
 	  .hash_type = V1_HASH_NONE, },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_RPKE_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  v1P(NONCE) | v1P(KE) | v1P(ID), v1P(VID) | v1P(CR) | v1P(HASH) | v1P(CERT),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(unexpected) /* ??? not yet implemented */,
 	  .hash_type = V1_HASH_NONE, },
 
@@ -234,7 +234,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_I2, STATE_MAIN_I3,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  v1P(KE) | v1P(NONCE), v1P(VID) | v1P(CR) | v1P(NATD_RFC),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(main_inR2_outI3),
 	  /* calls main_mode_hash() after DH */
 	  .hash_type = V1_HASH_NONE, },
@@ -242,14 +242,14 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  v1P(KE) | v1P(ID) | v1P(NONCE), v1P(VID) | v1P(CR),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(unexpected) /* ??? not yet implemented */,
 	  .hash_type = V1_HASH_NONE, },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  v1P(NONCE) | v1P(KE) | v1P(ID), v1P(VID) | v1P(CR),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(unexpected) /* ??? not yet implemented */,
 	  .hash_type = V1_HASH_NONE, },
 
@@ -460,7 +460,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_QUICK_R0, STATE_QUICK_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY,
 	  v1P(HASH) | v1P(SA) | v1P(NONCE), /* v1P(SA) | */ v1P(KE) | v1P(ID) | v1P(NATOA_RFC),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(quick_inI1_outR1),
 	  /* RFC 2409: 5.5 Phase 2 - Quick Mode:
 	     HASH(1) = prf(SKEYID_a, M-ID | <rest>) */
@@ -611,7 +611,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_XAUTH_I0, STATE_XAUTH_I1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  v1P(MODECFG) | v1P(HASH), v1P(VID),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(xauth_inI0),
 	  /* RFC ????: */
 	  .hash_type = V1_HASH_1, },
@@ -619,7 +619,7 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	{ STATE_XAUTH_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  v1P(MODECFG) | v1P(HASH), v1P(VID),
-	  EVENT_RETRANSMIT,
+	  EVENT_v1_RETRANSMIT,
 	  FM(xauth_inI1),
 	  /* RFC ????: */
 	  .hash_type = V1_HASH_1, },

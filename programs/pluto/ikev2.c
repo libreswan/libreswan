@@ -1513,7 +1513,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	switch (transition->timeout_event) {
 
-	case EVENT_RETRANSMIT:
+	case EVENT_v2_RETRANSMIT:
 		/*
 		 * Event retransmit is really a secret code to
 		 * indicate that a request is being sent and a
@@ -1521,7 +1521,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 */
 		dbg("checking that a retransmit timeout_event was already");
 		delete_event(&ike->sa); /* relying on retransmit */
-		pexpect(ike->sa.st_retransmit_event != NULL);
+		pexpect(ike->sa.st_v2_retransmit_event != NULL);
 		/* reverse polarity */
 		pexpect(transition->recv_role == NO_MESSAGE);
 		break;

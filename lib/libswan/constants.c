@@ -2604,7 +2604,6 @@ const struct enum_names global_timer_names = {
 static const char *const event_name[] = {
 #define S(E) [E - EVENT_NULL] = #E
 	S(EVENT_NULL),
-	S(EVENT_RETRANSMIT),
 	S(EVENT_CRYPTO_TIMEOUT),
 #undef S
 };
@@ -2624,6 +2623,7 @@ static const char *const event_v1_name[] = {
 	S(EVENT_v1_PAM_TIMEOUT),
 	S(EVENT_v1_REPLACE),
 	S(EVENT_v1_DISCARD),
+	S(EVENT_v1_RETRANSMIT),
 	S(EVENT_v1_EXPIRE),
 #undef S
 };
@@ -2642,6 +2642,7 @@ static const char *const event_v2_name[] = {
 	S(EVENT_v2_DISCARD),
 	S(EVENT_v2_LIVENESS),
 	S(EVENT_v2_ADDR_CHANGE),
+	S(EVENT_v2_RETRANSMIT),
 	S(EVENT_v2_EXPIRE),
 #undef S
 };
