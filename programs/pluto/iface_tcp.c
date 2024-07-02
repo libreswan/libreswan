@@ -474,6 +474,15 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 		return NULL;
 	}
 
+	/* This needs to be called before connect, so TCP handshake
+	 * (in plaintext) completes. */
+	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
+	    !kernel_ops->poke_ipsec_policy_hole(fd, afi, logger)) {
+		/* already logged */
+		close(fd);
+		return NULL;
+	}
+
 	/*
 	 * Connect
 	 *
@@ -553,13 +562,6 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 			close(fd);
 			return NULL;
 		}
-	}
-
-	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-	    !kernel_ops->poke_ipsec_policy_hole(fd, afi, logger)) {
-		/* already logged */
-		close(fd);
-		return NULL;
 	}
 
 	struct iface_endpoint *ifp =

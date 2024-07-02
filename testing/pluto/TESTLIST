@@ -939,6 +939,7 @@ kvmplutotest	ikev1-noretransmit-dos	wip
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-ondemand good
+kvmplutotest	basic-pluto-14-netkey-ondemand-tcp good
 kvmplutotest	basic-pluto-15-no-retransmit good
 
 kvmplutotest	basic-pluto-17-nssdir	good
