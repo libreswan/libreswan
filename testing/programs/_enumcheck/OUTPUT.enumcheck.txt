@@ -945,7 +945,7 @@
          jam_enum_human 253: twofish OK
          match TWOFISH [short]: OK
 
-  event_type_names: [0..18)
+  event_type_names: [0..21)
     0 -> EVENT_NULL
          jam_enum 0: EVENT_NULL OK
          search EVENT_NULL: OK
@@ -1017,7 +1017,7 @@
          short_name 8: RETRANSMIT OK
          jam_enum_short 8: RETRANSMIT OK
          jam_enum_human 8: retransmit OK
-         match RETRANSMIT [short]: OK (clashed with 15)
+         match RETRANSMIT [short]: OK (clashed with 18)
     9 -> EVENT_v1_REPLACE
          jam_enum 9: EVENT_v1_REPLACE OK
          search EVENT_v1_REPLACE: OK
@@ -1058,37 +1058,61 @@
          jam_enum_short 13: DISCARD OK
          jam_enum_human 13: discard OK
          match DISCARD [short]: OK
-   14 -> EVENT_v2_LIVENESS
-         jam_enum 14: EVENT_v2_LIVENESS OK
+   14 -> EVENT_v2_TIMEOUT_INITIATOR
+         jam_enum 14: EVENT_v2_TIMEOUT_INITIATOR OK
+         search EVENT_v2_TIMEOUT_INITIATOR: OK
+         match EVENT_v2_TIMEOUT_INITIATOR: OK
+         short_name 14: TIMEOUT_INITIATOR OK
+         jam_enum_short 14: TIMEOUT_INITIATOR OK
+         jam_enum_human 14: timeout-initiator OK
+         match TIMEOUT_INITIATOR [short]: OK
+   15 -> EVENT_v2_TIMEOUT_RESPONDER
+         jam_enum 15: EVENT_v2_TIMEOUT_RESPONDER OK
+         search EVENT_v2_TIMEOUT_RESPONDER: OK
+         match EVENT_v2_TIMEOUT_RESPONDER: OK
+         short_name 15: TIMEOUT_RESPONDER OK
+         jam_enum_short 15: TIMEOUT_RESPONDER OK
+         jam_enum_human 15: timeout-responder OK
+         match TIMEOUT_RESPONDER [short]: OK
+   16 -> EVENT_v2_TIMEOUT_RESPONSE
+         jam_enum 16: EVENT_v2_TIMEOUT_RESPONSE OK
+         search EVENT_v2_TIMEOUT_RESPONSE: OK
+         match EVENT_v2_TIMEOUT_RESPONSE: OK
+         short_name 16: TIMEOUT_RESPONSE OK
+         jam_enum_short 16: TIMEOUT_RESPONSE OK
+         jam_enum_human 16: timeout-response OK
+         match TIMEOUT_RESPONSE [short]: OK
+   17 -> EVENT_v2_LIVENESS
+         jam_enum 17: EVENT_v2_LIVENESS OK
          search EVENT_v2_LIVENESS: OK
          match EVENT_v2_LIVENESS: OK
-         short_name 14: LIVENESS OK
-         jam_enum_short 14: LIVENESS OK
-         jam_enum_human 14: liveness OK
+         short_name 17: LIVENESS OK
+         jam_enum_short 17: LIVENESS OK
+         jam_enum_human 17: liveness OK
          match LIVENESS [short]: OK
-   15 -> EVENT_v2_RETRANSMIT
-         jam_enum 15: EVENT_v2_RETRANSMIT OK
+   18 -> EVENT_v2_RETRANSMIT
+         jam_enum 18: EVENT_v2_RETRANSMIT OK
          search EVENT_v2_RETRANSMIT: OK
          match EVENT_v2_RETRANSMIT: OK
-         short_name 15: RETRANSMIT OK
-         jam_enum_short 15: RETRANSMIT OK
-         jam_enum_human 15: retransmit OK
+         short_name 18: RETRANSMIT OK
+         jam_enum_short 18: RETRANSMIT OK
+         jam_enum_human 18: retransmit OK
          match RETRANSMIT [short]: OK
-   16 -> EVENT_v2_ADDR_CHANGE
-         jam_enum 16: EVENT_v2_ADDR_CHANGE OK
+   19 -> EVENT_v2_ADDR_CHANGE
+         jam_enum 19: EVENT_v2_ADDR_CHANGE OK
          search EVENT_v2_ADDR_CHANGE: OK
          match EVENT_v2_ADDR_CHANGE: OK
-         short_name 16: ADDR_CHANGE OK
-         jam_enum_short 16: ADDR_CHANGE OK
-         jam_enum_human 16: addr-change OK
+         short_name 19: ADDR_CHANGE OK
+         jam_enum_short 19: ADDR_CHANGE OK
+         jam_enum_human 19: addr-change OK
          match ADDR_CHANGE [short]: OK
-   17 -> EVENT_RETAIN
-         jam_enum 17: EVENT_RETAIN OK
+   20 -> EVENT_RETAIN
+         jam_enum 20: EVENT_RETAIN OK
          search EVENT_RETAIN: OK
          match EVENT_RETAIN: OK
-         short_name 17: RETAIN OK
-         jam_enum_short 17: RETAIN OK
-         jam_enum_human 17: retain OK
+         short_name 20: RETAIN OK
+         jam_enum_short 20: RETAIN OK
+         jam_enum_human 20: retain OK
          match RETAIN [short]: OK
 
   fips_mode_names: [1..3)
