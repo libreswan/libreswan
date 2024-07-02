@@ -22,7 +22,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: cloning incoming encrypted message and scheduling its replay
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: corrupting incoming encrypted message's SK payload's first byte
-"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: AEAD decryption using AES_GCM_16_256 and PK11_Decrypt() failed: SEC_ERROR_BAD_DATA: security library: received bad data.
+"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: AEAD encryption using AES_GCM_16_256 and PK11_AEADOp() failed: SEC_ERROR_BAD_DATA: security library: received bad data.
 "westnet-eastnet-ipv4-psk-ikev2" #1: encrypted payload seems to be corrupt; dropping packet
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -32,7 +32,7 @@ up
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: cloning incoming encrypted message and scheduling its replay
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: corrupting incoming encrypted message's SK payload's first byte
-"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: AEAD decryption using AES_GCM_16_256 and PK11_Decrypt() failed: SEC_ERROR_BAD_DATA: security library: received bad data.
+"westnet-eastnet-ipv4-psk-ikev2" #1: NSS: AEAD encryption using AES_GCM_16_256 and PK11_AEADOp() failed: SEC_ERROR_BAD_DATA: security library: received bad data.
 "westnet-eastnet-ipv4-psk-ikev2" #1: encrypted payload seems to be corrupt; dropping packet
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
