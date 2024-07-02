@@ -377,6 +377,7 @@ int main(int argc UNUSED, char *argv[])
 				{ EVENT_v1_EXPIRE, EVENT_v2_EXPIRE, },
 				{ EVENT_v1_DISCARD, EVENT_v2_DISCARD, },
 				{ EVENT_v1_REPLACE, EVENT_v2_REPLACE, },
+				{ EVENT_v1_RETRANSMIT, EVENT_v2_RETRANSMIT, },
 				{ -1, -1, },
 			};
 			test_enums("event_type_names", &event_type_names, clash);
