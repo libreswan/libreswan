@@ -700,7 +700,7 @@ kvmplutotest	dnsoe-06				wip
 kvmplutotest	newoe-18-poc-cop-port-7-whack		good
 kvmplutotest	newoe-18-poc-cop-port-7			good
 kvmplutotest	newoe-18-poc-cop-port-7-transport	good
-kvmplutotest	newoe-18-poc-cop-port-7-both		good
+kvmplutotest	newoe-18-poc-cop-port-7-both		wip	github/1750
 kvmplutotest	newoe-18-poc-cop-port-7-both-reorder	wip	github:519
 
 kvmplutotest	mixoe-01-authanon-authanon		good
