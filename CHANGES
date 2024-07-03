@@ -8,6 +8,7 @@ v5.1 (unreleased)
   - ignore older whack as could trigger core dump [Andrew, github/1709]
 * linux:
   - handle NLMSG_DONE at end of response (6.9.0-rc1) [Andrew, Ilya, github/1675]
+  - fix hang when initiating an on-demand TCP connection [Daiki, github/1156]
 * config:
   - verbosely ignore x-* style comments in config file [Andrew, github/1725]
 
