@@ -939,7 +939,6 @@ kvmplutotest	ikev1-noretransmit-dos	wip
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-ondemand good
-kvmplutotest	basic-pluto-14-netkey-ondemand-tcp good
 kvmplutotest	basic-pluto-15-no-retransmit good
 
 kvmplutotest	basic-pluto-17-nssdir	good
@@ -1475,6 +1474,8 @@ kvmplutotest	ikev2-tcp-10-rekey-ike					good
 kvmplutotest	ikev2-tcp-25-rw-nat					good
 kvmplutotest	ikev2-tcp-26-rw-nat-keepalive				good
 kvmplutotest	ikev2-tcp-27-6in6					good	github/730
+kvmplutotest	ikev2-tcp-28-ondemand					good	github/1746,github/1156
+
 
 kvmplutotest	ikev2-tcp-05-transport-mode		wip	github/1133
 kvmplutotest	ikev2-udp-05-transport-mode 		good
