@@ -1487,9 +1487,9 @@ kvmplutotest	ikev2-intermediate-03-unsolicited	good
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good
-kvmplutotest	ikev2-systemrole-02-net-to-net		wip	github/1751
-kvmplutotest	ikev2-systemrole-03-certs		wip	github/1751
-kvmplutotest	ikev2-systemrole-04-mesh		wip	github/534,github/1751
+kvmplutotest	ikev2-systemrole-02-net-to-net		good	github/1751
+kvmplutotest	ikev2-systemrole-03-certs		good	github/1751
+kvmplutotest	ikev2-systemrole-04-mesh		good	github/534,github/1751
 
 kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good
