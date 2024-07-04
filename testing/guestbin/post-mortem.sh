@@ -202,6 +202,7 @@ if test -f /sbin/ausearch ; then
 		 -e '^type=PROCTITLE.*systemd-networkd' \
 		 -e '^type=PATH .* name="/run"' \
 		 -e '^type=AVC .* comm="agetty"' \
+		 -e '^type=AVC .* comm="systemd-getty-g"' \
 	    ${log} ; then
 	FAIL
 
