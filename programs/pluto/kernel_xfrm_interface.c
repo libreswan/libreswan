@@ -369,7 +369,7 @@ static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *l
 			ldbg(logger,
 				 "get_xfrmi_ipaddr_from_conn() taking IP from sourceip param for xfrmi IF [%s] id [%d]",
 				 c->xfrmi->name, c->xfrmi->if_id);
-			return cidr_from_address_prefix_len(*sip, 32);
+			return cidr_from_address(*sip);
 		}
 	}
 
@@ -382,7 +382,7 @@ static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *l
 			ldbg(logger,
 				"get_xfrmi_ipaddr_from_conn() taking IP from spd_end_sourceip() for xfrmi IF [%s] id [%d]",
 				c->xfrmi->name, c->xfrmi->if_id);
-			return cidr_from_address_prefix_len(spd_sourceip, 32);
+			return cidr_from_address(spd_sourceip);
 		}
 	}
 

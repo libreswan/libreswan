@@ -38,7 +38,7 @@ ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 	return cidr;
 }
 
-ip_cidr cidr_from_address_prefix_len(ip_address address, unsigned prefix_len)
+ip_cidr cidr_from_address(ip_address address)
 {
 	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
@@ -46,7 +46,8 @@ ip_cidr cidr_from_address_prefix_len(ip_address address, unsigned prefix_len)
 	}
 
 	/* contains both routing-prefix and host-identifier */
-	return cidr_from_raw(HERE, address.version, address.bytes, prefix_len);
+	return cidr_from_raw(HERE, address.version, address.bytes,
+			     afi->mask_cnt/*32|128*/);
 
 }
 

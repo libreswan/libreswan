@@ -53,7 +53,7 @@ ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 		      const struct ip_bytes bytes,
 		      unsigned prefix_bits);
 
-ip_cidr cidr_from_address_prefix_len(ip_address address, unsigned prefix_len);
+ip_cidr cidr_from_address(ip_address address);
 
 /*
  * return why, if CDIR isn't useful.
