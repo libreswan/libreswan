@@ -1,0 +1,75 @@
+/testing/guestbin/swan-prep --46
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet
+"westnet-eastnet": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=312, outBytes=312, maxBytes=2^63B, id='@west'
+east #
+ ../../guestbin/ip.sh -s link show ipsec1
+Device "ipsec1" does not exist.
+east #
+ ../../guestbin/ip.sh rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+east #
+ ../../guestbin/ip.sh route show table 50
+Error: ipv4: FIB table does not exist.
+Dump terminated
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir fwd priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir in priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir out priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
+east #
+ 
