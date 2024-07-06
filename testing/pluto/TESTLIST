@@ -552,7 +552,11 @@ kvmplutotest	ikev1-xfrmi-02-aggr			wip
 kvmplutotest	ikev1-xfrmi-04				good
 kvmplutotest	ikev1-xfrmi-04-aggr			good
 kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
-kvmplutotest	ikev2-xfrmi-15-interface-ip		good
+kvmplutotest	ikev1-xfrmi-06-interface-ip-ipv4	good
+kvmplutotest	ikev1-xfrmi-06-interface-ip-ipv6	good
+kvmplutotest	ikev2-xfrmi-15-interface-ip-ipv4	good
+kvmplutotest	ikev2-xfrmi-15-interface-ip-ipv6	good
+kvmplutotest	ikev2-xfrmi-15-interface-ip-blocked	good
 kvmplutotest	ikev2-xfrmi-16-rekey			good
 kvmplutotest	ikev2-xfrmi-17-ipcomp			good
 kvmplutotest	ikev2-xfrmi-19-route-before-up		good
