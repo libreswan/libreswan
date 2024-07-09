@@ -1213,7 +1213,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_v1_seen_fragmentation_supported = ike->sa.st_v1_seen_fragmentation_supported;
 	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
 	child->sa.st_v1_seen_fragments = ike->sa.st_v1_seen_fragments;
-	child->sa.st_v2_ike_ppk_enabled = ike->sa.st_v2_ike_ppk_enabled;
+	child->sa.st_v2_ike_ppk = ike->sa.st_v2_ike_ppk;
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
 	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
 

@@ -2085,13 +2085,15 @@ static const char *const v2_notification_status_name[] = {
 
 static const char *const v2_notification_private_name[] = {
 #define S(E) [E - v2N_NULL_AUTH] = #E
-	S(v2N_NULL_AUTH),	/* 40960, used for mixed OE */
+	S(v2N_NULL_AUTH),		/* 40960, used for mixed OE */
+	S(v2N_PPK_IDENTITY_KEY),	/* 50208, draft-ietf-ipsecme-ikev2-qr-alt-00 */
+	S(v2N_USE_PPK_ALT),		/* 50209, draft-ietf-ipsecme-ikev2-qr-alt-00 */
 #undef S
 };
 
 static const struct enum_names v2_notification_private_names = {
 	v2N_NULL_AUTH,
-	v2N_NULL_AUTH,
+	v2N_USE_PPK_ALT,
 	ARRAY_REF(v2_notification_private_name),
 	"v2N_", /* prefix */
 	NULL

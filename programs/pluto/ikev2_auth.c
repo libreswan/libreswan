@@ -938,7 +938,7 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 					    "st_skey_pi_nss",
 					    ike->sa.st_skey_pi_nss);
-	if (ike->sa.st_v2_ike_ppk_enabled && !c->config->ppk.insist) {
+	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH && !c->config->ppk.insist) {
 		/* ID payload that we've build is the same */
 		ike->sa.st_v2_id_payload.mac_no_ppk_auth =
 			v2_hash_id_payload("IDi (no-PPK)", ike,
