@@ -55,10 +55,10 @@ extern void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_sho
 
 extern const chunk_t *get_connection_psk(const struct connection *c);
 extern shunk_t get_connection_ppk_and_ppk_id(const struct connection *c,
-					     bool find_any,
-					     unsigned int index,
 					     chunk_t **ppk_id);
-extern shunk_t get_connection_ppk(const struct connection *c, chunk_t *ppk_id);
+extern shunk_t get_connection_ppk(const struct connection *c,
+				  chunk_t *ppk_id,
+				  unsigned int index);
 
 extern void load_preshared_secrets(struct logger *logger);
 extern void free_preshared_secrets(struct logger *logger);
