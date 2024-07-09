@@ -954,70 +954,70 @@
          jam_enum_short 0: NULL OK
          jam_enum_human 0: null OK
          match NULL [short]: OK
-    1 -> EVENT_CRYPTO_TIMEOUT
-         jam_enum 1: EVENT_CRYPTO_TIMEOUT OK
-         search EVENT_CRYPTO_TIMEOUT: OK
-         match EVENT_CRYPTO_TIMEOUT: OK
-         short_name 1: CRYPTO_TIMEOUT OK
-         jam_enum_short 1: CRYPTO_TIMEOUT OK
-         jam_enum_human 1: crypto-timeout OK
-         match CRYPTO_TIMEOUT [short]: OK
-    2 -> EVENT_v1_SEND_XAUTH
-         jam_enum 2: EVENT_v1_SEND_XAUTH OK
+    1 -> EVENT_v1_SEND_XAUTH
+         jam_enum 1: EVENT_v1_SEND_XAUTH OK
          search EVENT_v1_SEND_XAUTH: OK
          match EVENT_v1_SEND_XAUTH: OK
-         short_name 2: SEND_XAUTH OK
-         jam_enum_short 2: SEND_XAUTH OK
-         jam_enum_human 2: send-xauth OK
+         short_name 1: SEND_XAUTH OK
+         jam_enum_short 1: SEND_XAUTH OK
+         jam_enum_human 1: send-xauth OK
          match SEND_XAUTH [short]: OK
-    3 -> EVENT_v1_DPD
-         jam_enum 3: EVENT_v1_DPD OK
+    2 -> EVENT_v1_DPD
+         jam_enum 2: EVENT_v1_DPD OK
          search EVENT_v1_DPD: OK
          match EVENT_v1_DPD: OK
-         short_name 3: DPD OK
-         jam_enum_short 3: DPD OK
-         jam_enum_human 3: dpd OK
+         short_name 2: DPD OK
+         jam_enum_short 2: DPD OK
+         jam_enum_human 2: dpd OK
          match DPD [short]: OK
-    4 -> EVENT_v1_DPD_TIMEOUT
-         jam_enum 4: EVENT_v1_DPD_TIMEOUT OK
+    3 -> EVENT_v1_DPD_TIMEOUT
+         jam_enum 3: EVENT_v1_DPD_TIMEOUT OK
          search EVENT_v1_DPD_TIMEOUT: OK
          match EVENT_v1_DPD_TIMEOUT: OK
-         short_name 4: DPD_TIMEOUT OK
-         jam_enum_short 4: DPD_TIMEOUT OK
-         jam_enum_human 4: dpd-timeout OK
+         short_name 3: DPD_TIMEOUT OK
+         jam_enum_short 3: DPD_TIMEOUT OK
+         jam_enum_human 3: dpd-timeout OK
          match DPD_TIMEOUT [short]: OK
-    5 -> EVENT_v1_PAM_TIMEOUT
-         jam_enum 5: EVENT_v1_PAM_TIMEOUT OK
+    4 -> EVENT_v1_PAM_TIMEOUT
+         jam_enum 4: EVENT_v1_PAM_TIMEOUT OK
          search EVENT_v1_PAM_TIMEOUT: OK
          match EVENT_v1_PAM_TIMEOUT: OK
-         short_name 5: PAM_TIMEOUT OK
-         jam_enum_short 5: PAM_TIMEOUT OK
-         jam_enum_human 5: pam-timeout OK
+         short_name 4: PAM_TIMEOUT OK
+         jam_enum_short 4: PAM_TIMEOUT OK
+         jam_enum_human 4: pam-timeout OK
          match PAM_TIMEOUT [short]: OK
-    6 -> EVENT_v1_EXPIRE
-         jam_enum 6: EVENT_v1_EXPIRE OK
+    5 -> EVENT_v1_EXPIRE
+         jam_enum 5: EVENT_v1_EXPIRE OK
          search EVENT_v1_EXPIRE: OK
          match EVENT_v1_EXPIRE: OK
-         short_name 6: EXPIRE OK
-         jam_enum_short 6: EXPIRE OK
-         jam_enum_human 6: expire OK
+         short_name 5: EXPIRE OK
+         jam_enum_short 5: EXPIRE OK
+         jam_enum_human 5: expire OK
          match EXPIRE [short]: OK (clashed with 12)
-    7 -> EVENT_v1_DISCARD
-         jam_enum 7: EVENT_v1_DISCARD OK
+    6 -> EVENT_v1_DISCARD
+         jam_enum 6: EVENT_v1_DISCARD OK
          search EVENT_v1_DISCARD: OK
          match EVENT_v1_DISCARD: OK
-         short_name 7: DISCARD OK
-         jam_enum_short 7: DISCARD OK
-         jam_enum_human 7: discard OK
+         short_name 6: DISCARD OK
+         jam_enum_short 6: DISCARD OK
+         jam_enum_human 6: discard OK
          match DISCARD [short]: OK (clashed with 13)
-    8 -> EVENT_v1_RETRANSMIT
-         jam_enum 8: EVENT_v1_RETRANSMIT OK
+    7 -> EVENT_v1_RETRANSMIT
+         jam_enum 7: EVENT_v1_RETRANSMIT OK
          search EVENT_v1_RETRANSMIT: OK
          match EVENT_v1_RETRANSMIT: OK
-         short_name 8: RETRANSMIT OK
-         jam_enum_short 8: RETRANSMIT OK
-         jam_enum_human 8: retransmit OK
+         short_name 7: RETRANSMIT OK
+         jam_enum_short 7: RETRANSMIT OK
+         jam_enum_human 7: retransmit OK
          match RETRANSMIT [short]: OK (clashed with 18)
+    8 -> EVENT_v1_CRYPTO_TIMEOUT
+         jam_enum 8: EVENT_v1_CRYPTO_TIMEOUT OK
+         search EVENT_v1_CRYPTO_TIMEOUT: OK
+         match EVENT_v1_CRYPTO_TIMEOUT: OK
+         short_name 8: CRYPTO_TIMEOUT OK
+         jam_enum_short 8: CRYPTO_TIMEOUT OK
+         jam_enum_human 8: crypto-timeout OK
+         match CRYPTO_TIMEOUT [short]: OK
     9 -> EVENT_v1_REPLACE
          jam_enum 9: EVENT_v1_REPLACE OK
          search EVENT_v1_REPLACE: OK
