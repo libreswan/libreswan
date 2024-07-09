@@ -234,8 +234,6 @@ enum event_type {
 
 	/* events associated with states */
 
-	EVENT_CRYPTO_TIMEOUT,		/* v1/v2 after some time, give up on crypto helper */
-
 	/*
 	 * For IKEv2 'replace' is really either a re-key a full
 	 * replace, or expire.  IKEv1 should be the same but isn't.
@@ -248,6 +246,7 @@ enum event_type {
 	EVENT_v1_EXPIRE,		/* v1 SA expiration event */
 	EVENT_v1_DISCARD,		/* v1 discard unfinished state object */
 	EVENT_v1_RETRANSMIT,
+	EVENT_v1_CRYPTO_TIMEOUT,	/* v1 after some time, give up on crypto helper */
 	EVENT_v1_REPLACE,		/* v1 replacement event */
 
 	EVENT_v2_REKEY,			/* SA rekey event */

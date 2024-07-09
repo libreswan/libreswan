@@ -1734,9 +1734,18 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * Code off-loading work should have scheduled a
 		 * timeout.
 		 */
-		PEXPECT(st->logger, (st->st_event != NULL &&
-				     (st->st_event->ev_type == EVENT_CRYPTO_TIMEOUT ||
-				      st->st_event->ev_type == EVENT_v1_PAM_TIMEOUT)));
+		switch (st->st_ike_version) {
+		case IKEv1:
+			PEXPECT(st->logger, (st->st_event != NULL &&
+					     (st->st_event->ev_type == EVENT_v1_CRYPTO_TIMEOUT ||
+					      st->st_event->ev_type == EVENT_v1_PAM_TIMEOUT)));
+			break;
+		case IKEv2:
+			PEXPECT(st->logger, (st->st_v2_timeout_initiator_event != NULL ||
+					     st->st_v2_timeout_responder_event != NULL ||
+					     st->st_v2_timeout_response_event != NULL));
+			break;
+		}
 		return;
 	case STF_IGNORE:
 		/* DANGER: MD might be NULL; ST might be NULL */

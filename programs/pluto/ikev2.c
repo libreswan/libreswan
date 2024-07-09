@@ -1746,8 +1746,17 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * Code off-loading work should have scheduled a
 		 * timeout.
 		 */
-		PEXPECT(ike->sa.logger, (ike->sa.st_event != NULL &&
-					 (ike->sa.st_event->ev_type == EVENT_CRYPTO_TIMEOUT)));
+		switch (ike->sa.st_ike_version) {
+		case IKEv1:
+			PEXPECT(ike->sa.logger, (ike->sa.st_event != NULL &&
+						 (ike->sa.st_event->ev_type == EVENT_v1_CRYPTO_TIMEOUT)));
+			break;
+		case IKEv2:
+			PEXPECT(ike->sa.logger, (ike->sa.st_v2_timeout_initiator_event != NULL ||
+						 ike->sa.st_v2_timeout_responder_event != NULL ||
+						 ike->sa.st_v2_timeout_response_event != NULL));
+			break;
+		}
 		return;
 
 	case STF_IGNORE:

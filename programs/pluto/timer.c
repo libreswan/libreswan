@@ -115,7 +115,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v1_DPD_TIMEOUT:
 		return &st->st_v1_dpd_event;
 
-	case EVENT_CRYPTO_TIMEOUT:
+	case EVENT_v1_CRYPTO_TIMEOUT:
 	case EVENT_v1_DISCARD:
 	case EVENT_v1_EXPIRE:
 	case EVENT_v1_PAM_TIMEOUT:
@@ -513,7 +513,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 #endif
 #endif
-	case EVENT_CRYPTO_TIMEOUT:
+	case EVENT_v1_CRYPTO_TIMEOUT:
 		state_attach(st, logger);
 		ldbg(st->logger, "event crypto_failed on state #%lu, aborting",
 		     st->st_serialno);

@@ -367,12 +367,21 @@ void submit_task(struct state *callback_sa,
 	job->md = md_addref(md);
 	ldbg(job->logger, PRI_JOB": added to pending queue", pri_job(job));
 
-	/*
-	 * Schedule a timeout event to cap the suspend time.
-	 * STF_SUSPEND will be looking for this.
-	 */
-	delete_event(callback_sa);
-	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
+	if (callback_sa->st_ike_version == IKEv1) {
+		/*
+		 * IKEv1: schedule a timeout event to cap the suspend
+		 * time.  STF_SUSPEND will be looking for this.
+		 *
+		 * IKEv2: While initiating and processing a message
+		 * there's the TIMEOUT_INITIATOR, TIMEOUT_RESPONDER,
+		 * or TIMEOUT_RESPONSE timer running, hence no need
+		 * for this additional timer.  When calculating crypto
+		 * in the background (for instance when assembling
+		 * fragments), there's a DISCARD timer running.
+		 */
+		delete_event(callback_sa);
+		event_schedule(EVENT_v1_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
+	}
 
 	/*
 	 * do it all ourselves?
