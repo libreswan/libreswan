@@ -24,7 +24,11 @@ struct ike_sa;
 
 /*
  * Terminate the connection.  Delete any states, pendings and
- * revivals.  On return the connection can be deleted.
+ * revivals.
+ *
+ * Caller MUST hold a reference.  When the connection is an instance,
+ * terminating all states will also delete all references bar the one
+ * held by the caller.
  *
  * Must be called with all revival bits cleared (which means caller
  * needs to save/restore these bits across the call).

@@ -196,16 +196,12 @@ static void release_dead_interfaces(struct logger *logger)
 		 *
 		 * Since a reference is taken, deleting all states of
 		 * an instance can't delete the connection.
-		 */
-		c = connection_addref(c, logger);
-		connection_attach(c, logger);
-		/*
-		 * This is less bad than delete_states_by_connection()
-		 * which deletes things in the wrong order.
 		 *
 		 * What's needed is a variant that doesn't try to send
 		 * (it's pointless as the interface has gone).
 		 */
+		c = connection_addref(c, logger);
+		connection_attach(c, logger);
 		terminate_all_connection_states(c, HERE);
 
 		/*

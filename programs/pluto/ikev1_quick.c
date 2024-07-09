@@ -1349,7 +1349,9 @@ static void terminate_conflicts(struct child_sa *child)
 				 * Presumably the instance CO looses
 				 * to the permanent connection C.
 				 */
+				connection_addref(co, child->sa.logger);
 				terminate_all_connection_states(co, HERE);
+				connection_delref(&co, child->sa.logger);
 			} else {
 				/*
 				 * NOTE: C not CO; why?

@@ -211,6 +211,8 @@ void terminate_all_connection_states(struct connection *c, where_t where)
 {
 	struct whack_state_context context = {0};
 	whack_connection_states(c, delete_states, &context, where);
+	/* caller must hold a reference */
+	pmemory(c);
 }
 
 /*

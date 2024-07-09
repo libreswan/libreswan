@@ -2103,10 +2103,14 @@ void wipe_old_connections(const struct ike_sa *ike)
 			 *
 			 * Strip D of all states, and return it to
 			 * unrouted.  If the connection is a template,
-			 * it will also be deleted.
+			 * terminating it will also cause it to be
+			 * deleted.  Hence take a reference so it is
+			 * deleted here.
 			 */
 
+			connection_addref(d, ike->sa.logger);
 			terminate_all_connection_states(d, HERE);
+			connection_delref(&d, ike->sa.logger);
 
 		} else {
 
