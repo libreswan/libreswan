@@ -430,7 +430,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 #endif
 
 	msg.sec_label = conn->strings[KSCF_SEC_LABEL];
-	msg.conn_debug = conn->options[KWO_DEBUG];
+	msg.conn_debug = conn->options[KW_DEBUG];
 
 	msg.modecfgdns = conn->strings[KSCF_MODECFGDNS];
 	msg.modecfgdomains = conn->strings[KSCF_MODECFGDOMAINS];

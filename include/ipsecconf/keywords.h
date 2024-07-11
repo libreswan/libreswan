@@ -35,22 +35,45 @@
 #include "lset.h"
 #include "constants.h"
 
+/*
+ * Keyword value indexes.  The value is stored in:
+ *
+ * + the keyword table determines: the keyword type; where it is valid
+ *   and where the value is stored are stored:
+ *
+ *   "config setup; keyword=": in .setup.{strings,options,set}[].
+ *   "conn ...' keyword=": in .{strings,options,set}[]
+ *   "conn ; left...": in .{left,right}.{strings,options,set}[]
+ *
+ * + The original string is always stored in .strings[] and should be
+ *   used when logging errors.
+ *
+ * + .set[] is made non-zero (either k_set or k_default); code tests
+ *   for non-zero to determine if a value is present
+ *
+ * + for historic reasons, some of the enums have strange prefixes
+ *   and/or strange grouping.  For instance, KSF_* options only appear
+ *   in "config setup" so if the same option used between multiple
+ *   sections the prefix should be changed.
+ */
+
 enum keywords {
 
 	/*
-	 * Keyword value is stored in .options[] and .set[] is
-	 * non-zero.  In addition, the original string, in .strings[],
-	 * should be used when logging errors.
+	 * Generic keywords, add more here.
 	 */
-	KWO_DEBUG,
+	KW_DEBUG,
+	KW_IP,
+	KW_NEXTHOP,
+	KW_RSASIGKEY,
+	KW_ECDSAKEY,
+	KW_PUBKEY,
 
 	/*
-	 * These are global configuration strings.  They only appear
-	 * in "config setup" section.
-	 *
-	 * Indices for .setup.strings[], .setup.strings_set[]
+	 * By convention, these are global configuration strings and
+	 * only appear in the "config setup" section (KSF == Keyword
+	 * String Flag?).
 	 */
-	KSF_basement,
 	KSF_CURLIFACE,
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
@@ -72,10 +95,9 @@ enum keywords {
 	KSF_OCSP_TRUSTNAME,
 
 	/*
-	 * These are global config Bools (or numbers).  They only
-	 * appear in "config setup" section.
-	 *
-	 * Indices for .setup.option[], .setup.options_set[]
+	 * By convention, these are global configuration numeric (and
+	 * boolean) values and only appear in the "config setup"
+	 * section (KBF == Keyword Boolean Flag?).
 	 */
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
@@ -116,29 +138,9 @@ enum keywords {
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
 
 	/*
-	 * These are conn loose enums.
-	 *
-	 * Loose enums set .options to the numeric value of the enum,
-	 * or the enum's roof + the unsigned value.
-	 *
-	 * Indices for .option[], .options_set[] (and .strings[],
-	 * .strings_set[]) OR .{left|right}.option[],
-	 * .{left|right}.options_set[] (and .{left|right}.strings[],
-	 * .{left|right}.strings_set[]).
-	 */
-
-	KW_IP,		/* loose_enum */ /* left/right */
-	KW_NEXTHOP,	/* loose_enum */ /* left/right */
-	KW_RSASIGKEY,	/* loose_enum */ /* left/right */
-	KW_ECDSAKEY,	/* loose_enum */ /* left/right */
-	KW_PUBKEY,	/* loose_enum */ /* left/right */
-
-	/*
-	 * These are conn strings.  The initial ones come in
+	 * By convention, these are connnection strings (KSCF is
+	 * Keyword String Connection Flag?).  The initial ones come in
 	 * left/right variants.
-	 *
-	 * Indices for .strings[], .strings_set[] or
-	 * .{left|right}.strings[], .{left|right}.strings_set[]
 	 */
 
 	KSCF_GROUNDHOG,	/* left/right */
@@ -177,13 +179,9 @@ enum keywords {
 	KSCF_DPDTIMEOUT,
 
 	/*
-	 * conn numbers (or bool).  The initial ones come in
-	 * left/right variants.
-	 *
-	 * Indices for .option[], .options_set[] (and .strings[],
-	 * .strings_set[]) OR .{left|right}.option[],
-	 * .{left|right}.options_set[] (and .{left|right}.strings[],
-	 * .{left|right}.strings_set[]).
+	 * By convention, these are connection numeric (or boolean)
+	 * values (KNCF is Keyword Numeric Connection Flag?).  The
+	 * initial ones come in left/right variants.
 	 */
 
 	KNCF_XAUTHSERVER,	/* left/right */
@@ -203,7 +201,6 @@ enum keywords {
 	KNCF_SPI,
 	KNCF_ESPREPLAYWINDOW,
 
-	/* ??? these were once in keyword_numeric_config_field (KBF prefix) */
 	KNCF_FAILURESHUNT,
 	KNCF_NEGOTIATIONSHUNT,
 	KNCF_TYPE,
