@@ -147,7 +147,7 @@ static void help(void)
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
-		"	[--nic-offload {yes,no,auto} \\\n"
+		"	[--nic-offload <packet|crypto|no>] \\\n"
 		"	--to\n"
 		"\n"
 		"routing: whack (--route | --unroute) --name <connection_name>\n"
