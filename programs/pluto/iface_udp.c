@@ -49,10 +49,8 @@
 #include "ip_sockaddr.h"
 
 #ifdef UDP_ENCAP
-static bool nat_traversal_espinudp(const struct iface_endpoint *ifp,
-				   struct logger *logger)
+static int espinudp_enable_esp_encapsulation(int fd, struct logger *logger)
 {
-	const char *fam = endpoint_type(&ifp->local_endpoint)->ip_name;
 	ldbg(logger, "NAT-Traversal: Trying sockopt style NAT-T");
 
 	/*
@@ -80,16 +78,17 @@ static bool nat_traversal_espinudp(const struct iface_endpoint *ifp,
 	 */
 	const int sol_value = UDP_ENCAP_ESPINUDP;
 
-	int r = setsockopt(ifp->fd, sol_udp, sol_name, &sol_value, sizeof(sol_value));
+	int r = setsockopt(fd, sol_udp, sol_name, &sol_value, sizeof(sol_value));
 	if (r == -1) {
-		ldbg(logger, "NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
-		     sol_value, fam, errno);
-		return false;
+		int error = errno; /* save it */
+		ldbg(logger, "NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family (errno=%d)",
+		     sol_value, error);
+		return error;
 	}
 
-	ldbg(logger, "NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
-	     sol_value, fam);
-	return true;
+	ldbg(logger, "NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family",
+	     sol_value);
+	return 0;
 }
 #endif /* ifdef UDP_ENCAP */
 
@@ -324,7 +323,7 @@ const struct iface_io udp_iface_io = {
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
 #ifdef UDP_ENCAP
-	.enable_esp_encap = nat_traversal_espinudp,
+	.enable_esp_encapsulation = espinudp_enable_esp_encapsulation,
 #endif
 	.cleanup = udp_cleanup,
 };

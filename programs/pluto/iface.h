@@ -54,7 +54,8 @@ struct iface_io {
 				struct logger *logger);
 	void (*cleanup)(struct iface_endpoint *ifp);
 	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
-	bool (*enable_esp_encap)(const struct iface_endpoint *ifp, struct logger *logger);
+	/* returns 0 or ERRNO */
+	int (*enable_esp_encapsulation)(int fd, struct logger *logger);
 };
 
 extern const struct iface_io udp_iface_io;
@@ -189,18 +190,30 @@ extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint 
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
 void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger);
-struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd, const struct iface_io *io,
+
+enum iface_esp_encapsulation {
+	ESP_ENCAPSULATION_ENABLED = 1,
+	ESP_ENCAPSULATION_DISABLED,
+};
+
+enum iface_initiator_port {
+	INITIATOR_PORT_FIXED = 1,
+	INITIATOR_PORT_FLOATS,
+};
+
+struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
+					   const struct iface_io *io,
 					   ip_port port,
-					   bool esp_encapsulation_enabled,
-					   bool float_nat_initiator,
+					   enum iface_esp_encapsulation esp_encapsulation,
+					   enum iface_initiator_port initiator_port,
 					   struct logger *logger);
 
 /* internal */
 struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    struct iface_device *ifd,
 					    const struct iface_io *io,
-					    bool esp_encapsulation_enabled,
-					    bool float_nat_initiator,
+					    enum iface_esp_encapsulation esp_encapsulation,
+					    enum iface_initiator_port initiator_port,
 					    ip_endpoint local_endpoint,
 					    where_t where);
 

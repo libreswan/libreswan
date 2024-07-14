@@ -566,8 +566,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 
 	struct iface_endpoint *ifp =
 		alloc_iface_endpoint(fd, local_dev, &iketcp_iface_io,
-				     /*esp_encapsulation_enabled*/true,
-				     /*float_nat_initiator*/false,
+				     ESP_ENCAPSULATION_ENABLED,
+				     INITIATOR_PORT_FIXED,
 				     local_endpoint,
 				     HERE);
 	ifp->iketcp_remote_endpoint = remote_endpoint;
@@ -612,8 +612,8 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 
 	struct iface_endpoint *ifp =
 		alloc_iface_endpoint(accepted_fd, bind_ifp->ip_dev, &iketcp_iface_io,
-				     /*esp_encapsulation_enabled*/true,
-				     /*float_nat_initiator*/false,
+				     ESP_ENCAPSULATION_ENABLED,
+				     INITIATOR_PORT_FIXED,
 				     bind_ifp->local_endpoint,
 				     HERE);
 	ifp->iketcp_remote_endpoint = remote_tcp_endpoint;

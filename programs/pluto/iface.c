@@ -294,8 +294,8 @@ static void free_dead_ifaces(struct logger *logger)
 struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    struct iface_device *ifd,
 					    const struct iface_io *io,
-					    bool esp_encapsulation_enabled,
-					    bool float_nat_initiator,
+					    enum iface_esp_encapsulation esp_encapsulation,
+					    enum iface_initiator_port initiator_port,
 					    ip_endpoint local_endpoint,
 					    where_t where)
 {
@@ -303,8 +303,8 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 	ifp->fd = fd;
 	ifp->ip_dev = addref_where(ifd, where);
 	ifp->io = io;
-	ifp->esp_encapsulation_enabled = esp_encapsulation_enabled;
-	ifp->float_nat_initiator = float_nat_initiator;
+	ifp->esp_encapsulation_enabled = (esp_encapsulation == ESP_ENCAPSULATION_ENABLED);
+	ifp->float_nat_initiator = (initiator_port == INITIATOR_PORT_FLOATS);
 	ifp->local_endpoint = local_endpoint;
 	init_list_entry(&iface_endpoint_info, ifp, &ifp->entry);
 	insert_list_entry(&iface_endpoints, &ifp->entry);
@@ -336,13 +336,13 @@ struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, w
 struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 					   const struct iface_io *io,
 					   ip_port port,
-					   bool esp_encapsulation_enabled,
-					   bool float_nat_initiator,
+					   enum iface_esp_encapsulation esp_encapsulation,
+					   enum iface_initiator_port initiator_port,
 					   struct logger *logger)
 {
-#define BIND_ERROR(MSG, ...)						\
+#define BIND_ERROR(ERROR, MSG, ...)					\
 	{								\
-		int e = errno;						\
+		int e = ERROR;						\
 		endpoint_buf eb;					\
 		llog_error(logger, e,					\
 			   "bind %s %s endpoint %s failed, "MSG,	\
@@ -354,17 +354,23 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	const struct ip_info *afi = address_type(&ifd->local_address);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->local_address,
 									 io->protocol, port);
-	if (esp_encapsulation_enabled &&
-	    io->protocol->encap_esp->encap_type == 0) {
-		errno = 0; /*no-errno*/
-		BIND_ERROR("%s encapsulation is not configured (problem with kernel headers?)",
-			   io->protocol->encap_esp->name);
-		return NULL;
+
+	switch (esp_encapsulation) {
+	case ESP_ENCAPSULATION_ENABLED:
+		if (io->protocol->encap_esp->encap_type == 0) {
+			errno = 0; /*no-errno*/
+			BIND_ERROR(errno, "%s encapsulation is not configured (problem with kernel headers?)",
+				   io->protocol->encap_esp->name);
+			return NULL;
+		}
+		break;
+	case ESP_ENCAPSULATION_DISABLED:
+		break;
 	}
 
 	int fd = cloexec_socket(afi->socket.domain, io->socket.type|SOCK_NONBLOCK, io->protocol->ipproto);
 	if (fd < 0) {
-		BIND_ERROR("cloexec_socket(%s, %s|SOCK_NONBLOCK, %s)",
+		BIND_ERROR(errno, "cloexec_socket(%s, %s|SOCK_NONBLOCK, %s)",
 			   afi->socket.domain_name, io->socket.type_name, io->protocol->name);
 		return NULL;
 	}
@@ -373,7 +379,8 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		BIND_ERROR("setsockopt(SOL_SOCKET, SO_REUSEADDR)");
+		BIND_ERROR(errno, "setsockopt(SOL_SOCKET, SO_REUSEADDR)");
+		/* after logging so errno isn't trashed */
 		close(fd);
 		return NULL;
 	}
@@ -382,7 +389,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY, (const void *)&so_prio,
 		       sizeof(so_prio)) < 0) {
-		BIND_ERROR("setsockopt(SOL_SOCKET, SO_PRIORITY)");
+		BIND_ERROR(errno, "setsockopt(SOL_SOCKET, SO_PRIORITY)");
 		/* non-fatal; stumble on */
 	}
 #endif
@@ -401,12 +408,12 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 #endif
 		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_sock_bufsize,
 			       sizeof(pluto_sock_bufsize)) < 0) {
-			BIND_ERROR("setsockopt(SOL_SOCKET, SO_RCVBUFFORCE)");
+			BIND_ERROR(errno, "setsockopt(SOL_SOCKET, SO_RCVBUFFORCE)");
 			/* non-fatal; stumble on */
 		}
 		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_sock_bufsize,
 			       sizeof(pluto_sock_bufsize)) < 0) {
-			BIND_ERROR("setsockopt(SOL_SOCKET, SO_SNDBUFFORCE)");
+			BIND_ERROR(errno, "setsockopt(SOL_SOCKET, SO_SNDBUFFORCE)");
 			/* non-fatal; stumble on */
 		}
 	}
@@ -415,7 +422,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	if (pluto_sock_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
-			BIND_ERROR("setsockopt(SOL_IP, IP_RECVERR)");
+			BIND_ERROR(errno, "setsockopt(SOL_IP, IP_RECVERR)");
 			close(fd);
 			return NULL;
 		}
@@ -434,7 +441,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	if (afi == &ipv6_info &&
 	    setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		BIND_ERROR("setsockopt(IPPROTO_IPV6, IPV6_USE_MIN_MTU)");
+		BIND_ERROR(errno, "setsockopt(IPPROTO_IPV6, IPV6_USE_MIN_MTU)");
 		close(fd);
 		return NULL;
 	}
@@ -456,15 +463,26 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 
 	ip_sockaddr if_sa = sockaddr_from_endpoint(local_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
-		BIND_ERROR("bind()");
+		BIND_ERROR(errno, "bind()");
 		close(fd);
 		return NULL;
 	}
 
+	if (esp_encapsulation == ESP_ENCAPSULATION_ENABLED &&
+	    io->enable_esp_encapsulation != NULL) {
+		int error = io->enable_esp_encapsulation(fd, logger);
+		if (error != 0) {
+			/* not errno! */
+			BIND_ERROR(error, "interface does not support ESPINUDP encapsulation; NAT-traversal is turned OFF");
+			esp_encapsulation = ESP_ENCAPSULATION_DISABLED;
+			nat_traversal_enabled = false;
+		}
+	}
+
 	struct iface_endpoint *ifp =
 		alloc_iface_endpoint(fd, ifd, io,
-				     esp_encapsulation_enabled,
-				     float_nat_initiator,
+				     esp_encapsulation,
+				     initiator_port,
 				     local_endpoint,
 				     HERE);
 
@@ -476,14 +494,6 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	 */
 	ifp->next = interfaces;
 	interfaces = ifp;
-
-	if (esp_encapsulation_enabled &&
-	    io->enable_esp_encap != NULL &&
-	    !io->enable_esp_encap(ifp, logger)) {
-		llog(RC_LOG, logger,
-		     "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s; NAT-traversal is turned OFF", afi->af_name);
-		nat_traversal_enabled = false;
-	}
 
 	endpoint_buf b;
 	llog(RC_LOG, logger,
@@ -513,8 +523,8 @@ static void add_new_ifaces(struct logger *logger)
 		if (pluto_listen_udp) {
 			if (bind_iface_endpoint(ifd, &udp_iface_io,
 						ip_hport(IKE_UDP_PORT),
-						false /*esp_encapsulation_enabled*/,
-						true /*float_nat_initiator*/,
+						ESP_ENCAPSULATION_DISABLED,
+						INITIATOR_PORT_FLOATS,
 						logger) == NULL) {
 				ifd->ifd_change = IFD_DELETE;
 				continue;
@@ -530,8 +540,8 @@ static void add_new_ifaces(struct logger *logger)
 			/* XXX: ignore any errors!?! */
 			bind_iface_endpoint(ifd, &udp_iface_io,
 					    ip_hport(NAT_IKE_UDP_PORT),
-					    true /*esp_encapsulation_enabled*/,
-					    true /*float_nat_initiator*/,
+					    ESP_ENCAPSULATION_ENABLED,
+					    INITIATOR_PORT_FLOATS,
 					    logger);
 		}
 
@@ -548,8 +558,8 @@ static void add_new_ifaces(struct logger *logger)
 			/* XXX: ignore any errors!?! */
 			bind_iface_endpoint(ifd, &iketcp_iface_io,
 					    ip_hport(NAT_IKE_UDP_PORT),
-					    true /*esp_encapsulation_enabled*/,
-					    false /*float_nat_initiator*/,
+					    ESP_ENCAPSULATION_ENABLED,
+					    INITIATOR_PORT_FIXED,
 					    logger);
 		}
 

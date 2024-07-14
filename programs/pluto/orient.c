@@ -96,23 +96,6 @@ static void add_iface_endpoint(bool listening,
 	}
 
 	/*
-	 * A custom IKEPORT should not float away to port 4500.
-	 * Assume a custom port always has the prefix (like 4500 and
-	 * not 500).  Perhaps it doesn't belong in iface?
-	 *
-	 * Log against the connection that is causing the interface's
-	 * port to be opened.
-	 *
-	 * XXX: what happens if a second connection is also interested
-	 * in the interface?
-	 *
-	 * XXX: what about IPv4 vs IPv6, host_addr would have pinned
-	 * that down?
-	 */
-	const bool esp_encapsulation_enabled = true;
-	const bool float_nat_initiator = false;
-
-	/*
 	 * See if it already exists.
 	 */
 
@@ -133,10 +116,25 @@ static void add_iface_endpoint(bool listening,
 		return;
 	}
 
+	/*
+	 * A custom IKEPORT should not float away to port 4500.
+	 * Assume a custom port always has the prefix (like 4500 and
+	 * not 500).  Perhaps it doesn't belong in iface?
+	 *
+	 * Log against the connection that is causing the interface's
+	 * port to be opened.
+	 *
+	 * XXX: what happens if a second connection is also interested
+	 * in the interface?
+	 *
+	 * XXX: what about IPv4 vs IPv6, host_addr would have pinned
+	 * that down?
+	 */
+
 	struct iface_endpoint *ifp = bind_iface_endpoint(c->iface, io,
 							 local_port,
-							 esp_encapsulation_enabled,
-							 float_nat_initiator,
+							 ESP_ENCAPSULATION_ENABLED,
+							 INITIATOR_PORT_FIXED,
 							 c->logger);
 	if (ifp == NULL) {
 		address_buf ab;
