@@ -1231,8 +1231,6 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 
 void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 {
-	const enum ikev2_exchange ix = md->hdr.isa_xchg;
-
 	/*
 	 * The message successfully decrypted and passed integrity
 	 * protected so definitely sent by the other end of the
@@ -1295,19 +1293,6 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	dbg("selected state microcode %s", svm->story);
-
-	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
-		/*
-		 * XXX: This code was embedded in the end of the FSM
-		 * search loop.  Since it was always executed when the
-		 * state matches, move it out of the loop.  Suspect
-		 * this, and the code below, really belong in the
-		 * state transition function proper.
-		 */
-		/* going to switch to child st. before that update parent */
-		if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
-			update_ike_endpoints(ike, md);
-	}
 
 	v2_dispatch(ike, md, svm);
 }
