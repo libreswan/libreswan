@@ -1411,33 +1411,36 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	/*
 	 * 2.23.  NAT Traversal
 	 *
-	 * There are cases where a NAT box decides to remove mappings
-	 * that are still alive (for example, the keepalive interval
-	 * is too long, or the NAT box is rebooted).  This will be
-	 * apparent to a host if it receives a packet whose integrity
-	 * protection validates, but has a different port, address, or
-	 * both from the one that was associated with the SA in the
-	 * validated packet.  When such a validated packet is found, a
-	 * host that does not support other methods of recovery such
-	 * as IKEv2 Mobility and Multihoming (MOBIKE) [MOBIKE], and
-	 * that is not behind a NAT, SHOULD send all packets
-	 * (including retransmission packets) to the IP address and
-	 * port in the validated packet, and SHOULD store this as the
-	 * new address and port combination for the SA (that is, they
-	 * SHOULD dynamically update the address).  A host behind a
-	 * NAT SHOULD NOT do this type of dynamic address update if a
-	 * validated packet has different port and/or address values
-	 * because it opens a possible DoS attack (such as allowing an
-	 * attacker to break the connection with a single packet).
-	 * Also, dynamic address update should only be done in
-	 * response to a new packet; otherwise, an attacker can revert
-	 * the addresses with old replayed packets.  Because of this,
-	 * dynamic updates can only be done safely if replay
-	 * protection is enabled.  When IKEv2 is used with MOBIKE,
-	 * dynamically updating the addresses described above
-	 * interferes with MOBIKE's way of recovering from the same
-	 * situation.  See Section 3.8 of [MOBIKE] for more
-	 * information.
+	 * [...]
+	 *
+	 * o There are cases where a NAT box decides to remove
+	 *   mappings that are still alive (for example, the keepalive
+	 *   interval is too long, or the NAT box is rebooted).  This
+	 *   will be apparent to a host if it receives a packet whose
+	 *   integrity protection validates, but has a different port,
+	 *   address, or both from the one that was associated with
+	 *   the SA in the validated packet.  When such a validated
+	 *   packet is found, a host that does not support other
+	 *   methods of recovery such as IKEv2 Mobility and
+	 *   Multihoming (MOBIKE) [MOBIKE], and that is not behind a
+	 *   NAT, SHOULD send all packets (including retransmission
+	 *   packets) to the IP address and port in the validated
+	 *   packet, and SHOULD store this as the new address and port
+	 *   combination for the SA (that is, they SHOULD dynamically
+	 *   update the address).  A host behind a NAT SHOULD NOT do
+	 *   this type of dynamic address update if a validated packet
+	 *   has different port and/or address values because it opens
+	 *   a possible DoS attack (such as allowing an attacker to
+	 *   break the connection with a single packet).  Also,
+	 *   dynamic address update should only be done in response to
+	 *   a new packet; otherwise, an attacker can revert the
+	 *   addresses with old replayed packets.  Because of this,
+	 *   dynamic updates can only be done safely if replay
+	 *   protection is enabled.  When IKEv2 is used with MOBIKE,
+	 *   dynamically updating the addresses described above
+	 *   interferes with MOBIKE's way of recovering from the same
+	 *   situation.  See Section 3.8 of [MOBIKE] for more
+	 *   information.
 	 *
 	 * XXX: so ....
 	 *
