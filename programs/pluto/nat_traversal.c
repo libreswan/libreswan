@@ -160,6 +160,12 @@ void natd_lookup_common(struct state *st,
 	}
 }
 
+bool nat_traversal_detected(struct state *st)
+{
+	return (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) ||
+		LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER));
+}
+
 void nat_traversal_new_ka_event(void)
 {
 	if (nat_kap_event)

@@ -276,7 +276,7 @@ static void pstat_child_sa_established(struct state *st)
 #endif
 
 	if (st->st_esp.protocol == &ip_protocol_esp) {
-		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
+		bool nat = nat_traversal_detected(st);
 		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 

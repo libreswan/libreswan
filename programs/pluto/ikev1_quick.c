@@ -676,7 +676,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		return STF_FATAL;
 	}
 
-	if (isakmp_sa->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+	if (nat_traversal_detected(isakmp_sa)) {
 		/* Duplicate nat_traversal status in new state */
 		st->hidden_variables.st_nat_traversal =
 			isakmp_sa->hidden_variables.st_nat_traversal;
@@ -908,7 +908,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		 * state to store it in until after we've done the
 		 * authorization steps.
 		 */
-		if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+		if (nat_traversal_detected(p1st) &&
 		    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 		    (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
@@ -979,7 +979,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 */
 	struct connection *p = find_v1_client_connection(c, local_client, remote_client);
 
-	if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+	if (nat_traversal_detected(p1st) &&
 	    !(p1st->st_policy & POLICY_TUNNEL) &&
 	    p == NULL) {
 		p = c;
@@ -1089,7 +1089,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 */
 
 	hv = p1st->hidden_variables;
-	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
+	if (nat_traversal_detected(p1st) &&
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &hv, p1st->logger);
 
@@ -1127,7 +1127,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 */
 	child->sa.st_policy = child_sa_policy(c);
 
-	if (parent->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+	if (nat_traversal_detected(&parent->sa)) {
 		/* ??? this partially overwrites what was done via hv */
 		child->sa.hidden_variables.st_nat_traversal =
 			parent->sa.hidden_variables.st_nat_traversal;
@@ -1548,7 +1548,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
 				       &rbody, st->logger);
 
-	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+	if (nat_traversal_detected(st) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->logger);
 
@@ -1587,8 +1587,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 *    &st->st_connection->spd->remote->client, if the type
 			 * of the ID was FQDN
 			 */
-			if ((st->hidden_variables.st_nat_traversal &
-			     NAT_T_DETECTED) &&
+			if (nat_traversal_detected(st) &&
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {

@@ -73,7 +73,7 @@ extern deltatime_t nat_keepalive_period;
 /**
  * NAT-Traversal detected
  */
-#define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
+bool nat_traversal_detected(struct state *st);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger);
 
@@ -99,7 +99,7 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
  * ??? Wow.  Wow.
  */
 #define NAT_T_ENCAPSULATION_MODE(st, nat_t_policy) ( \
-		((st)->hidden_variables.st_nat_traversal & NAT_T_DETECTED) \
+		nat_traversal_detected(st)		     \
 		? ( ((nat_t_policy) & POLICY_TUNNEL) \
 		    ? ( ((st)->hidden_variables.st_nat_traversal & \
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \

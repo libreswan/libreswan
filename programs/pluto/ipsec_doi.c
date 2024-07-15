@@ -138,7 +138,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 	if (st->st_esp.protocol == &ip_protocol_esp) {
 		jam_string(buf, ini);
 		ini = " ";
-		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
+		bool nat = nat_traversal_detected(st);
 		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;

@@ -28,7 +28,6 @@
 #include "log.h"
 #include "connections.h"
 #include "unpack.h"
-#include "nat_traversal.h"		/* for NAT_T_DETECTED */
 #include "ikev2_nat.h"
 #include "ikev2_ike_auth.h"
 #include "pluto_stats.h"

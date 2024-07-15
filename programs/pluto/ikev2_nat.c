@@ -156,7 +156,7 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	natd_lookup_common(&ike->sa, md->sender, found_local, found_remote);
-	return (ike->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED);
+	return nat_traversal_detected(&ike->sa);
 }
 
 bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)

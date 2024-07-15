@@ -1319,7 +1319,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		uint16_t encap_sport = 0, encap_dport = 0;
 		ip_address natt_oa;
 
-		if (child->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+		if (nat_traversal_detected(&child->sa) ||
 		    child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 			encap_type = child->sa.st_iface_endpoint->io->protocol->encap_esp;
 			switch (direction) {

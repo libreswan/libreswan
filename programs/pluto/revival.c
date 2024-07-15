@@ -33,7 +33,6 @@
 
 #include "connections.h"
 #include "connection_event.h"
-#include "nat_traversal.h"		/* for NAT_T_DETECTED */
 #include "state.h"
 #include "log.h"
 #include "iface.h"

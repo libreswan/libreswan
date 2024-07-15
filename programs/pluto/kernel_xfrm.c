@@ -1175,7 +1175,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 
 	const struct ip_encap *encap_type =
 		(child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
-		(child->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? &ip_encap_esp_in_udp :
+		nat_traversal_detected(&child->sa) ? &ip_encap_esp_in_udp :
 		NULL;
 	ldbg_sa(child, "TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
 

@@ -368,12 +368,12 @@ bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st
 		emit_one_natoa(outs, pd, ipresp, "NAT-OAr"));
 }
 
-static void nat_traversal_show_result(lset_t nt, uint16_t sport)
+static void nat_traversal_show_result(struct state *st, uint16_t sport)
 {
-	lset_buf lb;
-	const char *rslt = (nt & NAT_T_DETECTED) ?
-		str_lset(&natt_method_names, nt & NAT_T_DETECTED, &lb) :
-		"no NAT detected";
+	lset_t nt = st->hidden_variables.st_nat_traversal;
+	const char *rslt = (LHAS(nt, NATED_HOST) ? "I am behind NAT" :
+			    LHAS(nt, NATED_PEER) ? "peer behind NAT" :
+			    "no NAT detected");
 
 	enum_buf nb;
 	dbg("NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
@@ -413,9 +413,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		ikev1_natd_lookup(md, st);
 
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-			nat_traversal_show_result(
-				st->hidden_variables.st_nat_traversal,
-				endpoint_hport(md->sender));
+			nat_traversal_show_result(st, endpoint_hport(md->sender));
 		}
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
@@ -441,7 +439,7 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	if ((st->st_state->kind == STATE_MAIN_I3 ||
 	     st->st_state->kind == STATE_QUICK_I1 ||
 	     st->st_state->kind == STATE_AGGR_I2) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+	    nat_traversal_detected(st) &&
 	    endpoint_hport(st->st_iface_endpoint->local_endpoint) != NAT_IKE_UDP_PORT) {
 		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
 		    st->st_serialno, st->st_state->short_name,
