@@ -44,7 +44,7 @@
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(struct pbs_out *outs, const struct connection *c)
+bool emit_nat_traversal_vid(struct pbs_out *outs, const struct connection *c)
 {
 	dbg("nat add vid");
 
@@ -118,19 +118,18 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 	}
 }
 
-void set_nat_traversal(struct state *st, const struct msg_digest *md)
+void check_nat_traversal_vid(struct ike_sa *ike, const struct msg_digest *md)
 {
-	dbg("sender checking NAT-T: %s; conn %s; VID %d",
-	    nat_traversal_enabled ? "enabled" : "disabled",
-	    (st->st_connection->config->ikev1_natt == NATT_NONE) ? "disabled" : "enabled",
-	    md->quirks.qnat_traversal_vid);
-	if (nat_traversal_enabled && (md->quirks.qnat_traversal_vid != VID_none) &&
-		(st->st_connection->config->ikev1_natt != NATT_NONE)) {
+	ldbg(ike->sa.logger, "sender checking NAT-T: conn %s; VID %d",
+	     (ike->sa.st_connection->config->ikev1_natt == NATT_NONE ? "disabled" : "enabled"),
+	     md->quirks.qnat_traversal_vid);
+	if ((md->quirks.qnat_traversal_vid != VID_none) &&
+	    (ike->sa.st_connection->config->ikev1_natt != NATT_NONE)) {
 		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
 
-		st->hidden_variables.st_nat_traversal = LELEM(v);
+		ike->sa.hidden_variables.st_nat_traversal = LELEM(v);
 		enum_buf vb;
-		ldbg(st->logger, "enabling possible NAT-traversal with method %s",
+		ldbg(ike->sa.logger, "flagging possible NAT-traversal with method %s",
 		    str_enum(&natt_method_names, v, &vb));
 	}
 }
@@ -393,6 +392,11 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 	    nat_traversal_enabled ? "enabled" : "disabled",
 	    st->st_connection->config->ikev1_natt == NATT_NONE ? "disabled" : "enabled",
 	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
+
+	if (!nat_traversal_enabled) {
+		ldbg(st->logger, "Skip NATD, !nat_traversal_enabled");
+		return;
+	}
 
 	if (st->st_connection->config->ikev1_natt == NATT_NONE) {
 		dbg("Skip NATD payloads due to nat-ikev1-method=none configuration");

@@ -188,7 +188,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	}
 
 	/* as Initiator, spray NAT VIDs */
-	if (!nat_traversal_insert_vid(&rbody, c)) {
+	if (!emit_nat_traversal_vid(&rbody, c)) {
 		return NULL;
 	}
 
@@ -523,7 +523,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 
 	merge_quirks(&ike->sa, md);
 
-	set_nat_traversal(&ike->sa, md);
+	check_nat_traversal_vid(ike, md);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_thing("  ICOOKIE-DUMP:", ike->sa.st_ike_spis.initiator);
@@ -635,7 +635,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 
 	merge_quirks(&ike->sa, md);
 
-	set_nat_traversal(&ike->sa, md);
+	check_nat_traversal_vid(ike, md);
 
 	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 			    ike->sa.st_oakley.ta_dh,

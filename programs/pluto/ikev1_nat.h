@@ -36,8 +36,8 @@ extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 /**
  * Vendor ID
  */
-bool nat_traversal_insert_vid(struct pbs_out *outs, const struct connection *c);
-void set_nat_traversal(struct state *st, const struct msg_digest *md);
+bool emit_nat_traversal_vid(struct pbs_out *outs, const struct connection *c);
+void check_nat_traversal_vid(struct ike_sa *ike, const struct msg_digest *md);
 
 /**
  * NAT-OA

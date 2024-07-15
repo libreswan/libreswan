@@ -235,7 +235,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	merge_quirks(&ike->sa, md);
 
-	set_nat_traversal(&ike->sa, md);
+	check_nat_traversal_vid(ike, md);
 
 	/* save initiator SA for HASH */
 
@@ -565,7 +565,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 
 	merge_quirks(&ike->sa, md);
 
-	set_nat_traversal(&ike->sa, md);
+	check_nat_traversal_vid(ike, md);
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
@@ -1140,7 +1140,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 		return STF_INTERNAL_ERROR;
 
 	/* as Initiator, spray NAT VIDs */
-	if (!nat_traversal_insert_vid(&rbody, c))
+	if (!emit_nat_traversal_vid(&rbody, c))
 		return STF_INTERNAL_ERROR;
 
 	/* finish message */
