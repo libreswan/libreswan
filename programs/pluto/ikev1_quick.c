@@ -680,9 +680,9 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* Duplicate nat_traversal status in new state */
 		st->hidden_variables.st_nat_traversal =
 			isakmp_sa->hidden_variables.st_nat_traversal;
-		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
-			 NATED_HOST))
+		if (isakmp_sa->hidden_variables.st_nated_host) {
 			has_client = true;
+		}
 		v1_maybe_natify_initiator_endpoints(st, HERE);
 	} else {
 		st->hidden_variables.st_nat_traversal = LEMPTY;
@@ -771,7 +771,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 	    !(st->st_policy & POLICY_TUNNEL) &&
-	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+	    st->hidden_variables.st_nated_host) {
 		/** Send NAT-OA if our address is NATed */
 		if (!v1_nat_traversal_add_initiator_natoa(&rbody, st)) {
 			return STF_INTERNAL_ERROR;

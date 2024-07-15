@@ -124,7 +124,7 @@ void natd_lookup_common(struct state *st,
 		dbg("NAT_TRAVERSAL encaps using auto-detect");
 		if (!found_me) {
 			dbg("NAT_TRAVERSAL this end is behind NAT");
-			st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
+			st->hidden_variables.st_nated_host = true;
 			st->hidden_variables.st_natd = endpoint_address(sender);
 		} else {
 			dbg("NAT_TRAVERSAL this end is NOT behind NAT");
@@ -134,7 +134,7 @@ void natd_lookup_common(struct state *st,
 			endpoint_buf b;
 			dbg("NAT_TRAVERSAL that end is behind NAT %s",
 			    str_endpoint(&sender, &b));
-			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
+			st->hidden_variables.st_nated_peer = true;
 			st->hidden_variables.st_natd = endpoint_address(sender);
 		} else {
 			dbg("NAT_TRAVERSAL that end is NOT behind NAT");
@@ -148,8 +148,8 @@ void natd_lookup_common(struct state *st,
 
 	case YNA_YES:
 		ldbg(st->logger, "NAT_TRAVERSAL local policy enforces encapsulation");
-		st->hidden_variables.st_nat_traversal |=
-			LELEM(NATED_PEER) | LELEM(NATED_HOST);
+		st->hidden_variables.st_nated_peer = true;
+		st->hidden_variables.st_nated_host = true;
 		st->hidden_variables.st_natd = endpoint_address(sender);
 		break;
 	}
@@ -162,8 +162,8 @@ void natd_lookup_common(struct state *st,
 
 bool nat_traversal_detected(struct state *st)
 {
-	return (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST) ||
-		LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER));
+	return (st->hidden_variables.st_nated_host ||
+		st->hidden_variables.st_nated_peer);
 }
 
 void nat_traversal_new_ka_event(void)
@@ -196,7 +196,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 	unsigned int *nat_kap_st = (unsigned int *)data;
 	const struct connection *c = st->st_connection;
 
-	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+	if (!st->hidden_variables.st_nated_host) {
 		dbg("not behind NAT: no NAT-T KEEP-ALIVE required for conn %s",
 		    c->name);
 		return;

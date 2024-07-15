@@ -273,7 +273,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	if (i == 0)
 		return;
 
-	if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
+	if (!hv->st_nated_peer) {
 		llog(RC_LOG, logger,
 			    "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			    i);
@@ -370,8 +370,8 @@ bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st
 static void nat_traversal_show_result(struct state *st, uint16_t sport)
 {
 	lset_t nt = st->hidden_variables.st_nat_traversal;
-	const char *rslt = (LHAS(nt, NATED_HOST) ? "I am behind NAT" :
-			    LHAS(nt, NATED_PEER) ? "peer behind NAT" :
+	const char *rslt = (st->hidden_variables.st_nated_host ? "I am behind NAT" :
+			    st->hidden_variables.st_nated_peer ? "peer behind NAT" :
 			    "no NAT detected");
 
 	enum_buf nb;

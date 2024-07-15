@@ -500,8 +500,9 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* going to switch to child st. before that update parent */
-	if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
+	if (!ike->sa.hidden_variables.st_nated_host) {
 		update_ike_endpoints(ike, md);
+	}
 
 	nat_traversal_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
 
@@ -850,7 +851,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 		}
 	}
 
-	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+	if (ike->sa.hidden_variables.st_nated_host) {
 		/* ensure we run keepalives if needed */
 		if (c->config->nat_keepalive) {
 			/* XXX: just trigger this event? */
@@ -1127,7 +1128,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	/*
 	 * Keep the portal open ...
 	 */
-	if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+	if (ike->sa.hidden_variables.st_nated_host) {
 		/* ensure we run keepalives if needed */
 		if (c->config->nat_keepalive) {
 			/*

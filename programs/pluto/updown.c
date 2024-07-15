@@ -140,7 +140,7 @@ static bool fmt_common_shell_out(char *buf,
 	/* for transport mode, things are complicated */
 	jam_string(&jb, "PLUTO_PEER_CLIENT='");
 	if (!tunneling && child != NULL &&
-	    LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_PEER)) {
+	    child->sa.hidden_variables.st_nated_peer) {
 		/* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
 		jam_address(&jb, &sr->remote->host->addr);
 		jam(&jb, "/%d", address_type(&sr->local->host->addr)->mask_cnt/*32 or 128*/);
@@ -151,7 +151,7 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDipaddr("PLUTO_PEER_CLIENT_NET",
 		 (!tunneling && child != NULL &&
-		  LHAS(child->sa.hidden_variables.st_nat_traversal, NATED_PEER)) ?
+		  child->sa.hidden_variables.st_nated_peer) ?
 		 sr->remote->host->addr : selector_prefix(sr->remote->client));
 
 	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->remote->client));

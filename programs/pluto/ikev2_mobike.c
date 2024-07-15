@@ -265,7 +265,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 	if (ntfy_update_sa) {
-		if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+		if (ike->sa.hidden_variables.st_nated_host) {
 			llog_sa(RC_LOG, ike,
 				  "Ignoring MOBIKE UPDATE_SA since we are behind NAT");
 		} else {
@@ -276,7 +276,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 	if (!ntfy_update_sa && ntfy_natd &&
-	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
+	    !ike->sa.hidden_variables.st_nated_host) {
 		/*
 		 * If this is a MOBIKE probe, use the received IP:port
 		 * for only this reply packet, without updating IKE
@@ -335,7 +335,7 @@ static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *
 void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 {
 	if (mobike_check_established(ike) &&
-	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
+	    !ike->sa.hidden_variables.st_nated_host &&
 	    !endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
 		/* swap out the remote-endpoint; restored below */
 		ip_endpoint old_remote = ike->sa.st_remote_endpoint;

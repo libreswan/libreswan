@@ -251,7 +251,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	if (!ike_auth_exchange) {
 		dbg("skipping CP, not IKE_AUTH request");
-	} else if (send_v2CP_request(cc, LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))) {
+	} else if (send_v2CP_request(cc, ike->sa.hidden_variables.st_nated_host)) {
 		if (!emit_v2CP_request(larval_child, pbs)) {
 			return false;
 		}
@@ -1190,7 +1190,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	}
 
 	if (need_v2CP_response(child->sa.st_connection,
-			       LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))) {
+			       ike->sa.hidden_variables.st_nated_host)) {
 		if (response_md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/*
 			 * not really anything to here... but it would

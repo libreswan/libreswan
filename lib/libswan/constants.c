@@ -212,13 +212,10 @@ static const char *const natt_method_name[] = {
 	[NAT_TRAVERSAL_METHOD_IETF_02_03] = "draft-ietf-ipsec-nat-t-ike-02/03",
 	[NAT_TRAVERSAL_METHOD_IETF_05] = "draft-ietf-ipsec-nat-t-ike-05",
 	[NAT_TRAVERSAL_METHOD_IETF_RFC] = "RFC 3947 (NAT-Traversal)",
-
-	[NATED_HOST] = "I am behind NAT",
-	[NATED_PEER] = "peer behind NAT",
 };
 
 enum_names natt_method_names = {
-	NAT_TRAVERSAL_METHOD_none, NATED_PEER,
+	NAT_TRAVERSAL_METHOD_none, NAT_TRAVERSAL_METHOD_IETF_RFC,
 	ARRAY_REF(natt_method_name),
 	NULL, /* prefix */
 	NULL

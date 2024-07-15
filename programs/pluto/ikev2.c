@@ -1462,8 +1462,8 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	     * Only when the local IKE SA isn't behind NAT but the
 	     * remote IKE SA is ...
 	     */
-	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
-	    LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_PEER)) {
+	    !ike->sa.hidden_variables.st_nated_host &&
+	    ike->sa.hidden_variables.st_nated_peer) {
 		/*
 		 * XXX: are these guards sufficient?
 		 */

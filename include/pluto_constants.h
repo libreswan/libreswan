@@ -166,21 +166,14 @@ enum sd_actions {
 };
 
 /*
- * NAT-Traversal defines for nat_traveral type from nat_traversal.h
- *
+ * NAT-Traversal defines for nat_traveral type from nat_traversal.h.
  * Elements for a set.
- * The first members are used to specify the type of NAT Traversal.
- * The second part says which ends are doing NAT.
- * ??? perhaps these ought to be partitioned into separate sets.
  */
 enum natt_method {
 	NAT_TRAVERSAL_METHOD_none,	/* unknown or unspecified */
 	NAT_TRAVERSAL_METHOD_IETF_02_03,
 	NAT_TRAVERSAL_METHOD_IETF_05,	/* same as RFC */
 	NAT_TRAVERSAL_METHOD_IETF_RFC,
-
-	NATED_HOST,	/* we are behind NAT */
-	NATED_PEER	/* peer is behind NAT */
 };
 
 /* Timer events */
