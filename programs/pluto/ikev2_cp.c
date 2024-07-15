@@ -82,11 +82,11 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 }
 
 static bool need_v2CP_payload(const struct connection *const cc,
-			      const lset_t st_nat_traversal)
+			      bool this_end_behind_nat)
 {
 	if (cc->local->host.config->modecfg.client &&
 	    cc->local->child.config->has_client_address_translation &&
-	    LHAS(st_nat_traversal, NATED_HOST)) {
+	    this_end_behind_nat) {
 		return true;
 	}
 	if (cc->local->host.config->modecfg.client &&
@@ -97,15 +97,15 @@ static bool need_v2CP_payload(const struct connection *const cc,
 }
 
 bool need_v2CP_response(const struct connection *const cc,
-			const lset_t st_nat_traversal)
+			bool this_end_behind_nat)
 {
-	return need_v2CP_payload(cc, st_nat_traversal);
+	return need_v2CP_payload(cc, this_end_behind_nat);
 }
 
 bool send_v2CP_request(const struct connection *const cc,
-		       const lset_t st_nat_traversal)
+		       bool this_end_behind_nat)
 {
-	bool send = (need_v2CP_payload(cc, st_nat_traversal) ||
+	bool send = (need_v2CP_payload(cc, this_end_behind_nat) ||
 		     cc->config->modecfg.domains != NULL ||
 		     cc->config->modecfg.dns.len > 0);
 	ldbg_cp(cc->logger, cc, "send-v2CP=%s", bool_str(send));
