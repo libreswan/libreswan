@@ -4483,7 +4483,7 @@ name for -1 present (should be absent)
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
 
-  natt_method_names: [0..6)
+  natt_method_names: [0..4)
     0 -> none
          jam_enum 0: none OK
          search none: OK
@@ -4513,20 +4513,6 @@ name for -1 present (should be absent)
          short_name 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_short 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_human 3: rfc 3947 (nat-traversal) OK
-    4 -> I am behind NAT
-         jam_enum 4: I am behind NAT OK
-         search I am behind NAT: OK
-         match I am behind NAT: OK
-         short_name 4: I am behind NAT OK
-         jam_enum_short 4: I am behind NAT OK
-         jam_enum_human 4: i am behind nat OK
-    5 -> peer behind NAT
-         jam_enum 5: peer behind NAT OK
-         search peer behind NAT: OK
-         match peer behind NAT: OK
-         short_name 5: peer behind NAT OK
-         jam_enum_short 5: peer behind NAT OK
-         jam_enum_human 5: peer behind nat OK
 
   oakley_attr_bit_names: [1..17)
     1 -> OAKLEY_ENCRYPTION_ALGORITHM
