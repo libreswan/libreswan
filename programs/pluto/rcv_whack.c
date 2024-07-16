@@ -43,7 +43,6 @@
 #include "root_certs.h"			/* for free_root_certs() */
 #include "server.h"			/* for listening; */
 #include "ikev2_liveness.h"		/* for submit_v2_liveness_exchange() */
-#include "send.h"			/* for send_keepalive_using_state() */
 #include "impair_message.h"		/* for add_message_impairment() */
 #include "pluto_sd.h"			/* for pluto_sd() */
 #ifdef USE_XFRM_INTERFACE
