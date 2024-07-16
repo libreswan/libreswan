@@ -56,8 +56,8 @@ void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logg
 		nat_keepalive_period = keep_alive_period;
 	}
 
-	llog(RC_LOG, logger, "NAT-Traversal: keep-alive timer initialized period %jds",
-	     deltasecs(keep_alive_period));
+	llog(RC_LOG, logger, "NAT-Traversal: keep-alive timer initialized, period %jds",
+	     deltasecs(nat_keepalive_period));
 
 	init_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_traversal_ka_event);
 }
