@@ -198,6 +198,11 @@ ipsec_redirect() {
 		echo "${usage}"
 		exit 0
 		;;
+	    --config)
+		IPSEC_CONF="${2}"
+		export IPSEC_CONF
+		shift
+		;;
 	    --redirect-to)
 		redirect_to="${2}"
 		shift
@@ -347,6 +352,11 @@ ipsec_whack() {
 		;;
 	    --asynchronous)
 		asynchronous="${1}"
+		;;
+	    --config)
+		IPSEC_CONF="${2}"
+		export IPSEC_CONF
+		shift
 		;;
 	    --ctlsocket)
 		CTLSOCKET="${2}"
