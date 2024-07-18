@@ -65,37 +65,46 @@ ipsec_add() {
 	    add|--add)
 		usage="Usage: ipsec add connectionname|--chekcconfig \\
 		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+		shift
 		;;
 	    replace|--replace)
 		usage="Usage: ipsec replace connectionname \\
 		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+		shift
 		;;
 	    checkconfig)
 		usage="Usage: ipsec checkconfig [--config ${IPSEC_CONF}] [--verbose]"
 		checkconfig="--checkconfig"
+		shift
 		;;
 	    help|--help|-h)
 		echo "${usage}"
+		shift
 		exit 0
 		;;
 	    --config)
 		IPSEC_CONF="${2}"
 		export IPSEC_CONF
 		shift
+		shift
 		;;
 	    --ctlsocket)
 		CTLSOCKET="${2}"
 		export CTLSOCKET
 		shift
+		shift
 		;;
 	    --dry-run|-n)
 		dry_run="echo"
+		shift
 		;;
 	    --verbose)
-		verbose="${verbose} ${1}"
+		verbose="${1}"
+		shift
 		;;
 	    --checkconfig)
 		checkconfig="${1}"
+		shift
 		;;
 	    -*)
 		echo "Unknown option \"${1}\"" >&2
@@ -105,9 +114,9 @@ ipsec_add() {
 		;;
 	    *)
 		conn_name="${1}"
+		shift
 		;;
 	esac
-	shift
     done
     # addconn performs a replace.  FIrst it deletes all connections
     # and aliases matching ${conn_name} and then creates a new
@@ -130,12 +139,38 @@ ipsec_combined() {
 		usage="Usage: ipsec ondemand [--asynchronous] connectionname \\
 		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
 		[--ctlsocket ${CTLSOCKET}] [--verbose]"
+		shift
+		case ${1} in
+		    --asynchronous)
+			asynchronous="${1}"
+			shift
+			;;
+		esac
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    start|--start)
 		cmd="--initiate"
 		usage="Usage: ipsec start [--asynchronous] connectionname \\
 		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
 		[--ctlsocket ${CTLSOCKET}] [--verbose]"
+		shift
+		case ${1} in
+		    --asynchronous)
+			asynchronous="${1}"
+			shift
+			;;
+		esac
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    help|--help|-h)
 		echo "${usage}"
@@ -143,25 +178,31 @@ ipsec_combined() {
 		;;
 	    --asynchronous)
 		asynchronous="${1}"
+		shift
 		;;
 	    --config)
 		IPSEC_CONF="${2}"
 		export IPSEC_CONF
+		shift
 		shift
 		;;
 	    --ctlsocket)
 		CTLSOCKET="${2}"
 		export CTLSOCKET
 		shift
+		shift
 		;;
 	    --dry-run|-n)
 		dry_run="echo"
+		shift
 		;;
 	    --verbose)
-		verbose="${verbose} ${1}"
+		verbose="${1}"
+		shift
 		;;
 	    --remote-host)
 		remote_host="--remote-host ${2}"
+		shift
 		shift
 		;;
 	    -*)
@@ -172,9 +213,9 @@ ipsec_combined() {
 		;;
 	    *)
 		conn_name="${1}"
+		shift
 		;;
 	esac
-	shift
     done
     ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
     ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} --name ${conn_name} ${cmd} ${remote_host}
@@ -193,6 +234,13 @@ ipsec_redirect() {
 		cmd="--redirect-to"
 		usage="Usage: ipsec redirect [connectionname] --redirect-to {ip-address,...} \\
 		[--ctlsocket ${CTLSOCKET}]"
+		shift
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    help|--help|-h)
 		echo "${usage}"
@@ -202,20 +250,24 @@ ipsec_redirect() {
 		IPSEC_CONF="${2}"
 		export IPSEC_CONF
 		shift
+		shift
 		;;
 	    --redirect-to)
 		redirect_to="${2}"
+		shift
 		shift
 		;;
 	    --ctlsocket)
 		CTLSOCKET="${2}"
 		export CTLSOCKET
 		shift
+		shift
 		;;
 	    --dry-run|-n)
 		dry_run="echo"
+		shift
 		;;
-	    -*)
+	    -*|"")
 		echo "Unknown option \"${1}\"" >&2
 		echo  >&2
 		echo "${usage}" >&2
@@ -223,9 +275,9 @@ ipsec_redirect() {
 		;;
 	    *)
 		conn_name="${1}"
+		shift
 		;;
 	esac
-	shift
     done
     ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd} "${redirect_to}"
     exit $?
@@ -243,108 +295,170 @@ ipsec_whack() {
 	    briefstatus|--briefstatus)
 		cmd="--briefstatus"
 		usage="Usage: ipsec briefstatus [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    checkpubkeys|--checkpubkeys)
 		cmd="--checkpubkeys"
 		usage="Usage: ipsec checkpubkeys [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    connectionstatus|--connectionstatus)
 		cmd="--connectionstatus"
 		usage="Usage: ipsec connectionstatus [connnectionname] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    briefconnectionstatus|--briefconnectionstatus)
 		cmd="--briefconnectionstatus"
 		usage="Usage: ipsec briefconnectionstatus [connnectionname] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    delete|--delete)
 		cmd="--delete"
 		usage="Usage: ipsec delete connectionname [--ctlsocket ${CTLSOCKET}]"
+		shift
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    down|--down|terminate)
 		cmd="--terminate" # or --down
 		usage="Usage: ipsec down connectionname \\
 		[--remote-host ipaddr] [--ctlsocket ${CTLSOCKET}]"
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
+		shift
 		;;
 	    fetchcrls|--fetchcrls|crls)
 		cmd="--fetchcrls"
 		usage="Usage: ipsec fetchcrls [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    fipsstatus|--fipsstatus|fips)
 		cmd="--fipsstatus"
 		usage="Usage: ipsec fipsstatus [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    globalstatus|--globalstatus)
 		cmd="--globalstatus"
 		usage="Usage: ipsec globalstatus [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    listall|--listall)
 		cmd="--listall"
 		usage="Usage: ipsec listall [--utc] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    listcacerts|--listcacerts)
 		cmd="--listcacerts"
 		usage="Usage: ipsec listcacerts [--utc] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    listcerts|--listcerts)
 		cmd="--listcerts"
 		usage="Usage: ipsec listcerts [--utc] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    listcrls|--listcrls)
 		cmd="--listcrls"
 		usage="Usage: ipsec listcrls [--utc] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    listen|--listen|--ready|--rereadgroups)
 		cmd="--listen"
 		usage="Usage: ipsec listen [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    listpubkeys|--listpubkeys)
 		cmd="--listpubkeys"
 		usage="Usage: ipsec listpubkeys [--utc] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    purgeocsp|--purgeocsp)
 		cmd="--purgeocsp"
 		usage="Usage: ipsec purgeocsp [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    rereadall|--rereadall)
 		cmd="--rereadall"
 		usage="Usage: ipsec rereadall [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    rereadcerts|--rereadcerts)
 		cmd="--rereadcerts"
 		usage="Usage: ipsec rereadcerts [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    rereadsecrets|--rereadsecrets|secrets)
 		cmd="--rereadsecrets"
 		usage="Usage: ipsec rereadsecrets|secrets [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    route|--route)
 		cmd="--route"
 		usage="Usage: ipsec route connectionname [--ctlsocket ${CTLSOCKET}]"
+		shift
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    showstates|--showstates|--statestatus)
 		cmd="--showstates"
 		usage="Usage: ipsec showstates [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    shuntstatus|--shuntstatus)
 		cmd="--shuntstatus"
 		usage="Usage: ipsec shuntstatus [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    status|--status)
 		cmd="--status"
 		usage="Usage: ipsec status [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    trafficstatus|--trafficstatus|traffic)
 		cmd="--trafficstatus"
-		usage="Usage: ipsec trafficstatus connectionname [--ctlsocket ${CTLSOCKET}]"
+		usage="Usage: ipsec trafficstatus [connectionname] [--ctlsocket ${CTLSOCKET}]"
+		shift
 		;;
 	    unroute|--unroute)
 		cmd="--unroute"
 		usage="Usage: ipsec unroute connectionname [--ctlsocket ${CTLSOCKET}]"
+		shift
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    up|--up|initiate|--initiate)
 		cmd="--initiate"
 		usage="Usage: ipsec up [--asynchronous] connectionname \\
 		[--remote-host ipaddr] [--ctlsocket ${CTLSOCKET}]"
+		shift
+		case ${1} in
+		    --asynchronous)
+			asynchronous="${1}"
+			shift
+			;;
+		esac
+		case ${1} in
+		    "")
+			echo "${usage}" >&2
+			exit 2
+			;;
+		esac
 		;;
 	    help|--help|-h)
 		echo "${usage}"
@@ -352,29 +466,36 @@ ipsec_whack() {
 		;;
 	    --asynchronous)
 		asynchronous="${1}"
+		shift
 		;;
 	    --config)
 		IPSEC_CONF="${2}"
 		export IPSEC_CONF
+		shift
 		shift
 		;;
 	    --ctlsocket)
 		CTLSOCKET="${2}"
 		export CTLSOCKET
 		shift
+		shift
 		;;
 	    --remote-host)
 		remote_host="--remote-host ${2}"
 		shift
+		shift
 		;;
 	    --dry-run|-n)
 		dry_run="echo"
+		shift
 		;;
 	    --utc)
 		utc="${1}"
+		shift
 		;;
 	    --verbose)
-		verbose="${verbose} ${1}"
+		verbose="${1}"
+		shift
 		;;
 	    -*)
 		echo "Unknown option \"${1}\"" >&2
@@ -384,9 +505,9 @@ ipsec_whack() {
 		;;
 	    *)
 		conn_name="--name ${1}"
+		shift
 		;;
 	esac
-	shift
     done
     ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host}
     exit $?
