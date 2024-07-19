@@ -186,6 +186,7 @@ enum natt_method {
 extern const struct enum_names global_timer_names;
 
 enum global_timer {
+#define GLOBAL_TIMER_FLOOR 0
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
@@ -199,8 +200,7 @@ enum global_timer {
 #define RESET_LOG_LIMITER_FREQUENCY	deltatime(secs_per_hour)
 
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
-
-	EVENT_PROCESS_KERNEL_QUEUE,	/* non-netkey */
+#define GLOBAL_TIMER_ROOF (EVENT_NAT_T_KEEPALIVE+1)
 };
 
 /*

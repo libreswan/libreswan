@@ -2583,12 +2583,11 @@ static const char *global_timer_name[] = {
 	S(EVENT_CHECK_CRLS),
 	S(EVENT_FREE_ROOT_CERTS),
 	S(EVENT_RESET_LOG_LIMITER),
-	S(EVENT_PROCESS_KERNEL_QUEUE),
 	S(EVENT_NAT_T_KEEPALIVE),
 #undef S
 };
 const struct enum_names global_timer_names = {
-	0, elemsof(global_timer_name) - 1,
+	GLOBAL_TIMER_FLOOR, GLOBAL_TIMER_ROOF-1,
 	ARRAY_REF(global_timer_name),
 	"EVENT_",
 	NULL,

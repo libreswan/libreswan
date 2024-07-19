@@ -253,7 +253,6 @@ static struct global_timer_desc global_timers[] = {
 	E(EVENT_CHECK_CRLS),
 	E(EVENT_FREE_ROOT_CERTS),
 	E(EVENT_RESET_LOG_LIMITER),
-	E(EVENT_PROCESS_KERNEL_QUEUE),
 	E(EVENT_NAT_T_KEEPALIVE),
 #undef E
 };
