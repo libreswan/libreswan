@@ -607,6 +607,8 @@ struct state {
 
 	struct state_event *st_event;			/* generic timer event for one-off events */
 
+	struct state_event *st_nat_keepalive_event;
+
 	struct state_event *st_v1_retransmit_event;
 	struct state_event *st_v1_send_xauth_event;
 

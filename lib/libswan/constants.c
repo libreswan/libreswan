@@ -2619,13 +2619,14 @@ static const char *const event_v1_name[] = {
 	S(EVENT_v1_REPLACE),
 	S(EVENT_v1_DISCARD),
 	S(EVENT_v1_RETRANSMIT),
+	S(EVENT_v1_NAT_KEEPALIVE),
 	S(EVENT_v1_CRYPTO_TIMEOUT),
 	S(EVENT_v1_EXPIRE),
 #undef S
 };
 
 static const enum_names event_v1_names = {
-	EVENT_v1_SEND_XAUTH, EVENT_v1_REPLACE,
+	EVENT_v1_FLOOR, EVENT_v1_ROOF-1,
 	ARRAY_REF(event_v1_name),
 	"EVENT_v1_", /* prefix */
 	&event_names
@@ -2642,12 +2643,13 @@ static const char *const event_v2_name[] = {
 	S(EVENT_v2_LIVENESS),
 	S(EVENT_v2_ADDR_CHANGE),
 	S(EVENT_v2_RETRANSMIT),
+	S(EVENT_v2_NAT_KEEPALIVE),
 	S(EVENT_v2_EXPIRE),
 #undef S
 };
 
 static const enum_names event_v2_names = {
-	EVENT_v2_REKEY, EVENT_v2_ADDR_CHANGE,
+	EVENT_v2_FLOOR, EVENT_v2_ROOF-1,
 	ARRAY_REF(event_v2_name),
 	"EVENT_v2_", /* prefix */
 	&event_v1_names,

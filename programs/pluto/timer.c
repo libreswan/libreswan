@@ -147,6 +147,10 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v2_DISCARD:
 		return &st->st_event;
 
+	case EVENT_v1_NAT_KEEPALIVE:
+	case EVENT_v2_NAT_KEEPALIVE:
+		return &st->st_nat_keepalive_event;
+
 	case EVENT_RETAIN:
 	case EVENT_NULL:
 		return NULL;
