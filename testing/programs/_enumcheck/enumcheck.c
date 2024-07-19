@@ -378,9 +378,10 @@ int main(int argc UNUSED, char *argv[])
 				{ EVENT_v1_DISCARD, EVENT_v2_DISCARD, },
 				{ EVENT_v1_REPLACE, EVENT_v2_REPLACE, },
 				{ EVENT_v1_RETRANSMIT, EVENT_v2_RETRANSMIT, },
+				{ EVENT_v1_NAT_KEEPALIVE, EVENT_v2_NAT_KEEPALIVE, },
 				{ -1, -1, },
 			};
-			test_enums("event_type_names", &event_type_names, clash);
+			test_enums("event_type_names", c->enum_names, clash);
 		} else {
 			test_enums(c->name, c->enum_names, NULL);
 		}
