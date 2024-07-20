@@ -1149,7 +1149,7 @@
          jam_enum_human 2: on OK
          match ON [short]: OK
 
-  global_timer_names: [0..8)
+  global_timer_names: [0..7)
     0 -> EVENT_REINIT_SECRET
          jam_enum 0: EVENT_REINIT_SECRET OK
          search EVENT_REINIT_SECRET: OK
@@ -1206,14 +1206,6 @@
          jam_enum_short 6: RESET_LOG_LIMITER OK
          jam_enum_human 6: reset-log-limiter OK
          match RESET_LOG_LIMITER [short]: OK
-    7 -> EVENT_NAT_T_KEEPALIVE
-         jam_enum 7: EVENT_NAT_T_KEEPALIVE OK
-         search EVENT_NAT_T_KEEPALIVE: OK
-         match EVENT_NAT_T_KEEPALIVE: OK
-         short_name 7: NAT_T_KEEPALIVE OK
-         jam_enum_short 7: NAT_T_KEEPALIVE OK
-         jam_enum_human 7: nat-t-keepalive OK
-         match NAT_T_KEEPALIVE [short]: OK
 
   ike_cert_type_names: [1..11)
     1 -> CERT_PKCS7_WRAPPED_X509
