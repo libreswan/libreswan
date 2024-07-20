@@ -70,6 +70,8 @@
 #include "ikev1_replace.h"
 #include "ikev2_replace.h"
 #include "terminate.h"
+#include "ikev1_nat.h"
+#include "ikev2_nat.h"
 
 static void dispatch_event(struct state *st, enum event_type event_type,
 			   deltatime_t event_delay, struct logger *logger,
@@ -532,6 +534,17 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		/* note: no md->st to clear */
 		break;
 
+
+	case EVENT_v1_NAT_KEEPALIVE:
+		state_attach(st, logger);
+		event_v1_nat_keepalive(st);
+		state_detach(st, logger);
+		break;
+	case EVENT_v2_NAT_KEEPALIVE:
+		state_attach(st, logger);
+		event_v2_nat_keepalive(pexpect_ike_sa(st));
+		state_detach(st, logger);
+		break;
 
 	default:
 		bad_case(event_type);

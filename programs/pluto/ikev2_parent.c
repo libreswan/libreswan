@@ -190,9 +190,10 @@ void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 	}
 }
 
-void v2_ike_sa_established(struct ike_sa *ike)
+void v2_ike_sa_established(struct ike_sa *ike, where_t where)
 {
-	connection_establish_ike(ike, HERE);
+	connection_establish_ike(ike, where);
+	schedule_v2_nat_keepalive(ike, where);
 	pstat_sa_established(&ike->sa);
 }
 

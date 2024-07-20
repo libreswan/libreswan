@@ -199,8 +199,7 @@ enum global_timer {
 	EVENT_RESET_LOG_LIMITER,	/* set rate limited log message count back to 0 */
 #define RESET_LOG_LIMITER_FREQUENCY	deltatime(secs_per_hour)
 
-	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
-#define GLOBAL_TIMER_ROOF (EVENT_NAT_T_KEEPALIVE+1)
+#define GLOBAL_TIMER_ROOF (EVENT_RESET_LOG_LIMITER+1)
 };
 
 /*

@@ -79,12 +79,6 @@ void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logg
 
 extern bool nat_traversal_enabled;
 
-/**
- * NAT-keep_alive
- */
-void nat_traversal_new_ka_event(void);
-void nat_traversal_ka_event(struct logger *logger);
-
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 
 /**
@@ -127,5 +121,12 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 			   const ip_endpoint endpoint,
 			   struct logger *logger);
 
-#endif /* _NAT_TRAVERSAL_H_ */
+/**
+ * NAT-keep_alive
+ */
+void schedule_v2_nat_keepalive(struct ike_sa *ike, where_t where);
+void schedule_v1_nat_keepalive(struct state *st);
+void event_v1_nat_keepalive(struct state *st);
+void event_v2_nat_keepalive(struct ike_sa *ike);
 
+#endif /* _NAT_TRAVERSAL_H_ */

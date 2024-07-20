@@ -808,7 +808,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	 * Update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	v2_ike_sa_established(ike);
+	v2_ike_sa_established(ike, HERE);
 
 	/*
 	 * Wipes any connections that were using an old version of
@@ -848,14 +848,6 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 				on_delete(old_p2, skip_send_delete);
 				event_force(EVENT_v2_DISCARD, old_p2);
 			}
-		}
-	}
-
-	if (ike->sa.hidden_variables.st_nated_host) {
-		/* ensure we run keepalives if needed */
-		if (c->config->nat_keepalive) {
-			/* XXX: just trigger this event? */
-			nat_traversal_ka_event(ike->sa.logger);
 		}
 	}
 
@@ -1111,7 +1103,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	passert(ike->sa.st_v2_transition->timeout_event == EVENT_v2_REPLACE);
 	passert(ike->sa.st_v2_transition->to == &state_v2_ESTABLISHED_IKE_SA);
 	change_v2_state(&ike->sa);
-	v2_ike_sa_established(ike);
+	v2_ike_sa_established(ike, HERE);
 
 	/*
 	 * IF there's a redirect, process it and return immediately.
@@ -1124,22 +1116,6 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	ike->sa.st_v2_mobike.enabled =
 		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
-
-	/*
-	 * Keep the portal open ...
-	 */
-	if (ike->sa.hidden_variables.st_nated_host) {
-		/* ensure we run keepalives if needed */
-		if (c->config->nat_keepalive) {
-			/*
-			 * Trigger a keep alive for all states.
-			 *
-			 * XXX: call nat_traversal_new_ka_event()
-			 * instead?  There's no hurry right?
-			 */
-			nat_traversal_ka_event(ike->sa.logger);
-		}
-	}
 
 	/*
 	 * Figure out of the child is both expected and viable.

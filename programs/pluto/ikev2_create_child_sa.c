@@ -230,7 +230,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	change_v2_state(&new_ike->sa); /* should trash .st_v2_transition */
 
 	/* child is now a parent */
-	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
+	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa), HERE);
 
 	/* Schedule for whatever timeout is specified */
 	delete_event(&new_ike->sa); /* relying on replace */
