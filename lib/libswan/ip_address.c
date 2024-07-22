@@ -37,6 +37,36 @@ ip_address address_from_raw(where_t where, enum ip_version version,
 	return a;
 }
 
+err_t data_to_address(const void *data, size_t sizeof_data,
+		      const struct ip_info *afi, ip_address *dst)
+{
+	if (afi == NULL) {
+		*dst = unset_address;
+		return "unknown address family";
+	}
+	switch (afi->af) {
+	case AF_INET:
+		if (sizeof_data != 4)
+			return "IPv4 address must be exactly 4 bytes";
+		passert(sizeof_data == sizeof(struct in_addr));
+		struct in_addr in; /* force alignment of data */
+		memcpy(&in, data, sizeof_data);
+		*dst = address_from_in_addr(&in);
+		break;
+	case AF_INET6:
+		if (sizeof_data != 16)
+			return "IPv6 address must be exactly 16 bytes";
+		passert(sizeof_data == sizeof(struct in6_addr));
+		struct in6_addr in6; /* force alignment of data */
+		memcpy(&in6, data, sizeof_data);
+		*dst = address_from_in6_addr(&in6);
+		break;
+	default:
+		bad_case(afi->af);
+	}
+	return NULL;
+}
+
 ip_address address_from_in_addr(const struct in_addr *in)
 {
 	struct ip_bytes bytes = { .byte = { 0, }, };

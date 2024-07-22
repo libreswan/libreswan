@@ -54,7 +54,6 @@ OBJS += state_category_names.o
 
 OBJS += constants.o \
 	id.o \
-	initaddr.o \
 	lex.o \
 	lswconf.o \
 	sameaddr.o \
