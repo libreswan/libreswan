@@ -119,7 +119,7 @@ size_t jam_diag(struct jambuf *buf, diag_t diag)
 	return jam_string(buf, str_diag(diag));
 }
 
-void llog_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
+void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
 	       const char *fmt, ...)
 {
 	LLOG_JAMBUF(rc_flags, logger, buf) {
@@ -132,7 +132,7 @@ void llog_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
 	pfree_diag(diag);
 }
 
-void fatal_diag(enum pluto_exit_code rc, struct logger *logger, diag_t *diag,
+void fatal_diag(enum pluto_exit_code rc, const struct logger *logger, diag_t *diag,
 		const char *fmt, ...)
 {
 	LLOG_JAMBUF(FATAL_STREAM, logger, buf) {

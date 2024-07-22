@@ -29,14 +29,22 @@ typedef struct diag *diag_t;
 
 diag_t diag(const char *message, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
 diag_t diag_errno(int error, const char *message, ...) PRINTF_LIKE(2) MUST_USE_RESULT;
-diag_t diag_va_list(const char *fmt, va_list ap) VPRINTF_LIKE(1) MUST_USE_RESULT;
+diag_t diag_va_list(const char *message, va_list ap) VPRINTF_LIKE(1) MUST_USE_RESULT;
 diag_t diag_jambuf(struct jambuf *buf);
 
-diag_t diag_diag(diag_t *d, const char *message, ...) PRINTF_LIKE(2) MUST_USE_RESULT;
-void llog_diag(lset_t rc_flags, struct logger *logger, diag_t *diag,
-	       const char *fmt, ...) PRINTF_LIKE(4);
+/*
+ * Emit MESSSAGE immediately followed by DIAG.  DIAG is freed as part
+ * of the call.
+ *
+ * Note: MESSAGE must include any trailing punctuation such as ", " or
+ * ": ".
+ */
 
-void fatal_diag(enum pluto_exit_code rc, struct logger *logger, diag_t *diag,
+diag_t diag_diag(diag_t *diag, const char *message, ...) PRINTF_LIKE(2) MUST_USE_RESULT;
+void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
+	       const char *message, ...) PRINTF_LIKE(4);
+
+void fatal_diag(enum pluto_exit_code rc, const struct logger *logger, diag_t *diag,
 		const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
 const char *str_diag(diag_t diag);
