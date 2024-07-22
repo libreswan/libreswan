@@ -31,22 +31,20 @@
 /* for ipsec0 we need to map it to a different if_id */
 #define PLUTO_XFRMI_REMAP_IF_ID_ZERO	16384
 
-/* And IPv6 str can be 8 4-character groups, separated by a colon (7 max).
- * Also includes room for netmask "/NN" and newline */
-#define MAX_IP_CIDR_STR_LEN 44
-
 #define XFRMI_SUCCESS 0
 #define XFRMI_FAILURE 1
 
 struct connection;
 struct logger;
 
-/* The same interface IP can be used by multiple tunnels, with different remote
- * IPs, so they are ref-counted to control removing the IP from the IF. */
+/*
+ * The same interface IP can be used by multiple tunnels, with
+ * different remote IPs, so they are ref-counted to control removing
+ * the IP from the IF.
+ */
 struct pluto_xfrmi_ipaddr {
-	ip_cidr if_ip;
-	char if_ip_str[MAX_IP_CIDR_STR_LEN];
 	refcnt_t refcnt;
+	ip_cidr if_ip;
 	bool pluto_added;
 	struct pluto_xfrmi_ipaddr *next;
 };

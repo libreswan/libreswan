@@ -437,8 +437,11 @@ static struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
 	struct pluto_xfrmi_ipaddr *xfrmi_ipaddr;
 	for (xfrmi_ipaddr = xfrmi->if_ips; xfrmi_ipaddr != NULL; xfrmi_ipaddr = xfrmi_ipaddr->next) {
 		if (cidr_eq_cidr(xfrmi_ipaddr->if_ip, *search_cidr)) {
-			ldbg(logger, "find_xfrmi_ipaddr() found IP [%s] for xfrmi IF [%s] id [%d]",
-					xfrmi_ipaddr->if_ip_str, xfrmi->name, xfrmi->if_id);
+			cidr_buf cb;
+			ldbg(logger, "%s() found IP [%s] for xfrmi IF [%s] id [%d]",
+			     __func__,
+			     str_cidr(&xfrmi_ipaddr->if_ip, &cb),
+			     xfrmi->name, xfrmi->if_id);
 
 			return xfrmi_ipaddr;
 		}
@@ -511,8 +514,11 @@ static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	ldbg(logger, "unreference_xfrmi_ip() xfrmi_ipaddr=%p name=%s if_id=%u IP [%s] refcount=%u (before).",
-		 refd_xfrmi_ipaddr, c->xfrmi->name, c->xfrmi->if_id, refd_xfrmi_ipaddr->if_ip_str,
+	cidr_buf cb;
+	ldbg(logger, "%s() xfrmi_ipaddr=%p name=%s if_id=%u IP [%s] refcount=%u (before).",
+	     __func__,
+	     refd_xfrmi_ipaddr, c->xfrmi->name, c->xfrmi->if_id,
+	     str_cidr(&refd_xfrmi_ipaddr->if_ip, &cb),
 	     refcnt_peek(refd_xfrmi_ipaddr, logger));
 
 	/* Decrement the reference:
@@ -532,14 +538,19 @@ static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
 		struct pluto_xfrmi_ipaddr *p = c->xfrmi->if_ips;
 
 		while (p != NULL && p != xfrmi_ipaddr_unref) {
-			ldbg(logger, "p=%p xfrmi_ipaddr=%p IP [%s]", p, xfrmi_ipaddr_unref, p->if_ip_str);
+			cidr_buf cb;
+			ldbg(logger, "p=%p xfrmi_ipaddr=%p IP [%s]",
+			     p, xfrmi_ipaddr_unref,
+			     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 			prev = p;
 			p = p->next;
 		}
 
 		if (p == NULL) {
-			ldbg(logger, "p=%p xfrmi=%s if_id=%u IP [%s] not found in the list", c->xfrmi,
-					c->xfrmi->name, c->xfrmi->if_id, xfrmi_ipaddr_unref->if_ip_str);
+			cidr_buf cb;
+			ldbg(logger, "p=%p xfrmi=%s if_id=%u IP [%s] not found in the list",
+			     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
+			     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 		} else {
 			prev->next = p->next;
 		}
@@ -548,13 +559,17 @@ static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
 	/* Check if the IP should be removed from the interface */
 	if (xfrmi_ipaddr_unref->pluto_added) {
 		ip_addr_xfrmi_del(c->xfrmi->name, xfrmi_ipaddr_unref, logger);
+		cidr_buf cb;
 		llog(RC_LOG, logger,
-				"delete ipsec-interface=%s if_id=%u IP [%s] added by pluto",
-				c->xfrmi->name, c->xfrmi->if_id, xfrmi_ipaddr_unref->if_ip_str);
+		     "delete ipsec-interface=%s if_id=%u IP [%s] added by pluto",
+		     c->xfrmi->name, c->xfrmi->if_id,
+		     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 	} else {
+		cidr_buf cb;
 		llog(RC_LOG, logger,
-				"cannot delete ipsec-interface=%s if_id=%u IP [%s], not created by pluto",
-				c->xfrmi->name, c->xfrmi->if_id, xfrmi_ipaddr_unref->if_ip_str);
+		     "cannot delete ipsec-interface=%s if_id=%u IP [%s], not created by pluto",
+		     c->xfrmi->name, c->xfrmi->if_id,
+		     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 	}
 
 	/* Free the memory */
@@ -727,16 +742,6 @@ static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 		if_ipaddr->if_ip.prefix_len = ifa->ifa_prefixlen;
 		if_ipaddr->pluto_added = false;
 		memcpy(if_ipaddr->if_ip.bytes.byte, local_addr, local_addr_len);
-		/* Create the IP string for logging */
-		if (local_addr_len == 4) {
-			/* IPv4 */
-			inet_ntop(AF_INET, local_addr, if_ipaddr->if_ip_str, MAX_IP_CIDR_STR_LEN);
-		} else {
-			/* IPv6 */
-			inet_ntop(AF_INET6, local_addr, if_ipaddr->if_ip_str, MAX_IP_CIDR_STR_LEN);
-		}
-		snprintf(if_ipaddr->if_ip_str+strlen(if_ipaddr->if_ip_str),
-			MAX_IP_CIDR_STR_LEN, "/%d", if_ipaddr->if_ip.prefix_len);
 	}
 
 	return XFRMI_SUCCESS;
@@ -1101,16 +1106,12 @@ static bool add_xfrm_interface_ip(struct connection *c, ip_cidr *conn_xfrmi_cidr
 	if (refd_xfrmi_ipaddr == NULL) {
 		/* This call will refcount the object */
 		refd_xfrmi_ipaddr = create_xfrmi_ipaddr(c->xfrmi);
-		refd_xfrmi_ipaddr->if_ip = *conn_xfrmi_cidr; /* object copy */
-		inet_ntop(((conn_xfrmi_cidr->version == IPv4) ? AF_INET : AF_INET6),
-					conn_xfrmi_cidr->bytes.byte,
-					refd_xfrmi_ipaddr->if_ip_str,
-					MAX_IP_CIDR_STR_LEN);
-		snprintf(refd_xfrmi_ipaddr->if_ip_str + strlen(refd_xfrmi_ipaddr->if_ip_str),
-				MAX_IP_CIDR_STR_LEN, "/%d", refd_xfrmi_ipaddr->if_ip.prefix_len);
+		refd_xfrmi_ipaddr->if_ip = *conn_xfrmi_cidr; /* value copy */
+		cidr_buf cb;
 		ldbg(logger,
-			 "add_xfrm_interface() created new pluto_xfrmi_ipaddr dev [%s] id [%d] IP [%s]",
-			 c->xfrmi->name, c->xfrmi->if_id, refd_xfrmi_ipaddr->if_ip_str);
+		     "%s() created new pluto_xfrmi_ipaddr dev [%s] id [%d] IP [%s]",
+		     __func__, c->xfrmi->name, c->xfrmi->if_id,
+		     str_cidr(&refd_xfrmi_ipaddr->if_ip, &cb));
 	} else {
 		/* The IP already exists, reference count it */
 		reference_xfrmi_ip(c->xfrmi, refd_xfrmi_ipaddr);
