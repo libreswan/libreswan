@@ -1989,7 +1989,7 @@ static bool xfrm_del_ipsec_spi(ipsec_spi_t spi,
 static struct ip_bytes bytes_from_xfrm_address(const struct ip_info *afi,
 					       const xfrm_address_t *xaddr)
 {
-	struct ip_bytes bytes = unset_ip_bytes; /* "zero" it & set type */
+	struct ip_bytes bytes = unset_ip_bytes;
 	memcpy(&bytes, xaddr, afi->ip_size);
 	return bytes;
 }
@@ -1997,8 +1997,15 @@ static struct ip_bytes bytes_from_xfrm_address(const struct ip_info *afi,
 static ip_address address_from_xfrm(const struct ip_info *afi,
 				    const xfrm_address_t *xaddr)
 {
-	struct ip_bytes bytes = bytes_from_xfrm_address(afi, xaddr);
-	return address_from_raw(HERE, afi->ip_version, bytes);
+	ip_address address = unset_address;
+	diag_t diag = data_to_address(xaddr, sizeof(*xaddr), afi, &address);
+	if (diag != NULL) {
+		llog_pexpect(&global_logger, HERE, "invalid xfrm address: %s",
+			     str_diag(diag));
+		pfree_diag(&diag);
+		return unset_address;
+	}
+	return address;
 }
 
 /*
