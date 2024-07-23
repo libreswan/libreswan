@@ -281,17 +281,20 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 	passert(result->data[0] != NULL);
 	passert(result->len != NULL);
 
-	if ((size_t)result->len[0] != afi->ip_size) {
-		llog_pexpect(logger, HERE, "dns record is %u bytes, expecting %zu",
-			     result->len[0], afi->ip_size);
+	/*
+	 * XXX: data_to_address() only requires the length >=
+	 * address-length.
+	 */
+	diag_t diag = data_to_address(result->data[0], (size_t)result->len[0], afi, ipaddr);
+	if (diag != NULL) {
+		llog_pexpect(logger, HERE, "invalid dns address record: %s",
+			     str_diag(diag));
+		pfree_diag(&diag);
 		ub_resolve_free(result);
 		return false;
 	}
 
-	struct ip_bytes bytes = unset_ip_bytes;
-	memcpy(bytes.byte, result->data[0], afi->ip_size);
-	*ipaddr = address_from_raw(HERE, afi->ip_version, bytes);
-	dbg("success for %s lookup", afi->ip_name);
+	ldbg(logger, "success for %s lookup", afi->ip_name);
 	return true;
 }
 
