@@ -67,6 +67,7 @@
 
 #include "lswalloc.h"
 #include "connections.h"
+#include "ip_info.h"
 #include "server.h" /* for struct iface_endpoint */
 #include "iface.h"
 #include "log.h"
@@ -737,11 +738,13 @@ static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 
 	if (local_addr != NULL) {
 		struct pluto_xfrmi_ipaddr *if_ipaddr = create_xfrmi_ipaddr(&if_rsp->result_if);
-		if_ipaddr->if_ip.version = (local_addr_len == 4 ? IPv4 : IPv6);
-		if_ipaddr->if_ip.is_set = true;
-		if_ipaddr->if_ip.prefix_len = ifa->ifa_prefixlen;
-		if_ipaddr->pluto_added = false;
-		memcpy(if_ipaddr->if_ip.bytes.byte, local_addr, local_addr_len);
+		diag_t diag = data_to_cidr(local_addr, local_addr_len, ifa->ifa_prefixlen,
+					   aftoinfo(ifa->ifa_family), &if_ipaddr->if_ip);
+		if (diag != NULL) {
+			llog_pexpect(&global_logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
+			pfree_diag(&diag);
+			return XFRMI_FAILURE;
+		}
 	}
 
 	return XFRMI_SUCCESS;
