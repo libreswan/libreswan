@@ -38,6 +38,32 @@ ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 	return cidr;
 }
 
+diag_t data_to_cidr(const void *data, size_t sizeof_data, unsigned prefix_len,
+		       const struct ip_info *afi, ip_cidr *dst)
+{
+	*dst = unset_cidr;
+
+	if (afi == NULL) {
+		return diag("unknown CIDR address family");
+	}
+
+	/* accept longer! */
+	if (sizeof_data < afi->ip_size) {
+		return diag("minimum %s CIDR address buffer length is %zu, not %zu",
+			    afi->ip_name, afi->ip_size, sizeof_data);
+	}
+
+	if (prefix_len > afi->mask_cnt) {
+		return diag("maximum %s CIDR prefix length is %u, not %u",
+			    afi->ip_name, afi->mask_cnt, prefix_len);
+	}
+
+	struct ip_bytes bytes = unset_ip_bytes;
+	memcpy(bytes.byte, data, afi->ip_size);
+	*dst = cidr_from_raw(HERE, afi->ip_version, bytes, prefix_len);
+	return NULL;
+}
+
 ip_cidr cidr_from_address(ip_address address)
 {
 	const struct ip_info *afi = address_info(address);

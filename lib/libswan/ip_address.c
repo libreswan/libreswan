@@ -52,7 +52,7 @@ diag_t data_to_address(const void *data, size_t sizeof_data,
 			    afi->ip_name, afi->ip_size, sizeof_data);
 	}
 
-	struct ip_bytes bytes = {0};
+	struct ip_bytes bytes = unset_ip_bytes;
 	memcpy(bytes.byte, data, afi->ip_size);
 	*dst = address_from_raw(HERE, afi->ip_version, bytes);
 	return NULL;

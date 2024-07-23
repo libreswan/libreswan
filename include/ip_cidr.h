@@ -53,6 +53,11 @@ ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 		      const struct ip_bytes bytes,
 		      unsigned prefix_bits);
 
+diag_t data_to_cidr(const void *data, size_t data_size, unsigned prefix_len,
+		    const struct ip_info *afi, ip_cidr *cidr) MUST_USE_RESULT;
+#define hunk_to_cidr(HUNK, PREFIX_LEN, AFI, CIDR) \
+	data_to_cidr((HUNK).ptr, (HUNK).len, PREFIX_LEN, AFI, CIDR)
+
 ip_cidr cidr_from_address(ip_address address);
 
 /*
