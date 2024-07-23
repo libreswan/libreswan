@@ -265,9 +265,11 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			case RTA_PREFSRC:
 #define PARSE_ADDRESS(OUT, WHAT)					\
 				{					\
-					err_t err = data_to_address(data, len, afi, OUT); \
-					if (err != NULL) {		\
-						vlog("invalid RTA_%s from kernel: %s", WHAT, err); \
+					diag_t diag = data_to_address(data, len, afi, OUT); \
+					if (diag != NULL) {		\
+						vlog("invalid RTA_%s from kernel: %s", \
+						     WHAT, str_diag(diag));	\
+						pfree_diag(&diag);	\
 					} else {			\
 						address_buf ab;		\
 						vlog("RTA_%s=%s", WHAT, str_address(OUT, &ab)); \

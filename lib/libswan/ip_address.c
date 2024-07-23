@@ -37,33 +37,24 @@ ip_address address_from_raw(where_t where, enum ip_version version,
 	return a;
 }
 
-err_t data_to_address(const void *data, size_t sizeof_data,
-		      const struct ip_info *afi, ip_address *dst)
+diag_t data_to_address(const void *data, size_t sizeof_data,
+		       const struct ip_info *afi, ip_address *dst)
 {
+	*dst = unset_address;
+
 	if (afi == NULL) {
-		*dst = unset_address;
-		return "unknown address family";
+		return diag("unknown address family");
 	}
-	switch (afi->af) {
-	case AF_INET:
-		if (sizeof_data != 4)
-			return "IPv4 address must be exactly 4 bytes";
-		passert(sizeof_data == sizeof(struct in_addr));
-		struct in_addr in; /* force alignment of data */
-		memcpy(&in, data, sizeof_data);
-		*dst = address_from_in_addr(&in);
-		break;
-	case AF_INET6:
-		if (sizeof_data != 16)
-			return "IPv6 address must be exactly 16 bytes";
-		passert(sizeof_data == sizeof(struct in6_addr));
-		struct in6_addr in6; /* force alignment of data */
-		memcpy(&in6, data, sizeof_data);
-		*dst = address_from_in6_addr(&in6);
-		break;
-	default:
-		bad_case(afi->af);
+
+	/* accept longer! */
+	if (sizeof_data < afi->ip_size) {
+		return diag("%s address must be %zu bytes, not %zu",
+			    afi->ip_name, afi->ip_size, sizeof_data);
 	}
+
+	struct ip_bytes bytes = {0};
+	memcpy(bytes.byte, data, afi->ip_size);
+	*dst = address_from_raw(HERE, afi->ip_version, bytes);
 	return NULL;
 }
 
@@ -100,14 +91,6 @@ const struct ip_info *address_info(const ip_address address)
 	/* may return NULL */
 	return ip_version_info(address.version);
 }
-
-/*
- * simplified interface to addrtot()
- *
- * Caller should allocate a buffer to hold the result as long
- * as the resulting string is needed.  Usually just long enough
- * to output.
- */
 
 shunk_t address_as_shunk(const ip_address *address)
 {

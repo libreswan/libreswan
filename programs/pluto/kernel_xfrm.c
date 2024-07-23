@@ -2273,34 +2273,35 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 	     (size_t) n->nlmsg_len);
 
 	while (RTA_OK(rta, msg_size)) {
-		err_t ugh;
+		diag_t diag;
 
 		switch (rta->rta_type) {
 		case IFA_LOCAL:
-			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
-					      aftoinfo(nl_msg->ifa_family), &ip);
-			if (ugh != NULL) {
-				llog(RC_LOG, logger,
-					    "ERROR IFA_LOCAL invalid %s", ugh);
-			} else {
-				if (n->nlmsg_type == RTM_DELADDR)
-					record_deladdr(&ip, "IFA_LOCAL");
-				else if (n->nlmsg_type == RTM_NEWADDR)
-					record_newaddr(&ip, "IFA_LOCAL");
+			diag = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
+					       aftoinfo(nl_msg->ifa_family), &ip);
+			if (diag != NULL) {
+				llog_diag(RC_LOG, logger, &diag, "ERROR IFA_LOCAL invalid, ");
+				break;
+			}
+
+			if (n->nlmsg_type == RTM_DELADDR) {
+				record_deladdr(&ip, "IFA_LOCAL");
+			} else if (n->nlmsg_type == RTM_NEWADDR) {
+				record_newaddr(&ip, "IFA_LOCAL");
 			}
 			break;
 
 		case IFA_ADDRESS:
-			ugh = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
-					      aftoinfo(nl_msg->ifa_family), &ip);
-			if (ugh != NULL) {
-				llog(RC_LOG, logger,
-					    "ERROR IFA_ADDRESS invalid %s", ugh);
-			} else {
-				address_buf ip_str;
-				ldbg(logger, "%s() XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
-				     __func__, str_address(&ip, &ip_str));
+			diag = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
+					       aftoinfo(nl_msg->ifa_family), &ip);
+			if (diag != NULL) {
+				llog_diag(RC_LOG, logger, &diag, "ERROR IFA_ADDRESS invalid,  ");
+				break;
 			}
+
+			address_buf ip_str;
+			ldbg(logger, "%s() XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
+			     __func__, str_address(&ip, &ip_str));
 			break;
 
 		default:

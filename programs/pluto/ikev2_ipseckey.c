@@ -136,24 +136,30 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 	}
 
-	/* XXX: this is assuming that addr has .ip_size bytes!?! */
-	if (data_to_address(addr, afi->ip_size, afi, &ipaddr) != NULL)
+	/*
+	 * XXX: this is assuming that addr has .ip_size bytes!?!
+	 * Interface doesn't pass in actual length.
+	 */
+	diag_t diag = data_to_address(addr, afi->ip_size, afi, &ipaddr);
+	if (diag != NULL) {
+		llog_diag(RC_LOG, dnsr->logger, &diag, "invalid address: ");
 		return;
+	}
 
 	if (!endpoint_address_eq_address(st->st_remote_endpoint, ipaddr)) {
 		endpoint_buf ra;
 		address_buf rb;
-		dbg(" forward address of IDi %s do not match remote address %s != %s",
-		    dnsr->qname,
-		    str_endpoint(&st->st_remote_endpoint, &ra),
-		    str_address(&ipaddr, &rb));
+		ldbg(dnsr->logger, " forward address of IDi %s do not match remote address %s != %s",
+		     dnsr->qname,
+		     str_endpoint(&st->st_remote_endpoint, &ra),
+		     str_address(&ipaddr, &rb));
 		return;
 	}
 
 	dnsr->fwd_addr_valid = true;
 	endpoint_buf ra;
-	dbg("address of IDi %s match remote address %s",
-	    dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
+	ldbg(dnsr->logger, "address of IDi %s match remote address %s",
+	     dnsr->qname, str_endpoint(&st->st_remote_endpoint, &ra));
 }
 
 static void initiator_fetch_idr_ipseckey_continue(struct p_dns_req *dnsr)

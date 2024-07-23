@@ -376,11 +376,10 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		 * is ignored?
 		 */
 		ip_address addr;
-		err_t ugh = hunk_to_address(gn->name, afi, &addr);
-		if (ugh != NULL) {
-			llog(RC_LOG, logger,
-			     "warning: invalid IP_ADDRESS general name: %s",
-			     ugh);
+		diag_t diag = hunk_to_address(gn->name, afi, &addr);
+		if (diag != NULL) {
+			llog_diag(RC_LOG, logger, &diag,
+				  "warning: invalid IP_ADDRESS general name: ");
 			PEXPECT(logger, id->kind == ID_NONE);
 			return;
 		}
