@@ -942,14 +942,14 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			}
 			switch (s->stuff.kind) {
 			case SECRET_PSK:
-				pfree(s->stuff.u.preshared_secret.ptr);
+				free_chunk_content(&s->stuff.u.preshared_secret);
 				break;
 			case SECRET_PPK:
-				pfree(s->stuff.ppk.ptr);
-				pfree(s->stuff.ppk_id.ptr);
+				free_chunk_content(&s->stuff.ppk);
+				free_chunk_content(&s->stuff.ppk_id);
 				break;
 			case SECRET_XAUTH:
-				pfree(s->stuff.u.preshared_secret.ptr);
+				free_chunk_content(&s->stuff.u.preshared_secret);
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:

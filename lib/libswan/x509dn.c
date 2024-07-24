@@ -1139,7 +1139,7 @@ void free_generalNames(generalName_t *gn, bool free_name)
 		generalName_t *gn_top = gn;
 
 		if (free_name)
-			pfree(gn->name.ptr);
+			free_chunk_content(&gn->name);
 		gn = gn->next;
 		pfree(gn_top);
 	}
