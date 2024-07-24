@@ -47,7 +47,6 @@ void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
 const char *str_diag(diag_t diag);
 size_t jam_diag(struct jambuf *buf, diag_t diag);
 
-diag_t clone_diag(struct diag *diag);
 void pfree_diag(struct diag **diag);
 
 #endif

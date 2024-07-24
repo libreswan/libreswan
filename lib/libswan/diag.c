@@ -94,12 +94,6 @@ diag_t diag_jambuf(struct jambuf *buf)
 	return (diag_t) clone_hunk_as_string(msg, "diag jambuf");
 }
 
-diag_t clone_diag(diag_t diag)
-{
-	/* clone_str() clones NULL as NULL */
-	return (diag_t) clone_str((char*)diag, "diag clone");
-}
-
 const char *str_diag(diag_t diag)
 {
 	/* let caller deal with mess */
