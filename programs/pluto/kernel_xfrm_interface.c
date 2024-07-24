@@ -395,7 +395,8 @@ static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *l
 }
 
 /* Create an internal XFRMi Interface IP address structure */
-static struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if)
+static struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if,
+						      ip_cidr if_ip)
 {
 	if (xfrmi_if == NULL) {
 		return NULL;
@@ -407,7 +408,7 @@ static struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_
 			refcnt_alloc(struct pluto_xfrmi_ipaddr, HERE);
 	new_xfrmi_ipaddr->next = NULL;
 	new_xfrmi_ipaddr->pluto_added = false;
-	new_xfrmi_ipaddr->if_ip.is_set = false;
+	new_xfrmi_ipaddr->if_ip = if_ip;
 
 	if (xfrmi_if->if_ips == NULL) {
 		xfrmi_if->if_ips = new_xfrmi_ipaddr;
@@ -737,14 +738,15 @@ static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	}
 
 	if (local_addr != NULL) {
-		struct pluto_xfrmi_ipaddr *if_ipaddr = create_xfrmi_ipaddr(&if_rsp->result_if);
+		ip_cidr if_ip;
 		diag_t diag = data_to_cidr(local_addr, local_addr_len, ifa->ifa_prefixlen,
-					   aftoinfo(ifa->ifa_family), &if_ipaddr->if_ip);
+					   aftoinfo(ifa->ifa_family), &if_ip);
 		if (diag != NULL) {
 			llog_pexpect(&global_logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
 			pfree_diag(&diag);
 			return XFRMI_FAILURE;
 		}
+		create_xfrmi_ipaddr(&if_rsp->result_if, if_ip);
 	}
 
 	return XFRMI_SUCCESS;
@@ -1108,8 +1110,7 @@ static bool add_xfrm_interface_ip(struct connection *c, ip_cidr *conn_xfrmi_cidr
 			find_xfrmi_ipaddr(c->xfrmi, conn_xfrmi_cidr, logger);
 	if (refd_xfrmi_ipaddr == NULL) {
 		/* This call will refcount the object */
-		refd_xfrmi_ipaddr = create_xfrmi_ipaddr(c->xfrmi);
-		refd_xfrmi_ipaddr->if_ip = *conn_xfrmi_cidr; /* value copy */
+		refd_xfrmi_ipaddr = create_xfrmi_ipaddr(c->xfrmi, *conn_xfrmi_cidr);
 		cidr_buf cb;
 		ldbg(logger,
 		     "%s() created new pluto_xfrmi_ipaddr dev [%s] id [%d] IP [%s]",
