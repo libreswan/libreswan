@@ -112,16 +112,3 @@ size_t jam_diag(struct jambuf *buf, diag_t diag)
 {
 	return jam_string(buf, str_diag(diag));
 }
-
-void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
-	       const char *fmt, ...)
-{
-	LLOG_JAMBUF(rc_flags, logger, buf) {
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-		jam_diag(buf, *diag);
-	}
-	pfree_diag(diag);
-}

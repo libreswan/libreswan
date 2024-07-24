@@ -248,8 +248,10 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	bool policy_xauth = false;
 	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &policy_xauth);
 	if (d != NULL) {
-		llog_diag(RC_LOG, md->logger, &d,
-			  "initial Main Mode message has corrupt SA payload: ");
+		llog(RC_LOG, md->logger,
+		     "initial Main Mode message has corrupt SA payload: %s",
+		     str_diag(d));
+		pfree_diag(&d);
 		return NULL;
 	}
 

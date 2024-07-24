@@ -893,8 +893,9 @@ static bool add_xauth_addresspool(struct connection *c,
 
 	diag_t d = install_addresspool(pool_range, c);
 	if (d != NULL) {
-		llog_diag(RC_CLASH, logger, &d, "XAUTH: invalid addresspool for the conn %s user %s: ",
-			 c->name, userid);
+		llog(RC_CLASH, logger, "XAUTH: invalid addresspool for the conn %s user %s: %s",
+		     c->name, userid, str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 
@@ -1919,8 +1920,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
 								 &i, sizeof(i), NULL);
 					if (d != NULL) {
-						llog_diag(RC_LOG, st->logger, &d,
-							  "ignoring malformed CISCO_SPLIT_INC payload: ");
+						llog(RC_LOG, st->logger,
+						     "ignoring malformed CISCO_SPLIT_INC payload: %s",
+						     str_diag(d));
+						pfree_diag(&d);
 						break;
 					}
 

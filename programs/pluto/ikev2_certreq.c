@@ -103,8 +103,8 @@ void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 			diag_t d = pbs_in_bytes(&pbs, hash.ptr, hash.len,
 						"Certification Authority hash");
 			if (d != NULL) {
-				llog_diag(RC_LOG, ike->sa.logger, &d,
-					  "ignoring CERTREQ payload: ");
+				llog(RC_LOG, ike->sa.logger, "ignoring CERTREQ payload: %s", str_diag(d));
+				pfree_diag(&d);
 				return;
 			}
 			count++;

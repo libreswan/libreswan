@@ -99,9 +99,11 @@ void process_md(struct msg_digest *md)
 		 */
 		lset_t rc_flags = log_limiter_rc_flags(md->logger, &md_log_limiter);
 		if (rc_flags != 0) {
-			llog_diag(rc_flags, md->logger, &d,
-				  "dropping packet with mangled IKE header: ");
+			llog(rc_flags, md->logger,
+			     "dropping packet with mangled IKE header: %s",
+			     str_diag(d));
 		}
+		pfree_diag(&d);
 		return;
 	}
 

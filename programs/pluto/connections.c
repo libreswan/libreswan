@@ -1147,7 +1147,8 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (src->modecfg_server && src->cat) {
@@ -1156,7 +1157,8 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (src->modecfg_client && other_src->cat) {
@@ -1165,7 +1167,8 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	/* only update, may already be set below */
@@ -1212,7 +1215,8 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (src->cat && other_src->addresspool != NULL) {
@@ -1221,7 +1225,8 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (src->modecfg_client && other_src->addresspool != NULL) {
@@ -1230,7 +1235,8 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	/*
@@ -3269,7 +3275,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (wm->left.modecfg_client && wm->right.modecfg_client) {
@@ -3277,7 +3284,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (wm->left.cat && wm->right.cat) {
@@ -3285,7 +3293,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (wm->left.virt != NULL && wm->right.virt != NULL) {
@@ -3341,7 +3350,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	if (config->end[LEFT_END].host.modecfg.client &&
@@ -3350,7 +3360,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
 	}
 
 	/*

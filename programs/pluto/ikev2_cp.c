@@ -343,8 +343,8 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 		diag_t d = pbs_in_struct(cp_pbs, &ikev2_cp_attribute_desc,
 					 &cp_attr, sizeof(cp_attr), &cp_attr_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, child->sa.logger, &d,
-				 "ERROR: malformed CP attribute");
+			llog(RC_LOG, child->sa.logger, "ERROR: malformed CP attribute: %s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 
@@ -669,8 +669,8 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		diag_t d = pbs_in_struct(attrs, &ikev2_cp_attribute_desc,
 					 &cp_a, sizeof(cp_a), &cp_a_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, child->sa.logger, &d,
-				 "ERROR malformed CP attribute");
+			llog(RC_LOG, child->sa.logger, "ERROR malformed CP attribute: %s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 

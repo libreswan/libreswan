@@ -378,8 +378,9 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		ip_address addr;
 		diag_t diag = hunk_to_address(gn->name, afi, &addr);
 		if (diag != NULL) {
-			llog_diag(RC_LOG, logger, &diag,
-				  "warning: invalid IP_ADDRESS general name: ");
+			llog(RC_LOG, logger, "warning: invalid IP_ADDRESS general name: %s",
+			     str_diag(diag));
+			pfree_diag(&diag);
 			PEXPECT(logger, id->kind == ID_NONE);
 			return;
 		}

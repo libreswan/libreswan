@@ -606,14 +606,13 @@ bool impair_proposal_errors(struct proposal_parser *parser)
 {
 	passert(parser->diag != NULL);
 	if (impair.proposal_parser) {
-		llog_diag(parser->policy->logger_rc_flags,
-			  parser->policy->logger,
-			  &parser->diag,
-			  "IMPAIR: ignoring proposal error: ");
+		llog(parser->policy->logger_rc_flags, parser->policy->logger,
+		     "IMPAIR: ignoring proposal error: %s", str_diag(parser->diag));
+		pfree_diag(&parser->diag);
 		return true;
-	} else {
-		return false;
 	}
+
+	return false;
 }
 
 struct proposals *proposals_from_str(struct proposal_parser *parser,

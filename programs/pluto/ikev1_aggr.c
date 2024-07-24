@@ -139,8 +139,10 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	struct authby authby = {0};
 	d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &xauth);
 	if (d != NULL) {
-		llog_diag(RC_LOG, md->logger, &d,
-			  "initial Aggressive Mode message has corrupt SA payload: ");
+		llog(RC_LOG, md->logger,
+		     "initial Aggressive Mode message has corrupt SA payload: %s",
+		     str_diag(d));
+		pfree_diag(&d);
 		return STF_IGNORE;
 	}
 

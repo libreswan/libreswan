@@ -77,8 +77,8 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	uint8_t id_byte;
 	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d,
-			  "reading PPK ID: ");
+		llog(RC_LOG, ike->sa.logger, "reading PPK ID: %s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 
 	}

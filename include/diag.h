@@ -32,17 +32,7 @@ diag_t diag_errno(int error, const char *message, ...) PRINTF_LIKE(2) MUST_USE_R
 diag_t diag_va_list(const char *message, va_list ap) VPRINTF_LIKE(1) MUST_USE_RESULT;
 diag_t diag_jambuf(struct jambuf *buf);
 
-/*
- * Emit MESSSAGE immediately followed by DIAG.  DIAG is freed as part
- * of the call.
- *
- * Note: MESSAGE must include any trailing punctuation such as ", " or
- * ": ".
- */
-
 diag_t diag_diag(diag_t *diag, const char *message, ...) PRINTF_LIKE(2) MUST_USE_RESULT;
-void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
-	       const char *message, ...) PRINTF_LIKE(4);
 
 const char *str_diag(diag_t diag);
 size_t jam_diag(struct jambuf *buf, diag_t diag);

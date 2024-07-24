@@ -263,8 +263,8 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
 						 &pd->payload, sizeof(pd->payload), &pd->pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, log, &d,
-					 "malformed payload in packet");
+				llog(RC_LOG, log, "malformed payload in packet: %s", str_diag(d));
+				pfree_diag(&d);
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
 			}
@@ -319,8 +319,8 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					 &pd->payload, sizeof(pd->payload),
 					 &pd->pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, log, &d,
-				 "malformed payload in packet");
+			llog(RC_LOG, log, "malformed payload in packet: %s", str_diag(d));
+			pfree_diag(&d);
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}

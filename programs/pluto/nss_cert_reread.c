@@ -42,9 +42,9 @@ static void reread_end_cert(struct host_end *host_end,
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
-		llog_diag(RC_BADID, logger, &diag,
-			 "reloading %scert='%s' failed: ",
-			  host_end_config->leftright, nickname);
+		llog(RC_BADID, logger, "reloading %scert='%s' failed: %s",
+		     host_end_config->leftright, nickname, str_diag(diag));
+		pfree_diag(&diag);
 		CERT_DestroyCertificate(new_cert);
 		host_end_config->cert.nss_cert = old_cert;
 		return;

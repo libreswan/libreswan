@@ -118,10 +118,12 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 					       NULL/*don't-return-pubkey*/, &pluto_pubkeys);
 		if (d != NULL) {
 			id_buf thatidbuf;
-			llog_diag(RC_LOG, dnsr->logger, &d,
-				  "add %s publickey failed, %s",
-				  str_id(&st->st_connection->remote->host.id, &thatidbuf),
-				  dnsr->log_buf);
+			llog(RC_LOG, dnsr->logger,
+			     "add %s publickey failed, %s: %s",
+			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
+			     dnsr->log_buf,
+			     str_diag(d));
+			pfree_diag(&d);
 		}
 	}
 }
@@ -142,7 +144,8 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	 */
 	diag_t diag = data_to_address(addr, afi->ip_size, afi, &ipaddr);
 	if (diag != NULL) {
-		llog_diag(RC_LOG, dnsr->logger, &diag, "invalid address: ");
+		llog(RC_LOG, dnsr->logger, "invalid address: %s", str_diag(diag));
+		pfree_diag(&diag);
 		return;
 	}
 

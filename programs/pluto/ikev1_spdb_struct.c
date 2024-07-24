@@ -1718,7 +1718,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
 						 &a, sizeof(a), &attr_pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "invalid transform: ");
+				llog(RC_LOG, st->logger, "invalid transform: %s", str_diag(d));
+				pfree_diag(&d);
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -1748,8 +1749,9 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					      &oakley_attr_names,
 					      &value);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "invalid attribute in Oakley Transform %u",
-					  trans.isat_transnum);
+				llog(RC_LOG, st->logger, "invalid attribute in Oakley Transform %u: %s",
+				     trans.isat_transnum, str_diag(d));
+				pfree_diag(&d);
 				return v1N_BAD_PROPOSAL_SYNTAX;
 			}
 
@@ -2385,8 +2387,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		intmax_t value;
 		d = decode_attr_value(&a, &attr_pbs, &ipsec_attr_names, &value);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "invalid attribute in IPsec Transform: %u",
-				trans->isat_transnum);
+			llog(RC_LOG, st->logger, "invalid attribute in IPsec Transform %u: %s",
+			     trans->isat_transnum, str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 

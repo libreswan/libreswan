@@ -496,9 +496,10 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 					 &remote_trans, sizeof(remote_trans),
 					 &trans_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d,
-				 "remote proposal %u transform %d is corrupt",
-				 remote_propnum, remote_transform_nr);
+			llog(RC_LOG, logger,
+			     "remote proposal %u transform %d is corrupt: %s",
+			     remote_propnum, remote_transform_nr, str_diag(d));
+			pfree_diag(&d);
 			jam_string(remote_jam_buf, "[corrupt-transform]");
 			return -v2N_INVALID_SYNTAX; /* fatal */
 		}
@@ -524,9 +525,11 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 			diag_t d = pbs_in_struct(&trans_pbs, &ikev2_trans_attr_desc,
 						 &attr, sizeof(attr), &attr_pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d,
-					 "remote proposal %u transform %d contains corrupt attribute",
-					 remote_propnum, remote_transform_nr);
+				llog(RC_LOG, logger,
+				     "remote proposal %u transform %d contains corrupt attribute: %s",
+				     remote_propnum, remote_transform_nr,
+				     str_diag(d));
+				pfree_diag(&d);
 				jam_string(remote_jam_buf, "[corrupt-attribute]");
 				return -v2N_INVALID_SYNTAX; /* fatal */
 			}
@@ -541,9 +544,10 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				remote_transform.attr_keylen = attr.isatr_lv;
 				break;
 			default:
-				llog(RC_LOG, logger, "remote proposal %u transform %d has unknown attribute %d or unexpeced attribute encoding",
-					    remote_propnum, remote_transform_nr,
-					    attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
+				llog(RC_LOG, logger,
+				     "remote proposal %u transform %d has unknown attribute %d or unexpeced attribute encoding",
+				     remote_propnum, remote_transform_nr,
+				     attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
 				jam_string(remote_jam_buf, "[unknown-attribute]");
 				return 0; /* try next proposal */
 			}
@@ -925,7 +929,8 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					 &remote_proposal, sizeof(remote_proposal),
 					 &proposal_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "proposal %d corrupt", next_propnum);
+			llog(RC_LOG, logger, "proposal %d corrupt: %s", next_propnum, str_diag(d));
+			pfree_diag(&d);
 			jam_string(remote_jam_buf, " [corrupt-proposal]");
 			matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 			break;
@@ -1026,8 +1031,9 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 			diag_t d = pbs_in_bytes(&proposal_pbs, remote_spi.bytes,
 						remote_spi.size, "remote SPI");
 			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d, "proposal %d contains corrupt SPI",
-					 remote_proposal.isap_propnum);
+				llog(RC_LOG, logger, "proposal %d contains corrupt SPI: %s",
+				     remote_proposal.isap_propnum, str_diag(d));
+				pfree_diag(&d);
 				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				jam_string(remote_jam_buf, "[corrupt-spi]");
 				break;

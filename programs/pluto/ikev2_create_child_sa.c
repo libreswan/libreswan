@@ -2119,9 +2119,11 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 							 &sg, sizeof(sg), NULL);
 				if (d != NULL) {
 					enum_buf nb;
-					llog_diag(RC_LOG, (*larval_child)->sa.logger, &d,
-						  "CREATE_CHILD_SA failed with error notification %s response: ",
-						  str_enum_short(&v2_notification_names, n, &nb));
+					llog(RC_LOG, (*larval_child)->sa.logger,
+					     "CREATE_CHILD_SA failed with error notification %s response: %s",
+					     str_enum_short(&v2_notification_names, n, &nb),
+					     str_diag(d));
+					pfree_diag(&d);
 					status = STF_FATAL;
 					break;
 				}

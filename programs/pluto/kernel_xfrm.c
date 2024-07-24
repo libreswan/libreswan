@@ -2287,7 +2287,8 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 			diag = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					       aftoinfo(nl_msg->ifa_family), &ip);
 			if (diag != NULL) {
-				llog_diag(RC_LOG, logger, &diag, "ERROR IFA_LOCAL invalid, ");
+				llog(RC_LOG, logger, "ERROR IFA_LOCAL invalid, %s", str_diag(diag));
+				pfree_diag(&diag);
 				break;
 			}
 
@@ -2302,7 +2303,8 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 			diag = data_to_address(RTA_DATA(rta), RTA_PAYLOAD(rta)/*size*/,
 					       aftoinfo(nl_msg->ifa_family), &ip);
 			if (diag != NULL) {
-				llog_diag(RC_LOG, logger, &diag, "ERROR IFA_ADDRESS invalid,  ");
+				llog(RC_LOG, logger, "ERROR IFA_ADDRESS invalid, %s", str_diag(diag));
+				pfree_diag(&diag);
 				break;
 			}
 
