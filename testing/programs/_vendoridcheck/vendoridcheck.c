@@ -27,8 +27,6 @@
 #include "lswlog.h"	/* for log_to_stderr */
 #include "lswnss.h"
 
-#define ERROR 124
-
 int main(int argc, char *argv[])
 {
 #if 0
@@ -51,7 +49,7 @@ int main(int argc, char *argv[])
 	 */
 	diag_t d = lsw_nss_setup(NULL, LSW_NSS_READONLY, logger);
 	if (d != NULL) {
-		fatal_diag(ERROR, logger, &d, "%s", "");
+		fatal(PLUTO_EXIT_NSS_FAIL, logger, "%s", str_diag(d));
 	}
 
 	init_vendorid(logger);

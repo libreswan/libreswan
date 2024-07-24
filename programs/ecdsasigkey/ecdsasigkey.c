@@ -234,7 +234,7 @@ static void ecdsasigkey(SECOidTag curve, int seedbits,
 	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
 
 	if (d != NULL) {
-		fatal_diag(1, logger, &d, "%s", "");
+		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
 	}
 
 	slot = lsw_nss_get_authenticated_slot(logger);

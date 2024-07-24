@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	/* start NSS so crypto works while args are being parsed */
 	diag_t d = lsw_nss_setup(NULL, 0, logger);
 	if (d != NULL) {
-		fatal_diag(1, logger, &d, "%s", "");
+		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
 	}
 	init_crypt_symkey(logger);
 

@@ -409,7 +409,7 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
 	diag_t d = lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger);
 	if (d != NULL) {
-		fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "%s", "");
+		fatal(PLUTO_EXIT_NSS_FAIL, logger, "%s", str_diag(d));
 	}
 	llog(RC_LOG, logger, "NSS crypto library initialized");
 
@@ -1524,7 +1524,7 @@ int main(int argc, char **argv)
 	} else {
 		diag_t d = init_ctl_socket(logger);
 		if (d != NULL) {
-			fatal_diag(PLUTO_EXIT_SOCKET_FAIL, logger, &d, "%s", "");
+			fatal(PLUTO_EXIT_SOCKET_FAIL, logger, "%s", str_diag(d));
 		}
 	}
 
@@ -1731,7 +1731,9 @@ int main(int argc, char **argv)
 					 ocsp_cache_min_age, ocsp_cache_min_age,
 					 (ocsp_method == OCSP_METHOD_POST), logger);
 		if (d != NULL) {
-			fatal_diag(PLUTO_EXIT_NSS_FAIL, logger, &d, "initializing NSS OCSP failed: ");
+			fatal(PLUTO_EXIT_NSS_FAIL, logger,
+			      "initializing NSS OCSP failed: %s",
+			      str_diag(d));
 		}
 		llog(RC_LOG, logger, "NSS OCSP started");
 	}
@@ -1873,7 +1875,7 @@ int main(int argc, char **argv)
 					      pluto_dnssec_rootkey_file, pluto_dnssec_trusted,
 					      logger/*for-warnings*/);
 		if (d != NULL) {
-			fatal_diag(PLUTO_EXIT_UNBOUND_FAIL, logger, &d, "%s", "");
+			fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, "%s", str_diag(d));
 		}
 	}
 #endif

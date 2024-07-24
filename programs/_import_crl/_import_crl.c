@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	const struct lsw_conf_options *oco = lsw_init_options();
 	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
 	if (d != NULL) {
-		fatal_diag(PLUTO_EXIT_FAIL, logger, &d, "%s", "");
+		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
 	}
 
 	fin = import_crl(url, tbuf, len);

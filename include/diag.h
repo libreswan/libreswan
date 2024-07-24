@@ -44,9 +44,6 @@ diag_t diag_diag(diag_t *diag, const char *message, ...) PRINTF_LIKE(2) MUST_USE
 void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
 	       const char *message, ...) PRINTF_LIKE(4);
 
-void fatal_diag(enum pluto_exit_code rc, const struct logger *logger, diag_t *diag,
-		const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
-
 const char *str_diag(diag_t diag);
 size_t jam_diag(struct jambuf *buf, diag_t diag);
 

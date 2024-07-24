@@ -131,17 +131,3 @@ void llog_diag(lset_t rc_flags, const struct logger *logger, diag_t *diag,
 	}
 	pfree_diag(diag);
 }
-
-void fatal_diag(enum pluto_exit_code rc, const struct logger *logger, diag_t *diag,
-		const char *fmt, ...)
-{
-	LLOG_JAMBUF(FATAL_STREAM, logger, buf) {
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-		jam_diag(buf, *diag);
-	}
-	pfree_diag(diag); /* XXX: bother? */
-	libreswan_exit(rc);
-}

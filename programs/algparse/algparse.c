@@ -651,7 +651,7 @@ int main(int argc, char *argv[])
 	 */
 	diag_t d = lsw_nss_setup(NULL, LSW_NSS_READONLY, logger);
 	if (d != NULL) {
-		fatal_diag(ERROR, logger, &d, "%s", "");
+		fatal(ERROR, logger, "%s", str_diag(d));
 	}
 
 	init_crypt_symkey(logger);
