@@ -198,6 +198,27 @@ err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 	return NULL;
 }
 
+shunk_t cidr_as_shunk(const ip_cidr *cidr)
+{
+	const struct ip_info *afi = cidr_type(cidr);
+	if (afi == NULL) {
+		return null_shunk;
+	}
+
+	return shunk2(&cidr->bytes, afi->ip_size);
+}
+
+chunk_t cidr_as_chunk(ip_cidr *cidr)
+{
+	const struct ip_info *afi = cidr_type(cidr);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return empty_chunk;
+	}
+
+	return chunk2(&cidr->bytes, afi->ip_size);
+}
+
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
 	if (cidr == NULL) {

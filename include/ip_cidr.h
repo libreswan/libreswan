@@ -82,6 +82,12 @@ unsigned cidr_prefix_len(const ip_cidr cidr);
 /* are two is_set() cidrs identical? */
 bool cidr_eq_cidr(const ip_cidr address, const ip_cidr another);
 
+/*
+ * Raw address bytes, both read-only and read-write.
+ */
+shunk_t cidr_as_shunk(const ip_cidr *cidr);
+chunk_t cidr_as_chunk(ip_cidr *cidr);
+
 err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
 
 typedef struct {
