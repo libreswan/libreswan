@@ -72,7 +72,6 @@
 #include "iface.h"
 #include "log.h"
 #include "sparse_names.h"
-#include "ip_info.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
@@ -297,45 +296,52 @@ static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 	return XFRMI_SUCCESS;
 }
 
-static bool nl_ifaddrmsg_req_op(uint16_t op, uint16_t flags,
-				const char *if_name,
-				const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
-				struct logger *logger)
+/* Add an IP address to an XFRMi interface using Netlink */
+static int ip_addr_xfrmi_add(const char *if_name,
+							 const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+							 struct logger *logger)
 {
-	const struct ip_info *afi = cidr_info(xfrmi_ipaddr->if_ip);
-	struct nl_ifaddrmsg_req req = init_nl_ifa(op, flags);
+	struct nl_ifaddrmsg_req req;
+	zero(&req);
+	req = init_nl_ifa(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
 	req.ifa.ifa_index = if_nametoindex(if_name);
 	req.ifa.ifa_scope = IP_ADDR_GLOBAL_SCOPE;
-	req.ifa.ifa_family = afi->af;
+	req.ifa.ifa_family = ((xfrmi_ipaddr->if_ip.version == IPv4) ? AF_INET : AF_INET6);
 
-	shunk_t if_ip_bytes = cidr_as_shunk(&xfrmi_ipaddr->if_ip);
-	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   if_ip_bytes.ptr, if_ip_bytes.len);
-	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, if_ip_bytes.ptr, if_ip_bytes.len);
+	uint8_t ipaddr_len = ((xfrmi_ipaddr->if_ip.version == IPv4) ? 4 : 16);
+	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
+	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
 	req.ifa.ifa_prefixlen = xfrmi_ipaddr->if_ip.prefix_len;
 
 	if (!simple_netlink_op(&req.n, "ip_addr_xfrmi_add", if_name, logger)) {
-		return false;
+		return XFRMI_FAILURE;
 	}
 
-	return true;
-}
-
-/* Add an IP address to an XFRMi interface using Netlink */
-static bool ip_addr_xfrmi_add(const char *if_name,
-			      const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
-			      struct logger *logger)
-{
-	return nl_ifaddrmsg_req_op(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL,
-				   if_name, xfrmi_ipaddr, logger);
+	return XFRMI_SUCCESS;
 }
 
 /* Delete an IP address from an XFRMi interface using Netlink */
 static int ip_addr_xfrmi_del(const char *if_name,
-			     const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
-			     struct logger *logger)
+							 const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+							 struct logger *logger)
 {
-	return nl_ifaddrmsg_req_op(RTM_DELADDR, NLM_F_REQUEST,
-				   if_name, xfrmi_ipaddr, logger);
+	struct nl_ifaddrmsg_req req;
+	zero(&req);
+	req = init_nl_ifa(RTM_DELADDR, NLM_F_REQUEST);
+	req.ifa.ifa_index = if_nametoindex(if_name);
+	req.ifa.ifa_scope = IP_ADDR_GLOBAL_SCOPE;
+	req.ifa.ifa_family = ((xfrmi_ipaddr->if_ip.version == IPv4) ? AF_INET : AF_INET6);
+
+	uint8_t ipaddr_len = ((xfrmi_ipaddr->if_ip.version == IPv4) ? 4 : 16);
+	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
+	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
+	req.ifa.ifa_prefixlen = xfrmi_ipaddr->if_ip.prefix_len;
+
+	if (!simple_netlink_op(&req.n, "ip_addr_xfrmi_del", if_name, logger)) {
+		return XFRMI_FAILURE;
+	}
+
+	return XFRMI_SUCCESS;
 }
 
 /* Get the IP used for the XFRMi IF from the connection.
@@ -388,23 +394,20 @@ static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *l
 	return unset_cidr;
 }
 
-/*
- * Create an internal XFRMi Interface IP address structure; link it to
- * xfrmi in the connection.
- */
-
+/* Create an internal XFRMi Interface IP address structure */
 static struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if,
 						      ip_cidr if_ip)
 {
-	passert(xfrmi_if != NULL);
+	if (xfrmi_if == NULL) {
+		return NULL;
+	}
 
 	/* Create a new ref-counted xfrmi_ip_addr.
 	 * The call to refcnt_alloc() counts as a reference */
 	struct pluto_xfrmi_ipaddr *new_xfrmi_ipaddr =
-		refcnt_alloc(struct pluto_xfrmi_ipaddr, HERE);
+			refcnt_alloc(struct pluto_xfrmi_ipaddr, HERE);
 	new_xfrmi_ipaddr->next = NULL;
-	new_xfrmi_ipaddr->pluto_added = false; /* caller will update
-						* when needed?  */
+	new_xfrmi_ipaddr->pluto_added = false;
 	new_xfrmi_ipaddr->if_ip = if_ip;
 
 	if (xfrmi_if->if_ips == NULL) {
@@ -424,10 +427,14 @@ static struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_
 }
 
 static struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
-						    ip_cidr *search_cidr,
-						    struct logger *logger)
+													ip_cidr *search_cidr,
+													struct logger *logger)
 {
-	PASSERT(logger, xfrmi != NULL);
+	if (xfrmi == NULL) {
+		llog_error(logger, 0/*no-errno*/,
+			   "find_xfrmi_ipaddr() xfrmi is NULL");
+		return NULL;
+	}
 
 	struct pluto_xfrmi_ipaddr *xfrmi_ipaddr;
 	for (xfrmi_ipaddr = xfrmi->if_ips; xfrmi_ipaddr != NULL; xfrmi_ipaddr = xfrmi_ipaddr->next) {
@@ -689,17 +696,13 @@ static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	return parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp);
 }
 
-static void parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *if_rsp,
-				 const struct logger *logger)
+static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *if_rsp)
 {
 	struct rtattr *attribute;
 	struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
 	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa));
-	ip_cidr if_ip = {0};
-	const struct ip_info *afi = aftoinfo(ifa->ifa_family);
-	if (PBAD(logger, afi == NULL)) {
-		return;
-	}
+	const char *local_addr = NULL;
+	int local_addr_len = 0;
 
 	for (attribute = IFLA_RTA(ifa); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
 		 void *attr_data = RTA_DATA(attribute);
@@ -707,44 +710,46 @@ static void parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response 
 
 		switch (attribute->rta_type) {
 		case IFA_LOCAL:
-		{
 			/* Only parse the IP, if the if_name/label matches */
-			diag_t d = data_to_cidr(attr_data, attr_len, ifa->ifa_prefixlen, afi, &if_ip);
-			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d, "ERROR IFA_LOCAL invalid: ");
-				return;
-			}
+			local_addr = attr_data;
+			local_addr_len = attr_len;
 			break;
-		}
 
 		case IFA_LABEL:
 			/* IFA_LABEL is the interface name */
 			if (memcmp(if_rsp->filter_data.if_name, attr_data, attr_len) != 0) {
-				ldbg(logger, "%s() skipping non-matching message for label %*s",
-				     __func__, attr_len, (char*)attr_data);
-				return;
+				 dbg("parse_nl_newaddr_msg() skipping non-matching message for label %s",
+				 (char*) attr_data);
+				return XFRMI_SUCCESS;
+			} else {
+				if (if_rsp->result_if.name == NULL) {
+					if_rsp->result_if.name = alloc_bytes(attr_len, "parse_linkinfo_data");
+					memcpy(if_rsp->result_if.name, attr_data, attr_len);
+					if_rsp->result = true;
+				}
+				dbg("parse_nl_newaddr_msg() matching message for if_name %s", if_rsp->result_if.name);
 			}
-
-			if (if_rsp->result_if.name == NULL) {
-				if_rsp->result_if.name = alloc_bytes(attr_len, "parse_linkinfo_data");
-				memcpy(if_rsp->result_if.name, attr_data, attr_len);
-				if_rsp->result = true;
-			}
-			ldbg(logger, "%s() matching message for if_name %s",
-			     __func__, if_rsp->result_if.name);
 			break;
 
 		default:
-			ldbg(logger, "%s() skipping attr type %d", __func__, attribute->rta_type);
+		    dbg("parse_nl_newaddr_msg() skipping attr type %d", attribute->rta_type);
 			break;
 		}
 	}
 
-	if (if_ip.is_set) {
+	if (local_addr != NULL) {
+		ip_cidr if_ip;
+		diag_t diag = data_to_cidr(local_addr, local_addr_len, ifa->ifa_prefixlen,
+					   aftoinfo(ifa->ifa_family), &if_ip);
+		if (diag != NULL) {
+			llog_pexpect(&global_logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
+			pfree_diag(&diag);
+			return XFRMI_FAILURE;
+		}
 		create_xfrmi_ipaddr(&if_rsp->result_if, if_ip);
 	}
 
-	return;
+	return XFRMI_SUCCESS;
 }
 
 struct linux_netlink_context {
@@ -764,7 +769,7 @@ static bool process_nlmsg(struct nlmsghdr *nlmsg,
 		return true;
 
 	case RTM_NEWADDR:
-		parse_nl_newaddr_msg(nlmsg, ifi_rsp, verbose.logger);
+		parse_nl_newaddr_msg(nlmsg, ifi_rsp);
 		return true;
 	}
 
