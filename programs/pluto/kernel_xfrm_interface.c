@@ -75,7 +75,7 @@
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
-static const int IP_ADDR_GLOBAL_SCOPE = 0;
+#define IP_ADDR_GLOBAL_SCOPE 0
 
 
 static struct pluto_xfrmi *pluto_xfrm_interfaces;
@@ -173,15 +173,20 @@ static struct nl_ifinfomsg_req init_nl_ifi(uint16_t type, uint16_t flags)
 	return req;
 }
 
-static struct nl_ifaddrmsg_req init_nl_ifa(uint16_t type, uint16_t flags)
+static struct nl_ifaddrmsg_req init_ifaddrmsg_req(uint16_t type, uint16_t flags,
+						  const char *if_name,
+						  const struct ip_info *afi)
 {
-	struct nl_ifaddrmsg_req req;
-	zero(&req);
-	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(struct ifaddrmsg)));
-	req.maxlen = req.n.nlmsg_len + sizeof(req.data);
-	req.n.nlmsg_flags = flags;
-	req.n.nlmsg_type = type;
-	req.n.nlmsg_pid = getpid();
+	struct nl_ifaddrmsg_req req = {
+		.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(struct ifaddrmsg))),
+		.maxlen = req.n.nlmsg_len + sizeof(req.data),
+		.n.nlmsg_flags = flags,
+		.n.nlmsg_type = type,
+		.n.nlmsg_pid = getpid(),
+		.ifa.ifa_index = if_nametoindex(if_name),
+		.ifa.ifa_family = afi->af,
+		.ifa.ifa_scope = IP_ADDR_GLOBAL_SCOPE,/*i.e., 0*/
+	};
 
 	return req;
 }
@@ -296,52 +301,42 @@ static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 	return XFRMI_SUCCESS;
 }
 
-/* Add an IP address to an XFRMi interface using Netlink */
-static int ip_addr_xfrmi_add(const char *if_name,
-							 const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
-							 struct logger *logger)
+static int ifaddrmsg_op(uint16_t type, uint16_t flags,
+			const char *if_name,
+			const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			struct logger *logger)
 {
-	struct nl_ifaddrmsg_req req;
-	zero(&req);
-	req = init_nl_ifa(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
-	req.ifa.ifa_index = if_nametoindex(if_name);
-	req.ifa.ifa_scope = IP_ADDR_GLOBAL_SCOPE;
-	req.ifa.ifa_family = ((xfrmi_ipaddr->if_ip.version == IPv4) ? AF_INET : AF_INET6);
+	const struct ip_info *afi = cidr_info(xfrmi_ipaddr->if_ip);
+	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(type, flags, if_name, afi);
 
-	uint8_t ipaddr_len = ((xfrmi_ipaddr->if_ip.version == IPv4) ? 4 : 16);
-	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
-	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
-	req.ifa.ifa_prefixlen = xfrmi_ipaddr->if_ip.prefix_len;
+	shunk_t bytes = cidr_as_shunk(&xfrmi_ipaddr->if_ip);
+	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   bytes.ptr, bytes.len);
+	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, bytes.ptr, bytes.len);
+	req.ifa.ifa_prefixlen = cidr_prefix_len(xfrmi_ipaddr->if_ip);
 
-	if (!simple_netlink_op(&req.n, "ip_addr_xfrmi_add", if_name, logger)) {
+	if (!simple_netlink_op(&req.n, __func__, if_name, logger)) {
 		return XFRMI_FAILURE;
 	}
 
 	return XFRMI_SUCCESS;
 }
 
+/* Add an IP address to an XFRMi interface using Netlink */
+static int ip_addr_xfrmi_add(const char *if_name,
+			     const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			     struct logger *logger)
+{
+	return ifaddrmsg_op(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL,
+			    if_name, xfrmi_ipaddr, logger);
+}
+
 /* Delete an IP address from an XFRMi interface using Netlink */
 static int ip_addr_xfrmi_del(const char *if_name,
-							 const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
-							 struct logger *logger)
+			     const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			     struct logger *logger)
 {
-	struct nl_ifaddrmsg_req req;
-	zero(&req);
-	req = init_nl_ifa(RTM_DELADDR, NLM_F_REQUEST);
-	req.ifa.ifa_index = if_nametoindex(if_name);
-	req.ifa.ifa_scope = IP_ADDR_GLOBAL_SCOPE;
-	req.ifa.ifa_family = ((xfrmi_ipaddr->if_ip.version == IPv4) ? AF_INET : AF_INET6);
-
-	uint8_t ipaddr_len = ((xfrmi_ipaddr->if_ip.version == IPv4) ? 4 : 16);
-	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
-	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, &xfrmi_ipaddr->if_ip.bytes, ipaddr_len);
-	req.ifa.ifa_prefixlen = xfrmi_ipaddr->if_ip.prefix_len;
-
-	if (!simple_netlink_op(&req.n, "ip_addr_xfrmi_del", if_name, logger)) {
-		return XFRMI_FAILURE;
-	}
-
-	return XFRMI_SUCCESS;
+	return ifaddrmsg_op(RTM_DELADDR, NLM_F_REQUEST,
+			    if_name, xfrmi_ipaddr, logger);
 }
 
 /* Get the IP used for the XFRMi IF from the connection.
@@ -846,9 +841,8 @@ static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct pluto_xfrmi *xfr
 		return NULL;
 	}
 
-	struct nl_ifaddrmsg_req req = init_nl_ifa(RTM_GETADDR, (NLM_F_DUMP | NLM_F_REQUEST));
-	req.ifa.ifa_index = if_nametoindex(xfrmi->name);
-	req.ifa.ifa_family = AF_UNSPEC;
+	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(RTM_GETADDR, (NLM_F_DUMP | NLM_F_REQUEST),
+							 xfrmi->name, &unspec_ip_info);
 
 	struct ifinfo_response *ifi_rsp = alloc_bytes(sizeof(struct ifinfo_response), "ifinfo_response");
 	zero(ifi_rsp);
