@@ -237,7 +237,8 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 					       ike->sa.st_firstpacket_me,
 					       &signed_octets);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 

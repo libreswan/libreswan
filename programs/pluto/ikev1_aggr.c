@@ -890,7 +890,8 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	if (new_certs_to_verify) {
 		diag_t d = update_peer_id_certs(pexpect_ike_sa(st));
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 	}

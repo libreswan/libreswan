@@ -1416,7 +1416,8 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
 				 &sg, sizeof(sg), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return STF_IGNORE;
 	}
 

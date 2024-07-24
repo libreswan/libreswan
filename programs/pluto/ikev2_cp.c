@@ -500,7 +500,8 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
 	if (d != NULL) {
-		llog_diag(RC_LOG, child->sa.logger, &d, "%s", "");
+		llog(RC_LOG, child->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 
@@ -544,7 +545,8 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, afi, "INTERNAL_IP_ADDRESS");
 	if (d != NULL) {
-		llog_diag(RC_LOG, child->sa.logger, &d, "%s", "");
+		llog(RC_LOG, child->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 

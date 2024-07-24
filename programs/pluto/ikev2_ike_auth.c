@@ -528,7 +528,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
@@ -693,7 +694,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
-			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			dbg("no PPK auth failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -718,7 +720,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
 						 &pbs_null_auth, AUTH_NULL);
 		if (d != NULL) {
-			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			dbg("NULL_auth from Notify Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -733,7 +736,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 						 ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						 remote_auth);
 		if (d != NULL) {
-			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			dbg("I2 Auth Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -1017,7 +1021,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	diag_t d = ikev2_initiator_decode_responder_id(ike, md);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing
@@ -1083,7 +1088,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		/*
 		 * We cannot send a response as we are processing

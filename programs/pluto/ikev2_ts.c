@@ -579,7 +579,8 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts_header_desc,
 				  &ts_h, sizeof(ts_h), &ts_body_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 
@@ -593,7 +594,8 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			d = pbs_in_struct(&ts_body_pbs, &ikev2_ts_portrange_desc,
 				  &pr, sizeof(pr), NULL);
 			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d, "%s", "");
+				llog(RC_LOG, logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 
@@ -620,14 +622,16 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			ip_address start;
 			d = pbs_in_address(&ts_body_pbs, &start, ipv, "TS IP start");
 			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d, "%s", "");
+				llog(RC_LOG, logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 
 			ip_address end;
 			d = pbs_in_address(&ts_body_pbs, &end, ipv, "TS IP end");
 			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d, "%s", "");
+				llog(RC_LOG, logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 

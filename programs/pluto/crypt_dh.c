@@ -148,7 +148,8 @@ static void compute_dh_shared_secret(struct logger *logger,
 								&task->shared_secret,
 								logger);
 	if (diag != NULL) {
-		llog_diag(RC_LOG, logger, &diag, "%s", "");
+		llog(RC_LOG, logger, "%s", str_diag(diag));
+		pfree_diag(&diag);
 		return;
 	}
 	/*

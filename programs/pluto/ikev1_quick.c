@@ -340,7 +340,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		ip_address temp_address;
 		diag_t d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 		/* i.e., "zero" */
@@ -366,14 +367,16 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		ip_address temp_address;
 		d = pbs_in_address(id_pbs, &temp_address, afi, "ID address");
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 
 		ip_address temp_mask;
 		d = pbs_in_address(id_pbs, &temp_mask, afi, "ID mask");
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 
@@ -402,14 +405,16 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		ip_address temp_address_from;
 		d = pbs_in_address(id_pbs, &temp_address_from, afi, "ID from address");
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 
 		ip_address temp_address_to;
 		d = pbs_in_address(id_pbs, &temp_address_to, afi, "ID to address");
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 

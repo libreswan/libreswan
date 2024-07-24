@@ -461,7 +461,8 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 			struct pubkey *pk = NULL;
 			diag_t d = create_pubkey_from_cert(&id, cert, &pk, logger);
 			if (d != NULL) {
-				llog_diag(RC_LOG, logger, &d, "%s", "");
+				llog(RC_LOG, logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				passert(pk == NULL);
 				return;
 			}
@@ -488,7 +489,8 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 	struct pubkey *pk = NULL;
 	diag_t d = create_cert_subjectdn_pubkey(cert, &pk, logger);
 	if (d != NULL) {
-		llog_diag(RC_LOG, logger, &d, "%s", "");
+		llog(RC_LOG, logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		dbg("failed to create subjectdn_pubkey from cert");
 		return false;
 	}
@@ -508,7 +510,8 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 		struct pubkey *pk2 = NULL;
 		diag_t d = create_pubkey_from_cert(keyid, cert, &pk2, logger);
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			/* ignore? */
 		} else {
 			replace_public_key(pubkey_db, &pk2);

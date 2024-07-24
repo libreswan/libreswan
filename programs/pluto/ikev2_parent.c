@@ -147,7 +147,8 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 		diag_t d = pbs_in_thing(&pbs, nh_value,
 					"hash algorithm identifier (network ordered)");
 		if (d != NULL) {
-			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 		enum ikev2_hash_algorithm h_value = ntohs(nh_value);

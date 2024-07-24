@@ -314,7 +314,8 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	diag_t d = pbs_in_address(&pbs, &ip, ipv, "NAT-Traversal: NAT-OA IP");
 	if (d != NULL) {
-		llog_diag(RC_LOG, logger, &d, "%s", "");
+		llog(RC_LOG, logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return;
 	}
 

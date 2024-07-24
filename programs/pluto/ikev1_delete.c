@@ -415,13 +415,15 @@ bool accept_delete(struct state **stp,
 			passert(sizeof(cookies.initiator) == COOKIE_SIZE);
 			d = pbs_in_thing(&p->pbs, cookies.initiator, "iCookie");
 			if (d != NULL) {
-				llog_diag(RC_LOG, p1->sa.logger, &d, "%s", "");
+				llog(RC_LOG, p1->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 
 			d = pbs_in_thing(&p->pbs, cookies.responder, "rCookie");
 			if (d != NULL) {
-				llog_diag(RC_LOG, p1->sa.logger, &d, "%s", "");
+				llog(RC_LOG, p1->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 
@@ -478,7 +480,8 @@ bool accept_delete(struct state **stp,
 			ipsec_spi_t spi;	/* network order */
 			diag_t dt = pbs_in_thing(&p->pbs, spi, "SPI");
 			if (dt != NULL) {
-				llog_diag(RC_LOG, p1->sa.logger, &dt, "%s", "");
+				llog(RC_LOG, p1->sa.logger, "%s", str_diag(dt));
+				pfree_diag(&dt);
 				return false;
 			}
 

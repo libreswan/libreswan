@@ -1280,7 +1280,8 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			/* fail if malformed */
 			return STF_FAIL_v1N;
 		}
@@ -1463,7 +1464,8 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "%s", "");
+				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
@@ -1543,7 +1545,8 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			/* reject malformed */
 			return STF_FAIL_v1N;
 		}
@@ -1556,7 +1559,8 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 			ip_address a;
 			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "%s", "");
+				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return STF_FATAL;
 			}
 			update_first_selector(c, local, selector_from_address(a));
@@ -1769,7 +1773,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &ignored);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "%s", "");
+				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
@@ -1806,7 +1811,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "%s", "");
+				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
@@ -1819,7 +1825,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->logger, &d, "%s", "");
+					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return STF_FATAL;
 				}
 				set_child_has_client(c, local, true);
@@ -1844,7 +1851,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->logger, &d, "%s", "");
+					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return STF_FATAL;
 				}
 
@@ -1859,7 +1867,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->logger, &d, "%s", "");
+					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return STF_FATAL;
 				}
 
@@ -2259,7 +2268,8 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			/* reject malformed */
 			return STF_FAIL_v1N;
 		}
@@ -2493,7 +2503,8 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "%s", "");
+				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}

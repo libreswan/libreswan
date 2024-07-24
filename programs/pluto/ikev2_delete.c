@@ -362,7 +362,8 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 				ipsec_spi_t outbound_spi;
 				diag_t d = pbs_in_thing( &p->pbs, outbound_spi, "SPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return false;
 				}
 

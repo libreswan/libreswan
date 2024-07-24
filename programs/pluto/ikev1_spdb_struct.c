@@ -1547,7 +1547,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->logger, &d, "%s", "");
+		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
@@ -1571,7 +1572,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			  &proposal, sizeof(proposal),
 			  &proposal_pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->logger, &d, "%s", "");
+		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1620,7 +1622,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_shunk(&proposal_pbs, proposal.isap_spisize, &junk_spi,
 					"Oakley SPI (ignored)");
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
@@ -1662,7 +1665,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
 					 &trans, sizeof(trans), &trans_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -2262,7 +2266,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(*trans), trans_pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->logger, &d, "%s", "");
+		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 
@@ -2351,7 +2356,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		diag_t d = pbs_in_struct(trans_pbs, &isakmp_ipsec_attribute_desc,
 					 &a, sizeof(a), &attr_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, st->logger, &d, "%s", "");
+			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 
@@ -2782,7 +2788,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 	/* Situation */
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->logger, &d, "%s", "");
+		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
@@ -2811,7 +2818,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			  &next_proposal, sizeof(next_proposal),
 			  &next_proposal_pbs);
 	if (d != NULL) {
-		llog_diag(RC_LOG, st->logger, &d, "%s", "");
+		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
@@ -2859,7 +2867,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 								IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 								&filler, "CPI filler");
 					if (d != NULL) {
-						llog_diag(RC_LOG, st->logger, &d, "%s", "");
+						llog(RC_LOG, st->logger, "%s", str_diag(d));
+						pfree_diag(&d);
 						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 					if (!all_zero(filler.ptr, filler.len)) {
@@ -2882,7 +2891,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 							IPCOMP_CPI_SIZE,
 							"CPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->logger, &d, "%s", "");
+					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -2929,7 +2939,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 				diag_t d = pbs_in_thing(&next_proposal_pbs, next_spi, "SPI");
 				if (d != NULL) {
-					llog_diag(RC_LOG, st->logger, &d, "%s", "");
+					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					pfree_diag(&d);
 					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
@@ -3015,7 +3026,8 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						 &next_proposal, sizeof(next_proposal),
 						 &next_proposal_pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, st->logger, &d, "%s", "");
+				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 		} while (next_proposal.isap_proposal == propno);

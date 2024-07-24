@@ -318,7 +318,8 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	diag_t d = pbs_in_thing(&rekey_pbs, spi, "SPI");
 	if (d != NULL) {
 		/* for instance, truncated SPI */
-		llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 

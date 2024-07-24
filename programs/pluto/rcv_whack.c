@@ -230,7 +230,8 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 					       &pubkey/*new-public-key:must-delref*/,
 					       &pluto_pubkeys);
 		if (d != NULL) {
-			llog_diag(RC_LOG, logger, &d, "%s", "");
+			llog(RC_LOG, logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			free_id_content(&keyid);
 			return;
 		}

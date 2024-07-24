@@ -575,7 +575,8 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			diag_t d = pbs_in_struct(&in_pbs, &ikev2_skf_desc,
 						 &skf, sizeof(skf), &ignored);
 			if (d != NULL) {
-				llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return true;
 			}
 			if (skf.isaskf_total != ike->sa.st_v2_msgid_windows.responder.recv_frags) {

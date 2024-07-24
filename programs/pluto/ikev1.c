@@ -866,7 +866,8 @@ void process_v1_packet(struct msg_digest *md)
 		diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ikefrag_desc,
 					 &fraghdr, sizeof(fraghdr), &frag_pbs);
 		if (d != NULL) {
-			llog_diag(RC_LOG, LOGGER, &d, "%s", "");
+			llog(RC_LOG, LOGGER, "%s", str_diag(d));
+			pfree_diag(&d);
 			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			return;
 		}
@@ -1296,7 +1297,8 @@ void process_packet_tail(struct msg_digest *md)
 					diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ignore_desc,
 								 &pd->payload, sizeof(pd->payload), &pd->pbs);
 					if (d != NULL) {
-						llog_diag(RC_LOG, LOGGER, &d, "%s", "");
+						llog(RC_LOG, LOGGER, "%s", str_diag(d));
+						pfree_diag(&d);
 						LOG_PACKET(RC_LOG,
 							   "%smalformed payload in packet",
 							   excuse);
@@ -1365,7 +1367,8 @@ void process_packet_tail(struct msg_digest *md)
 						 &pd->payload, sizeof(pd->payload),
 						 &pd->pbs);
 			if (d != NULL) {
-				llog_diag(RC_LOG, LOGGER, &d, "%s", "");
+				llog(RC_LOG, LOGGER, "%s", str_diag(d));
+				pfree_diag(&d);
 				LOG_PACKET(RC_LOG,
 					   "%smalformed payload in packet",
 					   excuse);

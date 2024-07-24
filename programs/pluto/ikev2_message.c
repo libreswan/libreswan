@@ -1329,7 +1329,8 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 		struct pbs_in ignored;
 		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &ignored);
 		if (d != NULL) {
-			llog_diag(RC_LOG, sk->logger, &d, "%s", "");
+			llog(RC_LOG, sk->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 	}
@@ -1347,7 +1348,8 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 		struct pbs_in ignored;
 		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), &ignored);
 		if (d != NULL) {
-			llog_diag(RC_LOG, sk->logger, &d, "%s", "");
+			llog(RC_LOG, sk->logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 		skf_np = e.isag_np;

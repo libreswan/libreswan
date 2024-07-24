@@ -716,7 +716,8 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
-			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
@@ -844,7 +845,8 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						       ike->sa.st_firstpacket_me,
 						       &signed_octets);
 		if (d != NULL) {
-			llog_diag(RC_LOG, ike->sa.logger, &d, "%s", "");
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return STF_FATAL;
 		}
 

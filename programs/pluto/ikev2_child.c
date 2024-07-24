@@ -383,7 +383,8 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
 						 &n_ipcomp, sizeof(n_ipcomp), NULL);
 			if (d != NULL) {
-				llog_diag(RC_LOG, larval_child->sa.logger, &d, "%s", "");
+				llog(RC_LOG, larval_child->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
 				return v2N_NO_PROPOSAL_CHOSEN;
 			}
 
@@ -822,7 +823,8 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		diag_t d = pbs_in_struct(&pbs, &ikev2notify_ipcomp_data_desc,
 					 &n_ipcomp, sizeof(n_ipcomp), NULL);
 		if (d != NULL) {
-			llog_diag(RC_LOG, child->sa.logger, &d, "%s", "");
+			llog(RC_LOG, child->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
 
