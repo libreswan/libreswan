@@ -24,6 +24,10 @@
 #include "passert.h"
 #include "lswlog.h"		/* for bad_case() */
 
+const struct ip_info unspec_ip_info = {
+	.af = AF_UNSPEC,
+};
+
 /*
  * Implement https://tools.ietf.org/html/rfc5952
  */

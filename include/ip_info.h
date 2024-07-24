@@ -104,13 +104,12 @@ struct ip_info {
 
 	/*
 	 * Sockaddr.
-	 *
-	 * AF_INET or AF_INET6
 	 */
-	int af;
-	const char *af_name;
+	int af;				/* AF_INET or AF_INET6 */
+	const char *af_name;		/* "AF_INET" or "AF_INET6" */
+
 	/* misc */
-	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
+	size_t sockaddr_size;		/* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
 	ip_address (*address_from_sockaddr)(const ip_sockaddr sa);
 	ip_port (*port_from_sockaddr)(const ip_sockaddr sa);
 
@@ -134,6 +133,7 @@ extern const struct ip_info ip_families[IP_INDEX_ROOF];
 
 #define ipv4_info ip_families[IPv4_INDEX]
 #define ipv6_info ip_families[IPv6_INDEX]
+extern const struct ip_info unspec_ip_info;
 
 extern const struct ip_info *aftoinfo(int af);
 
