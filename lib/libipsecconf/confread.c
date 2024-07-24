@@ -153,6 +153,13 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	DOPT(KNCF_AUTO, AUTOSTART_IGNORE);
 
+	DOPT(KNCF_IPTFS_OUT_SIZE, IPTFS_UNSET);
+	DOPT(KNCF_IPTFS_OUT_MAX_DELAY, IPTFS_UNSET);
+	DOPT(KNCF_IPTFS_OUT_QUEUE, IPTFS_UNSET);
+	DOPT(KNCF_IPTFS_OUT_FRAGMENT, YN_UNSET);
+	DOPT(KNCF_IPTFS_IN_REWIN, IPTFS_UNSET);
+	DOPT(KNCF_IPTFS_OUT_FRAGMENT, IPTFS_UNSET);
+
 # undef DOPT
 
 	d->ike_version = IKEv2;
@@ -680,6 +687,7 @@ static bool load_conn(struct starter_conn *conn,
 			bad_case(KS_UNSET);
 
 		case KS_TUNNEL:
+		case KS_IPTFS:
 			break;
 
 		case KS_TRANSPORT:

@@ -1,0 +1,7 @@
+IKEv2 mobike using esp=aes_gcm
+
+Fixed kernel commit 75bf50f, included in v4.15
+
+On linux kernel v4.14 this leads to a kernel panic and/or failed
+XFRM migration.
+

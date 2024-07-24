@@ -49,6 +49,7 @@
 #include "ip_index.h"
 #include "routing.h"
 #include "connection_owner.h"
+#include "iptfs.h"
 
 /*
  * Note that we include this even if not X509, because we do not want
@@ -353,6 +354,7 @@ struct config {
 		 */
 		struct child_proposals proposals; /* raw proposals */
 		struct ikev2_proposals *v2_ike_auth_proposals;
+		struct pluto_iptfs iptfs;
 	} child_sa;
 
 	struct {
