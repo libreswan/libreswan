@@ -691,60 +691,61 @@ static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	return parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp);
 }
 
-static int parse_nl_newaddr_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *if_rsp)
+static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
+			      struct ifinfo_response *if_rsp,
+			      const struct logger *logger)
 {
 	struct rtattr *attribute;
 	struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
 	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa));
-	const char *local_addr = NULL;
-	int local_addr_len = 0;
+	shunk_t local_addr = null_shunk;
 
 	for (attribute = IFLA_RTA(ifa); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
-		 void *attr_data = RTA_DATA(attribute);
-		 int attr_len = RTA_PAYLOAD(attribute);
+		shunk_t attr = shunk2(RTA_DATA(attribute), RTA_PAYLOAD(attribute));
 
 		switch (attribute->rta_type) {
 		case IFA_LOCAL:
 			/* Only parse the IP, if the if_name/label matches */
-			local_addr = attr_data;
-			local_addr_len = attr_len;
+			local_addr = attr;
 			break;
 
 		case IFA_LABEL:
 			/* IFA_LABEL is the interface name */
-			if (memcmp(if_rsp->filter_data.if_name, attr_data, attr_len) != 0) {
-				 dbg("parse_nl_newaddr_msg() skipping non-matching message for label %s",
-				 (char*) attr_data);
-				return XFRMI_SUCCESS;
-			} else {
-				if (if_rsp->result_if.name == NULL) {
-					if_rsp->result_if.name = alloc_bytes(attr_len, "parse_linkinfo_data");
-					memcpy(if_rsp->result_if.name, attr_data, attr_len);
-					if_rsp->result = true;
-				}
-				dbg("parse_nl_newaddr_msg() matching message for if_name %s", if_rsp->result_if.name);
+			if (memcmp(if_rsp->filter_data.if_name, attr.ptr, attr.len) != 0) {
+				ldbg(logger, "%s() skipping non-matching message for label "PRI_SHUNK,
+				     __func__, pri_shunk(attr));
+				return;
 			}
+
+			if (if_rsp->result_if.name == NULL) {
+				if_rsp->result_if.name = clone_hunk_as_string(attr, "parse_linkinfo_data");
+				if_rsp->result = true;
+			}
+			ldbg(logger, "%s() matching message for if_name %s",
+			     __func__, if_rsp->result_if.name);
 			break;
 
 		default:
-		    dbg("parse_nl_newaddr_msg() skipping attr type %d", attribute->rta_type);
+			ldbg(logger, "%s() skipping attr type %d",
+			     __func__, attribute->rta_type);
 			break;
 		}
 	}
 
-	if (local_addr != NULL) {
+	if (local_addr.len > 0) {
 		ip_cidr if_ip;
-		diag_t diag = data_to_cidr(local_addr, local_addr_len, ifa->ifa_prefixlen,
+		diag_t diag = hunk_to_cidr(local_addr, ifa->ifa_prefixlen,
 					   aftoinfo(ifa->ifa_family), &if_ip);
 		if (diag != NULL) {
-			llog_pexpect(&global_logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
+			llog_pexpect(logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
 			pfree_diag(&diag);
-			return XFRMI_FAILURE;
+			return;
 		}
+
 		create_xfrmi_ipaddr(&if_rsp->result_if, if_ip);
 	}
 
-	return XFRMI_SUCCESS;
+	return;
 }
 
 struct linux_netlink_context {
@@ -764,7 +765,7 @@ static bool process_nlmsg(struct nlmsghdr *nlmsg,
 		return true;
 
 	case RTM_NEWADDR:
-		parse_nl_newaddr_msg(nlmsg, ifi_rsp);
+		parse_newaddr_msg(nlmsg, ifi_rsp, verbose.logger);
 		return true;
 	}
 
