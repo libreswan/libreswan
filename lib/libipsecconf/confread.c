@@ -123,7 +123,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # define DOPT(kbf, v)  { d->options[kbf] = (v); }
 
-	DOPT(KNCF_NAT_KEEPALIVE, true);    /* per conn */
+	DOPT(KNCF_NAT_KEEPALIVE, DEFAULT_KEEP_ALIVE_SECS);    /* per conn */
 	DOPT(KNCF_TYPE, KS_TUNNEL);
 
 	DOPT(KNCF_INITIAL_CONTACT, true);
