@@ -27,12 +27,15 @@ char *clone_bytes_as_string(const void *ptr, size_t maxlen, const char *name)
 		return NULL;
 	}
 
-	/* Look for terminating NULL, if there is one */
+	/* Don't assume terminating NUL */
 	size_t len = strnlen(ptr, maxlen);
 
+	/* include space for NUL */
 	char *out = alloc_things(char, len + 1, name);
 	memcpy(out, ptr, len);
-	out[maxlen] = '\0'; /* also done by alloc_things() */
+
+	/* explict; but redundant as done by alloc_things() */
+	out[len] = '\0';
 	return out;
 }
 
