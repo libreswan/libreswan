@@ -15,6 +15,7 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
+# Underscore programs are for internal use only.
 PROGRAM = _hunkcheck
 
 OBJS += hunkcheck.o

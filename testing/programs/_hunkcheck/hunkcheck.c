@@ -947,6 +947,46 @@ static void check_hunks(void)
 	}
 }
 
+static void check__clone_hunk_as_string(void)
+{
+	static const struct test {
+		struct {
+			size_t len;
+			char ptr[5];
+		} hunk;
+		const char output[5];
+	} tests[] = {
+
+		{ { 0, "\0a\0", }, "", },
+		{ { 1, "\0a\0", }, "", },
+		{ { 2, "\0a\0", }, "", },
+		{ { 3, "\0a\0", }, "", },
+
+		{ { 0, "a\0bc", }, "",  },
+		{ { 1, "a\0bc", }, "a", },
+		{ { 2, "a\0bc", }, "a", },
+		{ { 3, "a\0bc", }, "a", },
+		{ { 4, "a\0bc", }, "a", },
+
+		{ { 0, "ab\0c", }, "",  },
+		{ { 1, "ab\0c", }, "a", },
+		{ { 2, "ab\0c", }, "ab", },
+		{ { 3, "ab\0c", }, "ab", },
+		{ { 4, "ab\0c", }, "ab", },
+
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT(" input='"PRI_SHUNK"' output='%s'", pri_shunk(t->hunk), t->output);
+		char *output = clone_hunk_as_string(t->hunk, "test");
+		if (!streq(t->output, output)) {
+			FAIL("clone_hunk_as_string() output %s should be '%s'", output, t->output);
+		}
+		pfreeany(output);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	leak_detective = true;
@@ -968,6 +1008,7 @@ int main(int argc, char *argv[])
 	check__hunk_get__hunk_put();
 	check_hunks();
 	check__hunk_append();
+	check__clone_hunk_as_string();
 
 	if (report_leaks(logger)) {
 		fails++;
