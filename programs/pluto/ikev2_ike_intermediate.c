@@ -166,9 +166,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 				 + inner_payloads.len);
 	dbg("adjusted payload length: %zu", adjusted_payload_length);
 	memcpy(&adjusted_message_header, header.ptr, header.len);
-	hton_bytes(adjusted_payload_length,
-		   &adjusted_message_header.isa_length,
-		   sizeof(adjusted_message_header.isa_length));
+	hton_thing(adjusted_payload_length, adjusted_message_header.isa_length);
 	crypt_prf_update_thing(prf, "Adjusted Message Header", adjusted_message_header);
 
 	/* Unencrypted payload */
@@ -178,9 +176,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	size_t adjusted_encrypted_payload_length = encrypted_payload_header.len + inner_payloads.len;
 	dbg("adjusted encrypted payload length: %zu", adjusted_encrypted_payload_length);
 	memcpy(&adjusted_encrypted_payload_header, encrypted_payload_header.ptr, encrypted_payload_header.len);
-	hton_bytes(adjusted_encrypted_payload_length,
-		   &adjusted_encrypted_payload_header.isag_length,
-		   sizeof(adjusted_encrypted_payload_header.isag_length));
+	hton_thing(adjusted_encrypted_payload_length, adjusted_encrypted_payload_header.isag_length);
 	crypt_prf_update_thing(prf, "Adjusted Encrypted (SK) Header", adjusted_encrypted_payload_header);
 
 	/* P: prf(... | IntAuth_[ir](N)P) */

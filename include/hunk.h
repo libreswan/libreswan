@@ -395,30 +395,42 @@ char  char_toupper(char c);
  * Overflow is handed with staturation (returns UINTMAX_MAX).
  */
 
-void hton_bytes(uintmax_t h, void *bytes, size_t size);
-uintmax_t ntoh_bytes(const void *bytes, size_t size);
+void raw_hton(uintmax_t h, void *bytes, size_t size);
+uintmax_t raw_ntoh(const void *bytes, size_t size);
 
 #define ntoh_hunk(HUNK)							\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		ntoh_bytes(hunk_.ptr, hunk_.len);			\
+		raw_ntoh(hunk_.ptr, hunk_.len);				\
 	})
 
 #define hton_chunk(H, HUNK) /* writeable */				\
 	({								\
 		const chunk_t hunk_ = HUNK; /* evaluate once */		\
-		hton_bytes(H, hunk_.ptr, hunk_.len);			\
+		raw_hton(H, hunk_.ptr, hunk_.len);			\
+	})
+
+#define ntoh_thing(THING)						\
+	({								\
+		const shunk_t hunk_ = THING_AS_HUNK(THING);		\
+		raw_ntoh(hunk_.ptr, hunk_.len);				\
+	})
+
+#define hton_thing(H, THING) /* writeable */				\
+	({								\
+		chunk_t hunk_ = THING_AS_CHUNK(THING);			\
+		raw_hton(H, hunk_.ptr, hunk_.len);			\
 	})
 
 /*
  * convert a hunk into a NUL terminated string; NULL is NULL.
  */
 
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
+char *raw_clone_as_string(const void *ptr, size_t len, const char *name);
 #define clone_hunk_as_string(HUNK, NAME)				\
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		clone_bytes_as_string(hunk_.ptr, hunk_.len, NAME);	\
+		raw_clone_as_string(hunk_.ptr, hunk_.len, NAME);	\
 	})
 
 #endif

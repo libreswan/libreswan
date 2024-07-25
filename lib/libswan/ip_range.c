@@ -207,7 +207,7 @@ uintmax_t range_size(const ip_range range)
 	 * can't overflow; but could be 0xf..f and adding one will
 	 * overflow
 	 */
-	uintmax_t diff = ntoh_bytes(diff_bytes.byte, afi->ip_size);
+	uintmax_t diff = raw_ntoh(diff_bytes.byte, afi->ip_size);
 	if (diff >= UINTMAX_MAX) {
 		/* size+1 would overflow */
 		return UINTMAX_MAX;
@@ -419,7 +419,7 @@ err_t address_to_range_offset(const ip_range range, const ip_address address, ui
 
 	struct ip_bytes diff = ip_bytes_sub(afi, address.bytes, range.start);
 
-	*offset = ntoh_bytes(diff.byte, afi->ip_size);
+	*offset = raw_ntoh(diff.byte, afi->ip_size);
 
 	if (*offset == UINTMAX_MAX) {
 		return "offset overflow";

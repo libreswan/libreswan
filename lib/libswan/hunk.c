@@ -21,7 +21,7 @@
 #include "lswalloc.h"		/* for clone_bytes() */
 #include "hunk.h"
 
-char *clone_bytes_as_string(const void *ptr, size_t maxlen, const char *name)
+char *raw_clone_as_string(const void *ptr, size_t maxlen, const char *name)
 {
 	if (ptr == NULL) {
 		return NULL;
@@ -115,7 +115,7 @@ bool raw_heq(const void *l_ptr, size_t l_len,
 	return true;
 }
 
-void hton_bytes(uintmax_t h, void *bytes, size_t size)
+void raw_hton(uintmax_t h, void *bytes, size_t size)
 {
 	uint8_t *byte = bytes;
 	for (unsigned i = 0; i < size; i++) {
@@ -125,7 +125,7 @@ void hton_bytes(uintmax_t h, void *bytes, size_t size)
 	}
 }
 
-uintmax_t ntoh_bytes(const void *bytes, size_t size)
+uintmax_t raw_ntoh(const void *bytes, size_t size)
 {
 	uintmax_t h = 0;
 	const uint8_t *byte = bytes;

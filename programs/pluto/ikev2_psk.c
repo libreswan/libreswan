@@ -82,8 +82,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 						    "IntAuth_*_I_A | IntAuth_*_R");
 		/* IKE AUTH's first Message ID */
 		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
-		hton_bytes(ike->sa.st_v2_ike_intermediate.id + 1,
-			   ike_auth_mid, sizeof(ike_auth_mid));
+		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, ike_auth_mid);
 		append_chunk_thing("IKE_AUTH_MID", &intermediate_auth, ike_auth_mid);
 	}
 

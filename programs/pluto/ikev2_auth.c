@@ -108,8 +108,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", ia2);
 		/* IKE AUTH's first Message ID */
 		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
-		hton_bytes(ike->sa.st_v2_ike_intermediate.id + 1,
-			   ike_auth_mid, sizeof(ike_auth_mid));
+		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, ike_auth_mid);
 		crypt_hash_digest_thing(ctx, "IKE_AUTH_MID", ike_auth_mid);
 	}
 	return crypt_hash_final_mac(&ctx);

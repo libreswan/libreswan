@@ -2986,7 +2986,7 @@ void close_output_pbs(struct pbs_out *pbs)
 		 */
 		unsigned size = pbs->lenfld_desc->size;
 		PASSERT(pbs->logger, size > 0);
-		hton_bytes(len, pbs->lenfld, size);
+		raw_hton(len, pbs->lenfld, size);
 	}
 
 	/* if there is one */
