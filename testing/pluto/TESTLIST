@@ -1375,7 +1375,7 @@ kvmplutotest	whack-hostkey-06-ikev2-pubkey-ecdsa	good
 # up edge cases
 kvmplutotest	whack-up-01-async-ikev1			good
 kvmplutotest	whack-up-01-async-ikev2			good
-kvmplutotest	whack-up-02-config			wip	github/1726
+kvmplutotest	whack-up-02-config			good	github/1726
 
 # ipsec delete/down of cuckoo
 kvmplutotest	whack-down-01-ikev1-child-1then2	good

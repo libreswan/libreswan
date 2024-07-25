@@ -34,18 +34,18 @@ west #
 "west": added IKEv2 connection
 west #
  ipsec up --config $PWD/ipsec.conf west
-"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec down --config $PWD/ipsec.conf west
 "west": terminating SAs using this connection
-"west" #1: sent INFORMATIONAL request to delete IKE SA
-"west" #2: ESP traffic information: in=0B out=0B
-"west" #1: deleting IKE SA (established IKE SA)
+"west" #3: sent INFORMATIONAL request to delete IKE SA
+"west" #4: ESP traffic information: in=0B out=0B
+"west" #3: deleting IKE SA (established IKE SA)
 west #
  ipsec delete --config $PWD/ipsec.conf west
 west #

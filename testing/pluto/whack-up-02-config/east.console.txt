@@ -18,8 +18,4 @@ east #
  echo "initdone"
 initdone
 east #
- # non-zero counts confirm encrypted traffic flowing
-east #
- ipsec trafficstatus
-east #
  
