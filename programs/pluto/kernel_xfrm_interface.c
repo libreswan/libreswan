@@ -270,16 +270,6 @@ static int ip_link_del(const char *if_name, const struct logger *logger)
 	return XFRMI_SUCCESS;
 }
 
-/* errno will be set on error: one caller will report it */
-static int dev_exists_check(const char *dev_name /*non-NULL*/)
-{
-	if (if_nametoindex(dev_name) == 0) {
-		return XFRMI_FAILURE;
-	}
-
-	return XFRMI_SUCCESS;
-}
-
 static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 			      const char *dev_name /*non-NULL*/,
 			      const uint32_t if_id,
@@ -816,8 +806,8 @@ static int find_xfrmi_interface(const char *if_name, /* optional */
 	vdbg("%s() start", __func__);
 	verbose.level++;
 
-	/* first do a cheap check */
-	if (if_name != NULL && dev_exists_check(if_name) != XFRMI_SUCCESS) {
+	/* first do a cheap existance check */
+	if (if_name != NULL && if_nametoindex(if_name) == 0) {
 		vdbg("%s() failed, if_nametoindex(%s) returned zero", __func__, if_name);
 		return XFRMI_FAILURE;
 	}
@@ -873,10 +863,13 @@ static int find_any_xfrmi_interface(struct logger *logger)
 static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct pluto_xfrmi *xfrmi, struct logger *logger)
 {
 	/* first do a cheap check */
-	if (xfrmi->name != NULL && dev_exists_check(xfrmi->name) != XFRMI_SUCCESS) {
-		llog_error(logger, 0/*no-errno*/,
-			   "ip_addr_xfrmi_get_all_ips device does not exist [%s]",
-			   (xfrmi->name == NULL ? "NULL" : xfrmi->name));
+	if (xfrmi->name != NULL && if_nametoindex(xfrmi->name) == 0) {
+		/*
+		 * XXX: why ERROR: prefix; why function name; why not
+		 * log error?
+		 */
+		llog_error(logger, errno, "device does not exist [%s]: ",
+			   xfrmi->name);
 		return NULL;
 	}
 
@@ -990,9 +983,8 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 		ldbg(logger, "xfrmi is not supported. failed to create %s@%s", if_name, dev_name);
 		return "xfrmi is not supported";
 	} else {
-		if (dev_exists_check(if_name) != XFRMI_SUCCESS) {
-			llog_error(logger, errno,
-				   "cannot find device %s", if_name);
+		if (if_nametoindex(if_name) == 0) {
+			llog_error(logger, errno, "cannot find device %s: ", if_name);
 
 			/*
 			 * failed to create xfrmi device.
@@ -1038,8 +1030,9 @@ err_t xfrm_iface_supported(struct logger *logger)
 		char *if_name = fmt_xfrmi_ifname(IPSEC1_XFRM_IF_ID);
 		static const char lo[] = "lo";
 
-		if (dev_exists_check(lo) != XFRMI_SUCCESS) {
-			/* possibly no need to panic: may be get smarter one day */
+		if (if_nametoindex(lo) == 0) {
+			/* possibly no need to panic: may be get
+			 * smarter one day */
 			xfrm_interface_support = -1;
 			pfreeany(if_name);
 			return "Could not create find real device needed to test xfrmi support";
@@ -1119,11 +1112,17 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		*/
 		new_pluto_xfrmi(if_id, shared, xfrmi_name, c);
 
-		/* Query the XFRMi IF IPs from netlink and store them, only if the IF exists.
+		/*
+		 * Query the XFRMi IF IPs from netlink and store them,
+		 * only if the IF exists.
+		 *
 		 * Any IPs added now will have pluto_added=false.
-		 * Any new IP created on this interface will be reference counted later
-		 * in the call to add_xfrm_interface(). */
-		if (dev_exists_check(xfrmi_name) == XFRMI_SUCCESS) {
+		 *
+		 * Any new IP created on this interface will be
+		 * reference counted later in the call to
+		 * add_xfrm_interface().
+		 */
+		if (if_nametoindex(xfrmi_name) != 0) {
 			ip_addr_xfrmi_store_ips(c->xfrmi, c->logger);
 		}
 	} else {
@@ -1233,7 +1232,7 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 	passert(c->xfrmi->name != NULL);
 	passert(c->iface->real_device_name != NULL);
 
-	if (dev_exists_check(c->xfrmi->name) != XFRMI_SUCCESS) {
+	if (if_nametoindex(c->xfrmi->name) == 0) {
 		if (ip_link_add_xfrmi(c->xfrmi->name,
 				      c->iface->real_device_name,
 				      c->xfrmi->if_id,
