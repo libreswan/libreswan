@@ -745,6 +745,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 		if (attribute->rta_type != IFA_ADDRESS) {
 			ldbg(logger, "%s() skipping attr type %d",
 			     __func__, attribute->rta_type);
+			continue;
 		}
 
 
