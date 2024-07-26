@@ -433,4 +433,11 @@ char *raw_clone_as_string(const void *ptr, size_t len, const char *name);
 		raw_clone_as_string(hunk_.ptr, hunk_.len, NAME);	\
 	})
 
+#define clone_thing_as_string(THING, NAME)				\
+	({								\
+		shunk_t hunk_ = THING_AS_HUNK(THING);			\
+		raw_clone_as_string(hunk_.ptr, hunk_.len, NAME);	\
+	})
+
+
 #endif
