@@ -574,8 +574,11 @@ static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
 }
 
 static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_name,
-							 struct ifinfo_response *ifi_rsp)
+				    struct ifinfo_response *ifi_rsp,
+				    struct verbose verbose)
 {
+	vdbg("%s() start", __func__);
+	verbose.level++;
 	struct rtattr *nested_attrib;
 	const struct rtattr *dev_if_id_attr = NULL;
 	const struct rtattr *if_id_attr = NULL;
@@ -584,33 +587,48 @@ static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_nam
 			RTA_OK(nested_attrib, attribute->rta_len);
 			nested_attrib = RTA_NEXT(nested_attrib,
 				attribute->rta_len)) {
-		if (nested_attrib->rta_type == IFLA_XFRM_LINK)
+		if (nested_attrib->rta_type == IFLA_XFRM_LINK) {
+			vdbg("%s() found IFLA_XFRM_LINK aka dev_if_id_attr", __func__);
 			dev_if_id_attr = nested_attrib;
+		}
 
-		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID)
+		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID) {
+			vdbg("%s() found IFLA_XFRM_IF_ID aka if_id_attr", __func__);
 			if_id_attr = nested_attrib;
+		}
 	}
 
 	if (dev_if_id_attr != NULL) {
 		uint32_t dev_if_id = *((const uint32_t *)RTA_DATA(dev_if_id_attr));
 		ifi_rsp->result_if.dev_if_id = dev_if_id;
+		vdbg("%s() setting .result_if.dev_if_id to %d", __func__, dev_if_id);
 		if (dev_if_id == ifi_rsp->filter_data.dev_if_id) {
+			vdbg("%s() dev_if_id %d matched .filter_data.dev_if_id %d; setting .matched.dev_if_id",
+			     __func__, dev_if_id, ifi_rsp->filter_data.dev_if_id);
 			ifi_rsp->matched.dev_if_id = true;
 		}
 	}
 
-	if (if_id_attr == NULL)
+	if (if_id_attr == NULL) {
+		vdbg("%s() failed, id_id_attr not found", __func__);
 		return -1;
+	}
 
 	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(if_id_attr));
 	if (ifi_rsp->filter_data.filter_xfrm_if_id) {
 		if (xfrm_if_id == ifi_rsp->filter_data.xfrm_if_id) {
+			vdbg("%s() xfrm_if_id %d matched .filter_data.xfrm_if_id %d; setting .matched.xfrm_if_id and .result_if.if_id",
+			     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
 			ifi_rsp->result_if.if_id = xfrm_if_id;
 			ifi_rsp->matched.xfrm_if_id = true;
 		} else {
+			vdbg("%s() failed, xfrm_if_id %d did not match .filter_data.xfrm_if_id %d",
+			     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
 			return -2;
 		}
 	} else {
+		vdbg("%s() wildcard matched xfrm_if_id %d, setting .result_if.if_id",
+		     __func__, xfrm_if_id);
 		ifi_rsp->result_if.if_id = xfrm_if_id;
 	}
 
@@ -618,13 +636,17 @@ static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_nam
 	ifi_rsp->result_if.name = clone_str(if_name, "xfrmi name from kernel");
 
 	/* if it came this far found what we looking for */
+	vdbg("%s() succeeded; setting .result", __func__);
 	ifi_rsp->result = true;
-
 	return XFRMI_SUCCESS;
 }
 
-static int parse_link_info_xfrm(struct rtattr *attribute, const char *if_name, struct ifinfo_response *ifi_rsp)
+static int parse_link_info_xfrm(struct rtattr *attribute, const char *if_name,
+				struct ifinfo_response *ifi_rsp,
+				struct verbose verbose)
 {
+	vdbg("%s() start", __func__);
+	verbose.level++;
 	struct rtattr *nested_attrib;
 	struct rtattr *info_data_attr = NULL;
 	ssize_t len = attribute->rta_len;
@@ -644,14 +666,17 @@ static int parse_link_info_xfrm(struct rtattr *attribute, const char *if_name, s
 	}
 
 	if (ifi_rsp->matched.kind && info_data_attr !=  NULL) {
-		return parse_xfrm_linkinfo_data(info_data_attr, if_name, ifi_rsp);
+		return parse_xfrm_linkinfo_data(info_data_attr, if_name, ifi_rsp, verbose);
 	} else {
 		return XFRMI_FAILURE;
 	}
 }
 
-static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *ifi_rsp)
+static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *ifi_rsp,
+				struct verbose verbose)
 {
+	vdbg("%s() start", __func__);
+	verbose.level++;
 	struct rtattr *attribute;
 	struct rtattr *linkinfo_attr =  NULL;
 	struct ifinfomsg *iface = NLMSG_DATA(nlmsg);
@@ -688,7 +713,7 @@ static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 		}
 	}
 
-	return parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp);
+	return parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp, verbose);
 }
 
 static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
@@ -764,7 +789,7 @@ static bool process_nlmsg(struct nlmsghdr *nlmsg,
 	struct ifinfo_response *ifi_rsp = c->ifi_rsp;
 	switch (nlmsg->nlmsg_type) {
 	case RTM_NEWLINK:
-		if (parse_nl_newlink_msg(nlmsg, ifi_rsp) == XFRMI_SUCCESS &&
+		if (parse_nl_newlink_msg(nlmsg, ifi_rsp, verbose) == XFRMI_SUCCESS &&
 		    ifi_rsp->result)
 			return true;
 		return true;
@@ -783,8 +808,16 @@ static int find_xfrmi_interface(const char *if_name, /* optional */
 				 uint32_t xfrm_if_id,
 				 struct logger *logger)
 {
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
+	vdbg("%s() start", __func__);
+	verbose.level++;
+
 	/* first do a cheap check */
 	if (if_name != NULL && dev_exists_check(if_name) != XFRMI_SUCCESS) {
+		vdbg("%s() failed, if_nametoindex(%s) returned zero", __func__, if_name);
 		return XFRMI_FAILURE;
 	}
 
@@ -803,20 +836,19 @@ static int find_xfrmi_interface(const char *if_name, /* optional */
 	struct linux_netlink_context ctx = {
 		.ifi_rsp = &ifi_rsp,
 	};
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
-	};
+
 	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
+		vdbg("%s() failed, linux_netlink_query() failed", __func__);
 		return XFRMI_FAILURE;
 	}
 
 	if (ifi_rsp.result) {
 		char if_name_buf[IF_NAMESIZE];
 		if_indextoname(ifi_rsp.result_if.dev_if_id, if_name_buf);
-		ldbg(logger,
-		     "xfrmi support found existing %s@%s xfrm if_id 0x%x",
-		     ifi_rsp.result_if.name, if_name_buf, ifi_rsp.result_if.if_id);
+		vdbg("%s() support found existing %s@%s (xfrm) .result_if.if_id %s %d .result_if.dev_if_id %s %d",
+		     __func__, ifi_rsp.result_if.name, if_name_buf,
+		     bool_str(ifi_rsp.matched.xfrm_if_id), ifi_rsp.result_if.if_id,
+		     bool_str(ifi_rsp.matched.dev_if_id), ifi_rsp.result_if.dev_if_id);
 		pfreeany(ifi_rsp.result_if.name);
 		return XFRMI_SUCCESS;
 	}
