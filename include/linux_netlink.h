@@ -29,6 +29,13 @@ struct nlmsghdr;
 struct linux_netlink_context;
 struct logger;
 
+/*
+ * Use struct linux_netlink_context to return the result.
+ *
+ * Only return false when something catastrophic happens and the
+ * parsing should be abandoned.
+ */
+
 typedef bool linux_netlink_response_processor(struct nlmsghdr *,
 					      struct linux_netlink_context *,
 					      struct verbose verbose);
