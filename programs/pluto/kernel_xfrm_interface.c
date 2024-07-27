@@ -795,68 +795,57 @@ static bool process_nlmsg(struct nlmsghdr *nlmsg,
 	return true;
 }
 
-static int find_xfrmi_interface(const char *if_name, /* optional */
-				 uint32_t xfrm_if_id,
-				 struct logger *logger)
+static bool find_xfrmi_interface(const char *if_name, /* optional */
+				 uint32_t xfrm_if_id, /* 0 is wildcard */
+				 struct verbose verbose)
 {
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
-	};
 	vdbg("%s() start", __func__);
 	verbose.level++;
 
 	/* first do a cheap existance check */
 	if (if_name != NULL && if_nametoindex(if_name) == 0) {
 		vdbg("%s() failed, if_nametoindex(%s) returned zero", __func__, if_name);
-		return XFRMI_FAILURE;
+		return false;
 	}
 
-	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_GETLINK,
-						  (NLM_F_REQUEST | NLM_F_DUMP));
+	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_GETLINK, (NLM_F_REQUEST | NLM_F_DUMP));
 
-	struct ifinfo_response ifi_rsp;
-	zero(&ifi_rsp);
-
-	ifi_rsp.filter_data.if_name = if_name;
-	if (xfrm_if_id > 0) {/* we deal with only > 0 */
-		ifi_rsp.filter_data.filter_xfrm_if_id = true;
-	}
-	ifi_rsp.filter_data.xfrm_if_id = xfrm_if_id;
-
+	struct ifinfo_response ifi_rsp = {
+		.filter_data = {
+			.if_name = if_name,
+			.filter_xfrm_if_id = (xfrm_if_id > 0),
+			.xfrm_if_id = xfrm_if_id,
+		},
+	};
 	struct linux_netlink_context ctx = {
 		.ifi_rsp = &ifi_rsp,
 	};
 
 	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
 		vdbg("%s() failed, linux_netlink_query() failed", __func__);
-		return XFRMI_FAILURE;
+		return false;
 	}
 
-	if (ifi_rsp.result) {
-		char if_name_buf[IF_NAMESIZE];
-		if_indextoname(ifi_rsp.result_if.dev_if_id, if_name_buf);
-		vdbg("%s() support found existing %s@%s (xfrm) .result_if.if_id %s %d .result_if.dev_if_id %s %d",
-		     __func__, ifi_rsp.result_if.name, if_name_buf,
-		     bool_str(ifi_rsp.matched.xfrm_if_id), ifi_rsp.result_if.if_id,
-		     bool_str(ifi_rsp.matched.dev_if_id), ifi_rsp.result_if.dev_if_id);
+	if (!ifi_rsp.result) {
+		vdbg("%s() failed, no .result", __func__);
 		pfreeany(ifi_rsp.result_if.name);
-		return XFRMI_SUCCESS;
+		return false;
 	}
 
+	/*
+	 * XXX: this is old code.
+	 *
+	 * The call to if_indextoname() has been expected to work for
+	 * many years but now 2024 doesn't.  Try to figure out why.
+	 */
+	char if_name_buf[IF_NAMESIZE];
+	const char *name = if_indextoname(ifi_rsp.result_if.dev_if_id, if_name_buf);
+	vdbg("%s() support found existing %s@%s (xfrm) .result_if.if_id %s %d .result_if.dev_if_id %s %d",
+	     __func__, ifi_rsp.result_if.name, name,
+	     bool_str(ifi_rsp.matched.xfrm_if_id), ifi_rsp.result_if.if_id,
+	     bool_str(ifi_rsp.matched.dev_if_id), ifi_rsp.result_if.dev_if_id);
 	pfreeany(ifi_rsp.result_if.name);
-
-	return XFRMI_FAILURE;
-}
-
-static int find_any_xfrmi_interface(struct logger *logger)
-{
-	int retval = find_xfrmi_interface(NULL, 0, logger);
-	if (retval != XFRMI_SUCCESS) {
-		ldbg(logger, "%s no xfrmi interface found", __func__);
-	}
-
-	return retval;
+	return true;
 }
 
 /* Get all of the IP addresses on an XFRMi interface using Netlink */
@@ -972,15 +961,25 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 				 const char *dev_name /*non-NULL*/,
 				 struct logger *logger)
 {
-	if (!find_any_xfrmi_interface(logger))
-		return NULL; /* success: there is already xfrmi interface */
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
+	vdbg("%s() start", __func__);
+	verbose.level++;
 
-	ldbg(logger,
-	     "create and delete an xfrmi interface '%s@%s' to test xfrmi support",
-	     if_name, dev_name);
+	/* match any if_id */
+	if (!find_xfrmi_interface(NULL, 0, verbose)) {
+		vdbg("%s() no xfrmi interface found", __func__);
+		return NULL; /* success: there is already xfrmi interface */
+	}
+
+	vdbg("%s() create and delete an xfrmi interface '%s@%s' to test xfrmi support",
+	     __func__, if_name, dev_name);
 	if (ip_link_add_xfrmi(if_name, dev_name, xfrm_interface_id, logger) != XFRMI_SUCCESS) {
 		xfrm_interface_support = -1;
-		ldbg(logger, "xfrmi is not supported. failed to create %s@%s", if_name, dev_name);
+		vdbg("%s() xfrmi is not supported. failed to create %s@%s",
+		     __func__, if_name, dev_name);
 		return "xfrmi is not supported";
 	} else {
 		if (if_nametoindex(if_name) == 0) {
@@ -997,9 +996,8 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 			xfrm_interface_support = -1;
 			return "missing CONFIG_XFRM_INTERFACE support in kernel";
 		}
-		ldbg(logger,
-		     "xfrmi supported success creating %s@%s and delete it",
-		     if_name, dev_name);
+		vdbg("%s() xfrmi supported success creating %s@%s and delete it",
+		     __func__, if_name, dev_name);
 		ip_link_del(if_name, logger); /* ignore return value??? */
 		xfrm_interface_support = 1; /* success */
 	}
@@ -1229,6 +1227,10 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 /* Return true on success, false on failure */
 bool add_xfrm_interface(struct connection *c, struct logger *logger)
 {
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
 	passert(c->xfrmi->name != NULL);
 	passert(c->iface->real_device_name != NULL);
 
@@ -1242,8 +1244,11 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 
 		c->xfrmi->pluto_added = true;
 	} else {
-		/* device exists: match name, type xfrmi, and xfrm_if_id */
-		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id, logger) != XFRMI_SUCCESS) {
+		/*
+		 * Device exists: try to match name, type xfrmi, and
+		 * xfrm_if_id.
+		 */
+		if (!find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id, verbose)) {
 			/* found wrong device abort adding */
 			llog_error(logger, 0/*no-errno*/,
 				   "device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'",
