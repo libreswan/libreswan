@@ -1,1 +1,3 @@
 XFRMi test with the interface-ip addresses already existing on the interface.
+
+And bogus XFRMI configurations
