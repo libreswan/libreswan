@@ -563,9 +563,9 @@ static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
 	pfreeany(xfrmi_ipaddr_unref);
 }
 
-static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_name,
-				    struct ifinfo_response *ifi_rsp,
-				    struct verbose verbose)
+
+static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_name,
+				     struct ifinfo_response *ifi_rsp, struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
@@ -574,9 +574,8 @@ static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_nam
 	const struct rtattr *if_id_attr = NULL;
 
 	for (nested_attrib = (struct rtattr *) RTA_DATA(attribute);
-			RTA_OK(nested_attrib, attribute->rta_len);
-			nested_attrib = RTA_NEXT(nested_attrib,
-				attribute->rta_len)) {
+	     RTA_OK(nested_attrib, attribute->rta_len);
+	     nested_attrib = RTA_NEXT(nested_attrib, attribute->rta_len)) {
 		if (nested_attrib->rta_type == IFLA_XFRM_LINK) {
 			vdbg("%s() found IFLA_XFRM_LINK aka dev_if_id_attr", __func__);
 			dev_if_id_attr = nested_attrib;
@@ -601,21 +600,21 @@ static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_nam
 
 	if (if_id_attr == NULL) {
 		vdbg("%s() failed, id_id_attr not found", __func__);
-		return -1;
+		return false;
 	}
 
 	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(if_id_attr));
 	if (ifi_rsp->filter_data.filter_xfrm_if_id) {
-		if (xfrm_if_id == ifi_rsp->filter_data.xfrm_if_id) {
-			vdbg("%s() xfrm_if_id %d matched .filter_data.xfrm_if_id %d; setting .matched.xfrm_if_id and .result_if.if_id",
-			     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
-			ifi_rsp->result_if.if_id = xfrm_if_id;
-			ifi_rsp->matched.xfrm_if_id = true;
-		} else {
+		if (xfrm_if_id != ifi_rsp->filter_data.xfrm_if_id) {
 			vdbg("%s() failed, xfrm_if_id %d did not match .filter_data.xfrm_if_id %d",
 			     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
-			return -2;
+			return false;
 		}
+
+		vdbg("%s() xfrm_if_id %d matched .filter_data.xfrm_if_id %d; setting .matched.xfrm_if_id and .result_if.if_id",
+		     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
+		ifi_rsp->result_if.if_id = xfrm_if_id;
+		ifi_rsp->matched.xfrm_if_id = true;
 	} else {
 		vdbg("%s() wildcard matched xfrm_if_id %d, setting .result_if.if_id",
 		     __func__, xfrm_if_id);
@@ -626,14 +625,17 @@ static int parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_nam
 	ifi_rsp->result_if.name = clone_str(if_name, "xfrmi name from kernel");
 
 	/* if it came this far found what we looking for */
-	vdbg("%s() succeeded; setting .result", __func__);
+	vdbg("%s() setting .result = true; .dev_if_id=%d; .matched.dev_if_id=%s; .if_id=%d .matched.xfrm_if_id=%s",
+	     __func__,
+	     ifi_rsp->result_if.dev_if_id, bool_str(ifi_rsp->matched.dev_if_id),
+	     ifi_rsp->result_if.if_id, bool_str(ifi_rsp->matched.xfrm_if_id));
 	ifi_rsp->result = true;
-	return XFRMI_SUCCESS;
+	return true;
 }
 
-static int parse_link_info_xfrm(struct rtattr *attribute, const char *if_name,
-				struct ifinfo_response *ifi_rsp,
-				struct verbose verbose)
+static bool parse_link_info_xfrm(struct rtattr *attribute, const char *if_name,
+				 struct ifinfo_response *ifi_rsp,
+				 struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
@@ -655,18 +657,20 @@ static int parse_link_info_xfrm(struct rtattr *attribute, const char *if_name,
 		}
 	}
 
-	if (ifi_rsp->matched.kind && info_data_attr !=  NULL) {
+	if (ifi_rsp->matched.kind && info_data_attr != NULL) {
 		return parse_xfrm_linkinfo_data(info_data_attr, if_name, ifi_rsp, verbose);
-	} else {
-		return XFRMI_FAILURE;
 	}
+
+	return false;
 }
 
-static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *ifi_rsp,
-				struct verbose verbose)
+static void parse_newlink_msg(struct nlmsghdr *nlmsg,
+			      struct ifinfo_response *ifi_rsp,
+			      struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
+
 	struct rtattr *attribute;
 	struct rtattr *linkinfo_attr =  NULL;
 	struct ifinfomsg *iface = NLMSG_DATA(nlmsg);
@@ -676,7 +680,9 @@ static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 	for (attribute = IFLA_RTA(iface); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
 		switch (attribute->rta_type) {
 		case IFLA_IFNAME:
-			if_name =  (char *) RTA_DATA(attribute); /* tmp */
+			/* XXX: is this guaranteed to be NUL
+			 * terminated? */
+			if_name =  (const char *) RTA_DATA(attribute); /* tmp */
 			break;
 
 		case IFLA_LINKINFO:
@@ -688,22 +694,31 @@ static int parse_nl_newlink_msg(struct nlmsghdr *nlmsg, struct ifinfo_response *
 		}
 	}
 
-	if (if_name == NULL)
-		return XFRMI_FAILURE;
-
-	if (linkinfo_attr == NULL)
-		return XFRMI_FAILURE;
-
-	if (ifi_rsp->filter_data.if_name != NULL) {
-		if (streq(ifi_rsp->filter_data.if_name, if_name)) {
-			/* name match requested and matched */
-			ifi_rsp->matched.name = true;
-		} else {
-			return XFRMI_FAILURE;
-		}
+	if (if_name == NULL) {
+		vdbg("%s() no if_name", __func__);
+		return;
 	}
 
-	return parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp, verbose);
+	if (linkinfo_attr == NULL) {
+		vdbg("%s() no linkinfo_attr", __func__);
+		return;
+	}
+
+	if (ifi_rsp->filter_data.if_name != NULL) {
+		if (!streq(ifi_rsp->filter_data.if_name, if_name)) {
+			vdbg("%s() if_name %s did not match %s",
+			     __func__, if_name, ifi_rsp->filter_data.if_name);
+		}
+		/* name match requested and matched */
+		ifi_rsp->matched.name = true;
+	}
+
+	if (!parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp, verbose)) {
+		vlog("%s() did not parse", __func__);
+		return;
+	}
+
+	return;
 }
 
 static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
@@ -738,7 +753,6 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			continue;
 		}
 
-
 		ip_cidr if_ip;
 		diag_t diag = hunk_to_cidr(attr, ifa->ifa_prefixlen,
 					   aftoinfo(ifa->ifa_family), &if_ip);
@@ -760,8 +774,8 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 		}
 
 		create_xfrmi_ipaddr(&if_rsp->result_if, if_ip);
-		ldbg(logger, "%s() matching message for if_name %s",
-		     __func__, if_rsp->result_if.name);
+		ldbg(logger, "%s() matching message for if_name %s and ifa_index %d; setting; result = true",
+		     __func__, if_rsp->result_if.name, ifa->ifa_index);
 		if_rsp->result = true;
 		return;
 	}
@@ -780,13 +794,13 @@ static bool process_nlmsg(struct nlmsghdr *nlmsg,
 	struct ifinfo_response *ifi_rsp = c->ifi_rsp;
 	switch (nlmsg->nlmsg_type) {
 	case RTM_NEWLINK:
-		if (parse_nl_newlink_msg(nlmsg, ifi_rsp, verbose) == XFRMI_SUCCESS &&
-		    ifi_rsp->result)
-			return true;
+		parse_newlink_msg(nlmsg, ifi_rsp, verbose);
+		/* true here means continue scanning */
 		return true;
 
 	case RTM_NEWADDR:
 		parse_newaddr_msg(nlmsg, ifi_rsp, verbose.logger);
+		/* true here means continue scanning */
 		return true;
 	}
 
