@@ -99,7 +99,6 @@ struct ifinfo_response {
 		const char *if_name;
 		uint32_t xfrm_if_id;
 		bool filter_xfrm_if_id /* because if_id can also be zero */;
-		uint32_t dev_if_id /* if_id of the dev such as eth0 or lo */;
 	} filter_data;
 
 	/* Which fields were matched while reading the NL response */
@@ -107,7 +106,6 @@ struct ifinfo_response {
 		bool name;
 		bool kind /* aka type in, "ip link show type xfrm" */;
 		bool xfrm_if_id /* xfrm if_id */;
-		bool dev_if_id;
 	} matched;
 
 	bool result; /* final result true success */
@@ -591,11 +589,6 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_na
 		uint32_t dev_if_id = *((const uint32_t *)RTA_DATA(dev_if_id_attr));
 		ifi_rsp->result_if.dev_if_id = dev_if_id;
 		vdbg("%s() setting .result_if.dev_if_id to %d", __func__, dev_if_id);
-		if (dev_if_id == ifi_rsp->filter_data.dev_if_id) {
-			vdbg("%s() dev_if_id %d matched .filter_data.dev_if_id %d; setting .matched.dev_if_id",
-			     __func__, dev_if_id, ifi_rsp->filter_data.dev_if_id);
-			ifi_rsp->matched.dev_if_id = true;
-		}
 	}
 
 	if (if_id_attr == NULL) {
@@ -625,9 +618,9 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_na
 	ifi_rsp->result_if.name = clone_str(if_name, "xfrmi name from kernel");
 
 	/* if it came this far found what we looking for */
-	vdbg("%s() setting .result = true; .dev_if_id=%d; .matched.dev_if_id=%s; .if_id=%d .matched.xfrm_if_id=%s",
+	vdbg("%s() setting .result = true; .dev_if_id=%d; .if_id=%d .matched.xfrm_if_id=%s",
 	     __func__,
-	     ifi_rsp->result_if.dev_if_id, bool_str(ifi_rsp->matched.dev_if_id),
+	     ifi_rsp->result_if.dev_if_id,
 	     ifi_rsp->result_if.if_id, bool_str(ifi_rsp->matched.xfrm_if_id));
 	ifi_rsp->result = true;
 	return true;
@@ -854,10 +847,10 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	 */
 	char if_name_buf[IF_NAMESIZE];
 	const char *name = if_indextoname(ifi_rsp.result_if.dev_if_id, if_name_buf);
-	vdbg("%s() support found existing %s@%s (xfrm) .result_if.if_id %s %d .result_if.dev_if_id %s %d",
+	vdbg("%s() support found existing %s@%s (xfrm) .result_if.if_id %s %d .result_if.dev_if_id %d",
 	     __func__, ifi_rsp.result_if.name, name,
 	     bool_str(ifi_rsp.matched.xfrm_if_id), ifi_rsp.result_if.if_id,
-	     bool_str(ifi_rsp.matched.dev_if_id), ifi_rsp.result_if.dev_if_id);
+	     ifi_rsp.result_if.dev_if_id);
 	pfreeany(ifi_rsp.result_if.name);
 	return true;
 }
