@@ -1,0 +1,9 @@
+test reordering adding the ipsec interface and adding the connection
+
+Adding the connection (ipsec add) then adding the interface (ip link)
+works; but adding the interface and then the connection fails.
+
+... and (bug) trying to fix things by deleting the interface and
+re-adding the connection still fails:
+
+  #1771 after ip link add ipsec1; ipsec add ... connection becomes unloadable
