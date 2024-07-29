@@ -567,50 +567,66 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_na
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
-	struct rtattr *nested_attrib;
 	const struct rtattr *dev_if_id_attr = NULL;
-	const struct rtattr *if_id_attr = NULL;
+	const struct rtattr *xfrm_if_id_attr = NULL;
 
-	for (nested_attrib = (struct rtattr *) RTA_DATA(attribute);
+	if (if_name == NULL) {
+		llog_pexpect(verbose.logger, HERE, "NULL if_name");
+		return false; /* abort */
+	}
+
+	for (struct rtattr *nested_attrib = (struct rtattr *) RTA_DATA(attribute);
 	     RTA_OK(nested_attrib, attribute->rta_len);
 	     nested_attrib = RTA_NEXT(nested_attrib, attribute->rta_len)) {
+
 		if (nested_attrib->rta_type == IFLA_XFRM_LINK) {
-			vdbg("%s() found IFLA_XFRM_LINK aka dev_if_id_attr", __func__);
+			vdbg("%s() %s found IFLA_XFRM_LINK aka dev_if_id_attr",
+			     __func__, if_name);
 			dev_if_id_attr = nested_attrib;
 		}
 
 		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID) {
-			vdbg("%s() found IFLA_XFRM_IF_ID aka if_id_attr", __func__);
-			if_id_attr = nested_attrib;
+			vdbg("%s() %s found IFLA_XFRM_IF_ID aka if_id_attr",
+			     __func__, if_name);
+			xfrm_if_id_attr = nested_attrib;
 		}
 	}
 
 	if (dev_if_id_attr != NULL) {
+		/* XXX: portable? */
 		uint32_t dev_if_id = *((const uint32_t *)RTA_DATA(dev_if_id_attr));
+		if (dev_if_id == 0) {
+			/* not good! see if_nametoindex() */
+			llog_error(verbose.logger, 0/*no-error*/,
+				   "%s has an xfrm device ifindex (RTA_LINK) of 0", if_name);
+			return true; /* stumble on */
+		}
 		ifi_rsp->result_if.dev_if_id = dev_if_id;
-		vdbg("%s() setting .result_if.dev_if_id to %d", __func__, dev_if_id);
+		vdbg("%s() %s setting .result_if.dev_if_id to %d",
+		     __func__, if_name, dev_if_id);
 	}
 
-	if (if_id_attr == NULL) {
-		vdbg("%s() failed, id_id_attr not found", __func__);
+	if (xfrm_if_id_attr == NULL) {
+		vdbg("%s() %s failed, xfrm_if_id_attr not found",
+		     __func__, if_name);
 		return false;
 	}
 
-	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(if_id_attr));
+	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(xfrm_if_id_attr));
 	if (ifi_rsp->filter_data.filter_xfrm_if_id) {
 		if (xfrm_if_id != ifi_rsp->filter_data.xfrm_if_id) {
-			vdbg("%s() failed, xfrm_if_id %d did not match .filter_data.xfrm_if_id %d",
-			     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
+			vdbg("%s() %s failed, xfrm_if_id %d did not match .filter_data.xfrm_if_id %d",
+			     __func__, if_name, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
 			return false;
 		}
 
-		vdbg("%s() xfrm_if_id %d matched .filter_data.xfrm_if_id %d; setting .matched.xfrm_if_id and .result_if.if_id",
-		     __func__, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
+		vdbg("%s() %s xfrm_if_id %d matched; saving",
+		     __func__, if_name, xfrm_if_id);
 		ifi_rsp->result_if.if_id = xfrm_if_id;
 		ifi_rsp->matched.xfrm_if_id = true;
 	} else {
-		vdbg("%s() wildcard matched xfrm_if_id %d, setting .result_if.if_id",
-		     __func__, xfrm_if_id);
+		vdbg("%s() %s wildcard matched xfrm_if_id %d, setting .result_if.if_id",
+		     __func__, if_name, xfrm_if_id);
 		ifi_rsp->result_if.if_id = xfrm_if_id;
 	}
 
@@ -618,8 +634,8 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_na
 	ifi_rsp->result_if.name = clone_str(if_name, "xfrmi name from kernel");
 
 	/* if it came this far found what we looking for */
-	vdbg("%s() setting .result = true; .dev_if_id=%d; .if_id=%d .matched.xfrm_if_id=%s",
-	     __func__,
+	vdbg("%s() %s setting .result = true; .dev_if_id=%d; .if_id=%d .matched.xfrm_if_id=%s",
+	     __func__, if_name,
 	     ifi_rsp->result_if.dev_if_id,
 	     ifi_rsp->result_if.if_id, bool_str(ifi_rsp->matched.xfrm_if_id));
 	ifi_rsp->result = true;
@@ -1258,7 +1274,7 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 		if (!find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id, verbose)) {
 			/* found wrong device abort adding */
 			llog_error(logger, 0/*no-errno*/,
-				   "device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'",
+				   "device %s exists but do not match expected type, XFRM if_id %u, or XFRM device is invalid; check 'ip -d link show dev %s'",
 				   c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
 			return false;
 		}
