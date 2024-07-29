@@ -86,106 +86,44 @@ west #
 "westnet4-eastnet4" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet4-eastnet4" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "westnet4-eastnet4" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet4-eastnet4" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ERROR: "westnet4-eastnet4" #X: ipsec1 has an xfrm device ifindex (RTA_LINK) of 0
+ERROR: "westnet4-eastnet4" #6: device ipsec1 exists but do not match expected type, XFRM if_id 1, or XFRM device is invalid; check 'ip -d link show dev ipsec1'
+"westnet4-eastnet4" #6: CHILD SA failed: TEMPORARY_FAILURE
+"westnet4-eastnet4" #5: IKE SA established but initiator rejected Child SA response
+"westnet4-eastnet4" #6: sent INFORMATIONAL request to delete larval Child SA using IKE SA #5
+"westnet4-eastnet4" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+ERROR: "westnet4-eastnet4" #6: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  ipsec up westnet6-eastnet6
-"westnet6-eastnet6" #7: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
-"westnet6-eastnet6" #7: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
-"westnet6-eastnet6" #7: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet6-eastnet6" #7: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
-"westnet6-eastnet6" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet6-eastnet6" #8: initiator established Child SA using #7; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet6-eastnet6" #8: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
+"westnet6-eastnet6" #8: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
+"westnet6-eastnet6" #8: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet6-eastnet6" #8: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
+"westnet6-eastnet6" #8: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+ERROR: "westnet6-eastnet6" #X: ipsec1 has an xfrm device ifindex (RTA_LINK) of 0
+ERROR: "westnet6-eastnet6" #9: device ipsec1 exists but do not match expected type, XFRM if_id 1, or XFRM device is invalid; check 'ip -d link show dev ipsec1'
+"westnet6-eastnet6" #9: CHILD SA failed: TEMPORARY_FAILURE
+"westnet6-eastnet6" #8: IKE SA established but initiator rejected Child SA response
+"westnet6-eastnet6" #9: sent INFORMATIONAL request to delete larval Child SA using IKE SA #8
+"westnet6-eastnet6" #9: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+ERROR: "westnet6-eastnet6" #9: netlink response for Del SA esp:505dc698@2001:db8:1:2::23: No such process (errno 3)
 west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet4-eastnet4" #6: ESP traffic information: in=0B out=0B
-"westnet4-eastnet4": cannot delete ipsec-interface=ipsec1 if_id=1 IP [192.0.1.251/24], not created by pluto
+ERROR: "westnet4-eastnet4": unreference_xfrmi_ip() Unable to unreference IP on xfrmi device [ipsec1] id [1]
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
-"westnet6-eastnet6" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet6-eastnet6" #8: ESP traffic information: in=0B out=0B
-"westnet6-eastnet6": cannot delete ipsec-interface=ipsec1 if_id=1 IP [2001:db8:0:1::251/64], not created by pluto
+"westnet6-eastnet6" #8: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+ERROR: "westnet6-eastnet6": unreference_xfrmi_ip() Unable to unreference IP on xfrmi device [ipsec1] id [1]
 west #
  ip --color=never link show ipsec1
-X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ip link del dev ipsec1
 west #
  ip --color=never link show ipsec1
 Device "ipsec1" does not exist.
-west #
- #
-west #
- # valid device; <<ip link>> is before <<ipsec add>>
-west #
- #
-west #
- ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
-west #
- ip addr add 192.0.1.251/24 dev ipsec1
-west #
- ip addr add 2001:db8:0:1::251/64 dev ipsec1
-west #
- # won't load!?!
-west #
- ipsec add westnet4-eastnet4
-"westnet4-eastnet4": conflict ipsec1 already exist cannot support xfrm-interface. May be leftover from previous pluto?
-"westnet4-eastnet4": failed to add connection: ipsec-interface=yes not supported: device name conflict in xfrm_iface_supported()
-west #
- ipsec add westnet6-eastnet6
-"westnet6-eastnet6": failed to add connection: ipsec-interface=yes not supported: may be missing CONFIG_XFRM_INTERFACE support in kernel
-west #
- # should still be there
-west #
- ip --color=never link show ipsec1
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
-west #
- ip link del dev ipsec1
-west #
- ip --color=never link show ipsec1
-Device "ipsec1" does not exist.
-west #
- #
-west #
- # valid device; <<ipsec add>> is before <<ip link>>
-west #
- #
-west #
- ipsec add westnet4-eastnet4
-"westnet4-eastnet4": failed to add connection: ipsec-interface=yes not supported: may be missing CONFIG_XFRM_INTERFACE support in kernel
-west #
- ipsec add westnet6-eastnet6
-"westnet6-eastnet6": failed to add connection: ipsec-interface=yes not supported: may be missing CONFIG_XFRM_INTERFACE support in kernel
-west #
- ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
-west #
- ip addr add 192.0.1.251/24 dev ipsec1
-west #
- ip addr add 2001:db8:0:1::251/64 dev ipsec1
-west #
- ipsec up westnet4-eastnet4
-no connection or alias named "westnet4-eastnet4"'
-west #
- ipsec up westnet6-eastnet6
-no connection or alias named "westnet6-eastnet6"'
-west #
- ipsec delete westnet4-eastnet4
-no connection or alias named "westnet4-eastnet4"'
-west #
- ipsec delete westnet6-eastnet6
-no connection or alias named "westnet6-eastnet6"'
-west #
- ip --color=never link show ipsec1
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
-west #
- ip link del dev ipsec1
-west #
- ip --color=never link show ipsec1
-Device "ipsec1" does not exist.
-west #
- echo done
-done
 west #
  

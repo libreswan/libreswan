@@ -556,7 +556,7 @@ kvmplutotest	ikev1-xfrmi-06-interface-ip-ipv4	good
 kvmplutotest	ikev1-xfrmi-06-interface-ip-ipv6	good
 kvmplutotest	ikev2-xfrmi-15-interface-ip-ipv4	good
 kvmplutotest	ikev2-xfrmi-15-interface-ip-ipv6	good
-kvmplutotest	ikev2-xfrmi-15-interface-ip-blocked	wip	github/1771,github/1769
+kvmplutotest	ikev2-xfrmi-15-interface-ip-blocked	good	github/1769
 kvmplutotest	ikev2-xfrmi-16-rekey			good
 kvmplutotest	ikev2-xfrmi-17-ipcomp			good
 kvmplutotest	ikev2-xfrmi-19-route-before-up		good

@@ -1,3 +1,4 @@
 XFRMi test with the interface-ip addresses already existing on the interface.
 
-And bogus XFRMI configurations
+- the first attempt is with a valid interface
+- the second attempt is with an invalid, but still conflicting, interface
