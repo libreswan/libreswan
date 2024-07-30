@@ -19,7 +19,7 @@ kvm_baseline=$(print-kvm-variable KVM_BASELINE)
 kvm_test_status=$(echo $(print-kvm-variable KVM_TEST_STATUS) | tr ' ' '|')
 kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
 kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
-kvm_prefixes=($(print-kvm-variable KVM_PREFIXES))
+kvm_prefix=($(print-kvm-variable KVM_PREFIX))
 kvm_sourcedir=$(print-kvm-variable KVM_SOURCEDIR)
 kvm_pidfile=$(print-kvm-variable KVM_PIDFILE)
 
@@ -328,7 +328,6 @@ declare -a ops
 
 modified=
 baseline=
-prefix=$(eval echo ${kvm_prefixes[0]})
 
 i=0
 while test $# -gt 0 ; do
@@ -554,7 +553,7 @@ for op in "${ops[@]}" ; do
 	    sudo systemctl restart libvirtd
 	    ;;
 	sh )
-	    host=${prefix}$1 ; shift
+	    host=${kvm_prefix}$1 ; shift
 	    echo "Connecting to ${host}" 1>&2
 	    exec testing/utils/kvmsh.py ${host} "$@"
 	    ;;
