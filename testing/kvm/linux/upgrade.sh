@@ -130,6 +130,7 @@ strongswan-sqlite
 systemd-networkd
 tar
 tcpdump
+valgrind
 vim-enhanced
 wireshark-cli
 EOF
