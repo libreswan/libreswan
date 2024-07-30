@@ -18,40 +18,40 @@ west #
 west #
  # $ git diff
 west #
- ipsec _enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
+ valgrind --quiet $(ipsec -n _enumcheck) > OUTPUT/enumcheck.out || echo "Enum check barfed"
 ipsec _enumcheck: leak detective found no leaks
 west #
  cmp ../../programs/_enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
 west #
  # other checks
 west #
- ipsec _jambufcheck > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _jambufcheck) > /dev/null || echo failed
 ipsec _jambufcheck: leak detective found no leaks
 west #
- ipsec _timecheck > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _timecheck) > /dev/null || echo failed
 ipsec _timecheck: leak detective found no leaks
 west #
- ipsec _hunkcheck > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _hunkcheck) > /dev/null || echo failed
 ipsec _hunkcheck: leak detective found no leaks
 west #
- ipsec _dncheck > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _dncheck) > /dev/null || echo failed
 ipsec _dncheck: leak detective found no leaks
 west #
- ipsec _keyidcheck > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _keyidcheck) > /dev/null || echo failed
 ipsec _keyidcheck: leak detective found no leaks
 west #
- ipsec _asn1check > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _asn1check) > /dev/null || echo failed
 ipsec _asn1check: leak detective found no leaks
 west #
- ipsec _vendoridcheck > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _vendoridcheck) > /dev/null || echo failed
 ipsec _vendoridcheck: Initializing NSS
 ipsec _vendoridcheck: FIPS Mode: OFF
 west #
- ipsec _ttodatacheck -r
+ valgrind --quiet $(ipsec -n _ttodatacheck -r)
 west #
  # Need to disable DNS tests; localhost is ok
 west #
- ipsec _ipcheck --dns=hosts-file > /dev/null || echo failed
+ valgrind --quiet $(ipsec -n _ipcheck --dns=hosts-file) > /dev/null || echo failed
 ipsec _ipcheck: leak detective found no leaks
 west #
  
