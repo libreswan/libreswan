@@ -1,0 +1,9 @@
+IKEv2 connection with MOBIKE=yes through a NAT that changes the MAP
+
+As a result of the MAP change, the responder will receive
+authenticated packets from the wrong endpoint.
+
+In MOBIKE mode the IKE SA responder initiates a MOBIKE exchange to the
+new port to authenticate that it is still talking to the same IKE SA.
+Provided that exchange succeeds, both the IKE SA and the IPsec SA's
+kernel state are updated.
