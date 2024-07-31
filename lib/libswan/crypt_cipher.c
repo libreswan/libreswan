@@ -56,8 +56,8 @@ bool cipher_aead(const struct encrypt_desc *cipher,
 }
 
 struct cipher_context {
-	struct cipher_op_context *op;
 	const struct encrypt_desc *cipher;
+	struct cipher_op_context *op_context;
 };
 
 struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
@@ -67,46 +67,47 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 					     shunk_t salt,
 					     struct logger *logger)
 {
-	if (cipher->encrypt_ops->cipher_op_context_create == NULL) {
-		return NULL;
+	struct cipher_context *cipher_context = alloc_thing(struct cipher_context, __func__);
+	cipher_context->cipher = cipher;
+	if (cipher->encrypt_ops->cipher_op_context_create != NULL) {
+		cipher_context->op_context =
+			cipher->encrypt_ops->cipher_op_context_create(cipher, op, iv_source,
+								      key, salt, logger);
+		PASSERT(logger, cipher_context->op_context != NULL);
 	}
-
-	struct cipher_op_context *op_context =
-		cipher->encrypt_ops->cipher_op_context_create(cipher, op, iv_source,
-							      key, salt, logger);
-	if (op_context == NULL) {
-		return NULL;
-	}
-	struct cipher_context *context = alloc_thing(struct cipher_context, __func__);
-	context->op = op_context;
-	context->cipher = cipher;
-	return context;
+	return cipher_context;
 }
 
-void cipher_context_destroy(struct cipher_context **context,
+void cipher_context_destroy(struct cipher_context **cipher_context,
 			    struct logger *logger)
 {
-	if ((*context) == NULL) {
+	if ((*cipher_context) == NULL) {
 		/* presumably an incomplete state */
 		ldbg(logger, "no cipher context to delete");
 		return;
 	}
 
-	const struct encrypt_desc *cipher = (*context)->cipher;
-	cipher->encrypt_ops->cipher_op_context_destroy(&(*context)->op, logger);
-	pfreeany(*context);
+	const struct encrypt_desc *cipher = (*cipher_context)->cipher;
+	if (cipher->encrypt_ops->cipher_op_context_destroy != NULL) {
+		PASSERT(logger, (*cipher_context)->op_context != NULL);
+		cipher->encrypt_ops->cipher_op_context_destroy(&(*cipher_context)->op_context, logger);
+	} else {
+		PASSERT(logger, (*cipher_context)->op_context == NULL);
+	}
+
+	pfreeany(*cipher_context);
 	return;
 }
 
-bool cipher_context_op_aead(const struct cipher_context *context,
+bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 			    chunk_t wire_iv,
 			    shunk_t aad,
 			    chunk_t text_and_tag,
 			    size_t text_size, size_t tag_size,
 			    struct logger *logger)
 {
-	return context->cipher->encrypt_ops->cipher_op_aead(context->op,
-							    wire_iv, aad,
-							    text_and_tag, text_size, tag_size,
-							    logger);
+	return cipher_context->cipher->encrypt_ops->cipher_op_aead(cipher_context->op_context,
+								   wire_iv, aad,
+								   text_and_tag, text_size, tag_size,
+								   logger);
 }
