@@ -198,6 +198,7 @@ OBJS += jam_logger.o
 OBJS += logjam.o
 
 OBJS += jam_nss_cka.o
+OBJS += jam_nss_ckg.o
 OBJS += jam_nss_ckf.o
 OBJS += jam_nss_ckm.o
 OBJS += jam_nss_error.o

@@ -88,6 +88,7 @@ void pexpect_nss_error(struct logger *logger, where_t where,
 		}							\
 	}
 
+size_t jam_nss_ckg(struct jambuf *buf, CK_GENERATOR_FUNCTION generate);
 size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute);
 size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags);
 size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism);
