@@ -24,10 +24,14 @@ void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
 		   chunk_t data,
 		   chunk_t iv,
-		   PK11SymKey *key,
+		   PK11SymKey *symkey,
 		   struct logger *logger)
 {
-	cipher->encrypt_ops->cipher_op_normal(cipher, data, iv, key, op, logger);
+	struct cipher_context *context = cipher_context_create(cipher, op, USE_IV,
+							       symkey, null_shunk,
+							       logger);
+	cipher_context_op_normal(context, op, data, iv, symkey, logger);
+	cipher_context_destroy(&context, logger);
 }
 
 bool cipher_aead(const struct encrypt_desc *cipher,
@@ -110,4 +114,15 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 								   wire_iv, aad,
 								   text_and_tag, text_size, tag_size,
 								   logger);
+}
+
+void cipher_context_op_normal(const struct cipher_context *cipher_context,
+			      enum cipher_op op,
+			      chunk_t data,
+			      chunk_t iv,
+			      PK11SymKey *symkey,
+			      struct logger *logger)
+{
+	cipher_context->cipher->encrypt_ops->cipher_op_normal(cipher_context->cipher,
+							      data, iv, symkey, op, logger);
 }
