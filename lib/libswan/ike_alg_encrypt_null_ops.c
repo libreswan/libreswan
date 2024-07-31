@@ -26,22 +26,23 @@
 #include "ike_alg_encrypt_ops.h"
 #include "lswnss.h"		/* for llog_nss_error() */
 
-static void ike_alg_encrypt_null_do_crypt(const struct encrypt_desc *alg,
-					  chunk_t in_buf, chunk_t iv,
-					  PK11SymKey *symkey,
-					  enum cipher_op op,
-					  struct logger *logger)
+static void cipher_op_null(const struct encrypt_desc *cipher,
+			   chunk_t in_buf, chunk_t iv,
+			   PK11SymKey *symkey,
+			   enum cipher_op op,
+			   struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "%s() %s - enter %p %zu bytes iv %p %s key=%p",
-	      __func__, alg->common.fqn, in_buf.ptr, in_buf.len,
+	      __func__, cipher->common.fqn, in_buf.ptr, in_buf.len,
 	      iv.ptr,
 	      str_cipher_op(op),
 	      symkey);
 	/* nothing happens */
-	ldbgf(DBG_CRYPT, logger, "%s() %s - exit", __func__, alg->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "%s() %s - exit", __func__, cipher->common.fqn);
 }
 
-static void ike_alg_encrypt_null_check(const struct encrypt_desc *encrypt, struct logger *logger)
+static void cipher_check_null(const struct encrypt_desc *encrypt,
+			      struct logger *logger)
 {
 	const struct ike_alg *alg = &encrypt->common;
 	pexpect_ike_alg(logger, alg, encrypt->nss.mechanism == 0);
@@ -49,6 +50,6 @@ static void ike_alg_encrypt_null_check(const struct encrypt_desc *encrypt, struc
 
 const struct encrypt_ops ike_alg_encrypt_null_ops = {
 	.backend = "NULL",
-	.check = ike_alg_encrypt_null_check,
-	.do_crypt = ike_alg_encrypt_null_do_crypt,
+	.cipher_check = cipher_check_null,
+	.cipher_op_normal = cipher_op_null,
 };

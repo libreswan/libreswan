@@ -61,14 +61,14 @@ enum cipher_iv_source {
  * Separate cipher and integrity.
  */
 
-void cipher_normal(const struct encrypt_desc *alg,
+void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
 		   chunk_t data,
 		   chunk_t iv,
 		   PK11SymKey *key,
 		   struct logger *logger);
 
-bool cipher_aead(const struct encrypt_desc *alg,
+bool cipher_aead(const struct encrypt_desc *cipher,
 		 enum cipher_op op,
 		 enum cipher_iv_source iv_source,
 		 shunk_t salt,
@@ -79,19 +79,20 @@ bool cipher_aead(const struct encrypt_desc *alg,
 		 PK11SymKey *key,
 		 struct logger *logger);
 
-struct cipher_context *cipher_context_create(const struct encrypt_desc *alg,
+struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 					     enum cipher_op op,
 					     enum cipher_iv_source iv_source,
 					     PK11SymKey *key,
 					     shunk_t salt,
 					     struct logger *logger);
-bool cipher_context_aead(const struct cipher_context *,
-			 chunk_t wire_iv,
-			 shunk_t aad,
-			 chunk_t text_and_tag,
-			 size_t text_size, size_t tag_size,
-			 struct logger *logger);
 void cipher_context_destroy(struct cipher_context **,
+			    struct logger *logger);
+
+bool cipher_context_op_aead(const struct cipher_context *,
+			    chunk_t wire_iv,
+			    shunk_t aad,
+			    chunk_t text_and_tag,
+			    size_t text_size, size_t tag_size,
 			    struct logger *logger);
 
 #endif

@@ -35,11 +35,11 @@
 #include "ike_alg_encrypt_ops.h"
 #include "crypt_cipher.h"
 
-static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
-		       chunk_t buf, chunk_t counter_block,
-		       PK11SymKey *sym_key,
-		       enum cipher_op op,
-		       struct logger *logger)
+static void cipher_op_ctr_nss(const struct encrypt_desc *cipher UNUSED,
+			      chunk_t buf, chunk_t counter_block,
+			      PK11SymKey *sym_key,
+			      enum cipher_op op,
+			      struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: enter");
 
@@ -111,12 +111,15 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: exit");
 }
 
-static void nss_ctr_check(const struct encrypt_desc *alg UNUSED, struct logger *unused_logger UNUSED)
+static void cipher_check_ctr_nss(const struct encrypt_desc *cipher,
+				 struct logger *logger)
 {
+	ldbgf(DBG_CRYPT, logger, "%s() nothing to do with %p",
+	      __func__, cipher);
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_ctr_ops = {
 	.backend = "NSS(CTR)",
-	.check = nss_ctr_check,
-	.do_crypt = do_nss_ctr,
+	.cipher_check = cipher_check_ctr_nss,
+	.cipher_op_normal = cipher_op_ctr_nss,
 };

@@ -39,7 +39,7 @@ struct cipher_op_context {
 	unsigned long count;
 };
 
-static struct cipher_op_context *cipher_context_create_aead_nss(const struct encrypt_desc *cipher,
+static struct cipher_op_context *cipher_op_context_create_aead_nss(const struct encrypt_desc *cipher,
 								enum cipher_op op,
 								enum cipher_iv_source iv_source,
 								PK11SymKey *symkey,
@@ -74,12 +74,12 @@ static struct cipher_op_context *cipher_context_create_aead_nss(const struct enc
 	return aead;
 }
 
-static bool cipher_context_aead_op_nss(struct cipher_op_context *aead,
-				       chunk_t wire_iv,
-				       shunk_t aad,
-				       chunk_t text_and_tag,
-				       size_t text_len, size_t tag_len,
-				       struct logger *logger)
+static bool cipher_op_aead_nss(struct cipher_op_context *aead,
+			       chunk_t wire_iv,
+			       shunk_t aad,
+			       chunk_t text_and_tag,
+			       size_t text_len, size_t tag_len,
+			       struct logger *logger)
 {
 	/* must be contigious */
 	PASSERT(logger, text_len + tag_len == text_and_tag.len);
@@ -171,8 +171,8 @@ static bool cipher_context_aead_op_nss(struct cipher_op_context *aead,
 	return ok;
 }
 
-static void cipher_context_destroy_aead_nss(struct cipher_op_context **aead,
-					    struct logger *logger)
+static void cipher_op_context_destroy_aead_nss(struct cipher_op_context **aead,
+					       struct logger *logger)
 {
 	PK11_Finalize((*aead)->context);
 	PK11_DestroyContext((*aead)->context, PR_TRUE);
@@ -191,8 +191,8 @@ static void cipher_check_aead_nss(const struct encrypt_desc *encrypt, struct log
 
 const struct encrypt_ops ike_alg_encrypt_nss_aead_ops = {
 	.backend = "NSS(AEAD)",
-	.check = cipher_check_aead_nss,
-	.context_create = cipher_context_create_aead_nss,
-	.context_aead_op = cipher_context_aead_op_nss,
-	.context_destroy = cipher_context_destroy_aead_nss,
+	.cipher_check = cipher_check_aead_nss,
+	.cipher_op_context_create = cipher_op_context_create_aead_nss,
+	.cipher_op_aead = cipher_op_aead_nss,
+	.cipher_op_context_destroy = cipher_op_context_destroy_aead_nss,
 };

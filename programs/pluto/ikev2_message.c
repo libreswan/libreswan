@@ -482,10 +482,10 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		    LDBG_hunk(sk->logger, sk->aad);
 		}
 
-		if (!cipher_context_aead(ike->sa.st_ike_encrypt_cipher_context,
-					 sk->wire_iv, HUNK_AS_SHUNK(sk->aad),
-					 text_and_tag, enc.len, sk->integrity.len,
-					 sk->logger)) {
+		if (!cipher_context_op_aead(ike->sa.st_ike_encrypt_cipher_context,
+					    sk->wire_iv, HUNK_AS_SHUNK(sk->aad),
+					    text_and_tag, enc.len, sk->integrity.len,
+					    sk->logger)) {
 			return false;
 		}
 
@@ -650,10 +650,10 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			LDBG_hunk(ike->sa.logger, enc);
 		}
 
-		if (!cipher_context_aead(ike->sa.st_ike_decrypt_cipher_context,
-					 wire_iv, aad,
-					 text_and_tag, enc.len, integ.len,
-					 ike->sa.logger)) {
+		if (!cipher_context_op_aead(ike->sa.st_ike_decrypt_cipher_context,
+					    wire_iv, aad,
+					    text_and_tag, enc.len, integ.len,
+					    ike->sa.logger)) {
 			return false;
 		}
 

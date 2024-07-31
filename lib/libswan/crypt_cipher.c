@@ -27,7 +27,7 @@ void cipher_normal(const struct encrypt_desc *cipher,
 		   PK11SymKey *key,
 		   struct logger *logger)
 {
-	cipher->encrypt_ops->do_crypt(cipher, data, iv, key, op, logger);
+	cipher->encrypt_ops->cipher_op_normal(cipher, data, iv, key, op, logger);
 }
 
 bool cipher_aead(const struct encrypt_desc *cipher,
@@ -47,9 +47,10 @@ bool cipher_aead(const struct encrypt_desc *cipher,
 		/* already logged */
 		return false;
 	}
-	bool ok = cipher_context_aead(context, wire_iv, aad,
-				      text_and_tag, text_size, tag_size,
-				      logger);
+
+	bool ok = cipher_context_op_aead(context, wire_iv, aad,
+					 text_and_tag, text_size, tag_size,
+					 logger);
 	cipher_context_destroy(&context, logger);
 	return ok;
 }
@@ -60,19 +61,19 @@ struct cipher_context {
 };
 
 struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
-				       enum cipher_op op,
-				       enum cipher_iv_source iv_source,
-				       PK11SymKey *key,
-				       shunk_t salt,
-				       struct logger *logger)
+					     enum cipher_op op,
+					     enum cipher_iv_source iv_source,
+					     PK11SymKey *key,
+					     shunk_t salt,
+					     struct logger *logger)
 {
-	if (cipher->encrypt_ops->context_create == NULL) {
+	if (cipher->encrypt_ops->cipher_op_context_create == NULL) {
 		return NULL;
 	}
 
 	struct cipher_op_context *op_context =
-		cipher->encrypt_ops->context_create(cipher, op, iv_source,
-						    key, salt, logger);
+		cipher->encrypt_ops->cipher_op_context_create(cipher, op, iv_source,
+							      key, salt, logger);
 	if (op_context == NULL) {
 		return NULL;
 	}
@@ -80,19 +81,6 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 	context->op = op_context;
 	context->cipher = cipher;
 	return context;
-}
-
-bool cipher_context_aead(const struct cipher_context *context,
-			 chunk_t wire_iv,
-			 shunk_t aad,
-			 chunk_t text_and_tag,
-			 size_t text_size, size_t tag_size,
-			 struct logger *logger)
-{
-	return context->cipher->encrypt_ops->context_aead_op(context->op,
-							     wire_iv, aad,
-							     text_and_tag, text_size, tag_size,
-							     logger);
 }
 
 void cipher_context_destroy(struct cipher_context **context,
@@ -105,7 +93,20 @@ void cipher_context_destroy(struct cipher_context **context,
 	}
 
 	const struct encrypt_desc *cipher = (*context)->cipher;
-	cipher->encrypt_ops->context_destroy(&(*context)->op, logger);
+	cipher->encrypt_ops->cipher_op_context_destroy(&(*context)->op, logger);
 	pfreeany(*context);
 	return;
+}
+
+bool cipher_context_op_aead(const struct cipher_context *context,
+			    chunk_t wire_iv,
+			    shunk_t aad,
+			    chunk_t text_and_tag,
+			    size_t text_size, size_t tag_size,
+			    struct logger *logger)
+{
+	return context->cipher->encrypt_ops->cipher_op_aead(context->op,
+							    wire_iv, aad,
+							    text_and_tag, text_size, tag_size,
+							    logger);
 }

@@ -30,34 +30,34 @@
 #include "crypt_cipher.h"
 #include "lswnss.h"		/* for llog_nss_error() */
 
-static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
-			    chunk_t in_buf, chunk_t iv,
-			    PK11SymKey *symkey,
-			    enum cipher_op op,
-			    struct logger *logger)
+static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
+			      chunk_t in_buf, chunk_t iv,
+			      PK11SymKey *symkey,
+			      enum cipher_op op,
+			      struct logger *logger)
 {
-	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", cipher->common.fqn);
 
 	if (symkey == NULL) {
 		llog_passert(logger, HERE,
 			     "%s - NSS derived enc key in NULL",
-			     alg->common.fqn);
+			     cipher->common.fqn);
 	}
 
-	PEXPECT(logger, iv.len == alg->enc_blocksize);
+	PEXPECT(logger, iv.len == cipher->enc_blocksize);
 	SECItem ivitem;
 	ivitem.type = siBuffer;
 	ivitem.data = iv.ptr;
-	ivitem.len = alg->enc_blocksize;
-	SECItem *secparam = PK11_ParamFromIV(alg->nss.mechanism, &ivitem);
+	ivitem.len = cipher->enc_blocksize;
+	SECItem *secparam = PK11_ParamFromIV(cipher->nss.mechanism, &ivitem);
 	if (secparam == NULL) {
 		llog_passert(logger, HERE,
 			     "%s - Failure to set up PKCS11 param (err %d)",
-			     alg->common.fqn, PR_GetError());
+			     cipher->common.fqn, PR_GetError());
 	}
 
 	PK11Context *enccontext;
-	enccontext = PK11_CreateContextBySymKey(alg->nss.mechanism,
+	enccontext = PK11_CreateContextBySymKey(cipher->nss.mechanism,
 						(op == ENCRYPT ? CKA_ENCRYPT :
 						 op == DECRYPT ? CKA_DECRYPT :
 						 pexpect(0)),
@@ -65,7 +65,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	if (enccontext == NULL) {
 		passert_nss_error(logger, HERE,
 				  "%s: PKCS11 context creation failure",
-				  alg->common.fqn);
+				  cipher->common.fqn);
 	}
 
 	/* Output buffer for transformed data. */
@@ -76,7 +76,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 				     in_buf.ptr, in_buf.len);
 	if (rv != SECSuccess) {
 		passert_nss_error(logger, HERE,
-				  "%s: PKCS11 operation failure", alg->common.fqn);
+				  "%s: PKCS11 operation failure", cipher->common.fqn);
 	}
 
 	PK11_DestroyContext(enccontext, PR_TRUE);
@@ -91,20 +91,20 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 		 * The IV for the next encryption call is the last
 		 * block of encrypted output data.
 		 */
-		new_iv = out_buf + out_buf_len - alg->enc_blocksize;
+		new_iv = out_buf + out_buf_len - cipher->enc_blocksize;
 		break;
 	case DECRYPT:
 		/*
 		 * The IV for the next decryption call is the last
 		 * block of the encrypted input data.
 		 */
-		new_iv = in_buf.ptr + in_buf.len - alg->enc_blocksize;
+		new_iv = in_buf.ptr + in_buf.len - cipher->enc_blocksize;
 		break;
 	default:
 		bad_case(op);
 	}
-	PEXPECT(logger, iv.len == alg->enc_blocksize);
-	memcpy(iv.ptr, new_iv, alg->enc_blocksize);
+	PEXPECT(logger, iv.len == cipher->enc_blocksize);
+	memcpy(iv.ptr, new_iv, cipher->enc_blocksize);
 
 	/*
 	 * Finally, copy the transformed data back to the buffer.  Do
@@ -115,10 +115,11 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 
 	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);
-	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - exit", alg->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - exit", cipher->common.fqn);
 }
 
-static void nss_cbc_check(const struct encrypt_desc *encrypt, struct logger *logger)
+static void cipher_check_cbc_nss(const struct encrypt_desc *encrypt,
+				 struct logger *logger)
 {
 	const struct ike_alg *alg = &encrypt->common;
 	pexpect_ike_alg(logger, alg, encrypt->nss.mechanism > 0);
@@ -126,6 +127,6 @@ static void nss_cbc_check(const struct encrypt_desc *encrypt, struct logger *log
 
 const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops = {
 	.backend = "NSS(CBC)",
-	.check = nss_cbc_check,
-	.do_crypt = ike_alg_nss_cbc,
+	.cipher_check = cipher_check_cbc_nss,
+	.cipher_op_normal = cipher_op_cbc_nss,
 };

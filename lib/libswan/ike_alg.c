@@ -758,11 +758,11 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	 */
 	if (encrypt->encrypt_ops != NULL) {
 		pexpect_ike_alg(logger, alg, encrypt->encrypt_ops->backend != NULL);
-		pexpect_ike_alg(logger, alg, encrypt->encrypt_ops->check != NULL);
-		pexpect_ike_alg(logger, alg, ((encrypt->encrypt_ops->context_create != NULL) ==
-					      (encrypt->encrypt_ops->context_destroy != NULL)));
-		pexpect_ike_alg(logger, alg, ((encrypt->encrypt_ops->do_crypt == NULL)
-					      != (encrypt->encrypt_ops->context_aead_op == NULL)));
+		pexpect_ike_alg(logger, alg, encrypt->encrypt_ops->cipher_check != NULL);
+		pexpect_ike_alg(logger, alg, ((encrypt->encrypt_ops->cipher_op_context_create != NULL) ==
+					      (encrypt->encrypt_ops->cipher_op_context_destroy != NULL)));
+		pexpect_ike_alg(logger, alg, ((encrypt->encrypt_ops->cipher_op_normal == NULL) !=
+					      (encrypt->encrypt_ops->cipher_op_aead == NULL)));
 	}
 
 	/*
@@ -770,8 +770,10 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	 * Converse for non-AEAD implementation.
 	 */
 	if (encrypt->encrypt_ops != NULL) {
-		pexpect_ike_alg(logger, alg, encrypt->encrypt_ops->context_aead_op == NULL || encrypt->aead_tag_size > 0);
-		pexpect_ike_alg(logger, alg, encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
+		pexpect_ike_alg(logger, alg, (encrypt->encrypt_ops->cipher_op_aead == NULL ||
+					      encrypt->aead_tag_size > 0));
+		pexpect_ike_alg(logger, alg, (encrypt->encrypt_ops->cipher_op_normal == NULL ||
+					      encrypt->aead_tag_size == 0));
 	}
 
 	/*

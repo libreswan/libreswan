@@ -30,19 +30,32 @@ struct encrypt_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
-	void (*const check)(const struct encrypt_desc *alg, struct logger *logger);
+	void (*const cipher_check)(const struct encrypt_desc *cipher,
+				   struct logger *logger);
+
+	/*
+	 * Create/delete a crypto context for use by the IKE SA.
+	 */
+	struct cipher_op_context *(*const cipher_op_context_create)(const struct encrypt_desc *cipher,
+								    enum cipher_op,
+								    enum cipher_iv_source,
+								    PK11SymKey *key,
+								    shunk_t salt,
+								    struct logger *logger);
+	void (*const cipher_op_context_destroy)(struct cipher_op_context **context,
+						struct logger *logger);
 
 	/*
 	 * Perform simple encryption.
 	 *
 	 * Presumably something else is implementing the integrity.
 	 */
-	void (*const do_crypt)(const struct encrypt_desc *alg,
-			       chunk_t data,
-			       chunk_t iv,
-			       PK11SymKey *key,
-			       enum cipher_op op,
-			       struct logger *logger);
+	void (*const cipher_op_normal)(const struct encrypt_desc *cipher,
+				       chunk_t data,
+				       chunk_t iv,
+				       PK11SymKey *key,
+				       enum cipher_op op,
+				       struct logger *logger);
 
 	/*
 	 * Perform Authenticated Encryption with Associated Data
@@ -57,24 +70,15 @@ struct encrypt_ops {
 	 *
 	 * All sizes are in 8-bit bytes.
 	 *
-	 * Danger: TEXT and TAG are assumed to be contigious.
+	 * Danger: TEXT and TAG are clearly contigious.
 	 */
 
-	struct cipher_op_context *(*const context_create)(const struct encrypt_desc *,
-							  enum cipher_op,
-							  enum cipher_iv_source,
-							  PK11SymKey *key,
-							  shunk_t salt,
-							  struct logger *logger);
-	void (*const context_destroy)(struct cipher_op_context **context,
-				      struct logger *logger);
-
-	bool (*const context_aead_op)(struct cipher_op_context *context,
-				      chunk_t wire_iv,
-				      shunk_t aad,
-				      chunk_t text_and_tag,
-				      size_t text_size, size_t tag_size,
-				      struct logger *logger);
+	bool (*const cipher_op_aead)(struct cipher_op_context *context,
+				     chunk_t wire_iv,
+				     shunk_t aad,
+				     chunk_t text_and_tag,
+				     size_t text_size, size_t tag_size,
+				     struct logger *logger);
 };
 
 extern const struct encrypt_ops ike_alg_encrypt_nss_aead_ops;
