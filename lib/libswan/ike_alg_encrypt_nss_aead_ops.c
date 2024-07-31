@@ -70,7 +70,7 @@ static struct cipher_op_context *cipher_context_create_aead_nss(const struct enc
 	return aead;
 }
 
-static bool cipher_context_aead_op_nss(const struct cipher_op_context *aead,
+static bool cipher_context_aead_op_nss(struct cipher_op_context *aead,
 				       chunk_t wire_iv,
 				       shunk_t aad,
 				       chunk_t text_and_tag,

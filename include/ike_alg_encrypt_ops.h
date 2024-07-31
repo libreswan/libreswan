@@ -69,7 +69,7 @@ struct encrypt_ops {
 	void (*const context_destroy)(struct cipher_op_context **context,
 				      struct logger *logger);
 
-	bool (*const context_aead_op)(const struct cipher_op_context *context,
+	bool (*const context_aead_op)(struct cipher_op_context *context,
 				      chunk_t wire_iv,
 				      shunk_t aad,
 				      chunk_t text_and_tag,
