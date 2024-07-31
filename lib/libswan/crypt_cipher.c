@@ -22,12 +22,13 @@
 
 void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
+		   enum cipher_iv_source iv_source,
 		   chunk_t data,
 		   chunk_t iv,
 		   PK11SymKey *symkey,
 		   struct logger *logger)
 {
-	struct cipher_context *context = cipher_context_create(cipher, op, USE_IV,
+	struct cipher_context *context = cipher_context_create(cipher, op, iv_source,
 							       symkey, null_shunk,
 							       logger);
 	cipher_context_op_normal(context, op, data, iv, symkey, logger);

@@ -63,6 +63,7 @@ enum cipher_iv_source {
 
 void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
+		   enum cipher_iv_source iv_source,
 		   chunk_t data,
 		   chunk_t iv,
 		   PK11SymKey *key,
