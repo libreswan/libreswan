@@ -81,7 +81,7 @@ bool raw_eq(const void *l_ptr, size_t l_len,
 bool raw_caseeq(const void *l_ptr, size_t l_len,
 		const void *r_ptr, size_t r_len);
 bool raw_heq(const void *l_ptr, size_t l_len,
-		const void *r_ptr, size_t r_len);
+	     const void *r_ptr, size_t r_len);
 
 #define hunk_isempty(HUNK)			\
 	({					\
@@ -102,7 +102,7 @@ bool raw_heq(const void *l_ptr, size_t l_len,
 		raw_caseeq(l_.ptr, l_.len, r_.ptr, r_.len);	\
 	})
 
-#define hunk_heq(L, R) /* case independent */			\
+#define hunk_heq(L, R) /* case and [-_] independent */		\
 	({							\
 		const typeof(L) l_ = L; /* evaluate once */	\
 		const typeof(R) r_ = R; /* evaluate once */	\
@@ -381,6 +381,16 @@ bool char_isxdigit(char c);
 
 char  char_tolower(char c);
 char  char_toupper(char c);
+
+#define hunk_cpy(DST, SRC)						\
+	({								\
+		typeof(SRC) *src_ = &(SRC); /* evaluate once */		\
+		typeof(DST) *dst_ = &(DST); /* evaluate once */		\
+		passert(src_->len == dst_->len);			\
+		passert(src_->ptr != NULL);				\
+		passert(dst_->ptr != NULL);				\
+		memcpy(dst_->ptr, src_->ptr, dst_->len);		\
+	})
 
 #define memcpy_hunk(DST, HUNK, SIZE)					\
 	({								\
