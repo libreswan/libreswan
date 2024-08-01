@@ -32,7 +32,8 @@ static void cipher_op_null(const struct encrypt_desc *cipher UNUSED,
 			   enum cipher_iv_source iv_source UNUSED,
 			   PK11SymKey *symkey UNUSED,
 			   shunk_t salt UNUSED,
-			   chunk_t in_buf UNUSED,
+			   chunk_t wire_iv UNUSED,
+			   chunk_t text UNUSED,
 			   chunk_t iv UNUSED,
 			   struct logger *logger UNUSED)
 {

@@ -32,7 +32,8 @@ void cipher_normal(const struct encrypt_desc *cipher,
 	struct cipher_context *context = cipher_context_create(cipher, op, iv_source,
 							       symkey, null_shunk,
 							       logger);
-	cipher_context_op_normal(context, data, iv, logger);
+	chunk_t wire_iv = hunk_slice(iv, cipher->salt_size, cipher->salt_size + cipher->wire_iv_size);
+	cipher_context_op_normal(context, wire_iv, data, iv, logger);
 	cipher_context_destroy(&context, logger);
 }
 
@@ -142,7 +143,9 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 }
 
 void cipher_context_op_normal(const struct cipher_context *cipher_context,
-			      chunk_t data, chunk_t iv,
+			      chunk_t wire_iv,
+			      chunk_t text,
+			      chunk_t iv,
 			      struct logger *logger)
 {
 	cipher_context->cipher->encrypt_ops->cipher_op_normal(cipher_context->cipher,
@@ -151,6 +154,7 @@ void cipher_context_op_normal(const struct cipher_context *cipher_context,
 							      cipher_context->iv_source,
 							      cipher_context->symkey,
 							      HUNK_AS_SHUNK(cipher_context->salt),
-							      data, iv,
+							      wire_iv, text,
+							      iv,
 							      logger);
 }

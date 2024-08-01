@@ -90,7 +90,8 @@ void cipher_context_destroy(struct cipher_context **,
 			    struct logger *logger);
 
 void cipher_context_op_normal(const struct cipher_context *,
-			      chunk_t data,
+			      chunk_t wire_iv,
+			      chunk_t text,
 			      chunk_t iv,
 			      struct logger *logger);
 

@@ -41,7 +41,8 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 			      enum cipher_iv_source iv_source UNUSED,
 			      PK11SymKey *sym_key,
 			      shunk_t salt UNUSED,
-			      chunk_t buf,
+			      chunk_t wire_iv UNUSED,
+			      chunk_t text,
 			      chunk_t counter_block,
 			      struct logger *logger)
 {
@@ -63,15 +64,15 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 	param.len = sizeof(counter_param);
 
 	/* Output buffer for transformed data. */
-	uint8_t *out_buf = PR_Malloc((PRUint32)buf.len);
-	unsigned int out_len = 0;
+	uint8_t *out_ptr = PR_Malloc(text.len);
+	unsigned int out_len = 0; /* not size_t; ulgh! */
 
 	switch (op) {
 	case ENCRYPT:
 	{
 		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_CTR, &param,
-					    out_buf, &out_len, buf.len,
-					    buf.ptr, buf.len);
+					    out_ptr, &out_len, text.len,
+					    text.ptr, text.len);
 		if (rv != SECSuccess) {
 			passert_nss_error(logger, HERE, "PK11_Encrypt failure");
 		}
@@ -80,8 +81,8 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 	case DECRYPT:
 	{
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
-					    out_buf, &out_len, buf.len,
-					    buf.ptr, buf.len);
+					    out_ptr, &out_len, text.len,
+					    text.ptr, text.len);
 		if (rv != SECSuccess) {
 			passert_nss_error(logger, HERE, "PK11_Decrypt failure");
 		}
@@ -91,8 +92,8 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 		bad_case(op);
 	}
 
-	memcpy(buf.ptr, out_buf, buf.len);
-	PR_Free(out_buf);
+	memcpy(text.ptr, out_ptr, text.len);
+	PR_Free(out_ptr);
 
 	/*
 	 * Finally update the counter located at the end of the
@@ -105,10 +106,10 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 	uint32_t *counter = (uint32_t*)(counter_block.ptr + AES_BLOCK_SIZE
 					- sizeof(uint32_t));
 	uint32_t old_counter = ntohl(*counter);
-	size_t increment = (buf.len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
+	size_t increment = (text.len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
 	uint32_t new_counter = old_counter + increment;
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
-	      old_counter, new_counter, buf.len);
+	      old_counter, new_counter, text.len);
 	/* Wrap ... */
 	passert(new_counter >= old_counter);
 	*counter = htonl(new_counter);

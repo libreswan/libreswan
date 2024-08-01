@@ -56,8 +56,9 @@ struct encrypt_ops {
 				       enum cipher_iv_source iv_source,
 				       PK11SymKey *symkey,
 				       shunk_t salt,
+				       chunk_t wire_iv,
+				       chunk_t text,
 				       /**/
-				       chunk_t data,
 				       chunk_t iv,
 				       struct logger *logger);
 

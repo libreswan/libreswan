@@ -36,7 +36,9 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 			      enum cipher_iv_source iv_source UNUSED,
 			      PK11SymKey *symkey,
 			      shunk_t salt UNUSED,
-			      chunk_t in_buf, chunk_t iv,
+			      chunk_t wire_iv UNUSED,
+			      chunk_t text,
+			      chunk_t iv,
 			      struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter %p",
@@ -73,11 +75,11 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 	}
 
 	/* Output buffer for transformed data. */
-	uint8_t *out_buf = PR_Malloc((PRUint32)in_buf.len);
-	int out_buf_len = 0;
+	uint8_t *out_ptr = PR_Malloc(text.len);
+	int out_len = 0; /* not size_t; ulgh */
 
-	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf.len,
-				     in_buf.ptr, in_buf.len);
+	SECStatus rv = PK11_CipherOp(enccontext, out_ptr, &out_len, text.len,
+				     text.ptr, text.len);
 	if (rv != SECSuccess) {
 		passert_nss_error(logger, HERE,
 				  "%s: PKCS11 operation failure", cipher->common.fqn);
@@ -95,14 +97,14 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 		 * The IV for the next encryption call is the last
 		 * block of encrypted output data.
 		 */
-		new_iv = out_buf + out_buf_len - cipher->enc_blocksize;
+		new_iv = out_ptr + out_len - cipher->enc_blocksize;
 		break;
 	case DECRYPT:
 		/*
 		 * The IV for the next decryption call is the last
 		 * block of the encrypted input data.
 		 */
-		new_iv = in_buf.ptr + in_buf.len - cipher->enc_blocksize;
+		new_iv = text.ptr + text.len - cipher->enc_blocksize;
 		break;
 	default:
 		bad_case(op);
@@ -114,8 +116,8 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 	 * Finally, copy the transformed data back to the buffer.  Do
 	 * this after extracting the IV.
 	 */
-	memcpy(in_buf.ptr, out_buf, in_buf.len);
-	PR_Free(out_buf);
+	memcpy(text.ptr, out_ptr, text.len);
+	PR_Free(out_ptr);
 
 	if (secparam != NULL)
 		SECITEM_FreeItem(secparam, PR_TRUE);

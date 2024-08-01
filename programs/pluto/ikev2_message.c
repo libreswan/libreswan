@@ -496,7 +496,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 				 ike->sa.logger);
 
 		cipher_context_op_normal(ike->sa.st_ike_encrypt_cipher_context,
-					 enc, HUNK_AS_CHUNK(iv),
+					 sk->wire_iv, enc, HUNK_AS_CHUNK(iv),
 					 sk->logger);
 
 		/* note: saved_iv's updated value is discarded */
@@ -689,7 +689,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		/* decrypt */
 
 		cipher_context_op_normal(ike->sa.st_ike_decrypt_cipher_context,
-					 enc, HUNK_AS_CHUNK(iv),
+					 wire_iv, enc, HUNK_AS_CHUNK(iv),
 					 ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
