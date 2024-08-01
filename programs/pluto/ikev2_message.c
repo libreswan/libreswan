@@ -442,17 +442,14 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	chunk_t enc = chunk2(sk->cleartext.ptr, sk->cleartext.len + sk->padding.len);
 
 	chunk_t salt;
-	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
 	/* encrypt with our end's key */
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
-		cipherkey = ike->sa.st_skey_ei_nss;
 		authkey = ike->sa.st_skey_ai_nss;
 		salt = ike->sa.st_skey_initiator_salt;
 		break;
 	case SA_RESPONDER:
-		cipherkey = ike->sa.st_skey_er_nss;
 		authkey = ike->sa.st_skey_ar_nss;
 		salt = ike->sa.st_skey_responder_salt;
 		break;
@@ -499,9 +496,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 				 ike->sa.logger);
 
 		cipher_context_op_normal(ike->sa.st_ike_encrypt_cipher_context,
-					 ENCRYPT,
 					 enc, HUNK_AS_CHUNK(iv),
-					 cipherkey, sk->logger);
+					 sk->logger);
 
 		/* note: saved_iv's updated value is discarded */
 
@@ -607,18 +603,15 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	}
 
 	chunk_t salt;
-	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
 		/* need responders key */
-		cipherkey = ike->sa.st_skey_er_nss;
 		authkey = ike->sa.st_skey_ar_nss;
 		salt = ike->sa.st_skey_responder_salt;
 		break;
 	case SA_RESPONDER:
 		/* need initiators key */
-		cipherkey = ike->sa.st_skey_ei_nss;
 		authkey = ike->sa.st_skey_ai_nss;
 		salt = ike->sa.st_skey_initiator_salt;
 		break;
@@ -696,8 +689,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		/* decrypt */
 
 		cipher_context_op_normal(ike->sa.st_ike_decrypt_cipher_context,
-					 DECRYPT, enc, HUNK_AS_CHUNK(iv),
-					 cipherkey, ike->sa.logger);
+					 enc, HUNK_AS_CHUNK(iv),
+					 ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {
 			LDBG_log(ike->sa.logger, "payload after decryption:");

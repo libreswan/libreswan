@@ -26,19 +26,17 @@
 #include "ike_alg_encrypt_ops.h"
 #include "lswnss.h"		/* for llog_nss_error() */
 
-static void cipher_op_null(const struct encrypt_desc *cipher,
-			   chunk_t in_buf, chunk_t iv,
-			   PK11SymKey *symkey,
-			   enum cipher_op op,
-			   struct logger *logger)
+static void cipher_op_null(const struct encrypt_desc *cipher UNUSED,
+			   struct cipher_op_context *context UNUSED,
+			   enum cipher_op op UNUSED,
+			   enum cipher_iv_source iv_source UNUSED,
+			   PK11SymKey *symkey UNUSED,
+			   shunk_t salt UNUSED,
+			   chunk_t in_buf UNUSED,
+			   chunk_t iv UNUSED,
+			   struct logger *logger UNUSED)
 {
-	ldbgf(DBG_CRYPT, logger, "%s() %s - enter %p %zu bytes iv %p %s key=%p",
-	      __func__, cipher->common.fqn, in_buf.ptr, in_buf.len,
-	      iv.ptr,
-	      str_cipher_op(op),
-	      symkey);
 	/* nothing happens */
-	ldbgf(DBG_CRYPT, logger, "%s() %s - exit", __func__, cipher->common.fqn);
 }
 
 static void cipher_check_null(const struct encrypt_desc *encrypt,

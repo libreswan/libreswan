@@ -39,7 +39,7 @@ struct encrypt_ops {
 	struct cipher_op_context *(*const cipher_op_context_create)(const struct encrypt_desc *cipher,
 								    enum cipher_op,
 								    enum cipher_iv_source,
-								    PK11SymKey *key,
+								    PK11SymKey *symkey,
 								    shunk_t salt,
 								    struct logger *logger);
 	void (*const cipher_op_context_destroy)(struct cipher_op_context **context,
@@ -51,10 +51,14 @@ struct encrypt_ops {
 	 * Presumably something else is implementing the integrity.
 	 */
 	void (*const cipher_op_normal)(const struct encrypt_desc *cipher,
+				       struct cipher_op_context *context,
+				       enum cipher_op op,
+				       enum cipher_iv_source iv_source,
+				       PK11SymKey *symkey,
+				       shunk_t salt,
+				       /**/
 				       chunk_t data,
 				       chunk_t iv,
-				       PK11SymKey *key,
-				       enum cipher_op op,
 				       struct logger *logger);
 
 	/*
@@ -73,7 +77,13 @@ struct encrypt_ops {
 	 * Danger: TEXT and TAG are clearly contigious.
 	 */
 
-	bool (*const cipher_op_aead)(struct cipher_op_context *context,
+	bool (*const cipher_op_aead)(const struct encrypt_desc *cipher,
+				     struct cipher_op_context *context,
+				     enum cipher_op op,
+				     enum cipher_iv_source iv_source,
+				     PK11SymKey *symkey,
+				     shunk_t salt,
+				     /**/
 				     chunk_t wire_iv,
 				     shunk_t aad,
 				     chunk_t text_and_tag,

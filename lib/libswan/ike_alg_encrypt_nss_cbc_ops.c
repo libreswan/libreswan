@@ -31,12 +31,16 @@
 #include "lswnss.h"		/* for llog_nss_error() */
 
 static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
-			      chunk_t in_buf, chunk_t iv,
-			      PK11SymKey *symkey,
+			      struct cipher_op_context *context,
 			      enum cipher_op op,
+			      enum cipher_iv_source iv_source UNUSED,
+			      PK11SymKey *symkey,
+			      shunk_t salt UNUSED,
+			      chunk_t in_buf, chunk_t iv,
 			      struct logger *logger)
 {
-	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter", cipher->common.fqn);
+	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter %p",
+	      cipher->common.fqn, context);
 
 	if (symkey == NULL) {
 		llog_passert(logger, HERE,

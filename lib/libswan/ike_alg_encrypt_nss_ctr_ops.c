@@ -35,13 +35,18 @@
 #include "ike_alg_encrypt_ops.h"
 #include "crypt_cipher.h"
 
-static void cipher_op_ctr_nss(const struct encrypt_desc *cipher UNUSED,
-			      chunk_t buf, chunk_t counter_block,
-			      PK11SymKey *sym_key,
+static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
+			      struct cipher_op_context *context,
 			      enum cipher_op op,
+			      enum cipher_iv_source iv_source UNUSED,
+			      PK11SymKey *sym_key,
+			      shunk_t salt UNUSED,
+			      chunk_t buf,
+			      chunk_t counter_block,
 			      struct logger *logger)
 {
-	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: enter");
+	ldbgf(DBG_CRYPT, logger, "%s() enter %s %p",
+	      __func__, cipher->common.fqn, context);
 
 	passert(sym_key);
 	if (sym_key == NULL) {

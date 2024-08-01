@@ -29,22 +29,17 @@
 #include "crypt_symkey.h"
 
 struct cipher_op_context {
-	PK11SymKey *symkey;
 	PK11Context *context;
-	enum cipher_op op;
-	enum cipher_iv_source iv_source;
-	chunk_t salt;
 	chunk_t random_iv;
-	const struct encrypt_desc *cipher;
 	unsigned long count;
 };
 
 static struct cipher_op_context *cipher_op_context_create_aead_nss(const struct encrypt_desc *cipher,
-								enum cipher_op op,
-								enum cipher_iv_source iv_source,
-								PK11SymKey *symkey,
-								shunk_t salt,
-								struct logger *logger)
+								   enum cipher_op op,
+								   enum cipher_iv_source iv_source UNUSED,
+								   PK11SymKey *symkey,
+								   shunk_t salt UNUSED,
+								   struct logger *logger)
 {
 	CK_ATTRIBUTE_TYPE mode = (op == ENCRYPT ? CKA_ENCRYPT :
 				  op == DECRYPT ? CKA_DECRYPT :
@@ -64,17 +59,17 @@ static struct cipher_op_context *cipher_op_context_create_aead_nss(const struct 
 
 	struct cipher_op_context *aead = alloc_thing(struct cipher_op_context, __func__);
 	aead->context = context;
-	aead->symkey = symkey_addref(logger, __func__, symkey);
-	aead->op = op;
-	aead->iv_source = iv_source;
-	aead->salt = clone_hunk(salt, __func__);
-	aead->cipher = cipher;
 	aead->random_iv = alloc_rnd_chunk(cipher->wire_iv_size, "Random-IV");
 	aead->count = 0;
 	return aead;
 }
 
-static bool cipher_op_aead_nss(struct cipher_op_context *aead,
+static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
+			       struct cipher_op_context *aead,
+			       enum cipher_op op UNUSED,
+			       enum cipher_iv_source iv_source,
+			       PK11SymKey *symkey,
+			       shunk_t salt,
 			       chunk_t wire_iv,
 			       shunk_t aad,
 			       chunk_t text_and_tag,
@@ -86,13 +81,13 @@ static bool cipher_op_aead_nss(struct cipher_op_context *aead,
 
 	CK_GENERATOR_FUNCTION generator;
 	chunk_t iv;
-	switch (aead->iv_source) {
+	switch (iv_source) {
 	case USE_IV:
 		/*
 		 * Presumably the IV has come from the peer.
 		 */
 		generator = CKG_NO_GENERATE;
-		iv = clone_hunk_hunk(aead->salt, wire_iv, "IV");
+		iv = clone_hunk_hunk(salt, wire_iv, "IV");
 		break;
 	case FILL_IV:
 		/*
@@ -100,10 +95,10 @@ static bool cipher_op_aead_nss(struct cipher_op_context *aead,
 		 * copy it back.
 		 */
 		generator = CKG_GENERATE_COUNTER_XOR;
-		iv = clone_hunk_hunk(aead->salt, aead->random_iv, "IV");
+		iv = clone_hunk_hunk(salt, aead->random_iv, "IV");
 		break;
 	default:
-		bad_case(aead->op);
+		bad_case(iv_source);
 	}
 
 	/* Output buffer for transformed data. */
@@ -111,7 +106,7 @@ static bool cipher_op_aead_nss(struct cipher_op_context *aead,
 	int out_len = 0;
 
 	SECStatus rv = PK11_AEADOp(aead->context, generator,
-				   /*fixedbits*/aead->cipher->salt_size * 8,
+				   /*fixedbits*/cipher->salt_size * 8,
 				   /*nss-scribbles-on-this*/iv.ptr, iv.len,
 				   aad.ptr, aad.len,
 				   out_ptr, &out_len,
@@ -123,21 +118,21 @@ static bool cipher_op_aead_nss(struct cipher_op_context *aead,
 	if (rv != SECSuccess) {
 		llog_nss_error(RC_LOG, logger,
 			       "AEAD encryption using %s_%u and PK11_AEADOp() failed",
-			       aead->cipher->common.fqn,
-			       PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE);
+			       cipher->common.fqn,
+			       PK11_GetKeyLength(symkey) * BITS_IN_BYTE);
 		ok = false;
 	} else if ((unsigned)out_len != text_len) {
 		/* should this be a pexpect fail? */
 		llog_nss_error(RC_LOG, logger,
 			       "AEAD encryption using %s_%u and PK11_AEADOp() failed (output length of %u not the expected %zd)",
-			       aead->cipher->common.fqn,
-			       PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE,
+			       cipher->common.fqn,
+			       PK11_GetKeyLength(symkey) * BITS_IN_BYTE,
 			       out_len, text_and_tag.len);
 		ok = false;
 	} else {
 		ldbg(logger, "AEAD encryption using %s_%u and PK11_AEADOp() succeded returning %d bytes",
-		     aead->cipher->common.fqn,
-		     PK11_GetKeyLength(aead->symkey) * BITS_IN_BYTE,
+		     cipher->common.fqn,
+		     PK11_GetKeyLength(symkey) * BITS_IN_BYTE,
 		     out_len);
 		ok = true;
 	}
@@ -146,14 +141,14 @@ static bool cipher_op_aead_nss(struct cipher_op_context *aead,
 	memcpy(text_and_tag.ptr, out_ptr, out_len);
 	PR_Free(out_ptr);
 
-	if (aead->iv_source == FILL_IV) {
+	if (iv_source == FILL_IV) {
 		/*
 		 * Cut out and then copy back the generated IV.
 		 *
 		 * The First time this op is used the .random_iv is
 		 * returned, from then on .random_op^count is used.
 		 */
-		chunk_t out_iv = hunk_slice(iv, aead->salt.len, iv.len);
+		chunk_t out_iv = hunk_slice(iv, salt.len, iv.len);
 		PASSERT(logger, out_iv.len == aead->random_iv.len);
 		hunk_cpy(wire_iv, out_iv);
 		/*
@@ -176,8 +171,6 @@ static void cipher_op_context_destroy_aead_nss(struct cipher_op_context **aead,
 {
 	PK11_Finalize((*aead)->context);
 	PK11_DestroyContext((*aead)->context, PR_TRUE);
-	symkey_delref(logger, __func__, &(*aead)->symkey);
-	free_chunk_content(&(*aead)->salt);
 	free_chunk_content(&(*aead)->random_iv);
 	ldbg(logger, "destroyed");
 	pfreeany(*aead);

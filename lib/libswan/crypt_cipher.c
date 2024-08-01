@@ -19,6 +19,7 @@
 #include "ike_alg_encrypt_ops.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "crypt_symkey.h"
 
 void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
@@ -31,7 +32,7 @@ void cipher_normal(const struct encrypt_desc *cipher,
 	struct cipher_context *context = cipher_context_create(cipher, op, iv_source,
 							       symkey, null_shunk,
 							       logger);
-	cipher_context_op_normal(context, op, data, iv, symkey, logger);
+	cipher_context_op_normal(context, data, iv, logger);
 	cipher_context_destroy(&context, logger);
 }
 
@@ -63,21 +64,36 @@ bool cipher_aead(const struct encrypt_desc *cipher,
 struct cipher_context {
 	const struct encrypt_desc *cipher;
 	struct cipher_op_context *op_context;
+	enum cipher_op op;
+	enum cipher_iv_source iv_source;
+	chunk_t salt;
+	PK11SymKey *symkey;
 };
 
 struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 					     enum cipher_op op,
 					     enum cipher_iv_source iv_source,
-					     PK11SymKey *key,
+					     PK11SymKey *symkey,
 					     shunk_t salt,
 					     struct logger *logger)
 {
+	if (DBGP(DBG_BASE)) {
+		LDBG_log(logger, "%s() %s %s %s symkey %p",
+			 __func__, cipher->common.fqn,
+			 str_cipher_op(op), str_cipher_iv_source(iv_source),
+			 symkey);
+		LDBG_hunk(logger, salt);
+	}
 	struct cipher_context *cipher_context = alloc_thing(struct cipher_context, __func__);
 	cipher_context->cipher = cipher;
+	cipher_context->op = op;
+	cipher_context->iv_source = iv_source;
+	cipher_context->symkey = symkey_addref(logger, __func__, symkey);
+	cipher_context->salt = clone_hunk(salt, __func__);
 	if (cipher->encrypt_ops->cipher_op_context_create != NULL) {
 		cipher_context->op_context =
 			cipher->encrypt_ops->cipher_op_context_create(cipher, op, iv_source,
-								      key, salt, logger);
+								      symkey, salt, logger);
 		PASSERT(logger, cipher_context->op_context != NULL);
 	}
 	return cipher_context;
@@ -100,6 +116,9 @@ void cipher_context_destroy(struct cipher_context **cipher_context,
 		PASSERT(logger, (*cipher_context)->op_context == NULL);
 	}
 
+	symkey_delref(logger, __func__, &(*cipher_context)->symkey);
+	free_chunk_content(&(*cipher_context)->salt);
+
 	pfreeany(*cipher_context);
 	return;
 }
@@ -111,19 +130,27 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 			    size_t text_size, size_t tag_size,
 			    struct logger *logger)
 {
-	return cipher_context->cipher->encrypt_ops->cipher_op_aead(cipher_context->op_context,
+	return cipher_context->cipher->encrypt_ops->cipher_op_aead(cipher_context->cipher,
+								   cipher_context->op_context,
+								   cipher_context->op,
+								   cipher_context->iv_source,
+								   cipher_context->symkey,
+								   HUNK_AS_SHUNK(cipher_context->salt),
 								   wire_iv, aad,
 								   text_and_tag, text_size, tag_size,
 								   logger);
 }
 
 void cipher_context_op_normal(const struct cipher_context *cipher_context,
-			      enum cipher_op op,
-			      chunk_t data,
-			      chunk_t iv,
-			      PK11SymKey *symkey,
+			      chunk_t data, chunk_t iv,
 			      struct logger *logger)
 {
 	cipher_context->cipher->encrypt_ops->cipher_op_normal(cipher_context->cipher,
-							      data, iv, symkey, op, logger);
+							      cipher_context->op_context,
+							      cipher_context->op,
+							      cipher_context->iv_source,
+							      cipher_context->symkey,
+							      HUNK_AS_SHUNK(cipher_context->salt),
+							      data, iv,
+							      logger);
 }

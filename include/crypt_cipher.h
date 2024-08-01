@@ -90,10 +90,8 @@ void cipher_context_destroy(struct cipher_context **,
 			    struct logger *logger);
 
 void cipher_context_op_normal(const struct cipher_context *,
-			      enum cipher_op op,
 			      chunk_t data,
 			      chunk_t iv,
-			      PK11SymKey *symkey,
 			      struct logger *logger);
 
 bool cipher_context_op_aead(const struct cipher_context *,
