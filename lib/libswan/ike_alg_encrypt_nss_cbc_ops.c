@@ -29,32 +29,44 @@
 #include "ike_alg_encrypt_ops.h"
 #include "crypt_cipher.h"
 #include "lswnss.h"		/* for llog_nss_error() */
+#include "rnd.h"
 
 static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 			      struct cipher_op_context *context,
 			      enum cipher_op op,
-			      enum cipher_iv_source iv_source UNUSED,
+			      enum cipher_iv_source iv_source,
 			      PK11SymKey *symkey,
-			      shunk_t salt UNUSED,
-			      chunk_t wire_iv UNUSED,
+			      shunk_t salt,
+			      chunk_t wire_iv,
 			      chunk_t text,
-			      chunk_t iv,
+			      chunk_t next_iv,
 			      struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter %p",
 	      cipher->common.fqn, context);
 
-	if (symkey == NULL) {
-		llog_passert(logger, HERE,
-			     "%s - NSS derived enc key in NULL",
-			     cipher->common.fqn);
+	PEXPECT(logger, salt.len == 0); /* CBC has no salt */
+	PEXPECT(logger, wire_iv.len == cipher->enc_blocksize);
+	PEXPECT(logger, next_iv.len == cipher->enc_blocksize); /*output*/
+
+	switch (iv_source) {
+	case USE_IV:
+		ldbgf(DBG_CRYPT, logger, "using existing wire IV");
+		break;
+	case FILL_IV:
+		/*
+		 * AES CBC Must always generate the full IV.
+		 */
+		ldbgf(DBG_CRYPT, logger, "generating wire IV");
+		fill_rnd_chunk(wire_iv);
+		break;
 	}
 
-	PEXPECT(logger, iv.len == cipher->enc_blocksize);
-	SECItem ivitem;
-	ivitem.type = siBuffer;
-	ivitem.data = iv.ptr;
-	ivitem.len = cipher->enc_blocksize;
+	SECItem ivitem = {
+		.type = siBuffer,
+		.data = wire_iv.ptr,
+		.len = wire_iv.len,
+	};
 	SECItem *secparam = PK11_ParamFromIV(cipher->nss.mechanism, &ivitem);
 	if (secparam == NULL) {
 		llog_passert(logger, HERE,
@@ -88,29 +100,33 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 	PK11_DestroyContext(enccontext, PR_TRUE);
 
 	/*
-	 * Update the IV ready for the next call to this function.
+	 * Update IKEv1's IV ready for the next call to this function.
+	 *
+	 * The next IV is always the last block of the encrypted
+	 * message.  Hence ENCRYPT gets it from the output; and
+	 * decrypt gets it from the INPUT.
 	 */
 	uint8_t *new_iv;
 	switch (op) {
 	case ENCRYPT:
 		/*
 		 * The IV for the next encryption call is the last
-		 * block of encrypted output data.
+		 * block of encrypted OUTPUT data.
 		 */
 		new_iv = out_ptr + out_len - cipher->enc_blocksize;
 		break;
 	case DECRYPT:
 		/*
 		 * The IV for the next decryption call is the last
-		 * block of the encrypted input data.
+		 * block of the encrypted INPUT data.
 		 */
 		new_iv = text.ptr + text.len - cipher->enc_blocksize;
 		break;
 	default:
 		bad_case(op);
 	}
-	PEXPECT(logger, iv.len == cipher->enc_blocksize);
-	memcpy(iv.ptr, new_iv, cipher->enc_blocksize);
+	PEXPECT(logger, next_iv.len == cipher->enc_blocksize);
+	memcpy(next_iv.ptr, new_iv, cipher->enc_blocksize);
 
 	/*
 	 * Finally, copy the transformed data back to the buffer.  Do
