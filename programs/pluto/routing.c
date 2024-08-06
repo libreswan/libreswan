@@ -690,6 +690,9 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 			continue;
 		}
 
+
+		do_updown(UPDOWN_DOWN, c, spd, child, logger);
+
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
 
