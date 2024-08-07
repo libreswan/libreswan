@@ -171,14 +171,14 @@ void calc_v2_keymat(struct state *st,
 		/* encrypt outbound uses I */
 		st->st_ike_encrypt_cipher_context =
 			cipher_context_create(st->st_oakley.ta_encrypt,
-					      ENCRYPT, FILL_IV,
+					      ENCRYPT, FILL_WIRE_IV,
 					      st->st_skey_ei_nss,
 					      HUNK_AS_SHUNK(st->st_skey_initiator_salt),
 					      st->logger);
 		/* decrypt inbound uses R */
 		st->st_ike_decrypt_cipher_context =
 			cipher_context_create(st->st_oakley.ta_encrypt,
-					      DECRYPT, USE_IV,
+					      DECRYPT, USE_WIRE_IV,
 					      st->st_skey_er_nss,
 					      HUNK_AS_SHUNK(st->st_skey_responder_salt),
 					      st->logger);
@@ -187,14 +187,14 @@ void calc_v2_keymat(struct state *st,
 		/* encrypt outbound uses R */
 		st->st_ike_encrypt_cipher_context =
 			cipher_context_create(st->st_oakley.ta_encrypt,
-					      ENCRYPT, FILL_IV,
+					      ENCRYPT, FILL_WIRE_IV,
 					      st->st_skey_er_nss,
 					      HUNK_AS_SHUNK(st->st_skey_responder_salt),
 					      st->logger);
 		/* decrypt inbound uses I */
 		st->st_ike_decrypt_cipher_context =
 			cipher_context_create(st->st_oakley.ta_encrypt,
-					      DECRYPT, USE_IV,
+					      DECRYPT, USE_WIRE_IV,
 					      st->st_skey_ei_nss,
 					      HUNK_AS_SHUNK(st->st_skey_initiator_salt),
 					      st->logger);

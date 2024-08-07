@@ -117,7 +117,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 				 __func__, #CIPHER_OP, aad.len, salt.len, wire_iv.len, len, tag.len); \
 			LDBG_hunk(logger, text_and_tag);		\
 		}							\
-		if (!cipher_aead(encrypt_desc, CIPHER_OP, USE_IV,	\
+		if (!cipher_aead(encrypt_desc, CIPHER_OP, USE_WIRE_IV,	\
 				 HUNK_AS_SHUNK(salt),			\
 				 wire_iv,				\
 				 HUNK_AS_SHUNK(aad),			\

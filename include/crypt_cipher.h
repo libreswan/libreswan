@@ -45,15 +45,17 @@ enum cipher_op {
  */
 
 enum cipher_iv_source {
-	USE_IV,
-	FILL_IV,
+	USE_WIRE_IV = 1,
+	FILL_WIRE_IV,
+	USE_IKEv1_IV,
 };
 
 #define str_cipher_iv_source(IV_SOURCE)				\
 	({							\
 		enum cipher_iv_source iv_source_ = IV_SOURCE;	\
-		(iv_source_ == USE_IV ? "use IV" :		\
-		 iv_source_ == FILL_IV ? "fill IV" :		\
+		(iv_source_ == USE_WIRE_IV ? "use wire IV" :	\
+		 iv_source_ == FILL_WIRE_IV ? "fill wire IV" :	\
+		 iv_source_ == USE_IKEv1_IV ? "use IKEv1 IV" :	\
 		 "???");					\
 	})
 
