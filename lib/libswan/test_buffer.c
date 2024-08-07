@@ -19,6 +19,7 @@
 #include "pk11pub.h"
 
 #include "crypt_symkey.h"
+#include "crypt_mac.h"
 #include "test_buffer.h"
 #include "ike_alg.h"
 
@@ -36,8 +37,8 @@ chunk_t decode_to_chunk(const char *prefix, const char *original,
 			struct logger *logger, where_t where UNUSED)
 {
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "decode_to_chunk: %s: input \"%s\"",
-			 prefix, original);
+		LDBG_log(logger, "%s() %s: input \"%s\"",
+			 __func__, prefix, original);
 	}
 	chunk_t chunk;
 	if (startswith(original, "0x")) {
@@ -47,10 +48,45 @@ chunk_t decode_to_chunk(const char *prefix, const char *original,
 		memcpy(chunk.ptr, original, chunk.len);
 	}
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "decode_to_chunk: output:");
+		LDBG_log(logger, "%s() output:", __func__);
 		LDBG_hunk(logger, chunk);
 	}
 	return chunk;
+}
+
+/*
+ * Given an ASCII string, convert it into a chunk of bytes.  If the
+ * string is prefixed by 0x assume the contents are hex (with spaces)
+ * and decode it; otherwise it is assumed that the ASCII (minus the
+ * NUL) should be copied.
+ *
+ * The caller must free the chunk.
+ */
+
+struct crypt_mac decode_to_mac(const char *prefix, const char *original,
+			       struct logger *logger, where_t where UNUSED)
+{
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s() %s: input \"%s\"",
+			 __func__, prefix, original);
+	}
+	struct crypt_mac mac;
+	if (startswith(original, "0x")) {
+		chunk_t chunk = chunk_from_hex(original + strlen("0x"), original);
+		PASSERT(logger, chunk.len <= sizeof(mac.ptr/*array*/));
+		mac.len = chunk.len;
+		memcpy(mac.ptr, chunk.ptr, mac.len);
+		free_chunk_content(&chunk);
+	} else {
+		mac.len = strlen(original);
+		PASSERT(logger, mac.len <= sizeof(mac.ptr/*array*/));
+		memcpy(mac.ptr, original, mac.len);
+	}
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s() output:", __func__);
+		LDBG_hunk(logger, mac);
+	}
+	return mac;
 }
 
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,

@@ -27,6 +27,8 @@ struct encrypt_desc;
 
 chunk_t decode_to_chunk(const char *prefix, const char *string,
 			struct logger *logger, where_t where);
+struct crypt_mac decode_to_mac(const char *prefix, const char *string,
+			       struct logger *logger, where_t where);
 PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string,
 				 struct logger *logger, where_t where);
 
