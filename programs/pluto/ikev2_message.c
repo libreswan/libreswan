@@ -389,7 +389,7 @@ struct iv {
 };
 
 static void construct_enc_iv(const char *name,
-			     struct iv *iv,
+			     struct crypt_mac *iv,
 			     chunk_t wire_iv,
 			     chunk_t salt,
 			     const struct encrypt_desc *encrypter,
@@ -488,15 +488,15 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 	} else {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
-		struct iv iv;
+		struct crypt_mac ikev1_iv;
 		fill_rnd_chunk(sk->wire_iv);
-		construct_enc_iv("encryption IV/starting-variable", &iv,
+		construct_enc_iv("encryption IV/starting-variable", &ikev1_iv,
 				 sk->wire_iv, salt,
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
 
 		cipher_context_op_normal(ike->sa.st_ike_encrypt_cipher_context,
-					 sk->wire_iv, enc, HUNK_AS_CHUNK(iv),
+					 sk->wire_iv, enc, &ikev1_iv,
 					 sk->logger);
 
 		/* note: saved_iv's updated value is discarded */
@@ -680,8 +680,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		}
 
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
-		struct iv iv;
-		construct_enc_iv("decryption IV/starting-variable", &iv,
+		struct crypt_mac ikev1_iv;
+		construct_enc_iv("decryption IV/starting-variable",
+				 &ikev1_iv,
 				 wire_iv, salt,
 				 ike->sa.st_oakley.ta_encrypt,
 				 ike->sa.logger);
@@ -689,7 +690,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		/* decrypt */
 
 		cipher_context_op_normal(ike->sa.st_ike_decrypt_cipher_context,
-					 wire_iv, enc, HUNK_AS_CHUNK(iv),
+					 wire_iv, enc, &ikev1_iv,
 					 ike->sa.logger);
 
 		if (DBGP(DBG_CRYPT)) {

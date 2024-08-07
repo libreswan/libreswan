@@ -34,7 +34,7 @@ static void cipher_op_null(const struct encrypt_desc *cipher UNUSED,
 			   shunk_t salt UNUSED,
 			   chunk_t wire_iv UNUSED,
 			   chunk_t text UNUSED,
-			   chunk_t iv UNUSED,
+			   struct crypt_mac *ikev1_iv UNUSED,
 			   struct logger *logger UNUSED)
 {
 	/* nothing happens */

@@ -26,6 +26,7 @@
 #include "fips_mode.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
+#include "crypt_mac.h"
 
 #include "lswlog.h"
 
@@ -133,7 +134,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	const char *opstr = str_cipher_op(op);
 
 	bool ok = true;
-	chunk_t iv = decode_to_chunk("IV: ", encoded_iv, logger, HERE);
+	struct crypt_mac iv = decode_to_mac("IV: ", encoded_iv, logger, HERE);
 
 	/*
 	 * If encrypting, the new iv is in the output, if decrypting,
@@ -149,7 +150,7 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected = decode_to_chunk(output_name, output, logger, HERE);
 
 	/* do_crypt modifies the data and IV in place. */
-	cipher_normal(encrypt_desc, op, USE_IKEv1_IV, tmp, iv, sym_key, logger);
+	cipher_normal(encrypt_desc, op, USE_IKEv1_IV, tmp, &iv, sym_key, logger);
 
 	if (!verify_hunk(description, opstr, expected, tmp, logger, HERE)) {
 		ok = false;
@@ -160,7 +161,6 @@ static bool test_cbc_op(const struct encrypt_desc *encrypt_desc,
 		ok = false;
 	}
 
-	free_chunk_content(&iv);
 	free_chunk_content(&expected_iv);
 	free_chunk_content(&tmp);
 	free_chunk_content(&expected);

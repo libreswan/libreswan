@@ -23,6 +23,7 @@ struct logger;
 enum cipher_op;
 enum cipher_iv_source;
 struct cipher_op_context;
+struct crypt_mac;
 
 struct encrypt_ops {
 	const char *backend;
@@ -59,7 +60,7 @@ struct encrypt_ops {
 				       chunk_t wire_iv,
 				       chunk_t text,
 				       /**/
-				       chunk_t iv,
+				       struct crypt_mac *ikev1_iv,
 				       struct logger *logger);
 
 	/*

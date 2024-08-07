@@ -43,7 +43,7 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 			      shunk_t salt UNUSED,
 			      chunk_t wire_iv UNUSED,
 			      chunk_t text,
-			      chunk_t counter_block,
+			      struct crypt_mac *ikev1_iv,
 			      struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "%s() enter %s %p",
@@ -56,8 +56,8 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 
 	CK_AES_CTR_PARAMS counter_param;
 	counter_param.ulCounterBits = sizeof(uint32_t) * 8;/* Per RFC 3686 */
-	PEXPECT(logger, counter_block.len == sizeof(counter_param.cb));
-	memcpy(counter_param.cb, counter_block.ptr, sizeof(counter_param.cb));
+	PEXPECT(logger, ikev1_iv->len == sizeof(counter_param.cb));
+	memcpy(counter_param.cb, ikev1_iv->ptr, sizeof(counter_param.cb));
 	SECItem param;
 	param.type = siBuffer;
 	param.data = (void*)&counter_param;
@@ -103,8 +103,7 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 	 * There's a portability assumption here that the IV buffer is
 	 * at least sizeof(uint32_t) (4-byte) aligned.
 	 */
-	uint32_t *counter = (uint32_t*)(counter_block.ptr + AES_BLOCK_SIZE
-					- sizeof(uint32_t));
+	uint32_t *counter = (uint32_t*)(ikev1_iv->ptr + AES_BLOCK_SIZE - sizeof(uint32_t));
 	uint32_t old_counter = ntohl(*counter);
 	size_t increment = (text.len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
 	uint32_t new_counter = old_counter + increment;

@@ -39,7 +39,7 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 			      shunk_t salt,
 			      chunk_t wire_iv,
 			      chunk_t text,
-			      chunk_t next_iv,
+			      struct crypt_mac *ikev1_iv,
 			      struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "NSS ike_alg_nss_cbc: %s - enter %p",
@@ -47,7 +47,7 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 
 	PEXPECT(logger, salt.len == 0); /* CBC has no salt */
 	PEXPECT(logger, wire_iv.len == cipher->enc_blocksize);
-	PEXPECT(logger, next_iv.len == cipher->enc_blocksize); /*output*/
+	PEXPECT(logger, ikev1_iv->len == cipher->enc_blocksize); /*output*/
 
 	switch (iv_source) {
 	case USE_WIRE_IV:
@@ -128,8 +128,8 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 	default:
 		bad_case(op);
 	}
-	PEXPECT(logger, next_iv.len == cipher->enc_blocksize);
-	memcpy(next_iv.ptr, new_iv, cipher->enc_blocksize);
+	PEXPECT(logger, ikev1_iv->len == cipher->enc_blocksize);
+	memcpy(ikev1_iv->ptr, new_iv, cipher->enc_blocksize);
 
 	/*
 	 * Finally, copy the transformed data back to the buffer.  Do

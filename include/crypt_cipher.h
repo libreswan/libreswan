@@ -24,6 +24,7 @@
 struct encrypt_desc;
 struct logger;
 struct cipher_context;
+struct crypt_mac;
 
 enum cipher_op {
 	DECRYPT = false,
@@ -66,8 +67,8 @@ enum cipher_iv_source {
 void cipher_normal(const struct encrypt_desc *cipher,
 		   enum cipher_op op,
 		   enum cipher_iv_source iv_source,
-		   chunk_t data,
-		   chunk_t iv,
+		   chunk_t text,
+		   struct crypt_mac *iv,
 		   PK11SymKey *key,
 		   struct logger *logger);
 
@@ -94,7 +95,7 @@ void cipher_context_destroy(struct cipher_context **,
 void cipher_context_op_normal(const struct cipher_context *,
 			      chunk_t wire_iv,
 			      chunk_t text,
-			      chunk_t iv,
+			      struct crypt_mac *ikev1_iv,
 			      struct logger *logger);
 
 bool cipher_context_op_aead(const struct cipher_context *,

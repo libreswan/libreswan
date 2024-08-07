@@ -25,6 +25,7 @@
 #include "fips_mode.h"
 #include "pk11pub.h"
 #include "crypt_symkey.h"
+#include "crypt_mac.h"
 
 #include "lswlog.h"
 
@@ -163,13 +164,13 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 {
 	const char *opstr = str_cipher_op(op);
 	bool ok = true;
-	chunk_t cb = decode_to_chunk("input counter-block: ", encoded_cb, logger, HERE);
+	struct crypt_mac cb = decode_to_mac("input counter-block: ", encoded_cb, logger, HERE);
 	chunk_t tmp = decode_to_chunk(input_name, input, logger, HERE);
 	chunk_t expected_output = decode_to_chunk(output_name, output, logger, HERE);
 	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb, logger, HERE);
 
 	/* do_crypt modifies the data and IV in place. */
-	cipher_normal(encrypt_desc, op, USE_IKEv1_IV, tmp, cb, sym_key, logger);
+	cipher_normal(encrypt_desc, op, USE_IKEv1_IV, tmp, &cb, sym_key, logger);
 	if (!verify_hunk(description, opstr,
 			 expected_output, tmp,
 			 logger, HERE)) {
@@ -181,7 +182,6 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 		ok = false;
 	}
 
-	free_chunk_content(&cb);
 	free_chunk_content(&expected_cb);
 	free_chunk_content(&tmp);
 	free_chunk_content(&expected_output);
