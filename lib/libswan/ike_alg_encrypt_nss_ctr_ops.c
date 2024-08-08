@@ -34,14 +34,15 @@
 #include "lswnss.h"
 #include "ike_alg_encrypt_ops.h"
 #include "crypt_cipher.h"
+#include "rnd.h"
 
 static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 			      struct cipher_op_context *context,
 			      enum cipher_op op,
-			      enum cipher_iv_source iv_source UNUSED,
+			      enum cipher_iv_source iv_source,
 			      PK11SymKey *sym_key,
-			      shunk_t salt UNUSED,
-			      chunk_t wire_iv UNUSED,
+			      shunk_t salt,
+			      chunk_t wire_iv,
 			      chunk_t text,
 			      struct crypt_mac *ikev1_iv,
 			      struct logger *logger)
@@ -54,14 +55,35 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 		llog_passert(logger, HERE, "%s", "NSS derived enc key in NULL");
 	}
 
-	CK_AES_CTR_PARAMS counter_param;
-	counter_param.ulCounterBits = sizeof(uint32_t) * 8;/* Per RFC 3686 */
-	PEXPECT(logger, ikev1_iv->len == sizeof(counter_param.cb));
-	memcpy(counter_param.cb, ikev1_iv->ptr, sizeof(counter_param.cb));
+	CK_AES_CTR_PARAMS ctr_params = {
+		.ulCounterBits = sizeof(uint32_t) * 8, /* Per RFC 3686 */
+	};
+
+	switch (iv_source) {
+	case USE_WIRE_IV:
+		PASSERT(logger, salt.len + wire_iv.len + ctr_params.ulCounterBits / 8 == sizeof(ctr_params.cb));
+		memcpy(ctr_params.cb, salt.ptr, salt.len);
+		memcpy(ctr_params.cb + salt.len, wire_iv.ptr, wire_iv.len);
+		ctr_params.cb[sizeof(ctr_params.cb) - 1] = 1;
+		break;
+	case FILL_WIRE_IV:
+		PASSERT(logger, salt.len + wire_iv.len + ctr_params.ulCounterBits / 8 == sizeof(ctr_params.cb));
+		fill_rnd_chunk(wire_iv);
+		memcpy(ctr_params.cb, salt.ptr, salt.len);
+		memcpy(ctr_params.cb + salt.len, wire_iv.ptr, wire_iv.len);
+		ctr_params.cb[sizeof(ctr_params.cb) - 1] = 1;
+		break;
+	case USE_IKEv1_IV:
+		PASSERT(logger, ikev1_iv->len == sizeof(ctr_params.cb));
+		memcpy(ctr_params.cb, ikev1_iv->ptr, sizeof(ctr_params.cb));
+		break;
+	}
+
+
 	SECItem param;
 	param.type = siBuffer;
-	param.data = (void*)&counter_param;
-	param.len = sizeof(counter_param);
+	param.data = (void*)&ctr_params;
+	param.len = sizeof(ctr_params);
 
 	/* Output buffer for transformed data. */
 	uint8_t *out_ptr = PR_Malloc(text.len);
