@@ -69,11 +69,11 @@ void get_rnd_bytes(void *buffer, size_t length)
 	}
 }
 
-uintmax_t get_rnd_uintmax(uintmax_t roof)
+uintmax_t get_rnd_uintmax(void)
 {
 	uintmax_t rnd;
 	get_rnd_bytes(&rnd, sizeof(rnd));
-	return rnd % roof;
+	return rnd;
 }
 
 void fill_rnd_chunk(chunk_t chunk)

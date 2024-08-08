@@ -37,14 +37,15 @@ deltatime_t fuzz_rekey_margin(enum sa_role role, deltatime_t marg,  unsigned fuz
 
 	switch (role) {
 	case SA_INITIATOR:
+	{
 		/*
 		 * Give the initiator a larger margin so that its
 		 * rekey event is scheduled earlier (relative to the
 		 * replace event).
 		 */
-		return deltatime_scale(marg,
-				       100 + /*[0..FUZZ_PERCENT]*/get_rnd_uintmax(/*roof*/fuzz_percent + 1),
-				       100);
+		uintmax_t fuzz = get_rnd_uintmax() % (fuzz_percent + 1);
+		return deltatime_scale(marg, 100 + fuzz, 100);
+	}
 	case SA_RESPONDER:
 		/*
 		 * Give the responder a smaller margin so that its
@@ -104,8 +105,7 @@ uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,
 	if (hard_limit < 16384/*magic*/) {
 		fuzz = 0;
 	} else {
-
-		fuzz = get_rnd_uintmax(/*roof*/soft_limit / 8 + 1);
+		fuzz = get_rnd_uintmax() % (soft_limit / 8 + 1);
 	}
 
 	const char *role_name;

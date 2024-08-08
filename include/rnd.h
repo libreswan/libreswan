@@ -26,7 +26,7 @@ struct logger;
 
 extern void fill_rnd_chunk(chunk_t chunk);
 extern void get_rnd_bytes(void *buffer, size_t size);
-extern uintmax_t get_rnd_uintmax(uintmax_t roof);
+extern uintmax_t get_rnd_uintmax(void);
 extern chunk_t alloc_rnd_chunk(size_t size, const char *name);
 
 #endif
