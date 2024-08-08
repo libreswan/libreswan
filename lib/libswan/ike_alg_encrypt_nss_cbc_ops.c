@@ -47,20 +47,23 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 
 	PEXPECT(logger, salt.len == 0); /* CBC has no salt */
 	PEXPECT(logger, wire_iv.len == cipher->enc_blocksize);
-	PEXPECT(logger, ikev1_iv->len == cipher->enc_blocksize); /*output*/
 
 	switch (iv_source) {
 	case USE_WIRE_IV:
+		PASSERT(logger, ikev1_iv == NULL);
 		ldbgf(DBG_CRYPT, logger, "using existing wire IV");
 		break;
 	case FILL_WIRE_IV:
 		/*
 		 * AES CBC Must always generate the full IV.
 		 */
+		PASSERT(logger, ikev1_iv == NULL);
 		ldbgf(DBG_CRYPT, logger, "generating wire IV");
 		fill_rnd_chunk(wire_iv);
 		break;
 	case USE_IKEv1_IV:
+		PASSERT(logger, ikev1_iv != NULL);
+		PEXPECT(logger, ikev1_iv->len == cipher->enc_blocksize);
 		ldbgf(DBG_CRYPT, logger, "using IKEv1 IV");
 		break;
 	}
@@ -102,38 +105,47 @@ static void cipher_op_cbc_nss(const struct encrypt_desc *cipher,
 
 	PK11_DestroyContext(enccontext, PR_TRUE);
 
-	/*
-	 * Update IKEv1's IV ready for the next call to this function.
-	 *
-	 * The next IV is always the last block of the encrypted
-	 * message.  Hence ENCRYPT gets it from the output; and
-	 * decrypt gets it from the INPUT.
-	 */
-	uint8_t *new_iv;
-	switch (op) {
-	case ENCRYPT:
+	if (iv_source == USE_IKEv1_IV) {
 		/*
-		 * The IV for the next encryption call is the last
-		 * block of encrypted OUTPUT data.
+		 * Update IKEv1's IV ready for the next call to this
+		 * function.
+		 *
+		 * The next IV is always the last block of the
+		 * encrypted message.  Hence ENCRYPT gets it from the
+		 * output; and decrypt gets it from the INPUT.
+		 *
+		 * ... and hence this needs to happen before the input
+		 * is scribbled on by the memcpy below.
 		 */
-		new_iv = out_ptr + out_len - cipher->enc_blocksize;
-		break;
-	case DECRYPT:
-		/*
-		 * The IV for the next decryption call is the last
-		 * block of the encrypted INPUT data.
-		 */
-		new_iv = text.ptr + text.len - cipher->enc_blocksize;
-		break;
-	default:
-		bad_case(op);
+		uint8_t *new_iv;
+		switch (op) {
+		case ENCRYPT:
+			/*
+			 * The IV for the next encryption call is the last
+			 * block of encrypted OUTPUT data.
+			 */
+			new_iv = out_ptr + out_len - cipher->enc_blocksize;
+			break;
+		case DECRYPT:
+			/*
+			 * The IV for the next decryption call is the last
+			 * block of the encrypted INPUT data.
+			 */
+			new_iv = text.ptr + text.len - cipher->enc_blocksize;
+			break;
+		default:
+			bad_case(op);
+		}
+		PEXPECT(logger, ikev1_iv->len == cipher->enc_blocksize);
+		memcpy(ikev1_iv->ptr, new_iv, cipher->enc_blocksize);
 	}
-	PEXPECT(logger, ikev1_iv->len == cipher->enc_blocksize);
-	memcpy(ikev1_iv->ptr, new_iv, cipher->enc_blocksize);
 
 	/*
 	 * Finally, copy the transformed data back to the buffer.  Do
 	 * this after extracting the IV.
+	 *
+	 * Note: this needs to happen after the IKEv1 IV is saved (so
+	 * that the old final block is still available).
 	 */
 	memcpy(text.ptr, out_ptr, text.len);
 	PR_Free(out_ptr);

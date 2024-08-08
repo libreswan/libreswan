@@ -44,7 +44,7 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 			      shunk_t salt,
 			      chunk_t wire_iv,
 			      chunk_t text,
-			      struct crypt_mac *ikev1_iv,
+			      struct crypt_mac *ikev1_iv/*possbly-NULL*/,
 			      struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "%s() enter %s %p",
@@ -61,12 +61,14 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 
 	switch (iv_source) {
 	case USE_WIRE_IV:
+		PASSERT(logger, ikev1_iv == NULL);
 		PASSERT(logger, salt.len + wire_iv.len + ctr_params.ulCounterBits / 8 == sizeof(ctr_params.cb));
 		memcpy(ctr_params.cb, salt.ptr, salt.len);
 		memcpy(ctr_params.cb + salt.len, wire_iv.ptr, wire_iv.len);
 		ctr_params.cb[sizeof(ctr_params.cb) - 1] = 1;
 		break;
 	case FILL_WIRE_IV:
+		PASSERT(logger, ikev1_iv == NULL);
 		PASSERT(logger, salt.len + wire_iv.len + ctr_params.ulCounterBits / 8 == sizeof(ctr_params.cb));
 		fill_rnd_chunk(wire_iv);
 		memcpy(ctr_params.cb, salt.ptr, salt.len);
@@ -74,6 +76,7 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 		ctr_params.cb[sizeof(ctr_params.cb) - 1] = 1;
 		break;
 	case USE_IKEv1_IV:
+		PASSERT(logger, ikev1_iv != NULL);
 		PASSERT(logger, ikev1_iv->len == sizeof(ctr_params.cb));
 		memcpy(ctr_params.cb, ikev1_iv->ptr, sizeof(ctr_params.cb));
 		break;
@@ -117,23 +120,28 @@ static void cipher_op_ctr_nss(const struct encrypt_desc *cipher,
 	memcpy(text.ptr, out_ptr, text.len);
 	PR_Free(out_ptr);
 
-	/*
-	 * Finally update the counter located at the end of the
-	 * counter_block. It is incremented by 1 for every full or
-	 * partial block encoded/decoded.
-	 *
-	 * There's a portability assumption here that the IV buffer is
-	 * at least sizeof(uint32_t) (4-byte) aligned.
-	 */
-	uint32_t *counter = (uint32_t*)(ikev1_iv->ptr + AES_BLOCK_SIZE - sizeof(uint32_t));
-	uint32_t old_counter = ntohl(*counter);
-	size_t increment = (text.len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
-	uint32_t new_counter = old_counter + increment;
-	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
-	      old_counter, new_counter, text.len);
-	/* Wrap ... */
-	passert(new_counter >= old_counter);
-	*counter = htonl(new_counter);
+
+	if (iv_source == USE_IKEv1_IV) {
+		/*
+		 * Finally update the counter located at the end of
+		 * the counter_block. It is incremented by 1 for every
+		 * full or partial block encoded/decoded.
+		 *
+		 * There's a portability assumption here that the IV
+		 * buffer is at least sizeof(uint32_t) (4-byte)
+		 * aligned.
+		 */
+		uint32_t *counter = (uint32_t*)(ikev1_iv->ptr + AES_BLOCK_SIZE - sizeof(uint32_t));
+		uint32_t old_counter = ntohl(*counter);
+		size_t increment = (text.len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
+		uint32_t new_counter = old_counter + increment;
+		ldbgf(DBG_CRYPT, logger,
+		      "%s() counter-block updated from 0x%" PRIx32 " to 0x%" PRIx32 " for %zd bytes",
+		      __func__, old_counter, new_counter, text.len);
+		/* Wrap ... */
+		passert(new_counter >= old_counter);
+		*counter = htonl(new_counter);
+	}
 
 	ldbgf(DBG_CRYPT, logger, "do_aes_ctr: exit");
 }
