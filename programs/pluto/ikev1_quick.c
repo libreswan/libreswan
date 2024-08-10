@@ -1047,10 +1047,21 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	}
 
 	/* fill in the client's true ip address/subnet */
-	dbg("client: %s  port wildcard: %s  virtual: %s",
-	    bool_str(c->remote->child.has_client),
-	    bool_str(c->remote->config->child.protoport.has_port_wildcard),
-	    bool_str(is_virtual_remote(c)));
+
+	const struct ip_info *client_afi = selector_type(remote_client);
+	if (client_afi == NULL) {
+		client_afi = &unspec_ip_info;
+	}
+
+	selector_buf csb;
+	ldbg(p1st->logger,
+	     "%s() client: %s; port wildcard: %s; virtual: %s; addresspool %s; current remote: %s",
+	     __func__,
+	     bool_str(c->remote->child.has_client),
+	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
+	     bool_str(is_virtual_remote(c)),
+	     bool_str(c->remote->child.lease[client_afi->ip_index].is_set),
+	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
 
 	/* fill in the client's true port */
 	if (c->remote->config->child.protoport.has_port_wildcard) {
