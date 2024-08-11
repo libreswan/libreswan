@@ -854,7 +854,22 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	ip_selector remote_client;
 
 	/*
-	 * [ IDci, IDcr ] in
+	 * 5.5 Phase 2 - Quick Mode
+	 *
+	 * The identities of the SAs negotiated in Quick Mode are
+	 * implicitly assumed to be the IP addresses of the ISAKMP
+	 * peers, without any implied constraints on the protocol or
+	 * port numbers allowed, unless client identifiers are
+	 * specified in Quick Mode.  If ISAKMP is acting as a client
+	 * negotiator on behalf of another party, the identities of
+	 * the parties MUST be passed as IDci and then IDcr.  Local
+	 * policy will dictate whether the proposals are acceptable
+	 * for the identities specified.  If the client identities are
+	 * not acceptable to the Quick Mode responder (due to policy
+	 * or other reasons), a Notify payload with Notify Message
+	 * Type INVALID-ID-INFORMATION (18) SHOULD be sent.
+	 *
+	 * Hence parse [ IDci, IDcr ] in
 	 *
 	 * We do this now (probably out of physical order) because we
 	 * wish to select the correct connection before we consult it
@@ -936,7 +951,9 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			}
 		}
 	} else {
-		/* implicit IDci and IDcr: peer and self */
+		/*
+		 * Implicit IDci and IDcr: peer and self.
+		 */
 		if (address_type(&c->local->host.addr) != address_type(&c->remote->host.addr))
 			return STF_FAIL_v1N;
 
