@@ -879,6 +879,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	struct payload_digest *const IDci = md->chain[ISAKMP_NEXT_ID];
 	if (IDci != NULL) {
 		struct payload_digest *IDcr = IDci->next;
+		PASSERT(p1st->logger, IDcr != NULL); /* checked in ikev1.c */
 
 		/* ??? we are assuming IPSEC_DOI */
 
