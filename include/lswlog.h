@@ -321,9 +321,13 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
 
 /* LDBG_JAMBUF() is ambiguous - LDBG_op() or ldbg() ucase? */
+
 #define LDBGP_JAMBUF(COND, LOGGER, BUF)					\
 	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
+#define PDBGP_JAMBUF(COND, LOGGER, BUF)					\
+	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, LOGGER, BUF)
 
 
 /* DBG_*() are unconditional */
