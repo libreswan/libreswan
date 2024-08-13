@@ -1410,6 +1410,54 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		}
 	}
 
+	/*
+	 * Assume initial contact when the peer needs, but doesn't yet
+	 * have, a lease.  This assumes that there will be no further
+	 * connection switches. The main-mode and Quick exchanges that
+	 * follow also use this connection.  If that isn't the case,
+	 * oops!
+	 *
+	 * For instance:
+	 *
+	 * + a road-warrior (instance) connection is established;
+	 *   during this a lease is assigned using mode-config
+	 *
+	 * + the road-warrior goes to sleep; since it no longer
+	 *   responds to DPD this end tears down the connection
+	 *   throwing away the instance and lease
+	 *
+	 * + the road-warrior wakes up; it initiates a new ISAKMP SA
+	 *   so that, presumably, it can reauth/rekey the connection;
+	 *   Since the exchange has no INITIAL_CONTACT the peer
+	 *   assumes its lease is still valid and mode-config can be
+	 *   skipped
+	 *
+	 * As a result this end never assigns a lease.  This leaves
+	 * the SPD uninitialized (well 0/0).  In v4 the SPD was left
+	 * containing the equally bogus HOST address!
+	 *
+	 * This end rebooting will have a similar effect.
+	 *
+	 * Hence, in an attempt to prod the peer into asking for a new
+	 * lease using a mode-config exchange, send INITIAL_CONTACT.
+	 *
+	 * XXX: IKEv1 only implements IPv4 leases.
+	 */
+	if (!c->config->send_initial_contact) {
+		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; initial-contact=false");
+	} else if (!c->local->config->host.modecfg.server) {
+		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; local is not a modecfg server");
+	} else if (c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len == 0) {
+		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote has no IPv4 addresspool range");
+	} else if (c->remote->child.lease[IPv4_INDEX].is_set) {
+		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote already has a lease");
+	} else {
+		pdbg(ike->sa.logger, "responder is sending IPSEC_INITIAL_CONTACT; remote initiator needs to ask for a lease");
+		if (!emit_v1N_IPSEC_INITIAL_CONTACT(&rbody, ike)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	/* encrypt message, sans fixed part of header */
 
 	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
