@@ -101,6 +101,33 @@
 
 static bool emit_message_padding(struct pbs_out *pbs, const struct state *st);
 
+static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa *ike)
+{
+	struct isakmp_notification isan = {
+		.isan_doi = ISAKMP_DOI_IPSEC,
+		.isan_protoid = PROTO_ISAKMP,
+		.isan_spisize = COOKIE_SIZE * 2,
+		.isan_type = v1N_IPSEC_INITIAL_CONTACT,
+	};
+
+	struct pbs_out notify_pbs;
+	if (!pbs_out_struct(rbody, &isakmp_notification_desc,
+			    &isan, sizeof(notify_pbs), &notify_pbs)) {
+		return false;
+	}
+
+	if (!pbs_out_raw(&notify_pbs, ike->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE,
+			 "notify icookie") ||
+	    !pbs_out_raw(&notify_pbs, ike->sa.st_ike_spis.responder.bytes, COOKIE_SIZE,
+			 "notify rcookie")) {
+		return false;
+	}
+
+	/* zero length data payload */
+	close_output_pbs(&notify_pbs);
+	return true;
+}
+
 /*
  * Initiate an Oakley Main Mode exchange.
  * --> HDR;SA
@@ -1054,26 +1081,6 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	dbg(" I am %ssending a certificate request",
 	    send_cr ? "" : "not ");
 
-	/*
-	 * Determine if we need to send INITIAL_CONTACT payload
-	 *
-	 * We are INITIATOR in I2, this is not a Quick Mode rekey, so if
-	 * there is a phase2 that we have for which the phase1 expired, this
-	 * state has no way of finding out, so this would mean adding
-	 * the payload, which would destroy the remote phase2, and cause
-	 * downtime until we establish the new phase2. It is better not to
-	 * send this payload, which is why the per-connection keyword default
-	 * for initial_contact is 'no'. But some interop with Cisco requires
-	 * this.
-	 *
-	 * In Quick Mode, we need to do a little more work, but that's in
-	 * ikev1_quick.c
-	 *
-	 */
-	bool initial_contact = c->config->send_initial_contact;
-	dbg("I will %ssend an initial contact payload",
-	    initial_contact ? "" : "NOT ");
-
 	/* done parsing; initialize crypto */
 
 	ikev1_natd_init(&ike->sa, md);
@@ -1188,30 +1195,29 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 		}
 	}
 
-	/* INITIAL_CONTACT */
-	if (initial_contact) {
-		struct pbs_out notify_pbs;
-		struct isakmp_notification isan = {
-			.isan_doi = ISAKMP_DOI_IPSEC,
-			.isan_protoid = PROTO_ISAKMP,
-			.isan_spisize = COOKIE_SIZE * 2,
-			.isan_type = v1N_IPSEC_INITIAL_CONTACT,
-		};
-
+	/*
+	 * Mindlessly send INITIAL_CONTACT when enabled.  Old comment
+	 * follows:
+	 *
+	 * We are INITIATOR in I2, this is not a Quick Mode rekey, so
+	 * if there is a phase2 that we have for which the phase1
+	 * expired, this state has no way of finding out, so this
+	 * would mean adding the payload, which would destroy the
+	 * remote phase2, and cause downtime until we establish the
+	 * new phase2. It is better not to send this payload, which is
+	 * why the per-connection keyword default for initial_contact
+	 * is 'no'.  But some interop with Cisco requires this.
+	 *
+	 * In Quick Mode, we need to do a little more work, but that's
+	 * in ikev1_quick.c
+	 */
+	if (c->config->send_initial_contact) {
 		llog(RC_LOG, ike->sa.logger, "sending INITIAL_CONTACT");
-
-		if (!out_struct(&isan, &isakmp_notification_desc, rbody,
-					&notify_pbs) ||
-		    !out_raw(ike->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE, &notify_pbs,
-				"notify icookie") ||
-		    !out_raw(ike->sa.st_ike_spis.responder.bytes, COOKIE_SIZE, &notify_pbs,
-				"notify rcookie"))
+		if (!emit_v1N_IPSEC_INITIAL_CONTACT(rbody, ike)) {
 			return STF_INTERNAL_ERROR;
-
-		/* zero length data payload */
-		close_output_pbs(&notify_pbs);
+		}
 	} else {
-		dbg("Not sending INITIAL_CONTACT");
+		pdbg(ike->sa.logger, "Not sending INITIAL_CONTACT");
 	}
 
 	/* encrypt message, except for fixed part of header */
