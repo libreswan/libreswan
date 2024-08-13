@@ -2328,8 +2328,6 @@ void doi_log_cert_thinking(uint16_t auth,
  * The use of uniqueIDs is mostly historic and might be removed
  * in a future version. It is ignored for PSK based connections,
  * which only act based on being a "server using PSK".
- *
- * IKEv1 code does not send or process INITIAL_CONTACT.
  */
 
 void ISAKMP_SA_established(struct ike_sa *ike)
