@@ -1117,6 +1117,28 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	passert((p1st->st_policy & POLICY_PFS) == 0 ||
 		p1st->st_pfs_group != NULL);
 
+	/*
+	 * Some sanity checks - confirm above configured connection.
+	 *
+	 * XXX: IKEv1 only does IPv4 address pool.
+	 */
+
+	if (c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0 &&
+	    !c->remote->child.lease[IPv4_INDEX].is_set) {
+		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection requires but has not been assigned a lease");
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+	}
+
+	if (!c->spd->remote->client.is_set) {
+		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection has no remote client selector");
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+	}
+
+	if (!c->spd->local->client.is_set) {
+		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection has no remote client selector");
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+	}
+
 	/* now that we are sure of our connection, create our new state, and
 	 * do any asynchronous cryptographic operations that we may need to
 	 * make it all work.
