@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec certutil -D -n road
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec add east
+"east": added IKEv2 connection
+east #
+ ../../guestbin/wait-for-pluto.sh --match '10 second timeout exceeded'
+"east"[1] 192.1.2.254 #1: ESTABLISHED_IKE_SA: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+east #
+ ../../guestbin/wait-for-pluto.sh --match 'ESP traffic information'
+"east"[1] 192.1.2.254 #2: ESP traffic information: in=84B out=84B
+east #
+ 

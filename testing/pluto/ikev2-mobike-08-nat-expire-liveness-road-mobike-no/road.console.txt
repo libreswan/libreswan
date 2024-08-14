@@ -23,6 +23,24 @@ road #
 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
 "road"[1] 192.1.2.23 #2: up-client output: updating resolvconf
-"road"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=active}
+road #
+ ../../guestbin/ping-once.sh --up -I 100.64.0.1 192.0.2.254
+up
+road #
+ ipsec trafficstatus
+#2: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east.testing.libreswan.org', lease=100.64.0.1/32
+road #
+ ../../guestbin/wait-for-pluto.sh --match '10 second timeout exceeded'
+"road"[1] 192.1.2.23 #1: ESTABLISHED_IKE_SA: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+road #
+ ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
+"road"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [100.64.0.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=active}
+road #
+ ../../guestbin/ping-once.sh --up -I 100.64.0.1 192.0.2.254
+up
+road #
+ ipsec trafficstatus
+#4: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east.testing.libreswan.org', lease=100.64.0.1/32
 road #
  

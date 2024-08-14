@@ -1,0 +1,16 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec certutil -D -n road
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec add east
+"east": added IKEv2 connection
+east #
+ 

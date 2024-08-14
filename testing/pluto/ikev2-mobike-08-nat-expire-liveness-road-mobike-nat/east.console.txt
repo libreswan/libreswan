@@ -10,7 +10,8 @@ east #
 east #
  ipsec whack --impair suppress_retransmits
 east #
- ipsec add road-any
-"road-any": added IKEv2 connection
+ ipsec add east
+ipsec addconn: /etc/ipsec.conf:20: warning: invalid, keyword ignored: mobike=nat
+"east": added IKEv2 connection
 east #
  

@@ -1,4 +1,10 @@
-iptables -F
+iptables --flush
+nic #
+ iptables --table nat --flush
+nic #
+ iptables --delete-chain
+nic #
+ iptables --table nat --delete-chain
 nic #
  # NAT to NIC's address
 nic #
@@ -6,7 +12,12 @@ nic #
 nic #
  iptables -t nat -A POSTROUTING -s 192.1.3.0/24 -j SNAT --to-source 192.1.2.254
 nic #
- iptables -F
+ iptables --table nat --flush
+nic #
+ iptables --table nat --delete-chain
+nic #
+ conntrack --flush
+conntrack vA.B.C (conntrack-tools): connection tracking table has been emptied.
 nic #
  # NAT to NIC's address
 nic #

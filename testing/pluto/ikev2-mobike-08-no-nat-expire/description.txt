@@ -1,7 +1,0 @@
-IKEv2 connection with MOBIKE=no through a NAT that changes the MAP
-
-As a result of the MAP change, the responder will receive
-authenticated packets from the wrong endpoint.
-
-In NO mode the IKE SA responder rejects these packets.  Liveness then
-kicks in causing a new IKE SA to be established.

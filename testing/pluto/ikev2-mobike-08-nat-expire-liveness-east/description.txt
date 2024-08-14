@@ -1,0 +1,12 @@
+IKEv2 connection through NAT that expires; liveness=EAST
+
+To simulate the expire, NIC changes its NAT mapping.
+
+mobike={yes,no,nat} should no effect on this test.
+
+EAST will send liveness requests to the expired PORT which NIC
+ignores.  Eventually this will timeout causing EAST to terminate the
+connection (no delete exchange).
+
+ROAD will be left hanging.
+mobike={yes,no,nat} should no effect on this test.

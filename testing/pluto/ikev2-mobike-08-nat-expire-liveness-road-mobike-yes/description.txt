@@ -1,0 +1,7 @@
+IKEv2 connection through NAT that expires; MOBIKE=yes liveness=ROAD
+
+To simulate the expire, NIC changes its NAT mapping.
+
+With MOBIKE=yes, EAST seeing a correctly protected liveness request
+from a wrong port will trigger MOBIKE.  MOBIKE will then update the
+IKE SA and Child SA on EAST to the new port.
