@@ -119,10 +119,6 @@ lset_t capture_child_rekey_policy(struct state *st)
 		policy |= POLICY_TUNNEL;
 	}
 
-	if (st->st_pfs_group != NULL) {
-		policy |= POLICY_PFS;
-	}
-
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
 		policy |= POLICY_COMPRESS;
 	}

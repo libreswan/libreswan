@@ -273,7 +273,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_AUTHENTICATE),
 	P(POLICY_COMPRESS),
 	P(POLICY_TUNNEL),
-	P(POLICY_PFS),
 #undef P
 };
 

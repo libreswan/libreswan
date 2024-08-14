@@ -1555,9 +1555,6 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 
 	ISAKMP_SA_established(ike);
 
-	passert((ike->sa.st_policy & POLICY_PFS) == 0 ||
-		ike->sa.st_pfs_group != NULL);
-
 	/*
 	 * save last IV from phase 1 so it can be restored later so anything
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config

@@ -554,13 +554,7 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 
 	/* figure out PFS group, if any */
 
-	if (policy & POLICY_PFS ) {
-		/*
-		 * Old code called ike_alg_pfsgroup() and that first
-		 * checked child->sa.st_policy for POLICY_PFS.  It's assumed
-		 * the check was redundant.
-		 */
-		pexpect((child->sa.st_policy & POLICY_PFS));
+	if (child->sa.st_connection->config->child_sa.pfs) {
 		/*
 		 * See if pfs_group has been specified for this conn,
 		 * use that group.
@@ -589,7 +583,7 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			jam(buf, "defaults");
 		}
 		jam(buf, " pfsgroup=");
-		if ((policy & POLICY_PFS) != LEMPTY) {
+		if (child->sa.st_pfs_group != NULL) {
 			jam_string(buf, child->sa.st_pfs_group->common.fqn);
 		} else {
 			jam_string(buf, "no-pfs");
@@ -600,17 +594,10 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 	/* save for post crypto logging */
 	child->sa.st_v1_ipsec_pred = replacing;
 
-	if (policy & POLICY_PFS) {
-		submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
-				    child->sa.st_pfs_group,
-				    quick_outI1_continue,
-				    /*detach_whack*/false, HERE);
-	} else {
-		submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
-				    NULL /* no-nonce*/,
-				    quick_outI1_continue,
-				    /*detach_whack*/false, HERE);
-	}
+	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
+			    child->sa.st_pfs_group/*could-be-null*/,
+			    quick_outI1_continue,
+			    /*detach_whack*/false, HERE);
 	return child;
 }
 
@@ -1129,9 +1116,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		}
 	}
 
-	passert((p1st->st_policy & POLICY_PFS) == 0 ||
-		p1st->st_pfs_group != NULL);
-
 	/*
 	 * Some sanity checks - confirm above configured connection.
 	 *
@@ -1482,9 +1466,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	passert(st->st_pfs_group != &unset_group);
 
-	if ((st->st_policy & POLICY_PFS) && st->st_pfs_group == NULL) {
-		log_state(RC_LOG, st,
-			  "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
+	if (st->st_connection->config->child_sa.pfs && st->st_pfs_group == NULL) {
+		llog(RC_LOG, st->logger,
+		     "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */
 	}
 

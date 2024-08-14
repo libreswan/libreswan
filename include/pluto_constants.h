@@ -895,15 +895,13 @@ enum sa_policy_bits {
 	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
-	POLICY_PFS_IX,
-#define POLICY_IX_LAST	POLICY_PFS_IX
+#define POLICY_IX_LAST	POLICY_TUNNEL_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
 #define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
-#define POLICY_PFS	LELEM(POLICY_PFS_IX)
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang
