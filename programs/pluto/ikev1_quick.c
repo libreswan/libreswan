@@ -1012,6 +1012,21 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		pdbg(p1st->logger, "using existing connection; nothing better and current is virtual-private");
 	}
 
+	/*
+	 * The lookup can fail because the peer things it has a lease
+	 * but it actually expired and the connection was deleted.
+	 *
+	 * Would trying to reacquire the lease be reasonable here?
+	 *
+	 * XXX: IKEv1 only does IPv4.
+	 */
+	if (p == NULL &&
+	    c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0 &&
+	    !c->remote->child.lease[IPv4_INDEX].is_set) {
+		llog(RC_LOG, p1st->logger, "Quick Mode request rejected, connection requires but has not been assigned a lease; deleting ISAKMP");
+		return STF_FATAL;
+	}
+
 	if (p == NULL) {
 		LLOG_JAMBUF(RC_LOG, p1st->logger, buf) {
 			jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
@@ -1121,12 +1136,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 *
 	 * XXX: IKEv1 only does IPv4 address pool.
 	 */
-
-	if (c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0 &&
-	    !c->remote->child.lease[IPv4_INDEX].is_set) {
-		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection requires but has not been assigned a lease");
-		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
-	}
 
 	if (!c->spd->remote->client.is_set) {
 		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection has no remote client selector");
