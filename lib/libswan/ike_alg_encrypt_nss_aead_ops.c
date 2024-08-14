@@ -152,13 +152,6 @@ static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
 		chunk_t out_iv = hunk_slice(iv, salt.len, iv.len);
 		PASSERT(logger, out_iv.len == aead->random_iv.len);
 		hunk_cpy(wire_iv, out_iv);
-		/*
-		 */
-		if (aead->count == 0) {
-			PASSERT(logger, hunk_eq(out_iv, aead->random_iv));
-		} else {
-			PASSERT(logger, !hunk_eq(out_iv, aead->random_iv));
-		}
 	}
 	aead->count++;
 

@@ -72,6 +72,7 @@ struct cipher_context {
 	enum cipher_iv_source iv_source;
 	chunk_t salt;
 	PK11SymKey *symkey;
+	chunk_t old_wire_iv;
 };
 
 struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
@@ -94,6 +95,7 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 	cipher_context->iv_source = iv_source;
 	cipher_context->symkey = symkey_addref(logger, __func__, symkey);
 	cipher_context->salt = clone_hunk(salt, __func__);
+	cipher_context->old_wire_iv = alloc_chunk(cipher->wire_iv_size, __func__);
 	if (cipher->encrypt_ops->cipher_op_context_create != NULL) {
 		cipher_context->op_context =
 			cipher->encrypt_ops->cipher_op_context_create(cipher, op, iv_source,
@@ -122,9 +124,27 @@ void cipher_context_destroy(struct cipher_context **cipher_context,
 
 	symkey_delref(logger, __func__, &(*cipher_context)->symkey);
 	free_chunk_content(&(*cipher_context)->salt);
+	free_chunk_content(&(*cipher_context)->old_wire_iv);
 
 	pfreeany(*cipher_context);
 	return;
+}
+
+static void verify_wire_iv(const struct cipher_context *cipher_context,
+			   chunk_t new_wire_iv,
+			   struct logger *logger)
+{
+	if (cipher_context->iv_source == FILL_WIRE_IV) {
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "update %p %s wire_iv ",
+			    cipher_context, cipher_context->cipher->common.fqn);
+			jam_hex_hunk(buf, cipher_context->old_wire_iv);
+			jam_string(buf, " -> ");
+			jam_hex_hunk(buf, new_wire_iv);
+		}
+		PASSERT(logger, !hunk_eq(new_wire_iv, cipher_context->old_wire_iv));
+		hunk_cpy(cipher_context->old_wire_iv, new_wire_iv);
+	}
 }
 
 bool cipher_context_op_aead(const struct cipher_context *cipher_context,
@@ -134,15 +154,19 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 			    size_t text_size, size_t tag_size,
 			    struct logger *logger)
 {
-	return cipher_context->cipher->encrypt_ops->cipher_op_aead(cipher_context->cipher,
-								   cipher_context->op_context,
-								   cipher_context->op,
-								   cipher_context->iv_source,
-								   cipher_context->symkey,
-								   HUNK_AS_SHUNK(cipher_context->salt),
-								   wire_iv, aad,
-								   text_and_tag, text_size, tag_size,
-								   logger);
+	if (!cipher_context->cipher->encrypt_ops->cipher_op_aead(cipher_context->cipher,
+								 cipher_context->op_context,
+								 cipher_context->op,
+								 cipher_context->iv_source,
+								 cipher_context->symkey,
+								 HUNK_AS_SHUNK(cipher_context->salt),
+								 wire_iv, aad,
+								 text_and_tag, text_size, tag_size,
+								 logger)) {
+		return false;
+	}
+	verify_wire_iv(cipher_context, wire_iv, logger);
+	return true;
 }
 
 void cipher_context_op_normal(const struct cipher_context *cipher_context,
@@ -160,4 +184,5 @@ void cipher_context_op_normal(const struct cipher_context *cipher_context,
 							      wire_iv, text,
 							      ikev1_iv,
 							      logger);
+	verify_wire_iv(cipher_context, wire_iv, logger);
 }
