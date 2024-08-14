@@ -774,8 +774,8 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		}
 	}
 
-	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	    !(st->st_policy & POLICY_TUNNEL) &&
+	if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 	    st->hidden_variables.st_nated_host) {
 		/** Send NAT-OA if our address is NATed */
 		if (!v1_nat_traversal_add_initiator_natoa(&rbody, st)) {
@@ -1002,13 +1002,27 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 */
 	struct connection *p = find_v1_client_connection(c, local_client, remote_client);
 
-	if (nat_traversal_detected(p1st) &&
-	    !(p1st->st_policy & POLICY_TUNNEL) &&
-	    p == NULL) {
+	/*
+	 * For instance: ikev1-l2tp-02 and ikev1-nat-transport-02.
+	 */
+	if (p == NULL &&
+	    c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+	    nat_traversal_detected(p1st)) {
 		p = c;
-		connection_buf cib;
-		dbg("using something (we hope the IP we or they are NAT'ed to) for transport mode connection "PRI_CONNECTION"",
-		    pri_connection(p, &cib));
+		pdbg(p1st->logger, "using existing connection; nothing better and current is NAT'ed and transport mode");
+	}
+
+	/*
+	 * For instance: nat-pluto-04.
+	 *
+	 * Note that, as demonstrated by nat-pluto-04, virtual-private
+	 * is not IFF transport-mode.
+	 */
+	if (p == NULL &&
+	    /* c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT && */
+	    is_virtual_remote(c)) {
+		p = c;
+		pdbg(p1st->logger, "using existing connection; nothing better and current is virtual-private");
 	}
 
 	if (p == NULL) {
@@ -1073,7 +1087,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	selector_buf csb;
 	ldbg(p1st->logger,
-	     "%s() client: %s; port wildcard: %s; virtual: %s; addresspool %s; current remote: %s",
+	     "%s() client: %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
@@ -1082,6 +1096,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
 
 	/* fill in the client's true port */
+
 	if (c->remote->config->child.protoport.has_port_wildcard) {
 		ip_selector selector =
 			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
@@ -1092,7 +1107,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	if (is_virtual_remote(c)) {
 
-		ldbg(c->logger, "virt: %s() spd %s/%s; config %s/%s",
+		pdbg(c->logger, "virtual-private: %s() spd %s/%s; config %s/%s",
 		     __func__,
 		     bool_str(c->spd->local->virt != NULL),
 		     bool_str(c->spd->remote->virt != NULL),
