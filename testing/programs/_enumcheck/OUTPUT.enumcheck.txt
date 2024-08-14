@@ -5983,7 +5983,7 @@ name for -1 present (should be absent)
          jam_enum_short 2: SA_LIFE_TYPE_KBYTES OK
          jam_enum_human 2: sa-life-type-kbytes OK
 
-  sa_policy_bit_names: [0..5)
+  sa_policy_bit_names: [0..4)
     0 -> POLICY_ENCRYPT
          jam_enum 0: POLICY_ENCRYPT OK
          search POLICY_ENCRYPT: OK
@@ -6016,14 +6016,6 @@ name for -1 present (should be absent)
          jam_enum_short 3: TUNNEL OK
          jam_enum_human 3: tunnel OK
          match TUNNEL [short]: OK
-    4 -> POLICY_PFS
-         jam_enum 4: POLICY_PFS OK
-         search POLICY_PFS: OK
-         match POLICY_PFS: OK
-         short_name 4: PFS OK
-         jam_enum_short 4: PFS OK
-         jam_enum_human 4: pfs OK
-         match PFS [short]: OK
 
   sa_role_names: [1..3)
     1 -> SA_INITIATOR
