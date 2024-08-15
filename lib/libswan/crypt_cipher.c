@@ -134,7 +134,8 @@ static void verify_wire_iv(const struct cipher_context *cipher_context,
 			   chunk_t new_wire_iv,
 			   struct logger *logger)
 {
-	if (cipher_context->iv_source == FILL_WIRE_IV) {
+	if (cipher_context->iv_source == FILL_WIRE_IV &&
+	    cipher_context->cipher->wire_iv_size > 0/*not-NULL*/) {
 		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 			jam(buf, "update %p %s wire_iv ",
 			    cipher_context, cipher_context->cipher->common.fqn);
