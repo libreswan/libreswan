@@ -30,9 +30,6 @@
 #include "ikev1_spdb.h"
 #include "instantiate.h"
 #include "orient.h"
-#include "host_pair.h"
-
-static match_host_pair_policy_fn match_v1_connection;
 
 struct host_pair_policy {
 	struct authby authby;
@@ -40,6 +37,19 @@ struct host_pair_policy {
 	bool aggressive;
 	const struct id *peer_id;
 };
+
+typedef bool match_host_pair_policy_fn(const struct connection *d,
+				       const struct host_pair_policy *context,
+				       struct logger *logger);
+
+static match_host_pair_policy_fn match_v1_connection;
+
+static struct connection *find_host_pair_connection_on_responder(const struct ike_info *ike_info,
+								 const ip_address local,
+								 const ip_address remote,
+								 match_host_pair_policy_fn *match_policy,
+								 const struct host_pair_policy *context,
+								 struct logger *logger);
 
 static bool match_v1_connection(const struct connection *c,
 				const struct host_pair_policy *hpc,
@@ -156,6 +166,59 @@ static bool match_v1_connection(const struct connection *c,
 	}
 
 	return true;
+}
+
+struct connection *find_host_pair_connection_on_responder(const struct ike_info *ike_info,
+							  const ip_address local_address,
+							  const ip_address remote_address,
+							  match_host_pair_policy_fn *match_connection_policy,
+							  const struct host_pair_policy *context,
+							  struct logger *logger)
+{
+	address_buf lb;
+	address_buf rb;
+	ldbg(logger, "%s() %s %s->%s", __func__,
+	     ike_info->version_name,
+	     str_address(&remote_address, &rb),
+	     str_address(&local_address, &lb));
+
+	struct connection *c = NULL;
+
+	struct connection_filter hpf = {
+		.host_pair = {
+			.local = &local_address,
+			.remote = &remote_address,
+		},
+		.ike_version = ike_info->version,
+		.search = {
+			.order = OLD2NEW,
+			.logger = logger,
+			.where = HERE,
+		},
+	};
+	while (next_connection(&hpf)) {
+		struct connection *d = hpf.c;
+
+		if (!match_connection_policy(d, context, logger)){
+			continue;
+		}
+
+		/*
+		 * This could be a shared ISAKMP SA connection, in
+		 * which case we prefer to find the connection that
+		 * has the ISAKMP SA.
+		 */
+		if (d->established_ike_sa != SOS_NOBODY) {
+			/* instant winner */
+			c = d;
+			break;
+		}
+		if (c == NULL) {
+			c = d;
+		}
+	}
+
+	return c;
 }
 
 /*

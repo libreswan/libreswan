@@ -258,7 +258,6 @@ OBJS += server_fork.o
 OBJS += server_pool.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
-OBJS += host_pair.o
 OBJS += ikev2_host_pair.o
 OBJS += ikev2_retransmit.o
 OBJS += ipsec_doi.o
