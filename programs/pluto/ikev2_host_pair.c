@@ -32,26 +32,9 @@
 #include "authby.h"
 #include "instantiate.h"
 
-struct host_pair_policy {
-	struct authby remote_authby;
-	bool *send_reject_response;
-};
-
-typedef bool match_host_pair_policy_fn(const struct connection *d,
-				       const struct host_pair_policy *context,
-				       struct logger *logger);
-
-static match_host_pair_policy_fn match_v2_connection;
-
-static struct connection *find_host_pair_connection_on_responder(const struct ike_info *ike_info,
-								 const ip_address local,
-								 const ip_address remote,
-								 match_host_pair_policy_fn *match_policy,
-								 const struct host_pair_policy *context,
-								 struct logger *logger);
-
 static bool match_v2_connection(const struct connection *c,
-				const struct host_pair_policy *hpp,
+				const struct authby remote_authby,
+				bool *send_reject_response,
 				struct logger *logger)
 {
 	PEXPECT(logger, c->config->ike_version == IKEv2);
@@ -68,13 +51,13 @@ static bool match_v2_connection(const struct connection *c,
 	/*
 	 * Require all the bits to match (there's actually only one).
 	 */
-	if (!authby_le(hpp->remote_authby, c->remote->host.config->authby)) {
+	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
 		connection_buf cb;
 		authby_buf ab, cab;
 		ldbg(logger, "  skipping "PRI_CONNECTION", %s missing required authby %s",
 		     pri_connection(c, &cb),
 		     str_authby(c->remote->host.config->authby, &cab),
-		     str_authby(hpp->remote_authby, &ab));
+		     str_authby(remote_authby, &ab));
 		return false;
 	}
 
@@ -97,8 +80,8 @@ static bool match_v2_connection(const struct connection *c,
 		if (shunt == SHUNT_PASS/*clear*/ ||
 		    shunt == SHUNT_REJECT/*block*/) {
 			if (is_group_instance(c)) {
-				pexpect(hpp->remote_authby.never);
-				*(hpp->send_reject_response) = false;
+				PEXPECT(logger, remote_authby.never);
+				(*send_reject_response) = false;
 			}
 		}
 		connection_buf cb;
@@ -110,68 +93,23 @@ static bool match_v2_connection(const struct connection *c,
 	return true;
 }
 
-struct connection *find_host_pair_connection_on_responder(const struct ike_info *ike_info,
-							  const ip_address local_address,
-							  const ip_address remote_address,
-							  match_host_pair_policy_fn *match_connection_policy,
-							  const struct host_pair_policy *context,
-							  struct logger *logger)
-{
-	address_buf lb;
-	address_buf rb;
-	ldbg(logger, "%s() %s %s->%s", __func__,
-	     ike_info->version_name,
-	     str_address(&remote_address, &rb),
-	     str_address(&local_address, &lb));
-
-	struct connection *c = NULL;
-
-	struct connection_filter hpf = {
-		.host_pair = {
-			.local = &local_address,
-			.remote = &remote_address,
-		},
-		.ike_version = ike_info->version,
-		.search = {
-			.order = OLD2NEW,
-			.logger = logger,
-			.where = HERE,
-		},
-	};
-	while (next_connection(&hpf)) {
-		struct connection *d = hpf.c;
-
-		if (!match_connection_policy(d, context, logger)){
-			continue;
-		}
-
-		/*
-		 * This could be a shared ISAKMP SA connection, in
-		 * which case we prefer to find the connection that
-		 * has the ISAKMP SA.
-		 */
-		if (d->established_ike_sa != SOS_NOBODY) {
-			/* instant winner */
-			c = d;
-			break;
-		}
-		if (c == NULL) {
-			c = d;
-		}
-	}
-
-	return c;
-}
-
 /*
+ * Find a connection matching exactly matching <local>-<remote>.
+ *
+ * This could be a permanent connection, a connection instance
+ * instantiated with <remote>, or a template needing to be
+ * instantiated.
+ *
+ * If the exact match is a block; SEND_REJECT_RESPONSE is cleared and
+ * the search is abandoned.  See above (yes, confusing).
+ *
  * This always returns a reference that needs to be released.
  */
 
-static struct connection *ikev2_find_host_connection(const struct msg_digest *md,
-						     struct authby remote_authby,
-						     bool *send_reject_response)
+static struct connection *find_v2_exact_peer_connection(const struct msg_digest *md,
+							struct authby remote_authby,
+							bool *send_reject_response)
 {
-	struct connection *c;
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 
@@ -187,51 +125,106 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	     str_address(&local_address, &lb),
 	     str_authby(remote_authby, &pb));
 
-	struct host_pair_policy host_pair_policy = {
-		.remote_authby = remote_authby,
-		.send_reject_response = send_reject_response,
+	struct connection *c = NULL;
+
+	struct connection_filter hpf = {
+		.host_pair = {
+			.local = &local_address,
+			.remote = &remote_address,
+		},
+		.ike_version = ikev2_info.version,
+		.search = {
+			.order = OLD2NEW,
+			.logger = md->logger,
+			.where = HERE,
+		},
 	};
 
-	/*
-	 * Pass #1: look for "static" or established connections which
-	 * match.
-	 */
+	while (next_connection(&hpf)) {
+		struct connection *d = hpf.c;
 
-	c = find_host_pair_connection_on_responder(&ikev2_info,
-						   local_address, remote_address,
-						   match_v2_connection,
-						   &host_pair_policy,
-						   md->logger);
-	if (c != NULL) {
+		if (!match_v2_connection(d, remote_authby, send_reject_response, md->logger)){
+			continue;
+		}
+
 		/*
-		 * We found a possibly non-wildcard connection.
+		 * This could be a shared ISAKMP SA connection, in
+		 * which case we prefer to find the connection that
+		 * has the ISAKMP SA.
 		 */
-		if (is_labeled_template(c)) {
-			ldbg(md->logger,
-			     "local endpoint is a labeled template - needs instantiation");
-			return labeled_template_instantiate(c, remote_address, HERE);
+		if (d->established_ike_sa != SOS_NOBODY) {
+			/* instant winner */
+			c = d;
+			break;
 		}
-
-		if (is_template(c) &&
-		    c->config->ikev2_allow_narrowing) {
-			ldbg(md->logger,
-			     "local endpoint has narrowing=yes - needs instantiation");
-			return rw_responder_instantiate(c, remote_address, HERE);
+		if (c == NULL) {
+			/* first is winner */
+			c = d;
 		}
-
-		connection_buf cb;
-		ldbg(md->logger, "winner is "PRI_CONNECTION,
-		     pri_connection(c, &cb));
-		return connection_addref(c, md->logger);
 	}
 
-	/*
-	 * A non-wild card connection rejected the packet, go with it.
-	 */
-	if (!(*send_reject_response)) {
-		dbg("  non-wildcard rejected packet");
+	if (c == NULL) {
+		endpoint_buf b;
+		enum_buf xb;
+		authby_buf pb;
+		ldbg(md->logger,
+		     "  no %s->%s connection has been authorized with policy %s for %s message, %s",
+		     str_endpoint(remote_endpoint, &b),
+		     str_endpoint(local_endpoint, &b),
+		     str_authby(remote_authby, &pb),
+		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}
+
+	/*
+	 * We found a possibly non-wildcard connection.
+	 */
+	if (is_labeled_template(c)) {
+		ldbg(md->logger,
+		     "local endpoint is a labeled template - needs instantiation");
+		return labeled_template_instantiate(c, remote_address, HERE);
+	}
+
+	if (is_template(c) &&
+	    c->config->ikev2_allow_narrowing) {
+		ldbg(md->logger,
+		     "local endpoint has narrowing=yes - needs instantiation");
+		return rw_responder_instantiate(c, remote_address, HERE);
+	}
+
+	connection_buf cb;
+	ldbg(md->logger, "winner is "PRI_CONNECTION,
+	     pri_connection(c, &cb));
+	return connection_addref(c, md->logger);
+
+}
+
+/*
+ * Find a connection matching <unset>-><local> (aka %any).
+ *
+ * (only template connections can have <unset>-><local>).
+ */
+
+static struct connection *find_v2_unset_peer_connection(const struct msg_digest *md,
+							struct authby remote_authby,
+							bool *send_reject_response)
+{
+	struct connection *c = NULL;
+	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
+	const ip_endpoint *remote_endpoint = &md->sender;
+
+	/* just the address */
+	ip_address local_address = endpoint_address(*local_endpoint);
+	ip_address remote_address = endpoint_address(*remote_endpoint);
+
+	address_buf lb;
+	address_buf rb;
+	authby_buf pb;
+	ldbg(md->logger, "%s() [%s]->%s remote_authby=%s", __func__,
+	     str_address(&remote_address, &rb),
+	     str_address(&local_address, &lb),
+	     str_authby(remote_authby, &pb));
 
 	/*
 	 * See if a wildcarded connection can be found.  We cannot
@@ -259,7 +252,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	while (next_connection(&hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
-		if (!match_v2_connection(d, &host_pair_policy, md->logger)) {
+		if (!match_v2_connection(d, remote_authby, send_reject_response, md->logger)) {
 			continue;
 		}
 
@@ -351,22 +344,22 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		connection_buf cb;
 		ldbg(md->logger, "  instantiate opportunistic winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		c = oppo_responder_instantiate(c, remote_address, HERE);
-	} else if (is_labeled_template(c)) {
+		return oppo_responder_instantiate(c, remote_address, HERE);
+	}
+
+	if (is_labeled_template(c)) {
 		/* regular roadwarrior */
 		connection_buf cb;
 		ldbg(md->logger, "  instantiate sec_label winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
-		c = labeled_template_instantiate(c, remote_address, HERE);
-	} else {
-		/* regular roadwarrior */
-		connection_buf cb;
-		ldbg(md->logger, "  instantiate roadwarrior winner "PRI_CONNECTION,
-		     pri_connection(c, &cb));
-		c = rw_responder_instantiate(c, remote_address, HERE);
+		return labeled_template_instantiate(c, remote_address, HERE);
 	}
 
-	return c;
+	/* regular roadwarrior */
+	connection_buf cb;
+	ldbg(md->logger, "  instantiate roadwarrior winner "PRI_CONNECTION,
+	     pri_connection(c, &cb));
+	return rw_responder_instantiate(c, remote_address, HERE);
 }
 
 struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
@@ -389,27 +382,47 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	struct connection *c = NULL;
 
 	/*
+	 * This searches the host-pairs REMOTE<->LOCAL and then
+	 * ANY->LOCAL for a match with the given PEER_AUTHBY.  This
+	 * means a "stronger" template will match before a "weaker"
+	 * static connection.
+	 *
+	 * When no connection matches, SEND_REJECTED_RESPONSE will
+	 * contain the value from the final AUTHBY=NEVER pass which
+	 * can include BLOCK and CLEAR.
+	 *
+	 * For instance, if an earlier search returns NULL and flags
+	 * SEND_REJECT_RESPONSE, that will be lost.
+	 *
 	 * XXX: this nested loop could do with a tune up.
 	 */
 	FOR_EACH_ELEMENT(remote_authby, remote_authbys) {
 		/*
-		 * This searches the host-pairs REMOTE<->LOCAL and
-		 * then ANY->LOCAL for a match with the given
-		 * PEER_AUTHBY.  This means a "stronger" template will
-		 * match before a "weaker" static connection.
-		 *
-		 * When no connection matches, SEND_REJECTED_RESPONSE
-		 * will contain the value from the final AUTHBY=NEVER
-		 * pass which can include BLOCK and CLEAR.
-		 *
-		 * For instance, if an earlier search returns NULL and
-		 * flags SEND_REJECT_RESPONSE, that will be lost.
+		 * Start by assuming that a response will be sent.
 		 */
 		*send_reject_response = true;
-		c = ikev2_find_host_connection(md, *remote_authby,
-					       send_reject_response);
-		if (c != NULL)
+
+		/*
+		 * Pass #1: look for "static" or established connections which
+		 * match.
+		 *
+		 * If send_reject_response was cleared; then a CLEAR
+		 * or BLOCK connection matched.
+		 */
+		c = find_v2_exact_peer_connection(md, *remote_authby, send_reject_response);
+		if (c != NULL) {
 			break;
+		}
+
+		if (!send_reject_response) {
+			dbg("  non-wildcard rejected packet");
+			continue;
+		}
+
+		c = find_v2_unset_peer_connection(md, *remote_authby, send_reject_response);
+		if (c != NULL) {
+			break;
+		}
 	}
 
 	if (c == NULL) {
