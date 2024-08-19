@@ -31,19 +31,20 @@
 #include "orient.h"		/* for oriented() */
 #include "authby.h"
 #include "instantiate.h"
+#include "verbose.h"
 
 static bool match_v2_connection(const struct connection *c,
 				const struct authby remote_authby,
 				bool *send_reject_response,
-				struct logger *logger)
+				struct verbose verbose)
 {
-	PEXPECT(logger, c->config->ike_version == IKEv2);
-	PEXPECT(logger, oriented(c)); /* searching oriented lists */
-	PEXPECT(logger, !is_group(c));
+	PEXPECT(verbose.logger, c->config->ike_version == IKEv2);
+	PEXPECT(verbose.logger, oriented(c)); /* searching oriented lists */
+	PEXPECT(verbose.logger, !is_group(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", ID_NULL instance",
+		vdbg("skipping "PRI_CONNECTION", ID_NULL instance",
 		     pri_connection(c, &cb));
 		return false;
 	}
@@ -54,7 +55,7 @@ static bool match_v2_connection(const struct connection *c,
 	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
 		connection_buf cb;
 		authby_buf ab, cab;
-		ldbg(logger, "  skipping "PRI_CONNECTION", %s missing required authby %s",
+		vdbg("skipping "PRI_CONNECTION", %s missing required authby %s",
 		     pri_connection(c, &cb),
 		     str_authby(c->remote->host.config->authby, &cab),
 		     str_authby(remote_authby, &ab));
@@ -80,12 +81,12 @@ static bool match_v2_connection(const struct connection *c,
 		if (shunt == SHUNT_PASS/*clear*/ ||
 		    shunt == SHUNT_REJECT/*block*/) {
 			if (is_group_instance(c)) {
-				PEXPECT(logger, remote_authby.never);
+				PEXPECT(verbose.logger, remote_authby.never);
 				(*send_reject_response) = false;
 			}
 		}
 		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", never negotiate",
+		vdbg("skipping "PRI_CONNECTION", never negotiate",
 		     pri_connection(c, &cb));
 		return false;
 	}
@@ -108,7 +109,8 @@ static bool match_v2_connection(const struct connection *c,
 
 static struct connection *find_v2_exact_peer_connection(const struct msg_digest *md,
 							struct authby remote_authby,
-							bool *send_reject_response)
+							bool *send_reject_response,
+							struct verbose verbose)
 {
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
@@ -120,10 +122,11 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 	address_buf lb;
 	address_buf rb;
 	authby_buf pb;
-	ldbg(md->logger, "%s() %s->%s remote_authby=%s", __func__,
-	     str_address(&remote_address, &rb),
+	vdbg("searching for exact peer matching inbound %s<-%s remote_authby=%s",
 	     str_address(&local_address, &lb),
+	     str_address(&remote_address, &rb),
 	     str_authby(remote_authby, &pb));
+	verbose.level++;
 
 	struct connection *c = NULL;
 
@@ -143,7 +146,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 
-		if (!match_v2_connection(d, remote_authby, send_reject_response, md->logger)){
+		if (!match_v2_connection(d, remote_authby, send_reject_response, verbose)){
 			continue;
 		}
 
@@ -167,10 +170,9 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 		endpoint_buf b;
 		enum_buf xb;
 		authby_buf pb;
-		ldbg(md->logger,
-		     "  no %s->%s connection has been authorized with policy %s for %s message, %s",
-		     str_endpoint(remote_endpoint, &b),
+		vdbg("no exact peer connection matching inbound %s<-%s with policy %s for %s message, %s",
 		     str_endpoint(local_endpoint, &b),
+		     str_endpoint(remote_endpoint, &b),
 		     str_authby(remote_authby, &pb),
 		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
@@ -181,21 +183,18 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 	 * We found a possibly non-wildcard connection.
 	 */
 	if (is_labeled_template(c)) {
-		ldbg(md->logger,
-		     "local endpoint is a labeled template - needs instantiation");
+		vdbg("local endpoint is a labeled template - needs instantiation");
 		return labeled_template_instantiate(c, remote_address, HERE);
 	}
 
 	if (is_template(c) &&
 	    c->config->ikev2_allow_narrowing) {
-		ldbg(md->logger,
-		     "local endpoint has narrowing=yes - needs instantiation");
+		vdbg("local endpoint has narrowing=yes - needs instantiation");
 		return rw_responder_instantiate(c, remote_address, HERE);
 	}
 
 	connection_buf cb;
-	ldbg(md->logger, "winner is "PRI_CONNECTION,
-	     pri_connection(c, &cb));
+	vdbg("winner is "PRI_CONNECTION, pri_connection(c, &cb));
 	return connection_addref(c, md->logger);
 
 }
@@ -208,7 +207,8 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 
 static struct connection *find_v2_unset_peer_connection(const struct msg_digest *md,
 							struct authby remote_authby,
-							bool *send_reject_response)
+							bool *send_reject_response,
+							struct verbose verbose)
 {
 	struct connection *c = NULL;
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
@@ -221,10 +221,11 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	address_buf lb;
 	address_buf rb;
 	authby_buf pb;
-	ldbg(md->logger, "%s() [%s]->%s remote_authby=%s", __func__,
-	     str_address(&remote_address, &rb),
+	vdbg("searching for unset peer matching inbound %s<-[%s] remote_authby=%s",
 	     str_address(&local_address, &lb),
+	     str_address(&remote_address, &rb),
 	     str_authby(remote_authby, &pb));
+	verbose.level++;
 
 	/*
 	 * See if a wildcarded connection can be found.  We cannot
@@ -252,7 +253,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	while (next_connection(&hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
-		if (!match_v2_connection(d, remote_authby, send_reject_response, md->logger)) {
+		if (!match_v2_connection(d, remote_authby, send_reject_response, verbose)) {
 			continue;
 		}
 
@@ -265,8 +266,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 */
 		if (!is_opportunistic(d)) {
 			connection_buf cb;
-			ldbg(md->logger,
-			     "  instant winner with non-opportunistic template "PRI_CONNECTION,
+			vdbg("instant winner with non-opportunistic template "PRI_CONNECTION,
 			     pri_connection(d, &cb));
 			c = d;
 			break;
@@ -293,10 +293,10 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 			address_buf ab;
 			selector_buf sb;
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION", as %s is-not in range %s",
-			    pri_connection(d, &cb),
-			    str_address(&remote_address, &ab),
-			    str_selector(&d->spd->remote->client, &sb));
+			vdbg("skipping "PRI_CONNECTION", as %s is-not in range %s",
+			     pri_connection(d, &cb),
+			     str_address(&remote_address, &ab),
+			     str_selector(&d->spd->remote->client, &sb));
 			continue;
 		}
 
@@ -305,19 +305,19 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 						     d->spd->remote->client)) {
 			selector_buf s1, s2;
 			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION", as best range of %s is narrower than %s",
-			    pri_connection(d, &cb),
-			    str_selector(&c->spd->remote->client, &s1),
-			    str_selector(&d->spd->remote->client, &s2));
+			vdbg("skipping "PRI_CONNECTION", as best range of %s is narrower than %s",
+			     pri_connection(d, &cb),
+			     str_selector(&c->spd->remote->client, &s1),
+			     str_selector(&d->spd->remote->client, &s2));
 			continue;
 		}
 
 		selector_buf s1, s2;
 		connection_buf dc;
-		dbg("  saving "PRI_CONNECTION", opportunistic %s range better than %s",
-		    pri_connection(d, &dc),
-		    str_selector(&d->spd->remote->client, &s1),
-		    c == NULL ? "n/a" : str_selector(&c->spd->remote->client, &s2));
+		vdbg("saving "PRI_CONNECTION", opportunistic %s range better than %s",
+		     pri_connection(d, &dc),
+		     str_selector(&d->spd->remote->client, &s1),
+		     c == NULL ? "n/a" : str_selector(&c->spd->remote->client, &s2));
 		c = d;
 		/* keep looking */
 	}
@@ -326,11 +326,11 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		endpoint_buf b;
 		authby_buf pb;
 		enum_buf xb;
-		ldbg(md->logger,
-		     "  %s message received on %s but no connection has been authorized with policy %s, %s",
-		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		vdbg("no unset peer connection matching inbound %s<-[%s] with policy %s for %s message, %s",
 		     str_endpoint(local_endpoint, &b),
+		     str_endpoint(remote_endpoint, &b),
 		     str_authby(remote_authby, &pb),
+		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}
@@ -342,29 +342,37 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 
 	if (is_opportunistic(c)) {
 		connection_buf cb;
-		ldbg(md->logger, "  instantiate opportunistic winner "PRI_CONNECTION,
-		     pri_connection(c, &cb));
+		vdbg("instantiating opportunistic winner "PRI_CONNECTION, pri_connection(c, &cb));
 		return oppo_responder_instantiate(c, remote_address, HERE);
 	}
 
 	if (is_labeled_template(c)) {
 		/* regular roadwarrior */
 		connection_buf cb;
-		ldbg(md->logger, "  instantiate sec_label winner "PRI_CONNECTION,
-		     pri_connection(c, &cb));
+		vdbg("instantiating sec_label winner "PRI_CONNECTION, pri_connection(c, &cb));
 		return labeled_template_instantiate(c, remote_address, HERE);
 	}
 
 	/* regular roadwarrior */
 	connection_buf cb;
-	ldbg(md->logger, "  instantiate roadwarrior winner "PRI_CONNECTION,
-	     pri_connection(c, &cb));
+	vdbg("instantiating roadwarrior winner "PRI_CONNECTION, pri_connection(c, &cb));
 	return rw_responder_instantiate(c, remote_address, HERE);
 }
 
 struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 						bool *send_reject_response)
 {
+	struct verbose verbose = {
+		.logger = md->logger,
+	};
+
+	endpoint_buf lb;
+	endpoint_buf rb;
+	vdbg("searching for connection matching inbound %s<-%s",
+	     str_endpoint(&md->iface->local_endpoint, &lb),
+	     str_endpoint(&md->sender, &rb));
+	verbose.level = 1;
+
 	/*
 	 * How to authenticate (prove the identity of) the remote
 	 * peer; in order of decreasing preference.  NEVER matches
@@ -397,45 +405,55 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	 * XXX: this nested loop could do with a tune up.
 	 */
 	FOR_EACH_ELEMENT(remote_authby, remote_authbys) {
+		authby_buf ab;
+		vdbg("trying authby %s", str_authby(*remote_authby, &ab));
+		verbose.level = 2;
+
 		/*
 		 * Start by assuming that a response will be sent.
 		 */
 		*send_reject_response = true;
 
 		/*
-		 * Pass #1: look for "static" or established connections which
-		 * match.
+		 * Pass #1: look for "static" or established
+		 * connections which match.
 		 *
 		 * If send_reject_response was cleared; then a CLEAR
 		 * or BLOCK connection matched.
 		 */
-		c = find_v2_exact_peer_connection(md, *remote_authby, send_reject_response);
+
+		*send_reject_response = true;
+		c = find_v2_exact_peer_connection(md, *remote_authby,
+						  send_reject_response,
+						  verbose);
 		if (c != NULL) {
 			break;
 		}
 
 		if (!send_reject_response) {
-			dbg("  non-wildcard rejected packet");
+			vdbg("non-wildcard rejected packet");
 			continue;
 		}
 
-		c = find_v2_unset_peer_connection(md, *remote_authby, send_reject_response);
+		c = find_v2_unset_peer_connection(md, *remote_authby,
+						  send_reject_response,
+						  verbose);
 		if (c != NULL) {
 			break;
 		}
 	}
 
+	verbose.level = 1;
+
 	if (c == NULL) {
-		ldbg(md->logger,
-		     "  no connection found, %s",
+		vdbg("no connection found, %s",
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}
 
 	connection_buf ci;
 	authby_buf pb;
-	ldbg(md->logger,
-	     "found connection: "PRI_CONNECTION" with remote authby %s",
+	vdbg("found connection: "PRI_CONNECTION" with remote authby %s",
 	     pri_connection(c, &ci),
 	     str_authby(c->remote->host.config->authby, &pb));
 
