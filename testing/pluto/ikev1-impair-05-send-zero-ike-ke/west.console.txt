@@ -8,6 +8,8 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk": added IKEv1 connection
 west #
+ ipsec whack --impair revival
+west #
  echo "initdone"
 initdone
 west #
@@ -25,6 +27,7 @@ west #
 "westnet-eastnet-ipv4-psk" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk" #1: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -36,19 +39,17 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-"westnet-eastnet-ipv4-psk": terminating SAs using this connection
-"westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 "westnet-eastnet-ipv4-psk": added IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk
-"westnet-eastnet-ipv4-psk" #3: initiating IKEv1 Main Mode connection
-"westnet-eastnet-ipv4-psk" #3: sent Main Mode request
-"westnet-eastnet-ipv4-psk" #3: sent Main Mode I2
-"westnet-eastnet-ipv4-psk" #3: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-"westnet-eastnet-ipv4-psk" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk" #3: IMPAIR: revival: skip scheduling revival event
-"westnet-eastnet-ipv4-psk" #3: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
+"westnet-eastnet-ipv4-psk" #2: initiating IKEv1 Main Mode connection
+"westnet-eastnet-ipv4-psk" #2: sent Main Mode request
+"westnet-eastnet-ipv4-psk" #2: sent Main Mode I2
+"westnet-eastnet-ipv4-psk" #2: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
+"westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk" #2: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  echo done
 done
@@ -59,7 +60,7 @@ west #
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+"westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #
