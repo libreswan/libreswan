@@ -6,17 +6,21 @@ s/used [0-9]*s ago/used XXs ago/g
 s/RSA Key Aw[^ ]* /RSA Key AwXXXXXXX /g
 s/ECDSA Key [^ ]* /ECDSA Key BXXXXXXXX /g
 
-# Try not to sanitize esp.0@ et.al.
+# Try not to sanitize {esp,ah,comp}.0@
+# For some reason IPv6 uses ':' and not '.'
+# why the bonus i?
 
-s/esp\.[a-z1-9]@/esp.ESPSPIi@/g
-s/ah\.[a-z1-9]@/ah.AHSPIi@/g
-s/comp\.[a-z1-9]@/comp.COMPSPIi@/g
+s/esp\([.:]\)[a-z1-9]@/esp\1ESPSPIi@/g
+s/ah\([.:]\)[a-z1-9]@/ah\1AHSPIi@/g
+s/comp\([.:]\)[a-z1-9]@/comp\1COMPSPIi@/g
+
+s/esp\([.:]\)[a-z0-9]\{2,8\}@/esp\1ESPSPIi@/g
+s/ah\([.:]\)[a-z0-9]\{2,8\}@/ah\1AHSPIi@/g
+s/comp\([.:]\)[a-z0-9]\{2,8\}@/comp\1COMPSPIi@/g
+
+#
 
 s/ SPI [a-z0-9][a-z0-9]* / SPI SPISPI /
-
-s/esp\.[a-z0-9]\{2,8\}@/esp.ESPSPIi@/g
-s/ah\.[a-z0-9]\{2,8\}@/ah.AHSPIi@/g
-s/comp\.[a-z0-9]\{2,8\}@/comp.COMPSPIi@/g
 
 # don't change seq number "0" entries
 s/seq in:[1-9][0-9]* out:[0-9]*/seq in:XXXXX out:YYYYY/g
