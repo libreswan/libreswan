@@ -93,14 +93,15 @@ static struct crypt_prf *wrap(const struct prf_desc *prf_desc,
 
 struct crypt_prf *crypt_prf_init_bytes(const char *name,
 				       const struct prf_desc *prf_desc,
-				       const char *key_name, const void *key, size_t key_size,
+				       const char *key_name,
+				       const void *key, size_t key_size,
 				       struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s init %s-chunk@%p (length %zd)",
-			name, prf_desc->common.fqn,
-			key_name, key, key_size);
-		DBG_dump(NULL, key, key_size);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s PRF %s init %s hunk %p (length %zd)",
+			 name, prf_desc->common.fqn,
+			 key_name, key, key_size);
+		LDBG_dump(logger, key, key_size);
 	}
 	return wrap(prf_desc, name, logger,
 		    prf_desc->prf_mac_ops->init_bytes(prf_desc, name,
