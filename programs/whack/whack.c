@@ -778,7 +778,6 @@ static const struct option long_opts[] = {
 	/* option for cert rotation */
 
 	{ "intermediate", optional_argument, NULL, CD_INTERMEDIATE },
-#define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX }
 	{ "encrypt", no_argument, NULL, CD_ENCRYPT },
 	{ "authenticate", no_argument, NULL, CD_AUTHENTICATE },
 	{ "compress", optional_argument, NULL, CD_COMPRESS },
@@ -910,9 +909,6 @@ static const struct option long_opts[] = {
 	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 }, /* obsolete, map onto allow */
 
 	{ "allow-narrowing", no_argument, NULL, CD_IKEV2_ALLOW_NARROWING, },
-#ifdef AUTH_HAVE_PAM
-	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
-#endif
 	{ "ikefrag-allow", no_argument, NULL, CD_IKEFRAG_ALLOW }, /* obsolete name */
 	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
 	{ "fragmentation", required_argument, NULL, CD_FRAGMENTATION },
@@ -925,7 +921,6 @@ static const struct option long_opts[] = {
 	{ "encap-dscp", optional_argument, NULL, CD_ENCAP_DSCP },
 	{ "nopmtudisc", optional_argument, NULL, CD_NOPMTUDISC },
 	{ "ignore-peer-dns", optional_argument, NULL, CD_IGNORE_PEER_DNS },
-#undef PS
 
 	{ "tcp", required_argument, NULL, CD_IKE_TCP },
 	{ "tcp-remote-port", required_argument, NULL, CD_IKE_TCP_REMOTE_PORT },
