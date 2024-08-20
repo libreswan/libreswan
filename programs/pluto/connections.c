@@ -2347,7 +2347,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
 	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id, /*default*/false,wm, c->logger);
-	config->ikev2_pam_authorize = extract_yn("", "ikev2-pam-authorize", wm->pam_authorize, /*default*/false,wm, c->logger);
+	/* IKEv2 only; IKEv1 uses xauth=pam */
+	config->ikev2_pam_authorize = extract_yn("", "pam-authorize", wm->pam_authorize, /*default*/false, wm, c->logger);
 	config->ikepad = extract_yn("", "ikepad", wm->ikepad, /*default*/true,wm, c->logger);
 	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
 						       /*default*/true/*YES-TRUE*/,wm, c->logger);
