@@ -106,7 +106,7 @@ ERROR: "westnet6-eastnet6" #9: device ipsec1 exists but do not match expected ty
 "westnet6-eastnet6" #8: IKE SA established but initiator rejected Child SA response
 "westnet6-eastnet6" #9: sent INFORMATIONAL request to delete larval Child SA using IKE SA #8
 "westnet6-eastnet6" #9: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-ERROR: "westnet6-eastnet6" #9: netlink response for Del SA esp:505dc698@2001:db8:1:2::23: No such process (errno 3)
+ERROR: "westnet6-eastnet6" #9: netlink response for Del SA esp:ESPSPIi@2001:db8:1:2::23: No such process (errno 3)
 west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
