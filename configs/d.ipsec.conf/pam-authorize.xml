@@ -4,15 +4,16 @@
   </term>
   <listitem>
     <para>
-      IKEv1 supports PAM authorization via XAUTH using
-      <option>xauthby=pam</option>. IKEv2 does not support receiving a
-      plaintext username and password. Libreswan does not yet support
-      EAP authentication methods for IKE. The pam-authorize=yes option
-      performs an authorization call via PAM, but only includes the
-      remote ID (not username or password). This allows for backends
-      to disallow an ID based on non-password situations, such as
-      "user disabled" or "user over quota".  See also
-      <option>xauthby=pam</option>
+      IKEv2 does not support receiving a plaintext username and
+      password.  Libreswan does not yet support EAP authentication
+      methods for IKE.  The pam-authorize=yes option performs an
+      authorization call via PAM, but only includes the remote ID (not
+      username or password). This allows for backends to disallow an
+      ID based on non-password situations, such as "user disabled" or
+      "user over quota".
+    </para>
+    <para>
+      See also the IKEv1 option <option>xauthby=pam</option>
     </para>
   </listitem>
 </varlistentry>
