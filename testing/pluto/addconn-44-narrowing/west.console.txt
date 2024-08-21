@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add addconn-narrowing=
+"addconn-narrowing=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-narrowing=no
+"addconn-narrowing=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn-narrowing=yes
+"addconn-narrowing=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec whack --name whack--narrowing=     --narrowing     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+whack error: "whack--narrowing=" unrecognized --narrowing '--encrypt', valid arguments are: yes, no
+west #
+ ipsec whack --name whack--narrowing=no   --narrowing no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+"whack--narrowing=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec whack --name whack--narrowing=yes  --narrowing yes --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+"whack--narrowing=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec whack --name whack--allow-narrowing  --allow-narrowing --encrypt --host 1.2.3.4 --to --host 5.6.7.8
+"whack--allow-narrowing": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*ALLOW_NARROWING.*/\1 ALLOW_NARROWING/p'
+"addconn-narrowing=yes":   policy: ALLOW_NARROWING
+"whack--allow-narrowing":   policy: ALLOW_NARROWING
+"whack--narrowing=yes":   policy: ALLOW_NARROWING
+west #
+ 

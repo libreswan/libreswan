@@ -1,7 +1,15 @@
 /testing/guestbin/swan-prep
 west #
- # this is enough to load the config file
+ ipsec start
+Redirecting to: [initsystem]
 west #
- ipsec pluto --debug all --stderrlog --selftest --leak-detective --config /etc/ipsec.conf > /tmp/pluto.log 2>&1
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add ignore
+ipsec addconn: /etc/ipsec.conf:2: warning: X- style comment ignored: x-something=...
+ipsec addconn: /etc/ipsec.conf:3: warning: X- style comment ignored: X_something= ...
+ipsec addconn: /etc/ipsec.conf:6: warning: X- style comment ignored: X-something=...
+ipsec addconn: /etc/ipsec.conf:7: warning: X- style comment ignored: x_something= ...
+Failed to load connection left= is not set
 west #
  
