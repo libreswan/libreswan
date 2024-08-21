@@ -1930,8 +1930,8 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, wm->sec_label);
 		return CK_LABELED_TEMPLATE;
 	}
-	if(wm->ikev2_allow_narrowing == YN_YES) {
-		ldbg(logger, "%s connection is CK_TEMPLATE: POLICY_IKEV2_ALLOW_NARROWING",
+	if(wm->narrowing == YN_YES) {
+		ldbg(logger, "%s connection is CK_TEMPLATE: narrowing=yes",
 		     this->leftright);
 		return CK_TEMPLATE;
 	}
@@ -2569,7 +2569,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
 	config->ikev2_allow_narrowing =
-		extract_yn("", "ikev2-allow-narrowing", wm->ikev2_allow_narrowing,
+		extract_yn("", "narrowing", wm->narrowing,
 			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
 							 wm->right.addresspool != NULL)),
 			   wm, c->logger);

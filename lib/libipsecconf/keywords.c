@@ -443,7 +443,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nopmtudisc",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_NOPMTUDISC, &yn_option_names, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_FRAGMENTATION, &ynf_option_names, NULL, },
   { "mobike",  kv_conn,  kt_sparse_name,  KNCF_MOBIKE, &yn_option_names, NULL, },
-  { "narrowing",  kv_conn,  kt_sparse_name,  KNCF_IKEv2_ALLOW_NARROWING, &yn_option_names, NULL, },
+  { "narrowing",  kv_conn,  kt_sparse_name,  KNCF_NARROWING, &yn_option_names, NULL, },
   { "pam-authorize",  kv_conn,  kt_sparse_name,  KNCF_PAM_AUTHORIZE, &yn_option_names, NULL, },
   { "send-redirect",  kv_conn,  kt_sparse_name,  KNCF_SEND_REDIRECT, &yna_option_names, NULL, },
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },

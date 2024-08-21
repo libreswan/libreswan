@@ -352,7 +352,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.metric = conn->options[KNCF_METRIC];
 
-	msg.ikev2_allow_narrowing = conn->options[KNCF_IKEv2_ALLOW_NARROWING];
+	msg.narrowing = conn->options[KNCF_NARROWING];
 	msg.rekey = conn->options[KNCF_REKEY];
 	msg.reauth = conn->options[KNCF_REAUTH];
 

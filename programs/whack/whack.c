@@ -113,7 +113,7 @@ static void help(void)
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
-		"	[--allow-narrowing] \\\n"
+		"	[--narrowing {yes,no}] \\\n"
 		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp] [--encap-dscp] [--nopmtudisc] [--mobike] \\\n"
@@ -537,7 +537,7 @@ enum option_enums {
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
-	CD_IKEV2_ALLOW_NARROWING,
+	CD_NARROWING,
 	CD_ESP,
 	CD_INTERMEDIATE,
 	CD_OVERLAPIP,
@@ -908,7 +908,8 @@ static const struct option long_opts[] = {
 	{ "ikev2-allow", no_argument, NULL, CD_IKEv2 }, /* obsolete name */
 	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 }, /* obsolete, map onto allow */
 
-	{ "allow-narrowing", no_argument, NULL, CD_IKEV2_ALLOW_NARROWING, },
+	{ "allow-narrowing", optional_argument, NULL, CD_NARROWING, }, /* undocumented but tested name */
+	{ "narrowing", required_argument, NULL, CD_NARROWING, },
 	{ "ikefrag-allow", no_argument, NULL, CD_IKEFRAG_ALLOW }, /* obsolete name */
 	{ "ikefrag-force", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
 	{ "fragmentation", required_argument, NULL, CD_FRAGMENTATION },
@@ -1823,8 +1824,8 @@ int main(int argc, char **argv)
 		}
 
 		/* --allow-narrowing */
-		case CD_IKEV2_ALLOW_NARROWING:
-			msg.ikev2_allow_narrowing = YN_YES;
+		case CD_NARROWING:
+			msg.narrowing = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		/* --donotrekey */

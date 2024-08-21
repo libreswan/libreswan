@@ -242,7 +242,7 @@ enum keywords {
 	KNCF_DECAP_DSCP,
 	KNCF_ENCAP_DSCP,
 	KNCF_NOPMTUDISC,
-	KNCF_IKEv2_ALLOW_NARROWING,
+	KNCF_NARROWING,
 	KNCF_PAM_AUTHORIZE,
 	KNCF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
 	KNCF_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */

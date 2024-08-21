@@ -262,7 +262,7 @@ struct whack_message {
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;
 
-	enum yn_options ikev2_allow_narrowing;
+	enum yn_options narrowing;	/* IKEv2 only? */
 	enum yn_options rekey;
 	enum yn_options reauth;
 
