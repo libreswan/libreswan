@@ -251,12 +251,14 @@ static err_t pool_lease_to_address(const struct addresspool *pool, const struct 
 	return range_offset_to_address(pool->r, lease - pool->leases, address);
 }
 
-static void DBG_pool(bool verbose, const struct addresspool *pool,
-		     const char *format, ...) PRINTF_LIKE(3);
-static void DBG_pool(bool verbose, const struct addresspool *pool,
-		     const char *format, ...)
+static void LDBG_pool(struct logger *logger, bool verbose,
+		      const struct addresspool *pool,
+		      const char *format, ...) PRINTF_LIKE(4);
+
+static void LDBG_pool(struct logger *logger, bool verbose, const struct addresspool *pool,
+		      const char *format, ...)
 {
-	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, "pool ");
 		jam_range(buf, &pool->r);
 		jam(buf, ": ");
@@ -266,18 +268,21 @@ static void DBG_pool(bool verbose, const struct addresspool *pool,
 		va_end(args);
 		if (verbose) {
 			jam(buf, "; pool-refcount %u size %u leases %u in-use %u free %u reusable %u",
-			    refcnt_peek(pool, &global_logger), pool->size, pool->nr_leases,
+			    refcnt_peek(pool, logger), pool->size, pool->nr_leases,
 			    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
 		}
 	}
 }
 
-static void DBG_lease(bool verbose, const struct addresspool *pool, const struct lease *lease,
-		      const char *format, ...) PRINTF_LIKE(4);
-static void DBG_lease(bool verbose, const struct addresspool *pool, const struct lease *lease,
-		      const char *format, ...)
+static void LDBG_lease(struct logger *logger, bool verbose,
+		       const struct addresspool *pool, const struct lease *lease,
+		       const char *format, ...) PRINTF_LIKE(5);
+
+static void LDBG_lease(struct logger *logger, bool verbose,
+		       const struct addresspool *pool, const struct lease *lease,
+		       const char *format, ...)
 {
-	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, "pool ");
 		jam_range(buf, &pool->r);
 		jam(buf, " lease ");
@@ -372,7 +377,8 @@ static bool client_can_reuse_lease(const struct connection *c)
  * that it still does (it may have been stolen by a newer connection
  * with the same ID).
  */
-static struct lease *connection_lease(struct connection *c, const struct ip_info *afi)
+static struct lease *connection_lease(struct connection *c, const struct ip_info *afi,
+				      struct logger *logger)
 {
 	/*
 	 * No point looking for a lease when the connection doesn't
@@ -396,7 +402,7 @@ static struct lease *connection_lease(struct connection *c, const struct ip_info
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
-		llog_pexpect(c->logger, HERE, "offset of address in range failed: %s", err);
+		llog_pexpect(logger, HERE, "offset of address in range failed: %s", err);
 		return NULL;
 	}
 	passert(pool->nr_leases <= pool->size);
@@ -408,8 +414,8 @@ static struct lease *connection_lease(struct connection *c, const struct ip_info
 	 * same ID?
 	 */
 	if (co_serial_cmp(lease->assigned_to, >, c->serialno)) {
-		if (DBGP(DBG_BASE)) {
-			DBG_lease(true, pool, lease, "stolen by "PRI_CO, pri_co(lease->assigned_to));
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_lease(logger, true, pool, lease, "stolen by "PRI_CO, pri_co(lease->assigned_to));
 		}
 		return NULL;
 	}
@@ -436,16 +442,16 @@ static struct lease *connection_lease(struct connection *c, const struct ip_info
  * In that case, we do free the lease since that ID isn't distinctive.
  */
 
-void free_that_address_lease(struct connection *c, const struct ip_info *afi)
+void free_that_address_lease(struct connection *c, const struct ip_info *afi, struct logger *logger)
 {
 	if (!c->remote->child.lease[afi->ip_index].is_set) {
-		ldbg(c->logger, "connection has no %s lease", afi->ip_name);
+		ldbg(logger, "connection has no %s lease", afi->ip_name);
 		return;
 	}
 
-	struct lease *lease = connection_lease(c, afi);
+	struct lease *lease = connection_lease(c, afi, logger);
 	if (lease == NULL) {
-		ldbg(c->logger, "connection lost its %s lease", afi->ip_name);
+		ldbg(logger, "connection lost its %s lease", afi->ip_name);
 		c->remote->child.lease[afi->ip_index] = unset_address;
 		return;
 	}
@@ -456,19 +462,21 @@ void free_that_address_lease(struct connection *c, const struct ip_info *afi)
 		/* the lease is reusable, leave it lingering */
 		APPEND(pool, free_list, free_entry, lease);
 		pool->nr_in_use--;
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			connection_buf cb;
-			DBG_lease(true, pool, lease, "lingering reusable lease '%s' for connection "PRI_CONNECTION,
-				  lease->reusable_name, pri_connection(c, &cb));
+			LDBG_lease(logger, true, pool, lease,
+				   "lingering reusable lease '%s' for connection "PRI_CONNECTION,
+				   lease->reusable_name, pri_connection(c, &cb));
 		}
 	} else {
 		/* cannot share: free it */
 		PREPEND(pool, free_list, free_entry, lease);
 		pool->nr_in_use--;
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			connection_buf cb;
-			DBG_lease(true, pool, lease, "returning one-time lease for connection "PRI_CONNECTION,
-				  pri_connection(c, &cb));
+			LDBG_lease(logger, true, pool, lease,
+				   "returning one-time lease for connection "PRI_CONNECTION,
+				   pri_connection(c, &cb));
 		}
 	}
 
@@ -481,7 +489,8 @@ void free_that_address_lease(struct connection *c, const struct ip_info *afi)
  * return previous lease if there is one lingering for the same ID
  */
 
-static struct lease *recover_lease(const struct connection *c, const char *that_name, const struct ip_info *afi)
+static struct lease *recover_lease(const struct connection *c, const char *that_name,
+				   const struct ip_info *afi, struct logger *logger)
 {
 	struct addresspool *pool = c->pool[afi->ip_index];
 	if (pool->nr_leases == 0) {
@@ -505,18 +514,20 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 				REMOVE(pool, free_list, free_entry, lease);
 				pexpect(co_serial_is_unset(lease->assigned_to));
 				pool->nr_in_use++;
-				if (DBGP(DBG_BASE)) {
+				if (LDBGP(DBG_BASE, logger)) {
 					connection_buf cb;
-					DBG_lease(false, pool, lease, "recovered by "PRI_CONNECTION" using '%s'; was on free-list",
-						  pri_connection(c, &cb), that_name);
+					LDBG_lease(logger, false, pool, lease,
+						   "recovered by "PRI_CONNECTION" using '%s'; was on free-list",
+						   pri_connection(c, &cb), that_name);
 				}
 			} else {
 				/* still assigned to older connection */
 				pexpect(co_serial_cmp(lease->assigned_to, <, c->serialno));
-				if (DBGP(DBG_BASE)) {
+				if (LDBGP(DBG_BASE, logger)) {
 					connection_buf cb;
-					DBG_lease(false, pool, lease, "recovered by "PRI_CONNECTION" using '%s'; was in use by "PRI_CO,
-						  pri_connection(c, &cb), that_name, pri_co(lease->assigned_to));
+					LDBG_lease(logger, false, pool, lease,
+						   "recovered by "PRI_CONNECTION" using '%s'; was in use by "PRI_CO,
+						   pri_connection(c, &cb), that_name, pri_co(lease->assigned_to));
 				}
 			}
 			return lease;
@@ -525,12 +536,12 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
-err_t lease_that_address(struct connection *c, const struct state *st,
-			 const struct ip_info *afi)
+err_t lease_that_address(struct connection *c, const char *xauth_username,
+			 const struct ip_info *afi, struct logger *logger)
 {
 	if (c->remote->child.lease[afi->ip_index].is_set &&
-	    connection_lease(c, afi) != NULL) {
-		dbg("connection both thinks it has, and really has a lease");
+	    connection_lease(c, afi, logger) != NULL) {
+		ldbg(logger, "connection both thinks it has, and really has a lease");
 		return NULL;
 	}
 
@@ -540,39 +551,39 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	}
 
 	unsigned nr_leases = nr_child_leases(c->remote);
-
-	const struct id *that_id = &c->remote->host.id;
 	bool reusable = client_can_reuse_lease(c);
 
-	id_buf that_idb;
+	/*
+	 * Combine the ID with the XAUTH_USERNAME so that, when xauth
+	 * with a shared ID is used, the result is still unique.
+	 */
+	id_buf remote_idb; /* same scope as remote_id */
+	const char *remote_id = str_id(&c->remote->host.id, &remote_idb);
 	char thatstr[sizeof(id_buf) + MAX_XAUTH_USERNAME_LEN];
-	const char *that_name = str_id(that_id, &that_idb);
-
-	jam_str(thatstr, sizeof(thatstr), that_name);
-
-	if(st->st_xauth_username[0] != '\0') {
-		add_str(thatstr, sizeof(thatstr), thatstr, st->st_xauth_username);
+	jam_str(thatstr, sizeof(thatstr), remote_id);
+	if (xauth_username != NULL && xauth_username[0] != '\0') {
+		add_str(thatstr, sizeof(thatstr), thatstr, xauth_username);
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		connection_buf cb;
-		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s'",
-			 reusable ? "reusable" : "one-time",
-			 pri_connection(c, &cb), thatstr);
+		LDBG_pool(logger, false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s'",
+			  reusable ? "reusable" : "one-time",
+			  pri_connection(c, &cb), thatstr);
 	}
 
 	struct lease *new_lease = NULL;
 	const char *story;
 	if (reusable) {
-		new_lease = recover_lease(c, thatstr, afi);
+		new_lease = recover_lease(c, thatstr, afi, logger);
 		story = "recovered";
 	}
 	if (new_lease == NULL) {
 		if (IS_EMPTY(pool, free_list)) {
 			/* try to grow the address pool */
 			if (pool->nr_leases >= pool->size) {
-				if (DBGP(DBG_BASE)) {
-					DBG_pool(true, pool, "no free address and no space to grow");
+				if (LDBGP(DBG_BASE, logger)) {
+					LDBG_pool(logger, true, pool, "no free address and no space to grow");
 				}
 				return "no free address in addresspool"; /* address pool exhausted */
 			}
@@ -585,7 +596,7 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 			realloc_things(pool->leases, old_nr_leases, pool->nr_leases, "leases");
 
 			range_buf rb;
-			llog(RC_LOG, &global_logger, "pool %s: growing address pool from %u to %u",
+			llog(RC_LOG, logger, "pool %s: growing address pool from %u to %u",
 			     str_range(&pool->r, &rb), old_nr_leases, pool->nr_leases);
 
 			/* initialize new leases (and add to free list) */
@@ -625,9 +636,10 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 		pool->nr_in_use++;
 		if (new_lease->reusable_name != NULL) {
 			/* oops; takeing over this lingering lease */
-			if (DBGP(DBG_BASE)) {
-				DBG_lease(false, pool, new_lease, "stealing reusable lease from '%s'",
-					  new_lease->reusable_name);
+			if (LDBGP(DBG_BASE, logger)) {
+				LDBG_lease(logger, false, pool, new_lease,
+					   "stealing reusable lease from '%s'",
+					   new_lease->reusable_name);
 			}
 			unhash_lease_id(pool, new_lease);
 			story = "stolen";
@@ -653,7 +665,7 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	ip_address ia;
 	err_t err = pool_lease_to_address(pool, new_lease, &ia);
 	if (err != NULL) {
-		llog_pexpect(st->logger, HERE, "%s", err);
+		llog_pexpect(logger, HERE, "%s", err);
 	}
 	c->remote->child.lease[afi->ip_index] = ia;
 	set_child_has_client(c, remote, true);
@@ -662,25 +674,25 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 			      HERE, nr_leases);
 	new_lease->assigned_to = c->serialno;
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		address_buf ab;
 		connection_buf cb;
-		DBG_lease(true, pool, new_lease,
-			  "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.lease %s",
-			  story,
-			  (reusable ? "reusable" : "one-time"),
-			  pri_connection(c, &cb),
-			  pri_co(new_lease->assigned_to),
-			  thatstr,
-			  str_address(&ia, &ab));
+		LDBG_lease(logger, true, pool, new_lease,
+			   "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.lease %s",
+			   story,
+			   (reusable ? "reusable" : "one-time"),
+			   pri_connection(c, &cb),
+			   pri_co(new_lease->assigned_to),
+			   thatstr,
+			   str_address(&ia, &ab));
 	}
 
 	return NULL;
 }
 
-void addresspool_delref(struct addresspool **poolparty)
+void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
 {
-	struct addresspool *pool = delref_where(poolparty, &global_logger, HERE);
+	struct addresspool *pool = delref_where(poolparty, logger, HERE);
 	if (pool != NULL) {
 		for (struct addresspool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
 			if (*pp == pool) {
@@ -693,8 +705,8 @@ void addresspool_delref(struct addresspool **poolparty)
 				return;
 			}
 		}
-		if (DBGP(DBG_BASE)) {
-			DBG_pool(false, pool, "pool %p not found in list of pools", pool);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_pool(logger, false, pool, "pool %p not found in list of pools", pool);
 		}
 	}
 }
@@ -744,7 +756,7 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
  * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-diag_t install_addresspool(const ip_range pool_range, struct connection *c)
+diag_t install_addresspool(const ip_range pool_range, struct connection *c, struct logger *logger)
 {
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);
@@ -760,7 +772,7 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
 		 */
 		pool_size = UINT32_MAX;
-		dbg("WARNING addresspool size overflow truncated to %ju", pool_size);
+		ldbg(logger, "WARNING addresspool size overflow truncated to %ju", pool_size);
 	}
 
 	/* can't start at 0 */
@@ -785,8 +797,8 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 
 	if (existing_pool != NULL) {
 		/* re-use existing pool */
-		if (DBGP(DBG_BASE)) {
-			DBG_pool(true, existing_pool, "reusing existing address pool@%p", existing_pool);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_pool(logger, true, existing_pool, "reusing existing address pool@%p", existing_pool);
 		}
 		c->pool[afi->ip_index] = addresspool_addref(existing_pool);
 		return NULL;
@@ -805,8 +817,8 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 	new_pool->next = pluto_pools;
 	pluto_pools = new_pool;
 
-	if (DBGP(DBG_BASE)) {
-		DBG_pool(false, new_pool, "creating new address pool@%p", new_pool);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_pool(logger, false, new_pool, "creating new address pool@%p", new_pool);
 	}
 	c->pool[afi->ip_index] = new_pool;
 	return NULL;

@@ -25,12 +25,18 @@ struct addresspool;        /* abstract object */
 
 diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool) MUST_USE_RESULT;
 
-diag_t install_addresspool(const ip_range pool_range, struct connection *c) MUST_USE_RESULT;
-void addresspool_delref(struct addresspool **pool);
+diag_t install_addresspool(const ip_range pool_range, struct connection *c,
+			   struct logger *logger) MUST_USE_RESULT;
+void addresspool_delref(struct addresspool **pool, struct logger *logger);
 struct addresspool *addresspool_addref(struct addresspool *pool);
 
-extern err_t lease_that_address(struct connection *c, const struct state *st, const struct ip_info *afi);
-extern void free_that_address_lease(struct connection *c, const struct ip_info *afi);
+extern err_t lease_that_address(struct connection *c, const char *xauth_username/*possibly-NULL|NUL*/,
+				const struct ip_info *afi, struct logger *logger);
+extern void free_that_address_lease(struct connection *c, const struct ip_info *afi,
+				    struct logger *logger);
+
+err_t recover_that_address(struct connection *c, const ip_selector *remote_client,
+			   struct logger *logger);
 
 extern void show_addresspool_status(struct show *s);
 

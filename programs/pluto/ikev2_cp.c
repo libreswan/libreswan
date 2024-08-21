@@ -306,7 +306,7 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 		return true; /*non-fatal*/
 	}
 
-	err_t e = lease_that_address(cc, &child->sa, afi);
+	err_t e = lease_that_address(cc, /*xauth-username*/NULL, afi, child->sa.logger);
 	if (e != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
 			afi->ip_name, e);

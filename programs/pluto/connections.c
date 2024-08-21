@@ -429,8 +429,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (c->pool[afi->ip_index] != NULL) {
-			free_that_address_lease(c, afi);
-			addresspool_delref(&c->pool[afi->ip_index]);
+			free_that_address_lease(c, afi, c->logger);
+			addresspool_delref(&c->pool[afi->ip_index], c->logger);
 		}
 	}
 
@@ -1287,7 +1287,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 						 leftright, src->addresspool);
 			}
 
-			d = install_addresspool(*pool_range, c);
+			d = install_addresspool(*pool_range, c, logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);

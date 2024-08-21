@@ -388,7 +388,8 @@ static stf_status modecfg_resp(struct state *st,
 		if (use_modecfg_addr_as_client_addr &&
 		    c->pool[IPv4_INDEX] != NULL) {
 
-			err_t e = lease_that_address(c, st, &ipv4_info);
+			err_t e = lease_that_address(c, st->st_xauth_username,
+						     &ipv4_info, st->logger);
 			if (e != NULL) {
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
@@ -887,11 +888,11 @@ static bool add_xauth_addresspool(struct connection *c,
 
 	/* delete existing pool if it exists */
 	if (c->pool[IPv4_INDEX] != NULL) {
-		free_that_address_lease(c, &ipv4_info);
-		addresspool_delref(&c->pool[IPv4_INDEX]);
+		free_that_address_lease(c, &ipv4_info, logger);
+		addresspool_delref(&c->pool[IPv4_INDEX], logger);
 	}
 
-	diag_t d = install_addresspool(pool_range, c);
+	diag_t d = install_addresspool(pool_range, c, logger);
 	if (d != NULL) {
 		llog(RC_CLASH, logger, "XAUTH: invalid addresspool for the conn %s user %s: %s",
 		     c->name, userid, str_diag(d));

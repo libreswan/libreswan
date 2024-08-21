@@ -1014,9 +1014,21 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	/*
 	 * The lookup can fail because the peer things it has a lease
-	 * but it actually expired and the connection was deleted.
+	 * but the connection has not because the peer skipped CONFIG.
 	 *
-	 * Would trying to reacquire the lease be reasonable here?
+	 * For instance, the peer was put to sleep (laptop lid closed)
+	 * leading to a DPD failure and connection delete.  When the
+	 * peer wakes it should use MODE-CONFIG to renew the lease but
+	 * that seems to be skipped (perhaps it hasn't expired?).
+	 *
+	 * For instance, this end crashes, the peer then tries to
+	 * quickly re-establish.  Even though INITIAL_CONTACT is sent
+	 * at the end of MAIN mode, the peer still assumes it has the
+	 * lease and skips MODE-CONFIG.
+	 *
+	 * The lease may be available.  But if it isn't what next?
+	 * And even if it is there's no guarentee that the rest of the
+	 * MODE-CONFIG, such as DNS, is correct.
 	 *
 	 * XXX: IKEv1 only does IPv4.
 	 */
