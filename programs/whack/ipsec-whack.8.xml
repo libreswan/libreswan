@@ -88,6 +88,13 @@
       </group>
       </arg>
 
+      <arg choice="opt">--narrowing
+      <group choice="plain">
+	<arg choice="plain">yes</arg>
+	<arg choice="plain">no</arg>
+      </group>
+      </arg>
+
       <arg choice="opt">--sourceip <replaceable>ip-address</replaceable></arg>
       <arg choice="opt">--srcip <replaceable>ip-address</replaceable></arg>
 
@@ -1004,6 +1011,20 @@
 	    <emphasis>17/%any</emphasis> can be used to allow all UDP
 	    traffic and is needed for L2TP connections with Windows XP
 	    machines before Service Pack 2.
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+	  <option>--narrowing</option> <emphasis>yes|no|auto</emphasis>
+	</term>
+        <listitem>
+          <para>
+	    IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing
+	    options.  See <option>narrowing</option> in <citerefentry>
+	    <refentrytitle>ipsec.conf</refentrytitle>
+	    <manvolnum>5</manvolnum></citerefentry>.
 	  </para>
         </listitem>
       </varlistentry>
