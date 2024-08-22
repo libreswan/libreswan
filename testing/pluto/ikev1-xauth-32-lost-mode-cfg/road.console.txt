@@ -1,0 +1,77 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec whack --impair suppress_retransmits
+road #
+ ipsec whack --impair revival
+road #
+ ipsec add road-east-modecfg-yes
+"road-east-modecfg-yes": added IKEv1 connection
+road #
+ ipsec add road-east-modecfg-no
+"road-east-modecfg-no": added IKEv1 connection
+road #
+ ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east-modecfg-yes --initiate
+"road-east-modecfg-yes" #1: initiating IKEv1 Main Mode connection
+"road-east-modecfg-yes" #1: sent Main Mode request
+"road-east-modecfg-yes" #1: sent Main Mode I2
+"road-east-modecfg-yes" #1: I am sending my cert
+"road-east-modecfg-yes" #1: I am sending a certificate request
+"road-east-modecfg-yes" #1: sent Main Mode I3
+"road-east-modecfg-yes" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"road-east-modecfg-yes" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road-east-modecfg-yes" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-yes" #1: prompt for Username:
+"road-east-modecfg-yes" #1: prompt for Password:
+"road-east-modecfg-yes" #1: XAUTH: Answering XAUTH challenge with user='xroad'
+"road-east-modecfg-yes" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-yes" #1: XAUTH: Successfully Authenticated
+"road-east-modecfg-yes" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-yes" #1: modecfg: Sending IP request (MODECFG_I1)
+"road-east-modecfg-yes" #1: Received IPv4 address: 192.0.2.101/32
+"road-east-modecfg-yes" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-yes" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east-modecfg-yes" #2: sent Quick Mode request
+"road-east-modecfg-yes" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=xroad}
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+#2: "road-east-modecfg-yes", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
+road #
+ ipsec down road-east-modecfg-yes
+"road-east-modecfg-yes": terminating SAs using this connection
+"road-east-modecfg-yes" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
+"road-east-modecfg-yes" #2: ESP traffic information: in=84B out=84B XAUTHuser=xroad
+"road-east-modecfg-yes" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+road #
+ ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east-modecfg-no --initiate
+"road-east-modecfg-no" #3: initiating IKEv1 Main Mode connection
+"road-east-modecfg-no" #3: sent Main Mode request
+"road-east-modecfg-no" #3: sent Main Mode I2
+"road-east-modecfg-no" #3: I am sending my cert
+"road-east-modecfg-no" #3: I am sending a certificate request
+"road-east-modecfg-no" #3: sent Main Mode I3
+"road-east-modecfg-no" #3: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"road-east-modecfg-no" #3: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road-east-modecfg-no" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-no" #3: prompt for Username:
+"road-east-modecfg-no" #3: prompt for Password:
+"road-east-modecfg-no" #3: XAUTH: Answering XAUTH challenge with user='xroad'
+"road-east-modecfg-no" #3: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-no" #3: XAUTH: Successfully Authenticated
+"road-east-modecfg-no" #3: XAUTH completed; ModeCFG skipped as per configuration
+"road-east-modecfg-no" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east-modecfg-no" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east-modecfg-no" #4: sent Quick Mode request
+"road-east-modecfg-no" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=xroad}
+road #
+ # skip ping check as result is a mess
+road #
+ 

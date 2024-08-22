@@ -1,0 +1,16 @@
+two xauth+mode-config exchanges except second forgets mode-config request for lease
+
+- client establishes connection and is assigned lease
+
+- client sleeps
+
+  this is mimiced by dying
+
+- server deletes connection as DPD times out
+
+  this is mimiced by deleting the connection
+
+- client wakes and rekeys but forgets to ask for a new lease
+
+  this is mimiced by re-connecting without modecfgclient=true and a
+  hardwired subnet
