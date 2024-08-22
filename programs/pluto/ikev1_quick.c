@@ -1058,7 +1058,8 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		p = c;
 		selector_buf sb;
-		pdbg(p1st->logger, "Quick Mode request recovered lease for %s,  ", str_selector(remote_client, &sb));
+		llog(RC_LOG, p1st->logger, "Quick Mode without mode-config, recovering previously assigned lease %s",
+		     str_selector(remote_client, &sb));
 
 		pdbg(p1st->logger, "another hack to get the SPD in sync");
 		c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
