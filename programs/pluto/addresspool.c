@@ -536,6 +536,69 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
+
+err_t lease_that_selector(struct connection *c, const char *xauth_username,
+			  const ip_selector *remote_client, struct logger *logger)
+{
+	const struct ip_info *afi = selector_type(remote_client);
+
+	if (c->remote->child.lease[afi->ip_index].is_set &&
+	    connection_lease(c, afi, logger) != NULL) {
+		ldbg(logger, "connection both thinks it has, and really has a lease");
+		return NULL;
+	}
+
+	struct addresspool *pool = c->pool[afi->ip_index];
+	if (pool == NULL) {
+		return "no address pool";
+	}
+
+	bool reusable = client_can_reuse_lease(c);
+	if (!reusable) {
+		return "lease is not reusable";
+	}
+
+	/*
+	 * Combine the ID with the XAUTH_USERNAME so that, when xauth
+	 * with a shared ID is used, the result is still unique.
+	 */
+	id_buf remote_idb; /* same scope as remote_id */
+	const char *remote_id = str_id(&c->remote->host.id, &remote_idb);
+	char thatstr[sizeof(id_buf) + MAX_XAUTH_USERNAME_LEN];
+	jam_str(thatstr, sizeof(thatstr), remote_id);
+	if (xauth_username != NULL && xauth_username[0] != '\0') {
+		add_str(thatstr, sizeof(thatstr), thatstr, xauth_username);
+	}
+
+	if (LDBGP(DBG_BASE, logger)) {
+		connection_buf cb;
+		LDBG_pool(logger, false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s'",
+			  reusable ? "reusable" : "one-time",
+			  pri_connection(c, &cb), thatstr);
+	}
+
+	struct lease *new_lease = recover_lease(c, thatstr, afi, logger);
+	if (new_lease == NULL) {
+		return "no lease";
+	}
+
+	ip_address ia;
+	err_t err = pool_lease_to_address(pool, new_lease, &ia);
+	if (err != NULL) {
+		llog_pexpect(logger, HERE, "%s", err);
+		free_that_address_lease(c, afi, logger);
+		return "bogus lease";
+	}
+
+	ip_selector is = selector_from_address(ia);
+	if (!selector_eq_selector(is, *remote_client)) {
+		free_that_address_lease(c, afi, logger);
+		return "wrong address";
+	}
+
+	return NULL;
+}
+
 err_t lease_that_address(struct connection *c, const char *xauth_username,
 			 const struct ip_info *afi, struct logger *logger)
 {

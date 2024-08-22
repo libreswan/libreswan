@@ -88,6 +88,7 @@
 #include "orient.h"
 #include "instantiate.h"
 #include "terminate.h"
+#include "addresspool.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -1035,8 +1036,34 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	if (p == NULL &&
 	    c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0 &&
 	    !c->remote->child.lease[IPv4_INDEX].is_set) {
-		llog(RC_LOG, p1st->logger, "Quick Mode request rejected, connection requires but has not been assigned a lease; deleting ISAKMP");
-		return STF_FATAL;
+
+		if (!selector_eq_selector(*local_client, c->spd->local->client)) {
+			selector_buf lb, cb;
+			llog(RC_LOG, p1st->logger,
+			     "Quick Mode request rejected, peer requested lease but proposed local selector %s does not match connection %s; deleting ISAKMP SA",
+			     str_selector(local_client, &lb),
+			     str_selector(&c->spd->local->client, &cb));
+			return STF_FATAL;
+		}
+
+		err_t e = lease_that_selector(c, p1st->st_xauth_username,
+					      remote_client, p1st->logger);
+		if (e != NULL) {
+			selector_buf cb;
+			llog(RC_LOG, p1st->logger,
+			     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
+			     str_selector(remote_client, &cb), e);
+			return STF_FATAL;
+		}
+
+		p = c;
+		selector_buf sb;
+		pdbg(p1st->logger, "Quick Mode request recovered lease for %s,  ", str_selector(remote_client, &sb));
+
+		pdbg(p1st->logger, "another hack to get the SPD in sync");
+		c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
+		spd_db_rehash_remote_client(c->spd);
+
 	}
 
 	if (p == NULL) {

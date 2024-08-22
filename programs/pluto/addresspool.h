@@ -30,6 +30,11 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c,
 void addresspool_delref(struct addresspool **pool, struct logger *logger);
 struct addresspool *addresspool_addref(struct addresspool *pool);
 
+extern err_t lease_that_selector(struct connection *c,
+				 const char *xauth_username/*possibly-NULL|NUL*/,
+				 const ip_selector *selector,
+				 struct logger *logger);
+
 extern err_t lease_that_address(struct connection *c, const char *xauth_username/*possibly-NULL|NUL*/,
 				const struct ip_info *afi, struct logger *logger);
 extern void free_that_address_lease(struct connection *c, const struct ip_info *afi,
