@@ -717,8 +717,8 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	 */
 	{
 		struct ipsec_db_policy pm = {
-			.encrypt = (st->st_policy & POLICY_ENCRYPT),
-			.authenticate = (st->st_policy & POLICY_AUTHENTICATE),
+			.encrypt = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 			.compress = (st->st_policy & POLICY_COMPRESS),
 		};
 
