@@ -3125,6 +3125,11 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			}
 			kernel_mode = ah_attrs.kernel_mode;
 			ah_attrs.spi = ah_spi;
+		} else if (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+			address_buf b;
+			pdbg(st->logger, "policy requires authentication but none in proposal from %s",
+			    str_address(&c->remote->host.addr, &b));
+			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
 
 		if (esp_seen) {
@@ -3184,20 +3189,11 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 			kernel_mode = esp_attrs.kernel_mode;
 			esp_attrs.spi = esp_spi;
-		} else if (st->st_policy & POLICY_ENCRYPT) {
-			connection_buf cib;
+		} else if (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP) {
 			address_buf b;
-			dbg("policy for "PRI_CONNECTION" requires encryption but ESP not in Proposal from %s",
-			    pri_connection(c, &cib),
-			    str_address(&c->remote->host.addr, &b));
+			pdbg(st->logger, "policy requires encryption but ESP not in Proposal from %s",
+			     str_address(&c->remote->host.addr, &b));
 			continue; /* we needed encryption, but didn't find ESP */
-		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
-			connection_buf cib;
-			address_buf b;
-			dbg("policy for \"%s\"%s requires authentication but none in Proposal from %s",
-			    pri_connection(c, &cib),
-			    str_address(&c->remote->host.addr, &b));
-			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
 
 		if (ipcomp_seen) {
