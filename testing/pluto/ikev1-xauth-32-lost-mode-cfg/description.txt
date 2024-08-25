@@ -1,16 +1,30 @@
-two xauth+mode-config exchanges except second forgets mode-config request for lease
+ikev1 Main+XAUTH+ModeCFG+Quick except second time Mode-Config is skipped
 
-- client establishes connection and is assigned lease
+Some clients skip re-requesting the lease using ModeCFG when
+re-connecting.  For instance when they sleep (and, mean while, the
+server has deleted the ISAKMP SA since DPD failed).
 
-- client sleeps
+Note that since the final Main mode response includes INITIAL_CONTACT,
+the client should initiate ModeCFG and ask for a new lease.  Some
+clients don't :-(
 
-  this is mimiced by dying
+- client establishes connection using the exchanges
 
-- server deletes connection as DPD times out
+  	 Main - auth=cert; sends back INITIAL_CONTACT
+	 XAUTH
+	 ModeCFG - assigns 192.0.2.101/32
+	 Quick - ID is 0.0.0.0/0 - 192.0.2.101/32
 
-  this is mimiced by deleting the connection
+- client deletes connection
 
-- client wakes and rekeys but forgets to ask for a new lease
+  this leaves server with an unused lease that can be recovered
 
-  this is mimiced by re-connecting without modecfgclient=true and a
-  hardwired subnet
+- client re-establishes connection but skips ModeCFG
+
+  	 Main - auth=cert; sends back INITIAL_CONTACT
+	 XAUTH
+	 Quick - ID is 0.0.0.0/0 - 192.0.2.101/32
+
+  since lease is still available it is recovered during Quick
+
+  (hack is to specify leftmodecfgclient=no leftsubnet=192.0.2.101/32)
