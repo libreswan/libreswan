@@ -102,3 +102,8 @@ void nl_addattr8(struct nlmsghdr *n, int maxlen, int type, const uint8_t data)
 {
 	nl_addattr_l(n, maxlen, type, &data, sizeof(uint8_t));
 }
+
+void nl_addattr16(struct nlmsghdr *n, int maxlen, int type, const uint16_t data)
+{
+	nl_addattr_l(n, maxlen, type, &data, sizeof(uint16_t));
+}
