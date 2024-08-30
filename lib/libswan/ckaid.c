@@ -81,7 +81,7 @@ ckaid_t ckaid_from_secitem(const SECItem *const nss_ckaid)
 	/* ckaid = { .len = min(...), } barfs with gcc 11.2.1 */
 	ckaid_t ckaid = {0};
 	/* should not be truncated but can be */
-	ckaid.len = min(nss_ckaid_len, sizeof(ckaid.ptr/*array*/)),
+	ckaid.len = min(nss_ckaid_len, sizeof(ckaid.ptr/*array*/));
 	pexpect(ckaid.len == nss_ckaid_len);
 	memmove(ckaid.ptr, nss_ckaid->data, ckaid.len);
 	return ckaid;
