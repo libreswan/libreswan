@@ -222,32 +222,41 @@ parser.add_argument('--userland', '-u', action='store',
                     default='libreswan', help='which userland to prepare')
 parser.add_argument('--strongswan-version', action='store',
                     default='', help='strongswan version expect')
-parser.add_argument('--x509', '-x', action='store_true',
+
+parser.add_argument('--nokeys', action='store_true',
+                    help='create an empty NSS database')
+parser.add_argument('--hostkeys', action='store_true',
+                    help="create an NSS database containing the host keys")
+parser.add_argument('--x509keys', '-x', '--x509', action='store_true',
+                    help='create an NSS database containing X.509 certificates and private keys')
+
+nsspassword="s3cret"
+parser.add_argument('--nsspw', action='store_true',
+                    help='set the security password on the NSS database to '+nsspassword)
+
+parser.add_argument('--x509name', '-X', action='store', default="",
                     help='create X509 NSS file by importing test certs')
+parser.add_argument('--revoked', '-r', action='store_true',
+                    help='import the revoked certificate into the NSS database')
+parser.add_argument('--signedbyother', '-o', action='store_true',
+                    help='import the signedbyother certificate into the NSS database')
+parser.add_argument('--eccert', '-e', action='store_true',
+                    help='enable an EC cert for this host')
+parser.add_argument('--certchain', '-c', action='store_true',
+                    help='import the ca-chain test certificates into the NSS database')
+
+parser.add_argument('--fips', '-f', action='store_true',
+                    help='prepare /etc/ipsec.d for running in FIPS mode')
+
 exclusive_grp_dnsserver.add_argument('--dnssec', '-d', action='store_true',
                     help='start nsd and unbound for DNSSEC - meant only for nic')
 exclusive_grp_dnsserver.add_argument('--nsd', action='store_true',
                     help='start nsd only for DNSSEC')
-parser.add_argument('--x509name', '-X', action='store', default="",
-                    help='create X509 NSS file by importing test certs')
-parser.add_argument('--fips', '-f', action='store_true',
-                    help='prepare /etc/ipsec.d for running in FIPS mode')
-parser.add_argument('--revoked', '-r', action='store_true',
-                    help='load a revoked certificate')
-parser.add_argument('--signedbyother', '-o', action='store_true',
-                    help='load the signedbyother certificate')
-parser.add_argument('--eccert', '-e', action='store_true',
-                    help='enable an EC cert for this host')
-parser.add_argument('--nsspw', action='store_true',
-                    help='set the security password (on the NSS DB)')
-parser.add_argument('--certchain', '-c', action='store_true',
-                    help='import the ca-chain test certs')
+
 parser.add_argument('--46', '--64', action='store_true',
                     help='Do not disable IPv6. Default is disable IPv6 ', dest='ipv46', default=False)
 parser.add_argument('--verbose', '-v', action='store_true',
                     help='more verbose')
-parser.add_argument('--nokeys', action='store_true',
-                    help='do not provide any keys')
 parser.add_argument('--namespace', action='store_true',
         default='', help='Running inside name sapace')
 parser.add_argument('--no-eth0', action='store_true',
@@ -411,10 +420,6 @@ if hostname != "nic":
 
     if args.userland in ("libreswan", "openswan"):
 
-        # this brings in the nss *.db files that are path-specific -
-        # they have pathnames hardcoded inside the file.  This default
-        # database contains a default key-pair for basic testing.
-        shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir, dirs_exist_ok=True)
         # fill in any missing dirs
         for dir in ("/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
             if not os.path.isdir(dir):
@@ -425,11 +430,6 @@ if hostname != "nic":
                 oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
                 for oldfile in oldfiles:
                     os.unlink(oldfile)
-
-        if not args.namespace:
-            dbfiles = glob.glob(nssdir + "/*db")
-            for dbfile in dbfiles:
-                os.chown(dbfile, 0, 0)
 
         copy_config_file(hostname, testpath, "/etc/ipsec.conf", nsprefix=nsbasepath)
         copy_config_file(hostname, testpath, "/etc/ipsec.secrets", nsprefix=nsbasepath)
@@ -501,38 +501,59 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic" and not args
         wipe_old("/etc/system-fips") # would work? would remove file from real system? AA_201902
 
 # Set up NSS DB
-if userland in ("libreswan", "openswan"):
+#
+# Stuff above will have emptied and re-created the directory.
 
-    # Set password options.
+if args.userland in ("libreswan", "openswan") and hostname != "nic":
+
+    # Determine the NSS password and save
     if args.nsspw or args.fips:
-        dbpassword = "s3cret"
+        # Save the raw password so it can be passed to NSS commands.
         util_pw = " -f /run/pluto/nsspw"
         p12cmd_pw = " -k /run/pluto/nsspw"
         with open("/run/pluto/nsspw", "w") as f:
-            f.write(dbpassword)
+            f.write(nsspassword)
             f.write("\n")
-        with open(ipsecdir + "/nsspassword", "w") as f:
-            if args.nsspw:
-                f.write("NSS Certificate DB:" + dbpassword + "\n")
-            if args.fips:
-                f.write("NSS FIPS 140-2 Certificate DB:" + dbpassword + "\n")
+        # Store the password in "$NSSDIR/nsspassword" so that pluto
+        # can use it to open the the NSS DB
+        if args.nsspw or args.fips:
+            with open(ipsecdir + "/nsspassword", "w") as f:
+                if args.nsspw:
+                    f.write("NSS Certificate DB:" + nsspassword + "\n")
+                if args.fips:
+                    f.write("NSS FIPS 140-2 Certificate DB:" + nsspassword + "\n")
     else:
         util_pw = ""
         p12cmd_pw = " -K ''"
 
-    if args.x509 or args.nokeys:
-        # Delete any existing db files, and start fresh.
-        if args.x509:
-            print("Preparing X.509 files")
-        else:
-            print("Creating empty NSS database")
-        oldfiles = glob.glob(nssdir + "/*db")
-        for oldfile in oldfiles:
-            os.unlink(oldfile)
+    if args.x509keys:
+        print("Preparing X.509 files")
+        #print("Creating NSS database containing X.509 keys and certificates")
         shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
+    elif args.hostkeys:
+        # This brings in the pre-generated nss *.db files that contain
+        # raw host keys.  Basic testing tends to use pre-shared keys
+        # and not these files.
+        print("Creating NSS database containing host keys")
+        shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir, dirs_exist_ok=True)
+        if not args.namespace:
+            dbfiles = glob.glob(nssdir + "/*db")
+            for dbfile in dbfiles:
+                os.chown(dbfile, 0, 0)
+    elif args.nokeys:
+        print("Creating empty NSS database")
+        shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
+    else:
+        # legacy; bring in existing host keys.
+        shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir, dirs_exist_ok=True)
+        if not args.namespace:
+            dbfiles = glob.glob(nssdir + "/*db")
+            for dbfile in dbfiles:
+                os.chown(dbfile, 0, 0)
 
     # If needed set a password (this will upgrade any existing
-    # database database)
+    # database)
+
     if args.nsspw or args.fips:
         with open("/tmp/pw", "w") as f:
             f.write("\n")
@@ -543,7 +564,7 @@ if userland in ("libreswan", "openswan"):
         shell("/usr/bin/modutil -dbdir sql:" + nssdir + " -fips true -force", out=True)
 
     # this section is getting rough. could use a nice refactoring
-    if args.x509:
+    if args.x509keys:
 
         if not os.path.isfile("/testing/x509/keys/mainca.key"):
             print("\n\n---------------------------------------------------------------------\n"
@@ -612,6 +633,7 @@ if userland in ("libreswan", "openswan"):
             # is pw needed?
             shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
 
+            # pre-import certs for all other hosts
             for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec", "nic"):
                 if not hostname in certname:
                     shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
@@ -625,7 +647,7 @@ if args.fips:
     shell("/testing/guestbin/fipson")
 
 # Strong swan has simple files.
-if userland == "strongswan" and args.x509:
+if userland == "strongswan" and args.x509keys:
     if args.eccert:
         ca = "curveca"
         key = hostname + "-ec"
