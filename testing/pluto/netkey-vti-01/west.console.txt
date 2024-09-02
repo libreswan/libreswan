@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 west #
  # We want to test without a specific existing non-device route,
 west #

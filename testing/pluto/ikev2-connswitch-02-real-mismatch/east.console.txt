@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 east #
  ipsec certutil -D -n west
 certutil: could not find certificate named "west": SEC_ERROR_...

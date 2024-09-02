@@ -2,7 +2,8 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #
  iptables -A INPUT -p icmp --icmp-type echo-reply -j DROP
 road #
- /testing/guestbin/swan-prep
+ /testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 road #
  ipsec start
 Redirecting to: [initsystem]

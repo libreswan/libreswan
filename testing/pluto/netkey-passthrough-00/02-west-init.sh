@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 # confirm that the network is alive
 ## ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 # ensure that clear text does not get through

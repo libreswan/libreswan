@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 # We want to test without a specific existing non-device route,
 # so we remove the regular route for 192.0.2.0/24, and add default route 
 ../../guestbin/ip.sh route del 192.0.2.0/24

@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 road #
  echo 3 > /proc/sys/net/core/xfrm_acq_expires
 road #

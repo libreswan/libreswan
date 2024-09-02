@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
 dig +short  @192.1.3.254 road.testing.libreswan.org  IPSECKEY | sort

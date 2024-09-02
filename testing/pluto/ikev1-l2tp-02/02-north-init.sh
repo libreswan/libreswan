@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 iptables -F INPUT
 iptables -F OUTPUT
 # ensure that clear text does not get through

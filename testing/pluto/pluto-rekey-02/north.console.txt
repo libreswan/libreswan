@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 north #
  ifconfig eth1 192.1.3.32 netmask 255.255.255.0
 north #

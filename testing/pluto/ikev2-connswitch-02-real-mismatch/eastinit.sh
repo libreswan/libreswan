@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 ipsec certutil -D -n west
 ipsec start
 ../../guestbin/wait-until-pluto-started

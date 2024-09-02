@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 setenforce 1
 ipsec start
 ../../guestbin/wait-until-pluto-started

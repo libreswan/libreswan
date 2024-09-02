@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 gcc -fPIC -fno-stack-protector -c mypam.c
 ld -x --shared -o /lib64/security/mypam.so mypam.o
 test -f /etc/pam.d/pluto && mv /etc/pam.d/pluto /etc/pam.d/pluto.stock

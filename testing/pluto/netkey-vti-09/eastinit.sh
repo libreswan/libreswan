@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 ../../guestbin/ip.sh address add 10.0.2.254 dev eth0
 ipsec start
 ../../guestbin/wait-until-pluto-started

@@ -1,4 +1,5 @@
-../../guestbin/swan-prep
+../../guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 east #
  ipsec start
 Redirecting to: [initsystem]

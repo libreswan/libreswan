@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 east #
  gcc -fPIC -fno-stack-protector -c mypam.c
 east #

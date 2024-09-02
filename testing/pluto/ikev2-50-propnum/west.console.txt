@@ -1,4 +1,5 @@
-../../guestbin/swan-prep
+../../guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 west #
  # confirm that the network is alive
 west #

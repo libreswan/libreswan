@@ -1,4 +1,4 @@
-../../guestbin/swan-prep
+../../guestbin/swan-prep --hostkeys
 # confirm that the network is alive
 ../../guestbin/wait-until-alive 192.0.2.254 -I 192.0.1.254
 ipsec start
