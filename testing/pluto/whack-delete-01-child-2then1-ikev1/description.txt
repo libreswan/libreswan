@@ -1,1 +1,10 @@
-two multinets, delete individually
+establish ISAKMP+IPsec (cuckold) then IPsec (cuckoo), delete second then first
+
+First the second (cuckoo) connection is deleted.  Since the cuckold's
+ISAKMP SA is still present that is used to send out a fire-and-forget
+/ last-gasp delete message.
+
+Next the first (cuckold) connection is deleted.  Again, since the
+cuckold's ISAKMP SA is still present, that is used to send out
+fire-and-forget delete messages for the IPsec and then ISAKMP SAs.
+

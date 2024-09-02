@@ -1,1 +1,14 @@
-two multinets, delete individually
+establish ISAKMP+IPsec (cuckold) then IPsec (cuckoo), delete first then second
+
+First the first (cuckold) connection is deleted.  Since the cuckold's
+ISAKMP SA is still present that is used to send out fire-and-forget
+messages to delete the cuckold's IPsec and then ISAKMP SAs.
+
+Per IKEv1 rules, the second (cuckoo) connection's IPsec SA is left
+untouched.
+
+Next the second (cuckoo) connection is deleted.  Since there is no
+ISAKMP SA and delete happens immediately there's no time to establish
+an ISAKMP SA to carry the delete.
+
+Consequently EAST ends up with a lingering IPsec SA.
