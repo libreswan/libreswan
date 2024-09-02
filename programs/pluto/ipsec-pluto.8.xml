@@ -354,8 +354,8 @@
       </title>
 
       <para>
-	The following option overrides the location of configuration
-	files:
+	The following options overide <command>pluto's</command>
+	default configuration parameters:
       </para>
 
       <variablelist>
@@ -365,12 +365,22 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      the configuration file
+	      specify a
+	      <citerefentry>
+	      <refentrytitle>ipsec.conf</refentrytitle>
+	      <manvolnum>5</manvolnum> </citerefentry> file containing
+	      additional configuration parameters
 	    </para>
 	    <para>
-	      Default is <filename>@@IPSEC_CONF@@</filename>.  See  <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry>.
+	      The "config" section of
+	      <replaceable>filename</replaceable> will be loaded.
+	    </para>
+	    <para>
+	      Normally, <command>pluto</command> is started using
+	      <command>ipsec start</command>, and that passes the
+	      parameter <option>--config
+	      <filename>@@IPSEC_CONF@@</filename></option> so that the
+	      default configuration is read.
 	    </para>
 	  </listitem>
 	</varlistentry>
