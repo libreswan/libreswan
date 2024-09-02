@@ -127,8 +127,8 @@ static void help(void)
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
-		"	[--encapsulation[={auto,yes,no}] [--no-nat-keepalive] \\\n"
-		"	[--ikev1-natt <both|rfc|drafts>] [--no-nat_keepalive] \\\n"
+		"	[--encapsulation={auto,yes,no}] [--nat-keepalive <secs>] \\\n"
+		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--xauthserver | --xauthclient] \\\n"
 		"	[--modecfgserver | --modecfgclient] [--modecfgpull] \\\n"
@@ -518,7 +518,7 @@ enum option_enums {
 	CD_ACCEPT_REDIRECT,
 	CD_ACCEPT_REDIRECT_TO,
 	CD_ENCAPSULATION,
-	CD_NO_NAT_KEEPALIVE,
+	CD_NAT_KEEPALIVE,
 	CD_IKEV1_NATT,
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
@@ -812,7 +812,7 @@ static const struct option long_opts[] = {
 	{ "reauth", no_argument, NULL, CD_REAUTH, },
 	{ "encaps", required_argument, NULL, CD_ENCAPSULATION },
 	{ "encapsulation", optional_argument, NULL, CD_ENCAPSULATION },
-	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ "nat_keepalive", required_argument, NULL,  CD_NAT_KEEPALIVE },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT },
 	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
@@ -1092,7 +1092,7 @@ int main(int argc, char **argv)
 	msg.esp = NULL;
 	msg.ike = NULL;
 	msg.pfsgroup = NULL;
-	msg.nat_keepalive = true;
+	msg.nat_keepalive = 30;
 
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
@@ -2046,8 +2046,8 @@ int main(int argc, char **argv)
 			msg.nic_offload = optarg_sparse(0, &nic_offload_option_names);
 			continue;
 
-		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
-			msg.nat_keepalive = false;
+		case CD_NAT_KEEPALIVE:	/* --nat_keepalive */
+			msg.nat_keepalive = optarg_uintmax();
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */

@@ -494,6 +494,9 @@
 /* RFC3948: bytes of zeros, same size as ESP SPI */
 #define NON_ESP_MARKER_SIZE 4
 
+/* As per https://tools.ietf.org/html/rfc3948#section-4 */
+#define DEFAULT_KEEP_ALIVE_SECS  20
+
 /* RFC8229: prefix at start of tcp stream (no NUL) */
 #define IKE_IN_TCP_PREFIX { 'I', 'K', 'E', 'T', 'C', 'P', }
 

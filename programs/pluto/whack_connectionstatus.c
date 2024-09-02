@@ -836,8 +836,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 		/* nat-keepalive= + keep-alive= */
 		jam_string(buf, " keepalive:");
-		if (c->config->nat_keepalive) {
-			jam(buf, "%jds", deltasecs(nat_keepalive_period));
+		if (c->config->nat_keepalive != 0) {
+			jam(buf, "%ds", c->config->nat_keepalive);
 		} else {
 			jam_string(buf, bool_str(false));
 		}

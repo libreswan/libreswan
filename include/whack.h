@@ -273,8 +273,9 @@ struct whack_message {
 	enum tcp_options enable_tcp;
 	uintmax_t tcp_remoteport;
 
-	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled */
-	bool nat_keepalive;
+	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is 30s */
+	uintmax_t nat_keepalive;
+
 	/* Option to tweak sending NATT drafts, rfc or both */
 	enum ikev1_natt_policy nat_ikev1_method;
 

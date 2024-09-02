@@ -41,9 +41,7 @@
 #include "iface.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "show.h"
-
-/* As per https://tools.ietf.org/html/rfc3948#section-4 */
-#define DEFAULT_KEEP_ALIVE_SECS  20
+#include "kernel.h"		/* for kernel_ops_detect_sa_direction() */
 
 bool nat_traversal_enabled = true; /* can get disabled if kernel lacks support */
 
@@ -51,6 +49,12 @@ deltatime_t nat_keepalive_period = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger)
 {
+	if (kernel_ops_detect_sa_direction(logger)) {
+		dbg("init_nat_traversal_timer() no userland NAT-Traversals timer as kernel will handle keepalives");
+		return;
+	}
+
+	dbg("init_nat_traversal_timer() no kernel NAT-Traversals timer, using userland event loop");
 	if (deltamillisecs(keep_alive_period) != 0) {
 		nat_keepalive_period = keep_alive_period;
 	}

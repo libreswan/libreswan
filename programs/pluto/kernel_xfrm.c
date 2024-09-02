@@ -76,6 +76,8 @@
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 
+#include <netinet/udp.h>               /* for UDP_ENCAP_ESPINUDP aka NAT */
+
 /* libreswan headers */
 
 #include "lsw_socket.h"
@@ -115,6 +117,14 @@
 #ifndef XFRM_STATE_AF_UNSPEC
 #define XFRM_STATE_AF_UNSPEC 32
 #endif
+/* required for linux 6.10 kernel and later */
+#ifndef XFRM_SA_DIR_OUT
+#define XFRM_SA_DIR_IN 1
+#define XFRM_SA_DIR_OUT 2
+#endif
+
+#define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
+#define XFRM_STAT "/proc/net/xfrm_stat"
 
 static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
 static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
@@ -208,6 +218,37 @@ static const struct sparse_names rtm_type_names = {
 #undef NE
 
 /*
+ * General helper to find features in /proc/net/xfrm_stat
+ * i.e. XfrmOutStateDirError or IPTFS
+ */
+static bool in_procnetxfrm_stat(const char *entry, struct logger *logger) {
+
+	char *line = NULL;
+	size_t len = 0;
+	ssize_t read;
+	FILE *xfrm_stat = fopen (XFRM_STAT, "r");
+
+	if (xfrm_stat == NULL) {
+		if (logger !=NULL)
+			ldbg(logger, "/proc/net/xfrm_stat not found, feature detection might wrong");
+		return false;
+	}
+
+	while ((read = getline(&line, &len, xfrm_stat)) != -1) {
+		if (strstr(line, entry) != NULL) {
+			fclose(xfrm_stat);
+			free(line);
+			return true;
+		}
+	}
+
+	fclose(xfrm_stat);
+	if (line != NULL)
+		free(line);
+	return false;
+}
+
+/*
  * xfrm_from-address - Take an IP address and convert to an xfrm.
  */
 static xfrm_address_t xfrm_from_address(const ip_address *addr)
@@ -287,9 +328,6 @@ static void init_netlink_xfrm_fd(struct logger *logger)
  */
 static void kernel_xfrm_init(struct logger *logger)
 {
-#define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
-#define XFRM_STAT "/proc/net/xfrm_stat"
-
 	struct stat buf;
 	char line[255];
 	ssize_t n;
@@ -1506,6 +1544,11 @@ static bool xfrm_detect_nic_offload(const char *ifname, struct logger *logger)
 	return ret;
 }
 
+static bool xfrm_detect_sa_direction(struct logger *logger)
+{
+	return in_procnetxfrm_stat("XfrmOutStateDirError", logger);
+}
+
 /*
  * netlink_add_sa - Add an SA into the kernel SPDB via netlink
  *
@@ -1583,7 +1626,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 	req.p.reqid = sa->reqid;
-	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
+	ldbg(logger, "%s() adding %s IPsec SA with reqid %d", __func__,
+			sa->direction == DIRECTION_OUTBOUND ? "output" : "input",
+			sa->reqid);
 
 	if (sa->nic_offload.dev == NULL /* i.e., no offload */ ||
 	    sa->nic_offload.type != KERNEL_OFFLOAD_PACKET) {
@@ -1628,11 +1673,11 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			ldbg(logger, "%s() enabling ESN", __func__);
 			req.p.flags |= XFRM_STATE_ESN;
 		}
-		if (sa->decap_dscp) {
+		if (sa->decap_dscp && sa->direction == DIRECTION_INBOUND) {
 			ldbg(logger, "%s() enabling Decap DSCP", __func__);
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
-		if (!sa->encap_dscp) {
+		if (!sa->encap_dscp && sa->direction == DIRECTION_OUTBOUND) {
 			ldbg(logger, "%s() disabling Encap DSCP", __func__);
 			__u32 extra_flags = XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
 			attr->rta_type = XFRMA_SA_EXTRA_FLAGS;
@@ -1646,28 +1691,31 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
 		}
 
-		if (sa->replay_window <= 32 && !sa->esn) {
-			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
-			req.p.replay_window = sa->replay_window;
-			ldbg(logger, "%s() setting IPsec SA replay-window to %d using old-style req",
-			     __func__, req.p.replay_window);
-		} else {
-			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
-				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
-			/* this is where we could fill in sequence numbers for this SA */
-			struct xfrm_replay_state_esn xre = {
-				/* replay_window must be multiple of 8 */
-				.replay_window = sa->replay_window,
-				.bmp_len = bmp_size / sizeof(uint32_t),
-			};
-			ldbg(logger, "%s() setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
-			     __func__, xre.replay_window);
+		if (sa->direction == DIRECTION_INBOUND) {
+		       if(sa->replay_window <= 32 && !sa->esn) {
+				/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
+				req.p.replay_window = sa->replay_window;
+				ldbg(logger, "%s() setting IPsec SA replay-window to %d using old-style req",
+					__func__, req.p.replay_window);
+			} else {
+				uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
+					pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
+				bmp_size = sa->replay_window == 0 ? 0 : bmp_size;
+				/* this is where we could fill in sequence numbers for this SA */
+				struct xfrm_replay_state_esn xre = {
+					/* replay_window must be multiple of 8 */
+					.replay_window = sa->replay_window,
+					.bmp_len = bmp_size / sizeof(uint32_t),
+				};
+				ldbg(logger, "%s() setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
+					__func__, xre.replay_window);
 
-			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
-			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
-			memcpy(RTA_DATA(attr), &xre, sizeof(xre));
-			req.n.nlmsg_len += attr->rta_len;
-			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+				attr->rta_type = XFRMA_REPLAY_ESN_VAL;
+				attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
+				memcpy(RTA_DATA(attr), &xre, sizeof(xre));
+				req.n.nlmsg_len += attr->rta_len;
+				attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+			}
 		}
 	}
 
@@ -1819,7 +1867,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		 * ESP tunnel mode (which is only on outer
 		 * level).
 		 */
-		if (sa->tfcpad != 0 &&
+		if (sa->direction == DIRECTION_OUTBOUND && sa->tfcpad != 0 &&
 		    sa->mode == KERNEL_MODE_TUNNEL &&
 		    sa->level == 0) {
 			ldbg(logger, "%s() setting TFC to %" PRIu32 " (up to PMTU)",
@@ -1870,6 +1918,22 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 	}
 #endif
+
+	if (kernel_ops_detect_sa_direction(logger)) {
+		if (sa->direction == DIRECTION_OUTBOUND) {
+			nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, (uint8_t)XFRM_SA_DIR_OUT);
+		} else {
+			nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, (uint8_t)XFRM_SA_DIR_IN);
+		}
+
+		/* assumes XFRMA_NAT_KEEPALIVE_INTERVAL is in all kernels with SA Direction support */
+		if (sa->sa_keepalive != 0 && sa->encap_type->encap_type == UDP_ENCAP_ESPINUDP &&
+		    sa->direction == DIRECTION_OUTBOUND) {
+			/* keep_alive is global option, not per-conn */
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_NAT_KEEPALIVE_INTERVAL, (uint32_t)sa->sa_keepalive);
+		}
+	}
+
 
 	if (sa->nic_offload.dev != NULL) {
 		struct xfrm_user_offload xuo = {
@@ -2620,6 +2684,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userspi_info spi;
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct nlm_resp rsp;
 
@@ -2638,6 +2703,8 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	req.spi.min = min;
 	req.spi.max = max;
+
+	nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, XFRM_SA_DIR_IN);
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
@@ -3136,4 +3203,5 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_nic_offload = xfrm_detect_nic_offload,
 	.poke_ipsec_offload_policy_hole = netlink_poke_ipsec_offload_policy_hole,
+	.detect_sa_direction = xfrm_detect_sa_direction,
 };

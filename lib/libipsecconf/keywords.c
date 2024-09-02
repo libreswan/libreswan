@@ -451,7 +451,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
   { "pfs",  kv_conn,  kt_sparse_name,  KNCF_PFS, &yn_option_names, NULL, },
 
-  { "nat-keepalive",  kv_conn,  kt_bool,  KNCF_NAT_KEEPALIVE, NULL, NULL, },
+  { "nat-keepalive",  kv_conn,  kt_seconds,  KNCF_NAT_KEEPALIVE, NULL, NULL, },
 
   { "initial-contact",  kv_conn,  kt_bool,  KNCF_INITIAL_CONTACT, NULL, NULL, },
   { "cisco-unity",  kv_conn,  kt_bool,  KNCF_CISCO_UNITY, NULL, NULL, },
