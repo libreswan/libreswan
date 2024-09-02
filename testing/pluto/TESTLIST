@@ -1389,10 +1389,10 @@ kvmplutotest	whack-down-02-ikev2-child-2then1	good
 kvmplutotest	whack-down-03-ikev1-quick-responder	good	github/1531
 kvmplutotest	whack-down-03-ikev1-quick-initiator	good	github/1531
 
-kvmplutotest	whack-delete-01-ikev1-child-1then2	good
-kvmplutotest	whack-delete-01-ikev2-child-1then2	good
-kvmplutotest	whack-delete-02-ikev1-child-2then1	good
-kvmplutotest	whack-delete-02-ikev2-child-2then1	good
+kvmplutotest	whack-delete-01-child-1then2-ikev1	good
+kvmplutotest	whack-delete-01-child-1then2-ikev2	good
+kvmplutotest	whack-delete-01-child-2then1-ikev1	good
+kvmplutotest	whack-delete-01-child-2then1-ikev2	good
 kvmplutotest	whack-delete-03-up-revival-ikev1	good
 kvmplutotest	whack-delete-03-up-revival-ikev2	good
 kvmplutotest	whack-delete-04-ikev1-quick-responder	good	github/1531
