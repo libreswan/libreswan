@@ -161,6 +161,11 @@ statement_kw:
 		const char *value = $3.keydef->keyname;
 		parser_kw(&kw, value, logger);
 	}
+	| COMMENT EQUAL {
+		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=", $1);
+		/* free strings allocated by lexer */
+		pfreeany($1);
+	}
 	| COMMENT EQUAL STRING {
 		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=%s", $1, $3);
 		/* free strings allocated by lexer */
