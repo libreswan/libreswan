@@ -149,6 +149,7 @@ kvmplutotest	addconn-41-ocsp-defaults			good
 kvmplutotest	addconn-42-empty				good
 kvmplutotest	addconn-43-x-comment				good
 kvmplutotest	addconn-44-narrowing				good
+kvmplutotest	addconn-45-unknown-parameter			good
 
 #################################################################
 # IKEv2 tests

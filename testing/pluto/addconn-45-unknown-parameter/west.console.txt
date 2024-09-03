@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+west #
+ # expect this to fail
+west #
+ ipsec start
+Redirecting to: [initsystem]
+Job for ipsec.service failed because the control process exited with error code.
+See "systemctl status ipsec.service" and "journalctl -xeu ipsec.service" for details.
+west #
+ # and why; --output==format
+west #
+ journalctl --output cat -xeu ipsec.service | grep FATAL
+FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
+FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
+west #
+ # and addconn
+west #
+ ipsec addconn --checkconfig --config /etc/ipsec.conf
+FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
+west #
+ 
