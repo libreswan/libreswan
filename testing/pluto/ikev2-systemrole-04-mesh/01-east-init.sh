@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # System Role deployment on nic will push configurations to our machine
 # into /etc/ipsec.d/
 # because it will change files, we can't mount bind them. So use a fressh empty dir

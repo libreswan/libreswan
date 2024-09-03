@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start

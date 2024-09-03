@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  # the sleep is to keep the pipe open, something better?
 west #

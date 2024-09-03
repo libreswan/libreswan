@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 road #
  ../../guestbin/wait-until-alive 192.0.2.254
 destination 192.0.2.254 is alive

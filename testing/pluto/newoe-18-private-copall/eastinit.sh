@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 cp policies/* /etc/ipsec.d/policies/
 echo "10.0.0.0/8"  >> /etc/ipsec.d/policies/clear-or-private
 echo "192.168.0.0/16"  >> /etc/ipsec.d/policies/clear-or-private

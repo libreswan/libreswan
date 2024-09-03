@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 cp policies/* /etc/ipsec.d/policies/
 # private-or-clear
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 7.7.7.7

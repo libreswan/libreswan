@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ipsec pk12util -W foobar -K '' -i /testing/x509/selfsigned/west-selfsigned.p12
 ipsec pk12util -W foobar -K '' -i /testing/x509/selfsigned/east-selfsigned.p12
 ipsec start

@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ../../guestbin/ip.sh route del default
 ../../guestbin/ip.sh address del 192.1.33.222/24 dev eth0 2>/dev/null
 sleep 2

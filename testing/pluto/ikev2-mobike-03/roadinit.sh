@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # delete the address 193.1.33.222 before re-run. otherwise pluto may choose it.
 ../../guestbin/ip.sh address show dev eth0 | grep 192.1.33.222 && ../../guestbin/ip.sh address del 192.1.33.222/24 dev eth0
 ../../guestbin/ip.sh route show scope global | grep "192.1.33.254" && ip route del default via 192.1.33.254

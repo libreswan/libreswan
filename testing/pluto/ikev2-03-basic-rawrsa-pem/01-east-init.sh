@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 
 # scrub the nssdb (is there a swan-prep option?)
 rm /etc/ipsec.d/*.db

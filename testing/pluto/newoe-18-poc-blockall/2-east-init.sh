@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 cp policies/* /etc/ipsec.d/policies/
 echo "0.0.0.0/0"  >> /etc/ipsec.d/policies/block
 ipsec start

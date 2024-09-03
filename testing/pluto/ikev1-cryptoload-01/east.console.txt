@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
  ifconfig eth1:1 192.1.2.24 netmask 255.255.255.0
 east #

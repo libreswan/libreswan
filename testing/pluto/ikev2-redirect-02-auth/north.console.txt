@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 north #
  ifconfig eth0:1 192.0.2.254
 north #

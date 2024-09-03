@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ifconfig eth0 inet 192.1.3.174
 ../../guestbin/ip.sh route add default via 192.1.3.254
 ipsec start

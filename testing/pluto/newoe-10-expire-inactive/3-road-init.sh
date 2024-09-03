@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 cp policies/* /etc/ipsec.d/policies/
 ipsec start
 # ensure for tests acquires expire before our failureshunt=2m

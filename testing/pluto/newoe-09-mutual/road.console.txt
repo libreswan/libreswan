@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 road #
  echo 1 >/proc/sys/net/core/xfrm_acq_expires
 road #

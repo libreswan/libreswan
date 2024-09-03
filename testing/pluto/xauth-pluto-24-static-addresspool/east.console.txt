@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
  echo "xnorth:xOzlFlqtwJIu2:east-any:192.0.2.101" > /etc/ipsec.d/passwd
 east #

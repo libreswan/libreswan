@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ipsec pluto --config /etc/ipsec.conf --leak-detective
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits

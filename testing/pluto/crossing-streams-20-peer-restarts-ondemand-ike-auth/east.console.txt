@@ -4,7 +4,8 @@ east #
 east #
  #
 east #
- /testing/guestbin/swan-prep
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
  ipsec start
 Redirecting to: [initsystem]

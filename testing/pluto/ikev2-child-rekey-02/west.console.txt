@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  ../../guestbin/ip.sh address show dev eth0 | grep ip 192.0.100.254 || ../../guestbin/ip.sh address add 192.0.100.254/24 dev eth0
 grep: 192.0.100.254: No such file or directory

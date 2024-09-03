@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ip address del 192.0.1.254/24 dev eth0 >/dev/null
 ../../guestbin/ip.sh link set dev eth0 down 2>/dev/null
 ../../guestbin/ip.sh link set dev ipsec17 down 2>/dev/null

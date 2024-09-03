@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 road #
  # delete the address 192.1.33.209 before re-run. otherwise pluto may choose it.
 road #

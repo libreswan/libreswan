@@ -2,7 +2,8 @@
 192.0.2.254 via 192.1.3.254 dev eth1 src 192.1.3.33 uid 0
 RTNETLINK answers: No such process
 north #
- /testing/guestbin/swan-prep
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 north #
  ipsec start
 Redirecting to: [initsystem]

@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # confirm that the network is alive
 ../../guestbin/wait-until-alive 192.0.2.254
 # ensure that clear text does not get through

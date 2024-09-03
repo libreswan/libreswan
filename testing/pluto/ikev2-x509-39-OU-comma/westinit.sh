@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 rm -f /etc/ipsec.d/*.*
 ipsec initnss > /dev/null 2> /dev/null
 ipsec pk12util -i OUTPUT/nss/client.p12 -K 'foobar' -W 'foobar'

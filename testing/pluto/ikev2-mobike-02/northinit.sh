@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # second address on north 193.1.8.22. nic gw 192.1.8.254
 # delete the address 193.1.8.22 before re-run. otherwise pluto may choose it.
 ../../guestbin/ip.sh address show dev eth1 | grep 192.1.8.22 && ../../guestbin/ip.sh address del 192.1.8.22/24 dev eth1

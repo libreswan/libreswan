@@ -1,2 +1,2 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 echo "initdone"

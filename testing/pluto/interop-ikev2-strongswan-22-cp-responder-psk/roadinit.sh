@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # confirm that the network is alive
 ipsec start
 ../../guestbin/wait-until-pluto-started

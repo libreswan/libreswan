@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  ip tunnel add eth3 mode gre local 192.1.2.45 remote 192.1.2.23
 west #

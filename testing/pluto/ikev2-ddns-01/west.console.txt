@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  ../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
 /etc/hosts /tmp/hosts.west.ikev2-ddns-01 /etc/hosts

@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ../../guestbin/wait-until-alive 192.0.2.254
 iptables -A INPUT -i eth0 -s 192.0.2.254 -p icmp -j DROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT

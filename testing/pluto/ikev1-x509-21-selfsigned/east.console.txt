@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
  ipsec pk12util -W foobar -K '' -i /testing/x509/selfsigned/west-selfsigned.p12
 pk12util: no nickname for cert in PKCS12 file.

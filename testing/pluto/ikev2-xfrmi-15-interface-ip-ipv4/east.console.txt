@@ -5,7 +5,8 @@ east #
 192.0.3.254 via 192.1.2.254 dev eth1 src 192.1.2.23 uid 0
 RTNETLINK answers: No such process
 east #
- /testing/guestbin/swan-prep
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
  ipsec start
 Redirecting to: [initsystem]

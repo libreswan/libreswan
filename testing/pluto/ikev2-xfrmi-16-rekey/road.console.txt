@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 road #
  echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
 road #

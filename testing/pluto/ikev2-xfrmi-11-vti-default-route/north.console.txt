@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 north #
  ../../guestbin/ip.sh link set vti0 down 2>/dev/null && ../../guestbin/ip.sh link del vti0 2>/dev/null
 north #

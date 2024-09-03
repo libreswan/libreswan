@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # System Role deployment on nic will push configurations to our machine
 # into /etc/ipsec.d/
 rm -rf OUTPUT/east/ipsec.d

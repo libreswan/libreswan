@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 echo "xnorth:xOzlFlqtwJIu2:east-any:192.0.2.101" > /etc/ipsec.d/passwd
 echo "xroad:xOzlFlqtwJIu2:east-any:192.0.2.101-192.0.2.200" >> /etc/ipsec.d/passwd
 ipsec start

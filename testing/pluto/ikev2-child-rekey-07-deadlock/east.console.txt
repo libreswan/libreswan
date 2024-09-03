@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
  export EF_DISABLE_BANNER=1; ipsec pluto  --impair helper_thread_delay:5 --config /etc/ipsec.conf
 PATH/libexec/ipsec/pluto: impair: helper_thread_delay: no -> 5

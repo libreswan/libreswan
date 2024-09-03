@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 ../../guestbin/ip.sh link set ipsec2 down 2>/dev/null && ../../guestbin/ip.sh link del ipsec2 2>/dev/null
 ../../guestbin/ip.sh link set ipsec3 down 2>/dev/null && ../../guestbin/ip.sh link del ipsec3 2>/dev/null
 ipsec start

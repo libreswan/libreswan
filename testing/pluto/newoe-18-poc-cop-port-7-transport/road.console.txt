@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 road #
  cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 road #

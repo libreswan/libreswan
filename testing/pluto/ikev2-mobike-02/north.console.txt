@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 north #
  # second address on north 193.1.8.22. nic gw 192.1.8.254
 north #

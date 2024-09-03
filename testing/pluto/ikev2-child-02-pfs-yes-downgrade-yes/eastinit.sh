@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 
 ../../guestbin/ip.sh address add 192.0.200.254/24 dev eth0:1
 ../../guestbin/ip.sh address add 192.0.201.254/24 dev eth0:1

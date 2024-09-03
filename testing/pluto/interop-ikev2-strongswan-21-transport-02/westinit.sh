@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 ipsec start

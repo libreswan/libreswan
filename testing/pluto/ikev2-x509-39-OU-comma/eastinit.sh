@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 
 # Always zap and recreate special comma certs. Saved under OUTPUT/nss
 # and left waiting for clients (west et.al.) which an import using:
