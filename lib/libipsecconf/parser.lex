@@ -43,7 +43,6 @@ YY_DECL;
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */
 #include "ipsecconf/parser.h"	/* includes parser.tab.h */
-#include "ipsecconf/parserlast.h"
 #include "lswlog.h"
 #include "lswglob.h"
 #include "lswalloc.h"
@@ -296,6 +295,102 @@ static bool parser_y_eof(struct logger *logger)
 		stacktop = &ic_private.stack[ic_private.stack_ptr];
 	}
 	return false;
+}
+
+/*
+ * Look for one of the tokens, and set the value up right.
+ *
+ * If we don't find it, clone and return the string.
+ */
+
+static bool parse_leftright(const char *s,
+			    const struct keyword_def *k,
+			    const char *leftright)
+{
+	size_t split = strlen(leftright);
+	if (!strncaseeq(s, leftright, strlen(leftright))) {
+		return false;
+	}
+
+	/* allow <leftright>-; s[split] could be '\0' */
+	if (s[split] == '-') {
+		split++;
+	}
+	/* keyword matches? */
+	if (!strcaseeq(s + split, k->keyname)) {
+		return false;
+	}
+
+	/* success */
+	return true;
+}
+
+/* type is really "token" type, which is actually int */
+static int parser_find_keyword(const char *s, YYSTYPE *lval)
+{
+	bool left = false;
+	bool right = false;
+	int keywordtype;
+
+	(*lval) = (YYSTYPE) {0};
+
+	const struct keyword_def *k;
+	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
+		if (strcaseeq(s, k->keyname)) {
+			if ((k->validity & kv_both) == kv_both) {
+				left = true;
+				right = true;
+				break;
+			}
+			if (k->validity & kv_leftright) {
+#if 0 /* see github#663 */
+				left = true;
+#endif
+				right = true;
+			}
+			break;
+		}
+
+		if (k->validity & kv_leftright) {
+			left = parse_leftright(s, k, "left");
+			if (left) {
+				break;
+			}
+			right = parse_leftright(s, k, "right");
+			if (right) {
+				break;
+			}
+		}
+	}
+
+	/* if we found nothing */
+	if (k->keyname == NULL &&
+	    (s[0] == 'x' || s[0] == 'X') && (s[1] == '-' || s[1] == '_')) {
+		lval->s = clone_str(s, "X-s");
+		return COMMENT;
+	}
+
+	/* if we still found nothing */
+	if (k->keyname == NULL) {
+		lval->s = clone_str(s, "s");
+		return STRING;
+	}
+
+	switch (k->type) {
+	case kt_byte:
+	case kt_binary:
+	case kt_percent:
+	case kt_bool:
+	default:
+		keywordtype = KEYWORD;
+		break;
+	}
+
+	/* else, set up llval.k to point, and return KEYWORD */
+	lval->k.keydef = k;
+	lval->k.keyleft = left;
+	lval->k.keyright = right;
+	return keywordtype;
 }
 
 %}
