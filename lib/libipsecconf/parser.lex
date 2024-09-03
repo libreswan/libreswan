@@ -326,11 +326,10 @@ static bool parse_leftright(const char *s,
 }
 
 /* type is really "token" type, which is actually int */
-static int parser_find_keyword(const char *s, YYSTYPE *lval)
+static void parser_find_keyword(const char *s, YYSTYPE *lval, struct logger *logger)
 {
 	bool left = false;
 	bool right = false;
-	int keywordtype;
 
 	(*lval) = (YYSTYPE) {0};
 
@@ -365,25 +364,13 @@ static int parser_find_keyword(const char *s, YYSTYPE *lval)
 
 	/* if we still found nothing */
 	if (k->keyname == NULL) {
-		lval->s = clone_str(s, "s");
-		return STRING;
-	}
-
-	switch (k->type) {
-	case kt_byte:
-	case kt_binary:
-	case kt_percent:
-	case kt_bool:
-	default:
-		keywordtype = KEYWORD;
-		break;
+		parser_fatal(logger, /*errno*/0, "unrecognized keyword '%s'", s);
 	}
 
 	/* else, set up llval.k to point, and return KEYWORD */
 	lval->k.keydef = k;
 	lval->k.keyleft = left;
 	lval->k.keyright = right;
-	return keywordtype;
 }
 
 %}
@@ -516,7 +503,7 @@ static int parser_find_keyword(const char *s, YYSTYPE *lval)
 
 =			{ BEGIN VALUE; return EQUAL; }
 
-version			return VERSION;
+version			{ BEGIN VALUE; return VERSION; }
 
 config			return CONFIG;
 
@@ -524,7 +511,7 @@ setup			return SETUP;
 
 conn			{ BEGIN VALUE; return CONN; }
 
-include			return INCLUDE;
+include			{ BEGIN VALUE; return INCLUDE; }
 
 [Xx][_-][^\"= \t\n]+	{
 				yylval.s = clone_str(yytext, "X-s");
@@ -553,9 +540,9 @@ include			return INCLUDE;
 			}
 
 [^\"= \t\n]+		{
-				int tok = parser_find_keyword(yytext, &yylval);
+				parser_find_keyword(yytext, &yylval, logger);
 				BEGIN KEY;
-				return tok;
+				return KEYWORD;
 			}
 
 #.*			{ /* eat comment to end of line */ }
