@@ -204,6 +204,26 @@ void parser_warning(struct logger *logger, int error, const char *s, ...)
 	}
 }
 
+void parser_fatal(struct logger *logger, int error, const char *s, ...)
+{
+        struct logjam logjam;
+        struct jambuf *buf = jambuf_from_logjam(&logjam, logger, PLUTO_EXIT_FAIL,
+                                                NULL/*where*/, FATAL_STREAM);
+        {
+		jam(buf, "%s:%u: ",
+		    parser_cur_filename(),
+		    parser_cur_line());
+		va_list ap;
+		va_start(ap, s);
+		jam_va_list(buf, s, ap);
+		va_end(ap);
+		if (error > 0) {
+			jam_errno(buf, error);
+		}
+        }
+        fatal_logjam_to_logger(&logjam);
+}
+
 static const char *leftright(struct keyword *kw)
 {
 	if (kw->keyleft && !kw->keyright) {

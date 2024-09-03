@@ -326,7 +326,8 @@ static bool parse_leftright(const char *s,
 }
 
 /* type is really "token" type, which is actually int */
-static int parser_find_keyword(const char *s, YYSTYPE *lval)
+
+static int parser_find_keyword(const char *s, YYSTYPE *lval, struct logger *logger)
 {
 	bool left = false;
 	bool right = false;
@@ -372,8 +373,7 @@ static int parser_find_keyword(const char *s, YYSTYPE *lval)
 
 	/* if we still found nothing */
 	if (k->keyname == NULL) {
-		lval->s = clone_str(s, "s");
-		return STRING;
+		parser_fatal(logger, /*errno*/0, "unrecognized keyword '%s'", s);
 	}
 
 	switch (k->type) {
@@ -541,7 +541,7 @@ conn			{ BEGIN VALUE; return CONN; }
 include			return INCLUDE;
 
 [^\"= \t\n]+		{
-				int tok = parser_find_keyword(yytext, &yylval);
+				int tok = parser_find_keyword(yytext, &yylval, logger);
 				switch (tok) {
 				case COMMENT:
 					BEGIN COMMENT_KEY;
