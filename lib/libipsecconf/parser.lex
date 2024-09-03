@@ -363,13 +363,6 @@ static int parser_find_keyword(const char *s, YYSTYPE *lval)
 		}
 	}
 
-	/* if we found nothing */
-	if (k->keyname == NULL &&
-	    (s[0] == 'x' || s[0] == 'X') && (s[1] == '-' || s[1] == '_')) {
-		lval->s = clone_str(s, "X-s");
-		return COMMENT;
-	}
-
 	/* if we still found nothing */
 	if (k->keyname == NULL) {
 		lval->s = clone_str(s, "s");
@@ -457,15 +450,14 @@ static int parser_find_keyword(const char *s, YYSTYPE *lval)
 				return STRING;
 			}
 
-<KEY,COMMENT_KEY>[\t ]	/* eat blanks */
-<KEY,COMMENT_KEY>\n	{
+<KEY>[\t ]	/* eat blanks */
+<KEY>\n	{
 				/* missing equals? */
 				stacktop->line++;
 				BEGIN INITIAL;
 				return EOL;
 			}
 <KEY>=			{ BEGIN VALUE; return EQUAL; }
-<COMMENT_KEY>=		{ BEGIN COMMENT_VALUE; return EQUAL; }
 
 <VALUE>[\t ]		/* eat blanks (not COMMENT_VALUE) */
 <VALUE>\n		{
@@ -473,12 +465,6 @@ static int parser_find_keyword(const char *s, YYSTYPE *lval)
 				stacktop->line++;
 				BEGIN INITIAL;
 				return EOL;
-			}
-
-<COMMENT_VALUE>[^\n]*	{
-				yylval.s = clone_str(yytext, "comment-value");
-				BEGIN INITIAL;
-				return STRING;
 			}
 
 <VALUE>\"[^\"\n]*\"	{
@@ -540,16 +526,35 @@ conn			{ BEGIN VALUE; return CONN; }
 
 include			return INCLUDE;
 
+[Xx][_-][^\"= \t\n]+	{
+				yylval.s = clone_str(yytext, "X-s");
+				BEGIN COMMENT_KEY;
+				return COMMENT;
+			}
+<COMMENT_KEY>[\t ]	/* eat blanks */
+<COMMENT_KEY>=		{
+				BEGIN COMMENT_VALUE;
+				return EQUAL;
+			}
+<COMMENT_KEY>\n		{
+				/* missing equals? */
+				stacktop->line++;
+				BEGIN INITIAL;
+				return EOL;
+			}
+<COMMENT_VALUE>\n	{
+				BEGIN INITIAL;
+				return EOL;
+			}
+<COMMENT_VALUE>[^\n]*	{
+				yylval.s = clone_str(yytext, "comment-value");
+				BEGIN INITIAL;
+				return STRING;
+			}
+
 [^\"= \t\n]+		{
 				int tok = parser_find_keyword(yytext, &yylval);
-				switch (tok) {
-				case COMMENT:
-					BEGIN COMMENT_KEY;
-					break;
-				default:
-					BEGIN KEY;
-					break;
-				}
+				BEGIN KEY;
 				return tok;
 			}
 

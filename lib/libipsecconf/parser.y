@@ -161,17 +161,6 @@ statement_kw:
 		const char *value = $3.keydef->keyname;
 		parser_kw(&kw, value, logger);
 	}
-	| COMMENT EQUAL {
-		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=", $1);
-		/* free strings allocated by lexer */
-		pfreeany($1);
-	}
-	| COMMENT EQUAL STRING {
-		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=%s", $1, $3);
-		/* free strings allocated by lexer */
-		pfreeany($1);
-		pfreeany($3);
-	}
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
 		const char *string = $3;
@@ -182,6 +171,23 @@ statement_kw:
 	| KEYWORD EQUAL {
 		struct keyword kw = $1;
 		parser_kw(&kw, "", logger);
+	}
+
+	| COMMENT EQUAL STRING {
+		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=%s", $1, $3);
+		/* free strings allocated by lexer */
+		pfreeany($1);
+		pfreeany($3);
+	}
+	| COMMENT EQUAL {
+		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=", $1);
+		/* free strings allocated by lexer */
+		pfreeany($1);
+	}
+	| COMMENT {
+		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s", $1);
+		/* free strings allocated by lexer */
+		pfreeany($1);
 	}
 	;
 %%
