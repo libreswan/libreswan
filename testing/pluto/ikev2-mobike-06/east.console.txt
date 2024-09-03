@@ -40,29 +40,5 @@ src 192.0.3.10/32 dst 0.0.0.0/0
 src 192.0.3.10/32 dst 0.0.0.0/0
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
-src 192.1.2.23/32 dst 192.1.2.129/32
-	dir out priority PRIORITY ptype main
-src 192.1.2.23/32 dst 192.1.2.130/32
-	dir out priority PRIORITY ptype main
-src 192.1.2.23/32 dst 192.1.2.254/32
-	dir out priority PRIORITY ptype main
-src 192.1.2.129/32 dst 192.1.2.23/32
-	dir fwd priority PRIORITY ptype main
-src 192.1.2.129/32 dst 192.1.2.23/32
-	dir in priority PRIORITY ptype main
-src 192.1.2.130/32 dst 192.1.2.23/32
-	dir fwd priority PRIORITY ptype main
-src 192.1.2.130/32 dst 192.1.2.23/32
-	dir in priority PRIORITY ptype main
-src 192.1.2.254/32 dst 192.1.2.23/32
-	dir fwd priority PRIORITY ptype main
-src 192.1.2.254/32 dst 192.1.2.23/32
-	dir in priority PRIORITY ptype main
-src 192.0.1.0/24 dst 192.1.2.23/32
-	dir fwd priority PRIORITY ptype main
-src 192.0.1.0/24 dst 192.1.2.23/32
-	dir in priority PRIORITY ptype main
-src 192.1.2.23/32 dst 192.0.1.0/24
-	dir out priority PRIORITY ptype main
 east #
  
