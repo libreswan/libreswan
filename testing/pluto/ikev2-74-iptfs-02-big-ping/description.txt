@@ -1,0 +1,2 @@
+A simple pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+send a large ping -s 2000 from west over the IP-TFS tunnel.
