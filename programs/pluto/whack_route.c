@@ -37,11 +37,6 @@ static unsigned maybe_route_connection(struct connection *c)
 	}
 
 	if (c->routing.state == RT_UNROUTED) {
-#ifdef USE_XFRM_INTERFACE
-		if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-			if (!add_xfrm_interface(c, c->logger))
-				return 0;
-#endif
 		/* both install policy and route connection */
 		connection_route(c, HERE);
 		return 1; /* counted */

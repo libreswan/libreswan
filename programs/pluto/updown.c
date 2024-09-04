@@ -509,6 +509,16 @@ bool do_updown(enum updown updown_verb,
 		bad_case(updown_verb);
 	}
 
+#ifdef USE_XFRM_INTERFACE
+	if (c->xfrmi != NULL && c->xfrmi->if_id != 0) {
+		if(updown_verb == UPDOWN_ROUTE) {
+			if(!add_xfrm_interface(c, logger))
+				return false;
+		} else if(updown_verb == UPDOWN_UNROUTE) {
+			remove_xfrm_interface(c, logger);
+		}
+	}
+#endif
 	/*
 	 * Support for skipping updown, eg leftupdown="".  Useful on
 	 * busy servers that do not need to use updown for anything.

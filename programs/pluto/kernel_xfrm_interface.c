@@ -336,7 +336,7 @@ static int ip_addr_xfrmi_del(const char *if_name,
 
 /* Get the IP used for the XFRMi IF from the connection.
  * Return an ip_cidr object if found, unset_cidr otherwise. */
-static ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *logger)
+static ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger)
 {
 	const struct child_end_config *child_config = &(c->config->end[LEFT_END].child);
 
@@ -485,7 +485,7 @@ static void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi, struct pluto_xfrmi_ipa
 	    refcnt_peek(xfrmi_ipaddr, &global_logger));
 }
 
-static void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
+static void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 {
 	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
 	if (conn_xfrmi_cidr.is_set == false) {
@@ -1156,7 +1156,7 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 }
 
 /* Only called by add_xfrm_interface() */
-static bool add_xfrm_interface_ip(struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
+static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
 {
 	/* Get the existing referenced IP, or create it if it doesn't exist */
 	struct pluto_xfrmi_ipaddr *refd_xfrmi_ipaddr =
@@ -1249,7 +1249,7 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 }
 
 /* Return true on success, false on failure */
-bool add_xfrm_interface(struct connection *c, struct logger *logger)
+bool add_xfrm_interface(const struct connection *c, struct logger *logger)
 {
 	struct verbose verbose = {
 		.logger = logger,
@@ -1297,6 +1297,13 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 	}
 
 	return (ip_link_set_up(c->xfrmi->name, logger) == XFRMI_SUCCESS);
+}
+
+void remove_xfrm_interface(const struct connection *c, struct logger *logger)
+{
+	PASSERT(logger, c->xfrmi != NULL);
+
+	unreference_xfrmi_ip(c, logger);
 }
 
 /* at start call this to see if there are any stale interface lying around. */
@@ -1360,8 +1367,6 @@ void unreference_xfrmi(struct connection *c)
 	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
 	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
 	     refcnt_peek(c->xfrmi, c->logger));
-
-	unreference_xfrmi_ip(c, logger);
 
 	struct pluto_xfrmi *xfrmi = delref_where(&c->xfrmi, logger, HERE);
 	if (xfrmi != NULL) {

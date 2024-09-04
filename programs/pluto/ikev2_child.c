@@ -433,13 +433,6 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 * ipsec_sa, but that will give us a "eroute in use"
 	 * error.
 	 */
-#ifdef USE_XFRM_INTERFACE
-	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0) {
-		if (!add_xfrm_interface(cc, larval_child->sa.logger)) {
-			return v2N_TEMPORARY_FAILURE; /* fatal */
-		}
-	}
-#endif
 
 	/* re-check IKE, child about to be updated */
 	pexpect(ike->sa.st_connection->established_ike_sa == ike->sa.st_serialno);
@@ -852,18 +845,6 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	}
 
 	ikev2_derive_child_keys(ike, child);
-
-#ifdef USE_XFRM_INTERFACE
-	/* before calling do_command() */
-	if (child->sa.st_state->kind != STATE_V2_REKEY_CHILD_I1) {
-		if (c->xfrmi != NULL &&
-		    c->xfrmi->if_id != 0) {
-			if (!add_xfrm_interface(c, child->sa.logger)) {
-				return v2N_TEMPORARY_FAILURE; /* delete child */
-			}
-		}
-	}
-#endif
 
 	/* now install child SAs */
 	if (!connection_establish_child(ike, child, HERE)) {
