@@ -1,3 +1,6 @@
+/testing/guestbin/swan-prep
+west #
+ valgrind --quiet $(ipsec -n _enumcheck)
   ah_transformid_names: [2..253)
     2 -> IKEv1_AH_MD5
          jam_enum 2: IKEv1_AH_MD5 OK
@@ -119,7 +122,6 @@
          jam_enum_short 252: SHA2_256_TRUNCBUG OK
          jam_enum_human 252: sha2-256-truncbug OK
          match SHA2_256_TRUNCBUG [short]: OK
-
   allow_global_redirect_names: [1..4)
     1 -> no
          jam_enum 1: no OK
@@ -142,7 +144,6 @@
          short_name 3: auto OK
          jam_enum_short 3: auto OK
          jam_enum_human 3: auto OK
-
   attr_msg_type_names: [1..5)
     1 -> ISAKMP_CFG_REQUEST
          jam_enum 1: ISAKMP_CFG_REQUEST OK
@@ -172,7 +173,6 @@
          short_name 4: ISAKMP_CFG_ACK OK
          jam_enum_short 4: ISAKMP_CFG_ACK OK
          jam_enum_human 4: isakmp-cfg-ack OK
-
   auth_alg_names: [0..253)
     0 -> AUTH_ALGORITHM_NONE
          jam_enum 0: AUTH_ALGORITHM_NONE OK
@@ -310,7 +310,6 @@
          jam_enum_short 252: HMAC_SHA2_256_TRUNCBUG OK
          jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
-
   certpolicy_type_names: [1..4)
     1 -> CERT_NEVERSEND
          jam_enum 1: CERT_NEVERSEND OK
@@ -336,7 +335,6 @@
          jam_enum_short 3: ALWAYSSEND OK
          jam_enum_human 3: alwayssend OK
          match ALWAYSSEND [short]: OK
-
   connection_event_kind_names: [1..2)
     1 -> CONNECTION_REVIVAL
          jam_enum 1: CONNECTION_REVIVAL OK
@@ -346,7 +344,6 @@
          jam_enum_short 1: REVIVAL OK
          jam_enum_human 1: revival OK
          match REVIVAL [short]: OK
-
   connection_kind_names: [0..8)
     0 -> CK_INVALID
          jam_enum 0: CK_INVALID OK
@@ -412,7 +409,6 @@
          jam_enum_short 7: LABELED_CHILD OK
          jam_enum_human 7: labeled-child OK
          match LABELED_CHILD [short]: OK
-
   connection_owner_names: [0..5)
     0 -> routing_sa
          jam_enum 0: routing_sa OK
@@ -449,7 +445,6 @@
          short_name 4: established_child_sa OK
          jam_enum_short 4: established_child_sa OK
          jam_enum_human 4: established-child-sa OK
-
   dns_auth_level_names: [1..4)
     1 -> PUBKEY_LOCAL
          jam_enum 1: PUBKEY_LOCAL OK
@@ -472,7 +467,6 @@
          short_name 3: DNSSEC_SECURE OK
          jam_enum_short 3: DNSSEC_SECURE OK
          jam_enum_human 3: dnssec-secure OK
-
   doi_names: [0..2)
     0 -> ISAKMP_DOI_ISAKMP
          jam_enum 0: ISAKMP_DOI_ISAKMP OK
@@ -488,7 +482,6 @@
          short_name 1: ISAKMP_DOI_IPSEC OK
          jam_enum_short 1: ISAKMP_DOI_IPSEC OK
          jam_enum_human 1: isakmp-doi-ipsec OK
-
   eap_code_names: [1..5)
     1 -> EAP_CODE_REQUEST
          jam_enum 1: EAP_CODE_REQUEST OK
@@ -522,7 +515,6 @@
          jam_enum_short 4: FAILURE OK
          jam_enum_human 4: failure OK
          match FAILURE [short]: OK
-
   eaptls_flag_names: [5..8)
     5 -> EAPTLS_FLAG_START
          jam_enum 5: EAPTLS_FLAG_START OK
@@ -548,7 +540,6 @@
          jam_enum_short 7: LENGTH OK
          jam_enum_human 7: length OK
          match LENGTH [short]: OK
-
   eap_type_names: [13..14)
    13 -> EAP_TYPE_TLS
          jam_enum 13: EAP_TYPE_TLS OK
@@ -558,7 +549,6 @@
          jam_enum_short 13: TLS OK
          jam_enum_human 13: tls OK
          match TLS [short]: OK
-
   encap_mode_names: [2..4)
     2 -> ENCAP_MODE_TRANSPORT
          jam_enum 2: ENCAP_MODE_TRANSPORT OK
@@ -576,7 +566,6 @@
          jam_enum_short 3: TUNNEL OK
          jam_enum_human 3: tunnel OK
          match TUNNEL [short]: OK
-
   encap_mode_story: [2..4)
     2 -> transport
          jam_enum 2: transport OK
@@ -592,7 +581,6 @@
          short_name 3: tunnel OK
          jam_enum_short 3: tunnel OK
          jam_enum_human 3: tunnel OK
-
   encap_proto_names: [1..3)
     1 -> ENCAP_PROTO_ESP
          jam_enum 1: ENCAP_PROTO_ESP OK
@@ -610,7 +598,6 @@
          jam_enum_short 2: AH OK
          jam_enum_human 2: ah OK
          match AH [short]: OK
-
   encap_proto_story: [1..3)
     1 -> esp
          jam_enum 1: esp OK
@@ -626,7 +613,6 @@
          short_name 2: ah OK
          jam_enum_short 2: ah OK
          jam_enum_human 2: ah OK
-
   encapsulation_mode_names: [1(0)..61445(256))
     1 -> ENCAPSULATION_MODE_TUNNEL
          jam_enum 1: ENCAPSULATION_MODE_TUNNEL OK
@@ -660,7 +646,6 @@
          jam_enum_short 4: UDP_TRANSPORT_RFC OK
          jam_enum_human 4: udp-transport-rfc OK
          match UDP_TRANSPORT_RFC [short]: OK
-
   encap_type_names: [1..5)
     1 -> ENCAP_TYPE_TRAP
          jam_enum 1: ENCAP_TYPE_TRAP OK
@@ -676,7 +661,7 @@
          match ENCAP_TYPE_IPSEC: OK
          short_name 2: IPSEC OK
          jam_enum_short 2: IPSEC OK
-         jam_enum_human 2: ipsec OK
+         jam_enum_human X: ipsec OK
          match IPSEC [short]: OK
     3 -> ENCAP_TYPE_PASS
          jam_enum 3: ENCAP_TYPE_PASS OK
@@ -694,7 +679,6 @@
          jam_enum_short 4: DROP OK
          jam_enum_human 4: drop OK
          match DROP [short]: OK
-
   esp_transformid_names: [1..254)
     1 -> IKEv1_ESP_DES_IV64
          jam_enum 1: IKEv1_ESP_DES_IV64 OK
@@ -944,7 +928,6 @@
          jam_enum_short 253: TWOFISH OK
          jam_enum_human 253: twofish OK
          match TWOFISH [short]: OK
-
   event_type_names: [0..23)
     0 -> EVENT_NULL
          jam_enum 0: EVENT_NULL OK
@@ -1130,7 +1113,6 @@
          jam_enum_short 22: RETAIN OK
          jam_enum_human 22: retain OK
          match RETAIN [short]: OK
-
   fips_mode_names: [1..3)
     1 -> FIPS_MODE_OFF
          jam_enum 1: FIPS_MODE_OFF OK
@@ -1148,7 +1130,6 @@
          jam_enum_short 2: ON OK
          jam_enum_human 2: on OK
          match ON [short]: OK
-
   global_timer_names: [0..7)
     0 -> EVENT_REINIT_SECRET
          jam_enum 0: EVENT_REINIT_SECRET OK
@@ -1206,7 +1187,6 @@
          jam_enum_short 6: RESET_LOG_LIMITER OK
          jam_enum_human 6: reset-log-limiter OK
          match RESET_LOG_LIMITER [short]: OK
-
   ike_cert_type_names: [1..11)
     1 -> CERT_PKCS7_WRAPPED_X509
          jam_enum 1: CERT_PKCS7_WRAPPED_X509 OK
@@ -1288,7 +1268,6 @@
          jam_enum_short 10: X509_ATTRIBUTE OK
          jam_enum_human 10: x509-attribute OK
          match X509_ATTRIBUTE [short]: OK
-
   ike_id_type_names: [0..14)
     0 -> %none
          jam_enum 0: %none OK
@@ -1389,7 +1368,6 @@
          jam_enum_short 13: ID_NULL OK
          jam_enum_human 13: id-null OK
 name for -1 present (should be absent)
-
   ikev1_exchange_names: [0..34)
     0 -> ISAKMP_XCHG_NONE
          jam_enum 0: ISAKMP_XCHG_NONE OK
@@ -1463,7 +1441,6 @@ name for -1 present (should be absent)
          jam_enum_short 33: NGRP OK
          jam_enum_human 33: ngrp OK
          match NGRP [short]: OK
-
   ikev1_ike_id_type_names: [1..14)
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
@@ -1556,7 +1533,6 @@ name for -1 present (should be absent)
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
          jam_enum_human 13: id-null OK
-
   ikev1_ipsec_attr_names: [1..32002)
     1 -> SA_LIFE_TYPE
          jam_enum 1: SA_LIFE_TYPE OK
@@ -1663,7 +1639,6 @@ name for -1 present (should be absent)
          short_name 32001: SECCTX OK
          jam_enum_short 32001: SECCTX OK
          jam_enum_human 32001: secctx OK
-
   ikev1_payload_names: [0..133)
     0 -> ISAKMP_NEXT_NONE
          jam_enum 0: ISAKMP_NEXT_NONE OK
@@ -1873,7 +1848,6 @@ name for -1 present (should be absent)
          jam_enum_short 132: IKE_FRAGMENTATION OK
          jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
-
   ikev1_protocol_names: [0..5)
     0 -> PROTO_RESERVED
          jam_enum 0: PROTO_RESERVED OK
@@ -1910,7 +1884,6 @@ name for -1 present (should be absent)
          short_name 4: PROTO_IPCOMP OK
          jam_enum_short 4: PROTO_IPCOMP OK
          jam_enum_human 4: proto-ipcomp OK
-
   ikev1_xauth_type_names: [0..4)
     0 -> IKEv1_XAUTH_TYPE_GENERIC
          jam_enum 0: IKEv1_XAUTH_TYPE_GENERIC OK
@@ -1944,7 +1917,6 @@ name for -1 present (should be absent)
          jam_enum_short 3: SKEY OK
          jam_enum_human 3: skey OK
          match SKEY [short]: OK
-
   ikev2_auth_method_names: [0..15)
     0 -> IKEv2_AUTH_RESERVED
          jam_enum 0: IKEv2_AUTH_RESERVED OK
@@ -2026,7 +1998,6 @@ name for -1 present (should be absent)
          jam_enum_short 14: DIGITAL_SIGNATURE OK
          jam_enum_human 14: digital-signature OK
          match DIGITAL_SIGNATURE [short]: OK
-
   ikev2_cert_type_names: [1..16)
     1 -> CERT_PKCS7_WRAPPED_X509
          jam_enum 1: CERT_PKCS7_WRAPPED_X509 OK
@@ -2140,7 +2111,6 @@ name for -1 present (should be absent)
          jam_enum_short 15: RAW_PUBLIC_KEY OK
          jam_enum_human 15: raw-public-key OK
          match RAW_PUBLIC_KEY [short]: OK
-
   ikev2_cp_attribute_type_names: [0..27)
     0 -> IKEv2_CP_ATTR_RESERVED
          jam_enum 0: IKEv2_CP_ATTR_RESERVED OK
@@ -2310,7 +2280,6 @@ name for -1 present (should be absent)
          short_name 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_short 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_human 26: ikev2-internal-dnssec-ta OK
-
   ikev2_cp_type_names: [1..5)
     1 -> IKEv2_CP_CFG_REQUEST
          jam_enum 1: IKEv2_CP_CFG_REQUEST OK
@@ -2340,7 +2309,6 @@ name for -1 present (should be absent)
          short_name 4: IKEv2_CP_CFG_ACK OK
          jam_enum_short 4: IKEv2_CP_CFG_ACK OK
          jam_enum_human 4: ikev2-cp-cfg-ack OK
-
   ikev2_delete_protocol_id_names: [1..4)
     1 -> IKEv2_SEC_PROTO_IKE
          jam_enum 1: IKEv2_SEC_PROTO_IKE OK
@@ -2366,7 +2334,6 @@ name for -1 present (should be absent)
          jam_enum_short 3: ESP OK
          jam_enum_human 3: esp OK
          match ESP [short]: OK
-
   ikev2_exchange_names: [34..45)
    34 -> ISAKMP_v2_IKE_SA_INIT
          jam_enum 34: ISAKMP_v2_IKE_SA_INIT OK
@@ -2448,7 +2415,6 @@ name for -1 present (should be absent)
          jam_enum_short 44: IKE_FOLLOWUP_KE OK
          jam_enum_human 44: ike-followup-ke OK
          match IKE_FOLLOWUP_KE [short]: OK
-
   ikev2_hash_algorithm_names: [0..6)
     0 -> IKEv2_HASH_ALGORITHM_RESERVED
          jam_enum 0: IKEv2_HASH_ALGORITHM_RESERVED OK
@@ -2498,7 +2464,6 @@ name for -1 present (should be absent)
          jam_enum_short 5: IDENTITY OK
          jam_enum_human 5: identity OK
          match IDENTITY [short]: OK
-
   ikev2_ike_id_type_names: [1..14)
     1 -> ID_IPV4_ADDR
          jam_enum 1: ID_IPV4_ADDR OK
@@ -2563,7 +2528,6 @@ name for -1 present (should be absent)
          short_name 13: ID_NULL OK
          jam_enum_short 13: ID_NULL OK
          jam_enum_human 13: id-null OK
-
   ikev2_last_proposal_desc: [0..3)
     0 -> v2_PROPOSAL_LAST
          jam_enum 0: v2_PROPOSAL_LAST OK
@@ -2579,7 +2543,6 @@ name for -1 present (should be absent)
          short_name 2: v2_PROPOSAL_NON_LAST OK
          jam_enum_short 2: v2_PROPOSAL_NON_LAST OK
          jam_enum_human 2: v2-proposal-non-last OK
-
   ikev2_last_transform_desc: [0..4)
     0 -> v2_TRANSFORM_LAST
          jam_enum 0: v2_TRANSFORM_LAST OK
@@ -2595,7 +2558,6 @@ name for -1 present (should be absent)
          short_name 3: v2_TRANSFORM_NON_LAST OK
          jam_enum_short 3: v2_TRANSFORM_NON_LAST OK
          jam_enum_human 3: v2-transform-non-last OK
-
   ikev2_notify_protocol_id_names: [0..4)
     0 -> IKEv2_SEC_PROTO_NONE
          jam_enum 0: IKEv2_SEC_PROTO_NONE OK
@@ -2629,7 +2591,6 @@ name for -1 present (should be absent)
          jam_enum_short 3: ESP OK
          jam_enum_human 3: esp OK
          match ESP [short]: OK
-
   ikev2_payload_names: [0..133)
     0 -> ISAKMP_NEXT_v2NONE
          jam_enum 0: ISAKMP_NEXT_v2NONE OK
@@ -2815,7 +2776,6 @@ name for -1 present (should be absent)
          jam_enum_short 132: IKE_FRAGMENTATION OK
          jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
-
   ikev2_ppk_id_type_names: [1..3)
     1 -> PPK_ID_OPAQUE
          jam_enum 1: PPK_ID_OPAQUE OK
@@ -2833,7 +2793,6 @@ name for -1 present (should be absent)
          jam_enum_short 2: FIXED OK
          jam_enum_human 2: fixed OK
          match FIXED [short]: OK
-
   ikev2_proposal_protocol_id_names: [1..6)
     1 -> IKEv2_SEC_PROTO_IKE
          jam_enum 1: IKEv2_SEC_PROTO_IKE OK
@@ -2873,7 +2832,6 @@ name for -1 present (should be absent)
          short_name 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          jam_enum_short 5: IKEv2_SEC_FC_CT_AUTHENTICATION OK
          jam_enum_human 5: ikev2-sec-fc-ct-authentication OK
-
   ikev2_redirect_gw_names: [1..4)
     1 -> GW_IPv4
          jam_enum 1: GW_IPv4 OK
@@ -2899,7 +2857,6 @@ name for -1 present (should be absent)
          jam_enum_short 3: FQDN OK
          jam_enum_human 3: fqdn OK
          match FQDN [short]: OK
-
   ikev2_trans_attr_descs: [32782..32783)
   32782 -> IKEv2_KEY_LENGTH
          jam_enum 32782: IKEv2_KEY_LENGTH OK
@@ -2908,7 +2865,6 @@ name for -1 present (should be absent)
          short_name 32782: IKEv2_KEY_LENGTH OK
          jam_enum_short 32782: IKEv2_KEY_LENGTH OK
          jam_enum_human 32782: ikev2-key-length OK
-
   ikev2_trans_type_encr_names: [1..65290)
     1 -> IKEv2_ENCR_DES_IV64
          jam_enum 1: IKEv2_ENCR_DES_IV64 OK
@@ -3134,7 +3090,6 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-
   ikev2_trans_type_esn_names: [0..2)
     0 -> IKEv2_ESN_NO
          jam_enum 0: IKEv2_ESN_NO OK
@@ -3152,7 +3107,6 @@ name for -1 present (should be absent)
          jam_enum_short 1: YES OK
          jam_enum_human 1: yes OK
          match YES [short]: OK
-
   ikev2_trans_type_integ_names: [0..15)
     0 -> IKEv2_INTEG_NONE
          jam_enum 0: IKEv2_INTEG_NONE OK
@@ -3274,7 +3228,6 @@ name for -1 present (should be absent)
          jam_enum_short 14: HMAC_SHA2_512_256 OK
          jam_enum_human 14: hmac-sha2-512-256 OK
          match HMAC_SHA2_512_256 [short]: OK
-
   ikev2_trans_type_names: [1..6)
     1 -> IKEv2_TRANS_TYPE_ENCR
          jam_enum 1: IKEv2_TRANS_TYPE_ENCR OK
@@ -3316,7 +3269,6 @@ name for -1 present (should be absent)
          jam_enum_short 5: ESN OK
          jam_enum_human 5: esn OK
          match ESN [short]: OK
-
   ikev2_trans_type_prf_names: [1..9)
     1 -> IKEv2_PRF_HMAC_MD5
          jam_enum 1: IKEv2_PRF_HMAC_MD5 OK
@@ -3382,7 +3334,6 @@ name for -1 present (should be absent)
          jam_enum_short 8: AES128_CMAC OK
          jam_enum_human 8: aes128-cmac OK
          match AES128_CMAC [short]: OK
-
   ikev2_ts_type_names: [7..11)
     7 -> IKEv2_TS_IPV4_ADDR_RANGE
          jam_enum 7: IKEv2_TS_IPV4_ADDR_RANGE OK
@@ -3412,7 +3363,6 @@ name for -1 present (should be absent)
          short_name 10: IKEv2_TS_SECLABEL OK
          jam_enum_short 10: IKEv2_TS_SECLABEL OK
          jam_enum_human 10: ikev2-ts-seclabel OK
-
   ike_version_names: [0..3)
     0 -> <do-not-negotiate>
          jam_enum 0: <do-not-negotiate> OK
@@ -3437,7 +3387,6 @@ name for -1 present (should be absent)
          jam_enum_short 2: v2 OK
          jam_enum_human 2: v2 OK
          match v2 [short]: OK
-
   initiated_by_names: [0..8)
     0 -> INITIATED_BY_UNKNOWN
          jam_enum 0: INITIATED_BY_UNKNOWN OK
@@ -3503,7 +3452,6 @@ name for -1 present (should be absent)
          jam_enum_short 7: PEER OK
          jam_enum_human 7: peer OK
          match PEER [short]: OK
-
   ip_protocol_id_names: [0..18)
     0 -> ALL
          jam_enum 0: ALL OK
@@ -3533,7 +3481,6 @@ name for -1 present (should be absent)
          short_name 17: UDP OK
          jam_enum_short 17: UDP OK
          jam_enum_human 17: udp OK
-
   ipsec_attr_names: [2..64770)
     2 -> SA_LIFE_DURATION (variable length)
          jam_enum 2: SA_LIFE_DURATION (variable length) OK
@@ -3672,7 +3619,6 @@ name for -1 present (should be absent)
          short_name 64769: SECCTX OK
          jam_enum_short 64769: SECCTX OK
          jam_enum_human 64769: secctx OK
-
   ipsec_ipcomp_algo_names: [0..5)
     0 -> IPCOMP_NONE
          jam_enum 0: IPCOMP_NONE OK
@@ -3714,7 +3660,6 @@ name for -1 present (should be absent)
          jam_enum_short 4: LZJH OK
          jam_enum_human 4: lzjh OK
          match LZJH [short]: OK
-
   ipseckey_algorithm_config_names: [2..5)
     2 -> rsasigkey
          jam_enum 2: rsasigkey OK
@@ -3737,7 +3682,6 @@ name for -1 present (should be absent)
          short_name 4: pubkey OK
          jam_enum_short 4: pubkey OK
          jam_enum_human 4: pubkey OK
-
   ipseckey_algorithm_type_names: [1..5)
     1 -> IPSECKEY_ALGORITHM_DSA
          jam_enum 1: IPSECKEY_ALGORITHM_DSA OK
@@ -3771,7 +3715,6 @@ name for -1 present (should be absent)
          jam_enum_short 4: X_PUBKEY OK
          jam_enum_human 4: x-pubkey OK
          match X_PUBKEY [short]: OK
-
   isakmp_flag_names: [0..8)
     0 -> ISAKMP_FLAG_v1_ENCRYPTION
          jam_enum 0: ISAKMP_FLAG_v1_ENCRYPTION OK
@@ -3829,7 +3772,6 @@ name for -1 present (should be absent)
          short_name 7: ISAKMP_FLAG_MSG_RESERVED_BIT7 OK
          jam_enum_short 7: ISAKMP_FLAG_MSG_RESERVED_BIT7 OK
          jam_enum_human 7: isakmp-flag-msg-reserved-bit7 OK
-
   isakmp_transformid_names: [1..2)
     1 -> KEY_IKE
          jam_enum 1: KEY_IKE OK
@@ -3838,7 +3780,6 @@ name for -1 present (should be absent)
          short_name 1: KEY_IKE OK
          jam_enum_short 1: KEY_IKE OK
          jam_enum_human 1: key-ike OK
-
   isakmp_xchg_type_names: [0..45)
     0 -> ISAKMP_XCHG_NONE
          jam_enum 0: ISAKMP_XCHG_NONE OK
@@ -3983,7 +3924,6 @@ name for -1 present (should be absent)
          jam_enum_short 44: IKE_FOLLOWUP_KE OK
          jam_enum_human 44: ike-followup-ke OK
          match IKE_FOLLOWUP_KE [short]: OK
-
   kernel_mode_names: [1..3)
     1 -> KERNEL_MODE_TRANSPORT
          jam_enum 1: KERNEL_MODE_TRANSPORT OK
@@ -4001,7 +3941,6 @@ name for -1 present (should be absent)
          jam_enum_short 2: TUNNEL OK
          jam_enum_human 2: tunnel OK
          match TUNNEL [short]: OK
-
   kernel_mode_stories: [1..3)
     1 -> Transport Mode
          jam_enum 1: Transport Mode OK
@@ -4017,7 +3956,6 @@ name for -1 present (should be absent)
          short_name 2: Tunnel Mode OK
          jam_enum_short 2: Tunnel Mode OK
          jam_enum_human 2: tunnel mode OK
-
   keyword_auth_names: [0..7)
     0 -> unset
          jam_enum 0: unset OK
@@ -4068,7 +4006,6 @@ name for -1 present (should be absent)
          short_name 6: eaponly OK
          jam_enum_short 6: eaponly OK
          jam_enum_human 6: eaponly OK
-
   keyword_host_names: [0..256)
     0 -> KH_NOTSET
          jam_enum 0: KH_NOTSET OK
@@ -4142,7 +4079,6 @@ name for -1 present (should be absent)
          jam_enum_short 255: IPADDR OK
          jam_enum_human 255: ipaddr OK
          match IPADDR [short]: OK
-
   message_role_names: [0..3)
     0 -> NO_MESSAGE
          jam_enum 0: NO_MESSAGE OK
@@ -4167,7 +4103,6 @@ name for -1 present (should be absent)
          jam_enum_short 2: RESPONSE OK
          jam_enum_human 2: response OK
          match RESPONSE [short]: OK
-
   modecfg_attr_names: [1..28684)
     1 -> INTERNAL_IP4_ADDRESS
          jam_enum 1: INTERNAL_IP4_ADDRESS OK
@@ -4482,7 +4417,6 @@ name for -1 present (should be absent)
          short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
-
   natt_method_names: [0..4)
     0 -> none
          jam_enum 0: none OK
@@ -4513,7 +4447,6 @@ name for -1 present (should be absent)
          short_name 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_short 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_human 3: rfc 3947 (nat-traversal) OK
-
   oakley_attr_bit_names: [1..17)
     1 -> OAKLEY_ENCRYPTION_ALGORITHM
          jam_enum 1: OAKLEY_ENCRYPTION_ALGORITHM OK
@@ -4627,7 +4560,6 @@ name for -1 present (should be absent)
          short_name 16: OAKLEY_GROUP_ORDER OK
          jam_enum_short 16: OAKLEY_GROUP_ORDER OK
          jam_enum_human 16: oakley-group-order OK
-
   oakley_attr_names: [6..32785)
     6 -> OAKLEY_GROUP_PRIME (variable length)
          jam_enum 6: OAKLEY_GROUP_PRIME (variable length) OK
@@ -4797,7 +4729,6 @@ name for -1 present (should be absent)
          short_name 32784: OAKLEY_GROUP_ORDER OK
          jam_enum_short 32784: OAKLEY_GROUP_ORDER OK
          jam_enum_human 32784: oakley-group-order OK
-
   oakley_auth_names: [1..65011)
     1 -> OAKLEY_PRESHARED_KEY
          jam_enum 1: OAKLEY_PRESHARED_KEY OK
@@ -4961,7 +4892,6 @@ name for -1 present (should be absent)
          short_name 65010: XAUTHRespRSARevisedEncryption OK
          jam_enum_short 65010: XAUTHRespRSARevisedEncryption OK
          jam_enum_human 65010: xauthresprsarevisedencryption OK
-
   oakley_enc_names: [1..65290)
     1 -> OAKLEY_DES_CBC
          jam_enum 1: OAKLEY_DES_CBC OK
@@ -5155,7 +5085,6 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-
   oakley_group_names: [0..33)
     0 -> OAKLEY_GROUP_NONE
          jam_enum 0: OAKLEY_GROUP_NONE OK
@@ -5421,7 +5350,6 @@ name for -1 present (should be absent)
          jam_enum_short 32: CURVE448 OK
          jam_enum_human 32: curve448 OK
          match CURVE448 [short]: OK
-
   oakley_hash_names: [1..7)
     1 -> OAKLEY_MD5
          jam_enum 1: OAKLEY_MD5 OK
@@ -5471,7 +5399,6 @@ name for -1 present (should be absent)
          jam_enum_short 6: SHA2_512 OK
          jam_enum_human 6: sha2-512 OK
          match SHA2_512 [short]: OK
-
   oakley_lifetime_names: [1..3)
     1 -> OAKLEY_LIFE_SECONDS
          jam_enum 1: OAKLEY_LIFE_SECONDS OK
@@ -5487,7 +5414,6 @@ name for -1 present (should be absent)
          short_name 2: OAKLEY_LIFE_KILOBYTES OK
          jam_enum_short 2: OAKLEY_LIFE_KILOBYTES OK
          jam_enum_human 2: oakley-life-kilobytes OK
-
   payload_names_ikev1orv2: [0..133)
     0 -> ISAKMP_NEXT_NONE
          jam_enum 0: ISAKMP_NEXT_NONE OK
@@ -5821,7 +5747,6 @@ name for -1 present (should be absent)
          jam_enum_short 132: IKE_FRAGMENTATION OK
          jam_enum_human 132: ike-fragmentation OK
          match IKE_FRAGMENTATION [short]: OK
-
   perspective_names: [0..3)
     0 -> NO_PERSPECTIVE
          jam_enum 0: NO_PERSPECTIVE OK
@@ -5844,7 +5769,6 @@ name for -1 present (should be absent)
          short_name 2: REMOTE_PERSPECTIVE OK
          jam_enum_short 2: REMOTE_PERSPECTIVE OK
          jam_enum_human 2: remote-perspective OK
-
   pluto_exit_code_names: [0..128)
     0 -> PLUTO_EXIT_OK
          jam_enum 0: PLUTO_EXIT_OK OK
@@ -5966,7 +5890,6 @@ name for -1 present (should be absent)
          jam_enum_short 127: SHELL_COMMAND_NOT_EXECUTABLE OK
          jam_enum_human 127: shell-command-not-executable OK
          match SHELL_COMMAND_NOT_EXECUTABLE [short]: OK
-
   sa_lifetime_names: [1..3)
     1 -> SA_LIFE_TYPE_SECONDS
          jam_enum 1: SA_LIFE_TYPE_SECONDS OK
@@ -5982,7 +5905,6 @@ name for -1 present (should be absent)
          short_name 2: SA_LIFE_TYPE_KBYTES OK
          jam_enum_short 2: SA_LIFE_TYPE_KBYTES OK
          jam_enum_human 2: sa-life-type-kbytes OK
-
   sa_policy_bit_names: [0..4)
     0 -> POLICY_ENCRYPT
          jam_enum 0: POLICY_ENCRYPT OK
@@ -6016,7 +5938,6 @@ name for -1 present (should be absent)
          jam_enum_short 3: TUNNEL OK
          jam_enum_human 3: tunnel OK
          match TUNNEL [short]: OK
-
   sa_role_names: [1..3)
     1 -> SA_INITIATOR
          jam_enum 1: SA_INITIATOR OK
@@ -6032,7 +5953,6 @@ name for -1 present (should be absent)
          short_name 2: SA_RESPONDER OK
          jam_enum_short 2: SA_RESPONDER OK
          jam_enum_human 2: sa-responder OK
-
   sa_type_names: [0..2)
     0 -> IKE_SA
          jam_enum 0: IKE_SA OK
@@ -6048,7 +5968,6 @@ name for -1 present (should be absent)
          short_name 1: CHILD_SA OK
          jam_enum_short 1: CHILD_SA OK
          jam_enum_human 1: child-sa OK
-
   sd_action_names: [1..7)
     1 -> action: exit
          jam_enum 1: action: exit OK
@@ -6092,7 +6011,6 @@ name for -1 present (should be absent)
          short_name 6: action: stopping OK
          jam_enum_short 6: action: stopping OK
          jam_enum_human 6: action: stopping OK
-
   secret_kind_names: [1..8)
     1 -> SECRET_PSK
          jam_enum 1: SECRET_PSK OK
@@ -6150,7 +6068,6 @@ name for -1 present (should be absent)
          jam_enum_short 7: INVALID OK
          jam_enum_human 7: invalid OK
          match INVALID [short]: OK
-
   shunt_kind_names: [0..7)
     0 -> SHUNT_KIND_NONE
          jam_enum 0: SHUNT_KIND_NONE OK
@@ -6190,7 +6107,7 @@ name for -1 present (should be absent)
          match SHUNT_KIND_IPSEC: OK
          short_name 4: IPSEC OK
          jam_enum_short 4: IPSEC OK
-         jam_enum_human 4: ipsec OK
+         jam_enum_human X: ipsec OK
          match IPSEC [short]: OK
     5 -> SHUNT_KIND_FAILURE
          jam_enum 5: SHUNT_KIND_FAILURE OK
@@ -6208,7 +6125,6 @@ name for -1 present (should be absent)
          jam_enum_short 6: BLOCK OK
          jam_enum_human 6: block OK
          match BLOCK [short]: OK
-
   shunt_policy_names: [0..8)
     0 -> SHUNT_UNSET
          jam_enum 0: SHUNT_UNSET OK
@@ -6224,7 +6140,7 @@ name for -1 present (should be absent)
          match SHUNT_IPSEC: OK
          short_name 1: IPSEC OK
          jam_enum_short 1: IPSEC OK
-         jam_enum_human 1: ipsec OK
+         jam_enum_human X: ipsec OK
          match IPSEC [short]: OK
     2 -> SHUNT_NONE
          jam_enum 2: SHUNT_NONE OK
@@ -6274,7 +6190,6 @@ name for -1 present (should be absent)
          jam_enum_short 7: REJECT OK
          jam_enum_human 7: reject OK
          match REJECT [short]: OK
-
   shunt_policy_percent_names: [0..8)
     0 -> <shunt-unset>
          jam_enum 0: <shunt-unset> OK
@@ -6331,7 +6246,6 @@ name for -1 present (should be absent)
          jam_enum_short 7: reject OK
          jam_enum_human 7: reject OK
          match reject [short]: OK
-
   sit_bit_names: [0..3)
     0 -> SIT_IDENTITY_ONLY
          jam_enum 0: SIT_IDENTITY_ONLY OK
@@ -6354,7 +6268,6 @@ name for -1 present (should be absent)
          short_name 2: SIT_INTEGRITY OK
          jam_enum_short 2: SIT_INTEGRITY OK
          jam_enum_human 2: sit-integrity OK
-
   state_category_names: [0..8)
     0 -> unknown
          jam_enum 0: unknown OK
@@ -6412,7 +6325,6 @@ name for -1 present (should be absent)
          short_name 7: ignore OK
          jam_enum_short 7: ignore OK
          jam_enum_human 7: ignore OK
-
   stf_status_names: [0..10)
     0 -> STF_SKIP_COMPLETE_STATE_TRANSITION
          jam_enum 0: STF_SKIP_COMPLETE_STATE_TRANSITION OK
@@ -6484,7 +6396,6 @@ name for -1 present (should be absent)
          short_name 9: STF_FAIL_v1N OK
          jam_enum_short 9: STF_FAIL_v1N OK
          jam_enum_human 9: stf-fail-v1n OK
-
   v1_notification_names: [1..40504)
     1 -> v1N_INVALID_PAYLOAD_TYPE
          jam_enum 1: v1N_INVALID_PAYLOAD_TYPE OK
@@ -6740,7 +6651,7 @@ name for -1 present (should be absent)
          match v1N_IPSEC_RESPONDER_LIFETIME: OK
          short_name 24576: IPSEC_RESPONDER_LIFETIME OK
          jam_enum_short 24576: IPSEC_RESPONDER_LIFETIME OK
-         jam_enum_human 24576: ipsec-responder-lifetime OK
+         jam_enum_human X: ipsec-responder-lifetime OK
          match IPSEC_RESPONDER_LIFETIME [short]: OK
   24577 -> v1N_IPSEC_REPLAY_STATUS
          jam_enum 24577: v1N_IPSEC_REPLAY_STATUS OK
@@ -6748,7 +6659,7 @@ name for -1 present (should be absent)
          match v1N_IPSEC_REPLAY_STATUS: OK
          short_name 24577: IPSEC_REPLAY_STATUS OK
          jam_enum_short 24577: IPSEC_REPLAY_STATUS OK
-         jam_enum_human 24577: ipsec-replay-status OK
+         jam_enum_human X: ipsec-replay-status OK
          match IPSEC_REPLAY_STATUS [short]: OK
   24578 -> v1N_IPSEC_INITIAL_CONTACT
          jam_enum 24578: v1N_IPSEC_INITIAL_CONTACT OK
@@ -6756,7 +6667,7 @@ name for -1 present (should be absent)
          match v1N_IPSEC_INITIAL_CONTACT: OK
          short_name 24578: IPSEC_INITIAL_CONTACT OK
          jam_enum_short 24578: IPSEC_INITIAL_CONTACT OK
-         jam_enum_human 24578: ipsec-initial-contact OK
+         jam_enum_human X: ipsec-initial-contact OK
          match IPSEC_INITIAL_CONTACT [short]: OK
   30000 -> v1N_ISAKMP_N_CISCO_HELLO
          jam_enum 30000: v1N_ISAKMP_N_CISCO_HELLO OK
@@ -6846,7 +6757,6 @@ name for -1 present (should be absent)
          jam_enum_short 40503: ISAKMP_N_CISCO_PRESHARED_KEY_HASH OK
          jam_enum_human 40503: isakmp-n-cisco-preshared-key-hash OK
          match ISAKMP_N_CISCO_PRESHARED_KEY_HASH [short]: OK
-
   v2_notification_names: [1..40961)
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
          jam_enum 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
@@ -7334,7 +7244,7 @@ name for -1 present (should be absent)
          match v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED: OK
          short_name 16421: IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
          jam_enum_short 16421: IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED OK
-         jam_enum_human 16421: ipsec-replay-counter-sync-supported OK
+         jam_enum_human X: ipsec-replay-counter-sync-supported OK
          match IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED [short]: OK
   16422 -> v2N_IKEV2_MESSAGE_ID_SYNC
          jam_enum 16422: v2N_IKEV2_MESSAGE_ID_SYNC OK
@@ -7350,7 +7260,7 @@ name for -1 present (should be absent)
          match v2N_IPSEC_REPLAY_COUNTER_SYNC: OK
          short_name 16423: IPSEC_REPLAY_COUNTER_SYNC OK
          jam_enum_short 16423: IPSEC_REPLAY_COUNTER_SYNC OK
-         jam_enum_human 16423: ipsec-replay-counter-sync OK
+         jam_enum_human X: ipsec-replay-counter-sync OK
          match IPSEC_REPLAY_COUNTER_SYNC [short]: OK
   16424 -> v2N_SECURE_PASSWORD_METHODS
          jam_enum 16424: v2N_SECURE_PASSWORD_METHODS OK
@@ -7512,7 +7422,6 @@ name for -1 present (should be absent)
          jam_enum_short 40960: NULL_AUTH OK
          jam_enum_human 40960: null-auth OK
          match NULL_AUTH [short]: OK
-
   version_names: [16..33)
    16 -> ISAKMP Version 1.0 (rfc2407)
          jam_enum 16: ISAKMP Version 1.0 (rfc2407) OK
@@ -7530,7 +7439,6 @@ name for -1 present (should be absent)
          short_name 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_short 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_human 32: ikev2 version 2.0 (rfc4306/rfc5996) OK
-
   xauth_attr_names: [16520..28684)
   16520 -> IKEv1_ATTR_XAUTH_TYPE
          jam_enum 16520: IKEv1_ATTR_XAUTH_TYPE OK
@@ -7712,7 +7620,6 @@ name for -1 present (should be absent)
          short_name 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_short 28683: CISCO_UNKNOWN_SEEN_ON_IPHONE OK
          jam_enum_human 28683: cisco-unknown-seen-on-iphone OK
-
   xfrm_policy_names: [0..3)
     0 -> XFRM_POLICY_IN
          jam_enum 0: XFRM_POLICY_IN OK
@@ -7738,7 +7645,6 @@ name for -1 present (should be absent)
          jam_enum_short 2: FWD OK
          jam_enum_human 2: fwd OK
          match FWD [short]: OK
-
 IKEv2 transforms:
          enum_enum_name 1 3: IKEv2_ENCR_3DES OK
          enum_name table 3: OK
@@ -7754,8 +7660,9 @@ IKEv2 transforms:
          enum_name table 65536: OK
          jam_enum_enum 2 65536: IKEv2_PRF_65536 OK
          jam_enum_enum_short 2 65536: IKEv2_PRF_65536 OK
-
 jam_enum_lset_short:
-
   debug 24:
 	<<cpu-usage+crypt>>
+ipsec _enumcheck: leak detective found no leaks
+west #
+ 

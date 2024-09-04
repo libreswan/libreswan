@@ -1,30 +1,5 @@
 /testing/guestbin/swan-prep
 west #
- # Check the enum name tables
-west #
- #
-west #
- # Use CMP not DIFF.  When there's a difference, the output from diff
-west #
- # mixed in with the output from comparing console.txt files looks too
-west #
- # much like console.txt needs updating when it doesn't.
-west #
- #
-west #
- # To update OUTPUT.enumcheck.txt run something like:
-west #
- # $ ./OBJ.linux.x86_64/testing/enumcheck/enumcheck > testing/enumcheck/OUTPUT.enumcheck.txt
-west #
- # $ git diff
-west #
- valgrind --quiet $(ipsec -n _enumcheck) > OUTPUT/enumcheck.out || echo "Enum check barfed"
-ipsec _enumcheck: leak detective found no leaks
-west #
- cmp ../../programs/_enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
-west #
- # other checks
-west #
  valgrind --quiet $(ipsec -n _jambufcheck) > /dev/null || echo failed
 ipsec _jambufcheck: leak detective found no leaks
 west #
