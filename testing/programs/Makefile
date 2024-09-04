@@ -17,18 +17,18 @@ include ../../mk/dirs.mk
 endif
 include $(top_srcdir)/mk/config.mk
 
-SUBDIRS += _enumcheck
-SUBDIRS += _ipcheck
-SUBDIRS += _jambufcheck
-SUBDIRS += _timecheck
-SUBDIRS += _hunkcheck
-SUBDIRS += _dncheck
-SUBDIRS += _keyidcheck
-SUBDIRS += _ttodatacheck
+SUBDIRS += enumcheck
+SUBDIRS += ipcheck
+SUBDIRS += jambufcheck
+SUBDIRS += timecheck
+SUBDIRS += hunkcheck
+SUBDIRS += dncheck
+SUBDIRS += keyidcheck
+SUBDIRS += ttodatacheck
 ifeq ($(USE_LABELED_IPSEC),true)
-SUBDIRS += _getpeercon_server
+SUBDIRS += getpeercon_server
 endif
-SUBDIRS += _asn1check
-SUBDIRS += _vendoridcheck
+SUBDIRS += asn1check
+SUBDIRS += vendoridcheck
 
 include $(top_srcdir)/mk/targets.mk
