@@ -526,20 +526,21 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
         util_pw = ""
         p12cmd_pw = " -K ''"
 
-    if args.x509keys:
-        print("Preparing X.509 files")
-        #print("Creating NSS database containing X.509 keys and certificates")
-        shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
-    elif args.hostkeys:
+    if args.hostkeys:
         # This brings in the pre-generated nss *.db files that contain
         # raw host keys.  Basic testing tends to use pre-shared keys
         # and not these files.
         print("Creating NSS database containing host keys")
-        shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir, dirs_exist_ok=True)
-        if not args.namespace:
-            dbfiles = glob.glob(nssdir + "/*db")
-            for dbfile in dbfiles:
-                os.chown(dbfile, 0, 0)
+        for dbfile in ("cert9.db", "key4.db"):
+            src = os.path.join("/testing/baseconfigs", hostname, "etc/ipsec.d", dbfile)
+            dst = os.path.join(nssdir, dbfile)
+            shutil.copyfile(src, dst)
+            if not args.namespace:
+                os.chown(dst, 0, 0)
+    elif args.x509keys:
+        print("Preparing X.509 files")
+        #print("Creating NSS database containing X.509 keys and certificates")
+        shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
     elif args.nokeys:
         print("Creating empty NSS database")
         shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
