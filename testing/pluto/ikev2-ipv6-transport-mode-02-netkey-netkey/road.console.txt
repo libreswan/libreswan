@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep --46
+/testing/guestbin/swan-prep --46 --hostkeys
+Creating NSS database containing host keys
 road #
  # confirm that the network is alive
 road #

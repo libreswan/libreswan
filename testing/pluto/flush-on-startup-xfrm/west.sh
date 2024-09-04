@@ -1,4 +1,4 @@
-../../guestbin/swan-prep --46
+../../guestbin/swan-prep --46 --nokeys
 
 # https://www.sobyte.net/post/2022-10/ipsec-ip-xfrm/
 # add a policy + state

@@ -14,15 +14,14 @@ secrets file: /etc/ipsec.secrets
 Initializing NSS using read-write database "sql:/etc/ipsec.d"
 FATAL ERROR: NSS: initialization using read-only database "sql:/etc/ipsec.d" failed: SEC_ERROR_BAD_DATABASE: security library: bad database.
 west #
- #
-west #
  # rhbz#1041576 start pluto in dir not owned by root
 west #
  # should not fail with "pluto: unable to create lock dir:"
 west #
  # not using /tmp or /var/tmp/ due to specialness of parent dir in test
 west #
- /testing/guestbin/swan-prep
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  rm -rf /var/cache/otheruser
 west #

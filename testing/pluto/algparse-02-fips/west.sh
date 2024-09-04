@@ -1,4 +1,4 @@
-../../guestbin/swan-prep --fips
+../../guestbin/swan-prep --fips --nokeys
 
 # Run the parser tests.
 

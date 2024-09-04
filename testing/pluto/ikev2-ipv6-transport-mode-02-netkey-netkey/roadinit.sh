@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --46
+/testing/guestbin/swan-prep --46 --hostkeys
 # confirm that the network is alive
 ping6 -n -q -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
 ip6tables -A INPUT -i eth0 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j DROP

@@ -1,5 +1,4 @@
 /testing/guestbin/swan-prep --fips
-Password changed successfully.
 FIPS mode enabled.
 east #
  rm /etc/ipsec.d/*db

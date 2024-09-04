@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --46
+/testing/guestbin/swan-prep --46 --hostkeys
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
 # ensure that clear text does not get through

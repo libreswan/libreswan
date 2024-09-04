@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --46
+/testing/guestbin/swan-prep --46 --hostkeys
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP

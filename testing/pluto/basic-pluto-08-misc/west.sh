@@ -3,11 +3,11 @@ mkdir /tmp/rhbz1313816
 rm -f /etc/ipsec.d/*.*
 # should abort, not crash, due to missing nss
 ipsec pluto --rundir /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
-#
+
 # rhbz#1041576 start pluto in dir not owned by root
 # should not fail with "pluto: unable to create lock dir:"
 # not using /tmp or /var/tmp/ due to specialness of parent dir in test
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 rm -rf /var/cache/otheruser
 mkdir -p /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
 cp /etc/ipsec.d/*.* /var/cache/otheruser/etc/

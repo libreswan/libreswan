@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --fips
+/testing/guestbin/swan-prep --fips --nokeys
 rm /etc/ipsec.d/*db
 ipsec initnss > /dev/null 2> /dev/null
 ipsec pk12util -i /testing/x509/strongswan/strongWest.p12 -w /testing/x509/nss-pw -k /testing/x509/nss-pw
