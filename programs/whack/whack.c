@@ -560,6 +560,7 @@ enum option_enums {
 	CD_COMPRESS,
 	CD_TUNNEL,
 	CD_TRANSPORT,
+	CD_IPTFS,
 	CD_ENCRYPT,
 	CD_AUTHENTICATE,
 	CD_INITIATEONTRAFFIC,
@@ -1848,6 +1849,10 @@ int main(int argc, char **argv)
 
 		case CD_TRANSPORT:	/* --transport */
 			msg.type = KS_TRANSPORT;
+			continue;
+
+		case CD_IPTFS:	/* --iptfs */
+			msg.type = KS_IPTFS;
 			continue;
 
 		case CD_ENCRYPT:	/* --encrypt */

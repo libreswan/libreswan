@@ -136,6 +136,7 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 	ip_selector remote_route;
 	switch (kernel_mode) {
 	case KERNEL_MODE_TUNNEL:
+	case KERNEL_MODE_IPTFS:
 		remote_route = spd->remote->client;
 		break;
 	case KERNEL_MODE_TRANSPORT:

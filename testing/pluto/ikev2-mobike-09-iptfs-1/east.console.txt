@@ -1,0 +1,42 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add eastnet-northnet
+"eastnet-northnet": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+#2: "eastnet-northnet"[1] 192.1.8.22, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='192.1.3.33'
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.8.22 dst 192.1.2.23
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.8.22
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ ip xfrm policy
+src 192.0.2.0/24 dst 192.0.3.0/24 
+	dir out priority PRIORITY ptype main 
+	tmpl src 192.1.2.23 dst 192.1.8.22
+src 192.0.3.0/24 dst 192.0.2.0/24 
+	dir fwd priority PRIORITY ptype main 
+	tmpl src 192.1.8.22 dst 192.1.2.23
+src 192.0.3.0/24 dst 192.0.2.0/24 
+	dir in priority PRIORITY ptype main 
+	tmpl src 192.1.8.22 dst 192.1.2.23
+east #
+ 

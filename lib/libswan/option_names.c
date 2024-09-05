@@ -170,6 +170,7 @@ const struct sparse_names type_option_names = {
 	.list = {
 		SPARSE("tunnel",      KS_TUNNEL),
 		SPARSE("transport",   KS_TRANSPORT),
+		SPARSE("iptfs",       KS_IPTFS),
 		SPARSE("pass",        KS_PASSTHROUGH),
 		SPARSE("passthrough", KS_PASSTHROUGH),
 		SPARSE("reject",      KS_REJECT),

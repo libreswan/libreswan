@@ -163,6 +163,7 @@ struct kernel_state {
 	uint64_t sa_ipsec_max_packets;
 	uint64_t sa_max_soft_packets;
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
+	struct pluto_iptfs iptfs;
 };
 
 /*
@@ -304,6 +305,7 @@ struct kernel_ops {
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
+	err_t (*iptfs_is_enabled)(const struct kernel_state *sa, struct logger *);
 };
 
 extern int create_socket(const struct kernel_iface *ifp, const char *v_name, int port, int proto);
@@ -425,4 +427,5 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 struct spd_owner spd_owner(const struct spd *spd, enum routing new_routing,
 			   struct logger *logger, where_t where);
 
+err_t kernel_iptfs_query(struct logger *logger);
 #endif

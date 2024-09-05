@@ -332,6 +332,14 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.replay_window = conn->options[KNCF_REPLAY_WINDOW]; /*has default*/
 	msg.ipsec_interface = conn->strings[KSCF_IPSEC_INTERFACE];
 
+	msg.iptfs.out_size = conn->options[KNCF_IPTFS_OUT_SIZE];
+	msg.iptfs.out_max_delay = conn->options[KNCF_IPTFS_OUT_MAX_DELAY];
+	msg.iptfs.out_queue = conn->options[KNCF_IPTFS_OUT_QUEUE];
+	msg.iptfs.out_frag = conn->options[KNCF_IPTFS_OUT_FRAGMENT];
+
+	msg.iptfs.in_rewin = conn->options[KNCF_IPTFS_IN_REWIN];
+	msg.iptfs.in_drop_time = conn->options[KNCF_IPTFS_IN_REWIN];
+
 	msg.retransmit_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
 	msg.retransmit_timeout = deltatime_ms(conn->options[KNCF_RETRANSMIT_TIMEOUT_MS]);
 
