@@ -463,7 +463,7 @@ if hostname != "nic":
     xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
     pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
     chapfile = "%s/chap-secrets" % testpath
-    xauthpasswd = "/testing/baseconfigs/%s/etc/ipsec.d/passwd" % hostname
+    xauthpasswd = "%s/%s.passwd" % (testpath, hostname)
 
     if os.path.isfile(xl2tpdconf):
         lsw_cp_file(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf", nsbasepath=nsbasepath)
@@ -472,7 +472,7 @@ if hostname != "nic":
     if os.path.isfile(chapfile):
         lsw_cp_file(chapfile, "/etc/ppp/chap-secrets", nsbasepath=nsbasepath)
     if os.path.isfile(xauthpasswd):
-        lsw_cp_file(xauthpasswd, ipsecdir, nsbasepath=nsbasepath)
+        lsw_cp_file(xauthpasswd, "/etc/ipsec.d/passwd", nsbasepath=nsbasepath)
 
     # restore /etc/hosts to original - some tests make changes
     lsw_cp_file("/testing/baseconfigs/all/etc/hosts", "/etc/hosts", nsbasepath=nsbasepath)
