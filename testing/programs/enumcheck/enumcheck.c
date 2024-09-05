@@ -368,6 +368,8 @@ int main(int argc UNUSED, char *argv[])
 	/* don't hold back */
 	setbuf(stdout, NULL);
 
+	init_enum_names();
+
 	for (const struct enum_names_check *c = enum_names_checklist;
 	     c->name != NULL && c->enum_names != NULL; c++) {
 		if (c->enum_names == &encapsulation_mode_names) {

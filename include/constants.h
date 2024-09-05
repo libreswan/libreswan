@@ -314,8 +314,6 @@ size_t jam_enum_enum_short(struct jambuf *log, enum_enum_names *een,
 /* XXX: assumes enums are 8-bits!?! */
 #define LOOSE_ENUM_OTHER 255
 
-extern void init_constants(void);
-
 #include "ietf_constants.h"
 #include "pluto_constants.h"
 #include "names_constant.h"

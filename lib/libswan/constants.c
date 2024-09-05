@@ -2665,9 +2665,3 @@ const enum_names event_type_names = {
 	"EVENT_", /* prefix */
 	&event_v2_names,
 };
-
-void init_constants(void)
-{
-	check_enum_names(enum_names_checklist);
-	check_enum_enum_names(enum_enum_names_checklist);
-}

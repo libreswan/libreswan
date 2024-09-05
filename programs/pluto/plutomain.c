@@ -78,6 +78,7 @@
 #include "iface.h"		/* for pluto_listen; */
 #include "server_pool.h"
 #include "show.h"
+#include "enum_names.h"		/* for init_enum_names() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1660,7 +1661,7 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
 	}
 
-	init_constants();
+	init_enum_names();
 	init_pluto_constants();
 
 #ifdef USE_IKEv1
