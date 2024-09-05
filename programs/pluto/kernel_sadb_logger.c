@@ -380,9 +380,9 @@ void llog_sadb_protocol(lset_t rc_flags, struct logger *logger,
 {
 	JAM_HEADER_SADB(sadb_protocol);
 
-	JAM_SPARSE_SPARSE(sadb_protocol_proto_names, m->sadb_protocol_exttype,
+	JAM_SPARSE_SPARSE(&sadb_protocol_proto_names, m->sadb_protocol_exttype,
 			  sadb_protocol, proto);
-	JAM_SPARSE(sadb_protocol_direction_names, sadb_protocol, direction);
+	JAM_SPARSE(&sadb_protocol_direction_names, sadb_protocol, direction);
 	JAM(u8, sadb_protocol, flags);
 	JAM_RAW(sadb_protocol, reserved2);
 

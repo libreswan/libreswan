@@ -322,12 +322,14 @@ const struct sparse_names sadb_policyflag_names = {
 };
 
 #ifdef SADB_X_EXT_PROTOCOL
-sparse_sparse_names sadb_protocol_proto_names = {
+const struct sparse_sparse_names sadb_protocol_proto_names = {
+	.list = {
 #ifdef SADB_X_EXT_FLOW_TYPE
-	{ SADB_X_EXT_FLOW_TYPE, sadb_x_flow_type_names, },
+		{ SADB_X_EXT_FLOW_TYPE, &sadb_x_flow_type_names, },
 #endif
-	{ SADB_X_EXT_PROTOCOL, ipsec_proto_names, },
-	{ 0, NULL, },
+		{ SADB_X_EXT_PROTOCOL, &ipsec_proto_names, },
+		{ 0, NULL, },
+	},
 };
 #endif
 
