@@ -17,6 +17,9 @@ east #
 "east"[1] 192.1.2.254 #1: ESTABLISHED_IKE_SA: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 east #
  ../../guestbin/wait-for-pluto.sh --match 'ESP traffic information'
-"east"[1] 192.1.2.254 #2: ESP traffic information: in=84B out=84B
+"east"[1] 192.1.2.254 #2: ESP traffic information: in=168B out=168B
+east #
+ ../../guestbin/wait-for-pluto.sh --match 'deleting connection instance with peer'
+"east"[1] 192.1.2.254: deleting connection instance with peer 192.1.2.254
 east #
  

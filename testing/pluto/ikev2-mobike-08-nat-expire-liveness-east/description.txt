@@ -1,12 +1,23 @@
 IKEv2 connection through NAT that expires; liveness=EAST
 
-To simulate the expire, NIC changes its NAT mapping.
+- ROAD establishes with EAST, a ping is exchanged.
 
-mobike={yes,no,nat} should no effect on this test.
+- to simulate the expire, NIC changes its NAT mapping.
 
-EAST will send liveness requests to the expired PORT which NIC
-ignores.  Eventually this will timeout causing EAST to terminate the
-connection (no delete exchange).
+- ROAD tries to send a further ping but gets no response:
 
-ROAD will be left hanging.
-mobike={yes,no,nat} should no effect on this test.
+  NIC NATs the outbound ESP packet with the NEW NAT port; EAST accepts
+  the packet even though the source port is wrong; EAST sends the ESP
+  response to the OLD NAT port (kernel state out-of-date); NIC drops
+  the packet as the OLD NAT port is invalid.
+
+- EAST sends a liveness probe to the OLD expired port
+
+  NIC drops the packet as the port is invalid.  Eventually EAST's
+  liveness probe times out causing it to terminate the connection (no
+  delete exchange initiated as the exchange window is full).
+
+- Since ROAD is not performing liveness probes it will never detect
+  the failure and instead will be left hanging.
+
+  Hence, mobike={yes,no,nat} should no effect on this test.
