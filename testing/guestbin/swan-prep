@@ -11,12 +11,8 @@ import pexpect
 import glob
 from pathlib import Path
 import re
-
-try:
-    import argparse
-except ImportError as e:
-    module = str(e)[16:]
-    sys.exit("we requires the python argparse module")
+import argparse
+from enum import Enum
 
 test_hosts = ["east", "west", "road", "north", "nic"]
 
@@ -223,11 +219,21 @@ parser.add_argument('--userland', '-u', action='store',
 parser.add_argument('--strongswan-version', action='store',
                     default='', help='strongswan version expect')
 
-parser.add_argument('--nokeys', action='store_true',
+class Keys(Enum):
+    X509 = 'x509'
+    HOST = 'host'
+    NONE = 'none'
+parser.add_argument('--keys',
+                    choices=[Keys.X509, Keys.HOST, Keys.NONE], default=None,
+                    help='create an NSS database containing X.509, host, or no keys')
+parser.add_argument('--nokeys',
+                    action='store_const', dest='keys', const=Keys.NONE,
                     help='create an empty NSS database')
-parser.add_argument('--hostkeys', action='store_true',
+parser.add_argument('--hostkeys',
+                    action='store_const', dest='keys', const=Keys.HOST,
                     help="create an NSS database containing the host keys")
-parser.add_argument('--x509keys', '-x', '--x509', action='store_true',
+parser.add_argument('--x509keys', '-x', '--x509',
+                    action='store_const', dest='keys', const=Keys.X509,
                     help='create an NSS database containing X.509 certificates and private keys')
 
 nsspassword="s3cret"
@@ -526,31 +532,25 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
         util_pw = ""
         p12cmd_pw = " -K ''"
 
-    if args.hostkeys:
-        # This brings in the pre-generated nss *.db files that contain
-        # raw host keys.  Basic testing tends to use pre-shared keys
-        # and not these files.
-        print("Creating NSS database containing host keys")
-        for dbfile in ("cert9.db", "key4.db"):
-            src = os.path.join("/testing/baseconfigs", hostname, "etc/ipsec.d", dbfile)
-            dst = os.path.join(nssdir, dbfile)
-            shutil.copyfile(src, dst)
-            if not args.namespace:
-                os.chown(dst, 0, 0)
-    elif args.x509keys:
-        print("Preparing X.509 files")
-        #print("Creating NSS database containing X.509 keys and certificates")
-        shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
-    elif args.nokeys:
-        print("Creating empty NSS database")
-        shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
-    else:
-        # legacy; bring in existing host keys.
-        shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, nssdir, dirs_exist_ok=True)
-        if not args.namespace:
-            dbfiles = glob.glob(nssdir + "/*db")
-            for dbfile in dbfiles:
-                os.chown(dbfile, 0, 0)
+    match args.keys:
+        case Keys.HOST:
+            # This brings in the pre-generated nss *.db files that contain
+            # raw host keys.  Basic testing tends to use pre-shared keys
+            # and not these files.
+            print("Creating NSS database containing host keys")
+            for dbfile in ("cert9.db", "key4.db"):
+                src = os.path.join("/testing/baseconfigs", hostname, "etc/ipsec.d", dbfile)
+                dst = os.path.join(nssdir, dbfile)
+                shutil.copyfile(src, dst)
+                if not args.namespace:
+                    os.chown(dst, 0, 0)
+        case Keys.X509:
+            print("Preparing X.509 files")
+            #print("Creating NSS database containing X.509 keys and certificates")
+            shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
+        case Keys.NONE:
+            print("Creating empty NSS database")
+            shell("/usr/bin/certutil -N --empty-password -d sql:" + nssdir)
 
     # If needed set a password (this will upgrade any existing
     # database)
@@ -565,7 +565,7 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
         shell("/usr/bin/modutil -dbdir sql:" + nssdir + " -fips true -force", out=True)
 
     # this section is getting rough. could use a nice refactoring
-    if args.x509keys:
+    if args.keys == Keys.X509:
 
         if not os.path.isfile("/testing/x509/keys/mainca.key"):
             print("\n\n---------------------------------------------------------------------\n"
@@ -648,7 +648,7 @@ if args.fips:
     shell("/testing/guestbin/fipson")
 
 # Strong swan has simple files.
-if userland == "strongswan" and args.x509keys:
+if userland == "strongswan" and args.keys == Keys.X509:
     if args.eccert:
         ca = "curveca"
         key = hostname + "-ec"
