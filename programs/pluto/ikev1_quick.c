@@ -167,8 +167,7 @@ static bool emit_subnet_id(enum perspective perspective,
 	struct pbs_out id_pbs;
 
 	enum ike_id_type idtype =
-		(perspective == REMOTE_PERSPECTIVE &&
-		 impair.v1_remote_quick_id.enabled ? (int)impair.v1_remote_quick_id.value :
+		(perspective == REMOTE_PERSPECTIVE && impair.v1_remote_quick_id.enabled ? (int)impair.v1_remote_quick_id.value :
 		 usehost ? ai->id_ip_addr :
 		 ai->id_ip_addr_subnet);
 
@@ -749,16 +748,40 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 
 	/* [ IDci, IDcr ] out */
 	if (has_client) {
-		/* IDci (we are initiator), then IDcr (peer is responder) */
-		if (!emit_subnet_id(LOCAL_PERSPECTIVE,
-				    selector_subnet(c->spd->local->client),
-				    c->spd->local->client.ipproto,
-				    c->spd->local->client.hport, &rbody) ||
-		    !emit_subnet_id(REMOTE_PERSPECTIVE,
-				    selector_subnet(c->spd->remote->client),
-				    c->spd->remote->client.ipproto,
-				    c->spd->remote->client.hport, &rbody)) {
-			return STF_INTERNAL_ERROR;
+		/* IDci (we are initiator) followed by ... */
+		if (impair.v1_emit_quick_id.enabled &&
+		    impair.v1_emit_quick_id.value < 1) {
+			llog(RC_LOG, st->logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
+		} else {
+			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
+					    selector_subnet(c->spd->local->client),
+					    c->spd->local->client.ipproto,
+					    c->spd->local->client.hport, &rbody)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+		/* ... IDcr (peer is responder) */
+		if (impair.v1_emit_quick_id.enabled &&
+		    impair.v1_emit_quick_id.value < 2) {
+			llog(RC_LOG, st->logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
+		} else {
+			if (!emit_subnet_id(REMOTE_PERSPECTIVE,
+					    selector_subnet(c->spd->remote->client),
+					    c->spd->remote->client.ipproto,
+					    c->spd->remote->client.hport, &rbody)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
+		/* bonus? */
+		if (impair.v1_emit_quick_id.enabled &&
+		    impair.v1_emit_quick_id.value > 2) {
+			llog(RC_LOG, st->logger, "IMPAIR: adding bonus Quick Mode client ID");
+			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
+					    selector_subnet(c->spd->local->client),
+					    c->spd->local->client.ipproto,
+					    c->spd->local->client.hport, &rbody)) {
+				return STF_INTERNAL_ERROR;
+			}
 		}
 	}
 

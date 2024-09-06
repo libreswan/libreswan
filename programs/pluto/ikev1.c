@@ -1508,25 +1508,33 @@ void process_packet_tail(struct msg_digest *md)
 			}
 		}
 
-		/* rfc2409: The Internet Key Exchange (IKE), 5.5 Phase 2 - Quick Mode:
-		 * "If ISAKMP is acting as a client negotiator on behalf of another
-		 *  party, the identities of the parties MUST be passed as IDci and
-		 *  then IDcr."
+		/*
+		 * rfc2409: The Internet Key Exchange (IKE), 5.5 Phase
+		 * 2 - Quick Mode: "If ISAKMP is acting as a client
+		 * negotiator on behalf of another party, the
+		 * identities of the parties MUST be passed as IDci
+		 * and then IDcr."
 		 */
 		{
 			struct payload_digest *id = md->chain[ISAKMP_NEXT_ID];
 
 			if (id != NULL) {
-				if (id->next == NULL ||
-				    id->next->next != NULL) {
+				/* at least one */
+				if (id->next == NULL) {
 					LOG_PACKET(RC_LOG,
-						   "malformed Quick Mode message: if any ID payload is present, there must be exactly two");
+						   "malformed Quick Mode message: when present there must be exactly two ID payloads, only one found");
+					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
+					return;
+				}
+				if (id->next->next != NULL) {
+					LOG_PACKET(RC_LOG,
+						   "malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
 					LOG_PACKET(RC_LOG,
-						   "malformed Quick Mode message: the ID payloads are not adjacent");
+						   "malformed Quick Mode message: when present the two ID payloads must be adjacent");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}

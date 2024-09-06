@@ -353,6 +353,7 @@ struct impairment impairments[] = {
 	B(copy_v1_notify_response_SPIs_to_retransmission, "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
 
 	U(v1_remote_quick_id, "set the remote quick ID to <unsigned>"),
+	U(v1_emit_quick_id, "number of IDc[ir]s to emit (there should be 2)"),
 
 	V(v1_isakmp_delete_payload, "corrupt outgoing ISAKMP delete payload",
 	  .how_sparse_names = &impair_emit_names),
