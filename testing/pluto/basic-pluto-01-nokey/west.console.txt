@@ -1,6 +1,8 @@
 /testing/guestbin/swan-prep
 west #
- rm /etc/ipsec.d/*db
+ # there are no keys, but spell it out
+west #
+ rm -f /etc/ipsec.d/*db
 west #
  ipsec initnss > /dev/null 2> /dev/null
 west #

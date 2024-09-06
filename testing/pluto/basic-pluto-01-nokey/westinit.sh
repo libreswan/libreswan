@@ -1,5 +1,6 @@
 /testing/guestbin/swan-prep
-rm /etc/ipsec.d/*db
+# there are no keys, but spell it out
+rm -f /etc/ipsec.d/*db
 ipsec initnss > /dev/null 2> /dev/null
 ipsec start
 ../../guestbin/wait-until-pluto-started
