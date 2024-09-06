@@ -398,6 +398,7 @@ kvmplutotest	impair-09-protected-ikev1		good
 
 kvmplutotest	impair-20-ikev2-rekey-sa-protoid	good
 kvmplutotest	impair-30-ikev1-ip-as-fqdn		good
+kvmplutotest	impair-31-ikev1-quick-id		good
 kvmplutotest	impair-40-ikev1-delete-child		good
 
 kvmplutotest	ikev1-psk-dual-behind-nat-01		good

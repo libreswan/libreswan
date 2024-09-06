@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add east
+"east": ikev2=no has been replaced by keyexchange=ikev1
+"east": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ grep 'malformed Quick Mode message' /tmp/pluto.log
+"west" #1: malformed Quick Mode message: when present there must be exactly two ID payloads, only one found
+"west" #1: malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ 
