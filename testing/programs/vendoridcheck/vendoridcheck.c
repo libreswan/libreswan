@@ -47,11 +47,7 @@ int main(int argc, char *argv[])
 	 *
 	 * Should just hardwire those hashes.
 	 */
-	diag_t d = lsw_nss_setup(NULL, LSW_NSS_READONLY, logger);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_NSS_FAIL, logger, "%s", str_diag(d));
-	}
-
+	init_nss(NULL, (struct nss_flags) { .open_readonly = true}, logger);
 	init_vendorid(logger);
 
 	for (enum known_vendorid id = 1; id < VID_ROOF; id++) {

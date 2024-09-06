@@ -408,10 +408,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 
 static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
-	diag_t d = lsw_nss_setup(nssdir, LSW_NSS_READONLY, logger);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_NSS_FAIL, logger, "%s", str_diag(d));
-	}
+	init_nss(nssdir, (struct nss_flags) { .open_readonly = true}, logger);
 	llog(RC_LOG, logger, "NSS crypto library initialized");
 
 	/*

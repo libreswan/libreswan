@@ -649,11 +649,7 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	diag_t d = lsw_nss_setup(NULL, LSW_NSS_READONLY, logger);
-	if (d != NULL) {
-		fatal(ERROR, logger, "%s", str_diag(d));
-	}
-
+	init_nss(NULL, (struct nss_flags) { .open_readonly = true}, logger);
 	init_crypt_symkey(logger);
 	fips = is_fips_mode();
 
@@ -697,7 +693,7 @@ int main(int argc, char *argv[])
 
 	report_leaks(logger);
 
-	lsw_nss_shutdown();
+	shutdown_nss();
 
 	exit(failures > 0 ? PLUTO_EXIT_FAIL : PLUTO_EXIT_OK);
 }

@@ -14,8 +14,8 @@
  * for more details.
  */
 
-#ifndef _LSWNSS_H_
-#define _LSWNSS_H_
+#ifndef LSWNSS_H
+#define LSWNSS_H
 
 #include <prerror.h>		/* for PRErrorCode, for PR_GetError() */
 #include <pk11pub.h>
@@ -26,21 +26,20 @@
 #include "secrets.h"
 #include "diag.h"
 
-enum lsw_nss_flags {
-	LSW_NSS_READONLY = 1,
+struct nss_flags {
+	bool open_readonly;
 	/*
 	 * Should shutdown call PR_CLEANUP.
 	 */
-	LSW_NSS_SKIP_PR_CLEANUP = 2,
+	bool skip_pr_cleanup;
 };
 
 /*
- * If something goes wrong, the error gets dumped into this null
- * terminated buffer.
+ * If something goes wrong, fatal(PLUTO_EXIT_FAIL, logger, ...) is called.
  */
 
-diag_t lsw_nss_setup(const char *config_dir, unsigned flags, struct logger *logger);
-void lsw_nss_shutdown(void);
+void init_nss(const char *config_dir, struct nss_flags flags, struct logger *logger);
+void shutdown_nss(void);
 
 /*
  * Any code that could call back into lsw_nss_get_password() needs to

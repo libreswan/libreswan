@@ -680,10 +680,7 @@ int main(int argc, char *argv[])
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
-	diag_t d = lsw_nss_setup(oco->nssdir, LSW_NSS_READONLY, logger);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
-	}
+	init_nss(oco->nssdir, (struct nss_flags){.open_readonly = true}, logger);
 
 	int status = 0;
 
@@ -751,7 +748,7 @@ out:
 	 * NSS it can.  Not really a problem since the entire secret
 	 * table gets leaked anyway.
 	 */
-	lsw_nss_shutdown();
+	shutdown_nss();
 	exit(status);
 
 usage:

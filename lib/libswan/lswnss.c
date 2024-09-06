@@ -28,10 +28,9 @@
 
 static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
-static unsigned flags;
+static struct nss_flags shutdown_flags;
 
-diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
-		     struct logger *logger)
+static diag_t setup(const char *configdir, struct nss_flags flags, struct logger *logger)
 {
 	/*
 	 * Turn (possibly NULL) CONFIGDIR into (possibly NULL) nssdir
@@ -54,14 +53,14 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		llog(RC_LOG, logger, "Initializing NSS");
 	} else {
 		llog(RC_LOG, logger, "Initializing NSS using %s database \"%s\"",
-			    (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
-			    nssdir);
+		     (flags.open_readonly ? "read-only" : "read-write"),
+		     nssdir);
 	}
 
 	/*
 	 * save for cleanup
 	 */
-	flags = setup_flags;
+	shutdown_flags = flags;
 
 	/*
 	 * According to the manual, not needed, and all parameters are
@@ -75,11 +74,11 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	enum fips_mode fips_mode;
 	if (nssdir != NULL) {
 		SECStatus rv = NSS_Initialize(nssdir, "", "", SECMOD_DB,
-					      (flags & LSW_NSS_READONLY) ? NSS_INIT_READONLY : 0);
+					      (flags.open_readonly ? NSS_INIT_READONLY : 0));
 		if (rv != SECSuccess) {
 			/* NSS: <message...>: <error-string> (SECERR: N) */
 			diag_t d = diag_nss_error("initialization using %s database \"%s\" failed",
-						  (flags & LSW_NSS_READONLY) ? "read-only" : "read-write",
+						  (flags.open_readonly ? "read-only" : "read-write"),
 						  nssdir);
 			pfree(nssdir);
 			return d;
@@ -138,11 +137,22 @@ diag_t lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	return NULL;
 }
 
-void lsw_nss_shutdown(void)
+void init_nss(const char *configdir, struct nss_flags flags, struct logger *logger)
+{
+	diag_t d = setup(configdir, flags, logger);
+	if (d != NULL) {
+		LLOG_FATAL_JAMBUF(PLUTO_EXIT_FAIL, logger, buf) {
+			jam_string(buf, str_diag(d));
+			pfree_diag(&d);
+		}
+	}
+}
+
+void shutdown_nss(void)
 {
 	NSS_Shutdown();
 	/* this flag is never set anywhere */
-	if (!(flags & LSW_NSS_SKIP_PR_CLEANUP)) {
+	if (!shutdown_flags.skip_pr_cleanup) {
 		PR_Cleanup();
 	}
 }

@@ -189,10 +189,7 @@ int main(int argc, char *argv[])
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
 
-	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
-	}
+	init_nss(oco->nssdir, (struct nss_flags){0}, logger);
 
 	/*
 	 * RSA-PSS requires keysize to be a multiple of 8 bits
@@ -256,7 +253,7 @@ void rsasigkey(int nbits, int seedbits, struct logger *logger)
 	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
 		/* already logged */
-		lsw_nss_shutdown();
+		shutdown_nss();
 		exit(1);
 	}
 
@@ -300,7 +297,7 @@ void rsasigkey(int nbits, int seedbits, struct logger *logger)
 	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
-	lsw_nss_shutdown();
+	shutdown_nss();
 }
 
 /*

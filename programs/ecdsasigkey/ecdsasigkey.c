@@ -231,16 +231,12 @@ static void ecdsasigkey(SECOidTag curve, int seedbits,
 	SECItem *ecdsaparams = SEC_ASN1EncodeItem(NULL, NULL, &oiddata->oid,
 						  SEC_ObjectIDTemplate);
 
-	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
-
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
-	}
+	init_nss(oco->nssdir, (struct nss_flags){0}, logger);
 
 	slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
 		/* already logged */
-		lsw_nss_shutdown();
+		shutdown_nss();
 		exit(1);
 	}
 
@@ -288,7 +284,7 @@ static void ecdsasigkey(SECOidTag curve, int seedbits,
 	if (pubkey != NULL)
 		SECKEY_DestroyPublicKey(pubkey);
 
-	lsw_nss_shutdown();
+	shutdown_nss();
 }
 
 /*

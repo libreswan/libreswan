@@ -152,7 +152,7 @@ void exit_epilogue(void)
 	struct logger logger[1] = { global_logger, };
 
 	if (pluto_leave_state) {
-		lsw_nss_shutdown();
+		shutdown_nss();
 		free_preshared_secrets(logger);
 		delete_lock();	/* delete any lock files */
 		close_log();	/* close the logfiles */
@@ -216,7 +216,7 @@ void exit_epilogue(void)
 
 	shutdown_ifaces(logger);	/* free interface list from memory */
 	shutdown_kernel(logger);
-	lsw_nss_shutdown();
+	shutdown_nss();
 	delete_lock();	/* delete any lock files */
 #ifdef USE_DNSSEC
 	unbound_ctx_free();	/* needs event-loop aka server */

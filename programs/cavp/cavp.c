@@ -156,10 +156,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* start NSS so crypto works while args are being parsed */
-	diag_t d = lsw_nss_setup(NULL, 0, logger);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "%s", str_diag(d));
-	}
+	init_nss(NULL, (struct nss_flags){0}, logger);
 	init_crypt_symkey(logger);
 
 	for (; *argp != NULL; argp++) {
@@ -267,6 +264,6 @@ int main(int argc, char *argv[])
 		cavp_parser(cavp, logger);
 	}
 
-	lsw_nss_shutdown();
+	shutdown_nss();
 	exit(0);
 }
