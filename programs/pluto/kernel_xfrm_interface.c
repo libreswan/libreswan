@@ -1204,13 +1204,6 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 		return NULL;
 	}
 
-	/* something other than ipsec-interface=no, check support */
-	err_t err = xfrm_iface_supported(c->logger);
-	if (err != NULL) {
-		return diag("ipsec-interface=%s not supported: %s",
-			    ipsec_interface, err);
-	}
-
 	uint32_t xfrm_if_id;
 	if (yn != NULL) {
 		PEXPECT(c->logger, yn->value == YN_YES);
@@ -1234,6 +1227,17 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 			xfrm_if_id = kernel_ops->ipsec_interface->map_if_id_zero;
 		} else {
 			xfrm_if_id = value;
+		}
+	}
+
+	/* check if interface is already used by pluto */
+	if(!find_pluto_xfrmi_interface(xfrm_if_id))
+	{
+		/* something other than ipsec-interface=no, check support */
+		err_t err = xfrm_iface_supported(c->logger);
+		if (err != NULL) {
+			return diag("ipsec-interface=%s not supported: %s",
+				    ipsec_interface, err);
 		}
 	}
 
