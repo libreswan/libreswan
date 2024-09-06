@@ -11,7 +11,7 @@ Starting Pluto (Libreswan Version ...) pid:PID
 operating system: ...
 core dump dir: /run/pluto
 secrets file: /etc/ipsec.secrets
-Initializing NSS using read-write database "sql:/etc/ipsec.d"
+Initializing NSS using read-only database "sql:/etc/ipsec.d"
 FATAL ERROR: NSS: initialization using read-only database "sql:/etc/ipsec.d" failed: SEC_ERROR_BAD_DATABASE: security library: bad database.
 west #
  # rhbz#1041576 start pluto in dir not owned by root
