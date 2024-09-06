@@ -8,6 +8,7 @@
 #include "lswtool.h"
 #include "jambuf.h"
 #include "passert.h"
+#include "pexpect.h"
 #include "enum_names.h"
 
 #define PREFIX "         "
@@ -265,6 +266,27 @@ static void test_enums(const char *enumname, enum_names *enum_test, const struct
 	if (clashed != 0) {
 		printf("    ERROR missing clashes %d\n", clashed);
 		errors++;
+	}
+
+	/* check tables are not empty */
+	unsigned level = 0;
+	for (const struct enum_names *en = enum_test; en != NULL; en = en->en_next_range) {
+		unsigned count = 0;
+		for (unsigned i = 0; i < en->en_checklen; i++) {
+			if (en->en_names[i] != NULL) {
+				count++;
+			}
+		}
+		/*
+		 * The goal is to catch an array with an entry at 0
+		 * and another at 64000 say.  10% is pretty arbitrary.
+		 */
+		if (count * 10 < en->en_checklen) {
+			llog_pexpect(&global_logger, HERE,
+				     "enum table %s at level %u of size %zu only contains %u names",
+				     enumname, level, en->en_checklen, count);
+		}
+		level++;
 	}
 
 	printf("\n");
