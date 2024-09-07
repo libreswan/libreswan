@@ -1,0 +1,2 @@
+IKEv2 testcase for IPTFS using auto=ondemand to confirm the policy
+after route + trigger traffic is still "mode iptfs" and not "mode tunnel"

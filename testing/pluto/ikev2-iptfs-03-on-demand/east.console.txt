@@ -1,0 +1,74 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add ipv4-psk-ikev2
+"ipv4-psk-ikev2": added IKEv2 connection
+east #
+ ipsec auto --status | grep iptfs
+"ipv4-psk-ikev2":   iptfs: yes; dont-frag: yes; pkt-size: 1400; max-queue-size: 10240 drop-time: 111 init-delay: 777 reorder-window: 13
+east #
+ ipsec whack --impair suppress-retransmits
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+	iptfs-opts dont-frag init-delay 777 max-queue-size 10240 pkt-size 1400
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+	iptfs-opts drop-time 111 reorder-window 13
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode iptfs
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode iptfs
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode iptfs
+east #
+ grep IPTFS /tmp/pluto.log
+| netlink_add_sa() enabling IPTFS mode
+| netlink_add_sa() setting all IPTFS xfrm options
+| sendrecv_xfrm_msg() sending 16 Add SA IPTFS Support Probe
+| sendrecv_xfrm_msg() netlink response for Add SA IPTFS Support Probe included non-error error
+| kernel: IPTFS supported
+| local policy is IPTFS and received USE_AGGFRAG, setting CHILD SA to IPTFS
+| kernel: Enabling IPTFS with 1400 byte packet size
+| kernel: IPTFS without dont_frag set
+| kernel: IPTFS max_qsize=10240, drop_time=111, init_delay=777, reord_win=13
+| netlink_add_sa() enabling IPTFS mode
+| netlink_add_sa() setting all IPTFS xfrm options
+| kernel: Enabling IPTFS with 1400 byte packet size
+| kernel: IPTFS without dont_frag set
+| kernel: IPTFS max_qsize=10240, drop_time=111, init_delay=777, reord_win=13
+| netlink_add_sa() enabling IPTFS mode
+| netlink_add_sa() setting all IPTFS xfrm options
+"ipv4-psk-ikev2" #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===192.1.2.45/32] {ESP/ESN/IPTFS=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+

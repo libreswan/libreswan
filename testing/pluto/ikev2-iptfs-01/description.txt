@@ -1,0 +1,4 @@
+Simpe IKEv2 testcase for IPTFS. west uses default iptfs
+options to test/check defaults. east sets specific values
+to test iptfs configuration works properly.
+
