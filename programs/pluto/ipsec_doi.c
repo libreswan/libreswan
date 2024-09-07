@@ -137,16 +137,18 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		bool nat = nat_traversal_detected(st);
 		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
+		bool iptfs = st->st_seen_and_use_iptfs;
 		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;
 
 		if (nat)
 			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
 			     c->remote->host.port);
 
-		jam(buf, "ESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
+		jam(buf, "ESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 		    tcp ? "inTCP" : nat ? "inUDP" : "",
 		    esn ? "/ESN" : "",
 		    tfc ? "/TFC" : "",
+		    iptfs ? "/IPTFS" : "",
 		    ntohl(st->st_esp.outbound.spi),
 		    ntohl(st->st_esp.inbound.spi));
 		jam(buf, " xfrm=%s", st->st_esp.trans_attrs.ta_encrypt->common.fqn);

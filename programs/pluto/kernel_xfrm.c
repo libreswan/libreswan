@@ -945,6 +945,9 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		/* only the first rule gets the worm; er tunnel flag */
 		unsigned mode = (policy->mode == KERNEL_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
 				 XFRM_MODE_TRANSPORT);
+		if (policy->iptfs && policy->mode == KERNEL_MODE_TUNNEL)
+			mode = XFRM_MODE_IPTFS;
+
 		for (unsigned i = 0; i < policy->nr_rules; i++) {
 			const struct kernel_policy_rule *rule = &policy->rule[i];
 			struct xfrm_user_tmpl *tmpl = &tmpls[i];
@@ -957,12 +960,12 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 			/* set mode (tunnel or transport); then switch to transport */
 			tmpl->mode = mode;
-			if (mode == XFRM_MODE_TUNNEL) {
-				/* tunnel mode needs addresses */
+			if (mode == XFRM_MODE_TUNNEL || mode == XFRM_MODE_IPTFS) {
+				/* tunnel / iptfs mode needs addresses */
 				tmpl->saddr = xfrm_from_address(&policy->src.host);
 				tmpl->id.daddr = xfrm_from_address(&policy->dst.host);
 			}
-			mode = XFRM_MODE_TRANSPORT;
+			mode = XFRM_MODE_TRANSPORT; /* XXX: why set it back to transport ? */
 
 			address_buf sb, db;
 			ldbg(logger, "%s() adding xfrm_user_tmpl reqid=%d id.proto=%d optional=%d family=%d mode=%d saddr=%s daddr=%s",
@@ -1238,6 +1241,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 		.encap_type = encap_type,
 		.reqid = reqid_esp(c->child.reqid),
 		.spi = dst->spi,
+		.iptfs = child->sa.st_seen_and_use_iptfs,
 		.src = {
 			.address = src->end->host->addr,
 			.new_address = src->end->host->addr,	/* may change */
