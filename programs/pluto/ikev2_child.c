@@ -278,6 +278,11 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
+	if (!send_use_transport && cc->config->child_sa.iptfs &&
+	    !emit_v2N(v2N_USE_AGGFRAG, pbs)) {
+		return false;
+	}
+
 	if (cc->config->send_no_esp_tfc &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
 		return false;
@@ -360,6 +365,23 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			str_enum(&kernel_mode_stories, required_mode, &dmb),
 			str_enum(&kernel_mode_stories, requested_mode, &rmb));
 		return v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	bool expecting_iptfs = cc->config->child_sa.iptfs;
+	if (request_md->pd[PD_v2N_USE_AGGFRAG] != NULL) {
+		if (!expecting_iptfs) {
+			/*
+			 * RFC9347 allows us to ignore their (mismatched) request
+			 */
+			llog_sa(RC_LOG, larval_child,
+				"policy does not allow IPTFS Mode, ignoring peer's request for IPTFS");
+		} else {
+			dbg("local policy is IPTFS and received USE_AGGFRAG, setting CHILD SA to IPTFS");
+			larval_child->sa.st_seen_and_use_iptfs = true;
+			// also set something in larval_child->sa.st_esp.attrs.mode ??
+		}
+	} else if (expecting_iptfs) {
+		dbg("local policy allows iptfs but peer did not request this");
 	}
 
 	larval_child->sa.st_kernel_mode = required_mode;
@@ -535,6 +557,11 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 
 	if (larval_child->sa.st_kernel_mode == KERNEL_MODE_TRANSPORT &&
 	    !emit_v2N(v2N_USE_TRANSPORT_MODE, outpbs)) {
+		return false;
+	}
+
+	if (larval_child->sa.st_seen_and_use_iptfs &&
+	    !emit_v2N(v2N_USE_AGGFRAG, outpbs)) {
 		return false;
 	}
 
@@ -793,6 +820,25 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 			str_enum(&kernel_mode_stories, accepted_mode, &amb));
  		return v2N_NO_PROPOSAL_CHOSEN;
  	}
+
+	if (md->pd[PD_v2N_USE_AGGFRAG] != NULL) {
+		if (!c->config->child_sa.iptfs) {
+			/*
+			 * This means we did not send
+			 * v2N_USE_AGGFRAG, however responder is
+			 * sending it in now, seems incorrect
+			 */
+			dbg("Initiator policy is IPTFS, responder sends v2N_USE_AGGFRAG notification in inR2, ignoring it");
+		} else {
+			if (c->config->child_sa.encap_mode != ENCAP_MODE_TUNNEL) {
+				llog_sa(RC_LOG, child,
+					"Unexpected IPTFS agreed upon while not using Tunnel Mode ? Ignoring IPTFS request");
+			}
+			dbg("Initiator policy is IPTFS, responder sends v2N_USE_AGGFRAG, setting CHILD SA to IPTFS");
+			child->sa.st_seen_and_use_iptfs = true;
+		}
+	}
+
 	enum_buf rmb;
 	ldbg_sa(child, "local policy is %s and received matching notify",
 		str_enum(&kernel_mode_stories, required_mode, &rmb));
@@ -1157,8 +1203,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 		return v2N_TS_UNACCEPTABLE;
 	}
 
+	/* AUTH is ok, we can trust the notify payloads */
+
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() (?!?) */
 	child->sa.st_seen_no_tfc = response_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
+	child->sa.st_seen_and_use_iptfs = response_md->pd[PD_v2N_USE_AGGFRAG] != NULL;
 
 	/* examine and accept SA ESP/AH proposals */
 
