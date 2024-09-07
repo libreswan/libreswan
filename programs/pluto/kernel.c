@@ -1408,7 +1408,16 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
 		said_next->proto = &ip_protocol_esp;
-		said_next->replay_window = c->config->child_sa.replay_window;
+
+		/*
+		 * Linux kernel >= 6.10 need replay-window 0 on OUTBOUND SA
+		 * 0. Older kernels does not support replay-window for
+		 *    OUTBOUND SA with ESN. It support 1.
+		 * 1. Do BSD varients support 0 on OUTBOUND? If not move next
+		 *    line to kernel_xfrm.c
+		 * 2. do we have code to detect Linux kernel version?
+		 */
+		said_next->replay_window = direction == DIRECTION_OUTBOUND ? 0 : c->config->child_sa.replay_window;
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
