@@ -111,11 +111,7 @@
 #include "ip_packet.h"
 #include "sparse_names.h"
 #include "kernel_iface.h"
-
-/* required for Linux 2.6.26 kernel and later */
-#ifndef XFRM_STATE_AF_UNSPEC
-#define XFRM_STATE_AF_UNSPEC 32
-#endif
+#include "rnd.h" /* for get_rnd_bytes() */
 
 static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
 static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
