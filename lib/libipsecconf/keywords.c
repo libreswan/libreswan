@@ -455,6 +455,15 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "initial-contact",  kv_conn,  kt_bool,  KNCF_INITIAL_CONTACT, NULL, NULL, },
   { "cisco-unity",  kv_conn,  kt_bool,  KNCF_CISCO_UNITY, NULL, NULL, },
   { "send-no-esp-tfc",  kv_conn,  kt_bool,  KNCF_NO_ESP_TFC, NULL, NULL, },
+
+  { "iptfs",  kv_conn,  kt_sparse_name,  KNCF_IPTFS, &yn_option_names, NULL, },
+  { "iptfs-dont-frag",  kv_conn,  kt_sparse_name,  KNCF_IPTFS_DONT_FRAG, &yn_option_names, NULL, },
+  { "iptfs-packet-size",  kv_conn,  kt_binary,  KNCF_IPTFS_PKT_SIZE, NULL, NULL, },
+  { "iptfs-max-queue-size",  kv_conn,  kt_binary,  KNCF_IPTFS_MAX_QUEUE, NULL, NULL, },
+  { "iptfs-init-delay",  kv_conn,  kt_binary,  KNCF_IPTFS_INIT_DELAY, NULL, NULL, },
+  { "iptfs-reorder-window",  kv_conn,  kt_binary,  KNCF_IPTFS_REORD_WIN, NULL, NULL, },
+  { "iptfs-drop-time",  kv_conn,  kt_binary,  KNCF_IPTFS_DROP_TIME, NULL, NULL, },
+
   { "fake-strongswan",  kv_conn,  kt_bool,  KNCF_VID_STRONGSWAN, NULL, NULL, },
   { "send-vendorid",  kv_conn,  kt_bool,  KNCF_SEND_VENDORID, NULL, NULL, },
   { "sha2-truncbug",  kv_conn,  kt_sparse_name,  KNCF_SHA2_TRUNCBUG, &yn_option_names, NULL, },

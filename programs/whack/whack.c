@@ -113,6 +113,9 @@ static void help(void)
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
+		"	[--iptfs] [--iptfs-dont-fragment] [--iptfs-packet-size <size>] \\\n"
+		"	[--iptfs-max-queue-size <size>] [--iptfs-init-delay <ms>] --iptfs-drop-time <ms> \\\n"
+		"	[--iptfs-reorder-window <window>] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--narrowing {yes,no}] \\\n"
 		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
@@ -502,6 +505,15 @@ enum option_enums {
 
 	CD_DONT_REKEY,
 	CD_REAUTH,
+
+	CD_IPTFS,
+	CD_IPTFS_DONT_FRAG,
+	CD_IPTFS_PKT_SIZE,
+	CD_IPTFS_MAX_QSIZE,
+	CD_IPTFS_INIT_DELAY,
+	CD_IPTFS_REORD_WIN,
+	CD_IPTFS_DROP_TIME,
+
 	CD_RETRANSMIT_TIMEOUT,
 	CD_RETRANSMIT_INTERVAL,
 	CD_IKE_LIFETIME,
@@ -814,6 +826,15 @@ static const struct option long_opts[] = {
 	{ "reauth", no_argument, NULL, CD_REAUTH, },
 	{ "encaps", required_argument, NULL, CD_ENCAPSULATION },
 	{ "encapsulation", optional_argument, NULL, CD_ENCAPSULATION },
+
+	{ "iptfs", no_argument, NULL, CD_IPTFS, },
+	{ "iptfs-dont-fragment", no_argument, NULL, CD_IPTFS_DONT_FRAG, },
+	{ "iptfs-packet-size", required_argument, NULL, CD_IPTFS_PKT_SIZE },
+	{ "iptfs-max-queue-size", required_argument, NULL, CD_IPTFS_MAX_QSIZE },
+	{ "iptfs-init-delay", required_argument, NULL, CD_IPTFS_INIT_DELAY },
+	{ "iptfs-reorder-window", required_argument, NULL, CD_IPTFS_REORD_WIN },
+	{ "iptfs-drop-time", required_argument, NULL, CD_IPTFS_DROP_TIME },
+
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT },
@@ -1832,6 +1853,28 @@ int main(int argc, char **argv)
 		/* --rekey */
 		case CD_REAUTH:
 			msg.reauth = YN_YES;
+			continue;
+
+		case CD_IPTFS: /* --iptfs */
+			msg.iptfs = YN_YES;
+			continue;
+		case CD_IPTFS_DONT_FRAG: /* --iptfs-dont-fragment */
+			msg.iptfs = YN_YES;
+			continue;
+		case CD_IPTFS_PKT_SIZE:	/* --iptfs-packet-size */
+			msg.iptfs_pkt_size = optarg_uintmax();
+			continue;
+		case CD_IPTFS_MAX_QSIZE: /* --iptfs-max-queue-size */
+			msg.iptfs_max_qsize = optarg_uintmax();
+			continue;
+		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
+			msg.iptfs_drop_time = optarg_uintmax();
+			continue;
+		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
+			msg.iptfs_init_delay = optarg_uintmax();
+			continue;
+		case CD_IPTFS_REORD_WIN: /* --iptfs-reorder-window */
+			msg.iptfs_reord_win = optarg_uintmax();
 			continue;
 
 		case CD_COMPRESS:	/* --compress */

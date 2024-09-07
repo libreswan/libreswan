@@ -465,6 +465,15 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.require_id_on_certificate = conn->options[KNCF_REQUIRE_ID_ON_CERTIFICATE]; /* yn_options */
 	msg.modecfgpull = conn->options[KNCF_MODECFGPULL]; /* yn_options */
 	msg.aggressive = conn->options[KNCF_AGGRESSIVE]; /* yn_options */
+
+	msg.iptfs = conn->options[KNCF_IPTFS]; /* yn_options */
+	msg.iptfs_dont_frag = conn->options[KNCF_IPTFS_DONT_FRAG]; /* yn_options */
+	msg.iptfs_pkt_size = conn->options[KNCF_IPTFS_PKT_SIZE];
+	msg.iptfs_max_qsize = conn->options[KNCF_IPTFS_MAX_QUEUE];
+	msg.iptfs_init_delay = conn->options[KNCF_IPTFS_INIT_DELAY];
+	msg.iptfs_reord_win = conn->options[KNCF_IPTFS_REORD_WIN];
+	msg.iptfs_drop_time = conn->options[KNCF_IPTFS_DROP_TIME];
+
 	msg.decap_dscp = conn->options[KNCF_DECAP_DSCP]; /* yn_options */
 	msg.encap_dscp = conn->options[KNCF_ENCAP_DSCP]; /* yn_options */
 	msg.nopmtudisc = conn->options[KNCF_NOPMTUDISC]; /* yn_options */

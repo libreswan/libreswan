@@ -343,6 +343,16 @@ struct config {
 		uint32_t metric;	/* metric for tunnel routes */
 		uint16_t mtu;		/* mtu for tunnel routes */
 		bool ipcomp;
+
+		bool iptfs;
+		bool iptfs_dont_frag;
+		uintmax_t iptfs_pkt_size;
+		uintmax_t iptfs_max_qsize;
+		uintmax_t iptfs_drop_time;
+		uintmax_t iptfs_init_delay;
+		uintmax_t iptfs_reord_win;
+
+
 		enum encap_proto encap_proto;	/* ESP or AH */
 		enum encap_mode encap_mode;	/* tunnel or transport */
 		bool pfs;			/* use DH */
