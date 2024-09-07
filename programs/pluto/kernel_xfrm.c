@@ -120,6 +120,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      const char *description, const char *story,
 			      int *recv_errno,
 			      struct logger *logger);
+static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger);
 
 static struct {
 	bool icmpv6;
@@ -129,6 +130,14 @@ static struct {
 static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int netlink_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int netlink_rtm_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
+
+enum xfrm_dir_sup {
+	XFRM_DIR_SUP_UKNOWN = 0,
+	XFRM_DIR_SUP_YES = 1,
+	XFRM_DIR_SUP_NO = 2
+};
+static enum xfrm_dir_sup xfrm_direction_supported = XFRM_DIR_SUP_UKNOWN;
+
 
 #define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
 
@@ -1566,6 +1575,11 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	default:
 		bad_enum(logger, &kernel_mode_names, sa->mode);
 	}
+	if (sa->level == 0 && sa->iptfs) {
+		ldbg(logger, "%s() enabling IPTFS mode", __func__);
+		req.p.mode = XFRM_MODE_IPTFS;
+		req.p.flags |= XFRM_STATE_AF_UNSPEC;
+	}
 
 	/*
 	 * We only add traffic selectors for transport mode.
@@ -1581,7 +1595,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 	req.p.reqid = sa->reqid;
-	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
+	ldbg(logger, "%s() adding %s IPsec SA with reqid %d", __func__,
+	     sa->direction == DIRECTION_OUTBOUND ? "output" : "input",
+	     sa->reqid);
 
 	req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
 	req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
@@ -1918,6 +1934,44 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 		/* attr not subsequently used */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+	}
+
+	/*
+	 * We cannot detect XFRM DIRECTION support, but we know it came in just
+	 * before IPTFS, which we can detect, so we use IPTS to detect DIRECTION
+	 * support.
+	 *
+	 * We also use netlink_add_sa() to detect IPTFS support, so avoid infinite loop.
+	 *
+	 */
+	if (xfrm_direction_supported != XFRM_DIR_SUP_NO ) {
+		uint8_t sa_dir = sa->direction == DIRECTION_OUTBOUND ? XFRM_SA_DIR_OUT : XFRM_SA_DIR_IN;
+
+		ldbg(logger, "%s() setting XFRM SA direction to %s", __func__,
+			sa_dir == XFRM_SA_DIR_OUT ? "outbound" : "inbound");
+		nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, sa_dir);
+	}
+
+	if (sa->level == 0 && sa->iptfs) {
+		unsigned short maxlen = sizeof(req.data);
+
+		ldbg(logger, "%s() setting all IPTFS xfrm options", __func__);
+
+		if (sa->direction == DIRECTION_OUTBOUND) {
+			if (sa->iptfs_max_qsize != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_MAX_QSIZE, sa->iptfs_max_qsize);
+			if (sa->iptfs_pkt_size != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_PKT_SIZE, sa->iptfs_pkt_size);
+			if (sa->iptfs_init_delay != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_INIT_DELAY, sa->iptfs_init_delay);
+			if (sa->iptfs_dont_frag)
+				nl_addattr_l(&req.n, maxlen, XFRMA_IPTFS_DONT_FRAG, NULL, 0);
+		} else {
+			if (sa->iptfs_drop_time != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_DROP_TIME, sa->iptfs_drop_time);
+			if (sa->iptfs_reord_win != 0)
+				nl_addattr16(&req.n, maxlen, XFRMA_IPTFS_REORDER_WINDOW, sa->iptfs_reord_win);
+		}
 	}
 
 	int recv_errno;
@@ -2878,6 +2932,55 @@ static void kernel_xfrm_plug_holes(struct logger *logger)
 	}
 }
 
+static bool qry_xfrm_iptfs_support(struct logger *logger) {
+	struct kernel_state sa;
+
+	zero(&sa);
+
+	ip_address ipaddr;
+	ipaddr.is_set = true;
+	ipaddr.version = IPv4;
+
+	enum_buf b;
+	const struct encrypt_desc *encrypt = ikev2_encrypt_desc(IKEv2_ENCR_AES_CBC, &b);
+	const struct integ_desc *integ = ikev2_integ_desc(IKEv2_INTEG_HMAC_SHA2_256_128, &b);
+	uint8_t fakekey[AES_BLOCK_SIZE];
+	get_rnd_bytes(fakekey, AES_BLOCK_SIZE);
+	shunk_t encrypt_key;
+	shunk_t integ_key;
+	encrypt_key.ptr = fakekey;
+	encrypt_key.len = AES_BLOCK_SIZE;
+	integ_key.ptr = fakekey;
+	encrypt_key.len = SHA2_256_DIGEST_SIZE;
+
+	sa.mode = KERNEL_MODE_TUNNEL;
+	sa.src.address = ipaddr;
+	sa.dst.address = ipaddr;
+	sa.proto = &ip_protocol_esp;
+	sa.direction = DIRECTION_OUTBOUND;
+	sa.iptfs = true;
+	sa.spi = 1;
+	sa.state_id = DEFAULT_KERNEL_STATE_ID;
+	sa.reqid = 1;
+	sa.story = "IPTFS Support Probe";
+	sa.encrypt = encrypt;
+	sa.integ = integ;
+	sa.encrypt_key = encrypt_key;
+	sa.integ_key = integ_key;
+
+	if (netlink_add_sa(&sa, false, logger)) {
+		ldbg(logger, "kernel: IPTFS supported");
+		if (!xfrm_del_ipsec_spi(sa.spi, sa.proto,
+			&sa.src.address, &sa.dst.address,
+			"del probe", logger)) {
+			llog(RC_LOG, logger, "kernel: IPTFS probe sa deletion failed - ignored");
+		}
+		return true;
+	}
+	ldbg(logger, "kernel: IPTFS not supported");
+	return false;
+}
+
 static bool qry_xfrm_migrate_support(struct logger *logger)
 {
 	/* check the kernel */
@@ -2984,6 +3087,25 @@ static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
+static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+{
+	static enum {
+		UNKNOWN, ENABLED, DISABLED,
+	} state = UNKNOWN;
+	static const char disabled_message[] = "requires option CONFIG_IPTFS";
+	switch (state) {
+	case UNKNOWN:
+		state = (qry_xfrm_iptfs_support(logger) ? ENABLED : DISABLED);
+		xfrm_direction_supported = (state == ENABLED) ? XFRM_DIR_SUP_YES : XFRM_DIR_SUP_NO;
+		return state == ENABLED ? NULL : disabled_message;
+	case ENABLED:
+		return NULL;
+	case DISABLED:
+		return disabled_message;
+	default:
+		bad_case(state);
+	}
+}
 static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
 {
 	if (nic_offload->type != KERNEL_OFFLOAD_PACKET)
@@ -3121,6 +3243,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,
 	.migrate_ipsec_sa_is_enabled = xfrm_migrate_ipsec_sa_is_enabled,
+	.iptfs_ipsec_sa_is_enabled = xfrm_iptfs_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,
 	.sha2_truncbug_support = true,
