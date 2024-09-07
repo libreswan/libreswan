@@ -310,6 +310,15 @@ struct whack_message {
 	uintmax_t priority;
 	uintmax_t tfc;
 	bool send_no_esp_tfc;
+
+	enum yn_options iptfs;
+	enum yn_options iptfs_dont_frag;
+	uintmax_t iptfs_pkt_size; /* 0 for PMTU */
+	uintmax_t iptfs_max_qsize;
+	uintmax_t iptfs_drop_time;
+	uintmax_t iptfs_init_delay;
+	uintmax_t iptfs_reord_win;
+
 	reqid_t sa_reqid;
 	int nflog_group;
 

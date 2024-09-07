@@ -1215,6 +1215,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
 	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
 	child->sa.st_event = NULL;
+	child->sa.st_seen_and_use_iptfs = ike->sa.st_seen_and_use_iptfs;
 
 	/* these were set while we didn't have client state yet */
 	/* we should really split the NOTIFY loop in two cleaner ones */

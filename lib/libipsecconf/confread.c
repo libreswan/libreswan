@@ -129,6 +129,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_INITIAL_CONTACT, true);
 	DOPT(KNCF_CISCO_UNITY, false);
 	DOPT(KNCF_NO_ESP_TFC, false);
+	DOPT(KNCF_IPTFS, false); /* Plan to enable per default in near future */
+	DOPT(KNCF_IPTFS_DONT_FRAG, false);
 	DOPT(KNCF_VID_STRONGSWAN, false);
 	DOPT(KNCF_SEND_VENDORID, false);
 

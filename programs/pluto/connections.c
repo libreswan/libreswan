@@ -2251,6 +2251,24 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	/* all these options cannot co-exist */
+	int i = 0;
+	if (wm->iptfs)
+		i++;
+	if (wm->tfc)
+		i++;
+	if (wm->compress)
+		i++;
+	if (encap_mode == ENCAP_MODE_TRANSPORT)
+		i++;
+	if (encap_proto != ENCAP_PROTO_ESP)
+		i++;
+	if (wm->compress && encap_mode == ENCAP_MODE_TRANSPORT)
+		i--; /* this combo is allowed */
+	if (i > 1) {
+		return diag("The following options cannot be mixed: iptfs=yes, tfc=, (compress=yes, type=transport), phase2=ah");
+	}
+
 	if (wm->authby.never) {
 		if (wm->never_negotiate_shunt == SHUNT_UNSET) {
 			return diag("connection with authby=never must specify shunt type via type=");
@@ -2387,6 +2405,35 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("MOBIKE support is not enabled for %s kernel interface: %s",
 				    kernel_ops->interface_name, err);
 		}
+	}
+
+	bool iptfs = extract_yn("", "iptfs", wm->iptfs, /*default*/false, wm, c->logger);
+	if (iptfs) {
+		if (wm->ike_version < IKEv2) {
+			return diag("IPTFS requires IKEv2");
+		}
+		if (encap_mode != ENCAP_MODE_TUNNEL) {
+			return diag("IPTFS requires tunnel mode");
+		}
+		if (kernel_ops->iptfs_ipsec_sa_is_enabled == NULL) {
+			return diag("IPTFS is not supported by %s kernel interface",
+				    kernel_ops->interface_name);
+		}
+		/* probe the interface */
+		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(c->logger);
+		if (err != NULL) {
+			return diag("IPTFS support is not enabled for %s kernel interface: %s",
+				    kernel_ops->interface_name, err);
+		}
+		config->child_sa.iptfs = true;
+		config->child_sa.iptfs_dont_frag = extract_yn("", "iptfs-dont-fragment", wm->iptfs_dont_frag, /*default*/false, wm, c->logger);
+		config->child_sa.iptfs_pkt_size = wm->iptfs_pkt_size;
+		config->child_sa.iptfs_max_qsize = wm->iptfs_max_qsize;
+		config->child_sa.iptfs_drop_time = wm->iptfs_drop_time;
+		config->child_sa.iptfs_init_delay = wm->iptfs_init_delay;
+		if (wm->iptfs_reord_win > 65535)
+			return diag("iptfs reorder window cannot be larger than 65535");
+		config->child_sa.iptfs_reord_win = wm->iptfs_reord_win;
 	}
 
 	/*
