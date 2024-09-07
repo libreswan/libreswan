@@ -445,6 +445,42 @@ west #
          short_name 4: established_child_sa OK
          jam_enum_short 4: established_child_sa OK
          jam_enum_human 4: established-child-sa OK
+  connection_owner_stories: [0..5)
+    0 -> routing SA
+         jam_enum 0: routing SA OK
+         search routing SA: OK
+         match routing SA: OK
+         short_name 0: routing SA OK
+         jam_enum_short 0: routing SA OK
+         jam_enum_human 0: routing sa OK
+    1 -> negotiating IKE SA
+         jam_enum 1: negotiating IKE SA OK
+         search negotiating IKE SA: OK
+         match negotiating IKE SA: OK
+         short_name 1: negotiating IKE SA OK
+         jam_enum_short 1: negotiating IKE SA OK
+         jam_enum_human 1: negotiating ike sa OK
+    2 -> established IKE SA
+         jam_enum 2: established IKE SA OK
+         search established IKE SA: OK
+         match established IKE SA: OK
+         short_name 2: established IKE SA OK
+         jam_enum_short 2: established IKE SA OK
+         jam_enum_human 2: established ike sa OK
+    3 -> negotiating Child SA
+         jam_enum 3: negotiating Child SA OK
+         search negotiating Child SA: OK
+         match negotiating Child SA: OK
+         short_name 3: negotiating Child SA OK
+         jam_enum_short 3: negotiating Child SA OK
+         jam_enum_human 3: negotiating child sa OK
+    4 -> established Child SA
+         jam_enum 4: established Child SA OK
+         search established Child SA: OK
+         match established Child SA: OK
+         short_name 4: established Child SA OK
+         jam_enum_short 4: established Child SA OK
+         jam_enum_human 4: established child sa OK
   dns_auth_level_names: [1..4)
     1 -> PUBKEY_LOCAL
          jam_enum 1: PUBKEY_LOCAL OK

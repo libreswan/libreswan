@@ -18,10 +18,6 @@ west #
  valgrind --quiet $(ipsec -n _asn1check) > /dev/null || echo failed
 ipsec _asn1check: leak detective found no leaks
 west #
- valgrind --quiet $(ipsec -n _vendoridcheck) > /dev/null || echo failed
-ipsec _vendoridcheck: Initializing NSS
-ipsec _vendoridcheck: FIPS Mode: OFF
-west #
  valgrind --quiet $(ipsec -n _ttodatacheck -r)
 west #
  # Need to disable DNS tests; localhost is ok

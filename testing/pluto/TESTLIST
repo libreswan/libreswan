@@ -55,6 +55,7 @@
 # various self-check programs
 kvmplutotest	check-01			good
 kvmplutotest	check-02-enumcheck		good
+kvmplutotest	check-03-vendoridcheck		good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
