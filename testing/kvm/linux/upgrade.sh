@@ -139,6 +139,7 @@ EOF
 dnf install -y `building` `testing` `kernel`
 dnf upgrade -y `building` `testing`
 
+rpm -Uhv /pool/*.rpm
 
 :
 : save the latest kernels
