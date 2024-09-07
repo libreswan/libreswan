@@ -138,6 +138,15 @@ struct kernel_state {
 	bool encap_dscp;
 	bool nopmtudisc;
 	uint32_t tfcpad;
+
+	bool iptfs;
+	bool iptfs_dont_frag;
+	uint32_t iptfs_pkt_size;
+	uint32_t iptfs_max_qsize;
+	uint32_t iptfs_drop_time;
+	uint32_t iptfs_init_delay;
+	uint32_t iptfs_reord_win;
+
 	ipsec_spi_t spi;
 	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
 	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL */
@@ -301,6 +310,8 @@ struct kernel_ops {
 	 */
 	err_t (*migrate_ipsec_sa_is_enabled)(struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
+	err_t (*iptfs_ipsec_sa_is_enabled)(struct logger *);
+	bool (*iptfs_ipsec_sa)(struct child_sa *child);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
