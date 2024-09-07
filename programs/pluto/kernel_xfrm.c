@@ -1150,7 +1150,7 @@ struct kernel_migrate {
 	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
 	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL(transport?) */
 	reqid_t reqid;
-
+	bool iptfs;
 	/*
 	 * size of buffer needed for "story"
 	 *
@@ -1167,7 +1167,6 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 				     struct kernel_migrate *migrate)
 {
 	const struct connection *const c = child->sa.st_connection;
-	pexpect(c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
 
 	const struct ip_encap *encap_type =
 		(child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
@@ -1284,7 +1283,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	return true;
 }
 
-static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logger)
+static bool migrate_xfrm_sa(const struct kernel_migrate *migrate, struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1296,49 +1295,49 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logg
 
 	zero(&req);
 
-	req.id.dir = sa->xfrm_dir;
-	req.id.sel.family = address_info(sa->src.address)->af;
+	req.id.dir = migrate->xfrm_dir;
+	req.id.sel.family = address_info(migrate->src.address)->af;
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-	SELECTOR_TO_XFRM(sa->src.client, req.id.sel, s);
-	SELECTOR_TO_XFRM(sa->dst.client, req.id.sel, d);
+	SELECTOR_TO_XFRM(migrate->src.client, req.id.sel, s);
+	SELECTOR_TO_XFRM(migrate->dst.client, req.id.sel, d);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	/* add attrs[XFRM_MSG_MIGRATE] */
 	{
-		struct xfrm_user_migrate migrate;
+		struct xfrm_user_migrate xum;
 
-		zero(&migrate);
+		zero(&xum);
 		attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		attr->rta_type = XFRMA_MIGRATE;
-		attr->rta_len = sizeof(migrate);
+		attr->rta_len = sizeof(xum);
 
 		/* set the migration attributes */
-		migrate.old_saddr = xfrm_from_address(&sa->src.address);
-		migrate.old_daddr = xfrm_from_address(&sa->dst.address);
-		migrate.new_saddr = xfrm_from_address(&sa->src.new_address);
-		migrate.new_daddr = xfrm_from_address(&sa->dst.new_address);
-		migrate.mode = XFRM_MODE_TUNNEL;
-		migrate.proto = sa->proto->ipproto;
-		migrate.reqid = sa->reqid;
-		migrate.old_family = migrate.new_family = address_info(sa->src.address)->af;
+		xum.old_saddr = xfrm_from_address(&migrate->src.address);
+		xum.old_daddr = xfrm_from_address(&migrate->dst.address);
+		xum.new_saddr = xfrm_from_address(&migrate->src.new_address);
+		xum.new_daddr = xfrm_from_address(&migrate->dst.new_address);
+		xum.mode = migrate->iptfs ? XFRM_MODE_IPTFS : XFRM_MODE_TUNNEL;
+		xum.proto = migrate->proto->ipproto;
+		xum.reqid = migrate->reqid;
+		xum.old_family = xum.new_family = address_info(migrate->src.address)->af;
 
 		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
 	}
 
-	if (sa->encap_type != NULL) {
+	if (migrate->encap_type != NULL) {
 		ldbg(logger, "adding xfrm_encap_templ when migrating sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
-		     pri_ip_encap(sa->encap_type),
-		     sa->src.encap_port, sa->dst.encap_port);
+		     pri_ip_encap(migrate->encap_type),
+		     migrate->src.encap_port, migrate->dst.encap_port);
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
-		natt.encap_type = sa->encap_type->encap_type;
-		natt.encap_sport = ntohs(sa->src.encap_port);
-		natt.encap_dport = ntohs(sa->dst.encap_port);
+		natt.encap_type = migrate->encap_type->encap_type;
+		natt.encap_sport = ntohs(migrate->src.encap_port);
+		natt.encap_dport = ntohs(migrate->dst.encap_port);
 		zero(&natt.encap_oa);
 
 		attr->rta_type = XFRMA_ENCAP;
@@ -1356,7 +1355,7 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logg
 	 */
 	int recv_errno;
 	bool r = sendrecv_xfrm_msg(&req.n, NLMSG_ERROR, &rsp,
-				   "mobike", sa->story,
+				   "mobike", migrate->story,
 				   &recv_errno, logger);
 	return r && rsp.u.e.error >= 0;
 }
@@ -2882,7 +2881,7 @@ static void kernel_xfrm_plug_holes(struct logger *logger)
 	}
 }
 
-static bool qry_xfrm_mirgrate_support(struct logger *logger)
+static bool qry_xfrm_migrate_support(struct logger *logger)
 {
 	/* check the kernel */
 	struct {
@@ -2917,7 +2916,7 @@ static bool qry_xfrm_mirgrate_support(struct logger *logger)
 
 	if (nl_fd < 0) {
 		llog_error(logger, errno,
-			   "socket() in qry_xfrm_mirgrate_support()");
+			   "socket() in qry_xfrm_migrate_support()");
 		return false;
 	}
 
@@ -2929,14 +2928,14 @@ static bool qry_xfrm_mirgrate_support(struct logger *logger)
 
 	if (r < 0) {
 		llog_error(logger, errno,
-			   "netlink write() xfrm_migrate_support lookup");
+			   "netlink write() qry_xfrm_migrate_support lookup");
 		close(nl_fd);
 		return false;
 	}
 
 	if ((size_t)r != len) {
 		llog_error(logger, 0/*no-errno*/,
-			   "netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
+			   "netlink write() qry_xfrm_migrate_support message truncated: %zd instead of %zu",
 			    r, len);
 		close(nl_fd);
 		return false;
@@ -2977,7 +2976,7 @@ static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 	static const char disabled_message[] = "requires option CONFIG_XFRM_MIGRATE";
 	switch (state) {
 	case UNKNOWN:
-		state = (qry_xfrm_mirgrate_support(logger) ? ENABLED : DISABLED);
+		state = (qry_xfrm_migrate_support(logger) ? ENABLED : DISABLED);
 		return state == ENABLED ? NULL : disabled_message;
 	case ENABLED:
 		return NULL;
