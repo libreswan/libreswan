@@ -88,13 +88,13 @@ initiating 2 connections
 "westnet-eastnet-second" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet-alias" #2: sent Quick Mode request
 "westnet-eastnet-second" #3: sent Quick Mode request
-"westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; it is in use by the unrouted-bare-negotiation connection "westnet-eastnet-second"
+"westnet-eastnet-alias" #2: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; in use by negotiating Child SA "westnet-eastnet-second" #3 with routing unrouted-bare-negotiation
 "westnet-eastnet-alias" #2: state transition failed: failed
 "westnet-eastnet-alias" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 ERROR: "westnet-eastnet-alias" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (in): No such file or directory (errno 2)
 "westnet-eastnet-alias" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "westnet-eastnet-alias" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
-"westnet-eastnet-second" #3: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; it is in use by the unrouted-bare-negotiation connection "westnet-eastnet-alias"
+"westnet-eastnet-second" #3: cannot install kernel policy 192.0.1.0/24===192.0.2.0/24; in use by negotiating Child SA "westnet-eastnet-alias" #4 with routing unrouted-bare-negotiation
 "westnet-eastnet-second" #3: state transition failed: failed
 "westnet-eastnet-second" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 ERROR: "westnet-eastnet-second" #3: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (in): No such file or directory (errno 2)
