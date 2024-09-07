@@ -992,8 +992,8 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 	verbose.level++;
 
 	/* match any if_id */
-	if (!find_xfrmi_interface(NULL, 0, verbose)) {
-		vdbg("%s() no xfrmi interface found", __func__);
+	if (find_xfrmi_interface(NULL, 0, verbose)) {
+		vdbg("%s() xfrmi interface found", __func__);
 		return NULL; /* success: there is already xfrmi interface */
 	}
 
@@ -1047,44 +1047,53 @@ err_t xfrm_iface_supported(struct logger *logger)
 {
 	err_t err = NULL; /* success */
 
-	if (xfrm_interface_support == 0) {
-		char *if_name = fmt_xfrmi_ifname(IPSEC1_XFRM_IF_ID);
-		static const char lo[] = "lo";
-
-		if (if_nametoindex(lo) == 0) {
-			/* possibly no need to panic: may be get
-			 * smarter one day */
-			xfrm_interface_support = -1;
-			pfreeany(if_name);
-			return "Could not create find real device needed to test xfrmi support";
-		}
-
-		unsigned int if_id = if_nametoindex(if_name);
-		int e = errno; /* save error */
-		if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
-			err = ipsec1_support_test(if_name, lo, logger);
-		} else if (if_id == 0) {
-			llog_error(logger, e,
-				   "unexpected error in xfrm_iface_supported() while checking device %s",
-				   if_name);
-			xfrm_interface_support = -1;
-			err = "cannot decide xfrmi support. assumed no.";
-		} else {
-			/*
-			 * may be more extensive checks?
-			 * such if it is a xfrmi device or something else
-			 */
-			llog(RC_LOG, logger,
-				    "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
-				    if_name);
-			xfrm_interface_support = -1;
-			err = "device name conflict in xfrm_iface_supported()";
-		}
-		pfreeany(if_name);
+	if (xfrm_interface_support > 0) {
+		return NULL;
 	}
 
-	if (xfrm_interface_support < 0 && err == NULL)
+	/*
+	 * If the previous probe failed, need to re-probe.  For
+	 * instance, "ipsec0" could be missing the first time, but is
+	 * than added manually.
+	 */
+
+	char *if_name = fmt_xfrmi_ifname(IPSEC1_XFRM_IF_ID); /* must-free */
+	static const char lo[] = "lo";
+
+	if (if_nametoindex(lo) == 0) {
+		/* possibly no need to panic: may be get
+		 * smarter one day */
+		xfrm_interface_support = -1;
+		pfreeany(if_name);
+		return "Could not create find real device needed to test xfrmi support";
+	}
+
+	unsigned int if_id = if_nametoindex(if_name);
+	int e = errno; /* save error */
+	if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
+		err = ipsec1_support_test(if_name, lo, logger);
+	} else if (if_id == 0) {
+		llog_error(logger, e,
+			   "unexpected error in xfrm_iface_supported() while checking device %s",
+			   if_name);
+		xfrm_interface_support = -1;
+		err = "cannot decide xfrmi support. assumed no.";
+	} else {
+		/*
+		 * may be more extensive checks?
+		 * such if it is a xfrmi device or something else
+		 */
+		llog(RC_LOG, logger,
+		     "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
+		     if_name);
+		xfrm_interface_support = -1;
+		err = "device name conflict in xfrm_iface_supported()";
+	}
+	pfreeany(if_name);
+
+	if (PBAD(logger, xfrm_interface_support < 0 && err == NULL)) {
 		err = "may be missing CONFIG_XFRM_INTERFACE support in kernel";
+	}
 
 	return err;
 }
