@@ -45,6 +45,8 @@ void nl_addattr_nest_end(struct nlmsghdr *n, struct rtattr *nest);
 void nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type,
 		const char *str);
 void nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data);
+void nl_addattr16(struct nlmsghdr *n, int maxlen, int type, const uint16_t data);
+void nl_addattr8(struct nlmsghdr *n, int maxlen, int type, const uint8_t data);
 
 const struct nlattr *nl_getattr(const struct nlmsghdr *n, size_t *offset);
 const char *nl_getattrvalstrz(const struct nlmsghdr *n,

@@ -64,11 +64,6 @@ void nl_addattrstrz(struct nlmsghdr *n, int maxlen, int type, const char *str /*
 	nl_addattr_l(n, maxlen, type, str, strlen(str)+1);
 }
 
-void nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data)
-{
-	nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t));
-}
-
 const struct nlattr *nl_getattr(const struct nlmsghdr *n, size_t *offset)
 {
 	struct nlattr *attr = (void *)n + NLMSG_HDRLEN + NLMSG_ALIGN(*offset);
@@ -96,4 +91,17 @@ const char *nl_getattrvalstrz(const struct nlmsghdr *n,
 	}
 
 	return (void *)attr + NLA_HDRLEN;
+}
+
+void nl_addattr8(struct nlmsghdr *n, int maxlen, int type, const uint8_t data)
+{
+	nl_addattr_l(n, maxlen, type, &data, sizeof(uint8_t));
+}
+void nl_addattr16(struct nlmsghdr *n, int maxlen, int type, const uint16_t data)
+{
+       nl_addattr_l(n, maxlen, type, &data, sizeof(uint16_t));
+}
+void nl_addattr32(struct nlmsghdr *n, int maxlen, int type, const uint32_t data)
+{
+	nl_addattr_l(n, maxlen, type, &data, sizeof(uint32_t));
 }
