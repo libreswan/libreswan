@@ -75,6 +75,7 @@
 <!ENTITY ipsec-max-bytes SYSTEM "d.ipsec.conf/ipsec-max-bytes.xml">
 <!ENTITY ipsec-max-packets SYSTEM "d.ipsec.conf/ipsec-max-packets.xml">
 <!ENTITY ipsecdir SYSTEM "d.ipsec.conf/ipsecdir.xml">
+<!ENTITY iptfs SYSTEM "d.ipsec.conf/iptfs.xml">
 <!ENTITY keep-alive SYSTEM "d.ipsec.conf/keep-alive.xml">
 <!ENTITY keyexchange SYSTEM "d.ipsec.conf/keyexchange.xml">
 <!ENTITY left SYSTEM "d.ipsec.conf/left.xml">
@@ -223,6 +224,7 @@
 	&hostaddrfamily;
 	&clientaddrfamily;
 	&type;
+	&iptfs;
 	&left;
 	&leftsubnet;
 	&leftsubnets;
