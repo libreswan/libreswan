@@ -1,0 +1,2 @@
+Testing that if IPTFS is not allowed, TUNNEL mode is used.
+

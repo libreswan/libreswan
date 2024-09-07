@@ -1,0 +1,107 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
+destination -I 192.1.2.45 192.1.2.23 is alive
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add ipv4-psk-ikev2
+"ipv4-psk-ikev2": added IKEv2 connection
+west #
+ ipsec auto --status | grep iptfs
+"ipv4-psk-ikev2":   iptfs: yes; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up ipv4-psk-ikev2
+"ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN/IPTFS=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ ipsec whack --trafficstatus
+#2: "ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=88, outBytes=88, maxBytes=2^63B, id='@east'
+west #
+ ip xfrm state |grep iptfs
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	iptfs-opts init-delay 0 max-queue-size 10485760 pkt-size 0
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	iptfs-opts drop-time 1000000 reorder-window 3
+west #
+ ip xfrm pol |grep iptfs
+		proto esp reqid 16389 mode iptfs
+		proto esp reqid 16389 mode iptfs
+		proto esp reqid 16389 mode iptfs
+west #
+ echo done
+done
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+	iptfs-opts init-delay 0 max-queue-size 10485760 pkt-size 0
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+	iptfs-opts drop-time 1000000 reorder-window 3
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode iptfs
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode iptfs
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode iptfs
+west #
+ grep IPTFS /tmp/pluto.log
+| netlink_add_sa() enabling IPTFS mode
+| netlink_add_sa() setting all IPTFS xfrm options
+| sendrecv_xfrm_msg() sending 16 Add SA IPTFS Support Probe
+| sendrecv_xfrm_msg() netlink response for Add SA IPTFS Support Probe included non-error error
+| kernel: IPTFS supported
+| Initiator policy is IPTFS, responder sends v2N_USE_AGGFRAG, setting CHILD SA to IPTFS
+| kernel: Enabling IPTFS with PMTU packet size
+| kernel: IPTFS with dont_frag set
+| kernel: IPTFS max_qsize=0, drop_time=0, init_delay=0, reord_win=0
+| netlink_add_sa() enabling IPTFS mode
+| netlink_add_sa() setting all IPTFS xfrm options
+| kernel: Enabling IPTFS with PMTU packet size
+| kernel: IPTFS with dont_frag set
+| kernel: IPTFS max_qsize=0, drop_time=0, init_delay=0, reord_win=0
+| netlink_add_sa() enabling IPTFS mode
+| netlink_add_sa() setting all IPTFS xfrm options
+"ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN/IPTFS=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+

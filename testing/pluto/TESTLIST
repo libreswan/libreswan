@@ -1489,6 +1489,11 @@ kvmplutotest	interop-ikev2-strongswan-38-mobike-pool		good
 kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
 kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
+# IPTFS tests
+kvmplutotest	ikev2-iptfs-01				good
+kvmplutotest	ikev2-iptfs-02-mismatch			good
+kvmplutotest	ikev2-iptfs-03-on-demand		good
+
 kvmplutotest	bad-nexthop-01		wip
 
 # TCP tests and UDP encap tests
