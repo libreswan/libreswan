@@ -2620,6 +2620,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userspi_info spi;
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct nlm_resp rsp;
 
@@ -2638,6 +2639,8 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	req.spi.min = min;
 	req.spi.max = max;
+
+	nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, XFRM_SA_DIR_IN);
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
