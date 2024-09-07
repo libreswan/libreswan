@@ -2,17 +2,21 @@
 See also https://libreswan.org/
 
 v5.1 (unreleased)
+* IKEv2:
+  - Add IPTFS support [Paul]
 * building:
   - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
 * whack:
   - ignore older whack as could trigger core dump [Andrew, github/1709]
+  - add --narrowing {yes,no}, retain undocumented --allow-narrowing [Andrew]
+  - Add IPTFS support [Paul]
 * linux:
   - handle NLMSG_DONE at end of response (6.9.0-rc1) [Andrew, Ilya, github/1675]
   - fix hang when initiating an on-demand TCP connection [Daiki, github/1156]
+  - Add XFRM IPTFS support [Paul/Antony]
+  - Add XFRM Direction support [Antony]
 * config:
   - verbosely ignore x-* style comments in config file [Andrew, github/1725]
-* whack:
-  - add --narrowing {yes,no}, retain undocumented --allow-narrowing [Andrew]
 
 v5.0 (Apr 24, 2024)
 * IKEv1:
