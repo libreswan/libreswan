@@ -1647,7 +1647,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			ldbg(logger, "%s() enabling Decap DSCP", __func__);
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
-		if (!sa->encap_dscp) {
+		if (!sa->encap_dscp && sa->direction ==  DIRECTION_OUTBOUND) {
 			ldbg(logger, "%s() disabling Encap DSCP", __func__);
 			__u32 extra_flags = XFRM_SA_XFLAG_DONT_ENCAP_DSCP;
 			attr->rta_type = XFRMA_SA_EXTRA_FLAGS;
@@ -1669,6 +1669,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		} else {
 			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
 				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
+			bmp_size = sa->replay_window == 0 ? 0 : bmp_size;
 			/* this is where we could fill in sequence numbers for this SA */
 			struct xfrm_replay_state_esn xre = {
 				/* replay_window must be multiple of 8 */
