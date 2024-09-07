@@ -1,0 +1,70 @@
+  <varlistentry>
+  <term><emphasis remap='B'>iptfs</emphasis></term>
+  <listitem>
+<para>
+Enable "Aggregation and Fragmentation Mode for Encapsulating Security
+Payload (ESP) and Its Use for IP Traffic Flow Security (IP-TFS) as
+defined in RFC 9347. Currently, this is only supported for the Linux
+XFRM stack and will likely be merged into Linux 6.7 or 6.8. Valid
+options are <emphasis remap='B'>no</emphasis> (the default) or
+<emphasis remap='B'>yes</emphasis>. IPTFS allow the kernel to
+combine multiple small packets into one ESP packet, which should
+cause a performance gain when many small packets (eg iperf packets)
+are sent. It also allows the kernel to fragment the outgoing packet
+stream so that the ESP packets have a fixed size that can be set
+manually or fit the path MTU. This should avoid common MTU issues
+with IPsec. IPTFS can only be used with tunnel mode and ESP. It
+cannot be combined with type=transport, phase2=ah, compress=yes or
+tfc=yes. A number of iptfs options can be tuned.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>iptfs-dont-fragment</emphasis></term>
+  <listitem>
+<para>Whether or not to use fragmentation. Unclear to author if this means
+regular ICMP Dont Fragment sending, or wether it stops iptfs from fragmenting
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>iptfs-max-queue-size</emphasis></term>
+  <listitem>
+<para>
+The default IPTFS max output queue size in octets. The output queue is
+where received packets destined for output over an IPTFS tunnel are
+stored prior to being output in aggregated/fragmented form over the
+IPTFS tunnel. Default 1000000.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>iptfs-drop-time</emphasis></term>
+  <listitem>
+<para>
+The default IPTFS drop time in microseconds. The drop time is the amount
+of time before a missing out-of-order IPTFS tunnel packet is considered
+lost. See also the reorder window. Default is 1s (1000000)
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>iptfs-in-delay</emphasis></term>
+  <listitem>
+<para>
+The default IPTFS initial output delay in microseconds. The initial
+output delay is the amount of time prior to servicing the output queue
+after queueing the first packet on said queue. Default 0.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>iptfs-reorder-window</emphasis></term>
+  <listitem>
+<para>
+The default IPTFS reorder window size. The reorder window size dictates
+the maximum number of IPTFS tunnel packets in a sequence that may arrive
+out of order. Default 3.
+</para>
+  </listitem>
+  </varlistentry>
