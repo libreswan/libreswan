@@ -2455,3 +2455,38 @@ static bool dispatch(enum routing_event event,
 
 	return ok;
 }
+
+void jam_routing_sa(struct jambuf *buf, const struct connection *c)
+{
+	/*
+	 * Only call when c->routing_sa is valid.
+	 */
+	if (c->routing_sa == SOS_NOBODY) {
+		jam_string(buf, "no routing SA!?!");
+		return;
+	}
+
+	/*
+	 * Try to figure out which SA is the routing SA and include
+	 * it's description in the log.
+	 *
+	 * Work backwards through established / negotiating Child SA,
+	 * established /negotiating IKE SA.  One should match.  The
+	 * routing SA acts as a backstop guarenteeing someting is
+	 * logged.
+	 */
+	for (enum connection_owner owner = CONNECTION_OWNER_ROOF-1;
+	     owner >= CONNECTION_OWNER_FLOOR; owner--) {
+		if (c->routing_sa == c->routing.owner[owner]) {
+			jam_enum(buf, &connection_owner_stories, owner);
+			jam_string(buf, " ");
+			break;
+		}
+	}
+
+	struct state *sa = state_by_serialno(c->routing_sa);
+	if (PBAD(c->logger, sa == NULL)) {
+		return;
+	}
+	jam_state(buf, sa);
+}

@@ -47,5 +47,6 @@ enum connection_owner {
 };
 
 extern const struct enum_names connection_owner_names;
+extern const struct enum_names connection_owner_stories;
 
 #endif

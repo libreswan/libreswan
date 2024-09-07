@@ -118,4 +118,7 @@ bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, w
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...);
 
+/* jam the routing SA prefixed by its type */
+void jam_routing_sa(struct jambuf *buf, const struct connection *c);
+
 #endif

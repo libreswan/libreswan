@@ -769,10 +769,15 @@ static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
 	LLOG_JAMBUF(RC_LOG, logger, buf) {
 		jam_string(buf, "cannot install kernel policy ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
-		jam_string(buf, "; it is in use by the ");
+		jam_string(buf, "; in use by ");
+		if (d->routing_sa != SOS_NOBODY) {
+			jam_routing_sa(buf, d);
+		} else {
+			jam_string(buf, "connection ");
+			jam_connection(buf, d);
+		}
+		jam_string(buf, " with routing ");
 		jam_enum_human(buf, &routing_names, d->routing.state);
-		jam_string(buf, " connection ");
-		jam_connection(buf, d);
 	}
 }
 

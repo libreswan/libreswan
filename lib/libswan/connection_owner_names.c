@@ -27,7 +27,22 @@ const char *connection_owner_name[] = {
 };
 
 const struct enum_names connection_owner_names = {
-	0, CONNECTION_OWNER_ROOF-1,
+	ROUTING_SA, ESTABLISHED_CHILD_SA,
 	ARRAY_REF(connection_owner_name),
+	.en_prefix = NULL,
+};
+
+
+const char *connection_owner_story[] = {
+	[ROUTING_SA] = "routing SA",
+	[NEGOTIATING_IKE_SA] = "negotiating IKE SA",
+	[ESTABLISHED_IKE_SA] = "established IKE SA",
+	[NEGOTIATING_CHILD_SA] = "negotiating Child SA",
+	[ESTABLISHED_CHILD_SA] = "established Child SA",
+};
+
+const struct enum_names connection_owner_stories = {
+	ROUTING_SA, ESTABLISHED_CHILD_SA,
+	ARRAY_REF(connection_owner_story),
 	.en_prefix = NULL,
 };
