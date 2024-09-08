@@ -1062,19 +1062,19 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					 */
 					enum encapsulation_mode encap_mode =
 						(nat_traversal_detected(st)
-						 ? (st->st_policy & POLICY_TUNNEL
+						 ? (st->st_policy.tunnel
 						    ? (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
 						       ? ENCAPSULATION_MODE_UDP_TUNNEL_RFC
 						       : ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS)
 						    : (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
 						       ? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
 						       : ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS)							 )
-						 : (st->st_policy & POLICY_TUNNEL
+						 : (st->st_policy.tunnel
 						    ? ENCAPSULATION_MODE_TUNNEL
 						    : ENCAPSULATION_MODE_TRANSPORT));
 
 					if (p->protoid != PROTO_IPCOMP ||
-					    st->st_policy & POLICY_TUNNEL) {
+					    st->st_policy.tunnel) {
 						if (!out_attr(
 							    ENCAPSULATION_MODE,
 							    encap_mode,
@@ -1196,7 +1196,7 @@ bool ikev1_out_quick_sa(struct pbs_out *outs,
 	struct connection *c = st->st_connection;
 	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
 						  c->config->child_sa.proposals,
-						  (st->st_policy & POLICY_COMPRESS),
+						  st->st_policy.compress,
 						  st->logger);
 
 	bool ok = ikev1_out_sa(outs, sadb, st, /*oakley_mode*/false);
@@ -3216,7 +3216,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			int previous_transnum = -1;
 			int tn;
 
-			if (!(st->st_policy & POLICY_COMPRESS)) {
+			if (!st->st_policy.compress) {
 				address_buf b;
 				connection_buf cib;
 				log_state(RC_LOG, st,

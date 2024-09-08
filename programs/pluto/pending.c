@@ -61,7 +61,7 @@
 
 void append_pending(struct ike_sa *ike,
 		    struct connection *c,
-		    lset_t policy,
+		    const struct child_policy *policy,
 		    so_serial_t replacing,
 		    const shunk_t sec_label,
 		    bool part_of_initiating_ike_sa,
@@ -96,7 +96,7 @@ void append_pending(struct ike_sa *ike,
 
 	p->ike = ike;
 	p->connection = connection_addref(c, p->logger); /* no pending logger */
-	p->policy = policy;
+	p->policy = (*policy);
 	p->replacing = replacing;
 	p->pend_time = mononow();
 	p->sec_label = sec_label;
@@ -310,7 +310,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 				connection_attach(p->connection, p->logger);
 				struct child_sa *child =
 					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
-									    p->policy,
+									    &p->policy,
 									    /*detach_whack*/false);
 				connection_initiated_child(ike, child,
 							   INITIATED_BY_PENDING,
@@ -324,7 +324,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			connection_attach(p->connection, p->logger);
 			struct child_sa *child =
 				quick_outI1(ike, p->connection,
-					    p->policy,
+					    &p->policy,
 					    p->replacing);
 			connection_initiated_child(ike, child,
 						   INITIATED_BY_PENDING,

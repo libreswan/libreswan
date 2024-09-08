@@ -39,6 +39,6 @@ extern stf_status send_isakmp_notification(struct state *st,
 extern void jam_child_sa_details(struct jambuf *buf, struct state *st);
 extern void jam_parent_sa_details(struct jambuf *buf, struct state *st);
 
-lset_t capture_child_rekey_policy(struct state *st);
+struct child_policy capture_child_rekey_policy(struct state *st);
 
 #endif

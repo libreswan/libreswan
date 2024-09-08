@@ -507,12 +507,12 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	 * could have changed) will be called.
 	 */
 
-	policy_buf pb;
+	child_policy_buf pb;
 	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s sec_label="PRI_SHUNK,
 	    larval_child->sa.st_serialno,
 	    child_being_replaced->sa.st_serialno,
 	    ike->sa.st_serialno,
-	    str_policy(larval_child->sa.st_policy, &pb),
+	    str_child_policy(&larval_child->sa.st_policy, &pb),
 	    (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
 	     larval_child->sa.st_pfs_group->common.fqn),
 	    pri_shunk(c->child.sec_label));
@@ -865,7 +865,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 						     struct connection *cc, /* for child + whack */
-						     lset_t policy,
+						     const struct child_policy *policy,
 						     bool detach_whack)
 {
 	/* share the log! */
@@ -880,7 +880,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
 
-	larval_child->sa.st_policy = policy;
+	larval_child->sa.st_policy = *policy;
 
 	llog_sa(RC_LOG, larval_child,
 		"initiating Child SA using IKE SA #%lu", ike->sa.st_serialno);
@@ -897,11 +897,11 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	 * could have changed) will be called.
 	 */
 
-	policy_buf pb;
+	child_policy_buf pb;
 	dbg("#%lu submitting crypto needed to initiate Child SA using IKE SA #%lu policy=%s pfs=%s",
 	    larval_child->sa.st_serialno,
 	    ike->sa.st_serialno,
-	    str_policy(policy, &pb),
+	    str_child_policy(policy, &pb),
 	    larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
 
 	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
@@ -1579,7 +1579,11 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
 	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
-	larval_ike->sa.st_policy = LEMPTY;
+	/*
+	 * Notice how policy is empty - rekeying an IKE doesn't create
+	 * a child.
+	 */
+	larval_ike->sa.st_policy = (struct child_policy) {0};
 	larval_ike->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_ike_proposals(ike, larval_ike->sa.logger);
 
@@ -1594,10 +1598,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	 */
 
 	passert(larval_ike->sa.st_connection != NULL);
-	policy_buf pb;
+	child_policy_buf pb;
 	dbg("#%lu submitting crypto needed to rekey IKE SA #%lu policy=%s pfs=%s",
 	    larval_ike->sa.st_serialno, ike->sa.st_serialno,
-	    str_policy(larval_ike->sa.st_policy, &pb),
+	    str_child_policy(&larval_ike->sa.st_policy, &pb),
 	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
 	submit_ke_and_nonce(/*callback*/&larval_ike->sa, /*task*/&larval_ike->sa, /*no-md*/NULL,

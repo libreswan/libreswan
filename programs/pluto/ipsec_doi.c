@@ -88,9 +88,10 @@
  * that rekeying doesn't downgrade security.  I admit that this
  * doesn't capture everything.
  */
-lset_t capture_child_rekey_policy(struct state *st)
+
+struct child_policy capture_child_rekey_policy(struct state *st)
 {
-	lset_t policy = LEMPTY;
+	struct child_policy policy = {0};
 
 	/*
 	 * ESP/AH are non-negotiatable, hence the connection value can
@@ -102,25 +103,25 @@ lset_t capture_child_rekey_policy(struct state *st)
 	 */
 	switch (st->st_connection->config->child_sa.encap_proto) {
 	case ENCAP_PROTO_ESP:
-		policy |= POLICY_ENCRYPT;
+		policy.encrypt = true;
 		break;
 	case ENCAP_PROTO_AH:
-		policy |= POLICY_AUTHENTICATE;
+		policy.authenticate = true;
 		break;
 	default:
 		/*
 		 * Without ESP/AH the connection must be
 		 * never-negotiate, hence return LEMPTY.
 		 */
-		return LEMPTY;
+		return (struct child_policy){0}; /*empty*/
 	}
 
 	if (st->st_kernel_mode == KERNEL_MODE_TUNNEL) {
-		policy |= POLICY_TUNNEL;
+		policy.tunnel = true;
 	}
 
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
-		policy |= POLICY_COMPRESS;
+		policy.compress = true;
 	}
 
 	return policy;

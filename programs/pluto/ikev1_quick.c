@@ -539,13 +539,13 @@ static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
 struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     struct connection *c,
-			     lset_t policy,
+			     const struct child_policy *policy,
 			     so_serial_t replacing)
 {
 	passert(c != NULL);
 	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR);
 
-	child->sa.st_policy = policy;
+	child->sa.st_policy = (*policy);
 
 	child->sa.st_v1_msgid.id = generate_msgid(&isakmp->sa);
 	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */
@@ -718,7 +718,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		struct ipsec_db_policy pm = {
 			.encrypt = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
 			.authenticate = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
-			.compress = (st->st_policy & POLICY_COMPRESS),
+			.compress = st->st_policy.compress,
 		};
 
 		ldbg(st->logger,

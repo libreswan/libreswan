@@ -318,10 +318,10 @@ void revive_connection(struct connection *c, const char *subplot,
 	shunk_t sec_label = null_shunk;
 	struct logger *logger = c->logger;
 	so_serial_t replacing = SOS_NOBODY;
-	lset_t policy = child_sa_policy(c);
+	const struct child_policy policy = child_sa_policy(c);
 	bool background = false;
 
-	initiate(c, policy, replacing, inception,
+	initiate(c, &policy, replacing, inception,
 		 sec_label, background, logger,
 		 INITIATED_BY_REVIVE, HERE);
 }

@@ -17,7 +17,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md);
 
 struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       struct state *predecessor,
-					       lset_t policy,
+					       const struct child_policy *policy,
 					       const threadtime_t *inception,
 					       shunk_t sec_label,
 					       bool background);

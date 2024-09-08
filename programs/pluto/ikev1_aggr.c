@@ -221,7 +221,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	passert(c == ike->sa.st_connection); /* no switch */
 
-	ike->sa.st_policy = LEMPTY; /* only as accurate as connection */
+	ike->sa.st_policy = (struct child_policy){0}; /* only as accurate as connection */
 
 	binlog_refresh_state(&ike->sa);
 
@@ -976,7 +976,7 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
 
 struct ike_sa *aggr_outI1(struct connection *c,
 			  struct ike_sa *predecessor,
-			  lset_t policy,
+			  const struct child_policy *policy,
 			  const threadtime_t *inception,
 			  bool detach_whack)
 {
@@ -1006,7 +1006,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 		return NULL;
 	}
 
-	if (policy != LEMPTY) {
+	if (has_child_policy(policy)) {
 		/*
 		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
 		 * so that a Child SA isn't also initiated and this

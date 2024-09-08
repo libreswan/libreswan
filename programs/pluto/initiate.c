@@ -294,9 +294,9 @@ static bool initiate_connection_4_fab(struct connection *c,
 	shunk_t sec_label = null_shunk;
 	struct logger *logger = c->logger;
 	so_serial_t replacing = SOS_NOBODY;
-	lset_t policy = child_sa_policy(c);
+	const struct child_policy policy = child_sa_policy(c);
 
-	initiate(c, policy, replacing, &inception,
+	initiate(c, &policy, replacing, &inception,
 		 sec_label, background, logger,
 		 INITIATED_BY_WHACK/*maybe?*/, HERE);
 
@@ -304,7 +304,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 }
 
 void initiate(struct connection *c,
-	      lset_t policy,
+	      const struct child_policy *policy,
 	      so_serial_t replacing,
 	      const threadtime_t *inception,
 	      shunk_t sec_label,
@@ -314,12 +314,12 @@ void initiate(struct connection *c,
 	      where_t where)
 {
 	enum_buf ifnb;
-	policy_buf pb;
+	child_policy_buf pb;
 	enum_buf epb;
 	ldbg_connection(c, where, "%s() by %s policy=%s proto=%s sec_label="PRI_SHUNK,
 			__func__,
 			str_enum_short(&initiated_by_names, initiated_by, &ifnb),
-			str_policy(policy, &pb),
+			str_child_policy(policy, &pb),
 			str_enum_short(&encap_proto_names, c->config->child_sa.encap_proto, &epb),
 			pri_shunk(sec_label));
 

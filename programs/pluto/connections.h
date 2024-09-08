@@ -1130,7 +1130,7 @@ const char *connection_sa_name(const struct connection *c, enum sa_type sa_type)
 /* IKE | ISAKMP || Child | IPsec */
 const char *connection_sa_short_name(const struct connection *c, enum sa_type sa_type);
 
-lset_t child_sa_policy(const struct connection *c);
+struct child_policy child_sa_policy(const struct connection *c);
 
 bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);

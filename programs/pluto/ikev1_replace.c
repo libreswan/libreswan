@@ -67,13 +67,13 @@ void ikev1_replace(struct state *st)
 		 * establishes.  Instead the revival code will
 		 * schedule the connection as a child.
 		 */
-		lset_t policy = LEMPTY;
+		const struct child_policy policy = {0};
 		struct connection *c = st->st_connection;
 		struct ike_sa *predecessor = pexpect_ike_sa(st);
 		if (c->config->aggressive) {
-			aggr_outI1(c, predecessor, policy, &inception, /*background?*/false);
+			aggr_outI1(c, predecessor, &policy, &inception, /*background?*/false);
 		} else {
-			main_outI1(c, predecessor, policy, &inception, /*background?*/false);
+			main_outI1(c, predecessor, &policy, &inception, /*background?*/false);
 		}
 
 	} else {
@@ -84,9 +84,9 @@ void ikev1_replace(struct state *st)
 		 * security.  I admit that this doesn't capture
 		 * everything.
 		 */
-		lset_t policy = capture_child_rekey_policy(st);
-		passert(policy != LEMPTY);
-		initiate(st->st_connection, policy, st->st_serialno, &inception,
+		const struct child_policy policy = capture_child_rekey_policy(st);
+		passert(has_child_policy(&policy));
+		initiate(st->st_connection, &policy, st->st_serialno, &inception,
 			 null_shunk, /*background?*/false, st->logger,
 			 INITIATED_BY_REPLACE, HERE);
 	}

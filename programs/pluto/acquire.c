@@ -151,7 +151,8 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		jam_kernel_acquire(buf, b);
 	}
 
-	initiate(cp, child_sa_policy(cp), SOS_NOBODY,
+	const struct child_policy policy = child_sa_policy(cp);
+	initiate(cp, &policy, SOS_NOBODY,
 		 &inception, b->sec_label,
 		 b->background, cp->logger,
 		 INITIATED_BY_ACQUIRE,

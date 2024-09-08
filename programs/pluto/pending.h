@@ -39,7 +39,7 @@ struct pending {
 	struct logger *logger;
 	struct ike_sa *ike;
 	struct connection *connection;
-	lset_t policy;
+	struct child_policy policy;
 	so_serial_t replacing;
 	monotime_t pend_time;
 	shunk_t sec_label;
@@ -48,7 +48,7 @@ struct pending {
 
 void append_pending(struct ike_sa *ike,
 		    struct connection *c, /*has whack*/
-		    lset_t policy,
+		    const struct child_policy *policy,
 		    so_serial_t replacing,
 		    shunk_t sec_label,
 		    bool part_of_initiating_ike_sa,

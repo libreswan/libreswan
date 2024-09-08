@@ -69,11 +69,11 @@ void ikev2_replace(struct state *st)
 		 * schedule the connection as a child.
 		 */
 		struct connection *c = st->st_connection;
-		lset_t policy = LEMPTY;
+		const struct child_policy policy = {0};
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 		}
-		initiate_v2_IKE_SA_INIT_request(c, st, policy, &inception,
+		initiate_v2_IKE_SA_INIT_request(c, st, &policy, &inception,
 						HUNK_AS_SHUNK(c->child.sec_label),
 						/*background?*/false);
 
@@ -85,9 +85,8 @@ void ikev2_replace(struct state *st)
 		 * security.  I admit that this doesn't capture
 		 * everything.
 		 */
-		lset_t policy = capture_child_rekey_policy(st);
-
-		initiate(st->st_connection, policy, st->st_serialno, &inception,
+		const struct child_policy policy = capture_child_rekey_policy(st);
+		initiate(st->st_connection, &policy, st->st_serialno, &inception,
 			 null_shunk, /*background?*/false, st->logger,
 			 INITIATED_BY_REPLACE, HERE);
 	}

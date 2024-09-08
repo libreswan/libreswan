@@ -636,7 +636,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 
 struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       struct state *predecessor,
-					       lset_t policy,
+					       const struct child_policy *policy,
 					       const threadtime_t *inception,
 					       shunk_t sec_label,
 					       bool detach_whack)
@@ -674,7 +674,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		     pri_shunk(c->config->sec_label));
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
-	} else if (policy != LEMPTY) {
+	} else if (has_child_policy(policy)) {
 		/*
 		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
 		 * so that a Child SA isn't also initiated and this

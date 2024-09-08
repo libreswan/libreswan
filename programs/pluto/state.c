@@ -2234,3 +2234,42 @@ const char *state_sa_short_name(const struct state *st)
 	return connection_sa_short_name(st->st_connection,
 					st->st_sa_type_when_established);
 }
+
+/* print a policy: like bitnamesof, but it also does the non-bitfields.
+ * Suppress the shunt and fail fields if 0.
+ */
+
+size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy)
+{
+	size_t s = 0;
+
+	const char *sep = "";
+	if (policy->encrypt) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "ENCRYPT");
+		sep = "+";
+	}
+	if (policy->authenticate) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "AUTHENTICATE");
+		sep = "+";
+	}
+	if (policy->tunnel) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "TUNNEL");
+		sep = "+";
+	}
+	if (policy->compress) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "COMPRESS");
+		sep = "+";
+	}
+	return s;
+}
+
+const char *str_child_policy(const struct child_policy *policy, child_policy_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_child_policy(&buf, policy);
+	return dst->buf;
+}

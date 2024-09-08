@@ -17,5 +17,5 @@
 
 struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     struct connection *c,
-			     lset_t policy,
+			     const struct child_policy *policy,
 			     so_serial_t replacing);

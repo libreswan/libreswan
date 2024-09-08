@@ -68,6 +68,24 @@ struct ikev2_ipseckey_dns; /* forward declaration of tag */
 struct state;   /* forward declaration of tag */
 struct eap_state;
 
+struct child_policy {
+	bool encrypt;
+	bool authenticate;
+	bool tunnel;
+	bool compress;
+};                       /* policy for IPsec SA */
+#define has_child_policy(POLICY) ((POLICY)->encrypt ||		\
+				  (POLICY)->authenticate ||	\
+				  (POLICY)->compress ||		\
+				  (POLICY)->tunnel)
+
+typedef struct {
+	char buf[32];
+} child_policy_buf;
+size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy);
+const char *str_child_policy(const struct child_policy *policy, child_policy_buf *buf);
+
+
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * in the Transaction Payload.
@@ -257,7 +275,7 @@ struct state {
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
 	const struct dh_desc *st_pfs_group;   /*group for Phase 2 PFS */
-	lset_t st_policy;                       /* policy for IPsec SA */
+	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
 

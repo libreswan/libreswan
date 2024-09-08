@@ -28,12 +28,13 @@
 struct logger;
 struct kernel_acquire;
 struct connection;
+struct child_policy;
 
 bool initiate_connection(struct connection *c, const char *remote_host,
 			 bool background, struct logger *logger);
 
 void initiate(struct connection *c,
-	      lset_t policy,
+	      const struct child_policy *policy,
 	      so_serial_t replacing,
 	      const threadtime_t *inception,
 	      shunk_t sec_label,

@@ -136,7 +136,7 @@ static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa 
 
 struct ike_sa *main_outI1(struct connection *c,
 			  struct ike_sa *predecessor,
-			  lset_t policy,
+			  const struct child_policy *policy,
 			  const threadtime_t *inception,
 			  bool background)
 {
@@ -147,7 +147,7 @@ struct ike_sa *main_outI1(struct connection *c,
 
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
-	if (policy != LEMPTY) {
+	if (has_child_policy(policy)) {
 		/*
 		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
 		 * so that a Child SA isn't also initiated and this
@@ -543,7 +543,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 	passert(!ike->sa.st_oakley.doing_xauth);
 
 	/* only as accurate as connection */
-	ike->sa.st_policy = LEMPTY;
+	ike->sa.st_policy = (struct child_policy){0};
 	change_v1_state(&ike->sa, STATE_MAIN_R0);
 
 	binlog_refresh_state(&ike->sa);

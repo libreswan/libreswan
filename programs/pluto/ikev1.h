@@ -35,13 +35,13 @@ extern void process_packet_tail(struct msg_digest *md);
 
 extern struct ike_sa *main_outI1(struct connection *c,
 				 struct ike_sa *predecessor,
-				 lset_t policy,
+				 const struct child_policy *policy,
 				 const threadtime_t *inception,
 				 bool background);
 
 extern struct ike_sa *aggr_outI1(struct connection *c,
 				 struct ike_sa *predecessor,
-				 lset_t policy,
+				 const struct child_policy *policy,
 				 const threadtime_t *inception,
 				 bool background);
 
