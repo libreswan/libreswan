@@ -1055,13 +1055,29 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					 * to Transport Mode, so we can exploit the default
 					 * (draft-shacham-ippcp-rfc2393bis-05.txt 4.1).
 					 */
+
+					/**
+					 * Encapsulation mode macro (see demux.c)
+					 * ??? Wow.  Wow.
+					 */
+					enum encapsulation_mode encap_mode =
+						(nat_traversal_detected(st)
+						 ? (st->st_policy & POLICY_TUNNEL
+						    ? (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
+						       ? ENCAPSULATION_MODE_UDP_TUNNEL_RFC
+						       : ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS)
+						    : (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
+						       ? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
+						       : ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS)							 )
+						 : (st->st_policy & POLICY_TUNNEL
+						    ? ENCAPSULATION_MODE_TUNNEL
+						    : ENCAPSULATION_MODE_TRANSPORT));
+
 					if (p->protoid != PROTO_IPCOMP ||
 					    st->st_policy & POLICY_TUNNEL) {
 						if (!out_attr(
 							    ENCAPSULATION_MODE,
-							    NAT_T_ENCAPSULATION_MODE(
-								    st,
-								    st->st_policy),
+							    encap_mode,
 							    attr_desc,
 							    attr_value_names,
 							    &trans_pbs))

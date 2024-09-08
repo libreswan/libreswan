@@ -88,30 +88,6 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
 /* NAT-T IKEv2 v2N */
 
-/**
- * Encapsulation mode macro (see demux.c)
- * ??? Wow.  Wow.
- */
-#define NAT_T_ENCAPSULATION_MODE(st, nat_t_policy) ( \
-		nat_traversal_detected(st)		     \
-		? ( ((nat_t_policy) & POLICY_TUNNEL) \
-		    ? ( ((st)->hidden_variables.st_nat_traversal & \
-			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
-			? ENCAPSULATION_MODE_UDP_TUNNEL_RFC \
-			: ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS \
-		      ) \
-		    : ( ((st)->hidden_variables.st_nat_traversal & \
-			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
-			? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC \
-			: ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS \
-		      ) \
-		  ) \
-		: ( ((st)->st_policy & POLICY_TUNNEL) \
-		    ? ENCAPSULATION_MODE_TUNNEL \
-		    : ENCAPSULATION_MODE_TRANSPORT \
-		  ) \
-		)
-
 void natd_lookup_common(struct state *st,
 			const ip_endpoint sender,
 			bool found_me, bool found_peer);
