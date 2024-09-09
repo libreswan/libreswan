@@ -91,8 +91,6 @@
 
 struct child_policy capture_child_rekey_policy(struct state *st)
 {
-	struct child_policy policy = {0};
-
 	/*
 	 * ESP/AH are non-negotiatable, hence the connection value can
 	 * be used.
@@ -101,30 +99,23 @@ struct child_policy capture_child_rekey_policy(struct state *st)
 	 * when deciding if an IKE (ISAKMP) SA should also initiate
 	 * the connection as a Child SA (look for add_pending()).
 	 */
-	switch (st->st_connection->config->child_sa.encap_proto) {
-	case ENCAP_PROTO_ESP:
-		policy.encrypt = true;
-		break;
-	case ENCAP_PROTO_AH:
-		policy.authenticate = true;
-		break;
-	default:
-		/*
-		 * Without ESP/AH the connection must be
-		 * never-negotiate, hence return LEMPTY.
-		 */
-		return (struct child_policy){0}; /*empty*/
+	const struct connection *c = st->st_connection;
+	if (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP ||
+	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+		return (struct child_policy) {
+			.is_set = true,
+			.encrypt = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+			.tunnel = (st->st_kernel_mode == KERNEL_MODE_TUNNEL),
+			.compress = (st->st_ipcomp.protocol == &ip_protocol_ipcomp),
+		};
 	}
 
-	if (st->st_kernel_mode == KERNEL_MODE_TUNNEL) {
-		policy.tunnel = true;
-	}
-
-	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
-		policy.compress = true;
-	}
-
-	return policy;
+	/*
+	 * Without ESP/AH the connection must be never-negotiate,
+	 * hence return unset.
+	 */
+	return (struct child_policy){0}; /*empty*/
 }
 
 void jam_child_sa_details(struct jambuf *buf, struct state *st)

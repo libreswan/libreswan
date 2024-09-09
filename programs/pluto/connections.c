@@ -4894,13 +4894,18 @@ const char *connection_sa_short_name(const struct connection *c, enum sa_type sa
 
 struct child_policy child_sa_policy(const struct connection *c)
 {
-	struct child_policy policy = {
-		.compress = c->config->child_sa.ipcomp,
-		.encrypt = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-		.authenticate = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
-		.tunnel = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL),
-	};
-	return policy;
+	if (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP ||
+	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+		return (struct child_policy) {
+			.is_set = true,
+			.encrypt = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+			.tunnel = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL),
+			.compress = c->config->child_sa.ipcomp,
+		};
+	}
+
+	return (struct child_policy) {0};
 }
 
 /*

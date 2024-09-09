@@ -69,15 +69,14 @@ struct state;   /* forward declaration of tag */
 struct eap_state;
 
 struct child_policy {
+	bool is_set;
 	bool encrypt;
 	bool authenticate;
 	bool tunnel;
 	bool compress;
 };                       /* policy for IPsec SA */
-#define has_child_policy(POLICY) ((POLICY)->encrypt ||		\
-				  (POLICY)->authenticate ||	\
-				  (POLICY)->compress ||		\
-				  (POLICY)->tunnel)
+
+#define has_child_policy(POLICY) ((POLICY) != NULL && (POLICY)->is_set)
 
 typedef struct {
 	char buf[32];
