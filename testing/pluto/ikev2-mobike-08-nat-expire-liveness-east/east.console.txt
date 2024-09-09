@@ -13,13 +13,68 @@ east #
  ipsec add east
 "east": added IKEv2 connection
 east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ cat /proc/net/xfrm_stat
+XfrmInError             	0
+XfrmInBufferError       	0
+XfrmInHdrError          	0
+XfrmInNoStates          	0
+XfrmInStateProtoError   	0
+XfrmInStateModeError    	0
+XfrmInStateSeqError     	0
+XfrmInStateExpired      	0
+XfrmInStateMismatch     	0
+XfrmInStateInvalid      	0
+XfrmInTmplMismatch      	0
+XfrmInNoPols            	0
+XfrmInPolBlock          	0
+XfrmInPolError          	0
+XfrmOutError            	0
+XfrmOutBundleGenError   	0
+XfrmOutBundleCheckError 	0
+XfrmOutNoStates         	0
+XfrmOutStateProtoError  	0
+XfrmOutStateModeError   	0
+XfrmOutStateSeqError    	0
+XfrmOutStateExpired     	0
+XfrmOutPolBlock         	0
+XfrmOutPolDead          	0
+XfrmOutPolError         	0
+XfrmFwdHdrError         	0
+XfrmOutStateInvalid     	0
+XfrmAcquireError        	0
+XfrmOutStateDirError    	0
+XfrmInStateDirError     	0
+east #
+ # the ping stops liveness
+east #
+ ../../guestbin/wait-for-pluto.sh --match 'recent IPsec traffic' | sed -e 's/ [^ ]* seconds/ NNN seconds/g'
+| liveness: #2 scheduling next check for 192.1.2.254:EPHEM in NNN seconds (recent IPsec traffic was NNN seconds ago)
+east #
+ # but no further pings let liveness continue
+east #
  ../../guestbin/wait-for-pluto.sh --match '10 second timeout exceeded'
 "east"[1] 192.1.2.254 #1: ESTABLISHED_IKE_SA: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-east #
- ../../guestbin/wait-for-pluto.sh --match 'ESP traffic information'
-"east"[1] 192.1.2.254 #2: ESP traffic information: in=168B out=168B
-east #
- ../../guestbin/wait-for-pluto.sh --match 'deleting connection instance with peer'
-"east"[1] 192.1.2.254: deleting connection instance with peer 192.1.2.254
 east #
  
