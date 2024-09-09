@@ -264,25 +264,6 @@ const struct enum_names connection_event_kind_names = {
 	"CONNECTION_", NULL,
 };
 
-/*
- * Names for sa_policy_bits.
- */
-static const char *const sa_policy_bit_name[] = {
-#define P(N) [N##_IX] = #N
-	P(POLICY_ENCRYPT),
-	P(POLICY_AUTHENTICATE),
-	P(POLICY_COMPRESS),
-	P(POLICY_TUNNEL),
-#undef P
-};
-
-enum_names sa_policy_bit_names = {
-	0, POLICY_IX_LAST,
-	ARRAY_REF(sa_policy_bit_name),
-	"POLICY_", /* prefix */
-	NULL
-};
-
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
 #define R(E,S) [E - PLUTO_SD_EXIT] = S

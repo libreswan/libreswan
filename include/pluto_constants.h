@@ -855,9 +855,6 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
  *
  * The singleton set version is potentially too big for an enum
  * so these are exhaustively defined as macros.  As are derived values.
- *
- * Changes to sa_policy_bits must be reflected in #defines below it and
- * in sa_policy_bit_names.
  */
 
 enum shunt_policy {
@@ -891,15 +888,11 @@ extern const struct enum_names shunt_kind_names;
 
 
 enum sa_policy_bits {
-	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
-	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,
 #define POLICY_IX_LAST	POLICY_TUNNEL_IX
 };
 
-#define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
-#define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
 #define POLICY_TUNNEL	LELEM(POLICY_TUNNEL_IX)
 

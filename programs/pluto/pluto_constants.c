@@ -73,27 +73,6 @@ enum_names direction_names = {
 
 /* */
 
-/* print a policy: like bitnamesof, but it also does the non-bitfields.
- * Suppress the shunt and fail fields if 0.
- */
-
-size_t jam_policy(struct jambuf *buf, lset_t policy)
-{
-	size_t s = 0;
-
-	if (policy != LEMPTY) {
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", policy);
-	}
-	return s;
-}
-
-const char *str_policy(lset_t policy, policy_buf *dst)
-{
-	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
-	jam_policy(&buf, policy);
-	return dst->buf;
-}
-
 static const struct enum_names_check pluto_enum_names_checklist[] = {
 #define S(V) { #V, &V, }
 	S(sd_action_names),
@@ -102,7 +81,6 @@ static const struct enum_names_check pluto_enum_names_checklist[] = {
 	S(routing_names),
 	S(stf_status_names),
 	S(perspective_names),
-	S(sa_policy_bit_names),
 	S(kernel_policy_op_names),
 	S(direction_names),
 	S(shunt_kind_names),
