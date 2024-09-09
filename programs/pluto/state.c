@@ -2244,16 +2244,6 @@ size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy)
 	size_t s = 0;
 
 	const char *sep = "";
-	if (policy->encrypt) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "ENCRYPT");
-		sep = "+";
-	}
-	if (policy->authenticate) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "AUTHENTICATE");
-		sep = "+";
-	}
 	if (policy->tunnel) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "TUNNEL");

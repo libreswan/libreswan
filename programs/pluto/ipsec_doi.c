@@ -104,8 +104,6 @@ struct child_policy capture_child_rekey_policy(struct state *st)
 	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
 		return (struct child_policy) {
 			.is_set = true,
-			.encrypt = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 			.tunnel = (st->st_kernel_mode == KERNEL_MODE_TUNNEL),
 			.compress = (st->st_ipcomp.protocol == &ip_protocol_ipcomp),
 		};

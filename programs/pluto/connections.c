@@ -4898,8 +4898,6 @@ struct child_policy child_sa_policy(const struct connection *c)
 	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
 		return (struct child_policy) {
 			.is_set = true,
-			.encrypt = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 			.tunnel = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL),
 			.compress = c->config->child_sa.ipcomp,
 		};

@@ -70,8 +70,6 @@ struct eap_state;
 
 struct child_policy {
 	bool is_set;
-	bool encrypt;
-	bool authenticate;
 	bool tunnel;
 	bool compress;
 };                       /* policy for IPsec SA */
