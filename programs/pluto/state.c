@@ -2244,9 +2244,9 @@ size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy)
 	size_t s = 0;
 
 	const char *sep = "";
-	if (policy->tunnel) {
+	if (policy->transport) {
 		s += jam_string(buf, sep);
-		s += jam_string(buf, "TUNNEL");
+		s += jam_string(buf, "TRANSPORT");
 		sep = "+";
 	}
 	if (policy->compress) {

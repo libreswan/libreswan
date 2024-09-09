@@ -1062,19 +1062,21 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					 */
 					enum encapsulation_mode encap_mode =
 						(nat_traversal_detected(st)
-						 ? (st->st_policy.tunnel
+						 ? (st->st_policy.transport
 						    ? (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
+						       ? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
+						       : ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS)
+						    : (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
 						       ? ENCAPSULATION_MODE_UDP_TUNNEL_RFC
 						       : ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS)
-						    : (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES
-						       ? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC
-						       : ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS)							 )
-						 : (st->st_policy.tunnel
-						    ? ENCAPSULATION_MODE_TUNNEL
-						    : ENCAPSULATION_MODE_TRANSPORT));
+							 )
+						 : (st->st_policy.transport
+						    ? ENCAPSULATION_MODE_TRANSPORT
+						    : ENCAPSULATION_MODE_TUNNEL)
+							);
 
 					if (p->protoid != PROTO_IPCOMP ||
-					    st->st_policy.tunnel) {
+					    !st->st_policy.transport) {
 						if (!out_attr(
 							    ENCAPSULATION_MODE,
 							    encap_mode,
