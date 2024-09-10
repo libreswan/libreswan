@@ -1872,8 +1872,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2
 		 */
-		if (nat_traversal_enabled &&
-		    st->st_connection->config->ikev1_natt != NATT_NONE) {
+		if (st->st_connection->config->ikev1_natt != NATT_NONE) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 			v1_maybe_natify_initiator_endpoints(st, HERE);

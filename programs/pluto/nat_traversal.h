@@ -77,8 +77,6 @@ bool nat_traversal_detected(struct state *st);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger);
 
-extern bool nat_traversal_enabled;
-
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 
 /**

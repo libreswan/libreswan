@@ -460,8 +460,7 @@ bool accept_delete(struct state **stp,
 				"received Delete SA payload: %sdeleting ISAKMP State "PRI_SO,
 				(dst == p1 ? "self-" : ""),
 				pri_so(dst->sa.st_serialno));
-			if (nat_traversal_enabled &&
-			    dst->sa.st_connection->config->ikev1_natt != NATT_NONE) {
+			if (dst->sa.st_connection->config->ikev1_natt != NATT_NONE) {
 				nat_traversal_change_port_lookup(md, &dst->sa);
 				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 			}
@@ -508,8 +507,7 @@ bool accept_delete(struct state **stp,
 					pri_ipsec_spi(spi));
 			}
 
-			if (nat_traversal_enabled &&
-			    p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
+			if (p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
 				nat_traversal_change_port_lookup(md, &p2d->sa);
 				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 			}

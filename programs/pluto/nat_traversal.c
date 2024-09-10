@@ -45,8 +45,6 @@
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_SECS  20
 
-bool nat_traversal_enabled = true; /* can get disabled if kernel lacks support */
-
 deltatime_t nat_keepalive_period = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger)

@@ -49,7 +49,6 @@
 #include "ip_sockaddr.h"
 #include "ip_encap.h"
 #include "kernel.h"			/* for kernel_ops_nic_detect_offload() */
-#include "nat_traversal.h"		/* for nat_traversal_enabled which seems like a broken idea */
 #include "show.h"
 #include "orient.h"			/* for check_orientations() */
 #include "terminate.h"
@@ -511,7 +510,6 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 			/* not errno! */
 			BIND_ERROR(error, "interface does not support ESPINUDP encapsulation; NAT-traversal is turned OFF");
 			esp_encapsulation = ESP_ENCAPSULATION_DISABLED;
-			nat_traversal_enabled = false;
 		}
 	}
 
