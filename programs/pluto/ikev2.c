@@ -1432,7 +1432,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 *
 	 * do nothing
 	 */
-	if (nat_traversal_enabled &&
+	if (ike->sa.st_iface_endpoint->esp_encapsulation_enabled &&
 	    /*
 	     * Only when MOBIKE is not in the picture.
 	     */
