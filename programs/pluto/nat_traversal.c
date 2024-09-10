@@ -433,8 +433,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 void show_setup_natt(struct show *s)
 {
 	show_separator(s);
-	show(s, "nat-traversal=%s, keep-alive=%jd, nat-ikeport=%d",
-		     bool_str(nat_traversal_enabled),
-		     deltasecs(nat_keepalive_period),
-		     NAT_IKE_UDP_PORT);
+	show(s, "nat-traversal: keep-alive=%jd, nat-ikeport=%d",
+	     deltasecs(nat_keepalive_period), NAT_IKE_UDP_PORT);
 }
