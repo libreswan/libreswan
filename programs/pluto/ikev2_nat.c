@@ -73,15 +73,12 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 		    const ike_spis_t *ike_spis,
 		    struct pbs_out *outs)
 {
-	struct crypt_mac hb;
-
-	dbg(" NAT-Traversal support %s add v2N payloads.",
-	    nat_traversal_enabled ? " [enabled]" : " [disabled]");
+	ldbg(outs->logger, "NAT-Traversal: add v2N payloads");
 
 	/* First: one with local (source) IP & port */
 
-	hb = natd_hash(&ike_alg_hash_sha1, ike_spis, *local_endpoint,
-		       outs->logger);
+	struct crypt_mac hb = natd_hash(&ike_alg_hash_sha1, ike_spis, *local_endpoint,
+					outs->logger);
 	if (!emit_v2N_hunk(v2N_NAT_DETECTION_SOURCE_IP, hb, outs)) {
 		return false;
 	}
