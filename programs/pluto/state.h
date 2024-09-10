@@ -622,7 +622,7 @@ struct state {
 
 	struct state_event *st_v1_event;		/* generic timer event for one-off events */
 
-	struct state_event *st_nat_keepalive_event;
+	struct state_event *st_v1_nat_keepalive_event;
 
 	struct state_event *st_v1_retransmit_event;
 	struct state_event *st_v1_send_xauth_event;
@@ -636,6 +636,7 @@ struct state {
 	struct state_event *st_v2_addr_change_event;
 	struct state_event *st_v2_refresh_event;	/* REKEY / REAUTH */
 	struct state_event *st_v2_lifetime_event;	/* REPLACE / EXPIRE (not DISCARD) */
+	struct state_event *st_v2_nat_keepalive_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

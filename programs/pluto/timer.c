@@ -117,6 +117,9 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v1_DPD_TIMEOUT:
 		return &st->st_v1_dpd_event;
 
+	case EVENT_v1_NAT_KEEPALIVE:
+		return &st->st_v1_nat_keepalive_event;
+
 	case EVENT_v1_CRYPTO_TIMEOUT:
 	case EVENT_v1_DISCARD:
 	case EVENT_v1_EXPIRE:
@@ -148,10 +151,8 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		return &st->st_v2_lifetime_event;
 	case EVENT_v2_DISCARD:
 		return &st->st_v1_event;
-
-	case EVENT_v1_NAT_KEEPALIVE:
 	case EVENT_v2_NAT_KEEPALIVE:
-		return &st->st_nat_keepalive_event;
+		return &st->st_v2_nat_keepalive_event;
 
 	case EVENT_RETAIN:
 	case EVENT_NULL:
