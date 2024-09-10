@@ -56,8 +56,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec status | grep 192.1.2
-interface eth1 UDP 192.1.2.23:4500
-interface eth1 UDP 192.1.2.23:500
+interface eth1 192.1.2.23:UDP/4500 (NAT)
+interface eth1 192.1.2.23:UDP/500
 "192.1.2.23-to-192.1.2.45": 192.1.2.23...192.1.2.45[%fromcert]; routed-ondemand; my_ip=unset; their_ip=unset;
 "192.1.2.23-to-192.1.2.45":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "192.1.2.23-to-192.1.2.45":   mycert=east; my_updown=ipsec _updown;

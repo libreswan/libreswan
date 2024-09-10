@@ -30,12 +30,12 @@ west #
  ipsec auto --status
 using kernel interface: xfrm
  
-interface lo UDP 127.0.0.1:4500
-interface lo UDP 127.0.0.1:500
-interface eth0 UDP 192.0.1.254:4500
-interface eth0 UDP 192.0.1.254:500
-interface eth1 UDP 192.1.2.45:4500
-interface eth1 UDP 192.1.2.45:500
+interface lo 127.0.0.1:UDP/4500 (NAT)
+interface lo 127.0.0.1:UDP/500
+interface eth0 192.0.1.254:UDP/4500 (NAT)
+interface eth0 192.0.1.254:UDP/500
+interface eth1 192.1.2.45:UDP/4500 (NAT)
+interface eth1 192.1.2.45:UDP/500
  
 fips mode=disabled;
 SElinux=XXXXX
