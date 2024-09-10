@@ -138,13 +138,3 @@ EOF
 
 dnf install -y `building` `testing` `kernel`
 dnf upgrade -y `building` `testing`
-
-
-:
-: save the latest kernels
-:
-
-kernel=$(ls /boot/vmlinuz-* | sort -V | tail -1)
-cp -vf ${kernel} /pool/${PREFIX}linux-upgrade.vmlinuz
-ramfs=$(ls /boot/initramfs-*.img | sort -V | tail -1)
-cp -vf ${ramfs} /pool/${PREFIX}linux-upgrade.initramfs
