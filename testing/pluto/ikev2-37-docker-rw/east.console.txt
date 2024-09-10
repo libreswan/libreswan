@@ -33,7 +33,7 @@ ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nfl
 global-redirect=no, global-redirect-to=<unset>
 debug ...
  
-nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+nat-traversal: keep-alive=20, nat-ikeport=4500
 virtual-private (%priv):
  
 ESP algorithms supported:

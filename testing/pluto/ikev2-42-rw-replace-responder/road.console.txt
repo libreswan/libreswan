@@ -77,7 +77,7 @@ ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-me
 global-redirect=no, global-redirect-to=<unset>
 debug ...
  
-nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+nat-traversal: keep-alive=20, nat-ikeport=4500
 virtual-private (%priv):
  
 Kernel algorithms supported:
