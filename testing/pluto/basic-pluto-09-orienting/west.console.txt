@@ -36,8 +36,8 @@ west #
 west #
  ipsec auto --ready
 listening for IKE messages
-adding UDP interface test0 172.29.1.3:500
-adding UDP interface test0 172.29.1.3:4500
+adding interface test0 172.29.1.3:UDP/500
+adding interface test0 172.29.1.3:UDP/4500 (NAT)
 "test2": connection matches both left test0 172.29.1.1 and right test0 172.29.1.3
 "test3": oriented IKEv1 connection (local: left=172.29.1.3  remote: right=172.29.1.2)
 forgetting secrets

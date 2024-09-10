@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": adding UDP interface eth1 192.1.2.45:2500
+"westnet-eastnet-ikev2": adding interface eth1 192.1.2.45:UDP/2500 (NAT fixed)
 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ikev2

@@ -7,19 +7,19 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": adding UDP interface eth1 192.1.2.23:2500
+"westnet-eastnet-ikev2": adding interface eth1 192.1.2.23:UDP/2500 (NAT fixed)
 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm
  
-interface eth1 UDP 192.1.2.23:2500
-interface lo UDP 127.0.0.1:4500
-interface lo UDP 127.0.0.1:500
-interface eth0 UDP 192.0.2.254:4500
-interface eth0 UDP 192.0.2.254:500
-interface eth1 UDP 192.1.2.23:4500
-interface eth1 UDP 192.1.2.23:500
+interface eth1 192.1.2.23:UDP/2500 (NAT fixed)
+interface lo 127.0.0.1:UDP/4500 (NAT)
+interface lo 127.0.0.1:UDP/500
+interface eth0 192.0.2.254:UDP/4500 (NAT)
+interface eth0 192.0.2.254:UDP/500
+interface eth1 192.1.2.23:UDP/4500 (NAT)
+interface eth1 192.1.2.23:UDP/500
  
 fips mode=disabled;
 SElinux=XXXXX

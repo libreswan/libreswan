@@ -41,8 +41,8 @@ west #
 west #
  ipsec auto --ready
 listening for IKE messages
-adding UDP interface eth1 192.1.2.23:500
-adding UDP interface eth1 192.1.2.23:4500
+adding interface eth1 192.1.2.23:UDP/500
+adding interface eth1 192.1.2.23:UDP/4500 (NAT)
 "west-east": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.23
 "west-east": terminating SAs using this connection
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1

@@ -39,8 +39,8 @@ Received 0 response(s)
 west #
  ipsec auto --ready
 listening for IKE messages
-adding UDP interface eth1 192.1.2.66:500
-adding UDP interface eth1 192.1.2.66:4500
+adding interface eth1 192.1.2.66:UDP/500
+adding interface eth1 192.1.2.66:UDP/4500 (NAT)
 "float-east": oriented IKEv1 connection (local: left=192.1.2.66  remote: right=192.1.2.23)
 "west-float": connection matches both left eth1 192.1.2.45 and right eth1 192.1.2.66
 forgetting secrets
