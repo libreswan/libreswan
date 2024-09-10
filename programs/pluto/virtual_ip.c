@@ -23,7 +23,6 @@
 #include "log.h"
 #include "connections.h"
 #include "virtual_ip.h"
-#include "nat_traversal.h"		/* for nat_traversal_enabled */
 #include "refcnt.h"
 #include "ip_info.h"
 #include "show.h"
@@ -496,15 +495,13 @@ static void show_virtual_private_kind(struct show *s,
 
 void show_virtual_private(struct show *s)
 {
-	if (nat_traversal_enabled) {
-		show(s, "virtual-private (%%priv):");
-		show_virtual_private_kind(s, "allowed",
-					  private_net_incl,
-					  private_net_incl_len);
-		show_virtual_private_kind(s, "excluded",
-					  private_net_excl,
-					  private_net_excl_len);
-	}
+	show(s, "virtual-private (%%priv):");
+	show_virtual_private_kind(s, "allowed",
+				  private_net_incl,
+				  private_net_incl_len);
+	show_virtual_private_kind(s, "excluded",
+				  private_net_excl,
+				  private_net_excl_len);
 }
 
 struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where)
