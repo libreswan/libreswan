@@ -57,9 +57,45 @@
 char *pluto_listen = NULL;		/* from --listen flag */
 static struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
+static size_t jam_iface_endpoint_sep(struct jambuf *buf, bool *first)
+{
+	size_t s = 0;
+	if (*first) {
+		s = jam_string(buf, " (");
+	} else {
+		s = jam_string(buf, " ");
+	}
+	*first = false;
+	return s;
+}
+
 static size_t jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint *ifp)
 {
-	return jam(buf, "%d", ifp->fd);
+	size_t s = 0;
+	s += jam_string(buf, "interface");
+	s += jam_string(buf, " ");
+	s += jam_string(buf, ifp->ip_dev->real_device_name);
+	s += jam_string(buf, " ");
+	s += jam_endpoint_address_protocol_port(buf, &ifp->local_endpoint);
+	bool first = true;
+	if (ifp->esp_encapsulation_enabled) {
+		/*
+		 * Pointing out that an interface encapsulates its
+		 * packets is probably meaningful to no one.  However,
+		 * pointing out the consequence - that it allows NAT -
+		 * is hopefully meaningful to everyone.
+		 */
+		s += jam_iface_endpoint_sep(buf, &first);
+		s += jam_string(buf, "NAT");
+	}
+	if (!ifp->float_nat_initiator) {
+		s += jam_iface_endpoint_sep(buf, &first);
+		s += jam_string(buf, "fixed");
+	}
+	if (!first) {
+		s += jam_string(buf, ")");
+	}
+	return s;
 }
 
 LIST_INFO(iface_endpoint, entry, iface_endpoint_info, jam_iface_endpoint);
@@ -495,11 +531,10 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	ifp->next = interfaces;
 	interfaces = ifp;
 
-	endpoint_buf b;
-	llog(RC_LOG, logger,
-	     "adding %s interface %s %s",
-	     io->protocol->name, ifp->ip_dev->real_device_name,
-	     str_endpoint(&ifp->local_endpoint, &b));
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
+		jam_string(buf, "adding ");
+		jam_iface_endpoint(buf, ifp);
+	}
 
 	return ifp;
 #undef BIND_ERROR
@@ -702,11 +737,9 @@ void show_ifaces_status(struct show *s)
 {
 	show_separator(s); /* if needed */
 	for (struct iface_endpoint *p = interfaces; p != NULL; p = p->next) {
-		endpoint_buf b;
-		show(s, "interface %s %s %s",
-			     p->ip_dev->real_device_name,
-			     p->io->protocol->name,
-			     str_endpoint(&p->local_endpoint, &b));
+		SHOW_JAMBUF(s, buf) {
+			jam_iface_endpoint(buf, p);
+		}
 	}
 }
 
