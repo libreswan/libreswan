@@ -4,55 +4,87 @@
   </term>
   <listitem>
     <para>
-      Create or use an existing virtual interface <option>ipsecXXX</option>
-      for "Routing based VPNs" (as opposed to "Policy based VPNs").
+      Create a new or use an existing Virtual Interface for "Routing
+      based IPsec VPNs" (as opposed to "Policy based VPNs").
+    </para>
+    <para>
+      On <application>Linux</application>,
+      <application>FreeBSD</application>, and
+      <application>NetBSD</application> the Virtual Interface device
+      name is <option><replaceable>ipsec</replaceable></option>;
+      <application>OpenBSD</application> uses the name
+      <option><replaceable>sec</replaceable></option>.
+    </para>
+    <para>
       Valid options are <option>yes</option>, <option>no</option> or a
-      number. When using a number, the IPsec interface created and/or
-      used will use that number as part of the interface name. For
-      example setting <option>ipsec-interface=5</option>
-      will create and/or use the <option>ipsec5</option>
-      interface. The value <option>0</option> cannot be
-      used and is interpreted as <option>no</option>. The value
-      <option>yes</option> is interpreted as the number 1, and
-      thus will use the interface named
-      <option>ipsec1</option>. An IP address can be configured for
-      this interface via the <option>interface-ip=</option> option.
+      number.  When using a number, the IPsec interface created and/or
+      used will use that number as part of the interface name.  For
+      example setting <option>ipsec-interface=5</option> will create
+      and/or use the
+      <option><replaceable>ipsec</replaceable>5</option> interface.
+      The value <option>0</option> cannot be used and is interpreted
+      as <option>no</option>.  The value <option>yes</option> is
+      interpreted as the number 1, and thus will use the interface
+      named <option><replaceable>ipsec</replaceable>1</option>.  An IP
+      address can be configured for this interface using the
+      <option>interface-ip=</option> option.
     </para>
     <para>
-      The ipsec-interface is used to route outbound traffic that needs
-      to be encrypted, and will decrypt inbound traffic that arrives
-      on this interface. All traffic that is routed to this interface
-      will be automatically encrypted providing the IPsec SA policy
-      covers this traffic. Traffic not matching the IPsec SA will be
-      dropped. Tools such as tcpdump, iptables, ifconfig and tools
-      that need traffic counters can be used on all cleartext
-      pre-encrypt and post-decrypt traffic on the device. When
+      The Virtual Interface is used to route outbound traffic that
+      needs to be encrypted, and will decrypt inbound traffic that
+      arrives on this interface.  All traffic that is routed to this
+      interface will be automatically encrypted providing the IPsec SA
+      policy covers this traffic.  Traffic not matching the IPsec SA
+      will be dropped.  Tools such as <command>tcpdump</command>,
+      <command>iptables</command>, <command>ifconfig</command> and
+      tools that need traffic counters can be used on all cleartext
+      pre-encrypt and post-decrypt traffic on the device.  When
       <option>leftsubnet=</option> is equal to
-      <option>rightsubnet=</option>, the routing needs to be
-      managed by an external routing daemon or manually by the
-      administrator.
+      <option>rightsubnet=</option>, the routing needs to be managed
+      by an external routing daemon or manually by the administrator.
     </para>
     <para>
-      This option is currently only supported on Linux kernels 4.19 or
-      later when compiled with XFRMi support
-      (<option>CONFIG_XFRM_INTERFACE</option>). The number of the
-      ipsecX device corresponds with the <option>XFRM
-      IF_ID</option> policy option of the IPsec SA in the Linux
-      kernel. On Linux, XFRMi interfaces can be managed by libreswan
-      automatically or can be preconfigured on the system using the
-      existing init system or via networking tools such as
-      systemd-networkd and NetworkManager. The _updown script handles
-      certain Linux specific interfaces settings required for proper
-      functioning, such as forwarding and routing rules for IPsec
-      traffic.
+      Support:
     </para>
-    <para>
-      The ipsec-interface=0 will create an interface with the same
-      name as the old KLIPS interface, ipsec0.  This interface name
-      should only be used when required for migration from KLIPS to
-      XFRM interfaces.  Since XFRM IF_ID and marking cannot use 0,
-      this is mapped to 16384. This means that the devices ipsec0 and
-      ipsec16384 cannot both be in use.
-    </para>
+    <variablelist>
+      <varlistentry>
+	<term>
+	  <application>Linux</application> (since 4.19)
+	</term>
+	<listitem>
+	  <para>
+	    This option is currently only supported on Linux kernels
+	    when compiled with XFRMi support
+	    (<option>CONFIG_XFRM_INTERFACE</option>).  The number of
+	    the ipsecX device corresponds with the <option>XFRM
+	    IF_ID</option> policy option of the IPsec SA in the Linux
+	    kernel. On Linux, XFRMi interfaces can be managed by
+	    libreswan automatically or can be preconfigured on the
+	    system using the existing init system or via networking
+	    tools such as systemd-networkd and NetworkManager. The
+	    _updown script handles certain Linux specific interfaces
+	    settings required for proper functioning, such as
+	    forwarding and routing rules for IPsec traffic.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <application>Netbsd</application> (since 8.0)
+	</term>
+	<term>
+	  <application>OpenBSD</application> (since 7.4)
+	</term>
+	<term>
+	  <application>FreeBSD</application> (since 11.0)
+	</term>
+	<listitem>
+	  <para>
+	    See the release notes for current level of support in
+	    <application>Libreswan</application>
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
   </listitem>
 </varlistentry>
