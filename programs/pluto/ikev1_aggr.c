@@ -1157,7 +1157,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	record_and_send_v1_ike_msg(st, &reply_stream, "aggr_outI1");
 
 	/* Set up a retransmission event, half a minute hence */
-	delete_event(st);
+	delete_v1_event(st);
 	clear_retransmits(st);
 	start_retransmits(st);
 

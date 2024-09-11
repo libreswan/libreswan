@@ -535,7 +535,7 @@ static stf_status modecfg_send_set(struct state *st)
 	record_and_send_v1_ike_msg(st, &reply, "ModeCfg set");
 
 	if (*state_event_slot(st, EVENT_v1_RETRANSMIT) == NULL) {
-		delete_event(st);
+		delete_v1_event(st);
 		clear_retransmits(st);
 		start_retransmits(st);
 	}
@@ -662,7 +662,7 @@ stf_status xauth_send_request(struct state *st)
 	}
 
 	if (*state_event_slot(st, EVENT_v1_RETRANSMIT) == NULL) {
-		delete_event(st);
+		delete_v1_event(st);
 		clear_retransmits(st);
 		start_retransmits(st);
 	}
@@ -754,7 +754,7 @@ stf_status modecfg_send_request(struct state *st)
 	record_and_send_v1_ike_msg(st, &reply, "modecfg: req");
 
 	if (*state_event_slot(st, EVENT_v1_RETRANSMIT) == NULL) {
-		delete_event(st);
+		delete_v1_event(st);
 		clear_retransmits(st);
 		start_retransmits(st);
 	}
@@ -833,7 +833,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with main thread */
-	delete_event(st);
+	delete_v1_event(st);
 	clear_retransmits(st);
 	start_retransmits(st);
 
@@ -1179,7 +1179,7 @@ static void xauth_launch_authent(struct state *st,
 	 * in the retransmit slot, and the XAUTH packet.
 	 * Two alternative events can be outstanding. Cancel both.
 	 */
-	delete_event(st);
+	delete_v1_event(st);
 	clear_retransmits(st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 	event_schedule(EVENT_v1_PAM_TIMEOUT, EVENT_v1_PAM_TIMEOUT_DELAY, st);

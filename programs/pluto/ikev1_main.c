@@ -229,7 +229,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	record_and_send_v1_ike_msg(&ike->sa, &reply_stream,
 		"reply packet for main_outI1");
 
-	delete_event(&ike->sa);
+	delete_v1_event(&ike->sa);
 	clear_retransmits(&ike->sa);
 	start_retransmits(&ike->sa);
 

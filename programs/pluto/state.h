@@ -620,7 +620,7 @@ struct state {
 	 * IKEv2, some are not.
 	 */
 
-	struct state_event *st_event;			/* generic timer event for one-off events */
+	struct state_event *st_v1_event;		/* generic timer event for one-off events */
 
 	struct state_event *st_nat_keepalive_event;
 

@@ -233,7 +233,7 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa), HERE);
 
 	/* Schedule for whatever timeout is specified */
-	delete_event(&new_ike->sa); /* relying on replace */
+	delete_v1_event(&new_ike->sa); /* relying on replace */
 	schedule_v2_replace_event(&new_ike->sa);
 
 	/*
@@ -812,7 +812,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	 * Child SA and transition to the new state.  The IKE SA will
 	 * have it's retransmit timer set.
 	 */
-	delete_event(&larval_child->sa);
+	delete_v1_event(&larval_child->sa);
 	change_v2_state(&larval_child->sa);
 
 	return STF_OK; /* IKE */
@@ -1067,7 +1067,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	 * Child SA and transition to the new state.  The IKE SA will
 	 * have it's retransmit timer set.
 	 */
-	delete_event(&larval_child->sa);
+	delete_v1_event(&larval_child->sa);
 	change_v2_state(&larval_child->sa);
 
 	return STF_OK; /* IKE */
@@ -1730,7 +1730,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	 * IKE SA and transition to the new state.  The current IKE SA
 	 * will have it's retransmit timer set.
 	 */
-	delete_event(&larval_ike->sa);
+	delete_v1_event(&larval_ike->sa);
 	change_v2_state(&larval_ike->sa);
 
 	return STF_OK; /* IKE */

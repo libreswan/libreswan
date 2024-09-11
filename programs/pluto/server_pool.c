@@ -379,7 +379,7 @@ void submit_task(struct state *callback_sa,
 		 * in the background (for instance when assembling
 		 * fragments), there's a DISCARD timer running.
 		 */
-		delete_event(callback_sa);
+		delete_v1_event(callback_sa);
 		event_schedule(EVENT_v1_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
 	}
 

@@ -126,7 +126,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		 * Many of these don't make sense - however that's
 		 * what happens when (the replaced) default: is used.
 		 */
-		return &st->st_event;
+		return &st->st_v1_event;
 
 	case EVENT_v2_TIMEOUT_INITIATOR:
 		return &st->st_v2_timeout_initiator_event;
@@ -147,7 +147,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v2_EXPIRE:
 		return &st->st_v2_lifetime_event;
 	case EVENT_v2_DISCARD:
-		return &st->st_event;
+		return &st->st_v1_event;
 
 	case EVENT_v1_NAT_KEEPALIVE:
 	case EVENT_v2_NAT_KEEPALIVE:
@@ -569,9 +569,9 @@ static void dispatch_event(struct state *st, enum event_type event_type,
  * off.
  */
 
-void delete_event(struct state *st)
+void delete_v1_event(struct state *st)
 {
-	delete_state_event(&st->st_event, HERE);
+	delete_state_event(&st->st_v1_event, HERE);
 }
 
 /*

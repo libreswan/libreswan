@@ -1748,9 +1748,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		switch (st->st_ike_version) {
 		case IKEv1:
-			PEXPECT(st->logger, (st->st_event != NULL &&
-					     (st->st_event->ev_type == EVENT_v1_CRYPTO_TIMEOUT ||
-					      st->st_event->ev_type == EVENT_v1_PAM_TIMEOUT)));
+			PEXPECT(st->logger, (st->st_v1_event != NULL &&
+					     (st->st_v1_event->ev_type == EVENT_v1_CRYPTO_TIMEOUT ||
+					      st->st_v1_event->ev_type == EVENT_v1_PAM_TIMEOUT)));
 			break;
 		case IKEv2:
 			PEXPECT(st->logger, (st->st_v2_timeout_initiator_event != NULL ||
@@ -1859,7 +1859,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * Delete previous retransmission event.
 		 * New event will be scheduled below.
 		 */
-		delete_event(st);
+		delete_v1_event(st);
 		clear_retransmits(st);
 
 		/* Delete IKE fragments */

@@ -953,7 +953,7 @@ void delete_state(struct state *st)
 	}
 
 	/* delete any pending timer event */
-	delete_state_event(&st->st_event, HERE);
+	delete_state_event(&st->st_v1_event, HERE);
 	delete_state_event(&st->st_nat_keepalive_event, HERE);
 	delete_state_event(&st->st_v1_retransmit_event, HERE);
 	delete_state_event(&st->st_v1_send_xauth_event, HERE);
@@ -1214,7 +1214,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.st_v2_ike_ppk_enabled = ike->sa.st_v2_ike_ppk_enabled;
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
 	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
-	child->sa.st_event = NULL;
 
 	/* these were set while we didn't have client state yet */
 	/* we should really split the NOTIFY loop in two cleaner ones */
@@ -1899,7 +1898,7 @@ void list_state_events(struct show *s, const monotime_t now)
 	};
 	while (next_state(OLD2NEW, &sf)) {
 		struct state *st = sf.st;
-		list_state_event(s, st, st->st_event, now);
+		list_state_event(s, st, st->st_v1_event, now);
 		list_state_event(s, st, st->st_v1_send_xauth_event, now);
 		list_state_event(s, st, st->st_v1_dpd_event, now);
 		/* order makes no sense */

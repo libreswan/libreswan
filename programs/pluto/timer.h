@@ -51,7 +51,7 @@ void delete_state_event(struct state_event **evp, where_t where);
 struct state_event **state_event_slot(struct state *st, enum event_type type);
 extern void event_force(enum event_type type, struct state *st);
 
-extern void delete_event(struct state *st);
+extern void delete_v1_event(struct state *st);
 
 void whack_impair_call_state_event_handler(struct logger *logger, struct state *st,
 					   enum event_type type, bool detach_whack);
