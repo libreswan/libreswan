@@ -1,0 +1,8 @@
+IKEv2 test with ike proposals where west's first proposal is still a valid
+proposal for east (but not its first proposal)
+
+east.conf:	ike=aes256-sha2;modp3072,aes256-sha2;dh19
+west.conf:	ike=aes256-sha2;dh19,aes256-sha2;modp3072
+
+The expected outcome for west initiating is to pick DH19, not MODP3072
+
