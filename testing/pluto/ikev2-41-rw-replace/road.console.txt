@@ -183,6 +183,7 @@ road #
 | event_schedule_where: newref EVENT_v2_REPLACE-pe@0xXXX timeout in N.N seconds for #2
 | event_schedule_where: newref EVENT_v2_REPLACE-pe@0xXXX timeout in N.N seconds for #1
 | #1 is retaining EVENT_v2_REPLACE with is previously set timeout
+| #1 requesting EVENT_v2_REPLACE-event@0xXXX be deleted (ikev2_rekey_expire_predecessor() +366 programs/pluto/ikev2_parent.c)
 | #1 deleting EVENT_v2_REPLACE
 | event_schedule_where: newref EVENT_v2_EXPIRE-pe@0xXXX timeout in N.N seconds for #1
 | event_schedule_where: newref EVENT_v2_REPLACE-pe@0xXXX timeout in N.N seconds for #3
