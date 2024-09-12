@@ -616,30 +616,33 @@ struct state {
 	chunk_t st_xauth_password;
 
 	/*
-	 * Events for state object.  Some are shared between IKEv1 and
-	 * IKEv2, some are not.
+	 * Events for an SA.
+	 *
+	 * Danger: Some IKEv1 events share .st_v1_event.
 	 */
 
-	struct state_event *st_v1_event;		/* generic timer event for one-off events */
+	struct state_event *st_events[PMAX(EVENT_v1_ROOF, EVENT_v2_ROOF)];
+#define st_v1_event st_events[0]		/* generic timer event for one-off events */
+#define st_v1_nat_keepalive_event st_events[EVENT_v1_NAT_KEEPALIVE]
 
-	struct state_event *st_v1_nat_keepalive_event;
+#define st_v1_retransmit_event st_events[EVENT_v1_RETRANSMIT]
+#define st_v1_send_xauth_event st_events[EVENT_v1_SEND_XAUTH]
 
-	struct state_event *st_v1_retransmit_event;
-	struct state_event *st_v1_send_xauth_event;
+#define st_v2_timeout_initiator_event st_events[EVENT_v2_TIMEOUT_INITIATOR]
+#define st_v2_timeout_responder_event st_events[EVENT_v2_TIMEOUT_RESPONDER]
+#define st_v2_timeout_response_event st_events[EVENT_v2_TIMEOUT_RESPONSE]
 
-	struct state_event *st_v2_timeout_initiator_event;
-	struct state_event *st_v2_timeout_responder_event;
-	struct state_event *st_v2_timeout_response_event;
+#define st_v2_retransmit_event st_events[EVENT_v2_RETRANSMIT]
+#define st_v2_liveness_event st_events[EVENT_v2_LIVENESS]
+#define st_v2_addr_change_event st_events[EVENT_v2_ADDR_CHANGE]
+#define st_v2_rekey_event st_events[EVENT_v2_REKEY]
+#define st_v2_replace_event st_events[EVENT_v2_REPLACE]
+#define st_v2_expire_event st_events[EVENT_v2_EXPIRE]
+#define st_v2_nat_keepalive_event st_events[EVENT_v2_NAT_KEEPALIVE]
+#define st_v2_discard_event st_events[EVENT_v2_DISCARD]
 
-	struct state_event *st_v2_retransmit_event;
-	struct state_event *st_v2_liveness_event;
-	struct state_event *st_v2_addr_change_event;
-	struct state_event *st_v2_rekey_event;
-	struct state_event *st_v2_replace_event;
-	struct state_event *st_v2_expire_event;
 #define st_v2_lifetime_event(ST) ((ST)->st_v2_replace_event != NULL ? (ST)->st_v2_replace_event : (ST)->st_v2_expire_event)
-	struct state_event *st_v2_nat_keepalive_event;
-	struct state_event *st_v2_discard_event;
+
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
