@@ -1509,19 +1509,19 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * retransmit should already be scheduled.
 		 */
 		dbg("checking that a retransmit timeout_event was already");
-		delete_v1_event(&ike->sa); /* relying on retransmit */
+		event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retransmit */
 		pexpect(ike->sa.st_v2_retransmit_event != NULL);
 		/* reverse polarity */
 		pexpect(transition->recv_role == NO_MESSAGE);
 		break;
 
 	case EVENT_v2_REPLACE: /* IKE or Child SA replacement event */
-		delete_v1_event(&ike->sa); /* relying on replace */
+		event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on replace */
 		schedule_v2_replace_event(&ike->sa);
 		break;
 
 	case EVENT_v2_DISCARD:
-		delete_v1_event(&ike->sa);
+		event_delete(EVENT_v2_DISCARD, &ike->sa);
 		event_schedule(EVENT_v2_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 		break;
 
@@ -1538,7 +1538,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	case EVENT_RETAIN:
 		/* the previous lifetime event is retained */
 		if (pexpect(ike->sa.st_v2_lifetime_event != NULL)) {
-			delete_v1_event(&ike->sa); /* relying on retained */
+			event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retained */
 			enum_buf tb;
 			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
 			     ike->sa.st_serialno,
