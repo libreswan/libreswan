@@ -145,7 +145,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v2_ADDR_CHANGE:
 		return &st->st_v2_addr_change_event;
 	case EVENT_v2_REKEY:
-		return &st->st_v2_refresh_event;
+		return &st->st_v2_rekey_event;
 	case EVENT_v2_REPLACE:
 	case EVENT_v2_EXPIRE:
 		return &st->st_v2_lifetime_event;

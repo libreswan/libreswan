@@ -963,7 +963,7 @@ void delete_state(struct state *st)
 	delete_state_event(&st->st_v2_retransmit_event, HERE);
 	delete_state_event(&st->st_v2_liveness_event, HERE);
 	delete_state_event(&st->st_v2_addr_change_event, HERE);
-	delete_state_event(&st->st_v2_refresh_event, HERE);
+	delete_state_event(&st->st_v2_rekey_event, HERE);
 	delete_state_event(&st->st_v2_lifetime_event, HERE);
 	delete_state_event(&st->st_v2_nat_keepalive_event, HERE);
 	delete_state_event(&st->st_v2_discard_event, HERE);

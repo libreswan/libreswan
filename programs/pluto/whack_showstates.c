@@ -191,7 +191,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			st->st_v2_retransmit_event,
 			st->st_v2_liveness_event,
 			st->st_v2_addr_change_event,
-			st->st_v2_refresh_event,
+			st->st_v2_rekey_event,
 			st->st_v2_lifetime_event,
 		};
 		/* remove NULLs */
