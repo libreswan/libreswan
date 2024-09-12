@@ -1536,15 +1536,18 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		break;
 
 	case EVENT_RETAIN:
+	{
 		/* the previous lifetime event is retained */
-		if (pexpect(ike->sa.st_v2_lifetime_event != NULL)) {
-			event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retained */
+		event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retained */
+		const struct state_event *lifetime_event = st_v2_lifetime_event(&ike->sa);
+		if (PEXPECT(ike->sa.logger, lifetime_event != NULL)) {
 			enum_buf tb;
 			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
 			     ike->sa.st_serialno,
-			     str_enum(&event_type_names, ike->sa.st_v2_lifetime_event->ev_type, &tb));
+			     str_enum(&event_type_names, lifetime_event->ev_type, &tb));
 		}
 		break;
+	}
 
 	default:
 		bad_case(transition->timeout_event);

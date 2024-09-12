@@ -635,7 +635,9 @@ struct state {
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;
 	struct state_event *st_v2_rekey_event;
-	struct state_event *st_v2_lifetime_event;	/* REPLACE / EXPIRE (not DISCARD) */
+	struct state_event *st_v2_replace_event;
+	struct state_event *st_v2_expire_event;
+#define st_v2_lifetime_event(ST) ((ST)->st_v2_replace_event != NULL ? (ST)->st_v2_replace_event : (ST)->st_v2_expire_event)
 	struct state_event *st_v2_nat_keepalive_event;
 	struct state_event *st_v2_discard_event;
 

@@ -964,7 +964,8 @@ void delete_state(struct state *st)
 	delete_state_event(&st->st_v2_liveness_event, HERE);
 	delete_state_event(&st->st_v2_addr_change_event, HERE);
 	delete_state_event(&st->st_v2_rekey_event, HERE);
-	delete_state_event(&st->st_v2_lifetime_event, HERE);
+	delete_state_event(&st->st_v2_replace_event, HERE);
+	delete_state_event(&st->st_v2_expire_event, HERE);
 	delete_state_event(&st->st_v2_nat_keepalive_event, HERE);
 	delete_state_event(&st->st_v2_discard_event, HERE);
 	clear_retransmits(st);
@@ -1903,7 +1904,8 @@ void list_state_events(struct show *s, const monotime_t now)
 		list_state_event(s, st, st->st_v1_send_xauth_event, now);
 		list_state_event(s, st, st->st_v1_dpd_event, now);
 		/* order makes no sense */
-		list_state_event(s, st, st->st_v2_lifetime_event, now);
+		list_state_event(s, st, st->st_v2_replace_event, now);
+		list_state_event(s, st, st->st_v2_expire_event, now);
 		list_state_event(s, st, st->st_v2_liveness_event, now);
 		list_state_event(s, st, st->st_v2_addr_change_event, now);
 		/*list_state_event(s, st, st->st_v2_refresh_event, now);*/
