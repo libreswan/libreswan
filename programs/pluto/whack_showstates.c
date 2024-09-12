@@ -184,20 +184,9 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		 * output churn.  This entire function needs an
 		 * update, start listing all events then.
 		 */
-		const struct state_event *events[] = {
-			st->st_v1_event,
-			st->st_v1_retransmit_event,
-			st->st_v1_send_xauth_event,
-			st->st_v2_retransmit_event,
-			st->st_v2_liveness_event,
-			st->st_v2_addr_change_event,
-			st->st_v2_rekey_event,
-			st->st_v2_replace_event,
-			st->st_v2_expire_event,
-		};
-		/* remove NULLs */
+		const struct state_event *events[elemsof(st->st_events)];
 		unsigned nr_events = 0;
-		FOR_EACH_ELEMENT(event, events) {
+		FOR_EACH_ELEMENT(event, st->st_events) {
 			if (*event != NULL) {
 				events[nr_events] = *event;
 				nr_events++;
