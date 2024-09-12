@@ -74,6 +74,10 @@ road #
 "road-east-modecfg-no" #4: sent Quick Mode request
 "road-east-modecfg-no" #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive username=xroad}
 road #
- # skip ping check as result is a mess
+ ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+#4: "road-east-modecfg-no", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 road #
  
