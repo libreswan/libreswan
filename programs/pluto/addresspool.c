@@ -310,15 +310,21 @@ static void LDBG_lease(struct logger *logger, bool verbose,
 	}
 }
 
-static void scribble_remote_selector(struct connection *c, ip_selector selector,
-				     where_t where, unsigned assigned_nr)
+static void scribble_remote_lease(struct connection *c, ip_address ia,
+				  unsigned assigned_nr,
+				  struct logger *logger, where_t where)
 {
+	/* assign the lease */
+	const struct ip_info *afi = address_info(ia);
+	c->remote->child.lease[afi->ip_index] = ia;
+	set_child_has_client(c, remote, true);
+
+	/* update the selectors */
+	ip_selector selector = selector_from_address(ia);
 	struct child_end_selectors *remote_selectors = &c->remote->child.selectors;
-	struct logger *logger = c->logger;
 	if (!PEXPECT_WHERE(logger, where, assigned_nr < elemsof(remote_selectors->assigned))) {
 		return;
 	}
-	const struct ip_info *afi = selector_info(selector);
 	remote_selectors->assigned[assigned_nr] = selector;
 	/* keep IPv[46] table in sync */
 	remote_selectors->proposed.ip[afi->ip_index].len = 1;
@@ -563,6 +569,7 @@ err_t lease_that_selector(struct connection *c, const char *xauth_username,
 			  const ip_selector *remote_client, struct logger *logger)
 {
 	const struct ip_info *afi = selector_type(remote_client);
+	unsigned next_lease_nr = nr_child_leases(c->remote);
 
 	if (c->remote->child.lease[afi->ip_index].is_set &&
 	    connection_lease(c, afi, logger) != NULL) {
@@ -618,6 +625,11 @@ err_t lease_that_selector(struct connection *c, const char *xauth_username,
 		return "wrong address";
 	}
 
+	scribble_remote_lease(c, ia, next_lease_nr, logger, HERE);
+
+	/* back link */
+	new_lease->assigned_to = c->serialno;
+
 	return NULL;
 }
 
@@ -635,7 +647,7 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 		return "no address pool";
 	}
 
-	unsigned nr_leases = nr_child_leases(c->remote);
+	unsigned next_lease_nr = nr_child_leases(c->remote);
 	bool reusable = client_can_reuse_lease(c);
 
 	/*
@@ -751,11 +763,12 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 	err_t err = pool_lease_to_address(pool, new_lease, &ia);
 	if (err != NULL) {
 		llog_pexpect(logger, HERE, "%s", err);
+		return "bad address";
 	}
-	c->remote->child.lease[afi->ip_index] = ia;
-	set_child_has_client(c, remote, true);
-	scribble_remote_selector(c, selector_from_address(ia),
-				 HERE, nr_leases);
+
+	scribble_remote_lease(c, ia, next_lease_nr, logger, HERE);
+
+	/* back link */
 	new_lease->assigned_to = c->serialno;
 
 	if (LDBGP(DBG_BASE, logger)) {
