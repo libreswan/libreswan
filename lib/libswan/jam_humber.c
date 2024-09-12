@@ -18,41 +18,56 @@
 #include "jambuf.h"
 
 /*
- * readable_humber: make large numbers clearer by expressing them
- * as Ki,Mi,Gi,Ti,Pi,Ei and 2^64 will be 16Ei based on
+ * Make large numbers clearer by expressing them as Ki,Mi,Gi,Ti,Pi,Ei
+ * and 2^64 will be 16Ei based on
+ *
  * https://en.wikipedia.org/wiki/Binary_prefix IEC 60027-2 standard.
- * The prefix and suffix2 are literally copied into the output.
- * e.g. use sufix2 "B" for Bytes.
  */
 
 size_t jam_humber(struct jambuf *buf, uintmax_t num)
 {
-	const char *suffix;
-	uint64_t to_print;
+	/* in assending order */
+	static const struct {
+		uintmax_t binary_per;
+		const char *suffix;
+	} map[] = {
+		{
+			.binary_per = binary_per_exa,
+			.suffix = "Ei",
+		},
+		{
+			.binary_per = binary_per_peta,
+			.suffix = "Pi",
+		},
+		{
+			.binary_per = binary_per_tera,
+			.suffix = "Ti",
+		},
+		{
+			.binary_per = binary_per_giga,
+			.suffix = "Gi",
+		},
+		{
+			.binary_per = binary_per_mega,
+			.suffix = "Mi",
+		},
+		{
+			.binary_per = binary_per_kilo,
+			.suffix = "Ki",
+		},
+	};
 
-	if (num >= binary_per_exa) {
-		to_print = num / binary_per_exa;
-		suffix = "Ei";
-	} else if (num >= binary_per_peta) {
-		to_print = num / binary_per_peta;
-		suffix = "Pi";
-	} else if (num >= binary_per_tera) {
-		to_print = num / binary_per_tera;
-		suffix = "Ti";
-	} else if (num >= binary_per_giga) {
-		to_print = num / binary_per_giga;
-		suffix = "Gi";
-	} else if (num >= binary_per_mega) {
-		to_print = num / binary_per_mega;
-		suffix = "Mi";
-	} else if (num >= binary_per_kilo) {
-		to_print = num / binary_per_kilo;
-		suffix = "Ki";
-	} else {
-		to_print = num;
-		suffix = "";
+	const char *suffix = "";
+	uint64_t to_print = num;
+	FOR_EACH_ELEMENT(m, map) {
+		if (num > m->binary_per) {
+			to_print = num / m->binary_per;
+			suffix = m->suffix;
+			break;
+		}
 	}
 
+	/* fractions? */
 	return jam(buf, "%ju%s", to_print, suffix);
 }
 
