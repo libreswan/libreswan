@@ -1078,13 +1078,13 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		p = c;
 		selector_buf sb;
-		llog(RC_LOG, p1st->logger, "Quick Mode without mode-config, recovering previously assigned lease %s",
+		llog(RC_LOG, p1st->logger,
+		     "Quick Mode without mode-config, recovered previously assigned lease %s",
 		     str_selector(remote_client, &sb));
 
 		pdbg(p1st->logger, "another hack to get the SPD in sync");
-		c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
+		c->spd->remote->client = (*remote_client);
 		spd_db_rehash_remote_client(c->spd);
-
 	}
 
 	if (p == NULL) {
@@ -1148,13 +1148,17 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	}
 
 	selector_buf csb;
+	selector_buf rcb;
+	address_buf lb;
 	ldbg(p1st->logger,
-	     "%s() client: %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %s",
+	     "%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
+	     str_selector(&c->spd->remote->client, &rcb),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c)),
-	     bool_str(c->remote->child.lease[client_afi->ip_index].is_set),
+	     str_address(&c->remote->child.lease[client_afi->ip_index], &lb),
+	     c->remote->child.selectors.proposed.len,
 	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
 
 	/* fill in the client's true port */
