@@ -967,6 +967,7 @@ void delete_state(struct state *st)
 	delete_state_event(&st->st_v2_refresh_event, HERE);
 	delete_state_event(&st->st_v2_lifetime_event, HERE);
 	delete_state_event(&st->st_v2_nat_keepalive_event, HERE);
+	delete_state_event(&st->st_v2_discard_event, HERE);
 	clear_retransmits(st);
 
 	/*

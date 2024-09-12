@@ -150,7 +150,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_v2_EXPIRE:
 		return &st->st_v2_lifetime_event;
 	case EVENT_v2_DISCARD:
-		return &st->st_v1_event;
+		return &st->st_v2_discard_event;
 	case EVENT_v2_NAT_KEEPALIVE:
 		return &st->st_v2_nat_keepalive_event;
 
