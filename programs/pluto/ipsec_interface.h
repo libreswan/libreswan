@@ -30,9 +30,6 @@
 /* for ipsec0 we need to map it to a different if_id */
 #define PLUTO_XFRMI_REMAP_IF_ID_ZERO	16384
 
-#define XFRMI_SUCCESS 0
-#define XFRMI_FAILURE 1
-
 struct connection;
 struct logger;
 

@@ -28,6 +28,9 @@
 #include <stdint.h>
 #include <net/if.h>
 
+#define XFRMI_SUCCESS 0
+#define XFRMI_FAILURE 1
+
 /*
  * GRRR:
  *
