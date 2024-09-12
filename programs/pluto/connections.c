@@ -4431,29 +4431,6 @@ void append_end_selector(struct connection_end *end,
 	     pri_where(where));
 }
 
-void scribble_end_selector(struct connection *c, enum left_right end,
-			   ip_selector selector, where_t where, unsigned nr)
-{
-	struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
-	struct logger *logger = c->logger;
-	if (!PEXPECT_WHERE(logger, where, nr < elemsof(end_selectors->assigned))) {
-		return;
-	}
-	const struct ip_info *afi = selector_info(selector);
-	end_selectors->assigned[nr] = selector;
-	/* keep IPv[46] table in sync */
-	end_selectors->proposed.ip[afi->ip_index].len = 1;
-	end_selectors->proposed.ip[afi->ip_index].list = &end_selectors->assigned[nr];
-
-	selector_buf nb;
-	ldbg(c->logger, "%s() %s.child.selector[%d] %s "PRI_WHERE,
-	     __func__,
-	     c->end[end].config->leftright,
-	     nr,
-	     str_selector(&selector, &nb),
-	     pri_where(where));
-}
-
 void update_end_selector_where(struct connection *c, enum left_right lr,
 			       ip_selector new_selector,
 			       const char *excuse, where_t where)

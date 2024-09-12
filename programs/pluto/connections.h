@@ -574,8 +574,6 @@ void update_end_selector_where(struct connection *c, enum left_right end,
 	update_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
 				  NULL, HERE)
 
-void scribble_end_selector(struct connection *c, enum left_right end,
-			   ip_selector selector, where_t where, unsigned nr);
 void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector s,
 			 struct logger *logger, where_t where);

@@ -310,6 +310,28 @@ static void LDBG_lease(struct logger *logger, bool verbose,
 	}
 }
 
+static void scribble_remote_selector(struct connection *c, ip_selector selector,
+				     where_t where, unsigned assigned_nr)
+{
+	struct child_end_selectors *remote_selectors = &c->remote->child.selectors;
+	struct logger *logger = c->logger;
+	if (!PEXPECT_WHERE(logger, where, assigned_nr < elemsof(remote_selectors->assigned))) {
+		return;
+	}
+	const struct ip_info *afi = selector_info(selector);
+	remote_selectors->assigned[assigned_nr] = selector;
+	/* keep IPv[46] table in sync */
+	remote_selectors->proposed.ip[afi->ip_index].len = 1;
+	remote_selectors->proposed.ip[afi->ip_index].list = &remote_selectors->assigned[assigned_nr];
+
+	selector_buf nb;
+	ldbg(c->logger, "%s() remote.child.selectors.assigned[%d] %s "PRI_WHERE,
+	     __func__,
+	     assigned_nr,
+	     str_selector(&selector, &nb),
+	     pri_where(where));
+}
+
 /*
  * A lease is an assignment of a single address from a particular pool.
  *
@@ -732,9 +754,8 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 	}
 	c->remote->child.lease[afi->ip_index] = ia;
 	set_child_has_client(c, remote, true);
-	scribble_end_selector(c, c->remote->config->index,
-			      selector_from_address(ia),
-			      HERE, nr_leases);
+	scribble_remote_selector(c, selector_from_address(ia),
+				 HERE, nr_leases);
 	new_lease->assigned_to = c->serialno;
 
 	if (LDBGP(DBG_BASE, logger)) {
