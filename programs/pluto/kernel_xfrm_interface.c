@@ -53,6 +53,7 @@
 #include "linux_netlink.h"
 
 #include "netlink_attrib.h"
+#include "ipsec_interface.h"
 #include "kernel_xfrm_interface.h"
 #include "kernel_netlink_reply.h"
 #include "kernel_netlink_query.h"

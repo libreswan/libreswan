@@ -53,7 +53,6 @@
 #include "enum_names.h"
 #include "crypt_dh.h"
 #include "kernel.h"
-#include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ikev1_send.h"		/* for free_v1_messages() */
 #include "ikev2_send.h"		/* for free_v2_messages() */

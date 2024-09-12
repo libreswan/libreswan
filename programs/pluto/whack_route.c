@@ -22,10 +22,7 @@
 #include "show.h"
 #include "log.h"
 #include "whack_connection.h"
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
-
+#include "ipsec_interface.h"
 
 static unsigned maybe_route_connection(struct connection *c)
 {

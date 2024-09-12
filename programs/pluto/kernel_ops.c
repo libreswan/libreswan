@@ -18,7 +18,7 @@
 #include "kernel.h"
 #include "kernel_ops.h"
 #include "log.h"
-#include "kernel_xfrm_interface.h"
+#include "ipsec_interface.h"
 #include "ip_info.h"
 #include "kernel_iface.h"
 #include "kernel_policy.h"

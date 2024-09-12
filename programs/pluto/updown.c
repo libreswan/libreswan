@@ -38,7 +38,7 @@
 #include "connections.h"
 #include "log.h"
 #include "kernel.h"
-#include "kernel_xfrm_interface.h"
+#include "ipsec_interface.h"
 #include "iface.h"
 #include "keys.h"		/* for pluto_pubkeys */
 #include "secrets.h"		/* for struct pubkey_list */

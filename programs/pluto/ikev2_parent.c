@@ -80,9 +80,6 @@
 #include "ikev2_notify.h"
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
 #include "crypt_ke.h"
 #include "crypt_symkey.h" /* for release_symkey */
 #include "ip_info.h"

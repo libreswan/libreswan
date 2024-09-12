@@ -40,7 +40,6 @@
 #include "plutoalg.h"
 #include "crypto.h"
 #include "ikev1_db_ops.h"
-#include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "show.h"
 #ifdef USE_SECCOMP

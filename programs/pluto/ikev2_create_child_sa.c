@@ -45,9 +45,6 @@
 #include "ikev2_child.h"
 #include "ikev2_create_child_sa.h"
 #include "addresspool.h"
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
 #include "kernel.h"
 #include "ikev2_message.h"
 #include "crypt_dh.h"

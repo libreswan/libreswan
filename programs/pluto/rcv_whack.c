@@ -45,9 +45,7 @@
 #include "ikev2_liveness.h"		/* for submit_v2_liveness_exchange() */
 #include "impair_message.h"		/* for add_message_impairment() */
 #include "pluto_sd.h"			/* for pluto_sd() */
-#ifdef USE_XFRM_INTERFACE
-#include "kernel_xfrm_interface.h"	/* for stale_xfrmi_interfaces() */
-#endif
+#include "ipsec_interface.h"
 #include "iface.h"			/* for find_ifaces() */
 #include "foodgroups.h"			/* for load_groups() */
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */

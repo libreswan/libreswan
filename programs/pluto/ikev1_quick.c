@@ -89,10 +89,7 @@
 #include "instantiate.h"
 #include "terminate.h"
 #include "addresspool.h"
-
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
+#include "ipsec_interface.h"
 
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,

@@ -42,7 +42,7 @@
 #include "orient.h"
 #include "connection_db.h"	/* for finish_connection() */
 #include "addresspool.h"
-#include "kernel_xfrm_interface.h"
+#include "ipsec_interface.h"
 #include "virtual_ip.h"
 #include "kernel.h"
 

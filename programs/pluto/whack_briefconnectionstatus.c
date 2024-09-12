@@ -23,7 +23,6 @@
 #include "connections.h"
 #include "orient.h"
 #include "virtual_ip.h"        /* needs connections.h */
-#include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "nat_traversal.h"
 #include "log.h"

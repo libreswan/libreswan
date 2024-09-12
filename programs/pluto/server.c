@@ -74,11 +74,6 @@
 #include "server_fork.h"
 #include "whack_shutdown.h"	/* for whack_shutdown() and exiting_pluto; */
 #include "show.h"
-
-#ifdef USE_XFRM_INTERFACE
-#include "kernel_xfrm_interface.h"
-#endif
-
 #include "nat_traversal.h"
 
 #include "fips_mode.h"

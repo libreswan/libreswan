@@ -35,8 +35,6 @@
 #include "kernel.h"
 #include "kernel_ops.h"
 #include "updown.h"
-#include "kernel_xfrm_interface.h"		/* for dumping struct pluto_xfrmi */
-
 
 /*
  * A kernel policy that does not have a state.  Typically constructed

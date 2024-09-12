@@ -75,7 +75,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "fips_mode.h" /* for is_fips_mode() */
-#include "kernel_xfrm_interface.h"
+#include "ipsec_interface.h"
 #include "iface.h"
 #include "ip_selector.h"
 #include "ip_encap.h"

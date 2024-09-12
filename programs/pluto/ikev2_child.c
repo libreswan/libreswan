@@ -56,9 +56,7 @@
 #include "ikev2_message.h"
 #include "ikev2_ts.h"
 #include "ip_info.h"
-#ifdef USE_XFRM_INTERFACE
-# include "kernel_xfrm_interface.h"
-#endif
+#include "ipsec_interface.h"
 #include "ikev2_cp.h"
 #include "ikev2_child.h"
 #include "ike_alg_dh.h"
