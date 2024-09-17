@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2018-2020 Antony Antony <antony@phenome.org>
  * Copyright (C) 2023 Brady Johnson <bradyallenjohnson@gmail.com>
+ * Copyright (C) 2024 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,6 +61,7 @@
 #include "kernel_xfrm_interface.h"
 #include "kernel_netlink_reply.h"
 #include "kernel_netlink_query.h"
+#include "kernel_ipsec_interface.h"
 
 #include <linux/rtnetlink.h>
 #include <linux/if_addr.h>
@@ -76,6 +78,7 @@
 #include "iface.h"
 #include "log.h"
 #include "sparse_names.h"
+#include "kernel.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
@@ -1032,21 +1035,6 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 	return NULL;
 }
 
-/*
- * format the name of xfrmi interface. To maintain consistency
- * on longer names won't be truncated, instead passert.
- * The caller MUST free the string.
- */
-static char *fmt_xfrmi_ifname(uint32_t if_id)
-{
-	char *if_name = alloc_things(char, IFNAMSIZ, "xfrmi name");
-	/* remap if_id PLUTO_XFRMI_REMAP_IF_ID_ZERO to ipsec0 as special case */
-	int n = snprintf(if_name, IFNAMSIZ, XFRMI_DEV_FORMAT,
-		 if_id == PLUTO_XFRMI_REMAP_IF_ID_ZERO ? 0  : if_id);
-	passert(n < IFNAMSIZ);
-	return if_name;
-}
-
 err_t xfrm_iface_supported(struct logger *logger)
 {
 	err_t err = NULL; /* success */
@@ -1061,14 +1049,14 @@ err_t xfrm_iface_supported(struct logger *logger)
 	 * than added manually.
 	 */
 
-	char *if_name = fmt_xfrmi_ifname(IPSEC1_XFRM_IF_ID); /* must-free */
+	ipsec_interface_id_buf ifb;
+	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb); /* must-free */
 	static const char lo[] = "lo";
 
 	if (if_nametoindex(lo) == 0) {
 		/* possibly no need to panic: may be get
 		 * smarter one day */
 		xfrm_interface_support = -1;
-		pfreeany(if_name);
 		return "Could not create find real device needed to test xfrmi support";
 	}
 
@@ -1093,7 +1081,6 @@ err_t xfrm_iface_supported(struct logger *logger)
 		xfrm_interface_support = -1;
 		err = "device name conflict in xfrm_iface_supported()";
 	}
-	pfreeany(if_name);
 
 	if (PBAD(logger, xfrm_interface_support < 0 && err == NULL)) {
 		err = "may be missing CONFIG_XFRM_INTERFACE support in kernel";
@@ -1117,14 +1104,14 @@ static struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id)
 	return ret;
 }
 
-static void new_pluto_xfrmi(uint32_t if_id, bool shared, char *name, struct connection *c)
+static void new_pluto_xfrmi(uint32_t if_id, bool shared, const char *name, struct connection *c)
 {
 	struct pluto_xfrmi **head = &pluto_xfrm_interfaces;
 	/* Create a new ref-counted xfrmi, it is not added to system yet.
 	 * The call to refcnt_alloc() counts as a reference */
 	struct pluto_xfrmi *p = refcnt_alloc(struct pluto_xfrmi, HERE);
 	p->if_id = if_id;
-	p->name = name;
+	p->name = clone_str(name, "xfrmi name");
 	c->xfrmi = p;
 	p->next = *head;
 	*head = p;
@@ -1135,7 +1122,6 @@ static void new_pluto_xfrmi(uint32_t if_id, bool shared, char *name, struct conn
 static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
 	c->xfrmi = find_pluto_xfrmi_interface(if_id);
-	char *xfrmi_name = fmt_xfrmi_ifname(if_id);
 	if (c->xfrmi == NULL) {
 		/*
 		if (!shared) {
@@ -1144,7 +1130,9 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 			return XFRMI_FAILURE;
 		}
 		*/
-		new_pluto_xfrmi(if_id, shared, xfrmi_name, c);
+		ipsec_interface_id_buf ifb;
+		const char *name = str_ipsec_interface_id(if_id, &ifb);
+		new_pluto_xfrmi(if_id, shared, name, c);
 
 		/*
 		 * Query the XFRMi IF IPs from netlink and store them,
@@ -1156,11 +1144,10 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		 * reference counted later in the call to
 		 * add_xfrm_interface().
 		 */
-		if (if_nametoindex(xfrmi_name) != 0) {
+		if (if_nametoindex(name) != 0) {
 			ip_addr_xfrmi_store_ips(c->xfrmi, c->logger);
 		}
 	} else {
-		pfreeany(xfrmi_name);
 		passert(c->xfrmi->shared == shared);
 		reference_xfrmi(c);
 	}
@@ -1240,10 +1227,11 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 			return diag("ipsec-interface=%s is too big", ipsec_interface);
 		}
 
-		if (value == 0) {
-			ldbg(c->logger, "remap ipsec0");
-			/* XXX: why? */
-			xfrm_if_id = PLUTO_XFRMI_REMAP_IF_ID_ZERO;
+		if (value == 0 &&
+		    kernel_ops->ipsec_interface->map_if_id_zero != 0) {
+			ldbg(c->logger, "remap ipsec0 to %"PRIu32" because VTI allowed zero but XFRMi does not",
+			     kernel_ops->ipsec_interface->map_if_id_zero);
+			xfrm_if_id = kernel_ops->ipsec_interface->map_if_id_zero;
 		} else {
 			xfrm_if_id = value;
 		}
@@ -1325,8 +1313,8 @@ void stale_xfrmi_interfaces(struct logger *logger)
 	 *  note when type foo is not supported would return success, 0
 	 */
 
-	char if_name[IFNAMSIZ];
-	snprintf(if_name, sizeof(if_name), XFRMI_DEV_FORMAT, IPSEC1_XFRM_IF_ID); /* first one ipsec1 */
+	ipsec_interface_id_buf ifb;
+	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
 
 	unsigned int if_id = if_nametoindex(if_name);
 	if (if_id != 0) {
@@ -1346,10 +1334,10 @@ void stale_xfrmi_interfaces(struct logger *logger)
 
 void free_xfrmi_ipsec1(struct logger *logger)
 {
-	char if_name[IFNAMSIZ];
-	snprintf(if_name, sizeof(if_name), XFRMI_DEV_FORMAT, IPSEC1_XFRM_IF_ID); /* global ipsec1 */
-	unsigned int if_id = if_nametoindex(if_name);
+	ipsec_interface_id_buf ifb;
+	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
 
+	unsigned int if_id = if_nametoindex(if_name);
 	if (if_id > 0) {
 		ip_link_del(if_name, logger); /* ignore return value??? */
 	}
@@ -1433,3 +1421,13 @@ void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 
 	ike_remote->mark_out = mark_out;
 }
+
+const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
+	.name = "ipsec",
+	/*
+	 * For ipsec0 and XFRMi we need to map it to a different
+	 * if_id.
+	 */
+	.map_if_id_zero = 16384,
+
+};

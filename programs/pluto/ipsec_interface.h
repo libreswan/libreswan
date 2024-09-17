@@ -17,18 +17,13 @@
 #ifndef IPSEC_INTERFACE_H
 #define IPSEC_INTERFACE_H
 
+#include <net/if.h>		/* for IFNAMSIZ */
 #include <stdbool.h>
 
 #include "err.h"
 #include "ip_cidr.h"
 #include "refcnt.h"
 #include "ip_endpoint.h"
-
-/* xfrmi interface format. start with ipsec1 IFNAMSIZ - 1 */
-#define XFRMI_DEV_FORMAT "ipsec%" PRIu32
-
-/* for ipsec0 we need to map it to a different if_id */
-#define PLUTO_XFRMI_REMAP_IF_ID_ZERO	16384
 
 struct connection;
 struct logger;
@@ -57,6 +52,7 @@ struct pluto_xfrmi {
 };
 
 /* Both add_xfrm_interface() return true on success, false otherwise */
+
 extern diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface);
 extern bool add_xfrm_interface(struct connection *c, struct logger *logger);
 extern void stale_xfrmi_interfaces(struct logger *logger);
@@ -64,5 +60,13 @@ extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
 extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);
+
+/* utilities; may at some point be made static */
+typedef struct {
+	char buf[IFNAMSIZ+1/*NULL*/+1/*CANARY*/];
+} ipsec_interface_id_buf;
+
+size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t if_id);
+char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_id_buf *buf);
 
 #endif

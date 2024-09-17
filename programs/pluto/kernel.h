@@ -304,6 +304,9 @@ struct kernel_ops {
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
 	bool (*detect_nic_offload)(const char *name, struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
+
+	/* extensions */
+	const struct kernel_ipsec_interface *ipsec_interface;
 };
 
 extern int create_socket(const struct kernel_iface *ifp, const char *v_name, int port, int proto);

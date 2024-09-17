@@ -36,6 +36,7 @@
 #include "initiate.h"
 #include "acquire.h"
 #include "server.h"		/* for add_fd_read_listener() */
+#include "kernel_ipsec_interface.h"
 
 static pid_t pfkeyv2_pid;
 static uint32_t pfkeyv2_seq;
@@ -1710,4 +1711,5 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.get_kernel_state = pfkeyv2_get_kernel_state,
 	.policy_del = kernel_pfkeyv2_policy_del,
 	.policy_add = kernel_pfkeyv2_policy_add,
+	.ipsec_interface = &kernel_ipsec_interface_bsd,
 };

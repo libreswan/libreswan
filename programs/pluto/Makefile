@@ -51,6 +51,10 @@ include $(top_srcdir)/mk/config.mk
 OBJS =
 
 OBJS += send.o
+OBJS += ipsec_interface.o
+ifneq ($(BSD_VARIANT),)
+OBJS += kernel_ipsec_interface_bsd.o
+endif
 
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_cert.o

@@ -101,6 +101,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "ipsec_interface.h"
+#include "kernel_ipsec_interface.h"		/* for kernel_xfrm_ipsec_interface; */
 #include "iface.h"
 #include "ip_selector.h"
 #include "ip_encap.h"
@@ -3136,4 +3137,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_nic_offload = xfrm_detect_nic_offload,
 	.poke_ipsec_offload_policy_hole = netlink_poke_ipsec_offload_policy_hole,
+#ifdef USE_XFRM_INTERFACE
+	.ipsec_interface = &kernel_ipsec_interface_xfrm,
+#endif
 };
