@@ -274,10 +274,10 @@ static bool ip_link_del(const char *if_name, const struct logger *logger)
 	return true;
 }
 
-static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
-			      const char *dev_name /*non-NULL*/,
-			      const uint32_t if_id,
-			      struct logger *logger)
+static bool ip_link_add(const char *if_name /*non-NULL*/,
+			const char *dev_name /*non-NULL*/,
+			const uint32_t if_id,
+			struct logger *logger)
 {
 	ldbg(logger, "add xfrm interface %s@%s id=%u", if_name, dev_name, if_id);
 	struct nl_ifinfomsg_req req;
@@ -285,14 +285,14 @@ static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 	if (link_add_nl_msg(if_name, dev_name, if_id, &req, logger) != XFRMI_SUCCESS) {
 		llog_error(logger, 0/*no-errno*/,
 			   "link_add_nl_msg() creating netlink message failed");
-		return XFRMI_FAILURE;
+		return false;
 	}
 
 	if (!simple_netlink_op(&req.n, "ip_link_add_xfrmi", if_name, logger)) {
-		return XFRMI_FAILURE;
+		return false;
 	}
 
-	return XFRMI_SUCCESS;
+	return true;
 }
 
 static int ifaddrmsg_op(uint16_t type, uint16_t flags,
@@ -770,7 +770,7 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 
 	vdbg("%s() create and delete an xfrmi interface '%s@%s' to test xfrmi support",
 	     __func__, if_name, dev_name);
-	if (ip_link_add_xfrmi(if_name, dev_name, IPSEC1_XFRM_IF_ID, logger) != XFRMI_SUCCESS) {
+	if (!ip_link_add(if_name, dev_name, IPSEC1_XFRM_IF_ID, logger)) {
 		xfrm_interface_support = -1;
 		vdbg("%s() xfrmi is not supported. failed to create %s@%s",
 		     __func__, if_name, dev_name);
@@ -1027,10 +1027,10 @@ bool add_xfrm_interface(const struct connection *c, struct logger *logger)
 	passert(c->iface->real_device_name != NULL);
 
 	if (if_nametoindex(c->xfrmi->name) == 0) {
-		if (ip_link_add_xfrmi(c->xfrmi->name,
-				      c->iface->real_device_name,
-				      c->xfrmi->if_id,
-				      logger) != XFRMI_SUCCESS) {
+		if (!ip_link_add(c->xfrmi->name,
+				 c->iface->real_device_name,
+				 c->xfrmi->if_id,
+				 logger)) {
 			return false;
 		}
 
