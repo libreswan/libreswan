@@ -257,21 +257,21 @@ static bool ip_link_set_up(const char *if_name, struct logger *logger)
 	return true;
 }
 
-static int ip_link_del(const char *if_name, const struct logger *logger)
+static bool ip_link_del(const char *if_name, const struct logger *logger)
 {
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
 		llog_error(logger, errno, "ip_link_del() cannot find index of interface %s",
 			   if_name);
-		return XFRMI_FAILURE;
+		return false;
 	}
 
 	if (!simple_netlink_op(&req.n, "ip_link_del", if_name, logger)) {
-		return XFRMI_FAILURE;
+		return false;
 	}
 
-	return XFRMI_SUCCESS;
+	return true;
 }
 
 static int ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
