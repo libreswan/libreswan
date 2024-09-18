@@ -124,7 +124,6 @@ struct ifinfo_response {
 static int xfrm_interface_support = 0;
 
 static bool stale_checked;
-static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
 
 /*
  * Perform a simple netlink operation.  Send the request; and only
@@ -771,7 +770,7 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 
 	vdbg("%s() create and delete an xfrmi interface '%s@%s' to test xfrmi support",
 	     __func__, if_name, dev_name);
-	if (ip_link_add_xfrmi(if_name, dev_name, xfrm_interface_id, logger) != XFRMI_SUCCESS) {
+	if (ip_link_add_xfrmi(if_name, dev_name, IPSEC1_XFRM_IF_ID, logger) != XFRMI_SUCCESS) {
 		xfrm_interface_support = -1;
 		vdbg("%s() xfrmi is not supported. failed to create %s@%s",
 		     __func__, if_name, dev_name);
