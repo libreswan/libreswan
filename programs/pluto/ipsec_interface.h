@@ -66,7 +66,6 @@ struct pluto_xfrmi {
 extern diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface);
 extern bool add_xfrm_interface(const struct connection *c, struct logger *logger);
 extern void remove_xfrm_interface(const struct connection *c, struct logger *logger);
-extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
 extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);

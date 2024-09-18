@@ -513,7 +513,11 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 	if(!find_pluto_xfrmi_interface(xfrm_if_id))
 	{
 		/* something other than ipsec-interface=no, check support */
-		err_t err = xfrm_iface_supported(c->logger);
+		if (kernel_ops->ipsec_interface->supported == NULL) {
+			return diag("ipsec-interface=%s is not implemented by %s",
+				    ipsec_interface, kernel_ops->interface_name);
+		}
+		err_t err = kernel_ops->ipsec_interface->supported(c->logger);
 		if (err != NULL) {
 			return diag("ipsec-interface=%s not supported: %s",
 				    ipsec_interface, err);

@@ -794,7 +794,7 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 	return NULL;
 }
 
-err_t xfrm_iface_supported(struct logger *logger)
+static err_t xfrm_iface_supported(struct logger *logger)
 {
 	err_t err = NULL; /* success */
 
@@ -971,4 +971,5 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 
 	.init = init_pluto_xfrmi,
 	.check_stale_ipsec_interfaces = check_stale_xfrmi_interfaces,
+	.supported = xfrm_iface_supported,
 };
