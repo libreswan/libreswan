@@ -14,7 +14,7 @@ west #
  ipsec auto --add second
 "second": added unoriented IKEv2 connection (neither left=2.3.4.5 nor right=5.6.7.8 match an interface)
 west #
- # conn second should inherit the conn %default values with 3des-md5
+ # conn second should inherit the conn %default values with 3des-sha1
 west #
  ipsec status |grep "algorithms:"
 "first":   IKE algorithms: AES_CBC-HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
