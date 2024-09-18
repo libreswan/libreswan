@@ -237,7 +237,7 @@ static int link_add_nl_msg(const char *if_name /*non-NULL*/,
 	return XFRMI_SUCCESS;
 }
 
-static int ip_link_set_up(const char *if_name, struct logger *logger)
+static bool ip_link_set_up(const char *if_name, struct logger *logger)
 {
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST);
 	req.i.ifi_change |= IFF_UP;
@@ -247,14 +247,14 @@ static int ip_link_set_up(const char *if_name, struct logger *logger)
 		llog_error(logger, errno,
 			   "link_set_up_nl() cannot find index of xfrm interface %s",
 			   if_name);
-		return XFRMI_FAILURE;
+		return false;
 	}
 
 	if (!simple_netlink_op(&req.n, "ip_link_set_up", if_name, logger)) {
-		return XFRMI_FAILURE;
+		return false;
 	}
 
-	return XFRMI_SUCCESS;
+	return true;
 }
 
 static int ip_link_del(const char *if_name, const struct logger *logger)
@@ -1064,7 +1064,7 @@ bool add_xfrm_interface(const struct connection *c, struct logger *logger)
 		}
 	}
 
-	return (ip_link_set_up(c->xfrmi->name, logger) == XFRMI_SUCCESS);
+	return ip_link_set_up(c->xfrmi->name, logger);
 }
 
 void remove_xfrm_interface(const struct connection *c, struct logger *logger)
