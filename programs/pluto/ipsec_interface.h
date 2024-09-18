@@ -71,6 +71,8 @@ extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
 extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);
+struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id);
+void new_pluto_xfrmi(uint32_t if_id, bool shared, const char *name, struct connection *c);
 
 /* utilities; may at some point be made static */
 typedef struct {

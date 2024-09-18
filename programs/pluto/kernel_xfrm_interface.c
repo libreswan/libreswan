@@ -84,9 +84,6 @@
 #define IFINFO_REPLY_BUFFER_SIZE (32768 + NL_BUFMARGIN)
 #define IP_ADDR_GLOBAL_SCOPE 0
 
-
-static struct pluto_xfrmi *pluto_xfrm_interfaces;
-
 struct nl_ifinfomsg_req {
 	struct nlmsghdr n;
 	struct ifinfomsg i;
@@ -853,36 +850,6 @@ err_t xfrm_iface_supported(struct logger *logger)
 	return err;
 }
 
-static struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id)
-{
-	struct pluto_xfrmi *h;
-	struct pluto_xfrmi *ret = NULL;
-
-	for (h = pluto_xfrm_interfaces;  h != NULL; h = h->next) {
-		if (h->if_id == if_id) {
-			ret = h;
-			break;
-		}
-	}
-
-	return ret;
-}
-
-static void new_pluto_xfrmi(uint32_t if_id, bool shared, const char *name, struct connection *c)
-{
-	struct pluto_xfrmi **head = &pluto_xfrm_interfaces;
-	/* Create a new ref-counted xfrmi, it is not added to system yet.
-	 * The call to refcnt_alloc() counts as a reference */
-	struct pluto_xfrmi *p = refcnt_alloc(struct pluto_xfrmi, HERE);
-	p->if_id = if_id;
-	p->name = clone_str(name, "xfrmi name");
-	c->xfrmi = p;
-	p->next = *head;
-	*head = p;
-	c->xfrmi = p;
-	c->xfrmi->shared = shared;
-}
-
 static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
 	c->xfrmi = find_pluto_xfrmi_interface(if_id);
@@ -1026,55 +993,6 @@ void free_xfrmi_ipsec1(struct logger *logger)
 	}
 }
 
-void reference_xfrmi(struct connection *c)
-{
-	struct logger *logger = c->logger;
-	addref_where(c->xfrmi, HERE);
-	ldbg(logger, "reference xfrmi=%p name=%s if_id=%u refcount=%u (after)", c->xfrmi,
-	     c->xfrmi->name, c->xfrmi->if_id,
-	     refcnt_peek(c->xfrmi, c->logger));
-}
-
-void unreference_xfrmi(struct connection *c)
-{
-	struct logger *logger = c->logger;
-	PASSERT(logger, c->xfrmi != NULL);
-
-	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
-	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
-	     refcnt_peek(c->xfrmi, c->logger));
-
-	struct pluto_xfrmi *xfrmi = delref_where(&c->xfrmi, logger, HERE);
-	if (xfrmi != NULL) {
-		struct pluto_xfrmi **pp;
-		struct pluto_xfrmi *p;
-		for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
-			if (p == xfrmi) {
-				*pp = p->next;
-				if (xfrmi->pluto_added) {
-					ip_link_del(xfrmi->name, logger);
-					llog(RC_LOG, logger,
-					     "delete ipsec-interface=%s if_id=%u added by pluto",
-					     xfrmi->name, xfrmi->if_id);
-				} else {
-					ldbg(logger,
-					     "skipping delete ipsec-interface=%s if_id=%u, never added pluto",
-					     xfrmi->name, xfrmi->if_id);
-				}
-				/* Free the IPs that were already on the interface (not added by pluto)
-				 * and added as such in: init_pluto_xfrmi()->ip_addr_xfrmi_store_ips() */
-				free_xfrmi_ipaddr_list(xfrmi->if_ips, logger);
-				pfreeany(xfrmi->name);
-				pfreeany(xfrmi);
-				return;
-			}
-			ldbg(logger, "p=%p xfrmi=%p", p, xfrmi);
-		}
-		ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
-		     xfrmi->name, xfrmi->if_id);
-	}
-}
-
 void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 {
 	bool set_mark = false;
@@ -1117,6 +1035,7 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 
 	.ip_link_set_up = ip_link_set_up,
 	.ip_link_add = ip_link_add,
+	.ip_link_del = ip_link_del,
 
 	.find_interface = find_xfrmi_interface,
 };

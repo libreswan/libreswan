@@ -40,12 +40,15 @@ struct kernel_ipsec_interface {
 	bool (*ip_addr_add)(const char *if_name,
 			    const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
 			    struct logger *logger);
+
 	bool (*ip_link_add)(const char *if_name /*non-NULL*/,
 			    const char *dev_name /*non-NULL*/,
 			    const uint32_t if_id,
 			    struct logger *logger);
 	bool (*ip_link_set_up)(const char *if_name,
 			       struct logger *logger);
+	bool (*ip_link_del)(const char *if_name /*non-NULL*/,
+			    const struct logger *logger);
 
 	bool (*find_interface)(const char *if_name, /* optional */
 			       uint32_t xfrm_if_id, /* 0 is wildcard */
