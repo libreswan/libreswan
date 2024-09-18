@@ -17,6 +17,7 @@
  */
 
 #include "passert.h"
+#include "sparse_names.h"
 
 #include "ipsec_interface.h"
 
@@ -465,4 +466,67 @@ void unreference_xfrmi(struct connection *c)
 		ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
 		     xfrmi->name, xfrmi->if_id);
 	}
+}
+
+diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
+{
+	ldbg(c->logger, "parsing ipsec-interface=%s", ipsec_interface);
+
+	/*
+	 * Danger; yn_option_names includes "0" and "1" but that isn't
+	 * wanted here!  Hence yn_text_option_names.
+	 */
+	const struct sparse_name *yn = sparse_lookup(&yn_text_option_names, shunk1(ipsec_interface));
+	if (yn != NULL && yn->value == YN_NO) {
+		/* well that was pointless */
+		ldbg(c->logger, "ipsec-interface=%s is no!", ipsec_interface);
+		return NULL;
+	}
+
+	uint32_t xfrm_if_id;
+	if (yn != NULL) {
+		PEXPECT(c->logger, yn->value == YN_YES);
+		xfrm_if_id = 1; /* YES means 1 */
+	} else {
+		uintmax_t value;
+		err_t e = shunk_to_uintmax(shunk1(ipsec_interface), /*cursor*/NULL,
+					   /*base*/10, &value);
+		if (e != NULL) {
+			return diag("ipsec-interface=%s invalid: %s", ipsec_interface, e);
+		}
+
+		if (value >= UINT32_MAX) {
+			return diag("ipsec-interface=%s is too big", ipsec_interface);
+		}
+
+		if (value == 0 &&
+		    kernel_ops->ipsec_interface->map_if_id_zero != 0) {
+			ldbg(c->logger, "remap ipsec0 to %"PRIu32" because VTI allowed zero but XFRMi does not",
+			     kernel_ops->ipsec_interface->map_if_id_zero);
+			xfrm_if_id = kernel_ops->ipsec_interface->map_if_id_zero;
+		} else {
+			xfrm_if_id = value;
+		}
+	}
+
+	/* check if interface is already used by pluto */
+	if(!find_pluto_xfrmi_interface(xfrm_if_id))
+	{
+		/* something other than ipsec-interface=no, check support */
+		err_t err = xfrm_iface_supported(c->logger);
+		if (err != NULL) {
+			return diag("ipsec-interface=%s not supported: %s",
+				    ipsec_interface, err);
+		}
+	}
+
+	bool shared = true;
+	ldbg(c->logger, "ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, xfrm_if_id);
+
+	/* always success for now */
+	if (!kernel_ops->ipsec_interface->init(c, xfrm_if_id, shared)) {
+		return diag("setting up ipsec-interface=%s failed", ipsec_interface);
+	}
+
+	return NULL;
 }

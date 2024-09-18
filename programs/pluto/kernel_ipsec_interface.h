@@ -53,6 +53,11 @@ struct kernel_ipsec_interface {
 	bool (*find_interface)(const char *if_name, /* optional */
 			       uint32_t xfrm_if_id, /* 0 is wildcard */
 			       struct verbose verbose);
+
+	bool (*init)(struct connection *c,
+		     uint32_t if_id,
+		     bool shared);
+
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;
