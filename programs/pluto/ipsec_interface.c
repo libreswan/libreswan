@@ -27,6 +27,15 @@
 #include "verbose.h"
 #include "iface.h"
 
+static ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger);
+static struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
+						    ip_cidr *search_cidr,
+						    struct logger *logger);
+static void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi,
+			       struct pluto_xfrmi_ipaddr *xfrmi_ipaddr);
+static void unreference_xfrmi_ip(const struct connection *c,
+				 struct logger *logger);
+
 static struct pluto_xfrmi *pluto_xfrm_interfaces;
 
 /*
