@@ -23,6 +23,8 @@
 #include "kernel.h"			/* for kernel_ops */
 #include "kernel_ipsec_interface.h"
 #include "log.h"
+#include "verbose.h"
+#include "iface.h"
 
 /*
  * Format the name of the IPsec interface.
@@ -287,4 +289,99 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 		  c->xfrmi->name, c->xfrmi->if_id);
 
 	return unset_cidr;
+}
+
+
+/* Only called by add_xfrm_interface() */
+static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
+{
+	/* Get the existing referenced IP, or create it if it doesn't exist */
+	struct pluto_xfrmi_ipaddr *refd_xfrmi_ipaddr =
+			find_xfrmi_ipaddr(c->xfrmi, conn_xfrmi_cidr, logger);
+	if (refd_xfrmi_ipaddr == NULL) {
+		/* This call will refcount the object */
+		refd_xfrmi_ipaddr = create_xfrmi_ipaddr(c->xfrmi, *conn_xfrmi_cidr);
+		cidr_buf cb;
+		ldbg(logger,
+		     "%s() created new pluto_xfrmi_ipaddr dev [%s] id [%d] IP [%s]",
+		     __func__, c->xfrmi->name, c->xfrmi->if_id,
+		     str_cidr(&refd_xfrmi_ipaddr->if_ip, &cb));
+	} else {
+		/* The IP already exists, reference count it */
+		reference_xfrmi_ip(c->xfrmi, refd_xfrmi_ipaddr);
+	}
+
+	/* Check if the IP is already defined on the interface */
+	bool ip_on_if = kernel_ops->ipsec_interface->ip_addr_find_on_if(c->xfrmi, &(refd_xfrmi_ipaddr->if_ip),
+									logger);
+	if (ip_on_if == false) {
+		refd_xfrmi_ipaddr->pluto_added = true;
+		if (!kernel_ops->ipsec_interface->ip_addr_add(c->xfrmi->name, refd_xfrmi_ipaddr, logger)) {
+			llog_error(logger, 0/*no-errno*/,
+					"Unable to add IP address to XFRMi interface %s xfrm_if_id %u.",
+						c->xfrmi->name, c->xfrmi->if_id);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/* Return true on success, false on failure */
+
+bool add_xfrm_interface(const struct connection *c, struct logger *logger)
+{
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
+	passert(c->xfrmi->name != NULL);
+	passert(c->iface->real_device_name != NULL);
+
+	if (if_nametoindex(c->xfrmi->name) == 0) {
+		if (!kernel_ops->ipsec_interface->ip_link_add(c->xfrmi->name,
+							      c->iface->real_device_name,
+							      c->xfrmi->if_id,
+							      logger)) {
+			return false;
+		}
+
+		c->xfrmi->pluto_added = true;
+	} else {
+		/*
+		 * Device exists: try to match name, type xfrmi, and
+		 * xfrm_if_id.
+		 */
+		if (!kernel_ops->ipsec_interface->find_interface(c->xfrmi->name, c->xfrmi->if_id, verbose)) {
+			/* found wrong device abort adding */
+			llog_error(logger, 0/*no-errno*/,
+				   "device %s exists but do not match expected type, XFRM if_id %u, or XFRM device is invalid; check 'ip -d link show dev %s'",
+				   c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
+			return false;
+		}
+	}
+
+	/*
+	 * Get the IP to use on the XFRMi interface from the connection.
+	 * - If it doesn't exist, nothing to add to the interface
+	 */
+	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
+	if (conn_xfrmi_cidr.is_set == false) {
+		ldbg(logger,
+				"No IP to set on xfrmi device [%s] id [%d]",
+				c->xfrmi->name, c->xfrmi->if_id);
+	} else {
+		if (!add_xfrm_interface_ip(c, &conn_xfrmi_cidr, logger)) {
+			return false;
+		}
+	}
+
+	return kernel_ops->ipsec_interface->ip_link_set_up(c->xfrmi->name, logger);
+}
+
+void remove_xfrm_interface(const struct connection *c, struct logger *logger)
+{
+	PASSERT(logger, c->xfrmi != NULL);
+
+	unreference_xfrmi_ip(c, logger);
 }
