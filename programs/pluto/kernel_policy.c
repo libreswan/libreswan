@@ -48,7 +48,7 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 						    enum shunt_kind shunt_kind,
 						    enum shunt_policy shunt_policy,
 						    const struct sa_marks *sa_marks,
-						    const struct pluto_xfrmi *xfrmi,
+						    const struct ipsec_interface *xfrmi,
 						    const shunk_t sec_label,
 						    const struct nic_offload *nic_offload,
 						    where_t where)
@@ -487,7 +487,7 @@ bool delete_kernel_policy(enum direction direction,
 			  const ip_selector *local_selector,
 			  const ip_selector *remote_selector,
 			  const struct sa_marks *sa_marks,
-			  const struct pluto_xfrmi *xfrmi,
+			  const struct ipsec_interface *xfrmi,
 			  enum kernel_policy_id id,
 			  const shunk_t sec_label,
 			  struct logger *logger, where_t where, const char *story)

@@ -1436,7 +1436,7 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      const ip_selector *src_child,
 				      const ip_selector *dst_child,
 				      const struct sa_marks *sa_marks UNUSED,
-				      const struct pluto_xfrmi *xfrmi UNUSED,
+				      const struct ipsec_interface *xfrmi UNUSED,
 				      enum kernel_policy_id policy_id,
 				      const shunk_t sec_label UNUSED,
 				      struct logger *logger, const char *func)

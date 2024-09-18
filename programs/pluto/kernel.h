@@ -248,7 +248,7 @@ struct kernel_ops {
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
 			   const struct sa_marks *sa_marks,
-			   const struct pluto_xfrmi *xfrmi,
+			   const struct ipsec_interface *xfrmi,
 			   enum kernel_policy_id id,
 			   const shunk_t sec_label, /*needed*/
 			   struct logger *logger,

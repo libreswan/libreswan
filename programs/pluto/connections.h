@@ -733,7 +733,7 @@ struct connection {
 					 * MASK value for IPsec SA
 					 * (per-connection) */
 
-	struct pluto_xfrmi *xfrmi;	/* pointer to possibly shared
+	struct ipsec_interface *xfrmi;	/* pointer to possibly shared
 					 * interface
 					 * (per-connection) */
 

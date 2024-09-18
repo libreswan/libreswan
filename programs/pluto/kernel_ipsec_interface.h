@@ -17,8 +17,8 @@
 #ifndef KERNEL_IPSEC_INTERFACE_H
 #define KERNEL_IPSEC_INTERFACE_H
 
-struct pluto_xfrmi_ipaddr;
-struct pluto_xfrmi;
+struct ipsec_interface_address;
+struct ipsec_interface;
 struct verbose;
 
 struct kernel_ipsec_interface {
@@ -32,13 +32,13 @@ struct kernel_ipsec_interface {
 
 	/* placeholders */
 	int (*ip_addr_del)(const char *if_name,
-			   const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			   const struct ipsec_interface_address *xfrmi_ipaddr,
 			   struct logger *logger);
-	bool (*ip_addr_find_on_if)(struct pluto_xfrmi *xfrmi,
+	bool (*ip_addr_find_on_if)(struct ipsec_interface *xfrmi,
 				   ip_cidr *search_ip,
 				   struct logger *logger);
 	bool (*ip_addr_add)(const char *if_name,
-			    const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			    const struct ipsec_interface_address *xfrmi_ipaddr,
 			    struct logger *logger);
 
 	bool (*ip_link_add)(const char *if_name /*non-NULL*/,

@@ -28,15 +28,15 @@
 #include "iface.h"
 
 static ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger);
-static struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
+static struct ipsec_interface_address *find_xfrmi_ipaddr(struct ipsec_interface *xfrmi,
 						    ip_cidr *search_cidr,
 						    struct logger *logger);
-static void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi,
-			       struct pluto_xfrmi_ipaddr *xfrmi_ipaddr);
+static void reference_xfrmi_ip(struct ipsec_interface *xfrmi,
+			       struct ipsec_interface_address *xfrmi_ipaddr);
 static void unreference_xfrmi_ip(const struct connection *c,
 				 struct logger *logger);
 
-static struct pluto_xfrmi *pluto_xfrm_interfaces;
+static struct ipsec_interface *pluto_xfrm_interfaces;
 
 /*
  * Format the name of the IPsec interface.
@@ -67,7 +67,7 @@ char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_id_buf *buf)
  * Create an internal XFRMi Interface IP address structure.
  */
 
-struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if,
+struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface *xfrmi_if,
 					       ip_cidr if_ip)
 {
 	if (xfrmi_if == NULL) {
@@ -76,8 +76,8 @@ struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if,
 
 	/* Create a new ref-counted xfrmi_ip_addr.
 	 * The call to refcnt_alloc() counts as a reference */
-	struct pluto_xfrmi_ipaddr *new_xfrmi_ipaddr =
-			refcnt_alloc(struct pluto_xfrmi_ipaddr, HERE);
+	struct ipsec_interface_address *new_xfrmi_ipaddr =
+			refcnt_alloc(struct ipsec_interface_address, HERE);
 	new_xfrmi_ipaddr->next = NULL;
 	new_xfrmi_ipaddr->pluto_added = false;
 	new_xfrmi_ipaddr->if_ip = if_ip;
@@ -87,8 +87,8 @@ struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if,
 		return new_xfrmi_ipaddr;
 	}
 
-	struct pluto_xfrmi_ipaddr *prev = NULL;
-	struct pluto_xfrmi_ipaddr *xfrmi_ipaddr = xfrmi_if->if_ips;
+	struct ipsec_interface_address *prev = NULL;
+	struct ipsec_interface_address *xfrmi_ipaddr = xfrmi_if->if_ips;
 	while (xfrmi_ipaddr != NULL) {
 		prev = xfrmi_ipaddr;
 		xfrmi_ipaddr = xfrmi_ipaddr->next;
@@ -98,7 +98,7 @@ struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if,
 	return new_xfrmi_ipaddr;
 }
 
-struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
+struct ipsec_interface_address *find_xfrmi_ipaddr(struct ipsec_interface *xfrmi,
 					     ip_cidr *search_cidr,
 					     struct logger *logger)
 {
@@ -108,7 +108,7 @@ struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
 		return NULL;
 	}
 
-	struct pluto_xfrmi_ipaddr *xfrmi_ipaddr;
+	struct ipsec_interface_address *xfrmi_ipaddr;
 	for (xfrmi_ipaddr = xfrmi->if_ips; xfrmi_ipaddr != NULL; xfrmi_ipaddr = xfrmi_ipaddr->next) {
 		if (cidr_eq_cidr(xfrmi_ipaddr->if_ip, *search_cidr)) {
 			cidr_buf cb;
@@ -126,10 +126,10 @@ struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi,
 	return NULL;
 }
 
-void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, struct logger *logger)
+void free_ipsec_interface_address_list(struct ipsec_interface_address *xfrmi_ipaddr, struct logger *logger)
 {
-	struct pluto_xfrmi_ipaddr *xi = xfrmi_ipaddr;
-	struct pluto_xfrmi_ipaddr *xi_next = NULL;
+	struct ipsec_interface_address *xi = xfrmi_ipaddr;
+	struct ipsec_interface_address *xi_next = NULL;
 
 	while (xi != NULL) {
 		/* step off IX */
@@ -146,11 +146,11 @@ void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, struct logg
 		 * suggests that something elsewhere is leaking these?
 		 */
 		if (refcnt_peek(xi, logger) > 0) {
-			struct pluto_xfrmi_ipaddr *xi_unref_result = NULL;
+			struct ipsec_interface_address *xi_unref_result = NULL;
 			do {
 				/* delref_where() sets the pointer passed in to NULL
 				 * delref_where() will return NULL until the refcount is 0 */
-				struct pluto_xfrmi_ipaddr *xi_unref = xi;
+				struct ipsec_interface_address *xi_unref = xi;
 				xi_unref_result = delref_where(&xi_unref, logger, HERE);
 			} while(xi_unref_result == NULL);
 		}
@@ -159,7 +159,7 @@ void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, struct logg
 	}
 }
 
-void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi, struct pluto_xfrmi_ipaddr *xfrmi_ipaddr)
+void reference_xfrmi_ip(struct ipsec_interface *xfrmi, struct ipsec_interface_address *xfrmi_ipaddr)
 {
 	addref_where(xfrmi_ipaddr, HERE);
 	dbg("reference xfrmi_ipaddr=%p name=%s if_id=%u refcount=%u (after)",
@@ -178,7 +178,7 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 	}
 
 	/* Get the existing referenced IP */
-	struct pluto_xfrmi_ipaddr *refd_xfrmi_ipaddr =
+	struct ipsec_interface_address *refd_xfrmi_ipaddr =
 			find_xfrmi_ipaddr(c->xfrmi, &conn_xfrmi_cidr, logger);
 	if (refd_xfrmi_ipaddr == NULL) {
 		/* This should never happen */
@@ -198,7 +198,7 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 	/* Decrement the reference:
 	 * - The pointer passed in will be set to NULL
 	 * - Returns a pointer to the object when its the last one */
-	struct pluto_xfrmi_ipaddr *xfrmi_ipaddr_unref = delref_where(&refd_xfrmi_ipaddr, logger, HERE);
+	struct ipsec_interface_address *xfrmi_ipaddr_unref = delref_where(&refd_xfrmi_ipaddr, logger, HERE);
 	if (xfrmi_ipaddr_unref == NULL) {
 		ldbg(logger, "unreference_xfrmi_ip() delref returned NULL, simple delref");
 		return;
@@ -208,8 +208,8 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 	if (c->xfrmi->if_ips == xfrmi_ipaddr_unref) {
 		c->xfrmi->if_ips = xfrmi_ipaddr_unref->next;
 	} else {
-		struct pluto_xfrmi_ipaddr *prev = NULL;
-		struct pluto_xfrmi_ipaddr *p = c->xfrmi->if_ips;
+		struct ipsec_interface_address *prev = NULL;
+		struct ipsec_interface_address *p = c->xfrmi->if_ips;
 
 		while (p != NULL && p != xfrmi_ipaddr_unref) {
 			cidr_buf cb;
@@ -304,15 +304,15 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 }
 
 
-/* Only called by add_xfrm_interface() */
+/* Only called by add_ipsec_interface() */
 static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
 {
 	/* Get the existing referenced IP, or create it if it doesn't exist */
-	struct pluto_xfrmi_ipaddr *refd_xfrmi_ipaddr =
+	struct ipsec_interface_address *refd_xfrmi_ipaddr =
 			find_xfrmi_ipaddr(c->xfrmi, conn_xfrmi_cidr, logger);
 	if (refd_xfrmi_ipaddr == NULL) {
 		/* This call will refcount the object */
-		refd_xfrmi_ipaddr = create_xfrmi_ipaddr(c->xfrmi, *conn_xfrmi_cidr);
+		refd_xfrmi_ipaddr = alloc_ipsec_interface_address(c->xfrmi, *conn_xfrmi_cidr);
 		cidr_buf cb;
 		ldbg(logger,
 		     "%s() created new pluto_xfrmi_ipaddr dev [%s] id [%d] IP [%s]",
@@ -341,7 +341,7 @@ static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrm
 
 /* Return true on success, false on failure */
 
-bool add_xfrm_interface(const struct connection *c, struct logger *logger)
+bool add_ipsec_interface(const struct connection *c, struct logger *logger)
 {
 	struct verbose verbose = {
 		.logger = logger,
@@ -391,17 +391,17 @@ bool add_xfrm_interface(const struct connection *c, struct logger *logger)
 	return kernel_ops->ipsec_interface->ip_link_set_up(c->xfrmi->name, logger);
 }
 
-void remove_xfrm_interface(const struct connection *c, struct logger *logger)
+void remove_ipsec_interface(const struct connection *c, struct logger *logger)
 {
 	PASSERT(logger, c->xfrmi != NULL);
 
 	unreference_xfrmi_ip(c, logger);
 }
 
-struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id)
+struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
 {
-	struct pluto_xfrmi *h;
-	struct pluto_xfrmi *ret = NULL;
+	struct ipsec_interface *h;
+	struct ipsec_interface *ret = NULL;
 
 	for (h = pluto_xfrm_interfaces;  h != NULL; h = h->next) {
 		if (h->if_id == if_id) {
@@ -413,12 +413,12 @@ struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id)
 	return ret;
 }
 
-void new_pluto_xfrmi(uint32_t if_id, bool shared, const char *name, struct connection *c)
+void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct connection *c)
 {
-	struct pluto_xfrmi **head = &pluto_xfrm_interfaces;
+	struct ipsec_interface **head = &pluto_xfrm_interfaces;
 	/* Create a new ref-counted xfrmi, it is not added to system yet.
 	 * The call to refcnt_alloc() counts as a reference */
-	struct pluto_xfrmi *p = refcnt_alloc(struct pluto_xfrmi, HERE);
+	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, HERE);
 	p->if_id = if_id;
 	p->name = clone_str(name, "xfrmi name");
 	c->xfrmi = p;
@@ -428,7 +428,7 @@ void new_pluto_xfrmi(uint32_t if_id, bool shared, const char *name, struct conne
 	c->xfrmi->shared = shared;
 }
 
-void reference_xfrmi(struct connection *c)
+void ipsec_interface_addref(struct connection *c)
 {
 	struct logger *logger = c->logger;
 	addref_where(c->xfrmi, HERE);
@@ -437,7 +437,7 @@ void reference_xfrmi(struct connection *c)
 	     refcnt_peek(c->xfrmi, c->logger));
 }
 
-void unreference_xfrmi(struct connection *c)
+void ipsec_interface_delref(struct connection *c)
 {
 	struct logger *logger = c->logger;
 	PASSERT(logger, c->xfrmi != NULL);
@@ -446,10 +446,10 @@ void unreference_xfrmi(struct connection *c)
 	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
 	     refcnt_peek(c->xfrmi, c->logger));
 
-	struct pluto_xfrmi *xfrmi = delref_where(&c->xfrmi, logger, HERE);
+	struct ipsec_interface *xfrmi = delref_where(&c->xfrmi, logger, HERE);
 	if (xfrmi != NULL) {
-		struct pluto_xfrmi **pp;
-		struct pluto_xfrmi *p;
+		struct ipsec_interface **pp;
+		struct ipsec_interface *p;
 		for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
 			if (p == xfrmi) {
 				*pp = p->next;
@@ -465,7 +465,7 @@ void unreference_xfrmi(struct connection *c)
 				}
 				/* Free the IPs that were already on the interface (not added by pluto)
 				 * and added as such in: init_pluto_xfrmi()->ip_addr_xfrmi_store_ips() */
-				free_xfrmi_ipaddr_list(xfrmi->if_ips, logger);
+				free_ipsec_interface_address_list(xfrmi->if_ips, logger);
 				pfreeany(xfrmi->name);
 				pfreeany(xfrmi);
 				return;
@@ -477,7 +477,7 @@ void unreference_xfrmi(struct connection *c)
 	}
 }
 
-diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
+diag_t setup_ipsec_interface(struct connection *c, const char *ipsec_interface)
 {
 	ldbg(c->logger, "parsing ipsec-interface=%s", ipsec_interface);
 
@@ -519,7 +519,7 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 	}
 
 	/* check if interface is already used by pluto */
-	if(!find_pluto_xfrmi_interface(xfrm_if_id))
+	if(!find_ipsec_interface_by_id(xfrm_if_id))
 	{
 		/* something other than ipsec-interface=no, check support */
 		if (kernel_ops->ipsec_interface->supported == NULL) {

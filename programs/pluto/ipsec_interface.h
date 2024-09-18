@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2018-2020 Antony Antony <antony@phenome.org>
  * Copyright (C) 2023 Brady Johnson <bradyallenjohnson@gmail.com>
+ * Copyright (C) Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +28,7 @@
 
 struct connection;
 struct logger;
-struct pluto_xfrmi;	/* forward */
+struct ipsec_interface;	/* forward */
 
 /*
  * The same interface IP can be used by multiple tunnels, with
@@ -35,36 +36,36 @@ struct pluto_xfrmi;	/* forward */
  * the IP from the IF.
  */
 
-struct pluto_xfrmi_ipaddr {
+struct ipsec_interface_address {
 	refcnt_t refcnt;
 	ip_cidr if_ip;
 	bool pluto_added;
-	struct pluto_xfrmi_ipaddr *next;
+	struct ipsec_interface_address *next;
 };
 
-struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if, ip_cidr if_ip);
-void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, struct logger *logger);
+struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface *ipsec_if, ip_cidr if_ip);
+void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifaddr, struct logger *logger);
 
-struct pluto_xfrmi {
+struct ipsec_interface {
 	char *name;
 	uint32_t if_id; /* IFLA_XFRM_IF_ID */
 	uint32_t dev_if_id;  /* if_id of device, IFLA_XFRM_LINK */
-	struct pluto_xfrmi_ipaddr *if_ips; /* ref-counted IPs on this IF */
+	struct ipsec_interface_address *if_ips; /* ref-counted IPs on this IF */
 	refcnt_t refcnt;
 	bool shared;
 	bool pluto_added;
-	struct pluto_xfrmi *next;
+	struct ipsec_interface *next;
 };
 
-/* Both add_xfrm_interface() return true on success, false otherwise */
+/* Both add_ipsec_interface() return true on success, false otherwise */
 
-diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface);
-bool add_xfrm_interface(const struct connection *c, struct logger *logger);
-void remove_xfrm_interface(const struct connection *c, struct logger *logger);
-void unreference_xfrmi(struct connection *c);
-void reference_xfrmi(struct connection *c);
-struct pluto_xfrmi *find_pluto_xfrmi_interface(uint32_t if_id);
-void new_pluto_xfrmi(uint32_t if_id, bool shared, const char *name, struct connection *c);
+diag_t setup_ipsec_interface(struct connection *c, const char *ipsec_interface);
+bool add_ipsec_interface(const struct connection *c, struct logger *logger);
+void remove_ipsec_interface(const struct connection *c, struct logger *logger);
+void ipsec_interface_delref(struct connection *c);
+void ipsec_interface_addref(struct connection *c);
+struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id);
+void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct connection *c);
 
 void shutdown_kernel_ipsec_interface(struct logger *logger);
 void check_stale_ipsec_interfaces(struct logger *logger);

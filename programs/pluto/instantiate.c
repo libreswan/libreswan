@@ -110,7 +110,7 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 #ifdef USE_XFRM_INTERFACE
 	if (t->xfrmi != NULL) {
 		c->xfrmi = t->xfrmi;
-		reference_xfrmi(c);
+		ipsec_interface_addref(c);
 	}
 #endif
 

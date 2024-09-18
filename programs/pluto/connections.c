@@ -436,7 +436,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL) {
-		unreference_xfrmi(c);
+		ipsec_interface_delref(c);
 	}
 #endif
 
@@ -3190,7 +3190,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	} else if (wm->ipsec_interface != NULL) {
 #ifdef USE_XFRM_INTERFACE
-		diag_t d = setup_xfrm_interface(c, wm->ipsec_interface);
+		diag_t d = setup_ipsec_interface(c, wm->ipsec_interface);
 		if (d != NULL) {
 			return d;
 		}

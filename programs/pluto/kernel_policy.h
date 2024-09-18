@@ -123,7 +123,7 @@ struct kernel_policy {
 	where_t where;
 	shunk_t sec_label;
 	const struct sa_marks *sa_marks;
-	const struct pluto_xfrmi *xfrmi;
+	const struct ipsec_interface *xfrmi;
 	enum kernel_policy_id id;
 	/*
 	 * The rules are applied to an outgoing packet in order they
@@ -169,7 +169,7 @@ bool delete_kernel_policy(enum direction direction,
 			  const ip_selector *local_selector,
 			  const ip_selector *remote_selector,
 			  const struct sa_marks *sa_marks,
-			  const struct pluto_xfrmi *xfrmi,
+			  const struct ipsec_interface *xfrmi,
 			  enum kernel_policy_id id,
 			  const shunk_t sec_label, /*needed*/
 			  struct logger *logger, where_t where, const char *story);

@@ -749,7 +749,7 @@ static void set_xfrm_selectors(struct xfrm_selector *sel,
 
 static void add_xfrmi_marks(struct nlmsghdr *n,
 			    const struct sa_marks *sa_marks,
-			    const struct pluto_xfrmi *xfrmi,
+			    const struct ipsec_interface *xfrmi,
 			    const unsigned xfrm_dir,
 			    unsigned short maxlen,
 			    struct logger *logger)
@@ -1055,7 +1055,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 				   const ip_selector *src_child,
 				   const ip_selector *dst_child,
 				   const struct sa_marks *sa_marks,
-				   const struct pluto_xfrmi *xfrmi,
+				   const struct ipsec_interface *xfrmi,
 				   enum kernel_policy_id policy_id,
 				   const shunk_t sec_label,
 				   struct logger *logger, const char *func)

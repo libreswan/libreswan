@@ -114,7 +114,7 @@ struct ifinfo_response {
 
 	bool result; /* final result true success */
 
-	struct pluto_xfrmi result_if;
+	struct ipsec_interface result_if;
 };
 
 /* -1 missing; 0 uninitialized; 1 present */
@@ -292,7 +292,7 @@ static bool ip_link_add(const char *if_name /*non-NULL*/,
 
 static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 			const char *if_name,
-			const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			const struct ipsec_interface_address *xfrmi_ipaddr,
 			struct logger *logger)
 {
 	const struct ip_info *afi = cidr_info(xfrmi_ipaddr->if_ip);
@@ -312,7 +312,7 @@ static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 
 /* Add an IP address to an XFRMi interface using Netlink */
 static bool ip_addr_xfrmi_add(const char *if_name,
-			      const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			      const struct ipsec_interface_address *xfrmi_ipaddr,
 			      struct logger *logger)
 {
 	return ifaddrmsg_op(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL,
@@ -321,7 +321,7 @@ static bool ip_addr_xfrmi_add(const char *if_name,
 
 /* Delete an IP address from an XFRMi interface using Netlink */
 static int ip_addr_xfrmi_del(const char *if_name,
-			     const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			     const struct ipsec_interface_address *xfrmi_ipaddr,
 			     struct logger *logger)
 {
 	return ifaddrmsg_op(RTM_DELADDR, NLM_F_REQUEST,
@@ -548,7 +548,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			if_rsp->result_if.name = clone_thing_as_string(if_name_buf, "parse_linkinfo_data");
 		}
 
-		create_xfrmi_ipaddr(&if_rsp->result_if, if_ip);
+		alloc_ipsec_interface_address(&if_rsp->result_if, if_ip);
 		ldbg(logger, "%s() matching message for if_name %s and ifa_index %d; setting; result = true",
 		     __func__, if_rsp->result_if.name, ifa->ifa_index);
 		if_rsp->result = true;
@@ -638,7 +638,7 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 }
 
 /* Get all of the IP addresses on an XFRMi interface using Netlink */
-static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct pluto_xfrmi *xfrmi, struct logger *logger)
+static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct ipsec_interface *xfrmi, struct logger *logger)
 {
 	/* first do a cheap check */
 	if (xfrmi->name != NULL && if_nametoindex(xfrmi->name) == 0) {
@@ -681,7 +681,7 @@ static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct pluto_xfrmi *xfr
 /* Wrapper function for ip_addr_xfrmi_get_all_ips() to find an IP on an
  * XFRMi interface.
  * Returns true if the IP address is found on the IF, false otherwise. */
-static bool ip_addr_xfrmi_find_on_if(struct pluto_xfrmi *xfrmi, ip_cidr *search_ip, struct logger *logger)
+static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi, ip_cidr *search_ip, struct logger *logger)
 {
 	struct ifinfo_response *ifi_rsp = ip_addr_xfrmi_get_all_ips(xfrmi, logger);
 
@@ -699,17 +699,17 @@ static bool ip_addr_xfrmi_find_on_if(struct pluto_xfrmi *xfrmi, ip_cidr *search_
 	}
 
 	/* Iterate the IPs to find a match */
-	struct pluto_xfrmi_ipaddr *x;
+	struct ipsec_interface_address *x;
 	for (x = ifi_rsp->result_if.if_ips; x != NULL; x = x->next) {
 		if (cidr_eq_cidr(*search_ip, x->if_ip)) {
-			free_xfrmi_ipaddr_list(ifi_rsp->result_if.if_ips, logger);
+			free_ipsec_interface_address_list(ifi_rsp->result_if.if_ips, logger);
 			pfreeany(ifi_rsp->result_if.name);
 			pfreeany(ifi_rsp);
 			return true;
 		}
 	}
 
-	free_xfrmi_ipaddr_list(ifi_rsp->result_if.if_ips, logger);
+	free_ipsec_interface_address_list(ifi_rsp->result_if.if_ips, logger);
 	pfreeany(ifi_rsp->result_if.name);
 	pfreeany(ifi_rsp);
 	return false;
@@ -719,7 +719,7 @@ static bool ip_addr_xfrmi_find_on_if(struct pluto_xfrmi *xfrmi, ip_cidr *search_
  * IPs on an XFRMi interface in Netlink and store them.
  * Returns XFRMI_SUCCESS if the IPs can be retrieved and stored,
  * XFRMI_FAILURE otherwise. */
-static int ip_addr_xfrmi_store_ips(struct pluto_xfrmi *xfrmi, struct logger *logger)
+static int ip_addr_xfrmi_store_ips(struct ipsec_interface *xfrmi, struct logger *logger)
 {
 	struct ifinfo_response *ifi_rsp = ip_addr_xfrmi_get_all_ips(xfrmi, logger);
 
@@ -850,7 +850,7 @@ static err_t xfrm_iface_supported(struct logger *logger)
 
 static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
-	c->xfrmi = find_pluto_xfrmi_interface(if_id);
+	c->xfrmi = find_ipsec_interface_by_id(if_id);
 	if (c->xfrmi == NULL) {
 		/*
 		if (!shared) {
@@ -861,7 +861,7 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		*/
 		ipsec_interface_id_buf ifb;
 		const char *name = str_ipsec_interface_id(if_id, &ifb);
-		new_pluto_xfrmi(if_id, shared, name, c);
+		alloc_ipsec_interface(if_id, shared, name, c);
 
 		/*
 		 * Query the XFRMi IF IPs from netlink and store them,
@@ -871,14 +871,14 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		 *
 		 * Any new IP created on this interface will be
 		 * reference counted later in the call to
-		 * add_xfrm_interface().
+		 * add_ipsec_interface().
 		 */
 		if (if_nametoindex(name) != 0) {
 			ip_addr_xfrmi_store_ips(c->xfrmi, c->logger);
 		}
 	} else {
 		passert(c->xfrmi->shared == shared);
-		reference_xfrmi(c);
+		ipsec_interface_addref(c);
 	}
 
 	return true;

@@ -2453,7 +2453,7 @@ static bool dispatch(enum routing_event event,
 				     c->routing.state == RT_UNROUTED_INBOUND) {
 					ldbg_routing(logger, "adding ipsec-interface %"PRIu32,
 						     c->xfrmi->if_id);
-					ok = add_xfrm_interface(c, logger);
+					ok = add_ipsec_interface(c, logger);
 				}
 			}
 #endif
@@ -2467,7 +2467,7 @@ static bool dispatch(enum routing_event event,
 					if (c->routing.state == RT_UNROUTED) {
 						ldbg_routing(logger, "removing ipsec-interface %"PRIu32,
 							     c->xfrmi->if_id);
-						remove_xfrm_interface(c, logger);
+						remove_ipsec_interface(c, logger);
 					}
 				}
 #endif
