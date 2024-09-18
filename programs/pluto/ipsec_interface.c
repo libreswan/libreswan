@@ -530,3 +530,10 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 
 	return NULL;
 }
+
+void check_stale_ipsec_interfaces(struct logger *logger)
+{
+	if (kernel_ops->ipsec_interface->check_stale_ipsec_interfaces != NULL) {
+		kernel_ops->ipsec_interface->check_stale_ipsec_interfaces(logger);
+	}
+}

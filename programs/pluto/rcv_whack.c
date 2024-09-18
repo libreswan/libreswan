@@ -109,9 +109,14 @@ static void do_whacklisten(struct logger *logger)
 	llog(RC_LOG, logger, "listening for IKE messages");
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, logger);
-#ifdef USE_XFRM_INTERFACE
-	stale_xfrmi_interfaces(logger);
-#endif
+
+	/* only do on first listen !?! */
+	static bool checked_stale_ipsec_interfaces = false;
+	if (!checked_stale_ipsec_interfaces) {
+		checked_stale_ipsec_interfaces = true;
+		check_stale_ipsec_interfaces(logger);
+	}
+
 	load_preshared_secrets(logger);
 	load_groups(logger);
 #ifdef USE_SYSTEMD_WATCHDOG

@@ -120,8 +120,6 @@ struct ifinfo_response {
 /* -1 missing; 0 uninitialized; 1 present */
 static int xfrm_interface_support = 0;
 
-static bool stale_checked;
-
 /*
  * Perform a simple netlink operation.  Send the request; and only
  * look for immediate error responses (i.e., NLM_F_ACK is not set).
@@ -887,13 +885,8 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 }
 
 /* at start call this to see if there are any stale interface lying around. */
-void stale_xfrmi_interfaces(struct logger *logger)
+static void check_stale_xfrmi_interfaces(struct logger *logger)
 {
-	if (stale_checked)
-		return; /* possibly from second whack listen */
-
-	stale_checked = true; /* do not re-enter */
-
 	/*
 	 * first check quick one do ipsec1 exist. later on add extensive checks
 	 * "ip link show type xfrmi" would be better.
@@ -977,5 +970,5 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	.find_interface = find_xfrmi_interface,
 
 	.init = init_pluto_xfrmi,
-
+	.check_stale_ipsec_interfaces = check_stale_xfrmi_interfaces,
 };
