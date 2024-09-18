@@ -27,18 +27,28 @@
 
 struct connection;
 struct logger;
+struct pluto_xfrmi;	/* forward */
 
 /*
  * The same interface IP can be used by multiple tunnels, with
  * different remote IPs, so they are ref-counted to control removing
  * the IP from the IF.
  */
+
 struct pluto_xfrmi_ipaddr {
 	refcnt_t refcnt;
 	ip_cidr if_ip;
 	bool pluto_added;
 	struct pluto_xfrmi_ipaddr *next;
 };
+
+struct pluto_xfrmi_ipaddr *create_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi_if, ip_cidr if_ip);
+struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi, ip_cidr *search_cidr,
+					     struct logger *logger);
+void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, struct logger *logger);
+void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi, struct pluto_xfrmi_ipaddr *xfrmi_ipaddr);
+void unreference_xfrmi_ip(struct connection *c, struct logger *logger);
+ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *logger);
 
 struct pluto_xfrmi {
 	char *name;

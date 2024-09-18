@@ -17,6 +17,9 @@
 #ifndef KERNEL_IPSEC_INTERFACE_H
 #define KERNEL_IPSEC_INTERFACE_H
 
+struct pluto_xfrmi_ipaddr;
+struct pluto_xfrmi;
+
 struct kernel_ipsec_interface {
 	const char *name;
 	/*
@@ -25,6 +28,11 @@ struct kernel_ipsec_interface {
 	 * code?
 	 */
 	uint32_t map_if_id_zero;
+
+	/* placeholders */
+	int (*ip_addr_del)(const char *if_name,
+			   const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			   struct logger *logger);
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;
