@@ -541,3 +541,10 @@ void check_stale_ipsec_interfaces(struct logger *logger)
 		kernel_ops->ipsec_interface->check_stale_ipsec_interfaces(logger);
 	}
 }
+
+void shutdown_kernel_ipsec_interface(struct logger *logger)
+{
+	if (kernel_ops->ipsec_interface->shutdown != NULL) {
+		kernel_ops->ipsec_interface->shutdown(logger);
+	}
+}

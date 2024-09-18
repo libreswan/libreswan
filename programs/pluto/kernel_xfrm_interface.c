@@ -912,7 +912,7 @@ static void check_stale_xfrmi_interfaces(struct logger *logger)
 	}
 }
 
-void free_xfrmi_ipsec1(struct logger *logger)
+static void free_xfrmi_ipsec1(struct logger *logger)
 {
 	ipsec_interface_id_buf ifb;
 	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
@@ -972,4 +972,5 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	.init = init_pluto_xfrmi,
 	.check_stale_ipsec_interfaces = check_stale_xfrmi_interfaces,
 	.supported = xfrm_iface_supported,
+	.shutdown = free_xfrmi_ipsec1,
 };

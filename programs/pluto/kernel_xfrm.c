@@ -3101,11 +3101,7 @@ static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, st
 
 static void kernel_xfrm_shutdown(struct logger *logger)
 {
-#ifdef USE_XFRM_INTERFACE
-	free_xfrmi_ipsec1(logger);
-#else
-	ldbg(logger, "%s() USE_XFRM_INTERFACE disabled", __func__);
-#endif
+	ldbg(logger, "%s() no-op", __func__);
 }
 
 static const char *xfrm_protostack_names[] = { "xfrm", "netkey", NULL, };

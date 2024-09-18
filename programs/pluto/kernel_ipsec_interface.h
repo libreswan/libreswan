@@ -59,6 +59,7 @@ struct kernel_ipsec_interface {
 		     bool shared);
 	void (*check_stale_ipsec_interfaces)(struct logger *logger);
 	err_t (*supported)(struct logger *logger);
+	void (*shutdown)(struct logger *logger);
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;
