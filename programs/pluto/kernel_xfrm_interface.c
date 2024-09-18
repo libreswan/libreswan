@@ -850,7 +850,7 @@ err_t xfrm_iface_supported(struct logger *logger)
 	return err;
 }
 
-static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
+static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
 	c->xfrmi = find_pluto_xfrmi_interface(if_id);
 	if (c->xfrmi == NULL) {
@@ -858,7 +858,7 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		if (!shared) {
 			log_state(RC_LOG, st, "%s, index %u, xfrm interface exist will not shared",
 				       xfrmi_name, if_id);
-			return XFRMI_FAILURE;
+			return false;
 		}
 		*/
 		ipsec_interface_id_buf ifb;
@@ -883,7 +883,7 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		reference_xfrmi(c);
 	}
 
-	return XFRMI_SUCCESS;
+	return true;
 }
 
 diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
@@ -942,7 +942,7 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 	ldbg(c->logger, "ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, xfrm_if_id);
 
 	/* always success for now */
-	if (init_pluto_xfrmi(c, xfrm_if_id, shared) != XFRMI_SUCCESS) {
+	if (!init_pluto_xfrmi(c, xfrm_if_id, shared)) {
 		return diag("setting up ipsec-interface=%s failed", ipsec_interface);
 	}
 
