@@ -153,7 +153,7 @@ void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi, struct pluto_xfrmi_ipaddr *xf
 	    refcnt_peek(xfrmi_ipaddr, &global_logger));
 }
 
-void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
+void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 {
 	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
 	if (conn_xfrmi_cidr.is_set == false) {
@@ -241,7 +241,7 @@ void unreference_xfrmi_ip(struct connection *c, struct logger *logger)
  *
  * Return an ip_cidr object if found, unset_cidr otherwise.
  */
-ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *logger)
+ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger)
 {
 	const struct child_end_config *child_config = &(c->config->end[LEFT_END].child);
 

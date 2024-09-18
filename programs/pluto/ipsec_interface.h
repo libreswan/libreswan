@@ -47,8 +47,8 @@ struct pluto_xfrmi_ipaddr *find_xfrmi_ipaddr(struct pluto_xfrmi *xfrmi, ip_cidr 
 					     struct logger *logger);
 void free_xfrmi_ipaddr_list(struct pluto_xfrmi_ipaddr *xfrmi_ipaddr, struct logger *logger);
 void reference_xfrmi_ip(struct pluto_xfrmi *xfrmi, struct pluto_xfrmi_ipaddr *xfrmi_ipaddr);
-void unreference_xfrmi_ip(struct connection *c, struct logger *logger);
-ip_cidr get_xfrmi_ipaddr_from_conn(struct connection *c, struct logger *logger);
+void unreference_xfrmi_ip(const struct connection *c, struct logger *logger);
+ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger);
 
 struct pluto_xfrmi {
 	char *name;
@@ -64,7 +64,8 @@ struct pluto_xfrmi {
 /* Both add_xfrm_interface() return true on success, false otherwise */
 
 extern diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface);
-extern bool add_xfrm_interface(struct connection *c, struct logger *logger);
+extern bool add_xfrm_interface(const struct connection *c, struct logger *logger);
+extern void remove_xfrm_interface(const struct connection *c, struct logger *logger);
 extern void stale_xfrmi_interfaces(struct logger *logger);
 extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);

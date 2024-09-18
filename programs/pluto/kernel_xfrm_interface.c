@@ -921,7 +921,7 @@ static int init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 }
 
 /* Only called by add_xfrm_interface() */
-static bool add_xfrm_interface_ip(struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
+static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
 {
 	/* Get the existing referenced IP, or create it if it doesn't exist */
 	struct pluto_xfrmi_ipaddr *refd_xfrmi_ipaddr =
@@ -969,13 +969,6 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 		return NULL;
 	}
 
-	/* something other than ipsec-interface=no, check support */
-	err_t err = xfrm_iface_supported(c->logger);
-	if (err != NULL) {
-		return diag("ipsec-interface=%s not supported: %s",
-			    ipsec_interface, err);
-	}
-
 	uint32_t xfrm_if_id;
 	if (yn != NULL) {
 		PEXPECT(c->logger, yn->value == YN_YES);
@@ -1002,6 +995,17 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 		}
 	}
 
+	/* check if interface is already used by pluto */
+	if(!find_pluto_xfrmi_interface(xfrm_if_id))
+	{
+		/* something other than ipsec-interface=no, check support */
+		err_t err = xfrm_iface_supported(c->logger);
+		if (err != NULL) {
+			return diag("ipsec-interface=%s not supported: %s",
+				    ipsec_interface, err);
+		}
+	}
+
 	bool shared = true;
 	ldbg(c->logger, "ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, xfrm_if_id);
 
@@ -1014,7 +1018,7 @@ diag_t setup_xfrm_interface(struct connection *c, const char *ipsec_interface)
 }
 
 /* Return true on success, false on failure */
-bool add_xfrm_interface(struct connection *c, struct logger *logger)
+bool add_xfrm_interface(const struct connection *c, struct logger *logger)
 {
 	struct verbose verbose = {
 		.logger = logger,
@@ -1062,6 +1066,13 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 	}
 
 	return (ip_link_set_up(c->xfrmi->name, logger) == XFRMI_SUCCESS);
+}
+
+void remove_xfrm_interface(const struct connection *c, struct logger *logger)
+{
+	PASSERT(logger, c->xfrmi != NULL);
+
+	unreference_xfrmi_ip(c, logger);
 }
 
 /* at start call this to see if there are any stale interface lying around. */
@@ -1125,8 +1136,6 @@ void unreference_xfrmi(struct connection *c)
 	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
 	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
 	     refcnt_peek(c->xfrmi, c->logger));
-
-	unreference_xfrmi_ip(c, logger);
 
 	struct pluto_xfrmi *xfrmi = delref_where(&c->xfrmi, logger, HERE);
 	if (xfrmi != NULL) {
