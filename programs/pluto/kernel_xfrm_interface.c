@@ -316,12 +316,12 @@ static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 }
 
 /* Add an IP address to an XFRMi interface using Netlink */
-static int ip_addr_xfrmi_add(const char *if_name,
-			     const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
-			     struct logger *logger)
+static bool ip_addr_xfrmi_add(const char *if_name,
+			      const struct pluto_xfrmi_ipaddr *xfrmi_ipaddr,
+			      struct logger *logger)
 {
 	return ifaddrmsg_op(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL,
-			    if_name, xfrmi_ipaddr, logger);
+			    if_name, xfrmi_ipaddr, logger) == XFRMI_SUCCESS;
 }
 
 /* Delete an IP address from an XFRMi interface using Netlink */
@@ -942,7 +942,7 @@ static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrm
 	bool ip_on_if = ip_addr_xfrmi_find_on_if(c->xfrmi, &(refd_xfrmi_ipaddr->if_ip), logger);
 	if (ip_on_if == false) {
 		refd_xfrmi_ipaddr->pluto_added = true;
-		if (ip_addr_xfrmi_add(c->xfrmi->name, refd_xfrmi_ipaddr, logger) != XFRMI_SUCCESS) {
+		if (!ip_addr_xfrmi_add(c->xfrmi->name, refd_xfrmi_ipaddr, logger)) {
 			llog_error(logger, 0/*no-errno*/,
 					"Unable to add IP address to XFRMi interface %s xfrm_if_id %u.",
 						c->xfrmi->name, c->xfrmi->if_id);
