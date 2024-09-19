@@ -548,7 +548,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			if_rsp->result_if.name = clone_thing_as_string(if_name_buf, "parse_linkinfo_data");
 		}
 
-		alloc_ipsec_interface_address(&if_rsp->result_if, if_ip);
+		alloc_ipsec_interface_address(&if_rsp->result_if.if_ips, if_ip);
 		ldbg(logger, "%s() matching message for if_name %s and ifa_index %d; setting; result = true",
 		     __func__, if_rsp->result_if.name, ifa->ifa_index);
 		if_rsp->result = true;

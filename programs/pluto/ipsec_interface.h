@@ -43,7 +43,8 @@ struct ipsec_interface_address {
 	struct ipsec_interface_address *next;
 };
 
-struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface *ipsec_if, ip_cidr if_ip);
+struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface_address **ptr,
+							      ip_cidr if_ip);
 void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifaddr, struct logger *logger);
 
 struct ipsec_interface {
