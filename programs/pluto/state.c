@@ -1879,16 +1879,14 @@ static void list_state_event(struct show *s, struct state *st,
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
 		SHOW_JAMBUF(s, buf) {
-			jam(buf, "event ");
+			jam_string(buf, "event ");
 			jam_enum_short(buf, &event_type_names, pe->ev_type);
-			jam(buf, "schd: %jd (in %jds)",
-			    monosecs(pe->ev_time),
-			    deltasecs(monotimediff(pe->ev_time, now)));
-			if (st->st_connection != NULL) {
-				connection_buf cib;
-				jam(buf, " "PRI_CONNECTION, pri_connection(st->st_connection, &cib));
-			}
-			jam(buf, "  #%lu", st->st_serialno);
+			jam_string(buf, " schd: ");
+			jam(buf, "%jds", monosecs(pe->ev_time));
+			jam_string(buf, " (in ");
+			jam(buf, "%jds", deltasecs(monotimediff(pe->ev_time, now)));
+			jam_string(buf, ") ");
+			jam_prefix(buf, st->logger);
 		}
 	}
 }
@@ -1900,15 +1898,12 @@ void list_state_events(struct show *s, const monotime_t now)
 	};
 	while (next_state(OLD2NEW, &sf)) {
 		struct state *st = sf.st;
-		list_state_event(s, st, st->st_v1_event, now);
-		list_state_event(s, st, st->st_v1_send_xauth_event, now);
-		list_state_event(s, st, st->st_v1_dpd_event, now);
 		/* order makes no sense */
-		list_state_event(s, st, st->st_v2_replace_event, now);
-		list_state_event(s, st, st->st_v2_expire_event, now);
-		list_state_event(s, st, st->st_v2_liveness_event, now);
-		list_state_event(s, st, st->st_v2_addr_change_event, now);
-		/*list_state_event(s, st, st->st_v2_refresh_event, now);*/
+		FOR_EACH_ELEMENT(event, st->st_events) {
+			if (*event != NULL) {
+				list_state_event(s, st, (*event), now);
+			}
+		}
 	}
 }
 
