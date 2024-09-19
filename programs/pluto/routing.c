@@ -2443,7 +2443,7 @@ static bool dispatch(enum routing_event event,
 		struct old_routing old = ldbg_routing_start(event, c, logger, e);
 		{
 #ifdef USE_XFRM_INTERFACE
-			if(c->xfrmi != NULL && c->xfrmi->if_id != 0) {
+			if(c->ipsec_interface != NULL && c->ipsec_interface->if_id != 0) {
 				PEXPECT(logger, ok);
 				/*
 				 *  add xfrm interface early for route on demand RT_UNROUTED->RT_ROUTE_ONDEMAND
@@ -2452,7 +2452,7 @@ static bool dispatch(enum routing_event event,
 				if ((c->routing.state == RT_UNROUTED && event == CONNECTION_ROUTE) ||
 				     c->routing.state == RT_UNROUTED_INBOUND) {
 					ldbg_routing(logger, "adding ipsec-interface %"PRIu32,
-						     c->xfrmi->if_id);
+						     c->ipsec_interface->if_id);
 					ok = add_ipsec_interface(c, logger);
 				}
 			}
@@ -2462,11 +2462,11 @@ static bool dispatch(enum routing_event event,
 				ok = dispatch_1(event, c, logger, e);
 #ifdef USE_XFRM_INTERFACE
 				if (old.routing != c->routing.state &&
-				    c->xfrmi != NULL && c->xfrmi->if_id != 0) {
+				    c->ipsec_interface != NULL && c->ipsec_interface->if_id != 0) {
 					PEXPECT(logger, ok);
 					if (c->routing.state == RT_UNROUTED) {
 						ldbg_routing(logger, "removing ipsec-interface %"PRIu32,
-							     c->xfrmi->if_id);
+							     c->ipsec_interface->if_id);
 						remove_ipsec_interface(c, logger);
 					}
 				}

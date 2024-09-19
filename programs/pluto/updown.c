@@ -96,10 +96,10 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDstr("PLUTO_CONNECTION", c->name);
 	JDstr("PLUTO_CONNECTION_TYPE", (tunneling ? "tunnel" : "transport"));
-	JDstr("PLUTO_VIRT_INTERFACE", (c->xfrmi != NULL && c->xfrmi->name != NULL) ?
-		c->xfrmi->name : "NULL");
+	JDstr("PLUTO_VIRT_INTERFACE", (c->ipsec_interface != NULL && c->ipsec_interface->name != NULL) ?
+		c->ipsec_interface->name : "NULL");
 	JDstr("PLUTO_INTERFACE", c->iface == NULL ? "NULL" : c->iface->real_device_name);
-	JDstr("PLUTO_XFRMI_ROUTE",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
+	JDstr("PLUTO_XFRMI_ROUTE",  (c->ipsec_interface != NULL && c->ipsec_interface->if_id > 0) ? "yes" : "");
 
 	if (address_is_specified(sr->local->host->nexthop)) {
 		JDipaddr("PLUTO_NEXT_HOP", sr->local->host->nexthop);
@@ -240,18 +240,18 @@ static bool fmt_common_shell_out(char *buf,
 		jam(&jb, "CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
-	if (c->sa_marks.out.val != 0 && c->xfrmi == NULL) {
+	if (c->sa_marks.out.val != 0 && c->ipsec_interface == NULL) {
 		jam(&jb, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
-	if (c->xfrmi != NULL) {
+	if (c->ipsec_interface != NULL) {
 		if (c->sa_marks.out.val != 0) {
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 			    c->sa_marks.out.val, c->sa_marks.out.mask);
 		} else if (address_in_selector_range(sr->remote->host->addr, sr->remote->client)) {
 			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
-			    c->xfrmi->if_id);
+			    c->ipsec_interface->if_id);
 		} else {
 			address_buf bpeer;
 			selector_buf peerclient_str;

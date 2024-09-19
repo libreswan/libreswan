@@ -435,7 +435,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	}
 
 #ifdef USE_XFRM_INTERFACE
-	if (c->xfrmi != NULL) {
+	if (c->ipsec_interface != NULL) {
 		ipsec_interface_delref(c);
 	}
 #endif

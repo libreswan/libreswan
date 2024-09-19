@@ -173,25 +173,25 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 	if (conn_xfrmi_cidr.is_set == false) {
 		ldbg(logger,
 			 "unreference_xfrmi_ip() No IP to unreference on xfrmi device [%s] id [%d]",
-			 c->xfrmi->name, c->xfrmi->if_id);
+			 c->ipsec_interface->name, c->ipsec_interface->if_id);
 		return;
 	}
 
 	/* Get the existing referenced IP */
 	struct ipsec_interface_address *refd_xfrmi_ipaddr =
-			find_xfrmi_ipaddr(c->xfrmi, &conn_xfrmi_cidr, logger);
+			find_xfrmi_ipaddr(c->ipsec_interface, &conn_xfrmi_cidr, logger);
 	if (refd_xfrmi_ipaddr == NULL) {
 		/* This should never happen */
 		llog_error(logger, 0/*no-errno*/,
 				   "unreference_xfrmi_ip() Unable to unreference IP on xfrmi device [%s] id [%d]",
-				   c->xfrmi->name, c->xfrmi->if_id);
+				   c->ipsec_interface->name, c->ipsec_interface->if_id);
 		return;
 	}
 
 	cidr_buf cb;
 	ldbg(logger, "%s() xfrmi_ipaddr=%p name=%s if_id=%u IP [%s] refcount=%u (before).",
 	     __func__,
-	     refd_xfrmi_ipaddr, c->xfrmi->name, c->xfrmi->if_id,
+	     refd_xfrmi_ipaddr, c->ipsec_interface->name, c->ipsec_interface->if_id,
 	     str_cidr(&refd_xfrmi_ipaddr->if_ip, &cb),
 	     refcnt_peek(refd_xfrmi_ipaddr, logger));
 
@@ -205,11 +205,11 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 	}
 
 	/* Remove the entry from the ip_ips list */
-	if (c->xfrmi->if_ips == xfrmi_ipaddr_unref) {
-		c->xfrmi->if_ips = xfrmi_ipaddr_unref->next;
+	if (c->ipsec_interface->if_ips == xfrmi_ipaddr_unref) {
+		c->ipsec_interface->if_ips = xfrmi_ipaddr_unref->next;
 	} else {
 		struct ipsec_interface_address *prev = NULL;
-		struct ipsec_interface_address *p = c->xfrmi->if_ips;
+		struct ipsec_interface_address *p = c->ipsec_interface->if_ips;
 
 		while (p != NULL && p != xfrmi_ipaddr_unref) {
 			cidr_buf cb;
@@ -223,7 +223,7 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 		if (p == NULL) {
 			cidr_buf cb;
 			ldbg(logger, "p=%p xfrmi=%s if_id=%u IP [%s] not found in the list",
-			     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
+			     c->ipsec_interface, c->ipsec_interface->name, c->ipsec_interface->if_id,
 			     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 		} else {
 			prev->next = p->next;
@@ -232,17 +232,17 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 
 	/* Check if the IP should be removed from the interface */
 	if (xfrmi_ipaddr_unref->pluto_added) {
-		kernel_ops->ipsec_interface->ip_addr_del(c->xfrmi->name, xfrmi_ipaddr_unref, logger);
+		kernel_ops->ipsec_interface->ip_addr_del(c->ipsec_interface->name, xfrmi_ipaddr_unref, logger);
 		cidr_buf cb;
 		llog(RC_LOG, logger,
 		     "delete ipsec-interface=%s if_id=%u IP [%s] added by pluto",
-		     c->xfrmi->name, c->xfrmi->if_id,
+		     c->ipsec_interface->name, c->ipsec_interface->if_id,
 		     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 	} else {
 		cidr_buf cb;
 		llog(RC_LOG, logger,
 		     "cannot delete ipsec-interface=%s if_id=%u IP [%s], not created by pluto",
-		     c->xfrmi->name, c->xfrmi->if_id,
+		     c->ipsec_interface->name, c->ipsec_interface->if_id,
 		     str_cidr(&xfrmi_ipaddr_unref->if_ip, &cb));
 	}
 
@@ -268,7 +268,7 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 	if (child_config->ifaceip.is_set) {
 		ldbg(logger,
 			 "get_xfrmi_ipaddr_from_conn() taking IP from ifaceip param for xfrmi IF [%s] id [%d]",
-			 c->xfrmi->name, c->xfrmi->if_id);
+			 c->ipsec_interface->name, c->ipsec_interface->if_id);
 
 		return child_config->ifaceip;
 	}
@@ -278,7 +278,7 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 		if (sip->is_set) {
 			ldbg(logger,
 				 "get_xfrmi_ipaddr_from_conn() taking IP from sourceip param for xfrmi IF [%s] id [%d]",
-				 c->xfrmi->name, c->xfrmi->if_id);
+				 c->ipsec_interface->name, c->ipsec_interface->if_id);
 			return cidr_from_address(*sip);
 		}
 	}
@@ -291,14 +291,14 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 		if (spd_sourceip.is_set) {
 			ldbg(logger,
 				"get_xfrmi_ipaddr_from_conn() taking IP from spd_end_sourceip() for xfrmi IF [%s] id [%d]",
-				c->xfrmi->name, c->xfrmi->if_id);
+				c->ipsec_interface->name, c->ipsec_interface->if_id);
 			return cidr_from_address(spd_sourceip);
 		}
 	}
 
 	ldbg(logger,
 		 "get_xfrmi_ipaddr_from_conn() No IPs found on connection for xfrmi IF [%s] id [%d].",
-		  c->xfrmi->name, c->xfrmi->if_id);
+		  c->ipsec_interface->name, c->ipsec_interface->if_id);
 
 	return unset_cidr;
 }
@@ -309,29 +309,29 @@ static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrm
 {
 	/* Get the existing referenced IP, or create it if it doesn't exist */
 	struct ipsec_interface_address *refd_xfrmi_ipaddr =
-			find_xfrmi_ipaddr(c->xfrmi, conn_xfrmi_cidr, logger);
+			find_xfrmi_ipaddr(c->ipsec_interface, conn_xfrmi_cidr, logger);
 	if (refd_xfrmi_ipaddr == NULL) {
 		/* This call will refcount the object */
-		refd_xfrmi_ipaddr = alloc_ipsec_interface_address(c->xfrmi, *conn_xfrmi_cidr);
+		refd_xfrmi_ipaddr = alloc_ipsec_interface_address(c->ipsec_interface, *conn_xfrmi_cidr);
 		cidr_buf cb;
 		ldbg(logger,
 		     "%s() created new pluto_xfrmi_ipaddr dev [%s] id [%d] IP [%s]",
-		     __func__, c->xfrmi->name, c->xfrmi->if_id,
+		     __func__, c->ipsec_interface->name, c->ipsec_interface->if_id,
 		     str_cidr(&refd_xfrmi_ipaddr->if_ip, &cb));
 	} else {
 		/* The IP already exists, reference count it */
-		reference_xfrmi_ip(c->xfrmi, refd_xfrmi_ipaddr);
+		reference_xfrmi_ip(c->ipsec_interface, refd_xfrmi_ipaddr);
 	}
 
 	/* Check if the IP is already defined on the interface */
-	bool ip_on_if = kernel_ops->ipsec_interface->ip_addr_find_on_if(c->xfrmi, &(refd_xfrmi_ipaddr->if_ip),
+	bool ip_on_if = kernel_ops->ipsec_interface->ip_addr_find_on_if(c->ipsec_interface, &(refd_xfrmi_ipaddr->if_ip),
 									logger);
 	if (ip_on_if == false) {
 		refd_xfrmi_ipaddr->pluto_added = true;
-		if (!kernel_ops->ipsec_interface->ip_addr_add(c->xfrmi->name, refd_xfrmi_ipaddr, logger)) {
+		if (!kernel_ops->ipsec_interface->ip_addr_add(c->ipsec_interface->name, refd_xfrmi_ipaddr, logger)) {
 			llog_error(logger, 0/*no-errno*/,
 					"Unable to add IP address to XFRMi interface %s xfrm_if_id %u.",
-						c->xfrmi->name, c->xfrmi->if_id);
+						c->ipsec_interface->name, c->ipsec_interface->if_id);
 			return false;
 		}
 	}
@@ -347,28 +347,28 @@ bool add_ipsec_interface(const struct connection *c, struct logger *logger)
 		.logger = logger,
 		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
 	};
-	passert(c->xfrmi->name != NULL);
+	passert(c->ipsec_interface->name != NULL);
 	passert(c->iface->real_device_name != NULL);
 
-	if (if_nametoindex(c->xfrmi->name) == 0) {
-		if (!kernel_ops->ipsec_interface->ip_link_add(c->xfrmi->name,
+	if (if_nametoindex(c->ipsec_interface->name) == 0) {
+		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
 							      c->iface->real_device_name,
-							      c->xfrmi->if_id,
+							      c->ipsec_interface->if_id,
 							      logger)) {
 			return false;
 		}
 
-		c->xfrmi->pluto_added = true;
+		c->ipsec_interface->pluto_added = true;
 	} else {
 		/*
 		 * Device exists: try to match name, type xfrmi, and
 		 * xfrm_if_id.
 		 */
-		if (!kernel_ops->ipsec_interface->find_interface(c->xfrmi->name, c->xfrmi->if_id, verbose)) {
+		if (!kernel_ops->ipsec_interface->find_interface(c->ipsec_interface->name, c->ipsec_interface->if_id, verbose)) {
 			/* found wrong device abort adding */
 			llog_error(logger, 0/*no-errno*/,
 				   "device %s exists but do not match expected type, XFRM if_id %u, or XFRM device is invalid; check 'ip -d link show dev %s'",
-				   c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
+				   c->ipsec_interface->name, c->ipsec_interface->if_id, c->ipsec_interface->name);
 			return false;
 		}
 	}
@@ -381,19 +381,19 @@ bool add_ipsec_interface(const struct connection *c, struct logger *logger)
 	if (conn_xfrmi_cidr.is_set == false) {
 		ldbg(logger,
 				"No IP to set on xfrmi device [%s] id [%d]",
-				c->xfrmi->name, c->xfrmi->if_id);
+				c->ipsec_interface->name, c->ipsec_interface->if_id);
 	} else {
 		if (!add_xfrm_interface_ip(c, &conn_xfrmi_cidr, logger)) {
 			return false;
 		}
 	}
 
-	return kernel_ops->ipsec_interface->ip_link_set_up(c->xfrmi->name, logger);
+	return kernel_ops->ipsec_interface->ip_link_set_up(c->ipsec_interface->name, logger);
 }
 
 void remove_ipsec_interface(const struct connection *c, struct logger *logger)
 {
-	PASSERT(logger, c->xfrmi != NULL);
+	PASSERT(logger, c->ipsec_interface != NULL);
 
 	unreference_xfrmi_ip(c, logger);
 }
@@ -421,32 +421,32 @@ void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct
 	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, HERE);
 	p->if_id = if_id;
 	p->name = clone_str(name, "xfrmi name");
-	c->xfrmi = p;
+	c->ipsec_interface = p;
 	p->next = *head;
 	*head = p;
-	c->xfrmi = p;
-	c->xfrmi->shared = shared;
+	c->ipsec_interface = p;
+	c->ipsec_interface->shared = shared;
 }
 
 void ipsec_interface_addref(struct connection *c)
 {
 	struct logger *logger = c->logger;
-	addref_where(c->xfrmi, HERE);
-	ldbg(logger, "reference xfrmi=%p name=%s if_id=%u refcount=%u (after)", c->xfrmi,
-	     c->xfrmi->name, c->xfrmi->if_id,
-	     refcnt_peek(c->xfrmi, c->logger));
+	addref_where(c->ipsec_interface, HERE);
+	ldbg(logger, "reference xfrmi=%p name=%s if_id=%u refcount=%u (after)", c->ipsec_interface,
+	     c->ipsec_interface->name, c->ipsec_interface->if_id,
+	     refcnt_peek(c->ipsec_interface, c->logger));
 }
 
 void ipsec_interface_delref(struct connection *c)
 {
 	struct logger *logger = c->logger;
-	PASSERT(logger, c->xfrmi != NULL);
+	PASSERT(logger, c->ipsec_interface != NULL);
 
 	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
-	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
-	     refcnt_peek(c->xfrmi, c->logger));
+	     c->ipsec_interface, c->ipsec_interface->name, c->ipsec_interface->if_id,
+	     refcnt_peek(c->ipsec_interface, c->logger));
 
-	struct ipsec_interface *xfrmi = delref_where(&c->xfrmi, logger, HERE);
+	struct ipsec_interface *xfrmi = delref_where(&c->ipsec_interface, logger, HERE);
 	if (xfrmi != NULL) {
 		struct ipsec_interface **pp;
 		struct ipsec_interface *p;

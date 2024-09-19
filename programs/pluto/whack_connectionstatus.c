@@ -717,8 +717,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		/* .interface? id_rname@id_vname? */
 		jam_string(buf, " interface: ");
 		if (oriented(c)) {
-			if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
-				jam_string(buf, c->xfrmi->name);
+			if (c->ipsec_interface != NULL && c->ipsec_interface->name != NULL) {
+				jam_string(buf, c->ipsec_interface->name);
 				jam_string(buf, "@");
 			}
 			jam_string(buf, c->iface->real_device_name);

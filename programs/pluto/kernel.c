@@ -1299,8 +1299,8 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
 
-		if (c->xfrmi != NULL) {
-			said_next->xfrm_if_id = c->xfrmi->if_id;
+		if (c->ipsec_interface != NULL) {
+			said_next->xfrm_if_id = c->ipsec_interface->if_id;
 			said_next->mark_set = c->sa_marks.out;
 		}
 
@@ -1414,8 +1414,8 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
-		if (c->xfrmi != NULL) {
-			said_next->xfrm_if_id = c->xfrmi->if_id;
+		if (c->ipsec_interface != NULL) {
+			said_next->xfrm_if_id = c->ipsec_interface->if_id;
 			said_next->mark_set = c->sa_marks.out;
 		}
 

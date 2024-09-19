@@ -850,8 +850,8 @@ static err_t xfrm_iface_supported(struct logger *logger)
 
 static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
-	c->xfrmi = find_ipsec_interface_by_id(if_id);
-	if (c->xfrmi == NULL) {
+	c->ipsec_interface = find_ipsec_interface_by_id(if_id);
+	if (c->ipsec_interface == NULL) {
 		/*
 		if (!shared) {
 			log_state(RC_LOG, st, "%s, index %u, xfrm interface exist will not shared",
@@ -874,10 +874,10 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		 * add_ipsec_interface().
 		 */
 		if (if_nametoindex(name) != 0) {
-			ip_addr_xfrmi_store_ips(c->xfrmi, c->logger);
+			ip_addr_xfrmi_store_ips(c->ipsec_interface, c->logger);
 		}
 	} else {
-		passert(c->xfrmi->shared == shared);
+		passert(c->ipsec_interface->shared == shared);
 		ipsec_interface_addref(c);
 	}
 
@@ -928,7 +928,7 @@ void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 	bool set_mark = false;
 	const struct spds *spds = &c->child.spds;
 
-	if (c->xfrmi == NULL || c->xfrmi->if_id == 0)
+	if (c->ipsec_interface == NULL || c->ipsec_interface->if_id == 0)
 		return;
 
 	FOR_EACH_ITEM(spd, spds) {
@@ -943,7 +943,7 @@ void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 	if (c->sa_marks.out.val != 0)
 		mark_out = c->sa_marks.out.val;
 	else
-		mark_out = c->xfrmi->if_id;
+		mark_out = c->ipsec_interface->if_id;
 
 	if (ike_remote->mark_out != 0)
 		passert(ike_remote->mark_out == mark_out);

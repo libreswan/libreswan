@@ -733,9 +733,11 @@ struct connection {
 					 * MASK value for IPsec SA
 					 * (per-connection) */
 
-	struct ipsec_interface *xfrmi;	/* pointer to possibly shared
-					 * interface
-					 * (per-connection) */
+	struct ipsec_interface *ipsec_interface;	/* pointer to
+							 * possibly
+							 * shared
+							 * interface
+							 * (per-connection) */
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */
