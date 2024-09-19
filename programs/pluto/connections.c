@@ -3185,14 +3185,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     wm->ipsec_interface);
 		}
 	} else if (wm->ipsec_interface != NULL) {
-#ifdef USE_XFRM_INTERFACE
-		diag_t d = setup_ipsec_interface(c, wm->ipsec_interface);
+		diag_t d = add_connection_ipsec_interface(c, wm->ipsec_interface);
 		if (d != NULL) {
 			return d;
 		}
-#else
-		return diag("ipsec-interface= is not supported");
-#endif
 	}
 
 #ifdef HAVE_NM

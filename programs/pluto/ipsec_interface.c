@@ -471,7 +471,7 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 	}
 }
 
-diag_t setup_ipsec_interface(struct connection *c, const char *ipsec_interface)
+diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_interface)
 {
 	ldbg(c->logger, "parsing ipsec-interface=%s", ipsec_interface);
 
@@ -479,11 +479,18 @@ diag_t setup_ipsec_interface(struct connection *c, const char *ipsec_interface)
 	 * Danger; yn_option_names includes "0" and "1" but that isn't
 	 * wanted here!  Hence yn_text_option_names.
 	 */
-	const struct sparse_name *yn = sparse_lookup(&yn_text_option_names, shunk1(ipsec_interface));
+	const struct sparse_name *yn = sparse_lookup(&yn_text_option_names,
+						     shunk1(ipsec_interface));
 	if (yn != NULL && yn->value == YN_NO) {
 		/* well that was pointless */
 		ldbg(c->logger, "ipsec-interface=%s is no!", ipsec_interface);
 		return NULL;
+	}
+
+	/* note, after YN check; so ipsec-interface=no is ignored */
+	if (kernel_ops->ipsec_interface == NULL) {
+		return diag("ipsec-interface is not implemented by %s",
+			    kernel_ops->interface_name);
 	}
 
 	uint32_t xfrm_if_id;
@@ -513,9 +520,9 @@ diag_t setup_ipsec_interface(struct connection *c, const char *ipsec_interface)
 	}
 
 	/* check if interface is already used by pluto */
-	if(!find_ipsec_interface_by_id(xfrm_if_id))
-	{
-		/* something other than ipsec-interface=no, check support */
+	if (!find_ipsec_interface_by_id(xfrm_if_id)) {
+		/* something other than ipsec-interface=no, check
+		 * support */
 		if (kernel_ops->ipsec_interface->supported == NULL) {
 			return diag("ipsec-interface=%s is not implemented by %s",
 				    ipsec_interface, kernel_ops->interface_name);
