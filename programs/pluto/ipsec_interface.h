@@ -62,8 +62,12 @@ struct ipsec_interface {
 diag_t setup_ipsec_interface(struct connection *c, const char *ipsec_interface);
 bool add_ipsec_interface(const struct connection *c, struct logger *logger);
 void remove_ipsec_interface(const struct connection *c, struct logger *logger);
-void ipsec_interface_delref(struct connection *c);
-void ipsec_interface_addref(struct connection *c);
+
+struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
+					       struct logger *logger, where_t where);
+void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
+			    struct logger *logger,
+			    where_t where);
 struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id);
 void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct connection *c);
 

@@ -878,7 +878,7 @@ static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 		}
 	} else {
 		passert(c->ipsec_interface->shared == shared);
-		ipsec_interface_addref(c);
+		ipsec_interface_addref(c->ipsec_interface, c->logger, HERE);
 	}
 
 	return true;

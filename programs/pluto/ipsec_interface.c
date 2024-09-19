@@ -428,52 +428,46 @@ void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct
 	c->ipsec_interface->shared = shared;
 }
 
-void ipsec_interface_addref(struct connection *c)
+struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
+					       struct logger *logger UNUSED, where_t where)
 {
-	struct logger *logger = c->logger;
-	addref_where(c->ipsec_interface, HERE);
-	ldbg(logger, "reference xfrmi=%p name=%s if_id=%u refcount=%u (after)", c->ipsec_interface,
-	     c->ipsec_interface->name, c->ipsec_interface->if_id,
-	     refcnt_peek(c->ipsec_interface, c->logger));
+	return addref_where(ipsec_if, where);
 }
 
-void ipsec_interface_delref(struct connection *c)
+void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
+			    struct logger *logger, where_t where)
 {
-	struct logger *logger = c->logger;
-	PASSERT(logger, c->ipsec_interface != NULL);
-
-	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
-	     c->ipsec_interface, c->ipsec_interface->name, c->ipsec_interface->if_id,
-	     refcnt_peek(c->ipsec_interface, c->logger));
-
-	struct ipsec_interface *xfrmi = delref_where(&c->ipsec_interface, logger, HERE);
-	if (xfrmi != NULL) {
-		struct ipsec_interface **pp;
-		struct ipsec_interface *p;
-		for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
-			if (p == xfrmi) {
-				*pp = p->next;
-				if (xfrmi->pluto_added) {
-					kernel_ops->ipsec_interface->ip_link_del(xfrmi->name, logger);
+	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
+	if (ipsec_interface != NULL) {
+		/* last reference (ignoring list entry) */
+		for (struct ipsec_interface **pp = &pluto_xfrm_interfaces;
+		     (*pp) != NULL; pp = &(*pp)->next) {
+			if ((*pp) == ipsec_interface) {
+				/* unlink */
+				(*pp) = (*pp)->next;
+				/* delete*/
+				if (ipsec_interface->pluto_added) {
+					kernel_ops->ipsec_interface->ip_link_del(ipsec_interface->name, logger);
 					llog(RC_LOG, logger,
 					     "delete ipsec-interface=%s if_id=%u added by pluto",
-					     xfrmi->name, xfrmi->if_id);
+					     ipsec_interface->name, ipsec_interface->if_id);
 				} else {
 					ldbg(logger,
 					     "skipping delete ipsec-interface=%s if_id=%u, never added pluto",
-					     xfrmi->name, xfrmi->if_id);
+					     ipsec_interface->name, ipsec_interface->if_id);
 				}
 				/* Free the IPs that were already on the interface (not added by pluto)
 				 * and added as such in: init_pluto_xfrmi()->ip_addr_xfrmi_store_ips() */
-				free_ipsec_interface_address_list(xfrmi->if_ips, logger);
-				pfreeany(xfrmi->name);
-				pfreeany(xfrmi);
+				free_ipsec_interface_address_list(ipsec_interface->if_ips, logger);
+				pfreeany(ipsec_interface->name);
+				pfreeany(ipsec_interface);
 				return;
 			}
-			ldbg(logger, "p=%p xfrmi=%p", p, xfrmi);
+			ldbg(logger, "(*pp)=%p ipsec_interface=%p", (*pp), ipsec_interface);
 		}
-		ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
-		     xfrmi->name, xfrmi->if_id);
+		llog_pexpect(logger, where,
+			     "%p ipsec-interface=%s if_id=%u not found in the list",
+			     ipsec_interface, ipsec_interface->name, ipsec_interface->if_id);
 	}
 }
 

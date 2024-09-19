@@ -107,12 +107,8 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 	}
 
 	c->sa_marks = t->sa_marks; /* no pointers? */
-#ifdef USE_XFRM_INTERFACE
-	if (t->ipsec_interface != NULL) {
-		c->ipsec_interface = t->ipsec_interface;
-		ipsec_interface_addref(c);
-	}
-#endif
+	c->ipsec_interface = ipsec_interface_addref(t->ipsec_interface,
+						    c->logger, HERE);
 
 	/* inherit UP, ROUTE, and KEEP */
 	c->policy = t->policy;

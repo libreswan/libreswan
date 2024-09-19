@@ -434,11 +434,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		}
 	}
 
-#ifdef USE_XFRM_INTERFACE
-	if (c->ipsec_interface != NULL) {
-		ipsec_interface_delref(c);
-	}
-#endif
+	ipsec_interface_delref(&c->ipsec_interface, c->logger, HERE);
 
 	/* find and delete c from the host pair list */
 #if 0
