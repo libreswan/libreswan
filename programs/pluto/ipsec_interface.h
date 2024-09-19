@@ -66,8 +66,9 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 			    struct logger *logger,
 			    where_t where);
 
-bool add_ipsec_interface(const struct connection *c, struct logger *logger);
-void remove_ipsec_interface(const struct connection *c, struct logger *logger);
+/* add/remove the system's interface device and address */
+bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logger);
+void remove_kernel_ipsec_interface(const struct connection *c, struct logger *logger);
 
 struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id);
 void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct connection *c);

@@ -305,6 +305,7 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 
 
 /* Only called by add_ipsec_interface() */
+
 static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrmi_cidr, struct logger *logger)
 {
 	/* Get the existing referenced IP, or create it if it doesn't exist */
@@ -341,12 +342,23 @@ static bool add_xfrm_interface_ip(const struct connection *c, ip_cidr *conn_xfrm
 
 /* Return true on success, false on failure */
 
-bool add_ipsec_interface(const struct connection *c, struct logger *logger)
+bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logger)
 {
 	struct verbose verbose = {
 		.logger = logger,
 		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
 	};
+
+	if (c->ipsec_interface == NULL) {
+		vlog("%s() skipped; connection ipsec-interface=no", __func__);
+		return true;
+	}
+
+	if (c->ipsec_interface->if_id == 0) {
+		vlog("%s() skipped; connection ipsec-interface=0", __func__);
+		return true;
+	}
+
 	passert(c->ipsec_interface->name != NULL);
 	passert(c->iface->real_device_name != NULL);
 
@@ -380,8 +392,8 @@ bool add_ipsec_interface(const struct connection *c, struct logger *logger)
 	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
 	if (conn_xfrmi_cidr.is_set == false) {
 		ldbg(logger,
-				"No IP to set on xfrmi device [%s] id [%d]",
-				c->ipsec_interface->name, c->ipsec_interface->if_id);
+		     "No IP to set on xfrmi device [%s] id [%d]",
+		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 	} else {
 		if (!add_xfrm_interface_ip(c, &conn_xfrmi_cidr, logger)) {
 			return false;
@@ -391,9 +403,24 @@ bool add_ipsec_interface(const struct connection *c, struct logger *logger)
 	return kernel_ops->ipsec_interface->ip_link_set_up(c->ipsec_interface->name, logger);
 }
 
-void remove_ipsec_interface(const struct connection *c, struct logger *logger)
+void remove_kernel_ipsec_interface(const struct connection *c, struct logger *logger)
 {
-	PASSERT(logger, c->ipsec_interface != NULL);
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
+	};
+
+	if (c->ipsec_interface == NULL) {
+		vlog("%s() skipped; connection ipsec-interface=no",
+		     __func__);
+		return;
+	}
+
+	if (c->ipsec_interface->if_id == 0) {
+		vlog("%s() skipped; connection ipsec-interface=0 (previously installed)",
+		     __func__);
+		return;
+	}
 
 	unreference_xfrmi_ip(c, logger);
 }
