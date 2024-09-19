@@ -393,20 +393,6 @@ static bool validate_end(struct starter_conn *conn_st,
 				  ugh);
 	}
 
-	if (end->set[KSCF_INTERFACE_IP]) {
-		const char *value = end->strings[KSCF_INTERFACE_IP];
-		err_t oops = ttocidr_num(shunk1(value), NULL, &end->ifaceip);
-		if (oops != NULL) {
-			ERR_FOUND("bad addr %s%s=%s [%s]",
-				  leftright, "interface-ip", value, oops);
-		}
-		oops = cidr_check(end->ifaceip);
-		if (oops != NULL) {
-			ERR_FOUND("bad addr %s%s=%s [%s]",
-				  leftright, "interface-ip", value, oops);
-		}
-	}
-
 	return err;
 #  undef ERR_FOUND
 }

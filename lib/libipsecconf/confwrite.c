@@ -302,12 +302,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			str_cidr(&end->vti_ip, &as));
 	}
 
-	if (cidr_is_specified(end->ifaceip)) {
-		cidr_buf as;
-		fprintf(out, "\t%sinterface-ip=%s\n", side,
-			str_cidr(&end->ifaceip, &as));
-	}
-
 	if (end->protoport.is_set) {
 		protoport_buf buf;
 		fprintf(out, "\t%sprotoport=%s\n", side,

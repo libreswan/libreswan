@@ -144,6 +144,15 @@ struct child_end_config {
 
 	ip_selectors selectors;
 	ip_addresses sourceip;
+	/*
+	 * When set, put this on the ipsec-interface.  Should there be
+	 * one for IPv4 and one for IPv6 like sourceip?
+	 *
+	 * Given interface-ip= and sourceip= are incompatible and the
+	 * ipsec-interface code checks for a sourceip=, is this
+	 * completely redundant?
+	 */
+	ip_cidr ipsec_interface_ip;
 
 	/*
 	 * Weird host related client stuff.
@@ -151,7 +160,6 @@ struct child_end_config {
 	 * It's only used when there's a Child SA.
 	 */
 	ip_cidr host_vtiip;
-	ip_cidr ifaceip;
 	struct virtual_ip *virt;
 };
 

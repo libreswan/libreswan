@@ -65,7 +65,6 @@ struct starter_end {
 	ip_address addr;
 	ip_address nexthop;
 	ip_cidr vti_ip;
-	ip_cidr ifaceip;
 	ip_protoport protoport;
 
 	ksf strings;

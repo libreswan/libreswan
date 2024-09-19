@@ -80,7 +80,7 @@ struct whack_end {
 	ip_address host_nexthop;
 	char *sourceip;
 	ip_cidr host_vtiip;
-	ip_cidr ifaceip;
+	char *interface_ip;		/* for ipsec-interface */
 
 	char *subnet; /* child */
 	char *subnets;	/* alias subnet expansion */

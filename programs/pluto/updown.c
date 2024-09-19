@@ -116,8 +116,8 @@ static bool fmt_common_shell_out(char *buf,
 		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->config->child.host_vtiip));
 	}
 
-	if (cidr_is_specified(c->local->config->child.ifaceip)) {
-		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->config->child.ifaceip));
+	if (cidr_is_specified(c->local->config->child.ipsec_interface_ip)) {
+		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->config->child.ipsec_interface_ip));
 	}
 
 	JDuint("PLUTO_MY_PORT", sr->local->client.hport);

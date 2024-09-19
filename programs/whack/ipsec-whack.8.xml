@@ -96,7 +96,7 @@
       </arg>
 
       <arg choice="opt">--sourceip <replaceable>ip-address</replaceable></arg>
-      <arg choice="opt">--srcip <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--interface-ip <replaceable>ip-address/mask</replaceable></arg>
 
       <arg choice="opt">--xauthserver</arg>
 
@@ -160,7 +160,7 @@
       <replaceable>protocol</replaceable>/<replaceable>port</replaceable></arg>
 
       <arg choice="opt">--sourceip <replaceable>ip-address</replaceable></arg>
-      <arg choice="opt">--srcip <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--interface-ip <replaceable>ip-address/mask</replaceable></arg>
 
       <arg choice="opt">--xauthserver</arg>
 
@@ -1033,19 +1033,17 @@
         <term>
 	  <option>--sourceip <replaceable>ip-address</replaceable></option>
 	</term>
-        <term>
-	  <option>--srcip <replaceable>ip-address</replaceable></option>
-	</term>
         <listitem>
           <para>
 	    The IP address for this host to use when transmitting a
-	    packet to the remote IPsec gateway itself.  This option
-	    is used to make the gateway itself use its internal IP,
-	    which is part of the <option>--client
-	    <replaceable>subnet</replaceable></option>.  Otherwise
-	    it will use its nearest IP address, which is its public
-	    IP address, which is not part of the subnet-subnet IPsec
-	    tunnel, and would therefore not get encrypted.  </para>
+	    packet to the remote IPsec gateway itself.  This option is
+	    used to make the gateway itself use its internal IP, which
+	    is part of the <option>--client
+	    <replaceable>subnet</replaceable></option>.  Otherwise it
+	    will use its nearest IP address, which is its public IP
+	    address, which is not part of the subnet-subnet IPsec
+	    tunnel, and would therefore not get encrypted.
+	  </para>
         </listitem>
       </varlistentry>
 

@@ -76,7 +76,8 @@ static void help(void)
 		"	[--ipv4 | --ipv6] [--tunnelipv4 | --tunnelipv6] \\\n"
 		"	(--host <ip-address> | --id <identity>) \\\n"
 		"	[--ca <distinguished name>] \\\n"
-		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
+		"	[--ikeport <port-number>] \\\n"
+		"	[--sourceip <ip-address>] [--interface-ip <address>/<mask>]\\\n"
 		"	[--vtiip <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | rsa | ecdsa | null | eaponly>] \\\n"
@@ -455,7 +456,7 @@ enum option_enums {
 	END_ADDRESSPOOL,
 	END_SENDCERT,
 	END_SOURCEIP,
-        END_INTERFACEIP,
+        END_INTERFACE_IP,
 	END_VTIIP,
 	END_AUTHBY,
 	END_AUTHEAP,
@@ -766,7 +767,8 @@ static const struct option long_opts[] = {
 	{ "sourceip",  required_argument, NULL, END_SOURCEIP },
 	{ "srcip",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
 	{ "vtiip",  required_argument, NULL, END_VTIIP },
-	{ "interfaceip", required_argument, NULL, END_INTERFACEIP },
+	{ "interface-ip", required_argument, NULL, END_INTERFACE_IP },	/* match config */
+	{ "interfaceip", required_argument, NULL, END_INTERFACE_IP },	/* alias / backward compat */
 	{ "authby",  required_argument, NULL, END_AUTHBY },
 	{ "autheap",  required_argument, NULL, END_AUTHEAP },
 	{ "updown", required_argument, NULL, END_UPDOWN },
@@ -1727,17 +1729,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */
-			if (end->ifaceip.is_set == false) {
-				diagw("only one --interfaceip <ip-address/mask> or --sourceip <ip-address> allowed");
-			}
 			end->sourceip = optarg;
 			continue;
 
-		case END_INTERFACEIP:	/* --interface-ip <ip-address/mask> */
-			if (end->sourceip != NULL) {
-				diagw("only one --sourceip <ip-address> or --interfaceip <ip-address/mask> allowed");
-			}
-			opt_to_cidr(&child_family, &end->ifaceip);
+		case END_INTERFACE_IP:	/* --interface-ip <ip-address/mask> */
+			end->interface_ip = optarg;
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */

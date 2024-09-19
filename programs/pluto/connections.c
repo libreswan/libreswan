@@ -1318,7 +1318,26 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	}
 
 	child_config->host_vtiip = src->host_vtiip;
-	child_config->ifaceip = src->ifaceip;
+
+	if (never_negotiate_wm(wm)) {
+		if (src->interface_ip != NULL) {
+			llog(RC_LOG, logger,
+			     "warning: %sinterface-ip=%s ignored when never negotiate",
+			     leftright, src->interface_ip);
+		}
+	} else if (src->interface_ip != NULL) {
+		err_t oops = ttocidr_num(shunk1(src->interface_ip), NULL,
+					 &child_config->ipsec_interface_ip);
+		if (oops != NULL) {
+			return diag("%sinterface-ip=%s invalid, %s",
+				    leftright, src->interface_ip, oops);
+		}
+		oops = cidr_check(child_config->ipsec_interface_ip);
+		if (oops != NULL) {
+			return diag("bad addr %sinterface-ip=%s, %s",
+				    leftright, src->interface_ip, oops);
+		}
+	}
 
 	/* save some defaults */
 	child_config->protoport = src->protoport;
@@ -1439,10 +1458,9 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 */
 
 	if (src->sourceip != NULL) {
-		if (src->ifaceip.is_set) {
-			cidr_buf cb;
+		if (src->interface_ip != NULL) {
 			return diag("cannot specify %sinterface-ip=%s and %sssourceip=%s",
-				    leftright, str_cidr(&src->ifaceip, &cb),
+				    leftright, src->interface_ip,
 				    leftright, src->sourceip);
 		}
 

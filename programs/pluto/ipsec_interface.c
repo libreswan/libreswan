@@ -265,12 +265,12 @@ ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *lo
 		return unset_cidr;
 	}
 
-	if (child_config->ifaceip.is_set) {
+	if (cidr_is_specified(child_config->ipsec_interface_ip)) {
 		ldbg(logger,
-			 "get_xfrmi_ipaddr_from_conn() taking IP from ifaceip param for xfrmi IF [%s] id [%d]",
-			 c->ipsec_interface->name, c->ipsec_interface->if_id);
+		     "%s() taking IP from ifaceip param for xfrmi IF [%s] id [%d]",
+		     __func__, c->ipsec_interface->name, c->ipsec_interface->if_id);
 
-		return child_config->ifaceip;
+		return child_config->ipsec_interface_ip;
 	}
 
 	FOR_EACH_ITEM(sip, &child_config->sourceip) {

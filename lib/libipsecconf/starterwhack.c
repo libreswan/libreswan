@@ -134,8 +134,7 @@ static bool set_whack_end(struct whack_end *w,
 	if (cidr_is_specified(l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
-	if (cidr_is_specified(l->ifaceip))
-		w->ifaceip = l->ifaceip;
+	w->interface_ip = l->strings[KSCF_INTERFACE_IP]; /* could be NULL */
 
 	/* validate the KSCF_SUBNET */
 	if (l->strings[KSCF_SUBNET] != NULL) {
