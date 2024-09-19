@@ -1,5 +1,4 @@
-/*
- * xfrmi interface related functions
+/* ipsec-interface= structures, for libreswan
  *
  * Copyright (C) 2018-2020 Antony Antony <antony@phenome.org>
  * Copyright (C) 2023 Brady Johnson <bradyallenjohnson@gmail.com>
@@ -27,7 +26,7 @@
 #include "verbose.h"
 #include "iface.h"
 
-static ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger);
+static ip_cidr get_connection_ipsec_interface_ip(const struct connection *c, struct logger *logger);
 static struct ipsec_interface_address *find_xfrmi_ipaddr(struct ipsec_interface *xfrmi,
 						    ip_cidr *search_cidr,
 						    struct logger *logger);
@@ -169,7 +168,7 @@ void reference_xfrmi_ip(struct ipsec_interface *xfrmi, struct ipsec_interface_ad
 
 void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
 {
-	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
+	ip_cidr conn_xfrmi_cidr = get_connection_ipsec_interface_ip(c, logger);
 	if (conn_xfrmi_cidr.is_set == false) {
 		ldbg(logger,
 			 "unreference_xfrmi_ip() No IP to unreference on xfrmi device [%s] id [%d]",
@@ -255,9 +254,9 @@ void unreference_xfrmi_ip(const struct connection *c, struct logger *logger)
  *
  * Return an ip_cidr object if found, unset_cidr otherwise.
  */
-ip_cidr get_xfrmi_ipaddr_from_conn(const struct connection *c, struct logger *logger)
+ip_cidr get_connection_ipsec_interface_ip(const struct connection *c, struct logger *logger)
 {
-	const struct child_end_config *child_config = &(c->config->end[LEFT_END].child);
+	const struct child_end_config *child_config = &(c->local->config->child);
 
 	if (child_config == NULL) {
 		llog_error(logger, 0/*no-errno*/,
@@ -389,7 +388,7 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 	 * Get the IP to use on the XFRMi interface from the connection.
 	 * - If it doesn't exist, nothing to add to the interface
 	 */
-	ip_cidr conn_xfrmi_cidr = get_xfrmi_ipaddr_from_conn(c, logger);
+	ip_cidr conn_xfrmi_cidr = get_connection_ipsec_interface_ip(c, logger);
 	if (conn_xfrmi_cidr.is_set == false) {
 		ldbg(logger,
 		     "No IP to set on xfrmi device [%s] id [%d]",
