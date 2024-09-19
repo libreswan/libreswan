@@ -112,9 +112,13 @@ struct ifinfo_response {
 		bool xfrm_if_id /* xfrm if_id */;
 	} matched;
 
-	bool result; /* final result true success */
-
-	struct ipsec_interface result_if;
+	struct {
+		bool ok; /* final result true success */
+		uint32 dev_if_id;
+		uint32 xfrm_if_id;
+		char name[IF_NAMESIZE+1];
+		struct ipsec_interface_address *if_ips;
+	} result;
 };
 
 /* -1 missing; 0 uninitialized; 1 present */
@@ -367,8 +371,8 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_na
 				   "%s has an xfrm device ifindex (RTA_LINK) of 0", if_name);
 			return true; /* stumble on */
 		}
-		ifi_rsp->result_if.dev_if_id = dev_if_id;
-		vdbg("%s() %s setting .result_if.dev_if_id to %d",
+		ifi_rsp->result.dev_if_id = dev_if_id;
+		vdbg("%s() %s setting .result.dev_if_id to %d",
 		     __func__, if_name, dev_if_id);
 	}
 
@@ -388,23 +392,23 @@ static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_na
 
 		vdbg("%s() %s xfrm_if_id %d matched; saving",
 		     __func__, if_name, xfrm_if_id);
-		ifi_rsp->result_if.if_id = xfrm_if_id;
+		ifi_rsp->result.xfrm_if_id = xfrm_if_id;
 		ifi_rsp->matched.xfrm_if_id = true;
 	} else {
-		vdbg("%s() %s wildcard matched xfrm_if_id %d, setting .result_if.if_id",
+		vdbg("%s() %s wildcard matched xfrm_if_id %d, setting .result.if_id",
 		     __func__, if_name, xfrm_if_id);
-		ifi_rsp->result_if.if_id = xfrm_if_id;
+		ifi_rsp->result.xfrm_if_id = xfrm_if_id;
 	}
 
 	/* trust kernel if_name != NULL */
-	ifi_rsp->result_if.name = clone_str(if_name, "xfrmi name from kernel");
+	jam_str(ifi_rsp->result.name, sizeof(ifi_rsp->result.name), if_name);
 
 	/* if it came this far found what we looking for */
 	vdbg("%s() %s setting .result = true; .dev_if_id=%d; .if_id=%d .matched.xfrm_if_id=%s",
 	     __func__, if_name,
-	     ifi_rsp->result_if.dev_if_id,
-	     ifi_rsp->result_if.if_id, bool_str(ifi_rsp->matched.xfrm_if_id));
-	ifi_rsp->result = true;
+	     ifi_rsp->result.dev_if_id,
+	     ifi_rsp->result.xfrm_if_id, bool_str(ifi_rsp->matched.xfrm_if_id));
+	ifi_rsp->result.ok = true;
 	return true;
 }
 
@@ -537,21 +541,17 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			return;
 		}
 
-		if (if_rsp->result_if.name == NULL) {
+		if (if_rsp->result.name[0] == '\0') {
 			/* Does if_indextoname() guarantee NUL
 			 * termination?  Perhaps.  It does assume
 			 * IF_NAMESIZE buffer.  */
-			char if_name_buf[IF_NAMESIZE];
-			if_indextoname(ifa->ifa_index, if_name_buf);
-			/* This works even when IF_NAME_BUF lacks a
-			 * terminating NUL. */
-			if_rsp->result_if.name = clone_thing_as_string(if_name_buf, "parse_linkinfo_data");
+			if_indextoname(ifa->ifa_index, if_rsp->result.name);
 		}
 
-		alloc_ipsec_interface_address(&if_rsp->result_if.if_ips, if_ip);
+		alloc_ipsec_interface_address(&if_rsp->result.if_ips, if_ip);
 		ldbg(logger, "%s() matching message for if_name %s and ifa_index %d; setting; result = true",
-		     __func__, if_rsp->result_if.name, ifa->ifa_index);
-		if_rsp->result = true;
+		     __func__, if_rsp->result.name, ifa->ifa_index);
+		if_rsp->result.ok = true;
 		return;
 	}
 
@@ -615,9 +615,8 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 		return false;
 	}
 
-	if (!ifi_rsp.result) {
+	if (!ifi_rsp.result.ok) {
 		vdbg("%s() failed, no .result", __func__);
-		pfreeany(ifi_rsp.result_if.name);
 		return false;
 	}
 
@@ -628,12 +627,11 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	 * many years but now 2024 doesn't.  Try to figure out why.
 	 */
 	char if_name_buf[IF_NAMESIZE];
-	const char *name = if_indextoname(ifi_rsp.result_if.dev_if_id, if_name_buf);
-	vdbg("%s() support found existing %s@%s (xfrm) .result_if.if_id %s %d .result_if.dev_if_id %d",
-	     __func__, ifi_rsp.result_if.name, name,
-	     bool_str(ifi_rsp.matched.xfrm_if_id), ifi_rsp.result_if.if_id,
-	     ifi_rsp.result_if.dev_if_id);
-	pfreeany(ifi_rsp.result_if.name);
+	const char *name = if_indextoname(ifi_rsp.result.dev_if_id, if_name_buf);
+	vdbg("%s() support found existing %s@%s (xfrm) .result.xfrm_if_id %d %s .result.dev_if_id %d",
+	     __func__, ifi_rsp.result.name, name,
+	     ifi_rsp.result.xfrm_if_id, bool_str(ifi_rsp.matched.xfrm_if_id),
+	     ifi_rsp.result.dev_if_id);
 	return true;
 }
 
@@ -691,26 +689,23 @@ static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi, ip_cidr *sea
 		return false;
 	}
 
-	if (ifi_rsp->result != true) {
+	if (ifi_rsp->result.ok != true) {
 		ldbg(logger, "ip_addr_xfrmi_find_on_if() no IPs found on interface.");
-		pfreeany(ifi_rsp->result_if.name);
 		pfreeany(ifi_rsp);
 		return false;
 	}
 
 	/* Iterate the IPs to find a match */
 	struct ipsec_interface_address *x;
-	for (x = ifi_rsp->result_if.if_ips; x != NULL; x = x->next) {
+	for (x = ifi_rsp->result.if_ips; x != NULL; x = x->next) {
 		if (cidr_eq_cidr(*search_ip, x->if_ip)) {
-			free_ipsec_interface_address_list(ifi_rsp->result_if.if_ips, logger);
-			pfreeany(ifi_rsp->result_if.name);
+			free_ipsec_interface_address_list(ifi_rsp->result.if_ips, logger);
 			pfreeany(ifi_rsp);
 			return true;
 		}
 	}
 
-	free_ipsec_interface_address_list(ifi_rsp->result_if.if_ips, logger);
-	pfreeany(ifi_rsp->result_if.name);
+	free_ipsec_interface_address_list(ifi_rsp->result.if_ips, logger);
 	pfreeany(ifi_rsp);
 	return false;
 }
@@ -729,9 +724,8 @@ static int ip_addr_xfrmi_store_ips(struct ipsec_interface *xfrmi, struct logger 
 		return XFRMI_FAILURE;
 	}
 
-	if (ifi_rsp->result != true) {
+	if (ifi_rsp->result.ok != true) {
 		ldbg(logger, "ip_addr_xfrmi_store_ips() no IPs found on interface.");
-		pfreeany(ifi_rsp->result_if.name);
 		pfreeany(ifi_rsp);
 		/* No IPs on the interface is still a successful operation */
 		return XFRMI_SUCCESS;
@@ -739,8 +733,7 @@ static int ip_addr_xfrmi_store_ips(struct ipsec_interface *xfrmi, struct logger 
 
 	/* Notice: this function will only ever be called upon XFRMi interface setup
 	 * and there will not be any existing interface IPs to merge here. */
-	xfrmi->if_ips = ifi_rsp->result_if.if_ips;
-	pfreeany(ifi_rsp->result_if.name);
+	xfrmi->if_ips = ifi_rsp->result.if_ips;
 	pfreeany(ifi_rsp);
 
 	return XFRMI_SUCCESS;
