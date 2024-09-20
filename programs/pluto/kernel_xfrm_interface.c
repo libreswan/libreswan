@@ -636,107 +636,76 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 }
 
 /* Get all of the IP addresses on an XFRMi interface using Netlink */
-static struct ifinfo_response *ip_addr_xfrmi_get_all_ips(struct ipsec_interface *xfrmi, struct logger *logger)
+static struct ipsec_interface_address *ip_addr_xfrmi_get_all_ips(const char *if_name,
+								 uint32_t xfrm_if_id,
+								 struct logger *logger)
 {
 	/* first do a cheap check */
-	if (xfrmi->name != NULL && if_nametoindex(xfrmi->name) == 0) {
-		/*
-		 * XXX: why ERROR: prefix; why function name; why not
-		 * log error?
-		 */
-		llog_error(logger, errno, "device does not exist [%s]: ",
-			   xfrmi->name);
-		return NULL;
-	}
+	PASSERT(logger, if_name != NULL);
+	PEXPECT(logger, if_nametoindex(if_name) != 0);
 
 	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(RTM_GETADDR, (NLM_F_DUMP | NLM_F_REQUEST),
-							 xfrmi->name, &unspec_ip_info);
+							 if_name, &unspec_ip_info);
 
-	struct ifinfo_response *ifi_rsp = alloc_bytes(sizeof(struct ifinfo_response), "ifinfo_response");
-	zero(ifi_rsp);
-
-	ifi_rsp->filter_data.if_name = xfrmi->name;
-	if (xfrmi->if_id > 0) {/* we deal with only > 0 */
-		ifi_rsp->filter_data.filter_xfrm_if_id = true;
-	}
-	ifi_rsp->filter_data.xfrm_if_id = xfrmi->if_id;
+	struct ifinfo_response ifi_rsp = {
+		.filter_data.if_name = if_name,
+		.filter_data.xfrm_if_id = xfrm_if_id,
+		.filter_data.filter_xfrm_if_id = (xfrm_if_id > 0),
+	};
 
 	struct linux_netlink_context ctx = {
-		.ifi_rsp = ifi_rsp,
+		.ifi_rsp = &ifi_rsp,
 	};
 	struct verbose verbose = {
 		.logger = logger,
 		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
 	};
+
 	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
-		pfree(ifi_rsp);
+		/* netlink error */
+		llog_error(logger, 0/*no-errno*/,
+			   "%s() request for all IPs failed", __func__);
 		return NULL;
 	}
 
-	return ifi_rsp;
+	if (!ifi_rsp.result.ok) {
+		ldbg(logger, "%s() no IPs found on interface; that's ok", __func__);
+		return NULL;
+	}
+
+	return ifi_rsp.result.if_ips;
 }
 
 /* Wrapper function for ip_addr_xfrmi_get_all_ips() to find an IP on an
  * XFRMi interface.
  * Returns true if the IP address is found on the IF, false otherwise. */
-static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi, ip_cidr *search_ip, struct logger *logger)
-{
-	struct ifinfo_response *ifi_rsp = ip_addr_xfrmi_get_all_ips(xfrmi, logger);
 
-	if (ifi_rsp == NULL) {
-		llog_error(logger, 0/*no-errno*/,
-			   "ip_addr_xfrmi_find_on_if() ifinfo_response NULL");
+static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi,
+				     ip_cidr *search_ip,
+				     struct logger *logger)
+{
+	if (if_nametoindex(xfrmi->name) == 0) {
+		llog_error(logger, errno, "device does not exist [%s]: ", xfrmi->name);
 		return false;
 	}
 
-	if (ifi_rsp->result.ok != true) {
-		ldbg(logger, "ip_addr_xfrmi_find_on_if() no IPs found on interface.");
-		pfreeany(ifi_rsp);
+	struct ipsec_interface_address *if_ips =
+		ip_addr_xfrmi_get_all_ips(xfrmi->name, xfrmi->if_id, logger);
+	if (if_ips == NULL) {
 		return false;
 	}
 
 	/* Iterate the IPs to find a match */
-	struct ipsec_interface_address *x;
-	for (x = ifi_rsp->result.if_ips; x != NULL; x = x->next) {
+	bool found = false;
+	for (struct ipsec_interface_address *x = if_ips; x != NULL; x = x->next) {
 		if (cidr_eq_cidr(*search_ip, x->if_ip)) {
-			free_ipsec_interface_address_list(ifi_rsp->result.if_ips, logger);
-			pfreeany(ifi_rsp);
-			return true;
+			found = true;
+			break;
 		}
 	}
 
-	free_ipsec_interface_address_list(ifi_rsp->result.if_ips, logger);
-	pfreeany(ifi_rsp);
-	return false;
-}
-
-/* Wrapper function for ip_addr_xfrmi_get_all_ips() to query all of the
- * IPs on an XFRMi interface in Netlink and store them.
- * Returns XFRMI_SUCCESS if the IPs can be retrieved and stored,
- * XFRMI_FAILURE otherwise. */
-static int ip_addr_xfrmi_store_ips(struct ipsec_interface *xfrmi, struct logger *logger)
-{
-	struct ifinfo_response *ifi_rsp = ip_addr_xfrmi_get_all_ips(xfrmi, logger);
-
-	if (ifi_rsp == NULL) {
-		llog_error(logger, 0/*no-errno*/,
-			   "ip_addr_xfrmi_store_ips() ifinfo_response NULL");
-		return XFRMI_FAILURE;
-	}
-
-	if (ifi_rsp->result.ok != true) {
-		ldbg(logger, "ip_addr_xfrmi_store_ips() no IPs found on interface.");
-		pfreeany(ifi_rsp);
-		/* No IPs on the interface is still a successful operation */
-		return XFRMI_SUCCESS;
-	}
-
-	/* Notice: this function will only ever be called upon XFRMi interface setup
-	 * and there will not be any existing interface IPs to merge here. */
-	xfrmi->if_ips = ifi_rsp->result.if_ips;
-	pfreeany(ifi_rsp);
-
-	return XFRMI_SUCCESS;
+	free_ipsec_interface_address_list(if_ips, logger);
+	return found;
 }
 
 static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
@@ -844,35 +813,42 @@ static err_t xfrm_iface_supported(struct logger *logger)
 static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
 {
 	c->ipsec_interface = find_ipsec_interface_by_id(if_id);
-	if (c->ipsec_interface == NULL) {
-		/*
-		if (!shared) {
-			log_state(RC_LOG, st, "%s, index %u, xfrm interface exist will not shared",
-				       xfrmi_name, if_id);
-			return false;
-		}
-		*/
-		ipsec_interface_id_buf ifb;
-		const char *name = str_ipsec_interface_id(if_id, &ifb);
-		alloc_ipsec_interface(if_id, shared, name, c);
-
-		/*
-		 * Query the XFRMi IF IPs from netlink and store them,
-		 * only if the IF exists.
-		 *
-		 * Any IPs added now will have pluto_added=false.
-		 *
-		 * Any new IP created on this interface will be
-		 * reference counted later in the call to
-		 * add_ipsec_interface().
-		 */
-		if (if_nametoindex(name) != 0) {
-			ip_addr_xfrmi_store_ips(c->ipsec_interface, c->logger);
-		}
-	} else {
+	if (c->ipsec_interface != NULL) {
 		passert(c->ipsec_interface->shared == shared);
 		ipsec_interface_addref(c->ipsec_interface, c->logger, HERE);
+		return true;
 	}
+
+	ipsec_interface_id_buf ifb;
+	const char *name = str_ipsec_interface_id(if_id, &ifb);
+	alloc_ipsec_interface(if_id, shared, name, c);
+
+	/*
+	 * Query the XFRMi IF IPs from netlink and store them, only if
+	 * the IF exists.
+	 *
+	 * Any IPs added now will have pluto_added=false.
+	 *
+	 * Any new IP created on this interface will be reference
+	 * counted later in the call to add_ipsec_interface().
+	 */
+	if (if_nametoindex(name) == 0) {
+		return true;
+	}
+
+	struct ipsec_interface_address *if_ips =
+		ip_addr_xfrmi_get_all_ips(name, if_id, c->logger);
+
+	if (if_ips == NULL) {
+		ldbg(c->logger, "%s() no IP addresses", __func__);
+		return true;
+	}
+
+	/*
+	 * The interface was only just created above.  Hence .if_ips
+	 * must be NULL.
+	 */
+	c->ipsec_interface->if_ips = if_ips;
 
 	return true;
 }
