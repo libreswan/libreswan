@@ -810,49 +810,6 @@ static err_t xfrm_iface_supported(struct logger *logger)
 	return err;
 }
 
-static bool init_pluto_xfrmi(struct connection *c, uint32_t if_id, bool shared)
-{
-	c->ipsec_interface = find_ipsec_interface_by_id(if_id);
-	if (c->ipsec_interface != NULL) {
-		passert(c->ipsec_interface->shared == shared);
-		ipsec_interface_addref(c->ipsec_interface, c->logger, HERE);
-		return true;
-	}
-
-	ipsec_interface_id_buf ifb;
-	const char *name = str_ipsec_interface_id(if_id, &ifb);
-	alloc_ipsec_interface(if_id, shared, name, c);
-
-	/*
-	 * Query the XFRMi IF IPs from netlink and store them, only if
-	 * the IF exists.
-	 *
-	 * Any IPs added now will have pluto_added=false.
-	 *
-	 * Any new IP created on this interface will be reference
-	 * counted later in the call to add_ipsec_interface().
-	 */
-	if (if_nametoindex(name) == 0) {
-		return true;
-	}
-
-	struct ipsec_interface_address *if_ips =
-		ip_addr_xfrmi_get_all_ips(name, if_id, c->logger);
-
-	if (if_ips == NULL) {
-		ldbg(c->logger, "%s() no IP addresses", __func__);
-		return true;
-	}
-
-	/*
-	 * The interface was only just created above.  Hence .if_ips
-	 * must be NULL.
-	 */
-	c->ipsec_interface->if_ips = if_ips;
-
-	return true;
-}
-
 /* at start call this to see if there are any stale interface lying around. */
 static void check_stale_xfrmi_interfaces(struct logger *logger)
 {
@@ -931,6 +888,7 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	.ip_addr_add = ip_addr_xfrmi_add,
 	.ip_addr_del = ip_addr_xfrmi_del,
 	.ip_addr_find_on_if = ip_addr_xfrmi_find_on_if,
+	.ip_addr_get_all_ips = ip_addr_xfrmi_get_all_ips,
 
 	.ip_link_set_up = ip_link_set_up,
 	.ip_link_add = ip_link_add,
@@ -938,7 +896,6 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 
 	.find_interface = find_xfrmi_interface,
 
-	.init = init_pluto_xfrmi,
 	.check_stale_ipsec_interfaces = check_stale_xfrmi_interfaces,
 	.supported = xfrm_iface_supported,
 	.shutdown = free_xfrmi_ipsec1,

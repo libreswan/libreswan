@@ -392,7 +392,7 @@ void remove_kernel_ipsec_interface(const struct connection *c, struct logger *lo
 	remove_kernel_ipsec_interface_address(c, conn_cidr, logger);
 }
 
-struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
+static struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
 {
 	struct ipsec_interface *h;
 	struct ipsec_interface *ret = NULL;
@@ -407,7 +407,7 @@ struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
 	return ret;
 }
 
-void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct connection *c)
+static struct ipsec_interface *alloc_ipsec_interface(const char *name, uint32_t if_id)
 {
 	struct ipsec_interface **head = &ipsec_interfaces;
 	/*
@@ -418,11 +418,10 @@ void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct
 	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, HERE);
 	p->if_id = if_id;
 	p->name = clone_str(name, "ipsec_interface name");
-	c->ipsec_interface = p;
+	/* add to known interfaces */
 	p->next = *head;
 	*head = p;
-	c->ipsec_interface = p;
-	c->ipsec_interface->shared = shared;
+	return p;
 }
 
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
@@ -487,10 +486,25 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 		return NULL;
 	}
 
-	/* note, after YN check; so ipsec-interface=no is ignored */
+	/*
+	 * Note: check for kernel support after YN check; this way
+	 * ipsec-interface=no is silently ignored.
+	 */
 	if (kernel_ops->ipsec_interface == NULL) {
 		return diag("ipsec-interface is not implemented by %s",
 			    kernel_ops->interface_name);
+	}
+
+	if (kernel_ops->ipsec_interface->supported == NULL) {
+		return diag("ipsec-interface=%s is not implemented by %s",
+			    ipsec_interface, kernel_ops->interface_name);
+	}
+
+	/* something other than ipsec-interface=no, check support */
+	err_t err = kernel_ops->ipsec_interface->supported(c->logger);
+	if (err != NULL) {
+		return diag("ipsec-interface=%s not supported: %s",
+			    ipsec_interface, err);
 	}
 
 	uint32_t if_id;
@@ -519,28 +533,35 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 		}
 	}
 
-	/* check if interface is already used by pluto */
-	if (!find_ipsec_interface_by_id(if_id)) {
-		/* something other than ipsec-interface=no, check
-		 * support */
-		if (kernel_ops->ipsec_interface->supported == NULL) {
-			return diag("ipsec-interface=%s is not implemented by %s",
-				    ipsec_interface, kernel_ops->interface_name);
-		}
-		err_t err = kernel_ops->ipsec_interface->supported(c->logger);
-		if (err != NULL) {
-			return diag("ipsec-interface=%s not supported: %s",
-				    ipsec_interface, err);
-		}
-	}
-
-	bool shared = true;
 	ldbg(c->logger, "ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, if_id);
 
-	/* always success for now */
-	if (!kernel_ops->ipsec_interface->init(c, if_id, shared)) {
-		return diag("setting up ipsec-interface=%s failed", ipsec_interface);
+	/* check if interface is already used by pluto */
+
+	struct ipsec_interface *ipsec_iface = find_ipsec_interface_by_id(if_id);
+	if (ipsec_iface != NULL) {
+		c->ipsec_interface = ipsec_interface_addref(ipsec_iface, c->logger, HERE);
+		return NULL;
 	}
+
+	/*
+	 * Create a new ipsec-interface structure (but don't yet
+	 * install in the kernel).
+	 */
+
+	ipsec_interface_id_buf ifb;
+	const char *name = str_ipsec_interface_id(if_id, &ifb);
+	c->ipsec_interface = alloc_ipsec_interface(name, if_id);
+
+	/* if the interface doesn't exist all done */
+	if (if_nametoindex(name) == 0) {
+		return NULL;
+	}
+
+	/*
+	 * Probe the interface draging in any existing IP addresses.
+	 */
+	c->ipsec_interface->if_ips =
+		kernel_ops->ipsec_interface->ip_addr_get_all_ips(name, if_id, c->logger);
 
 	return NULL;
 }

@@ -41,6 +41,10 @@ struct kernel_ipsec_interface {
 			    const struct ipsec_interface_address *xfrmi_ipaddr,
 			    struct logger *logger);
 
+	struct ipsec_interface_address *(*ip_addr_get_all_ips)(const char *if_name,
+							       uint32_t if_id,
+							       struct logger *logger);
+
 	bool (*ip_link_add)(const char *if_name /*non-NULL*/,
 			    const char *dev_name /*non-NULL*/,
 			    const uint32_t if_id,
@@ -54,9 +58,6 @@ struct kernel_ipsec_interface {
 			       uint32_t xfrm_if_id, /* 0 is wildcard */
 			       struct verbose verbose);
 
-	bool (*init)(struct connection *c,
-		     uint32_t if_id,
-		     bool shared);
 	void (*check_stale_ipsec_interfaces)(struct logger *logger);
 	err_t (*supported)(struct logger *logger);
 	void (*shutdown)(struct logger *logger);

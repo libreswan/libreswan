@@ -53,7 +53,6 @@ struct ipsec_interface {
 	uint32_t dev_if_id;  /* if_id of device, IFLA_XFRM_LINK */
 	struct ipsec_interface_address *if_ips; /* ref-counted IPs on this IF */
 	refcnt_t refcnt;
-	bool shared;
 	bool pluto_added;
 	struct ipsec_interface *next;
 };
@@ -70,9 +69,6 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 /* add/remove the system's interface device and address */
 bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logger);
 void remove_kernel_ipsec_interface(const struct connection *c, struct logger *logger);
-
-struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id);
-void alloc_ipsec_interface(uint32_t if_id, bool shared, const char *name, struct connection *c);
 
 void shutdown_kernel_ipsec_interface(struct logger *logger);
 void check_stale_ipsec_interfaces(struct logger *logger);
