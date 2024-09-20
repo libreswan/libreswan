@@ -26,11 +26,12 @@
 #include "verbose.h"
 #include "iface.h"
 
-static ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c, struct logger *logger);
+static ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
+						   struct verbose verbose);
 
 static struct ipsec_interface_address **find_ipsec_interface_address_ptr(struct ipsec_interface *ipsecif,
 									 ip_cidr cidr,
-									 struct logger *logger);
+									 struct verbose verbose);
 
 static struct ipsec_interface *ipsec_interfaces;
 
@@ -81,15 +82,15 @@ struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_inter
 
 struct ipsec_interface_address **find_ipsec_interface_address_ptr(struct ipsec_interface *ipsecif,
 								  ip_cidr search_cidr,
-								  struct logger *logger)
+								  struct verbose verbose)
 {
-	PASSERT(logger, ipsecif != NULL);
+	PASSERT(verbose.logger, ipsecif != NULL);
 
 	struct ipsec_interface_address **address = &ipsecif->if_ips;
 	for (; (*address) != NULL; address = &(*address)->next) {
 		if (cidr_eq_cidr((*address)->if_ip, search_cidr)) {
 			cidr_buf cb;
-			ldbg(logger, "%s() found CIDR %s for ipsec-interface %s ID %d",
+			vdbg("%s() found CIDR %s for ipsec-interface %s ID %d",
 			     __func__,
 			     str_cidr(&(*address)->if_ip, &cb),
 			     ipsecif->name, ipsecif->if_id);
@@ -99,12 +100,13 @@ struct ipsec_interface_address **find_ipsec_interface_address_ptr(struct ipsec_i
 	}
 
 	cidr_buf cb;
-	ldbg(logger, "%s() no CIDR matching %s found",
+	vdbg("%s() no CIDR matching %s found",
 	     __func__, str_cidr(&search_cidr, &cb));
 	return address;
 }
 
-void free_ipsec_interface_address_list(struct ipsec_interface_address *xfrmi_ipaddr, struct logger *logger)
+void free_ipsec_interface_address_list(struct ipsec_interface_address *xfrmi_ipaddr,
+				       const struct logger *logger)
 {
 	struct ipsec_interface_address *xi = xfrmi_ipaddr;
 	struct ipsec_interface_address *xi_next = NULL;
@@ -142,14 +144,14 @@ void free_ipsec_interface_address_list(struct ipsec_interface_address *xfrmi_ipa
  *
  * Return an ip_cidr object if found, unset_cidr otherwise.
  */
-ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c, struct logger *logger)
+ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
+					    struct verbose verbose)
 {
 	const struct child_end_config *child_config = &(c->local->config->child);
 
 	if (cidr_is_specified(child_config->ipsec_interface_ip)) {
 		cidr_buf cb;
-		ldbg(logger,
-		     "%s() taking CIDR from interface-ip=%s for ipsec-interface %s ID %d",
+		vdbg("%s() taking CIDR from interface-ip=%s for ipsec-interface %s ID %d",
 		     __func__, str_cidr(&child_config->ipsec_interface_ip, &cb),
 		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 
@@ -160,8 +162,7 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c, struct l
 		/* Use the first sourceip in the list that is set */
 		if (sip->is_set) {
 			address_buf ab;
-			ldbg(logger,
-			     "%s() taking CIDR from sourceip=%s for ipsec-interface %s ID %d",
+			vdbg("%s() taking CIDR from sourceip=%s for ipsec-interface %s ID %d",
 			     __func__, str_address(sip, &ab),
 			     c->ipsec_interface->name, c->ipsec_interface->if_id);
 			return cidr_from_address(*sip);
@@ -175,15 +176,14 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c, struct l
 		ip_address spd_sourceip = spd_end_sourceip(spd->local);
 		if (spd_sourceip.is_set) {
 			address_buf ab;
-			ldbg(logger,
-			     "%s() taking CIDR from spd_end_sourceip(spd->local) %s for ipsec-interface %s ID %d",
+			vdbg("%s() taking CIDR from spd_end_sourceip(spd->local) %s for ipsec-interface %s ID %d",
 			     __func__, str_address(&spd_sourceip, &ab),
 			     c->ipsec_interface->name, c->ipsec_interface->if_id);
 			return cidr_from_address(spd_sourceip);
 		}
 	}
 
-	ldbg(logger, "%s() no CIDR found on connection for ipsec-interface %s id %d",
+	vdbg("%s() no CIDR found on connection for ipsec-interface %s id %d",
 	     __func__, c->ipsec_interface->name, c->ipsec_interface->if_id);
 
 	return unset_cidr;
@@ -193,19 +193,21 @@ static bool add_kernel_ipsec_interface_address(const struct connection *c,
 					       ip_cidr conn_cidr,
 					       struct logger *logger)
 {
+	cidr_buf cb;
+	VERBOSE(logger, "%s", str_cidr(&conn_cidr, &cb));
+
 	/*
 	 * Get the existing referenced IP, or create it if it doesn't
 	 * exist.
 	 */
 	struct ipsec_interface_address **conn_address_ptr =
-			find_ipsec_interface_address_ptr(c->ipsec_interface, conn_cidr, logger);
+			find_ipsec_interface_address_ptr(c->ipsec_interface, conn_cidr, verbose);
 	struct ipsec_interface_address *conn_address = (*conn_address_ptr);
 	if (conn_address == NULL) {
 		/* This call will refcount the object */
 		conn_address = alloc_ipsec_interface_address(conn_address_ptr, conn_cidr);
 		cidr_buf cb;
-		ldbg(logger,
-		     "%s() created new ipsec_interface_address %s for ipsec-interface %s ID %d",
+		vdbg("%s() created new ipsec_interface_address %s for ipsec-interface %s ID %d",
 		     __func__, str_cidr(&conn_address->if_ip, &cb),
 		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 	} else {
@@ -216,12 +218,13 @@ static bool add_kernel_ipsec_interface_address(const struct connection *c,
 	/* Check if the IP is already defined on the interface */
 	bool ip_on_if = kernel_ops->ipsec_interface->ip_addr_find_on_if(c->ipsec_interface,
 									&conn_address->if_ip,
-									logger);
+									verbose);
 	if (ip_on_if == false) {
 		conn_address->pluto_added = true;
-		if (!kernel_ops->ipsec_interface->ip_addr_add(c->ipsec_interface->name, conn_address, logger)) {
+		if (!kernel_ops->ipsec_interface->ip_addr_add(c->ipsec_interface->name,
+							      conn_address, verbose)) {
 			cidr_buf cb;
-			llog_error(logger, 0/*no-errno*/,
+			llog_error(verbose.logger, 0/*no-errno*/,
 				   "unable to add CIDR %s to ipsec-interface %s ID %u",
 				   str_cidr(&conn_address->if_ip, &cb),
 				   c->ipsec_interface->name, c->ipsec_interface->if_id);
@@ -236,18 +239,15 @@ static bool add_kernel_ipsec_interface_address(const struct connection *c,
 
 bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logger)
 {
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
-	};
+	VERBOSE(logger, "...");
 
 	if (c->ipsec_interface == NULL) {
-		vlog("%s() skipped; connection ipsec-interface=no", __func__);
+		vlog("skipped; connection ipsec-interface=no");
 		return true;
 	}
 
 	if (c->ipsec_interface->if_id == 0) {
-		vlog("%s() skipped; connection ipsec-interface=0", __func__);
+		vlog("skipped; connection ipsec-interface=0");
 		return true;
 	}
 
@@ -258,7 +258,7 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
 							      c->iface->real_device_name,
 							      c->ipsec_interface->if_id,
-							      logger)) {
+							      verbose)) {
 			return false;
 		}
 
@@ -267,9 +267,11 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		/*
 		 * Device exists: try to match name, cidr, and if_id.
 		 */
-		if (!kernel_ops->ipsec_interface->find_interface(c->ipsec_interface->name, c->ipsec_interface->if_id, verbose)) {
+		if (!kernel_ops->ipsec_interface->find_interface(c->ipsec_interface->name,
+								 c->ipsec_interface->if_id,
+								 verbose)) {
 			/* found wrong device abort adding */
-			llog_error(logger, 0/*no-errno*/,
+			llog_error(verbose.logger, 0/*no-errno*/,
 				   "device %s exists but do not match expected type, XFRM if_id %u, or XFRM device is invalid; check 'ip -d link show dev %s'",
 				   c->ipsec_interface->name, c->ipsec_interface->if_id, c->ipsec_interface->name);
 			return false;
@@ -282,28 +284,31 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 	 *
 	 * - If it doesn't exist, nothing to add to the interface
 	 */
-	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, logger);
-	if (conn_cidr.is_set == false) {
-		ldbg(logger, "%s() no CIDR to set on ipsec-interface %s ID %d",
-		     __func__, c->ipsec_interface->name, c->ipsec_interface->if_id);
-	} else {
+	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, verbose);
+	if (cidr_is_specified(conn_cidr)) {
 		if (!add_kernel_ipsec_interface_address(c, conn_cidr, logger)) {
 			return false;
 		}
+	} else {
+		vdbg("no CIDR to set on ipsec-interface %s ID %d",
+		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 	}
 
-	return kernel_ops->ipsec_interface->ip_link_set_up(c->ipsec_interface->name, logger);
+	return kernel_ops->ipsec_interface->ip_link_set_up(c->ipsec_interface->name, verbose);
 }
 
 static void remove_kernel_ipsec_interface_address(const struct connection *c,
 						  ip_cidr conn_cidr,
 						  struct logger *logger)
 {
+	cidr_buf cb;
+	VERBOSE(logger, "removing %s", str_cidr(&conn_cidr, &cb));
+
 	/*
 	 * Use that to find the address structure.
 	 */
 	struct ipsec_interface_address **conn_address_ptr =
-			find_ipsec_interface_address_ptr(c->ipsec_interface, conn_cidr, logger);
+			find_ipsec_interface_address_ptr(c->ipsec_interface, conn_cidr, verbose);
 	if ((*conn_address_ptr) == NULL) {
 		/* This should never happen */
 		cidr_buf cb;
@@ -314,8 +319,7 @@ static void remove_kernel_ipsec_interface_address(const struct connection *c,
 		return;
 	}
 
-	cidr_buf cb;
-	ldbg(logger, "%s() addressr=%p name=%s if_id=%u IP [%s] refcount=%u (before)",
+	vdbg("%s() addressr=%p name=%s if_id=%u IP [%s] refcount=%u (before)",
 	     __func__,
 	     (*conn_address_ptr), c->ipsec_interface->name, c->ipsec_interface->if_id,
 	     str_cidr(&(*conn_address_ptr)->if_ip, &cb),
@@ -332,7 +336,7 @@ static void remove_kernel_ipsec_interface_address(const struct connection *c,
 	struct ipsec_interface_address *tmp_address = (*conn_address_ptr);
 	struct ipsec_interface_address *conn_address = delref_where(&tmp_address, logger, HERE);
 	if (conn_address == NULL) {
-		ldbg(logger, "%s() delref returned NULL, simple delref", __func__);
+		vdbg("%s() delref returned NULL, simple delref", __func__);
 		return;
 	}
 
@@ -341,7 +345,8 @@ static void remove_kernel_ipsec_interface_address(const struct connection *c,
 
 	/* Check if the IP should be removed from the interface */
 	if (conn_address->pluto_added) {
-		kernel_ops->ipsec_interface->ip_addr_del(c->ipsec_interface->name, conn_address, logger);
+		kernel_ops->ipsec_interface->ip_addr_del(c->ipsec_interface->name,
+							 conn_address, verbose);
 		cidr_buf cb;
 		llog(RC_LOG, logger,
 		     "delete ipsec-interface=%s if_id=%u IP [%s] added by pluto",
@@ -361,31 +366,25 @@ static void remove_kernel_ipsec_interface_address(const struct connection *c,
 
 void remove_kernel_ipsec_interface(const struct connection *c, struct logger *logger)
 {
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
-	};
+	VERBOSE(logger, "...");
 
 	if (c->ipsec_interface == NULL) {
-		vlog("%s() skipped; connection ipsec-interface=no",
-		     __func__);
+		vlog("skipped; connection ipsec-interface=no");
 		return;
 	}
 
 	if (c->ipsec_interface->if_id == 0) {
-		vlog("%s() skipped; connection ipsec-interface=0 (previously installed)",
-		     __func__);
+		vlog("skipped; connection ipsec-interface=0 (previously installed)");
 		return;
 	}
 
 	/*
 	 * Find the IP address assigned to the connection.
 	 */
-	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, logger);
+	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, verbose);
 	if (conn_cidr.is_set == false) {
-		ldbg(logger,
-		     "%s() no CIDR to unreference on ipsec-interface %s ID %d",
-		     __func__, c->ipsec_interface->name, c->ipsec_interface->if_id);
+		vdbg("no CIDR to unreference on ipsec-interface %s ID %d",
+		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 		return;
 	}
 
@@ -433,6 +432,8 @@ struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 			    struct logger *logger, where_t where)
 {
+	VERBOSE(logger, "%p", *ipsec_if);
+
 	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
 	if (ipsec_interface != NULL) {
 		/* last reference (ignoring list entry) */
@@ -443,13 +444,12 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 				(*pp) = (*pp)->next;
 				/* delete*/
 				if (ipsec_interface->pluto_added) {
-					kernel_ops->ipsec_interface->ip_link_del(ipsec_interface->name, logger);
+					kernel_ops->ipsec_interface->ip_link_del(ipsec_interface->name, verbose);
 					llog(RC_LOG, logger,
 					     "delete ipsec-interface=%s if_id=%u added by pluto",
 					     ipsec_interface->name, ipsec_interface->if_id);
 				} else {
-					ldbg(logger,
-					     "skipping delete ipsec-interface=%s if_id=%u, never added pluto",
+					vdbg("skipping delete ipsec-interface=%s if_id=%u, never added pluto",
 					     ipsec_interface->name, ipsec_interface->if_id);
 				}
 				/*
@@ -462,7 +462,7 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 				pfreeany(ipsec_interface);
 				return;
 			}
-			ldbg(logger, "(*pp)=%p ipsec_interface=%p", (*pp), ipsec_interface);
+			vdbg("(*pp)=%p ipsec_interface=%p", (*pp), ipsec_interface);
 		}
 		llog_pexpect(logger, where,
 			     "%p ipsec-interface=%s if_id=%u not found in the list",
@@ -472,7 +472,7 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 
 diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_interface)
 {
-	ldbg(c->logger, "parsing ipsec-interface=%s", ipsec_interface);
+	VERBOSE(c->logger, "adding %s", ipsec_interface);
 
 	/*
 	 * Danger; yn_option_names includes "0" and "1" but that isn't
@@ -482,7 +482,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 						     shunk1(ipsec_interface));
 	if (yn != NULL && yn->value == YN_NO) {
 		/* well that was pointless */
-		ldbg(c->logger, "ipsec-interface=%s is no!", ipsec_interface);
+		vdbg("ipsec-interface=%s is no!", ipsec_interface);
 		return NULL;
 	}
 
@@ -501,7 +501,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 	}
 
 	/* something other than ipsec-interface=no, check support */
-	err_t err = kernel_ops->ipsec_interface->supported(c->logger);
+	err_t err = kernel_ops->ipsec_interface->supported(verbose);
 	if (err != NULL) {
 		return diag("ipsec-interface=%s not supported: %s",
 			    ipsec_interface, err);
@@ -525,7 +525,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 
 		if (value == 0 &&
 		    kernel_ops->ipsec_interface->map_if_id_zero != 0) {
-			ldbg(c->logger, "remap ipsec0 to %"PRIu32" because VTI allowed zero but XFRMi does not",
+			vdbg("remap ipsec0 to %"PRIu32" because VTI allowed zero but XFRMi does not",
 			     kernel_ops->ipsec_interface->map_if_id_zero);
 			if_id = kernel_ops->ipsec_interface->map_if_id_zero;
 		} else {
@@ -533,7 +533,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 		}
 	}
 
-	ldbg(c->logger, "ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, if_id);
+	vdbg("ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, if_id);
 
 	/* check if interface is already used by pluto */
 
@@ -561,7 +561,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 	 * Probe the interface draging in any existing IP addresses.
 	 */
 	c->ipsec_interface->if_ips =
-		kernel_ops->ipsec_interface->ip_addr_get_all_ips(name, if_id, c->logger);
+		kernel_ops->ipsec_interface->ip_addr_get_all_ips(name, if_id, verbose);
 
 	return NULL;
 }
@@ -575,7 +575,8 @@ void check_stale_ipsec_interfaces(struct logger *logger)
 
 void shutdown_kernel_ipsec_interface(struct logger *logger)
 {
+	VERBOSE(logger, "...");
 	if (kernel_ops->ipsec_interface->shutdown != NULL) {
-		kernel_ops->ipsec_interface->shutdown(logger);
+		kernel_ops->ipsec_interface->shutdown(verbose);
 	}
 }

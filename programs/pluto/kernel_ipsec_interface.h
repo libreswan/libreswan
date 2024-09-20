@@ -17,9 +17,10 @@
 #ifndef KERNEL_IPSEC_INTERFACE_H
 #define KERNEL_IPSEC_INTERFACE_H
 
+#include "verbose.h"
+
 struct ipsec_interface_address;
 struct ipsec_interface;
-struct verbose;
 
 struct kernel_ipsec_interface {
 	const char *name;
@@ -33,34 +34,34 @@ struct kernel_ipsec_interface {
 	/* placeholders */
 	int (*ip_addr_del)(const char *if_name,
 			   const struct ipsec_interface_address *xfrmi_ipaddr,
-			   struct logger *logger);
+			   struct verbose verbose);
 	bool (*ip_addr_find_on_if)(struct ipsec_interface *xfrmi,
 				   ip_cidr *search_ip,
-				   struct logger *logger);
+				   struct verbose verbose);
 	bool (*ip_addr_add)(const char *if_name,
 			    const struct ipsec_interface_address *xfrmi_ipaddr,
-			    struct logger *logger);
+			    struct verbose verbose);
 
 	struct ipsec_interface_address *(*ip_addr_get_all_ips)(const char *if_name,
 							       uint32_t if_id,
-							       struct logger *logger);
+							       struct verbose verbose);
 
 	bool (*ip_link_add)(const char *if_name /*non-NULL*/,
 			    const char *dev_name /*non-NULL*/,
 			    const uint32_t if_id,
-			    struct logger *logger);
+			    struct verbose verbose);
 	bool (*ip_link_set_up)(const char *if_name,
-			       struct logger *logger);
+			       struct verbose verbose);
 	bool (*ip_link_del)(const char *if_name /*non-NULL*/,
-			    const struct logger *logger);
+			    struct verbose verbose);
 
 	bool (*find_interface)(const char *if_name, /* optional */
 			       uint32_t xfrm_if_id, /* 0 is wildcard */
 			       struct verbose verbose);
 
 	void (*check_stale_ipsec_interfaces)(struct logger *logger);
-	err_t (*supported)(struct logger *logger);
-	void (*shutdown)(struct logger *logger);
+	err_t (*supported)(struct verbose verbose);
+	void (*shutdown)(struct verbose verbose);
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;

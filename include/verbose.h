@@ -48,6 +48,14 @@ struct verbose {
 	int level;
 };
 
+#define VERBOSE(LOGGER, MESSAGE, ...)		\
+	struct verbose verbose = {		\
+		.logger = (LOGGER),		\
+		.rc_flags = (LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : LEMPTY), \
+	};								\
+	vdbg("%s() "MESSAGE, __func__, ##__VA_ARGS__);			\
+	verbose.level++;
+
 /*
  * Log, but only when VERBOSE is enabled.
  */
@@ -66,7 +74,7 @@ struct verbose {
 
 #define vdbg(FMT, ...)							\
 	{								\
-		if (DBGP(DBG_BASE)) {					\
+		if (LDBGP(DBG_BASE, verbose.logger)) {			\
 			llog(DEBUG_STREAM, verbose.logger,		\
 			     "%*s"FMT,					\
 			     verbose.level * 2, "", ##__VA_ARGS__);	\

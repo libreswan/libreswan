@@ -145,7 +145,7 @@ void refcnt_addref_where(const char *what,
  */
 unsigned refcnt_peek_where(const void *pointer,
 			   const refcnt_t *refcnt,
-			   struct logger *logger,
+			   const struct logger *logger,
 			   where_t where)
 {
 	unsigned val;

@@ -39,21 +39,33 @@ struct ipsec_interface;	/* forward */
 struct ipsec_interface_address {
 	refcnt_t refcnt;
 	ip_cidr if_ip;
-	bool pluto_added;
+	bool pluto_added;	/* vs an address on a pre-existing
+				 * interface */
 	struct ipsec_interface_address *next;
 };
 
 struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface_address **ptr,
 							      ip_cidr if_ip);
-void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifaddr, struct logger *logger);
+void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifaddr,
+				       const struct logger *logger);
 
 struct ipsec_interface {
-	char *name;
-	uint32_t if_id; /* IFLA_XFRM_IF_ID */
-	uint32_t dev_if_id;  /* if_id of device, IFLA_XFRM_LINK */
-	struct ipsec_interface_address *if_ips; /* ref-counted IPs on this IF */
 	refcnt_t refcnt;
-	bool pluto_added;
+	char *name;		/* ipsec<ipsec-interface> */
+	uint32_t if_id;		/* <ipsec-interface> but with 0
+				 * re-mapped on linux; derived from
+				 * IFLA_XFRM_IF_ID */
+	uint32_t dev_if_id;	/* on linux, the IFLA_XFRM_LINK ID of
+				 * the real device that the
+				 * ipsec-interface IF_ID pseudo device
+				 * is bound to (on BSD this binding is
+				 * done using addresses?) */
+	struct ipsec_interface_address *if_ips;
+				/* ref-counted IPs on this IF;
+				 * ref-counted as multiple connections
+				 * may share the same value; this
+				 * seems a little weird */
+	bool pluto_added;	/* vs a pre-existing interface */
 	struct ipsec_interface *next;
 };
 

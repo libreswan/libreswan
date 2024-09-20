@@ -142,16 +142,12 @@ static bool ignore_response_processor(struct nlmsghdr *h,
 }
 
 static bool simple_netlink_op(const struct nlmsghdr *req,
-			     const char *context,
-			     const char *if_name,
-			     const struct logger *logger)
+			      const char *context,
+			      const char *if_name,
+			      struct verbose verbose)
 {
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY,
-	};
-
 	vdbg("%s() %s %s", __func__, context, if_name);
+	verbose.level++;
 
 	if (!linux_netlink_query(req, NETLINK_ROUTE,
 				 ignore_response_processor,
@@ -198,7 +194,7 @@ static int link_add_nl_msg(const char *if_name /*non-NULL*/,
 			    const char *dev_name /*non-NULL*/,
 			    const uint32_t if_id,
 			    struct nl_ifinfomsg_req *req,
-			    struct logger *logger)
+			    struct verbose verbose)
 {
 	*req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
 
@@ -222,7 +218,7 @@ static int link_add_nl_msg(const char *if_name /*non-NULL*/,
 		/* e.g link id of the interface, eth0 */
 		uint32_t dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id == 0) {
-			llog_error(logger, errno,
+			llog_error(verbose.logger, errno,
 				   "cannot find interface index for device %s", dev_name);
 			return XFRMI_FAILURE;
 		}
@@ -236,37 +232,42 @@ static int link_add_nl_msg(const char *if_name /*non-NULL*/,
 	return XFRMI_SUCCESS;
 }
 
-static bool ip_link_set_up(const char *if_name, struct logger *logger)
+static bool ip_link_set_up(const char *if_name, struct verbose verbose)
 {
+	vdbg("%s() if_name %s", __func__, if_name);
+	verbose.level++;
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST);
 	req.i.ifi_change |= IFF_UP;
 	req.i.ifi_flags |= IFF_UP;
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		llog_error(logger, errno,
-			   "link_set_up_nl() cannot find index of xfrm interface %s",
-			   if_name);
+		llog_error(verbose.logger, errno,
+			   "%s() cannot find index of xfrm interface %s",
+			   __func__, if_name);
 		return false;
 	}
 
-	if (!simple_netlink_op(&req.n, "ip_link_set_up", if_name, logger)) {
+	if (!simple_netlink_op(&req.n, __func__, if_name, verbose)) {
 		return false;
 	}
 
 	return true;
 }
 
-static bool ip_link_del(const char *if_name, const struct logger *logger)
+static bool ip_link_del(const char *if_name, struct verbose verbose)
 {
+	vdbg("%s() if_name %s", __func__, if_name);
+	verbose.level++;
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		llog_error(logger, errno, "ip_link_del() cannot find index of interface %s",
-			   if_name);
+		llog_error(verbose.logger, errno,
+			   "%s() cannot find index of interface %s",
+			   __func__, if_name);
 		return false;
 	}
 
-	if (!simple_netlink_op(&req.n, "ip_link_del", if_name, logger)) {
+	if (!simple_netlink_op(&req.n, __func__, if_name, verbose)) {
 		return false;
 	}
 
@@ -276,18 +277,20 @@ static bool ip_link_del(const char *if_name, const struct logger *logger)
 static bool ip_link_add(const char *if_name /*non-NULL*/,
 			const char *dev_name /*non-NULL*/,
 			const uint32_t if_id,
-			struct logger *logger)
+			struct verbose verbose)
 {
-	ldbg(logger, "add xfrm interface %s@%s id=%u", if_name, dev_name, if_id);
+	vdbg("%s() interface %s@%s id=%u", __func__, if_name, dev_name, if_id);
+	verbose.level++;
 	struct nl_ifinfomsg_req req;
 	zero(&req);
-	if (link_add_nl_msg(if_name, dev_name, if_id, &req, logger) != XFRMI_SUCCESS) {
-		llog_error(logger, 0/*no-errno*/,
-			   "link_add_nl_msg() creating netlink message failed");
+	if (link_add_nl_msg(if_name, dev_name, if_id, &req, verbose) != XFRMI_SUCCESS) {
+		llog_error(verbose.logger, 0/*no-errno*/,
+			   "%s() creating netlink message failed",
+			   __func__);
 		return false;
 	}
 
-	if (!simple_netlink_op(&req.n, "ip_link_add_xfrmi", if_name, logger)) {
+	if (!simple_netlink_op(&req.n, __func__, if_name, verbose)) {
 		return false;
 	}
 
@@ -297,7 +300,7 @@ static bool ip_link_add(const char *if_name /*non-NULL*/,
 static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 			const char *if_name,
 			const struct ipsec_interface_address *xfrmi_ipaddr,
-			struct logger *logger)
+			struct verbose verbose)
 {
 	const struct ip_info *afi = cidr_info(xfrmi_ipaddr->if_ip);
 	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(type, flags, if_name, afi);
@@ -307,7 +310,7 @@ static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, bytes.ptr, bytes.len);
 	req.ifa.ifa_prefixlen = cidr_prefix_len(xfrmi_ipaddr->if_ip);
 
-	if (!simple_netlink_op(&req.n, __func__, if_name, logger)) {
+	if (!simple_netlink_op(&req.n, __func__, if_name, verbose)) {
 		return XFRMI_FAILURE;
 	}
 
@@ -317,19 +320,19 @@ static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 /* Add an IP address to an XFRMi interface using Netlink */
 static bool ip_addr_xfrmi_add(const char *if_name,
 			      const struct ipsec_interface_address *xfrmi_ipaddr,
-			      struct logger *logger)
+			      struct verbose verbose)
 {
 	return ifaddrmsg_op(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL,
-			    if_name, xfrmi_ipaddr, logger) == XFRMI_SUCCESS;
+			    if_name, xfrmi_ipaddr, verbose) == XFRMI_SUCCESS;
 }
 
 /* Delete an IP address from an XFRMi interface using Netlink */
 static int ip_addr_xfrmi_del(const char *if_name,
 			     const struct ipsec_interface_address *xfrmi_ipaddr,
-			     struct logger *logger)
+			     struct verbose verbose)
 {
 	return ifaddrmsg_op(RTM_DELADDR, NLM_F_REQUEST,
-			    if_name, xfrmi_ipaddr, logger);
+			    if_name, xfrmi_ipaddr, verbose);
 }
 
 static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_name,
@@ -502,7 +505,7 @@ static void parse_newlink_msg(struct nlmsghdr *nlmsg,
 
 static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 			      struct ifinfo_response *if_rsp,
-			      const struct logger *logger)
+			      struct verbose verbose)
 {
 	struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
 	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa));
@@ -511,7 +514,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 	if (ifa->ifa_index != if_nametoindex(if_rsp->filter_data.if_name)) {
 		char if_name_buf[IF_NAMESIZE];
 		if_indextoname(ifa->ifa_index, if_name_buf);
-		ldbg(logger, "%s() skipping non-matching message for if_name %s",
+		vdbg("%s() skipping non-matching message for if_name %s",
 		     __func__, if_name_buf);
 		return;
 	}
@@ -527,7 +530,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 		 * anything else.
 		 */
 		if (attribute->rta_type != IFA_ADDRESS) {
-			ldbg(logger, "%s() skipping attr type %d",
+			vdbg("%s() skipping attr type %d",
 			     __func__, attribute->rta_type);
 			continue;
 		}
@@ -536,7 +539,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 		diag_t diag = hunk_to_cidr(attr, ifa->ifa_prefixlen,
 					   aftoinfo(ifa->ifa_family), &if_ip);
 		if (diag != NULL) {
-			llog_pexpect(logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
+			llog_pexpect(verbose.logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
 			pfree_diag(&diag);
 			return;
 		}
@@ -549,7 +552,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 		}
 
 		alloc_ipsec_interface_address(&if_rsp->result.if_ips, if_ip);
-		ldbg(logger, "%s() matching message for if_name %s and ifa_index %d; setting; result = true",
+		vdbg("%s() matching message for if_name %s and ifa_index %d; setting; result = true",
 		     __func__, if_rsp->result.name, ifa->ifa_index);
 		if_rsp->result.ok = true;
 		return;
@@ -574,7 +577,7 @@ static bool process_nlmsg(struct nlmsghdr *nlmsg,
 		return true;
 
 	case RTM_NEWADDR:
-		parse_newaddr_msg(nlmsg, ifi_rsp, verbose.logger);
+		parse_newaddr_msg(nlmsg, ifi_rsp, verbose);
 		/* true here means continue scanning */
 		return true;
 	}
@@ -638,11 +641,13 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 /* Get all of the IP addresses on an XFRMi interface using Netlink */
 static struct ipsec_interface_address *ip_addr_xfrmi_get_all_ips(const char *if_name,
 								 uint32_t xfrm_if_id,
-								 struct logger *logger)
+								 struct verbose verbose)
 {
+	vdbg("%s() if_name %s xfrm_if_id %u", __func__, if_name, xfrm_if_id);
+
 	/* first do a cheap check */
-	PASSERT(logger, if_name != NULL);
-	PEXPECT(logger, if_nametoindex(if_name) != 0);
+	PASSERT(verbose.logger, if_name != NULL);
+	PEXPECT(verbose.logger, if_nametoindex(if_name) != 0);
 
 	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(RTM_GETADDR, (NLM_F_DUMP | NLM_F_REQUEST),
 							 if_name, &unspec_ip_info);
@@ -656,20 +661,16 @@ static struct ipsec_interface_address *ip_addr_xfrmi_get_all_ips(const char *if_
 	struct linux_netlink_context ctx = {
 		.ifi_rsp = &ifi_rsp,
 	};
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
-	};
 
 	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
 		/* netlink error */
-		llog_error(logger, 0/*no-errno*/,
+		llog_error(verbose.logger, 0/*no-errno*/,
 			   "%s() request for all IPs failed", __func__);
 		return NULL;
 	}
 
 	if (!ifi_rsp.result.ok) {
-		ldbg(logger, "%s() no IPs found on interface; that's ok", __func__);
+		vdbg("%s() no IPs found on interface; that's ok", __func__);
 		return NULL;
 	}
 
@@ -682,15 +683,15 @@ static struct ipsec_interface_address *ip_addr_xfrmi_get_all_ips(const char *if_
 
 static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi,
 				     ip_cidr *search_ip,
-				     struct logger *logger)
+				     struct verbose verbose)
 {
 	if (if_nametoindex(xfrmi->name) == 0) {
-		llog_error(logger, errno, "device does not exist [%s]: ", xfrmi->name);
+		llog_error(verbose.logger, errno, "device does not exist [%s]: ", xfrmi->name);
 		return false;
 	}
 
 	struct ipsec_interface_address *if_ips =
-		ip_addr_xfrmi_get_all_ips(xfrmi->name, xfrmi->if_id, logger);
+		ip_addr_xfrmi_get_all_ips(xfrmi->name, xfrmi->if_id, verbose);
 	if (if_ips == NULL) {
 		return false;
 	}
@@ -704,18 +705,14 @@ static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi,
 		}
 	}
 
-	free_ipsec_interface_address_list(if_ips, logger);
+	free_ipsec_interface_address_list(if_ips, verbose.logger);
 	return found;
 }
 
 static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 				 const char *dev_name /*non-NULL*/,
-				 struct logger *logger)
+				 struct verbose verbose)
 {
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY),
-	};
 	vdbg("%s() start", __func__);
 	verbose.level++;
 
@@ -727,14 +724,14 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 
 	vdbg("%s() create and delete an xfrmi interface '%s@%s' to test xfrmi support",
 	     __func__, if_name, dev_name);
-	if (!ip_link_add(if_name, dev_name, IPSEC1_XFRM_IF_ID, logger)) {
+	if (!ip_link_add(if_name, dev_name, IPSEC1_XFRM_IF_ID, verbose)) {
 		xfrm_interface_support = -1;
 		vdbg("%s() xfrmi is not supported. failed to create %s@%s",
 		     __func__, if_name, dev_name);
 		return "xfrmi is not supported";
 	} else {
 		if (if_nametoindex(if_name) == 0) {
-			llog_error(logger, errno, "cannot find device %s: ", if_name);
+			llog_error(verbose.logger, errno, "cannot find device %s: ", if_name);
 
 			/*
 			 * failed to create xfrmi device.
@@ -749,14 +746,14 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 		}
 		vdbg("%s() xfrmi supported success creating %s@%s and delete it",
 		     __func__, if_name, dev_name);
-		ip_link_del(if_name, logger); /* ignore return value??? */
+		ip_link_del(if_name, verbose); /* ignore return value??? */
 		xfrm_interface_support = 1; /* success */
 	}
 
 	return NULL;
 }
 
-static err_t xfrm_iface_supported(struct logger *logger)
+static err_t xfrm_iface_supported(struct verbose verbose)
 {
 	err_t err = NULL; /* success */
 
@@ -784,9 +781,9 @@ static err_t xfrm_iface_supported(struct logger *logger)
 	unsigned int if_id = if_nametoindex(if_name);
 	int e = errno; /* save error */
 	if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
-		err = ipsec1_support_test(if_name, lo, logger);
+		err = ipsec1_support_test(if_name, lo, verbose);
 	} else if (if_id == 0) {
-		llog_error(logger, e,
+		llog_error(verbose.logger, e,
 			   "unexpected error in xfrm_iface_supported() while checking device %s",
 			   if_name);
 		xfrm_interface_support = -1;
@@ -796,14 +793,14 @@ static err_t xfrm_iface_supported(struct logger *logger)
 		 * may be more extensive checks?
 		 * such if it is a xfrmi device or something else
 		 */
-		llog(RC_LOG, logger,
+		llog(RC_LOG, verbose.logger,
 		     "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
 		     if_name);
 		xfrm_interface_support = -1;
 		err = "device name conflict in xfrm_iface_supported()";
 	}
 
-	if (PBAD(logger, xfrm_interface_support < 0 && err == NULL)) {
+	if (PBAD(verbose.logger, xfrm_interface_support < 0 && err == NULL)) {
 		err = "may be missing CONFIG_XFRM_INTERFACE support in kernel";
 	}
 
@@ -838,14 +835,17 @@ static void check_stale_xfrmi_interfaces(struct logger *logger)
 	}
 }
 
-static void free_xfrmi_ipsec1(struct logger *logger)
+static void free_xfrmi_ipsec1(struct verbose verbose)
 {
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	ipsec_interface_id_buf ifb;
 	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
 
 	unsigned int if_id = if_nametoindex(if_name);
 	if (if_id > 0) {
-		ip_link_del(if_name, logger); /* ignore return value??? */
+		ip_link_del(if_name, verbose); /* ignore return value??? */
 	}
 }
 

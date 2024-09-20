@@ -62,7 +62,7 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 
 unsigned refcnt_peek_where(const void *pointer,
 			   const refcnt_t *refcnt,
-			   struct logger *owner,
+			   const struct logger *owner,
 			   where_t where);
 #define refcnt_peek(OBJ, OWNER)						\
 	({								\
