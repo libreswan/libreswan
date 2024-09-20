@@ -190,48 +190,6 @@ static struct nl_ifaddrmsg_req init_ifaddrmsg_req(uint16_t type, uint16_t flags,
 	return req;
 }
 
-static int link_add_nl_msg(const char *if_name /*non-NULL*/,
-			    const char *dev_name /*non-NULL*/,
-			    const uint32_t if_id,
-			    struct nl_ifinfomsg_req *req,
-			    struct verbose verbose)
-{
-	*req = init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
-
-	nl_addattrstrz(&req->n, req->maxlen, IFLA_IFNAME, if_name);
-
-	struct rtattr *linkinfo = nl_addattr_nest(&req->n, req->maxlen, IFLA_LINKINFO);
-
-	static const char link_type[] = "xfrm";
-	nl_addattr_l(&req->n, req->maxlen, IFLA_INFO_KIND, link_type,
-		     strlen(link_type));
-
-	struct rtattr *xfrm_link = nl_addattr_nest(&req->n, req->maxlen,
-						   IFLA_INFO_DATA);
-	/*
-	 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19 linux/if_link.h
-	 * with older kernel headers 'make USE_XFRM_INTERFACE_IFLA_HEADER=true'
-	 */
-	nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_IF_ID, if_id);	/* see USE_XFRM_INTERFACE_IFLA_HEADER */
-
-	if (dev_name != NULL) {
-		/* e.g link id of the interface, eth0 */
-		uint32_t dev_link_id = if_nametoindex(dev_name);
-		if (dev_link_id == 0) {
-			llog_error(verbose.logger, errno,
-				   "cannot find interface index for device %s", dev_name);
-			return XFRMI_FAILURE;
-		}
-		nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_LINK, dev_link_id);
-	}
-
-	nl_addattr_nest_end(&req->n, xfrm_link);
-
-	nl_addattr_nest_end(&req->n, linkinfo);
-
-	return XFRMI_SUCCESS;
-}
-
 static bool ip_link_set_up(const char *if_name, struct verbose verbose)
 {
 	vdbg("%s() if_name %s", __func__, if_name);
@@ -274,27 +232,60 @@ static bool ip_link_del(const char *if_name, struct verbose verbose)
 	return true;
 }
 
-static bool ip_link_add(const char *if_name /*non-NULL*/,
-			const char *dev_name /*non-NULL*/,
-			const uint32_t if_id,
-			struct verbose verbose)
+static bool nl_newlink(const char *ipsec_if_name,
+		       const uint32_t ipsec_if_id,
+		       const char *physical_if_name,
+		       struct verbose verbose)
 {
-	vdbg("%s() interface %s@%s id=%u", __func__, if_name, dev_name, if_id);
+	vdbg("%s() interface %s@%s id=%u",
+	     __func__, ipsec_if_name, physical_if_name, ipsec_if_id);
 	verbose.level++;
-	struct nl_ifinfomsg_req req;
-	zero(&req);
-	if (link_add_nl_msg(if_name, dev_name, if_id, &req, verbose) != XFRMI_SUCCESS) {
-		llog_error(verbose.logger, 0/*no-errno*/,
-			   "%s() creating netlink message failed",
-			   __func__);
-		return false;
-	}
 
-	if (!simple_netlink_op(&req.n, __func__, if_name, verbose)) {
+	struct nl_ifinfomsg_req req =
+		init_nl_ifi(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL);
+	nl_addattrstrz(&req.n, req.maxlen, IFLA_IFNAME, ipsec_if_name);
+
+	struct rtattr *linkinfo = nl_addattr_nest(&req.n, req.maxlen, IFLA_LINKINFO);
+	{
+		static const char link_kind[] = "xfrm";
+		nl_addattr_l(&req.n, req.maxlen, IFLA_INFO_KIND,
+			     link_kind, strlen(link_kind));
+
+		struct rtattr *info_data = nl_addattr_nest(&req.n, req.maxlen, IFLA_INFO_DATA);
+		{
+			/*
+			 * IFLA_XFRM_IF_ID was added to mainline kernel 4.19
+			 * linux/if_link.h with older kernel headers 'make
+			 * USE_XFRM_INTERFACE_IFLA_HEADER=true'
+			 */
+			nl_addattr32(&req.n, sizeof(req.data), IFLA_XFRM_IF_ID, ipsec_if_id);	/* see USE_XFRM_INTERFACE_IFLA_HEADER */
+
+			/* e.g link id of the interface, eth0 */
+			uint32_t physical_if_index = if_nametoindex(physical_if_name);
+			if (physical_if_index == 0) {
+				llog_error(verbose.logger, errno,
+					   "cannot find interface index for physical interface device %s", physical_if_name);
+				return false;
+			}
+			nl_addattr32(&req.n, sizeof(req.data), IFLA_XFRM_LINK, physical_if_index);
+		}
+		nl_addattr_nest_end(&req.n, info_data);
+	}
+	nl_addattr_nest_end(&req.n, linkinfo);
+
+	if (!simple_netlink_op(&req.n, __func__, ipsec_if_name, verbose)) {
 		return false;
 	}
 
 	return true;
+}
+
+static bool ip_link_add(const char *if_name /*non-NULL*/,
+			const uint32_t if_id,
+			const struct iface_device *real_device,
+			struct verbose verbose)
+{
+	return nl_newlink(if_name, if_id, real_device->real_device_name, verbose);
 }
 
 static int ifaddrmsg_op(uint16_t type, uint16_t flags,
@@ -709,11 +700,13 @@ static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi,
 	return found;
 }
 
-static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
-				 const char *dev_name /*non-NULL*/,
-				 struct verbose verbose)
+static err_t ipsec_support_test(const char *ipsec_if_name /*non-NULL*/,
+				uint32_t ipsec_if_id,
+				const char *physical_if_name /*non-NULL*/,
+				struct verbose verbose)
 {
-	vdbg("%s() start", __func__);
+	vdbg("%s() testing XFRMi ipsec-interface support using ipsec-if %s/%u physical-if %s",
+	     __func__, ipsec_if_name, ipsec_if_id, physical_if_name);
 	verbose.level++;
 
 	/* match any if_id */
@@ -722,33 +715,39 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 		return NULL; /* success: there is already xfrmi interface */
 	}
 
-	vdbg("%s() create and delete an xfrmi interface '%s@%s' to test xfrmi support",
-	     __func__, if_name, dev_name);
-	if (!ip_link_add(if_name, dev_name, IPSEC1_XFRM_IF_ID, verbose)) {
+	vdbg("trying to create the XFRMi ipsec-interface %s bound to %s",
+	     ipsec_if_name, physical_if_name);
+	if (!nl_newlink(ipsec_if_name, ipsec_if_id, physical_if_name, verbose)) {
 		xfrm_interface_support = -1;
-		vdbg("%s() xfrmi is not supported. failed to create %s@%s",
-		     __func__, if_name, dev_name);
+		llog_error(verbose.logger, 0/*lost-error*/,
+			   "xfrmi is not supported, failed to create ipsec-interface %s bound to %s",
+			   ipsec_if_name, physical_if_name);
 		return "xfrmi is not supported";
-	} else {
-		if (if_nametoindex(if_name) == 0) {
-			llog_error(verbose.logger, errno, "cannot find device %s: ", if_name);
-
-			/*
-			 * failed to create xfrmi device.
-			 * assume kernel support is not enabled.
-			 * build kernel with CONFIG_XFRM_INTERFACE=y
-			 * to diagnose:
-			 * 'ip link add ipsec1 type xfrm if_id 1 dev lo'
-			 * 'ip -d link show dev ipsec1'
-			 */
-			xfrm_interface_support = -1;
-			return "missing CONFIG_XFRM_INTERFACE support in kernel";
-		}
-		vdbg("%s() xfrmi supported success creating %s@%s and delete it",
-		     __func__, if_name, dev_name);
-		ip_link_del(if_name, verbose); /* ignore return value??? */
-		xfrm_interface_support = 1; /* success */
 	}
+
+	vdbg("checking the ipsec-interface %s bound to %s was created",
+	     ipsec_if_name, physical_if_name);
+	if (if_nametoindex(ipsec_if_name) == 0) {
+		llog_error(verbose.logger, errno,
+			   "cannot find test ipsec-interface %s bound to %s: ",
+			   ipsec_if_name, physical_if_name);
+
+		/*
+		 * failed to create xfrmi device.
+		 * assume kernel support is not enabled.
+		 * build kernel with CONFIG_XFRM_INTERFACE=y
+		 * to diagnose:
+		 * 'ip link add ipsec1 type xfrm if_id 1 dev lo'
+		 * 'ip -d link show dev ipsec1'
+		 */
+		xfrm_interface_support = -1;
+		return "missing CONFIG_XFRM_INTERFACE support in kernel";
+	}
+
+	vdbg("xfrmi supported, successfully created %s bound to %s; now deleting it",
+	     ipsec_if_name, physical_if_name);
+	ip_link_del(ipsec_if_name, verbose); /* ignore return value??? */
+	xfrm_interface_support = 1; /* success */
 
 	return NULL;
 }
@@ -763,14 +762,16 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 
 	/*
 	 * If the previous probe failed, need to re-probe.  For
-	 * instance, "ipsec0" could be missing the first time, but is
-	 * than added manually.
+	 * instance, "ipsec1" may have been present, but has since
+	 * been deleted.
 	 */
 
-	ipsec_interface_id_buf ifb;
-	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb); /* must-free */
-	static const char lo[] = "lo";
+	/*
+	 * Try building ipsec-interface device "ipsec1" bound to "lo".
+	 * But only when the interface doesn't already exist.
+	 */
 
+	static const char lo[] = "lo";
 	if (if_nametoindex(lo) == 0) {
 		/* possibly no need to panic: may be get
 		 * smarter one day */
@@ -778,26 +779,35 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 		return "Could not create find real device needed to test xfrmi support";
 	}
 
-	unsigned int if_id = if_nametoindex(if_name);
+	ipsec_interface_id_buf ifb;
+	const char *ipsec1_if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb); /* must-free */
+	unsigned int ipsec1_if_index = if_nametoindex(ipsec1_if_name);
 	int e = errno; /* save error */
-	if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
-		err = ipsec1_support_test(if_name, lo, verbose);
-	} else if (if_id == 0) {
+	if (ipsec1_if_index != 0) {
+		/*
+		 * The device already exists so can't attempt probe.
+		 *
+		 * Should something else be tried such as confirming
+		 * it's ipsec-interface device or something else?
+		 */
+		llog(RC_LOG, verbose.logger,
+		     "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
+		     ipsec1_if_name);
+		xfrm_interface_support = -1;
+		err = "device name conflict in xfrm_iface_supported()";
+	} else if (e != ENXIO && e != ENODEV) {
+		/* The device lookup failed!?! */
 		llog_error(verbose.logger, e,
-			   "unexpected error in xfrm_iface_supported() while checking device %s",
-			   if_name);
+			   "unexpected error in %s() while checking device %s",
+			   __func__, ipsec1_if_name);
 		xfrm_interface_support = -1;
 		err = "cannot decide xfrmi support. assumed no.";
 	} else {
 		/*
-		 * may be more extensive checks?
-		 * such if it is a xfrmi device or something else
+		 * The device doesn't exist, try to create and then
+		 * delete it.
 		 */
-		llog(RC_LOG, verbose.logger,
-		     "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
-		     if_name);
-		xfrm_interface_support = -1;
-		err = "device name conflict in xfrm_iface_supported()";
+		err = ipsec_support_test(ipsec1_if_name, IPSEC1_XFRM_IF_ID, lo, verbose);
 	}
 
 	if (PBAD(verbose.logger, xfrm_interface_support < 0 && err == NULL)) {

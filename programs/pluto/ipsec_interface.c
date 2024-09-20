@@ -256,9 +256,8 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 
 	if (if_nametoindex(c->ipsec_interface->name) == 0) {
 		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
-							      c->iface->real_device_name,
 							      c->ipsec_interface->if_id,
-							      verbose)) {
+							      c->iface, verbose)) {
 			return false;
 		}
 

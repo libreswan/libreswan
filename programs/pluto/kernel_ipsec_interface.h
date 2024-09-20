@@ -21,6 +21,7 @@
 
 struct ipsec_interface_address;
 struct ipsec_interface;
+struct iface_device;
 
 struct kernel_ipsec_interface {
 	const char *name;
@@ -32,31 +33,31 @@ struct kernel_ipsec_interface {
 	uint32_t map_if_id_zero;
 
 	/* placeholders */
-	int (*ip_addr_del)(const char *if_name,
+	int (*ip_addr_del)(const char *ipsec_if_name,
 			   const struct ipsec_interface_address *xfrmi_ipaddr,
 			   struct verbose verbose);
 	bool (*ip_addr_find_on_if)(struct ipsec_interface *xfrmi,
 				   ip_cidr *search_ip,
 				   struct verbose verbose);
-	bool (*ip_addr_add)(const char *if_name,
+	bool (*ip_addr_add)(const char *ipsec_if_name,
 			    const struct ipsec_interface_address *xfrmi_ipaddr,
 			    struct verbose verbose);
 
-	struct ipsec_interface_address *(*ip_addr_get_all_ips)(const char *if_name,
+	struct ipsec_interface_address *(*ip_addr_get_all_ips)(const char *ipsec_if_name,
 							       uint32_t if_id,
 							       struct verbose verbose);
 
-	bool (*ip_link_add)(const char *if_name /*non-NULL*/,
-			    const char *dev_name /*non-NULL*/,
-			    const uint32_t if_id,
+	bool (*ip_link_add)(const char *ipsec_if_name /*non-NULL*/,
+			    const uint32_t ipsec_if_id,
+			    const struct iface_device *physical_device,
 			    struct verbose verbose);
-	bool (*ip_link_set_up)(const char *if_name,
+	bool (*ip_link_set_up)(const char *ipsec_if_name,
 			       struct verbose verbose);
-	bool (*ip_link_del)(const char *if_name /*non-NULL*/,
+	bool (*ip_link_del)(const char *ipsec_if_name /*non-NULL*/,
 			    struct verbose verbose);
 
-	bool (*find_interface)(const char *if_name, /* optional */
-			       uint32_t xfrm_if_id, /* 0 is wildcard */
+	bool (*find_interface)(const char *ipsec_if_name, /* optional */
+			       uint32_t ipsec_if_id, /* 0 is wildcard */
 			       struct verbose verbose);
 
 	void (*check_stale_ipsec_interfaces)(struct logger *logger);
