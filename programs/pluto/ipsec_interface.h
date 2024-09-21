@@ -55,11 +55,6 @@ struct ipsec_interface {
 	uint32_t if_id;		/* <ipsec-interface> but with 0
 				 * re-mapped on linux; derived from
 				 * IFLA_XFRM_IF_ID */
-	uint32_t dev_if_id;	/* on linux, the IFLA_XFRM_LINK ID of
-				 * the real device that the
-				 * ipsec-interface IF_ID pseudo device
-				 * is bound to (on BSD this binding is
-				 * done using addresses?) */
 	struct ipsec_interface_address *if_ips;
 				/* ref-counted IPs on this IF;
 				 * ref-counted as multiple connections
