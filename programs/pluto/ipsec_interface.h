@@ -29,6 +29,7 @@
 struct connection;
 struct logger;
 struct ipsec_interface;	/* forward */
+struct iface_device;
 
 /*
  * The same interface IP can be used by multiple tunnels, with
@@ -43,11 +44,6 @@ struct ipsec_interface_address {
 				 * interface */
 	struct ipsec_interface_address *next;
 };
-
-struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface_address **ptr,
-							      ip_cidr if_ip);
-void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifaddr,
-				       const struct logger *logger);
 
 struct ipsec_interface {
 	refcnt_t refcnt;
@@ -84,8 +80,12 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 			    where_t where);
 
 /* add/remove the system's interface device and address */
-bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logger);
+
+bool add_kernel_ipsec_interface(const struct connection *c,
+				const struct iface_device *,
+				struct logger *logger);
 void remove_kernel_ipsec_interface(const struct connection *c, struct logger *logger);
+bool add_kernel_ipsec_interface_address(const struct connection *c, struct logger *logger);
 
 void shutdown_kernel_ipsec_interface(struct logger *logger);
 void check_stale_ipsec_interfaces(struct logger *logger);
