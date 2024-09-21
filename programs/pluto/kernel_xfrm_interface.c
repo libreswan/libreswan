@@ -898,7 +898,6 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	.ip_addr_add = ip_addr_xfrmi_add,
 	.ip_addr_del = ip_addr_xfrmi_del,
 	.ip_addr_find_on_if = ip_addr_xfrmi_find_on_if,
-	.ip_addr_get_all_ips = ip_addr_xfrmi_get_all_ips,
 
 	.ip_link_set_up = ip_link_set_up,
 	.ip_link_add = ip_link_add,

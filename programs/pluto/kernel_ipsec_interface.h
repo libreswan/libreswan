@@ -43,10 +43,6 @@ struct kernel_ipsec_interface {
 			    const struct ipsec_interface_address *xfrmi_ipaddr,
 			    struct verbose verbose);
 
-	struct ipsec_interface_address *(*ip_addr_get_all_ips)(const char *ipsec_if_name,
-							       uint32_t if_id,
-							       struct verbose verbose);
-
 	bool (*ip_link_add)(const char *ipsec_if_name /*non-NULL*/,
 			    const uint32_t ipsec_if_id,
 			    const struct iface_device *physical_device,

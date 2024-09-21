@@ -544,23 +544,12 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 
 	/*
 	 * Create a new ipsec-interface structure (but don't yet
-	 * install in the kernel).
+	 * install in the kernel) or probe it.
 	 */
 
 	ipsec_interface_id_buf ifb;
 	const char *name = str_ipsec_interface_id(if_id, &ifb);
 	c->ipsec_interface = alloc_ipsec_interface(name, if_id);
-
-	/* if the interface doesn't exist all done */
-	if (if_nametoindex(name) == 0) {
-		return NULL;
-	}
-
-	/*
-	 * Probe the interface draging in any existing IP addresses.
-	 */
-	c->ipsec_interface->if_ips =
-		kernel_ops->ipsec_interface->ip_addr_get_all_ips(name, if_id, verbose);
 
 	return NULL;
 }
