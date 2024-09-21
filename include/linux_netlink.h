@@ -32,13 +32,22 @@ struct logger;
 /*
  * Use struct linux_netlink_context to return the result.
  *
- * Only return false when something catastrophic happens and the
- * parsing should be abandoned.
+ * Return FALSE when processing can stop early.  Actual status should
+ * be stored in the linux_netlink_context.
  */
 
 typedef bool linux_netlink_response_processor(struct nlmsghdr *,
 					      struct linux_netlink_context *,
 					      struct verbose verbose);
+
+/*
+ * Send query and process response.
+ *
+ * Returns FALSE when something catastrophic happens.
+ *
+ * Note that the processor, above returning FALSE is not catastrophic.
+ * Things will stop early and return true.
+ */
 
 bool linux_netlink_query(const struct nlmsghdr *nlmsg, int netlink_protocol,
 			 linux_netlink_response_processor *processor,

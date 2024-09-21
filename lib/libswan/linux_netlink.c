@@ -105,7 +105,9 @@ static bool linux_netlink_process_response(const struct nlmsghdr *nlmsg, int soc
 			 */
 			if (nlhdr->nlmsg_seq == nlmsg->nlmsg_seq) {
 				if (!processor(nlhdr, context, verbose)) {
-					return false;
+					/* this means stop early; not
+					 * a failure */
+					return true;
 				}
 			}
 
