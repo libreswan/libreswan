@@ -322,10 +322,12 @@ struct getlink_context {
 	} result;
 };
 
-static void match_getlink_info_data(struct rtattr *attribute,
-				    const char *if_name,
-				    struct getlink_context *ifi_rsp,
-				    struct verbose verbose)
+/* should either set .ok or .diag */
+
+static diag_t check_ipsec_interface_linkinfo_data(const char *if_name,
+						  struct rtattr *attribute,
+						  struct getlink_context *ifi_rsp,
+						  struct verbose verbose)
 {
 	vdbg("%s() start %s", __func__, if_name);
 	verbose.level++;
@@ -355,17 +357,14 @@ static void match_getlink_info_data(struct rtattr *attribute,
 	 */
 
 	if (xfrm_link_attr == NULL) {
-		vdbg("%s failed, xfrm_link_attr not found", if_name);
-		return;
+		return diag("IFLA_XFRM_LINK attribute is missing");
 	}
 
 	/* XXX: portable? */
 	uint32_t xfrm_link = *((const uint32_t *)RTA_DATA(xfrm_link_attr));
 	if (xfrm_link == 0) {
 		/* not good! see if_nametoindex() */
-		llog_error(verbose.logger, 0/*no-error*/,
-			   "%s has an xfrm device ifindex (RTA_LINK) of 0", if_name);
-		return;
+		return diag("IFLA_XFRM_LINK attribute is zero");
 	}
 	vdbg("found %s .xfrm_link %d", if_name, xfrm_link);
 
@@ -374,8 +373,7 @@ static void match_getlink_info_data(struct rtattr *attribute,
 	 */
 
 	if (xfrm_if_id_attr == NULL) {
-		vdbg("%s failed, xfrm_if_id_attr not found", if_name);
-		return;
+		return diag("IFLA_XFRM_IF_ID attribute is missing");
 	}
 
 	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(xfrm_if_id_attr));
@@ -384,9 +382,8 @@ static void match_getlink_info_data(struct rtattr *attribute,
 	} else if (xfrm_if_id == ifi_rsp->match->ipsec_if_id) {
 		vdbg("%s matched xfrm_if_id %d matched", if_name, xfrm_if_id);
 	} else {
-		vdbg("%s failed, xfrm_if_id %d did not match .match.ipsec_if_id %d",
-		     if_name, xfrm_if_id, ifi_rsp->match->ipsec_if_id);
-		return;
+		return diag("IFLA_XFRM_IF_ID attribute %u does not match ipsec-interface ID %u",
+			    xfrm_if_id, ifi_rsp->match->ipsec_if_id);
 	}
 
 	/* if it came this far found what we looking for */
@@ -397,28 +394,26 @@ static void match_getlink_info_data(struct rtattr *attribute,
 	ifi_rsp->result.xfrm_link = xfrm_link;
 	ifi_rsp->result.xfrm_if_id = xfrm_if_id;
 	ifi_rsp->result.ok = true;
-	return; /* this one is good! */
+	return NULL; /* this one is good! */
 }
 
-static void match_getlink_linkinfo(struct rtattr *attribute, const char *if_name,
-				   struct getlink_context *ifi_rsp,
-				   struct verbose verbose)
+static diag_t check_ipsec_interface_linkinfo(const char *if_name,
+					     struct rtattr *attribute,
+					     struct getlink_context *ifi_rsp,
+					     struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
 
-	bool matched_kind = false;
 	struct rtattr *info_data_attr = NULL;
+	struct rtattr *info_kind_attr = NULL;
 	ssize_t len = attribute->rta_len;
 	for (struct rtattr *nested_attrib = (struct rtattr *) RTA_DATA(attribute);
 	     RTA_OK(nested_attrib, len);
 	     nested_attrib = RTA_NEXT(nested_attrib, len)) {
 
 		if (nested_attrib->rta_type == IFLA_INFO_KIND) {
-			const char *kind_str = RTA_DATA(nested_attrib);
-			if (streq("xfrm", kind_str)) {
-				matched_kind = true;
-			}
+			info_kind_attr = nested_attrib;
 		}
 
 		if (nested_attrib->rta_type == IFLA_INFO_DATA) {
@@ -426,17 +421,21 @@ static void match_getlink_linkinfo(struct rtattr *attribute, const char *if_name
 		}
 	}
 
-	if (!matched_kind) {
-		vlog("INFO_KIND did not match 'xfrm'");
-		return;
+	if (info_kind_attr == NULL) {
+		return diag("IFLA_INFO_KIND attribute is missing");
+	}
+
+	const char *info_kind = RTA_DATA(info_kind_attr);
+	if (!streq("xfrm", info_kind)) {
+		return diag("IFLA_INFO_KIND attribute '%s' should be 'xfrm'", info_kind);
 	}
 
 	if (info_data_attr == NULL) {
-		vlog("INFO_DATA was not found");
-		return;
+		return diag("IFLA_INFO_DATA attribute is missing");
 	}
 
-	match_getlink_info_data(info_data_attr, if_name, ifi_rsp, verbose);
+	return check_ipsec_interface_linkinfo_data(if_name, info_data_attr,
+						   ifi_rsp, verbose);
 }
 
 /*
@@ -484,27 +483,33 @@ static bool parse_getlink_newlink_response(struct nlmsghdr *nlmsg,
 	}
 
 	if (ifi_rsp->match->wildcard) {
-		vdbg("wildcard so probing %s to see if it matches", if_name);
+		vdbg("wildcard: checking %s to see if it is an ipsec-interface", if_name);
 	} else if (streq(ifi_rsp->match->ipsec_if_name, if_name)) {
-		vdbg("exact match of %s, checking it is an ipsec-interface", if_name);
+		vdbg("exact: checking that %s is a valid ipsec-interface", if_name);
 	} else {
 		vdbg("%s is not the correct ipsec-interface, stumbling on", if_name);
 		return true; /* stumble on */
 	}
 
-	match_getlink_linkinfo(linkinfo_attr, if_name, ifi_rsp, verbose);
+	diag_t d = check_ipsec_interface_linkinfo(if_name, linkinfo_attr,
+						     ifi_rsp, verbose);
 
 	if (ifi_rsp->result.ok) {
+		vexpect(d == NULL);
 		return false; /* success! so stop early */
 	}
 
 	if (ifi_rsp->match->wildcard) {
-		vdbg("wildcard, stumbling on");
+		vexpect(d != NULL);
+		vdbg("wildcard %s invalid, %s, stumbling on", if_name, str_diag(d));
+		pfree_diag(&d);
 		return true; /* stumble on */
 	}
 
-	vdbg("matching ipsec-interface %s isn't valid", if_name);
-	return false;
+	vdbg("matching ipsec-interface %s isn't valid, %s", if_name, str_diag(d));
+	ifi_rsp->match->diag = diag("%s, check 'ip -d link show dev %s'", str_diag(d), if_name);
+	pfree_diag(&d);
+	return false; /* abort */
 
 }
 
@@ -548,10 +553,12 @@ static bool xfrm_ip_link_match(struct ip_link_match *match,
 	}
 
 	if (!getlink.result.ok) {
+		vexpect(match->wildcard != (match->diag != NULL));
 		vdbg("%s() failed, no .result", __func__);
 		return false;
 	}
 
+	vexpect(match->diag == NULL);
 	char xfrm_link_name[IF_NAMESIZE];
 	if_indextoname(getlink.result.xfrm_link, xfrm_link_name);
 	vdbg("support found existing %s@%s (xfrm) .xfrm_if_id %d .xfrm_link %d",

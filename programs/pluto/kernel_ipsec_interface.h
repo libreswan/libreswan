@@ -29,6 +29,7 @@ struct ip_link_match {
 	/* BSD can have zero?  Linux remaps 0 */
 	uint32_t ipsec_if_id; /* only when !wildcard */
 	char found[IFNAMSIZ];
+	diag_t diag;
 };
 
 struct kernel_ipsec_interface {

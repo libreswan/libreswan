@@ -309,7 +309,7 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 	} else {
 		/*
 		 * Device exists: check that it matches IPSEC_IF_NAME
-		 * and IPSEC_IF_ID.
+		 * and IPSEC_IF_ID and has a valid LINK.
 		 */
 		struct ip_link_match match = {
 			.ipsec_if_name = c->ipsec_interface->name,
@@ -320,9 +320,9 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 			/* .NAME isn't suitable */
 			ipsec_interface_buf ib;
 			llog_error(verbose.logger, 0/*no-errno*/,
-				   "ipsec-interface %s exists but do not match expected type or XFRM, device is invalid; check 'ip -d link show dev %s'",
+				   "existing ipsec-interface %s is not valid: %s",
 				   str_ipsec_interface(c->ipsec_interface, &ib),
-				   c->ipsec_interface->name);
+				   str_diag(match.diag));
 			return false;
 		}
 	}
