@@ -190,7 +190,7 @@ static struct nl_ifaddrmsg_req init_ifaddrmsg_req(uint16_t type, uint16_t flags,
 	return req;
 }
 
-static bool ip_link_set_up(const char *if_name, struct verbose verbose)
+static bool ip_link_xfrm_up(const char *if_name, struct verbose verbose)
 {
 	vdbg("%s() if_name %s", __func__, if_name);
 	verbose.level++;
@@ -907,7 +907,7 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	.ip_addr_del = ip_addr_xfrmi_del,
 	.ip_addr_find_on_if = ip_addr_xfrmi_find_on_if,
 
-	.ip_link_set_up = ip_link_set_up,
+	.ip_link_up = ip_link_xfrm_up,
 	.ip_link_add = ip_link_add,
 	.ip_link_del = ip_link_del,
 

@@ -47,8 +47,8 @@ struct kernel_ipsec_interface {
 			    const uint32_t ipsec_if_id,
 			    const struct iface_device *physical_device,
 			    struct verbose verbose);
-	bool (*ip_link_set_up)(const char *ipsec_if_name,
-			       struct verbose verbose);
+	bool (*ip_link_up)(const char *ipsec_if_name,
+			   struct verbose verbose);
 	bool (*ip_link_del)(const char *ipsec_if_name /*non-NULL*/,
 			    struct verbose verbose);
 

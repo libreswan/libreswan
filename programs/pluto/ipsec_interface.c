@@ -293,7 +293,8 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 	}
 
-	return kernel_ops->ipsec_interface->ip_link_set_up(c->ipsec_interface->name, verbose);
+	/* make certain that the interface is up */
+	return kernel_ops->ipsec_interface->ip_link_up(c->ipsec_interface->name, verbose);
 }
 
 static void remove_kernel_ipsec_interface_address(const struct connection *c,
