@@ -98,27 +98,9 @@ struct nl_ifaddrmsg_req {
 	size_t maxlen;
 };
 
-struct ifinfo_response {
-	struct ifinfo_req {
-		const char *if_name;
-		uint32_t xfrm_if_id;
-		bool filter_xfrm_if_id /* because if_id can also be zero */;
-	} filter_data;
-
-	/* Which fields were matched while reading the NL response */
-	struct ifinfo_match {
-		bool name;
-		bool kind /* aka type in, "ip link show type xfrm" */;
-		bool xfrm_if_id /* xfrm if_id */;
-	} matched;
-
-	struct {
-		bool ok; /* final result true success */
-		uint32 dev_if_id;
-		uint32 xfrm_if_id;
-		char name[IF_NAMESIZE+1];
-		struct ipsec_interface_address *if_ips;
-	} result;
+struct linux_netlink_context {
+	struct getaddr_context *getaddr;
+	struct getlink_context *getlink;
 };
 
 /* -1 missing; 0 uninitialized; 1 present */
@@ -326,102 +308,116 @@ static int ip_addr_xfrmi_del(const char *if_name,
 			    if_name, xfrmi_ipaddr, verbose);
 }
 
-static bool parse_xfrm_linkinfo_data(struct rtattr *attribute, const char *if_name,
-				     struct ifinfo_response *ifi_rsp, struct verbose verbose)
-{
-	vdbg("%s() start", __func__);
-	verbose.level++;
-	const struct rtattr *dev_if_id_attr = NULL;
-	const struct rtattr *xfrm_if_id_attr = NULL;
+/*
+ * Find or verify an ipsec-interface using netlink's GETLINK.
+ */
 
-	if (if_name == NULL) {
-		llog_pexpect(verbose.logger, HERE, "NULL if_name");
-		return false; /* abort */
-	}
+struct getlink_context {
+	struct ip_link_match *match;
+
+	struct {
+		bool ok; /* final result true success */
+		uint32 xfrm_link;
+		uint32 xfrm_if_id;
+	} result;
+};
+
+static void match_getlink_info_data(struct rtattr *attribute,
+				    const char *if_name,
+				    struct getlink_context *ifi_rsp,
+				    struct verbose verbose)
+{
+	vdbg("%s() start %s", __func__, if_name);
+	verbose.level++;
+
+	const struct rtattr *xfrm_link_attr = NULL;
+	const struct rtattr *xfrm_if_id_attr = NULL;
 
 	for (struct rtattr *nested_attrib = (struct rtattr *) RTA_DATA(attribute);
 	     RTA_OK(nested_attrib, attribute->rta_len);
 	     nested_attrib = RTA_NEXT(nested_attrib, attribute->rta_len)) {
 
 		if (nested_attrib->rta_type == IFLA_XFRM_LINK) {
-			vdbg("%s() %s found IFLA_XFRM_LINK aka dev_if_id_attr",
-			     __func__, if_name);
-			dev_if_id_attr = nested_attrib;
+			vdbg("%s found IFLA_XFRM_LINK", if_name);
+			xfrm_link_attr = nested_attrib;
 		}
 
 		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID) {
-			vdbg("%s() %s found IFLA_XFRM_IF_ID aka if_id_attr",
-			     __func__, if_name);
+			vdbg("%s found IFLA_XFRM_IF_ID", if_name);
 			xfrm_if_id_attr = nested_attrib;
 		}
 	}
 
-	if (dev_if_id_attr != NULL) {
-		/* XXX: portable? */
-		uint32_t dev_if_id = *((const uint32_t *)RTA_DATA(dev_if_id_attr));
-		if (dev_if_id == 0) {
-			/* not good! see if_nametoindex() */
-			llog_error(verbose.logger, 0/*no-error*/,
-				   "%s has an xfrm device ifindex (RTA_LINK) of 0", if_name);
-			return true; /* stumble on */
-		}
-		ifi_rsp->result.dev_if_id = dev_if_id;
-		vdbg("%s() %s setting .result.dev_if_id to %d",
-		     __func__, if_name, dev_if_id);
+	/*
+	 * An ipsec-interface must have a valid link (aka physical
+	 * device).  If it doesn't return, caller will move onto the
+	 * next one.
+	 */
+
+	if (xfrm_link_attr == NULL) {
+		vdbg("%s failed, xfrm_link_attr not found", if_name);
+		return;
 	}
 
+	/* XXX: portable? */
+	uint32_t xfrm_link = *((const uint32_t *)RTA_DATA(xfrm_link_attr));
+	if (xfrm_link == 0) {
+		/* not good! see if_nametoindex() */
+		llog_error(verbose.logger, 0/*no-error*/,
+			   "%s has an xfrm device ifindex (RTA_LINK) of 0", if_name);
+		return;
+	}
+	vdbg("found %s .xfrm_link %d", if_name, xfrm_link);
+
+	/*
+	 * The device also needs its ID
+	 */
+
 	if (xfrm_if_id_attr == NULL) {
-		vdbg("%s() %s failed, xfrm_if_id_attr not found",
-		     __func__, if_name);
-		return false;
+		vdbg("%s failed, xfrm_if_id_attr not found", if_name);
+		return;
 	}
 
 	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(xfrm_if_id_attr));
-	if (ifi_rsp->filter_data.filter_xfrm_if_id) {
-		if (xfrm_if_id != ifi_rsp->filter_data.xfrm_if_id) {
-			vdbg("%s() %s failed, xfrm_if_id %d did not match .filter_data.xfrm_if_id %d",
-			     __func__, if_name, xfrm_if_id, ifi_rsp->filter_data.xfrm_if_id);
-			return false;
-		}
-
-		vdbg("%s() %s xfrm_if_id %d matched; saving",
-		     __func__, if_name, xfrm_if_id);
-		ifi_rsp->result.xfrm_if_id = xfrm_if_id;
-		ifi_rsp->matched.xfrm_if_id = true;
+	if (ifi_rsp->match->wildcard) {
+		vdbg("%s wildcard matched xfrm_if_id %d", if_name, xfrm_if_id);
+	} else if (xfrm_if_id == ifi_rsp->match->ipsec_if_id) {
+		vdbg("%s matched xfrm_if_id %d matched", if_name, xfrm_if_id);
 	} else {
-		vdbg("%s() %s wildcard matched xfrm_if_id %d, setting .result.if_id",
-		     __func__, if_name, xfrm_if_id);
-		ifi_rsp->result.xfrm_if_id = xfrm_if_id;
+		vdbg("%s failed, xfrm_if_id %d did not match .match.ipsec_if_id %d",
+		     if_name, xfrm_if_id, ifi_rsp->match->ipsec_if_id);
+		return;
 	}
 
-	/* trust kernel if_name != NULL */
-	jam_str(ifi_rsp->result.name, sizeof(ifi_rsp->result.name), if_name);
-
 	/* if it came this far found what we looking for */
-	vdbg("%s() %s setting .result = true; .dev_if_id=%d; .if_id=%d .matched.xfrm_if_id=%s",
+	vdbg("%s() %s setting .result = true; .xfrm_link=%d; .xfrm_if_id=%d",
 	     __func__, if_name,
-	     ifi_rsp->result.dev_if_id,
-	     ifi_rsp->result.xfrm_if_id, bool_str(ifi_rsp->matched.xfrm_if_id));
+	     ifi_rsp->result.xfrm_link, ifi_rsp->result.xfrm_if_id);
+	jam_str(ifi_rsp->match->found, sizeof(ifi_rsp->match->found), if_name);
+	ifi_rsp->result.xfrm_link = xfrm_link;
+	ifi_rsp->result.xfrm_if_id = xfrm_if_id;
 	ifi_rsp->result.ok = true;
-	return true;
+	return; /* this one is good! */
 }
 
-static bool parse_link_info_xfrm(struct rtattr *attribute, const char *if_name,
-				 struct ifinfo_response *ifi_rsp,
-				 struct verbose verbose)
+static void match_getlink_linkinfo(struct rtattr *attribute, const char *if_name,
+				   struct getlink_context *ifi_rsp,
+				   struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
-	struct rtattr *nested_attrib;
+
+	bool matched_kind = false;
 	struct rtattr *info_data_attr = NULL;
 	ssize_t len = attribute->rta_len;
-	for (nested_attrib = (struct rtattr *) RTA_DATA(attribute);
-			RTA_OK(nested_attrib, len);
-			nested_attrib = RTA_NEXT(nested_attrib, len)) {
+	for (struct rtattr *nested_attrib = (struct rtattr *) RTA_DATA(attribute);
+	     RTA_OK(nested_attrib, len);
+	     nested_attrib = RTA_NEXT(nested_attrib, len)) {
+
 		if (nested_attrib->rta_type == IFLA_INFO_KIND) {
 			const char *kind_str = RTA_DATA(nested_attrib);
 			if (streq("xfrm", kind_str)) {
-				ifi_rsp->matched.kind = true;
+				matched_kind = true;
 			}
 		}
 
@@ -430,27 +426,37 @@ static bool parse_link_info_xfrm(struct rtattr *attribute, const char *if_name,
 		}
 	}
 
-	if (ifi_rsp->matched.kind && info_data_attr != NULL) {
-		return parse_xfrm_linkinfo_data(info_data_attr, if_name, ifi_rsp, verbose);
+	if (!matched_kind) {
+		vlog("INFO_KIND did not match 'xfrm'");
+		return;
 	}
 
-	return false;
+	if (info_data_attr == NULL) {
+		vlog("INFO_DATA was not found");
+		return;
+	}
+
+	match_getlink_info_data(info_data_attr, if_name, ifi_rsp, verbose);
 }
 
-static void parse_newlink_msg(struct nlmsghdr *nlmsg,
-			      struct ifinfo_response *ifi_rsp,
-			      struct verbose verbose)
+/*
+ * Return TRUE when stumbling on; FALSE when stopping.
+ */
+
+static bool parse_getlink_newlink_response(struct nlmsghdr *nlmsg,
+					   struct getlink_context *ifi_rsp,
+					   struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
 
-	struct rtattr *attribute;
 	struct rtattr *linkinfo_attr =  NULL;
 	struct ifinfomsg *iface = NLMSG_DATA(nlmsg);
 	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*iface));
 	const char *if_name = NULL;
 
-	for (attribute = IFLA_RTA(iface); RTA_OK(attribute, len); attribute = RTA_NEXT(attribute, len)) {
+	for (struct rtattr *attribute = IFLA_RTA(iface); RTA_OK(attribute, len);
+	     attribute = RTA_NEXT(attribute, len)) {
 		switch (attribute->rta_type) {
 		case IFLA_IFNAME:
 			/* XXX: is this guaranteed to be NUL
@@ -468,165 +474,89 @@ static void parse_newlink_msg(struct nlmsghdr *nlmsg,
 	}
 
 	if (if_name == NULL) {
-		vdbg("%s() no if_name", __func__);
-		return;
+		vdbg("no if_name, stumbling on");
+		return true; /* stumble on */
 	}
 
 	if (linkinfo_attr == NULL) {
-		vdbg("%s() no linkinfo_attr", __func__);
-		return;
+		vdbg("no linkinfo_attr, stumbling on");
+		return true; /* stumble on */
 	}
 
-	if (ifi_rsp->filter_data.if_name != NULL) {
-		if (!streq(ifi_rsp->filter_data.if_name, if_name)) {
-			vdbg("%s() if_name %s did not match %s",
-			     __func__, if_name, ifi_rsp->filter_data.if_name);
-		}
-		/* name match requested and matched */
-		ifi_rsp->matched.name = true;
+	if (ifi_rsp->match->wildcard) {
+		vdbg("wildcard so probing %s to see if it matches", if_name);
+	} else if (streq(ifi_rsp->match->ipsec_if_name, if_name)) {
+		vdbg("exact match of %s, checking it is an ipsec-interface", if_name);
+	} else {
+		vdbg("%s is not the correct ipsec-interface, stumbling on", if_name);
+		return true; /* stumble on */
 	}
 
-	if (!parse_link_info_xfrm(linkinfo_attr, if_name, ifi_rsp, verbose)) {
-		vlog("%s() did not parse", __func__);
-		return;
+	match_getlink_linkinfo(linkinfo_attr, if_name, ifi_rsp, verbose);
+
+	if (ifi_rsp->result.ok) {
+		return false; /* success! so stop early */
 	}
 
-	return;
+	if (ifi_rsp->match->wildcard) {
+		vdbg("wildcard, stumbling on");
+		return true; /* stumble on */
+	}
+
+	vdbg("matching ipsec-interface %s isn't valid", if_name);
+	return false;
+
 }
 
-static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
-			      struct ifinfo_response *if_rsp,
-			      struct verbose verbose)
-{
-	struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
-	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa));
-
-	/* Only parse the IP, when the interface index matches */
-	if (ifa->ifa_index != if_nametoindex(if_rsp->filter_data.if_name)) {
-		char if_name_buf[IF_NAMESIZE];
-		if_indextoname(ifa->ifa_index, if_name_buf);
-		vdbg("%s() skipping non-matching message for if_name %s",
-		     __func__, if_name_buf);
-		return;
-	}
-
-	for (struct rtattr *attribute = IFA_RTA(ifa); RTA_OK(attribute, len);
-	     attribute = RTA_NEXT(attribute, len)) {
-		shunk_t attr = shunk2(RTA_DATA(attribute), RTA_PAYLOAD(attribute));
-
-		/*
-		 * Since we only have broadcast interfaces, it is safe
-		 * to only use IFA_ADDRESS to get the local IPv4 or
-		 * IPv6 address from the the xfrm interface.  Skip
-		 * anything else.
-		 */
-		if (attribute->rta_type != IFA_ADDRESS) {
-			vdbg("%s() skipping attr type %d",
-			     __func__, attribute->rta_type);
-			continue;
-		}
-
-		ip_cidr if_ip;
-		diag_t diag = hunk_to_cidr(attr, ifa->ifa_prefixlen,
-					   aftoinfo(ifa->ifa_family), &if_ip);
-		if (diag != NULL) {
-			llog_pexpect(verbose.logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
-			pfree_diag(&diag);
-			return;
-		}
-
-		if (if_rsp->result.name[0] == '\0') {
-			/* Does if_indextoname() guarantee NUL
-			 * termination?  Perhaps.  It does assume
-			 * IF_NAMESIZE buffer.  */
-			if_indextoname(ifa->ifa_index, if_rsp->result.name);
-		}
-
-		alloc_ipsec_interface_address(&if_rsp->result.if_ips, if_ip);
-		vdbg("%s() matching message for if_name %s and ifa_index %d; setting; result = true",
-		     __func__, if_rsp->result.name, ifa->ifa_index);
-		if_rsp->result.ok = true;
-		return;
-	}
-
-	return;
-}
-
-struct linux_netlink_context {
-	struct ifinfo_response *ifi_rsp;
-	struct getaddr_context *getaddr;
-};
-
-static bool process_nlmsg(struct nlmsghdr *nlmsg,
-			  struct linux_netlink_context *c,
-			  struct verbose verbose)
-{
-	struct ifinfo_response *ifi_rsp = c->ifi_rsp;
-	switch (nlmsg->nlmsg_type) {
-	case RTM_NEWLINK:
-		parse_newlink_msg(nlmsg, ifi_rsp, verbose);
-		/* true here means continue scanning */
-		return true;
-
-	case RTM_NEWADDR:
-		parse_newaddr_msg(nlmsg, ifi_rsp, verbose);
-		/* true here means continue scanning */
-		return true;
-	}
-
-	vdbg("ignored message type %d length %d", nlmsg->nlmsg_type,
-	     nlmsg->nlmsg_len);
-	return true;
-}
-
-static bool find_xfrmi_interface(const char *if_name, /* optional */
-				 uint32_t xfrm_if_id, /* 0 is wildcard */
-				 struct verbose verbose)
+static bool parse_getlink_response(struct nlmsghdr *nlmsg,
+				   struct linux_netlink_context *ctx,
+				   struct verbose verbose)
 {
 	vdbg("%s() start", __func__);
 	verbose.level++;
 
-	/* first do a cheap existance check */
-	if (if_name != NULL && if_nametoindex(if_name) == 0) {
-		vdbg("%s() failed, if_nametoindex(%s) returned zero", __func__, if_name);
-		return false;
+	if (nlmsg->nlmsg_type != RTM_NEWLINK) {
+		vdbg("ignored message type %d length %d",
+		     nlmsg->nlmsg_type, nlmsg->nlmsg_len);
+		return true;
 	}
+
+	return parse_getlink_newlink_response(nlmsg, ctx->getlink, verbose);
+}
+
+static bool xfrm_ip_link_match(struct ip_link_match *match,
+			       struct verbose verbose)
+{
+	vdbg("%s() start", __func__);
+	verbose.level++;
+
+	struct getlink_context getlink = {
+		.match = match,
+	};
+
+	struct linux_netlink_context ctx = {
+		.getlink = &getlink,
+	};
 
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_GETLINK, (NLM_F_REQUEST | NLM_F_DUMP));
 
-	struct ifinfo_response ifi_rsp = {
-		.filter_data = {
-			.if_name = if_name,
-			.filter_xfrm_if_id = (xfrm_if_id > 0),
-			.xfrm_if_id = xfrm_if_id,
-		},
-	};
-	struct linux_netlink_context ctx = {
-		.ifi_rsp = &ifi_rsp,
-	};
-
-	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
+	if (!linux_netlink_query(&req.n, NETLINK_ROUTE,
+				 parse_getlink_response,
+				 &ctx, verbose)) {
 		vdbg("%s() failed, linux_netlink_query() failed", __func__);
 		return false;
 	}
 
-	if (!ifi_rsp.result.ok) {
+	if (!getlink.result.ok) {
 		vdbg("%s() failed, no .result", __func__);
 		return false;
 	}
 
-	/*
-	 * XXX: this is old code.
-	 *
-	 * The call to if_indextoname() has been expected to work for
-	 * many years but now 2024 doesn't.  Try to figure out why.
-	 */
-	char if_name_buf[IF_NAMESIZE];
-	const char *name = if_indextoname(ifi_rsp.result.dev_if_id, if_name_buf);
-	vdbg("%s() support found existing %s@%s (xfrm) .result.xfrm_if_id %d %s .result.dev_if_id %d",
-	     __func__, ifi_rsp.result.name, name,
-	     ifi_rsp.result.xfrm_if_id, bool_str(ifi_rsp.matched.xfrm_if_id),
-	     ifi_rsp.result.dev_if_id);
+	char xfrm_link_name[IF_NAMESIZE];
+	if_indextoname(getlink.result.xfrm_link, xfrm_link_name);
+	vdbg("support found existing %s@%s (xfrm) .xfrm_if_id %d .xfrm_link %d",
+	     match->found, xfrm_link_name,
+	     getlink.result.xfrm_if_id, getlink.result.xfrm_link);
 	return true;
 }
 
@@ -768,9 +698,17 @@ static err_t ipsec_support_test(const char *ipsec_if_name /*non-NULL*/,
 	     __func__, ipsec_if_name, ipsec_if_id, physical_if_name);
 	verbose.level++;
 
-	/* match any if_id */
-	if (find_xfrmi_interface(NULL, 0, verbose)) {
-		vdbg("%s() xfrmi interface found", __func__);
+	/*
+	 * Use a wildcard check to match any existing ipsec-interface
+	 * (for instance, a pre-existing "ipsec1").  If it succeeds
+	 * (i.e., there is at least one ipsec-interface) then things
+	 * are working.
+	 */
+	struct ip_link_match match = {
+		.wildcard = true,
+	};
+	if (xfrm_ip_link_match(&match, verbose)) {
+		vdbg("existing xfrmi interface %s found", match.found);
 		return NULL; /* success: there is already xfrmi interface */
 	}
 
@@ -969,8 +907,7 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	.ip_link_up = ip_link_xfrm_up,
 	.ip_link_add = ip_link_add,
 	.ip_link_del = ip_link_del,
-
-	.find_interface = find_xfrmi_interface,
+	.ip_link_match = xfrm_ip_link_match,
 
 	.check_stale_ipsec_interfaces = check_stale_xfrmi_interfaces,
 	.supported = xfrm_iface_supported,

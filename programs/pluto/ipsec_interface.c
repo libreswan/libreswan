@@ -268,14 +268,18 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		c->ipsec_interface->pluto_added = true;
 	} else {
 		/*
-		 * Device exists: try to match name, cidr, and if_id.
+		 * Device exists: check that it matches IPSEC_IF_NAME
+		 * and IPSEC_IF_ID.
 		 */
-		if (!kernel_ops->ipsec_interface->find_interface(c->ipsec_interface->name,
-								 c->ipsec_interface->if_id,
-								 verbose)) {
-			/* found wrong device abort adding */
+		struct ip_link_match match = {
+			.ipsec_if_name = c->ipsec_interface->name,
+			.ipsec_if_id = c->ipsec_interface->if_id,
+			.wildcard = false,
+		};
+		if (!kernel_ops->ipsec_interface->ip_link_match(&match, verbose)) {
+			/* .NAME isn't suitable */
 			llog_error(verbose.logger, 0/*no-errno*/,
-				   "device %s exists but do not match expected type, XFRM if_id %u, or XFRM device is invalid; check 'ip -d link show dev %s'",
+				   "device %s exists but do not match expected type, ipsec-interface %u, or XFRM device is invalid; check 'ip -d link show dev %s'",
 				   c->ipsec_interface->name, c->ipsec_interface->if_id, c->ipsec_interface->name);
 			return false;
 		}

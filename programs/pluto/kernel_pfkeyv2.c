@@ -36,6 +36,7 @@
 #include "initiate.h"
 #include "acquire.h"
 #include "server.h"		/* for add_fd_read_listener() */
+#include "ipsec_interface.h"
 #include "kernel_ipsec_interface.h"
 
 static pid_t pfkeyv2_pid;

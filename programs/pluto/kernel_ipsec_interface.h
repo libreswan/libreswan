@@ -23,6 +23,14 @@ struct ipsec_interface_address;
 struct ipsec_interface;
 struct iface_device;
 
+struct ip_link_match {
+	bool wildcard; /* match any valid ipsec-interface */
+	const char *ipsec_if_name;
+	/* BSD can have zero?  Linux remaps 0 */
+	uint32_t ipsec_if_id; /* only when !wildcard */
+	char found[IFNAMSIZ];
+};
+
 struct kernel_ipsec_interface {
 	const char *name;
 	/*
@@ -51,9 +59,8 @@ struct kernel_ipsec_interface {
 	bool (*ip_link_del)(const char *ipsec_if_name /*non-NULL*/,
 			    struct verbose verbose);
 
-	bool (*find_interface)(const char *ipsec_if_name, /* optional */
-			       uint32_t ipsec_if_id, /* 0 is wildcard */
-			       struct verbose verbose);
+	bool (*ip_link_match)(struct ip_link_match *match,
+			     struct verbose verbose);
 
 	void (*check_stale_ipsec_interfaces)(struct logger *logger);
 	err_t (*supported)(struct verbose verbose);
