@@ -81,4 +81,8 @@ struct verbose {
 		}							\
 	}
 
+#define vbad(BAD) PBAD(verbose.logger, BAD)
+#define vexpect(EXPECT) PEXPECT(verbose.logger, EXPECT)
+#define vassert(ASSERT) PASSERT(verbose.logger, ASSERT)
+
 #endif
