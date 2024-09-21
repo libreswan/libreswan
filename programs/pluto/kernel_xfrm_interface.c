@@ -810,14 +810,18 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 		err = ipsec_support_test(ipsec1_if_name, IPSEC1_XFRM_IF_ID, lo, verbose);
 	}
 
-	if (PBAD(verbose.logger, xfrm_interface_support < 0 && err == NULL)) {
+	if (vbad(xfrm_interface_support < 0 && err == NULL)) {
 		err = "may be missing CONFIG_XFRM_INTERFACE support in kernel";
 	}
 
 	return err;
 }
 
-/* at start call this to see if there are any stale interface lying around. */
+/*
+ * During startup call this to see if there are any stale interface
+ * lying around.
+ */
+
 static void check_stale_xfrmi_interfaces(struct logger *logger)
 {
 	/*
@@ -829,20 +833,24 @@ static void check_stale_xfrmi_interfaces(struct logger *logger)
 	ipsec_interface_id_buf ifb;
 	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
 
-	unsigned int if_id = if_nametoindex(if_name);
-	if (if_id != 0) {
+	unsigned int if_index = if_nametoindex(if_name);
+	int e = errno;
+	if (if_index != 0) {
 		llog(RC_LOG, logger,
-			    "found an unexpected interface %s if_id=%u From previous pluto run?",
-			    if_name, if_id);
+		     "found an unexpected interface %s if_index=%u From previous pluto run?",
+		     if_name, if_index);
 		return; /* ERROR */
 	}
-	if (errno == ENXIO || errno == ENODEV) {
-		ldbg(logger, "no stale xfrmi interface '%s' found", if_name);
-	} else {
-		llog_error(logger, errno,
-			   "failed stale_xfrmi_interfaces() call if_nametoindex('%s')", if_name);
+
+	if (e != ENXIO && e != ENODEV) {
+		llog_error(logger, e,
+			   "in %s() if_nametoindex('%s') failed: ",
+			   __func__, if_name);
 		return;
 	}
+
+	ldbg(logger, "no stale xfrmi interface '%s' found", if_name);
+	return;
 }
 
 static void free_xfrmi_ipsec1(struct verbose verbose)
