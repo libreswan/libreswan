@@ -554,6 +554,7 @@ static void parse_newaddr_msg(struct nlmsghdr *nlmsg,
 
 struct linux_netlink_context {
 	struct ifinfo_response *ifi_rsp;
+	struct getaddr_context *getaddr;
 };
 
 static bool process_nlmsg(struct nlmsghdr *nlmsg,
@@ -629,75 +630,133 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	return true;
 }
 
-/* Get all of the IP addresses on an XFRMi interface using Netlink */
-static struct ipsec_interface_address *ip_addr_xfrmi_get_all_ips(const char *if_name,
-								 uint32_t xfrm_if_id,
-								 struct verbose verbose)
+/*
+ * See if the specified CIDR is on the interface.
+ */
+
+struct getaddr_context {
+	struct {
+		unsigned ipsec_if_index;
+		ip_cidr cidr;
+	} match;
+
+	struct {
+		bool ok; /* final result true success */
+	} result;
+};
+
+static bool parse_getaddr_newaddr_response(struct nlmsghdr *nlmsg,
+					   struct getaddr_context *if_rsp,
+					   struct verbose verbose)
 {
-	vdbg("%s() if_name %s xfrm_if_id %u", __func__, if_name, xfrm_if_id);
+	vdbg("%s() start", __func__);
+	verbose.level++;
 
+	struct ifaddrmsg *ifa = NLMSG_DATA(nlmsg);
+	int len = nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa));
+
+	/* Only parse the IP, when the interface index matches */
+	char if_name[IF_NAMESIZE] = "???";
+	if_indextoname(ifa->ifa_index, if_name);
+	if (ifa->ifa_index != if_rsp->match.ipsec_if_index) {
+		vdbg("skipping %s, ifa_index %u did not match ipsec_if_index %u",
+		     if_name, ifa->ifa_index, if_rsp->match.ipsec_if_index);
+		return true; /* try again */
+	}
+
+	for (struct rtattr *attribute = IFA_RTA(ifa); RTA_OK(attribute, len);
+	     attribute = RTA_NEXT(attribute, len)) {
+		shunk_t attr = shunk2(RTA_DATA(attribute), RTA_PAYLOAD(attribute));
+
+		/*
+		 * Since we only have broadcast interfaces, it is safe
+		 * to only use IFA_ADDRESS to get the local IPv4 or
+		 * IPv6 address from the the xfrm interface.  Skip
+		 * anything else.
+		 */
+		if (attribute->rta_type != IFA_ADDRESS) {
+			vdbg("skipping %s attr type %d", if_name, attribute->rta_type);
+			continue;
+		}
+
+		ip_cidr if_cidr;
+		diag_t diag = hunk_to_cidr(attr, ifa->ifa_prefixlen,
+					   aftoinfo(ifa->ifa_family),
+					   &if_cidr);
+		if (diag != NULL) {
+			llog_pexpect(verbose.logger, HERE, "invalid XFRMI address: %s", str_diag(diag));
+			pfree_diag(&diag);
+			return false; /* disaster; stop processing */
+		}
+
+		if (!cidr_eq_cidr(if_cidr, if_rsp->match.cidr)) {
+			cidr_buf cb;
+			vdbg("skipping %s cidr %s", if_name, str_cidr(&if_cidr, &cb));
+			continue;
+		}
+
+		cidr_buf cb;
+		vdbg("interface %s has matching index %d and cidr %s",
+		     if_name, ifa->ifa_index, str_cidr(&if_cidr, &cb));
+		if_rsp->result.ok = true; /* found!!! */
+		return false;  /* stop looking */
+	}
+
+	return true; /* try again */
+}
+
+static bool parse_getaddr_response(struct nlmsghdr *nlmsg,
+				   struct linux_netlink_context *ctx,
+				   struct verbose verbose)
+{
+	vdbg("%s() message type %d length %d",
+	     __func__, nlmsg->nlmsg_type, nlmsg->nlmsg_len);
+	verbose.level++;
+
+	if (nlmsg->nlmsg_type != RTM_NEWADDR) {
+		vdbg("ignored message");
+		return true;
+	}
+
+	return parse_getaddr_newaddr_response(nlmsg, ctx->getaddr, verbose);
+}
+
+static bool ip_addr_xfrmi_if_has_cidr(const char *ipsec_if_name,
+				      ip_cidr search_cidr,
+				      struct verbose verbose)
+{
 	/* first do a cheap check */
-	PASSERT(verbose.logger, if_name != NULL);
-	PEXPECT(verbose.logger, if_nametoindex(if_name) != 0);
+	vassert(ipsec_if_name != NULL);
 
-	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(RTM_GETADDR, (NLM_F_DUMP | NLM_F_REQUEST),
-							 if_name, &unspec_ip_info);
-
-	struct ifinfo_response ifi_rsp = {
-		.filter_data.if_name = if_name,
-		.filter_data.xfrm_if_id = xfrm_if_id,
-		.filter_data.filter_xfrm_if_id = (xfrm_if_id > 0),
+	struct getaddr_context getaddr = {
+		.match.ipsec_if_index = if_nametoindex(ipsec_if_name),
+		.match.cidr = search_cidr,
 	};
+
+	if (vbad(getaddr.match.ipsec_if_index == 0)) {
+		return NULL;
+	}
 
 	struct linux_netlink_context ctx = {
-		.ifi_rsp = &ifi_rsp,
+		.getaddr = &getaddr,
 	};
 
-	if (!linux_netlink_query(&req.n, NETLINK_ROUTE, process_nlmsg, &ctx, verbose)) {
+	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(RTM_GETADDR,
+							 (NLM_F_DUMP | NLM_F_REQUEST),
+							 ipsec_if_name,
+							 &unspec_ip_info);
+
+
+	if (!linux_netlink_query(&req.n, NETLINK_ROUTE,
+				 parse_getaddr_response,
+				 &ctx, verbose)) {
 		/* netlink error */
 		llog_error(verbose.logger, 0/*no-errno*/,
 			   "%s() request for all IPs failed", __func__);
-		return NULL;
-	}
-
-	if (!ifi_rsp.result.ok) {
-		vdbg("%s() no IPs found on interface; that's ok", __func__);
-		return NULL;
-	}
-
-	return ifi_rsp.result.if_ips;
-}
-
-/* Wrapper function for ip_addr_xfrmi_get_all_ips() to find an IP on an
- * XFRMi interface.
- * Returns true if the IP address is found on the IF, false otherwise. */
-
-static bool ip_addr_xfrmi_find_on_if(struct ipsec_interface *xfrmi,
-				     ip_cidr *search_ip,
-				     struct verbose verbose)
-{
-	if (if_nametoindex(xfrmi->name) == 0) {
-		llog_error(verbose.logger, errno, "device does not exist [%s]: ", xfrmi->name);
 		return false;
 	}
 
-	struct ipsec_interface_address *if_ips =
-		ip_addr_xfrmi_get_all_ips(xfrmi->name, xfrmi->if_id, verbose);
-	if (if_ips == NULL) {
-		return false;
-	}
-
-	/* Iterate the IPs to find a match */
-	bool found = false;
-	for (struct ipsec_interface_address *x = if_ips; x != NULL; x = x->next) {
-		if (cidr_eq_cidr(*search_ip, x->if_ip)) {
-			found = true;
-			break;
-		}
-	}
-
-	free_ipsec_interface_address_list(if_ips, verbose.logger);
-	return found;
+	return getaddr.result.ok; /* found */
 }
 
 static err_t ipsec_support_test(const char *ipsec_if_name /*non-NULL*/,
@@ -903,9 +962,9 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	 */
 	.map_if_id_zero = 16384,
 
+	.ip_addr_if_has_cidr = ip_addr_xfrmi_if_has_cidr,
 	.ip_addr_add = ip_addr_xfrmi_add,
 	.ip_addr_del = ip_addr_xfrmi_del,
-	.ip_addr_find_on_if = ip_addr_xfrmi_find_on_if,
 
 	.ip_link_up = ip_link_xfrm_up,
 	.ip_link_add = ip_link_add,

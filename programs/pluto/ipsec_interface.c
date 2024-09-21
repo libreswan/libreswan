@@ -215,11 +215,15 @@ static bool add_kernel_ipsec_interface_address(const struct connection *c,
 		addref_where(conn_address, HERE);
 	}
 
-	/* Check if the IP is already defined on the interface */
-	bool ip_on_if = kernel_ops->ipsec_interface->ip_addr_find_on_if(c->ipsec_interface,
-									&conn_address->if_ip,
-									verbose);
-	if (ip_on_if == false) {
+	/*
+	 * Check if the IP is already defined on the interface.
+	 *
+	 * If it isn't add it, and flag it as such (pluto will need to
+	 * delete it).
+	 */
+	if (!kernel_ops->ipsec_interface->ip_addr_if_has_cidr(c->ipsec_interface->name,
+							      conn_address->if_ip,
+							      verbose)) {
 		conn_address->pluto_added = true;
 		if (!kernel_ops->ipsec_interface->ip_addr_add(c->ipsec_interface->name,
 							      conn_address, verbose)) {

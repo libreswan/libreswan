@@ -32,16 +32,15 @@ struct kernel_ipsec_interface {
 	 */
 	uint32_t map_if_id_zero;
 
-	/* placeholders */
-	int (*ip_addr_del)(const char *ipsec_if_name,
-			   const struct ipsec_interface_address *xfrmi_ipaddr,
-			   struct verbose verbose);
-	bool (*ip_addr_find_on_if)(struct ipsec_interface *xfrmi,
-				   ip_cidr *search_ip,
-				   struct verbose verbose);
+	bool (*ip_addr_if_has_cidr)(const char *ipsec_if_name,
+				    ip_cidr cidr,
+				    struct verbose verbose);
 	bool (*ip_addr_add)(const char *ipsec_if_name,
 			    const struct ipsec_interface_address *xfrmi_ipaddr,
 			    struct verbose verbose);
+	int (*ip_addr_del)(const char *ipsec_if_name,
+			   const struct ipsec_interface_address *xfrmi_ipaddr,
+			   struct verbose verbose);
 
 	bool (*ip_link_add)(const char *ipsec_if_name /*non-NULL*/,
 			    const uint32_t ipsec_if_id,
