@@ -64,6 +64,13 @@ struct ipsec_interface {
 	struct ipsec_interface *next;
 };
 
+typedef struct {
+	char buf[IFNAMSIZ+7/*[16384]*/+1/*@*/+IFNAMSIZ+1/*NUL*/+1/*CANARY*/];
+} ipsec_interface_buf;
+
+size_t jam_ipsec_interface(struct jambuf *buf, const struct ipsec_interface *ipsec_if);
+const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if, ipsec_interface_buf *buf);
+
 /* Both add_ipsec_interface() return true on success, false otherwise */
 
 diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_interface);
@@ -80,12 +87,7 @@ void remove_kernel_ipsec_interface(const struct connection *c, struct logger *lo
 void shutdown_kernel_ipsec_interface(struct logger *logger);
 void check_stale_ipsec_interfaces(struct logger *logger);
 
-/* utilities; may at some point be made static */
-typedef struct {
-	char buf[IFNAMSIZ+1/*@*/+IFNAMSIZ+1/*NUL*/+1/*CANARY*/];
-} ipsec_interface_buf;
-
 size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t if_id);
-char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_buf *buf);
+const char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_buf *buf);
 
 #endif
