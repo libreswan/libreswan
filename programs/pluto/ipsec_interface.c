@@ -335,14 +335,6 @@ bool add_kernel_ipsec_interface_address(const struct connection *c,
 		return false;
 	}
 
-	/*
-	 * Save the name for logging.  Should take a reference to
-	 * iface but that will end up wrong when there's a re-orient
-	 * since it isn't triggering a kernel ipsec-interface update.
-	 */
-	jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
-		c->iface->real_device_name);
-
 	if (!add_kernel_ipsec_interface_address_1(c, verbose)) {
 		return false;
 	}
@@ -368,6 +360,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 	/* Note: during orient c->iface is bogus */
 	vassert(iface->real_device_name != NULL);
 
+	bool created;
 	if (if_nametoindex(c->ipsec_interface->name) == 0) {
 		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
 							      c->ipsec_interface->if_id,
@@ -376,10 +369,14 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 		}
 
 		c->ipsec_interface->pluto_added = true;
+		created = true;
 	} else {
 		/*
 		 * Device exists: check that it matches IPSEC_IF_NAME
 		 * and IPSEC_IF_ID and has a valid LINK.
+		 *
+		 * Note: pluto may have added this device during an
+		 * earlier call.
 		 */
 		struct ip_link_match match = {
 			.ipsec_if_name = c->ipsec_interface->name,
@@ -395,6 +392,25 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 				   str_diag(match.diag));
 			return false;
 		}
+		created = false;
+	}
+
+	/*
+	 * Save the name for logging.  Should take a reference to
+	 * iface but that will end up wrong when there's a re-orient
+	 * since it isn't triggering a kernel ipsec-interface update.
+	 */
+	jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
+		c->iface->real_device_name);
+
+	if (created) {
+		ipsec_interface_buf ib;
+		vdbg("added ipsec-interface %s",
+		     str_ipsec_interface(c->ipsec_interface, &ib));
+	} else {
+		ipsec_interface_buf ib;
+		vdbg("linked ipsec-interface %s",
+		     str_ipsec_interface(c->ipsec_interface, &ib));
 	}
 
 	return true;
