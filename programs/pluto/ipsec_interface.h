@@ -51,10 +51,13 @@ void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifa
 
 struct ipsec_interface {
 	refcnt_t refcnt;
-	char name[IFNAMSIZ];	/* ipsec<ipsec-interface> */
-	uint32_t if_id;		/* <ipsec-interface> but with 0
-				 * re-mapped on linux; derived from
-				 * IFLA_XFRM_IF_ID */
+	char name[IFNAMSIZ];		/* ipsec<ipsec-interface> */
+	char physical[IFNAMSIZ];	/* name of physical (link)
+					 * device; if known */
+	uint32_t if_id;			/* <ipsec-interface> but with
+					 * 0 re-mapped on linux;
+					 * derived from
+					 * IFLA_XFRM_IF_ID */
 	struct ipsec_interface_address *if_ips;
 				/* ref-counted IPs on this IF;
 				 * ref-counted as multiple connections

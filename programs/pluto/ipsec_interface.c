@@ -15,6 +15,8 @@
  * for more details.
  */
 
+#include <errno.h>
+
 #include "passert.h"
 #include "sparse_names.h"
 
@@ -72,6 +74,10 @@ size_t jam_ipsec_interface(struct jambuf *buf,
 	s += jam_string(buf, ipsec_if->name);
 	if (ipsec_if->if_id == kernel_ops->ipsec_interface->map_if_id_zero) {
 		s += jam(buf, "[%u]", kernel_ops->ipsec_interface->map_if_id_zero);
+	}
+	if (ipsec_if->physical[0] != '\0') {
+		s += jam_string(buf, "@");
+		s += jam_string(buf, ipsec_if->physical);
 	}
 	return s;
 }
@@ -279,7 +285,18 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		return true;
 	}
 
-	vassert(c->iface->real_device_name != NULL);
+	if (vbad(c->iface == NULL) ||
+	    vbad(c->iface->real_device_name == NULL)) {
+		return false;
+	}
+
+	/*
+	 * Save the name for logging.  Should take a reference to
+	 * iface but that will end up wrong when there's a re-orient
+	 * since it isn't triggering a kernel ipsec-interface update.
+	 */
+	jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
+		c->iface->real_device_name);
 
 	if (if_nametoindex(c->ipsec_interface->name) == 0) {
 		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
