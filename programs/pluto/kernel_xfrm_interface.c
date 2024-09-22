@@ -696,36 +696,103 @@ static bool ip_addr_xfrmi_if_has_cidr(const char *ipsec_if_name,
 	return getaddr.result.ok; /* found */
 }
 
-static err_t ipsec_support_test(const char *ipsec_if_name /*non-NULL*/,
-				uint32_t ipsec_if_id,
-				const char *physical_if_name /*non-NULL*/,
-				struct verbose verbose)
+static err_t xfrm_iface_supported(struct verbose verbose)
 {
-	vdbg("%s() testing XFRMi ipsec-interface support using ipsec-if %s/%u physical-if %s",
-	     __func__, ipsec_if_name, ipsec_if_id, physical_if_name);
-	verbose.level++;
+	if (xfrm_interface_support > 0) {
+		return NULL;
+	}
 
 	/*
 	 * Use a wildcard check to match any existing ipsec-interface
 	 * (for instance, a pre-existing "ipsec1").  If it succeeds
-	 * (i.e., there is at least one ipsec-interface) then things
-	 * are working.
+	 * (i.e., there is at least one ipsec-interface that is valid)
+	 * then things are working.
+	 *
+	 * Note: this silently ignores invalid IPsec interfaces.
+	 * Should it instead flag them?  It would mean carefully
+	 * differentiating between several rejection cases.
 	 */
-	struct ip_link_match match = {
+	struct ip_link_match wildcard_match = {
 		.wildcard = true,
 	};
-	if (xfrm_ip_link_match(&match, verbose)) {
-		vdbg("existing xfrmi interface %s found", match.found);
+	if (xfrm_ip_link_match(&wildcard_match, verbose)) {
+		vdbg("existing xfrmi ipsec-interface %s found; ipsec-must be supported",
+		     wildcard_match.found);
+		xfrm_interface_support = 1; /* permanent success */
 		return NULL; /* success: there is already xfrmi interface */
+	}
+
+	/*
+	 * If the previous .supported() call failed, need to re-probe.
+	 * For instance, "ipsec1" may have been present, but has since
+	 * been deleted.
+	 */
+
+	/*
+	 * Try building ipsec-interface device "ipsec1" bound to "lo".
+	 * But only when the interface doesn't already exist.
+	 *
+	 * Interface ipsec0 can't be used as, on linux that gets remapped.
+	 */
+
+	const uint32_t ipsec_if_id = 1; /* NOT ZERO ON LINUX */
+	const char ipsec_if_name[] = "ipsec1";
+	unsigned int ipsec_if_index = if_nametoindex(ipsec_if_name);
+	int e = errno; /* save error */
+
+	if (ipsec_if_index != 0) {
+		/*
+		 * The device already exists so can't attempt
+		 * insert/delete.
+		 *
+		 * Presumably the device is invalid.  If it was valid
+		 * above match() call would have found and accepted
+		 * it.  Find out by trying an exact match.
+		 */
+		struct ip_link_match ipsec_match = {
+			.ipsec_if_name = ipsec_if_name,
+			.ipsec_if_id = ipsec_if_id,
+		};
+		if (!xfrm_ip_link_match(&ipsec_match, verbose)) {
+			llog(RC_LOG, verbose.logger,
+			     "ipsec-interface %s exists but is invalid, %s",
+			     ipsec_match.found, str_diag(ipsec_match.diag));
+			pfree_diag(&ipsec_match.diag);
+			return "device name conflict in xfrm_iface_supported()";
+		}
+		llog(RC_LOG, verbose.logger,
+		     "ipsec-interface %s isn't valid when it is? May be leftover from previous pluto?",
+		     ipsec_if_name);
+		return "device name conflict in xfrm_iface_supported()";
+	}
+
+	if (e != ENXIO && e != ENODEV) {
+		/* The device lookup failed!?! */
+		llog_error(verbose.logger, e,
+			   "unexpected error in %s() while checking device %s",
+			   __func__, ipsec_if_name);
+		return "cannot decide xfrmi support. assumed no.";
+	}
+
+	/*
+	 * The device doesn't exist, try to create ipsec1@lo and then
+	 * delete it.
+	 */
+
+	static const char physical_if_name[] = "lo";
+	if (if_nametoindex(physical_if_name) == 0) {
+		/* possibly no need to panic: may be get smarter one
+		 * day */
+		return "could not find real device needed to test xfrmi support";
 	}
 
 	vdbg("trying to create the XFRMi ipsec-interface %s bound to %s",
 	     ipsec_if_name, physical_if_name);
 	if (!nl_newlink(ipsec_if_name, ipsec_if_id, physical_if_name, verbose)) {
-		xfrm_interface_support = -1;
 		llog_error(verbose.logger, 0/*lost-error*/,
 			   "xfrmi is not supported, failed to create ipsec-interface %s bound to %s",
 			   ipsec_if_name, physical_if_name);
+		/* xfrm_interface_support = -1; */
 		return "xfrmi is not supported";
 	}
 
@@ -735,7 +802,6 @@ static err_t ipsec_support_test(const char *ipsec_if_name /*non-NULL*/,
 		llog_error(verbose.logger, errno,
 			   "cannot find test ipsec-interface %s bound to %s: ",
 			   ipsec_if_name, physical_if_name);
-
 		/*
 		 * failed to create xfrmi device.
 		 * assume kernel support is not enabled.
@@ -744,81 +810,15 @@ static err_t ipsec_support_test(const char *ipsec_if_name /*non-NULL*/,
 		 * 'ip link add ipsec1 type xfrm if_id 1 dev lo'
 		 * 'ip -d link show dev ipsec1'
 		 */
-		xfrm_interface_support = -1;
+		/* xfrm_interface_support = -1; */
 		return "missing CONFIG_XFRM_INTERFACE support in kernel";
 	}
 
 	vdbg("xfrmi supported, successfully created %s bound to %s; now deleting it",
 	     ipsec_if_name, physical_if_name);
 	ip_link_del(ipsec_if_name, verbose); /* ignore return value??? */
-	xfrm_interface_support = 1; /* success */
-
+	xfrm_interface_support = 1; /* permanent success */
 	return NULL;
-}
-
-static err_t xfrm_iface_supported(struct verbose verbose)
-{
-	err_t err = NULL; /* success */
-
-	if (xfrm_interface_support > 0) {
-		return NULL;
-	}
-
-	/*
-	 * If the previous probe failed, need to re-probe.  For
-	 * instance, "ipsec1" may have been present, but has since
-	 * been deleted.
-	 */
-
-	/*
-	 * Try building ipsec-interface device "ipsec1" bound to "lo".
-	 * But only when the interface doesn't already exist.
-	 */
-
-	static const char lo[] = "lo";
-	if (if_nametoindex(lo) == 0) {
-		/* possibly no need to panic: may be get
-		 * smarter one day */
-		xfrm_interface_support = -1;
-		return "Could not create find real device needed to test xfrmi support";
-	}
-
-	ipsec_interface_buf ifb;
-	const char *ipsec1_if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb); /* must-free */
-	unsigned int ipsec1_if_index = if_nametoindex(ipsec1_if_name);
-	int e = errno; /* save error */
-	if (ipsec1_if_index != 0) {
-		/*
-		 * The device already exists so can't attempt probe.
-		 *
-		 * Should something else be tried such as confirming
-		 * it's ipsec-interface device or something else?
-		 */
-		llog(RC_LOG, verbose.logger,
-		     "conflict %s already exist cannot support xfrm-interface. May be leftover from previous pluto?",
-		     ipsec1_if_name);
-		xfrm_interface_support = -1;
-		err = "device name conflict in xfrm_iface_supported()";
-	} else if (e != ENXIO && e != ENODEV) {
-		/* The device lookup failed!?! */
-		llog_error(verbose.logger, e,
-			   "unexpected error in %s() while checking device %s",
-			   __func__, ipsec1_if_name);
-		xfrm_interface_support = -1;
-		err = "cannot decide xfrmi support. assumed no.";
-	} else {
-		/*
-		 * The device doesn't exist, try to create and then
-		 * delete it.
-		 */
-		err = ipsec_support_test(ipsec1_if_name, IPSEC1_XFRM_IF_ID, lo, verbose);
-	}
-
-	if (vbad(xfrm_interface_support < 0 && err == NULL)) {
-		err = "may be missing CONFIG_XFRM_INTERFACE support in kernel";
-	}
-
-	return err;
 }
 
 /*
