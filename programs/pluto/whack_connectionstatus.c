@@ -714,15 +714,15 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ":  ");
 		/* priority */
 		jam(buf, " conn_prio: %s;", str_connection_priority(c, &prio));
-		/* .interface? id_rname@id_vname? */
+		/* .interface: [id_rname@][id_vname] */
 		jam_string(buf, " interface: ");
+		if (c->config->ipsec_interface.enabled) {
+			jam_ipsec_interface_id(buf, c->config->ipsec_interface.id);
+			jam_string(buf, "@");
+		}
 		if (oriented(c)) {
-			if (c->ipsec_interface != NULL) {
-				jam_string(buf, c->ipsec_interface->name);
-				jam_string(buf, "@");
-			}
 			jam_string(buf, c->iface->real_device_name);
-		};
+		}
 		jam_string(buf, ";");
 		/* .metric */
 		jam(buf, " metric: %u;", c->config->child_sa.metric);

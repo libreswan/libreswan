@@ -378,6 +378,11 @@ struct config {
 		bool insist;
 	} ppk;
 
+	struct {
+		bool enabled;
+		uint32_t id;
+	} ipsec_interface;
+
 	struct config_end end[END_ROOF];
 };
 

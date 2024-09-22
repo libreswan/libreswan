@@ -49,14 +49,23 @@ static struct ipsec_interface *ipsec_interfaces;
  * passert.
  */
 
-size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t if_id)
+static unsigned unmap_id(uint32_t ipsec_if_id)
 {
-	/* remap if_id to ipsec0 as special case */
-	size_t s = jam(buf, "%s%"PRIu32, kernel_ops->ipsec_interface->name,
-		       if_id == kernel_ops->ipsec_interface->map_if_id_zero ? 0  : if_id);
+	if (ipsec_if_id == kernel_ops->ipsec_interface->map_if_id_zero) {
+		return 0;
+	}
+	return ipsec_if_id;
+}
 
-	/* guarentee buf, including trailing NULL fits in IFNAMSIZE */
-	passert(s < IFNAMSIZ);
+size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t ipsec_if_id)
+{
+	/* Map the IPSEC_IF_ID back to the name's number, when
+	 * needed */
+	unsigned id = unmap_id(ipsec_if_id);
+	size_t s = jam(buf, "%s%u", kernel_ops->ipsec_interface->name, id);
+	if (id != ipsec_if_id) {
+		jam(buf, "[%"PRIu32"]", ipsec_if_id);
+	}
 	return s;
 }
 
@@ -76,10 +85,9 @@ size_t jam_ipsec_interface(struct jambuf *buf,
 	}
 
 	size_t s = 0;
-	s += jam_string(buf, ipsec_if->name);
-	if (ipsec_if->if_id == kernel_ops->ipsec_interface->map_if_id_zero) {
-		s += jam(buf, "[%u]", kernel_ops->ipsec_interface->map_if_id_zero);
-	}
+	/* ipsecN[M] */
+	s += jam_ipsec_interface_id(buf, ipsec_if->if_id);
+	/* @eth0 */
 	if (ipsec_if->physical[0] != '\0') {
 		s += jam_string(buf, "@");
 		s += jam_string(buf, ipsec_if->physical);
@@ -494,20 +502,24 @@ static struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
 	return ret;
 }
 
-static struct ipsec_interface *alloc_ipsec_interface(const char *name, uint32_t if_id)
+static struct ipsec_interface *alloc_ipsec_interface(uint32_t ipsec_if_id)
 {
-	struct ipsec_interface **head = &ipsec_interfaces;
 	/*
 	 * Create a new ref-counted ipsec_interface, it is not added
 	 * to system yet.  The call to refcnt_alloc() counts as the
 	 * first reference.
 	 */
 	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, HERE);
-	p->if_id = if_id;
-	jam_str(p->name, sizeof(p->name), name);
+	p->if_id = ipsec_if_id;
+	/* unmap the ID and then generate the name; can't use str*id()
+	 * function above as that appends [] */
+	int l = snprintf(p->name, sizeof(p->name), "%s%u",
+			 kernel_ops->ipsec_interface->name,
+			 unmap_id(ipsec_if_id));
+	passert(l < IFNAMSIZ);
 	/* add to known interfaces */
-	p->next = *head;
-	*head = p;
+	p->next = ipsec_interfaces;
+	ipsec_interfaces = p;
 	return p;
 }
 
@@ -559,9 +571,11 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 	}
 }
 
-diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_interface)
+diag_t parse_ipsec_interface(struct config *config,
+			     const char *ipsec_interface,
+			     struct logger *logger)
 {
-	VERBOSE(c->logger, "adding %s", ipsec_interface);
+	VERBOSE(logger, "adding %s to config", ipsec_interface);
 
 	/*
 	 * Danger; yn_option_names includes "0" and "1" but that isn't
@@ -598,7 +612,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 
 	uint32_t if_id;
 	if (yn != NULL) {
-		PEXPECT(c->logger, yn->value == YN_YES);
+		vexpect(yn->value == YN_YES);
 		if_id = 1; /* YES means 1 */
 	} else {
 		uintmax_t value;
@@ -622,14 +636,33 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 		}
 	}
 
-	vdbg("ipsec-interface=%s parsed to %"PRIu32, ipsec_interface, if_id);
+	ipsec_interface_buf ib;
+	vdbg("ipsec-interface=%s parsed to %s",
+	     ipsec_interface, str_ipsec_interface_id(if_id, &ib));
+
+	config->ipsec_interface.enabled = true;
+	config->ipsec_interface.id = if_id;
+
+	return NULL;
+}
+
+void add_ipsec_interface(struct connection *c)
+{
+	ipsec_interface_buf ifb;
+	VERBOSE(c->logger, "adding %s to connection",
+		str_ipsec_interface_id(c->config->ipsec_interface.id, &ifb));
+
+	if (!vexpect(c->config->ipsec_interface.enabled)) {
+		return;
+	}
 
 	/* check if interface is already used by pluto */
 
-	struct ipsec_interface *ipsec_iface = find_ipsec_interface_by_id(if_id);
+	struct ipsec_interface *ipsec_iface =
+		find_ipsec_interface_by_id(c->config->ipsec_interface.id);
 	if (ipsec_iface != NULL) {
 		c->ipsec_interface = ipsec_interface_addref(ipsec_iface, c->logger, HERE);
-		return NULL;
+		return;
 	}
 
 	/*
@@ -637,11 +670,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 	 * install in the kernel) or probe it.
 	 */
 
-	ipsec_interface_buf ifb;
-	const char *name = str_ipsec_interface_id(if_id, &ifb);
-	c->ipsec_interface = alloc_ipsec_interface(name, if_id);
-
-	return NULL;
+	c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id);
 }
 
 void check_stale_ipsec_interfaces(struct logger *logger)

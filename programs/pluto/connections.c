@@ -3203,9 +3203,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     wm->ipsec_interface);
 		}
 	} else if (wm->ipsec_interface != NULL) {
-		diag_t d = add_connection_ipsec_interface(c, wm->ipsec_interface);
+		diag_t d;
+		d = parse_ipsec_interface(config, wm->ipsec_interface, c->logger);
 		if (d != NULL) {
 			return d;
+		}
+		/* ignoring ipsec-interface=no */
+		if (config->ipsec_interface.enabled) {
+			add_ipsec_interface(c);
 		}
 	}
 
