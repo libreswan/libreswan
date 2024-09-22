@@ -82,10 +82,10 @@ void check_stale_ipsec_interfaces(struct logger *logger);
 
 /* utilities; may at some point be made static */
 typedef struct {
-	char buf[IFNAMSIZ+1/*NULL*/+1/*CANARY*/];
-} ipsec_interface_id_buf;
+	char buf[IFNAMSIZ+1/*@*/+IFNAMSIZ+1/*NUL*/+1/*CANARY*/];
+} ipsec_interface_buf;
 
 size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t if_id);
-char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_id_buf *buf);
+char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_buf *buf);
 
 #endif

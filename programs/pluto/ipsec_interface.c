@@ -53,7 +53,7 @@ size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t if_id)
 	return s;
 }
 
-char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_id_buf *buf)
+char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_buf *buf)
 {
 	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
 	jam_ipsec_interface_id(&jb, if_id);
@@ -546,7 +546,7 @@ diag_t add_connection_ipsec_interface(struct connection *c, const char *ipsec_in
 	 * install in the kernel) or probe it.
 	 */
 
-	ipsec_interface_id_buf ifb;
+	ipsec_interface_buf ifb;
 	const char *name = str_ipsec_interface_id(if_id, &ifb);
 	c->ipsec_interface = alloc_ipsec_interface(name, if_id);
 

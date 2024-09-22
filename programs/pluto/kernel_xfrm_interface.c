@@ -776,7 +776,7 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 		return "Could not create find real device needed to test xfrmi support";
 	}
 
-	ipsec_interface_id_buf ifb;
+	ipsec_interface_buf ifb;
 	const char *ipsec1_if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb); /* must-free */
 	unsigned int ipsec1_if_index = if_nametoindex(ipsec1_if_name);
 	int e = errno; /* save error */
@@ -827,7 +827,7 @@ static void check_stale_xfrmi_interfaces(struct logger *logger)
 	 *  note when type foo is not supported would return success, 0
 	 */
 
-	ipsec_interface_id_buf ifb;
+	ipsec_interface_buf ifb;
 	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
 
 	unsigned int if_index = if_nametoindex(if_name);
@@ -855,7 +855,7 @@ static void free_xfrmi_ipsec1(struct verbose verbose)
 	vdbg("%s() ...", __func__);
 	verbose.level++;
 
-	ipsec_interface_id_buf ifb;
+	ipsec_interface_buf ifb;
 	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
 
 	unsigned int if_id = if_nametoindex(if_name);
