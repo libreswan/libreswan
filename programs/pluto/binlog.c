@@ -240,7 +240,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		 pluto_stats_binary,
 		 (conn->iface != NULL ? "push" : "drop"),
 		 conn->name,
-		 (conn->ipsec_interface != NULL && conn->ipsec_interface->name != NULL ? conn->ipsec_interface->name : ""),
+		 (conn->ipsec_interface != NULL ? conn->ipsec_interface->name : ""),
 		 conn->name, tun,
 		 conn->name, p1,
 		 conn->name, p2);

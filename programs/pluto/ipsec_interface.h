@@ -51,7 +51,7 @@ void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifa
 
 struct ipsec_interface {
 	refcnt_t refcnt;
-	char *name;		/* ipsec<ipsec-interface> */
+	char name[IFNAMSIZ];	/* ipsec<ipsec-interface> */
 	uint32_t if_id;		/* <ipsec-interface> but with 0
 				 * re-mapped on linux; derived from
 				 * IFLA_XFRM_IF_ID */

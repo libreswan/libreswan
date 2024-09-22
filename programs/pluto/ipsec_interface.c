@@ -250,8 +250,7 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		return true;
 	}
 
-	passert(c->ipsec_interface->name != NULL);
-	passert(c->iface->real_device_name != NULL);
+	vassert(c->iface->real_device_name != NULL);
 
 	if (if_nametoindex(c->ipsec_interface->name) == 0) {
 		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
@@ -414,7 +413,7 @@ static struct ipsec_interface *alloc_ipsec_interface(const char *name, uint32_t 
 	 */
 	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, HERE);
 	p->if_id = if_id;
-	p->name = clone_str(name, "ipsec_interface name");
+	jam_str(p->name, sizeof(p->name), name);
 	/* add to known interfaces */
 	p->next = *head;
 	*head = p;
@@ -456,7 +455,6 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 				 * pluto).
 				 */
 				free_ipsec_interface_address_list(ipsec_interface->if_ips, logger);
-				pfreeany(ipsec_interface->name);
 				pfreeany(ipsec_interface);
 				return;
 			}

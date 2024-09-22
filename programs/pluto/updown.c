@@ -96,8 +96,7 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDstr("PLUTO_CONNECTION", c->name);
 	JDstr("PLUTO_CONNECTION_TYPE", (tunneling ? "tunnel" : "transport"));
-	JDstr("PLUTO_VIRT_INTERFACE", (c->ipsec_interface != NULL && c->ipsec_interface->name != NULL) ?
-		c->ipsec_interface->name : "NULL");
+	JDstr("PLUTO_VIRT_INTERFACE", (c->ipsec_interface != NULL ? c->ipsec_interface->name : "NULL"));
 	JDstr("PLUTO_INTERFACE", c->iface == NULL ? "NULL" : c->iface->real_device_name);
 	JDstr("PLUTO_XFRMI_ROUTE",  (c->ipsec_interface != NULL && c->ipsec_interface->if_id > 0) ? "yes" : "");
 
