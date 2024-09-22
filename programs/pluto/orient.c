@@ -35,6 +35,7 @@
 #include "terminate.h"
 #include "sparse_names.h"
 #include "initiate.h"
+#include "ipsec_interface.h"
 
 static void terminate_and_disorient_connection(struct connection *c,
 					       where_t where)
@@ -63,6 +64,7 @@ void disorient(struct connection *c)
 	if (oriented(c)) {
 		iface_device_delref(&c->iface);
 		PASSERT(c->logger, !oriented(c));
+		ipsec_interface_delref(&c->ipsec_interface, c->logger, HERE);
 		/*
 		 * Move to a special disoriented hash.
 		 */
@@ -345,6 +347,11 @@ bool orient(struct connection *c, struct logger *logger)
 	PASSERT(c->logger, matching_end != END_ROOF);
 	disorient(c);
 	c->iface = iface_addref(matching_iface);
+
+	/* ignoring ipsec-interface=no */
+	if (c->config->ipsec_interface.enabled) {
+		add_ipsec_interface(c);
+	}
 
 	struct connection_end *local = &c->end[matching_end];
 	struct connection_end *remote = &c->end[!matching_end];

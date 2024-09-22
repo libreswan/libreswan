@@ -434,13 +434,13 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		}
 	}
 
-	ipsec_interface_delref(&c->ipsec_interface, c->logger, HERE);
-
 	/* find and delete c from the host pair list */
 #if 0
 	PEXPECT(c->logger, !oriented(c));
 #endif
 	disorient(c);
+
+	PEXPECT(c->logger, c->ipsec_interface == NULL);
 
 	remove_from_group(c);
 
@@ -3207,10 +3207,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		d = parse_ipsec_interface(config, wm->ipsec_interface, c->logger);
 		if (d != NULL) {
 			return d;
-		}
-		/* ignoring ipsec-interface=no */
-		if (config->ipsec_interface.enabled) {
-			add_ipsec_interface(c);
 		}
 	}
 
