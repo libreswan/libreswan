@@ -250,11 +250,6 @@ bool add_kernel_ipsec_interface(const struct connection *c, struct logger *logge
 		return true;
 	}
 
-	if (c->ipsec_interface->if_id == 0) {
-		vlog("skipped; connection ipsec-interface=0");
-		return true;
-	}
-
 	passert(c->ipsec_interface->name != NULL);
 	passert(c->iface->real_device_name != NULL);
 
@@ -378,11 +373,6 @@ void remove_kernel_ipsec_interface(const struct connection *c, struct logger *lo
 
 	if (c->ipsec_interface == NULL) {
 		vlog("skipped; connection ipsec-interface=no");
-		return;
-	}
-
-	if (c->ipsec_interface->if_id == 0) {
-		vlog("skipped; connection ipsec-interface=0 (previously installed)");
 		return;
 	}
 

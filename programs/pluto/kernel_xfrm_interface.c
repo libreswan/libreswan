@@ -869,8 +869,9 @@ void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 	bool set_mark = false;
 	const struct spds *spds = &c->child.spds;
 
-	if (c->ipsec_interface == NULL || c->ipsec_interface->if_id == 0)
+	if (c->ipsec_interface == NULL) {
 		return;
+	}
 
 	FOR_EACH_ITEM(spd, spds) {
 		if (address_in_selector_range(spd->remote->host->addr, spd->remote->client))
