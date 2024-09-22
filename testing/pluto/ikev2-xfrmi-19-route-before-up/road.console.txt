@@ -91,7 +91,7 @@ road #
 "road": terminating SAs using this connection
 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "road" #2: ESP traffic information: in=84B out=84B
-"road": delete ipsec-interface=ipsec0 if_id=16384 added by pluto
+"road": delete ipsec-interface ipsec0[16384] added by pluto
 road #
  ../../guestbin/ipsec-kernel-state.sh
 road #

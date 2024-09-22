@@ -46,13 +46,13 @@ west #
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet4-eastnet4" #2: ESP traffic information: in=0B out=0B
-"westnet4-eastnet4": cannot delete ipsec-interface=ipsec1 if_id=1 IP [192.0.1.251/24], not created by pluto
+"westnet4-eastnet4": cannot delete ipsec-interface ipsec1 IP [192.0.1.251/24], not created by pluto
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
 "westnet6-eastnet6" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet6-eastnet6" #4: ESP traffic information: in=0B out=0B
-"westnet6-eastnet6": cannot delete ipsec-interface=ipsec1 if_id=1 IP [2001:db8:0:1::251/64], not created by pluto
+"westnet6-eastnet6": cannot delete ipsec-interface ipsec1 IP [2001:db8:0:1::251/64], not created by pluto
 west #
  ip --color=never link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -100,13 +100,13 @@ west #
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet4-eastnet4" #6: ESP traffic information: in=0B out=0B
-"westnet4-eastnet4": cannot delete ipsec-interface=ipsec1 if_id=1 IP [192.0.1.251/24], not created by pluto
+"westnet4-eastnet4": cannot delete ipsec-interface ipsec1 IP [192.0.1.251/24], not created by pluto
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
 "westnet6-eastnet6" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "westnet6-eastnet6" #8: ESP traffic information: in=0B out=0B
-"westnet6-eastnet6": cannot delete ipsec-interface=ipsec1 if_id=1 IP [2001:db8:0:1::251/64], not created by pluto
+"westnet6-eastnet6": cannot delete ipsec-interface ipsec1 IP [2001:db8:0:1::251/64], not created by pluto
 west #
  ip --color=never link show ipsec1
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

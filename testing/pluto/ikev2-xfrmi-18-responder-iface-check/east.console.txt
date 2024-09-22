@@ -28,7 +28,7 @@ east #
 east #
  ipsec auto --delete east
 "east": terminating SAs using this connection
-"east": delete ipsec-interface=ipsec1 if_id=1 added by pluto
+"east": delete ipsec-interface ipsec1 added by pluto
 east #
  ../../guestbin/ip.sh link show dev ipsec1
 Device "ipsec1" does not exist.
