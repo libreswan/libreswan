@@ -2465,17 +2465,16 @@ static bool dispatch(enum routing_event event,
 			/*
 			 * When the connection transitions to
 			 * RT_UNROUTED, remove the connection's local
-			 * CIDR.  Possibly also remove ipsec-interface
-			 * pseudo-device.
+			 * CIDR.
 			 *
-			 * A changed routing implies success so
-			 * PEXPECT(ok).
+			 * Since routing only changes when the
+			 * transition completes, can pexpect(ok).
 			 */
 			if (old.routing != RT_UNROUTED &&
 			    c->routing.state == RT_UNROUTED) {
 				PEXPECT(logger, ok);
 				/* ignore any failure */
-				remove_kernel_ipsec_interface(c, logger);
+				del_kernel_ipsec_interface_address(c, logger);
 			}
 			if (ok && e->post_op != NULL) {
 				e->post_op(e);

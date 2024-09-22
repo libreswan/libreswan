@@ -392,12 +392,28 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 	return true;
 }
 
-static void remove_kernel_ipsec_interface_address(const struct connection *c,
-						  ip_cidr conn_cidr,
-						  struct logger *logger)
+void del_kernel_ipsec_interface_address(const struct connection *c,
+					struct logger *logger)
 {
+
+	VERBOSE(logger, "...");
+
+	if (c->ipsec_interface == NULL) {
+		vlog("skipped; connection ipsec-interface=no");
+		return;
+	}
+
+	/*
+	 * Find the IP address assigned to the connection.
+	 */
+	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, verbose);
+	if (conn_cidr.is_set == false) {
+		vdbg("no CIDR to unreference on ipsec-interface %s ID %d",
+		     c->ipsec_interface->name, c->ipsec_interface->if_id);
+		return;
+	}
 	cidr_buf cb;
-	VERBOSE(logger, "removing %s", str_cidr(&conn_cidr, &cb));
+	vlog("removing %s", str_cidr(&conn_cidr, &cb));
 
 	/*
 	 * Use that to find the address structure.
@@ -461,29 +477,6 @@ static void remove_kernel_ipsec_interface_address(const struct connection *c,
 
 	/* Free the memory */
 	pfreeany(conn_address);
-}
-
-void remove_kernel_ipsec_interface(const struct connection *c, struct logger *logger)
-{
-	VERBOSE(logger, "...");
-
-	if (c->ipsec_interface == NULL) {
-		vlog("skipped; connection ipsec-interface=no");
-		return;
-	}
-
-	/*
-	 * Find the IP address assigned to the connection.
-	 */
-	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, verbose);
-	if (conn_cidr.is_set == false) {
-		ipsec_interface_buf ib;
-		vdbg("no CIDR to unreference on ipsec-interface %s",
-		     str_ipsec_interface(c->ipsec_interface, &ib));
-		return;
-	}
-
-	remove_kernel_ipsec_interface_address(c, conn_cidr, logger);
 }
 
 static struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
