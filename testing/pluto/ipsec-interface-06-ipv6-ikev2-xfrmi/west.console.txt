@@ -113,11 +113,11 @@ west #
  ipsec auto --down westnet-eastnet
 "westnet-eastnet": terminating SAs using this connection
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
-"westnet-eastnet" #2: delete ipsec-interface ipsec1 IP [2001:db8:0:1::251/64] added by pluto
+"westnet-eastnet" #2: delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64] added by pluto
 "westnet-eastnet" #2: ESP traffic information: in=312B out=312B
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec auto --delete westnet-eastnet
-"westnet-eastnet": delete ipsec-interface ipsec1 added by pluto
+"westnet-eastnet": delete ipsec-interface ipsec1@eth1 added by pluto
 west #
  
