@@ -324,12 +324,12 @@ struct getlink_context {
 
 /* should either set .ok or .diag */
 
-static diag_t check_ipsec_interface_linkinfo_data(const char *if_name,
+static diag_t check_ipsec_interface_linkinfo_data(const char *ipsec_if_name,
 						  struct rtattr *attribute,
 						  struct getlink_context *ifi_rsp,
 						  struct verbose verbose)
 {
-	vdbg("%s() start %s", __func__, if_name);
+	vdbg("%s() start %s", __func__, ipsec_if_name);
 	verbose.level++;
 
 	const struct rtattr *xfrm_link_attr = NULL;
@@ -340,12 +340,12 @@ static diag_t check_ipsec_interface_linkinfo_data(const char *if_name,
 	     nested_attrib = RTA_NEXT(nested_attrib, attribute->rta_len)) {
 
 		if (nested_attrib->rta_type == IFLA_XFRM_LINK) {
-			vdbg("%s found IFLA_XFRM_LINK", if_name);
+			vdbg("%s found IFLA_XFRM_LINK", ipsec_if_name);
 			xfrm_link_attr = nested_attrib;
 		}
 
 		if (nested_attrib->rta_type == IFLA_XFRM_IF_ID) {
-			vdbg("%s found IFLA_XFRM_IF_ID", if_name);
+			vdbg("%s found IFLA_XFRM_IF_ID", ipsec_if_name);
 			xfrm_if_id_attr = nested_attrib;
 		}
 	}
@@ -366,7 +366,27 @@ static diag_t check_ipsec_interface_linkinfo_data(const char *if_name,
 		/* not good! see if_nametoindex() */
 		return diag("IFLA_XFRM_LINK attribute is zero");
 	}
-	vdbg("found %s .xfrm_link %d", if_name, xfrm_link);
+	if (ifi_rsp->match->iface_if_index == 0) {
+		vdbg("%s wildcard matched IFLA_XFRM_LINK %d", ipsec_if_name, xfrm_link);
+	} else if (ifi_rsp->match->iface_if_index == xfrm_link) {
+		vdbg("%s matched IFLA_XFRM_LINK %d to .iface_if_index %u",
+		     ipsec_if_name, xfrm_link, ifi_rsp->match->iface_if_index);
+	} else {
+		char iface_buf[IFNAMSIZ] = "", link_buf[IFNAMSIZ] = "";
+		const char *iface_name = if_indextoname(ifi_rsp->match->iface_if_index, iface_buf);
+		const char *link_name = if_indextoname(xfrm_link, link_buf);
+#if 0
+		return diag("IFLA_XFRM_LINK attribute %s (%u) does not match expected iface_if_index %s (%u)",
+		     (link_name == NULL ? "?" : link_name), xfrm_link,
+		     (iface_name == NULL ? "?" : iface_name), ifi_rsp->match->iface_if_index);
+#else
+		llog(RC_LOG, verbose.logger,
+		     "ipsec-interface %s linked to %s (%u) and not %s (%u)",
+		     ipsec_if_name,
+		     (link_name == NULL ? "?" : link_name), xfrm_link,
+		     (iface_name == NULL ? "?" : iface_name), ifi_rsp->match->iface_if_index);
+#endif
+	}
 
 	/*
 	 * The device also needs its ID
@@ -378,9 +398,9 @@ static diag_t check_ipsec_interface_linkinfo_data(const char *if_name,
 
 	uint32_t xfrm_if_id = *((const uint32_t *)RTA_DATA(xfrm_if_id_attr));
 	if (ifi_rsp->match->wildcard) {
-		vdbg("%s wildcard matched xfrm_if_id %d", if_name, xfrm_if_id);
+		vdbg("%s wildcard matched xfrm_if_id %d", ipsec_if_name, xfrm_if_id);
 	} else if (xfrm_if_id == ifi_rsp->match->ipsec_if_id) {
-		vdbg("%s matched xfrm_if_id %d matched", if_name, xfrm_if_id);
+		vdbg("%s matched xfrm_if_id %d matched", ipsec_if_name, xfrm_if_id);
 	} else {
 		return diag("IFLA_XFRM_IF_ID attribute %u does not match ipsec-interface ID %u",
 			    xfrm_if_id, ifi_rsp->match->ipsec_if_id);
@@ -388,9 +408,9 @@ static diag_t check_ipsec_interface_linkinfo_data(const char *if_name,
 
 	/* if it came this far found what we looking for */
 	vdbg("%s() %s setting .result = true; .xfrm_link=%d; .xfrm_if_id=%d",
-	     __func__, if_name,
+	     __func__, ipsec_if_name,
 	     ifi_rsp->result.xfrm_link, ifi_rsp->result.xfrm_if_id);
-	jam_str(ifi_rsp->match->found, sizeof(ifi_rsp->match->found), if_name);
+	jam_str(ifi_rsp->match->found, sizeof(ifi_rsp->match->found), ipsec_if_name);
 	ifi_rsp->result.xfrm_link = xfrm_link;
 	ifi_rsp->result.xfrm_if_id = xfrm_if_id;
 	ifi_rsp->result.ok = true;
@@ -482,7 +502,7 @@ static bool parse_getlink_newlink_response(struct nlmsghdr *nlmsg,
 		return true; /* stumble on */
 	}
 
-	if (ifi_rsp->match->wildcard) {
+	if (ifi_rsp->match->ipsec_if_name == NULL) {
 		vdbg("wildcard: checking %s to see if it is an ipsec-interface", if_name);
 	} else if (streq(ifi_rsp->match->ipsec_if_name, if_name)) {
 		vdbg("exact: checking that %s is a valid ipsec-interface", if_name);
@@ -532,7 +552,12 @@ static bool parse_getlink_response(struct nlmsghdr *nlmsg,
 static bool xfrm_ip_link_match(struct ip_link_match *match,
 			       struct verbose verbose)
 {
-	vdbg("%s() start", __func__);
+	vdbg("%s() wildcard %s ipsec_if_name %s ipsec_if_id %u iface_if_index %u",
+	     __func__,
+	     bool_str(match->wildcard),
+	     (match->ipsec_if_name != NULL ? match->ipsec_if_name : "N/A"),
+	     match->ipsec_if_id,
+	     match->iface_if_index);
 	verbose.level++;
 
 	struct getlink_context getlink = {

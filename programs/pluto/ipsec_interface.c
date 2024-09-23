@@ -381,8 +381,12 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 		struct ip_link_match match = {
 			.ipsec_if_name = c->ipsec_interface->name,
 			.ipsec_if_id = c->ipsec_interface->if_id,
+			.iface_if_index = if_nametoindex(iface->real_device_name),
 			.wildcard = false,
 		};
+		if (vbad(match.iface_if_index == 0)) {
+			return false;
+		}
 		if (!kernel_ops->ipsec_interface->ip_link_match(&match, verbose)) {
 			/* .NAME isn't suitable */
 			ipsec_interface_buf ib;
