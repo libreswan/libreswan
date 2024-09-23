@@ -76,7 +76,7 @@ const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if, ipsec_in
 /* Both add_ipsec_interface() return true on success, false otherwise */
 
 diag_t parse_ipsec_interface(struct config *config, const char *ipsec_interface, struct logger *logger);
-void add_ipsec_interface(struct connection *c);
+bool add_ipsec_interface(struct connection *c, const struct iface_device *iface);
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 					       struct logger *logger, where_t where);
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,

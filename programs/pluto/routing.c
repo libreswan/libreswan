@@ -2455,8 +2455,9 @@ static bool dispatch(enum routing_event event,
 			 */
 			if ((c->routing.state == RT_UNROUTED && event == CONNECTION_ROUTE) ||
 			    c->routing.state == RT_UNROUTED_INBOUND) {
-				ok = (add_kernel_ipsec_interface(c, c->iface, logger) &&
-				      add_kernel_ipsec_interface_address(c, logger));
+				if (c->config->ipsec_interface.enabled) {
+					ok = add_kernel_ipsec_interface_address(c, logger);
+				}
 			}
 			if (ok &
 			    (e->dispatch_ok == NULL || e->dispatch_ok(c, logger, e))) {
@@ -2474,7 +2475,9 @@ static bool dispatch(enum routing_event event,
 			    c->routing.state == RT_UNROUTED) {
 				PEXPECT(logger, ok);
 				/* ignore any failure */
-				del_kernel_ipsec_interface_address(c, logger);
+				if (c->config->ipsec_interface.enabled) {
+					del_kernel_ipsec_interface_address(c, logger);
+				}
 			}
 			if (ok && e->post_op != NULL) {
 				e->post_op(e);

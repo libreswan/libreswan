@@ -346,13 +346,15 @@ bool orient(struct connection *c, struct logger *logger)
 	 */
 	PASSERT(c->logger, matching_end != END_ROOF);
 	disorient(c);
-	c->iface = iface_addref(matching_iface);
 
 	/* ignoring ipsec-interface=no */
 	if (c->config->ipsec_interface.enabled) {
-		add_ipsec_interface(c);
+		if (!add_ipsec_interface(c, matching_iface)) {
+			return false;
+		}
 	}
 
+	c->iface = iface_addref(matching_iface);
 	struct connection_end *local = &c->end[matching_end];
 	struct connection_end *remote = &c->end[!matching_end];
 
