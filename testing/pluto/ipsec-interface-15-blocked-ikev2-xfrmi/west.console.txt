@@ -10,21 +10,21 @@ initdone
 west #
  #
 west #
- # valid device; <<ipsec add>> is before <<ip link>>
+ # valid device; <<ip link>> is before orient in <<ipsec add>>
 west #
  #
-west #
- ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
-west #
- ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
 west #
  ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
 west #
  ip addr add 192.0.1.251/24 dev ipsec1
 west #
  ip addr add 2001:db8:0:1::251/64 dev ipsec1
+west #
+ ipsec add westnet4-eastnet4
+"westnet4-eastnet4": added IKEv2 connection
+west #
+ ipsec add westnet6-eastnet6
+"westnet6-eastnet6": added IKEv2 connection
 west #
  ipsec up westnet4-eastnet4
 "westnet4-eastnet4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -45,13 +45,13 @@ west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@eth0 IP [192.0.1.251/24], not created by pluto
+"westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@eth1 IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
 "westnet6-eastnet6" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@eth0 IP [2001:db8:0:1::251/64], not created by pluto
+"westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #4: ESP traffic information: in=0B out=0B
 west #
  ip --color=never link show ipsec1
@@ -62,21 +62,11 @@ west #
  ip --color=never link show ipsec1
 Device "ipsec1" does not exist.
 west #
- 
-west #
  #
 west #
- # invalid device; <<ipsec add>> is before <<ip link>>
+ # valid device; <<ip link>> is before orient in <<ipsec add>>
 west #
  #
-west #
- 
-west #
- ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
-west #
- ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
 west #
  ip link add dev ipsec1 type xfrm if_id 0x1
 west #
@@ -84,47 +74,23 @@ west #
 west #
  ip addr add 2001:db8:0:1::251/64 dev ipsec1
 west #
+ ipsec add westnet4-eastnet4
+ERROR: "westnet4-eastnet4": existing ipsec-interface ipsec1 is not valid: IFLA_XFRM_LINK attribute is zero, check 'ip -d link show dev ipsec1'
+"westnet4-eastnet4": added unoriented IKEv2 connection (neither left=192.1.2.45 nor right=192.1.2.23 match an interface)
+west #
+ ipsec add westnet6-eastnet6
+ERROR: "westnet6-eastnet6": existing ipsec-interface ipsec1 is not valid: IFLA_XFRM_LINK attribute is zero, check 'ip -d link show dev ipsec1'
+"westnet6-eastnet6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
+west #
  ipsec up westnet4-eastnet4
-"westnet4-eastnet4" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet4-eastnet4" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet4-eastnet4" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet4-eastnet4" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"westnet4-eastnet4" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-ERROR: "westnet4-eastnet4" #X: ipsec1 has an xfrm device ifindex (RTA_LINK) of 0
-ERROR: "westnet4-eastnet4" #6: device ipsec1 exists but do not match expected type, XFRM if_id 1, or XFRM device is invalid; check 'ip -d link show dev ipsec1'
-"westnet4-eastnet4" #6: CHILD SA failed: TEMPORARY_FAILURE
-"westnet4-eastnet4" #5: IKE SA established but initiator rejected Child SA response
-"westnet4-eastnet4" #6: sent INFORMATIONAL request to delete larval Child SA using IKE SA #5
-"westnet4-eastnet4" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-ERROR: "westnet4-eastnet4" #6: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (in): No such file or directory (errno 2)
-"westnet4-eastnet4" #6: kernel: replace_ipsec_with_bare_kernel_policy() inbound delete failed
+"westnet4-eastnet4": we cannot identify ourselves with either end of this connection.  192.1.2.45 or 192.1.2.23 are not usable
 west #
  ipsec up westnet6-eastnet6
-"westnet6-eastnet6" #8: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
-"westnet6-eastnet6" #8: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
-"westnet6-eastnet6" #8: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet6-eastnet6" #8: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
-"westnet6-eastnet6" #8: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-ERROR: "westnet6-eastnet6" #X: ipsec1 has an xfrm device ifindex (RTA_LINK) of 0
-ERROR: "westnet6-eastnet6" #9: device ipsec1 exists but do not match expected type, XFRM if_id 1, or XFRM device is invalid; check 'ip -d link show dev ipsec1'
-"westnet6-eastnet6" #9: CHILD SA failed: TEMPORARY_FAILURE
-"westnet6-eastnet6" #8: IKE SA established but initiator rejected Child SA response
-"westnet6-eastnet6" #9: sent INFORMATIONAL request to delete larval Child SA using IKE SA #8
-"westnet6-eastnet6" #9: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-ERROR: "westnet6-eastnet6" #9: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (in): No such file or directory (errno 2)
-"westnet6-eastnet6" #9: kernel: replace_ipsec_with_bare_kernel_policy() inbound delete failed
+"westnet6-eastnet6": we cannot identify ourselves with either end of this connection.  2001:db8:1:2::45 or 2001:db8:1:2::23 are not usable
 west #
  ipsec delete westnet4-eastnet4
-"westnet4-eastnet4": terminating SAs using this connection
-"westnet4-eastnet4" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-ERROR: "westnet4-eastnet4" #7: unreference_xfrmi_ip() Unable to unreference IP on xfrmi device [ipsec1] id [1]
-"westnet4-eastnet4" #7: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
-"westnet6-eastnet6": terminating SAs using this connection
-"westnet6-eastnet6" #8: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-ERROR: "westnet6-eastnet6" #10: unreference_xfrmi_ip() Unable to unreference IP on xfrmi device [ipsec1] id [1]
-"westnet6-eastnet6" #10: ESP traffic information: in=0B out=0B
 west #
  ip --color=never link show ipsec1
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000

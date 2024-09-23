@@ -1,9 +1,41 @@
-test reordering adding the ipsec interface and adding the connection
+order of <<ipsec add>> (orient) vs <<ip link>> vs <<ip addr>>
 
-Adding the connection (ipsec add) then adding the interface (ip link)
-works; but adding the interface and then the connection fails.
+1. existing ipsec-interface with address
+
+   <<ip link>> create the naked ipsec-interface
+   <<ip addr>> adds the address
+   <<ipsec add>> (orient) finds and saves the existing interface.
+   <<ipsec up>> finds and saves the existing address.
+
+   Since everything is pre-existing, <<ipsec delete>> leaves
+   everything behind.
+
+2. existing ipsec-interface with no address
+
+   <<ip link>> create the naked ipsec-interface
+   <<ipsec add>> (orient) finds and saves the existing interface.
+   <<ipsec up>> adds the missing address
+
+   During <<ipsec delete>>:
+
+   - since pluto added the address it is removed
+
+   - since pluto found the interface that is left behind
+
+3. missing ipsec-interface, yet with addresses
+
+   <<ipsec add>> creates the missing ipsec-interface
+   <<ip addr>> adds the address
+   <<ipsec up>> finds and saves the existing address.
+
+   During <<ipsec delete>>
+
+   - since pluto did not add the address it is left behind
+
+   - since pluto did create the interface it is deleted (which of
+     course deletes the address
 
 ... and (bug) trying to fix things by deleting the interface and
 re-adding the connection still fails:
 
-  #1771 after ip link add ipsec1; ipsec add ... connection becomes unloadable
+see #1771 after ip link add ipsec1; ipsec add ... connection becomes unloadable
