@@ -257,7 +257,7 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 
 	/*
 	 * See if the ipsec-interface already has the address; if it
-	 * does, up it's refcnt.
+	 * does, take a reference and UP the interface.
 	 *
 	 * XXX: this is pretty broken: the connection should be
 	 * tracking the addresses being added so it can easily remove
