@@ -390,6 +390,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 				   "existing ipsec-interface %s is not valid: %s",
 				   str_ipsec_interface(c->ipsec_interface, &ib),
 				   str_diag(match.diag));
+			pfree_diag(&match.diag);
 			return false;
 		}
 		created = false;
