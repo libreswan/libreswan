@@ -49,6 +49,13 @@ enum proposal_algorithm {
 	PROPOSAL_prf,
 	PROPOSAL_integ,
 	PROPOSAL_dh,
+	PROPOSAL_addke1,
+	PROPOSAL_addke2,
+	PROPOSAL_addke3,
+	PROPOSAL_addke4,
+	PROPOSAL_addke5,
+	PROPOSAL_addke6,
+	PROPOSAL_addke7,
 	PROPOSAL_ALGORITHM_ROOF,
 };
 
@@ -170,6 +177,9 @@ void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorith
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
 		      const struct ike_alg *alg, int enckeylen);
+void append_algorithm_for(struct proposal_parser *parser, struct proposal *proposal,
+			  enum proposal_algorithm algorithm,
+			  const struct ike_alg *alg, int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
 				 enum proposal_algorithm algorithm);
