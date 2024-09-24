@@ -16,6 +16,8 @@
 #ifndef IKEV2_IKE_INTERMEDIATE_H
 #define IKEV2_IKE_INTERMEDIATE_H
 
+const struct dh_desc *next_additional_ke_desc(struct ike_sa *ike);
+
 extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;
 
 #endif
