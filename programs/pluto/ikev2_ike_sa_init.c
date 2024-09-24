@@ -946,6 +946,10 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		return STF_INTERNAL_ERROR;
 	}
 
+	if (ike->sa.st_v2_ike_intermediate.enabled && !next_additional_ke_desc(ike)) {
+		dbg("IKE INTERMEDIATE is enabled, but no additional KE is configured");
+	}
+
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
 		      pbs_out_all(&response.message),
@@ -1351,6 +1355,9 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 
 	const struct v2_exchange *next_exchange;
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		if (!next_additional_ke_desc(ike)) {
+			dbg("IKE INTERMEDIATE is enabled, but no additional KE is configured");
+		}
 		next_exchange = &v2_IKE_INTERMEDIATE_exchange;
 	} else {
 		next_exchange = &v2_IKE_AUTH_exchange;
