@@ -85,6 +85,10 @@ typedef struct {
 size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy);
 const char *str_child_policy(const struct child_policy *policy, child_policy_buf *buf);
 
+struct additional_ke {
+	enum ikev2_trans_type type;
+	const struct kem_desc *group;
+};
 
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
@@ -107,6 +111,7 @@ struct trans_attrs {
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
 	const struct kem_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
+	struct additional_ke ta_addke[7]; /* additional key exchange */
 };
 
 /*
@@ -379,6 +384,7 @@ struct state {
 		chunk_t responder;	/* calculated from peers last Intermediate Exchange packet */
 		bool enabled;		/* both ends agree/use Intermediate Exchange */
 		uint32_t id;		/* ID of last IKE_INTERMEDIATE exchange */
+		unsigned ke_index;	/* current index of additional key exchanges in st_oakley.ta_addke */
 	} st_v2_ike_intermediate;
 
 	/** end of IKEv2-only things **/

@@ -867,6 +867,8 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					if ((type == IKEv2_TRANS_TYPE_INTEG &&
 					     sentinel_transform->id == IKEv2_INTEG_NONE) ||
 					    (type == IKEv2_TRANS_TYPE_KE &&
+					     sentinel_transform->id == OAKLEY_GROUP_NONE) ||
+					    (IKEv2_TRANS_TYPE_ADDKE1 <= type && type <= IKEv2_TRANS_TYPE_ADDKE7 &&
 					     sentinel_transform->id == OAKLEY_GROUP_NONE)) {
 						optional_transform_types |= LELEM(type);
 					}
@@ -1107,6 +1109,13 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 						id = IKEv2_INTEG_NONE;
 						break;
 					case IKEv2_TRANS_TYPE_KE:
+					case IKEv2_TRANS_TYPE_ADDKE1:
+					case IKEv2_TRANS_TYPE_ADDKE2:
+					case IKEv2_TRANS_TYPE_ADDKE3:
+					case IKEv2_TRANS_TYPE_ADDKE4:
+					case IKEv2_TRANS_TYPE_ADDKE5:
+					case IKEv2_TRANS_TYPE_ADDKE6:
+					case IKEv2_TRANS_TYPE_ADDKE7:
 						id = OAKLEY_GROUP_NONE;
 						break;
 					default:
@@ -1650,6 +1659,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 	 */
 	*ta_out = ta;
 
+	size_t additional_ke_index = 0;
+	struct additional_ke *additional_ke_map[7] = { 0, };
 	enum ikev2_trans_type type;
 	const struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
@@ -1752,6 +1763,47 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					return false;
 				}
 				break;
+			case IKEv2_TRANS_TYPE_ADDKE1:
+			case IKEv2_TRANS_TYPE_ADDKE2:
+			case IKEv2_TRANS_TYPE_ADDKE3:
+			case IKEv2_TRANS_TYPE_ADDKE4:
+			case IKEv2_TRANS_TYPE_ADDKE5:
+			case IKEv2_TRANS_TYPE_ADDKE6:
+			case IKEv2_TRANS_TYPE_ADDKE7:
+			{
+				name_buf b;
+				const struct kem_desc *group = ikev2_kem_desc(transform->id, &b);
+				if (group == NULL) {
+					/*
+					 * Assuming pluto, and not the
+					 * kernel, is going to do the
+					 * DH calculation, then not
+					 * finding the DH group is
+					 * likely really bad.
+					 */
+					llog_pexpect(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected DH %s",
+						     b.buf);
+					return false;
+				}
+				/*
+				 * Initiator is free to select any
+				 * transform type for additional key
+				 * exchange, though the responder must
+				 * select one per transform type. Use
+				 * a map (additional_ke_map) to ensure that.
+				 */
+				unsigned n = type - IKEv2_TRANS_TYPE_ADDKE1;
+				if (additional_ke_map[n]) {
+					passert(additional_ke_map[n]->type == type);
+					additional_ke_map[n]->group = group;
+				} else {
+					ta.ta_addke[additional_ke_index].type = type;
+					ta.ta_addke[additional_ke_index].group = group;
+					additional_ke_map[n] = &ta.ta_addke[additional_ke_index];
+				}
+				break;
+			}
 			default:
 				llog_pexpect(logger, HERE,
 					     "accepted IKEv2 proposal contains unexpected trans type %d",
@@ -2148,6 +2200,21 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 				 default_kem->common.id[IKEv2_ALG_ID], 0);
+	}
+
+	/*
+	 * Additional key exchanges.
+	 */
+	for (enum ikev2_trans_type type = IKEv2_TRANS_TYPE_ADDKE1;
+	     type <= IKEv2_TRANS_TYPE_ADDKE7; type++) {
+		enum proposal_algorithm ptype =
+			PROPOSAL_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
+		for (struct algorithm *alg = next_algorithm(proposal, ptype, NULL);
+		     alg != NULL; alg = next_algorithm(proposal, ptype, alg)) {
+			const struct kem_desc *kem = kem_desc(alg->desc);
+			append_transform(v2_proposal, type,
+					 kem->common.id[IKEv2_ALG_ID], 0);
+		}
 	}
 
 	return v2_proposal;
