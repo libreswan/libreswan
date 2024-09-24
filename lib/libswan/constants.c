@@ -2244,6 +2244,13 @@ static const char *const ikev2_trans_type_name[] = {
 	S(IKEv2_TRANS_TYPE_INTEG),
 	S(IKEv2_TRANS_TYPE_DH),
 	S(IKEv2_TRANS_TYPE_ESN),
+	S(IKEv2_TRANS_TYPE_ADDKE1),
+	S(IKEv2_TRANS_TYPE_ADDKE2),
+	S(IKEv2_TRANS_TYPE_ADDKE3),
+	S(IKEv2_TRANS_TYPE_ADDKE4),
+	S(IKEv2_TRANS_TYPE_ADDKE5),
+	S(IKEv2_TRANS_TYPE_ADDKE6),
+	S(IKEv2_TRANS_TYPE_ADDKE7),
 #undef S
 };
 
@@ -2263,6 +2270,13 @@ static enum_names *const ikev2_transid_val_descs[] = {
 	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
 	S(IKEv2_TRANS_TYPE_DH, oakley_group_names),                   /* 4 */
 	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
+	S(IKEv2_TRANS_TYPE_ADDKE1, oakley_group_names),               /* 6 */
+	S(IKEv2_TRANS_TYPE_ADDKE2, oakley_group_names),               /* 7 */
+	S(IKEv2_TRANS_TYPE_ADDKE3, oakley_group_names),               /* 8 */
+	S(IKEv2_TRANS_TYPE_ADDKE4, oakley_group_names),               /* 9 */
+	S(IKEv2_TRANS_TYPE_ADDKE5, oakley_group_names),               /* 10 */
+	S(IKEv2_TRANS_TYPE_ADDKE6, oakley_group_names),               /* 11 */
+	S(IKEv2_TRANS_TYPE_ADDKE7, oakley_group_names),               /* 12 */
 #undef S
 };
 
