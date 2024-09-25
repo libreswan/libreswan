@@ -322,7 +322,7 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 bool add_kernel_ipsec_interface_address(const struct connection *c,
 					struct logger *logger)
 {
-	VERBOSE(logger, "...");
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 
 	if (c->ipsec_interface == NULL) {
 		vdbg("skipped; no ipsec-interface");
@@ -349,7 +349,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 				ip_address remote_address,
 				struct logger *logger)
 {
-	VERBOSE(logger, "...");
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 
 	if (c->ipsec_interface == NULL) {
 		vdbg("skipped; no ipsec-interface");
@@ -426,7 +426,7 @@ void del_kernel_ipsec_interface_address(const struct connection *c,
 					struct logger *logger)
 {
 
-	VERBOSE(logger, "...");
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 
 	if (c->ipsec_interface == NULL) {
 		vdbg("skipped; no ipsec-interface");
@@ -554,7 +554,7 @@ struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 			    struct logger *logger, where_t where)
 {
-	VERBOSE(logger, "%p", *ipsec_if);
+	VERBOSE_DBGP(DBG_BASE, logger, "%p", *ipsec_if);
 
 	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
 	if (ipsec_interface != NULL) {
@@ -598,7 +598,7 @@ diag_t parse_ipsec_interface(struct config *config,
 			     const char *ipsec_interface,
 			     struct logger *logger)
 {
-	VERBOSE(logger, "adding %s to config", ipsec_interface);
+	VERBOSE_DBGP(DBG_BASE, logger, "adding %s to config", ipsec_interface);
 
 	/*
 	 * Danger; yn_option_names includes "0" and "1" but that isn't
@@ -667,7 +667,7 @@ diag_t parse_ipsec_interface(struct config *config,
 void add_ipsec_interface(struct connection *c)
 {
 	ipsec_interface_buf ifb;
-	VERBOSE(c->logger, "adding %s to connection",
+	VERBOSE_DBGP(DBG_BASE, c->logger, "adding %s to connection",
 		str_ipsec_interface_id(c->config->ipsec_interface.id, &ifb));
 
 	if (!vexpect(c->config->ipsec_interface.enabled)) {
@@ -693,12 +693,12 @@ void add_ipsec_interface(struct connection *c)
 
 void check_stale_ipsec_interfaces(struct logger *logger)
 {
-	VERBOSE(logger, "...");
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 	kernel_ipsec_interface_check_stale(verbose);
 }
 
 void shutdown_kernel_ipsec_interface(struct logger *logger)
 {
-	VERBOSE(logger, "...");
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 	kernel_ipsec_interface_shutdown(verbose);
 }

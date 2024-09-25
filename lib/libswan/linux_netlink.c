@@ -48,7 +48,7 @@ static bool linux_netlink_process_response(const struct nlmsghdr *nlmsg, int soc
 		 */
 		do {
 			socklen_t salen = sizeof(sa);
-			vlog("reading into %zu byte buffer", sizeof(buf));
+			verbose("reading into %zu byte buffer", sizeof(buf));
 			errno = 0;
 			readlen = recvfrom(sock, &buf, sizeof(buf), 0,
 					   (struct sockaddr *)&sa, &salen);
@@ -65,7 +65,7 @@ static bool linux_netlink_process_response(const struct nlmsghdr *nlmsg, int soc
 			}
 		} while (sa.nl_pid != 0);
 
-		vlog("processing %zu byte response", readlen);
+		verbose("processing %zu byte response", readlen);
 
 		/*
 		 * Now process the contents.
@@ -81,12 +81,12 @@ static bool linux_netlink_process_response(const struct nlmsghdr *nlmsg, int soc
 			 * the current message.
 			 */
 			if (!NLMSG_OK(nlhdr, readlen)) {
-				vlog("TRUNCATED %zd", readlen);
+				verbose("TRUNCATED %zd", readlen);
 				return false;
 			}
 
 			if (nlhdr->nlmsg_type == NLMSG_ERROR) {
-				vlog("ERROR");
+				verbose("ERROR");
 				return false;
 			}
 
@@ -95,7 +95,7 @@ static bool linux_netlink_process_response(const struct nlmsghdr *nlmsg, int soc
 			 * part has type NLMSG_DONE set.
 			 */
 			if (nlhdr->nlmsg_type == NLMSG_DONE) {
-				vlog("DONE");
+				verbose("DONE");
 				return true;
 			}
 
@@ -150,9 +150,9 @@ bool linux_netlink_query(const struct nlmsghdr *nlmsg, int netlink_protocol,
 	 */
 	unsigned flags = 0;
 	if (nlmsg->nlmsg_flags & NLM_F_ACK) {
-		vlog("opening blocking netlink socket");
+		verbose("opening blocking netlink socket");
 	} else {
-		vlog("opening non-blocking netlink socket");
+		verbose("opening non-blocking netlink socket");
 		flags |= SOCK_NONBLOCK;
 	}
 
@@ -170,7 +170,7 @@ bool linux_netlink_query(const struct nlmsghdr *nlmsg, int netlink_protocol,
 		return false;
 	}
 
-	vlog("sent %d byte netlink message", (int)nlmsg->nlmsg_len);
+	verbose("sent %d byte netlink message", (int)nlmsg->nlmsg_len);
 
 	bool ok = linux_netlink_process_response(nlmsg, sock,
 						 processor, context,

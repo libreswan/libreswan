@@ -48,36 +48,60 @@ struct verbose {
 	int level;
 };
 
-#define VERBOSE(LOGGER, MESSAGE, ...)		\
-	struct verbose verbose = {		\
-		.logger = (LOGGER),		\
-		.rc_flags = (LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : LEMPTY), \
-	};								\
-	vdbg("%s() "MESSAGE, __func__, ##__VA_ARGS__);			\
+#define VERBOSE_LOG(LOGGER, MESSAGE, ...)		\
+	struct verbose verbose = {			\
+		.logger = (LOGGER),			\
+		.rc_flags = RC_LOG,			\
+	};						\
+	verbose(MESSAGE, ##__VA_ARGS__);		\
 	verbose.level++;
 
-/*
- * Log, but only when VERBOSE is enabled.
- */
-#define vlog(FMT, ...)							\
-	{								\
-		if (verbose.rc_flags) {					\
-			llog(verbose.rc_flags, verbose.logger,		\
-			     "%*s"FMT,					\
-			     verbose.level * 2, "", ##__VA_ARGS__);	\
-		}							\
-	}
+#define VERBOSE_DBGP(COND, LOGGER, MESSAGE, ...)			\
+	struct verbose verbose = {					\
+		.logger = (LOGGER),					\
+		.rc_flags = (LDBGP(COND, LOGGER) ? DEBUG_STREAM : 0),	\
+	};								\
+	verbose("%s() "MESSAGE, __func__, ##__VA_ARGS__);		\
+	verbose.level++;
+
+#define PRI_VERBOSE "%*s"
+#define pri_verbose (verbose.level * 2), ""
 
 /*
- * Debug-log using VERBOSE, but only when debugging is enabled.
+ * Normal logging: the message is always logged (no indentation); just
+ * a wrapper around llog(verbose.logger)
+ */
+#define vlog(FMT, ...)					\
+	llog(RC_LOG, verbose.logger, FMT, ##__VA_ARGS__);
+
+/*
+ * Debug-logging: when the logger has debugging enabled, the message is
+ * logged, prefixed by indentation.
  */
 
 #define vdbg(FMT, ...)							\
 	{								\
 		if (LDBGP(DBG_BASE, verbose.logger)) {			\
 			llog(DEBUG_STREAM, verbose.logger,		\
-			     "%*s"FMT,					\
-			     verbose.level * 2, "", ##__VA_ARGS__);	\
+			     PRI_VERBOSE""FMT,				\
+			     pri_verbose, ##__VA_ARGS__);		\
+		}							\
+	}
+
+/*
+ * Informational log: when verbose.rc_info is non-zero, the message is
+ * logged, prefixed by indentation.
+ *
+ * Use this for messages that, depending on the caller, should be
+ * supressed, pretty-logged or pretty-debug-logged.
+ */
+
+#define verbose(FMT, ...)							\
+	{								\
+		if (verbose.rc_flags != 0) {				\
+			llog(verbose.rc_flags, verbose.logger,		\
+			     PRI_VERBOSE""FMT,				\
+			     pri_verbose, ##__VA_ARGS__);		\
 		}							\
 	}
 

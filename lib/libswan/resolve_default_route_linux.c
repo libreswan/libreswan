@@ -73,13 +73,13 @@ static void resolve_point_to_point_peer(const char *interface,
 		err_t err = sockaddr_to_address_port(sa, afi->sockaddr_size,
 						     peer, NULL/*ignore port*/);
 		if (err != NULL) {
-			vlog("interface %s had invalid sockaddr: %s",
+			verbose("interface %s had invalid sockaddr: %s",
 				interface, err);
 			continue;
 		}
 
 		address_buf ab;
-		vlog("found peer %s to interface %s",
+		verbose("found peer %s to interface %s",
 			str_address(peer, &ab), interface);
 		break;
 	}
@@ -126,7 +126,7 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 	rtmsg->rtm_dst_len = 0;
 	rtmsg->rtm_tos = 0;
 
-	vlog("query %s%s%s%s",
+	verbose("query %s%s%s%s",
 		(type == RTM_GETROUTE ? "GETROUTE" : "?"),
 		(flags & NLM_F_REQUEST ? "+REQUEST" : ""),
 		/*NLM_F_DUMP==NLM_F_ROOT|NLM_F_MATCH*/
@@ -167,7 +167,7 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
 	nlmsg->nlmsg_len += rtattr->rta_len;
 
 	address_buf ab;
-	vlog("add RTA_%s %s (%s)",
+	verbose("add RTA_%s %s (%s)",
 		(rta_type == RTA_DST ? "DST" :
 		 rta_type == RTA_GATEWAY ? "GATEWAY" :
 		 rta_type == RTA_SRC ? "SRC" :
@@ -230,7 +230,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		/* ignore all but IPv4 and IPv6 */
 		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
 		if (rtmsg->rtm_family != afi->af) {
-			vlog("wrong family");
+			verbose("wrong family");
 			return true;
 		}
 
@@ -251,7 +251,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		int rtlen = RTM_PAYLOAD(nlmsg);
 
-		vlog("parsing route entry (RTA payloads)");
+		verbose("parsing route entry (RTA payloads)");
 		verbose.level++;
 
 		while (RTA_OK(rtattr, rtlen)) {
@@ -267,12 +267,12 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 				{					\
 					diag_t diag = data_to_address(data, len, afi, OUT); \
 					if (diag != NULL) {		\
-						vlog("invalid RTA_%s from kernel: %s", \
-						     WHAT, str_diag(diag));	\
+						verbose("invalid RTA_%s from kernel: %s", \
+							WHAT, str_diag(diag)); \
 						pfree_diag(&diag);	\
 					} else {			\
 						address_buf ab;		\
-						vlog("RTA_%s=%s", WHAT, str_address(OUT, &ab)); \
+						verbose("RTA_%s=%s", WHAT, str_address(OUT, &ab)); \
 					}				\
 				}
 				PARSE_ADDRESS(&prefsrc, "PREFSRC");
@@ -291,10 +291,10 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 #define PARSE_NUMBER(OUT, WHAT)						\
 				{					\
 					if (len != sizeof(OUT)) {	\
-						vlog("ignoring RTA_%s with wrong size %d", WHAT, len); \
+						verbose("ignoring RTA_%s with wrong size %d", WHAT, len); \
 					} else {			\
 						memcpy(&OUT, data, len); \
-						vlog("RTA_%s=%d", WHAT, OUT); \
+						verbose("RTA_%s=%d", WHAT, OUT); \
 					}				\
 				}
 				PARSE_NUMBER(priority, "PRIORITY");
@@ -341,7 +341,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 				break;
 #endif
 			default:
-				vlog("ignoring RTA type %d", rtattr->rta_type);
+				verbose("ignoring RTA type %d", rtattr->rta_type);
 			}
 			rtattr = RTA_NEXT(rtattr, rtlen);
 		}
@@ -354,7 +354,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		 * TABLE?
 		 */
 		address_buf sb, psb, db, gb;
-		vlog("using src=%s prefsrc=%s gateway=%s dst=%s dev='%s' priority=%d pref=%d table=%d%s%s",
+		verbose("using src=%s prefsrc=%s gateway=%s dst=%s dev='%s' priority=%d pref=%d table=%d%s%s",
 			str_address(&src, &sb),
 			str_address(&prefsrc, &psb),
 			str_address(&gateway, &gb),
@@ -365,14 +365,14 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			cacheinfo, uid);
 
 		if (rtmsg->rtm_table != RT_TABLE_MAIN) {
-			vlog("IGNORE: table %d is not main(%d)",
+			verbose("IGNORE: table %d is not main(%d)",
 				rtmsg->rtm_table, RT_TABLE_MAIN);
 			return true;
 		}
 
 		if (startswith(r_interface, "ipsec") ||
 		    startswith(r_interface, "mast")) {
-			vlog("IGNORE: interface %s", r_interface);
+			verbose("IGNORE: interface %s", r_interface);
 			return true;
 		}
 
@@ -383,7 +383,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 				context->host->addrtype = KH_IPADDR;
 				context->host->addr = prefsrc;
 				address_buf ab;
-				vlog("found prefsrc(host_addr): %s",
+				verbose("found prefsrc(host_addr): %s",
 					str_address(&context->host->addr, &ab));
 			}
 			break;
@@ -414,7 +414,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 					context->host->nexttype = KH_IPADDR;
 					context->host->nexthop = gateway;
 					address_buf ab;
-					vlog("found gateway(host_nexthop): %s",
+					verbose("found gateway(host_nexthop): %s",
 						str_address(&context->host->nexthop, &ab));
 				}
 			}
@@ -437,7 +437,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	const struct ip_info *afi = host->host_family;
 
 	address_buf ab, gb, pb;
-	vlog("resolving family=%s src=%s gateway=%s peer %s",
+	verbose("resolving family=%s src=%s gateway=%s peer %s",
 		(afi == NULL ? "<unset>" : afi->ip_name),
 		pa(host->addrtype, host->addr, host->strings[KW_IP], &ab),
 		pa(host->nexttype, host->nexthop, host->strings[KW_NEXTHOP], &gb),
@@ -464,7 +464,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	enum seeking seeking = (host->nexttype == KH_DEFAULTROUTE ? GATEWAY :
 				host->addrtype == KH_DEFAULTROUTE ? PREFSRC :
 				NOTHING);
-	vlog("seeking %s", (seeking == NOTHING ? "NOTHING" :
+	verbose("seeking %s", (seeking == NOTHING ? "NOTHING" :
 			    seeking == PREFSRC ? "PREFSRC" :
 			    seeking == GATEWAY ? "GATEWAY" :
 			    "?"));
@@ -580,13 +580,13 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	}
 
 	verbose.level = 1;
-	vlog("%s: src=%s gateway=%s",
-	     (context.status == RESOLVE_FAILURE ? "failure" :
-	      context.status == RESOLVE_SUCCESS ? "success" :
-	      context.status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
-	      "???"),
-	     pa(host->addrtype, host->addr, host->strings[KW_IP], &ab),
-	     pa(host->nexttype, host->nexthop, host->strings[KW_NEXTHOP], &gb));
+	verbose("%s: src=%s gateway=%s",
+		(context.status == RESOLVE_FAILURE ? "failure" :
+		 context.status == RESOLVE_SUCCESS ? "success" :
+		 context.status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
+		 "???"),
+		pa(host->addrtype, host->addr, host->strings[KW_IP], &ab),
+		pa(host->nexttype, host->nexthop, host->strings[KW_NEXTHOP], &gb));
 	pfree(msgbuf);
 	return context.status;
 }
