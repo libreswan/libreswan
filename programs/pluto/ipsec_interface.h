@@ -32,6 +32,8 @@ struct ipsec_interface;	/* forward */
 struct iface_device;
 struct config;
 
+typedef enum { IPSEC_INTERFACE_ID_1 = 1, } ipsec_interface_id_t;
+
 /*
  * The same interface IP can be used by multiple tunnels, with
  * different remote IPs, so they are ref-counted to control removing
@@ -51,7 +53,7 @@ struct ipsec_interface {
 	char name[IFNAMSIZ];		/* ipsec<ipsec-interface> */
 	char physical[IFNAMSIZ];	/* name of physical (link)
 					 * device; if known */
-	uint32_t if_id;			/* <ipsec-interface> but with
+	ipsec_interface_id_t if_id;	/* <ipsec-interface> but with
 					 * 0 re-mapped on linux;
 					 * derived from
 					 * IFLA_XFRM_IF_ID */
@@ -92,7 +94,7 @@ void del_kernel_ipsec_interface_address(const struct connection *c, struct logge
 void shutdown_kernel_ipsec_interface(struct logger *logger);
 void check_stale_ipsec_interfaces(struct logger *logger);
 
-size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t if_id);
-const char *str_ipsec_interface_id(uint32_t if_id, ipsec_interface_buf *buf);
+size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t if_id);
+const char *str_ipsec_interface_id(ipsec_interface_id_t if_id, ipsec_interface_buf *buf);
 
 #endif

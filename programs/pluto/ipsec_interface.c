@@ -48,7 +48,7 @@ static struct ipsec_interface *ipsec_interfaces;
  * passert.
  */
 
-static unsigned unmap_id(uint32_t ipsec_if_id)
+static unsigned unmap_id(ipsec_interface_id_t ipsec_if_id)
 {
 	if (ipsec_if_id == kernel_ops->ipsec_interface->map_if_id_zero) {
 		return 0;
@@ -56,19 +56,19 @@ static unsigned unmap_id(uint32_t ipsec_if_id)
 	return ipsec_if_id;
 }
 
-size_t jam_ipsec_interface_id(struct jambuf *buf, uint32_t ipsec_if_id)
+size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t ipsec_if_id)
 {
 	/* Map the IPSEC_IF_ID back to the name's number, when
 	 * needed */
 	unsigned id = unmap_id(ipsec_if_id);
 	size_t s = jam(buf, "%s%u", kernel_ops->ipsec_interface->name, id);
 	if (id != ipsec_if_id) {
-		jam(buf, "[%"PRIu32"]", ipsec_if_id);
+		jam(buf, "[%u]", ipsec_if_id);
 	}
 	return s;
 }
 
-const char *str_ipsec_interface_id(uint32_t if_id,
+const char *str_ipsec_interface_id(ipsec_interface_id_t if_id,
 				   ipsec_interface_buf *buf)
 {
 	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
@@ -507,7 +507,7 @@ void del_kernel_ipsec_interface_address(const struct connection *c,
 	pfreeany(conn_address);
 }
 
-static struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
+static struct ipsec_interface *find_ipsec_interface_by_id(ipsec_interface_id_t if_id)
 {
 	struct ipsec_interface *h;
 	struct ipsec_interface *ret = NULL;
@@ -522,7 +522,7 @@ static struct ipsec_interface *find_ipsec_interface_by_id(uint32_t if_id)
 	return ret;
 }
 
-static struct ipsec_interface *alloc_ipsec_interface(uint32_t ipsec_if_id)
+static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_if_id)
 {
 	/*
 	 * Create a new ref-counted ipsec_interface, it is not added
@@ -626,7 +626,7 @@ diag_t parse_ipsec_interface(struct config *config,
 			    ipsec_interface, err);
 	}
 
-	uint32_t if_id;
+	ipsec_interface_id_t if_id;
 	if (yn != NULL) {
 		vexpect(yn->value == YN_YES);
 		if_id = 1; /* YES means 1 */
@@ -644,7 +644,7 @@ diag_t parse_ipsec_interface(struct config *config,
 
 		if (value == 0 &&
 		    kernel_ops->ipsec_interface->map_if_id_zero != 0) {
-			vdbg("remap ipsec0 to %"PRIu32" because VTI allowed zero but XFRMi does not",
+			vdbg("remap ipsec0 to %u because VTI allowed zero but XFRMi does not",
 			     kernel_ops->ipsec_interface->map_if_id_zero);
 			if_id = kernel_ops->ipsec_interface->map_if_id_zero;
 		} else {

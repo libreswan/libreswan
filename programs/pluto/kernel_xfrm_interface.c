@@ -243,7 +243,7 @@ static bool nl_newlink(const char *ipsec_if_name,
 			nl_addattr32(&req.n, sizeof(req.data), IFLA_XFRM_IF_ID, ipsec_if_id);	/* see USE_XFRM_INTERFACE_IFLA_HEADER */
 
 			/* e.g link id of the interface, eth0 */
-			uint32_t physical_if_index = if_nametoindex(physical_if_name);
+			unsigned physical_if_index = if_nametoindex(physical_if_name);
 			if (physical_if_index == 0) {
 				llog_error(verbose.logger, errno,
 					   "cannot find interface index for physical interface device %s", physical_if_name);
@@ -263,7 +263,7 @@ static bool nl_newlink(const char *ipsec_if_name,
 }
 
 static bool xfrm_ipsec_interface_add(const char *if_name /*non-NULL*/,
-				     const uint32_t if_id,
+				     const ipsec_interface_id_t if_id,
 				     const struct iface_device *real_device,
 				     struct verbose verbose)
 {
@@ -749,7 +749,7 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	 * Interface ipsec0 can't be used as, on linux that gets remapped.
 	 */
 
-	const uint32_t ipsec_if_id = 1; /* NOT ZERO ON LINUX */
+	const ipsec_interface_id_t ipsec_if_id = 1; /* NOT ZERO ON LINUX */
 	const char ipsec_if_name[] = "ipsec1";
 	unsigned int ipsec_if_index = if_nametoindex(ipsec_if_name);
 	int e = errno; /* save error */

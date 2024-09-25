@@ -29,7 +29,7 @@ struct ipsec_interface_match {
 
 	bool wildcard; /* match any valid ipsec-interface */
 	/* BSD can have zero?  Linux remaps 0 */
-	uint32_t ipsec_if_id; /* only when !wildcard */
+	ipsec_interface_id_t ipsec_if_id; /* only when !wildcard */
 
 	char found[IFNAMSIZ];
 	diag_t diag;
@@ -42,7 +42,7 @@ struct kernel_ipsec_interface {
 	 * to some other value; is this all about preserving old VTI
 	 * code?
 	 */
-	uint32_t map_if_id_zero;
+	ipsec_interface_id_t map_if_id_zero;
 
 	bool (*has_cidr)(const char *ipsec_if_name, ip_cidr cidr,
 			 struct verbose verbose);
@@ -52,7 +52,7 @@ struct kernel_ipsec_interface {
 			 struct verbose verbose);
 
 	bool (*add)(const char *ipsec_if_name /*non-NULL*/,
-		    const uint32_t ipsec_if_id,
+		    const ipsec_interface_id_t ipsec_if_id,
 		    const struct iface_device *physical_device,
 		    struct verbose verbose);
 	bool (*up)(const char *ipsec_if_name,
@@ -81,7 +81,7 @@ void kernel_ipsec_interface_del_cidr(const char *ipsec_if_name, ip_cidr cidr,
 				     struct verbose verbose);
 
 bool kernel_ipsec_interface_add(const char *ipsec_if_name /*non-NULL*/,
-				const uint32_t ipsec_if_id,
+				const ipsec_interface_id_t ipsec_if_id,
 				const struct iface_device *physical_device,
 				struct verbose verbose);
 bool kernel_ipsec_interface_up(const char *ipsec_if_name,

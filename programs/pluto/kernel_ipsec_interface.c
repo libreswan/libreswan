@@ -55,11 +55,11 @@ void kernel_ipsec_interface_del_cidr(const char *ipsec_if_name, ip_cidr cidr,
 }
 
 bool kernel_ipsec_interface_add(const char *ipsec_if_name /*non-NULL*/,
-				const uint32_t ipsec_if_id,
+				const ipsec_interface_id_t ipsec_if_id,
 				const struct iface_device *iface,
 				struct verbose verbose)
 {
-	vdbg("%s:%s() %s %"PRIu32" %s ...",
+	vdbg("%s:%s() %s %u %s ...",
 	     kernel_ops->ipsec_interface->name, __func__,
 	     ipsec_if_name, ipsec_if_id, iface->real_device_name);
 	verbose.level++;
