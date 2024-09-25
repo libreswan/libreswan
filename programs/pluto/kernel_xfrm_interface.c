@@ -264,10 +264,11 @@ static bool nl_newlink(const char *ipsec_if_name,
 
 static bool xfrm_ipsec_interface_add(const char *if_name /*non-NULL*/,
 				     const ipsec_interface_id_t if_id,
-				     const struct iface_device *real_device,
+				     const struct iface_device *local_iface,
+				     ip_address remote_address UNUSED,
 				     struct verbose verbose)
 {
-	return nl_newlink(if_name, if_id, real_device->real_device_name, verbose);
+	return nl_newlink(if_name, if_id, local_iface->real_device_name, verbose);
 }
 
 static int ifaddrmsg_op(uint16_t type, uint16_t flags,

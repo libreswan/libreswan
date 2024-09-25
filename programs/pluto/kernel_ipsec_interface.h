@@ -53,7 +53,8 @@ struct kernel_ipsec_interface {
 
 	bool (*add)(const char *ipsec_if_name /*non-NULL*/,
 		    const ipsec_interface_id_t ipsec_if_id,
-		    const struct iface_device *physical_device,
+		    const struct iface_device *local_iface,
+		    ip_address remote_address,
 		    struct verbose verbose);
 	bool (*up)(const char *ipsec_if_name,
 		   struct verbose verbose);
@@ -82,7 +83,8 @@ void kernel_ipsec_interface_del_cidr(const char *ipsec_if_name, ip_cidr cidr,
 
 bool kernel_ipsec_interface_add(const char *ipsec_if_name /*non-NULL*/,
 				const ipsec_interface_id_t ipsec_if_id,
-				const struct iface_device *physical_device,
+				const struct iface_device *local_iface,
+				ip_address remote_address,
 				struct verbose verbose);
 bool kernel_ipsec_interface_up(const char *ipsec_if_name,
 			       struct verbose verbose);
