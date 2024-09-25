@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+
 set -eu
 verbose=${verbose-''}
 
@@ -13,7 +14,7 @@ this_host=$(hostname)
 host=${this_host}
 ip6="not ip6"
 
-function usage () {
+ usage() {
     cat <<EOF >/dev/stderr
 
 Usage:
@@ -38,14 +39,9 @@ if test $# -lt 1; then
 	exit 1
 fi
 
-OPTIONS=$(getopt -o h,i: --long help,host:,start,stop,kill -- "$@")
-if (( $? != 0 )); then
-    err 4 "Error calling getopt"
-fi
+action=
 
-eval set -- "$OPTIONS"
-
-while true; do
+while test $# -gt 0; do
 	case "$1" in
 		-h | --help )
                         usage
@@ -77,14 +73,15 @@ while true; do
 			action="kill"
 			shift
 			;;
+
 		* )
-			shift
-			break
+			echo "unrecognized option: $1" 1>&2
+			exit 1
 			;;
 	esac
 done
 
-function set_file_names()
+set_file_names()
 {
 	tmp_dir=/tmp
 	testname=$(basename ${PWD})
@@ -93,7 +90,7 @@ function set_file_names()
 	pid_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.pid"
 }
 
-function start_tcpdump()
+start_tcpdump()
 {
 	# call stop if there are any previous runawy tcpdump - don't show output
 	stop_tcpdump >/dev/null 2>&1
@@ -106,7 +103,7 @@ function start_tcpdump()
 	echo tcpdump started
 }
 
-function stop_tcpdump()
+stop_tcpdump()
 {
     if test -r ${pid_path} ; then
 	pid=$(cat ${pid_path})
