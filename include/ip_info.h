@@ -20,6 +20,8 @@ struct ip_info {
 	enum ip_version ip_version; /* 4 or 6 */
 	enum ip_index ip_index; /* 0 or 1 */
 	const char *ip_name; /* "IPv4" or "IPv6" */
+	const char *inet_name;		/* "inet" or "inet6" */
+
 	size_t ip_size; /* 4 or 16 */
 	unsigned mask_cnt; /* 32 or 128 */
 
@@ -98,8 +100,8 @@ struct ip_info {
 	 * documents those instead.
 	 */
 	struct {
-		int domain;
-		const char *domain_name;
+		int domain;			/* PF_INET or PF_INET6 */
+		const char *domain_name;	/* "PF_INET" or "PF_INET6" */
 	} socket;
 
 	/*
