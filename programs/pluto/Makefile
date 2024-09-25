@@ -52,7 +52,8 @@ OBJS =
 
 OBJS += send.o
 OBJS += ipsec_interface.o
-ifneq ($(BSD_VARIANT),)
+OBJS += kernel_ipsec_interface.o
+ifeq ($(USE_PFKEYV2),true)
 OBJS += kernel_ipsec_interface_bsd.o
 endif
 

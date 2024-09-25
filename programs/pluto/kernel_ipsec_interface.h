@@ -23,7 +23,7 @@ struct ipsec_interface_address;
 struct ipsec_interface;
 struct iface_device;
 
-struct ip_link_match {
+struct ipsec_interface_match {
 	const char *ipsec_if_name;	/* when non-NULL */
 	unsigned iface_if_index;	/* when non-zero */
 
@@ -44,34 +44,56 @@ struct kernel_ipsec_interface {
 	 */
 	uint32_t map_if_id_zero;
 
-	bool (*ip_addr_if_has_cidr)(const char *ipsec_if_name,
-				    ip_cidr cidr,
-				    struct verbose verbose);
-	bool (*ip_addr_add)(const char *ipsec_if_name,
-			    const struct ipsec_interface_address *xfrmi_ipaddr,
-			    struct verbose verbose);
-	int (*ip_addr_del)(const char *ipsec_if_name,
-			   const struct ipsec_interface_address *xfrmi_ipaddr,
-			   struct verbose verbose);
+	bool (*has_cidr)(const char *ipsec_if_name, ip_cidr cidr,
+			 struct verbose verbose);
+	bool (*add_cidr)(const char *ipsec_if_name, ip_cidr cidr,
+			 struct verbose verbose);
+	void (*del_cidr)(const char *ipsec_if_name, ip_cidr cidr,
+			 struct verbose verbose);
 
-	bool (*ip_link_add)(const char *ipsec_if_name /*non-NULL*/,
-			    const uint32_t ipsec_if_id,
-			    const struct iface_device *physical_device,
-			    struct verbose verbose);
-	bool (*ip_link_up)(const char *ipsec_if_name,
-			   struct verbose verbose);
-	bool (*ip_link_del)(const char *ipsec_if_name /*non-NULL*/,
-			    struct verbose verbose);
+	bool (*add)(const char *ipsec_if_name /*non-NULL*/,
+		    const uint32_t ipsec_if_id,
+		    const struct iface_device *physical_device,
+		    struct verbose verbose);
+	bool (*up)(const char *ipsec_if_name,
+		   struct verbose verbose);
+	bool (*del)(const char *ipsec_if_name /*non-NULL*/,
+		    struct verbose verbose);
 
-	bool (*ip_link_match)(struct ip_link_match *match,
-			     struct verbose verbose);
+	bool (*match)(struct ipsec_interface_match *match,
+		      struct verbose verbose);
 
-	void (*check_stale_ipsec_interfaces)(struct logger *logger);
+	void (*check_stale)(struct verbose verbose);
 	err_t (*supported)(struct verbose verbose);
 	void (*shutdown)(struct verbose verbose);
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_bsd;
+
+
+bool kernel_ipsec_interface_has_cidr(const char *ipsec_if_name,
+				     ip_cidr cidr,
+				     struct verbose verbose);
+bool kernel_ipsec_interface_add_cidr(const char *ipsec_if_name, ip_cidr cidr,
+				     struct verbose verbose);
+void kernel_ipsec_interface_del_cidr(const char *ipsec_if_name, ip_cidr cidr,
+				     struct verbose verbose);
+
+bool kernel_ipsec_interface_add(const char *ipsec_if_name /*non-NULL*/,
+				const uint32_t ipsec_if_id,
+				const struct iface_device *physical_device,
+				struct verbose verbose);
+bool kernel_ipsec_interface_up(const char *ipsec_if_name,
+			       struct verbose verbose);
+bool kernel_ipsec_interface_del(const char *ipsec_if_name /*non-NULL*/,
+				struct verbose verbose);
+
+bool kernel_ipsec_interface_match(struct ipsec_interface_match *match,
+				  struct verbose verbose);
+
+void kernel_ipsec_interface_check_stale(struct verbose verbose);
+err_t kernel_ipsec_interface_supported(struct verbose verbose);
+void kernel_ipsec_interface_shutdown(struct verbose verbose);
 
 #endif

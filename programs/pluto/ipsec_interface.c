@@ -21,8 +21,7 @@
 #include "sparse_names.h"
 
 #include "ipsec_interface.h"
-
-#include "kernel.h"			/* for kernel_ops */
+#include "kernel.h"
 #include "kernel_ipsec_interface.h"
 #include "log.h"
 #include "verbose.h"
@@ -276,9 +275,9 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 		     str_ipsec_interface(c->ipsec_interface, &ib),
 		     str_cidr(&conn_cidr, &cb));
 		addref_where(conn_address, HERE);
-		if (!kernel_ops->ipsec_interface->ip_addr_if_has_cidr(c->ipsec_interface->name,
-								      conn_address->if_ip,
-								      verbose)) {
+		if (!kernel_ipsec_interface_has_cidr(c->ipsec_interface->name,
+						     conn_address->if_ip,
+						     verbose)) {
 			cidr_buf cb;
 			llog_pexpect(verbose.logger, HERE,
 				     "ipsec-interface %s ID %u has %s but the kernel interface does not!?!",
@@ -295,9 +294,9 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 
 	conn_address = alloc_ipsec_interface_address(conn_address_ptr, conn_cidr);
 
-	if (kernel_ops->ipsec_interface->ip_addr_if_has_cidr(c->ipsec_interface->name,
-							     conn_address->if_ip,
-							     verbose)) {
+	if (kernel_ipsec_interface_has_cidr(c->ipsec_interface->name,
+					    conn_address->if_ip,
+					    verbose)) {
 		cidr_buf cb;
 		vdbg("ipsec-interface %s ID %u already has %s",
 		     c->ipsec_interface->name, c->ipsec_interface->if_id,
@@ -307,8 +306,8 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 	}
 
 	conn_address->pluto_added = true;
-	if (!kernel_ops->ipsec_interface->ip_addr_add(c->ipsec_interface->name,
-						      conn_address, verbose)) {
+	if (!kernel_ipsec_interface_add_cidr(c->ipsec_interface->name,
+					     conn_address->if_ip, verbose)) {
 		cidr_buf cb;
 		llog_error(verbose.logger, 0/*no-errno*/,
 			   "unable to add CIDR %s to ipsec-interface %s ID %u",
@@ -340,7 +339,7 @@ bool add_kernel_ipsec_interface_address(const struct connection *c,
 	}
 
 	/* make certain that the interface is up */
-	return kernel_ops->ipsec_interface->ip_link_up(c->ipsec_interface->name, verbose);
+	return kernel_ipsec_interface_up(c->ipsec_interface->name, verbose);
 }
 
 /* Return true on success, false on failure */
@@ -362,9 +361,9 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 
 	bool created;
 	if (if_nametoindex(c->ipsec_interface->name) == 0) {
-		if (!kernel_ops->ipsec_interface->ip_link_add(c->ipsec_interface->name,
-							      c->ipsec_interface->if_id,
-							      iface, verbose)) {
+		if (!kernel_ipsec_interface_add(c->ipsec_interface->name,
+						c->ipsec_interface->if_id,
+						iface, verbose)) {
 			return false;
 		}
 
@@ -378,7 +377,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 		 * Note: pluto may have added this device during an
 		 * earlier call.
 		 */
-		struct ip_link_match match = {
+		struct ipsec_interface_match match = {
 			.ipsec_if_name = c->ipsec_interface->name,
 			.ipsec_if_id = c->ipsec_interface->if_id,
 			.iface_if_index = if_nametoindex(iface->real_device_name),
@@ -387,7 +386,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 		if (vbad(match.iface_if_index == 0)) {
 			return false;
 		}
-		if (!kernel_ops->ipsec_interface->ip_link_match(&match, verbose)) {
+		if (!kernel_ipsec_interface_match(&match, verbose)) {
 			/* .NAME isn't suitable */
 			ipsec_interface_buf ib;
 			llog_error(verbose.logger, 0/*no-errno*/,
@@ -487,8 +486,8 @@ void del_kernel_ipsec_interface_address(const struct connection *c,
 
 	/* Check if the IP should be removed from the interface */
 	if (conn_address->pluto_added) {
-		kernel_ops->ipsec_interface->ip_addr_del(c->ipsec_interface->name,
-							 conn_address, verbose);
+		kernel_ipsec_interface_del_cidr(c->ipsec_interface->name,
+						conn_address->if_ip, verbose);
 		cidr_buf cb;
 		ipsec_interface_buf ib;
 		llog(RC_LOG, logger,
@@ -565,7 +564,8 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 				(*pp) = (*pp)->next;
 				/* delete*/
 				if (ipsec_interface->pluto_added) {
-					kernel_ops->ipsec_interface->ip_link_del(ipsec_interface->name, verbose);
+					kernel_ipsec_interface_del(ipsec_interface->name,
+								   verbose);
 					ipsec_interface_buf ib;
 					llog(RC_LOG, logger,
 					     "delete ipsec-interface %s added by pluto",
@@ -619,13 +619,8 @@ diag_t parse_ipsec_interface(struct config *config,
 			    kernel_ops->interface_name);
 	}
 
-	if (kernel_ops->ipsec_interface->supported == NULL) {
-		return diag("ipsec-interface=%s is not implemented by %s",
-			    ipsec_interface, kernel_ops->interface_name);
-	}
-
 	/* something other than ipsec-interface=no, check support */
-	err_t err = kernel_ops->ipsec_interface->supported(verbose);
+	err_t err = kernel_ipsec_interface_supported(verbose);
 	if (err != NULL) {
 		return diag("ipsec-interface=%s not supported: %s",
 			    ipsec_interface, err);
@@ -696,15 +691,12 @@ void add_ipsec_interface(struct connection *c)
 
 void check_stale_ipsec_interfaces(struct logger *logger)
 {
-	if (kernel_ops->ipsec_interface->check_stale_ipsec_interfaces != NULL) {
-		kernel_ops->ipsec_interface->check_stale_ipsec_interfaces(logger);
-	}
+	VERBOSE(logger, "...");
+	kernel_ipsec_interface_check_stale(verbose);
 }
 
 void shutdown_kernel_ipsec_interface(struct logger *logger)
 {
 	VERBOSE(logger, "...");
-	if (kernel_ops->ipsec_interface->shutdown != NULL) {
-		kernel_ops->ipsec_interface->shutdown(verbose);
-	}
+	kernel_ipsec_interface_shutdown(verbose);
 }

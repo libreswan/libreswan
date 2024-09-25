@@ -172,7 +172,7 @@ static struct nl_ifaddrmsg_req init_ifaddrmsg_req(uint16_t type, uint16_t flags,
 	return req;
 }
 
-static bool ip_link_xfrm_up(const char *if_name, struct verbose verbose)
+static bool xfrm_ipsec_interface_up(const char *if_name, struct verbose verbose)
 {
 	vdbg("%s() if_name %s", __func__, if_name);
 	verbose.level++;
@@ -194,7 +194,7 @@ static bool ip_link_xfrm_up(const char *if_name, struct verbose verbose)
 	return true;
 }
 
-static bool ip_link_del(const char *if_name, struct verbose verbose)
+static bool xfrm_ipsec_interface_del(const char *if_name, struct verbose verbose)
 {
 	vdbg("%s() if_name %s", __func__, if_name);
 	verbose.level++;
@@ -262,26 +262,25 @@ static bool nl_newlink(const char *ipsec_if_name,
 	return true;
 }
 
-static bool ip_link_add(const char *if_name /*non-NULL*/,
-			const uint32_t if_id,
-			const struct iface_device *real_device,
-			struct verbose verbose)
+static bool xfrm_ipsec_interface_add(const char *if_name /*non-NULL*/,
+				     const uint32_t if_id,
+				     const struct iface_device *real_device,
+				     struct verbose verbose)
 {
 	return nl_newlink(if_name, if_id, real_device->real_device_name, verbose);
 }
 
 static int ifaddrmsg_op(uint16_t type, uint16_t flags,
-			const char *if_name,
-			const struct ipsec_interface_address *xfrmi_ipaddr,
+			const char *if_name, ip_cidr cidr,
 			struct verbose verbose)
 {
-	const struct ip_info *afi = cidr_info(xfrmi_ipaddr->if_ip);
+	const struct ip_info *afi = cidr_info(cidr);
 	struct nl_ifaddrmsg_req req = init_ifaddrmsg_req(type, flags, if_name, afi);
 
-	shunk_t bytes = cidr_as_shunk(&xfrmi_ipaddr->if_ip);
+	shunk_t bytes = cidr_as_shunk(&cidr);
 	nl_addattr_l(&req.n, sizeof(req.data), IFA_LOCAL,   bytes.ptr, bytes.len);
 	nl_addattr_l(&req.n, sizeof(req.data), IFA_ADDRESS, bytes.ptr, bytes.len);
-	req.ifa.ifa_prefixlen = cidr_prefix_len(xfrmi_ipaddr->if_ip);
+	req.ifa.ifa_prefixlen = cidr_prefix_len(cidr);
 
 	if (!simple_netlink_op(&req.n, __func__, if_name, verbose)) {
 		return XFRMI_FAILURE;
@@ -291,21 +290,19 @@ static int ifaddrmsg_op(uint16_t type, uint16_t flags,
 }
 
 /* Add an IP address to an XFRMi interface using Netlink */
-static bool ip_addr_xfrmi_add(const char *if_name,
-			      const struct ipsec_interface_address *xfrmi_ipaddr,
-			      struct verbose verbose)
+static bool xfrm_ipsec_interface_add_cidr(const char *if_name, ip_cidr cidr,
+					  struct verbose verbose)
 {
 	return ifaddrmsg_op(RTM_NEWADDR, NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL,
-			    if_name, xfrmi_ipaddr, verbose) == XFRMI_SUCCESS;
+			    if_name, cidr, verbose) == XFRMI_SUCCESS;
 }
 
 /* Delete an IP address from an XFRMi interface using Netlink */
-static int ip_addr_xfrmi_del(const char *if_name,
-			     const struct ipsec_interface_address *xfrmi_ipaddr,
-			     struct verbose verbose)
+static void xfrm_ipsec_interface_del_cidr(const char *if_name, ip_cidr cidr,
+					  struct verbose verbose)
 {
-	return ifaddrmsg_op(RTM_DELADDR, NLM_F_REQUEST,
-			    if_name, xfrmi_ipaddr, verbose);
+	ifaddrmsg_op(RTM_DELADDR, NLM_F_REQUEST,
+		     if_name, cidr, verbose);
 }
 
 /*
@@ -313,7 +310,7 @@ static int ip_addr_xfrmi_del(const char *if_name,
  */
 
 struct getlink_context {
-	struct ip_link_match *match;
+	struct ipsec_interface_match *match;
 
 	struct {
 		bool ok; /* final result true success */
@@ -549,17 +546,9 @@ static bool parse_getlink_response(struct nlmsghdr *nlmsg,
 	return parse_getlink_newlink_response(nlmsg, ctx->getlink, verbose);
 }
 
-static bool xfrm_ip_link_match(struct ip_link_match *match,
-			       struct verbose verbose)
+static bool xfrm_ipsec_interface_match(struct ipsec_interface_match *match,
+				       struct verbose verbose)
 {
-	vdbg("%s() wildcard %s ipsec_if_name %s ipsec_if_id %u iface_if_index %u",
-	     __func__,
-	     bool_str(match->wildcard),
-	     (match->ipsec_if_name != NULL ? match->ipsec_if_name : "N/A"),
-	     match->ipsec_if_id,
-	     match->iface_if_index);
-	verbose.level++;
-
 	struct getlink_context getlink = {
 		.match = match,
 	};
@@ -683,9 +672,9 @@ static bool parse_getaddr_response(struct nlmsghdr *nlmsg,
 	return parse_getaddr_newaddr_response(nlmsg, ctx->getaddr, verbose);
 }
 
-static bool ip_addr_xfrmi_if_has_cidr(const char *ipsec_if_name,
-				      ip_cidr search_cidr,
-				      struct verbose verbose)
+static bool xfrm_ipsec_interface_has_cidr(const char *ipsec_if_name,
+					  ip_cidr search_cidr,
+					  struct verbose verbose)
 {
 	/* first do a cheap check */
 	vassert(ipsec_if_name != NULL);
@@ -737,10 +726,10 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	 * Should it instead flag them?  It would mean carefully
 	 * differentiating between several rejection cases.
 	 */
-	struct ip_link_match wildcard_match = {
+	struct ipsec_interface_match wildcard_match = {
 		.wildcard = true,
 	};
-	if (xfrm_ip_link_match(&wildcard_match, verbose)) {
+	if (kernel_ipsec_interface_match(&wildcard_match, verbose)) {
 		vdbg("existing xfrmi ipsec-interface %s found; ipsec-must be supported",
 		     wildcard_match.found);
 		xfrm_interface_support = 1; /* permanent success */
@@ -774,11 +763,11 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 		 * above match() call would have found and accepted
 		 * it.  Find out by trying an exact match.
 		 */
-		struct ip_link_match ipsec_match = {
+		struct ipsec_interface_match ipsec_match = {
 			.ipsec_if_name = ipsec_if_name,
 			.ipsec_if_id = ipsec_if_id,
 		};
-		if (!xfrm_ip_link_match(&ipsec_match, verbose)) {
+		if (!kernel_ipsec_interface_match(&ipsec_match, verbose)) {
 			llog(RC_LOG, verbose.logger,
 			     "ipsec-interface %s exists but is invalid, %s",
 			     ipsec_match.found, str_diag(ipsec_match.diag));
@@ -841,7 +830,7 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 
 	vdbg("xfrmi supported, successfully created %s bound to %s; now deleting it",
 	     ipsec_if_name, physical_if_name);
-	ip_link_del(ipsec_if_name, verbose); /* ignore return value??? */
+	kernel_ipsec_interface_del(ipsec_if_name, verbose); /* ignore return value??? */
 	xfrm_interface_support = 1; /* permanent success */
 	return NULL;
 }
@@ -851,7 +840,7 @@ static err_t xfrm_iface_supported(struct verbose verbose)
  * lying around.
  */
 
-static void check_stale_xfrmi_interfaces(struct logger *logger)
+static void xfrm_check_stale(struct verbose verbose)
 {
 	/*
 	 * first check quick one do ipsec1 exist. later on add extensive checks
@@ -865,20 +854,20 @@ static void check_stale_xfrmi_interfaces(struct logger *logger)
 	unsigned int if_index = if_nametoindex(if_name);
 	int e = errno;
 	if (if_index != 0) {
-		llog(RC_LOG, logger,
+		llog(RC_LOG, verbose.logger,
 		     "found an unexpected interface %s if_index=%u From previous pluto run?",
 		     if_name, if_index);
 		return; /* ERROR */
 	}
 
 	if (e != ENXIO && e != ENODEV) {
-		llog_error(logger, e,
+		llog_error(verbose.logger, e,
 			   "in %s() if_nametoindex('%s') failed: ",
 			   __func__, if_name);
 		return;
 	}
 
-	ldbg(logger, "no stale xfrmi interface '%s' found", if_name);
+	vdbg("no stale xfrmi interface '%s' found", if_name);
 	return;
 }
 
@@ -892,7 +881,7 @@ static void free_xfrmi_ipsec1(struct verbose verbose)
 
 	unsigned int if_id = if_nametoindex(if_name);
 	if (if_id > 0) {
-		ip_link_del(if_name, verbose); /* ignore return value??? */
+		kernel_ipsec_interface_del(if_name, verbose); /* ignore return value??? */
 	}
 }
 
@@ -933,16 +922,17 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 	 */
 	.map_if_id_zero = 16384,
 
-	.ip_addr_if_has_cidr = ip_addr_xfrmi_if_has_cidr,
-	.ip_addr_add = ip_addr_xfrmi_add,
-	.ip_addr_del = ip_addr_xfrmi_del,
+	.has_cidr = xfrm_ipsec_interface_has_cidr,
+	.add_cidr = xfrm_ipsec_interface_add_cidr,
+	.del_cidr = xfrm_ipsec_interface_del_cidr,
 
-	.ip_link_up = ip_link_xfrm_up,
-	.ip_link_add = ip_link_add,
-	.ip_link_del = ip_link_del,
-	.ip_link_match = xfrm_ip_link_match,
+	.up = xfrm_ipsec_interface_up,
+	.add = xfrm_ipsec_interface_add,
+	.del = xfrm_ipsec_interface_del,
 
-	.check_stale_ipsec_interfaces = check_stale_xfrmi_interfaces,
+	.match = xfrm_ipsec_interface_match,
+
+	.check_stale = xfrm_check_stale,
 	.supported = xfrm_iface_supported,
 	.shutdown = free_xfrmi_ipsec1,
 };
