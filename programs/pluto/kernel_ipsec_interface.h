@@ -70,8 +70,7 @@ struct kernel_ipsec_interface {
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;
-extern const struct kernel_ipsec_interface kernel_ipsec_interface_bsd;
-
+extern const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig;
 
 bool kernel_ipsec_interface_has_cidr(const char *ipsec_if_name,
 				     ip_cidr cidr,
