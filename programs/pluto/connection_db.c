@@ -148,7 +148,7 @@ HASH_DB(connection,
 
 static struct list_head *connection_filter_head(struct connection_filter *filter)
 {
-	struct logger *logger = filter->search.logger;
+	const struct logger *logger = filter->search.logger;
 	if (filter->that_id_eq != NULL) {
 		id_buf idb;
 		ldbg(logger, "FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
@@ -260,7 +260,7 @@ static bool matches_connection_filter(struct connection *c,
 
 bool next_connection(struct connection_filter *filter)
 {
-	struct logger *logger = filter->search.logger;
+	const struct logger *logger = filter->search.logger;
 	/* try to stop all_connections() calls */
 	passert(filter->connections == NULL);
 	if (filter->internal == NULL) {
@@ -312,7 +312,7 @@ bool next_connection(struct connection_filter *filter)
 
 bool all_connections(struct connection_filter *filter)
 {
-	struct logger *logger = filter->search.logger;
+	const struct logger *logger = filter->search.logger;
 	/* try to stop next_connection() calls */
 	PASSERT_WHERE(logger, filter->search.where, filter->internal == NULL);
 

@@ -1000,7 +1000,7 @@ struct connection_filter {
 	 */
 	struct search {
 		enum chrono order;
-		struct logger *logger;
+		const struct logger *logger;
 		/* .where MUST BE LAST (See GCC bug 102288) */
 		where_t where;
 	} search;
