@@ -432,9 +432,21 @@ enum ipsec_proto {
 
 enum ipsec_level {
 
+	ipsec_level_default = IPSEC_LEVEL_DEFAULT,
+#undef IPSEC_LEVEL_DEFAULT
+#define IPSEC_LEVEL_DEFAULT ipsec_level_default
+
+	ipsec_level_use = IPSEC_LEVEL_USE,
+#undef IPSEC_LEVEL_USE
+#define IPSEC_LEVEL_USE ipsec_level_use
+
 	ipsec_level_require = IPSEC_LEVEL_REQUIRE,
 #undef IPSEC_LEVEL_REQUIRE
 #define IPSEC_LEVEL_REQUIRE ipsec_level_require
+
+	ipsec_level_unique = IPSEC_LEVEL_UNIQUE,
+#undef IPSEC_LEVEL_UNIQUE
+#define IPSEC_LEVEL_UNIQUE ipsec_level_unique
 
 };
 

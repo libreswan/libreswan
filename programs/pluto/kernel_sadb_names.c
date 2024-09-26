@@ -593,7 +593,10 @@ const struct sparse_names ipsec_mode_names = {
 
 const struct sparse_names ipsec_level_names = {
 	.list = {
+		S(IPSEC_LEVEL_DEFAULT),
+		S(IPSEC_LEVEL_USE),
 		S(IPSEC_LEVEL_REQUIRE),
+		S(IPSEC_LEVEL_UNIQUE),
 		SPARSE_NULL,
 	},
 };
