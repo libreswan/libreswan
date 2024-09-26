@@ -3999,7 +3999,7 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
 
 struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
-					      struct logger *logger)
+					      const struct logger *logger)
 {
 	packet_buf pb;
 	ldbg(logger, "%s() looking for an out-going connection that matches packet %s sec_label="PRI_SHUNK,

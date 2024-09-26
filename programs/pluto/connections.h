@@ -900,7 +900,7 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 bool connection_with_name_exists(const char *name);
 struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
-					      struct logger *logger);
+					      const struct logger *logger);
 
 /* "name"[1]... OE-MAGIC */
 size_t jam_connection(struct jambuf *buf, const struct connection *c);

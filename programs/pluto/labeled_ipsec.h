@@ -38,9 +38,9 @@ struct logger;
 
 err_t vet_seclabel(shunk_t sl);
 
-void init_labeled_ipsec(struct logger *logger);
+void init_labeled_ipsec(const struct logger *logger);
 
 bool sec_label_within_range(const char *source, shunk_t label, chunk_t range,
-			    struct logger *logger);
+			    const struct logger *logger);
 
 #endif

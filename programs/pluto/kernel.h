@@ -413,7 +413,7 @@ spd_priority_t spd_priority(const struct spd *spd);
 struct kernel_acquire {
 	ip_packet packet;			/* that triggered the on-demand exchange */
 	bool by_acquire;			/* by kernel acquire, else by whack */
-	struct logger *logger;			/* on stack, could have whack attached */
+	const struct logger *logger;		/* on stack, could have whack attached */
 	bool background;			/* close whackfd once started */
 	shunk_t sec_label;			/* on stack */
 	enum kernel_state_id state_id;		/* matches kernel state's .seq? */

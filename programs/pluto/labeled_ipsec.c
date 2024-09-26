@@ -51,7 +51,7 @@ err_t vet_seclabel(shunk_t sl)
 #endif
 }
 
-void init_labeled_ipsec(struct logger *logger)
+void init_labeled_ipsec(const struct logger *logger)
 {
 #ifdef HAVE_LABELED_IPSEC
 	if (!is_selinux_enabled()) {
@@ -69,7 +69,7 @@ void init_labeled_ipsec(struct logger *logger)
 static bool check_access(const char *perm,
 			 const char *source, const char *scontext,
 			 const char *target, const char *tcontext,
-			 struct logger *logger)
+			 const struct logger *logger)
 {
 	const char tclass[] = "association";
 	errno = 0;	/* selinux_check_access(3) is not documented to set errno */
@@ -88,8 +88,8 @@ static bool check_access(const char *perm,
 }
 #endif
 
-bool sec_label_within_range(const char *source, shunk_t label,
-			    chunk_t range, struct logger *logger)
+bool sec_label_within_range(const char *source, shunk_t label, chunk_t range,
+			    const struct logger *logger)
 {
 #ifdef HAVE_LABELED_IPSEC
 	if (label.len == 0 || range.len == 0) {
