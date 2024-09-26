@@ -29,6 +29,7 @@
 #include <string.h>		/* for strcmp() */
 
 #include "shunk.h"
+#include "names.h"
 
 struct jambuf;
 
@@ -222,12 +223,8 @@ extern char *add_str(char *buf, size_t size, char *hint, const char *src);
  * the struct invalidating the internal pointer.
  */
 
-typedef struct enum_buf {
-	const char *buf;
-	/* N_N? */
-	char tmp[((sizeof(unsigned long) * 241 + 99) / 100)*2 + sizeof("_??")];
-} enum_buf;
-typedef enum_buf esb_buf; /* XXX: TBD */
+#define enum_buf name_buf
+#define esb_buf  name_buf /* XXX: TBD */
 
 typedef const struct enum_names enum_names;
 
@@ -235,9 +232,9 @@ bool enum_long(const struct enum_names *en, unsigned long val, enum_buf *b);
 const char *str_enum_long(const struct enum_names *en, unsigned long val, enum_buf *b);
 size_t jam_enum_long(struct jambuf *, const struct enum_names *en, unsigned long val);
 
-#define jam_enum jam_enum_long
-#define str_enum str_enum_long
-#define enum_name enum_long
+#define jam_enum jam_enum_long /* legacy */
+#define str_enum str_enum_long /* legacy */
+#define enum_name enum_long /* legacy */
 
 bool enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);
 const char *str_enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);

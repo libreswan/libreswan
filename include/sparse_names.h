@@ -27,6 +27,7 @@
 #include <stddef.h>		/* for size_t */
 
 #include "shunk.h"
+#include "names.h"
 
 struct jambuf;
 
@@ -50,18 +51,27 @@ struct sparse_name {
 
 struct sparse_names {
 	size_t roof; /* when non-zero, limit on value */
+	const char *prefix; /* what to remove from short names */
 	struct sparse_name list[];
 };
 
 const struct sparse_name *sparse_lookup(const struct sparse_names *, shunk_t);
 
-typedef struct {
-	char buf[16];/*how big?*/
-} sparse_buf;
+#define sparse_buf name_buf
 
 const char *sparse_name(const struct sparse_names *sd, unsigned long val);
-size_t jam_sparse(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
-const char *str_sparse(const struct sparse_names *sd, unsigned long val, sparse_buf *buf);
+bool sparse_long(const struct sparse_names *sd, unsigned long val, sparse_buf *b);
+bool sparse_short(const struct sparse_names *sd, unsigned long val, sparse_buf *b);
+
+size_t jam_sparse_long(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
+const char *str_sparse_long(const struct sparse_names *sd, unsigned long val, sparse_buf *buf);
+
+size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
+const char *str_sparse_short(const struct sparse_names *sd, unsigned long val, sparse_buf *buf);
+
+#define jam_sparse jam_sparse_long
+#define str_sparse str_sparse_long
+
 size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
 
 /*

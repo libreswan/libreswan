@@ -285,6 +285,7 @@ ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
 
+OBJS += names.o
 OBJS += enum_names.o
 OBJS += pluto_exit_code_names.o
 OBJS += ipseckey_algorithm_type_names.o

@@ -169,18 +169,12 @@ static const char *find_enum(const struct enum_names *en, unsigned long val, boo
 	return enum_range_name(range, val, prefix, shorten);
 }
 
-static void bad_enum_name(unsigned long val, enum_buf *b)
-{
-	snprintf(b->tmp, sizeof(b->tmp), "%lu", val);
-	b->buf = b->tmp;
-}
-
 bool enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 {
 	/* can be NULL; handled here */
 	b->buf = find_enum(ed, val, /*shorten?*/false);
 	if (b->buf == NULL) {
-		bad_enum_name(val, b);
+		bad_name(val, b);
 		return false;
 	}
 
@@ -192,7 +186,7 @@ bool enum_short(enum_names *ed, unsigned long val, enum_buf *b)
 	/* can be NULL; handled here */
 	b->buf = find_enum(ed, val, /*shorten?*/true);
 	if (b->buf == NULL) {
-		bad_enum_name(val, b);
+		bad_name(val, b);
 		return false;
 	}
 
@@ -211,57 +205,33 @@ const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
 	return b->buf;
 }
 
-static size_t jam_bad_enum(struct jambuf *buf, enum_names *en, unsigned long val)
-{
-	size_t s = 0;
-	if (en->en_prefix != NULL) {
-		s += jam_string(buf, en->en_prefix);
-		const char c = en->en_prefix[strlen(en->en_prefix)-1];
-		/* typically .en_prefix has a trailing "_" */
-		if (c != '_' && c != '.') {
-			s += jam_string(buf, ".");
-		}
-	}
-	s += jam(buf, "%lu", val);
-	return s;
-}
-
 size_t jam_enum_long(struct jambuf *buf, enum_names *en, unsigned long val)
 {
-	size_t s = 0;
 	const char *name = find_enum(en, val, /*shorten*/false);
-	if (name == NULL) {
-		s += jam_bad_enum(buf, en, val);
-	} else {
-		s += jam_string(buf, name);
+	if (name != NULL) {
+		return jam_string(buf, name);
 	}
-	return s;
+	return jam_bad(buf, en->en_prefix, val);
 }
 
 size_t jam_enum_short(struct jambuf *buf, enum_names *en, unsigned long val)
 {
-	size_t s = 0;
 	/* can be NULL; handled here */
 	const char *name = find_enum(en, val, /*shorten*/true);
-	if (name == NULL) {
-		s += jam_bad_enum(buf, en, val);
-	} else {
-		s += jam_string(buf, name);
+	if (name != NULL) {
+		return jam_string(buf, name);
 	}
-	return s;
+	return jam_bad(buf, en->en_prefix, val);
 }
 
 size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
 {
-	size_t s = 0;
 	/* can be NULL; handled here */
 	const char *name = find_enum(en, val, /*shorten?*/true);
-	if (name == NULL) {
-		s += jam_bad_enum(buf, en, val);
-	} else {
-		jam_string_human(buf, name);
+	if (name != NULL) {
+		return jam_string_human(buf, name);
 	}
-	return s;
+	return jam_bad(buf, en->en_prefix, val);
 }
 
 /*
