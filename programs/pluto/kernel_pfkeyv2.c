@@ -63,19 +63,21 @@ static void pfkeyv2_process_msg(int fd, void *arg, struct logger *logger);
 struct outbuf {
 	const char *what;
 	chunk_t buf;
+	unsigned seq;
+	const struct logger *logger;
+	struct sadb_msg *base;
+	/* cursor */
 	void *ptr;
 	size_t len;
-	unsigned seq;
-	struct logger *logger;
 };
 
-static void ldbg_outbuf(struct logger *logger, struct outbuf *msg)
+static void ldbg_outbuf(struct verbose verbose, struct outbuf *msg)
 {
-	ldbg(logger, "msg: %p + %zu = %p + %zu = %p",
+	vdbg("msg: %p + %zu = %p + %zu = %p",
 	     msg->buf.ptr, (msg->ptr - (void*)msg->buf.ptr),
 	     msg->ptr, msg->len,
 	     (msg->ptr + msg->len));
-	passert((msg->ptr + msg->len) == (msg->buf.ptr + msg->buf.len));
+	vassert((msg->ptr + msg->len) == (msg->buf.ptr + msg->buf.len));
 }
 
 static size_t msg_len(const void *start, struct outbuf *msg)
@@ -109,9 +111,11 @@ static size_t msg_len(const void *start, struct outbuf *msg)
 		struct TYPE ps_thing_ = { __VA_ARGS__ };		\
 		struct outbuf *ps_req_ = MSG;				\
 		struct TYPE *ps_ptr_ = hunk_put_thing(ps_req_, ps_thing_); \
-		if (DBGP(DBG_BASE)) {					\
-			llog_##TYPE(DEBUG_STREAM, ps_req_->logger,	\
-				    ps_ptr_, "put ");			\
+		if (verbose.rc_flags != 0) {				\
+			verbose("put %s ...", ps_req_->what);		\
+			verbose.level++;				\
+			llog_##TYPE(verbose, ps_req_->base, ps_ptr_);	\
+			verbose.level--;				\
 		}							\
 		ps_ptr_;						\
 	})
@@ -130,9 +134,11 @@ static size_t msg_len(const void *start, struct outbuf *msg)
 		req_->len -= pad_;					\
 		/* XXX: pexpect ..._len == sizeof(TYPE) */		\
 		ext_->sadb_##NAME##_len = msg_len(ext_, req_);		\
-		if (DBGP(DBG_BASE)) {					\
-			llog_sadb_##NAME(DEBUG_STREAM, req_->logger,	\
-					 NAME, " padup ");		\
+		if (verbose.rc_flags != 0) {				\
+			verbose("padup %s ...", req_->what);		\
+			verbose.level++;				\
+			llog_sadb_##NAME(verbose, req_->base, NAME);	\
+			verbose.level--;				\
 		}							\
 	})
 
@@ -155,9 +161,10 @@ static struct list_head pending_queue = INIT_LIST_HEAD(&pending_queue, &pending_
 
 struct inbuf {
 	const char *what;
-	chunk_t buf;
-	shunk_t msg;
-	shunk_t msgbase;
+	shunk_t buf;
+	shunk_t msg_cursor;
+	shunk_t base_cursor;
+	const struct sadb_msg *base;
 	uint8_t buffer[65536];
 };
 
@@ -170,52 +177,69 @@ static void queue_msg(const struct inbuf *msg)
 	insert_list_entry(&pending_queue, &pending->entry);
 }
 
-static bool recv_msg(struct inbuf *msg, const char *what, struct logger *logger)
+static bool recv_msg(struct inbuf *msg, const char *what, struct verbose verbose)
 {
 	*msg = (struct inbuf) { .what = what, };
 	ssize_t s = recv(pfkeyv2_fd, msg->buffer, sizeof(msg->buffer), /*flags*/0);
 	if (s < 0) {
-		llog_errno(RC_LOG, logger, errno,
+		llog_errno(RC_LOG, verbose.logger, errno,
 			   "receiving %s response: ", what);
 		return false;
 	}
 
-	ldbg(logger, "read %zd bytes", s);
-	msg->buf = chunk2(msg->buffer, s);
-	if (DBGP(DBG_BASE)) {
-		llog_sadb(DEBUG_STREAM, logger, msg->buf.ptr, msg->buf.len, "%s:", msg->what);
+	verbose("read %zd bytes for %s", s, msg->what);
+	verbose.level++;
+
+	msg->buf = shunk2(msg->buffer, s);
+	if (verbose.rc_flags != 0) {
+		llog_sadb(verbose, msg->buf);
 	}
 
 	return true;
 }
 
-static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg *req, struct logger *logger)
+static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg *req,
+		     struct verbose verbose)
 {
+	verbose("in %s() receiving message for %s", __func__, what);
+	verbose.level++;
+
 	while (true) {
-		if (!recv_msg(msg, what, logger)) {
+		if (!recv_msg(msg, what, verbose)) {
 			return false;
 		}
 
-		msg->msg = shunk2(msg->buf.ptr, msg->buf.len);
-		const struct sadb_msg *base = get_sadb_msg(&msg->msg, &msg->msgbase, logger);
-		if (base == NULL) {
-			llog_pexpect(logger, HERE, "no base");
+		msg->msg_cursor = shunk2(msg->buf.ptr, msg->buf.len);
+		msg->base = get_sadb_msg(&msg->msg_cursor, &msg->base_cursor, verbose);
+		if (msg->base == NULL) {
+			llog_pexpect(verbose.logger, HERE, "no base");
 			return false;
 		}
 
-		if (base->sadb_msg_seq == 0) {
-			llog_sadb(RC_LOG, logger, msg->buf.ptr, msg->buf.len,
-				  "ignoring message with sequence number 0:");
+		if (msg->base->sadb_msg_seq == 0) {
+			/* flip verbose to RC_LOG */
+			struct verbose log = {
+				.logger = verbose.logger,
+				.rc_flags = RC_LOG,
+			};
+			llog(RC_LOG, log.logger,
+			     "ignoring message with sequence number 0:");
+			llog_sadb(log, msg->buf);
 			/* XXX: need to trigger event */
 			queue_msg(msg);
 			continue;
 		}
 
-		if (base->sadb_msg_seq != req->sadb_msg_seq) {
-			llog_pexpect(logger, HERE,
-				     "response has wrong sequence number; expecting %u but got %u",
-				     req->sadb_msg_seq, base->sadb_msg_seq);
-			llog_sadb(RC_LOG, logger, msg->buf.ptr, msg->buf.len, "content ...");
+		if (msg->base->sadb_msg_seq != req->sadb_msg_seq) {
+			/* flip verbose to rc_log */
+			struct verbose log = {
+				.logger = verbose.logger,
+				.rc_flags = RC_LOG,
+			};
+			llog(RC_LOG, log.logger,
+			     "ignoring message with incorrect sequence number %u, expecting %u:",
+			     msg->base->sadb_msg_seq, req->sadb_msg_seq);
+			llog_sadb(log, msg->buf);
 			/* XXX: need to trigger event */
 			queue_msg(msg);
 			continue;
@@ -224,13 +248,13 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 		/*
 		 * XXX: update when SA expired?
 		 */
-		if (base->sadb_msg_errno == ENOENT) {
-			llog_pexpect(logger, HERE, "ENOENT returned");
+		if (msg->base->sadb_msg_errno == ENOENT) {
+			llog_pexpect(verbose.logger, HERE, "ENOENT returned");
 			return true;
 		}
 
-		if (base->sadb_msg_errno != 0) {
-			llog_errno(RC_LOG, logger, base->sadb_msg_errno, "bad response: ");
+		if (msg->base->sadb_msg_errno != 0) {
+			llog_errno(RC_LOG, verbose.logger, msg->base->sadb_msg_errno, "bad response: ");
 			return false;
 		}
 
@@ -238,27 +262,37 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 	}
 }
 
-static bool msg_sendrecv(struct outbuf *req, struct sadb_msg *msg, struct inbuf *recv)
+static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
+			 struct verbose verbose)
 {
+	verbose("in %s()", __func__);
+	verbose.level++;
+
+	struct sadb_msg *msg = req->base;
 	padup_sadb(req, msg);
-	if (DBGP(DBG_BASE)) {
-		llog_sadb(DEBUG_STREAM, req->logger, req->buf.ptr, req->buf.len, "sending %s:", req->what);
+	if (verbose.rc_flags != 0) {
+		llog_sadb(verbose, HUNK_AS_SHUNK(req->buf));
 	}
+
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, req->logger, errno,
+		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, verbose.logger, errno,
 			    "sending %s", req->what);
 		return false;
 	}
 
-	return msg_recv(recv, req->what, msg, req->logger);
+	return msg_recv(recv, req->what, msg, verbose);
 }
 
 static struct sadb_msg *put_sadb_base(struct outbuf *msg,
 				      enum sadb_type type,
 				      enum sadb_satype satype,
-				      unsigned seq)
+				      unsigned seq,
+				      struct verbose verbose)
 {
+	verbose("%s", __func__);
+	verbose.level++;
+
 	struct sadb_msg *base = put_sadb(msg, sadb_msg,
 					 .sadb_msg_version = PF_KEY_V2,
 					 .sadb_msg_type = type,
@@ -277,8 +311,12 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 				   unsigned saflags,
 				   const struct integ_desc *integ,
 				   const struct encrypt_desc *encrypt,
-				   const struct ipcomp_desc *ipcomp)
+				   const struct ipcomp_desc *ipcomp,
+				   struct verbose verbose)
 {
+	verbose("in %s() ...", __func__);
+	verbose.level++;
+
 	unsigned aalg = (integ == &ike_alg_integ_none && encrypt_desc_is_aead(encrypt) ? SADB_AALG_NONE :
 			 integ != NULL ? integ->integ_sadb_aalg_id :
 			 0);
@@ -297,8 +335,8 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 			      .sadb_sa_encrypt = ealg),
 	};
 	struct sadb_sa *sa = hunk_put_thing(msg, tmp);
-	if (DBGP(DBG_BASE)) {
-		llog_sadb_sa(DEBUG_STREAM, msg->logger, satype, sa, "put ");
+	if (verbose.rc_flags != 0) {
+		llog_sadb_sa(verbose, msg->base, satype, sa);
 	}
 	return sa;
 }
@@ -333,7 +371,8 @@ static struct sockaddr *put_endpoint_sockaddr(struct outbuf *msg,
  */
 static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 					      enum sadb_exttype srcdst_exttype,
-					      const ip_selector selector)
+					      const ip_selector selector,
+					      struct verbose verbose)
 {
 	const struct ip_protocol *protocol = selector_protocol(selector);
 	enum ipsec_proto proto = (protocol == &ip_protocol_all ? IPSEC_PROTO_ANY/*255*/ :
@@ -353,7 +392,8 @@ static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 
 static struct sadb_address *put_sadb_address(struct outbuf *msg,
 					     enum sadb_exttype srcdst_exttype,
-					     const ip_address addr)
+					     const ip_address addr,
+					     struct verbose verbose)
 {
 	const struct ip_info *afi = address_info(addr);
 #ifdef __OpenBSD__
@@ -414,20 +454,28 @@ static struct sadb_address *put_sadb_endpoint(struct outbuf *msg,
 
 static struct sadb_key *put_sadb_key(struct outbuf *msg,
 				     enum sadb_exttype key_alg,
-				     shunk_t keyval)
+				     shunk_t keyval,
+				     struct verbose verbose)
 {
+	verbose("in %s() ...", __func__);
+	verbose.level++;
+
 	struct sadb_key *key =
 		put_sadb_ext(msg, sadb_key, key_alg,
 			     .sadb_key_bits = keyval.len * BITS_IN_BYTE);
 	if (hunk_put_hunk(msg, keyval) == NULL) {
-		llog_passert(msg->logger, HERE, "bad key(E)");
+		llog_passert(verbose.logger, HERE, "bad key(E)");
 	}
 	padup_sadb(msg, key);
 	return key;
 }
 
-static struct sadb_spirange *put_sadb_spirange(struct outbuf *msg, uintmax_t min, uintmax_t max)
+static struct sadb_spirange *put_sadb_spirange(struct outbuf *msg, uintmax_t min, uintmax_t max,
+					       struct verbose verbose)
 {
+	verbose("in %s() ...", __func__);
+	verbose.level++;
+
 	struct sadb_spirange *spirange =
 		put_sadb_ext(msg, sadb_spirange, SADB_EXT_SPIRANGE,
 			     .sadb_spirange_min = min,
@@ -438,8 +486,12 @@ static struct sadb_spirange *put_sadb_spirange(struct outbuf *msg, uintmax_t min
 #ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 static struct sadb_x_sa2 *put_sadb_x_sa2(struct outbuf *msg,
 					 enum ipsec_mode ipsec_mode,
-					 reqid_t reqid)
+					 reqid_t reqid,
+					 struct verbose verbose)
 {
+	verbose("in %s() ...", __func__);
+	verbose.level++;
+
 	struct sadb_x_sa2 *x_sa2 =
 		put_sadb_ext(msg, sadb_x_sa2, SADB_X_EXT_SA2,
 			     .sadb_x_sa2_mode = ipsec_mode,
@@ -449,11 +501,9 @@ static struct sadb_x_sa2 *put_sadb_x_sa2(struct outbuf *msg,
 }
 #endif
 
-static struct sadb_msg *msg_base(struct outbuf *msg, const char *what,
-				 chunk_t buf,
-				 enum sadb_type type,
-				 enum sadb_satype satype,
-				 struct logger *logger)
+static void msg_base(struct verbose verbose, struct outbuf *msg, const char *what,
+		     chunk_t buf, enum sadb_type type,
+		     enum sadb_satype satype)
 {
 	*msg = (struct outbuf) {
 		.buf = buf,
@@ -461,25 +511,26 @@ static struct sadb_msg *msg_base(struct outbuf *msg, const char *what,
 		.len = buf.len,
 		.what = what,
 		.seq = ++pfkeyv2_seq,
-		.logger = logger,
+		.logger = verbose.logger,
 	};
-	ldbg_outbuf(logger, msg);
-	struct sadb_msg *base = put_sadb_base(msg, type, satype, msg->seq);
-	return base;
+	ldbg_outbuf(verbose, msg);
+	msg->base = put_sadb_base(msg, type, satype, msg->seq, verbose);
 }
 
 static bool sadb_base_sendrecv(struct inbuf *resp,
 			      enum sadb_type type,
 			      enum sadb_satype satype,
-			      struct logger *logger)
+			      struct verbose verbose)
 {
+	verbose("in %s() ...", __func__);
+	verbose.level++;
+
 	uint8_t reqbuf[SIZEOF_SADB_BASE];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 type, satype,
-					 logger);
-	return msg_sendrecv(&req, base, resp);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 type, satype);
+	return msg_sendrecv(&req, resp, verbose);
 }
 
 static enum sadb_satype sadb_satype_from_protocol(const struct ip_protocol *proto)
@@ -490,17 +541,23 @@ static enum sadb_satype sadb_satype_from_protocol(const struct ip_protocol *prot
 		pexpect(0));
 }
 
-static bool register_alg(shunk_t *msgext, const struct ike_alg_type *type,
-			 struct logger *logger)
+static bool register_alg(const struct sadb_msg *b,
+			 shunk_t *msgext, const struct ike_alg_type *type,
+			 struct verbose verbose)
 {
+	verbose("in %s() ...", __func__);
+	verbose.level++;
+
 	const struct sadb_supported *supported =
 		hunk_get_thing(msgext, const struct sadb_supported);
 	if (supported == NULL) {
-		llog_pexpect(logger, HERE, "bad ext");
+		llog_pexpect(verbose.logger, HERE, "bad ext");
 		return false;
 	}
-	if (DBGP(DBG_BASE)) {
-		llog_sadb_supported(DEBUG_STREAM, logger, supported, "get ");
+
+	if (verbose.rc_flags != 0) {
+		llog_sadb_supported(verbose, b, supported);
+		verbose.level++;
 	}
 
 	unsigned nr_algs = ((supported->sadb_supported_len * sizeof(uint64_t) -
@@ -510,13 +567,13 @@ static bool register_alg(shunk_t *msgext, const struct ike_alg_type *type,
 		const struct sadb_alg *alg =
 			hunk_get_thing(msgext, const struct sadb_alg);
 		if (alg == NULL) {
-			llog_pexpect(logger, HERE, "bad ext");
+			llog_pexpect(verbose.logger, HERE, "bad ext");
 			return false;
 		}
 
 		enum sadb_exttype exttype = supported->sadb_supported_exttype;
-		if (DBGP(DBG_BASE)) {
-			llog_sadb_alg(DEBUG_STREAM, logger, exttype, alg, "get ");
+		if (verbose.rc_flags != 0) {
+			llog_sadb_alg(verbose, b, exttype, alg);
 		}
 
 		const struct ike_alg *ike_alg = ike_alg_by_sadb_alg_id(type, alg->sadb_alg_id);
@@ -527,37 +584,38 @@ static bool register_alg(shunk_t *msgext, const struct ike_alg_type *type,
 	return true;
 }
 
-static void register_satype(const struct ip_protocol *protocol, struct logger *logger)
+static void register_satype(const struct ip_protocol *protocol, struct verbose verbose)
 {
-	ldbg(logger, "sending %s request", protocol->name);
+	verbose("in %s() sending %s request", __func__, protocol->name);
+	verbose.level++;
 
 	struct inbuf resp;
 	if (!sadb_base_sendrecv(&resp, SADB_REGISTER,
 				sadb_satype_from_protocol(protocol),
-				logger)) {
+				verbose)) {
 		return;
 	}
 
-	while (resp.msgbase.len > 0) {
+	while (resp.base_cursor.len > 0) {
 
 		shunk_t msgext;
 		const struct sadb_ext *ext =
-			get_sadb_ext(&resp.msgbase, &msgext, logger);
+			get_sadb_ext(&resp.base_cursor, &msgext, verbose);
 		if (ext == NULL) {
-			llog_pexpect(logger, HERE, "bad ext");
+			llog_pexpect(verbose.logger, HERE, "bad ext");
 			return;
 		}
 
 		enum sadb_exttype exttype = ext->sadb_ext_type;
 		switch (exttype) {
 		case SADB_EXT_SUPPORTED_AUTH:
-			if (!register_alg(&msgext, &ike_alg_integ, logger)) {
+			if (!register_alg(resp.base, &msgext, &ike_alg_integ, verbose)) {
 				/* already logged */
 				return;
 			}
 			break;
 		case SADB_EXT_SUPPORTED_ENCRYPT:
-			if (!register_alg(&msgext, &ike_alg_encrypt, logger)) {
+			if (!register_alg(resp.base, &msgext, &ike_alg_encrypt, verbose)) {
 				/* already logged */
 				return;
 			}
@@ -581,14 +639,14 @@ static void register_satype(const struct ip_protocol *protocol, struct logger *l
 			 * it's not well tested on either Linux or
 			 * [*]BSD)
 			 */
-			if (!register_alg(&msgext, &ike_alg_ipcomp, logger)) {
+			if (!register_alg(resp.base, &msgext, &ike_alg_ipcomp, verbose)) {
 				/* already logged */
 				return;
 			}
 			break;
 #endif
 		default:
-			llog_pexpect(logger, HERE, "unknown ext");
+			llog_pexpect(verbose.logger, HERE, "unknown ext");
 			break;
 		}
 	}
@@ -596,7 +654,7 @@ static void register_satype(const struct ip_protocol *protocol, struct logger *l
 
 static void kernel_pfkeyv2_init(struct logger *logger)
 {
-	ldbg(logger, "initializing PFKEY V2");
+	VERBOSE_DBGP(DBG_BASE, logger, "initializing PFKEY V2");
 
 	pfkeyv2_pid = getpid();
 
@@ -613,19 +671,21 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 
 	/* register everything */
 
-	register_satype(&ip_protocol_ah, logger);
-	register_satype(&ip_protocol_esp, logger);
-	register_satype(&ip_protocol_ipcomp, logger);
+	register_satype(&ip_protocol_ah, verbose);
+	register_satype(&ip_protocol_esp, verbose);
+	register_satype(&ip_protocol_ipcomp, verbose);
 }
 
 static void kernel_pfkeyv2_flush(struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "flushing");
+
 	struct inbuf resp;
-	sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, logger);
+	sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, verbose);
 #ifdef SADB_X_SPDFLUSH /* FreeBSD NetBSD */
-	sadb_base_sendrecv(&resp, SADB_X_SPDFLUSH, SADB_SATYPE_UNSPEC, logger);
+	sadb_base_sendrecv(&resp, SADB_X_SPDFLUSH, SADB_SATYPE_UNSPEC, verbose);
 #else /* OpenBSD */
-	ldbg(logger, "OpenBSD SADB_FLUSH does everything; SADB_X_SPDFLUSH not needed");
+	vlog("OpenBSD SADB_FLUSH does everything; SADB_X_SPDFLUSH not needed");
 #endif
 }
 
@@ -648,6 +708,8 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const char *story UNUSED,	/* often SAID string */
 					 struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
+
 	/* GETSPI */
 	/* send: <base, address, SPI range> */
 	/* recv: <base, SA(*), address(SD)> */
@@ -659,11 +721,10 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 		       SIZEOF_SADB_ADDRESS * 2 +
 		       SIZEOF_SADB_SPIRANGE];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_GETSPI,
-					 sadb_satype_from_protocol(protocol),
-					 logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 SADB_GETSPI,
+		 sadb_satype_from_protocol(protocol));
 
 	/*
 	 * XXX: the original PF_KEY_V2 RFC didn't leave space to
@@ -675,28 +736,28 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	 */
 
 #ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
-	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, reqid);
+	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, reqid, verbose);
 #endif
 
 	/* (tunnel_mode ? ipsec_mode_tunnel : ipsec_mode_transport), */
 
-	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, *src);
-	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, *dst);
-	put_sadb_spirange(&req, min, max);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, *src, verbose);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, *dst, verbose);
+	put_sadb_spirange(&req, min, max, verbose);
 
 	struct inbuf resp;
-	if (!msg_sendrecv(&req, base, &resp)) {
+	if (!msg_sendrecv(&req, &resp, verbose)) {
 		return 0;
 	}
 
 	ipsec_spi_t spi = 0;
-	while (resp.msgbase.len > 0) {
+	while (resp.base_cursor.len > 0) {
 
 		shunk_t msgext;
 		const struct sadb_ext *ext =
-			get_sadb_ext(&resp.msgbase, &msgext, logger);
+			get_sadb_ext(&resp.base_cursor, &msgext, verbose);
 		if (msgext.ptr == NULL) {
-			llog_pexpect(logger, HERE, "bad ext");
+			llog_pexpect(verbose.logger, HERE, "bad ext");
 			return 0;
 		}
 
@@ -707,11 +768,11 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 			const struct sadb_sa *sa =
 				hunk_get_thing(&msgext, const struct sadb_sa);
 			if (sa == NULL) {
-				llog_pexpect(logger, HERE, "getting sa");
+				llog_pexpect(verbose.logger, HERE, "getting sa");
 				return 0;
 			}
-			if (DBGP(DBG_BASE)) {
-				llog_sadb_sa(DEBUG_STREAM, logger, base->sadb_msg_satype, sa, "get ");
+			if (verbose.rc_flags != 0) {
+				llog_sadb_sa(verbose, resp.base, req.base->sadb_msg_satype, sa);
 			}
 			spi = sa->sadb_sa_spi;
 			break;
@@ -735,6 +796,7 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 				  const char *story UNUSED,
 				  struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 	/* DEL */
 	/* send: <base, SA(*), address(SD)> */
 	/* recv: <base, SA(*), address(SD)> */
@@ -745,24 +807,23 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 		       SIZEOF_SADB_SA +
 		       SIZEOF_SADB_ADDRESS * 2];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_DELETE,
-					 sadb_satype_from_protocol(protocol),
-					 logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 SADB_DELETE,
+		 sadb_satype_from_protocol(protocol));
 
 	/* SA(*) */
 
 	put_sadb_sa(&req, spi, /*satype*/0, /*sastate*/0, /*replay*/0, /*saflags*/0,
-		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL);
+		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL, verbose);
 
 	/* address(SD) */
 
-	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, *src_address);
-	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, *dst_address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, *src_address, verbose);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, *dst_address, verbose);
 
 	struct inbuf recv;
-	if (!msg_sendrecv(&req, base, &recv)) {
+	if (!msg_sendrecv(&req, &recv, verbose)) {
 		llog_pexpect(logger, HERE, "bad");
 		return false;
 	}
@@ -774,6 +835,8 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 			   bool replace,
 			   struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
+
 	/* UPDATE <base, SA, (lifetime(HSC),) address(SD),
 	   (address(P),) key(AE), (identity(SD),) (sensitivity)> */
 	/* ADD <base, SA, (lifetime(HS),) address(SD), (address(P),)
@@ -796,11 +859,10 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 		       SIZEOF_SADB_SENS +
 		       0];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 type,
-					 sadb_satype_from_protocol(k->proto),
-					 logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 type,
+		 sadb_satype_from_protocol(k->proto));
 
 	/* SA */
 
@@ -894,11 +956,12 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 		(bytes_for_replay_window > UINT8_MAX ? UINT8_MAX : bytes_for_replay_window);
 
 	put_sadb_sa(&req, k->spi,
-		    base->sadb_msg_satype,
+		    req.base->sadb_msg_satype,
 		    SADB_SASTATE_MATURE,
 		    /*sadb_sa_replay*/saturated_bytes_for_replay_window,
 		    saflags,
-		    k->integ, k->encrypt, k->ipcomp);
+		    k->integ, k->encrypt, k->ipcomp,
+		    verbose);
 
 	/*
 	 * X_SA2
@@ -914,7 +977,7 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	 */
 
 #ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
-	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, k->reqid);
+	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, k->reqid, verbose);
 #endif
 #if 0
 	k->level == 0 && k->mode == KERNEL_MODE_TUNNEL ? ipsec_mode_tunnel :
@@ -935,18 +998,18 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	 * -> NetBSD, FreeBSD, and OpenBSD(?) can handle the address
 	 *    including the port.
 	 */
-	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address);
-	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address, verbose);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address, verbose);
 
 	/* (address(P)) */
 
 	/* key(AE[C]) (AUTH/INTEG/ENCRYPT/IPCOMP) */
 
 	if (k->integ_key.len > 0) {
-		put_sadb_key(&req, SADB_EXT_KEY_AUTH, k->integ_key);
+		put_sadb_key(&req, SADB_EXT_KEY_AUTH, k->integ_key, verbose);
 	}
 	if (k->encrypt_key.len > 0) {
-		put_sadb_key(&req, SADB_EXT_KEY_ENCRYPT, k->encrypt_key);
+		put_sadb_key(&req, SADB_EXT_KEY_ENCRYPT, k->encrypt_key, verbose);
 	}
 
 	/* (lifetime(HSC)) */
@@ -1014,7 +1077,7 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	   (sensitivity)> */
 
 	struct inbuf recv;
-	if (!msg_sendrecv(&req, base, &recv)) {
+	if (!msg_sendrecv(&req, &recv, verbose)) {
 		llog_pexpect(logger, HERE, "bad");
 		return false;
 	}
@@ -1028,6 +1091,8 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				     uint64_t *lastused UNUSED,
 				     struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
+
 	/* GET */
 	/* <base, SA(*), address(SD)> */
 	/* <base, SA, (lifetime(HSC),) address(SD), (address(P),) key(AE),
@@ -1039,35 +1104,34 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 		       SIZEOF_SADB_SA +
 		       SIZEOF_SADB_ADDRESS * 2];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_GET,
-					 sadb_satype_from_protocol(k->proto),
-					 logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 SADB_GET,
+		 sadb_satype_from_protocol(k->proto));
 
 	/* SA(*) */
 
 	put_sadb_sa(&req, k->spi, /*satype*/0, /*sastate*/0, /*replay*/0, /*saflags*/0,
-		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL);
+		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL, verbose);
 
 	/* address(SD) */
 
-	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address);
-	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address, verbose);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address, verbose);
 
 	struct inbuf resp;
-	if (!msg_sendrecv(&req, base, &resp)) {
+	if (!msg_sendrecv(&req, &resp, verbose)) {
 		llog_pexpect(logger, HERE, "bad");
 		return false;
 	}
 
-	while (resp.msgbase.len > 0) {
+	while (resp.base_cursor.len > 0) {
 
 		shunk_t msgext;
 		const struct sadb_ext *ext =
-			get_sadb_ext(&resp.msgbase, &msgext, logger);
+			get_sadb_ext(&resp.base_cursor, &msgext, verbose);
 		if (msgext.ptr == NULL) {
-			llog_pexpect(logger, HERE, "bad ext");
+			llog_pexpect(verbose.logger, HERE, "bad ext");
 			return false;
 		}
 
@@ -1081,8 +1145,8 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				llog_pexpect(logger, HERE, "getting policy");
 				return 0;
 			}
-			if (DBGP(DBG_BASE)) {
-				llog_sadb_lifetime(DEBUG_STREAM, logger, lifetime, "get ");
+			if (verbose.rc_flags != 0) {
+				llog_sadb_lifetime(verbose, req.base, lifetime);
 			}
 			*bytes = lifetime->sadb_lifetime_bytes;
 			*add_time = lifetime->sadb_lifetime_addtime;
@@ -1116,9 +1180,12 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 			/* ignore these */
 			break;
 		default:
-			llog_sadb_ext(RC_LOG, logger, ext, "get_sa ");
-			llog_pexpect(logger, HERE, "bad ext");
+		{
+			VERBOSE_LOG(logger, "get_sa ...");
+			llog_sadb_ext(verbose, req.base, ext);
+			llog_pexpect(verbose.logger, HERE, "bad ext");
 			break;
+		}
 		}
 	}
 
@@ -1131,6 +1198,7 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 							   enum ipsec_mode mode,
 							   const struct kernel_policy_rule *rule)
 {
+	VERBOSE_DBGP(DBG_BASE, msg->logger, "...");
 	/*
 	 * XXX: sadb_x_ipsecrequest screwed up the LEN parameter; it's
 	 * in bytes.
@@ -1168,6 +1236,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 					       enum kernel_policy_id policy_id,
 					       const struct kernel_policy *kernel_policy)
 {
+	VERBOSE_DBGP(DBG_BASE, req->logger, "...");
 
 	enum ipsec_dir policy_dir = (dir == DIRECTION_INBOUND ? IPSEC_DIR_INBOUND :
 				     dir == DIRECTION_OUTBOUND ? IPSEC_DIR_OUTBOUND :
@@ -1210,21 +1279,22 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 #endif
 
 #ifdef SADB_X_EXT_POLICY
-static bool parse_sadb_x_policy(shunk_t *ext_cursor,
-				enum kernel_policy_id *policy_id,
-				struct logger *logger)
+static bool parse_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
+				shunk_t *ext_cursor,
+				enum kernel_policy_id *policy_id)
 {
+	verbose.level++;
 	shunk_t policy_cursor;
 	const struct sadb_x_policy *policy =
-		get_sadb_x_policy(ext_cursor, &policy_cursor, logger);
+		get_sadb_x_policy(ext_cursor, &policy_cursor, verbose);
 	if (policy == NULL) {
 		return false;
 	}
-	if (DBGP(DBG_BASE)) {
-		llog_sadb_x_policy(DEBUG_STREAM, logger, policy, "  ");
+	if (verbose.rc_flags != 0) {
+		llog_sadb_x_policy(verbose, b, policy);
 	}
 	*policy_id = policy->sadb_x_policy_id;
-	ldbg(logger, "    %u", (unsigned)(*policy_id));
+	verbose("%u", (unsigned)(*policy_id));
 	return true;
 }
 #endif
@@ -1237,6 +1307,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      deltatime_t use_lifetime UNUSED,
 				      struct logger *logger, const char *func)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
 #ifdef __OpenBSD__
 
 	if (policy->nr_rules > 1) {
@@ -1247,7 +1318,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		 * and ESP; bundle (SADB_X_EXT_GRPSPIs) to group the
 		 * two SAs.
 		 */
-		llog_pexpect(logger, HERE,
+		llog_pexpect(verbose.logger, HERE,
 			     "multiple policies using SADB_X_EXT_GRPSPIS (GRouP SPI S) not implemented");
 		return false;
 	}
@@ -1270,9 +1341,9 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		       0];
 
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 type, satype, logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 type, satype);
 
 	/* flow type */
 
@@ -1338,22 +1409,22 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		switch (dir) {
 		case DIRECTION_INBOUND:
 			/* XXX: notice how DST gets SRC's value et.al. */
-			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, policy->src.host);
-			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, policy->dst.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, policy->src.host, verbose);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, policy->dst.host, verbose);
 			break;
 		case DIRECTION_OUTBOUND:
-			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, policy->src.host);
-			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, policy->dst.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, policy->src.host, verbose);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, policy->dst.host, verbose);
 			break;
 		}
 	}
 
 	/* selectors */
 
-	put_sadb_address(&req, SADB_X_EXT_SRC_FLOW, selector_prefix(*src_client));
-	put_sadb_address(&req, SADB_X_EXT_SRC_MASK, selector_prefix_mask(*src_client));
-	put_sadb_address(&req, SADB_X_EXT_DST_FLOW, selector_prefix(*dst_client));
-	put_sadb_address(&req, SADB_X_EXT_DST_MASK, selector_prefix_mask(*dst_client));
+	put_sadb_address(&req, SADB_X_EXT_SRC_FLOW, selector_prefix(*src_client), verbose);
+	put_sadb_address(&req, SADB_X_EXT_SRC_MASK, selector_prefix_mask(*src_client), verbose);
+	put_sadb_address(&req, SADB_X_EXT_DST_FLOW, selector_prefix(*dst_client), verbose);
+	put_sadb_address(&req, SADB_X_EXT_DST_MASK, selector_prefix_mask(*dst_client), verbose);
 
 	/* which protocol? */
 
@@ -1376,14 +1447,14 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		       SIZEOF_SADB_ADDRESS * 2 +
 		       SIZEOF_SADB_LIFETIME * 2];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 type, satype, logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 type, satype);
 
 	/* address(SD) */
 
-	put_sadb_selector(&req, SADB_EXT_ADDRESS_SRC, *src_client);
-	put_sadb_selector(&req, SADB_EXT_ADDRESS_DST, *dst_client);
+	put_sadb_selector(&req, SADB_EXT_ADDRESS_SRC, *src_client, verbose);
+	put_sadb_selector(&req, SADB_EXT_ADDRESS_DST, *dst_client, verbose);
 
 	/* [lifetime(HSC)] */
 
@@ -1440,7 +1511,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	/* send/req */
 
 	struct inbuf resp;
-	return msg_sendrecv(&req, base, &resp);
+	return msg_sendrecv(&req, &resp, verbose);
 }
 
 static bool kernel_pfkeyv2_policy_del(enum direction direction,
@@ -1453,6 +1524,7 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      const shunk_t sec_label UNUSED,
 				      struct logger *logger, const char *func)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
 #ifdef __OpenBSD__
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
@@ -1463,11 +1535,10 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 		       0];
 
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_X_DELFLOW,
-					 SADB_SATYPE_UNSPEC,
-					 logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 SADB_X_DELFLOW,
+		 SADB_SATYPE_UNSPEC);
 
 	/* flow type */
 
@@ -1482,10 +1553,10 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 
 	/* selectors */
 
-	put_sadb_address(&req, SADB_X_EXT_SRC_FLOW, selector_prefix(*src_child));
-	put_sadb_address(&req, SADB_X_EXT_SRC_MASK, selector_prefix_mask(*src_child));
-	put_sadb_address(&req, SADB_X_EXT_DST_FLOW, selector_prefix(*dst_child));
-	put_sadb_address(&req, SADB_X_EXT_DST_MASK, selector_prefix_mask(*dst_child));
+	put_sadb_address(&req, SADB_X_EXT_SRC_FLOW, selector_prefix(*src_child), verbose);
+	put_sadb_address(&req, SADB_X_EXT_SRC_MASK, selector_prefix_mask(*src_child), verbose);
+	put_sadb_address(&req, SADB_X_EXT_DST_FLOW, selector_prefix(*dst_child), verbose);
+	put_sadb_address(&req, SADB_X_EXT_DST_MASK, selector_prefix_mask(*dst_child), verbose);
 
 	/* which protocol? */
 
@@ -1503,16 +1574,15 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 		       SIZEOF_SADB_ADDRESS * 2 +
 		       SIZEOF_SADB_LIFETIME * 2];
 	struct outbuf req;
-	struct sadb_msg *base = msg_base(&req, __func__,
-					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_X_SPDDELETE,
-					 SADB_SATYPE_UNSPEC,
-					 logger);
+	msg_base(verbose, &req, __func__,
+		 chunk2(reqbuf, sizeof(reqbuf)),
+		 SADB_X_SPDDELETE,
+		 SADB_SATYPE_UNSPEC);
 
 	/* address(SD) */
 
-	put_sadb_selector(&req, SADB_EXT_ADDRESS_SRC, *src_child);
-	put_sadb_selector(&req, SADB_EXT_ADDRESS_DST, *dst_child);
+	put_sadb_selector(&req, SADB_EXT_ADDRESS_SRC, *src_child, verbose);
+	put_sadb_selector(&req, SADB_EXT_ADDRESS_DST, *dst_child, verbose);
 
 	/* policy */
 
@@ -1524,7 +1594,7 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 	/* send/req */
 
 	struct inbuf resp;
-	if (!msg_sendrecv(&req, base, &resp)) {
+	if (!msg_sendrecv(&req, &resp, verbose)) {
 		switch (expect_kernel_policy) {
 		case IGNORE_KERNEL_POLICY_MISSING:
 		case EXPECT_NO_INBOUND:
@@ -1539,30 +1609,33 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 	return true;
 }
 
-static bool parse_sadb_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port, struct logger *logger)
+static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
+			       shunk_t *ext_cursor, ip_address *addr, ip_port *port)
 {
+	verbose.level++;
 	shunk_t address_cursor;
 	const struct sadb_address *address =
-		get_sadb_address(ext_cursor, &address_cursor, logger);
+		get_sadb_address(ext_cursor, &address_cursor, verbose);
 	if (address == NULL) {
 		return false;
 	}
-	if (DBGP(DBG_BASE)) {
-		llog_sadb_address(DEBUG_STREAM, logger, address, "  ");
+	if (verbose.rc_flags != 0) {
+		llog_sadb_address(verbose, b, address);
 	}
-	if (!get_sadb_sockaddr_address_port(&address_cursor, addr, port, logger)) {
+	if (!get_sadb_sockaddr_address_port(&address_cursor, addr, port, verbose)) {
 		return false;
 	}
 	address_buf ab;
 	port_buf pb;
-	ldbg(logger, "    %s:%s", str_address(addr, &ab), str_hport(*port, &pb));
+	verbose("%s:%s", str_address(addr, &ab), str_hport(*port, &pb));
 	return true;
 }
 
-static void parse_sadb_acquire(const struct sadb_msg *msg UNUSED,
+static void parse_sadb_acquire(const struct sadb_msg *msg,
 			       shunk_t msg_cursor,
-			       struct logger *logger)
+			       const struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "...");
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;
 	ip_port src_port, dst_port;
@@ -1572,9 +1645,9 @@ static void parse_sadb_acquire(const struct sadb_msg *msg UNUSED,
 
 		shunk_t ext_cursor;
 		const struct sadb_ext *ext =
-			get_sadb_ext(&msg_cursor, &ext_cursor, logger);
+			get_sadb_ext(&msg_cursor, &ext_cursor, verbose);
 		if (ext == NULL) {
-			llog_pexpect(logger, HERE, "bad ext");
+			llog_pexpect(verbose.logger, HERE, "bad ext");
 			return;
 		}
 
@@ -1582,19 +1655,19 @@ static void parse_sadb_acquire(const struct sadb_msg *msg UNUSED,
 		switch (exttype) {
 
 		case SADB_EXT_ADDRESS_SRC:
-			if (!parse_sadb_address(&ext_cursor, &src_address, &src_port, logger)) {
+			if (!parse_sadb_address(verbose, msg, &ext_cursor, &src_address, &src_port)) {
 				return;
 			}
 			break;
 		case SADB_EXT_ADDRESS_DST:
-			if (!parse_sadb_address(&ext_cursor, &dst_address, &dst_port, logger)) {
+			if (!parse_sadb_address(verbose, msg, &ext_cursor, &dst_address, &dst_port)) {
 				return;
 			}
 			break;
 #ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 		case SADB_X_EXT_POLICY:
 			policy_id = 0;
-			if (!parse_sadb_x_policy(&ext_cursor, &policy_id, logger)) {
+			if (!parse_sadb_x_policy(verbose, msg, &ext_cursor, &policy_id)) {
 				return;
 			}
 			break;
@@ -1602,13 +1675,19 @@ static void parse_sadb_acquire(const struct sadb_msg *msg UNUSED,
 
 		case SADB_EXT_PROPOSAL:
 			if (DBGP(DBG_BASE)) {
-				llog_sadb_ext(DEBUG_STREAM, logger, ext, "ignore: ");
+				verbose("ignore: ");
+				verbose.level++;
+				llog_sadb_ext(verbose, msg, ext);
+				verbose.level--;
 			}
 			break;
 
 		default:
 			if (DBGP(DBG_BASE)) {
-				llog_sadb_ext(DEBUG_STREAM, logger, ext, "huh? ");
+				verbose("huh?");
+				verbose.level++;
+				llog_sadb_ext(verbose, msg, ext);
+				verbose.level--;
 			}
 			break;
 		}
@@ -1637,32 +1716,35 @@ static void parse_sadb_acquire(const struct sadb_msg *msg UNUSED,
 	initiate_ondemand(&b);
 }
 
-static void process_pending(chunk_t payload, struct logger *logger)
+static void process_pending(shunk_t payload, struct verbose verbose)
 {
-	if (DBGP(DBG_BASE)) {
-		llog_sadb(DEBUG_STREAM, logger, payload.ptr, payload.len, "pending ");
+	verbose("in %s() processing ...", __func__);
+	verbose.level++;
+
+	if (verbose.rc_flags != 0) {
+		llog_sadb(verbose, payload);
 	}
 
-	shunk_t cursor = HUNK_AS_SHUNK(payload);
+	shunk_t cursor = payload;
 	shunk_t msg_cursor;
-	const struct sadb_msg *msg = get_sadb_msg(&cursor, &msg_cursor, logger);
+	const struct sadb_msg *msg = get_sadb_msg(&cursor, &msg_cursor, verbose);
 	if (msg == NULL) {
-		llog_pexpect(logger, HERE, "no msg");
+		llog_pexpect(verbose.logger, HERE, "no msg");
 	}
 
 	switch (msg->sadb_msg_type) {
 	case SADB_ACQUIRE:
-		parse_sadb_acquire(msg, msg_cursor, logger);
+		parse_sadb_acquire(msg, msg_cursor, verbose.logger);
 		break;
 	}
 }
 
-static void process_pending_queue(struct logger *logger)
+static void process_pending_queue(struct verbose verbose)
 {
 	struct pending *pending;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(pending, &pending_queue) {
 		remove_list_entry(&pending->entry);
-		process_pending(pending->msg, logger);
+		process_pending(HUNK_AS_SHUNK(pending->msg), verbose);
 		free_chunk_content(&pending->msg);
 		pfree(pending);
 	}
@@ -1670,13 +1752,13 @@ static void process_pending_queue(struct logger *logger)
 
 static void pfkeyv2_process_msg(int fd UNUSED, void *arg UNUSED, struct logger *logger)
 {
-	ldbg(logger, "processing message");
+	VERBOSE_DBGP(DBG_BASE, logger, "processing message");
 	struct inbuf msg;
-	if (!recv_msg(&msg, "process", logger)) {
+	if (!recv_msg(&msg, "process", verbose)) {
 		return;
 	}
 	queue_msg(&msg);
-	process_pending_queue(logger);
+	process_pending_queue(verbose);
 }
 
 static void kernel_pfkeyv2_shutdown(struct logger *logger)

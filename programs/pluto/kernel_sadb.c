@@ -19,16 +19,17 @@
 #include "ip_protocol.h"
 #include "ip_sockaddr.h"
 #include "ip_info.h"
+#include "verbose.h"
 
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_address *address,
 				    ip_port *port,
-				    struct logger *logger)
+				    struct verbose verbose)
 {
 	err_t err = sockaddr_to_address_port(cursor->ptr, cursor->len,
 					     address, port);
 	if (err != NULL) {
-		llog_pexpect(logger, HERE, "invalid sockaddr: %s", err);
+		llog_pexpect(verbose.logger, HERE, "invalid sockaddr: %s", err);
 		return false;
 	}
 	const struct ip_info *afi = address_type(address);
@@ -39,19 +40,21 @@ bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 
 const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
 				    shunk_t *msgext,
-				    struct logger *logger)
+				    struct verbose verbose)
 {
 	shunk_t tmp = *msgbase;
 	const struct sadb_ext *ext =
 		hunk_get_thing(&tmp, const struct sadb_ext);
-	PASSERT(logger, ext != NULL);
+	vassert(ext != NULL);
 
 	size_t len = ext->sadb_ext_len * sizeof(uint64_t);
 	if (len == 0) {
-		llog_passert(logger, HERE, "have zero bytes");
+		llog_passert(verbose.logger, HERE,
+			     "have zero bytes");
 	}
 	if (msgbase->len < len) {
-		llog_passert(logger, HERE, "have %zu bytes but should be %zu",
+		llog_passert(verbose.logger, HERE,
+			     "have %zu bytes but should be %zu",
 			     msgbase->len, len);
 	}
 
@@ -74,11 +77,11 @@ const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
 #define X_GET_SADB(TYPE, LEN_MULTIPLIER)				\
 	const struct TYPE *get_##TYPE(shunk_t *cursor,			\
 				      shunk_t *type_cursor,		\
-				      struct logger *logger)		\
+				      struct verbose verbose)		\
 	{								\
 		*type_cursor = null_shunk;				\
 		if (sizeof(struct TYPE) > cursor->len) {		\
-			llog_pexpect(logger, HERE,			\
+			llog_pexpect(verbose.logger, HERE,		\
 				     "%zu-byte buffer too small for %zu-byte "#TYPE, \
 				     cursor->len, sizeof(struct TYPE));	\
 			return NULL;					\
@@ -87,13 +90,13 @@ const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
 		const struct TYPE *type = cursor->ptr;			\
 		size_t type_len = type->TYPE##_len * LEN_MULTIPLIER;	\
 		if (type_len < sizeof(struct TYPE)) {			\
-			llog_pexpect(logger, HERE,			\
+			llog_pexpect(verbose.logger, HERE,		\
 				     "%zu-byte "#TYPE" bigger than "#TYPE"_len=%u(%zu-bytes)", \
 				     sizeof(struct TYPE), type->TYPE##_len, type_len); \
 			return NULL;					\
 		}							\
 		if (type_len > (cursor)->len) {				\
-			llog_pexpect(logger, HERE,			\
+			llog_pexpect(verbose.logger, HERE,		\
 				     "%zu-byte buffer too small for "#TYPE"_len=%u(%zu-bytes)", \
 				     cursor->len, type->TYPE##_len, type_len); \
 			return NULL;					\

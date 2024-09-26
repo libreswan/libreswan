@@ -15,6 +15,7 @@
 
 #include "kernel_sadb.h"
 
+#include "verbose.h"
 #include "lswlog.h"
 #include "ip_protocol.h"
 #include "ip_sockaddr.h"
@@ -50,9 +51,9 @@ typedef uint64_t u64_t;
 #define JAM_SPARSE(E, T, F)						\
 	{								\
 		jam(buf, " "#F"=%lu", (long unsigned)m->T##_##F);	\
-		const char *name = sparse_name(E, m->T##_##F);		\
-		if (name != NULL) {					\
-			jam(buf, "(%s)", name);				\
+		name_buf ss;						\
+		if (sparse_short(E, m->T##_##F, &ss)) {			\
+			jam(buf, "(%s)", ss.buf);			\
 		}							\
 	}
 
@@ -73,50 +74,53 @@ typedef uint64_t u64_t;
 
 #define JAM_HEADER(T)							\
 	struct logjam logjam;						\
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger,	\
-						0, NULL, rc_flags);	\
-	jam_string(buf, what);						\
-	jam(buf, #T" @%p", m);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, verbose.logger, \
+						0, NULL, verbose.rc_flags); \
+	jam(buf, PRI_VERBOSE, pri_verbose);				\
+	jam_string(buf, #T" @");					\
+	if (b != NULL) {						\
+		jam(buf, "%td", (const uint8_t*)m - (const uint8_t*)b); \
+	}								\
+	verbose.level++;
 
 #define JAM_FOOTER()				\
 	logjam_to_logger(&logjam);
 
-#define JAM_HEADER_SADB(T)					\
-	JAM_HEADER(T);						\
-	JAM_LEN(T, len);					\
+#define JAM_HEADER_SADB(T)				\
+	JAM_HEADER(T);					\
+	JAM_LEN(T, len);				\
 	JAM_SPARSE(&sadb_exttype_names, T, exttype);
 
-#define JAM_SADB(T, F)							\
+#define JAM_SADB(T, F)				\
 	JAM_SPARSE(&sadb_##F##_names, T, F)
 
-#define JAM_IPSEC(T, F)							\
+#define JAM_IPSEC(T, F)				\
 	JAM_SPARSE(&ipsec_##F##_names, T, F)
 
-#define JAM_LEN_MULTIPLIER(T, F, LEN_MULTIPLIER)			\
-	jam(buf, " "#F"=%"PRIu16"(%zu)",				\
-	    m->T##_##F, m->T##_##F * LEN_MULTIPLIER)
+#define JAM_LEN_MULTIPLIER(T, F, LEN_MULTIPLIER)	\
+	jam(buf, " "#F"=%zu(%"PRIu16"*%zu)",		\
+	    m->T##_##F * LEN_MULTIPLIER,		\
+	    m->T##_##F, LEN_MULTIPLIER);
 #define JAM_LEN(T, F)					\
 	JAM_LEN_MULTIPLIER(T, F, sizeof(uint64_t))
 
-void llog_sadb_address(lset_t rc_flags, struct logger *logger,
-		       const struct sadb_address *m, const char *what)
+void llog_sadb_address(struct verbose verbose, const struct sadb_msg *b, const struct sadb_address *m)
 {
 	JAM_HEADER_SADB(sadb_address);
 
 #ifdef __OpenBSD__
 	JAM_RAW(sadb_address, reserved);
 #else
-	JAM_SADB(sadb_address, proto);
+	JAM_IPSEC(sadb_address, proto);
 	JAM(u8, sadb_address, prefixlen);
 #endif
 
 	JAM_FOOTER();
 }
 
-void llog_sadb_alg(lset_t rc_flags, struct logger *logger,
+void llog_sadb_alg(struct verbose verbose, const struct sadb_msg *b,
 		   enum sadb_exttype exttype,
-		   const struct sadb_alg *m,
-		   const char *what)
+		   const struct sadb_alg *m)
 {
 	JAM_HEADER(sadb_alg);
 
@@ -129,8 +133,8 @@ void llog_sadb_alg(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_comb(lset_t rc_flags, struct logger *logger,
-		    const struct sadb_comb *m, const char *what)
+void llog_sadb_comb(struct verbose verbose, const struct sadb_msg *b,
+		    const struct sadb_comb *m)
 {
 	JAM_HEADER(sadb_comb);
 
@@ -154,8 +158,8 @@ void llog_sadb_comb(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_ext(lset_t rc_flags, struct logger *logger,
-		   const struct sadb_ext *m, const char *what)
+void llog_sadb_ext(struct verbose verbose, const struct sadb_msg *b,
+		   const struct sadb_ext *m)
 {
 	JAM_HEADER(sadb_ext);
 
@@ -165,8 +169,8 @@ void llog_sadb_ext(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_ident(lset_t rc_flags, struct logger *logger,
-		     const struct sadb_ident *m, const char *what)
+void llog_sadb_ident(struct verbose verbose, const struct sadb_msg *b,
+		     const struct sadb_ident *m)
 {
 	JAM_HEADER_SADB(sadb_ident);
 
@@ -177,8 +181,8 @@ void llog_sadb_ident(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_key(lset_t rc_flags, struct logger *logger,
-		   const struct sadb_key *m, const char *what)
+void llog_sadb_key(struct verbose verbose, const struct sadb_msg *b,
+		   const struct sadb_key *m)
 {
 	JAM_HEADER_SADB(sadb_key);
 
@@ -188,8 +192,8 @@ void llog_sadb_key(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_lifetime(lset_t rc_flags, struct logger *logger,
-			const struct sadb_lifetime *m, const char *what)
+void llog_sadb_lifetime(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_lifetime *m)
 {
 	JAM_HEADER_SADB(sadb_lifetime);
 
@@ -201,8 +205,8 @@ void llog_sadb_lifetime(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_msg(lset_t rc_flags, struct logger *logger,
-		   const struct sadb_msg *m, const char *what)
+void llog_sadb_msg(struct verbose verbose, const struct sadb_msg *b,
+		   const struct sadb_msg *m)
 {
 	JAM_HEADER(sadb_msg);
 
@@ -218,8 +222,8 @@ void llog_sadb_msg(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_prop(lset_t rc_flags, struct logger *logger,
-		    const struct sadb_prop *m, const char *what)
+void llog_sadb_prop(struct verbose verbose, const struct sadb_msg *b,
+		    const struct sadb_prop *m)
 {
 	JAM_HEADER_SADB(sadb_prop);
 
@@ -232,10 +236,9 @@ void llog_sadb_prop(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_sa(lset_t rc_flags, struct logger *logger,
+void llog_sadb_sa(struct verbose verbose, const struct sadb_msg *b,
 		  enum sadb_satype satype,
-		  const struct sadb_sa *m,
-		  const char *what)
+		  const struct sadb_sa *m)
 {
 	JAM_HEADER_SADB(sadb_sa);
 
@@ -249,8 +252,8 @@ void llog_sadb_sa(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_sens(lset_t rc_flags, struct logger *logger,
-		    const struct sadb_sens *m, const char *what)
+void llog_sadb_sens(struct verbose verbose, const struct sadb_msg *b,
+		    const struct sadb_sens *m)
 {
 	JAM_HEADER_SADB(sadb_sens);
 
@@ -264,8 +267,8 @@ void llog_sadb_sens(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_spirange(lset_t rc_flags, struct logger *logger,
-			const struct sadb_spirange *m, const char *what)
+void llog_sadb_spirange(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_spirange *m)
 {
 	JAM_HEADER_SADB(sadb_spirange);
 
@@ -276,8 +279,8 @@ void llog_sadb_spirange(lset_t rc_flags, struct logger *logger,
 	JAM_FOOTER();
 }
 
-void llog_sadb_supported(lset_t rc_flags, struct logger *logger,
-			 const struct sadb_supported *m, const char *what)
+void llog_sadb_supported(struct verbose verbose, const struct sadb_msg *b,
+			 const struct sadb_supported *m)
 {
 	JAM_HEADER_SADB(sadb_supported);
 
@@ -287,8 +290,8 @@ void llog_sadb_supported(lset_t rc_flags, struct logger *logger,
 }
 
 #ifdef SADB_X_EXT_POLICY
-void llog_sadb_x_ipsecrequest(lset_t rc_flags, struct logger *logger,
-			      const struct sadb_x_ipsecrequest *m, const char *what)
+void llog_sadb_x_ipsecrequest(struct verbose verbose, const struct sadb_msg *b,
+			      const struct sadb_x_ipsecrequest *m)
 {
 	JAM_HEADER(sadb_x_ipsecrequest);
 
@@ -309,8 +312,8 @@ void llog_sadb_x_ipsecrequest(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_NAT_T_FRAG
-void llog_sadb_x_nat_t_frag(lset_t rc_flags, struct logger *logger,
-			    const struct sadb_x_nat_t_frag *m, const char *what)
+void llog_sadb_x_nat_t_frag(struct verbose verbose, const struct sadb_msg *b,
+			    const struct sadb_x_nat_t_frag *m)
 {
 	JAM_HEADER_SADB(sadb_x_nat_t_frag);
 
@@ -322,8 +325,8 @@ void llog_sadb_x_nat_t_frag(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_NAT_T_PORT
-void llog_sadb_x_nat_t_port(lset_t rc_flags, struct logger *logger,
-			    const struct sadb_x_nat_t_port *m, const char *what)
+void llog_sadb_x_nat_t_port(struct verbose verbose, const struct sadb_msg *b,
+			    const struct sadb_x_nat_t_port *m)
 {
 	JAM_HEADER_SADB(sadb_x_nat_t_port);
 
@@ -335,8 +338,8 @@ void llog_sadb_x_nat_t_port(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
-void llog_sadb_x_nat_t_type(lset_t rc_flags, struct logger *logger,
-			    const struct sadb_x_nat_t_type *m, const char *what)
+void llog_sadb_x_nat_t_type(struct verbose verbose, const struct sadb_msg *b,
+			    const struct sadb_x_nat_t_type *m)
 {
 	JAM_HEADER_SADB(sadb_x_nat_t_type);
 
@@ -348,8 +351,8 @@ void llog_sadb_x_nat_t_type(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_POLICY
-void llog_sadb_x_policy(lset_t rc_flags, struct logger *logger,
-			const struct sadb_x_policy *m, const char *what)
+void llog_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_x_policy *m)
 {
 	JAM_HEADER_SADB(sadb_x_policy);
 
@@ -375,8 +378,8 @@ void llog_sadb_x_policy(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_PROTOCOL
-void llog_sadb_protocol(lset_t rc_flags, struct logger *logger,
-			const struct sadb_protocol *m, const char *what)
+void llog_sadb_protocol(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_protocol *m)
 {
 	JAM_HEADER_SADB(sadb_protocol);
 
@@ -391,8 +394,8 @@ void llog_sadb_protocol(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_SA2
-void llog_sadb_x_sa2(lset_t rc_flags, struct logger *logger,
-		     const struct sadb_x_sa2 *m, const char *what)
+void llog_sadb_x_sa2(struct verbose verbose, const struct sadb_msg *b,
+		     const struct sadb_x_sa2 *m)
 {
 	JAM_HEADER_SADB(sadb_x_sa2);
 
@@ -407,8 +410,8 @@ void llog_sadb_x_sa2(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_SA_REPLAY
-void llog_sadb_x_sa_replay(lset_t rc_flags, struct logger *logger,
-			   const struct sadb_x_sa_replay *m, const char *what)
+void llog_sadb_x_sa_replay(struct verbose verbose, const struct sadb_msg *b,
+			   const struct sadb_x_sa_replay *m)
 {
 	JAM_HEADER_SADB(sadb_x_sa_replay);
 
@@ -419,8 +422,8 @@ void llog_sadb_x_sa_replay(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_COUNTER
-void llog_sadb_x_counter(lset_t rc_flags, struct logger *logger,
-			 const struct sadb_x_counter *m, const char *what)
+void llog_sadb_x_counter(struct verbose verbose, const struct sadb_msg *b,
+			 const struct sadb_x_counter *m)
 {
 	JAM_HEADER_SADB(sadb_x_counter);
 
@@ -439,8 +442,8 @@ void llog_sadb_x_counter(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_REPLAY /* OpenBSD */
-void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger,
-			const struct sadb_x_replay *m, const char *what)
+void llog_sadb_x_replay(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_x_replay *m)
 {
 	JAM_HEADER_SADB(sadb_x_replay);
 
@@ -452,8 +455,8 @@ void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
-void llog_sadb_x_udpencap(lset_t rc_flags, struct logger *logger,
-			const struct sadb_x_udpencap *m, const char *what)
+void llog_sadb_x_udpencap(struct verbose verbose, const struct sadb_msg *b,
+			const struct sadb_x_udpencap *m)
 {
 	JAM_HEADER_SADB(sadb_x_udpencap);
 
@@ -464,31 +467,24 @@ void llog_sadb_x_udpencap(lset_t rc_flags, struct logger *logger,
 }
 #endif
 
-void llog_sadb(lset_t rc_flags, struct logger *logger,
-	       const void *ptr, size_t len, const char *fmt, ...)
+void llog_sadb(struct verbose verbose, shunk_t msg_cursor)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	llog_va_list(rc_flags, logger, fmt, ap);
-	va_end(ap);
-
-	shunk_t msg_cursor = shunk2(ptr, len);
-
 	shunk_t base_cursor;
-	const struct sadb_msg *base = get_sadb_msg(&msg_cursor, &base_cursor, logger);
+	const struct sadb_msg *base = get_sadb_msg(&msg_cursor, &base_cursor, verbose);
 	if (base == NULL) {
-		llog_passert(logger, HERE, "bad base");
+		llog_passert(verbose.logger, HERE, "bad base");
 	}
 
-	llog_sadb_msg(rc_flags, logger, base, " ");
+	llog_sadb_msg(verbose, base, base);
+	verbose.level++;
 
 	while (base_cursor.len > 0) {
 
 		shunk_t ext_cursor; /* includes SADB_EXT */
 		const struct sadb_ext *ext =
-			get_sadb_ext(&base_cursor, &ext_cursor, logger);
+			get_sadb_ext(&base_cursor, &ext_cursor, verbose);
 		if (ext == NULL) {
-			llog_passert(logger, HERE, "bad ext");
+			llog_passert(verbose.logger, HERE, "bad ext");
 		}
 
 		enum sadb_exttype exttype = ext->sadb_ext_type;
@@ -511,20 +507,21 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t address_cursor;
 			const struct sadb_address *address =
-				get_sadb_address(&ext_cursor, &address_cursor, logger);
+				get_sadb_address(&ext_cursor, &address_cursor, verbose);
 			if (address == NULL) {
 				return;
 			}
-			llog_sadb_address(rc_flags, logger, address, "  ");
+			llog_sadb_address(verbose, base, address);
 			ip_address addr;
 			ip_port port;
-			if (!get_sadb_sockaddr_address_port(&address_cursor, &addr, &port, logger)) {
+			if (!get_sadb_sockaddr_address_port(&address_cursor, &addr, &port, verbose)) {
 				return;
 			}
 			address_buf ab;
 			port_buf pb;
-			llog(rc_flags, logger,
-			     "    %s:%s", str_address_wrapped(&addr, &ab), str_hport(port, &pb));
+			llog(verbose.rc_flags, verbose.logger,
+			     PRI_VERBOSE"  %s:%s", pri_verbose,
+			     str_address_wrapped(&addr, &ab), str_hport(port, &pb));
 			/* no PEXPECT(logger, address_cursor.len == 0); may be padded */
 			break;
 		}
@@ -534,13 +531,13 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t key_cursor;
 			const struct sadb_key *key =
-				get_sadb_key(&ext_cursor, &key_cursor, logger);
+				get_sadb_key(&ext_cursor, &key_cursor, verbose);
 			if (key == NULL) {
 				return;
 			}
-			llog_sadb_key(rc_flags, logger, key, "  ");
-			if (LDBGP(DBG_CRYPT, logger)) {
-				LLOG_JAMBUF(rc_flags, logger, buf) {
+			llog_sadb_key(verbose, base, key);
+			if (LDBGP(DBG_CRYPT, verbose.logger)) {
+				LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
 					jam(buf, "   ");
 					jam_dump_hunk(buf, key_cursor);
 				}
@@ -558,12 +555,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t lifetime_cursor;
 			const struct sadb_lifetime *lifetime =
-				get_sadb_lifetime(&ext_cursor, &lifetime_cursor, logger);
+				get_sadb_lifetime(&ext_cursor, &lifetime_cursor, verbose);
 			if (lifetime == NULL) {
 				return;
 			}
-			llog_sadb_lifetime(rc_flags, logger, lifetime, "  ");
-			PEXPECT(logger, lifetime_cursor.len == 0); /* nothing following */
+			llog_sadb_lifetime(verbose, base, lifetime);
+			vexpect(lifetime_cursor.len == 0); /* nothing following */
 			break;
 		}
 
@@ -571,11 +568,11 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t prop_cursor;
 			const struct sadb_prop *prop =
-				get_sadb_prop(&ext_cursor, &prop_cursor, logger);
+				get_sadb_prop(&ext_cursor, &prop_cursor, verbose);
 			if (prop == NULL) {
 				return;
 			}
-			llog_sadb_prop(rc_flags, logger, prop, "  ");
+			llog_sadb_prop(verbose, base, prop);
 
 			unsigned nr_comb = 0;
 			while (prop_cursor.len > 0) {
@@ -585,12 +582,11 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 					break;
 				}
 				nr_comb++;
-				llog_sadb_comb(rc_flags, logger, comb, "   ");
+				llog_sadb_comb(verbose, base, comb);
 			}
-			PEXPECT(logger, prop_cursor.len == 0); /* nothing left */
+			vexpect(prop_cursor.len == 0); /* nothing left */
 			/* from the RFC */
-			PEXPECT(logger,
-				nr_comb == ((prop->sadb_prop_len * sizeof(uint64_t) -
+			vexpect(nr_comb == ((prop->sadb_prop_len * sizeof(uint64_t) -
 					     sizeof(struct sadb_prop)) /
 					    sizeof(struct sadb_comb)));
 			break;
@@ -600,12 +596,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t sa_cursor;
 			const struct sadb_sa *sa =
-				get_sadb_sa(&ext_cursor, &sa_cursor, logger);
+				get_sadb_sa(&ext_cursor, &sa_cursor, verbose);
 			if (sa == NULL) {
 				return;
 			}
-			llog_sadb_sa(rc_flags, logger, base->sadb_msg_satype, sa, "  ");
-			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			llog_sadb_sa(verbose, base, base->sadb_msg_satype, sa);
+			vexpect(sa_cursor.len == 0); /* nothing following */
 			break;
 		}
 
@@ -613,12 +609,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t spirange_cursor;
 			const struct sadb_spirange *spirange =
-				get_sadb_spirange(&ext_cursor, &spirange_cursor, logger);
+				get_sadb_spirange(&ext_cursor, &spirange_cursor, verbose);
 			if (spirange == NULL) {
 				return;
 			}
-			llog_sadb_spirange(rc_flags, logger, spirange, "  ");
-			PEXPECT(logger, spirange_cursor.len == 0); /* nothing following */
+			llog_sadb_spirange(verbose, base, spirange);
+			vexpect(spirange_cursor.len == 0); /* nothing following */
 			break;
 		}
 
@@ -630,11 +626,11 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t supported_cursor;
 			const struct sadb_supported *supported =
-				get_sadb_supported(&ext_cursor, &supported_cursor, logger);
+				get_sadb_supported(&ext_cursor, &supported_cursor, verbose);
 			if (supported == NULL) {
 				return;
 			}
-			llog_sadb_supported(rc_flags, logger, supported, "  ");
+			llog_sadb_supported(verbose, base, supported);
 
 			unsigned nr_algs = 0;
 			while (supported_cursor.len > 0) {
@@ -644,12 +640,13 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 					break;
 				}
 				nr_algs++;
-				llog_sadb_alg(rc_flags, logger, exttype, alg, "   ");
+				verbose.level++;
+				llog_sadb_alg(verbose, base, exttype, alg);
+				verbose.level--;
 			}
-			PEXPECT(logger, supported_cursor.len == 0); /* nothing left */
+			vexpect(supported_cursor.len == 0); /* nothing left */
 			/* from the RFC */
-			PEXPECT(logger,
-				nr_algs == ((supported->sadb_supported_len * sizeof(uint64_t) -
+			vexpect(nr_algs == ((supported->sadb_supported_len * sizeof(uint64_t) -
 					     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg)));
 			break;
 		}
@@ -659,35 +656,36 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t x_policy_cursor;
 			const struct sadb_x_policy *x_policy =
-				get_sadb_x_policy(&ext_cursor, &x_policy_cursor, logger);
+				get_sadb_x_policy(&ext_cursor, &x_policy_cursor, verbose);
 			if (x_policy == NULL) {
 				return;
 			}
-			llog_sadb_x_policy(rc_flags, logger, x_policy, "  ");
+			llog_sadb_x_policy(verbose, base, x_policy);
 
 			while (x_policy_cursor.len > 0) {
 				shunk_t x_ipsecrequest_cursor;
 				const struct sadb_x_ipsecrequest *x_ipsecrequest =
-					get_sadb_x_ipsecrequest(&x_policy_cursor, &x_ipsecrequest_cursor, logger);
+					get_sadb_x_ipsecrequest(&x_policy_cursor, &x_ipsecrequest_cursor, verbose);
 				if (x_ipsecrequest == NULL) {
 					break;
 				}
-				llog_sadb_x_ipsecrequest(rc_flags, logger, x_ipsecrequest, "   ");
+				llog_sadb_x_ipsecrequest(verbose, base, x_ipsecrequest);
 				while (x_ipsecrequest_cursor.len > 0) {
 					/* can't assume sockaddr is aligned */
 					ip_address address;
 					ip_port port;
 					if (!get_sadb_sockaddr_address_port(&x_ipsecrequest_cursor,
-									    &address, &port, logger)) {
+									    &address, &port, verbose)) {
 						break;
 					}
 					address_buf ab;
 					port_buf pb;
-					llog(rc_flags, logger,
-					     "     %s:%s", str_address_wrapped(&address, &ab), str_hport(port, &pb));
+					llog(verbose.rc_flags, verbose.logger,
+					     PRI_VERBOSE"  %s:%s", pri_verbose,
+					     str_address_wrapped(&address, &ab), str_hport(port, &pb));
 				}
 			}
-			PEXPECT(logger, ext_cursor.len == 0);
+			vexpect(ext_cursor.len == 0);
 			break;
 		}
 #endif
@@ -697,12 +695,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t x_nat_t_type_cursor;
 			const struct sadb_x_nat_t_type *x_nat_t_type =
-				get_sadb_x_nat_t_type(&ext_cursor, &x_nat_t_type_cursor, logger);
+				get_sadb_x_nat_t_type(&ext_cursor, &x_nat_t_type_cursor, verbose);
 			if (x_nat_t_type == NULL) {
 				return;
 			}
-			llog_sadb_x_nat_t_type(rc_flags, logger, x_nat_t_type, "  ");
-			PEXPECT(logger, x_nat_t_type_cursor.len == 0); /* nothing following */
+			llog_sadb_x_nat_t_type(verbose, base, x_nat_t_type);
+			vexpect(x_nat_t_type_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
@@ -712,12 +710,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t x_sa2_cursor;
 			const struct sadb_x_sa2 *x_sa2 =
-				get_sadb_x_sa2(&ext_cursor, &x_sa2_cursor, logger);
+				get_sadb_x_sa2(&ext_cursor, &x_sa2_cursor, verbose);
 			if (x_sa2 == NULL) {
 				return;
 			}
-			llog_sadb_x_sa2(rc_flags, logger, x_sa2, "  ");
-			PEXPECT(logger, x_sa2_cursor.len == 0); /* nothing following */
+			llog_sadb_x_sa2(verbose, base, x_sa2);
+			vexpect(x_sa2_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
@@ -727,12 +725,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_sa_replay *x_sa_replay =
-				get_sadb_x_sa_replay(&ext_cursor, &sa_cursor, logger);
+				get_sadb_x_sa_replay(&ext_cursor, &sa_cursor, verbose);
 			if (x_sa_replay == NULL) {
 				return;
 			}
-			llog_sadb_x_sa_replay(rc_flags, logger, x_sa_replay, "  ");
-			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			llog_sadb_x_sa_replay(verbose, base, x_sa_replay);
+			vexpect(sa_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
@@ -742,12 +740,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_counter *x_counter =
-				get_sadb_x_counter(&ext_cursor, &sa_cursor, logger);
+				get_sadb_x_counter(&ext_cursor, &sa_cursor, verbose);
 			if (x_counter == NULL) {
 				return;
 			}
-			llog_sadb_x_counter(rc_flags, logger, x_counter, "  ");
-			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			llog_sadb_x_counter(verbose, base, x_counter);
+			vexpect(sa_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
@@ -760,12 +758,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t sa_cursor;
 			const struct sadb_protocol *protocol =
-				get_sadb_protocol(&ext_cursor, &sa_cursor, logger);
+				get_sadb_protocol(&ext_cursor, &sa_cursor, verbose);
 			if (protocol == NULL) {
 				return;
 			}
-			llog_sadb_protocol(rc_flags, logger, protocol, "  ");
-			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			llog_sadb_protocol(verbose, base, protocol);
+			vexpect(sa_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
@@ -775,12 +773,12 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_replay *x_replay =
-				get_sadb_x_replay(&ext_cursor, &sa_cursor, logger);
+				get_sadb_x_replay(&ext_cursor, &sa_cursor, verbose);
 			if (x_replay == NULL) {
 				return;
 			}
-			llog_sadb_x_replay(rc_flags, logger, x_replay, "  ");
-			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			llog_sadb_x_replay(verbose, base, x_replay);
+			vexpect(sa_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
@@ -790,20 +788,22 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_udpencap *x_udpencap =
-				get_sadb_x_udpencap(&ext_cursor, &sa_cursor, logger);
+				get_sadb_x_udpencap(&ext_cursor, &sa_cursor, verbose);
 			if (x_udpencap == NULL) {
 				return;
 			}
-			llog_sadb_x_udpencap(rc_flags, logger, x_udpencap, "  ");
-			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			llog_sadb_x_udpencap(verbose, base, x_udpencap);
+			vexpect(sa_cursor.len == 0); /* nothing following */
 			break;
 		}
 #endif
 
 		default:
 		{
-			llog_sadb_ext(ERROR_STREAM, logger, ext, PEXPECT_PREFIX);
-			llog_pexpect(logger, HERE, "unexpected payload");
+			struct verbose error = verbose;
+			verbose.rc_flags = ERROR_STREAM;
+			llog_pexpect(verbose.logger, HERE, "unexpected payload");
+			llog_sadb_ext(error, base, ext);
 			break;
 		}
 		}

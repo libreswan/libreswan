@@ -17,14 +17,9 @@
 
 #define S(E) { .name = #E, .value = E, }
 
-const struct sparse_names sadb_proto_names = {
-	.list = {
-		SPARSE_NULL
-	},
-};
-
 const struct sparse_names sadb_type_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_RESERVED),
 		S(SADB_GETSPI),
 		S(SADB_UPDATE),
@@ -95,7 +90,8 @@ const struct sparse_names sadb_type_names = {
 };
 
 const struct sparse_names sadb_exttype_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_EXT_RESERVED),
 		S(SADB_EXT_SA),
 		S(SADB_EXT_LIFETIME_CURRENT),
@@ -259,7 +255,8 @@ const struct sparse_names sadb_exttype_names = {
 };
 
 const struct sparse_names sadb_satype_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_SATYPE_UNSPEC),
 		S(SADB_SATYPE_AH),
 		S(SADB_SATYPE_ESP),
@@ -284,7 +281,8 @@ const struct sparse_names sadb_satype_names = {
 };
 
 const struct sparse_names sadb_sastate_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_SASTATE_LARVAL),
 		S(SADB_SASTATE_MATURE),
 		S(SADB_SASTATE_DYING),
@@ -294,7 +292,8 @@ const struct sparse_names sadb_sastate_names = {
 };
 
 const struct sparse_names sadb_saflag_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_SAFLAGS_PFS),
 #ifdef SADB_X_SAFLAGS_CHAINDEL
 		S(SADB_X_SAFLAGS_CHAINDEL),
@@ -313,7 +312,8 @@ const struct sparse_names sadb_saflag_names = {
 };
 
 const struct sparse_names sadb_policyflag_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 #ifdef SADB_X_POLICYFLAGS_POLICY
 		S(SADB_X_POLICYFLAGS_POLICY), /* OpenBSD */
 #endif
@@ -323,7 +323,7 @@ const struct sparse_names sadb_policyflag_names = {
 
 #ifdef SADB_X_EXT_PROTOCOL
 const struct sparse_sparse_names sadb_protocol_proto_names = {
-	.list = {
+        .list = {
 #ifdef SADB_X_EXT_FLOW_TYPE
 		{ SADB_X_EXT_FLOW_TYPE, &sadb_x_flow_type_names, },
 #endif
@@ -335,7 +335,8 @@ const struct sparse_sparse_names sadb_protocol_proto_names = {
 
 #ifdef SADB_X_EXT_PROTOCOL
 const struct sparse_names sadb_protocol_direction_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(IPSP_DIRECTION_IN),
 		S(IPSP_DIRECTION_OUT),
 		SPARSE_NULL,
@@ -344,7 +345,8 @@ const struct sparse_names sadb_protocol_direction_names = {
 #endif
 
 const struct sparse_names sadb_aalg_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_AALG_NONE),
 		S(SADB_AALG_MD5HMAC),
 		S(SADB_AALG_SHA1HMAC),
@@ -392,7 +394,8 @@ const struct sparse_names sadb_aalg_names = {
 };
 
 const struct sparse_names sadb_calg_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 #ifdef SADB_X_CALG_NONE
 		S(SADB_X_CALG_NONE),
 #endif
@@ -413,7 +416,8 @@ const struct sparse_names sadb_calg_names = {
 };
 
 const struct sparse_names sadb_ealg_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_EALG_NULL),
 #ifdef SADB_EALG_DESCBC
 		S(SADB_EALG_DESCBC),
@@ -470,7 +474,8 @@ const struct sparse_names sadb_ealg_names = {
 };
 
 const struct sparse_names sadb_identtype_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_IDENTTYPE_RESERVED),
 		S(SADB_IDENTTYPE_PREFIX),
 		S(SADB_IDENTTYPE_FQDN),
@@ -486,7 +491,8 @@ const struct sparse_names sadb_identtype_names = {
 };
 
 const struct sparse_names sadb_flow_type_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 #ifdef SADB_X_FLOW_TYPE_ACQUIRE
 		S(SADB_X_FLOW_TYPE_ACQUIRE),
 #endif
@@ -510,7 +516,8 @@ const struct sparse_names sadb_flow_type_names = {
 };
 
 const struct sparse_names sadb_lifetime_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 #ifdef SADB_X_LIFETIME_ADDTIME
 		S(SADB_X_LIFETIME_ADDTIME),
 #endif
@@ -528,7 +535,7 @@ const struct sparse_names sadb_lifetime_names = {
 };
 
 const struct sparse_sparse_names sadb_alg_names = {
-	.list = {
+        .list = {
 		{ SADB_EXT_SUPPORTED_AUTH, &sadb_aalg_names, },
 		{ SADB_EXT_SUPPORTED_ENCRYPT, &sadb_ealg_names, },
 #ifdef SADB_X_EXT_SUPPORTED_COMP
@@ -539,7 +546,7 @@ const struct sparse_sparse_names sadb_alg_names = {
 };
 
 const struct sparse_sparse_names sadb_satype_ealg_names = {
-	.list = {
+        .list = {
 		{ SADB_SATYPE_ESP, &sadb_ealg_names, },
 		{ SADB_X_SATYPE_IPCOMP, &sadb_calg_names, },
 		{ 0, NULL, },
@@ -547,7 +554,7 @@ const struct sparse_sparse_names sadb_satype_ealg_names = {
 };
 
 const struct sparse_sparse_names sadb_satype_aalg_names = {
-	.list = {
+        .list = {
 		{ SADB_SATYPE_ESP, &sadb_aalg_names, },
 		{ SADB_SATYPE_AH, &sadb_aalg_names, },
 		{ 0, NULL, }
@@ -556,7 +563,8 @@ const struct sparse_sparse_names sadb_satype_aalg_names = {
 
 #ifdef SADB_X_EXT_POLICY
 const struct sparse_names ipsec_policy_names = {
-	.list = {
+        .prefix = "IPSEC_",
+        .list = {
 		S(IPSEC_POLICY_DISCARD),
 		S(IPSEC_POLICY_NONE),
 		S(IPSEC_POLICY_IPSEC),
@@ -569,7 +577,8 @@ const struct sparse_names ipsec_policy_names = {
 
 #ifdef SADB_X_EXT_POLICY
 const struct sparse_names ipsec_dir_names = {
-	.list = {
+        .prefix = "IPSEC_",
+        .list = {
 		S(IPSEC_DIR_ANY),
 		S(IPSEC_DIR_INBOUND),
 		S(IPSEC_DIR_OUTBOUND),
@@ -582,7 +591,8 @@ const struct sparse_names ipsec_dir_names = {
 
 #ifdef SADB_X_EXT_POLICY
 const struct sparse_names ipsec_mode_names = {
-	.list = {
+        .prefix = "IPSEC_",
+        .list = {
 		{ .name = "any!?!", .value = IPSEC_MODE_ANY, },
 		S(IPSEC_MODE_TRANSPORT),
 		S(IPSEC_MODE_TUNNEL),
@@ -592,7 +602,8 @@ const struct sparse_names ipsec_mode_names = {
 #endif
 
 const struct sparse_names ipsec_level_names = {
-	.list = {
+        .prefix = "IPSEC_",
+        .list = {
 		S(IPSEC_LEVEL_DEFAULT),
 		S(IPSEC_LEVEL_USE),
 		S(IPSEC_LEVEL_REQUIRE),
@@ -602,18 +613,20 @@ const struct sparse_names ipsec_level_names = {
 };
 
 const struct sparse_names ipsec_proto_names = {
-	.list = {
+        .prefix = "IPSEC_",
+        .list = {
 		S(IPSEC_PROTO_AH),
 		S(IPSEC_PROTO_ESP),
 		S(IPSEC_PROTO_IPIP),
-#ifdef IPSEC_PROTO_ANY
-		S(IPSEC_PROTO_ANY), /* 255, aka IPSEC_ULPROTO_ANY */
-#endif
+		S(IPSEC_PROTO_IPV6),
 #ifdef IPSEC_PROTO_IPCOMP
 		S(IPSEC_PROTO_IPCOMP),
 #endif
 #ifdef IPSEC_PROTO_COMP
 		S(IPSEC_PROTO_COMP),
+#endif
+#ifdef IPSEC_PROTO_ANY
+		S(IPSEC_PROTO_ANY), /* 255, aka IPSEC_ULPROTO_ANY */
 #endif
 		SPARSE_NULL
 	},
@@ -621,7 +634,8 @@ const struct sparse_names ipsec_proto_names = {
 
 #ifdef SADB_X_EXT_FLOW_TYPE
 const struct sparse_names sadb_x_flow_type_names = {
-	.list = {
+        .prefix = "SADB_",
+        .list = {
 		S(SADB_X_FLOW_TYPE_USE),
 		S(SADB_X_FLOW_TYPE_ACQUIRE),
 		S(SADB_X_FLOW_TYPE_REQUIRE),
