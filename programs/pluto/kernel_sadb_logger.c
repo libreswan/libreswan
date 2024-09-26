@@ -469,7 +469,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	LDBG_va_list(logger, fmt, ap);
+	llog_va_list(rc_flags, logger, fmt, ap);
 	va_end(ap);
 
 	shunk_t msg_cursor = shunk2(ptr, len);
@@ -477,7 +477,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 	shunk_t base_cursor;
 	const struct sadb_msg *base = get_sadb_msg(&msg_cursor, &base_cursor, logger);
 	if (base == NULL) {
-		llog_passert(logger, HERE, "wrong base");
+		llog_passert(logger, HERE, "bad base");
 	}
 
 	llog_sadb_msg(rc_flags, logger, base, " ");
@@ -523,7 +523,8 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			}
 			address_buf ab;
 			port_buf pb;
-			DBG_log("    %s:%s", str_address_wrapped(&addr, &ab), str_hport(port, &pb));
+			llog(rc_flags, logger,
+			     "    %s:%s", str_address_wrapped(&addr, &ab), str_hport(port, &pb));
 			/* no PEXPECT(logger, address_cursor.len == 0); may be padded */
 			break;
 		}
@@ -538,9 +539,11 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 				return;
 			}
 			llog_sadb_key(rc_flags, logger, key, "  ");
-			LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
-				jam(buf, "   ");
-				jam_dump_hunk(buf, key_cursor);
+			if (LDBGP(DBG_CRYPT, logger)) {
+				LLOG_JAMBUF(rc_flags, logger, buf) {
+					jam(buf, "   ");
+					jam_dump_hunk(buf, key_cursor);
+				}
 			}
 			/* no PEXPECT(logger, address_cursor.len == 0); allow any length+padding */
 			break;
@@ -680,7 +683,8 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 					}
 					address_buf ab;
 					port_buf pb;
-					DBG_log("     %s:%s", str_address_wrapped(&address, &ab), str_hport(port, &pb));
+					llog(rc_flags, logger,
+					     "     %s:%s", str_address_wrapped(&address, &ab), str_hport(port, &pb));
 				}
 			}
 			PEXPECT(logger, ext_cursor.len == 0);
