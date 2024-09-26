@@ -36,5 +36,6 @@ done
 cp -v /bench/testing/kvm/netbsd/auto_master /etc/
 cp -v /bench/testing/kvm/netbsd/rc.local /etc/
 cp -v /bench/testing/kvm/netbsd/rc.conf /etc/
+cp -v /bench/testing/kvm/netbsd/sysctl.conf /etc/
 
 exit 0
