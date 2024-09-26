@@ -203,8 +203,19 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 			return false;
 		}
 
+		if (base->sadb_msg_seq == 0) {
+			llog_sadb(RC_LOG, logger, msg->buf.ptr, msg->buf.len,
+				  "ignoring message with sequence number 0:");
+			/* XXX: need to trigger event */
+			queue_msg(msg);
+			continue;
+		}
+
 		if (base->sadb_msg_seq != req->sadb_msg_seq) {
-			llog_pexpect(logger, HERE, "wrong base");
+			llog_pexpect(logger, HERE,
+				     "response has wrong sequence number; expecting %u but got %u",
+				     req->sadb_msg_seq, base->sadb_msg_seq);
+			llog_sadb(RC_LOG, logger, msg->buf.ptr, msg->buf.len, "content ...");
 			/* XXX: need to trigger event */
 			queue_msg(msg);
 			continue;
