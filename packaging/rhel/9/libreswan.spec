@@ -15,7 +15,6 @@
     NSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
     NSS_HAS_IPSEC_PROFILE=true \\\
-    NSS_REQ_AVA_COPY=false \\\
     PREFIX=%{_prefix} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
     USE_AUTHPAM=true \\\

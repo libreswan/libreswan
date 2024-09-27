@@ -89,6 +89,13 @@ USERLAND_CFLAGS += -pthread
 USERLAND_CFLAGS += -std=gnu99
 
 #
+# Error out on deprecated since 5.1 config variables.
+#
+ifdef USE_NSS_AVA_COPY
+$(error ERROR: Deprecated USE_NSS_AVA_COPY variable set, please remove)
+endif
+
+#
 # Error out on deprecated since 5.0 config variables.
 #
 ifdef HAVE_IPTABLES
@@ -484,14 +491,6 @@ NSS_SMIME_LDFLAGS ?= -lsmime3
 NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
 SSL_LDFLAGS ?= -lssl3
-
-# Use local copy of nss function CERT_CompareAVA
-# See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
-# This work-around is needed with nss versions before 3.30.
-USE_NSS_AVA_COPY ?= false
-ifeq ($(USE_NSS_AVA_COPY),true)
-USERLAND_CFLAGS += -DNSS_REQ_AVA_COPY
-endif
 
 # Use nss IPsec profile for X509 validation. This is less restrictive
 # on EKU's. Enable when using NSS >= 3.41 (or RHEL-7.6 / RHEL-8.0)

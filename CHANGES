@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v5.1 (unreleased)
 * building:
   - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
+  - remove USE_NSS_AVA_COPY and copy of nss source, remove license exception [Tuomo]
 * whack:
   - ignore older whack as could trigger core dump [Andrew, github/1709]
 * linux:

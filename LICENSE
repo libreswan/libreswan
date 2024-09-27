@@ -1,8 +1,5 @@
-Except for the exceptions listed below, this software is under the GNU
-General Public License (GPLv2+), see the file COPYING.
+This software is under the GNU General Public License (GPLv2+),
+see the file COPYING.
 
 See the file CREDITS and docs/CREDITS.openswan and docs/CREDITS.freeswan
 for contribution details.
-
-Code in lib/libswan/nss_copies.c is used under the Mozilla Public License
-Version 2.0. https://www.mozilla.org/MPL/2.0/

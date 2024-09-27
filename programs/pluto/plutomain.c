@@ -191,9 +191,6 @@ static const char compile_time_interop_options[] = ""
 	" BROKEN_POPEN"
 #endif
 	" NSS"
-#ifdef NSS_REQ_AVA_COPY
-	" (AVA copy)"
-#endif
 #ifdef NSS_IPSEC_PROFILE
 	" (IPsec profile)"
 #endif

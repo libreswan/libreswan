@@ -277,10 +277,6 @@ OBJS += ikev1_prf.o
 endif
 OBJS += ikev2_prf.o
 
-ifeq ($(USE_NSS_AVA_COPY),true)
-OBJS += nss_copies.o
-endif
-
 ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
