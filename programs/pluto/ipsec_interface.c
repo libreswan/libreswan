@@ -325,7 +325,7 @@ bool add_kernel_ipsec_interface_address(const struct connection *c,
 	VERBOSE(logger, "...");
 
 	if (c->ipsec_interface == NULL) {
-		vlog("skipped; connection ipsec-interface=no");
+		vdbg("skipped; no ipsec-interface");
 		return true;
 	}
 
@@ -352,7 +352,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 	VERBOSE(logger, "...");
 
 	if (c->ipsec_interface == NULL) {
-		vlog("skipped; connection ipsec-interface=no");
+		vdbg("skipped; no ipsec-interface");
 		return true;
 	}
 
@@ -429,7 +429,7 @@ void del_kernel_ipsec_interface_address(const struct connection *c,
 	VERBOSE(logger, "...");
 
 	if (c->ipsec_interface == NULL) {
-		vlog("skipped; connection ipsec-interface=no");
+		vdbg("skipped; no ipsec-interface");
 		return;
 	}
 
@@ -443,7 +443,7 @@ void del_kernel_ipsec_interface_address(const struct connection *c,
 		return;
 	}
 	cidr_buf cb;
-	vlog("removing %s", str_cidr(&conn_cidr, &cb));
+	vdbg("removing %s", str_cidr(&conn_cidr, &cb));
 
 	/*
 	 * Use that to find the address structure.
