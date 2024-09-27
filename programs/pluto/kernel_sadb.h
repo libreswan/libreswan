@@ -371,6 +371,32 @@ enum ipsec_dir {
 
 #endif
 
+#ifdef sadb_x_policy_scope
+
+enum ipsec_policyscope {
+
+	ipsec_policyscope_any = IPSEC_POLICYSCOPE_ANY,
+#undef IPSEC_POLICYSCOPE_ANY
+#define IPSEC_POLICYSCOPE_ANY ipsec_policyscope_any
+
+	ipsec_policyscope_global = IPSEC_POLICYSCOPE_GLOBAL,
+#undef IPSEC_POLICYSCOPE_GLOBAL
+#define IPSEC_POLICYSCOPE_GLOBAL ipsec_policyscope_global
+
+	ipsec_policyscope_ifnet = IPSEC_POLICYSCOPE_IFNET,
+#undef IPSEC_POLICYSCOPE_IFNET
+#define IPSEC_POLICYSCOPE_IFNET ipsec_policyscope_ifnet
+
+	ipsec_policyscope_pcb = IPSEC_POLICYSCOPE_PCB,
+#undef IPSEC_POLICYSCOPE_PCB
+#define IPSEC_POLICYSCOPE_PCB ipsec_policyscope_pcb
+
+};
+
+extern const struct sparse_names ipsec_policyscope_names;
+
+#endif
+
 #ifdef SADB_X_EXT_POLICY
 
 enum ipsec_mode {

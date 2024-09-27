@@ -589,6 +589,19 @@ const struct sparse_names ipsec_dir_names = {
 };
 #endif
 
+#ifdef sadb_x_policy_scope
+const struct sparse_names ipsec_policyscope_names = {
+        .prefix = "IPSEC_",
+        .list = {
+		S(IPSEC_POLICYSCOPE_ANY),
+		S(IPSEC_POLICYSCOPE_GLOBAL),
+		S(IPSEC_POLICYSCOPE_IFNET),
+		S(IPSEC_POLICYSCOPE_PCB),
+		SPARSE_NULL
+	},
+};
+#endif
+
 #ifdef SADB_X_EXT_POLICY
 const struct sparse_names ipsec_mode_names = {
         .prefix = "IPSEC_",

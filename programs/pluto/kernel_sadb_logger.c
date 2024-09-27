@@ -362,17 +362,37 @@ void llog_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
 	JAM_SPARSE(&ipsec_policy_names, sadb_x_policy, type); /* POLICY <> TYPE */
 	/* XXX: broken; needs sparse_sparse_names; */
 	JAM_IPSEC(sadb_x_policy, dir);
-#if defined sadb_x_policy_scope
-	JAM(u8, sadb_x_policy, scope);
+
+#ifdef sadb_x_policy_scope
+	/* FreeBSD */
+	JAM_SPARSE(&ipsec_policyscope_names, sadb_x_policy, scope);
 #elif defined sadb_x_policy_flags
+	/* NetBSD */
 	JAM(u8, sadb_x_policy, flags);
 #else
+	/* Linux */
 	JAM_RAW(sadb_x_policy, reserved);
 #endif
+
 	JAM(u32, sadb_x_policy, id);
+
 #ifdef sadb_x_policy_priority
+	/* Linux */
 	JAM(u32, sadb_x_policy, priority);
+#elif defined sadb_x_policy_ifindex
+	/* FreeBSD */
+	JAM(u32, sadb_x_policy, ifindex);
+	char ifname[IFBUFSIZ];
+	if (m->sadb_x_policy_scope == IPSEC_POLICYSCOPE_IFNET &&
+	    m->sadb_x_policy_ifindex != 0 &&
+	    if_indextoname(m->sadb_x_policy_ifindex, name) != NULL) {
+			jam_string(buf, "(");
+			jam_string(buf, name);
+			jam_string(buf, ")");
+		}
+	}
 #else
+	/* NetBSD */
 	JAM_RAW(sadb_x_policy, reserved2);
 #endif
 
