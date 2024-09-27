@@ -261,6 +261,7 @@ OBJS += orient.o
 OBJS += server.o
 OBJS += server_fork.o
 OBJS += server_pool.o
+OBJS += server_run.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
 OBJS += ikev2_host_pair.o

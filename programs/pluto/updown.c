@@ -26,10 +26,6 @@
  * for more details.
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <sys/wait.h>		/* WIFEXITED() et.al. */
-
 #include "ip_info.h"
 
 #include "defs.h"
@@ -42,6 +38,7 @@
 #include "iface.h"
 #include "keys.h"		/* for pluto_pubkeys */
 #include "secrets.h"		/* for struct pubkey_list */
+#include "server_run.h"
 
 /*
  * Remove all characters but [-_.0-9a-zA-Z] from a character string.
@@ -281,120 +278,6 @@ static bool fmt_common_shell_out(char *buf,
 #	undef JDipaddr
 }
 
-static bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
-			   struct logger *logger)
-{
-#	define CHUNK_WIDTH	80	/* units for cmd logging */
-	if (DBGP(DBG_BASE)) {
-		int slen = strlen(cmd);
-		int i;
-
-		DBG_log("executing %s%s: %s",
-			verb, verb_suffix, cmd);
-		DBG_log("popen cmd is %d chars long", slen);
-		for (i = 0; i < slen; i += CHUNK_WIDTH)
-			DBG_log("cmd(%4d):%.*s:", i,
-				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
-				&cmd[i]);
-	}
-#	undef CHUNK_WIDTH
-
-
-	{
-		/*
-		 * invoke the script, catching stderr and stdout
-		 * It may be of concern that some file descriptors will
-		 * be inherited.  For the ones under our control, we
-		 * have done fcntl(fd, F_SETFD, FD_CLOEXEC) to prevent this.
-		 * Any used by library routines (perhaps the resolver or
-		 * syslog) will remain.
-		 */
-		FILE *f = popen(cmd, "r");
-
-		if (f == NULL) {
-#ifdef HAVE_BROKEN_POPEN
-			/*
-			 * See bug #1067  Angstrom Linux on a arm7 has no
-			 * popen()
-			 */
-			if (errno == ENOSYS) {
-				/*
-				 * Try system(), though it will not give us
-				 * output
-				 */
-				DBG_log("unable to popen(), falling back to system()");
-				system(cmd);
-				return true;
-			}
-#endif
-			llog(RC_LOG, logger,
-				    "unable to popen %s%s command",
-				    verb, verb_suffix);
-			return false;
-		}
-
-		/* log any output */
-		for (;; ) {
-			/*
-			 * if response doesn't fit in this buffer, it will
-			 * be folded
-			 */
-			char resp[256];
-
-			if (fgets(resp, sizeof(resp), f) == NULL) {
-				if (ferror(f)) {
-					llog_error(logger, errno,
-						   "fgets failed on output of %s%s command",
-						   verb, verb_suffix);
-					pclose(f);
-					return false;
-				} else {
-					passert(feof(f));
-					break;
-				}
-			} else {
-				char *e = resp + strlen(resp);
-
-				if (e > resp && e[-1] == '\n')
-					e[-1] = '\0'; /* trim trailing '\n' */
-				llog(RC_LOG, logger, "%s%s output: %s", verb,
-					    verb_suffix, resp);
-			}
-		}
-
-		/* report on and react to return code */
-		{
-			int r = pclose(f);
-
-			if (r == -1) {
-				llog_error(logger, errno,
-					   "pclose failed for %s%s command",
-					   verb, verb_suffix);
-				return false;
-			} else if (WIFEXITED(r)) {
-				if (WEXITSTATUS(r) != 0) {
-					llog(RC_LOG, logger,
-						    "%s%s command exited with status %d",
-						    verb, verb_suffix,
-						    WEXITSTATUS(r));
-					return false;
-				}
-			} else if (WIFSIGNALED(r)) {
-				llog(RC_LOG, logger,
-					    "%s%s command exited with signal %d",
-					    verb, verb_suffix, WTERMSIG(r));
-				return false;
-			} else {
-				llog(RC_LOG, logger,
-					    "%s%s command exited with unknown status %d",
-					    verb, verb_suffix, r);
-				return false;
-			}
-		}
-	}
-	return true;
-}
-
 static bool do_updown_verb(const char *verb,
 			   const struct connection *c,
 			   const struct spd *sr,
@@ -469,7 +352,7 @@ static bool do_updown_verb(const char *verb,
 		return false;
 	}
 
-	bool ok = invoke_command(verb, verb_suffix, cmd, logger);
+	bool ok = server_run(verb, verb_suffix, cmd, logger);
 	pfree(cmd);
 	return ok;
 }

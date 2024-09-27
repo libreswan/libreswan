@@ -14,58 +14,14 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/wait.h>
-
 #include "ip_info.h"
 
 #include "ipsec_interface.h"
 #include "kernel_ipsec_interface.h"
 #include "iface.h"
+#include "server_run.h"
 
 #include "log.h"
-
-static bool run(const char *cmd[], struct verbose verbose)
-{
-	char command[LOG_WIDTH];
-	struct jambuf buf[] = { ARRAY_AS_JAMBUF(command), };
-	const char *sep = "";
-	for (const char **c = cmd; *c != NULL; c++) {
-		jam_string(buf, sep); sep = " ";
-		jam_string(buf, *c);
-	}
-	llog(RC_LOG, verbose.logger, "command: %s", command);
-	FILE *out = popen(command, "re");
-	if (out == NULL) {
-		llog_error(verbose.logger, errno, "command '%s' failed: ", command);
-		return false;
-	}
-	while (true) {
-		char buf[100];
-		int n = fread(buf, sizeof(buf), 1, out);
-		if (n > 0) {
-			llog(RC_LOG, verbose.logger, "output: %*s", n, buf);
-			continue;
-		}
-		if (feof(out) || ferror(out)) {
-			const char *why = (feof(out) ? "eof" :
-					   ferror(out) ? "error" :
-					   "???");
-			int wstatus = pclose(out);
-			llog(RC_LOG, verbose.logger,
-			     "%s: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s",
-			     why, wstatus,
-			     bool_str(WIFEXITED(wstatus)), WEXITSTATUS(wstatus),
-			     bool_str(WIFSIGNALED(wstatus)), WTERMSIG(wstatus),
-			     bool_str(WIFSTOPPED(wstatus)), WSTOPSIG(wstatus),
-			     bool_str(WCOREDUMP(wstatus)));
-			break;
-		}
-	}
-	return true;
-}
 
 static bool ifconfig_ipsec_interface_has_cidr(const char *ipsec_if_name UNUSED,
 					      ip_cidr cidr UNUSED,
@@ -96,7 +52,7 @@ static bool ifconfig_ipsec_interface_add_cidr(const char *ipsec_if_name,
 		str_address(&address, &ab),
 		NULL,
 	};
-	return run(add, verbose);
+	return server_runv(add, verbose);
 }
 
 static void ifconfig_ipsec_interface_del_cidr(const char *ipsec_if_name,
@@ -117,7 +73,7 @@ static void ifconfig_ipsec_interface_del_cidr(const char *ipsec_if_name,
 		str_address(&address, &ab),
 		NULL,
 	};
-	run(delete, verbose);
+	server_runv(delete, verbose);
 }
 
 static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
@@ -132,7 +88,7 @@ static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
 		"create",
 		NULL,
 	};
-	if (!run(create, verbose)) {
+	if (!server_runv(create, verbose)) {
 		return false;
 	}
 	address_buf rab, lab; /* must be same scope as tunnel[] */
@@ -144,7 +100,7 @@ static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
 		str_address(&remote_address, &rab),
 		NULL,
 	};
-	return run(tunnel, verbose);
+	return server_runv(tunnel, verbose);
 }
 
 static bool ifconfig_ipsec_interface_up(const char *ipsec_if_name UNUSED,
@@ -156,7 +112,7 @@ static bool ifconfig_ipsec_interface_up(const char *ipsec_if_name UNUSED,
 		"up",
 		NULL,
 	};
-	return run(up, verbose);
+	return server_runv(up, verbose);
 }
 
 static bool ifconfig_ipsec_interface_del(const char *ipsec_if_name,
@@ -168,7 +124,7 @@ static bool ifconfig_ipsec_interface_del(const char *ipsec_if_name,
 		"destroy",
 		NULL,
 	};
-	return run(destroy, verbose);
+	return server_runv(destroy, verbose);
 }
 
 static bool ifconfig_ipsec_interface_match(struct ipsec_interface_match *match UNUSED,
