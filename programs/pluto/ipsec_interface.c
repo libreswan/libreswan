@@ -361,7 +361,8 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 	vassert(local_iface->real_device_name != NULL);
 
 	bool created;
-	if (if_nametoindex(c->ipsec_interface->name) == 0) {
+	unsigned ipsec_if_index = if_nametoindex(c->ipsec_interface->name);
+	if (ipsec_if_index == 0) {
 		if (!kernel_ipsec_interface_add(c->ipsec_interface->name,
 						c->ipsec_interface->if_id,
 						local_iface, remote_address,
@@ -372,6 +373,10 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 		c->ipsec_interface->pluto_added = true;
 		created = true;
 	} else {
+		ipsec_interface_buf ib;
+		vdbg("verifying existing ipsec-interface %s with index %u",
+		     str_ipsec_interface(c->ipsec_interface, &ib),
+		     ipsec_if_index);
 		/*
 		 * Device exists: check that it matches IPSEC_IF_NAME
 		 * and IPSEC_IF_ID and has a valid LINK.

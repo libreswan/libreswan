@@ -73,6 +73,9 @@ typedef uint64_t u64_t;
 	}
 
 #define JAM_HEADER(T)							\
+	if (verbose.rc_flags == 0) {					\
+		return;	/* skip when not verbose */			\
+	}								\
 	struct logjam logjam;						\
 	struct jambuf *buf = jambuf_from_logjam(&logjam, verbose.logger, \
 						0, NULL, verbose.rc_flags); \
@@ -469,6 +472,10 @@ void llog_sadb_x_udpencap(struct verbose verbose, const struct sadb_msg *b,
 
 void llog_sadb(struct verbose verbose, shunk_t msg_cursor)
 {
+	if (verbose.rc_flags == 0) {
+		return;
+	}
+
 	shunk_t base_cursor;
 	const struct sadb_msg *base = get_sadb_msg(&msg_cursor, &base_cursor, verbose);
 	if (base == NULL) {

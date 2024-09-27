@@ -191,9 +191,7 @@ static bool recv_msg(struct inbuf *msg, const char *what, struct verbose verbose
 	verbose.level++;
 
 	msg->buf = shunk2(msg->buffer, s);
-	if (verbose.rc_flags != 0) {
-		llog_sadb(verbose, msg->buf);
-	}
+	llog_sadb(verbose, msg->buf);
 
 	return true;
 }
@@ -224,6 +222,7 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 			};
 			llog(RC_LOG, log.logger,
 			     "ignoring message with sequence number 0:");
+			log.level++;
 			llog_sadb(log, msg->buf);
 			/* XXX: need to trigger event */
 			queue_msg(msg);
@@ -239,6 +238,7 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 			llog(RC_LOG, log.logger,
 			     "ignoring message with incorrect sequence number %u, expecting %u:",
 			     msg->base->sadb_msg_seq, req->sadb_msg_seq);
+			log.level++;
 			llog_sadb(log, msg->buf);
 			/* XXX: need to trigger event */
 			queue_msg(msg);
@@ -270,9 +270,7 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 
 	struct sadb_msg *msg = req->base;
 	padup_sadb(req, msg);
-	if (verbose.rc_flags != 0) {
-		llog_sadb(verbose, HUNK_AS_SHUNK(req->buf));
-	}
+	llog_sadb(verbose, HUNK_AS_SHUNK(req->buf));
 
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
@@ -335,9 +333,7 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 			      .sadb_sa_encrypt = ealg),
 	};
 	struct sadb_sa *sa = hunk_put_thing(msg, tmp);
-	if (verbose.rc_flags != 0) {
-		llog_sadb_sa(verbose, msg->base, satype, sa);
-	}
+	llog_sadb_sa(verbose, msg->base, satype, sa);
 	return sa;
 }
 
@@ -555,10 +551,8 @@ static bool register_alg(const struct sadb_msg *b,
 		return false;
 	}
 
-	if (verbose.rc_flags != 0) {
-		llog_sadb_supported(verbose, b, supported);
-		verbose.level++;
-	}
+	llog_sadb_supported(verbose, b, supported);
+	verbose.level++;
 
 	unsigned nr_algs = ((supported->sadb_supported_len * sizeof(uint64_t) -
 			     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg));
@@ -572,9 +566,7 @@ static bool register_alg(const struct sadb_msg *b,
 		}
 
 		enum sadb_exttype exttype = supported->sadb_supported_exttype;
-		if (verbose.rc_flags != 0) {
-			llog_sadb_alg(verbose, b, exttype, alg);
-		}
+		llog_sadb_alg(verbose, b, exttype, alg);
 
 		const struct ike_alg *ike_alg = ike_alg_by_sadb_alg_id(type, alg->sadb_alg_id);
 		if (ike_alg != NULL) {
@@ -771,9 +763,7 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 				llog_pexpect(verbose.logger, HERE, "getting sa");
 				return 0;
 			}
-			if (verbose.rc_flags != 0) {
-				llog_sadb_sa(verbose, resp.base, req.base->sadb_msg_satype, sa);
-			}
+			llog_sadb_sa(verbose, resp.base, req.base->sadb_msg_satype, sa);
 			spi = sa->sadb_sa_spi;
 			break;
 		}
@@ -1145,9 +1135,7 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				llog_pexpect(logger, HERE, "getting policy");
 				return 0;
 			}
-			if (verbose.rc_flags != 0) {
-				llog_sadb_lifetime(verbose, req.base, lifetime);
-			}
+			llog_sadb_lifetime(verbose, req.base, lifetime);
 			*bytes = lifetime->sadb_lifetime_bytes;
 			*add_time = lifetime->sadb_lifetime_addtime;
 			break;
@@ -1290,11 +1278,9 @@ static bool parse_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b
 	if (policy == NULL) {
 		return false;
 	}
-	if (verbose.rc_flags != 0) {
-		llog_sadb_x_policy(verbose, b, policy);
-	}
+	llog_sadb_x_policy(verbose, b, policy);
+	verbose.level++;
 	*policy_id = policy->sadb_x_policy_id;
-	verbose("%u", (unsigned)(*policy_id));
 	return true;
 }
 #endif
@@ -1308,6 +1294,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      struct logger *logger, const char *func)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
+	return true;
 #ifdef __OpenBSD__
 
 	if (policy->nr_rules > 1) {
@@ -1612,16 +1599,14 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
 			       shunk_t *ext_cursor, ip_address *addr, ip_port *port)
 {
-	verbose.level++;
 	shunk_t address_cursor;
 	const struct sadb_address *address =
 		get_sadb_address(ext_cursor, &address_cursor, verbose);
 	if (address == NULL) {
 		return false;
 	}
-	if (verbose.rc_flags != 0) {
-		llog_sadb_address(verbose, b, address);
-	}
+	llog_sadb_address(verbose, b, address);
+	verbose.level++;
 	if (!get_sadb_sockaddr_address_port(&address_cursor, addr, port, verbose)) {
 		return false;
 	}
@@ -1721,9 +1706,7 @@ static void process_pending(shunk_t payload, struct verbose verbose)
 	verbose("in %s() processing ...", __func__);
 	verbose.level++;
 
-	if (verbose.rc_flags != 0) {
-		llog_sadb(verbose, payload);
-	}
+	llog_sadb(verbose, payload);
 
 	shunk_t cursor = payload;
 	shunk_t msg_cursor;

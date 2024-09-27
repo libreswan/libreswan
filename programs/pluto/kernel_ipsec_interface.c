@@ -66,9 +66,13 @@ bool kernel_ipsec_interface_add(const char *ipsec_if_name /*non-NULL*/,
 	     ipsec_if_name, ipsec_if_id, local_iface->real_device_name,
 	     str_address_sensitive(&remote_address, &ab));
 	verbose.level++;
-	return kernel_ops->ipsec_interface->add(ipsec_if_name, ipsec_if_id,
-						local_iface, remote_address,
-						verbose);
+	bool ok = kernel_ops->ipsec_interface->add(ipsec_if_name, ipsec_if_id,
+						   local_iface, remote_address,
+						   verbose);
+	unsigned ipsec_if_index = if_nametoindex(ipsec_if_name);
+	vdbg("ipsec-interface %s with if_index %u ok: %s",
+	     ipsec_if_name, ipsec_if_index, bool_str(ok));
+	return ok;
 }
 
 bool kernel_ipsec_interface_up(const char *ipsec_if_name,
