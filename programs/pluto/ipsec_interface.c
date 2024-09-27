@@ -667,31 +667,88 @@ diag_t parse_ipsec_interface(struct config *config,
 	return NULL;
 }
 
-void add_ipsec_interface(struct connection *c)
+bool add_ipsec_interface(struct connection *c,
+			 const struct iface_device *iface)
 {
 	ipsec_interface_buf ifb;
-	VERBOSE_DBGP(DBG_BASE, c->logger, "adding %s to connection",
-		str_ipsec_interface_id(c->config->ipsec_interface.id, &ifb));
+	VERBOSE_DBGP(DBG_BASE, c->logger, "adding %s@%s to connection",
+		     str_ipsec_interface_id(c->config->ipsec_interface.id, &ifb),
+		     iface->real_device_name);
 
-	if (!vexpect(c->config->ipsec_interface.enabled)) {
-		return;
-	}
-
-	/* check if interface is already used by pluto */
-
-	struct ipsec_interface *ipsec_iface =
-		find_ipsec_interface_by_id(c->config->ipsec_interface.id);
-	if (ipsec_iface != NULL) {
-		c->ipsec_interface = ipsec_interface_addref(ipsec_iface, c->logger, HERE);
-		return;
+	if (vbad(!c->config->ipsec_interface.enabled) ||
+	    vbad(c->ipsec_interface != NULL)) {
+		return false;
 	}
 
 	/*
-	 * Create a new ipsec-interface structure (but don't yet
-	 * install in the kernel) or probe it.
+	 * Check if interface is already used by pluto.
+	 *
+	 * XXX This should also check that the linked iface is
+	 * correct.
 	 */
 
+	struct ipsec_interface *ipsec_if =
+		find_ipsec_interface_by_id(c->config->ipsec_interface.id);
+	if (ipsec_if != NULL) {
+		c->ipsec_interface = ipsec_interface_addref(ipsec_if, c->logger, HERE);
+		return true;
+	}
+
+	char ipsec_if_name[IFNAMSIZ];
+	snprintf(ipsec_if_name, IFNAMSIZ, "%s%u",
+		 kernel_ops->ipsec_interface->name,
+		 unmap_id(c->config->ipsec_interface.id));
+
+	/*
+	 * The device is missing, try to create it.
+	 */
+
+	if (if_nametoindex(ipsec_if_name) == 0) {
+		if (!kernel_ipsec_interface_add(ipsec_if_name,
+						c->config->ipsec_interface.id,
+						iface, verbose)) {
+			return false;
+		}
+		c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id);
+		jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
+			iface->real_device_name);
+		c->ipsec_interface->pluto_added = true;
+		ipsec_interface_buf ib;
+		vdbg("created ipsec-interface %s",
+		     str_ipsec_interface(c->ipsec_interface, &ib));
+		return true;
+	}
+
+	/*
+	 * Device exists: check that it matches IPSEC_IF_NAME
+	 * and IPSEC_IF_ID and has a valid LINK.
+	 */
+
+	struct ipsec_interface_match match = {
+		.ipsec_if_name = ipsec_if_name,
+		.ipsec_if_id = c->config->ipsec_interface.id,
+		.iface_if_index = if_nametoindex(iface->real_device_name),
+		.wildcard = false,
+	};
+	if (vbad(match.iface_if_index == 0)) {
+		return false;
+	}
+
+	if (!kernel_ipsec_interface_match(&match, verbose)) {
+		/* .NAME isn't suitable */
+		llog_error(verbose.logger, 0/*no-errno*/,
+			   "existing ipsec-interface %s is not valid: %s",
+			   ipsec_if_name, str_diag(match.diag));
+		pfree_diag(&match.diag);
+		return false;
+	}
+
 	c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id);
+	jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
+		iface->real_device_name);
+	ipsec_interface_buf ib;
+	vdbg("added ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
+	return true;
 }
 
 void check_stale_ipsec_interfaces(struct logger *logger)

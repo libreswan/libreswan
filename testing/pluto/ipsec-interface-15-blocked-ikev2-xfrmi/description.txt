@@ -1,4 +1,10 @@
 XFRMi test with the interface-ip addresses already existing on the interface.
 
-- the first attempt is with a valid interface
-- the second attempt is with an invalid, but still conflicting, interface
+1. with a valid interface
+
+   Orient finds the interface, and delete leaves it be.
+
+2. with an invalid interface
+
+   Orient finds the interface is invalid leaving the connection
+   disoriented.
