@@ -56,18 +56,16 @@ void kernel_ipsec_interface_del_cidr(const char *ipsec_if_name, ip_cidr cidr,
 
 bool kernel_ipsec_interface_add(const char *ipsec_if_name /*non-NULL*/,
 				const ipsec_interface_id_t ipsec_if_id,
-				const struct iface_device *local_iface,
-				ip_address remote_address,
+				const struct iface_device *iface,
 				struct verbose verbose)
 {
-	address_buf ab;
-	vdbg("%s:%s() %s %u %s %s ...",
+	vdbg("%s:%s() %s %u %s ...",
 	     kernel_ops->ipsec_interface->name, __func__,
-	     ipsec_if_name, ipsec_if_id, local_iface->real_device_name,
-	     str_address_sensitive(&remote_address, &ab));
+	     ipsec_if_name, ipsec_if_id, iface->real_device_name);
 	verbose.level++;
-	bool ok = kernel_ops->ipsec_interface->add(ipsec_if_name, ipsec_if_id,
-						   local_iface, remote_address,
+	bool ok = kernel_ops->ipsec_interface->add(ipsec_if_name,
+						   ipsec_if_id,
+						   iface,
 						   verbose);
 	unsigned ipsec_if_index = if_nametoindex(ipsec_if_name);
 	vdbg("ipsec-interface %s with if_index %u ok: %s",

@@ -345,8 +345,7 @@ bool add_kernel_ipsec_interface_address(const struct connection *c,
 /* Return true on success, false on failure */
 
 bool add_kernel_ipsec_interface(const struct connection *c,
-				const struct iface_device *local_iface,
-				ip_address remote_address,
+				const struct iface_device *iface,
 				struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "...");
@@ -358,15 +357,14 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 
 	vassert(c->ipsec_interface->name != NULL);
 	/* Note: during orient c->iface is bogus */
-	vassert(local_iface->real_device_name != NULL);
+	vassert(iface->real_device_name != NULL);
 
 	bool created;
 	unsigned ipsec_if_index = if_nametoindex(c->ipsec_interface->name);
 	if (ipsec_if_index == 0) {
 		if (!kernel_ipsec_interface_add(c->ipsec_interface->name,
 						c->ipsec_interface->if_id,
-						local_iface, remote_address,
-						verbose)) {
+						iface, verbose)) {
 			return false;
 		}
 
@@ -387,7 +385,7 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 		struct ipsec_interface_match match = {
 			.ipsec_if_name = c->ipsec_interface->name,
 			.ipsec_if_id = c->ipsec_interface->if_id,
-			.iface_if_index = if_nametoindex(local_iface->real_device_name),
+			.iface_if_index = if_nametoindex(iface->real_device_name),
 			.wildcard = false,
 		};
 		if (vbad(match.iface_if_index == 0)) {

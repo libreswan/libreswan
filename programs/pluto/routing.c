@@ -2455,10 +2455,7 @@ static bool dispatch(enum routing_event event,
 			 */
 			if ((c->routing.state == RT_UNROUTED && event == CONNECTION_ROUTE) ||
 			    c->routing.state == RT_UNROUTED_INBOUND) {
-				ip_address remote_address =
-					(e->ike != NULL ? endpoint_address((*e->ike)->sa.st_remote_endpoint) :
-					 unset_address);
-				ok = (add_kernel_ipsec_interface(c, c->iface, remote_address, logger) &&
+				ok = (add_kernel_ipsec_interface(c, c->iface, logger) &&
 				      add_kernel_ipsec_interface_address(c, logger));
 			}
 			if (ok &

@@ -78,8 +78,7 @@ static void ifconfig_ipsec_interface_del_cidr(const char *ipsec_if_name,
 
 static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
 					 const ipsec_interface_id_t ipsec_if_id UNUSED,
-					 const struct iface_device *iface,
-					 ip_address remote_address,
+					 const struct iface_device *iface UNUSED,
 					 struct verbose verbose)
 {
 	const char *create[] = {
@@ -88,19 +87,7 @@ static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
 		"create",
 		NULL,
 	};
-	if (!server_runv(create, verbose)) {
-		return false;
-	}
-	address_buf rab, lab; /* must be same scope as tunnel[] */
-	const char *tunnel[] = {
-		"ifconfig",
-		ipsec_if_name,
-		"tunnel",
-		str_address(&iface->local_address, &lab),
-		str_address(&remote_address, &rab),
-		NULL,
-	};
-	return server_runv(tunnel, verbose);
+	return server_runv(create, verbose);
 }
 
 static bool ifconfig_ipsec_interface_up(const char *ipsec_if_name UNUSED,
