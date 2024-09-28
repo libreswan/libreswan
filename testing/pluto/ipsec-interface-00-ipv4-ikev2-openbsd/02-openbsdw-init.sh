@@ -1,2 +1,2 @@
-/testing/guestbin/netbsd-prep.sh
+/testing/guestbin/prep.sh
 echo "initdone"

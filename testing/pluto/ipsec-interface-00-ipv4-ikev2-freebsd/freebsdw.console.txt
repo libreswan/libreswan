@@ -1,4 +1,4 @@
-/testing/guestbin/netbsd-prep.sh
+/testing/guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 west #

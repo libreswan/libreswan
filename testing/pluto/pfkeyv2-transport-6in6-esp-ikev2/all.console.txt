@@ -5,7 +5,7 @@ east# ../../guestbin/wait-until-pluto-started
 east# ipsec auto --add eastnet-westnet-ikev2
 "eastnet-westnet-ikev2": added IKEv2 connection
 east# ipsec whack --impair suppress_retransmits
-netbsdw# ../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD
+netbsdw# ../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 netbsdw# ipsec start

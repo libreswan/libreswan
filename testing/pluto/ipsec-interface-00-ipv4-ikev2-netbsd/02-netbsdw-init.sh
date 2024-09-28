@@ -1,4 +1,4 @@
-/testing/guestbin/netbsd-prep.sh
+/testing/guestbin/prep.sh
 ipsec start
 ../../guestbin/wait-until-pluto-started
 echo "initdone"

@@ -7,7 +7,7 @@ east# ipsec auto --add eastnet-westnet-ikev2
 east# ipsec whack --impair suppress_retransmits
 east# echo "initdone"
 initdone
-freebsdw# ../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD
+freebsdw# ../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 freebsdw# ipsec start

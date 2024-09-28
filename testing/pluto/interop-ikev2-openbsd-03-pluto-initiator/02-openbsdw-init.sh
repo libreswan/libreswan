@@ -1,4 +1,4 @@
-../../guestbin/netbsd-prep.sh
+../../guestbin/prep.sh
 
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23

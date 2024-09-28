@@ -1,1 +1,1 @@
-../../guestbin/netbsd-prep.sh
+../../guestbin/prep.sh

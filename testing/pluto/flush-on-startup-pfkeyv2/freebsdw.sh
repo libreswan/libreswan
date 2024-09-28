@@ -1,4 +1,4 @@
-../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD
+../../guestbin/prep.sh
 ipsec initnss
 
 # add a policy + state
