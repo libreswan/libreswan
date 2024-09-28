@@ -54,7 +54,7 @@ OBJS += send.o
 OBJS += ipsec_interface.o
 OBJS += kernel_ipsec_interface.o
 ifeq ($(USE_PFKEYV2),true)
-OBJS += kernel_ipsec_interface_ifconfig.o
+OBJS += kernel_ipsec_interface_$(OSDEP).o
 endif
 
 ifeq ($(USE_IKEv1),true)
