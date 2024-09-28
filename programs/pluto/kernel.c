@@ -2630,7 +2630,6 @@ void shutdown_kernel(struct logger *logger)
 		delete_bare_shunt_kernel_policies(logger);
 		kernel_ops->plug_holes(logger);
 		kernel_ops->flush(logger);
-		shutdown_kernel_ipsec_interface(logger);
 		kernel_ops->shutdown(logger);
 	}
 }

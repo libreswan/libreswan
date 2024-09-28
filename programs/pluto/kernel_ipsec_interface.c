@@ -121,11 +121,3 @@ err_t kernel_ipsec_interface_supported(struct verbose verbose)
 	verbose.level++;
 	return kernel_ops->ipsec_interface->supported(verbose);
 }
-
-void kernel_ipsec_interface_shutdown(struct verbose verbose)
-{
-	vdbg("%s:%s() ...",
-	     kernel_ops->ipsec_interface->name, __func__);
-	verbose.level++;
-	return kernel_ops->ipsec_interface->shutdown(verbose);
-}

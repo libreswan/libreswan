@@ -91,7 +91,6 @@ bool add_kernel_ipsec_interface(const struct connection *c,
 bool add_kernel_ipsec_interface_address(const struct connection *c, struct logger *logger);
 void del_kernel_ipsec_interface_address(const struct connection *c, struct logger *logger);
 
-void shutdown_kernel_ipsec_interface(struct logger *logger);
 void check_stale_ipsec_interfaces(struct logger *logger);
 
 size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t if_id);

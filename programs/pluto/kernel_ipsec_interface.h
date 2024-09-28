@@ -65,7 +65,6 @@ struct kernel_ipsec_interface {
 
 	void (*check_stale)(struct verbose verbose);
 	err_t (*supported)(struct verbose verbose);
-	void (*shutdown)(struct verbose verbose);
 };
 
 extern const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm;
@@ -93,6 +92,5 @@ bool kernel_ipsec_interface_match(struct ipsec_interface_match *match,
 
 void kernel_ipsec_interface_check_stale(struct verbose verbose);
 err_t kernel_ipsec_interface_supported(struct verbose verbose);
-void kernel_ipsec_interface_shutdown(struct verbose verbose);
 
 #endif

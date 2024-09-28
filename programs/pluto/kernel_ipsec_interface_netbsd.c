@@ -129,10 +129,6 @@ static err_t ifconfig_ipsec_interface_supported(struct verbose verbose UNUSED)
 	return NULL;
 }
 
-static void ifconfig_ipsec_interface_shutdown(struct verbose verbose UNUSED)
-{
-}
-
 const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
 	.name = "ipsec",
 
@@ -147,6 +143,5 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
 	.match = ifconfig_ipsec_interface_match,
 	.check_stale = ifconfig_ipsec_interface_check_stale,
 	.supported = ifconfig_ipsec_interface_supported,
-	.shutdown = ifconfig_ipsec_interface_shutdown,
 
 };

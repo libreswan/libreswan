@@ -756,9 +756,3 @@ void check_stale_ipsec_interfaces(struct logger *logger)
 	VERBOSE_DBGP(DBG_BASE, logger, "...");
 	kernel_ipsec_interface_check_stale(verbose);
 }
-
-void shutdown_kernel_ipsec_interface(struct logger *logger)
-{
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
-	kernel_ipsec_interface_shutdown(verbose);
-}

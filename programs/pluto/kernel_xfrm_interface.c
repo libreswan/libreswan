@@ -871,20 +871,6 @@ static void xfrm_check_stale(struct verbose verbose)
 	return;
 }
 
-static void free_xfrmi_ipsec1(struct verbose verbose)
-{
-	vdbg("%s() ...", __func__);
-	verbose.level++;
-
-	ipsec_interface_buf ifb;
-	const char *if_name = str_ipsec_interface_id(IPSEC1_XFRM_IF_ID, &ifb);
-
-	unsigned int if_id = if_nametoindex(if_name);
-	if (if_id > 0) {
-		kernel_ipsec_interface_del(if_name, verbose); /* ignore return value??? */
-	}
-}
-
 void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 {
 	bool set_mark = false;
@@ -934,5 +920,4 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 
 	.check_stale = xfrm_check_stale,
 	.supported = xfrm_iface_supported,
-	.shutdown = free_xfrmi_ipsec1,
 };
