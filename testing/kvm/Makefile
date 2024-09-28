@@ -302,6 +302,12 @@ KVM_$($(strip $1))_DOMAIN         = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(st
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(KVM_$($(strip $1))_TEST_HOST_NAMES)))
 
+KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BASE_DOMAIN)
+KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
+KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
+KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_DOMAIN)
+KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_TEST_DOMAINS)
+
 endef
 
 $(foreach platform, $(KVM_PLATFORM), \
@@ -1439,12 +1445,12 @@ $(foreach prefix, $(KVM_TEST_PREFIXES), \
 
 .PHONY: kvm-shutdown
 
-kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES))
+kvm-shutdown: $(foreach os, $(KVM_OS), kvm-shutdown-$(os))
 
-$(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES)): \
+$(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM)): \
 kvm-shutdown-%:
-	: $@
-	$(KVMSH) --shutdown $*
+	: $@=$*
+	: $(foreach domain, $(KVM_$($*)_DOMAINS), && $(KVMSH) --shutdown $(notdir $(domain)))
 
 .PHONY: kvm-clean
 
@@ -1657,6 +1663,8 @@ $(call kvm-var-value,KVM_BUILD_DOMAINS)
 $(call kvm-var-value,KVM_TEST_DOMAINS)
 
 $(call kvm-var-value,KVM_DOMAINS)
+
+ $(foreach platform,$(KVM_PLATFORM),$(call kvm-var-value,KVM_$($(platform))_DOMAINS)$(crlf))
 
 $(call kvm-var-value,KVM_GATEWAY_ADDRESS)
 $(call kvm-var-value,KVM_GATEWAY_NAME)
