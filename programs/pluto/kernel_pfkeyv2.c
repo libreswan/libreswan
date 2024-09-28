@@ -1294,7 +1294,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      struct logger *logger, const char *func)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
-	return true;
 #ifdef __OpenBSD__
 
 	if (policy->nr_rules > 1) {
