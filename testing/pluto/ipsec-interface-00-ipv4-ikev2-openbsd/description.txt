@@ -1,3 +1,18 @@
-XFRMi ikev2 ipv4 test with interface-ip enabled.
+ipsec-interface using sec(4) on OpenBSD
 
-This test also tests if the ip address is unreferenced when delting the connection.
+This test first demonstrates a configuration using IKED, followed by
+the equivalent behaviour using libreswan (at least in theory).
+
+With IKED:
+
+- the device sec1 is created with:
+  - the local child's CIDR
+  - the remote child's gateway
+  - made up
+
+- IKED then establishes an IPsec tunnel adding kernel state (SADBs)
+  bound to the interface (there is no kernel policy!)
+
+See https://man.openbsd.org/sec
+
+The sec(4) device was added to OpenBSD in 2024.
