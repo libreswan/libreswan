@@ -1,6 +1,9 @@
 #
-# valid device; <<ip link>> is before orient in <<ipsec add>>
+# valid device
 #
+
+ipsec start
+../../guestbin/wait-until-pluto-started
 
 ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
 ip addr add 192.0.1.251/24 dev ipsec1
@@ -17,11 +20,15 @@ ipsec delete westnet6-eastnet6
 
 ip --color=never link show ipsec1
 ip link del dev ipsec1
-ip --color=never link show ipsec1
+
+ipsec stop
 
 #
-# valid device; <<ip link>> is before orient in <<ipsec add>>
+# invalid device (no dev eth1)
 #
+
+ipsec start
+../../guestbin/wait-until-pluto-started
 
 ip link add dev ipsec1 type xfrm if_id 0x1
 ip addr add 192.0.1.251/24 dev ipsec1
@@ -38,4 +45,5 @@ ipsec delete westnet6-eastnet6
 
 ip --color=never link show ipsec1
 ip link del dev ipsec1
-ip --color=never link show ipsec1
+
+ipsec stop
