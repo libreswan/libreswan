@@ -1,5 +1,5 @@
-/testing/guestbin/netbsd-prep.sh
+/testing/guestbin/swan-prep --nokeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec add west
+ipsec auto --add east
 echo "initdone"

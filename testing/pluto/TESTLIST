@@ -562,9 +562,12 @@ kvmplutotest	ikev2-xfrmi-16-rekey			good
 kvmplutotest	ikev2-xfrmi-17-ipcomp			good
 kvmplutotest	ikev2-xfrmi-19-route-before-up		good
 
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-freebsd	freebsd
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-netbsd	netbsd
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd	openbsd
+
 kvmplutotest	ipsec-interface-06-ipv4-ikev1-xfrmi	good
 kvmplutotest	ipsec-interface-06-ipv4-ikev2-xfrmi	good
-kvmplutotest	ipsec-interface-06-ipv4-ikev2-pfkeyv2	netbsd
 kvmplutotest	ipsec-interface-06-ipv6-ikev1-xfrmi	good
 kvmplutotest	ipsec-interface-06-ipv6-ikev2-xfrmi	good
 kvmplutotest	ipsec-interface-15-blocked-ikev2-xfrmi	good	github/1769

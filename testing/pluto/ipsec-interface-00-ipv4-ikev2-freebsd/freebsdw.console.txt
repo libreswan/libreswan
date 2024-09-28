@@ -1,0 +1,179 @@
+/testing/guestbin/netbsd-prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+Initializing NSS database
+Starting pluto.
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ ifconfig ipsec1 create
+west #
+ ifconfig ipsec1 inet 192.0.1.251/24 192.0.1.251
+west #
+ ifconfig ipsec1 up
+west #
+ ifconfig ipsec1
+ipsec1: flags=1008011<UP,POINTOPOINT,MULTICAST,LOWER_UP> metric 0 mtu 1400
+	options=0
+	inet 192.0.1.251 --> 192.0.1.251 netmask 0xffffff00
+	groups: ipsec
+	reqid: 0
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+No SAD entries.
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+No SPD entries.
+west #
+ ifconfig ipsec1 destroy
+west #
+ ipsec add west
+"west": command: 'ifconfig' 'ipsec1' 'create'
+"west": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"west": added IKEv2 connection
+west #
+ ifconfig ipsec1
+ipsec1: flags=8010<POINTOPOINT,MULTICAST> metric 0 mtu 1400
+	options=0
+	groups: ipsec
+	reqid: 0
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+No SAD entries.
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+No SPD entries.
+west #
+ ipsec up west
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #2: command: 'ifconfig' 'ipsec1' 'inet' '192.0.1.251/24' '192.0.1.251'
+"west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"west" #2: command: 'ifconfig' 'ipsec1' 'up'
+"west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ifconfig ipsec1
+ipsec1: flags=1008011<UP,POINTOPOINT,MULTICAST,LOWER_UP> metric 0 mtu 1400
+	options=0
+	inet 192.0.1.251 --> 192.0.1.251 netmask 0xffffff00
+	groups: ipsec
+	reqid: 0
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.45 192.1.2.23
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+192.1.2.23 192.1.2.45
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+192.0.2.0/24[any] 192.0.1.0/24[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/require
+	spid=1 seq=1 pid=PID scope=global 
+	refcnt=1
+192.0.1.0/24[any] 192.0.2.0/24[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/require
+	spid=2 seq=0 pid=PID scope=global 
+	refcnt=1
+west #
+ ../../guestbin/tcpdump.sh --start -i ipsec1
+tcpdump started
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+unexpected status 4
+# fping  -c 1  --timeout 5s   --src 192.0.1.251 192.0.2.254
+fping error: not enough sequence numbers available! (expire_timeout=10000000000, host_nr=0, ping_count=0, seqmap_next_id=0)
+west #
+ ../../guestbin/ping-once.sh --up -I ipsec1 192.0.2.254
+down UNEXPECTED
+# fping  -c 1  --timeout 5s   --src ipsec1 192.0.2.254
+fping: can't parse source address: ipsec1
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.45 192.1.2.23
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+192.1.2.23 192.1.2.45
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+192.0.2.0/24[any] 192.0.1.0/24[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/require
+	spid=1 seq=1 pid=PID scope=global 
+	refcnt=1
+192.0.1.0/24[any] 192.0.2.0/24[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/require
+	spid=2 seq=0 pid=PID scope=global 
+	refcnt=1
+west #
+ ../../guestbin/tcpdump.sh --stop -i ipsec1
+reading from file /tmp/west.ipsec-interface-00-ipv4-ikev2-freebsd.ipsec1.tcpdump.pcap, link-type NULL (BSD loopback)
+west #
+ ipsec down west
+"west": terminating SAs using this connection
+"west" #1: sent INFORMATIONAL request to delete IKE SA
+"west" #2: command: 'ifconfig' 'ipsec1' 'delete' 'inet' '192.0.1.251/24' '192.0.1.251'
+"west" #2: eof: 256; exited yes(1); signaled: no(0); stopped: no(1); core: no
+"west" #2: delete ipsec-interface ipsec1@vtnet1 IP [192.0.1.251/24] added by pluto
+"west" #2: failed to pull traffic counters from outbound IPsec SA
+"west" #2: failed to pull traffic counters from inbound IPsec SA
+"west" #2: ESP traffic information: in=0B out=0B
+"west" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec delete west
+"west": command: 'ifconfig' 'ipsec1' 'destroy'
+"west": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"west": delete ipsec-interface ipsec1@vtnet1 added by pluto
+west #
+ 
