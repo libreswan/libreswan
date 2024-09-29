@@ -53,7 +53,7 @@ for n in iked.conf ; do
     copy_if /etc/iked.conf ${hostname}.${n} ${n}
 done
 
-log_if pluto /etc/iked.conf
+log_if iked /etc/iked.conf
 
 #
 # Racoon

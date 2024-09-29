@@ -7,7 +7,7 @@ fi
 
 case $1 in
     start )
-	/sbin/iked -dv > /tmp/iked.log 2>&1 & sleep 1
+	/sbin/iked -dv >> /tmp/iked.log 2>&1 & sleep 1
 	echo $! > /tmp/iked.pid
 	;;
     stop )
