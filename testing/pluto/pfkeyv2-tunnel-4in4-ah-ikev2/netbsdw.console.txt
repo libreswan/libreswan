@@ -1,4 +1,3 @@
-# note swan-prep does not yet support BSD
 west #
  ../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf

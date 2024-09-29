@@ -6,7 +6,9 @@ ifconfig sec1 create
 ifconfig sec1 inet 192.0.1.251/24 192.0.2.254
 ifconfig sec1 up
 
-/sbin/iked -dv > /tmp/iked.log 2>&1 & iked=$! ; sleep 10
+../../guestbin/iked.sh start
+
+sleep 10 # something better?
 
 ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
 
@@ -14,7 +16,7 @@ ifconfig sec1
 ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ipsec-kernel-policy.sh
 
-kill ${iked}
+../../guestbin/iked.sh stop
 
 ifconfig sec1 destroy
 

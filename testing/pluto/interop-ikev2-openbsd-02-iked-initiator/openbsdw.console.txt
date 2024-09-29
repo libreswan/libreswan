@@ -1,11 +1,7 @@
-# note swan-prep does not yet support iked
+../../guestbin/prep.sh
+west.iked.conf -> /etc/iked.conf
 west #
- cp openbsdw.conf /etc/iked.conf
-west #
- chmod 600 /etc/iked.conf
-west #
- /sbin/iked -dvvv > OUTPUT/iked.log 2>&1 & sleep 1
-[x] PID
+ ../../guestbin/iked.sh start
 west #
  echo "initdone"
 initdone

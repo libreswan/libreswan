@@ -6,7 +6,11 @@ west #
  echo "initdone"
 initdone
 west #
+ #
+west #
  # establish the IKE SA using IKED
+west #
+ #
 west #
  ifconfig sec1 create
 west #
@@ -14,8 +18,9 @@ west #
 west #
  ifconfig sec1 up
 west #
- /sbin/iked -dv > /tmp/iked.log 2>&1 & iked=$! ; sleep 10
-[x] PID
+ ../../guestbin/iked.sh start
+west #
+ sleep 10 # something better?
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
 up
@@ -82,16 +87,19 @@ west #
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 west #
+ ../../guestbin/iked.sh stop
+west #
  ifconfig sec1 destroy
 west #
- kill ${iked}
+ #
 west #
  # establish the IKE SA using Libreswan
+west #
+ #
 west #
  ipsec start
 Redirecting to: [initsystem]
 pluto(ok)
-[1]+  Done                    /sbin/iked -dv > /tmp/iked.log 2>&1
 west #
  ../../guestbin/wait-until-pluto-started
 west #

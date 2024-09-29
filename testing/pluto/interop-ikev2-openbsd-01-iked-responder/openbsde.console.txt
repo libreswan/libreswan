@@ -1,16 +1,10 @@
-# note swan-prep does not yet support iked
+../../guestbin/prep.sh
+east.iked.conf -> /etc/iked.conf
 east #
- cp openbsde.conf /etc/iked.conf
-east #
- chmod 600 /etc/iked.conf
-east #
- /sbin/iked -dvvv > /tmp/iked.log 2>&1 & sleep 1
-[x] PID
+ ../../guestbin/iked.sh start
 east #
  echo "initdone"
 initdone
-east #
- cp /tmp/iked.log OUTPUT/openbsde.iked.log
 east #
  ../../guestbin/ipsec-kernel-state.sh
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI enc aes-128-gcm \

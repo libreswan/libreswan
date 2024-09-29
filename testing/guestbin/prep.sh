@@ -2,6 +2,31 @@
 
 hostname=$(hostname)
 
+copy_if()
+{
+    local d=$1 ; shift
+    rm -f ${d}
+    local s
+    for s in "$@" ; do
+	test ! -r ${s} && continue
+	if test -r ${d} ; then
+	    echo "duplicate ${d}: $@" 1>&2
+	    exit 1
+	fi
+	mkdir -p $(dirname ${d})
+	cp -v ${s} ${d}
+	chmod u=r,go= ${d}
+    done
+}
+
+log_if() {
+    local d=$1
+    rm -f /tmp/${d}.log
+    if test -r ${2} ; then
+	ln -s $PWD/OUTPUT/${hostname}.${d}.log /tmp/${d}.log
+    fi
+}
+
 #
 # Libreswan
 #
@@ -13,38 +38,34 @@ rm -rf ${etc}/ipsec.d
 mkdir ${etc}/ipsec.d
 
 for s in conf secrets ; do
-    rm -f ${etc}/ipsec.${s}
-    for f in ${hostname}.${s} ipsec.${s} ; do
-	if test -r "${f}" ; then
-	    cp -v ${f} ${etc}/ipsec.${s}
-	fi
-    done
+    copy_if ${etc}/ipsec.${s} ${hostname}.${s} ipsec.${s}
 done
 
-if test -r ${etc}/ipsec.conf ; then
-    rm -f /tmp/pluto.log
-    ln -s $PWD/OUTPUT/${hostname}.pluto.log /tmp/pluto.log
-fi
+log_if pluto ${etc}/ipsec.conf
 
 #
-# Others
+# IKED
 #
-# install stuff into /etc/*.conf
+# Install stuff into /etc/*.conf
 #
 
-for p in iked ; do
-    rm -rf /etc/${p}.conf
-    for f in ${hostname}.${p} ${p}.conf ; do
-	if test -r "${f}" ; then
-	    cp -v ${f} /etc/${p}.conf
-	    chmod 600 /etc/${p}.conf
-	fi
-    done
+for n in iked.conf ; do
+    copy_if /etc/iked.conf ${hostname}.${n} ${n}
 done
 
-if test -r /etc/iked.conf ; then
-    rm -f /tmp/iked.log
-    ln -s $PWD/OUTPUT/${hostname}.iked.log /tmp/iked.log
-fi
+log_if pluto /etc/iked.conf
+
+#
+# Racoon
+#
+# Install stuff into /etc/racoon/*
+#
+
+rm -rf /etc/racoon
+for p in racoon.conf psk.txt ; do
+    copy_if /etc/racoon/${p} ${hostname}.${p} ${p}
+done
+
+log_if racoon /etc/racoon/racoon.conf
 
 stty -oxtabs

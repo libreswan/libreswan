@@ -1,5 +1,4 @@
-../../guestbin/prep.sh #
- note: swan-prep does not yet support BSD
+../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 west #
