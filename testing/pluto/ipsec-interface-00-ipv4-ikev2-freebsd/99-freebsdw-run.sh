@@ -1,12 +1,4 @@
-ifconfig ipsec1 create
-ifconfig ipsec1 inet 192.0.1.251/24 192.0.1.251
-ifconfig ipsec1 up
-
-ifconfig ipsec1
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
-
-ifconfig ipsec1 destroy
+ipsec start
 
 ipsec add west
 

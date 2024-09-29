@@ -1,3 +1,12 @@
-XFRMi ikev2 ipv4 test with interface-ip enabled.
+FreeBSD with ipsec-interface
 
-This test also tests if the ip address is unreferenced when delting the connection.
+On FreeBSD with if_ipsec(4):
+
+- create ipsec1 with msgid
+- add tunnel describing ESP
+- add inet describing what is tunneled
+
+The tunnel adds kernel policies bound to the ipsec interface and
+direct it to the kernel state using a message ID.
+
+Generated kernel state then needs to match.
