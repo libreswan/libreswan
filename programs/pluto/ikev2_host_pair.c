@@ -275,18 +275,18 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		/*
 		 * Opportunistic or Shunt:
 		 *
-		 * Keep searching selecting the narrowest
-		 * match, based on addresses, each time.
+		 * Keep searching refining until the connection with
+		 * the narrowed address is found.
 		 *
-		 * Don't consider the protocol/port as, at
-		 * this point (just received an IKE_SA_INIT
-		 * request), they are not known (and won't be
-		 * known until the next exchange - IKE_AUTH).
+		 * At this point only the peer's address is known so
+		 * trying to narrow beyond that (i.e., down to a
+		 * protocol/port) is just wild speculation.
 		 *
-		 * The end result, which depends on the order
-		 * that the connections are loaded, is
-		 * probably going to be wrong (for instance
-		 * when connections include protocol / port).
+		 * Hence use in_selector_range() and in_selector().
+		 *
+		 * Since the connections are searched OLD2NEW so the
+		 * first connection in the config file is prefered
+		 * (but this isn't documented).
 		 */
 
 		if (!address_in_selector_range(remote_address, d->spd->remote->client)) {
@@ -299,6 +299,14 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 			     str_selector(&d->spd->remote->client, &sb));
 			continue;
 		}
+
+		/*
+		 * Per above; when comparing D to the previously
+		 * selected connection C, use use in_selector_range()
+		 * and not in_selector() - the protocol/port are not
+		 * known so any attempt to narrow based on that is
+		 * probably wrong.
+		 */
 
 		if (c != NULL &&
 		    selector_range_in_selector_range(c->spd->remote->client,
