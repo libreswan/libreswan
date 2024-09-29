@@ -1,1 +1,0 @@
-../../guestbin/prep.sh
