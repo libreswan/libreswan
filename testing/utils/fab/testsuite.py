@@ -21,7 +21,6 @@ from fab import utilsdir
 from fab import scripts
 from fab.hosts import GUEST_NAMES
 
-
 class Test:
 
     def __init__(self, test_directory, testing_directory,
@@ -93,10 +92,14 @@ class Test:
         # Just assume any non-empty host mentioned in scripts needs to
         # run.
         guest_names = set()
+        host_names = set()
         for command in self.commands:
             if command.guest_name:
                 guest_names.add(command.guest_name)
+            if command.host_name:
+                host_names.add(command.host_name)
         self.guest_names = sorted(guest_names)
+        self.host_names = sorted(host_names)
 
     def testing_directory(self, *path):
         return os.path.relpath(os.path.join(self._testing_directory, *path))

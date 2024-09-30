@@ -362,8 +362,9 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                             for test_domain in test_domains.values():
                                 guest_name = test_domain.domain.guest_name
+                                host_name = test_domain.domain.host_name
                                 output = os.path.join(test.output_directory,
-                                                      guest_name + ".console.verbose.txt")
+                                                      host_name + ".console.verbose.txt")
                                 f = open(output, "w")
                                 verbose_files[guest_name] = f
 
