@@ -1,0 +1,120 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+east #
+ ifconfig ipsec1 create
+east #
+ ifconfig ipsec1 -link2
+east #
+ ifconfig ipsec1 inet tunnel 192.1.2.23 192.1.2.45
+east #
+ ifconfig ipsec1 inet 192.0.2.254/24 192.0.1.251
+east #
+ ifconfig ipsec1
+ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+	tunnel inet 192.1.2.23 --> 192.1.2.45
+	status: active
+	inet6 fe80::3003:81db:f7cd:2f31%ipsec1/64 ->  flags 0x2<TENTATIVE> scopeid 0x5
+	inet 192.0.2.254/24 -> 192.0.1.251 flags 0
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+192.1.2.45[any] 192.1.2.23[any] 4(ipv4)
+	in ipsec
+	esp/transport//unique#16385
+	spid=1 seq=3 pid=PID
+	refcnt=0
+192.1.2.45[any] 192.1.2.23[any] 41(ipv6)
+	in discard
+	spid=3 seq=2 pid=PID
+	refcnt=0
+192.1.2.23[any] 192.1.2.45[any] 4(ipv4)
+	out ipsec
+	esp/transport//unique#16386
+	spid=2 seq=1 pid=PID
+	refcnt=0
+192.1.2.23[any] 192.1.2.45[any] 41(ipv6)
+	out discard
+	spid=4 seq=0 pid=PID
+	refcnt=0
+east #
+ echo 'add 192.1.2.45 192.1.2.23 esp 4523 -m transport -u 16385 -E rijndael-cbc "45--SecureKey-23";' | setkey -c
+east #
+ echo 'add 192.1.2.23 192.1.2.45 esp 2345 -m transport -u 16386 -E rijndael-cbc "23--SecureKey-45";' | setkey -c
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.23 192.1.2.45 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
+192.1.2.45 192.1.2.23 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
+east #
+ echo added
+added
+east #
+ sleep 5 # work-around broken ping
+east #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.254 192.0.1.251
+up
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.23 192.1.2.45 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 140(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
+192.1.2.45 192.1.2.23 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 104(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+192.1.2.45[any] 192.1.2.23[any] 4(ipv4)
+	in ipsec
+	esp/transport//unique#16385
+	spid=1 seq=3 pid=PID
+	refcnt=0
+192.1.2.45[any] 192.1.2.23[any] 41(ipv6)
+	in discard
+	spid=3 seq=2 pid=PID
+	refcnt=0
+192.1.2.23[any] 192.1.2.45[any] 4(ipv4)
+	out ipsec
+	esp/transport//unique#16386
+	spid=2 seq=1 pid=PID
+	refcnt=0
+192.1.2.23[any] 192.1.2.45[any] 41(ipv6)
+	out discard
+	spid=4 seq=0 pid=PID
+	refcnt=0
+east #
+ setkey -F
+east #
+ ifconfig ipsec1 destroy
+east #
+ 
