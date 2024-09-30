@@ -564,7 +564,7 @@ kvmplutotest	ikev2-xfrmi-19-route-before-up		good
 
 kvmplutotest	ipsec-interface-00-ipv4-ikev2-freebsd-setkey	freebsd
 kvmplutotest	ipsec-interface-00-ipv4-ikev2-netbsd	netbsd
-kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd	openbsd
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd-iked	openbsd
 
 kvmplutotest	ipsec-interface-06-ipv4-ikev1-xfrmi	good
 kvmplutotest	ipsec-interface-06-ipv4-ikev2-xfrmi	good

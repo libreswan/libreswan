@@ -13,6 +13,11 @@ With IKED:
 - IKED then establishes an IPsec tunnel adding kernel state (SADBs)
   bound to the interface (there is no kernel policy!)
 
+- Note: for what ever reason the sec(4) device doesn't send ping
+  replies.  IPsec stats and a tcpdump of sec(4) show the packets flow
+  from one end to the other BUT the sec(4) device doesn't send back an
+  ICMP response.
+
 See https://man.openbsd.org/sec
 
 The sec(4) device was added to OpenBSD in 2024.

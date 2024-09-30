@@ -1,0 +1,91 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+east.iked.conf -> /etc/iked.conf
+east #
+ ifconfig sec1 create
+east #
+ ifconfig sec1 inet 192.0.2.254/24 192.0.1.251
+east #
+ ifconfig sec1 up
+east #
+ ifconfig sec1
+sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+	index 7 priority 0 llprio 3
+	groups: sec
+	inet 192.0.2.254 --> 192.0.1.251 netmask 0xffffff00
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ ../../guestbin/iked.sh start
+east #
+ echo "initdone"
+initdone
+east #
+ # Peer's sec(4) doesn't send back a response?!?
+east #
+ ../../guestbin/ping-once.sh --down -I 192.0.2.254 192.0.1.251
+down
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI enc aes-128-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-128 enc aes-gcm
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 84 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
+	address_src: 192.1.2.23
+	address_dst: 192.1.2.45
+	key_auth: bits 160: HASHKEY
+	key_encrypt: bits 160: ENCKEY
+	identity_src: type fqdn id 0: FQDN/east
+	identity_dst: type fqdn id 0: FQDN/west
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	counter:
+		0 input packets
+		1 output packet
+		0 input bytes
+		140 output bytes
+		0 input bytes, decompressed
+		104 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 2
+	interface: sec1 direction out
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI enc aes-128-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-128 enc aes-gcm
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 160: HASHKEY
+	key_encrypt: bits 160: ENCKEY
+	identity_src: type fqdn id 0: FQDN/west
+	identity_dst: type fqdn id 0: FQDN/east
+	counter:
+		0 input packets
+		0 output packets
+		0 input bytes
+		0 output bytes
+		0 input bytes, decompressed
+		0 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 1
+	interface: sec1 direction in
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ ../../guestbin/iked.sh stop
+east #
+ ifconfig sec1 destroy
+east #
+ 
