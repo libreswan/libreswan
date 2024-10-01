@@ -3,35 +3,37 @@
 'ipsec.secrets' -> 'PATH/etc/ipsec.secrets'
 stty: invalid argument '-oxtabs'
 Try 'stty --help' for more information.
-east #
- ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth1 if_id 0x1
-east #
- ../../guestbin/ip.sh addr add 192.0.23.1/24 dev ipsec1
-east #
+west #
+ ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth1 if_id 1
+west #
+ ../../guestbin/ip.sh addr add 192.0.45.1/24 dev ipsec1
+west #
  ../../guestbin/ip.sh link set ipsec1 up
-east #
+west #
  ../../guestbin/ip.sh addr show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    inet 192.0.23.1/24 scope global ipsec1
+    inet 192.0.45.1/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
        valid_lft forever preferred_lft forever
-east #
+west #
  ../../guestbin/ip.sh link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-east #
+west #
  ../../guestbin/ipsec-kernel-policy.sh
-east #
- ../../guestbin/ip.sh xfrm state add src 192.1.2.45 dst 192.1.2.23 proto esp spi 4523 reqid 4523 if_id 0x1 mode tunnel enc 'cbc(aes)' '45-----Key----23' auth 'hmac(sha1)' '45------Hash------23'
-east #
- ../../guestbin/ip.sh xfrm state add src 192.1.2.23 dst 192.1.2.45 proto esp spi 2345 reqid 2345 if_id 0x1 mode tunnel enc 'cbc(aes)' '23-----Key----45' auth 'hmac(sha1)' '23------Hash------45'
-east #
+west #
+ ../../guestbin/ip.sh xfrm state add src 192.1.2.45 dst 192.1.2.23 proto esp spi 4523 reqid 4523 if_id 1 mode tunnel enc 'cbc(aes)' '45-----Key----23' auth 'hmac(sha1)' '45------Hash------23'
+west #
+ ../../guestbin/ip.sh xfrm state add src 192.1.2.23 dst 192.1.2.45 proto esp spi 2345 reqid 2345 if_id 1 mode tunnel enc 'cbc(aes)' '23-----Key----45' auth 'hmac(sha1)' '23------Hash------45'
+west #
  # ignore forward policy
-east #
- ../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir in  tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
-east #
- ../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir out tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
-east #
+west #
+ ../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir out tmpl src 192.1.2.45 dst 192.1.2.23 proto esp reqid 4523 mode tunnel
+west #
+ ../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir in  tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
+west #
+ #../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir fwd tmpl src 192.1.2.23 dst 192.1.2.45 proto esp reqid 2345 mode tunnel
+west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -47,34 +49,33 @@ src 192.1.2.45 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-east #
+west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir in priority 0 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
+	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir out priority 0 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
+	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
-east #
+west #
  echo added
 added
-east #
- ../../guestbin/ping-once.sh --up -I ipsec1 192.0.45.1
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
 down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I ipsec1 192.0.45.1
-PING 192.0.45.1 (192.0.45.1) from 192.0.23.1 ipsec1: 56(84) bytes of data. --- 192.0.45.1 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
-east #
+# ping -n -c 1  -i 6 -w 5   -I 192.0.45.1 192.0.23.1
+PING 192.0.23.1 (192.0.23.1) from 192.0.45.1 : 56(84) bytes of data. From 192.0.45.1 icmp_seq=1 Destination Host Unreachable --- 192.0.23.1 ping statistics --- 1 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
@@ -84,21 +85,21 @@ src 192.1.2.45 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-east #
+west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir in priority 0 ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
+	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir out priority 0 ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
+	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
-east #
+west #
  #../../guestbin/ip.sh xfrm state flush
-east #
+west #
  #../../guestbin/ip.sh link delete ipsec1
-east #
+west #
  
