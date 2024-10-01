@@ -63,6 +63,7 @@ sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 # first time install; after that upgrade
 upgrade="
 audit-libs-devel
+fping
 ldns-devel
 libcurl-devel
 libseccomp-devel
@@ -72,6 +73,7 @@ nss-tools
 nss-util-devel
 pam-devel
 systemd-networkd
+tcpdump
 unbound
 unbound-devel
 xmlto

@@ -8,14 +8,14 @@ west #
 west #
  ifconfig ipsec1 inet tunnel 192.1.2.45 192.1.2.23
 west #
- ifconfig ipsec1 inet 192.0.1.251/24 192.0.2.254
+ ifconfig ipsec1 inet 192.0.45.1/24 192.0.23.1
 west #
  ifconfig ipsec1
 ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
 	tunnel inet 192.1.2.45 --> 192.1.2.23
 	status: active
 	inet6 fe80::d84f:53:a5c1:3882%ipsec1/64 ->  flags 0x2<TENTATIVE> scopeid 0x5
-	inet 192.0.1.251/24 -> 192.0.2.254 flags 0
+	inet 192.0.45.1/24 -> 192.0.23.1 flags 0
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 192.1.2.23[any] 192.1.2.45[any] 4(ipv4)
@@ -37,14 +37,15 @@ west #
 	spid=4 seq=0 pid=PID
 	refcnt=0
 west #
- echo 'add 192.1.2.23 192.1.2.45 esp 2345 -m transport -u 16385 -E rijndael-cbc "23--SecureKey-45";' | setkey -c
+ echo 'add 192.1.2.45 192.1.2.23 esp 4523 -m transport -u 16386 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
 west #
- echo 'add 192.1.2.45 192.1.2.23 esp 4523 -m transport -u 16386 -E rijndael-cbc "45--SecureKey-23";' | setkey -c
+ echo 'add 192.1.2.23 192.1.2.45 esp 2345 -m transport -u 16385 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 west #
  ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
@@ -55,6 +56,7 @@ west #
 192.1.2.45 192.1.2.23 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
@@ -66,15 +68,14 @@ west #
  echo added
 added
 west #
- sleep 5 # work-around broken ping
-west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
 up
 west #
  ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
@@ -85,11 +86,12 @@ west #
 192.1.2.45 192.1.2.23 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 280(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	current: 304(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 west #
