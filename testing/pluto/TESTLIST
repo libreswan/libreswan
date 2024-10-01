@@ -1597,6 +1597,7 @@ kvmplutotest	ikev2-udp-05-transport-mode 		good
 kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
 kvmplutotest	ikev2-intermediate-02-psk		good
 kvmplutotest	ikev2-intermediate-03-unsolicited	good
+kvmplutotest	ikev2-intermediate-04-addke		wip
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good
