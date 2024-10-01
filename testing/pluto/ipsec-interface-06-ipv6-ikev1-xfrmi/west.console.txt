@@ -20,6 +20,7 @@ west #
 "westnet-eastnet" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #2: sent Quick Mode request
+"westnet-eastnet" #2: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@eth1
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
