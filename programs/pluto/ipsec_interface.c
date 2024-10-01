@@ -257,7 +257,7 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 
 	/*
 	 * See if the ipsec-interface already has the address; if it
-	 * does, take a reference and UP the interface.
+	 * does, take an additional reference.
 	 *
 	 * XXX: this is pretty broken: the connection should be
 	 * tracking the addresses being added so it can easily remove
@@ -315,6 +315,12 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 			   c->ipsec_interface->name, c->ipsec_interface->if_id);
 		return false;
 	}
+
+	cidr_buf cb;
+	ipsec_interface_buf ib;
+	vlog("added %s to ipsec-interface %s",
+	     str_cidr(&conn_address->if_ip, &cb),
+	     str_ipsec_interface(c->ipsec_interface, &ib));
 
 	return true;
 }
