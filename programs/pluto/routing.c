@@ -2142,20 +2142,30 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(SUSPEND, ROUTED_TUNNEL, INSTANCE):
 	case X(SUSPEND, ROUTED_TUNNEL, PERMANENT):
-		do_updown_child(UPDOWN_DOWN, (*e->child));
 		/*
-		 * Update connection's routing so that route_owner()
-		 * won't find us.
+		 * Suspend leaves kernel state and policy in place
+		 * while running UPDOWN_DOWN and UPDOWN_UNROUTE.
+		 * Hopefully this stops traffic flow.
 		 *
-		 * Only unroute when no other routed connection shares
-		 * the SPD.
-		 *
-		 * XXX: no-op as SPD is still owned?
+		 * For UPDOWN_UNROUTE, only really run it when this
+		 * connection hold's the only SPD, i.e. .bare_route is
+		 * NULL (which happens when there is no other matching
+		 * SPD).  Think of .bare_route as .other_route_owner).
 		 */
+		do_updown_child(UPDOWN_DOWN, (*e->child));
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* only unroute if no other connection shares it */
+			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
+							   logger, HERE);
+			/* .del_src_ip=true sets the value of
+			 * PLUTO_MOBIKE_EVENT=yes */
+			(*e->child)->sa.st_v2_mobike.del_src_ip = true;
+			do_updown_unroute_spd(spd, &owner, (*e->child), logger);
+			(*e->child)->sa.st_v2_mobike.del_src_ip = false;
+		}
+		/* finally flag as unrouted */
 		c->routing.state = RT_UNROUTED_TUNNEL;
-		(*e->child)->sa.st_v2_mobike.del_src_ip = true;
-		do_updown_unroute(c, (*e->child));
-		(*e->child)->sa.st_v2_mobike.del_src_ip = false;
+		PEXPECT(logger, !kernel_route_installed(c)); /* per previous line */
 		return true;
 
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):

@@ -55,7 +55,6 @@ bool do_updown(enum updown updown_verb,
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child);
 
-void do_updown_unroute(const struct connection *c, struct child_sa *child);
 void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger);
 

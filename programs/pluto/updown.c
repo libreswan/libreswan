@@ -435,15 +435,3 @@ void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			  spd, child, logger);
 	}
 }
-
-void do_updown_unroute(const struct connection *c, struct child_sa *child)
-{
-	struct logger *logger = (child != NULL ? child->sa.logger : c->logger);
-	PEXPECT(logger, !kernel_route_installed(c));
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		/* only unroute if no other connection shares it */
-		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
-						   logger, HERE);
-		do_updown_unroute_spd(spd, &owner, child, logger);
-	}
-}
