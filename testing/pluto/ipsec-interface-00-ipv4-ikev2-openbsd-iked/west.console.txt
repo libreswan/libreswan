@@ -26,12 +26,8 @@ west #
  echo "initdone"
 initdone
 west #
- # Peer's sec(4) doesn't send back a response?!?
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.45.1 192.0.23.1
-up UNEXPECTED
-# fping  -c 1  --timeout 1s   --src 192.0.45.1 192.0.23.1
-192.0.23.1 : [0], 64 bytes, 0.206 ms (0.206 avg, 0% loss) 192.0.23.1 : xmt/rcv/%loss = 1/1/0%, min/avg/max = 0.206/0.206/0.206
+ ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
+up
 west #
  ../../guestbin/ipsec-kernel-state.sh
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI enc aes-128-gcm \
