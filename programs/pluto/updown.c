@@ -79,7 +79,8 @@ static bool fmt_common_shell_out(char *buf,
 				 size_t blen,
 				 const struct connection *c,
 				 const struct spd *sr,
-				 struct child_sa *child)
+				 struct child_sa *child,
+				 struct updown_env updown_env)
 {
 	struct jambuf jb = array_as_jambuf(buf, blen);
 	const bool tunneling = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
@@ -192,7 +193,7 @@ static bool fmt_common_shell_out(char *buf,
 		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
 		if (child != NULL) {
 			JDstr("PLUTO_MOBIKE_EVENT",
-			      (child->sa.st_v2_mobike.del_src_ip ? "yes" : ""));
+			      (updown_env.pluto_mobike_event ? "yes" : ""));
 		}
 	}
 
@@ -280,19 +281,30 @@ static bool fmt_common_shell_out(char *buf,
 
 static bool do_updown_verb(const char *verb,
 			   const struct connection *c,
-			   const struct spd *sr,
+			   const struct spd *spd,
 			   struct child_sa *child,
 			   /* either st, or c's logger */
-			   struct logger *logger)
+			   struct logger *logger,
+			   struct updown_env updown_env)
 {
+	if (c->child.spds.len > 1) {
+		/* i.e., more selectors than just this */
+		selector_pair_buf sb;
+		llog(RC_LOG, logger, "running updown %s %s", verb,
+		     str_selector_pair(&spd->local->client, &spd->remote->client, &sb));
+	} else {
+		ldbg(logger, "kernel: running updown command \"%s\" for verb %s ",
+		     c->local->config->child.updown, verb);
+	}
+
 	/*
 	 * Figure out which verb suffix applies.
 	 */
 	const char *verb_suffix;
 
 	{
-		const struct ip_info *host_afi = address_info(sr->local->host->addr);
-		const struct ip_info *child_afi = selector_info(sr->local->client);
+		const struct ip_info *host_afi = address_info(spd->local->host->addr);
+		const struct ip_info *child_afi = selector_info(spd->local->client);
 		if (host_afi == NULL || child_afi == NULL) {
 			llog_pexpect(logger, HERE, "unknown address family");
 			return false;
@@ -322,15 +334,15 @@ static bool do_updown_verb(const char *verb,
 			bad_case(child_afi->af);
 		}
 
-		verb_suffix = selector_range_eq_address(sr->local->client, sr->local->host->addr) ? hs : cs;
+		verb_suffix = selector_range_eq_address(spd->local->client, spd->local->host->addr) ? hs : cs;
 	}
 
 	dbg("kernel: command executing %s%s", verb, verb_suffix);
 
 	char common_shell_out_str[2048];
 	if (!fmt_common_shell_out(common_shell_out_str,
-				  sizeof(common_shell_out_str), c, sr,
-				  child)) {
+				  sizeof(common_shell_out_str), c, spd,
+				  child, updown_env)) {
 		llog(RC_LOG, logger,
 			    "%s%s command too long!", verb,
 			    verb_suffix);
@@ -357,12 +369,13 @@ static bool do_updown_verb(const char *verb,
 	return ok;
 }
 
-bool do_updown(enum updown updown_verb,
-	       const struct connection *c,
-	       const struct spd *spd,
-	       struct child_sa *child,
-	       /* either st, or c's logger */
-	       struct logger *logger)
+static bool do_updown_1(enum updown updown_verb,
+			const struct connection *c,
+			const struct spd *spd,
+			struct child_sa *child,
+			/* either st, or c's logger */
+			struct logger *logger,
+			struct updown_env updown_env)
 {
 #if 0
 	/*
@@ -396,22 +409,23 @@ bool do_updown(enum updown updown_verb,
 	 * busy servers that do not need to use updown for anything.
 	 * Same for never_negotiate().
 	 */
-	const char *updown = c->local->config->child.updown;
-	if (updown == NULL) {
+	if (c->local->config->child.updown == NULL) {
 		ldbg(logger, "kernel: skipped updown %s command - disabled per policy", verb);
 		return true;
 	}
 
-	if (c->child.spds.len > 1) {
-		/* i.e., more selectors than just this */
-		selector_pair_buf sb;
-		llog(RC_LOG, logger, "running updown %s %s", verb,
-		     str_selector_pair(&spd->local->client, &spd->remote->client, &sb));
-	} else {
-		ldbg(logger, "kernel: running updown command \"%s\" for verb %s ", updown, verb);
-	}
+	return do_updown_verb(verb, c, spd, child, logger, updown_env);
+}
 
-	return do_updown_verb(verb, c, spd, child, logger);
+bool do_updown(enum updown updown_verb,
+	       const struct connection *c,
+	       const struct spd *spd,
+	       struct child_sa *child,
+	       /* either st, or c's logger */
+	       struct logger *logger)
+{
+	return do_updown_1(updown_verb, c, spd, child, logger,
+			   (struct updown_env) {0});
 }
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child)
@@ -428,10 +442,11 @@ void do_updown_child(enum updown updown_verb, struct child_sa *child)
  */
 
 void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
-			   struct child_sa *child, struct logger *logger)
+			   struct child_sa *child, struct logger *logger,
+			   struct updown_env updown_env)
 {
 	if (owner->bare_route == NULL) {
-		do_updown(UPDOWN_UNROUTE, spd->connection,
-			  spd, child, logger);
+		do_updown_1(UPDOWN_UNROUTE, spd->connection,
+			    spd, child, logger, updown_env);
 	}
 }

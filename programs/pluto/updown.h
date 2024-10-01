@@ -55,7 +55,20 @@ bool do_updown(enum updown updown_verb,
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child);
 
+/*
+ * Value of some environment variables passed down to updown.
+ */
+struct updown_env {
+	/*
+	 * Yes when updown is being run because mobike is suspending
+	 * the the connection.  This lets the script know that the
+	 * sourceip should be deleted.
+	*/
+	bool pluto_mobike_event;
+};
+
 void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
-			   struct child_sa *child, struct logger *logger);
+			   struct child_sa *child, struct logger *logger,
+			   struct updown_env);
 
 #endif

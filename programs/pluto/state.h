@@ -669,7 +669,6 @@ struct state {
 	/* IKEv2 IKE SA only */
 	struct {
 		bool enabled;			/* did we agree to MOBIKE? */
-		bool del_src_ip;		/* for mobike migrate unroute */
 		/* IKEv2 MOBIKE probe copies */
 		ip_address deleted_local_addr;	/* kernel deleted address */
 		ip_endpoint remote_endpoint;

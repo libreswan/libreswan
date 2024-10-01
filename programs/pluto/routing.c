@@ -767,7 +767,8 @@ static void routed_kernel_policy_to_unrouted(struct connection *c,
 		delete_spd_kernel_policies(spd, &owner,
 					   inbound_policy_expectation,
 					   logger, where, story);
-		do_updown_unroute_spd(spd, &owner, NULL, logger);
+		do_updown_unroute_spd(spd, &owner, NULL, logger,
+				      (struct updown_env) {0});
 	}
 
 	set_routing(c, RT_UNROUTED);
@@ -829,7 +830,8 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
 
 		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
 					   logger, where, "delete");
-		do_updown_unroute_spd(spd, &owner, child, logger);
+		do_updown_unroute_spd(spd, &owner, child, logger,
+				      (struct updown_env) {0});
 	}
 
 	set_routing(c, RT_UNROUTED);
@@ -1091,7 +1093,8 @@ static void routed_inbound_negotiation_to_unrouted(struct connection *c,
 
 		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
 					   logger, where, story);
-		do_updown_unroute_spd(spd, &owner, child, logger);
+		do_updown_unroute_spd(spd, &owner, child, logger,
+				      (struct updown_env) {0});
 	}
 
 	set_routing(c, RT_UNROUTED);
@@ -2157,11 +2160,11 @@ static bool dispatch_1(enum routing_event event,
 			/* only unroute if no other connection shares it */
 			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 							   logger, HERE);
-			/* .del_src_ip=true sets the value of
-			 * PLUTO_MOBIKE_EVENT=yes */
-			(*e->child)->sa.st_v2_mobike.del_src_ip = true;
-			do_updown_unroute_spd(spd, &owner, (*e->child), logger);
-			(*e->child)->sa.st_v2_mobike.del_src_ip = false;
+			/* Pass PLUTO_MOBIKE_EVENT=yes to UPDOWN */
+			do_updown_unroute_spd(spd, &owner, (*e->child), logger,
+					      (struct updown_env) {
+						      .pluto_mobike_event = true,
+					      });
 		}
 		/* finally flag as unrouted */
 		c->routing.state = RT_UNROUTED_TUNNEL;
