@@ -1,0 +1,6 @@
+Set up a single ISAKMP+IPsec SA, and then delete the IPsec
+
+Because the connection is +UP revival will keep in and a new IPsec SA
+will establish under the existing ISAKMP SA.
+
+(should the ISAKMP have been deleted?)

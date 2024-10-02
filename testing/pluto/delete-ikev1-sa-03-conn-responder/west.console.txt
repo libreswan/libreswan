@@ -1,0 +1,41 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add west-east
+"west-east": added IKEv1 connection
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv1 Main Mode connection
+"west-east" #1: sent Main Mode request
+"west-east" #1: sent Main Mode I2
+"west-east" #1: sent Main Mode I3
+"west-east" #1: Peer ID is ID_FQDN: '@east'
+"west-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-east" #2: sent Quick Mode request
+"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
+west #
+ ipsec trafficstatus
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # both east and west should still have one IKE SA #1
+west #
+ ipsec showstates
+#4: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#5: "west-east":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #4; idle;
+#5: "west-east" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
+west #
+ 

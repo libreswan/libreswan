@@ -1,0 +1,5 @@
+UP a single ISAKMP+IPsec SA from west, and then delete the ISAKMP east (responder)
+
+Under IKEv1 rules the ISAKMP SA gets deleted but the IPsec SA lives to
+fight another day.
+

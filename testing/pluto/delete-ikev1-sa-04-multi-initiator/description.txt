@@ -2,4 +2,3 @@ Setup multiple IPsec SA's that share the same IKE SA. Delete the first IPsec SA.
 
 The issue is that we delete IPsec SAs based on "conn" names. It should not matter which
 conn has the IKE SA associated with it. It must remain alive for the other SAs (for DPD)
-

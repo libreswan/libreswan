@@ -813,9 +813,16 @@ kvmplutotest	ikev2-ike-rekey-05		good
 kvmplutotest	ikev2-cp-rekey-01		wip
 kvmplutotest	ikev2-cp-rekey-02-up-up		wip	github/366
 
+kvmplutotest	delete-ikev1-sa-01-isakmp-initiator	good
+kvmplutotest	delete-ikev1-sa-01-isakmp-responder	good
+kvmplutotest	delete-ikev1-sa-02-ipsec-initiator	good
+kvmplutotest	delete-ikev1-sa-02-ipsec-responder	good
+kvmplutotest	delete-ikev1-sa-03-conn-initiator	good
+kvmplutotest	delete-ikev1-sa-03-conn-responder	good
+kvmplutotest	delete-ikev1-sa-04-multi-initiator	good
+kvmplutotest	delete-ikev1-sa-04-multi-responder	good
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-02			good
-kvmplutotest	delete-sa-03			good
 kvmplutotest	ikev1-delete-sa-04		good
 kvmplutotest	ikev2-delete-sa-04		good
 kvmplutotest	delete-sa-05			good

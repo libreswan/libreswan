@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ../../guestbin/ipsec-add.sh west-east
+"west-east": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # both east and west should still have one IKE SA #1
+east #
+ ipsec showstates
+east #
+ 

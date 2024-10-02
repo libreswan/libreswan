@@ -1,0 +1,1 @@
+ipsec down west-east

@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ../../guestbin/ipsec-add.sh west-east
+"west-east": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --deletestate 1
+"west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
+east #
+ ../../guestbin/ping-once.sh --up 192.1.2.45
+up
+east #
+ ipsec trafficstatus
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+east #
+ # both east and west should still have one IKE SA #1
+east #
+ ipsec showstates
+#2: "west-east":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#2: "west-east" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=168B ESPout=168B ESPmax=2^63B 
+east #
+ 

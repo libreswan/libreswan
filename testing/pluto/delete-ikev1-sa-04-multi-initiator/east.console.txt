@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ../../guestbin/ipsec-add.sh west-east-c west-east-b west-east
+"west-east-c": added IKEv1 connection
+"west-east-b": added IKEv1 connection
+"west-east": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec showstates
+#3: "west-east-b":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-b" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#1: "west-east-c":500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#4: "west-east-c":500 STATE_QUICK_R2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "west-east-c" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+east #
+ 

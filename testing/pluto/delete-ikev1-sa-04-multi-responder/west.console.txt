@@ -1,0 +1,55 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add west-east
+"west-east": added IKEv1 connection
+west #
+ ipsec auto --add west-east-b
+"west-east-b": added IKEv1 connection
+west #
+ ipsec auto --add west-east-c
+"west-east-c": added IKEv1 connection
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv1 Main Mode connection
+"west-east" #1: sent Main Mode request
+"west-east" #1: sent Main Mode I2
+"west-east" #1: sent Main Mode I3
+"west-east" #1: Peer ID is ID_FQDN: '@east'
+"west-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
+"west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-east" #2: sent Quick Mode request
+"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ipsec up west-east-b
+"west-east-b" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-east-b" #3: sent Quick Mode request
+"west-east-b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ipsec up west-east-c
+"west-east-c" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-east-c" #4: sent Quick Mode request
+"west-east-c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ # both east and west should still have one IKE SA #1
+west #
+ ipsec showstates
+#1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
+#5: "west-east":500 STATE_QUICK_I1 (sent Quick Mode request); CRYPTO_TIMEOUT in XXs; eroute owner; lastdpd=-1s(seq in:0 out:0); crypto_calculating;
+#3: "west-east-b":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#3: "west-east-b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "west-east-c":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
+#4: "west-east-c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+west #
+ 

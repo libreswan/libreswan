@@ -1,0 +1,7 @@
+UP the ISAKMP+IPsec SA on west, and then delete the ISAKMP on west (initiator)
+
+Under IKEv1 rules the ISAKMP SA gets deleted but the IPsec SA lives to
+fight another day.
+
+Even though the IPsec SA is up, there's no immediate need to initiate
+a new ISAKMP SA.
