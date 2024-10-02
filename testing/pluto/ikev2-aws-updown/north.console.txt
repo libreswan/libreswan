@@ -6,24 +6,27 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add westnet-northnet
-002 "westnet-northnet": added IKEv2 connection
+"westnet-northnet": added IKEv2 connection
 north #
  ipsec auto --add eastnet-northnet
-002 "eastnet-northnet": added IKEv2 connection
+"eastnet-northnet": added IKEv2 connection
 north #
  echo "initdone"
 initdone
 north #
+ ipsec whack --impair revival
+north #
  ipsec auto --up westnet-northnet
-181 "westnet-northnet" #1: initiating IKEv2 connection
-181 "westnet-northnet" #1: sent IKE_SA_INIT request to 192.1.2.45:500
-182 "westnet-northnet" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-northnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'
-002 "westnet-northnet" #2: route-client output: westnet-northnet routed: setting eastnet-northnet passive
-004 "westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.1.4.0-192.1.4.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
+"westnet-northnet" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
+"westnet-northnet" #1: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
+"westnet-northnet" #1: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-northnet" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500
+"westnet-northnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'
+"westnet-northnet" #2: route-client output: westnet-northnet routed: setting eastnet-northnet passive
+"westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 north #
  ipsec whack --trafficstatus
-006 #2: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#2: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
 up
@@ -31,16 +34,45 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
 up
 north #
- # block west
+ ipsec whack --trafficstatus
+#2: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+north #
+ # block west ...
 north #
  iptables -I INPUT -s 192.1.2.45 -j DROP
 north #
  iptables -I OUTPUT -d 192.1.2.45 -j DROP
 north #
- sleep 60
+ # ... west #1/#2 dies ...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#1: ESTABLISHED_IKE_SA: .* second timeout exceeded'
+"westnet-northnet" #1: ESTABLISHED_IKE_SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#2: connection is supposed to remain up'
+"westnet-northnet" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#2: down-client output: down: unrouting'
+"westnet-northnet" #2: down-client output: down: unrouting...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#2: ESP traffic information'
+"westnet-northnet" #2: ESP traffic information: in=168B out=168B
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#1: deleting IKE SA'
+"westnet-northnet" #1: deleting IKE SA (established IKE SA)
+north #
+ # ... east #3/#4 establishes
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#3: initiating IKEv2 connection'
+"eastnet-northnet" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#4: route-client output: eastnet-northnet routed: setting westnet-northnet passive'
+"eastnet-northnet" #4: route-client output: eastnet-northnet routed: setting westnet-northnet passive
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
+"eastnet-northnet" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 north #
  ipsec whack --trafficstatus
-006 #5: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
 up
@@ -48,16 +80,19 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
 up
 north #
- # unblock west
+ ipsec whack --trafficstatus
+#4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+north #
+ # unblock west; nothing should change
 north #
  iptables -D INPUT -s 192.1.2.45 -j DROP
 north #
  iptables -D OUTPUT -d 192.1.2.45 -j DROP
 north #
- sleep 60
+ sleep 10 # let the liveness flow
 north #
  ipsec whack --trafficstatus
-006 #5: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
 up
@@ -65,16 +100,45 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
 up
 north #
- # block east
+ ipsec whack --trafficstatus
+#4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+north #
+ # block east ...
 north #
  iptables -I INPUT -s 192.1.2.23 -j DROP
 north #
  iptables -I OUTPUT -d 192.1.2.23 -j DROP
 north #
- sleep 60
+ # ... east #3/#4 dies ...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#3: ESTABLISHED_IKE_SA: .* second timeout exceeded'
+"eastnet-northnet" #3: ESTABLISHED_IKE_SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#4: connection is supposed to remain up'
+"eastnet-northnet" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#4: down-client output: down: unrouting'
+"eastnet-northnet" #4: down-client output: down: unrouting...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#4: ESP traffic information'
+"eastnet-northnet" #4: ESP traffic information: in=336B out=336B
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#3: deleting IKE SA'
+"eastnet-northnet" #3: deleting IKE SA (established IKE SA)
+north #
+ # ... west #5/#6 establishes
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#5: initiating IKEv2 connection'
+"westnet-northnet" #5: initiating IKEv2 connection to 192.1.2.45 using UDP
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#6: route-client output: westnet-northnet routed: setting eastnet-northnet passive'
+"westnet-northnet" #6: route-client output: westnet-northnet routed: setting eastnet-northnet passive
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#6: initiator established Child SA using #5'
+"westnet-northnet" #6: initiator established Child SA using #5; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 north #
  ipsec whack --trafficstatus
-006 #8: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+#6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
 up
@@ -82,22 +146,28 @@ north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
 up
 north #
- # unblock east
+ ipsec whack --trafficstatus
+#6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+north #
+ # unblock east; nothing should change
 north #
  iptables -D INPUT -s 192.1.2.23 -j DROP
 north #
  iptables -D OUTPUT -d 192.1.2.23 -j DROP
 north #
- sleep 60
+ sleep 10 # let the liveness flow
 north #
  ipsec whack --trafficstatus
-006 #8: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+#6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
 up
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
 up
+north #
+ ipsec whack --trafficstatus
+#6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
 north #
  # block both
 north #
@@ -109,7 +179,22 @@ north #
 north #
  iptables -I OUTPUT -d 192.1.2.23 -j DROP
 north #
- sleep 60
+ # ... west #5/#6 dies ...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#5: ESTABLISHED_IKE_SA: .* second timeout exceeded'
+"westnet-northnet" #5: ESTABLISHED_IKE_SA: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our IKEv2 message
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#6: connection is supposed to remain up'
+"westnet-northnet" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#6: down-client output: down: unrouting'
+"westnet-northnet" #6: down-client output: down: unrouting...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#6: ESP traffic information'
+"westnet-northnet" #6: ESP traffic information: in=336B out=336B
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#5: deleting IKE SA'
+"westnet-northnet" #5: deleting IKE SA (established IKE SA)
 north #
  ipsec whack --trafficstatus
 north #
@@ -119,38 +204,89 @@ north #
  ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.45
 down
 north #
- # unblock west
-north #
- iptables -D INPUT -s 192.1.2.45 -j DROP
-north #
- iptables -D OUTPUT -d 192.1.2.45 -j DROP
-north #
- sleep 60
-north #
  ipsec whack --trafficstatus
-006 #12: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
-up
+ # ... east #7 tries to establish and fails ...
 north #
- ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
-up
+ ../../guestbin/wait-for-pluto.sh --match '#7: initiating IKEv2 connection'
+"eastnet-northnet" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 north #
- # unblock east
+ ../../guestbin/wait-for-pluto.sh --match '#7: IKE_SA_INIT_I: .* second timeout exceeded'
+"eastnet-northnet" #7: IKE_SA_INIT_I: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#7: connection is supposed to remain up'
+"eastnet-northnet" #7: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#7: unroute-client output: westnet-northnet up'
+"eastnet-northnet" #7: unroute-client output: westnet-northnet up
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#7: deleting IKE SA'
+"eastnet-northnet" #7: deleting IKE SA (sent IKE_SA_INIT request)
+north #
+ # ... west #8 tries to establish and fails ...
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#8: initiating IKEv2 connection'
+"westnet-northnet" #8: initiating IKEv2 connection to 192.1.2.45 using UDP
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#8: IKE_SA_INIT_I: .* second timeout exceeded'
+"westnet-northnet" #8: IKE_SA_INIT_I: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#8: connection is supposed to remain up'
+"westnet-northnet" #8: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#8: unroute-client output: eastnet-northnet up'
+"westnet-northnet" #8: unroute-client output: eastnet-northnet up
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#8: deleting IKE SA'
+"westnet-northnet" #8: deleting IKE SA (sent IKE_SA_INIT request)
+north #
+ # unblock east ...
 north #
  iptables -D INPUT -s 192.1.2.23 -j DROP
 north #
  iptables -D OUTPUT -d 192.1.2.23 -j DROP
 north #
- sleep 60
+ # ... east #9/#10 establish
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#9: initiating IKEv2 connection'
+"eastnet-northnet" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#10: route-client output: eastnet-northnet routed: setting westnet-northnet passive'
+"eastnet-northnet" #10: route-client output: eastnet-northnet routed: setting westnet-northnet passive
+north #
+ ../../guestbin/wait-for-pluto.sh --match '#10: initiator established Child SA using #9'
+"eastnet-northnet" #10: initiator established Child SA using #9; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
 north #
  ipsec whack --trafficstatus
-006 #12: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+#10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
 up
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
 up
+north #
+ ipsec whack --trafficstatus
+#10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+north #
+ # unblock west; nothing should change
+north #
+ iptables -D INPUT -s 192.1.2.45 -j DROP
+north #
+ iptables -D OUTPUT -d 192.1.2.45 -j DROP
+north #
+ sleep 10 # let the liveness flow
+north #
+ ipsec whack --trafficstatus
+#10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ ipsec whack --trafficstatus
+#10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
 north #
  
