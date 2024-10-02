@@ -131,25 +131,28 @@ _GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
 
 def commands(directory, logger):
 
+    all_sh = os.path.join(directory, "all.sh")
     all_console_txt = os.path.join(directory, "all.console.txt")
-    if os.path.exists(all_console_txt):
-        commands = Commands()
-        for line in open(all_console_txt, "r"):
-            # includes '\n'; matches both:
-            #   <host># command
-            # and
-            #   # comment
-            command = _GUEST_COMMAND_REGEX.match(line)
-            if command:
-                guest = command.group("guest")
-                line = command.group("line")
-                if guest:
-                    commands.append(Command(guest, line))
-                elif line:
-                    commands.append(Command(guest, "# "+line))
-                else:
-                    commands.append(Command(guest, "#"))
-        return commands
+    for all in (all_sh, all_console_txt):
+        if os.path.exists(all):
+            commands = Commands()
+            # read includes '\n';
+            for line in open(all, "r"):
+                # regex matches both:
+                #   <host># command
+                # and
+                #   # comment
+                command = _GUEST_COMMAND_REGEX.match(line)
+                if command:
+                    guest = command.group("guest")
+                    line = command.group("line")
+                    if guest:
+                        commands.append(Command(guest, line))
+                    elif line:
+                        commands.append(Command(guest, "# "+line))
+                    else:
+                        commands.append(Command(guest, "#"))
+            return commands
 
     commands = Commands()
     scripts = _guest_scripts(directory, logger)
