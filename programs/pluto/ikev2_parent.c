@@ -585,7 +585,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(unused_md) == NO_MESSAGE);
-	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
+	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R || ike->sa.st_state == &state_v2_IKE_INTERMEDIATE_R);
 	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
@@ -606,10 +606,17 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(&ike->sa,
-		       NULL /* no old keymat; not a rekey */,
-		       NULL /* no old prf; not a rekey */,
-		       &ike->sa.st_ike_spis);
+	if (ike->sa.st_state == &state_v2_IKE_SA_INIT_R) {
+		calc_v2_keymat(&ike->sa,
+			       NULL /* no old keymat; not a rekey */,
+			       NULL /* no old prf; not a rekey */,
+			       &ike->sa.st_ike_spis);
+	} else {
+		calc_v2_keymat(&ike->sa,
+			       ike->sa.st_skey_d_nss,
+			       ike->sa.st_oakley.ta_prf,
+			       &ike->sa.st_ike_spis);
+	}
 
 	/*
 	 * Try to decrypt the fragments; the result could be no
@@ -656,9 +663,10 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		return;
 	}
 
-	if (!PEXPECT(ike->sa.logger, ike->sa.st_state == &state_v2_IKE_SA_INIT_R)) {
+	if (!PEXPECT(ike->sa.logger, (ike->sa.st_state == &state_v2_IKE_SA_INIT_R ||
+				      ike->sa.st_state == &state_v2_IKE_INTERMEDIATE_R))) {
 		/*
-		 * Still in IKE_SA_INIT responder state.
+		 * Still in IKE_SA_INIT or IKE_INTERMEDIATE responder state.
 		 */
 		return;
 	}
@@ -666,8 +674,9 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	/*
 	 * Not yet officially started on next message.
 	 */
-	if (!PEXPECT(ike->sa.logger, (ike->sa.st_v2_msgid_windows.responder.recv == 0 &&
-				      ike->sa.st_v2_msgid_windows.responder.sent == 0 &&
+	intmax_t first_msgid = ike->sa.st_state == &state_v2_IKE_INTERMEDIATE_R ? ike->sa.st_v2_ike_intermediate.id : 0;
+	if (!PEXPECT(ike->sa.logger, (ike->sa.st_v2_msgid_windows.responder.recv == first_msgid &&
+				      ike->sa.st_v2_msgid_windows.responder.sent == first_msgid &&
 				      ike->sa.st_v2_msgid_windows.responder.wip == -1))) {
 		return;
 	}
