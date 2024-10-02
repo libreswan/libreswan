@@ -225,24 +225,32 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
-			/* set b->buf */
-			bool known = enum_name(type->enum_names[key], id, b);
-			pexpect(known);
+			/* Note: .enum_name[key] can be NULL so don't
+			 * bother with .enum_name[] lookup.  */
 			ldbgf(debug, &global_logger,
-			      "%s %s id: %s=%u, found %s",
-			      type->name, __func__, b->buf,
-			      id, alg->fqn);
+			      "%s %s algorithm %s id: %u found by %s()",
+			      ike_alg_key_name(key),
+			      type->name, alg->fqn, id, __func__);
+			/* must save name */
 			b->buf = alg->fqn;
 			return alg;
 		}
  	}
 
-	/* set b->buf */
+	/*
+	 * Even though the lookup failed, b->buf must still be set.
+	 *
+	 * When .enum_names[] is NULL then the enum_name() call will
+	 * set it to the numeric value.
+	 */
 	bool known = enum_name(type->enum_names[key], id, b);
 	ldbgf(debug, &global_logger,
-	      "%s %s id: %s=%u, not found %s by enum_names/IETF",
-	      type->name, __func__, b->buf, id,
-	      (known ? " but known" : " and unknown"));
+	      "%s %s id: %u, not found by %s(); %s %s",
+	      ike_alg_key_name(key), type->name, id, __func__,
+	      b->buf,
+	      (type->enum_names[key] == NULL ? "no .enum_names[]" :
+	       known ? "known by .enum_names[]" :
+	       "unknown by .enum_names[]"));
 	return NULL;
 }
 
