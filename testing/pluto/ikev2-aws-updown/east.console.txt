@@ -1,0 +1,18 @@
+ip addr add 192.1.4.45/24 dev eth0 2>/dev/null
+east #
+ ip addr add 192.1.4.23/24 dev eth0 2>/dev/null
+east #
+ /testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add eastnet-northnet
+002 "eastnet-northnet": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ 

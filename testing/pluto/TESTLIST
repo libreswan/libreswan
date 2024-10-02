@@ -1628,3 +1628,4 @@ kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev1	wip
 kvmplutotest	impair-install-ipsec-sa-outbound-policy-responder-ikev2	wip
 
 kvmplutotest	ikev1-29-quick-restart			wip	github/1531
+kvmplutotest	ikev2-aws-updown			wip	github/1828

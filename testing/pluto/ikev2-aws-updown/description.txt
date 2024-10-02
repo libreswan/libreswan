@@ -1,0 +1,1 @@
+Two redundant tunnels with different peers, only one tunnel is active, the swap is done via a custom updown script

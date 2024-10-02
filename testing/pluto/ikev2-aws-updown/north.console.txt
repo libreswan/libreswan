@@ -1,0 +1,156 @@
+/testing/guestbin/swan-prep
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ ipsec auto --add westnet-northnet
+002 "westnet-northnet": added IKEv2 connection
+north #
+ ipsec auto --add eastnet-northnet
+002 "eastnet-northnet": added IKEv2 connection
+north #
+ echo "initdone"
+initdone
+north #
+ ipsec auto --up westnet-northnet
+181 "westnet-northnet" #1: initiating IKEv2 connection
+181 "westnet-northnet" #1: sent IKE_SA_INIT request to 192.1.2.45:500
+182 "westnet-northnet" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "westnet-northnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'
+002 "westnet-northnet" #2: route-client output: westnet-northnet routed: setting eastnet-northnet passive
+004 "westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.1.4.0-192.1.4.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
+north #
+ ipsec whack --trafficstatus
+006 #2: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ # block west
+north #
+ iptables -I INPUT -s 192.1.2.45 -j DROP
+north #
+ iptables -I OUTPUT -d 192.1.2.45 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+006 #5: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ # unblock west
+north #
+ iptables -D INPUT -s 192.1.2.45 -j DROP
+north #
+ iptables -D OUTPUT -d 192.1.2.45 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+006 #5: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ # block east
+north #
+ iptables -I INPUT -s 192.1.2.23 -j DROP
+north #
+ iptables -I OUTPUT -d 192.1.2.23 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+006 #8: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ # unblock east
+north #
+ iptables -D INPUT -s 192.1.2.23 -j DROP
+north #
+ iptables -D OUTPUT -d 192.1.2.23 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+006 #8: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ # block both
+north #
+ iptables -I INPUT -s 192.1.2.45 -j DROP
+north #
+ iptables -I OUTPUT -d 192.1.2.45 -j DROP
+north #
+ iptables -I INPUT -s 192.1.2.23 -j DROP
+north #
+ iptables -I OUTPUT -d 192.1.2.23 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+north #
+ ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.23
+down
+north #
+ ../../guestbin/ping-once.sh --down -I 192.0.3.254 192.1.4.45
+down
+north #
+ # unblock west
+north #
+ iptables -D INPUT -s 192.1.2.45 -j DROP
+north #
+ iptables -D OUTPUT -d 192.1.2.45 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+006 #12: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ # unblock east
+north #
+ iptables -D INPUT -s 192.1.2.23 -j DROP
+north #
+ iptables -D OUTPUT -d 192.1.2.23 -j DROP
+north #
+ sleep 60
+north #
+ ipsec whack --trafficstatus
+006 #12: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23
+up
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.45
+up
+north #
+ 
