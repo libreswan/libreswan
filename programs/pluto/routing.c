@@ -1792,8 +1792,22 @@ static bool dispatch_1(enum routing_event event,
 	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_IKE, UNROUTED_BARE_NEGOTIATION, PERMANENT):
 		if (connection_cannot_die(event, c, logger, e)) {
-			set_routing(c, RT_UNROUTED);
-			return true;
+			ldbg(logger, "will not die!");
+		}
+		/*
+		 * Even though the SPD isn't routed, invoke
+		 * UPDOWN_UNROUTE.  This way scripts are notified when
+		 * a bare initiate fails.
+		 *
+		 * This is v4.x behaviour that was lost in v5.0 and
+		 * restored !?! in v5.1.
+		 */
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
+							   logger, HERE);
+			do_updown_unroute_spd(spd, &owner,
+					      (e->child != NULL ? (*e->child) : NULL),
+					       logger, (struct updown_env) {0});
 		}
 		set_routing(c, RT_UNROUTED);
 		return true;
