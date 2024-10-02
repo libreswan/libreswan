@@ -1490,10 +1490,11 @@ static void terminate_conflicts(struct child_sa *child)
 	}
 }
 
-static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md)
+static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struct msg_digest *md)
 {
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
+	struct child_sa *child = pexpect_child_sa(child_sa);
 
 	/* Start the output packet.
 	 *
@@ -1510,16 +1511,16 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->logger);
+				       &rbody, child->sa.logger);
 
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_2, "quick inR1 outI2",
 			  IMPAIR_v1_QUICK_EXCHANGE,
-			  st, &hash_fixup, &rbody)) {
+			  &child->sa, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	passert(st->st_connection != NULL);
+	passert(child->sa.st_connection != NULL);
 
 	struct pbs_out r_sa_pbs;
 
@@ -1535,22 +1536,23 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sapd->pbs,
 					       &sapd->payload.sa,
 					       &r_sa_pbs,
-					       false, st));
+					       false, &child->sa));
 
-	passert(st->st_pfs_group != &unset_group);
+	passert(child->sa.st_pfs_group != &unset_group);
 
-	if (st->st_connection->config->child_sa.pfs && st->st_pfs_group == NULL) {
-		llog(RC_LOG, st->logger,
+	if (child->sa.st_connection->config->child_sa.pfs && child->sa.st_pfs_group == NULL) {
+		llog(RC_LOG, child->sa.logger,
 		     "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */
 	}
 
-	log_state(RC_LOG, st,
-		  "responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
-		  st->st_v1_msgid.id);
-	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+	llog(RC_LOG, child->sa.logger,
+	     "responding to Quick Mode proposal {msgid:%08" PRIx32 "} using ISAKMP SA "PRI_SO,
+	     child->sa.st_v1_msgid.id,
+	     pri_so(child->sa.st_clonedfrom));
+	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 		jam(buf, "    us: ");
-		const struct connection *c = st->st_connection;
+		const struct connection *c = child->sa.st_connection;
 		const struct spd *sr = c->spd;
 		jam_spd_end(buf, c, sr->local, sr->remote, LEFT_END, oriented(c));
 		jam_string(buf, "  them: ");
@@ -1560,13 +1562,13 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
 
 	/* Nr out */
-	if (!ikev1_justship_nonce(&st->st_nr, &rbody, "Nr")) {
+	if (!ikev1_justship_nonce(&child->sa.st_nr, &rbody, "Nr")) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (st->st_pfs_group != NULL && st->st_gr.ptr != NULL) {
-		if (!ikev1_justship_KE(st->logger, &st->st_gr, &rbody))
+	if (child->sa.st_pfs_group != NULL && child->sa.st_gr.ptr != NULL) {
+		if (!ikev1_justship_KE(child->sa.logger, &child->sa.st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1579,10 +1581,10 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	}
 
 	/* Compute reply HASH(2) and insert in output */
-	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
+	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
 	/* Derive new keying material */
-	if (!compute_keymats(st)) {
+	if (!compute_keymats(&child->sa)) {
 		return STF_FATAL;
 	}
 
@@ -1591,7 +1593,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
-	struct child_sa *child = pexpect_child_sa(st);
 
 	terminate_conflicts(child);
 
@@ -1600,7 +1601,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	}
 
 	/* encrypt message, except for fixed part of header */
-	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
