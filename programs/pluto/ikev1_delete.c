@@ -435,13 +435,19 @@ static bool handle_v1_delete_payload(struct state **stp,
 				nat_traversal_change_port_lookup(md, &dst->sa);
 				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
 			}
+			/*
+			 * IKEv1 semantics: when an ISAKMP is deleted
+			 * its children are left alone.  If the intent
+			 * is to delete both then two messages are
+			 * sent.
+			 */
 			bool self_inflicted = (dst == p1);
-			connection_delete_ike_family(&dst, HERE);
+			connection_delete_ike(&dst, HERE);
 			if (self_inflicted) {
 				/* bail; IKE SA no longer viable */
 				*stp = md->v1_st = NULL;
 				dst = p1 = NULL;
-				return true;
+				return true; /* caller will see ST==NULL */
 			}
 		} else {
 			/*
