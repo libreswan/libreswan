@@ -1600,16 +1600,10 @@ void process_packet_tail(struct msg_digest *md)
 
 	pexpect(st == md->v1_st); /* could be NULL */
 
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_D];
-	     p != NULL; p = p->next) {
-		if (!accept_delete(&st, md, p)) {
-			ldbg(md->logger, "bailing with bad delete message");
-			return;
-		}
-		if (st == NULL) {
-			ldbg(md->logger, "bailing due to self-inflicted delete");
-			return;
-		}
+	if (md->chain[ISAKMP_NEXT_D] != NULL) {
+	     if (!handle_v1_delete_payloads(&st, md)) {
+		     return;
+	     }
 	}
 
 	pexpect(st == md->v1_st); /* could be NULL */

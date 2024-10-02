@@ -321,46 +321,17 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
  * Returns FALSE when the payload is crud.
  */
 
-bool accept_delete(struct state **stp,
-		   struct msg_digest *md,
-		   struct payload_digest *p)
+static bool handle_v1_delete_payload(struct state **stp,
+				     struct msg_digest *md,
+				     struct payload_digest *p)
 {
 	const struct isakmp_delete *d = &(p->payload.delete);
 
-	/* Need state for things to be encrypted */
-	if (*stp == NULL) {
-		/* should not be here */
-		llog(RC_LOG, md->logger,
-		     "ignoring Delete SA payload: no state");
-		return false;
-	}
-
-	if (!IS_IKE_SA(*stp)) {
-		llog(RC_LOG, (*stp)->logger,
-		     "ignoring Delete SA payload: not an ISAKMP SA");
-		return false;
-	}
-
 	struct ike_sa *p1 = pexpect_ike_sa(*stp);
-
-	/* If there is no SA related to this request, but it was encrypted */
-	if (!IS_V1_ISAKMP_SA_ESTABLISHED(&p1->sa)) {
-		/* can't happen (if msg is encrypt), but just to be sure */
-		llog_sa(RC_LOG, p1,
-			"ignoring Delete SA payload: ISAKMP SA not established");
-		return false;
-	}
 
 	if (d->isad_nospi == 0) {
 		llog_sa(RC_LOG, p1,
 			"ignoring Delete SA payload: no SPI");
-		return false;
-	}
-
-	/* We only listen to encrypted notifications */
-	if (!md->encrypted) {
-		llog_sa(RC_LOG, p1,
-			"ignoring Delete SA payload: not encrypted");
 		return false;
 	}
 
@@ -521,5 +492,50 @@ bool accept_delete(struct state **stp,
 		}
 	}
 
+	return true;
+}
+
+bool handle_v1_delete_payloads(struct state **stp,
+			       struct msg_digest *md)
+{
+	/* Need state for things to be encrypted */
+	if ((*stp) == NULL) {
+		/* should not be here */
+		llog(RC_LOG, md->logger,
+		     "ignoring Delete SA payload: no state");
+		return false;
+	}
+
+	if (!IS_IKE_SA(*stp)) {
+		llog(RC_LOG, (*stp)->logger,
+		     "ignoring Delete SA payload: not an ISAKMP SA");
+		return false;
+	}
+
+	/* We only listen to encrypted notifications */
+	if (!md->encrypted) {
+		llog(RC_LOG, (*stp)->logger,
+		     "ignoring Delete SA payload: not encrypted");
+		return false;
+	}
+	/* If there is no SA related to this request, but it was encrypted */
+	if (!IS_V1_ISAKMP_SA_ESTABLISHED((*stp))) {
+		/* can't happen (if msg is encrypt), but just to be sure */
+		llog(RC_LOG, (*stp)->logger,
+		     "ignoring Delete SA payload: ISAKMP SA not established");
+		return false;
+	}
+
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_D];
+	     p != NULL; p = p->next) {
+		if (!handle_v1_delete_payload(stp, md, p)) {
+			ldbg(md->logger, "bailing with bad delete message");
+			return false;
+		}
+		if ((*stp) == NULL) {
+			ldbg(md->logger, "bailing due to self-inflicted delete");
+			return false;
+		}
+	}
 	return true;
 }

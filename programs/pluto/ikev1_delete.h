@@ -30,12 +30,19 @@
 #ifndef IKEV1_DELETE_H
 #define IKEV1_DELETE_H
 
+#include <stdbool.h>
+
 #include "where.h"
 
 struct ike_sa;
 struct state;
+struct msg_digest;
+struct payload_digest;
 
 void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where);
 void llog_n_maybe_send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where);
+
+bool handle_v1_delete_payloads(struct state **st,
+			       struct msg_digest *md);
 
 #endif
