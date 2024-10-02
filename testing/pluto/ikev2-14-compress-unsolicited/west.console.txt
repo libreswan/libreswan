@@ -28,6 +28,7 @@ west #
 "westnet-eastnet-ipcomp" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "westnet-eastnet-ipcomp" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipcomp" #2: IMPAIR: revival: skip scheduling revival event
+ERROR: "westnet-eastnet-ipcomp" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "westnet-eastnet-ipcomp" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  ../../guestbin/ipsec-kernel-state.sh
