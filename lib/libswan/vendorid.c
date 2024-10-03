@@ -101,20 +101,17 @@
  *  But this VID has not been seen in any IETF drafts. (mlafon)
  */
 
-#define VID_KEEP                0x0000
-#define VID_MD5HASH             0x0001
-#define VID_STRING              0x0002
-#define VID_FSWAN_HASH          0x0004
-
-#define VID_SUBSTRING_DUMPHEXA  0x0100
-#define VID_SUBSTRING_DUMPASCII 0x0200
-#define VID_SUBSTRING_MATCH     0x0400
-#define VID_SUBSTRING  (VID_SUBSTRING_DUMPHEXA | VID_SUBSTRING_DUMPASCII | \
-			VID_SUBSTRING_MATCH)
+enum vid_kind {
+	VID_KEEP,
+	VID_MD5HASH,
+	VID_STRING,
+	VID_FSWAN_HASH,
+	VID_SUBSTRING,
+};
 
 struct vid_struct {
 	const enum known_vendorid id;
-	const unsigned short flags;
+	const enum vid_kind kind;
 	const char *const data;
 
 	/* filled in at runtime: */
@@ -122,20 +119,16 @@ struct vid_struct {
 	shunk_t vid;
 };
 
-#define DEC_MD5_VID_D(ID, STR, DESCR)		\
-	VID(ID, VID_MD5HASH, STR, DESCR)
-#define DEC_MD5_VID(ID, STR)			\
-	VID(ID, VID_MD5HASH, STR, NULL)
-#define DEC_FSWAN_VID(ID, STR, DESCR)		\
-	VID(ID, VID_FSWAN_HASH, STR, DESCR)
+#define DEC_MD5_VID(ID, DATA)			\
+	VID(ID, VID_MD5HASH, NULL, DATA)
 
-#define VID(ID, FLAGS, DATA, DESCR)					\
-	[ID] = { .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR, }
+#define VID(ID, KIND, DESCR, DATA)					\
+	[ID] = { .id = ID, .kind = KIND, .descr = DESCR, .data = DATA, }
 
-#define RAW(ID, FLAGS, DESCR, RAW_VID)					\
+#define RAW(ID, KIND, DESCR, RAW_VID)					\
 	[ID] = {							\
 		.id = ID,						\
-		.flags = FLAGS,						\
+		.kind = KIND,						\
 		.descr = DESCR,						\
 		.vid = {						\
 			.ptr = RAW_VID,					\
@@ -147,11 +140,11 @@ static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
 
-	VID(VID_OPPORTUNISTIC, VID_STRING, "Opportunistic IPsec", NULL),
+	VID(VID_OPPORTUNISTIC, VID_STRING, NULL, "Opportunistic IPsec"),
 
-	VID(VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP"),
+	VID(VID_OPENPGP, VID_STRING, "OpenPGP", "OpenPGP10171"),
 
-	DEC_MD5_VID(VID_KAME_RACOON, "KAME/racoon"),
+	VID(VID_KAME_RACOON, VID_MD5HASH, NULL, "KAME/racoon"),
 
 	/*
 	 * https://msdn.microsoft.com/en-us/library/cc233476.aspx
@@ -211,55 +204,55 @@ static struct vid_struct vid_tab[] = {
 	    "\x68\x6A\x8C\xBD\xFE\x63\x4B\x40\x51\x46\xFB\x2B\xAF\x33\xE9\xE8"),
 
 	/* These two VID's plus VID_MS_NT5 trigger GSS-API support on Windows */
-	DEC_MD5_VID(VID_GSSAPILONG, "A GSS-API Authentication Method for IKE"),
-	DEC_MD5_VID(VID_GSSAPI, "GSSAPI"),
+	VID(VID_GSSAPILONG, VID_MD5HASH, NULL, "A GSS-API Authentication Method for IKE"),
+	VID(VID_GSSAPI, VID_MD5HASH, NULL, "GSSAPI"),
 
 
-	DEC_MD5_VID(VID_SSH_SENTINEL, "SSH Sentinel"),
-	DEC_MD5_VID(VID_SSH_SENTINEL_1_1, "SSH Sentinel 1.1"),
-	DEC_MD5_VID(VID_SSH_SENTINEL_1_2, "SSH Sentinel 1.2"),
-	DEC_MD5_VID(VID_SSH_SENTINEL_1_3, "SSH Sentinel 1.3"),
-	DEC_MD5_VID(VID_SSH_SENTINEL_1_4, "SSH Sentinel 1.4"),
-	DEC_MD5_VID(VID_SSH_SENTINEL_1_4_1, "SSH Sentinel 1.4.1"),
+	VID(VID_SSH_SENTINEL, VID_MD5HASH, NULL, "SSH Sentinel"),
+	VID(VID_SSH_SENTINEL_1_1, VID_MD5HASH, NULL, "SSH Sentinel 1.1"),
+	VID(VID_SSH_SENTINEL_1_2, VID_MD5HASH, NULL, "SSH Sentinel 1.2"),
+	VID(VID_SSH_SENTINEL_1_3, VID_MD5HASH, NULL, "SSH Sentinel 1.3"),
+	VID(VID_SSH_SENTINEL_1_4, VID_MD5HASH, NULL, "SSH Sentinel 1.4"),
+	VID(VID_SSH_SENTINEL_1_4_1, VID_MD5HASH, NULL, "SSH Sentinel 1.4.1"),
 
 	/* These ones come from SSH vendors.txt */
-	DEC_MD5_VID(VID_SSH_IPSEC_1_1_0,
-		    "Ssh Communications Security IPSEC Express version 1.1.0"),
-	DEC_MD5_VID(VID_SSH_IPSEC_1_1_1,
-		    "Ssh Communications Security IPSEC Express version 1.1.1"),
-	DEC_MD5_VID(VID_SSH_IPSEC_1_1_2,
-		    "Ssh Communications Security IPSEC Express version 1.1.2"),
-	DEC_MD5_VID(VID_SSH_IPSEC_1_2_1,
-		    "Ssh Communications Security IPSEC Express version 1.2.1"),
-	DEC_MD5_VID(VID_SSH_IPSEC_1_2_2,
-		    "Ssh Communications Security IPSEC Express version 1.2.2"),
-	DEC_MD5_VID(VID_SSH_IPSEC_2_0_0,
-		    "SSH Communications Security IPSEC Express version 2.0.0"),
-	DEC_MD5_VID(VID_SSH_IPSEC_2_1_0,
-		    "SSH Communications Security IPSEC Express version 2.1.0"),
-	DEC_MD5_VID(VID_SSH_IPSEC_2_1_1,
-		    "SSH Communications Security IPSEC Express version 2.1.1"),
-	DEC_MD5_VID(VID_SSH_IPSEC_2_1_2,
-		    "SSH Communications Security IPSEC Express version 2.1.2"),
-	DEC_MD5_VID(VID_SSH_IPSEC_3_0_0,
-		    "SSH Communications Security IPSEC Express version 3.0.0"),
-	DEC_MD5_VID(VID_SSH_IPSEC_3_0_1,
-		    "SSH Communications Security IPSEC Express version 3.0.1"),
-	DEC_MD5_VID(VID_SSH_IPSEC_4_0_0,
-		    "SSH Communications Security IPSEC Express version 4.0.0"),
-	DEC_MD5_VID(VID_SSH_IPSEC_4_0_1,
-		    "SSH Communications Security IPSEC Express version 4.0.1"),
-	DEC_MD5_VID(VID_SSH_IPSEC_4_1_0,
-		    "SSH Communications Security IPSEC Express version 4.1.0"),
-	DEC_MD5_VID(VID_SSH_IPSEC_4_2_0,
-		    "SSH Communications Security IPSEC Express version 4.2.0"),
+	VID(VID_SSH_IPSEC_1_1_0, VID_MD5HASH, NULL,
+	    "Ssh Communications Security IPSEC Express version 1.1.0"),
+	VID(VID_SSH_IPSEC_1_1_1, VID_MD5HASH, NULL,
+	    "Ssh Communications Security IPSEC Express version 1.1.1"),
+	VID(VID_SSH_IPSEC_1_1_2, VID_MD5HASH, NULL,
+	    "Ssh Communications Security IPSEC Express version 1.1.2"),
+	VID(VID_SSH_IPSEC_1_2_1, VID_MD5HASH, NULL,
+	    "Ssh Communications Security IPSEC Express version 1.2.1"),
+	VID(VID_SSH_IPSEC_1_2_2, VID_MD5HASH, NULL,
+	    "Ssh Communications Security IPSEC Express version 1.2.2"),
+	VID(VID_SSH_IPSEC_2_0_0, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 2.0.0"),
+	VID(VID_SSH_IPSEC_2_1_0, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 2.1.0"),
+	VID(VID_SSH_IPSEC_2_1_1, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 2.1.1"),
+	VID(VID_SSH_IPSEC_2_1_2, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 2.1.2"),
+	VID(VID_SSH_IPSEC_3_0_0, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 3.0.0"),
+	VID(VID_SSH_IPSEC_3_0_1, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 3.0.1"),
+	VID(VID_SSH_IPSEC_4_0_0, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 4.0.0"),
+	VID(VID_SSH_IPSEC_4_0_1, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 4.0.1"),
+	VID(VID_SSH_IPSEC_4_1_0, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 4.1.0"),
+	VID(VID_SSH_IPSEC_4_2_0, VID_MD5HASH, NULL,
+	    "SSH Communications Security IPSEC Express version 4.2.0"),
 
 	/* The VPN 3000 concentrator VID is a truncated MD5 hash of "ALTIGA GATEWAY" */
 	/* Last two bytes are version number, eg 0306 = 3.0.6 */
-	RAW(VID_CISCO3K, VID_SUBSTRING_MATCH, "Cisco VPN 3000 Series",
+	RAW(VID_CISCO3K, VID_SUBSTRING, "Cisco VPN 3000 Series",
 	    "\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50"),
 
-	RAW(VID_CISCO_IOS, VID_SUBSTRING_MATCH, "Cisco IOS Device",
+	RAW(VID_CISCO_IOS, VID_SUBSTRING, "Cisco IOS Device",
 	    "\x3e\x98\x40\x48"),
 
 	/* note: md5('CISCO-UNITY') = 12f5f28c457168a9702d9fe274cc02d4 */
@@ -268,64 +261,62 @@ static struct vid_struct vid_tab[] = {
 	    "\x12\xf5\xf2\x8c\x45\x71\x68\xa9\x70\x2d\x9f\xe2\x74\xcc\x01\x00"),
 
 	/* 434953434f56504e2d5245562d3032 */
-	VID(VID_CISCO_VPN_REV_02, VID_STRING, "CISCOVPN-REV-02", NULL),
+	VID(VID_CISCO_VPN_REV_02, VID_STRING, NULL, "CISCOVPN-REV-02"),
 
 	RAW(VID_CISCO_UNITY_FWTYPE, VID_KEEP, "Cisco-Unity FW type",
 	    "\x80\x01\x00\x01\x80\x02\x00\x01\x80\x03\x00\x02"),
 
 	/* 434953434f2d44454c4554452d524541534f4e */
-	VID(VID_CISCO_DELETE_REASON, VID_STRING, "CISCO-DELETE-REASON", NULL),
+	VID(VID_CISCO_DELETE_REASON, VID_STRING, NULL, "CISCO-DELETE-REASON"),
 
 	/* 434953434f2d44594e414d49432d524f555445 */
-	VID(VID_CISCO_DYNAMIC_ROUTE, VID_STRING, "CISCO-DYNAMIC-ROUTE", NULL),
+	VID(VID_CISCO_DYNAMIC_ROUTE, VID_STRING, NULL, "CISCO-DYNAMIC-ROUTE"),
 
 	/* 464c455856504e2d535550504f52544544 */
-	VID(VID_CISCO_FLEXVPN_SUPPORTED, VID_STRING, "FLEXVPN-SUPPORTED", NULL),
+	VID(VID_CISCO_FLEXVPN_SUPPORTED, VID_STRING, NULL, "FLEXVPN-SUPPORTED"),
 
 	/*
 	 * Timestep VID seen:
 	 *   - 54494d455354455020312053475720313532302033313520322e303145303133
 	 *     = 'TIMESTEP 1 SGW 1520 315 2.01E013'
 	 */
-	VID(VID_TIMESTEP, VID_STRING | VID_SUBSTRING_DUMPASCII, "TIMESTEP", NULL),
+	RAW(VID_TIMESTEP, VID_SUBSTRING, "TIMESTEP", "TIMESTEP"),
 
-	DEC_FSWAN_VID(VID_FSWAN_2_00_VID,
-		      "Linux FreeS/WAN 2.00 PLUTO_SENDS_VENDORID",
-		      "FreeS/WAN 2.00"),
-	DEC_FSWAN_VID(VID_FSWAN_2_00_X509_1_3_1_VID,
-		      "Linux FreeS/WAN 2.00 X.509-1.3.1 PLUTO_SENDS_VENDORID",
-		      "FreeS/WAN 2.00 (X.509-1.3.1)"),
-	DEC_FSWAN_VID(VID_FSWAN_2_00_X509_1_3_1_LDAP_VID,
-		      "Linux FreeS/WAN 2.00 X.509-1.3.1 LDAP PLUTO_SENDS_VENDORID",
-		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)"),
-	DEC_FSWAN_VID(VID_OPENSWAN2,
-		      "Openswan 2.2.0",
-		      "Openswan 2.2.0"),
+	VID(VID_FSWAN_2_00_VID, VID_FSWAN_HASH,
+	    "FreeS/WAN 2.00",
+	    "Linux FreeS/WAN 2.00 PLUTO_SENDS_VENDORID"),
+	VID(VID_FSWAN_2_00_X509_1_3_1_VID, VID_FSWAN_HASH,
+	    "FreeS/WAN 2.00 (X.509-1.3.1)",
+	    "Linux FreeS/WAN 2.00 X.509-1.3.1 PLUTO_SENDS_VENDORID"),
+	VID(VID_FSWAN_2_00_X509_1_3_1_LDAP_VID, VID_FSWAN_HASH,
+	    "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)",
+	    "Linux FreeS/WAN 2.00 X.509-1.3.1 LDAP PLUTO_SENDS_VENDORID"),
+	VID(VID_OPENSWAN2, VID_FSWAN_HASH, "Openswan 2.2.0",
+	    "Openswan 2.2.0"),
 
 	/* always make sure to include ourself! */
-	VID(VID_LIBRESWANSELF, VID_STRING, libreswan_vendorid, "Libreswan (this version)"),
+	VID(VID_LIBRESWANSELF, VID_STRING, "Libreswan (this version)", libreswan_vendorid),
 
 	/* NAT-Traversal */
-	DEC_MD5_VID(VID_NATT_STENBERG_01, "draft-stenberg-ipsec-nat-traversal-01"),
-	DEC_MD5_VID(VID_NATT_STENBERG_02, "draft-stenberg-ipsec-nat-traversal-02"),
-	DEC_MD5_VID(VID_NATT_HUTTUNEN, "ESPThruNAT"),
-	DEC_MD5_VID(VID_NATT_HUTTUNEN_ESPINUDP,
+	VID(VID_NATT_STENBERG_01, VID_MD5HASH, NULL, "draft-stenberg-ipsec-nat-traversal-01"),
+	VID(VID_NATT_STENBERG_02, VID_MD5HASH, NULL, "draft-stenberg-ipsec-nat-traversal-02"),
+	VID(VID_NATT_HUTTUNEN, VID_MD5HASH, NULL, "ESPThruNAT"),
+	VID(VID_NATT_HUTTUNEN_ESPINUDP, VID_MD5HASH, NULL,
 		    "draft-huttunen-ipsec-esp-in-udp-00.txt"),
-	DEC_MD5_VID(VID_NATT_IETF_00, "draft-ietf-ipsec-nat-t-ike-00"),
-	DEC_MD5_VID(VID_NATT_IETF_01, "draft-ietf-ipsec-nat-t-ike-01"),
-	DEC_MD5_VID(VID_NATT_IETF_02, "draft-ietf-ipsec-nat-t-ike-02"),
-	/* hash in draft-ietf-ipsec-nat-t-ike-02 contains '\n'... Accept both */
-	DEC_MD5_VID_D(VID_NATT_IETF_02_N, "draft-ietf-ipsec-nat-t-ike-02\n",
-		      "draft-ietf-ipsec-nat-t-ike-02_n"),
-	DEC_MD5_VID(VID_NATT_IETF_03, "draft-ietf-ipsec-nat-t-ike-03"),
-	DEC_MD5_VID(VID_NATT_IETF_04, "draft-ietf-ipsec-nat-t-ike-04"),
-	DEC_MD5_VID(VID_NATT_IETF_05, "draft-ietf-ipsec-nat-t-ike-05"),
-	DEC_MD5_VID(VID_NATT_IETF_06, "draft-ietf-ipsec-nat-t-ike-06"),
-	DEC_MD5_VID(VID_NATT_IETF_07, "draft-ietf-ipsec-nat-t-ike-07"),
-	DEC_MD5_VID(VID_NATT_IETF_08, "draft-ietf-ipsec-nat-t-ike-08"),
-	DEC_MD5_VID(VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE,
-		    "draft-ietf-ipsec-nat-t-ike"),
-	DEC_MD5_VID(VID_NATT_RFC, "RFC 3947"),
+	VID(VID_NATT_IETF_00, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-00"),
+	VID(VID_NATT_IETF_01, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-01"),
+	VID(VID_NATT_IETF_02, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-02"),
+	/* hash in draft-ietf-ipsec-nat-t-ike-02 contains '\n'... that as well */
+	VID(VID_NATT_IETF_02_N, VID_MD5HASH, "draft-ietf-ipsec-nat-t-ike-02_n",
+	    "draft-ietf-ipsec-nat-t-ike-02\n"),
+	VID(VID_NATT_IETF_03, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-03"),
+	VID(VID_NATT_IETF_04, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-04"),
+	VID(VID_NATT_IETF_05, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-05"),
+	VID(VID_NATT_IETF_06, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-06"),
+	VID(VID_NATT_IETF_07, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-07"),
+	VID(VID_NATT_IETF_08, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike-08"),
+	VID(VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE, VID_MD5HASH, NULL, "draft-ietf-ipsec-nat-t-ike"),
+	VID(VID_NATT_RFC, VID_MD5HASH, NULL, "RFC 3947"),
 
 	/* SonicWall */
 	RAW(VID_SONICWALL_1, VID_KEEP, "Sonicwall 1 (TZ 170 Standard?)",
@@ -346,85 +337,85 @@ static struct vid_struct vid_tab[] = {
 	    "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49"),
 
 	/* Obsolete: Was used by libreswan and openswan to detect bid-down attacks */
-	VID(VID_MISC_IKEv2, VID_STRING, "IKEv2", "CAN-IKEv2(obsolete)"),
+	VID(VID_MISC_IKEv2, VID_STRING, "CAN-IKEv2(obsolete)", "IKEv2"),
 
 	/* VID is ASCII "HeartBeat_Notify" plus a few bytes (version?) */
-	VID(VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
-	  "HeartBeat_Notify", "HeartBeat Notify"),
+	RAW(VID_MISC_HEARTBEAT_NOTIFY, VID_SUBSTRING, "HeartBeat Notify",
+	    "HeartBeat_Notify"),
 
 	/* FRAGMENTATION; Cisco VPN 3000 and strongSwan send extra values */
-	RAW(VID_IKE_FRAGMENTATION, VID_SUBSTRING_DUMPHEXA, "FRAGMENTATION",
+	RAW(VID_IKE_FRAGMENTATION, VID_SUBSTRING, "FRAGMENTATION",
 	    "\x40\x48\xb7\xd5\x6e\xbc\xe8\x85\x25\xe7\xde\x7f\x00\xd6\xc2\xd3"),
 
-	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
+	VID(VID_INITIAL_CONTACT, VID_MD5HASH, NULL, "Vid-Initial-Contact"),
 
 	/*
 	 * strongSwan
 	 */
 
-	DEC_MD5_VID(VID_STRONGSWAN, "strongSwan"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_0, "strongSwan 4.0.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_1, "strongSwan 4.0.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_2, "strongSwan 4.0.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_3, "strongSwan 4.0.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_4, "strongSwan 4.0.4"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_5, "strongSwan 4.0.5"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_6, "strongSwan 4.0.6"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_0_7, "strongSwan 4.0.7"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_0, "strongSwan 4.1.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_1, "strongSwan 4.1.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_2, "strongSwan 4.1.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_3, "strongSwan 4.1.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_4, "strongSwan 4.1.4"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_5, "strongSwan 4.1.5"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_6, "strongSwan 4.1.6"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_7, "strongSwan 4.1.7"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_8, "strongSwan 4.1.8"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_9, "strongSwan 4.1.9"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_10, "strongSwan 4.1.10"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_1_11, "strongSwan 4.1.11"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_2_0, "strongSwan 4.2.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_2_1, "strongSwan 4.2.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_2_2, "strongSwan 4.2.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_4_2_3, "strongSwan 4.2.3"),
+	VID(VID_STRONGSWAN, VID_MD5HASH, NULL, "strongSwan"),
+	VID(VID_STRONGSWAN_4_0_0, VID_MD5HASH, NULL, "strongSwan 4.0.0"),
+	VID(VID_STRONGSWAN_4_0_1, VID_MD5HASH, NULL, "strongSwan 4.0.1"),
+	VID(VID_STRONGSWAN_4_0_2, VID_MD5HASH, NULL, "strongSwan 4.0.2"),
+	VID(VID_STRONGSWAN_4_0_3, VID_MD5HASH, NULL, "strongSwan 4.0.3"),
+	VID(VID_STRONGSWAN_4_0_4, VID_MD5HASH, NULL, "strongSwan 4.0.4"),
+	VID(VID_STRONGSWAN_4_0_5, VID_MD5HASH, NULL, "strongSwan 4.0.5"),
+	VID(VID_STRONGSWAN_4_0_6, VID_MD5HASH, NULL, "strongSwan 4.0.6"),
+	VID(VID_STRONGSWAN_4_0_7, VID_MD5HASH, NULL, "strongSwan 4.0.7"),
+	VID(VID_STRONGSWAN_4_1_0, VID_MD5HASH, NULL, "strongSwan 4.1.0"),
+	VID(VID_STRONGSWAN_4_1_1, VID_MD5HASH, NULL, "strongSwan 4.1.1"),
+	VID(VID_STRONGSWAN_4_1_2, VID_MD5HASH, NULL, "strongSwan 4.1.2"),
+	VID(VID_STRONGSWAN_4_1_3, VID_MD5HASH, NULL, "strongSwan 4.1.3"),
+	VID(VID_STRONGSWAN_4_1_4, VID_MD5HASH, NULL, "strongSwan 4.1.4"),
+	VID(VID_STRONGSWAN_4_1_5, VID_MD5HASH, NULL, "strongSwan 4.1.5"),
+	VID(VID_STRONGSWAN_4_1_6, VID_MD5HASH, NULL, "strongSwan 4.1.6"),
+	VID(VID_STRONGSWAN_4_1_7, VID_MD5HASH, NULL, "strongSwan 4.1.7"),
+	VID(VID_STRONGSWAN_4_1_8, VID_MD5HASH, NULL, "strongSwan 4.1.8"),
+	VID(VID_STRONGSWAN_4_1_9, VID_MD5HASH, NULL, "strongSwan 4.1.9"),
+	VID(VID_STRONGSWAN_4_1_10, VID_MD5HASH, NULL, "strongSwan 4.1.10"),
+	VID(VID_STRONGSWAN_4_1_11, VID_MD5HASH, NULL, "strongSwan 4.1.11"),
+	VID(VID_STRONGSWAN_4_2_0, VID_MD5HASH, NULL, "strongSwan 4.2.0"),
+	VID(VID_STRONGSWAN_4_2_1, VID_MD5HASH, NULL, "strongSwan 4.2.1"),
+	VID(VID_STRONGSWAN_4_2_2, VID_MD5HASH, NULL, "strongSwan 4.2.2"),
+	VID(VID_STRONGSWAN_4_2_3, VID_MD5HASH, NULL, "strongSwan 4.2.3"),
 
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_8, "strongSwan 2.8.8"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_7, "strongSwan 2.8.7"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_6, "strongSwan 2.8.6"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_5, "strongSwan 2.8.5"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_4, "strongSwan 2.8.4"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_3, "strongSwan 2.8.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_2, "strongSwan 2.8.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_1, "strongSwan 2.8.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_8_0, "strongSwan 2.8.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_7_3, "strongSwan 2.7.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_7_2, "strongSwan 2.7.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_7_1, "strongSwan 2.7.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_7_0, "strongSwan 2.7.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_6_4, "strongSwan 2.6.4"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_6_3, "strongSwan 2.6.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_6_2, "strongSwan 2.6.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_6_1, "strongSwan 2.6.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_6_0, "strongSwan 2.6.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_7, "strongSwan 2.5.7"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_6, "strongSwan 2.5.6"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_5, "strongSwan 2.5.5"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_4, "strongSwan 2.5.4"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_3, "strongSwan 2.5.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_2, "strongSwan 2.5.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_1, "strongSwan 2.5.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_5_0, "strongSwan 2.5.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_4_4, "strongSwan 2.4.4"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_4_3, "strongSwan 2.4.3"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_4_2, "strongSwan 2.4.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_4_1, "strongSwan 2.4.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_4_0, "strongSwan 2.4.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_3_2, "strongSwan 2.3.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_3_1, "strongSwan 2.3.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_3_0, "strongSwan 2.3.0"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_2_2, "strongSwan 2.2.2"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_2_1, "strongSwan 2.2.1"),
-	DEC_MD5_VID(VID_STRONGSWAN_2_2_0, "strongSwan 2.2.0"),
+	VID(VID_STRONGSWAN_2_8_8, VID_MD5HASH, NULL, "strongSwan 2.8.8"),
+	VID(VID_STRONGSWAN_2_8_7, VID_MD5HASH, NULL, "strongSwan 2.8.7"),
+	VID(VID_STRONGSWAN_2_8_6, VID_MD5HASH, NULL, "strongSwan 2.8.6"),
+	VID(VID_STRONGSWAN_2_8_5, VID_MD5HASH, NULL, "strongSwan 2.8.5"),
+	VID(VID_STRONGSWAN_2_8_4, VID_MD5HASH, NULL, "strongSwan 2.8.4"),
+	VID(VID_STRONGSWAN_2_8_3, VID_MD5HASH, NULL, "strongSwan 2.8.3"),
+	VID(VID_STRONGSWAN_2_8_2, VID_MD5HASH, NULL, "strongSwan 2.8.2"),
+	VID(VID_STRONGSWAN_2_8_1, VID_MD5HASH, NULL, "strongSwan 2.8.1"),
+	VID(VID_STRONGSWAN_2_8_0, VID_MD5HASH, NULL, "strongSwan 2.8.0"),
+	VID(VID_STRONGSWAN_2_7_3, VID_MD5HASH, NULL, "strongSwan 2.7.3"),
+	VID(VID_STRONGSWAN_2_7_2, VID_MD5HASH, NULL, "strongSwan 2.7.2"),
+	VID(VID_STRONGSWAN_2_7_1, VID_MD5HASH, NULL, "strongSwan 2.7.1"),
+	VID(VID_STRONGSWAN_2_7_0, VID_MD5HASH, NULL, "strongSwan 2.7.0"),
+	VID(VID_STRONGSWAN_2_6_4, VID_MD5HASH, NULL, "strongSwan 2.6.4"),
+	VID(VID_STRONGSWAN_2_6_3, VID_MD5HASH, NULL, "strongSwan 2.6.3"),
+	VID(VID_STRONGSWAN_2_6_2, VID_MD5HASH, NULL, "strongSwan 2.6.2"),
+	VID(VID_STRONGSWAN_2_6_1, VID_MD5HASH, NULL, "strongSwan 2.6.1"),
+	VID(VID_STRONGSWAN_2_6_0, VID_MD5HASH, NULL, "strongSwan 2.6.0"),
+	VID(VID_STRONGSWAN_2_5_7, VID_MD5HASH, NULL, "strongSwan 2.5.7"),
+	VID(VID_STRONGSWAN_2_5_6, VID_MD5HASH, NULL, "strongSwan 2.5.6"),
+	VID(VID_STRONGSWAN_2_5_5, VID_MD5HASH, NULL, "strongSwan 2.5.5"),
+	VID(VID_STRONGSWAN_2_5_4, VID_MD5HASH, NULL, "strongSwan 2.5.4"),
+	VID(VID_STRONGSWAN_2_5_3, VID_MD5HASH, NULL, "strongSwan 2.5.3"),
+	VID(VID_STRONGSWAN_2_5_2, VID_MD5HASH, NULL, "strongSwan 2.5.2"),
+	VID(VID_STRONGSWAN_2_5_1, VID_MD5HASH, NULL, "strongSwan 2.5.1"),
+	VID(VID_STRONGSWAN_2_5_0, VID_MD5HASH, NULL, "strongSwan 2.5.0"),
+	VID(VID_STRONGSWAN_2_4_4, VID_MD5HASH, NULL, "strongSwan 2.4.4"),
+	VID(VID_STRONGSWAN_2_4_3, VID_MD5HASH, NULL, "strongSwan 2.4.3"),
+	VID(VID_STRONGSWAN_2_4_2, VID_MD5HASH, NULL, "strongSwan 2.4.2"),
+	VID(VID_STRONGSWAN_2_4_1, VID_MD5HASH, NULL, "strongSwan 2.4.1"),
+	VID(VID_STRONGSWAN_2_4_0, VID_MD5HASH, NULL, "strongSwan 2.4.0"),
+	VID(VID_STRONGSWAN_2_3_2, VID_MD5HASH, NULL, "strongSwan 2.3.2"),
+	VID(VID_STRONGSWAN_2_3_1, VID_MD5HASH, NULL, "strongSwan 2.3.1"),
+	VID(VID_STRONGSWAN_2_3_0, VID_MD5HASH, NULL, "strongSwan 2.3.0"),
+	VID(VID_STRONGSWAN_2_2_2, VID_MD5HASH, NULL, "strongSwan 2.2.2"),
+	VID(VID_STRONGSWAN_2_2_1, VID_MD5HASH, NULL, "strongSwan 2.2.1"),
+	VID(VID_STRONGSWAN_2_2_0, VID_MD5HASH, NULL, "strongSwan 2.2.0"),
 
 	/*
 	 * NCP.de
@@ -486,36 +477,36 @@ static struct vid_struct vid_tab[] = {
 	RAW(VID_CHECKPOINT, VID_KEEP, "Check Point",
 	    "\xf4\xed\x19\xe0\xc1\x14\xeb\x51\x6f\xaa\xac\x0e\xe3\x7d\xaf\x28\x07\xb4\x38\x1f"),
 
-	RAW(VID_LIBRESWAN, VID_SUBSTRING_DUMPHEXA, "Libreswan (3.6+)",
+	RAW(VID_LIBRESWAN, VID_SUBSTRING, "Libreswan (3.6+)",
 	    "\x4f\x45\x2d\x4c\x69\x62\x72\x65\x73\x77\x61\x6e\x2d"),
 
-	RAW(VID_LIBRESWAN_OLD, VID_SUBSTRING_MATCH, "Libreswan 3.0 - 3.5",
+	RAW(VID_LIBRESWAN_OLD, VID_SUBSTRING, "Libreswan 3.0 - 3.5",
 	    "\x4f\x45\x4e"),
 
-	RAW(VID_XOPENSWAN, VID_SUBSTRING_MATCH, "Openswan(xeleranized)",
+	RAW(VID_XOPENSWAN, VID_SUBSTRING, "Openswan(xeleranized)",
 	    "\x4f\x53\x57"),
 
-	RAW(VID_OPENSWANORG, VID_KEEP | VID_SUBSTRING_MATCH, "Openswan(project)",
+	RAW(VID_OPENSWANORG, VID_SUBSTRING, "Openswan(project)",
 	    "\x4f\x45"),
 
 	/*
 	 * "ELVIS-PLUS Zastava"
 	 * Last two bytes (not matched here) are major|minor nibbles and a reserved 00
 	 */
-	RAW(VID_ELVIS, VID_KEEP | VID_SUBSTRING_DUMPHEXA, "ELVIS-PLUS Zastava",
+	RAW(VID_ELVIS, VID_SUBSTRING, "ELVIS-PLUS Zastava",
 	    "\x08\xdb\x45\xe6\xcb\x01\xf8\x0b\xb5\x76\xe9\xa7\x8c\x0f\x54\xe1\x30\x0b\x88\x81"),
 
 	/*
 	 * Fortinet
 	 */
-	DEC_MD5_VID(VID_FORTINET_ENDPOINT_CONTROL, "Fortinet Endpoint Control"),
-	DEC_MD5_VID(VID_FORTINET_CONNECT_LICENSE, "forticlient connect license"),
+	VID(VID_FORTINET_ENDPOINT_CONTROL, VID_MD5HASH, NULL, "Fortinet Endpoint Control"),
+	VID(VID_FORTINET_CONNECT_LICENSE, VID_MD5HASH, NULL, "forticlient connect license"),
 
 	/*
 	 * OpenIKED
 	 */
 
-	VID(VID_OPENIKED, VID_STRING|VID_SUBSTRING_DUMPASCII, "OpenIKED", NULL),
+	RAW(VID_OPENIKED, VID_SUBSTRING, "OpenIKED", "OpenIKED"),
 
 	/* END OF TABLE */
 	VID(VID_none, 0, NULL, NULL),
@@ -552,7 +543,8 @@ static int vid_sorted_cmp(const void *lp, const void *rp)
 
 static int vid_entry_cmp(const shunk_t *key, const struct vid_entry *member)
 {
-	if (member->entry->vid.len < key->len && (member->entry->flags & VID_SUBSTRING)) {
+	if (member->entry->vid.len < key->len &&
+	    member->entry->kind == VID_SUBSTRING) {
 		return raw_cmp(key->ptr, member->entry->vid.len,
 			       member->entry->vid.ptr, member->entry->vid.len);
 	} else {
@@ -573,16 +565,28 @@ static int vid_lookup_cmp(const void *key, const void *member)
  * leak: 2 * vid->data, item size: 13
  */
 
-static void DBG_vid_struct(const struct vid_struct *vid, const struct logger *logger)
+static void LDBG_vid_struct(const struct logger *logger, const struct vid_struct *vid)
 {
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, " %3d ", vid->id); /* match " %3s " below */
 		jam_string(buf, vid->descr);
-		if (vid->flags & VID_MD5HASH) {
-			jam_string(buf, " +md5");
-		}
-		if (vid->flags & VID_SUBSTRING) {
+		jam_string(buf, " ");
+		switch (vid->kind) {
+		case VID_KEEP:
+			jam_string(buf, " keep");
+			break;
+		case VID_FSWAN_HASH:
+			jam_string(buf, " fswan-hash");
+			break;
+		case VID_MD5HASH:
+			jam_string(buf, " md5");
+			break;
+		case VID_SUBSTRING:
 			jam_string(buf, " substring");
+			break;
+		case VID_STRING:
+			jam_string(buf, " string");
+			break;
 		}
 	}
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
@@ -596,29 +600,26 @@ static void DBG_vid_struct(const struct vid_struct *vid, const struct logger *lo
 
 void init_vendorid(struct logger *logger)
 {
-	dbg("building Vendor ID table");
+	ldbg(logger, "building Vendor ID table");
 
 	FOR_EACH_ELEMENT_FROM_1(vid, vid_tab) {
 		bool good = true;
-
-		/*
-		 * Point the lookup table at VID table.
-		 *
-		 * Entry VID_TAB[0] is not included; hence ID-1.
-		 */
-		passert(vid->id > 0);
-		unsigned id0 = vid->id - 1;
-		passert(id0 < elemsof(vid_sorted));
-		vid_sorted[id0].entry = vid;
-
-		if (vid->flags & VID_STRING) {
-			/** VendorID is a string **/
+		switch (vid->kind) {
+		case VID_STRING:
+			/* built using VID() */
 			good &= pexpect(vid->vid.ptr == NULL);
 			good &= pexpect(vid->vid.len == 0);
 			good &= pexpect(vid->descr == NULL || !streq(vid->descr, vid->data));
 			vid->vid = shunk1(vid->data);
-		} else if (vid->flags & VID_MD5HASH) {
-			/** VendorID is a string to hash with MD5 **/
+			break;
+		case VID_SUBSTRING:
+			/* built using RAW */
+			good &= pexpect(vid->vid.ptr != NULL);
+			good &= pexpect(vid->vid.len > 0);
+			good &= pexpect(vid->descr != NULL);
+			break;
+		case VID_MD5HASH:
+			/* built using VID(), .data is a string to hash with MD5 **/
 			good &= pexpect(vid->vid.ptr == NULL);
 			good &= pexpect(vid->vid.len == 0);
 			/* TODO: This use must allowed even with USE_MD5=false */
@@ -629,7 +630,9 @@ void init_vendorid(struct logger *logger)
 			void *vidm = alloc_bytes(MD5_DIGEST_SIZE, "VendorID MD5 (ignore)");
 			crypt_hash_final_bytes(&ctx, vidm, MD5_DIGEST_SIZE);
 			vid->vid = shunk2(vidm, MD5_DIGEST_SIZE);
-		} else if (vid->flags & VID_FSWAN_HASH) {
+			break;
+		case VID_FSWAN_HASH:
+		{
 			/** FreeS/WAN 2.00+ specific hash **/
 			good &= pexpect(vid->vid.ptr == NULL);
 			good &= pexpect(vid->vid.len == 0);
@@ -658,12 +661,15 @@ void init_vendorid(struct logger *logger)
 			}
 			vid->vid = shunk2(vidm, FSWAN_VID_SIZE);
 #undef FSWAN_VID_SIZE
-		} else {
+			break;
+		}
+		case VID_KEEP:
 			/* RAW() */
 			good &= pexpect(vid->vid.len > 0);
 			good &= pexpect(vid->vid.ptr != NULL);
 			good &= pexpect(vid->descr != NULL);
 			good &= pexpect(vid->data == NULL);
+			break;
 		}
 
 		if (vid->descr == NULL) {
@@ -675,17 +681,19 @@ void init_vendorid(struct logger *logger)
 		good &= pexpect(vid->descr != NULL);
 		good &= pexpect(vid->vid.ptr != NULL);
 		good &= pexpect(vid->vid.len > 0);
-		if (!good || DBGP(DBG_TMI)) {
-			DBG_vid_struct(vid, logger);
+		if (!good || LDBGP(DBG_TMI, logger)) {
+			LDBG_vid_struct(logger, vid);
 		}
 	}
 
 	/*
-	 * Sort the VID_TAB[] creating VID_SORTED.  Because VIDs
-	 * overlap, the result is a table containing overlapping
-	 * entries which means it isn't suitable for a binary search.
+	 * Step 1: Sort the VID_TAB[] creating VID_SORTED.
 	 *
-	 * For instance, given:
+	 * Because VIDs overlap, the result is a table containing
+	 * multiple entries with the same prefix which means it isn't
+	 * suitable for a binary search.
+	 *
+	 * For instance, say the table includes the entries:
 	 *
 	 *    "OA.*"
 	 *    "OE.*"
@@ -693,17 +701,29 @@ void init_vendorid(struct logger *logger)
 	 *    "OE Libreswan 123"
 	 *    "OF.*"
 	 *
-	 * a search for "OE LIBRESWAN" could find "OE.*" or fail.
+	 * then a binary search for "OE LIBRESWAN" would match either
+	 * "OE.*" or "OE Libreswan", or fail.
+	 *
+	 * Note that vid_sorted[] is zero indexed.
 	 */
+	ldbg(logger, "building sorted Vendor ID table");
+	FOR_EACH_ELEMENT_FROM_1(vid, vid_tab) {
+		passert(vid->id > 0);
+		/* make it zero indexed */
+		unsigned id0 = vid->id - 1;
+		passert(id0 < elemsof(vid_sorted));
+		vid_sorted[id0].entry = vid;
+	}
 	qsort(vid_sorted, elemsof(vid_sorted), sizeof(vid_sorted[0]), vid_sorted_cmp);
 
 	/*
-	 * Prune the VID_SORTED[] table of all but the shortest VIDs
-	 * creating VID_LOOKUP[].  Each entry points point into
-	 * VID_SORTED[] at the first of the overlapping VIDs that
-	 * match the VID_LOOKUP[] entry.
+	 * Step 2: Prune the VID_SORTED[] table of all but the
+	 * shortest overlapping VIDs creating VID_LOOKUP[].
 	 *
-	 * For instance, creating:
+	 * Each entry points into VID_SORTED[] at the first of the
+	 * overlapping VIDs that match the VID_LOOKUP[] entry.
+	 *
+	 * For instance, using the above:
 	 *
 	 *   VID_LOOKUP[]    VID_SORTED[]
 	 *     "OA.*"     ->   "OA.*"
@@ -715,13 +735,15 @@ void init_vendorid(struct logger *logger)
 	 * A search for "OE LIBRESWAN" is then performed in two steps:
 	 *
 	 * 1. using bsearch(VID_LOOKUP) to find the element "OE.*"
-	 * 2. a linear search of VID_SORTED[] starting at it's "OE.*" entry
+	 *
+	 * 2. a linear search of VID_SORTED[] starting at it's "OE.*"
+	 *    entry and finding "OE Libreswan.*"
 	 */
-	dbg("verifying VID lookup table");
+	ldbg(logger, "building lookup Vendor ID table");
 	vid_lookup[elemsof_vid_lookup++] = &vid_sorted[0];
 	FOR_EACH_ELEMENT_FROM_1(vidp, vid_sorted) {
 
-		/* do this and prev clash? */
+		/* do this and prev entry share their prefix? */
 		const struct vid_entry *prev = vid_lookup[elemsof_vid_lookup-1];
 		int c = vid_entry_cmp(&vidp->entry->vid, prev);
 		if (c > 0) {
@@ -730,12 +752,12 @@ void init_vendorid(struct logger *logger)
 			continue;
 		}
 
-		if (DBGP(DBG_BASE)) {
-			DBG_log("Vendor ID '%s' and '%s' clash",
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "Vendor IDs '%s' and '%s' have a common prefix",
 				prev->entry->descr,
 				vidp->entry->descr);
-			DBG_vid_struct(prev->entry, logger);
-			DBG_vid_struct(vidp->entry, logger);
+			LDBG_vid_struct(logger, prev->entry);
+			LDBG_vid_struct(logger, vidp->entry);
 		}
 	}
 }
@@ -745,7 +767,7 @@ void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, b
 	const unsigned MAX_LOG_VID_LEN = 32;
 
 	lset_t stream = (id == VID_none ? RC_LOG|ALL_STREAMS :
-			 DBGP(DBG_BASE) ? DEBUG_STREAM :
+			 LDBGP(DBG_BASE, logger) ? DEBUG_STREAM :
 			 0);
 	if (stream == 0) {
 		return;
@@ -793,11 +815,11 @@ void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, b
 
 enum known_vendorid vendorid_by_shunk(shunk_t vid)
 {
+	const struct logger *logger = &global_logger;
 	/*
 	 * Find known VendorID in vid_tab
 	 */
 	if (vid.len > 0) {
-#if 1
 		/* oh for generics */
 		const struct vid_entry **bvid = bsearch(&vid, vid_lookup,
 							elemsof_vid_lookup,
@@ -817,54 +839,49 @@ enum known_vendorid vendorid_by_shunk(shunk_t vid)
 		pexpect(vid_entry_cmp(&vid, best) == 0);
 		passert(best >= &vid_sorted[0]);
 		passert(best < &vid_sorted[elemsof(vid_sorted)]);
-		if (DBGP(DBG_TMI)) {
-			DBG_log("starting with first clash:");
-			DBG_vid_struct(best->entry, &global_logger);
+		if (LDBGP(DBG_TMI, logger)) {
+			LDBG_log(logger, "starting with the Vendor ID:");
+			LDBG_vid_struct(logger, best->entry);
 		}
+
+		/*
+		 * Search through the Vendor IDs sharing a common
+		 * prefix looking for the best match.  Since they are
+		 * sorted short-to-long and the last match is used it
+		 * will have the longest prefix.
+		 */
 
 		for (const struct vid_entry *vidp = best + 1;
 		     vidp < &vid_sorted[elemsof(vid_sorted)];
 		     vidp++) {
 
-			if (DBGP(DBG_TMI)) {
-				DBG_vid_struct(vidp->entry, &global_logger);
+			if (LDBGP(DBG_TMI, logger)) {
+				LDBG_log(logger, "comparing with Vendor ID:");
+				LDBG_vid_struct(logger, vidp->entry);
 			}
 
 			int c = vid_entry_cmp(&vid, vidp);
 			if (c < 0) {
-				if (DBGP(DBG_TMI)) {
-					DBG_log("end of clashes reached:");
+				if (LDBGP(DBG_TMI, logger)) {
+					LDBG_log(logger, "  reached the end of the overlapping Vendor IDs");
 				}
 				break;
 			}
 
 			if (c == 0) {
-				if (DBGP(DBG_TMI)) {
-					DBG_log("updating best");
+				if (LDBGP(DBG_TMI, logger)) {
+					LDBG_log(logger, "  better match");
 				}
 				best = vidp;
 				continue;
 			}
 
-			if (DBGP(DBG_TMI)) {
-				DBG_log("not the best");
+			if (LDBGP(DBG_TMI, logger)) {
+				LDBG_log(logger, "  not the best");
 			}
 		}
 
 		return best->entry->id;
-#else
-		FOR_EACH_ELEMENT_FROM_1(pvid, vid_tab) {
-			if (pvid->vid.len == vid.len) {
-				if (hunk_eq(pvid->vid, vid)) {
-					return pvid->id;
-				}
-			} else if (pvid->flags & VID_SUBSTRING) {
-				if (hunk_starteq(vid, pvid->vid)) {
-					return pvid->id;
-				}
-			}
-		}
-#endif
 	}
 	return VID_none;
 }
