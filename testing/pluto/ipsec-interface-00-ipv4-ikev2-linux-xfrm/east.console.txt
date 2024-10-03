@@ -22,6 +22,8 @@ X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 east #
  ../../guestbin/ipsec-kernel-policy.sh
 east #
+ ip -4 route add 192.0.45.0/24 dev ipsec1
+east #
  ../../guestbin/ip.sh xfrm state add src 192.1.2.45 dst 192.1.2.23 proto esp spi 4523 reqid 4523 if_id 0x1 mode tunnel enc 'cbc(aes)' '45-----Key----23' auth 'hmac(sha1)' '45------Hash------23'
 east #
  ../../guestbin/ip.sh xfrm state add src 192.1.2.23 dst 192.1.2.45 proto esp spi 2345 reqid 2345 if_id 0x1 mode tunnel enc 'cbc(aes)' '23-----Key----45' auth 'hmac(sha1)' '23------Hash------45'
@@ -66,9 +68,7 @@ east #
 added
 east #
  ../../guestbin/ping-once.sh --up -I 192.0.23.1 192.0.45.1
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.23.1 192.0.45.1
-PING 192.0.45.1 (192.0.45.1) from 192.0.23.1 : 56(84) bytes of data. From 192.0.23.1 icmp_seq=1 Destination Host Unreachable --- 192.0.45.1 ping statistics --- 1 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+up
 east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
@@ -76,6 +76,7 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
@@ -83,6 +84,7 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 east #

@@ -8,6 +8,8 @@
 ../../guestbin/ip.sh link show ipsec1
 ../../guestbin/ipsec-kernel-policy.sh
 
+ip -4 route add 192.0.45.0/24 dev ipsec1
+
 ../../guestbin/ip.sh xfrm state add src 192.1.2.45 dst 192.1.2.23 proto esp spi 4523 reqid 4523 if_id 0x1 mode tunnel enc 'cbc(aes)' '45-----Key----23' auth 'hmac(sha1)' '45------Hash------23'
 ../../guestbin/ip.sh xfrm state add src 192.1.2.23 dst 192.1.2.45 proto esp spi 2345 reqid 2345 if_id 0x1 mode tunnel enc 'cbc(aes)' '23-----Key----45' auth 'hmac(sha1)' '23------Hash------45'
 
