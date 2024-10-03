@@ -907,7 +907,8 @@ shunk_t shunk_from_vendorid(enum known_vendorid id)
 
 void llog_vendorids(lset_t rc_flags, struct logger *logger)
 {
-	for (enum known_vendorid id = 1; id < VID_ROOF; id++) {
+	FOR_EACH_ELEMENT(v, vid_sorted) {
+		enum known_vendorid id = v->entry->id;
 		shunk_t vid = shunk_from_vendorid(id);
 		enum_buf idb;
 		/* wack is secret code for the console aka stdout */
