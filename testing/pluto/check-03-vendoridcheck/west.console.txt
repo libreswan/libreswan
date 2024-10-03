@@ -16,7 +16,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   05 41 82 a0  7c 7a e2 06  f9 d2 cf 9d  24 32 c4 82   .A..|z......$2..
 [strongSwan 2.7.0]
   07 fa 12 8e  47 54 f9 44  7b 1d d4 63  74 ee f3 60   ....GT.D{..ct..`
-[ELVIS-PLUS Zastava]
+[ELVIS-PLUS Zastava] (prefix match)
   08 db 45 e6  cb 01 f8 0b  b5 76 e9 a7  8c 0f 54 e1   ..E......v....T.
   30 0b 88 81                                          0...
 [XAUTH]
@@ -64,7 +64,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   00 00 00 09                                          ....
 [strongSwan 4.0.4]
   1e f2 83 f8  35 49 b5 ff  96 08 b6 d6  34 f8 4d 75   ....5I......4.Mu
-[Cisco VPN 3000 Series]
+[Cisco VPN 3000 Series] (prefix match)
   1f 07 f7 0e  aa 65 14 d3  b0 fa 96 54  2a 50         .....e.....T*P
 [strongSwan 2.5.7]
   1f 44 42 29  6b 83 d7 e3  3a 8b 45 20  9b a0 e5 90   .DB)k...:.E ....
@@ -103,7 +103,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   3b 90 31 dc  e4 fc f8 8b  48 9a 92 39  63 dd 0c 49   ;.1.....H..9c..I
 [strongSwan 2.5.6]
   3c 5e ba 3d  85 64 92 8e  32 ae 43 c3  d9 92 4d ee   <^.=.d..2.C...M.
-[Cisco IOS Device]
+[Cisco IOS Device] (prefix match)
   3e 98 40 48                                          >.@H
 [SSH Communications Security IPSEC Express version 2.1.2]
   3f 23 72 86  7e 23 7c 1c  d8 25 0a 75  55 9c ae 20   ?#r.~#|..%.uU.. 
@@ -111,7 +111,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   3f 26 7e d6  21 ad a7 ee  6c 7d 88 93  cc b0 b1 4b   ?&~.!...l}.....K
 [strongSwan 2.6.0]
   3f 32 66 49  9f fd bd 85  95 0e 70 22  98 06 28 44   ?2fI......p"..(D
-[FRAGMENTATION]
+[FRAGMENTATION] (prefix match)
   40 48 b7 d5  6e bc e8 85  25 e7 de 7f  00 d6 c2 d3   @H..n...%.......
 [Sonicwall 1 (TZ 170 Standard?)]
   40 4b f4 39  52 2c a3 f6                             @K.9R,..
@@ -139,7 +139,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   03 49 7c 15                                          .I|.
 [strongSwan 2.4.4]
   48 5a 70 36  1b 44 33 b3  1d ea 1c 6b  e0 df 24 3e   HZp6.D3....k..$>
-[HeartBeat Notify]
+[HeartBeat Notify] (prefix match)
   48 65 61 72  74 42 65 61  74 5f 4e 6f  74 69 66 79   HeartBeat_Notify
 [CAN-IKEv2(obsolete)]
   49 4b 45 76  32                                      IKEv2
@@ -163,9 +163,9 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   4d 1e 0e 13  6d ea fa 34  c4 f3 ea 9f  02 ec 72 85   M...m..4......r.
 [draft-ietf-ipsec-nat-t-ike]
   4d f3 79 28  e9 fc 4f d1  b3 26 21 70  d5 15 c6 62   M.y(..O..&!p...b
-[Openswan(project)]
+[Openswan(project)] (prefix match)
   4f 45                                                OE
-[Libreswan (3.6+)]
+[Libreswan (3.6+)] (prefix match)
   4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d            OE-Libreswan-
 [Libreswan (this version)]
   4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d 35 2e 30   OE-Libreswan-5.0
@@ -174,15 +174,15 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   4f 45 44 76  5b 57 6b 40  45 41 74 47                OEDv[Wk@EAtG
 [Openswan 2.2.0]
   4f 45 48 72  4b 6e 5e 68  55 7c 60 4f                OEHrKn^hU|`O
-[Libreswan 3.0 - 3.5]
+[Libreswan 3.0 - 3.5] (prefix match)
   4f 45 4e                                             OEN
 [FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)]
   4f 45 57 5d  6a 53 43 42  46 74 79 6e                OEW]jSCBFtyn
 [FreeS/WAN 2.00 (X.509-1.3.1)]
   4f 45 77 4e  4a 43 52 71  6e 45 48 6f                OEwNJCRqnEHo
-[Openswan(xeleranized)]
+[Openswan(xeleranized)] (prefix match)
   4f 53 57                                             OSW
-[OpenIKED]
+[OpenIKED] (prefix match)
   4f 70 65 6e  49 4b 45 44                             OpenIKED
 [OpenPGP]
   4f 70 65 6e  50 47 50 31  30 31 37 31                OpenPGP10171
@@ -193,7 +193,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   50 76 0f 62  4c 63 e5 c5  3e ea 38 6c  68 5c a0 83   Pv.bLc..>.8lh\..
 [SSH Sentinel 1.2]
   54 30 88 8d  e0 1a 31 a6  fa 8f 60 22  4e 44 99 58   T0....1...`"ND.X
-[TIMESTEP]
+[TIMESTEP] (prefix match)
   54 49 4d 45  53 54 45 50                             TIMESTEP
 [strongSwan 4.1.3]
   58 49 ab 6d  8b ea bd 6e  4d 09 e5 a3  b8 8c 08 9a   XI.m...nM.......
