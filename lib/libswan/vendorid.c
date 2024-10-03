@@ -581,14 +581,8 @@ static void DBG_vid_struct(const struct vid_struct *vid, const struct logger *lo
 		if (vid->flags & VID_MD5HASH) {
 			jam_string(buf, " +md5");
 		}
-		if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
-			jam_string(buf, " substring+hexa");
-		}
-		if (vid->flags & VID_SUBSTRING_DUMPASCII) {
-			jam_string(buf, " substring+ascii");
-		}
-		if (vid->flags & VID_SUBSTRING_MATCH) {
-			jam_string(buf, " substring+match");
+		if (vid->flags & VID_SUBSTRING) {
+			jam_string(buf, " substring");
 		}
 	}
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
@@ -750,51 +744,36 @@ void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, b
 {
 	const unsigned MAX_LOG_VID_LEN = 32;
 
-	if (id == VID_none) {
-		/*
-		 * Unknown Vendor ID. Log the beginning.
-		 */
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			/* truncate the VID */
-			shunk_t tvid = hunk_slice(vid, 0, PMIN(vid.len, MAX_LOG_VID_LEN));
-			const char *trunc = (vid.len > MAX_LOG_VID_LEN ? " ..." : "");
-			jam_string(buf, "ignoring unknown Vendor ID payload");
-			/* dump as ascii */
-			jam_string(buf, " \"");
-			jam_sanitized_hunk(buf, tvid);
-			jam_string(buf, trunc);
-			jam_string(buf, "\"");
-			/* dump as hex */
-			jam_string(buf, " [");
-			jam_dump_hunk(buf, tvid);
-			jam_string(buf, trunc);
-			jam_string(buf, "]");
+	lset_t stream = (id == VID_none ? RC_LOG|ALL_STREAMS :
+			 DBGP(DBG_BASE) ? DEBUG_STREAM :
+			 0);
+	if (stream == 0) {
+		return;
+	}
+
+	LLOG_JAMBUF(stream, logger, buf) {
+		/* truncate the VID */
+		shunk_t tvid = hunk_slice(vid, 0, PMIN(vid.len, MAX_LOG_VID_LEN));
+		const char *trunc = (vid.len > MAX_LOG_VID_LEN ? " ..." : "");
+		jam_string(buf, vid_useful ? "received" : "ignoring");
+		/* description */
+		jam_string(buf, " ");
+		if (id == VID_none) {
+			jam_string(buf, "unknown");
+		} else {
+			jam_string(buf, vid_tab[id].descr);
 		}
-	} else {
-		/*
-		 * Known Vendor ID, casually mention it in the debug
-		 * logs.
-		 */
-		if (DBGP(DBG_BASE)) {
-			const struct vid_struct *pvid = &vid_tab[id];
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "%s Vendor ID payload [",
-				    vid_useful ? "received" : "ignoring");
-				if (pvid->flags & VID_SUBSTRING_DUMPHEXA) {
-					/* Dump description + Hexa */
-					jam(buf, "%s ", pvid->descr);
-					jam_dump_hunk(buf, vid);
-				} else if (pvid->flags & VID_SUBSTRING_DUMPASCII) {
-					/* Dump ASCII content */
-					/* no descr? */
-					jam_sanitized_hunk(buf, vid);
-				} else {
-					/* Dump description (descr) */
-					jam_string(buf, pvid->descr);
-				}
-				jam(buf, "]");
-			}
-		}
+		jam_string(buf, " Vendor ID payload");
+		/* dump as ascii */
+		jam_string(buf, " \"");
+		jam_sanitized_hunk(buf, tvid);
+		jam_string(buf, trunc);
+		jam_string(buf, "\"");
+		/* dump as hex */
+		jam_string(buf, " [");
+		jam_dump_hunk(buf, tvid);
+		jam_string(buf, trunc);
+		jam_string(buf, "]");
 	}
 }
 
