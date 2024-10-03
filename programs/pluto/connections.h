@@ -746,11 +746,12 @@ struct connection {
 					 * MASK value for IPsec SA
 					 * (per-connection) */
 
-	struct ipsec_interface *ipsec_interface;	/* pointer to
-							 * possibly
-							 * shared
-							 * interface
-							 * (per-connection) */
+	/*
+	 * Pointer to possibly shared interface (per-connection).  And
+	 * a pointer to CIDR this connection added to the interface.
+	 */
+	struct ipsec_interface *ipsec_interface;
+	struct ipsec_interface_address *ipsec_interface_address;
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */

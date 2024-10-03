@@ -27,17 +27,8 @@
 #include "verbose.h"
 #include "iface.h"
 
-struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface_address **ptr,
-							      ip_cidr if_ip);
-void free_ipsec_interface_address_list(struct ipsec_interface_address *ipsec_ifaddr,
-				       const struct logger *logger);
-
 static ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
 						   struct verbose verbose);
-
-static struct ipsec_interface_address **find_ipsec_interface_address_ptr(struct ipsec_interface *ipsecif,
-									 ip_cidr cidr,
-									 struct verbose verbose);
 
 static struct ipsec_interface *ipsec_interfaces;
 
@@ -103,38 +94,41 @@ const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if,
 }
 
 /*
- * Create an internal ipsec_interface_address address structure.
+ * Create an internal ipsec_interface_address address structure and
+ * add it to the ipsec_interface.
+ *
+ * Caller must save reference somewhere.  On last delref, address is
+ * removed from the ipsec_if list.
  */
 
-struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface_address **ptr,
-							      ip_cidr cidr)
+static struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface *ipsec_if,
+								     ip_cidr cidr)
 {
-	/* Create a new ref-counted xfrmi_ip_addr.
-	 * The call to refcnt_alloc() counts as a reference */
 	struct ipsec_interface_address *new_address =
 		refcnt_alloc(struct ipsec_interface_address, HERE);
 	new_address->pluto_added = false;
 	new_address->if_ip = cidr;
-	new_address->next = *ptr;
-	*ptr = new_address;
+	/* add to front */
+	new_address->next = ipsec_if->if_ips;
+	ipsec_if->if_ips = new_address;
 	return new_address;
 }
 
 /* returns indirect pointer to struct, or insertion point */
 
-struct ipsec_interface_address **find_ipsec_interface_address_ptr(struct ipsec_interface *ipsec_if,
-								  ip_cidr search_cidr,
-								  struct verbose verbose)
+static struct ipsec_interface_address *find_ipsec_interface_address(struct ipsec_interface *ipsec_if,
+								     ip_cidr search_cidr,
+								     struct verbose verbose)
 {
 	PASSERT(verbose.logger, ipsec_if != NULL);
 
-	struct ipsec_interface_address **address = &ipsec_if->if_ips;
-	for (; (*address) != NULL; address = &(*address)->next) {
-		if (cidr_eq_cidr((*address)->if_ip, search_cidr)) {
+	for (struct ipsec_interface_address *address = ipsec_if->if_ips;
+	     address != NULL; address = address->next) {
+		if (cidr_eq_cidr(address->if_ip, search_cidr)) {
 			cidr_buf cb;
 			ipsec_interface_buf ib;
 			vdbg("found %s for ipsec-interface %s",
-			     str_cidr(&(*address)->if_ip, &cb),
+			     str_cidr(&address->if_ip, &cb),
 			     str_ipsec_interface(ipsec_if, &ib));
 
 			return address;
@@ -143,41 +137,81 @@ struct ipsec_interface_address **find_ipsec_interface_address_ptr(struct ipsec_i
 
 	cidr_buf cb;
 	vdbg("no CIDR matching %s found", str_cidr(&search_cidr, &cb));
-	return address;
+	return NULL;
 }
 
-void free_ipsec_interface_address_list(struct ipsec_interface_address *xfrmi_ipaddr,
-				       const struct logger *logger)
+static struct ipsec_interface_address *ipsec_interface_address_addref(struct ipsec_interface_address *address,
+								      where_t where)
 {
-	struct ipsec_interface_address *xi = xfrmi_ipaddr;
-	struct ipsec_interface_address *xi_next = NULL;
+	return addref_where(address, where);
+}
 
-	while (xi != NULL) {
-		/* step off IX */
-		xi_next = xi->next;
-		/*
-		 * When the list is allocated with interface IPs not
-		 * created by pluto, then they were never
-		 * unreference'd, so we'll have to do it here
-		 *
-		 * XXX: since XI is non-NULL this must always be
-		 * true?
-		 *
-		 * XXX: forcing the deletion of all references
-		 * suggests that something elsewhere is leaking these?
-		 */
-		if (refcnt_peek(xi, logger) > 0) {
-			struct ipsec_interface_address *xi_unref_result = NULL;
-			do {
-				/* delref_where() sets the pointer passed in to NULL
-				 * delref_where() will return NULL until the refcount is 0 */
-				struct ipsec_interface_address *xi_unref = xi;
-				xi_unref_result = delref_where(&xi_unref, logger, HERE);
-			} while(xi_unref_result == NULL);
-		}
-		pfreeany(xi);
-		xi = xi_next;
+static void ipsec_interface_address_delref(struct ipsec_interface *ipsec_if,
+					   struct ipsec_interface_address **ipsec_if_address,
+					   struct verbose verbose)
+{
+	/*
+	 * Decrement the reference:
+	 *
+	 * - The pointer IPSEC_IF_ADDRESS passed in will be set to
+             NULL
+	 *
+	 * - Returns a pointer to the object to be deleted when its
+         *   the last one.
+	 */
+	struct ipsec_interface_address *address = delref_where(ipsec_if_address, verbose.logger, HERE);
+	if (address == NULL) {
+		vdbg("%s() delref returned NULL, simple delref", __func__);
+		return;
 	}
+
+	/*
+	 * Find and remove the entry from the ipsec_if list.
+	 */
+
+	for (struct ipsec_interface_address **pp = &ipsec_if->if_ips;
+	     (*pp) != NULL; pp = &(*pp)->next) {
+		if ((*pp) == address) {
+
+			/* Remove the entry from the ip_ips list */
+			(*pp) = address->next;
+			address->next = NULL;
+
+			/* Check if the IP should be removed from the interface */
+			if (address->pluto_added) {
+				kernel_ipsec_interface_del_cidr(ipsec_if->name, address->if_ip, verbose);
+				cidr_buf cb;
+				ipsec_interface_buf ib;
+				vlog("delete ipsec-interface %s IP [%s] added by pluto",
+				     str_ipsec_interface(ipsec_if, &ib),
+				     str_cidr(&address->if_ip, &cb));
+			} else {
+				cidr_buf cb;
+				ipsec_interface_buf ib;
+				vlog("cannot delete ipsec-interface %s IP [%s], not created by pluto",
+				     str_ipsec_interface(ipsec_if, &ib),
+				     str_cidr(&address->if_ip, &cb));
+			}
+
+			/* Free the memory */
+			pfreeany(address);
+			return;
+
+		}
+	}
+
+	/*
+	 * Should never happen.  The ipsec_if is always the last
+	 * (uncounted) reference.
+	 */
+	cidr_buf cb;
+	ipsec_interface_buf ib;
+	llog_pexpect(verbose.logger, HERE,
+		     "can't remove %s, not assigned to ipsec-interface %s",
+		     str_cidr(&address->if_ip, &cb),
+		     str_ipsec_interface(ipsec_if, &ib));
+	/* drop it on the floor */
+	return;
 }
 
 /*
@@ -234,7 +268,7 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
 	return unset_cidr;
 }
 
-static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
+static bool add_kernel_ipsec_interface_address_1(struct connection *c,
 						 struct verbose verbose)
 {
 	/*
@@ -265,24 +299,23 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 	 * get_connection_ipsec_interface_cidr9) call and that is
 	 * using dynamic values.
 	 */
-	struct ipsec_interface_address **conn_address_ptr =
-			find_ipsec_interface_address_ptr(c->ipsec_interface, conn_cidr, verbose);
-	struct ipsec_interface_address *conn_address = (*conn_address_ptr);
-	if (conn_address != NULL) {
+	struct ipsec_interface_address *address =
+		find_ipsec_interface_address(c->ipsec_interface, conn_cidr, verbose);
+	if (address != NULL) {
 		cidr_buf cb;
 		ipsec_interface_buf ib;
-		vdbg("ipsec-interface %s already has %s, adding a reference for this connection",
+		vdbg("ipsec-interface %s already has %s, adding a reference from this connection",
 		     str_ipsec_interface(c->ipsec_interface, &ib),
 		     str_cidr(&conn_cidr, &cb));
-		addref_where(conn_address, HERE);
-		if (!kernel_ipsec_interface_has_cidr(c->ipsec_interface->name,
-						     conn_address->if_ip,
+		vexpect(c->ipsec_interface_address == NULL);
+		c->ipsec_interface_address = ipsec_interface_address_addref(address, HERE);
+		if (!kernel_ipsec_interface_has_cidr(c->ipsec_interface->name, address->if_ip,
 						     verbose)) {
 			cidr_buf cb;
 			llog_pexpect(verbose.logger, HERE,
 				     "ipsec-interface %s ID %u has %s but the kernel interface does not!?!",
 				     c->ipsec_interface->name, c->ipsec_interface->if_id,
-				     str_cidr(&conn_cidr, &cb));
+				     str_cidr(&address->if_ip, &cb));
 		}
 		return true;
 	}
@@ -292,26 +325,28 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 	 * interface.
 	 */
 
-	conn_address = alloc_ipsec_interface_address(conn_address_ptr, conn_cidr);
+	vexpect(c->ipsec_interface_address == NULL);
+	c->ipsec_interface_address = alloc_ipsec_interface_address(c->ipsec_interface, conn_cidr);
 
 	if (kernel_ipsec_interface_has_cidr(c->ipsec_interface->name,
-					    conn_address->if_ip,
+					    c->ipsec_interface_address->if_ip,
 					    verbose)) {
 		cidr_buf cb;
 		vdbg("ipsec-interface %s ID %u already has %s",
 		     c->ipsec_interface->name, c->ipsec_interface->if_id,
-		     str_cidr(&conn_address->if_ip, &cb));
-		conn_address->pluto_added = false; /* redundant */
+		     str_cidr(&c->ipsec_interface_address->if_ip, &cb));
+		c->ipsec_interface_address->pluto_added = false; /* redundant */
 		return true;
 	}
 
-	conn_address->pluto_added = true;
+	c->ipsec_interface_address->pluto_added = true;
 	if (!kernel_ipsec_interface_add_cidr(c->ipsec_interface->name,
-					     conn_address->if_ip, verbose)) {
+					     c->ipsec_interface_address->if_ip,
+					     verbose)) {
 		cidr_buf cb;
 		llog_error(verbose.logger, 0/*no-errno*/,
 			   "unable to add CIDR %s to ipsec-interface %s ID %u",
-			   str_cidr(&conn_address->if_ip, &cb),
+			   str_cidr(&c->ipsec_interface_address->if_ip, &cb),
 			   c->ipsec_interface->name, c->ipsec_interface->if_id);
 		return false;
 	}
@@ -319,13 +354,13 @@ static bool add_kernel_ipsec_interface_address_1(const struct connection *c,
 	cidr_buf cb;
 	ipsec_interface_buf ib;
 	vlog("added %s to ipsec-interface %s",
-	     str_cidr(&conn_address->if_ip, &cb),
+	     str_cidr(&c->ipsec_interface_address->if_ip, &cb),
 	     str_ipsec_interface(c->ipsec_interface, &ib));
 
 	return true;
 }
 
-bool add_kernel_ipsec_interface_address(const struct connection *c,
+bool add_kernel_ipsec_interface_address(struct connection *c,
 					struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "...");
@@ -348,9 +383,7 @@ bool add_kernel_ipsec_interface_address(const struct connection *c,
 	return kernel_ipsec_interface_up(c->ipsec_interface->name, verbose);
 }
 
-/* Return true on success, false on failure */
-
-void del_kernel_ipsec_interface_address(const struct connection *c,
+void del_kernel_ipsec_interface_address(struct connection *c,
 					struct logger *logger)
 {
 
@@ -361,80 +394,14 @@ void del_kernel_ipsec_interface_address(const struct connection *c,
 		return;
 	}
 
-	/*
-	 * Find the IP address assigned to the connection.
-	 */
-	ip_cidr conn_cidr = get_connection_ipsec_interface_cidr(c, verbose);
-	if (conn_cidr.is_set == false) {
-		vdbg("no CIDR to unreference on ipsec-interface %s ID %d",
-		     c->ipsec_interface->name, c->ipsec_interface->if_id);
+	if (c->ipsec_interface_address == NULL) {
+		vdbg("skipped; no ipsec-interface-address to delete");
 		return;
 	}
+
 	cidr_buf cb;
-	vdbg("removing %s", str_cidr(&conn_cidr, &cb));
-
-	/*
-	 * Use that to find the address structure.
-	 */
-	struct ipsec_interface_address **conn_address_ptr =
-			find_ipsec_interface_address_ptr(c->ipsec_interface, conn_cidr, verbose);
-	if ((*conn_address_ptr) == NULL) {
-		/* This should never happen */
-		cidr_buf cb;
-		ipsec_interface_buf ib;
-		llog_pexpect(logger, HERE,
-			     "can't remove %s, not assigned to ipsec-interface %s",
-			     str_cidr(&conn_cidr, &cb),
-			     str_ipsec_interface(c->ipsec_interface, &ib));
-		return;
-	}
-
-	ipsec_interface_buf ib;
-	vdbg("addressr=%p ipsec-interface %s IP [%s] refcount=%u (before)",
-	     (*conn_address_ptr),
-	     str_ipsec_interface(c->ipsec_interface, &ib),
-	     str_cidr(&(*conn_address_ptr)->if_ip, &cb),
-	     refcnt_peek((*conn_address_ptr), logger));
-
-	/*
-	 * Decrement the reference:
-	 *
-	 * - The pointer CONN_ADDRESS passed in will be set to NULL
-	 *
-	 * - Returns a pointer to the object to be deleted when its
-         *   the last one.
-	 */
-	struct ipsec_interface_address *tmp_address = (*conn_address_ptr);
-	struct ipsec_interface_address *conn_address = delref_where(&tmp_address, logger, HERE);
-	if (conn_address == NULL) {
-		vdbg("%s() delref returned NULL, simple delref", __func__);
-		return;
-	}
-
-	/* Remove the entry from the ip_ips list */
-	(*conn_address_ptr) = conn_address->next;
-
-	/* Check if the IP should be removed from the interface */
-	if (conn_address->pluto_added) {
-		kernel_ipsec_interface_del_cidr(c->ipsec_interface->name,
-						conn_address->if_ip, verbose);
-		cidr_buf cb;
-		ipsec_interface_buf ib;
-		llog(RC_LOG, logger,
-		     "delete ipsec-interface %s IP [%s] added by pluto",
-		     str_ipsec_interface(c->ipsec_interface, &ib),
-		     str_cidr(&conn_cidr, &cb));
-	} else {
-		cidr_buf cb;
-		ipsec_interface_buf ib;
-		llog(RC_LOG, logger,
-		     "cannot delete ipsec-interface %s IP [%s], not created by pluto",
-		     str_ipsec_interface(c->ipsec_interface, &ib),
-		     str_cidr(&conn_cidr, &cb));
-	}
-
-	/* Free the memory */
-	pfreeany(conn_address);
+	vdbg("removing %s", str_cidr(&c->ipsec_interface_address->if_ip, &cb));
+	ipsec_interface_address_delref(c->ipsec_interface, &c->ipsec_interface_address, verbose);
 }
 
 static struct ipsec_interface *find_ipsec_interface_by_id(ipsec_interface_id_t if_id)
@@ -485,41 +452,52 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 	VERBOSE_DBGP(DBG_BASE, logger, "%p", *ipsec_if);
 
 	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
-	if (ipsec_interface != NULL) {
-		/* last reference (ignoring list entry) */
-		for (struct ipsec_interface **pp = &ipsec_interfaces;
-		     (*pp) != NULL; pp = &(*pp)->next) {
-			if ((*pp) == ipsec_interface) {
-				/* unlink */
-				(*pp) = (*pp)->next;
-				/* delete*/
-				if (ipsec_interface->pluto_added) {
-					kernel_ipsec_interface_del(ipsec_interface->name,
-								   verbose);
-					ipsec_interface_buf ib;
-					llog(RC_LOG, logger,
-					     "delete ipsec-interface %s added by pluto",
-					     str_ipsec_interface(ipsec_interface, &ib));
-				} else {
-					ipsec_interface_buf ib;
-					vdbg("skipping delete ipsec-interface %s, never added pluto",
-					     str_ipsec_interface(ipsec_interface, &ib));
-				}
-				/*
-				 * Free the IPs that were already on
-				 * the interface (not added by
-				 * pluto).
-				 */
-				free_ipsec_interface_address_list(ipsec_interface->if_ips, logger);
-				pfreeany(ipsec_interface);
-				return;
-			}
-			vdbg("(*pp)=%p ipsec_interface=%p", (*pp), ipsec_interface);
-		}
-		llog_pexpect(logger, where,
-			     "%p ipsec-interface=%s if_id=%u not found in the list",
-			     ipsec_interface, ipsec_interface->name, ipsec_interface->if_id);
+	if (ipsec_interface == NULL) {
+		return;
 	}
+
+	/*
+	 * Last reference (ignoring list entry); remove it from the
+	 * list.
+	 */
+	for (struct ipsec_interface **pp = &ipsec_interfaces;
+	     (*pp) != NULL; pp = &(*pp)->next) {
+		if ((*pp) == ipsec_interface) {
+			/* unlink */
+			(*pp) = ipsec_interface->next;
+			ipsec_interface->next = NULL;
+			/*
+			 * Any IP addresses should have
+			 * already been released!
+			 */
+			vexpect(ipsec_interface->if_ips == NULL);
+			/*
+			 * Now release the interface.
+			 */
+			if (ipsec_interface->pluto_added) {
+				kernel_ipsec_interface_del(ipsec_interface->name,
+							   verbose);
+				ipsec_interface_buf ib;
+				llog(RC_LOG, logger,
+				     "delete ipsec-interface %s added by pluto",
+				     str_ipsec_interface(ipsec_interface, &ib));
+			} else {
+				ipsec_interface_buf ib;
+				vdbg("skipping delete ipsec-interface %s, never added pluto",
+				     str_ipsec_interface(ipsec_interface, &ib));
+			}
+			pfreeany(ipsec_interface);
+			return;
+		}
+	}
+
+	/*
+	 * Should never happen, the ipsec_interfaces list always has
+	 * the last (uncounted) reference.
+	 */
+	llog_pexpect(logger, where,
+		     "%p ipsec-interface=%s if_id=%u not found in the list",
+		     ipsec_interface, ipsec_interface->name, ipsec_interface->if_id);
 }
 
 diag_t parse_ipsec_interface(struct config *config,

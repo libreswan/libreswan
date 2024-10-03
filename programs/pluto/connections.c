@@ -440,7 +440,13 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 #endif
 	disorient(c);
 
+	/*
+	 * Disorienting should have released .ipsec_interface, and
+	 * unrouting should have released the
+	 * .ipsec_interface_address.
+	 */
 	PEXPECT(c->logger, c->ipsec_interface == NULL);
+	PEXPECT(c->logger, c->ipsec_interface_address == NULL);
 
 	remove_from_group(c);
 
