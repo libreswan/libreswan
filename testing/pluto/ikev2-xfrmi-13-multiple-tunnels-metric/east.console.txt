@@ -9,6 +9,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add north-east-gw
+"north-east-gw": created ipsec-interface ipsec1@eth1
 "north-east-gw": added IKEv2 connection
 east #
  ipsec auto --add north-east-sn

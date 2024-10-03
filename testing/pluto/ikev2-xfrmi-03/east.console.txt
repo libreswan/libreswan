@@ -14,6 +14,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add northnet-eastnet
+"northnet-eastnet": created ipsec-interface ipsec1@eth1
 "northnet-eastnet": added IKEv2 connection
 east #
  ipsec auto --add westnet-eastnet

@@ -6,6 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add westnet-eastnet
+"westnet-eastnet": created ipsec-interface ipsec1@eth1
 "westnet-eastnet": added IKEv2 connection
 west #
  echo "initdone"

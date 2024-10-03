@@ -21,6 +21,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
+"west": created ipsec-interface ipsec1@eth1
 "west": added IKEv2 connection
 west #
  echo "initdone"

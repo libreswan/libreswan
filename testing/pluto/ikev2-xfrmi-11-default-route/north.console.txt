@@ -9,6 +9,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
+"north-east": created ipsec-interface ipsec2@eth1
 "north-east": added IKEv2 connection
 north #
  echo "initdone"

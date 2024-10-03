@@ -17,12 +17,14 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north
+"north": created ipsec-interface ipsec1@eth1
 "north": added IKEv2 connection
 north #
  # test for refcounting when connection has never been up'ed yet
 north #
  ipsec auto --add north
 "north": delete ipsec-interface ipsec1@eth1 added by pluto
+"north": created ipsec-interface ipsec1@eth1
 "north": added IKEv2 connection
 north #
  echo "initdone"
