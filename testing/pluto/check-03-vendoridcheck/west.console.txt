@@ -399,6 +399,8 @@ ipsec _vendoridcheck: FIPS Mode: OFF
   b4 f0 1c a9  51 e9 da 8d  0b af bb d3  4a d3 04 4e   ....Q.......J..N
 [forticlient connect license]
   4c 53 42 7b  6d 46 5d 1b  33 7b b7 55  a3 7a 7f ef   LSB{mF].3{.U.z..
+[OpenIKED]
+  4f 70 65 6e  49 4b 45 44                             OpenIKED
 [XAUTH]
   09 00 26 89  df d6 b7 12                             ..&.....
 [Dead Peer Detection]
