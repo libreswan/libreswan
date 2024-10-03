@@ -511,6 +511,12 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(VID_FORTINET_ENDPOINT_CONTROL, "Fortinet Endpoint Control"),
 	DEC_MD5_VID(VID_FORTINET_CONNECT_LICENSE, "forticlient connect license"),
 
+	/*
+	 * OpenIKED
+	 */
+
+	VID(VID_OPENIKED, VID_STRING|VID_SUBSTRING_DUMPASCII, "OpenIKED", NULL),
+
 	/* END OF TABLE */
 	VID(VID_none, 0, NULL, NULL),
 

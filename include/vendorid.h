@@ -228,6 +228,10 @@ enum known_vendorid {
 	VID_FORTINET_ENDPOINT_CONTROL,
 	VID_FORTINET_CONNECT_LICENSE,
 
+	/* IKED */
+
+	VID_OPENIKED,
+
 	/* Misc */
 
 	VID_MISC_XAUTH,
