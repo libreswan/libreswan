@@ -58,6 +58,8 @@ static struct double_double debug = {
 
 	/* end of debug=tmi */
 
+	D(DBG_UPDOWN, "debug-updown", "run updown script with 'set -v -x'"),
+
 	D(DBG_CRYPT, "debug-crypt", "encryption/decryption of messages: DANGER!"),
 	D(DBG_PRIVATE, "debug-private", "displays private information: DANGER!"),
 	D(DBG_WHACKWATCH, "debug-whackwatch", "never let WHACK go"),

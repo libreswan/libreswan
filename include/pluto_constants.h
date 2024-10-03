@@ -436,6 +436,8 @@ enum {
 
 	/* below are excluded */
 
+	DBG_UPDOWN_IX,
+
 	DBG_CRYPT_IX,
 	DBG_PRIVATE_IX,
 
@@ -461,6 +463,7 @@ enum {
 
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+#define DBG_UPDOWN	LELEM(DBG_UPDOWN_IX)
 
 /* so things don't break */
 #define DBG_PROPOSAL_PARSER	DBG_TMI
