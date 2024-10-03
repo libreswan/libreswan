@@ -904,3 +904,23 @@ shunk_t shunk_from_vendorid(enum known_vendorid id)
 	const struct vid_struct *pvid = &vid_tab[id];
 	return pvid->vid;
 }
+
+void llog_vendorids(lset_t rc_flags, struct logger *logger)
+{
+	for (enum known_vendorid id = 1; id < VID_ROOF; id++) {
+		shunk_t vid = shunk_from_vendorid(id);
+		enum_buf idb;
+		/* wack is secret code for the console aka stdout */
+		llog(rc_flags, logger, "[%s]", str_vendorid(id, &idb));
+		llog_dump_hunk(rc_flags, logger, vid);
+		enum known_vendorid r = vendorid_by_shunk(vid);
+		passert(r != VID_none);
+		if (r != id) {
+			enum_buf idb, rb;
+			llog_passert(logger, HERE,
+				     "lookup for %d [%s] returned %d [%s]",
+				     id, str_vendorid(id, &idb),
+				     r, str_vendorid(r, &rb));
+		}
+	}
+}

@@ -49,23 +49,7 @@ int main(int argc, char *argv[])
 	 */
 	init_nss(NULL, (struct nss_flags) { .open_readonly = true}, logger);
 	init_vendorid(logger);
-
-	for (enum known_vendorid id = 1; id < VID_ROOF; id++) {
-		shunk_t vid = shunk_from_vendorid(id);
-		enum_buf idb;
-		/* wack is secret code for the console aka stdout */
-		llog(NO_PREFIX|WHACK_STREAM, logger, "[%s]", str_vendorid(id, &idb));
-		llog_dump_hunk(NO_PREFIX|WHACK_STREAM, logger, vid);
-		enum known_vendorid r = vendorid_by_shunk(vid);
-		passert(r != VID_none);
-		if (r != id) {
-			enum_buf idb, rb;
-			llog_passert(logger, HERE,
-				     "lookup for %d [%s] returned %d [%s]",
-				     id, str_vendorid(id, &idb),
-				     r, str_vendorid(r, &rb));
-		}
-	}
+	llog_vendorids(NO_PREFIX|WHACK_STREAM, logger);
 
 	/* shhh; try some bonus searches */
 	static const struct {
