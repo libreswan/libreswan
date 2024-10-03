@@ -707,13 +707,20 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	/*
-	 * First fragment, save it and start crypto.
+	 * First fragment (SKF) or payload (SK), start accumulating it
+	 * as fragments and start crypto (for SK there's only one
+	 * fragment).
 	 */
 	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
+		enum_buf xb;
+		llog(RC_LOG, ike->sa.logger,
+		     "received %s request, computing DH in the background",
+		     str_enum_short(&ikev2_exchange_names, ix, &xb));
 	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
+		struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
 			dbg("no fragments accumulated; skipping SKEYSEED");
@@ -722,6 +729,11 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		case FRAGMENTS_COMPLETE:
 			break;
 		}
+		enum_buf xb;
+		llog(RC_LOG, ike->sa.logger,
+		     "received %s request fragment %u (1 of %u), computing DH in the background",
+		     str_enum_short(&ikev2_exchange_names, ix, &xb),
+		     skf->isaskf_number, (*frags)->total);
 	} else {
 		llog_pexpect(ike->sa.logger, HERE,
 			     "message has neither SK nor SKF payload");
@@ -734,8 +746,8 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 	}
 
 	/*
-	 * If fragments are accumulating, and not already started,
-	 * kick off SKEYSEED.
+	 * Now that the first fragment or payload to arrive, kick of
+	 * the SKEYSEED calculation.
 	 */
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
 				/*no-md:in-background*/NULL,
