@@ -639,7 +639,7 @@ bool add_ipsec_interface(struct connection *c,
 			iface->real_device_name);
 		c->ipsec_interface->pluto_added = true;
 		ipsec_interface_buf ib;
-		vdbg("created ipsec-interface %s",
+		vlog("created ipsec-interface %s",
 		     str_ipsec_interface(c->ipsec_interface, &ib));
 		return true;
 	}
@@ -672,7 +672,7 @@ bool add_ipsec_interface(struct connection *c,
 	jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
 		iface->real_device_name);
 	ipsec_interface_buf ib;
-	vdbg("added ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
+	vdbg("using ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
 	return true;
 }
 
