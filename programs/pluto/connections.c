@@ -2462,14 +2462,16 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	if (never_negotiate_wm(wm)) {
 		if (wm->fragmentation != YNF_UNSET) {
+			name_buf fb;
 			llog(RC_LOG, c->logger,
 			     "warning: never-negotiate connection ignores fragmentation=%s",
-			     sparse_name(&ynf_option_names, wm->fragmentation));
+			     str_sparse(&ynf_option_names, wm->fragmentation, &fb));
 		}
 	} else if (wm->ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
+		name_buf fb;
 		llog(RC_LOG, c->logger,
 		     "warning: IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
-		     sparse_name(&ynf_option_names, wm->fragmentation));
+		     str_sparse(&ynf_option_names, wm->fragmentation, &fb));
 		config->ike_frag.allow = true;
 	} else {
 		switch (wm->fragmentation) {
@@ -2604,21 +2606,30 @@ static diag_t extract_connection(const struct whack_message *wm,
 	switch (wm->autostart) {
 	case AUTOSTART_UP:
 	case AUTOSTART_START:
+	{
+		name_buf nb;
 		ldbg(c->logger, "autostart=%s implies +UP",
-		     sparse_name(&autostart_names, wm->autostart));
+		     str_sparse(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.up);
 		break;
+	}
 	case AUTOSTART_ROUTE:
 	case AUTOSTART_ONDEMAND:
+	{
+		name_buf nb;
 		ldbg(c->logger, "autostart=%s implies +ROUTE",
-		     sparse_name(&autostart_names, wm->autostart));
+		     str_sparse(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.route);
 		break;
+	}
 	case AUTOSTART_KEEP:
+	{
+		name_buf nb;
 		ldbg(c->logger, "autostart=%s implies +KEEP",
-		     sparse_name(&autostart_names, wm->autostart));
+		     str_sparse(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.keep);
 		break;
+	}
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_ADD:
 	case AUTOSTART_UNSET:
@@ -2691,9 +2702,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
+			name_buf nb;
 			llog(RC_LOG, c->logger,
 			     "warning: ignoring esn=%s as connection is never-negotiate",
-			     sparse_name(&yne_option_names, wm->esn));
+			     str_sparse(&yne_option_names, wm->esn, &nb));
 		}
 	} else if (wm->replay_window == 0) {
 		/*
@@ -2740,9 +2752,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 		dbg("ESN: ignored as not implemented with IKEv1");
 #if 0
 		if (wm->esn != YNE_UNSET) {
+			name_buf nb;
 			llog(RC_LOG, c->logger,
 			     "warning: ignoring esn=%s as not implemented with IKEv1",
-			     sparse_name(yne_option_names, wm->esn));
+			     str_sparse(yne_option_names, wm->esn, &nb));
 		}
 #endif
 		switch (wm->esn) {
@@ -2950,8 +2963,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->nic_offload != NIC_OFFLOAD_UNSET) {
+			name_buf nb;
 			llog(RC_LOG, c->logger, "nic-offload=%s ignored for never-negotiate connection",
-			     sparse_name(&nic_offload_option_names, wm->nic_offload));
+			     str_sparse(&nic_offload_option_names, wm->nic_offload, &nb));
 		}
 		/* keep <<ipsec connectionstatus>> simple */
 		config->nic_offload = NIC_OFFLOAD_NO;
@@ -2964,8 +2978,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		case NIC_OFFLOAD_PACKET:
 		case NIC_OFFLOAD_CRYPTO:
 			if (kernel_ops->detect_nic_offload == NULL) {
+				name_buf nb;
 				return diag("no kernel support for nic-offload[=%s]",
-					    sparse_name(&nic_offload_option_names, wm->nic_offload));
+					    str_sparse(&nic_offload_option_names, wm->nic_offload, &nb));
 			}
 			config->nic_offload = wm->nic_offload;
 		}

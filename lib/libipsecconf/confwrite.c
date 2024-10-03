@@ -415,8 +415,9 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 			/* esn= */
 			if (conn->options[KNCF_ESN] != YNE_UNSET) {
-				cwf("esn", sparse_name(&yne_option_names,
-						       conn->options[KNCF_ESN]));
+				name_buf nb;
+				cwf("esn", str_sparse(&yne_option_names,
+						      conn->options[KNCF_ESN], &nb));
 			}
 
 			switch (conn->options[KNCF_FRAGMENTATION]) {

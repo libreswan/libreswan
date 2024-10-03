@@ -779,7 +779,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 					    c->config->vti.interface));
 		jam(buf, " vti-routing:%s;", bool_str(c->config->vti.routing));
 		jam(buf, " vti-shared:%s;", bool_str(c->config->vti.shared));
-		jam(buf, " nic-offload:%s;", sparse_name(&nic_offload_option_names, c->config->nic_offload));
+
+		jam_string(buf, " nic-offload:");
+		jam_sparse(buf, &nic_offload_option_names, c->config->nic_offload);
+		jam_string(buf, ";");
 	}
 
 

@@ -57,22 +57,20 @@ struct sparse_names {
 
 const struct sparse_name *sparse_lookup(const struct sparse_names *, shunk_t);
 
-#define sparse_buf name_buf
-
-const char *sparse_name(const struct sparse_names *sd, unsigned long val);
-bool sparse_long(const struct sparse_names *sd, unsigned long val, sparse_buf *b);
-bool sparse_short(const struct sparse_names *sd, unsigned long val, sparse_buf *b);
+bool sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *b);
+bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b);
 
 size_t jam_sparse_long(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
-const char *str_sparse_long(const struct sparse_names *sd, unsigned long val, sparse_buf *buf);
+const char *str_sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *buf);
 
 size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
-const char *str_sparse_short(const struct sparse_names *sd, unsigned long val, sparse_buf *buf);
-
-#define jam_sparse jam_sparse_long
-#define str_sparse str_sparse_long
+const char *str_sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *buf);
 
 size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
+
+#define sparse_buf name_buf
+#define jam_sparse jam_sparse_long
+#define str_sparse str_sparse_long
 
 /*
  * sparse_sparse_names is much like enum_enum_names, except, again the

@@ -116,12 +116,12 @@ size_t jam_sparse_lset(struct jambuf *buf, const struct sparse_names *sd, lset_t
 			s += jam_string(buf, sep);
 			sep = LSET_SEPARATOR;
 			/* can return NULL */
-			const char *name = sparse_name(sd, bit);
-			if (name == NULL) {
+			name_buf nb;
+			if (sparse_short(sd, bit, &nb)) {
+				s += jam_string(buf, nb.buf);
+			} else {
 				/* No name for this bit, use hex. */
 				s += jam(buf, "0x" PRI_LSET, bit);
-			} else {
-				s += jam_string(buf, name);
 			}
 		}
 		val &= ~bit;

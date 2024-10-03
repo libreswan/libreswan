@@ -27,16 +27,6 @@
 #include "jambuf.h"
 
 /* look up enum names in a sparse_names */
-const char *sparse_name(const struct sparse_names *sd, unsigned long val)
-{
-	for (const struct sparse_name *p = sd->list; p->name != NULL; p++) {
-		if (p->value == val) {
-			return p->name;
-		}
-	}
-
-	return NULL;
-}
 
 const struct sparse_name *sparse_lookup(const struct sparse_names *names, shunk_t name)
 {
@@ -130,7 +120,13 @@ const char *sparse_sparse_name(const struct sparse_sparse_names *ssn, unsigned l
 	const struct sparse_sparse_name *ssd = ssn->list;
 	while (ssd->names != NULL) {
 		if (ssd->value == v1) {
-			return sparse_name(ssd->names, v2);
+			for (const struct sparse_name *p = ssd->names->list;
+			     p->name != NULL; p++) {
+				if (p->value == v2) {
+					return p->name;
+				}
+			}
+			return NULL;
 		}
 		ssd++;
 	}

@@ -677,9 +677,9 @@ static void jam_impairment_value(struct jambuf *buf,
 {
 	uintmax_t value = value_of(impairment);
 	if (impairment->how_sparse_names != NULL) {
-		const char *name = sparse_name(impairment->how_sparse_names, value);
-		if (name != NULL) {
-			jam_string(buf, name);
+		name_buf nb;
+		if (sparse_short(impairment->how_sparse_names, value, &nb)) {
+			jam_string(buf, nb.buf);
 		} else if (value >= impairment->how_sparse_names->roof) {
 			/*unbias*/
 			jam(buf, "%ju", value - impairment->how_sparse_names->roof);
