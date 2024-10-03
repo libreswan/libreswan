@@ -11,6 +11,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add road
+"road": created ipsec-interface ipsec0[16384]@eth0
 "road": added IKEv2 connection
 road #
  ipsec auto --route road

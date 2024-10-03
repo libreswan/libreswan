@@ -194,6 +194,7 @@ west #
 Device "ipsec1" does not exist.
 west #
  ipsec add westnet4-eastnet4
+"westnet4-eastnet4": created ipsec-interface ipsec1@eth1
 "westnet4-eastnet4": added IKEv2 connection
 west #
  ipsec add westnet6-eastnet6

@@ -14,6 +14,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add road
+"road": created ipsec-interface ipsec1@eth0
 "road": added IKEv2 connection
 road #
  echo "initdone"
@@ -68,6 +69,7 @@ road #
 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "road" #4: ESP traffic information: in=0B out=0B
 "road": delete ipsec-interface ipsec1@eth0 added by pluto
+"road": created ipsec-interface ipsec1@eth0
 "road": added IKEv2 connection
 road #
  ipsec auto --up road
