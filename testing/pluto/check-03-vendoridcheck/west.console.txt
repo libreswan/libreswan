@@ -3,10 +3,41 @@ west #
  valgrind --quiet $(ipsec -n _vendoridcheck)
 ipsec _vendoridcheck: Initializing NSS
 ipsec _vendoridcheck: FIPS Mode: OFF
-[OpenPGP]
-  4f 70 65 6e  50 47 50 31  30 31 37 31                OpenPGP10171
-[KAME/racoon]
-  70 03 cb c1  09 7d be 9c  26 00 ba 69  83 bc 8b 35   p....}..&..i...5
+[Windows KEY_MODS (IKE)]
+  01 52 8b bb  c0 06 96 12  18 49 ab 9a  1c 5b 2a 51   .R.......I...[*Q
+  00 00 00 00                                          ....
+[Windows KEY_MODS (AUTHIP)]
+  01 52 8b bb  c0 06 96 12  18 49 ab 9a  1c 5b 2a 51   .R.......I...[*Q
+  00 00 00 01                                          ....
+[Windows KEY_MODS (IKEv2)]
+  01 52 8b bb  c0 06 96 12  18 49 ab 9a  1c 5b 2a 51   .R.......I...[*Q
+  00 00 00 02                                          ....
+[SSH Sentinel]
+  05 41 82 a0  7c 7a e2 06  f9 d2 cf 9d  24 32 c4 82   .A..|z......$2..
+[strongSwan 2.7.0]
+  07 fa 12 8e  47 54 f9 44  7b 1d d4 63  74 ee f3 60   ....GT.D{..ct..`
+[ELVIS-PLUS Zastava]
+  08 db 45 e6  cb 01 f8 0b  b5 76 e9 a7  8c 0f 54 e1   ..E......v....T.
+  30 0b 88 81                                          0...
+[XAUTH]
+  09 00 26 89  df d6 b7 12                             ..&.....
+[Ssh Communications Security IPSEC Express version 1.2.2]
+  09 ec 27 bf  bc 09 c7 58  23 cf ec bf  fe 56 5a 2e   ..'....X#....VZ.
+[SSH Communications Security IPSEC Express version 3.0.0]
+  0e 58 d5 77  4d f6 02 00  7d 0b 02 44  36 60 f7 eb   .X.wM...}..D6`..
+[NCP client]
+  10 1f b0 b3  5c 5a 4f 4c  08 b9 19 f1  cb 97 77 b0   ....\ZOL......w.
+[Cisco-Unity]
+  12 f5 f2 8c  45 71 68 a9  70 2d 9f e2  74 cc 01 00   ....Eqh.p-..t...
+[strongSwan 4.1.2]
+  15 a1 ac e7  ee 52 fd df  ef 04 f9 28  db 2d d1 34   .....R.....(.-.4
+[Netscreen-15]
+  16 6f 93 2d  55 eb 64 d8  e4 df 4f d3  7e 23 13 f0   .o.-U.d...O.~#..
+  d0 fd 84 51                                          ...Q
+[draft-ietf-ipsec-nat-t-ike-01]
+  16 f6 ca 16  e4 a4 06 6d  83 82 1a 0f  0a ea a8 62   .......m.......b
+[Ssh Communications Security IPSEC Express version 1.1.1]
+  19 52 dc 91  ac 20 f6 46  fb 01 cf 42  a3 3a ee 30   .R... .F...B.:.0
 [Windows 2000]
   1e 2b 51 69  05 99 1c 7d  7c 96 fc bf  b5 87 e4 61   .+Qi...}|......a
   00 00 00 02                                          ....
@@ -31,15 +62,186 @@ ipsec _vendoridcheck: FIPS Mode: OFF
 [Windows 8, 8.1, 10, Server 2012 R2, Server 2016]
   1e 2b 51 69  05 99 1c 7d  7c 96 fc bf  b5 87 e4 61   .+Qi...}|......a
   00 00 00 09                                          ....
-[Windows KEY_MODS (IKE)]
-  01 52 8b bb  c0 06 96 12  18 49 ab 9a  1c 5b 2a 51   .R.......I...[*Q
-  00 00 00 00                                          ....
-[Windows KEY_MODS (AUTHIP)]
-  01 52 8b bb  c0 06 96 12  18 49 ab 9a  1c 5b 2a 51   .R.......I...[*Q
-  00 00 00 01                                          ....
-[Windows KEY_MODS (IKEv2)]
-  01 52 8b bb  c0 06 96 12  18 49 ab 9a  1c 5b 2a 51   .R.......I...[*Q
-  00 00 00 02                                          ....
+[strongSwan 4.0.4]
+  1e f2 83 f8  35 49 b5 ff  96 08 b6 d6  34 f8 4d 75   ....5I......4.Mu
+[Cisco VPN 3000 Series]
+  1f 07 f7 0e  aa 65 14 d3  b0 fa 96 54  2a 50         .....e.....T*P
+[strongSwan 2.5.7]
+  1f 44 42 29  6b 83 d7 e3  3a 8b 45 20  9b a0 e5 90   .DB)k...:.E ....
+[AuthIP supported]
+  21 4c a4 fa  ff a7 f3 2d  67 48 e5 30  33 95 ae 83   !L.....-gH.03...
+[Vid-Initial-Contact]
+  26 24 4d 38  ed db 61 b3  17 2a 36 e3  d0 cf b8 19   &$M8..a..*6.....
+[draft-stenberg-ipsec-nat-traversal-01]
+  27 ba b5 dc  01 ea 07 60  ea 4e 31 90  ac 27 c0 d0   '......`.N1..'..
+[SSH Communications Security IPSEC Express version 2.1.0]
+  28 36 d1 fd  28 07 bc 9e  5a e3 07 86  32 04 51 ec   (6..(...Z...2.Q.
+[strongSwan 2.8.2]
+  29 99 32 27  7b 7d fe 38  2c e2 34 65  33 3a 7d 23   ).2'{}.8,.4e3:}#
+[Netscreen-01]
+  29 9e e8 28  9f 40 a8 97  3b c7 86 87  e2 e7 22 6b   )..(.@..;....."k
+  53 2c 3b 76                                          S,;v
+[Netscreen-14]
+  2a 2b ca c1  9b 8e 91 b4  26 10 78 07  e0 2e 72 49   *+......&.x...rI
+  56 9d 6f d3                                          V.o.
+[strongSwan 4.2.2]
+  2a 51 7d 0d  23 c3 7d 08  bc e7 c2 92  a0 21 7b 39   *Q}.#.}......!{9
+[strongSwan 4.0.0]
+  2c e9 c9 46  a4 c8 79 bf  11 b5 0b 76  cc 56 92 cb   ,..F..y....v.V..
+[strongSwan 4.2.3]
+  2d 1f 40 61  18 fb d5 d2  84 74 79 1f  fa 00 48 8a   -.@a.....ty...H.
+[strongSwan 4.1.4]
+  31 2f 9c b1  a6 b9 0e 19  de 75 28 c9  04 ac 30 87   1/.......u(...0.
+[strongSwan 2.8.0]
+  32 f0 e9 b9  c0 6d fe 8c  9a d5 59 9a  63 69 71 a1   2....m....Y.ciq.
+[strongSwan 2.8.7]
+  3a 0d 4e 7c  a4 e4 92 ed  4d fe 47 6d  1a c6 01 8b   :.N|....M.Gm....
+[Netscreen-02]
+  3a 15 e1 f3  cf 2a 63 58  2e 3a c8 2d  1c 64 cb e3   :....*cX.:.-.d..
+  b6 d7 79 e7                                          ..y.
+[DPDv1_NG]
+  3b 90 31 dc  e4 fc f8 8b  48 9a 92 39  63 dd 0c 49   ;.1.....H..9c..I
+[strongSwan 2.5.6]
+  3c 5e ba 3d  85 64 92 8e  32 ae 43 c3  d9 92 4d ee   <^.=.d..2.C...M.
+[Cisco IOS Device]
+  3e 98 40 48                                          >.@H
+[SSH Communications Security IPSEC Express version 2.1.2]
+  3f 23 72 86  7e 23 7c 1c  d8 25 0a 75  55 9c ae 20   ?#r.~#|..%.uU.. 
+[strongSwan 2.5.5]
+  3f 26 7e d6  21 ad a7 ee  6c 7d 88 93  cc b0 b1 4b   ?&~.!...l}.....K
+[strongSwan 2.6.0]
+  3f 32 66 49  9f fd bd 85  95 0e 70 22  98 06 28 44   ?2fI......p"..(D
+[FRAGMENTATION]
+  40 48 b7 d5  6e bc e8 85  25 e7 de 7f  00 d6 c2 d3   @H..n...%.......
+[Sonicwall 1 (TZ 170 Standard?)]
+  40 4b f4 39  52 2c a3 f6                             @K.9R,..
+[strongSwan 2.3.2]
+  42 a4 83 4c  92 ab 9a 77  77 06 3a fa  25 4b cb 69   B..L...ww.:.%K.i
+[CISCO-DELETE-REASON]
+  43 49 53 43  4f 2d 44 45  4c 45 54 45  2d 52 45 41   CISCO-DELETE-REA
+  53 4f 4e                                             SON
+[CISCO-DYNAMIC-ROUTE]
+  43 49 53 43  4f 2d 44 59  4e 41 4d 49  43 2d 52 4f   CISCO-DYNAMIC-RO
+  55 54 45                                             UTE
+[CISCOVPN-REV-02]
+  43 49 53 43  4f 56 50 4e  2d 52 45 56  2d 30 32      CISCOVPN-REV-02
+[draft-ietf-ipsec-nat-t-ike-07]
+  43 9b 59 f8  ba 67 6c 4c  77 37 ae 22  ea b8 f5 82   C.Y..glLw7."....
+[draft-ietf-ipsec-nat-t-ike-00]
+  44 85 15 2d  18 b6 bb cd  0b e8 a8 46  95 79 dd cc   D..-.......F.y..
+[FLEXVPN-SUPPORTED]
+  46 4c 45 58  56 50 4e 2d  53 55 50 50  4f 52 54 45   FLEXVPN-SUPPORTE
+  44                                                   D
+[strongSwan 4.1.0]
+  47 94 ce f6  84 34 22 98  0d 1a 3d 06  af 41 c5 cd   G....4"...=..A..
+[Netscreen-03]
+  47 d2 b1 26  bf cd 83 48  97 60 e2 cf  8c 5d 4d 5a   G..&...H.`...]MZ
+  03 49 7c 15                                          .I|.
+[strongSwan 2.4.4]
+  48 5a 70 36  1b 44 33 b3  1d ea 1c 6b  e0 df 24 3e   HZp6.D3....k..$>
+[HeartBeat Notify]
+  48 65 61 72  74 42 65 61  74 5f 4e 6f  74 69 66 79   HeartBeat_Notify
+[CAN-IKEv2(obsolete)]
+  49 4b 45 76  32                                      IKEv2
+[RFC 3947]
+  4a 13 1c 81  07 03 58 45  5c 57 28 f2  0e 95 45 2f   J.....XE\W(...E/
+[Netscreen-04]
+  4a 43 40 b5  43 e0 2b 84  c8 8a 8b 96  a8 af 9e be   JC@.C.+.........
+  77 d9 ac cc                                          w...
+[forticlient connect license]
+  4c 53 42 7b  6d 46 5d 1b  33 7b b7 55  a3 7a 7f ef   LSB{mF].3{.U.z..
+[Lucent VPN Client 7 (LVC7.1.2:XP)]
+  4c 56 43 37  2e 31 2e 32  3a 58 50                   LVC7.1.2:XP
+[Lucent VPN Gateway 9 (LVG9.1.255:BRICK:9.1.255)]
+  4c 56 47 39  2e 32 2e 32  34 35 3a 42  52 49 43 4b   LVG9.2.245:BRICK
+  3a 39 2e 32  2e 32 34 35                             :9.2.245
+[strongSwan 2.8.5]
+  4c 7e fa 31  b3 9e 51 04  32 a3 17 57  0d 97 bb b9   L~.1..Q.2..W....
+[strongSwan 4.0.6]
+  4c 90 13 69  46 57 7b 51  91 9d 8d 9a  6b 8e 4a 9f   L..iFW{Q....k.J.
+[draft-ietf-ipsec-nat-t-ike-06]
+  4d 1e 0e 13  6d ea fa 34  c4 f3 ea 9f  02 ec 72 85   M...m..4......r.
+[draft-ietf-ipsec-nat-t-ike]
+  4d f3 79 28  e9 fc 4f d1  b3 26 21 70  d5 15 c6 62   M.y(..O..&!p...b
+[Openswan(project)]
+  4f 45                                                OE
+[Libreswan (3.6+)]
+  4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d            OE-Libreswan-
+[Libreswan (this version)]
+  4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d 35 2e 30   OE-Libreswan-5.0
+  72 63 32                                             rc2
+[FreeS/WAN 2.00]
+  4f 45 44 76  5b 57 6b 40  45 41 74 47                OEDv[Wk@EAtG
+[Openswan 2.2.0]
+  4f 45 48 72  4b 6e 5e 68  55 7c 60 4f                OEHrKn^hU|`O
+[Libreswan 3.0 - 3.5]
+  4f 45 4e                                             OEN
+[FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)]
+  4f 45 57 5d  6a 53 43 42  46 74 79 6e                OEW]jSCBFtyn
+[FreeS/WAN 2.00 (X.509-1.3.1)]
+  4f 45 77 4e  4a 43 52 71  6e 45 48 6f                OEwNJCRqnEHo
+[Openswan(xeleranized)]
+  4f 53 57                                             OSW
+[OpenIKED]
+  4f 70 65 6e  49 4b 45 44                             OpenIKED
+[OpenPGP]
+  4f 70 65 6e  50 47 50 31  30 31 37 31                OpenPGP10171
+[Opportunistic IPsec]
+  4f 70 70 6f  72 74 75 6e  69 73 74 69  63 20 49 50   Opportunistic IP
+  73 65 63                                             sec
+[ESPThruNAT]
+  50 76 0f 62  4c 63 e5 c5  3e ea 38 6c  68 5c a0 83   Pv.bLc..>.8lh\..
+[SSH Sentinel 1.2]
+  54 30 88 8d  e0 1a 31 a6  fa 8f 60 22  4e 44 99 58   T0....1...`"ND.X
+[TIMESTEP]
+  54 49 4d 45  53 54 45 50                             TIMESTEP
+[strongSwan 4.1.3]
+  58 49 ab 6d  8b ea bd 6e  4d 09 e5 a3  b8 8c 08 9a   XI.m...nM.......
+[strongSwan 2.6.2]
+  5b 1c d6 fe  7d 05 0e da  6c 93 87 1c  10 7d b3 d2   [...}...l....}..
+[draft-stenberg-ipsec-nat-traversal-02]
+  61 05 c4 22  e7 68 47 e4  3f 96 84 80  12 92 ae cd   a..".hG.?.......
+[GSSAPI]
+  62 1b 04 bb  09 88 2a c1  e1 59 35 fe  fa 24 ae ee   b.....*..Y5..$..
+[Zywall]
+  62 50 27 74  9d 5a b9 7f  56 16 c1 60  27 65 cf 48   bP't.Z..V..`'e.H
+  0a 3b 7d 0b                                          .;}.
+[SSH Sentinel 1.4]
+  63 d9 a1 a7  00 94 91 b5  a0 a6 fd eb  2a 82 84 f0   c...........*...
+[Netscreen-05]
+  64 40 5f 46  f0 3b 76 60  a2 3b e1 16  a1 97 50 58   d@_F.;v`.;....PX
+  e6 9e 83 87                                          ....
+[Xbox IKEv2 Negotiation]
+  66 08 22 b3  a7 3a 24 41  49 57 8d 62  e0 eb 46 a0   f."..:$AIW.b..F.
+[strongSwan 4.1.8]
+  66 a2 04 55  07 c1 19 da  78 a4 66 62  59 cd ea 48   f..U....x.fbY..H
+[strongSwan 2.6.1]
+  66 af bc 12  bb fe 6c e1  08 b1 f6 9f  4b c9 17 b7   f.....l.....K...
+[MSFT IPsec Security Realm Id]
+  68 6a 8c bd  fe 63 4b 40  51 46 fb 2b  af 33 e9 e8   hj...cK@QF.+.3..
+[SSH Communications Security IPSEC Express version 4.2.0]
+  68 80 c7 d0  26 09 91 14  e4 86 c5 54  30 e7 ab ee   h...&......T0...
+[Netscreen-06]
+  69 93 69 22  87 41 c6 d4  ca 09 4c 93  e2 42 c9 de   i.i".A....L..B..
+  19 e7 b7 c6                                          ....
+[draft-huttunen-ipsec-esp-in-udp-00.txt]
+  6a 74 34 c1  9d 7e 36 34  80 90 a0 23  34 c9 c8 05   jt4..~64...#4...
+[KAME/racoon]
+  70 03 cb c1  09 7d be 9c  26 00 ba 69  83 bc 8b 35   p....}..&..i...5
+[NLB/MSCS fast failover supported]
+  72 87 2b 95  fc da 2e b7  08 ef e3 22  11 9b 49 71   r.+........"..Iq
+[strongSwan 2.4.1]
+  75 b0 65 3c  b2 81 eb 26  d3 1e de 38  c8 e1 e2 28   u.e<...&...8...(
+[strongSwan 2.8.4]
+  76 c7 2b fd  39 84 24 dd  00 1b 86 d0  01 2f e0 61   v.+.9.$....../.a
+[strongSwan 4.0.2]
+  77 e8 ee a6  f5 56 a4 99  de 3f fe 7f  7f 95 66 1c   w....V...?....f.
+[strongSwan 4.1.9]
+  78 fd d2 87  de f0 1a 3f  07 4b 53 69  ea b4 fd 1c   x......?.KSi....
+[SSH Communications Security IPSEC Express version 4.0.1]
+  7a 54 d3 bd  b3 b1 e6 d9  23 89 20 64  be 2d 98 1c   zT......#. d.-..
+[strongSwan 2.5.4]
+  7a 6b f5 b7  df 89 64 2a  75 a7 8e f7  d6 57 c1 c0   zk....d*u....W..
 [AUTHIP INIT KE DH NONE]
   7b b9 38 67  d7 6c 8d 80  df 0f 40 fa  e8 fc 3b 19   {.8g.l....@...;.
   00 00 00 00                                          ....
@@ -64,356 +266,154 @@ ipsec _vendoridcheck: FIPS Mode: OFF
 [AUTHIP INIT KE DH MAX]
   7b b9 38 67  d7 6c 8d 80  df 0f 40 fa  e8 fc 3b 19   {.8g.l....@...;.
   00 00 00 07                                          ....
-[NLB/MSCS fast failover supported]
-  72 87 2b 95  fc da 2e b7  08 ef e3 22  11 9b 49 71   r.+........"..Iq
-[AuthIP supported]
-  21 4c a4 fa  ff a7 f3 2d  67 48 e5 30  33 95 ae 83   !L.....-gH.03...
-[CGA supported]
-  e3 a5 96 6a  76 37 9f e7  07 22 82 31  e5 ce 86 52   ...jv7...".1...R
-[Negotiation discovery supported]
-  fb 1d e3 cd  f3 41 b7 ea  16 b7 e5 be  08 55 f1 20   .....A.......U. 
-[Microsoft Xbox One 2013]
-  8a a3 94 cf  8a 55 77 dc  31 10 c1 13  b0 27 a4 f2   .....Uw.1....'..
-[Xbox IKEv2 Negotiation]
-  66 08 22 b3  a7 3a 24 41  49 57 8d 62  e0 eb 46 a0   f."..:$AIW.b..F.
-[MSFT IPsec Security Realm Id]
-  68 6a 8c bd  fe 63 4b 40  51 46 fb 2b  af 33 e9 e8   hj...cK@QF.+.3..
-[SSH Sentinel]
-  05 41 82 a0  7c 7a e2 06  f9 d2 cf 9d  24 32 c4 82   .A..|z......$2..
-[SSH Sentinel 1.1]
-  b9 16 23 e6  93 ca 18 a5  4c 6a 27 78  55 23 05 e8   ..#.....Lj'xU#..
-[SSH Sentinel 1.2]
-  54 30 88 8d  e0 1a 31 a6  fa 8f 60 22  4e 44 99 58   T0....1...`"ND.X
+[draft-ietf-ipsec-nat-t-ike-03]
+  7d 94 19 a6  53 10 ca 6f  2c 17 9d 92  15 52 9d 56   }...S..o,....R.V
 [SSH Sentinel 1.3]
   7e e5 cb 85  f7 1c e2 59  c9 4a 5c 73  1e e4 e7 52   ~......Y.J\s...R
-[Ssh Communications Security IPSEC Express version 1.1.0]
-  fb f4 76 14  98 40 31 fa  8e 3b b6 19  80 89 b2 23   ..v..@1..;.....#
-[Ssh Communications Security IPSEC Express version 1.1.1]
-  19 52 dc 91  ac 20 f6 46  fb 01 cf 42  a3 3a ee 30   .R... .F...B.:.0
-[Ssh Communications Security IPSEC Express version 1.1.2]
-  e8 bf fa 64  3e 5c 8f 2c  d1 0f da 73  70 b6 eb e5   ...d>\.,...sp...
-[Ssh Communications Security IPSEC Express version 1.2.1]
-  c1 11 1b 2d  ee 8c bc 3d  62 05 73 ec  57 aa b9 cb   ...-...=b.s.W...
-[Ssh Communications Security IPSEC Express version 1.2.2]
-  09 ec 27 bf  bc 09 c7 58  23 cf ec bf  fe 56 5a 2e   ..'....X#....VZ.
 [SSH Communications Security IPSEC Express version 2.0.0]
   7f 21 a5 96  e4 e3 18 f0  b2 f4 94 4c  23 84 cb 84   .!.........L#...
-[SSH Communications Security IPSEC Express version 2.1.0]
-  28 36 d1 fd  28 07 bc 9e  5a e3 07 86  32 04 51 ec   (6..(...Z...2.Q.
-[SSH Communications Security IPSEC Express version 2.1.1]
-  a6 8d e7 56  a9 c5 22 9b  ae 66 49 80  40 95 1a d5   ...V.."..fI.@...
-[SSH Communications Security IPSEC Express version 2.1.2]
-  3f 23 72 86  7e 23 7c 1c  d8 25 0a 75  55 9c ae 20   ?#r.~#|..%.uU.. 
-[SSH Communications Security IPSEC Express version 3.0.0]
-  0e 58 d5 77  4d f6 02 00  7d 0b 02 44  36 60 f7 eb   .X.wM...}..D6`..
-[SSH Communications Security IPSEC Express version 3.0.1]
-  f5 ce 31 eb  c2 10 f4 43  50 cf 71 26  5b 57 38 0f   ..1....CP.q&[W8.
-[SSH Communications Security IPSEC Express version 4.0.0]
-  f6 42 60 af  2e 27 42 da  dd d5 69 87  06 8a 99 a0   .B`..'B...i.....
-[SSH Communications Security IPSEC Express version 4.0.1]
-  7a 54 d3 bd  b3 b1 e6 d9  23 89 20 64  be 2d 98 1c   zT......#. d.-..
-[SSH Communications Security IPSEC Express version 4.1.0]
-  9a a1 f3 b4  34 72 a4 5d  5f 50 6a eb  26 0c f2 14   ....4r.]_Pj.&...
-[SSH Communications Security IPSEC Express version 4.2.0]
-  68 80 c7 d0  26 09 91 14  e4 86 c5 54  30 e7 ab ee   h...&......T0...
-[Cisco-Unity]
-  12 f5 f2 8c  45 71 68 a9  70 2d 9f e2  74 cc 01 00   ....Eqh.p-..t...
-[CISCOVPN-REV-02]
-  43 49 53 43  4f 56 50 4e  2d 52 45 56  2d 30 32      CISCOVPN-REV-02
-[Cisco VPN 3000 Series]
-  1f 07 f7 0e  aa 65 14 d3  b0 fa 96 54  2a 50         .....e.....T*P
-[Cisco IOS Device]
-  3e 98 40 48                                          >.@H
+[strongSwan 2.7.3]
+  7f 50 cc 4e  bf 04 c2 d9  da 73 ab fd  69 b7 7a a2   .P.N.....s..i.z.
 [Cisco-Unity FW type]
   80 01 00 01  80 02 00 01  80 03 00 02                ............
-[CISCO-DELETE-REASON]
-  43 49 53 43  4f 2d 44 45  4c 45 54 45  2d 52 45 41   CISCO-DELETE-REA
-  53 4f 4e                                             SON
-[FLEXVPN-SUPPORTED]
-  46 4c 45 58  56 50 4e 2d  53 55 50 50  4f 52 54 45   FLEXVPN-SUPPORTE
-  44                                                   D
-[CISCO-DYNAMIC-ROUTE]
-  43 49 53 43  4f 2d 44 59  4e 41 4d 49  43 2d 52 4f   CISCO-DYNAMIC-RO
-  55 54 45                                             UTE
-[SSH Sentinel 1.4]
-  63 d9 a1 a7  00 94 91 b5  a0 a6 fd eb  2a 82 84 f0   c...........*...
-[SSH Sentinel 1.4.1]
-  eb 4b 0d 96  27 6b 4e 22  0a d1 62 21  a7 b2 a5 e6   .K..'kN"..b!....
-[TIMESTEP]
-  54 49 4d 45  53 54 45 50                             TIMESTEP
-[FreeS/WAN 2.00]
-  4f 45 44 76  5b 57 6b 40  45 41 74 47                OEDv[Wk@EAtG
-[FreeS/WAN 2.00 (X.509-1.3.1)]
-  4f 45 77 4e  4a 43 52 71  6e 45 48 6f                OEwNJCRqnEHo
-[FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)]
-  4f 45 57 5d  6a 53 43 42  46 74 79 6e                OEW]jSCBFtyn
-[Openswan 2.2.0]
-  4f 45 48 72  4b 6e 5e 68  55 7c 60 4f                OEHrKn^hU|`O
-[Openswan(xeleranized)]
-  4f 53 57                                             OSW
-[Openswan(project)]
-  4f 45                                                OE
-[ELVIS-PLUS Zastava]
-  08 db 45 e6  cb 01 f8 0b  b5 76 e9 a7  8c 0f 54 e1   ..E......v....T.
-  30 0b 88 81                                          0...
-[Opportunistic IPsec]
-  4f 70 70 6f  72 74 75 6e  69 73 74 69  63 20 49 50   Opportunistic IP
-  73 65 63                                             sec
-[Libreswan (this version)]
-  4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d 35 2e 30   OE-Libreswan-5.0
-  72 63 32                                             rc2
-[Libreswan (3.6+)]
-  4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d            OE-Libreswan-
-[Libreswan 3.0 - 3.5]
-  4f 45 4e                                             OEN
-[NCP client]
-  10 1f b0 b3  5c 5a 4f 4c  08 b9 19 f1  cb 97 77 b0   ....\ZOL......w.
-[Sonicwall 1 (TZ 170 Standard?)]
-  40 4b f4 39  52 2c a3 f6                             @K.9R,..
-[Sonicwall 2 (3.1.0.12-86s?)]
-  da 8e 93 78  80 01 00 00                             ...x....
-[Shrew Soft client]
-  f1 4b 94 b7  bf f1 fe f0  27 73 b8 c4  9f ed ed 26   .K......'s.....&
-[Netscreen-01]
-  29 9e e8 28  9f 40 a8 97  3b c7 86 87  e2 e7 22 6b   )..(.@..;....."k
-  53 2c 3b 76                                          S,;v
-[Netscreen-02]
-  3a 15 e1 f3  cf 2a 63 58  2e 3a c8 2d  1c 64 cb e3   :....*cX.:.-.d..
-  b6 d7 79 e7                                          ..y.
-[Netscreen-03]
-  47 d2 b1 26  bf cd 83 48  97 60 e2 cf  8c 5d 4d 5a   G..&...H.`...]MZ
-  03 49 7c 15                                          .I|.
-[Netscreen-04]
-  4a 43 40 b5  43 e0 2b 84  c8 8a 8b 96  a8 af 9e be   JC@.C.+.........
-  77 d9 ac cc                                          w...
-[Netscreen-05]
-  64 40 5f 46  f0 3b 76 60  a2 3b e1 16  a1 97 50 58   d@_F.;v`.;....PX
-  e6 9e 83 87                                          ....
-[Netscreen-06]
-  69 93 69 22  87 41 c6 d4  ca 09 4c 93  e2 42 c9 de   i.i".A....L..B..
-  19 e7 b7 c6                                          ....
+[draft-ietf-ipsec-nat-t-ike-05]
+  80 d0 bb 3d  ef 54 56 5e  e8 46 45 d4  c8 5c e3 ee   ...=.TV^.FE..\..
+[strongSwan 2.7.1]
+  81 34 87 85  82 12 17 85  ba 65 ea 34  5d 6b a7 24   .4.......e.4]k.$
+[Sidewinder]
+  84 04 ad f9  cd a0 57 60  b2 ca 29 2e  4b ff 53 7b   ......W`..).K.S{
+[strongSwan 2.2.0]
+  85 b6 cb ec  48 0d 5c 8c  d9 88 2c 82  5a c2 c2 44   ....H.\...,.Z..D
+[strongSwan 2.5.2]
+  86 1c e5 eb  72 16 4b 19  0e 9e 62 9a  31 cf 49 01   ....r.K...b.1.I.
+[strongSwan]
+  88 2f e5 6d  6f d2 0d bc  22 51 61 3b  2e be 5b eb   ./.mo..."Qa;..[.
+[Microsoft Xbox One 2013]
+  8a a3 94 cf  8a 55 77 dc  31 10 c1 13  b0 27 a4 f2   .....Uw.1....'..
 [Netscreen-07]
   8c 0d c6 cf  62 a0 ef 1b  5c 6e ab d1  b6 7b a6 98   ....b...\n...{..
   66 ad f1 6a                                          f..j
+[strongSwan 2.8.8]
+  8c 4a 3b cb  72 9b 11 f7  03 d2 2a 5b  39 64 0c a8   .J;.r.....*[9d..
+[draft-ietf-ipsec-nat-t-ike-08]
+  8f 8d 83 82  6d 24 6b 6f  c7 a8 a6 a4  28 c1 1d e8   ....m$ko....(...
+[draft-ietf-ipsec-nat-t-ike-02_n]
+  90 cb 80 91  3e bb 69 6e  08 63 81 b5  ec 42 7b 1f   ....>.in.c...B{.
 [Netscreen-08]
   92 d2 7a 9e  cb 31 d9 92  46 98 6d 34  53 d0 c3 d5   ..z..1..F.m4S...
   7a 22 2a 61                                          z"*a
+[strongSwan 2.4.3]
+  98 2b 7a 06  3a 33 c1 43  a8 ea dc 88  24 9f 6b cc   .+z.:3.C....$.k.
+[draft-ietf-ipsec-nat-t-ike-04]
+  99 09 b6 4e  ed 93 7c 65  73 de 52 ac  e9 52 fa 6b   ...N..|es.R..R.k
+[strongSwan 2.2.2]
+  99 dc 7c c8  23 37 6b 3b  33 d0 43 57  89 6a e0 7b   ..|.#7k;3.CW.j.{
+[strongSwan 2.5.1]
+  9a 4a 46 48  f6 0f 8e da  7c fc bf e2  71 ee 5b 7d   .JFH....|...q.[}
+[SSH Communications Security IPSEC Express version 4.1.0]
+  9a a1 f3 b4  34 72 a4 5d  5f 50 6a eb  26 0c f2 14   ....4r.]_Pj.&...
 [Netscreen-09]
   9b 09 6d 9a  c3 27 5a 7d  6f e8 b9 1c  58 31 11 b0   ..m..'Z}o...X1..
   9e fe d1 a0                                          ....
+[strongSwan 4.0.1]
+  9d bb af cf  1d b0 dd 59  5a e0 65 29  40 03 ad 3e   .......YZ.e)@..>
+[strongSwan 2.5.0]
+  9e b3 d9 07  ed 7a da 4e  3c bc ac b9  17 ab c8 e4   .....z.N<.......
+[strongSwan 4.2.0]
+  9f 68 90 13  25 a9 72 89  43 35 30 2a  95 31 ab 9f   .h..%.r.C50*.1..
+[strongSwan 2.7.2]
+  a1 94 e2 aa  dd d0 ba fb  95 25 3d d9  6d c7 33 eb   .........%=.m.3.
+[Netscreen-16]
+  a3 5b fd 05  ca 1a c0 b3  d2 f2 4e 9e  82 bf cb ff   .[........N.....
+  9c 9e 52 b5                                          ..R.
+[SSH Communications Security IPSEC Express version 2.1.1]
+  a6 8d e7 56  a9 c5 22 9b  ae 66 49 80  40 95 1a d5   ...V.."..fI.@...
+[strongSwan 4.0.7]
+  ab 07 46 22  1c c8 fd 0d  52 38 f7 3a  9b 3d a5 57   ..F"....R8.:.=.W
+[A GSS-API Authentication Method for IKE]
+  ad 2c 0d d0  b9 c3 20 83  cc ba 25 b8  86 1e c4 55   .,.... ...%....U
+[Dead Peer Detection]
+  af ca d7 13  68 a1 f1 c9  6b 86 96 fc  77 57 01 00   ....h...k...wW..
+[strongSwan 4.0.3]
+  b1 81 b1 8e  11 4f c2 09  b3 c6 e2 6c  3a 80 71 8e   .....O.....l:.q.
+[strongSwan 2.6.3]
+  b2 86 0e 78  37 f7 11 be  f3 d0 ee b1  06 87 2d ed   ...x7.........-.
+[Fortinet Endpoint Control]
+  b4 f0 1c a9  51 e9 da 8d  0b af bb d3  4a d3 04 4e   ....Q.......J..N
+[strongSwan 4.1.11]
+  b7 bd 9f 2f  97 8e 32 59  a7 aa 9f 7a  13 96 ad 6c   .../..2Y...z...l
+[strongSwan 2.3.0]
+  b8 f9 2b 2f  a2 d3 fe 5f  e1 58 34 4b  da 1c c6 ae   ..+/..._.X4K....
+[SSH Sentinel 1.1]
+  b9 16 23 e6  93 ca 18 a5  4c 6a 27 78  55 23 05 e8   ..#.....Lj'xU#..
+[strongSwan 2.6.4]
+  b9 27 f9 52  19 a0 fe 36  00 db a3 c1  18 2a e5 5f   .'.R...6.....*._
+[strongSwan 4.2.1]
+  ba b2 53 f4  cb 10 a8 10  8a 7c 92 7c  56 c8 78 86   ..S......|.|V.x.
 [Netscreen-10]
   bf 03 74 61  08 d7 46 c9  04 f1 f3 54  7d e2 4f 78   ..ta..F....T}.Ox
   47 9f ed 12                                          G...
+[strongSwan 4.1.5]
+  bf 0f bf 73  06 eb b7 82  70 42 d8 93  53 98 86 e2   ...s....pB..S...
+[strongSwan 4.1.10]
+  bf 3a 89 ae  5b ef 8e 72  d4 4d ac 8b  b8 8d 7d 5f   .:..[..r.M....}_
+[Ssh Communications Security IPSEC Express version 1.2.1]
+  c1 11 1b 2d  ee 8c bc 3d  62 05 73 ec  57 aa b9 cb   ...-...=b.s.W...
 [Netscreen-11]
   c2 e8 05 00  f4 cc 5f bf  5d aa ee d3  bb 59 ab ae   ......_.]....Y..
   ee 56 c6 52                                          .V.R
 [Netscreen-12]
   c8 66 0a 62  b0 3b 1b 61  30 bf 78 16  08 d3 2a 6a   .f.b.;.a0.x...*j
   8d 0f b8 9f                                          ....
-[Netscreen-13]
-  f8 85 da 40  b1 e7 a9 ab  d1 76 55 ec  5b be c0 f2   ...@.....vU.[...
-  1f 0e d5 2e                                          ....
-[Netscreen-14]
-  2a 2b ca c1  9b 8e 91 b4  26 10 78 07  e0 2e 72 49   *+......&.x...rI
-  56 9d 6f d3                                          V.o.
-[Netscreen-15]
-  16 6f 93 2d  55 eb 64 d8  e4 df 4f d3  7e 23 13 f0   .o.-U.d...O.~#..
-  d0 fd 84 51                                          ...Q
-[Netscreen-16]
-  a3 5b fd 05  ca 1a c0 b3  d2 f2 4e 9e  82 bf cb ff   .[........N.....
-  9c 9e 52 b5                                          ..R.
-[Zywall]
-  62 50 27 74  9d 5a b9 7f  56 16 c1 60  27 65 cf 48   bP't.Z..V..`'e.H
-  0a 3b 7d 0b                                          .;}.
-[Sidewinder]
-  84 04 ad f9  cd a0 57 60  b2 ca 29 2e  4b ff 53 7b   ......W`..).K.S{
-[Lucent VPN Gateway 9 (LVG9.1.255:BRICK:9.1.255)]
-  4c 56 47 39  2e 32 2e 32  34 35 3a 42  52 49 43 4b   LVG9.2.245:BRICK
-  3a 39 2e 32  2e 32 34 35                             :9.2.245
-[Lucent VPN Client 7 (LVC7.1.2:XP)]
-  4c 56 43 37  2e 31 2e 32  3a 58 50                   LVC7.1.2:XP
+[draft-ietf-ipsec-nat-t-ike-02]
+  cd 60 46 43  35 df 21 f8  7c fd b2 fc  68 b6 a4 48   .`FC5.!.|...h..H
+[strongSwan 4.1.6]
+  d1 96 83 36  8a f4 b0 ed  c2 1c cd e9  82 b1 d1 b0   ...6............
+[strongSwan 4.1.1]
+  d3 f1 c4 88  c3 68 17 5d  5f 40 a8 f5  ca 5f 5e 12   .....h.]_@..._^.
+[strongSwan 2.2.1]
+  d9 11 8b 1e  9d e5 ef ce  d9 cc 9d 88  3f 21 68 ff   ............?!h.
+[Sonicwall 2 (3.1.0.12-86s?)]
+  da 8e 93 78  80 01 00 00                             ...x....
+[strongSwan 4.0.5]
+  dd 18 0d 21  e5 ce 65 5a  76 8b a3 22  11 dd 8a d9   ...!..eZv.."....
+[strongSwan 2.5.3]
+  df 5b 1f 0f  1d 56 79 d9  f8 51 2b 16  c5 5a 60 65   .[...Vy..Q+..Z`e
+[strongSwan 2.8.1]
+  e3 7f 2d 5b  a8 9a 62 cd  20 2e e2 7d  ac 06 c8 a8   ..-[..b. ..}....
+[CGA supported]
+  e3 a5 96 6a  76 37 9f e7  07 22 82 31  e5 ce 86 52   ...jv7...".1...R
+[strongSwan 2.4.2]
+  e7 a3 fd 0c  6d 77 1a 8f  1b 8a 86 a4  16 9c 9e a4   ....mw..........
+[strongSwan 2.4.0]
+  e8 29 c8 81  49 ba b3 c0  ce e8 5d a6  0e 18 ae 9b   .)..I.....].....
+[Ssh Communications Security IPSEC Express version 1.1.2]
+  e8 bf fa 64  3e 5c 8f 2c  d1 0f da 73  70 b6 eb e5   ...d>\.,...sp...
+[strongSwan 4.1.7]
+  ea 84 0a a4  df c9 71 2d  6c 32 b5 a1  6e b3 29 a3   ......q-l2..n.).
+[SSH Sentinel 1.4.1]
+  eb 4b 0d 96  27 6b 4e 22  0a d1 62 21  a7 b2 a5 e6   .K..'kN"..b!....
+[Shrew Soft client]
+  f1 4b 94 b7  bf f1 fe f0  27 73 b8 c4  9f ed ed 26   .K......'s.....&
 [Check Point]
   f4 ed 19 e0  c1 14 eb 51  6f aa ac 0e  e3 7d af 28   .......Qo....}.(
   07 b4 38 1f                                          ..8.
-[GSSAPI]
-  62 1b 04 bb  09 88 2a c1  e1 59 35 fe  fa 24 ae ee   b.....*..Y5..$..
-[A GSS-API Authentication Method for IKE]
-  ad 2c 0d d0  b9 c3 20 83  cc ba 25 b8  86 1e c4 55   .,.... ...%....U
-[draft-stenberg-ipsec-nat-traversal-01]
-  27 ba b5 dc  01 ea 07 60  ea 4e 31 90  ac 27 c0 d0   '......`.N1..'..
-[draft-stenberg-ipsec-nat-traversal-02]
-  61 05 c4 22  e7 68 47 e4  3f 96 84 80  12 92 ae cd   a..".hG.?.......
-[ESPThruNAT]
-  50 76 0f 62  4c 63 e5 c5  3e ea 38 6c  68 5c a0 83   Pv.bLc..>.8lh\..
-[draft-huttunen-ipsec-esp-in-udp-00.txt]
-  6a 74 34 c1  9d 7e 36 34  80 90 a0 23  34 c9 c8 05   jt4..~64...#4...
-[draft-ietf-ipsec-nat-t-ike-00]
-  44 85 15 2d  18 b6 bb cd  0b e8 a8 46  95 79 dd cc   D..-.......F.y..
-[draft-ietf-ipsec-nat-t-ike-01]
-  16 f6 ca 16  e4 a4 06 6d  83 82 1a 0f  0a ea a8 62   .......m.......b
-[draft-ietf-ipsec-nat-t-ike-02_n]
-  90 cb 80 91  3e bb 69 6e  08 63 81 b5  ec 42 7b 1f   ....>.in.c...B{.
-[draft-ietf-ipsec-nat-t-ike-02]
-  cd 60 46 43  35 df 21 f8  7c fd b2 fc  68 b6 a4 48   .`FC5.!.|...h..H
-[draft-ietf-ipsec-nat-t-ike-03]
-  7d 94 19 a6  53 10 ca 6f  2c 17 9d 92  15 52 9d 56   }...S..o,....R.V
-[draft-ietf-ipsec-nat-t-ike-04]
-  99 09 b6 4e  ed 93 7c 65  73 de 52 ac  e9 52 fa 6b   ...N..|es.R..R.k
-[draft-ietf-ipsec-nat-t-ike-05]
-  80 d0 bb 3d  ef 54 56 5e  e8 46 45 d4  c8 5c e3 ee   ...=.TV^.FE..\..
-[draft-ietf-ipsec-nat-t-ike-06]
-  4d 1e 0e 13  6d ea fa 34  c4 f3 ea 9f  02 ec 72 85   M...m..4......r.
-[draft-ietf-ipsec-nat-t-ike-07]
-  43 9b 59 f8  ba 67 6c 4c  77 37 ae 22  ea b8 f5 82   C.Y..glLw7."....
-[draft-ietf-ipsec-nat-t-ike-08]
-  8f 8d 83 82  6d 24 6b 6f  c7 a8 a6 a4  28 c1 1d e8   ....m$ko....(...
-[draft-ietf-ipsec-nat-t-ike]
-  4d f3 79 28  e9 fc 4f d1  b3 26 21 70  d5 15 c6 62   M.y(..O..&!p...b
-[RFC 3947]
-  4a 13 1c 81  07 03 58 45  5c 57 28 f2  0e 95 45 2f   J.....XE\W(...E/
-[strongSwan]
-  88 2f e5 6d  6f d2 0d bc  22 51 61 3b  2e be 5b eb   ./.mo..."Qa;..[.
-[strongSwan 2.2.0]
-  85 b6 cb ec  48 0d 5c 8c  d9 88 2c 82  5a c2 c2 44   ....H.\...,.Z..D
-[strongSwan 2.2.1]
-  d9 11 8b 1e  9d e5 ef ce  d9 cc 9d 88  3f 21 68 ff   ............?!h.
-[strongSwan 2.2.2]
-  99 dc 7c c8  23 37 6b 3b  33 d0 43 57  89 6a e0 7b   ..|.#7k;3.CW.j.{
-[strongSwan 2.3.0]
-  b8 f9 2b 2f  a2 d3 fe 5f  e1 58 34 4b  da 1c c6 ae   ..+/..._.X4K....
+[SSH Communications Security IPSEC Express version 3.0.1]
+  f5 ce 31 eb  c2 10 f4 43  50 cf 71 26  5b 57 38 0f   ..1....CP.q&[W8.
+[SSH Communications Security IPSEC Express version 4.0.0]
+  f6 42 60 af  2e 27 42 da  dd d5 69 87  06 8a 99 a0   .B`..'B...i.....
 [strongSwan 2.3.1]
   f6 97 c1 af  cc 2e c8 dd  cd f9 9d c7  af 03 a6 7f   ................
-[strongSwan 2.3.2]
-  42 a4 83 4c  92 ab 9a 77  77 06 3a fa  25 4b cb 69   B..L...ww.:.%K.i
-[strongSwan 2.4.0]
-  e8 29 c8 81  49 ba b3 c0  ce e8 5d a6  0e 18 ae 9b   .)..I.....].....
-[strongSwan 2.4.1]
-  75 b0 65 3c  b2 81 eb 26  d3 1e de 38  c8 e1 e2 28   u.e<...&...8...(
-[strongSwan 2.4.2]
-  e7 a3 fd 0c  6d 77 1a 8f  1b 8a 86 a4  16 9c 9e a4   ....mw..........
-[strongSwan 2.4.3]
-  98 2b 7a 06  3a 33 c1 43  a8 ea dc 88  24 9f 6b cc   .+z.:3.C....$.k.
-[strongSwan 2.4.4]
-  48 5a 70 36  1b 44 33 b3  1d ea 1c 6b  e0 df 24 3e   HZp6.D3....k..$>
-[strongSwan 2.5.0]
-  9e b3 d9 07  ed 7a da 4e  3c bc ac b9  17 ab c8 e4   .....z.N<.......
-[strongSwan 2.5.1]
-  9a 4a 46 48  f6 0f 8e da  7c fc bf e2  71 ee 5b 7d   .JFH....|...q.[}
-[strongSwan 2.5.2]
-  86 1c e5 eb  72 16 4b 19  0e 9e 62 9a  31 cf 49 01   ....r.K...b.1.I.
-[strongSwan 2.5.3]
-  df 5b 1f 0f  1d 56 79 d9  f8 51 2b 16  c5 5a 60 65   .[...Vy..Q+..Z`e
-[strongSwan 2.5.4]
-  7a 6b f5 b7  df 89 64 2a  75 a7 8e f7  d6 57 c1 c0   zk....d*u....W..
-[strongSwan 2.5.5]
-  3f 26 7e d6  21 ad a7 ee  6c 7d 88 93  cc b0 b1 4b   ?&~.!...l}.....K
-[strongSwan 2.5.6]
-  3c 5e ba 3d  85 64 92 8e  32 ae 43 c3  d9 92 4d ee   <^.=.d..2.C...M.
-[strongSwan 2.5.7]
-  1f 44 42 29  6b 83 d7 e3  3a 8b 45 20  9b a0 e5 90   .DB)k...:.E ....
-[strongSwan 2.6.0]
-  3f 32 66 49  9f fd bd 85  95 0e 70 22  98 06 28 44   ?2fI......p"..(D
-[strongSwan 2.6.1]
-  66 af bc 12  bb fe 6c e1  08 b1 f6 9f  4b c9 17 b7   f.....l.....K...
-[strongSwan 2.6.2]
-  5b 1c d6 fe  7d 05 0e da  6c 93 87 1c  10 7d b3 d2   [...}...l....}..
-[strongSwan 2.6.3]
-  b2 86 0e 78  37 f7 11 be  f3 d0 ee b1  06 87 2d ed   ...x7.........-.
-[strongSwan 2.6.4]
-  b9 27 f9 52  19 a0 fe 36  00 db a3 c1  18 2a e5 5f   .'.R...6.....*._
-[strongSwan 2.7.0]
-  07 fa 12 8e  47 54 f9 44  7b 1d d4 63  74 ee f3 60   ....GT.D{..ct..`
-[strongSwan 2.7.1]
-  81 34 87 85  82 12 17 85  ba 65 ea 34  5d 6b a7 24   .4.......e.4]k.$
-[strongSwan 2.7.2]
-  a1 94 e2 aa  dd d0 ba fb  95 25 3d d9  6d c7 33 eb   .........%=.m.3.
-[strongSwan 2.7.3]
-  7f 50 cc 4e  bf 04 c2 d9  da 73 ab fd  69 b7 7a a2   .P.N.....s..i.z.
-[strongSwan 2.8.0]
-  32 f0 e9 b9  c0 6d fe 8c  9a d5 59 9a  63 69 71 a1   2....m....Y.ciq.
-[strongSwan 2.8.1]
-  e3 7f 2d 5b  a8 9a 62 cd  20 2e e2 7d  ac 06 c8 a8   ..-[..b. ..}....
-[strongSwan 2.8.2]
-  29 99 32 27  7b 7d fe 38  2c e2 34 65  33 3a 7d 23   ).2'{}.8,.4e3:}#
+[Netscreen-13]
+  f8 85 da 40  b1 e7 a9 ab  d1 76 55 ec  5b be c0 f2   ...@.....vU.[...
+  1f 0e d5 2e                                          ....
+[Negotiation discovery supported]
+  fb 1d e3 cd  f3 41 b7 ea  16 b7 e5 be  08 55 f1 20   .....A.......U. 
 [strongSwan 2.8.3]
   fb 46 41 ad  0e eb 2a 34  49 1d 15 f4  ef f5 10 63   .FA...*4I......c
-[strongSwan 2.8.4]
-  76 c7 2b fd  39 84 24 dd  00 1b 86 d0  01 2f e0 61   v.+.9.$....../.a
-[strongSwan 2.8.5]
-  4c 7e fa 31  b3 9e 51 04  32 a3 17 57  0d 97 bb b9   L~.1..Q.2..W....
+[Ssh Communications Security IPSEC Express version 1.1.0]
+  fb f4 76 14  98 40 31 fa  8e 3b b6 19  80 89 b2 23   ..v..@1..;.....#
 [strongSwan 2.8.6]
   fe 3f 49 70  6e 26 a9 fb  36 a8 7b fc  e9 ea 36 ce   .?Ipn&..6.{...6.
-[strongSwan 2.8.7]
-  3a 0d 4e 7c  a4 e4 92 ed  4d fe 47 6d  1a c6 01 8b   :.N|....M.Gm....
-[strongSwan 2.8.8]
-  8c 4a 3b cb  72 9b 11 f7  03 d2 2a 5b  39 64 0c a8   .J;.r.....*[9d..
-[strongSwan 4.0.0]
-  2c e9 c9 46  a4 c8 79 bf  11 b5 0b 76  cc 56 92 cb   ,..F..y....v.V..
-[strongSwan 4.0.1]
-  9d bb af cf  1d b0 dd 59  5a e0 65 29  40 03 ad 3e   .......YZ.e)@..>
-[strongSwan 4.0.2]
-  77 e8 ee a6  f5 56 a4 99  de 3f fe 7f  7f 95 66 1c   w....V...?....f.
-[strongSwan 4.0.3]
-  b1 81 b1 8e  11 4f c2 09  b3 c6 e2 6c  3a 80 71 8e   .....O.....l:.q.
-[strongSwan 4.0.4]
-  1e f2 83 f8  35 49 b5 ff  96 08 b6 d6  34 f8 4d 75   ....5I......4.Mu
-[strongSwan 4.0.5]
-  dd 18 0d 21  e5 ce 65 5a  76 8b a3 22  11 dd 8a d9   ...!..eZv.."....
-[strongSwan 4.0.6]
-  4c 90 13 69  46 57 7b 51  91 9d 8d 9a  6b 8e 4a 9f   L..iFW{Q....k.J.
-[strongSwan 4.0.7]
-  ab 07 46 22  1c c8 fd 0d  52 38 f7 3a  9b 3d a5 57   ..F"....R8.:.=.W
-[strongSwan 4.1.0]
-  47 94 ce f6  84 34 22 98  0d 1a 3d 06  af 41 c5 cd   G....4"...=..A..
-[strongSwan 4.1.1]
-  d3 f1 c4 88  c3 68 17 5d  5f 40 a8 f5  ca 5f 5e 12   .....h.]_@..._^.
-[strongSwan 4.1.2]
-  15 a1 ac e7  ee 52 fd df  ef 04 f9 28  db 2d d1 34   .....R.....(.-.4
-[strongSwan 4.1.3]
-  58 49 ab 6d  8b ea bd 6e  4d 09 e5 a3  b8 8c 08 9a   XI.m...nM.......
-[strongSwan 4.1.4]
-  31 2f 9c b1  a6 b9 0e 19  de 75 28 c9  04 ac 30 87   1/.......u(...0.
-[strongSwan 4.1.5]
-  bf 0f bf 73  06 eb b7 82  70 42 d8 93  53 98 86 e2   ...s....pB..S...
-[strongSwan 4.1.6]
-  d1 96 83 36  8a f4 b0 ed  c2 1c cd e9  82 b1 d1 b0   ...6............
-[strongSwan 4.1.7]
-  ea 84 0a a4  df c9 71 2d  6c 32 b5 a1  6e b3 29 a3   ......q-l2..n.).
-[strongSwan 4.1.8]
-  66 a2 04 55  07 c1 19 da  78 a4 66 62  59 cd ea 48   f..U....x.fbY..H
-[strongSwan 4.1.9]
-  78 fd d2 87  de f0 1a 3f  07 4b 53 69  ea b4 fd 1c   x......?.KSi....
-[strongSwan 4.1.10]
-  bf 3a 89 ae  5b ef 8e 72  d4 4d ac 8b  b8 8d 7d 5f   .:..[..r.M....}_
-[strongSwan 4.1.11]
-  b7 bd 9f 2f  97 8e 32 59  a7 aa 9f 7a  13 96 ad 6c   .../..2Y...z...l
-[strongSwan 4.2.0]
-  9f 68 90 13  25 a9 72 89  43 35 30 2a  95 31 ab 9f   .h..%.r.C50*.1..
-[strongSwan 4.2.1]
-  ba b2 53 f4  cb 10 a8 10  8a 7c 92 7c  56 c8 78 86   ..S......|.|V.x.
-[strongSwan 4.2.2]
-  2a 51 7d 0d  23 c3 7d 08  bc e7 c2 92  a0 21 7b 39   *Q}.#.}......!{9
-[strongSwan 4.2.3]
-  2d 1f 40 61  18 fb d5 d2  84 74 79 1f  fa 00 48 8a   -.@a.....ty...H.
-[Fortinet Endpoint Control]
-  b4 f0 1c a9  51 e9 da 8d  0b af bb d3  4a d3 04 4e   ....Q.......J..N
-[forticlient connect license]
-  4c 53 42 7b  6d 46 5d 1b  33 7b b7 55  a3 7a 7f ef   LSB{mF].3{.U.z..
-[OpenIKED]
-  4f 70 65 6e  49 4b 45 44                             OpenIKED
-[XAUTH]
-  09 00 26 89  df d6 b7 12                             ..&.....
-[Dead Peer Detection]
-  af ca d7 13  68 a1 f1 c9  6b 86 96 fc  77 57 01 00   ....h...k...wW..
-[HeartBeat Notify]
-  48 65 61 72  74 42 65 61  74 5f 4e 6f  74 69 66 79   HeartBeat_Notify
-[FRAGMENTATION]
-  40 48 b7 d5  6e bc e8 85  25 e7 de 7f  00 d6 c2 d3   @H..n...%.......
-[Vid-Initial-Contact]
-  26 24 4d 38  ed db 61 b3  17 2a 36 e3  d0 cf b8 19   &$M8..a..*6.....
-[CAN-IKEv2(obsolete)]
-  49 4b 45 76  32                                      IKEv2
-[DPDv1_NG]
-  3b 90 31 dc  e4 fc f8 8b  48 9a 92 39  63 dd 0c 49   ;.1.....H..9c..I
 west #
  
