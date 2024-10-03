@@ -7664,7 +7664,7 @@ IKEv2 transforms:
          jam_enum_enum 2 65536: IKEv2_PRF_65536 OK
          jam_enum_enum_short 2 65536: IKEv2_PRF_65536 OK
 jam_enum_lset_short:
-  debug 24:
+  debug 44:
 	<<cpu-usage+crypt>>
 ipsec _enumcheck: leak detective found no leaks
 west #
