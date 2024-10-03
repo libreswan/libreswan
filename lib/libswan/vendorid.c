@@ -101,8 +101,6 @@
  *  But this VID has not been seen in any IETF drafts. (mlafon)
  */
 
-#define MAX_LOG_VID_LEN         32
-
 #define VID_KEEP                0x0000
 #define VID_MD5HASH             0x0001
 #define VID_STRING              0x0002
@@ -744,20 +742,28 @@ void init_vendorid(struct logger *logger)
 
 void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, bool vid_useful)
 {
+	const unsigned MAX_LOG_VID_LEN = 32;
+
 	if (id == VID_none) {
 		/*
 		 * Unknown Vendor ID. Log the beginning.
 		 */
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "ignoring unknown Vendor ID payload [");
-			jam_dump_bytes(buf, vid.ptr, PMIN(vid.len, MAX_LOG_VID_LEN));
-			if (vid.len > MAX_LOG_VID_LEN) {
-				jam(buf, "...");
-			}
-			jam(buf, "]");
+			/* truncate the VID */
+			shunk_t tvid = hunk_slice(vid, 0, PMIN(vid.len, MAX_LOG_VID_LEN));
+			const char *trunc = (vid.len > MAX_LOG_VID_LEN ? " ..." : "");
+			jam_string(buf, "ignoring unknown Vendor ID payload");
+			/* dump as ascii */
+			jam_string(buf, " \"");
+			jam_sanitized_hunk(buf, tvid);
+			jam_string(buf, trunc);
+			jam_string(buf, "\"");
+			/* dump as hex */
+			jam_string(buf, " [");
+			jam_dump_hunk(buf, tvid);
+			jam_string(buf, trunc);
+			jam_string(buf, "]");
 		}
-		/* this includes ascii */
-		ldbg_hunk(logger, vid);
 	} else {
 		/*
 		 * Known Vendor ID, casually mention it in the debug
