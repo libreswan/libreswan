@@ -103,8 +103,10 @@ static const char default_fips_off_ikev2_esp_proposals[] =
 	"AES_GCM_16_256"
 	","
 	"AES_GCM_16_128"
+#ifdef USE_CHACHA
 	","
 	"CHACHA20_POLY1305" /*non-FIPS*/
+#endif
 	","
 	"AES_CBC_256"
 	","

@@ -37,3 +37,7 @@ MANDIR=$(PREFIX)/man
 
 # LTO seems either broken or confused
 USE_LTO ?= false
+
+# CHACHA is embedded in the ESP proposal (it shouldn't) this removes
+# it, but also removes it from IKE, oops.
+USE_CHACHA = false
