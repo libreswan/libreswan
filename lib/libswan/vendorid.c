@@ -911,8 +911,8 @@ void llog_vendorids(lset_t rc_flags, struct logger *logger)
 		enum known_vendorid id = v->entry->id;
 		shunk_t vid = shunk_from_vendorid(id);
 		enum_buf idb;
-		/* wack is secret code for the console aka stdout */
-		llog(rc_flags, logger, "[%s]", str_vendorid(id, &idb));
+		llog(rc_flags, logger, "[%s]%s", str_vendorid(id, &idb),
+		     (v->entry->kind == VID_SUBSTRING ? " (prefix match)" : ""));
 		llog_dump_hunk(rc_flags, logger, vid);
 		enum known_vendorid r = vendorid_by_shunk(vid);
 		passert(r != VID_none);
