@@ -2718,14 +2718,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->esn.no = true;
 	} else if (!kernel_ops->esn_supported) {
 		/*
-		 * YNE_UNSET default's to YES|NO, hence need to warn
-		 * for that ESN was disabled for that and YNE_YES and
-		 * YNE_EITHER.
+		 * Only warn when there's an explicit esn=yes.
 		 */
-		if (wm->esn != YNE_NO) {
+		if (wm->esn == YNE_YES ||
+		    wm->esn == YNE_EITHER) {
+			name_buf nb;
 			llog(RC_LOG, c->logger,
-			     "warning: %s kernel interface does not support ESN so disabling",
-			     kernel_ops->interface_name);
+			     "warning: %s kernel interface does not support ESN, ignoring esn=%s",
+			     kernel_ops->interface_name,
+			     str_sparse(&yne_option_names, wm->esn, &nb));
 		}
 		config->esn.no = true;
 #ifdef USE_IKEv1
