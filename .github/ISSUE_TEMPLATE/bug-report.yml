@@ -10,15 +10,15 @@ body:
       label: Which version of Libreswan?
       value: |
         Please add a label for your version of libreswan (see right v5.0, v5.1 et.al.) and the Operating System you're running on (Linux, NetBSD, ...).
-	If at all possible, please try reproducing the problem in mainline.
-	If you're looking for a backported fix to an old Libreswan release then please see https://libreswan.org/wiki/Support
+        If at all possible, please try reproducing the problem in mainline.
+        If you're looking for a backported fix to an old Libreswan release then please see https://libreswan.org/wiki/Support
   - type: textarea
      attributes:
        label: Please tell us about the environment
        placeholder:
-	- What is the other end running?
-	- Which operating system?
-	- IKEv1 or IKEv2? ESP or AH? NAT?
+        - What is the other end running?
+        - Which operating system?
+        - IKEv1 or IKEv2? ESP or AH? NAT?
     validations:
       required: false
   - type: textarea
