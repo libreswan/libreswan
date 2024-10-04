@@ -110,16 +110,6 @@ struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
 struct logger *clone_logger(const struct logger *stack, where_t where);
 void free_logger(struct logger **logp, where_t where);
 
-#define log_verbose(RC_FLAGS, LOGGER, FORMAT, ...)			\
-	{								\
-		if (suppress_log(LOGGER)) {				\
-			dbg(FORMAT, ##__VA_ARGS__);			\
-		} else {						\
-			llog(RC_FLAGS, LOGGER, FORMAT,		\
-				    ##__VA_ARGS__);			\
-		}							\
-	}
-
 /*
  * Log the state.
  *
