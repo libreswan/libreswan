@@ -5,10 +5,41 @@ body:
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
+  - type: markdown
+    attributes:
+      label: Which version of Libreswan?
+      value: |
+        Please add a label for your version of libreswan (see right v5.0, v5.1 et.al.) and the Operating System you're running on (Linux, NetBSD, ...).
+	If at all possible, please try reproducing the problem in mainline.
+	If you're looking for a backported fix to an old Libreswan release then please see https://libreswan.org/wiki/Support
   - type: textarea
-    id: what-happened
+     attributes:
+       label: Please tell us about the environment
+       placeholder:
+	- What is the other end running?
+	- Which operating system?
+	- IKEv1 or IKEv2? ESP or AH? NAT?
+    validations:
+      required: false
+  - type: textarea
     attributes:
       label: What happened?
       description: Also tell us, what did you expect to happen?
     validations:
       required: true
+  - type: textarea
+    attributes:
+      label: Your configuration
+      description: Please copy and past your configuration file.
+      placeholder: This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output.  There's no need to include debug output (most problems are better understood with just the standard logs).
+      placeholder: This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
