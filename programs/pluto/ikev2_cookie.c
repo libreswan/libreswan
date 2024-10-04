@@ -202,11 +202,18 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 						      struct child_sa *child,
 						      struct msg_digest *md)
 {
-	pexpect(child == NULL);
-	if (!pexpect(md->pd[PD_v2N_COOKIE] != NULL)) {
+	PEXPECT(ike->sa.logger, child == NULL);
+	if (!PEXPECT(ike->sa.logger, md->pd[PD_v2N_COOKIE] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
 	const struct pbs_in *cookie_pbs = &md->pd[PD_v2N_COOKIE]->pbs;
+
+	/*
+	 * Cookie exchanges are not logged when the connection is OE.
+	 */
+	lset_t rc_flags = (!is_opportunistic(ike->sa.st_connection) ? RC_LOG :
+			   LDBGP(DBG_BASE, ike->sa.logger) ? DEBUG_STREAM :
+			   LEMPTY);
 
 	/*
 	 * Responder replied with N(COOKIE) for DOS avoidance.  See
@@ -224,20 +231,14 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	 */
 	shunk_t cookie = pbs_in_left(cookie_pbs);
 	if (cookie.len > IKEv2_MAX_COOKIE_SIZE) {
-		/* XXX: cumbersom */
-		if (suppress_log(ike->sa.logger)) {
-			dbg("IKEv2 COOKIE notify payload too big - packet dropped");
-		} else {
-			llog_sa(RC_LOG, ike, "IKEv2_COOKIE notify payload too big - packet dropped");
+		if (rc_flags != LEMPTY) {
+			llog(rc_flags, ike->sa.logger, "IKEv2 COOKIE notify payload too big - packet dropped");
 		}
 		return STF_IGNORE;
 	}
 	if (cookie.len < 1) {
-		/* XXX: cumbersom */
-		if (suppress_log(ike->sa.logger)) {
-			dbg("IKEv2 COOKIE notify payload too small - packet dropped");
-		} else {
-			llog_sa(RC_LOG, ike, "IKEv2 COOKIE notify payload too small - packet dropped");
+		if (rc_flags != LEMPTY) {
+			llog(rc_flags, ike->sa.logger, "IKEv2 COOKIE notify payload too small - packet dropped");
 		}
 		return STF_IGNORE;
 	}
@@ -247,17 +248,18 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	 * one?
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N]->next != NULL) {
-		dbg("ignoring other notify payloads");
+		ldbg(ike->sa.logger, "ignoring other notify payloads");
 	}
 
 	replace_chunk(&ike->sa.st_dcookie, cookie, "DDOS cookie");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("IKEv2 cookie received", ike->sa.st_dcookie);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "IKEv2 cookie received");
+		LDBG_hunk(ike->sa.logger, ike->sa.st_dcookie);
 	}
 
-	if (!suppress_log(ike->sa.logger)) {
-		llog_sa(RC_LOG, ike,
-			  "received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload");
+	if (rc_flags != LEMPTY) {
+		llog(rc_flags, ike->sa.logger,
+		     "received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload");
 	}
 
 	/*
