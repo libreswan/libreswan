@@ -658,7 +658,9 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	return result;
 }
 
-diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id *id)
+diag_t cert_verify_subject_alt_name(const char *who,
+				    const CERTCertificate *cert,
+				    const struct id *id)
 {
 	/*
 	 * Get a handle on the certificate's subject alt name.
@@ -669,8 +671,8 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 	if (rv != SECSuccess) {
 		id_buf idb;
 		enum_buf kb;
-		return diag("peer certificate contains no subjectAltName extension to match %s '%s'",
-			    str_enum(&ike_id_type_names, id->kind, &kb),
+		return diag("%s certificate contains no subjectAltName extension to match %s '%s'",
+			    who, str_enum(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
 	}
 
@@ -685,8 +687,8 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 		PORT_FreeArena(arena, PR_FALSE);
 		id_buf idb;
 		enum_buf kb;
-		return diag("peer certificate subjectAltName extension failed to decode while looking for %s '%s'",
-			    str_enum(&ike_id_type_names, id->kind, &kb),
+		return diag("%s certificate subjectAltName extension failed to decode while looking for %s '%s'",
+			    who, str_enum(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
 	}
 
@@ -794,8 +796,8 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 			if (hunk_memeq(as, current->name.other.data,
 				       current->name.other.len)) {
 				address_buf b;
-				dbg("peer certificate subjectAltname matches address %s",
-				    str_address(&myip, &b));
+				dbg("%s certificate subjectAltname matches address %s",
+				    who, str_address(&myip, &b));
 				PORT_FreeArena(arena, PR_FALSE);
 				return NULL;
 			}
@@ -816,8 +818,9 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 	 */
 	PORT_FreeArena(arena, PR_FALSE);
 	esb_buf esb;
-	return diag("peer certificate subjectAltName extension does not match %s '%s'",
-		    str_enum(&ike_id_type_names, id->kind, &esb), ascii_id);
+	return diag("%s certificate subjectAltName extension does not match %s '%s'",
+		    who, str_enum(&ike_id_type_names, id->kind, &esb),
+		    ascii_id);
 }
 
 SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain)

@@ -52,13 +52,16 @@
  */
 static bool idr_wildmatch(const struct host_end *this, const struct id *idr, struct logger *logger)
 {
-	/* check if received IDr is a valid SAN of our cert */
-	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
-	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
-	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
+	/*
+	 * Check if the IDr sent by the peer is a valid SAN of our
+	 * cert.  This way the peer can indicate which of our many
+	 * identities it wants to authenticate against.
+	 */
 	if (this->config->cert.nss_cert != NULL &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		diag_t d = cert_verify_subject_alt_name(this->config->cert.nss_cert, idr);
+		diag_t d = cert_verify_subject_alt_name("our",
+							this->config->cert.nss_cert,
+							idr);
 		if (d == NULL) {
 			return true;
 		}
@@ -772,7 +775,7 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
        dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
        struct id remote_cert_id = empty_id;
-       diag_t d = match_end_cert_id(certs, &c->remote->host.id, &remote_cert_id);
+       diag_t d = match_peer_id_cert(certs, &c->remote->host.id, &remote_cert_id);
 
        if (d == NULL) {
 	       dbg("X509: CERT and ID matches current connection");

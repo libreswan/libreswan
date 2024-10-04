@@ -56,7 +56,8 @@ struct verified_certs find_and_verify_certs(struct logger *log,
 					    struct root_certs *root_cert,
 					    const struct id *keyid);
 
-extern diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id *id);
+extern diag_t cert_verify_subject_alt_name(const char *who, const CERTCertificate *cert,
+					   const struct id *id);
 
 extern SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain);
 

@@ -36,9 +36,9 @@ struct certs;
 struct ike_sa;
 struct cert;
 
-diag_t match_end_cert_id(const struct certs *certs,
-			 const struct id *peer_id,
-			 struct id *cert_id);
+diag_t match_peer_id_cert(const struct certs *peer_certs,
+			  const struct id *peer_id,
+			  struct id *cert_id);
 
 extern generalName_t *collect_rw_ca_candidates(ip_address local_address,
 					       enum ike_version ike_version);

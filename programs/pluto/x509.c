@@ -625,11 +625,11 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
  * We only deal with the head and it must be an endpoint cert.
  */
 
-diag_t match_end_cert_id(const struct certs *certs,
+diag_t match_peer_id_cert(const struct certs *peer_certs,
 			 const struct id *peer_id,
 			 struct id *cert_id)
 {
-	CERTCertificate *end_cert = certs->cert;
+	CERTCertificate *end_cert = peer_certs->cert;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
 		return diag("cannot use peer CA certificate");
@@ -643,7 +643,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		return cert_verify_subject_alt_name(end_cert, peer_id);
+		return cert_verify_subject_alt_name("peer", end_cert, peer_id);
 	}
 
 	case ID_FROMCERT:
