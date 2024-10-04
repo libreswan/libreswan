@@ -41,16 +41,12 @@ struct log_limiter certificate_log_limiter = LOG_LIMIT(10, "bad certificate");
 
 static unsigned log_limit(const struct log_limiter *limiter)
 {
-	if (impair.log_rate_limit == 0) {
-		/* unimpaired; use default */
-		/* --impair log-rate-limit:no */
-		return limiter->limit;
-	} else {
-		/* impaired; use value */
-		/* --impair log-rate-limit:yes */
-		/* --impair log-rate-limit:NNN */
-		return impair.log_rate_limit;
+	if (impair.log_rate_limit.enabled) {
+		return impair.log_rate_limit.value;
 	}
+
+	/* --impair log-rate-limit:no */
+	return limiter->limit;
 }
 
 lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)

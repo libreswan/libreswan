@@ -93,7 +93,7 @@ struct impair {
 	enum impair_emit ike_key_length_attribute;
 	enum impair_emit child_key_length_attribute;
 
-	unsigned log_rate_limit;
+	struct impair_unsigned log_rate_limit;
 
 	enum impair_emit v1_hash_payload;
 	enum impair_v1_exchange v1_hash_exchange;

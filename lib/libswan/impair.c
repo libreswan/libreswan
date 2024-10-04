@@ -209,7 +209,7 @@ struct impairment impairments[] = {
 	V(ke_payload, "corrupt the outgoing KE payload",
 	  .how_sparse_names = &impair_emit_names,
 	  .unsigned_help = "emit the KE payload filled with <unsigned> bytes"),
-	B(log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
+	U(log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
 	B(major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
 	B(minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
 	B(childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
