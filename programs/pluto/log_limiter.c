@@ -22,6 +22,8 @@
 #include "defs.h"
 #include "demux.h"
 
+#define RATE_LIMIT 1000
+
 struct limiter {
 	pthread_mutex_t mutex;
 	const unsigned limit;
@@ -31,12 +33,16 @@ struct limiter {
 
 struct limiter log_limiters[LOG_LIMITER_ROOF] = {
 	[MD_LOG_LIMITER] {
-		.limit = 1000,
+		.limit = RATE_LIMIT,
 		.what = "message digest",
 	},
 	[CERTIFICATE_LOG_LIMITER] = {
 		.limit = 10,
 		.what = "bad certificate",
+	},
+	[PAYLOAD_ERRORS_LOG_LIMITER] = {
+		.what = "payload errors",
+		.limit = RATE_LIMIT,
 	},
 };
 

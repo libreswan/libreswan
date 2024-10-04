@@ -49,6 +49,7 @@
 #include "ikev2_eap.h"
 #include "ikev2_create_child_sa.h"
 #include "ikev2_delete.h"
+#include "log_limiter.h"		/* for payload_errors_log_limiter; */
 
 struct ikev2_payload_errors {
 	bool bad;
@@ -58,8 +59,8 @@ struct ikev2_payload_errors {
 	v2_notification_t notification;
 };
 
-static void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
-				  const struct ikev2_payload_errors *errors);
+static void llog_v2_payload_errors(struct logger *logger, struct msg_digest *md,
+				   const struct ikev2_payload_errors *errors);
 
 static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 							 const struct payload_summary *summary,
@@ -513,19 +514,20 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 	 * secured state have the same message payload set so either
 	 * they all match or they all fail.
 	 */
+
 	if (message_payload_status.bad) {
 		/*
 		 * A very messed up message - none of the state
 		 * transitions recognized it!.
 		 */
-		log_v2_payload_errors(ike->sa.logger, md,
-				      &message_payload_status);
+		llog_v2_payload_errors(ike->sa.logger, md,
+				       &message_payload_status);
 		return NULL;
 	}
 
 	if (encrypted_payload_status.bad) {
-		log_v2_payload_errors(ike->sa.logger, md,
-				      &encrypted_payload_status);
+		llog_v2_payload_errors(ike->sa.logger, md,
+				       &encrypted_payload_status);
 		/*
 		 * Notify caller so that evasive action can be taken.
 		 */
@@ -561,8 +563,7 @@ const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
 	 * transitions recognized it!.
 	 */
 	if (message_payload_status.bad) {
-		log_v2_payload_errors(logger, md,
-				      &message_payload_status);
+		llog_v2_payload_errors(logger, md, &message_payload_status);
 		return NULL;
 	}
 
@@ -655,25 +656,15 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
  * report problems - but less so when OE
  */
 
-void log_v2_payload_errors(struct logger *logger, struct msg_digest *md,
+void llog_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 			   const struct ikev2_payload_errors *errors)
 {
-	enum stream log_stream;
-	if (suppress_log(logger)) {
-		if (DBGP(DBG_BASE)) {
-			log_stream = DEBUG_STREAM;
-		} else {
-			/*
-			 * presumably the responder so tone things
-			 * down
-			 */
-			return;
-		}
-	} else {
-		log_stream = ALL_STREAMS;
+	lset_t rc_flags = log_limiter_rc_flags(logger, PAYLOAD_ERRORS_LOG_LIMITER);
+	if (rc_flags == LEMPTY) {
+		return;
 	}
 
-	LLOG_JAMBUF(log_stream, logger, buf) {
+	LLOG_JAMBUF(rc_flags, logger, buf) {
 		const enum ikev2_exchange ix = md->hdr.isa_xchg;
 		jam(buf, "dropping unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
