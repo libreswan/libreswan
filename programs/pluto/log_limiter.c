@@ -32,7 +32,7 @@ struct limiter {
 };
 
 struct limiter log_limiters[LOG_LIMITER_ROOF] = {
-	[MD_LOG_LIMITER] {
+	[MD_LOG_LIMITER] = {
 		.limit = RATE_LIMIT,
 		.what = "message digest",
 	},
