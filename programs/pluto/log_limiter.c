@@ -83,18 +83,6 @@ lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)
 	return LOG_STREAM;
 }
 
-void llog_md(const struct msg_digest *md,
-	     const char *message, ...)
-{
-	lset_t rc_flags = log_limiter_rc_flags(md->logger, &md_log_limiter);
-	if (rc_flags != LEMPTY) {
-		va_list ap;
-		va_start(ap, message);
-		llog_va_list(rc_flags, md->logger, message, ap);
-		va_end(ap);
-	}
-}
-
 static global_timer_cb reset_log_limiter;	/* type check */
 
 static void reset_log_limiter(struct logger *logger)

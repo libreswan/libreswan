@@ -111,6 +111,18 @@ struct logger *clone_logger(const struct logger *stack, where_t where);
 void free_logger(struct logger **logp, where_t where);
 
 /*
+ * Wrappers.
+ *
+ * XXX: do these help or hinder - would calling log_state() directly
+ * be better (if slightly more text)?  For the moment stick with the
+ * wrappers so changing the underlying implementation is easier.
+ *
+ * XXX: what about whack_log()?  That only sends messages to the
+ * global whack (and never the objects whack).  Likely easier to stick
+ * with whack_log() and manually add the prefix as needed.
+ */
+
+/*
  * Log the state.
  *
  * PRI_STATE() / PRI_SA() try to match the llog_sa() prefix.
@@ -130,25 +142,6 @@ void log_state(lset_t rc_flags, const struct state *st,
 #define pri_sa(SA, B) pri_connection((SA)->sa.st_connection, B), pri_so((SA)->sa.st_serialno)
 
 size_t jam_state(struct jambuf *buf, const struct state *st);
-
-/*
- * Wrappers.
- *
- * XXX: do these help or hinder - would calling log_state() directly
- * be better (if slightly more text)?  For the moment stick with the
- * wrappers so changing the underlying implementation is easier.
- *
- * XXX: what about whack_log()?  That only sends messages to the
- * global whack (and never the objects whack).  Likely easier to stick
- * with whack_log() and manually add the prefix as needed.
- */
-
-/*
- * rate limited logging
- */
-
-PRINTF_LIKE(2)
-void llog_md(const struct msg_digest *md, const char *message, ...);
 
 extern void show_setup_plutomain(struct show *s);
 extern void show_setup_natt(struct show *s);
