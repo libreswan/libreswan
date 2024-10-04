@@ -11,7 +11,6 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add eastnet-westnet-ikev2
-"eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
 "eastnet-westnet-ikev2": added IKEv2 connection
 east #
  ipsec whack --impair suppress_retransmits

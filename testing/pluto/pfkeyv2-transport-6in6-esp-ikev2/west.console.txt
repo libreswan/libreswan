@@ -9,7 +9,6 @@ Initializing NSS database
 Starting pluto.
 west #
  ipsec auto --add eastnet-westnet-ikev2
-"eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
 "eastnet-westnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"

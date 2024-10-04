@@ -7,7 +7,6 @@ Initializing NSS database
 Starting pluto.
 netbsde# ../../guestbin/wait-until-pluto-started
 netbsde# ipsec auto --add eastnet-westnet-ikev2
-"eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
 "eastnet-westnet-ikev2": added IKEv2 connection
 netbsde# ipsec whack --impair suppress_retransmits
 netbsde# echo "initdone"
@@ -21,7 +20,6 @@ Initializing NSS database
 Starting pluto.
 netbsdw# ../../guestbin/wait-until-pluto-started
 netbsdw# ipsec auto --add eastnet-westnet-ikev2
-"eastnet-westnet-ikev2": warning: PF_KEY v2 kernel interface does not support ESN so disabling
 "eastnet-westnet-ikev2": added IKEv2 connection
 netbsdw# echo "initdone"
 initdone

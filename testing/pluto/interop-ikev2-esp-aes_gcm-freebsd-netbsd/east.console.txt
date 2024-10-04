@@ -10,7 +10,6 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add interop
-"interop": warning: PF_KEY v2 kernel interface does not support ESN so disabling
 "interop": added IKEv2 connection
 east #
  ipsec trafficstatus
