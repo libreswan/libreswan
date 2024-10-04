@@ -159,12 +159,6 @@ struct logger_object_vec {
 	const char *name;
 	bool free_object;
 	size_t (*jam_object_prefix)(struct jambuf *buf, const void *object);
-	/*
-	 * When opportunistic encryption or the initial responder, for
-	 * instance, some logging is suppressed.
-	 */
-	bool (*suppress_object_log)(const void *object);
-#define suppress_log(LOGGER) (LOGGER)->object_vec->suppress_object_log((LOGGER)->object)
 };
 
 /* these omit ": " always */
@@ -178,8 +172,6 @@ size_t jam_prefix(struct jambuf *buf, const struct logger *logger);
 size_t jam_logger_prefix(struct jambuf *buf, const struct logger *logger);
 void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
-bool suppress_object_log_false(const void *object);
-bool suppress_object_log_true(const void *object);
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
 #ifndef GLOBAL_LOGGER

@@ -46,15 +46,9 @@ static size_t jam_progname_prefix(struct jambuf *buf, const void *object UNUSED)
 	return 0;
 }
 
-static bool suppress_progname_log(const void *object UNUSED)
-{
-	return false;
-}
-
 const struct logger_object_vec progname_object_vec = {
 	.name = "tool",
 	.jam_object_prefix = jam_progname_prefix,
-	.suppress_object_log = suppress_progname_log,
 };
 
 static struct logger progname_logger = {

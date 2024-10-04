@@ -16,16 +16,6 @@
 
 #include "lswlog.h"
 
-bool suppress_object_log_false(const void *object UNUSED)
-{
-	return false;
-}
-
-bool suppress_object_log_true(const void *object UNUSED)
-{
-	return true;
-}
-
 size_t jam_object_prefix_none(struct jambuf *buf UNUSED, const void *object UNUSED)
 {
 	return 0;
@@ -33,7 +23,6 @@ size_t jam_object_prefix_none(struct jambuf *buf UNUSED, const void *object UNUS
 
 static const struct logger_object_vec logger_global_vec = {
 	.name = "global",
-	.suppress_object_log = suppress_object_log_false,
 	.jam_object_prefix = jam_object_prefix_none,
 	.free_object = false,
 };

@@ -333,7 +333,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 
 const struct logger_object_vec logger_global_vec = {
 	.name = "global",
-	.suppress_object_log = suppress_object_log_false,
 	.jam_object_prefix = jam_object_prefix_none,
 	.free_object = false,
 };
@@ -376,7 +375,6 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 
 const struct logger_object_vec logger_from_vec = {
 	.name = "from",
-	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_from_prefix,
 	.free_object = false,
 };
@@ -397,7 +395,6 @@ static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 
 const struct logger_object_vec logger_message_vec = {
 	.name = "message",
-	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_message_prefix,
 	.free_object = false,
 };
@@ -417,15 +414,8 @@ static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 	return s;
 }
 
-static bool suppress_connection_log(const void *object)
-{
-	const struct connection *connection = object;
-	return is_opportunistic(connection);
-}
-
 const struct logger_object_vec logger_connection_vec = {
 	.name = "connection",
-	.suppress_object_log = suppress_connection_log,
 	.jam_object_prefix = jam_connection_prefix,
 	.free_object = false,
 };
@@ -464,15 +454,8 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 	return s;
 }
 
-static bool suppress_state_log(const void *object)
-{
-	const struct state *state = object;
-	return is_opportunistic(state->st_connection);
-}
-
 const struct logger_object_vec logger_state_vec = {
 	.name = "state",
-	.suppress_object_log = suppress_state_log,
 	.jam_object_prefix = jam_state_prefix,
 	.free_object = false,
 };
@@ -485,14 +468,6 @@ static size_t jam_string_prefix(struct jambuf *buf, const void *object)
 
 static const struct logger_object_vec logger_string_vec = {
 	.name = "string(never-suppress)",
-	.suppress_object_log = suppress_object_log_false,
-	.jam_object_prefix = jam_string_prefix,
-	.free_object = true,
-};
-
-static const struct logger_object_vec logger_string_suppress_vec = {
-	.name = "string(always-suppressed)",
-	.suppress_object_log = suppress_object_log_true,
 	.jam_object_prefix = jam_string_prefix,
 	.free_object = true,
 };
@@ -523,19 +498,10 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	 */
 	prefix_buf pb;
 	const char *prefix = str_prefix(stack, &pb);
-	/*
-	 * choose a logger object vec with a hardwired suppress.
-	 */
-	const struct logger_object_vec *object_vec;
-	if (suppress_log(stack)) {
-		object_vec = &logger_string_suppress_vec;
-	} else {
-		object_vec = &logger_string_vec;
-	}
 	/* construct the clone */
 	struct logger heap = {
 		.where = stack->where,
-		.object_vec = object_vec,
+		.object_vec = &logger_string_vec,
 		.object = clone_str(prefix, "heap logger prefix"),
 		.debugging = stack->debugging,
 	};
