@@ -97,7 +97,7 @@ void process_md(struct msg_digest *md)
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		lset_t rc_flags = log_limiter_rc_flags(md->logger, &md_log_limiter);
+		lset_t rc_flags = log_limiter_rc_flags(md->logger, MD_LOG_LIMITER);
 		if (rc_flags != 0) {
 			llog(rc_flags, md->logger,
 			     "dropping packet with mangled IKE header: %s",
@@ -459,7 +459,7 @@ void llog_msg_digest(lset_t rc_flags, struct logger *logger, const char *prefix,
 void llog_md(const struct msg_digest *md,
 	     const char *message, ...)
 {
-	lset_t rc_flags = log_limiter_rc_flags(md->logger, &md_log_limiter);
+	lset_t rc_flags = log_limiter_rc_flags(md->logger, MD_LOG_LIMITER);
 	if (rc_flags != LEMPTY) {
 		va_list ap;
 		va_start(ap, message);

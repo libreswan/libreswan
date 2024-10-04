@@ -20,27 +20,30 @@
 
 struct msg_digest;
 struct logger;
-struct log_limiter;
 
 /*
  * rate limited logging
  */
 
-extern struct log_limiter md_log_limiter;
-extern struct log_limiter certificate_log_limiter;
+enum log_limiter {
+	MD_LOG_LIMITER,
+	CERTIFICATE_LOG_LIMITER,
+#define LOG_LIMITER_ROOF (CERTIFICATE_LOG_LIMITER+1)
+};
 
 /*
- * Returns non-LEMPTY rc_flags when the message should be logged.  For
- * instance:
+ * Returns non-LEMPTY RC_FLAGS (either RC_LOG, or DEBUG_STREAM) when
+ * the message should be logged.  For instance:
  *
- *    lset_t rc_flags = log_limiter_rc_flags(logger, &md_log_limiter);
+ *    lset_t rc_flags = log_limiter_rc_flags(logger, MD_LOG_LIMITER);
  *    if (rc_flags != LEMPTY) {
- *        llog(rc_flags, logger, "I am rate limited");
+ *        llog(rc_flags, logger, "a log-limited message");
  *    }
  *
  */
-lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter);
 
-void init_log_limiter(void);
+lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter limiter);
+
+void init_log_limiter(struct logger *logger);
 
 #endif

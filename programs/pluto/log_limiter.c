@@ -22,24 +22,25 @@
 #include "defs.h"
 #include "demux.h"
 
-struct log_limiter {
+struct limiter {
 	pthread_mutex_t mutex;
 	const unsigned limit;
 	volatile unsigned count;
 	const char *what;
 };
 
-#define LOG_LIMIT(N, WHAT) {				\
-		.mutex = PTHREAD_MUTEX_INITIALIZER,	\
-		.limit = N,				\
-		.what = WHAT,				\
-	}
+struct limiter log_limiters[LOG_LIMITER_ROOF] = {
+	[MD_LOG_LIMITER] {
+		.limit = 1000,
+		.what = "message digest",
+	},
+	[CERTIFICATE_LOG_LIMITER] = {
+		.limit = 10,
+		.what = "bad certificate",
+	},
+};
 
-#define RATE_LIMIT 1000
-struct log_limiter md_log_limiter = LOG_LIMIT(RATE_LIMIT, "message digest");
-struct log_limiter certificate_log_limiter = LOG_LIMIT(10, "bad certificate");
-
-static unsigned log_limit(const struct log_limiter *limiter)
+static unsigned log_limit(const struct limiter *limiter)
 {
 	if (impair.log_rate_limit.enabled) {
 		return impair.log_rate_limit.value;
@@ -49,8 +50,10 @@ static unsigned log_limit(const struct log_limiter *limiter)
 	return limiter->limit;
 }
 
-lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)
+lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter log_limiter)
 {
+	struct limiter *limiter = &log_limiters[log_limiter];
+
 	/* allow imparing to override specified limit */
 	unsigned limit = log_limit(limiter);
 
@@ -73,27 +76,40 @@ lset_t log_limiter_rc_flags(struct logger *logger, struct log_limiter *limiter)
 	pthread_mutex_unlock(&limiter->mutex);
 
 	if (is_limited) {
-		return (DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY);
+		return (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : LEMPTY);
 	}
 
-	return LOG_STREAM;
+	return RC_LOG;
 }
 
 static global_timer_cb reset_log_limiter;	/* type check */
 
 static void reset_log_limiter(struct logger *logger)
 {
-	FOR_EACH_THING(limiter, &md_log_limiter, &certificate_log_limiter) {
-		if (limiter->count > log_limit(limiter)) {
-			llog(RC_LOG, logger, "%s rate limited log reset",
-			     limiter->what);
+	FOR_EACH_ELEMENT(limiter, log_limiters) {
+		pthread_mutex_lock(&limiter->mutex);
+		{
+			if (limiter->count > log_limit(limiter)) {
+				llog(RC_LOG, logger, "%s rate limited log reset",
+				     limiter->what);
+			}
+			limiter->count = 0;
 		}
-		limiter->count = 0;
+		pthread_mutex_unlock(&limiter->mutex);
 	}
 }
 
-void init_log_limiter(void)
+void init_log_limiter(struct logger *logger)
 {
+	PASSERT(logger, elemsof(log_limiters) == LOG_LIMITER_ROOF);
+	FOR_EACH_ELEMENT(limiter, log_limiters) {
+		ldbg(logger, "initializing limiter %td: %s %u",
+		     limiter-log_limiters, limiter->what, limiter->limit);
+		PASSERT(logger, limiter->what != NULL);
+		PASSERT(logger, limiter->limit > 0);
+		pthread_mutex_init(&limiter->mutex, NULL);
+
+	}
 	enable_periodic_timer(EVENT_RESET_LOG_LIMITER,
 			      reset_log_limiter,
 			      RESET_LOG_LIMITER_FREQUENCY);

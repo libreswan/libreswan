@@ -1829,7 +1829,7 @@ int main(int argc, char **argv)
 	init_server(logger);
 
 	/* server initialized; timers can follow */
-	init_log_limiter();
+	init_log_limiter(logger);
 	init_nat_traversal_timer(keep_alive, logger);
 	init_ddns();
 
