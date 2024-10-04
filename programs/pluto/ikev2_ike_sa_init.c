@@ -695,13 +695,6 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	}
 
 	/*
-	 * XXX: why limit this log line to whack when opportunistic?
-	 * This was, after all, triggered by something that happened
-	 * at this end.
-	 */
-	enum stream log_stream = (!is_opportunistic(c) ? ALL_STREAMS : WHACK_STREAM);
-
-	/*
 	 * XXX: this is the first of two IKE_SA_INIT messages that are
 	 * logged when building and sending an IKE_SA_INIT request:
 	 *
@@ -731,18 +724,18 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			what = "establishing Child SA";
 		}
-		llog_sa(log_stream, ike,
-			"initiating IKEv2 connection to replace %s #%lu",
-			what, predecessor->st_serialno);
+		llog(RC_LOG, ike->sa.logger,
+		     "initiating IKEv2 connection to replace %s #%lu",
+		     what, predecessor->st_serialno);
 		move_pending(ike_sa(predecessor, HERE), ike);
 	} else {
 		address_buf ab;
 		const struct ip_protocol *protocol = endpoint_protocol(ike->sa.st_remote_endpoint);
 		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		llog_sa(log_stream, ike,
-			"initiating IKEv2 connection to %s using %s",
-			str_address(&remote_addr, &ab),
-			protocol->name);
+		llog(RC_LOG, ike->sa.logger,
+		     "initiating IKEv2 connection to %s using %s",
+		     str_address(&remote_addr, &ab),
+		     protocol->name);
 	}
 
 	/*
