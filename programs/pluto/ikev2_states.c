@@ -666,7 +666,7 @@ void llog_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 
 	LLOG_JAMBUF(rc_flags, logger, buf) {
 		const enum ikev2_exchange ix = md->hdr.isa_xchg;
-		jam(buf, "dropping unexpected ");
+		jam_string(buf, "unexpected ");
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 		jam(buf, " message");
 		/* we want to print and log the first notify payload */
