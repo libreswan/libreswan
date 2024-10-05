@@ -33,7 +33,11 @@ log_if() {
 # install stuff into ${etc}/ipsec.*
 #
 
-etc=/usr/local/etc
+case $(uname) in
+    Linux ) etc=/etc ;;
+    *BSD ) etc=/usr/local/etc ;;
+esac
+
 rm -rf ${etc}/ipsec.d
 mkdir ${etc}/ipsec.d
 
@@ -68,4 +72,6 @@ done
 
 log_if racoon /etc/racoon/racoon.conf
 
-stty -oxtabs
+case $(uname) in
+    *BSD ) stty -oxtabs ;;
+esac
