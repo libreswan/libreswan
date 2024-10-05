@@ -1,0 +1,11 @@
+NetBSD with ipsec-interface
+
+On NetBSD with ipsecif(4):
+
+- create ipsec1
+- add tunnel describing ESP
+- add inet describing what is tunneled
+
+Now the magic!  the generated kernel policy contains the MSG ID in the
+form unique#NNNN, that needs to be extrated and then fed to the
+transport mode kernel state.

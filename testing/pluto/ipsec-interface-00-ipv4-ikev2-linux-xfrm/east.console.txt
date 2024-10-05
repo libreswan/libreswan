@@ -1,5 +1,4 @@
 ../../guestbin/prep.sh
-'ipsec.secrets' -> 'PATH/etc/ipsec.secrets'
 stty: invalid argument '-oxtabs'
 Try 'stty --help' for more information.
 east #

@@ -1,5 +1,4 @@
 ../../guestbin/prep.sh
-ipsec.secrets -> PATH/etc/ipsec.secrets
 west #
  ifconfig ipsec1 create reqid 100
 west #

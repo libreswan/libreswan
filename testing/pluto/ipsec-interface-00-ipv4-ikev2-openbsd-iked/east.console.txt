@@ -1,5 +1,4 @@
 ../../guestbin/prep.sh
-ipsec.secrets -> PATH/etc/ipsec.secrets
 east.iked.conf -> /etc/iked.conf
 east #
  ifconfig sec1 create

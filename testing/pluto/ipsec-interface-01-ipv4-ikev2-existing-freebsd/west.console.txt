@@ -1,0 +1,141 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+west #
+ ifconfig ipsec1 create reqid 100
+west #
+ ifconfig ipsec1 inet tunnel 192.1.2.45 192.1.2.23
+west #
+ ifconfig ipsec1 inet 192.0.45.1/24 192.0.23.1
+west #
+ ifconfig ipsec1
+ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
+	options=0
+	tunnel inet 192.1.2.45 --> 192.1.2.23
+	inet 192.0.45.1 --> 192.0.23.1 netmask 0xffffff00
+	groups: ipsec
+	reqid: 100
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+No SAD entries.
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+west #
+ ipsec start
+Redirecting to: [initsystem]
+Initializing NSS database
+Starting pluto.
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add east-west
+"east-west": command: 'ifconfig' 'ipsec1'
+"east-west": output: ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400\n\toptions=0\n\ttunne
+"east-west": output: l inet 192.1.2.45 --> 192.1.2.23\n\tinet 192.0.45.1 --> 192.0.23.1 netmask 0xffffff00\n\tgroups: ipsec\n\t
+"east-west": output: reqid: 100\n\tnd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>\n
+"east-west": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"east-west": added IKEv2 connection
+west #
+ ipsec up east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"east-west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"east-west" #2: command: 'ifconfig' 'ipsec1' 'inet' '192.0.45.1/24' '192.0.45.1'
+"east-west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"east-west" #2: added 192.0.45.1/24 to ipsec-interface ipsec1@vtnet1
+"east-west" #2: command: 'ifconfig' 'ipsec1' 'up'
+"east-west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"east-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.23.0/24===192.0.45.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ echo added
+added
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
+down UNEXPECTED
+# fping  -c 1  --timeout 5s   --src 192.0.45.1 192.0.23.1
+192.0.23.1 : [0], timed out (NaN avg, 100% loss) 192.0.23.1 : xmt/rcv/%loss = 1/0/100%
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.45 192.1.2.23
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+192.1.2.23 192.1.2.45
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+west #
+ ipsec delete east-west
+"east-west": terminating SAs using this connection
+"east-west" #3: bad response: Invalid argument (errno 22)
+EXPECTATION FAILED: "east-west" #3: kernel_ops_policy_del()   receiving (kernel_pfkeyv2_policy_del() +1577 programs/pluto/kernel_pfkeyv2.c)
+"east-west" #3: bad response: Invalid argument (errno 22)
+"east-west" #3: command: 'ifconfig' 'ipsec1' 'delete' 'inet' '192.0.45.1/24' '192.0.45.1'
+"east-west" #3: eof: 256; exited yes(1); signaled: no(0); stopped: no(1); core: no
+"east-west" #3: delete ipsec-interface ipsec1@vtnet1 IP [192.0.45.1/24] added by pluto
+"east-west" #3: deleting IKE SA (sent IKE_SA_INIT request)
+west #
+ setkey -F
+west #
+ ifconfig ipsec1 destroy
+west #
+ 
