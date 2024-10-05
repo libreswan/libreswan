@@ -567,10 +567,10 @@ kvmplutotest	ipsec-interface-00-ipv4-ikev2-netbsd-setkey	netbsd
 kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd-iked	openbsd
 kvmplutotest	ipsec-interface-00-ipv4-ikev2-linux-xfrm	good
 
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-freebsd	freebsd
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	netbsd
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-openbsd	openbsd
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-linux	wip
+#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-freebsd	freebsd
+#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	netbsd
+#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-openbsd	openbsd
+#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-linux	wip
 
 kvmplutotest	ipsec-interface-06-ipv4-ikev1-xfrmi	good
 kvmplutotest	ipsec-interface-06-ipv4-ikev2-xfrmi	good

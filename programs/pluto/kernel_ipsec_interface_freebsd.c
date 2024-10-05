@@ -23,7 +23,7 @@
 
 #include "log.h"
 
-static bool ifconfig_ipsec_interface_has_cidr(const char *ipsec_if_name UNUSED,
+static bool freebsd_ipsec_interface_has_cidr(const char *ipsec_if_name UNUSED,
 					      ip_cidr cidr UNUSED,
 					      struct verbose verbose UNUSED)
 {
@@ -35,7 +35,7 @@ static bool ifconfig_ipsec_interface_has_cidr(const char *ipsec_if_name UNUSED,
  * where 172.16.200.1 is the interface-ip / sourceip.
  */
 
-static bool ifconfig_ipsec_interface_add_cidr(const char *ipsec_if_name,
+static bool freebsd_ipsec_interface_add_cidr(const char *ipsec_if_name,
 					      ip_cidr cidr,
 					      struct verbose verbose)
 {
@@ -55,7 +55,7 @@ static bool ifconfig_ipsec_interface_add_cidr(const char *ipsec_if_name,
 	return server_runv(add, verbose);
 }
 
-static void ifconfig_ipsec_interface_del_cidr(const char *ipsec_if_name,
+static void freebsd_ipsec_interface_del_cidr(const char *ipsec_if_name,
 					      ip_cidr cidr UNUSED,
 					      struct verbose verbose)
 {
@@ -76,11 +76,14 @@ static void ifconfig_ipsec_interface_del_cidr(const char *ipsec_if_name,
 	server_runv(delete, verbose);
 }
 
-static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
+static bool freebsd_ipsec_interface_add(const char *ipsec_if_name,
 					 const ipsec_interface_id_t ipsec_if_id UNUSED,
 					 const struct iface_device *iface UNUSED,
 					 struct verbose verbose)
 {
+	/*
+	 * Don't yet support creating an interface.
+	 */
 	const char *create[] = {
 		"ifconfig",
 		ipsec_if_name,
@@ -90,7 +93,7 @@ static bool ifconfig_ipsec_interface_add(const char *ipsec_if_name,
 	return server_runv(create, verbose);
 }
 
-static bool ifconfig_ipsec_interface_up(const char *ipsec_if_name UNUSED,
+static bool freebsd_ipsec_interface_up(const char *ipsec_if_name UNUSED,
 					struct verbose verbose UNUSED)
 {
 	const char *up[] = {
@@ -102,7 +105,7 @@ static bool ifconfig_ipsec_interface_up(const char *ipsec_if_name UNUSED,
 	return server_runv(up, verbose);
 }
 
-static bool ifconfig_ipsec_interface_del(const char *ipsec_if_name,
+static bool freebsd_ipsec_interface_del(const char *ipsec_if_name,
 					 struct verbose verbose)
 {
 	const char *destroy[] = {
@@ -114,17 +117,28 @@ static bool ifconfig_ipsec_interface_del(const char *ipsec_if_name,
 	return server_runv(destroy, verbose);
 }
 
-static bool ifconfig_ipsec_interface_match(struct ipsec_interface_match *match UNUSED,
-					   struct verbose verbose UNUSED)
+static bool freebsd_ipsec_interface_match(struct ipsec_interface_match *match,
+					   struct verbose verbose)
 {
-	return false;
+	const char *run[] = {
+		"ifconfig",
+		match->ipsec_if_name,
+		NULL,
+	};
+	bool ok = server_runv(run, verbose);
+	if (ok) {
+		jam_str(match->found, sizeof(match->found), match->ipsec_if_name);
+	} else {
+		match->diag = diag("not found");
+	}
+	return ok;
 }
 
-static void ifconfig_ipsec_interface_check_stale(struct verbose verbose UNUSED)
+static void freebsd_ipsec_interface_check_stale(struct verbose verbose UNUSED)
 {
 }
 
-static err_t ifconfig_ipsec_interface_supported(struct verbose verbose UNUSED)
+static err_t freebsd_ipsec_interface_supported(struct verbose verbose UNUSED)
 {
 	return NULL;
 }
@@ -132,16 +146,16 @@ static err_t ifconfig_ipsec_interface_supported(struct verbose verbose UNUSED)
 const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
 	.name = "ipsec",
 
-	.has_cidr = ifconfig_ipsec_interface_has_cidr,
-	.add_cidr = ifconfig_ipsec_interface_add_cidr,
-	.del_cidr = ifconfig_ipsec_interface_del_cidr,
+	.has_cidr = freebsd_ipsec_interface_has_cidr,
+	.add_cidr = freebsd_ipsec_interface_add_cidr,
+	.del_cidr = freebsd_ipsec_interface_del_cidr,
 
-	.add = ifconfig_ipsec_interface_add,
-	.up = ifconfig_ipsec_interface_up,
-	.del = ifconfig_ipsec_interface_del,
+	.add = freebsd_ipsec_interface_add,
+	.up = freebsd_ipsec_interface_up,
+	.del = freebsd_ipsec_interface_del,
 
-	.match = ifconfig_ipsec_interface_match,
-	.check_stale = ifconfig_ipsec_interface_check_stale,
-	.supported = ifconfig_ipsec_interface_supported,
+	.match = freebsd_ipsec_interface_match,
+	.check_stale = freebsd_ipsec_interface_check_stale,
+	.supported = freebsd_ipsec_interface_supported,
 
 };
