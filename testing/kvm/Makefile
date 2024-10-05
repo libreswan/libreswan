@@ -540,9 +540,7 @@ STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 # or KVM_TEST_STATUS+=wip.
 
 KVM_TEST_STATUS += good
-KVM_TEST_STATUS += $(if $(KVM_FREEBSD),freebsd)
-KVM_TEST_STATUS += $(if $(KVM_NETBSD),netbsd)
-KVM_TEST_STATUS += $(if $(KVM_OPENBSD),openbsd)
+KVM_TEST_STATUS += $(KVM_OS)
 KVM_RUN_POST_MORTEM ?=
 
 STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
