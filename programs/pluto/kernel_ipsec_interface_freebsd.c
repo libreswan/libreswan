@@ -23,11 +23,14 @@
 
 #include "log.h"
 
-static bool freebsd_ipsec_interface_has_cidr(const char *ipsec_if_name UNUSED,
-					      ip_cidr cidr UNUSED,
-					      struct verbose verbose UNUSED)
+static bool freebsd_ipsec_interface_has_cidr(const char *ipsec_if_name,
+					      ip_cidr cidr,
+					      struct verbose verbose)
 {
-	return false;
+	cidr_buf cb;
+	vlog("%s() always true %s %s", __func__, ipsec_if_name,
+	     str_cidr(&cidr, &cb));
+	return true;
 }
 
 /*
@@ -134,12 +137,14 @@ static bool freebsd_ipsec_interface_match(struct ipsec_interface_match *match,
 	return ok;
 }
 
-static void freebsd_ipsec_interface_check_stale(struct verbose verbose UNUSED)
+static void freebsd_ipsec_interface_check_stale(struct verbose verbose)
 {
+	vdbg("%s() nothing to do", __func__);
 }
 
-static err_t freebsd_ipsec_interface_supported(struct verbose verbose UNUSED)
+static err_t freebsd_ipsec_interface_supported(struct verbose verbose)
 {
+	vdbg("%s() nothing to do", __func__);
 	return NULL;
 }
 

@@ -1280,6 +1280,12 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      struct logger *logger, const char *func)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
+	if (policy->ipsec_interface != NULL) {
+		ipsec_interface_buf ifb;
+		vlog("BSD doesn't add kernel-policy to an ipsec-interface (%s)",
+		     str_ipsec_interface(policy->ipsec_interface, &ifb));
+		return true;
+	}
 #ifdef __OpenBSD__
 
 	if (policy->nr_rules > 1) {
@@ -1491,12 +1497,18 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      const ip_selector *src_child,
 				      const ip_selector *dst_child,
 				      const struct sa_marks *sa_marks UNUSED,
-				      const struct ipsec_interface *xfrmi UNUSED,
+				      const struct ipsec_interface *ipsec_interface,
 				      enum kernel_policy_id policy_id,
 				      const shunk_t sec_label UNUSED,
 				      struct logger *logger, const char *func)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
+	if (ipsec_interface != NULL) {
+		ipsec_interface_buf ifb;
+		vlog("BSD doesn't add kernel-policy to an ipsec-interface (%s)",
+		     str_ipsec_interface(ipsec_interface, &ifb));
+		return true;
+	}
 #ifdef __OpenBSD__
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
