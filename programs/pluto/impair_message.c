@@ -100,7 +100,7 @@ static struct direction_impairment outbound = {
 	.recording = &impair.record_outbound,
 };
 
-struct direction_impairment *const message_impairments[] = {
+struct direction_impairment *const direction_impairments[] = {
 	[IMPAIR_INBOUND_MESSAGE] = &inbound,
 	[IMPAIR_OUTBOUND_MESSAGE] = &outbound,
 };
@@ -185,8 +185,8 @@ void add_message_impairment(enum impair_action impair_action,
 			    bool whack_enable, unsigned whack_value,
 			    struct logger *logger)
 {
-	PASSERT(logger, impair_direction < elemsof(message_impairments));
-	struct direction_impairment *direction = message_impairments[impair_direction];
+	PASSERT(logger, impair_direction < elemsof(direction_impairments));
+	struct direction_impairment *direction = direction_impairments[impair_direction];
 	PASSERT(logger, direction != NULL);
 
 	if (!(*direction->recording)) {
@@ -209,8 +209,10 @@ void add_message_impairment(enum impair_action impair_action,
 		return;
 	case CALL_IMPAIR_MESSAGE_DROP:
 	{
-		struct message_impairment *m = alloc_thing(struct message_impairment, "impair message");
+		struct message_impairment *m = alloc_thing(struct message_impairment,
+							   "impair message");
 		m->message_nr = whack_value;
+		/* add to list */
 		m->next = direction->impairments;
 		direction->impairments = m;
 		llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
@@ -322,9 +324,16 @@ static void free_direction(struct direction_impairment *direction, struct logger
 		pfree(m);
 	}
 
-	if (direction->impairments != NULL) {
-		llog(RC_LOG, logger, "IMPAIR: outstanding %s impairment",
-			direction->name);
+	while (direction->impairments != NULL) {
+		/* unlink */
+		struct message_impairment *m = direction->impairments;
+		direction->impairments = m->next;
+		m->next = NULL;
+		/* complain */
+		llog_pexpect(logger, HERE,
+			     "IMPAIR: outstanding %s impairment for message %u",
+			     direction->name, m->message_nr);
+		pfree(m);
 	}
 }
 
@@ -398,7 +407,7 @@ bool impair_outbound(const struct iface_endpoint *interface, shunk_t message,
 
 void shutdown_impair_message(struct logger *logger)
 {
-	FOR_EACH_ELEMENT(direction, message_impairments) {
+	FOR_EACH_ELEMENT(direction, direction_impairments) {
 		free_direction((*direction), logger);
 	}
 }
