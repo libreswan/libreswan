@@ -69,7 +69,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		}
 
 		if (policy->sa_marks != NULL ||
-		    policy->xfrmi != NULL) {
+		    policy->ipsec_interface != NULL) {
 			LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 				jam(buf, "routing:  ");
 
@@ -85,8 +85,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 					}
 				}
 
-				if (policy->xfrmi != NULL) {
-					jam(buf, " xfrm_if_id=%d", (int)policy->xfrmi->if_id);
+				if (policy->ipsec_interface != NULL) {
+					jam_ipsec_interface(buf, policy->ipsec_interface);
 				}
 			}
 

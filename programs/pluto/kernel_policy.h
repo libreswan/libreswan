@@ -123,7 +123,7 @@ struct kernel_policy {
 	where_t where;
 	shunk_t sec_label;
 	const struct sa_marks *sa_marks;
-	const struct ipsec_interface *xfrmi;
+	const struct ipsec_interface *ipsec_interface;
 	enum kernel_policy_id id;
 	/*
 	 * The rules are applied to an outgoing packet in order they

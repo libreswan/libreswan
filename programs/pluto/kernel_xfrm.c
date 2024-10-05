@@ -1009,7 +1009,9 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 *
 	 * XXX: identical code in policy_add(), time to share?
 	 */
-	add_xfrmi_marks(&req.n, policy->sa_marks, policy->xfrmi, xfrm_dir, sizeof(req.data), logger);
+	add_xfrmi_marks(&req.n, policy->sa_marks,
+			policy->ipsec_interface,
+			xfrm_dir, sizeof(req.data), logger);
 	add_sec_label(&req.n, policy->sec_label, logger);
 
 	enum expect_kernel_policy what_about_inbound =
