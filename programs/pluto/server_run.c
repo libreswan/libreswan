@@ -175,7 +175,7 @@ bool server_runv(const char *argv[], const struct verbose verbose)
 
 	while (true) {
 		char inp[100];
-		int n = fread(inp, sizeof(inp), 1, out);
+		int n = fread(inp, 1, sizeof(inp), out);
 		if (n > 0) {
 			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
 				jam_string(buf, "output: ");
