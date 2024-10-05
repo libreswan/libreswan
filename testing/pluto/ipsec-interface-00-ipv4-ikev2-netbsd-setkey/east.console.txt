@@ -63,9 +63,6 @@ east #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 east #
- echo added
-added
-east #
  ../../guestbin/ping-once.sh --up -I 192.0.23.1 192.0.45.1
 up
 east #

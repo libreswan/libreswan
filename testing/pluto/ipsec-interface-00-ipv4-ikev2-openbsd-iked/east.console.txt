@@ -19,9 +19,6 @@ east #
 east #
  ../../guestbin/iked.sh start
 east #
- echo "initdone"
-initdone
-east #
  ../../guestbin/ping-once.sh --up -I 192.0.23.1 192.0.45.1
 up
 east #

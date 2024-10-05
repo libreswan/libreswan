@@ -1,6 +1,4 @@
 ../../guestbin/prep.sh
-stty: invalid argument '-oxtabs'
-Try 'stty --help' for more information.
 west #
  ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth1 if_id 1
 west #
@@ -61,9 +59,6 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
-west #
- echo added
-added
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
 up

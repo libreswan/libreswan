@@ -1,0 +1,103 @@
+../../guestbin/prep.sh
+'ipsec.conf' -> '/etc/ipsec.conf'
+'ipsec.secrets' -> '/etc/ipsec.secrets'
+west #
+ ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth1 if_id 1
+west #
+ ../../guestbin/ip.sh addr add 192.0.45.1/24 dev ipsec1
+west #
+ ../../guestbin/ip.sh link set ipsec1 up
+west #
+ ../../guestbin/ip.sh addr show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    inet 192.0.45.1/24 scope global ipsec1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+       valid_lft forever preferred_lft forever
+west #
+ ../../guestbin/ip.sh link show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+west #
+ ip -4 route add 192.0.23.0/24 dev ipsec1
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add east-west
+"east-west": added IKEv2 connection
+west #
+ ipsec up east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"east-west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"east-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.23.0/24===192.0.45.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 192.0.45.1 192.0.23.1
+PING 192.0.23.1 (192.0.23.1) from 192.0.45.1 : 56(84) bytes of data. From 192.0.45.1 icmp_seq=1 Destination Host Unreachable --- 192.0.23.1 ping statistics --- 1 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.23.0/24 dst 192.0.45.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 192.0.45.0/24 dst 192.0.23.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 192.0.45.0/24 dst 192.0.23.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+west #
+ #../../guestbin/ip.sh xfrm state flush
+west #
+ #../../guestbin/ip.sh link delete ipsec1
+west #
+ 

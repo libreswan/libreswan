@@ -21,9 +21,6 @@ west #
 west #
  sleep 10 # give IKE a chance :-/
 west #
- echo "initdone"
-initdone
-west #
  ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
 up
 west #

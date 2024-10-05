@@ -7,11 +7,3 @@ ifconfig ipsec1 inet 192.0.45.1/24 192.0.23.1
 ifconfig ipsec1
 ../../guestbin/ipsec-kernel-state.sh
 ../../guestbin/ipsec-kernel-policy.sh
-
-ipsec start
-../../guestbin/wait-until-pluto-started
-
-ipsec add east-west
-ipsec up east-west
-
-echo added

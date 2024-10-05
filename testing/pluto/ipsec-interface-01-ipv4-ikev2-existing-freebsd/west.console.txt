@@ -63,15 +63,16 @@ west #
 "east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "east-west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"east-west" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet1)
 "east-west" #2: command: 'ifconfig' 'ipsec1' 'inet' '192.0.45.1/24' '192.0.45.1'
 "east-west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "east-west" #2: added 192.0.45.1/24 to ipsec-interface ipsec1@vtnet1
 "east-west" #2: command: 'ifconfig' 'ipsec1' 'up'
 "east-west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"east-west" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet1)
 "east-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.23.0/24===192.0.45.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- echo added
-added
+ sleep 10 # give fping some time
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
 down UNEXPECTED
@@ -80,7 +81,7 @@ down UNEXPECTED
 west #
  ../../guestbin/ipsec-kernel-state.sh
 192.1.2.45 192.1.2.23
-	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
@@ -91,15 +92,15 @@ west #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=1
 192.1.2.23 192.1.2.45
-	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	seq=0x00000001 replay=16 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
-	last:                     	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 west #
  ../../guestbin/ipsec-kernel-policy.sh
@@ -126,9 +127,8 @@ west #
 west #
  ipsec delete east-west
 "east-west": terminating SAs using this connection
-"east-west" #3: bad response: Invalid argument (errno 22)
-EXPECTATION FAILED: "east-west" #3: kernel_ops_policy_del()   receiving (kernel_pfkeyv2_policy_del() +1577 programs/pluto/kernel_pfkeyv2.c)
-"east-west" #3: bad response: Invalid argument (errno 22)
+"east-west" #3: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet1)
+"east-west" #3: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet1)
 "east-west" #3: command: 'ifconfig' 'ipsec1' 'delete' 'inet' '192.0.45.1/24' '192.0.45.1'
 "east-west" #3: eof: 256; exited yes(1); signaled: no(0); stopped: no(1); core: no
 "east-west" #3: delete ipsec-interface ipsec1@vtnet1 IP [192.0.45.1/24] added by pluto
