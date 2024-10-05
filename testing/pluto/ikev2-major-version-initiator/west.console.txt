@@ -26,7 +26,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2-major
 "westnet-eastnet-ikev2-major" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2-major" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ikev2-major" #1: dropping unexpected IKE_SA_INIT message containing INVALID_MAJOR_VERSION notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ikev2-major" #1: unexpected IKE_SA_INIT message containing INVALID_MAJOR_VERSION notification; message payloads: N; missing payloads: SA,KE,Ni
 "westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ikev2-major" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2-major" #1: IMPAIR: revival: skip scheduling revival event
@@ -36,6 +36,6 @@ west #
 done
 west #
  grep '^[^|].*INVALID_MAJOR_VERSION' /tmp/pluto.log
-"westnet-eastnet-ikev2-major" #1: dropping unexpected IKE_SA_INIT message containing INVALID_MAJOR_VERSION notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ikev2-major" #1: unexpected IKE_SA_INIT message containing INVALID_MAJOR_VERSION notification; message payloads: N; missing payloads: SA,KE,Ni
 west #
  

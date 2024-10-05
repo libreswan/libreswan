@@ -29,7 +29,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ikev2" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ikev2" #3: unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "westnet-eastnet-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2" #3: deleting IKE SA (sent IKE_SA_INIT request)

@@ -44,7 +44,7 @@ west #
 "aes128" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #3: IMPAIR: emitting fixed-length key-length attribute with 0 key
 "aes128" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
+"aes128" #3: unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #3: deleting IKE SA (sent IKE_SA_INIT request)
@@ -123,7 +123,7 @@ west #
 "aes128" #12: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #12: IMPAIR: omitting fixed-size key-length attribute
 "aes128" #12: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #12: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
+"aes128" #12: unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #12: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #12: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #12: deleting IKE SA (sent IKE_SA_INIT request)
@@ -161,7 +161,7 @@ west #
 "aes128" #17: IMPAIR: emitting variable-size key-length attribute with no key
 "aes128" #17: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
+"aes128" #17: unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #17: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #17: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #17: deleting IKE SA (sent IKE_SA_INIT request)
@@ -180,7 +180,7 @@ west #
 "aes128" #19: IMPAIR: emitting variable-size key-length attribute with no key
 "aes128" #19: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #19: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"aes128" #19: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
+"aes128" #19: unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 "aes128" #19: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #19: deleting IKE SA (sent IKE_SA_INIT request)
@@ -241,7 +241,7 @@ west #
 "3des" #25: initiating IKEv2 connection to 192.1.2.23 using UDP
 "3des" #25: IMPAIR: emitting fixed-length key-length attribute with 192 key
 "3des" #25: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"3des" #25: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
+"3des" #25: unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 "3des" #25: IMPAIR: retransmit so timing out SA (may retry)
 "3des" #25: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "3des" #25: deleting IKE SA (sent IKE_SA_INIT request)
