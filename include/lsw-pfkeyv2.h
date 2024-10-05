@@ -102,8 +102,6 @@
  * -> dropped sadb_address_proto
  * -> dropped sadb_address_prefixlen
  *
- * XXX: HOW?
- *
  * XXX: But why?  Since OpenBSD uses address+mask and not
  * address/prefixlen when specifying child selectors, I'm guessing
  * that the extra seemingly unused fields were simply dropped.
@@ -115,6 +113,11 @@
  * The thing is that, even at the time, IKE daemons were using UDP and
  * non-standard ports.  Things this change seems to prohibit.
  */
+
+#ifndef __OpenBSD__
+#define sadb_address_prefixlen sadb_address_prefixlen
+#define sadb_address_proto sadb_address_proto
+#endif
 
 /*
  * Work-around various OSs reusing / renaming fields of existing

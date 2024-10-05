@@ -345,26 +345,12 @@ static struct sockaddr *put_address_sockaddr(struct outbuf *msg,
 }
 
 /*
- * XXX: the BSDs embed the host's port (when UDP) in the SA/SPD's host
- * address.
- */
-
-#if 0
-static struct sockaddr *put_endpoint_sockaddr(struct outbuf *msg,
-					      const ip_endpoint endpoint)
-{
-	ip_sockaddr sa = sockaddr_from_endpoint(endpoint);
-	return hunk_put(msg, &sa.sa.sa, sa.len);
-}
-#endif
-
-#ifndef __OpenBSD__
-/*
  * XXX: OpenBSD uses address+mask, instead of address/prefixlen;
  * protocol and prefix length were dropped from the structure.
  *
  * Ulgh!
  */
+#ifdef sadb_address_prefixlen /* NetBSD FreeBSD */
 static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 					      enum sadb_exttype srcdst_exttype,
 					      const ip_selector selector,
@@ -392,7 +378,12 @@ static struct sadb_address *put_sadb_address(struct outbuf *msg,
 					     struct verbose verbose)
 {
 	const struct ip_info *afi = address_info(addr);
-#ifdef __OpenBSD__
+#ifdef sadb_address_prefixlen /* NetBSD FreeBSD */
+	struct sadb_address *address =
+		put_sadb_ext(msg, sadb_address, srcdst_exttype,
+			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
+			     .sadb_address_prefixlen = afi->mask_cnt);
+#else /* OpenBSD */
 	/*
 	 * XXX: OpenBSD uses address+mask, instead of
 	 * address/prefixlen; protocol and prefix length were dropped
@@ -402,11 +393,6 @@ static struct sadb_address *put_sadb_address(struct outbuf *msg,
 	 */
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst_exttype);
-#else
-	struct sadb_address *address =
-		put_sadb_ext(msg, sadb_address, srcdst_exttype,
-			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
-			     .sadb_address_prefixlen = afi->mask_cnt);
 #endif
 	put_address_sockaddr(msg, addr);
 	padup_sadb(msg, address);
@@ -419,6 +405,11 @@ static struct sadb_address *put_sadb_address(struct outbuf *msg,
  */
 
 #if 0
+static struct sockaddr *put_endpoint_sockaddr(struct outbuf *msg,
+					      const ip_endpoint endpoint)
+{
+}
+
 static struct sadb_address *put_sadb_endpoint(struct outbuf *msg,
 					      enum sadb_exttype srcdst_exttype,
 					      const ip_endpoint endpoint)
@@ -426,7 +417,12 @@ static struct sadb_address *put_sadb_endpoint(struct outbuf *msg,
 	pexpect(srcdst_exttype == SADB_EXT_ADDRESS_SRC ||
 		srcdst_exttype == SADB_EXT_ADDRESS_DST);
 	const struct ip_info *afi = endpoint_info(endpoint);
-#ifdef __OpenBSD__
+#ifdef sadb_address_prefixlen
+	struct sadb_address *address =
+		put_sadb_ext(msg, sadb_address, srcdst_exttype,
+			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
+			     .sadb_address_prefixlen = afi->mask_cnt);
+#else
 	/*
 	 * XXX: OpenBSD uses address+mask, instead of
 	 * address/prefixlen; protocol and prefix length were dropped
@@ -436,11 +432,6 @@ static struct sadb_address *put_sadb_endpoint(struct outbuf *msg,
 	 */
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst_exttype);
-#else
-	struct sadb_address *address =
-		put_sadb_ext(msg, sadb_address, srcdst_exttype,
-			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
-			     .sadb_address_prefixlen = afi->mask_cnt);
 #endif
 	put_endpoint_sockaddr(msg, endpoint);
 	padup_sadb(msg, address);
@@ -968,11 +959,6 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 
 #ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, k->reqid, verbose);
-#endif
-#if 0
-	k->level == 0 && k->mode == KERNEL_MODE_TUNNEL ? ipsec_mode_tunnel :
-		k->mode == KERNEL_MODE_TRANSPORT ? ipsec_mode_transport :
-		barf)
 #endif
 
 	/*
