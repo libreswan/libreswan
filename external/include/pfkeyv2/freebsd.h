@@ -1,4 +1,3 @@
-/*	$FreeBSD$	*/
 /*	$KAME: pfkeyv2.h,v 1.37 2003/09/06 05:15:43 itojun Exp $	*/
 
 /*-
@@ -372,6 +371,7 @@ _Static_assert(sizeof(struct sadb_x_sa_replay) == 8, "struct size mismatch");
 #define SADB_X_AALG_AES128GMAC	11		/* RFC4543 + Errata1821 */
 #define SADB_X_AALG_AES192GMAC	12
 #define SADB_X_AALG_AES256GMAC	13
+#define	SADB_X_AALG_CHACHA20POLY1305	14
 #define SADB_X_AALG_MD5		249	/* Keyed MD5 */
 #define SADB_X_AALG_SHA		250	/* Keyed SHA */
 #define SADB_X_AALG_NULL	251	/* null authentication */
@@ -387,6 +387,7 @@ _Static_assert(sizeof(struct sadb_x_sa_replay) == 8, "struct size mismatch");
 #define SADB_X_EALG_AES		12
 #define	SADB_X_EALG_AESCBC	12
 #define SADB_X_EALG_AESCTR	13
+#define	SADB_X_EALG_CHACHA20POLY1305	15
 #define SADB_X_EALG_AESGCM8	18	/* RFC4106 */
 #define SADB_X_EALG_AESGCM12	19
 #define SADB_X_EALG_AESGCM16	20
@@ -431,7 +432,7 @@ _Static_assert(sizeof(struct sadb_x_sa_replay) == 8, "struct size mismatch");
 /* SPI size for PF_KEYv2 */
 #define PFKEY_SPI_SIZE	sizeof(u_int32_t)
 
-/* Identifier for menber of lifetime structure */
+/* Identifier for member of lifetime structure */
 #define SADB_X_LIFETIME_ALLOCATIONS	0
 #define SADB_X_LIFETIME_BYTES		1
 #define SADB_X_LIFETIME_ADDTIME		2
