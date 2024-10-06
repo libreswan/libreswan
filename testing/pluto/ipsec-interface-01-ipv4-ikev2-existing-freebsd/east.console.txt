@@ -58,9 +58,7 @@ east #
 "east-west": added IKEv2 connection
 east #
  ../../guestbin/ping-once.sh --up -I 192.0.23.1 192.0.45.1
-down UNEXPECTED
-# fping  -c 1  --timeout 5s   --src 192.0.23.1 192.0.45.1
-192.0.45.1 : [0], timed out (NaN avg, 100% loss) 192.0.45.1 : xmt/rcv/%loss = 1/0/100%
+up
 east #
  ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45
@@ -78,12 +76,12 @@ east #
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
+	seq=0x00000001 replay=16 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
-	last:                     	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 east #
  ../../guestbin/ipsec-kernel-policy.sh
