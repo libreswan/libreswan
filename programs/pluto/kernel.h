@@ -151,7 +151,6 @@ struct kernel_state {
 	shunk_t integ_key;
 	const struct ipcomp_desc *ipcomp;
 
-	ip_address *natt_oa;
 	const char *story;
 	chunk_t sec_label;
 

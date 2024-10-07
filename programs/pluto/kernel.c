@@ -1322,7 +1322,6 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 		const struct ip_encap *encap_type = NULL;
 		uint16_t encap_sport = 0, encap_dport = 0;
-		ip_address natt_oa;
 
 		if (nat_traversal_detected(&child->sa) ||
 		    child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
@@ -1339,7 +1338,6 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			default:
 				bad_case(direction);
 			}
-			natt_oa = child->sa.hidden_variables.st_nat_oa;
 			dbg("kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
 			    pri_ip_encap(encap_type), encap_sport, encap_dport);
 		}
@@ -1486,7 +1484,6 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next->src.encap_port = encap_sport;
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
-		said_next->natt_oa = &natt_oa;
 		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_esp,
 					    esp_spi, &text_esp);
