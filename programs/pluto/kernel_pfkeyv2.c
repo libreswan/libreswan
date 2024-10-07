@@ -59,6 +59,7 @@ static void pfkeyv2_process_msg(int fd, void *arg, struct logger *logger);
 #define SIZEOF_SADB_X_SA_REPLAY sizeof(struct sadb_x_sa_replay) /* FreeBSD */
 #define SIZEOF_SADB_PROTOCOL (sizeof(struct sadb_protocol)) /* OpenBSD */
 #define SIZEOF_SADB_X_UDPENCAP (sizeof(struct sadb_x_udpencap)) /* OpenBSD */
+#define SIZEOF_SADB_X_IFACE (sizeof(struct sadb_x_iface)) /* OpenBSD */
 
 struct outbuf {
 	const char *what;
@@ -837,6 +838,9 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 #ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
 		       SIZEOF_SADB_X_UDPENCAP +
 #endif
+#ifdef SADB_X_EXT_IFACE
+		       SIZEOF_SADB_X_IFACE +
+#endif
 		       SIZEOF_SADB_SENS +
 		       0];
 	struct outbuf req;
@@ -1045,6 +1049,29 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 	}
 #endif
 
+#ifdef SADB_X_EXT_IFACE
+	if (k->ipsec_interface != NULL) {
+		unsigned ipsec_if_index = if_nametoindex(k->ipsec_interface->name);
+		if (ipsec_if_index == 0) {
+			llog_errno(RC_LOG, logger, errno,
+				   "invalid ipsec-interface %s: ",
+				   k->ipsec_interface->name);
+		} else {
+			enum ipsp_direction direction;
+			switch (k->direction) {
+			case DIRECTION_INBOUND: direction = ipsp_direction_in; break;
+			case DIRECTION_OUTBOUND: direction = ipsp_direction_out; break;
+			default:
+				bad_case(k->direction);
+			}
+			put_sadb_ext(&req, sadb_x_iface, sadb_x_ext_iface,
+
+				     .sadb_x_iface_unit = k->ipsec_interface->if_id,
+				     .sadb_x_iface_direction = direction);
+		}
+	}
+#endif
+
 	/* UPDATE */
         /* <base, SA, (lifetime(HSC),) address(SD), (address(P),)
 	   (identity(SD),) (sensitivity)> */
@@ -1103,10 +1130,10 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 
 	while (resp.base_cursor.len > 0) {
 
-		shunk_t msgext;
+		shunk_t ext_cursor;
 		const struct sadb_ext *ext =
-			get_sadb_ext(&resp.base_cursor, &msgext, verbose);
-		if (msgext.ptr == NULL) {
+			get_sadb_ext(&resp.base_cursor, &ext_cursor, verbose);
+		if (ext_cursor.ptr == NULL) {
 			llog_pexpect(verbose.logger, HERE, "bad ext");
 			return false;
 		}
@@ -1116,7 +1143,7 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 		case SADB_EXT_LIFETIME_CURRENT:
 		{
 			const struct sadb_lifetime *lifetime =
-				hunk_get_thing(&msgext, const struct sadb_lifetime);
+				hunk_get_thing(&ext_cursor, const struct sadb_lifetime);
 			if (lifetime == NULL) {
 				llog_pexpect(logger, HERE, "getting policy");
 				return 0;
@@ -1151,13 +1178,15 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 #ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 		case SADB_X_EXT_REPLAY:
 #endif
+#ifdef SADB_X_EXT_IFACE /* OpenBSD */
+		case SADB_X_EXT_IFACE:
+#endif
 			/* ignore these */
 			break;
 		default:
 		{
-			VERBOSE_LOG(logger, "get_sa ...");
-			llog_sadb_ext(verbose, req.base, ext);
-			llog_pexpect(verbose.logger, HERE, "bad ext");
+			VERBOSE_LOG(logger, "%s(), ignoring unexpected:", __func__);
+			llog_sadb_ext(verbose, req.base, ext, ext_cursor);
 			break;
 		}
 		}
@@ -1659,16 +1688,15 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 			if (DBGP(DBG_BASE)) {
 				verbose("ignore: ");
 				verbose.level++;
-				llog_sadb_ext(verbose, msg, ext);
+				llog_sadb_ext(verbose, msg, ext, ext_cursor);
 				verbose.level--;
 			}
 			break;
 
 		default:
 			if (DBGP(DBG_BASE)) {
-				verbose("huh?");
 				verbose.level++;
-				llog_sadb_ext(verbose, msg, ext);
+				llog_sadb_ext(verbose, msg, ext, ext_cursor);
 				verbose.level--;
 			}
 			break;

@@ -13,7 +13,13 @@
  * for more details.
  */
 
+#include <net/if.h>		/* for IFBUFSIZ; if_indextoname() */
+
 #include "kernel_sadb.h"
+
+#include "ipsec_interface.h"
+#include "kernel_ops.h"			/* for .ipsec_interface */
+#include "kernel_ipsec_interface.h"	/* for .name */
 
 #include "verbose.h"
 #include "lswlog.h"
@@ -157,17 +163,6 @@ void llog_sadb_comb(struct verbose verbose, const struct sadb_msg *b,
 	JAM(u64, sadb_comb, hard_addtime);
 	JAM(u64, sadb_comb, soft_usetime);
 	JAM(u64, sadb_comb, hard_usetime);
-
-	JAM_FOOTER();
-}
-
-void llog_sadb_ext(struct verbose verbose, const struct sadb_msg *b,
-		   const struct sadb_ext *m)
-{
-	JAM_HEADER(sadb_ext);
-
-	JAM_LEN(sadb_ext, len);
-	JAM_SPARSE(&sadb_exttype_names, sadb_ext, type);
 
 	JAM_FOOTER();
 }
@@ -382,10 +377,10 @@ void llog_sadb_x_policy(struct verbose verbose, const struct sadb_msg *b,
 #elif defined sadb_x_policy_ifindex
 	/* FreeBSD */
 	JAM(u32, sadb_x_policy, ifindex);
-	char ifname[IFBUFSIZ];
 	if (m->sadb_x_policy_scope == IPSEC_POLICYSCOPE_IFNET &&
-	    m->sadb_x_policy_ifindex != 0 &&
-	    if_indextoname(m->sadb_x_policy_ifindex, name) != NULL) {
+	    m->sadb_x_policy_ifindex != 0) {
+		char name[IFBUFSIZ];
+		if (if_indextoname(m->sadb_x_policy_ifindex, name) != NULL) {
 			jam_string(buf, "(");
 			jam_string(buf, name);
 			jam_string(buf, ")");
@@ -490,6 +485,365 @@ void llog_sadb_x_udpencap(struct verbose verbose, const struct sadb_msg *b,
 }
 #endif
 
+#ifdef SADB_X_EXT_IFACE /* OpenBSD */
+void llog_sadb_x_iface(struct verbose verbose, const struct sadb_msg *b,
+		       const struct sadb_x_iface *m)
+{
+	JAM_HEADER_SADB(sadb_x_iface);
+
+	jam(buf, "%s%"PRIu32,
+	    kernel_ops->ipsec_interface->name,
+	    m->sadb_x_iface_unit);
+	JAM_SPARSE(&ipsp_direction_names, sadb_x_iface, direction);
+
+	JAM_FOOTER();
+}
+#endif
+
+void llog_sadb_ext(struct verbose verbose,
+		   const struct sadb_msg *base,
+		   const struct sadb_ext *ext,
+		   shunk_t ext_cursor)
+{
+	enum sadb_exttype exttype = ext->sadb_ext_type;
+	switch (exttype) {
+
+	case SADB_EXT_ADDRESS_SRC:
+	case SADB_EXT_ADDRESS_DST:
+#ifdef SADB_X_EXT_SRC_FLOW
+	case SADB_X_EXT_SRC_FLOW:
+#endif
+#ifdef SADB_X_EXT_DST_FLOW
+	case SADB_X_EXT_DST_FLOW:
+#endif
+#ifdef SADB_X_EXT_SRC_MASK
+	case SADB_X_EXT_SRC_MASK:
+#endif
+#ifdef SADB_X_EXT_DST_MASK
+	case SADB_X_EXT_DST_MASK:
+#endif
+	{
+		shunk_t address_cursor;
+		const struct sadb_address *address =
+			get_sadb_address(&ext_cursor, &address_cursor, verbose);
+		if (address == NULL) {
+			return;
+		}
+		llog_sadb_address(verbose, base, address);
+		ip_address addr;
+		ip_port port;
+		if (!get_sadb_sockaddr_address_port(&address_cursor, &addr, &port, verbose)) {
+			return;
+		}
+		address_buf ab;
+		port_buf pb;
+		llog(verbose.rc_flags, verbose.logger,
+		     PRI_VERBOSE"  %s:%s", pri_verbose,
+		     str_address_wrapped(&addr, &ab), str_hport(port, &pb));
+		/* no PEXPECT(logger, address_cursor.len == 0); may be padded */
+		return;
+	}
+
+	case SADB_EXT_KEY_ENCRYPT:
+	case SADB_EXT_KEY_AUTH:
+	{
+		shunk_t key_cursor;
+		const struct sadb_key *key =
+			get_sadb_key(&ext_cursor, &key_cursor, verbose);
+		if (key == NULL) {
+			return;
+		}
+		llog_sadb_key(verbose, base, key);
+		if (LDBGP(DBG_CRYPT, verbose.logger)) {
+			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+				jam(buf, "   ");
+				jam_dump_hunk(buf, key_cursor);
+			}
+		}
+		/* no PEXPECT(logger, address_cursor.len == 0); allow any length+padding */
+		return;
+	}
+
+	case SADB_EXT_LIFETIME_SOFT:
+	case SADB_EXT_LIFETIME_HARD:
+	case SADB_EXT_LIFETIME_CURRENT:
+#ifdef SADB_X_EXT_LIFETIME_LASTUSE
+	case SADB_X_EXT_LIFETIME_LASTUSE:
+#endif
+	{
+		shunk_t lifetime_cursor;
+		const struct sadb_lifetime *lifetime =
+			get_sadb_lifetime(&ext_cursor, &lifetime_cursor, verbose);
+		if (lifetime == NULL) {
+			return;
+		}
+		llog_sadb_lifetime(verbose, base, lifetime);
+		vexpect(lifetime_cursor.len == 0); /* nothing following */
+		return;
+	}
+
+	case SADB_EXT_PROPOSAL:
+	{
+		shunk_t prop_cursor;
+		const struct sadb_prop *prop =
+			get_sadb_prop(&ext_cursor, &prop_cursor, verbose);
+		if (prop == NULL) {
+			return;
+		}
+		llog_sadb_prop(verbose, base, prop);
+
+		unsigned nr_comb = 0;
+		while (prop_cursor.len > 0) {
+			const struct sadb_comb *comb =
+				hunk_get_thing(&prop_cursor, const struct sadb_comb);
+			if (comb == NULL) {
+				break;
+			}
+			nr_comb++;
+			llog_sadb_comb(verbose, base, comb);
+		}
+		vexpect(prop_cursor.len == 0); /* nothing left */
+		/* from the RFC */
+		vexpect(nr_comb == ((prop->sadb_prop_len * sizeof(uint64_t) -
+				     sizeof(struct sadb_prop)) /
+				    sizeof(struct sadb_comb)));
+		return;
+	}
+
+	case SADB_EXT_SA:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_sa *sa =
+			get_sadb_sa(&ext_cursor, &sa_cursor, verbose);
+		if (sa == NULL) {
+			return;
+		}
+		llog_sadb_sa(verbose, base, base->sadb_msg_satype, sa);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+
+	case SADB_EXT_SPIRANGE:
+	{
+		shunk_t spirange_cursor;
+		const struct sadb_spirange *spirange =
+			get_sadb_spirange(&ext_cursor, &spirange_cursor, verbose);
+		if (spirange == NULL) {
+			return;
+		}
+		llog_sadb_spirange(verbose, base, spirange);
+		vexpect(spirange_cursor.len == 0); /* nothing following */
+		return;
+	}
+
+	case SADB_EXT_SUPPORTED_AUTH:
+	case SADB_EXT_SUPPORTED_ENCRYPT:
+#ifdef SADB_X_EXT_SUPPORTED_COMP
+	case SADB_X_EXT_SUPPORTED_COMP:
+#endif
+	{
+		shunk_t supported_cursor;
+		const struct sadb_supported *supported =
+			get_sadb_supported(&ext_cursor, &supported_cursor, verbose);
+		if (supported == NULL) {
+			return;
+		}
+		llog_sadb_supported(verbose, base, supported);
+
+		unsigned nr_algs = 0;
+		while (supported_cursor.len > 0) {
+			const struct sadb_alg *alg =
+				hunk_get_thing(&supported_cursor, const struct sadb_alg);
+			if (alg == NULL) {
+				break;
+			}
+			nr_algs++;
+			verbose.level++;
+			llog_sadb_alg(verbose, base, exttype, alg);
+			verbose.level--;
+		}
+		vexpect(supported_cursor.len == 0); /* nothing left */
+		/* from the RFC */
+		vexpect(nr_algs == ((supported->sadb_supported_len * sizeof(uint64_t) -
+				     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg)));
+		return;
+	}
+
+#ifdef SADB_X_EXT_POLICY
+	case SADB_X_EXT_POLICY:
+	{
+		shunk_t x_policy_cursor;
+		const struct sadb_x_policy *x_policy =
+			get_sadb_x_policy(&ext_cursor, &x_policy_cursor, verbose);
+		if (x_policy == NULL) {
+			return;
+		}
+		llog_sadb_x_policy(verbose, base, x_policy);
+
+		while (x_policy_cursor.len > 0) {
+			shunk_t x_ipsecrequest_cursor;
+			const struct sadb_x_ipsecrequest *x_ipsecrequest =
+				get_sadb_x_ipsecrequest(&x_policy_cursor, &x_ipsecrequest_cursor, verbose);
+			if (x_ipsecrequest == NULL) {
+				break;
+			}
+			llog_sadb_x_ipsecrequest(verbose, base, x_ipsecrequest);
+			while (x_ipsecrequest_cursor.len > 0) {
+				/* can't assume sockaddr is aligned */
+				ip_address address;
+				ip_port port;
+				if (!get_sadb_sockaddr_address_port(&x_ipsecrequest_cursor,
+								    &address, &port, verbose)) {
+					break;
+				}
+				address_buf ab;
+				port_buf pb;
+				llog(verbose.rc_flags, verbose.logger,
+				     PRI_VERBOSE"  %s:%s", pri_verbose,
+				     str_address_wrapped(&address, &ab), str_hport(port, &pb));
+			}
+		}
+		vexpect(ext_cursor.len == 0);
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_NAT_T_TYPE
+	case SADB_X_EXT_NAT_T_TYPE:
+	{
+		shunk_t x_nat_t_type_cursor;
+		const struct sadb_x_nat_t_type *x_nat_t_type =
+			get_sadb_x_nat_t_type(&ext_cursor, &x_nat_t_type_cursor, verbose);
+		if (x_nat_t_type == NULL) {
+			return;
+		}
+		llog_sadb_x_nat_t_type(verbose, base, x_nat_t_type);
+		vexpect(x_nat_t_type_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_SA2
+	case SADB_X_EXT_SA2:
+	{
+		shunk_t x_sa2_cursor;
+		const struct sadb_x_sa2 *x_sa2 =
+			get_sadb_x_sa2(&ext_cursor, &x_sa2_cursor, verbose);
+		if (x_sa2 == NULL) {
+			return;
+		}
+		llog_sadb_x_sa2(verbose, base, x_sa2);
+		vexpect(x_sa2_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_SA_REPLAY
+	case SADB_X_EXT_SA_REPLAY:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_x_sa_replay *x_sa_replay =
+			get_sadb_x_sa_replay(&ext_cursor, &sa_cursor, verbose);
+		if (x_sa_replay == NULL) {
+			return;
+		}
+		llog_sadb_x_sa_replay(verbose, base, x_sa_replay);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_COUNTER
+	case SADB_X_EXT_COUNTER:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_x_counter *x_counter =
+			get_sadb_x_counter(&ext_cursor, &sa_cursor, verbose);
+		if (x_counter == NULL) {
+			return;
+		}
+		llog_sadb_x_counter(verbose, base, x_counter);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_PROTOCOL
+#ifdef SADB_X_EXT_FLOW_TYPE
+	case SADB_X_EXT_FLOW_TYPE:
+#endif
+	case SADB_X_EXT_PROTOCOL:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_protocol *protocol =
+			get_sadb_protocol(&ext_cursor, &sa_cursor, verbose);
+		if (protocol == NULL) {
+			return;
+		}
+		llog_sadb_protocol(verbose, base, protocol);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
+	case SADB_X_EXT_REPLAY:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_x_replay *x_replay =
+			get_sadb_x_replay(&ext_cursor, &sa_cursor, verbose);
+		if (x_replay == NULL) {
+			return;
+		}
+		llog_sadb_x_replay(verbose, base, x_replay);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_UDPENCAP
+	case SADB_X_EXT_UDPENCAP:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_x_udpencap *x_udpencap =
+			get_sadb_x_udpencap(&ext_cursor, &sa_cursor, verbose);
+		if (x_udpencap == NULL) {
+			return;
+		}
+		llog_sadb_x_udpencap(verbose, base, x_udpencap);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+
+#ifdef SADB_X_EXT_IFACE
+	case SADB_X_EXT_IFACE:
+	{
+		shunk_t sa_cursor;
+		const struct sadb_x_iface *x_iface =
+			get_sadb_x_iface(&ext_cursor, &sa_cursor, verbose);
+		if (x_iface == NULL) {
+			return;
+		}
+		llog_sadb_x_iface(verbose, base, x_iface);
+		vexpect(sa_cursor.len == 0); /* nothing following */
+		return;
+	}
+#endif
+	}
+
+	/* Force to ERROR stream! */
+	verbose.rc_flags = ERROR_STREAM;
+	llog_pexpect(verbose.logger, HERE, "unexpected payload");
+
+	const struct sadb_msg *b = base; /*hack*/
+	const struct sadb_ext *m = ext;
+	JAM_HEADER(sadb_ext);
+	JAM_LEN(sadb_ext, len);
+	JAM_SPARSE(&sadb_exttype_names, sadb_ext, type);
+	JAM_FOOTER();
+}
+
 void llog_sadb(struct verbose verbose, shunk_t msg_cursor)
 {
 	if (verbose.rc_flags == 0) {
@@ -514,325 +868,6 @@ void llog_sadb(struct verbose verbose, shunk_t msg_cursor)
 			llog_passert(verbose.logger, HERE, "bad ext");
 		}
 
-		enum sadb_exttype exttype = ext->sadb_ext_type;
-		switch (exttype) {
-
-		case SADB_EXT_ADDRESS_SRC:
-		case SADB_EXT_ADDRESS_DST:
-#ifdef SADB_X_EXT_SRC_FLOW
-		case SADB_X_EXT_SRC_FLOW:
-#endif
-#ifdef SADB_X_EXT_DST_FLOW
-		case SADB_X_EXT_DST_FLOW:
-#endif
-#ifdef SADB_X_EXT_SRC_MASK
-		case SADB_X_EXT_SRC_MASK:
-#endif
-#ifdef SADB_X_EXT_DST_MASK
-		case SADB_X_EXT_DST_MASK:
-#endif
-		{
-			shunk_t address_cursor;
-			const struct sadb_address *address =
-				get_sadb_address(&ext_cursor, &address_cursor, verbose);
-			if (address == NULL) {
-				return;
-			}
-			llog_sadb_address(verbose, base, address);
-			ip_address addr;
-			ip_port port;
-			if (!get_sadb_sockaddr_address_port(&address_cursor, &addr, &port, verbose)) {
-				return;
-			}
-			address_buf ab;
-			port_buf pb;
-			llog(verbose.rc_flags, verbose.logger,
-			     PRI_VERBOSE"  %s:%s", pri_verbose,
-			     str_address_wrapped(&addr, &ab), str_hport(port, &pb));
-			/* no PEXPECT(logger, address_cursor.len == 0); may be padded */
-			break;
-		}
-
-		case SADB_EXT_KEY_ENCRYPT:
-		case SADB_EXT_KEY_AUTH:
-		{
-			shunk_t key_cursor;
-			const struct sadb_key *key =
-				get_sadb_key(&ext_cursor, &key_cursor, verbose);
-			if (key == NULL) {
-				return;
-			}
-			llog_sadb_key(verbose, base, key);
-			if (LDBGP(DBG_CRYPT, verbose.logger)) {
-				LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-					jam(buf, "   ");
-					jam_dump_hunk(buf, key_cursor);
-				}
-			}
-			/* no PEXPECT(logger, address_cursor.len == 0); allow any length+padding */
-			break;
-		}
-
-		case SADB_EXT_LIFETIME_SOFT:
-		case SADB_EXT_LIFETIME_HARD:
-		case SADB_EXT_LIFETIME_CURRENT:
-#ifdef SADB_X_EXT_LIFETIME_LASTUSE
-		case SADB_X_EXT_LIFETIME_LASTUSE:
-#endif
-		{
-			shunk_t lifetime_cursor;
-			const struct sadb_lifetime *lifetime =
-				get_sadb_lifetime(&ext_cursor, &lifetime_cursor, verbose);
-			if (lifetime == NULL) {
-				return;
-			}
-			llog_sadb_lifetime(verbose, base, lifetime);
-			vexpect(lifetime_cursor.len == 0); /* nothing following */
-			break;
-		}
-
-		case SADB_EXT_PROPOSAL:
-		{
-			shunk_t prop_cursor;
-			const struct sadb_prop *prop =
-				get_sadb_prop(&ext_cursor, &prop_cursor, verbose);
-			if (prop == NULL) {
-				return;
-			}
-			llog_sadb_prop(verbose, base, prop);
-
-			unsigned nr_comb = 0;
-			while (prop_cursor.len > 0) {
-				const struct sadb_comb *comb =
-					hunk_get_thing(&prop_cursor, const struct sadb_comb);
-				if (comb == NULL) {
-					break;
-				}
-				nr_comb++;
-				llog_sadb_comb(verbose, base, comb);
-			}
-			vexpect(prop_cursor.len == 0); /* nothing left */
-			/* from the RFC */
-			vexpect(nr_comb == ((prop->sadb_prop_len * sizeof(uint64_t) -
-					     sizeof(struct sadb_prop)) /
-					    sizeof(struct sadb_comb)));
-			break;
-		}
-
-		case SADB_EXT_SA:
-		{
-			shunk_t sa_cursor;
-			const struct sadb_sa *sa =
-				get_sadb_sa(&ext_cursor, &sa_cursor, verbose);
-			if (sa == NULL) {
-				return;
-			}
-			llog_sadb_sa(verbose, base, base->sadb_msg_satype, sa);
-			vexpect(sa_cursor.len == 0); /* nothing following */
-			break;
-		}
-
-		case SADB_EXT_SPIRANGE:
-		{
-			shunk_t spirange_cursor;
-			const struct sadb_spirange *spirange =
-				get_sadb_spirange(&ext_cursor, &spirange_cursor, verbose);
-			if (spirange == NULL) {
-				return;
-			}
-			llog_sadb_spirange(verbose, base, spirange);
-			vexpect(spirange_cursor.len == 0); /* nothing following */
-			break;
-		}
-
-		case SADB_EXT_SUPPORTED_AUTH:
-		case SADB_EXT_SUPPORTED_ENCRYPT:
-#ifdef SADB_X_EXT_SUPPORTED_COMP
-		case SADB_X_EXT_SUPPORTED_COMP:
-#endif
-		{
-			shunk_t supported_cursor;
-			const struct sadb_supported *supported =
-				get_sadb_supported(&ext_cursor, &supported_cursor, verbose);
-			if (supported == NULL) {
-				return;
-			}
-			llog_sadb_supported(verbose, base, supported);
-
-			unsigned nr_algs = 0;
-			while (supported_cursor.len > 0) {
-				const struct sadb_alg *alg =
-					hunk_get_thing(&supported_cursor, const struct sadb_alg);
-				if (alg == NULL) {
-					break;
-				}
-				nr_algs++;
-				verbose.level++;
-				llog_sadb_alg(verbose, base, exttype, alg);
-				verbose.level--;
-			}
-			vexpect(supported_cursor.len == 0); /* nothing left */
-			/* from the RFC */
-			vexpect(nr_algs == ((supported->sadb_supported_len * sizeof(uint64_t) -
-					     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg)));
-			break;
-		}
-
-#ifdef SADB_X_EXT_POLICY
-		case SADB_X_EXT_POLICY:
-		{
-			shunk_t x_policy_cursor;
-			const struct sadb_x_policy *x_policy =
-				get_sadb_x_policy(&ext_cursor, &x_policy_cursor, verbose);
-			if (x_policy == NULL) {
-				return;
-			}
-			llog_sadb_x_policy(verbose, base, x_policy);
-
-			while (x_policy_cursor.len > 0) {
-				shunk_t x_ipsecrequest_cursor;
-				const struct sadb_x_ipsecrequest *x_ipsecrequest =
-					get_sadb_x_ipsecrequest(&x_policy_cursor, &x_ipsecrequest_cursor, verbose);
-				if (x_ipsecrequest == NULL) {
-					break;
-				}
-				llog_sadb_x_ipsecrequest(verbose, base, x_ipsecrequest);
-				while (x_ipsecrequest_cursor.len > 0) {
-					/* can't assume sockaddr is aligned */
-					ip_address address;
-					ip_port port;
-					if (!get_sadb_sockaddr_address_port(&x_ipsecrequest_cursor,
-									    &address, &port, verbose)) {
-						break;
-					}
-					address_buf ab;
-					port_buf pb;
-					llog(verbose.rc_flags, verbose.logger,
-					     PRI_VERBOSE"  %s:%s", pri_verbose,
-					     str_address_wrapped(&address, &ab), str_hport(port, &pb));
-				}
-			}
-			vexpect(ext_cursor.len == 0);
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_NAT_T_TYPE
-		case SADB_X_EXT_NAT_T_TYPE:
-		{
-			shunk_t x_nat_t_type_cursor;
-			const struct sadb_x_nat_t_type *x_nat_t_type =
-				get_sadb_x_nat_t_type(&ext_cursor, &x_nat_t_type_cursor, verbose);
-			if (x_nat_t_type == NULL) {
-				return;
-			}
-			llog_sadb_x_nat_t_type(verbose, base, x_nat_t_type);
-			vexpect(x_nat_t_type_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_SA2
-		case SADB_X_EXT_SA2:
-		{
-			shunk_t x_sa2_cursor;
-			const struct sadb_x_sa2 *x_sa2 =
-				get_sadb_x_sa2(&ext_cursor, &x_sa2_cursor, verbose);
-			if (x_sa2 == NULL) {
-				return;
-			}
-			llog_sadb_x_sa2(verbose, base, x_sa2);
-			vexpect(x_sa2_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_SA_REPLAY
-		case SADB_X_EXT_SA_REPLAY:
-		{
-			shunk_t sa_cursor;
-			const struct sadb_x_sa_replay *x_sa_replay =
-				get_sadb_x_sa_replay(&ext_cursor, &sa_cursor, verbose);
-			if (x_sa_replay == NULL) {
-				return;
-			}
-			llog_sadb_x_sa_replay(verbose, base, x_sa_replay);
-			vexpect(sa_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_COUNTER
-		case SADB_X_EXT_COUNTER:
-		{
-			shunk_t sa_cursor;
-			const struct sadb_x_counter *x_counter =
-				get_sadb_x_counter(&ext_cursor, &sa_cursor, verbose);
-			if (x_counter == NULL) {
-				return;
-			}
-			llog_sadb_x_counter(verbose, base, x_counter);
-			vexpect(sa_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_PROTOCOL
-#ifdef SADB_X_EXT_FLOW_TYPE
-		case SADB_X_EXT_FLOW_TYPE:
-#endif
-		case SADB_X_EXT_PROTOCOL:
-		{
-			shunk_t sa_cursor;
-			const struct sadb_protocol *protocol =
-				get_sadb_protocol(&ext_cursor, &sa_cursor, verbose);
-			if (protocol == NULL) {
-				return;
-			}
-			llog_sadb_protocol(verbose, base, protocol);
-			vexpect(sa_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
-		case SADB_X_EXT_REPLAY:
-		{
-			shunk_t sa_cursor;
-			const struct sadb_x_replay *x_replay =
-				get_sadb_x_replay(&ext_cursor, &sa_cursor, verbose);
-			if (x_replay == NULL) {
-				return;
-			}
-			llog_sadb_x_replay(verbose, base, x_replay);
-			vexpect(sa_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-#ifdef SADB_X_EXT_UDPENCAP
-		case SADB_X_EXT_UDPENCAP:
-		{
-			shunk_t sa_cursor;
-			const struct sadb_x_udpencap *x_udpencap =
-				get_sadb_x_udpencap(&ext_cursor, &sa_cursor, verbose);
-			if (x_udpencap == NULL) {
-				return;
-			}
-			llog_sadb_x_udpencap(verbose, base, x_udpencap);
-			vexpect(sa_cursor.len == 0); /* nothing following */
-			break;
-		}
-#endif
-
-		default:
-		{
-			struct verbose error = verbose;
-			verbose.rc_flags = ERROR_STREAM;
-			llog_pexpect(verbose.logger, HERE, "unexpected payload");
-			llog_sadb_ext(error, base, ext);
-			break;
-		}
-		}
+		llog_sadb_ext(verbose, base, ext, ext_cursor);
 	}
 }

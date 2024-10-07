@@ -68,6 +68,17 @@
 #endif
 
 /*
+ * OpenBSD's ipsec-interface uses IPSP_DIRECTION_{IN,OUT}, which is
+ * hidden in <netinet/ip_ipsp.h>, to specify the interface's direction
+ * in the sadb_x_ext_iface payload.  Why it didn't use values from
+ * PFKEY I don't know.
+ */
+#ifdef __OpenBSD__
+#include <sys/socket.h>
+#include <netinet/ip_ipsp.h>
+#endif
+
+/*
  * Work-around OpenBSD which defines SADB_X_EXT_SA2 but not struct
  * sadb_x_sa2 (it doesn't even use that structure).
  */

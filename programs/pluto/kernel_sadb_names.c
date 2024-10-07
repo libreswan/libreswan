@@ -250,6 +250,9 @@ const struct sparse_names sadb_exttype_names = {
 #ifdef SADB_X_EXT_UDPENCAP
 		S(SADB_X_EXT_UDPENCAP),
 #endif
+#ifdef SADB_X_EXT_IFACE
+		S(SADB_X_EXT_IFACE),
+#endif
 		SPARSE_NULL
 	},
 };
@@ -655,6 +658,17 @@ const struct sparse_names sadb_x_flow_type_names = {
 		S(SADB_X_FLOW_TYPE_BYPASS),
 		S(SADB_X_FLOW_TYPE_DENY),
 		S(SADB_X_FLOW_TYPE_DONTACQ),
+		SPARSE_NULL,
+	},
+};
+#endif
+
+#ifdef SADB_X_EXT_IFACE
+const struct sparse_names ipsp_direction_names = {
+        .prefix = "IPSP_DIRECTION_",
+        .list = {
+		S(IPSP_DIRECTION_IN),
+		S(IPSP_DIRECTION_OUT),
 		SPARSE_NULL,
 	},
 };

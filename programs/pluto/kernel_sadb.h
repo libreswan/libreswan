@@ -295,6 +295,12 @@ enum sadb_exttype {
 #define SADB_X_EXT_UDPENCAP sadb_x_ext_udpencap
 #endif
 
+#ifdef SADB_X_EXT_IFACE
+	sadb_x_ext_iface = SADB_X_EXT_IFACE,
+#undef SADB_X_EXT_IFACE
+#define SADB_X_EXT_IFACE sadb_x_ext_iface
+#endif
+
 };
 
 enum sadb_sastate {
@@ -513,6 +519,14 @@ enum sadb_x_flow_type {
 
 #endif
 
+#ifdef SADB_X_EXT_IFACE
+enum ipsp_direction {
+	ipsp_direction_in = IPSP_DIRECTION_IN,
+	ipsp_direction_out = IPSP_DIRECTION_OUT,
+};
+extern const struct sparse_names ipsp_direction_names;
+#endif
+
 extern const struct sparse_names sadb_aalg_names;
 extern const struct sparse_names sadb_calg_names;
 extern const struct sparse_names sadb_ealg_names;
@@ -546,7 +560,7 @@ void llog_sadb_sa(struct verbose verbose, const struct sadb_msg *b, enum sadb_sa
 
 void llog_sadb_address(struct verbose verbose, const struct sadb_msg *b, const struct sadb_address *m);
 void llog_sadb_comb(struct verbose verbose, const struct sadb_msg *b, const struct sadb_comb *m);
-void llog_sadb_ext(struct verbose verbose, const struct sadb_msg *b, const struct sadb_ext *m);
+void llog_sadb_ext(struct verbose verbose, const struct sadb_msg *base, const struct sadb_ext *ext, shunk_t sadb_cursor);
 void llog_sadb_ident(struct verbose verbose, const struct sadb_msg *b, const struct sadb_ident *m);
 void llog_sadb_key(struct verbose verbose, const struct sadb_msg *b, const struct sadb_key *m);
 void llog_sadb_lifetime(struct verbose verbose, const struct sadb_msg *b, const struct sadb_lifetime *m);
@@ -587,6 +601,9 @@ void llog_sadb_x_replay(struct verbose verbose, const struct sadb_msg *b, const 
 #endif
 #ifdef SADB_X_EXT_UDPENCAP
 void llog_sadb_x_udpencap(struct verbose verbose, const struct sadb_msg *b, const struct sadb_x_udpencap *m);
+#endif
+#ifdef SADB_X_EXT_IFACE
+void llog_sadb_x_iface(struct verbose verbose, const struct sadb_msg *b, const struct sadb_x_iface *m);
 #endif
 
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
@@ -634,6 +651,9 @@ GET_SADB(sadb_x_replay);
 #endif
 #ifdef SADB_X_EXT_UDPENCAP
 GET_SADB(sadb_x_udpencap);
+#endif
+#ifdef SADB_X_EXT_IFACE /* OpenBSD */
+GET_SADB(sadb_x_iface);
 #endif
 
 #undef GET_SADB
