@@ -32,6 +32,9 @@ const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_IPSEC_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CHACHA20_POLY1305,
+#ifdef SADB_X_AALG_CHACHA20POLY1305
+			[SADB_ALG_ID] = SADB_X_AALG_CHACHA20POLY1305,
+#endif
 		},
 	},
 	.keylen_omitted = true,
