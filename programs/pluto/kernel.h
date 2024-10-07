@@ -118,6 +118,8 @@ struct kernel_state_end {
 };
 
 struct kernel_state {
+	const char *story;
+
 	struct kernel_state_end src;
 	struct kernel_state_end dst;
 
@@ -133,17 +135,14 @@ struct kernel_state {
 	unsigned level;		/* inner-most is 0 */
 
 	enum direction direction;
-	bool esn;
-	bool decap_dscp;
-	bool encap_dscp;
-	bool nopmtudisc;
-	uint32_t tfcpad;
 	ipsec_spi_t spi;
 	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
 	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL */
-	unsigned replay_window;
 	enum kernel_state_id state_id;		/* linux calls this seq */
 	reqid_t reqid;
+
+	bool esn;
+	unsigned replay_window;
 
 	const struct encrypt_desc *encrypt;
 	shunk_t encrypt_key;
@@ -151,17 +150,24 @@ struct kernel_state {
 	shunk_t integ_key;
 	const struct ipcomp_desc *ipcomp;
 
-	const char *story;
 	chunk_t sec_label;
 
-	struct nic_offload nic_offload;
-	uint32_t xfrm_if_id;
-	struct sa_mark mark_set; /* config keyword mark-out */
+	const struct ipsec_interface *ipsec_interface;
 	uint64_t sa_ipsec_max_bytes;
 	uint64_t sa_max_soft_bytes;
 	uint64_t sa_ipsec_max_packets;
 	uint64_t sa_max_soft_packets;
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
+
+	struct nic_offload nic_offload;
+
+	/* linux jibberish */
+	const struct sa_mark *sa_mark_out;	 /* config keyword mark-out */
+	bool decap_dscp;
+	bool encap_dscp;
+	bool nopmtudisc;
+	uint32_t tfcpad;
+
 };
 
 /*

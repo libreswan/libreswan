@@ -1858,17 +1858,20 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 #ifdef USE_XFRM_INTERFACE
-	if (sa->xfrm_if_id != 0) {
+	if (sa->ipsec_interface != 0) {
+		uint32_t xfrm_if_id = sa->ipsec_interface->if_id;
 		dbg("%s xfrm: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
-		    __func__, sa->xfrm_if_id, req.n.nlmsg_type);
-		nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, sa->xfrm_if_id);
-		if (sa->mark_set.val != 0 || sa->mark_set.mask != 0) {
+		    __func__, xfrm_if_id, req.n.nlmsg_type);
+		nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
+		if (sa->sa_mark_out != NULL) {
 			/* manually configured mark-out=mark/mask */
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, sa->mark_set.val);
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK_MASK, sa->mark_set.mask);
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK,
+				     sa->sa_mark_out->val);
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK_MASK,
+				     sa->sa_mark_out->mask);
 		} else {
 			/* XFRMA_SET_MARK = XFRMA_IF_ID */
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, sa->xfrm_if_id);
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrm_if_id);
 		}
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 	}

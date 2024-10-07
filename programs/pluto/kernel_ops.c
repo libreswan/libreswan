@@ -73,8 +73,13 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 				jam(buf, "routing:  ");
 
+				if (policy->ipsec_interface != NULL) {
+					jam_string(buf, " ");
+					jam_ipsec_interface(buf, policy->ipsec_interface);
+				}
+
 				if (policy->sa_marks != NULL) {
-					jam(buf, " sa_marks=");
+					jam_string(buf, " sa_marks=");
 					const char *dir = "out:";
 					FOR_EACH_THING(mark,
 						       &policy->sa_marks->out,
@@ -83,10 +88,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 						    dir, pri_sa_mark(*mark));
 						dir = ",in:";
 					}
-				}
-
-				if (policy->ipsec_interface != NULL) {
-					jam_ipsec_interface(buf, policy->ipsec_interface);
 				}
 			}
 
@@ -353,10 +354,22 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			}
 
 			jam(buf, " replay_window=%d", sa->replay_window);
-			if (sa->esn) jam(buf, " +esn");
-			if (sa->decap_dscp) jam(buf, " +decap_dscp");
-			if (!sa->encap_dscp) jam(buf, " +dont_encap_dscp");
-			if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
+			if (sa->esn) jam_string(buf, " +esn");
+
+			if (sa->ipsec_interface != NULL) {
+				jam_string(buf, " ");
+				jam_ipsec_interface(buf, sa->ipsec_interface);
+			}
+
+			if (sa->sa_mark_out != NULL) {
+				jam_string(buf, " sa_mark_out=");
+				jam(buf, PRI_SA_MARK, pri_sa_mark((*sa->sa_mark_out)));
+			}
+
+			/* other stuff */
+			if (sa->decap_dscp) jam_string(buf, " +decap_dscp");
+			if (!sa->encap_dscp) jam_string(buf, " +dont_encap_dscp");
+			if (sa->nopmtudisc) jam_string(buf, " +nopmtudisc");
 
 			jam_string(buf, " ...");
 		}

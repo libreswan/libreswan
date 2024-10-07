@@ -1300,8 +1300,8 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 					    ipcomp_spi, &text_ipcomp);
 
 		if (c->ipsec_interface != NULL) {
-			said_next->xfrm_if_id = c->ipsec_interface->if_id;
-			said_next->mark_set = c->sa_marks.out;
+			said_next->ipsec_interface = c->ipsec_interface;
+			said_next->sa_mark_out = &c->sa_marks.out;
 		}
 
 		if (!kernel_ops_add_sa(said_next, replace, child->sa.logger)) {
@@ -1413,8 +1413,12 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		     c->config->child_sa.replay_window);
 
 		if (c->ipsec_interface != NULL) {
-			said_next->xfrm_if_id = c->ipsec_interface->if_id;
-			said_next->mark_set = c->sa_marks.out;
+			said_next->ipsec_interface = c->ipsec_interface;
+			if (c->sa_marks.out.val != 0 ||
+			    c->sa_marks.out.mask != 0) {
+				/* manually configured mark-out=mark/mask */
+				said_next->sa_mark_out = &c->sa_marks.out;
+			}
 		}
 
 		if (direction == DIRECTION_OUTBOUND &&
