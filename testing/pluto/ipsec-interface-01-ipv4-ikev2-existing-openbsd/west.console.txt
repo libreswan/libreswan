@@ -38,18 +38,14 @@ west #
 "east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "east-west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "east-west" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio1)
-"east-west" #2: command: 'ifconfig' 'sec1' 'inet' '192.0.45.1/24' '192.0.45.1'
-"east-west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
-"east-west" #2: added 192.0.45.1/24 to ipsec-interface sec1@vio1
+"east-west" #2: openbsd_ipsec_interface_has_cidr() always true sec1 192.0.45.1/24
 "east-west" #2: command: 'ifconfig' 'sec1' 'up'
 "east-west" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "east-west" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio1)
 "east-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.23.0/24===192.0.45.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.45.1 192.0.23.1
-down UNEXPECTED
-# fping  -c 1  --timeout 5s   --src 192.0.45.1 192.0.23.1
-192.0.23.1 : [0], timed out (NaN avg, 100% loss) 192.0.23.1 : xmt/rcv/%loss = 1/0/100%
+up
 west #
  ../../guestbin/ipsec-kernel-state.sh
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha1 enc aes \
@@ -57,52 +53,51 @@ west #
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth hmac-sha1 enc aes
 		state mature replay 16 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_cur: alloc 0 bytes 192 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
 	key_auth: bits 160: HASHKEY
 	key_encrypt: bits 128: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
-		0 input packets
+		2 input packets
 		0 output packets
-		0 input bytes
+		496 input bytes
 		0 output bytes
-		0 input bytes, decompressed
+		208 input bytes, decompressed
 		0 output bytes, uncompressed
-		0 packets dropped on input
+		2 packets dropped on input
 		0 packets dropped on output
-	replay: rpl 1
+	replay: rpl 2
+	interface: sec1 direction in
 @0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha1 enc aes \
 	authkey 0xHASHKEY \
 	enckey 0xENCKEY
 	sa: spi 0xSPISPI auth hmac-sha1 enc aes
 		state mature replay 16 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add N first 0
+	lifetime_cur: alloc 0 bytes 168 add N first N
 	lifetime_hard: alloc 0 bytes 0 add N first 0
 	lifetime_soft: alloc 0 bytes 0 add N first 0
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
 	key_auth: bits 160: HASHKEY
 	key_encrypt: bits 128: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	counter:
 		0 input packets
-		0 output packets
+		2 output packets
 		0 input bytes
-		0 output bytes
+		304 output bytes
 		0 input bytes, decompressed
-		0 output bytes, uncompressed
+		208 output bytes, uncompressed
 		0 packets dropped on input
 		0 packets dropped on output
-	replay: rpl 1
+	replay: rpl 3
+	interface: sec1 direction out
 west #
  ../../guestbin/ipsec-kernel-policy.sh
-west #
- ../../guestbin/iked.sh stop
-cat: /tmp/iked.pid: No such file or directory
-usage: kill [-s signame | -signum | -signame] { job | pid | pgrp } ...
-       kill -l [exit_status ...]
 west #
  ifconfig sec1 destroy
 west #
