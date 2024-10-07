@@ -1,19 +1,45 @@
-
 See also https://libreswan.org/
 
 v5.1 (unreleased)
+* IKEv1:
+  - fix Quick mode installing 0.0.0.0/0 when no MSG_CONFIG exchange [Andrew, Tuomo]
+  - fix iOS Quick mode request needing to re-recover lease [Andrew, Tuomo]
+  - fix regression where deleting ISAKMP deleted IPsec [Andrew, Tuomo]
+* IKEv2:
+  - fix race when initiator-responder cross rekey requests [Andrew]
+  - don't ignore Delete IKE SA request while waiting for Delete IKE SA response [Andrew]
+  - log arrival of first IKE_AUTH request that triggers DH [Andrew]
+  - rate limit logging of packets with invalid payloads
+* Crypto:
+  - update IKE to use NSS's FIPS compliant PK11_AEADOp() [Andrew]
+  - support ESP+CHACHA20POLY1305 on FreeBSD and OpenBSD [Andrew]
+* IPsec Interface:
+  - fix check for an existing IPsec Interface address (Linux) [Wolfgang]
+  - add IPsec Interface address when connection establishes [Wolfgang]
+  - fix adding IPv6 address to IPsec interface [Wolfgang]
+  - delete Ipsec Interface address when connection unroutes [Wolfgang]
+  - fix setting metric on IPsec Interface [Wolfgang]
+  - add IPsec Interface device when connection orients [Andrew]
+  - support existing IPsec interface on FreeBSD and OpenBSD [Andrew]
+  - log addition of IPsec Interface or Address [Andrew]
+  - don't delete existing ipsec1 interface (Linux) [Andrew]
+  - handle repeated connection adds [Wolfgang]
+* Linux:
+  - fix hang because of unhandled NLMSG_DONE at end of response (6.9.0-rc1) [Andrew, Ilya, github/1675]
+  - fix hang when initiating an on-demand TCP connection [Daiki, github/1156]
+* updown:
+  - restore 4.x behaviour of running "updown unroute|down" when initiate fails [Wolfgang, Andrew]
+  - add test demonstrating redundant tunnels [Wolfgang]
+  - add plutodebug=updown for debugging updown scripts [Andrew]
+* config:
+  - verbosely ignore x-* style comments in ipsec.conf [Andrew, github/1725]
+* whack:
+  - ignore older whack as could trigger core dump [Andrew, github/1709]
+  - add --narrowing {yes,no}, retain undocumented --allow-narrowing [Andrew]
 * building:
   - replace calloc(size,nr) with alloc_things(), fixing compile error [Daiki]
   - remove USE_NSS_AVA_COPY and copy of nss source, remove license exception [Tuomo]
-* whack:
-  - ignore older whack as could trigger core dump [Andrew, github/1709]
-* linux:
-  - handle NLMSG_DONE at end of response (6.9.0-rc1) [Andrew, Ilya, github/1675]
-  - fix hang when initiating an on-demand TCP connection [Daiki, github/1156]
-* config:
-  - verbosely ignore x-* style comments in config file [Andrew, github/1725]
-* whack:
-  - add --narrowing {yes,no}, retain undocumented --allow-narrowing [Andrew]
+  - fix syntax error in ckaid.c allowed by GCC [yuncang123]
 
 v5.0 (Apr 24, 2024)
 * IKEv1:
