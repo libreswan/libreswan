@@ -1,6 +1,6 @@
 See also https://libreswan.org/
 
-v5.1 (unreleased)
+v5.1 (Oct 8, 2024)
 * IKEv2:
   - fix race when initiator-responder cross rekey requests [Andrew]
   - don't ignore Delete IKE SA request while waiting for Delete IKE SA response [Andrew]
@@ -14,7 +14,7 @@ v5.1 (unreleased)
   - add DH29,DH31 to default proposals [Andrew]
   - reject ESP AEAD combined with non-NULL integrity [Andrew]
 * Crypto:
-  - update IKE to use NSS's FIPS compliant PK11_AEADOp() [Andrew]
+  - update IKE to use NSS's FIPS compliant PK11_AEADOp() [Andrew, Robert Relyea]
   - support ESP with CHACHA20POLY1305 on FreeBSD and OpenBSD [Andrew]
 * IPsec Interface:
   - fix check for an existing IPsec Interface address (Linux) [Wolfgang]
