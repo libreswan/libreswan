@@ -3178,7 +3178,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		config->modecfg.banner = clone_str(wm->modecfgbanner, "connection modecfg_banner");
 
-		/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
+		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-00 */
 		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
 		if (config->ppk_ids != NULL) {
 			config->ppk_ids_shunks = shunks(shunk1(config->ppk_ids),

@@ -54,6 +54,11 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				size_t required_bytes,
 				struct logger *logger);
 
+PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
+					    PK11SymKey *old_SK_d,
+					    PK11SymKey *ppk,
+					    struct logger *logger);
+
 /*
  * Child SA
  */

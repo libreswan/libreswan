@@ -19,10 +19,12 @@
 
 #include "state.h"
 #include "demux.h"
+#include "keys.h"
 #include "crypt_dh.h"
 #include "ikev2.h"
 #include "ikev2_send.h"
 #include "ikev2_message.h"
+#include "ikev2_ppk.h"
 #include "ikev2_ike_intermediate.h"
 #include "crypt_symkey.h"
 #include "log.h"
@@ -190,6 +192,45 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
 }
 
+/*
+ * Calculate PPK Confirmation = prf(PPK, Ni | Nr | SPIi | SPIr). It is used in
+ * draft-ietf-ipsecme-ikev2-qr-alt-00 and only in IKE_INTERMEDIATE exchange.
+ * It is called both by initiator and by the responder.
+ */
+static chunk_t calc_ppk_confirmation(const struct prf_desc *prf_desc,
+				     const shunk_t *ppk,
+				     const chunk_t Ni, const chunk_t Nr,
+				     const ike_spis_t *ike_spis,
+				     struct logger *logger)
+{
+	dbg("calculating PPK Confirmation for PPK_IDENTITY_KEY Notify");
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
+
+	/* prf(PPK, ... */
+	struct crypt_prf *prf = crypt_prf_init_symkey("prf(PPK,)",
+						      prf_desc,
+						      "PPK", ppk_key,
+						      logger);
+
+	crypt_prf_update_hunk(prf, "Ni", Ni);
+	crypt_prf_update_hunk(prf, "Nr", Nr);
+	crypt_prf_update_hunk(prf, "SPIi", THING_AS_SHUNK(ike_spis->initiator));
+	crypt_prf_update_hunk(prf, "SPIr", THING_AS_SHUNK(ike_spis->responder));
+	struct crypt_mac ppk_confirmation = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
+
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)", ppk_confirmation.ptr,
+			prf_desc->prf_output_size);
+	}
+
+	symkey_delref(logger, "PPK Keying material", &ppk_key);
+
+	/* NOTE: caller should free this */
+	chunk_t ret = clone_bytes_as_chunk(ppk_confirmation.ptr, PPK_CONFIRMATION_LEN, "PPK Confirmation data");
+
+	return ret;
+}
+
 static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 						       struct child_sa *null_child,
 						       struct msg_digest *null_md)
@@ -211,7 +252,87 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	/* message is empty! */
+	struct connection *const c = ike->sa.st_connection;
+	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
+	chunk_t *ppk_id_p;
+	chunk_t ppk_id;
+	bool found_one = false;
+
+	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		if (ppk_ids_shunks == NULL) {
+			/* find any matching PPK and PPK_ID */
+			const shunk_t ppk = get_connection_ppk_and_ppk_id(c, &ppk_id_p);
+			ppk_id = *ppk_id_p;
+			if (ppk.ptr != NULL) {
+				found_one = true;
+				chunk_t ppk_confirmation = \
+						calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
+								&ppk,
+								ike->sa.st_ni, ike->sa.st_nr,
+								&ike->sa.st_ike_spis,
+								ike->sa.logger);
+				struct ppk_id_payload payl = { .type = 0, };
+				create_ppk_id_payload(&ppk_id, &payl);
+				if (DBGP(DBG_BASE)) {
+					DBG_log("ppk type: %d", (int) payl.type);
+					DBG_dump_hunk("ppk_id from payload:", payl.ppk_id);
+				}
+
+				struct pbs_out ppks;
+				if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
+					return STF_INTERNAL_ERROR;
+				}
+				if (!emit_unified_ppk_id(&payl, &ppks)) {
+					return STF_INTERNAL_ERROR;
+				}
+				if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
+					return STF_INTERNAL_ERROR;
+				}
+				close_output_pbs(&ppks);
+				free_chunk_content(&ppk_confirmation);
+			}
+		} else {
+			for (unsigned i = 0; i < ppk_ids_shunks->len; i++) {
+				const shunk_t ppk = get_connection_ppk(c, NULL, i);
+				if (ppk.ptr != NULL) {
+					found_one = true;
+					chunk_t ppk_confirmation = \
+							calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
+									&ppk,
+									ike->sa.st_ni, ike->sa.st_nr,
+									&ike->sa.st_ike_spis,
+									ike->sa.logger);
+					ppk_id = chunk2((void *) ppk_ids_shunks->list[i].ptr,
+						                 ppk_ids_shunks->list[i].len);
+					struct ppk_id_payload payl = { .type = 0, };
+					create_ppk_id_payload(&ppk_id, &payl);
+					struct pbs_out ppks;
+					if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
+						return STF_INTERNAL_ERROR;
+					}
+					if (!emit_unified_ppk_id(&payl, &ppks)) {
+						return STF_INTERNAL_ERROR;
+					}
+					if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
+						return STF_INTERNAL_ERROR;
+					}
+					close_output_pbs(&ppks);
+					free_chunk_content(&ppk_confirmation);
+				}
+			}
+		}
+
+		if (!found_one) {
+			if (c->config->ppk.insist) {
+				llog_sa(RC_LOG, ike,
+					"connection requires PPK, but we didn't find one");
+				return STF_FATAL;
+			} else {
+				llog_sa(RC_LOG, ike,
+					"failed to find PPK and PPK_ID, continuing without PPK");
+			}
+		}
+	}
 
 	if (!close_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
@@ -291,7 +412,63 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	/* empty message */
+	const struct payload_digest *ppk_id_key_payls = md->pd[PD_v2N_PPK_IDENTITY_KEY];
+	bool found_one = false;		/* found one matching PPK? */
+	shunk_t ppk = null_shunk;
+
+	while (ppk_id_key_payls != NULL && !found_one && ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		dbg("received PPK_IDENTITY_KEY");
+		struct ppk_id_key_payload payl;
+		if (!extract_v2N_ppk_id_key(&ppk_id_key_payls->pbs, &payl, ike)) {
+			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+			return STF_FATAL;
+		}
+
+		ppk = get_connection_ppk(ike->sa.st_connection, &payl.ppk_id_payl.ppk_id, 0);
+
+		if (ppk.ptr != NULL) {
+			chunk_t ppk_confirmation = \
+						calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
+					    			      &ppk,
+								      ike->sa.st_ni, ike->sa.st_nr,
+								      &ike->sa.st_ike_spis,
+					    			      ike->sa.logger);
+			if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
+				dbg("found matching PPK, send PPK_IDENTITY back");
+				found_one = true;
+				/* we have a match, send PPK_IDENTITY back */
+				struct ppk_id_payload ppk_id_p = { .type = 0, }; 
+				create_ppk_id_payload(&payl.ppk_id_payl.ppk_id, &ppk_id_p);
+
+				struct pbs_out ppks;
+				if (!open_v2N_output_pbs(response.pbs, v2N_PPK_IDENTITY, &ppks)) {
+					return STF_INTERNAL_ERROR;
+				}
+				if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
+					return STF_INTERNAL_ERROR;
+				}
+				close_output_pbs(&ppks);
+			}
+			free_chunk_content(&ppk_confirmation);
+		}
+		free_chunk_content(&payl.ppk_id_payl.ppk_id);
+		free_chunk_content(&payl.ppk_confirmation);
+		ppk_id_key_payls = ppk_id_key_payls->next;
+	}
+
+	if (md->pd[PD_v2N_PPK_IDENTITY_KEY] == NULL || !found_one) {
+		if (ike->sa.st_connection->config->ppk.insist) {
+			llog_sa(RC_LOG, ike, "No matching (PPK_ID, PPK) found and connection requires \
+					      a valid PPK. Abort!");
+			record_v2N_response(ike->sa.logger, ike, md,
+					v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		} else {
+			llog_sa(RC_LOG, ike,
+				"failed to find a matching PPK, continuing without PPK");
+		}
+	}
 
 	if (!close_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
@@ -313,6 +490,15 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	}
 
 	record_v2_message(&response.message, response.story, response.outgoing_fragments);
+
+	if (found_one) {
+		recalc_v2_ppk_interm_keymat(&ike->sa,
+			ike->sa.st_skey_d_nss,
+			&ppk,
+			&ike->sa.st_ike_spis);
+		llog_sa(RC_LOG, ike,
+			"PPK used in IKE_INTERMEDIATE as responder");
+	}
 
 	return STF_OK;
 }
@@ -414,6 +600,32 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 	 * XXX: does the keymat need to be re-computed here?
 	 */
 
+	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
+		struct ppk_id_payload payl;
+		if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
+			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+			return STF_FATAL;
+		}
+		shunk_t ppk = get_connection_ppk(ike->sa.st_connection, &payl.ppk_id, 0);
+		free_chunk_content(&payl.ppk_id);
+
+		recalc_v2_ppk_interm_keymat(&ike->sa,
+			ike->sa.st_skey_d_nss,
+			&ppk,
+			&ike->sa.st_ike_spis);
+		llog_sa(RC_LOG, ike,
+			"PPK used in IKE_INTERMEDIATE as initiator");
+	}
+	if (md->pd[PD_v2N_PPK_IDENTITY] == NULL) {
+		if (ike->sa.st_connection->config->ppk.insist) {
+			llog_sa(RC_LOG, ike, "N(PPK_IDENTITY) not received and connection \
+					      insists on PPK. Abort!");
+			return STF_FATAL;
+		} else {
+			llog_sa(RC_LOG, ike,
+				"N(PPK_IDENTITY) not received, continuing without PPK");
+		}
+	}
 	/*
 	 * We've done one intermediate exchange round, now proceed to
 	 * IKE AUTH.
