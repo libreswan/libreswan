@@ -1,18 +1,21 @@
 See also https://libreswan.org/
 
 v5.1 (unreleased)
-* IKEv1:
-  - fix Quick mode installing 0.0.0.0/0 when no MSG_CONFIG exchange [Andrew, Tuomo]
-  - fix iOS Quick mode request needing to re-recover lease [Andrew, Tuomo]
-  - fix regression where deleting ISAKMP deleted IPsec [Andrew, Tuomo]
 * IKEv2:
   - fix race when initiator-responder cross rekey requests [Andrew]
   - don't ignore Delete IKE SA request while waiting for Delete IKE SA response [Andrew]
   - log arrival of first IKE_AUTH request that triggers DH [Andrew]
   - rate limit logging of packets with invalid payloads
+* IKEv1:
+  - fix Quick mode installing 0.0.0.0/0 when no MSG_CONFIG exchange [Andrew, Tuomo]
+  - fix iOS Quick mode request needing to re-recover lease [Andrew, Tuomo]
+  - fix regression where deleting ISAKMP deleted IPsec [Andrew, Tuomo]
+  - add config options of ah=sha2{256,512} [Andrew]
+  - add DH29,DH31 to default proposals [Andrew]
+  - reject ESP AEAD combined with non-NULL integrity [Andrew]
 * Crypto:
   - update IKE to use NSS's FIPS compliant PK11_AEADOp() [Andrew]
-  - support ESP+CHACHA20POLY1305 on FreeBSD and OpenBSD [Andrew]
+  - support ESP with CHACHA20POLY1305 on FreeBSD and OpenBSD [Andrew]
 * IPsec Interface:
   - fix check for an existing IPsec Interface address (Linux) [Wolfgang]
   - add IPsec Interface address when connection establishes [Wolfgang]
@@ -25,6 +28,7 @@ v5.1 (unreleased)
   - don't delete existing ipsec1 interface (Linux) [Andrew]
   - handle repeated connection adds [Wolfgang]
 * Linux:
+  - handle NLMSG_DONE at end of response for > 6.9.0 kernels [Andrew]
   - fix hang because of unhandled NLMSG_DONE at end of response (6.9.0-rc1) [Andrew, Ilya, github/1675]
   - fix hang when initiating an on-demand TCP connection [Daiki, github/1156]
 * updown:
