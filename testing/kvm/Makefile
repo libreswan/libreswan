@@ -1115,15 +1115,15 @@ $(KVM_NETBSD_DOMAIN)-base.iso: | netbsd/base.sh
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_ISO_RELEASE ?= 7.5
+KVM_OPENBSD_ISO_RELEASE ?= 7.6
 
 KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)/amd64/
 
 # not openbsd... as gets deleted by rm openbsd.*
 KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 KVM_OPENBSD_ISO_HASH ?= SHA256
-KVM_OPENBSD_ISO_CKSUM ?= 034435c6e27405d5a7fafb058162943c194eb793dafdc412c08d49bb56b3892a
-# note: different to ISO name; strip "."
+KVM_OPENBSD_ISO_CKSUM ?= 60cba8cb391b50bba8fa10fc768bd0529636f5345d82133c93e22c798d8e5269
+# note: strip "."; upstream ISO name omits it
 KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL)/install$(subst .,,$(KVM_OPENBSD_ISO_RELEASE)).iso
 
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
