@@ -279,8 +279,8 @@ KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $
 # immediately, but delay everything else by using $$.
 
 # override below
-KVM_LINUX_TEST_HOST_NAMES = east west north road nic
-KVM_OS_TEST_HOST_NAMES = e w n
+KVM_LINUX_TEST_HOST_NAMES = east west north road nic rise set
+KVM_OS_TEST_HOST_NAMES = e w rise set
 
 define domains
 
