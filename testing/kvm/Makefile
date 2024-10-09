@@ -1497,6 +1497,8 @@ kvm-demolish: $(foreach os, $(KVM_OS), kvm-demolish-$(os))
 $(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
 kvm-demolish-%: kvm-purge-%
 	: $@=$*
+	: things like ISOs
+	rm -vf $(KVM_$($*)_BASE_DOMAIN).*
 
 
 #
