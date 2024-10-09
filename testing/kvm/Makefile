@@ -766,16 +766,16 @@ $(KVM_GATEWAY): | $(KVM_POOLDIR)
 # Test networks.
 #
 
-KVM_TEST_NETWORK_NAMES = $(notdir $(wildcard net/192_*))
+KVM_TEST_NETWORK_NAMES = 192_0_1 192_0_2 192_0_3 198_18_145 198_18_123
 KVM_TEST_NETWORKS = \
 	$(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 		$(foreach test_network, $(KVM_TEST_NETWORK_NAMES), \
 			$(test_prefix)$(test_network)))
 
 # <prefix><network>; if <prefix> is blank call it swan<network>*
-KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
-					$*, \
-					swan$(subst _,,$(patsubst %192_,,$*))))
+KVM_BRIDGE_NAME = $(strip $(addprefix \
+			$(if $(patsubst 198_%,, $(patsubst 192_%,,$*)),, swan), \
+			$(subst 198_18_,_, $(subst 192_,_, $*))))
 
 $(KVM_TEST_NETWORKS): \
 $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
@@ -787,15 +787,13 @@ $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	echo "  <name>$*</name>"					>> '$@.tmp'
 	echo "  <bridge name='$(KVM_BRIDGE_NAME)'"			>> '$@.tmp'
 	echo "          stp='on' delay='0'/>"				>> '$@.tmp'
-	$(if $(patsubst 192_%,, $*), \
-	echo "  <!--" 							>> '$@.tmp')
-	echo "  <ip address='$(subst _,.,$(patsubst %192_, 192_, $*)).253'/>" >> '$@.tmp'
-	$(if $(patsubst 192_%,, $*), \
-	echo "    -->" 							>> '$@.tmp')
+	echo "$(if $(patsubst 198.%,, $(patsubst 192.%,, $*)), <!--)" 	>> '$@.tmp'
+	echo "  <ip address='$(subst _,.,$*).253'/>" 				>> '$@.tmp'
+	echo "$(if $(patsubst 198.%,, $(patsubst 192.%,, $*)), -->)" 	>> '$@.tmp'
 	echo "</network>"						>> '$@.tmp'
 	: create a transient network
 	: - immediately started
-	: - deleted on reboot
+	: - auto-delete on shutdown+reboot
 	$(VIRSH) net-create $@.tmp
 	mv $@.tmp $@
 
