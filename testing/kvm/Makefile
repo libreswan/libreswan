@@ -462,12 +462,22 @@ KVM_HOST_OK += $(KVM_HOST_QEMUDIR_OK)
 #
 
 KVM_HOST_NFS_OK = $(KVM_POOLDIR_PREFIX)nfs.ok
-$(KVM_HOST_NFS_OK): nfs.sh
+$(KVM_HOST_NFS_OK): kvm-exportfs.sh
 $(KVM_HOST_NFS_OK): $(KVM_FRESH_BOOT_FILE)
 $(KVM_HOST_NFS_OK): | $(KVM_POOLDIR)
-	sh nfs.sh $(KVM_BENCHDIR) $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR)
+	sh kvm-exportfs.sh \
+		$(KVM_GATEWAY_ADDRESS)/$(KVM_GATEWAY_PREFIX) \
+		$(KVM_BENCHDIR) \
+		$(KVM_POOLDIR) \
+		$(KVM_SOURCEDIR) \
+		$(KVM_TESTINGDIR)
 	touch $@
 
+.PHONY: kvm-install-nfs kvm-uninstall-nfs
+kvm-install-nfs: $(KVM_HOST_NFS_OK)
+kvm-uninstall-nfs:
+	sudo exportfs -ua
+	rm -f $(KVM_HOST_NFS_OK)
 KVM_HOST_OK += $(KVM_HOST_NFS_OK)
 
 #
@@ -723,17 +733,34 @@ kvm-keys-ok:
 # this problem) define a dedicated swandefault gateway.
 
 KVM_GATEWAY_NAME ?= swandefault
-KVM_GATEWAY_ADDRESS ?= 192.168.234.1
+KVM_GATEWAY_ADDRESS ?= 198.19.0.1
+KVM_GATEWAY_PREFIX ?= 16
+KVM_GATEWAY_DHCP_START ?= 198.19.0.2
+KVM_GATEWAY_DHCP_END ?= 198.19.4.254
 
 KVM_GATEWAY = $(KVM_POOLDIR)/$(KVM_GATEWAY_NAME)
 
-$(KVM_GATEWAY): | net/$(KVM_GATEWAY_NAME)
+define KVM_GATEWAY_XML
+<network ipv6='yes'>
+  <name>$(KVM_GATEWAY_NAME)</name>
+  <forward mode='nat'/>
+  <bridge name='$(KVM_GATEWAY_NAME)' stp='on' delay='0'/>
+  <domain name='$(KVM_GATEWAY_NAME)'/>
+  <ip address='$(KVM_GATEWAY_ADDRESS)' prefix='$(KVM_GATEWAY_PREFIX)'>
+    <dhcp>
+      <range start='$(KVM_GATEWAY_DHCP_START)' end='$(KVM_GATEWAY_DHCP_END)'/>
+    </dhcp>
+  </ip>
+</network>
+endef
+
 $(KVM_GATEWAY): | $(KVM_POOLDIR)
-	./kvm-uninstall-network.sh $@
-	$(VIRSH) net-define net/$(KVM_GATEWAY_NAME)
+	./kvm-uninstall-network.sh $(KVM_GATEWAY)
+	echo "$(strip $(KVM_GATEWAY_XML))" > $(KVM_GATEWAY).xml
+	$(VIRSH) net-define $(KVM_GATEWAY).xml
 	$(VIRSH) net-autostart $(KVM_GATEWAY_NAME)
 	$(VIRSH) net-start $(KVM_GATEWAY_NAME)
-	touch $@
+	touch $(KVM_GATEWAY)
 
 #
 # Test networks.

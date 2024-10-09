@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if test "$#" -eq 0 ; then
-   echo "usage: $0 <dir> ..."
+if test "$#" -le 1 ; then
+   echo "usage: $0 <gateway> <export-dir> ..."
    exit 1
 fi
 
@@ -18,6 +18,10 @@ else
     exit 1
 fi
 
+# gateway
+
+gateway=$1 ; shift
+
 # export the testing directory
 
 for d in "$@" ; do
@@ -25,13 +29,13 @@ for d in "$@" ; do
     if sudo exportfs -s | grep "^${d} " ; then
 	echo ${d} already exported
     else
-	echo "exporting ${d} ..."
+	echo "exporting ${d} ${gateway} ..."
 	#sudo exportfs -r
-	sudo exportfs -o rw,all_squash,anonuid=$(id -u),anongid=$(id -g) 192.168.232.0/21:${d}
+	sudo exportfs -o rw,all_squash,anonuid=$(id -u),anongid=$(id -g) ${gateway}:${d}
     fi
 done
 
-# poke a hole in the firewall; see systemctl EXIT CODE 0 indicates it is running
+# poke a hole in the firewall; see systemctl; EXIT CODE 0 indicates it is running
 if test -f /lib/systemd/system/firewalld.service && systemctl status firewalld > /dev/null ; then
     echo "configuring firewall ..."
     # add the zone swandefault; replace old
