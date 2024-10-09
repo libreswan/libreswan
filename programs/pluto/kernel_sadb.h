@@ -467,7 +467,7 @@ enum ipsec_proto {
 
 };
 
-enum ipsec_level {
+enum sadb_ipsec_level {
 
 	ipsec_level_default = IPSEC_LEVEL_DEFAULT,
 #undef IPSEC_LEVEL_DEFAULT
