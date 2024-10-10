@@ -1,0 +1,10 @@
+[Match]
+Name=eth1
+MACAddress=12:00:53:45:54:01
+
+[Network]
+Address=192.0.1.145/24
+Address=2001:db8:0:1::145/64
+IPForward=yes
+IPv6DuplicateAddressDetection=0
+IPv6AcceptRouterAdvertisements=false

@@ -20,6 +20,8 @@ for mac in $(ip address show | awk '$1 == "link/ether" { print $2 }') ; do
 	 12:00:00:ab:cd:ff | 12:00:00:64:64:45                     ) host west ;;
 	 12:00:00:ab:cd:02                                         ) host road ;;
 	 12:00:00:de:cd:49 | 12:00:00:96:96:49                     ) host north ;;
+                             12:52:49:53:45:01                     ) host rise ;;
+                             12:00:53:45:54:01                     ) host set ;;
      esac
 done
 

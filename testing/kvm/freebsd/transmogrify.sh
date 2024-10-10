@@ -25,8 +25,8 @@ for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 
+cp -v /bench/testing/kvm/rc.d/rc.local /etc/
 cp -v /bench/testing/kvm/freebsd/rc.conf /etc/
-
 cp -v /bench/testing/kvm/freebsd/auto_master /etc/
 
 # suppress motd
