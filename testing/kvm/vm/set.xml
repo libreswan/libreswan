@@ -50,10 +50,16 @@ You can load this machine definition into libvirt using:
       <source network='swandefault'/>
       <model type='virtio'/>
     </interface>
+    <!-- 12:00:198.18.145.145 -->
     <interface type='network'>
-      <!-- 198.18.145.145 -->
-      <mac address='12:00:c6:12:91:91'/>
-      <source network='@@TEST_PREFIX@@198_18_145'/>
+      <mac address='12:00:c6:12:91:91' />
+      <source network='@@TEST_PREFIX@@198_18_145' />
+      <model type='virtio'/>
+    </interface>
+    <!-- 12:00:198.18.1.145 -->
+    <interface type='network'>
+      <mac address='12:00:c6:12:1:91' />
+      <source network='@@TEST_PREFIX@@198_18_1' />
       <model type='virtio'/>
     </interface>
     <serial type='pty'>
