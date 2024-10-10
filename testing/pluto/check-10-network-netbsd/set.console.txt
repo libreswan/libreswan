@@ -1,0 +1,31 @@
+ifconfig vioif1
+vioif1: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	ec_capabilities=0x1<VLAN_MTU>
+	ec_enabled=0
+	address: 12:00:53:45:54:01
+	status: active
+	inet6 fe80::1000:53ff:fe45:5401%vioif1/64 flags 0 scopeid 0x2
+	inet6 2001:db8:0:1::145/64 flags 0
+	inet 192.0.1.145/24 broadcast 192.0.1.255 flags 0
+set #
+ ifconfig vioif1 up
+set #
+ ifconfig vioif2
+vioif2: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	ec_capabilities=0x1<VLAN_MTU>
+	ec_enabled=0
+	address: 12:00:53:45:54:02
+	status: active
+	inet6 fe80::1000:53ff:fe45:5402%vioif2/64 flags 0 scopeid 0x3
+	inet6 2001:db8:1::145/64 flags 0
+	inet 198.18.1.145/24 broadcast 198.18.1.255 flags 0
+set #
+ ifconfig vioif2 up
+set #
+ ../../guestbin/ping-once.sh --up 198.18.1.123 # RISE
+up
+set #
+ ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
+up
+set #
+ 

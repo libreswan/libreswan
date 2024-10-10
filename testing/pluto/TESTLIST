@@ -57,6 +57,12 @@ kvmplutotest	check-01			good
 kvmplutotest	check-02-enumcheck		good
 kvmplutotest	check-03-vendoridcheck		good
 
+# interconnect
+kvmplutotest	check-10-network-fedora		fedora
+kvmplutotest	check-10-network-freebsd	freebsd
+kvmplutotest	check-10-network-netbsd		netbsd
+kvmplutotest	check-10-network-openbsd	openbsd
+
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
 kvmplutotest	basic-pluto-01-failtest		good

@@ -1,0 +1,29 @@
+../../guestbin/ip.sh addr show eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
+    link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
+    altname enp0s6
+    altname ens6
+    inet 192.0.1.254/24 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 2001:db8:0:1::254/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1000:ff:feab:cdff/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+west #
+ ../../guestbin/ip.sh link set eth0 up
+west #
+ ../../guestbin/ip.sh addr show eth1
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
+    link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
+    altname enp0s8
+    altname ens8
+    inet 192.1.2.45/24 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 2001:db8:1:2::45/64 scope global
+       valid_lft forever preferred_lft forever
+    inet6 fe80::1000:ff:fe64:6445/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+west #
+ ../../guestbin/ip.sh link set eth1 up
+west #
+ 

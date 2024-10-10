@@ -1,0 +1,31 @@
+ifconfig vio1
+vio1: flags=2008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LRO> mtu 1500
+	lladdr 12:00:53:45:54:01
+	index 2 priority 0 llprio 3
+	media: Ethernet autoselect
+	status: active
+	inet 192.0.1.145 netmask 0xffffff00 broadcast 192.0.1.255
+	inet6 fe80::1000:53ff:fe45:5401%vio1 prefixlen 64 scopeid 0x2
+	inet6 2001:db8:0:1::145 prefixlen 64
+set #
+ ifconfig vio1 up
+set #
+ ifconfig vio2
+vio2: flags=2008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LRO> mtu 1500
+	lladdr 12:00:53:45:54:02
+	index 3 priority 0 llprio 3
+	media: Ethernet autoselect
+	status: active
+	inet 198.18.1.145 netmask 0xffffff00 broadcast 198.18.1.255
+	inet6 fe80::1000:53ff:fe45:5402%vio2 prefixlen 64 scopeid 0x3
+	inet6 2001:db8:1::145 prefixlen 64
+set #
+ ifconfig vio2 up
+set #
+ ../../guestbin/ping-once.sh --up 198.18.1.123 # RISE
+up
+set #
+ ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
+up
+set #
+ 
