@@ -15,7 +15,6 @@ ls --indicator-style=file-type *.xml | \
     while read h ; do
 	case ${h} in
 	    rise | set )
-		echo ${h}
 		for os in alpine debian fedora freebsd netbsd openbsd ; do
 		    echo ${os}${h}
 		done

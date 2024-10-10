@@ -76,7 +76,7 @@ def _check_prompt_group(logger, match, field, expected):
         if expected.encode() != found:
             # Throw TIMEOUT as that is what is expected and what
             # would have happened.
-            raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
+            raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s' but was '%s'" \
                                   % (field, expected, found))
 
 # This file-like class passes all writes on to the LOGGER at DEBUG.

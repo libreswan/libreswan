@@ -23,12 +23,12 @@ def _guest_names():
 
     guest_names = []
     for guest_name in output.decode('utf-8').splitlines():
-        host_name = guest_name
-        for h in ["north", "south", "east", "west", "road"]:
-            if re.search(h[0:1]+r'$', guest_name):
+        # match rise before e[ast]
+        for h in ["rise", "set", "nic", "north", "south", "east", "west", "road"]:
+            if re.search(h+r'$', guest_name):
                 host_name = h
                 break
-            if re.search(h+r'$', guest_name):
+            if re.search(h[0:1]+r'$', guest_name):
                 host_name = h
                 break
         t = (guest_name, host_name)
