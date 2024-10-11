@@ -47,8 +47,6 @@ class Print(argutil.List):
     RESULT = "result"
     SAVED_OUTPUT_DIRECTORY = "saved-output-directory"
     TESTING_DIRECTORY = "testing-directory"
-    BASELINE_DIRECTORY = "baseline-directory"
-    BASELINE_OUTPUT_DIRECTORY = "baseline-output-directory"
 
 
 class JsonBuilder:
@@ -103,7 +101,7 @@ class TextBuilder:
         self.eol = False
 
 
-def build_result(logger, result, baseline, args, what_to_print, b):
+def build_result(logger, result, args, what_to_print, b):
 
     # Print the test's name/path
 
@@ -139,10 +137,6 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, result.test.saved_output_directory)
         elif p is Print.TEST_COMMANDS:
             b.add(p, result.test.commands)
-        elif p is Print.BASELINE_DIRECTORY:
-            b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].directory or None)
-        elif p is Print.BASELINE_OUTPUT_DIRECTORY:
-            b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].output_directory or None)
         elif p is Print.START_TIME:
             b.add(p, result.start_time())
         elif p is Print.STOP_TIME:

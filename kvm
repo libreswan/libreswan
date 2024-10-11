@@ -15,7 +15,6 @@ print-kvm-variable() {
 
 kvm_platform=$(print-kvm-variable KVM_PLATFORM)
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
-kvm_baseline=$(print-kvm-variable KVM_BASELINE)
 kvm_test_status=$(echo $(print-kvm-variable KVM_TEST_STATUS) | tr ' ' '|')
 kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
 kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
@@ -25,9 +24,6 @@ kvm_pidfile=$(print-kvm-variable KVM_PIDFILE)
 
 # repo under test
 rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
-
-__baseline=${kvm_baseline:+--baseline ${kvm_baseline}}
-
 
 buildhosts=${kvm_platform}
 basehosts=
@@ -55,22 +51,6 @@ Modifiers:
 
     modified
 	apply operation to modified tests (default is all tests)
-
-  When comparing results, specify the baseline directory to compare
-  against (default is Makefile.inc.local:KVM_BASELINE):
-
-    baseline
-	compare test results against baseline
-    baseline-passed
-	compare test results against baseline tests that passed
-    baseline-failed
-	compare test results against baseline tests that failed
-    --baseline <dir>
-	specify baseline directory to compare against
-    --baseline-passed <dir>
-	specify baseline directory to compare against
-    --baseline-failed
-	specify baseline directory to compare against
 
 EOF
 }
@@ -330,7 +310,6 @@ fi
 declare -a ops
 
 modified=
-baseline=
 
 i=0
 while test $# -gt 0 ; do
@@ -354,12 +333,6 @@ while test $# -gt 0 ; do
 	    shift
 	    nohup ./kvm "$@" &
 	    exec tail -f nohup.out
-	    ;;
-
-	--baseline* )
-	    baseline=$(expr $1 : '--\(.*\)')
-	    shift
-	    __baseline="--baseline $1"
 	    ;;
 
 	# aliases for pass2 commands
@@ -395,14 +368,6 @@ while test $# -gt 0 ; do
 		echo "no modified tests" 1>&2
 		exit 1
 	    fi
-	    ;;
-
-	baseline | baseline-passed | baseline-failed )
-	    if test -z "${__baseline}" ; then
-		echo "no KVM_BASELINE" 1&2
-		exit 1
-	    fi
-	    baseline=$1
 	    ;;
 
 	* ) # either: a directory; a hostname; or pass2 command
@@ -469,29 +434,14 @@ kvmresults()
 
 results_command()
 {
-    if test -n "${baseline}" ; then
-	kvmresults ${__baseline} "$@" \
-	    | grep --line-buffered -v -e baseline:untested \
-	    | grep --line-buffered -e ${baseline}
-    else
-	kvmresults "$@"
-	status=$?
-    fi
+    kvmresults "$@"
+    status=$?
 }
 
 diffs_command()
 {
-    if test -n "${baseline}" ; then
-	kvmresults ${__baseline} --stats none "$@" \
-	    | grep --line-buffered -v -e baseline:untested \
-	    | grep --line-buffered -e "${baseline}" \
-	    | while read test eol ; do
-	    kvmresults --stats none --print diffs ${test}
-	done
-    else
-	kvmresults --stats none --print diffs "$@"
-	status=$?
-    fi
+    kvmresults --stats none --print diffs "$@"
+    status=$?
 }
 
 kill_command()

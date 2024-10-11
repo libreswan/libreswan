@@ -114,12 +114,6 @@ class Issues:
     OUTPUT_WHITESPACE = "output-whitespace"
     OUTPUT_DIFFERENT = "output-different"
 
-    BASELINE_FAILED = "baseline-failed"
-    BASELINE_PASSED = "baseline-passed"
-    BASELINE_MISSING = "baseline-missing"
-    BASELINE_WHITESPACE = "baseline-whitespace"
-    BASELINE_DIFFERENT = "baseline-different"
-
     def __init__(self, logger):
         # Structure needs to be JSON friendly.
         self._host_issues = {}
@@ -608,99 +602,7 @@ class TestResult:
 # XXX: given that most of args are passed in unchagned, this should
 # change to some type of result factory.
 
-def mortem(test, args, logger, baseline=None, output_directory=None, quick=False):
+def mortem(test, args, logger, output_directory=None, quick=False):
 
-    test_result = TestResult(logger, test, quick,
-                             output_directory=output_directory)
-
-    if not test_result:
-        return test_result
-
-    if not baseline:
-        return test_result
-
-    # For "baseline", the general idea is that "kvmresults.py | grep
-    # baseline" should print something when either a regression or
-    # progression has occurred.  For instance:
-    #
-    #    - a test passing but the baseline failing
-    #
-    #    - a test failing, but the baseline passing
-    #
-    #    - a test failing, and the baseline failing in a different way
-    #
-    # What isn't interesting is a test and the baseline failing the
-    # same way.
-
-    if not test.name in baseline:
-        test_result.issues.add(Issues.ABSENT, "baseline")
-        return test_result
-
-    # When loading the baseline results use "quick" so that the
-    # original results are used.  This seems to be the best of a bad
-    # bunch.
-    #
-    # Since that the baseline was generated using an old sanitizer and
-    # reference output, using the latest sanitizer scripts (in
-    # testing/) can, confusingly, lead to baselines results being
-    # identified as failures failing yet the diffs show a pass.
-    #
-    # OTOH, when this goes to compare the results against the
-    # baseline, first putting them through the latest sanitizer tends
-    # to result in better diffs.
-
-    base = baseline[test.name]
-    baseline_result = TestResult(logger, base, quick=True)
-
-    if not baseline_result.resolution in [test_result.resolution.PASSED,
-                                          test_result.resolution.FAILED]:
-        test_result.issues.add(str(baseline_result), "baseline")
-        return test_result
-
-    if test_result.resolution in [test_result.resolution.PASSED] \
-    and baseline_result.resolution in [baseline_result.resolution.PASSED]:
-        return test_result
-
-    for host_name in test.host_names:
-
-        # result missing output; still check baseline ..
-        if host_name not in test_result.sanitized_output:
-            if host_name in baseline_result.sanitized_output:
-                if host_name in baseline_result.diff_output:
-                    test_result.issues.add(Issues.BASELINE_FAILED, host_name)
-                else:
-                    test_result.issues.add(Issues.BASELINE_PASSED, host_name)
-            continue
-
-        if host_name not in baseline_result.sanitized_output:
-            test_result.issues.add(Issues.BASELINE_MISSING, host_name)
-            continue
-
-        if host_name not in test_result.diff_output:
-            if host_name in baseline_result.diff_output:
-                test_result.issues.add(Issues.BASELINE_FAILED, host_name)
-            continue
-
-        if not host_name in baseline_result.diff_output:
-            test_result.issues.add(Issues.BASELINE_PASSED, host_name)
-            continue
-
-        baseline_diff = _diff(logger,
-                              "BASELINE/" + test.directory + "/" + host_name + ".console.txt",
-                              baseline_result.sanitized_output[host_name],
-                              "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
-                              test_result.sanitized_output[host_name])
-        if baseline_diff:
-            baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
-                                              test_result.sanitized_output[host_name])
-            if baseline_whitespace:
-                test_result.issues.add(Issues.BASELINE_WHITESPACE, host_name)
-            else:
-                test_result.issues.add(Issues.BASELINE_DIFFERENT, host_name)
-            # update the diff to something hopefully closer?
-            # test_result.diff_output[host_name] = baseline_diff
-        else:
-            # test_result.issues.add("baseline-failed", host_name)
-            pass
-
-    return test_result
+    return TestResult(logger, test, quick,
+                      output_directory=output_directory)
