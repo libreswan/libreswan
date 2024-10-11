@@ -47,5 +47,9 @@
       initiator's soft limit is 2^61 bytes (approx.) and the original
       responder's soft limit is 2^62 bytes (approx.).
     </para>
+    <para>
+      When using Linux with <option>nic-offload=packet</option> set,
+      Linux 6.7 or later is required.
+    </para>
   </listitem>
 </varlistentry>

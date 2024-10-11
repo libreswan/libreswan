@@ -4,7 +4,7 @@
   </term>
   <listitem>
     <para>
-      how many packets can be sent/received on a particular instance
+      How many packets can be sent/received on a particular instance
       of a connection (a set of encryption/authentication keys for
       user packets) , from successful negotiation to expiry.
     </para>
@@ -12,6 +12,10 @@
       Default values and caveats are the same as for
       <option>ipsec-max-bytes</option>. This option uses a prefix
       without "B" for bytes.
+    </para>
+    <para>
+      When using Linux with <option>nic-offload=packet</option> set,
+      Linux 6.7 or later is required.
     </para>
   </listitem>
 </varlistentry>

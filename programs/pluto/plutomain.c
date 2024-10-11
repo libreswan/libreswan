@@ -109,6 +109,8 @@ bool in_main_thread(void)
 	return pthread_equal(pthread_self(), main_thread);
 }
 
+struct kernel_info kinfo = { KINFO_UNKNOWN, 0, 0, 0};
+
 static char *rundir = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
@@ -133,6 +135,7 @@ static deltatime_t ocsp_cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AG
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
+
 
 /* Overridden by virtual_private= in ipsec.conf */
 static char *virtual_private = NULL;
@@ -1635,12 +1638,39 @@ int main(int argc, char **argv)
 	 */
 	llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
 	     ipsec_version_code(), compile_time_interop_options, getpid());
+
 	struct utsname uts;
-	if (uname(&uts) >= 0) {
+	if (uname(&uts) < 0) {
+		llog(RC_LOG, logger, "host: unknown");
+	} else {
+		char *c = uts.release;
+		long ver[5];
+		int i = 0;
+
 		llog(RC_LOG, logger, "operating system: %s %s %s %s",
 		     uts.sysname, uts.release, uts.version, uts.machine);
-	} else {
-		llog(RC_LOG, logger, "host: unknown");
+
+		while (*c) {
+			if (isdigit(*c)) {
+				ver[i] = strtol(c, &c, 10);
+				i++;
+			} else {
+				c++;
+			}
+		}
+		if (streq(uts.sysname, "Linux"))
+			kinfo.os = KINFO_LINUX;
+		else if (streq(uts.sysname, "FreeBSD"))
+			kinfo.os = KINFO_FREEBSD;
+		else if (streq(uts.sysname, "NetBSD"))
+			kinfo.os = KINFO_NETBSD;
+		else if (streq(uts.sysname, "OpenBSD"))
+			kinfo.os = KINFO_OPENBSD;
+		else
+			kinfo.os = KINFO_UNKNOWN;
+		kinfo.maj = ver[0];
+		kinfo.min = ver[1];
+		kinfo.pat = ver[2];
 	}
 
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);

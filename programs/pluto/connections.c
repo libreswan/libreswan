@@ -102,6 +102,8 @@
 #include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
 #include "sparse_names.h"
 
+extern struct kernel_info kinfo;
+
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
 void ldbg_connection(const struct connection *c, where_t where,
@@ -2999,6 +3001,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 				return diag("nic-offload=packet cannot specify encapsulation=yes");
 			}
 
+			/* byte/packet counters for packet offload on linux requires >= 6.7 */
+			if (wm->sa_ipsec_max_bytes != 0 || wm->sa_ipsec_max_packets != 0) {
+				if (kinfo.os == KINFO_LINUX) {
+					if ((kinfo.maj < 6) || ((kinfo.maj == 6) && (kinfo.min < 7)))
+						return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
+				}
+			}
+
+			/* limited replay windows supported for packet offload */
 			switch (wm->replay_window) {
 			case 32:
 			case 64:
