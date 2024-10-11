@@ -80,6 +80,12 @@ struct nic_offload {
 	enum kernel_offload_type type;
 };
 
+struct kernel_info {
+	char *name; /* eg "Linux" */
+	int maj;
+	int min;
+	int pat;
+};
 
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.
