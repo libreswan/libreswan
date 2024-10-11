@@ -141,6 +141,9 @@ pass2help()
 
   Step wize create/delete the domains (just use ./kvm install):
 
+    gateway
+	create the gateway (swandefault) used by the VMs
+
     base[-PLATFORM]
 	create a domain containing the base OS
 	creates: ${basehosts}
@@ -524,7 +527,7 @@ for op in "${ops[@]}" ; do
 	kill ) kill_command ;;
 	status ) status_command ;;
 
-	config | base* | upgrade* | transmogrify* | build* | install* | \
+	gateway | config | base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
         check-clean | clean | purge* )
 	    echo ${gnumake} kvm-${op}
