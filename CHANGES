@@ -1,5 +1,7 @@
 See also https://libreswan.org/
 
+v5.2 (unreleased)
+
 v5.1 (Oct 8, 2024)
 * IKEv2:
   - fix race when initiator-responder cross rekey requests [Andrew]
