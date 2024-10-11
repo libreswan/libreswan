@@ -2,8 +2,8 @@ ifconfig vtnet1
 vtnet1: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
 	options=4c07bb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,TSO4,TSO6,LRO,VLAN_HWTSO,LINKSTATE,TXCSUM_IPV6>
 	ether 12:00:53:45:54:01
-	inet 192.0.1.145 netmask 0xffffff00 broadcast 192.0.1.255
-	inet6 2001:db8:0:1::145 prefixlen 64
+	inet 192.0.1.15 netmask 0xffffff00 broadcast 192.0.1.255
+	inet6 2001:db8:0:1::15 prefixlen 64
 	inet6 fe80::1000:53ff:fe45:5401%vtnet1 prefixlen 64 scopeid 0x2
 	media: Ethernet autoselect (10Gbase-T <full-duplex>)
 	status: active
@@ -15,8 +15,8 @@ set #
 vtnet2: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
 	options=4c07bb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,TSO4,TSO6,LRO,VLAN_HWTSO,LINKSTATE,TXCSUM_IPV6>
 	ether 12:00:53:45:54:02
-	inet 198.18.1.145 netmask 0xffffff00 broadcast 198.18.1.255
-	inet6 2001:db8:1::145 prefixlen 64
+	inet 198.18.1.15 netmask 0xffffff00 broadcast 198.18.1.255
+	inet6 2001:db8:1::15 prefixlen 64
 	inet6 fe80::1000:53ff:fe45:5402%vtnet2 prefixlen 64 scopeid 0x3
 	media: Ethernet autoselect (10Gbase-T <full-duplex>)
 	status: active
@@ -24,7 +24,7 @@ vtnet2: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 
 set #
  ifconfig vtnet2 up
 set #
- ../../guestbin/ping-once.sh --up 198.18.1.123 # RISE
+ ../../guestbin/ping-once.sh --up 198.18.1.12 # RISE
 up
 set #
  ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST

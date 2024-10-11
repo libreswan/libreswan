@@ -6,7 +6,7 @@ rise #
 rise #
  ip link set eth2 up
 rise #
- ../../guestbin/ping-once.sh --up 198.18.1.145 # SET
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # SET
 up
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST

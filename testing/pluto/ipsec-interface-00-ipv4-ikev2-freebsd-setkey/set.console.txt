@@ -2,15 +2,15 @@
 set #
  ifconfig ipsec1 create reqid 100
 set #
- ifconfig ipsec1 inet tunnel 198.18.1.145 198.18.1.123
+ ifconfig ipsec1 inet tunnel 198.18.1.15 198.18.1.12
 set #
- ifconfig ipsec1 inet 198.18.145.145/24 198.18.123.123
+ ifconfig ipsec1 inet 198.18.15.15/24 198.18.12.12
 set #
  ifconfig ipsec1
 ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
 	options=0
-	tunnel inet 198.18.1.145 --> 198.18.1.123
-	inet 198.18.145.145 --> 198.18.123.123 netmask 0xffffff00
+	tunnel inet 198.18.1.15 --> 198.18.1.12
+	inet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00
 	groups: ipsec
 	reqid: 100
 	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
@@ -21,40 +21,40 @@ set #
  ../../guestbin/ipsec-kernel-policy.sh
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 set #
- echo 'add 198.18.1.123 198.18.1.145 esp 4523 -m tunnel -u 100 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
+ echo 'add 198.18.1.12 198.18.1.15 esp 4523 -m tunnel -u 100 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
 set #
- echo 'add 198.18.1.145 198.18.1.123 esp 2345 -m tunnel -u 100 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
+ echo 'add 198.18.1.15 198.18.1.12 esp 2345 -m tunnel -u 100 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 set #
  ifconfig ipsec1
 ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
 	options=0
-	tunnel inet 198.18.1.145 --> 198.18.1.123
-	inet 198.18.145.145 --> 198.18.123.123 netmask 0xffffff00
+	tunnel inet 198.18.1.15 --> 198.18.1.12
+	inet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00
 	groups: ipsec
 	reqid: 100
 	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
 set #
  ../../guestbin/ipsec-kernel-state.sh
-198.18.1.145 198.18.1.123
+198.18.1.15 198.18.1.12
 	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -65,7 +65,7 @@ set #
 	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=1
-198.18.1.123 198.18.1.145
+198.18.1.12 198.18.1.15
 	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -80,30 +80,30 @@ set #
  ../../guestbin/ipsec-kernel-policy.sh
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 set #
- ../../guestbin/ping-once.sh --up -I 198.18.145.145 198.18.123.123
+ ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 up
 set #
  ../../guestbin/ipsec-kernel-state.sh
-198.18.1.145 198.18.1.123
+198.18.1.15 198.18.1.12
 	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -114,7 +114,7 @@ set #
 	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=1
-198.18.1.123 198.18.1.145
+198.18.1.12 198.18.1.15
 	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -129,22 +129,22 @@ set #
  ../../guestbin/ipsec-kernel-policy.sh
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 set #

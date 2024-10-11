@@ -4,44 +4,44 @@ set #
 set #
  ifconfig ipsec1 -link2
 set #
- ifconfig ipsec1 inet tunnel 198.18.1.145 198.18.1.123
+ ifconfig ipsec1 inet tunnel 198.18.1.15 198.18.1.12
 set #
- ifconfig ipsec1 inet 198.18.145.145/24 198.18.123.123
+ ifconfig ipsec1 inet 198.18.15.15/24 198.18.12.12
 set #
  ifconfig ipsec1
 ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
-	tunnel inet 198.18.1.145 --> 198.18.1.123
+	tunnel inet 198.18.1.15 --> 198.18.1.12
 	status: active
 	inet6 fe80::ccae:eeba:9b4a:4c5e%ipsec1/64 ->  flags 0x2<TENTATIVE> scopeid 0x5
-	inet 198.18.145.145/24 -> 198.18.123.123 flags 0
+	inet 198.18.15.15/24 -> 198.18.12.12 flags 0
 set #
  ../../guestbin/ipsec-kernel-policy.sh
-198.18.1.123[any] 198.18.1.145[any] 4(ipv4)
+198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	in ipsec
 	esp/transport//unique#16385
 	spid=1 seq=3 pid=PID
 	refcnt=0
-198.18.1.123[any] 198.18.1.145[any] 41(ipv6)
+198.18.1.12[any] 198.18.1.15[any] 41(ipv6)
 	in discard
 	spid=3 seq=2 pid=PID
 	refcnt=0
-198.18.1.145[any] 198.18.1.123[any] 4(ipv4)
+198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	out ipsec
 	esp/transport//unique#16386
 	spid=2 seq=1 pid=PID
 	refcnt=0
-198.18.1.145[any] 198.18.1.123[any] 41(ipv6)
+198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
 	out discard
 	spid=4 seq=0 pid=PID
 	refcnt=0
 set #
- echo 'add 198.18.1.123 198.18.1.145 esp 4523 -m transport -u 16385 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
+ echo 'add 198.18.1.12 198.18.1.15 esp 4523 -m transport -u 16385 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
 set #
- echo 'add 198.18.1.145 198.18.1.123 esp 2345 -m transport -u 16386 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
+ echo 'add 198.18.1.15 198.18.1.12 esp 2345 -m transport -u 16386 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 set #
  ../../guestbin/ipsec-kernel-state.sh
-198.18.1.145 198.18.1.123 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
+198.18.1.12 198.18.1.15 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
@@ -51,8 +51,8 @@ set #
 	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
-198.18.1.123 198.18.1.145 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
+198.18.1.15 198.18.1.12 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
@@ -63,22 +63,11 @@ set #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 set #
- ../../guestbin/ping-once.sh --up -I 198.18.145.145 198.18.123.123
+ ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 up
 set #
  ../../guestbin/ipsec-kernel-state.sh
-198.18.1.145 198.18.1.123 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
-	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
-	created: TIMESTAMP	current: TIMESTAMP
-	diff: N(s)	hard: 0(s)	soft: 0(s)
-	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 1	hard: 0	soft: 0
-	sadb_seq=1 pid=PID refcnt=0
-198.18.1.123 198.18.1.145 
+198.18.1.12 198.18.1.15 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -88,24 +77,35 @@ set #
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 104(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
+198.18.1.15 198.18.1.12 
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 set #
  ../../guestbin/ipsec-kernel-policy.sh
-198.18.1.123[any] 198.18.1.145[any] 4(ipv4)
+198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	in ipsec
 	esp/transport//unique#16385
 	spid=1 seq=3 pid=PID
 	refcnt=0
-198.18.1.123[any] 198.18.1.145[any] 41(ipv6)
+198.18.1.12[any] 198.18.1.15[any] 41(ipv6)
 	in discard
 	spid=3 seq=2 pid=PID
 	refcnt=0
-198.18.1.145[any] 198.18.1.123[any] 4(ipv4)
+198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	out ipsec
 	esp/transport//unique#16386
 	spid=2 seq=1 pid=PID
 	refcnt=0
-198.18.1.145[any] 198.18.1.123[any] 41(ipv6)
+198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
 	out discard
 	spid=4 seq=0 pid=PID
 	refcnt=0

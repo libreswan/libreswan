@@ -4,15 +4,15 @@ ipsec.secrets -> PATH/etc/ipsec.secrets
 rise #
  ifconfig ipsec1 create reqid 100
 rise #
- ifconfig ipsec1 inet tunnel 198.18.1.123 198.18.1.145
+ ifconfig ipsec1 inet tunnel 198.18.1.12 198.18.1.15
 rise #
- ifconfig ipsec1 inet 198.18.123.123/24 198.18.145.145
+ ifconfig ipsec1 inet 198.18.12.12/24 198.18.15.15
 rise #
  ifconfig ipsec1
 ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
 	options=0
-	tunnel inet 198.18.1.123 --> 198.18.1.145
-	inet 198.18.123.123 --> 198.18.145.145 netmask 0xffffff00
+	tunnel inet 198.18.1.12 --> 198.18.1.15
+	inet 198.18.12.12 --> 198.18.15.15 netmask 0xffffff00
 	groups: ipsec
 	reqid: 100
 	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
@@ -23,22 +23,22 @@ rise #
  ../../guestbin/ipsec-kernel-policy.sh
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 rise #
@@ -52,30 +52,30 @@ rise #
  ipsec add rise-set
 "rise-set": command: 'ifconfig' 'ipsec1'
 "rise-set": output: ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400\n\toptions=0\n\ttunne
-"rise-set": output: l inet 198.18.1.123 --> 198.18.1.145\n\tinet 198.18.123.123 --> 198.18.145.145 netmask 0xffffff00\n\tgro
-"rise-set": output: ups: ipsec\n\treqid: 100\n\tnd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>\n
+"rise-set": output: l inet 198.18.1.12 --> 198.18.1.15\n\tinet 198.18.12.12 --> 198.18.15.15 netmask 0xffffff00\n\tgroups: i
+"rise-set": output: psec\n\treqid: 100\n\tnd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>\n
 "rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "rise-set": added IKEv2 connection
 rise #
  ipsec up rise-set
-"rise-set" #1: initiating IKEv2 connection to 198.18.1.145 using UDP
-"rise-set" #1: sent IKE_SA_INIT request to 198.18.1.145:UDP/500
-"rise-set" #1: processed IKE_SA_INIT response from 198.18.1.145:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"rise-set" #1: sent IKE_AUTH request to 198.18.1.145:UDP/500
+"rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
+"rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
+"rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet2)
 "rise-set" #2: command: 'ifconfig' 'ipsec1' 'up'
 "rise-set" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vtnet2)
-"rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.145.0/24===192.19.123.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #
  sleep 10 # give fping some time
 rise #
- ../../guestbin/ping-once.sh --up -I 198.18.123.123 198.18.145.145
+ ../../guestbin/ping-once.sh --up -I 198.18.12.12 198.18.15.15
 up
 rise #
  ../../guestbin/ipsec-kernel-state.sh
-198.18.1.123 198.18.1.145
+198.18.1.12 198.18.1.15
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -86,7 +86,7 @@ rise #
 	current: 304(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=1
-198.18.1.145 198.18.1.123
+198.18.1.15 198.18.1.12
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -101,22 +101,22 @@ rise #
  ../../guestbin/ipsec-kernel-policy.sh
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	in ipsec
-	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	esp/tunnel/198.18.1.15-198.18.1.12/unique:100
 	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 ::/0[any] ::/0[any] any
 	out ipsec
-	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
 	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
 	refcnt=1
 rise #

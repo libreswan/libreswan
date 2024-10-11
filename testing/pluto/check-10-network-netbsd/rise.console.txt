@@ -5,8 +5,8 @@ vioif1: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 	address: 12:52:49:53:45:01
 	status: active
 	inet6 fe80::1052:49ff:fe53:4501%vioif1/64 flags 0 scopeid 0x2
-	inet6 2001:db8:0:2::123/64 flags 0
-	inet 192.0.2.123/24 broadcast 192.0.2.255 flags 0
+	inet6 2001:db8:0:2::12/64 flags 0
+	inet 192.0.2.12/24 broadcast 192.0.2.255 flags 0
 rise #
  ifconfig vioif1 up
 rise #
@@ -17,12 +17,12 @@ vioif2: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 	address: 12:52:49:53:45:02
 	status: active
 	inet6 fe80::1052:49ff:fe53:4502%vioif2/64 flags 0 scopeid 0x3
-	inet6 2001:db8:1::123/64 flags 0
-	inet 198.18.1.123/24 broadcast 198.18.1.255 flags 0
+	inet6 2001:db8:1::12/64 flags 0
+	inet 198.18.1.12/24 broadcast 198.18.1.255 flags 0
 rise #
  ifconfig vioif2 up
 rise #
- ../../guestbin/ping-once.sh --up 198.18.1.145 # SET
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # SET
 up
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST

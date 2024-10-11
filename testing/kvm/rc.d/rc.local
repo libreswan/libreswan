@@ -41,15 +41,15 @@ case "$mac" in
 	;;
     12:52:49:53:45:01 ) # RISE
 	config_host rise
-	#config_eth 1 198.18.123.123 2001:db8:123::123
-	config_eth 1 192.0.2.123 2001:db8:0:2::123
-	config_eth 2 198.18.1.123 2001:db8:1::123
+	#config_eth 1 198.18.12.12 2001:db8:12::12
+	config_eth 1 192.0.2.12 2001:db8:0:2::12
+	config_eth 2 198.18.1.12 2001:db8:1::12
 	;;
     12:00:53:45:54:01 ) # SET
 	config_host set
-	#config_eth 1 198.18.145.145 2001:db8:145::145
-	config_eth 1 192.0.1.145 2001:db8:0:1::145
-	config_eth 2 198.18.1.145 2001:db8:1::145
+	#config_eth 1 198.18.15.15 2001:db8:15::15
+	config_eth 1 192.0.1.15 2001:db8:0:1::15
+	config_eth 2 198.18.1.15 2001:db8:1::15
 	;;
     * )
 	config_host ${default}
