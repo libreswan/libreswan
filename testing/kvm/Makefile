@@ -797,6 +797,10 @@ $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	$(VIRSH) net-create $@.tmp
 	mv $@.tmp $@
 
+.PHONY: kvm-gateway
+kvm-gateway:
+	$(MAKE) kvm-uninstall-gateway
+	$(MAKE) kvm-install-gateway
 .PHONY: kvm-install-test-networks kvm-install-gateway
 kvm-install-gateway: $(KVM_GATEWAY)
 kvm-install-test-networks: $(KVM_TEST_NETWORKS)
