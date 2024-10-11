@@ -1,0 +1,115 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+set #
+ ifconfig ipsec1 create reqid 100
+set #
+ ifconfig ipsec1 inet tunnel 198.18.1.145 198.18.1.123
+set #
+ ifconfig ipsec1 inet 198.18.145.145/24 198.18.123.123
+set #
+ ifconfig ipsec1
+ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
+	options=0
+	tunnel inet 198.18.1.145 --> 198.18.1.123
+	inet 198.18.145.145 --> 198.18.123.123 netmask 0xffffff00
+	groups: ipsec
+	reqid: 100
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+set #
+ ../../guestbin/ipsec-kernel-state.sh
+No SAD entries.
+set #
+ ../../guestbin/ipsec-kernel-policy.sh
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+set #
+ ipsec start
+Redirecting to: [initsystem]
+Initializing NSS database
+Starting pluto.
+set #
+ ../../guestbin/wait-until-pluto-started
+set #
+ ipsec add rise-set
+"rise-set": command: 'ifconfig' 'ipsec1'
+"rise-set": output: ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400\n\toptions=0\n\ttunne
+"rise-set": output: l inet 198.18.1.145 --> 198.18.1.123\n\tinet 198.18.145.145 --> 198.18.123.123 netmask 0xffffff00\n\tgro
+"rise-set": output: ups: ipsec\n\treqid: 100\n\tnd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>\n
+"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set": added IKEv2 connection
+set #
+ ../../guestbin/ping-once.sh --up -I 198.18.145.145 198.18.123.123
+up
+set #
+ ../../guestbin/ipsec-kernel-state.sh
+198.18.1.145 198.18.1.123
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+198.18.1.123 198.18.1.145
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=16 flags=0x00000400 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+set #
+ ../../guestbin/ipsec-kernel-policy.sh
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/198.18.1.123-198.18.1.145/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/198.18.1.145-198.18.1.123/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+set #
+ ipsec delete rise-set
+set #
+ setkey -F
+set #
+ ifconfig ipsec1 destroy
+set #
+ 

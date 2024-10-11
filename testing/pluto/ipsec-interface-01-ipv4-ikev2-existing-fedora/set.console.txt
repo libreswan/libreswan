@@ -1,0 +1,95 @@
+../../guestbin/prep.sh
+'ipsec.conf' -> '/etc/ipsec.conf'
+'ipsec.secrets' -> '/etc/ipsec.secrets'
+set #
+ ../../guestbin/ip.sh link add dev ipsec1 type xfrm dev eth2 if_id 0x1
+set #
+ ../../guestbin/ip.sh addr add 198.18.145.145/24 dev ipsec1
+set #
+ ../../guestbin/ip.sh link set ipsec1 up
+set #
+ ../../guestbin/ip.sh addr show ipsec1
+X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    inet 198.18.145.145/24 scope global ipsec1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+       valid_lft forever preferred_lft forever
+set #
+ ../../guestbin/ip.sh link show ipsec1
+X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+set #
+ ../../guestbin/ipsec-kernel-policy.sh
+set #
+ ip -4 route add 198.18.123.0/24 dev ipsec1
+set #
+ ipsec start
+Redirecting to: [initsystem]
+set #
+ ../../guestbin/wait-until-pluto-started
+set #
+ ipsec add rise-set
+"rise-set": added IKEv2 connection
+set #
+ ../../guestbin/ping-once.sh --up -I 198.18.145.145 198.18.123.123
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 198.18.145.145 198.18.123.123
+PING 198.18.123.123 (198.18.123.123) from 198.18.145.145 : 56(84) bytes of data. From 198.18.145.145 icmp_seq=1 Destination Host Unreachable --- 198.18.123.123 ping statistics --- 1 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+set #
+ ../../guestbin/ipsec-kernel-state.sh
+src 198.18.1.145 dst 198.18.1.123
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+src 198.18.1.123 dst 198.18.1.145
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+set #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.19.123.0/24 dst 198.18.145.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 198.18.1.145 dst 198.18.1.123
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 198.18.145.0/24 dst 192.19.123.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 198.18.1.123 dst 198.18.1.145
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 198.18.145.0/24 dst 192.19.123.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 198.18.1.123 dst 198.18.1.145
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+set #
+ #../../guestbin/ip.sh xfrm state flush
+set #
+ #../../guestbin/ip.sh link delete ipsec1
+set #
+ 

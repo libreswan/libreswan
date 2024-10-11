@@ -1,0 +1,91 @@
+../../guestbin/prep.sh
+ipsec.conf -> PATH/etc/ipsec.conf
+ipsec.secrets -> PATH/etc/ipsec.secrets
+set #
+ ifconfig sec1 create
+set #
+ ifconfig sec1 inet 198.18.145.145/24 198.18.123.123
+set #
+ ifconfig sec1 up
+set #
+ ifconfig sec1
+sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+	index 7 priority 0 llprio 3
+	groups: sec
+	inet 198.18.145.145 --> 198.18.123.123 netmask 0xffffff00
+set #
+ ../../guestbin/ipsec-kernel-state.sh
+set #
+ ../../guestbin/ipsec-kernel-policy.sh
+set #
+ ipsec start
+Redirecting to: [initsystem]
+pluto(ok)
+set #
+ ../../guestbin/wait-until-pluto-started
+set #
+ ipsec add rise-set
+"rise-set": command: 'ifconfig' 'sec1'
+"rise-set": output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\tindex 7 priority 0 llprio 3\n\tgroups: se
+"rise-set": output: c\n\tinet 198.18.145.145 --> 198.18.123.123 netmask 0xffffff00\n
+"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set": added IKEv2 connection
+set #
+ ../../guestbin/ping-once.sh --up -I 198.18.145.145 198.18.123.123
+up
+set #
+ ../../guestbin/ipsec-kernel-state.sh
+@0 esp tunnel from 198.18.1.123 to 198.18.1.145 spi 0xSPISPI auth hmac-sha1 enc aes \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth hmac-sha1 enc aes
+		state mature replay 16 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 96 add N first N
+	lifetime_hard: alloc 0 bytes 0 add N first 0
+	lifetime_soft: alloc 0 bytes 0 add N first 0
+	address_src: 198.18.1.123
+	address_dst: 198.18.1.145
+	key_auth: bits 160: HASHKEY
+	key_encrypt: bits 128: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	counter:
+		1 input packet
+		0 output packets
+		248 input bytes
+		0 output bytes
+		104 input bytes, decompressed
+		0 output bytes, uncompressed
+		1 packet dropped on input
+		0 packets dropped on output
+	replay: rpl 1
+	interface: sec1 direction in
+@0 esp tunnel from 198.18.1.145 to 198.18.1.123 spi 0xSPISPI auth hmac-sha1 enc aes \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth hmac-sha1 enc aes
+		state mature replay 16 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 84 add N first N
+	lifetime_hard: alloc 0 bytes 0 add N first 0
+	lifetime_soft: alloc 0 bytes 0 add N first 0
+	address_src: 198.18.1.145
+	address_dst: 198.18.1.123
+	key_auth: bits 160: HASHKEY
+	key_encrypt: bits 128: ENCKEY
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	counter:
+		0 input packets
+		1 output packet
+		0 input bytes
+		152 output bytes
+		0 input bytes, decompressed
+		104 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 2
+	interface: sec1 direction out
+set #
+ ../../guestbin/ipsec-kernel-policy.sh
+set #
+ ifconfig sec1 destroy
+set #
+ 

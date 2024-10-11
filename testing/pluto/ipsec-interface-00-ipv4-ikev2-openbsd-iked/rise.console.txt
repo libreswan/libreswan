@@ -1,0 +1,87 @@
+../../guestbin/prep.sh
+rise.iked.conf -> /etc/iked.conf
+rise #
+ ifconfig sec1 create
+rise #
+ ifconfig sec1 inet 198.18.123.123/24 198.18.145.145
+rise #
+ ifconfig sec1 up
+rise #
+ ifconfig sec1
+sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+	index 7 priority 0 llprio 3
+	groups: sec
+	inet 198.18.123.123 --> 198.18.145.145 netmask 0xffffff00
+rise #
+ ../../guestbin/ipsec-kernel-state.sh
+rise #
+ ../../guestbin/ipsec-kernel-policy.sh
+rise #
+ ../../guestbin/iked.sh start
+rise #
+ sleep 10 # give IKE a chance :-/
+rise #
+ ../../guestbin/ping-once.sh --up -I 198.18.123.123 198.18.145.145
+up
+rise #
+ ../../guestbin/ipsec-kernel-state.sh
+@0 esp tunnel from 198.18.1.123 to 198.18.1.145 spi 0xSPISPI enc aes-128-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-128 enc aes-gcm
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 168 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
+	address_src: 198.18.1.123
+	address_dst: 198.18.1.145
+	key_auth: bits 160: HASHKEY
+	key_encrypt: bits 160: ENCKEY
+	identity_src: type fqdn id 0: FQDN/rise
+	identity_dst: type fqdn id 0: FQDN/set
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	counter:
+		0 input packets
+		2 output packets
+		0 input bytes
+		280 output bytes
+		0 input bytes, decompressed
+		208 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 3
+	interface: sec1 direction out
+@0 esp tunnel from 198.18.1.145 to 198.18.1.123 spi 0xSPISPI enc aes-128-gcm \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth gmac-aes-128 enc aes-gcm
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 176 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
+	address_src: 198.18.1.145
+	address_dst: 198.18.1.123
+	key_auth: bits 160: HASHKEY
+	key_encrypt: bits 160: ENCKEY
+	identity_src: type fqdn id 0: FQDN/set
+	identity_dst: type fqdn id 0: FQDN/rise
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	counter:
+		2 input packets
+		0 output packets
+		456 input bytes
+		0 output bytes
+		208 input bytes, decompressed
+		0 output bytes, uncompressed
+		2 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 2
+	interface: sec1 direction in
+rise #
+ ../../guestbin/ipsec-kernel-policy.sh
+rise #
+ ../../guestbin/iked.sh stop
+rise #
+ ifconfig sec1 destroy
+rise #
+ 

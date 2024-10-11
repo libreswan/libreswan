@@ -1,3 +1,3 @@
-ipsec delete east-west
+ipsec delete rise-set
 setkey -F
 ifconfig ipsec1 destroy
