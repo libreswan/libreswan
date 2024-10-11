@@ -1392,6 +1392,7 @@ kvmplutotest	seccomp-03-updown		wip
 
 kvmplutotest	whack-globalstatus-01			good
 kvmplutotest	whack-rereadcerts-01			good
+kvmplutotest	whack-ctlsocket-01			good
 
 # "ipsec showhostkey"
 kvmplutotest	whack-hostkey-01-ckaid-rsa		good

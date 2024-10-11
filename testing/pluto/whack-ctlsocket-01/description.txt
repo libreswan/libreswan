@@ -1,0 +1,3 @@
+<<ipsec --ctlsocket whack ...>> vs <<ipsec whack --ctlsocket ...>>
+
+bug in 5.0

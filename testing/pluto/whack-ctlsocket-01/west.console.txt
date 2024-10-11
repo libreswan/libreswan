@@ -1,0 +1,34 @@
+ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec -n --briefstatus
+PATH/libexec/ipsec/whack --ctlsocket /run/pluto/pluto.ctl --briefstatus
+west #
+ ipsec    --briefstatus
+State Information: DDoS cookies not required, Accepting new IKE connections
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
+west #
+ # now for some fun
+west #
+ ln -s /var/run/pluto/pluto.ctl /tmp/tmp.ctl
+west #
+ ipsec -n --ctlsocket /tmp/tmp.ctl whack --briefstatus
+PATH/libexec/ipsec/whack --ctlsocket /tmp/tmp.ctl --briefstatus
+west #
+ ipsec    --ctlsocket /tmp/tmp.ctl whack --briefstatus
+State Information: DDoS cookies not required, Accepting new IKE connections
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
+west #
+ ipsec -n whack --ctlsocket /tmp/tmp.ctl --briefstatus
+PATH/libexec/ipsec/whack --ctlsocket /tmp/tmp.ctl --briefstatus
+west #
+ ipsec    whack --ctlsocket /tmp/tmp.ctl --briefstatus
+State Information: DDoS cookies not required, Accepting new IKE connections
+IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
+IPsec SAs: total(0), authenticated(0), anonymous(0)
+west #
+ 
