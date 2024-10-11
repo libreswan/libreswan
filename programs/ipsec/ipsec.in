@@ -1203,7 +1203,7 @@ while [ ${#} -gt 0 ]; do
 	    # We need to make sure we don't give it twice
 	    shift
 	    case " ${@} " in
-		--ctlsocket)
+		*" --ctlsocket "*)
 		    exec ${dry_run} "${IPSEC_EXECDIR}/whack" "${@}"
 		    ;;
 		*)
