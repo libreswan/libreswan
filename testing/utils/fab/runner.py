@@ -611,6 +611,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
         domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest,
                               snapshot_directory=args.snapshot_directory)
         domains.append(domain)
+        domain.shutdown()
 
     logger.info("processing test queue")
     try:
