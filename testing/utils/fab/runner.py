@@ -32,7 +32,6 @@ from fab import logutil
 from fab import post
 from fab import skip
 from fab import ignore
-from fab import tcpdump
 from fab import publish
 from fab.hosts import GUESTS
 
@@ -47,8 +46,6 @@ def add_arguments(parser):
                        help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
-    group.add_argument("--tcpdump", action="store_true",
-                       help="enable experimental TCPDUMP support")
     group.add_argument("--run-post-mortem", default=None, action=argparse.BooleanOptionalAction,
                        help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
 
@@ -68,7 +65,6 @@ def log_arguments(logger, args):
     logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
-    logger.info("  tcpdump: %s", args.tcpdump)
     logger.info("  backup-directory: %s", args.backup_directory)
     logger.info("  snapshot-directory: %s", args.snapshot_directory)
     logger.info("  run-post-mortem: %s", args.run_post_mortem)
@@ -337,216 +333,213 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                 # Run the commands directly
                 with logger.time("running commands") as test_run_time:
-                    with tcpdump.Dump(logger, domain_prefix, test.output_directory,
-                                      [test_domain.domain for test_domain in test_domains.values()],
-                                      enable=args.tcpdump):
 
-                        try:
+                    try:
 
-                            # open the consoles
-                            for test_domain in test_domains.values():
-                                test_domain.open()
+                        # open the consoles
+                        for test_domain in test_domains.values():
+                            test_domain.open()
 
-                            # Open output files.  Since the child is
-                            # in NO-ECHO mode, also need to fudge up
-                            # prompt and command.
+                        # Open output files.  Since the child is
+                        # in NO-ECHO mode, also need to fudge up
+                        # prompt and command.
+                        #
+                        # Should output file be opened in binary
+                        # mode?
+
+                        all_verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
+                        verbose_files = {None: all_verbose_txt}
+
+                        for test_domain in test_domains.values():
+                            guest = test_domain.domain.guest
+                            output = os.path.join(test.output_directory,
+                                                  guest.host.name + ".console.verbose.txt")
+                            f = open(output, "w")
+                            verbose_files[guest.name] = f
+
+                        # If a guest command times out, don't try
+                        # to run post-mortem.sh.
+                        guest_timed_out = None
+
+                        last_was_comment = False
+
+                        for command in test.commands:
+
+                            # If the per-guest command has no
+                            # guest (i.e., blank or NULL), skip
+                            # executing it.
                             #
-                            # Should output file be opened in binary
-                            # mode?
+                            # It's a comment or blank line from
+                            # all.console.txt.  Just copy it to
+                            # the shared output file.
 
-                            all_verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
-                            verbose_files = {None: all_verbose_txt}
+                            if not command.guest.name:
+                                last_was_comment = True
+                                all_verbose_txt.write(command.line)
+                                all_verbose_txt.write("\n");
+                                all_verbose_txt.flush()
+                                continue
 
-                            for test_domain in test_domains.values():
-                                guest = test_domain.domain.guest
-                                output = os.path.join(test.output_directory,
-                                                      guest.host.name + ".console.verbose.txt")
-                                f = open(output, "w")
-                                verbose_files[guest.name] = f
+                            # If the per-guest command turns out
+                            # to be a comment, skip executing it.
+                            #
+                            # Instead write it directly to the
+                            # output (for GUEST also need to fake
+                            # up a new prompt).
 
-                            # If a guest command times out, don't try
-                            # to run post-mortem.sh.
-                            guest_timed_out = None
+                            guest_verbose_txt = verbose_files[command.guest.name]
+                            test_domain = test_domains[command.guest.name]
 
+                            if command.line.startswith("#"):
+                                last_was_comment = True
+                                for txt in (all_verbose_txt, guest_verbose_txt):
+                                    txt.write(command.line)
+                                    txt.write("\n");
+                                # fudge the prompt
+                                _write_guest_prompt(guest_verbose_txt, command, test)
+                                for txt in (all_verbose_txt, guest_verbose_txt):
+                                    txt.flush()
+                                continue
+
+                            if last_was_comment:
+                                all_verbose_txt.write("\n");
                             last_was_comment = False
 
-                            for command in test.commands:
+                            # ALL gets the new prompt
+                            all_verbose_txt.write(command.guest.name)
+                            all_verbose_txt.write("# ")
+                            # both get the command
+                            for txt in (all_verbose_txt, guest_verbose_txt):
+                                txt.write(command.line)
+                                txt.write("\n")
+                                txt.flush()
 
-                                # If the per-guest command has no
-                                # guest (i.e., blank or NULL), skip
-                                # executing it.
-                                #
-                                # It's a comment or blank line from
-                                # all.console.txt.  Just copy it to
-                                # the shared output file.
+                            # run the command
+                            status, output = test_domain.run(command.line)
+                            if output:
+                                # All gets a blank line
+                                all_verbose_txt.write("\n")
+                                for txt in (all_verbose_txt, guest_verbose_txt):
+                                    txt.write(output.decode()) # convert byte to string
+                                    txt.flush()
 
-                                if not command.guest.name:
-                                    last_was_comment = True
-                                    all_verbose_txt.write(command.line)
-                                    all_verbose_txt.write("\n");
-                                    all_verbose_txt.flush()
-                                    continue
+                            if status is post.Issues.TIMEOUT:
+                                # A timeout while running a
+                                # test command is a sign that
+                                # the command hung.
+                                message = "%s while running command %s" % (post.Issues.TIMEOUT, command)
+                                logger.warning("*** %s ***" % message)
+                                for txt in (all_verbose_txt, guest_verbose_txt):
+                                    txt.write("%s %s %s" % (post.LHS, message, post.RHS))
+                                guest_timed_out = command.guest.name
+                                break
 
-                                # If the per-guest command turns out
-                                # to be a comment, skip executing it.
-                                #
-                                # Instead write it directly to the
-                                # output (for GUEST also need to fake
-                                # up a new prompt).
+                            if status is post.Issues.EOF:
+                                # An EOF while a command is
+                                # running is a sign that libvirt
+                                # crashed.
+                                message = "%s while running command %s" % (post.Issues.EOF, command)
+                                logger.exception("*** %s ***" % message)
+                                for txt in (all_verbose_txt, guest_verbose_txt):
+                                    txt.write("%s %s %s" % (post.LHS, message, post.RHS))
+                                guest_timed_out = command.guest.name
+                                break
 
-                                guest_verbose_txt = verbose_files[command.guest.name]
-                                test_domain = test_domains[command.guest.name]
+                            if status:
+                                # XXX: Can't abort as some
+                                # ping commands are expected
+                                # to fail.
+                                test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
 
-                                if command.line.startswith("#"):
-                                    last_was_comment = True
-                                    for txt in (all_verbose_txt, guest_verbose_txt):
-                                        txt.write(command.line)
-                                        txt.write("\n");
-                                    # fudge the prompt
-                                    _write_guest_prompt(guest_verbose_txt, command, test)
-                                    for txt in (all_verbose_txt, guest_verbose_txt):
-                                        txt.flush()
-                                    continue
+                            # GUEST then gets the next prompt
+                            _write_guest_prompt(guest_verbose_txt, command, test)
 
-                                if last_was_comment:
-                                    all_verbose_txt.write("\n");
-                                last_was_comment = False
+                            all_verbose_txt.write("\n")
+                            all_verbose_txt.flush()
+
+                        if args.run_post_mortem is False:
+                            logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
+                        elif guest_timed_out:
+                            logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (guest_timed_out))
+                        else: # None or True
+                            post_mortem_ok = True
+                            script = "../../guestbin/post-mortem.sh"
+                            # Tag merged file ready for post-mortem output
+                            all_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                            all_verbose_txt.flush()
+                            # run post mortem
+                            for guest in test.guests:
+
+                                test_domain = test_domains[guest.name]
+                                guest_verbose_txt = verbose_files[guest.name]
+                                logger.info("running %s on %s", script, guest.name)
+
+                                # mark domain's console
+                                guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                guest_verbose_txt.flush()
 
                                 # ALL gets the new prompt
-                                all_verbose_txt.write(command.guest.name)
+                                all_verbose_txt.write(guest.name)
                                 all_verbose_txt.write("# ")
                                 # both get the command
                                 for txt in (all_verbose_txt, guest_verbose_txt):
-                                    txt.write(command.line)
+                                    txt.write(script)
                                     txt.write("\n")
                                     txt.flush()
 
-                                # run the command
-                                status, output = test_domain.run(command.line)
+                                status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
                                 if output:
-                                    # All gets a blank line
                                     all_verbose_txt.write("\n")
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write(output.decode()) # convert byte to string
-                                        txt.flush()
-
-                                if status is post.Issues.TIMEOUT:
-                                    # A timeout while running a
-                                    # test command is a sign that
-                                    # the command hung.
-                                    message = "%s while running command %s" % (post.Issues.TIMEOUT, command)
-                                    logger.warning("*** %s ***" % message)
-                                    for txt in (all_verbose_txt, guest_verbose_txt):
-                                        txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                    guest_timed_out = command.guest.name
-                                    break
-
-                                if status is post.Issues.EOF:
-                                    # An EOF while a command is
-                                    # running is a sign that libvirt
-                                    # crashed.
-                                    message = "%s while running command %s" % (post.Issues.EOF, command)
-                                    logger.exception("*** %s ***" % message)
-                                    for txt in (all_verbose_txt, guest_verbose_txt):
-                                        txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                    guest_timed_out = command.guest.name
-                                    break
-
-                                if status:
-                                    # XXX: Can't abort as some
-                                    # ping commands are expected
-                                    # to fail.
-                                    test_domain.logger.warning("command '%s' failed with status %d", command.line, status)
-
-                                # GUEST then gets the next prompt
-                                _write_guest_prompt(guest_verbose_txt, command, test)
-
-                                all_verbose_txt.write("\n")
-                                all_verbose_txt.flush()
-
-                            if args.run_post_mortem is False:
-                                logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
-                            elif guest_timed_out:
-                                logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (guest_timed_out))
-                            else: # None or True
-                                post_mortem_ok = True
-                                script = "../../guestbin/post-mortem.sh"
-                                # Tag merged file ready for post-mortem output
-                                all_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                all_verbose_txt.flush()
-                                # run post mortem
-                                for guest in test.guests:
-
-                                    test_domain = test_domains[guest.name]
-                                    guest_verbose_txt = verbose_files[guest.name]
-                                    logger.info("running %s on %s", script, guest.name)
-
-                                    # mark domain's console
-                                    guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                    guest_verbose_txt.flush()
-
-                                    # ALL gets the new prompt
-                                    all_verbose_txt.write(guest.name)
-                                    all_verbose_txt.write("# ")
-                                    # both get the command
-                                    for txt in (all_verbose_txt, guest_verbose_txt):
-                                        txt.write(script)
                                         txt.write("\n")
                                         txt.flush()
 
-                                    status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
-                                    if output:
-                                        all_verbose_txt.write("\n")
-                                        for txt in (all_verbose_txt, guest_verbose_txt):
-                                            txt.write(output.decode()) # convert byte to string
-                                            txt.write("\n")
-                                            txt.flush()
+                                if status is post.Issues.TIMEOUT:
+                                    # A post-mortem ending with a
+                                    # TIMEOUT gets treated as a
+                                    # FAIL.
+                                    post_mortem_ok = False
+                                    message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
+                                    logger.warning("*** %s ***" % message)
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write("%s %s %s" % (post.LHS, message, post.RHS))
+                                    continue # to next teardown
 
-                                    if status is post.Issues.TIMEOUT:
-                                        # A post-mortem ending with a
-                                        # TIMEOUT gets treated as a
-                                        # FAIL.
-                                        post_mortem_ok = False
-                                        message = "%s while running script %s" % (post.Issues.TIMEOUT, script)
-                                        logger.warning("*** %s ***" % message)
-                                        for txt in (all_verbose_txt, guest_verbose_txt):
-                                            txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                        continue # to next teardown
+                                if status is post.Issues.EOF:
+                                    # A post-mortem ending with an
+                                    # EOF gets treated as
+                                    # unresloved.
+                                    post_mortem_ok = False
+                                    message = "%s while running script %s" % (post.Issues.EOF, script)
+                                    logger.exception("*** %s ***" % message)
+                                    for txt in (all_verbose_txt, guest_verbose_txt):
+                                        txt.write("%s %s %s" % (post.LHS, message, post.RHS))
+                                    continue # to next teardown
 
-                                    if status is post.Issues.EOF:
-                                        # A post-mortem ending with an
-                                        # EOF gets treated as
-                                        # unresloved.
-                                        post_mortem_ok = False
-                                        message = "%s while running script %s" % (post.Issues.EOF, script)
-                                        logger.exception("*** %s ***" % message)
-                                        for txt in (all_verbose_txt, guest_verbose_txt):
-                                            txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                        continue # to next teardown
+                                if status:
+                                    post_mortem_ok = False
+                                    logger.error("%s failed on %s with status %s", script, guest.name, status)
+                                    continue # to next teardown
 
-                                    if status:
-                                        post_mortem_ok = False
-                                        logger.error("%s failed on %s with status %s", script, guest.name, status)
-                                        continue # to next teardown
+                                # GUEST finishes with the old prompt
+                                _write_guest_prompt(guest_verbose_txt, command, test)
 
-                                    # GUEST finishes with the old prompt
-                                    _write_guest_prompt(guest_verbose_txt, command, test)
+                                # followed by marker
+                                guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                guest_verbose_txt.flush()
 
-                                    # followed by marker
-                                    guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                    guest_verbose_txt.flush()
+                            if post_mortem_ok:
+                                all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                all_verbose_txt.flush()
 
-                                if post_mortem_ok:
-                                    all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                    all_verbose_txt.flush()
+                        for f in verbose_files.values():
+                            f.write(post.DONE)
 
-                            for f in verbose_files.values():
-                                f.write(post.DONE)
+                    finally:
 
-                        finally:
-
-                            for f in verbose_files.values():
-                                f.close()
+                        for f in verbose_files.values():
+                            f.close()
 
         finally:
 
