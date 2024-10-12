@@ -28,6 +28,7 @@ from fab import remote
 from fab import argutil
 from fab import logutil
 from fab import pathutil
+from fab import hosts
 
 class Boot(Enum):
     cold = "cold"
@@ -90,7 +91,8 @@ def main():
     logger = logutil.getLogger("kvmsh", args.domain_name)
 
     # Get things started
-    domain = virsh.Domain(logger, domain_name=args.domain_name, guest_name=args.guest_name)
+    domain = virsh.Domain(logger, name=args.domain_name,
+                          guest=hosts.lookup(args.guest_name))
 
     # Find a reason to log-in and interact with the console.
     batch = args.mode == "batch" or args.command

@@ -13,6 +13,7 @@
 # for more details.
 
 import sys
+import glob as _glob
 from os import path
 
 def _directory(*util):
@@ -23,3 +24,6 @@ def realpath(*util):
 
 def relpath(*util):
     return path.relpath(_directory(*util))
+
+def glob(*util):
+    return _glob.glob(_directory(*util))

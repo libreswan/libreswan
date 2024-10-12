@@ -273,24 +273,24 @@ class TestResult:
 
         # check the log files for problems
 
-        for host_name in test.host_names:
-            pluto_log_filename = host_name + ".pluto.log"
+        for guest in test.guests:
+            pluto_log_filename = guest.host.name + ".pluto.log"
             if self._grub(pluto_log_filename, r"ASSERTION FAILED"):
-                self.issues.add(Issues.ASSERTION, host_name)
+                self.issues.add(Issues.ASSERTION, guest.host.name)
                 self.resolution.failed()
             if self._grub(pluto_log_filename, r"EXPECTATION FAILED"):
-                self.issues.add(Issues.EXPECTATION, host_name)
+                self.issues.add(Issues.EXPECTATION, guest.host.name)
                 self.resolution.failed()
             if self._grub(pluto_log_filename, r"\(null\)"):
-                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.issues.add(Issues.PRINTF_NULL, guest.host.name)
                 self.resolution.failed()
             if self._grub(pluto_log_filename, r"[^ -~\n]"):
                 # This won't detect a \n embedded in the middle of a
                 # log line.
-                self.issues.add(Issues.ISCNTRL, host_name)
+                self.issues.add(Issues.ISCNTRL, guest.host.name)
                 self.resolution.failed()
             if self._grub(pluto_log_filename, r"leak detective found [0-9]+ leaks"):
-                self.issues.add(Issues.LEAK, host_name)
+                self.issues.add(Issues.LEAK, guest.host.name)
                 self.resolution.failed()
 
         # Generate tpple lists of what to sanitize and what to
@@ -306,12 +306,12 @@ class TestResult:
         if os.path.exists(os.path.join(test.directory, "all.console.txt")):
             verify.append("all")
         else:
-            for host_name in test.host_names:
-                verify.append(host_name)
+            for guest in test.guests:
+                verify.append(guest.host.name)
 
         sanitize = []
-        for host_name in test.host_names:
-            sanitize.append(host_name)
+        for guest in test.guests:
+            sanitize.append(guest.host.name)
         if os.path.exists(os.path.join(test.directory, "all.sh")) \
         or os.path.exists(os.path.join(test.directory, "all.console.txt")):
             sanitize.append("all")

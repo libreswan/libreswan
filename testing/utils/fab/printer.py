@@ -30,6 +30,8 @@ class Print(argutil.List):
     # tests
     TEST_DIRECTORY = "test-directory"
     TEST_GUEST_NAMES = "test-guest-names"
+    TEST_HOST_NAMES = "test-host-names"
+    TEST_PLATFORMS = "test-platforms"
     TEST_KIND = "test-kind"
     TEST_NAME = "test-name"
     TEST_COMMANDS = "test-commands"
@@ -119,8 +121,14 @@ def build_result(logger, result, args, what_to_print, b):
         elif p is Print.TEST_STATUS:
             b.add(p, result.test.status)
         elif p is Print.TEST_GUEST_NAMES:
-            b.add(p, result.test.guest_names,
-                  string=lambda guest_names, sep: sep + ",".join(guest_names))
+            b.add(p, [guest.name for guest in result.test.guests],
+                  string=lambda names, sep: sep + ",".join(names))
+        elif p is Print.TEST_HOST_NAMES:
+            b.add(p, [guest.host.name for guest in result.test.guests],
+                  string=lambda names, sep: sep + ",".join(names))
+        elif p is Print.TEST_PLATFORMS:
+            b.add(p, result.test.platforms,
+                  string=lambda platforms, sep: sep + ",".join(platforms))
         elif p is Print.TEST_KIND:
             b.add(p, result.test.kind)
         elif p is Print.TEST_NAME:

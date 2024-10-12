@@ -12,40 +12,73 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import subprocess
 import re
+from os import path
 
 from fab import utilsdir
 
-def _guest_names():
-    # this failing is a disaster
-    output = subprocess.check_output([utilsdir.relpath("kvmhosts.sh")])
+class Host:
+    def __init__(self, name):
+        self.name = name
+    def __str__(self):
+        return self.name
+    def __lt__(self, peer):
+        return self.name < peer.name
 
-    guest_names = []
-    for guest_name in output.decode('utf-8').splitlines():
-        # match rise before e[ast]
-        for h in ["rise", "set", "nic", "north", "south", "east", "west", "road"]:
-            if re.search(h+r'$', guest_name):
-                host_name = h
-                break
-            if re.search(h[0:1]+r'$', guest_name):
-                host_name = h
-                break
-        t = (guest_name, host_name)
-        guest_names.append(t)
+class Guest:
+    def __init__(self, host, platform=None, guest=None):
+        self.platform = platform	# netbsd, freebsd, ...
+        self.host = host		# east, west, ...
+        self.name = guest or host.name
+    def __str__(self):
+        return self.name
+    def __lt__(self, peer):
+        return self.name < peer.name
 
-    return guest_names
+class Set(set):
+    def __str__(self):
+        return " ".join(str(s) for s in self)
 
-"""An unordered set of tuples of (GUEST_NAME,HOST_NAME)"""
-GUEST_NAMES = _guest_names()
+HOSTS = Set()
+for xml in utilsdir.glob("../kvm/vm/*.xml"):
+    host = re.match(r'^.*/(.*).xml$', xml).group(1)
+    # For hosts, ignor E,W,N,...
+    if len(host) == 1:
+        continue
+    HOSTS.add(Host(host))
 
-def _guest_to_host():
-    d = dict()
-    for guest_name, host_name in GUEST_NAMES:
-        d[guest_name] = host_name
-    return d
+# should have kvm/platform/*
+PLATFORMS = Set()
+for t in utilsdir.glob("../kvm/*/upgrade.sh"):
+    # after the "*" in pattern
+    p = path.basename(path.dirname(t))
+    PLATFORMS.add(p)
+
+GUESTS = Set()
+for host in HOSTS:
+    if host.name in ("rise", "set"):
+        for platform in PLATFORMS:
+            GUESTS.add(Guest(host, platform, platform+host.name))
+        continue
+    if host.name in ("east", "west"):
+        GUESTS.add(Guest(host))
+        for platform in PLATFORMS:
+            GUESTS.add(Guest(host, platform, platform+host.name[0:1]))
+        continue
+    GUESTS.add(Guest(host))
 
 # A dictionary, with GUEST_NAME (as used to manipulate the domain
 # externally) as the KEY and HOST_NAME (what `hostname` within the
 # domain would return) as the value.
-GUEST_TO_HOST = _guest_to_host()
+
+_LOOKUP = dict()
+for guest in GUESTS:
+    _LOOKUP[guest.name] = guest
+
+def lookup(name):
+    if name in _LOOKUP:
+        return _LOOKUP[name]
+    return None
+
+NIC = _LOOKUP["nic"]
+EAST = _LOOKUP["east"]

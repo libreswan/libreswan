@@ -34,7 +34,7 @@ from fab import skip
 from fab import ignore
 from fab import tcpdump
 from fab import publish
-from fab.hosts import GUEST_NAMES
+from fab.hosts import GUESTS
 
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
@@ -87,7 +87,7 @@ class TestDomain:
         self.console = None
 
     def __str__(self):
-        return self.domain.domain_name
+        return self.domain.name
 
     def open(self):
         self.console = self.domain.console()
@@ -102,7 +102,7 @@ class TestDomain:
             self.console = None
 
     def run(self, command, timeout=TEST_TIMEOUT):
-        self.logger.info("%s# %s", self.domain.host_name, command)
+        self.logger.info("%s# %s", self.domain.guest.host.name, command)
         self.console.logger.debug("run '%s' expecting prompt", command)
         self.console.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
@@ -138,22 +138,19 @@ def _boot_test_domains(logger, test, domains):
 
     test_domains = {}
     unused_domains = set()
-    for guest_name in domains:
-        # hack to overriding existing loggers
-        domain = domains[guest_name]
+    for domain in domains.values():
         domain.nest(logger, test.name + " ")
         # new test domain
-        test_domain = TestDomain(domain, test, domain.logger)
-        if guest_name in test.guest_names:
-            test_domains[guest_name] = test_domain
+        if domain.guest in test.guests:
+            test_domain = TestDomain(domain, test, domain.logger)
+            test_domains[domain.guest.name] = test_domain
         else:
-            unused_domains.add(test_domain)
+            unused_domains.add(domain)
 
     logger.info("shutdown domains: %s",
                 " ".join(str(e) for e in unused_domains))
 
-    for test_domain in unused_domains:
-        domain = test_domain.domain
+    for domain in unused_domains:
         domain.shutdown()
 
     logger.info("boot-and-login domains: %s",
@@ -194,7 +191,7 @@ def _boot_test_domains(logger, test, domains):
 
 def _write_guest_prompt(f, command, test):
     f.write("[root@");
-    f.write(command.host_name)
+    f.write(command.guest.host.name)
     f.write(" ")
     f.write(test.name)
     f.write("]# ")
@@ -361,12 +358,11 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             verbose_files = {None: all_verbose_txt}
 
                             for test_domain in test_domains.values():
-                                guest_name = test_domain.domain.guest_name
-                                host_name = test_domain.domain.host_name
+                                guest = test_domain.domain.guest
                                 output = os.path.join(test.output_directory,
-                                                      host_name + ".console.verbose.txt")
+                                                      guest.host.name + ".console.verbose.txt")
                                 f = open(output, "w")
-                                verbose_files[guest_name] = f
+                                verbose_files[guest.name] = f
 
                             # If a guest command times out, don't try
                             # to run post-mortem.sh.
@@ -384,7 +380,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 # all.console.txt.  Just copy it to
                                 # the shared output file.
 
-                                if not command.guest_name:
+                                if not command.guest.name:
                                     last_was_comment = True
                                     all_verbose_txt.write(command.line)
                                     all_verbose_txt.write("\n");
@@ -398,8 +394,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 # output (for GUEST also need to fake
                                 # up a new prompt).
 
-                                guest_verbose_txt = verbose_files[command.guest_name]
-                                test_domain = test_domains[command.guest_name]
+                                guest_verbose_txt = verbose_files[command.guest.name]
+                                test_domain = test_domains[command.guest.name]
 
                                 if command.line.startswith("#"):
                                     last_was_comment = True
@@ -417,7 +413,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 last_was_comment = False
 
                                 # ALL gets the new prompt
-                                all_verbose_txt.write(command.guest_name)
+                                all_verbose_txt.write(command.guest.name)
                                 all_verbose_txt.write("# ")
                                 # both get the command
                                 for txt in (all_verbose_txt, guest_verbose_txt):
@@ -442,7 +438,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     logger.warning("*** %s ***" % message)
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                    guest_timed_out = command.guest_name
+                                    guest_timed_out = command.guest.name
                                     break
 
                                 if status is post.Issues.EOF:
@@ -453,7 +449,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     logger.exception("*** %s ***" % message)
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write("%s %s %s" % (post.LHS, message, post.RHS))
-                                    guest_timed_out = command.guest_name
+                                    guest_timed_out = command.guest.name
                                     break
 
                                 if status:
@@ -479,18 +475,18 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 all_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
                                 all_verbose_txt.flush()
                                 # run post mortem
-                                for guest_name in test.guest_names:
+                                for guest in test.guests:
 
-                                    test_domain = test_domains[guest_name]
-                                    guest_verbose_txt = verbose_files[guest_name]
-                                    logger.info("running %s on %s", script, guest_name)
+                                    test_domain = test_domains[guest.name]
+                                    guest_verbose_txt = verbose_files[guest.name]
+                                    logger.info("running %s on %s", script, guest.name)
 
                                     # mark domain's console
                                     guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
                                     guest_verbose_txt.flush()
 
                                     # ALL gets the new prompt
-                                    all_verbose_txt.write(guest_name)
+                                    all_verbose_txt.write(guest.name)
                                     all_verbose_txt.write("# ")
                                     # both get the command
                                     for txt in (all_verbose_txt, guest_verbose_txt):
@@ -530,7 +526,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                                     if status:
                                         post_mortem_ok = False
-                                        logger.error("%s failed on %s with status %s", script, guest_name, status)
+                                        logger.error("%s failed on %s with status %s", script, guest.name, status)
                                         continue # to next teardown
 
                                     # GUEST finishes with the old prompt
@@ -580,7 +576,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                     jsonutil.result.expect: test.status,
                     jsonutil.result.result: result,
                     jsonutil.result.issues: result.issues,
-                    jsonutil.result.hosts: test.guest_names,
+                    jsonutil.result.hosts: test.guests,
                     jsonutil.result.time: jsonutil.ftime(test_runtime.start),
                     jsonutil.result.runtime: round(test_runtime.seconds(), 1),
                     jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
@@ -614,14 +610,10 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     logger.info("preparing test domains")
 
     domains = {}
-    for guest_name, host_name in GUEST_NAMES:
-        domain_name = (domain_prefix + guest_name)
-        domain = virsh.Domain(logger.nest(domain_name),
-                              guest_name=guest_name,
-                              host_name=host_name,
-                              domain_name=domain_name,
+    for guest in GUESTS:
+        domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest,
                               snapshot_directory=args.snapshot_directory)
-        domains[guest_name] = domain
+        domains[domain.guest.name] = domain
 
     logger.info("processing test queue")
     try:
@@ -636,7 +628,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
         done.release()
         if nr_tests > 1:
             logger.info("shutdown test domains: %s",
-                        " ".join(e.domain_name for e in domains.values()))
+                        " ".join(domain.name for domain in domains.values()))
             for domain in domains.values():
                 domain.nest(logger, "")
                 domain.shutdown()

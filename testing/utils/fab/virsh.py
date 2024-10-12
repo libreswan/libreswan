@@ -46,11 +46,11 @@ TIMEOUT = 10
 
 class Domain:
 
-    def __init__(self, logger, host_name=None, guest_name=None, domain_name=None, snapshot_directory=None):
+    def __init__(self, logger, name=None, prefix=None, guest=None,
+                 snapshot_directory=None):
         # Use the term "domain" just like virsh
-        self.domain_name = domain_name
-        self.guest_name = guest_name
-        self.host_name = host_name
+        self.name = name or prefix+guest.name
+        self.guest = guest
         self.logger = logger
         self.debug_handler = None
         self.logger.debug("domain created")
@@ -59,15 +59,17 @@ class Domain:
         # ._console is three state: None when state unknown; False
         # when shutdown (by us); else the console.
         self._console = None
-        self._snapshot_memory = snapshot_directory and os.path.join(snapshot_directory, domain_name + ".mem")
-        self._snapshot_disk = snapshot_directory and os.path.join(snapshot_directory, domain_name + ".disk")
+        self._snapshot_memory = snapshot_directory and \
+            os.path.join(snapshot_directory, name + ".mem")
+        self._snapshot_disk = snapshot_directory and \
+            os.path.join(snapshot_directory, name + ".disk")
         self.has_snapshot = False
 
     def __str__(self):
-        return "domain " + self.domain_name
+        return "domain " + self.name
 
     def nest(self, logger, prefix):
-        self.logger = logger.nest(prefix + self.domain_name)
+        self.logger = logger.nest(prefix + self.name)
         if self._console:
             self._console.logger = self.logger
         return self.logger
@@ -93,14 +95,14 @@ class Domain:
         return status, output
 
     def state(self):
-        status, output = self._run_status_output(_VIRSH + ["domstate", self.domain_name])
+        status, output = self._run_status_output(_VIRSH + ["domstate", self.name])
         if status:
             return None
         else:
             return output
 
     def _shutdown(self):
-        self._run_status_output(_VIRSH + ["shutdown", self.domain_name])
+        self._run_status_output(_VIRSH + ["shutdown", self.name])
 
     def shutdown(self):
         """Use the console to detect the shutdown - if/when the domain stops
@@ -130,7 +132,7 @@ class Domain:
         return self.destroy()
 
     def _destroy(self):
-        return self._run_status_output(_VIRSH + ["destroy", self.domain_name])
+        return self._run_status_output(_VIRSH + ["destroy", self.name])
 
     def destroy(self):
         """Use the console to detect a destroyed domain - if/when the domain
@@ -157,7 +159,7 @@ class Domain:
         return False
 
     def reboot(self):
-        return self._run_status_output(_VIRSH + ["reboot", self.domain_name])
+        return self._run_status_output(_VIRSH + ["reboot", self.name])
 
     def start(self):
         # A shutdown domain can linger for a bit
@@ -167,12 +169,13 @@ class Domain:
             time.sleep(1)
             shutdown_timeout = shutdown_timeout - 1;
 
-        command = _VIRSH + ["start", self.domain_name, "--console"]
+        command = _VIRSH + ["start", self.name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Console(command, self.logger, host_name=self.host_name)
+        self._console = console.Console(command, self.logger,
+                                        host_name=self.guest and self.guest.host.name)
         match = self._console.expect([("Domain '%s' started\r\n" +
                                        "Connected to domain '%s'\r\n" +
-                                       "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.domain_name, self.domain_name),
+                                       "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.name, self.name),
                                       pexpect.TIMEOUT,
                                       pexpect.EOF],
                                      timeout=START_TIMEOUT)
@@ -186,29 +189,30 @@ class Domain:
 
         # already tried and failed
         self._console = False
-        raise pexpect.EOF("failed to start domain %s" % self.domain_name)
+        raise pexpect.EOF("failed to start domain %s" % self.name)
 
     def dumpxml(self):
         if self._xml == None:
-            status, self._xml = self._run_status_output(_VIRSH + ["dumpxml", self.domain_name])
+            status, self._xml = self._run_status_output(_VIRSH + ["dumpxml", self.name])
             if status:
                 raise AssertionError("dumpxml failed: %s" % (output))
         return self._xml
 
     def _open_console(self):
         # self._console is None
-        command = _VIRSH + ["console", "--force", self.domain_name]
+        command = _VIRSH + ["console", "--force", self.name]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Console(command, self.logger, host_name=self.host_name)
+        self._console = console.Console(command, self.logger,
+                                        host_name=self.guest and self.guest.host.name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
         # will get an EOF.
         if self._console.expect([pexpect.EOF,
                                  # earlier
-                                 "Connected to domain %s\r\nEscape character is \\^]" % self.domain_name,
+                                 "Connected to domain %s\r\nEscape character is \\^]" % self.name,
                                  # libvirt >= 7.0
-                                 "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.domain_name
+                                 "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.name
                                  ],
                                 timeout=CONSOLE_TIMEOUT) > 0:
             self.logger.debug("console attached");
@@ -252,18 +256,18 @@ class Domain:
         # Hence the convoluted hoops to make this work.
 
         # grab the memory, which shuts down the domain
-        command = _VIRSH + ["save", self.domain_name, self._snapshot_memory]
+        command = _VIRSH + ["save", self.name, self._snapshot_memory]
         status, output = self._run_status_output(command, verbose=True)
         if status:
             self.logger.error("save failed: %s", output)
             return False
 
         # create a disk snapshot
-        command = _VIRSH + ["snapshot-delete", self.domain_name, "--current"]
+        command = _VIRSH + ["snapshot-delete", self.name, "--current"]
         status, output = self._run_status_output(command, verbose=True)
         if status:
             self.logger.info("snapshot delete: %s", output)
-        command = _VIRSH + ["snapshot-create", self.domain_name]
+        command = _VIRSH + ["snapshot-create", self.name]
         status, output = self._run_status_output(command, verbose=True)
         if status:
             self.logger.error("snapshot failed: %s", output)
@@ -289,7 +293,7 @@ class Domain:
         self._destroy()
 
         # wind back the disk
-        command = _VIRSH + ["snapshot-revert", self.domain_name, "--current"]
+        command = _VIRSH + ["snapshot-revert", self.name, "--current"]
         status, output = self._run_status_output(command, verbose=True)
         if status:
             self.logger.error("restore failed: %s", output)
