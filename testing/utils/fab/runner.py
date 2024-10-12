@@ -91,21 +91,22 @@ class TestDomain:
         self.logger = logger
         self.domain = domain
         self.console = None
+        self.verbose_txt = None
 
     def __str__(self):
         return self.domain.name
 
     def open(self):
         self.console = self.domain.console()
-        return self.console
 
-    def close(self):
-        if self.console:
-            self.logger.debug("sending ^] to close virsh; expecting EOF")
-            self.console.sendcontrol("]")
-            self.console.expect([pexpect.EOF])
-            self.domain.close()
-            self.console = None
+        # open the output file
+        guest = self.domain.guest
+        output = os.path.join(self.test.output_directory,
+                              guest.host.name + ".console.verbose.txt")
+        # buffering=1 is line buffered
+        self.verbose_txt = open(output, "w", buffering=1)
+
+        return self.console
 
     def run(self, command, timeout=TEST_TIMEOUT):
         self.logger.info("%s# %s", self.domain.guest.host.name, command)
@@ -144,7 +145,7 @@ def _boot_test_domains(logger, test, domains):
 
     test_domains = {}
     unused_domains = set()
-    for domain in domains.values():
+    for domain in domains:
         domain.nest(logger, test.name + " ")
         # new test domain
         if domain.guest in test.guests:
@@ -251,7 +252,6 @@ def _write_guest_prompt(f, command, test):
     f.write(" ")
     f.write(test.name)
     f.write("]# ")
-    f.flush()
 
 def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
@@ -378,14 +378,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                         # mode?
 
                         all_verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
-                        verbose_files = {None: all_verbose_txt}
-
-                        for test_domain in test_domains.values():
-                            guest = test_domain.domain.guest
-                            output = os.path.join(test.output_directory,
-                                                  guest.host.name + ".console.verbose.txt")
-                            f = open(output, "w")
-                            verbose_files[guest.name] = f
 
                         # If a guest command times out, don't try
                         # to run post-mortem.sh.
@@ -407,7 +399,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 last_was_comment = True
                                 all_verbose_txt.write(command.line)
                                 all_verbose_txt.write("\n");
-                                all_verbose_txt.flush()
                                 continue
 
                             # If the per-guest command turns out
@@ -417,8 +408,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             # output (for GUEST also need to fake
                             # up a new prompt).
 
-                            guest_verbose_txt = verbose_files[command.guest.name]
                             test_domain = test_domains[command.guest.name]
+                            guest_verbose_txt = test_domain.verbose_txt
 
                             if command.line.startswith("#"):
                                 last_was_comment = True
@@ -427,8 +418,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     txt.write("\n");
                                 # fudge the prompt
                                 _write_guest_prompt(guest_verbose_txt, command, test)
-                                for txt in (all_verbose_txt, guest_verbose_txt):
-                                    txt.flush()
                                 continue
 
                             if last_was_comment:
@@ -442,7 +431,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             for txt in (all_verbose_txt, guest_verbose_txt):
                                 txt.write(command.line)
                                 txt.write("\n")
-                                txt.flush()
 
                             # run the command
                             status, output = test_domain.run(command.line)
@@ -451,7 +439,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 all_verbose_txt.write("\n")
                                 for txt in (all_verbose_txt, guest_verbose_txt):
                                     txt.write(output.decode()) # convert byte to string
-                                    txt.flush()
 
                             if status is post.Issues.TIMEOUT:
                                 # A timeout while running a
@@ -485,7 +472,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             _write_guest_prompt(guest_verbose_txt, command, test)
 
                             all_verbose_txt.write("\n")
-                            all_verbose_txt.flush()
 
                         if args.run_post_mortem is False:
                             logger.warning("+++ skipping script post-mortem.sh -- disabled +++")
@@ -496,17 +482,15 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             script = "../../guestbin/post-mortem.sh"
                             # Tag merged file ready for post-mortem output
                             all_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                            all_verbose_txt.flush()
                             # run post mortem
                             for guest in test.guests:
 
                                 test_domain = test_domains[guest.name]
-                                guest_verbose_txt = verbose_files[guest.name]
+                                guest_verbose_txt = test_domain.verbose_txt
                                 logger.info("running %s on %s", script, guest.name)
 
                                 # mark domain's console
                                 guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
-                                guest_verbose_txt.flush()
 
                                 # ALL gets the new prompt
                                 all_verbose_txt.write(guest.name)
@@ -515,7 +499,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 for txt in (all_verbose_txt, guest_verbose_txt):
                                     txt.write(script)
                                     txt.write("\n")
-                                    txt.flush()
 
                                 status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
                                 if output:
@@ -523,7 +506,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write(output.decode()) # convert byte to string
                                         txt.write("\n")
-                                        txt.flush()
 
                                 if status is post.Issues.TIMEOUT:
                                     # A post-mortem ending with a
@@ -557,19 +539,17 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                                 # followed by marker
                                 guest_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                guest_verbose_txt.flush()
 
                             if post_mortem_ok:
                                 all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
-                                all_verbose_txt.flush()
 
-                        for f in verbose_files.values():
-                            f.write(post.DONE)
+                        for test_domain in test_domains.values():
+                            test_domain.verbose_txt.write(post.DONE)
 
                     finally:
 
-                        for f in verbose_files.values():
-                            f.close()
+                        for test_domain in test_domains.values():
+                            test_domain.verbose_txt.close()
 
         finally:
 
@@ -625,11 +605,11 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
 
     logger.info("preparing test domains")
 
-    domains = {}
+    domains = list()
     for guest in GUESTS:
         domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest,
                               snapshot_directory=args.snapshot_directory)
-        domains[domain.guest.name] = domain
+        domains.append(domain)
 
     logger.info("processing test queue")
     try:
@@ -644,8 +624,8 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
         done.release()
         if nr_tests > 1:
             logger.info("shutdown test domains: %s",
-                        " ".join(domain.name for domain in domains.values()))
-            for domain in domains.values():
+                        " ".join(domain.name for domain in domains))
+            for domain in domains:
                 domain.nest(logger, "")
                 domain.shutdown()
 
