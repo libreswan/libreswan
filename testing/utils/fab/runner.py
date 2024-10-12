@@ -548,6 +548,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                     finally:
 
+                        all_verbose_txt.close()
                         for test_domain in test_domains.values():
                             test_domain.verbose_txt.close()
 
