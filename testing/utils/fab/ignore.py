@@ -27,6 +27,9 @@ def add_arguments(parser):
     group.add_argument("--test-name", default="",
                        type=re.compile, metavar="REGULAR-EXPRESSION",
                        help="Select tests with name matching %(metavar)s (default: '%(default)s')")
+    group.add_argument("--test-platform", default="",
+                       type=re.compile, metavar="REGULAR-EXPRESSION",
+                       help="Select tests with all platforms matching %(metavar)s (default: '%(default)s')")
 
 
 def log_arguments(logger, args):
@@ -34,6 +37,7 @@ def log_arguments(logger, args):
     logger.info("  test-kind: '%s'" , args.test_kind.pattern)
     logger.info("  test-status: '%s'" , args.test_status.pattern)
     logger.info("  test-name: '%s'" , args.test_name.pattern)
+    logger.info("  test-platform: '%s'" , args.test_platform.pattern)
 
 
 def test(logger, args, test):
@@ -47,14 +51,21 @@ def test(logger, args, test):
 
     """
 
-    for arg, field, title in [(args.test_kind, test.kind, "kind"),
-                              (args.test_status, test.status, "status"),
-                              (args.test_name, test.name, "name")]:
-        if not arg.pattern:
+    for regex, field, title in [(args.test_kind, test.kind, "kind"),
+                                (args.test_status, test.status, "status"),
+                                (args.test_name, test.name, "name")]:
+        if regex.pattern \
+        and not regex.search(field):
+            return (title+"."+field + "!=" + regex.pattern,
+                    "%s (%s) does not match '%s'" % (title, field, regex.pattern))
+
+    for regex, fields, title in [(args.test_platform, test.platforms, "platform")]:
+        if not fields:
             continue
-        if arg.search(field):
-            continue
-        return (title + "!=" + arg.pattern,
-                "%s '%s' does not match '%s'" % (title, field, arg.pattern))
+        for field in fields:
+            if not regex.pattern \
+               or not regex.search(field):
+                return (title+"."+field + "!=" + regex.pattern,
+                        "%s '%s' does not match '%s'" % (title, field, regex.pattern))
 
     return None, None

@@ -549,14 +549,17 @@ STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 # Allow any of 'KVM_TEST_STATUS=good|wip', 'KVM_TEST_STATUS=good wip',
 # or KVM_TEST_STATUS+=wip.
 
+KVM_TEST_PLATFORM += $(KVM_OS)
 KVM_TEST_STATUS += good
+# Keep until TESTLIST is stripped of bogus status fields
 KVM_TEST_STATUS += $(KVM_OS)
 KVM_RUN_POST_MORTEM ?=
 
+STRIPPED_KVM_TEST_PLATFORM = $(subst $(sp),|,$(sort $(KVM_TEST_PLATFORM)))
 STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
+STRIPPED_KVM_TEST_NAME = $(subst $(sp),|,$(sort $(KVM_TEST_NAME)))
 
 KVM_TEST_NAME ?=
-STRIPPED_KVM_TEST_NAME = $(subst $(sp),|,$(sort $(KVM_TEST_NAME)))
 
 kvm-test kvm-check kvm-retest kvm-recheck: \
 kvm-%: $(KVM_HOST_OK) kvm-keys-ok
@@ -575,6 +578,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
 		$(if $(STRIPPED_KVM_TEST_STATUS), --test-status '$(STRIPPED_KVM_TEST_STATUS)') \
 		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
+		$(if $(STRIPPED_KVM_TEST_PLATFORM), --test-platform '$(STRIPPED_KVM_TEST_PLATFORM)') \
 		$(if $(KVM_SNAPSHOTDIR), --snapshot-directory $(KVM_SNAPSHOTDIR)) \
 		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(if $(filter true, $(KVM_RUN_POST_MORTEM)), --run-post-mortem, \
