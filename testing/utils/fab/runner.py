@@ -35,6 +35,12 @@ from fab import ignore
 from fab import publish
 from fab.hosts import GUESTS
 
+PREFIX = "******"
+SUFFIX = "******"
+
+TEST_TIMEOUT = 120
+POST_MORTEM_TIMEOUT = 120
+
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
@@ -70,8 +76,12 @@ def log_arguments(logger, args):
     logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
-TEST_TIMEOUT = 120
-POST_MORTEM_TIMEOUT = 120
+class Task:
+    def __init__(self, test, test_nr, nr_tests):
+        self.test_nr = test_nr
+        self.nr_tests = nr_tests
+        self.test = test
+        self.prefix = "%s (test %d of %d)" % (test.name, test_nr, nr_tests)
 
 class TestDomain:
 
@@ -185,6 +195,56 @@ def _boot_test_domains(logger, test, domains):
 
     return test_domains
 
+def _ignore_test(task, args, result_stats, logger):
+
+    test = task.test
+    ignored, details = ignore.test(logger, args, task.test)
+    if ignored:
+        # So that there's no possible confusion over the test being
+        # run; remove any pre-existing output.
+        #
+        # The isdir() test followed by a simple move, while racy,
+        # should be good enough.
+        if os.path.isdir(test.output_directory):
+            logger.info("moving '%s' to '%s'", test.output_directory,
+                        backup_directory)
+            os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
+            os.rename(test.output_directory, backup_directory)
+        result_stats.add_ignored(test, ignored)
+        publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
+        logger.info("%s %s ignored (%s) %s",
+                    PREFIX, task.prefix, details, SUFFIX)
+        return True
+
+    return False
+
+def _skip_test(task, args, result_stats, logger):
+
+    # For instance, during a test re-run, skip any tests that are
+    # passing.
+    #
+    # The check below compares the test and expected output,
+    # ignoring any previous test result.  This way the results are
+    # consistent with kvmresults.py which always reflects the
+    # current sources.
+    #
+    # - modifying the expected output so that it no longer matches
+    #   the last result is a fail
+    #
+    # - modifying the expected output so that it matches the last
+    #   result is a pass
+
+    test = task.test
+    old_result = post.mortem(test, args, logger)
+    if skip.result(logger, args, old_result):
+        logger.info("%s %s skipped (previously %s) %s",
+                    PREFIX, task.prefix, old_result, SUFFIX)
+        result_stats.add_skipped(old_result)
+        publish.everything(logger, args, old_result)
+        return True
+
+    return False
+
 def _write_guest_prompt(f, command, test):
     f.write("[root@");
     f.write(command.guest.host.name)
@@ -196,58 +256,28 @@ def _write_guest_prompt(f, command, test):
 def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
     test = task.test
-    prefix = "******"
-    suffix = "******"
 
     test_runtime = test_boot_time = test_run_time = test_post_time = None
     old_result = None
     backup_directory = os.path.join(args.backup_directory, test.name)
 
     # Would the number of tests to be [re]run be better?
-    test_prefix = "%s (test %d of %d)" % (test.name, task.test_nr, task.total_tests)
-    publish.json_status(logger, args, "processing %s" % test_prefix)
-    with logger.time("processing test %s", test_prefix):
+    publish.json_status(logger, args, "processing %s" % task.prefix)
+    with logger.time("processing test %s", task.prefix):
 
-        # Ignoring the test completely?
-        #
-        # So that there's no possible confusion over the test being
-        # run; remove any pre-existing output.
-
-        ignored, details = ignore.test(logger, args, test)
-        if ignored:
-            # The isdir() test followed by a simple move, while
-            # racy, should be good enough.
-            if os.path.isdir(test.output_directory):
-                logger.info("moving '%s' to '%s'", test.output_directory,
-                            backup_directory)
-                os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
-                os.rename(test.output_directory, backup_directory)
-            result_stats.add_ignored(test, ignored)
-            publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
-            logger.info("%s %s ignored (%s) %s",
-                        prefix, test_prefix, details, suffix)
+        # Ignore the test completely?  Don't touch the test results.
+        if _ignore_test(task, args, result_stats, logger):
             return
 
-        # Skip the test, leaving old results?
-        #
-        # For instance, during a test re-run, skip any tests that are
-        # passing.
-        #
-        # The check below compares the test and expected output,
-        # ignoring any previous test result.  This way the results are
-        # consistent with kvmresults.py which always reflects the
-        # current sources.
-        #
-        # - modifying the expected output so that it no longer matches
-        #   the last result is a fail
-        #
-        # - modifying the expected output so that it matches the last
-        #   result is a pass
+        # Skip the test?  Leave any old results so next run skips the
+        # same way.
+        if _skip_test(task, args, result_stats, logger):
+            return
 
         old_result = post.mortem(test, args, logger)
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
-                        prefix, test_prefix, old_result, suffix)
+                        PREFIX, task.prefix, old_result, SUFFIX)
             result_stats.add_skipped(old_result)
             publish.everything(logger, args, old_result)
             return
@@ -261,9 +291,9 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
             if old_result:
                 logger.info("%s %s started (previously %s) ....",
-                            prefix, test_prefix, old_result)
+                            PREFIX, task.prefix, old_result)
             else:
-                logger.info("%s %s started ....", prefix, test_prefix)
+                logger.info("%s %s started ....", PREFIX, task.prefix)
 
             # Create just the OUTPUT/ directory.
             #
@@ -309,7 +339,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
             # log writing to that directory; include timing for this
             # test run.
 
-            with logger.debug_time("testing %s", test_prefix,
+            with logger.debug_time("testing %s", task.prefix,
                                    logfile=os.path.join(test.output_directory, "debug.log"),
                                    loglevel=logutil.INFO) as test_runtime:
 
@@ -543,12 +573,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
         finally:
 
-            with logger.time("post-mortem %s", test_prefix):
+            with logger.time("post-mortem %s", task.prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
                 result = post.mortem(test, args, logger)
-                logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
-                            result.issues and " ", result.issues, suffix)
+                logger.info("%s %s %s%s%s %s", PREFIX, task.prefix, result,
+                            result.issues and " ", result.issues, SUFFIX)
 
             result.save()
 
@@ -583,17 +613,10 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
             # Do this after RESULT is created so it too is published.
             publish.everything(logger, args, result)
-            publish.json_status(logger, args, "finished %s" % test_prefix)
+            publish.json_status(logger, args, "finished %s" % task.prefix)
 
             result_stats.add_result(result, old_result)
             result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
-
-
-class Task:
-    def __init__(self, test, test_nr, total_tests):
-        self.test_nr = test_nr
-        self.total_tests = total_tests
-        self.test = test
 
 
 def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_stats):
