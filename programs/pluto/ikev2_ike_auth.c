@@ -561,8 +561,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			}
 
 			const shunk_t ppk = get_connection_ppk(ike->sa.st_connection,
-							       &payl.ppk_id,
-							       0);
+							       /*ppk_id*/&payl.ppk_id,
+							       /*index*/0);
 			free_chunk_content(&payl.ppk_id);
 			if (ppk.ptr != NULL) {
 				found_ppk = true;

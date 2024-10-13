@@ -293,7 +293,9 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			}
 		} else {
 			for (unsigned i = 0; i < ppk_ids_shunks->len; i++) {
-				const shunk_t ppk = get_connection_ppk(c, NULL, i);
+				const shunk_t ppk = get_connection_ppk(c,
+								       /*ppk_id*/NULL,
+								       /*index*/i);
 				if (ppk.ptr != NULL) {
 					found_one = true;
 					chunk_t ppk_confirmation = \
@@ -424,7 +426,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			return STF_FATAL;
 		}
 
-		ppk = get_connection_ppk(ike->sa.st_connection, &payl.ppk_id_payl.ppk_id, 0);
+		ppk = get_connection_ppk(ike->sa.st_connection,
+		                         /*ppk_id*/&payl.ppk_id_payl.ppk_id,
+					 /*index*/0);
 
 		if (ppk.ptr != NULL) {
 			chunk_t ppk_confirmation = \
@@ -606,7 +610,9 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 			return STF_FATAL;
 		}
-		shunk_t ppk = get_connection_ppk(ike->sa.st_connection, &payl.ppk_id, 0);
+		shunk_t ppk = get_connection_ppk(ike->sa.st_connection,
+						 /*ppk_id*/&payl.ppk_id,
+						 /*index*/0);
 		free_chunk_content(&payl.ppk_id);
 
 		recalc_v2_ppk_interm_keymat(&ike->sa,
