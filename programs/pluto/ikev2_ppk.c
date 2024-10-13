@@ -148,8 +148,8 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	uint8_t id_byte;
 	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d,
-			  "reading PPK ID: ");
+		llog(RC_LOG, ike->sa.logger,
+		     "%s", str_diag(d));
 		return false;
 
 	}
@@ -176,8 +176,8 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	size_t data_len = pbs.roof - pbs.cur;
 	d = pbs_in_shunk(&pbs, data_len - PPK_CONFIRMATION_LEN, &ppk_id, "PPK ID data");
 	if (d != NULL) {
-		llog_diag(RC_LOG, ike->sa.logger, &d,
-			  "reading PPK ID: ");
+		llog(RC_LOG, ike->sa.logger,
+		     "%s", str_diag(d));
 		return false;
 
 	}
