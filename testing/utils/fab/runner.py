@@ -259,7 +259,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
     test_runtime = test_boot_time = test_run_time = test_post_time = None
     old_result = None
-    backup_directory = os.path.join(args.backup_directory, test.name)
+    backup_directory = os.path.join(args.backup_directory, task.test.name)
 
     # Would the number of tests to be [re]run be better?
     publish.json_status(logger, args, "processing %s" % task.prefix)
@@ -272,14 +272,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
         # Skip the test?  Leave any old results so next run skips the
         # same way.
         if _skip_test(task, args, result_stats, logger):
-            return
-
-        old_result = post.mortem(test, args, logger)
-        if skip.result(logger, args, old_result):
-            logger.info("%s %s skipped (previously %s) %s",
-                        PREFIX, task.prefix, old_result, SUFFIX)
-            result_stats.add_skipped(old_result)
-            publish.everything(logger, args, old_result)
             return
 
         # Running the test ...
@@ -387,13 +379,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                         for command in test.commands:
 
-                            # If the per-guest command has no
-                            # guest (i.e., blank or NULL), skip
-                            # executing it.
+                            # The per-guest command has no guest?
                             #
-                            # It's a comment or blank line from
-                            # all.console.txt.  Just copy it to
-                            # the shared output file.
+                            # i.e., blank or None.  It's a comment
+                            # from all.console.txt.  Skip executing it
+                            # and save it in the shared
+                            # all.console.verbose.txt file.
 
                             if not command.guest.name:
                                 last_was_comment = True
@@ -401,12 +392,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 all_verbose_txt.write("\n");
                                 continue
 
-                            # If the per-guest command turns out
-                            # to be a comment, skip executing it.
+                            # The per-guest command is a comment?
                             #
-                            # Instead write it directly to the
-                            # output (for GUEST also need to fake
-                            # up a new prompt).
+                            # i.e., it starts with '#'.  Skip
+                            # executing it and save it in the output
+                            # file.  (for per-GUEST output also need
+                            # to fake up a new prompt).
 
                             test_domain = test_domains[command.guest.name]
                             guest_verbose_txt = test_domain.verbose_txt
@@ -487,7 +478,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                                 test_domain = test_domains[guest.name]
                                 guest_verbose_txt = test_domain.verbose_txt
-                                logger.info("running %s on %s", script, guest.name)
+                                logger.debug("running %s on %s", script, guest.name)
 
                                 # mark domain's console
                                 guest_verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
