@@ -118,7 +118,7 @@ pass2help()
     kill
 	kill the running testsuite
     nohup
-	run in the background
+	run in the background writing output to a NEW nohup.out
 
   Step wize create/delete the domains (just use ./kvm install):
 
@@ -330,7 +330,7 @@ while test $# -gt 0 ; do
 	    fi
 	    # avoid race tail can try to open nohup.out before nohup
 	    # creates it.
-	    touch nohup.out
+	    cp /dev/null nohup.out
 	    shift
 	    nohup ./kvm "$@" &
 	    exec tail -f nohup.out
