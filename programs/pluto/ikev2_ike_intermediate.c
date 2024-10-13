@@ -194,7 +194,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 
 /*
  * Calculate PPK Confirmation = prf(PPK, Ni | Nr | SPIi | SPIr). It is used in
- * draft-ietf-ipsecme-ikev2-qr-alt-00 and only in IKE_INTERMEDIATE exchange.
+ * draft-ietf-ipsecme-ikev2-qr-alt-04 and only in IKE_INTERMEDIATE exchange.
  * It is called both by initiator and by the responder.
  */
 static chunk_t calc_ppk_confirmation(const struct prf_desc *prf_desc,

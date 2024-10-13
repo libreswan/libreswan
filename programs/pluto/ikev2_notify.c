@@ -70,7 +70,7 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(UNSUPPORTED_CRITICAL_PAYLOAD);
 	C(UPDATE_SA_ADDRESSES);
 	C(USE_PPK);
-	C(USE_PPK_ALT);
+	C(USE_PPK_INT);
 	C(USE_TRANSPORT_MODE);
 	C(USE_AGGFRAG);
 #undef C

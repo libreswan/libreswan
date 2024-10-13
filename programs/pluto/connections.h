@@ -212,7 +212,7 @@ struct config {
 
 	reqid_t sa_reqid;
 
-	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-00 */
+	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 	char *ppk_ids;
 	struct shunks *ppk_ids_shunks;
 

@@ -592,7 +592,7 @@ struct state {
 	enum {
 		PPK_DISABLED = 0,
 		PPK_IKE_AUTH = 1,		/* RFC 8784 */
-		PPK_IKE_INTERMEDIATE = 2,	/* draft-ietf-ipsecme-ikev2-qr-alt-00 */
+		PPK_IKE_INTERMEDIATE = 2,	/* draft-ietf-ipsecme-ikev2-qr-alt-04 */
 	} st_v2_ike_ppk;
 
 	chunk_t st_no_ppk_auth;

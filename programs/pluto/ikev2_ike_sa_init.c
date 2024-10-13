@@ -919,12 +919,12 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			return false;
 	}
 
-	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED (and maybe USE_PPK_ALT) Notify payload */
+	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED (and maybe USE_PPK_INT) Notify payload */
 	if (c->config->intermediate) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, request.pbs))
 			return STF_INTERNAL_ERROR;
 		if (c->config->ppk.allow) {
-			if (!emit_v2N(v2N_USE_PPK_ALT, request.pbs))
+			if (!emit_v2N(v2N_USE_PPK_INT, request.pbs))
 				return false;
 		}
 	}
@@ -1115,10 +1115,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		accept_v2_notification(v2N_USE_PPK, ike->sa.logger,
 				       md, c->config->ppk.allow);
 	bool ppk_ike_intermediate_enabled =
-		accept_v2_notification(v2N_USE_PPK_ALT, ike->sa.logger,
+		accept_v2_notification(v2N_USE_PPK_INT, ike->sa.logger,
 				       md, c->config->ppk.allow);
 
-	/* PPK (RFC8784 + draft-ietf-ipsecme-ikev2-qr-alt-00) logic */
+	/* PPK (RFC8784 + draft-ietf-ipsecme-ikev2-qr-alt-04) logic */
 	if (ike->sa.st_v2_ike_intermediate.enabled && ppk_ike_intermediate_enabled) {
 		ike->sa.st_v2_ike_ppk = PPK_IKE_INTERMEDIATE;
 	} else if (ppk_ike_auth_enabled) {
@@ -1289,12 +1289,12 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		}
 	}
 
-	/* Send USE_PPK / USE_PPK_ALT Notify payload */
+	/* Send USE_PPK / USE_PPK_INT Notify payload */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		if (!emit_v2N(v2N_USE_PPK, response.pbs))
 			return STF_INTERNAL_ERROR;
 	} else if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
-		if (!emit_v2N(v2N_USE_PPK_ALT, response.pbs))
+		if (!emit_v2N(v2N_USE_PPK_INT, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1552,10 +1552,10 @@ static stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		accept_v2_notification(v2N_USE_PPK, ike->sa.logger,
 				       md, c->config->ppk.allow);
 	bool ppk_ike_intermediate_enabled =
-		accept_v2_notification(v2N_USE_PPK_ALT, ike->sa.logger,
+		accept_v2_notification(v2N_USE_PPK_INT, ike->sa.logger,
 				       md, c->config->ppk.allow);
 
-	/* PPK (RFC8784 + draft-ietf-ipsecme-ikev2-qr-alt-00) logic */
+	/* PPK (RFC8784 + draft-ietf-ipsecme-ikev2-qr-alt-04) logic */
 	if (ike->sa.st_v2_ike_intermediate.enabled && ppk_ike_intermediate_enabled) {
 		ike->sa.st_v2_ike_ppk = PPK_IKE_INTERMEDIATE;
 	} else if (ppk_ike_auth_enabled) {
