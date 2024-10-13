@@ -51,7 +51,6 @@ KVM_TESTINGDIR ?= $(KVM_RUTDIR)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
-KVM_SNAPSHOTDIR ?=
 
 #
 # Build KVM_TEST_PREFIXES from $(KVM_PREFIX) and $(KVM_WORKERS).  Goal
@@ -579,7 +578,6 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(STRIPPED_KVM_TEST_STATUS), --test-status '$(STRIPPED_KVM_TEST_STATUS)') \
 		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(STRIPPED_KVM_TEST_PLATFORM), --test-platform '$(STRIPPED_KVM_TEST_PLATFORM)') \
-		$(if $(KVM_SNAPSHOTDIR), --snapshot-directory $(KVM_SNAPSHOTDIR)) \
 		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(if $(filter true, $(KVM_RUN_POST_MORTEM)), --run-post-mortem, \
 		$(if $(filter false, $(KVM_RUN_POST_MORTEM)), --no-run-post-mortem)) \

@@ -62,9 +62,6 @@ def add_arguments(parser):
                        default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
                        help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
-    group.add_argument("--snapshot-directory",
-                       metavar="DIRECTORY", default=None,
-                       help="directory for storing test domain snapshots, typically pointed at KVM_POOLDIR")
 
 def log_arguments(logger, args):
     logger.info("Test Runner arguments:")
@@ -72,7 +69,6 @@ def log_arguments(logger, args):
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
     logger.info("  backup-directory: %s", args.backup_directory)
-    logger.info("  snapshot-directory: %s", args.snapshot_directory)
     logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
@@ -168,21 +164,14 @@ def _boot_test_domains(logger, test, domains):
         logger = test_domain.logger
         domain = test_domain.domain
 
-        if domain.restore():
-            logger.info("domain restored")
-            console = domain.console()
-        else:
-            console = domain.console()
-            if console:
-                logger.info("shutting down existing domain")
-                domain.shutdown()
-            console = remote.boot_to_login_prompt(domain)
-            if not console:
-                logger.error("domain not running")
-                return None
-            if domain.save():
-                logger.info("domain saved")
-                console = domain.console()
+        console = domain.console()
+        if console:
+            logger.info("shutting down existing domain")
+            domain.shutdown()
+        console = remote.boot_to_login_prompt(domain)
+        if not console:
+            logger.error("domain not running")
+            return None
 
         logger.info("domain is running")
         remote.login(domain, console)
@@ -599,8 +588,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
 
     domains = list()
     for guest in GUESTS:
-        domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest,
-                              snapshot_directory=args.snapshot_directory)
+        domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest)
         domains.append(domain)
         domain.shutdown()
 
