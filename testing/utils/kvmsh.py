@@ -30,11 +30,6 @@ from fab import logutil
 from fab import pathutil
 from fab import hosts
 
-class Boot(Enum):
-    cold = "cold"
-    warm = "warm"
-
-
 def main():
 
     # If SIGUSR1, backtrace all threads; hopefully this is early
@@ -61,11 +56,8 @@ def main():
                               " as relative to the current local working directory"
                               ", is converted to an absolute remote path before use"
                               " (default: leave directory unchanged)"))
-    parser.add_argument("--boot", default=None, action="store",
-                        type=Boot, choices=[e for e in Boot],
-                        help=("force the domain to boot"
-                              "; 'cold': power-off any existing domain"
-                              "; 'warm': reboot any existing domain"
+    parser.add_argument("--boot", default=False, action="store_true",
+                        help=("force the domain to shutdown and then boot"
                               " (default: leave existing domain running)"))
     parser.add_argument("--shutdown", default=False, action="store_true",
                         help=("on-completion shut down the domain"
@@ -96,12 +88,12 @@ def main():
 
     # Find a reason to log-in and interact with the console.
     batch = args.mode == "batch" or args.command
-    interactive = args.mode == "interactive" or (not args.command and args.boot == None and not args.shutdown)
+    interactive = args.mode == "interactive" or (not args.command and not args.boot and not args.shutdown)
 
     # Get the current console, this will be None if the machine is
     # shutoff (and forced to none if a cold boot)
 
-    if args.boot is Boot.cold and domain.console():
+    if args.boot and domain.console():
         domain.shutdown()
 
     status = 0

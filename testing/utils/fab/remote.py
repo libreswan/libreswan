@@ -115,4 +115,5 @@ def boot_to_login_prompt(domain):
 
     console = domain.start()
     console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
+    domain.logger.info("domain reached Login: prompt")
     return console

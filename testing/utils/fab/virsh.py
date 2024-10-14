@@ -152,9 +152,6 @@ class Domain:
         self._console = None
         return False
 
-    def reboot(self):
-        return self._run_status_output(_VIRSH + ["reboot", self.name])
-
     def start(self):
         # A shutdown domain can linger for a bit
         shutdown_timeout = START_TIMEOUT

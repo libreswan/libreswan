@@ -170,7 +170,6 @@ def _boot_test_domains(logger, test, test_domains):
             logger.error("domain not running")
             return None
 
-        logger.info("domain is running")
         remote.login(domain, console)
 
         # Set noecho on the PTY inside the VM (not pexpect's PTY
