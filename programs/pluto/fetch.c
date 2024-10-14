@@ -46,6 +46,7 @@
 
 #define FETCH_CMD_TIMEOUT       5       /* seconds */
 
+char *curl_iface = NULL;
 deltatime_t curl_timeout = DELTATIME_INIT(FETCH_CMD_TIMEOUT);
 
 static pthread_t fetch_thread_id;

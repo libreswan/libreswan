@@ -89,7 +89,6 @@ bool crl_strict = false;
 bool ocsp_strict = false;
 bool ocsp_enable = false;
 bool ocsp_post = false;
-char *curl_iface = NULL;
 
 SECItem same_shunk_as_dercert_secitem(shunk_t shunk)
 {
