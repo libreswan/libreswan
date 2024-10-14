@@ -1416,17 +1416,20 @@ define define-test-domain
 	: define-test-domain
 	:  *=$$*
 	:  @=$$@
+	:  domain=notdir $$@
 	:  test_prefix=$(1)
-	:  domain=$(2)
+	:  guest_name=$(2)
 	:  platform=$(3)
-	:  host=$(4)
+	:  host_name=$(4)
 	./kvm-uninstall-domain.sh $$@
-	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(3)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
 		-e 's;@@SOURCEDIR@@;$$(KVM_$($(strip $(3)))_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$$(KVM_$($(strip $(3)))_TESTINGDIR);' \
 		-e "s;@@TEST_PREFIX@@;$(notdir $(1));" \
+		-e 's;@@GUEST_NAME@@;$(strip $(2));' \
+		-e 's;@@PLATFORM@@;$(strip $(3));' \
+		-e 's;@@HOST_NAME@@;$(strip $(4));' \
 		vm/$(strip $(4)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
