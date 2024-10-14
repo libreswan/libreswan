@@ -1421,7 +1421,7 @@ define define-test-domain
 	:  guest_name=$(2)
 	:  platform=$(3)
 	:  host_name=$(4)
-	./kvm-uninstall-domain.sh $$@ $(KVM_POOLDIR_PREFIX)$(strip $(3))
+	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
 	rm -f $(KVM_POOLDIR_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
 	$$(KVM_TRANSMOGRIFY) \
