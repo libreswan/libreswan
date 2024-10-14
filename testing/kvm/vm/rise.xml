@@ -25,6 +25,7 @@ You can load this machine definition into libvirt using:
       <driver name='qemu' type='qcow2' cache='writeback'/>
       <source file='@@LOCALDIR@@/@@DOMAIN@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
+      <transient shareBacking='yes'/>
     </disk>
     <controller type='usb' index='0'>
     </controller>
