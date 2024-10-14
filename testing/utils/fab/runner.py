@@ -127,17 +127,7 @@ def submit_job_for_domain(executor, jobs, logger, domain, work):
 def executor_qsize_hack(executor):
     return executor._work_queue.qsize()
 
-def _boot_test_domains(logger, test, domains):
-
-    # There's a tradeoff here between speed and reliability.
-    #
-    # In theory, the boot process is mostly I/O bound.
-    # Consequently, having lots of domains boot in parallel should
-    # be harmless.
-    #
-    # In reality, the [fedora] boot process is very much CPU bound
-    # (a rule of thumb is two cores per domain).  Consequently, it
-    # is best to serialize the boot/login process.
+def _test_domains(logger, test, domains):
 
     test_domains = {}
     unused_domains = set()
@@ -152,12 +142,25 @@ def _boot_test_domains(logger, test, domains):
 
     logger.info("unused domains: %s",
                 " ".join(str(e) for e in unused_domains))
+    logger.info("test domains: %s",
+                " ".join(str(e) for e in test_domains.values()))
+
+    return test_domains, unused_domains
+
+def _boot_test_domains(logger, test, test_domains, unused_domains):
+
+    # There's a tradeoff here between speed and reliability.
+    #
+    # In theory, the boot process is mostly I/O bound.
+    # Consequently, having lots of domains boot in parallel should
+    # be harmless.
+    #
+    # In reality, the [fedora] boot process is very much CPU bound
+    # (a rule of thumb is two cores per domain).  Consequently, it
+    # is best to serialize the boot/login process.
 
     for domain in unused_domains:
         domain.destroy()
-
-    logger.info("boot-and-login domains: %s",
-                " ".join(str(e) for e in test_domains.values()))
 
     for test_domain in test_domains.values():
 
@@ -263,6 +266,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
         if _skip_test(task, args, result_stats, logger):
             return
 
+        test_domains, unused_domains = _test_domains(logger, test, domains)
+
         # Running the test ...
         #
         # From now on the test will be run so need to perform post
@@ -327,7 +332,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                 # boot the domains
                 with logger.time("booting domains") as test_boot_time:
                     try:
-                        test_domains = _boot_test_domains(logger, test, domains)
+                        test_domains = _boot_test_domains(logger, test, test_domains, unused_domains)
                     except pexpect.TIMEOUT:
                         # Bail.  Being unable to boot the domains is a
                         # disaster.  The test is UNRESOLVED.
