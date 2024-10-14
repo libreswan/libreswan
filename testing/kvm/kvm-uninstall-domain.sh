@@ -13,10 +13,10 @@ for file in "$@" ; do
 	case "${state}" in
 	    "running" | "in shutdown" | "paused" )
 		run sudo virsh destroy ${domain}
-		run sudo virsh undefine ${domain} --managed-save --snapshots-metadata
+		run sudo virsh undefine ${domain}
 		;;
 	    "shut off" )
-		run sudo virsh undefine ${domain} --managed-save --snapshots-metadata
+		run sudo virsh undefine ${domain}
 		;;
 	    * )
 		echo "Unknown state ${state} for ${domain}"
