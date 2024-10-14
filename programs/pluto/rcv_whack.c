@@ -522,13 +522,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "purgeocsp: stop:");
 	}
 
-#if defined(LIBCURL) || defined(LIBLDAP)
 	if (m->whack_fetchcrls) {
 		dbg_whack(s, "fetchcrls: start:");
 		whack_fetchcrls(s);
 		dbg_whack(s, "fetchcrls: stop:");
 	}
-#endif
 
 	if (m->whack_rereadcerts) {
 		dbg_whack(s, "rereadcerts: start:");

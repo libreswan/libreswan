@@ -19,8 +19,6 @@
  *
  */
 
-#if defined(LIBCURL) || defined(LIBLDAP)	/* essentially whole body of file */
-
 #include <pthread.h>    /* Must be the first include file */
 #include <stdlib.h>
 #include <errno.h>
@@ -29,7 +27,6 @@
 
 #include <cert.h>
 #include <certdb.h>
-
 
 #include "constants.h"
 #include "defs.h"
@@ -153,9 +150,11 @@ static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 
 #else	/* LIBCURL */
 
-static err_t fetch_curl(const char *url UNUSED,
-			chunk_t *blob UNUSED)
+static err_t fetch_curl(const char *url,
+			chunk_t *blob,
+			struct logger *logger)
 {
+	ldbg(logger, "%s() ignoring %s %p", __func__, url, blob->ptr);
 	return "not compiled with libcurl support";
 }
 
@@ -578,7 +577,3 @@ void free_crl_fetch(void)
 	}
 #endif
 }
-
-#else /* defined(LIBCURL) || defined(LIBLDAP) */
-/* we'll just ignore for now - this is all going away anyway */
-#endif
