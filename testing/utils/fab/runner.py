@@ -145,9 +145,9 @@ def _test_domains(logger, test, domains):
     logger.info("test domains: %s",
                 " ".join(str(e) for e in test_domains.values()))
 
-    return test_domains, unused_domains
+    return test_domains
 
-def _boot_test_domains(logger, test, test_domains, unused_domains):
+def _boot_test_domains(logger, test, test_domains):
 
     # There's a tradeoff here between speed and reliability.
     #
@@ -159,18 +159,12 @@ def _boot_test_domains(logger, test, test_domains, unused_domains):
     # (a rule of thumb is two cores per domain).  Consequently, it
     # is best to serialize the boot/login process.
 
-    for domain in unused_domains:
-        domain.destroy()
-
     for test_domain in test_domains.values():
 
         logger = test_domain.logger
         domain = test_domain.domain
 
         console = domain.console()
-        if console:
-            logger.info("shutting down existing domain")
-            domain.destroy()
         console = remote.boot_to_login_prompt(domain)
         if not console:
             logger.error("domain not running")
@@ -185,8 +179,6 @@ def _boot_test_domains(logger, test, test_domains, unused_domains):
 
         test_directory = os.path.join("/testing/pluto", test.name)
         console.chdir(test_directory)
-
-    return test_domains
 
 def _ignore_test(task, args, result_stats, logger):
 
@@ -266,7 +258,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
         if _skip_test(task, args, result_stats, logger):
             return
 
-        test_domains, unused_domains = _test_domains(logger, test, domains)
+        test_domains = _test_domains(logger, test, domains)
 
         # Running the test ...
         #
@@ -332,7 +324,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                 # boot the domains
                 with logger.time("booting domains") as test_boot_time:
                     try:
-                        test_domains = _boot_test_domains(logger, test, test_domains, unused_domains)
+                        _boot_test_domains(logger, test, test_domains)
                     except pexpect.TIMEOUT:
                         # Bail.  Being unable to boot the domains is a
                         # disaster.  The test is UNRESOLVED.
@@ -539,6 +531,14 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
         finally:
 
+            if task.nr_tests <= 1:
+                logger.info("single test run; leaving domains running");
+            elif test_domains:
+                logger.info("destroying domains: %s",
+                            " ".join(test_domain.domain.name for test_domain in test_domains.values()))
+                for test_domain in test_domains.values():
+                    test_domain.domain.destroy()
+
             with logger.time("post-mortem %s", task.prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
@@ -608,12 +608,6 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
         None
     finally:
         done.release()
-        if nr_tests > 1:
-            logger.info("destroying domains: %s",
-                        " ".join(domain.name for domain in domains))
-            for domain in domains:
-                domain.nest(logger, "")
-                domain.destroy()
 
 
 def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result_stats, logger):
