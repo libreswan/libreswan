@@ -14,6 +14,12 @@ print-kvm-variable() {
 }
 
 kvm_platform=$(print-kvm-variable KVM_PLATFORM)
+
+kvm_test_host_names=$(print-kvm-variable KVM_TEST_HOST_NAMES)
+kvm_base_host_names=$(print-kvm-variable KVM_BASE_HOST_NAMES)
+kvm_build_host_names=$(print-kvm-variable KVM_BUILD_HOST_NAMES)
+kvm_upgrade_host_names=$(print-kvm-variable KVM_UPGRADE_HOST_NAMES)
+
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_test_status=$(echo $(print-kvm-variable KVM_TEST_STATUS) | tr ' ' '|')
 kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
@@ -26,18 +32,10 @@ kvm_pidfile=$(print-kvm-variable KVM_PIDFILE)
 # repo under test
 rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 
-buildhosts=${kvm_platform}
-basehosts=
-upgradehosts=
-for p in ${kvm_platform} ; do
-    basehosts="${basehosts} ${p}-base ${p}-upgrade"
-    upgradehosts="${upgradehosts} ${p}-upgrade ${p}-upgrade"
-done
 
 # eat newlines
-testhosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
 
-hosts="${testhosts} ${buildhosts} ${basehosts} ${upgradehosts}"
+hosts="${kvm_test_host_names} ${kvm_build_host_names} ${kvm_base_host_names} ${kvm_upgrade_host_names}"
 
 # Anything matching '^____[-a-z]' is considered a command ('_' denotes
 # a space).
@@ -127,12 +125,12 @@ pass2help()
 
     base[-PLATFORM]
 	create a domain containing the base OS
-	creates: ${basehosts}
+	creates: ${kvm_base_host_names}
     upgrade[-PLATFORM]
 	create the upgrade domain from the base domain
 	installs missing packages
         updates existing packages
-	creates: ${upgradehosts}
+	creates: ${kvm_upgrade_host_names}
     transmogrify[-PLATFORM]
 	create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
@@ -169,10 +167,10 @@ pass2help()
 
     sh <host> [ <command> ]
 	start a shell on <host> which can be a:
-	  test domain: ${testhosts}
-	  build domain: ${kvm_platform}
-	  base domain: ${basehosts}
-	  upgrade domain: ${upgradehosts}
+	  test domain: ${kvm_test_host_names}
+	  build domain: ${kvm_build_host_names}
+	  base domain: ${kvm_base_host_names}
+	  upgrade domain: ${kvm_upgrade_host_names}
 
   Configuration:
 

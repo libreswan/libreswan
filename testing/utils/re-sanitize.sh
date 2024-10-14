@@ -59,47 +59,48 @@ check_pluto_log_for()
     fi
 }
 
-for host in $(${LIBRESWANSRCDIR}/testing/utils/kvmhosts.sh); do
-    # The host list includes "nic" but that is ok as the checks below
-    # filter it out.
-    if [ -f "${host}.console.txt" ]; then
-	#echo "re-sanitizing ${host}"
-	rm -f OUTPUT/${host}.console.tmp
-	touch OUTPUT/${host}.console.tmp
-	# sanitize last run
-	if [ ! -f OUTPUT/${host}.console.verbose.txt ]; then
-	    echo "# ${host}.console.verbose.txt missing"
-	    echo "${host}.console.verbose.txt" >> OUTPUT/${host}.console.tmp
-	    failure=1
-	else
-	    fixedoutput=OUTPUT/${host}.console.txt
-	    ${LIBRESWANSRCDIR}/testing/utils/sanitizer.sh \
-			      OUTPUT/${host}.console.verbose.txt \
-			      $PWD \
-			      ${FIXUPDIR} ${FIXUPDIR2:-} \
-			      > ${fixedoutput}
-
-	    if diff -w -N -u ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
-		echo "# ${host} Console output matched"
-	    else
-		echo "# ${host} Console output differed"
-		failure=1
-	    fi
-	    check_console_log_for '^CORE FOUND'
-	    check_console_log_for SEGFAULT
-	    check_console_log_for GPFAULT
-	    check_pluto_log_for 'ASSERTION FAILED'
-	    check_pluto_log_for 'EXPECTATION FAILED'
-	    # this blats CORE into all the .diff files; better than nothing
-	    for i in OUTPUT/core* ; do
-		if [ -f "$i" ] ; then
-		    echo "# CORE: $i"
-		    echo "$i " >> OUTPUT/${host}.console.tmp
-		fi
-	    done
-	fi
-	mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
+for verbose in OUTPUT/*.console.verbose.txt ; do
+    if test ! -r "${verbose}" ; then
+	echo "OUTPUT does not contain .console.verbose.txt files" 1>&2
+	failure=1
+	break
     fi
+    host=$(basename ${verbose} .console.verbose.txt)
+    if [ ! -f "${host}.console.txt" ]; then
+	continue
+    fi
+
+    # sanitize last run
+    fixedoutput=OUTPUT/${host}.console.txt
+    ${LIBRESWANSRCDIR}/testing/utils/sanitizer.sh \
+		      ${verbose} \
+		      $PWD \
+		      ${FIXUPDIR} ${FIXUPDIR2:-} \
+		      > ${fixedoutput}
+
+    # generate the diff in .tmp
+    rm -f OUTPUT/${host}.console.tmp
+    touch OUTPUT/${host}.console.tmp
+    if diff -w -N -u ${host}.console.txt $fixedoutput > OUTPUT/${host}.console.tmp; then
+	echo "# ${host} Console output matched"
+    else
+	echo "# ${host} Console output differed"
+	failure=1
+    fi
+
+    check_console_log_for '^CORE FOUND'
+    check_console_log_for SEGFAULT
+    check_console_log_for GPFAULT
+    check_pluto_log_for 'ASSERTION FAILED'
+    check_pluto_log_for 'EXPECTATION FAILED'
+    # this blats CORE into all the .diff files; better than nothing
+    for i in OUTPUT/core* ; do
+	if [ -f "$i" ] ; then
+	    echo "# CORE: $i"
+	    echo "$i " >> OUTPUT/${host}.console.tmp
+	    fi
+    done
+    mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
 done
 
 if [ $failure -eq 0 ]; then
