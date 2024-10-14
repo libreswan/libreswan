@@ -150,11 +150,11 @@ def _boot_test_domains(logger, test, domains):
         else:
             unused_domains.add(domain)
 
-    logger.info("shutdown domains: %s",
+    logger.info("unused domains: %s",
                 " ".join(str(e) for e in unused_domains))
 
     for domain in unused_domains:
-        domain.shutdown()
+        domain.destroy()
 
     logger.info("boot-and-login domains: %s",
                 " ".join(str(e) for e in test_domains.values()))
@@ -167,7 +167,7 @@ def _boot_test_domains(logger, test, domains):
         console = domain.console()
         if console:
             logger.info("shutting down existing domain")
-            domain.shutdown()
+            domain.destroy()
         console = remote.boot_to_login_prompt(domain)
         if not console:
             logger.error("domain not running")
@@ -590,7 +590,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     for guest in GUESTS:
         domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest)
         domains.append(domain)
-        domain.shutdown()
+        domain.destroy()
 
     logger.info("processing test queue")
     try:
@@ -604,11 +604,11 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     finally:
         done.release()
         if nr_tests > 1:
-            logger.info("shutdown test domains: %s",
+            logger.info("destroying domains: %s",
                         " ".join(domain.name for domain in domains))
             for domain in domains:
                 domain.nest(logger, "")
-                domain.shutdown()
+                domain.destroy()
 
 
 def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result_stats, logger):
