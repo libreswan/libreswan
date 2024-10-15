@@ -86,15 +86,12 @@ class TestDomain:
         # Get the domain
         self.logger = logger
         self.domain = domain
-        self.console = None
         self.verbose_txt = None
 
     def __str__(self):
         return self.domain.name
 
     def open(self):
-        self.console = self.domain.console()
-
         # open the output file
         guest = self.domain.guest
         output = os.path.join(self.test.output_directory,
@@ -102,21 +99,20 @@ class TestDomain:
         # buffering=1 is line buffered
         self.verbose_txt = open(output, "w", buffering=1)
 
-        return self.console
-
     def run(self, command, timeout=TEST_TIMEOUT):
+        console = self.domain.console()
         self.logger.info("%s# %s", self.domain.guest.host.name, command)
-        self.console.logger.debug("run '%s' expecting prompt", command)
-        self.console.sendline(command)
+        console.logger.debug("run '%s' expecting prompt", command)
+        console.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
-        m = self.console.expect([self.console.prompt, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout)
+        m = console.expect([console.prompt, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout)
         if m == 1:
-            return post.Issues.TIMEOUT, self.console.before
+            return post.Issues.TIMEOUT, console.before
         if m == 2:
-            return post.Issues.EOF, self.console.before
-        status = self.console._check_prompt()
-        self.console.logger.debug("run exit status %s", status)
-        return status, self.console.before
+            return post.Issues.EOF, console.before
+        status = console._check_prompt()
+        console.logger.debug("run exit status %s", status)
+        return status, console.before
 
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
@@ -164,7 +160,6 @@ def _boot_test_domains(logger, test, test_domains):
         logger = test_domain.logger
         domain = test_domain.domain
 
-        console = domain.console()
         console = remote.boot_to_login_prompt(domain)
         if not console:
             logger.error("domain not running")
