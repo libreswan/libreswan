@@ -1651,7 +1651,7 @@ int main(int argc, char **argv)
 		     uts.sysname, uts.release, uts.version, uts.machine);
 
 		while (*c) {
-			if (isdigit(*c)) {
+			if (char_isdigit(*c)) {
 				ver[i] = strtol(c, &c, 10);
 				i++;
 			} else {
