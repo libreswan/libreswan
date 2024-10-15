@@ -486,6 +486,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             if post_mortem_ok:
                                 all_verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
 
+                        all_verbose_txt.write(post.DONE)
                         for test_domain in test_domains.values():
                             test_domain.verbose_txt.write(post.DONE)
 
