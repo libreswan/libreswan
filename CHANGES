@@ -4,6 +4,7 @@ v5.2 (unreleased)
 * Linux:
   - packet offload counters supported in 6.7+ [Paul]
   - Add IPTFS support [Paul / Antony]
+  - 6.10+ need replay-window 0 on OUTBOUND SA [Paul]
 * whack:
   - fix "duplicated flag ctlsocket" error introduced in 5.0 #1840 [Andrew]
 * building:
