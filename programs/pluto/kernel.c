@@ -87,6 +87,8 @@
 #include "pending.h"
 #include "terminate.h"
 
+extern struct kernel_info kinfo;
+
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
@@ -1411,14 +1413,19 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next->proto = &ip_protocol_esp;
 
 		/*
-		 * Linux kernel >= 6.10 need replay-window 0 on OUTBOUND SA
-		 * 0. Older kernels does not support replay-window for
-		 *    OUTBOUND SA with ESN. It support 1.
-		 * 1. Do BSD varients support 0 on OUTBOUND? If not move next
-		 *    line to kernel_xfrm.c
-		 * 2. do we have code to detect Linux kernel version?
+		 * Linux kernel >= 6.10 need replay-window 0 on OUTBOUND SA.
+		 *
+		 * Older kernels does not support replay-window for OUTBOUND
+		 * SA with ESN. It support 1.
+		 *
+		 * What about the BSDs? Should this move into kernel_xfrm.c ?
 		 */
-		said_next->replay_window = direction == DIRECTION_OUTBOUND ? 0 : c->config->child_sa.replay_window;
+		if (kinfo.os == KINFO_LINUX) {
+			if ((kinfo.maj > 6) || ((kinfo.maj == 6) && (kinfo.min >= 10))) {
+				said_next->replay_window = direction == DIRECTION_OUTBOUND ? 0
+					: c->config->child_sa.replay_window;
+			}
+		}
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
