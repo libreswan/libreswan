@@ -1,6 +1,14 @@
 See also https://libreswan.org/
 
 v5.2 (unreleased)
+* Linux:
+  - packet offload counters supported in 6.7+ [Paul]
+* whack:
+  - fix "duplicated flag ctlsocket" error introduced in 5.0 #1840 [Andrew]
+* building:
+  - fix build with USE_LIBCURL=false [Andrew]
+
+
 
 v5.1 (Oct 8, 2024)
 * IKEv2:
