@@ -21,7 +21,7 @@ import logging
 import re
 import os
 
-from fab import console
+from fab.console import Console
 from fab import logutil
 from fab import timing
 
@@ -129,11 +129,8 @@ class Domain:
         return self._run_status_output(_VIRSH + ["destroy", self.name])
 
     def destroy(self):
-        """Use the console to detect a destroyed domain - if/when the domain
-        stops it will exit giving an EOF.
-
-        """
-
+        # Use the console to detect a destroyed domain - if/when the
+        # domain stops it will exit giving an EOF.
         console = self.console()
         if not console:
             self.logger.error("domain already destroyed")
@@ -142,15 +139,16 @@ class Domain:
         self.logger.info("waiting %d seconds for domain to be destroyed", DESTROY_TIMEOUT)
         lapsed_time = timing.Lapsed()
         self._destroy()
-        if console.expect([pexpect.EOF, pexpect.TIMEOUT],
-                          timeout=DESTROY_TIMEOUT) == 0:
-            self.logger.info("domain destroyed after %s", lapsed_time)
-            self._console = None
-            return True
-
-        self.logger.error("timeout destroying domain, giving up")
-        self._console = None
-        return False
+        match console.expect([pexpect.EOF, pexpect.TIMEOUT],
+                          timeout=DESTROY_TIMEOUT):
+            case 0: #EOF
+                self.logger.info("domain destroyed after %s", lapsed_time)
+                self._console = None
+                return True
+            case 1: #TIMEOUT
+                self.logger.error("timeout destroying domain, giving up")
+                self._console = None
+                return False
 
     def start(self):
         # A shutdown domain can linger for a bit
@@ -160,27 +158,33 @@ class Domain:
             time.sleep(1)
             shutdown_timeout = shutdown_timeout - 1;
 
+        self._console = None # status unknown
+
         command = _VIRSH + ["start", self.name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Console(command, self.logger,
-                                        host_name=self.guest and self.guest.host.name)
-        match = self._console.expect([("Domain '%s' started\r\n" +
-                                       "Connected to domain '%s'\r\n" +
-                                       "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.name, self.name),
-                                      pexpect.TIMEOUT,
-                                      pexpect.EOF],
-                                     timeout=START_TIMEOUT)
-        if match == 0: #success
-            self.logger.info("domain started");
-            return self._console
+        console = Console(command, self.logger, host_name=self.guest and self.guest.host.name)
+        match console.expect([("Domain '%s' started\r\n" +
+                               "Connected to domain '%s'\r\n" +
+                               "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.name, self.name),
+                              pexpect.TIMEOUT,
+                              pexpect.EOF],
+                             timeout=START_TIMEOUT):
+            case 0: #success
+                self.logger.info("domain started");
+                self._console = console
+                return console
 
-        if match == 1: #TIMEOUT
-            if self._open_console(): #could re-timeout
-                return self._console
+            case 1: #TIMEOUT
+                self.logger.error("TIMEOUT while starting domain");
+                console.close()
+                self._console = None # status unknown
+                return None
 
-        # already tried and failed
-        self._console = False
-        raise pexpect.EOF("failed to start domain %s" % self.name)
+            case 2: #EOF
+                # already tried and failed
+                self.logger.error("EOF while starting domain");
+                self._console = None # status unknown
+                return None
 
     def dumpxml(self):
         if self._xml == None:
@@ -193,8 +197,8 @@ class Domain:
         # self._console is None
         command = _VIRSH + ["console", "--force", self.name]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Console(command, self.logger,
-                                        host_name=self.guest and self.guest.host.name)
+        self._console = Console(command, self.logger,
+                                host_name=self.guest and self.guest.host.name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it

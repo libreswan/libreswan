@@ -104,6 +104,14 @@ class TestDomain:
             self.verbose_txt.close()
             self.verbose_txt = None
 
+    def start(self):
+        console = remote.boot_and_login(self.domain)
+        if not console:
+            return None
+        test_directory = os.path.join("/testing/pluto", self.test.name)
+        console.chdir(test_directory)
+        return console
+
     def stop(self):
         self.domain.destroy()
 
@@ -150,37 +158,6 @@ def _test_domains(logger, test, domains):
                 " ".join(str(e) for e in test_domains.values()))
 
     return test_domains
-
-def _boot_test_domains(logger, test, test_domains):
-
-    # There's a tradeoff here between speed and reliability.
-    #
-    # In theory, the boot process is mostly I/O bound.
-    # Consequently, having lots of domains boot in parallel should
-    # be harmless.
-    #
-    # In reality, the [fedora] boot process is very much CPU bound
-    # (a rule of thumb is two cores per domain).  Consequently, it
-    # is best to serialize the boot/login process.
-
-    for test_domain in test_domains.values():
-
-        logger = test_domain.logger
-        domain = test_domain.domain
-
-        console = remote.boot_to_login_prompt(domain)
-        if not console:
-            logger.error("domain not running")
-            return None
-
-        remote.login(domain, console)
-
-        # Set noecho on the PTY inside the VM (not pexpect's PTY
-        # outside of the VM).
-        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
-
-        test_directory = os.path.join("/testing/pluto", test.name)
-        console.chdir(test_directory)
 
 def _ignore_test(task, args, result_stats, logger):
 
@@ -325,21 +302,10 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                 # boot the domains
                 with logger.time("booting domains") as test_boot_time:
-                    try:
-                        _boot_test_domains(logger, test, test_domains)
-                    except pexpect.TIMEOUT:
-                        # Bail.  Being unable to boot the domains is a
-                        # disaster.  The test is UNRESOLVED.
-                        logger.exception("TIMEOUT while booting domains")
-                        return
-                    except pexpect.EOF:
-                        # Bail.  Being unable to attach to the domains
-                        # is a disaster.  The test is UNRESOLVED.
-                        logger.exception("EOF while booting domains")
-                        return
-                    except:
-                        logger.exception("EXCEPTION while booting domains")
-                        raise
+                    for test_domain in test_domains.values():
+                        if not test_domain.start():
+                            # final will clean up
+                            return
 
                 # Run the commands directly
                 with logger.time("running commands") as test_run_time:
