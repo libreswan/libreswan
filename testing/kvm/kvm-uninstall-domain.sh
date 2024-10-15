@@ -2,17 +2,16 @@
 
 set -e
 
-run() {
-    echo -n "$@"": "
-    "$@"
-}
+run() (
+    set -x ; "$@"
+)
 
 for file in "$@" ; do
     domain=$(basename ${file})
     if state=$(sudo virsh domstate ${domain} 2>&1); then
 	case "${state}" in
 	    "running" | "in shutdown" | "paused" )
-		run sudo virsh destroy ${domain}
+		run sudo virsh destroy ${domain} || true
 		run sudo virsh undefine ${domain}
 		;;
 	    "shut off" )
