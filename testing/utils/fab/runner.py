@@ -99,6 +99,14 @@ class TestDomain:
         # buffering=1 is line buffered
         self.verbose_txt = open(output, "w", buffering=1)
 
+    def close(self):
+        if self.verbose_txt:
+            self.verbose_txt.close()
+            self.verbose_txt = None
+
+    def stop(self):
+        self.domain.destroy()
+
     def run(self, command, timeout=TEST_TIMEOUT):
         console = self.domain.console()
         self.logger.info("%s# %s", self.domain.guest.host.name, command)
@@ -125,7 +133,7 @@ def executor_qsize_hack(executor):
 
 def _test_domains(logger, test, domains):
 
-    test_domains = {}
+    test_domains = dict()
     unused_domains = set()
     for domain in domains:
         domain.nest(logger, test.name + " ")
@@ -336,20 +344,18 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                 # Run the commands directly
                 with logger.time("running commands") as test_run_time:
 
-                    try:
+                        # Open output files.  Since the child is
+                    # in NO-ECHO mode, also need to fudge up
+                    # prompt and command.
+                    #
+                    # Should output file be opened in binary
+                    # mode?
+
+                    with open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w") as all_verbose_txt:
 
                         # open the consoles
                         for test_domain in test_domains.values():
                             test_domain.open()
-
-                        # Open output files.  Since the child is
-                        # in NO-ECHO mode, also need to fudge up
-                        # prompt and command.
-                        #
-                        # Should output file be opened in binary
-                        # mode?
-
-                        all_verbose_txt = open(os.path.join(test.output_directory, "all.console.verbose.txt"), "w")
 
                         # If a guest command times out, don't try
                         # to run post-mortem.sh.
@@ -517,21 +523,18 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                         for test_domain in test_domains.values():
                             test_domain.verbose_txt.write(post.DONE)
 
-                    finally:
-
-                        all_verbose_txt.close()
-                        for test_domain in test_domains.values():
-                            test_domain.verbose_txt.close()
-
         finally:
+
+            for test_domain in test_domains.values():
+                test_domain.close()
 
             if task.nr_tests <= 1:
                 logger.info("single test run; leaving domains running");
-            elif test_domains:
-                logger.info("destroying domains: %s",
+            else:
+                logger.info("stopping domains: %s",
                             " ".join(test_domain.domain.name for test_domain in test_domains.values()))
                 for test_domain in test_domains.values():
-                    test_domain.domain.destroy()
+                    test_domain.stop()
 
             with logger.time("post-mortem %s", task.prefix):
                 # The test finished; it is assumed that post.mortem
