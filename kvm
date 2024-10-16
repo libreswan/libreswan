@@ -51,6 +51,10 @@ Modifiers:
     modified
 	apply operation to modified tests (default is all tests)
 
+  In addition, failed and unresolved, update the current test
+  directory.  For instance "unresolved results" only lists unresolved
+  tests.
+
 EOF
 }
 
@@ -81,8 +85,11 @@ pass2help()
 	list test results (for the specified tests)
 	exit non-zero when failures are found
     failed [ <test-directory> ... ]
-	list failed test results (for the specified tests)
-	(XX: broken: exit non-zero when failures are found)
+	list failed and unresolved test results (for the specified tests)
+        subsequent commands are applied to the resulting list
+    unresolved [ <test-directory> ... ]
+	list unresolved test results (for the specified tests)
+        subsequent commands are applied to the resulting list
 
   Re-run, or run a-new the testsuite:
 
@@ -335,11 +342,12 @@ while test $# -gt 0 ; do
 	    ;;
 
 	# aliases for pass2 commands
-	diff )   ops[$i]=diffs ;   i=$((i + 1)) ;;
-	result ) ops[$i]=results ; i=$((i + 1)) ;;
-	failed ) ops[$i]=failed ;  i=$((i + 1)) ;;
-	test   ) ops[$i]=check ;   i=$((i + 1)) ;;
-	retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
+	diff )       ops[$i]=diffs ;       i=$((i + 1)) ;;
+	result )     ops[$i]=results ;     i=$((i + 1)) ;;
+	failed )     ops[$i]=failed ;      i=$((i + 1)) ;;
+	unresolved ) ops[$i]=unresolved ;  i=$((i + 1)) ;;
+	test   )     ops[$i]=check ;       i=$((i + 1)) ;;
+	retest )     ops[$i]=recheck ;     i=$((i + 1)) ;;
 	test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
 
 	sh )
@@ -469,7 +477,14 @@ status_command()
 
 # second pass
 status=0
-for op in "${ops[@]}" ; do
+i=0
+
+while test $i -lt ${#ops[@]} ; do
+
+    op=${ops[${i}]}
+    i=$((i + 1))
+    # note [ $i -lt ${#ops[@]} ] -> more to come
+
     case ${op} in
 
 	add ) git add "$@" ;;
@@ -493,8 +508,19 @@ for op in "${ops[@]}" ; do
 	results )
 	    results_command "$@"
 	    ;;
-	failed )
-	    results_command "$@" | if grep -e ' failed' -e ' unresolved' ; then false ; else true ; fi
+	failed | unresolved )
+	    # should leave: failed and/or unresolved
+	    case ${op} in
+		failed )     skip="passed,unsupported,untested" ;;
+		unresolved ) skip="passed,unsupported,untested,failed" ;;
+	    esac
+	    if test  ${i} -lt ${#ops[@]} ; then
+		# kvmresults.py --print test-directory --skip ... does
+		# not do what it should! See #1852.
+		set -- $(results_command --skip "${skip}" "$@" 2>/dev/null | awk '{print $1}')
+	    else
+		results_command --skip ${skip} "$@"
+	    fi
 	    ;;
 	patch )
 	    diffs_command "$@" | patch -p1
