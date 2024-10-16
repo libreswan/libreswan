@@ -56,25 +56,33 @@ KVM_LOCALDIR ?= $(KVM_POOLDIR)
 # Build KVM_TEST_PREFIXES from $(KVM_PREFIX) and $(KVM_WORKERS).  Goal
 # is to make KVM_TEST_PREFIXES non-empty.
 #
-# Compat values:
-#   KVM_PREFIX=                 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/
-#   KVM_PREFIX=a b              -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a $(KVM_LOCALDIR)/b
-#   KVM_PREFIX=a  KVM_WORKERS=1 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a
-#   KVM_PREFIX=a  KVM_WORKERS=2 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a  $(KVM_LOCALDIR)/a2
-#   KVM_PREFIX=a. KVM_WORKERS=3 -> KVM_TEST_PREFIXES=$(KVM_LOCALDIR)/a. $(KVM_LOCALDIR)/a2 $(KVM_LOCALDIR)/a3
+#   KVM_PREFIX=  KVM_WORKERS=  KVM_TEST_PREFIXES=
+#                                 $(KVM_LOCALDIR)/
+#                    1            $(KVM_LOCALDIR)/
+#                    2            $(KVM_LOCALDIR)/   $(KVM_LOCALDIR)/2
+#       a                         $(KVM_LOCALDIR)/a
+#       a            1            $(KVM_LOCALDIR)/a
+#       a            2            $(KVM_LOCALDIR)/a  $(KVM_LOCALDIR)/a2
+#       a.                        $(KVM_LOCALDIR)/a.
+#       a.           1            $(KVM_LOCALDIR)/a.
+#       a.           2            $(KVM_LOCALDIR)/a. $(KVM_LOCALDIR)/a2
+#
+# Note:
+#    $(join $(KVM_LOCALDIR), $(KVM_PREFIX))
+# and not not:
+#    $(addprefix $(KVM_LOCALDIR), $(KVM_PREFIX))
+# is used as, when $(KVM_PREFIX) is empty, the latter expands to
+# nothing.
+#
+# Note: test with:
+#    make -C testing/kvm kvm-config KVM_PREFIX=... KVM_WORKERS=... | grep PREFIXES
 
 KVM_PREFIX ?=
 KVM_WORKERS ?= 1
 KVM_NUMBERS = $(wordlist 2, $(KVM_WORKERS), 1 2 3 4 5 6 7 8 9)
-KVM_TEST_PREFIXES ?= \
-	$(if $(wordlist 2, 2, $(KVM_PREFIX)), \
-		$(addprefix $(KVM_LOCALDIR)/, $(KVM_PREFIX)), \
-	$(if $(wordlist 1, 1, $(KVM_PREFIX)), \
-		$(addprefix $(KVM_LOCALDIR)/, $(KVM_PREFIX) $(foreach n, $(KVM_NUMBERS), $(patsubst %., %, $(KVM_PREFIX))$(n))), \
-	$(KVM_LOCALDIR)/))
-
-strip-prefix = $(subst '',,$(subst "",,$(1)))
-
+KVM_TEST_PREFIXES ?= $(sort \
+	$(join $(KVM_LOCALDIR)/, $(KVM_PREFIX)) \
+	$(foreach n, $(KVM_NUMBERS), $(join $(KVM_LOCALDIR)/, $(join $(patsubst %., %, $(KVM_PREFIX)), $(n)))))
 
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
 KVM_PIDFILE ?= $(KVM_BENCHDIR)/kvmrunner.pid
@@ -1722,10 +1730,10 @@ $(foreach prefix,$(KVM_TEST_PREFIXES), \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| test group $(prefix) \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp) +-- \
-  $(foreach install,$(KVM_TEST_HOST_NAMES),$(call strip-prefix,$(prefix))$(install)) \
+  $(foreach install,$(KVM_TEST_HOST_NAMES),$(prefix)$(install)) \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)|$(sp$)$(sp)$(sp) networks: \
-  $(foreach network, $(KVM_TEST_SUBNETS),$(call strip-prefix,$(prefix))$(network)) \
+  $(foreach network, $(KVM_TEST_SUBNETS),$(prefix)$(network)) \
   \
   $(crlf)$(sp)$(sp)$(sp)$(sp)|$(sp)$(sp)| \
 )
