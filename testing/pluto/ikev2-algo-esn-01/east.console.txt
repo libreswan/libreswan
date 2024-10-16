@@ -20,7 +20,7 @@ east #
  ip xfrm state |grep replay
 	replay-window 0 flag af-unspec esn
 	anti-replay esn context:
-	 replay_window 128, bitmap-length 4
+	 replay_window 0, bitmap-length 0
 	replay-window 0 flag af-unspec esn
 	anti-replay esn context:
 	 replay_window 128, bitmap-length 4
