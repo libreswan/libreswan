@@ -153,7 +153,7 @@ class DebugHandler(logging.Handler):
         self.setFormatter(_DEBUG_FORMATTER)
 
     def createLock(self):
-        pass
+        return None
     def acquire(self):
         pass
     def release(self):
