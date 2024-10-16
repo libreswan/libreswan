@@ -509,7 +509,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 		}
 	}
 
-	if (ike->sa.st_ppk_used) {
+	if (ike->sa.st_ppk_ike_auth_used) {
 		if (!emit_v2N(v2N_PPK_IDENTITY, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
