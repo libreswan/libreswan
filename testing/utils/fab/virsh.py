@@ -50,7 +50,7 @@ class Domain:
         # Use the term "domain" just like virsh
         self.name = name or prefix+guest.name
         self.guest = guest
-        self.logger = logger
+        self.logger = logger.nest(self.name)
         self.debug_handler = None
         self.logger.debug("domain created")
         self._mounts = None
