@@ -62,10 +62,6 @@ def main():
     parser.add_argument("--shutdown", default=False, action="store_true",
                         help=("on-completion shut down the domain"
                               " (default: leave the domain running)"))
-    parser.add_argument("--mode", default=None,
-                        choices=set(["interactive", "batch"]),
-                        help=("enter mode"
-                              " (default: if there is no command enter interactive mode)"))
     parser.add_argument("--guest-name", default=None,
                         help="The virtual machine guest's name")
 
@@ -86,70 +82,66 @@ def main():
     domain = virsh.Domain(logger, name=args.domain_name,
                           guest=hosts.lookup(args.guest_name))
 
-    # Find a reason to log-in and interact with the console.
-    batch = args.mode == "batch" or args.command
-    interactive = args.mode == "interactive" or (not args.command and not args.boot and not args.shutdown)
+    # Find a reason to give shell access
+    interactive = (not args.command and not args.boot and not args.shutdown)
 
     # Get the current console, this will be None if the machine is
     # shutoff (and forced to none if a cold boot)
 
-    if args.boot and domain.console():
+    console = domain.console()
+
+    if not console:
+        console = remote.boot_and_login(domain)
+    elif args.boot:
         domain.shutdown()
+        console = remote.boot_and_login(domain)
+    else:
+        console = remote.login(domain, console)
+
+    if not console:
+        logger.error("no domain")
+        sys.exit(1)
 
     status = 0
-    if args.boot and not (interactive or batch):
 
-        console = remote.boot_to_login_prompt(domain)
+    if args.chdir and os.path.isabs(args.chdir):
+        chdir = args.chdir
+    elif args.chdir:
+        # convert host path to guest path
+        chdir = pathutil.guest_path(domain, args.chdir)
+    else:
+        chdir = None
+    if chdir:
+        domain.logger.info("'cd' to %s", chdir)
+        console.chdir(chdir)
 
-    elif interactive or batch:
-
-        console = domain.console()
-        if not console:
-            console = remote.boot_to_login_prompt(domain)
-        if not console:
-            logger.error("no domain")
-            sys.exit(1)
-
-        remote.login(domain, console)
-
-        if args.chdir and os.path.isabs(args.chdir):
-            chdir = args.chdir
-        elif args.chdir:
-            # convert host path to guest path
-            chdir = pathutil.guest_path(domain, args.chdir)
-        else:
-            chdir = None
-        if chdir:
-            domain.logger.info("'cd' to %s", chdir)
-            console.chdir(chdir)
-
-        if args.command:
-
-            if interactive:
-                logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
-            else:
-                console.redirect_output(args.output)
-            console.run("")
-
-            status = console.run(' '.join(args.command), timeout=args.timeout)
-            print()
+    if args.command:
 
         if interactive:
+            logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
+        else:
+            console.redirect_output(args.output)
+        console.run("")
 
-            print()
-            if args.debug:
-                logger.info("info: pexpect ignores --debug in interactive mode!")
-            logger.info("Escape character is ^]")
-            # Hack so that the prompt appears
-            console.redirect_output(sys.stdout)
-            console.run("")
-            console.redirect_output(None)
-            # Pass this terminals properties to the VM.
-            columns, rows = os.get_terminal_size()
-            console.run("unset LS_COLORS; export TERM=%s; stty sane rows %s columns %s"
-                        % (os.getenv("TERM"), rows, columns))
-            # F.A.B.
-            console.interact()
+        status = console.run(' '.join(args.command), timeout=args.timeout)
+        print()
+
+    if interactive:
+
+        print()
+        if args.debug:
+            logger.info("info: pexpect ignores --debug in interactive mode!")
+        logger.info("Escape character is ^]")
+        # Hack so that the prompt appears
+        console.redirect_output(sys.stdout)
+        console.run("")
+        console.redirect_output(None)
+        # Pass this terminals properties to the VM.
+        columns, rows = os.get_terminal_size()
+        console.run("unset LS_COLORS; export TERM=%s; stty sane rows %s columns %s"
+                    % (os.getenv("TERM"), rows, columns))
+        # F.A.B.
+        console.interact()
 
     if args.shutdown:
         shutdown_status = not domain.shutdown()
