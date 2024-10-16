@@ -82,15 +82,18 @@ def main():
     domain = virsh.Domain(logger, name=args.domain_name,
                           guest=hosts.lookup(args.guest_name))
 
-    # Find a reason to give shell access
-    interactive = (not args.command and not args.boot and not args.shutdown)
-
     # Get the current console, this will be None if the machine is
-    # shutoff (and forced to none if a cold boot)
+    # shutoff.  When there's no console need to decide if the VM
+    # should be booted.
 
     console = domain.console()
 
     if not console:
+        if args.shutdown and not (args.command or args.boot):
+            # no reason to boot
+            logger.info("already shutdown")
+            sys.exit(0)
+        # need to boot and login
         console = remote.boot_and_login(domain)
     elif args.boot:
         domain.shutdown()
@@ -117,16 +120,12 @@ def main():
 
     if args.command:
 
-        if interactive:
-            logger.info("info: option --output disabled as it makes pexpect crash when in interactive mode.")
-        else:
-            console.redirect_output(args.output)
-        console.run("")
-
+        console.redirect_output(args.output)
+        console.run("") # so the prompt appears
         status = console.run(' '.join(args.command), timeout=args.timeout)
         print()
 
-    if interactive:
+    elif not (args.boot or args.shutdown):
 
         print()
         if args.debug:
