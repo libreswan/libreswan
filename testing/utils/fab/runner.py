@@ -87,6 +87,7 @@ class TestDomain:
         self.logger = logger
         self.domain = domain
         self.verbose_txt = None
+        self.console = None
 
     def __str__(self):
         return self.domain.name
@@ -107,28 +108,31 @@ class TestDomain:
     def start(self):
         console = remote.boot_and_login(self.domain)
         if not console:
-            return None
+            return False
         test_directory = os.path.join("/testing/pluto", self.test.name)
         console.chdir(test_directory)
-        return console
+        self.console = console
+        return True
 
     def stop(self):
         self.domain.destroy()
+        self.console = None
 
     def run(self, command, timeout=TEST_TIMEOUT):
-        console = self.domain.console()
+        console = self.console
         self.logger.info("%s# %s", self.domain.guest.host.name, command)
         console.logger.debug("run '%s' expecting prompt", command)
         console.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
-        m = console.expect([console.prompt, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout)
-        if m == 1:
-            return post.Issues.TIMEOUT, console.before
-        if m == 2:
-            return post.Issues.EOF, console.before
-        status = console._check_prompt()
-        console.logger.debug("run exit status %s", status)
-        return status, console.before
+        match console.expect([console.prompt, pexpect.TIMEOUT, pexpect.EOF], timeout=timeout):
+            case 0:
+                status = console._check_prompt()
+                console.logger.debug("run exit status %s", status)
+                return status, console.before
+            case 1:
+                return post.Issues.TIMEOUT, console.before
+            case 2:
+                return post.Issues.EOF, console.before
 
 def submit_job_for_domain(executor, jobs, logger, domain, work):
     job = executor.submit(work, domain)
@@ -303,9 +307,10 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                 # boot the domains
                 with logger.time("booting domains") as test_boot_time:
                     for test_domain in test_domains.values():
-                        if not test_domain.start():
-                            # final will clean up
-                            return
+                        with logger.time("booting %s domain" % test_domain.domain.name):
+                            if not test_domain.start():
+                                # final will clean up
+                                return
 
                 # Run the commands directly
                 with logger.time("running commands") as test_run_time:
