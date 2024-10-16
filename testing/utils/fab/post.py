@@ -454,7 +454,7 @@ class TestResult:
             expected_output = self._file_contents(expected_output_path)
             if expected_output is None:
                 self.issues.add(Issues.OUTPUT_UNCHECKED, host_name)
-                self.resolution.unresolved()
+                self.resolution.failed()
                 continue
 
             diff_output = None
