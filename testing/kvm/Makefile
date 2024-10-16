@@ -570,7 +570,6 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
 		$(foreach prefix,$(KVM_TEST_PREFIXES), --prefix '$(notdir $(prefix))') \
-		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
 		$(if $(KVM_TESTINGDIR), --testing-directory $(KVM_TESTINGDIR)) \
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
 		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \

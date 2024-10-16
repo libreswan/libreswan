@@ -44,8 +44,6 @@ POST_MORTEM_TIMEOUT = 120
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
-    group.add_argument("--workers", default="1", type=int,
-                       help="specify the number of worker threads to use when rebooting domains; default: %(default)s")
     group.add_argument("--prefix", metavar="HOST-PREFIX", action="append",
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
     group.add_argument("--parallel", action="store_true",
@@ -65,7 +63,6 @@ def add_arguments(parser):
 
 def log_arguments(logger, args):
     logger.info("Test Runner arguments:")
-    logger.info("  workers: %s", args.workers)
     logger.info("  prefix: %s", args.prefix)
     logger.info("  parallel: %s", args.parallel)
     logger.info("  backup-directory: %s", args.backup_directory)
