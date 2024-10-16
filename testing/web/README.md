@@ -17,21 +17,20 @@ directory.  For instance, either by adding it to Makefile.inc.local:
 
 ## Setup
 
-Lets assume everything is being set up under ~/libreswan-web/:
+Lets assume things are being setup to track the MAIN branch and that
+all the files (other than the web pages) will live under:
 
-      $ mkdir ~/libreswan-web/
+      base                                    |  ~/main/
+      repository/directory under test         |  ~/main/rutdir/
+      repository/directory driving the tests  |  ~/main/benchdir/
+      directory containing VM disks et.al.    |  ~/main/pooldir/
 
-With the following layout:
-
-      ~/libreswan-web/rutdir/   # repository/directory under test
-      ~/libreswan-web/benchdir/    # repository/directory driving the tests
-      ~/libreswan-web/pool/              # directory containing VM disks et.al.
-      ~/libreswan-web/results/           # directory containing published results
+      directory containing published results  |  ~/results/
 
 and optionally:
 
-      /tmp/pool                          # tmpfs containing test vm disks
-      ~/libreswan-web/scratch-repo/      # only used when rebuilding the world
+      tmpfs containing test vm disks          | /tmp/localdir
+      only used when rebuilding the world     | ~/main/scratchdir/
 
 - check that the host machine is correctly configured, see:
 
@@ -41,70 +40,58 @@ and optionally:
 
   For instance, to set up results/:
 
-      $ cd ~/libreswan-web/
-      $ mkdir results
+      mkdir ~/results
+      mkdir ~/main
 
 - create the pool directory for storing permanent VM disk images
 
   For instance, assuming building and testing is being run from the
-  sub-directory libreswan-web/:
+  sub-directory main/:
 
-      $ cd ~/libreswan-web/
-      $ mkdir -p pool/
+      cd ~/main/
+      mkdir -p pooldir/
 
-- checkout a dedicated repository for running tests (aka rutdir/)
+- create a directory containing the Repository Under Test (RUT) (ak
+  rutdir/)
 
   In addition to regular updates using "git fetch + git rebase", this
   repository is switched to the commit being tested using "git reset
   --hard".
 
-      $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git rutdir/
+      cd ~/main/
+      git clone https://github.com/libreswan/libreswan.git -b $(basename $PWD) rutdir/
 
-- configure the rutdir
+- create a directory containing the Test Bench (web sources and
+  scripts aka benchdir/):
 
-  increase the number of reboots allowed in parallel (since a reboot
-  seems to tie up two cores a rule of thumb is number-cores/2):
+      cd ~/main/
+      git clone https://github.com/libreswan/libreswan.git -b $(basename $PWD) benchdir/
 
-      $ echo 'KVM_WORKERS=2' >> rutdir/Makefile.inc.local
+- configure the Test Bench (benchdir/):
 
-  increase the number of test domains (and give them unique prefixes
-  so that they don't run with the default domain names):
+  increase the number of test domains giving them unique prefixes (so
+  that they don't run with the default domain names); add WIP to what
+  should be tested; and use /tmp/pool:
 
-      $ echo 'KVM_PREFIXES=w1. w2.' >> rutdir/Makefile.inc.local
+      cd ~/main/
+      echo 'KVM_PREFIXES=m1. m2.'           >> benchdir/Makefile.inc.local
+      echo 'KVM_TEST_STATUS += wip'         >> benchdir/Makefile.inc.local
+      echo 'KVM_LOCALDIR=/tmp/localdir'     >> benchdir/Makefile.inc.local
+      echo 'KVM_RUTDIR='"${PWD}"'/rutdir'   >> benchdir/Makefile.inc.local
+      echo 'KVM_POOLDIR='"${PWD}"'/pooldir' >> benchdir/Makefile.inc.local
+      echo 'KVM_WEBDIR='"${HOME}"'/results' >> benchdir/Makefile.inc.local
 
-  enable the wip tests:
-
-      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> rutdir/Makefile.inc.local
-
-  move the test domains to /tmp (tmpfs):
-
-      $ echo 'KVM_LOCALDIR=/tmp/pool' >> rutdir/Makefile.inc.local
-
-- checkout a repository for the web sources and scripts (aka benchdir/)
-
-      $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git benchdir/
-
+      echo '# cover all bases'              >> benchdir/Makefile.inc.local
+      echo 'WEB_SUMMARYDIR=$(KVM_WEBDIR)'   >> benchdir/Makefile.inc.local
+      echo 'LSW_WEBDIR=$(KVM_WEBDIR)'       >> benchdir/Makefile.inc.local
 
 ## Running
 
-Assuming results are to be published in the directory
-libreswan-web/results/ (see above), the testing script is invoked as:
+Assuming results are to be published in the directory ~/results/ (see
+above), the testing script is invoked as:
 
-Either:
-
-    $ cd libreswan-web/
-    $ rm -f nohup.out
-    $ nohup benchdir/testing/web/tester.sh &
-    $ tail -f nohup.out
-
-or:
-
-    $ cp /dev/null nohup.out
-    $ nohup ./libreswan-web/benchdir/testing/web/tester.sh &
-    $ tail -f nohup.out
-
+      cd ~/main
+      cp /dev/null nohup.out ; nohup benchdir/testing/web/tester.sh & tail -f nohup.out
 
 ## Restarting and Maintenance
 
@@ -147,7 +134,7 @@ with "restart"):
   while killing runner.sh et.al. works, it is easier/quicker to just
   crash it by running the following a few times:
 
-      $ cd libreswan-web/
+      $ cd main/
       $ ( cd rutdir/ && make kvm-uninstall )
 
 - (optional, but recommended) upgrade and reboot the test machine:
@@ -158,7 +145,7 @@ with "restart"):
 - (optional) cleanup and update the rutdir/ (tester.sh will do this
   anyway)
 
-      $ cd libreswan-web/
+      $ cd main/
       $ ( cd rutdir/ && git clean -f )
       $ ( cd rutdir/ && git pull --ff-only )
 
@@ -166,20 +153,20 @@ with "restart"):
 
   Remember to first check for local changes:
 
-      $ cd libreswan-web/
+      $ cd main/
       $ ( cd benchdir/ && git status )
       $ ( cd benchdir/ && git pull --ff-only )
 
 - (optional) examine, and perhaps delete, any test runs where tests
   have 'missing-output':
 
-      $ cd libreswan-web/
+      $ cd main/
       $ grep '"output-missing"' results/*-g*-*/results.json | cut -d/ -f1-2 | sort -u
 
 - (optional) examine (and perhaps delete) test runs with no
   results.json:
 
-      $ cd libreswan-web/
+      $ cd main/
       $ ls -d results/*-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done
 
 - (optional) examine, and perhaps delete, some test results:
@@ -230,12 +217,12 @@ of the results, a dedicated git repository is needed).
   repository is "git reset --hard" to the original commit used to
   generate those results.
 
-  For instance, to set up libreswan-web/scratch/:
+  For instance, to set up main/scratch/:
 
-      $ cd libreswan-web/
+      $ cd main/
       $ git clone https://github.com/libreswan/libreswan.git scratch/
 
-- `make web [WEB_SCRATCH_REPODIR=.../libreswan-web/scratch]`
+- `make web [WEB_SCRATCH_REPODIR=.../main/scratch]`
 
   Update the web site.
 
@@ -260,7 +247,7 @@ of the results, a dedicated git repository is needed).
   create the files, will force an update.  So too will deleting the
   .../commits/ directory.
 
-- `make web-results-json WEB_SCRATCH_REPODIR=.../libreswan-web/scratch`
+- `make web-results-json WEB_SCRATCH_REPODIR=.../main/scratch`
 
   Update the `results.json` file in each test run's sub-directory.
   Very slow.  Requires a dedicated git repository.
@@ -268,7 +255,7 @@ of the results, a dedicated git repository is needed).
   Touching the script `testing/utils/kvmresults.py`, which is used to
   generate results.json, will force an update.
 
-- `make '$(WEB_SUMMARYDIR)/<run>/results.json' WEB_SCRATCH_REPODIR=.../libreswan-web/scratch`
+- `make '$(WEB_SUMMARYDIR)/<run>/results.json' WEB_SCRATCH_REPODIR=.../main/scratch`
 
   Update an individual test run's `results.json` file.  Slow.
   Requires a dedicated git repository.
@@ -313,7 +300,7 @@ After the release, save the results to elsewhere.
   With out this it will likely try to test results that have been
   archived.  Something like:
 
-      ( cd libreswan-web/test-repo/ && ./kvm kill )
+      ( cd main/test-repo/ && ./kvm kill )
       pkill tester
 
 - clean up scratch directories (they get rebuilt):
@@ -366,14 +353,14 @@ After the release, save the results to elsewhere.
 
 - finally re-generate the pages in the archive:
 
-      ( cd ~/libreswan-web/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
+      ( cd ~/main/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
 
 - and restart tester.sh
 
   Note the addition of ${n} to specify the commit to start from.
 
       cp /dev/null nohup.out ; nohup ;
-      ./libreswan-web/benchdir/testing/web/tester.sh ${n} &
+      ./main/benchdir/testing/web/tester.sh ${n} &
 
 
 # Improvements
