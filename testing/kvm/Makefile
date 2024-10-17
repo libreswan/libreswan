@@ -836,8 +836,10 @@ kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
 $(patsubst %, kvm-base-%, $(KVM_PLATFORM)): \
 kvm-base-%:
 	: $@
+	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
+	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORM)): \
@@ -1212,8 +1214,9 @@ kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
 $(patsubst %, kvm-upgrade-%, $(KVM_PLATFORM)): \
 kvm-upgrade-%:
 	: $@
+	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
@@ -1266,8 +1269,9 @@ kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORM)): \
 kvm-transmogrify-%:
 	: $@
+	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)
-	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
 KVM_BUILD_CPUS = $(KVM_WORKERS)
