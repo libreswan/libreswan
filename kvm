@@ -4,13 +4,13 @@
 
 set -e
 
-# possible hostnames, always implies first
+declare -a makeflags
 
 # gmake isn't on debian?
 gnumake="make -C $(realpath $(dirname $0))/testing/kvm"
 
 print-kvm-variable() {
-    ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1
+    ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1 "${makeflags[@]}"
 }
 
 kvm_platform=$(print-kvm-variable KVM_PLATFORM)
@@ -21,10 +21,6 @@ kvm_build_host_names=$(print-kvm-variable KVM_BUILD_HOST_NAMES)
 kvm_upgrade_host_names=$(print-kvm-variable KVM_UPGRADE_HOST_NAMES)
 
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
-kvm_test_status=$(echo $(print-kvm-variable KVM_TEST_STATUS) | tr ' ' '|')
-kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
-kvm_test_platform=$(echo $(print-kvm-variable KVM_TEST_PLATFORM) | tr ' ' '|')
-kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
 kvm_prefix=($(print-kvm-variable KVM_PREFIX))
 kvm_sourcedir=$(print-kvm-variable KVM_SOURCEDIR)
 kvm_pidfile=$(print-kvm-variable KVM_PIDFILE)
@@ -37,8 +33,8 @@ rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 
 hosts="${kvm_test_host_names} ${kvm_build_host_names} ${kvm_base_host_names} ${kvm_upgrade_host_names}"
 
-# Anything matching '^____[-a-z]' is considered a command ('_' denotes
-# a space).
+# Note: pass1help() is fed into AWK.  Anything that matches
+# '^____[-a-z]' is considered a Pass 1 command ('_' denotes a space).
 
 pass1help()
 {
@@ -60,7 +56,8 @@ EOF
 
 pass1=$(pass1help | awk '/^    [-a-z]/ { printf " %s ", $1 }' ; echo ${host})
 
-# Anything matching '^____[-a-z]' is considered a command (_ denotes a
+# Note: pass2help() is fed into AWK.  Anything that matches
+# '^____[-a-z]' is considered a valid Pass 2 command (_ denotes a
 # space).
 
 pass2help()
@@ -377,6 +374,9 @@ while test $# -gt 0 ; do
 	    fi
 	    ;;
 
+	*=* ) # capture make variables
+	    makeflags[${#makeflags[@]}]=$1
+	    ;;
 	* ) # either: a directory; a hostname; or pass2 command
 
 	    if [[ " ${pass2} " =~ " $1 " ]] ; then
@@ -429,12 +429,23 @@ if test -z "${ops[*]}" ; then
     exit 1
 fi
 
+# Now that makeflags[] is set, extract more variables so they can be
+# passed to kvmresults.
+#
+# For instance ./kvm results KVM_NETBSD=true adds netbsd to platform
+# and status flags.
+
+kvm_test_status=$(print-kvm-variable KVM_TEST_STATUS)
+kvm_test_platform=$(print-kvm-variable KVM_TEST_PLATFORM)
+kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
+kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
+
 kvmresults()
 {
     ./testing/utils/kvmresults.py \
 	${kvm_testingdir:+--testing-directory ${kvm_testingdir}} \
-	${kvm_test_status:+--test-status "${kvm_test_status}"} \
-	${kvm_test_platform:+--test-platform "${kvm_test_platform}"} \
+	${kvm_test_status:+--test-status "$(echo ${kvm_test_status} | tr ' ' '|')"} \
+	${kvm_test_platform:+--test-platform "$(echo ${kvm_test_platform} | tr ' ' '|')"} \
 	${kvm_test_name:+--test-name "${kvm_test_name}"} \
 	${kvm_test_flags} \
 	"$@"
@@ -495,12 +506,10 @@ while test $i -lt ${#ops[@]} ; do
 	gateway | config | base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
         check-clean | clean | purge* )
-	    echo ${gnumake} kvm-${op}
-	    ${gnumake} kvm-${op} || exit $?
+	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" ) || exit $?
 	    ;;
 	check | recheck )
-	    echo ${op}: "$@"
-	    ${gnumake} kvm-${op} KVM_TESTS="$*" || exit $?
+	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="$*" ) || exit $?
 	    ;;
 	diffs )
 	    diffs_command "$@"
@@ -526,7 +535,7 @@ while test $i -lt ${#ops[@]} ; do
 	    diffs_command "$@" | patch -p1
 	    ;;
 	keys )
-	    ${gnumake} kvm-keys-clean kvm-keys
+	    ( set -x ; ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}" )
 	    ;;
 	restart )
 	    sudo systemctl restart libvirtd
