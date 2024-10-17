@@ -112,7 +112,7 @@ class TestDomain:
         return True
 
     def stop(self):
-        self.domain.destroy()
+        self.domain.destroy(self.console)
         self.console = None
 
     def run(self, command, timeout=TEST_TIMEOUT):

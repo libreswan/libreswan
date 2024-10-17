@@ -96,7 +96,7 @@ def main():
         # need to boot and login
         console = remote.boot_and_login(domain)
     elif args.boot:
-        domain.shutdown()
+        domain.shutdown(console)
         console = remote.boot_and_login(domain)
     else:
         console = remote.login(domain, console)
@@ -143,7 +143,7 @@ def main():
         console.interact()
 
     if args.shutdown:
-        shutdown_status = not domain.shutdown()
+        shutdown_status = not domain.shutdown(console)
         status = status or shutdown_status
 
     sys.exit(status)
