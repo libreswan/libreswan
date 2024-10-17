@@ -144,7 +144,7 @@ class Domain:
                 self._console = None
                 return True
             case 1: #TIMEOUT
-                self.logger.error("timeout destroying domain, giving up")
+                self.logger.error("TIMEOUT destroying domain, giving up")
                 self._console = None
                 return False
 
@@ -205,7 +205,7 @@ class Domain:
         match console.expect(["Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.name,
                               pexpect.TIMEOUT,
                               pexpect.EOF],
-                             timeout=CONSOLE_TIMEOUT) > 0:
+                             timeout=CONSOLE_TIMEOUT):
             case 0:
                 self.logger.debug("console attached");
                 self._console = console
