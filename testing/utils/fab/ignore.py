@@ -56,7 +56,7 @@ def test(logger, args, test):
                                 (args.test_name, test.name, "name")]:
         if regex.pattern \
         and not regex.search(field):
-            return (title+"."+field + "!=" + regex.pattern,
+            return (title+"="+field + "!=" + regex.pattern,
                     "%s (%s) does not match '%s'" % (title, field, regex.pattern))
 
     for regex, fields, title in [(args.test_platform, test.platforms, "platform")]:
@@ -65,7 +65,7 @@ def test(logger, args, test):
         for field in fields:
             if not regex.pattern \
                or not regex.search(field):
-                return (title+"."+field + "!=" + regex.pattern,
+                return (title+"="+field + "!=" + regex.pattern,
                         "%s '%s' does not match '%s'" % (title, field, regex.pattern))
 
     return None, None
