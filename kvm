@@ -444,8 +444,8 @@ kvmresults()
 {
     ./testing/utils/kvmresults.py \
 	${kvm_testingdir:+--testing-directory ${kvm_testingdir}} \
-	${kvm_test_status:+--test-status "$(echo ${kvm_test_status} | tr ' ' '|')"} \
-	${kvm_test_platform:+--test-platform "$(echo ${kvm_test_platform} | tr ' ' '|')"} \
+	${kvm_test_status:+--test-status "${kvm_test_status// /|}"} \
+	${kvm_test_platform:+--test-platform "${kvm_test_platform// /|}"} \
 	${kvm_test_name:+--test-name "${kvm_test_name}"} \
 	${kvm_test_flags} \
 	"$@"
