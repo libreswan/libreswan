@@ -181,7 +181,7 @@ def json_result(logger, args, result):
 
     # Convert the result into json, and ...
     json_builder = printer.JsonBuilder()
-    printer.build_result(logger, result, None, args, results_to_print, json_builder)
+    printer.build_result(logger, result, args, results_to_print, json_builder)
     json_result = json_builder.json()
     json_result["directory"] = result.test.name
 
