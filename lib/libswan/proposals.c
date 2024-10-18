@@ -328,20 +328,20 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 	}
 }
 
-void append_algorithm(struct proposal_parser *parser,
-		      struct proposal *proposal,
-		      const struct ike_alg *alg,
-		      int enckeylen)
+void append_algorithm_for(struct proposal_parser *parser,
+			  struct proposal *proposal,
+			  enum proposal_algorithm proposal_algorithm,
+			  const struct ike_alg *alg,
+			  int enckeylen)
 {
 	struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
 		ldbgf(DBG_PROPOSAL_PARSER, logger, "no algorithm to append");
 		return;
 	}
-	enum proposal_algorithm algorithm = ike_to_proposal_algorithm(alg);
-	passert(algorithm < elemsof(proposal->algorithms));
+	passert(proposal_algorithm < elemsof(proposal->algorithms));
 	/* find end */
-	struct algorithm **end = &proposal->algorithms[algorithm];
+	struct algorithm **end = &proposal->algorithms[proposal_algorithm];
 	while ((*end) != NULL) {
 		end = &(*end)->next;
 	}
@@ -354,6 +354,17 @@ void append_algorithm(struct proposal_parser *parser,
 	      parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
 	      enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
+}
+
+void append_algorithm(struct proposal_parser *parser,
+		      struct proposal *proposal,
+		      const struct ike_alg *alg,
+		      int enckeylen)
+{
+	append_algorithm_for(parser, proposal,
+			     ike_to_proposal_algorithm(alg),
+			     alg,
+			     enckeylen);
 }
 
 void remove_duplicate_algorithms(struct proposal_parser *parser,
