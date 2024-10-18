@@ -2,6 +2,10 @@ function lsw_summary_graph_click_test_run(table_id, summary_test_run) {
     window.location = "../" + summary_test_run.directory
 }
 
+function output_file(result, suffix) {
+    return result.test_name + "/OUTPUT/" + suffix
+}
+
 function results(div_id, json_file) {
     d3.json(json_file, function(error, results) {
 
@@ -78,43 +82,22 @@ function results(div_id, json_file) {
 				let value = ""
 				if (error == "passed") {
 				    value = "passed"
-				} else if (error == "baseline-missing") {
-				    // Probably a new test.
-				    value = "previous-missing"
 				} else if (error == "output-different"
 					   || error == "output-whitespace") {
-				    href = result.output_directory + "/" + host + ".console.diff"
+				    href = output_file(result, host + ".console.diff")
 				    value = error
 				} else if (error == "output-unchecked") {
-				    href = result.output_directory + "/" + host + ".console.txt"
+				    href = output_file(result, host + ".console.txt")
 				    value = error
 				} else if (error == "output-truncated") {
-				    href = result.output_directory + "/" + host + ".console.verbose.txt"
+				    href = output_file(result, host + ".console.verbose.txt")
 				    value = error
-				} else if (error == "baseline-passed") {
-				    // The current test failed, but the
-				    // previous test passed.
-				    value = "previous-passed"
-				} else if (error == "baseline-failed") {
-				    // The current test passed, but the
-				    // previous test failed.
-				    href = result.baseline_output_directory + "/" + host + ".console.diff"
-				    value = "previous-failed"
-				} else if (error == "baseline-different"
-					   || error == "baseline-whitespace") {
-				    // The current and previous tests
-				    // fail, but in different ways.  Ideal
-				    // would be to show the diff between
-				    // this and the old test.  Showing the
-				    // old diff might be helpful.
-				    href = result.baseline_output_directory + "/" + host + ".console.diff"
-				    value = "previous-different"
 				} else if (error == "EXPECTATION"
 					   || error == "ASSERTION") {
-				    href = result.output_directory + "/" + host + ".pluto.log.gz"
+				    href = output_file(result, host + ".pluto.log")
 				    value = error
 				} else {
-				    href = result.output_directory
+				    href = output_file(result, "")
 				    value = error
 				}
 				if (href) {
@@ -132,7 +115,7 @@ function results(div_id, json_file) {
 		title: "Boot Time",
 	    },
 	    {
-		title: "Run Time",
+		title: "Test Time",
 	    },
 	    {
 		title: "Total Time",

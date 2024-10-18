@@ -312,21 +312,18 @@ function lsw_compare_table(test_runs) {
 			    let value = ""
 			    if (error == "passed") {
 				value = "passed"
-			    } else if (error == "baseline-missing") {
-				// Probably a new test.
-				value = "previous-missing"
 			    } else if (error == "output-different"
 				       || error == "output-whitespace") {
-				href = result.output_directory + "/" + host + ".console.diff"
+				href = output_file(result, host + ".console.diff")
 				value = error
 			    } else if (error == "output-unchecked") {
-				href = result.output_directory + "/" + host + ".console.txt"
+				href = output_file(result, host + ".console.txt")
 				value = error
 			    } else if (error == "output-truncated") {
-				href = result.output_directory + "/" + host + ".console.verbose.txt"
+				href = output_file(result, host + ".console.verbose.txt")
 				value = error
 			    } else {
-				href = result.output_directory
+				href = output_file(result, "")
 				value = error
 			    }
 			    if (href) {

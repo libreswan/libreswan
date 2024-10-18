@@ -184,15 +184,9 @@ def json_result(logger, args, result):
     printer.build_result(logger, result, args, results_to_print, json_builder)
     json_result = json_builder.json()
 
-    # add some missing fields
-    json_result["directory"] = result.test.name
-
     # ... if there is an output directory, write that also
     outdir = _mkdir_test_output(logger, args, result)
     if outdir:
-        # needs to be a relative path
-        json_result["output_directory"] = os.path.join(os.path.basename(os.path.dirname(outdir)),
-                                                       os.path.basename(outdir))
         path = os.path.join(outdir, "result.json")
         logger.info("writing result to '%s'", path)
         with open(path, "w") as output:
