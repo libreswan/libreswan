@@ -60,9 +60,9 @@ results_to_print = printer.Print(printer.Print.TEST_NAME,
                                  printer.Print.STOP_TIME,
                                  printer.Print.RESULT,
                                  printer.Print.ISSUES,
-                                 printer.Print.RUNTIME,
+                                 printer.Print.TOTAL_TIME,
                                  printer.Print.BOOT_TIME,
-                                 printer.Print.SCRIPT_TIME)
+                                 printer.Print.TEST_TIME)
 
 JSON_RESULTS = []
 JSON_SUMMARY = { }
@@ -183,6 +183,8 @@ def json_result(logger, args, result):
     json_builder = printer.JsonBuilder()
     printer.build_result(logger, result, args, results_to_print, json_builder)
     json_result = json_builder.json()
+
+    # add some missing fields
     json_result["directory"] = result.test.name
 
     # ... if there is an output directory, write that also

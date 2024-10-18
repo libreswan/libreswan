@@ -39,9 +39,9 @@ class Print(argutil.List):
     # results
     START_TIME = "start-time"
     STOP_TIME = "stop-time"
+    TOTAL_TIME = "total-time"
     BOOT_TIME = "boot-time"
-    SCRIPT_TIME = "script-time"
-    RUNTIME = "runtime"
+    TEST_TIME = "test-time"
     DIFFS = "diffs"
     ISSUES = "errors"                      # for historic reasons
     OUTPUT_DIRECTORY = "output-directory"
@@ -149,12 +149,12 @@ def build_result(logger, result, args, what_to_print, b):
             b.add(p, result.start_time())
         elif p is Print.STOP_TIME:
             b.add(p, result.stop_time())
-        elif p is Print.RUNTIME:
-            b.add(p, result.runtime())
+        elif p is Print.TOTAL_TIME:
+            b.add(p, result.total_time())
         elif p is Print.BOOT_TIME:
             b.add(p, result.boot_time())
-        elif p is Print.SCRIPT_TIME:
-            b.add(p, result.script_time())
+        elif p is Print.TEST_TIME:
+            b.add(p, result.test_time())
         elif p is Print.DIFFS:
             continue # see below
         else:

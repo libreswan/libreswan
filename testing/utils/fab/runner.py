@@ -34,6 +34,7 @@ from fab import skip
 from fab import ignore
 from fab import publish
 from fab.hosts import GUESTS
+from fab import printer
 
 PREFIX = "******"
 SUFFIX = "******"
@@ -223,8 +224,6 @@ def _write_guest_prompt(f, command, test):
 def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
     test = task.test
-
-    test_runtime = test_boot_time = test_run_time = test_post_time = None
     old_result = None
 
     # Would the number of tests to be [re]run be better?
@@ -303,10 +302,10 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
             with logger.debug_time("testing %s", task.prefix,
                                    logfile=os.path.join(test.output_directory, "debug.log"),
-                                   loglevel=logutil.INFO) as test_runtime:
+                                   loglevel=logutil.INFO):
 
                 # boot the domains
-                with logger.time("booting domains") as test_boot_time:
+                with logger.time("booting domains"):
                     for test_domain in test_domains.values():
                         with logger.time("booting %s domain" % test_domain.domain.name):
                             if not test_domain.start():
@@ -314,7 +313,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 return
 
                 # Run the commands directly
-                with logger.time("running commands") as test_run_time:
+                with logger.time("running commands"):
 
                         # Open output files.  Since the child is
                     # in NO-ECHO mode, also need to fudge up
@@ -512,6 +511,10 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
             with logger.time("post-mortem %s", task.prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
+                #
+                # Post mortem extracts the total, boot, and test times
+                # from debug.log (this is so that a re-run gets the
+                # same values).
                 result = post.mortem(test, args, logger)
                 logger.info("%s %s %s%s%s %s", PREFIX, task.prefix, result,
                             result.issues and " ", result.issues, SUFFIX)
@@ -536,10 +539,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                     jsonutil.result.result: result,
                     jsonutil.result.issues: result.issues,
                     jsonutil.result.hosts: test.guests,
-                    jsonutil.result.time: jsonutil.ftime(test_runtime.start),
-                    jsonutil.result.runtime: round(test_runtime.seconds(), 1),
-                    jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
-                    jsonutil.result.script_time: round(test_run_time.seconds(), 1),
                 }
                 j = jsonutil.dumps(RESULT)
                 logger.debug("filling '%s' with json: %s", result_file, j)

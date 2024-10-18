@@ -129,20 +129,13 @@ function results(div_id, json_file) {
 		},
 	    },
 	    {
-		title: "Boot time",
-	    },
-	    {
-		title: "Script time",
+		title: "Boot Time",
 	    },
 	    {
 		title: "Run Time",
-		value: function(result) {
-		    return (result.runtime !== undefined
-			    ? result.runtime
-			    : result.total_time !== undefined
-			    ? result.total_time
-			    : "")
-		},
+	    },
+	    {
+		title: "Total Time",
 	    },
 	]
 

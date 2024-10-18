@@ -22,7 +22,7 @@ class result:
     result = "result"
     hosts = "hosts"
     issues = "errors" # for historic reasons, "issues" are publicly called "errors"
-    script_time = "script_time"
+    test_time = "test_time"
     boot_time = "boot_time"
     hosts = "hosts"
     # keep things going

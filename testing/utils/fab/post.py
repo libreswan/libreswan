@@ -255,9 +255,9 @@ class TestResult:
         # times
         self._start_time = None
         self._stop_time = None
-        self._runtime = None
+        self._total_time = None
         self._boot_time = None
-        self._script_time = None
+        self._test_time = None
 
         # If there is no OUTPUT directory the result is UNTESTED -
         # presence of the OUTPUT is a clear indicator that some
@@ -574,13 +574,13 @@ class TestResult:
                                          cast=jsonutil.ptime)
         return self._stop_time
 
-    def runtime(self):
-        if not self._runtime:
+    def total_time(self):
+        if not self._total_time:
             # stop testing basic-pluto-01 (test 2 of 756) after 79.3 seconds
-            self._runtime = self._grub("debug.log",
-                                       r": stop testing .* after ([0-9].*) second",
-                                       cast=float)
-        return self._runtime
+            self._total_time = self._grub("debug.log",
+                                          r": stop testing .* after ([0-9].*) second",
+                                          cast=float)
+        return self._total_time
 
     def boot_time(self):
         if not self._boot_time:
@@ -590,13 +590,13 @@ class TestResult:
                                          cast=float)
         return self._boot_time
 
-    def script_time(self):
-        if not self._script_time:
-            # stop running scripts east:eastinit.sh ... after 22.4 seconds
-            self._script_time = self._grub("debug.log",
-                                           r": stop running scripts .* after ([0-9].*) second",
-                                           cast=float)
-        return self._script_time
+    def test_time(self):
+        if not self._test_time:
+            # stop running commands after 56.9 seconds
+            self._test_time = self._grub("debug.log",
+                                         r": stop running commands after ([0-9].*) second",
+                                         cast=float)
+        return self._test_time
 
 
 # XXX: given that most of args are passed in unchagned, this should
