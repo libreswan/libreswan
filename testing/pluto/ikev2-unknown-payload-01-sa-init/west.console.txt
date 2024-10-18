@@ -54,7 +54,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
-"westnet-eastnet-ipv4-psk-ikev2" #3: unexpected IKE_SA_INIT message containing UNSUPPORTED_CRITICAL_PAYLOAD notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ipv4-psk-ikev2" #3: ignoring IKE_SA_INIT message containing UNSUPPORTED_CRITICAL_PAYLOAD notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: revival: skip scheduling revival event

@@ -22,7 +22,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipv4-psk-ppk":   sec_label:unset;
 "westnet-eastnet-ipv4-psk-ppk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"westnet-eastnet-ipv4-psk-ppk":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-ipv4-psk-ppk":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipv4-psk-ppk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-ipv4-psk-ppk":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -49,7 +49,7 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ppk" #1: unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ipv4-psk-ppk" #1: ignoring IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "westnet-eastnet-ipv4-psk-ppk" #1: IKE_SA_INIT_I: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 "westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: revival: skip scheduling revival event

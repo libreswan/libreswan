@@ -24,7 +24,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending an empty KE value
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #1: unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
+"westnet-eastnet-ipv4-psk-ikev2" #1: ignoring IKE_SA_INIT message containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: revival: skip scheduling revival event
