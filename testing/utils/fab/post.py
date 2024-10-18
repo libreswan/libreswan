@@ -469,7 +469,7 @@ class TestResult:
             if diff_output is None:
                 # use brute force
                 diff_output = _diff(self.logger,
-                                    "MASTER/" + test.directory + "/" + host_name + ".console.txt",
+                                    "MAIN/" + test.directory + "/" + host_name + ".console.txt",
                                     expected_output,
                                     "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
                                     sanitized_output)
