@@ -21,6 +21,8 @@ look()
 	 -o -type d -path "$d/contrib" -prune \
 	 -o -type d -path "$d/testing/pluto/*/*" -prune \
 	 \
+	 -o -type f -path "$d/testing/web/*" -print \
+	 -o -type f -path "$d/testing/kvm/*" -print \
 	 -o -type f -path "$d/testing/utils/*" -print \
 	 -o -type f -path "$d/testing/guestbin/*" -print \
 	 \
