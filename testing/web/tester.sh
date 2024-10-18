@@ -36,8 +36,10 @@ make_variable() {
     eval $1="'$v'"
 }
 
+make_variable branch_name KVM_BRANCH_NAME
+make_variable branch_tag KVM_BRANCH_TAG
 make_variable rutdir KVM_RUTDIR
-make_variable webdir KVM_WEBDIR
+make_variable summarydir KVM_WEBDIR
 make_variable KVM_PREFIX KVM_PREFIX
 make_variable KVM_WORKERS KVM_WORKERS
 # what could build
@@ -46,7 +48,7 @@ make_variable KVM_PLATFORM KVM_PLATFORM
 make_variable KVM_OS KVM_OS
 
 rutdir=$(realpath ${rutdir})
-webdir=$(realpath ${webdir})
+webdir=$(realpath ${summarydir})
 
 # start with new shiny new just upgraded domains
 
@@ -69,13 +71,13 @@ if test $# -gt 0 ; then
     # updated.
     earliest_commit=$1; shift
 else
-    earliest_commit=$(${benchdir}/testing/web/gime-git-hash.sh ${rutdir} HEAD)
+    earliest_commit=$(git -C ${rutdir} show --no-patch --format=%H HEAD --)
 fi
 
 # start with basic status output; updated below to add more details as
 # they become available.
 
-json_status="${benchdir}/testing/web/json-status.sh --json ${webdir}/status.json"
+json_status="${benchdir}/testing/web/json-status.sh --json ${summarydir}/status.json"
 update_status=${json_status}
 
 MAKE() {
@@ -85,7 +87,11 @@ MAKE() {
 }
 
 KVM() {
-    ${benchdir}/kvm ${target} "${makeflags[@]}"
+    ${benchdir}/kvm ${target} "${makeflags[@]}" \
+	       WEB_TIME=${start_time} \
+	       WEB_HASH=${commit} \
+	       WEB_RESULTSDIR=${resultsdir} \
+	       WEB_SUMMARYDIR=${summarydir}
 }
 
 # Update the repo.
@@ -110,7 +116,7 @@ ${update_status} "updating summary"
 
 make -C ${benchdir} web-summarydir \
      WEB_RESULTSDIR= \
-     WEB_SUMMARYDIR=${webdir}
+     WEB_SUMMARYDIR=${summarydir}
 
 # Select the next commit to test
 #
@@ -119,7 +125,7 @@ make -C ${benchdir} web-summarydir \
 
 ${update_status} "looking for work"
 
-if ! commit=$(${benchdir}/testing/web/gime-work.sh ${webdir} ${rutdir} ${earliest_commit}) ; then
+if ! commit=$(${benchdir}/testing/web/gime-work.sh ${summarydir} ${rutdir} ${earliest_commit}) ; then
     # Seemlingly nothing to do ...  github gets updated up every 15
     # minutes so sleep for less than that
     delay=$(expr 10 \* 60)
@@ -138,32 +144,32 @@ fi
 # When first starting and/or recovering this does nothing as the repo
 # is already at head.
 
-${update_status} "checking out ${commit}"
+count=$(git -C ${rutdir} rev-list --count ${branch_tag}..${commit})
+abbrev=$(git -C ${rutdir} show --no-patch --format="%h" ${commit})
+gitstamp=${branch_name}-${count}-g${abbrev}
+
+${update_status} "checking out ${commit} (${gitstamp})"
 
 git -C ${rutdir} reset --hard ${commit}
 
-# Determine the rutdir and add that to status.
-#
-# Mimic how web-targets.mki computes RESULTSDIR; switch to directory
-# specific status.
+# Add the results dir to status.
 
-resultsdir=${webdir}/$(${benchdir}/testing/web/gime-git-description.sh ${rutdir})
-gitstamp=$(basename ${resultsdir})
+resultsdir=${summarydir}/${gitstamp}
 update_status="${update_status} --directory ${gitstamp}"
 
 # create the resultsdir and point the summary at it.
 
 ${update_status} "creating results directory"
 
-rm -f ${webdir}/current
-ln -s $(basename ${resultsdir}) ${webdir}/current
+rm -f ${summarydir}/current
+ln -s $(basename ${resultsdir}) ${summarydir}/current
 
 start_time=$(${benchdir}/testing/web/now.sh)
 make -C ${benchdir} web-resultsdir \
      WEB_TIME=${start_time} \
      WEB_HASH=${commit} \
      WEB_RESULTSDIR=${resultsdir} \
-     WEB_SUMMARYDIR=${webdir}
+     WEB_SUMMARYDIR=${summarydir}
 
 # fudge up enough of summary.json to fool the top level
 
@@ -267,8 +273,8 @@ run_target()
 	ok:check )
 	    # should also only update latest when most recent
 	    # commit; how?
-	    rm -f ${webdir}/latest
-	    ln -s $(basename ${resultsdir}) ${webdir}/latest
+	    rm -f ${summarydir}/latest
+	    ln -s $(basename ${resultsdir}) ${summarydir}/latest
 	    ;;
     esac
 
@@ -392,7 +398,7 @@ fi
 
 ${update_status} "deleting *.log.gz files older than 14 days"
 
-find ${webdir} \
+find ${summarydir} \
      -type d -name '*-0-*' -prune \
      -o \
      -type f -name '*.log.gz' -mtime +14 -print0 | \
