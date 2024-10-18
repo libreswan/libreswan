@@ -448,7 +448,7 @@ struct whack_message {
 	enum yn_options vti_shared;	/* use remote %any and skip
 					 * cleanup on down? */
 
-	/* RFC 8784 and draft-smyslov-ipsecme-ikev2-qr-alt-07 */
+	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 	char *ppk_ids;
 
 	/* for RFC 5685 - IKEv2 Redirect mechanism */

@@ -1688,6 +1688,10 @@ typedef enum v2_notification {
 
 	v2N_NULL_AUTH = 40960,
 
+	v2N_PPK_IDENTITY_KEY = 50208,		/* draft-ietf-ipsecme-ikev2--00 */
+	v2N_USE_PPK_INT = 50209,		/* draft-ietf-ipsecme-ikev2-qr-alt-04 */
+
+
 } v2_notification_t;
 
 /* RFC 8784 created registry */
