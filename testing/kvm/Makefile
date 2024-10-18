@@ -1535,6 +1535,8 @@ $(patsubst %, kvm-purge-%, $(KVM_PLATFORM)): \
 kvm-purge-%: kvm-downgrade-%
 	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
+	: things like ISOs
+	rm -vf $(KVM_$($*)_BASE_DOMAIN).*
 
 .PHONY: kvm-demolish
 
@@ -1544,8 +1546,6 @@ kvm-demolish: $(foreach os, $(KVM_OS), kvm-demolish-$(os))
 $(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
 kvm-demolish-%: kvm-purge-%
 	: $@=$*
-	: things like ISOs
-	rm -vf $(KVM_$($*)_BASE_DOMAIN).*
 
 
 #
