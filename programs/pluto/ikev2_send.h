@@ -27,6 +27,7 @@ struct ike_sa;
 struct child_sa;
 enum payload_security;
 struct impair_unsigned;
+struct v2_payload_errors;
 
 struct v2_incoming_fragment {
 	chunk_t text;		/* cipher or plain - decrypt in place */
@@ -109,7 +110,8 @@ bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
 
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t type,
-			       const shunk_t *data);
+			       const shunk_t *data,
+			       const char *reason);
 
 void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 const char *what,

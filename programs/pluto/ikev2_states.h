@@ -45,12 +45,13 @@ S(ZOMBIE);
 bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md);
 
 /* used by the IKE_SA_INIT code to find initial transitions only */
-const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
-							 const struct v2_transitions *transitions,
-							 struct msg_digest *md);
+diag_t find_v2_unsecured_transition(struct logger *logger,
+				    const struct v2_transitions *transitions,
+				    const struct msg_digest *md,
+				    const struct v2_transition **transition);
 
 const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
-						       struct msg_digest *md,
+						       const struct msg_digest *md,
 						       bool *secured_payload_failed);
 
 void init_ikev2_states(struct logger *logger);

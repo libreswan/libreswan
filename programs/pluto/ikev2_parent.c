@@ -602,7 +602,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		 * and then abandon the connection.
 		 */
 		dbg("aborting IKE SA: DH failed (EXPECTATION FAILED valid as no transition?)");
-		send_v2N_response_from_md((*frags)->md, v2N_INVALID_SYNTAX, NULL);
+		send_v2N_response_from_md((*frags)->md, v2N_INVALID_SYNTAX, NULL, NULL);
 		return STF_FATAL;
 	}
 

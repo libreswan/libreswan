@@ -152,7 +152,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	/* No cookie? demand one */
 	if (me_want_cookie && cookie_digest == NULL) {
 		llog_md(md, "DOS mode on; responding to IKE_SA_INIT with cookie notification request");
-		send_v2N_response_from_md(md, v2N_COOKIE, &local_cookie);
+		send_v2N_response_from_md(md, v2N_COOKIE, &local_cookie, NULL);
 		return true; /* reject cookie */
 	}
 

@@ -251,7 +251,7 @@ void process_md(struct msg_digest *md)
 		 * INVALID_MAJOR_VERSION.  Presumably the latter.
 		 */
 		send_v2N_response_from_md(md, v2N_INVALID_MAJOR_VERSION,
-					  NULL/*no data*/);
+					  NULL/*no data*/, NULL);
 		return;
 	}
 }

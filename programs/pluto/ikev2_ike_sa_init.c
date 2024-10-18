@@ -65,6 +65,7 @@
 #include "ike_alg_integ.h"	/* for ike_alg_integ_none */
 #include "ikev2_parent.h"
 #include "ikev2_eap.h"
+#include "log_limiter.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -402,7 +403,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				shunk_t data = shunk2(md->message_payloads.data,
 						      md->message_payloads.data_size);
 				send_v2N_response_from_md(md, md->message_payloads.n,
-							  &data);
+							  &data, NULL);
 			}
 			return;
 		}
@@ -449,13 +450,12 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * Does the message match the (only) expected
 		 * transition?
 		 */
-		const struct v2_transition *transition =
-			find_v2_unsecured_transition(md->logger,
-						     v2_IKE_SA_INIT_exchange.responder,
-						     md);
+		const struct v2_transition *transition = NULL;
+		diag_t d = find_v2_unsecured_transition(md->logger, v2_IKE_SA_INIT_exchange.responder,
+							md, &transition);
 		if (transition == NULL) {
-			/* already logged */
-			send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+			send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL, str_diag(d));
+			pfree_diag(&d);
 			return;
 		}
 
@@ -485,7 +485,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				 * was sent.  Should its message be
 				 * merged with the above?
 				 */
-				send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
+				send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL, NULL);
 			}
 			return;
 		}
@@ -600,10 +600,15 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 
 		/* transition? */
 		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
-		const struct v2_transition *transition =
-			find_v2_unsecured_transition(ike->sa.logger, exchange->response, md);
+		const struct v2_transition *transition = NULL;
+		diag_t d = find_v2_unsecured_transition(ike->sa.logger, exchange->response,
+							md, &transition);
 		if (transition == NULL) {
-			/* already logged */
+			lset_t rc_flags = log_limiter_rc_flags(ike->sa.logger, PAYLOAD_ERRORS_LOG_LIMITER);
+			if (rc_flags != LEMPTY) {
+				llog(rc_flags, ike->sa.logger, "ignoring %s", str_diag(d));
+			}
+			pfree_diag(&d);
 			return;
 		}
 

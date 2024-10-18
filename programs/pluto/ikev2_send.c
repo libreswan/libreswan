@@ -398,7 +398,8 @@ void record_v2N_response(struct logger *logger,
  */
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
-			       const shunk_t *ndata)
+			       const shunk_t *ndata,
+			       const char *details)
 {
 	passert(md != NULL); /* always a response */
 
@@ -414,11 +415,18 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	llog(RC_LOG, md->logger,
-	     "responding to %s (%d) message (Message ID %u) with unencrypted notification %s",
-	     exchange_name.buf, exchange_type,
-	     md->hdr.isa_msgid,
-	     notify_name.buf);
+	LLOG_JAMBUF(RC_LOG, md->logger, buf) {
+		jam_string(buf, "responding to ");
+		if (details != NULL) {
+			jam_string(buf, details);
+		} else {
+			jam(buf, "%s (%d) message (Message ID %u)",
+			    exchange_name.buf, exchange_type,
+			    md->hdr.isa_msgid);
+		}
+		jam(buf, " with unencrypted notification %s",
+		    notify_name.buf);
+	}
 
 	/*
 	 * Normally an unencrypted response is only valid for

@@ -59,10 +59,13 @@ struct ikev2_payload_errors {
 	v2_notification_t notification;
 };
 
-static void llog_v2_payload_errors(struct logger *logger, struct msg_digest *md,
+static void llog_v2_payload_errors(struct logger *logger, const struct msg_digest *md,
 				   const struct ikev2_payload_errors *errors);
 
-static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
+static void jam_v2_payload_errors(struct jambuf *buf, const struct msg_digest *md,
+				  const struct ikev2_payload_errors *errors);
+
+static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads);
 
@@ -322,7 +325,7 @@ static const struct finite_state *v2_states[] = {
 static const lset_t everywhere_payloads = v2P(N) | v2P(V);	/* can appear in any packet */
 static const lset_t repeatable_payloads = v2P(N) | v2P(D) | v2P(CP) | v2P(V) | v2P(CERT) | v2P(CERTREQ);	/* if one can appear, many can appear */
 
-struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
+struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 						  const struct payload_summary *summary,
 						  const struct ikev2_expected_payloads *payloads)
 {
@@ -363,7 +366,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 
 static const struct v2_transition *find_v2_transition(struct logger *logger, unsigned indent,
 						      const struct v2_transitions *transitions,
-						      struct msg_digest *md,
+						      const struct msg_digest *md,
 						      struct ikev2_payload_errors *message_payload_status,
 						      struct ikev2_payload_errors *encrypted_payload_status)
 {
@@ -441,7 +444,7 @@ static const struct v2_transition *find_v2_transition(struct logger *logger, uns
 }
 
 const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
-						       struct msg_digest *md,
+						       const struct msg_digest *md,
 						       bool *secured_payload_failed)
 {
 	enum_buf xb, rb;
@@ -539,9 +542,10 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 	return NULL;
 }
 
-const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
-							 const struct v2_transitions *transitions,
-							 struct msg_digest *md)
+diag_t find_v2_unsecured_transition(struct logger *logger,
+				    const struct v2_transitions *transitions,
+				    const struct msg_digest *md,
+				    const struct v2_transition **transition)
 {
 	unsigned indent = 0;
 	enum_buf xb, rb;
@@ -550,25 +554,24 @@ const struct v2_transition *find_v2_unsecured_transition(struct logger *logger,
 		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
 	indent = 1;
 
+
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
-	const struct v2_transition *t = find_v2_transition(logger, indent,
-							   transitions, md,
-							   &message_payload_status, NULL);
-	if (t != NULL) {
-		return t;
+	(*transition) = find_v2_transition(logger, indent, transitions, md,
+					   &message_payload_status, NULL);
+	if (*transition != NULL) {
+		return NULL;
 	}
 
 	/*
 	 * A very messed up message - none of the state
 	 * transitions recognized it!.
 	 */
-	if (message_payload_status.bad) {
-		llog_v2_payload_errors(logger, md, &message_payload_status);
-		return NULL;
+	diag_t d = NULL;
+	JAMBUF(buf) {
+		jam_v2_payload_errors(buf, md, &message_payload_status);
+		d = diag_jambuf(buf);
 	}
-
-	llog(RC_LOG, logger, "no useful state microcode entry found for incoming unsecured packet");
-	return NULL;
+	return d;
 }
 
 bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
@@ -656,8 +659,9 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
  * report problems - but less so when OE
  */
 
-void llog_v2_payload_errors(struct logger *logger, struct msg_digest *md,
-			   const struct ikev2_payload_errors *errors)
+void llog_v2_payload_errors(struct logger *logger,
+			    const struct msg_digest *md,
+			    const struct ikev2_payload_errors *errors)
 {
 	lset_t rc_flags = log_limiter_rc_flags(logger, PAYLOAD_ERRORS_LOG_LIMITER);
 	if (rc_flags == LEMPTY) {
@@ -665,52 +669,70 @@ void llog_v2_payload_errors(struct logger *logger, struct msg_digest *md,
 	}
 
 	LLOG_JAMBUF(rc_flags, logger, buf) {
-		const enum ikev2_exchange ix = md->hdr.isa_xchg;
-		jam_string(buf, "unexpected ");
-		jam_enum_short(buf, &ikev2_exchange_names, ix);
-		jam(buf, " message");
-		/* we want to print and log the first notify payload */
-		struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
-		if (ntfy != NULL) {
-			jam(buf, " containing ");
-			jam_enum_short(buf, &v2_notification_names,
-				       ntfy->payload.v2n.isan_type);
-			if (ntfy->next != NULL) {
-				jam(buf, "...");
-			}
-			jam(buf, " notification");
+		jam_v2_payload_errors(buf, md, errors);
+	}
+}
+
+void jam_v2_payload_errors(struct jambuf *buf, const struct msg_digest *md,
+			   const struct ikev2_payload_errors *errors)
+{
+	/*
+	 * Ignore .bad; who is this function to judge that the message
+	 * is at fault (invalid or unexpected) when, in truth, the
+	 * cause is a gap in the state machine.
+	 */
+	const enum ikev2_exchange ix = md->hdr.isa_xchg;
+	jam_enum_short(buf, &ikev2_exchange_names, ix);
+	/* we want to print and log the first notify payload */
+	struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+	jam_string(buf, " message");
+	if (ntfy != NULL) {
+		jam_string(buf, " containing ");
+		jam_enum_short(buf, &v2_notification_names,
+			       ntfy->payload.v2n.isan_type);
+		if (ntfy->next != NULL) {
+			jam_string(buf, "...");
 		}
-		if (md->message_payloads.parsed) {
-			jam(buf, "; message payloads: ");
+		jam_string(buf, " notification");
+	}
+	jam(buf, " (Message ID %u", md->hdr.isa_msgid);
+	if (md->message_payloads.parsed) {
+		jam_string(buf, ";");
+		if (md->message_payloads.present == LEMPTY) {
+			jam_string(buf, " no payloads");
+		} else {
+			jam_string(buf, " message payloads ");
 			jam_lset_short(buf, &ikev2_payload_names, ",",
 				       md->message_payloads.present);
 		}
-		if (md->encrypted_payloads.parsed) {
-			jam(buf, "; encrypted payloads: ");
+		if (md->encrypted_payloads.present != LEMPTY) {
+			jam_string(buf, ", encrypted payloads ");
 			jam_lset_short(buf, &ikev2_payload_names, ",",
 				       md->encrypted_payloads.present);
 		}
 		if (errors->missing != LEMPTY) {
-			jam(buf, "; missing payloads: ");
+			jam_string(buf, ", missing ");
 			jam_lset_short(buf, &ikev2_payload_names, ",",
 				       errors->missing);
 		}
 		if (errors->unexpected != LEMPTY) {
-			jam(buf, "; unexpected payloads: ");
+			jam_string(buf, ", unexpected ");
 			jam_lset_short(buf, &ikev2_payload_names, ",",
 				       errors->unexpected);
 		}
 		if (errors->excessive != LEMPTY) {
-			jam(buf, "; excessive payloads: ");
+			jam_string(buf, ", excessive ");
 			jam_lset_short(buf, &ikev2_payload_names, ",",
 				       errors->excessive);
 		}
 		if (errors->notification != v2N_NOTHING_WRONG) {
-			jam(buf, "; missing notification ");
+			jam_string(buf, ", no ");
 			jam_enum_short(buf, &v2_notification_names,
 				       errors->notification);
+			jam_string(buf, " notification");
 		}
 	}
+	jam_string(buf, ")");
 }
 
 static void ldbg_transition(struct logger *logger, const char *indent,
