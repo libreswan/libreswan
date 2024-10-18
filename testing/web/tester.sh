@@ -18,10 +18,10 @@ fi
 
 set -euvx
 
+declare -A makeflags # Associative
+
 tester=$(realpath $0)
-webdir=$(dirname ${tester})
-benchdir=$(cd ${webdir}/../.. && pwd)
-utilsdir=${benchdir}/testing/utils
+benchdir=$(realpath $(dirname ${tester})/../..)
 
 # run from BENCHDIR so relative make varibles work
 # and ./kvm doesn't get confused
@@ -37,16 +37,16 @@ make_variable() {
 }
 
 make_variable rutdir KVM_RUTDIR
-make_variable summarydir WEB_SUMMARYDIR
-make_variable prefixes KVM_PREFIXES
-make_variable workers KVM_WORKERS
+make_variable webdir KVM_WEBDIR
+make_variable KVM_PREFIX KVM_PREFIX
+make_variable KVM_WORKERS KVM_WORKERS
 # what could build
-make_variable platforms KVM_PLATFORM
+make_variable KVM_PLATFORM KVM_PLATFORM
 # what must build / is enabled
-make_variable oss KVM_OS
+make_variable KVM_OS KVM_OS
 
 rutdir=$(realpath ${rutdir})
-summarydir=$(realpath ${summarydir})
+webdir=$(realpath ${webdir})
 
 # start with new shiny new just upgraded domains
 
@@ -69,33 +69,23 @@ if test $# -gt 0 ; then
     # updated.
     earliest_commit=$1; shift
 else
-    earliest_commit=$(${webdir}/gime-git-hash.sh ${rutdir} HEAD)
+    earliest_commit=$(${benchdir}/testing/web/gime-git-hash.sh ${rutdir} HEAD)
 fi
 
 # start with basic status output; updated below to add more details as
 # they become available.
 
-json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
+json_status="${benchdir}/testing/web/json-status.sh --json ${webdir}/status.json"
 update_status=${json_status}
 
 MAKE() {
-
-    # So new features can be tested (?) use kvmrunner.py from this
-    # directory (${utilsdir}), but point it at files in the test
-    # directory (${rutdir}).
-
-    runner="${utilsdir}/kvmrunner.py --publish-hash ${commit} --publish-results ${resultsdir} --testing-directory ${rutdir}/testing --publish-status ${summarydir}/status.json"
-
     make -C ${rutdir} $1 \
 	    WEB_RESULTSDIR=
 	    WEB_SUMMARYDIR=
-	    KVM_PREFIXES="${prefixes}" \
-	    KVM_WORKERS="${workers}" \
-	    KVMRUNNER="${runner}"
 }
 
 KVM() {
-    ${benchdir}/kvm ${target}
+    ${benchdir}/kvm ${target} "${makeflags[@]}"
 }
 
 # Update the repo.
@@ -120,7 +110,7 @@ ${update_status} "updating summary"
 
 make -C ${benchdir} web-summarydir \
      WEB_RESULTSDIR= \
-     WEB_SUMMARYDIR=${summarydir}
+     WEB_SUMMARYDIR=${webdir}
 
 # Select the next commit to test
 #
@@ -129,7 +119,7 @@ make -C ${benchdir} web-summarydir \
 
 ${update_status} "looking for work"
 
-if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${rutdir} ${earliest_commit}) ; then
+if ! commit=$(${benchdir}/testing/web/gime-work.sh ${webdir} ${rutdir} ${earliest_commit}) ; then
     # Seemlingly nothing to do ...  github gets updated up every 15
     # minutes so sleep for less than that
     delay=$(expr 10 \* 60)
@@ -157,7 +147,7 @@ git -C ${rutdir} reset --hard ${commit}
 # Mimic how web-targets.mki computes RESULTSDIR; switch to directory
 # specific status.
 
-resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${rutdir})
+resultsdir=${webdir}/$(${benchdir}/testing/web/gime-git-description.sh ${rutdir})
 gitstamp=$(basename ${resultsdir})
 update_status="${update_status} --directory ${gitstamp}"
 
@@ -165,19 +155,19 @@ update_status="${update_status} --directory ${gitstamp}"
 
 ${update_status} "creating results directory"
 
-rm -f ${summarydir}/current
-ln -s $(basename ${resultsdir}) ${summarydir}/current
+rm -f ${webdir}/current
+ln -s $(basename ${resultsdir}) ${webdir}/current
 
-start_time=$(${webdir}/now.sh)
+start_time=$(${benchdir}/testing/web/now.sh)
 make -C ${benchdir} web-resultsdir \
      WEB_TIME=${start_time} \
      WEB_HASH=${commit} \
      WEB_RESULTSDIR=${resultsdir} \
-     WEB_SUMMARYDIR=${summarydir}
+     WEB_SUMMARYDIR=${webdir}
 
 # fudge up enough of summary.json to fool the top level
 
-${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
+${benchdir}/testing/web/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
 
 # Build / update / test the repo
 #
@@ -198,11 +188,130 @@ ${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
 #
 # - the prefix MAKE: and KVM: denote what is run
 
+build_json()
+{
+    local run=$1
+    local target=$2
+    local ot=$3
+    local os=$4
+    local status=$5
+    jq --null-input \
+       --arg run    "${run}" \
+       --arg target "${target}" \
+       --arg ot     "${ot}" \
+       --arg os     "${os}" \
+       --arg status "${status}" \
+       '{ run: $run, target: $target, ot: $ot, os: $os, status: $status }'
+}
+
+run_target()
+{
+
+    local run=$1
+    local target=$2
+    local ot=$3
+    local os=$4
+    local ignore=$5
+
+    finished="${finished} ${target}"
+    logfile=${resultsdir}/${target}.log
+    cp /dev/null ${logfile}
+
+    # Update build.json
+    #
+    # Merge build.json.in and the current build command into
+    # build.json.
+
+    {
+	cat ${resultsdir}/build.json.in
+	build_json "${run}" "${target}" "${ot}" "${os}" "running"
+    } | jq -s . > ${resultsdir}/build.json
+
+    # Update the status.
+
+    href="<a href=\"$(basename ${resultsdir})/${target}.log\">${target}</a>"
+    ${update_status} "running '${run} ${href}'"
+
+    # Run the target
+    #
+    # Notice how the first stage of the pipeline saves it's status
+    # touching ${target}.ok.
+
+    if ${run} ${target} 2>&1 ; then
+	touch ${resultsdir}/${target}.ok ;
+    fi | tee -a ${resultsdir}/${target}.log
+
+    # Figure out and save the the result.
+
+    if test -r ${resultsdir}/${target}.ok ; then
+	result=ok
+    elif ${ignore} ; then
+	# for instance, OpenBSD build fail is ignored.
+	result=ignored
+    else
+	result=failed
+    fi
+
+    # handle any magic extra processing
+
+    case ${result}:${target} in
+	ok:html )
+	    mkdir -p ${resultsdir}/documentation
+	    rm -f ${resultsdir}/documentation/*.html
+	    cp -v ${rutdir}/OBJ.*/html/*.html ${resultsdir}/documentation/
+	    # Use libreswan.7 as the index page since that
+	    # should be the starting point for someone reading
+	    # about libreswan.
+	    cp -v ${rutdir}/OBJ.*/html/libreswan.7.html ${resultsdir}/documentation/index.html
+	    ;;
+	ok:check )
+	    # should also only update latest when most recent
+	    # commit; how?
+	    rm -f ${webdir}/latest
+	    ln -s $(basename ${resultsdir}) ${webdir}/latest
+	    ;;
+    esac
+
+    # Maintain a list of KVM_$(OS)={true,false} flags.  These are to
+    # to ./kvm which passes them onto MAKE controlling which OS
+    # platforms are and are not enabled.
+
+    if test -n "${os}" ; then
+	if test "${result}" = ok ; then
+	    makeflags[${os}]="KVM_${os^^}=true"
+	else
+	    makeflags[${os}]="KVM_${os^^}=false"
+	fi
+    fi
+
+    gzip -v -9 ${resultsdir}/${target}.log
+
+    # Update the status: done.
+
+    ${update_status} "'${run} ${href}' ok"
+
+    # Update build.json.
+    #
+    # This time add the result to build.json.in and built build.json
+    # from that.
+
+    build_json  "${run}" "${target}" "${ot}" "${os}" "${result}" >> ${resultsdir}/build.json.in
+    jq -s . < ${resultsdir}/build.json.in > ${resultsdir}/build.json
+
+    if test "${result}" = failed ; then
+	# force the next run to test HEAD++ using rebuilt and updated
+	# domains; hopefully that will include the fix (or at least
+	# contain the damage).
+	${update_status} "${target} barfed, restarting with HEAD: ${tester}"
+	exec ${tester}
+    fi
+}
+
 targets="MAKE:distclean MAKE:html" # NATIVE!
 finished=""
 
 if ${build_kvms} ; then
-    for platform in ${platforms} ; do
+    for platform in ${KVM_PLATFORM} ; do
 	# i.e., kvm-upgrade[~+]OS
 	targets="${targets} KVM:upgrade~${platform}"
     done
@@ -210,15 +319,15 @@ else
     targets="${targets} KVM:shutdown"
 fi
 
-for platform in ${platforms} ; do
+for platform in ${KVM_PLATFORM} ; do
     targets="${targets} KVM:transmogrify~${platform}"
 done
 
 targets="${targets} KVM:keys"
 
-for platform in ${platforms} ; do
+for platform in ${KVM_PLATFORM} ; do
     # anything in OSS must build
-    case " ${oss} " in
+    case " ${KVM_OS} " in
 	"* ${platform} *" )
 	    targets="${targets} KVM:install+${platform}"
 	    ;;
@@ -243,87 +352,10 @@ for t in ${targets} ; do
     target=$( echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\2/' -e 's/[~+]/-/' )
     ot=$(     echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\3/' )
     os=$(     echo "${t}" | sed -e 's/\(.*\):\(\([^~+]*\)[~+]*\(.*\)\)/\4/' )
-
     # ...~...
     ignore=$(expr "${t}" : '.*~' > /dev/null && echo true || echo false)
 
-    finished="${finished} ${target}"
-    logfile=${resultsdir}/${target}.log
-    cp /dev/null ${logfile}
-
-    # generate json of the progress
-    {
-	cat ${resultsdir}/build.json.in
-	# same command further down
-	jq --null-input \
-	   --arg run    "${run}" \
-	   --arg target "${target}" \
-	   --arg ot     "${ot}" \
-	   --arg os     "${os}" \
-	   --arg status "running" \
-	   '{ run: $run, target: $target, ot: $ot, os: $os, status: $status }'
-    } | jq -s . > ${resultsdir}/build.json
-
-    # run the target; note how the start of the pipeline
-    # creates ${target}.ok as a way to detect success
-
-    href="<a href=\"$(basename ${resultsdir})/${target}.log\">${target}</a>"
-    ${update_status} "running '${run} ${href}'"
-
-    if ${run} ${target} 2>&1 ; then
-	touch ${resultsdir}/${target}.ok ;
-    fi | tee -a ${resultsdir}/${target}.log
-
-    if test -r ${resultsdir}/${target}.ok ; then
-	result=ok
-	case ${target} in
-	    html )
-		mkdir -p ${resultsdir}/documentation
-		rm -f ${resultsdir}/documentation/*.html
-		cp -v ${rutdir}/OBJ.*/html/*.html ${resultsdir}/documentation/
-		# Use libreswan.7 as the index page since that
-		# should be the starting point for someone reading
-		# about libreswan.
-		cp -v ${rutdir}/OBJ.*/html/libreswan.7.html ${resultsdir}/documentation/index.html
-		;;
-	    kvm-check )
-		# should only update when latest
-		rm -f ${summarydir}/latest
-		ln -s $(basename ${resultsdir}) ${summarydir}/latest
-		;;
-	esac
-    elif ${ignore} ; then
-	# ex -kvm-install-openbsd = kvm-install-openbsd?
-	result=ignored
-    else
-	result=failed
-    fi
-    gzip -v -9 ${resultsdir}/${target}.log
-
-    ${update_status} "'${run} ${href}' ok"
-
-    # generate json of the final result
-
-    # same command further up
-    {
-	jq --null-input \
-	   --arg run    "${run}" \
-	   --arg target "${target}" \
-	   --arg ot     "${ot}" \
-	   --arg os     "${os}" \
-	   --arg status "${result}" \
-	   '{ run: $run, target: $target, ot: $ot, os: $os, status: $status }'
-    } >> ${resultsdir}/build.json.in
-    # convert raw list to an array
-    jq -s . < ${resultsdir}/build.json.in > ${resultsdir}/build.json
-
-    if test "${result}" = failed ; then
-	# force the next run to test HEAD++ using rebuilt and updated
-	# domains; hopefully that will contain the fix (or at least
-	# contain the damage).
-	${update_status} "${target} barfed, restarting with HEAD: ${tester}"
-	exec ${tester}
-    fi
+    run_target "${run}" "${target}" "${ot}" "${os}" "${ignore}"
 
 done
 
@@ -360,7 +392,7 @@ fi
 
 ${update_status} "deleting *.log.gz files older than 14 days"
 
-find ${summarydir} \
+find ${webdir} \
      -type d -name '*-0-*' -prune \
      -o \
      -type f -name '*.log.gz' -mtime +14 -print0 | \
