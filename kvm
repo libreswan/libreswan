@@ -13,7 +13,7 @@ print-kvm-variable() {
     ${gnumake} --no-print-directory print-kvm-variable VARIABLE=$1 "${makeflags[@]}"
 }
 
-kvm_platform=$(print-kvm-variable KVM_PLATFORM)
+kvm_platforms=$(print-kvm-variable KVM_PLATFORMS)
 
 kvm_test_host_names=$(print-kvm-variable KVM_TEST_HOST_NAMES)
 kvm_base_host_names=$(print-kvm-variable KVM_BASE_HOST_NAMES)
@@ -138,10 +138,10 @@ pass2help()
     transmogrify[-PLATFORM]
 	create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
-	creates: ${kvm_platform}
+	creates: ${kvm_platforms}
     build[-PLATFORM]
 	build/install libreswan on the build domains
-	uses: ${kvm_platform}
+	uses: ${kvm_platforms}
     install[-PLATFORM]
 	build/install libreswan
 	clones build domains to create the test domains
@@ -193,7 +193,7 @@ pass2help()
 EOF
 }
 
-pass2=$(pass2help | awk -v "plat=${kvm_platform}" -- '
+pass2=$(pass2help | awk -v "plat=${kvm_platforms}" -- '
 BEGIN {
 	split(plat, platforms)
 }
