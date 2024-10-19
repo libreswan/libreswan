@@ -638,7 +638,7 @@ KVM_KEYS_DOMAIN = $(addprefix $(KVM_PREFIX), linux)
 .PHONY: kvm-keys
 kvm-keys:
 	: invoke phony target to shut things down and delete old keys
-	$(MAKE) kvm-shutdown
+	$(MAKE) kvm-shutdown-linux
 	$(MAKE) kvm-clean-keys
 	$(MAKE) $(KVM_KEYS)
 
