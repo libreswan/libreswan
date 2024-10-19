@@ -58,10 +58,10 @@ kvmplutotest	check-02-enumcheck		good
 kvmplutotest	check-03-vendoridcheck		good
 
 # interconnect
-kvmplutotest	check-10-network-fedora		fedora
-kvmplutotest	check-10-network-freebsd	freebsd
-kvmplutotest	check-10-network-netbsd		netbsd
-kvmplutotest	check-10-network-openbsd	openbsd
+kvmplutotest	check-10-network-fedora		good
+kvmplutotest	check-10-network-freebsd	good
+kvmplutotest	check-10-network-netbsd		good
+kvmplutotest	check-10-network-openbsd	good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
@@ -568,15 +568,15 @@ kvmplutotest	ikev2-xfrmi-16-rekey			good
 kvmplutotest	ikev2-xfrmi-17-ipcomp			good
 kvmplutotest	ikev2-xfrmi-19-route-before-up		good
 
-kvmplutotest	ipsec-interface-00-ipv4-ikev2-freebsd-setkey	freebsd
-kvmplutotest	ipsec-interface-00-ipv4-ikev2-netbsd-setkey	netbsd
-kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd-iked	openbsd
-kvmplutotest	ipsec-interface-00-ipv4-ikev2-fedora-xfrm	fedora
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-freebsd-setkey	good
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-netbsd-setkey	good
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd-iked	good
+kvmplutotest	ipsec-interface-00-ipv4-ikev2-fedora-xfrm	good
 
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-freebsd	freebsd
-#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	netbsd
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-openbsd	openbsd
-kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-fedora	fedora
+kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-freebsd	good
+#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	good
+kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-openbsd	good
+kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-fedora	good
 
 kvmplutotest	ipsec-interface-06-ipv4-ikev1-xfrmi	good
 kvmplutotest	ipsec-interface-06-ipv4-ikev2-xfrmi	good
@@ -1088,8 +1088,8 @@ kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
 kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
-kvmplutotest	interop-ikev2-esp-aes_gcm-netbsd-linux			netbsd
-kvmplutotest	interop-ikev2-esp-aes_gcm-freebsd-netbsd		freebsd	github/1228
+kvmplutotest	interop-ikev2-esp-aes_gcm-netbsd-linux			good
+kvmplutotest	interop-ikev2-esp-aes_gcm-freebsd-netbsd		good	github/1228
 
 # EAPTLS
 kvmplutotest	interop-ikev2-eaptls-strongswan-client			wip
@@ -1577,49 +1577,49 @@ kvmplutotest	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
 
 # uses the kernel-pfkeyv2.c code
 
-kvmplutotest	pfkeyv2-transport-4in4-ah-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-4in4-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-transport-4in4-esp-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-4in4-esp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-4in4-ah-ipcomp-ikev2	good
+kvmplutotest	pfkeyv2-transport-4in4-ah-ikev2		good
+kvmplutotest	pfkeyv2-transport-4in4-esp-ipcomp-ikev2	good
+kvmplutotest	pfkeyv2-transport-4in4-esp-ikev2	good
 
-kvmplutotest	pfkeyv2-transport-6in6-ah-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-6in6-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-transport-6in6-esp-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-6in6-esp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-6in6-ah-ipcomp-ikev2	good
+kvmplutotest	pfkeyv2-transport-6in6-ah-ikev2		good
+kvmplutotest	pfkeyv2-transport-6in6-esp-ipcomp-ikev2	good
+kvmplutotest	pfkeyv2-transport-6in6-esp-ikev2	good
 
-kvmplutotest	pfkeyv2-tunnel-4in4-ah-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-tunnel-4in4-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-tunnel-4in4-esp-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-tunnel-4in4-esp-ikev2		netbsd
+kvmplutotest	pfkeyv2-tunnel-4in4-ah-ipcomp-ikev2	good
+kvmplutotest	pfkeyv2-tunnel-4in4-ah-ikev2		good
+kvmplutotest	pfkeyv2-tunnel-4in4-esp-ipcomp-ikev2	good
+kvmplutotest	pfkeyv2-tunnel-4in4-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-tunnel-4in6-ah-ipcomp-ikev2	netbsd	github/713
-kvmplutotest	pfkeyv2-tunnel-4in6-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-tunnel-4in6-esp-ipcomp-ikev2	netbsd	github/713
-kvmplutotest	pfkeyv2-tunnel-4in6-esp-ikev2		netbsd
+kvmplutotest	pfkeyv2-tunnel-4in6-ah-ipcomp-ikev2	good	github/713
+kvmplutotest	pfkeyv2-tunnel-4in6-ah-ikev2		good
+kvmplutotest	pfkeyv2-tunnel-4in6-esp-ipcomp-ikev2	good	github/713
+kvmplutotest	pfkeyv2-tunnel-4in6-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-tunnel-6in4-ah-ipcomp-ikev2	netbsd	github/713
-kvmplutotest	pfkeyv2-tunnel-6in4-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-tunnel-6in4-esp-ipcomp-ikev2	netbsd	github/713
-kvmplutotest	pfkeyv2-tunnel-6in4-esp-ikev2		netbsd
+kvmplutotest	pfkeyv2-tunnel-6in4-ah-ipcomp-ikev2	good	github/713
+kvmplutotest	pfkeyv2-tunnel-6in4-ah-ikev2		good
+kvmplutotest	pfkeyv2-tunnel-6in4-esp-ipcomp-ikev2	good	github/713
+kvmplutotest	pfkeyv2-tunnel-6in4-esp-ikev2		good
 
-kvmplutotest	pfkeyv2-tunnel-6in6-ah-ipcomp-ikev2	netbsd	github/713
-kvmplutotest	pfkeyv2-tunnel-6in6-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-tunnel-6in6-esp-ipcomp-ikev2	netbsd	github/713
-kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		netbsd
+kvmplutotest	pfkeyv2-tunnel-6in6-ah-ipcomp-ikev2	good	github/713
+kvmplutotest	pfkeyv2-tunnel-6in6-ah-ikev2		good
+kvmplutotest	pfkeyv2-tunnel-6in6-esp-ipcomp-ikev2	good	github/713
+kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		good
 
-kvmplutotest	interop-ikev1-racoon-01-aggr		netbsd
-kvmplutotest	interop-ikev1-racoon-02-main		netbsd
+kvmplutotest	interop-ikev1-racoon-01-aggr		good
+kvmplutotest	interop-ikev1-racoon-02-main		good
 
-kvmplutotest	pfkeyv2-esn-esp-freebsd			freebsd
-kvmplutotest	pfkeyv2-esn-ah-freebsd			freebsd
-kvmplutotest	pfkeyv2-replay-window-freebsd		freebsd
+kvmplutotest	pfkeyv2-esn-esp-freebsd			good
+kvmplutotest	pfkeyv2-esn-ah-freebsd			good
+kvmplutotest	pfkeyv2-replay-window-freebsd		good
 
 kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
 
 # OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01-iked-responder		openbsd
-kvmplutotest	interop-ikev2-openbsd-02-iked-initiator		openbsd
-kvmplutotest	interop-ikev2-openbsd-03-pluto-initiator	openbsd
+kvmplutotest	interop-ikev2-openbsd-01-iked-responder		good
+kvmplutotest	interop-ikev2-openbsd-02-iked-initiator		good
+kvmplutotest	interop-ikev2-openbsd-03-pluto-initiator	good
 
 # trying to reproduce github bugs
 
@@ -1631,7 +1631,7 @@ kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
 kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
 
 # flush startup and teardown
-kvmplutotest	flush-on-startup-pfkeyv2		freebsd	github/1285
+kvmplutotest	flush-on-startup-pfkeyv2		good	github/1285
 kvmplutotest	flush-on-startup-xfrm			good	github/1284
 kvmplutotest	flush-on-shutdown-xfrm			good	github/1384
 
