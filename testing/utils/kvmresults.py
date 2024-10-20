@@ -32,6 +32,7 @@ from fab import argutil
 from fab import jsonutil
 from fab import printer
 from fab import publish
+from fab import resolution
 
 
 class Stats(Enum):
@@ -177,11 +178,11 @@ def results(logger, tests, args, result_stats):
                     continue
             result_stats.add_result(result)
 
-            if result.resolution in [post.Resolution.PASSED,
-                                     post.Resolution.UNTESTED,
-                                     post.Resolution.UNSUPPORTED]:
+            if result.resolution in [resolution.PASSED,
+                                     resolution.UNTESTED,
+                                     resolution.UNSUPPORTED]:
                 passed = passed + 1
-            elif result.resolution in [post.Resolution.UNRESOLVED]:
+            elif result.resolution in [resolution.UNRESOLVED]:
                 unresolved = unresolved + 1
             else:
                 failures = failures + 1
@@ -191,7 +192,7 @@ def results(logger, tests, args, result_stats):
             publish.json_result(logger, args, result)
 
             b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
-            printer.build_result(logger, result, args, args.print, b)
+            printer.build_result(logger, result, args.print, b)
 
         publish.json_results(logger, args)
         publish.json_summary(logger, args)

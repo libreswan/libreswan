@@ -521,31 +521,6 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
             result.save()
 
-            # If the test was run (a fresh run would delete RESULT)
-            # and finished (resolved in POSIX terminology), emit
-            # enough JSON to fool scripts like pluto-testlist-scan.sh.
-            #
-            # A test that timed-out or crashed, isn't considered
-            # resolved so the file isn't created.
-            #
-            # XXX: this should go away.
-
-            result_file = os.path.join(test.output_directory, "RESULT")
-            if not os.path.isfile(result_file) \
-            and result.resolution.isresolved():
-                RESULT = {
-                    jsonutil.result.testname: test.name,
-                    jsonutil.result.expect: test.status,
-                    jsonutil.result.result: result,
-                    jsonutil.result.issues: result.issues,
-                    jsonutil.result.hosts: test.guests,
-                }
-                j = jsonutil.dumps(RESULT)
-                logger.debug("filling '%s' with json: %s", result_file, j)
-                with open(result_file, "w") as f:
-                    f.write(j)
-                    f.write("\n")
-
             # Do this after RESULT is created so it too is published.
             publish.everything(logger, args, result)
             publish.json_status(logger, args, "finished %s" % task.prefix)

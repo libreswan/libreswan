@@ -43,8 +43,8 @@ def loads(s):
         return None
 
 def default(obj):
-    if hasattr(obj, "json") and callable(getattr(obj, "json")):
-        return obj.json()
+    if hasattr(obj, "__json__") and callable(getattr(obj, "__json__")):
+        return obj.__json__()
     if hasattr(obj, "isoformat") and callable(getattr(obj, "isoformat")):
         # date/time objects
         if not obj.utcoffset():

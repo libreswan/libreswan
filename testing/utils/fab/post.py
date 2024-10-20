@@ -1,6 +1,6 @@
 # Perform post.mortem on a test result, for libreswan.
 #
-# Copyright (C) 2015-2019 Andrew Cagney
+# Copyright (C) 2015-2024 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -22,6 +22,8 @@ import bz2
 
 from fab import logutil
 from fab import jsonutil
+from fab import printer
+from fab import resolution
 
 # Strings used to mark up files; see also runner.py where it marks up
 # the file names.  The sanitizer is hardwired to recognize CUT & TUC
@@ -32,38 +34,6 @@ LHS = ">>>>>>>>>>"
 CUT = LHS + "cut" + LHS
 TUC = RHS + "tuc" + RHS
 DONE = CUT + " done " + TUC
-
-class Resolution:
-    PASSED = "passed"
-    FAILED = "failed"
-    UNRESOLVED = "unresolved"
-    UNTESTED = "untested"
-    UNSUPPORTED = "unsupported"
-    def __init__(self):
-        self.state = None
-    def __str__(self):
-        return self.state
-    def __eq__(self, rhs):
-        return self.state == rhs
-    def isresolved(self):
-        return self.state in [self.PASSED, self.FAILED]
-    def unsupported(self):
-        assert(self.state in [None])
-        self.state = self.UNSUPPORTED
-    def untested(self):
-        assert(self.state in [None])
-        self.state = self.UNTESTED
-    def passed(self):
-        assert(self.state in [None])
-        self.state = self.PASSED
-    def failed(self):
-        assert(self.state in [self.FAILED, self.PASSED, self.UNRESOLVED])
-        if self.state in [self.FAILED, self.PASSED]:
-            self.state = self.FAILED
-    def unresolved(self):
-        assert(self.state in [self.PASSED, self.FAILED, self.UNRESOLVED, None])
-        self.state = self.UNRESOLVED
-
 
 # Mapping between hosts and their issues and/or issues and their
 # hosts.
@@ -120,7 +90,7 @@ class Issues:
         self._issue_hosts = {}
         self._logger = logger
 
-    # Both __str__() and json() dump the table in user friendly
+    # Both __str__() and __json__() dump the table in user friendly
     # format.  That is:
     #
     #     host:issue,...  host:issue,...
@@ -138,7 +108,7 @@ class Issues:
             s += ",".join(sorted(errors))
         return s
 
-    def json(self):
+    def __json__(self):
         return self._host_issues
 
     # Programmatic collections like interface.  This is indexed by
@@ -239,14 +209,14 @@ class TestResult:
         UNTESTED).
 
         """
-        return self.resolution in [self.resolution.PASSED, self.resolution.FAILED, self.resolution.UNRESOLVED]
+        return self.resolution in [resolution.PASSED, resolution.FAILED, resolution.UNRESOLVED]
 
     def __init__(self, logger, test, quick, output_directory=None):
 
         # Set things up for passed
         self.logger = logger
         self.test = test
-        self.resolution = Resolution()
+        self.resolution = resolution.Resolution()
         self.issues = Issues(self.logger)
         self.diff_output = {}
         self.sanitized_output = {}
@@ -258,6 +228,7 @@ class TestResult:
         self._total_time = None
         self._boot_time = None
         self._test_time = None
+        self._json = None
 
         # If there is no OUTPUT directory the result is UNTESTED -
         # presence of the OUTPUT is a clear indicator that some
@@ -510,6 +481,35 @@ class TestResult:
                         f.write(line)
                         f.write(b"\n")
 
+        # Convert the result into json, and save it
+        json = self.json()
+        result_file = os.path.join(output_directory, "result.json")
+        self.logger.debug("writing %s to %s", json, result_file)
+        with open(result_file, "w") as output:
+            jsonutil.dump(json, output)
+            output.write("\n")
+
+        # Emit enough JSON to fool scripts like
+        # pluto-testlist-scan.sh.
+        #
+        # A test that timed-out or crashed, isn't considered
+        # resolved so the file isn't created.
+        #
+        # XXX: this should go away.
+        result_file = os.path.join(output_directory, "RESULT")
+        if self.resolution.isresolved():
+            RESULT = {
+                jsonutil.result.testname: self.test.name,
+                jsonutil.result.expect: self.test.status,
+                jsonutil.result.result: self.__str__(),
+                jsonutil.result.issues: self.issues,
+                jsonutil.result.hosts: self.test.guests,
+            }
+            self.logger.debug("writing %s %s", json, result_file)
+            with open(result_file, "w") as output:
+                jsonutil.dump(RESULT, output)
+                output.write("\n")
+
     def _file_contents(self, path):
         # Find/load the file, and uncompress when needed.
         if not path in self._file_contents_cache:
@@ -597,6 +597,26 @@ class TestResult:
                                          r": stop running commands after ([0-9].*) second",
                                          cast=float)
         return self._test_time
+
+    def json(self):
+        if not self._json:
+            # Convert the result into json, and save it
+            result_to_json = printer.Print(printer.Print.TEST_NAME,
+                                           printer.Print.TEST_KIND,
+                                           printer.Print.TEST_STATUS,
+                                           printer.Print.TEST_GUEST_PLATFORMS,
+                                           printer.Print.TEST_HOST_NAMES,
+                                           printer.Print.START_TIME,
+                                           printer.Print.STOP_TIME,
+                                           printer.Print.RESULT,
+                                           printer.Print.ISSUES,
+                                           printer.Print.TOTAL_TIME,
+                                           printer.Print.BOOT_TIME,
+                                           printer.Print.TEST_TIME)
+            json_builder = printer.JsonBuilder()
+            printer.build_result(self.logger, self, result_to_json, json_builder)
+            self._json = json_builder.json()
+        return self._json
 
 
 # XXX: given that most of args are passed in unchagned, this should
