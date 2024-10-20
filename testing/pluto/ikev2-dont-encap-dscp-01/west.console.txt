@@ -49,7 +49,6 @@ west #
 west #
  ip -statistics xfrm state |grep dscp
 	replay-window 0 seq 0x00000000 flag af-unspec esnextra_flag dont-encap-dscp (0x10100000)
-	replay-window 0 seq 0x00000000 flag af-unspec esnextra_flag dont-encap-dscp (0x10100000)
 west #
  echo done
 done

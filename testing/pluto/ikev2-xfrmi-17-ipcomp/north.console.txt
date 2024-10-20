@@ -51,14 +51,12 @@ src 192.1.3.33 dst 192.1.2.23
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	 replay_window 0, bitmap-length 0
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.3.33 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
-	output-mark 0x1/0xffffffff
 	comp deflate 
 	if_id 0x1
 src 192.1.3.33 dst 192.1.2.23
@@ -79,7 +77,6 @@ src 192.1.2.23 dst 192.1.3.33
 src 192.1.2.23 dst 192.1.3.33
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
-	output-mark 0x1/0xffffffff
 	comp deflate 
 	if_id 0x1
 src 192.1.2.23 dst 192.1.3.33

@@ -45,7 +45,7 @@ freebsdw# ../../guestbin/ipsec-kernel-state.sh
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000001 replay=256 flags=0x00000400 state=mature 
+	seq=0x00000001 replay=0 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -56,7 +56,7 @@ freebsdw# ../../guestbin/ipsec-kernel-state.sh
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000001 replay=256 flags=0x00000400 state=mature 
+	seq=0x00000000 replay=0 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -70,7 +70,7 @@ freebsdw# ../../guestbin/ipsec-kernel-state.sh
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000002 replay=256 flags=0x00000400 state=mature 
+	seq=0x00000002 replay=0 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -81,7 +81,7 @@ freebsdw# ../../guestbin/ipsec-kernel-state.sh
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000002 replay=256 flags=0x00000400 state=mature 
+	seq=0x00000000 replay=0 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -89,3 +89,4 @@ freebsdw# ../../guestbin/ipsec-kernel-state.sh
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 freebsdw# dmesg | grep ipsec
+

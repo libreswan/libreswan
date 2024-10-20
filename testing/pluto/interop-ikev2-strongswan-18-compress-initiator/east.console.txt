@@ -18,10 +18,6 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
@@ -81,10 +77,6 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
