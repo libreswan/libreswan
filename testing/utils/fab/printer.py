@@ -31,6 +31,7 @@ class Print(argutil.List):
     TEST_DIRECTORY = "test-directory"
     TEST_GUEST_NAMES = "test-guest-names"
     TEST_HOST_NAMES = "test-host-names"
+    TEST_GUEST_PLATFORMS = "test-guest-platforms"
     TEST_PLATFORMS = "test-platforms"
     TEST_KIND = "test-kind"
     TEST_NAME = "test-name"
@@ -43,7 +44,7 @@ class Print(argutil.List):
     BOOT_TIME = "boot-time"
     TEST_TIME = "test-time"
     DIFFS = "diffs"
-    ISSUES = "errors"                      # for historic reasons
+    ISSUES = "issues"
     OUTPUT_DIRECTORY = "output-directory"
     PATH = "path"
     RESULT = "result"
@@ -103,62 +104,66 @@ class TextBuilder:
         self.eol = False
 
 
-def build_result(logger, result, args, what_to_print, b):
+def build_result(logger, result, what_to_print, b):
 
     # Print the test's name/path
 
     for p in what_to_print:
-        if p is Print.PATH:
-            # When the path given on the command line explicitly
-            # specifies a test's output directory (found in
-            # RESULT.TEST.SAVED_OUTPUT_DIRECTORY), print that; otherwise
-            # print the path to the test's directory.
-            b.add(p, (result.test.saved_output_directory
-                      and result.test.saved_output_directory
-                      or result.test.directory))
-        elif p is Print.TEST_DIRECTORY:
-            b.add(p, result.test.directory)
-        elif p is Print.TEST_STATUS:
-            b.add(p, result.test.status)
-        elif p is Print.TEST_GUEST_NAMES:
-            b.add(p, [guest.name for guest in result.test.guests],
-                  string=lambda names, sep: sep + ",".join(names))
-        elif p is Print.TEST_HOST_NAMES:
-            b.add(p, [guest.host.name for guest in result.test.guests],
-                  string=lambda names, sep: sep + ",".join(names))
-        elif p is Print.TEST_PLATFORMS:
-            b.add(p, result.test.platforms,
-                  string=lambda platforms, sep: sep + ",".join(platforms))
-        elif p is Print.TEST_KIND:
-            b.add(p, result.test.kind)
-        elif p is Print.TEST_NAME:
-            b.add(p, result.test.name)
-        elif p is Print.OUTPUT_DIRECTORY:
-            b.add(p, result.test.output_directory)
-        elif p is Print.RESULT:
-            b.add(p, result)
-        elif p is Print.ISSUES:
-            b.add(p, result.issues)
-        elif p is Print.TESTING_DIRECTORY:
-            b.add(p, result.test.testing_directory())
-        elif p is Print.SAVED_OUTPUT_DIRECTORY:
-            b.add(p, result.test.saved_output_directory)
-        elif p is Print.TEST_COMMANDS:
-            b.add(p, result.test.commands)
-        elif p is Print.START_TIME:
-            b.add(p, result.start_time())
-        elif p is Print.STOP_TIME:
-            b.add(p, result.stop_time())
-        elif p is Print.TOTAL_TIME:
-            b.add(p, result.total_time())
-        elif p is Print.BOOT_TIME:
-            b.add(p, result.boot_time())
-        elif p is Print.TEST_TIME:
-            b.add(p, result.test_time())
-        elif p is Print.DIFFS:
-            continue # see below
-        else:
-            raise Exception("unhandled print option %s" % p)
+        match p:
+            case Print.PATH:
+                # When the path given on the command line explicitly
+                # specifies a test's output directory (found in
+                # RESULT.TEST.SAVED_OUTPUT_DIRECTORY), print that; otherwise
+                # print the path to the test's directory.
+                b.add(p, (result.test.saved_output_directory
+                          and result.test.saved_output_directory
+                          or result.test.directory))
+            case Print.TEST_DIRECTORY:
+                b.add(p, result.test.directory)
+            case Print.TEST_STATUS:
+                b.add(p, result.test.status)
+            case Print.TEST_GUEST_NAMES:
+                b.add(p, [guest.name for guest in result.test.guests],
+                      string=lambda names, sep: sep + ",".join(names))
+            case Print.TEST_HOST_NAMES:
+                b.add(p, [guest.host.name for guest in result.test.guests],
+                      string=lambda names, sep: sep + ",".join(names))
+            case Print.TEST_GUEST_PLATFORMS:
+                b.add(p, [guest.platform for guest in result.test.guests],
+                      string=lambda names, sep: sep + ",".join(names))
+            case Print.TEST_PLATFORMS:
+                b.add(p, result.test.platforms,
+                      string=lambda platforms, sep: sep + ",".join(platforms))
+            case Print.TEST_KIND:
+                b.add(p, result.test.kind)
+            case Print.TEST_NAME:
+                b.add(p, result.test.name)
+            case Print.OUTPUT_DIRECTORY:
+                b.add(p, result.test.output_directory)
+            case Print.RESULT:
+                b.add(p, result)
+            case Print.ISSUES:
+                b.add(p, result.issues)
+            case Print.TESTING_DIRECTORY:
+                b.add(p, result.test.testing_directory())
+            case Print.SAVED_OUTPUT_DIRECTORY:
+                b.add(p, result.test.saved_output_directory)
+            case Print.TEST_COMMANDS:
+                b.add(p, result.test.commands)
+            case Print.START_TIME:
+                b.add(p, result.start_time())
+            case Print.STOP_TIME:
+                b.add(p, result.stop_time())
+            case Print.TOTAL_TIME:
+                b.add(p, result.total_time())
+            case Print.BOOT_TIME:
+                b.add(p, result.boot_time())
+            case Print.TEST_TIME:
+                b.add(p, result.test_time())
+            case Print.DIFFS:
+                continue # see below
+            case _:
+                raise Exception("unhandled print option %s" % p)
 
     if Print.DIFFS in what_to_print:
         for guest_name, diff_output in result.diff_output.items():

@@ -23,7 +23,6 @@ from collections import defaultdict
 from datetime import datetime
 from datetime import time
 
-from fab import printer
 from fab import jsonutil
 from fab import stats
 from fab import timing
@@ -51,19 +50,6 @@ def log_arguments(logger, args):
     logger.info("  publish-summary: '%s'", args.publish_summary)
     logger.info("  publish-hash: '%s'", args.publish_hash)
 
-
-results_to_print = printer.Print(printer.Print.TEST_NAME,
-                                 printer.Print.TEST_KIND,
-                                 printer.Print.TEST_STATUS,
-                                 printer.Print.TEST_GUEST_NAMES,
-                                 printer.Print.START_TIME,
-                                 printer.Print.STOP_TIME,
-                                 printer.Print.RESULT,
-                                 printer.Print.ISSUES,
-                                 printer.Print.TOTAL_TIME,
-                                 printer.Print.BOOT_TIME,
-                                 printer.Print.TEST_TIME)
-
 JSON_RESULTS = []
 JSON_SUMMARY = { }
 
@@ -78,13 +64,13 @@ def _add(counts, *keys):
         counts[key] = 0
     counts[key] = counts[key] + 1
 
-def _update_time(compare, key, result):
-    result_time = result.get(key)
-    summary_time = JSON_SUMMARY.get(key)
+def _update_time(compare, json, time):
+    result_time = json.get(time)
+    summary_time = JSON_SUMMARY.get(time)
     if summary_time and result_time:
-        JSON_SUMMARY[key] = compare(summary_time, result_time)
+        JSON_SUMMARY[time] = compare(summary_time, result_time)
     elif result_time:
-        JSON_SUMMARY[key] = result_time
+        JSON_SUMMARY[time] = result_time
 
 def _mkdir_test(logger, args, result):
     dstdir = os.path.join(args.publish_results, result.test.name)
@@ -150,7 +136,7 @@ def test_output_files(logger, args, result):
     if not dstdir:
         return
     # copy plain text files
-    text_name = re.compile(r"(\.txt|\.diff|^RESULT)$")
+    text_name = re.compile(r"(\.txt|\.diff|^RESULT|\.json)$")
     log_name = re.compile(r"(\.log)$")
     for name in os.listdir(result.output_directory):
         # copy simple files
@@ -179,33 +165,20 @@ def json_result(logger, args, result):
     if not args.publish_results:
         return
 
-    # Convert the result into json, and ...
-    json_builder = printer.JsonBuilder()
-    printer.build_result(logger, result, args, results_to_print, json_builder)
-    json_result = json_builder.json()
-
-    # ... if there is an output directory, write that also
-    outdir = _mkdir_test_output(logger, args, result)
-    if outdir:
-        path = os.path.join(outdir, "result.json")
-        logger.info("writing result to '%s'", path)
-        with open(path, "w") as output:
-            jsonutil.dump(json_result, output)
-            output.write("\n")
-
     # accumulate results.json
-    JSON_RESULTS.append(json_result)
+    json = result.json()
+    JSON_RESULTS.append(json)
 
     # accumulate summary.json
     _add(JSON_SUMMARY, "totals", result.test.kind, result.test.status, str(result))
     for issue in result.issues:
-        for domain in result.issues[issue]:
+        for host in result.issues[issue]:
             # count the number of times it occurred
-            _add(JSON_SUMMARY, "totals", result.test.kind, result.test.status, "errors", issue)
+            _add(JSON_SUMMARY, "totals", result.test.kind, result.test.status, "issues", issue)
 
-    # extend the times
-    _update_time(min, "start_time", json_result)
-    _update_time(max, "stop_time", json_result)
+    # use the time in the JSON to update the global times
+    _update_time(min, json, "start_time")
+    _update_time(max, json, "stop_time")
 
 
 def json_results(logger, args):

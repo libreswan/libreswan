@@ -12,7 +12,7 @@ table.summary > tbody > tr > td:first-child {
     width: 35%;
 }
 
-table div.errors {
+table div.issues {
     text-align: left;
 }
 

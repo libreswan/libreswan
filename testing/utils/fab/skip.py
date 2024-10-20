@@ -13,15 +13,15 @@
 # for more details.
 
 from fab import argutil
-from fab import post
+from fab import resolution
 
 # a list/set of resolutions
 class Skip(argutil.List):
-    PASSED = post.Resolution.PASSED
-    FAILED = post.Resolution.FAILED
-    UNRESOLVED = post.Resolution.UNRESOLVED
-    UNTESTED = post.Resolution.UNTESTED
-    UNSUPPORTED = post.Resolution.UNSUPPORTED
+    PASSED = resolution.PASSED
+    FAILED = resolution.FAILED
+    UNRESOLVED = resolution.UNRESOLVED
+    UNTESTED = resolution.UNTESTED
+    UNSUPPORTED = resolution.UNSUPPORTED
 
 def add_arguments(parser, *defaults):
     group = parser.add_argument_group("Skip arguments")
