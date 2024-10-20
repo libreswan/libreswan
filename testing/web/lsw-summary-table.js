@@ -30,7 +30,7 @@ function lsw_summary_table(table_id, summary) {
     //
     // The table "totals" is structured:
     //
-    //    <kind> . <status> . <result|errors> . <count>
+    //    <kind> . <status> . <result|issues> . <count>
     //
     // and the table reflects this (with some filtering).
 
@@ -67,22 +67,22 @@ function lsw_summary_table(table_id, summary) {
 	    }
 
 	    results_columns.push({
-		title: "errors",
+		title: "issues",
 		kind: kind,
 		status: status,
 		value: function(summary) {
-		    let errors = (summary.totals &&
+		    let issues = (summary.totals &&
 				  summary.totals[this.kind] &&
 				  summary.totals[this.kind][this.status] &&
 				  summary.totals[this.kind][this.status][this.title] ||
 				  null)
 		    html = ""
-		    if (errors) {
-			html += "<div class=\"errors\">"
-			for (const error of Object.keys(errors).sort()) {
-			    // only real errors are UPPER CASE?
-			    if (error == error.toUpperCase()) {
-				html += error + ": " + errors[error] + "<br>"
+		    if (issues) {
+			html += "<div class=\"issues\">"
+			for (const issue of Object.keys(issues).sort()) {
+			    // only real issues are UPPER CASE?
+			    if (issue == issue.toUpperCase()) {
+				html += issue + ": " + issues[issue] + "<br>"
 			    }
 			}
 			html += "</div>"
