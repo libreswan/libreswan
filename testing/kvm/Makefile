@@ -14,9 +14,6 @@
 
 include ../../mk/dirs.mk
 include ../../mk/config.mk
-
-WEB_REPODIR=$(KVM_RUTDIR)
-
 include ../../mk/web-targets.mk
 
 # Note: GNU Make doesn't let you combine pattern targets (e.x.,
