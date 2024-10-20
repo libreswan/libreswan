@@ -79,7 +79,7 @@ KVM_LOCALDIR ?= $(KVM_POOLDIR)
 
 KVM_PREFIX ?=
 KVM_WORKERS ?= 1
-KVM_NUMBERS = $(wordlist 2, $(KVM_WORKERS), 1 2 3 4 5 6 7 8 9)
+KVM_NUMBERS = $(wordlist 2, $(KVM_WORKERS), 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17)
 KVM_TEST_PREFIXES ?= $(sort \
 	$(join $(KVM_LOCALDIR)/, $(KVM_PREFIX)) \
 	$(foreach n, $(KVM_NUMBERS), $(join $(KVM_LOCALDIR)/, $(join $(patsubst %., %, $(KVM_PREFIX)), $(n)))))
