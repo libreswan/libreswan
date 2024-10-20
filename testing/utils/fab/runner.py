@@ -343,7 +343,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             # and save it in the shared
                             # all.console.verbose.txt file.
 
-                            if not command.guest.name:
+                            if not command.guest:
                                 last_was_comment = True
                                 all_verbose_txt.write(command.line)
                                 all_verbose_txt.write("\n");

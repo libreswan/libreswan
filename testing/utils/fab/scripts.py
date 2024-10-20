@@ -154,9 +154,9 @@ def commands(directory, logger):
                     if guest:
                         commands.append(Command(hosts.lookup(guest), line, script))
                     elif line:
-                        commands.append(Command(guest, "# "+line, script))
+                        commands.append(Command(None, "# "+line, script))
                     else:
-                        commands.append(Command(guest, "#", script))
+                        commands.append(Command(None, "#", script))
             return commands
 
     return _guest_scripts(directory, logger)
