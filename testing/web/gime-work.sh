@@ -66,8 +66,12 @@ else
     earliest_commit=$(${bindir}/earliest-commit.sh ${summarydir})
 fi
 
+echo summarydir=${summarydir} rutdir=${rutdir} earliest_commit=${earliest_commit} 1>&2
+
 branch=$(${bindir}/gime-git-branch.sh .)
 remote=$(git config --get branch.${branch}.remote)
+
+echo branch=${branch} remote=${remote} 1>&2
 
 # non-zero index indicates earliest commit is untested
 earliest_index=0
