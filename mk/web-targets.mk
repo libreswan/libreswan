@@ -18,7 +18,7 @@
 # Because web-page dependencies are very heavy (invoking git et.al.)
 # much of this code needs to be made conditional.
 
-LSW_WEBDIR ?= $(top_srcdir)/RESULTS
+LSW_WEBDIR ?= $(abs_top_srcdir)/RESULTS
 WEB_SUMMARYDIR ?= $(LSW_WEBDIR)
 ifneq ($(wildcard $(WEB_SUMMARYDIR)),)
 WEB_ENABLED ?= true
