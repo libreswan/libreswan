@@ -20,7 +20,7 @@ east #
 "westnet-eastnet-0":   labeled_ipsec:no;
 "westnet-eastnet-0":   sec_label:unset;
 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clone_id: 0;
-"westnet-eastnet-0":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-0":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-0":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -41,7 +41,7 @@ east #
 "westnet-eastnet-1":   labeled_ipsec:no;
 "westnet-eastnet-1":   sec_label:unset;
 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clone_id: 1;
-"westnet-eastnet-1":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-1":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -62,7 +62,7 @@ east #
 "westnet-eastnet-2":   labeled_ipsec:no;
 "westnet-eastnet-2":   sec_label:unset;
 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clone_id: 2;
-"westnet-eastnet-2":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-2":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -158,7 +158,7 @@ east #
 "westnet-eastnet-0":   labeled_ipsec:no;
 "westnet-eastnet-0":   sec_label:unset;
 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clone_id: 0;
-"westnet-eastnet-0":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-0":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-0":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -180,7 +180,7 @@ east #
 "westnet-eastnet-1":   labeled_ipsec:no;
 "westnet-eastnet-1":   sec_label:unset;
 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clone_id: 1;
-"westnet-eastnet-1":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-1":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -201,7 +201,7 @@ east #
 "westnet-eastnet-2":   labeled_ipsec:no;
 "westnet-eastnet-2":   sec_label:unset;
 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clone_id: 2;
-"westnet-eastnet-2":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"westnet-eastnet-2":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

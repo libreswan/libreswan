@@ -109,7 +109,7 @@ Connection list:
 "rw-eastnet-ipv6":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "rw-eastnet-ipv6":   sec_label:unset;
 "rw-eastnet-ipv6":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"rw-eastnet-ipv6":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0"
+"rw-eastnet-ipv6":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "rw-eastnet-ipv6":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "rw-eastnet-ipv6":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "rw-eastnet-ipv6":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
