@@ -1,7 +1,3 @@
-function lsw_summary_graph_click_test_run(table_id, summary_test_run) {
-    window.location = "../" + summary_test_run.directory
-}
-
 function results(div_id, json_file) {
     d3.json(json_file, function(error, results) {
 
