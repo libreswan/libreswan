@@ -18,18 +18,23 @@ apt-get update
 while read p eol ; do
     apt-get install -y $p
 done <<EOF
-net-tools
-make
-build-essential
-libnss3-dev
-pkg-config
-libevent-dev
-libunbound-dev
 bison
+build-essential
 flex
-libcurl4-nss-dev
-libpam0g-dev
 libcap-ng-dev
+libcurl4-nss-dev
+libevent-dev
 libldns-dev
+libnss3
+libnss3-dev
+libnss3-tools
+libpam0g-dev
+libunbound-dev
+make
+net-tools
+python3-pexpect
+pkg-config
 xmlto
+iptables
+nftables
 EOF
