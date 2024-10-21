@@ -90,10 +90,12 @@
 #include "terminate.h"
 #include "addresspool.h"
 #include "ipsec_interface.h"
+#include "verbose.h"
 
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,
-					     const ip_selector *remote_client);
+					     const ip_selector *remote_client,
+					     struct verbose verbose);
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
@@ -857,9 +859,12 @@ static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type 
 
 stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 {
+	VERBOSE_DBGP(DBG_BASE, ike_sa->logger,
+		     "in %s() with "PRI_SO, __func__, pri_so(ike_sa->st_serialno));
+	vassert(ike_sa == md->v1_st);
+
 	struct ike_sa *ike = pexpect_parent_sa(ike_sa);
-	PASSERT(ike_sa->logger, &ike->sa == md->v1_st);
-	struct connection *c = ike->sa.st_connection;
+	struct connection *c = ike->sa.st_connection; /* parent, tentative */
 
 	/*
 	 * 5.5 Phase 2 - Quick Mode
@@ -988,10 +993,12 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 	/*
 	 * Now that we have identities of client subnets, we must look
-	 * for a suitable connection (our current one only matches for
-	 * hosts).
+	 * for a suitable connection (the IKE SA's connection only
+	 * matches for hosts).
 	 */
-	struct connection *p = find_v1_client_connection(c, &local_client, &remote_client);
+	struct connection *p = find_v1_client_connection(ike->sa.st_connection,
+							 &local_client, &remote_client,
+							 verbose);
 
 	/*
 	 * For instance: ikev1-l2tp-02 and ikev1-nat-transport-02.
@@ -1000,7 +1007,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	    c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
 	    nat_traversal_detected(&ike->sa)) {
 		p = c;
-		pdbg(ike->sa.logger, "using existing connection; nothing better and current is NAT'ed and transport mode");
+		vdbg("using existing connection; nothing better and current is NAT'ed and transport mode");
 	}
 
 	/*
@@ -1013,7 +1020,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	    /* c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT && */
 	    is_virtual_remote(c)) {
 		p = c;
-		pdbg(ike->sa.logger, "using existing connection; nothing better and current is virtual-private");
+		vdbg("using existing connection; nothing better and current is virtual-private");
 	}
 
 	/*
@@ -1065,7 +1072,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		     "Quick Mode without mode-config, recovered previously assigned lease %s",
 		     str_selector(&remote_client, &sb));
 
-		pdbg(ike->sa.logger, "another hack to get the SPD in sync");
+		vdbg("another hack to get the SPD in sync");
 		c->spd->remote->client = remote_client;
 		spd_db_rehash_remote_client(c->spd);
 	}
@@ -1116,8 +1123,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			p = connection_addref(p, p->logger); /* must delref */
 		}
 		connection_buf cib;
-		ldbg(p->logger, "using connection "PRI_CONNECTION"",
-		     pri_connection(p, &cib));
+		vdbg("using connection "PRI_CONNECTION"", pri_connection(p, &cib));
 		c = p;
 	} else {
 		c = connection_addref(c, c->logger); /* must delref */
@@ -1133,8 +1139,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	selector_buf csb;
 	selector_buf rcb;
 	address_buf lb;
-	ldbg(ike->sa.logger,
-	     "%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
+	vdbg("%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
 	     str_selector(&c->spd->remote->client, &rcb),
@@ -1156,8 +1161,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 	if (is_virtual_remote(c)) {
 
-		pdbg(c->logger, "virtual-private: %s() spd %s/%s; config %s/%s",
-		     __func__,
+		vdbg("virtual-private: spd %s/%s; config %s/%s",
 		     bool_str(c->spd->local->virt != NULL),
 		     bool_str(c->spd->remote->virt != NULL),
 		     bool_str(c->local->config->child.virt != NULL),
@@ -1173,6 +1177,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		}
 
 		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam(buf, "setting phase 2 virtual values to ");
 			jam_spd_end(buf, c, c->spd->remote, NULL, LEFT_END, oriented(c));
 		}
@@ -1983,10 +1988,20 @@ static struct connection *fc_try(const struct connection *c,
 				 const ip_address local_address,
 				 const ip_address remote_address,
 				 const ip_selector *local_client,
-				 const ip_selector *remote_client)
+				 const ip_selector *remote_client,
+				 struct verbose verbose)
 {
+	selector_pair_buf spb;
+	address_buf lb, rb;
+	vdbg("%s() %s<-%s %s",
+	     __func__,
+	     str_address(&local_address, &lb), str_address(&remote_address, &rb),
+	     str_selector_pair(local_client, remote_client, &spb));
+	verbose.level++;
+
 	if (selector_is_unset(local_client) ||
 	    selector_is_unset(remote_client)) {
+		vdbg("null selectors!?!");
 		return NULL;
 	}
 
@@ -2008,19 +2023,21 @@ static struct connection *fc_try(const struct connection *c,
 			.where = HERE,
 		},
 	};
+	unsigned level = verbose.level;
 	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 
+		connection_buf cb;
+		selector_pair_buf sb;
+		vdbg("looking at "PRI_CONNECTION" with %s",
+		     pri_connection(d, &cb),
+		     str_selector_pair(&d->spd->local->client, &d->spd->remote->client, &sb));
+		verbose.level = level+1;
+
 		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
-			connection_buf cb;
-			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
-			    pri_connection(d, &cb));
+			vdbg("skipping unauthenticated connection instance with ID_NULL");
 			continue;
 		}
-
-		selector_pair_buf sb;
-		dbg("  fc_try: looking at %s",
-		    str_selector_pair(&d->spd->local->client, &d->spd->remote->client, &sb));
 
 		/*
 		 * ??? what should wildcards and pathlen default to?
@@ -2039,6 +2056,7 @@ static struct connection *fc_try(const struct connection *c,
 			      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
 			      trusted_ca(ASN1(c->remote->host.config->ca),
 					 ASN1(d->remote->host.config->ca), &pathlen))) {
+				vdbg("skipping connection same connalias but with faulty ID (logic is too complex)");
 				continue;
 			}
 		}
@@ -2054,6 +2072,7 @@ static struct connection *fc_try(const struct connection *c,
 		       d->spd->local->client.hport == local_port) &&
 		      (d->remote->config->child.protoport.has_port_wildcard ||
 		       d->spd->remote->client.hport == remote_port))) {
+			vdbg("skipping connection with wrong protocol/port");
 			continue;
 		}
 
@@ -2069,41 +2088,41 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
+		vdbg("checking connection's SPDs");
+		verbose.level = level+2;
+
 		FOR_EACH_ITEM(d_spd, &d->child.spds) {
 
 			if (best == d) {
 				break;
 			}
 
-			if (DBGP(DBG_BASE)) {
-				selector_buf s1, d1;
-				selector_buf s3, d3;
-				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-					c->name,
-					str_selector_subnet_port(local_client, &s1),
-					c->spd->local->client.ipproto,
-					c->spd->local->client.hport,
-					str_selector_subnet_port(remote_client, &d1),
-					c->spd->remote->client.ipproto,
-					c->spd->remote->client.hport,
-					(is_virtual_remote(c) ? "(virt)" : ""),
-					d->name,
-					str_selector_subnet_port(&d_spd->local->client, &s3),
-					d_spd->local->client.ipproto,
-					d_spd->local->client.hport,
-					str_selector_subnet_port(&d_spd->remote->client, &d3),
-					d_spd->remote->client.ipproto,
-					d_spd->remote->client.hport,
-					(is_virtual_spd_end(d_spd->remote) ? "(virt)" : ""));
-			}
+			selector_buf s1, d1;
+			selector_buf s3, d3;
+			vdbg("trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
+			     c->name,
+			     str_selector_subnet_port(local_client, &s1),
+			     c->spd->local->client.ipproto,
+			     c->spd->local->client.hport,
+			     str_selector_subnet_port(remote_client, &d1),
+			     c->spd->remote->client.ipproto,
+			     c->spd->remote->client.hport,
+			     (is_virtual_remote(c) ? "(virt)" : ""),
+			     d->name,
+			     str_selector_subnet_port(&d_spd->local->client, &s3),
+			     d_spd->local->client.ipproto,
+			     d_spd->local->client.hport,
+			     str_selector_subnet_port(&d_spd->remote->client, &d3),
+			     d_spd->remote->client.ipproto,
+			     d_spd->remote->client.hport,
+			     (is_virtual_spd_end(d_spd->remote) ? "(virt)" : ""));
+			verbose.level = level+3;
 
 			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
-				if (DBGP(DBG_BASE)) {
-					selector_buf s1, s3;
-					DBG_log("   our client (%s) not in local_net (%s)",
-						str_selector_subnet_port(&d_spd->local->client, &s3),
-						str_selector_subnet_port(local_client, &s1));
-				}
+				selector_buf s1, s3;
+				vdbg("our client (%s) not in local_net (%s)",
+				     str_selector_subnet_port(&d_spd->local->client, &s3),
+				     str_selector_subnet_port(local_client, &s1));
 				continue;
 			}
 
@@ -2111,12 +2130,10 @@ static struct connection *fc_try(const struct connection *c,
 
 				if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client) &&
 				    !is_virtual_spd_end(d_spd->remote)) {
-					if (DBGP(DBG_BASE)) {
-						selector_buf d1, d3;
-						DBG_log("   their client (%s) not in same remote_net (%s)",
-							str_selector_subnet_port(&d_spd->remote->client, &d3),
-							str_selector_subnet_port(remote_client, &d1));
-					}
+					selector_buf d1, d3;
+					vdbg("their client (%s) not in same remote_net (%s)",
+					     str_selector_subnet_port(&d_spd->remote->client, &d3),
+					     str_selector_subnet_port(remote_client, &d1));
 					continue;
 				}
 
@@ -2128,10 +2145,11 @@ static struct connection *fc_try(const struct connection *c,
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
 							 &d_spd->remote->host->id))) {
-					dbg("   virtual net not allowed");
+					vdbg("virtual net not allowed");
 					continue;
 				}
 			} else if (!remote_is_host) {
+				vdbg("not remote_is_host, so!?!");
 				continue;
 			}
 
@@ -2155,20 +2173,23 @@ static struct connection *fc_try(const struct connection *c,
 				(c == d ? 1 : 0) +
 				1;
 			if (prio > best_prio) {
+				vdbg("best so far!");
 				best = d;
 				best_prio = prio;
 			}
 		}
 	}
+	verbose.level = level;
 
+	/* XXX: should have been skipped earlier!?! */
 	if (best != NULL && never_negotiate(best))
 		best = NULL;
 
-	dbg("  fc_try concluding with %s [%" PRIu32 "]",
+	vdbg("concluding with %s [%" PRIu32 "]",
 	    (best ? best->name : "none"), best_prio);
 
 	if (best == NULL && virtualwhy != NULL) {
-		llog(RC_LOG, c->logger,
+		llog(RC_LOG, verbose.logger,
 		     "peer proposal was rejected in a virtual connection policy: %s",
 		     virtualwhy);
 	}
@@ -2178,29 +2199,29 @@ static struct connection *fc_try(const struct connection *c,
 
 struct connection *find_v1_client_connection(struct connection *const c,
 					     const ip_selector *local_client,
-					     const ip_selector *remote_client)
+					     const ip_selector *remote_client,
+					     struct verbose verbose)
 {
-	struct connection *d;
+	selector_pair_buf sb;
+	connection_buf cb;
+	vdbg("%s() looking for %s, starting with "PRI_CONNECTION,
+	     __func__, str_selector_pair(local_client, remote_client, &sb),
+	     pri_connection(c, &cb));
+	verbose.level++;
 
 	/* weird things can happen to our interfaces */
 	if (!oriented(c)) {
+		vdbg("connection is unoriented");
 		return NULL;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		selector_pair_buf sb;
-		DBG_log("find_v1_client_connection starting with %s", c->name);
-		DBG_log("  looking for %s",
-			str_selector_pair(local_client, remote_client, &sb));
-	}
-
 	if (selector_is_unset(local_client)) {
-		dbg("peer's local client is not set");
+		vdbg("peer's local client is not set");
 		return NULL;
 	}
 
 	if (selector_is_unset(remote_client)) {
-		dbg("peer's remote client is not set");
+		vdbg("peer's remote client is not set");
 		return NULL;
 	}
 
@@ -2208,25 +2229,21 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	 * Give priority to current connection
 	 * but even greater priority to a routed concrete connection.
 	 */
+	struct connection *d;
+
 	{
-		struct connection *unrouted = NULL;
 		int srnum = -1;
 
+		struct connection *unrouted = NULL;
 		FOR_EACH_ITEM(spd, &c->child.spds) {
-
-			if (unrouted != NULL) {
-				break;
-			}
 
 			srnum++;
 
-			if (DBGP(DBG_BASE)) {
-				selector_buf s2;
-				selector_buf d2;
-				DBG_log("  concrete checking against sr#%d %s -> %s", srnum,
-					str_selector_subnet_port(&spd->local->client, &s2),
-					str_selector_subnet_port(&spd->remote->client, &d2));
-			}
+			selector_buf s2;
+			selector_buf d2;
+			vdbg("concrete checking against sr#%d %s -> %s", srnum,
+			     str_selector_subnet_port(&spd->local->client, &s2),
+			     str_selector_subnet_port(&spd->remote->client, &d2));
 
 			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
 			int local_port = selector_port(*local_client).hport;
@@ -2235,15 +2252,17 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			if (selector_range_eq_selector_range(spd->local->client, *local_client) &&
 			    selector_range_eq_selector_range(spd->remote->client, *remote_client) &&
 			    spd->local->client.ipproto == local_protocol &&
-			    (!spd->local->client.hport ||
-			     spd->local->client.hport == local_port) &&
+			    (!spd->local->client.hport || spd->local->client.hport == local_port) &&
 			    (spd->remote->client.ipproto == remote_protocol) &&
-			    (!spd->remote->client.hport ||
-			     spd->remote->client.hport == remote_port)) {
-				if (kernel_route_installed(c))
+			    (!spd->remote->client.hport || spd->remote->client.hport == remote_port)) {
+
+				/* instant winner */
+				if (kernel_route_installed(c)) {
 					return c;
+				}
 
 				unrouted = c;
+				break;
 			}
 		}
 
@@ -2257,23 +2276,50 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		 * and earlier references would be wrong (segfault).
 		 */
 		d = fc_try(c, c->local->host.addr, c->remote->host.addr,
-			   local_client, remote_client);
+			   local_client, remote_client, verbose);
 
-		dbg("  fc_try %s gives %s", c->name, (d ? d->name : "none"));
+		vdbg("fc_try %s gives %s", c->name, (d ? d->name : "none"));
 
-		if (d == NULL)
+		if (d == NULL) {
 			d = unrouted;
+		}
 	}
 
 	if (d == NULL) {
 		/*
 		 * look for an abstract connection to match
+		 *
+		 * XXX: this code makes no sense.
+		 *
+		 * It is searching through the connection's SPDs using
+		 * the .local .host .addr to search for a connection
+		 * matching LOCAL<-ANY.  The problem is that .spd
+		 * .local .host .addr is in the connection (C) making
+		 * the loop pointless!?!
 		 */
+		vlog("trying with LOCAL<->ANY");
+		unsigned level = verbose.level++;
 		ip_address local_address = unset_address;
 		FOR_EACH_ITEM(spd, &c->child.spds) {
-			if (address_is_specified(local_address)) {
-				break;
-			}
+			verbose.level = level+1;
+			selector_buf s2;
+			selector_buf d2;
+			vdbg("checking hostpair %s -> %s",
+			     str_selector_subnet_port(&spd->local->client, &s2),
+			     str_selector_subnet_port(&spd->remote->client, &d2));
+			/*
+			 * Look for a host-pair matching LOCAL<-ANY.
+			 * If one is found, flag that by setting
+			 * local_address.
+			 *
+			 * XXX: Is this just a convolted way of
+			 * figuring out that C is an instance, and
+			 * perhaps the template is better?
+			 *
+			 * XXX: it would probably be easier to just
+			 * call fc_try() with local/unset and see what
+			 * comes back.
+			 */
 			struct connection_filter hpf = {
 				.host_pair = {
 					.local = &spd->local->host->addr,
@@ -2282,29 +2328,31 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				.ike_version = IKEv1,
 				.search = {
 					.order = NEW2OLD,
-					.logger = &global_logger,
+					.logger = verbose.logger,
 					.where = HERE,
 				},
 			};
 			while (next_connection(&hpf)) {
 				/* found something */
 				local_address = spd->local->host->addr;
-				selector_buf s2;
-				selector_buf d2;
-				DBG_log("  checking hostpair %s -> %s",
-					str_selector_subnet_port(&spd->local->client, &s2),
-					str_selector_subnet_port(&spd->remote->client, &d2));
+				address_buf ab;
+				vdbg("found a connection matching %s<-any",
+				     str_address(&local_address, &ab));
+				break;
+			}
+			if (address_is_specified(local_address)) {
 				break;
 			}
 		}
+		verbose.level = level;
 
 		if (address_is_specified(local_address)) {
 			/* RW match with actual remote_id or abstract remote_id? */
 			d = fc_try(c, local_address, unset_address,
-				   local_client, remote_client);
+				   local_client, remote_client, verbose);
 		}
 	}
 
-	dbg("  concluding with d = %s", (d ? d->name : "none"));
+	vdbg("concluding with d = %s", (d ? d->name : "none"));
 	return d;
 }
