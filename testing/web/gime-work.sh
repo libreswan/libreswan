@@ -282,7 +282,8 @@ echo RUN ${run_commit} at ${run_index} length ${run_length} 1>&2
 
 print_selected() {
     echo selecting $1 at $2 1>&2
-    ( git log $2^..$2 ) 1>&2
+    # dump to the console
+    git --no-pager show --no-patch $2 1>&2
     echo $2
     exit 0
 }
