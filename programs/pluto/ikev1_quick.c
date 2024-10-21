@@ -849,13 +849,15 @@ static stf_status quick_outI1_continue_tail(struct state *st,
  * we have to call nonce/ke and DH if we are doing PFS.
  */
 
-static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *md,
-					const ip_selector *local_client,
-					const ip_selector *remote_client,
-					struct crypt_mac new_iv);
+/* forward definitions */
+static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
+
+static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
 stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 {
+	struct ike_sa *parent = pexpect_parent_sa(p1st);
 	passert(p1st != NULL && p1st == md->v1_st);
 	struct connection *c = p1st->st_connection;
 	ip_selector local_client;
@@ -973,26 +975,6 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	struct crypt_mac new_iv;
 	save_new_iv(p1st, new_iv);
 
-	/*
-	 * XXX: merge.
-	 */
-	return quick_inI1_outR1_tail(p1st, md, &local_client, &remote_client, new_iv);
-}
-
-/* forward definitions */
-static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
-
-static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
-static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
-
-static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *md,
-					const ip_selector *local_client,
-					const ip_selector *remote_client,
-					struct crypt_mac new_iv)
-{
-	struct ike_sa *parent = pexpect_parent_sa(p1st);
-	pexpect(p1st == md->v1_st);
-	struct connection *c = p1st->st_connection;
 	struct hidden_variables hv;
 
 	/*
@@ -1001,14 +983,14 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 */
 	selector_pair_buf sb;
 	log_state(RC_LOG, p1st, "the peer proposed: %s",
-		  str_selector_pair(local_client, remote_client, &sb));
+		  str_selector_pair(&local_client, &remote_client, &sb));
 
 	/*
 	 * Now that we have identities of client subnets, we must look
 	 * for a suitable connection (our current one only matches for
 	 * hosts).
 	 */
-	struct connection *p = find_v1_client_connection(c, local_client, remote_client);
+	struct connection *p = find_v1_client_connection(c, &local_client, &remote_client);
 
 	/*
 	 * For instance: ikev1-l2tp-02 and ikev1-nat-transport-02.
@@ -1057,22 +1039,22 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	    c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0 &&
 	    !c->remote->child.lease[IPv4_INDEX].is_set) {
 
-		if (!selector_eq_selector(*local_client, c->spd->local->client)) {
+		if (!selector_eq_selector(local_client, c->spd->local->client)) {
 			selector_buf lb, cb;
 			llog(RC_LOG, p1st->logger,
 			     "Quick Mode request rejected, peer requested lease but proposed local selector %s does not match connection %s; deleting ISAKMP SA",
-			     str_selector(local_client, &lb),
+			     str_selector(&local_client, &lb),
 			     str_selector(&c->spd->local->client, &cb));
 			return STF_FATAL;
 		}
 
 		err_t e = lease_that_selector(c, p1st->st_xauth_username,
-					      remote_client, p1st->logger);
+					      &remote_client, p1st->logger);
 		if (e != NULL) {
 			selector_buf cb;
 			llog(RC_LOG, p1st->logger,
 			     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
-			     str_selector(remote_client, &cb), e);
+			     str_selector(&remote_client, &cb), e);
 			return STF_FATAL;
 		}
 
@@ -1080,10 +1062,10 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		selector_buf sb;
 		llog(RC_LOG, p1st->logger,
 		     "Quick Mode without mode-config, recovered previously assigned lease %s",
-		     str_selector(remote_client, &sb));
+		     str_selector(&remote_client, &sb));
 
 		pdbg(p1st->logger, "another hack to get the SPD in sync");
-		c->spd->remote->client = (*remote_client);
+		c->spd->remote->client = remote_client;
 		spd_db_rehash_remote_client(c->spd);
 	}
 
@@ -1098,13 +1080,13 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			 */
 
 			struct spd_end local = *c->spd->local;
-			local.client = *local_client;
+			local.client = local_client;
 			jam_spd_end(buf, c, &local, NULL, LEFT_END, oriented(c));
 
 			jam_string(buf, "...");
 
 			struct spd_end remote = *c->spd->remote;
-			remote.client = *remote_client;
+			remote.client = remote_client;
 			jam_spd_end(buf, c, &remote, NULL, RIGHT_END, oriented(c));
 		}
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
@@ -1126,7 +1108,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			 * template's address when it is already set.
 			 */
 			p = rw_responder_refined_instantiate(p, c->remote->host.addr,
-							     remote_client,
+							     &remote_client,
 							     &c->remote->host.id,
 							     HERE); /* must delref */
 		} else {
@@ -1142,7 +1124,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 	/* fill in the client's true ip address/subnet */
 
-	const struct ip_info *client_afi = selector_type(remote_client);
+	const struct ip_info *client_afi = selector_info(remote_client);
 	if (client_afi == NULL) {
 		client_afi = &unspec_ip_info;
 	}
@@ -1167,7 +1149,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		ip_selector selector =
 			selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
 							  selector_protocol(c->remote->child.selectors.proposed.list[0]),
-							  selector_port(*remote_client));
+							  selector_port(remote_client));
 		update_first_selector(c, remote, selector);
 	}
 
@@ -1180,12 +1162,12 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		     bool_str(c->local->config->child.virt != NULL),
 		     bool_str(c->remote->config->child.virt != NULL));
 
-		update_first_selector(c, remote, *remote_client);
+		update_first_selector(c, remote, remote_client);
 		spd_db_rehash_remote_client(c->spd);
 		set_child_has_client(c, remote, true);
 		virtual_ip_delref(&c->spd->remote->virt);
 
-		if (selector_eq_address(*remote_client, c->remote->host.addr)) {
+		if (selector_eq_address(remote_client, c->remote->host.addr)) {
 			set_child_has_client(c, remote, false);
 		}
 
