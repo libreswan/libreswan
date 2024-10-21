@@ -34,7 +34,7 @@ function lsw_compare_test_runs(test_runs) {
 	// fill in the now-loaded results.
 	for (let i = 0; i < results.length; i++) {
 	    requested_runs[i].test_results =
-		results[i].map((result) => new Result(result))
+		results[i].map((result) => new TestResult(result))
 	}
 
 	lsw_compare_table(test_runs)
@@ -196,7 +196,7 @@ function lsw_compare_table(test_runs) {
 
     test_runs.forEach(function(run, run_index) {
 	let results_column = []
-	results_column.title = lsw_commits_html(run.commits)
+	results_column.title = run.html_commits()
 	results_column.style = {
 	    header: {
 		"text-align": "left",
@@ -284,7 +284,7 @@ function lsw_compare_table(test_runs) {
 		if (!result) {
 		    return ""
 		}
-		return result.html_issues(this.directory + "/OUTPUT/")
+		return result.html_issues(this.directory + "/")
 	    },
 	})
 	columns.push(results_column)

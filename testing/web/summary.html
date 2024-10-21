@@ -6,7 +6,11 @@
     <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
 
     <script type="text/javascript" src="lsw-date2iso.js"></script>
-    <script type="text/javascript" src="result.js"></script>
+
+    <script type="text/javascript" src="TestRun.js"></script>
+    <script type="text/javascript" src="TestResult.js"></script>
+    <script type="text/javascript" src="Commit.js"></script>
+    <script type="text/javascript" src="Commits.js"></script>
 
     <link rel="stylesheet" type="text/css" href="summary.css"> </link>
 
@@ -16,14 +20,17 @@
     <script type="text/javascript" src="lsw-summary-table.js"></script>
     <script type="text/javascript" src="lsw-summary-status.js"></script>
     <script type="text/javascript" src="lsw-summary-graph.js"></script>
+
     <link rel="stylesheet" type="text/css" href="lsw-table.css"> </link>
     <link rel="stylesheet" type="text/css" href="lsw-summary-graph.css"> </link>
+
     <script>
       function lsw_summary_graph_click_test_run(table_id, test_run) {
 	  // pass selection onto the table
 	  lsw_table_select_rows("summary", new Set([test_run]))
       }
     </script>
+
     <script>
       window.addEventListener('load', function() {
           lsw_summary_load("", function(summary) {

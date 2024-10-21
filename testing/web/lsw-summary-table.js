@@ -11,17 +11,12 @@ function lsw_summary_table(table_id, summary) {
 	html: function(row) {
 	    // If there are no commits, this (correctly) returns a
 	    // blank column.
-	    return lsw_commits_html(row.commits)
+	    return row.html_commits()
 	},
 	value: function(row) {
-	    // The value is used to sort the column.  Should the
-	    // commit not be known, use NOW so that a sort will
-	    // force the row to the top/bottom.
-	    if (row.commits.length) {
-		return row.commits[0].committer.date
-	    } else {
-		return now
-	    }
+	    // The value is used to sort the column.  A run without a
+	    // commit is dropped on the floor.
+	    return row.commit.rank
 	},
     })
 
@@ -147,7 +142,7 @@ function lsw_summary_table(table_id, summary) {
 	data: summary.test_runs,
 	sort: {
 	    column: columns[0], // Commits
-	    ascending: false,
+	    ascending: true,
 	},
 	columns: columns,
 	select: {
@@ -156,28 +151,4 @@ function lsw_summary_table(table_id, summary) {
 	    }
 	},
     })
-}
-
-
-// Return a sorted list of MAP's keys, but with any key in FIRSTS
-// moved to the front.
-//
-// For instance:
-//
-//    (["c", "d"], { "a", "b", "c" })
-//    -> ["c", "a", "b"]
-
-function lsw_filter_first_list(firsts, map) {
-    // force firsts to the front
-    let list = firsts.filter(function(first) {
-	return first in map
-    })
-    // and then append any thing else in sort order
-    for (const element of Object.keys(map).sort()) {
-	if (list.indexOf(element) < 0) {
-	    list.push(element)
-	}
-    }
-
-    return list
 }

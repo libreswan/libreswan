@@ -23,15 +23,3 @@ function lsw_date2iso_long(d) {
 	return ">>> " + d + " <<<"
     }
 }
-
-function lsw_cleanup_dates(table, fields) {
-    return fields.reduce(function(values, key) {
-	if (table[key]) {
-	    table[key] = new Date(table[key])
-	    return values
-	} else {
-	    console.log("date", key, "not found in", table)
-	    return false
-	}
-    }, true)
-}

@@ -76,13 +76,15 @@ function lsw_table(table) {
 		column.sort = function(l, r) {
 		    let lv = column.value(l)
 		    let rv = column.value(r)
+		    let diff
 		    if (lv < rv) {
-			return -1
+			diff = -1
 		    } else if (lv > rv) {
-			return 1
+			diff = 1
 		    } else {
-			return 0
+			diff = 0
 		    }
+		    return diff
 		}
 	    }
 	}
@@ -191,10 +193,11 @@ function lsw_table_body(table) {
     // always sort
 
     table.rows.sort(function (left_row, right_row) {
+	let column = table.sort.column
 	if (table.sort.ascending) {
-	    return table.sort.column.sort(left_row.data, right_row.data)
+	    return column.sort(left_row.data, right_row.data)
 	} else {
-	    return table.sort.column.sort(right_row.data, left_row.data)
+	    return column.sort(right_row.data, left_row.data)
 	}
     })
 

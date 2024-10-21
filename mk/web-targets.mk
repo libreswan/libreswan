@@ -26,6 +26,7 @@ endif
 
 WEB_UTILSDIR ?= $(top_srcdir)/testing/utils
 WEB_SOURCEDIR ?= $(top_srcdir)/mk/web
+WEB_MAKEDIR ?= $(top_srcdir)
 KVM_RUTDIR ?= $(abs_top_srcdir)
 WEB_REPODIR ?= $(KVM_RUTDIR)
 # these are verbose so multiple invocations can be spotted

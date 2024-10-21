@@ -27,22 +27,23 @@ function build_summary(div_id, json_file) {
 
 	// Add a column for each OS
 
-	let oss = targets.reduce(
+	let platforms = targets.reduce(
 	    function(r, target) {
-		if (target.os) {
-		    return r.add(target.os)
+		if (target.platform) {
+		    return r.add(target.platform)
 		} else {
 		    return r
 		}
 	    },
 	    new Set())
 
-	for (let os of oss) {
+	for (let platform of platforms) {
 	    columns.push({
-		title: os,
+		title: platform,
 		html: function(target) {
-		    if (os in target) {
-			return "<a href=\"" + target.target + "-" + os + ".log\">" + target[os] + "</a>"
+		    // code below merges platform results
+		    if (platform in target) {
+			return "<a href=\"" + target.target + "-" + platform + ".log\">" + target[platform] + "</a>"
 		    } else {
 			return ""
 		    }
@@ -52,22 +53,26 @@ function build_summary(div_id, json_file) {
 
 	console.log("columns", columns)
 
-	// Merge similar targets
+	// Merge identical targets
 
 	// Build the table
 	let runs = targets.reduce(
 	    function(m, target) {
-		if (m.has(target.ot)) {
-		    let mm = m.get(target.ot)
-		    mm[target.os] = target.status
+		let mm
+		if (m.has(target.target)) {
+		    // m[target] already exists, update it
+		    mm = m.get(target.target)
 		} else {
-		    let mm = new Object()
-		    mm["target"] = target.ot
-		    if (target.os)
-			mm[target.os] = target.status
-		    else
-			mm["all"] = target.status
-		    m.set(target.ot, mm)
+		    // m[target] doesn't exist, create it
+		    mm = new Object()
+		    mm["target"] = target.target
+		    m.set(target.target, mm)
+		}
+		// Add the new status
+		if (target.platform) {
+		    mm[target.platform] = target.status
+		} else {
+		    mm["all"] = target.status
 		}
 		return m
 	    },

@@ -17,7 +17,7 @@ var lsw_count_names = [
 
 function lsw_summary_graph(graph_id, table_id, summary) {
 
-    console.log("test_runs:", summary.test_runs.length)
+    console.log("test_runs:", summary.test_runs.length, summary.test_runs)
 
     // old code; don't plot nothing
     if (summary.test_runs.length == 0) {
@@ -108,10 +108,10 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     //
     // Set up the graph dimensions and scale
     //
-    // Use first test run's committer.date (test runs are ordered by
-    // that dated).
+    // Use first test run's commit date (test runs are ordered by that
+    // dated).
 
-    let start = summary.test_runs[0].commit.committer.date
+    let start = summary.commits.oldest.committer_date
     console.log("graph start:", start)
 
     let xt = d3.scaleUtc()
@@ -182,9 +182,9 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // bad).
     //
 
-    let newest_test_run = summary.test_runs[summary.test_runs.length - 1]
+    let newest_test_run = summary.test_runs[0]
     console.log("newest_test_run", newest_test_run)
-    let keys_x = x(newest_test_run.commit.committer.date) + radius
+    let keys_x = x(newest_test_run.commit.committer_date) + radius
     let keys = []
 
     //
@@ -205,19 +205,21 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     // the result is in reverse chronological order.
 
     let good_first_parent_test_runs = []
-    for (let commit = newest_test_run && newest_test_run.commit;
+    for (let commit = summary.test_runs[0].commit;
 	 commit; commit = commit.parents[0]) {
-	if (commit.test_run && commit.test_run.totals && commit.test_run != summary.current) {
+	if (commit.test_run &&
+	    commit.test_run.totals &&
+	    commit.test_run != summary.current) {
 	    good_first_parent_test_runs.push(commit.test_run)
 	}
     }
-    console.log("good_first_parent_test_runs:", good_first_parent_test_runs.length)
+    console.log("good_first_parent_test_runs:", good_first_parent_test_runs)
 
     //
     // Identify the right-most side of the "full" plot.
     //
     // Things like keys are positioned based on this.  Remember,
-    // good_first_parent_test_runs[] is in reverse chronological order
+    // good_first_parent_test_runs[] is in reverse topological order
     // so "last" is at the front.
 
     let newest_first_parent_test_run = good_first_parent_test_runs[0]
@@ -232,7 +234,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     for (let sum_index = sum_text.length - 1; sum_index >= 0; sum_index--) {
 	let line = d3.line()
 	    .x(function(test_run) {
-		return x(test_run.commit.committer.date)
+		return x(test_run.commit.committer_date)
 	    })
 	    .y(function(test_run) {
 		return y(sums[test_run.commit.hash][sum_index])
@@ -256,7 +258,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	    })
 	    .attr("r", radius)
 	    .attr("cx", function(test_run) {
-		return x(test_run.commit.committer.date)
+		return x(test_run.commit.committer_date)
 	    })
 	    .attr("cy", function(test_run) {
 		return y(sums[test_run.commit.hash][sum_index])
@@ -302,7 +304,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	})
 	.attr("r", radius)
 	.attr("cx", function(test_run) {
-	    return x(test_run.commit.committer.date)
+	    return x(test_run.commit.committer_date)
 	})
 	.attr("cy", function(test_run) {
 	    return height-radius
@@ -322,7 +324,7 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     if (summary.current.commits && summary.current.commits.length) {
 	keys.push({
 	    klass: "current",
-	    x: x(summary.current.commit.committer.date) + radius,
+	    x: x(summary.current.commit.committer_date) + radius,
 	    y: height - radius,
 	    text: "Current",
 	})

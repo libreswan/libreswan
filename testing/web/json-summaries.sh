@@ -35,7 +35,7 @@ fi | while read d; do
     dir=$(dirname $d)
     rev=$(${bindir}/gime-git-rev.sh ${dir})
     # expand to full hash
-    hash=$(${bindir}/gime-git-hash.sh ${rutdir} ${rev})
+    hash=$(git -C ${rutdir} show --no-patch --format=%H ${rev})
     # let any existing hash override above
     jq --arg hash "${hash}" \
        '.hash = if .hash? then .hash else $hash end | .directory = (input_filename|split("/")|.[-2])' \

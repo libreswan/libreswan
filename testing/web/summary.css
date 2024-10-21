@@ -39,3 +39,6 @@ table .commits tr.tag td.subject {
 table .commits tr.merge td.subject {
     font-weight: bolder;
 }
+table .commits tr.branch td.subject {
+    font-weight: bolder;
+}

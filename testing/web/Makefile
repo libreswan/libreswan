@@ -15,22 +15,26 @@
 include ../../mk/dirs.mk
 include ../../mk/config.mk
 
-KVM_WEBDIR ?= $(abs_top_srcdir)/RESULTS
 KVM_RUTDIR ?= $(abs_top_srcdir)
-
-WEB_SUMMARYDIR ?= $(KVM_WEBDIR)
-WEB_UTILSDIR ?= $(abs_top_srcdir)/testing/utils
 WEB_RUTDIR ?= $(KVM_RUTDIR)
 
-# these are verbose so multiple invocations can be spotted
-ifndef WEB_SUBDIR
-WEB_SUBDIR ?= $(shell ./gime-git-description.sh $(WEB_RUTDIR))
-endif
-ifndef WEB_HASH
-WEB_HASH := $(shell git -C $(WEB_RUTDIR) show --no-patch --format=%H HEAD)
-endif
+KVM_WEBDIR ?= $(abs_top_srcdir)/RESULTS
+WEB_SUMMARYDIR ?= $(KVM_WEBDIR)
+
+WEB_MAKEDIR ?= $(srcdir)
+WEB_UTILSDIR ?= $(abs_top_srcdir)/testing/utils
+
+WEB_BRANCH_NAME ?= $(shell git -C $(WEB_RUTDIR) describe --abbrev=0)
+WEB_BRANCH_TAG ?= $(WEB_BRANCH_NAME)
+
+WEB_HASH ?= $(shell git -C $(WEB_RUTDIR) show --no-patch --format=%H HEAD)
+WEB_ABBREV_HASH = $(shell git -C $(WEB_RUTDIR) show --no-patch --format="%h" $(WEB_HASH))
+WEB_BRANCH_COUNT = $(shell git -C $(WEB_RUTDIR) rev-list --count $(WEB_BRANCH_TAG)..$(WEB_HASH))
+WEB_SUBDIR = $(WEB_BRANCH_NAME)-$(WEB_BRANCH_COUNT)-g$(WEB_ABBREV_HASH)
+
 WEB_RESULTSDIR ?= $(WEB_SUMMARYDIR)/$(WEB_SUBDIR)
-WEB_SOURCES ?= $(wildcard $(addprefix , *.css *.js *.html))
+
+# run once
 ifndef WEB_TIME
 WEB_TIME := $(shell ./now.sh)
 endif
@@ -40,10 +44,14 @@ endif
 #
 
 .PHONY: web
-web: | $(WEB_SUMMARYDIR)
+web: | $(WEB_SUMMARYDIR)/
 	$(MAKE) web-summarydir
 	$(MAKE) web-resultsdir
-	$(MAKE) web-publish
+	#	$(MAKE) web-publish
+
+.PHONY: print-web-variable
+print-web-variable:
+	@echo "$(strip $($(VARIABLE)))"
 
 .PHONY: web-publish
 web-publish: | $(WEB_RESULTSDIR)
@@ -57,6 +65,9 @@ web-publish: | $(WEB_RESULTSDIR)
 		--publish-results $(WEB_RESULTSDIR) \
 		--publish-hash $(WEB_HASH) \
 		testing/pluto
+
+%/:
+	mkdir $*
 
 #
 # Build or update the web pages ready for a new test run
@@ -92,17 +103,14 @@ web-summarydir: $(WEB_SUMMARYDIR)/tsconfig.json
 web-summarydir: $(WEB_SUMMARYDIR)/favicon.ico
 web-summarydir: | $(WEB_SUMMARYDIR)/status.json
 
-$(WEB_SUMMARYDIR)/index.html: summary.html | $(WEB_SUMMARYDIR)
+$(WEB_SUMMARYDIR)/index.html: summary.html | $(WEB_SUMMARYDIR)/
 	cp $< $@
 
-$(WEB_SUMMARYDIR)/%.css: %.css | $(WEB_SUMMARYDIR)
+$(WEB_SUMMARYDIR)/%.css: %.css | $(WEB_SUMMARYDIR)/
 	cp $< $@
 
-$(WEB_SUMMARYDIR)/favicon.ico: favicon.ico | $(WEB_SUMMARYDIR)
+$(WEB_SUMMARYDIR)/favicon.ico: favicon.ico | $(WEB_SUMMARYDIR)/
 	cp $< $@
-
-$(WEB_SUMMARYDIR):
-	mkdir $(WEB_SUMMARYDIR)
 
 # no dependencies, just needs to exist
 $(WEB_SUMMARYDIR)/status.json:
@@ -111,8 +119,8 @@ $(WEB_SUMMARYDIR)/status.json:
 
 # Update the pooled summary (summaries.json) of all the test runs
 $(WEB_SUMMARYDIR)/summaries.json: \
-		$(wildcard $(WEB_SUMMARYDIR)/*/summary.json) \
-		json-summaries.sh
+			$(wildcard $(WEB_SUMMARYDIR)/*/summary.json) \
+			json-summaries.sh
 	: use find: can be too many files for glob
 	: use -H: handle WEB_SUMMARYDIR being a softlink
 	: use -maxdepth 2: no need to go below WEB_SUMMARYDIR/*/*/
@@ -125,54 +133,48 @@ $(WEB_SUMMARYDIR)/summaries.json: \
 	mv $@.tmp $@
 
 # fudge dependency by using */summary.json
-WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
-$(WEB_SUMMARYDIR)/commits.json: $(WEB_COMMITSDIR)/$(WEB_HASH).json $(wildcard $(WEB_COMMITSDIR)/*.json)
-	: pick up all commits unconditionally and unsorted.
-	find $(WEB_COMMITSDIR) -name '*.json' \
-		| xargs --no-run-if-empty cat \
-		| jq -s 'unique_by(.hash)' > $@.tmp
+$(WEB_SUMMARYDIR)/commits.json: \
+			$(wildcard $(WEB_SUMMARYDIR)/*/summary.json) \
+			gime-json-commits.sh \
+			gime-first-run-hash.sh
+	: pick up all commits unconditionally and topo sorted
+	./gime-json-commits.sh ${WEB_SUMMARYDIR} ${WEB_RUTDIR} \
+		$(shell set -x ; ./gime-first-run-hash.sh $(WEB_SUMMARYDIR) $(WEB_RUTDIR)) \
+		| jq -s > $@.tmp
 	mv $@.tmp $@
+
 
 #
 # Create or update a test run's results page.
 #
 
 .PHONY: web-resultsdir
-web-resultsdir:
-
 web-resultsdir: $(WEB_RESULTSDIR)/index.html
-web-resultsdir: $(WEB_RESULTSDIR)/lsw-summary-graph.css
-web-resultsdir: $(WEB_RESULTSDIR)/lsw-table.css
-web-resultsdir: $(WEB_RESULTSDIR)/results.css
-web-resultsdir: $(WEB_RESULTSDIR)/tsconfig.json
-web-resultsdir: $(WEB_RESULTSDIR)/favicon.ico
+web-resultsdir: $(wildcard $(WEB_SUMMARYDIR)/*/index.html)
+
+$(WEB_SUMMARYDIR)/%/index.html: results.html \
+		lsw-summary-graph.css lsw-table.css results.css favicon.ico \
+		| $(WEB_SUMMARYDIR)/%/
+	cp $? $(WEB_SUMMARYDIR)/$*
+	mv $(WEB_SUMMARYDIR)/$*/results.html $(WEB_SUMMARYDIR)/$*/index.html
+
+#
+# generate json
+#
 
 web-results-json: $(WEB_RESULTSDIR)/results.json
 web-results-json: $(WEB_RESULTSDIR)/summary.json
 
-$(WEB_RESULTSDIR)/index.html: results.html | $(WEB_RESULTSDIR)
-	cp $< $@
-
-$(WEB_RESULTSDIR)/%.css: %.css | $(WEB_RESULTSDIR)
-	cp $< $@
-
-$(WEB_RESULTSDIR)/favicon.ico: favicon.ico | $(WEB_RESULTSDIR)
-	cp $< $@
-
-$(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
-	mkdir $(WEB_RESULTSDIR)
 
 #
 # Create the tests directory
 #
 
-web-testsdir: | $(WEB_TESTSDIR)
-$(WEB_TESTSDIR):
-	mkdir $@
+web-testsdir: | $(WEB_TESTSDIR)/
 
 .PHONY:
-web-tests-json:
-	./json-tests.sh $(WEB_RUTDIR) $(WEB_TESTSDIR) $(WEB_RESULTSDIR)
+web-tests-json: $(WEB_SUMMARYDIR)/tests/
+	./json-tests.sh $(WEB_SUMMARYDIR)
 
 #
 # Update the html in all the result directories
@@ -181,10 +183,6 @@ web-tests-json:
 
 WEB_RESULTS_HTML = $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.html)
 web-site: $(WEB_RESULTS_HTML)
-
-$(WEB_SUMMARYDIR)/%/results.html: $(WEB_SOURCES)
-	$(MAKE) web-resultsdir \
-		WEB_SUMMARYDIR=$(WEB_SUMMARYDIR) WEB_RESULTSDIR=$(dir $@)
 
 #
 # Conditional rules for building an individual test run's results
@@ -208,7 +206,7 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 # hack to compile json code
 #
 
-%/tsconfig.json: tsconfig.json.in $(wildcard *.js *.tc) | %
+%/tsconfig.json: tsconfig.json.in $(wildcard *.js *.tc) | %/
 	sed \
 		-e 's;@@DEST_DIR@@;$(realpath $(dir $@));' \
 		-e 's;@@SOURCE_DIR@@;$(abs_srcdir);'\

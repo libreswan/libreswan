@@ -7,13 +7,13 @@ if test "$#" -lt 2; then
 
 Usage:
 
-   $0 <repodir> <resultsdir> ...
+   $0 <rutdir> <resultsdir> ...
 
-Use <repodir> to update the .json files under the <test-run-dir>
+Use <rutdir> to update the .json files under the <test-run-dir>
 directories (where <test-run-dir> contains the results from a full
 test run).
 
-Because this script needs to modify the contents of <repodir> (for
+Because this script needs to modify the contents of <rutdir> (for
 instance to examine (checkout) the commit used to generate a test
 run), it requires access to a dedicated repository.
 
@@ -29,19 +29,19 @@ fi
 bindir=$(cd $(dirname $0) && pwd)
 utilsdir=$(cd ${bindir}/../utils && pwd)
 makedir=$(cd ${bindir}/../.. && pwd)
-repodir=$(cd $1 && pwd) ; shift
-branch=$(${bindir}/gime-git-branch.sh ${repodir})
-origin=$(cd ${repodir} && git config --get branch.${branch}.remote)
+rutdir=$(cd $1 && pwd) ; shift
+branch=$(${bindir}/gime-git-branch.sh ${rutdir})
+remote=$(git -C ${rutdir} config --get branch.${branch}.remote)
 
 echo
 echo Rebuilding: "$@"
 echo
 
 # Make certain that the repository has all the latest changes.
-echo Updating repo ${repodir}
-( cd ${repodir} && git checkout ${branch} )
-( cd ${repodir} && git fetch ${origin} )
-( cd ${repodir} && git rebase ${origin} )
+echo Updating repo ${rutdir}
+git -C ${rutdir} checkout ${branch}
+git -C ${rutdir} fetch ${remote}
+git -C ${rutdir} rebase ${remote}
 
 for resultsdir in "$@" ; do
 
@@ -70,12 +70,12 @@ for resultsdir in "$@" ; do
     fi
 
     echo "Revert to revision ${gitrev}"
-    ( cd ${repodir} && git reset --hard ${gitrev} )
+    git -C ${rutdir} reset --hard ${gitrev}
 
     # the test list can be missing, and kvmresults works better when
     # it is present.
     if test ! -r ${resultsdir}/TESTLIST ; then
-	cp ${repodir}/testing/pluto/TESTLIST ${resultsdir}
+	cp ${rutdir}/testing/pluto/TESTLIST ${resultsdir}
     fi
 
     echo "Rebuilding results and summary"
@@ -86,11 +86,11 @@ for resultsdir in "$@" ; do
 		   --test-kind '' \
 		   --test-status '' \
 		   --publish-results ${resultsdir} \
-		   --testing-directory ${repodir}/testing \
+		   --testing-directory ${rutdir}/testing \
 		   ${resultsdir}
     )
 
     echo "Switching bach to HEAD"
-    ( cd ${repodir} && git merge --quiet --ff-only )
+    git -C ${rutdir} merge --quiet --ff-only
 
 done

@@ -85,133 +85,83 @@ function lsw_summary_load(prefix, f) {
     })
 }
 
-function lsw_summary_cleanup(status, commits, summaries, current) {
-
+function lsw_summary_cleanup(status, commits, test_runs, current) {
 
     let summary = {}
 
-    // Create "summary.current" by merging current into status.
+    // Clean up the commits.  Accumulate a table containing all the
+    // commits.
 
-    summary.current = status
-    if (current) {
-	for (const key of Object.keys(current)) {
-	    status[key] = current[key]
-	}
-    }
-    // probably redundant; but easier
-    lsw_cleanup_dates(summary.current, ["date"])
-    console.log("summary.current", summary.current)
+    summary.commits = new Commits(commits)
 
-    // Clean up the commits discarding anything strange.  Accumulate a
-    // table containing all the commits.
+    // Clean up the test_runs.
 
-    let commit_by_hash = []
-    summary.commits = commits.filter(function (commit) {
-	// Fix values
-	if (!lsw_cleanup_dates(commit.author, ["date"])) {
-	    console.log("discarding commit with no author date", commit)
-	    return false
-	}
-	if (!lsw_cleanup_dates(commit.committer, ["date"])) {
-	    console.log("discarding commit with no committer date", commit)
-	    return false
-	}
-	// add to the lookup table
-	let hash = commit.hash
-	if (!hash) {
-	    console.log("discarding commit with no hash", commit)
-	    return false
-	}
-	if (commit_by_hash[hash]) {
-	    console.log("discarding duplicate commit", commit)
-	    return false
-	}
-	commit_by_hash[hash] = commit
-	// other fields; see below
-	commit.children = []
-	commit.parents = []
-	return true
-    })
-
-    // Using the above hash->commit table, fill in the .parent[] and
-    // .children[] fields from the relevant hashes.
-
-    for (const commit of summary.commits) {
-	for (parent_hash of commit.parent_hashes) {
-	    let parent = commit_by_hash[parent_hash]
-	    if (parent) {
-		// cross link the parent and child
-		commit.parents.push(parent)
-		parent.children.push(commit)
-	    }
-	}
-    }
-
-    // Clean up the result values discarding anything strange.
-    //
-    // Use the hash table above to cross link each test run with a
-    // corresponding commit.
-    //
-    // Ensure the summary for current is up-to-date by appending the
-    // latest and discarding any older earlier entry.
-
-    if (current) {
-	summaries.push(summary.current)
-    }
-    summary.test_runs = summaries.filter(function(test_run, index) {
-	// The above appended current's summary on the end so anything
-	// earlier is an out-of-date duplicate.
-	if (index < summaries.length - 1 && status.directory == test_run.directory) {
-	    console.warn("discarding test run", test_run, "at", index, "duplicating current")
-	    return false
-	}
-	// Validate the contents
-	if (!lsw_cleanup_dates(test_run, ["start_time", "stop_time"])) {
-	    console.warn("discarding test run", test_run, "at", index, "with invalid dates")
-	    return false
-	}
-	// Try to cross link commit and test_run
+    console.log("raw test runs", test_runs)
+    summary.test_runs = test_runs.filter((test_run, index) => {
+	// Check that the test run has a valid hash.
 	let hash = test_run.hash
 	if (!hash) {
 	    console.warn("discarding test run", test_run, "at", index, "with a missing .hash")
 	    return false
 	}
-	// Cross link when possible.
-	let commit = commit_by_hash[hash]
+	let commit = summary.commits.hash_to_commit[hash]
 	if (!commit) {
-	    console.warn("discarding test run", test_run, "at", index, "with commit matching .hash")
+	    console.warn("discarding test run", test_run, "at", index, "with no commit matching .hash")
 	    return false
 	}
-	// Cross link commits and test_runs
-	test_run.commit = commit
-	commit.test_run = test_run
 	return true
+    }).map((test_run) => {
+	return new TestRun(test_run, summary.commits.hash_to_commit)
     })
 
-    // Sort the test run by committer.date in ascending order.
-
-    summary.test_runs.sort(function(l, r) {
-	return l.commit.committer.date - r.commit.committer.date
-    })
+    // Create a dictionary of directory->test_run so that
+    // ?run=<directory> can find them.
 
     summary.test_run_by_directory = []
     for (const test_run of summary.test_runs) {
-
-	// Create a dictionary of directory->test_run so that
-	// ?run=<directory> can find them
-
 	summary.test_run_by_directory[test_run.directory] = test_run
-
-	// Use the commit<->test_run and commit.parent[] links created
-	// above to find the commits unique to this test run.  Cross
-	// link those additional commits back to the test.
-
-	test_run.commits = lsw_summary_commits(test_run.commit)
-	for (const commit of test_run.commits) {
-	    // One of these assignments is redundant, oops.
-	    commit.test_run = test_run;
-	}
     }
+
+    // Create "summary.current" by merging current into status.
+    //
+    // If there's a test run, use that.  Else mash together CURRENT
+    // and STATUS.
+    //
+    // Note that if CURRENT is in SUMMARY .TEST_RUNS then it must be
+    // the same object as as SUMMARY .CURRENT.  Code uses identity
+    // comparison to find current in the .TEST_RUNS[] array.
+
+    let current_test_run = summary.test_run_by_directory[status.directory]
+    status.date = new Date(status.date) // cleanup the date
+    if (current_test_run) {
+	// use same object but mash in status; what's missing?
+	console.log("current from test_run", current_test_run, "and status", status)
+	Object.assign(current_test_run, status)
+	summary.current = current_test_run
+    } else if (current) {
+	// Current doesn't have .directory!?!
+	console.log("current from current", current, "and status", status)
+	summary.current = current
+	Object.assign(current, status)
+    } else {
+	console.log("current from status", status);
+	summary.current = status
+    }
+
+    // Use the commit<->test_run and commit.parent[] links created
+    // above to find the commits unique to this test run.  Cross
+    // link those additional commits back to the test.
+    for (const test_run of summary.test_runs) {
+	lsw_summary_commits(test_run)
+    }
+
+    // Sort the test run by commits topologically in ascending order.
+
+    summary.test_runs.sort((l, r) => {
+	return l.commit.rank - r.commit.rank
+    })
+
+    console.log("cooked test runs", summary.test_runs)
 
     return summary
 }
@@ -220,7 +170,7 @@ function lsw_commit_texts(commits) {
     let subject = ""
     for (const commit of commits) {
 	subject = (subject
-		   + lsw_date2iso(commit.committer.date)
+		   + lsw_date2iso(commit.author_date)
 		   + ": "
 		   + commit.subject
 		   + "\n")
@@ -231,30 +181,22 @@ function lsw_commit_texts(commits) {
 // Use the commit<>test_run links and the commit.parents to identify
 // all commits for a test_run.
 
-function lsw_summary_commits(commit) {
-    let commits = []
-    if (commit) {
-	commits.push(commit)
-	let parents = commit.parents.slice()
-	while (parents.length) {
-	    let parent = parents.shift()
-	    if (parent.test_run) {
-		// stop when there is a test_run
-		continue
-	    }
-	    if (commits.indexOf(parent) >= 0) {
-		// stop if this is a duplicate (for instance two
-		// branches joined).
-		continue
-	    }
-	    commits.push(parent)
-	    parents = parents.concat(parent.parents)
+function lsw_summary_commits(test_run) {
+    test_run.commits = []
+    test_run.commits.push(test_run.commit)
+    let parents = test_run.commit.parents.slice()
+    while (parents.length) {
+	let parent = parents.shift()
+	if (parent.test_run) {
+	    // stop when there is a test_run
+	    continue
 	}
+	// back link this commit to the same test, acts as a loop
+	// sentinal.
+	// parent.test_run = test_run
+	test_run.commits.push(parent)
+	parents = parents.concat(parent.parents)
     }
-    // Return the list in reverse commit-date order.
-    return commits.sort(function(l, r) {
-	return r.committer.date - l.committer.date
-    })
 }
 
 // see http://stackoverflow.com/questions/24816/escaping-html-strings-with-jquery#12034334
@@ -274,33 +216,4 @@ function lsw_html_escape(string) {
     return String(string).replace(/[&<>"'`=\/]/g, function (s) {
 	return lsw_html_entity_map[s];
     })
-}
-
-// Return the commits as a blob of HTML.
-
-var lsw_abbrev_hash_length = 9
-
-function lsw_commits_html(commits) {
-    html = ""
-    html += "<table class=\"commits\"><tbody class=\"commits\">"
-    for (const commit of commits) {
-	html += "<tr class=\"" + commit.interesting + "\" title=\"interesting commit: " + commit.interesting + "\">"
-	html += "<td class=\"date\">"
-	html += lsw_date2iso(commit.committer.date)
-	html += ":</td>"
-	html += "<td class=\"hash\">"
-	html += "<a href=\""
-	html += "https://github.com/libreswan/libreswan/commit/"
-	html += commit.hash
-	html += "\">"
-	html += commit.hash.substring(0, lsw_abbrev_hash_length);
-	html += "</a>"
-	html += "</td>"
-	html += "<td class=\"subject\">"
-	html += lsw_html_escape(commit.subject)
-	html += "</td>"
-	html += "</tr>"
-    }
-    html += "</tbody></table>"
-    return html
 }

@@ -43,7 +43,7 @@ function results(div_id, json_file) {
 	    {
 		title: "Issues",
 		html: function(result) {
-		    return result.html_issues("OUTPUT/")
+		    return result.html_issues("")
 		},
 	    },
 	    {
@@ -59,7 +59,7 @@ function results(div_id, json_file) {
 
 	lsw_table({
 	    id: div_id,
-	    data: results.map((result) => new Result(result)),
+	    data: results.map((result) => new TestResult(result)),
 	    columns: columns,
 	})
     })

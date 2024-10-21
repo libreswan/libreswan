@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if test $# -lt 1; then
+if test $# -lt 2; then
   cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <summarydir> [ <rutdir> [ <earliest_commit> ] ]
+    $0 <summarydir> <rutdir> <earliest_commit>
 
 Iterate through [<earliest_commit>..HEAD] identifying the next next commit
 to test.
@@ -39,37 +39,16 @@ EOF
 fi
 
 bindir=$(cd $(dirname $0) && pwd)
+summarydir=$(realpath $1) ; shift
+rutdir=$(realpath $1) ; shift
+earliest_commit=$(git rev-parse ${1}^{})
 
-# <summarydir>
-if test $# -gt 0 ; then
-    summarydir=$(cd $1 && pwd) ; shift
-else
-    echo "Missing <summarydir>" 1>&2
-    exit 1
-fi
+echo summarydir ${summarydir} 1>&2
+echo rutdir ${rutdir} 1>&2
+echo earliest_commit ${earliest_commit} 1>&2
 
-# <rutdir>
-if test $# -gt 0 ; then
-    rutdir=$1 ; shift
-    cd ${rutdir} || {
-	echo "could not change-directory to <rutdir> ${rutdir}" 1>&2
-	exit 1
-    }
-else
-    rutdir=.
-fi
-
-# <earliest_commit>
-if test $# -gt 0 ; then
-    earliest_commit=$(git rev-parse ${1}^{}) ; shift
-else
-    earliest_commit=$(${bindir}/earliest-commit.sh ${summarydir})
-fi
-
-echo summarydir=${summarydir} rutdir=${rutdir} earliest_commit=${earliest_commit} 1>&2
-
-branch=$(${bindir}/gime-git-branch.sh .)
-remote=$(git config --get branch.${branch}.remote)
+branch=$(${bindir}/gime-git-branch.sh ${rutdir})
+remote=$(git -C ${rutdir} config --get branch.${branch}.remote)
 
 echo branch=${branch} remote=${remote} 1>&2
 
