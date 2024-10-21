@@ -855,13 +855,11 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
 static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
-stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
+stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 {
-	struct ike_sa *parent = pexpect_parent_sa(p1st);
-	passert(p1st != NULL && p1st == md->v1_st);
-	struct connection *c = p1st->st_connection;
-	ip_selector local_client;
-	ip_selector remote_client;
+	struct ike_sa *ike = pexpect_parent_sa(ike_sa);
+	PASSERT(ike_sa->logger, &ike->sa == md->v1_st);
+	struct connection *c = ike->sa.st_connection;
 
 	/*
 	 * 5.5 Phase 2 - Quick Mode
@@ -886,17 +884,20 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 * for policy.
 	 */
 
+	ip_selector local_client; /* must-be-determined */
+	ip_selector remote_client; /* must-be-determined */
+
 	struct payload_digest *const IDci = md->chain[ISAKMP_NEXT_ID];
 	if (IDci != NULL) {
 		struct payload_digest *IDcr = IDci->next;
-		PASSERT(p1st->logger, IDcr != NULL); /* checked in ikev1.c */
+		PASSERT(ike->sa.logger, IDcr != NULL); /* checked in ikev1.c */
 
 		/* ??? we are assuming IPSEC_DOI */
 
 		/* IDci (initiator is remote peer) */
 
 		if (!decode_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-				   &remote_client, "peer client", p1st->logger))
+				   &remote_client, "peer client", ike->sa.logger))
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/* for code overwriting above */
@@ -914,8 +915,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		 * type of ID."  ??? needs more complete description.
 		 */
 		if (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
-			log_state(RC_LOG, p1st,
-				  "Applying workaround for MS-818043 NAT-T bug");
+			llog(RC_LOG, ike->sa.logger,
+			     "applying workaround for MS-818043 NAT-T bug");
 			remote_client = selector_from_address_protocol_port(c->remote->host.addr,
 									    remote_protocol,
 									    remote_port);
@@ -926,7 +927,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		/* IDcr (we are local responder) */
 
 		if (!decode_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-				   &local_client, "our client", p1st->logger))
+				   &local_client, "our client", ike->sa.logger))
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/*
@@ -939,20 +940,20 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		 * state to store it in until after we've done the
 		 * authorization steps.
 		 */
-		if (nat_traversal_detected(p1st) &&
-		    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
+		if (nat_traversal_detected(&ike->sa) &&
+		    (ike->sa.hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 		    (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
 			shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
 
-			hv = p1st->hidden_variables;
-			nat_traversal_natoa_lookup(md, &hv, p1st->logger);
+			hv = ike->sa.hidden_variables;
+			nat_traversal_natoa_lookup(md, &hv, ike->sa.logger);
 
 			if (address_is_specified(hv.st_nat_oa)) {
 				remote_client = selector_from_address_protocol_port(hv.st_nat_oa,
 										    remote_protocol,
 										    remote_port);
-				LLOG_JAMBUF(RC_LOG, p1st->logger, buf) {
+				LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 					jam(buf, "IDci was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
@@ -973,7 +974,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	}
 
 	struct crypt_mac new_iv;
-	save_new_iv(p1st, new_iv);
+	save_new_iv(&ike->sa, new_iv);
 
 	struct hidden_variables hv;
 
@@ -982,8 +983,8 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 * proposed the reverse?
 	 */
 	selector_pair_buf sb;
-	log_state(RC_LOG, p1st, "the peer proposed: %s",
-		  str_selector_pair(&local_client, &remote_client, &sb));
+	llog(RC_LOG, ike->sa.logger, "the peer proposed: %s",
+	     str_selector_pair(&local_client, &remote_client, &sb));
 
 	/*
 	 * Now that we have identities of client subnets, we must look
@@ -997,9 +998,9 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 */
 	if (p == NULL &&
 	    c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
-	    nat_traversal_detected(p1st)) {
+	    nat_traversal_detected(&ike->sa)) {
 		p = c;
-		pdbg(p1st->logger, "using existing connection; nothing better and current is NAT'ed and transport mode");
+		pdbg(ike->sa.logger, "using existing connection; nothing better and current is NAT'ed and transport mode");
 	}
 
 	/*
@@ -1012,7 +1013,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	    /* c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT && */
 	    is_virtual_remote(c)) {
 		p = c;
-		pdbg(p1st->logger, "using existing connection; nothing better and current is virtual-private");
+		pdbg(ike->sa.logger, "using existing connection; nothing better and current is virtual-private");
 	}
 
 	/*
@@ -1041,18 +1042,18 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		if (!selector_eq_selector(local_client, c->spd->local->client)) {
 			selector_buf lb, cb;
-			llog(RC_LOG, p1st->logger,
+			llog(RC_LOG, ike->sa.logger,
 			     "Quick Mode request rejected, peer requested lease but proposed local selector %s does not match connection %s; deleting ISAKMP SA",
 			     str_selector(&local_client, &lb),
 			     str_selector(&c->spd->local->client, &cb));
 			return STF_FATAL;
 		}
 
-		err_t e = lease_that_selector(c, p1st->st_xauth_username,
-					      &remote_client, p1st->logger);
+		err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
+					      &remote_client, ike->sa.logger);
 		if (e != NULL) {
 			selector_buf cb;
-			llog(RC_LOG, p1st->logger,
+			llog(RC_LOG, ike->sa.logger,
 			     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
 			     str_selector(&remote_client, &cb), e);
 			return STF_FATAL;
@@ -1060,17 +1061,17 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		p = c;
 		selector_buf sb;
-		llog(RC_LOG, p1st->logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "Quick Mode without mode-config, recovered previously assigned lease %s",
 		     str_selector(&remote_client, &sb));
 
-		pdbg(p1st->logger, "another hack to get the SPD in sync");
+		pdbg(ike->sa.logger, "another hack to get the SPD in sync");
 		c->spd->remote->client = remote_client;
 		spd_db_rehash_remote_client(c->spd);
 	}
 
 	if (p == NULL) {
-		LLOG_JAMBUF(RC_LOG, p1st->logger, buf) {
+		LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 			jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
 
 			/*
@@ -1132,7 +1133,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	selector_buf csb;
 	selector_buf rcb;
 	address_buf lb;
-	ldbg(p1st->logger,
+	ldbg(ike->sa.logger,
 	     "%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
@@ -1184,12 +1185,12 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 */
 
 	if (!c->spd->remote->client.is_set) {
-		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection has no remote client selector");
+		llog(RC_LOG, ike->sa.logger, "Quick Mode request rejected; connection has no remote client selector");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	if (!c->spd->local->client.is_set) {
-		llog(RC_LOG, p1st->logger, "Quick Mode request rejected; connection has no remote client selector");
+		llog(RC_LOG, ike->sa.logger, "Quick Mode request rejected; connection has no remote client selector");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
@@ -1198,14 +1199,14 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 * make it all work.
 	 */
 
-	hv = p1st->hidden_variables;
-	if (nat_traversal_detected(p1st) &&
+	hv = ike->sa.hidden_variables;
+	if (nat_traversal_detected(&ike->sa) &&
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &hv, p1st->logger);
+		nat_traversal_natoa_lookup(md, &hv, ike->sa.logger);
 
 	/* create our new state */
 
-	struct child_sa *child = new_v1_child_sa(c, parent, SA_RESPONDER);
+	struct child_sa *child = new_v1_child_sa(c, ike, SA_RESPONDER);
 	/* delref stack reference */
 	struct connection *cc = c;
 	connection_delref(&cc, cc->logger);
@@ -1237,10 +1238,10 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 */
 	child->sa.st_policy = child_sa_policy(c);
 
-	if (nat_traversal_detected(&parent->sa)) {
+	if (nat_traversal_detected(&ike->sa)) {
 		/* ??? this partially overwrites what was done via hv */
 		child->sa.hidden_variables.st_nat_traversal =
-			parent->sa.hidden_variables.st_nat_traversal;
+			ike->sa.hidden_variables.st_nat_traversal;
 		nat_traversal_change_port_lookup(md, md->v1_st);
 		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
