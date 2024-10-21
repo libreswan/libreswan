@@ -148,17 +148,17 @@ HASH_DB(connection,
 
 static struct list_head *connection_filter_head(struct connection_filter *filter)
 {
-	const struct logger *logger = filter->search.logger;
+	const struct verbose verbose = filter->search.verbose;
 	if (filter->that_id_eq != NULL) {
 		id_buf idb;
-		ldbg(logger, "FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
+		vdbg("FOR_EACH_CONNECTION[that_id_eq=%s].... in "PRI_WHERE,
 		     str_id(filter->that_id_eq, &idb), pri_where(filter->search.where));
 		hash_t hash = hash_connection_that_id(filter->that_id_eq);
 		return hash_table_bucket(&connection_that_id_hash_table, hash);
 	}
 
 	if (filter->clonedfrom != NULL) {
-		ldbg(logger, "FOR_EACH_CONNECTION[clonedfrom="PRI_CO"].... in "PRI_WHERE,
+		vdbg("FOR_EACH_CONNECTION[clonedfrom="PRI_CO"].... in "PRI_WHERE,
 		     pri_connection_co(filter->clonedfrom), pri_where(filter->search.where));
 		hash_t hash = hash_connection_clonedfrom(&filter->clonedfrom);
 		return hash_table_bucket(&connection_clonedfrom_hash_table, hash);
@@ -167,7 +167,7 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 	if (filter->host_pair.local != NULL) {
 		passert(filter->host_pair.remote != NULL);
 		address_buf lb, rb;
-		ldbg(logger, "FOR_EACH_CONNECTION[local=%s,remote=%s].... in "PRI_WHERE,
+		vdbg("FOR_EACH_CONNECTION[local=%s,remote=%s].... in "PRI_WHERE,
 		     str_address(filter->host_pair.local, &lb),
 		     str_address(filter->host_pair.remote, &rb),
 		     pri_where(filter->search.where));
@@ -176,7 +176,7 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 		return hash_table_bucket(&connection_host_pair_hash_table, hash);
 	}
 
-	ldbg(logger, "FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->search.where));
+	vdbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->search.where));
 	return &connection_db_list_head;
 }
 
@@ -260,9 +260,9 @@ static bool matches_connection_filter(struct connection *c,
 
 bool next_connection(struct connection_filter *filter)
 {
-	const struct logger *logger = filter->search.logger;
+	struct verbose verbose = filter->search.verbose;
 	/* try to stop all_connections() calls */
-	passert(filter->connections == NULL);
+	vassert(filter->connections == NULL);
 	if (filter->internal == NULL) {
 		/*
 		 * First time.
@@ -273,20 +273,22 @@ bool next_connection(struct connection_filter *filter)
 		if (filter->ike_version == 0) {
 #if 0
 			/* foodgroups searches for just CK_GROUP */
-			PEXPECT_WHERE(logger, filter->search.where, filter->kind == 0);
+			vexpect_where(filter->search.where, filter->kind == 0);
 #endif
-			PEXPECT_WHERE(logger, filter->search.where, filter->clonedfrom == NULL);
-			PEXPECT_WHERE(logger, filter->search.where, filter->host_pair.local == NULL);
-			PEXPECT_WHERE(logger, filter->search.where, filter->host_pair.remote == NULL);
-			PEXPECT_WHERE(logger, filter->search.where, filter->this_id_eq == NULL);
-			PEXPECT_WHERE(logger, filter->search.where, filter->that_id_eq == NULL);
+			vexpect_where(filter->search.where, filter->clonedfrom == NULL);
+			vexpect_where(filter->search.where, filter->host_pair.local == NULL);
+			vexpect_where(filter->search.where, filter->host_pair.remote == NULL);
+			vexpect_where(filter->search.where, filter->this_id_eq == NULL);
+			vexpect_where(filter->search.where, filter->that_id_eq == NULL);
 		}
 		/*
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
-		 * data).
+		 * data). And announces that the search has started.
 		 */
 		filter->internal = connection_filter_head(filter)->head.next[filter->search.order];
+		verbose.level++;
+		filter->search.verbose.level++;	/* ready for caller */
 	}
 	/* Walk list until an entry matches */
 	filter->c = NULL;
@@ -298,26 +300,27 @@ bool next_connection(struct connection_filter *filter)
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-				jam_string(buf, "  found ");
-				jam_connection(buf, c);
-			}
+			connection_buf cb;
+			vdbg("found "PRI_CONNECTION, pri_connection(c, &cb));
 			filter->c = c;
 			return true;
 		}
 	}
-	ldbg(logger, "  matches: %d", filter->count);
+	vdbg("matches: %d", filter->count);
 	return false;
 }
 
 bool all_connections(struct connection_filter *filter)
 {
-	const struct logger *logger = filter->search.logger;
+	const struct verbose verbose = filter->search.verbose;
 	/* try to stop next_connection() calls */
-	PASSERT_WHERE(logger, filter->search.where, filter->internal == NULL);
+	vassert_where(filter->search.where, filter->internal == NULL);
 
 	if (filter->connections == NULL) {
 
+		/*
+		 * Total up the number of connections.
+		 */
 		unsigned count = 0;
 		{
 			struct connection_filter iterator = *filter;
@@ -339,15 +342,15 @@ bool all_connections(struct connection_filter *filter)
 			alloc_things(struct connection*, count+1, __func__);
 
 		{
-			struct connection_filter iterator = iterator = *filter;
+			struct connection_filter iterator = *filter;
 			unsigned i = 0;
 			while (next_connection(&iterator)) {
-				PASSERT(logger, refcnt_peek(iterator.c, logger) >= 1);
-				connections[i++] = connection_addref(iterator.c, logger);
-				PASSERT(logger, refcnt_peek(iterator.c, logger) > 1);
+				vassert(refcnt_peek(iterator.c, verbose.logger) >= 1);
+				connections[i++] = connection_addref(iterator.c, verbose.logger);
+				vassert(refcnt_peek(iterator.c, verbose.logger) > 1);
 			}
-			PASSERT(logger, i == count);
-			PASSERT(logger, connections[i] == NULL);
+			vassert(i == count);
+			vassert(connections[i] == NULL);
 		}
 		filter->connections = connections;
 	}
@@ -359,8 +362,8 @@ bool all_connections(struct connection_filter *filter)
 	 * XXX: refcnt_peek() returns 0 for NULL.
 	 */
 
-	while (refcnt_peek(filter->connections[filter->count], logger) == 1) {
-		connection_delref(&filter->connections[filter->count], logger);
+	while (refcnt_peek(filter->connections[filter->count], verbose.logger) == 1) {
+		connection_delref(&filter->connections[filter->count], verbose.logger);
 		filter->count++;
 	}
 
@@ -369,8 +372,8 @@ bool all_connections(struct connection_filter *filter)
 	 */
 	filter->c = filter->connections[filter->count];
 	if (filter->c != NULL) {
-		PASSERT(logger, refcnt_peek(filter->c, logger) > 1);
-		connection_delref(&filter->connections[filter->count], logger);
+		vassert(refcnt_peek(filter->c, verbose.logger) > 1);
+		connection_delref(&filter->connections[filter->count], verbose.logger);
 		filter->count++;
 		return true;
 	}

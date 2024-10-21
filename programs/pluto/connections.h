@@ -39,6 +39,7 @@
 #include "ip_packet.h"
 #include "refcnt.h"
 #include "encap_mode.h"
+#include "verbose.h"
 
 #include "defs.h"
 #include "proposals.h"
@@ -1011,7 +1012,7 @@ struct connection_filter {
 	 */
 	struct search {
 		enum chrono order;
-		const struct logger *logger;
+		struct verbose verbose;
 		/* .where MUST BE LAST (See GCC bug 102288) */
 		where_t where;
 	} search;

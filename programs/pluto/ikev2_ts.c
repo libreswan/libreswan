@@ -1386,7 +1386,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			.ike_version = IKEv2,
 			.search = {
 				.order = NEW2OLD,
-				.logger = child->sa.logger,
+				.verbose.logger = child->sa.logger,
 				.where = HERE,
 			},
 		};
@@ -1633,7 +1633,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			.ike_version = IKEv2,
 			.search = {
 				.order = NEW2OLD,
-				.logger = child->sa.logger,
+				.verbose.logger = child->sa.logger,
 				.where = HERE,
 			},
 		};

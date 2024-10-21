@@ -192,7 +192,7 @@ struct connection *find_host_pair_connection_on_responder(const struct ike_info 
 		.ike_version = ike_info->version,
 		.search = {
 			.order = OLD2NEW,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};

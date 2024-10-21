@@ -294,7 +294,7 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 		.ike_version = ike_version,
 		.search = {
 			.order = NEW2OLD,
-			.logger = &global_logger,
+			.verbose.logger = &global_logger,
 			.where = HERE,
 		},
 	};

@@ -341,7 +341,7 @@ void load_groups(struct logger *logger)
 		.kind = CK_GROUP,
 		.search = {
 			.order = NEW2OLD,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};

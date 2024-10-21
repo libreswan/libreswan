@@ -196,7 +196,7 @@ static void release_dead_interfaces(struct logger *logger)
 	struct connection_filter cf = {
 		.search = {
 			.order = NEW2OLD,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};

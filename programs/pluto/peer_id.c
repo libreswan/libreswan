@@ -630,7 +630,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			.ike_version = c->config->ike_version,
 			.search = {
 				.order = OLD2NEW,
-				.logger = ike->sa.logger,
+				.verbose.logger = ike->sa.logger,
 				.where = HERE,
 			},
 		};

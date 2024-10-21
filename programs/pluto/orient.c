@@ -417,7 +417,7 @@ void check_orientations(struct logger *logger)
 	struct connection_filter cq = {
 		.search = {
 			.order = OLD2NEW,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};

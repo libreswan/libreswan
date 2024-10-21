@@ -2047,7 +2047,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 		.that_id_eq = &c->remote->host.id,
 		.search = {
 			.order = NEW2OLD,
-			.logger = ike->sa.logger,
+			.verbose.logger = ike->sa.logger,
 			.where = HERE,
 		},
 	};

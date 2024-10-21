@@ -329,7 +329,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 				.ike_version = c->config->ike_version,
 				.search = {
 					.order = OLD2NEW,
-					.logger = c->logger,
+					.verbose.logger = c->logger,
 					.where = where,
 				},
 			};
@@ -365,7 +365,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 			.ike_version = c->config->ike_version,
 			.search = {
 				.order = OLD2NEW,
-				.logger = c->logger,
+				.verbose.logger = c->logger,
 				.where = where,
 			},
 		};
@@ -420,7 +420,7 @@ void terminate_and_delete_connections(struct connection **cp,
 			.ike_version = (*cp)->config->ike_version,
 			.search = {
 				.order = OLD2NEW,
-				.logger = logger,
+				.verbose.logger = logger,
 				.where = where,
 			},
 		};

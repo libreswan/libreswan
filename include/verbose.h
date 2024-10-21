@@ -106,7 +106,11 @@ struct verbose {
 	}
 
 #define vbad(BAD) PBAD(verbose.logger, BAD)
+
 #define vexpect(EXPECT) PEXPECT(verbose.logger, EXPECT)
 #define vassert(ASSERT) PASSERT(verbose.logger, ASSERT)
+
+#define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
+#define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
 
 #endif

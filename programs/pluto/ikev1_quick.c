@@ -1822,7 +1822,7 @@ static bool is_virtual_net_used(struct connection *c,
 		.ike_version = IKEv1,
 		.search = {
 			.order = NEW2OLD,
-			.logger = c->logger,
+			.verbose.logger = c->logger,
 			.where = HERE,
 		},
 	};
@@ -2019,13 +2019,15 @@ static struct connection *fc_try(const struct connection *c,
 		.ike_version = IKEv1,
 		.search = {
 			.order = NEW2OLD,
-			.logger = c->logger,
+			.verbose = verbose,
 			.where = HERE,
 		},
 	};
 	unsigned level = verbose.level;
 	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
+		struct verbose verbose = hpf.search.verbose;
+		verbose.level++;
 
 		connection_buf cb;
 		selector_pair_buf sb;
@@ -2328,11 +2330,14 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				.ike_version = IKEv1,
 				.search = {
 					.order = NEW2OLD,
-					.logger = verbose.logger,
+					.verbose = verbose,
 					.where = HERE,
 				},
 			};
 			while (next_connection(&hpf)) {
+				struct verbose verbose = hpf.search.verbose;
+				verbose.level++;
+
 				/* found something */
 				local_address = spd->local->host->addr;
 				address_buf ab;

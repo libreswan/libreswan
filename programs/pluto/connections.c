@@ -212,7 +212,7 @@ bool connection_with_name_exists(const char *name)
 		.name = name,
 		.search = {
 			.order = NEW2OLD,
-			.logger = &global_logger,
+			.verbose.logger = &global_logger,
 			.where = HERE,
 		},
 	};
@@ -352,7 +352,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		.ike_version = c->config->ike_version,
 		.search = {
 			.order = OLD2NEW,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};
@@ -4094,7 +4094,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	struct connection_filter cq = {
 		.search = {
 			.order = NEW2OLD,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};
@@ -4380,7 +4380,7 @@ struct connection **sort_connections(void)
 		struct connection_filter cq = {
 			.search = {
 				.order = NEW2OLD,
-				.logger = &global_logger,
+				.verbose.logger = &global_logger,
 				.where = HERE,
 			},
 		};
@@ -4402,7 +4402,7 @@ struct connection **sort_connections(void)
 		struct connection_filter cq = {
 			.search = {
 				.order = NEW2OLD,
-				.logger = &global_logger,
+				.verbose.logger = &global_logger,
 				.where = HERE,
 			},
 		};

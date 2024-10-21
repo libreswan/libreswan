@@ -78,7 +78,7 @@ static bool whack_connections_by_name(const struct whack_message *m,
 		.name = m->name,
 		.search = {
 			.order = OLD2NEW,
-			.logger = show_logger(s),
+			.verbose.logger = show_logger(s),
 			.where = HERE,
 		},
 	};
@@ -118,7 +118,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 		.alias_root = m->name,
 		.search = {
 			.order = alias_order,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};
@@ -245,7 +245,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 		.ike_version = c->config->ike_version, /*redundant but meh*/
 		.search = {
 			.order = NEW2OLD,
-			.logger = show_logger(s),
+			.verbose.logger = show_logger(s),
 			.where = HERE,
 		},
 	};
@@ -281,7 +281,7 @@ static unsigned visit_connections_bottom_up(struct connection *c,
 		.ike_version = c->config->ike_version, /*redundant but meh*/
 		.search = {
 			.order = NEW2OLD,
-			.logger = logger,
+			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};

@@ -138,7 +138,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 		.ike_version = ikev2_info.version,
 		.search = {
 			.order = OLD2NEW,
-			.logger = md->logger,
+			.verbose = verbose,
 			.where = HERE,
 		},
 	};
@@ -246,7 +246,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		.ike_version = IKEv2,
 		.search = {
 			.order = OLD2NEW,
-			.logger = md->logger,
+			.verbose.logger = md->logger,
 			.where = HERE,
 		},
 	};
