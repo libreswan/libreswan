@@ -102,16 +102,6 @@ web-test-prep web-test-post:
 endif
 
 #
-# Update the web site
-#
-# Well almost everything, result .json files are not updated by
-# default - very slow.
-#
-
-.PHONY: web-site
-web-site:
-
-#
 # Create or update just the summary web page.
 #
 # This is a cheap short-cut that, unlike "web", doesn't update the
@@ -272,22 +262,6 @@ $(WEB_COMMITSDIR): | $(WEB_SUMMARYDIR)
 	mkdir $(WEB_COMMITSDIR)
 
 #
-# Update the html in all the result directories
-#
-# Not part of web-summarydir, web-resultsdir or web-results-html
-
-ifdef WEB_ENABLED
-
-WEB_RESULTS_HTML = $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.html)
-web-site: $(WEB_RESULTS_HTML)
-
-$(WEB_SUMMARYDIR)/%/results.html: $(WEB_SOURCES)
-	$(MAKE) web-resultsdir \
-		WEB_SUMMARYDIR=$(WEB_SUMMARYDIR) WEB_RESULTSDIR=$(dir $@)
-
-endif
-
-#
 # Conditional rules for building an individual test run's results
 # page.  Requires WEB_SUMMARYDIR or WEB_RESULTSDIR.
 #
@@ -320,105 +294,3 @@ endif
 		> $@.tmp
 	tsc --project $@.tmp
 	mv $@.tmp $@
-
-#
-# update the json in all the results directories; very slow so only
-# enabled when WEB_SCRATCH_REPODIR is set and things are not pointing
-# at this directory.
-#
-
-ifdef WEB_ENABLED
-ifdef WEB_SCRATCH_REPODIR
-ifneq ($(abspath $(WEB_SCRATCH_REPODIR)),$(abspath .))
-
-.PHONY: web-results-json
-web-site web-results-json: $(sort $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.json))
-
-$(WEB_SUMMARYDIR)/%/results.json: $(WEB_UTILSDIR)/kvmresults.py $(WEB_UTILSDIR)/fab/*.py
-	$(WEB_SOURCEDIR)/json-results.sh $(WEB_SCRATCH_REPODIR) $(dir $@)
-
-endif
-endif
-endif
-
-#
-# Equivalent of help
-#
-
-define web-config
-
-Web Configuration:
-
-    The test results can be published as a web page using either of
-    the make variables:
-
-    $(call kvm-var-value,LSW_WEBDIR)
-    $(call kvm-var-value,WEB_SUMMARYDIR)
-
-        The top-level html directory containing a summary of all test
-        runs.
-
-	The results from individual test runs are stored under this
-        directory.
-
-    $(call kvm-var-value,WEB_SUBDIR)
-    $(call kvm-var-value,WEB_RESULTSDIR)
-
-        Sub-directory to store the current test run's results.
-
-	By default, the test run's results are stored as the
-	sub-directory $$(WEB_SUBDIR) under $$(WEB_SUMMARYDIR), and
-	$$(WEB_SUBDIR) is formatted as TAG-OFFSET-gREV-BRANCH using
-	information from $$(WEB_REPODIR)'s current commit (see also
-	`git describe --long`).
-
-    $(call kvm-var-value,WEB_REPODIR)
-
-        The git repository to use when constructing the web pages (for
-        instance the list of commits).
-
-	By default, the current directory is used.
-
-Internal targets:
-
-    web-site:
-
-        update the web site
-
-    web-results-json:
-
-        update the results.json in all the test run sub-directories
-        under $$(WEB_SUMMARYDIR)
-
-	very slow
-
-	requires $$(WEB_SCRATCH_REPODIR) set and pointing at a
-	dedicated git repository
-
-Web targets:
-
-    web-summarydir:
-
-	build or update the top-level summary web page under
-	$$(WEB_SUMMARYDIR) (the test run sub-directories are not
-	updated, see above).
-
-    web-resultsdir:
-
-        build or update $$(WEB_RESULTSDIR)
-
-    web-commitsdir:
-
-        build or update both $$(WEB_COMMITSDIR) and
-	$$(WEB_SUMMARYDIR)/commits.json
-
-    web-page:
-
-        build or update the web page in $(LSW_WEBDIR) including the
-        results from the most recent test run
-
-endef
-
-.PHONY: web-config web-help
-web-config web-help:
-	$(info $(web-config))
