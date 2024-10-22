@@ -1420,12 +1420,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 *
 		 * What about the BSDs? Should this move into kernel_xfrm.c ?
 		 */
-		if (kinfo.os == KINFO_LINUX) {
+		said_next->replay_window = c->config->child_sa.replay_window;
+		if ((kinfo.os == KINFO_LINUX) && (direction == DIRECTION_OUTBOUND)) {
 			if ((kinfo.maj > 6) || ((kinfo.maj == 6) && (kinfo.min >= 10))) {
-				said_next->replay_window = direction == DIRECTION_OUTBOUND ? 0
-					: c->config->child_sa.replay_window;
+				said_next->replay_window = 0;
 			}
 		}
+
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
@@ -1592,10 +1593,10 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 *
 		 * What about the BSDs? Should this move into kernel_xfrm.c ?
 		 */
-		if (kinfo.os == KINFO_LINUX) {
+		said_next->replay_window = c->config->child_sa.replay_window;
+		if ((kinfo.os == KINFO_LINUX) && (direction == DIRECTION_OUTBOUND)) {
 			if ((kinfo.maj > 6) || ((kinfo.maj == 6) && (kinfo.min >= 10))) {
-				said_next->replay_window = direction == DIRECTION_OUTBOUND ? 0
-					: c->config->child_sa.replay_window;
+				said_next->replay_window = 0;
 			}
 		}
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
