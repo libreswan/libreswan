@@ -1054,7 +1054,8 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 	return matched > 0 && matched == ava_num;
 }
 
-static bool match_dn_unordered(const char *prefix, asn1_t a, asn1_t b, int *const wildcards)
+static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
+			       struct verbose verbose)
 {
 	dn_buf a_dnbuf = { "", };
 	dn_buf b_dnbuf = { "", };
@@ -1073,7 +1074,7 @@ static bool match_dn_unordered(const char *prefix, asn1_t a, asn1_t b, int *cons
 	 * encoded string and that can contain UTF-8 (i.e.,
 	 * !isprint()).  Strip that out before logging.
 	 */
-	dbg("%smatching unordered DNs A: '%s' B: '%s'", prefix, abuf, bbuf);
+	vdbg("matching unordered DNs A: '%s' B: '%s'", abuf, bbuf);
 
 	CERTName *const a_name = CERT_AsciiToName(abuf);
 	CERTName *const b_name = CERT_AsciiToName(bbuf);
@@ -1110,22 +1111,23 @@ static bool match_dn_unordered(const char *prefix, asn1_t a, asn1_t b, int *cons
 
 	CERT_DestroyName(a_name);
 	CERT_DestroyName(b_name);
-	dbg("%s%s matched: %d, rdn_num: %d, wc %d",
-	    prefix, __func__, matched, rdn_num, wildcards ? *wildcards : 0);
+	vdbg("%s() matched: %d, rdn_num: %d, wc %d",
+	     __func__, matched, rdn_num, wildcards ? *wildcards : 0);
 
 	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }
 
-bool match_dn_any_order_wild(const char *prefix, asn1_t a, asn1_t b, int *wildcards)
+bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
+			     struct verbose verbose)
 {
 	bool ret = match_dn(a, b, wildcards);
 
 	if (!ret) {
-		dbg("%s%s: not an exact match, now checking any RDN order with %d wildcards",
-		    prefix, __func__, *wildcards);
+		vdbg("%s() not an exact match, now checking any RDN order with %d wildcards",
+		     __func__, *wildcards);
 		/* recount wildcards */
 		*wildcards = 0;
-		ret = match_dn_unordered(prefix, a, b, wildcards);
+		ret = match_dn_unordered(a, b, wildcards, verbose);
 	}
 	return ret;
 }

@@ -410,9 +410,11 @@ static bool score_host_connection(unsigned indent,
 	 * were used.
 	 */
 
-	score->matching_peer_id = match_id("rhc:       ", peer_id,
+	struct verbose verbose = { .logger = ike->sa.logger, .level = indent, };
+	score->matching_peer_id = match_id(peer_id,
 					   &d->remote->host.id,
-					   &score->wildcards);
+					   &score->wildcards,
+					   verbose);
 
 	/*
 	 * Check if peer_id matches, exactly or after

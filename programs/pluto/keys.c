@@ -228,8 +228,10 @@ static bool try_all_keys(enum cert_origin cert_origin,
 			continue;
 		}
 
+		struct verbose verbose = { .logger = &global_logger, };
 		int wildcards; /* value ignored */
-		if (!match_id("  ", &key->id, &s->remote->id, &wildcards)) {
+		if (!match_id(&key->id, &s->remote->id,
+			      &wildcards, verbose)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));

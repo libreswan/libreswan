@@ -1460,11 +1460,11 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			      streq(cc->config->connalias, d->config->connalias))) {
 				int wildcards;	/* value ignored */
 				int pathlen;	/* value ignored */
-
+				struct verbose verbose = { .logger = indent.logger, .level = indent.level, };
 				if (!(same_id(&cc->local->host.id, &d->local->host.id) &&
-				      match_id("ts:       ",
-					       &cc->remote->host.id,
-					       &d->remote->host.id, &wildcards) &&
+				      match_id(&cc->remote->host.id,
+					       &d->remote->host.id,
+					       &wildcards, verbose) &&
 				      trusted_ca(ASN1(cc->remote->host.config->ca),
 						 ASN1(d->remote->host.config->ca), &pathlen))) {
 					connection_buf cb;

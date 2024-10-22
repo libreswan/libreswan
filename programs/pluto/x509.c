@@ -683,11 +683,11 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 				end_cert->subjectName);
 		}
 
+		struct verbose verbose = { .logger = &global_logger, };
 		int wildcards;
-		bool m = match_dn_any_order_wild("",
-						 end_cert_der_subject,
+		bool m = match_dn_any_order_wild(end_cert_der_subject,
 						 peer_id->name,
-						 &wildcards);
+						 &wildcards, verbose);
 		if (!m) {
 			id_buf idb;
 			return diag("peer ID_DER_ASN1_DN '%s' does not match expected '%s'",

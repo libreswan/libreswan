@@ -2023,18 +2023,17 @@ static struct connection *fc_try(const struct connection *c,
 			.where = HERE,
 		},
 	};
-	unsigned level = verbose.level;
+
 	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 		struct verbose verbose = hpf.search.verbose;
-		verbose.level++;
 
 		connection_buf cb;
 		selector_pair_buf sb;
 		vdbg("looking at "PRI_CONNECTION" with %s",
 		     pri_connection(d, &cb),
 		     str_selector_pair(&d->spd->local->client, &d->spd->remote->client, &sb));
-		verbose.level = level+1;
+		verbose.level++;
 
 		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 			vdbg("skipping unauthenticated connection instance with ID_NULL");
@@ -2055,7 +2054,8 @@ static struct connection *fc_try(const struct connection *c,
 		      d->config->connalias != NULL &&
 		      streq(c->config->connalias, d->config->connalias))) {
 			if (!(same_id(&c->local->host.id, &d->local->host.id) &&
-			      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
+			      match_id(&c->remote->host.id, &d->remote->host.id,
+				       &wildcards, verbose) &&
 			      trusted_ca(ASN1(c->remote->host.config->ca),
 					 ASN1(d->remote->host.config->ca), &pathlen))) {
 				vdbg("skipping connection same connalias but with faulty ID (logic is too complex)");
@@ -2091,7 +2091,7 @@ static struct connection *fc_try(const struct connection *c,
 		 */
 
 		vdbg("checking connection's SPDs");
-		verbose.level = level+2;
+		verbose.level++;
 
 		FOR_EACH_ITEM(d_spd, &d->child.spds) {
 
@@ -2118,7 +2118,6 @@ static struct connection *fc_try(const struct connection *c,
 			     d_spd->remote->client.ipproto,
 			     d_spd->remote->client.hport,
 			     (is_virtual_spd_end(d_spd->remote) ? "(virt)" : ""));
-			verbose.level = level+3;
 
 			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
 				selector_buf s1, s3;
@@ -2181,7 +2180,6 @@ static struct connection *fc_try(const struct connection *c,
 			}
 		}
 	}
-	verbose.level = level;
 
 	/* XXX: should have been skipped earlier!?! */
 	if (best != NULL && never_negotiate(best))

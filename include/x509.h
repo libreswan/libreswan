@@ -33,6 +33,7 @@
 #include "constants.h"
 #include "jambuf.h"		/* for typedef jam_bytes_fn */
 #include "asn1.h"
+#include "verbose.h"
 
 struct logger;
 struct pubkey_list;
@@ -77,7 +78,8 @@ extern deltatime_t crl_check_interval;
 
 extern bool same_dn(asn1_t a, asn1_t b);
 extern bool match_dn(asn1_t a, asn1_t b, int *wildcards);
-extern bool match_dn_any_order_wild(const char *prefix, asn1_t a, asn1_t b, int *wildcards);
+extern bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
+				    struct verbose verbose);
 extern bool dn_has_wildcards(asn1_t dn);
 extern err_t atodn(const char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);

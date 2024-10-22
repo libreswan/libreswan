@@ -294,9 +294,10 @@ static struct connection *instantiate(struct connection *t,
 			    is_labeled_parent(t)));
 
 	if (peer_id != NULL) {
+		struct verbose verbose = { .logger = t->logger, };
 		int wildcards;	/* value ignored */
 		passert(t->remote->host.id.kind == ID_FROMCERT ||
-			match_id("", peer_id, &t->remote->host.id, &wildcards));
+			match_id(peer_id, &t->remote->host.id, &wildcards, verbose));
 	}
 
 	struct connection *d = duplicate_connection(t->name, t, peer_id, where);

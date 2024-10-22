@@ -22,6 +22,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "jambuf.h"		/* for typedef jam_bytes_fn */
+#include "verbose.h"
 
 struct id {
 	enum ike_id_type kind;
@@ -91,7 +92,8 @@ extern bool id_is_any(const struct id *a);
 extern bool id_eq(const struct id *a, const struct id *b);
 extern bool same_id(const struct id *a, const struct id *b); /* fuzzy */
 #define MAX_WILDCARDS	15
-extern bool match_id(const char *prefix, const struct id *a, const struct id *b, int *wildcards);
+extern bool match_id(const struct id *a, const struct id *b,
+		     int *wildcards, struct verbose verbose);
 extern bool id_has_wildcards(const struct id *id);
 #define id_is_ipaddr(id) ((id)->kind == ID_IPV4_ADDR || (id)->kind == ID_IPV6_ADDR)
 

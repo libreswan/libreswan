@@ -401,8 +401,8 @@ bool same_id(const struct id *a, const struct id *b)
 
 /* compare two struct id values, DNs can contain wildcards */
 
-bool match_id(const char *prefix, const struct id *a, const struct id *b,
-	      int *wildcards_out)
+bool match_id(const struct id *a, const struct id *b,
+	      int *wildcards_out, struct verbose verbose)
 {
 	bool match;
 	int wildcards;
@@ -415,7 +415,7 @@ bool match_id(const char *prefix, const struct id *a, const struct id *b,
 		wildcards = MAX_WILDCARDS;
 		match = false;
 	} else if (a->kind == ID_DER_ASN1_DN) {
-		match = match_dn_any_order_wild(prefix, a->name, b->name, &wildcards);
+		match = match_dn_any_order_wild(a->name, b->name, &wildcards, verbose);
 	} else if (same_id(a, b)) {
 		wildcards = 0;
 		match = true;
@@ -424,13 +424,11 @@ bool match_id(const char *prefix, const struct id *a, const struct id *b,
 		match = false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		id_buf buf;
-		DBG_log("%smatch_id a=%s", prefix, str_id(a, &buf));
-		DBG_log("%s         b=%s", prefix, str_id(b, &buf));
-		DBG_log("%sresults  %s wildcards=%d",
-			prefix, match ? "matched" : "fail", wildcards);
-	}
+	id_buf buf;
+	vdbg("match_id a=%s", str_id(a, &buf));
+	vdbg("         b=%s", str_id(b, &buf));
+	vdbg("  result %s wildcards=%d",
+	     match ? "matched" : "fail", wildcards);
 
 	*wildcards_out = wildcards;
 	return match;
