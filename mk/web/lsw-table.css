@@ -1,0 +1,22 @@
+table {
+    font: 10px sans-serif;
+    border-collapse: collapse;
+    border: 1px solid gray;
+    white-space: nowrap;
+    table-layout: auto;
+    white-space: pre-wrap;
+}
+
+th, td {
+    border: 1px solid grey;
+    padding: 5px 5px;
+    text-align: center;
+}
+
+td {
+    vertical-align: top;
+}
+
+th {
+    vertical-align: bottom;
+}

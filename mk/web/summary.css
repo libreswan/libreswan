@@ -1,0 +1,41 @@
+body {
+  font: 10px sans-serif;
+}
+
+table.summary {
+    width: 100%;
+}
+
+/* Be careful to only apply the 35% to the summary table (and not
+   tables nested within) */
+table.summary > tbody > tr > td:first-child {
+    width: 35%;
+}
+
+table div.issues {
+    text-align: left;
+}
+
+table .commits {
+    border: 0px;
+}
+table .commits td {
+    border: 0px;
+    text-align: left;
+    padding: 1px;
+    vertical-align: top;
+}
+table .commits td.date {
+    white-space: nowrap;
+    /* need to undo the "width" above */
+    /* width: auto; */
+}
+table .commits tr.false td.subject {
+    font-weight: lighter;
+}
+table .commits tr.tag td.subject {
+    font-weight: bolder;
+}
+table .commits tr.merge td.subject {
+    font-weight: bolder;
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+
+    <script type="text/javascript" src="lsw-date2iso.js"></script>
+    <script type="text/javascript" src="result.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="results.css"> </link>
+    <script type="text/javascript" src="results.js"></script>
+
+    <script>
+      window.addEventListener('load', function() {
+          results("results", "results.json")
+      })
+    </script>
+
+    <script>
+      function lsw_summary_graph_click_test_run(table_id, summary_test_run) {
+	  window.location = "../" + summary_test_run.directory
+      }
+    </script>
+
+    <script type="text/javascript" src="lsw-summary-load.js"></script>
+    <script type="text/javascript" src="lsw-summary-graph.js"></script>
+    <script type="text/javascript" src="lsw-table.js"></script>
+    <link rel="stylesheet" type="text/css" href="lsw-summary-graph.css"> </link>
+    <link rel="stylesheet" type="text/css" href="lsw-table.css"> </link>
+    <script>
+      window.addEventListener('load', function() {
+          lsw_summary_load("../", function(summary) {
+              lsw_summary_graph("graph", "results", summary)
+          })
+      })
+    </script>
+
+    <script type="text/javascript" src="build.js"></script>
+    <script>
+      window.addEventListener('load', function() {
+	  build_summary("build-summary", "build.json")
+      })
+    </script>
+
+  </head>
+
+  <body>
+    <center>
+      <div id="graph"></div>
+      <br/>
+      <div id="build-summary"></div>
+      <br/>
+      <div id="documentation">
+	<center>
+	  <a href="documentation">documentation</a>
+	</center>
+      </div>
+      <div id="results"></div>
+    </center>
+  </body>
+
+</html>

@@ -25,7 +25,7 @@ WEB_ENABLED ?= true
 endif
 
 WEB_UTILSDIR ?= $(top_srcdir)/testing/utils
-WEB_SOURCEDIR ?= $(top_srcdir)/testing/web
+WEB_SOURCEDIR ?= $(top_srcdir)/mk/web
 WEB_REPODIR ?= .
 # these are verbose so multiple invocations can be spotted
 WEB_SUBDIR ?= $(shell $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
