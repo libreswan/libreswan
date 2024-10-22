@@ -137,6 +137,10 @@ KVM_LINUX_USE_EFENCE ?= true
 KVM_LINUX_USE_LABELED_IPSEC ?= true
 KVM_LINUX_USE_SECCOMP ?= true
 
+# in KB
+KVM_TEST_MEMORY=1000000
+#KVM_FEDORA_TEST_MEMORY=1000000
+
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
 	$(firstword \
@@ -1438,6 +1442,7 @@ define define-test-domain
 		-e 's;@@GUEST_NAME@@;$(strip $(2));' \
 		-e 's;@@PLATFORM@@;$(strip $(3));' \
 		-e 's;@@HOST_NAME@@;$(strip $(4));' \
+		-e 's;@@MEMORY@@;$$(call kvm-flag-value, KVM_TEST_MEMORY);' \
 		vm/$(strip $(4)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
