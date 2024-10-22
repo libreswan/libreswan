@@ -704,9 +704,13 @@ static void flush_incomplete_children(struct ike_sa *ike)
 {
 	struct state_filter sf = {
 		.clonedfrom = ike->sa.st_serialno,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(OLD2NEW, &sf)) {
+	while (next_state(&sf)) {
 		struct child_sa *child = pexpect_child_sa(sf.st);
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
@@ -841,9 +845,13 @@ void delete_state(struct state *st)
 	    DBGP(DBG_BASE)) {
 		struct state_filter sf = {
 			.clonedfrom = st->st_serialno,
-			.where = HERE,
+			.search = {
+				.order = OLD2NEW,
+				.verbose.logger = &global_logger,
+				.where = HERE,
+			},
 		};
-		while (next_state(OLD2NEW, &sf)) {
+		while (next_state(&sf)) {
 			state_buf sb;
 			barf((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 			     st->logger, /*ignore-exit-code*/0, HERE,
@@ -1433,8 +1441,14 @@ struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 		.inbound_spi = spi,
 		.dst = &dst,
 	};
-	struct state_filter sf = { .where = HERE, };
-	while (next_state(NEW2OLD, &sf)) {
+	struct state_filter sf = {
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
 		struct state *st = sf.st;
 		if (v2_spi_predicate(st, &filter))
 			break;
@@ -1500,8 +1514,14 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 {
 	struct ike_sa *best = NULL;
 
-	struct state_filter sf = { .where = HERE, };
-	while (next_state(NEW2OLD, &sf)) {
+	struct state_filter sf = {
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
 		struct state *st = sf.st;
 		if (!IS_PARENT_SA(st)) {
 			continue;
@@ -1554,8 +1574,14 @@ struct ike_sa *find_viable_parent_for_connection(const struct connection *c)
 
 	struct ike_sa *best = NULL;
 
-	struct state_filter sf = { .where = HERE, };
-	while (next_state(NEW2OLD, &sf)) {
+	struct state_filter sf = {
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
 		struct state *st = sf.st;
 		if (!IS_PARENT_SA(st)) {
 			continue;
@@ -1654,8 +1680,14 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
-	struct state_filter sf = { .where = HERE, };
-	while (next_state(NEW2OLD, &sf)) {
+	struct state_filter sf = {
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
 		struct state *s = sf.st;
 		if (s->st_ipcomp.protocol == &ip_protocol_ipcomp &&
 		    sameaddr(&s->st_connection->remote->host.addr,
@@ -1759,9 +1791,13 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 
 	struct state_filter cf = {
 		.clonedfrom = (*ike)->sa.st_serialno,
-		.where = where,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = where,
+		},
 	};
-	while(next_state(NEW2OLD, &cf)) {
+	while(next_state(&cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
 		state_attach(&child->sa, logger); /* no detach, going down */
 		switch (child->sa.st_ike_version) {
@@ -1895,9 +1931,13 @@ static void list_state_event(struct show *s, struct state *st,
 void list_state_events(struct show *s, const monotime_t now)
 {
 	struct state_filter sf = {
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(OLD2NEW, &sf)) {
+	while (next_state(&sf)) {
 		struct state *st = sf.st;
 		/* order makes no sense */
 		FOR_EACH_ELEMENT(event, st->st_events) {

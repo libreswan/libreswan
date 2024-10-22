@@ -197,9 +197,13 @@ static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
 	/* passert(SPIs should be different) */
 	struct state_filter child = {
 		.clonedfrom = from->sa.st_serialno,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(OLD2NEW, &child)) {
+	while (next_state(&child)) {
 		migrate_v2_child(from, to, pexpect_child_sa(child.st));
 	}
 }

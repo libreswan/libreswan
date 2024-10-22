@@ -51,9 +51,13 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 
 	struct state_filter state_by_connection = {
 	    .connection_serialno = c->serialno,
-	    .where = HERE,
+	    .search = {
+		    .order = OLD2NEW,
+		    .verbose.logger = &global_logger,
+		    .where = HERE,
+	    },
 	};
-	while (next_state(OLD2NEW, &state_by_connection)) {
+	while (next_state(&state_by_connection)) {
 
 		struct state *st = state_by_connection.st;
 

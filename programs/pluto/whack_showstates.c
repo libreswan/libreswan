@@ -101,8 +101,14 @@ static struct state **sort_states(where_t where)
 	/* COUNT the number of states. */
 	int count = 0;
 	{
-		struct state_filter sf = { .where = where, };
-		while (next_state(NEW2OLD, &sf)) {
+		struct state_filter sf = {
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = where,
+			},
+		};
+		while (next_state(&sf)) {
 			count++;
 		}
 	}
@@ -118,8 +124,14 @@ static struct state **sort_states(where_t where)
 	{
 		int p = 0;
 
-		struct state_filter sf = { .where = where, };
-		while (next_state(NEW2OLD, &sf)) {
+		struct state_filter sf = {
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = where,
+			},
+		};
+		while (next_state(&sf)) {
 			struct state *st = sf.st;
 			passert(st != NULL);
 			array[p++] = st;

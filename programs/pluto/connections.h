@@ -974,13 +974,13 @@ struct connection_filter {
 	/*
 	 * Filters.
 	 */
-	enum connection_kind kind;
-	const char *name;
-	const char *alias_root;
-	const struct id *this_id_eq; /* strict; not same_id() */
-	const struct id *that_id_eq; /* strict; not same_id() */
-	struct connection *clonedfrom;
-	enum ike_version ike_version;
+	const enum connection_kind kind;
+	const char *const name;
+	const char *const alias_root;
+	const struct id *const this_id_eq; /* strict; not same_id() */
+	const struct id *const that_id_eq; /* strict; not same_id() */
+	struct connection *const clonedfrom;
+	const enum ike_version ike_version;
 	/*
 	 * host-pair: matches is_template(), is_instance() and
 	 * is_permanent() (i.e., excludes is_group()) and:
@@ -989,9 +989,9 @@ struct connection_filter {
 	 * oriented() + local + 0.0.0.0 or ::; else match oriented() +
 	 * local + remote.
 	 */
-	struct {
-		const ip_address *local;
-		const ip_address *remote;
+	const struct {
+		const ip_address *const local;
+		const ip_address *const remote;
 	} host_pair;
 
 	/*
@@ -1010,11 +1010,11 @@ struct connection_filter {
 	/*
 	 * Required fields.
 	 */
-	struct search {
-		enum chrono order;
-		struct verbose verbose;
+	struct /*search*/ {
+		const enum chrono order;
+		struct verbose verbose; /* writable */
 		/* .where MUST BE LAST (See GCC bug 102288) */
-		where_t where;
+		const where_t where;
 	} search;
 };
 

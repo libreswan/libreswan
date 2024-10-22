@@ -346,32 +346,34 @@ void update_st_ike_spis(struct child_sa *new_ike, const ike_spis_t *ike_spis)
  * See also {next,prev}_connection()
  */
 
-static struct list_head *filter_head(struct state_filter *filter)
+static struct list_head *state_filter_head(struct state_filter *filter)
 {
+	struct verbose verbose = filter->search.verbose;
 	/* select list head */
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
-		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam(buf, "FOR_EACH_STATE[ike_spis=");
 			jam_ike_spis(buf, filter->ike_spis);
 			jam_string(buf, "]... in ");
-			jam_where(buf, filter->where);
+			jam_where(buf, filter->search.where);
 		}
 		hash_t hash = hash_state_ike_spis(filter->ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	} else if (filter->clonedfrom != SOS_NOBODY) {
-		dbg("FOR_EACH_STATE[clonedfrom="PRI_SO"]... in "PRI_WHERE,
-		    pri_so(filter->clonedfrom), pri_where(filter->where));
+		vdbg("FOR_EACH_STATE[clonedfrom="PRI_SO"]... in "PRI_WHERE,
+		     pri_so(filter->clonedfrom), pri_where(filter->search.where));
 		hash_t hash = hash_state_clonedfrom(&filter->clonedfrom);
 		bucket = hash_table_bucket(&state_clonedfrom_hash_table, hash);
 	} else if (filter->connection_serialno != 0) {
-		dbg("FOR_EACH_STATE[connection_serialno="PRI_CO"]... in "PRI_WHERE,
-		    pri_co(filter->connection_serialno), pri_where(filter->where));
+		vdbg("FOR_EACH_STATE[connection_serialno="PRI_CO"]... in "PRI_WHERE,
+		     pri_co(filter->connection_serialno), pri_where(filter->search.where));
 		hash_t hash = hash_state_connection_serialno(&filter->connection_serialno);
 		bucket = hash_table_bucket(&state_connection_serialno_hash_table, hash);
 	} else {
 		/* else other queries? */
-		dbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->where));
+		vdbg("FOR_EACH_STATE_... in "PRI_WHERE, pri_where(filter->search.where));
 		bucket = &state_db_list_head;
 	}
 	return bucket;
@@ -398,7 +400,7 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 	return true;
 }
 
-bool next_state(enum chrono adv, struct state_filter *filter)
+bool next_state(struct state_filter *filter)
 {
 	if (filter->internal == NULL) {
 		/*
@@ -406,19 +408,24 @@ bool next_state(enum chrono adv, struct state_filter *filter)
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		filter->internal = filter_head(filter)->head.next[adv];
+		filter->internal = state_filter_head(filter)->
+			head.next[filter->search.order];
+		filter->search.verbose.level++;
 	}
+	struct verbose verbose = filter->search.verbose;
+
 	filter->st = NULL;
 	/* Walk list until an entry matches */
 	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->next[adv]) {
+	     entry = entry->next[filter->search.order]) {
 		struct state *st = (struct state *) entry->data;
 		if (matches_filter(st, filter)) {
 			/* save state; but step off current entry */
-			filter->internal = entry->next[adv];
+			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
 				jam_string(buf, "  found ");
 				jam_state(buf, st);
 			}
@@ -426,6 +433,6 @@ bool next_state(enum chrono adv, struct state_filter *filter)
 			return true;
 		}
 	}
-	dbg("  matches: %d", filter->count);
+	vdbg("matches: %d", filter->count);
 	return false;
 }

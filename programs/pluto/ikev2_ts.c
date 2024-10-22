@@ -1240,8 +1240,14 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 	}
 
 	struct ike_sa *ike = ike_sa(&child->sa, HERE);
-	struct state_filter sf = { .where = HERE, };
-	while (next_state(NEW2OLD, &sf)) {
+	struct state_filter sf = {
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
+	};
+	while (next_state(&sf)) {
 		struct state *st = sf.st;
 		if (st->st_connection != c) {
 			continue;

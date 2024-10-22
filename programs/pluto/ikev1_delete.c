@@ -275,9 +275,13 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
 	*bogus = false;
 
 	struct state_filter sf = {
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(NEW2OLD, &sf)) {
+	while (next_state(&sf)) {
 		if (!IS_CHILD_SA(sf.st)) {
 			continue;
 		}

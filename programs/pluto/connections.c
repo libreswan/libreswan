@@ -373,9 +373,13 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	 */
 	struct state_filter state = {
 		.connection_serialno = c->serialno,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(NEW2OLD, &state)) {
+	while (next_state(&state)) {
 		state_buf sb;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] is still being used by %s "PRI_STATE,

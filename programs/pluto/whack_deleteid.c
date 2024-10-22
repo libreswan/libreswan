@@ -45,10 +45,14 @@ void whack_deleteid(const struct whack_message *m, struct show *s)
 	     "received whack command to delete connections with peer ID '%s'", m->name);
 
 	struct state_filter sf = {
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
 	unsigned nr = 0;
-	while (next_state(NEW2OLD, &sf)) {
+	while (next_state(&sf)) {
 		struct connection *c = sf.st->st_connection;
 
 		if (!IS_PARENT_SA(sf.st)) {

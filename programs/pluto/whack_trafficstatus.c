@@ -147,10 +147,14 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 
 	struct state_filter state_by_connection = {
 		.connection_serialno = c->serialno,
-		.where = HERE,
+		.search = {
+			.order = OLD2NEW,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
 	unsigned nr = 0;
-	while (next_state(OLD2NEW, &state_by_connection)) {
+	while (next_state(&state_by_connection)) {
 
 		struct state *st = state_by_connection.st;
 

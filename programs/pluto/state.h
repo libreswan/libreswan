@@ -39,6 +39,7 @@
 #include <pk11pub.h>
 #include <x509.h>
 
+#include "verbose.h"
 #include "deltatime.h"
 #include "monotime.h"
 #include "reqid.h"
@@ -911,22 +912,37 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st);
  */
 
 struct state_filter {
-	/* filters */
-	enum ike_version ike_version;
-	const ike_spis_t *ike_spis;	/* hashed */
-	so_serial_t clonedfrom;
-	co_serial_t connection_serialno;
-	/* current result (can be safely deleted) */
+	/*
+	 * Filters.
+	 */
+	const enum ike_version ike_version;
+	const ike_spis_t *const ike_spis;	/* hashed */
+	const so_serial_t clonedfrom;
+	const co_serial_t connection_serialno;
+
+	/*
+	 * Current result (can be safely deleted).
+	 */
 	struct state *st;
-	/* internal: handle on next entry */
-	struct list_entry *internal;
-	/* internal: total matches so far */
-	unsigned count;
-	/* .where MUST BE LAST (See GCC bug 102288) */
-	where_t where;
+
+	/*
+	 * internal
+	 */
+	struct list_entry *internal;	/* handle on next entry */
+	unsigned count;			/* total matches so far */
+
+	/*
+	 * Required fields.
+	 */
+	struct /*search*/ {
+		const enum chrono order;
+		struct verbose verbose; /* writable */
+		/* .where MUST BE LAST (See GCC bug 102288) */
+		const where_t where;
+	} search;
 };
 
-bool next_state(enum chrono advance, struct state_filter *query);
+bool next_state(struct state_filter *query);
 
 extern void set_sa_expire_next_event(enum sa_expire_kind expire, struct child_sa *child);
 

@@ -286,10 +286,12 @@ bool next_connection(struct connection_filter *filter)
 		 * list is entry it ends up back on HEAD which has no
 		 * data). And announces that the search has started.
 		 */
-		filter->internal = connection_filter_head(filter)->head.next[filter->search.order];
-		verbose.level++;
+		filter->internal = connection_filter_head(filter)->
+			head.next[filter->search.order];
 		filter->search.verbose.level++;	/* ready for caller */
 	}
+	verbose = filter->search.verbose; /* update */
+
 	/* Walk list until an entry matches */
 	filter->c = NULL;
 	for (struct list_entry *entry = filter->internal;

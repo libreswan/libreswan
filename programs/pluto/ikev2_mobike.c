@@ -391,9 +391,13 @@ void record_newaddr(ip_address *ip, char *a_type)
 	dbg("XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
 	struct state_filter sf = {
 		.ike_version = IKEv2,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(NEW2OLD, &sf)) {
+	while (next_state(&sf)) {
 
 		if (!IS_IKE_SA(sf.st)) {
 			continue;
@@ -429,9 +433,13 @@ void record_deladdr(ip_address *ip, char *a_type)
 	dbg("XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
 	struct state_filter sf = {
 		.ike_version = IKEv2,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while (next_state(NEW2OLD, &sf)) {
+	while (next_state(&sf)) {
 
 		if (!IS_IKE_SA(sf.st)) {
 			continue;

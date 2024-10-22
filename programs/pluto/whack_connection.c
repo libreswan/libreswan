@@ -488,11 +488,15 @@ void whack_connection_states(struct connection *c,
 	pdbg(c->logger, "%s()  weeding out larval and lingering SAs", __func__);
 	struct state_filter weed = {
 		.connection_serialno = c->serialno,
-		.where = where,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = where,
+		},
 	};
 	unsigned nr_parents = 0;
 	unsigned nr_children = 0;
-	while (next_state(NEW2OLD, &weed)) {
+	while (next_state(&weed)) {
 		if (weed.st->st_serialno == c->established_ike_sa) {
 			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest IKE SA",
 			      __func__, pri_so(weed.st->st_serialno));
@@ -537,10 +541,14 @@ void whack_connection_states(struct connection *c,
 		pdbg(c->logger, "%s()  poking siblings", __func__);
 		struct state_filter child_filter = {
 			.clonedfrom = ike->sa.st_serialno,
-			.where = where,
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = where,
+			},
 		};
 		unsigned nr = 0;
-		while (next_state(NEW2OLD, &child_filter)) {
+		while (next_state(&child_filter)) {
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
 			state_buf sb;
 			pdbg(c->logger, "%s()    dispatching to sibling Child SA "PRI_STATE,

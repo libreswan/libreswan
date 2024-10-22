@@ -46,10 +46,14 @@ void whack_deleteuser(const struct whack_message *m, struct show *s)
 	struct state_filter sf = {
 		/* only support deleting ikev1 with XAUTH username */
 		.ike_version = IKEv1,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
 	unsigned nr = 0;
-	while (next_state(NEW2OLD, &sf)) {
+	while (next_state(&sf)) {
 
 		if (!IS_ISAKMP_SA(sf.st)) {
 			continue;

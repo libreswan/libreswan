@@ -109,9 +109,13 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 		ike->sa.st_viable_parent = false; /*needed?*/
 		struct state_filter sf = {
 			.clonedfrom = ike->sa.st_serialno,
-			.where = HERE,
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = HERE,
+			},
 		};
-		while (next_state(NEW2OLD, &sf)) {
+		while (next_state(&sf)) {
 			struct child_sa *child = pexpect_child_sa(sf.st);
 			pdbg(logger, "delete IPsec SA "PRI_SO" which is a sibling",
 			     pri_so(child->sa.st_serialno));
@@ -127,9 +131,13 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	{
 		struct state_filter sf = {
 			.connection_serialno = c->serialno,
-			.where = HERE,
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = HERE,
+			},
 		};
-		while (next_state(NEW2OLD, &sf)) {
+		while (next_state(&sf)) {
 			/* on first pass, ignore established ISAKMP SA's */
 			if (IS_PARENT_SA(sf.st)) {
 				continue;
@@ -152,9 +160,13 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	{
 		struct state_filter sf = {
 			.connection_serialno = c->serialno,
-			.where = HERE,
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = &global_logger,
+				.where = HERE,
+			},
 		};
-		while (next_state(NEW2OLD, &sf)) {
+		while (next_state(&sf)) {
 			if (!PEXPECT(logger, IS_PARENT_SA(sf.st))) {
 				continue;
 			}

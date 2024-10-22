@@ -264,8 +264,14 @@ static bool impair_message(const struct message *message,
 			 * Hack to find a whack to log to.
 			 */
 			bool whacked = false;
-			struct state_filter sf = { .where = HERE, };
-			while (next_state(NEW2OLD, &sf)) {
+			struct state_filter sf = {
+				.search = {
+					.order = NEW2OLD,
+					.verbose.logger = &global_logger,
+					.where = HERE,
+				},
+			};
+			while (next_state(&sf)) {
 				struct state *st = sf.st;
 				if (whack_attached(st->logger)) {
 					llog(RC_LOG, st->logger,

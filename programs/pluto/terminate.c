@@ -594,9 +594,13 @@ static void connection_zap_ike_family(struct ike_sa **ike,
 
 	struct state_filter cf = {
 		.clonedfrom = (*ike)->sa.st_serialno,
-		.where = HERE,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = &global_logger,
+			.where = HERE,
+		},
 	};
-	while(next_state(NEW2OLD, &cf)) {
+	while(next_state(&cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
 
 		switch (child->sa.st_ike_version) {
