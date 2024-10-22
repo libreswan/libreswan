@@ -115,7 +115,6 @@ struct kernel_policy_encap {
 static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap policy,
 						   const struct spd *spd,
 						   enum kernel_mode kernel_mode,
-						   bool iptfs,
 						   enum direction direction,
 						   struct nic_offload *nic_offload,
 						   struct logger *logger,
@@ -157,7 +156,6 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 		/* details */
 		.priority = spd_priority(spd),
 		.mode = kernel_mode,
-		.iptfs = iptfs,
 		.kind = SHUNT_KIND_IPSEC,
 		.shunt = SHUNT_IPSEC,
 		.where = where,
@@ -247,7 +245,6 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 	enum kernel_mode kernel_mode = child->sa.st_kernel_mode;
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, kernel_mode,
-								    child->sa.st_seen_and_use_iptfs,
 								    direction,
 								    &nic_offload,
 								    child->sa.logger,
@@ -283,11 +280,9 @@ bool add_sec_label_kernel_policy(const struct spd *spd,
 		.esp = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
 		.ah = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 	};
-	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
 
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_spd(policy, spd, kernel_mode,
-				       child->sa.st_seen_and_use_iptfs, direction,
+		kernel_policy_from_spd(policy, spd, kernel_mode, direction,
 				       &nic_offload,
 				       logger, where);
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
