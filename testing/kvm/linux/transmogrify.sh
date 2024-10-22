@@ -187,7 +187,7 @@ for rpmdir in /bench/linux-rpms /pool/${PREFIX}linux-rpms ; do
     # directory is not called linux-transmogrify.* as a cleanup would
     # delete it; oops!
     if test -d ${rpmdir} ; then
-	RUN rpm -vi ${rpmdir}/*.rpm
+	RUN rpm -vi --force ${rpmdir}/*.rpm
 	break
     fi
 done
