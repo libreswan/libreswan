@@ -244,13 +244,13 @@ KVM_PLATFORMS += netbsd
 KVM_PLATFORMS += openbsd
 
 # this is what is enabled; OS needs a better name; KVM_OSS is weird
-KVM_OS += $(if $(KVM_ALPINE),  alpine)
-KVM_OS += $(if $(KVM_DEBIAN),  debian)
-KVM_OS += $(if $(KVM_FEDORA),  fedora)
-KVM_OS += $(if $(KVM_FREEBSD), freebsd)
-KVM_OS += $(if $(KVM_LINUX),   linux)
-KVM_OS += $(if $(KVM_NETBSD),  netbsd)
-KVM_OS += $(if $(KVM_OPENBSD), openbsd)
+KVM_OS += $(if $(filter true, $(KVM_ALPINE)),  alpine)
+KVM_OS += $(if $(filter true, $(KVM_DEBIAN)),  debian)
+KVM_OS += $(if $(filter true, $(KVM_FEDORA)),  fedora)
+KVM_OS += $(if $(filter true, $(KVM_FREEBSD)), freebsd)
+KVM_OS += $(if $(filter true, $(KVM_LINUX)),   linux)
+KVM_OS += $(if $(filter true, $(KVM_NETBSD)),  netbsd)
+KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 
 # fed into virt-install --os-variant; linux is fedora!
 KVM_ALPINE_OS_VARIANT  ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
