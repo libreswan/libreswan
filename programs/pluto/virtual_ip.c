@@ -326,13 +326,14 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
  * @param that end structure
  * @return bool True if we do
  */
-bool is_virtual_spd_end(const struct spd_end *end)
+bool is_virtual_spd_end(const struct spd_end *end,
+			struct verbose verbose)
 {
 	bool virt = (end->virt != NULL);
-	dbg("virt: %s() %s spd=%s config=%s",
-	    __func__, bool_str(virt),
-	    bool_str(end->virt != NULL),
-	    bool_str(end->config->child.virt != NULL));
+	vdbg("virt: %s() %s spd=%s config=%s",
+	     __func__, bool_str(virt),
+	     bool_str(end->virt != NULL),
+	     bool_str(end->config->child.virt != NULL));
 	pexpect((end->config->child.virt != NULL) >= (end->virt != NULL));
 	return virt;
 }
@@ -343,7 +344,8 @@ bool is_virtual_spd_end(const struct spd_end *end)
  * @param c Active Connection struct
  * @return bool True if we do
  */
-bool is_virtual_remote(const struct connection *c)
+bool is_virtual_remote(const struct connection *c,
+		       struct verbose verbose)
 {
 	bool virt = false;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -352,7 +354,7 @@ bool is_virtual_remote(const struct connection *c)
 			break;
 		}
 	}
-	ldbg(c->logger, "virt: %s() %s local/remote spd %s/%s; config %s/%s",
+	vdbg("virt: %s() %s local/remote spd %s/%s; config %s/%s",
 	     __func__, bool_str(virt),
 	     bool_str(c->spd->local->virt != NULL),
 	     bool_str(c->spd->remote->virt != NULL),
@@ -370,7 +372,9 @@ bool is_virtual_remote(const struct connection *c)
  */
 bool is_virtual_vhost(const struct spd_end *end)
 {
-	return is_virtual_spd_end(end) && (end->virt->flags & F_VIRTUAL_HOST) != 0;
+	struct verbose verbose = { .logger = &global_logger, };
+	return (is_virtual_spd_end(end, verbose) &&
+		(end->virt->flags & F_VIRTUAL_HOST) != 0);
 }
 
 /*
@@ -402,9 +406,10 @@ static bool net_in_list(const ip_subnet peer_net, const ip_subnet *list,
  */
 err_t check_virtual_net_allowed(const struct connection *c,
 				const ip_subnet peer_net,
-				const ip_address peers_addr)
+				const ip_address peers_addr,
+				struct verbose verbose)
 {
-	ldbg(c->logger, "virt: %s() spd %s/%s; config %s/%s",
+	vdbg("virt: %s() spd %s/%s; config %s/%s",
 	     __func__,
 	     bool_str(c->spd->local->virt != NULL),
 	     bool_str(c->spd->remote->virt != NULL),

@@ -1018,7 +1018,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 */
 	if (p == NULL &&
 	    /* c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT && */
-	    is_virtual_remote(c)) {
+	    is_virtual_remote(c, verbose)) {
 		p = c;
 		vdbg("using existing connection; nothing better and current is virtual-private");
 	}
@@ -1144,7 +1144,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	     bool_str(c->remote->child.has_client),
 	     str_selector(&c->spd->remote->client, &rcb),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
-	     bool_str(is_virtual_remote(c)),
+	     bool_str(is_virtual_remote(c, verbose)),
 	     str_address(&c->remote->child.lease[client_afi->ip_index], &lb),
 	     c->remote->child.selectors.proposed.len,
 	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
@@ -1159,7 +1159,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		update_first_selector(c, remote, selector);
 	}
 
-	if (is_virtual_remote(c)) {
+	if (is_virtual_remote(c, verbose)) {
 
 		vdbg("virtual-private: spd %s/%s; config %s/%s",
 		     bool_str(c->spd->local->virt != NULL),
@@ -2109,7 +2109,7 @@ static struct connection *fc_try(const struct connection *c,
 			     str_selector_subnet_port(remote_client, &d1),
 			     c->spd->remote->client.ipproto,
 			     c->spd->remote->client.hport,
-			     (is_virtual_remote(c) ? "(virt)" : ""),
+			     (is_virtual_remote(c, verbose) ? "(virt)" : ""),
 			     d->name,
 			     str_selector_subnet_port(&d_spd->local->client, &s3),
 			     d_spd->local->client.ipproto,
@@ -2117,7 +2117,7 @@ static struct connection *fc_try(const struct connection *c,
 			     str_selector_subnet_port(&d_spd->remote->client, &d3),
 			     d_spd->remote->client.ipproto,
 			     d_spd->remote->client.hport,
-			     (is_virtual_spd_end(d_spd->remote) ? "(virt)" : ""));
+			     (is_virtual_spd_end(d_spd->remote, verbose) ? "(virt)" : ""));
 
 			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
 				selector_buf s1, s3;
@@ -2130,7 +2130,7 @@ static struct connection *fc_try(const struct connection *c,
 			if (d_spd->remote->child->has_client) {
 
 				if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client) &&
-				    !is_virtual_spd_end(d_spd->remote)) {
+				    !is_virtual_spd_end(d_spd->remote, verbose)) {
 					selector_buf d1, d3;
 					vdbg("their client (%s) not in same remote_net (%s)",
 					     str_selector_subnet_port(&d_spd->remote->client, &d3),
@@ -2140,9 +2140,10 @@ static struct connection *fc_try(const struct connection *c,
 
 				virtualwhy = check_virtual_net_allowed(d,
 								       selector_subnet(*remote_client),
-								       d_spd->remote->host->addr);
+								       d_spd->remote->host->addr,
+								       verbose);
 
-				if (is_virtual_spd_end(d_spd->remote) &&
+				if (is_virtual_spd_end(d_spd->remote, verbose) &&
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
 							 &d_spd->remote->host->id))) {

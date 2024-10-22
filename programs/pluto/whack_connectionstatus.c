@@ -163,7 +163,8 @@ void jam_end_client(struct jambuf *buf, const struct connection *c,
 		jam_string(buf, separator);
 	}
 
-	if (is_virtual_spd_end(this)) {
+	struct verbose verbose = { .logger = &global_logger, };
+	if (is_virtual_spd_end(this, verbose)) {
 		if (is_virtual_vhost(this))
 			jam_string(buf, "vhost:?");
 		else

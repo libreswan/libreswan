@@ -18,6 +18,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "ip_subnet.h"
+#include "verbose.h"
 
 struct connection;
 struct spd;
@@ -35,13 +36,14 @@ struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where
 void virtual_ip_delref_where(struct virtual_ip **vip, where_t where);
 #define virtual_ip_delref(IP) virtual_ip_delref_where(IP, HERE)
 
-bool is_virtual_spd_end(const struct spd_end *that);
-bool is_virtual_remote(const struct connection *c);
+bool is_virtual_spd_end(const struct spd_end *that, struct verbose verbose);
+bool is_virtual_remote(const struct connection *c, struct verbose verbose);
 
 extern bool is_virtual_vhost(const struct spd_end *that);
 extern err_t check_virtual_net_allowed(const struct connection *c,
 				       const ip_subnet peer_net,
-				       const ip_address peers_addr);
+				       const ip_address peers_addr,
+				       struct verbose verbose);
 
 #endif /* VIRTUAL_IP_H */
 
