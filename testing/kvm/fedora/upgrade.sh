@@ -72,6 +72,7 @@ nss-devel
 nss-tools
 nss-util-devel
 pam-devel
+python3-pexpect
 systemd-networkd
 tcpdump
 unbound
