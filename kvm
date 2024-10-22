@@ -240,43 +240,20 @@ if test "$1" = $0 -a $# -eq 3 ; then
     exit 0
 fi
 
-# Translate ../../../kvm [...] into ./kvm [...]
+# Handle ../../../kvm [...]
 #
-# No arguments implies "check $PWD", and operations but no directory
-# implies $PWD as the test.  Do this before checking $#=0 as this will
-# add the missing parameter.
+# No arguments implies "check $PWD".  Operations but no directory
+# implies $PWD is the test.
+#
+# Set relative to the directory to interpret paths from.
+
+relative=
 
 if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
     if test $# -eq 0 ; then
 	set -- check $PWD
     else
-	# convert any paths to absolute
-	declare -a args
-	i=0
-	found_dir=false
-	need_dir=false
-	for arg in "$@" ; do
-	    case "${arg}" in
-		check | recheck | diff | diffs | patch | add )
-		    args[$i]="${arg}"
-		    need_dir=true
-		    ;;
-		* )
-		    if test -d "${arg}" ; then
-			found_dir=true
-			args[$i]=$(realpath ${arg})
-		    else
-			args[$i]="${arg}"
-		    fi
-		    ;;
-	    esac
-	    i=$((i + 1))
-	done
-	if ! $found_dir && $need_dir ; then
-	    set -- "${args[@]}" $PWD
-	else
-	    set -- "${args[@]}"
-	fi
+	relative=$PWD
     fi
     cd $(dirname $0)
 fi
@@ -310,11 +287,10 @@ fi
 # XXX: should "sh" be delayed so that "downgrade install sh netbsd"
 # DTRT?
 
+modified=
+declare -a directories
 declare -a ops
 
-modified=
-
-i=0
 while test $# -gt 0 ; do
 
     # pass 1; look for modifiers  commands
@@ -322,7 +298,7 @@ while test $# -gt 0 ; do
     case "$1" in
 
 	nohup )
-	    if test "$i" -ne 0 ; then
+	    if test "${#ops[@]}" -gt 0 ; then
 		echo "nohup must be first command" 1>&2
 		exit 1
 	    fi
@@ -339,17 +315,17 @@ while test $# -gt 0 ; do
 	    ;;
 
 	# aliases for pass2 commands
-	diff )       ops[$i]=diffs ;       i=$((i + 1)) ;;
-	result )     ops[$i]=results ;     i=$((i + 1)) ;;
-	failed )     ops[$i]=failed ;      i=$((i + 1)) ;;
-	unresolved ) ops[$i]=unresolved ;  i=$((i + 1)) ;;
-	test   )     ops[$i]=check ;       i=$((i + 1)) ;;
-	retest )     ops[$i]=recheck ;     i=$((i + 1)) ;;
-	test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
+	diff )       ops[${#ops[@]}]=diffs ;;
+	result )     ops[${#ops[@]}]=results ;;
+	failed )     ops[${#ops[@]}]=failed ;;
+	unresolved ) ops[${#ops[@]}]=unresolved ;;
+	test   )     ops[${#ops[@]}]=check ;;
+	retest )     ops[${#ops[@]}]=recheck ;;
+	test-clean ) ops[${#ops[@]}]=check-clean ;;
 
 	sh )
 	    # remainder of line is host + optional commands
-	    ops[$i]=sh ; i=$((i + 1)) ; shift
+	    ops[${#ops[@]}]=sh ; shift
 	    if test $# -lt 1 ; then
 		echo "missing hostname" 1>&2
 		exit 1
@@ -377,51 +353,44 @@ while test $# -gt 0 ; do
 	*=* ) # capture make variables
 	    makeflags[${#makeflags[@]}]=$1
 	    ;;
-	* ) # either: a directory; a hostname; or pass2 command
+
+	/* ) # an absolute directory path
+	    directories[${#directories[@]}]=$(realpath --relative-to=$PWD "$1")
+	    ;;
+
+	* ) # either: a directory or a pass2 command
 
 	    if [[ " ${pass2} " =~ " $1 " ]] ; then
-
 	       # a pass2 command, accumulate
-	       ops[$i]="$1" ; i=$((i + 1))
-
-	    elif [[ " ${hosts} " =~ " $1 " ]] ; then
-
-		# a hostname ..., run: sh hostname (leave it in input)
-		ops[$i]="sh" ; i=$((i + 1))
-		break
-
+		ops[${#ops[@]}]=$1
+	    elif test -n "${relative}" -a -d ${relative}/$1 ; then
+		directories[${#directories[@]}]=$(realpath --relative-to=$PWD ${relative}/$1)
+	    elif test -z "${relative}" -a -d "$1" ; then
+		directories[${#directories[@]}]=$(realpath --relative-to=$PWD "$1")
+	    elif test -z "${relative}" -a -d "${rutdir}/$1" ; then
+		directories[${#directories[@]}]=$(realpath --relative-to=${rutdir} "${rutdir}/$1")
+	    elif test -z "${ops[*]}" ; then
+		# first argument, should be a command
+		echo "unrecognized command: $1" 1>&2
 	    else
-
-		# If the argument is a directory then bail; it's
-		# assumed that "$@" is a list of test directories.
-		if test ! -d "$1" -a ! -d "${rutdir}/$1" ; then
-		    if test -z "${ops[*]}" ; then
-			echo "unknown command: $1" 1>&2
-		    else
-			echo "not a directory: $1" 1>&2
-		    fi
-		    exit 1
-		fi
-		break
-
+		echo "not a directory: $1" 1>&2
 	    fi
-
 	    ;;
     esac
     shift
 done
 
 if test -n "${modified}" ; then
-    if test -z "${ops[*]}" ; then
+    if test ${#ops[@]} -eq 0 ; then
 	echo "${modified}"
 	exit 0
-    elif test $# -ne 0 ; then
+    elif test ${#directories[@]} -gt 0 ; then
 	echo "both modified and tests specified" 1>&2
 	exit 1
     fi
-    set -- ${modified}
-elif test $# -eq 0 ; then
-    set -- ${kvm_testingdir}
+    directories=(${modified})
+elif test ${#directories[@]} -eq 0 ; then
+    directories=(${kvm_testingdir})
 fi
 
 if test -z "${ops[*]}" ; then
@@ -448,18 +417,18 @@ kvmresults()
 	${kvm_test_platform:+--test-platform "${kvm_test_platform// /|}"} \
 	${kvm_test_name:+--test-name "${kvm_test_name}"} \
 	${kvm_test_flags} \
-	"$@"
+	"${directories[@]}"
 }
 
 results_command()
 {
-    kvmresults "$@"
+    kvmresults "${directories[@]}"
     status=$?
 }
 
 diffs_command()
 {
-    kvmresults --stats none --print diffs "$@"
+    kvmresults --stats none --print diffs "${directories[@]}"
     status=$?
 }
 
@@ -498,10 +467,15 @@ while test $i -lt ${#ops[@]} ; do
 
     case ${op} in
 
-	add ) git add "$@" ;;
+	add ) git add "${directories[@]}"
+	      ;;
 
-	kill ) kill_command ;;
-	status ) status_command ;;
+	kill )
+	    kill_command
+	    ;;
+	status )
+	    status_command
+	    ;;
 
 	gateway | config | base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | \
@@ -509,13 +483,13 @@ while test $i -lt ${#ops[@]} ; do
 	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" ) || exit $?
 	    ;;
 	check | recheck )
-	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="$*" ) || exit $?
+	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="${directories[*]}" ) || exit $?
 	    ;;
 	diffs )
-	    diffs_command "$@"
+	    diffs_command "${directories[@]}"
 	    ;;
 	results )
-	    results_command "$@"
+	    results_command "${directories[@]}"
 	    ;;
 	failed | unresolved )
 	    # should leave: failed and/or unresolved
@@ -526,13 +500,13 @@ while test $i -lt ${#ops[@]} ; do
 	    if test  ${i} -lt ${#ops[@]} ; then
 		# kvmresults.py --print test-directory --skip ... does
 		# not do what it should! See #1852.
-		set -- $(results_command --skip "${skip}" "$@" 2>/dev/null | awk '{print $1}')
+		set -- $(results_command --skip "${skip}" "${directories[@]}" 2>/dev/null | awk '{print $1}')
 	    else
-		results_command --skip ${skip} "$@"
+		results_command --skip ${skip} "${directories[@]}"
 	    fi
 	    ;;
 	patch )
-	    diffs_command "$@" | patch -p1
+	    diffs_command "${directories[@]}" | patch -p1
 	    ;;
 	keys )
 	    ( set -x ; ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}" )
@@ -543,7 +517,7 @@ while test $i -lt ${#ops[@]} ; do
 	sh )
 	    host=${kvm_prefix}$1 ; shift
 	    echo "Connecting to ${host}" 1>&2
-	    exec testing/utils/kvmsh.py ${host} "$@"
+	    exec testing/utils/kvmsh.py ${host} "${directories[@]}"
 	    ;;
 	nsinstall )
 	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsinstall
