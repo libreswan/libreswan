@@ -555,8 +555,6 @@ STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
 KVM_TEST_PLATFORM += $(KVM_OS)
 KVM_TEST_STATUS += good
-# Keep until TESTLIST is stripped of bogus status fields
-KVM_TEST_STATUS += $(KVM_OS)
 KVM_RUN_POST_MORTEM ?=
 
 STRIPPED_KVM_TEST_PLATFORM = $(subst $(sp),|,$(sort $(KVM_TEST_PLATFORM)))
