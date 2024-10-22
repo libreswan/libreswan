@@ -1,8 +1,6 @@
 #!/bin/sh
 
-# Reverse engineer things like:
-#    3.18-51-g00a7f80-dirty-branch
-#    3.18-51-g00a7f80
+# Reverse engineer 2016-08-08-0556-3.18-51-g00a7f80-dirty-branch
 if test $# -lt 1 ; then
     cat <<EOF
 Usage:
@@ -13,8 +11,6 @@ EOF
 fi
 
 for d in "$@" ; do
-    basename ${d} | \
-	sed -n \
-	    -e 's;^[^-]*-[0-9]*-g\([0-9a-f]*\)-[^/]*$;\1;p' \
-	    -e 's;^[^-]*-[0-9]*-g\([0-9a-f]*\);\1;p'
+    # reallink?
+    realpath ${d} | sed -n -e 's/.*-g\([^-]*\)-[^/]*$/\1/p'
 done

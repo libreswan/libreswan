@@ -33,8 +33,7 @@ function lsw_compare_test_runs(test_runs) {
 
 	// fill in the now-loaded results.
 	for (let i = 0; i < results.length; i++) {
-	    requested_runs[i].test_results =
-		results[i].map((result) => new Result(result))
+	    requested_runs[i].test_results = results[i]
 	}
 
 	lsw_compare_table(test_runs)
@@ -110,19 +109,19 @@ function lsw_compare_table(test_runs) {
 	    if (!baseline) {
 		return true
 	    }
-	    // For the issues, convert them to a string so any change
+	    // For the errors, convert them to a string so any change
 	    // is detected.
-	    let issue_string = function(test_result) {
-		let issues = "issues"
-		for (const host of Object.keys(test_result.issues).sort()) {
-		    issues += ":" + host
-		    for (const issue of test_result.issues[host].sort()) {
-			issues += ":" + issue
+	    let error_string = function(test_result) {
+		let errors = "errors"
+		for (const host of Object.keys(test_result.errors).sort()) {
+		    errors += ":" + host
+		    for (const error of test_result.errors[host].sort()) {
+			errors += ":" + error
 		    }
 		}
-		return issues
+		return errors
 	    }
-	    let baseline_issues = issue_string(baseline)
+	    let baseline_errors = error_string(baseline)
 	    return test.test_results.slice(1).some(function(current) {
 		if (!current) {
 		    return true
@@ -136,7 +135,7 @@ function lsw_compare_table(test_runs) {
 		if (baseline.test_status != current.test_status) {
 		    return true
 		}
-		if (baseline_issues != issue_string(current)) {
+		if (baseline_errors != error_string(current)) {
 		    return true
 		}
 	    })
@@ -281,10 +280,64 @@ function lsw_compare_table(test_runs) {
 	    },
 	    html: function(row) {
 		let result = row.test_results[run_index]
-		if (!result) {
+		if (result == undefined) {
 		    return ""
 		}
-		return result.html_issues(this.directory + "/OUTPUT/")
+		let test_guest_names =
+		    (result.test_guest_names !== undefined ? result.test_guest_names :
+		     result.test_host_names !== undefined ? result.test_host_names :
+		     result.host_names !== undefined ? result.host_names :
+		     null)
+		if (!test_guest_names) {
+		    return ""
+		}
+		let br = false
+		let html = ""
+		let directory = this.directory
+		for (const host of test_guest_names) {
+		    if (br) {
+			html += "<br/>"
+		    }
+		    br = true
+		    html += host + ":"
+		    if (result.errors[host] === undefined
+			|| result.errors[host].length == 0) {
+			html += "passed"
+		    } else {
+			let sep = ""
+			for (const error of result.errors[host]) {
+			    html += sep
+			    sep = ", "
+			    let href = null
+			    let value = ""
+			    if (error == "passed") {
+				value = "passed"
+			    } else if (error == "baseline-missing") {
+				// Probably a new test.
+				value = "previous-missing"
+			    } else if (error == "output-different"
+				       || error == "output-whitespace") {
+				href = result.output_directory + "/" + host + ".console.diff"
+				value = error
+			    } else if (error == "output-unchecked") {
+				href = result.output_directory + "/" + host + ".console.txt"
+				value = error
+			    } else if (error == "output-truncated") {
+				href = result.output_directory + "/" + host + ".console.verbose.txt"
+				value = error
+			    } else {
+				href = result.output_directory
+				value = error
+			    }
+			    if (href) {
+				html += "<a href=\"" + directory + "/" + href + "\">" + value + "</a>"
+			    } else {
+				html += value
+			    }
+			}
+		    }
+		}
+		return html
 	    },
 	})
 	columns.push(results_column)
