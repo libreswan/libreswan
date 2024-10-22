@@ -179,7 +179,7 @@ def _ignore_test(task, args, result_stats, logger):
             logger.info("moving '%s' to '%s'", test.output_directory,
                         test_backup_directory)
             # create BACKUP/ then move OUTPUT/ to BACKUP/<test>
-            os.makedirs(os.path.dirname(args.backup_directory), exist_ok=True)
+            os.makedirs(args.backup_directory, exist_ok=True)
             os.rename(test.output_directory, test_backup_directory)
         result_stats.add_ignored(test, ignored)
         publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
