@@ -41,14 +41,9 @@
 
 #define TS_MAX 16 /* arbitrary */
 
-typedef struct {
-	struct logger *logger;
-	unsigned level;
-} indent_t;
-
 #define TS_INDENT "ts:%*s "
-#define ts_indent indent.level*2, ""
-#define dbg_ts(FORMAT, ...) ldbg(indent.logger, TS_INDENT""FORMAT, ts_indent, ##__VA_ARGS__)
+#define ts_indent verbose.level*2, ""
+#define dbg_ts(FORMAT, ...) ldbg(verbose.logger, TS_INDENT""FORMAT, ts_indent, ##__VA_ARGS__)
 
 struct score {
 	int range;
@@ -156,12 +151,12 @@ static const char *str_fit_story(enum fit fit)
 
 static void scribble_accepted_selectors(ip_selectors *selectors,
 					const struct narrowed_selector_payload *nsp,
-					indent_t indent)
+					struct verbose verbose)
 {
 	if (selectors->len > 0) {
 		pexpect(selectors->len > 0);
 		pexpect(selectors->list != NULL);
-		ldbg(indent.logger, "skipping scribble as already scribbled");
+		dbg_ts("skipping scribble as already scribbled");
 	} else {
 		pexpect(selectors->len == 0);
 		pexpect(selectors->list == NULL);
@@ -176,7 +171,7 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 }
 
 static void llog_narrowed_selector_payloads(lset_t rc_flags,
-					    struct logger *logger,
+					    const struct logger *logger,
 					    const struct narrowed_selector_payload *local_nsp,
 					    const struct narrowed_selector_payload *remote_nsp)
 {
@@ -202,20 +197,20 @@ static void llog_narrowed_selector_payloads(lset_t rc_flags,
 static void scribble_selectors_on_spd(struct connection *c,
 				      const struct narrowed_selector_payload *local_nsp,
 				      const struct narrowed_selector_payload *remote_nsp,
-				      indent_t indent)
+				      struct verbose verbose)
 {
-	scribble_accepted_selectors(&c->local->child.selectors.accepted, local_nsp, indent);
-	scribble_accepted_selectors(&c->remote->child.selectors.accepted, remote_nsp, indent);
+	scribble_accepted_selectors(&c->local->child.selectors.accepted, local_nsp, verbose);
+	scribble_accepted_selectors(&c->remote->child.selectors.accepted, remote_nsp, verbose);
 
 	/*
 	 * Log accepted list when multiple traffic selectors are
 	 * involved.
 	 */
 	if (local_nsp->nr > 1 || remote_nsp->nr > 1) {
-		llog_narrowed_selector_payloads(RC_LOG, indent.logger,
+		llog_narrowed_selector_payloads(RC_LOG, verbose.logger,
 						local_nsp, remote_nsp);
 	} else if (DBGP(DBG_BASE)) {
-		llog_narrowed_selector_payloads(DEBUG_STREAM, indent.logger,
+		llog_narrowed_selector_payloads(DEBUG_STREAM, verbose.logger,
 						local_nsp, remote_nsp);
 	}
 
@@ -252,7 +247,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 static void scribble_ts_request_on_responder(struct child_sa *child,
 					     struct connection *c,
 					     const struct narrowed_selector_payloads *nsps,
-					     indent_t indent)
+					     struct verbose verbose)
 {
 	if (c != child->sa.st_connection) {
 		connection_buf from, to;
@@ -267,16 +262,16 @@ static void scribble_ts_request_on_responder(struct child_sa *child,
 	}
 
 	/* end game; polarity reversed */
-	scribble_selectors_on_spd(c, /*local*/&nsps->r, /*remote*/&nsps->i, indent);
+	scribble_selectors_on_spd(c, /*local*/&nsps->r, /*remote*/&nsps->i, verbose);
 }
 
 static void scribble_ts_response_on_initiator(struct child_sa *child,
 					      const struct narrowed_selector_payloads *nsps,
-					      indent_t indent)
+					      struct verbose verbose)
 {
 	/* end game */
 	struct connection *c = child->sa.st_connection;
-	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, indent);
+	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, verbose);
 
 	/*
 	 * Redundant (should have been set earlier)?
@@ -743,7 +738,7 @@ static bool v2_parse_tsps(const struct msg_digest *md,
 
 static const struct ip_protocol *narrow_protocol(ip_selector selector,
 						 const struct traffic_selector *ts,
-						 enum fit fit, indent_t indent)
+						 enum fit fit, struct verbose verbose)
 {
 	int ipproto = -1;
 
@@ -790,7 +785,7 @@ static const struct ip_protocol *narrow_protocol(ip_selector selector,
 
 static int narrow_port(ip_selector selector,
 		       const struct traffic_selector *ts,
-		       enum fit fit, indent_t indent)
+		       enum fit fit, struct verbose verbose)
 {
 	int end_low = selector.hport;
 	int end_high = selector.hport == 0 ? 65535 : selector.hport;
@@ -849,7 +844,7 @@ static int narrow_port(ip_selector selector,
 
 static ip_range narrow_range(ip_selector selector,
 			     const struct traffic_selector *ts,
-			     enum fit fit, indent_t indent)
+			     enum fit fit, struct verbose verbose)
 {
 	/*
 	 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2
@@ -893,7 +888,7 @@ static ip_range narrow_range(ip_selector selector,
 static bool narrow_ts_to_selector(struct narrowed_selector *n,
 				  const struct traffic_selector *ts,
 				  ip_selector selector,
-				  enum fit fit, indent_t indent)
+				  enum fit fit, struct verbose verbose)
 {
 	*n = (struct narrowed_selector) {
 		.name = ts->name,
@@ -908,19 +903,19 @@ static bool narrow_ts_to_selector(struct narrowed_selector *n,
 		return false;
 	}
 
-	int hport = narrow_port(selector, ts, fit, indent);
+	int hport = narrow_port(selector, ts, fit, verbose);
 	if (hport < 0) {
 		dbg_ts("skipping; %s[%d] port too wide", ts->name, ts->nr);
 		return false;
 	}
 
-	const struct ip_protocol *protocol = narrow_protocol(selector, ts, fit, indent);
+	const struct ip_protocol *protocol = narrow_protocol(selector, ts, fit, verbose);
 	if (protocol == NULL) {
 		dbg_ts("skipping; %s[%d] protocol too wide", ts->name, ts->nr);
 		return false;
 	}
 
-	ip_range range = narrow_range(selector, ts, fit, indent);
+	ip_range range = narrow_range(selector, ts, fit, verbose);
 	if (range_is_unset(&range)) {
 		dbg_ts("skipping; %s[%d] range too wide", ts->name, ts->nr);
 		return false;
@@ -938,13 +933,13 @@ static bool narrow_ts_to_selector(struct narrowed_selector *n,
 
 static bool score_narrowed_selector(struct score *score,
 				    const struct narrowed_selector *ts,
-				    indent_t indent)
+				    struct verbose verbose)
 {
 	if (!pexpect(ts->selector.is_set)) {
 		return false;
 	}
 
-	indent.level++;
+	verbose.level++;
 	zero(score);
 
 	ip_range range = selector_range(ts->selector);
@@ -979,12 +974,12 @@ static bool score_gt_best(const struct score *score,
 static bool fit_ts_to_selector(struct narrowed_selector *ns,
 			       const struct traffic_selector *ts,
 			       ip_selector selector,
-			       enum fit fit, indent_t indent)
+			       enum fit fit, struct verbose verbose)
 {
-	if (!narrow_ts_to_selector(ns, ts, selector, fit, indent)) {
+	if (!narrow_ts_to_selector(ns, ts, selector, fit, verbose)) {
 		return false;
 	}
-	if (!score_narrowed_selector(&ns->score, ns, indent)) {
+	if (!score_narrowed_selector(&ns->score, ns, verbose)) {
 		return false;
 	}
 	return true;
@@ -993,9 +988,9 @@ static bool fit_ts_to_selector(struct narrowed_selector *ns,
 static bool fit_ts_to_sec_label(struct narrowed_selector_payload *nsp,
 				const struct traffic_selector_payload *tsp,
 				chunk_t sec_label, enum fit sec_label_fit,
-				indent_t indent)
+				struct verbose verbose)
 {
-	indent.level++;
+	verbose.level++;
 
 	if (sec_label.len == 0) {
 		/*
@@ -1019,7 +1014,7 @@ static bool fit_ts_to_sec_label(struct narrowed_selector_payload *nsp,
 	case END_WIDER_THAN_TS:
 		if (!sec_label_within_range("Traffic Selector",
 					    tsp->sec_label, sec_label,
-					    indent.logger)) {
+					    verbose.logger)) {
 			dbg_ts("%s sec_label="PRI_SHUNK" IS NOT within range connection sec_label="PRI_SHUNK,
 			       tsp->name, pri_shunk(tsp->sec_label), pri_shunk(sec_label));
 			return false;
@@ -1044,7 +1039,7 @@ static bool fit_ts_to_sec_label(struct narrowed_selector_payload *nsp,
 
 static bool append_ns_to_nsp(const struct narrowed_selector *ns,
 			     struct narrowed_selector_payload *nsp,
-			     indent_t indent)
+			     struct verbose verbose)
 {
 	/*
 	 * Save the best overall score.  Presumably duplicates won't
@@ -1118,9 +1113,9 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 			   const struct child_selector_end *end,
 			   enum fit selector_fit,
 			   enum fit sec_label_fit,
-			   indent_t indent)
+			   struct verbose verbose)
 {
-	if (!fit_ts_to_sec_label(nsp, tsp, end->sec_label, sec_label_fit, indent)) {
+	if (!fit_ts_to_sec_label(nsp, tsp, end->sec_label, sec_label_fit, verbose)) {
 		return false;
 	}
 
@@ -1136,9 +1131,9 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 
 			struct narrowed_selector ns;
 			if (fit_ts_to_selector(&ns, ts, selector,
-						selector_fit, indent)) {
-				if (!append_ns_to_nsp(&ns, nsp, indent)) {
-					llog(RC_LOG, indent.logger, "TS overflow");
+						selector_fit, verbose)) {
+				if (!append_ns_to_nsp(&ns, nsp, verbose)) {
+					llog(RC_LOG, verbose.logger, "TS overflow");
 					return false;
 				}
 				match = matched = true;
@@ -1153,7 +1148,7 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 			 * about initiator?
 			 */
 			if (!append_block_to_nsp(selector, nsp)) {
-				llog(RC_LOG, indent.logger, "TS overflow");
+				llog(RC_LOG, verbose.logger, "TS overflow");
 				return false;
 			}
 		}
@@ -1202,17 +1197,17 @@ static bool fit_tsps_to_ends(struct narrowed_selector_payloads *nsps,
 			     const struct child_selector_ends *ends,
 			     enum fit selector_fit,
 			     enum fit sec_label_fit,
-			     indent_t indent)
+			     struct verbose verbose)
 {
 	dbg_ts("evaluating END %s:", str_end_fit_ts(selector_fit));
-	indent.level++;
+	verbose.level++;
 
 	if (!fit_tsp_to_end(&nsps->i, &tsps->i, &ends->i,
-			    selector_fit, sec_label_fit, indent)) {
+			    selector_fit, sec_label_fit, verbose)) {
 		return false;
 	}
 	if (!fit_tsp_to_end(&nsps->r, &tsps->r, &ends->r,
-			    selector_fit, sec_label_fit, indent)) {
+			    selector_fit, sec_label_fit, verbose)) {
 		return false;
 	}
 
@@ -1229,7 +1224,7 @@ static bool fit_tsps_to_ends(struct narrowed_selector_payloads *nsps,
 }
 
 static bool v2_child_connection_probably_shared(struct child_sa *child,
-						indent_t indent)
+						struct verbose verbose)
 {
 	struct connection *c = child->sa.st_connection;
 
@@ -1286,7 +1281,7 @@ struct best {
 static bool fit_connection_for_v2TS_request(struct connection *d,
 					    const struct traffic_selector_payloads *tsps,
 					    struct narrowed_selector_payloads *nsps,
-					    indent_t indent)
+					    struct verbose verbose)
 {
 	/* responder -- note D! */
 	enum fit responder_selector_fit;
@@ -1333,7 +1328,7 @@ static bool fit_connection_for_v2TS_request(struct connection *d,
 	if (!fit_tsps_to_ends(nsps, tsps, &ends,
 			      responder_selector_fit,
 			      responder_sec_label_fit,
-			      indent)) {
+			      verbose)) {
 		return false;
 	}
 
@@ -1344,7 +1339,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 							 const struct traffic_selector_payloads *tsps,
 							 const struct msg_digest *md)
 {
-	indent_t indent = {child->sa.logger, 0};
+	struct verbose verbose = { .logger = child->sa.logger, };
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -1378,7 +1373,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 
 	const ip_address local = md->iface->ip_dev->local_address;
 	FOR_EACH_THING(remote, endpoint_address(md->sender), unset_address) {
-		indent.level = 1;
+		verbose.level = 1;
 
 		address_buf rab, lab;
 		dbg_ts("searching host_pair %s->%s",
@@ -1398,7 +1393,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 		};
 		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
-			indent.level = 2;
+			verbose.level = 2;
 
 			/* XXX: sec_label connections all look a-like, include CO */
 			connection_buf cb;
@@ -1409,7 +1404,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			       pri_connection(d, &cb), pri_co(d->serialno),
 			       str_connection_policies(d, &pb));
 
-			indent.level = 3;
+			verbose.level = 3;
 
 			/*
 			 * Normally OE instances are never considered
@@ -1460,7 +1455,6 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			      streq(cc->config->connalias, d->config->connalias))) {
 				int wildcards;	/* value ignored */
 				int pathlen;	/* value ignored */
-				struct verbose verbose = { .logger = indent.logger, .level = indent.level, };
 				if (!(same_id(&cc->local->host.id, &d->local->host.id) &&
 				      match_id(&cc->remote->host.id,
 					       &d->remote->host.id,
@@ -1475,7 +1469,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			}
 
 			struct narrowed_selector_payloads nsps = {0};
-			if (!fit_connection_for_v2TS_request(d, tsps, &nsps, indent)) {
+			if (!fit_connection_for_v2TS_request(d, tsps, &nsps, verbose)) {
 				connection_buf cb;
 				dbg_ts("skipping "PRI_CONNECTION" does not score at all",
 				       pri_connection(d, &cb));
@@ -1500,7 +1494,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 bool process_v2TS_request_payloads(struct child_sa *child,
 				   const struct msg_digest *md)
 {
-	indent_t indent = {child->sa.logger, 0};
+	struct verbose verbose = { .logger = child->sa.logger, };
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 	struct connection *cc = child->sa.st_connection;
@@ -1522,7 +1516,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	if (is_labeled(cc)) {
 		PEXPECT(child->sa.logger, is_labeled_parent(cc));
 		struct narrowed_selector_payloads nsps = {0};
-		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, indent)) {
+		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, verbose)) {
 			llog_sa(RC_LOG, child, "proposed Traffic Selectors do not match labeled IKEv2 connection");
 			return false;
 		}
@@ -1535,7 +1529,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		best = find_best_connection_for_v2TS_request(child, &tsps, md);
 	}
 
-	indent.level = 1;
+	verbose.level = 1;
 
 	if (best.connection == NULL) {
 		connection_buf cb;
@@ -1645,7 +1639,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		};
 		while (next_connection(&cf)) {
 			struct connection *t = cf.c;
-			indent.level = 2;
+			verbose.level = 2;
 
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, TS_INDENT, ts_indent);
@@ -1656,7 +1650,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				jam(buf, ">");
 			}
 
-			indent.level = 3;
+			verbose.level = 3;
 
 			/*
 			 * Is it worth looking at the template.
@@ -1750,11 +1744,11 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			struct narrowed_selector_payloads nsps;
 			if (!fit_tsps_to_ends(&nsps, &tsps, &ends, responder_selector_fit,
-					      responder_sec_label_fit, indent)) {
+					      responder_sec_label_fit, verbose)) {
 				continue;
 			}
 
-			indent.level--;
+			verbose.level--;
 
 			/*
 			 * XXX: isn't this a template, or are group
@@ -1762,7 +1756,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 */
 			struct connection *s;
 			bool instantiated;
-			if (v2_child_connection_probably_shared(child, indent)) {
+			if (v2_child_connection_probably_shared(child, verbose)) {
 				/* instantiate it, filling in peer's ID */
 				s = spd_instantiate(t, child->sa.st_connection->remote->host.addr, HERE);
 				instantiated = true;
@@ -1770,7 +1764,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				s = child->sa.st_connection;
 				instantiated = false;
 			}
-			scribble_ts_request_on_responder(child, s, &nsps, indent);
+			scribble_ts_request_on_responder(child, s, &nsps, verbose);
 
 			/* switch */
 			best = (struct best) {
@@ -1798,38 +1792,38 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * - a more straight forward template that needs narrowing
 	 */
 
-	indent.level = 1;
+	verbose.level = 1;
 	if (is_labeled_parent(best.connection)) {
 		/*
 		 * Convert the hybrid sec_label template-instance into
 		 * a proper instance, and then update its selectors.
 		 */
 		dbg_ts("instantiating the labeled_parent connection");
-		indent.level = 2;
+		verbose.level = 2;
 		pexpect(best.connection == child->sa.st_connection); /* big circle */
 		pexpect(best.nsps.i.sec_label.len > 0);
 		pexpect(best.nsps.r.sec_label.len > 0);
 		pexpect(best.connection->child.sec_label.len == 0);
 		pexpect(address_is_specified(best.connection->remote->host.addr));
 		struct connection *s = labeled_parent_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
-		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
+		scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
 		/* switch to instantiated instance; same score */
 		best.connection = s;
 		best.instantiated = true;
 	} else if (best.connection != NULL &&
 		   is_template(best.connection)) {
 		dbg_ts("instantiating the template connection");
-		indent.level = 2;
+		verbose.level = 2;
 		pexpect(best.nsps.i.sec_label.len == 0);
 		pexpect(best.nsps.r.sec_label.len == 0);
 		struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
-		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
+		scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
 		/* switch to instantiated instance; same score */
 		best.connection = s;
 		best.instantiated = true;
 	}
 
-	indent.level = 1;
+	verbose.level = 1;
 
 	if (best.connection == NULL) {
 		dbg_ts("giving up");
@@ -1857,7 +1851,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 bool process_v2TS_response_payloads(struct child_sa *child,
 				    struct msg_digest *md)
 {
-	indent_t indent = {child->sa.logger, 0};
+	struct verbose verbose = { .logger = child->sa.logger, };
 
 	passert(child->sa.st_sa_role == SA_INITIATOR);
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
@@ -1903,13 +1897,13 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	struct narrowed_selector_payloads best = {0};
 	if (!fit_tsps_to_ends(&best, &tsps, &ends,
 			      initiator_selector_fit,
-			      initiator_sec_label_fit, indent)) {
+			      initiator_sec_label_fit, verbose)) {
 		dbg_ts("reject responder TSi/TSr Traffic Selector");
 		/* prevents parent from going to I3 */
 		return false;
 	}
 
-	scribble_ts_response_on_initiator(child, &best, indent);
+	scribble_ts_response_on_initiator(child, &best, verbose);
 	spd_db_rehash_remote_client(c->spd);
 
 	return true;
@@ -1939,7 +1933,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
  */
 bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md)
 {
-	indent_t indent = {child->sa.logger, 0};
+	struct verbose verbose = { .logger = child->sa.logger, };
 
 	if (!pexpect(child->sa.st_state == &state_v2_REKEY_CHILD_R0))
 		return false;
@@ -1976,7 +1970,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	struct narrowed_selector_payloads best = {0};
 	if (!fit_tsps_to_ends(&best, &their_tsps, &ends,
 			      responder_selector_fit,
-			      responder_sec_label_fit, indent)) {
+			      responder_sec_label_fit, verbose)) {
 		llog_sa(RC_LOG, child,
 			  "rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
 		return false;

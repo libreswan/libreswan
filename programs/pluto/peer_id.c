@@ -170,7 +170,7 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
  * as nothing already used is changed.
  */
 
-#define dbg_rhc(FORMAT, ...) pdbg(ike->sa.logger, "rhc:%*s "FORMAT, indent*2, "", ##__VA_ARGS__)
+#define dbg_rhc(FORMAT, ...) pdbg(verbose.logger, "rhc:%*s "FORMAT, verbose.level*2, "", ##__VA_ARGS__)
 
 struct score {
 	bool matching_peer_id;
@@ -180,13 +180,13 @@ struct score {
 	struct connection *connection;
 };
 
-static bool score_host_connection(unsigned indent,
-				  const struct ike_sa *ike,
+static bool score_host_connection(const struct ike_sa *ike,
 				  lset_t proposed_authbys,
 				  const struct id *peer_id,
 				  const struct id *tarzan_id,
 				  asn1_t peer_ca,
-				  struct score *score)
+				  struct score *score,
+				  struct verbose verbose)
 {
 	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
 	struct connection *c = ike->sa.st_connection;
@@ -410,7 +410,6 @@ static bool score_host_connection(unsigned indent,
 	 * were used.
 	 */
 
-	struct verbose verbose = { .logger = ike->sa.logger, .level = indent, };
 	score->matching_peer_id = match_id(peer_id,
 					   &d->remote->host.id,
 					   &score->wildcards,
@@ -447,7 +446,7 @@ static bool score_host_connection(unsigned indent,
 	dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
 		bool_str(matching_peer_ca), score->peer_pathlen,
 		bool_str(matching_requested_ca), score->our_pathlen);
-	indent++;
+	verbose.level++;
 
 	/*
 	 * Both matching_peer_ca and
@@ -538,13 +537,12 @@ static bool better_score(struct score best, struct score score, struct logger *l
 	return false;
 }
 
-static struct connection *refine_host_connection_on_responder(int indent,
-							      const struct ike_sa *ike,
+static struct connection *refine_host_connection_on_responder(const struct ike_sa *ike,
 							      lset_t proposed_authbys,
 							      const struct id *peer_id,
-							      const struct id *tarzan_id)
+							      const struct id *tarzan_id,
+							      struct verbose verbose)
 {
-
 	struct connection *c = ike->sa.st_connection;
 
 	PASSERT(ike->sa.logger, !LHAS(proposed_authbys, AUTH_NEVER));
@@ -605,10 +603,10 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	struct score best = {0};
 
 	struct score c_score = { .connection = c, };
-	if (score_host_connection(indent, ike,
+	if (score_host_connection(ike,
 				  proposed_authbys,
 				  peer_id, tarzan_id, peer_ca,
-				  &c_score)) {
+				  &c_score, verbose)) {
 		best = c_score;
 		if (exact_id_match(best)) {
 			dbg_rhc("returning initial connection because exact (peer) ID match");
@@ -619,7 +617,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	ip_address local = c->iface->local_address;
 	FOR_EACH_THING(remote, endpoint_address(ike->sa.st_remote_endpoint), unset_address) {
 
-		indent = 1;
+		verbose.level = 1;
 		address_buf lb, rb;
 		dbg_rhc("trying connections matching %s->%s",
 			str_address(&local, &lb), str_address(&remote, &rb));
@@ -644,17 +642,17 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			}
 
 			connection_buf b2;
-			indent = 2;
+			verbose.level = 2;
 			dbg_rhc("checking "PRI_CONNECTION, pri_connection(d, &b2));
-			indent++;
+			verbose.level++;
 
 			struct score score = {
 				.connection = d,
 			};
-			if (!score_host_connection(indent, ike,
+			if (!score_host_connection(ike,
 						   proposed_authbys,
 						   peer_id, tarzan_id, peer_ca,
-						   &score)) {
+						   &score, verbose)) {
 				continue;
 			}
 
@@ -698,16 +696,17 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  const struct id *peer_id,
 						  const struct id *tarzan_id)
 {
-	int indent = 0;
+	struct verbose verbose = { .logger = ike->sa.logger, };
 	connection_buf cib;
 	dbg_rhc("looking for an %s connection more refined than "PRI_CONNECTION"",
 		ike->sa.st_connection->config->ike_info->version_name,
 	    pri_connection(ike->sa.st_connection, &cib));
-	indent = 1;
+	verbose.level = 1;
 
-	struct connection *r = refine_host_connection_on_responder(indent, ike,
+	struct connection *r = refine_host_connection_on_responder(ike,
 								   proposed_authbys,
-								   peer_id, tarzan_id);
+								   peer_id, tarzan_id,
+								   verbose);
 	if (r == NULL) {
 		dbg_rhc("returning FALSE because nothing is sufficiently refined");
 		return false;
