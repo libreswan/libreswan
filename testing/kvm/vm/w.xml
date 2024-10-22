@@ -5,8 +5,7 @@ You can load this machine definition into libvirt using:
 
 <domain type='kvm'>
   <name>@@DOMAIN@@</name>
-  <memory unit='KiB'>@@MEMORY@@</memory>
-  <currentMemory unit='KiB'>@@MEMORY@@</currentMemory>
+  <memory unit='MiB'>@@MEMORY@@</memory>
   <vcpu placement='static'>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>

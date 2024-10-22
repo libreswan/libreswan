@@ -137,10 +137,6 @@ KVM_LINUX_USE_EFENCE ?= true
 KVM_LINUX_USE_LABELED_IPSEC ?= true
 KVM_LINUX_USE_SECCOMP ?= true
 
-# in KB
-KVM_TEST_MEMORY=1000000
-#KVM_FEDORA_TEST_MEMORY=1000000
-
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
 	$(firstword \
@@ -350,13 +346,6 @@ KVM_DOMAINS += $(KVM_BASE_DOMAINS)
 KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
 KVM_DOMAINS += $(KVM_BUILD_DOMAINS)
 KVM_DOMAINS += $(KVM_TEST_DOMAINS)
-
-define kvm-os-dir
-KVM_$($(strip $(1)))_SOURCEDIR ?= $$(KVM_SOURCEDIR)
-KVM_$($(strip $(1)))_TESTINGDIR ?= $$(KVM_TESTINGDIR)
-
-endef
-$(foreach platform, $(KVM_PLATFORMS), $(eval $(call kvm-os-dir, $(platform))))
 
 #
 # Domains
@@ -827,7 +816,7 @@ kvm-uninstall-gateway:
 ##
 
 KVM_BASE_CPUS = 1
-KVM_BASE_MEMORY = 2048
+KVM_BASE_MEMORY ?= 2048
 
 .PHONY: kvm-base
 kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
@@ -1205,7 +1194,7 @@ $(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.disk
 ##
 
 KVM_UPGRADE_CPUS = 1
-KVM_UPGRADE_MEMORY = 2048
+KVM_UPGRADE_MEMORY ?= 2048
 
 .PHONY: kvm-upgrade
 kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
@@ -1273,8 +1262,9 @@ kvm-transmogrify-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
+# start at 2gb and go up
 KVM_BUILD_CPUS = $(KVM_WORKERS)
-KVM_BUILD_MEMORY = $(shell expr 2048 + \( $(KVM_BUILD_CPUS) - 1 \) \* 256 )
+KVM_BUILD_MEMORY ?= $(shell expr 1792 + $(KVM_BUILD_CPUS) \* 256 )
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%: \
@@ -1307,8 +1297,8 @@ $(KVM_POOLDIR_PREFIX)%: \
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
-		-e 's;@@SOURCEDIR@@;$(KVM_$($*)_SOURCEDIR);' \
-		-e 's;@@TESTINGDIR@@;$(KVM_$($*)_TESTINGDIR);' \
+		-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
+		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 		$*/transmogrify.sh \
 		> $@.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
@@ -1415,6 +1405,9 @@ kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
 # domain needs updating.  Instead use the domain-name to indicate that
 # a domain has been created.
 
+# in MiB
+KVM_TEST_MEMORY ?= 512
+
 .PRECIOUS: $(KVM_TEST_DOMAINS)
 
 define define-test-domain
@@ -1431,18 +1424,19 @@ define define-test-domain
 	:  guest_name=$(2)
 	:  platform=$(3)
 	:  host_name=$(4)
+	:  KVM_OS_TEST_MEMORY=$$(KVM_$($(strip $(3)))_TEST_MEMORY)
 	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
 	rm -f $(KVM_POOLDIR_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
 	$$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
-		-e 's;@@SOURCEDIR@@;$$(KVM_$($(strip $(3)))_SOURCEDIR);' \
-		-e 's;@@TESTINGDIR@@;$$(KVM_$($(strip $(3)))_TESTINGDIR);' \
+		-e 's;@@SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
+		-e 's;@@TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
 		-e "s;@@TEST_PREFIX@@;$(notdir $(1));" \
 		-e 's;@@GUEST_NAME@@;$(strip $(2));' \
 		-e 's;@@PLATFORM@@;$(strip $(3));' \
 		-e 's;@@HOST_NAME@@;$(strip $(4));' \
-		-e 's;@@MEMORY@@;$$(call kvm-flag-value, KVM_TEST_MEMORY);' \
+		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(3)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
 		vm/$(strip $(4)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
