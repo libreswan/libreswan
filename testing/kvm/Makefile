@@ -191,8 +191,8 @@ VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY_NAME),model=virtio
 VIRT_BENCHDIR ?= --filesystem=target=bench,type=mount,accessmode=squash,source=$(KVM_BENCHDIR)
 VIRT_POOLDIR ?= --filesystem=target=pool,type=mount,accessmode=squash,source=$(KVM_POOLDIR)
 # note: these rely on %==$(OS)
-VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_$($*)_SOURCEDIR)
-VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_$($*)_TESTINGDIR)
+VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_SOURCEDIR)
+VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
 
 VIRT_INSTALL_FLAGS = \
 	--connect=$(KVM_CONNECTION) \$(crlf)\
@@ -1634,13 +1634,7 @@ $(call kvm-var-value,KVM_LOCALDIR)
 	can be temporary storage (for instance /tmp)
 
 $(call kvm-var-value,KVM_SOURCEDIR)
-
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_SOURCEDIR)$(crlf))
-
 $(call kvm-var-value,KVM_TESTINGDIR)
-
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TESTINGDIR)$(crlf))
-
 $(call kvm-var-value,KVM_WORKERS)
 
 $(call kvm-var-value,KVM_PREFIX)
