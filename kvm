@@ -417,12 +417,12 @@ kvmresults()
 	${kvm_test_platform:+--test-platform "${kvm_test_platform// /|}"} \
 	${kvm_test_name:+--test-name "${kvm_test_name}"} \
 	${kvm_test_flags} \
-	"${directories[@]}"
+	"$@"
 }
 
 results_command()
 {
-    kvmresults "${directories[@]}"
+    kvmresults "$@"
     status=$?
 }
 
@@ -494,15 +494,15 @@ while test $i -lt ${#ops[@]} ; do
 	failed | unresolved )
 	    # should leave: failed and/or unresolved
 	    case ${op} in
-		failed )     skip="passed,unsupported,untested" ;;
-		unresolved ) skip="passed,unsupported,untested,failed" ;;
+		failed )     match="--skip passed --skip unsupported --skip untested" ;;
+		unresolved ) match="--result unresolved" ;;
 	    esac
 	    if test  ${i} -lt ${#ops[@]} ; then
 		# kvmresults.py --print test-directory --skip ... does
 		# not do what it should! See #1852.
-		set -- $(results_command --skip "${skip}" "${directories[@]}" 2>/dev/null | awk '{print $1}')
+		set -- $(results_command ${match} "${directories[@]}" 2>/dev/null | awk '{print $1}')
 	    else
-		results_command --skip ${skip} "${directories[@]}"
+		results_command ${match} "${directories[@]}"
 	    fi
 	    ;;
 	patch )

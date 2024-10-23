@@ -14,27 +14,32 @@
 
 from fab import argutil
 from fab import resolution
+from enum import Enum
 
 # a list/set of resolutions
-class Skip(argutil.List):
-    PASSED = resolution.PASSED
-    FAILED = resolution.FAILED
-    UNRESOLVED = resolution.UNRESOLVED
-    UNTESTED = resolution.UNTESTED
-    UNSUPPORTED = resolution.UNSUPPORTED
+_RESULTS = [resolution.PASSED,
+            resolution.FAILED,
+            resolution.UNRESOLVED,
+            resolution.UNTESTED,
+            resolution.UNSUPPORTED]
 
-def add_arguments(parser, *defaults):
-    group = parser.add_argument_group("Skip arguments")
-    group.add_argument("--skip", action="store",
-                       default=Skip(*defaults),
-                       type=Skip, metavar=str(Skip),
-                       help="comma separated list of previous test results to skip; default: '%(default)s'")
+def add_arguments(parser):
+    group = parser.add_argument_group("Result arguments")
+    group.add_argument("--skip", action="append",
+                       default=list(), choices=_RESULTS,
+                       help="skip test with previous result; default: '%(default)s'")
+    group.add_argument("--result", action="append",
+                       default=list(), choices=_RESULTS,
+                       help="include test with previous result; default: '%(default)s'")
 
 def log_arguments(logger, args):
-    logger.info("Skip arguments:")
+    logger.info("Result arguments:")
     logger.info("  skip: %s", args.skip)
+    logger.info("  result: %s", args.result)
 
 def result(logger, args, result):
     if result.resolution in args.skip:
+        return result.resolution
+    if args.result and result.resolution not in args.result:
         return result.resolution
     return None

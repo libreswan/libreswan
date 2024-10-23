@@ -82,10 +82,7 @@ def main():
 
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
-    # XXX: while checking for an UNTESTED test should be very cheap
-    # (does OUTPUT/ exist?) it isn't.  Currently it triggers a full
-    # post-mortem analysis.
-    skip.add_arguments(parser, skip.Skip.UNTESTED)
+    skip.add_arguments(parser)
     ignore.add_arguments(parser)
     publish.add_arguments(parser)
 
@@ -171,7 +168,7 @@ def results(logger, tests, args, result_stats):
                                  quick=args.quick)
             if args.update:
                 result.save()
-            if args.skip:
+            if args.skip or args.result:
                 if printer.Print.RESULT in args.print \
                 and skip.result(logger, args, result):
                     result_stats.add_skipped(result)

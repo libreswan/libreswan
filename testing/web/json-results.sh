@@ -85,7 +85,6 @@ for resultsdir in "$@" ; do
 		   --exit-ok \
 		   --test-kind '' \
 		   --test-status '' \
-		   --skip '' \
 		   --publish-results ${resultsdir} \
 		   --testing-directory ${repodir}/testing \
 		   ${resultsdir}
