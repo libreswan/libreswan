@@ -88,14 +88,18 @@ class TextBuilder:
     def prefix(self, key, value):
         self.stream.write(value)
         self.eol = True
-    def add(self, *keyval, string=lambda s, sep: s and sep + str(s) or ""):
-        # default is to print value as a string when it is "not
-        # false".
+    def add(self, *keyval, string=lambda s: s and str(s) or False):
+        # By default, when the VALUE is False-like, the output is
+        # suppressed.  For instance, when ISSUES is False (there are
+        # none) it is skipped.
         keys = keyval[0:-1]
         value = keyval[-1]
-        self.stream.write(string(value, self.sep))
-        self.sep = " "
-        self.eol = True
+        s = string(value)
+        if s:
+            self.stream.write(self.sep)
+            self.stream.write(s)
+            self.sep = " "
+            self.eol = True
     def flush(self):
         if self.eol:
             self.stream.write("\n")
@@ -124,16 +128,16 @@ def build_result(logger, result, what_to_print, b):
                 b.add(p, result.test.status)
             case Print.TEST_GUEST_NAMES:
                 b.add(p, [guest.name for guest in result.test.guests],
-                      string=lambda names, sep: sep + ",".join(names))
+                      string=lambda names: ",".join(names))
             case Print.TEST_HOST_NAMES:
                 b.add(p, [guest.host.name for guest in result.test.guests],
-                      string=lambda names, sep: sep + ",".join(names))
+                      string=lambda names: ",".join(names))
             case Print.TEST_GUEST_PLATFORMS:
                 b.add(p, [guest.platform for guest in result.test.guests],
-                      string=lambda names, sep: sep + ",".join(names))
+                      string=lambda names: ",".join(names))
             case Print.TEST_PLATFORMS:
                 b.add(p, result.test.platforms,
-                      string=lambda platforms, sep: sep + ",".join(platforms))
+                      string=lambda platforms: ",".join(platforms))
             case Print.TEST_KIND:
                 b.add(p, result.test.kind)
             case Print.TEST_NAME:
@@ -141,7 +145,7 @@ def build_result(logger, result, what_to_print, b):
             case Print.OUTPUT_DIRECTORY:
                 b.add(p, result.test.output_directory)
             case Print.RESULT:
-                b.add(p, result)
+                b.add(p, result, string=lambda result: str(result))
             case Print.ISSUES:
                 b.add(p, result.issues)
             case Print.TESTING_DIRECTORY:

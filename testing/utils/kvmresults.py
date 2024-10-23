@@ -168,9 +168,9 @@ def results(logger, tests, args, result_stats):
                                  quick=args.quick)
             if args.update:
                 result.save()
+
             if args.skip or args.result:
-                if printer.Print.RESULT in args.print \
-                and skip.result(logger, args, result):
+                if skip.result(logger, args, result):
                     result_stats.add_skipped(result)
                     continue
             result_stats.add_result(result)

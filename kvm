@@ -498,9 +498,7 @@ while test $i -lt ${#ops[@]} ; do
 		unresolved ) match="--result unresolved" ;;
 	    esac
 	    if test  ${i} -lt ${#ops[@]} ; then
-		# kvmresults.py --print test-directory --skip ... does
-		# not do what it should! See #1852.
-		set -- $(results_command ${match} "${directories[@]}" 2>/dev/null | awk '{print $1}')
+		set -- $(results_command ${match} "${directories[@]}" 2>/dev/null)
 	    else
 		results_command ${match} "${directories[@]}"
 	    fi
