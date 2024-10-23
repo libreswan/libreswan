@@ -14,7 +14,9 @@
 
 include ../../mk/dirs.mk
 include ../../mk/config.mk
-include ../../mk/web-targets.mk
+
+WEB_MAKEDIR ?= $(top_srcdir)
+WEB_ENABLED ?= $(wildcard $(top_srcdir)/RESULTS)
 
 # Note: GNU Make doesn't let you combine pattern targets (e.x.,
 # kvm-install-%: kvm-reboot-%) with .PHONY.  Consequently, so that
@@ -561,7 +563,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	: $@
 	: shutdown all the build domains, kvmrunner shuts down the test domains
 	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
-	@$(MAKE) -C $(top_srcdir) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-prep
+	@$(if $(WEB_ENABLED), $(MAKE) -C $(WEB_MAKEDIR) --no-print-directory web-test-prep, echo RUN make web TO ENABLE WEB PAGES)
 	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
@@ -579,7 +581,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
-	@$(MAKE) -C $(top_srcdir) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-post
+	@$(if $(WEB_ENABLED), $(MAKE) -C $(WEB_MAKEDIR) --no-print-directory web-test-post, echo RUN make web TO ENABLE WEB PAGES)
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean
@@ -1858,11 +1860,6 @@ Standard targets and operations:
                         compare against KVM_BASELINE when defined
 
 endef
-
-.PHONY: kvm-help
-kvm-help:
-	$(info $(kvm-help))
-	$(info For more details see "make kvm-config" and "make web-config")
 
 .PHONY: kvm-config
 kvm-config:
