@@ -246,7 +246,6 @@ Web Configuration:
     The test results can be published as a web page using either of
     the make variables:
 
-    $(call kvm-var-value,LSW_WEBDIR)
     $(call kvm-var-value,WEB_SUMMARYDIR)
 
         The top-level html directory containing a summary of all test

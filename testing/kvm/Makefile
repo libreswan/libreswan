@@ -14,7 +14,6 @@
 
 include ../../mk/dirs.mk
 include ../../mk/config.mk
-include ../../mk/web-targets.mk
 
 # Note: GNU Make doesn't let you combine pattern targets (e.x.,
 # kvm-install-%: kvm-reboot-%) with .PHONY.  Consequently, so that
@@ -45,6 +44,16 @@ KVM_RUTDIR ?= $(abs_top_srcdir)
 KVM_BENCHDIR ?= $(abs_top_srcdir)
 KVM_SOURCEDIR ?= $(KVM_RUTDIR)
 KVM_TESTINGDIR ?= $(KVM_RUTDIR)/testing
+KVM_WEBDIR ?= $(abs_top_srcdir)/RESULTS
+
+# these kickstart web pages; should merge with above
+WEB_REPODIR ?= $(KVM_RUTDIR)
+WEB_ENABLED ?= $(wildcard $(WEB_SUMMARYDIR))
+WEB_SUMMARYDIR ?= $(KVM_WEBDIR)
+WEB_MAKEDIR ?= $(top_srcdir)
+WEB_HASH ?= $(shell git -C $(WEB_REPODIR) show --no-patch --format=%H HEAD)
+WEB_RESULTSDIR ?= $(KVM_WEBDIR)/$(shell $(top_srcdir)/mk/web/gime-git-description.sh $(WEB_REPODIR))
+
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
@@ -561,7 +570,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	: $@
 	: shutdown all the build domains, kvmrunner shuts down the test domains
 	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
-	@$(MAKE) -C $(top_srcdir) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-prep
+	@$(MAKE) -C $(WEB_MAKEDIR) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-prep
 	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
@@ -579,7 +588,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
-	@$(MAKE) -C $(top_srcdir) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-post
+	@$(MAKE) -C $(WEB_MAKEDIR) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-post
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean
