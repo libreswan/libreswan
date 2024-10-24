@@ -80,10 +80,9 @@ STATUS()
 --------------------------------------
 EOF
     if test "${summarydir}" ; then
-	${bindir}/json-status.sh \
-		 --json ${summarydir}/status.json \
-		 ${subdir:+--directory ${subdir}} \
-		 "$*"
+	${bindir}/gime-status-json.sh "${subdir}" "${start_time}" "$@" \
+		 > ${summarydir}/status.json.tmp
+	mv ${summarydir}/status.json.tmp  ${summarydir}/status.json
     fi
     LOG "$@"
 }

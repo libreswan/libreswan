@@ -13,14 +13,11 @@ function lsw_summary_status(id, status) {
 		return now
 	    },
 	    html: function(status) {
-		return lsw_date2iso(now)
+		return now.toLocaleString()
 	    }
 	},
 	{
 	    title: "Directory",
-	    value: function(status) {
-		return status.directory
-	    },
 	    html: function(status) {
 		if (status.directory && status.directory.length) {
 		    return ("<a href=\"" + status.directory + "\">"
@@ -32,12 +29,27 @@ function lsw_summary_status(id, status) {
 	    }
 	},
 	{
+	    title: "Start Time",
+	    html: function(status) {
+		return status.start_time.toLocaleString()
+	    },
+	},
+	{
 	    title: "Last Update",
 	    value: function(status) {
-		return status.date
+		return status.current_time
 	    },
 	    html: function(status) {
-		return status.date ? lsw_date2iso(status.date) : ""
+		return status.current_time.toLocaleString()
+	    },
+	},
+	{
+	    title: "Run time",
+	    value: function(status) {
+		return subtime(now, status.start_time)
+	    },
+	    html: function(status) {
+		return subtime(now, status.start_time)
 	    },
 	},
 	{

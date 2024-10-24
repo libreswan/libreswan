@@ -92,7 +92,6 @@ web-summarydir: $(WEB_SUMMARYDIR)/summaries.json
 web-summarydir: $(WEB_SUMMARYDIR)/summary.css
 web-summarydir: $(WEB_SUMMARYDIR)/tsconfig.json
 web-summarydir: $(WEB_SUMMARYDIR)/favicon.ico
-web-summarydir: | $(WEB_SUMMARYDIR)/status.json
 
 $(WEB_SUMMARYDIR)/index.html: summary.html | $(WEB_SUMMARYDIR)/
 	cp $< $@
@@ -102,11 +101,6 @@ $(WEB_SUMMARYDIR)/%.css: %.css | $(WEB_SUMMARYDIR)/
 
 $(WEB_SUMMARYDIR)/favicon.ico: favicon.ico | $(WEB_SUMMARYDIR)/
 	cp $< $@
-
-# no dependencies, just needs to exist
-$(WEB_SUMMARYDIR)/status.json:
-	./json-status.sh "initialized" > $@.tmp
-	mv $@.tmp $@
 
 # Update the pooled summary (summaries.json) of all the test runs
 $(WEB_SUMMARYDIR)/summaries.json: \

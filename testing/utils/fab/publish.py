@@ -30,6 +30,7 @@ from fab import argutil
 
 JSON_RESULTS = []
 JSON_SUMMARY = { }
+JSON_STATUS = { }
 
 def add_arguments(parser):
     group = parser.add_argument_group("publish arguments",
@@ -60,6 +61,8 @@ def log_arguments(logger, args):
                                   or args.publish_results))
     JSON_SUMMARY["directory"] = directory
     JSON_SUMMARY["start_time"] = datetime.now()
+    JSON_STATUS["start_time"] = datetime.now()
+    JSON_STATUS["directory"] = directory
 
 def _add(counts, *keys):
     # fill in the missing keys.
@@ -217,17 +220,10 @@ def testlist(logger, args):
 def json_status(logger, args, details):
     if not args.publish_status:
         return
-    json_status = {
-        "date": datetime.now(),
-        "details": details,
-    }
-    if args.publish_results:
-        # The directory is taken relative to the status (summarydir)
-        # directory.
-        json_status["directory"] = os.path.relpath(args.publish_results,
-                                                   os.path.dirname(args.publish_status))
+    JSON_STATUS["current_time"] = datetime.now()
+    JSON_STATUS["details"] = details
     with open(args.publish_status, "w") as output:
-        jsonutil.dump(json_status, output)
+        jsonutil.dump(JSON_STATUS, output)
         output.write("\n")
 
 

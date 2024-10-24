@@ -89,6 +89,8 @@ function lsw_summary_cleanup(status, commits, test_runs, current) {
 
     let summary = {}
 
+    summary.status = new Status(status)
+
     // Clean up the commits.  Accumulate a table containing all the
     // commits.
 
@@ -124,9 +126,6 @@ function lsw_summary_cleanup(status, commits, test_runs, current) {
 	console.log("current from current")
 	summary.current = new TestRun(current, summary.commits.hash_to_commit)
 	summary.test_runs.push(summary.current)
-    } else {
-	console.log("current from status", status);
-	summary.current = status // Bogus!
     }
 
     // Create a dictionary of directory->test_run so that
