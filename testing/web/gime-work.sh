@@ -1,11 +1,11 @@
 #!/bin/bash
 
-if test $# -lt 2; then
+if test $# -ne 3; then
   cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <summarydir> <rutdir> <earliest_commit>
+    $0 <summarydir> <rutdir> <earliest_commit> 
 
 Iterate through [<earliest_commit>..HEAD] identifying the next next commit
 to test.
@@ -38,10 +38,10 @@ EOF
   exit 1
 fi
 
-bindir=$(cd $(dirname $0) && pwd)
+bindir=$(realpath $(dirname $0))
 summarydir=$(realpath $1) ; shift
 rutdir=$(realpath $1) ; shift
-earliest_commit=$(git rev-parse ${1}^{})
+earliest_commit=$(git -C ${rutdir} rev-parse ${1}^{})
 
 echo summarydir ${summarydir} 1>&2
 echo rutdir ${rutdir} 1>&2
@@ -89,7 +89,7 @@ run_bias=0
 
 index=0
 
-for commit in $(git rev-list \
+for commit in $(git -C ${rutdir} rev-list \
 		    --topo-order \
 		    --first-parent \
 		    ${earliest_commit}..${remote} ;
@@ -262,7 +262,7 @@ echo RUN ${run_commit} at ${run_index} length ${run_length} 1>&2
 print_selected() {
     echo selecting $1 at $2 1>&2
     # dump to the console
-    git --no-pager show --no-patch $2 1>&2
+    git -C ${rutdir} --no-pager show --no-patch $2 1>&2
     echo $2
     exit 0
 }

@@ -3,19 +3,18 @@
 if test $# -ne 1; then
     cat >>/dev/stderr <<EOF
 Usage:
-    $0 <repodir>
+    $0 <rutdir>
 Use a heuristic to determine the branch name of the current detached
 head.
 EOF
     exit 1
 fi
 
-# switch to repodir
-cd $1 ; shift
+rutdir=$1 ; shift
 
 # Easy way, see what branch HEAD is on.
 
-branch=$(git rev-parse --abbrev-ref HEAD)
+branch=$(git -C ${rutdir} rev-parse --abbrev-ref HEAD)
 if test ${branch} != HEAD ; then
     echo ${branch}
     exit 0
@@ -23,7 +22,7 @@ fi
 
 # Hard way, follow checkouts until one hits a branch.
 
-git reflog | awk '
+git -C ${rutdir} reflog | awk '
 BEGIN {
   found = ""
 }

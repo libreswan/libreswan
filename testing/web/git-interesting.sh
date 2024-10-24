@@ -34,9 +34,8 @@ fi
 
 set -eu
 
-bindir=$(cd $(dirname $0) && pwd)
-# switch to repodir
-cd $1 ; shift
+bindir=$(realpath $(dirname $0))
+rutdir=$1 ; shift
 gitrev=$1 ; shift
 
 # All tags are interesting.
@@ -44,7 +43,7 @@ gitrev=$1 ; shift
 # If there is no tag then this command fails with an error so suppress
 # that.
 
-tag=$(git describe --exact-match ${gitrev} 2>/dev/null || :)
+tag=$(git -C ${rutdir} describe --exact-match ${gitrev} 2>/dev/null || :)
 if test -n "${tag}" ; then
     echo tag: ${tag}
     exit 0
@@ -52,7 +51,7 @@ fi
 
 # All merges (commits with more than one parent) are "interesting".
 
-parents=$(${bindir}/gime-git-parents.sh . ${gitrev})
+parents=$(git -C ${rutdir} show --no-patch --format=%P ${gitrev})
 if test $(echo ${parents} | wc -w) -gt 1 ; then
     echo merge: ${parents}
     exit 0
@@ -65,7 +64,7 @@ fi
 # (REV.. seems to be interpreted as that) and use that to find
 # immediate parents (a child matches $GITREV).
 
-children=$(git rev-list --parents ${gitrev}.. | awk "/ ${gitrev}/ { print \$1}")
+children=$(git -C ${rutdir} rev-list --parents ${gitrev}.. | awk "/ ${gitrev}/ { print \$1}")
 if test $(echo ${children} | wc -w) -gt 1 ; then
     echo branch: ${children}
     exit 0
@@ -74,7 +73,7 @@ fi
 # grep . exits non-zero when there is no input (i.e., the diff is
 # empty); and this will cause the command to fail.
 
-if git show "${gitrev}^{commit}" \
+if git -C ${rutdir} show "${gitrev}^{commit}" \
        Makefile \
        lib \
        mk \
