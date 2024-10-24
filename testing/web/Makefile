@@ -80,10 +80,6 @@ web-publish: | $(WEB_RESULTSDIR)
 .PHONY: web-test-prep
 web-test-prep: web-resultsdir
 web-test-prep: web-summarydir
-web-test-prep: web-testsdir
-
-.PHONY: web-test-post
-web-test-post: web-tests-json
 
 #
 # Create or update just the summary web page.
@@ -165,16 +161,6 @@ $(WEB_SUMMARYDIR)/%/index.html: results.html \
 web-results-json: $(WEB_RESULTSDIR)/results.json
 web-results-json: $(WEB_RESULTSDIR)/summary.json
 
-
-#
-# Create the tests directory
-#
-
-web-testsdir: | $(WEB_TESTSDIR)/
-
-.PHONY:
-web-tests-json: $(WEB_SUMMARYDIR)/tests/
-	./json-tests.sh $(WEB_SUMMARYDIR)
 
 #
 # Update the html in all the result directories

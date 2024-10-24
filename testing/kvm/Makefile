@@ -588,7 +588,6 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
-	@$(MAKE) -C $(WEB_MAKEDIR) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-post
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean

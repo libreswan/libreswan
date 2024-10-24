@@ -87,14 +87,11 @@ endif
 # directory, do a full update so that all the previous runs are
 # included.
 
-.PHONY: web-test-prep web-test-post
-web-test-prep:
-web-test-post:
+.PHONY: web-test-prep
 ifdef WEB_ENABLED
-web-test-prep: web-resultsdir web-summarydir web-testsdir
-web-test-post: web-tests-json
+web-test-prep: web-resultsdir web-summarydir
 else
-web-test-prep web-test-post:
+web-test-prep:
 	@echo
 	@echo Web-pages disabled.
 	@echo
@@ -169,22 +166,6 @@ $(WEB_RESULTSDIR)/favicon.ico: $(WEB_SOURCEDIR)/favicon.ico | $(WEB_RESULTSDIR)
 
 $(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
 	mkdir $(WEB_RESULTSDIR)
-
-endif
-
-#
-# Create the tests directory
-#
-
-ifdef WEB_ENABLED
-
-web-testsdir: | $(WEB_TESTSDIR)
-$(WEB_TESTSDIR):
-	mkdir $@
-
-.PHONY:
-web-tests-json:
-	$(WEB_SOURCEDIR)/json-tests.sh $(WEB_REPODIR) $(WEB_TESTSDIR) $(WEB_RESULTSDIR)
 
 endif
 
