@@ -1478,7 +1478,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			ldbg(child->sa.logger, "kernel: Disabling Encap ToS/DSCP bits");
 			said_next->encap_dscp = false;
 		}
-		if (c->config->nopmtudisc) {
+		if (c->config->nopmtudisc && direction == DIRECTION_OUTBOUND) {
 			ldbg(child->sa.logger, "kernel: Disabling Path MTU Discovery");
 			said_next->nopmtudisc = true;
 		}
