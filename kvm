@@ -330,13 +330,14 @@ while test $# -gt 0 ; do
 		echo "missing hostname" 1>&2
 		exit 1
 	    fi
-	    for host in ${kvm_prefix}$1 $1 ; do
-		if [[ " ${hosts} " =~ " $1 " ]] ; then
-		    shift # drop HOST
-		    echo "Connecting to ${host}" 1>&2
-		    exec testing/utils/kvmsh.py ${host} "$@"
-		fi
-	    done
+	    # try matching without prefix
+	    if [[ " ${hosts} " =~ " $1 " ]] ; then
+		host=${kvm_prefix}$1
+		shift # drop HOST; add prefix
+		echo "Connecting to ${host}" 1>&2
+		exec testing/utils/kvmsh.py ${host} "$@"
+	    fi
+	    # try matching with prefix?
 	    echo "unrecognized hostname" 1>&2
 	    exit 1
 	    ;;

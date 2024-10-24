@@ -126,6 +126,34 @@ class Domain:
     def _destroy(self):
         return self._run_status_output(_VIRSH + ["destroy", self.name])
 
+    def __console(self, command, timeout):
+
+        self.logger.info("spawning: %s; waiting %d seconds", " ".join(command), timeout)
+        self._console = None
+        console = Console(command, self.logger, host_name=self.guest and self.guest.host.name)
+        # Give the virsh process a chance set up its control-c
+        # handler.  Otherwise something like control-c as the first
+        # character sent might kill it.  If the machine is down, it
+        # will get an EOF.
+        match console.expect([(r"Connected to domain '%s'\r\n" % self.name +
+                               r"Escape character is \^] \(Ctrl \+ ]\)\r\n"),
+                              pexpect.TIMEOUT,
+                              pexpect.EOF],
+                             timeout=timeout):
+            case 0: #success
+                self.logger.debug("domain connected");
+                self._console = console
+                return console
+            case 1: #TIMEOUT
+                self.logger.error("TIMEOUT opening console: %s", console.before)
+                console.close()
+                return None
+            case 2: #EOF
+                # already tried and failed
+                self.logger.error("EOF opening console: %s", console.before)
+                return None
+
+
     def destroy(self, console=None):
         # Use the console to detect a destroyed domain - if/when the
         # domain stops it will exit giving an EOF.
@@ -159,30 +187,7 @@ class Domain:
         self._console = None # status unknown
 
         command = _VIRSH + ["start", self.name, "--console"]
-        self.logger.info("spawning: %s", " ".join(command))
-        console = Console(command, self.logger, host_name=self.guest and self.guest.host.name)
-        match console.expect([("Domain '%s' started\r\n" +
-                               "Connected to domain '%s'\r\n" +
-                               "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.name, self.name),
-                              pexpect.TIMEOUT,
-                              pexpect.EOF],
-                             timeout=START_TIMEOUT):
-            case 0: #success
-                self.logger.info("domain started");
-                self._console = console
-                return console
-
-            case 1: #TIMEOUT
-                self.logger.error("TIMEOUT while starting domain");
-                console.close()
-                self._console = None # status unknown
-                return None
-
-            case 2: #EOF
-                # already tried and failed
-                self.logger.error("EOF while starting domain");
-                self._console = None # status unknown
-                return None
+        return self.__console(command, START_TIMEOUT)
 
     def dumpxml(self):
         if self._xml == None:
@@ -194,30 +199,7 @@ class Domain:
     def console(self):
         # self._console is None
         command = _VIRSH + ["console", "--force", self.name]
-        self.logger.info("spawning: %s", " ".join(command))
-        self._console = None
-        console = Console(command, self.logger,
-                          host_name=self.guest and self.guest.host.name)
-        # Give the virsh process a chance set up its control-c
-        # handler.  Otherwise something like control-c as the first
-        # character sent might kill it.  If the machine is down, it
-        # will get an EOF.
-        match console.expect(["Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.name,
-                              pexpect.TIMEOUT,
-                              pexpect.EOF],
-                             timeout=CONSOLE_TIMEOUT):
-            case 0:
-                self.logger.debug("console attached");
-                self._console = console
-                return console
-            case 1: #TIMEOUT
-                self.logger.error("TIMEOUT trying to open console")
-                console.close()
-                return None
-            case 2: #EOF
-                self.logger.info("got EOF from console")
-                console.close()
-                return None
+        return self.__console(command, CONSOLE_TIMEOUT)
 
     def close(self):
         if self._console:
