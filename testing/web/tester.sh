@@ -420,4 +420,10 @@ find ${summarydir} \
      -type f -name '*.log.gz' -mtime +14 -print0 | \
     xargs -0 --no-run-if-empty rm -v
 
+# Updating tests/
+
+STATUS "updating bisect/ directory (slow, ignoring result)"
+
+RUN ${bindir}/gime-bisect.sh ${summarydir} || true
+
 RESTART "run complete"
