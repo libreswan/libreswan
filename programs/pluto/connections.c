@@ -55,6 +55,7 @@
 #include "lswnss.h"
 #include "authby.h"
 
+#include "kernel_info.h"
 #include "defs.h"
 #include "connections.h" /* needs id.h */
 #include "connection_db.h"
@@ -101,8 +102,6 @@
 #include "connection_event.h"
 #include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
 #include "sparse_names.h"
-
-extern struct kernel_info kinfo;
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -3054,10 +3053,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 			/* byte/packet counters for packet offload on linux requires >= 6.7 */
 			if (wm->sa_ipsec_max_bytes != 0 || wm->sa_ipsec_max_packets != 0) {
-				if (kinfo.os == KINFO_LINUX) {
-					if ((kinfo.maj < 6) || ((kinfo.maj == 6) && (kinfo.min < 7)))
-						return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
+				if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
+					return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
 				}
+				ldbg(c->logger, "kernel >= 6.7 is GTG for h/w offload");
 			}
 
 			/* limited replay windows supported for packet offload */

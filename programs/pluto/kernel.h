@@ -80,21 +80,6 @@ struct nic_offload {
 	enum kernel_offload_type type;
 };
 
-enum kinfo_os {
-	KINFO_UNKNOWN,
-	KINFO_LINUX,
-	KINFO_FREEBSD,
-	KINFO_NETBSD,
-	KINFO_OPENBSD
-};
-
-struct kernel_info {
-	enum kinfo_os os;
-	int maj;
-	int min;
-	int pat;
-};
-
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.
  */

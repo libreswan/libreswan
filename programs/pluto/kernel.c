@@ -56,6 +56,7 @@
 #include "state.h"
 #include "timer.h"
 #include "kernel.h"
+#include "kernel_info.h"
 #include "kernel_ops.h"
 #include "kernel_xfrm.h"
 #include "kernel_policy.h"
@@ -70,6 +71,7 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
+#include "kernel_info.h"
 
 #include "nat_traversal.h"
 #include "ip_address.h"
@@ -86,8 +88,6 @@
 #include "updown.h"
 #include "pending.h"
 #include "terminate.h"
-
-extern struct kernel_info kinfo;
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -1421,8 +1421,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * What about the BSDs? Should this move into kernel_xfrm.c ?
 		 */
 		said_next->replay_window = c->config->child_sa.replay_window;
-		if ((kinfo.os == KINFO_LINUX) && (direction == DIRECTION_OUTBOUND)) {
-			if ((kinfo.maj > 6) || ((kinfo.maj == 6) && (kinfo.min >= 10))) {
+		if (direction == DIRECTION_OUTBOUND) {
+			if (kernel_ge(KINFO_LINUX, 6, 10, 0)) {
+				ldbg(child->sa.logger, "kernel >= 6.10 expects no outbound replay_window");
 				said_next->replay_window = 0;
 			}
 		}
@@ -1594,8 +1595,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * What about the BSDs? Should this move into kernel_xfrm.c ?
 		 */
 		said_next->replay_window = c->config->child_sa.replay_window;
-		if ((kinfo.os == KINFO_LINUX) && (direction == DIRECTION_OUTBOUND)) {
-			if ((kinfo.maj > 6) || ((kinfo.maj == 6) && (kinfo.min >= 10))) {
+		if (direction == DIRECTION_OUTBOUND) {
+			if (kernel_ge(KINFO_LINUX, 6, 10, 0)) {
+				ldbg(child->sa.logger, "kernel >= 6.10 expects no outbound replay_window");
 				said_next->replay_window = 0;
 			}
 		}

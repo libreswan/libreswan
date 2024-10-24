@@ -39,7 +39,6 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
-#include <sys/utsname.h>	/* for uname() */
 
 #include "deltatime.h"
 #include "timescale.h"
@@ -76,6 +75,7 @@
 #include "ddns.h"		/* for init_ddns() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for pluto_listen; */
+#include "kernel_info.h"	/* for init_kernel_interface() */
 #include "server_pool.h"
 #include "show.h"
 #include "enum_names.h"		/* for init_enum_names() */
@@ -108,8 +108,6 @@ bool in_main_thread(void)
 {
 	return pthread_equal(pthread_self(), main_thread);
 }
-
-struct kernel_info kinfo = { KINFO_UNKNOWN, 0, 0, 0};
 
 static char *rundir = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
@@ -1639,39 +1637,7 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
 	     ipsec_version_code(), compile_time_interop_options, getpid());
 
-	struct utsname uts;
-	if (uname(&uts) < 0) {
-		llog(RC_LOG, logger, "host: unknown");
-	} else {
-		char *c = uts.release;
-		long ver[5];
-		int i = 0;
-
-		llog(RC_LOG, logger, "operating system: %s %s %s %s",
-		     uts.sysname, uts.release, uts.version, uts.machine);
-
-		while (*c) {
-			if (char_isdigit(*c)) {
-				ver[i] = strtol(c, &c, 10);
-				i++;
-			} else {
-				c++;
-			}
-		}
-		if (streq(uts.sysname, "Linux"))
-			kinfo.os = KINFO_LINUX;
-		else if (streq(uts.sysname, "FreeBSD"))
-			kinfo.os = KINFO_FREEBSD;
-		else if (streq(uts.sysname, "NetBSD"))
-			kinfo.os = KINFO_NETBSD;
-		else if (streq(uts.sysname, "OpenBSD"))
-			kinfo.os = KINFO_OPENBSD;
-		else
-			kinfo.os = KINFO_UNKNOWN;
-		kinfo.maj = ver[0];
-		kinfo.min = ver[1];
-		kinfo.pat = ver[2];
-	}
+	init_kernel_info(logger);
 
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
