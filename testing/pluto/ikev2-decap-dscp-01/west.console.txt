@@ -49,7 +49,6 @@ west #
 west #
  ip xfrm state |grep dscp
 	replay-window 0 flag decap-dscp af-unspec esn
-	replay-window 0 flag decap-dscp af-unspec esn
 west #
  echo done
 done
