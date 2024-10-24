@@ -1470,11 +1470,11 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 				c->config->child_sa.iptfs_init_delay, c->config->child_sa.iptfs_reord_win);
 		}
 
-		if (c->config->decap_dscp) {
+		if (c->config->decap_dscp && direction == DIRECTION_INBOUND) {
 			ldbg(child->sa.logger, "kernel: Enabling Decap ToS/DSCP bits");
 			said_next->decap_dscp = true;
 		}
-		if (!c->config->encap_dscp) {
+		if (!c->config->encap_dscp && direction == DIRECTION_OUTBOUND) {
 			ldbg(child->sa.logger, "kernel: Disabling Encap ToS/DSCP bits");
 			said_next->encap_dscp = false;
 		}
