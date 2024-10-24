@@ -110,6 +110,10 @@ class TextBuilder:
 
 def build_result(logger, result, what_to_print, b):
 
+    # Does multi-line output, namely Print.DIFFS, need a newline
+    # before starting its output?
+    newline= ""
+
     # Print the test's name/path
 
     for p in what_to_print:
@@ -165,16 +169,20 @@ def build_result(logger, result, what_to_print, b):
             case Print.TEST_TIME:
                 b.add(p, result.test_time())
             case Print.DIFFS:
-                continue # see below
+                # see below; skips setting newline
+                continue
             case _:
                 raise Exception("unhandled print option %s" % p)
+
+        # Print.DIFFS, below, needs to finish the current line.
+        newline = "\n"
 
     if Print.DIFFS in what_to_print:
         for guest_name, diff_output in result.diff_output.items():
             if diff_output: # could be blank
                 b.add(Print.DIFFS, guest_name, diff_output,
-                      string=(lambda diff, sep: diff
-                              and (sep and "\n" or "") + b"\n".join(diff).decode('utf-8')
-                              or ""))
+                      string=(lambda diff:
+                              diff and newline + b"\n".join(diff).decode('utf-8') or ""))
+                newline = "\n"
 
     b.flush()
