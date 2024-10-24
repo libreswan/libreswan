@@ -325,16 +325,20 @@ while test $# -gt 0 ; do
 
 	sh )
 	    # remainder of line is host + optional commands
-	    ops[${#ops[@]}]=sh ; shift
+	    shift # drop SH
 	    if test $# -lt 1 ; then
 		echo "missing hostname" 1>&2
 		exit 1
 	    fi
-	    if ! [[ " ${hosts} " =~ " $1 " ]] ; then
-		echo "unrecognized hostname" 1>&2
-		exit 1
-	    fi
-	    break
+	    for host in ${kvm_prefix}$1 $1 ; do
+		if [[ " ${hosts} " =~ " $1 " ]] ; then
+		    shift # drop HOST
+		    echo "Connecting to ${host}" 1>&2
+		    exec testing/utils/kvmsh.py ${host} "$@"
+		fi
+	    done
+	    echo "unrecognized hostname" 1>&2
+	    exit 1
 	    ;;
 
 	# wrappers
@@ -511,11 +515,6 @@ while test $i -lt ${#ops[@]} ; do
 	    ;;
 	restart )
 	    sudo systemctl restart libvirtd
-	    ;;
-	sh )
-	    host=${kvm_prefix}$1 ; shift
-	    echo "Connecting to ${host}" 1>&2
-	    exec testing/utils/kvmsh.py ${host} "${directories[@]}"
 	    ;;
 	nsinstall )
 	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsinstall
