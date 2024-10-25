@@ -1662,49 +1662,6 @@ fail:
 	return false;
 }
 
-static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
-{
-	const struct connection *c = child->sa.st_connection;
-	struct logger *logger = child->sa.logger;
-	/*
-	 * Add an inbound eroute to enforce an arrival check.
-	 *
-	 * If inbound,
-	 * ??? and some more mysterious conditions,
-	 * Note reversed ends.
-	 * Not much to be done on failure.
-	 */
-
-	if (is_labeled_child(c)) {
-		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
-		     __func__, pri_shunk(c->config->sec_label));
-		return true;
-	}
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		selector_buf sb, db;
-		enum_buf eb;
-		pdbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
-		     __func__,
-		     /* inbound */
-		     str_selector(&spd->remote->client, &sb),
-		     str_selector(&spd->local->client, &db),
-		     str_enum_short(&routing_names, c->routing.state, &eb));
-
-		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
-		    log_state(RC_LOG, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
-			return false;
-		}
-	}
-
-	if (impair.install_ipsec_sa_inbound_policy) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_policy in %s()", __func__);
-		return false;
-	}
-
-	return true;
-}
-
 /*
  * XXX: Two cases:
  *
