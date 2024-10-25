@@ -442,4 +442,17 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 struct spd_owner spd_owner(const struct spd *spd, enum routing new_routing,
 			   struct logger *logger, where_t where);
 
+void clear_connection_spd_conflicts(struct connection *c);
+bool get_connection_spd_conflict(const struct spd *spd,
+				 const enum routing new_routing,
+				 struct spd_owner *owner,
+				 struct bare_shunt ***bare_shunt,
+				 struct logger *logger);
+void clear_narrow_holds(const ip_selector *src_client,
+			const ip_selector *dst_client,
+			struct logger *logger);
+void revert_kernel_policy(struct spd *spd,
+			  struct child_sa *child/*could be NULL*/,
+			  struct logger *logger);
+
 #endif

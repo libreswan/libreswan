@@ -240,9 +240,6 @@ void delete_cat_kernel_policies(const struct spd *spd,
 				struct logger *logger,
 				where_t where);
 
-bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd *spd,
-					  enum kernel_policy_op op, where_t where);
-
 void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 					   struct connection *c,
 					   struct spd *spd,
@@ -258,5 +255,8 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				struct logger *logger, where_t where);
 
 bool install_inbound_ipsec_kernel_policies(struct child_sa *child);
+bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
+					    enum routing new_routing,
+					    struct do_updown updown);
 
 #endif

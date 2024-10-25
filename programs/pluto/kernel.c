@@ -757,7 +757,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
  * XXX: can this and/or route_owner() be merged?
  */
 
-static void clear_connection_spd_conflicts(struct connection *c)
+void clear_connection_spd_conflicts(struct connection *c)
 {
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		zero(&spd->wip);
@@ -783,11 +783,11 @@ static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
 	}
 }
 
-static bool get_connection_spd_conflict(const struct spd *spd,
-					const enum routing new_routing,
-					struct spd_owner *owner,
-					struct bare_shunt ***bare_shunt,
-					struct logger *logger)
+bool get_connection_spd_conflict(const struct spd *spd,
+				 const enum routing new_routing,
+				 struct spd_owner *owner,
+				 struct bare_shunt ***bare_shunt,
+				 struct logger *logger)
 {
 	*owner = (struct spd_owner) {0};
 	*bare_shunt = NULL;
@@ -821,9 +821,9 @@ static bool get_connection_spd_conflict(const struct spd *spd,
 	return true;
 }
 
-static void revert_kernel_policy(struct spd *spd,
-				 struct child_sa *child/*could be NULL*/,
-				 struct logger *logger)
+void revert_kernel_policy(struct spd *spd,
+			  struct child_sa *child/*could be NULL*/,
+			  struct logger *logger)
 {
 	struct connection *c = spd->connection;
 	PEXPECT(logger, child == NULL || child->sa.st_connection == c);
@@ -1156,9 +1156,9 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
  * address to single address.
  */
 
-static void clear_narrow_holds(const ip_selector *src_client,
-			       const ip_selector *dst_client,
-			       struct logger *logger)
+void clear_narrow_holds(const ip_selector *src_client,
+			const ip_selector *dst_client,
+			struct logger *logger)
 {
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(src_client->ipproto);
 	struct bare_shunt **bspp = &bare_shunts;
@@ -1789,165 +1789,6 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 	}
 
 	return result;
-}
-
-static bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
-						   enum routing new_routing,
-						   struct do_updown updown)
-{
-	struct logger *logger = child->sa.logger;
-	struct connection *c = child->sa.st_connection;
-
-	if (is_labeled_child(c)) {
-		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
-		     __func__, pri_shunk(c->config->sec_label));
-		return true;
-	}
-
-	/* clear the deck */
-	clear_connection_spd_conflicts(c);
-
-	bool ok = true;	/* sticky: once false, stays false */
-
-	/*
-	 * Install the IPsec kernel policies.
-	 */
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		selector_buf sb, db;
-		enum_buf eb;
-		pdbg(logger,
-		     "kernel: %s() installing SPD for %s=>%s %s route=%s up=%s",
-		     __func__,
-		     /* outbound */
-		     str_selector(&spd->local->client, &db),
-		     str_selector(&spd->remote->client, &sb),
-		     str_enum_short(&routing_names, c->routing.state, &eb),
-		     bool_str(updown.route),
-		     bool_str(updown.up));
-
-		struct spd_owner owner;
-		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.shunt,
-						 c->logger);
-		if (!ok) {
-			break;
-		}
-
-		spd->wip.ok = true;
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			/* XXX: why is CISCO skipped? */
-			continue;
-		}
-
-		PEXPECT(logger, spd->wip.ok);
-		enum kernel_policy_op op =
-			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
-			 KERNEL_POLICY_OP_ADD);
-		if (spd->block) {
-			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
-			ok = spd->wip.installed.kernel_policy =
-				add_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
-						      SHUNT_KIND_BLOCK,
-						      logger, HERE,
-						      "install IPsec block policy");
-		} else {
-			ok = spd->wip.installed.kernel_policy =
-				install_outbound_ipsec_kernel_policy(child, spd, op, HERE);
-		}
-		if (!ok) {
-			break;
-		}
-
-		/*
-		 * Do we have to make a mess of the routing?
-		 *
-		 * Probably.  This code path needs a re-think.
-		 */
-
-		PEXPECT(logger, spd->wip.ok);
-		if ((updown.route || updown.up) && owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, child, logger))
-				ldbg(logger, "kernel: prepare command returned an error");
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
-		}
-
-		PEXPECT(logger, spd->wip.ok);
-		if (updown.route && owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			ok = spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, child, logger);
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
-		}
-		if (!ok) {
-			break;
-		}
-
-		/*
-		 * Do we have to notify the firewall?
-		 *
-		 * Yes if this is the first time that the tunnel is
-		 * established (rekeys do not need to re-UP).
-		 *
-		 * Yes, if we are installing a tunnel eroute and the
-		 * firewall wasn't notified for a previous tunnel with
-		 * the same clients.  Any Previous tunnel would have
-		 * to be for our connection, so the actual test is
-		 * simple.
-		 */
-
-		if (updown.up) {
-			PEXPECT(logger, spd->wip.ok);
-			ok = spd->wip.installed.up =
-				do_updown(UPDOWN_UP, c, spd, child, logger);
-		}
-
-		if (!ok) {
-			break;
-		}
-	}
-
-	if (impair.install_ipsec_sa_outbound_policy) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_policy in %s()", __func__);
-		return false;
-	}
-
-	/*
-	 * Finally clean up.
-	 */
-
-	if (!ok) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* go back to old routing */
-			struct spd_owner owner = spd_owner(spd, c->routing.state,
-							   logger, HERE);
-			delete_cat_kernel_policies(spd, &owner, child->sa.logger, HERE);
-			revert_kernel_policy(spd, child, logger);
-		}
-		return false;
-	}
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
-		PEXPECT(logger, spd->wip.ok);
-		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
-		if (bspp != NULL) {
-			free_bare_shunt(bspp);
-		}
-		/* clear host shunts that clash with freshly installed route */
-		clear_narrow_holds(&spd->local->client, &spd->remote->client, logger);
-	}
-
-	return true;
 }
 
 static bool connection_has_policy_conflicts(const struct connection *c,
