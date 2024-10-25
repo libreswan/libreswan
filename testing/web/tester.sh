@@ -52,6 +52,11 @@ make_web_variable() {
     echo $1=$v
 }
 
+NOW()
+{
+    date --utc --iso-8601=seconds
+}
+
 RESTART()
 {
     STATUS "restarting: $@; sending output to ${summarydir}/tester.log"
@@ -86,7 +91,7 @@ make_web_variable branch_tag WEB_BRANCH_TAG
 rutdir=$(realpath ${rutdir})
 summarydir=$(realpath ${summarydir})
 
-start_time=$(${benchdir}/testing/web/now.sh)
+start_time=$(NOW)
 
 STATUS "starting at ${start_time}"
 
