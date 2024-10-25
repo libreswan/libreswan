@@ -168,7 +168,6 @@ ${benchdir}/testing/web/json-summary.sh "${start_time}" > ${resultsdir}/summary.
 
 RUN make -C ${benchdir}/testing/web web-resultsdir \
     WEB_MAKEDIR=${web_makedir} \
-    WEB_TIME=${start_time} \
     WEB_HASH=${commit} \
     WEB_SUBDIR=${subdir} \
     WEB_RESULTSDIR=${resultsdir} \
@@ -248,7 +247,6 @@ KVM() {
     RUN ${benchdir}/kvm ${kvm_target} \
 	       $(platform_makeflags) \
 	       WEB_MAKEDIR=${web_makedir} \
-	       WEB_TIME=${start_time} \
 	       WEB_HASH=${commit} \
 	       WEB_RESULTSDIR=${resultsdir} \
 	       WEB_SUMMARYDIR=${summarydir}

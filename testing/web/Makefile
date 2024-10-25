@@ -34,11 +34,6 @@ WEB_SUBDIR = $(WEB_BRANCH_NAME)-$(WEB_BRANCH_COUNT)-g$(WEB_ABBREV_HASH)
 
 WEB_RESULTSDIR ?= $(WEB_SUMMARYDIR)/$(WEB_SUBDIR)
 
-# run once
-ifndef WEB_TIME
-WEB_TIME := $(shell ./now.sh)
-endif
-
 #
 # Force the creation and/or update of the web pages
 #

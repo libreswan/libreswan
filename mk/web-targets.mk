@@ -46,9 +46,6 @@ endif
 ifndef WEB_SOURCES
 WEB_SOURCES := $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
 endif
-ifndef WEB_TIME
-WEB_TIME := $(shell $(WEB_SOURCEDIR)/now.sh)
-endif
 ifndef WEB_TESTSDIR
 WEB_TESTSDIR := $(WEB_SUMMARYDIR)/tests
 endif
