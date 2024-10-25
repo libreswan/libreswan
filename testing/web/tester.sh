@@ -204,9 +204,12 @@ exec "$@" > ${logfile} 2>&1 </dev/null
 
 set -vx
 
-# populate the resultsdir
+# Populate the resultsdir with a summary.json asap so that the web
+# page can pick it up.  The fields that matter are .hash(commit) and
+# .directory(subdir).  The timestamps are 0 since the run hasn't
+# started yet.
 
-${bindir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
+${bindir}/gime-summary-json.sh ${rutdir} ${commit} ${subdir} > ${resultsdir}/summary.json
 
 RUN make -C ${bindir} web-resultsdir \
     WEB_MAKEDIR=${web_makedir} \

@@ -321,7 +321,10 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     //
     // Overlay the current commit dot.
     //
-    if (summary.current.commits && summary.current.commits.length) {
+    if (summary.current &&
+	summary.current.commits &&
+	summary.current.commits.length) {
+
 	keys.push({
 	    klass: "current",
 	    x: x(summary.current.commit.committer_date) + radius,

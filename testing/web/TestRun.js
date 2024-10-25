@@ -1,9 +1,10 @@
 class TestRun {
+
     constructor(json, commits) {
 	Object.assign(this, json)
 	// Cleanup the contents
-	this.start_time = new Date(json.start_time)
-	this.stop_time = new Date(json.stop_time)
+	this.start_time = (json.start_time ? new Date(json.start_time) : null)
+	this.current_time = (json.current_time ? new Date(json.current_time) : null)
 	// cross link commit and test run
 	this.commit = commits[json.hash]
 	this.commit.test_run = this

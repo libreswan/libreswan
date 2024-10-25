@@ -99,25 +99,21 @@ function lsw_summary_table(table_id, summary) {
     // Add Extra info columns
 
     columns.push({
-	title: "Start",
+	title: "Start Time",
 	html: function(row) {
-	    return (row.start_time
-		    ? lsw_date2iso(row.start_time)
-		    : "")
-	},
-	value: function(row) {
-	    return (row.start_time
-		    ? row.start_time
-		    : "")
+	    if (row.start_time)
+		return row.start_time.toLocaleString()
+	    return ""
 	},
     })
     columns.push({
-	title: "Time",
+	title: "Run Time",
 	value: function(row) {
-	    return (row.runtime
-		    ? row.runtime
-		    : "")
-	},
+	    if (row.start_time) {
+		return subtime(row.current_time, row.start_time)
+	    }
+	    return ""
+	}
     })
     columns.push({
 	title: "Directory",
@@ -126,7 +122,7 @@ function lsw_summary_table(table_id, summary) {
 		     + row.directory
 		     + "</a>")
 	    if (row == summary.current) {
-		a += "<br/>" + summary.current.details
+		a += "<br/>" + summary.status.details
 	    }
 	    return a
 	},
