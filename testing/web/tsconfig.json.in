@@ -2,6 +2,7 @@
     "compilerOptions": {
         "outDir": "@@DEST_DIR@@",
         "allowJs": true,
+	"pretty": false,
         "target": "es2015"
     },
     "include": [
