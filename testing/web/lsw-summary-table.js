@@ -30,7 +30,7 @@ function lsw_summary_table(table_id, summary) {
     // and the table reflects this (with some filtering).
 
     STATUSES = ["good", "wip"]
-    RESULTS = ["passed", "failed", "unresolved"]
+    RESULTS = ["passed", "failed", "unresolved", "untested"]
     KINDS = ["kvmplutotest"]
     for (const kind of KINDS) {
 
