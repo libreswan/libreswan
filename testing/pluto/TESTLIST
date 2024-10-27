@@ -1136,7 +1136,7 @@ kvmplutotest	ipv6-4in6-02-ikev2			good
 kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
 kvmplutotest	ipv6-transport-mode-04-ondemand-netkey	good
 kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	good
+kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	wip	github/1875
 kvmplutotest	ipv6-tunnel-mode-03-rw			good
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
 kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	good
