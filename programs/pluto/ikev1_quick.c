@@ -984,8 +984,8 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	struct hidden_variables hv;
 
 	/*
-	 * XXX: isn't local->remote backwards?  The peer things it
-	 * proposed the reverse?
+	 * Note: the peer's IDr is our LOCAL_CLIENT, and the peer's
+	 * IDi is our REMOTE_CLIENT.
 	 */
 	selector_pair_buf sb;
 	llog(RC_LOG, ike->sa.logger, "the peer proposed: %s",
@@ -994,7 +994,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	/*
 	 * Now that we have identities of client subnets, we must look
 	 * for a suitable connection (the IKE SA's connection only
-	 * matches for hosts).
+	 * matches for hosts and IDs).
 	 */
 	struct connection *p = find_v1_client_connection(ike->sa.st_connection,
 							 &local_client, &remote_client,
@@ -1983,7 +1983,9 @@ static bool is_virtual_net_used(struct connection *c,
 #define WILD_WEIGHT (MAX_CA_PATH_LEN + 1)
 #define PRIO_WEIGHT ((MAX_WILDCARDS + 1) * WILD_WEIGHT)
 
-/* fc_try: a helper function for find_client_connection */
+/*
+ * fc_try() an unhelpful confusion of find_client_connection.
+ */
 static struct connection *fc_try(const struct connection *c,
 				 const ip_address local_address,
 				 const ip_address remote_address,
@@ -2014,7 +2016,7 @@ static struct connection *fc_try(const struct connection *c,
 	struct connection_filter hpf = {
 		.host_pair = {
 			.local = &local_address,
-			.remote = &remote_address,
+			.remote = &remote_address, /* could be %any */
 		},
 		.ike_version = IKEv1,
 		.search = {
@@ -2025,6 +2027,7 @@ static struct connection *fc_try(const struct connection *c,
 	};
 
 	while (next_connection(&hpf)) {
+
 		struct connection *d = hpf.c;
 		struct verbose verbose = hpf.search.verbose;
 
@@ -2053,38 +2056,30 @@ static struct connection *fc_try(const struct connection *c,
 		if (!(c->config->connalias != NULL &&
 		      d->config->connalias != NULL &&
 		      streq(c->config->connalias, d->config->connalias))) {
-			if (!(same_id(&c->local->host.id, &d->local->host.id) &&
-			      match_id(&c->remote->host.id, &d->remote->host.id,
-				       &wildcards, verbose) &&
-			      trusted_ca(ASN1(c->remote->host.config->ca),
-					 ASN1(d->remote->host.config->ca), &pathlen))) {
-				vdbg("skipping connection same connalias but with faulty ID (logic is too complex)");
+			if (!same_id(&c->local->host.id, &d->local->host.id)) {
+				vdbg("skipping connection with same connalias but different IDs (logic is too complex)");
 				continue;
 			}
-		}
-
-		/* compare protocol and ports */
-		unsigned local_protocol = local_client->ipproto;
-		unsigned remote_protocol = remote_client->ipproto;
-		int local_port = local_client->hport;
-		int remote_port = remote_client->hport;
-		if (!(d->spd->local->client.ipproto == local_protocol &&
-		      d->spd->remote->client.ipproto == remote_protocol &&
-		      (d->spd->local->client.hport == 0 ||
-		       d->spd->local->client.hport == local_port) &&
-		      (d->remote->config->child.protoport.has_port_wildcard ||
-		       d->spd->remote->client.hport == remote_port))) {
-			vdbg("skipping connection with wrong protocol/port");
-			continue;
+			if (!match_id(&c->remote->host.id, &d->remote->host.id,
+				      &wildcards, verbose)) {
+				vdbg("skipping connection with same connalias but mismatched ID (logic is too complex)");
+				continue;
+			}
+			if (!trusted_ca(ASN1(c->remote->host.config->ca),
+					ASN1(d->remote->host.config->ca), &pathlen)) {
+				vdbg("skipping connection with same connalias but untrusted CA (logic is too complex)");
+				continue;
+			}
 		}
 
 		/*
 		 * non-Opportunistic case: local_client must match.
 		 *
-		 * So must remote_client, but the testing is complicated
-		 * by the fact that the peer might be a wildcard
-		 * and if so, the default value of that.client
-		 * won't match the default remote_net. The appropriate test:
+		 * So must remote_client, but the testing is
+		 * complicated by the fact that the peer might be a
+		 * wildcard and if so, the default value of
+		 * that.client won't match the default remote_net. The
+		 * appropriate test:
 		 *
 		 * If d has a peer client, it must match remote_net.
 		 * If d has no peer client, remote_net must just have peer itself.
@@ -2094,10 +2089,6 @@ static struct connection *fc_try(const struct connection *c,
 		verbose.level++;
 
 		FOR_EACH_ITEM(d_spd, &d->child.spds) {
-
-			if (best == d) {
-				break;
-			}
 
 			selector_buf s1, d1;
 			selector_buf s3, d3;
@@ -2124,6 +2115,30 @@ static struct connection *fc_try(const struct connection *c,
 				vdbg("our client (%s) not in local_net (%s)",
 				     str_selector_subnet_port(&d_spd->local->client, &s3),
 				     str_selector_subnet_port(local_client, &s1));
+				continue;
+			}
+
+			/* compare protocol and ports */
+
+			if (d_spd->local->client.ipproto != local_client->ipproto) {
+				vdbg("skipping connection SPD with wrong local protocol");
+				continue;
+			}
+
+			if (d_spd->remote->client.ipproto != remote_client->ipproto) {
+				vdbg("skipping connection SPD with wrong remote protocol");
+				continue;
+			}
+
+			if (d_spd->local->client.hport != 0 &&
+			    d_spd->local->client.hport != local_client->hport) {
+				vdbg("skipping connection SPD with wrong local port");
+				continue;
+			}
+
+			if (!d->remote->config->child.protoport.has_port_wildcard &&
+			    d_spd->remote->client.hport != remote_client->hport) {
+				vdbg("skipping connection with wrong remote port");
 				continue;
 			}
 
@@ -2174,28 +2189,42 @@ static struct connection *fc_try(const struct connection *c,
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
 				(c == d ? 1 : 0) +
 				1;
-			if (prio > best_prio) {
-				vdbg("best so far!");
-				best = d;
-				best_prio = prio;
+			if (prio <= best_prio) {
+				vdbg("not the best as %d <= %d", prio, best_prio);
+				continue;
 			}
+
+			vdbg("best so far!");
+			best = d;
+			best_prio = prio;
+			break;
 		}
 	}
 
-	/* XXX: should have been skipped earlier!?! */
-	if (best != NULL && never_negotiate(best))
-		best = NULL;
+	if (best != NULL && never_negotiate(best)) {
+		connection_buf cb;
+		llog(RC_LOG, verbose.logger,
+		     "best connection "PRI_CONNECTION" is never-negotiate, ignoring",
+		     pri_connection(best, &cb));
+		return NULL;
+	}
 
-	vdbg("concluding with %s [%" PRIu32 "]",
-	    (best ? best->name : "none"), best_prio);
+	if (best != NULL) {
+		connection_buf cb;
+		vdbg("concluding with "PRI_CONNECTION" with priority %d",
+		     pri_connection(best, &cb), best_prio);
+		return best;
+	}
 
-	if (best == NULL && virtualwhy != NULL) {
+	if (virtualwhy != NULL) {
+		/* this may not be the only/real reason! */
 		llog(RC_LOG, verbose.logger,
 		     "peer proposal was rejected in a virtual connection policy: %s",
 		     virtualwhy);
 	}
 
-	return best;
+	vdbg("concluding with no matching connection");
+	return NULL;
 }
 
 struct connection *find_v1_client_connection(struct connection *const c,
