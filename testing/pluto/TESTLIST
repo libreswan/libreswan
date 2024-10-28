@@ -832,7 +832,7 @@ kvmplutotest	delete-ikev1-sa-02-ipsec-responder	good
 kvmplutotest	delete-ikev1-sa-03-conn-initiator	good
 kvmplutotest	delete-ikev1-sa-03-conn-responder	good
 kvmplutotest	delete-ikev1-sa-04-multi-initiator	good
-kvmplutotest	delete-ikev1-sa-04-multi-responder	good
+kvmplutotest	delete-ikev1-sa-04-multi-responder	wip	github/1876
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-02			good
 kvmplutotest	ikev1-delete-sa-04		good
