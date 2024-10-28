@@ -1,4 +1,7 @@
-ipsec start
+../../guestbin/prep.sh
+'west.conf' -> '/etc/ipsec.conf'
+west #
+ ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
