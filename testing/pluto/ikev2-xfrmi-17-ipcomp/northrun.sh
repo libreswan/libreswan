@@ -13,4 +13,8 @@ sleep 2
 #cp /tmp/ipsec1.pcap OUTPUT/
 ../../guestbin/ip.sh rule show
 ../../guestbin/ip.sh route show table 50
+# check actual compression
+ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+../../guestbin/ping-once.sh --up --large 192.0.2.254
+ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
 echo done

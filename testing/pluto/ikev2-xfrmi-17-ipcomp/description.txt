@@ -9,3 +9,5 @@ Just add route to the subnet via dev ipsec0
 
 Also note output marks are not necessary, there will not be any routing loop,
 because that end IP address is outside the extruded subnet.
+
+Note: unsure why "proto 4" in output of ip xfrm state
