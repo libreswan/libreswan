@@ -19,6 +19,7 @@ fi
 echo args: "$@"
 
 tester=$(realpath $0)
+bindir=$(dirname ${tester})
 web_makedir=$(dirname ${tester})
 benchdir=$(realpath $(dirname ${tester})/../..)
 
@@ -40,7 +41,7 @@ make_kvm_variable() {
 }
 
 make_web_variable() {
-    local v=$(make -C ${benchdir}/testing/web \
+    local v=$(make -C ${bindir} \
 		   --no-print-directory \
 		   print-web-variable \
 		   VARIABLE=$2)
@@ -65,7 +66,7 @@ RESTART()
 
 STATUS()
 {
-    ${benchdir}/testing/web/json-status.sh \
+    ${bindir}/json-status.sh \
 	       --json ${summarydir}/status.json \
 	       ${subdir:+--directory ${subdir}} \
 	       "$*"
@@ -115,7 +116,7 @@ git -C ${rutdir} merge --quiet --ff-only
 
 STATUS "updating summary"
 
-RUN make -C ${benchdir}/testing/web web-summarydir
+RUN make -C ${bindir} web-summarydir
 
 # Select the next commit to test
 #
@@ -124,7 +125,7 @@ RUN make -C ${benchdir}/testing/web web-summarydir
 
 STATUS "looking for work"
 
-if ! commit=$(${benchdir}/testing/web/gime-work.sh ${summarydir} ${rutdir} ${branch_tag}) ; then
+if ! commit=$(${bindir}/gime-work.sh ${summarydir} ${rutdir} ${branch_tag}) ; then
     # Seemlingly nothing to do ...  github gets updated up every 15
     # minutes so sleep for less than that
     delay=$(expr 10 \* 60)
@@ -142,7 +143,7 @@ STATUS "selected ${commit}"
 # Get this done ASAP so that status can start tracking it.  Once
 # subdir is set, STATUS will include it.
 
-subdir=$(make -C ${benchdir}/testing/web \
+subdir=$(make -C ${bindir} \
 	      --no-print-directory \
 	      print-web-variable \
 	      WEB_MAKEDIR=${web_makedir} \
@@ -169,9 +170,9 @@ set -vx
 
 # populate the resultsdir
 
-${benchdir}/testing/web/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
+${bindir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
 
-RUN make -C ${benchdir}/testing/web web-resultsdir \
+RUN make -C ${bindir} web-resultsdir \
     WEB_MAKEDIR=${web_makedir} \
     WEB_HASH=${commit} \
     WEB_SUBDIR=${subdir} \
