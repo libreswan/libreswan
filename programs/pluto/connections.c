@@ -2276,22 +2276,24 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	/* all these options cannot co-exist */
-	int i = 0;
-	if (wm->iptfs)
-		i++;
-	if (wm->tfc)
-		i++;
-	if (wm->compress)
-		i++;
-	if (encap_mode == ENCAP_MODE_TRANSPORT)
-		i++;
-	if (encap_proto != ENCAP_PROTO_ESP)
-		i++;
-	if (wm->compress && encap_mode == ENCAP_MODE_TRANSPORT)
-		i--; /* this combo is allowed */
-	if (i > 1) {
-		return diag("The following options cannot be mixed: iptfs=yes, tfc=, (compress=yes, type=transport), phase2=ah");
+	if (!never_negotiate_wm(wm)) {
+		/* all these options cannot co-exist */
+		int i = 0;
+		if (wm->iptfs)
+			i++;
+		if (wm->tfc)
+			i++;
+		if (wm->compress)
+			i++;
+		if (encap_mode == ENCAP_MODE_TRANSPORT)
+			i++;
+		if (encap_proto != ENCAP_PROTO_ESP)
+			i++;
+		if (wm->compress && encap_mode == ENCAP_MODE_TRANSPORT)
+			i--; /* this combo is allowed */
+		if (i > 1) {
+			return diag("The following options cannot be mixed: iptfs=yes, tfc=, (compress=yes, type=transport), phase2=ah");
+		}
 	}
 
 	if (wm->authby.never) {
