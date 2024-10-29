@@ -37,7 +37,6 @@ make_kvm_variable() {
 	exit 1
     fi
     eval $1="'$v'"
-    echo "$1=$v"
 }
 
 make_web_variable() {
@@ -50,7 +49,6 @@ make_web_variable() {
 	exit 1
     fi
     eval $1="'$v'"
-    echo $1=$v
 }
 
 NOW()
@@ -109,6 +107,13 @@ SLEEP()
     sleep ${delay}
 }
 
+start_time=$(NOW)
+subdir=		# TBD ASAP
+logfile=	# TBD ASAP
+summarydir=	# TBD ASAP
+
+STATUS "starting at ${start_time}"
+
 make_kvm_variable rutdir        KVM_RUTDIR
 make_kvm_variable prefix        KVM_PREFIX
 make_kvm_variable workers       KVM_WORKERS
@@ -121,9 +126,17 @@ make_web_variable branch_tag WEB_BRANCH_TAG
 rutdir=$(realpath ${rutdir})
 summarydir=$(realpath ${summarydir})
 
-start_time=$(NOW)
+declare -A platforms
+declare -A platform_status
+for platform in ${kvm_platforms} ; do
+    platforms[${platform}]=${platform}
+    case " ${kvm_os} " in
+	*" ${platform} "* ) platform_status[${platform}]=true ;;
+	* )                 platform_status[${platform}]=false ;;
+    esac
+done
 
-STATUS "starting at ${start_time}"
+STATUS "config loaded: summarydir=${summarydir} rutdir=${rutdir} prefix=${prefix} workers=${workers} platforms='${platforms[*]}' platform_status='${platform_status[*]}' branch_tag=${branch_tag}"
 
 # Update the repo.
 #
@@ -217,22 +230,6 @@ git -C ${rutdir} reset --hard ${commit}
 # platforms[] contains what can be built, platform_status[] indicates
 # if should be built.  platform_status[] is then turned into MAKEFLAGS
 # to pass down.
-
-declare -A platforms
-for platform in ${kvm_platforms} ; do
-    platforms[${platform}]=${platform}
-done
-
-declare -A platform_status
-for platform in ${platforms[@]} ; do
-    case " ${kvm_os} " in
-	*" ${platform} "* ) platform_status[${platform}]=true ;;
-	* )                 platform_status[${platform}]=false ;;
-    esac
-done
-
-echo "platforms=${platforms[@]}"
-echo "platform_status=${platform_status[@]}"
 
 # emit a build.json line
 #
