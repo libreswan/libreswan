@@ -274,9 +274,6 @@ run_target()
 	kvm_target=${target}-${platform}
     fi
 
-    logfile=${resultsdir}/${kvm_target}.log
-    cp /dev/null ${logfile}
-
     # should the target be skipped?
 
     if test "${status}" = skip ; then
@@ -303,12 +300,15 @@ run_target()
 
     # Run the target
     #
-    # Notice how the first stage of the pipeline saves it's status
-    # by touching ${kvm_target}.ok.
+    # This duplicates the output writing it both to STDOUT and to the
+    # target log file.
+    #
+    # Notice how the first stage of the pipeline saves it's status by
+    # touching ${kvm_target}.ok.
 
     if ${run} ${kvm_target} 2>&1 ; then
 	touch ${resultsdir}/${kvm_target}.ok ;
-    fi | tee -a ${resultsdir}/${kvm_target}.log
+    fi | tee ${resultsdir}/${kvm_target}.log
 
     # Figure out and save the the result.
 
