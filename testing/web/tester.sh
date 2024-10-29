@@ -60,22 +60,39 @@ NOW()
 
 RESTART()
 {
-    STATUS "restarting: $@; sending output to ${summarydir}/tester.log"
+    # don't publish location of log file on WEB via STATUS
+    STATUS "restarting: $@"
+    echo "switching output to ${summarydir}/tester.log"
     exec ${tester} >> ${summarydir}/tester.log 2>&1 < /dev/null
+}
+
+LOG()
+{
+    if test "${logfile}" ; then
+	echo logfile: ${logfile} >> ${summarydir}/tester.log
+	echo "$*" >> ${summarydir}/tester.log
+    fi
 }
 
 STATUS()
 {
-    ${bindir}/json-status.sh \
-	       --json ${summarydir}/status.json \
-	       ${subdir:+--directory ${subdir}} \
-	       "$*"
-    echo "$*" >> ${summarydir}/tester.log
+    cat <<EOF 1>&2
+--------------------------------------
+    $*
+--------------------------------------
+EOF
+    if test "${summarydir}" ; then
+	${bindir}/json-status.sh \
+		 --json ${summarydir}/status.json \
+		 ${subdir:+--directory ${subdir}} \
+		 "$*"
+    fi
+    LOG "$@"
 }
 
 RUN()
 (
-    echo "running: $*" >> ${summarydir}/tester.log
+    LOG "running:" "$@"
     set -x
     "$@"
 )

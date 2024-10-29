@@ -33,17 +33,6 @@ while test $# -gt 0; do
     esac
 done
 
-
-cat <<EOF 1>&2
-
---------------------------------------
-
-    ${details}
-
---------------------------------------
-
-EOF
-
 {
     jq --null-input \
        --arg details "${details}" \
