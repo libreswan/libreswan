@@ -396,9 +396,16 @@ void submit_task(struct state *callback_sa,
 		 */
 		deltatime_t delay = deltatime(0);
 		if (impair.helper_thread_delay.enabled) {
-			delay = deltatime(impair.helper_thread_delay.value);
-			llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is pausing for %ju seconds",
-			     pri_job(job), deltasecs(delay));
+			if (impair.helper_thread_delay.value == 0) {
+				static uint64_t warp = 0;
+				delay = deltatime_ms(++warp);
+				llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is warped by %ju milliseconds",
+				     pri_job(job), warp);
+			} else {
+				delay = deltatime(impair.helper_thread_delay.value);
+				llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is pausing for %ju seconds",
+				     pri_job(job), deltasecs(delay));
+			}
 		}
 
 		if (detach_whack) {
