@@ -8,20 +8,22 @@ if [ "${verbose}" = "yes" ]; then
 fi
 
 interface="eth1"
-sync_wait_stop=5
 sync_wait_start=1
 this_host=$(hostname)
 host=${this_host}
 ip6="not ip6"
+ascii=
+count=
 
  usage() {
     cat <<EOF >/dev/stderr
 
 Usage:
 
-    $0 --start -i <ethX> [--host <hostname>]
-    $0 --stop [--host <hostname>] [--ip6]
-    $0 --kill [--host <hostname>]
+    $0 --start [ -i <ethX> ] [--host <hostname>] [ -c <count> ]
+    $0 --stop  [ -i <ethX> ] [--host <hostname>] [--ip6] [-A] [ -- <tcpdump-options> ]
+    $0 --kill  [ -i <ethX> ] [--host <hostname>]
+    $0 --wait  [ -i <ethX> ] [--host <hostname>] [ -- <tcpdump-options> ]
 
 Start tcpdump saving output to /tmp/
 
@@ -56,10 +58,20 @@ while test $# -gt 0; do
 			interface=$2
 			shift 2
 			;;
-		-ip6 )
+		-ip6 | -6 )
 			ip6=''
 			shift
 			;;
+
+		-A )
+		    	ascii=-A
+		    	shift
+		    	;;
+
+		-c | --count )
+		    	count="-c $2"
+		    	shift 2
+		    	;;
 
 		--start )
 			action="start"
@@ -69,10 +81,18 @@ while test $# -gt 0; do
 			action="stop"
 			shift
 			;;
+		--wait )
+			action="wait"
+			shift
+			;;
 		--kill )
 			action="kill"
 			shift
 			;;
+
+		-- )
+		    	break;
+		    	;;
 
 		* )
 			echo "unrecognized option: $1" 1>&2
@@ -81,13 +101,24 @@ while test $# -gt 0; do
 	esac
 done
 
+# set the extra arguments to tcpdump
+
+if test $# -gt 0 ; then
+    shift # drop --
+else
+    set -- ${ascii} not arp and ${ip6} and not stp
+fi
+
+# set the output files and paths
+
 set_file_names()
 {
 	tmp_dir=/tmp
 	testname=$(basename ${PWD})
-	out_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.pcap"
-	log_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.log"
-	pid_path="${tmp_dir}/${host}.${testname}.${interface}.tcpdump.pid"
+	tcpdump=$(echo ${host}.${testname}.${interface}.tcpdump | tr : .)
+	out_path="${tmp_dir}/${tcpdump}.pcap"
+	log_path="${tmp_dir}/${tcpdump}.log"
+	pid_path="${tmp_dir}/${tcpdump}.pid"
 }
 
 start_tcpdump()
@@ -97,7 +128,7 @@ start_tcpdump()
 	rm -f ${out_path}
 	rm -f ${log_path}
 	rm -f ${pid_path}
-	tcpdump -s 0 -i ${interface} -w ${out_path} > ${log_path} 2>&1 &
+	tcpdump ${count} -s 0 -i ${interface} -w ${out_path} > ${log_path} 2>&1 &
 	echo $! > ${pid_path}
 	sleep ${sync_wait_start}
 	echo tcpdump started
@@ -115,10 +146,34 @@ stop_tcpdump()
 	    while kill -0 ${pid} > /dev/null 2>&1 ; do
 		sleep 1
 	    done
-	    cp ${out_path} OUTPUT/
-	    cp ${log_path} OUTPUT/
+	    for f in ${out_path} ${log_path} ; do
+		cp ${f} OUTPUT/
+	    done
 	    rm -f ${pid_path}
 	fi
+    else
+	echo tcpdump ${pid_path} is not running
+    fi
+}
+
+wait_tcpdump()
+{
+    if test -r ${pid_path} ; then
+	pid=$(cat ${pid_path})
+	c=30
+	while kill -0 ${pid} > /dev/null 2>&1 && test $c -gt 0 ; do
+	    sleep 1
+	    c=$(expr $c - 1)
+	done
+	if test $c -eq 0 ; then
+	    echo timeout waiting for tcpdump ${pid} to exit 1>&2
+	    exit 1
+	fi
+	sleep 1
+	for f in ${out_path} ${log_path} ; do
+	    cp ${f} OUTPUT/
+	done
+	rm -f ${pid_path}
     else
 	echo tcpdump ${pid_path} is not running
     fi
@@ -136,7 +191,11 @@ case "${action}" in
 	;;
     stop)
 	stop_tcpdump
-	tcpdump -n -r ${out_path} not arp and ${ip6} and not stp
+	tcpdump -n -r OUTPUT/$(basename ${out_path}) "$@"
+	;;
+    wait)
+	wait_tcpdump
+	tcpdump -n -r OUTPUT/$(basename ${out_path}) "$@"
 	;;
     kill)
 	stop_tcpdump
