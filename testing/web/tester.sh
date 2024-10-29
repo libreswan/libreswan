@@ -80,6 +80,18 @@ RUN()
     "$@"
 )
 
+SLEEP()
+{
+    # Seemlingly nothing to do ...  github gets updated up every 15
+    # minutes so sleep for less than that
+    delay=$(expr 10 \* 60)
+    now=$(date +%s)
+    future=$(expr ${now} + ${delay})
+    start_time=$(NOW)
+    STATUS "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${delay}s)"
+    sleep ${delay}
+}
+
 make_kvm_variable rutdir        KVM_RUTDIR
 make_kvm_variable prefix        KVM_PREFIX
 make_kvm_variable workers       KVM_WORKERS
@@ -126,13 +138,7 @@ RUN make -C ${bindir} web-summarydir
 STATUS "looking for work"
 
 if ! commit=$(${bindir}/gime-work.sh ${summarydir} ${rutdir} ${branch_tag}) ; then
-    # Seemlingly nothing to do ...  github gets updated up every 15
-    # minutes so sleep for less than that
-    delay=$(expr 10 \* 60)
-    now=$(date +%s)
-    future=$(expr ${now} + ${delay})
-    STATUS "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${delay}s)"
-    sleep ${delay}
+    SLEEP
     RESTART "after a sleep"
 fi
 
