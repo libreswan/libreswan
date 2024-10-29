@@ -1,0 +1,19 @@
+Tunnel using ipsec-interface, AH+IPCOMP, and kernel's default marks.
+
+Because this test is subnet-to-subnet and the other end is not inside
+the 'subnet' we do not need any specific 'ip rule' lookups here.  Just
+add route to the subnet via dev ipsec0
+
+Also note that the kernel state shows output marks even though they
+are not necessary:
+
+- because that end's IP address is outside the extruded subnet,
+  there's no routing loop and hence, no marks are needed
+
+however:
+
+- even though the test's config file does not specify marks, and the
+  XFRMI code passes no marks to the kernel, the kernel still feels the
+  need to add them, hence the presence of output marks
+
+Note: unsure why "proto 4" in output of ip xfrm state

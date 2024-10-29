@@ -565,7 +565,6 @@ kvmplutotest	ikev1-xfrmi-04				good
 kvmplutotest	ikev1-xfrmi-04-aggr			good
 kvmplutotest	ikev1-xfrmi-05-remote-access-client	good
 kvmplutotest	ikev2-xfrmi-16-rekey			good
-kvmplutotest	ikev2-xfrmi-17-ipcomp			wip	github/1879
 kvmplutotest	ikev2-xfrmi-19-route-before-up		good
 
 kvmplutotest	ipsec-interface-00-ipv4-ikev2-freebsd-setkey	good
@@ -584,6 +583,9 @@ kvmplutotest	ipsec-interface-06-ipv6-ikev1-xfrmi	good
 kvmplutotest	ipsec-interface-06-ipv6-ikev2-xfrmi	good
 kvmplutotest	ipsec-interface-15-blocked-ikev2-xfrmi	good	github/1769
 kvmplutotest	ipsec-interface-15-order-ikev2-xfrmi	good	github/1771
+
+kvmplutotest	ipsec-interface-17-ipcomp-ah		wip	github/1879
+kvmplutotest	ipsec-interface-17-ipcomp-esp		wip	github/1879
 
 kvmplutotest	ikev2-decap-dscp-01			good
 kvmplutotest	ikev2-dont-encap-dscp-01		good

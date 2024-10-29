@@ -1,0 +1,128 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+north #
+ # this route from /etc/sysconfig/network-scripts/route-eth1 interferes
+north #
+ ../../guestbin/ip.sh route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.3.254 dev eth1
+192.0.2.254 via 192.1.3.254 dev eth1 src 192.1.3.33 uid 0
+RTNETLINK answers: No such process
+north #
+ echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ ipsec auto --add north
+"north": created ipsec-interface ipsec1@eth1
+"north": added IKEv2 connection
+north #
+ echo "initdone"
+initdone
+north #
+ ipsec auto --up north
+"north" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"north" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"north" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"north" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"north" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"north" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+north #
+ # comments below are to understand/explore the basics : what is going on
+north #
+ # ../../guestbin/ip.sh link add ipsec1 type xfrm if_id 1 dev eth0
+north #
+ # ../../guestbin/ip.sh link set ipsec1 up
+north #
+ # ../../guestbin/ip.sh route add 192.0.2.0/24 dev ipsec1 src 192.0.3.254
+north #
+ # tcpdump -s 0 -n -w /tmp/ipsec1.pcap -i ipsec1 & echo $! > /tmp/tcpdump.pid
+north #
+ sleep  2
+north #
+ ip xfrm state
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	if_id 0x1
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.3.33 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	output-mark 0x1/0xffffffff
+	comp deflate 
+	if_id 0x1
+src 192.1.3.33 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+	if_id 0x1
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.3.33
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	output-mark 0x1/0xffffffff
+	comp deflate 
+	if_id 0x1
+src 192.1.2.23 dst 192.1.3.33
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+	if_id 0x1
+north #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+north #
+ ../../guestbin/ip.sh -s link show ipsec1
+X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX:  bytes packets errors dropped  missed   mcast           
+           168       2      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+            84       1      0       0       0       0 
+north #
+ #kill -9 $(cat /tmp/tcpdump.pid)
+north #
+ sleep 2
+north #
+ #cp /tmp/ipsec1.pcap OUTPUT/
+north #
+ ../../guestbin/ip.sh rule show
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+north #
+ ../../guestbin/ip.sh route show table 50
+Error: ipv4: FIB table does not exist.
+Dump terminated
+north #
+ # check actual compression
+north #
+ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+lifetime current:\	  84(bytes), 1(packets)\	  
+lifetime current:\	  0(bytes), 0(packets)\	  
+north #
+ ../../guestbin/ping-once.sh --up --large 192.0.2.254
+up
+north #
+ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+lifetime current:\	  8212(bytes), 7(packets)\	  
+lifetime current:\	  8028(bytes), 1(packets)\	  
+north #
+ echo done
+done
+north #
+ 
