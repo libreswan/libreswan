@@ -9,7 +9,7 @@ nic #
 192.1.3.0/24 -> 192.1.2.254
 nic #
  ../../guestbin/tcpdump.sh --stop -i eth1
-reading from file /tmp/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file OUTPUT/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
 IP 192.1.2.254.40500 > 192.1.2.23.isakmp: isakmp: parent_sa ikev2_init[I]
 IP 192.1.2.23.isakmp > 192.1.2.254.40500: isakmp: parent_sa ikev2_init[R]
 IP 192.1.2.254.44500 > 192.1.2.23.ipsec-nat-t: NONESP-encap: isakmp: child_sa  ikev2_auth[I]
@@ -29,7 +29,7 @@ nic #
 tcpdump started
 nic #
  ../../guestbin/tcpdump.sh --stop -i eth1
-reading from file /tmp/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file OUTPUT/nic.ikev2-mobike-08-nat-expire-liveness-east.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
 IP 192.1.2.254.54500 > 192.1.2.23.ipsec-nat-t: UDP-encap: ESP(spi=0xSPISPI,seq=0x2), length XXX
 IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: UDP-encap: ESP(spi=0xSPISPI,seq=0x2), length XXX
 IP 192.1.2.254 > 192.1.2.23: ICMP 192.1.2.254 udp port 44500 unreachable, length 156

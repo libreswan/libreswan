@@ -27,7 +27,7 @@ east #
  # EAST should not have ESP packets - no IKE over ESP
 east #
  ../../guestbin/tcpdump.sh --stop -i eth1
-reading from file /tmp/east.ikev2-xfrmi-16-rekey.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
+reading from file OUTPUT/east.ikev2-xfrmi-16-rekey.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
 IP 192.1.3.209.isakmp > 192.1.2.23.isakmp: isakmp: parent_sa ikev2_init[I]
 IP 192.1.2.23.isakmp > 192.1.3.209.isakmp: isakmp: parent_sa ikev2_init[R]
 IP 192.1.3.209.isakmp > 192.1.2.23.isakmp: isakmp: child_sa  ikev2_auth[I]

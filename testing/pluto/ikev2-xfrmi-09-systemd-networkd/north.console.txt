@@ -78,7 +78,7 @@ north #
  sleep 20 # wait for tcpdump to collect all events
 north #
  ../../guestbin/tcpdump.sh --stop -i ipsec2
-reading from file /tmp/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pcap, link-type RAW (Raw IP)
+reading from file OUTPUT/north.ikev2-xfrmi-09-systemd-networkd.ipsec2.tcpdump.pcap, link-type RAW (Raw IP)
 IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.3.254: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.0.3.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
