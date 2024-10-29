@@ -1,4 +1,5 @@
 ipsec whack --impair suppress_retransmits
+ipsec whack --impair helper_thread_delay:0 # do the timewarp
 ipsec auto --up westnet-eastnet-subnets
 ipsec whack --trafficstatus
 # test return code for --down when using aliases
