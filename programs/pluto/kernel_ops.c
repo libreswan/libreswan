@@ -361,8 +361,11 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 				jam_ipsec_interface(buf, sa->ipsec_interface);
 			}
 
-			if (sa->sa_mark_out != NULL) {
-				jam_string(buf, " sa_mark_out=");
+			/* manual mark-out? */
+			jam_string(buf, " sa_mark_out=");
+			if (sa->sa_mark_out == NULL) {
+				jam_string(buf, "auto");
+			} else {
 				jam(buf, PRI_SA_MARK, pri_sa_mark((*sa->sa_mark_out)));
 			}
 
