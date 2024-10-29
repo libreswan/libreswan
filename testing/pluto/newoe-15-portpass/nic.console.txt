@@ -2,16 +2,15 @@
 nic #
  iptables -F
 nic #
- tcpdump -i eth1 -l -A > /tmp/nic.tcpdump.log 2>&1 & echo $? > /tmp/nic.tcpdump.pid ; sleep 1
-[x] PID
+ ../../guestbin/tcpdump.sh --start -i eth1
+tcpdump started
 nic #
  # expect two lines of plain text - there and back
 nic #
- sed -n -e 's/.*PLAINTEXT.*/PLAINTEXT/p' /tmp/nic.tcpdump.log
+ ../../guestbin/tcpdump.sh --stop -i eth1 -A | sed -n -e 's/.*PLAINTEXT.*/PLAINTEXT/p'
+reading from file OUTPUT/nic.newoe-15-portpass.eth1.tcpdump.pcap, link-type EN10MB (Ethernet)
 PLAINTEXT
 PLAINTEXT
-nic #
- cp /tmp/nic.tcpdump.log OUTPUT/
 nic #
  ../../guestbin/ipsec-kernel-state.sh
 nic #

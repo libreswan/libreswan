@@ -41,15 +41,8 @@ west #
 west #
  # suppress job monitoring; specify packet count
 west #
- rm -f /tmp/nflog-50.pcap /tmp/tcpdump.log
-west #
- set +m
-west #
- tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 & sleep 1
-[x] PID
-west #
- ../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
-tcpdump: listening on INTERFACE DETAILS
+ ../../guestbin/tcpdump.sh --start -c 4 -i nflog:50
+tcpdump started
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
@@ -57,13 +50,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # wait for count to reach tcpdump then dump it
+ # wait for count to reach tcpdump then dump it; dump everything
 west #
- wait
-west #
- cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
-west #
- tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
+ ../../guestbin/tcpdump.sh --wait -i nflog:50 --
+reading from file OUTPUT/west.nflog-01-global-nftables.nflog.50.tcpdump.pcap, link-type NFLOG (Linux netfilter log messages)
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
