@@ -2355,71 +2355,18 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	}
 
 	/*
-	 * look for an abstract connection to match
-	 *
-	 * XXX: this code makes no sense.
-	 *
-	 * It is searching through the connection's SPDs using the
-	 * .local .host .addr to search for a connection matching
-	 * LOCAL<-ANY.  The problem is that .spd .local .host .addr is
-	 * in the connection (C) making the loop pointless!?!
+	 * Retry looking for a template.
 	 */
-	vlog("trying with LOCAL<->ANY");
-	ip_address local_address = unset_address;
-	unsigned level = verbose.level;
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		verbose.level = level+1;
-		selector_buf s2;
-		selector_buf d2;
-		vdbg("checking hostpair %s -> %s",
-		     str_selector_subnet_port(&spd->local->client, &s2),
-		     str_selector_subnet_port(&spd->remote->client, &d2));
-		/*
-		 * Look for a host-pair matching LOCAL<-ANY.  If one
-		 * is found, flag that by setting local_address.
-		 *
-		 * XXX: Is this just a convolted way of figuring out
-		 * that C is an instance, and perhaps the template is
-		 * better?
-		 *
-		 * XXX: it would probably be easier to just call
-		 * fc_try() with local/unset and see what comes back.
-		 */
-		struct connection_filter hpf = {
-			.host_pair = {
-				.local = &spd->local->host->addr,
-				.remote = &unset_address,
-			},
-			.ike_version = IKEv1,
-			.search = {
-				.order = NEW2OLD,
-				.verbose = verbose,
-				.where = HERE,
-			},
-				};
-		while (next_connection(&hpf)) {
-			struct verbose verbose = hpf.search.verbose;
-			verbose.level++;
 
-			/* found something */
-			local_address = spd->local->host->addr;
-			address_buf ab;
-			vdbg("found a connection matching %s<-any",
-			     str_address(&local_address, &ab));
-			break;
-		}
-		if (address_is_specified(local_address)) {
-			break;
-		}
-	}
-	verbose.level = level;
-
-	if (address_is_specified(local_address)) {
-		/* RW match with actual remote_id or abstract remote_id? */
-		d = fc_try(c, local_address, unset_address,
-			   local_client, remote_client, verbose);
+	d = fc_try(c, c->local->host.addr, unset_address,
+		   local_client, remote_client, verbose);
+	if (d != NULL) {
+		connection_buf cb;
+		vdbg("success! template search found "PRI_CONNECTION,
+		     pri_connection(d, &cb));
+		return d;
 	}
 
-	vdbg("concluding with d = %s", (d ? d->name : "none"));
-	return d;
+	vdbg("concluding with no connection");
+	return NULL;
 }
