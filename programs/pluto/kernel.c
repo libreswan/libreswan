@@ -1269,6 +1269,10 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.sa_ipsec_max_bytes = c->config->sa_ipsec_max_bytes,
 		.sa_ipsec_max_packets = c->config->sa_ipsec_max_packets,
 		.sec_label = c->child.sec_label /* assume connection outlive their kernel_sa's */,
+		.ipsec_interface = c->ipsec_interface,
+		.sa_mark_out = (c->ipsec_interface == NULL ? NULL :
+				(c->sa_marks.out.val == 0 && c->sa_marks.out.mask == 0) ? NULL :
+				&c->sa_marks.out),
 	};
 
 	address_buf sab, dab;
@@ -1301,11 +1305,6 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
-
-		if (c->ipsec_interface != NULL) {
-			said_next->ipsec_interface = c->ipsec_interface;
-			said_next->sa_mark_out = &c->sa_marks.out;
-		}
 
 		if (!kernel_ops_add_sa(said_next, replace, child->sa.logger)) {
 			llog_sa(RC_LOG, child, "add_sa ipcomp failed");
@@ -1430,15 +1429,6 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
-
-		if (c->ipsec_interface != NULL) {
-			said_next->ipsec_interface = c->ipsec_interface;
-			if (c->sa_marks.out.val != 0 ||
-			    c->sa_marks.out.mask != 0) {
-				/* manually configured mark-out=mark/mask */
-				said_next->sa_mark_out = &c->sa_marks.out;
-			}
-		}
 
 		if (direction == DIRECTION_OUTBOUND &&
 		    c->config->child_sa.tfcpad != 0 &&
