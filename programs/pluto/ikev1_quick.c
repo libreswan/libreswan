@@ -2259,131 +2259,165 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	 * Give priority to current connection
 	 * but even greater priority to a routed concrete connection.
 	 */
+
 	struct connection *d;
+	int srnum = -1;
+	struct connection *unrouted = NULL;
 
-	{
-		int srnum = -1;
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		struct connection *unrouted = NULL;
-		FOR_EACH_ITEM(spd, &c->child.spds) {
+		srnum++;
 
-			srnum++;
+		selector_buf s2;
+		selector_buf d2;
+		vdbg("concrete checking against sr#%d %s -> %s", srnum,
+		     str_selector_subnet_port(&spd->local->client, &s2),
+		     str_selector_subnet_port(&spd->remote->client, &d2));
 
-			selector_buf s2;
-			selector_buf d2;
-			vdbg("concrete checking against sr#%d %s -> %s", srnum,
-			     str_selector_subnet_port(&spd->local->client, &s2),
-			     str_selector_subnet_port(&spd->remote->client, &d2));
+		/* compare selector ranges */
 
-			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
-			int local_port = selector_port(*local_client).hport;
-			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
-			int remote_port = selector_port(*remote_client).hport;
-			if (selector_range_eq_selector_range(spd->local->client, *local_client) &&
-			    selector_range_eq_selector_range(spd->remote->client, *remote_client) &&
-			    spd->local->client.ipproto == local_protocol &&
-			    (!spd->local->client.hport || spd->local->client.hport == local_port) &&
-			    (spd->remote->client.ipproto == remote_protocol) &&
-			    (!spd->remote->client.hport || spd->remote->client.hport == remote_port)) {
-
-				/* instant winner */
-				if (kernel_route_installed(c)) {
-					return c;
-				}
-
-				unrouted = c;
-				break;
-			}
+		if (!selector_range_eq_selector_range(spd->local->client, *local_client)) {
+			selector_buf s1, s3;
+			vdbg("our client (%s) does not have a matching local selector range (%s)",
+			     str_selector_subnet_port(&spd->local->client, &s3),
+			     str_selector_subnet_port(local_client, &s1));
+			continue;
 		}
 
-		/* exact match? */
-		/*
-		 * clang 3.4 says: warning: Access to field
-		 * 'host_pair' results in a dereference of a null
-		 * pointer (loaded from variable 'c')
-		 *
-		 * If so, the caller must have passed NULL for it
-		 * and earlier references would be wrong (segfault).
-		 */
-		d = fc_try(c, c->local->host.addr, c->remote->host.addr,
-			   local_client, remote_client, verbose);
-
-		vdbg("fc_try %s gives %s", c->name, (d ? d->name : "none"));
-
-		if (d == NULL) {
-			d = unrouted;
+		if (!selector_range_eq_selector_range(spd->remote->client, *remote_client)) {
+			selector_buf s1, s3;
+			vdbg("our client (%s) does not have a matching remote selector range (%s)",
+			     str_selector_subnet_port(&spd->remote->client, &s3),
+			     str_selector_subnet_port(remote_client, &s1));
+			continue;
 		}
+
+		/* compare protocol */
+
+		if (spd->local->client.ipproto != local_client->ipproto) {
+			vdbg("skipping connection SPD with wrong local protocol");
+			continue;
+		}
+
+		if (spd->remote->client.ipproto != remote_client->ipproto) {
+			vdbg("skipping connection SPD with wrong remote protocol");
+			continue;
+		}
+
+		/* compare port */
+
+		if (spd->local->client.hport != 0 &&
+		    spd->local->client.hport != local_client->hport) {
+			vdbg("skipping connection SPD with wrong local port");
+			continue;
+		}
+
+		if (spd->remote->client.hport != 0 &&
+		    spd->remote->client.hport != remote_client->hport) {
+			vdbg("skipping connection with wrong remote port");
+			continue;
+		}
+
+		/* instant winner */
+		if (kernel_route_installed(c)) {
+			vdbg("connection has route installed; instant winner!");
+			return c;
+		}
+
+		/* save for after fc_try() */
+		vdbg("saving unrouted connection for later");
+		unrouted = c;
 	}
 
-	if (d == NULL) {
+	/* exact match? */
+	/*
+	 * clang 3.4 says: warning: Access to field 'host_pair'
+	 * results in a dereference of a null pointer (loaded from
+	 * variable 'c')
+	 *
+	 * If so, the caller must have passed NULL for it and earlier
+	 * references would be wrong (segfault).
+	 */
+	d = fc_try(c, c->local->host.addr, c->remote->host.addr,
+		   local_client, remote_client, verbose);
+	if (d != NULL) {
+		connection_buf cb;
+		vdbg("success! fc_try %s gives "PRI_CONNECTION,
+		     c->name, pri_connection(d, &cb));
+		return d;
+	}
+
+	if (unrouted != NULL) {
+		connection_buf cb;
+		vdbg("success! early search gave unrouted "PRI_CONNECTION,
+		     pri_connection(unrouted, &cb));
+		return unrouted;
+	}
+
+	/*
+	 * look for an abstract connection to match
+	 *
+	 * XXX: this code makes no sense.
+	 *
+	 * It is searching through the connection's SPDs using the
+	 * .local .host .addr to search for a connection matching
+	 * LOCAL<-ANY.  The problem is that .spd .local .host .addr is
+	 * in the connection (C) making the loop pointless!?!
+	 */
+	vlog("trying with LOCAL<->ANY");
+	ip_address local_address = unset_address;
+	unsigned level = verbose.level;
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		verbose.level = level+1;
+		selector_buf s2;
+		selector_buf d2;
+		vdbg("checking hostpair %s -> %s",
+		     str_selector_subnet_port(&spd->local->client, &s2),
+		     str_selector_subnet_port(&spd->remote->client, &d2));
 		/*
-		 * look for an abstract connection to match
+		 * Look for a host-pair matching LOCAL<-ANY.  If one
+		 * is found, flag that by setting local_address.
 		 *
-		 * XXX: this code makes no sense.
+		 * XXX: Is this just a convolted way of figuring out
+		 * that C is an instance, and perhaps the template is
+		 * better?
 		 *
-		 * It is searching through the connection's SPDs using
-		 * the .local .host .addr to search for a connection
-		 * matching LOCAL<-ANY.  The problem is that .spd
-		 * .local .host .addr is in the connection (C) making
-		 * the loop pointless!?!
+		 * XXX: it would probably be easier to just call
+		 * fc_try() with local/unset and see what comes back.
 		 */
-		vlog("trying with LOCAL<->ANY");
-		unsigned level = verbose.level++;
-		ip_address local_address = unset_address;
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			verbose.level = level+1;
-			selector_buf s2;
-			selector_buf d2;
-			vdbg("checking hostpair %s -> %s",
-			     str_selector_subnet_port(&spd->local->client, &s2),
-			     str_selector_subnet_port(&spd->remote->client, &d2));
-			/*
-			 * Look for a host-pair matching LOCAL<-ANY.
-			 * If one is found, flag that by setting
-			 * local_address.
-			 *
-			 * XXX: Is this just a convolted way of
-			 * figuring out that C is an instance, and
-			 * perhaps the template is better?
-			 *
-			 * XXX: it would probably be easier to just
-			 * call fc_try() with local/unset and see what
-			 * comes back.
-			 */
-			struct connection_filter hpf = {
-				.host_pair = {
-					.local = &spd->local->host->addr,
-					.remote = &unset_address,
-				},
-				.ike_version = IKEv1,
-				.search = {
-					.order = NEW2OLD,
-					.verbose = verbose,
-					.where = HERE,
-				},
-			};
-			while (next_connection(&hpf)) {
-				struct verbose verbose = hpf.search.verbose;
-				verbose.level++;
+		struct connection_filter hpf = {
+			.host_pair = {
+				.local = &spd->local->host->addr,
+				.remote = &unset_address,
+			},
+			.ike_version = IKEv1,
+			.search = {
+				.order = NEW2OLD,
+				.verbose = verbose,
+				.where = HERE,
+			},
+				};
+		while (next_connection(&hpf)) {
+			struct verbose verbose = hpf.search.verbose;
+			verbose.level++;
 
-				/* found something */
-				local_address = spd->local->host->addr;
-				address_buf ab;
-				vdbg("found a connection matching %s<-any",
-				     str_address(&local_address, &ab));
-				break;
-			}
-			if (address_is_specified(local_address)) {
-				break;
-			}
+			/* found something */
+			local_address = spd->local->host->addr;
+			address_buf ab;
+			vdbg("found a connection matching %s<-any",
+			     str_address(&local_address, &ab));
+			break;
 		}
-		verbose.level = level;
-
 		if (address_is_specified(local_address)) {
-			/* RW match with actual remote_id or abstract remote_id? */
-			d = fc_try(c, local_address, unset_address,
-				   local_client, remote_client, verbose);
+			break;
 		}
+	}
+	verbose.level = level;
+
+	if (address_is_specified(local_address)) {
+		/* RW match with actual remote_id or abstract remote_id? */
+		d = fc_try(c, local_address, unset_address,
+			   local_client, remote_client, verbose);
 	}
 
 	vdbg("concluding with d = %s", (d ? d->name : "none"));
