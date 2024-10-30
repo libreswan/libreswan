@@ -236,11 +236,11 @@ int main(int argc, char *argv[])
 		listignore = false,
 		listall = false,
 		liststack = false;
-	char *configfile = NULL;
+	const char *configfile = NULL;
 	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	char *ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default control socket");
+	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 
 #if 0
 	/* efence settings */
@@ -280,12 +280,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case OPT_CONFIG: /*'C'*/
-			configfile = clone_str(optarg, "config file name");
+			configfile = optarg;
 			break;
 
 		case OPT_CTLSOCKET: /*'c'*/
-			pfree(ctlsocket);
-			ctlsocket = clone_str(optarg, "control socket");
+			ctlsocket = optarg;
 			break;
 
 		case OPT_LISTADD: /*'L'*/
@@ -379,7 +378,7 @@ int main(int argc, char *argv[])
 	ldbg(logger, "debugging mode enabled");
 
 	if (configfile == NULL) {
-		configfile = clone_str(IPSEC_CONF, "default ipsec.conf file");
+		configfile = IPSEC_CONF;
 	}
 	if (verbose > 0) {
 		printf("opening file: %s\n", configfile);
@@ -684,8 +683,6 @@ int main(int argc, char *argv[])
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif
-	pfreeany(ctlsocket);
-	pfreeany(configfile);
 	/*
 	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
 	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code
