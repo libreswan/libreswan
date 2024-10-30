@@ -1416,7 +1416,7 @@ int main(int argc, char **argv)
 
 		case OPT_REDIRECT_TO:	/* --redirect-to */
 			/* either active, or or add */
-			msg.redirect_to = strdup(optarg);
+			msg.redirect_to = optarg;
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
@@ -1435,7 +1435,7 @@ int main(int argc, char **argv)
 			if (!strlen(optarg)) {
 				msg.global_redirect_to = strdup("<none>");
 			} else {
-				msg.global_redirect_to = strdup(optarg);
+				msg.global_redirect_to = optarg;
 			}
 			continue;
 
@@ -2106,11 +2106,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			msg.dpddelay = strdup(optarg);
+			msg.dpddelay = optarg;
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			msg.dpdtimeout = strdup(optarg);
+			msg.dpdtimeout = optarg;
 			continue;
 
 		case CD_OBSOLETE:
@@ -2127,7 +2127,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
-			msg.accept_redirect_to = strdup(optarg);
+			msg.accept_redirect_to = optarg;
 			continue;
 
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
@@ -2328,31 +2328,31 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			end->addresspool = strdup(optarg);
+			end->addresspool = optarg;
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
-			msg.modecfgdns = strdup(optarg);
+			msg.modecfgdns = optarg;
 			continue;
 		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
-			msg.modecfgdomains = strdup(optarg);
+			msg.modecfgdomains = optarg;
 			continue;
 		case CD_MODECFGBANNER:	/* --modecfgbanner */
-			msg.modecfgbanner = strdup(optarg);
+			msg.modecfgbanner = optarg;
 			continue;
 
 		case CD_CONN_MARK:      /* --conn-mark */
-			msg.mark = strdup(optarg);
+			msg.mark = optarg;
 			continue;
 		case CD_CONN_MARK_IN:      /* --conn-mark-in */
-			msg.mark_in = strdup(optarg);
+			msg.mark_in = optarg;
 			continue;
 		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
-			msg.mark_out = strdup(optarg);
+			msg.mark_out = optarg;
 			continue;
 
 		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */
-			msg.vti_interface = strdup(optarg);
+			msg.vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
 			msg.vti_routing = optarg_sparse(YN_YES, &yn_option_names);
@@ -2362,7 +2362,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
-			msg.ipsec_interface = strdup(optarg);
+			msg.ipsec_interface = optarg;
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
