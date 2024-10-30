@@ -1201,9 +1201,9 @@ static struct child_sa *duplicate_state(struct connection *c,
 					   sa_type, sa_role, HERE));
 
 	connection_buf cib;
-	dbg("duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
-	    ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
-	    child->sa.st_serialno, sa_type == CHILD_SA ? "IPSEC SA" : "IKE SA");
+	ldbg(ike->sa.logger, "duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
+	     ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
+	     child->sa.st_serialno, sa_type == CHILD_SA ? "IPSEC SA" : "IKE SA");
 
 	if (sa_type == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
@@ -1211,20 +1211,26 @@ static struct child_sa *duplicate_state(struct connection *c,
 
 	child->sa.quirks = ike->sa.quirks;
 	child->sa.hidden_variables = ike->sa.hidden_variables;
-	endpoint_buf eb;
-	dbg("#%lu setting local endpoint to %s from #%ld.st_localport "PRI_WHERE,
-	    child->sa.st_serialno,
-	    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb),
-	    ike->sa.st_serialno,pri_where(HERE));
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
-	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
+
+	/*
+	 * Propogate IKEv1's IKE (ISAKMP) bits to the child so that
+	 * they are still available after the ISAKMP has been deleted.
+	 */
 	child->sa.st_v1_seen_fragmentation_supported = ike->sa.st_v1_seen_fragmentation_supported;
-	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
 	child->sa.st_v1_seen_fragments = ike->sa.st_v1_seen_fragments;
+
+	/*
+	 * Propogate IKEv2 IKE SA bits to the larval IKE SA replacement.
+	 *
+	 * XXX: Handle this in emancipate?
+	 * XXX: are these all really IKE SA bits?
+	 */
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
+	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
 	child->sa.st_v2_ike_ppk_enabled = ike->sa.st_v2_ike_ppk_enabled;
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
 	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
-	child->sa.st_seen_and_use_iptfs = ike->sa.st_seen_and_use_iptfs;
 
 	/* these were set while we didn't have client state yet */
 	/* we should really split the NOTIFY loop in two cleaner ones */
