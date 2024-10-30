@@ -13,6 +13,66 @@
 //
 // This is effectively a leaf walk.
 
+class Table {
+}
+
+class TableColumn {
+    constructor(json) {
+	this.json = json
+	this.title = (json.title ? json.title : "")
+	this.index = this.title.toLowerCase().replace(/ /g, "_")
+	this.span = json.span
+    }
+    value(row) {
+	if (this.json.value) {
+	    return this.json.value(row)
+	}
+	return (row[this.index] ? row[this.index] : "")
+    }
+    html(row) {
+	if (this.json.html) {
+	    return this.json.html(row)
+	}
+	return this.value(row)
+    }
+    sort(l, r) {
+	if (this.json.sort) {
+	    return this.json.sort(l, r)
+	}
+	let lv = this.value(l)
+	let rv = this.value(r)
+	let diff
+	if (lv < rv) {
+	    diff = -1
+	} else if (lv > rv) {
+	    diff = 1
+	} else {
+	    diff = 0
+	}
+	return diff
+    }
+}
+
+class TableRow {
+    constructor(table, data) {
+	this.data = data
+	// XXX: selected used to rebuild the table after a sort.
+	this.selected = false
+	this.table = table
+	this.columns = []
+    }
+}
+
+class TableCell {
+    constructor(row, column) {
+	this.row = row
+	this.column = column
+    }
+    html() {
+	return this.column.html(this.row.data)
+    }
+}
+
 function lsw_table_headers(recursion, start, table, headers) {
     let this_row = 0
     if (table.length) {
@@ -58,37 +118,9 @@ function lsw_table(table) {
 
     // Fuge up "table.column" inheritance
 
-    for (const header of table.headers) {
-	for (const column of header) {
-	    if (column.title === undefined) {
-		column.title = ""
-	    }
-	    if (column.value === undefined) {
-		column.index = column.title.toLowerCase().replace(/ /g, "_")
-		column.value = function(row) {
-		    return (row[column.index] ? row[column.index] : "")
-		}
-	    }
-	    if (column.html === undefined) {
-		column.html = column.value
-	    }
-	    if (column.sort === undefined) {
-		column.sort = function(l, r) {
-		    let lv = column.value(l)
-		    let rv = column.value(r)
-		    let diff
-		    if (lv < rv) {
-			diff = -1
-		    } else if (lv > rv) {
-			diff = 1
-		    } else {
-			diff = 0
-		    }
-		    return diff
-		}
-	    }
-	}
-    }
+    table.headers.forEach((header, index) => {
+	table.headers[index] = header.map((column) => new TableColumn(column))
+    })
 
     // Fudge up "table.sort" inheritance.
 
@@ -112,19 +144,9 @@ function lsw_table(table) {
 
     table.rows = []
     for (const data of table.data) {
-	let row = {
-	    data: data,
-	    // XXX: selected used to rebuild the table after a sort.
-	    selected: false,
-	    table: table,
-	    columns: []
-	}
+	let row = new TableRow(table, data)
 	for (const column of table.headers[table.headers.length - 1]) {
-	    row.columns.push({
-		text: column.html(data),
-		row: row,
-		column: column,
-	    })
+	    row.columns.push(new TableCell(row, column))
 	}
 	table.rows.push(row)
     }
@@ -192,7 +214,7 @@ function lsw_table_body(table) {
 
     // always sort
 
-    table.rows.sort(function (left_row, right_row) {
+    table.rows.sort((left_row, right_row) => {
 	let column = table.sort.column
 	if (table.sort.ascending) {
 	    return column.sort(left_row.data, right_row.data)
@@ -232,7 +254,7 @@ function lsw_table_body(table) {
 	.enter()
 	.append("td")
 	.html(function(element) {
-	    return element.text
+	    return element.html()
 	})
 	.each(function(element, index) {
 	    let styles = element.column.style && element.column.style.body

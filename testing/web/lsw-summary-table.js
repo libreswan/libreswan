@@ -13,11 +13,10 @@ function lsw_summary_table(table_id, summary) {
 	    // blank column.
 	    return row.html_commits()
 	},
-	value: function(row) {
-	    // The value is used to sort the column.  A run without a
-	    // commit is dropped on the floor.
-	    return row.commit.rank
-	},
+	sort: function(l, r) {
+	    // sort descending!
+	    return r.commit.rank - l.commit.rank
+	}
     })
 
     //
@@ -136,10 +135,6 @@ function lsw_summary_table(table_id, summary) {
     lsw_table({
 	id: table_id,
 	data: summary.test_runs,
-	sort: {
-	    column: columns[0], // Commits
-	    ascending: true,
-	},
 	columns: columns,
 	select: {
 	    row: function(selected_test_runs) {
