@@ -584,8 +584,8 @@ kvmplutotest	ipsec-interface-06-ipv6-ikev2-xfrmi	good
 kvmplutotest	ipsec-interface-15-blocked-ikev2-xfrmi	good	github/1769
 kvmplutotest	ipsec-interface-15-order-ikev2-xfrmi	good	github/1771
 
-kvmplutotest	ipsec-interface-17-ipcomp-ah		wip	github/1879
-kvmplutotest	ipsec-interface-17-ipcomp-esp		wip	github/1879
+kvmplutotest	ipsec-interface-17-ipcomp-ah		good	github/1879
+kvmplutotest	ipsec-interface-17-ipcomp-esp		good	github/1879
 
 kvmplutotest	ikev2-decap-dscp-01			good
 kvmplutotest	ikev2-dont-encap-dscp-01		good

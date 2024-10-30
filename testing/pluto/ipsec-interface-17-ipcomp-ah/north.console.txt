@@ -7,8 +7,6 @@ north #
 192.0.2.254 via 192.1.3.254 dev eth1 src 192.1.3.33 uid 0
 RTNETLINK answers: No such process
 north #
- # ../../guestbin/ip.sh link show ipsec1 2>/dev/null && ../../guestbin/ip.sh link del ipsec1
-north #
  echo 0 > /proc/sys/net/ipv4/conf/all/rp_filter
 north #
  ipsec start
@@ -29,7 +27,7 @@ north #
 "north" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "north" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "north" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"north" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+"north" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {AH/ESN=>0xAHAH <0xAHAH xfrm=HMAC_SHA2_512_256 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 north #
  # comments below are to understand/explore the basics : what is going on
 north #
@@ -45,10 +43,10 @@ north #
 north #
  ip xfrm state
 src 192.1.3.33 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
+	proto ah spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag align4 esn
 	output-mark 0x1/0xffffffff
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	auth-trunc hmac(sha512) 0xHASHKEY 256
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
@@ -57,6 +55,7 @@ src 192.1.3.33 dst 192.1.2.23
 src 192.1.3.33 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
+	output-mark 0x1/0xffffffff
 	comp deflate 
 	if_id 0x1
 src 192.1.3.33 dst 192.1.2.23
@@ -64,10 +63,10 @@ src 192.1.3.33 dst 192.1.2.23
 	replay-window 0 flag af-unspec
 	if_id 0x1
 src 192.1.2.23 dst 192.1.3.33
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
+	proto ah spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag align4 esn
 	output-mark 0x1/0xffffffff
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	auth-trunc hmac(sha512) 0xHASHKEY 256
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -77,6 +76,7 @@ src 192.1.2.23 dst 192.1.3.33
 src 192.1.2.23 dst 192.1.3.33
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
+	output-mark 0x1/0xffffffff
 	comp deflate 
 	if_id 0x1
 src 192.1.2.23 dst 192.1.3.33
