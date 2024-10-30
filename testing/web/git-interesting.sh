@@ -74,14 +74,13 @@ fi
 # empty); and this will cause the command to fail.
 
 if git -C ${rutdir} show "${gitrev}^{commit}" \
+       CHANGES \
        Makefile \
-       lib \
        mk \
+       lib \
        programs \
        include \
        testing/pluto \
-       testing/sanitizers \
-       testing/baseconfigs \
 	| grep . > /dev/null ; then
     echo "true"
     exit 0

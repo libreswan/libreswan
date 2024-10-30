@@ -89,6 +89,8 @@ function lsw_summary_cleanup(status, commits, test_runs, current) {
 
     let summary = {}
 
+    summary.status = new Status(status)
+
     // Clean up the commits.  Accumulate a table containing all the
     // commits.
 
@@ -98,6 +100,10 @@ function lsw_summary_cleanup(status, commits, test_runs, current) {
 
     console.log("raw test runs", test_runs)
     summary.test_runs = test_runs.filter((test_run, index) => {
+	if (test_run.directory == status.directory) {
+	    console.warn("discarding test run", test_run, "at", index, "that duplicates status.directory")
+	    return false
+	}
 	// Check that the test run has a valid hash.
 	let hash = test_run.hash
 	if (!hash) {
@@ -114,38 +120,20 @@ function lsw_summary_cleanup(status, commits, test_runs, current) {
 	return new TestRun(test_run, summary.commits.hash_to_commit)
     })
 
+    // Create "summary.current" and append it to test_runs
+
+    if (current && current.hash in summary.commits.hash_to_commit) {
+	console.log("current from current")
+	summary.current = new TestRun(current, summary.commits.hash_to_commit)
+	summary.test_runs.push(summary.current)
+    }
+
     // Create a dictionary of directory->test_run so that
     // ?run=<directory> can find them.
 
     summary.test_run_by_directory = []
     for (const test_run of summary.test_runs) {
 	summary.test_run_by_directory[test_run.directory] = test_run
-    }
-
-    // Create "summary.current" by merging current into status.
-    //
-    // If there's a test run, use that.  Else mash together CURRENT
-    // and STATUS.
-    //
-    // Note that if CURRENT is in SUMMARY .TEST_RUNS then it must be
-    // the same object as as SUMMARY .CURRENT.  Code uses identity
-    // comparison to find current in the .TEST_RUNS[] array.
-
-    let current_test_run = summary.test_run_by_directory[status.directory]
-    status.date = new Date(status.date) // cleanup the date
-    if (current_test_run) {
-	// use same object but mash in status; what's missing?
-	console.log("current from test_run", current_test_run, "and status", status)
-	Object.assign(current_test_run, status)
-	summary.current = current_test_run
-    } else if (current) {
-	// Current doesn't have .directory!?!
-	console.log("current from current", current, "and status", status)
-	summary.current = current
-	Object.assign(current, status)
-    } else {
-	console.log("current from status", status);
-	summary.current = status
     }
 
     // Use the commit<->test_run and commit.parent[] links created

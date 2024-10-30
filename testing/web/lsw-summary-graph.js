@@ -47,11 +47,6 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	// Drop anything that doesn't have a result.
 	if (test_run.totals) {
 	    full_test_runs.push(test_run)
-	    // Current is always added to "empty" so it appears on the
-	    // bottom line.
-	    if (test_run == summary.current) {
-		empty_test_runs.push(test_run)
-	    }
 	} else {
 	    empty_test_runs.push(test_run)
 	}
@@ -271,8 +266,8 @@ function lsw_summary_graph(graph_id, table_id, summary) {
 	    .append("title")
 	    .text(function(test_run) {
 		return (test_run == summary.current
-			? ("In progress: " + test_run.details
-			   + "\nLast Update: " + lsw_date2iso(test_run.date)
+			? ("In progress: " + summary.status.details
+			   + "\nLast Update: " + lsw_date2iso(summary.status.current_time)
 			   + "\n")
 			: "") + lsw_commit_texts(test_run.commits)
 	    })
@@ -321,7 +316,10 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     //
     // Overlay the current commit dot.
     //
-    if (summary.current.commits && summary.current.commits.length) {
+    if (summary.current &&
+	summary.current.commits &&
+	summary.current.commits.length) {
+
 	keys.push({
 	    klass: "current",
 	    x: x(summary.current.commit.committer_date) + radius,

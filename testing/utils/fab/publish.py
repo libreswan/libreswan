@@ -28,6 +28,10 @@ from fab import stats
 from fab import timing
 from fab import argutil
 
+JSON_RESULTS = []
+JSON_SUMMARY = { }
+JSON_STATUS = { }
+
 def add_arguments(parser):
     group = parser.add_argument_group("publish arguments",
                                       "options for publishing the results as json")
@@ -50,8 +54,15 @@ def log_arguments(logger, args):
     logger.info("  publish-summary: '%s'", args.publish_summary)
     logger.info("  publish-hash: '%s'", args.publish_hash)
 
-JSON_RESULTS = []
-JSON_SUMMARY = { }
+    # sneak in some fields
+    if args.publish_hash:
+        JSON_SUMMARY["hash"] = args.publish_hash
+    directory = os.path.basename((args.publish_summary and os.path.dirname(args.publish_summary)
+                                  or args.publish_results))
+    JSON_SUMMARY["directory"] = directory
+    JSON_SUMMARY["start_time"] = datetime.now()
+    JSON_STATUS["start_time"] = datetime.now()
+    JSON_STATUS["directory"] = directory
 
 def _add(counts, *keys):
     # fill in the missing keys.
@@ -63,14 +74,6 @@ def _add(counts, *keys):
     if not key in counts:
         counts[key] = 0
     counts[key] = counts[key] + 1
-
-def _update_time(compare, json, time):
-    result_time = json.get(time)
-    summary_time = JSON_SUMMARY.get(time)
-    if summary_time and result_time:
-        JSON_SUMMARY[time] = compare(summary_time, result_time)
-    elif result_time:
-        JSON_SUMMARY[time] = result_time
 
 def _mkdir_test(logger, args, result):
     dstdir = os.path.join(args.publish_results, result.test.name)
@@ -176,10 +179,6 @@ def json_result(logger, args, result):
             # count the number of times it occurred
             _add(JSON_SUMMARY, "totals", result.test.kind, result.test.status, "issues", issue)
 
-    # use the time in the JSON to update the global times
-    _update_time(min, json, "start_time")
-    _update_time(max, json, "stop_time")
-
 
 def json_results(logger, args):
     if not args.publish_results:
@@ -194,22 +193,14 @@ def json_results(logger, args):
 def json_summary(logger, args):
     if not args.publish_results:
         return
-    # times
-    start_time = JSON_SUMMARY.get("start_time")
-    stop_time = JSON_SUMMARY.get("stop_time")
-    if start_time and stop_time:
-        # in minutes
-        runtime = round((stop_time - start_time).total_seconds() / 60.0)
-        JSON_SUMMARY["runtime"] = "%d:%02d" % (runtime / 60, runtime % 60)
-    # other stuff
+
+    # update totals and stop time
     JSON_SUMMARY["total"] = len(JSON_RESULTS)
-    if args.publish_hash:
-        JSON_SUMMARY["hash"] = args.publish_hash
+    JSON_SUMMARY["current_time"] = datetime.now()
+
     # emit
-    if args.publish_summary:
-        path = args.publish_summary;
-    else:
-        path = os.path.join(args.publish_results, "summary.json")
+    path = (args.publish_summary and args.publish_summary
+            or os.path.join(args.publish_results, "summary.json"))
     logger.info("writing summary to '%s'", path)
     with open(path, "w") as output:
         jsonutil.dump(JSON_SUMMARY, output)
@@ -229,17 +220,10 @@ def testlist(logger, args):
 def json_status(logger, args, details):
     if not args.publish_status:
         return
-    json_status = {
-        "date": datetime.now(),
-        "details": details,
-    }
-    if args.publish_results:
-        # The directory is taken relative to the status (summarydir)
-        # directory.
-        json_status["directory"] = os.path.relpath(args.publish_results,
-                                                   os.path.dirname(args.publish_status))
+    JSON_STATUS["current_time"] = datetime.now()
+    JSON_STATUS["details"] = details
     with open(args.publish_status, "w") as output:
-        jsonutil.dump(json_status, output)
+        jsonutil.dump(JSON_STATUS, output)
         output.write("\n")
 
 

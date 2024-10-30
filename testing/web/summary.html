@@ -11,6 +11,7 @@
     <script type="text/javascript" src="TestResult.js"></script>
     <script type="text/javascript" src="Commit.js"></script>
     <script type="text/javascript" src="Commits.js"></script>
+    <script type="text/javascript" src="Status.js"></script>
 
     <link rel="stylesheet" type="text/css" href="summary.css"> </link>
 
@@ -34,7 +35,7 @@
     <script>
       window.addEventListener('load', function() {
           lsw_summary_load("", function(summary) {
-	      lsw_summary_status("status", summary.current)
+	      lsw_summary_status("status", summary.status)
               lsw_summary_graph("graph", "summary", summary)
               lsw_summary_table("summary", summary)
 	      let params = new URLSearchParams(window.location.search)

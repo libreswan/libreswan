@@ -37,7 +37,6 @@ make_kvm_variable() {
 	exit 1
     fi
     eval $1="'$v'"
-    echo "$1=$v"
 }
 
 make_web_variable() {
@@ -50,7 +49,6 @@ make_web_variable() {
 	exit 1
     fi
     eval $1="'$v'"
-    echo $1=$v
 }
 
 NOW()
@@ -60,25 +58,60 @@ NOW()
 
 RESTART()
 {
-    STATUS "restarting: $@; sending output to ${summarydir}/tester.log"
+    # don't publish location of log file on WEB via STATUS
+    STATUS "restarting: $@"
+    echo "switching output to ${summarydir}/tester.log"
     exec ${tester} >> ${summarydir}/tester.log 2>&1 < /dev/null
+}
+
+LOG()
+{
+    if test "${logfile}" ; then
+	echo logfile: ${logfile} >> ${summarydir}/tester.log
+	echo "$*" >> ${summarydir}/tester.log
+    fi
 }
 
 STATUS()
 {
-    ${bindir}/json-status.sh \
-	       --json ${summarydir}/status.json \
-	       ${subdir:+--directory ${subdir}} \
-	       "$*"
-    echo "$*" >> ${summarydir}/tester.log
+    cat <<EOF 1>&2
+--------------------------------------
+    $*
+--------------------------------------
+EOF
+    if test "${summarydir}" ; then
+	${bindir}/gime-status-json.sh "${subdir}" "${start_time}" "$@" \
+		 > ${summarydir}/status.json.tmp
+	mv ${summarydir}/status.json.tmp  ${summarydir}/status.json
+    fi
+    LOG "$@"
 }
 
 RUN()
 (
-    echo "running: $*" >> ${summarydir}/tester.log
+    LOG "running:" "$@"
     set -x
     "$@"
 )
+
+SLEEP()
+{
+    # Seemlingly nothing to do ...  github gets updated up every 15
+    # minutes so sleep for less than that
+    delay=$(expr 10 \* 60)
+    now=$(date +%s)
+    future=$(expr ${now} + ${delay})
+    start_time=$(NOW)
+    STATUS "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${delay}s)"
+    sleep ${delay}
+}
+
+start_time=$(NOW)
+subdir=		# TBD ASAP
+logfile=	# TBD ASAP
+summarydir=	# TBD ASAP
+
+STATUS "starting at ${start_time}"
 
 make_kvm_variable rutdir        KVM_RUTDIR
 make_kvm_variable prefix        KVM_PREFIX
@@ -92,9 +125,17 @@ make_web_variable branch_tag WEB_BRANCH_TAG
 rutdir=$(realpath ${rutdir})
 summarydir=$(realpath ${summarydir})
 
-start_time=$(NOW)
+declare -A platforms
+declare -A platform_status
+for platform in ${kvm_platforms} ; do
+    platforms[${platform}]=${platform}
+    case " ${kvm_os} " in
+	*" ${platform} "* ) platform_status[${platform}]=true ;;
+	* )                 platform_status[${platform}]=false ;;
+    esac
+done
 
-STATUS "starting at ${start_time}"
+STATUS "config loaded: summarydir=${summarydir} rutdir=${rutdir} prefix=${prefix} workers=${workers} platforms='${platforms[*]}' platform_status='${platform_status[*]}' branch_tag=${branch_tag}"
 
 # Update the repo.
 #
@@ -126,13 +167,7 @@ RUN make -C ${bindir} web-summarydir
 STATUS "looking for work"
 
 if ! commit=$(${bindir}/gime-work.sh ${summarydir} ${rutdir} ${branch_tag}) ; then
-    # Seemlingly nothing to do ...  github gets updated up every 15
-    # minutes so sleep for less than that
-    delay=$(expr 10 \* 60)
-    now=$(date +%s)
-    future=$(expr ${now} + ${delay})
-    STATUS "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${delay}s)"
-    sleep ${delay}
+    SLEEP
     RESTART "after a sleep"
 fi
 
@@ -168,9 +203,12 @@ exec "$@" > ${logfile} 2>&1 </dev/null
 
 set -vx
 
-# populate the resultsdir
+# Populate the resultsdir with a summary.json asap so that the web
+# page can pick it up.  The fields that matter are .hash(commit) and
+# .directory(subdir).  The timestamps are 0 since the run hasn't
+# started yet.
 
-${bindir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
+${bindir}/gime-summary-json.sh ${rutdir} ${commit} ${subdir} > ${resultsdir}/summary.json
 
 RUN make -C ${bindir} web-resultsdir \
     WEB_MAKEDIR=${web_makedir} \
@@ -194,22 +232,6 @@ git -C ${rutdir} reset --hard ${commit}
 # platforms[] contains what can be built, platform_status[] indicates
 # if should be built.  platform_status[] is then turned into MAKEFLAGS
 # to pass down.
-
-declare -A platforms
-for platform in ${kvm_platforms} ; do
-    platforms[${platform}]=${platform}
-done
-
-declare -A platform_status
-for platform in ${platforms[@]} ; do
-    case " ${kvm_os} " in
-	*" ${platform} "* ) platform_status[${platform}]=true ;;
-	* )                 platform_status[${platform}]=false ;;
-    esac
-done
-
-echo "platforms=${platforms[@]}"
-echo "platform_status=${platform_status[@]}"
 
 # emit a build.json line
 #
