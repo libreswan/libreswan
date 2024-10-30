@@ -453,7 +453,8 @@ static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
  */
 
 static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
-			      unsigned expected_resp_type, struct nlm_resp *rbuf,
+			      unsigned expected_resp_type,
+			      struct nlm_resp *rbuf,
 			      const char *description, const char *story,
 			      int *recv_errno,
 			      struct logger *logger)
@@ -554,30 +555,51 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		return false;
 	}
 
-	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
-		if (rsp.u.e.error != 0) {
+	/*
+	 * Is an error expected? Dump or log it.
+	 */
+	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
+		if (expected_resp_type == NLMSG_ERROR) {
+			if (DBGP(DBG_BASE)) {
+				llog_errno(DEBUG_STREAM, logger, -rsp.u.e.error,
+					   "%s() expected netlink error response for %s %s: ",
+					   __func__, description, story);
+				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
+			}
+			/* ignore */
+		} else if (rsp.u.e.error == 0) {
+			/*
+			 * What the heck does a 0 error mean?
+			 *
+			 * Since the caller doesn't depend on the
+			 * result we'll let it pass.  This really
+			 * happens for netlink_add_sa().
+			 */
+			if (DBGP(DBG_BASE)) {
+				LDBG_log(logger, "%s() netlink response for %s %s included non-error error",
+					 __func__, description, story);
+				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
+			}
+			/* ignore */
+		} else {
 			llog_error(logger, -rsp.u.e.error,
 				   "netlink response for %s %s", description, story);
 			llog_ext_ack(RC_LOG, logger, &rsp.n);
 			return false;
 		}
-		/*
-		 * What the heck does a 0 error mean?
-		 * Since the caller doesn't depend on the result
-		 * we'll let it pass.
-		 * This really happens for netlink_add_sa().
-		 */
-		if (DBGP(DBG_BASE)) {
-			LDBG_log(logger, "%s() netlink response for %s %s included non-error error",
-				 __func__, description, story);
-			llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
-		}
-		/* ignore */
 	}
-	if (rbuf == NULL) {
-		return true;
-	}
+
 	if (rsp.n.nlmsg_type != expected_resp_type) {
+		if (rbuf == NULL) {
+			sparse_buf sb1, sb2;
+			ldbg(logger,
+			     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s); discarded",
+			     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb1),
+			     description, story,
+			     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
+			return true;
+		}
+
 		sparse_buf sb1, sb2;
 		llog(RC_LOG, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
@@ -586,6 +608,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
 		return false;
 	}
+
 	memcpy(rbuf, &rsp, r);
 	return true;
 }
