@@ -55,14 +55,19 @@ def log_arguments(logger, args):
     logger.info("  publish-hash: '%s'", args.publish_hash)
 
     # sneak in some fields
+    if not args.publish_results:
+        return
+
     if args.publish_hash:
         JSON_SUMMARY["hash"] = args.publish_hash
-    directory = os.path.basename((args.publish_summary and os.path.dirname(args.publish_summary)
-                                  or args.publish_results))
-    JSON_SUMMARY["directory"] = directory
+    path = (args.publish_summary and os.path.dirname(args.publish_summary)
+            or args.publish_results)
+    if path:
+        directory = os.path.basename(path)
+        JSON_SUMMARY["directory"] = directory
+        JSON_STATUS["directory"] = directory
     JSON_SUMMARY["start_time"] = datetime.now()
     JSON_STATUS["start_time"] = datetime.now()
-    JSON_STATUS["directory"] = directory
 
 def _add(counts, *keys):
     # fill in the missing keys.
