@@ -239,7 +239,6 @@ int main(int argc, char *argv[])
 	const char *configfile = NULL;
 	const char *varprefix = "";
 	int exit_status = 0;
-	struct starter_conn *conn = NULL;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 
 #if 0
@@ -431,7 +430,8 @@ int main(int argc, char *argv[])
 		if (verbose > 0)
 			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
 
-		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
+		for (struct starter_conn *conn = cfg->conns.tqh_first;
+		     conn != NULL; conn = conn->link.tqe_next) {
 			enum autostart autostart = conn->options[KNCF_AUTO];
 			switch (autostart) {
 			case AUTOSTART_UNSET:
@@ -484,9 +484,12 @@ int main(int argc, char *argv[])
 				printf(" %s\n", connname);
 
 			/* find first name match, if any */
+			struct starter_conn *conn = NULL;
 			for (conn = cfg->conns.tqh_first;
-			     conn != NULL && !streq(conn->name, connname);
-			     conn = conn->link.tqe_next) {
+			     conn != NULL; conn = conn->link.tqe_next) {
+				if (streq(conn->name, connname)) {
+					break;
+				}
 			}
 
 			if (conn == NULL) {
@@ -497,11 +500,9 @@ int main(int argc, char *argv[])
 				p3 = " ";
 
 				for (conn = cfg->conns.tqh_first;
-				     conn != NULL;
-				     conn = conn->link.tqe_next) {
+				     conn != NULL; conn = conn->link.tqe_next) {
 					if (lsw_alias_cmp(connname,
-						conn->strings[KSCF_CONNALIAS]))
-					{
+						conn->strings[KSCF_CONNALIAS])) {
 						break;
 					}
 				}
@@ -515,32 +516,36 @@ int main(int argc, char *argv[])
 				}
 				fprintf(stderr, "conn '%s': not found (tried aliases)\n",
 					connname);
-			} else {
-				/* found name or alias */
-				if (conn->state == STATE_ADDED) {
-					fprintf(stderr, "\n%s%s%sconn %s already added\n",
-						p1, p2, p3,
-						conn->name);
-				} else if (conn->state == STATE_FAILED) {
-					fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
-						p1, p2, p3,
-						conn->name);
-				} else {
-					resolve_default_routes(conn, logger);
-					exit_status = starter_whack_add_conn(ctlsocket,
-									     conn, logger);
-					conn->state = STATE_ADDED;
-				}
+				continue;
 			}
+
+			/* found name or alias */
+			if (conn->state == STATE_ADDED) {
+				fprintf(stderr, "\n%s%s%sconn %s already added\n",
+					p1, p2, p3,
+					conn->name);
+				continue;
+			}
+
+			if (conn->state == STATE_FAILED) {
+				fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
+					p1, p2, p3,
+					conn->name);
+				continue;
+			}
+
+			resolve_default_routes(conn, logger);
+			exit_status = starter_whack_add_conn(ctlsocket,
+							     conn, logger);
+			conn->state = STATE_ADDED;
 		}
 	}
 
 	if (listall) {
 		if (verbose > 0)
 			printf("listing all conns\n");
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next)
+		for (struct starter_conn *conn = cfg->conns.tqh_first;
+		     conn != NULL; conn = conn->link.tqe_next)
 			printf("%s ", conn->name);
 		printf("\n");
 	} else {
@@ -549,9 +554,8 @@ int main(int argc, char *argv[])
 				printf("listing all conns marked as auto=add\n");
 
 			/* list all conns marked as auto=add */
-			for (conn = cfg->conns.tqh_first;
-				conn != NULL;
-				conn = conn->link.tqe_next) {
+			for (struct starter_conn *conn = cfg->conns.tqh_first;
+			     conn != NULL; conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
 				if (autostart == AUTOSTART_ADD)
 					printf("%s ", conn->name);
@@ -565,9 +569,8 @@ int main(int argc, char *argv[])
 			 * list all conns marked as auto=route or start or
 			 * better
 			 */
-			for (conn = cfg->conns.tqh_first;
-				conn != NULL;
-				conn = conn->link.tqe_next) {
+			for (struct starter_conn *conn = cfg->conns.tqh_first;
+			     conn != NULL; conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_START ||
@@ -582,9 +585,8 @@ int main(int argc, char *argv[])
 				printf("listing all conns marked as auto=up\n");
 
 			/* list all conns marked as auto=up */
-			for (conn = cfg->conns.tqh_first;
-				conn != NULL;
-				conn = conn->link.tqe_next) {
+			for (struct starter_conn *conn = cfg->conns.tqh_first;
+			     conn != NULL; conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_START)
@@ -597,9 +599,8 @@ int main(int argc, char *argv[])
 				printf("listing all conns marked as auto=ignore\n");
 
 			/* list all conns marked as auto=up */
-			for (conn = cfg->conns.tqh_first;
-				conn != NULL;
-				conn = conn->link.tqe_next) {
+			for (struct starter_conn *conn = cfg->conns.tqh_first;
+			     conn != NULL; conn = conn->link.tqe_next) {
 				enum autostart autostart = conn->options[KNCF_AUTO];
 				if (autostart == AUTOSTART_IGNORE ||
 				    autostart == AUTOSTART_UNSET)
