@@ -171,29 +171,51 @@ static void usage(void)
 	exit(10);
 }
 
+enum opt {
+	OPT_EOF = -1,
+	OPT_CONFIG = 'C',
+	OPT_DEBUG = 'D',
+	OPT_AUTOALL = 'a',
+	OPT_LISTALL = 'A',
+	OPT_LISTADD = 'L',
+	OPT_LISTROUTE = 'r',
+	OPT_LISTSTART = 's',
+	OPT_LISTIGNORE = 'i',
+	OPT_VARPREFIX = 'P',
+	OPT_CTLSOCKET = 'c',
+	OPT_CONFIGSETUP = 'T',
+	OPT_LISTSTACK = 'S',
+	OPT_CHECKCONFIG = 'K',
+	OPT_NOEXPORT = 'N',
+	OPT_HELP = 'h',
+	/* obsoleted, eat and ignore for compatibility */
+	OPT_DEFAULTROUTE = 'd',
+	OPT_DEFAULTROUTENEXTHOP = 'n',
+};
+
 static const struct option longopts[] =
 {
-	{ "config", required_argument, NULL, 'C' },
-	{ "debug", no_argument, NULL, 'D' },
-	{ "verbose", no_argument, NULL, 'D' },
-	{ "addall", no_argument, NULL, 'a' }, /* alias, backwards compat */
-	{ "autoall", no_argument, NULL, 'a' },
-	{ "listall", no_argument, NULL, 'A' },
-	{ "listadd", no_argument, NULL, 'L' },
-	{ "listroute", no_argument, NULL, 'r' },
-	{ "liststart", no_argument, NULL, 's' },
-	{ "listignore", no_argument, NULL, 'i' },
-	{ "varprefix", required_argument, NULL, 'P' },
-	{ "ctlsocket", required_argument, NULL, 'c' },
-	{ "ctlbase", required_argument, NULL, 'c' }, /* backwards compatibility */
-	{ "configsetup", no_argument, NULL, 'T' },
-	{ "liststack", no_argument, NULL, 'S' },
-	{ "checkconfig", no_argument, NULL, 'K' },
-	{ "noexport", no_argument, NULL, 'N' },
-	{ "help", no_argument, NULL, 'h' },
+	{ "config", required_argument, NULL, OPT_CONFIG, /*'C'*/ },
+	{ "debug", no_argument, NULL, OPT_DEBUG, /*'D'*/ },
+	{ "verbose", no_argument, NULL, OPT_DEBUG, /*'D'*/ },
+	{ "autoall", no_argument, NULL, OPT_AUTOALL, /*'a'*/ },
+	{ "addall", no_argument, NULL, OPT_AUTOALL, /*'a'*/ }, /* alias, backwards compat */
+	{ "listall", no_argument, NULL, OPT_LISTALL, /*'A'*/ },
+	{ "listadd", no_argument, NULL, OPT_LISTADD, /*'L'*/ },
+	{ "listroute", no_argument, NULL, OPT_LISTROUTE, /*'r'*/ },
+	{ "liststart", no_argument, NULL, OPT_LISTSTART, /*'s'*/ },
+	{ "listignore", no_argument, NULL, OPT_LISTIGNORE, /*'i'*/ },
+	{ "varprefix", required_argument, NULL, OPT_VARPREFIX, /*'P'*/ },
+	{ "ctlsocket", required_argument, NULL, OPT_CTLSOCKET, /*'c'*/ },
+	{ "ctlbase", required_argument, NULL, OPT_CTLSOCKET, /*'c'*/ }, /* backwards compatibility */
+	{ "configsetup", no_argument, NULL, OPT_CONFIGSETUP, /*'T'*/ },
+	{ "liststack", no_argument, NULL, OPT_LISTSTACK, /*'S'*/ },
+	{ "checkconfig", no_argument, NULL, OPT_CHECKCONFIG, /*'K'*/ },
+	{ "noexport", no_argument, NULL, OPT_NOEXPORT, /*'N'*/ },
+	{ "help", no_argument, NULL, OPT_HELP, /*'h'*/ },
 	/* obsoleted, eat and ignore for compatibility */
-	{"defaultroute", required_argument, NULL, 'd'},
-	{"defaultroutenexthop", required_argument, NULL, 'n'},
+	{"defaultroute", required_argument, NULL, OPT_DEFAULTROUTE, /*'d'*/},
+	{"defaultroutenexthop", required_argument, NULL, OPT_DEFAULTROUTENEXTHOP, /*'n'*/},
 
 	{ 0, 0, 0, 0 }
 };
@@ -202,7 +224,6 @@ int main(int argc, char *argv[])
 {
 	struct logger *logger = tool_logger(argc, argv);
 
-	int opt;
 	bool autoall = false;
 	bool configsetup = false;
 	bool checkconfig = false;
@@ -229,79 +250,80 @@ int main(int argc, char *argv[])
 	EF_PROTECT_BELOW = 1;
 	EF_PROTECT_FREE = 1;
 #endif
+	enum opt opt;
 	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
 		switch (opt) {
-		case 'h':
+		case OPT_HELP: /*'h'*/
 			/* usage: */
 			usage();
 			break;
 
-		case 'a':
+		case OPT_AUTOALL: /*'a'*/
 			autoall = true;
 			break;
 
-		case 'D':
+		case OPT_DEBUG: /*'D'*/
 			verbose++;
 			lex_verbosity++;
 			break;
 
-		case 'T':
+		case OPT_CONFIGSETUP: /*'T'*/
 			configsetup = true;
 			break;
 
-		case 'K':
+		case OPT_CHECKCONFIG: /*'K'*/
 			checkconfig = true;
 			break;
 
-		case 'N':
+		case OPT_NOEXPORT: /*'N'*/
 			export = "";
 			break;
 
-		case 'C':
+		case OPT_CONFIG: /*'C'*/
 			configfile = clone_str(optarg, "config file name");
 			break;
 
-		case 'c':
+		case OPT_CTLSOCKET: /*'c'*/
 			pfree(ctlsocket);
 			ctlsocket = clone_str(optarg, "control socket");
 			break;
 
-		case 'L':
+		case OPT_LISTADD: /*'L'*/
 			listadd = true;
 			dolist = true;
 			break;
 
-		case 'r':
+		case OPT_LISTROUTE: /*'r'*/
 			listroute = true;
 			dolist = true;
 			break;
 
-		case 's':
+		case OPT_LISTSTART: /*'s'*/
 			liststart = true;
 			dolist = true;
 			break;
 
-		case 'S':
+		case OPT_LISTSTACK: /*'S'*/
 			liststack = true;
 			dolist = true;
 			break;
 
-		case 'i':
+		case OPT_LISTIGNORE: /*'i'*/
 			listignore = true;
 			dolist = true;
 			break;
 
-		case 'A':
+		case OPT_LISTALL: /*'A'*/
 			listall = true;
 			dolist = true;
 			break;
 
-		case 'P':
+		case OPT_VARPREFIX: /*'P'*/
 			varprefix = optarg;
 			break;
 
-		case 'd':
-		case 'n':
+		case OPT_DEFAULTROUTE: /*'d'*/
+		case OPT_DEFAULTROUTENEXTHOP: /*'n'*/
 			fprintf(stderr, "Warning: options --defaultroute and --defaultroutenexthop are obsolete and were ignored\n");
 			break;
 
