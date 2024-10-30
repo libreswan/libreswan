@@ -41,12 +41,11 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <getopt.h>
 #include <assert.h>
 #include <limits.h>	/* for INT_MAX */
 
 #include "lsw_socket.h"
-
+#include "optarg.h"
 #include "ttodata.h"
 #include "lswversion.h"
 #include "lswtool.h"
@@ -652,9 +651,7 @@ enum option_enums {
 #define OPTION_ENUMS_ROOF	(OPTION_ENUMS_LAST+1)
 };
 
-int long_index;
-
-static const struct option long_opts[] = {
+const struct option long_opts[] = {
 
 	/* name, has_arg, flag, val */
 
@@ -967,114 +964,41 @@ static const struct option long_opts[] = {
 	{ 0, 0, 0, 0 }
 };
 
-/*
- * figure out an address family.
- */
-struct family {
-	const char *used_by;
-	const struct ip_info *type;
-};
-
-static err_t opt_ttoaddress_num(struct family *family, ip_address *address)
-{
-	err_t err = ttoaddress_num(shunk1(optarg), family->type, address);
-	if (err == NULL && family->type == NULL) {
-		family->type = address_type(address);
-		family->used_by = long_opts[long_index].name;
-	}
-	return err;
-}
-
-static err_t opt_ttoaddress_dns(struct family *family, ip_address *address)
-{
-	err_t err = ttoaddress_dns(shunk1(optarg), family->type, address);
-	if (err == NULL && family->type == NULL) {
-		family->type = address_type(address);
-		family->used_by = long_opts[long_index].name;
-	}
-	return err;
-}
-
-static void opt_to_address(struct family *family, ip_address *address)
-{
-	diagq(opt_ttoaddress_dns(family, address), optarg);
-}
-
-static void opt_to_cidr(struct family *family, ip_cidr *cidr)
-{
-	diagq(ttocidr_num(shunk1(optarg), family->type, cidr), optarg);
-	if (family->type == NULL) {
-		family->type = cidr_type(cidr);
-		family->used_by = long_opts[long_index].name;
-	}
-}
-
-static const struct ip_info *get_address_family(struct family *family)
-{
-	if (family->type == NULL) {
-		family->type = &ipv4_info;
-		family->used_by = long_opts[long_index].name;
-	}
-	return family->type;
-}
-
-static ip_address get_address_any(struct family *family)
-{
-	return get_address_family(family)->address.unspec;
-}
-
 static char *ctlsocket = NULL;
 
-static deltatime_t optarg_deltatime(const struct timescale *timescale)
-{
-	passert((long_opts[long_index].has_arg == required_argument) ||
-		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
-	deltatime_t deltatime;
-	diag_t diag = ttodeltatime(optarg, &deltatime, timescale);
-	if (diag != NULL) {
-		diagq(str_diag(diag), optarg);
-	}
-	return deltatime;
-}
-
-static uintmax_t optarg_uintmax(void)
-{
-	passert((long_opts[long_index].has_arg == required_argument) ||
-		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
-	uintmax_t val;
-	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, &val);
-	if (err != NULL) {
-		diagq(err, optarg);
-	}
-	return val;
-}
-
 /*
- * Lookup OPTARG in NAMES.
+ * If the numeric address is valid, accept it.  Otherwise try to parse
+ * it using DNS, and regardless throw the name at pluto.
  *
- * When optional_argument OPTARG is missing, return OPTIONAL (pass
- * optional=0 when required_argument).
+ * This is pretty bespoke.
  */
 
-static uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names)
+static void msg_host_name(struct family *family, ip_address *address, char **dns_name)
 {
-	if (optarg == NULL) {
-		passert(long_opts[long_index].has_arg == optional_argument);
-		passert(optional != 0);
-		return optional;
+	if (ttoaddress_num(shunk1(optarg), family->type, address) == NULL) {
+		/*
+		 * we have a proper numeric IP address.  Update the
+		 * host's family.
+		 */
+		optarg_family(family, address_type(address));
+		return;
 	}
 
-	const struct sparse_name *name = sparse_lookup(names, shunk1(optarg));
-	if (name == NULL) {
-		JAMBUF(buf) {
-			const char *msg = jambuf_cursor(buf); /* hack */
-			jam(buf, "unrecognized --%s '%s', valid arguments are: ",
-			    long_opts[long_index].name, optarg);
-			jam_sparse_names(buf, names, ", ");
-			diagw(msg);
-		}
+	/*
+	 * We assume that we have a DNS name.
+	 *
+	 * This logic matches confread.c.  ??? it would be kind to
+	 * check the syntax.
+	 *
+	 * we don't fail here.  Pluto will re-check the DNS later
+	 * (begging the question of why bother here!).
+	 *
+	 * Shouldn't this be per-end.
+	 */
+	(*dns_name) = optarg;
+	if (ttoaddress_dns(shunk1(optarg), family->type, address) == NULL) {
+		optarg_family(family, address_type(address));
 	}
-	return name->value;
 }
 
 /* This is a hack for initiating ISAKMP exchanges. */
@@ -1082,6 +1006,7 @@ static uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *nam
 int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
+	optarg_init(logger); /* merge into tool logger? */
 
 	struct whack_message msg;
 	char esp_buf[256];	/* uses snprintf */
@@ -1400,9 +1325,9 @@ int main(int argc, char **argv)
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
 			msg.whack_crash = true;
-			opt_to_address(&host_family, &msg.whack_crash_peer);
+			msg.whack_crash_peer = optarg_address_dns(&host_family);
 			if (!address_is_specified(msg.whack_crash_peer)) {
-				/* either :: or 0.0.0.0; unset rejected */
+				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				diagq("invalid --crash <address>",
 				      str_address(&msg.whack_crash_peer, &ab));
@@ -1560,9 +1485,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
-			opt_to_address(&child_family, &msg.oppo.local.address);
+			msg.oppo.local.address = optarg_address_dns(&child_family);
 			if (!address_is_specified(msg.oppo.local.address)) {
-				/* either :: or 0.0.0.0; unset rejected */
+				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				diagq("invalid --opphere <address>",
 				      str_address(&msg.oppo.local.address, &ab));
@@ -1570,9 +1495,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
-			opt_to_address(&child_family, &msg.oppo.remote.address);
+			msg.oppo.remote.address = optarg_address_dns(&child_family);
 			if (!address_is_specified(msg.oppo.remote.address)) {
-				/* either :: or 0.0.0.0; unset rejected */
+				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				diagq("invalid --oppothere <address>",
 				      str_address(&msg.oppo.remote.address, &ab));
@@ -1631,47 +1556,37 @@ int main(int argc, char **argv)
 		case END_HOST:	/* --host <ip-address> */
 		{
 			if (streq(optarg, "%any")) {
-				end->host_addr = get_address_any(&host_family);
+				end->host_addr = optarg_any(&host_family);
 				end->host_type = KH_ANY;
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
 				msg.type = KS_TUNNEL;
 				end->host_type = KH_OPPO;
-				end->host_addr = get_address_any(&host_family);
+				end->host_addr = optarg_any(&host_family);
 				end->key_from_DNS_on_demand = true;
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				msg.type = KS_TUNNEL;
 				end->host_type = KH_GROUP;
-				end->host_addr = get_address_any(&host_family);
+				end->host_addr = optarg_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
 				msg.type = KS_TUNNEL;
 				end->host_type = KH_OPPOGROUP;
-				end->host_addr = get_address_any(&host_family);
+				end->host_addr = optarg_any(&host_family);
 				end->key_from_DNS_on_demand = true;
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
-				if (opt_ttoaddress_num(&host_family, &end->host_addr) == NULL) {
-					/*
-					 * we have a proper numeric IP
-					 * address.
-					 */
-				} else {
-					/*
-					 * We assume that we have a DNS name.
-					 * This logic matches confread.c.
-					 * ??? it would be kind to check
-					 * the syntax.
-					 */
-					msg.dnshostname = optarg;
-					opt_ttoaddress_dns(&host_family, &end->host_addr);
-					/*
-					 * we don't fail here.  pluto
-					 * will re-check the DNS later
-					 */
-				}
+				/*
+				 * This is pretty bespoke.
+				 *
+				 * If the numeric address is valid,
+				 * accept it.  Otherwise try to parse
+				 * it using DNS, and regardless throw
+				 * the name at pluto.
+				 */
+				msg_host_name(&host_family, &end->host_addr, &msg.dnshostname);
 			} else {
-				opt_to_address(&host_family, &end->host_addr);
+				end->host_addr = optarg_address_dns(&host_family);
 			}
 
 			if (end->host_type == KH_GROUP ||
@@ -1743,9 +1658,9 @@ int main(int argc, char **argv)
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			if (streq(optarg, "%direct")) {
-				end->host_nexthop = get_address_any(&host_family);
+				end->host_nexthop = optarg_any(&host_family);
 			} else {
-				opt_to_address(&host_family, &end->host_nexthop);
+				end->host_nexthop = optarg_address_dns(&host_family);
 			}
 			continue;
 
@@ -1758,7 +1673,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			opt_to_cidr(&child_family, &end->host_vtiip);
+			end->host_vtiip = optarg_cidr_num(&child_family);
 			continue;
 
 		/*

@@ -184,6 +184,8 @@ OBJS += bad_sparse_where.o
 
 OBJS += lswglob.o
 
+OBJS += optarg.o
+
 OBJS += global_logger.o
 OBJS += jambuf.o
 OBJS += jam_humber.o
