@@ -1492,9 +1492,9 @@ kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
 kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 # IPTFS tests
-kvmplutotest	ikev2-iptfs-01				good
-kvmplutotest	ikev2-iptfs-02-mismatch			good
-kvmplutotest	ikev2-iptfs-03-on-demand		good
+kvmplutotest	ikev2-iptfs-01					skiptest	github/1873
+kvmplutotest	ikev2-iptfs-02-mismatch				skiptest	github/1873
+kvmplutotest	ikev2-iptfs-03-on-demand			skiptest	github/1873
 
 kvmplutotest	bad-nexthop-01		wip
 
