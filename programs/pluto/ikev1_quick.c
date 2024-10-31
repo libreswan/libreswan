@@ -132,34 +132,35 @@ const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
  * Check and accept optional Quick Mode KE payload for PFS.
  * Extends ACCEPT_PFS to check whether KE is allowed or required.
  */
-static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
+
+static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest *md,
 				       chunk_t *dest, const char *val_name,
 				       const char *msg_name)
 {
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
 
 	if (ke_pd == NULL) {
-		if (st->st_pfs_group != NULL) {
-			log_state(RC_LOG, st,
-				  "missing KE payload in %s message", msg_name);
+		if (child->sa.st_pfs_group != NULL) {
+			llog(RC_LOG, child->sa.logger,
+			     "missing KE payload in %s message", msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
 	} else {
-		if (st->st_pfs_group == NULL) {
-			log_state(RC_LOG, st,
-				  "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
-				  msg_name);
+		if (child->sa.st_pfs_group == NULL) {
+			llog(RC_LOG, child->sa.logger,
+			     "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
+			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		if (ke_pd->next != NULL) {
-			log_state(RC_LOG, st,
-				  "%s message contains several KE payloads; we accept at most one",
-				  msg_name);
+			llog(RC_LOG, child->sa.logger,
+			     "%s message contains several KE payloads; we accept at most one",
+			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!unpack_KE(dest, val_name, st->st_pfs_group,
-			       ke_pd, st->logger)) {
+		if (!unpack_KE(dest, val_name, child->sa.st_pfs_group,
+			       ke_pd, child->sa.logger)) {
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
@@ -1275,7 +1276,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_ni, "Ni"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(&child->sa, md, &child->sa.st_gi,
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gi,
 					     "Gi", "Quick Mode I1"));
 
 	passert(child->sa.st_pfs_group != &unset_group);
@@ -1641,7 +1642,7 @@ stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(&child->sa, md, &child->sa.st_gr, "Gr",
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gr, "Gr",
 					     "Quick Mode R1"));
 
 	if (child->sa.st_pfs_group != NULL) {
