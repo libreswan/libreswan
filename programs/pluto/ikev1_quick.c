@@ -64,7 +64,6 @@
 #include "plutoalg.h"
 #include "crypt_symkey.h"
 #include "crypt_prf.h"
-#include "crypt_hash.h"
 #include "ikev1.h"
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
@@ -509,29 +508,6 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	}
 
 	return !bad_proposal;
-}
-
-/* Compute Phase 2 IV.
- * Uses Phase 1 IV from st_iv; puts result in st_new_iv.
- */
-void init_phase2_iv(struct state *st, const msgid_t *msgid)
-{
-	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
-	passert(h != NULL);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("last Phase 1 IV:", st->st_v1_ph1_iv);
-		DBG_dump_hunk("current Phase 1 IV:", st->st_v1_iv);
-	}
-
-	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h,
-						 st->logger);
-	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
-	passert(*msgid != 0);
-	passert(sizeof(msgid_t) == sizeof(uint32_t));
-	msgid_t raw_msgid = htonl(*msgid);
-	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
-	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
 }
 
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */

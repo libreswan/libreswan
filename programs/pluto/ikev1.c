@@ -126,6 +126,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "crypt_hash.h"
 
 #include "defs.h"
 #include "ike_spi.h"
@@ -2453,6 +2454,29 @@ bool verbose_v1_state_busy(const struct state *st)
 		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
 		  st->st_state->name);
 	return true;
+}
+
+/* Compute Phase 2 IV.
+ * Uses Phase 1 IV from st_iv; puts result in st_new_iv.
+ */
+void init_phase2_iv(struct state *st, const msgid_t *msgid)
+{
+	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
+	passert(h != NULL);
+
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("last Phase 1 IV:", st->st_v1_ph1_iv);
+		DBG_dump_hunk("current Phase 1 IV:", st->st_v1_iv);
+	}
+
+	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h,
+						 st->logger);
+	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
+	passert(*msgid != 0);
+	passert(sizeof(msgid_t) == sizeof(uint32_t));
+	msgid_t raw_msgid = htonl(*msgid);
+	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
+	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
 }
 
 /*
