@@ -100,6 +100,12 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 					    struct child_sa *child,
 					    struct dh_local_secret *local_secret,
 					    chunk_t *nonce);
+static stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
+						 struct child_sa *child,
+						 struct msg_digest *md);
+
+static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
@@ -835,12 +841,6 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
  * we have to call nonce/ke and DH if we are doing PFS.
  */
 
-/* forward definitions */
-static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
-
-static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
-static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
-
 stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 {
 	VERBOSE_DBGP(DBG_BASE, ike_sa->logger,
@@ -1275,36 +1275,45 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 	passert(child->sa.st_pfs_group != &unset_group);
 
-	passert(child->sa.st_connection != NULL);
-
 	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, md,
 			    child->sa.st_pfs_group/*possibly-null*/,
 			    quick_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 
-	passert(child->sa.st_connection != NULL);
 	return STF_SUSPEND;
 
 }
 
-static stf_status quick_inI1_outR1_continue1(struct state *st,
+static stf_status quick_inI1_outR1_continue1(struct state *child_sa,
 					     struct msg_digest *md,
 					     struct dh_local_secret *local_secret,
 					     chunk_t *nonce)
 {
-	dbg("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
-	    st->st_serialno);
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
 
-	passert(st->st_connection != NULL);
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, calculating DH",
+	     __func__, pri_so(child->sa.st_serialno));
 
 	/* we always calculate a nonce */
-	unpack_nonce(&st->st_nr, nonce);
+	unpack_nonce(&child->sa.st_nr, nonce);
 
-	if (st->st_pfs_group != NULL) {
+	if (child->sa.st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		unpack_KE_from_helper(st, local_secret, &st->st_gr);
-		submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
-					st->st_gi,
+		unpack_KE_from_helper(&child->sa, local_secret, &child->sa.st_gr);
+		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
+					child->sa.st_gi,
 					quick_inI1_outR1_continue2,
 					HERE);
 		/*
@@ -1313,25 +1322,38 @@ static stf_status quick_inI1_outR1_continue1(struct state *st,
 		 * did everything this wouldn't be needed.
 		 */
 		return STF_SUSPEND;
-	} else {
-		/*
-		 * but if PFS is off, we don't do a second DH, so just
-		 * call the continuation with NULL struct
-		 * pluto_crypto_req *
-		 */
-		return quick_inI1_outR1_continue12_tail(st, md);
 	}
+
+	/*
+	 * but if PFS is off, we don't do a second DH, so just call
+	 * the continuation with NULL struct pluto_crypto_req *
+	 */
+	return quick_inI1_outR1_continue_tail(ike, child, md);
 }
 
-static stf_status quick_inI1_outR1_continue2(struct state *st,
+static stf_status quick_inI1_outR1_continue2(struct state *child_sa,
 					     struct msg_digest *md)
 {
-	dbg("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
-	    st->st_serialno);
-
-	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	return quick_inI1_outR1_continue12_tail(st, md);
+
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger, "%s() for "PRI_SO": calculated DH, sending R1",
+	     __func__, pri_so(child->sa.st_serialno));
+
+	return quick_inI1_outR1_continue_tail(ike, child, md);
 }
 
 /*
@@ -1462,11 +1484,13 @@ static void terminate_conflicts(struct child_sa *child)
 	}
 }
 
-static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struct msg_digest *md)
+stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
+					  struct child_sa *child,
+					  struct msg_digest *md)
 {
+	passert(ike != NULL); /* use it */
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-	struct child_sa *child = pexpect_child_sa(child_sa);
 
 	/* Start the output packet.
 	 *
@@ -1491,8 +1515,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struc
 			  &child->sa, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	passert(child->sa.st_connection != NULL);
 
 	struct pbs_out r_sa_pbs;
 
