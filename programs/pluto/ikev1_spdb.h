@@ -131,7 +131,7 @@ struct ipsec_db_policy {
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
 extern bool ikev1_out_quick_sa(struct pbs_out *outs,
-			       struct state *st);
+			       struct child_sa *child);
 
 extern bool ikev1_out_main_sa(struct pbs_out *outs,
 			      struct ike_sa *ike);
@@ -155,7 +155,7 @@ extern v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,            /
 					     const struct isakmp_sa *sa,   /* header of input SA Payload */
 					     struct pbs_out *r_sa_pbs,          /* if non-NULL, where to emit winning SA */
 					     bool selection,               /* if this SA is a selection, only one transform can appear */
-					     struct state *st);            /* current state object */
+					     struct child_sa *child);
 
 extern void free_sa_attr(struct db_attr *attr);
 extern void free_sa(struct db_sa **sapp);

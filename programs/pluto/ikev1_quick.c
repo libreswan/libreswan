@@ -64,7 +64,6 @@
 #include "plutoalg.h"
 #include "crypt_symkey.h"
 #include "crypt_prf.h"
-#include "crypt_hash.h"
 #include "ikev1.h"
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
@@ -97,6 +96,24 @@ struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *remote_client,
 					     struct verbose verbose);
 
+static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
+					    struct child_sa *child,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce);
+static stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
+						 struct child_sa *child,
+						 struct msg_digest *md);
+
+stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike,
+					  struct child_sa *child,
+					  struct msg_digest *md);
+
+static dh_shared_secret_cb quick_inR1_outI2_continue;	/* forward decl and type assertion */
+static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
+static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
+
+static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
+
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
@@ -115,34 +132,35 @@ const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
  * Check and accept optional Quick Mode KE payload for PFS.
  * Extends ACCEPT_PFS to check whether KE is allowed or required.
  */
-static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
+
+static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest *md,
 				       chunk_t *dest, const char *val_name,
 				       const char *msg_name)
 {
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
 
 	if (ke_pd == NULL) {
-		if (st->st_pfs_group != NULL) {
-			log_state(RC_LOG, st,
-				  "missing KE payload in %s message", msg_name);
+		if (child->sa.st_pfs_group != NULL) {
+			llog(RC_LOG, child->sa.logger,
+			     "missing KE payload in %s message", msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
 	} else {
-		if (st->st_pfs_group == NULL) {
-			log_state(RC_LOG, st,
-				  "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
-				  msg_name);
+		if (child->sa.st_pfs_group == NULL) {
+			llog(RC_LOG, child->sa.logger,
+			     "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
+			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		if (ke_pd->next != NULL) {
-			log_state(RC_LOG, st,
-				  "%s message contains several KE payloads; we accept at most one",
-				  msg_name);
+			llog(RC_LOG, child->sa.logger,
+			     "%s message contains several KE payloads; we accept at most one",
+			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!unpack_KE(dest, val_name, st->st_pfs_group,
-			       ke_pd, st->logger)) {
+		if (!unpack_KE(dest, val_name, child->sa.st_pfs_group,
+			       ke_pd, child->sa.logger)) {
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
@@ -202,7 +220,7 @@ static bool emit_subnet_id(enum perspective perspective,
  * RFC 2409 "IKE" section 5.5
  * specifies how this is to be done.
  */
-static bool compute_proto_keymat(struct state *st,
+static bool compute_proto_keymat(struct child_sa *child,
 				 uint8_t protoid,
 				 struct ipsec_proto_info *pi,
 				 const char *satypename)
@@ -232,7 +250,7 @@ static bool compute_proto_keymat(struct state *st,
 		const struct encrypt_desc *encrypt = pi->trans_attrs.ta_encrypt;
 		size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 		needed_len = encrypt_key_size + encrypt_salt_size;
-		ldbg(st->logger, "compute_proto_keymat: encrypt_key_size %zd encrypt_salt_size %zd needed_len=%zd",
+		ldbg(child->sa.logger, "compute_proto_keymat: encrypt_key_size %zd encrypt_salt_size %zd needed_len=%zd",
 		     encrypt_key_size, encrypt_salt_size, encrypt_salt_size);
 		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
 		dbg("compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
@@ -248,26 +266,26 @@ static bool compute_proto_keymat(struct state *st,
 	}
 
 	free_chunk_content(&pi->inbound.keymat);
-	pi->inbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
-						    st->st_skeyid_d_nss,
-						    st->st_dh_shared_secret,
+	pi->inbound.keymat = ikev1_section_5_keymat(child->sa.st_oakley.ta_prf,
+						    child->sa.st_skeyid_d_nss,
+						    child->sa.st_dh_shared_secret,
 						    protoid,
 						    THING_AS_SHUNK(pi->inbound.spi),
-						    st->st_ni, st->st_nr,
+						    child->sa.st_ni, child->sa.st_nr,
 						    needed_len,
-						    st->logger);
-	PASSERT(st->logger, pi->inbound.keymat.len == needed_len);
+						    child->sa.logger);
+	PASSERT(child->sa.logger, pi->inbound.keymat.len == needed_len);
 
 	free_chunk_content(&pi->outbound.keymat);
-	pi->outbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
-						     st->st_skeyid_d_nss,
-						     st->st_dh_shared_secret,
+	pi->outbound.keymat = ikev1_section_5_keymat(child->sa.st_oakley.ta_prf,
+						     child->sa.st_skeyid_d_nss,
+						     child->sa.st_dh_shared_secret,
 						     protoid,
 						     THING_AS_SHUNK(pi->outbound.spi),
-						     st->st_ni, st->st_nr,
+						     child->sa.st_ni, child->sa.st_nr,
 						     needed_len,
-						     st->logger);
-	PASSERT(st->logger, pi->outbound.keymat.len == needed_len);
+						     child->sa.logger);
+	PASSERT(child->sa.logger, pi->outbound.keymat.len == needed_len);
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s KEYMAT", satypename);
@@ -278,12 +296,12 @@ static bool compute_proto_keymat(struct state *st,
 	return true;
 }
 
-static bool compute_keymats(struct state *st)
+static bool compute_keymats(struct child_sa *child)
 {
-	if (st->st_ah.protocol == &ip_protocol_ah)
-		return compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah, "AH");
-	if (st->st_esp.protocol == &ip_protocol_esp)
-		return compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
+	if (child->sa.st_ah.protocol == &ip_protocol_ah)
+		return compute_proto_keymat(child, PROTO_IPSEC_AH, &child->sa.st_ah, "AH");
+	if (child->sa.st_esp.protocol == &ip_protocol_esp)
+		return compute_proto_keymat(child, PROTO_IPSEC_ESP, &child->sa.st_esp, "ESP");
 	return false;
 }
 
@@ -511,31 +529,6 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	return !bad_proposal;
 }
 
-/* Compute Phase 2 IV.
- * Uses Phase 1 IV from st_iv; puts result in st_new_iv.
- */
-void init_phase2_iv(struct state *st, const msgid_t *msgid)
-{
-	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
-	passert(h != NULL);
-
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("last Phase 1 IV:", st->st_v1_ph1_iv);
-		DBG_dump_hunk("current Phase 1 IV:", st->st_v1_iv);
-	}
-
-	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h,
-						 st->logger);
-	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
-	passert(*msgid != 0);
-	passert(sizeof(msgid_t) == sizeof(uint32_t));
-	msgid_t raw_msgid = htonl(*msgid);
-	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
-	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
-}
-
-static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
-
 struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     struct connection *c,
 			     const struct child_policy *policy,
@@ -574,8 +567,8 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);
 		}
-		jam(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
-			isakmp->sa.st_serialno, child->sa.st_v1_msgid.id);
+		jam(buf, " {using isakmp"PRI_SO" msgid:%08" PRIx32 " proposal=",
+		    pri_so(isakmp->sa.st_serialno), child->sa.st_v1_msgid.id);
 		if (child->sa.st_connection->config->child_sa.proposals.p != NULL) {
 			jam_proposals(buf, child->sa.st_connection->config->child_sa.proposals.p);
 		} else {
@@ -593,25 +586,38 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 	/* save for post crypto logging */
 	child->sa.st_v1_ipsec_pred = replacing;
 
-	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
+	submit_ke_and_nonce(/*callback*/&child->sa,
+			    /*task*/&child->sa,
+			    /*no-md*/NULL,
 			    child->sa.st_pfs_group/*could-be-null*/,
 			    quick_outI1_continue,
 			    /*detach_whack*/false, HERE);
 	return child;
 }
 
-static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
-
-static stf_status quick_outI1_continue(struct state *st,
+static stf_status quick_outI1_continue(struct state *child_sa,
 				       struct msg_digest *unused_md,
 				       struct dh_local_secret *local_secret,
 				       chunk_t *nonce)
 {
-	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-	    st->st_serialno);
-
 	pexpect(unused_md == NULL); /* no packet */
-	passert(st != NULL);
+
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, sending I1",
+	     __func__, pri_so(child->sa.st_serialno));
 
 	/*
 	 * XXX: Read and weep:
@@ -626,11 +632,11 @@ static stf_status quick_outI1_continue(struct state *st,
 	 *   hole - as it assumes md (perhaps this is why the function
 	 *   wasn't called)
 	 */
-	stf_status e = quick_outI1_continue_tail(st, unused_md, local_secret, nonce);
+	stf_status e = quick_outI1_continue_tail(ike, child, local_secret, nonce);
 	if (e == STF_INTERNAL_ERROR) {
-		log_state(RC_LOG, st,
-			  "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
-			  __func__);
+		llog(RC_LOG, child->sa.logger,
+		     "%s(): %s_tail() failed with STF_INTERNAL_ERROR",
+		     __func__, __func__);
 	}
 	/*
 	 * This way all the broken behaviour is ignored.
@@ -638,19 +644,16 @@ static stf_status quick_outI1_continue(struct state *st,
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static stf_status quick_outI1_continue_tail(struct state *st,
-					    struct msg_digest *unused_md,
+static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
+					    struct child_sa *child,
 					    struct dh_local_secret *local_secret,
 					    chunk_t *nonce)
 {
-	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-	    st->st_serialno);
+	ldbg(child->sa.logger,
+	     "%s() for "PRI_SO": calculated ke+nonce, sending I1",
+	     __func__, pri_so(child->sa.st_serialno));
 
-	pexpect(unused_md == NULL); /* no packet */
-	passert(st != NULL);
-
-	struct state *isakmp_sa = state_by_serialno(st->st_clonedfrom);
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 	struct pbs_out rbody;
 	bool has_client = (c->local->child.has_client ||
 			   c->remote->child.has_client ||
@@ -659,28 +662,20 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			   c->spd->local->client.hport != 0 ||
 			   c->spd->remote->client.hport != 0);
 
-	if (isakmp_sa == NULL) {
-		/* phase1 state got deleted while cryptohelper was working */
-		log_state(RC_LOG, st,
-			  "phase2 initiation failed because parent ISAKMP #%lu is gone",
-			  st->st_clonedfrom);
-		return STF_FATAL;
-	}
-
-	if (nat_traversal_detected(isakmp_sa)) {
+	if (nat_traversal_detected(&ike->sa)) {
 		/* Duplicate nat_traversal status in new state */
-		st->hidden_variables.st_nat_traversal =
-			isakmp_sa->hidden_variables.st_nat_traversal;
-		if (isakmp_sa->hidden_variables.st_nated_host) {
+		child->sa.hidden_variables.st_nat_traversal =
+			ike->sa.hidden_variables.st_nat_traversal;
+		if (ike->sa.hidden_variables.st_nated_host) {
 			has_client = true;
 		}
-		v1_maybe_natify_initiator_endpoints(st, HERE);
+		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
-		st->hidden_variables.st_nat_traversal = LEMPTY;
+		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
 	}
 
 	/* set up reply */
-	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), st->logger);
+	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), child->sa.logger);
 
 	/* HDR* out */
 	{
@@ -688,11 +683,11 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 					  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_QUICK,
-			.isa_msgid = st->st_v1_msgid.id,
+			.isa_msgid = child->sa.st_v1_msgid.id,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		};
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = child->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = child->sa.st_ike_spis.responder;
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
 			return STF_INTERNAL_ERROR;
@@ -703,7 +698,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_1, "outI1",
 			  IMPAIR_v1_QUICK_EXCHANGE,
-			  st, &hash_fixup, &rbody)) {
+			  &child->sa, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -715,32 +710,32 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	 */
 	{
 		struct ipsec_db_policy pm = {
-			.encrypt = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
-			.compress = st->st_policy.compress,
+			.encrypt = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+			.compress = child->sa.st_policy.compress,
 		};
 
-		ldbg(st->logger,
+		ldbg(child->sa.logger,
 		     "emitting quick defaults using policy:%s%s%s",
 		     (pm.encrypt ? " encrypt" : ""),
 		     (pm.authenticate ? " authenticate" : ""),
 		     (pm.compress ? " compress" : ""));
 
-		if (!ikev1_out_quick_sa(&rbody, st)) {
+		if (!ikev1_out_quick_sa(&rbody, child)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	{
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni")) {
+		if (!ikev1_ship_nonce(&child->sa.st_ni, nonce, &rbody, "Ni")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody)) {
+	if (child->sa.st_pfs_group != NULL) {
+		if (!ikev1_ship_KE(&child->sa, local_secret, &child->sa.st_gi, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -750,7 +745,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* IDci (we are initiator) followed by ... */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 1) {
-			llog(RC_LOG, st->logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
+			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
 		} else {
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->spd->local->client),
@@ -762,7 +757,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* ... IDcr (peer is responder) */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 2) {
-			llog(RC_LOG, st->logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
+			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
 		} else {
 			if (!emit_subnet_id(REMOTE_PERSPECTIVE,
 					    selector_subnet(c->spd->remote->client),
@@ -774,7 +769,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* bonus? */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value > 2) {
-			llog(RC_LOG, st->logger, "IMPAIR: adding bonus Quick Mode client ID");
+			llog(RC_LOG, child->sa.logger, "IMPAIR: adding bonus Quick Mode client ID");
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->spd->local->client),
 					    c->spd->local->client.ipproto,
@@ -785,40 +780,41 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	}
 
 	if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	    st->hidden_variables.st_nated_host) {
+	    (child->sa.hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
+	    child->sa.hidden_variables.st_nated_host) {
 		/** Send NAT-OA if our address is NATed */
-		if (!v1_nat_traversal_add_initiator_natoa(&rbody, st)) {
+		if (!v1_nat_traversal_add_initiator_natoa(&rbody, &child->sa)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* finish computing HASH(1), inserting it in output */
-	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
+	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
 	/* encrypt message, except for fixed part of header */
 
-	init_phase2_iv(isakmp_sa, &st->st_v1_msgid.id);
-	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
+	init_phase2_iv(&ike->sa, &child->sa.st_v1_msgid.id);
+	restore_new_iv(&child->sa, ike->sa.st_v1_new_iv);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	record_and_send_v1_ike_msg(st, &reply_stream,
+	record_and_send_v1_ike_msg(&child->sa, &reply_stream,
 		"reply packet from quick_outI1");
 
-	delete_v1_event(st);
-	clear_retransmits(st);
-	start_retransmits(st);
+	delete_v1_event(&child->sa);
+	clear_retransmits(&child->sa);
+	start_retransmits(&child->sa);
 
-	if (st->st_v1_ipsec_pred == SOS_NOBODY) {
-		log_state(RC_LOG, st, "%s", st->st_state->story);
+	if (child->sa.st_v1_ipsec_pred == SOS_NOBODY) {
+		llog(RC_LOG, child->sa.logger,
+		     "%s", child->sa.st_state->story);
 	} else {
-		log_state(RC_LOG, st, "%s, to replace #%lu",
-			  st->st_state->story,
-			  st->st_v1_ipsec_pred);
-		st->st_v1_ipsec_pred = SOS_NOBODY;
+		llog(RC_LOG, child->sa.logger, "%s, to replace #%lu",
+		     child->sa.st_state->story,
+		     child->sa.st_v1_ipsec_pred);
+		child->sa.st_v1_ipsec_pred = SOS_NOBODY;
 	}
 
 	return STF_OK;
@@ -850,12 +846,6 @@ static stf_status quick_outI1_continue_tail(struct state *st,
  *
  * we have to call nonce/ke and DH if we are doing PFS.
  */
-
-/* forward definitions */
-static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md);
-
-static ke_and_nonce_cb quick_inI1_outR1_continue1;	/* forward decl and type assertion */
-static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
 stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 {
@@ -1279,48 +1269,57 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 							   sa,
 							   NULL,
 							   false,
-							   &child->sa));
+							   child));
 	}
 
 	/* Ni in */
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_ni, "Ni"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(&child->sa, md, &child->sa.st_gi,
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gi,
 					     "Gi", "Quick Mode I1"));
 
 	passert(child->sa.st_pfs_group != &unset_group);
-
-	passert(child->sa.st_connection != NULL);
 
 	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, md,
 			    child->sa.st_pfs_group/*possibly-null*/,
 			    quick_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 
-	passert(child->sa.st_connection != NULL);
 	return STF_SUSPEND;
 
 }
 
-static stf_status quick_inI1_outR1_continue1(struct state *st,
+static stf_status quick_inI1_outR1_continue1(struct state *child_sa,
 					     struct msg_digest *md,
 					     struct dh_local_secret *local_secret,
 					     chunk_t *nonce)
 {
-	dbg("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
-	    st->st_serialno);
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
 
-	passert(st->st_connection != NULL);
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, calculating DH",
+	     __func__, pri_so(child->sa.st_serialno));
 
 	/* we always calculate a nonce */
-	unpack_nonce(&st->st_nr, nonce);
+	unpack_nonce(&child->sa.st_nr, nonce);
 
-	if (st->st_pfs_group != NULL) {
+	if (child->sa.st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		unpack_KE_from_helper(st, local_secret, &st->st_gr);
-		submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
-					st->st_gi,
+		unpack_KE_from_helper(&child->sa, local_secret, &child->sa.st_gr);
+		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
+					child->sa.st_gi,
 					quick_inI1_outR1_continue2,
 					HERE);
 		/*
@@ -1329,25 +1328,38 @@ static stf_status quick_inI1_outR1_continue1(struct state *st,
 		 * did everything this wouldn't be needed.
 		 */
 		return STF_SUSPEND;
-	} else {
-		/*
-		 * but if PFS is off, we don't do a second DH, so just
-		 * call the continuation with NULL struct
-		 * pluto_crypto_req *
-		 */
-		return quick_inI1_outR1_continue12_tail(st, md);
 	}
+
+	/*
+	 * but if PFS is off, we don't do a second DH, so just call
+	 * the continuation with NULL struct pluto_crypto_req *
+	 */
+	return quick_inI1_outR1_continue_tail(ike, child, md);
 }
 
-static stf_status quick_inI1_outR1_continue2(struct state *st,
+static stf_status quick_inI1_outR1_continue2(struct state *child_sa,
 					     struct msg_digest *md)
 {
-	dbg("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
-	    st->st_serialno);
-
-	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	return quick_inI1_outR1_continue12_tail(st, md);
+
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger, "%s() for "PRI_SO": calculated DH, sending R1",
+	     __func__, pri_so(child->sa.st_serialno));
+
+	return quick_inI1_outR1_continue_tail(ike, child, md);
 }
 
 /*
@@ -1478,11 +1490,13 @@ static void terminate_conflicts(struct child_sa *child)
 	}
 }
 
-static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struct msg_digest *md)
+stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
+					  struct child_sa *child,
+					  struct msg_digest *md)
 {
+	passert(ike != NULL); /* use it */
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-	struct child_sa *child = pexpect_child_sa(child_sa);
 
 	/* Start the output packet.
 	 *
@@ -1508,8 +1522,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struc
 		return STF_INTERNAL_ERROR;
 	}
 
-	passert(child->sa.st_connection != NULL);
-
 	struct pbs_out r_sa_pbs;
 
 	{
@@ -1524,7 +1536,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struc
 	RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sapd->pbs,
 					       &sapd->payload.sa,
 					       &r_sa_pbs,
-					       false, &child->sa));
+					       false, child));
 
 	passert(child->sa.st_pfs_group != &unset_group);
 
@@ -1572,7 +1584,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struc
 	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
 	/* Derive new keying material */
-	if (!compute_keymats(&child->sa)) {
+	if (!compute_keymats(child)) {
 		return STF_FATAL;
 	}
 
@@ -1603,64 +1615,86 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struc
  * (see RFC 2409 "IKE" 5.5)
  * Installs inbound and outbound IPsec SAs, routing, etc.
  */
-static stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md);
 
-static dh_shared_secret_cb quick_inR1_outI2_continue;	/* forward decl and type assertion */
-
-stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
+stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 {
-	/* SA in */
-	{
-		struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-
-		RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sa_pd->pbs,
-						       &sa_pd->payload.sa,
-						       NULL, true, st));
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
 	}
 
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	/* SA in */
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
+	RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sa_pd->pbs,
+						   &sa_pd->payload.sa,
+						   NULL, true, child));
+
 	/* Nr in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(st, md, &st->st_gr, "Gr",
-					 "Quick Mode R1"));
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gr, "Gr",
+					     "Quick Mode R1"));
 
-	if (st->st_pfs_group != NULL) {
+	if (child->sa.st_pfs_group != NULL) {
 		/* set up DH calculation */
-		submit_dh_shared_secret(/*callback*/st, /*task*/st, md,
-					st->st_gr,
+		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
+					child->sa.st_gr,
 					quick_inR1_outI2_continue,
 					HERE);
 		return STF_SUSPEND;
-	} else {
-		/* just call the tail function */
-		return quick_inR1_outI2_tail(st, md);
 	}
+
+	/* just call the tail function */
+	return quick_inR1_outI2_continue_tail(ike, child, md);
 }
 
-static stf_status quick_inR1_outI2_continue(struct state *st,
+static stf_status quick_inR1_outI2_continue(struct state *child_sa,
 					    struct msg_digest *md)
 {
-	dbg("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
-	    st->st_serialno);
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
 
-	passert(st->st_connection != NULL);
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "phase2 initiation failed because parent ISAKMP #%lu is gone",
+		     child->sa.st_clonedfrom);
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger,
+	     "quick_inR1_outI2_continue for "PRI_SO": calculated ke+nonce, calculating DH",
+	     pri_so(child->sa.st_serialno));
+
 	passert(md != NULL);
-	return quick_inR1_outI2_tail(st, md);
+	return quick_inR1_outI2_continue_tail(ike, child, md);
 }
 
-stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
+stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *child, struct msg_digest *md)
 {
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->logger);
+				       &rbody, child->sa.logger);
 
-	if (nat_traversal_detected(st) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
-		nat_traversal_natoa_lookup(md, &st->hidden_variables, st->logger);
+	if (nat_traversal_detected(&child->sa) &&
+	    (child->sa.hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
+		nat_traversal_natoa_lookup(md, &child->sa.hidden_variables, child->sa.logger);
 
 	/* [ IDci, IDcr ] in; these must match what we sent */
 
@@ -1675,8 +1709,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
 					  c->spd->local->client.ipproto,
 					  c->spd->local->client.hport,
-					  selector_subnet(st->st_connection->spd->local->client),
-					  "our client", st->logger))
+					  selector_subnet(child->sa.st_connection->spd->local->client),
+					  "our client", child->sa.logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/* we checked elsewhere that we got two of them */
@@ -1688,27 +1722,27 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
 					  c->spd->remote->client.ipproto,
 					  c->spd->remote->client.hport,
-					  selector_subnet(st->st_connection->spd->remote->client),
-					  "peer client", st->logger))
+					  selector_subnet(child->sa.st_connection->spd->remote->client),
+					  "peer client", child->sa.logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/*
 			 * if there is a NATOA payload, then use it as
-			 *    &st->st_connection->spd->remote->client, if the type
+			 *    &child->sa.st_connection->spd->remote->client, if the type
 			 * of the ID was FQDN
 			 */
-			if (nat_traversal_detected(st) &&
-			    (st->hidden_variables.st_nat_traversal &
+			if (nat_traversal_detected(&child->sa) &&
+			    (child->sa.hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 				shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
-				update_first_selector(st->st_connection, remote,
-						      selector_from_address(st->hidden_variables.st_nat_oa));
-				LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+				update_first_selector(child->sa.st_connection, remote,
+						      selector_from_address(child->sa.hidden_variables.st_nat_oa));
+				LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_subnet(buf, &st->st_connection->spd->remote->client);
+					jam_selector_subnet(buf, &child->sa.st_connection->spd->remote->client);
 					jam(buf, " as IDcr");
 				}
 			}
@@ -1719,8 +1753,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 */
 			if (!selector_eq_address(c->spd->local->client, c->local->host.addr) ||
 			    !selector_eq_address(c->spd->remote->client, c->remote->host.addr)) {
-				log_state(RC_LOG, st,
-					  "IDci, IDcr payloads missing in message but default does not match proposal");
+				llog(RC_LOG, child->sa.logger,
+				     "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 			}
 		}
@@ -1735,38 +1769,31 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	struct v1_hash_fixup hash_fixup;
 
 	if (!emit_v1_HASH(V1_HASH_3, "quick_inR1_outI2",
-			  IMPAIR_v1_QUICK_EXCHANGE, st, &hash_fixup, &rbody)) {
+			  IMPAIR_v1_QUICK_EXCHANGE, &child->sa, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, NULL);
+	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, NULL);
 
 	/* Derive new keying material */
-	compute_keymats(st);
+	compute_keymats(child);
 
 	/* Tell the kernel to establish the inbound, outbound, and routing part
 	 * of the new SA (unless the commit bit is set -- which we don't support).
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
-	/*
-	 * IKE must still exist as how else could the quick message
-	 * have been decrypted?
-	 */
-	struct child_sa *child = pexpect_child_sa(st);
-	struct ike_sa *ike = ike_sa(st, HERE);
-	PEXPECT(child->sa.logger, ike != NULL);
 
 	if (!connection_establish_child(ike, child, HERE))
 		return STF_FAIL_v1N;
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	if (dpd_init(st) != STF_OK) {
+	if (dpd_init(&child->sa) != STF_OK) {
 		return STF_FAIL_v1N;
 	}
 
@@ -1778,32 +1805,39 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
  * (see RFC 2409 "IKE" 5.5)
  * Installs outbound IPsec SAs, routing, etc.
  */
-stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
+stf_status quick_inI2(struct state *child_sa, struct msg_digest *md UNUSED)
 {
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
 	/* Tell the kernel to establish the outbound and routing part of the new SA
 	 * (the previous state established inbound)
 	 * (unless the commit bit is set -- which we don't support).
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
-	/*
-	 * IKE must still exist as how else could the quick message
-	 * have been decrypted?
-	 */
-	struct child_sa *child = pexpect_child_sa(st);
-	struct ike_sa *ike = ike_sa(st, HERE);
-	PEXPECT(child->sa.logger, ike != NULL);
 
 	if (!connection_establish_outbound(ike, child, HERE))
 		return STF_FAIL_v1N;
 
-	update_iv(st);  /* not actually used, but tidy */
+	update_iv(&child->sa);  /* not actually used, but tidy */
 
 	/*
 	 * If we have dpd delay and dpdtimeout set, then we are doing DPD
 	 * on this conn, so initialize it
 	 */
-	if (dpd_init(st) != STF_OK) {
+	if (dpd_init(&child->sa) != STF_OK) {
 		return STF_FAIL_v1N;
 	}
 

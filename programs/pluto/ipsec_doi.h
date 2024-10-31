@@ -27,8 +27,6 @@ struct payload_digest;
 struct state;
 struct jambuf;
 
-extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
-
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
 					   size_t len);
