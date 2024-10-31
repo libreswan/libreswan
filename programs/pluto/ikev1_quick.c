@@ -96,6 +96,13 @@ struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *remote_client,
 					     struct verbose verbose);
 
+static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
+					    struct child_sa *child,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce);
+
+static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
+
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
@@ -510,8 +517,6 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	return !bad_proposal;
 }
 
-static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
-
 struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			     struct connection *c,
 			     const struct child_policy *policy,
@@ -550,8 +555,8 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);
 		}
-		jam(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
-			isakmp->sa.st_serialno, child->sa.st_v1_msgid.id);
+		jam(buf, " {using isakmp"PRI_SO" msgid:%08" PRIx32 " proposal=",
+		    pri_so(isakmp->sa.st_serialno), child->sa.st_v1_msgid.id);
 		if (child->sa.st_connection->config->child_sa.proposals.p != NULL) {
 			jam_proposals(buf, child->sa.st_connection->config->child_sa.proposals.p);
 		} else {
@@ -569,25 +574,38 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 	/* save for post crypto logging */
 	child->sa.st_v1_ipsec_pred = replacing;
 
-	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, /*no-md*/NULL,
+	submit_ke_and_nonce(/*callback*/&child->sa,
+			    /*task*/&child->sa,
+			    /*no-md*/NULL,
 			    child->sa.st_pfs_group/*could-be-null*/,
 			    quick_outI1_continue,
 			    /*detach_whack*/false, HERE);
 	return child;
 }
 
-static ke_and_nonce_cb quick_outI1_continue_tail;	/* type assertion */
-
-static stf_status quick_outI1_continue(struct state *st,
+static stf_status quick_outI1_continue(struct state *child_sa,
 				       struct msg_digest *unused_md,
 				       struct dh_local_secret *local_secret,
 				       chunk_t *nonce)
 {
-	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-	    st->st_serialno);
-
 	pexpect(unused_md == NULL); /* no packet */
-	passert(st != NULL);
+
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
+	ldbg(child->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, sending I1",
+	     __func__, pri_so(child->sa.st_serialno));
 
 	/*
 	 * XXX: Read and weep:
@@ -602,11 +620,11 @@ static stf_status quick_outI1_continue(struct state *st,
 	 *   hole - as it assumes md (perhaps this is why the function
 	 *   wasn't called)
 	 */
-	stf_status e = quick_outI1_continue_tail(st, unused_md, local_secret, nonce);
+	stf_status e = quick_outI1_continue_tail(ike, child, local_secret, nonce);
 	if (e == STF_INTERNAL_ERROR) {
-		log_state(RC_LOG, st,
-			  "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
-			  __func__);
+		llog(RC_LOG, child->sa.logger,
+		     "%s(): %s_tail() failed with STF_INTERNAL_ERROR",
+		     __func__, __func__);
 	}
 	/*
 	 * This way all the broken behaviour is ignored.
@@ -614,19 +632,16 @@ static stf_status quick_outI1_continue(struct state *st,
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static stf_status quick_outI1_continue_tail(struct state *st,
-					    struct msg_digest *unused_md,
+static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
+					    struct child_sa *child,
 					    struct dh_local_secret *local_secret,
 					    chunk_t *nonce)
 {
-	dbg("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-	    st->st_serialno);
+	ldbg(child->sa.logger,
+	     "%s() for "PRI_SO": calculated ke+nonce, sending I1",
+	     __func__, pri_so(child->sa.st_serialno));
 
-	pexpect(unused_md == NULL); /* no packet */
-	passert(st != NULL);
-
-	struct state *isakmp_sa = state_by_serialno(st->st_clonedfrom);
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 	struct pbs_out rbody;
 	bool has_client = (c->local->child.has_client ||
 			   c->remote->child.has_client ||
@@ -635,28 +650,20 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			   c->spd->local->client.hport != 0 ||
 			   c->spd->remote->client.hport != 0);
 
-	if (isakmp_sa == NULL) {
-		/* phase1 state got deleted while cryptohelper was working */
-		log_state(RC_LOG, st,
-			  "phase2 initiation failed because parent ISAKMP #%lu is gone",
-			  st->st_clonedfrom);
-		return STF_FATAL;
-	}
-
-	if (nat_traversal_detected(isakmp_sa)) {
+	if (nat_traversal_detected(&ike->sa)) {
 		/* Duplicate nat_traversal status in new state */
-		st->hidden_variables.st_nat_traversal =
-			isakmp_sa->hidden_variables.st_nat_traversal;
-		if (isakmp_sa->hidden_variables.st_nated_host) {
+		child->sa.hidden_variables.st_nat_traversal =
+			ike->sa.hidden_variables.st_nat_traversal;
+		if (ike->sa.hidden_variables.st_nated_host) {
 			has_client = true;
 		}
-		v1_maybe_natify_initiator_endpoints(st, HERE);
+		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
-		st->hidden_variables.st_nat_traversal = LEMPTY;
+		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
 	}
 
 	/* set up reply */
-	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), st->logger);
+	reply_stream = open_pbs_out("reply packet",reply_buffer, sizeof(reply_buffer), child->sa.logger);
 
 	/* HDR* out */
 	{
@@ -664,11 +671,11 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
 					  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_QUICK,
-			.isa_msgid = st->st_v1_msgid.id,
+			.isa_msgid = child->sa.st_v1_msgid.id,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		};
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = child->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = child->sa.st_ike_spis.responder;
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
 			return STF_INTERNAL_ERROR;
@@ -679,7 +686,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_1, "outI1",
 			  IMPAIR_v1_QUICK_EXCHANGE,
-			  st, &hash_fixup, &rbody)) {
+			  &child->sa, &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -691,32 +698,32 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	 */
 	{
 		struct ipsec_db_policy pm = {
-			.encrypt = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (st->st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
-			.compress = st->st_policy.compress,
+			.encrypt = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+			.compress = child->sa.st_policy.compress,
 		};
 
-		ldbg(st->logger,
+		ldbg(child->sa.logger,
 		     "emitting quick defaults using policy:%s%s%s",
 		     (pm.encrypt ? " encrypt" : ""),
 		     (pm.authenticate ? " authenticate" : ""),
 		     (pm.compress ? " compress" : ""));
 
-		if (!ikev1_out_quick_sa(&rbody, st)) {
+		if (!ikev1_out_quick_sa(&rbody, &child->sa)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	{
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, nonce, &rbody, "Ni")) {
+		if (!ikev1_ship_nonce(&child->sa.st_ni, nonce, &rbody, "Ni")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (st->st_pfs_group != NULL) {
-		if (!ikev1_ship_KE(st, local_secret, &st->st_gi, &rbody)) {
+	if (child->sa.st_pfs_group != NULL) {
+		if (!ikev1_ship_KE(&child->sa, local_secret, &child->sa.st_gi, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -726,7 +733,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* IDci (we are initiator) followed by ... */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 1) {
-			llog(RC_LOG, st->logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
+			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
 		} else {
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->spd->local->client),
@@ -738,7 +745,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* ... IDcr (peer is responder) */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 2) {
-			llog(RC_LOG, st->logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
+			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
 		} else {
 			if (!emit_subnet_id(REMOTE_PERSPECTIVE,
 					    selector_subnet(c->spd->remote->client),
@@ -750,7 +757,7 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 		/* bonus? */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value > 2) {
-			llog(RC_LOG, st->logger, "IMPAIR: adding bonus Quick Mode client ID");
+			llog(RC_LOG, child->sa.logger, "IMPAIR: adding bonus Quick Mode client ID");
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->spd->local->client),
 					    c->spd->local->client.ipproto,
@@ -761,40 +768,41 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	}
 
 	if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	    st->hidden_variables.st_nated_host) {
+	    (child->sa.hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
+	    child->sa.hidden_variables.st_nated_host) {
 		/** Send NAT-OA if our address is NATed */
-		if (!v1_nat_traversal_add_initiator_natoa(&rbody, st)) {
+		if (!v1_nat_traversal_add_initiator_natoa(&rbody, &child->sa)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* finish computing HASH(1), inserting it in output */
-	fixup_v1_HASH(st, &hash_fixup, st->st_v1_msgid.id, rbody.cur);
+	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
 	/* encrypt message, except for fixed part of header */
 
-	init_phase2_iv(isakmp_sa, &st->st_v1_msgid.id);
-	restore_new_iv(st, isakmp_sa->st_v1_new_iv);
+	init_phase2_iv(&ike->sa, &child->sa.st_v1_msgid.id);
+	restore_new_iv(&child->sa, ike->sa.st_v1_new_iv);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	record_and_send_v1_ike_msg(st, &reply_stream,
+	record_and_send_v1_ike_msg(&child->sa, &reply_stream,
 		"reply packet from quick_outI1");
 
-	delete_v1_event(st);
-	clear_retransmits(st);
-	start_retransmits(st);
+	delete_v1_event(&child->sa);
+	clear_retransmits(&child->sa);
+	start_retransmits(&child->sa);
 
-	if (st->st_v1_ipsec_pred == SOS_NOBODY) {
-		log_state(RC_LOG, st, "%s", st->st_state->story);
+	if (child->sa.st_v1_ipsec_pred == SOS_NOBODY) {
+		llog(RC_LOG, child->sa.logger,
+		     "%s", child->sa.st_state->story);
 	} else {
-		log_state(RC_LOG, st, "%s, to replace #%lu",
-			  st->st_state->story,
-			  st->st_v1_ipsec_pred);
-		st->st_v1_ipsec_pred = SOS_NOBODY;
+		llog(RC_LOG, child->sa.logger, "%s, to replace #%lu",
+		     child->sa.st_state->story,
+		     child->sa.st_v1_ipsec_pred);
+		child->sa.st_v1_ipsec_pred = SOS_NOBODY;
 	}
 
 	return STF_OK;
@@ -1743,7 +1751,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st)) {
+	if (!ikev1_close_and_encrypt_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
