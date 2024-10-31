@@ -1213,25 +1213,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.hidden_variables = ike->sa.hidden_variables;
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 
-	/*
-	 * Propogate IKEv1's IKE (ISAKMP) bits to the child so that
-	 * they are still available after the ISAKMP has been deleted.
-	 */
-	child->sa.st_v1_seen_fragmentation_supported = ike->sa.st_v1_seen_fragmentation_supported;
-	child->sa.st_v1_seen_fragments = ike->sa.st_v1_seen_fragments;
-
-	/*
-	 * Propogate IKEv2 IKE SA bits to the larval IKE SA replacement.
-	 *
-	 * XXX: Handle this in emancipate?
-	 * XXX: are these all really IKE SA bits?
-	 */
-	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
-	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
-	child->sa.st_v2_ike_ppk_enabled = ike->sa.st_v2_ike_ppk_enabled;
-	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
-	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
-
 	/* these were set while we didn't have client state yet */
 	/* we should really split the NOTIFY loop in two cleaner ones */
 	child->sa.st_ipcomp.trans_attrs = ike->sa.st_ipcomp.trans_attrs;
@@ -1278,10 +1259,21 @@ static struct child_sa *duplicate_state(struct connection *c,
 }
 
 struct child_sa *new_v1_child_sa(struct connection *c,
-				 struct ike_sa *isakmp,
+				 struct ike_sa *ike,
 				 enum sa_role sa_role)
 {
-	return duplicate_state(c, isakmp, CHILD_SA, sa_role);
+	struct child_sa *child = duplicate_state(c, ike, CHILD_SA, sa_role);
+
+	/*
+	 * Propogate IKEv1's IKE (ISAKMP) bits to the child so that
+	 * they are still available after the ISAKMP has been deleted.
+	 */
+	child->sa.st_v1_seen_fragmentation_supported =
+		ike->sa.st_v1_seen_fragmentation_supported;
+	child->sa.st_v1_seen_fragments =
+		ike->sa.st_v1_seen_fragments;
+
+	return child;
 }
 
 struct child_sa *new_v2_child_sa(struct connection *c,
@@ -1296,6 +1288,19 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	const struct v2_transition *transition = fs->v2.child_transition;
 	PASSERT(c->logger, transition != NULL);
 	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
+
+	/*
+	 * Propogate IKEv2 IKE SA bits to the larval IKE SA replacement.
+	 *
+	 * XXX: Handle this in emancipate?
+	 * XXX: are these all really IKE SA bits?
+	 */
+	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
+	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
+	child->sa.st_v2_ike_ppk_enabled = ike->sa.st_v2_ike_ppk_enabled;
+	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
+	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
+
 	change_state(&child->sa, transition->from[0]->kind);
 	set_v2_transition(&child->sa, transition, HERE);
 	return child;
