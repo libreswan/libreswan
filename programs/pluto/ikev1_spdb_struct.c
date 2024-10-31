@@ -1193,15 +1193,15 @@ fail:
 }
 
 bool ikev1_out_quick_sa(struct pbs_out *outs,
-			struct state *st)
+			struct child_sa *child)
 {
-	struct connection *c = st->st_connection;
+	struct connection *c = child->sa.st_connection;
 	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
 						  c->config->child_sa.proposals,
-						  st->st_policy.compress,
-						  st->logger);
+						  child->sa.st_policy.compress,
+						  child->sa.logger);
 
-	bool ok = ikev1_out_sa(outs, sadb, st, /*oakley_mode*/false);
+	bool ok = ikev1_out_sa(outs, sadb, &child->sa, /*oakley_mode*/false);
 	free_sa(&sadb);
 	return ok;
 }

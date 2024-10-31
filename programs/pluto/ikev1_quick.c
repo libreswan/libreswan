@@ -721,7 +721,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		     (pm.authenticate ? " authenticate" : ""),
 		     (pm.compress ? " compress" : ""));
 
-		if (!ikev1_out_quick_sa(&rbody, &child->sa)) {
+		if (!ikev1_out_quick_sa(&rbody, child)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

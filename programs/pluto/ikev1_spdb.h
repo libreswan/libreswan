@@ -131,7 +131,7 @@ struct ipsec_db_policy {
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
 extern bool ikev1_out_quick_sa(struct pbs_out *outs,
-			       struct state *st);
+			       struct child_sa *child);
 
 extern bool ikev1_out_main_sa(struct pbs_out *outs,
 			      struct ike_sa *ike);
