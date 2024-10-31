@@ -56,7 +56,6 @@
 #include "state.h"
 #include "timer.h"
 #include "kernel.h"
-#include "kernel_info.h"
 #include "kernel_ops.h"
 #include "kernel_xfrm.h"
 #include "kernel_policy.h"
@@ -71,7 +70,6 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
-#include "kernel_info.h"
 
 #include "nat_traversal.h"
 #include "ip_address.h"
@@ -1412,21 +1410,12 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		said_next->proto = &ip_protocol_esp;
 
 		/*
-		 * Linux kernel >= 6.10 need replay-window 0 on OUTBOUND SA.
-		 *
-		 * Older kernels does not support replay-window for OUTBOUND
-		 * SA with ESN. It support 1.
-		 *
-		 * What about the BSDs? Should this move into kernel_xfrm.c ?
+		 * Note: Linux kernels put various restrictions and
+		 * expectations replay-window size (for instance,
+		 * cleared on outbound SA).  The kernel backend gets
+		 * to handle this.
 		 */
 		said_next->replay_window = c->config->child_sa.replay_window;
-		if (direction == DIRECTION_OUTBOUND) {
-			if (kernel_ge(KINFO_LINUX, 6, 10, 0)) {
-				ldbg(child->sa.logger, "kernel >= 6.10 expects no outbound replay_window");
-				said_next->replay_window = 0;
-			}
-		}
-
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 
@@ -1577,20 +1566,12 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 					    ah_spi, &text_ah);
 
 		/*
-		 * Linux kernel >= 6.10 need replay-window 0 on OUTBOUND SA.
-		 *
-		 * Older kernels does not support replay-window for OUTBOUND
-		 * SA with ESN. It support 1.
-		 *
-		 * What about the BSDs? Should this move into kernel_xfrm.c ?
+		 * Note: Linux kernels put various restrictions and
+		 * expectations replay-window size (for instance,
+		 * cleared on outbound SA).  The kernel backend gets
+		 * to handle this.
 		 */
 		said_next->replay_window = c->config->child_sa.replay_window;
-		if (direction == DIRECTION_OUTBOUND) {
-			if (kernel_ge(KINFO_LINUX, 6, 10, 0)) {
-				ldbg(child->sa.logger, "kernel >= 6.10 expects no outbound replay_window");
-				said_next->replay_window = 0;
-			}
-		}
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
 		     c->config->child_sa.replay_window);
 

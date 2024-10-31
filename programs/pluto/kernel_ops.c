@@ -354,7 +354,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			}
 
 			jam(buf, " replay_window=%d", sa->replay_window);
-			if (sa->esn) jam_string(buf, " +esn");
+			jam(buf, " esn=%s", bool_str(sa->esn));
 
 			if (sa->ipsec_interface != NULL) {
 				jam_string(buf, " ");

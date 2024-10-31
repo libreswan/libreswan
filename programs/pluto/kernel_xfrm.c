@@ -91,6 +91,7 @@
 #include "nat_traversal.h"
 #include "state.h"
 #include "kernel_xfrm.h"
+#include "kernel_info.h"
 #include "netlink_attrib.h"
 #include "log.h"
 #include "whack.h"	/* for RC_LOG */
@@ -131,13 +132,17 @@ static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int netlink_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int netlink_rtm_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
+/*
+ * XXX: Can these be merged?
+ */
+
 enum xfrm_dir_sup {
 	XFRM_DIR_SUP_UKNOWN = 0,
 	XFRM_DIR_SUP_YES = 1,
 	XFRM_DIR_SUP_NO = 2
 };
 static enum xfrm_dir_sup xfrm_direction_supported = XFRM_DIR_SUP_UKNOWN;
-
+static bool xfrm_needs_outbound_replay_window_cleared;
 
 #define NE(x) { .name = #x, .value = x, }	/* Name Entry -- shorthand for sparse_names */
 
@@ -293,6 +298,15 @@ static void init_netlink_xfrm_fd(struct logger *logger)
  */
 static void kernel_xfrm_init(struct logger *logger)
 {
+	/*
+	 * Linux kernel >= 6.10 need replay-window cleared (set to 0)
+	 * on OUTBOUND SA.
+	 *
+	 * Older kernels does not support replay-window for OUTBOUND
+	 * SA with ESN. It support 1.
+	 */
+	xfrm_needs_outbound_replay_window_cleared = kernel_ge(KINFO_LINUX, 6, 10, 0);
+
 #define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
 #define XFRM_STAT "/proc/net/xfrm_stat"
 
@@ -1678,19 +1692,35 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
 		}
 
-		if (sa->replay_window <= 32 && !sa->esn) {
+		/*
+		 * Note:
+		 *
+		 * Linux kernel >= 6.10 need replay-window 0 on
+		 * OUTBOUND SA.
+		 *
+		 * Older kernels does not support replay-window for
+		 * OUTBOUND SA with ESN. It support 1.
+		 */
+		unsigned replay_window = sa->replay_window;
+		if (sa->direction == DIRECTION_OUTBOUND &&
+		    xfrm_needs_outbound_replay_window_cleared) {
+			replay_window = 0;
+			ldbg(logger, "%s() clearing OUTBOUND IPsec SA replay-window (i.e., ignoring %d)",
+			     __func__, sa->replay_window);
+		}
+		if (replay_window <= 32 && !sa->esn) {
 			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
-			req.p.replay_window = sa->replay_window;
+			req.p.replay_window = replay_window;
 			ldbg(logger, "%s() setting IPsec SA replay-window to %d using old-style req",
 			     __func__, req.p.replay_window);
 		} else {
-			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
-				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
-			bmp_size = sa->replay_window == 0 ? 0 : bmp_size;
+			uint32_t bmp_size = BYTES_FOR_BITS(replay_window +
+				pad_up(replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
+			bmp_size = (replay_window == 0 ? 0 : bmp_size);
 			/* this is where we could fill in sequence numbers for this SA */
 			struct xfrm_replay_state_esn xre = {
 				/* replay_window must be multiple of 8 */
-				.replay_window = sa->replay_window,
+				.replay_window = replay_window,
 				.bmp_len = bmp_size / sizeof(uint32_t),
 			};
 			ldbg(logger, "%s() setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
