@@ -1255,7 +1255,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 							   sa,
 							   NULL,
 							   false,
-							   &child->sa));
+							   child));
 	}
 
 	/* Ni in */
@@ -1500,7 +1500,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *child_sa, struc
 	RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sapd->pbs,
 					       &sapd->payload.sa,
 					       &r_sa_pbs,
-					       false, &child->sa));
+					       false, child));
 
 	passert(child->sa.st_pfs_group != &unset_group);
 
@@ -1585,13 +1585,18 @@ static dh_shared_secret_cb quick_inR1_outI2_continue;	/* forward decl and type a
 
 stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
+	struct child_sa *child = pexpect_child_sa(st);
+	if (PBAD(st->logger, child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
 	/* SA in */
 	{
 		struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
 		RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sa_pd->pbs,
-						       &sa_pd->payload.sa,
-						       NULL, true, st));
+							   &sa_pd->payload.sa,
+							   NULL, true, child));
 	}
 
 	/* Nr in */
