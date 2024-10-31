@@ -1805,32 +1805,39 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
  * (see RFC 2409 "IKE" 5.5)
  * Installs outbound IPsec SAs, routing, etc.
  */
-stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
+stf_status quick_inI2(struct state *child_sa, struct msg_digest *md UNUSED)
 {
+	struct child_sa *child = pexpect_child_sa(child_sa);
+	if (pbad(child == NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct ike_sa *ike = isakmp_sa_where(child, HERE);
+	if (ike == NULL) {
+		/* phase1 state got deleted while cryptohelper was working */
+		llog(RC_LOG, child->sa.logger,
+		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
+		     __func__, pri_so(child->sa.st_clonedfrom));
+		return STF_FATAL;
+	}
+
 	/* Tell the kernel to establish the outbound and routing part of the new SA
 	 * (the previous state established inbound)
 	 * (unless the commit bit is set -- which we don't support).
 	 * We do this before any state updating so that
 	 * failure won't look like success.
 	 */
-	/*
-	 * IKE must still exist as how else could the quick message
-	 * have been decrypted?
-	 */
-	struct child_sa *child = pexpect_child_sa(st);
-	struct ike_sa *ike = ike_sa(st, HERE);
-	PEXPECT(child->sa.logger, ike != NULL);
 
 	if (!connection_establish_outbound(ike, child, HERE))
 		return STF_FAIL_v1N;
 
-	update_iv(st);  /* not actually used, but tidy */
+	update_iv(&child->sa);  /* not actually used, but tidy */
 
 	/*
 	 * If we have dpd delay and dpdtimeout set, then we are doing DPD
 	 * on this conn, so initialize it
 	 */
-	if (dpd_init(st) != STF_OK) {
+	if (dpd_init(&child->sa) != STF_OK) {
 		return STF_FAIL_v1N;
 	}
 
