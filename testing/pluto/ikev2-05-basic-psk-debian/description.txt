@@ -1,3 +1,6 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+Basic pluto with IKEv2 using PSK on debian
+
+Debian kernels tend to be older so, in effect, this is testing libreswan
+on an old kernel.
 
 

@@ -175,6 +175,7 @@ kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-05-basic-psk-oneconf-namespaces	good
 kvmplutotest	ikev2-05-basic-psk-missing-initiator	good
 kvmplutotest	ikev2-05-basic-psk-missing-responder	good
+kvmplutotest	ikev2-05-basic-psk-debian		good
 kvmplutotest	ikev2-06-dual-net			good	github/275
 kvmplutotest	ikev2-06-dual-net-notany		good
 kvmplutotest	ikev2-07-invalid-xchg			good
