@@ -1213,13 +1213,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 	child->sa.hidden_variables = ike->sa.hidden_variables;
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 
-	/* these were set while we didn't have client state yet */
-	/* we should really split the NOTIFY loop in two cleaner ones */
-	child->sa.st_ipcomp.trans_attrs = ike->sa.st_ipcomp.trans_attrs;
-	child->sa.st_ipcomp.v1_lifetime = ike->sa.st_ipcomp.v1_lifetime;
-	child->sa.st_ipcomp.protocol = ike->sa.st_ipcomp.protocol;
-	child->sa.st_ipcomp.inbound.spi = ike->sa.st_ipcomp.inbound.spi;
-
 	if (sa_type == CHILD_SA) {
 #   define clone_nss_symkey_field(field)				\
 		child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
