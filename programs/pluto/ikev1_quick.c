@@ -220,7 +220,7 @@ static bool emit_subnet_id(enum perspective perspective,
  * RFC 2409 "IKE" section 5.5
  * specifies how this is to be done.
  */
-static bool compute_proto_keymat(struct state *st,
+static bool compute_proto_keymat(struct child_sa *child,
 				 uint8_t protoid,
 				 struct ipsec_proto_info *pi,
 				 const char *satypename)
@@ -250,7 +250,7 @@ static bool compute_proto_keymat(struct state *st,
 		const struct encrypt_desc *encrypt = pi->trans_attrs.ta_encrypt;
 		size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 		needed_len = encrypt_key_size + encrypt_salt_size;
-		ldbg(st->logger, "compute_proto_keymat: encrypt_key_size %zd encrypt_salt_size %zd needed_len=%zd",
+		ldbg(child->sa.logger, "compute_proto_keymat: encrypt_key_size %zd encrypt_salt_size %zd needed_len=%zd",
 		     encrypt_key_size, encrypt_salt_size, encrypt_salt_size);
 		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
 		dbg("compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
@@ -266,26 +266,26 @@ static bool compute_proto_keymat(struct state *st,
 	}
 
 	free_chunk_content(&pi->inbound.keymat);
-	pi->inbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
-						    st->st_skeyid_d_nss,
-						    st->st_dh_shared_secret,
+	pi->inbound.keymat = ikev1_section_5_keymat(child->sa.st_oakley.ta_prf,
+						    child->sa.st_skeyid_d_nss,
+						    child->sa.st_dh_shared_secret,
 						    protoid,
 						    THING_AS_SHUNK(pi->inbound.spi),
-						    st->st_ni, st->st_nr,
+						    child->sa.st_ni, child->sa.st_nr,
 						    needed_len,
-						    st->logger);
-	PASSERT(st->logger, pi->inbound.keymat.len == needed_len);
+						    child->sa.logger);
+	PASSERT(child->sa.logger, pi->inbound.keymat.len == needed_len);
 
 	free_chunk_content(&pi->outbound.keymat);
-	pi->outbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
-						     st->st_skeyid_d_nss,
-						     st->st_dh_shared_secret,
+	pi->outbound.keymat = ikev1_section_5_keymat(child->sa.st_oakley.ta_prf,
+						     child->sa.st_skeyid_d_nss,
+						     child->sa.st_dh_shared_secret,
 						     protoid,
 						     THING_AS_SHUNK(pi->outbound.spi),
-						     st->st_ni, st->st_nr,
+						     child->sa.st_ni, child->sa.st_nr,
 						     needed_len,
-						     st->logger);
-	PASSERT(st->logger, pi->outbound.keymat.len == needed_len);
+						     child->sa.logger);
+	PASSERT(child->sa.logger, pi->outbound.keymat.len == needed_len);
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s KEYMAT", satypename);
@@ -296,12 +296,12 @@ static bool compute_proto_keymat(struct state *st,
 	return true;
 }
 
-static bool compute_keymats(struct state *st)
+static bool compute_keymats(struct child_sa *child)
 {
-	if (st->st_ah.protocol == &ip_protocol_ah)
-		return compute_proto_keymat(st, PROTO_IPSEC_AH, &st->st_ah, "AH");
-	if (st->st_esp.protocol == &ip_protocol_esp)
-		return compute_proto_keymat(st, PROTO_IPSEC_ESP, &st->st_esp, "ESP");
+	if (child->sa.st_ah.protocol == &ip_protocol_ah)
+		return compute_proto_keymat(child, PROTO_IPSEC_AH, &child->sa.st_ah, "AH");
+	if (child->sa.st_esp.protocol == &ip_protocol_esp)
+		return compute_proto_keymat(child, PROTO_IPSEC_ESP, &child->sa.st_esp, "ESP");
 	return false;
 }
 
@@ -1584,7 +1584,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
 	/* Derive new keying material */
-	if (!compute_keymats(&child->sa)) {
+	if (!compute_keymats(child)) {
 		return STF_FATAL;
 	}
 
@@ -1776,7 +1776,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, NULL);
 
 	/* Derive new keying material */
-	compute_keymats(&child->sa);
+	compute_keymats(child);
 
 	/* Tell the kernel to establish the inbound, outbound, and routing part
 	 * of the new SA (unless the commit bit is set -- which we don't support).
