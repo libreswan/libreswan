@@ -1362,7 +1362,7 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *migrate, struct logger 
 		xum.reqid = migrate->reqid;
 		xum.old_family = xum.new_family = address_info(migrate->src.address)->af;
 
-		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
+		memcpy(RTA_DATA(attr), &xum, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
 	}
