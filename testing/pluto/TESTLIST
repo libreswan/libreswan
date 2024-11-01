@@ -970,6 +970,7 @@ kvmplutotest	ikev1-xauth-35-xauth-only-lease-wrong			good	github/1955
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-missing			good	github/1955
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-psk			good	github/1955
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-x509			good	github/1955
+kvmplutotest	ikev1-xauth-36-github-2051				wip	github/2051
 
 #
 # Aggressive Mode Pluto Tests

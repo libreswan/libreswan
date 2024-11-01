@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add any-east
+ipsec addconn: /etc/ipsec.conf:29: warning: obsolete keyword ignored: dpdaction=clear
+ipsec addconn: /etc/ipsec.conf:55: warning: obsolete keyword ignored: dpdaction=restart
+"any-east": ikev2=no has been replaced by keyexchange=ikev1
+"any-east": warning: keyingtries=3 ignored, UP connection will attempt to establish until marked DOWN
+"any-east": added IKEv1 connection
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo initdone
+initdone
+east #
