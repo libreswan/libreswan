@@ -628,7 +628,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	/* HASH_R or SIG_R in */
 
 	/* initiator authenticating responder */
-	stf_status r = oakley_auth(md, SA_RESPONDER, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
+	stf_status r = oakley_auth(ike, md, SA_RESPONDER, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
 	if (r != STF_OK) {
 		return r;
 	}
@@ -926,7 +926,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 	 *
 	 * Use ID sent over in I1.
 	 */
-	stf_status r = oakley_auth(md, SA_INITIATOR, initiator_id);
+	stf_status r = oakley_auth(ike, md, SA_INITIATOR, initiator_id);
 	if (r != STF_OK) {
 		return r;
 	}

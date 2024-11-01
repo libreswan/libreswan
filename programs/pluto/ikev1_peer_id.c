@@ -230,9 +230,9 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
  * (Hash or Signature Payload).
  * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
-stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_payload)
+stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
+		       enum sa_role sa_role, shunk_t id_payload)
 {
-	struct state *st = md->v1_st;
 	stf_status r = STF_OK;
 
 	/*
@@ -241,9 +241,9 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_p
 	 * main_mode_hash() expects the entire ID payload, i.e., up to
 	 * .raw.  Hence pbs_in_all.
 	 */
-	struct crypt_mac hash = main_mode_hash(st, sa_role, id_payload);
+	struct crypt_mac hash = main_mode_hash(&ike->sa, sa_role, id_payload);
 
-	switch (st->st_oakley.auth) {
+	switch (ike->sa.st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:
 	{
 		struct pbs_in *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
@@ -261,12 +261,12 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_p
 				DBG_dump("received HASH:",
 					 hash_pbs->cur, pbs_left(hash_pbs));
 			}
-			log_state(RC_LOG, st,
-				  "received Hash Payload does not match computed value");
+			llog(RC_LOG, ike->sa.logger,
+			     "received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
 			r = STF_FAIL_v1N + v1N_INVALID_HASH_INFORMATION;
 		} else {
-			ldbg(st->logger, "received message HASH_%s data ok",
+			ldbg(ike->sa.logger, "received message HASH_%s data ok",
 			     (sa_role == SA_INITIATOR ? "I" :
 			      sa_role == SA_RESPONDER ? "R" :
 			      "???"));
@@ -277,15 +277,14 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_p
 	case OAKLEY_RSA_SIG:
 	{
 		shunk_t signature = pbs_in_left(&md->chain[ISAKMP_NEXT_SIG]->pbs);
-		diag_t d = authsig_and_log_using_pubkey(ike_sa(st, HERE),
-							&hash, signature,
+		diag_t d = authsig_and_log_using_pubkey(ike, &hash, signature,
 							&ike_alg_hash_sha1, /*always*/
 							&pubkey_signer_raw_rsa,
 							NULL/*legacy-signature-name*/);
 		if (d != NULL) {
-			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			ldbg(st->logger, "received message SIG_%s data did not match computed value",
+			ldbg(ike->sa.logger, "received message SIG_%s data did not match computed value",
 			     (sa_role == SA_INITIATOR ? "I" :
 			      sa_role == SA_RESPONDER ? "R" :
 			      "???"));
@@ -295,10 +294,10 @@ stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_p
 	}
 	/* These are the only IKEv1 AUTH methods we support */
 	default:
-		bad_case(st->st_oakley.auth);
+		bad_case(ike->sa.st_oakley.auth);
 	}
 
 	if (r == STF_OK)
-		dbg("authentication succeeded");
+		ldbg(ike->sa.logger, "authentication succeeded");
 	return r;
 }
