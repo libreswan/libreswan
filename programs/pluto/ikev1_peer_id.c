@@ -241,7 +241,7 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 	 * main_mode_hash() expects the entire ID payload, i.e., up to
 	 * .raw.  Hence pbs_in_all.
 	 */
-	struct crypt_mac hash = main_mode_hash(&ike->sa, sa_role, id_payload);
+	struct crypt_mac hash = main_mode_hash(ike, sa_role, id_payload);
 
 	switch (ike->sa.st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:

@@ -465,7 +465,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 
 	/* HASH_R or SIG_R out */
 	{
-		struct crypt_mac hash = main_mode_hash(&ike->sa, SA_RESPONDER,
+		struct crypt_mac hash = main_mode_hash(ike, SA_RESPONDER,
 						       pbs_out_all(&r_id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
@@ -756,7 +756,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 		close_output_pbs(&r_id_pbs);
 		close_output_pbs(&id_pbs);
 
-		struct crypt_mac hash = main_mode_hash(&ike->sa, SA_INITIATOR,
+		struct crypt_mac hash = main_mode_hash(ike, SA_INITIATOR,
 						       pbs_out_all(&id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {

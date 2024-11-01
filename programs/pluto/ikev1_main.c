@@ -262,23 +262,23 @@ struct ike_sa *main_outI1(struct connection *c,
  * See draft-ietf-ipsec-ike-01.txt 4.1 and 6.1.1.2
  */
 
-static void main_mode_hash_body(struct state *st,
+static void main_mode_hash_body(struct ike_sa *ike,
 				enum sa_role role,
 				shunk_t id_payload, /* ID payload, including header */
 				struct crypt_prf *ctx)
 {
 	switch (role) {
 	case SA_INITIATOR:
-		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
-		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
-		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
-		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
+		crypt_prf_update_hunk(ctx, "gi", ike->sa.st_gi);
+		crypt_prf_update_hunk(ctx, "gr", ike->sa.st_gr);
+		crypt_prf_update_thing(ctx, "initiator", ike->sa.st_ike_spis.initiator);
+		crypt_prf_update_thing(ctx, "responder", ike->sa.st_ike_spis.responder);
 		break;
 	case SA_RESPONDER:
-		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
-		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
-		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
-		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
+		crypt_prf_update_hunk(ctx, "gr", ike->sa.st_gr);
+		crypt_prf_update_hunk(ctx, "gi", ike->sa.st_gi);
+		crypt_prf_update_thing(ctx, "responder", ike->sa.st_ike_spis.responder);
+		crypt_prf_update_thing(ctx, "initiator", ike->sa.st_ike_spis.initiator);
 		break;
 	default:
 		bad_case(role);
@@ -286,13 +286,13 @@ static void main_mode_hash_body(struct state *st,
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("hashing %zu bytes of SA",
-			st->st_p1isa.len - sizeof(struct isakmp_generic));
+			ike->sa.st_p1isa.len - sizeof(struct isakmp_generic));
 	}
 
 	/* SA_b */
 	crypt_prf_update_bytes(ctx, "p1isa",
-			       st->st_p1isa.ptr + sizeof(struct isakmp_generic),
-			       st->st_p1isa.len - sizeof(struct isakmp_generic));
+			       ike->sa.st_p1isa.ptr + sizeof(struct isakmp_generic),
+			       ike->sa.st_p1isa.len - sizeof(struct isakmp_generic));
 
 	/*
 	 * Hash identification payload, without generic payload header
@@ -308,15 +308,15 @@ static void main_mode_hash_body(struct state *st,
 	crypt_prf_update_hunk(ctx, "idpl", id_body);
 }
 
-struct crypt_mac main_mode_hash(struct state *st,
+struct crypt_mac main_mode_hash(struct ike_sa *ike,
 				enum sa_role role,
 				shunk_t id_payload) /* ID payload, including header */
 {
 	struct crypt_prf *ctx = crypt_prf_init_symkey("main mode",
-						      st->st_oakley.ta_prf,
-						      "skeyid", st->st_skeyid_nss,
-						      st->logger);
-	main_mode_hash_body(st, role, id_payload, ctx);
+						      ike->sa.st_oakley.ta_prf,
+						      "skeyid", ike->sa.st_skeyid_nss,
+						      ike->sa.logger);
+	main_mode_hash_body(ike, role, id_payload, ctx);
 	return crypt_prf_final_mac(&ctx, NULL);
 }
 
@@ -1193,7 +1193,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* HASH_I or SIG_I out */
 	{
-		struct crypt_mac hash = main_mode_hash(&ike->sa, SA_INITIATOR,
+		struct crypt_mac hash = main_mode_hash(ike, SA_INITIATOR,
 						       pbs_out_all(&id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
@@ -1415,7 +1415,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* HASH_R or SIG_R out */
 	{
-		struct crypt_mac hash = main_mode_hash(&ike->sa, SA_RESPONDER,
+		struct crypt_mac hash = main_mode_hash(ike, SA_RESPONDER,
 						       pbs_out_all(&r_id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
