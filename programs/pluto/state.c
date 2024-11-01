@@ -1231,20 +1231,20 @@ static struct child_sa *duplicate_state(struct connection *c,
 #   undef state_clone_chunk
 	}
 
-	child->sa.hidden_variables = ike->sa.hidden_variables;
-	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
-
 	/*
-	 * These are done because we need them in child st when
-	 * do_command() uses them to fill in our format string.
-	 * Maybe similarly to above for chunks, do this for all
-	 * strings on the state?
+	 * Due to IKEv1, these IKE (ISAKMP) SA fields need to be
+	 * copied to the Child SA so that they are still available
+	 * when the IKE (ISAKMP) SA gets deleted.
+	 *
+	 * For instance the "generic" Child SA code for up-down
+	 * expects .st_seen_cfg_dns, and the "generic" show-status
+	 * code expects the NAT result.
 	 */
-	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
-
+	child->sa.hidden_variables = ike->sa.hidden_variables;
 	child->sa.st_seen_cfg_dns = clone_str(ike->sa.st_seen_cfg_dns, "child st_seen_cfg_dns");
 	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
 	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
+	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
 
 	return child;
 }
