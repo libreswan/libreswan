@@ -446,6 +446,6 @@ find ${summarydir} \
 
 STATUS "updating bisect/ directory (slow, ignoring result)"
 
-RUN ${bindir}/gime-bisect.sh ${summarydir} || true
+RUN ${bindir}/gime-bisectdir.sh ${summarydir} || true
 
 RESTART "run complete"
