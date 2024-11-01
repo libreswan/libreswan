@@ -82,7 +82,7 @@
 #include "ikev1_message.h"
 
 /* forward declarations */
-static stf_status xauth_client_ackstatus(struct state *st,
+static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 					 struct pbs_out *rbody,
 					 uint16_t ap_id);
 
@@ -160,19 +160,19 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
  * @return size_t Length of the HASH
  */
 
-static bool emit_xauth_hash(const char *what, struct state *st,
+static bool emit_xauth_hash(struct ike_sa *ike, const char *what,
 			    struct v1_hash_fixup *hash_fixup, struct pbs_out *out)
 {
 	return emit_v1_HASH(V1_HASH_1, what,
 			    IMPAIR_v1_XAUTH_EXCHANGE,
-			    st, hash_fixup, out);
+			    &ike->sa, hash_fixup, out);
 }
 
-static void fixup_xauth_hash(struct state *st,
+static void fixup_xauth_hash(struct ike_sa *ike,
 			     struct v1_hash_fixup *hash_fixup,
 			     const uint8_t *roof)
 {
-	fixup_v1_HASH(st, hash_fixup, st->st_v1_msgid.phase15, roof);
+	fixup_v1_HASH(&ike->sa, hash_fixup, ike->sa.st_v1_msgid.phase15, roof);
 }
 
 /**
@@ -187,12 +187,12 @@ static void fixup_xauth_hash(struct state *st,
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
 static stf_status isakmp_add_attr(struct pbs_out *strattr,
-				   const int attr_type,
-				   const ip_address ia,
-				   const struct state *st)
+				  const int attr_type,
+				  const ip_address ia,
+				  const struct ike_sa *ike)
 {
 	bool ok = true;
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
 	/* ISAKMP attr out */
 	const struct isakmp_attribute attr = {
@@ -310,9 +310,9 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 	default:
 	{
 		esb_buf b;
-		log_state(RC_LOG, st,
-			  "attempt to send unsupported mode cfg attribute %s.",
-			  str_enum(&modecfg_attr_names, attr_type, &b));
+		llog(RC_LOG, ike->sa.logger,
+		     "attempt to send unsupported mode cfg attribute %s.",
+		     str_enum(&modecfg_attr_names, attr_type, &b));
 		break;
 	}
 	}
@@ -341,16 +341,16 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
  * @param ap_id ISAMA Identifier
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
-static stf_status modecfg_resp(struct state *st,
-			lset_t resp,
-			struct pbs_out *rbody,
-			uint16_t replytype,
-			bool use_modecfg_addr_as_client_addr,
-			uint16_t ap_id)
+static stf_status modecfg_resp(struct ike_sa *ike,
+			       lset_t resp,
+			       struct pbs_out *rbody,
+			       uint16_t replytype,
+			       bool use_modecfg_addr_as_client_addr,
+			       uint16_t ap_id)
 {
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash("XAUTH: mode config response",
-			     st, &hash_fixup, rbody)) {
+	if (!emit_xauth_hash(ike, "XAUTH: mode config response",
+			     &hash_fixup, rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -358,7 +358,7 @@ static stf_status modecfg_resp(struct state *st,
 	{
 		struct pbs_out strattr;
 		int attr_type;
-		struct connection *c = st->st_connection;
+		struct connection *c = ike->sa.st_connection;
 
 		{
 			struct isakmp_mode_attr attrh = {
@@ -388,10 +388,10 @@ static stf_status modecfg_resp(struct state *st,
 		if (use_modecfg_addr_as_client_addr &&
 		    c->pool[IPv4_INDEX] != NULL) {
 
-			err_t e = lease_that_address(c, st->st_xauth_username,
-						     &ipv4_info, st->logger);
+			err_t e = lease_that_address(c, ike->sa.st_xauth_username,
+						     &ipv4_info, ike->sa.logger);
 			if (e != NULL) {
-				log_state(RC_LOG, st, "lease_an_address failure %s", e);
+				llog(RC_LOG, ike->sa.logger, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
 			}
 
@@ -419,7 +419,7 @@ static stf_status modecfg_resp(struct state *st,
 		attr_type = 0;
 		while (resp != LEMPTY) {
 			if (resp & 1) {
-				stf_status ret = isakmp_add_attr(&strattr, attr_type, ia, st);
+				stf_status ret = isakmp_add_attr(&strattr, attr_type, ia, ike);
 				if (ret != STF_OK)
 					return ret;
 			}
@@ -441,14 +441,14 @@ static stf_status modecfg_resp(struct state *st,
 		if (c->config->modecfg.domains != NULL) {
 			dbg("We are sending '"PRI_SHUNK"' as domain",
 			    pri_shunk(c->config->modecfg.domains[0]));
-			isakmp_add_attr(&strattr, MODECFG_DOMAIN, ia, st);
+			isakmp_add_attr(&strattr, MODECFG_DOMAIN, ia, ike);
 		} else {
 			dbg("we are not sending a domain");
 		}
 
 		if (c->config->modecfg.banner != NULL) {
 			dbg("We are sending '%s' as banner", c->config->modecfg.banner);
-			isakmp_add_attr(&strattr, MODECFG_BANNER, ia, st);
+			isakmp_add_attr(&strattr, MODECFG_BANNER, ia, ike);
 		} else {
 			dbg("We are not sending a banner");
 		}
@@ -458,16 +458,16 @@ static stf_status modecfg_resp(struct state *st,
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");
-			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, ia, st);
+			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, ia, ike);
 		}
 
-		if (!ikev1_close_message(&strattr, st))
+		if (!ikev1_close_message(&strattr, &ike->sa))
 			return STF_INTERNAL_ERROR;
 	}
 
-	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
+	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_and_encrypt_message(rbody, st))
+	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -478,13 +478,13 @@ static stf_status modecfg_resp(struct state *st,
  * @param st State Structure
  * @return stf_status
  */
-static stf_status modecfg_send_set(struct state *st)
+static stf_status modecfg_send_set(struct ike_sa *ike)
 {
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), st->logger);
+	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), ike->sa.logger);
 
-	change_v1_state(st, STATE_MODE_CFG_R1);
+	change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
 	/* HDR out */
 	struct pbs_out rbody;
 	{
@@ -493,15 +493,15 @@ static stf_status modecfg_send_set(struct state *st)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_v1_msgid.phase15,
+			.isa_msgid = ike->sa.st_v1_msgid.phase15,
 		};
 
 		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -512,7 +512,7 @@ static stf_status modecfg_send_set(struct state *st)
 	/* should become a conn option */
 	/* client-side is not yet implemented for this - only works with SoftRemote clients */
 	/* SoftRemote takes the IV for XAUTH from phase2, where Libreswan takes it from phase1 */
-	init_phase2_iv(st, &st->st_v1_msgid.phase15);
+	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 #endif
 
 /* XXX This does not include IPv6 at this point */
@@ -520,24 +520,24 @@ static stf_status modecfg_send_set(struct state *st)
 			  LELEM(IKEv1_INTERNAL_IP4_SUBNET) | \
 			  LELEM(IKEv1_INTERNAL_IP4_DNS))
 
-	stf_status stat = modecfg_resp(st,
-		     MODECFG_SET_ITEM,
-		     &rbody,
-		     ISAKMP_CFG_SET,
-		     true,
-		     0 /* XXX ID */);
+	stf_status stat = modecfg_resp(ike,
+				       MODECFG_SET_ITEM,
+				       &rbody,
+				       ISAKMP_CFG_SET,
+				       true,
+				       0 /* XXX ID */);
 
 	if (stat != STF_OK)
 		return stat;
 #undef MODECFG_SET_ITEM
 
 	/* Transmit */
-	record_and_send_v1_ike_msg(st, &reply, "ModeCfg set");
+	record_and_send_v1_ike_msg(&ike->sa, &reply, "ModeCfg set");
 
-	if (*state_event_slot(st, EVENT_v1_RETRANSMIT) == NULL) {
-		delete_v1_event(st);
-		clear_retransmits(st);
-		start_retransmits(st);
+	if (*state_event_slot(&ike->sa, EVENT_v1_RETRANSMIT) == NULL) {
+		delete_v1_event(&ike->sa);
+		clear_retransmits(&ike->sa);
+		start_retransmits(&ike->sa);
 	}
 
 	return STF_OK;
@@ -548,15 +548,15 @@ static stf_status modecfg_send_set(struct state *st)
  * @param st State Structure
  * @return stf_status
  */
-stf_status modecfg_start_set(struct state *st)
+stf_status modecfg_start_set(struct ike_sa *ike)
 {
-	if (st->st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
+	if (ike->sa.st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
 		/* pick a new message id */
-		st->st_v1_msgid.phase15 = generate_msgid(st);
+		ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
 	}
-	st->hidden_variables.st_modecfg_vars_set = true;
+	ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
-	return modecfg_send_set(st);
+	return modecfg_send_set(ike);
 }
 
 /*
@@ -564,21 +564,21 @@ stf_status modecfg_start_set(struct state *st)
  * @param st State
  * @return stf_status
  */
-stf_status xauth_send_request(struct state *st)
+stf_status xauth_send_request(struct ike_sa *ike)
 {
-	const enum state_kind p_state = st->st_state->kind;
+	const enum state_kind p_state = ike->sa.st_state->kind;
 
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->logger);
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), ike->sa.logger);
 
-	log_state(RC_LOG, st,
-		  "XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
-		  st->st_state->short_name);
+	llog(RC_LOG, ike->sa.logger,
+	     "XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
+	     ike->sa.st_state->short_name);
 
 	/* this is the beginning of a new exchange */
-	st->st_v1_msgid.phase15 = generate_msgid(st);
-	change_v1_state(st, STATE_XAUTH_R0);
+	ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
+	change_v1_state(&ike->sa, STATE_XAUTH_R0);
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -588,22 +588,22 @@ stf_status xauth_send_request(struct state *st)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_v1_msgid.phase15,
+			.isa_msgid = ike->sa.st_v1_msgid.phase15,
 		};
 
 		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash("XAUTH: send request",
-			     st, &hash_fixup, &rbody)) {
+	if (!emit_xauth_hash(ike, "XAUTH: send request",
+			     &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -630,20 +630,20 @@ stf_status xauth_send_request(struct state *st)
 				NULL) ||
 		    !out_struct(&pw, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, st))
+		    !ikev1_close_message(&strattr, &ike->sa))
 			return STF_INTERNAL_ERROR;
 	}
 
-	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
-	init_phase2_iv(st, &st->st_v1_msgid.phase15);
+	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
+	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st))
+	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
 	if (!impair.send_no_xauth_r0) {
 		if (p_state == STATE_AGGR_R2) {
-			record_and_send_v1_ike_msg(st, &reply, "XAUTH: req");
+			record_and_send_v1_ike_msg(&ike->sa, &reply, "XAUTH: req");
 		} else {
 			/*
 			 * Main Mode responder: do not record XAUTH_R0 message.
@@ -651,20 +651,20 @@ stf_status xauth_send_request(struct state *st)
 			 * Main Mode message and send/create a new XAUTH_R0
 			 * message.
 			 */
-			send_pbs_out_using_state(st, "XAUTH: req (unrecorded)", &reply);
+			send_pbs_out_using_state(&ike->sa, "XAUTH: req (unrecorded)", &reply);
 		}
 	} else {
-		log_state(RC_LOG, st, "IMPAIR: Skipped sending XAUTH user/pass packet");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: Skipped sending XAUTH user/pass packet");
 		if (p_state == STATE_AGGR_R2) {
 			/* record-only so we properly emulate packet drop */
-			record_outbound_v1_ike_msg(st, &reply, "XAUTH: req");
+			record_outbound_v1_ike_msg(&ike->sa, &reply, "XAUTH: req");
 		}
 	}
 
-	if (*state_event_slot(st, EVENT_v1_RETRANSMIT) == NULL) {
-		delete_v1_event(st);
-		clear_retransmits(st);
-		start_retransmits(st);
+	if (*state_event_slot(&ike->sa, EVENT_v1_RETRANSMIT) == NULL) {
+		delete_v1_event(&ike->sa);
+		clear_retransmits(&ike->sa);
+		start_retransmits(&ike->sa);
 	}
 
 	return STF_OK;
@@ -674,17 +674,18 @@ stf_status xauth_send_request(struct state *st)
  * @param st State
  * @return stf_status
  */
-stf_status modecfg_send_request(struct state *st)
+
+stf_status modecfg_send_request(struct ike_sa *ike)
 {
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->logger);
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), ike->sa.logger);
 
-	log_state(RC_LOG, st, "modecfg: Sending IP request (MODECFG_I1)");
+	log_state(RC_LOG, &ike->sa, "modecfg: Sending IP request (MODECFG_I1)");
 
 	/* this is the beginning of a new exchange */
-	st->st_v1_msgid.phase15 = generate_msgid(st);
-	change_v1_state(st, STATE_MODE_CFG_I1);
+	ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
+	change_v1_state(&ike->sa, STATE_MODE_CFG_I1);
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -694,23 +695,23 @@ stf_status modecfg_send_request(struct state *st)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_v1_msgid.phase15,
+			.isa_msgid = ike->sa.st_v1_msgid.phase15,
 		};
 
 		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash("XAUTH: mode config request",
-			     st, &hash_fixup, &rbody)) {
+	if (!emit_xauth_hash(ike, "XAUTH: mode config request",
+			     &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -740,25 +741,25 @@ stf_status modecfg_send_request(struct state *st)
 				return STF_INTERNAL_ERROR;
 		}
 
-		if (!ikev1_close_message(&strattr, st))
+		if (!ikev1_close_message(&strattr, &ike->sa))
 			return STF_INTERNAL_ERROR;
 	}
 
-	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
-	init_phase2_iv(st, &st->st_v1_msgid.phase15);
+	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
+	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st))
+	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
-	record_and_send_v1_ike_msg(st, &reply, "modecfg: req");
+	record_and_send_v1_ike_msg(&ike->sa, &reply, "modecfg: req");
 
-	if (*state_event_slot(st, EVENT_v1_RETRANSMIT) == NULL) {
-		delete_v1_event(st);
-		clear_retransmits(st);
-		start_retransmits(st);
+	if (*state_event_slot(&ike->sa, EVENT_v1_RETRANSMIT) == NULL) {
+		delete_v1_event(&ike->sa);
+		clear_retransmits(&ike->sa);
+		start_retransmits(&ike->sa);
 	}
-	st->hidden_variables.st_modecfg_started = true;
+	ike->sa.hidden_variables.st_modecfg_started = true;
 
 	return STF_OK;
 }
@@ -770,14 +771,14 @@ stf_status modecfg_send_request(struct state *st)
  * @return stf_status
  */
 /* IN AN AUTH THREAD */
-static stf_status xauth_send_status(struct state *st, int status)
+static stf_status xauth_send_status(struct ike_sa *ike, int status)
 {
 	/* set up reply */
 	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), st->logger);
+	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), ike->sa.logger);
 
 	/* pick a new message id */
-	st->st_v1_msgid.phase15 = generate_msgid(st);
+	ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -787,21 +788,21 @@ static stf_status xauth_send_status(struct state *st, int status)
 				  ISAKMP_MINOR_VERSION,
 			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_v1_msgid.phase15,
+			.isa_msgid = ike->sa.st_v1_msgid.phase15,
 		};
 
 		if (impair.send_bogus_isakmp_flag) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash("XAUTH: status", st, &hash_fixup, &rbody)) {
+	if (!emit_xauth_hash(ike, "XAUTH: status", &hash_fixup, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -821,27 +822,27 @@ static stf_status xauth_send_status(struct state *st, int status)
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
 		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, st))
+		    !ikev1_close_message(&strattr, &ike->sa))
 			return STF_INTERNAL_ERROR;
 	}
 
-	fixup_xauth_hash(st, &hash_fixup, rbody.cur);
-	init_phase2_iv(st, &st->st_v1_msgid.phase15);
+	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
+	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, st))
+	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with main thread */
-	delete_v1_event(st);
-	clear_retransmits(st);
-	start_retransmits(st);
+	delete_v1_event(&ike->sa);
+	clear_retransmits(&ike->sa);
+	start_retransmits(&ike->sa);
 
 	/* Transmit */
-	record_and_send_v1_ike_msg(st, &reply, "XAUTH: status");
+	record_and_send_v1_ike_msg(&ike->sa, &reply, "XAUTH: status");
 
 	if (status != 0)
-		change_v1_state(st, STATE_XAUTH_R1);
+		change_v1_state(&ike->sa, STATE_XAUTH_R1);
 
 	return STF_OK;
 }
@@ -928,7 +929,7 @@ static bool add_xauth_addresspool(struct connection *c,
  * @return bool success
  */
 
-static bool do_file_authentication(struct state *st, const char *name,
+static bool do_file_authentication(struct ike_sa *ike, const char *name,
 				   const char *password, const char *connname)
 {
 	char pswdpath[PATH_MAX];
@@ -941,13 +942,13 @@ static bool do_file_authentication(struct state *st, const char *name,
 	FILE *fp = fopen(pswdpath, "r");
 	if (fp == NULL) {
 		/* unable to open the password file */
-		log_state(RC_LOG, st,
-			  "XAUTH: unable to open password file (%s) for verification",
-			  pswdpath);
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: unable to open password file (%s) for verification",
+		     pswdpath);
 		return false;
 	}
 
-	log_state(RC_LOG, st, "XAUTH: password file (%s) open.", pswdpath);
+	llog(RC_LOG, ike->sa.logger, "XAUTH: password file (%s) open.", pswdpath);
 
 	/** simple stuff read in a line then go through positioning
 	 * userid, passwd and conniectionname at the beginning of each of the
@@ -960,7 +961,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 		char *passwdhash;
 		char *connectionname = NULL;
 		char *addresspool = NULL;
-		struct connection *c = st->st_connection;
+		struct connection *c = ike->sa.st_connection;
 
 		lineno++;
 
@@ -978,9 +979,9 @@ static bool do_file_authentication(struct state *st, const char *name,
 		p = strchr(userid, ':');	/* find end */
 		if (p == NULL) {
 			/* no end: skip line */
-			log_state(RC_LOG, st,
-				  "XAUTH: %s:%d missing password hash field",
-				  pswdpath, lineno);
+			llog(RC_LOG, ike->sa.logger,
+			     "XAUTH: %s:%d missing password hash field",
+			     pswdpath, lineno);
 			continue;
 		}
 
@@ -1026,13 +1027,13 @@ static bool do_file_authentication(struct state *st, const char *name,
 			cp = crypt(password, passwdhash);
 			win = cp != NULL && streq(cp, passwdhash);
 
-			ldbgf(DBG_CRYPT, st->logger, "XAUTH: %s user(%s:%s) pass %s vs %s",
+			ldbgf(DBG_CRYPT, ike->sa.logger, "XAUTH: %s user(%s:%s) pass %s vs %s",
 			      win ? "success" : "failure",
 			      userid, connectionname, cp, passwdhash);
 
-			log_state(RC_LOG, st, "XAUTH: %s user(%s:%s) ",
-				  win ? "success" : "failure",
-				  userid, connectionname);
+			llog(RC_LOG, ike->sa.logger, "XAUTH: %s user(%s:%s) ",
+			     win ? "success" : "failure",
+			     userid, connectionname);
 
 			if (win) {
 				if (addresspool != NULL && addresspool[0] != '\0') {
@@ -1040,7 +1041,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 					/* ??? should we then keep trying other entries? */
 					if (!add_xauth_addresspool(c, userid,
 								   addresspool,
-								   st->logger)) {
+								   ike->sa.logger)) {
 						win = false;
 						continue;	/* try other entries */
 					}
@@ -1063,44 +1064,50 @@ static bool do_file_authentication(struct state *st, const char *name,
 static pam_auth_callback_fn ikev1_xauth_callback;	/* type assertion */
 #endif
 
-static stf_status ikev1_xauth_callback(struct state *st,
+static stf_status ikev1_xauth_callback(struct state *ike_sa,
 				       struct msg_digest *md UNUSED,
 				       const char *name, bool results)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
 	 * The soft fail mode is used to bring up the SA in a walled garden.
 	 * This can be detected in the updown script by the env variable XAUTH_FAILED=1
 	 */
-	if (!results && st->st_connection->config->xauthfail == XAUTHFAIL_SOFT) {
-		log_state(RC_LOG, st,
-			  "XAUTH: authentication for %s failed, but policy is set to soft fail",
-			  name);
-		st->st_xauth_soft = true; /* passed to updown for notification */
+	if (!results && ike->sa.st_connection->config->xauthfail == XAUTHFAIL_SOFT) {
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: authentication for %s failed, but policy is set to soft fail",
+		     name);
+		ike->sa.st_xauth_soft = true; /* passed to updown for notification */
 		results = true;
 	}
 
 	if (results) {
-		log_state(RC_LOG, st,
-			  "XAUTH: User %s: Authentication Successful",
-			  name);
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: User %s: Authentication Successful",
+		     name);
 		/* ??? result of xauth_send_status is ignored */
-		xauth_send_status(st, XAUTH_STATUS_OK);
+		xauth_send_status(ike, XAUTH_STATUS_OK);
 
-		if (st->st_v1_quirks.xauth_ack_msgid)
-			st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		if (ike->sa.st_v1_quirks.xauth_ack_msgid)
+			ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
-		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), name);
+		jam_str(ike->sa.st_xauth_username, sizeof(ike->sa.st_xauth_username), name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
 		 * and reset state to XAUTH_R0
 		 */
-		log_state(RC_LOG, st,
-			  "XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
-			  name);
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
+		     name);
 		/* ??? result of xauth_send_status is ignored */
-		xauth_send_status(st, XAUTH_STATUS_FAIL);
+		xauth_send_status(ike, XAUTH_STATUS_FAIL);
 	}
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
@@ -1126,9 +1133,9 @@ static stf_status xauth_immediate_callback(struct state *st,
 {
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
 	if (st == NULL) {
-		log_state(RC_LOG, st,
-			  "XAUTH: #%lu: state destroyed for user '%s'",
-			  xic->serialno, xic->name);
+		llog(RC_LOG, &global_logger,
+		     "XAUTH: #%lu: state destroyed for user '%s'",
+		     xic->serialno, xic->name);
 	} else {
 		/* ikev1_xauth_callback() will log result */
 		ikev1_xauth_callback(st, md, xic->name, xic->success);
@@ -1139,15 +1146,15 @@ static stf_status xauth_immediate_callback(struct state *st,
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
-static void xauth_immediate(const char *name, const struct state *st,
+static void xauth_immediate(const char *name, const struct ike_sa *ike,
 			    struct msg_digest *md, bool success)
 {
 	struct xauth_immediate_context *xic = alloc_thing(struct xauth_immediate_context, "xauth next");
 	xic->success = success;
-	xic->serialno = st->st_serialno;
+	xic->serialno = ike->sa.st_serialno;
 	xic->name = clone_str(name, "xauth next name");
 	xic->md = md_addref(md);
-	schedule_resume("xauth immediate", st->st_serialno, &xic->md,
+	schedule_resume("xauth immediate", ike->sa.st_serialno, &xic->md,
 			xauth_immediate_callback, xic);
 }
 
@@ -1158,7 +1165,7 @@ static void xauth_immediate(const char *name, const struct state *st,
  * @param password Password
  */
 
-static void xauth_launch_authent(struct state *st,
+static void xauth_launch_authent(struct ike_sa *ike,
 				 struct msg_digest *md,
 				 shunk_t *name,
 				 shunk_t *password)
@@ -1167,7 +1174,7 @@ static void xauth_launch_authent(struct state *st,
 	 * XAUTH somehow already in progress?
 	 */
 #ifdef USE_PAM_AUTH
-	if (st->st_pam_auth != NULL)
+	if (ike->sa.st_pam_auth != NULL)
 		return;
 #endif
 
@@ -1179,42 +1186,43 @@ static void xauth_launch_authent(struct state *st,
 	 * in the retransmit slot, and the XAUTH packet.
 	 * Two alternative events can be outstanding. Cancel both.
 	 */
-	delete_v1_event(st);
-	clear_retransmits(st);
-	event_delete(EVENT_v1_SEND_XAUTH, st);
-	event_schedule(EVENT_v1_PAM_TIMEOUT, EVENT_v1_PAM_TIMEOUT_DELAY, st);
+	delete_v1_event(&ike->sa);
+	clear_retransmits(&ike->sa);
+	event_delete(EVENT_v1_SEND_XAUTH, &ike->sa);
+	event_schedule(EVENT_v1_PAM_TIMEOUT, EVENT_v1_PAM_TIMEOUT_DELAY, &ike->sa);
 
-	switch (st->st_connection->config->xauthby) {
+	switch (ike->sa.st_connection->config->xauthby) {
 #ifdef USE_PAM_AUTH
 	case XAUTHBY_PAM:
-		log_state(RC_LOG, st,
-			  "XAUTH: PAM authentication method requested to authenticate user '%s'",
-			  arg_name);
-		pam_auth_fork_request(st, md, arg_name, arg_password,
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: PAM authentication method requested to authenticate user '%s'",
+		     arg_name);
+		pam_auth_fork_request(&ike->sa, md, arg_name, arg_password,
 				      "XAUTH", ikev1_xauth_callback);
 		break;
 #endif
 
 	case XAUTHBY_FILE:
-		log_state(RC_LOG, st,
-			  "XAUTH: password file authentication method requested to authenticate user '%s'",
-			  arg_name);
-		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
-		xauth_immediate(arg_name, st, md, success);
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: password file authentication method requested to authenticate user '%s'",
+		     arg_name);
+		bool success = do_file_authentication(ike, arg_name, arg_password,
+						      ike->sa.st_connection->name);
+		xauth_immediate(arg_name, ike, md, success);
 		break;
 
 	case XAUTHBY_ALWAYSOK:
-		log_state(RC_LOG, st,
-			  "XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
-			  arg_name);
-		xauth_immediate(arg_name, st, md, true);
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
+		     arg_name);
+		xauth_immediate(arg_name, ike, md, true);
 		break;
 
 	default:
-		log_state(RC_LOG, st,
-			  "XAUTH: unknown authentication method requested to authenticate user '%s'",
-			  arg_name);
-		bad_case(st->st_connection->config->xauthby);
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH: unknown authentication method requested to authenticate user '%s'",
+		     arg_name);
+		bad_case(ike->sa.st_connection->config->xauthby);
 	}
 
 	pfreeany(arg_name);
@@ -1239,8 +1247,14 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR0(struct state *st, struct msg_digest *md)
+stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 
 	/*
@@ -1265,7 +1279,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 	default:
 	{
 		enum_buf mb;
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "Expecting MODE_CFG_REPLY; got %s instead.",
 		     str_enum(&attr_msg_type_names,
 			      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_type,
@@ -1282,7 +1296,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			/* fail if malformed */
 			return STF_FAIL_v1N;
@@ -1294,7 +1308,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			 * don't need to record this attribute */
 			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
 				enum_buf b;
-				ldbg(st->logger, "unsupported XAUTH_TYPE value %s received",
+				ldbg(ike->sa.logger, "unsupported XAUTH_TYPE value %s received",
 				     str_enum(&ikev1_xauth_type_names, attr.isaat_lv, &b));
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
@@ -1307,8 +1321,8 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			}
 			sz = pbs_left(&strattr);
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
-				log_state(RC_LOG, st,
-					  "XAUTH User Name contains NUL character: rejected");
+				llog(RC_LOG, ike->sa.logger,
+				     "XAUTH User Name contains NUL character: rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			name = shunk2(strattr.cur, sz);
@@ -1317,19 +1331,19 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 		case IKEv1_ATTR_XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
 			if (gotpassword) {
-				log_state(RC_LOG, st,
-					  "XAUTH: two User Passwords!  Rejected");
+				llog(RC_LOG, ike->sa.logger,
+				     "XAUTH: two User Passwords!  Rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
 			if (sz > 0 && strattr.cur[sz-1] == '\0') {
-				log_state(RC_LOG, st,
-					  "Ignoring NUL at end of XAUTH User Password (Android Issue 36879?)");
+				llog(RC_LOG, ike->sa.logger,
+				     "Ignoring NUL at end of XAUTH User Password (Android Issue 36879?)");
 				sz--;
 			}
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
-				log_state(RC_LOG, st,
-					  "XAUTH User Password contains NUL character: rejected");
+				llog(RC_LOG, ike->sa.logger,
+				     "XAUTH User Password contains NUL character: rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			password = shunk2(strattr.cur, sz);
@@ -1344,18 +1358,18 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 
 	/** we must get a username and a password value */
 	if (!gotname || !gotpassword) {
-		log_state(RC_LOG, st,
-			  "Expected MODE_CFG_REPLY is missing %s%s%s attribute",
-			  !gotname ? "username" : "",
-			  !gotname && !gotpassword ? " and " : "",
-			  !gotpassword ? "password" : "");
-		if (st->hidden_variables.st_xauth_client_attempt++ < XAUTH_PROMPT_TRIES) {
-			stf_status stat = xauth_send_request(st);
-			LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+		llog(RC_LOG, ike->sa.logger,
+		     "Expected MODE_CFG_REPLY is missing %s%s%s attribute",
+		     !gotname ? "username" : "",
+		     !gotname && !gotpassword ? " and " : "",
+		     !gotpassword ? "password" : "");
+		if (ike->sa.hidden_variables.st_xauth_client_attempt++ < XAUTH_PROMPT_TRIES) {
+			stf_status stat = xauth_send_request(ike);
+			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 				jam_string(buf, "XAUTH: User ");
 				jam_sanitized_hunk(buf, name);
 				jam(buf, ": Authentication Failed (retry %d)",
-				    st->hidden_variables.st_xauth_client_attempt);
+				    ike->sa.hidden_variables.st_xauth_client_attempt);
 			}
 			/**
 			 * STF_OK means that we transmitted again okay, but actually
@@ -1363,19 +1377,19 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			 */
 			return stat == STF_OK ? STF_IGNORE : stat;
 		} else {
-			stf_status stat = xauth_send_status(st, XAUTH_STATUS_FAIL);
+			stf_status stat = xauth_send_status(ike, XAUTH_STATUS_FAIL);
 
-			LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 				jam_string(buf, "XAUTH: User ");
 				jam_sanitized_hunk(buf, name);
 				jam(buf, ": Authentication Failed (Retried %d times)",
-				    st->hidden_variables.st_xauth_client_attempt);
+				    ike->sa.hidden_variables.st_xauth_client_attempt);
 			}
 
 			return stat == STF_OK ? STF_FAIL_v1N : stat;
 		}
 	} else {
-		xauth_launch_authent(st, md, &name, &password);
+		xauth_launch_authent(ike, md, &name, &password);
 		return STF_SUSPEND;
 	}
 }
@@ -1388,27 +1402,32 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
+stf_status xauth_inR1(struct state *ike_sa, struct msg_digest *md UNUSED)
 {
-	log_state(RC_LOG, st, "XAUTH: xauth_inR1(STF_OK)");
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	/* Back to where we were */
-	st->st_oakley.doing_xauth = false;
+	ike->sa.st_oakley.doing_xauth = false;
 
-	if (!st->st_connection->local->host.config->modecfg.server) {
+	if (!ike->sa.st_connection->local->host.config->modecfg.server) {
 		dbg("not server, starting new exchange");
-		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	if (st->st_connection->local->host.config->modecfg.server &&
-	    st->hidden_variables.st_modecfg_vars_set) {
+	if (ike->sa.st_connection->local->host.config->modecfg.server &&
+	    ike->sa.hidden_variables.st_modecfg_vars_set) {
 		dbg("modecfg server, vars are set. Starting new exchange.");
-		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	if (st->st_connection->local->host.config->modecfg.server &&
-	    st->st_connection->config->modecfg.pull) {
+	if (ike->sa.st_connection->local->host.config->modecfg.server &&
+	    ike->sa.st_connection->config->modecfg.pull) {
 		dbg("modecfg server, pull mode. Starting new exchange.");
-		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 	return STF_OK;
 }
@@ -1428,12 +1447,18 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
+stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->logger);
+				       &rbody, ike->sa.logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -1441,13 +1466,13 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 	dbg("arrived in modecfg_inR0");
 
-	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
 	{
 		enum_buf tb;
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "Expecting ISAKMP_CFG_REQUEST, got %s instead (ignored).",
 		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
 		/* ??? what should we do here?  Pretend all is well? */
@@ -1466,7 +1491,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
@@ -1489,7 +1514,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 		}
 
 		{
-			stf_status stat = modecfg_resp(st, resp,
+			stf_status stat = modecfg_resp(ike, resp,
 						       &rbody,
 						       ISAKMP_CFG_REPLY,
 						       true,
@@ -1503,10 +1528,10 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 		}
 
 		/* they asked us, we responded, msgid is done */
-		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	log_state(RC_LOG, st, "modecfg_inR0(STF_OK)");
+	llog(RC_LOG, ike->sa.logger, "modecfg_inR0(STF_OK)");
 	return STF_OK;
 }
 
@@ -1519,9 +1544,12 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
+static stf_status modecfg_inI2(struct ike_sa *ike,
+			       struct msg_digest *md,
+			       struct pbs_out *rbody)
 {
-	struct state *const st = md->v1_st;
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	uint16_t isama_id = ma->isama_identifier;
@@ -1529,12 +1557,12 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 
 	dbg("modecfg_inI2");
 
-	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	/* CHECK that SET has been received. */
 
 	if (ma->isama_type != ISAKMP_CFG_SET) {
-		log_state(RC_LOG, st,
+		llog(RC_LOG, ike->sa.logger,
 			  "Expecting MODE_CFG_SET, got %x instead.",
 			  ma->isama_type);
 		return STF_IGNORE;
@@ -1547,7 +1575,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			/* reject malformed */
 			return STF_FAIL_v1N;
@@ -1556,12 +1584,12 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 		switch (attr.isaat_af_type) {
 		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 		{
-			struct connection *c = st->st_connection;
+			struct connection *c = ike->sa.st_connection;
 
 			ip_address a;
 			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				return STF_FATAL;
 			}
@@ -1572,7 +1600,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 
 			subnet_buf caddr;
 			str_selector_subnet(&c->spd->local->client, &caddr);
-			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
+			llog(RC_LOG, ike->sa.logger, "Received IP address %s", caddr.buf);
 
 			/*
 			 * When the sourceip set in the config file,
@@ -1581,8 +1609,8 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 			if (c->local->config->child.sourceip.len == 0) {
 				ip_address sourceip = spd_end_sourceip(c->spd->local);
 				pexpect(address_eq_address(a, sourceip));
-				log_state(RC_LOG, st, "setting ip source address to %s",
-					  caddr.buf);
+				llog(RC_LOG, ike->sa.logger, "setting ip source address to %s",
+				     caddr.buf);
 			}
 
 			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
@@ -1612,7 +1640,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 
 	/* ack things */
 	{
-		stf_status stat = modecfg_resp(st, resp,
+		stf_status stat = modecfg_resp(ike, resp,
 					       rbody,
 					       ISAKMP_CFG_ACK,
 					       false,
@@ -1629,9 +1657,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, struct pbs_out *rbody)
 	 * we are done with this exchange, clear things so
 	 * that we can start phase 2 properly
 	 */
-	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	if (resp != LEMPTY)
-		st->hidden_variables.st_modecfg_vars_set = true;
+		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
 	dbg("modecfg_inI2(STF_OK)");
 	return STF_OK;
@@ -1739,14 +1767,20 @@ static void append_cisco_split_spd(struct connection *c,
  * @return stf_status
  */
 
-stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
+stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->logger);
+				       &rbody, ike->sa.logger);
 
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -1754,14 +1788,14 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 	dbg("modecfg_inR1: received mode cfg reply");
 
-	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
 	{
-		log_state(RC_LOG, st,
-			  "Expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %x instead.",
-			  ma->isama_type);
+		llog(RC_LOG, ike->sa.logger,
+		     "Expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %x instead.",
+		     ma->isama_type);
 		return STF_IGNORE;
 		break;
 	}
@@ -1775,7 +1809,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &ignored);
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
@@ -1813,7 +1847,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
@@ -1822,12 +1856,12 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			switch (attr.isaat_af_type) {
 			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
-				struct connection *c = st->st_connection;
+				struct connection *c = ike->sa.st_connection;
 
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 					pfree_diag(&d);
 					return STF_FATAL;
 				}
@@ -1840,9 +1874,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				subnet_buf caddr;
 				str_selector_subnet(&c->spd->local->client, &caddr);
-				log_state(RC_LOG, st,
-					  "Received IPv4 address: %s",
-					  caddr.buf);
+				llog(RC_LOG, ike->sa.logger,
+				     "Received IPv4 address: %s",
+				     caddr.buf);
 
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
@@ -1853,7 +1887,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 					pfree_diag(&d);
 					return STF_FATAL;
 				}
@@ -1869,7 +1903,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 				if (d != NULL) {
-					llog(RC_LOG, st->logger, "%s", str_diag(d));
+					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 					pfree_diag(&d);
 					return STF_FATAL;
 				}
@@ -1877,11 +1911,11 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				address_buf a_buf;
 				const char *a_str = str_address(&a, &a_buf);
 				bool ignore = c->config->ignore_peer_dns;
-				log_state(RC_LOG, st, "Received %sDNS server %s",
-					  ignore ? "and ignored " : "",
-					  a_str);
+				llog(RC_LOG, ike->sa.logger, "Received %sDNS server %s",
+				     ignore ? "and ignored " : "",
+				     a_str);
 
-				append_st_cfg_dns(st, a_str);
+				append_st_cfg_dns(&ike->sa, a_str);
 
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
@@ -1889,23 +1923,23 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain",
-									 false/*don't-ignore*/,
-									 st->logger));
+				append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
+									       false/*don't-ignore*/,
+									       ike->sa.logger));
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
+				ike->sa.st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
 									 false/*don't-ignore*/,
-									 st->logger);
+									 ike->sa.logger);
 				break;
 			}
 
 			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 			{
-				struct connection *c = st->st_connection;
+				struct connection *c = ike->sa.st_connection;
 
 				/* make sure that other side isn't an endpoint */
 				if (!c->remote->child.has_client) {
@@ -1921,7 +1955,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
 								 &i, sizeof(i), NULL);
 					if (d != NULL) {
-						llog(RC_LOG, st->logger,
+						llog(RC_LOG, ike->sa.logger,
 						     "ignoring malformed CISCO_SPLIT_INC payload: %s",
 						     str_diag(d));
 						pfree_diag(&d);
@@ -1933,9 +1967,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					ip_subnet wire_subnet;
 					err_t ugh = address_mask_to_subnet(base, mask, &wire_subnet);
 					if (ugh != NULL) {
-						log_state(RC_LOG, st,
-							  "ignoring malformed CISCO_SPLIT_INC subnet: %s",
-							  ugh);
+						llog(RC_LOG, ike->sa.logger,
+						     "ignoring malformed CISCO_SPLIT_INC subnet: %s",
+						     ugh);
 						break;
 					}
 
@@ -1946,9 +1980,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						if (selector_range_eq_selector_range(wire_selector, spd->remote->client)) {
 							/* duplicate entry: ignore */
 							subnet_buf pretty_subnet;
-							log_state(RC_LOG, st,
-								  "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
-								  str_subnet(&wire_subnet, &pretty_subnet));
+							llog(RC_LOG, ike->sa.logger,
+							     "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
+							     str_subnet(&wire_subnet, &pretty_subnet));
 							already_split = true;
 							break;
 						}
@@ -1959,9 +1993,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					}
 #else
 					subnet_buf pretty_subnet;
-					log_state(RC_LOG, st,
-						  "received and ignored CISCO_SPLIT_INC subnet %s",
-						  str_subnet(&wire_subnet, &pretty_subnet));
+					llog(RC_LOG, ike->sa.logger,
+					     "received and ignored CISCO_SPLIT_INC subnet %s",
+					     str_subnet(&wire_subnet, &pretty_subnet));
 #endif
 				}
 
@@ -1975,7 +2009,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
-				log_state(RC_LOG, st, "received and ignored obsoleted Cisco NetBEUI NS info");
+				llog(RC_LOG, ike->sa.logger, "received and ignored obsoleted Cisco NetBEUI NS info");
 				break;
 			}
 
@@ -1991,9 +2025,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* we are done with this exchange, clear things so that we can start phase 2 properly */
-	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	if (resp != LEMPTY)
-		st->hidden_variables.st_modecfg_vars_set = true;
+		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
 	dbg("modecfg_inR1(STF_OK)");
 	return STF_OK;
@@ -2008,15 +2042,15 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
  * @param ap_id
  * @return stf_status
  */
-static stf_status xauth_client_resp(struct state *st,
-			     lset_t xauth_resp,
-			     struct pbs_out *rbody,
-			     uint16_t ap_id)
+static stf_status xauth_client_resp(struct ike_sa *ike,
+				    lset_t xauth_resp,
+				    struct pbs_out *rbody,
+				    uint16_t ap_id)
 {
 	char xauth_username[MAX_XAUTH_USERNAME_LEN];
 
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash("XAUTH: client response", st, &hash_fixup, rbody)) {
+	if (!emit_xauth_hash(ike, "XAUTH: client response", &hash_fixup, rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2059,14 +2093,13 @@ static stf_status xauth_client_resp(struct state *st,
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
-							&
-							isakmp_xauth_attribute_desc,
+							&isakmp_xauth_attribute_desc,
 							&strattr,
 							&attrval))
 						return STF_INTERNAL_ERROR;
 
-					if (st->st_xauth_username[0] == '\0') {
-						if (!whack_prompt_for(st,
+					if (ike->sa.st_xauth_username[0] == '\0') {
+						if (!whack_prompt_for(&ike->sa,
 								      "Username",
 								      true,
 								      xauth_username,
@@ -2075,21 +2108,19 @@ static stf_status xauth_client_resp(struct state *st,
 							return STF_FATAL;
 						}
 						/* replace the first newline character with a string-terminating \0. */
-						char *cptr = memchr(
-							xauth_username,
-							'\n',
-							sizeof(xauth_username));
+						char *cptr = memchr(xauth_username,
+								    '\n',
+								    sizeof(xauth_username));
 						if (cptr != NULL)
 							*cptr = '\0';
 
-						jam_str(st->st_xauth_username,
-							sizeof(st->st_xauth_username),
+						jam_str(ike->sa.st_xauth_username,
+							sizeof(ike->sa.st_xauth_username),
 							xauth_username);
 					}
 
-					if (!out_raw(st->st_xauth_username,
-						     strlen(st->
-							    st_xauth_username),
+					if (!out_raw(ike->sa.st_xauth_username,
+						     strlen(ike->sa. st_xauth_username),
 						     &attrval,
 						     "XAUTH username"))
 						return STF_INTERNAL_ERROR;
@@ -2099,28 +2130,26 @@ static stf_status xauth_client_resp(struct state *st,
 					break;
 
 				case IKEv1_ATTR_XAUTH_USER_PASSWORD:
-					attr.isaat_af_type = attr_type |
-							     ISAKMP_ATTR_AF_TLV;
+					attr.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
-						&isakmp_xauth_attribute_desc,
-						&strattr, &attrval))
+							&isakmp_xauth_attribute_desc,
+							&strattr, &attrval))
 					{
 						return STF_INTERNAL_ERROR;
 					}
 
-					if (st->st_xauth_password.ptr == NULL)
+					if (ike->sa.st_xauth_password.ptr == NULL)
 					{
 						struct secret *s =
-							lsw_get_xauthsecret(
-								st->st_xauth_username);
+							lsw_get_xauthsecret(ike->sa.st_xauth_username);
 
 						dbg("looked up username=%s, got=%p",
-						    st->st_xauth_username,
+						    ike->sa.st_xauth_username,
 						    s);
 						if (s != NULL) {
 							struct secret_stuff *pks = get_secret_stuff(s);
 
-							st->st_xauth_password = clone_hunk(pks->u.preshared_secret,
+							ike->sa.st_xauth_password = clone_hunk(pks->u.preshared_secret,
 											   "saved xauth password");
 						}
 					}
@@ -2132,9 +2161,9 @@ static stf_status xauth_client_resp(struct state *st,
 					 */
 					bool discard_pw = false;
 
-					if (st->st_xauth_password.ptr == NULL) {
+					if (ike->sa.st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
-						if (!whack_prompt_for(st,
+						if (!whack_prompt_for(&ike->sa,
 								      "Password",
 								      false,
 								      xauth_password,
@@ -2152,23 +2181,23 @@ static stf_status xauth_client_resp(struct state *st,
 								*cptr = '\0';
 						}
 						/* see above */
-						pexpect(st->st_xauth_password.ptr == NULL);
-						st->st_xauth_password = clone_bytes_as_chunk(xauth_password,
+						pexpect(ike->sa.st_xauth_password.ptr == NULL);
+						ike->sa.st_xauth_password = clone_bytes_as_chunk(xauth_password,
 											     strlen(xauth_password),
 											     "XAUTH password");
 						discard_pw = true;
 					}
 
-					if (!out_hunk(st->st_xauth_password, &attrval,
+					if (!out_hunk(ike->sa.st_xauth_password, &attrval,
 						      "XAUTH password")) {
 						if (discard_pw) {
-							free_chunk_content(&st->st_xauth_password);
+							free_chunk_content(&ike->sa.st_xauth_password);
 						}
 						return STF_INTERNAL_ERROR;
 					}
 
 					if (discard_pw) {
-						free_chunk_content(&st->st_xauth_password);
+						free_chunk_content(&ike->sa.st_xauth_password);
 					}
 					close_output_pbs(&attrval);
 					break;
@@ -2176,9 +2205,9 @@ static stf_status xauth_client_resp(struct state *st,
 				default:
 				{
 					esb_buf b;
-					log_state(RC_LOG, st,
-						"trying to send XAUTH reply, sending %s instead.",
-						  str_enum(&modecfg_attr_names, attr_type, &b));
+					llog(RC_LOG, ike->sa.logger,
+					     "trying to send XAUTH reply, sending %s instead.",
+					     str_enum(&modecfg_attr_names, attr_type, &b));
 					break;
 				}
 				}
@@ -2191,12 +2220,12 @@ static stf_status xauth_client_resp(struct state *st,
 		close_output_pbs(&strattr);
 	}
 
-	log_state(RC_LOG, st, "XAUTH: Answering XAUTH challenge with user='%s'",
-		      st->st_xauth_username);
+	llog(RC_LOG, ike->sa.logger, "XAUTH: Answering XAUTH challenge with user='%s'",
+	     ike->sa.st_xauth_username);
 
-	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
+	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_and_encrypt_message(rbody, st))
+	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -2216,12 +2245,18 @@ static stf_status xauth_client_resp(struct state *st,
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inI0(struct state *st, struct msg_digest *md)
+stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->logger);
+				       &rbody, ike->sa.logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -2233,23 +2268,23 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	bool gotset = false;
 	bool got_status = false;
 
-	if (st->hidden_variables.st_xauth_client_done)
-		return modecfg_inI2(md, &rbody);
+	if (ike->sa.hidden_variables.st_xauth_client_done)
+		return modecfg_inI2(ike, md, &rbody);
 
 	dbg("arrived in xauth_inI0");
 
 	if (impair.drop_xauth_r0) {
-		log_state(RC_LOG, st, "IMPAIR: drop XAUTH R0 message ");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: drop XAUTH R0 message ");
 		return STF_FAIL_v1N;
 	}
 
-	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
 	{
 		enum_buf tb;
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "Expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead (ignored).",
 		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
 		/* ??? what are we supposed to do here?  Original code fell through to next case! */
@@ -2272,7 +2307,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 					 &attr, sizeof(attr), &strattr);
 		if (d != NULL) {
-			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			/* reject malformed */
 			return STF_FAIL_v1N;
@@ -2283,7 +2318,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			got_status = true;
 			switch (attr.isaat_lv) {
 			case XAUTH_STATUS_FAIL:
-				log_state(RC_LOG, st, "Received Cisco XAUTH status: FAIL");
+				llog(RC_LOG, ike->sa.logger, "Received Cisco XAUTH status: FAIL");
 				status = attr.isaat_lv;
 				break;
 			case XAUTH_STATUS_OK:
@@ -2292,7 +2327,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				break;
 			default:
 				/* ??? treat as fail?  Should we abort negotiation? */
-				log_state(RC_LOG, st, "invalid XAUTH_STATUS value %u", attr.isaat_lv);
+				llog(RC_LOG, ike->sa.logger, "invalid XAUTH_STATUS value %u", attr.isaat_lv);
 				status = XAUTH_STATUS_FAIL;
 				break;
 			}
@@ -2310,16 +2345,14 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
 			msgbuf[len] = '\0';
-			log_state(RC_LOG, st,
-			       "XAUTH Message: %s", msgbuf);
+			llog(RC_LOG, ike->sa.logger, "XAUTH Message: %s", msgbuf);
 			break;
 		}
 
 		case IKEv1_ATTR_XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
-				log_state(RC_LOG, st,
-					"XAUTH: Unsupported type: %d",
-					attr.isaat_lv);
+				llog(RC_LOG, ike->sa.logger, "XAUTH: Unsupported type: %d",
+				     attr.isaat_lv);
 				return STF_IGNORE;
 			}
 			dbg("received Cisco XAUTH type: Generic");
@@ -2364,21 +2397,20 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	if (gotset && got_status) {
 		/* ACK whatever it was that we got */
-		stat = xauth_client_ackstatus(st, &rbody,
-					      md->chain[
-						      ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
+		stat = xauth_client_ackstatus(ike, &rbody,
+					      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
 		/* must have gotten a status */
 		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
-			st->hidden_variables.st_xauth_client_done = true;
-			log_state(RC_LOG, st, "XAUTH: Successfully Authenticated");
-			st->st_oakley.doing_xauth = false;
+			ike->sa.hidden_variables.st_xauth_client_done = true;
+			llog(RC_LOG, ike->sa.logger, "XAUTH: Successfully Authenticated");
+			ike->sa.st_oakley.doing_xauth = false;
 			return STF_OK;
 		} else {
 			enum_buf sb;
-			llog(RC_LOG, st->logger, "xauth: xauth_client_ackstatus() returned %s",
+			llog(RC_LOG, ike->sa.logger, "xauth: xauth_client_ackstatus() returned %s",
 			     str_enum(&stf_status_names, stat, &sb));
-			llog(RC_LOG, st->logger, "XAUTH: aborting entire IKE Exchange");
+			llog(RC_LOG, ike->sa.logger, "XAUTH: aborting entire IKE Exchange");
 			return STF_FATAL;
 		}
 	}
@@ -2386,21 +2418,21 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	if (gotrequest) {
 		if (xauth_resp & (XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_NAME) |
 				  XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_PASSWORD))) {
-			if (!st->st_connection->local->host.config->xauth.client) {
-				log_state(RC_LOG, st,
-					  "XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
+			if (!ike->sa.st_connection->local->host.config->xauth.client) {
+				llog(RC_LOG, ike->sa.logger,
+				     "XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
 				return STF_IGNORE;
 			}
-			ldbg(st->logger, "XAUTH: Username or password request received");
+			ldbg(ike->sa.logger, "XAUTH: Username or password request received");
 		} else {
-			if (st->st_connection->local->host.config->xauth.client) {
-				log_state(RC_LOG, st,
-					  "XAUTH: No username or password request was received.");
+			if (ike->sa.st_connection->local->host.config->xauth.client) {
+				llog(RC_LOG, ike->sa.logger,
+				     "XAUTH: No username or password request was received.");
 				return STF_IGNORE;
 			}
 		}
 
-		stat = xauth_client_resp(st, xauth_resp,
+		stat = xauth_client_resp(ike, xauth_resp,
 					 &rbody,
 					 md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 	}
@@ -2412,7 +2444,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	}
 
 	/* reset the message ID */
-	st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
 	dbg("xauth_inI0(STF_OK)");
 	return STF_OK;
@@ -2425,12 +2457,12 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
  * @param ap_id
  * @return stf_status
  */
-static stf_status xauth_client_ackstatus(struct state *st,
+static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 					 struct pbs_out *rbody,
 					 uint16_t ap_id)
 {
 	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash("XAUTH: ack status", st, &hash_fixup, rbody)) {
+	if (!emit_xauth_hash(ike, "XAUTH: ack status", &hash_fixup, rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2449,13 +2481,13 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr) ||
 		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, st))
+		    !ikev1_close_message(&strattr, &ike->sa))
 			return STF_INTERNAL_ERROR;
 	}
 
-	fixup_xauth_hash(st, &hash_fixup, rbody->cur);
+	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_and_encrypt_message(rbody, st))
+	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -2468,12 +2500,18 @@ static stf_status xauth_client_ackstatus(struct state *st,
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inI1(struct state *st, struct msg_digest *md)
+stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	struct pbs_out rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, true,
 				       &reply_stream, reply_buffer, sizeof(reply_buffer),
-				       &rbody, st->logger);
+				       &rbody, ike->sa.logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -2483,19 +2521,18 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 
 	dbg("xauth_inI1");
 
-	if (st->hidden_variables.st_xauth_client_done) {
+	if (ike->sa.hidden_variables.st_xauth_client_done) {
 		dbg("st_xauth_client_done, moving into modecfg_inI2");
-		return modecfg_inI2(md, &rbody);
+		return modecfg_inI2(ike, md, &rbody);
 	}
 	dbg("Continuing with xauth_inI1");
 
-	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
 	default:
-		log_state(RC_LOG, st,
-			"Expecting MODE_CFG_SET, got %x instead.",
-			ma->isama_type);
+		llog(RC_LOG, ike->sa.logger, "Expecting MODE_CFG_SET, got %x instead.",
+		     ma->isama_type);
 		return STF_IGNORE;
 
 	case ISAKMP_CFG_SET:
@@ -2507,7 +2544,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
 						 &attr, sizeof(attr), &strattr);
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				/* reject malformed */
 				return STF_FAIL_v1N;
@@ -2523,7 +2560,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 					break;
 				default:
 					/* ??? treat as fail?  Should we abort negotiation? */
-					log_state(RC_LOG, st, "invalid XAUTH_STATUS value %u", attr.isaat_lv);
+					llog(RC_LOG, ike->sa.logger, "invalid XAUTH_STATUS value %u", attr.isaat_lv);
 					status = XAUTH_STATUS_FAIL;
 					break;
 				}
@@ -2532,11 +2569,11 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			default:
 			{
 				esb_buf b;
-				log_state(RC_LOG, st,
-					"while waiting for XAUTH_STATUS, got %s %s instead.",
-					(attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-					str_enum(&modecfg_attr_names,
-						  attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK, &b));
+				llog(RC_LOG, ike->sa.logger,
+				     "while waiting for XAUTH_STATUS, got %s %s instead.",
+				     (attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
+				     str_enum(&modecfg_attr_names,
+					      attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK, &b));
 				break;
 			}
 			}
@@ -2547,21 +2584,21 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	/* first check if we might be done! */
 	if (!got_status || status == XAUTH_STATUS_FAIL) {
 		/* oops, something seriously wrong */
-		log_state(RC_LOG, st,
-			"did not get status attribute in xauth_inI1, looking for new challenge.");
-		change_v1_state(st, STATE_XAUTH_I0);
-		return xauth_inI0(st, md);
+		llog(RC_LOG, ike->sa.logger,
+		     "did not get status attribute in xauth_inI1, looking for new challenge.");
+		change_v1_state(&ike->sa, STATE_XAUTH_I0);
+		return xauth_inI0(&ike->sa, md);
 	}
 
 	/* ACK whatever it was that we got */
-	stat = xauth_client_ackstatus(st, &rbody,
+	stat = xauth_client_ackstatus(ike, &rbody,
 				      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
 	/* must have gotten a status */
 	if (status && stat == STF_OK) {
-		st->hidden_variables.st_xauth_client_done = true;
-		log_state(RC_LOG, st, "successfully logged in");
-		st->st_oakley.doing_xauth = false;
+		ike->sa.hidden_variables.st_xauth_client_done = true;
+		llog(RC_LOG, ike->sa.logger, "successfully logged in");
+		ike->sa.st_oakley.doing_xauth = false;
 
 		return STF_OK;
 	}

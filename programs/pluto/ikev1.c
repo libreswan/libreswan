@@ -2099,10 +2099,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    (st->st_v1_quirks.modecfg_pull_mode ||
 		     st->st_connection->config->modecfg.pull) &&
 		    !st->hidden_variables.st_modecfg_started) {
-			dbg("modecfg client is starting due to %s",
-			    st->st_v1_quirks.modecfg_pull_mode ? "quirk" :
-			    "policy");
-			modecfg_send_request(st);
+			/* note IS_V1_ISAKMP_SA_ESTABLISHED() above */
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			ldbg(ike->sa.logger, "modecfg client is starting due to %s",
+			     ike->sa.st_v1_quirks.modecfg_pull_mode ? "quirk" :
+			     "policy");
+			modecfg_send_request(ike);
 			break;
 		}
 
@@ -2111,14 +2113,16 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !st->st_connection->config->modecfg.pull) {
-			change_v1_state(st, STATE_MODE_CFG_R1);
-			log_state(RC_LOG, st, "Sending MODE CONFIG set");
+			/* note IS_V1_ISAKMP_SA_ESTABLISHED() above */
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
+			llog(RC_LOG, ike->sa.logger, "Sending MODE CONFIG set");
 			/*
 			 * ??? we ignore the result of modecfg.
 			 * But surely, if it fails, we ought to terminate this exchange.
 			 * What do the RFCs say?
 			 */
-			modecfg_start_set(st);
+			modecfg_start_set(ike);
 			break;
 		}
 
