@@ -61,6 +61,14 @@
 #include "pluto_x509.h"
 #include "ikev1_delete.h"
 #include "pluto_stats.h"
+#include "ikev1_msgid.h"
+#include "ikev1_hash.h"
+#include "ikev1_message.h"
+#include "send.h"
+
+static stf_status send_dpd_notification(struct ike_sa *ike,
+					uint16_t type, const void *data,
+					size_t len);
 
 /**
  * DPD Timeout Function
@@ -419,8 +427,8 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	    str_endpoint(&p1->sa.st_remote_endpoint, &b),
 	    p1->sa.st_serialno);
 
-	if (send_isakmp_notification(&p1->sa, v1N_R_U_THERE,
-				     &seqno, sizeof(seqno)) != STF_IGNORE) {
+	if (send_dpd_notification(p1, v1N_R_U_THERE,
+				  &seqno, sizeof(seqno)) != STF_IGNORE) {
 		llog(RC_LOG, st->logger,
 		     "DPD: could not send R_U_THERE");
 		return;
@@ -561,8 +569,8 @@ stf_status dpd_inI_outR(struct state *p1sa,
 
 	p1->sa.st_dpd_peerseqno = seqno;
 
-	if (send_isakmp_notification(&p1->sa, v1N_R_U_THERE_ACK,
-				     pbs->cur, pbs_left(pbs)) != STF_IGNORE) {
+	if (send_dpd_notification(p1, v1N_R_U_THERE_ACK,
+				  pbs->cur, pbs_left(pbs)) != STF_IGNORE) {
 		llog(RC_LOG, p1->sa.logger,
 		     "DPD: could not send R_U_THERE_ACK");
 		return STF_IGNORE;
@@ -663,6 +671,91 @@ stf_status dpd_inR(struct state *p1sa,
 	if (p1->sa.st_v1_dpd_event != NULL &&
 	    p1->sa.st_v1_dpd_event->ev_type == EVENT_v1_DPD_TIMEOUT)
 		event_delete(EVENT_v1_DPD_TIMEOUT, &p1->sa);
+
+	return STF_IGNORE;
+}
+
+stf_status send_dpd_notification(struct ike_sa *ike,
+				 uint16_t type, const void *data,
+				 size_t len)
+{
+	msgid_t msgid;
+	struct pbs_out rbody;
+
+	msgid = generate_msgid(&ike->sa);
+
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), ike->sa.logger);
+
+	/* HDR* */
+	{
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				ISAKMP_MINOR_VERSION,
+			.isa_xchg = ISAKMP_XCHG_INFO,
+			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
+			.isa_msgid = msgid,
+		};
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_v1_HASH(V1_HASH_1, "notification",
+			  IMPAIR_v1_NOTIFICATION_EXCHANGE,
+			  &ike->sa, &hash_fixup, &rbody)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/* NOTIFY */
+	{
+		struct pbs_out notify_pbs;
+		struct isakmp_notification isan = {
+			.isan_doi = ISAKMP_DOI_IPSEC,
+			.isan_protoid = PROTO_ISAKMP,
+			.isan_spisize = COOKIE_SIZE * 2,
+			.isan_type = type,
+		};
+		if (!out_struct(&isan, &isakmp_notification_desc, &rbody,
+				&notify_pbs) ||
+		    !out_raw(ike->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE, &notify_pbs,
+			     "notify icookie") ||
+		    !out_raw(ike->sa.st_ike_spis.responder.bytes, COOKIE_SIZE, &notify_pbs,
+			     "notify rcookie"))
+			return STF_INTERNAL_ERROR;
+
+		if (data != NULL && len > 0)
+			if (!out_raw(data, len, &notify_pbs, "notify data"))
+				return STF_INTERNAL_ERROR;
+
+		close_output_pbs(&notify_pbs);
+	}
+
+	fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, rbody.cur);
+
+	/*
+	 * save old IV (this prevents from copying a whole new state object
+	 * for NOTIFICATION / DELETE messages we don't need to maintain a state
+	 * because there are no retransmissions...
+	 */
+	{
+		struct crypt_mac old_new_iv;
+		struct crypt_mac old_iv;
+
+		save_iv(&ike->sa, old_iv);
+		save_new_iv(&ike->sa, old_new_iv);
+
+		init_phase2_iv(&ike->sa, &msgid);
+		if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+			return STF_INTERNAL_ERROR;
+
+		send_pbs_out_using_state(&ike->sa, "ISAKMP notify", &reply_stream);
+
+		/* get back old IV for this state */
+		restore_iv(&ike->sa, old_iv);
+		restore_new_iv(&ike->sa, old_new_iv);
+	}
 
 	return STF_IGNORE;
 }
