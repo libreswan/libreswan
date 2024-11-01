@@ -768,7 +768,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			if (this->host->config->xauth.server &&
 			    st->st_state->kind == STATE_XAUTH_R1 &&
-			    st->quirks.xauth_ack_msgid) {
+			    st->st_v1_quirks.xauth_ack_msgid) {
 				from_state = STATE_XAUTH_R1;
 				dbg(" set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
 				    st->st_state->name);
@@ -2088,7 +2088,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * override in the form of a policy bit.
 		 */
 		dbg("modecfg pull: %s policy:%s %s",
-		    (st->quirks.modecfg_pull_mode ?
+		    (st->st_v1_quirks.modecfg_pull_mode ?
 		     "quirk-poll" : "noquirk"),
 		    (st->st_connection->config->modecfg.pull ? "pull" : "push"),
 		    (st->st_connection->local->host.config->modecfg.client ?
@@ -2096,11 +2096,11 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
-		    (st->quirks.modecfg_pull_mode ||
+		    (st->st_v1_quirks.modecfg_pull_mode ||
 		     st->st_connection->config->modecfg.pull) &&
 		    !st->hidden_variables.st_modecfg_started) {
 			dbg("modecfg client is starting due to %s",
-			    st->quirks.modecfg_pull_mode ? "quirk" :
+			    st->st_v1_quirks.modecfg_pull_mode ? "quirk" :
 			    "policy");
 			modecfg_send_request(st);
 			break;

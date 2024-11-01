@@ -612,7 +612,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 
 	/* as Responder, send best NAT VID we received */
 	if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!out_v1VID(&rbody, md->quirks.qnat_traversal_vid))
+		if (!out_v1VID(&rbody, md->v1_quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
 

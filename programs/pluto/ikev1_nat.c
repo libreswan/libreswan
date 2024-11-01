@@ -122,10 +122,10 @@ void check_nat_traversal_vid(struct ike_sa *ike, const struct msg_digest *md)
 {
 	ldbg(ike->sa.logger, "sender checking NAT-T: conn %s; VID %d",
 	     (ike->sa.st_connection->config->ikev1_natt == NATT_NONE ? "disabled" : "enabled"),
-	     md->quirks.qnat_traversal_vid);
-	if ((md->quirks.qnat_traversal_vid != VID_none) &&
+	     md->v1_quirks.qnat_traversal_vid);
+	if ((md->v1_quirks.qnat_traversal_vid != VID_none) &&
 	    (ike->sa.st_connection->config->ikev1_natt != NATT_NONE)) {
-		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
+		enum natt_method v = nat_traversal_vid_to_method(md->v1_quirks.qnat_traversal_vid);
 
 		ike->sa.hidden_variables.st_nat_traversal = LELEM(v);
 		enum_buf vb;

@@ -1535,7 +1535,7 @@ static void set_established_ike(enum routing_event event UNUSED,
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */
 	if (DBGP(DBG_PRIVATE)) {
-		DBG_tcpdump_ike_sa_keys(&ike->sa);
+		LDBG_tcpdump_ike_sa_keys(&global_logger, ike);
 	}
 }
 

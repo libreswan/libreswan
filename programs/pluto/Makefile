@@ -96,6 +96,7 @@ OBJS += state_db.o
 OBJS += show.o
 OBJS += binlog.o
 OBJS += retransmit.o
+OBJS += quirks.o
 
 OBJS += rcv_whack.o
 OBJS += whack_add.o

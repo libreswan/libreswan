@@ -1205,31 +1205,26 @@ static struct child_sa *duplicate_state(struct connection *c,
 	     ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
 	     child->sa.st_serialno, sa_type == CHILD_SA ? "IPSEC SA" : "IKE SA");
 
+	/*
+	 * Some sloppy value inheritance.
+	 *
+	 * A child created during IKE_AUTH uses the IKE SA's PRF,
+	 * while a child created using CREATE_CHILD_SA uses its own
+	 * negotiated PRF.
+	 *
+	 * A child created during IKE_AUTH uses the N[ir] from the IKE
+	 * SA's IKE_SA_INIT exchange, while a child created using
+	 * CREATE_CHILD_SA uses N[ir] from that exchange.
+	 *
+	 * See 2.17. Generating Keying Material for Child SAs
+	 *
+	 * IKEv1 probably does something similar.
+	 *
+	 * Should code instead be copying values explicitly and only
+	 * during IKE_AUTH?
+	 */
 	if (sa_type == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
-	}
-
-	child->sa.quirks = ike->sa.quirks;
-	child->sa.hidden_variables = ike->sa.hidden_variables;
-	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
-
-	if (sa_type == CHILD_SA) {
-#   define clone_nss_symkey_field(field)				\
-		child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
-
-		clone_nss_symkey_field(st_skeyid_nss);
-		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
-		clone_nss_symkey_field(st_skey_ai_nss); /* aka st_skeyid_a_nss */
-		clone_nss_symkey_field(st_skey_ar_nss);
-		clone_nss_symkey_field(st_skey_ei_nss); /* aka st_skeyid_e_nss */
-		clone_nss_symkey_field(st_skey_er_nss);
-		clone_nss_symkey_field(st_skey_pi_nss);
-		clone_nss_symkey_field(st_skey_pr_nss);
-		clone_nss_symkey_field(st_enc_key_nss);
-
-#   undef clone_nss_symkey_field
-
-		/* v2 duplication of state */
 #   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);
@@ -1237,16 +1232,19 @@ static struct child_sa *duplicate_state(struct connection *c,
 	}
 
 	/*
-	 * These are done because we need them in child st when
-	 * do_command() uses them to fill in our format string.
-	 * Maybe similarly to above for chunks, do this for all
-	 * strings on the state?
+	 * Due to IKEv1, these IKE (ISAKMP) SA fields need to be
+	 * copied to the Child SA so that they are still available
+	 * when the IKE (ISAKMP) SA gets deleted.
+	 *
+	 * For instance the "generic" Child SA code for up-down
+	 * expects .st_seen_cfg_dns, and the "generic" show-status
+	 * code expects the NAT result.
 	 */
-	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
-
+	child->sa.hidden_variables = ike->sa.hidden_variables;
 	child->sa.st_seen_cfg_dns = clone_str(ike->sa.st_seen_cfg_dns, "child st_seen_cfg_dns");
 	child->sa.st_seen_cfg_domains = clone_str(ike->sa.st_seen_cfg_domains, "child st_seen_cfg_domains");
 	child->sa.st_seen_cfg_banner = clone_str(ike->sa.st_seen_cfg_banner, "child st_seen_cfg_banner");
+	jam_str(child->sa.st_xauth_username, sizeof(child->sa.st_xauth_username), ike->sa.st_xauth_username);
 
 	return child;
 }
@@ -1265,6 +1263,16 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 		ike->sa.st_v1_seen_fragmentation_supported;
 	child->sa.st_v1_seen_fragments =
 		ike->sa.st_v1_seen_fragments;
+
+	child->sa.st_v1_quirks = ike->sa.st_v1_quirks;
+
+#   define clone_nss_symkey_field(field) child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
+	clone_nss_symkey_field(st_skeyid_nss);
+	clone_nss_symkey_field(st_skeyid_d_nss); /* aka st_skey_d_nss */
+	clone_nss_symkey_field(st_skeyid_a_nss); /* aka st_skey_ai_nss */
+	clone_nss_symkey_field(st_skeyid_e_nss); /* aka st_skey_ei_nss */
+	clone_nss_symkey_field(st_enc_key_nss);
+#   undef clone_nss_symkey_field
 
 	return child;
 }
@@ -1704,19 +1712,6 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 		}
 	}
 	return cpi;
-}
-
-void merge_quirks(struct state *st, const struct msg_digest *md)
-{
-	struct isakmp_quirks *dq = &st->quirks;
-	const struct isakmp_quirks *sq = &md->quirks;
-
-	dq->xauth_ack_msgid   |= sq->xauth_ack_msgid;
-	dq->modecfg_pull_mode |= sq->modecfg_pull_mode;
-	/* ??? st->quirks.qnat_traversal is never used */
-	if (dq->qnat_traversal_vid < sq->qnat_traversal_vid)
-		dq->qnat_traversal_vid = sq->qnat_traversal_vid;
-	dq->xauth_vid |= sq->xauth_vid;
 }
 
 /*
@@ -2182,73 +2177,77 @@ void wipe_old_connections(const struct ike_sa *ike)
  *
  * DANGER: this intentionally leaks cryptographic secrets.
  */
-void DBG_tcpdump_ike_sa_keys(const struct state *st)
+void LDBG_tcpdump_ike_sa_keys(struct logger *logger, const struct ike_sa *ike)
 {
 	passert(DBGP(DBG_PRIVATE));
 	passert(!is_fips_mode());
 
-	if (st->st_oakley.ta_integ == NULL ||
-	    st->st_oakley.ta_encrypt == NULL)
+	if (ike->sa.st_oakley.ta_integ == NULL ||
+	    ike->sa.st_oakley.ta_encrypt == NULL) {
 		return;
+	}
 
 	/* format initiator SPI */
 	char tispi[3 + 2*IKE_SA_SPI_SIZE];
-	datatot(st->st_ike_spis.initiator.bytes, sizeof(st->st_ike_spis.initiator.bytes),
+	datatot(ike->sa.st_ike_spis.initiator.bytes,
+		sizeof(ike->sa.st_ike_spis.initiator.bytes),
 		'x', tispi, sizeof(tispi));
 
 	/* format responder SPI */
 	char trspi[3 + 2*IKE_SA_SPI_SIZE];
-	datatot(st->st_ike_spis.responder.bytes, sizeof(st->st_ike_spis.responder.bytes),
+	datatot(ike->sa.st_ike_spis.responder.bytes,
+		sizeof(ike->sa.st_ike_spis.responder.bytes),
 		'x', trspi, sizeof(trspi));
 
-	const char *authalgo = st->st_oakley.ta_integ->integ_tcpdump_name;
-	const char *encalgo = st->st_oakley.ta_encrypt->encrypt_tcpdump_name;
+	const char *authalgo = ike->sa.st_oakley.ta_integ->integ_tcpdump_name;
+	const char *encalgo = ike->sa.st_oakley.ta_encrypt->encrypt_tcpdump_name;
 
 	/*
 	 * Text of encryption key length (suffix for encalgo).
 	 * No more than 3 digits, but compiler fears it might be 5.
 	 */
 	char tekl[6] = "";
-	if (st->st_oakley.enckeylen != 0)
+	if (ike->sa.st_oakley.enckeylen != 0) {
 		snprintf(tekl, sizeof(tekl), "%u",
-			 st->st_oakley.enckeylen);
+			 ike->sa.st_oakley.enckeylen);
+	}
 
 	/* v2 IKE authentication key for initiator (256 bit bound) */
-	chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss,
-				       st->logger);
+	chunk_t ai = chunk_from_symkey("ai", ike->sa.st_skey_ai_nss,
+				       ike->sa.logger);
 	char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
 	free_chunk_content(&ai);
 
 	/* v2 IKE encryption key for initiator (256 bit bound) */
-	chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss,
-				       st->logger);
+	chunk_t ei = chunk_from_symkey("ei", ike->sa.st_skey_ei_nss,
+				       ike->sa.logger);
 	char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
 	free_chunk_content(&ei);
 
-	DBG_log("ikev%d I %s %s %s:%s %s%s:%s",
-		st->st_ike_version,
+	LDBG_log(logger, "ikev%d I %s %s %s:%s %s%s:%s",
+		ike->sa.st_ike_version,
 		tispi, trspi,
 		authalgo, tai,
 		encalgo, tekl, tei);
 
 	/* v2 IKE authentication key for responder (256 bit bound) */
-	chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss,
-				       st->logger);
+	chunk_t ar = chunk_from_symkey("ar", ike->sa.st_skey_ar_nss,
+				       ike->sa.logger);
 	char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
 	free_chunk_content(&ar);
 
 	/* v2 IKE encryption key for responder (256 bit bound) */
-	chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss,
-				       st->logger);
+	chunk_t er = chunk_from_symkey("er", ike->sa.st_skey_er_nss,
+				       ike->sa.logger);
 	char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
 	datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
 	free_chunk_content(&er);
 
-	DBG_log("ikev%d R %s %s %s:%s %s%s:%s",
-		st->st_ike_version,
+	LDBG_log(logger, "ikev%d R %s %s %s:%s %s%s:%s",
+		ike->sa.st_ike_version,
 		tispi, trspi,
 		authalgo, tar,
 		encalgo, tekl, ter);

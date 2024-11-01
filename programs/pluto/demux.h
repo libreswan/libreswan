@@ -223,7 +223,7 @@ struct msg_digest {
 	 */
 	struct payload_digest *chain[LELEM_ROOF];
 	struct payload_digest *last[LELEM_ROOF];
-	struct isakmp_quirks quirks;
+	struct isakmp_quirks v1_quirks;
 };
 
 enum ike_version hdr_ike_version(const struct isakmp_hdr *hdr);
