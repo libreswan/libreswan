@@ -492,7 +492,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		/* as Responder, send best NAT VID we received */
-		if (!out_v1VID(&rbody, md->quirks.qnat_traversal_vid))
+		if (!out_v1VID(&rbody, md->v1_quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */

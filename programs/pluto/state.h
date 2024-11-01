@@ -653,7 +653,7 @@ struct state {
 	uint32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
 	struct state_event *st_v1_dpd_event;	/* backpointer for IKEv1 DPD events */
 
-	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
+	struct isakmp_quirks st_v1_quirks;	/* work arounds for faults in other products */
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_v1_seen_fragmentation_supported;	/* v1 frag vid */
 	bool st_v2_ike_fragmentation_enabled;	/* v2 frag notify */

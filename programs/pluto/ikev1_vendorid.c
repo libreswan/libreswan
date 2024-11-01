@@ -81,11 +81,11 @@ void handle_v1_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
-		if (md->quirks.qnat_traversal_vid < id) {
+		if (md->v1_quirks.qnat_traversal_vid < id) {
 			enum_buf idb;
 			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", id,
 			    str_vendorid(id, &idb));
-			md->quirks.qnat_traversal_vid = id;
+			md->v1_quirks.qnat_traversal_vid = id;
 		} else {
 			enum_buf idb;
 			dbg("ignoring older NAT-T Vendor ID payload [%s]",
@@ -107,15 +107,15 @@ void handle_v1_vendorid(struct msg_digest *md,
 	case VID_SSH_SENTINEL_1_4_1:
 		llog(RC_LOG, logger,
 			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
-		md->quirks.xauth_ack_msgid = true;
+		md->v1_quirks.xauth_ack_msgid = true;
 		break;
 
 	case VID_CISCO_UNITY:
-		md->quirks.modecfg_pull_mode = true;
+		md->v1_quirks.modecfg_pull_mode = true;
 		break;
 
 	case VID_MISC_XAUTH:
-		md->quirks.xauth_vid = true;
+		md->v1_quirks.xauth_vid = true;
 		break;
 
 	case VID_IKE_FRAGMENTATION:

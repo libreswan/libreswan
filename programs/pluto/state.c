@@ -1231,7 +1231,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 #   undef state_clone_chunk
 	}
 
-	child->sa.quirks = ike->sa.quirks;
 	child->sa.hidden_variables = ike->sa.hidden_variables;
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 
@@ -1264,6 +1263,8 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 		ike->sa.st_v1_seen_fragmentation_supported;
 	child->sa.st_v1_seen_fragments =
 		ike->sa.st_v1_seen_fragments;
+
+	child->sa.st_v1_quirks = ike->sa.st_v1_quirks;
 
 #   define clone_nss_symkey_field(field) child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
 	clone_nss_symkey_field(st_skeyid_nss);
@@ -1711,19 +1712,6 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 		}
 	}
 	return cpi;
-}
-
-void merge_quirks(struct state *st, const struct msg_digest *md)
-{
-	struct isakmp_quirks *dq = &st->quirks;
-	const struct isakmp_quirks *sq = &md->quirks;
-
-	dq->xauth_ack_msgid   |= sq->xauth_ack_msgid;
-	dq->modecfg_pull_mode |= sq->modecfg_pull_mode;
-	/* ??? st->quirks.qnat_traversal is never used */
-	if (dq->qnat_traversal_vid < sq->qnat_traversal_vid)
-		dq->qnat_traversal_vid = sq->qnat_traversal_vid;
-	dq->xauth_vid |= sq->xauth_vid;
 }
 
 /*

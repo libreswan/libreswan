@@ -1087,7 +1087,7 @@ static stf_status ikev1_xauth_callback(struct state *st,
 		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
-		if (st->quirks.xauth_ack_msgid)
+		if (st->st_v1_quirks.xauth_ack_msgid)
 			st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
 		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), name);
