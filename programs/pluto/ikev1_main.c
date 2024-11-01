@@ -100,6 +100,9 @@
 #include "terminate.h"
 
 static bool emit_message_padding(struct pbs_out *pbs, const struct state *st);
+static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
+static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
+static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
 static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa *ike)
 {
@@ -620,7 +623,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
-	replace_chunk(&ike->sa.st_p1isa, pbs_in_all(&sa_pd->pbs), "sa in main_inI1_outR1()");
+	replace_chunk(&ike->sa.st_p1isa, pbs_in_all(&sa_pd->pbs), __func__);
 
 	return STF_OK;
 }
@@ -634,11 +637,14 @@ stf_status main_inI1_outR1(struct state *null_st,
  *
  */
 
-static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
-
 stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO,
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	if (impair.drop_i2) {
 		dbg("dropping Main Mode I2 packet as per impair");
@@ -689,8 +695,11 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 					   chunk_t *nonce/*steal*/)
 {
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	ldbg_sa(ike, "main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-		ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, sending I2",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	/*
 	 * HDR out.
@@ -765,11 +774,14 @@ static stf_status main_inR1_outI2_continue(struct state *st,
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 
-static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
-
 stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO"",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
@@ -798,15 +810,18 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
  * We are precomputing the DH.
  * This also means that it isn't good at reporting an NSS error.
  */
-static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
 static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 					    struct msg_digest *null_md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	ldbg(ike->sa.logger,
-	     "main_inI2_outR2_calcdone for #%lu: calculate DH finished",
-	     ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": after dh-shared",
+	     __func__, pri_so(ike->sa.st_serialno));
+
+	/*no-md:in-background*/
 	PEXPECT(ike->sa.logger, null_md == NULL);
 	ike->sa.st_v1_offloaded_task_in_background = false;
 
@@ -846,9 +861,11 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 					    chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	ldbg(ike->sa.logger,
-	     "main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-	     ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, sending I2",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	passert(md != NULL);
 
@@ -982,6 +999,11 @@ static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	/*
 	 * XXX: have we been here before?
 	 *
@@ -1017,9 +1039,11 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 					   struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	ldbg(ike->sa.logger,
-	     "main_inR2_outI3_continue for #%lu: calculated DH, sending R1",
-	     ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": finished DH shared",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	passert(md != NULL);	/* ??? how would this fail? */
 
@@ -1239,6 +1263,11 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	pexpect(&ike->sa == md->v1_st);
 
 	/* handle case where NSS balked at generating DH */
@@ -1503,6 +1532,10 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	if (!v1_decode_certs(md)) {
 		llog(RC_LOG, ike->sa.logger, "X509: CERT payload bogus or revoked");
