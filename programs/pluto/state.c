@@ -1221,8 +1221,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
 		clone_nss_symkey_field(st_skey_ai_nss); /* aka st_skeyid_a_nss */
 		clone_nss_symkey_field(st_skey_ei_nss); /* aka st_skeyid_e_nss */
-		clone_nss_symkey_field(st_skey_pi_nss);
-		clone_nss_symkey_field(st_skey_pr_nss);
 		clone_nss_symkey_field(st_enc_key_nss);
 
 #   undef clone_nss_symkey_field
