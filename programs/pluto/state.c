@@ -1205,21 +1205,35 @@ static struct child_sa *duplicate_state(struct connection *c,
 	     ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
 	     child->sa.st_serialno, sa_type == CHILD_SA ? "IPSEC SA" : "IKE SA");
 
+	/*
+	 * Some sloppy value inheritance.
+	 *
+	 * A child created during IKE_AUTH uses the IKE SA's PRF,
+	 * while a child created using CREATE_CHILD_SA uses its own
+	 * negotiated PRF.
+	 *
+	 * A child created during IKE_AUTH uses the N[ir] from the IKE
+	 * SA's IKE_SA_INIT exchange, while a child created using
+	 * CREATE_CHILD_SA uses N[ir] from that exchange.
+	 *
+	 * See 2.17. Generating Keying Material for Child SAs
+	 *
+	 * IKEv1 probably does something similar.
+	 *
+	 * Should code instead be copying values explicitly and only
+	 * during IKE_AUTH?
+	 */
 	if (sa_type == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
-	}
-
-	child->sa.quirks = ike->sa.quirks;
-	child->sa.hidden_variables = ike->sa.hidden_variables;
-	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
-
-	if (sa_type == CHILD_SA) {
-		/* v2 duplication of state */
 #   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);
 #   undef state_clone_chunk
 	}
+
+	child->sa.quirks = ike->sa.quirks;
+	child->sa.hidden_variables = ike->sa.hidden_variables;
+	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 
 	/*
 	 * These are done because we need them in child st when
