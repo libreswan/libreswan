@@ -1214,17 +1214,6 @@ static struct child_sa *duplicate_state(struct connection *c,
 	passert(child->sa.st_ike_version == ike->sa.st_ike_version);
 
 	if (sa_type == CHILD_SA) {
-#   define clone_nss_symkey_field(field)				\
-		child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
-
-		clone_nss_symkey_field(st_skeyid_nss);
-		clone_nss_symkey_field(st_skey_d_nss); /* aka st_skeyid_d_nss */
-		clone_nss_symkey_field(st_skey_ai_nss); /* aka st_skeyid_a_nss */
-		clone_nss_symkey_field(st_skey_ei_nss); /* aka st_skeyid_e_nss */
-		clone_nss_symkey_field(st_enc_key_nss);
-
-#   undef clone_nss_symkey_field
-
 		/* v2 duplication of state */
 #   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
@@ -1261,6 +1250,14 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 		ike->sa.st_v1_seen_fragmentation_supported;
 	child->sa.st_v1_seen_fragments =
 		ike->sa.st_v1_seen_fragments;
+
+#   define clone_nss_symkey_field(field) child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
+	clone_nss_symkey_field(st_skeyid_nss);
+	clone_nss_symkey_field(st_skeyid_d_nss); /* aka st_skey_d_nss */
+	clone_nss_symkey_field(st_skeyid_a_nss); /* aka st_skey_ai_nss */
+	clone_nss_symkey_field(st_skeyid_e_nss); /* aka st_skey_ei_nss */
+	clone_nss_symkey_field(st_enc_key_nss);
+#   undef clone_nss_symkey_field
 
 	return child;
 }
