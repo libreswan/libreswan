@@ -896,7 +896,7 @@ struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 
 void connswitch_state_and_log(struct state *st, struct connection *c);
 
-void DBG_tcpdump_ike_sa_keys(const struct state *st);
+void LDBG_tcpdump_ike_sa_keys(struct logger *logger, const struct ike_sa *ike);
 
 /*
  * For iterating over the state DB.
