@@ -140,7 +140,7 @@ void calc_v1_skeyid_and_iv(struct state *st)
 			st->st_dh_shared_secret,
 			st->st_oakley.enckeylen / BITS_IN_BYTE,
 			&st->st_skeyid_nss,	/* output */
-			&st->st_skeyid_d_nss,	/* output */
+			&st->st_v1_isakmp_skeyid_d,	/* output */
 			&st->st_skeyid_a_nss,	/* output */
 			&st->st_skeyid_e_nss,	/* output */
 			&st->st_v1_new_iv,	/* output */

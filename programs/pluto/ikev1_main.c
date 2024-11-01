@@ -1017,7 +1017,7 @@ stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 	 */
 	symkey_delref(ike->sa.logger, "DH shared secret", &ike->sa.st_dh_shared_secret);
 	symkey_delref(ike->sa.logger, "skeyid", &ike->sa.st_skeyid_nss);
-	symkey_delref(ike->sa.logger, "skeyid_d", &ike->sa.st_skeyid_d_nss);
+	symkey_delref(ike->sa.logger, "skeyid_d", &ike->sa.st_v1_isakmp_skeyid_d);
 	symkey_delref(ike->sa.logger, "skeyid_a", &ike->sa.st_skeyid_a_nss);
 	symkey_delref(ike->sa.logger, "skeyid_e", &ike->sa.st_skeyid_e_nss);
 	symkey_delref(ike->sa.logger, "enc_key", &ike->sa.st_enc_key_nss);

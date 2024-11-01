@@ -1268,7 +1268,6 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 
 #   define clone_nss_symkey_field(field) child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
 	clone_nss_symkey_field(st_skeyid_nss);
-	clone_nss_symkey_field(st_skeyid_d_nss); /* aka st_skey_d_nss */
 	clone_nss_symkey_field(st_skeyid_a_nss); /* aka st_skey_ai_nss */
 	clone_nss_symkey_field(st_skeyid_e_nss); /* aka st_skey_ei_nss */
 	clone_nss_symkey_field(st_enc_key_nss);
