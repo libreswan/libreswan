@@ -1064,11 +1064,10 @@ static bool do_file_authentication(struct ike_sa *ike, const char *name,
 static pam_auth_callback_fn ikev1_xauth_callback;	/* type assertion */
 #endif
 
-static stf_status ikev1_xauth_callback(struct state *ike_sa,
+static stf_status ikev1_xauth_callback(struct ike_sa *ike,
 				       struct msg_digest *md UNUSED,
 				       const char *name, bool results)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1127,18 +1126,19 @@ struct xauth_immediate_context {
 };
 
 static resume_cb xauth_immediate_callback;
-static stf_status xauth_immediate_callback(struct state *st,
+static stf_status xauth_immediate_callback(struct state *ike_sa,
 					   struct msg_digest *md,
 					   void *arg)
 {
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa); /* could be NULL! */
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
-	if (st == NULL) {
+	if (ike == NULL) {
 		llog(RC_LOG, &global_logger,
 		     "XAUTH: #%lu: state destroyed for user '%s'",
 		     xic->serialno, xic->name);
 	} else {
 		/* ikev1_xauth_callback() will log result */
-		ikev1_xauth_callback(st, md, xic->name, xic->success);
+		ikev1_xauth_callback(ike, md, xic->name, xic->success);
 	}
 	pfree(xic->name);
 	md_delref(&xic->md);
@@ -1197,7 +1197,7 @@ static void xauth_launch_authent(struct ike_sa *ike,
 		llog(RC_LOG, ike->sa.logger,
 		     "XAUTH: PAM authentication method requested to authenticate user '%s'",
 		     arg_name);
-		pam_auth_fork_request(&ike->sa, md, arg_name, arg_password,
+		pam_auth_fork_request(ike, md, arg_name, arg_password,
 				      "XAUTH", ikev1_xauth_callback);
 		break;
 #endif

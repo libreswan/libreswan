@@ -22,10 +22,10 @@
 
 #include <stdbool.h>
 
-struct state;
+struct ike_sa;
 struct msg_digest;
 
-typedef stf_status pam_auth_callback_fn(struct state *st,
+typedef stf_status pam_auth_callback_fn(struct ike_sa *ike,
 					struct msg_digest *md,
 					const char *,
 					bool success);
@@ -33,9 +33,9 @@ typedef stf_status pam_auth_callback_fn(struct state *st,
 /*
  * XXX: Should XAUTH handle timeouts internally?
  */
-void pam_auth_abort(struct state *st, const char *story);
+void pam_auth_abort(struct ike_sa *ike, const char *story);
 
-bool pam_auth_fork_request(struct state *st,
+bool pam_auth_fork_request(struct ike_sa *ike,
 			   struct msg_digest *md,
 			   const char *name,
 			   const char *password,

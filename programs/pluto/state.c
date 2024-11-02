@@ -945,7 +945,10 @@ void delete_state(struct state *st)
 
 #ifdef USE_PAM_AUTH
 	if (st->st_pam_auth != NULL) {
-		pam_auth_abort(st, "deleting state");
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		if (ike != NULL) {
+			pam_auth_abort(ike, "deleting state");
+		}
 	}
 #endif
 
