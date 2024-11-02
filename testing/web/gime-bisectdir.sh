@@ -87,13 +87,13 @@ echo merging into all.json
 
 {
     {
-	jq '{ tests: . }' < ${bisectdir}/tests.json
 	jq '{ runs: . }' < ${bisectdir}/runs.json
 	while read testdir ; do
 	    # array of results
-	    jq 'reduce .[] as $d ([]; . += [$d.result] )' \
+	    jq --arg testdir ${testdir} \
+	       'reduce .[] as $d ({ ($testdir): [] }; .[$testdir] += [$d.result] )' \
 	       < ${bisectdir}/${testdir}.json
-	done < ${bisectdir}/tests.tmp | jq -s '{ results: . }'
+	done < ${bisectdir}/tests.tmp | jq -s 'add|{ results: .}'
     } > ${bisectdir}/all.tmp
     jq -s 'add' \
        < ${bisectdir}/all.tmp \
