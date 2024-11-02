@@ -18,6 +18,7 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_encrypt_ops.h"
+#include "lsw-pfkeyv2.h"
 
 /*
  * See: https://tools.ietf.org/html/rfc7634#section-2
