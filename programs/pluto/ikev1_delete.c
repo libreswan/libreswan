@@ -49,12 +49,12 @@
 #include "packet.h"
 #include "terminate.h"
 
-void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
+void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 {
 	ldbg(st->logger, "hacking around IKEv1 send'n'log delete for "PRI_SO" "PRI_WHERE,
 	     pri_so(st->st_serialno), pri_where(where));
 
-	if (!PEXPECT(st->logger, IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp->sa))) {
+	if (!PEXPECT(st->logger, IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa))) {
 		return;
 	}
 
@@ -92,8 +92,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 		return;
 	}
 
-	struct state *p1st = &isakmp->sa;
-	msgid = generate_msgid(p1st);
+	msgid = generate_msgid(&ike->sa);
 
 	uint8_t buffer[8192];	/* ??? large enough for any deletion notification? */
 	struct pbs_out reply_pbs = open_pbs_out("delete msg", buffer, sizeof(buffer), st->logger);
@@ -107,8 +106,8 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 			.isa_msgid = msgid,
 			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		};
-		hdr.isa_ike_initiator_spi = p1st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = p1st->st_ike_spis.responder;
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
 				   &r_hdr_pbs));
 	}
@@ -117,12 +116,12 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_v1_HASH(V1_HASH_1, "send delete",
 			  IMPAIR_v1_DELETE_EXCHANGE,
-			  p1st, &hash_fixup, &r_hdr_pbs)) {
+			  &ike->sa, &hash_fixup, &r_hdr_pbs)) {
 		return /* STF_INTERNAL_ERROR */;
 	}
 
 	/* Delete Payloads */
-	if (st == p1st) {
+	if (st == &ike->sa) {
 		struct isakmp_delete isad = {
 			.isad_doi = ISAKMP_DOI_IPSEC,
 			.isad_spisize = 2 * COOKIE_SIZE,
@@ -223,7 +222,7 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 	}
 
 	/* calculate hash value and patch into Hash Payload */
-	fixup_v1_HASH(p1st, &hash_fixup, msgid, r_hdr_pbs.cur);
+	fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, r_hdr_pbs.cur);
 
 	/*
 	 * Do a dance to avoid needing a new state object.
@@ -236,25 +235,25 @@ void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
 	{
 		struct crypt_mac old_iv;
 
-		save_iv(p1st, old_iv);
-		init_phase2_iv(p1st, &msgid);
+		save_iv(&ike->sa, old_iv);
+		init_phase2_iv(&ike->sa, &msgid);
 
-		passert(ikev1_close_and_encrypt_message(&r_hdr_pbs, p1st));
+		passert(ikev1_close_and_encrypt_message(&r_hdr_pbs, &ike->sa));
 
-		send_pbs_out_using_state(p1st, "delete notify", &reply_pbs);
+		send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);
 
 		/* get back old IV for this state */
-		restore_iv(p1st, old_iv);
+		restore_iv(&ike->sa, old_iv);
 	}
 }
 
-void llog_n_maybe_send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where)
+void llog_n_maybe_send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 {
-	llog_sa_delete_n_send(isakmp, st);
-	if (isakmp == NULL) {
+	llog_sa_delete_n_send(ike, st);
+	if (ike == NULL) {
 		on_delete(st, skip_send_delete);
 	} else {
-		send_v1_delete(isakmp, st, where);
+		send_v1_delete(ike, st, where);
 	}
 }
 
@@ -266,7 +265,7 @@ void llog_n_maybe_send_v1_delete(struct ike_sa *isakmp, struct state *st, where_
  * but mark it as bogus.
  */
 
-static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
+static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 						    uint8_t protoid,
 						    ipsec_spi_t spi,
 						    bool *bogus)
@@ -285,28 +284,28 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *p1,
 		if (!IS_CHILD_SA(sf.st)) {
 			continue;
 		}
-		struct child_sa *p2 = pexpect_child_sa(sf.st);
-		if (!IS_IPSEC_SA_ESTABLISHED(&p2->sa)) {
+		struct child_sa *child = pexpect_child_sa(sf.st);
+		if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 			continue;
 		}
-		if (!connections_can_share_parent(p1->sa.st_connection,
-						  p2->sa.st_connection)) {
+		if (!connections_can_share_parent(ike->sa.st_connection,
+						  child->sa.st_connection)) {
 			continue;
 		}
 		const struct ipsec_proto_info *pr =
-			(protoid == PROTO_IPSEC_AH ? &p2->sa.st_ah :
-			 &p2->sa.st_esp);
+			(protoid == PROTO_IPSEC_AH ? &child->sa.st_ah :
+			 &child->sa.st_esp);
 		if (pr->protocol == NULL) {
 			continue;
 		}
 		if (pr->outbound.spi == spi) {
 			*bogus = false;
-			return p2;
+			return child;
 		}
 
 		if (pr->inbound.spi == spi) {
 			*bogus = true;
-			bogusst = p2;
+			bogusst = child;
 			/* don't return! */
 		}
 	}
@@ -331,11 +330,11 @@ static bool handle_v1_delete_payload(struct state **stp,
 {
 	const struct isakmp_delete *d = &(p->payload.delete);
 
-	struct ike_sa *p1 = pexpect_ike_sa(*stp);
+	struct ike_sa *ike = pexpect_ike_sa(*stp);
 
 	if (d->isad_nospi == 0) {
-		llog_sa(RC_LOG, p1,
-			"ignoring Delete SA payload: no SPI");
+		llog(RC_LOG, ike->sa.logger,
+		     "ignoring Delete SA payload: no SPI");
 		return false;
 	}
 
@@ -357,25 +356,25 @@ static bool handle_v1_delete_payload(struct state **stp,
 	default:
 	{
 		esb_buf b;
-		llog_sa(RC_LOG, p1,
-			"ignoring Delete SA payload: unknown Protocol ID (%s)",
-			str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
+		llog(RC_LOG, ike->sa.logger,
+		     "ignoring Delete SA payload: unknown Protocol ID (%s)",
+		     str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
 	}
 	}
 
 	if (d->isad_spisize != sizespi) {
 		esb_buf b;
-		llog_sa(RC_LOG, p1,
-			"ignoring Delete SA payload: bad SPI size (%d) for %s",
-			d->isad_spisize,
-			str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
+		llog(RC_LOG, ike->sa.logger,
+		     "ignoring Delete SA payload: bad SPI size (%d) for %s",
+		     d->isad_spisize,
+		     str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
 		return false;
 	}
 
 	if (pbs_left(&p->pbs) != d->isad_nospi * sizespi) {
-		llog_sa(RC_LOG, p1,
-			"ignoring Delete SA payload: invalid payload size");
+		llog(RC_LOG, ike->sa.logger,
+		     "ignoring Delete SA payload: invalid payload size");
 		return false;
 	}
 
@@ -390,14 +389,14 @@ static bool handle_v1_delete_payload(struct state **stp,
 			passert(sizeof(cookies.initiator) == COOKIE_SIZE);
 			d = pbs_in_thing(&p->pbs, cookies.initiator, "iCookie");
 			if (d != NULL) {
-				llog(RC_LOG, p1->sa.logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				return false;
 			}
 
 			d = pbs_in_thing(&p->pbs, cookies.responder, "rCookie");
 			if (d != NULL) {
-				llog(RC_LOG, p1->sa.logger, "%s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 				pfree_diag(&d);
 				return false;
 			}
@@ -405,13 +404,13 @@ static bool handle_v1_delete_payload(struct state **stp,
 			/* this only finds ISAKMP SAs. Right!?! */
 			struct state *st = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
 			if (st == NULL) {
-				llog_sa(RC_LOG, p1,
-					"ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
+				llog(RC_LOG, ike->sa.logger,
+				     "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
 				continue;
 			}
 
 			if (!IS_PARENT_SA(st)) {
-				llog_pexpect(p1->sa.logger, HERE,
+				llog_pexpect(ike->sa.logger, HERE,
 					     "ignoring Delete SA payload: "PRI_SO" is not an ISAKMP SA",
 					     pri_so(st->st_serialno));
 				continue;
@@ -419,25 +418,25 @@ static bool handle_v1_delete_payload(struct state **stp,
 
 			struct ike_sa *dst = pexpect_ike_sa(st);
 
-			if (!same_peer_ids(p1->sa.st_connection,
+			if (!same_peer_ids(ike->sa.st_connection,
 					   dst->sa.st_connection)) {
 				/*
 				 * we've not authenticated the relevant
 				 * identities
 				 */
-				llog_sa(RC_LOG, p1,
-					"ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
+				llog(RC_LOG, ike->sa.logger,
+				     "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
 				continue;
 			}
 
 			/* note: this code is cloned for handling self_delete */
-			llog_sa(RC_LOG, p1,
-				"received Delete SA payload: %sdeleting ISAKMP State "PRI_SO,
-				(dst == p1 ? "self-" : ""),
-				pri_so(dst->sa.st_serialno));
+			llog(RC_LOG, ike->sa.logger,
+			     "received Delete SA payload: %sdeleting ISAKMP State "PRI_SO,
+			     (dst == ike ? "self-" : ""),
+			     pri_so(dst->sa.st_serialno));
 			if (dst->sa.st_connection->config->ikev1_natt != NATT_NONE) {
 				nat_traversal_change_port_lookup(md, &dst->sa);
-				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
+				v1_maybe_natify_initiator_endpoints(&ike->sa, HERE);
 			}
 			/*
 			 * IKEv1 semantics: when an ISAKMP is deleted
@@ -445,12 +444,12 @@ static bool handle_v1_delete_payload(struct state **stp,
 			 * is to delete both then two messages are
 			 * sent.
 			 */
-			bool self_inflicted = (dst == p1);
+			bool self_inflicted = (dst == ike);
 			connection_delete_ike(&dst, HERE);
 			if (self_inflicted) {
 				/* bail; IKE SA no longer viable */
 				*stp = md->v1_st = NULL;
-				dst = p1 = NULL;
+				dst = ike = NULL;
 				return true; /* caller will see ST==NULL */
 			}
 		} else {
@@ -460,42 +459,42 @@ static bool handle_v1_delete_payload(struct state **stp,
 			ipsec_spi_t spi;	/* network order */
 			diag_t dt = pbs_in_thing(&p->pbs, spi, "SPI");
 			if (dt != NULL) {
-				llog(RC_LOG, p1->sa.logger, "%s", str_diag(dt));
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(dt));
 				pfree_diag(&dt);
 				return false;
 			}
 
 			bool bogus;
-			struct child_sa *p2d = find_phase2_state_to_delete(p1,
+			struct child_sa *p2d = find_phase2_state_to_delete(ike,
 									   d->isad_protoid,
 									   spi,
 									   &bogus);
 			if (p2d == NULL) {
 				esb_buf b;
-				llog_sa(RC_LOG, p1,
-					"ignoring Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" not found (maybe expired)",
-					str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
-					pri_ipsec_spi(spi));
+				llog(RC_LOG, ike->sa.logger,
+				     "ignoring Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" not found (maybe expired)",
+				     str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
+				     pri_ipsec_spi(spi));
 				continue;
 			}
 
-			passert(&p1->sa != &p2d->sa);	/* st is an IKE SA */
+			passert(&ike->sa != &p2d->sa);	/* st is an IKE SA */
 			if (bogus) {
 				esb_buf b;
-				llog_sa(RC_LOG, p1,
-					"warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
-					str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
-					pri_ipsec_spi(spi));
+				llog(RC_LOG, ike->sa.logger,
+				     "warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
+				     str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
+				     pri_ipsec_spi(spi));
 			}
 
 			if (p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
 				nat_traversal_change_port_lookup(md, &p2d->sa);
-				v1_maybe_natify_initiator_endpoints(&p1->sa, HERE);
+				v1_maybe_natify_initiator_endpoints(&ike->sa, HERE);
 			}
 
 			llog_sa(RC_LOG, p2d,
 				"received Delete SA payload via "PRI_SO,
-				pri_so(p1->sa.st_serialno));
+				pri_so(ike->sa.st_serialno));
 			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/
 			connection_delete_child(&p2d, HERE);
 
