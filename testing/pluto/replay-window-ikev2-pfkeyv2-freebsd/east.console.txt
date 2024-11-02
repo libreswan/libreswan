@@ -14,22 +14,22 @@ east #
 "westnet-eastnet-null":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "westnet-eastnet-null":   my_updown=ipsec _updown;
 "westnet-eastnet-null":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-"westnet-eastnet-null":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"westnet-eastnet-null":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-null":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-null":   sec_label:unset;
 "westnet-eastnet-null":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-null":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-null":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-null":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"westnet-eastnet-null":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-null":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"westnet-eastnet-null":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-null":   v2-auth-hash-policy: none;
 "westnet-eastnet-null":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-null":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-null":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-null":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-null":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-null":   routing: unrouted;
-"westnet-eastnet-null":   conn serial: $1;
+"westnet-eastnet-null":   conn serial: $7;
 east #
  echo "initdone"
 initdone

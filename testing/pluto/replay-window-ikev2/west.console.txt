@@ -1,0 +1,102 @@
+../../guestbin/prep.sh
+'ipsec.conf' -> '/etc/ipsec.conf'
+'ipsec.secrets' -> '/etc/ipsec.secrets'
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec auto --up westnet-eastnet-default
+"westnet-eastnet-default" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-default" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-default" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet-default" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-default" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-default" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+	replay-window 0 flag af-unspec esn
+	 replay_window 0, bitmap-length 0
+	replay-window 0 flag af-unspec esn
+	 replay_window 128, bitmap-length 4
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec auto --up westnet-eastnet-0
+"westnet-eastnet-0" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-0" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-0" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet-0" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-0" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+	replay-window 0 flag af-unspec
+	replay-window 0 flag af-unspec
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec auto --up westnet-eastnet-64
+"westnet-eastnet-64" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-64" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-64" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet-64" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-64" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-64" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+	replay-window 0 flag af-unspec esn
+	 replay_window 0, bitmap-length 0
+	replay-window 0 flag af-unspec esn
+	 replay_window 64, bitmap-length 2
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec auto --up westnet-eastnet-256
+"westnet-eastnet-256" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-256" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-256" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet-256" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-256" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-256" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+	replay-window 0 flag af-unspec esn
+	 replay_window 0, bitmap-length 0
+	replay-window 0 flag af-unspec esn
+	 replay_window 256, bitmap-length 8
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ echo done
+done
+west #
+ 
