@@ -2099,7 +2099,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						return STF_INTERNAL_ERROR;
 
 					if (ike->sa.st_xauth_username[0] == '\0') {
-						if (!whack_prompt_for(&ike->sa,
+						if (!whack_prompt_for(ike,
 								      "Username",
 								      true,
 								      xauth_username,
@@ -2163,7 +2163,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 					if (ike->sa.st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
-						if (!whack_prompt_for(&ike->sa,
+						if (!whack_prompt_for(ike,
 								      "Password",
 								      false,
 								      xauth_password,

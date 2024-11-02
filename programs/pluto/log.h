@@ -26,6 +26,7 @@
 #include "ip_endpoint.h"
 #include "monotime.h"
 
+struct ike_sa;
 struct state;
 struct connection;
 struct msg_digest;
@@ -55,7 +56,7 @@ void show_log(struct show *s);
 extern bool log_to_audit;
 extern char *pluto_stats_binary;
 
-extern bool whack_prompt_for(struct state *st,
+extern bool whack_prompt_for(struct ike_sa *ike,
 			     const char *prompt,
 			     bool echo,
 			     char *ansbuf,
