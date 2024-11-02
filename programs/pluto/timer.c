@@ -278,10 +278,15 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 #ifdef USE_IKEv1
 	case EVENT_v1_SEND_XAUTH:
+	{
 		ldbg(st->logger, "XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
 		     st->st_serialno, st->st_state->name);
-		xauth_send_request(st);
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		if (ike != NULL) {
+			xauth_send_request(ike);
+		}
 		break;
+	}
 #endif
 
 	case EVENT_v2_LIVENESS:
@@ -503,22 +508,31 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	case EVENT_v1_DPD:
 		event_v1_dpd(st);
 		break;
+#endif
 
+#ifdef USE_IKEv1
 	case EVENT_v1_DPD_TIMEOUT:
 		event_v1_dpd_timeout(st);
 		break;
+#endif
 
+#ifdef USE_IKEv1
 #ifdef USE_PAM_AUTH
 	case EVENT_v1_PAM_TIMEOUT:
+	{
 		ldbg(st->logger, "PAM thread timeout on state #%lu", st->st_serialno);
-		pam_auth_abort(st, "timeout");
-		/*
-		 * Things get cleaned up when the PAM process exits.
-		 *
-		 * Should this schedule an event for the case when the
-		 * child process (which is SIGKILLed) doesn't exit!?!
-		 */
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		if (ike != NULL) {
+			pam_auth_abort(ike, "timeout");
+			/*
+			 * Things get cleaned up when the PAM process exits.
+			 *
+			 * Should this schedule an event for the case when the
+			 * child process (which is SIGKILLed) doesn't exit!?!
+			 */
+		}
 		break;
+	}
 #endif
 #endif
 	case EVENT_v1_CRYPTO_TIMEOUT:

@@ -27,9 +27,6 @@ struct payload_digest;
 struct state;
 struct jambuf;
 
-extern stf_status send_isakmp_notification(struct state *st,
-					   uint16_t type, const void *data,
-					   size_t len);
 extern void jam_child_sa_details(struct jambuf *buf, struct state *st);
 extern void jam_parent_sa_details(struct jambuf *buf, struct state *st);
 

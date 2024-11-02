@@ -49,7 +49,8 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,
 				       struct logger *logger);
 
-struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
+struct crypt_mac main_mode_hash(struct ike_sa *ike,
+				enum sa_role role,
 				shunk_t id_payload);  /* ID payload, including header */
 
 void doi_log_cert_thinking(uint16_t auth,

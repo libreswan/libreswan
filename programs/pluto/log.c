@@ -179,23 +179,23 @@ static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum r
 /*
  * Interactive input from the whack user, using current whack_fd
  */
-bool whack_prompt_for(struct state *st,
+bool whack_prompt_for(struct ike_sa *ike,
 		      const char *prompt,
 		      bool echo, char *ansbuf, size_t ansbuf_len)
 {
 	/* find an fd */
-	struct fd *whack_fd = logger_fd(st->logger);
+	struct fd *whack_fd = logger_fd(ike->sa.logger);
 	if (whack_fd == NULL) {
-		log_state(RC_LOG, st,
-			  "XAUTH password requested, but no file descriptor available for prompt");
+		llog(RC_LOG, ike->sa.logger,
+		     "XAUTH password requested, but no file descriptor available for prompt");
 		return false;
 	}
 
-	ldbg(st->logger, "prompting whack for %s using "PRI_FD,
+	ldbg(ike->sa.logger, "prompting whack for %s using "PRI_FD,
 	     prompt, pri_fd(whack_fd));
 
 	JAMBUF(buf) {
-		jam_logger_prefix(buf, st->logger);
+		jam_logger_prefix(buf, ike->sa.logger);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
 		jambuf_to_whack(buf, whack_fd,
@@ -204,13 +204,13 @@ bool whack_prompt_for(struct state *st,
 
 	ssize_t n = fd_read(whack_fd, ansbuf, ansbuf_len);
 	if (n < 0) {
-		llog_errno(RC_LOG, st->logger, (-(int)n),
+		llog_errno(RC_LOG, ike->sa.logger, (-(int)n),
 			   "read(whackfd) failed: ");
 		return false;
 	}
 
 	if (n == 0) {
-		log_state(RC_LOG, st, "no %s entered, aborted", prompt);
+		llog(RC_LOG, ike->sa.logger, "no %s entered, aborted", prompt);
 		return false;
 	}
 

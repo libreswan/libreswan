@@ -439,12 +439,11 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 static pam_auth_callback_fn ikev2_pam_continue;	/* type assertion */
 
-static stf_status ikev2_pam_continue(struct state *ike_st,
+static stf_status ikev2_pam_continue(struct ike_sa *ike,
 				     struct msg_digest *md,
 				     const char *name UNUSED,
 				     bool success)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
@@ -762,7 +761,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		llog_sa(RC_LOG, ike,
 			"IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 			thatid);
-		if (!pam_auth_fork_request(&ike->sa, md, thatid, "password",
+		if (!pam_auth_fork_request(ike, md, thatid, "password",
 					   "IKEv2", ikev2_pam_continue)) {
 			return STF_FATAL;
 		}

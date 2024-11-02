@@ -945,7 +945,10 @@ void delete_state(struct state *st)
 
 #ifdef USE_PAM_AUTH
 	if (st->st_pam_auth != NULL) {
-		pam_auth_abort(st, "deleting state");
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		if (ike != NULL) {
+			pam_auth_abort(ike, "deleting state");
+		}
 	}
 #endif
 
@@ -1268,7 +1271,6 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 
 #   define clone_nss_symkey_field(field) child->sa.field = symkey_addref(ike->sa.logger, #field, ike->sa.field)
 	clone_nss_symkey_field(st_skeyid_nss);
-	clone_nss_symkey_field(st_skeyid_d_nss); /* aka st_skey_d_nss */
 	clone_nss_symkey_field(st_skeyid_a_nss); /* aka st_skey_ai_nss */
 	clone_nss_symkey_field(st_skeyid_e_nss); /* aka st_skey_ei_nss */
 	clone_nss_symkey_field(st_enc_key_nss);

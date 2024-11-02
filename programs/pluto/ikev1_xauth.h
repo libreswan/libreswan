@@ -21,9 +21,9 @@
 struct state;	/* so state.h is not a prerequisite */
 struct msg_digest;	/* so demux.h is not a prerequisite */
 
-extern stf_status xauth_send_request(struct state *st);
+extern stf_status xauth_send_request(struct ike_sa *ike);
 
-extern stf_status modecfg_start_set(struct state *st);
+extern stf_status modecfg_start_set(struct ike_sa *ike);
 
 /* XAUTH state transitions */
 
@@ -35,6 +35,7 @@ extern ikev1_state_transition_fn xauth_inI0;
 extern ikev1_state_transition_fn xauth_inI1;
 
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
-extern stf_status modecfg_send_request(struct state *st);
+
+extern stf_status modecfg_send_request(struct ike_sa *ike);
 
 #endif  /* XAUTH_H */

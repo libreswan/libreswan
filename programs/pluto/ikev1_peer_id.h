@@ -28,7 +28,8 @@
 
 #include "shunk.h"
 
-stf_status oakley_auth(struct msg_digest *md, enum sa_role sa_role, shunk_t id_payload);
+stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
+		       enum sa_role sa_role, shunk_t id_payload);
 
 bool ikev1_decode_peer_id_initiator(struct ike_sa *ike, struct msg_digest *md);
 

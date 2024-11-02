@@ -100,6 +100,9 @@
 #include "terminate.h"
 
 static bool emit_message_padding(struct pbs_out *pbs, const struct state *st);
+static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
+static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
+static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
 static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa *ike)
 {
@@ -259,23 +262,23 @@ struct ike_sa *main_outI1(struct connection *c,
  * See draft-ietf-ipsec-ike-01.txt 4.1 and 6.1.1.2
  */
 
-static void main_mode_hash_body(struct state *st,
+static void main_mode_hash_body(struct ike_sa *ike,
 				enum sa_role role,
 				shunk_t id_payload, /* ID payload, including header */
 				struct crypt_prf *ctx)
 {
 	switch (role) {
 	case SA_INITIATOR:
-		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
-		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
-		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
-		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
+		crypt_prf_update_hunk(ctx, "gi", ike->sa.st_gi);
+		crypt_prf_update_hunk(ctx, "gr", ike->sa.st_gr);
+		crypt_prf_update_thing(ctx, "initiator", ike->sa.st_ike_spis.initiator);
+		crypt_prf_update_thing(ctx, "responder", ike->sa.st_ike_spis.responder);
 		break;
 	case SA_RESPONDER:
-		crypt_prf_update_hunk(ctx, "gr", st->st_gr);
-		crypt_prf_update_hunk(ctx, "gi", st->st_gi);
-		crypt_prf_update_thing(ctx, "responder", st->st_ike_spis.responder);
-		crypt_prf_update_thing(ctx, "initiator", st->st_ike_spis.initiator);
+		crypt_prf_update_hunk(ctx, "gr", ike->sa.st_gr);
+		crypt_prf_update_hunk(ctx, "gi", ike->sa.st_gi);
+		crypt_prf_update_thing(ctx, "responder", ike->sa.st_ike_spis.responder);
+		crypt_prf_update_thing(ctx, "initiator", ike->sa.st_ike_spis.initiator);
 		break;
 	default:
 		bad_case(role);
@@ -283,13 +286,13 @@ static void main_mode_hash_body(struct state *st,
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("hashing %zu bytes of SA",
-			st->st_p1isa.len - sizeof(struct isakmp_generic));
+			ike->sa.st_p1isa.len - sizeof(struct isakmp_generic));
 	}
 
 	/* SA_b */
 	crypt_prf_update_bytes(ctx, "p1isa",
-			       st->st_p1isa.ptr + sizeof(struct isakmp_generic),
-			       st->st_p1isa.len - sizeof(struct isakmp_generic));
+			       ike->sa.st_p1isa.ptr + sizeof(struct isakmp_generic),
+			       ike->sa.st_p1isa.len - sizeof(struct isakmp_generic));
 
 	/*
 	 * Hash identification payload, without generic payload header
@@ -305,15 +308,15 @@ static void main_mode_hash_body(struct state *st,
 	crypt_prf_update_hunk(ctx, "idpl", id_body);
 }
 
-struct crypt_mac main_mode_hash(struct state *st,
+struct crypt_mac main_mode_hash(struct ike_sa *ike,
 				enum sa_role role,
 				shunk_t id_payload) /* ID payload, including header */
 {
 	struct crypt_prf *ctx = crypt_prf_init_symkey("main mode",
-						      st->st_oakley.ta_prf,
-						      "skeyid", st->st_skeyid_nss,
-						      st->logger);
-	main_mode_hash_body(st, role, id_payload, ctx);
+						      ike->sa.st_oakley.ta_prf,
+						      "skeyid", ike->sa.st_skeyid_nss,
+						      ike->sa.logger);
+	main_mode_hash_body(ike, role, id_payload, ctx);
 	return crypt_prf_final_mac(&ctx, NULL);
 }
 
@@ -620,7 +623,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
-	replace_chunk(&ike->sa.st_p1isa, pbs_in_all(&sa_pd->pbs), "sa in main_inI1_outR1()");
+	replace_chunk(&ike->sa.st_p1isa, pbs_in_all(&sa_pd->pbs), __func__);
 
 	return STF_OK;
 }
@@ -634,11 +637,14 @@ stf_status main_inI1_outR1(struct state *null_st,
  *
  */
 
-static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
-
 stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO,
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	if (impair.drop_i2) {
 		dbg("dropping Main Mode I2 packet as per impair");
@@ -689,8 +695,11 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 					   chunk_t *nonce/*steal*/)
 {
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	ldbg_sa(ike, "main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-		ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, sending I2",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	/*
 	 * HDR out.
@@ -765,11 +774,14 @@ static stf_status main_inR1_outI2_continue(struct state *st,
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 
-static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
-
 stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO"",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
@@ -798,15 +810,18 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
  * We are precomputing the DH.
  * This also means that it isn't good at reporting an NSS error.
  */
-static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
 static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 					    struct msg_digest *null_md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	ldbg(ike->sa.logger,
-	     "main_inI2_outR2_calcdone for #%lu: calculate DH finished",
-	     ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": after dh-shared",
+	     __func__, pri_so(ike->sa.st_serialno));
+
+	/*no-md:in-background*/
 	PEXPECT(ike->sa.logger, null_md == NULL);
 	ike->sa.st_v1_offloaded_task_in_background = false;
 
@@ -846,9 +861,11 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 					    chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	ldbg(ike->sa.logger,
-	     "main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-	     ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": calculated ke+nonce, sending I2",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	passert(md != NULL);
 
@@ -982,6 +999,11 @@ static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	/*
 	 * XXX: have we been here before?
 	 *
@@ -995,7 +1017,7 @@ stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 	 */
 	symkey_delref(ike->sa.logger, "DH shared secret", &ike->sa.st_dh_shared_secret);
 	symkey_delref(ike->sa.logger, "skeyid", &ike->sa.st_skeyid_nss);
-	symkey_delref(ike->sa.logger, "skeyid_d", &ike->sa.st_skeyid_d_nss);
+	symkey_delref(ike->sa.logger, "skeyid_d", &ike->sa.st_v1_isakmp_skeyid_d);
 	symkey_delref(ike->sa.logger, "skeyid_a", &ike->sa.st_skeyid_a_nss);
 	symkey_delref(ike->sa.logger, "skeyid_e", &ike->sa.st_skeyid_e_nss);
 	symkey_delref(ike->sa.logger, "enc_key", &ike->sa.st_enc_key_nss);
@@ -1017,9 +1039,11 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 					   struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	ldbg(ike->sa.logger,
-	     "main_inR2_outI3_continue for #%lu: calculated DH, sending R1",
-	     ike->sa.st_serialno);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": finished DH shared",
+	     __func__, pri_so(ike->sa.st_serialno));
 
 	passert(md != NULL);	/* ??? how would this fail? */
 
@@ -1169,7 +1193,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* HASH_I or SIG_I out */
 	{
-		struct crypt_mac hash = main_mode_hash(&ike->sa, SA_INITIATOR,
+		struct crypt_mac hash = main_mode_hash(ike, SA_INITIATOR,
 						       pbs_out_all(&id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
@@ -1239,6 +1263,11 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
 	pexpect(&ike->sa == md->v1_st);
 
 	/* handle case where NSS balked at generating DH */
@@ -1265,7 +1294,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	/* HASH_I or SIG_I */
 
 	/* responder authenticating initiator */
-	stf_status r = oakley_auth(md, SA_INITIATOR, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
+	stf_status r = oakley_auth(ike, md, SA_INITIATOR, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
 	if (r != STF_OK) {
 		return r;
 	}
@@ -1386,7 +1415,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* HASH_R or SIG_R out */
 	{
-		struct crypt_mac hash = main_mode_hash(&ike->sa, SA_RESPONDER,
+		struct crypt_mac hash = main_mode_hash(ike, SA_RESPONDER,
 						       pbs_out_all(&r_id_pbs));
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
@@ -1503,6 +1532,10 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	if (!v1_decode_certs(md)) {
 		llog(RC_LOG, ike->sa.logger, "X509: CERT payload bogus or revoked");
@@ -1528,7 +1561,7 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 	/* HASH_R or SIG_R */
 
 	/* initiator authenticating responder */
-	stf_status r = oakley_auth(md, SA_RESPONDER, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
+	stf_status r = oakley_auth(ike, md, SA_RESPONDER, pbs_in_all(&md->chain[ISAKMP_NEXT_ID]->pbs));
 	if (r != STF_OK) {
 		return r;
 	}
@@ -1565,91 +1598,6 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 	update_iv(&ike->sa); /* finalize our Phase 1 IV */
 
 	return STF_OK;
-}
-
-stf_status send_isakmp_notification(struct state *st,
-				    uint16_t type, const void *data,
-				    size_t len)
-{
-	msgid_t msgid;
-	struct pbs_out rbody;
-
-	msgid = generate_msgid(st);
-
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), st->logger);
-
-	/* HDR* */
-	{
-		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_INFO,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = msgid,
-		};
-		hdr.isa_ike_initiator_spi = st->st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = st->st_ike_spis.responder;
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
-			return STF_INTERNAL_ERROR;
-	}
-
-	struct v1_hash_fixup hash_fixup;
-	if (!emit_v1_HASH(V1_HASH_1, "notification",
-			  IMPAIR_v1_NOTIFICATION_EXCHANGE,
-			  st, &hash_fixup, &rbody)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* NOTIFY */
-	{
-		struct pbs_out notify_pbs;
-		struct isakmp_notification isan = {
-			.isan_doi = ISAKMP_DOI_IPSEC,
-			.isan_protoid = PROTO_ISAKMP,
-			.isan_spisize = COOKIE_SIZE * 2,
-			.isan_type = type,
-		};
-		if (!out_struct(&isan, &isakmp_notification_desc, &rbody,
-					&notify_pbs) ||
-		    !out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE, &notify_pbs,
-				"notify icookie") ||
-		    !out_raw(st->st_ike_spis.responder.bytes, COOKIE_SIZE, &notify_pbs,
-				"notify rcookie"))
-			return STF_INTERNAL_ERROR;
-
-		if (data != NULL && len > 0)
-			if (!out_raw(data, len, &notify_pbs, "notify data"))
-				return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&notify_pbs);
-	}
-
-	fixup_v1_HASH(st, &hash_fixup, msgid, rbody.cur);
-
-	/*
-	 * save old IV (this prevents from copying a whole new state object
-	 * for NOTIFICATION / DELETE messages we don't need to maintain a state
-	 * because there are no retransmissions...
-	 */
-	{
-		struct crypt_mac old_new_iv;
-		struct crypt_mac old_iv;
-
-		save_iv(st, old_iv);
-		save_new_iv(st, old_new_iv);
-
-		init_phase2_iv(st, &msgid);
-		if (!ikev1_close_and_encrypt_message(&rbody, st))
-			return STF_INTERNAL_ERROR;
-
-		send_pbs_out_using_state(st, "ISAKMP notify", &reply_stream);
-
-		/* get back old IV for this state */
-		restore_iv(st, old_iv);
-		restore_new_iv(st, old_new_iv);
-	}
-
-	return STF_IGNORE;
 }
 
 /*

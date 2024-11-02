@@ -559,12 +559,9 @@ struct state {
 	chunk_t st_p1isa;	/* v1 Phase 1 initiator SA (Payload) for HASH */
 
 	PK11SymKey *st_skeyid_nss;	/* v1 Key material */
+#define st_v1_isakmp_skeyid_d st_skey_d_nss
 
-	/* v1 names are aliases for subset of v2 fields (#define) */
-
-#define st_skeyid_d_nss st_skey_d_nss	/* v1 KM for non-ISAKMP key derivation */
 	PK11SymKey *st_skey_d_nss;	/* v2 KM for non-ISAKMP key derivation */
-
 #define st_skeyid_a_nss st_skey_ai_nss	/* v1 IKE authentication KM */
 	PK11SymKey *st_skey_ai_nss;	/* v2 IKE authentication key for initiator */
 	PK11SymKey *st_skey_ar_nss;	/* v2 IKE authentication key for responder */

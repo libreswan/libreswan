@@ -220,7 +220,8 @@ static bool emit_subnet_id(enum perspective perspective,
  * RFC 2409 "IKE" section 5.5
  * specifies how this is to be done.
  */
-static bool compute_proto_keymat(struct child_sa *child,
+static bool compute_proto_keymat(struct ike_sa *ike,
+				 struct child_sa *child,
 				 uint8_t protoid,
 				 struct ipsec_proto_info *pi,
 				 const char *satypename)
@@ -267,7 +268,7 @@ static bool compute_proto_keymat(struct child_sa *child,
 
 	free_chunk_content(&pi->inbound.keymat);
 	pi->inbound.keymat = ikev1_section_5_keymat(child->sa.st_oakley.ta_prf,
-						    child->sa.st_skeyid_d_nss,
+						    ike->sa.st_v1_isakmp_skeyid_d,
 						    child->sa.st_dh_shared_secret,
 						    protoid,
 						    THING_AS_SHUNK(pi->inbound.spi),
@@ -278,7 +279,7 @@ static bool compute_proto_keymat(struct child_sa *child,
 
 	free_chunk_content(&pi->outbound.keymat);
 	pi->outbound.keymat = ikev1_section_5_keymat(child->sa.st_oakley.ta_prf,
-						     child->sa.st_skeyid_d_nss,
+						     ike->sa.st_v1_isakmp_skeyid_d,
 						     child->sa.st_dh_shared_secret,
 						     protoid,
 						     THING_AS_SHUNK(pi->outbound.spi),
@@ -296,12 +297,14 @@ static bool compute_proto_keymat(struct child_sa *child,
 	return true;
 }
 
-static bool compute_keymats(struct child_sa *child)
+static bool compute_keymats(struct ike_sa *ike, struct child_sa *child)
 {
 	if (child->sa.st_ah.protocol == &ip_protocol_ah)
-		return compute_proto_keymat(child, PROTO_IPSEC_AH, &child->sa.st_ah, "AH");
+		return compute_proto_keymat(ike, child, PROTO_IPSEC_AH,
+					    &child->sa.st_ah, "AH");
 	if (child->sa.st_esp.protocol == &ip_protocol_esp)
-		return compute_proto_keymat(child, PROTO_IPSEC_ESP, &child->sa.st_esp, "ESP");
+		return compute_proto_keymat(ike, child, PROTO_IPSEC_ESP,
+					    &child->sa.st_esp, "ESP");
 	return false;
 }
 
@@ -1584,7 +1587,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
 	/* Derive new keying material */
-	if (!compute_keymats(child)) {
+	if (!compute_keymats(ike, child)) {
 		return STF_FATAL;
 	}
 
@@ -1776,7 +1779,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, NULL);
 
 	/* Derive new keying material */
-	compute_keymats(child);
+	compute_keymats(ike, child);
 
 	/* Tell the kernel to establish the inbound, outbound, and routing part
 	 * of the new SA (unless the commit bit is set -- which we don't support).

@@ -62,19 +62,19 @@ static void pam_auth_free(struct pam_auth **p)
  * the pamauth request has already been deleted.  Need to pass in
  * st_callback, but only when it needs to notify an abort.
  */
-void pam_auth_abort(struct state *st, const char *story)
+void pam_auth_abort(struct ike_sa *ike, const char *story)
 {
-	struct pam_auth *pamauth = st->st_pam_auth;
+	struct pam_auth *pamauth = ike->sa.st_pam_auth;
 
 	if (pamauth == NULL) {
-		llog_pexpect(st->logger, HERE,
+		llog_pexpect(ike->sa.logger, HERE,
 			     "PAM: %s while authenticating yet no PAM process to abort",
 			     story);
 		return;
 	}
 
 	pstats_pamauth_aborted++;
-	passert(pamauth->serialno == st->st_serialno);
+	passert(pamauth->serialno == ike->sa.st_serialno);
 	pamauth->aborted = story;
 	dbg("PAM: #%lu: %s while authenticating '%s'; aborting PAM",
 	    pamauth->serialno, story, pamauth->ptarg.name);
@@ -94,7 +94,7 @@ void pam_auth_abort(struct state *st, const char *story)
 	 * Free ST of any responsibility for releasing .st_pam_auth
 	 * (the fork handler will do that later).
 	 */
-	st->st_pam_auth = NULL; /* aborted */
+	ike->sa.st_pam_auth = NULL; /* aborted */
 
 }
 
@@ -143,7 +143,10 @@ static stf_status pam_callback(struct state *st,
 	stf_status ret = STF_OK;
 	if (st != NULL) {
 		st->st_pam_auth = NULL; /* all done */
-		ret = pamauth->callback(st, md, pamauth->ptarg.name, success);
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		if (ike != NULL) {
+			ret = pamauth->callback(ike, md, pamauth->ptarg.name, success);
+		}
 	}
 
 	pam_auth_free(&pamauth);
@@ -167,14 +170,14 @@ static int pam_child(void *arg, struct logger *logger)
 	return success ? 0 : 1;
 }
 
-bool pam_auth_fork_request(struct state *st,
+bool pam_auth_fork_request(struct ike_sa *ike,
 			   struct msg_digest *md,
 			   const char *name,
 			   const char *password,
 			   const char *atype,
 			   pam_auth_callback_fn *callback)
 {
-	so_serial_t serialno = st->st_serialno;
+	so_serial_t serialno = ike->sa.st_serialno;
 
 	/* now start the pamauth child process */
 
@@ -189,10 +192,10 @@ bool pam_auth_fork_request(struct state *st,
 	pamauth->ptarg.name = clone_str(name, "pam name");
 
 	pamauth->ptarg.password = clone_str(password, "pam password");
-	pamauth->ptarg.c_name = clone_str(st->st_connection->name, "pam connection name");
-	pamauth->ptarg.rhost = endpoint_address(st->st_remote_endpoint);
+	pamauth->ptarg.c_name = clone_str(ike->sa.st_connection->name, "pam connection name");
+	pamauth->ptarg.rhost = endpoint_address(ike->sa.st_remote_endpoint);
 	pamauth->ptarg.st_serialno = serialno;
-	pamauth->ptarg.c_instance_serial = st->st_connection->instance_serial;
+	pamauth->ptarg.c_instance_serial = ike->sa.st_connection->instance_serial;
 	pamauth->ptarg.atype = atype;
 
 	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
@@ -200,16 +203,16 @@ bool pam_auth_fork_request(struct state *st,
 	pamauth->child = server_fork("pamauth", pamauth->serialno, md,
 				     pam_child,
 				     pam_callback, pamauth,
-				     st->logger);
+				     ike->sa.logger);
 	if (pamauth->child < 0) {
-		log_state(RC_LOG, st,
-			  "PAM: creation of PAM authentication process for user '%s' failed",
-			  pamauth->ptarg.name);
+		llog(RC_LOG, ike->sa.logger,
+		     "PAM: creation of PAM authentication process for user '%s' failed",
+		     pamauth->ptarg.name);
 		pam_auth_free(&pamauth);
 		return false;
 	}
 
-	st->st_pam_auth = pamauth;
+	ike->sa.st_pam_auth = pamauth;
 	pstats_pamauth_started++;
 	return true;
 }
