@@ -169,6 +169,7 @@
 #include "updown.h"
 #include "ikev1_delete.h"
 #include "terminate.h"
+#include "state_db.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -178,6 +179,58 @@
 
 static bool v1_state_busy(const struct state *st);
 static bool verbose_v1_state_busy(const struct state *st);
+
+struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
+{
+	return state_by_ike_spis(IKEv1,
+				 NULL /*ignore-clonedfrom*/,
+				 &msgid/*check v1 msgid*/,
+				 NULL /*ignore-role*/,
+				 ike_spis, NULL, NULL, __func__);
+}
+
+static struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
+					   msgid_t msgid)
+{
+	return state_by_ike_initiator_spi(IKEv1,
+					  NULL /*ignore-clonedfrom*/,
+					  &msgid /*check v1 msgid*/,
+					  NULL /*ignore-role*/,
+					  ike_initiator_spi, __func__);
+}
+
+struct v1_msgid_filter {
+	msgid_t msgid;
+};
+
+static bool v1_msgid_predicate(struct state *st, void *context)
+{
+	struct v1_msgid_filter *filter = context;
+	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
+	    st->st_serialno, filter->msgid,
+	    st->st_v1_msgid.id, st->st_v1_msgid.phase15);
+	if ((st->st_v1_msgid.phase15 != v1_MAINMODE_MSGID &&
+	     filter->msgid == st->st_v1_msgid.phase15) ||
+	    filter->msgid == st->st_v1_msgid.id) {
+		dbg("p15 state object #%lu found, in %s",
+		    st->st_serialno, st->st_state->name);
+		return true;
+	}
+	return false;
+}
+
+static struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
+{
+	struct v1_msgid_filter filter = {
+		.msgid = msgid,
+	};
+	return state_by_ike_spis(IKEv1,
+				 NULL /* ignore-clonedfrom */,
+				 NULL /* ignore v1 msgid; see predicate */,
+				 NULL /* ignore-role */,
+				 ike_spis, v1_msgid_predicate,
+				 &filter, __func__);
+}
 
 void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition)
 {

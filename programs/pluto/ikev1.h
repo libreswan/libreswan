@@ -113,6 +113,8 @@ void ISAKMP_SA_established(struct ike_sa *ike);
 
 void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
+struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid);
+
 extern struct pbs_out reply_stream;
 
 #endif

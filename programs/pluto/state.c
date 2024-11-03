@@ -1309,27 +1309,6 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	return child;
 }
 
-#ifdef USE_IKEv1
-struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
-{
-	return state_by_ike_spis(IKEv1,
-				 NULL /*ignore-clonedfrom*/,
-				 &msgid/*check v1 msgid*/,
-				 NULL /*ignore-role*/,
-				 ike_spis, NULL, NULL, __func__);
-}
-
-struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
-				    msgid_t msgid)
-{
-	return state_by_ike_initiator_spi(IKEv1,
-					  NULL /*ignore-clonedfrom*/,
-					  &msgid /*check v1 msgid*/,
-					  NULL /*ignore-role*/,
-					  ike_initiator_spi, __func__);
-}
-#endif
-
 /*
  * Find the IKEv2 IKE SA with the specified SPIs.
  */
@@ -1486,41 +1465,6 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 					     v2_spi_predicate, &filter, __func__);
 	return pexpect_child_sa(st);
 }
-
-#ifdef USE_IKEv1
-struct v1_msgid_filter {
-	msgid_t msgid;
-};
-
-static bool v1_msgid_predicate(struct state *st, void *context)
-{
-	struct v1_msgid_filter *filter = context;
-	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
-	    st->st_serialno, filter->msgid,
-	    st->st_v1_msgid.id, st->st_v1_msgid.phase15);
-	if ((st->st_v1_msgid.phase15 != v1_MAINMODE_MSGID &&
-	     filter->msgid == st->st_v1_msgid.phase15) ||
-	    filter->msgid == st->st_v1_msgid.id) {
-		dbg("p15 state object #%lu found, in %s",
-		    st->st_serialno, st->st_state->name);
-		return true;
-	}
-	return false;
-}
-
-struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
-{
-	struct v1_msgid_filter filter = {
-		.msgid = msgid,
-	};
-	return state_by_ike_spis(IKEv1,
-				 NULL /* ignore-clonedfrom */,
-				 NULL /* ignore v1 msgid; see predicate */,
-				 NULL /* ignore-role */,
-				 ike_spis, v1_msgid_predicate,
-				 &filter, __func__);
-}
-#endif
 
 struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 					 lset_t ok_states,

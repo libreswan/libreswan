@@ -846,10 +846,6 @@ struct ike_sa *find_ike_sa_by_connection(const struct connection *c,
 					 lset_t ok_states,
 					 bool viable_parent);
 
-struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid);
-struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
-				    msgid_t msgid);
-
 extern struct ike_sa *find_v2_ike_sa(const ike_spis_t *ike_spis,
 				     enum sa_role local_ike_role);
 extern struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_spi,
@@ -858,9 +854,6 @@ extern struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initi
 struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 						  uint8_t protoid,
 						  ipsec_spi_t outbound_spi);
-
-extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
-					msgid_t msgid);
 
 extern void show_brief_status(struct show *s);
 
