@@ -836,6 +836,8 @@ kvm-base-%:
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
+	: generated dependencies
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS)): \
@@ -1213,6 +1215,8 @@ kvm-upgrade-%:
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+	: generated dependencies
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
@@ -1268,6 +1272,8 @@ kvm-transmogrify-%:
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)
+	: generated dependencies
+	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
 # start at 2gb and go up
