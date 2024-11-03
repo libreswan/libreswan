@@ -36,6 +36,8 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where);
 
 void free_v1_message_queues(struct state *st);
 
+extern monotime_t last_v1N_PAYLOAD_MALFORMED;
+
 extern void send_v1_notification_from_state(struct state *st,
 					    enum state_kind from_state,
 					    v1_notification_t type);

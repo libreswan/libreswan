@@ -1607,7 +1607,6 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
  *
  * Note: msgid is in different order here from other calls :/
  */
-static monotime_t last_malformed = MONOTIME_EPOCH;
 
 static void send_v1_notification(struct logger *logger,
 				 struct state *sndst,
@@ -1624,10 +1623,10 @@ static void send_v1_notification(struct logger *logger,
 	switch (type) {
 	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		if (monotime_cmp(monotime_add(last_malformed, deltatime(1)), <, now))
+		if (monotime_cmp(monotime_add(last_v1N_PAYLOAD_MALFORMED, deltatime(1)),
+				 <, now))
 			return;
-
-		last_malformed = now;
+		last_v1N_PAYLOAD_MALFORMED = now;
 
 		/*
 		 * If a state gets too many of these, delete it.
@@ -1821,78 +1820,4 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 			     st->st_ike_spis.initiator.bytes,
 			     st->st_ike_spis.responder.bytes,
 			     PROTO_ISAKMP);
-}
-
-void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
-{
-	struct pbs_out r_hdr_pbs;
-	const monotime_t now = mononow();
-
-	switch (type) {
-	case v1N_PAYLOAD_MALFORMED:
-		/* only send one per second. */
-		if (monotime_cmp(monotime_add(last_malformed, deltatime(1)), <, now))
-			return;
-		last_malformed = now;
-		break;
-
-	case v1N_INVALID_FLAGS:
-		break;
-
-	default:
-		/* quiet GCC warning */
-		break;
-	}
-
-	endpoint_buf b;
-	enum_buf nb;
-	llog(RC_LOG, md->logger,
-	     "sending notification %s to %s",
-	     str_enum_short(&v1_notification_names, type, &nb),
-	     str_endpoint(&md->sender, &b));
-
-	uint8_t buffer[1024];	/* ??? large enough for any notification? */
-	struct pbs_out pbs = open_pbs_out("notification msg",
-					  buffer, sizeof(buffer),
-					  md->logger);
-
-	/* HDR* */
-
-	{
-		/* ??? "keep it around for TPM" */
-		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_INFO,
-			.isa_msgid = 0,
-			.isa_flags = 0,
-			.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi,
-			.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
-		};
-		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
-	}
-
-	/* Notification Payload */
-
-	{
-		struct pbs_out not_pbs;
-		struct isakmp_notification isan = {
-			.isan_doi = ISAKMP_DOI_IPSEC,
-			.isan_type = type,
-			.isan_spisize = 0,
-			.isan_protoid = PROTO_ISAKMP,
-		};
-
-		if (!out_struct(&isan, &isakmp_notification_desc,
-					&r_hdr_pbs, &not_pbs)) {
-			llog(RC_LOG, md->logger,
-			     "failed to build notification in send_notification");
-			return;
-		}
-
-		close_output_pbs(&not_pbs);
-	}
-
-	close_output_pbs(&r_hdr_pbs);
-	send_pbs_out_using_md(md, "notification packet", &pbs);
 }

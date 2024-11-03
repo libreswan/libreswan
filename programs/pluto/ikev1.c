@@ -459,14 +459,15 @@ void process_v1_packet(struct msg_digest *md)
 	 */
 #define SEND_NOTIFICATION(t)						\
 	{								\
-		pstats(ikev1_sent_notifies_e, t);			\
 		if (st != NULL &&					\
 		    st->st_state->kind != STATE_AGGR_R0 &&		\
 		    st->st_state->kind != STATE_AGGR_R1 &&		\
-		    st->st_state->kind != STATE_MAIN_R0)		\
+		    st->st_state->kind != STATE_MAIN_R0) {		\
+			pstats(ikev1_sent_notifies_e, t);		\
 			send_v1_notification_from_state(st, from_state, t); \
-		else							\
+		} else {						\
 			send_v1_notification_from_md(md, t);		\
+		}							\
 	}
 
 #define LOGGER (st != NULL ? st->logger : md->logger)
