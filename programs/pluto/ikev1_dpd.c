@@ -279,8 +279,17 @@ stf_status dpd_init(struct state *st)
 			return STF_OK;
 		}
 
-		/* find the IKE SA */
-		struct state *p1st = find_state_ikev1(&st->st_ike_spis, 0);
+		/*
+		 * See if the IKE (ISAKMP) SA that was used to create
+		 * the Child SA is still around.
+		 *
+		 * If it is then it can be used to send the DPD
+		 * message.  If it isn't (for instance peer deleted
+		 * it) then this operation is doomed (technically, the
+		 * a new ISAKMP can be establish and used, but why
+		 * bother).
+		 */
+		struct ike_sa *p1st = find_v1_isakmp_sa(&st->st_ike_spis);
 		if (p1st == NULL) {
 			llog(RC_LOG, st->logger,
 			     "could not find phase 1 state for DPD");

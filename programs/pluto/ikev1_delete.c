@@ -402,21 +402,12 @@ static bool handle_v1_delete_payload(struct state **stp,
 			}
 
 			/* this only finds ISAKMP SAs. Right!?! */
-			struct state *st = find_state_ikev1(&cookies, v1_MAINMODE_MSGID);
-			if (st == NULL) {
+			struct ike_sa *dst = find_v1_isakmp_sa(&cookies);
+			if (dst == NULL) {
 				llog(RC_LOG, ike->sa.logger,
 				     "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
 				continue;
 			}
-
-			if (!IS_PARENT_SA(st)) {
-				llog_pexpect(ike->sa.logger, HERE,
-					     "ignoring Delete SA payload: "PRI_SO" is not an ISAKMP SA",
-					     pri_so(st->st_serialno));
-				continue;
-			}
-
-			struct ike_sa *dst = pexpect_ike_sa(st);
 
 			if (!same_peer_ids(ike->sa.st_connection,
 					   dst->sa.st_connection)) {

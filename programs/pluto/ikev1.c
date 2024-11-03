@@ -223,15 +223,6 @@ static struct ike_sa *find_v1_isakmp_by_initiator_spi(const ike_spi_t *ike_initi
 							 ike_initiator_spi, __func__));
 }
 
-struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
-{
-	return state_by_ike_spis(IKEv1,
-				 NULL /*ignore-clonedfrom*/,
-				 &msgid/*check v1 msgid*/,
-				 NULL /*ignore-role*/,
-				 ike_spis, NULL, NULL, __func__);
-}
-
 struct v1_msgid_filter {
 	msgid_t msgid;
 };
