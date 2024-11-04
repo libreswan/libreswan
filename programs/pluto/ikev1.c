@@ -1031,9 +1031,9 @@ void process_v1_packet(struct msg_digest *md)
 	default:
 	{
 		esb_buf b;
-		dbg("unsupported exchange type %s in message",
-		    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
-		SEND_NOTIFICATION(v1N_UNSUPPORTED_EXCHANGE_TYPE);
+		ldbg(md->logger, "unsupported exchange type %s in message",
+		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
+		send_v1_notification_from_md(md, v1N_UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
 	}
