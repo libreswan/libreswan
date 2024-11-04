@@ -232,16 +232,6 @@ struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 				 ike_spis, NULL, NULL, __func__);
 }
 
-static struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
-					   msgid_t msgid)
-{
-	return state_by_ike_initiator_spi(IKEv1,
-					  NULL /*ignore-clonedfrom*/,
-					  &msgid /*check v1 msgid*/,
-					  NULL /*ignore-role*/,
-					  ike_initiator_spi, __func__);
-}
-
 struct v1_msgid_filter {
 	msgid_t msgid;
 };
@@ -652,80 +642,89 @@ void process_v1_packet(struct msg_digest *md)
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
-		st = find_v1_info_state(&md->hdr.isa_ike_spis,
-					v1_MAINMODE_MSGID);
-
-		if (st == NULL) {
+	{
+		ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
 			/*
 			 * might be an informational response to our
 			 * first message, in which case, we don't know
 			 * the rcookie yet.
 			 */
-			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
-						   v1_MAINMODE_MSGID);
+			ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
 		}
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-			bool quiet = (st == NULL);
 
-			if (st == NULL) {
-				if (DBGP(DBG_BASE)) {
-					DBG_log("Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08" PRIx32,
-						md->hdr.isa_msgid);
-					DBG_dump_thing("- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:",
-						       md->hdr.isa_ike_initiator_spi);
-					DBG_dump_thing("- unknown SA's md->hdr.isa_ike_responder_spi.bytes:",
-						       md->hdr.isa_ike_responder_spi);
+			if (ike == NULL) {
+				if (LDBGP(DBG_BASE, md->logger)) {
+					LDBG_log(md->logger,
+						 "Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08" PRIx32,
+						 md->hdr.isa_msgid);
+					LDBG_log(md->logger, "- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:");
+					LDBG_thing(md->logger, md->hdr.isa_ike_initiator_spi);
+					LDBG_log(md->logger, "- unknown SA's md->hdr.isa_ike_responder_spi.bytes:");
+					LDBG_thing(md->logger, md->hdr.isa_ike_responder_spi);
 				}
-
 				/* XXX Could send notification back */
 				return;
 			}
 
-			if (!IS_V1_ISAKMP_ENCRYPTED(st->st_state->kind)) {
-				if (!quiet) {
-					log_state(RC_LOG, st,
-						  "encrypted Informational Exchange message is invalid because no key is known");
-				}
+			if (!IS_V1_ISAKMP_ENCRYPTED(ike->sa.st_state->kind)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "encrypted Informational Exchange message is invalid because no key is known");
 				/* XXX Could send notification back */
 				return;
 			}
 
 			if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
-				if (!quiet) {
-					log_state(RC_LOG, st,
-						  "Informational Exchange message is invalid because it has a Message ID of 0");
-				}
+				llog(RC_LOG, ike->sa.logger,
+				     "Informational Exchange message is invalid because it has a Message ID of 0");
 				/* XXX Could send notification back */
 				return;
 			}
 
-			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-				if (!quiet) {
-					log_state(RC_LOG, st,
-						  "Informational Exchange message is invalid because it has a previously used Message ID (0x%08" PRIx32 " )",
-						  md->hdr.isa_msgid);
-				}
+			if (!unique_msgid(&ike->sa, md->hdr.isa_msgid)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "Informational Exchange message is invalid because it has a previously used Message ID (0x%08" PRIx32 " )",
+				     md->hdr.isa_msgid);
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_v1_msgid.reserved = false;
+			ike->sa.st_v1_msgid.reserved = false;
 
-			init_phase2_iv(st, &md->hdr.isa_msgid);
+			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
 			new_iv_set = true;
-
 			from_state = STATE_INFO_PROTECTED;
+			st = &ike->sa;
 		} else {
-			if (st != NULL &&
-			    IS_V1_ISAKMP_AUTHENTICATED(st->st_state)) {
-				log_state(RC_LOG, st,
-					  "Informational Exchange message must be encrypted");
-				/* XXX Could send notification back */
-				return;
+			/* see IF above */
+			passert((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY);
+			if (ike != NULL) {
+				if (IS_V1_ISAKMP_AUTHENTICATED(ike->sa.st_state)) {
+					llog(RC_LOG, ike->sa.logger,
+					     "Informational Exchange message must be encrypted");
+					/* XXX Could send notification back */
+					return;
+				}
+				/*
+				 * There's an IKE (ISAKMP) SA but it isn't yet
+				 * secured. Presumably this is some sort of
+				 * notification.
+				 */
+				from_state = STATE_INFO;
+				st = &ike->sa;
+			} else {
+				/*
+				 * There's no IKE (ISAKMP) SA at all.
+				 * New exchange!?!?  or just bogus and
+				 * should be dropped?
+				 */
+				from_state = STATE_INFO;
+				st = NULL;
 			}
-			from_state = STATE_INFO;
 		}
 		break;
+	}
 
 	case ISAKMP_XCHG_QUICK: /* part of a Quick Mode exchange */
 	{
