@@ -496,15 +496,11 @@ static void send_v1_notification_from_isakmp(struct ike_sa *ike,
 void process_v1_packet(struct msg_digest *md)
 {
 	/*
-	 * The big switch will initialize IKE, and possibly the CHILD.
-	 * Its assumed the compiler can detect the switch failing to
-	 * do this.
-	 *
-	 * ST is set CHILD, or IKE as needed.
+	 * Depending on what it finds, the big message switch sets IKE
+	 * and, possibly, CHILD.
 	 */
-	struct child_sa *child = NULL;	/* only one path sets this */
-	struct ike_sa *ike;		/* must be determined */
-	struct state *st = NULL;
+	struct child_sa *child = NULL;
+	struct ike_sa *ike = NULL;
 	bool new_iv_set = false;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
@@ -582,8 +578,6 @@ void process_v1_packet(struct msg_digest *md)
 			}
 			/* don't build a state until the message looks tasty */
 			passert(ike == NULL); /* new state needed */
-			child = NULL;
-			st = NULL; /* new state needed */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
 		} else {
@@ -631,8 +625,6 @@ void process_v1_packet(struct msg_digest *md)
 				}
 			}
 
-			child = NULL;
-			st = &ike->sa;
 			from_state = ike->sa.st_state->kind;
 		}
 		break;
@@ -691,7 +683,6 @@ void process_v1_packet(struct msg_digest *md)
 			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
 			new_iv_set = true;
 			from_state = STATE_INFO_PROTECTED;
-			st = &ike->sa;
 		} else {
 			/* see IF above */
 			passert((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY);
@@ -708,7 +699,6 @@ void process_v1_packet(struct msg_digest *md)
 				 * notification.
 				 */
 				from_state = STATE_INFO;
-				st = &ike->sa;
 			} else {
 				/*
 				 * There's no IKE (ISAKMP) SA at all.
@@ -716,7 +706,6 @@ void process_v1_packet(struct msg_digest *md)
 				 * should be dropped?
 				 */
 				from_state = STATE_INFO;
-				st = NULL;
 			}
 		}
 		break;
@@ -837,7 +826,6 @@ void process_v1_packet(struct msg_digest *md)
 
 			/* send to state machine */
 			from_state = STATE_QUICK_R0;
-			st = &ike->sa;
 		} else {
 			/*
 			 * XXX:
@@ -867,7 +855,6 @@ void process_v1_packet(struct msg_digest *md)
 				return;
 			}
 			from_state = child->sa.st_state->kind;
-			st = &child->sa;
 		}
 
 		break;
@@ -998,7 +985,6 @@ void process_v1_packet(struct msg_digest *md)
 				return;
 			}
 			/* from_state set above */
-			st = &ike->sa;
 		} else {
 			if (ike->sa.st_connection->local->host.config->xauth.server &&
 			    IS_V1_PHASE1(ike->sa.st_state->kind)) {
@@ -1009,7 +995,6 @@ void process_v1_packet(struct msg_digest *md)
 
 			/* otherwise, this is fine, we continue in the state we are in */
 			from_state = ike->sa.st_state->kind;
-			st = &ike->sa;
 		}
 
 		break;
@@ -1029,10 +1014,22 @@ void process_v1_packet(struct msg_digest *md)
 	}
 	}
 
-	/* We have found a from_state, and perhaps a state object.
-	 * If we need to build a new state object,
-	 * we wait until the packet has been sanity checked.
+	/*
+	 * We have found a FROM_STATE, and perhaps an IKE (ISAKMP)
+	 * and/or Child (IPsec) SA.  Set ST to one of these.
+	 *
+	 * If we need to build a new state object, we wait until the
+	 * packet has been sanity checked.
 	 */
+	if (ike != NULL) {
+		pdbg(ike->sa.logger, "found IKE (ISAKMP) SA");
+	}
+	if (child != NULL) {
+		pdbg(child->sa.logger, "found Child (IPsec) SA");
+	}
+	struct state *st = (child != NULL ? &child->sa :
+			    ike != NULL ? &ike->sa :
+			    NULL);
 
 	/* We don't support the Commit Flag.  It is such a bad feature.
 	 * It isn't protected -- neither encrypted nor authenticated.
