@@ -212,6 +212,17 @@ static struct child_sa *find_v1_ipsec_sa(const ike_spis_t *ike_spis, msgid_t msg
 						  __func__));
 }
 
+static struct ike_sa *find_v1_isakmp_by_initiator_spi(const ike_spi_t *ike_initiator_spi)
+{
+	const so_serial_t sos_nobody = SOS_NOBODY;
+	const msgid_t isakmp_msgid = 0; /*main-or-aggr*/
+	return pexpect_ike_sa(state_by_ike_initiator_spi(IKEv1,
+							 &sos_nobody /*.clonedfrom==0*/,
+							 &isakmp_msgid /*msgid==0*/,
+							 NULL /*ignore-role*/,
+							 ike_initiator_spi, __func__));
+}
+
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
 	return state_by_ike_spis(IKEv1,
@@ -540,15 +551,15 @@ void process_v1_packet(struct msg_digest *md)
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
-			LOG_PACKET(RC_LOG, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
-				   md->hdr.isa_msgid);
-			SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
+			llog(RC_LOG, md->logger, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
+			     md->hdr.isa_msgid);
+			send_v1_notification_from_md(md, v1N_INVALID_MESSAGE_ID);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			LOG_PACKET(RC_LOG, "Initiator Cookie must not be zero in phase 1 message");
-			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
+			llog(RC_LOG, md->logger, "Initiator Cookie must not be zero in phase 1 message");
+			send_v1_notification_from_md(md, v1N_INVALID_COOKIE);
 			return;
 		}
 
@@ -557,8 +568,8 @@ void process_v1_packet(struct msg_digest *md)
 			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-				LOG_PACKET(RC_LOG, "initial phase 1 message is invalid: its Encrypted Flag is on");
-				SEND_NOTIFICATION(v1N_INVALID_FLAGS);
+				llog(RC_LOG, md->logger, "initial phase 1 message is invalid: its Encrypted Flag is on");
+				send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
 				return;
 			}
 
@@ -567,10 +578,9 @@ void process_v1_packet(struct msg_digest *md)
 			 * this ICOOKIE, assume it is some sort of
 			 * re-transmit.
 			 */
-			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
-						   md->hdr.isa_msgid);
-			if (st != NULL) {
-				if (!ikev1_duplicate(st, md)) {
+			ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+			if (ike != NULL) {
+				if (!ikev1_duplicate(&ike->sa, md)) {
 					/*
 					 * Not a duplicate for the
 					 * current state; assume that
@@ -579,13 +589,15 @@ void process_v1_packet(struct msg_digest *md)
 					 * state that should be
 					 * discarded.
 					 */
-					log_state(RC_LOG, st, "discarding initial packet; already %s",
-						  st->st_state->name);
+					llog(RC_LOG, ike->sa.logger, "discarding initial packet; already %s",
+					     ike->sa.st_state->name);
 				}
 				return;
 			}
-			passert(st == NULL); /* new state needed */
 			/* don't build a state until the message looks tasty */
+			passert(ike == NULL); /* new state needed */
+			child = NULL;
+			st = NULL; /* new state needed */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
 		} else {
@@ -596,10 +608,8 @@ void process_v1_packet(struct msg_digest *md)
 			 * Possibly.  Which is probably hopeless.
 			 */
 
-			st = find_state_ikev1(&md->hdr.isa_ike_spis,
-					      md->hdr.isa_msgid);
-
-			if (st == NULL) {
+			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+			if (ike == NULL) {
 				/*
 				 * Perhaps this is a first message
 				 * from the responder and contains a
@@ -610,16 +620,15 @@ void process_v1_packet(struct msg_digest *md)
 				 * with a bogus non-zero responder IKE
 				 * SPI.
 				 */
-				st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
-							   md->hdr.isa_msgid);
-
-				if (st == NULL) {
+				ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+				if (ike == NULL) {
 					llog(RC_LOG, md->logger,
 					     "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}
-				if (st->st_state->kind == STATE_AGGR_R0) {
+
+				if (ike->sa.st_state->kind == STATE_AGGR_R0) {
 					/*
 					 * The only way for this to
 					 * happen is for the attacker
@@ -635,7 +644,10 @@ void process_v1_packet(struct msg_digest *md)
 					return;
 				}
 			}
-			from_state = st->st_state->kind;
+
+			child = NULL;
+			st = &ike->sa;
+			from_state = ike->sa.st_state->kind;
 		}
 		break;
 
