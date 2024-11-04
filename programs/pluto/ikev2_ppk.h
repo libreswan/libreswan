@@ -18,15 +18,25 @@
 
 #include "state.h"
 
+#define PPK_CONFIRMATION_LEN 8
+
 struct ppk_id_payload {
 	enum ikev2_ppk_id_type type;
 	chunk_t ppk_id;
+};
+
+struct ppk_id_key_payload {
+	struct ppk_id_payload ppk_id_payl;
+	chunk_t ppk_confirmation;
 };
 
 extern bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl);
 extern bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *pbs);
 extern bool extract_v2N_ppk_identity(const struct pbs_in *pbs, struct ppk_id_payload *payl,
 				     struct ike_sa *ike);
+extern bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
+				   struct ppk_id_key_payload *payl,
+				   struct ike_sa *ike);
 
 extern bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				   const struct crypt_mac *id_hash,

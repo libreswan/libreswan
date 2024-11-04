@@ -1300,7 +1300,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	 */
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon;
 	child->sa.st_v2_ike_fragmentation_enabled = ike->sa.st_v2_ike_fragmentation_enabled;
-	child->sa.st_v2_ike_ppk_enabled = ike->sa.st_v2_ike_ppk_enabled;
+	child->sa.st_v2_ike_ppk = ike->sa.st_v2_ike_ppk;
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
 	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
 

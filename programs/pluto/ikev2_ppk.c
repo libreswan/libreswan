@@ -121,6 +121,87 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	return true;
 }
 
+/*
+ * used by responder, in IKE INTERMEDIATE exchange, for extracting
+ * PPK_ID (variable length) and PPK confirmation (8 octets) from IKEv2
+ * PPK_IDENTITY_KEY Notify Payload. We store PPK_ID and associated
+ * PPK confirmation chunk in payl.
+ *                      1                   2                   3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                                                               |
+ * ~                             PPK_ID                            ~
+ * |                                                               |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |                                                               |
+ * +                        PPK Confirmation                       +
+ * |                                                               |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
+			    struct ppk_id_key_payload *payl,
+			    struct ike_sa *ike)
+{
+	diag_t d;
+	struct pbs_in pbs = *notify_pbs;
+
+	uint8_t id_byte;
+	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
+	if (d != NULL) {
+		llog(RC_LOG, ike->sa.logger,
+		     "%s", str_diag(d));
+		return false;
+
+	}
+
+	/* XXX: above+below could be turned into a descr? */
+	enum ikev2_ppk_id_type id_type = id_byte;
+	switch (id_type) {
+	case PPK_ID_FIXED:
+		dbg("PPK_ID of type PPK_ID_FIXED.");
+		break;
+	case PPK_ID_OPAQUE:
+	default:
+	{
+		enum_buf eb;
+		llog_sa(RC_LOG, ike, "PPK_ID type %d (%s) not supported",
+			id_type, str_enum(&ikev2_ppk_id_type_names, id_type, &eb));
+		return false;
+	}
+	}
+
+	payl->ppk_id_payl.type = id_type;
+
+	shunk_t ppk_id;
+	size_t data_len = pbs.roof - pbs.cur;
+	d = pbs_in_shunk(&pbs, data_len - PPK_CONFIRMATION_LEN, &ppk_id, "PPK ID data");
+	if (d != NULL) {
+		llog(RC_LOG, ike->sa.logger,
+		     "%s", str_diag(d));
+		return false;
+
+	}
+
+	shunk_t ppk_confirmation = pbs_in_left(&pbs);
+
+	if (ppk_confirmation.len != PPK_CONFIRMATION_LEN) {
+		llog_sa(RC_LOG, ike, "PPK Confirmation data must be exactly 8 bytes.");
+		return false;
+	}
+
+	/* clone ppk id and ppk confirmation data */
+	payl->ppk_id_payl.ppk_id = clone_hunk(ppk_id, "PPK_ID data");
+	payl->ppk_confirmation = clone_hunk(ppk_confirmation, "PPK Confirmation data");
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id_payl.ppk_id);
+	}
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("Extracted PPK Confirmation", payl->ppk_confirmation);
+	}
+
+	return true;
+}
+
 static bool ikev2_calculate_hash(struct ike_sa *ike,
 				 const struct crypt_mac *idhash,
 				 struct pbs_out *a_pbs,

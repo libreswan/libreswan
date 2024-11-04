@@ -560,10 +560,10 @@ static shunk_t get_ppk_by_id(const chunk_t *ppk_id)
 }
 
 /*
- * Get connection PPK and store ppk_id in *ppk_id. If ppk-ids conn option
- * was set, one of the listed PPK_IDs needs to be found in .secrets
+ * Get connection PPK and store corresponding ppk_id in *ppk_id.
  */
-shunk_t get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_id)
+shunk_t get_connection_ppk_and_ppk_id(const struct connection *c,
+				      chunk_t **ppk_id)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
@@ -583,13 +583,14 @@ shunk_t get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_i
 		struct secret_stuff *pks = get_secret_stuff(s);
 		*ppk_id = &pks->ppk_id;
 		if (DBGP(DBG_CRYPT)) {
-			DBG_log("Found PPK");
+			DBG_log("found PPK");
 			DBG_dump_hunk("PPK_ID:", **ppk_id);
 			DBG_dump_hunk("PPK:", pks->ppk);
 		}
 		return HUNK_AS_SHUNK(pks->ppk);
 	} else {
-		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
+		ldbg(c->logger,
+		     "ppk-ids conn option specified, find any matching PPK_ID in list: %s",
 		     c->config->ppk_ids);
 		/*
 		 * iterate through PPK_ID (ppk-ids=) list and try to find
@@ -615,36 +616,40 @@ shunk_t get_connection_ppk_initiator(const struct connection *c, chunk_t **ppk_i
 }
 
 /*
- * Get connection PPK with PPK_ID ppk_id. If ppk-ids conn option was set,
- * ppk_id (that was received) needs to be in it. Used by responder.
+ * Get connection PPK, in one of the two ways:
+ * - With specified PPK_ID ppk_id (if ppk_id is not NULL).
+ * or
+ * - With a PPK_ID that is at place 'index' in the ppk-ids=
+ * conn option list.
  */
-shunk_t get_connection_ppk_responder(const struct connection *c, chunk_t *ppk_id)
+shunk_t get_connection_ppk(const struct connection *c,
+			   chunk_t *ppk_id,
+			   unsigned int index)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
-	if (ppk_ids_shunks == NULL) {
+	if (ppk_id != NULL) {
 		/* try to find PPK with PPK_ID ppk_id */
-		ldbg(c->logger, "ppk-ids conn option not specified, look for PPK with ID:");
+		ldbg(c->logger, "looking for PPK with ID:");
 		ldbg_hunk(c->logger, *ppk_id);
 		return get_ppk_by_id(ppk_id);
 	} else {
-		ldbg(c->logger, "ppk-ids conn option specified, iterate through list: %s",
-		     c->config->ppk_ids);
-		/*
-		 * iterate through PPK_ID (ppk-ids=) list and try to match
-		 * ppk_id with one entry from PPK_ID list.
-		 */
-		FOR_EACH_ITEM(ppk_id_shunk, ppk_ids_shunks) {
-			/* XXX cast away the const qualifier from shunk_t pointer... */
-			chunk_t ppk_id_chunk = chunk2((void *) ppk_id_shunk->ptr, ppk_id_shunk->len);
+		passert(index < ppk_ids_shunks->len);
 
-			ldbg(c->logger, "checking if received PPK_ID is equal to:");
-			ldbg_hunk(c->logger, *ppk_id_shunk);
+		ldbg(c->logger, "looking for PPK with PPK ID in list %s at place: %u",
+		     c->config->ppk_ids, index);
 
-			if (hunk_eq(*ppk_id, *ppk_id_shunk)) {
-				ldbg(c->logger, "match! try to find PPK with that PPK_ID");
-				return get_ppk_by_id(&ppk_id_chunk);
-			}
+		/* XXX cast away the const qualifier from shunk_t pointer... */
+		chunk_t chunk = chunk2((void *) ppk_ids_shunks->list[index].ptr,
+						ppk_ids_shunks->list[index].len);
+
+		ldbg(c->logger, "try to find PPK with PPK_ID:");
+		ldbg_hunk(c->logger, ppk_ids_shunks->list[index]);
+
+		const shunk_t ppk = get_ppk_by_id(&chunk);
+
+		if (ppk.ptr != NULL) {
+			return ppk;
 		}
 	}
 	return null_shunk;

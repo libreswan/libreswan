@@ -71,5 +71,9 @@ void calc_v2_keymat(struct state *st,
 		    PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
 		    const struct prf_desc *old_prf, /* IKE Rekey */
 		    const ike_spis_t *new_ike_spis);
+void recalc_v2_ppk_interm_keymat(struct state *st,
+		    		 PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
+		    		 shunk_t *ppk,
+		    		 const ike_spis_t *new_ike_spis);
 
 #endif

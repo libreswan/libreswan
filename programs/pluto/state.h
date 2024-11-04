@@ -586,8 +586,12 @@ struct state {
 	/*
 	 * Post-quantum Preshared Key variables (v2)
 	 */
-	bool st_ppk_used;			/* both ends agreed on PPK ID and PPK */
-	bool st_v2_ike_ppk_enabled;		/* does remote peer support PPK? */
+	bool st_ppk_ike_auth_used;			/* both ends agreed on PPK ID and PPK (RFC 8784) */
+	enum {
+		PPK_DISABLED = 0,
+		PPK_IKE_AUTH = 1,		/* RFC 8784 */
+		PPK_IKE_INTERMEDIATE = 2,	/* draft-ietf-ipsecme-ikev2-qr-alt-04 */
+	} st_v2_ike_ppk;
 
 	chunk_t st_no_ppk_auth;
 	PK11SymKey *st_sk_d_no_ppk;

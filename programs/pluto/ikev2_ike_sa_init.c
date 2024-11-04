@@ -924,10 +924,14 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			return false;
 	}
 
-	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
+	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED (and maybe USE_PPK_INT) Notify payload */
 	if (c->config->intermediate) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, request.pbs))
 			return STF_INTERNAL_ERROR;
+		if (c->config->ppk.allow) {
+			if (!emit_v2N(v2N_USE_PPK_INT, request.pbs))
+				return false;
+		}
 	}
 
 	/* first check if this IKE_SA_INIT came from redirect
@@ -1108,10 +1112,27 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
 				       ike->sa.logger, md, c->config->ike_frag.allow);
 
-	ike->sa.st_v2_ike_ppk_enabled =
-		accept_v2_notification(v2N_USE_PPK,
-				       ike->sa.logger, md, c->config->ppk.allow);
-	if (c->config->ppk.insist && !ike->sa.st_v2_ike_ppk_enabled) {
+	ike->sa.st_v2_ike_intermediate.enabled =
+		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+				       ike->sa.logger, md, c->config->intermediate);
+
+	bool ppk_ike_auth_enabled =
+		accept_v2_notification(v2N_USE_PPK, ike->sa.logger,
+				       md, c->config->ppk.allow);
+	bool ppk_ike_intermediate_enabled =
+		accept_v2_notification(v2N_USE_PPK_INT, ike->sa.logger,
+				       md, c->config->ppk.allow);
+
+	/* PPK (RFC8784 + draft-ietf-ipsecme-ikev2-qr-alt-04) logic */
+	if (ike->sa.st_v2_ike_intermediate.enabled && ppk_ike_intermediate_enabled) {
+		ike->sa.st_v2_ike_ppk = PPK_IKE_INTERMEDIATE;
+	} else if (ppk_ike_auth_enabled) {
+		ike->sa.st_v2_ike_ppk = PPK_IKE_AUTH;
+	} else {
+		ike->sa.st_v2_ike_ppk = PPK_DISABLED;
+	}
+
+	if (c->config->ppk.insist && ike->sa.st_v2_ike_ppk == PPK_DISABLED) {
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_NO_PROPOSAL_CHOSEN,
 				    NULL, UNENCRYPTED_PAYLOAD);
@@ -1266,20 +1287,20 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Send USE_PPK Notify payload */
-	if (ike->sa.st_v2_ike_ppk_enabled) {
-		if (!emit_v2N(v2N_USE_PPK, response.pbs))
-			return STF_INTERNAL_ERROR;
-	 }
-
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
-	ike->sa.st_v2_ike_intermediate.enabled =
-		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
-				       ike->sa.logger, md, c->config->intermediate);
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
+	}
+
+	/* Send USE_PPK / USE_PPK_INT Notify payload */
+	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
+		if (!emit_v2N(v2N_USE_PPK, response.pbs))
+			return STF_INTERNAL_ERROR;
+	} else if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		if (!emit_v2N(v2N_USE_PPK_INT, response.pbs))
+			return STF_INTERNAL_ERROR;
 	}
 
 	/*
@@ -1521,10 +1542,34 @@ static stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		accept_v2_notification(v2N_IKEV2_FRAGMENTATION_SUPPORTED,
 				       ike->sa.logger, md, c->config->ike_frag.allow);
 
-	ike->sa.st_v2_ike_ppk_enabled =
-		accept_v2_notification(v2N_USE_PPK,
-				       ike->sa.logger, md, c->config->ppk.allow);
-	if (c->config->ppk.insist && !ike->sa.st_v2_ike_ppk_enabled) {
+	/*
+	 * If we see the intermediate AND we are configured to use
+	 * intermediate.
+	 *
+	 * For now, do only one Intermediate Exchange round and
+	 * proceed with IKE_AUTH.
+	 */
+	ike->sa.st_v2_ike_intermediate.enabled =
+		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+				       ike->sa.logger, md, c->config->intermediate);
+
+	bool ppk_ike_auth_enabled =
+		accept_v2_notification(v2N_USE_PPK, ike->sa.logger,
+				       md, c->config->ppk.allow);
+	bool ppk_ike_intermediate_enabled =
+		accept_v2_notification(v2N_USE_PPK_INT, ike->sa.logger,
+				       md, c->config->ppk.allow);
+
+	/* PPK (RFC8784 + draft-ietf-ipsecme-ikev2-qr-alt-04) logic */
+	if (ike->sa.st_v2_ike_intermediate.enabled && ppk_ike_intermediate_enabled) {
+		ike->sa.st_v2_ike_ppk = PPK_IKE_INTERMEDIATE;
+	} else if (ppk_ike_auth_enabled) {
+		ike->sa.st_v2_ike_ppk = PPK_IKE_AUTH;
+	} else {
+		ike->sa.st_v2_ike_ppk = PPK_DISABLED;
+	}
+
+	if (c->config->ppk.insist && ike->sa.st_v2_ike_ppk == PPK_DISABLED) {
 		llog_sa(RC_LOG, ike,
 			"connection has ppk=insist but peer does not support PPK");
 		return STF_FATAL;
@@ -1657,17 +1702,6 @@ static stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		.initiator = ike->sa.st_ike_spis.initiator,
 		.responder = md->hdr.isa_ike_responder_spi,
 	};
-
-	/*
-	 * If we see the intermediate AND we are configured to use
-	 * intermediate.
-	 *
-	 * For now, do only one Intermediate Exchange round and
-	 * proceed with IKE_AUTH.
-	 */
-	ike->sa.st_v2_ike_intermediate.enabled =
-		accept_v2_notification(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
-				       ike->sa.logger, md, c->config->intermediate);
 
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 				ike->sa.st_gr/*initiator needs responder KE*/,

@@ -1,0 +1,4 @@
+Testing alternative PPK mechanism (qr-alt) during IKE_INTERMEDIATE exchange. Both west (initiator) and east (responder) support both PPK and INTERMEDIATE exchange.
+west has multiple PPKs configured and it will send 2 PPK_IDENTITY_KEY Notifies, with correct PPK/PPK_ID being in the second PPK_IDENTITY_KEY Notify.
+PPK is used to rekey during IKE_INTERMEDIATE and connection is set up.
+
