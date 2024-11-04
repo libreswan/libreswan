@@ -180,6 +180,38 @@
 static bool v1_state_busy(const struct state *st);
 static bool verbose_v1_state_busy(const struct state *st);
 
+struct ike_sa *find_v1_isakmp_sa(const ike_spis_t *ike_spis)
+{
+	const so_serial_t sos_nobody = SOS_NOBODY;
+	const msgid_t isakmp_msgid = 0; /*main-or-aggr*/
+	return pexpect_ike_sa(state_by_ike_spis(IKEv1,
+						&sos_nobody /*.st_clonedfrom==0*/,
+						&isakmp_msgid/*.msgid==0*/,
+						NULL /*ignore-role*/,
+						ike_spis,
+						NULL, NULL, __func__));
+}
+
+static bool state_is_child(const struct state *st, void *unused UNUSED)
+{
+	return IS_CHILD_SA(st);
+}
+
+static struct child_sa *find_v1_ipsec_sa(const ike_spis_t *ike_spis, msgid_t msgid)
+{
+	/* only IKE (ISAKMP) SAs have MSGID==0 */
+	if (pbad(msgid == 0)) {
+		return NULL;
+	}
+	return pexpect_child_sa(state_by_ike_spis(IKEv1,
+						  NULL/*clonedfrom==state_is_child()*/,
+						  &msgid,
+						  NULL/*ignore-role*/,
+						  ike_spis,
+						  NULL, state_is_child,
+						  __func__));
+}
+
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
 	return state_by_ike_spis(IKEv1,
@@ -434,6 +466,25 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 	return false;
 }
 
+static void send_v1_notification_from_isakmp(struct ike_sa *ike,
+					     struct msg_digest *md,
+					     v1_notification_t n)
+{
+	pstats(ikev1_sent_notifies_e, n);
+	if (pbad(ike == NULL)) {
+		return;
+	}
+	if (ike->sa.st_state->kind != STATE_AGGR_R0 &&
+	    ike->sa.st_state->kind != STATE_AGGR_R1 &&
+	    ike->sa.st_state->kind != STATE_MAIN_R0) {
+		send_v1_notification_from_state(&ike->sa,
+						/*from_state*/ike->sa.st_state->kind,
+						n);
+	} else {
+		send_v1_notification_from_md(md, n);
+	}
+}
+
 /* process an input packet, possibly generating a reply.
  *
  * If all goes well, this routine eventually calls a state-specific
@@ -444,10 +495,20 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
  */
+
 void process_v1_packet(struct msg_digest *md)
 {
-	bool new_iv_set = false;
+	/*
+	 * The big switch will initialize IKE, and possibly the CHILD.
+	 * Its assumed the compiler can detect the switch failing to
+	 * do this.
+	 *
+	 * ST is set CHILD, or IKE as needed.
+	 */
+	struct child_sa *child = NULL;	/* only one path sets this */
+	struct ike_sa *ike;		/* must be determined */
 	struct state *st = NULL;
+	bool new_iv_set = false;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 	/*
@@ -655,93 +716,109 @@ void process_v1_packet(struct msg_digest *md)
 		break;
 
 	case ISAKMP_XCHG_QUICK: /* part of a Quick Mode exchange */
+	{
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			dbg("Quick Mode message is invalid because it has an Initiator Cookie of 0");
-			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
+			ldbg(md->logger, "Quick Mode message is invalid because it has an Initiator Cookie of 0");
+			send_v1_notification_from_md(md, v1N_INVALID_COOKIE);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
-			dbg("Quick Mode message is invalid because it has a Responder Cookie of 0");
-			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
+			ldbg(md->logger, "Quick Mode message is invalid because it has a Responder Cookie of 0");
+			send_v1_notification_from_md(md, v1N_INVALID_COOKIE);
 			return;
 		}
 
 		if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
-			dbg("Quick Mode message is invalid because it has a Message ID of 0");
-			SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
+			ldbg(md->logger, "Quick Mode message is invalid because it has a Message ID of 0");
+			send_v1_notification_from_md(md, v1N_INVALID_MESSAGE_ID);
 			return;
 		}
 
-		st = find_state_ikev1(&md->hdr.isa_ike_spis,
-				      md->hdr.isa_msgid);
-
-		if (st == NULL) {
-			/* No appropriate Quick Mode state.
-			 * See if we have a Main Mode state.
-			 * ??? what if this is a duplicate of another message?
+		/* this is looking for a Child SA */
+		child = find_v1_ipsec_sa(&md->hdr.isa_ike_spis,
+					 md->hdr.isa_msgid);
+		if (child == NULL) {
+			/*
+			 * No appropriate Child (Quick Mode) state.
+			 * See if we have an ISAKMP (Main/Aggr) state.
+			 *
+			 * ??? what if this is a duplicate of another
+			 * message?
 			 */
-			st = find_state_ikev1(&md->hdr.isa_ike_spis,
-					      v1_MAINMODE_MSGID);
-
-			if (st == NULL) {
-				dbg("Quick Mode message is for a non-existent (expired?) ISAKMP SA");
+			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+			if (ike == NULL) {
+				ldbg(md->logger, "Quick Mode message is for a non-existent (expired?) ISAKMP SA");
 				/* XXX Could send notification back */
 				return;
 			}
 
-			if (st->st_oakley.doing_xauth) {
-				dbg("Cannot do Quick Mode until XAUTH done.");
+			if (ike->sa.st_oakley.doing_xauth) {
+				ldbg(ike->sa.logger, "Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
 
 			/* Have we just given an IP address to peer? */
-			if (st->st_state->kind == STATE_MODE_CFG_R2) {
+			if (ike->sa.st_state->kind == STATE_MODE_CFG_R2) {
 				/* ISAKMP is up... */
-				change_v1_state(st, STATE_MAIN_R3);
+				change_v1_state(&ike->sa, STATE_MAIN_R3);
 			}
 
 #ifdef SOFTREMOTE_CLIENT_WORKAROUND
 			/* See: http://popoludnica.pl/?id=10100110 */
-			if (st->st_state->kind == STATE_MODE_CFG_R1) {
-				log_state(RC_LOG, st,
-					  "SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
+			if (ike->sa.st_state->kind == STATE_MODE_CFG_R1) {
+				llog(RC_LOG, ike->sa.logger,
+				     "SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
 				return;
 			}
 #endif
 
-
-			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-				log_state(RC_LOG, st,
-					  "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
-				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED /* XXX ? */);
+			if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
+				send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED/* XXX ? */);
 				return;
 			}
 
-			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-				log_state(RC_LOG, st,
-					  "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08" PRIx32 " (perhaps this is a duplicated packet)",
-					  md->hdr.isa_msgid);
-				SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
+			if (!unique_msgid(&ike->sa, md->hdr.isa_msgid)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08" PRIx32 " (perhaps this is a duplicated packet)",
+				     md->hdr.isa_msgid);
+				send_v1_notification_from_isakmp(ike, md, v1N_INVALID_MESSAGE_ID);
 				return;
 			}
-			st->st_v1_msgid.reserved = false;
+			ike->sa.st_v1_msgid.reserved = false;
 
 			/* Quick Mode Initial IV */
-			init_phase2_iv(st, &md->hdr.isa_msgid);
+			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
 			new_iv_set = true;
 
+			/* send to state machine */
 			from_state = STATE_QUICK_R0;
+			st = &ike->sa;
 		} else {
-			if (st->st_oakley.doing_xauth) {
-				log_state(RC_LOG, st, "Cannot do Quick Mode until XAUTH done.");
+			/*
+			 * XXX:
+			 *
+			 * How can a Child SA be doing an xauth exchange?
+			 *
+			 * Perhaps it is from the ISAKMP being cloned
+			 * (and .st_oakly copied) too early.
+			 *
+			 * Or is it because the child lookup found
+			 * isakmp states, confusing things?
+			 */
+			if (pbad(child->sa.st_oakley.doing_xauth)) {
+				llog(RC_LOG, child->sa.logger, "Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
-			from_state = st->st_state->kind;
+			from_state = child->sa.st_state->kind;
+			st = &child->sa;
 		}
 
 		break;
+	}
 
 	case ISAKMP_XCHG_MODE_CFG:
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
