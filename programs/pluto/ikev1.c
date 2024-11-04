@@ -736,51 +736,85 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		/* this is looking for a Child SA */
+		/*
+		 * Quick mode requires an IKE (ISAKMP) SA.
+		 *
+		 * ??? what if this is a duplicate of another
+		 * message?
+		 */
+		ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
+			llog(RC_LOG, md->logger, "Quick Mode message is for a non-existent (expired or deleted?) ISAKMP SA");
+			/*
+			 * Is there a Child SA matching the MSGID?
+			 *
+			 * This should be fine, for instance: the
+			 * Child SA is established; the IKE (ISAKMP)
+			 * SA is deleted; and then this duplicate
+			 * appears (Thanks Apple).
+			 *
+			 * Just as long as a larval Child SA isn't
+			 * returned. Part of deleting the IKE (ISAKMP)
+			 * SA is flush_incomplete_children() so it
+			 * shouldn't happen.
+			 */
+			struct child_sa *child = find_v1_ipsec_sa(&md->hdr.isa_ike_spis,
+								  md->hdr.isa_msgid);
+			if (child != NULL) {
+				if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
+					pdbg(child->sa.logger,
+					     "deleted IKE (ISAKMP) SA "PRI_SO" has established Child SA in state %s",
+					     pri_so(child->sa.st_clonedfrom),
+					     child->sa.st_state->name);
+				} else {
+					llog_pexpect(child->sa.logger, HERE,
+						     "deleted IKE (ISAKMP) SA "PRI_SO" has larval child SA in state %s",
+						     pri_so(child->sa.st_clonedfrom),
+						     child->sa.st_state->name);
+				}
+			}
+			/* XXX Could send notification back */
+			return;
+		}
+
+		if (ike->sa.st_oakley.doing_xauth) {
+			ldbg(ike->sa.logger, "Cannot do Quick Mode until XAUTH done.");
+			return;
+		}
+
+#ifdef SOFTREMOTE_CLIENT_WORKAROUND
+		/* See: http://popoludnica.pl/?id=10100110 */
+		if (ike->sa.st_state->kind == STATE_MODE_CFG_R1) {
+			llog(RC_LOG, ike->sa.logger,
+			     "SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
+			return;
+		}
+#endif
+
+		/* Have we just given an IP address to peer? */
+		if (ike->sa.st_state->kind == STATE_MODE_CFG_R2) {
+			/* ISAKMP is up... */
+			change_v1_state(&ike->sa, STATE_MAIN_R3);
+		}
+
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
+			llog(RC_LOG, ike->sa.logger,
+			     "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
+			send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED/* XXX ? */);
+			return;
+		}
+
+		/*
+		 * See if there's an in-progress Child SA matching the
+		 * msgid.
+		 */
 		child = find_v1_ipsec_sa(&md->hdr.isa_ike_spis,
 					 md->hdr.isa_msgid);
 		if (child == NULL) {
 			/*
-			 * No appropriate Child (Quick Mode) state.
-			 * See if we have an ISAKMP (Main/Aggr) state.
-			 *
-			 * ??? what if this is a duplicate of another
-			 * message?
+			 * There isn't so, presumably, this exchange
+			 * is trying to create a new Child SA.
 			 */
-			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
-			if (ike == NULL) {
-				ldbg(md->logger, "Quick Mode message is for a non-existent (expired?) ISAKMP SA");
-				/* XXX Could send notification back */
-				return;
-			}
-
-			if (ike->sa.st_oakley.doing_xauth) {
-				ldbg(ike->sa.logger, "Cannot do Quick Mode until XAUTH done.");
-				return;
-			}
-
-			/* Have we just given an IP address to peer? */
-			if (ike->sa.st_state->kind == STATE_MODE_CFG_R2) {
-				/* ISAKMP is up... */
-				change_v1_state(&ike->sa, STATE_MAIN_R3);
-			}
-
-#ifdef SOFTREMOTE_CLIENT_WORKAROUND
-			/* See: http://popoludnica.pl/?id=10100110 */
-			if (ike->sa.st_state->kind == STATE_MODE_CFG_R1) {
-				llog(RC_LOG, ike->sa.logger,
-				     "SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
-				return;
-			}
-#endif
-
-			if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
-				llog(RC_LOG, ike->sa.logger,
-				     "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
-				send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED/* XXX ? */);
-				return;
-			}
-
 			if (!unique_msgid(&ike->sa, md->hdr.isa_msgid)) {
 				llog(RC_LOG, ike->sa.logger,
 				     "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08" PRIx32 " (perhaps this is a duplicated packet)",
@@ -811,6 +845,18 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 			if (pbad(child->sa.st_oakley.doing_xauth)) {
 				llog(RC_LOG, child->sa.logger, "Cannot do Quick Mode until XAUTH done.");
+				return;
+			}
+			/*
+			 * Because only the Child SA is passed down to
+			 * the message processor, code uses
+			 * .st_clonedfrom to re-find the IKE (ISAKMP)
+			 * SA (it could also use SPIs (COOKIES)).
+			 *
+			 * Hence, having these mis-match is pretty
+			 * bad.
+			 */
+			if (pbad(child->sa.st_clonedfrom != ike->sa.st_serialno)) {
 				return;
 			}
 			from_state = child->sa.st_state->kind;
