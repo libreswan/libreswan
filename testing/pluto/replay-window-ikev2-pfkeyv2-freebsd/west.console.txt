@@ -26,7 +26,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 Stopping pluto.
-Waiting for PIDS: 1140.
+Waiting for PIDS: PID.
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -51,7 +51,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 Stopping pluto.
-Waiting for PIDS: 1192.
+Waiting for PIDS: PID.
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -76,7 +76,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 Stopping pluto.
-Waiting for PIDS: 1242.
+Waiting for PIDS: PID.
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -101,7 +101,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 Stopping pluto.
-Waiting for PIDS: 1292.
+Waiting for PIDS: PID.
 west #
  echo done
 done
