@@ -47,6 +47,6 @@ done
 west #
  # will only show up on east - note "expired" is wrong and should be "not yet valid"
 west #
- grep "ERROR" /tmp/pluto.log
+ grep '^".*ERROR' /tmp/pluto.log
 west #
  
