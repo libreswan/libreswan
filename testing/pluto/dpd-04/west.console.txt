@@ -18,6 +18,10 @@ west #
 ipsec addconn: /etc/ipsec.conf:17: warning: obsolete keyword ignored: dpdaction=hold
 "westnet-east": added IKEv1 connection
 west #
+ # don't auto-revive, instead wait for a trigger
+west #
+ ipsec whack --impair revival
+west #
  echo "initdone"
 initdone
 west #
@@ -40,15 +44,33 @@ west #
 "west-east" #2: sent Quick Mode request
 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
 west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
  ipsec auto --up west-eastnet
 "west-eastnet" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-eastnet" #3: sent Quick Mode request
 "west-eastnet" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
 west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
+up
+west #
  ipsec auto --up westnet-east
 "westnet-east" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-east" #4: sent Quick Mode request
 "westnet-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
 west #
  # use the tunnel
 west #
@@ -58,15 +80,20 @@ west #
  # show the tunnel
 west #
  ipsec whack --trafficstatus
-#2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-#4: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#4: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
- # Let R_U_THERE packets flow
+ # Let R_U_THERE packets flow; connection should still be up
+west #
+ sleep 10
 west #
  sleep 10
 west #
- sleep 10
+ ipsec whack --trafficstatus
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#4: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
  # Create the block; wait for DPD to trigger
 west #
@@ -83,15 +110,15 @@ west #
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir out action block priority PRIORITY ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 src 192.1.2.45/32 dst 192.0.2.0/24
-	dir out action block priority PRIORITY ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 src 192.0.1.0/24 dst 192.1.2.23/32
-	dir out action block priority PRIORITY ptype main
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 west #
@@ -103,37 +130,22 @@ west #
 west #
  # wait for west-east
 west #
+ ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.1.2.23
+down
+west #
  ../../guestbin/wait-for.sh --match '"west-east"' -- ipsec whack --trafficstatus
-#8: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+#6: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
 west #
- # trigger westnet-east
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.1.2.23
-up UNEXPECTED
-# ping -n -c 1  -i 2 -w 1   -I 192.0.1.254 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.0.1.254 : 56(84) bytes of data. 64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.1.2.23 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- ../../guestbin/wait-for.sh --match '"westnet-east"' -- ipsec whack --trafficstatus
-#6: "westnet-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
-up
-west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
-up
-west #
- # trigger west-eastnet
+ # wait for west-eastnet
 west #
  ../../guestbin/ping-once.sh --down -I 192.1.2.45 192.0.2.254
-up UNEXPECTED
-# ping -n -c 1  -i 2 -w 1   -I 192.1.2.45 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.1.2.45 : 56(84) bytes of data. 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.0.2.254 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+down
 west #
  ../../guestbin/wait-for.sh --match '"west-eastnet"' -- ipsec whack --trafficstatus
-#7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
 up
@@ -141,18 +153,39 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
 up
 west #
- ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
+ # wait for westnet-east
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.1.2.23
+down
+west #
+ ../../guestbin/wait-for.sh --match '"westnet-east"' -- ipsec whack --trafficstatus
+#8: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
 up
 west #
  # Tunnels should be back up now
 west #
  ipsec whack --trafficstatus
-#8: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
-#6: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+#6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#8: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
  echo done
 done
+west #
+ # final check
+west #
+ ipsec whack --trafficstatus
+#6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#7: "west-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#8: "westnet-east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.45 dst 192.1.2.23
@@ -171,6 +204,30 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+src 192.0.1.254 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.0.1.254/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.0.2.254
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.1.2.45/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -188,21 +245,9 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32

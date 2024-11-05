@@ -1,8 +1,6 @@
 This tests the RFC3706 DPD implementation, with dpdaction=hold on east,
 and dpdaction=hold on west.
 
-Paul: there is a mystery of two packets not getting counted?
-
 This is a variation of dpd-03, except it uses multiple tunnels.
 
 This means both sides with %trap the eroute awaiting a new packet to
@@ -10,13 +8,34 @@ trigger reestablishment of the tunnel.
 
 Order of Operations:
 
-1) East sets up for tunnel
-2) West initiates tunnel to east
-3) We idle for 20 seconds, to prove that DPD R_U_THERE/R_U_THERE_ACKs work.
-4) West blocks traffic on eth0
-5) Both sides trigger a DPD Timeout:
-	East puts the eroute into %trap
-	West puts the eroute into %trap
-6) West removes the traffic block
-7) West sends icmp packets to east, triggering a renegotiation of the tunnel
+- WEST has revival impaired
 
+  When a +UP connection fails, and revival is triggered, it gets as
+  far as installing a %trap, but stops short of trying to initiate a
+  new connection.
+
+  This way, ping can be used to trigger revival.
+
+- EAST sets up for tunnel
+
+- WEST initiates tunnels to east
+
+  (and connection is confirmed as established on east)
+
+- We idle for 20 seconds proving DPD R_U_THERE/R_U_THERE_ACKs work.
+
+  (after which trafficstatus should still show output)
+
+- WEST blocks inbound and outbound traffic
+
+- Both sides trigger a DPD Timeout:
+
+  EAST tears down the state/policy
+
+  WEST triggers revival, tearing down state, and, per above,
+  installing a %trap policy
+
+- WEST removes the traffic block
+
+- WEST sends icmp packets to east, triggering a renegotiation of each
+  aof the tunnels
