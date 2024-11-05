@@ -242,7 +242,7 @@ void recalc_v2_ppk_interm_keymat(struct state *st,
 	old_skey_d = key_from_symkey_bytes("'old' SK_d", st->st_skey_d_nss,
 				  	   0, prf->prf_key_size,
 					   HERE, logger);
-	/* release old keys (and salts) */
+	/* release old keys, salts and cipher contexts */
 	symkey_delref(logger, "SK_d", &st->st_skey_d_nss);
 	symkey_delref(logger, "SK_ai", &st->st_skey_ai_nss);
 	symkey_delref(logger, "SK_ar", &st->st_skey_ar_nss);
@@ -254,6 +254,8 @@ void recalc_v2_ppk_interm_keymat(struct state *st,
 	free_chunk_content(&st->st_skey_chunk_SK_pr);
 	free_chunk_content(&st->st_skey_initiator_salt);
 	free_chunk_content(&st->st_skey_responder_salt);
+	cipher_context_destroy(&st->st_ike_encrypt_cipher_context, st->logger);
+	cipher_context_destroy(&st->st_ike_decrypt_cipher_context, st->logger);
 
 	PK11SymKey *skeyseed;
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);

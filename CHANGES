@@ -1,6 +1,8 @@
 See also https://libreswan.org/
 
 v5.2 (unreleased)
+* IKEv2:
+  - PPK in INTERMEDIATE exchange, draft-ietf-ipsecme-ikev2-qr-alt-04 [Vukasin]
 * Linux:
   - packet offload counters supported in 6.7+ [Paul]
   - Add IPTFS support [Paul / Antony]
