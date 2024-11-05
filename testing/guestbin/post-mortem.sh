@@ -94,7 +94,7 @@ else
 fi
 
 
-CHECK memory leaks
+CHECK leak detective
 
 # The absence of 'leak detective found no leaks' in the log file isn't
 # sufficient.  For instance a pluto self-test (in check-01) doesn't
@@ -104,11 +104,17 @@ if ! ${pluto} ; then
     SKIP as pluto was not running
 elif ${core} ; then
     SKIP as pluto core dumped
+elif test ! -s /tmp/pluto.log ; then
+    SKIP as pluto.log was empty
+elif grep 'leak-detective disabled' /tmp/pluto.log ; then
+    SKIP as leak-detective was disabled
 elif grep 'leak detective found [0-9]* leaks' /tmp/pluto.log ; then
     FAIL
     grep -e leak /tmp/pluto.log | grep -v -e '|'
-else
+elif grep 'leak detective found no leaks' /tmp/pluto.log ; then
     PASS
+else
+    FAIL
 fi
 
 
