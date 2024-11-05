@@ -93,10 +93,10 @@ static void check(const struct protocol *protocol,
 	} else {
 		printf("'%s=%s'", protocol->name, algstr);
 	}
-	if (expected == PASS) {
-		printf(" (expect SUCCESS)");
-	} else {
-		printf(" (expect ERROR)");
+	switch (expected) {
+	case PASS: printf(" (expect SUCCESS)"); break;
+	case FAIL: printf(" (expect ERROR)"); break;
+	case COUNT: break;
 	}
 	printf("\n");
 	fflush(NULL);
