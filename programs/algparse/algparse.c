@@ -26,84 +26,6 @@ static int failures = 0;
 
 enum expect { FAIL = false, PASS = true, COUNT, };
 
-#define CHECK(CHECK,PARSE,OK) {						\
-		struct proposal_policy policy = {			\
-			.version = ike_version,				\
-			.alg_is_ok = OK,				\
-			.pfs = pfs,					\
-			.logger_rc_flags = ERROR_STREAM,		\
-			.logger = logger,				\
-			.check_pfs_vs_dh = CHECK,			\
-			.ignore_parser_errors = ignore_parser_errors,	\
-		};							\
-		printf("algparse ");					\
-		if (impaired) {						\
-			printf("-impair ");				\
-		}							\
-		if (fips) {						\
-			printf("-fips ");				\
-		}							\
-		switch (ike_version) {					\
-		case IKEv1: printf("-v1 "); break;			\
-		case IKEv2: printf("-v2 "); break;			\
-		default: break;						\
-		}							\
-		if (pfs) {						\
-			printf("-pfs ");				\
-		}							\
-		if (algstr == NULL) {					\
-			printf("'%s'", #PARSE);				\
-		} else {						\
-			printf("'%s=%s'", #PARSE, algstr);		\
-		}							\
-		if (expected == PASS) {					\
-			printf(" (expect SUCCESS)");			\
-		} else {						\
-			printf(" (expect ERROR)");			\
-		}							\
-		printf("\n");						\
-		fflush(NULL);						\
-		struct proposal_parser *parser =			\
-			PARSE##_proposal_parser(&policy);		\
-		struct proposals *proposals =				\
-			proposals_from_str(parser, algstr);		\
-		if (proposals != NULL) {				\
-			pexpect(parser->diag == NULL);			\
-			FOR_EACH_PROPOSAL(proposals, proposal) {	\
-				JAMBUF(buf) {				\
-					jam(buf, "\t");			\
-					jam_proposal(buf, proposal);	\
-					fprintf(stdout, PRI_SHUNK"\n",	\
-						pri_shunk(jambuf_as_shunk(buf))); \
-				}					\
-			}						\
-			free_proposals(&proposals);			\
-			if (expected == FAIL) {				\
-				failures++;				\
-				fprintf(stderr,				\
-					"UNEXPECTED PASS: %s%s%s\n",	\
-					#PARSE,				\
-					algstr == NULL ? "" : "=",	\
-					algstr == NULL ? "" : algstr);	\
-			}						\
-		} else {						\
-			pexpect(parser->diag != NULL);			\
-			printf("\tERROR: %s\n", str_diag(parser->diag)); \
-			if (expected == PASS) {				\
-				failures++;				\
-				fprintf(stderr,				\
-					"UNEXPECTED FAIL: %s%s%s\n",	\
-					#PARSE,				\
-					algstr == NULL ? "" : "=",	\
-					algstr == NULL ? "" : algstr);	\
-			} else if (expected == COUNT) {			\
-				failures++;				\
-			}						\
-		}							\
-		free_proposal_parser(&parser);				\
-		fflush(NULL);						\
-	}
-
 /*
  * Kernel not available so fake it.
  */
@@ -118,59 +40,140 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-#define esp(EXPECTED, ALGSTR) test_esp(EXPECTED, ALGSTR, logger)
-static void test_esp(enum expect expected, const char *algstr, struct logger *logger)
-{
-	CHECK(true, esp, kernel_alg_is_ok);
-}
-
-#define ah(EXPECTED, ALGSTR) test_ah(EXPECTED, ALGSTR, logger)
-static void test_ah(enum expect expected, const char *algstr, struct logger *logger)
-{
-	CHECK(true, ah, kernel_alg_is_ok);
-}
-
-#define ike(EXPECTED, ALGSTR) test_ike(EXPECTED, ALGSTR, logger)
-static void test_ike(enum expect expected, const char *algstr, struct logger *logger)
-{
-	CHECK(false, ike, ike_alg_is_ike);
-}
-
 typedef void (protocol_t)(enum expect expected, const char *, struct logger *logger);
 
 struct protocol {
 	const char *name;
-	protocol_t *parser;
+	struct proposal_parser *(*parser)(const struct proposal_policy *policy);
+	bool pfs_vs_dh;
+	bool (*alg_is_ok)(const struct ike_alg *alg);
 };
 
-const struct protocol protocols[] = {
-	{ "ike", test_ike, },
-	{ "ah", test_ah, },
-	{ "esp", test_esp, },
+const struct protocol ike_protocol = {
+	"ike", ike_proposal_parser, .pfs_vs_dh = false, .alg_is_ok = ike_alg_is_ike,
 };
+
+const struct protocol ah_protocol = {
+	"ah", ah_proposal_parser, .pfs_vs_dh = true, .alg_is_ok = kernel_alg_is_ok,
+};
+
+const struct protocol esp_protocol = {
+	"esp", esp_proposal_parser, .pfs_vs_dh = true, .alg_is_ok = kernel_alg_is_ok,
+};
+
+const struct protocol *protocols[] = {
+	&ike_protocol,
+	&ah_protocol,
+	&esp_protocol,
+};
+
+static void check(const struct protocol *protocol,
+		  enum expect expected,
+		  const char *algstr,
+		  struct logger *logger)
+{
+	/* print the test */
+	printf("algparse ");
+	if (impaired) {
+		printf("-impair ");
+	}
+	if (fips) {
+		printf("-fips ");
+	}
+	switch (ike_version) {
+	case IKEv1: printf("-v1 "); break;
+	case IKEv2: printf("-v2 "); break;
+	default: break;
+	}
+	if (pfs) {
+		printf("-pfs ");
+	}
+	if (algstr == NULL) {
+		printf("'%s'", protocol->name);
+	} else {
+		printf("'%s=%s'", protocol->name, algstr);
+	}
+	if (expected == PASS) {
+		printf(" (expect SUCCESS)");
+	} else {
+		printf(" (expect ERROR)");
+	}
+	printf("\n");
+	fflush(NULL);
+
+	/* run the test */
+	struct proposal_policy policy = {
+		.version = ike_version,
+		.alg_is_ok = protocol->alg_is_ok,
+		.pfs = pfs,
+		.logger_rc_flags = ERROR_STREAM,
+		.logger = logger,
+		.check_pfs_vs_dh = protocol->pfs_vs_dh,
+		.ignore_parser_errors = ignore_parser_errors,
+	};
+	struct proposal_parser *parser =
+		protocol->parser(&policy);
+	struct proposals *proposals =
+		proposals_from_str(parser, algstr);
+
+	/* print the results */
+	if (proposals != NULL) {
+		pexpect(parser->diag == NULL);
+		FOR_EACH_PROPOSAL(proposals, proposal) {
+			JAMBUF(buf) {
+				jam(buf, "\t");
+				jam_proposal(buf, proposal);
+				fprintf(stdout, PRI_SHUNK"\n",
+					pri_shunk(jambuf_as_shunk(buf)));
+			}
+		}
+		free_proposals(&proposals);
+		if (expected == FAIL) {
+			failures++;
+			fprintf(stderr,
+				"UNEXPECTED PASS: %s%s%s\n",
+				protocol->name,
+				(algstr == NULL ? "" : "="),
+				(algstr == NULL ? "" : algstr));
+		}
+	} else {
+		pexpect(parser->diag != NULL);
+		printf("\tERROR: %s\n", str_diag(parser->diag));
+		if (expected == PASS) {
+			failures++;
+			fprintf(stderr,
+				"UNEXPECTED FAIL: %s%s%s\n",
+				protocol->name,
+				(algstr == NULL ? "" : "="),
+				(algstr == NULL ? "" : algstr));
+		} else if (expected == COUNT) {
+			failures++;
+		}
+	}
+	free_proposal_parser(&parser);
+	fflush(NULL);
+}
 
 static void all(const char *algstr, struct logger *logger)
 {
-	for (const struct protocol *protocol = protocols;
-	     protocol < protocols + elemsof(protocols);
-	     protocol++) {
-		protocol->parser(COUNT, algstr, logger);
+	FOR_EACH_ELEMENT(protocolp, protocols) {
+		const struct protocol *protocol = (*protocolp);
+		check(protocol, COUNT, algstr, logger);
 	}
 }
 
 static void test_proposal(const char *arg, struct logger *logger)
 {
 	const char *eq = strchr(arg, '=');
-	for (const struct protocol *protocol = protocols;
-	     protocol < protocols + elemsof(protocols);
-	     protocol++) {
+	FOR_EACH_ELEMENT(protocolp, protocols) {
+		const struct protocol *protocol = (*protocolp);
 		if (streq(arg, protocol->name)) {
-			protocol->parser(COUNT, NULL, logger);
+			check(protocol, COUNT, NULL, logger);
 			return;
 		}
 		if (startswith(arg, protocol->name) &&
 		    arg + strlen(protocol->name) == eq) {
-			protocol->parser(COUNT, eq + 1, logger);
+			check(protocol, COUNT, eq + 1, logger);
 			return;
 		}
 	}
@@ -181,11 +184,9 @@ static void test_proposal(const char *arg, struct logger *logger)
 	all(arg, logger);
 }
 
-static void test(struct logger *logger)
+static void test_esp(struct logger *logger)
 {
-	/*
-	 * esp=
-	 */
+#define esp(EXPECTED, ALGSTR) check(&esp_protocol, EXPECTED, ALGSTR, logger)
 
 	esp(true, NULL);
 	esp(false, "");
@@ -405,9 +406,12 @@ static void test(struct logger *logger)
 	esp(true, "3des-sha1;modp8192,3des-sha2;modp8192");
 	esp(!pfs, "3des-sha1-modp8192,3des-sha2-modp2048");
 
-	/*
-	 * ah=
-	 */
+#undef esp
+}
+
+static void test_ah(struct logger *logger)
+{
+#define ah(EXPECTED, ALGSTR) check(&ah_protocol, EXPECTED, ALGSTR, logger)
 
 	ah(true, NULL);
 	ah(false, "");
@@ -454,9 +458,13 @@ static void test(struct logger *logger)
 #endif
 	ah(false, "ripemd"); /* support removed */
 
-	/*
-	 * ike=
-	 */
+#undef ah
+}
+
+static void test_ike(struct logger *logger)
+{
+
+#define ike(EXPECTED, ALGSTR) check(&ike_protocol, EXPECTED, ALGSTR, logger)
 
 	ike(true, NULL);
 	ike(false, "");
@@ -533,6 +541,15 @@ static void test(struct logger *logger)
 	ike(false, "aes+-"); /* empty algorithm */
 	ike(false, "aes+;"); /* empty algorithm */
 	ike(false, "aes++"); /* empty algorithm */
+
+#undef ike
+}
+
+static void test(struct logger *logger)
+{
+	test_esp(logger);
+	test_ah(logger);
+	test_ike(logger);
 }
 
 static void usage(void)
