@@ -212,6 +212,17 @@ static struct child_sa *find_v1_ipsec_sa(const ike_spis_t *ike_spis, msgid_t msg
 						  __func__));
 }
 
+static struct ike_sa *find_v1_isakmp_by_initiator_spi(const ike_spi_t *ike_initiator_spi)
+{
+	const so_serial_t sos_nobody = SOS_NOBODY;
+	const msgid_t isakmp_msgid = 0; /*main-or-aggr*/
+	return pexpect_ike_sa(state_by_ike_initiator_spi(IKEv1,
+							 &sos_nobody /*.clonedfrom==0*/,
+							 &isakmp_msgid /*msgid==0*/,
+							 NULL /*ignore-role*/,
+							 ike_initiator_spi, __func__));
+}
+
 struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 {
 	return state_by_ike_spis(IKEv1,
@@ -221,47 +232,42 @@ struct state *find_state_ikev1(const ike_spis_t *ike_spis, msgid_t msgid)
 				 ike_spis, NULL, NULL, __func__);
 }
 
-static struct state *find_state_ikev1_init(const ike_spi_t *ike_initiator_spi,
-					   msgid_t msgid)
-{
-	return state_by_ike_initiator_spi(IKEv1,
-					  NULL /*ignore-clonedfrom*/,
-					  &msgid /*check v1 msgid*/,
-					  NULL /*ignore-role*/,
-					  ike_initiator_spi, __func__);
-}
-
 struct v1_msgid_filter {
 	msgid_t msgid;
 };
 
-static bool v1_msgid_predicate(struct state *st, void *context)
+static bool phase15_predicate(struct state *st, void *context)
 {
 	struct v1_msgid_filter *filter = context;
-	dbg("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
-	    st->st_serialno, filter->msgid,
-	    st->st_v1_msgid.id, st->st_v1_msgid.phase15);
-	if ((st->st_v1_msgid.phase15 != v1_MAINMODE_MSGID &&
-	     filter->msgid == st->st_v1_msgid.phase15) ||
-	    filter->msgid == st->st_v1_msgid.id) {
-		dbg("p15 state object #%lu found, in %s",
-		    st->st_serialno, st->st_state->name);
+	ldbg(&global_logger,
+	     "peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
+	     st->st_serialno, filter->msgid,
+	     st->st_v1_msgid.id, st->st_v1_msgid.phase15);
+	if (st->st_v1_msgid.phase15 == filter->msgid) {
+		ldbg(&global_logger,
+		     "p15 state object #%lu found, in %s",
+		     st->st_serialno, st->st_state->name);
 		return true;
 	}
 	return false;
 }
 
-static struct state *find_v1_info_state(const ike_spis_t *ike_spis, msgid_t msgid)
+static struct ike_sa *find_v1_phase15_isakmp_sa(const ike_spis_t *ike_spis, msgid_t msgid)
 {
+	if (pbad(msgid == 0)) {
+		return NULL;
+	}
 	struct v1_msgid_filter filter = {
 		.msgid = msgid,
 	};
-	return state_by_ike_spis(IKEv1,
-				 NULL /* ignore-clonedfrom */,
-				 NULL /* ignore v1 msgid; see predicate */,
-				 NULL /* ignore-role */,
-				 ike_spis, v1_msgid_predicate,
-				 &filter, __func__);
+	const so_serial_t sos_nobody = SOS_NOBODY;
+	const msgid_t isakmp_msgid = 0; /*main-or-aggr*/
+	return pexpect_ike_sa(state_by_ike_spis(IKEv1,
+						&sos_nobody /* clonedfrom==0 */,
+						&isakmp_msgid /* msgid==0 */,
+						NULL /* ignore-role */,
+						ike_spis, phase15_predicate,
+						&filter, __func__));
 }
 
 void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *transition)
@@ -540,15 +546,15 @@ void process_v1_packet(struct msg_digest *md)
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
-			LOG_PACKET(RC_LOG, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
-				   md->hdr.isa_msgid);
-			SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
+			llog(RC_LOG, md->logger, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
+			     md->hdr.isa_msgid);
+			send_v1_notification_from_md(md, v1N_INVALID_MESSAGE_ID);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			LOG_PACKET(RC_LOG, "Initiator Cookie must not be zero in phase 1 message");
-			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
+			llog(RC_LOG, md->logger, "Initiator Cookie must not be zero in phase 1 message");
+			send_v1_notification_from_md(md, v1N_INVALID_COOKIE);
 			return;
 		}
 
@@ -557,8 +563,8 @@ void process_v1_packet(struct msg_digest *md)
 			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-				LOG_PACKET(RC_LOG, "initial phase 1 message is invalid: its Encrypted Flag is on");
-				SEND_NOTIFICATION(v1N_INVALID_FLAGS);
+				llog(RC_LOG, md->logger, "initial phase 1 message is invalid: its Encrypted Flag is on");
+				send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
 				return;
 			}
 
@@ -567,10 +573,9 @@ void process_v1_packet(struct msg_digest *md)
 			 * this ICOOKIE, assume it is some sort of
 			 * re-transmit.
 			 */
-			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
-						   md->hdr.isa_msgid);
-			if (st != NULL) {
-				if (!ikev1_duplicate(st, md)) {
+			ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+			if (ike != NULL) {
+				if (!ikev1_duplicate(&ike->sa, md)) {
 					/*
 					 * Not a duplicate for the
 					 * current state; assume that
@@ -579,13 +584,15 @@ void process_v1_packet(struct msg_digest *md)
 					 * state that should be
 					 * discarded.
 					 */
-					log_state(RC_LOG, st, "discarding initial packet; already %s",
-						  st->st_state->name);
+					llog(RC_LOG, ike->sa.logger, "discarding initial packet; already %s",
+					     ike->sa.st_state->name);
 				}
 				return;
 			}
-			passert(st == NULL); /* new state needed */
 			/* don't build a state until the message looks tasty */
+			passert(ike == NULL); /* new state needed */
+			child = NULL;
+			st = NULL; /* new state needed */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
 		} else {
@@ -596,10 +603,8 @@ void process_v1_packet(struct msg_digest *md)
 			 * Possibly.  Which is probably hopeless.
 			 */
 
-			st = find_state_ikev1(&md->hdr.isa_ike_spis,
-					      md->hdr.isa_msgid);
-
-			if (st == NULL) {
+			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+			if (ike == NULL) {
 				/*
 				 * Perhaps this is a first message
 				 * from the responder and contains a
@@ -610,16 +615,15 @@ void process_v1_packet(struct msg_digest *md)
 				 * with a bogus non-zero responder IKE
 				 * SPI.
 				 */
-				st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
-							   md->hdr.isa_msgid);
-
-				if (st == NULL) {
+				ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
+				if (ike == NULL) {
 					llog(RC_LOG, md->logger,
 					     "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
 					return;
 				}
-				if (st->st_state->kind == STATE_AGGR_R0) {
+
+				if (ike->sa.st_state->kind == STATE_AGGR_R0) {
 					/*
 					 * The only way for this to
 					 * happen is for the attacker
@@ -635,85 +639,97 @@ void process_v1_packet(struct msg_digest *md)
 					return;
 				}
 			}
-			from_state = st->st_state->kind;
+
+			child = NULL;
+			st = &ike->sa;
+			from_state = ike->sa.st_state->kind;
 		}
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
-		st = find_v1_info_state(&md->hdr.isa_ike_spis,
-					v1_MAINMODE_MSGID);
-
-		if (st == NULL) {
+	{
+		ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
 			/*
 			 * might be an informational response to our
 			 * first message, in which case, we don't know
 			 * the rcookie yet.
 			 */
-			st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
-						   v1_MAINMODE_MSGID);
+			ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
 		}
 
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
-			bool quiet = (st == NULL);
 
-			if (st == NULL) {
-				if (DBGP(DBG_BASE)) {
-					DBG_log("Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08" PRIx32,
-						md->hdr.isa_msgid);
-					DBG_dump_thing("- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:",
-						       md->hdr.isa_ike_initiator_spi);
-					DBG_dump_thing("- unknown SA's md->hdr.isa_ike_responder_spi.bytes:",
-						       md->hdr.isa_ike_responder_spi);
+			if (ike == NULL) {
+				if (LDBGP(DBG_BASE, md->logger)) {
+					LDBG_log(md->logger,
+						 "Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08" PRIx32,
+						 md->hdr.isa_msgid);
+					LDBG_log(md->logger, "- unknown SA's md->hdr.isa_ike_initiator_spi.bytes:");
+					LDBG_thing(md->logger, md->hdr.isa_ike_initiator_spi);
+					LDBG_log(md->logger, "- unknown SA's md->hdr.isa_ike_responder_spi.bytes:");
+					LDBG_thing(md->logger, md->hdr.isa_ike_responder_spi);
 				}
-
 				/* XXX Could send notification back */
 				return;
 			}
 
-			if (!IS_V1_ISAKMP_ENCRYPTED(st->st_state->kind)) {
-				if (!quiet) {
-					log_state(RC_LOG, st,
-						  "encrypted Informational Exchange message is invalid because no key is known");
-				}
+			if (!IS_V1_ISAKMP_ENCRYPTED(ike->sa.st_state->kind)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "encrypted Informational Exchange message is invalid because no key is known");
 				/* XXX Could send notification back */
 				return;
 			}
 
 			if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
-				if (!quiet) {
-					log_state(RC_LOG, st,
-						  "Informational Exchange message is invalid because it has a Message ID of 0");
-				}
+				llog(RC_LOG, ike->sa.logger,
+				     "Informational Exchange message is invalid because it has a Message ID of 0");
 				/* XXX Could send notification back */
 				return;
 			}
 
-			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-				if (!quiet) {
-					log_state(RC_LOG, st,
-						  "Informational Exchange message is invalid because it has a previously used Message ID (0x%08" PRIx32 " )",
-						  md->hdr.isa_msgid);
-				}
+			if (!unique_msgid(&ike->sa, md->hdr.isa_msgid)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "Informational Exchange message is invalid because it has a previously used Message ID (0x%08" PRIx32 " )",
+				     md->hdr.isa_msgid);
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_v1_msgid.reserved = false;
+			ike->sa.st_v1_msgid.reserved = false;
 
-			init_phase2_iv(st, &md->hdr.isa_msgid);
+			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
 			new_iv_set = true;
-
 			from_state = STATE_INFO_PROTECTED;
+			st = &ike->sa;
 		} else {
-			if (st != NULL &&
-			    IS_V1_ISAKMP_AUTHENTICATED(st->st_state)) {
-				log_state(RC_LOG, st,
-					  "Informational Exchange message must be encrypted");
-				/* XXX Could send notification back */
-				return;
+			/* see IF above */
+			passert((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY);
+			if (ike != NULL) {
+				if (IS_V1_ISAKMP_AUTHENTICATED(ike->sa.st_state)) {
+					llog(RC_LOG, ike->sa.logger,
+					     "Informational Exchange message must be encrypted");
+					/* XXX Could send notification back */
+					return;
+				}
+				/*
+				 * There's an IKE (ISAKMP) SA but it isn't yet
+				 * secured. Presumably this is some sort of
+				 * notification.
+				 */
+				from_state = STATE_INFO;
+				st = &ike->sa;
+			} else {
+				/*
+				 * There's no IKE (ISAKMP) SA at all.
+				 * New exchange!?!?  or just bogus and
+				 * should be dropped?
+				 */
+				from_state = STATE_INFO;
+				st = NULL;
 			}
-			from_state = STATE_INFO;
 		}
 		break;
+	}
 
 	case ISAKMP_XCHG_QUICK: /* part of a Quick Mode exchange */
 	{
@@ -867,60 +883,60 @@ void process_v1_packet(struct msg_digest *md)
 	}
 
 	case ISAKMP_XCHG_MODE_CFG:
+	{
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-			dbg("Mode Config message is invalid because it has an Initiator Cookie of 0");
+			ldbg(md->logger, "Mode Config message is invalid because it has an Initiator Cookie of 0");
 			/* XXX Could send notification back */
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
-			dbg("Mode Config message is invalid because it has a Responder Cookie of 0");
+			ldbg(md->logger, "Mode Config message is invalid because it has a Responder Cookie of 0");
 			/* XXX Could send notification back */
 			return;
 		}
 
 		if (md->hdr.isa_msgid == 0) {
-			dbg("Mode Config message is invalid because it has a Message ID of 0");
+			ldbg(md->logger, "Mode Config message is invalid because it has a Message ID of 0");
 			/* XXX Could send notification back */
 			return;
 		}
 
-		st = find_v1_info_state(&md->hdr.isa_ike_spis, md->hdr.isa_msgid);
-
-		if (st == NULL) {
+		ike = find_v1_phase15_isakmp_sa(&md->hdr.isa_ike_spis, md->hdr.isa_msgid);
+		if (ike == NULL) {
 			/* No appropriate Mode Config state.
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
-			dbg("No appropriate Mode Config state yet. See if we have a Main Mode state");
+			ldbg(md->logger, "no appropriate Mode Config state yet. See if we have a Main Mode state");
 
-			st = find_v1_info_state(&md->hdr.isa_ike_spis, 0);
-
-			if (st == NULL) {
-				dbg("Mode Config message is for a non-existent (expired?) ISAKMP SA");
+			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+			if (ike == NULL) {
+				ldbg(md->logger, "Mode Config message is for a non-existent (expired?) ISAKMP SA");
 				/* XXX Could send notification back */
 				/* ??? ought to log something (not just DBG)? */
 				return;
 			}
 
-
-			const struct spd_end *this = st->st_connection->spd->local;
+			const struct spd_end *this = ike->sa.st_connection->spd->local;
 			esb_buf b;
-			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
-			    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-			    this->host->config->xauth.server ? " xauthserver" : "",
-			    this->host->config->xauth.client ? " xauthclient" : "",
-			    this->host->config->modecfg.server ? " modecfgserver" : "",
-			    this->host->config->modecfg.client ? " modecfgclient" : "");
+			ldbg(ike->sa.logger,
+			     " processing received isakmp_xchg_type %s; this is a%s%s%s%s",
+			     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+			     this->host->config->xauth.server ? " xauthserver" : "",
+			     this->host->config->xauth.client ? " xauthclient" : "",
+			     this->host->config->modecfg.server ? " modecfgserver" : "",
+			     this->host->config->modecfg.client ? " modecfgclient" : "");
 
-			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-				dbg("Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
-				    st->st_state->name);
+			if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
+				ldbg(ike->sa.logger,
+				     "Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
+				     ike->sa.st_state->name);
 				/* XXX Could send notification back */
 				return;
 			}
-			dbg(" call init_phase2_iv");
-			init_phase2_iv(st, &md->hdr.isa_msgid);
+			ldbg(ike->sa.logger, " call init_phase2_iv");
+			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
 			new_iv_set = true;
 
 			/*
@@ -944,59 +960,69 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 
 			if (this->host->config->xauth.server &&
-			    st->st_state->kind == STATE_XAUTH_R1 &&
-			    st->st_v1_quirks.xauth_ack_msgid) {
+			    ike->sa.st_state->kind == STATE_XAUTH_R1 &&
+			    ike->sa.st_v1_quirks.xauth_ack_msgid) {
 				from_state = STATE_XAUTH_R1;
-				dbg(" set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
-				    st->st_state->name);
+				ldbg(ike->sa.logger,
+				     " set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
+				     ike->sa.st_state->name);
 			} else if (this->host->config->xauth.client &&
-				   IS_V1_PHASE1(st->st_state->kind)) {
+				   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 				from_state = STATE_XAUTH_I0;
-				dbg(" set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
-				    st->st_state->name);
+				ldbg(ike->sa.logger,
+				     " set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
+				     ike->sa.st_state->name);
 			} else if (this->host->config->xauth.client &&
-				   st->st_state->kind == STATE_XAUTH_I1) {
+				   ike->sa.st_state->kind == STATE_XAUTH_I1) {
 				/*
 				 * in this case, we got a new MODECFG message after I0, maybe
 				 * because it wants to start over again.
 				 */
 				from_state = STATE_XAUTH_I0;
-				dbg(" set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
-				    st->st_state->name);
+				ldbg(ike->sa.logger,
+				     " set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
+				     ike->sa.st_state->name);
 			} else if (this->host->config->modecfg.server &&
-				   IS_V1_PHASE1(st->st_state->kind)) {
+				   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 				from_state = STATE_MODE_CFG_R0;
-				dbg(" set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
-				    st->st_state->name);
+				ldbg(ike->sa.logger,
+				     " set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
+				     ike->sa.st_state->name);
 			} else if (this->host->config->modecfg.client &&
-				   IS_V1_PHASE1(st->st_state->kind)) {
+				   IS_V1_PHASE1(ike->sa.st_state->kind)) {
 				from_state = STATE_MODE_CFG_R1;
-				dbg(" set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
-				    st->st_state->name);
+				ldbg(ike->sa.logger,
+				     " set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
+				     ike->sa.st_state->name);
 			} else {
 				esb_buf b;
-				dbg("received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
-				    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-				    st->st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
-				    st->st_connection->local->host.config->xauth.client ? " xauthclient" : "",
-				    st->st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
-				    st->st_connection->local->host.config->modecfg.client ? " modecfgclient" : "",
-				    st->st_state->name);
+				ldbg(ike->sa.logger,
+				     "received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
+				     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+				     ike->sa.st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
+				     ike->sa.st_connection->local->host.config->xauth.client ? " xauthclient" : "",
+				     ike->sa.st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
+				     ike->sa.st_connection->local->host.config->modecfg.client ? " modecfgclient" : "",
+				     ike->sa.st_state->name);
 				return;
 			}
+			/* from_state set above */
+			st = &ike->sa;
 		} else {
-			if (st->st_connection->local->host.config->xauth.server &&
-			    IS_V1_PHASE1(st->st_state->kind)) {
+			if (ike->sa.st_connection->local->host.config->xauth.server &&
+			    IS_V1_PHASE1(ike->sa.st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
-				dbg("We were in phase 1, with no state, so we went to XAUTH_R0");
-				change_v1_state(st, STATE_XAUTH_R0);
+				ldbg(ike->sa.logger, "We were in phase 1, with no state, so we went to XAUTH_R0");
+				change_v1_state(&ike->sa, STATE_XAUTH_R0);
 			}
 
 			/* otherwise, this is fine, we continue in the state we are in */
-			from_state = st->st_state->kind;
+			from_state = ike->sa.st_state->kind;
+			st = &ike->sa;
 		}
 
 		break;
+	}
 
 	case ISAKMP_XCHG_NONE:
 	case ISAKMP_XCHG_BASE:
@@ -1005,9 +1031,9 @@ void process_v1_packet(struct msg_digest *md)
 	default:
 	{
 		esb_buf b;
-		dbg("unsupported exchange type %s in message",
-		    str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
-		SEND_NOTIFICATION(v1N_UNSUPPORTED_EXCHANGE_TYPE);
+		ldbg(md->logger, "unsupported exchange type %s in message",
+		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
+		send_v1_notification_from_md(md, v1N_UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
 	}
