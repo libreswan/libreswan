@@ -17,6 +17,24 @@ east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for-pluto.sh --match '"west-east" #2: IPsec SA established'
+"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
+east #
+ ../../guestbin/wait-for-pluto.sh --match '"west-eastnet" #3: IPsec SA established'
+"west-eastnet" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
+east #
+ ../../guestbin/wait-for-pluto.sh --match '"westnet-east" #4: IPsec SA established'
+"westnet-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active}
+east #
+ ../../guestbin/wait-for-pluto.sh --match '#1: DPD action'
+"westnet-east" #1: DPD action - putting connection into hold
+east #
+ ../../guestbin/wait-for.sh --no-match ':' -- ipsec whack --trafficstatus
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
  ../../guestbin/ipsec-kernel-state.sh
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel

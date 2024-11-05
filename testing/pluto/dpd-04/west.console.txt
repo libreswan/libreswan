@@ -70,13 +70,36 @@ west #
 west #
  # Create the block; wait for DPD to trigger
 west #
+ iptables -I OUTPUT -s 192.1.2.45/32 -d 0/0 -j DROP
+west #
  iptables -I INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 west #
+ ../../guestbin/wait-for-pluto.sh --match '#1: DPD action'
+"west-east" #1: DPD action - putting connection into hold
+west #
  ../../guestbin/wait-for.sh --no-match ':' -- ipsec whack --trafficstatus
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.2.45/32 dst 192.0.2.0/24
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.0.1.0/24 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 west #
  # remove the block
 west #
  iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
+west #
+ iptables -D OUTPUT -s 192.1.2.45/32 -d 0/0 -j DROP
 west #
  # wait for west-east
 west #
