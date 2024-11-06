@@ -476,7 +476,7 @@ $(KVM_HOST_NFS_OK): | $(KVM_POOLDIR)
 		$(KVM_BENCHDIR) \
 		$(KVM_POOLDIR) \
 		$(KVM_SOURCEDIR) \
-		$(KVM_TESTINGDIR)
+		$(KVM_RUTDIR)
 	touch $@
 
 .PHONY: kvm-install-nfs kvm-uninstall-nfs
