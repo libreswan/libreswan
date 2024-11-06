@@ -1,0 +1,17 @@
+
+span.prompt {
+    color: brown;
+    font-weight: bolder;
+}
+
+span.command {
+    color: brown;
+}
+
+span.output {
+    color: black;
+}
+
+span.comment {
+    color: darkgray;
+}

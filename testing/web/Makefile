@@ -42,7 +42,10 @@ WEB_RESULTSDIR ?= $(WEB_SUMMARYDIR)/$(WEB_SUBDIR)
 web: | $(WEB_SUMMARYDIR)/
 	$(MAKE) web-summarydir
 	$(MAKE) web-resultsdir
-	#	$(MAKE) web-publish
+
+test-result:
+	$(MAKE) WEB_RESULTSDIR=$(WEB_SUMMARYDIR)/5.1.90-0-g6f13205ddd \
+		$(WEB_SUMMARYDIR)/5.1.90-0-g6f13205ddd/basic-pluto-01/index.html
 
 .PHONY: print-web-variable
 print-web-variable:
@@ -85,13 +88,11 @@ web-test-prep: web-summarydir
 
 .PHONY: web-summarydir
 web-summarydir: $(WEB_SUMMARYDIR)/commits.json
-web-summarydir: $(WEB_SUMMARYDIR)/index.html
-web-summarydir: $(WEB_SUMMARYDIR)/lsw-summary-graph.css
-web-summarydir: $(WEB_SUMMARYDIR)/lsw-table.css
-web-summarydir: $(WEB_SUMMARYDIR)/summaries.json
-web-summarydir: $(WEB_SUMMARYDIR)/summary.css
 web-summarydir: $(WEB_SUMMARYDIR)/tsconfig.json
+web-summarydir: $(WEB_SUMMARYDIR)/index.html
+web-summarydir: $(addprefix $(WEB_SUMMARYDIR)/, $(wildcard *.css))
 web-summarydir: $(WEB_SUMMARYDIR)/favicon.ico
+web-summarydir: $(WEB_SUMMARYDIR)/summaries.json
 
 $(WEB_SUMMARYDIR)/index.html: summary.html | $(WEB_SUMMARYDIR)/
 	cp $< $@
@@ -103,6 +104,7 @@ $(WEB_SUMMARYDIR)/favicon.ico: favicon.ico | $(WEB_SUMMARYDIR)/
 	cp $< $@
 
 # Update the pooled summary (summaries.json) of all the test runs
+
 $(WEB_SUMMARYDIR)/summaries.json: \
 			$(wildcard $(WEB_SUMMARYDIR)/*/summary.json) \
 			json-summaries.sh
@@ -138,7 +140,6 @@ web-resultsdir: $(WEB_RESULTSDIR)/index.html
 web-resultsdir: $(wildcard $(WEB_SUMMARYDIR)/*/index.html)
 
 $(WEB_SUMMARYDIR)/%/index.html: results.html \
-		lsw-summary-graph.css lsw-table.css results.css favicon.ico \
 		| $(WEB_SUMMARYDIR)/%/
 	cp $? $(WEB_SUMMARYDIR)/$*
 	mv $(WEB_SUMMARYDIR)/$*/results.html $(WEB_SUMMARYDIR)/$*/index.html
@@ -208,83 +209,9 @@ $(WEB_SUMMARYDIR)/%/results.json: $(WEB_UTILSDIR)/kvmresults.py $(WEB_UTILSDIR)/
 endif
 endif
 
-#
-# Equivalent of help
-#
-
-define web-config
-
-Web Configuration:
-
-    The test results can be published as a web page using either of
-    the make variables:
-
-    $(call kvm-var-value,WEB_SUMMARYDIR)
-
-        The top-level html directory containing a summary of all test
-        runs.
-
-	The results from individual test runs are stored under this
-        directory.
-
-    $(call kvm-var-value,WEB_SUBDIR)
-    $(call kvm-var-value,WEB_RESULTSDIR)
-
-        Sub-directory to store the current test run's results.
-
-	By default, the test run's results are stored as the
-	sub-directory $$(WEB_SUBDIR) under $$(WEB_SUMMARYDIR), and
-	$$(WEB_SUBDIR) is formatted as TAG-OFFSET-gREV-BRANCH using
-	information from $$(WEB_RUTDIR)'s current commit (see also
-	`git describe --long`).
-
-    $(call kvm-var-value,WEB_RUTDIR)
-
-        The git repository to use when constructing the web pages (for
-        instance the list of commits).
-
-	By default, the current directory is used.
-
-Internal targets:
-
-    web-site:
-
-        update the web site
-
-    web-results-json:
-
-        update the results.json in all the test run sub-directories
-        under $$(WEB_SUMMARYDIR)
-
-	very slow
-
-	requires $$(WEB_SCRATCH_REPODIR) set and pointing at a
-	dedicated git repository
-
-Web targets:
-
-    web-summarydir:
-
-	build or update the top-level summary web page under
-	$$(WEB_SUMMARYDIR) (the test run sub-directories are not
-	updated, see above).
-
-    web-resultsdir:
-
-        build or update $$(WEB_RESULTSDIR)
-
-    web-commitsdir:
-
-        build or update both $$(WEB_COMMITSDIR) and
-	$$(WEB_SUMMARYDIR)/commits.json
-
-    web-page:
-
-        build or update the web page in $(LSW_WEBDIR) including the
-        results from the most recent test run
-
-endef
-
-.PHONY: web-config web-help
-web-config web-help:
-	$(info $(web-config))
+ifdef WEB_RESULTSDIR
+$(WEB_RESULTSDIR)/%/index.html: result.html \
+		| $(WEB_RESULTSDIR)/%/
+	cp $? $(WEB_RESULTSDIR)/$*
+	mv $(WEB_RESULTSDIR)/$*/result.html $(WEB_RESULTSDIR)/$*/index.html
+endif

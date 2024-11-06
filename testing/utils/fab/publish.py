@@ -35,7 +35,7 @@ JSON_STATUS = { }
 def add_arguments(parser):
     group = parser.add_argument_group("publish arguments",
                                       "options for publishing the results as json")
-    group.add_argument("--publish-results", metavar="DIRECTORY",
+    group.add_argument("--publish-resultsdir", metavar="DIRECTORY",
                        type=argutil.directory,
                        help="publish the results from the test run in %(metavar)s as json")
     group.add_argument("--publish-status", metavar="STATUS-FILE",
@@ -46,22 +46,28 @@ def add_arguments(parser):
                        help="publish a summary in %(metavar)s as json; default: DIRECTORY/summary.json")
     group.add_argument("--publish-hash", metavar="HASH",
                        help="hash code of the commit being tested; added to the summary")
+    group.add_argument("--publish-result-html", metavar="index.html",
+                       help="%(metavar) for each test directory")
+    group.add_argument("--publish-source-url", metavar="URL",
+                       help="point test source files at %(metavar)/testing/pluto/...")
 
 def log_arguments(logger, args):
     logger.info("Publish arguments:")
-    logger.info("  publish-results: '%s'", args.publish_results)
+    logger.info("  publish-resultsdir: '%s'", args.publish_resultsdir)
+    logger.info("  publish-result-html: '%s'", args.publish_result_html)
+    logger.info("  publish-source-url: '%s'", args.publish_source_url)
     logger.info("  publish-status: '%s'", args.publish_status)
     logger.info("  publish-summary: '%s'", args.publish_summary)
     logger.info("  publish-hash: '%s'", args.publish_hash)
 
     # sneak in some fields
-    if not args.publish_results:
+    if not args.publish_resultsdir:
         return
 
     if args.publish_hash:
         JSON_SUMMARY["hash"] = args.publish_hash
     path = (args.publish_summary and os.path.dirname(args.publish_summary)
-            or args.publish_results)
+            or args.publish_resultsdir)
     if path:
         directory = os.path.basename(path)
         JSON_SUMMARY["directory"] = directory
@@ -81,7 +87,9 @@ def _add(counts, *keys):
     counts[key] = counts[key] + 1
 
 def _mkdir_test(logger, args, result):
-    dstdir = os.path.join(args.publish_results, result.test.name)
+    if not args.publish_resultsdir:
+        return None
+    dstdir = os.path.join(args.publish_resultsdir, result.test.name)
     try:
         os.mkdir(dstdir)
     except FileExistsError:
@@ -89,9 +97,10 @@ def _mkdir_test(logger, args, result):
     return dstdir
 
 def _mkdir_test_output(logger, args, result):
-    if not os.path.isdir(result.output_directory):
+    testdir = _mkdir_test(logger, args, result);
+    if not testdir:
         return None
-    outdir = os.path.join(_mkdir_test(logger, args, result), "OUTPUT")
+    outdir = os.path.join(testdir, "OUTPUT")
     try:
         os.mkdir(outdir)
     except FileExistsError:
@@ -121,56 +130,71 @@ def _copy_new_file(src, dst, logger):
     shutil.copy2(src, dst)
     return
 
-def test_files(logger, args, result):
-    if not args.publish_results:
-        return
-    dstdir = _mkdir_test(logger, args, result)
+def test_files(logger, args, result, files={}):
+    testdir = _mkdir_test(logger, args, result)
+    if not testdir:
+        return None
     test = result.test
     ignore = re.compile(r"[~]$")
     for name in os.listdir(test.directory):
         if ignore.search(name):
             continue
+        if args.publish_source_url:
+            # no need to copy
+            files[name] = args.publish_source_url + "/testing/pluto/" + test.name + "/" + name
+        else:
+            files[name] = name
+        # No reason to copy files that can't be seen?  Problem is the
+        # web page relies on pulling in description.txt from the local
+        # file.
+        #
+        # if not args.publish_result_html or not args.publish_source_url:
         src = os.path.join(test.directory, name)
-        dst = os.path.join(dstdir, name)
+        dst = os.path.join(testdir, name)
         _copy_new_file(src, dst, logger)
-    return dstdir
+    if args.publish_result_html:
+        src = args.publish_result_html
+        dst = os.path.join(testdir, "index.html")
+        _copy_new_file(src, dst, logger)
+    return testdir
 
-
-def test_output_files(logger, args, result):
-    if not args.publish_results:
-        return
-    # Only when there is an output directory does it need publishing.
-    dstdir = _mkdir_test_output(logger, args, result)
-    if not dstdir:
-        return
-    # copy plain text files
-    text_name = re.compile(r"(\.txt|\.diff|^RESULT|\.json)$")
-    log_name = re.compile(r"(\.log)$")
-    for name in os.listdir(result.output_directory):
-        # copy simple files
-        src = os.path.join(result.output_directory, name)
-        dst = os.path.join(dstdir, name)
-        if text_name.search(name):
-            _copy_new_file(src, dst, logger)
-            continue
-        # copy compressed files; gzip is used as that works with the
-        # web's deflate?!?
-        if log_name.search(name):
-            dst_gz = dst + ".gz"
-            # heuristic to avoid re-compression
-            if os.path.isfile(dst) \
-            and os.path.getmtime(src) < os.path.getmtime(dst_gz):
+def test_output_files(logger, args, result, files={}):
+    # always create OUTPUT/; even untested it contains files.json
+    outdir = _mkdir_test_output(logger, args, result)
+    if not outdir:
+        return None
+    # Only when there is an output directory does it need copying.
+    if os.path.isdir(result.output_directory):
+        # copy plain text files
+        text_name = re.compile(r"(\.txt|\.diff|^RESULT|\.json)$")
+        log_name = re.compile(r"(\.log)$")
+        for name in os.listdir(result.output_directory):
+            output_name = "OUTPUT/"+name
+            files[output_name] = output_name
+            # copy simple files
+            src = os.path.join(result.output_directory, name)
+            dst = os.path.join(outdir, name)
+            if text_name.search(name):
+                _copy_new_file(src, dst, logger)
                 continue
-            logger.info("compressing '%s' to '%s'", src, dst_gz)
-            with open(src, "rb") as f:
-                data = f.read()
-            with gzip.open(dst_gz, "wb") as f:
-                f.write(data)
-            continue
-
+            # copy compressed files; gzip is used as that works with
+            # the web's deflate?!?
+            if log_name.search(name):
+                dst_gz = dst + ".gz"
+                # heuristic to avoid re-compression
+                if os.path.isfile(dst) \
+                   and os.path.getmtime(src) < os.path.getmtime(dst_gz):
+                    continue
+                logger.info("compressing '%s' to '%s'", src, dst_gz)
+                with open(src, "rb") as f:
+                    data = f.read()
+                with gzip.open(dst_gz, "wb") as f:
+                    f.write(data)
+                continue
+    return outdir
 
 def json_result(logger, args, result):
-    if not args.publish_results:
+    if not args.publish_resultsdir:
         return
 
     # accumulate results.json
@@ -186,9 +210,9 @@ def json_result(logger, args, result):
 
 
 def json_results(logger, args):
-    if not args.publish_results:
+    if not args.publish_resultsdir:
         return
-    path = os.path.join(args.publish_results, "results.json")
+    path = os.path.join(args.publish_resultsdir, "results.json")
     logger.info("writing results to '%s'", path)
     with open(path, "w") as output:
         jsonutil.dump(JSON_RESULTS, output)
@@ -196,7 +220,7 @@ def json_results(logger, args):
 
 
 def json_summary(logger, args):
-    if not args.publish_results:
+    if not args.publish_resultsdir:
         return
 
     # update totals and stop time
@@ -205,7 +229,7 @@ def json_summary(logger, args):
 
     # emit
     path = (args.publish_summary and args.publish_summary
-            or os.path.join(args.publish_results, "summary.json"))
+            or os.path.join(args.publish_resultsdir, "summary.json"))
     logger.info("writing summary to '%s'", path)
     with open(path, "w") as output:
         jsonutil.dump(JSON_SUMMARY, output)
@@ -213,9 +237,9 @@ def json_summary(logger, args):
 
 
 def testlist(logger, args):
-    if not args.publish_results:
+    if not args.publish_resultsdir:
         return
-    path = os.path.join(args.publish_results, "TESTLIST")
+    path = os.path.join(args.publish_resultsdir, "TESTLIST")
     logger.info("writing TESTLIST to '%s'", path)
     with open(path, "w") as output:
         for result in JSON_RESULTS:
@@ -233,8 +257,15 @@ def json_status(logger, args, details):
 
 
 def everything(logger, args, result):
-    test_files(logger, args, result)
-    test_output_files(logger, args, result)
+
+    files = { "result.json": "result.json", }
+    testdir = test_files(logger, args, result, files)
+    outdir = test_output_files(logger, args, result, files)
+
+    if outdir:
+        with open(os.path.join(outdir, "files.json"), "w") as f:
+            jsonutil.dump(files, f)
+
     json_result(logger, args, result)
     json_results(logger, args)
     json_summary(logger, args)

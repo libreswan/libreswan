@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+
+    <script type="text/javascript" src="../../lsw-date2iso.js"></script>
+    <script type="text/javascript" src="../../lsw-table.js"></script>
+
+    <script type="text/javascript" src="../../TestRun.js"></script>
+    <script type="text/javascript" src="../../TestResult.js"></script>
+    <script type="text/javascript" src="../../Commit.js"></script>
+    <script type="text/javascript" src="../../Commits.js"></script>
+    <script type="text/javascript" src="../../Status.js"></script>
+
+    <script type="text/javascript" src="../../terminal.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../../result.css"> </link>
+    <link rel="stylesheet" type="text/css" href="../../lsw-table.css"> </link>
+    <script type="text/javascript" src="../../description.js"></script>
+    <script type="text/javascript" src="../../result.js"></script>
+    <script type="text/javascript" src="../../files.js"></script>
+
+    <script>
+      window.addEventListener('load', function() {
+	  d3.text("description.txt",
+		  (error, description_txt) => {
+		      if (error) {
+			  console.log(error)
+			  return
+		      }
+		      description(description_txt, "title", "description")
+		  })
+	  d3.json("OUTPUT/result.json",
+		  (error, result_json) => {
+		      if (error) {
+			  console.log(error)
+			  return
+		      }
+		      result(result_json, "result")
+		  })
+	  d3.json("OUTPUT/files.json",
+		  (error, files_json) => {
+		      if (error) {
+			  console.log(error)
+			  return
+		      }
+		      files(files_json, "files")
+		  })
+	  d3.text("OUTPUT/all.console.verbose.txt",
+		  (error, console_txt) => {
+		      if (error) {
+			  console.log(error)
+			  return
+		      }
+	              terminal(console_txt, "terminal")
+		  })
+      })
+    </script>
+
+  </head>
+
+  <body>
+    <div id="title"></div>
+    <div id="description"></div>
+    <div id="result"></div>
+    <h2>Files</h2>
+    <div id="files"></div>
+    <h2>Console</h2>
+    <div id="terminal"></div>
+  </body>
+
+</html>

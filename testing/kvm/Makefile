@@ -577,8 +577,10 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(foreach prefix,$(KVM_TEST_PREFIXES), --prefix '$(notdir $(prefix))') \
 		$(if $(KVM_TESTINGDIR), --testing-directory $(KVM_TESTINGDIR)) \
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
-		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
+		$(if $(WEB_ENABLED), --publish-resultsdir $(WEB_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
+		$(if $(WEB_ENABLED), --publish-result-html $(KVM_BENCHDIR)/testing/web/result.html) \
+		$(if $(PUBLISH_SOURCE_URL), --publish-source-url $(PUBLISH_SOURCE_URL)) \
 		$(if $(STRIPPED_KVM_TEST_STATUS), --test-status '$(STRIPPED_KVM_TEST_STATUS)') \
 		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(STRIPPED_KVM_TEST_PLATFORM), --test-platform '$(STRIPPED_KVM_TEST_PLATFORM)') \

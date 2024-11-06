@@ -277,7 +277,8 @@ KVM() {
 	       WEB_MAKEDIR=${web_makedir} \
 	       WEB_HASH=${commit} \
 	       WEB_RESULTSDIR=${resultsdir} \
-	       WEB_SUMMARYDIR=${summarydir}
+	       WEB_SUMMARYDIR=${summarydir} \
+	       PUBLISH_SOURCE_URL=https://github.com/libreswan/libreswan/blob/${commit}
 }
 
 run_target()
