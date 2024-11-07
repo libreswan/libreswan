@@ -1520,10 +1520,10 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 				       struct pbs_out *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
 				       bool selection,		/* if this SA is a selection, only one transform
 								 * can appear. */
-				       struct state *const st)	/* current state object */
+				       struct ike_sa *ike)	/* current state object */
 {
 	diag_t d;
-	const struct connection *const c = st->st_connection;
+	const struct connection *const c = ike->sa.st_connection;
 	bool xauth_init = false,
 		xauth_resp = false;
 	const char *const role = selection ? "initiator" : "responder";
@@ -1554,8 +1554,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
 		esb_buf b;
-		log_state(RC_LOG, st, "Unknown/unsupported DOI %s",
-			  str_enum(&doi_names, sa->isasa_doi, &b));
+		llog(RC_LOG, ike->sa.logger, "Unknown/unsupported DOI %s",
+		     str_enum(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
 		return v1N_DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1565,15 +1565,15 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
 		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
 		lset_buf lb;
-		log_state(RC_LOG, st, "unsupported IPsec DOI situation (%s)",
-			  str_lset(&sit_bit_names, ipsecdoisit, &lb));
+		llog(RC_LOG, ike->sa.logger, "unsupported IPsec DOI situation (%s)",
+		     str_lset(&sit_bit_names, ipsecdoisit, &lb));
 		/* XXX Could send notification back */
 		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1590,24 +1590,24 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			  &proposal, sizeof(proposal),
 			  &proposal_pbs);
 	if (d != NULL) {
-		llog(RC_LOG, st->logger, "%s", str_diag(d));
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
 		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
 	if (proposal.isap_pnp != ISAKMP_NEXT_NONE) {
 		esb_buf b;
-		log_state(RC_LOG, st,
-			  "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-			  str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
+		llog(RC_LOG, ike->sa.logger,
+		     "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
+		     str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
 		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
 		esb_buf b;
-		log_state(RC_LOG, st,
-			  "unexpected Protocol ID (%s) found in Oakley Proposal",
-			  str_enum(&ikev1_protocol_names, proposal.isap_protoid, &b));
+		llog(RC_LOG, ike->sa.logger,
+		     "unexpected Protocol ID (%s) found in Oakley Proposal",
+		     str_enum(&ikev1_protocol_names, proposal.isap_protoid, &b));
 		return v1N_INVALID_PROTOCOL_ID;	/* reject whole SA */
 	}
 
@@ -1640,21 +1640,21 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_shunk(&proposal_pbs, proposal.isap_spisize, &junk_spi,
 					"Oakley SPI (ignored)");
 		if (d != NULL) {
-			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
-		log_state(RC_LOG, st,
-			  "invalid SPI size (%u) in Oakley Proposal",
-			  (unsigned)proposal.isap_spisize);
+		llog(RC_LOG, ike->sa.logger,
+		     "invalid SPI size (%u) in Oakley Proposal",
+		     (unsigned)proposal.isap_spisize);
 		return v1N_INVALID_SPI;	/* reject whole SA */
 	}
 
 	if (selection && proposal.isap_notrans != 1) {
-		log_state(RC_LOG, st,
-			  "a single Transform is required in a selecting Oakley Proposal; found %u",
-			  (unsigned)proposal.isap_notrans);
+		llog(RC_LOG, ike->sa.logger,
+		     "a single Transform is required in a selecting Oakley Proposal; found %u",
+		     (unsigned)proposal.isap_notrans);
 		return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
@@ -1665,8 +1665,8 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	for (;;) {
 		if (no_trans_left == 0) {
-			log_state(RC_LOG, st,
-				  "number of Transform Payloads disagrees with Oakley Proposal Payload");
+			llog(RC_LOG, ike->sa.logger,
+			     "number of Transform Payloads disagrees with Oakley Proposal Payload");
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
@@ -1683,25 +1683,25 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
 					 &trans, sizeof(trans), &trans_pbs);
 		if (d != NULL) {
-			llog(RC_LOG, st->logger, "%s", str_diag(d));
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
 		if (trans.isat_transnum <= last_transnum) {
 			/* picky, picky, picky */
-			log_state(RC_LOG, st,
-				  "Transform Numbers are not monotonically increasing in Oakley Proposal");
+			llog(RC_LOG, ike->sa.logger,
+			     "Transform Numbers are not monotonically increasing in Oakley Proposal");
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 		last_transnum = trans.isat_transnum;
 
 		if (trans.isat_transid != KEY_IKE) {
 			esb_buf b;
-			log_state(RC_LOG, st,
-				  "expected KEY_IKE but found %s in Oakley Transform",
-				  str_enum(&isakmp_transformid_names,
-					    trans.isat_transid, &b));
+			llog(RC_LOG, ike->sa.logger,
+			     "expected KEY_IKE but found %s in Oakley Transform",
+			     str_enum(&isakmp_transformid_names,
+				      trans.isat_transid, &b));
 			return v1N_INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
 
@@ -1717,11 +1717,11 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		{							\
 			esb_buf typeesb_;				\
 			ok = false;					\
-			log_state(RC_LOG, st,			\
-				  FMT".  Attribute %s",			\
-				  ##__VA_ARGS__,			\
-				  str_enum(&oakley_attr_names,		\
-					    a.isaat_af_type, &typeesb_)); \
+			llog(RC_LOG, ike->sa.logger,			\
+			     FMT".  Attribute %s",			\
+			     ##__VA_ARGS__,				\
+			     str_enum(&oakley_attr_names,		\
+				      a.isaat_af_type, &typeesb_));	\
 		}
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
@@ -1736,7 +1736,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
 						 &a, sizeof(a), &attr_pbs);
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "invalid transform: %s", str_diag(d));
+				llog(RC_LOG, ike->sa.logger, "invalid transform: %s", str_diag(d));
 				pfree_diag(&d);
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
@@ -1746,10 +1746,10 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			bool tlv = ((a.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TLV);
 			const char *af = (tlv ? "TLV" : "TV");
 
-			PASSERT(st->logger, type < LELEM_ROOF);
+			PASSERT(ike->sa.logger, type < LELEM_ROOF);
 			if (LHAS(seen_attrs, type)) {
 				enum_buf b;
-				llog(RC_LOG, st->logger,
+				llog(RC_LOG, ike->sa.logger,
 				     "repeated %s(%s) attribute in Oakley Transform %u",
 				     str_enum(&oakley_attr_names, type, &b), af,
 				     trans.isat_transnum);
@@ -1767,7 +1767,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					      &oakley_attr_names,
 					      &value);
 			if (d != NULL) {
-				llog(RC_LOG, st->logger, "invalid attribute in Oakley Transform %u: %s",
+				llog(RC_LOG, ike->sa.logger, "invalid attribute in Oakley Transform %u: %s",
 				     trans.isat_transnum, str_diag(d));
 				pfree_diag(&d);
 				return v1N_BAD_PROPOSAL_SYNTAX;
@@ -1776,9 +1776,9 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			if (DBGP(DBG_BASE)) {
 				enum_buf b;
 				if (enum_enum_name(&ikev1_oakley_attr_value_names, type, value, &b)) {
-					LDBG_log(st->logger, "   [%s %jd is %s]", af, value, b.buf);
+					LDBG_log(ike->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 				} else if (tlv) {
-					LDBG_log(st->logger, "   [%s is %jd]", af, value);
+					LDBG_log(ike->sa.logger, "   [%s is %jd]", af, value);
 				}
 			}
 
@@ -1946,9 +1946,9 @@ rsasig_common:
 				case OAKLEY_LIFE_KILOBYTES:
 					if (LHAS(seen_durations, value)) {
 						esb_buf b;
-						log_state(RC_LOG, st,
-							  "attribute OAKLEY_LIFE_TYPE value %s repeated",
-							  str_enum(&oakley_lifetime_names, value, &b));
+						llog(RC_LOG, ike->sa.logger,
+						     "attribute OAKLEY_LIFE_TYPE value %s repeated",
+						     str_enum(&oakley_lifetime_names, value, &b));
 						return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 					}
 					seen_durations |= LELEM(value);
@@ -1977,14 +1977,14 @@ rsasig_common:
 				case OAKLEY_LIFE_SECONDS:
 					ta.life_seconds = deltatime(value);
 					if (deltatime_cmp(ta.life_seconds, >, IKE_SA_LIFETIME_MAXIMUM)) {
-						llog(RC_LOG, st->logger,
+						llog(RC_LOG, ike->sa.logger,
 						     "warning: peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
 						     value, deltasecs(IKE_SA_LIFETIME_MAXIMUM));
 						ta.life_seconds = IKE_SA_LIFETIME_MAXIMUM;
 					}
 					break;
 				case OAKLEY_LIFE_KILOBYTES:
-					dbg("ignoring OAKLEY_LIFE_KILOBYTES=%jd", value);
+					ldbg(ike->sa.logger, "ignoring OAKLEY_LIFE_KILOBYTES=%jd", value);
 					break;
 				default:
 					bad_case(life_type);
@@ -2040,20 +2040,20 @@ rsasig_common:
 
 				if (pss->len < key_size_min) {
 					if (is_fips_mode()) {
-						log_state(RC_LOG, st,
-							  "FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-							  c->name,
-							  pss->len,
-							  ta.ta_prf->common.fqn,
-							  key_size_min);
+						llog(RC_LOG, ike->sa.logger,
+						     "FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+						     c->name,
+						     pss->len,
+						     ta.ta_prf->common.fqn,
+						     key_size_min);
 						break;	/* reject transform */
 					} else {
-						log_state(RC_LOG, st,
-							  "WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-							  c->name,
-							  pss->len,
-							  ta.ta_prf->common.fqn,
-							  key_size_min);
+						llog(RC_LOG, ike->sa.logger,
+						     "WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+						     c->name,
+						     pss->len,
+						     ta.ta_prf->common.fqn,
+						     key_size_min);
 					}
 				}
 			}
@@ -2061,7 +2061,7 @@ rsasig_common:
 			/*
 			 * ML: at last check for allowed transforms in ike_proposals
 			 */
-			if (!ikev1_verify_ike(&ta, c->config->ike_proposals, st->logger)) {
+			if (!ikev1_verify_ike(&ta, c->config->ike_proposals, ike->sa.logger)) {
 				/*
 				 * already logged; UGH acts as a skip
 				 * rest of checks flag
@@ -2080,10 +2080,10 @@ rsasig_common:
 
 				if (missing) {
 					lset_buf lb;
-					log_state(RC_LOG, st,
-						  "missing mandatory attribute(s) %s in Oakley Transform %u",
-						  str_lset(&oakley_attr_bit_names, missing, &lb),
-						  trans.isat_transnum);
+					llog(RC_LOG, ike->sa.logger,
+					     "missing mandatory attribute(s) %s in Oakley Transform %u",
+					     str_lset(&oakley_attr_bit_names, missing, &lb),
+					     trans.isat_transnum);
 					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 			}
@@ -2093,7 +2093,7 @@ rsasig_common:
 			 * Let's finish early and leave.
 			 */
 
-			dbg("Oakley Transform %u accepted", trans.isat_transnum);
+			ldbg(ike->sa.logger, "Oakley Transform %u accepted", trans.isat_transnum);
 
 			if (r_sa_pbs != NULL) {
 
@@ -2128,7 +2128,7 @@ rsasig_common:
 			}
 
 			/* copy over the results */
-			st->st_oakley = ta;
+			ike->sa.st_oakley = ta;
 			return v1N_NOTHING_WRONG;	/* accept SA */
 		}
 
@@ -2138,21 +2138,21 @@ rsasig_common:
 
 		if (trans.isat_tnp == ISAKMP_NEXT_NONE) {
 			if (no_trans_left != 0) {
-				log_state(RC_LOG, st,
-					  "number of Transform Payloads disagrees with Oakley Proposal Payload");
+				llog(RC_LOG, ike->sa.logger,
+				     "number of Transform Payloads disagrees with Oakley Proposal Payload");
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 			break;
 		}
 		if (trans.isat_tnp != ISAKMP_NEXT_T) {
 			esb_buf b;
-			log_state(RC_LOG, st,
-				  "unexpected %s payload in Oakley Proposal",
-				  str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
+			llog(RC_LOG, ike->sa.logger,
+			     "unexpected %s payload in Oakley Proposal",
+			     str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 	}
-	log_state(RC_LOG, st, "no acceptable Oakley Transform");
+	llog(RC_LOG, ike->sa.logger, "no acceptable Oakley Transform");
 	return v1N_NO_PROPOSAL_CHOSEN;	/* reject whole SA */
 }
 

@@ -607,7 +607,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 	/* SA body in and out */
 	RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sa_pd->pbs,
 						    &sa_pd->payload.sa,
-						    &r_sa_pbs, false, &ike->sa));
+						    &r_sa_pbs, false, ike));
 
 	/* send Vendor IDs */
 	if (!out_v1VID_set(&rbody, c))
@@ -657,7 +657,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 
 		RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sapd->pbs,
 							    &sapd->payload.sa,
-							    NULL, true, &ike->sa));
+							    NULL, true, ike));
 	}
 
 	if (is_fips_mode() && ike->sa.st_oakley.ta_prf == NULL) {

@@ -262,7 +262,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 		RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sabs,
 							    &sa_pd->payload.sa,
-							    NULL, false, &ike->sa));
+							    NULL, false, ike));
 	}
 
 	/* KE in */
@@ -389,7 +389,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 		/* SA body in and out */
 		v1_notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
 							    &sa_pd->payload.sa,
-							    &r_sa_pbs, false, &ike->sa);
+							    &r_sa_pbs, false, ike);
 		if (rn != v1N_NOTHING_WRONG) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL_v1N + rn;
@@ -569,7 +569,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 		v1_notification_t r =
 			parse_isakmp_sa_body(&sapd->pbs, &sapd->payload.sa,
-					     NULL, true, &ike->sa);
+					     NULL, true, ike);
 
 		if (r != v1N_NOTHING_WRONG)
 			return STF_FAIL_v1N + r;

@@ -146,7 +146,7 @@ extern v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,           /
 					      const struct isakmp_sa *sa,  /* header of input SA Payload */
 					      struct pbs_out *r_sa_pbs,         /* if non-NULL, where to emit winning SA */
 					      bool selection,              /* if this SA is a selection, only one transform can appear */
-					      struct state *st);           /* current state object */
+					      struct ike_sa *ike);           /* current state object */
 
 /* initialize a state with the aggressive mode parameters */
 extern bool init_aggr_st_oakley(struct ike_sa *st);
