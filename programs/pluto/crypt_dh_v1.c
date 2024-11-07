@@ -41,33 +41,36 @@
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(const struct state *st,
-			    oakley_auth_t auth, chunk_t pss,
-			    const struct prf_desc *prf_desc,
-			    const struct encrypt_desc *encrypter,
-			    chunk_t ni, chunk_t nr,
-			    chunk_t icookie, chunk_t rcookie,
-			    chunk_t gi, chunk_t gr,
-			    /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
-			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_IN_BYTE; */
-			    PK11SymKey **skeyid_out,	/* output */
-			    PK11SymKey **skeyid_d_out,	/* output */
-			    PK11SymKey **skeyid_a_out,	/* output */
-			    PK11SymKey **skeyid_e_out,	/* output */
-			    struct crypt_mac *new_iv,	/* output */
-			    PK11SymKey **enc_key_out,	/* output */
-			    struct logger *logger)
+
+void calc_v1_skeyid_and_iv(struct ike_sa *ike)
 {
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
+	const struct encrypt_desc *cipher = ike->sa.st_oakley.ta_encrypt;
+
+	const chunk_t *psk = get_connection_psk(ike->sa.st_connection);
+	chunk_t pss = (psk != NULL ? *psk : empty_chunk);
+
+	chunk_t ni = ike->sa.st_ni;
+	chunk_t nr = ike->sa.st_nr;
+	chunk_t icookie = chunk2(ike->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE);
+	chunk_t rcookie = chunk2(ike->sa.st_ike_spis.responder.bytes, COOKIE_SIZE);
+	chunk_t gi = ike->sa.st_gi;
+	chunk_t gr = ike->sa.st_gr;
+
+	PK11SymKey *shared = ike->sa.st_dh_shared_secret;
+	const size_t keysize = ike->sa.st_oakley.enckeylen / BITS_IN_BYTE;
+
 	/* Generate the SKEYID */
 	PK11SymKey *skeyid;
-	switch (auth) {
+	switch (ike->sa.st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:
-		skeyid = ikev1_pre_shared_key_skeyid(prf_desc, pss,
-						     ni, nr, logger);
+		skeyid = ikev1_pre_shared_key_skeyid(prf, pss,
+						     ni, nr,
+						     ike->sa.logger);
 		break;
 
 	case OAKLEY_RSA_SIG:
-		skeyid = ikev1_signature_skeyid(prf_desc, ni, nr, shared, logger);
+		skeyid = ikev1_signature_skeyid(prf, ni, nr, shared, ike->sa.logger);
 		break;
 
 	/* Not implemented */
@@ -78,73 +81,56 @@ static void calc_skeyids_iv(const struct state *st,
 	case OAKLEY_ECDSA_P384:
 	case OAKLEY_ECDSA_P521:
 	default:
-		bad_case(auth);
+		bad_case(ike->sa.st_oakley.auth);
 	}
 
-	pexpect(*skeyid_out == NULL);
-	pexpect(*skeyid_d_out == NULL);
-	pexpect(*skeyid_a_out == NULL);
-	pexpect(*skeyid_e_out == NULL);
-	pexpect(*enc_key_out == NULL);
-
-	dbg("NSS: "PRI_SO" pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
-	    st->st_serialno, *skeyid_d_out, *skeyid_a_out, *skeyid_e_out, *enc_key_out);
+	PEXPECT(ike->sa.logger, ike->sa.st_skeyid_nss == NULL);
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_isakmp_skeyid_d == NULL);
+	PEXPECT(ike->sa.logger, ike->sa.st_skeyid_a_nss == NULL);
+	PEXPECT(ike->sa.logger, ike->sa.st_skeyid_e_nss == NULL);
+	PEXPECT(ike->sa.logger, ike->sa.st_enc_key_nss == NULL);
 
 	/* generate SKEYID_* from SKEYID */
-	PK11SymKey *skeyid_d = ikev1_skeyid_d(prf_desc, skeyid, shared,
+	PK11SymKey *skeyid_d = ikev1_skeyid_d(prf, skeyid, shared,
 					      icookie, rcookie,
-					      logger);
-	PK11SymKey *skeyid_a = ikev1_skeyid_a(prf_desc, skeyid, skeyid_d,
+					      ike->sa.logger);
+	PK11SymKey *skeyid_a = ikev1_skeyid_a(prf, skeyid, skeyid_d,
 					      shared, icookie, rcookie,
-					      logger);
-	PK11SymKey *skeyid_e = ikev1_skeyid_e(prf_desc, skeyid, skeyid_a,
+					      ike->sa.logger);
+	PK11SymKey *skeyid_e = ikev1_skeyid_e(prf, skeyid, skeyid_a,
 					      shared, icookie, rcookie,
-					      logger);
+					      ike->sa.logger);
 
-	PK11SymKey *enc_key = ikev1_appendix_b_keymat_e(prf_desc, encrypter,
+	PK11SymKey *enc_key = ikev1_appendix_b_keymat_e(prf, cipher,
 							skeyid_e, keysize,
-							logger);
+							ike->sa.logger);
 
-	*skeyid_out = skeyid;
-	*skeyid_d_out = skeyid_d;
-	*skeyid_a_out = skeyid_a;
-	*skeyid_e_out = skeyid_e;
-	*enc_key_out = enc_key;
+	ike->sa.st_skeyid_nss = skeyid;
+	ike->sa.st_v1_isakmp_skeyid_d = skeyid_d;
+	ike->sa.st_skeyid_a_nss = skeyid_a;
+	ike->sa.st_skeyid_e_nss = skeyid_e;
+	ike->sa.st_enc_key_nss = enc_key;
 
-	dbg("NSS: "PRI_SO" pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
-	    st->st_serialno, *skeyid_d_out, *skeyid_a_out, *skeyid_e_out, *enc_key_out);
+	ldbg(ike->sa.logger,
+	     "NSS: "PRI_SO" pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
+	     ike->sa.st_serialno,
+	     ike->sa.st_v1_isakmp_skeyid_d,
+	     ike->sa.st_skeyid_a_nss,
+	     ike->sa.st_skeyid_e_nss,
+	     ike->sa.st_enc_key_nss);
 
 	/* generate IV */
-	{
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("DH_i:", gi);
-			DBG_dump_hunk("DH_r:", gr);
-		}
-		struct crypt_hash *ctx = crypt_hash_init("new IV", prf_desc->hasher, logger);
-		crypt_hash_digest_hunk(ctx, "GI", gi);
-		crypt_hash_digest_hunk(ctx, "GR", gr);
-		*new_iv = crypt_hash_final_mac(&ctx);
-	}
-}
 
-void calc_v1_skeyid_and_iv(struct state *st)
-{
-	const chunk_t *pss = get_connection_psk(st->st_connection);
-	calc_skeyids_iv(st,
-			st->st_oakley.auth, pss != NULL ? *pss : empty_chunk,
-			st->st_oakley.ta_prf, st->st_oakley.ta_encrypt,
-			st->st_ni, st->st_nr,
-			chunk2(st->st_ike_spis.initiator.bytes, COOKIE_SIZE),
-			chunk2(st->st_ike_spis.responder.bytes, COOKIE_SIZE),
-			st->st_gi, st->st_gr,
-			st->st_dh_shared_secret,
-			st->st_oakley.enckeylen / BITS_IN_BYTE,
-			&st->st_skeyid_nss,	/* output */
-			&st->st_v1_isakmp_skeyid_d,	/* output */
-			&st->st_skeyid_a_nss,	/* output */
-			&st->st_skeyid_e_nss,	/* output */
-			&st->st_v1_new_iv,	/* output */
-			&st->st_enc_key_nss,	/* output */
-			st->logger);
-	st->hidden_variables.st_skeyid_calculated = true;
+	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "DH_i");
+		LDBG_hunk(ike->sa.logger, gi);
+		LDBG_log(ike->sa.logger, "DH_r");
+		LDBG_hunk(ike->sa.logger, gr);
+	}
+	struct crypt_hash *ctx = crypt_hash_init("new IV", prf->hasher, ike->sa.logger);
+	crypt_hash_digest_hunk(ctx, "GI", gi);
+	crypt_hash_digest_hunk(ctx, "GR", gr);
+	ike->sa.st_v1_new_iv = crypt_hash_final_mac(&ctx);
+
+	ike->sa.hidden_variables.st_skeyid_calculated = true;
 }

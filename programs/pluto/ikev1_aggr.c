@@ -304,7 +304,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	if (ike->sa.st_dh_shared_secret == NULL) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
-	calc_v1_skeyid_and_iv(&ike->sa);
+	calc_v1_skeyid_and_iv(ike);
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(&ike->sa, md);
@@ -623,7 +623,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	if (ike->sa.st_dh_shared_secret == NULL) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
-	calc_v1_skeyid_and_iv(&ike->sa);
+	calc_v1_skeyid_and_iv(ike);
 
 	/* HASH_R or SIG_R in */
 

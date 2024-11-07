@@ -37,6 +37,7 @@ struct dh_desc;
 struct state;
 struct msg_digest;
 struct logger;
+struct ike_sa;
 
 /*
  * The DH secret (opaque, but we all know it is implemented using
@@ -66,7 +67,7 @@ extern void submit_dh_shared_secret(struct state *task_st,
 				    dh_shared_secret_cb *callback, where_t where);
 
 /* internal */
-void calc_v1_skeyid_and_iv(struct state *st);
+void calc_v1_skeyid_and_iv(struct ike_sa *ike);
 void calc_v2_keymat(struct state *st,
 		    PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
 		    const struct prf_desc *old_prf, /* IKE Rekey */

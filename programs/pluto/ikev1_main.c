@@ -830,7 +830,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 	 * message arrives?!?
 	 */
 	if (ike->sa.st_dh_shared_secret != NULL) {
-		calc_v1_skeyid_and_iv(&ike->sa);
+		calc_v1_skeyid_and_iv(ike);
 		update_iv(&ike->sa);
 	}
 
@@ -1051,7 +1051,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
-	calc_v1_skeyid_and_iv(&ike->sa);
+	calc_v1_skeyid_and_iv(ike);
 
 	struct pbs_out rbody[1]; /* hack */
 	ikev1_init_pbs_out_from_md_hdr(md, true,
