@@ -85,6 +85,7 @@ and optionally:
       echo 'WEB_SUMMARYDIR=$(KVM_WEBDIR)'   >> benchdir/Makefile.inc.local
       echo 'LSW_WEBDIR=$(KVM_WEBDIR)'       >> benchdir/Makefile.inc.local
 
+
 ## Running
 
 Assuming results are to be published in the directory ~/results/ (see
@@ -92,6 +93,7 @@ above), the testing script is invoked as:
 
       cd ~/main
       cp /dev/null nohup.out ; nohup benchdir/testing/web/tester.sh & tail -f nohup.out
+
 
 ## Restarting and Maintenance
 
@@ -202,7 +204,115 @@ with "restart"):
 - start <tt>tester.sh</tt>, see above
 
 
+# After a Release (Release Engineering)
+
+Once the release is made, the website will need an update.  Here's a
+guideline:
+
+## Roll over the web site
+
+- in mainline, cleanup and fix testing/web et.al.
+
+  Since the results page is going to be built from scratch, now is the
+  time to make enhancements and remove fluf.
+
+  Remember, the the website is run from the (mostly) frozen benchdir/
+  so this should be save.
+
+- in mainline, check for VM OSs that need an upgrade
+
+  general rule is Debian is trailing edge others are leading edge
+
+- let the website run until the release has been tested
+
+  assuming tester.sh can see it (if not, fun times)
+
+- upgrade/reboot machine
+
+- move testing/ aside (to old/?) creating an empty testing/ directory
+
+  continued below
+
+- in benchdir/ run `./kvm demolish` (why not)
+
+- update benchdir/ pulling in above enhancements
+
+  SOP is to only update benchdir/ when the test scripts need an
+  update.
+
+- review benchdir/Makefile.inc.local
+
+  Set $(WEB_BRANCH_TAG) (name subject to change) to most recent branch
+  point or release.  That will be the first change tested!  After that
+  changes from the tag to HEAD are tested.
+
+  Should $(WEB_BRANCH_NAME) (name subject to change) be set?
+
+- run `cp /dev/null nohup.out ; nohup ./benchdir/testing/web/tester.sh & tail -f nohup.out`
+
+  tester.sh redirects its output to results/tester.log
+
+## Archive the previous results
+
+Arguably this should all be dropped and instead, each release captures
+its test results.
+
+- set up the variables
+
+      o=v4.7
+      n=v4.8
+
+- create the archive directory:
+
+      mkdir ~/${o}-${n}
+
+- move results from previous release:
+
+      mv ~/old/${o}-* ~/${o}-${n}
+
+- copy result from latest release (so results are bookended with by
+  releases) (tester.sh given a chance will seek out and test ${n}-0):
+
+      cp -r ~/old/${n}-0-* ~/${o}-${n}
+
+- now clean the archive of old logs (these should match the pattern
+  OUTPUT/*):
+
+      find ~/${o}-${n} -name 'debug.log.gz' | xargs rm -v
+      find ~/${o}-${n} -name 'pluto.log' -print | xargs rm -v
+      find ~/${o}-${n} -name 'iked.log' -print | xargs rm -v
+      find ~/${o}-${n} -name 'charon.log' -print | xargs rm -v
+
+- check for other files:
+
+      find ~/${o}-${n} -name '*.log.gz' -print # delete?
+
+  this finds some bonus stuff in OUTPUT which should be added to
+  above
+
+- check for stray logs:
+
+      find ~/${o}-${n} -name '.log' -print # delete?
+
+  this finds things like kvm-check.log which should be compressed
+
+- finally re-generate the pages in the archive:
+
+      ( cd ~/main/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
+
+- and restart tester.sh
+
+  Note the addition of ${n} to specify the commit to start from.
+
+      cp /dev/null nohup.out ; nohup ;
+      ./main/benchdir/testing/web/tester.sh ${n} &
+
+
+
 ## Rebuilding
+
+This section is out-of-date.  It is probably easier to just delete the
+problematic test results and let them be rerun.
 
 From time-to-time the web site may require a partial or full rebuild.
 
@@ -259,128 +369,3 @@ of the results, a dedicated git repository is needed).
 
   Update an individual test run's `results.json` file.  Slow.
   Requires a dedicated git repository.
-
-
-# Nuances
-
-Some things, annoyingly, don't quite work right:
-
-- comparisons sometimes loose a result
-
-  The code fetching all the json result tables is likely racy, when
-  too may results are clicked too fast a result goes missing.  The
-  work around is to de-select and then re-select the missing result.
-
-- libreswan's repo contains "knots"
-
-  When following a linear history (parent links), the commit dates
-  normally decrease.  In this repo they some times increase resulting
-  in graph doubling back on itself.
-
-- libreswan's repo contains "plats"
-
-  As a generalization, is good to merge local changes onto the remote
-  first-parent branch and not the reverse.  Unfortunately `git pull
-  (git merge)` does the reverse by default.  The result is that
-  first-parent keeps switching with development branches.
-
-- clicking links toggls a results selection
-
-  For instance, control-click a result's subject hash link (to open a
-  new tab displaying the diff)) also toggls the results appearance
-  under the comparison tab
-
-
-# Archiving
-
-After the release, save the results to elsewhere.
-
-- shut down the tester
-
-  With out this it will likely try to test results that have been
-  archived.  Something like:
-
-      ( cd main/test-repo/ && ./kvm kill )
-      pkill tester
-
-- clean up scratch directories (they get rebuilt):
-
-      rm -rf results/commits*
-      rm -rf results/tests
-
-   well perhaps not the second, later
-
-- set up the variables
-
-      o=v4.7
-      n=v4.8
-
-- make some paths easier:
-
-- create the archive directory:
-
-      mkdir ~/${o}-${n}
-
-- move results from previous release:
-
-      mv ~/results/${o}-* ~/${o}-${n}
-
-- copy result from latest release (so results are bookended with by
-  releases) (tester.sh given a chance will seek out and test ${n}-0):
-
-      cp -r ~/results/${n}-0-* ~/${o}-${n}
-
-- now clean the archive of old logs (these should match the pattern
-  OUTPUT/*):
-
-      find ~/${o}-${n} -name 'debug.log.gz' | xargs rm -v
-      find ~/${o}-${n} -name 'pluto.log' -print | xargs rm -v
-      find ~/${o}-${n} -name 'iked.log' -print | xargs rm -v
-      find ~/${o}-${n} -name 'charon.log' -print | xargs rm -v
-
-- check for other files:
-
-      find ~/${o}-${n} -name '*.log.gz' -print # delete?
-
-  this finds some bonus stuff in OUTPUT which should be added to
-  above
-
-- check for stray logs:
-
-      find ~/${o}-${n} -name '.log' -print # delete?
-
-  this finds things like kvm-check.log which should be compressed
-
-- finally re-generate the pages in the archive:
-
-      ( cd ~/main/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
-
-- and restart tester.sh
-
-  Note the addition of ${n} to specify the commit to start from.
-
-      cp /dev/null nohup.out ; nohup ;
-      ./main/benchdir/testing/web/tester.sh ${n} &
-
-
-# Improvements
-
-Some things could work better:
-
-- examine (compare) individual tests
-
-  For instance, select a test in the "Compare Results" tab would
-  display (graph?) that test's history under a "Compare Test" tab.
-
-  The raw test results are in <run>/<test>/OUTPUT/result.json.
-
-- Use an accumulative bar graph instead of a scatter plot
-
-  It probably better represents the data.  However, since it needs to
-  also plot branches things could get interesting.
-
-- Graph should pan and zoom
-
-- trim older directories so the total is kept reasonable
-
-- use rowspan=... in the summary table
