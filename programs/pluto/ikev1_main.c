@@ -222,7 +222,7 @@ struct ike_sa *main_outI1(struct connection *c,
 		return NULL;
 	}
 
-	if (!ikev1_close_message(&rbody, &ike->sa)) {
+	if (!ikev1_close_message(&rbody, ike)) {
 		return NULL;
 	}
 
@@ -474,13 +474,13 @@ static bool emit_message_padding(struct pbs_out *pbs, const struct state *st)
 	return true;
 }
 
-bool ikev1_close_message(struct pbs_out *pbs, const struct state *st)
+bool ikev1_close_message(struct pbs_out *pbs, const struct ike_sa *ike)
 {
-	if (pbad(st == NULL)) {
+	if (pbad(ike == NULL)) {
 		return false;
 	}
 
-	if (!emit_message_padding(pbs, st)) {
+	if (!emit_message_padding(pbs, &ike->sa)) {
 		/* already logged */
 		return false; /*fatal*/
 	}
@@ -619,7 +619,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (!ikev1_close_message(&rbody, &ike->sa))
+	if (!ikev1_close_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
@@ -752,7 +752,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, &ike->sa))
+	if (!ikev1_close_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
@@ -952,7 +952,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, &ike->sa))
+	if (!ikev1_close_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	/*

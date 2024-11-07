@@ -507,7 +507,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, &ike->sa))
+	if (!ikev1_close_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -1170,7 +1170,7 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 
 	/* finish message */
 
-	if (!ikev1_close_message(&rbody, &ike->sa))
+	if (!ikev1_close_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&reply_stream);

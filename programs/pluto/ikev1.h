@@ -61,7 +61,7 @@ void doi_log_cert_thinking(uint16_t auth,
 			   bool send_chain);
 
 bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st);
-bool ikev1_close_message(struct pbs_out *pbs, const struct state *st);
+bool ikev1_close_message(struct pbs_out *pbs, const struct ike_sa *ike);
 
 /* Parent capable of sending messages.  */
 struct ike_sa *established_isakmp_sa_for_state(struct state *st, bool viable_parent);

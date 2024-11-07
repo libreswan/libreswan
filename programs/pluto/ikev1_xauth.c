@@ -461,7 +461,7 @@ static stf_status modecfg_resp(struct ike_sa *ike,
 			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, ia, ike);
 		}
 
-		if (!ikev1_close_message(&strattr, &ike->sa))
+		if (!ikev1_close_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -630,7 +630,7 @@ stf_status xauth_send_request(struct ike_sa *ike)
 				NULL) ||
 		    !out_struct(&pw, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, &ike->sa))
+		    !ikev1_close_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -741,7 +741,7 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 				return STF_INTERNAL_ERROR;
 		}
 
-		if (!ikev1_close_message(&strattr, &ike->sa))
+		if (!ikev1_close_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -822,7 +822,7 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
 		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, &ike->sa))
+		    !ikev1_close_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -2481,7 +2481,7 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr) ||
 		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, &ike->sa))
+		    !ikev1_close_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
