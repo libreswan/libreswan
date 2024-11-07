@@ -307,7 +307,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	calc_v1_skeyid_and_iv(ike);
 
 	/* decode certificate requests */
-	decode_v1_certificate_requests(&ike->sa, md);
+	decode_v1_certificate_requests(ike, md);
 	bool cert_requested = (ike->sa.st_v1_requested_ca != NULL);
 
 	/*
@@ -640,7 +640,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* decode certificate requests */
-	decode_v1_certificate_requests(&ike->sa, md);
+	decode_v1_certificate_requests(ike, md);
 	bool cert_requested = (ike->sa.st_v1_requested_ca != NULL);
 
 	/*

@@ -164,7 +164,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id *peer)
 {
 	/* check for certificate requests */
-	decode_v1_certificate_requests(&ike->sa, md);
+	decode_v1_certificate_requests(ike, md);
 
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;

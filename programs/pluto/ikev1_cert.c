@@ -191,8 +191,9 @@ bool v1_decode_certs(struct msg_digest *md)
  *  Signature".
  */
 
-static void decode_certificate_request(struct state *st, enum ike_cert_type cert_type,
-				       const struct pbs_in *pbs)
+static void decode_v1_certificate_request(struct ike_sa *ike,
+					  enum ike_cert_type cert_type,
+					  const struct pbs_in *pbs)
 {
 	switch (cert_type) {
 	case CERT_X509_SIGNATURE:
@@ -206,7 +207,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 		if (ca_name.len > 0) {
 			err_t e = asn1_ok(ca_name);
 			if (e != NULL) {
-				llog(RC_LOG, st->logger,
+				llog(RC_LOG, ike->sa.logger,
 				     "ignoring CERTREQ payload that is not ASN1: %s", e);
 				return;
 			}
@@ -214,32 +215,32 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 			generalName_t *gn = alloc_thing(generalName_t, "generalName");
 			gn->name = clone_hunk(ca_name, "ca name");
 			gn->kind = GN_DIRECTORY_NAME;
-			gn->next = st->st_v1_requested_ca;
-			st->st_v1_requested_ca = gn;
+			gn->next = ike->sa.st_v1_requested_ca;
+			ike->sa.st_v1_requested_ca = gn;
 		}
 
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, ike->sa.logger)) {
 			dn_buf buf;
-			DBG_log("requested CA: '%s'",
-				str_dn_or_null(ca_name, "%any", &buf));
+			LDBG_log(ike->sa.logger, "requested CA: '%s'",
+				 str_dn_or_null(ca_name, "%any", &buf));
 		}
 		break;
 	}
 	default:
 	{
 		enum_buf b;
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "ignoring CERTREQ payload of unsupported type %s",
 		     str_enum(&ikev2_cert_type_names, cert_type, &b));
 	}
 	}
 }
 
-void decode_v1_certificate_requests(struct state *st, struct msg_digest *md)
+void decode_v1_certificate_requests(struct ike_sa *ike, struct msg_digest *md)
 {
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_CR]; p != NULL; p = p->next) {
 		const struct isakmp_cr *const cr = &p->payload.cr;
-		decode_certificate_request(st, cr->isacr_type, &p->pbs);
+		decode_v1_certificate_request(ike, cr->isacr_type, &p->pbs);
 	}
 }
 

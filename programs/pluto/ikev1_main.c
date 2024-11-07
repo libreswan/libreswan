@@ -793,7 +793,7 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(ike->sa.logger, md, &ike->sa.st_ni, "Ni"));
 
 	/* decode certificate requests */
-	decode_v1_certificate_requests(&ike->sa, md);
+	decode_v1_certificate_requests(ike, md);
 
 	ikev1_natd_init(&ike->sa, md);
 
@@ -1062,7 +1062,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 
 	/* decode certificate requests */
-	decode_v1_certificate_requests(&ike->sa, md);
+	decode_v1_certificate_requests(ike, md);
 	bool cert_requested = (ike->sa.st_v1_requested_ca != NULL);
 
 	/*

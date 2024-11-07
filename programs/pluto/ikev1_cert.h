@@ -27,12 +27,12 @@
 struct msg_digest;
 struct pbs_out;
 enum ike_cert_type;
-struct state;
+struct ike_sa;
 
 bool ikev1_ship_chain(chunk_t *chain, int n, struct pbs_out *outs, uint8_t type);
 
 bool v1_decode_certs(struct msg_digest *md);
-void decode_v1_certificate_requests(struct state *st, struct msg_digest *md);
+void decode_v1_certificate_requests(struct ike_sa *ike, struct msg_digest *md);
 bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, struct pbs_out *outs);
 bool ikev1_build_and_ship_CR(enum ike_cert_type type, chunk_t ca, struct pbs_out *outs);
 
