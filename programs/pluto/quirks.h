@@ -17,6 +17,9 @@
 
 #include "vendorid.h"	/* for enum known_vendorid */
 
+struct ike_sa;
+struct msg_digest;
+
 /*
  * PAUL: Why are the quirks in the message digest and not in the state?
  *       EECK: they are in both! Candidate to phase out completely
@@ -37,9 +40,7 @@ struct isakmp_quirks {
 	bool xauth_vid;	/**< if the client has XAUTH */
 };
 
-struct state;
-struct msg_digest;
-extern void merge_quirks(struct state *st,
+extern void merge_quirks(struct ike_sa *ike,
 			 const struct msg_digest *md);
 
 #endif

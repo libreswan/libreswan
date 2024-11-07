@@ -551,7 +551,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 
 	binlog_refresh_state(&ike->sa);
 
-	merge_quirks(&ike->sa, md);
+	merge_quirks(ike, md);
 
 	check_nat_traversal_vid(ike, md);
 
@@ -666,7 +666,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
 	}
 
-	merge_quirks(&ike->sa, md);
+	merge_quirks(ike, md);
 
 	check_nat_traversal_vid(ike, md);
 

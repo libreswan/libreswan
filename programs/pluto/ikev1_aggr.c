@@ -237,7 +237,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			str_address_sensitive(&c->remote->host.addr, &b));
 	}
 
-	merge_quirks(&ike->sa, md);
+	merge_quirks(ike, md);
 
 	check_nat_traversal_vid(ike, md);
 
@@ -575,7 +575,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 			return STF_FAIL_v1N + r;
 	}
 
-	merge_quirks(&ike->sa, md);
+	merge_quirks(ike, md);
 
 	check_nat_traversal_vid(ike, md);
 

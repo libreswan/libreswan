@@ -25,14 +25,14 @@
  * message digest quirks are merged into state quirks by merge_quirks.
  */
 
-void merge_quirks(struct state *st, const struct msg_digest *md)
+void merge_quirks(struct ike_sa *ike, const struct msg_digest *md)
 {
-	struct isakmp_quirks *dq = &st->st_v1_quirks;
+	struct isakmp_quirks *dq = &ike->sa.st_v1_quirks;
 	const struct isakmp_quirks *sq = &md->v1_quirks;
 
 	dq->xauth_ack_msgid   |= sq->xauth_ack_msgid;
 	dq->modecfg_pull_mode |= sq->modecfg_pull_mode;
-	/* ??? st->quirks.qnat_traversal is never used */
+	/* ??? ike->sa.quirks.qnat_traversal is never used */
 	if (dq->qnat_traversal_vid < sq->qnat_traversal_vid)
 		dq->qnat_traversal_vid = sq->qnat_traversal_vid;
 	dq->xauth_vid |= sq->xauth_vid;

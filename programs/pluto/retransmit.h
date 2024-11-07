@@ -17,6 +17,8 @@
 #ifndef RETRANSMIT_H
 #define RETRANSMIT_H
 
+struct state;
+
 /*
  * Treat as opaque!
  */
