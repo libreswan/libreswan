@@ -689,12 +689,12 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
  * We must verify that the proposal received matches one we sent.
  */
 
-static stf_status main_inR1_outI2_continue(struct state *st,
+static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 					   struct msg_digest *md,
 					   struct dh_local_secret *local_secret,
 					   chunk_t *nonce/*steal*/)
 {
-	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -712,7 +712,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 				       &rbody, ike->sa.logger);
 
 	/* KE out */
-	if (!ikev1_ship_KE(st, local_secret, &ike->sa.st_gi, &rbody))
+	if (!ikev1_ship_KE(&ike->sa, local_secret, &ike->sa.st_gi, &rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
@@ -752,7 +752,7 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
