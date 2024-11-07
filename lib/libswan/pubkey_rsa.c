@@ -339,10 +339,10 @@ const struct pubkey_type pubkey_type_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_raw_rsa(const struct secret_stuff *pks,
-						   const uint8_t *hash_val, size_t hash_len,
-						   const struct hash_desc *hash_algo,
-						   struct logger *logger)
+static struct hash_signature RSA_raw_sign_hash(const struct secret_stuff *pks,
+					       const uint8_t *hash_val, size_t hash_len,
+					       const struct hash_desc *hash_algo,
+					       struct logger *logger)
 {
 	dbg("%s: started using NSS", __func__);
 
@@ -472,16 +472,16 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 	.name = "RSA",
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
-	.sign_hash = RSA_sign_hash_raw_rsa,
+	.sign_hash = RSA_raw_sign_hash,
 	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct secret_stuff *pks,
-							 const uint8_t *hash_val, size_t hash_len,
-							 const struct hash_desc *hash_algo,
-							 struct logger *logger)
+static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_stuff *pks,
+						     const uint8_t *hash_val, size_t hash_len,
+						     const struct hash_desc *hash_algo,
+						     struct logger *logger)
 {
 	dbg("%s: started using NSS", __func__);
 
@@ -607,7 +607,7 @@ const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
-	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
+	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_signature = RSA_authenticate_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
@@ -616,13 +616,13 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 	.type = &pubkey_type_rsa,
-	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
+	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_signature = RSA_authenticate_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_rsassa_pss(const struct secret_stuff *pks,
+static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_stuff *pks,
 						      const uint8_t *hash_val, size_t hash_len,
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
@@ -746,7 +746,7 @@ const struct pubkey_signer pubkey_signer_digsig_rsassa_pss = {
 	.name = "RSASSA-PSS", /* name from RFC 7427 */
 	.type = &pubkey_type_rsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
-	.sign_hash = RSA_sign_hash_rsassa_pss,
+	.sign_hash = RSA_rsassa_pss_sign_hash,
 	.authenticate_signature = RSA_authenticate_signature_rsassa_pss,
 	.jam_auth_method = RSA_jam_auth_method,
 };
