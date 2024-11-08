@@ -20,10 +20,13 @@
 #include "deltatime.h"
 #include "ip_address.h"
 #include "ip_cidr.h"
+#include "lmod.h"
 
 struct logger;
-extern int long_index; /* defined by optarg.c */
-extern const struct option long_opts[]; /* defined by program */
+
+extern unsigned verbose;			/* defined by optarg.c */
+extern int long_index; 				/* defined by optarg.c */
+extern const struct option long_opts[]; 	/* defined by program */
 
 void optarg_init(const struct logger *logger);
 
@@ -41,5 +44,17 @@ ip_address optarg_address_dns(struct family *);
 ip_cidr optarg_cidr_num(struct family *);
 void optarg_family(struct family *family, const struct ip_info *info);
 ip_address optarg_any(struct family *family);
+
+/*
+ * Call optarg_verbose() whenever --verbose is encountered.
+ *
+ * Each call increments VERBOSE.
+ *
+ * When VERBOSE>=2 it also adds increasingly verbose debugging to
+ * CUR_DEBUGGING.  As verbose increases, START (if non-LEMPTY),
+ * DBG_BASE, DBG_ALL and DBG_TMI are each added in turn.
+ */
+
+void optarg_verbose(lset_t start);
 
 #endif

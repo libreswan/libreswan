@@ -23,6 +23,7 @@
 #include "ip_info.h"
 
 int long_index;
+unsigned verbose;
 
 static const struct logger *optarg_logger;
 
@@ -147,4 +148,32 @@ ip_address optarg_any(struct family *family)
 {
 	optarg_family(family, &ipv4_info);
 	return family->type->address.unspec;
+}
+
+void optarg_verbose(lset_t start)
+{
+	verbose++;
+	if (verbose == 1) {
+		return;
+	}
+
+	const lset_t debugging[] = {
+		start, DBG_BASE, DBG_ALL, DBG_TMI,
+	};
+
+	unsigned i = verbose - 2;
+	if (start == LEMPTY) {
+		/* skip start */
+		i++;
+	}
+
+	if (i < elemsof(debugging)) {
+		cur_debugging |= debugging[i];
+	}
+
+	/* logged when true; log once at end? */
+	LDBGP_JAMBUF(DEBUG_STREAM, optarg_logger, buf) {
+		jam_string(buf, "debugging: ");
+		jam_lset(buf, &debug_names, cur_debugging);
+	}
 }

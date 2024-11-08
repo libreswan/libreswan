@@ -30,8 +30,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/parser-controls.h"
-
-static int verbose = 0;
+#include "optarg.h"
 
 static void usage(void)
 {
@@ -42,12 +41,22 @@ static void usage(void)
 }
 
 
-static const struct option longopts[] =
+/*
+ * XXX: the letters below are meaningless as getopt_long() isn't
+ * passing in an option string.
+ */
+
+enum opt {
+	OPT_EOF = -1,
+	OPT_VERBOSE = 256,
+};
+
+const struct option long_opts[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
 	{ "conn",                required_argument, NULL, 'c' },
-	{ "debug",               no_argument, NULL, 'D' },
-	{ "verbose",             no_argument, NULL, 'D' },
+	{ "debug",               no_argument, NULL, OPT_VERBOSE, },
+	{ "verbose",             no_argument, NULL, OPT_VERBOSE, },
 	{ "rootdir",             required_argument, NULL, 'R' },
 	{ "rootdir2",            required_argument, NULL, 'S' },
 	{ "nosetup",             no_argument, NULL, 'n' },
@@ -68,7 +77,7 @@ int main(int argc, char *argv[])
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
 
-	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
+	while ((opt = getopt_long(argc, argv, "", long_opts, 0)) != EOF) {
 		switch (opt) {
 		case 'h':
 			/* usage: */
@@ -79,9 +88,8 @@ int main(int argc, char *argv[])
 			setup = false;
 			break;
 
-		case 'D':
-			verbose++;
-			lex_verbosity++;
+		case OPT_VERBOSE:
+			optarg_verbose(LEMPTY);
 			break;
 
 		case 'C':
@@ -113,21 +121,9 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	switch (verbose) {
-	case 0:
-	case 1:
-		break;
-	case 2:
-		cur_debugging = DBG_ALL;
-		break;
-	case 3:
-		cur_debugging = DBG_ALL|DBG_TMI;
-		break;
-	default: /*>=4*/
-		cur_debugging = DBG_ALL|DBG_TMI;
-		yydebug = true;
-		break;
-	}
+	/* update fields dependent on VERBOSE */
+	yydebug = (verbose >= 4);
+	lex_verbosity = verbose;
 
 	/* logged when true */
 	ldbg(logger, "debugging mode enabled");

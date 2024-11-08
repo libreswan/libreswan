@@ -42,7 +42,7 @@
 #include "lswseccomp.h"
 #endif
 
-static int verbose = 0;
+#include "optarg.h"
 
 /*
  * make options valid environment variables
@@ -175,7 +175,7 @@ enum opt {
 	OPT_EOF = -1,
 	OPT_HELP = 'h',
 	OPT_CONFIG = 256,
-	OPT_DEBUG,
+	OPT_VERBOSE,
 	OPT_AUTOALL,
 	OPT_LISTALL,
 	OPT_LISTADD,
@@ -193,11 +193,11 @@ enum opt {
 	OPT_DEFAULTROUTENEXTHOP,
 };
 
-static const struct option longopts[] =
+const struct option long_opts[] =
 {
 	{ "config", required_argument, NULL, OPT_CONFIG, },
-	{ "debug", no_argument, NULL, OPT_DEBUG, },
-	{ "verbose", no_argument, NULL, OPT_DEBUG, },
+	{ "debug", no_argument, NULL, OPT_VERBOSE, },
+	{ "verbose", no_argument, NULL, OPT_VERBOSE, },
 	{ "autoall", no_argument, NULL, OPT_AUTOALL, },
 	{ "addall", no_argument, NULL, OPT_AUTOALL, }, /* alias, backwards compat */
 	{ "listall", no_argument, NULL, OPT_LISTALL, },
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 	enum opt opt;
-	while ((opt = getopt_long(argc, argv, "", longopts, 0)) != EOF) {
+	while ((opt = getopt_long(argc, argv, "", long_opts, 0)) != EOF) {
 		switch (opt) {
 		case OPT_HELP:
 			/* usage: */
@@ -260,9 +260,8 @@ int main(int argc, char *argv[])
 			autoall = true;
 			break;
 
-		case OPT_DEBUG:
-			verbose++;
-			lex_verbosity++;
+		case OPT_VERBOSE:
+			optarg_verbose(LEMPTY);
 			break;
 
 		case OPT_CONFIGSETUP:
@@ -334,24 +333,9 @@ int main(int argc, char *argv[])
 	    !checkconfig)
 		usage();
 
-	switch (verbose) {
-	case 0:
-	case 1:
-		break;
-	case 2:
-		cur_debugging = DBG_ALL;
-		break;
-	case 3:
-		cur_debugging = DBG_ALL|DBG_TMI;
-		break;
-	default: /*>=4*/
-		cur_debugging = DBG_ALL|DBG_TMI;
-		yydebug = true;
-		break;
-	}
-
-	/* logged when true! */
-	ldbg(logger, "debugging mode enabled");
+	/* some variables depend on verbose */
+	lex_verbosity = verbose;
+	yydebug = (verbose >= 4);
 
 	if (configfile == NULL) {
 		configfile = IPSEC_CONF;
