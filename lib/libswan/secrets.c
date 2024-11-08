@@ -114,6 +114,18 @@ struct secret_stuff *get_secret_stuff(struct secret *secret)
 	return &secret->stuff;
 }
 
+struct secret_pubkey_stuff *get_secret_pubkey_stuff(struct secret *secret)
+{
+	switch (secret->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		/* some sort of PKI */
+		return &secret->stuff.u.pubkey;
+	default:
+		return NULL;
+	}
+}
+
 struct id_list *lsw_get_idlist(const struct secret *s)
 {
 	return s->ids;
@@ -1172,7 +1184,8 @@ static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_
 	}
 }
 
-static err_t add_private_key(struct secret **secrets, const struct secret_stuff **pks,
+static err_t add_private_key(struct secret **secrets,
+			     const struct secret_pubkey_stuff **pks,
 			     SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 			     const struct pubkey_type *type, SECKEYPrivateKey *private_key)
 {
@@ -1195,12 +1208,12 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 	pexpect(s->stuff.u.pubkey.content.keyid.keyid[0] != '\0');
 
 	add_secret(secrets, s, "lsw_add_rsa_secret");
-	*pks = &s->stuff;
+	*pks = &s->stuff.u.pubkey;
 	return NULL;
 }
 
 static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCertificate *cert,
-						const struct secret_stuff **pks, struct logger *logger,
+						const struct secret_pubkey_stuff **pks, struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 						const struct pubkey_type *type)
 {
@@ -1216,7 +1229,7 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 }
 
 static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCertificate *cert,
-						const struct secret_stuff **pks, bool *load_needed,
+						const struct secret_pubkey_stuff **pks, bool *load_needed,
 						struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
@@ -1230,7 +1243,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, type, ckaid_nss);
 	if (s != NULL) {
 		dbg("secrets entry for certificate already exists: %s", cert->nickname);
-		*pks = &s->stuff;
+		*pks = &s->stuff.u.pubkey;
 		*load_needed = false;
 		return NULL;
 	}
@@ -1244,7 +1257,8 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 }
 
 static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCertificate *cert,
-						const struct secret_stuff **pks, bool *load_needed,
+						const struct secret_pubkey_stuff **pks,
+						bool *load_needed,
 						struct logger *logger,
 						SECKEYPublicKey *pubk)
 {
@@ -1259,7 +1273,8 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 		return "NSS: key ID not found";
 	}
 
-	err_t err = find_or_load_private_key_by_cert_2(secrets, cert, pks, load_needed, logger,
+	err_t err = find_or_load_private_key_by_cert_2(secrets, cert,
+						       pks, load_needed, logger,
 						       /* extracted fields */
 						       pubk, ckaid_nss);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
@@ -1267,7 +1282,7 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 }
 
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct secret_stuff **pks, bool *load_needed,
+				       const struct secret_pubkey_stuff **pks, bool *load_needed,
 				       struct logger *logger)
 {
 	*load_needed = false;
@@ -1282,7 +1297,8 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 		return "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() failed";
 	}
 
-	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->nss_cert, pks, load_needed, logger,
+	err_t err = find_or_load_private_key_by_cert_1(secrets, cert->nss_cert,
+						       pks, load_needed, logger,
 						       /* extracted fields */
 						       pubk);
 	SECKEY_DestroyPublicKey(pubk);
@@ -1290,7 +1306,7 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 }
 
 static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
-						 const struct secret_stuff **pks,
+						 const struct secret_pubkey_stuff **pks,
 						 SECItem *ckaid_nss, SECKEYPrivateKey *private_key)
 {
 	const struct pubkey_type *type = private_key_type_nss(private_key);
@@ -1309,7 +1325,7 @@ static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 }
 
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct secret_stuff **pks, bool *load_needed,
+					const struct secret_pubkey_stuff **pks, bool *load_needed,
 					struct logger *logger)
 {
 	*load_needed = false;
@@ -1319,7 +1335,7 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, NULL, &ckaid_nss);
 	if (s != NULL) {
 		dbg("secrets entry for ckaid already exists");
-		*pks = &s->stuff;
+		*pks = &s->stuff.u.pubkey;
 		*load_needed = false;
 		return NULL;
 	}

@@ -38,7 +38,7 @@ struct task {
 	const struct crypt_mac hash_to_sign;
 	const struct hash_desc *hash_algo;
 	v2_auth_signature_cb *cb;
-	const struct secret_stuff *pks;
+	const struct secret_pubkey_stuff *pks;
 	const struct pubkey_signer *signer;
 	/* out */
 	struct hash_signature signature;
@@ -86,7 +86,7 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 static struct hash_signature v2_auth_signature(struct logger *logger,
 					       const struct crypt_mac *hash_to_sign,
 					       const struct hash_desc *hash_algo,
-					       const struct secret_stuff *pks,
+					       const struct secret_pubkey_stuff *pks,
 					       const struct pubkey_signer *signer)
 {
 	passert(hash_to_sign->len <= sizeof(hash_to_sign->ptr/*array*/)); /*hint to coverity*/

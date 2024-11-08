@@ -251,9 +251,9 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 	if (!mycert)
 		return false;
 
-	const struct secret_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
-								    ike->sa.logger);
-	if (!pks) {
+	const struct secret_pubkey_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
+								      ike->sa.logger);
+	if (pks == NULL) {
 		llog_sa(RC_LOG, ike, "private key for connection not found");
 		return false;
 	}
@@ -282,7 +282,7 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 	    SSL_OptionSet(pr, SSL_ENABLE_SSL3, PR_FALSE) != SECSuccess ||
 	    SSL_BadCertHook(pr, eaptls_bad_cert_cb, eap) != SECSuccess ||
 	    SSL_HandshakeCallback(pr, eaptls_handshake_cb, eap) != SECSuccess ||
-	    SSL_ConfigServerCert(pr, mycert->nss_cert, pks->u.pubkey.private_key, 0, 0) != SECSuccess) {
+	    SSL_ConfigServerCert(pr, mycert->nss_cert, pks->private_key, 0, 0) != SECSuccess) {
 		llog_nss_error(RC_LOG, logger, "Failed to start configure TLS options");
 		return false;
 	}

@@ -339,7 +339,7 @@ const struct pubkey_type pubkey_type_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_raw_sign_hash(const struct secret_stuff *pks,
+static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,
 					       const uint8_t *hash_val, size_t hash_len,
 					       const struct hash_desc *hash_algo,
 					       struct logger *logger)
@@ -350,7 +350,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_stuff *pks,
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
+	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -361,7 +361,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_stuff *pks,
 		.data = DISCARD_CONST(uint8_t *, hash_val),
 	};
 
-	struct hash_signature sig = { .len = PK11_SignatureLen(pks->u.pubkey.private_key), };
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
 	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	SECItem signature = {
 		.type = siBuffer,
@@ -369,7 +369,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_stuff *pks,
 		.data = sig.ptr,
 	};
 
-	SECStatus s = PK11_Sign(pks->u.pubkey.private_key, &signature, &data);
+	SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
 		llog_nss_error(RC_LOG, logger,
@@ -478,14 +478,14 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_stuff *pks,
+static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_stuff *pks,
 						     const uint8_t *hash_val, size_t hash_len,
 						     const struct hash_desc *hash_algo,
 						     struct logger *logger)
 {
 	dbg("%s: started using NSS", __func__);
 
-	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
+	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -501,7 +501,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_stuff *
 	 * used to generate the signature.
 	 */
 	SECItem signature_result = {0};
-	SECStatus s = SGN_Digest(pks->u.pubkey.private_key,
+	SECStatus s = SGN_Digest(pks->private_key,
 				 hash_algo->nss.oid_tag,
 				 &signature_result, &digest);
 	if (s != SECSuccess) {
@@ -516,7 +516,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_stuff *
 	/* save the signature, free the returned pointer */
 
 	struct hash_signature signature = {
-		.len = PK11_SignatureLen(pks->u.pubkey.private_key),
+		.len = PK11_SignatureLen(pks->private_key),
 	};
 	passert(signature.len <= sizeof(signature.ptr/*array*/));
 	memcpy(signature.ptr, signature_result.data, signature.len);
@@ -622,14 +622,14 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_stuff *pks,
+static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey_stuff *pks,
 						      const uint8_t *hash_val, size_t hash_len,
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
 {
 	dbg("%s: started using NSS", __func__);
 
-	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
+	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -640,7 +640,7 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_stuff 
 		.data = DISCARD_CONST(uint8_t *, hash_val),
 	};
 
-	struct hash_signature sig = { .len = PK11_SignatureLen(pks->u.pubkey.private_key), };
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
 	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	SECItem signature = {
 		.type = siBuffer,
@@ -661,7 +661,7 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_stuff 
 		.data = (void*)mech, /* strip const */
 		.len = sizeof(*mech),
 	};
-	SECStatus s = PK11_SignWithMechanism(pks->u.pubkey.private_key, CKM_RSA_PKCS_PSS,
+	SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
 					     &mech_item, &signature, &data);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */

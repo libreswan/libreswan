@@ -299,7 +299,7 @@ static char *base64_ipseckey_rdata_from_pubkey_secret(struct secret_stuff *pks,
 static char *base64_pem_from_pks(struct secret_stuff *pks)
 {
 	chunk_t der = empty_chunk; /* must free */
-	diag_t d = secret_pubkey_stuff_to_pubkey_der(pks, &der);
+	diag_t d = secret_pubkey_stuff_to_pubkey_der(&pks->u.pubkey, &der);
 	if (d != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
 		pfree_diag(&d);
@@ -356,7 +356,7 @@ static int show_ipseckey(struct secret_stuff *pks,
 static int show_pem(struct secret_stuff *pks)
 {
 	chunk_t der = empty_chunk; /* must free */
-	diag_t d = secret_pubkey_stuff_to_pubkey_der(pks, &der);
+	diag_t d = secret_pubkey_stuff_to_pubkey_der(&pks->u.pubkey, &der);
 	if (d != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
 		pfree_diag(&d);

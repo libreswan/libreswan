@@ -660,9 +660,9 @@ shunk_t get_connection_ppk(const struct connection *c,
  * indicated by a NULL pointer.
  */
 
-const struct secret_stuff *get_local_private_key(const struct connection *c,
-						      const struct pubkey_type *type,
-						      struct logger *logger)
+const struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
+							const struct pubkey_type *type,
+							struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
 	if (c->local->host.config->cert.nss_cert != NULL) {
@@ -675,7 +675,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
-		const struct secret_stuff *pks = NULL;
+		const struct secret_pubkey_stuff *pks = NULL;
 		bool load_needed;
 		err_t err = find_or_load_private_key_by_cert(&pluto_secrets,
 							     &c->local->host.config->cert,
@@ -703,8 +703,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		pexpect(pks->kind == type->private_key_kind);
-		pexpect(pks->u.pubkey.content.type == type);
+		pexpect(pks->content.type == type);
 		dbg("connection %s's %s private key found in NSS DB using cert",
 		    c->name, type->name);
 		return pks;
@@ -720,7 +719,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
-		const struct secret_stuff *pks;
+		const struct secret_pubkey_stuff *pks;
 		bool load_needed;
 		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->local->host.config->ckaid,
 							      &pks, &load_needed, logger);
@@ -751,8 +750,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		pexpect(pks->kind == type->private_key_kind);
-		pexpect(pks->u.pubkey.content.type == type);
+		pexpect(pks->content.type == type);
 		dbg("connection %s's %s private key found in NSS DB using CKAID",
 		    c->name, type->name);
 		return pks;
@@ -767,11 +765,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		return NULL;
 	}
 
-	const struct secret_stuff *pks = get_secret_stuff(s);
+	const struct secret_pubkey_stuff *pks = get_secret_pubkey_stuff(s);
 	passert(pks != NULL);
 
-	pexpect(pks->kind == type->private_key_kind);
-	pexpect(pks->u.pubkey.content.type == type);
+	pexpect(pks->content.type == type);
 	dbg("connection %s's %s private key found",
 	    c->name, type->name);
 	return pks;
@@ -903,7 +900,7 @@ void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
 err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
-	const struct secret_stuff *pks;
+	const struct secret_pubkey_stuff *pks;
 	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert,
 						     &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
@@ -914,7 +911,7 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, st
 err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
-	const struct secret_stuff *pks;
+	const struct secret_pubkey_stuff *pks;
 	err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, ckaid,
 						      &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key using CKAID", __func__);

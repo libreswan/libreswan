@@ -95,10 +95,11 @@ struct secret_stuff {
 	chunk_t ppk_id;
 };
 
-diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der);
+diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_pubkey_stuff *pks, chunk_t *der);
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc);
 
 extern struct secret_stuff *get_secret_stuff(struct secret *s);
+extern struct secret_pubkey_stuff *get_secret_pubkey_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
@@ -153,7 +154,7 @@ struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
 	const struct pubkey_type *type;
-	struct hash_signature (*sign_hash)(const struct secret_stuff *pks,
+	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
@@ -270,10 +271,10 @@ extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct secret_stuff **pks, bool *load_needed,
+				       const struct secret_pubkey_stuff **pks, bool *load_needed,
 				       struct logger *logger);
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct secret_stuff **pks, bool *load_needed,
+					const struct secret_pubkey_stuff **pks, bool *load_needed,
 					struct logger *logger);
 
 diag_t create_pubkey_from_cert(const struct id *id,

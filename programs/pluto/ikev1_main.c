@@ -332,8 +332,8 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 				       const struct crypt_mac *hash,
 				       struct logger *logger)
 {
-	const struct secret_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
-								    logger);
+	const struct secret_pubkey_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
+								      logger);
 	if (pks == NULL) {
 		llog(RC_LOG, logger,
 			    "unable to locate my private key for RSA Signature");

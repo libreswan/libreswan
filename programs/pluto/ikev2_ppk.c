@@ -213,8 +213,8 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	statetime_t start = statetime_start(&ike->sa);
 	const struct connection *c = ike->sa.st_connection;
 
-	const struct secret_stuff *pks = get_local_private_key(c, type,
-								    ike->sa.logger);
+	const struct secret_pubkey_stuff *pks = get_local_private_key(c, type,
+								      ike->sa.logger);
 	if (pks == NULL) {
 		llog_sa(RC_LOG, ike, "No %s private key found", type->name);
 		return false; /* failure: no key to use */

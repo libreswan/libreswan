@@ -281,14 +281,14 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.strength_in_bits = ECDSA_strength_in_bits,
 };
 
-static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
+static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,
 						 const uint8_t *hash_val, size_t hash_len,
 						 const struct hash_desc *hash_alg,
 						 struct logger *logger)
 {
 	ldbgf(DBG_CRYPT, logger, "%s: started using NSS", __func__);
 
-	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
+	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -304,7 +304,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 	/* point signature at the SIG_VAL buffer */
 	struct hash_signature signature = {0};
 	SECItem raw_signature;
-	SECStatus s = SGN_Digest(pks->u.pubkey.private_key,
+	SECStatus s = SGN_Digest(pks->private_key,
 				 hash_alg->nss.oid_tag,
 				 &raw_signature, &hash_to_sign);
 	if (s != SECSuccess) {
@@ -405,13 +405,13 @@ const struct pubkey_signer pubkey_signer_raw_ecdsa = {
 	.jam_auth_method = ECDSA_jam_auth_method,
 };
 
-static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *pks,
+static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_stuff *pks,
 						    const uint8_t *hash_val, size_t hash_len,
 						    const struct hash_desc *hash_algo_unused UNUSED,
 						    struct logger *logger)
 {
 
-	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
+	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -429,14 +429,14 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 	uint8_t raw_signature_data[sizeof(struct hash_signature)];
 	SECItem raw_signature = {
 		.type = siBuffer,
-		.len = PK11_SignatureLen(pks->u.pubkey.private_key),
+		.len = PK11_SignatureLen(pks->private_key),
 		.data = raw_signature_data,
 	};
 	passert(raw_signature.len <= sizeof(raw_signature_data));
 	dbg("ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
-	SECStatus s = PK11_Sign(pks->u.pubkey.private_key, &raw_signature, &hash_to_sign);
+	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len);
 	}
