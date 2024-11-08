@@ -881,7 +881,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	/* Build output packet HDR;KE;Nr */
 
 	send_cr = (ike->sa.st_oakley.auth == OAKLEY_RSA_SIG) &&
-		!remote_has_preloaded_pubkey(&ike->sa) &&
+		!remote_has_preloaded_pubkey(ike) &&
 		ike->sa.st_connection->remote->host.config->ca.ptr != NULL;
 
 	/* HDR out */
@@ -1100,7 +1100,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	 * send certificate request, if we don't have a preloaded RSA
 	 * public key
 	 */
-	bool send_cr = send_cert && !remote_has_preloaded_pubkey(&ike->sa);
+	bool send_cr = send_cert && !remote_has_preloaded_pubkey(ike);
 
 	dbg(" I am %ssending a certificate request",
 	    send_cr ? "" : "not ");

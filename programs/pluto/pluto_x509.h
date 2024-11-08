@@ -57,6 +57,6 @@ extern void free_auth_chain(chunk_t *chain, int chain_len);
 bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c);
 #endif
 
-bool remote_has_preloaded_pubkey(const struct state *st);
+bool remote_has_preloaded_pubkey(const struct ike_sa *ike);
 
 #endif /* _PLUTO_X509_H */

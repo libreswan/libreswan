@@ -270,7 +270,7 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike)
 {
 	struct authby authby = ike->sa.st_connection->remote->host.config->authby;
-	return (authby_has_digsig(authby) && !remote_has_preloaded_pubkey(&ike->sa));
+	return (authby_has_digsig(authby) && !remote_has_preloaded_pubkey(ike));
 }
 
 bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
@@ -284,7 +284,7 @@ bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
 		return false;
 	}
 
-	if (remote_has_preloaded_pubkey(&ike->sa)) {
+	if (remote_has_preloaded_pubkey(ike)) {
 		dbg("IKEv2 CERTREQ: public key already known");
 		return false;
 	}

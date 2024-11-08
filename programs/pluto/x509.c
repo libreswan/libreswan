@@ -723,12 +723,13 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 /*
  * Look for the existence of a non-expiring preloaded public key.
  */
-bool remote_has_preloaded_pubkey(const struct state *st)
+bool remote_has_preloaded_pubkey(const struct ike_sa *ike)
 {
-	const struct connection *c = st->st_connection;
+	const struct connection *c = ike->sa.st_connection;
 
-	/* do not consider rw connections since
-	 * the peer's identity must be known
+	/*
+	 * Do not consider rw connections since the peer's identity
+	 * must be known
 	 */
 	if (is_permanent(c)) {
 		/* look for a matching RSA public key */
