@@ -21,6 +21,8 @@
 #include "passert.h"
 #include "lswlog.h"
 #include "ip_info.h"
+#include "lmod.h"
+#include "names_constant.h"		/* for debug_lmod_info */
 
 int long_index;
 unsigned verbose;
@@ -177,3 +179,49 @@ void optarg_verbose(lset_t start)
 		jam_lset(buf, &debug_names, cur_debugging);
 	}
 }
+
+void optarg_debug_lmod(bool enable, lmod_t *mods)
+{
+	if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+		fprintf(stderr, "aliases:\n");
+		for (struct lmod_alias *a = debug_lmod_info.aliases;
+		     a->name != NULL; a++) {
+			JAMBUF(buf) {
+				jam(buf, "  %s: ", a->name);
+				jam_lset_short(buf, debug_lmod_info.names, "+", a->bits);
+				fprintf(stderr, PRI_SHUNK"\n",
+					pri_shunk(jambuf_as_shunk(buf)));
+			}
+		}
+		fprintf(stderr, "bits:\n");
+		for (long e = next_enum(&debug_names, -1);
+		     e != -1; e = next_enum(&debug_names, e)) {
+			JAMBUF(buf) {
+				jam(buf, "  ");
+				jam_enum_short(buf, &debug_names, e);
+				enum_buf help;
+				if (enum_name(&debug_help, e, &help)) {
+					jam(buf, ": ");
+					jam_string(buf, help.buf);
+				}
+				fprintf(stderr, PRI_SHUNK"\n",
+					pri_shunk(jambuf_as_shunk(buf)));
+			}
+		}
+		exit(1);
+	}
+
+	/* work through the updates */
+	if (!lmod_arg(mods, &debug_lmod_info, optarg, enable)) {
+		fprintf(stderr, "whack: unrecognized -%s-debug '%s' option ignored\n",
+			enable ? "" : "-no", optarg);
+	}
+}
+
+void optarg_debug(bool enable)
+{
+	lmod_t mods = {0};
+	optarg_debug_lmod(enable, &mods);
+	cur_debugging = lmod(cur_debugging, mods);
+}
+

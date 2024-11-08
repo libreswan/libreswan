@@ -2405,42 +2405,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_DEBUG:	/* --debug */
-		case DBGOPT_NO_DEBUG:	/* --no-debug */
-		{
-			bool enable = (c == DBGOPT_DEBUG);
-			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
-				fprintf(stderr, "aliases:\n");
-				for (struct lmod_alias *a = debug_lmod_info.aliases;
-				     a->name != NULL; a++) {
-					JAMBUF(buf) {
-						jam(buf, "  %s: ", a->name);
-						jam_lset_short(buf, debug_lmod_info.names, "+", a->bits);
-						fprintf(stderr, PRI_SHUNK"\n",
-							pri_shunk(jambuf_as_shunk(buf)));
-					}
-				}
-				fprintf(stderr, "bits:\n");
-				for (long e = next_enum(&debug_names, -1);
-				     e != -1; e = next_enum(&debug_names, e)) {
-					JAMBUF(buf) {
-						jam(buf, "  ");
-						jam_enum_short(buf, &debug_names, e);
-						enum_buf help;
-						if (enum_name(&debug_help, e, &help)) {
-							jam(buf, ": ");
-							jam_string(buf, help.buf);
-						}
-						fprintf(stderr, PRI_SHUNK"\n",
-							pri_shunk(jambuf_as_shunk(buf)));
-					}
-				}
-				exit(1);
-			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg, enable)) {
-				fprintf(stderr, "whack: unrecognized -%s-debug '%s' option ignored\n",
-					enable ? "" : "-no", optarg);
-			}
+			optarg_debug_lmod(/*enable*/true, &msg.debugging);
 			continue;
-		}
+		case DBGOPT_NO_DEBUG:	/* --no-debug */
+			optarg_debug_lmod(/*enable*/false, &msg.debugging);
+			continue;
 
 		case DBGOPT_IMPAIR:	/* --impair */
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */

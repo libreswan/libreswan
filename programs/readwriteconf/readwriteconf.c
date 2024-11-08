@@ -49,13 +49,14 @@ static void usage(void)
 enum opt {
 	OPT_EOF = -1,
 	OPT_VERBOSE = 256,
+	OPT_DEBUG,
 };
 
 const struct option long_opts[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
 	{ "conn",                required_argument, NULL, 'c' },
-	{ "debug",               no_argument, NULL, OPT_VERBOSE, },
+	{ "debug",               no_argument, NULL, OPT_DEBUG, },
 	{ "verbose",             no_argument, NULL, OPT_VERBOSE, },
 	{ "rootdir",             required_argument, NULL, 'R' },
 	{ "rootdir2",            required_argument, NULL, 'S' },
@@ -90,6 +91,9 @@ int main(int argc, char *argv[])
 
 		case OPT_VERBOSE:
 			optarg_verbose(LEMPTY);
+			break;
+		case OPT_DEBUG:
+			optarg_debug(/*enable*/true);
 			break;
 
 		case 'C':

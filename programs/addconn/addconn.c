@@ -176,6 +176,7 @@ enum opt {
 	OPT_HELP = 'h',
 	OPT_CONFIG = 256,
 	OPT_VERBOSE,
+	OPT_DEBUG,
 	OPT_AUTOALL,
 	OPT_LISTALL,
 	OPT_LISTADD,
@@ -196,7 +197,7 @@ enum opt {
 const struct option long_opts[] =
 {
 	{ "config", required_argument, NULL, OPT_CONFIG, },
-	{ "debug", no_argument, NULL, OPT_VERBOSE, },
+	{ "debug", no_argument, NULL, OPT_DEBUG, },
 	{ "verbose", no_argument, NULL, OPT_VERBOSE, },
 	{ "autoall", no_argument, NULL, OPT_AUTOALL, },
 	{ "addall", no_argument, NULL, OPT_AUTOALL, }, /* alias, backwards compat */
@@ -262,6 +263,10 @@ int main(int argc, char *argv[])
 
 		case OPT_VERBOSE:
 			optarg_verbose(LEMPTY);
+			break;
+
+		case OPT_DEBUG:
+			optarg_debug(/*enable*/true);
 			break;
 
 		case OPT_CONFIGSETUP:

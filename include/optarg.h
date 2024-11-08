@@ -57,4 +57,14 @@ ip_address optarg_any(struct family *family);
 
 void optarg_verbose(lset_t start);
 
+/*
+ * parse --debug and --no-debug options
+ *
+ * First variant updates CUR_DEBUGGING; second maintains a set of
+ * updates - see whack.c.
+ */
+
+void optarg_debug(bool enable);
+void optarg_debug_lmod(bool enable, lmod_t *debugging);
+
 #endif
