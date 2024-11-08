@@ -52,8 +52,7 @@ src 198.18.1.12 dst 198.18.1.15
 	enc cbc(aes) 0xENCKEY
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	 replay_window 0, bitmap-length 0
 	if_id 0x1
 src 198.18.1.15 dst 198.18.1.12
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
