@@ -42,9 +42,9 @@ struct show;
 struct ike_sa;
 struct pubkey_signer;
 
-const struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
-							const struct pubkey_type *type,
-							struct logger *logger);
+struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
+						  const struct pubkey_type *type,
+						  struct logger *logger);
 
 extern bool has_private_key(cert_t cert);
 extern void list_psks(struct show *s);

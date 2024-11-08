@@ -955,9 +955,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
-				SECKEY_DestroyPrivateKey(s->u.pubkey->private_key);
-				s->u.pubkey->content.type->free_pubkey_content(&s->u.pubkey->content);
-				pfreeany(s->u.pubkey)
+				secret_pubkey_stuff_delref(&s->u.pubkey, HERE);
 				break;
 			default:
 				bad_case(s->kind);
@@ -1174,8 +1172,24 @@ static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_
 	}
 }
 
+struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuff *pks,
+						       where_t where)
+{
+	return addref_where(pks, where);
+}
+
+void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
+{
+	struct secret_pubkey_stuff *last = delref_where(pks, &global_logger, where);
+	if (last != NULL) {
+		SECKEY_DestroyPrivateKey(last->private_key);
+		last->content.type->free_pubkey_content(&last->content);
+		pfree(last);
+	}
+}
+
 static err_t add_private_key(struct secret **secrets,
-			     const struct secret_pubkey_stuff **pks,
+			     struct secret_pubkey_stuff **pks,
 			     SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 			     const struct pubkey_type *type,
 			     SECKEYPrivateKey *private_key)
@@ -1194,7 +1208,7 @@ static err_t add_private_key(struct secret **secrets,
 	s->kind = type->private_key_kind;
 	s->line = 0;
 	/* make an unpacked copy of the private key */
-	s->u.pubkey = alloc_thing(struct secret_pubkey_stuff, "secret pubkey_content");
+	s->u.pubkey = refcnt_alloc(struct secret_pubkey_stuff, HERE);
 	s->u.pubkey->private_key = copy_private_key(private_key);
 	s->u.pubkey->content = content;
 
@@ -1204,7 +1218,7 @@ static err_t add_private_key(struct secret **secrets,
 }
 
 static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCertificate *cert,
-						const struct secret_pubkey_stuff **pks, struct logger *logger,
+						struct secret_pubkey_stuff **pks, struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 						const struct pubkey_type *type)
 {
@@ -1220,7 +1234,7 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 }
 
 static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCertificate *cert,
-						const struct secret_pubkey_stuff **pks, bool *load_needed,
+						struct secret_pubkey_stuff **pks, bool *load_needed,
 						struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
@@ -1248,7 +1262,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 }
 
 static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCertificate *cert,
-						const struct secret_pubkey_stuff **pks,
+						struct secret_pubkey_stuff **pks,
 						bool *load_needed,
 						struct logger *logger,
 						SECKEYPublicKey *pubk)
@@ -1273,7 +1287,7 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 }
 
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct secret_pubkey_stuff **pks, bool *load_needed,
+				       struct secret_pubkey_stuff **pks, bool *load_needed,
 				       struct logger *logger)
 {
 	*load_needed = false;
@@ -1297,7 +1311,7 @@ err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cer
 }
 
 static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
-						 const struct secret_pubkey_stuff **pks,
+						 struct secret_pubkey_stuff **pks,
 						 SECItem *ckaid_nss, SECKEYPrivateKey *private_key)
 {
 	const struct pubkey_type *type = private_key_type_nss(private_key);
@@ -1316,7 +1330,7 @@ static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 }
 
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct secret_pubkey_stuff **pks, bool *load_needed,
+					struct secret_pubkey_stuff **pks, bool *load_needed,
 					struct logger *logger)
 {
 	*load_needed = false;

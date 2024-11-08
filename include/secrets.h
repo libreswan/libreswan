@@ -24,6 +24,7 @@
 
 #include <pk11pub.h>
 
+#include "refcnt.h"
 #include "lswcdefs.h"
 #include "x509.h"
 #include "id.h"
@@ -89,11 +90,15 @@ const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret 
  */
 
 struct secret_pubkey_stuff {
+	struct refcnt refcnt;
 	SECKEYPrivateKey *private_key;
 	struct pubkey_content content;
 };
 
-extern struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *s);
+struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *s);
+
+struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuff *, where_t where);
+void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **, where_t where);
 
 /*
  * PPK
@@ -284,10 +289,10 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct secret_pubkey_stuff **pks, bool *load_needed,
+				       struct secret_pubkey_stuff **pks, bool *load_needed,
 				       struct logger *logger);
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct secret_pubkey_stuff **pks, bool *load_needed,
+					struct secret_pubkey_stuff **pks, bool *load_needed,
 					struct logger *logger);
 
 diag_t create_pubkey_from_cert(const struct id *id,

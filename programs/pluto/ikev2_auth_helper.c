@@ -38,7 +38,7 @@ struct task {
 	const struct crypt_mac hash_to_sign;
 	const struct hash_desc *hash_algo;
 	v2_auth_signature_cb *cb;
-	const struct secret_pubkey_stuff *pks;
+	struct secret_pubkey_stuff *pks;
 	const struct pubkey_signer *signer;
 	/* out */
 	struct hash_signature signature;
@@ -63,18 +63,21 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 			      where_t where)
 {
 	const struct connection *c = ike->sa.st_connection;
+	struct secret_pubkey_stuff *pks = get_local_private_key(c, signer->type,
+								ike->sa.logger);
+	if (pks == NULL) {
+		/* failure: no key to use */
+		return false;
+	}
+
 	struct task task = {
 		.cb = cb,
 		.hash_algo = hash_algo,
 		.hash_to_sign = *hash_to_sign,
 		.signer = signer,
-		.pks = get_local_private_key(c, signer->type,
-					     ike->sa.logger),
+		.pks = secret_pubkey_stuff_addref(pks, HERE),
+		.signature = {0},
 	};
-
-	if (task.pks == NULL)
-		/* failure: no key to use */
-		return false;
 
 	submit_task(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 		    /*detach_whack*/false,
@@ -125,5 +128,6 @@ static stf_status v2_auth_signature_completed(struct state *st,
 
 static void v2_auth_signature_cleanup(struct task **task)
 {
+	secret_pubkey_stuff_delref(&(*task)->pks, HERE);
 	pfreeany(*task);
 }
