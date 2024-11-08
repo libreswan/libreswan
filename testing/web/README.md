@@ -209,53 +209,17 @@ with "restart"):
 Once the release is made, the website will need an update.  Here's a
 guideline:
 
-## Roll over the web site
-
-- in mainline, cleanup and fix testing/web et.al.
-
-  Since the results page is going to be built from scratch, now is the
-  time to make enhancements and remove fluf.
-
-  Remember, the the website is run from the (mostly) frozen benchdir/
-  so this should be save.
-
-- in mainline, check for VM OSs that need an upgrade
-
-  general rule is Debian is trailing edge others are leading edge
-
-- let the website run until the release has been tested
-
-  assuming tester.sh can see it (if not, fun times)
-
-- upgrade/reboot machine
-
-- move testing/ aside (to old/?) creating an empty testing/ directory
-
-  continued below
-
-- in benchdir/ run `./kvm demolish` (why not)
-
-- update benchdir/ pulling in above enhancements
-
-  SOP is to only update benchdir/ when the test scripts need an
-  update.
-
-- review benchdir/Makefile.inc.local
-
-  Set $(WEB_BRANCH_TAG) (name subject to change) to most recent branch
-  point or release.  That will be the first change tested!  After that
-  changes from the tag to HEAD are tested.
-
-  Should $(WEB_BRANCH_NAME) (name subject to change) be set?
-
-- run `cp /dev/null nohup.out ; nohup ./benchdir/testing/web/tester.sh & tail -f nohup.out`
-
-  tester.sh redirects its output to results/tester.log
-
-## Archive the previous results
+## Archive the existing results
 
 Arguably this should all be dropped and instead, each release captures
 its test results.
+
+- wait for tester.sh to test the release tag
+
+  this assumes the release is from mainline (ARGH!) if it isn't
+  a different strategy will be needed
+
+- shutdown tester.sh
 
 - set up the variables
 
@@ -306,6 +270,56 @@ its test results.
 
       cp /dev/null nohup.out ; nohup ;
       ./main/benchdir/testing/web/tester.sh ${n} &
+
+## Upgrade the website
+
+- in mainline, cleanup and fix testing/web et.al.
+
+  Since the results page is going to be built from scratch, now is the
+  time to make enhancements and remove fluf.
+
+  Remember, the the website is run from the (mostly) frozen benchdir/
+  so this should be save.
+
+- in mainline, check for VM OSs that need an upgrade
+
+  general rule is Debian is trailing edge others are leading edge
+
+- let the website run until the release has been tested
+
+  assuming tester.sh can see it (if not, fun times)
+
+- upgrade/reboot machine
+
+- move testing/ aside (to old/?) creating an empty testing/ directory
+
+  continued below
+
+- cleanout  existing domains and networks
+
+  - in benchdir/ run `./kvm demolish`
+  - using virsh to find and remove stray domains and networks
+  - empty pooldir/
+
+- update benchdir/ pulling in above enhancements
+
+  SOP is to only update benchdir/ when the test scripts need an
+  update.
+
+- review benchdir/Makefile.inc.local
+
+  Set $(WEB_BRANCH_TAG) (name subject to change) to most recent branch
+  point or release.  That will be the first change tested!  After that
+  changes from the tag to HEAD are tested.
+
+  Should $(WEB_BRANCH_NAME) (name subject to change) be set?
+
+- run `cp /dev/null nohup.out ; nohup ./benchdir/testing/web/tester.sh & tail -f nohup.out`
+
+  tester.sh redirects its output to results/tester.log
+
+## Archive the previous results
+
 
 
 
