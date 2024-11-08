@@ -29,6 +29,7 @@
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "whack.h"
+#include "sparse_names.h"
 #include "ipsecconf/parser-controls.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
@@ -437,8 +438,10 @@ int main(int argc, char *argv[])
 		/* load named conns, regardless of their state */
 		int connum;
 
-		if (verbose > 0)
+		if (verbose > 0) {
 			printf("loading named conns:");
+		}
+
 		for (connum = optind; connum < argc; connum++) {
 			const char *connname = argv[connum];
 
@@ -446,8 +449,9 @@ int main(int argc, char *argv[])
 			const char *p2 = "";
 			const char *p3 = "";
 
-			if (verbose > 0)
+			if (verbose > 0) {
 				printf(" %s\n", connname);
+			}
 
 			/* find first name match, if any */
 			struct starter_conn *conn = NULL;
@@ -477,9 +481,6 @@ int main(int argc, char *argv[])
 			if (conn == NULL) {
 				/* we found neither name nor alias */
 				exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
-				if (verbose > 0) {
-					printf(" (notfound)\n");
-				}
 				fprintf(stderr, "conn '%s': not found (tried aliases)\n",
 					connname);
 				continue;
@@ -499,6 +500,23 @@ int main(int argc, char *argv[])
 					conn->name);
 				continue;
 			}
+
+			/*
+			 * Scrub AUTOSTART; conns will need to be
+			 * started manually.
+			 */
+			enum autostart autostart = conn->options[KNCF_AUTO];
+			if (autostart != AUTOSTART_UNSET &&
+			    autostart != AUTOSTART_ADD) {
+				if (verbose) {
+					name_buf nb;
+					printf("  overiding auto=%s with auto=add\n",
+					       str_sparse(&autostart_names, autostart, &nb));
+				}
+				conn->options[KNCF_AUTO] = AUTOSTART_ADD;
+			}
+
+			printf("\n"); /* close printf line */
 
 			resolve_default_routes(conn, logger);
 			exit_status = starter_whack_add_conn(ctlsocket,
