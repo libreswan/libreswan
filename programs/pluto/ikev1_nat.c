@@ -386,37 +386,38 @@ static void nat_traversal_show_result(struct state *st, uint16_t sport)
 	    rslt);
 }
 
-void ikev1_natd_init(struct state *st, struct msg_digest *md)
+void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
 {
 	lset_buf lb;
-	dbg("init checking NAT-T: conn %s; vid %s",
-	    st->st_connection->config->ikev1_natt == NATT_NONE ? "disabled" : "enabled",
-	    str_lset(&natt_method_names, st->hidden_variables.st_nat_traversal, &lb));
+	ldbg(ike->sa.logger, "init checking NAT-T: conn %s; vid %s",
+	     ike->sa.st_connection->config->ikev1_natt == NATT_NONE ? "disabled" : "enabled",
+	     str_lset(&natt_method_names, ike->sa.hidden_variables.st_nat_traversal, &lb));
 
-	if (st->st_connection->config->ikev1_natt == NATT_NONE) {
-		dbg("Skip NATD payloads due to nat-ikev1-method=none configuration");
+	if (ike->sa.st_connection->config->ikev1_natt == NATT_NONE) {
+		ldbg(ike->sa.logger, "skip NATD payloads due to nat-ikev1-method=none configuration");
 		return;
 	}
 
-	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (md->v1_st->st_oakley.ta_prf == NULL) {
+	if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
+		if (PBAD(ike->sa.logger, ike->sa.st_oakley.ta_prf == NULL)) {
 			/*
-			 * This connection is doomed - no PRF for NATD hash
-			 * Probably in FIPS trying MD5 ?
+			 * This connection is doomed - no PRF for NATD
+			 * hash Probably in FIPS trying MD5 ?
+			 *
 			 * Nothing will get send, so just do nothing
 			 */
-			log_state(RC_LOG, st,
-				  "Cannot compute NATD payloads without valid PRF");
+			llog(RC_LOG, ike->sa.logger,
+			     "cannot compute NATD payloads without valid PRF");
 			return;
 		}
-		ikev1_natd_lookup(md, st);
+		ikev1_natd_lookup(md, &ike->sa);
 
-		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-			nat_traversal_show_result(st, endpoint_hport(md->sender));
+		if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
+			nat_traversal_show_result(&ike->sa, endpoint_hport(md->sender));
 		}
 	}
 
-	schedule_v1_nat_keepalive(st);
+	schedule_v1_nat_keepalive(&ike->sa);
 }
 
 /*

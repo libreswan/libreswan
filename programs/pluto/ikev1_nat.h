@@ -31,7 +31,7 @@ bool v1_nat_traversal_add_initiator_natoa(struct pbs_out *outs, struct state *st
 void v1_maybe_natify_initiator_endpoints(struct state *st,
 					 where_t where);
 
-extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
+void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md);
 
 /**
  * Vendor ID

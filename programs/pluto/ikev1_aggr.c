@@ -597,7 +597,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	 */
 	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
-	ikev1_natd_init(&ike->sa, md);
+	ikev1_natd_init(ike, md);
 
 	/* set up second calculation */
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
@@ -841,7 +841,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 
 	struct connection *c = ike->sa.st_connection;
 
-	ikev1_natd_init(&ike->sa, md);
+	ikev1_natd_init(ike, md);
 
 	/*
 	 * In aggressive mode, the initiator sends its ID in the first

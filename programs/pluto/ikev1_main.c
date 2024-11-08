@@ -795,7 +795,7 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 	/* decode certificate requests */
 	decode_v1_certificate_requests(ike, md);
 
-	ikev1_natd_init(&ike->sa, md);
+	ikev1_natd_init(ike, md);
 
 	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 			    ike->sa.st_oakley.ta_dh,
@@ -1107,7 +1107,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* done parsing; initialize crypto */
 
-	ikev1_natd_init(&ike->sa, md);
+	ikev1_natd_init(ike, md);
 
 	/*
 	 * Build output packet HDR*;IDii;HASH/SIG_I
