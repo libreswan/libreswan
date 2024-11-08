@@ -124,7 +124,7 @@ struct secret_stuff {
 	union {
 		struct secret_preshared_stuff *preshared;
 		struct secret_ppk_stuff *ppk;
-		struct secret_pubkey_stuff pubkey;
+		struct secret_pubkey_stuff *pubkey;
 	} u;
 };
 

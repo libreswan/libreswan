@@ -96,14 +96,11 @@ const struct secret_preshared_stuff *secret_preshared_stuff(struct secret *secre
 
 struct secret_pubkey_stuff *secret_pubkey_stuff(struct secret *secret)
 {
-	switch (secret->stuff.kind) {
-	case SECRET_RSA:
-	case SECRET_ECDSA:
+	if (secret->stuff.u.pubkey != NULL) {
 		/* some sort of PKI */
-		return &secret->stuff.u.pubkey;
-	default:
-		return NULL;
+		return secret->stuff.u.pubkey;
 	}
+	return NULL;
 }
 
 const struct secret_ppk_stuff *secret_ppk_stuff(struct secret *secret)
@@ -184,26 +181,20 @@ const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 
 const ckaid_t *secret_ckaid(const struct secret *secret)
 {
-	switch (secret->stuff.kind) {
-	case SECRET_RSA:
-	case SECRET_ECDSA:
+	if (secret->stuff.u.pubkey != NULL) {
 		/* some sort of PKI */
-		return &secret->stuff.u.pubkey.content.ckaid;
-	default:
-		return NULL;
+		return &secret->stuff.u.pubkey->content.ckaid;
 	}
+	return NULL;
 }
 
 const keyid_t *secret_keyid(const struct secret *secret)
 {
-	switch (secret->stuff.kind) {
-	case SECRET_RSA:
-	case SECRET_ECDSA:
+	if (secret->stuff.u.pubkey != NULL) {
 		/* some sort of PKI */
-		return &secret->stuff.u.pubkey.content.keyid;
-	default:
-		return NULL;
+		return &secret->stuff.u.pubkey->content.keyid;
 	}
+	return NULL;
 }
 
 struct secret *foreach_secret(struct secret *secrets,
@@ -234,21 +225,16 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 		    str_enum(&secret_kind_names, pks->kind, &kb),
 		    (pexpect(s->ids != NULL) ? str_id(&s->ids->id, &idb) : "<NULL-ID-LIST>"));
 		/* should be == SECRET_PKI */
-		switch (pks->kind) {
-		case SECRET_RSA:
-		case SECRET_ECDSA:
-			/* some sort of PKI */
-			break;
-		default:
+		if (pks->u.pubkey == NULL) {
 			dbg("  not PKI");
 			continue;
 		}
-		if (type != NULL && pks->u.pubkey.content.type != type) {
+		if (type != NULL && pks->u.pubkey->content.type != type) {
 			/* need exact or wildcard */
 			dbg("  not %s", type->name);
 			continue;
 		}
-		if (!ckaid_eq_nss(&pks->u.pubkey.content.ckaid, pubkey_ckaid)) {
+		if (!ckaid_eq_nss(&pks->u.pubkey->content.ckaid, pubkey_ckaid)) {
 			dbg("  wrong ckaid");
 			continue;
 		}
@@ -261,29 +247,21 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 bool secret_pubkey_same(struct secret *lhs, struct secret *rhs)
 {
 	/* should be == SECRET_PKI */
-	switch (lhs->stuff.kind) {
-	case SECRET_RSA:
-	case SECRET_ECDSA:
-		break;
-	default:
+	if (lhs->stuff.u.pubkey == NULL) {
 		return false;
 	}
 
 	/* should be == SECRET_PKI */
-	switch (rhs->stuff.kind) {
-	case SECRET_RSA:
-	case SECRET_ECDSA:
-		break;
-	default:
+	if (rhs->stuff.u.pubkey == NULL) {
 		return false;
 	}
 
-	if (lhs->stuff.u.pubkey.content.type != rhs->stuff.u.pubkey.content.type) {
+	if (lhs->stuff.u.pubkey->content.type != rhs->stuff.u.pubkey->content.type) {
 		return false;
 	}
 
-	return lhs->stuff.u.pubkey.content.type->pubkey_same(&lhs->stuff.u.pubkey.content,
-							    &rhs->stuff.u.pubkey.content);
+	return lhs->stuff.u.pubkey->content.type->pubkey_same(&lhs->stuff.u.pubkey->content,
+							      &rhs->stuff.u.pubkey->content);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -957,9 +935,9 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
-				/* Note: pub is all there is */
-				SECKEY_DestroyPrivateKey(s->stuff.u.pubkey.private_key);
-				s->stuff.u.pubkey.content.type->free_pubkey_content(&s->stuff.u.pubkey.content);
+				SECKEY_DestroyPrivateKey(s->stuff.u.pubkey->private_key);
+				s->stuff.u.pubkey->content.type->free_pubkey_content(&s->stuff.u.pubkey->content);
+				pfreeany(s->stuff.u.pubkey)
 				break;
 			default:
 				bad_case(s->stuff.kind);
@@ -1179,28 +1157,29 @@ static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_
 static err_t add_private_key(struct secret **secrets,
 			     const struct secret_pubkey_stuff **pks,
 			     SECKEYPublicKey *pubk, SECItem *ckaid_nss,
-			     const struct pubkey_type *type, SECKEYPrivateKey *private_key)
+			     const struct pubkey_type *type,
+			     SECKEYPrivateKey *private_key)
 {
+	struct pubkey_content content;
+	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss);
+	if (err != NULL) {
+		return err;
+	}
+
+	passert(content.type == type);
+	pexpect(content.ckaid.len > 0);
+	pexpect(content.keyid.keyid[0] != '\0');
+
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
 	s->stuff.kind = type->private_key_kind;
 	s->stuff.line = 0;
 	/* make an unpacked copy of the private key */
-	s->stuff.u.pubkey.private_key = copy_private_key(private_key);
-	err_t err = type->extract_pubkey_content(&s->stuff.u.pubkey.content,
-						 pubk, ckaid_nss);
-	if (err != NULL) {
-		/* extract should leave pubkey_content clean */
-		SECKEY_DestroyPrivateKey(s->stuff.u.pubkey.private_key); /* allocated above */
-		pfree(s);
-		return err;
-	}
-
-	passert(s->stuff.u.pubkey.content.type == type);
-	pexpect(s->stuff.u.pubkey.content.ckaid.len > 0);
-	pexpect(s->stuff.u.pubkey.content.keyid.keyid[0] != '\0');
+	s->stuff.u.pubkey = alloc_thing(struct secret_pubkey_stuff, "secret pubkey_content");
+	s->stuff.u.pubkey->private_key = copy_private_key(private_key);
+	s->stuff.u.pubkey->content = content;
 
 	add_secret(secrets, s, "lsw_add_rsa_secret");
-	*pks = &s->stuff.u.pubkey;
+	*pks = s->stuff.u.pubkey;
 	return NULL;
 }
 
@@ -1235,7 +1214,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, type, ckaid_nss);
 	if (s != NULL) {
 		dbg("secrets entry for certificate already exists: %s", cert->nickname);
-		*pks = &s->stuff.u.pubkey;
+		*pks = s->stuff.u.pubkey;
 		*load_needed = false;
 		return NULL;
 	}
@@ -1327,7 +1306,7 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, NULL, &ckaid_nss);
 	if (s != NULL) {
 		dbg("secrets entry for ckaid already exists");
-		*pks = &s->stuff.u.pubkey;
+		*pks = s->stuff.u.pubkey;
 		*load_needed = false;
 		return NULL;
 	}
