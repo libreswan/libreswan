@@ -60,8 +60,8 @@
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <arg choice="opt">--verbose</arg>
       <arg choice="opt">--warningsfatal</arg>
-      <arg choice="plain"><replaceable>name1</replaceable></arg>
-      <arg choice="opt"><replaceable>name2 ..</replaceable></arg>
+      <arg choice="plain"><replaceable>connection</replaceable></arg>
+      <arg choice="opt"><replaceable>connection ...</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -86,26 +86,62 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>ipsec addconn</command>
-      takes a config file (or stdin) containing the format of ipsec.conf,
-      or the format of individual "conn" sections, and uses that information
-      to load named or all connections defined in that configuration file
-      into the running libreswan pluto IKE daemon. If no configuration file
-      is specified, the default configuration file is used. If no pluto
+      <command>ipsec addconn</command> takes a config file (or stdin)
+      containing the format of ipsec.conf, or the format of individual
+      "conn" sections, and uses that information to load named or all
+      connections defined in that configuration file into the running
+      libreswan pluto IKE daemon. If no configuration file is
+      specified, the default configuration file is used. If no pluto
       socket is specified, the default socket location will be used.
     </para>
 
     <para>
-      When <option>--addall</option> is used, all connections
-      defined in the config file will be operated on. Otherwise, only the
-      specified connection names will be affected.
+      When <option>--autoall</option> is specified, all connections
+      that include the <option>auto=</option> configuration option are
+      processed as follows:
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>auto=add</option></term>
+	<term><option>auto=keep</option></term>
+	<listitem>
+	  <para>
+	    the <replaceable>connection</replaceable> is loaded
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>auto=route</option></term>
+	<term><option>auto=ondemand</option></term>
+	<listitem>
+	  <para>
+	    the <replaceable>connection</replaceable> is loaded and
+	    routed
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>auto=up</option></term>
+	<term><option>auto=start</option></term>
+	<listitem>
+	  <para>
+	    the <replaceable>connection</replaceable> is loaded,
+	    routed, marked as needing to stay up, and initiated
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      If the <replaceable>connection</replaceable> is already loaded
+      then it is first removed.
     </para>
 
     <para>
-      When addcon is run, connections that have the <emphasis>auto=</emphasis>
-      option set to <command>add</command>, <command>start</command>
-      or <command>route</command> will be loaded, routed or initiated.
-      If a connection was loaded or initiated already, it will be replaced.
+      When one or more <replaceable>connections</replaceable> are
+      specified, those connections are loaded.  Any
+      <option>auto=</option> in the configuration is ignored.
     </para>
 
     <para>
