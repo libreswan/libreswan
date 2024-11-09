@@ -3,14 +3,21 @@
 #
 
 east# /testing/guestbin/swan-prep
+
 east# ipsec start
 
-Redirecting to: [initsystem]
+Redirecting to: systemctl start ipsec.service
 
 east# ../../guestbin/wait-until-pluto-started
+
+
 east# ipsec whack --impair revival
+
 east# ipsec whack --impair suppress_retransmits
+
 east# ipsec auto --add east-west
+
+WARNING: ipsec auto has been deprecated
 
 "east-west": added IKEv2 connection
 
@@ -19,18 +26,26 @@ east# ipsec auto --add east-west
 #
 
 west# /testing/guestbin/swan-prep
+
 west# ipsec start
 
-Redirecting to: [initsystem]
+Redirecting to: systemctl start ipsec.service
 
 west# ../../guestbin/wait-until-pluto-started
+
+
 east# ipsec whack --impair revival
+
 west# ipsec whack --impair suppress_retransmits
+
 west# ipsec whack --impair block_inbound:yes
 
-IMPAIR: block all inbound messages: yes
+IMPAIR: recording all inbound messages
+IMPAIR: block all inbound messages: no -> yes
 
 west# ipsec auto --add east-west
+
+WARNING: ipsec auto has been deprecated
 
 "east-west": added IKEv2 connection
 
@@ -41,7 +56,7 @@ west# ipsec auto --add east-west
 
 east# ipsec up --asynchronous east-west
 
-"east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"east-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
 
 west# ../../guestbin/wait-for-inbound.sh 1
 
@@ -76,7 +91,7 @@ IMPAIR: stop processing inbound drip packet 1
 
 west# ../../guestbin/wait-for-pluto.sh '^".*#2: sent IKE_SA_INIT'
 
-"east-west" #2: sent IKE_SA_INIT (or IKE_INTERMEDIATE) response {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+"east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 
 west# ../../guestbin/wait-for-inbound.sh 3
 
@@ -94,7 +109,6 @@ IMPAIR: stop processing inbound drip packet 2
 
 west# ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_AUTH request'  -- cat /tmp/pluto.log
 
-"east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 
 west# ../../guestbin/wait-for-inbound.sh 4
@@ -129,4 +143,4 @@ west# ../../guestbin/wait-for-pluto.sh 'established Child SA using #1'
 
 "east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 
-echo how to show crossed connection?
+echo how to show a crossed connection?
