@@ -11,23 +11,23 @@ if test $# -lt 1; then
     cat <<EOF 1>&2
 Usage:
 
-    $0 <verbose.txt> [ <test-directory> [ <fixup-directory> ... ] ]
+    $0 <all.console.verbose.txt> [ <test-directory> [ <fixup-directory> ... ] ]
 
-Sanitizes the file <verbose.txt> using fixup scripts specified by
-testparams.sh (or default-testparams.sh).  The result is written to
-STDOUT.
+Sanitizes the file <all.console.verbose.txt> using fixup scripts
+specified by testparams.sh (or default-testparams.sh).  The result is
+written to STDOUT.
 
 <test-directory>
 
 	The directory containing testparams.sh
 
-	Only required when when the unsanitized file <verbose.txt> is
-	not under OUTPUT/ in the build tree.
+	Only required when when the unsanitized file
+	<all.console.verbose.txt> is not under OUTPUT/ in the build
+	tree.
 
 	By default, the test under directory:
 		${testingdir}
 	from this source tree is used.
-
 
 <fixup.directory> ...
 
@@ -42,7 +42,8 @@ EOF
 fi
 
 
-# *.console.verbose.txt | verbose.txt
+# *.console.verbose.txt
+
 if test "x$1" = "x-"; then
     input=- ; shift
 else
@@ -52,13 +53,18 @@ else
 	exit 1
     fi
     case "$input" in
-	*verbose.txt) ;; # not .verbose.txt
-	*) echo "expecting an unsanitized .verbose.txt file: $input" 1>&2 ; exit 1 ;;
+	*.console.verbose.txt )
+	    :
+	    ;;
+	* )
+	    echo "expecting an unsanitized .console.verbose.txt file: $input" 1>&2
+	    exit 1
+	    ;;
     esac
 fi
 
-
 # <test-directory>
+
 if test $# -gt 0; then
     testdir=$(readlink -f $1) ; shift
 elif test "x$input" != "x-" ; then
@@ -68,12 +74,14 @@ else
     exit 1
 fi
 
+
 # <fixups-dir> ...
 if test $# -gt 0; then
-    :
+    fixupdirs="$@"
 else
-    set "$fixupdir"
+    fixupdirs="${fixupdir}"
 fi
+
 
 # Load REF_CONSOLE_FIXUPS et.al.
 if [ -f $testdir/testparams.sh ]; then
@@ -87,49 +95,76 @@ else
     . $testingdir/default-testparams.sh
 fi
 
+
 # The per-host fixup.  Get hostname from the INPUT file name,
 # stripping of what is probably .console.verbose.txt
 host_fixups=$(basename ${input} | sed -e 's;\..*;;' | tr '[a-z]' '[A-Z]')_CONSOLE_FIXUPS
 REF_CONSOLE_FIXUPS=${!host_fixups:-${REF_CONSOLE_FIXUPS}}
+
 if test -z "$REF_CONSOLE_FIXUPS"; then
-    echo "\$REF_CONSOLE_FIXUPS empty" 1>&2 ; exit 1
+    echo "\$REF_CONSOLE_FIXUPS empty" 1>&2
+    exit 1
 fi
 
-cleanups="cat ${input}"
-sedup=
-for fixup in ${REF_CONSOLE_FIXUPS}; do
+
+cleanups=
+sedups=
+cleanup=
+
+find_cleanup()
+{
+    local fixup=$1
     # Parameter list contains fixup directories; find the one
     # containing the sanitizer script ${fixup}
     cleanup=
-    for fixupdir in "$@" ; do
+    for fixupdir in "${fixupdirs}" ; do
 	if test -f ${fixupdir}/${fixup} ; then
-	    cleanup=${fixupdir}/${fixup}
-	    break;
+	    cleanup=$(realpath --relative-to=$PWD ${fixupdir}/${fixup})
+	    return
 	fi
     done
-    if test -z "$cleanup" ; then
-	echo "fixup '${fixup}' not found in $@" 1>&2 ; exit 1
+    echo "fixup '${fixup}' not found in $@" 1>&2
+    exit 1
+}
+
+cleanup() {
+    local fixup=$1 ; shift
+    local op="$*" ; shift
+    find_cleanup ${fixup}
+    if test -z "${cleanups}" -a -z "${sedups}" ; then
+	cleanups="${op} < ${input} -f ${cleanup}"
+    else
+	cleanups="${cleanups}${sedups} | ${op} -f ${cleanup}"
+	sedups=
     fi
+}
+
+sedup() {
+    local fixup=$(basename $1 .sed-f).sed ; shift
+    find_cleanup ${fixup}
+    if test -z "${cleanups}" -a -z "${sedups}" ; then
+	sedups="sed < ${input} -f ${cleanup}"
+    elif test -z "${sedups}" ; then
+	sedups=" | sed -f ${cleanup}"
+    else
+	sedups="${sedups} -f ${cleanup}"
+    fi
+}
+
+for fixup in ${REF_CONSOLE_FIXUPS}; do
     # now add the fixup to the pipeline
     case $fixup in
 	*.sed-n) # -n sanitizers suppress output
-	    cleanups="${cleanups}${sedup} | sed -n -f $fixupdir/$fixup"
-	    sedup=
-	    ;;
-	*.sed-f) # -f sanitizers can be merged
-	    if test -z "${sedup}" ; then
-		sedup=" | sed -f $fixupdir/$fixup"
-	    else
-		sedup="${sedup} -f $fixupdir/$fixup"
-	    fi
+	    cleanup ${fixup} sed -n
 	    ;;
 	*.sed)
-	    cleanups="${cleanups}${sedup} | sed -f $fixupdir/$fixup"
-	    sedup=
+	    cleanup ${fixup} sed
 	    ;;
 	*.awk)
-	    cleanups="${cleanups}${sedup} | awk -f $fixupdir/$fixup"
-	    sedup=
+	    cleanup ${fixup} awk
+	    ;;
+	*.sed-f) # -f sanitizers can be merged
+	    sedup ${fixup}
 	    ;;
 	*)
 	    echo "unknown fixup type: $fixup" 1>&2
@@ -137,11 +172,14 @@ for fixup in ${REF_CONSOLE_FIXUPS}; do
 	    ;;
     esac
 done
-cleanups="${cleanups}${sedup}"
+
+# close
+cleanups="${cleanups}${sedups}"
 # echo "${cleanups}" 1>&2
 
 eval $cleanups
 status=$?
+
 # The "known-good" output contains an extra trailing blank line so add
 # one here.
 echo
