@@ -84,13 +84,13 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define alloc_thing(thing, name) ((thing*) alloc_bytes(sizeof(thing), (name)))
 
 /* XXX: No NAME parameter; get ready for implicit HERE */
-#define over_alloc_thing(THING, EXTRA)				\
+#define overalloc_thing(THING, EXTRA)				\
 	((THING*) alloc_bytes(sizeof(THING) + (EXTRA), #THING))
 
 #define alloc_things(THING, COUNT, NAME)			\
 	((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
-#define over_alloc_things(THING, COUNT, EXTRA)			\
+#define overalloc_things(THING, COUNT, EXTRA)				\
 	((THING*) alloc_bytes(sizeof(THING) * (COUNT) +  (EXTRA), #THING"s"))
 
 #define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\

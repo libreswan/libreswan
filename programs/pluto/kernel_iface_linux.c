@@ -216,7 +216,7 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 
 			if (address_is_specified(ifaddr)) {
 				struct kernel_iface *ri =
-					over_alloc_thing(struct kernel_iface, strlen(ifname) + 1);
+					overalloc_thing(struct kernel_iface, strlen(ifname) + 1);
 				ri->addr = ifaddr;
 				strcpy(ri->name, ifname);
 				ri->next = rifaces;

@@ -218,7 +218,7 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 		 * the key.
 		 */
 		size_t pubkey_len = strlen(pubkey); /* over estimate; decoded is less */
-		struct dns_pubkey *dns_pubkey = over_alloc_thing(struct dns_pubkey, pubkey_len);
+		struct dns_pubkey *dns_pubkey = overalloc_thing(struct dns_pubkey, pubkey_len);
 		dns_pubkey->algorithm_type = algorithm_type;
 		dns_pubkey->ttl = ttl;
 		/* store the pubkey after the struct */

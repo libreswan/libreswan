@@ -50,7 +50,7 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 		static const struct refcnt_base b_ = {		       \
 			.what = #THING,				       \
 		};						       \
-		THING *t_ = alloc_bytes(sizeof(THING) + (EXTRA), b_.what); \
+		THING *t_ = overalloc_thing(THING, EXTRA);	       \
 		refcnt_init(t_, &t_->refcnt, &b_, WHERE);	       \
 		t_;						       \
 	})
