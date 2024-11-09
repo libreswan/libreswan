@@ -63,38 +63,6 @@
 #include "ike_alg_hash.h"
 #include "certs.h"
 
-/*
- * Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
- *
- * Although this would be a generally useful function, it is very
- * hard to come up with a discipline that prevents different uses
- * from interfering.  It is intended that by limiting it to building
- * diagnostics, we will avoid this problem.
- * Juggling is performed to allow an argument to be a previous
- * result: the new string may safely depend on the old one.  This
- * restriction is not checked in any way: violators will produce
- * confusing results (without crashing!).
- *
- * @param fmt String format
- * @param ... strings
- * @return err_t
- */
-
-static err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
-static err_t builddiag(const char *fmt, ...)
-{
-	/* longer messages will be truncated */
-	static char mydiag_space[LOG_WIDTH];
-	char t[sizeof(mydiag_space)];	/* build result here first */
-	va_list args;
-	va_start(args, fmt);
-	t[0] = '\0';	/* in case nothing terminates string */
-	vsnprintf(t, sizeof(t), fmt, args);
-	va_end(args);
-	strcpy(mydiag_space, t);
-	return mydiag_space;
-}
-
 struct fld {
 	const char *name;
 	ssize_t offset;
@@ -526,89 +494,61 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
  */
 
 /* parse PSK from file */
-static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
+static diag_t process_preshared_secret(const char *what, size_t minlen,
+				       struct file_lex_position *flp,
+				       chunk_t *psk)
 {
-	err_t ugh = NULL;
-
 	if (flp->quote == '"' || flp->quote == '\'') {
 		size_t len = strlen(flp->tok);
-		if (len < 8) {
+		if (minlen > 0 && len < minlen) {
 			llog(RC_LOG, flp->logger,
-			     "WARNING: using a weak secret (PSK)");
+			     "WARNING: using a weak secret (%s)", what);
 		}
-		*psk = clone_bytes_as_chunk(flp->tok, len, "PSK");
+		*psk = clone_bytes_as_chunk(flp->tok, len, what);
 		shift(flp);
-	} else {
-		ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, psk);
-		if (ugh != NULL) {
-			/* ttodata didn't like PSK data */
-			ugh = builddiag("PSK data malformed (%s): %s", ugh,
-					flp->tok);
-		} else {
-			shift(flp);
-		}
+		return NULL;
 	}
 
-	return ugh;
-}
-
-/* parse XAUTH secret from file */
-static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
-{
-	err_t ugh = NULL;
-
-	if (flp->quote == '"' || flp->quote == '\'') {
-		*xauth = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "XAUTH");
-		shift(flp);
-	} else {
-		ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, xauth);
-		if (ugh != NULL) {
-			/* ttodata didn't like PSK data */
-			ugh = builddiag("PSK data malformed (%s): %s", ugh,
-					flp->tok);
-		} else {
-			shift(flp);
-		}
+	err_t ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, psk);
+	if (ugh != NULL) {
+		/* ttodata didn't like PSK data */
+		return diag("%s data malformed (%s): %s",
+			    what, ugh, flp->tok);
 	}
 
-	return ugh;
+	shift(flp);
+	return NULL;
 }
 
 /* parse static PPK */
-static err_t process_ppk_static_secret(struct file_lex_position *flp,
-				       chunk_t *ppk, chunk_t *ppk_id)
+static diag_t process_ppk_static_secret(struct file_lex_position *flp,
+					chunk_t *ppk, chunk_t *ppk_id)
 {
-	err_t ugh = NULL;
-
-	if (flp->quote == '"' || flp->quote == '\'') {
-		*ppk_id = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK ID");
-	} else {
-		ugh = "No quotation marks found. PPK ID should be in quotation marks";
-		return ugh;
+	if (flp->quote != '"' && flp->quote != '\'') {
+		return diag("no quotation marks found, PPK ID should be in quotation marks");
 	}
 
+	*ppk_id = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK ID");
 	if (!shift(flp)) {
-		ugh = "No PPK found. PPK should be specified after PPK ID";
 		free_chunk_content(ppk_id);
-		return ugh;
+		return diag("No PPK found. PPK should be specified after PPK ID");
 	}
 
 	if (flp->quote == '"' || flp->quote == '\'') {
 		*ppk = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK");
 		shift(flp);
 	} else {
-		ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, ppk);
+		err_t ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, ppk);
 		if (ugh != NULL) {
 			/* ttodata didn't like PPK data */
-			ugh = builddiag("PPK data malformed (%s): %s", ugh,
-					flp->tok);
 			free_chunk_content(ppk_id);
-		} else {
-			shift(flp);
+			return diag("PPK data malformed (%s): %s", ugh, flp->tok);
 		}
+
+		shift(flp);
 	}
 
-	return ugh;
+	return NULL;
 }
 
 struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
@@ -707,36 +647,41 @@ static void add_secret(struct secret **slist,
 static void process_secret(struct file_lex_position *flp,
 			   struct secret **psecrets, struct secret *s)
 {
-	err_t ugh = NULL;
+	diag_t ugh = NULL;
 
 	if (tokeqword(flp, "psk")) {
 		s->stuff.kind = SECRET_PSK;
 		/* preshared key: quoted string or ttodata format */
-		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
-			process_psk_secret(flp, &s->stuff.u.preshared_secret);
-		dbg("processing PSK at line %d: %s",
-			s->stuff.line, ugh == NULL ? "passed" : ugh);
+		ugh = (!shift(flp) ? diag("ERROR: unexpected end of record in PSK") :
+		       process_preshared_secret("PSK", 8, flp,
+						&s->stuff.u.preshared_secret));
+		ldbg(flp->logger, "processing PSK at line %d: %s",
+		     s->stuff.line,
+		     (ugh == NULL ? "passed" : str_diag(ugh)));
 	} else if (tokeqword(flp, "xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->stuff.kind = SECRET_XAUTH;
-		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
-			process_xauth_secret(flp, &s->stuff.u.preshared_secret);
-		dbg("processing XAUTH at line %d: %s",
-			s->stuff.line, ugh == NULL ? "passed" : ugh);
+		ugh = (!shift(flp) ? diag("ERROR: unexpected end of record in PSK") :
+		       process_preshared_secret("XAUTH", 0, flp,
+						&s->stuff.u.preshared_secret));
+		ldbg(flp->logger, "processing XAUTH at line %d: %s",
+		     s->stuff.line,
+		     (ugh == NULL ? "passed" : str_diag(ugh)));
 	} else if (tokeqword(flp, "ppks")) {
 		s->stuff.kind = SECRET_PPK;
-		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
-			process_ppk_static_secret(flp, &s->stuff.ppk, &s->stuff.ppk_id);
-		dbg("processing PPK at line %d: %s",
-			s->stuff.line, ugh == NULL ? "passed" : ugh);
+		ugh = (!shift(flp) ? diag("ERROR: unexpected end of record in static PPK") :
+		       process_ppk_static_secret(flp, &s->stuff.ppk, &s->stuff.ppk_id));
+		ldbg(flp->logger, "processing PPK at line %d: %s",
+		     s->stuff.line,
+		     (ugh == NULL ? "passed" : str_diag(ugh)));
 	} else {
-		ugh = builddiag("WARNING: ignored unrecognized keyword: %s", flp->tok);
+		ugh = diag("WARNING: ignored unrecognized keyword: %s", flp->tok);
 	}
 
 	if (ugh != NULL) {
-		llog(RC_LOG, flp->logger,
-			    "\"%s\" line %d: %s",
-			    flp->filename, s->stuff.line, ugh);
+		llog(RC_LOG, flp->logger, "\"%s\" line %d: %s",
+		     flp->filename, s->stuff.line, str_diag(ugh));
+		pfree_diag(&ugh);
 		/* free id's that should have been allocated */
 		if (s->ids != NULL) {
 			struct id_list *i, *ni;
@@ -748,7 +693,10 @@ static void process_secret(struct file_lex_position *flp,
 		}
 		/* finally free s */
 		pfree(s);
-	} else if (flushline(flp, "expected record boundary in key")) {
+		return;
+	}
+
+	if (flushline(flp, "expected record boundary in key")) {
 		/* gauntlet has been run: install new secret */
 		add_secret(psecrets, s, "process_secret");
 	}
