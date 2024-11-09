@@ -8,6 +8,7 @@ west #
  ipsec addconn --verbose west
 opening file: /etc/ipsec.conf
 loading named conns: west
+  overiding auto=ignore with auto=add
 resolving family=IPv4 src=%eth1 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %eth1
@@ -17,6 +18,7 @@ west #
  ipsec addconn --verbose west-bogus
 opening file: /etc/ipsec.conf
 loading named conns: west-bogus
+  overiding auto=ignore with auto=add
 resolving family=IPv4 src=%bogus1 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %bogus1

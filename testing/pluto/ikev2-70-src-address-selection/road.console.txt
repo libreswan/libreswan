@@ -25,6 +25,7 @@ road #
  ipsec auto --add --verbose road
 opening file: /etc/ipsec.conf
 loading named conns: road
+  overiding auto=ignore with auto=add
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer 192.1.2.23
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
@@ -102,6 +103,7 @@ road #
  ipsec addconn --verbose --ctlsocket /run/pluto/foo road
 opening file: /etc/ipsec.conf
 loading named conns: road
+  overiding auto=ignore with auto=add
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer 192.1.2.23
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
