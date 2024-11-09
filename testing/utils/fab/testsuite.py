@@ -25,7 +25,6 @@ class Test:
 
     def __init__(self, test_directory, testing_directory,
                  saved_test_output_directory=None,
-                 testsuite_output_directory=None,
                  kind="kvmplutotest", status="good"):
         # basics
         self.kind = kind
@@ -52,12 +51,8 @@ class Test:
         self.directory = os.path.join(os.path.relpath(os.path.dirname(test_directory)), self.name)
 
         # Directory where the next test run's output should be
-        # written.  If a common testsuite output directory was
-        # specified, use that.
-        if testsuite_output_directory:
-            self.output_directory = os.path.join(testsuite_output_directory, self.name)
-        else:
-            self.output_directory = os.path.join(self.directory, "OUTPUT")
+        # written.
+        self.output_directory = os.path.join(self.directory, "OUTPUT")
 
         # Directory containing saved output from a previous test run.
         # If the test's output directory was explicitly specified, say
@@ -116,8 +111,7 @@ class Test:
 class Testsuite:
 
     def __init__(self, logger, testlist,
-                 testing_directory,
-                 testsuite_output_directory=None):
+                 testing_directory):
         self.directory = os.path.dirname(testlist)
         self.testlist = collections.OrderedDict()
         line_nr = 0
@@ -156,7 +150,6 @@ class Testsuite:
                 # pr = fields[3]?
                 test = Test(kind=kind, status=status,
                             test_directory=os.path.join(self.directory, name),
-                            testsuite_output_directory=testsuite_output_directory,
                             testing_directory=testing_directory)
                 logger.debug("test directory: %s", test.directory)
                 if not os.path.exists(test.directory):
@@ -207,15 +200,10 @@ def add_arguments(parser):
                        default=utilsdir.relpath(".."),
                        help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
-    # There are two outputs: old and new; how to differentiate?
-    group.add_argument("--testsuite-output", metavar="OUTPUT-DIRECTORY",
-                        help="save test results in %(metavar)s/<test> instead of testing/pluto/<test>/OUTPUT")
-
 
 def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
     logger.info("  testing-directory: '%s'", args.testing_directory)
-    logger.info("  testsuite-output: '%s'", args.testsuite_output)
 
 
 def is_test_directory(directory):
@@ -234,8 +222,7 @@ def is_test_output_directory(directory):
 
 
 def load(logger, log_level, args,
-         testsuite_directory=None,
-         testsuite_output_directory=None):
+         testsuite_directory=None):
     """Load the single testsuite (TESTLIST) found in DIRECTORY
 
     A testsutite is defined by the presence of TESTLIST in DIRECTORY,
@@ -265,8 +252,7 @@ def load(logger, log_level, args,
             path = os.path.join(tail, path)
 
     return Testsuite(logger, testlist,
-                     testing_directory=args.testing_directory,
-                     testsuite_output_directory=testsuite_output_directory or args.testsuite_output)
+                     testing_directory=args.testing_directory)
 
 
 def append_test(logger, log_level, tests, args, directory,
@@ -295,8 +281,7 @@ def append_test(logger, log_level, tests, args, directory,
 
     test = Test(test_directory=test_directory,
                 saved_test_output_directory=saved_test_output_directory,
-                testing_directory=args.testing_directory,
-                testsuite_output_directory=args.testsuite_output)
+                testing_directory=args.testing_directory)
     logger.log(log_level, "directory '%s' contains %s '%s'", directory, message, test.name)
     tests.append(test)
 
@@ -321,8 +306,7 @@ def load_testsuite_or_tests(logger, directories, args,
             directory = os.path.dirname(directory)
 
         # perhaps directory/file is a testsuite?
-        testsuite = load(logger, log_level, args, testsuite_directory=directory,
-                         testsuite_output_directory=args.testsuite_output)
+        testsuite = load(logger, log_level, args, testsuite_directory=directory)
         if testsuite:
             # more efficient?
             for test in testsuite:
