@@ -48,3 +48,15 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-auto-up.sed-n"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pem.sed-n"
 # this is last
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-prompt-double.sed"
+
+# all.console.txt gets it's own list; add as necessary.  .sed-f
+# scripts are all run from a single sed!
+
+ALL_CONSOLE_FIXUPS=""
+ALL_CONSOLE_FIXUPS+=" pluto-whack-sanitize.sed-f"
+ALL_CONSOLE_FIXUPS+=" all-date-sanitize.sed"
+ALL_CONSOLE_FIXUPS+=" ipsec-start.sed-f"
+ALL_CONSOLE_FIXUPS+=" ipsec-kernel-state.sed-f"		# includes ip xfrm state
+ALL_CONSOLE_FIXUPS+=" ipsec-kernel-policy.sed-f"	# includes ip xfrm policy
+ALL_CONSOLE_FIXUPS+=" post-mortem.sed-f"
+ALL_CONSOLE_FIXUPS+=" cutout.sed-f"
