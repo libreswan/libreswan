@@ -1067,7 +1067,7 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
 KVM_LINUX_RELEASE ?= 40
 KVM_LINUX_BUILD ?= 1.14
 
-KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
+KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_LINUX_RELEASE)/Server/x86_64/iso
 
 KVM_LINUX_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_LINUX_RELEASE)-$(KVM_LINUX_BUILD).iso
 KVM_LINUX_ISO_HASH ?= SHA256
