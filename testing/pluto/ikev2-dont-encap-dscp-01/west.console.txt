@@ -22,30 +22,30 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add netkey
-"netkey": added IKEv2 connection
+ ipsec auto --add xfrm
+"xfrm": added IKEv2 connection
 west #
  ipsec auto --status | grep DONT_ENCAP_DSCP
-"netkey":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_ENCAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"xfrm":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_ENCAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 west #
  ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up netkey
-"netkey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"netkey" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"netkey" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"netkey" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"netkey" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"netkey" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec auto --up xfrm
+"xfrm" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"xfrm" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"xfrm" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"xfrm" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"xfrm" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
+"xfrm" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
-#2: "netkey", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#2: "xfrm", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ip -statistics xfrm state |grep dscp
 	replay-window 0 seq 0x00000000 flag af-unspec esnextra_flag dont-encap-dscp (0x10100000)

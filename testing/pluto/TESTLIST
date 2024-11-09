@@ -218,7 +218,7 @@ kvmplutotest	ikev1-impair-01-replay-duplicates	good
 kvmplutotest	ikev2-impair-01-replay-duplicates	good
 kvmplutotest	ikev1-impair-02-replay-forward		good
 kvmplutotest	ikev2-impair-02-replay-forward		good
-kvmplutotest	ikev2-46-basic-psk-netkey		good
+kvmplutotest	ikev2-46-basic-psk-xfrm		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
 kvmplutotest	ikev2-48-nat-cp-start			wip	github:518
@@ -303,9 +303,9 @@ kvmplutotest	ikev2-algo-16-newer-dh			good
 kvmplutotest	ikev2-algo-17-no-sha1-01		good
 kvmplutotest	ikev2-algo-17-chacha20_poly1305-ike-esp	good
 kvmplutotest	ikev2-algo-18-ike-null			good
-kvmplutotest	netkey-algo-aes_gcm-01			good
-kvmplutotest	netkey-algo-aes_gcm-02			good
-kvmplutotest	netkey-algo-aes_gcm-03			good
+kvmplutotest	xfrm-algo-aes_gcm-01			good
+kvmplutotest	xfrm-algo-aes_gcm-02			good
+kvmplutotest	xfrm-algo-aes_gcm-03			good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
@@ -526,14 +526,14 @@ kvmplutotest	nflog-02-conn-nftables			good
 kvmplutotest	ikev2-73-cat-nftables			good
 
 
-kvmplutotest	netkey-vti-01				good
-kvmplutotest	netkey-vti-02				good
-kvmplutotest	netkey-vti-03				good
-kvmplutotest	netkey-vti-05				good
-kvmplutotest	netkey-vti-06				good
-kvmplutotest	netkey-vti-07				wip
-kvmplutotest	netkey-vti-08				good
-kvmplutotest	netkey-vti-09				good
+kvmplutotest	xfrm-vti-01				good
+kvmplutotest	xfrm-vti-02				good
+kvmplutotest	xfrm-vti-03				good
+kvmplutotest	xfrm-vti-05				good
+kvmplutotest	xfrm-vti-06				good
+kvmplutotest	xfrm-vti-07				wip
+kvmplutotest	xfrm-vti-08				good
+kvmplutotest	xfrm-vti-09				good
 
 kvmplutotest	ikev2-tfc-01				good
 kvmplutotest	ikev2-tfc-02				good
@@ -921,7 +921,7 @@ kvmplutotest	psk-pluto-02		good
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
 kvmplutotest	xauth-pluto-05		good
-kvmplutotest	xauth-pluto-05-netkey	good
+kvmplutotest	xauth-pluto-05-xfrm	good
 kvmplutotest	xauth-pluto-06		good
 kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
@@ -978,7 +978,7 @@ kvmplutotest	ikev1-noretransmit-dos	wip
 
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
-kvmplutotest	basic-pluto-13-netkey-ondemand good
+kvmplutotest	basic-pluto-13-xfrm-ondemand good
 kvmplutotest	basic-pluto-15-no-retransmit good
 
 kvmplutotest	basic-pluto-17-nssdir	good
@@ -995,9 +995,9 @@ kvmplutotest	psk-pluto-06		good
 #
 # tests using alternative ESP algorithms
 #
-kvmplutotest	netkey-algo-camellia-01	good
-kvmplutotest	netkey-algo-null-01	good
-kvmplutotest	netkey-algo-null-02	good
+kvmplutotest	xfrm-algo-camellia-01	good
+kvmplutotest	xfrm-algo-null-01	good
+kvmplutotest	xfrm-algo-null-02	good
 
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
@@ -1137,13 +1137,13 @@ kvmplutotest	ipv6-6in6-02-ikev2			good
 kvmplutotest	ipv6-4in6-01-ikev1			good
 kvmplutotest	ipv6-4in6-02-ikev2			good
 
-kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-transport-mode-04-ondemand-netkey	good
-kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	good	github/1875
+kvmplutotest	ipv6-transport-mode-02-xfrm-xfrm	good
+kvmplutotest	ipv6-transport-mode-04-ondemand-xfrm	good
+kvmplutotest	ipv6-tunnel-mode-02-xfrm-xfrm	good
+kvmplutotest	ipv6-transport-ts-mode-04-xfrm-xfrm	good	github/1875
 kvmplutotest	ipv6-tunnel-mode-03-rw			good
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
-kvmplutotest	ikev2-ipv6-transport-mode-02-netkey-netkey	good
+kvmplutotest	ikev2-ipv6-transport-mode-02-xfrm-xfrm	good
 kvmplutotest	interop-ikev2-strongswan-47-addresspool-ipv6	good
 
 # address pool tests
@@ -1292,11 +1292,11 @@ kvmplutotest    basic-pluto-19-seedbits			good
 #################################################################
 # passthrough tests
 #################################################################
-kvmplutotest	netkey-passthrough-ipxfrm		good
-kvmplutotest	netkey-passthrough-00			good
-kvmplutotest	netkey-passthrough-01			good
-kvmplutotest	netkey-passthrough-02			good
-kvmplutotest	netkey-passthrough-03			good
+kvmplutotest	xfrm-passthrough-ipxfrm			good
+kvmplutotest	xfrm-passthrough-00			good
+kvmplutotest	xfrm-passthrough-01			good
+kvmplutotest	xfrm-passthrough-02			good
+kvmplutotest	xfrm-passthrough-03			good
 
 kvmplutotest	ikev1-isakmp-reserved-flags-01		good
 kvmplutotest	ikev1-isakmp-reserved-flags-02		good

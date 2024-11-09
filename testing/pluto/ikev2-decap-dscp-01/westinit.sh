@@ -8,7 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add netkey
+ipsec auto --add xfrm
 ipsec auto --status | grep DECAP_DSCP
 ipsec whack --impair suppress_retransmits
 echo "initdone"

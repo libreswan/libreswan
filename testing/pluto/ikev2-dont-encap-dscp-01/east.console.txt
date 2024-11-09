@@ -6,8 +6,8 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add netkey
-"netkey": added IKEv2 connection
+ ipsec auto --add xfrm
+"xfrm": added IKEv2 connection
 east #
  echo "initdone"
 initdone
