@@ -106,6 +106,16 @@ struct secret_pubkey_stuff *secret_pubkey_stuff(struct secret *secret)
 	}
 }
 
+const struct secret_ppk_stuff *secret_ppk_stuff(struct secret *secret)
+{
+	switch (secret->stuff.kind) {
+	case SECRET_PPK:
+		return secret->stuff.u.ppk;
+	default:
+		return NULL;
+	}
+}
+
 struct id_list *lsw_get_idlist(const struct secret *s)
 {
 	return s->ids;
@@ -406,7 +416,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				 */
 				break;
 			case SECRET_PPK:
-				same = hunk_eq(s->stuff.ppk, best->stuff.ppk);
+				same = hunk_eq(s->stuff.u.ppk->key,
+					       best->stuff.u.ppk->key);
 				break;
 			default:
 				bad_case(kind);
@@ -540,41 +551,58 @@ static diag_t process_preshared_secret(const char *what, size_t minlen,
 
 /* parse static PPK */
 static diag_t process_ppk_static_secret(struct file_lex_position *flp,
-					chunk_t *ppk, chunk_t *ppk_id)
+					struct secret_ppk_stuff **ppk)
 {
 	if (flp->quote != '"' && flp->quote != '\'') {
 		return diag("no quotation marks found, PPK ID should be in quotation marks");
 	}
 
-	*ppk_id = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK ID");
+	chunk_t id = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK ID");
 	if (!shift(flp)) {
-		free_chunk_content(ppk_id);
+		free_chunk_content(&id);
 		return diag("No PPK found. PPK should be specified after PPK ID");
 	}
 
+	chunk_t key;
 	if (flp->quote == '"' || flp->quote == '\'') {
-		*ppk = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK");
+		key = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK");
 		shift(flp);
 	} else {
-		err_t ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, ppk);
+		err_t ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, &key);
 		if (ugh != NULL) {
 			/* ttodata didn't like PPK data */
-			free_chunk_content(ppk_id);
+			free_chunk_content(&id);
 			return diag("PPK data malformed (%s): %s", ugh, flp->tok);
 		}
 
 		shift(flp);
 	}
 
+	/* merge the fields */
+	(*ppk) = overalloc_thing(struct secret_ppk_stuff, id.len + key.len);
+
+	uint8_t *dst = (*ppk)->data;
+	(*ppk)->id.ptr = dst;
+	(*ppk)->id.len = id.len;
+	memcpy(dst, id.ptr, id.len);
+
+	dst += id.len;
+	(*ppk)->key.ptr = dst;
+	(*ppk)->key.len = key.len;
+	memcpy(dst, key.ptr, key.len);
+
+	free_chunk_content(&key);
+	free_chunk_content(&id);
+
 	return NULL;
 }
 
-struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
+const struct secret_ppk_stuff *secret_ppk_stuff_by_id(struct secret *s, shunk_t ppk_id)
 {
 	while (s != NULL) {
-		struct secret_stuff pks = s->stuff;
-		if (pks.kind == SECRET_PPK && hunk_eq(pks.ppk_id, ppk_id))
-			return s;
+		if (s->stuff.kind == SECRET_PPK &&
+		    hunk_eq(s->stuff.u.ppk->id, ppk_id))
+			return s->stuff.u.ppk;
 		s = s->next;
 	}
 	return NULL;
@@ -688,7 +716,7 @@ static void process_secret(struct file_lex_position *flp,
 	} else if (tokeqword(flp, "ppks")) {
 		s->stuff.kind = SECRET_PPK;
 		ugh = (!shift(flp) ? diag("ERROR: unexpected end of record in static PPK") :
-		       process_ppk_static_secret(flp, &s->stuff.ppk, &s->stuff.ppk_id));
+		       process_ppk_static_secret(flp, &s->stuff.u.ppk));
 		ldbg(flp->logger, "processing PPK at line %d: %s",
 		     s->stuff.line,
 		     (ugh == NULL ? "passed" : str_diag(ugh)));
@@ -922,8 +950,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				pfreeany(s->stuff.u.preshared);
 				break;
 			case SECRET_PPK:
-				free_chunk_content(&s->stuff.ppk);
-				free_chunk_content(&s->stuff.ppk_id);
+				pfreeany(s->stuff.u.ppk);
 				break;
 			case SECRET_XAUTH:
 				pfreeany(s->stuff.u.preshared);

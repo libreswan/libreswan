@@ -208,7 +208,7 @@ void calc_v2_keymat(struct state *st,
 
 void recalc_v2_ppk_interm_keymat(struct state *st,
 				 PK11SymKey *old_skey_d, /* SKEYSEED IKE Rekey */
-		    		 shunk_t *ppk,
+		    		 const shunk_t *ppk,
 				 const ike_spis_t *new_ike_spis)
 {
 	PASSERT(st->logger, ppk != NULL);

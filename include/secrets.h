@@ -96,6 +96,20 @@ struct secret_pubkey_stuff {
 extern struct secret_pubkey_stuff *secret_pubkey_stuff(struct secret *s);
 
 /*
+ * PPK
+ */
+
+struct secret_ppk_stuff {
+	shunk_t key;
+	chunk_t id;
+	uint8_t data[];
+};
+
+const struct secret_ppk_stuff *secret_ppk_stuff(struct secret *s);
+const struct secret_ppk_stuff *secret_ppk_stuff_by_id(struct secret *secrets, shunk_t ppk_id);
+
+
+/*
  * Joined, can this be made like for IKE vs Child and ike_alg.
  */
 
@@ -109,11 +123,9 @@ struct secret_stuff {
 	int line;
 	union {
 		struct secret_preshared_stuff *preshared;
+		struct secret_ppk_stuff *ppk;
 		struct secret_pubkey_stuff pubkey;
 	} u;
-
-	chunk_t ppk;
-	chunk_t ppk_id;
 };
 
 diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_pubkey_stuff *pks, chunk_t *der);
@@ -286,8 +298,6 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    const struct id *my_id,
 					    const struct id *his_id,
 					    bool asym);
-
-extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,

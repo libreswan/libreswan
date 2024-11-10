@@ -41,7 +41,7 @@
  * used by initiator, to properly construct struct
  * from chunk_t we got from .secrets
  */
-bool create_ppk_id_payload(chunk_t *ppk_id, struct ppk_id_payload *payl)
+bool create_ppk_id_payload(const chunk_t *ppk_id, struct ppk_id_payload *payl)
 {
 	payl->type = PPK_ID_FIXED;	/* currently we support only this type */
 	payl->ppk_id = *ppk_id;

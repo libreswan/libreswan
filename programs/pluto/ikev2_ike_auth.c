@@ -115,11 +115,10 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 * scramble the st_skey_* keys with PPK.
 	 */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
-		chunk_t *ppk_id;
-		const shunk_t ppk = get_connection_ppk_and_ppk_id(ike->sa.st_connection,
-								  &ppk_id);
+		const struct secret_ppk_stuff *ppk =
+			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
 
-		if (ppk.ptr != NULL) {
+		if (ppk != NULL) {
 			dbg("found PPK and PPK_ID for our connection");
 
 			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
@@ -134,7 +133,7 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 			ike->sa.st_sk_pr_no_ppk = symkey_addref(ike->sa.logger, "sk_pr_no_ppk",
 								ike->sa.st_skey_pr_nss);
 
-			ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
+			ppk_recalculate(ppk->key, ike->sa.st_oakley.ta_prf,
 					&ike->sa.st_skey_d_nss,
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
@@ -359,11 +358,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * generate NO_PPK_AUTH as well as PPK-based AUTH payload
 	 */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
-		chunk_t *ppk_id;
-		get_connection_ppk_and_ppk_id(ike->sa.st_connection,
-					      &ppk_id);
+		const struct secret_ppk_stuff *ppk =
+			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
 		struct ppk_id_payload ppk_id_p = { .type = 0, };
-		create_ppk_id_payload(ppk_id, &ppk_id_p);
+		create_ppk_id_payload(&ppk->id, &ppk_id_p);
 		if (DBGP(DBG_BASE)) {
 			DBG_log("ppk type: %d", (int) ppk_id_p.type);
 			DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id);
@@ -559,16 +557,17 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 				return STF_FATAL;
 			}
 
-			const shunk_t ppk = get_connection_ppk(ike->sa.st_connection,
-							       /*ppk_id*/&payl.ppk_id,
-							       /*index*/0);
+			const struct secret_ppk_stuff *ppk =
+				get_connection_ppk(ike->sa.st_connection,
+						   /*ppk_id*/&payl.ppk_id,
+						   /*index*/0);
 			free_chunk_content(&payl.ppk_id);
-			if (ppk.ptr != NULL) {
+			if (ppk != NULL) {
 				found_ppk = true;
 			}
 
 			if (found_ppk && c->config->ppk.allow) {
-				ppk_recalculate(ppk, ike->sa.st_oakley.ta_prf,
+				ppk_recalculate(ppk->key, ike->sa.st_oakley.ta_prf,
 						&ike->sa.st_skey_d_nss,
 						&ike->sa.st_skey_pi_nss,
 						&ike->sa.st_skey_pr_nss,
