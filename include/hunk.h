@@ -450,4 +450,12 @@ char *raw_clone_as_string(const void *ptr, size_t len, const char *name);
 	})
 
 
+#define clone_bytes_as_hunk(TYPE, PTR, LEN)				\
+	({								\
+		TYPE *h_ = overalloc_thing(TYPE, LEN);			\
+		memcpy(h_->ptr, (PTR), (LEN));				\
+		h_->len = LEN;						\
+		h_;							\
+	})
+
 #endif
