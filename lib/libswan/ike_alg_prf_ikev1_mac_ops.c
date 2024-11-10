@@ -23,6 +23,7 @@
 #include "crypt_symkey.h"
 #include "passert.h"
 #include "lswlog.h"		/* for pexpect() */
+#include "secrets.h"	/* for struct secret_preshared_stuff; */
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
@@ -52,13 +53,13 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
  * Compute: SKEYID = prf(pre-shared-key, Ni_b | Nr_b)
  */
 static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
-					 chunk_t pre_shared_key,
+					 const struct secret_preshared_stuff *pre_shared_key,
 					 chunk_t Ni, chunk_t Nr,
 					 struct logger *logger)
 {
 	/* key = pre-shared-key */
 	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYID psk", prf_desc,
-						    "psk", pre_shared_key,
+						    "psk", (*pre_shared_key),
 						    logger);
 	/* seed = Ni_b | Nr_b */
 	crypt_prf_update_hunk(prf, "Ni", Ni);

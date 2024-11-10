@@ -170,7 +170,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		 * XXX: same PSK used for both local and remote end,
 		 * so peer doesn't apply?
 		 */
-		const chunk_t *psk = get_connection_psk(c);
+		const struct secret_preshared_stuff *psk = get_connection_psk(c);
 		if (psk == NULL) {
 			id_buf idb;
 			return diag("authentication failed: no PSK found for '%s'",

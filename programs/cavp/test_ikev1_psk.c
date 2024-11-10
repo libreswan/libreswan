@@ -100,8 +100,12 @@ static void ikev1_psk_run_test(struct logger *logger)
 		return;
 	}
 	const struct prf_desc *prf = prf_entry->prf;
-	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk, ni, nr, logger);
+	struct secret_preshared_stuff *pss =
+		clone_bytes_as_hunk(struct secret_preshared_stuff,
+				    psk.ptr, psk.len);
+	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, pss, ni, nr, logger);
 	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid, logger);
+	pfreeany(pss);
 	symkey_delref(logger, "skeyid", &skeyid);
 }
 

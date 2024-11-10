@@ -55,6 +55,7 @@
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
 #include "refcnt.h"		/* for dbg_alloc()+dbg_free() */
+#include "secrets.h"
 
 /** output an attribute (within an SA) */
 /* Note: ikev2_out_attr is a clone, with the same bugs */
@@ -1527,7 +1528,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	bool xauth_init = false,
 		xauth_resp = false;
 	const char *const role = selection ? "initiator" : "responder";
-	const chunk_t *pss = &empty_chunk;
+	const struct secret_preshared_stuff *pss = NULL;
 
 	passert(c != NULL);
 
@@ -2033,7 +2034,6 @@ rsasig_common:
 		while (ok) {
 
 			if (c->remote->host.config->auth == AUTH_PSK &&
-			    pss != &empty_chunk &&
 			    pss != NULL &&
 			    ta.ta_prf != NULL) {
 				const size_t key_size_min = crypt_prf_fips_key_size_min(ta.ta_prf);

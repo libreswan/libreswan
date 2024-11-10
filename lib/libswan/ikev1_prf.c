@@ -47,7 +47,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
  * Compute: SKEYID = prf(pre-shared-key, Ni_b | Nr_b)
  */
 PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
-					chunk_t pre_shared_key,
+					const struct secret_preshared_stuff *pre_shared_key,
 					chunk_t Ni, chunk_t Nr,
 					struct logger *logger)
 {

@@ -24,6 +24,7 @@
 #include "crypt_symkey.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "secrets.h"	/* for struct secret_preshared_stuff; */
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
@@ -60,11 +61,11 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
  * Compute: SKEYID = prf(pre-shared-key, Ni_b | Nr_b)
  */
 static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
-					 chunk_t pre_shared_key,
+					 const struct secret_preshared_stuff *pre_shared_key,
 					 chunk_t Ni, chunk_t Nr,
 					 struct logger *logger)
 {
-	PK11SymKey *psk = prf_key_from_hunk("psk", prf_desc, pre_shared_key, logger);
+	PK11SymKey *psk = prf_key_from_hunk("psk", prf_desc, (*pre_shared_key), logger);
 	PK11SymKey *skeyid;
 	if (psk == NULL) {
 		return NULL;

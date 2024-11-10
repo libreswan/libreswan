@@ -525,7 +525,7 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
  * Note2: this seems to be called for connections using RSA too?
  */
 
-const chunk_t *get_connection_psk(const struct connection *c)
+const struct secret_preshared_stuff *get_connection_psk(const struct connection *c)
 {
 	struct secret *s = lsw_get_secret(c, SECRET_PSK, false);
 	if (s == NULL) {
@@ -533,7 +533,7 @@ const chunk_t *get_connection_psk(const struct connection *c)
 		return NULL;
 	}
 
-	const chunk_t *psk = &get_secret_stuff(s)->u.preshared_secret;
+	const struct secret_preshared_stuff *psk = secret_preshared_stuff(s);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("PreShared Key", *psk);
 	}
@@ -765,7 +765,7 @@ const struct secret_pubkey_stuff *get_local_private_key(const struct connection 
 		return NULL;
 	}
 
-	const struct secret_pubkey_stuff *pks = get_secret_pubkey_stuff(s);
+	const struct secret_pubkey_stuff *pks = secret_pubkey_stuff(s);
 	passert(pks != NULL);
 
 	pexpect(pks->content.type == type);

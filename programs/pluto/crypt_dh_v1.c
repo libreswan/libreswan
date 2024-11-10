@@ -47,8 +47,8 @@ void calc_v1_skeyid_and_iv(struct ike_sa *ike)
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 	const struct encrypt_desc *cipher = ike->sa.st_oakley.ta_encrypt;
 
-	const chunk_t *psk = get_connection_psk(ike->sa.st_connection);
-	chunk_t pss = (psk != NULL ? *psk : empty_chunk);
+	const struct secret_preshared_stuff *psk =
+		get_connection_psk(ike->sa.st_connection);
 
 	chunk_t ni = ike->sa.st_ni;
 	chunk_t nr = ike->sa.st_nr;
@@ -64,7 +64,7 @@ void calc_v1_skeyid_and_iv(struct ike_sa *ike)
 	PK11SymKey *skeyid;
 	switch (ike->sa.st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:
-		skeyid = ikev1_pre_shared_key_skeyid(prf, pss,
+		skeyid = ikev1_pre_shared_key_skeyid(prf, psk,
 						     ni, nr,
 						     ike->sa.logger);
 		break;

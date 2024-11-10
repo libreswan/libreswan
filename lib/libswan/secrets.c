@@ -82,7 +82,19 @@ struct secret_stuff *get_secret_stuff(struct secret *secret)
 	return &secret->stuff;
 }
 
-struct secret_pubkey_stuff *get_secret_pubkey_stuff(struct secret *secret)
+const struct secret_preshared_stuff *secret_preshared_stuff(struct secret *secret)
+{
+	switch (secret->stuff.kind) {
+	case SECRET_PSK:
+	case SECRET_XAUTH:
+		/* some sort of PSK */
+		return secret->stuff.u.preshared;
+	default:
+		return NULL;
+	}
+}
+
+struct secret_pubkey_stuff *secret_pubkey_stuff(struct secret *secret)
 {
 	switch (secret->stuff.kind) {
 	case SECRET_RSA:
@@ -380,8 +392,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				same = true;
 				break;
 			case SECRET_PSK:
-				same = hunk_eq(s->stuff.u.preshared_secret,
-					       best->stuff.u.preshared_secret);
+				same = hunk_eq(s->stuff.u.preshared[0],
+					       best->stuff.u.preshared[0]);
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
@@ -496,7 +508,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 /* parse PSK from file */
 static diag_t process_preshared_secret(const char *what, size_t minlen,
 				       struct file_lex_position *flp,
-				       chunk_t *psk)
+				       struct secret_preshared_stuff **psk)
 {
 	if (flp->quote == '"' || flp->quote == '\'') {
 		size_t len = strlen(flp->tok);
@@ -504,17 +516,23 @@ static diag_t process_preshared_secret(const char *what, size_t minlen,
 			llog(RC_LOG, flp->logger,
 			     "WARNING: using a weak secret (%s)", what);
 		}
-		*psk = clone_bytes_as_chunk(flp->tok, len, what);
+		*psk = clone_bytes_as_hunk(struct secret_preshared_stuff,
+					   flp->tok, len);
 		shift(flp);
 		return NULL;
 	}
 
-	err_t ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, psk);
+	chunk_t secret;
+	err_t ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, &secret);
 	if (ugh != NULL) {
 		/* ttodata didn't like PSK data */
 		return diag("%s data malformed (%s): %s",
 			    what, ugh, flp->tok);
 	}
+
+	*psk = clone_bytes_as_hunk(struct secret_preshared_stuff,
+				   secret.ptr, secret.len);
+	free_chunk_content(&secret);
 
 	shift(flp);
 	return NULL;
@@ -654,7 +672,7 @@ static void process_secret(struct file_lex_position *flp,
 		/* preshared key: quoted string or ttodata format */
 		ugh = (!shift(flp) ? diag("ERROR: unexpected end of record in PSK") :
 		       process_preshared_secret("PSK", 8, flp,
-						&s->stuff.u.preshared_secret));
+						&s->stuff.u.preshared));
 		ldbg(flp->logger, "processing PSK at line %d: %s",
 		     s->stuff.line,
 		     (ugh == NULL ? "passed" : str_diag(ugh)));
@@ -663,7 +681,7 @@ static void process_secret(struct file_lex_position *flp,
 		s->stuff.kind = SECRET_XAUTH;
 		ugh = (!shift(flp) ? diag("ERROR: unexpected end of record in PSK") :
 		       process_preshared_secret("XAUTH", 0, flp,
-						&s->stuff.u.preshared_secret));
+						&s->stuff.u.preshared));
 		ldbg(flp->logger, "processing XAUTH at line %d: %s",
 		     s->stuff.line,
 		     (ugh == NULL ? "passed" : str_diag(ugh)));
@@ -768,14 +786,13 @@ static void process_secret_records(struct file_lex_position *flp,
 				flp->tok = NULL;	/* redundant? */
 			}
 		} else {
-			/* expecting a list of indices and then the key info */
+			/*
+			 * Expecting a list of indices and then the
+			 * key info.
+			 */
 			struct secret *s = alloc_thing(struct secret, "secret");
-
-			s->ids = NULL;
-			s->stuff.kind = SECRET_PSK;	/* default */
-			s->stuff.u.preshared_secret = EMPTY_CHUNK;
+			s->stuff.kind = 0;	/* invalid */
 			s->stuff.line = flp->lino;
-			s->next = NULL;
 
 			for (;;) {
 				struct id id;
@@ -902,14 +919,14 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			}
 			switch (s->stuff.kind) {
 			case SECRET_PSK:
-				free_chunk_content(&s->stuff.u.preshared_secret);
+				pfreeany(s->stuff.u.preshared);
 				break;
 			case SECRET_PPK:
 				free_chunk_content(&s->stuff.ppk);
 				free_chunk_content(&s->stuff.ppk_id);
 				break;
 			case SECRET_XAUTH:
-				free_chunk_content(&s->stuff.u.preshared_secret);
+				pfreeany(s->stuff.u.preshared);
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:

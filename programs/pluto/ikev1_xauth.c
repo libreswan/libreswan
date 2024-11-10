@@ -2149,8 +2149,8 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						if (s != NULL) {
 							struct secret_stuff *pks = get_secret_stuff(s);
 
-							ike->sa.st_xauth_password = clone_hunk(pks->u.preshared_secret,
-											   "saved xauth password");
+							ike->sa.st_xauth_password = clone_hunk(pks->u.preshared[0],
+											       "saved xauth password");
 						}
 					}
 

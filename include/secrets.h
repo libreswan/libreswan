@@ -73,10 +73,31 @@ enum secret_kind {
 	SECRET_INVALID,
 };
 
+/*
+ * Pre-shared Secrets, and XAUTH stuff.
+ */
+
+struct secret_preshared_stuff {
+	size_t len;
+	uint8_t ptr[];
+};
+
+const struct secret_preshared_stuff *secret_preshared_stuff(struct secret *);
+
+/*
+ * PKI or raw public/private keys.
+ */
+
 struct secret_pubkey_stuff {
 	SECKEYPrivateKey *private_key;
 	struct pubkey_content content;
 };
+
+extern struct secret_pubkey_stuff *secret_pubkey_stuff(struct secret *s);
+
+/*
+ * Joined, can this be made like for IKE vs Child and ike_alg.
+ */
 
 struct secret_stuff {
 	enum secret_kind kind;
@@ -87,7 +108,7 @@ struct secret_stuff {
 	 */
 	int line;
 	union {
-		chunk_t preshared_secret;
+		struct secret_preshared_stuff *preshared;
 		struct secret_pubkey_stuff pubkey;
 	} u;
 
@@ -99,7 +120,6 @@ diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_pubkey_stuff *pks, chunk_
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc);
 
 extern struct secret_stuff *get_secret_stuff(struct secret *s);
-extern struct secret_pubkey_stuff *get_secret_pubkey_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
