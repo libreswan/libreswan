@@ -1,6 +1,17 @@
-function result(result_json, result_id) {
+function result(result_json, title_id, description_id, result_id) {
 
     console.log(result_json)
+
+    // URL/RESULTS/TEST/index.html
+    let path = window.location.pathname.split("/")
+    let test = path[path.length - 2]
+    d3.select("div#"+title_id)
+	.selectAll("h1")
+	.data([test])
+	.enter()
+	.append("h1")
+	.text((test) => test)
+
     let results = [result_json]
 
     let columns = [

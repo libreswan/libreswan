@@ -1,20 +1,17 @@
-function description(description_txt, title_id, description_id) {
+function description(description_txt, description_id) {
 
     let lines = description_txt.split("\n")
 
-    // URL/RESULTS/TEST/index.html
-    let path = window.location.pathname.split("/")
-    let test = path[path.length - 2]
-    let title = test + ": " + lines.shift() // first line; and drop it
+    let title = lines.shift() // first line; and drop it
 
-    d3.select("div#"+title_id)
+    d3.select("div#"+description_id)
 	.selectAll("h1")
 	.data([title])
 	.enter()
-	.append("h1")
+	.append("h2")
 	.text((title) => title)
 
-    // drop any leading blank lines
+    // drop any blank lines between the title and the body
     while (lines.length > 0 && !lines[0]) {
 	lines.shift()
     }
