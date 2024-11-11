@@ -1,0 +1,30 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ # delay the helper thread by 5 seconds so that a rereadsecrets can be
+west #
+ # run while it is "busy"
+west #
+ ipsec whack --impair helper_thread_delay:5
+west #
+ ipsec up --asynchronous westnet-eastnet-ikev2
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+west #
+ ipsec rereadsecrets
+forgetting secrets
+loading secrets from "/etc/ipsec.secrets"
+"/etc/ipsec.secrets" line 1: WARNING: ignored unrecognized keyword: A big big secret that isn't used
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+west #
+ 

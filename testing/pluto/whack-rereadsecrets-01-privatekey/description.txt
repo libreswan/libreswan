@@ -1,0 +1,4 @@
+Re-read the secrets file, flushing a private key that is in use on a thread
+
+Per:
+  Segmentation fault in PK11_SignatureLen (key=0xa5a5a5a5a5a5a5a5) #1894

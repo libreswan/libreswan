@@ -1396,6 +1396,7 @@ kvmplutotest	seccomp-03-updown		wip
 
 kvmplutotest	whack-globalstatus-01			good
 kvmplutotest	whack-rereadcerts-01			good
+kvmplutotest	whack-rereadsecrets-01-privatekey	wip	github/1894
 kvmplutotest	whack-ctlsocket-01			good
 
 # "ipsec showhostkey"
