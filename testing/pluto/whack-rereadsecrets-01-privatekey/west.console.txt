@@ -18,13 +18,69 @@ west #
  ipsec up --asynchronous westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
+ ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 1 helper 1 #1/#1 initiate_v2_IKE_SA_INIT_request'
+"westnet-eastnet-ikev2" #1: IMPAIR: job 1 helper 1 #1/#1 initiate_v2_IKE_SA_INIT_request (dh): helper is pausing for 5 seconds
+west #
  ipsec rereadsecrets
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
-"/etc/ipsec.secrets" line 1: WARNING: ignored unrecognized keyword: A big big secret that isn't used
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 2 helper 1 #1/#1 process_v2_IKE_SA_INIT_response'
+"westnet-eastnet-ikev2" #1: IMPAIR: job 2 helper 1 #1/#1 process_v2_IKE_SA_INIT_response (dh): helper is pausing for 5 seconds
+west #
+ ipsec rereadsecrets
+forgetting secrets
+loading secrets from "/etc/ipsec.secrets"
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: initiator established IKE SA'
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 3 helper 1 #1/#1 submit_v2_IKE_AUTH_request_signature'
+"westnet-eastnet-ikev2" #1: IMPAIR: job 3 helper 1 #1/#1 submit_v2_IKE_AUTH_request_signature (signature): helper is pausing for 5 seconds
+west #
+ ipsec rereadsecrets
+forgetting secrets
+loading secrets from "/etc/ipsec.secrets"
+west #
+ ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 4 helper 1 #1/#1 process_v2_IKE_AUTH_response'
+"westnet-eastnet-ikev2" #1: IMPAIR: job 4 helper 1 #1/#1 process_v2_IKE_AUTH_response (decode certificate payload): helper is pausing for 5 seconds
+west #
+ ipsec rereadsecrets
+forgetting secrets
+loading secrets from "/etc/ipsec.secrets"
+west #
+ ../../guestbin/wait-for-pluto.sh '#2: initiator established Child SA using #1'
+"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 west #
  ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 west #
  

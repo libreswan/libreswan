@@ -11,6 +11,12 @@ ipsec rereadsecrets
 ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 2 helper 1 #1/#1 process_v2_IKE_SA_INIT_response'
 ipsec rereadsecrets
 
+../../guestbin/wait-for-pluto.sh '#1: initiator established IKE SA'
 
 ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 3 helper 1 #1/#1 submit_v2_IKE_AUTH_request_signature'
 ipsec rereadsecrets
+
+../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 4 helper 1 #1/#1 process_v2_IKE_AUTH_response'
+ipsec rereadsecrets
+
+../../guestbin/wait-for-pluto.sh '#2: initiator established Child SA using #1'
