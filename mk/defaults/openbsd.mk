@@ -10,6 +10,7 @@ PKG_BASE ?= /usr/local
 CC=clang-17
 
 WARNING_CFLAGS += -Wno-unused
+WARNING_CFLAGS += -Wself-assign
 USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
 
 USERLAND_INCLUDES += -I$(PKG_BASE)/include
