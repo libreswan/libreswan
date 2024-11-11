@@ -149,6 +149,7 @@ void show_to_logger(struct show *s)
 	s->separator = HAD_OUTPUT;
 }
 
+VPRINTF_LIKE(3)
 static void show_rc_va_list(struct show *s, enum rc_type rc,
 			    const char *message, va_list ap)
 {

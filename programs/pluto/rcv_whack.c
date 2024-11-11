@@ -256,7 +256,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	free_id_content(&keyid);
 }
 
-static void dbg_whack(struct show *s, const char *fmt, ...) PRINTF_LIKE(2);
+PRINTF_LIKE(2)
 static void dbg_whack(struct show *s, const char *fmt, ...)
 {
 	if (DBGP(DBG_BASE)) {
@@ -276,7 +276,9 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
  *
  */
 
-static void dispatch(const struct whack_message *const m, struct show *s,
+PRINTF_LIKE(5)
+static void dispatch(const struct whack_message *const m,
+		     struct show *s,
 		     void (*op)(const struct whack_message *const m, struct show *s),
 		     const char *name,
 		     const char *fmt, ...)

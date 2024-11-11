@@ -39,6 +39,7 @@ void optarg_init(const struct logger *logger)
  */
 
 NEVER_RETURNS
+PRINTF_LIKE(1)
 static void fatal_optarg(const char *fmt, ...)
 {
 	/*
