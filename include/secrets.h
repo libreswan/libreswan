@@ -82,7 +82,7 @@ struct secret_preshared_stuff {
 	uint8_t ptr[];
 };
 
-const struct secret_preshared_stuff *secret_preshared_stuff(struct secret *);
+const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret *);
 
 /*
  * PKI or raw public/private keys.
@@ -93,7 +93,7 @@ struct secret_pubkey_stuff {
 	struct pubkey_content content;
 };
 
-extern struct secret_pubkey_stuff *secret_pubkey_stuff(struct secret *s);
+extern struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *s);
 
 /*
  * PPK
@@ -105,33 +105,12 @@ struct secret_ppk_stuff {
 	uint8_t data[];
 };
 
-const struct secret_ppk_stuff *secret_ppk_stuff(struct secret *s);
-const struct secret_ppk_stuff *secret_ppk_stuff_by_id(struct secret *secrets, shunk_t ppk_id);
-
-
-/*
- * Joined, can this be made like for IKE vs Child and ike_alg.
- */
-
-struct secret_stuff {
-	enum secret_kind kind;
-	/*
-	 * This replaced "int lsw_secretlineno()", which assumes only
-	 * one file (no includes) and isn't applicable to NSS.  For
-	 * NSS it's the entry number.
-	 */
-	int line;
-	union {
-		struct secret_preshared_stuff *preshared;
-		struct secret_ppk_stuff *ppk;
-		struct secret_pubkey_stuff *pubkey;
-	} u;
-};
+const struct secret_ppk_stuff *secret_ppk_stuff(const struct secret *s);
+const struct secret_ppk_stuff *secret_ppk_stuff_by_id(const struct secret *secrets, shunk_t ppk_id);
 
 diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_pubkey_stuff *pks, chunk_t *der);
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc);
 
-extern struct secret_stuff *get_secret_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
@@ -139,12 +118,16 @@ extern struct id_list *lsw_get_idlist(const struct secret *s);
  * return 0 to return current secret
  * return -1 to return NULL
  */
+
+struct secret_context;
 typedef int (*secret_eval)(struct secret *secret,
-			   struct secret_stuff *pks,
-			   void *uservoid);
+			   enum secret_kind kind,
+			   unsigned line,
+			   struct secret_context *context);
 
 struct secret *foreach_secret(struct secret *secrets,
-			      secret_eval func, void *uservoid);
+			      secret_eval func,
+			      struct secret_context *context);
 
 struct hash_signature {
 	size_t len;
@@ -287,7 +270,7 @@ struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where);
 extern void pubkey_delref_where(struct pubkey **pkp, where_t where);
 #define pubkey_delref(PKP) pubkey_delref_where(PKP, HERE)
 
-bool secret_pubkey_same(struct secret *lhs, struct secret *rhs);
+bool secret_pubkey_same(const struct secret *lhs, const struct secret *rhs);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
 				       struct logger *logger);

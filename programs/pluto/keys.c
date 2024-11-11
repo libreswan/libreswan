@@ -81,14 +81,19 @@ void free_preshared_secrets(struct logger *logger)
 	lsw_free_preshared_secrets(&pluto_secrets, logger);
 }
 
+struct secret_context {
+	struct show *s;
+};
+
 static int print_secrets(struct secret *secret,
-			 struct secret_stuff *pks UNUSED,
-			 void *uservoid)
+			 enum secret_kind secret_kind,
+			 unsigned secret_line,
+			 struct secret_context *context)
 {
-	struct show *s = uservoid;
+	struct show *s = context->s;
 
 	const char *kind;
-	switch (pks->kind) {
+	switch (secret_kind) {
 	case SECRET_PSK:
 		kind = "PSK";
 		break;
@@ -109,7 +114,7 @@ static int print_secrets(struct secret *secret,
 
 	int indent = 0;
 	SHOW_JAMBUF(s, buf) {
-		indent = jam(buf, "%5d:", pks->line);
+		indent = jam(buf, "%5d:", secret_line);
 		jam(buf, " %s ", kind);
 		if (ids == NULL) {
 			jam(buf, "%%any");
@@ -142,9 +147,12 @@ void list_psks(struct show *s)
 	const struct lsw_conf_options *oco = lsw_init_options();
 	show_blank(s);
 	show(s, "List of Pre-shared secrets (from %s)",
-		     oco->secretsfile);
+	     oco->secretsfile);
 	show_blank(s);
-	foreach_secret(pluto_secrets, print_secrets, s);
+	struct secret_context context = {
+		.s = s,
+	};
+	foreach_secret(pluto_secrets, print_secrets, &context);
 }
 
 /*
@@ -497,10 +505,8 @@ static struct secret *lsw_get_secret(const struct connection *c,
 /*
  * find the struct secret associated with an XAUTH username.
  */
-struct secret *lsw_get_xauthsecret(char *xauthname)
+const struct secret_preshared_stuff *xauth_secret_by_xauthname(char *xauthname)
 {
-	struct secret *best = NULL;
-
 	dbg("started looking for xauth secret for %s", xauthname);
 
 	struct id xa_id = {
@@ -511,11 +517,14 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 		}
 	};
 
-	best = lsw_find_secret_by_id(pluto_secrets,
-				     SECRET_XAUTH,
-				     &xa_id, NULL, true);
+	struct secret *best = lsw_find_secret_by_id(pluto_secrets,
+						    SECRET_XAUTH,
+						    &xa_id, NULL, true);
+	if (best == NULL) {
+		return NULL;
+	}
 
-	return best;
+	return secret_preshared_stuff(best);
 }
 
 /*

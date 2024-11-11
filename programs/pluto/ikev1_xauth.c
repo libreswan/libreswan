@@ -2138,19 +2138,14 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						return STF_INTERNAL_ERROR;
 					}
 
-					if (ike->sa.st_xauth_password.ptr == NULL)
-					{
-						struct secret *s =
-							lsw_get_xauthsecret(ike->sa.st_xauth_username);
-
+					if (ike->sa.st_xauth_password.ptr == NULL) {
+						const struct secret_preshared_stuff *pks =
+							xauth_secret_by_xauthname(ike->sa.st_xauth_username);
 						dbg("looked up username=%s, got=%p",
 						    ike->sa.st_xauth_username,
-						    s);
-						if (s != NULL) {
-							struct secret_stuff *pks = get_secret_stuff(s);
-
-							ike->sa.st_xauth_password = clone_hunk(pks->u.preshared[0],
-											       "saved xauth password");
+						    pks);
+						if (pks != NULL) {
+							ike->sa.st_xauth_password = clone_hunk(*pks, "saved xauth password");
 						}
 					}
 

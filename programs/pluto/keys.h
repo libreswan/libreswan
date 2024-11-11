@@ -37,7 +37,6 @@ struct pubkey_content;
 struct pubkey;
 struct pubkey_type;
 struct crypt_mac;
-struct secret_stuff;
 struct hash_desc;
 struct show;
 struct ike_sa;
@@ -65,7 +64,7 @@ extern void free_remembered_public_keys(void);
 err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger);
 err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger);
 
-extern struct secret *lsw_get_xauthsecret(char *xauthname);
+extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xauthname);
 
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
