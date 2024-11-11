@@ -378,8 +378,8 @@ static struct sadb_address *put_sadb_address(struct outbuf *msg,
 					     const ip_address addr,
 					     struct verbose verbose)
 {
-	const struct ip_info *afi = address_info(addr);
 #ifdef sadb_address_prefixlen /* NetBSD FreeBSD */
+	const struct ip_info *afi = address_info(addr);
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst_exttype,
 			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
@@ -696,7 +696,7 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const char *story UNUSED,	/* often SAID string */
 					 struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	VERBOSE_DBGP(DBG_BASE, logger, "reqid=%d ...", reqid);
 
 	/* GETSPI */
 	/* send: <base, address, SPI range> */
@@ -1535,7 +1535,7 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      const shunk_t sec_label UNUSED,
 				      struct logger *logger, const char *func)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
+	VERBOSE_DBGP(DBG_BASE, logger, "%s policy_id=%u ...", func, policy_id);
 	if (ipsec_interface != NULL) {
 		ipsec_interface_buf ifb;
 		vlog("BSD doesn't add kernel-policy to an ipsec-interface (%s)",
