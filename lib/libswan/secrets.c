@@ -919,7 +919,7 @@ static void process_secrets_file(struct file_lex_position *oflp,
 
 	struct lswglob_context context = {
 		.oflp = oflp,
-		psecrets = psecrets,
+		.psecrets = psecrets,
 	};
 	if (!lswglob(file_pat, "secrets", process_secret_files,
 		     &context, oflp->logger)) {
