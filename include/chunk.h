@@ -72,8 +72,8 @@ chunk_t clone_bytes_as_chunk(const void *first_ptr, size_t first_len,
 
 #define clone_hunk(HUNK, NAME)						\
 	({								\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		clone_bytes_as_chunk(hunk_.ptr, hunk_.len, NAME);	\
+		typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */	\
+		clone_bytes_as_chunk(hunk_->ptr, hunk_->len, NAME);	\
 	})
 
 chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
