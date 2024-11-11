@@ -267,8 +267,10 @@ endif
 #
 # AUTOCONF dogma is to put debug and optimization options such as the
 # DEBUG_CFLAGS, WARNING_CFLAGS and OPTIMIZE_CFLAGS below, in CFLAGS
-# making them easy to tweak.  Stuff that shouldn change such as
-# include paths are then put elsewhere (such as USERLAND_CFLAGS).
+# making them easy to tweak.
+#
+# Stuff that shouldn change such as include paths are then put
+# elsewhere (such as USERLAND_CFLAGS).
 #
 
 DEBUG_CFLAGS ?= -g
@@ -277,7 +279,17 @@ USERLAND_CFLAGS += $(DEBUG_CFLAGS)
 # eventually: -Wshadow -pedantic?
 WERROR_CFLAGS ?= -Werror
 USERLAND_CFLAGS += $(WERROR_CFLAGS)
-WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
+
+WARNING_CFLAGS += -Wall
+WARNING_CFLAGS += -Wextra
+WARNING_CFLAGS += -Wformat
+WARNING_CFLAGS += -Wformat-nonliteral
+WARNING_CFLAGS += -Wformat-security
+WARNING_CFLAGS += -Wundef
+WARNING_CFLAGS += -Wmissing-declarations
+WARNING_CFLAGS += -Wredundant-decls
+WARNING_CFLAGS += -Wnested-externs
+
 USERLAND_CFLAGS += $(WARNING_CFLAGS)
 
 # _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
