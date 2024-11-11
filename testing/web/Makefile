@@ -42,10 +42,7 @@ WEB_RESULTSDIR ?= $(WEB_SUMMARYDIR)/$(WEB_SUBDIR)
 web: | $(WEB_SUMMARYDIR)/
 	$(MAKE) web-summarydir
 	$(MAKE) web-resultsdir
-
-test-result:
-	$(MAKE) WEB_RESULTSDIR=$(WEB_SUMMARYDIR)/5.1.90-0-g6f13205ddd \
-		$(WEB_SUMMARYDIR)/5.1.90-0-g6f13205ddd/basic-pluto-01/index.html
+	$(MAKE) web-resultdir
 
 .PHONY: print-web-variable
 print-web-variable:
@@ -135,10 +132,12 @@ $(WEB_SUMMARYDIR)/commits.json: \
 # Create or update a test run's results page.
 #
 
-.PHONY: web-resultsdir
-web-resultsdir: $(WEB_RESULTSDIR)/index.html
-web-resultsdir: $(wildcard $(WEB_SUMMARYDIR)/*/index.html)
+WEB_RESULTS_INDEX = $(sort $(WEB_RESULTSDIR)/index.html $(wildcard $(WEB_SUMMARYDIR)/*/index.html))
 
+.PHONY: web-resultsdir
+web-resultsdir: $(WEB_RESULTS_INDEX)
+
+$(WEB_RESULTS_INDEX): \
 $(WEB_SUMMARYDIR)/%/index.html: results.html \
 		| $(WEB_SUMMARYDIR)/%/
 	cp $? $(WEB_SUMMARYDIR)/$*
@@ -190,6 +189,15 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 		> $@.tmp
 	tsc --project $@.tmp
 	mv $@.tmp $@
+
+
+.PHONY: web-resultdir
+WEB_RESULT_INDEX += $(wildcard $(WEB_SUMMARYDIR)/*/*/index.html)
+web-resultdir: $(WEB_RESULT_INDEX)
+
+$(WEB_RESULT_INDEX): \
+$(WEB_SUMMARYDIR)/%/index.html: result.html
+	cp result.html $(WEB_SUMMARYDIR)/$*/index.html
 
 #
 # update the json in all the results directories; very slow so only
