@@ -9,9 +9,11 @@ PKG_BASE ?= /usr/local
 #CC=egcc
 CC=clang-17
 
-WARNING_CFLAGS += -Wno-unused
 WARNING_CFLAGS += -Wself-assign
 USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
+
+# hack around broken LDNS header refering to undefined USE_ED448
+USERLAND_CFLAGS += -DUSE_ED448=LDNS_BUILD_CONFIG_USE_ED448
 
 USERLAND_INCLUDES += -I$(PKG_BASE)/include
 
