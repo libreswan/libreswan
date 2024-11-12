@@ -11,7 +11,12 @@ host()
 
 # this will fail for the build domains leaving the default
 
-for mac in $(ip address show | awk '$1 == "link/ether" { print $2 }') ; do
+ip address show | tee /dev/console
+macs=$(ip address show | awk '$1 == "link/ether" { print $2 }')
+
+echo hostnamer: macs: ${macs} | tee /dev/console
+
+for mac in ${macs} ; do
     echo hostnamer: mac: ${mac} | tee /dev/console
     case ${mac} in
     	 #   eth0                 eth1               eth2

@@ -1,5 +1,5 @@
 [Unit]
-  Description=hostnamer: who-am-i
+  Description=determine hostname from MAC
   #not-file-not-empty == file empty
   # ConditionFileNotEmpty=|!/etc/hostname
   # need interfaces configured
