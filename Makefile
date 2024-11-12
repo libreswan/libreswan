@@ -205,5 +205,8 @@ release:
 
 local-install:
 
+.PHONY: web web-page
+web web-page:
+	$(MAKE) -C testing/web web-publish
+
 include ${LIBRESWANSRCDIR}/mk/docker-targets.mk
-include ${LIBRESWANSRCDIR}/mk/web-targets.mk

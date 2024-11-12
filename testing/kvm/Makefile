@@ -14,6 +14,16 @@
 
 include ../../mk/dirs.mk
 include ../../mk/config.mk
+include ../../mk/testing.mk
+
+KVM_RUTDIR ?= $(TESTING_RUTDIR)
+KVM_BENCHDIR ?= $(TESTING_BENCHDIR)
+KVM_SOURCEDIR ?= $(TESTING_SOURCEDIR)
+KVM_TESTINGDIR ?= $(TESTING_RUTDIR)/testing
+
+# An educated guess ...
+KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
+KVM_LOCALDIR ?= $(KVM_POOLDIR)
 
 # Note: GNU Make doesn't let you combine pattern targets (e.x.,
 # kvm-install-%: kvm-reboot-%) with .PHONY.  Consequently, so that
@@ -33,30 +43,6 @@ define crlf
 
 
 endef
-
-#
-# where things live and what gets created
-#
-# can be a separate directories; RUT == repo under test; bench ==
-# testbench
-
-KVM_RUTDIR ?= $(abs_top_srcdir)
-KVM_BENCHDIR ?= $(abs_top_srcdir)
-KVM_SOURCEDIR ?= $(KVM_RUTDIR)
-KVM_TESTINGDIR ?= $(KVM_RUTDIR)/testing
-KVM_WEBDIR ?= $(abs_top_srcdir)/RESULTS
-
-# these kickstart web pages; should merge with above
-WEB_REPODIR ?= $(KVM_RUTDIR)
-WEB_ENABLED ?= $(wildcard $(WEB_SUMMARYDIR))
-WEB_SUMMARYDIR ?= $(KVM_WEBDIR)
-WEB_MAKEDIR ?= $(top_srcdir)
-WEB_HASH ?= $(shell git -C $(WEB_REPODIR) show --no-patch --format=%H HEAD)
-WEB_RESULTSDIR ?= $(KVM_WEBDIR)/$(shell $(top_srcdir)/mk/web/gime-git-description.sh $(WEB_REPODIR))
-
-# An educated guess ...
-KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
-KVM_LOCALDIR ?= $(KVM_POOLDIR)
 
 #
 # Build KVM_TEST_PREFIXES from $(KVM_PREFIX) and $(KVM_WORKERS).  Goal
@@ -525,6 +511,31 @@ $(KVM_LOCALDIR):
 	mkdir $(KVM_LOCALDIR)
 endif
 
+#
+# Build or update the web pages ready for a new test run
+#
+# For the results directory, just install the HTML / javascript files
+# (kvmrunner.py will fill in all the json files).  For the summary
+# directory, do a full update so that all the previous runs are
+# included.
+
+.PHONY: kvm-web
+kvm-web: kvm-ready
+ifdef WEB_ENABLED
+	$(MAKE) -C $(top_srcdir)/testing/web --no-print-directory web-test-prep
+else
+	@echo
+	@echo Web-pages disabled.
+	@echo
+	@echo To enable web pages create the directory:
+	@echo
+	@echo "   $(TESTING_WEBDIR)"
+	@echo
+	@echo To convert this result into a web page run:
+	@echo
+	@echo "   make web"
+	@echo
+endif
 
 #
 # [re]run the testsuite.
@@ -565,24 +576,28 @@ STRIPPED_KVM_TEST_NAME = $(subst $(sp),|,$(sort $(KVM_TEST_NAME)))
 
 KVM_TEST_NAME ?=
 
-kvm-test kvm-check kvm-retest kvm-recheck: \
-kvm-%: $(KVM_HOST_OK) kvm-keys-ok
-	: $@
+.PHONY: kvm-ready
+kvm-ready: kvm-keys-ok
+kvm-ready: $(KVM_HOST_OK)
+kvm-ready:
 	: shutdown all the build domains, kvmrunner shuts down the test domains
-	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
-	@$(MAKE) -C $(WEB_MAKEDIR) --no-print-directory WEB_REPODIR=$(WEB_REPODIR) web-test-prep
+	true $(foreach domain, $(KVM_BUILD_DOMAIN_NAMES), && $(KVMSH) --shutdown $(domain))
+
+kvm-test kvm-check kvm-retest kvm-recheck: \
+kvm-%: kvm-ready kvm-web
+	: $@
 	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
 		$(foreach prefix,$(KVM_TEST_PREFIXES), --prefix '$(notdir $(prefix))') \
-		$(if $(KVM_TESTINGDIR), --testing-directory $(KVM_TESTINGDIR)) \
-		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
-		$(if $(WEB_ENABLED), --publish-resultsdir $(WEB_RESULTSDIR)) \
-		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
-		$(if $(WEB_ENABLED), --publish-result-html $(KVM_BENCHDIR)/testing/web/result.html) \
+		--testing-directory $(KVM_TESTINGDIR) \
+		$(if $(WEB_ENABLED), --publish-hash        $(TESTING_HASH)) \
+		$(if $(WEB_ENABLED), --publish-resultsdir  $(TESTING_RESULTSDIR)) \
+		$(if $(WEB_ENABLED), --publish-status      $(TESTING_WEBDIR)/status.json) \
+		$(if $(WEB_ENABLED), --publish-result-html $(top_srcdir)/testing/web/result.html) \
 		$(if $(PUBLISH_SOURCE_URL), --publish-source-url $(PUBLISH_SOURCE_URL)) \
-		$(if $(STRIPPED_KVM_TEST_STATUS), --test-status '$(STRIPPED_KVM_TEST_STATUS)') \
-		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
+		$(if $(STRIPPED_KVM_TEST_STATUS),   --test-status   '$(STRIPPED_KVM_TEST_STATUS)') \
+		$(if $(STRIPPED_KVM_TEST_NAME),     --test-name     '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(STRIPPED_KVM_TEST_PLATFORM), --test-platform '$(STRIPPED_KVM_TEST_PLATFORM)') \
 		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(if $(filter true, $(KVM_RUN_POST_MORTEM)), --run-post-mortem, \
