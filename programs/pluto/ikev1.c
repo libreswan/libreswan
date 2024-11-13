@@ -512,30 +512,6 @@ void process_v1_packet(struct msg_digest *md)
 	bool new_iv_set = false;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
-	/*
-	 * For the initial responses, don't leak the responder's SPI.
-	 * Hence the use of send_v1_notification_from_md().
-	 *
-	 * AGGR mode is a mess in that the R0->R1 transition happens
-	 * well before the transition succeeds.
-	 */
-#define SEND_NOTIFICATION(t)						\
-	{								\
-		if (st != NULL &&					\
-		    st->st_state->kind != STATE_AGGR_R0 &&		\
-		    st->st_state->kind != STATE_AGGR_R1 &&		\
-		    st->st_state->kind != STATE_MAIN_R0) {		\
-			send_v1_notification_from_state(st, from_state, t); \
-		} else {						\
-			send_v1_notification_from_md(md, t);		\
-		}							\
-	}
-
-#define LOGGER (st != NULL ? st->logger : md->logger)
-
-#define LOG_PACKET(RC, ...) llog(RC, LOGGER, __VA_ARGS__)
-#define LOG_PACKET_JAMBUF(RC_FLAGS, BUF) LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)
-
 	switch (md->hdr.isa_xchg) {
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
@@ -1062,7 +1038,12 @@ void process_v1_packet(struct msg_digest *md)
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_COMMIT)
 		ldbg(logger, "IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag");
 
-	/* Handle IKE fragmentation payloads */
+	/*
+	 * Handle IKE fragmentation payloads.
+	 *
+	 * Fragments are accumulated in ST, which, depending on the
+	 * exchange, is either the IKE or Child SA.
+	 */
 	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION) {
 		struct isakmp_ikefrag fraghdr;
 		int last_frag_index = 0;  /* index of the last fragment */
@@ -1073,7 +1054,10 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		if (!st->st_connection->config->ike_frag.allow) {
+		/* per above selection of ST */
+		PASSERT(logger, ike != NULL);
+
+		if (!ike->sa.st_connection->config->ike_frag.allow) {
 			ldbg(logger, "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
 			return;
 		}
@@ -1083,7 +1067,7 @@ void process_v1_packet(struct msg_digest *md)
 		if (d != NULL) {
 			llog(RC_LOG, logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
+			send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED);
 			return;
 		}
 		/*
@@ -1094,7 +1078,7 @@ void process_v1_packet(struct msg_digest *md)
 		    fraghdr.isafrag_np != ISAKMP_NEXT_NONE ||
 		    fraghdr.isafrag_number == 0 ||
 		    fraghdr.isafrag_number > 16) {
-			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
+			send_v1_notification_from_isakmp(ike, md, v1N_PAYLOAD_MALFORMED);
 			return;
 		}
 
@@ -1298,6 +1282,30 @@ void process_v1_packet(struct msg_digest *md)
 	process_v1_packet_tail(ike, child, md);
 	/* our caller will md_delref(mdp); */
 }
+
+/*
+ * For the initial responses, don't leak the responder's SPI.
+ * Hence the use of send_v1_notification_from_md().
+ *
+ * AGGR mode is a mess in that the R0->R1 transition happens
+ * well before the transition succeeds.
+ */
+#define SEND_NOTIFICATION(t)						\
+	{								\
+		if (st != NULL &&					\
+		    st->st_state->kind != STATE_AGGR_R0 &&		\
+		    st->st_state->kind != STATE_AGGR_R1 &&		\
+		    st->st_state->kind != STATE_MAIN_R0) {		\
+			send_v1_notification_from_state(st, from_state, t); \
+		} else {						\
+			send_v1_notification_from_md(md, t);		\
+		}							\
+	}
+
+#define LOGGER (st != NULL ? st->logger : md->logger)
+
+#define LOG_PACKET(RC, ...) llog(RC, LOGGER, __VA_ARGS__)
+#define LOG_PACKET_JAMBUF(RC_FLAGS, BUF) LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)
 
 /*
  * This routine will not md_delref(mdp).  It is expected that its
