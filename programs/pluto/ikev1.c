@@ -1038,13 +1038,14 @@ void process_v1_packet(struct msg_digest *md)
 	 *
 	 * If we need to build a new state object, we wait until the
 	 * packet has been sanity checked.
+	 *
+	 * CHILD can only be valid when there's also IKE!
 	 */
-	if (ike != NULL) {
-		pdbg(ike->sa.logger, "found IKE (ISAKMP) SA");
-	}
-	if (child != NULL) {
-		pdbg(child->sa.logger, "found Child (IPsec) SA");
-	}
+	ldbg(logger, "found IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
+	     pri_so(ike != NULL ? ike->sa.st_serialno : SOS_NOBODY),
+	     pri_so(child != NULL ? child->sa.st_serialno : SOS_NOBODY),
+	     pri_so(SOS_NOBODY));
+	PASSERT(logger, (ike != NULL) >= (child != NULL));
 	struct state *st = (child != NULL ? &child->sa :
 			    ike != NULL ? &ike->sa :
 			    NULL);
