@@ -465,20 +465,26 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 	return false;
 }
 
+/*
+ * For the initial responses, don't leak the responder's SPI.  Hence
+ * the use of send_v1_notification_from_md().
+ *
+ * AGGR mode is a mess in that the R0->R1 transition happens well
+ * before the transition succeeds.
+ */
+
 static void send_v1_notification_from_isakmp(struct ike_sa *ike,
 					     struct msg_digest *md,
 					     v1_notification_t n)
 {
-	pstats(ikev1_sent_notifies_e, n);
 	if (pbad(ike == NULL)) {
 		return;
 	}
 	if (ike->sa.st_state->kind != STATE_AGGR_R0 &&
 	    ike->sa.st_state->kind != STATE_AGGR_R1 &&
 	    ike->sa.st_state->kind != STATE_MAIN_R0) {
-		send_v1_notification_from_state(&ike->sa,
-						/*from_state*/ike->sa.st_state->kind,
-						n);
+		/* i.e., somewhat useful */
+		send_v1_notification_from_ike(ike, n);
 	} else {
 		send_v1_notification_from_md(md, n);
 	}
@@ -519,7 +525,6 @@ void process_v1_packet(struct msg_digest *md)
 		    st->st_state->kind != STATE_AGGR_R0 &&		\
 		    st->st_state->kind != STATE_AGGR_R1 &&		\
 		    st->st_state->kind != STATE_MAIN_R0) {		\
-			pstats(ikev1_sent_notifies_e, t);		\
 			send_v1_notification_from_state(st, from_state, t); \
 		} else {						\
 			send_v1_notification_from_md(md, t);		\
