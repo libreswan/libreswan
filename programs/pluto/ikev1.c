@@ -682,7 +682,8 @@ void process_v1_packet(struct msg_digest *md)
 			}
 			ike->sa.st_v1_msgid.reserved = false;
 
-			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
+			init_phase2_iv(&ike->sa, md->hdr.isa_msgid,
+				       "IKE received encrypted ISAKMP_XCHG_INFO", HERE);
 			new_iv_set = true;
 			from_state = STATE_INFO_PROTECTED;
 		} else {
@@ -823,7 +824,8 @@ void process_v1_packet(struct msg_digest *md)
 			ike->sa.st_v1_msgid.reserved = false;
 
 			/* Quick Mode Initial IV */
-			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
+			init_phase2_iv(&ike->sa, md->hdr.isa_msgid,
+				       "IKE received encrypted first QUICK request", HERE);
 			new_iv_set = true;
 
 			/* send to state machine */
@@ -915,8 +917,9 @@ void process_v1_packet(struct msg_digest *md)
 				/* XXX Could send notification back */
 				return;
 			}
-			ldbg(ike->sa.logger, " call init_phase2_iv");
-			init_phase2_iv(&ike->sa, &md->hdr.isa_msgid);
+
+			init_phase2_iv(&ike->sa, md->hdr.isa_msgid,
+				       "IKE received encrypted ISAKMP_XCHG_MODE_CFG", HERE);
 			new_iv_set = true;
 
 			/*
@@ -1289,7 +1292,9 @@ void process_packet_tail(struct msg_digest *md)
 	struct state *st = md->v1_st;
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
+
 	bool new_iv_set = md->new_iv_set;
+	ldbg(LOGGER, "phase2_iv: recovered new_iv_set=%s from MD", bool_str(new_iv_set));
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 
@@ -1343,9 +1348,11 @@ void process_packet_tail(struct msg_digest *md)
 		/* Decrypt everything after header */
 		if (!new_iv_set) {
 			if (st->st_v1_iv.len == 0) {
-				init_phase2_iv(st, &md->hdr.isa_msgid);
+				init_phase2_iv(st, md->hdr.isa_msgid,
+					       "something decrypting message, .st_v1_iv.len==0", HERE);
 			} else {
 				/* use old IV */
+				pdbg(st->logger, "phase2_iv: something restoring new IV from .st_v1_iv");
 				restore_new_iv(st, st->st_v1_iv);
 			}
 		}

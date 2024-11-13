@@ -262,22 +262,33 @@ bool close_and_encrypt_v1_message(struct pbs_out *pbs, struct state *st)
  * Uses Phase 1 IV from st_iv; puts result in st_new_iv.
  */
 
-void init_phase2_iv(struct state *st, const msgid_t *msgid)
+void init_phase2_iv(struct state *st, const msgid_t msgid,
+		    const char *why, where_t where)
 {
+	struct logger *logger = st->logger;
 	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
 	passert(h != NULL);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("last Phase 1 IV:", st->st_v1_ph1_iv);
-		DBG_dump_hunk("current Phase 1 IV:", st->st_v1_iv);
+	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "last Phase 1 IV:");
+		LDBG_hunk(logger, st->st_v1_ph1_iv);
+		LDBG_log(logger, "current Phase 1 IV:");
+		LDBG_hunk(logger, st->st_v1_iv);
 	}
 
-	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h,
-						 st->logger);
+	struct crypt_hash *ctx =
+		crypt_hash_init("Phase 2 IV", h, logger);
+
+	/* the current phase1 IV */
 	crypt_hash_digest_hunk(ctx, "PH1_IV", st->st_v1_ph1_iv);
-	passert(*msgid != 0);
+
+	/* plus the MSGID in network order */
+	passert(msgid != 0); /* because phase2 (or phase15) */
 	passert(sizeof(msgid_t) == sizeof(uint32_t));
-	msgid_t raw_msgid = htonl(*msgid);
+	msgid_t raw_msgid = htonl(msgid);
 	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
+
+	/* save in new */
 	st->st_v1_new_iv = crypt_hash_final_mac(&ctx);
 }

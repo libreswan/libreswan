@@ -755,7 +755,7 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 		save_iv(&ike->sa, old_iv);
 		save_new_iv(&ike->sa, old_new_iv);
 
-		init_phase2_iv(&ike->sa, &msgid);
+		init_phase2_iv(&ike->sa, msgid, "IKE sending DPD", HERE);
 		if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 			return STF_INTERNAL_ERROR;
 

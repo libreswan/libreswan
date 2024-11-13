@@ -236,7 +236,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 		struct crypt_mac old_iv;
 
 		save_iv(&ike->sa, old_iv);
-		init_phase2_iv(&ike->sa, &msgid);
+		init_phase2_iv(&ike->sa, msgid, "IKE sending delete", HERE);
 
 		passert(close_and_encrypt_v1_message(&r_hdr_pbs, &ike->sa));
 

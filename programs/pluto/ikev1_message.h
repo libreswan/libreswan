@@ -76,6 +76,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike);
 	(st)->st_v1_new_iv = (tmp); \
     }
 
-void init_phase2_iv(struct state *st, const msgid_t *msgid);
+void init_phase2_iv(struct state *st, const msgid_t msgid,
+		    const char *why, where_t where);
 
 #endif

@@ -635,7 +635,8 @@ stf_status xauth_send_request(struct ike_sa *ike)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
+	init_phase2_iv(&ike->sa, ike->sa.st_v1_msgid.phase15,
+		       "IKE sending xauth request", HERE);
 
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
@@ -746,7 +747,8 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
+	init_phase2_iv(&ike->sa, ike->sa.st_v1_msgid.phase15,
+		       "IKE sending mode cfg request", HERE);
 
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
@@ -827,7 +829,8 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
+	init_phase2_iv(&ike->sa, ike->sa.st_v1_msgid.phase15,
+		       "IKE sending xauth status", HERE);
 
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;

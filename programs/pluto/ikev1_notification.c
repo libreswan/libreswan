@@ -200,7 +200,8 @@ static void send_v1_notification(struct logger *logger,
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&isakmp_encrypt->sa)) {
 			update_iv(&isakmp_encrypt->sa);
 		}
-		init_phase2_iv(&isakmp_encrypt->sa, &msgid);
+		init_phase2_iv(&isakmp_encrypt->sa, msgid,
+			       "IKE encrypting notification", HERE);
 		passert(close_and_encrypt_v1_message(&r_hdr_pbs, &isakmp_encrypt->sa));
 
 		restore_iv(&isakmp_encrypt->sa, old_iv);

@@ -796,7 +796,8 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 
 	/* encrypt message, except for fixed part of header */
 
-	init_phase2_iv(&ike->sa, &child->sa.st_v1_msgid.id);
+	init_phase2_iv(&ike->sa, child->sa.st_v1_msgid.id,
+		       "IKE sending quick message", HERE);
 	restore_new_iv(&child->sa, ike->sa.st_v1_new_iv);
 
 	if (!close_and_encrypt_v1_message(&rbody, &child->sa)) {
