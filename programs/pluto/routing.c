@@ -1189,8 +1189,11 @@ static void teardown_routed_negotiation(struct connection *c,
 
 	/*
 	 * Should this instead install a failure shunt?
+	 *
+	 * A ROUTED_NEGOTIATION doesn't have inbound policy so don't
+	 * expect it.
 	 */
-	routed_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
+	routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
 					 logger, where, "deleting");
 	PEXPECT(logger, c->routing.state == RT_UNROUTED);
 }
