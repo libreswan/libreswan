@@ -1345,17 +1345,18 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 
-		endpoint_buf b;
-		dbg("received encrypted packet from %s", str_endpoint(&md->sender, &b));
-
-		if (st == NULL) {
-			LOG_PACKET(RC_LOG,
-				   "discarding encrypted message for an unknown ISAKMP SA");
+		if (ike_or_null == NULL) {
+			llog(RC_LOG, md->logger,
+			     "discarding encrypted message for an unknown ISAKMP SA");
 			return;
 		}
-		if (st->st_skeyid_e_nss == NULL) {
-			LOG_PACKET(RC_LOG,
-				   "discarding encrypted message because we haven't yet negotiated keying material");
+
+		struct ike_sa *ike = ike_or_null;
+		PASSERT(md->logger, ike != NULL);
+
+		if (ike->sa.st_skeyid_e_nss == NULL) {
+			llog(RC_LOG, ike->sa.logger,
+			     "discarding encrypted message because we haven't yet negotiated keying material");
 			return;
 		}
 
@@ -1377,10 +1378,11 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * Each post phase 1 exchange generates IVs from
 		 * the last phase 1 block, not the last block sent.
 		 */
-		const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
+		const struct encrypt_desc *cipher = ike->sa.st_oakley.ta_encrypt;
 
-		if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0) {
-			LOG_PACKET(RC_LOG, "malformed message: not a multiple of encryption blocksize");
+		if (pbs_left(&md->message_pbs) % cipher->enc_blocksize != 0) {
+			llog(RC_LOG, ike->sa.logger,
+			     "malformed message: not a multiple of encryption blocksize");
 			return;
 		}
 
@@ -1392,7 +1394,13 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 */
 		md->raw_packet = clone_pbs_in_all(&md->packet_pbs, "raw packet");
 
-		/* Decrypt everything after header */
+		/*
+		 * Determine the IV to use.
+		 *
+		 * Here ST could be ike or child!  Which means it is
+		 * scribbling on the .new_iv for one of those.
+		 */
+
 		if (!new_iv_set) {
 			if (st->st_v1_iv.len == 0) {
 				init_phase2_iv(st, md->hdr.isa_msgid,
@@ -1404,35 +1412,48 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			}
 		}
 
-		passert(st->st_v1_new_iv.len >= e->enc_blocksize);
-		st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
+		passert(st->st_v1_new_iv.len >= cipher->enc_blocksize);
+		st->st_v1_new_iv.len = cipher->enc_blocksize;   /* truncate */
 
-		if (DBGP(DBG_CRYPT)) {
-			DBG_log("decrypting %u bytes using algorithm %s",
-				(unsigned) pbs_left(&md->message_pbs),
-				st->st_oakley.ta_encrypt->common.fqn);
-			DBG_dump_hunk("IV before:", st->st_v1_new_iv);
+		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+			LDBG_log(ike->sa.logger,
+				 "decrypting %u bytes using cipher algorithm %s",
+				 (unsigned) pbs_left(&md->message_pbs),
+				 cipher->common.fqn);
+			LDBG_log(ike->sa.logger, "IV before:");
+			LDBG_hunk(ike->sa.logger, st->st_v1_new_iv);
 		}
+
+		/* Decrypt everything after header */
 		size_t cipher_start = (md->message_pbs.cur - md->message_pbs.start);
 		chunk_t cipher_text = chunk2(md->message_pbs.start + cipher_start,
-					    pbs_left(&md->message_pbs));
-		cipher_normal(e, DECRYPT, USE_IKEv1_IV, cipher_text,
+					     pbs_left(&md->message_pbs));
+		cipher_normal(cipher, DECRYPT,
+			      USE_IKEv1_IV, cipher_text,
 			      &st->st_v1_new_iv,
-			      st->st_enc_key_nss, st->logger);
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("IV after:", st->st_v1_new_iv);
-			DBG_log("decrypted payload (starts at offset %td):",
-				md->message_pbs.cur - md->message_pbs.roof);
-			DBG_dump(NULL, md->message_pbs.start,
-				 md->message_pbs.roof - md->message_pbs.start);
+			      ike->sa.st_enc_key_nss,
+			      ike->sa.logger);
+		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+			LDBG_log(ike->sa.logger, "IV after:");
+			LDBG_hunk(ike->sa.logger, st->st_v1_new_iv);
+			LDBG_log(ike->sa.logger,
+				 "decrypted payload (starts at offset %td):",
+				 md->message_pbs.cur - md->message_pbs.roof);
+			LDBG_dump(ike->sa.logger, md->message_pbs.start,
+				  md->message_pbs.roof - md->message_pbs.start);
 		}
 	} else {
 		/* packet was not encrypted -- should it have been? */
-
 		if (smc->flags & SMF_INPUT_ENCRYPTED) {
-			LOG_PACKET(RC_LOG,
-				   "packet rejected: should have been encrypted");
-			SEND_NOTIFICATION(v1N_INVALID_FLAGS);
+			if (ike_or_null != NULL) {
+				struct ike_sa *ike = ike_or_null;
+				passert(ike != NULL);
+				llog(RC_LOG, ike->sa.logger, "packet rejected: should have been encrypted");
+				send_v1_notification_from_isakmp(ike, md, v1N_INVALID_FLAGS);
+				return;
+			}
+			llog(RC_LOG, md->logger, "packet rejected: should have been encrypted");
+			send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
 			return;
 		}
 	}
