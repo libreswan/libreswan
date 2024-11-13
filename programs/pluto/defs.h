@@ -66,8 +66,8 @@ typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
  * "#%lu".  Sigh.
  */
 typedef unsigned long so_serial_t;
-#define SOS_NOBODY      0       /* null serial number */
-#define SOS_FIRST       1       /* first normal serial number */
+#define SOS_NOBODY      ((so_serial_t)0)       /* null serial number */
+#define SOS_FIRST       ((so_serial_t)1)       /* first normal serial number */
 
 #define PRI_SO "#%lu"
 #define pri_so(SO) (SO)
