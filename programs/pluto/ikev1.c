@@ -171,6 +171,7 @@
 #include "terminate.h"
 #include "state_db.h"
 #include "ikev1_message.h"
+#include "ikev1_notification.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"

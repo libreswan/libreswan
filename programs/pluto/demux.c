@@ -73,6 +73,7 @@
 #include "iface.h"
 #include "impair_message.h"
 #include "log_limiter.h"
+#include "ikev1_notification.h"
 
 static callback_cb handle_md_event;		/* type assertion */
 

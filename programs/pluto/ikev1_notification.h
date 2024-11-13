@@ -1,6 +1,6 @@
-/* IKEv1 send, for libreswan
+/* IKEv1 notifications, for libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2024 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,27 +13,19 @@
  * for more details.
  */
 
-#ifndef IKEV1_SEND_H
-#define IKEV1_SEND_H
+#ifndef IKEV1_NOTIFICATION_H
+#define IKEV1_NOTIFICATION_H
 
-#include "shunk.h"
+#include "constants.h"
 
 struct state;
+enum state_kind;
+struct msg_digest;
 
-struct v1_ike_rfrag {
-	struct v1_ike_rfrag *next;
-	struct msg_digest *md;
-	int index;
-	int last;
-	shunk_t data;
-};
-
-void record_outbound_v1_ike_msg(struct state *st, struct pbs_out *pbs, const char *what);
-bool record_and_send_v1_ike_msg(struct state *st, struct pbs_out *pbs,
-				const char *what);
-
-bool resend_recorded_v1_ike_msg(struct state *st, const char *where);
-
-void free_v1_message_queues(struct state *st);
+void send_v1_notification_from_state(struct state *st,
+				     enum state_kind from_state,
+				     v1_notification_t type);
+void send_v1_notification_from_md(struct msg_digest *md,
+				  v1_notification_t type);
 
 #endif

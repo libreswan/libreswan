@@ -60,6 +60,7 @@ endif
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_cert.o
 OBJS += ikev1_send.o
+OBJS += ikev1_notification.o
 OBJS += ikev1_peer_id.o
 endif
 
