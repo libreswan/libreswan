@@ -702,7 +702,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 		 * This will call complete_v1_state_transition() when
 		 * needed.
 		 */
-		process_packet_tail(md);
+		process_v1_packet_tail(ike, NULL/*no-child*/, md);
 		md_delref(&md);
 	}
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;

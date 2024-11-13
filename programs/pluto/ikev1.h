@@ -29,7 +29,9 @@ extern void process_v1_packet(struct msg_digest *md);
  */
 
 /* continue with encrypted packet */
-extern void process_packet_tail(struct msg_digest *md);
+extern void process_v1_packet_tail(struct ike_sa *ike_or_null,
+				   struct child_sa *child_or_null,
+				   struct msg_digest *md);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 

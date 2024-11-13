@@ -1025,35 +1025,39 @@ void process_v1_packet(struct msg_digest *md)
 	}
 
  	/*
-	 * Depending on what the big message switch finds, use the
-	 * Child SA's, IKE SA's, or MD's logger.
+	 * The above big message switch may have found an IKE SA, and
+	 * when it has it may have also found a Child SA, i.e., CHILD
+	 * can only be valid when there's an IKE.
+	 *
+	 * Dump the result.
 	 */
-	struct logger *logger = (child != NULL ? child->sa.logger :
-				 ike != NULL ? ike->sa.logger :
-				 md->logger);
 
-	/*
-	 * We have found a FROM_STATE, and perhaps an IKE (ISAKMP)
-	 * and/or Child (IPsec) SA.  Set ST to one of these.
-	 *
-	 * If we need to build a new state object, we wait until the
-	 * packet has been sanity checked.
-	 *
-	 * CHILD can only be valid when there's also IKE!
-	 */
-	ldbg(logger, "found IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
+	ldbg(md->logger, "found IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
 	     pri_so(ike != NULL ? ike->sa.st_serialno : SOS_NOBODY),
 	     pri_so(child != NULL ? child->sa.st_serialno : SOS_NOBODY),
 	     pri_so(SOS_NOBODY));
-	PASSERT(logger, (ike != NULL) >= (child != NULL));
+	if (!PEXPECT(md->logger, (ike != NULL) >= (child != NULL))) {
+		return;
+	}
+
+	/*
+	 * Select the state to work on.  It's the Child SA, IKE SA, or
+	 * NULL in that preference order.
+	 *
+	 * If we need to build a new state object, we wait until the
+	 * packet has been sanity checked.
+	 */
+
 	struct state *st = (child != NULL ? &child->sa :
 			    ike != NULL ? &ike->sa :
 			    NULL);
+	struct logger *logger = (st != NULL ? st->logger : md->logger);
 
-	/* We don't support the Commit Flag.  It is such a bad feature.
-	 * It isn't protected -- neither encrypted nor authenticated.
-	 * A man in the middle turns it on, leading to DoS.
-	 * We just ignore it, with a warning.
+	/*
+	 * We don't support the Commit Flag.  It is such a bad
+	 * feature.  It isn't protected -- neither encrypted nor
+	 * authenticated.  A man in the middle turns it on, leading to
+	 * DoS.  We just ignore it, with a warning.
 	 */
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_COMMIT)
 		ldbg(logger, "IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag");
@@ -1291,7 +1295,7 @@ void process_v1_packet(struct msg_digest *md)
 		return;
 	}
 
-	process_packet_tail(md);
+	process_v1_packet_tail(ike, child, md);
 	/* our caller will md_delref(mdp); */
 }
 
@@ -1301,13 +1305,42 @@ void process_v1_packet(struct msg_digest *md)
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
  */
-void process_packet_tail(struct msg_digest *md)
+
+void process_v1_packet_tail(struct ike_sa *ike_or_null,
+			    struct child_sa *child_or_null,
+			    struct msg_digest *md)
 {
-	struct state *st = md->v1_st;
+ 	/*
+	 * Like for process_v1_packet() can have an IKE SA, and when
+	 * there is, can also have a Child SA, i.e., CHILD can only be
+	 * valid when there's an IKE.
+	 *
+	 * DANGER!  ST, with its logger, can disappear.  Hence don't
+	 * take a pointer to it.  The LOGGER macro hack tries to paper
+	 * over this.
+	 */
+
+	struct state *st = (child_or_null != NULL ? &child_or_null->sa :
+			    ike_or_null != NULL ? &ike_or_null->sa :
+			    NULL);
+
+	ldbg(LOGGER, "have IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
+	     pri_so(ike_or_null != NULL ? ike_or_null->sa.st_serialno : SOS_NOBODY),
+	     pri_so(child_or_null != NULL ? child_or_null->sa.st_serialno : SOS_NOBODY),
+	     pri_so(SOS_NOBODY));
+
+	if (!PEXPECT(LOGGER, (ike_or_null != NULL) >= (child_or_null != NULL))) {
+		return;
+	}
+
+	if (!PEXPECT(md->logger, st == md->v1_st)) {
+		return;
+	}
+
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
-
 	bool new_iv_set = md->new_iv_set;
+
 	ldbg(LOGGER, "phase2_iv: recovered new_iv_set=%s from MD", bool_str(new_iv_set));
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
