@@ -756,7 +756,7 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 		save_new_iv(&ike->sa, old_new_iv);
 
 		init_phase2_iv(&ike->sa, &msgid);
-		if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+		if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 			return STF_INTERNAL_ERROR;
 
 		send_pbs_out_using_state(&ike->sa, "ISAKMP notify", &reply_stream);

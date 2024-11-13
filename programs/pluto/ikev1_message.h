@@ -16,7 +16,15 @@
 #ifndef IKEV1_MESSAGE_H
 #define IKEV1_MESSAGE_H
 
+#include "shunk.h"
+#include "chunk.h"
+
+struct logger;
+struct msg_digest;
 struct host_end;
+struct pbs_out;
+struct state;
+struct ike_sa;
 
 struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *body);
 
@@ -38,5 +46,36 @@ extern bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out 
 /* just calls previous two routines now */
 extern bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
 			  chunk_t *g, struct pbs_out *outs);
+
+bool close_and_encrypt_v1_message(struct pbs_out *pbs, struct state *st);
+bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike);
+
+/* macros to manipulate IVs in state */
+
+#define update_iv(st)	{ \
+	(st)->st_v1_iv = (st)->st_v1_new_iv; \
+    }
+
+#define set_ph1_iv_from_new(st)	{ \
+	(st)->st_v1_ph1_iv = (st)->st_v1_new_iv; \
+ }
+
+#define save_iv(st, tmp) { \
+	(tmp) = (st)->st_v1_iv; \
+    }
+
+#define restore_iv(st, tmp) { \
+	(st)->st_v1_iv = (tmp); \
+    }
+
+#define save_new_iv(st, tmp)	{ \
+	(tmp) = (st)->st_v1_new_iv; \
+    }
+
+#define restore_new_iv(st, tmp)	{ \
+	(st)->st_v1_new_iv = (tmp); \
+    }
+
+void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
 #endif

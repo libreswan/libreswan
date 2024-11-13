@@ -60,9 +60,6 @@ void doi_log_cert_thinking(uint16_t auth,
 			   bool send_cert,
 			   bool send_chain);
 
-bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st);
-bool ikev1_close_message(struct pbs_out *pbs, const struct ike_sa *ike);
-
 /* Parent capable of sending messages.  */
 struct ike_sa *established_isakmp_sa_for_state(struct state *st, bool viable_parent);
 
@@ -83,35 +80,7 @@ extern ikev1_state_transition_fn quick_inI2;
 extern ikev1_state_transition_fn unexpected;
 extern ikev1_state_transition_fn informational;
 
-/* macros to manipulate IVs in state */
-
-#define update_iv(st)	{ \
-	(st)->st_v1_iv = (st)->st_v1_new_iv; \
-    }
-
-#define set_ph1_iv_from_new(st)	{ \
-	(st)->st_v1_ph1_iv = (st)->st_v1_new_iv; \
- }
-
-#define save_iv(st, tmp) { \
-	(tmp) = (st)->st_v1_iv; \
-    }
-
-#define restore_iv(st, tmp) { \
-	(st)->st_v1_iv = (tmp); \
-    }
-
-#define save_new_iv(st, tmp)	{ \
-	(tmp) = (st)->st_v1_new_iv; \
-    }
-
-#define restore_new_iv(st, tmp)	{ \
-	(st)->st_v1_new_iv = (tmp); \
-    }
-
 void ISAKMP_SA_established(struct ike_sa *ike);
-
-void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
 struct ike_sa *find_v1_isakmp_sa(const ike_spis_t *ipe_spis);
 

@@ -507,7 +507,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, ike))
+	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -783,7 +783,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	/* RFC2408 says we must encrypt at this point */
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
-	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
@@ -1170,7 +1170,7 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 
 	/* finish message */
 
-	if (!ikev1_close_message(&rbody, ike))
+	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&reply_stream);

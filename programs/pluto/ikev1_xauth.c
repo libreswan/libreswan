@@ -461,13 +461,13 @@ static stf_status modecfg_resp(struct ike_sa *ike,
 			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, ia, ike);
 		}
 
-		if (!ikev1_close_message(&strattr, ike))
+		if (!close_v1_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -630,14 +630,14 @@ stf_status xauth_send_request(struct ike_sa *ike)
 				NULL) ||
 		    !out_struct(&pw, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, ike))
+		    !close_v1_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
@@ -741,14 +741,14 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 				return STF_INTERNAL_ERROR;
 		}
 
-		if (!ikev1_close_message(&strattr, ike))
+		if (!close_v1_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
@@ -822,14 +822,14 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
 		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, ike))
+		    !close_v1_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
 
-	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	/* Set up a retransmission event, half a minute hence */
@@ -2220,7 +2220,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -2476,13 +2476,13 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr) ||
 		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL) ||
-		    !ikev1_close_message(&strattr, ike))
+		    !close_v1_message(&strattr, ike))
 			return STF_INTERNAL_ERROR;
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;

@@ -238,7 +238,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 		save_iv(&ike->sa, old_iv);
 		init_phase2_iv(&ike->sa, &msgid);
 
-		passert(ikev1_close_and_encrypt_message(&r_hdr_pbs, &ike->sa));
+		passert(close_and_encrypt_v1_message(&r_hdr_pbs, &ike->sa));
 
 		send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);
 

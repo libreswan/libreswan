@@ -70,7 +70,6 @@
 #include "lswnss.h"
 
 #include "ike_alg.h"
-#include "crypt_cipher.h"
 #include "ike_alg_hash.h"		/* for ike_alg_hash_sha1 */
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -99,7 +98,6 @@
 #include "ikev1_cert.h"
 #include "terminate.h"
 
-static bool emit_message_padding(struct pbs_out *pbs, const struct state *st);
 static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
 static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
@@ -222,7 +220,7 @@ struct ike_sa *main_outI1(struct connection *c,
 		return NULL;
 	}
 
-	if (!ikev1_close_message(&rbody, ike)) {
+	if (!close_v1_message(&rbody, ike)) {
 		return NULL;
 	}
 
@@ -343,150 +341,6 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 	struct hash_signature sig = pubkey_signer_raw_rsa.sign_hash(pks, hash->ptr, hash->len,
 								    &ike_alg_hash_sha1, logger);
 	return sig;
-}
-
-/*
- * encrypt message, sans fixed part of header
- * IV is fetched from st->st_new_iv and stored into st->st_iv.
- * The theory is that there will be no "backing out", so we commit to IV.
- * We also close the pbs.
- */
-bool ikev1_close_and_encrypt_message(struct pbs_out *pbs, struct state *st)
-{
-	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
-
-	/*
-	 * Pad the message (header and body) to message alignment
-	 * which is normally 4-bytes.
-	 */
-
-	if (!emit_message_padding(pbs, st)) {
-		/* already logged */
-		return false; /*fatal*/
-	}
-
-	/*
-	 * Next pad the encrypted part of the payload so it is
-	 * alligned with the encryption's blocksize.
-	 *
-	 * Since the header is isn't encrypted, this doesn't include
-	 * the header.  See the description associated with the
-	 * definition of struct isakmp_hdr in packet.h.
-	 *
-	 * The alignment is probably 16-bytes, but can be 1-byte!
-	 */
-	shunk_t message = pbs_out_all(pbs);
-	shunk_t unpadded_encrypt = hunk_slice(message, sizeof(struct isakmp_hdr), message.len);
-	size_t encrypt_padding = pad_up(unpadded_encrypt.len, e->enc_blocksize);
-	if (encrypt_padding != 0) {
-		if (!pbs_out_zero(pbs, encrypt_padding, "encryption padding")) {
-			/* already logged */
-			return false; /*fatal*/
-		}
-	}
-
-	/*
-	 * Now mark out the block that will be encrypted.
-	 *
-	 * Hack to get at writeable buffer!  IKEv2 does something
-	 * vaguely similar.
-	 */
-	chunk_t padded_message = chunk2(pbs->start, pbs_out_all(pbs).len);
-	chunk_t padded_encrypt = hunk_slice(padded_message,
-					    sizeof(struct isakmp_hdr),
-					    padded_message.len);
-
-	PASSERT(st->logger, st->st_v1_new_iv.len >= e->enc_blocksize);
-	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
-
-	/*
-	 * Finally, re-pad the entire message (header and body) to
-	 * message alignment.
-	 *
-	 * This should be a no-op?
-	 *
-	 * XXX: note the double padding (triple if you count the code
-	 * paths that call ikev1_close_message() before encrypting.
-	 */
-
-	if (!emit_message_padding(pbs, st)) {
-		/* already logged */
-		return false; /*fatal*/
-	}
-
-	close_output_pbs(pbs);
-
-	/* XXX: not ldbg(pbs->logger) as can be NULL */
-	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",
-	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("encrypting:", padded_encrypt.ptr, padded_encrypt.len);
-		DBG_dump_hunk("IV:", st->st_v1_new_iv);
-	}
-
-	cipher_normal(e, ENCRYPT, USE_IKEv1_IV, padded_encrypt,
-		      &st->st_v1_new_iv,
-		      st->st_enc_key_nss, st->logger);
-
-	update_iv(st);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("next IV:", st->st_v1_iv);
-	}
-
-	return true;
-}
-
-/*
- * In IKEv1, some implementations (including freeswan/openswan/libreswan)
- * interpreted the RFC that the whole IKE message must padded to a multiple
- * of 4 octets, but other implementations (i.e. Checkpoint in Aggressive Mode)
- * drop padded IKE packets. Some of the text on this topic can be found in the
- * IKEv1 RFC 2408 section 3.6 Transform Payload.
- *
- * The ikepad= option can be set to yes or no on a per-connection basis,
- * and defaults to yes.
- *
- * In IKEv2, there is no padding specified in the RFC and some implementations
- * will reject IKEv2 messages that are padded. As there are no known IKEv2
- * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
- * clients are discovered in the wild, we will revisit this - please contact
- * the libreswan developers if you find such an implementation.
- * Therefore the ikepad= option has no effect on IKEv2 connections.
- *
- * @param pbs PB Stream
- */
-
-static bool emit_message_padding(struct pbs_out *pbs, const struct state *st)
-{
-	size_t padding = pad_up(pbs_out_all(pbs).len, 4);
-	if (padding == 0) {
-		ldbg(st->logger, "no IKEv1 message padding required");
-	} else if (!st->st_connection->config->ikepad) {
-		ldbg(st->logger, "IKEv1 message padding of %zu bytes skipped by policy",
-		     padding);
-	} else {
-		ldbg(st->logger, "padding IKEv1 message with %zu bytes", padding);
-		if (!pbs_out_zero(pbs, padding, "message padding")) {
-			/* already logged */
-			return false; /*fatal*/
-		}
-	}
-	return true;
-}
-
-bool ikev1_close_message(struct pbs_out *pbs, const struct ike_sa *ike)
-{
-	if (pbad(ike == NULL)) {
-		return false;
-	}
-
-	if (!emit_message_padding(pbs, &ike->sa)) {
-		/* already logged */
-		return false; /*fatal*/
-	}
-
-	close_output_pbs(pbs);
-	return true;
 }
 
 /*
@@ -619,7 +473,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (!ikev1_close_message(&rbody, ike))
+	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
@@ -752,7 +606,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, ike))
+	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
@@ -952,7 +806,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	}
 
 	/* finish message */
-	if (!ikev1_close_message(&rbody, ike))
+	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
 	/*
@@ -1247,7 +1101,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	/* encrypt message, except for fixed part of header */
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
-	if (!ikev1_close_and_encrypt_message(rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	return STF_OK;
@@ -1489,7 +1343,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* encrypt message, sans fixed part of header */
 
-	if (!ikev1_close_and_encrypt_message(&rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */
@@ -1754,7 +1608,7 @@ static void send_v1_notification(struct logger *logger,
 			update_iv(&isakmp_encrypt->sa);
 		}
 		init_phase2_iv(&isakmp_encrypt->sa, &msgid);
-		passert(ikev1_close_and_encrypt_message(&r_hdr_pbs, &isakmp_encrypt->sa));
+		passert(close_and_encrypt_v1_message(&r_hdr_pbs, &isakmp_encrypt->sa));
 
 		restore_iv(&isakmp_encrypt->sa, old_iv);
 	} else {
