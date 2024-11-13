@@ -48,21 +48,21 @@
       <source dir='/tmp'/>
       <target dir='tmp'/>
     </filesystem>
-    <interface type='network'>
+    <interface type='bridge'>
       <!-- eth0 -->
-      <source network='swandefault'/>
+      <source bridge='swandefault'/>
       <model type='virtio'/>
     </interface>
-    <interface type='network'>
+    <interface type='bridge'>
       <!-- eth1 -->
       <mac address='12:00:00:de:ad:ba'/>
-      <source network='@@TEST_PREFIX@@192_1_2'/>
+      <source bridge='@@TEST_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
-    <interface type='network'>
+    <interface type='bridge'>
       <!-- eth2 -->
       <mac address='12:00:00:32:64:ba'/>
-      <source network='@@TEST_PREFIX@@192_1_3'/>
+      <source bridge='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

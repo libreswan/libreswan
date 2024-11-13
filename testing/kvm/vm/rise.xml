@@ -47,23 +47,23 @@ You can load this machine definition into libvirt using:
       Keep the first interface pointing at the gateway (if it moves
       first boot gets confused as the new interface isn't configured).
     -->
-    <interface type='network'>
-      <source network='swandefault'/>
+    <interface type='bridge'>
+      <source bridge='swandefault'/>
       <model type='virtio'/>
     </interface>
     <!-- RISE-EAST -->
-    <interface type='network'>
+    <interface type='bridge'>
       <!-- 12:R:I:S:E:01 -->
       <mac address='12:52:49:53:45:01' />
-      <!-- <source network='@@TEST_PREFIX@@198_18_?' /> -->
-      <source network='@@TEST_PREFIX@@192_0_2' />
+      <!-- <source bridge='@@TEST_PREFIX@@198_18_?' /> -->
+      <source bridge='@@TEST_PREFIX@@192_0_2' />
       <model type='virtio'/>
     </interface>
     <!-- RISE-SET -->
-    <interface type='network'>
+    <interface type='bridge'>
       <!-- 12:R:I:S:E:02 -->
       <mac address='12:52:49:53:45:02' />
-      <source network='@@TEST_PREFIX@@198_18_1' />
+      <source bridge='@@TEST_PREFIX@@198_18_1' />
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

@@ -779,11 +779,6 @@ KVM_TEST_NETWORKS = \
 		$(foreach test_network, $(KVM_TEST_NETWORK_NAMES), \
 			$(test_prefix)$(test_network)))
 
-# <prefix><network>; if <prefix> is blank call it swan<network>*
-KVM_BRIDGE_NAME = $(strip $(addprefix \
-			$(if $(patsubst 198_%,, $(patsubst 192_%,,$*)),, swan), \
-			$(subst 198_18_,_, $(subst 192_,_, $*))))
-
 $(KVM_TEST_NETWORKS): \
 $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	: @=$@
@@ -792,7 +787,7 @@ $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	rm -f '$@.tmp'
 	echo "<network ipv6='yes'>" 					>> '$@.tmp'
 	echo "  <name>$*</name>"					>> '$@.tmp'
-	echo "  <bridge name='$(KVM_BRIDGE_NAME)'"			>> '$@.tmp'
+	echo "  <bridge name='$*'"					>> '$@.tmp'
 	echo "          stp='on' delay='0'/>"				>> '$@.tmp'
 	echo "$(if $(patsubst 198.%,, $(patsubst 192.%,, $*)), <!--)" 	>> '$@.tmp'
 	echo "  <ip address='$(subst _,.,$*).253'/>" 				>> '$@.tmp'

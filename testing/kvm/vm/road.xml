@@ -44,9 +44,9 @@
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <interface type='network'>
+    <interface type='bridge'>
       <mac address='12:00:00:AB:CD:02'/>
-      <source network='@@TEST_PREFIX@@192_1_3'/>
+      <source bridge='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>

@@ -48,14 +48,14 @@
       <source dir='/tmp'/>
       <target dir='tmp'/>
     </filesystem>
-    <interface type='network'>
+    <interface type='bridge'>
       <mac address='12:00:00:ab:cd:ff'/>
-      <source network='@@TEST_PREFIX@@192_0_1'/>
+      <source bridge='@@TEST_PREFIX@@192_0_1'/>
       <model type='virtio'/>
     </interface>
-    <interface type='network'>
+    <interface type='bridge'>
       <mac address='12:00:00:64:64:45'/>
-      <source network='@@TEST_PREFIX@@192_1_2'/>
+      <source bridge='@@TEST_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>
