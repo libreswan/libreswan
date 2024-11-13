@@ -1024,6 +1024,14 @@ void process_v1_packet(struct msg_digest *md)
 	}
 	}
 
+ 	/*
+	 * Depending on what the big message switch finds, use the
+	 * Child SA's, IKE SA's, or MD's logger.
+	 */
+	struct logger *logger = (child != NULL ? child->sa.logger :
+				 ike != NULL ? ike->sa.logger :
+				 md->logger);
+
 	/*
 	 * We have found a FROM_STATE, and perhaps an IKE (ISAKMP)
 	 * and/or Child (IPsec) SA.  Set ST to one of these.
@@ -1047,7 +1055,7 @@ void process_v1_packet(struct msg_digest *md)
 	 * We just ignore it, with a warning.
 	 */
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_COMMIT)
-		dbg("IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag");
+		ldbg(logger, "IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag");
 
 	/* Handle IKE fragmentation payloads */
 	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION) {
@@ -1056,19 +1064,19 @@ void process_v1_packet(struct msg_digest *md)
 		struct pbs_in frag_pbs;
 
 		if (st == NULL) {
-			dbg("received IKE fragment, but have no state. Ignoring packet.");
+			ldbg(logger, "received IKE fragment, but have no state. Ignoring packet.");
 			return;
 		}
 
 		if (!st->st_connection->config->ike_frag.allow) {
-			dbg("discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
+			ldbg(logger, "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
 			return;
 		}
 
 		diag_t d = pbs_in_struct(&md->message_pbs, &isakmp_ikefrag_desc,
 					 &fraghdr, sizeof(fraghdr), &frag_pbs);
 		if (d != NULL) {
-			llog(RC_LOG, LOGGER, "%s", str_diag(d));
+			llog(RC_LOG, logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			return;
@@ -1085,10 +1093,10 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		dbg("received IKE fragment id '%d', number '%u'%s",
-		    fraghdr.isafrag_id,
-		    fraghdr.isafrag_number,
-		    (fraghdr.isafrag_flags == 1) ? "(last)" : "");
+		ldbg(logger, "received IKE fragment id '%d', number '%u'%s",
+		     fraghdr.isafrag_id,
+		     fraghdr.isafrag_number,
+		     (fraghdr.isafrag_flags == 1) ? "(last)" : "");
 
 		struct v1_ike_rfrag *ike_frag = alloc_thing(struct v1_ike_rfrag, "ike_frag");
 		ike_frag->md = md_addref(md);
@@ -1175,7 +1183,7 @@ void process_v1_packet(struct msg_digest *md)
 					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_v1_seen_fragments = true;
-					dbg(" updated IKE fragment state to respond using fragments without waiting for re-transmits");
+					ldbg(logger, " updated IKE fragment state to respond using fragments without waiting for re-transmits");
 					break;
 				}
 			}
@@ -1261,8 +1269,8 @@ void process_v1_packet(struct msg_digest *md)
 	    !st->hidden_variables.st_skeyid_calculated) {
 		PEXPECT(st->logger, st->st_v1_offloaded_task_in_background);
 		endpoint_buf b;
-		dbg("received encrypted packet from %s but exponentiation still in progress",
-		    str_endpoint(&md->sender, &b));
+		ldbg(logger, "received encrypted packet from %s but exponentiation still in progress",
+		     str_endpoint(&md->sender, &b));
 
 		/*
 		 * If there was a previous packet, let it go, and go
@@ -1273,9 +1281,9 @@ void process_v1_packet(struct msg_digest *md)
 		 */
 		PEXPECT(st->logger, st->st_v1_background_md == NULL);
 		if (st->st_v1_background_md != NULL) {
-			dbg("suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
-			    st->st_serialno, st->st_v1_background_md,
-			    pri_where(HERE));
+			ldbg(logger, "suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
+			     st->st_serialno, st->st_v1_background_md,
+			     pri_where(HERE));
 			md_delref(&st->st_v1_background_md);
 		}
 		st->st_v1_background_md = md_addref(md);
