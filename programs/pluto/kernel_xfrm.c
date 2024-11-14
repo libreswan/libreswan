@@ -657,7 +657,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	int error = -rsp.u.e.error;
 
 	switch (what_about_inbound) {
-	case IGNORE_KERNEL_POLICY_MISSING:
+	case KERNEL_POLICY_PRESENT_OR_MISSING:
 		if (error == 0) {
 			/* pexpect? */
 			sparse_buf sb;
@@ -677,7 +677,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			return true;
 		}
 		break;
-	case EXPECT_KERNEL_POLICY_OK:
+	case KERNEL_POLICY_PRESENT:
 		if (error == 0) {
 			/* pexpect? */
 			sparse_buf sb;
@@ -688,7 +688,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			return true;
 		}
 		break;
-	case EXPECT_NO_INBOUND:
+	case KERNEL_POLICY_MISSING:
 		if (error == ENOENT) {
 			/* pexpect? */
 			sparse_buf sb;
@@ -698,6 +698,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			     story, adstory);
 			return true;
 		}
+#if 0
 		if (error == 0) {
 			/* pexpect? */
 			sparse_buf sb;
@@ -707,6 +708,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			     story, adstory);
 			return true;
 		}
+#endif
 		break;
 	}
 
@@ -1060,8 +1062,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	add_sec_label(&req.n, policy->sec_label, logger);
 
 	enum expect_kernel_policy what_about_inbound =
-		(op == KERNEL_POLICY_OP_ADD ? IGNORE_KERNEL_POLICY_MISSING :
-		 EXPECT_KERNEL_POLICY_OK);
+		(op == KERNEL_POLICY_OP_ADD ? KERNEL_POLICY_PRESENT_OR_MISSING :
+		 KERNEL_POLICY_PRESENT);
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
 				       (dir == DIRECTION_OUTBOUND ? "(out)" : "(in)"),
 				       logger, func);
@@ -1168,7 +1170,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 		ldbg(logger, "%s() deleting policy forward (even when there may not be one)",
 		    __func__);
 		id->dir = XFRM_POLICY_FWD;
-		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
+		ok &= sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT_OR_MISSING,
 					   "delete", "(fwd)",
 					   logger, func);
 	}
@@ -2843,23 +2845,18 @@ static struct xfrm_selector icmpv6_selector(int port)
 static bool fiddle_icmpv6_bypass(struct nlmsghdr *n, uint8_t *dir,
 				 const char *story, struct logger *logger)
 {
-
-	/*
-	 * EXPECT_NO_INBOUND means no fail on missing and/or
-	 * success.
-	 */
 	*dir = XFRM_POLICY_IN;
-	if (!sendrecv_xfrm_policy(n, EXPECT_KERNEL_POLICY_OK,
+	if (!sendrecv_xfrm_policy(n, KERNEL_POLICY_PRESENT,
 				  story, "(in)", logger, __func__))
 		return false;
 
 	*dir = XFRM_POLICY_FWD;
-	if (!sendrecv_xfrm_policy(n, EXPECT_KERNEL_POLICY_OK,
+	if (!sendrecv_xfrm_policy(n, KERNEL_POLICY_PRESENT,
 				  story, "(fwd)", logger, __func__))
 		return false;
 
 	*dir = XFRM_POLICY_OUT;
-	if (!sendrecv_xfrm_policy(n, EXPECT_KERNEL_POLICY_OK,
+	if (!sendrecv_xfrm_policy(n, KERNEL_POLICY_PRESENT,
 				  story, "(out)", logger, __func__))
 		return false;
 
@@ -3221,13 +3218,13 @@ static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offlo
 
 	char *text = "add IPv4 ike port bypass for nic-offload";
 
-	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
+	if (!sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT,
 				  text, "(out)", logger, __func__))
 		return false;
 
 	text = "add IPv6 ike port bypass for nic-offload";
 	req.nlmsg.p.sel.family = AF_INET6;
-	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
+	if (!sendrecv_xfrm_policy(&req.n, KERNEL_POLICY_PRESENT,
 				  text, "(out)", logger, __func__))
 		return false;
 

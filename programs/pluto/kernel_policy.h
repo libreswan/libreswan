@@ -213,7 +213,7 @@ bool delete_spd_kernel_policy(const struct spd *spd,
 
 void delete_spd_kernel_policies(struct spd *spd,
 				const struct spd_owner *owner,
-				enum expect_kernel_policy inbound_policy_expectation,
+				enum directions directions,
 				struct logger *logger,
 				where_t where,
 				const char *story);

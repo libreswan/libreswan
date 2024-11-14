@@ -626,7 +626,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 				struct spd_owner owner = spd_owner(c->spd, c->routing.state,
 								   logger, where);
 				delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
-							 EXPECT_KERNEL_POLICY_OK,
+							 KERNEL_POLICY_PRESENT,
 							 /*logger*/logger,
 							 where, "security label policy");
 			}
@@ -648,11 +648,13 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 		/* go back to old routing */
 		struct spd_owner owner = spd_owner(c->spd, c->routing.state,
 						   logger, where);
-		delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
-					 EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policy(c->spd, &owner,
+					 DIRECTION_OUTBOUND,
+					 KERNEL_POLICY_PRESENT,
 					 logger, where, "failed security label");
-		delete_spd_kernel_policy(c->spd, &owner, DIRECTION_INBOUND,
-					 EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policy(c->spd, &owner,
+					 DIRECTION_INBOUND,
+					 KERNEL_POLICY_PRESENT,
 					 logger, where, "failed security label");
 		return false;
 	}
@@ -700,7 +702,7 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_ONDEMAND,
-						      EXPECT_KERNEL_POLICY_OK,
+						      KERNEL_POLICY_PRESENT,
 						      logger, where);
 	}
 
@@ -729,7 +731,7 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_FAILURE,
-						      EXPECT_KERNEL_POLICY_OK,
+						      KERNEL_POLICY_PRESENT,
 						      logger, where);
 	}
 
@@ -737,24 +739,11 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 }
 
 static void routed_kernel_policy_to_unrouted(struct connection *c,
-					     lset_t direction,
+					     enum directions directions,
 					     struct logger *logger,
 					     where_t where,
 					     const char *story)
 {
-	enum expect_kernel_policy inbound_policy_expectation;
-	switch (direction) {
-	case DIRECTION_INBOUND|DIRECTION_OUTBOUND:
-	case DIRECTION_INBOUND:
-		inbound_policy_expectation = EXPECT_KERNEL_POLICY_OK;
-		break;
-	case DIRECTION_OUTBOUND:
-		inbound_policy_expectation = EXPECT_NO_INBOUND;
-		break;
-	default:
-		bad_case(direction);
-	}
-
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		if (is_v1_cisco_split(spd, HERE)) {
@@ -764,8 +753,7 @@ static void routed_kernel_policy_to_unrouted(struct connection *c,
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
 
-		delete_spd_kernel_policies(spd, &owner,
-					   inbound_policy_expectation,
+		delete_spd_kernel_policies(spd, &owner, directions,
 					   logger, where, story);
 		do_updown_unroute_spd(spd, &owner, NULL, logger,
 				      (struct updown_env) {0});
@@ -775,23 +763,10 @@ static void routed_kernel_policy_to_unrouted(struct connection *c,
 }
 
 static void unrouted_kernel_policy_to_unrouted(struct connection *c,
-					       lset_t direction,
+					       enum directions directions,
 					       struct logger *logger, where_t where,
 					       const char *story)
 {
-	enum expect_kernel_policy inbound_policy_expectation;
-	switch (direction) {
-	case DIRECTION_INBOUND|DIRECTION_OUTBOUND:
-	case DIRECTION_INBOUND:
-		inbound_policy_expectation = EXPECT_KERNEL_POLICY_OK;
-		break;
-	case DIRECTION_OUTBOUND:
-		inbound_policy_expectation = EXPECT_NO_INBOUND;
-		break;
-	default:
-		bad_case(direction);
-	}
-
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		if (is_v1_cisco_split(spd, HERE)) {
@@ -801,8 +776,7 @@ static void unrouted_kernel_policy_to_unrouted(struct connection *c,
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
 
-		delete_spd_kernel_policies(spd, &owner,
-					   inbound_policy_expectation,
+		delete_spd_kernel_policies(spd, &owner, directions,
 					   logger, where, story);
 	}
 
@@ -828,7 +802,8 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
 
-		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policies(spd, &owner,
+					   DIRECTIONS_INBOUND_AND_OUTBOUND,
 					   logger, where, "delete");
 		do_updown_unroute_spd(spd, &owner, child, logger,
 				      (struct updown_env) {0});
@@ -979,7 +954,7 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_ONDEMAND,
-						      EXPECT_KERNEL_POLICY_OK,
+						      KERNEL_POLICY_PRESENT,
 						      logger, where);
 	}
 
@@ -1009,7 +984,7 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
 						      SHUNT_KIND_FAILURE,
-						      EXPECT_KERNEL_POLICY_OK,
+						      KERNEL_POLICY_PRESENT,
 						      logger, where);
 	}
 
@@ -1033,7 +1008,8 @@ static void unrouted_tunnel_to_unrouted(struct connection *c,
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
 
-		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policies(spd, &owner,
+					   DIRECTIONS_INBOUND_AND_OUTBOUND,
 					   logger, where, story);
 	}
 
@@ -1091,7 +1067,8 @@ static void routed_inbound_negotiation_to_unrouted(struct connection *c,
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 						   logger, where);
 
-		delete_spd_kernel_policies(spd, &owner, EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policies(spd, &owner,
+					   DIRECTIONS_INBOUND_AND_OUTBOUND,
 					   logger, where, story);
 		do_updown_unroute_spd(spd, &owner, child, logger,
 				      (struct updown_env) {0});
@@ -1117,7 +1094,7 @@ static void unrouted_inbound_to_unrouted(struct connection *c,
 						   logger, where);
 
 		delete_spd_kernel_policies(spd, &owner,
-					   EXPECT_KERNEL_POLICY_OK,
+					   DIRECTIONS_INBOUND_AND_OUTBOUND,
 					   logger, where, story);
 	}
 
@@ -1145,12 +1122,12 @@ static void teardown_unrouted_inbound_negotiation(struct connection *c,
 						  const char *story)
 {
 	if (scheduled_child_revival(child, story)) {
-		unrouted_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTIONS_INBOUND,
 						   logger, where, story);
 		return;
 	}
 
-	unrouted_kernel_policy_to_unrouted(c, DIRECTION_INBOUND,
+	unrouted_kernel_policy_to_unrouted(c, DIRECTIONS_INBOUND,
 					   logger, where, story);
 }
 
@@ -1193,7 +1170,7 @@ static void teardown_routed_negotiation(struct connection *c,
 	 * A ROUTED_NEGOTIATION doesn't have inbound policy so don't
 	 * expect it.
 	 */
-	routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+	routed_kernel_policy_to_unrouted(c, DIRECTIONS_INBOUND,
 					 logger, where, "deleting");
 	PEXPECT(logger, c->routing.state == RT_UNROUTED);
 }
@@ -1864,7 +1841,7 @@ static bool dispatch_1(enum routing_event event,
 			return true;
 		}
 		/* is this reachable? */
-		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 						 logger, e->where, "deleting");
 		PEXPECT(logger, c->routing.state == RT_UNROUTED);
 		/* connection lives to fight another day */
@@ -1873,7 +1850,7 @@ static bool dispatch_1(enum routing_event event,
 	case X(TEARDOWN_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 	case X(TEARDOWN_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 		if (connection_cannot_die(event, c, logger, e)) {
-			unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+			unrouted_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 							   logger, e->where, e->story);
 			return true;
 		}
@@ -1889,7 +1866,7 @@ static bool dispatch_1(enum routing_event event,
 			set_routing(c, RT_UNROUTED);
 			return true;
 		}
-		unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 						   logger, e->where, e->story);
 		return true;
 
@@ -2224,7 +2201,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
 	case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
-		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
@@ -2236,7 +2213,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 	case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
-		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
@@ -2253,7 +2230,7 @@ static bool dispatch_1(enum routing_event event,
 		    c->local->kind == CK_PERMANENT) {
 			flush_routed_ondemand_revival(c);
 		}
-		routed_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+		routed_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 						 logger, e->where, "unroute");
 		return true;
 
@@ -2270,7 +2247,7 @@ static bool dispatch_1(enum routing_event event,
 		return true;
 
 	case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
-		unrouted_kernel_policy_to_unrouted(c, DIRECTION_OUTBOUND,
+		unrouted_kernel_policy_to_unrouted(c, DIRECTIONS_OUTBOUND,
 						   logger, e->where, "unroute");
 		return true;
 

@@ -870,12 +870,14 @@ void revert_kernel_policy(struct spd *spd,
 		/* go back to old routing */
 		struct spd_owner owner = spd_owner(spd, c->routing.state,
 						   logger, HERE);
-		delete_spd_kernel_policy(spd, &owner, DIRECTION_OUTBOUND,
-					 EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policy(spd, &owner,
+					 DIRECTION_OUTBOUND,
+					 KERNEL_POLICY_PRESENT,
 					 c->logger, HERE,
 					 "deleting failed policy");
-		delete_spd_kernel_policy(spd, &owner, DIRECTION_INBOUND,
-					 EXPECT_KERNEL_POLICY_OK,
+		delete_spd_kernel_policy(spd, &owner,
+					 DIRECTION_INBOUND,
+					 KERNEL_POLICY_PRESENT,
 					 c->logger, HERE,
 					 "deleting failed policy");
 		return;
@@ -957,7 +959,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							EXPECT_KERNEL_POLICY_OK,
+							KERNEL_POLICY_PRESENT,
 							c->logger, where);
 			/* if everything succeeds, delete below */
 		}
@@ -974,7 +976,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PBAD(c->logger, kernel_ops->overlap_supported)) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							EXPECT_KERNEL_POLICY_OK,
+							KERNEL_POLICY_PRESENT,
 							c->logger, where);
 			/* if everything succeeds, delete below */
 		}
@@ -1169,8 +1171,7 @@ void clear_narrow_holds(const ip_selector *src_client,
 		    transport_proto == bsp->transport_proto &&
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
-			delete_bare_shunt_kernel_policy(bsp,
-							EXPECT_KERNEL_POLICY_OK,
+			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 							logger, HERE);
 			free_bare_shunt(bspp);
 		} else {
@@ -2245,8 +2246,7 @@ static void expire_bare_shunts(struct logger *logger)
 					}
 				}
 			} else {
-				delete_bare_shunt_kernel_policy(bsp,
-								EXPECT_KERNEL_POLICY_OK,
+				delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 								logger, HERE);
 			}
 			free_bare_shunt(bspp);
@@ -2262,8 +2262,7 @@ static void delete_bare_shunt_kernel_policies(struct logger *logger)
 	dbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
-		delete_bare_shunt_kernel_policy(bsp,
-						EXPECT_KERNEL_POLICY_OK,
+		delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 						logger, HERE);
 		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
 	}

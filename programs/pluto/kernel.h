@@ -69,6 +69,38 @@ enum direction {
 
 extern const struct enum_names direction_names;
 
+enum directions {
+	DIRECTIONS_INBOUND = DIRECTION_INBOUND,
+	DIRECTIONS_OUTBOUND = DIRECTION_OUTBOUND,
+	DIRECTIONS_INBOUND_AND_OUTBOUND = DIRECTION_INBOUND|DIRECTION_OUTBOUND,
+};
+
+/*
+ * What to do when the kernel policy operation returns ENOENT?
+ */
+
+enum expect_kernel_policy {
+	/* Kernel policy can return either ENOENT or 0. */
+	KERNEL_POLICY_PRESENT_OR_MISSING,
+	KERNEL_POLICY_PRESENT,
+	KERNEL_POLICY_MISSING,
+};
+
+#define expect_kernel_policy(DIRECTIONS, DIRECTION)	\
+	(DIRECTIONS & DIRECTION ? KERNEL_POLICY_PRESENT : KERNEL_POLICY_MISSING)
+
+#define expect_kernel_policy_name(E)					\
+	({								\
+		enum expect_kernel_policy e_ = E;			\
+		const char *n_ = "?";					\
+		switch (e_) {						\
+		case KERNEL_POLICY_PRESENT_OR_MISSING: n_ = "PRESENT or MISSING"; break; \
+		case KERNEL_POLICY_MISSING: n_ = "MISSING"; break;	\
+		case KERNEL_POLICY_PRESENT: n_ = "PRESENT"; break;	\
+		}							\
+		n_;							\
+	})
+
 enum kernel_offload_type {
 	KERNEL_OFFLOAD_NONE,
 	KERNEL_OFFLOAD_CRYPTO,
@@ -176,41 +208,6 @@ struct kernel_state {
 	uint32_t iptfs_reord_win;
 
 };
-
-/*
- * What to do when there's a policy op returns the ENOENT response?
- *
- * The old test, which looked like this:
- *
- *	bool enoent_ok = (op == KP_DELETE_INBOUND ||
- *			  (op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
- *
- * but was too forgiving.  It hid bugs such as trying to delete the
- * wrong policy.
- */
-
-enum expect_kernel_policy {
-	/* Kernel policy can return either ENOENT or 0. */
-	IGNORE_KERNEL_POLICY_MISSING,
-#if 0
-	REPORT_KERNEL_POLICY_PRESENT,
-#endif
-	EXPECT_NO_INBOUND,
-	/* op can only return 0 */
-	EXPECT_KERNEL_POLICY_OK,
-};
-
-#define expect_kernel_policy_name(E)					\
-	({								\
-		enum expect_kernel_policy e_ = E;			\
-		const char *n_ = "?";					\
-		switch (e_) {						\
-		case IGNORE_KERNEL_POLICY_MISSING: n_ = "IGNORE_KERNEL_POLICY_MISSING"; break; \
-		case EXPECT_NO_INBOUND: n_ = "EXPECT_NO_INBOUND"; break; \
-		case EXPECT_KERNEL_POLICY_OK: n_ = "REPORT_NO_INBOUND"; break; \
-		}							\
-		n_;							\
-	})
 
 struct kernel_ops {
 	/*

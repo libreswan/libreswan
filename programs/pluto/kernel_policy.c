@@ -569,15 +569,15 @@ bool delete_spd_kernel_policy(const struct spd *spd,
 
 void delete_spd_kernel_policies(struct spd *spd,
 				const struct spd_owner *owner,
-				enum expect_kernel_policy inbound_policy_expectation,
+				enum directions directions,
 				struct logger *logger, where_t where,
 				const char *story)
 {
 	delete_spd_kernel_policy(spd, owner, DIRECTION_OUTBOUND,
-				 EXPECT_KERNEL_POLICY_OK,
+				 expect_kernel_policy(directions, DIRECTION_OUTBOUND),
 				 logger, where, story);
 	delete_spd_kernel_policy(spd, owner, DIRECTION_INBOUND,
-				 inbound_policy_expectation,
+				 expect_kernel_policy(directions, DIRECTION_INBOUND),
 				 logger, where, story);
 }
 
@@ -642,7 +642,7 @@ static void delete_cat_kernel_policy(const struct spd *spd,
 		}
 	}
 
-	if (!delete_kernel_policy(direction, EXPECT_KERNEL_POLICY_OK,
+	if (!delete_kernel_policy(direction, KERNEL_POLICY_PRESENT,
 				  &local_client, &spd->remote->client,
 				  &c->sa_marks, c->ipsec_interface,
 				  DEFAULT_KERNEL_POLICY_ID,
@@ -821,7 +821,7 @@ void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 		const struct kernel_policy kernel_policy =
 			kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
 		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
-					  EXPECT_KERNEL_POLICY_OK,
+					  KERNEL_POLICY_PRESENT,
 					  &kernel_policy.src.route,
 					  &kernel_policy.dst.route,
 					  kernel_policy.sa_marks,
