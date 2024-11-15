@@ -54,7 +54,6 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 static void confwrite_int(FILE *out,
 			  const char *side,
 			  unsigned int context,
-			  knf options,
 			  keyword_values values,
 			  keyword_set set)
 {
@@ -97,7 +96,8 @@ static void confwrite_int(FILE *out,
 			/* special enumeration */
 			if (set[k->field]) {
 				fprintf(out, "\t%s%s=%s\n", side,
-					k->keyname, options[k->field] ? "yes" : "no");
+					k->keyname,
+					(values[k->field].option ? "yes" : "no"));
 			}
 			break;
 
@@ -112,7 +112,7 @@ static void confwrite_int(FILE *out,
 		case kt_sparse_name:
 			/* special enumeration */
 			if (set[k->field]) {
-				int val = options[k->field];
+				int val = values[k->field].option;
 				fprintf(out, "\t%s%s=", side, k->keyname);
 				for (const struct sparse_name *kev = k->sparse_names->list;
 				     kev->name != NULL; kev++) {
@@ -126,7 +126,7 @@ static void confwrite_int(FILE *out,
 
 		case kt_lset:
 			if (set[k->field]) {
-				unsigned long val = options[k->field];
+				unsigned long val = values[k->field].option;
 
 				if (val != 0) {
 					JAMBUF(buf) {
@@ -150,7 +150,7 @@ static void confwrite_int(FILE *out,
 		case kt_unsigned:
 			if (set[k->field])
 				fprintf(out, "\t%s%s=%jd\n", side, k->keyname,
-					options[k->field]);
+					values[k->field].option);
 		}
 	}
 }
@@ -311,7 +311,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 
 	confwrite_int(out, side,
 		      kv_conn | kv_leftright,
-		      end->options, end->values, end->set);
+		      end->values, end->set);
 	confwrite_str(out, side, kv_conn | kv_leftright,
 		      end->values, end->set);
 }
@@ -331,25 +331,25 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	confwrite_side(out, &conn->left);
 	confwrite_side(out, &conn->right);
 	/* fprintf(out, "# confwrite_int:\n"); */
-	confwrite_int(out, "", kv_conn, conn->options, conn->values, conn->set);
+	confwrite_int(out, "", kv_conn, conn->values, conn->set);
 	/* fprintf(out, "# confwrite_str:\n"); */
 	confwrite_str(out, "", kv_conn, conn->values, conn->set);
 
-	if (conn->options[KNCF_AUTO] != 0) {
+	if (conn->values[KNCF_AUTO].option != 0) {
 		sparse_buf sb;
-		cwf("auto", str_sparse(&autostart_names, conn->options[KNCF_AUTO], &sb));
+		cwf("auto", str_sparse(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
 	}
 
-	if (conn->options[KNCF_PPK] != NPPI_UNSET) {
+	if (conn->values[KNCF_PPK].option != NPPI_UNSET) {
 		sparse_buf sb;
-		cwf("ppk", str_sparse(&nppi_option_names, conn->options[KNCF_PPK], &sb));
+		cwf("ppk", str_sparse(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
 	}
 
 	if (conn->never_negotiate_shunt != SHUNT_UNSET ||
-	    conn->options[KNCF_PHASE2] != 0) {
-		enum encap_proto encap_proto = conn->options[KNCF_PHASE2];
+	    conn->values[KNCF_PHASE2].option != 0) {
+		enum encap_proto encap_proto = conn->values[KNCF_PHASE2].option;
 		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
-		enum type_options satype = conn->options[KNCF_TYPE];
+		enum type_options satype = conn->values[KNCF_TYPE].option;
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
 		 * config-write-policy-bit: short-cut for writing out a field that is a policy
@@ -365,8 +365,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 #		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
 #define cwyn(NAME, KNCF)						\
 		{							\
-			if (conn->options[KNCF] != YN_UNSET)		\
-				cwf(NAME, noyes[conn->options[KNCF] == YN_YES]); \
+			if (conn->values[KNCF].option != YN_UNSET)		\
+				cwf(NAME, noyes[conn->values[KNCF].option == YN_YES]); \
 		}
 		switch (shunt_policy) {
 		case SHUNT_UNSET:
@@ -385,8 +385,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwyn("pfs", KNCF_PFS);
 			cwyn("ikepad", KNCF_IKEPAD);
 
-			if (conn->left.options[KNCF_AUTH] == k_unset ||
-			    conn->right.options[KNCF_AUTH] == k_unset) {
+			if (conn->left.values[KNCF_AUTH].option == k_unset ||
+			    conn->right.values[KNCF_AUTH].option == k_unset) {
 				authby_buf ab;
 				cwf("authby", str_authby(conn->authby, &ab));
 			}
@@ -415,13 +415,13 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			}
 
 			/* esn= */
-			if (conn->options[KNCF_ESN] != YNE_UNSET) {
+			if (conn->values[KNCF_ESN].option != YNE_UNSET) {
 				name_buf nb;
 				cwf("esn", str_sparse(&yne_option_names,
-						      conn->options[KNCF_ESN], &nb));
+						      conn->values[KNCF_ESN].option, &nb));
 			}
 
-			switch (conn->options[KNCF_FRAGMENTATION]) {
+			switch (conn->values[KNCF_FRAGMENTATION].option) {
 			case YNF_UNSET:
 				/* it's the default, do not print anything */
 				break;
@@ -486,7 +486,7 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	if (setup) {
 		fprintf(out, "config setup\n");
 		confwrite_int(out, "", kv_config,
-			      cfg->setup.options, cfg->values, cfg->setup.set);
+			      cfg->values, cfg->setup.set);
 		confwrite_str(out, "", kv_config,
 			      cfg->values, cfg->setup.set);
 

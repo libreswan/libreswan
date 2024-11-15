@@ -72,7 +72,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	/* ==== config setup ==== */
 
-# define SOPT(kbf, v)  { cfg->setup.options[kbf] = (v) ; }
+# define SOPT(kbf, v)  { cfg->values[kbf].option = (v) ; }
 
 	SOPT(KBF_LOGTIME, true);
 	SOPT(KBF_LOGAPPEND, true);
@@ -121,7 +121,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	struct starter_conn *d = &cfg->conn_default;
 
-# define DOPT(kbf, v)  { d->options[kbf] = (v); }
+# define DOPT(kbf, v)  { d->values[kbf].option = (v); }
 
 	DOPT(KNCF_NAT_KEEPALIVE, true);    /* per conn */
 	DOPT(KNCF_TYPE, KS_TUNNEL);
@@ -229,8 +229,8 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_binary:
 		case kt_byte:
 			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup.options));
-			cfg->setup.options[f] = kw->number;
+			assert(f < elemsof(cfg->values));
+			cfg->values[f].option = kw->number;
 			cfg->setup.set[f] = true;
 			break;
 
@@ -286,7 +286,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		conn_st->state = STATE_INCOMPLETE;
 
 	/* validate the KSCF_IP/KNCF_IP */
-	end->addrtype = end->options[KW_IP];
+	end->addrtype = end->values[KW_IP].option;
 	switch (end->addrtype) {
 	case KH_ANY:
 		end->addr = unset_address;
@@ -418,7 +418,6 @@ static bool translate_field(struct starter_conn *conn,
 			    const struct kw_list *kw,
 			    const char *leftright,
 			    keyword_values values,
-			    knf *the_options,
 			    keyword_set *set,
 			    struct logger *logger)
 {
@@ -516,8 +515,8 @@ static bool translate_field(struct starter_conn *conn,
 			     sl->name);
 
 			/* only fatal if we try to change values */
-			if ((*the_options)[field] != (int)kw->number ||
-			    !((*the_options)[field] ==
+			if (values[field].option != (int)kw->number ||
+			    !(values[field].option ==
 			      LOOSE_ENUM_OTHER &&
 			      kw->number == LOOSE_ENUM_OTHER &&
 			      kw->keyword.string != NULL &&
@@ -530,7 +529,7 @@ static bool translate_field(struct starter_conn *conn,
 			}
 		}
 
-		(*the_options)[field] = kw->number;
+		values[field].option = kw->number;
 		if (kw->number == LOOSE_ENUM_OTHER) {
 			assert(kw->string != NULL);
 			pfreeany(values[field].string);
@@ -559,13 +558,13 @@ static bool translate_field(struct starter_conn *conn,
 			     sl->name);
 
 			/* only fatal if we try to change values */
-			if ((*the_options)[field] != (int)kw->number) {
+			if (values[field].option != (int)kw->number) {
 				serious_err = true;
 				break;
 			}
 		}
 
-		(*the_options)[field] = kw->number;
+		values[field].option = kw->number;
 		(*set)[field] = assigned_value;
 		break;
 
@@ -587,7 +586,6 @@ static bool translate_leftright(struct starter_conn *conn,
 	return translate_field(conn, cfgp, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
 			       this->values,
-			       /*the_options*/&this->options,
 			       /*set_options*/&this->set,
 			       logger);
 }
@@ -626,7 +624,6 @@ static bool translate_conn(struct starter_conn *conn,
 				translate_field(conn, cfgp, sl, assigned_value, kw,
 						/*leftright*/"",
 						conn->values,
-						/*the_options*/&conn->options,
 						/*set_options*/&conn->set,
 						logger);
 		}
@@ -663,7 +660,7 @@ static bool load_conn(struct starter_conn *conn,
 	}
 
 	if (conn->set[KNCF_TYPE]) {
-		switch ((enum type_options)conn->options[KNCF_TYPE]) {
+		switch ((enum type_options)conn->values[KNCF_TYPE].option) {
 		case KS_UNSET:
 			bad_case(KS_UNSET);
 
@@ -690,15 +687,15 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	conn->negotiation_shunt = conn->options[KNCF_NEGOTIATIONSHUNT];
-	conn->failure_shunt = conn->options[KNCF_FAILURESHUNT];
+	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
+	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
 
 	/* i.e., default is to have policy off */
 #define KW_POLICY_FLAG(val, fl)						\
 	{								\
 		if (conn->set[val])				\
 			conn->policy = (conn->policy & ~(fl)) |		\
-				(conn->options[val] ? (fl) : LEMPTY);	\
+				(conn->values[val].option ? (fl) : LEMPTY);	\
 	}
 
 	/* i.e., confusion rains */
@@ -706,7 +703,7 @@ static bool load_conn(struct starter_conn *conn,
 	{								\
 		if (conn->set[val]) {				\
 			conn->policy = (conn->policy & ~(fl)) |		\
-				(!conn->options[val] ? (fl) : LEMPTY);	\
+				(!conn->values[val].option ? (fl) : LEMPTY);	\
 		}							\
 	}
 
@@ -717,20 +714,20 @@ static bool load_conn(struct starter_conn *conn,
 	 */
 
 	if (conn->set[KNCF_KEYEXCHANGE]) {
-		if (conn->options[KNCF_KEYEXCHANGE] == IKE_VERSION_ROOF) {
+		if (conn->values[KNCF_KEYEXCHANGE].option == IKE_VERSION_ROOF) {
 			/*
 			 * i.e., keyexchange=ike which was ignored.
 			 * Use ikev2= when specified.
 			 */
 			if (conn->set[KNCF_IKEv2]) {
-				conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
+				conn->ike_version = (conn->values[KNCF_IKEv2].option == YN_YES ? IKEv2 : IKEv1);
 			}
 		} else {
 			/* IKEv1, IKEv2, ... */
-			conn->ike_version = conn->options[KNCF_KEYEXCHANGE];
+			conn->ike_version = conn->values[KNCF_KEYEXCHANGE].option;
 		}
 	} else if (conn->set[KNCF_IKEv2]) {
-		conn->ike_version = (conn->options[KNCF_IKEv2] == YN_YES ? IKEv2 : IKEv1);
+		conn->ike_version = (conn->values[KNCF_IKEv2].option == YN_YES ? IKEv2 : IKEv1);
 	}
 
 	/*
@@ -827,7 +824,7 @@ static bool load_conn(struct starter_conn *conn,
 	}
 
 	/* Let this go through to pluto which will validate it. */
-	conn->clientaddrfamily = aftoinfo(conn->options[KNCF_CLIENTADDRFAMILY]);
+	conn->clientaddrfamily = aftoinfo(conn->values[KNCF_CLIENTADDRFAMILY].option);
 
 	/*
 	 * TODO:
@@ -836,7 +833,7 @@ static bool load_conn(struct starter_conn *conn,
 	 * For now, %defaultroute and %any means IPv4 only
 	 */
 
-	const struct ip_info *afi = aftoinfo(conn->options[KNCF_HOSTADDRFAMILY]);
+	const struct ip_info *afi = aftoinfo(conn->values[KNCF_HOSTADDRFAMILY].option);
 	if (afi == NULL) {
 		FOR_EACH_THING(end, &conn->left, &conn->right) {
 			FOR_EACH_THING(ips,

@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef USE_SECCOMP
-	switch (cfg->setup.options[KBF_SECCOMP]) {
+	switch (cfg->values[KBF_SECCOMP].option) {
 		case SECCOMP_ENABLED:
 			init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
@@ -372,12 +372,12 @@ int main(int argc, char *argv[])
 	case SECCOMP_DISABLED:
 		break;
 	default:
-		bad_case(cfg->setup.options[KBF_SECCOMP]);
+		bad_case(cfg->values[KBF_SECCOMP].option);
 	}
 #endif
 
 #ifdef USE_DNSSEC
-	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+	unbound_sync_init(cfg->values[KBF_DO_DNSSEC].option,
 			  cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
 			  cfg->values[KSF_PLUTO_DNSSEC_ANCHORS].string,
 			  logger);
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
 
 		for (struct starter_conn *conn = cfg->conns.tqh_first;
 		     conn != NULL; conn = conn->link.tqe_next) {
-			enum autostart autostart = conn->options[KNCF_AUTO];
+			enum autostart autostart = conn->values[KNCF_AUTO].option;
 			switch (autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:
@@ -505,7 +505,7 @@ int main(int argc, char *argv[])
 			 * Scrub AUTOSTART; conns will need to be
 			 * started manually.
 			 */
-			enum autostart autostart = conn->options[KNCF_AUTO];
+			enum autostart autostart = conn->values[KNCF_AUTO].option;
 			if (autostart != AUTOSTART_UNSET &&
 			    autostart != AUTOSTART_ADD) {
 				if (verbose) {
@@ -513,7 +513,7 @@ int main(int argc, char *argv[])
 					printf("  overiding auto=%s with auto=add\n",
 					       str_sparse(&autostart_names, autostart, &nb));
 				}
-				conn->options[KNCF_AUTO] = AUTOSTART_ADD;
+				conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
 			}
 
 			printf("\n"); /* close printf line */
@@ -540,7 +540,7 @@ int main(int argc, char *argv[])
 			/* list all conns marked as auto=add */
 			for (struct starter_conn *conn = cfg->conns.tqh_first;
 			     conn != NULL; conn = conn->link.tqe_next) {
-				enum autostart autostart = conn->options[KNCF_AUTO];
+				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_ADD)
 					printf("%s ", conn->name);
 			}
@@ -555,7 +555,7 @@ int main(int argc, char *argv[])
 			 */
 			for (struct starter_conn *conn = cfg->conns.tqh_first;
 			     conn != NULL; conn = conn->link.tqe_next) {
-				enum autostart autostart = conn->options[KNCF_AUTO];
+				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_START ||
 				    autostart == AUTOSTART_ROUTE ||
@@ -571,7 +571,7 @@ int main(int argc, char *argv[])
 			/* list all conns marked as auto=up */
 			for (struct starter_conn *conn = cfg->conns.tqh_first;
 			     conn != NULL; conn = conn->link.tqe_next) {
-				enum autostart autostart = conn->options[KNCF_AUTO];
+				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_START)
 					printf("%s ", conn->name);
@@ -585,7 +585,7 @@ int main(int argc, char *argv[])
 			/* list all conns marked as auto=up */
 			for (struct starter_conn *conn = cfg->conns.tqh_first;
 			     conn != NULL; conn = conn->link.tqe_next) {
-				enum autostart autostart = conn->options[KNCF_AUTO];
+				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_IGNORE ||
 				    autostart == AUTOSTART_UNSET)
 					printf("%s ", conn->name);
@@ -643,18 +643,18 @@ int main(int argc, char *argv[])
 			case kt_bool:
 				printf("%s %s%s='%s'\n", export, varprefix,
 					safe_kwname,
-					bool_str(cfg->setup.options[kd->field]));
+					bool_str(cfg->values[kd->field].option));
 				break;
 
 			case kt_obsolete:
 				break;
 
 			default:
-				if (cfg->setup.options[kd->field] ||
+				if (cfg->values[kd->field].option ||
 					cfg->setup.set[kd->field]) {
 					printf("%s %s%s='%jd'\n",
 						export, varprefix, safe_kwname,
-						cfg->setup.options[kd->field]);
+						cfg->values[kd->field].option);
 				}
 				break;
 			}
