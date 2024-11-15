@@ -315,13 +315,13 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
 	if (conn->values[KNCF_IKELIFETIME_MS].set) {
-		msg.ikelifetime = deltatime_ms(conn->values[KNCF_IKELIFETIME_MS].option);
+		msg.ikelifetime = conn->values[KNCF_IKELIFETIME_MS].deltatime;
 	}
 	if (conn->values[KNCF_IPSEC_LIFETIME_MS].set) {
-		msg.ipsec_lifetime = deltatime_ms(conn->values[KNCF_IPSEC_LIFETIME_MS].option);
+		msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME_MS].deltatime;
 	}
 	if (conn->values[KNCF_REKEYMARGIN_MS].set) {
-		msg.rekeymargin = deltatime_ms(conn->values[KNCF_REKEYMARGIN_MS].option);
+		msg.rekeymargin = conn->values[KNCF_REKEYMARGIN_MS].deltatime;
 	}
 	msg.sa_ipsec_max_bytes = conn->values[KNCF_IPSEC_MAXBYTES].option;
 	msg.sa_ipsec_max_packets = conn->values[KNCF_IPSEC_MAXPACKETS].option;
@@ -334,10 +334,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.ipsec_interface = conn->values[KSCF_IPSEC_INTERFACE].string;
 
 	if (conn->values[KNCF_RETRANSMIT_INTERVAL_MS].set) {
-		msg.retransmit_interval = deltatime_ms(conn->values[KNCF_RETRANSMIT_INTERVAL_MS].option);
+		msg.retransmit_interval = conn->values[KNCF_RETRANSMIT_INTERVAL_MS].deltatime;
 	}
 	if (conn->values[KNCF_RETRANSMIT_TIMEOUT_MS].set) {
-		msg.retransmit_timeout = deltatime_ms(conn->values[KNCF_RETRANSMIT_TIMEOUT_MS].option);
+		msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT_MS].deltatime;
 	}
 
 	msg.ike_version = conn->ike_version;
