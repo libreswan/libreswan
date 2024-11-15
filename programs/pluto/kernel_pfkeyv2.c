@@ -1613,11 +1613,11 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 	struct inbuf resp;
 	if (!msg_sendrecv(&req, &resp, verbose)) {
 		switch (expect_kernel_policy) {
-		case EXPECT_KERNEL_POLICY_OR_NOT:
-		case EXPECT_KERNEL_POLICY_MISSING:
+		case KERNEL_POLICY_PRESENT_OR_MISSING:
+		case KERNEL_POLICY_MISSING:
 			ldbg(logger, "%s()   ignoring pfkey error", func);
 			break;
-		case EXPECT_KERNEL_POLICY_PRESENT:
+		case KERNEL_POLICY_PRESENT:
 			llog_pexpect(logger, HERE, "%s()   receiving", func);
 			return false;
 		}
