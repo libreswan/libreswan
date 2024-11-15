@@ -359,7 +359,7 @@ static void replace_when_cfg_setup(char **target, const struct starter_config *c
 				   enum keywords field)
 {
 	/* Do nothing if value is unset. */
-	const char *value = cfg->setup.strings[field];
+	const char *value = cfg->values[field].string;
 	if (value == NULL || *value == '\0')
 		return;
 	replace_value(target, value);
@@ -685,8 +685,8 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 	 * non empty.
 	 */
 	pfreeany(pluto_dnssec_rootkey_file);
-	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE][0] != '\0') {
-		pluto_dnssec_rootkey_file = clone_str(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE], __func__);
+	if (cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string[0] != '\0') {
+		pluto_dnssec_rootkey_file = clone_str(cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string, __func__);
 	}
 	replace_when_cfg_setup(&pluto_dnssec_trusted, cfg, KSF_PLUTO_DNSSEC_ANCHORS);
 }
@@ -1292,7 +1292,7 @@ int main(int argc, char **argv)
 			replace_when_cfg_setup(&ocsp_uri, cfg, KSF_OCSP_URI);
 			replace_when_cfg_setup(&ocsp_trust_name, cfg, KSF_OCSP_TRUSTNAME);
 
-			char *tmp_global_redirect = cfg->setup.strings[KSF_GLOBAL_REDIRECT];
+			char *tmp_global_redirect = cfg->values[KSF_GLOBAL_REDIRECT].string;
 			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
 				/* NULL means it is not specified so default is no */
 				global_redirect = GLOBAL_REDIRECT_NO;
@@ -1338,26 +1338,26 @@ int main(int argc, char **argv)
 
 			/* no config option: rundir */
 			/* secretsfile= */
-			if (cfg->setup.strings[KSF_SECRETSFILE] &&
-			    *cfg->setup.strings[KSF_SECRETSFILE]) {
-				lsw_conf_secretsfile(cfg->setup.strings[KSF_SECRETSFILE]);
+			if (cfg->values[KSF_SECRETSFILE].string &&
+			    *cfg->values[KSF_SECRETSFILE].string) {
+				lsw_conf_secretsfile(cfg->values[KSF_SECRETSFILE].string);
 			}
-			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
-			    *cfg->setup.strings[KSF_IPSECDIR] != 0) {
+			if (cfg->values[KSF_IPSECDIR].string != NULL &&
+			    *cfg->values[KSF_IPSECDIR].string != 0) {
 				/* ipsecdir= */
-				lsw_conf_confddir(cfg->setup.strings[KSF_IPSECDIR], logger);
+				lsw_conf_confddir(cfg->values[KSF_IPSECDIR].string, logger);
 			}
 
-			if (cfg->setup.strings[KSF_NSSDIR] != NULL &&
-			    *cfg->setup.strings[KSF_NSSDIR] != 0) {
+			if (cfg->values[KSF_NSSDIR].string != NULL &&
+			    *cfg->values[KSF_NSSDIR].string != 0) {
 				/* nssdir= */
-				lsw_conf_nssdir(cfg->setup.strings[KSF_NSSDIR], logger);
+				lsw_conf_nssdir(cfg->values[KSF_NSSDIR].string, logger);
 			}
 
-			if (cfg->setup.strings[KSF_CURLIFACE]) {
+			if (cfg->values[KSF_CURLIFACE].string) {
 				pfreeany(curl_iface);
 				/* curl-iface= */
-				curl_iface = clone_str(cfg->setup.strings[KSF_CURLIFACE],
+				curl_iface = clone_str(cfg->values[KSF_CURLIFACE].string,
 						       "curl-iface= via --config");
 			}
 
@@ -1367,24 +1367,24 @@ int main(int argc, char **argv)
 				/* checked below */
 			}
 
-			if (cfg->setup.strings[KSF_DUMPDIR]) {
+			if (cfg->values[KSF_DUMPDIR].string) {
 				pfree(coredir);
 				/* dumpdir= */
-				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR],
+				coredir = clone_str(cfg->values[KSF_DUMPDIR].string,
 						    "coredir via --config");
 			}
 			/* vendorid= */
-			if (cfg->setup.strings[KSF_MYVENDORID]) {
+			if (cfg->values[KSF_MYVENDORID].string) {
 				pfree(pluto_vendorid);
-				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
+				pluto_vendorid = clone_str(cfg->values[KSF_MYVENDORID].string,
 							   "pluto_vendorid via --config");
 			}
 
-			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
-				if (access(cfg->setup.strings[KSF_STATSBINARY], X_OK) == 0) {
+			if (cfg->values[KSF_STATSBINARY].string != NULL) {
+				if (access(cfg->values[KSF_STATSBINARY].string, X_OK) == 0) {
 					pfreeany(pluto_stats_binary);
 					/* statsbin= */
-					pluto_stats_binary = clone_str(cfg->setup.strings[KSF_STATSBINARY], "statsbin via --config");
+					pluto_stats_binary = clone_str(cfg->values[KSF_STATSBINARY].string, "statsbin via --config");
 					llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
 				} else {
 					llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
@@ -1397,12 +1397,12 @@ int main(int argc, char **argv)
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
-			set_global_redirect_dests(cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
+			set_global_redirect_dests(cfg->values[KSF_GLOBAL_REDIRECT_TO].string);
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 			cur_debugging = cfg->setup.options[KW_DEBUG];
 
-			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
+			char *protostack = cfg->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
 
 			if (protostack != NULL && protostack[0] != '\0') {

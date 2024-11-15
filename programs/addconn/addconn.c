@@ -378,8 +378,8 @@ int main(int argc, char *argv[])
 
 #ifdef USE_DNSSEC
 	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
-			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
-			  cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS],
+			  cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
+			  cfg->values[KSF_PLUTO_DNSSEC_ANCHORS].string,
 			  logger);
 #endif
 
@@ -472,7 +472,7 @@ int main(int argc, char *argv[])
 				for (conn = cfg->conns.tqh_first;
 				     conn != NULL; conn = conn->link.tqe_next) {
 					if (lsw_alias_cmp(connname,
-						conn->strings[KSCF_CONNALIAS])) {
+						conn->values[KSCF_CONNALIAS].string)) {
 						break;
 					}
 				}
@@ -599,9 +599,9 @@ int main(int argc, char *argv[])
 
 		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
-				if (cfg->setup.strings[kd->field]) {
+				if (cfg->values[kd->field].string) {
 					printf("%s\n",
-						cfg->setup.strings[kd->field]);
+						cfg->values[kd->field].string);
 				} else {
 					/* implicit default */
 					printf("xfrm\n");
@@ -633,10 +633,10 @@ int main(int argc, char *argv[])
 			case kt_filename:
 			case kt_dirname:
 			case kt_host:
-				if (cfg->setup.strings[kd->field]) {
+				if (cfg->values[kd->field].string) {
 					printf("%s %s%s='%s'\n",
 						export, varprefix, safe_kwname,
-						cfg->setup.strings[kd->field]);
+						cfg->values[kd->field].string);
 				}
 				break;
 

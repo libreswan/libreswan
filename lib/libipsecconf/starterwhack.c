@@ -55,8 +55,8 @@ static bool set_whack_end(struct whack_end *w,
 	w->leftright = lr;
 
 	/* validate the KSCF_ID */
-	if (l->strings[KSCF_ID] != NULL) {
-		char *value = l->strings[KSCF_ID];
+	if (l->values[KSCF_ID].string != NULL) {
+		char *value = l->values[KSCF_ID].string;
 		/*
 		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
 		 * backslash comma.
@@ -107,7 +107,7 @@ static bool set_whack_end(struct whack_end *w,
 		printf("Failed to load connection %s= is not set\n", lr);
 		return false;
 	}
-	w->host_addr_name = l->strings[KW_IP];
+	w->host_addr_name = l->values[KW_IP].string;
 
 	switch (l->nexttype) {
 	case KH_IPADDR:
@@ -129,16 +129,16 @@ static bool set_whack_end(struct whack_end *w,
 		break;
 	}
 
-	w->sourceip = l->strings[KSCF_SOURCEIP]; /* could be NULL */
+	w->sourceip = l->values[KSCF_SOURCEIP].string; /* could be NULL */
 
 	if (cidr_is_specified(l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
-	w->interface_ip = l->strings[KSCF_INTERFACE_IP]; /* could be NULL */
+	w->interface_ip = l->values[KSCF_INTERFACE_IP].string; /* could be NULL */
 
 	/* validate the KSCF_SUBNET */
-	if (l->strings[KSCF_SUBNET] != NULL) {
-		char *value = l->strings[KSCF_SUBNET];
+	if (l->values[KSCF_SUBNET].string != NULL) {
+		char *value = l->values[KSCF_SUBNET].string;
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			w->virt = value;
 		} else {
@@ -146,12 +146,12 @@ static bool set_whack_end(struct whack_end *w,
 		}
 	}
 
-	w->subnets = l->strings[KSCF_SUBNETS];
+	w->subnets = l->values[KSCF_SUBNETS].string;
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
-	w->cert = l->strings[KSCF_CERT];
-	w->ckaid = l->strings[KSCF_CKAID];
+	w->cert = l->values[KSCF_CERT].string;
+	w->ckaid = l->values[KSCF_CKAID].string;
 
 	static const struct {
 		enum ipseckey_algorithm_type alg;
@@ -185,7 +185,7 @@ static bool set_whack_end(struct whack_end *w,
 			 * CKAID.
 			 */
 			w->key_from_DNS_on_demand = false;
-			w->pubkey = l->strings[key->kscf];
+			w->pubkey = l->values[key->kscf].string;
 			w->pubkey_alg = key->alg;
 			break;
 
@@ -197,7 +197,7 @@ static bool set_whack_end(struct whack_end *w,
 		break;
 	}
 
-	w->ca = l->strings[KSCF_CA];
+	w->ca = l->values[KSCF_CA].string;
 	if (l->set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
@@ -211,16 +211,16 @@ static bool set_whack_end(struct whack_end *w,
 	else
 		w->eap = IKE_EAP_NONE;
 
-	w->updown = l->strings[KSCF_UPDOWN];
+	w->updown = l->values[KSCF_UPDOWN].string;
 
 	if (l->set[KNCF_XAUTHSERVER])
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	if (l->set[KNCF_XAUTHCLIENT])
 		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
 	if (l->set[KSCF_USERNAME])
-		w->xauth_username = l->strings[KSCF_USERNAME];
+		w->xauth_username = l->values[KSCF_USERNAME].string;
 	if (l->set[KSCF_GROUNDHOG])
-		w->groundhog = l->strings[KSCF_GROUNDHOG];
+		w->groundhog = l->values[KSCF_GROUNDHOG].string;
 
 	if (l->set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
@@ -229,7 +229,7 @@ static bool set_whack_end(struct whack_end *w,
 	if (l->set[KNCF_CAT])
 		w->cat = l->options[KNCF_CAT];
 
-	w->addresspool = l->strings[KSCF_ADDRESSPOOL];
+	w->addresspool = l->values[KSCF_ADDRESSPOOL].string;
 	return true;
 }
 
@@ -311,7 +311,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.child_afi = conn->clientaddrfamily;
 
 	if (conn->right.addrtype == KH_IPHOSTNAME)
-		msg.dnshostname = conn->right.strings[KW_IP];
+		msg.dnshostname = conn->right.values[KW_IP].string;
 
 	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
 	if (conn->set[KNCF_IKELIFETIME_MS]) {
@@ -329,7 +329,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.keyingtries.value = conn->options[KNCF_KEYINGTRIES];
 	}
 	msg.replay_window = conn->options[KNCF_REPLAY_WINDOW]; /*has default*/
-	msg.ipsec_interface = conn->strings[KSCF_IPSEC_INTERFACE];
+	msg.ipsec_interface = conn->values[KSCF_IPSEC_INTERFACE].string;
 
 	msg.retransmit_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
 	msg.retransmit_timeout = deltatime_ms(conn->options[KNCF_RETRANSMIT_TIMEOUT_MS]);
@@ -347,7 +347,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.failure_shunt = conn->failure_shunt;
 	msg.autostart = conn->options[KNCF_AUTO];
 
-	msg.connalias = conn->strings[KSCF_CONNALIAS];
+	msg.connalias = conn->values[KSCF_CONNALIAS].string;
 
 	msg.metric = conn->options[KNCF_METRIC];
 
@@ -386,8 +386,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	/* default to HOLD */
-	msg.dpddelay = conn->strings[KSCF_DPDDELAY];
-	msg.dpdtimeout = conn->strings[KSCF_DPDTIMEOUT];
+	msg.dpddelay = conn->values[KSCF_DPDDELAY].string;
+	msg.dpdtimeout = conn->values[KSCF_DPDTIMEOUT].string;
 
 	if (conn->set[KNCF_SEND_CA])
 		msg.send_ca = conn->options[KNCF_SEND_CA];
@@ -428,27 +428,27 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.nm_configured = conn->options[KNCF_NM_CONFIGURED];
 #endif
 
-	msg.sec_label = conn->strings[KSCF_SEC_LABEL];
+	msg.sec_label = conn->values[KSCF_SEC_LABEL].string;
 	msg.conn_debug = conn->options[KW_DEBUG];
 
-	msg.modecfgdns = conn->strings[KSCF_MODECFGDNS];
-	msg.modecfgdomains = conn->strings[KSCF_MODECFGDOMAINS];
-	msg.modecfgbanner = conn->strings[KSCF_MODECFGBANNER];
+	msg.modecfgdns = conn->values[KSCF_MODECFGDNS].string;
+	msg.modecfgdomains = conn->values[KSCF_MODECFGDOMAINS].string;
+	msg.modecfgbanner = conn->values[KSCF_MODECFGBANNER].string;
 
-	msg.mark = conn->strings[KSCF_MARK];
-	msg.mark_in = conn->strings[KSCF_MARK_IN];
-	msg.mark_out = conn->strings[KSCF_MARK_OUT];
+	msg.mark = conn->values[KSCF_MARK].string;
+	msg.mark_in = conn->values[KSCF_MARK_IN].string;
+	msg.mark_out = conn->values[KSCF_MARK_OUT].string;
 
-	msg.vti_interface = conn->strings[KSCF_VTI_INTERFACE];
+	msg.vti_interface = conn->values[KSCF_VTI_INTERFACE].string;
 	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);
 	msg.vti_routing = conn->options[KNCF_VTI_ROUTING];
 	msg.vti_shared = conn->options[KNCF_VTI_SHARED];
 
-	msg.ppk_ids = conn->strings[KSCF_PPK_IDS];
+	msg.ppk_ids = conn->values[KSCF_PPK_IDS].string;
 
-	msg.redirect_to = conn->strings[KSCF_REDIRECT_TO];
+	msg.redirect_to = conn->values[KSCF_REDIRECT_TO].string;
 	conn_log_val(logger, conn, "redirect-to", msg.redirect_to);
-	msg.accept_redirect_to = conn->strings[KSCF_ACCEPT_REDIRECT_TO];
+	msg.accept_redirect_to = conn->values[KSCF_ACCEPT_REDIRECT_TO].string;
 	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
 	msg.send_redirect = conn->options[KNCF_SEND_REDIRECT];
 
@@ -492,8 +492,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (!set_whack_end(&msg.right, &conn->right, logger))
 		return -1;
 
-	msg.esp = conn->strings[KSCF_ESP];
-	msg.ike = conn->strings[KSCF_IKE];
+	msg.esp = conn->values[KSCF_ESP].string;
+	msg.ike = conn->values[KSCF_IKE].string;
 
 	/*
 	 * Save the "computed" pubkeys and IDs before the pointers in

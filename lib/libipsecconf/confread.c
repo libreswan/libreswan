@@ -109,11 +109,11 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # undef SOPT
 
-	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
-	cfg->setup.strings[KSF_NSSDIR] = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
-	cfg->setup.strings[KSF_SECRETSFILE] = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
-	cfg->setup.strings[KSF_DUMPDIR] = clone_str(IPSEC_RUNDIR, "default dumpdir");
-	cfg->setup.strings[KSF_IPSECDIR] = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
+	cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
+	cfg->values[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
+	cfg->values[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
+	cfg->values[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
+	cfg->values[KSF_IPSECDIR].string = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
 
 	/* ==== end of config setup ==== */
 
@@ -211,9 +211,9 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_dirname:
 		case kt_host:
 			/* all treated as strings for now */
-			assert(f < elemsof(cfg->setup.strings));
-			pfreeany(cfg->setup.strings[f]);
-			cfg->setup.strings[f] =
+			assert(f < elemsof(cfg->values));
+			pfreeany(cfg->values[f].string);
+			cfg->values[f].string =
 				clone_str(kw->string, "kt_loose_enum kw->string");
 			cfg->setup.set[f] = true;
 			break;
@@ -298,10 +298,10 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_IPADDR:
-		assert(end->strings[KW_IP] != NULL);
+		assert(end->values[KW_IP].string != NULL);
 
-		if (end->strings[KW_IP][0] == '%') {
-			const char *iface = end->strings[KW_IP] + 1;
+		if (end->values[KW_IP].string[0] == '%') {
+			const char *iface = end->values[KW_IP].string + 1;
 			if (!starter_iface_find(iface,
 						end->host_family,
 						&end->addr,
@@ -312,7 +312,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		err_t er = ttoaddress_num(shunk1(end->strings[KW_IP]),
+		err_t er = ttoaddress_num(shunk1(end->values[KW_IP].string),
 					  end->host_family, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
@@ -344,7 +344,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	if (end->set[KSCF_VTI_IP]) {
-		const char *value = end->strings[KSCF_VTI_IP];
+		const char *value = end->values[KSCF_VTI_IP].string;
 		err_t oops = ttocidr_num(shunk1(value), NULL, &end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
@@ -364,7 +364,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	 */
 	end->nexthop = end->host_family->address.unspec;
 	if (end->set[KW_NEXTHOP]) {
-		char *value = end->strings[KW_NEXTHOP];
+		char *value = end->values[KW_NEXTHOP].string;
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
@@ -388,7 +388,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	/* copy certificate path name */
 
 	if (end->set[KSCF_PROTOPORT]) {
-		char *value = end->strings[KSCF_PROTOPORT];
+		char *value = end->values[KSCF_PROTOPORT].string;
 		err_t ugh = ttoprotoport(value, &end->protoport);
 		if (ugh != NULL)
 			ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value,
@@ -417,7 +417,7 @@ static bool translate_field(struct starter_conn *conn,
 			    enum keyword_set assigned_value,
 			    const struct kw_list *kw,
 			    const char *leftright,
-			    ksf *the_strings,
+			    keyword_values values,
 			    knf *the_options,
 			    keyword_set *set,
 			    struct logger *logger)
@@ -465,15 +465,15 @@ static bool translate_field(struct starter_conn *conn,
 
 			/* only fatal if we try to change values */
 			if (kw->keyword.string == NULL ||
-			    (*the_strings)[field] == NULL ||
+			    values[field].string == NULL ||
 			    !streq(kw->keyword.string,
-				   (*the_strings)[field]))
+				   values[field].string))
 			{
 				serious_err = true;
 				break;
 			}
 		}
-		pfreeany((*the_strings)[field]);
+		pfreeany(values[field].string);
 
 		if (kw->string == NULL) {
 			llog(RC_LOG, logger, "invalid %s value",
@@ -482,17 +482,17 @@ static bool translate_field(struct starter_conn *conn,
 			break;
 		}
 
-		(*the_strings)[field] = clone_str(kw->string, "kt_idtype kw->string");
+		values[field].string = clone_str(kw->string, "kt_idtype kw->string");
 		(*set)[field] = assigned_value;
 		break;
 
 	case kt_appendstring:
 	case kt_appendlist:
 		/* implicitly, this field can have multiple values */
-		if ((*the_strings)[field] == NULL) {
-			(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
+		if (values[field].string == NULL) {
+			values[field].string = clone_str(kw->string, "kt_appendlist kw->string");
 		} else {
-			char *s = (*the_strings)[field];
+			char *s = values[field].string;
 			size_t old_len = strlen(s);	/* excludes '\0' */
 			size_t new_len = strlen(kw->string);
 			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
@@ -500,7 +500,7 @@ static bool translate_field(struct starter_conn *conn,
 			memcpy(n, s, old_len);
 			n[old_len] = ' ';
 			memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
-			(*the_strings)[field] = n;
+			values[field].string = n;
 			pfree(s);
 		}
 		(*set)[field] = true;
@@ -521,9 +521,9 @@ static bool translate_field(struct starter_conn *conn,
 			      LOOSE_ENUM_OTHER &&
 			      kw->number == LOOSE_ENUM_OTHER &&
 			      kw->keyword.string != NULL &&
-			      (*the_strings)[field] != NULL &&
+			      values[field].string != NULL &&
 			      streq(kw->keyword.string,
-				    (*the_strings)[field])))
+				    values[field].string)))
 			{
 				serious_err = true;
 				break;
@@ -533,8 +533,8 @@ static bool translate_field(struct starter_conn *conn,
 		(*the_options)[field] = kw->number;
 		if (kw->number == LOOSE_ENUM_OTHER) {
 			assert(kw->string != NULL);
-			pfreeany((*the_strings)[field]);
-			(*the_strings)[field] = clone_str(
+			pfreeany(values[field].string);
+			values[field].string = clone_str(
 				kw->string, "kt_loose_enum kw->keyword.string");
 		}
 		(*set)[field] = assigned_value;
@@ -586,7 +586,7 @@ static bool translate_leftright(struct starter_conn *conn,
 {
 	return translate_field(conn, cfgp, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
-			       /*the_strings*/&this->strings,
+			       this->values,
 			       /*the_options*/&this->options,
 			       /*set_options*/&this->set,
 			       logger);
@@ -625,7 +625,7 @@ static bool translate_conn(struct starter_conn *conn,
 			serious_err |=
 				translate_field(conn, cfgp, sl, assigned_value, kw,
 						/*leftright*/"",
-						/*the_strings*/&conn->strings,
+						conn->values,
 						/*the_options*/&conn->options,
 						/*set_options*/&conn->set,
 						logger);
@@ -655,7 +655,7 @@ static bool load_conn(struct starter_conn *conn,
 	if (err)
 		return err;
 
-	if (conn->strings[KSCF_ALSO] != NULL &&
+	if (conn->values[KSCF_ALSO].string != NULL &&
 	    !alsoprocessing) {
 		llog(RC_LOG, logger, "also= is not valid in section '%s'",
 		     sl->name);
@@ -751,7 +751,7 @@ static bool load_conn(struct starter_conn *conn,
 		conn->sighash_policy = LEMPTY;
 		conn->authby = (struct authby) {0};
 
-		shunk_t curseby = shunk1(conn->strings[KSCF_AUTHBY]);
+		shunk_t curseby = shunk1(conn->values[KSCF_AUTHBY].string);
 		while (true) {
 
 			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
@@ -840,8 +840,8 @@ static bool load_conn(struct starter_conn *conn,
 	if (afi == NULL) {
 		FOR_EACH_THING(end, &conn->left, &conn->right) {
 			FOR_EACH_THING(ips,
-				       end->strings[KW_IP],
-				       end->strings[KW_NEXTHOP]) {
+				       end->values[KW_IP].string,
+				       end->values[KW_NEXTHOP].string) {
 				if (ips == NULL) {
 					continue;
 				}
@@ -890,15 +890,15 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD(name);
 
-	for (unsigned i = 0; i < elemsof(conn->strings); i++)
-		STR_FIELD(strings[i]);
+	for (unsigned i = 0; i < elemsof(conn->values); i++)
+		STR_FIELD(values[i].string);
 
 	/* handle starter_end strings */
 
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
-	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
-		STR_FIELD_END(strings[i]);
+	for (unsigned i = 0; i < elemsof(conn->left.values); i++)
+		STR_FIELD_END(values[i].string);
 
 # undef STR_FIELD_END
 
@@ -1017,15 +1017,15 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD(name);
 
-	for (unsigned i = 0; i < elemsof(conn->strings); i++)
-		STR_FIELD(strings[i]);
+	for (unsigned i = 0; i < elemsof(conn->values); i++)
+		STR_FIELD(values[i].string);
 
 	/* handle starter_end strings */
 
 # define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
 
-	for (unsigned i = 0; i < elemsof(conn->left.strings); i++)
-		STR_FIELD_END(strings[i]);
+	for (unsigned i = 0; i < elemsof(conn->left.values); i++)
+		STR_FIELD_END(values[i].string);
 
 # undef STR_FIELD_END
 
@@ -1034,8 +1034,8 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	for (unsigned i = 0; i < elemsof(cfg->setup.strings); i++)
-		pfreeany(cfg->setup.strings[i]);
+	for (unsigned i = 0; i < elemsof(cfg->values); i++)
+		pfreeany(cfg->values[i].string);
 
 	confread_free_conn(&cfg->conn_default);
 
