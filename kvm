@@ -65,7 +65,7 @@ pass2help()
     cat <<EOF
   Set up the test environment, run the testsuite:
 
-    install[-PLATFORM]
+    install [PLATFORM]
 	if needed, create the build domains
 	install libreswan on the build domains
 	clone the build domains to create the test domains
@@ -127,39 +127,39 @@ pass2help()
     gateway
 	create the gateway (swandefault) used by the VMs
 
-    base[-PLATFORM]
+    base [PLATFORM]
 	create a domain containing the base OS
 	creates: ${kvm_base_host_names}
-    upgrade[-PLATFORM]
+    upgrade [PLATFORM]
 	create the upgrade domain from the base domain
 	installs missing packages
         updates existing packages
 	creates: ${kvm_upgrade_host_names}
-    transmogrify[-PLATFORM]
+    transmogrify [PLATFORM]
 	create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
 	creates: ${kvm_platforms}
-    build[-PLATFORM]
+    build [PLATFORM]
 	build/install libreswan on the build domains
 	uses: ${kvm_platforms}
-    install[-PLATFORM]
+    install [PLATFORM]
 	build/install libreswan
 	clones build domains to create the test domains
 
   Stepwize delete the domains (just use ./kvm purge):
 
-    shutdown[-PLATFORM]
+    shutdown [PLATFORM]
 	shutdown all domains
-    uninstall[-PLATFORM]
+    uninstall [PLATFORM]
 	delete test-domains, build domain
 	leaves base domains and upgrade domains alone
-    downgrade[-PLATFORM]
+    downgrade [PLATFORM]
 	also deletes upgrade domains
 	also deletes test keys
 	also deletes test results
-    purge[-PLATFORM]
+    purge [PLATFORM]
 	also deletes base domains
-    demolish[-PLATFORM]
+    demolish [PLATFORM]
 	also deletes shared gateway
 
   Libvirt breakage:
@@ -287,15 +287,21 @@ fi
 # XXX: should "sh" be delayed so that "downgrade install sh netbsd"
 # DTRT?
 
+echo=
 modified=
 declare -a directories
 declare -a ops
+declare -a platforms
 
 while test $# -gt 0 ; do
 
     # pass 1; look for modifiers  commands
 
     case "$1" in
+
+	-n )
+	    echo=echo
+	    ;;
 
 	nohup )
 	    if test "${#ops[@]}" -gt 0 ; then
@@ -363,11 +369,14 @@ while test $# -gt 0 ; do
 	    directories[${#directories[@]}]=$(realpath --relative-to=$PWD "$1")
 	    ;;
 
-	* ) # either: a directory or a pass2 command
+	* ) # a directory, a pass2 command, or a platform
 
 	    if [[ " ${pass2} " =~ " $1 " ]] ; then
 	       # a pass2 command, accumulate
 		ops[${#ops[@]}]=$1
+	    elif [[ " ${kvm_platforms} " =~ " $1 " ]] ; then
+		# platform, accumulate
+		platforms[${#platforms[@]}]=$1
 	    elif test -n "${relative}" -a -d ${relative}/$1 ; then
 		directories[${#directories[@]}]=$(realpath --relative-to=$PWD ${relative}/$1)
 	    elif test -z "${relative}" -a -d "$1" ; then
@@ -413,6 +422,14 @@ kvm_test_status=$(print-kvm-variable KVM_TEST_STATUS)
 kvm_test_platform=$(print-kvm-variable KVM_TEST_PLATFORM)
 kvm_test_name=$(print-kvm-variable KVM_TEST_NAME)
 kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
+
+run()
+{
+    echo "$@"
+    if test -z "${echo}" ; then
+	"$@"
+    fi
+}
 
 kvmresults()
 {
@@ -472,8 +489,9 @@ while test $i -lt ${#ops[@]} ; do
 
     case ${op} in
 
-	add ) git add "${directories[@]}"
-	      ;;
+	add )
+	    run git add "${directories[@]}"
+	    ;;
 
 	kill )
 	    kill_command
@@ -482,19 +500,32 @@ while test $i -lt ${#ops[@]} ; do
 	    status_command
 	    ;;
 
-	gateway | config | base* | upgrade* | transmogrify* | build* | install* | \
-        shutdown* | uninstall* | downgrade* | demolish* | \
-        check-clean | clean | purge* )
-	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" ) || exit $?
+	base | upgrade | transmogrify | build | install | \
+        shutdown | uninstall | downgrade | demolish | purge )
+	    if test "${#platforms[@]}" -gt 0 ; then
+		targets=$(for platform in ${platforms[@]} ; do
+			      echo kvm-${op}-${platform}
+			  done)
+		run ${gnumake} ${targets} "${makeflags[@]}" || exit $?
+	    else
+		run ${gnumake} kvm-${op} "${makeflags[@]}" || exit $?
+	    fi
+	    ;;
+	base* | upgrade* | transmogrify* | build* | install* | \
+        shutdown* | uninstall* | downgrade* | demolish* | purge* )
+	    run ${gnumake} kvm-${op} "${makeflags[@]}" || exit $?
+	    ;;
+	gateway | config | check-clean | clean )
+	    run ${gnumake} kvm-${op} "${makeflags[@]}" || exit $?
 	    ;;
 	check | recheck )
-	    ( set -x ; ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="${directories[*]}" ) || exit $?
+	    run ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="${directories[*]}" || exit $?
 	    ;;
 	diffs )
-	    diffs_command "${directories[@]}"
+	    run diffs_command "${directories[@]}"
 	    ;;
 	results )
-	    results_command "${directories[@]}"
+	    run results_command "${directories[@]}"
 	    ;;
 	failed | unresolved )
 	    # should leave: failed and/or unresolved
@@ -503,28 +534,28 @@ while test $i -lt ${#ops[@]} ; do
 		unresolved ) match="--result unresolved" ;;
 	    esac
 	    if test  ${i} -lt ${#ops[@]} ; then
-		set -- $(results_command ${match} "${directories[@]}" 2>/dev/null)
+		run set -- $(results_command ${match} "${directories[@]}" 2>/dev/null)
 	    else
-		results_command ${match} "${directories[@]}"
+		run results_command ${match} "${directories[@]}"
 	    fi
 	    ;;
 	patch )
-	    diffs_command "${directories[@]}" | patch -p1
+	    run diffs_command "${directories[@]}" | patch -p1
 	    ;;
 	keys )
-	    ( set -x ; ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}" )
+	    run ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}"
 	    ;;
 	restart )
-	    sudo systemctl restart libvirtd
+	    run sudo systemctl restart libvirtd
 	    ;;
 	nsinstall )
-	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsinstall
+	    run testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsinstall
 	    ;;
 	nsreinstall )
-	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsreinstall
+	    run testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsreinstall
 	    ;;
 	nsrun )
-	    testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsrun
+	    run testing/utils/kvmsh.py --chdir /source ${prefix}fedora -- gmake nsrun
 	    ;;
     esac
 done

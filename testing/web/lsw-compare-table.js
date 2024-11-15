@@ -284,7 +284,7 @@ function lsw_compare_table(test_runs) {
 		if (!result) {
 		    return ""
 		}
-		return result.html_issues(this.directory + "/")
+		return result.html_issues(this.directory + "/" + result.test_name + "/")
 	    },
 	})
 	columns.push(results_column)

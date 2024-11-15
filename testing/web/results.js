@@ -43,7 +43,7 @@ function results(div_id, json_file) {
 	    {
 		title: "Issues",
 		html: function(result) {
-		    return result.html_issues("")
+		    return result.html_issues(result.test_name + "/")
 		},
 	    },
 	    {
