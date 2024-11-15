@@ -52,6 +52,7 @@ struct keyword_value {
 	enum keyword_set set;
 	char *string;
 	intmax_t option;
+	deltatime_t deltatime;
 };
 
 typedef struct keyword_value keyword_values[KW_roof];

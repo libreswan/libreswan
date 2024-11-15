@@ -212,6 +212,7 @@ static bool load_setup(struct starter_config *cfg,
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->values));
 			cfg->values[f].option = kw->number;
+			cfg->values[f].deltatime = kw->deltatime;
 			cfg->values[f].set = true;
 			break;
 
@@ -544,6 +545,7 @@ static bool translate_field(struct starter_conn *conn,
 			}
 		}
 
+		values[field].deltatime = kw->deltatime;
 		values[field].option = kw->number;
 		values[field].set = assigned_value;
 		break;
