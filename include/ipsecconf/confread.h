@@ -48,9 +48,8 @@ enum keyword_set {
 	k_default = 2
 };
 
-typedef enum keyword_set keyword_set[KW_roof];
-
 struct keyword_value {
+	enum keyword_set set;
 	char *string;
 	intmax_t option;
 };
@@ -73,7 +72,6 @@ struct starter_end {
 	ip_protoport protoport;
 
 	keyword_values values;
-	keyword_set set;
 };
 
 /*
@@ -86,7 +84,6 @@ struct starter_conn {
 	char *name;
 
 	keyword_values values;
-	keyword_set set;
 
 	enum ike_version ike_version;
 	struct authby authby;
@@ -109,9 +106,6 @@ struct starter_conn {
 };
 
 struct starter_config {
-	struct {
-		keyword_set set;
-	} setup;
 	keyword_values values;
 
 	/* conn %default */

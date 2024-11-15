@@ -163,7 +163,7 @@ static bool set_whack_end(struct whack_end *w,
 		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KW_PUBKEY, "pubkey", },
 	};
 	FOR_EACH_ELEMENT(key, keys) {
-		if (!l->set[key->kscf]) {
+		if (!l->values[key->kscf].set) {
 			continue;
 		}
 
@@ -198,35 +198,35 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->ca = l->values[KSCF_CA].string;
-	if (l->set[KNCF_SENDCERT])
+	if (l->values[KNCF_SENDCERT].set)
 		w->sendcert = l->values[KNCF_SENDCERT].option;
 	else
 		w->sendcert = CERT_ALWAYSSEND;
 
-	if (l->set[KNCF_AUTH])
+	if (l->values[KNCF_AUTH].set)
 		w->auth = l->values[KNCF_AUTH].option;
 
-	if (l->set[KNCF_EAP])
+	if (l->values[KNCF_EAP].set)
 		w->eap = l->values[KNCF_EAP].option;
 	else
 		w->eap = IKE_EAP_NONE;
 
 	w->updown = l->values[KSCF_UPDOWN].string;
 
-	if (l->set[KNCF_XAUTHSERVER])
+	if (l->values[KNCF_XAUTHSERVER].set)
 		w->xauth_server = l->values[KNCF_XAUTHSERVER].option;
-	if (l->set[KNCF_XAUTHCLIENT])
+	if (l->values[KNCF_XAUTHCLIENT].set)
 		w->xauth_client = l->values[KNCF_XAUTHCLIENT].option;
-	if (l->set[KSCF_USERNAME])
+	if (l->values[KSCF_USERNAME].set)
 		w->xauth_username = l->values[KSCF_USERNAME].string;
-	if (l->set[KSCF_GROUNDHOG])
+	if (l->values[KSCF_GROUNDHOG].set)
 		w->groundhog = l->values[KSCF_GROUNDHOG].string;
 
-	if (l->set[KNCF_MODECONFIGSERVER])
+	if (l->values[KNCF_MODECONFIGSERVER].set)
 		w->modecfg_server = l->values[KNCF_MODECONFIGSERVER].option;
-	if (l->set[KNCF_MODECONFIGCLIENT])
+	if (l->values[KNCF_MODECONFIGCLIENT].set)
 		w->modecfg_client = l->values[KNCF_MODECONFIGCLIENT].option;
-	if (l->set[KNCF_CAT])
+	if (l->values[KNCF_CAT].set)
 		w->cat = l->values[KNCF_CAT].option;
 
 	w->addresspool = l->values[KSCF_ADDRESSPOOL].string;
@@ -314,17 +314,17 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.dnshostname = conn->right.values[KW_IP].string;
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
-	if (conn->set[KNCF_IKELIFETIME_MS]) {
+	if (conn->values[KNCF_IKELIFETIME_MS].set) {
 		msg.ikelifetime = deltatime_ms(conn->values[KNCF_IKELIFETIME_MS].option);
 	}
-	if (conn->set[KNCF_IPSEC_LIFETIME_MS]) {
+	if (conn->values[KNCF_IPSEC_LIFETIME_MS].set) {
 		msg.ipsec_lifetime = deltatime_ms(conn->values[KNCF_IPSEC_LIFETIME_MS].option);
 	}
 	msg.sa_rekey_margin = deltatime_ms(conn->values[KNCF_REKEYMARGIN_MS].option);
 	msg.sa_ipsec_max_bytes = conn->values[KNCF_IPSEC_MAXBYTES].option;
 	msg.sa_ipsec_max_packets = conn->values[KNCF_IPSEC_MAXPACKETS].option;
 	msg.sa_rekeyfuzz_percent = conn->values[KNCF_REKEYFUZZ].option;
-	if (conn->set[KNCF_KEYINGTRIES]) {
+	if (conn->values[KNCF_KEYINGTRIES].set) {
 		msg.keyingtries.set = true;
 		msg.keyingtries.value = conn->values[KNCF_KEYINGTRIES].option;
 	}
@@ -355,18 +355,18 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.rekey = conn->values[KNCF_REKEY].option;
 	msg.reauth = conn->values[KNCF_REAUTH].option;
 
-	if (conn->set[KNCF_MTU])
+	if (conn->values[KNCF_MTU].set)
 		msg.mtu = conn->values[KNCF_MTU].option;
-	if (conn->set[KNCF_PRIORITY])
+	if (conn->values[KNCF_PRIORITY].set)
 		msg.priority = conn->values[KNCF_PRIORITY].option;
-	if (conn->set[KNCF_TFC])
+	if (conn->values[KNCF_TFC].set)
 		msg.tfc = conn->values[KNCF_TFC].option;
-	if (conn->set[KNCF_NO_ESP_TFC])
+	if (conn->values[KNCF_NO_ESP_TFC].set)
 		msg.send_no_esp_tfc = conn->values[KNCF_NO_ESP_TFC].option;
-	if (conn->set[KNCF_NFLOG_CONN])
+	if (conn->values[KNCF_NFLOG_CONN].set)
 		msg.nflog_group = conn->values[KNCF_NFLOG_CONN].option;
 
-	if (conn->set[KNCF_REQID]) {
+	if (conn->values[KNCF_REQID].set) {
 		if (conn->values[KNCF_REQID].option <= 0 ||
 		    conn->values[KNCF_REQID].option > IPSEC_MANUAL_REQID_MAX) {
 			llog_error(logger, 0,
@@ -377,11 +377,11 @@ int starter_whack_add_conn(const char *ctlsocket,
 		}
 	}
 
-	if (conn->set[KNCF_TCP_REMOTEPORT]) {
+	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
 		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;
 	}
 
-	if (conn->set[KNCF_ENABLE_TCP]) {
+	if (conn->values[KNCF_ENABLE_TCP].set) {
 		msg.enable_tcp = conn->values[KNCF_ENABLE_TCP].option;
 	}
 
@@ -389,7 +389,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.dpddelay = conn->values[KSCF_DPDDELAY].string;
 	msg.dpdtimeout = conn->values[KSCF_DPDTIMEOUT].string;
 
-	if (conn->set[KNCF_SEND_CA])
+	if (conn->values[KNCF_SEND_CA].set)
 		msg.send_ca = conn->values[KNCF_SEND_CA].option;
 	else
 		msg.send_ca = CA_SEND_NONE;
@@ -397,7 +397,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
 
-	if (conn->set[KNCF_NAT_KEEPALIVE])
+	if (conn->values[KNCF_NAT_KEEPALIVE].set)
 		msg.nat_keepalive = conn->values[KNCF_NAT_KEEPALIVE].option;
 	else
 		msg.nat_keepalive = true;
@@ -406,18 +406,18 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
 
 	/* Activate sending out own vendorid */
-	if (conn->set[KNCF_SEND_VENDORID])
+	if (conn->values[KNCF_SEND_VENDORID].set)
 		msg.send_vendorid = conn->values[KNCF_SEND_VENDORID].option;
 
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
-	if (conn->set[KNCF_INITIAL_CONTACT])
+	if (conn->values[KNCF_INITIAL_CONTACT].set)
 		msg.initial_contact = conn->values[KNCF_INITIAL_CONTACT].option;
 
 	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
-	if (conn->set[KNCF_CISCO_UNITY])
+	if (conn->values[KNCF_CISCO_UNITY].set)
 		msg.cisco_unity = conn->values[KNCF_CISCO_UNITY].option;
 
-	if (conn->set[KNCF_VID_STRONGSWAN])
+	if (conn->values[KNCF_VID_STRONGSWAN].set)
 		msg.fake_strongswan = conn->values[KNCF_VID_STRONGSWAN].option;
 
 	/* Active our Cisco interop code if set */
@@ -482,9 +482,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.esn = conn->values[KNCF_ESN].option; /* yne_options */
 	msg.ppk = conn->values[KNCF_PPK].option; /* nppi_options */
 
-	if (conn->set[KNCF_XAUTHBY])
+	if (conn->values[KNCF_XAUTHBY].set)
 		msg.xauthby = conn->values[KNCF_XAUTHBY].option;
-	if (conn->set[KNCF_XAUTHFAIL])
+	if (conn->values[KNCF_XAUTHFAIL].set)
 		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
 
 	if (!set_whack_end(&msg.left, &conn->left, logger))
