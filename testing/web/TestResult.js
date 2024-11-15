@@ -31,7 +31,7 @@ class TestResult {
 	    href = ""
 	    value = issue
 	}
-	return "<a href=\"" + directory + this.test_name + "/OUTPUT/" + href + "\">" + value + "</a>"
+	return "<a href=\"" + directory + "OUTPUT/" + href + "\">" + value + "</a>"
     }
 
     _html_host_issues(directory, host) {

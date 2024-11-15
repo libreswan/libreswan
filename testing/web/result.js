@@ -31,7 +31,7 @@ function result(result_json, title_id, description_id, result_id) {
 	{
 	    title: "Issues",
 	    html: function(result) {
-		return result.html_issues("OUTPUT")
+		return result.html_issues("")
 	    },
 	},
 	{
