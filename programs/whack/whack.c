@@ -112,8 +112,10 @@ static void help(void)
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
-		"	[--iptfs] [--iptfs-dont-fragment] [--iptfs-packet-size <size>] \\\n"
-		"	[--iptfs-max-queue-size <size>] [--iptfs-init-delay <ms>] --iptfs-drop-time <ms> \\\n"
+		"	[--iptfs[={yes,no}] \\\n"
+		"       [--iptfs-dont-fragment] [--iptfs-packet-size <size>] \\\n"
+		"	[--iptfs-max-queue-size <size>] [--iptfs-init-delay <ms>] \\\n"
+		"       [--iptfs-drop-time <ms> ] \\\n"
 		"	[--iptfs-reorder-window <window>] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--narrowing {yes,no}] \\\n"
@@ -824,7 +826,7 @@ const struct option long_opts[] = {
 	{ "encaps", required_argument, NULL, CD_ENCAPSULATION },
 	{ "encapsulation", optional_argument, NULL, CD_ENCAPSULATION },
 
-	{ "iptfs", no_argument, NULL, CD_IPTFS, },
+	{ "iptfs", optional_argument, NULL, CD_IPTFS, },
 	{ "iptfs-dont-fragment", no_argument, NULL, CD_IPTFS_DONT_FRAG, },
 	{ "iptfs-packet-size", required_argument, NULL, CD_IPTFS_PKT_SIZE },
 	{ "iptfs-max-queue-size", required_argument, NULL, CD_IPTFS_MAX_QSIZE },
@@ -1770,8 +1772,8 @@ int main(int argc, char **argv)
 			msg.reauth = YN_YES;
 			continue;
 
-		case CD_IPTFS: /* --iptfs */
-			msg.iptfs = YN_YES;
+		case CD_IPTFS: /* --iptfs[={yes,no}] */
+			msg.iptfs = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 		case CD_IPTFS_DONT_FRAG: /* --iptfs-dont-fragment */
 			msg.iptfs = YN_YES;
