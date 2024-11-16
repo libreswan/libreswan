@@ -141,16 +141,27 @@ static void confwrite_int(FILE *out,
 		case kt_obsolete:
 			break;
 
-		case kt_time: /* special number, but do work later XXX */
-		case kt_seconds: /* special number, but do work later XXX */
-		case kt_milliseconds: /* special number, but do work later XXX */
 		case kt_binary:
 		case kt_byte:
 		case kt_unsigned:
-			if (values[k->field].set)
+			if (values[k->field].set) {
 				fprintf(out, "\t%s%s=%jd\n", side, k->keyname,
 					values[k->field].option);
+			}
+			break;
+
+		case kt_time:
+		case kt_seconds:
+		case kt_milliseconds:
+			if (values[k->field].set) {
+				deltatime_buf d;
+				fprintf(out, "\t%s%s=%s\n", side, k->keyname,
+					str_deltatime(values[k->field].deltatime, &d));
+			}
+			break;
+
 		}
+
 	}
 }
 
@@ -210,12 +221,15 @@ static void confwrite_str(FILE *out,
 			/* special enumeration */
 			break;
 
-		case kt_time:
-		case kt_seconds:
-		case kt_milliseconds:
 		case kt_binary:
 		case kt_byte:
 			/* special number, not a string */
+			break;
+
+		case kt_time:
+		case kt_seconds:
+		case kt_milliseconds:
+			/* special value in .deltatime */
 			break;
 
 		case kt_percent:
