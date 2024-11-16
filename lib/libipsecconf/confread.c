@@ -80,24 +80,18 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	SOPT(KBF_AUDIT_LOG, true);
 	SOPT(KBF_UNIQUEIDS, true);
 	SOPT(KBF_LISTEN_UDP, true);
-	SOPT(KBF_LISTEN_TCP, false);
 	SOPT(KBF_DO_DNSSEC, true);
-	SOPT(KBF_PERPEERLOG, false);
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
 	SOPT(KBF_IKE_ERRQUEUE, true);
-	SOPT(KBF_NFLOG_ALL, 0); /* disabled per default */
 #ifdef XFRM_LIFETIME_DEFAULT
 	SOPT(KBF_XFRMLIFETIME, XFRM_LIFETIME_DEFAULT); /* not used by pluto itself */
 #endif
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
 
-	SOPT(KBF_KEEPALIVE, 0);                  /* config setup */
 	SOPT(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
 	SOPT(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
 	SOPT(KBF_SHUNTLIFETIME_MS, PLUTO_SHUNT_LIFE_DURATION_DEFAULT * 1000);
 	/* Don't inflict BSI requirements on everyone */
-	SOPT(KBF_SEEDBITS, 0);
-	SOPT(KBF_DROP_OPPO_NULL, false);
 	SOPT(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
 
 	SOPT(KBF_DDOS_MODE, DDOS_AUTO);
@@ -127,15 +121,6 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_TYPE, KS_TUNNEL);
 
 	DOPT(KNCF_INITIAL_CONTACT, true);
-	DOPT(KNCF_CISCO_UNITY, false);
-	DOPT(KNCF_NO_ESP_TFC, false);
-	DOPT(KNCF_IPTFS, false); /* Plan to enable per default in near future */
-	DOPT(KNCF_IPTFS_DONT_FRAG, false);
-	DOPT(KNCF_VID_STRONGSWAN, false);
-	DOPT(KNCF_SEND_VENDORID, false);
-
-	DOPT(KNCF_ENABLE_TCP, 0); /* aka use default */
-	DOPT(KNCF_TCP_REMOTEPORT, 0);	/* aka use default */
 
 	DOPT(KNCF_XAUTHBY, XAUTHBY_FILE);
 	DOPT(KNCF_XAUTHFAIL, XAUTHFAIL_HARD);
