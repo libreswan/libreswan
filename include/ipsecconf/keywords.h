@@ -34,6 +34,7 @@
 
 #include "lset.h"
 #include "constants.h"
+#include "deltatime.h"
 
 /*
  * Keyword value indexes.  The value is stored in:
@@ -365,6 +366,7 @@ struct kw_list {
 	struct keyword keyword;
 	char *string;
 	uintmax_t number;
+	deltatime_t deltatime;
 };
 
 struct section_list {

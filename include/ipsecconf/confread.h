@@ -48,9 +48,14 @@ enum keyword_set {
 	k_default = 2
 };
 
-typedef char *ksf[KW_roof];
-typedef intmax_t knf[KW_roof];
-typedef enum keyword_set keyword_set[KW_roof];
+struct keyword_value {
+	enum keyword_set set;
+	char *string;
+	intmax_t option;
+	deltatime_t deltatime;
+};
+
+typedef struct keyword_value keyword_values[KW_roof];
 
 /*
  * Note: string fields in struct starter_end and struct starter_conn
@@ -67,9 +72,7 @@ struct starter_end {
 	ip_cidr vti_ip;
 	ip_protoport protoport;
 
-	ksf strings;
-	knf options;
-	keyword_set set;
+	keyword_values values;
 };
 
 /*
@@ -81,9 +84,7 @@ struct starter_conn {
 	TAILQ_ENTRY(starter_conn) link;
 	char *name;
 
-	ksf strings;
-	knf options;
-	keyword_set set;
+	keyword_values values;
 
 	enum ike_version ike_version;
 	struct authby authby;
@@ -106,11 +107,7 @@ struct starter_conn {
 };
 
 struct starter_config {
-	struct {
-		ksf strings;
-		knf options;
-		keyword_set set;
-	} setup;
+	keyword_values values;
 
 	/* conn %default */
 	struct starter_conn conn_default;

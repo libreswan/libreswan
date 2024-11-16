@@ -439,9 +439,9 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	address_buf ab, gb, pb;
 	verbose("resolving family=%s src=%s gateway=%s peer %s",
 		(afi == NULL ? "<unset>" : afi->ip_name),
-		pa(host->addrtype, host->addr, host->strings[KW_IP], &ab),
-		pa(host->nexttype, host->nexthop, host->strings[KW_NEXTHOP], &gb),
-		pa(peer->addrtype, peer->addr, peer->strings[KW_IP], &pb));
+		pa(host->addrtype, host->addr, host->values[KW_IP].string, &ab),
+		pa(host->nexttype, host->nexthop, host->values[KW_NEXTHOP].string, &gb),
+		pa(peer->addrtype, peer->addr, peer->values[KW_IP].string, &pb));
 	verbose.level++;
 
 	/*
@@ -518,11 +518,11 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		if (peer->addrtype == KH_IPHOSTNAME) {
 #ifdef USE_DNSSEC
 			/* try numeric first */
-			err_t er = ttoaddress_num(shunk1(peer->strings[KW_IP]),
+			err_t er = ttoaddress_num(shunk1(peer->values[KW_IP].string),
 						  peer->host_family, &peer->addr);
 			if (er != NULL) {
 				/* not numeric, so resolve it */
-				if (!unbound_resolve(peer->strings[KW_IP],
+				if (!unbound_resolve(peer->values[KW_IP].string,
 						     peer->host_family,
 						     &peer->addr,
 						     verbose.logger)) {
@@ -531,7 +531,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				}
 			}
 #else
-			err_t er = ttoaddress_dns(shunk1(peer->strings[KW_IP]),
+			err_t er = ttoaddress_dns(shunk1(peer->values[KW_IP].string),
 						  peer->host_family, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);
@@ -585,8 +585,8 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 context.status == RESOLVE_SUCCESS ? "success" :
 		 context.status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
 		 "???"),
-		pa(host->addrtype, host->addr, host->strings[KW_IP], &ab),
-		pa(host->nexttype, host->nexthop, host->strings[KW_NEXTHOP], &gb));
+		pa(host->addrtype, host->addr, host->values[KW_IP].string, &ab),
+		pa(host->nexttype, host->nexthop, host->values[KW_NEXTHOP].string, &gb));
 	pfree(msgbuf);
 	return context.status;
 }
