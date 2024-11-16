@@ -320,7 +320,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_IPSEC_LIFETIME_MS].set) {
 		msg.ipsec_lifetime = deltatime_ms(conn->values[KNCF_IPSEC_LIFETIME_MS].option);
 	}
-	msg.sa_rekey_margin = deltatime_ms(conn->values[KNCF_REKEYMARGIN_MS].option);
+	if (conn->values[KNCF_REKEYMARGIN_MS].set) {
+		msg.rekeymargin = deltatime_ms(conn->values[KNCF_REKEYMARGIN_MS].option);
+	}
 	msg.sa_ipsec_max_bytes = conn->values[KNCF_IPSEC_MAXBYTES].option;
 	msg.sa_ipsec_max_packets = conn->values[KNCF_IPSEC_MAXPACKETS].option;
 	msg.sa_rekeyfuzz_percent = conn->values[KNCF_REKEYFUZZ].option;
