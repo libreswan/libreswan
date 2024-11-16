@@ -1054,8 +1054,6 @@ int main(int argc, char **argv)
 	msg.keyingtries.set = false;
 	/* whack cannot access kernel_ops->replay_window */
 	msg.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
-	msg.retransmit_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
-	msg.retransmit_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
 	msg.host_afi = NULL;
 	msg.child_afi = NULL;

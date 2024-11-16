@@ -3102,8 +3102,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->sa_rekey_margin = wm->sa_rekey_margin;
 		config->sa_rekey_fuzz = wm->sa_rekeyfuzz_percent;
 
-		config->retransmit_timeout = wm->retransmit_timeout;
-		config->retransmit_interval = wm->retransmit_interval;
+		config->retransmit_timeout =
+			(wm->retransmit_timeout.is_set ? wm->retransmit_timeout :
+			 deltatime_ms(RETRANSMIT_TIMEOUT_DEFAULT * 1000));
+		config->retransmit_interval =
+			(wm->retransmit_interval.is_set ? wm->retransmit_interval :
+			 deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS));
 
 		/*
 		 * A 1500 mtu packet requires 1500/16 ~= 90 crypto
