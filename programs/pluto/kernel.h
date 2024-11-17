@@ -343,15 +343,20 @@ extern const struct kernel_ops *const kernel_stacks[];
  * which %holds are news and which others should expire.
  */
 
-//#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
-#define SHUNT_SCAN_INTERVAL     (2 * 10)   /* time between scans of eroutes */
+#define SHUNT_SCAN_INTERVAL_SECONDS (2*10)
+#define SHUNT_SCAN_INTERVAL     deltatime(SHUNT_SCAN_INTERVAL_SECONDS)   /* time between scans of eroutes */
 
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
  * By making SHUNT_PATIENCE an odd multiple of half of SHUNT_SCAN_INTERVAL,
  * we minimize the effects of jitter.
  */
-#define SHUNT_PATIENCE  (SHUNT_SCAN_INTERVAL * 15 / 2)  /* inactivity timeout */
+#define SHUNT_PATIENCE  deltatime(SHUNT_SCAN_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
+
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT deltatime(15 * secs_per_minute)
+
+extern deltatime_t bare_shunt_interval;
+extern deltatime_t pluto_shunt_lifetime;
 
 extern void show_shunt_status(struct show *);
 extern unsigned shunt_count(void);
@@ -406,8 +411,6 @@ bool kernel_ops_migrate_ipsec_sa(struct child_sa *child);
 
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);
-
-extern deltatime_t bare_shunt_interval;
 
 extern bool kernel_ops_detect_nic_offload(const char *name, struct logger *logger);
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,

@@ -182,7 +182,6 @@ enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
 #endif
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
-deltatime_t pluto_shunt_lifetime = DELTATIME_INIT(PLUTO_SHUNT_LIFE_DURATION_DEFAULT);
 
 unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
 bool pluto_sock_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */

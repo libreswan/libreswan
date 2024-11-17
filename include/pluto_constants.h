@@ -74,7 +74,6 @@ enum ike_version {
 #define IPSEC_SA_MAX_OPERATIONS_STRING "2^63"		/* how to print IPSEC_SA_MAX_OPERATIONS */
 #define IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE 50
 
-#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
 
 #define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */

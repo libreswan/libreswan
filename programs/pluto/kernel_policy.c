@@ -794,7 +794,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     &kernel_policy.src.client,
 				     &kernel_policy.dst.client,
 				     &kernel_policy,
-				     deltatime(SHUNT_PATIENCE),
+				     SHUNT_PATIENCE,
 				     logger, where, "install bare policy");
 }
 

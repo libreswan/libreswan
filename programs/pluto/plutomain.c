@@ -768,7 +768,10 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
-	deltatime_t keep_alive = DELTATIME_INIT(0);
+	deltatime_t keep_alive = deltatime(0);
+
+	pluto_shunt_lifetime = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
+	bare_shunt_interval = SHUNT_SCAN_INTERVAL;
 
 	/* handle arguments */
 	for (;; ) {
@@ -1269,23 +1272,25 @@ int main(int argc, char **argv)
 
 			crl_strict = cfg->values[KBF_CRL_STRICT].option;
 
-			pluto_shunt_lifetime = deltatime_ms(cfg->values[KBF_SHUNTLIFETIME_MS].option);
+			if (cfg->values[KBF_SHUNTLIFETIME].set) {
+				pluto_shunt_lifetime = cfg->values[KBF_SHUNTLIFETIME].deltatime;
+			}
 
 			ocsp_enable = cfg->values[KBF_OCSP_ENABLE].option;
 			ocsp_strict = cfg->values[KBF_OCSP_STRICT].option;
 			if (cfg->values[KBF_OCSP_TIMEOUT_SECONDS].set) {
-				ocsp_timeout = deltatime(cfg->values[KBF_OCSP_TIMEOUT_SECONDS].option);
+				ocsp_timeout = cfg->values[KBF_OCSP_TIMEOUT_SECONDS].deltatime;
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
 			ocsp_method = cfg->values[KBF_OCSP_METHOD].option;
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->values[KBF_OCSP_CACHE_SIZE].option;
 			if (cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].set) {
-				ocsp_cache_min_age = deltatime(cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].option);
+				ocsp_cache_min_age = cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].deltatime;
 				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
 			}
 			if (cfg->values[KBF_OCSP_CACHE_MAX_AGE_SECONDS].set) {
-				ocsp_cache_max_age = deltatime(cfg->values[KBF_OCSP_CACHE_MAX_AGE_SECONDS].option);
+				ocsp_cache_max_age = cfg->values[KBF_OCSP_CACHE_MAX_AGE_SECONDS].deltatime;
 				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
 			}
 
@@ -1305,7 +1310,7 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			crl_check_interval = deltatime_ms(cfg->values[KBF_CRL_CHECKINTERVAL_MS].option);
+			crl_check_interval = cfg->values[KBF_CRL_CHECKINTERVAL].deltatime;
 			uniqueIDs = cfg->values[KBF_UNIQUEIDS].option;
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->values[KBF_DO_DNSSEC].option;
@@ -1362,7 +1367,7 @@ int main(int argc, char **argv)
 			}
 
 			if (cfg->values[KBF_CURL_TIMEOUT_SECONDS].set) {
-				curl_timeout = deltatime(cfg->values[KBF_CURL_TIMEOUT_SECONDS].option);
+				curl_timeout = cfg->values[KBF_CURL_TIMEOUT_SECONDS].deltatime;
 				check_conf(CURL_TIMEOUT_OK, "curl-timeout", logger);
 				/* checked below */
 			}

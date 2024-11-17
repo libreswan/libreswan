@@ -338,12 +338,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "secretsfile",  kv_config,  kt_dirname,  KSF_SECRETSFILE, NULL, NULL, },
   { "statsbin",  kv_config,  kt_dirname,  KSF_STATSBINARY, NULL, NULL, },
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
-  { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME_MS, NULL, NULL, },
+  { "shuntlifetime",  kv_config,  kt_seconds,  KBF_SHUNTLIFETIME, NULL, NULL, },
   { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },
   { "global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL, NULL, },
 
   { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
-  { "crlcheckinterval",  kv_config,  kt_time,  KBF_CRL_CHECKINTERVAL_MS, NULL, NULL, },
+  { "crlcheckinterval",  kv_config,  kt_seconds,  KBF_CRL_CHECKINTERVAL, NULL, NULL, },
 
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
   { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE, NULL, NULL, },
