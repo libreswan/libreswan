@@ -197,7 +197,7 @@ pass2=$(pass2help | awk -v "plat=${kvm_platforms}" -- '
 BEGIN {
 	split(plat, platforms)
 }
-/^    [a-z]*.-PLATFORM.$/ {
+/^    [a-z]* .PLATFORM.$/ {
 	t=$1
 	sub(/[^a-z]*$/,"",t)
 	printf " %s ", t
