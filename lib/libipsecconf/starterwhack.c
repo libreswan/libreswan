@@ -333,8 +333,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.replay_window = conn->values[KNCF_REPLAY_WINDOW].option; /*has default*/
 	msg.ipsec_interface = conn->values[KSCF_IPSEC_INTERFACE].string;
 
-	if (conn->values[KNCF_RETRANSMIT_INTERVAL_MS].set) {
-		msg.retransmit_interval = conn->values[KNCF_RETRANSMIT_INTERVAL_MS].deltatime;
+	if (conn->values[KNCF_RETRANSMIT_INTERVAL].set) {
+		msg.retransmit_interval = conn->values[KNCF_RETRANSMIT_INTERVAL].deltatime;
 	}
 	if (conn->values[KNCF_RETRANSMIT_TIMEOUT_MS].set) {
 		msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT_MS].deltatime;
