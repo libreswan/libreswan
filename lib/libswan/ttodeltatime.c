@@ -22,10 +22,15 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *defau
 {
 	*d = deltatime_zero;
 
-	uintmax_t time;
 	shunk_t cursor = shunk1(t);
 
-	/* <NUMBER>[<SCALE>] => TIME + [<SCALE>] */
+	/*
+	 * parse:
+	 *   <NUMBER>[<SCALE>]
+	 * into:
+	 *   TIME + [<SCALE>]
+	 */
+	uintmax_t time;
 	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*base*/, &time);
 	if (err != NULL) {
 		return diag("bad duration value \"%s\": %s", t, err);
@@ -38,12 +43,17 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *defau
 			    pri_shunk(cursor));
 	}
 
-	/* check convertint TIME to MS doesn't overflow */
-	if (UINTMAX_MAX / scale->ms < time) {
+	/*
+	 * Check that converting TIME to microseconds doesn't
+	 * overflow.  It shouldn't:
+	 *
+	 * $(( 2 ** 62 / 365 / 24 / 60 / 60 / 1000 / 1000 / 1000 )) = 145 Years!
+	 */
+	if (UINTMAX_MAX / scale->us < time) {
 		return diag("duration too large: \"%s\" is more than %ju seconds",
 			    t, UINTMAX_MAX);
 	}
 
-	*d = deltatime_ms(time * scale->ms);
+	*d = deltatime_from_microseconds(time * scale->us);
 	return NULL;
 }

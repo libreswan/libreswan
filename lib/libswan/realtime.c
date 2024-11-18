@@ -27,19 +27,9 @@
 
 const realtime_t realtime_epoch = REALTIME_EPOCH;
 
-realtime_t realtime(time_t time)
+realtime_t realtime(time_t seconds)
 {
-	return (realtime_t) { { time, 0, }, };
-}
-
-realtime_t realtime_ms(intmax_t milliseconds)
-{
-	return (realtime_t) { .rt = timeval_ms(milliseconds), };
-}
-
-uint64_t realmicroseconds(realtime_t t)
-{
-	return t.rt.tv_sec * 1000000LL + t.rt.tv_usec;
+	return (realtime_t) { .rt = from_seconds(seconds), };
 }
 
 realtime_t realtimesum(realtime_t t, deltatime_t d)

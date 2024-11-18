@@ -24,7 +24,7 @@ void check_monotime(void);
 void check_realtime(void);
 
 extern const struct time_cmp {
-	intmax_t l_ms, r_ms;
+	intmax_t l, r;
 	bool lt;
 	bool le;
 	bool eq;
@@ -34,15 +34,16 @@ extern const struct time_cmp {
 	bool sentinel;
 } time_cmp[];
 
-#define CHECK_TIME_CMP_OP(T, O, OP, ...)				\
+#define CHECK_TIME_CMP_OP(TIME, CONVERT, O, OP)				\
 	{								\
-		bool o = T##time_cmp(l, OP, r);				\
+		TIME##_t l = CONVERT(t->l);				\
+		TIME##_t r = CONVERT(t->r);				\
+		bool o = TIME##_cmp(l, OP, r);				\
 		FILE *out = (o == t->O) ? stdout : stderr;		\
-		T##time_buf lb, rb;					\
-		fprintf(out, #T"time_cmp(%s, %s, %s)) -> %s",		\
-			str_##T##time(l, ##__VA_ARGS__, &lb),		\
+		fprintf(out, #TIME"_cmp(%s(%jd), %s, %s(%jd))) -> %s",	\
+			#CONVERT, t->l,					\
 			#OP,						\
-			str_##T##time(r, ##__VA_ARGS__, &rb),		\
+			#CONVERT, t->r,					\
 			bool_str(t->O));				\
 		if (out == stderr) {					\
 			fprintf(out, "; FAIL: returned %s",		\
@@ -52,16 +53,20 @@ extern const struct time_cmp {
 		fprintf(out, "\n");					\
 	}
 
-#define CHECK_TIME_CMP(T, ...)						\
+#define CHECK_TIME_CMP_CONVERT(TIME, CONVERT)				\
 	for (const struct time_cmp *t = time_cmp; !t->sentinel; t++) {	\
-		T##time_t l = T##time_ms(t->l_ms);			\
-		T##time_t r = T##time_ms(t->r_ms);			\
-		CHECK_TIME_CMP_OP(T, lt,  <, ##__VA_ARGS__);		\
-		CHECK_TIME_CMP_OP(T, le, <=, ##__VA_ARGS__);		\
-		CHECK_TIME_CMP_OP(T, eq, ==, ##__VA_ARGS__);		\
-		CHECK_TIME_CMP_OP(T, ge, >=, ##__VA_ARGS__);		\
-		CHECK_TIME_CMP_OP(T, gt,  >, ##__VA_ARGS__);		\
-		CHECK_TIME_CMP_OP(T, ne, !=, ##__VA_ARGS__);		\
+		CHECK_TIME_CMP_OP(TIME, CONVERT, lt,  <); \
+		CHECK_TIME_CMP_OP(TIME, CONVERT, le, <=); \
+		CHECK_TIME_CMP_OP(TIME, CONVERT, eq, ==); \
+		CHECK_TIME_CMP_OP(TIME, CONVERT, ge, >=); \
+		CHECK_TIME_CMP_OP(TIME, CONVERT, gt,  >); \
+		CHECK_TIME_CMP_OP(TIME, CONVERT, ne, !=); \
 	}
+
+#define CHECK_TIME_CMP_SECONDS(TIME, ...) \
+	CHECK_TIME_CMP_CONVERT(TIME, TIME)
+
+#define CHECK_TIME_CMP_MILLISECONDS(TIME, ...) \
+	CHECK_TIME_CMP_CONVERT(TIME, TIME##_from_milliseconds)
 
 #endif

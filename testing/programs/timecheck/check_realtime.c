@@ -51,5 +51,5 @@ void check_realtime(void)
 		}
 	}
 
-	CHECK_TIME_CMP(real, /*UTC?*/false);
+	CHECK_TIME_CMP_SECONDS(realtime, /*UTC?*/false);
 }

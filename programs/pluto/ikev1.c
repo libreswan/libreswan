@@ -2341,7 +2341,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			    IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("XAUTH: Sending XAUTH Login/Password Request");
 				event_schedule(EVENT_v1_SEND_XAUTH,
-					       deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS),
+					       deltatime_from_milliseconds(EVENT_v1_SEND_XAUTH_DELAY_MS),
 					       st);
 				break;
 			}

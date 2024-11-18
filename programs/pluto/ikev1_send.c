@@ -225,7 +225,7 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where)
 	if (st->st_state->kind == STATE_XAUTH_R0 &&
 	    !st->st_connection->config->aggressive) {
 		/* Only for Main mode + XAUTH */
-		event_schedule(EVENT_v1_SEND_XAUTH, deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS), st);
+		event_schedule(EVENT_v1_SEND_XAUTH, deltatime_from_milliseconds(EVENT_v1_SEND_XAUTH_DELAY_MS), st);
 	}
 
 	return ret;

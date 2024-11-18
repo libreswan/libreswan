@@ -23,9 +23,10 @@
 
 struct timescale {
 	const char *suffix;
-	uintmax_t ms;
+	uintmax_t us;
 };
 
+extern const struct timescale timescale_microseconds;
 extern const struct timescale timescale_milliseconds;
 extern const struct timescale timescale_seconds;
 extern const struct timescale timescale_minutes;
@@ -33,8 +34,8 @@ extern const struct timescale timescale_hours;
 extern const struct timescale timescale_days;
 extern const struct timescale timescale_weeks;
 
-#define PRI_TIMESCALE "1%s(%jums)"
-#define pri_timescale(TS) (TS).suffix, (TS).ms
+#define PRI_TIMESCALE "1%s(%juus)"
+#define pri_timescale(TS) (TS).suffix, (TS).us
 
 const struct timescale *ttotimescale(shunk_t s, const struct timescale *default_scale);
 

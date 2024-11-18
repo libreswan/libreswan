@@ -38,35 +38,26 @@ static struct timeval negate_timeval(struct timeval tv)
 	return res;
 }
 
-deltatime_t deltatime(time_t secs)
-{
-	return (deltatime_t) DELTATIME_INIT(secs);
-}
-
-struct timeval timeval_ms(intmax_t ms)
-{
-	/*
-	 * C99 defines '%' thus:
-	 *
-	 * [...] the result of the % operator is the remainder. [...]
-	 * If the quotient a/b is representable, the expression (a/b)*b
-	 * + a%b shall equal a.
-	 */
-	intmax_t ams = imaxabs(ms);
-	struct timeval tv = {
-		.tv_sec = ams / 1000,
-		.tv_usec = ams % 1000 * 1000,
-	};
-	if (ms < 0) {
-		tv = negate_timeval(tv);
-	}
-	return tv;
-}
-
-deltatime_t deltatime_ms(intmax_t milliseconds)
+deltatime_t deltatime(time_t seconds)
 {
 	return (deltatime_t) {
-		.dt = timeval_ms(milliseconds),
+		.dt = from_seconds(seconds),
+		.is_set = true,
+	};
+}
+
+deltatime_t deltatime_from_milliseconds(intmax_t ms)
+{
+	return (deltatime_t) {
+		.dt = from_milliseconds(ms),
+		.is_set = true,
+	};
+}
+
+deltatime_t deltatime_from_microseconds(intmax_t us)
+{
+	return (deltatime_t) {
+		.dt = from_microseconds(us),
 		.is_set = true,
 	};
 }
@@ -131,23 +122,28 @@ deltatime_t deltatime_sub(deltatime_t a, deltatime_t b)
 
 deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar)
 {
-	return deltatime_ms(deltamillisecs(a) * scalar);
+	return deltatime_from_milliseconds(milliseconds_from_deltatime(a) * scalar);
 }
 
 deltatime_t deltatime_divu(deltatime_t a, unsigned scalar)
 {
-	return deltatime_ms(deltamillisecs(a) / scalar);
+	return deltatime_from_milliseconds(milliseconds_from_deltatime(a) / scalar);
 }
 
-intmax_t deltamillisecs(deltatime_t d)
+intmax_t microseconds_from_deltatime(deltatime_t d)
 {
-	return ((intmax_t) d.dt.tv_sec) * 1000 + d.dt.tv_usec / 1000;
+	return microseconds_from(d.dt);
+}
+
+intmax_t milliseconds_from_deltatime(deltatime_t d)
+{
+	return milliseconds_from(d.dt);
 }
 
 intmax_t deltasecs(deltatime_t d)
 {
 	/* XXX: ignore .tv_usec's bias, don't round */
-	return d.dt.tv_sec;
+	return seconds_from(d.dt);
 }
 
 deltatime_t deltatime_scale(deltatime_t d, int num, int denom)
@@ -200,4 +196,60 @@ const char *str_deltatime(deltatime_t d, deltatime_buf *out)
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_deltatime(&buf, d);
 	return out->buf;
+}
+
+struct timeval from_seconds(time_t seconds)
+{
+	struct timeval tv = {
+		.tv_sec = seconds,
+	};
+	return tv;
+}
+
+struct timeval from_milliseconds(intmax_t ms)
+{
+	/*
+	 * C99 defines '%' thus:
+	 *
+	 * [...] the result of the % operator is the remainder. [...]
+	 * If the quotient a/b is representable, the expression (a/b)*b
+	 * + a%b shall equal a.
+	 */
+	intmax_t ams = imaxabs(ms);
+	struct timeval tv = {
+		.tv_sec = ams / 1000,
+		.tv_usec = ams % 1000 * 1000,
+	};
+	if (ms < 0) {
+		tv = negate_timeval(tv);
+	}
+	return tv;
+}
+
+struct timeval from_microseconds(intmax_t us)
+{
+	intmax_t ams = imaxabs(us);
+	struct timeval tv = {
+		.tv_sec = ams / 1000 / 1000,
+		.tv_usec = ams % 1000000,
+	};
+	if (us < 0) {
+		tv = negate_timeval(tv);
+	}
+	return tv;
+}
+
+time_t seconds_from(struct timeval v)
+{
+	return v.tv_sec;
+}
+
+intmax_t milliseconds_from(struct timeval v)
+{
+	return ((intmax_t) v.tv_sec) * 1000 + v.tv_usec / 1000;
+}
+
+intmax_t microseconds_from(struct timeval v)
+{
+	return ((intmax_t) v.tv_sec) * 1000 * 1000 + v.tv_usec;
 }

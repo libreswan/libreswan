@@ -39,8 +39,8 @@ static void check_deltatime_op(const struct test_op *tests, size_t nr_tests,
 {
 	for (unsigned i = 0; i < nr_tests; i++) {
 		const struct test_op *t = &tests[i];
-		deltatime_t l = deltatime_ms(t->lms);
-		deltatime_t r = deltatime_ms(t->rms);
+		deltatime_t l = deltatime_from_milliseconds(t->lms);
+		deltatime_t r = deltatime_from_milliseconds(t->rms);
 		deltatime_buf buf;
 		const char *str = str_deltatime(op(l, r), &buf);
 		FILE *out = (strcmp(str, t->str) == 0) ? stdout : stderr;
@@ -58,32 +58,34 @@ static void check_ttodeltatime(void)
 {
 	static const struct test_ttodeltatime {
 		const char *str;
-		intmax_t ms;
+		intmax_t us;
 		const struct timescale *scale;
 		bool ok;
 	} test_ttodeltatime[] = {
 		/* scale */
-		{ "1", (uintmax_t)1, &timescale_milliseconds, true, },
-		{ "1", (uintmax_t)1*1000, &timescale_seconds, true, },
-		{ "1", (uintmax_t)1*1000*60, &timescale_minutes, true, },
-		{ "1", (uintmax_t)1*1000*60*60, &timescale_hours, true, },
-		{ "1", (uintmax_t)1*1000*60*60*24, &timescale_days, true, },
-		{ "1", (uintmax_t)1*1000*60*60*24*7, &timescale_weeks, true, },
+		{ "1",   (uintmax_t)1,                      &timescale_microseconds, true, },
+		{ "1",   (uintmax_t)1*1000,                 &timescale_milliseconds, true, },
+		{ "1",   (uintmax_t)1*1000*1000,            &timescale_seconds, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60,         &timescale_minutes, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60*60,      &timescale_hours, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60*60*24,   &timescale_days, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60*60*24*7, &timescale_weeks, true, },
 		/* suffix */
-		{ "1ms", (uintmax_t)1, &timescale_milliseconds, true, },
-		{ "1s", (uintmax_t)1*1000, &timescale_milliseconds, true, },
-		{ "1m", (uintmax_t)1*1000*60, &timescale_milliseconds, true, },
-		{ "1h", (uintmax_t)1*1000*60*60, &timescale_milliseconds, true, },
-		{ "1d", (uintmax_t)1*1000*60*60*24, &timescale_milliseconds, true, },
-		{ "1w", (uintmax_t)1*1000*60*60*24*7, &timescale_milliseconds, true, },
+		{ "1us", (uintmax_t)1,                      &timescale_seconds, true, },
+		{ "1ms", (uintmax_t)1*1000,                 &timescale_seconds, true, },
+		{ "1s",  (uintmax_t)1*1000*1000,            &timescale_seconds, true, },
+		{ "1m",  (uintmax_t)1*1000*1000*60,         &timescale_seconds, true, },
+		{ "1h",  (uintmax_t)1*1000*1000*60*60,      &timescale_seconds, true, },
+		{ "1d",  (uintmax_t)1*1000*1000*60*60*24,   &timescale_seconds, true, },
+		{ "1w",  (uintmax_t)1*1000*1000*60*60*24*7, &timescale_seconds, true, },
 		/* error */
-		{ "", (uintmax_t)0, &timescale_seconds, false, },
-		{ "1x", (uintmax_t)0, &timescale_milliseconds, false, },
-		{ "x1", (uintmax_t)0, &timescale_milliseconds, false, },
-		{ "1mm", (uintmax_t)0, &timescale_milliseconds, false, },
-		{ "1seconds", (uintmax_t)0, &timescale_milliseconds, false, },
-		{ "1 s", (uintmax_t)0, &timescale_milliseconds, false, },
-		{ "0x10", (uintmax_t)0, &timescale_seconds, false, },
+		{ "",    (uintmax_t)0,                      &timescale_seconds, false, },
+		{ "1x",  (uintmax_t)0,                      &timescale_milliseconds, false, },
+		{ "x1",  (uintmax_t)0,                      &timescale_milliseconds, false, },
+		{ "1mm", (uintmax_t)0,                      &timescale_milliseconds, false, },
+		{ "1seconds", (uintmax_t)0,                 &timescale_milliseconds, false, },
+		{ "1 s", (uintmax_t)0,                      &timescale_milliseconds, false, },
+		{ "0x10", (uintmax_t)0,                     &timescale_seconds, false, },
 	};
 
 	for (unsigned i = 0; i < elemsof(test_ttodeltatime); i++) {
@@ -107,9 +109,10 @@ static void check_ttodeltatime(void)
 		} else {
 			pfree_diag(&diag);
 		}
-		if (deltamillisecs(d) != t->ms) {
+		intmax_t microseconds = microseconds_from_deltatime(d);
+		if (microseconds != t->us) {
 			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, expecting %jd\n",
-				t->str, pri_timescale(*t->scale), deltamillisecs(d), t->ms);
+				t->str, pri_timescale(*t->scale), microseconds, t->us);
 			fails++;
 			return;
 		}
@@ -131,7 +134,7 @@ void check_deltatime(void)
 	};
 	for (unsigned i = 0; i < elemsof(test_str_deltatime); i++) {
 		const struct test_str_deltatime *t = &test_str_deltatime[i];
-		deltatime_t d = deltatime_ms(t->ms);
+		deltatime_t d = deltatime_from_milliseconds(t->ms);
 		deltatime_buf buf;
 		const char *str = str_deltatime(d, &buf);
 		snprintf(what, sizeof(what), "str_deltatime(%jdms) == %s", t->ms, t->str);
@@ -171,7 +174,8 @@ void check_deltatime(void)
 	};
 	CHECK_DELTATIME_OP(sub);
 
-	CHECK_TIME_CMP(delta);
+	CHECK_TIME_CMP_SECONDS(deltatime);
+	CHECK_TIME_CMP_MILLISECONDS(deltatime);
 
 	check_ttodeltatime();
 

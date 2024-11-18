@@ -667,7 +667,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam(buf, " retransmit-interval: %jdms;",
-		    deltamillisecs(c->config->retransmit_interval));
+		    milliseconds_from_deltatime(c->config->retransmit_interval));
 		jam(buf, " retransmit-timeout: %jds;",
 		    deltasecs(c->config->retransmit_timeout));
 		/* tcp? */

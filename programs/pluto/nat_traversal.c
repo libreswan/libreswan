@@ -49,7 +49,7 @@ deltatime_t nat_keepalive_period = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger)
 {
-	if (deltamillisecs(keep_alive_period) != 0) {
+	if (milliseconds_from_deltatime(keep_alive_period) != 0) {
 		nat_keepalive_period = keep_alive_period;
 	}
 

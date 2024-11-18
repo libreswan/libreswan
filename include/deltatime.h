@@ -51,7 +51,8 @@ extern const deltatime_t deltatime_zero;
 #define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), }, .is_set = true, }
 
 deltatime_t deltatime(time_t secs);
-deltatime_t deltatime_ms(intmax_t milliseconds);
+deltatime_t deltatime_from_milliseconds(intmax_t milliseconds);
+deltatime_t deltatime_from_microseconds(intmax_t microseconds);
 
 /* for monotime(a-b) and realtime(a-b) */
 deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
@@ -76,7 +77,8 @@ deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar);
 /* a/s */
 deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
 
-intmax_t deltamillisecs(deltatime_t d);
+intmax_t microseconds_from_deltatime(deltatime_t d);
+intmax_t milliseconds_from_deltatime(deltatime_t d);
 intmax_t deltasecs(deltatime_t d);
 deltatime_t deltatime_scale(deltatime_t d, int num, int denom);
 
@@ -88,7 +90,7 @@ deltatime_t deltatime_from_timeval(const struct timeval a);
 
 typedef struct {
 	/* slightly over size */
-	char buf[sizeof("-18446744073709551615.1000000")+1/*canary*/]; /* true length ???? */
+	char buf[sizeof("-18446744073709551615.1000000000")+1/*canary*/]; /* true length ???? */
 } deltatime_buf;
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
@@ -96,9 +98,18 @@ size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
 
 diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *default_scale);
 
-/* primitives used to implement times. */
+/*
+ * Primitives used to implement times; try to avoid timeval
+ * explicitly.
+ */
 
-struct timeval timeval_ms(intmax_t milliseconds);
+struct timeval from_seconds(time_t seconds);
+struct timeval from_milliseconds(intmax_t milliseconds);
+struct timeval from_microseconds(intmax_t microseconds);
+intmax_t seconds_from(struct timeval);
+intmax_t milliseconds_from(struct timeval);
+intmax_t microseconds_from(struct timeval);
+
 /* for *time_cmp(): sign(l-r) */
 int timeval_sub_sign(struct timeval l, struct timeval r);
 

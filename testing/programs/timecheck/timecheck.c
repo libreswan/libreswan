@@ -23,18 +23,27 @@
 
 #include "timecheck.h"
 
+/*
+ * 1 second == 1000 milliseconds.
+ *
+ * These values are converted to either seconds or and milliseconds
+ * (deltatime).  The time values store seconds, and microseconds.
+ */
+
 const struct time_cmp time_cmp[] = {
-	/* Milliseconds */
+	/* basic */
 	{ 1, 1, .eq = true, .le = true, .ge = true, },
 	{ 1, 2, .ne = true, .le = true, .lt = true, },
 	{ 2, 1, .ne = true, .ge = true, .gt = true, },
-	/* Seconds */
+	/* 1:1000 */
 	{ 1000, 1000, .eq = true, .le = true, .ge = true, },
 	{ 1000, 2000, .ne = true, .le = true, .lt = true, },
 	{ 2000, 1000, .ne = true, .ge = true, .gt = true, },
 	/* mixed */
 	{ 200, 1000, .ne = true, .le = true, .lt = true, },
 	{ 1000, 200, .ne = true, .ge = true, .gt = true, },
+	{ 1001, 1000, .ne = true, .ge = true, .gt = true, },
+	{ 1000, 1001, .ne = true, .le = true, .lt = true, },
 	{ .sentinel = true, },
 };
 

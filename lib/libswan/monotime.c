@@ -27,12 +27,7 @@
 
 monotime_t monotime(intmax_t seconds)
 {
-	return (monotime_t) { .mt = { .tv_sec = seconds, }, };
-}
-
-monotime_t monotime_ms(intmax_t milliseconds)
-{
-	return (monotime_t) { .mt = timeval_ms(milliseconds), };
+	return (monotime_t) { .mt = from_seconds(seconds), };
 }
 
 const monotime_t monotime_epoch = MONOTIME_EPOCH;

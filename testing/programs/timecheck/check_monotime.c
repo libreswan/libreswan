@@ -112,7 +112,7 @@ void check_monotime(void)
 		}
 	}
 
-	CHECK_TIME_CMP(mono);
+	CHECK_TIME_CMP_SECONDS(monotime);
 
 	static const struct test_op test_monotime_min[] = {
 		{  1000,  100,  100 },

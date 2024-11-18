@@ -398,7 +398,7 @@ void submit_task(struct state *callback_sa,
 		if (impair.helper_thread_delay.enabled) {
 			if (impair.helper_thread_delay.value == 0) {
 				static uint64_t warp = 0;
-				delay = deltatime_ms(++warp);
+				delay = deltatime_from_milliseconds(++warp);
 				llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is warped by %ju milliseconds",
 				     pri_job(job), warp);
 			} else {

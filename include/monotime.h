@@ -49,7 +49,6 @@
 typedef struct { struct timeval mt; } monotime_t;
 
 monotime_t monotime(intmax_t seconds);
-monotime_t monotime_ms(intmax_t milliseconds);
 
 #define MONOTIME_EPOCH { { 0, 0 } }
 

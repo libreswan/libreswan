@@ -19,14 +19,16 @@
 #include "lswcdefs.h"
 #include "constants.h"		/* for secs_per_* */
 
-const struct timescale timescale_milliseconds = { "ms", .ms = 1, };
-const struct timescale timescale_seconds =      { "s",  .ms = 1 * 1000, };
-const struct timescale timescale_minutes =      { "m",  .ms = 1 * 1000 * secs_per_minute, };
-const struct timescale timescale_hours =        { "h",  .ms = 1 * 1000 * secs_per_hour, };
-const struct timescale timescale_days =         { "d",  .ms = 1 * 1000 * secs_per_day, };
-const struct timescale timescale_weeks =        { "w",  .ms = 1 * 1000 * secs_per_day * 7, };
+const struct timescale timescale_microseconds = { "us", .us = (uintmax_t)1, };
+const struct timescale timescale_milliseconds = { "ms", .us = (uintmax_t)1 * 1000, };
+const struct timescale timescale_seconds =      { "s",  .us = (uintmax_t)1 * 1000 * 1000, };
+const struct timescale timescale_minutes =      { "m",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_minute, };
+const struct timescale timescale_hours =        { "h",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_hour, };
+const struct timescale timescale_days =         { "d",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_day, };
+const struct timescale timescale_weeks =        { "w",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_day * 7, };
 
 static const struct timescale *timescales[] = {
+	&timescale_microseconds,
 	&timescale_milliseconds,
 	&timescale_seconds,
 	&timescale_minutes,
