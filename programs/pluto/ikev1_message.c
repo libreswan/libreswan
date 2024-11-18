@@ -131,16 +131,16 @@ bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
  * @param pbs PB Stream
  */
 
-static bool emit_v1_message_padding(struct pbs_out *pbs, const struct state *st)
+static bool emit_v1_message_padding(struct pbs_out *pbs, const struct ike_sa *ike)
 {
 	size_t padding = pad_up(pbs_out_all(pbs).len, 4);
 	if (padding == 0) {
-		ldbg(st->logger, "no IKEv1 message padding required");
-	} else if (!st->st_connection->config->ikepad) {
-		ldbg(st->logger, "IKEv1 message padding of %zu bytes skipped by policy",
+		ldbg(pbs->logger, "no IKEv1 message padding required");
+	} else if (!ike->sa.st_connection->config->ikepad) {
+		ldbg(pbs->logger, "IKEv1 message padding of %zu bytes skipped by policy",
 		     padding);
 	} else {
-		ldbg(st->logger, "padding IKEv1 message with %zu bytes", padding);
+		ldbg(pbs->logger, "padding IKEv1 message with %zu bytes", padding);
 		if (!pbs_out_zero(pbs, padding, "message padding")) {
 			/* already logged */
 			return false; /*fatal*/
@@ -155,7 +155,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 		return false;
 	}
 
-	if (!emit_v1_message_padding(pbs, &ike->sa)) {
+	if (!emit_v1_message_padding(pbs, ike)) {
 		/* already logged */
 		return false; /*fatal*/
 	}
@@ -184,7 +184,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * which is normally 4-bytes.
 	 */
 
-	if (!emit_v1_message_padding(pbs, &ike->sa)) {
+	if (!emit_v1_message_padding(pbs, ike)) {
 		/* already logged */
 		return false; /*fatal*/
 	}
@@ -237,7 +237,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * paths that call ikev1_close_message() before encrypting.
 	 */
 
-	if (!emit_v1_message_padding(pbs, st)) {
+	if (!emit_v1_message_padding(pbs, ike)) {
 		/* already logged */
 		return false; /*fatal*/
 	}
