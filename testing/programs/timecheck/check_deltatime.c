@@ -70,6 +70,7 @@ static void check_ttodeltatime(void)
 		{ "1",   (uintmax_t)1*1000*1000*60*60,      &timescale_hours, true, },
 		{ "1",   (uintmax_t)1*1000*1000*60*60*24,   &timescale_days, true, },
 		{ "1",   (uintmax_t)1*1000*1000*60*60*24*7, &timescale_weeks, true, },
+
 		/* suffix */
 		{ "1us", (uintmax_t)1,                      &timescale_seconds, true, },
 		{ "1ms", (uintmax_t)1*1000,                 &timescale_seconds, true, },
@@ -78,6 +79,14 @@ static void check_ttodeltatime(void)
 		{ "1h",  (uintmax_t)1*1000*1000*60*60,      &timescale_seconds, true, },
 		{ "1d",  (uintmax_t)1*1000*1000*60*60*24,   &timescale_seconds, true, },
 		{ "1w",  (uintmax_t)1*1000*1000*60*60*24*7, &timescale_seconds, true, },
+
+		/* fractions */
+		{ "1.234", (uintmax_t)1234*1000,            &timescale_seconds, true, },
+		{ ".034",  (uintmax_t)  34*1000,            &timescale_seconds, true, },
+		{ "2.",    (uintmax_t)2000*1000,            &timescale_seconds, true, },
+		{ "0.1ms", (uintmax_t)      100,            &timescale_seconds, true, },
+		{ "0.5m",  (uintmax_t)  30*1000*1000,       &timescale_seconds, true, },
+
 		/* error */
 		{ "",    (uintmax_t)0,                      &timescale_seconds, false, },
 		{ "1x",  (uintmax_t)0,                      &timescale_milliseconds, false, },
@@ -86,6 +95,10 @@ static void check_ttodeltatime(void)
 		{ "1seconds", (uintmax_t)0,                 &timescale_milliseconds, false, },
 		{ "1 s", (uintmax_t)0,                      &timescale_milliseconds, false, },
 		{ "0x10", (uintmax_t)0,                     &timescale_seconds, false, },
+		{ "0.1",  (uintmax_t)0,                     &timescale_microseconds, false, },
+		{ "0.1x", (uintmax_t)0,                     &timescale_seconds, false, },
+		{ ".ms",  (uintmax_t)0,                     &timescale_seconds, false, },
+		{ ".",  (uintmax_t)0,                       &timescale_seconds, false, },
 	};
 
 	for (unsigned i = 0; i < elemsof(test_ttodeltatime); i++) {

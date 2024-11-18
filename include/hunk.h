@@ -369,6 +369,10 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 	})
 
 /* see hunkcheck.c */
+
+#define is_digit(HUNK) char_isdigit(hunk_char(HUNK, 0))
+#define is_char(HUNK, CHAR) (hunk_char(HUNK, 0) == CHAR)
+
 bool char_isbdigit(char c);
 bool char_isblank(char c);
 bool char_isdigit(char c);
