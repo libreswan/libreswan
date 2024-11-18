@@ -1304,9 +1304,6 @@ void process_v1_packet(struct msg_digest *md)
 
 #define LOGGER (st != NULL ? st->logger : md->logger)
 
-#define LOG_PACKET(RC, ...) llog(RC, LOGGER, __VA_ARGS__)
-#define LOG_PACKET_JAMBUF(RC_FLAGS, BUF) LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)
-
 /*
  * This routine will not md_delref(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
@@ -1486,9 +1483,9 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			struct_desc *sd = v1_payload_desc(np);
 
 			if (md->digest_roof >= elemsof(md->digest)) {
-				LOG_PACKET(RC_LOG,
-					   "more than %zu payloads in message; ignored",
-					   elemsof(md->digest));
+				llog(RC_LOG, LOGGER,
+				     "more than %zu payloads in message; ignored",
+				     elemsof(md->digest));
 				if (!md->encrypted) {
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 				}
@@ -1513,10 +1510,10 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 						 * unless we're using NAT-T RFC
 						 */
 						lset_buf lb;
-						dbg("st_nat_traversal was: %s",
-						    str_lset(&natt_method_names,
-							     st->hidden_variables.st_nat_traversal,
-							     &lb));
+						ldbg(LOGGER, "st_nat_traversal was: %s",
+						     str_lset(&natt_method_names,
+							      st->hidden_variables.st_nat_traversal,
+							      &lb));
 						sd = NULL;
 					}
 					break;
@@ -1560,9 +1557,9 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					 * We ignore (rather than reject) this in support of people
 					 * with crufty Cisco machines.
 					 */
-					LOG_PACKET(RC_LOG,
-						   "%smessage with unsupported payload ISAKMP_NEXT_SAK (or ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
-						   excuse);
+					llog(RC_LOG, LOGGER,
+					     "%smessage with unsupported payload ISAKMP_NEXT_SAK (or ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
+					     excuse);
 					/*
 					 * Hack to discard payload, whatever it was.
 					 * Since we are skipping the rest of the loop
@@ -1577,9 +1574,8 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					if (d != NULL) {
 						llog(RC_LOG, LOGGER, "%s", str_diag(d));
 						pfree_diag(&d);
-						LOG_PACKET(RC_LOG,
-							   "%smalformed payload in packet",
-							   excuse);
+						llog(RC_LOG, LOGGER, "%smalformed payload in packet",
+						     excuse);
 						if (!md->encrypted) {
 							SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 						}
@@ -1592,10 +1588,10 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				default:
 				{
 					esb_buf b;
-					LOG_PACKET(RC_LOG,
-						   "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
-						   excuse,
-						   str_enum(&ikev1_payload_names, np, &b));
+					llog(RC_LOG, LOGGER,
+					     "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
+					     excuse,
+					     str_enum(&ikev1_payload_names, np, &b));
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
 					}
@@ -1618,11 +1614,11 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					      LELEM(ISAKMP_NEXT_CR) |
 					      LELEM(ISAKMP_NEXT_CERT))) {
 					esb_buf b;
-					LOG_PACKET(RC_LOG,
-						   "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
-						   excuse,
-						   str_enum(&ikev1_payload_names, np, &b),
-						   finite_states[smc->state]->name);
+					llog(RC_LOG, LOGGER,
+					     "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
+					     excuse,
+					     str_enum(&ikev1_payload_names, np, &b),
+					     finite_states[smc->state]->name);
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
 					}
@@ -1630,9 +1626,9 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				}
 
 				esb_buf b;
-				dbg("got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
-				    s, str_enum(&ikev1_payload_names, np, &b),
-				    needed, smc->opt_payloads);
+				ldbg(LOGGER, "got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
+				     s, str_enum(&ikev1_payload_names, np, &b),
+				     needed, smc->opt_payloads);
 				needed &= ~s;
 			}
 
@@ -1647,9 +1643,8 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			if (d != NULL) {
 				llog(RC_LOG, LOGGER, "%s", str_diag(d));
 				pfree_diag(&d);
-				LOG_PACKET(RC_LOG,
-					   "%smalformed payload in packet",
-					   excuse);
+				llog(RC_LOG, LOGGER, "%smalformed payload in packet",
+				     excuse);
 				if (!md->encrypted) {
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 				}
@@ -1661,9 +1656,10 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			case ISAKMP_NEXT_ID:
 			case ISAKMP_NEXT_NATOA_RFC:
 				/* dump ID section */
-				if (DBGP(DBG_BASE)) {
-					DBG_dump("     obj: ", pd->pbs.cur,
-						 pbs_left(&pd->pbs));
+				if (LDBGP(DBG_BASE, LOGGER)) {
+					LDBG_log(LOGGER, "     obj:");
+					LDBG_dump(LOGGER, pd->pbs.cur,
+						  pbs_left(&pd->pbs));
 				}
 				break;
 			default:
@@ -1697,10 +1693,10 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			excuse = "";
 		}
 
-		if (DBGP(DBG_BASE) &&
+		if (LDBGP(DBG_BASE, LOGGER) &&
 		    pbs_left(&md->message_pbs) != 0) {
-			DBG_log("removing %d bytes of padding",
-				(int) pbs_left(&md->message_pbs));
+			LDBG_log(LOGGER, "removing %d bytes of padding",
+				 (int) pbs_left(&md->message_pbs));
 		}
 
 		md->message_pbs.roof = md->message_pbs.cur;
@@ -1708,7 +1704,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		/* check that all mandatory payloads appeared */
 
 		if (needed != 0) {
-			LOG_PACKET_JAMBUF(RC_LOG, buf) {
+			LLOG_JAMBUF(RC_LOG, LOGGER, buf) {
 				jam(buf, "message for %s is missing payloads ",
 				    finite_states[from_state]->name);
 				jam_lset_short(buf, &ikev1_payload_names, "+", needed);
@@ -1733,8 +1729,8 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 */
 		if (md->chain[ISAKMP_NEXT_SA] != NULL &&
 		    md->hdr.isa_np != ISAKMP_NEXT_SA) {
-			LOG_PACKET(RC_LOG,
-				   "malformed Phase 1 message: does not start with an SA payload");
+			llog(RC_LOG, LOGGER,
+			     "malformed Phase 1 message: does not start with an SA payload");
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
@@ -1757,8 +1753,8 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 */
 
 		if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
-			LOG_PACKET(RC_LOG,
-				   "malformed Quick Mode message: does not start with a HASH payload");
+			llog(RC_LOG, LOGGER,
+			     "malformed Quick Mode message: does not start with a HASH payload");
 			if (!md->encrypted) {
 				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
@@ -1773,8 +1769,8 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			i = 1;
 			while (p != NULL) {
 				if (p != &md->digest[i]) {
-					LOG_PACKET(RC_LOG,
-						   "malformed Quick Mode message: SA payload is in wrong position");
+					llog(RC_LOG, LOGGER,
+					     "malformed Quick Mode message: SA payload is in wrong position");
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					}
@@ -1798,20 +1794,20 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			if (id != NULL) {
 				/* at least one */
 				if (id->next == NULL) {
-					LOG_PACKET(RC_LOG,
-						   "malformed Quick Mode message: when present there must be exactly two ID payloads, only one found");
+					llog(RC_LOG, LOGGER,
+					     "malformed Quick Mode message: when present there must be exactly two ID payloads, only one found");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id->next->next != NULL) {
-					LOG_PACKET(RC_LOG,
-						   "malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found");
+					llog(RC_LOG, LOGGER,
+					     "malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
-					LOG_PACKET(RC_LOG,
-						   "malformed Quick Mode message: when present the two ID payloads must be adjacent");
+					llog(RC_LOG, LOGGER,
+					     "malformed Quick Mode message: when present the two ID payloads must be adjacent");
 					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
@@ -1838,17 +1834,18 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		case v1N_IPSEC_RESPONDER_LIFETIME:
 			if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
 				/* these are handled later on in informational() */
-				if (DBGP(DBG_BASE)) {
+				if (LDBGP(DBG_BASE, LOGGER)) {
 					shunk_t header = pbs_in_to_cursor(&p->pbs);
-					DBG_dump_hunk(p->pbs.name, header);
+					LDBG_log(LOGGER, "%s", p->pbs.name);
+					LDBG_hunk(LOGGER, header);
 				}
 				continue;
 			}
 		}
 
 		if (st == NULL) {
-			dbg("ignoring informational payload %s, no corresponding state",
-			    nname.buf);
+			ldbg(LOGGER, "ignoring informational payload %s, no corresponding state",
+			     nname.buf);
 		} else {
 			if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
 				ldbg(st->logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
@@ -1864,14 +1861,15 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				sleep(2);
 				resend_recorded_v1_ike_msg(st, "IMPAIR: retransmitting mangled packet");
 			}
-			LOG_PACKET(RC_LOG,
-				   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
-				   nname.buf, st->st_v1_msgid.id,
-				   p->payload.notification.isan_length);
+			llog(RC_LOG, LOGGER,
+			     "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
+			     nname.buf, st->st_v1_msgid.id,
+			     p->payload.notification.isan_length);
 		}
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, LOGGER)) {
 			shunk_t header = pbs_in_to_cursor(&p->pbs);
-			DBG_dump_hunk(p->pbs.name, header);
+			LDBG_log(LOGGER, "%s", p->pbs.name);
+			LDBG_hunk(LOGGER, header);
 		}
 	}
 
