@@ -469,23 +469,6 @@ static bool parser_kw_bool(struct keyword *kw, const char *yytext,
 	bad_case(yn);
 }
 
-/* parse seconds, but convert to milliseconds; ulgh! */
-
-static bool parser_kw_time(struct keyword *kw, const char *yytext,
-			   uintmax_t *number, deltatime_t *deltatime,
-			   struct logger *logger)
-{
-	diag_t diag = ttodeltatime(yytext, deltatime, &timescale_seconds);
-	if (diag != NULL) {
-		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
-		pfree_diag(&diag);
-		return false;
-	}
-	/* convert seconds to milliseconds */
-	(*number) = deltamillisecs((*deltatime));
-	return true;
-}
-
 static bool parser_kw_deltatime(struct keyword *kw, const char *yytext,
 				const struct timescale *timescale,
 				deltatime_t *deltatime,
@@ -652,10 +635,6 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 
 	case kt_unsigned:
 		ok = parser_kw_unsigned(kw, string, &number, logger);
-		break;
-
-	case kt_time:
-		ok = parser_kw_time(kw, string, &number, &deltatime, logger);
 		break;
 
 	case kt_seconds:

@@ -472,13 +472,13 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "require-id-on-certificate",  kv_conn,  kt_sparse_name,  KNCF_REQUIRE_ID_ON_CERTIFICATE, &yn_option_names, NULL, },
   { "dns-match-id,",  kv_conn,  kt_sparse_name,  KNCF_DNS_MATCH_ID, &yn_option_names, NULL, },
   { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },
-  { "ipsec-lifetime",  kv_conn,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, },
-  { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
-  { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
-  { "salifetime",  kv_conn,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
+  { "ipsec-lifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, },
+  { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
+  { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
+  { "salifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
   { "ipsec-max-packets",  kv_conn,  kt_binary,  KNCF_IPSEC_MAXPACKETS, NULL, NULL, },
 
-  { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT_MS, NULL, NULL, },
+  { "retransmit-timeout",  kv_conn,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT, NULL, NULL, },
   { "retransmit-interval",  kv_conn,  kt_milliseconds,  KNCF_RETRANSMIT_INTERVAL, NULL, NULL, },
 
   { "ikepad",  kv_conn,  kt_sparse_name,  KNCF_IKEPAD, &yn_option_names, NULL, },
@@ -521,11 +521,11 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "overlapip",  kv_conn,  kt_sparse_name,  KNCF_OVERLAPIP, &yn_option_names, NULL, },
   { "reauth",  kv_conn,  kt_sparse_name,  KNCF_REAUTH, &yn_option_names, NULL, },
   { "rekey",  kv_conn,  kt_sparse_name,  KNCF_REKEY, &yn_option_names, NULL, },
-  { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN_MS, NULL, NULL, },
+  { "rekeymargin",  kv_conn,  kt_seconds,  KNCF_REKEYMARGIN, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
   { "keyingtries",  kv_conn,  kt_unsigned,  KNCF_KEYINGTRIES, NULL, NULL, },
   { "replay-window",  kv_conn,  kt_unsigned,  KNCF_REPLAY_WINDOW, NULL, NULL, },
-  { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKELIFETIME_MS, NULL, NULL, },
+  { "ikelifetime",  kv_conn,  kt_seconds,  KNCF_IKELIFETIME, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_sparse_name,  KNCF_FAILURESHUNT, &kw_failureshunt_names, NULL, },
   { "negotiationshunt",  kv_conn,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, &kw_negotiationshunt_names, NULL, },
 

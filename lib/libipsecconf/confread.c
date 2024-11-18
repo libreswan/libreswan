@@ -202,15 +202,19 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_bool:
 		case kt_sparse_name:
 		case kt_unsigned:
-		case kt_time:
-		case kt_seconds:
-		case kt_milliseconds:
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->values));
 			cfg->values[f].option = kw->number;
+			cfg->values[f].set = true;
+			break;
+
+		case kt_seconds:
+		case kt_milliseconds:
+			/* all treated as a number for now */
+			assert(f < elemsof(cfg->values));
 			cfg->values[f].deltatime = kw->deltatime;
 			cfg->values[f].set = true;
 			break;
@@ -523,9 +527,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_bool:
 	case kt_sparse_name:
 	case kt_unsigned:
-	case kt_time:
-	case kt_seconds:
-	case kt_milliseconds:
 	case kt_percent:
 	case kt_binary:
 	case kt_byte:
@@ -544,8 +545,28 @@ static bool translate_field(struct starter_conn *conn,
 			}
 		}
 
-		values[field].deltatime = kw->deltatime;
 		values[field].option = kw->number;
+		values[field].set = assigned_value;
+		break;
+
+	case kt_seconds:
+	case kt_milliseconds:
+		/* all treated as a number for now */
+		if (values[field].set == k_set) {
+			llog(RC_LOG, logger,
+			     "duplicate key '%s%s' in conn %s while processing def %s",
+			     leftright, kw->keyword.keydef->keyname,
+			     conn->name,
+			     sl->name);
+
+			/* only fatal if we try to change values */
+			if (deltatime_cmp(values[field].deltatime, !=, kw->deltatime)) {
+				serious_err = true;
+				break;
+			}
+		}
+
+		values[field].deltatime = kw->deltatime;
 		values[field].set = assigned_value;
 		break;
 

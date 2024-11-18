@@ -150,7 +150,6 @@ static void confwrite_int(FILE *out,
 			}
 			break;
 
-		case kt_time:
 		case kt_seconds:
 		case kt_milliseconds:
 			if (values[k->field].set) {
@@ -226,7 +225,6 @@ static void confwrite_str(FILE *out,
 			/* special number, not a string */
 			break;
 
-		case kt_time:
 		case kt_seconds:
 		case kt_milliseconds:
 			/* special value in .deltatime */
