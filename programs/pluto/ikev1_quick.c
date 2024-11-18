@@ -796,10 +796,11 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 
 	/* encrypt message, except for fixed part of header */
 
-	init_phase2_iv(&ike->sa, child->sa.st_v1_msgid.id,
-		       "IKE sending quick message", HERE);
+	ike->sa.st_v1_new_iv = new_phase2_iv(ike, child->sa.st_v1_msgid.id,
+					     "IKE sending quick message", HERE);
 	restore_new_iv(&child->sa, ike->sa.st_v1_new_iv);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1605,6 +1606,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* encrypt message, except for fixed part of header */
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
@@ -1793,6 +1795,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 
 	/* encrypt message, except for fixed part of header */
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &child->sa)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}

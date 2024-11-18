@@ -467,6 +467,7 @@ static stf_status modecfg_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
@@ -512,7 +513,7 @@ static stf_status modecfg_send_set(struct ike_sa *ike)
 	/* should become a conn option */
 	/* client-side is not yet implemented for this - only works with SoftRemote clients */
 	/* SoftRemote takes the IV for XAUTH from phase2, where Libreswan takes it from phase1 */
-	init_phase2_iv(&ike->sa, &ike->sa.st_v1_msgid.phase15);
+	ike->sa.st_v1_new_iv = init_phase2_iv(ike, &ike->sa.st_v1_msgid.phase15);
 #endif
 
 /* XXX This does not include IPv6 at this point */
@@ -635,9 +636,10 @@ stf_status xauth_send_request(struct ike_sa *ike)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	init_phase2_iv(&ike->sa, ike->sa.st_v1_msgid.phase15,
-		       "IKE sending xauth request", HERE);
+	ike->sa.st_v1_new_iv =
+		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending xauth request", HERE);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
@@ -747,9 +749,10 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	init_phase2_iv(&ike->sa, ike->sa.st_v1_msgid.phase15,
-		       "IKE sending mode cfg request", HERE);
+	ike->sa.st_v1_new_iv =
+		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending mode cfg request", HERE);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
@@ -829,9 +832,10 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	init_phase2_iv(&ike->sa, ike->sa.st_v1_msgid.phase15,
-		       "IKE sending xauth status", HERE);
+	ike->sa.st_v1_new_iv = new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15,
+					     "IKE sending xauth status", HERE);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
@@ -2223,6 +2227,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 
@@ -2485,6 +2490,7 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR;
 

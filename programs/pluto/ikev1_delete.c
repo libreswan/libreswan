@@ -39,7 +39,6 @@
 #include "demux.h"
 #include "pending.h"
 #include "send.h"
-#include "ipsec_doi.h"		/* for init_phase2_iv() !?! */
 #include "ikev1_message.h"
 #include "nat_traversal.h"
 #include "kernel.h"
@@ -233,17 +232,21 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 	 * - we need to preserve (save/restore) st_tpacket.
 	 */
 	{
-		struct crypt_mac old_iv;
+		struct crypt_mac saved_iv = ike->sa.st_v1_iv;
+		struct crypt_mac saved_new_iv = ike->sa.st_v1_new_iv;
+		struct crypt_mac saved_ph1_iv = ike->sa.st_v1_ph1_iv; /* harmless */
 
-		save_iv(&ike->sa, old_iv);
-		init_phase2_iv(&ike->sa, msgid, "IKE sending delete", HERE);
-
+		ike->sa.st_v1_new_iv = new_phase2_iv(ike, msgid,
+						     "IKE sending delete", HERE);
+		/* updates .st_v1_iv and .st_v1_new_iv */
 		passert(close_and_encrypt_v1_message(&r_hdr_pbs, &ike->sa));
 
 		send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);
 
 		/* get back old IV for this state */
-		restore_iv(&ike->sa, old_iv);
+		ike->sa.st_v1_iv = saved_iv;
+		ike->sa.st_v1_new_iv = saved_new_iv;
+		ike->sa.st_v1_ph1_iv = saved_ph1_iv;
 	}
 }
 

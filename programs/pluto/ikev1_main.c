@@ -1101,6 +1101,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	/* encrypt message, except for fixed part of header */
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
@@ -1343,6 +1344,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* encrypt message, sans fixed part of header */
 
+	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
