@@ -1,0 +1,84 @@
+<refsect1>
+  <title>
+    SPECIFYING UNITS
+  </title>
+
+  <refsect2 id='unit_bytes'>
+    <title>
+      BYTE COUNT
+    </title>
+    <para>
+      Options, such as <option>ipsec-max-bytes</option>, that expect a
+      numeric byte count, allow one of the following multipliers as a
+      suffix:
+      <variablelist>
+	<varlistentry>
+	  <term><option>KiB</option></term>
+	  <listitem><para>kilobytes (1024 bytes)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>MiB</option></term>
+	  <listitem><para>megabytes (1024*1024 bytes)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>GiB</option></term>
+	  <listitem><para>gigabytes (1024*1024*1024 bytes)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>TiB</option></term>
+	  <listitem><para>terabytes (1024*1024*1024*1024 bytes)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>PiB</option></term>
+	  <listitem><para>petabytes (1024*1024*1024*1024*1024 bytes)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>EiB</option></term>
+	  <listitem><para>exabytes (1024*1024*1024*1024*1024*1024 bytes)</para></listitem>
+	</varlistentry>
+      </variablelist>
+    </para>
+  </refsect2>
+
+  <refsect2 id='unit_duration'>
+    <title>
+      TIME DURATION
+    </title>
+    <para>
+      Options, such as <option>retransmit-timeout</option>, that
+      expect a numeric duration, also accept decimal fractions, and
+      allow one of the following multipliers as a suffix:
+      <variablelist>
+	<varlistentry>
+	  <term><option>us</option></term>
+	  <listitem><para>microseconds (1/1000000 seconds)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>ms</option></term>
+	  <listitem><para>milliseconds (1/1000 seconds)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>s</option></term>
+	<listitem><para>seconds</para></listitem></varlistentry>
+	<varlistentry><term><option>m</option></term>
+	<listitem><para>minutes (60 seconds)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>h</option></term>
+	  <listitem><para>hours (60*60 seconds)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>d</option></term>
+	  <listitem><para>days (24*60*60 seconds)</para></listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>w</option></term>
+	  <listitem><para>weeks (7*24*60*60 seconds)</para></listitem>
+	</varlistentry>
+      </variablelist>
+      For instance, 1ms and 1000us, 0.5s and 500ms, 1.5h and 90m, are
+      each equivalent.
+    </para>
+</refsect2>
+
+</refsect1>

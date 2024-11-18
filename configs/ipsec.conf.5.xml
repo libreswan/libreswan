@@ -181,6 +181,7 @@
 <!ENTITY tfc SYSTEM "d.ipsec.conf/tfc.xml">
 <!ENTITY type SYSTEM "d.ipsec.conf/type.xml">
 <!ENTITY uniqueids SYSTEM "d.ipsec.conf/uniqueids.xml">
+<!ENTITY units SYSTEM "d.ipsec.conf/units.xml">
 <!ENTITY virtual-private SYSTEM "d.ipsec.conf/virtual-private.xml">
 <!ENTITY vti-interface SYSTEM "d.ipsec.conf/vti-interface.xml">
 <!ENTITY vti-routing SYSTEM "d.ipsec.conf/vti-routing.xml">
@@ -205,6 +206,7 @@
   </refnamediv>
 
   &connsections;
+  &units;
 
   <refsect1 id='conn_sections'>
     &exampleleftright;
