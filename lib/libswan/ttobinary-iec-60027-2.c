@@ -30,13 +30,15 @@
 diag_t ttobinary(const char *t, uint64_t *r, bool prefix_B)
 {
 	*r = 0;
-	uint64_t v;
 	shunk_t cursor = shunk1(t);
-	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*any-base*/, &v);
+	const char *suffix = (prefix_B ? " Bytes" : "");
 
+	uint64_t decimal, numerator, denominator;
+	err_t err = shunk_to_decimal(cursor, &cursor, &decimal,
+				     &numerator, &denominator);
 	if (err != NULL) {
 		return diag("bad binary%s value \"%s\": %s",
-				prefix_B ? " Bytes" : "",  t, err);
+			    suffix,  t, err);
 	}
 
 	const struct binaryscale *scale = prefix_B ?
@@ -45,17 +47,23 @@ diag_t ttobinary(const char *t, uint64_t *r, bool prefix_B)
 
 	if (scale == NULL) {
 		return diag("unrecognized binary%s multiplier \""PRI_SHUNK"\"",
-				prefix_B ? "Bytes" : "", pri_shunk(cursor));
+			    suffix, pri_shunk(cursor));
 	}
 
-	/* XXX: I guess this works? */
-	*r = v * scale->b;
-
-	if (v != 0 && *r / v != scale->b) {
-		*r = 0;
-		return diag("binary too large: \"%s\" is more than %llu %s",
-				t, ULLONG_MAX, prefix_B ? " Bytes" : "");
+	if (UINTMAX_MAX / scale->b < decimal) {
+		return diag("binary%s value \"%s\" overflows", suffix, t);
 	}
 
+	uintmax_t b = decimal * scale->b;
+
+	if (numerator > 0 && denominator > 0) {
+		if (denominator > scale->b) {
+			return diag("binary%s value \"%s\" has sub-byte resolution", suffix, t);
+		}
+		/* fails on really small fractions? */
+		b += (numerator * (scale->b / denominator));
+	}
+
+	*r = b;
 	return NULL;
 }
