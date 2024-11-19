@@ -1697,26 +1697,6 @@ struct_desc ikev2notify_ipcomp_data_desc = {
 };
 
 /*
- * Undocumented Security Context for Labeled IPsec
- *
- * See struct sec_ctx in state.h
- */
-#include "ikev1_labeled_ipsec.h"	/* for struct sec_ctx */
-
-static field_desc sec_ctx_fields[] = {
-	{ ft_nat,  8 / BITS_IN_BYTE, "DOI", NULL },
-	{ ft_nat,  8 / BITS_IN_BYTE, "Alg", NULL },
-	{ ft_nat, 16 / BITS_IN_BYTE, "length", NULL },	/* not ft_len */
-	{ ft_end,  0, NULL, NULL }
-};
-
-struct_desc sec_ctx_desc = {
-	.name = "Security Label Context",
-	.fields = sec_ctx_fields,
-	.size = sizeof(struct sec_ctx),
-};
-
-/*
  * descriptor for each V1 payload type
  *
  * There is a slight problem in that some payloads differ, depending

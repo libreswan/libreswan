@@ -1273,8 +1273,6 @@ struct ikev2_notify_ipcomp_data {
 };
 extern struct_desc ikev2notify_ipcomp_data_desc;
 
-extern struct_desc sec_ctx_desc;
-
 /*
  * Nasty evil global packet buffer.
  */
