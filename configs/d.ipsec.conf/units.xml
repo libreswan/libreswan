@@ -5,12 +5,12 @@
 
   <refsect2 id='unit_bytes'>
     <title>
-      BYTE COUNT
+      BYTE COUNTS AND BINARY DATA
     </title>
     <para>
       Options, such as <option>ipsec-max-bytes</option>, that expect a
-      numeric byte count, allow one of the following multipliers as a
-      suffix:
+      numeric byte count, also accept deciml fractions, and the
+      following multipliers as a suffix:
       <variablelist>
 	<varlistentry>
 	  <term><option>KiB</option></term>
@@ -47,7 +47,7 @@
     <para>
       Options, such as <option>retransmit-timeout</option>, that
       expect a numeric duration, also accept decimal fractions, and
-      allow one of the following multipliers as a suffix:
+      the following multipliers as a suffix:
       <variablelist>
 	<varlistentry>
 	  <term><option>us</option></term>
