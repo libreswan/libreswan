@@ -181,8 +181,7 @@ STATUS "selected ${commit}"
 subdir=$(make -C ${bindir} \
 	      --no-print-directory \
 	      print-web-variable \
-	      WEB_MAKEDIR=${web_makedir} \
-	      WEB_HASH=${commit} \
+	      TESTING_HASH=${commit} \
 	      VARIABLE=WEB_SUBDIR)
 
 resultsdir=${summarydir}/${subdir}
@@ -199,7 +198,9 @@ ln -s ${subdir} ${summarydir}/current
 
 logfile=${resultsdir}/tester.log
 echo writing log to ${logfile}
-exec "$@" > ${logfile} 2>&1 </dev/null
+exec "$@" >> ${logfile} 2>&1 </dev/null
+
+STATUS switched to ${logfile}
 
 set -vx
 
