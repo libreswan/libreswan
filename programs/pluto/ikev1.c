@@ -1433,11 +1433,11 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		size_t cipher_start = (md->message_pbs.cur - md->message_pbs.start);
 		chunk_t cipher_text = chunk2(md->message_pbs.start + cipher_start,
 					     pbs_left(&md->message_pbs));
-		cipher_normal(cipher, DECRYPT,
-			      USE_IKEv1_IV, cipher_text,
-			      &st->st_v1_new_iv,
-			      ike->sa.st_enc_key_nss,
-			      ike->sa.logger);
+		cipher_ikev1(cipher, DECRYPT,
+			     cipher_text,
+			     &st->st_v1_new_iv,
+			     ike->sa.st_enc_key_nss,
+			     ike->sa.logger);
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "IV after:");
 			LDBG_hunk(ike->sa.logger, st->st_v1_new_iv);

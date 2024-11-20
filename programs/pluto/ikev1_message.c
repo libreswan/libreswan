@@ -252,11 +252,11 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		DBG_dump_hunk("IV:", st->st_v1_new_iv);
 	}
 
-	cipher_normal(e, ENCRYPT, USE_IKEv1_IV,
-		      padded_encrypt,
-		      &st->st_v1_new_iv,
-		      ike->sa.st_enc_key_nss,
-		      st->logger);
+	cipher_ikev1(e, ENCRYPT,
+		     padded_encrypt,
+		     &st->st_v1_new_iv,
+		     ike->sa.st_enc_key_nss,
+		     st->logger);
 
 	st->st_v1_iv = st->st_v1_new_iv;
 	if (DBGP(DBG_CRYPT)) {

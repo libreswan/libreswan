@@ -22,14 +22,14 @@
 #include "crypt_symkey.h"
 #include "crypt_mac.h"
 
-void cipher_normal(const struct encrypt_desc *cipher,
-		   enum cipher_op op,
-		   enum cipher_iv_source iv_source,
-		   chunk_t data,
-		   struct crypt_mac *iv,
-		   PK11SymKey *symkey,
-		   struct logger *logger)
+void cipher_ikev1(const struct encrypt_desc *cipher,
+		  enum cipher_op op,
+		  chunk_t data,
+		  struct crypt_mac *iv,
+		  PK11SymKey *symkey,
+		  struct logger *logger)
 {
+	enum cipher_iv_source iv_source = USE_IKEv1_IV;
 	struct cipher_context *context = cipher_context_create(cipher, op, iv_source,
 							       symkey, null_shunk,
 							       logger);

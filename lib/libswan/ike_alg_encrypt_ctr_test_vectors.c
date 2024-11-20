@@ -170,7 +170,7 @@ static bool test_ctr_op(const struct encrypt_desc *encrypt_desc,
 	chunk_t expected_cb = decode_to_chunk("expected counter-block: ", output_cb, logger, HERE);
 
 	/* do_crypt modifies the data and IV in place. */
-	cipher_normal(encrypt_desc, op, USE_IKEv1_IV, tmp, &cb, sym_key, logger);
+	cipher_ikev1(encrypt_desc, op, tmp, &cb, sym_key, logger);
 	if (!verify_hunk(description, opstr,
 			 expected_output, tmp,
 			 logger, HERE)) {

@@ -64,13 +64,12 @@ enum cipher_iv_source {
  * Separate cipher and integrity.
  */
 
-void cipher_normal(const struct encrypt_desc *cipher,
-		   enum cipher_op op,
-		   enum cipher_iv_source iv_source,
-		   chunk_t text,
-		   struct crypt_mac *iv,
-		   PK11SymKey *key,
-		   struct logger *logger);
+void cipher_ikev1(const struct encrypt_desc *cipher,
+		  enum cipher_op op,
+		  chunk_t text,
+		  struct crypt_mac *iv,
+		  PK11SymKey *key,
+		  struct logger *logger);
 
 bool cipher_aead(const struct encrypt_desc *cipher,
 		 enum cipher_op op,
