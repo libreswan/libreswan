@@ -371,9 +371,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 			return;
 		}
 
-		if (drop_new_exchanges()) {
-			/* only log for debug to prevent disk filling up */
-			dbg("pluto is overloaded with half-open IKE SAs; dropping new exchange");
+		if (drop_new_exchanges(md->logger) != NULL) {
+			/* already debug-logged; log would fill disk */
 			return;
 		}
 
@@ -646,13 +645,6 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       shunk_t sec_label,
 					       bool detach_whack)
 {
-	if (drop_new_exchanges()) {
-		/* Only drop outgoing opportunistic connections */
-		if (is_opportunistic(c)) {
-			return NULL;
-		}
-	}
-
 	struct ike_sa *ike = new_v2_ike_sa_initiator(c);
 	if (ike == NULL) {
 		return NULL;

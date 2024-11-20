@@ -377,10 +377,10 @@ stf_status main_inI1_outR1(struct state *null_st,
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct pbs_out r_sa_pbs;
 
-	if (drop_new_exchanges()) {
+	if (drop_new_exchanges(md->logger) != NULL) {
+		/* already debug-logged; log would fill disk */
 		return STF_IGNORE;
 	}
-
 
 	struct connection *c = find_v1_main_mode_connection(md); /* must delref */
 	if (c == NULL) {

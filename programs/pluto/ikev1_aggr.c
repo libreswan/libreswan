@@ -133,7 +133,8 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
-	if (drop_new_exchanges()) {
+	if (drop_new_exchanges(md->logger) != NULL) {
+		/* already debug-logged; log would fill disk */
 		return STF_IGNORE;
 	}
 

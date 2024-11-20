@@ -343,6 +343,19 @@ void initiate(struct connection *c,
 	 */
 
 	if (ike == NULL) {
+
+		/*
+		 * When overloaded constrain things to
+		 * non-opportunistic connections
+		 */
+		if (is_opportunistic(c)) {
+			err_t reason = drop_new_exchanges(logger);
+			if (reason != NULL) {
+				llog(RC_LOG, logger, "dropping new Opportunistic exchange, %s", reason);
+				return;
+			}
+		}
+
 		switch (c->config->ike_version) {
 #ifdef USE_IKEv1
 		case IKEv1:

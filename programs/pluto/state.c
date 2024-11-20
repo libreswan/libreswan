@@ -1601,8 +1601,8 @@ void show_brief_status(struct show *s)
 {
 	show_separator(s);
 	show(s, "State Information: DDoS cookies %s, %s new IKE connections",
-		     require_ddos_cookies() ? "REQUIRED" : "not required",
-		     drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
+	     require_ddos_cookies() ? "REQUIRED" : "not required",
+	     (drop_new_exchanges(show_logger(s)) == NULL ? "Accepting" : "NOT ACCEPTING"));
 
 	show(s, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  total_ike_sa(),
@@ -1774,15 +1774,15 @@ bool require_ddos_cookies(void)
 		 cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_ddos_threshold);
 }
 
-bool drop_new_exchanges(void)
+err_t drop_new_exchanges(struct logger *logger)
 {
 	if (exiting_pluto) {
-		dbg("%s() exiting_pluto!", __func__);
-		return true;
+		ldbg(logger, "%s() exiting_pluto!", __func__);
+		return "exiting pluto";
 	}
 	if (cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen) {
-		dbg("%s() half open count >= %u", __func__, pluto_max_halfopen);
-		return true;
+		ldbg(logger, "%s() half open count >= %u", __func__, pluto_max_halfopen);
+		return "too many half open IKE SAs";
 	}
 	return false;
 }
