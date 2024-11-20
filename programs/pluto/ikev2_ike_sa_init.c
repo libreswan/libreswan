@@ -673,18 +673,22 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		 * sec-label for the child.  Assume this is a forced
 		 * up aka childless IKE SA.
 		 */
-		PEXPECT(c->logger, is_labeled_parent(c));
-		ldbg(c->logger,
+		PEXPECT(ike->sa.logger, is_labeled_parent(c));
+		ldbg(ike->sa.logger,
 		     "labeled parent connection with sec_label="PRI_SHUNK" but no child sec_label; assuming childless",
 		     pri_shunk(c->config->sec_label));
+	} else if (!has_child_policy(policy)) {
+		/*
+		 * When replacing (re-authenticating) the IKE (ISAKMP)
+		 * SA, policy=LEMPTY stopping the code adding a
+		 * pending child - the Child will be lurking on the
+		 * replace queue!?!
+		 */
+		ldbg(ike->sa.logger,
+		     "omitting CHILD SA payloads from the IKE_AUTH request as no child policy");
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
-	} else if (has_child_policy(policy)) {
-		/*
-		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
-		 * so that a Child SA isn't also initiated and this
-		 * code is skipped.
-		 */
+	} else {
 		struct connection *cc;
 		if (is_labeled(c)) {
 			PEXPECT(ike->sa.logger, is_labeled_parent(c));
