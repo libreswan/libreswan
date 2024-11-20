@@ -762,15 +762,6 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-#ifdef SOFTREMOTE_CLIENT_WORKAROUND
-		/* See: http://popoludnica.pl/?id=10100110 */
-		if (ike->sa.st_state->kind == STATE_MODE_CFG_R1) {
-			llog(RC_LOG, ike->sa.logger,
-			     "SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
-			return;
-		}
-#endif
-
 		/* Have we just given an IP address to peer? */
 		if (ike->sa.st_state->kind == STATE_MODE_CFG_R2) {
 			/* ISAKMP is up... */

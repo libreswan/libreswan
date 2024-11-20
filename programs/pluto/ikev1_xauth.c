@@ -508,14 +508,6 @@ static stf_status modecfg_send_set(struct ike_sa *ike)
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef SOFTREMOTE_CLIENT_WORKAROUND
-	/* see: http://popoludnica.pl/?id=10100110 */
-	/* should become a conn option */
-	/* client-side is not yet implemented for this - only works with SoftRemote clients */
-	/* SoftRemote takes the IV for XAUTH from phase2, where Libreswan takes it from phase1 */
-	ike->sa.st_v1_new_iv = init_phase2_iv(ike, &ike->sa.st_v1_msgid.phase15);
-#endif
-
 /* XXX This does not include IPv6 at this point */
 #define MODECFG_SET_ITEM (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) | \
 			  LELEM(IKEv1_INTERNAL_IP4_SUBNET) | \
