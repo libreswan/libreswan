@@ -2028,29 +2028,6 @@ bool accept_v2_notification(v2_notification_t n,
 	return false;
 }
 
-void event_v2_rekey(struct state *st, bool detach_whack)
-{
-	if (v2_state_is_expired(st, "rekey")) {
-		return;
-	}
-
-	struct ike_sa *ike = ike_sa(st, HERE);
-
-	struct child_sa *larval_sa;
-	if (IS_IKE_SA(st)) {
-		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike, /*detach_whack*/false);
-	} else {
-		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st),
-								  detach_whack);
-	}
-
-	llog(RC_LOG, larval_sa->sa.logger,
-	     "initiating rekey to replace %s "PRI_SO" using IKE SA "PRI_SO,
-	     state_sa_name(st),
-	     pri_so(st->st_serialno),
-	     pri_so(ike->sa.st_serialno));
-}
-
 bool v2_transition_from(const struct v2_transition *transition, const struct finite_state *state)
 {
 	FOR_EACH_ELEMENT(from, transition->from) {

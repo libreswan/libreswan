@@ -56,6 +56,5 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype);
 bool emit_v2KE(chunk_t g, const struct dh_desc *group, struct pbs_out *outs);
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred);
 void schedule_v2_replace_event(struct state *st);
-bool v2_state_is_expired(struct state *st, const char *verb);
 
 #endif

@@ -136,7 +136,7 @@ static bool recent_last_contact(struct child_sa *child,
  * note: this mutates *st by calling get_sa_bundle_info
  */
 
-void liveness_check(struct state *st)
+void event_v2_liveness(struct state *st)
 {
 	const monotime_t now = mononow();
 

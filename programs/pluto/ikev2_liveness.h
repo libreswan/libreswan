@@ -20,7 +20,7 @@ struct state;
 struct ike_sa;
 struct child_sa;
 
-void liveness_check(struct state *st);
+void event_v2_liveness(struct state *st);
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t);
 
 #endif

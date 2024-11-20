@@ -371,71 +371,6 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	 */
 }
 
-/*
- * For opportunistic IPsec, we want to delete idle connections, so we
- * are not gaining an infinite amount of unused IPsec SAs.
- *
- * NOTE: Soon we will accept an idletime= configuration option that
- * replaces this check.
- *
- * Only replace the SA when it's been in use (checking for in-use is a
- * separate operation).
- */
-
-static bool expire_ike_because_child_not_used(struct state *st)
-{
-	if (!(IS_IKE_SA_ESTABLISHED(st) ||
-	      IS_CHILD_SA_ESTABLISHED(st))) {
-		/* for instance, too many retransmits trigger replace */
-		return false;
-	}
-
-	struct connection *c = st->st_connection;
-
-	if (!is_opportunistic(c)) {
-		/* killing idle IPsec SA's is only for opportunistic SA's */
-		return false;
-	}
-
-	if (nr_child_leases(c->remote) > 0) {
-		llog_pexpect(st->logger, HERE,
-			     "#%lu has lease; should not be trying to replace",
-			     st->st_serialno);
-		return true;
-	}
-
-	/* see of (most recent) child is busy */
-	struct child_sa *child;
-	struct ike_sa *ike;
-	if (IS_IKE_SA(st)) {
-		ike = pexpect_ike_sa(st);
-		child = child_sa_by_serialno(c->established_child_sa);
-		if (child == NULL) {
-			llog_pexpect(st->logger, HERE,
-				     "can't check usage as IKE SA #%lu has no newest child",
-				     ike->sa.st_serialno);
-			return true;
-		}
-	} else {
-		child = pexpect_child_sa(st);
-		ike = ike_sa(st, HERE);
-	}
-
-	dbg(PRI_SO" check last used on newest CHILD SA "PRI_SO,
-	    ike->sa.st_serialno, child->sa.st_serialno);
-
-	/* not sure why idleness is set to rekey margin? */
-	if (was_eroute_idle(child, c->config->sa_rekey_margin)) {
-		/* we observed no traffic, let IPSEC SA and IKE SA expire */
-		dbg("expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
-		    ike->sa.st_serialno,
-		    child->sa.st_serialno,
-		    deltasecs(c->config->sa_rekey_margin));
-		return true;
-	}
-	return false;
-}
-
 void schedule_v2_replace_event(struct state *st)
 {
 	/*
@@ -516,67 +451,6 @@ void schedule_v2_replace_event(struct state *st)
 	 */
 	event_schedule(kind, lifetime, st);
 	pexpect(st_v2_lifetime_event(st)->ev_type == kind);
-}
-
-bool v2_state_is_expired(struct state *st, const char *verb)
-{
-	struct ike_sa *ike = ike_sa(st, HERE);
-	if (ike == NULL) {
-		/*
-		 * An IKE SA must return itself so NULL implies a
-		 * parentless child.
-		 *
-		 * Even it is decided that Child SAs can linger after
-		 * the IKE SA has gone they shouldn't be getting
-		 * rekeys!
-		 */
-		llog_pexpect(st->logger, HERE,
-			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
-			     verb, st->st_serialno, st->st_clonedfrom);
-		event_force(EVENT_v2_EXPIRE, st);
-		return true;
-	}
-
-	if (expire_ike_because_child_not_used(st)) {
-		struct ike_sa *ike = ike_sa(st, HERE);
-		event_force(EVENT_v2_EXPIRE, &ike->sa);
-		return true;
-	}
-
-	so_serial_t newer_sa = get_newer_sa_from_connection(st);
-	if (newer_sa != SOS_NOBODY) {
-		/*
-		 * A newer SA implies that this SA has already been
-		 * successfully replaced (it's only set when the newer
-		 * SA establishes).
-		 *
-		 * Two ways this can happen:
-		 *
-		 * + the SA should have been expired at the same time
-		 * as the new SA was established; but wasn't
-		 *
-		 * + this and the peer established the same SA in
-		 * parallel, aka crossing the streams; the two SAs are
-		 * allowed to linger until one is clearly obsolete;
-		 * see github/699
-		 *
-		 * either way expire the SA now
-		 */
-		const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-#if 0
-		llog_pexpect(st->logger, HERE,
-			     "not %s stale %s SA #%lu; as already got a newer #%lu",
-			     verb, satype, st->st_serialno, newer_sa);
-#else
-		log_state(RC_LOG, st,
-			  "not %s stale %s SA #%lu; as already got a newer #%lu",
-			  verb, satype, st->st_serialno, newer_sa);
-#endif
-		event_force(EVENT_v2_EXPIRE, st);
-		return true;
-	}
-
-	return false;
 }
 
 static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,

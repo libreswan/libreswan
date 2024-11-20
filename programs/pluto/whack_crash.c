@@ -79,7 +79,7 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 						break;
 #endif
 					case IKEv2:
-						ikev2_replace(st);
+						ikev2_replace(st, /*background*/false);
 						break;
 					}
 				} else {

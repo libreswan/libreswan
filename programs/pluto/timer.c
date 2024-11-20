@@ -290,12 +290,15 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 #endif
 
 	case EVENT_v2_LIVENESS:
-		liveness_check(st);
+		event_v2_liveness(st);
 		break;
 
 	case EVENT_v2_REKEY:
-		pexpect(st->st_ike_version == IKEv2);
 		event_v2_rekey(st, detach_whack);
+		break;
+
+	case EVENT_v2_REPLACE:
+		event_v2_replace(st, detach_whack);
 		break;
 
 #ifdef USE_IKEv1
@@ -303,10 +306,6 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		event_v1_replace(st, now);
 		break;
 #endif
-
-	case EVENT_v2_REPLACE:
-		event_v2_replace(st, now);
-		break;
 
 	case EVENT_v1_EXPIRE:
 	{

@@ -18,7 +18,9 @@
 
 #include "monotime.h"
 
-void event_v2_replace(struct state *st, monotime_t now);
-void ikev2_replace(struct state *st);
+void event_v2_replace(struct state *st, bool detach_whack);
+void event_v2_rekey(struct state *st, bool detach_whack);
+
+void ikev2_replace(struct state *st, bool detach_whack);
 
 #endif

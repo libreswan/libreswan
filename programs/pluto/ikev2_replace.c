@@ -34,7 +34,134 @@
 #include "connections.h"
 #include "ikev2_ike_sa_init.h"
 #include "initiate.h"
-#include "ikev2_parent.h"
+#include "ikev2_create_child_sa.h"
+#include "kernel.h"		/* for was_eroute_idle() */
+
+/*
+ * For opportunistic IPsec, we want to delete idle connections, so we
+ * are not gaining an infinite amount of unused IPsec SAs.
+ *
+ * NOTE: Soon we will accept an idletime= configuration option that
+ * replaces this check.
+ *
+ * Only replace the SA when it's been in use (checking for in-use is a
+ * separate operation).
+ */
+
+static bool expire_ike_because_child_not_used(struct state *st)
+{
+	if (!(IS_IKE_SA_ESTABLISHED(st) ||
+	      IS_CHILD_SA_ESTABLISHED(st))) {
+		/* for instance, too many retransmits trigger replace */
+		return false;
+	}
+
+	struct connection *c = st->st_connection;
+
+	if (!is_opportunistic(c)) {
+		/* killing idle IPsec SA's is only for opportunistic SA's */
+		return false;
+	}
+
+	if (nr_child_leases(c->remote) > 0) {
+		llog_pexpect(st->logger, HERE,
+			     "#%lu has lease; should not be trying to replace",
+			     st->st_serialno);
+		return true;
+	}
+
+	/* see of (most recent) child is busy */
+	struct child_sa *child;
+	struct ike_sa *ike;
+	if (IS_IKE_SA(st)) {
+		ike = pexpect_ike_sa(st);
+		child = child_sa_by_serialno(c->established_child_sa);
+		if (child == NULL) {
+			llog_pexpect(st->logger, HERE,
+				     "can't check usage as IKE SA #%lu has no newest child",
+				     ike->sa.st_serialno);
+			return true;
+		}
+	} else {
+		child = pexpect_child_sa(st);
+		ike = ike_sa(st, HERE);
+	}
+
+	dbg(PRI_SO" check last used on newest CHILD SA "PRI_SO,
+	    ike->sa.st_serialno, child->sa.st_serialno);
+
+	/* not sure why idleness is set to rekey margin? */
+	if (was_eroute_idle(child, c->config->sa_rekey_margin)) {
+		/* we observed no traffic, let IPSEC SA and IKE SA expire */
+		dbg("expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
+		    ike->sa.st_serialno,
+		    child->sa.st_serialno,
+		    deltasecs(c->config->sa_rekey_margin));
+		return true;
+	}
+	return false;
+}
+
+static bool v2_state_is_expired(struct state *st, const char *verb)
+{
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (ike == NULL) {
+		/*
+		 * An IKE SA must return itself so NULL implies a
+		 * parentless child.
+		 *
+		 * Even it is decided that Child SAs can linger after
+		 * the IKE SA has gone they shouldn't be getting
+		 * rekeys!
+		 */
+		llog_pexpect(st->logger, HERE,
+			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
+			     verb, st->st_serialno, st->st_clonedfrom);
+		event_force(EVENT_v2_EXPIRE, st);
+		return true;
+	}
+
+	if (expire_ike_because_child_not_used(st)) {
+		struct ike_sa *ike = ike_sa(st, HERE);
+		event_force(EVENT_v2_EXPIRE, &ike->sa);
+		return true;
+	}
+
+	so_serial_t newer_sa = get_newer_sa_from_connection(st);
+	if (newer_sa != SOS_NOBODY) {
+		/*
+		 * A newer SA implies that this SA has already been
+		 * successfully replaced (it's only set when the newer
+		 * SA establishes).
+		 *
+		 * Two ways this can happen:
+		 *
+		 * + the SA should have been expired at the same time
+		 * as the new SA was established; but wasn't
+		 *
+		 * + this and the peer established the same SA in
+		 * parallel, aka crossing the streams; the two SAs are
+		 * allowed to linger until one is clearly obsolete;
+		 * see github/699
+		 *
+		 * either way expire the SA now
+		 */
+		const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
+#if 0
+		llog_pexpect(st->logger, HERE,
+			     "not %s stale %s SA #%lu; as already got a newer #%lu",
+			     verb, satype, st->st_serialno, newer_sa);
+#else
+		log_state(RC_LOG, st,
+			  "not %s stale %s SA #%lu; as already got a newer #%lu",
+			  verb, satype, st->st_serialno, newer_sa);
+#endif
+		event_force(EVENT_v2_EXPIRE, st);
+		return true;
+	}
+
+	return false;
+}
 
 /* Replace SA with a fresh one that is similar
  *
@@ -46,7 +173,7 @@
  * Does not delete the old state -- someone else will do that.
  */
 
-void ikev2_replace(struct state *st)
+void ikev2_replace(struct state *st, bool detach_whack)
 {
 	/*
 	 * start billing the new state.  The old state also gets
@@ -75,7 +202,7 @@ void ikev2_replace(struct state *st)
 		}
 		initiate_v2_IKE_SA_INIT_request(c, st, &policy, &inception,
 						HUNK_AS_SHUNK(c->child.sec_label),
-						/*background?*/false);
+						detach_whack);
 
 	} else {
 
@@ -87,20 +214,50 @@ void ikev2_replace(struct state *st)
 		 */
 		const struct child_policy policy = capture_child_rekey_policy(st);
 		initiate(st->st_connection, &policy, st->st_serialno, &inception,
-			 null_shunk, /*background?*/false, st->logger,
+			 null_shunk, detach_whack, st->logger,
 			 INITIATED_BY_REPLACE, HERE);
 	}
 }
 
-void event_v2_replace(struct state *st, monotime_t now UNUSED)
+void event_v2_replace(struct state *st, bool detach_whack)
 {
 	if (v2_state_is_expired(st, "replace")) {
 		return;
 	}
 
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-	ldbg(st->logger, "replacing stale %s SA", satype);
+	ldbg(st->logger, "replacing stale %s", state_sa_name(st));
 
-	ikev2_replace(st);
+	ikev2_replace(st, detach_whack);
+
+	/*
+	 * XXX: this kills the existing state, which means the
+	 * 'replace' is never smooth.
+	 */
 	event_force(EVENT_v2_EXPIRE, st);
+}
+
+void event_v2_rekey(struct state *st, bool detach_whack)
+{
+	if (v2_state_is_expired(st, "rekey")) {
+		return;
+	}
+
+	struct ike_sa *ike = ike_sa(st, HERE);
+	if (PBAD(st->logger, ike == NULL)) {
+		return;
+	}
+
+	struct child_sa *larval_sa;
+	if (IS_IKE_SA(st)) {
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_ike(ike, detach_whack);
+	} else {
+		larval_sa = submit_v2_CREATE_CHILD_SA_rekey_child(ike, pexpect_child_sa(st),
+								  detach_whack);
+	}
+
+	llog(RC_LOG, larval_sa->sa.logger,
+	     "initiating rekey to replace %s "PRI_SO" using IKE SA "PRI_SO,
+	     state_sa_name(st),
+	     pri_so(st->st_serialno),
+	     pri_so(ike->sa.st_serialno));
 }

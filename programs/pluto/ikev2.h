@@ -182,8 +182,6 @@ struct v2_exchanges {
 
 extern void init_ikev2(void);
 
-void event_v2_rekey(struct state *st, bool detach_whack);
-
 struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     struct msg_digest *md,
 					     struct pbs_in *in_pbs,
