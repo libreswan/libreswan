@@ -685,7 +685,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 	 */
 	if (ike->sa.st_dh_shared_secret != NULL) {
 		calc_v1_skeyid_and_iv(ike);
-		update_iv(&ike->sa);
+		ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 	}
 
 	/*
@@ -1354,7 +1354,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 			      ike->sa.st_v1_new_iv);
 	}
 
-	set_ph1_iv_from_new(&ike->sa);
+	ike->sa.st_v1_ph1_iv = ike->sa.st_v1_new_iv;
 
 	/*
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
@@ -1449,9 +1449,8 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config
 	 * payloads etc. will not lose our IV
 	 */
-	set_ph1_iv_from_new(&ike->sa);
-
-	update_iv(&ike->sa); /* finalize our Phase 1 IV */
+	ike->sa.st_v1_ph1_iv = ike->sa.st_v1_new_iv;
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;	 /* finalize our Phase 1 IV */
 
 	return STF_OK;
 }

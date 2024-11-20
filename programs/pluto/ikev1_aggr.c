@@ -461,7 +461,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 			return STF_INTERNAL_ERROR;
 	}
 
-	update_iv(&ike->sa);
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* HASH_R or SIG_R out */
 	{
@@ -820,7 +820,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config
 	 * payloads etc. will not lose our IV
 	 */
-	set_ph1_iv_from_new(&ike->sa);
+	ike->sa.st_v1_ph1_iv = ike->sa.st_v1_new_iv;
 	dbg("phase 1 complete");
 
 	ISAKMP_SA_established(ike);
@@ -965,13 +965,13 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 		}
 	}
 
-	update_iv(&ike->sa);  /* Finalize our Phase 1 IV */
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;	  /* Finalize our Phase 1 IV */
 
 	/* save last IV from phase 1 so it can be restored later so anything
 	 * between the end of phase 1 and the start of phase 2 i.e. mode config
 	 * payloads etc. will not lose our IV
 	 */
-	set_ph1_iv_from_new(&ike->sa);
+	ike->sa.st_v1_ph1_iv = ike->sa.st_v1_new_iv;
 	dbg("phase 1 complete");
 
 	ISAKMP_SA_established(ike);

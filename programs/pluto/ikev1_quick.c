@@ -798,7 +798,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 
 	ike->sa.st_v1_new_iv = new_phase2_iv(ike, child->sa.st_v1_msgid.id,
 					     "IKE sending quick message", HERE);
-	restore_new_iv(&child->sa, ike->sa.st_v1_new_iv);
+	child->sa.st_v1_new_iv = ike->sa.st_v1_new_iv;
 
 	/* updates .st_v1_iv and .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(&rbody, &child->sa)) {
@@ -973,8 +973,11 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		remote_client = selector_from_address(c->remote->host.addr);
 	}
 
-	struct crypt_mac new_iv;
-	save_new_iv(&ike->sa, new_iv);
+	/*
+	 * This will be copied to the Child SA, below, so that it is
+	 * ready for the next cipher op.
+	 */
+	struct crypt_mac new_iv = ike->sa.st_v1_new_iv;
 
 	struct hidden_variables hv;
 
@@ -1219,8 +1222,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 */
 
 	child->sa.st_v1_msgid.id = md->hdr.isa_msgid;
-
-	restore_new_iv(&child->sa, new_iv);
+	child->sa.st_v1_new_iv = new_iv; /* from IKE SA, above */
 
 	switch_md_st(md, &child->sa, HERE);	/* feed back new state */
 
@@ -1838,7 +1840,7 @@ stf_status quick_inI2(struct state *child_sa, struct msg_digest *md UNUSED)
 	if (!connection_establish_outbound(ike, child, HERE))
 		return STF_FAIL_v1N;
 
-	update_iv(&child->sa);  /* not actually used, but tidy */
+	child->sa.st_v1_iv = child->sa.st_v1_new_iv;  /* not actually used, but tidy */
 
 	/*
 	 * If we have dpd delay and dpdtimeout set, then we are doing DPD

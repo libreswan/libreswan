@@ -52,22 +52,6 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike);
 
 /* macros to manipulate IVs in state */
 
-#define update_iv(st)	{ \
-	(st)->st_v1_iv = (st)->st_v1_new_iv; \
-    }
-
-#define set_ph1_iv_from_new(st)	{ \
-	(st)->st_v1_ph1_iv = (st)->st_v1_new_iv; \
- }
-
-#define save_new_iv(st, tmp)	{ \
-	(tmp) = (st)->st_v1_new_iv; \
-    }
-
-#define restore_new_iv(st, tmp)	{ \
-	(st)->st_v1_new_iv = (tmp); \
-    }
-
 struct crypt_mac new_phase2_iv(const struct ike_sa *ike, const msgid_t msgid,
 			       const char *why, where_t where);
 

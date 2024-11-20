@@ -199,7 +199,7 @@ static void send_v1_notification(struct logger *logger,
 		struct crypt_mac saved_ph1_iv = ike->sa.st_v1_ph1_iv; /* mostly harmless */
 
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
-			update_iv(&ike->sa);
+			ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 		}
 		ike->sa.st_v1_new_iv = new_phase2_iv(ike, msgid,
 						     "IKE encrypting notification", HERE);

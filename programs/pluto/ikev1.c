@@ -1413,7 +1413,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			} else {
 				/* use old IV */
 				pdbg(st->logger, "phase2_iv: something restoring new IV from .st_v1_iv");
-				restore_new_iv(st, st->st_v1_iv);
+				st->st_v1_new_iv = st->st_v1_iv;
 			}
 		}
 

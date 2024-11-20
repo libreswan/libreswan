@@ -254,7 +254,7 @@ bool close_and_encrypt_v1_message(struct pbs_out *pbs, struct state *st)
 		      &st->st_v1_new_iv,
 		      st->st_enc_key_nss, st->logger);
 
-	update_iv(st);
+	st->st_v1_iv = st->st_v1_new_iv;
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("next IV:", st->st_v1_iv);
 	}
