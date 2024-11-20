@@ -173,16 +173,18 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
  * updates .st_v1_iv and .st_v1_new_iv
  */
 
-bool close_and_encrypt_v1_message(struct pbs_out *pbs, struct state *st)
+bool close_and_encrypt_v1_message(struct ike_sa *ike,
+				  struct pbs_out *pbs,
+				  struct state *st)
 {
-	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
+	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
 	/*
 	 * Pad the message (header and body) to message alignment
 	 * which is normally 4-bytes.
 	 */
 
-	if (!emit_v1_message_padding(pbs, st)) {
+	if (!emit_v1_message_padding(pbs, &ike->sa)) {
 		/* already logged */
 		return false; /*fatal*/
 	}
@@ -250,9 +252,11 @@ bool close_and_encrypt_v1_message(struct pbs_out *pbs, struct state *st)
 		DBG_dump_hunk("IV:", st->st_v1_new_iv);
 	}
 
-	cipher_normal(e, ENCRYPT, USE_IKEv1_IV, padded_encrypt,
+	cipher_normal(e, ENCRYPT, USE_IKEv1_IV,
+		      padded_encrypt,
 		      &st->st_v1_new_iv,
-		      st->st_enc_key_nss, st->logger);
+		      ike->sa.st_enc_key_nss,
+		      st->logger);
 
 	st->st_v1_iv = st->st_v1_new_iv;
 	if (DBGP(DBG_CRYPT)) {

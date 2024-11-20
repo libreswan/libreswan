@@ -1102,7 +1102,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	/* updates .st_v1_iv and .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	return STF_OK;
@@ -1345,7 +1345,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	/* encrypt message, sans fixed part of header */
 
 	/* updates .st_v1_iv and .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(&rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */

@@ -47,7 +47,7 @@ extern bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out 
 extern bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
 			  chunk_t *g, struct pbs_out *outs);
 
-bool close_and_encrypt_v1_message(struct pbs_out *pbs, struct state *st);
+bool close_and_encrypt_v1_message(struct ike_sa *ike, struct pbs_out *pbs, struct state *st);
 bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike);
 
 /* macros to manipulate IVs in state */
