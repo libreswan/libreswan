@@ -1,0 +1,1 @@
+IKE_SESSION_RESUME of IKE SA that was first authenticated using x509

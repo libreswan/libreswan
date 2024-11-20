@@ -1,0 +1,15 @@
+../../guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add west-east
+"west-east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ 
