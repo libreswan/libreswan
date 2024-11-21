@@ -1849,7 +1849,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			} else {
-				llog_pexpect_v2_msgid(ike, "exchange zombie as no response?");
+				llog_pexpect_v2_msgid(ike, "exchange zombie: no FATAL message response was recorded!?!");
 			}
 			break;
 		case NO_MESSAGE:
