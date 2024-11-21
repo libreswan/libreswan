@@ -27,8 +27,8 @@
  *
  */
 
-#define ldbg_ft(LOGGER, FORMAT, ...)		\
-	ldbg(LOGGER, "ft: %*s"FORMAT, indent*2, "", ##__VA_ARGS__)
+#define vdbg_ft(FORMAT, ...)			\
+	vdbg("ft: "FORMAT, ##__VA_ARGS__)
 
 #include "defs.h"
 #include "state.h"
@@ -50,6 +50,7 @@
 #include "ikev2_create_child_sa.h"
 #include "ikev2_delete.h"
 #include "log_limiter.h"		/* for payload_errors_log_limiter; */
+#include "verbose.h"
 
 struct ikev2_payload_errors {
 	bool bad;
@@ -364,41 +365,46 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 	return errors;
 }
 
-static const struct v2_transition *find_v2_transition(struct logger *logger, unsigned indent,
-						      const struct v2_transitions *transitions,
+static const struct v2_transition *find_v2_transition(struct verbose verbose,
 						      const struct msg_digest *md,
+						      const struct v2_transitions *transitions,
 						      struct ikev2_payload_errors *message_payload_status,
 						      struct ikev2_payload_errors *encrypted_payload_status)
 {
+	const unsigned level = verbose.level;
+	enum message_role role = v2_msg_role(md);
+
 	FOR_EACH_ITEM(transition, transitions) {
 
-		ldbg_ft(logger, "trying %s ...", transition->story);
+		verbose.level = level;
+		vdbg_ft("trying %s ...", transition->story);
+		verbose.level++;
 
 		/* message type? */
 		if (transition->exchange != md->hdr.isa_xchg) {
 			enum_buf xb;
-			ldbg_ft(logger, "  exchange type does not match %s",
+			vdbg_ft("exchange type does not match %s",
 				str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
 			continue;
 		}
 
 		/* role? */
-		if (transition->recv_role != v2_msg_role(md)) {
+		if (transition->recv_role != role) {
 			enum_buf rb;
-			ldbg_ft(logger, "  message role does not match %s",
+			vdbg_ft("message role does not match %s",
 				str_enum_short(&message_role_names, transition->recv_role, &rb));
 			continue;
 		}
 
 		/* message payloads */
-		if (!PEXPECT(logger, md->message_payloads.parsed)) {
+		if (!vexpect(md->message_payloads.parsed)) {
 			return NULL;
 		}
 		struct ikev2_payload_errors message_payload_errors
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
 		if (message_payload_errors.bad) {
-			ldbg_ft(logger, "  message payloads do not match");
+			vdbg_ft("message payloads do not match");
 			/* save error for last pattern!?! */
 			*message_payload_status = message_payload_errors;
 			continue;
@@ -410,8 +416,8 @@ static const struct v2_transition *find_v2_transition(struct logger *logger, uns
 		 * so checking is complete and things have matched.
 		 */
 		if (encrypted_payload_status == NULL) {
-			PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) == LEMPTY);
-			ldbg_ft(logger, "  unsecured message matched");
+			vexpect((transition->message_payloads.required & v2P(SK)) == LEMPTY);
+			vdbg_ft("unsecured message matched");
 			return transition;
 		}
 
@@ -419,10 +425,10 @@ static const struct v2_transition *find_v2_transition(struct logger *logger, uns
 		 * Since SK{} payloads are expected, the caller should
 		 * have parsed them.
 		 */
-		if (!PEXPECT(logger, (transition->message_payloads.required & v2P(SK)) != LEMPTY)) {
+		if (!vexpect((transition->message_payloads.required & v2P(SK)) != LEMPTY)) {
 			continue;
 		}
-		if (!PEXPECT(logger, md->encrypted_payloads.parsed)) {
+		if (!vexpect(md->encrypted_payloads.parsed)) {
 			return NULL;
 		}
 
@@ -430,13 +436,13 @@ static const struct v2_transition *find_v2_transition(struct logger *logger, uns
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
-			ldbg_ft(logger, "  secured payloads do not match");
+			vdbg_ft("secured payloads do not match");
 			/* save error for last pattern!?! */
 			*encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
 
-		ldbg_ft(logger, "  secured message matched");
+		vdbg_ft("secured message matched");
 		return transition;
 	}
 
@@ -447,18 +453,18 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 						       const struct msg_digest *md,
 						       bool *secured_payload_failed)
 {
+	enum message_role role = v2_msg_role(md);
+
 	enum_buf xb, rb;
-	unsigned indent = 0;
-	ldbg_ft(ike->sa.logger, "looking for secured transition matching exchange %s %s ...",
-		str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
-	indent = 1;
-	PASSERT(ike->sa.logger, secured_payload_failed != NULL);
+	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
+		     "looking for secured transition matching exchange %s %s ...",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&message_role_names, role, &rb));
+	vassert(secured_payload_failed != NULL);
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
-	enum message_role role = v2_msg_role(md);
 	switch (role) {
 	default:
 	case NO_MESSAGE:
@@ -475,17 +481,22 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		 * IKE_INTERMEDIATE exchanges.  With a matching
 		 * exchange, look for a matching transition.
 		 */
+		const unsigned level = verbose.level;
 		FOR_EACH_ITEM(exchangep, ike->sa.st_state->v2.ike_exchanges) {
 			const struct v2_exchange *exchange = (*exchangep);
-			ldbg_ft(ike->sa.logger, "trying exchange %s ...", exchange->subplot);
+
+			verbose.level = level;
+			vdbg_ft("trying exchange %s ...", exchange->subplot);
+			verbose.level++;
+
 			if (exchange->type != md->hdr.isa_xchg) {
-				ldbg_ft(ike->sa.logger, "  wrong exchange type");
+				vdbg_ft("wrong exchange type");
 				continue;
 			}
 			const struct v2_transition *t =
-				find_v2_transition(ike->sa.logger, indent+1,
+				find_v2_transition(verbose, md,
 						   exchange->responder,
-						   md, &message_payload_status,
+						   &message_payload_status,
 						   &encrypted_payload_status);
 			if (t != NULL) {
 				return t;
@@ -496,12 +507,11 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 	case MESSAGE_RESPONSE:
 	{
 		const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
-		PASSERT(ike->sa.logger, exchange != NULL);
-		ldbg_ft(ike->sa.logger, "trying outstanding exchange %s", exchange->subplot);
+		vassert(exchange != NULL);
 		const struct v2_transition *t =
-			find_v2_transition(ike->sa.logger, indent+1,
+			find_v2_transition(verbose, md,
 					   exchange->response,
-					   md, &message_payload_status,
+					   &message_payload_status,
 					   &encrypted_payload_status);
 		if (t != NULL) {
 			return t;
@@ -547,15 +557,16 @@ diag_t find_v2_unsecured_transition(struct logger *logger,
 				    const struct msg_digest *md,
 				    const struct v2_transition **transition)
 {
-	unsigned indent = 0;
+	enum message_role role = v2_msg_role(md);
+
 	enum_buf xb, rb;
-	ldbg_ft(logger, "looking for an unsecured transition matching exchange %s %s ...",
-		str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
-	indent = 1;
+	VERBOSE_DBGP(DBG_BASE, logger,
+		     "looking for an unsecured transition matching exchange %s %s ...",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&message_role_names, role, &rb));
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
-	(*transition) = find_v2_transition(logger, indent, transitions, md,
+	(*transition) = find_v2_transition(verbose, md, transitions,
 					   &message_payload_status, NULL);
 	if (*transition != NULL) {
 		return NULL;
@@ -576,13 +587,12 @@ diag_t find_v2_unsecured_transition(struct logger *logger,
 bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 {
 	enum message_role role = v2_msg_role(md);
-	unsigned indent = 0;
 
 	enum_buf xb, rb;
-	ldbg_ft(ike->sa.logger, "looking for plausible secured exchange matching %s %s ...",
-		str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
-	indent = 1;
+	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
+		     "looking for plausible secured exchange matching %s %s ...",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&message_role_names, role, &rb));
 
 	/*
 	 * See if the decrypted message payloads include the secured
@@ -590,8 +600,8 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	 *
 	 * At this point, only the message payloads have been parsed.
 	 */
-	PASSERT(ike->sa.logger, md->message_payloads.parsed);
-	PEXPECT(ike->sa.logger, !md->encrypted_payloads.parsed);
+	vassert(md->message_payloads.parsed);
+	vassert(!md->encrypted_payloads.parsed);
 	if ((md->message_payloads.present & (v2P(SK) | v2P(SKF))) == LEMPTY) {
 		llog(RC_LOG, ike->sa.logger, "missing SK or SKF payload; message dropped");
 		return false;
@@ -617,8 +627,8 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb));
 			return false;
 		}
-		ldbg_ft(ike->sa.logger, "plausible; exchange type matches responder %s exchange",
-		     exchange->subplot);
+		vdbg_ft("plausible; exchange type matches responder %s exchange",
+			exchange->subplot);
 		break;
 	case MESSAGE_RESPONSE:
 		exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
@@ -633,7 +643,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			     exchange->subplot);
 			return false;
 		}
-		ldbg_ft(ike->sa.logger, "plausible; exchange type matches outstanding %s exchange",
+		vdbg_ft("plausible; exchange type matches outstanding %s exchange",
 		     exchange->subplot);
 		break;
 	}
@@ -734,23 +744,26 @@ void jam_v2_payload_errors(struct jambuf *buf, const struct msg_digest *md,
 	jam_string(buf, ")");
 }
 
-static void ldbg_transition(struct logger *logger, const char *indent,
+static void vdbg_transition(struct verbose verbose,
 			    const struct v2_transition *t)
 {
 	if (DBGP(DBG_BASE)) {
 
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, indent);
-			jam_string(buf, "-> ");
+		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "->");
 			jam_string(buf, (t->to == NULL ? "<NULL>" :
 					 t->to->short_name));
 			jam_string(buf, "; ");
 			jam_enum_short(buf, &event_type_names, t->timeout_event);
 		}
 
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, indent);
-			jam_string(buf, "   ");
+		verbose.level++;
+
+		LDBG_log(verbose.logger, PRI_VERBOSE"story: %s", pri_verbose, t->story);
+
+		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
 			switch (t->recv_role) {
 			case NO_MESSAGE:
 				/* reverse polarity */
@@ -799,11 +812,10 @@ static void ldbg_transition(struct logger *logger, const char *indent,
 			}
 		}
 
-		DBG_log("%s   story: %s", indent, t->story);
 	}
 }
 
-static void validate_state_child_transition(struct logger *logger,
+static void validate_state_child_transition(struct verbose verbose,
 					    const struct finite_state *from,
 					    const struct v2_transition *t)
 {
@@ -813,58 +825,59 @@ static void validate_state_child_transition(struct logger *logger,
 			found_from = true;
 		}
 	}
-	passert(found_from);
+	vassert(found_from);
 
 	const struct finite_state *to = t->to;
-	passert(to != NULL);
-	passert(to->kind >= STATE_IKEv2_FLOOR);
-	passert(to->kind < STATE_IKEv2_ROOF);
-	passert(to->ike_version == IKEv2);
-	ldbg_transition(logger, "     ", t);
+	vassert(to != NULL);
+	vassert(to->kind >= STATE_IKEv2_FLOOR);
+	vassert(to->kind < STATE_IKEv2_ROOF);
+	vassert(to->ike_version == IKEv2);
+	vdbg_transition(verbose, t);
 	FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
-		passert(payloads->notification == 0);
-		passert(payloads->required == LEMPTY);
-		passert(payloads->optional == LEMPTY);
+		vassert(payloads->notification == 0);
+		vassert(payloads->required == LEMPTY);
+		vassert(payloads->optional == LEMPTY);
 	}
-	passert(t->exchange != 0);
-	passert(t->recv_role == 0);
-	passert(t->processor == NULL);
-	passert(t->llog_success == NULL);
+	vassert(t->exchange != 0);
+	vassert(t->recv_role == 0);
+	vassert(t->processor == NULL);
+	vassert(t->llog_success == NULL);
 }
 
-static void validate_state_exchange(struct logger *logger,
+static void validate_state_exchange(struct verbose verbose,
 				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
 {
 	enum_buf ixb;
-	ldbg(logger, "     => %s (%s); secured: %s",
+	vdbg("=>%s (%s); secured: %s",
 	     str_enum_short(&ikev2_exchange_names, exchange->type, &ixb),
 	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),
 	     bool_str(exchange->secured));
+	verbose.level++;
 
 	if (exchange->initiate != NULL) {
-		ldbg(logger, "        => initiator");
-		ldbg_transition(logger, "           ", exchange->initiate);
+		vdbg("initiator:");
+		vdbg_transition(verbose, exchange->initiate);
 	}
 
 	if (exchange->responder != NULL) {
-		ldbg(logger, "        => responder");
+		vdbg("responder:");
 		FOR_EACH_ITEM(t, exchange->responder) {
-			ldbg_transition(logger, "           ", t);
-			PASSERT(logger, t->exchange == exchange->type);
-			PASSERT(logger, t->recv_role == MESSAGE_REQUEST);
+			vdbg_transition(verbose, t);
+			vassert(t->exchange == exchange->type);
+			vassert(t->recv_role == MESSAGE_REQUEST);
 		}
 	}
 
 	if (exchange->response != NULL) {
-		ldbg(logger, "        => response");
+		vdbg("response:");
 		FOR_EACH_ITEM(t, exchange->response) {
-			ldbg_transition(logger, "           ", t);
+			vdbg_transition(verbose, t);
 		}
 	}
 
-	PASSERT(logger, exchange->subplot != NULL);
-	PASSERT(logger, from->v2.secured == exchange->secured);
+	vassert(exchange->subplot != NULL);
+	vassert(from->v2.secured == exchange->secured);
 
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;
@@ -874,37 +887,44 @@ static void validate_state_exchange(struct logger *logger,
 			break;
 		}
 	}
-	PASSERT(logger, found_transition);
+	vassert(found_transition);
 }
 
-static void validate_state(struct logger *logger, const struct finite_state *from)
+static void validate_state(struct verbose verbose, const struct finite_state *from)
 {
 	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "  ");
+		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam_finite_state(buf, from);
 		}
 	}
+	const unsigned level = ++verbose.level;
 
 	/*
 	 * Validate transitions XOR exchanges.  Can have at most one.
 	 */
 
-	PASSERT(logger, ((from->v2.child_transition == NULL) ||
-			 (from->v2.ike_exchanges == NULL)));
+	vassert((from->v2.child_transition == NULL) ||
+		(from->v2.ike_exchanges == NULL));
 
 	if (from->v2.child_transition != NULL) {
-		validate_state_child_transition(logger, from, from->v2.child_transition);
+		verbose.level = level;
+		vdbg("transitions:");
+		verbose.level++;
+		validate_state_child_transition(verbose, from, from->v2.child_transition);
 	}
 
+	verbose.level = level;
+	vdbg("exchanges:");
+	verbose.level++;
 	FOR_EACH_ITEM(exchange, from->v2.ike_exchanges) {
-		validate_state_exchange(logger, from, *exchange);
+		validate_state_exchange(verbose, from, *exchange);
 	}
 }
 
 void init_ikev2_states(struct logger *logger)
 {
-	ldbg(logger, "checking IKEv2 state table");
+	VERBOSE_DBGP(DBG_BASE, logger, "checking IKEv2 state table");
 	/* XXX: debug this using <<--selftest --debug-all --stderrlog>> */
 
 	/*
@@ -921,11 +941,11 @@ void init_ikev2_states(struct logger *logger)
 		/* fill in using static struct */
 		const struct finite_state *fs = v2_states[kind - STATE_IKEv2_FLOOR];
 		if (fs == NULL) {
-			llog_passert(logger, HERE, "entry %d is NULL", kind);
+			llog_passert(verbose.logger, HERE, "entry %d is NULL", kind);
 		}
-		passert(fs->kind == kind);
-		passert(fs->ike_version == IKEv2);
-		passert(finite_states[kind] == NULL);
+		vassert(fs->kind == kind);
+		vassert(fs->ike_version == IKEv2);
+		vassert(finite_states[kind] == NULL);
 		finite_states[kind] = fs;
 	}
 
@@ -941,8 +961,7 @@ void init_ikev2_states(struct logger *logger)
 	for (enum state_kind kind = STATE_IKEv2_FLOOR; kind < STATE_IKEv2_ROOF; kind++) {
 		/* fill in using static struct */
 		const struct finite_state *from = finite_states[kind];
-		validate_state(logger, from);
-
+		validate_state(verbose, from);
 	}
 
 }
