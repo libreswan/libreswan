@@ -1286,11 +1286,12 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 				 /* const struct v2_transition *transition */
 				 enum state_kind kind)
 {
+	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
+
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
 	const struct v2_transition *transition = fs->v2.child_transition;
 	PASSERT(c->logger, transition != NULL);
-	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
 
 	/*
 	 * Propogate IKEv2 IKE SA bits to the larval IKE SA replacement.
@@ -1303,8 +1304,9 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	child->sa.st_seen_redirect_sup = ike->sa.st_seen_redirect_sup;
 	child->sa.st_sent_redirect = ike->sa.st_sent_redirect;
 
-	change_state(&child->sa, transition->from[0]->kind);
+	change_state(&child->sa, fs->kind);
 	set_v2_transition(&child->sa, transition, HERE);
+
 	return child;
 }
 

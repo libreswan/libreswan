@@ -959,7 +959,6 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	/* starting point */
 	const struct v2_transition undefined_transition = {
 		.story = "suspect message",
-		.from = { state, },
 		.to = finite_states[STATE_UNDEFINED],
 		.recv_role = recv_role,
 		.llog_success = ldbg_v2_success,
@@ -1999,16 +1998,6 @@ bool accept_v2_notification(v2_notification_t n,
 	enum_buf eb;
 	ldbg(logger, "%s neither requested nor accepted",
 	     str_enum_short(&v2_notification_names, n, &eb));
-	return false;
-}
-
-bool v2_transition_from(const struct v2_transition *transition, const struct finite_state *state)
-{
-	FOR_EACH_ELEMENT(from, transition->from) {
-		if (*from == state) {
-			return true;
-		}
-	}
 	return false;
 }
 

@@ -509,13 +509,11 @@ static stf_status process_v2_INFORMATIONAL_mobike_response(struct ike_sa *ike,
 
 static const struct v2_transition v2_INFORMATIONAL_mobike_initiate_transition = {
 	.story = "MOBIKE",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 };
 
 static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] = {
 	{ .story      = "Informational Response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,

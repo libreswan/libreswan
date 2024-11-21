@@ -167,7 +167,6 @@ static void jam_expected_payloads(struct jambuf *buf,
 
 static const struct v2_transition v2_REKEY_IKE_I0_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
-	.from = { &state_v2_REKEY_IKE_I0, },
 	.to = &state_v2_REKEY_IKE_I1,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -176,7 +175,6 @@ V2_CHILD(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
 
 static const struct v2_transition v2_REKEY_IKE_R0_transition = {
 	.story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
-	.from = { &state_v2_REKEY_IKE_R0, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -185,7 +183,6 @@ V2_CHILD(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA);
 
 static const struct v2_transition v2_REKEY_IKE_I1_transition = {
 	.story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
-	.from = { &state_v2_REKEY_IKE_I1, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -198,7 +195,6 @@ V2_CHILD(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_
 
 static const struct v2_transition v2_REKEY_CHILD_I0_transition = {
 	.story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
-	.from = { &state_v2_REKEY_CHILD_I0, },
 	.to = &state_v2_REKEY_CHILD_I1,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -207,7 +203,6 @@ V2_CHILD(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
 
 static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
 	.story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	.from = { &state_v2_REKEY_CHILD_R0, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -216,7 +211,6 @@ V2_CHILD(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA);
 
 static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
 	.story      = "process rekey Child SA response (CREATE_CHILD_SA)",
-	.from = { &state_v2_REKEY_CHILD_I1, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.flags = { .release_whack = true, },
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -230,7 +224,6 @@ V2_CHILD(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_O
 
 static const struct v2_transition v2_NEW_CHILD_I0_transition = {
 	.story      = "initiate create Child SA (CREATE_CHILD_SA)",
-	.from = { &state_v2_NEW_CHILD_I0, },
 	.to = &state_v2_NEW_CHILD_I1,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -239,7 +232,6 @@ V2_CHILD(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
 
 static const struct v2_transition v2_NEW_CHILD_R0_transition = {
 	.story      = "process create Child SA request (CREATE_CHILD_SA)",
-	.from = { &state_v2_NEW_CHILD_R0, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -249,7 +241,6 @@ V2_CHILD(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
 
 static const struct v2_transition v2_NEW_CHILD_I1_transition = {
 	.story      = "process create Child SA response (CREATE_CHILD_SA)",
-	.from = { &state_v2_NEW_CHILD_I1, },
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 };
@@ -911,20 +902,6 @@ static void vdbg_transition(struct verbose verbose,
 
 		verbose.level++;
 
-		if (t->from[0] != NULL) {
-			LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
-				jam(buf, PRI_VERBOSE, pri_verbose);
-				jam_string(buf, "from:");
-				FOR_EACH_ELEMENT(f, t->from) {
-					if ((*f) == NULL) {
-						break;
-					}
-					jam_string(buf, " ");
-					jam_string(buf, (*f)->short_name);
-				}
-			}
-		}
-
 		LDBG_log(verbose.logger, PRI_VERBOSE"%s", pri_verbose, t->story);
 
 		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
@@ -941,17 +918,8 @@ static void vdbg_transition(struct verbose verbose,
 }
 
 static void validate_state_child_transition(struct verbose verbose,
-					    const struct finite_state *from,
 					    const struct v2_transition *t)
 {
-	bool found_from = false;
-	FOR_EACH_ELEMENT(f, t->from) {
-		if (*f == from) {
-			found_from = true;
-		}
-	}
-	vassert(found_from);
-
 	const struct finite_state *to = t->to;
 	vassert(to != NULL);
 	vassert(to->kind >= STATE_IKEv2_FLOOR);
@@ -978,7 +946,6 @@ static void validate_state_exchange_transition(struct verbose verbose,
 	vassert(transition->llog_success != NULL);
 	vassert(transition->recv_role == recv_role);
 	vassert(transition->exchange == exchange->type);
-	vassert(transition->from[0] == NULL);
 }
 
 static void validate_state_exchange(struct verbose verbose,
@@ -1068,7 +1035,7 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 		verbose.level = level;
 		vdbg("child transition:");
 		verbose.level++;
-		validate_state_child_transition(verbose, from, from->v2.child_transition);
+		validate_state_child_transition(verbose, from->v2.child_transition);
 	}
 
 	verbose.level = level;
