@@ -752,18 +752,8 @@ static void vdbg_transition(struct verbose verbose,
 		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
 			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam_string(buf, "->");
-			jam_string(buf, (t->to == NULL ? "<NULL>" :
-					 t->to->short_name));
+			jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
 			jam_string(buf, "; ");
-			jam_enum_short(buf, &event_type_names, t->timeout_event);
-		}
-
-		verbose.level++;
-
-		LDBG_log(verbose.logger, PRI_VERBOSE"story: %s", pri_verbose, t->story);
-
-		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
-			jam(buf, PRI_VERBOSE, pri_verbose);
 			switch (t->recv_role) {
 			case NO_MESSAGE:
 				/* reverse polarity */
@@ -778,8 +768,6 @@ static void vdbg_transition(struct verbose verbose,
 			default:
 				bad_case(t->recv_role);
 			}
-			jam_string(buf, ": ");
-			jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
 			jam_string(buf, "; ");
 			jam_string(buf, "payloads: ");
 			FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
@@ -810,7 +798,36 @@ static void vdbg_transition(struct verbose verbose,
 					jam(buf, "}");
 				}
 			}
+
 		}
+
+		verbose.level++;
+
+		if (t->from[0] != NULL) {
+			LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam_string(buf, "from:");
+				FOR_EACH_ELEMENT(f, t->from) {
+					if ((*f) == NULL) {
+						break;
+					}
+					jam_string(buf, " ");
+					jam_string(buf, (*f)->short_name);
+				}
+			}
+		}
+
+		LDBG_log(verbose.logger, PRI_VERBOSE"%s", pri_verbose, t->story);
+
+		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "->");
+			jam_string(buf, (t->to == NULL ? "<NULL>" :
+					 t->to->short_name));
+			jam_string(buf, "; ");
+			jam_enum_short(buf, &event_type_names, t->timeout_event);
+		}
+
 
 	}
 }
@@ -853,29 +870,34 @@ static void validate_state_exchange(struct verbose verbose,
 	     str_enum_short(&ikev2_exchange_names, exchange->type, &ixb),
 	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),
 	     bool_str(exchange->secured));
-	verbose.level++;
+	const unsigned level = ++verbose.level;
 
+	verbose.level = level;
 	if (exchange->initiate != NULL) {
 		vdbg("initiator:");
+		verbose.level++;
 		vdbg_transition(verbose, exchange->initiate);
 	}
 
+	verbose.level = level;
 	if (exchange->responder != NULL) {
 		vdbg("responder:");
+		verbose.level++;
 		FOR_EACH_ITEM(t, exchange->responder) {
 			vdbg_transition(verbose, t);
-			vassert(t->exchange == exchange->type);
-			vassert(t->recv_role == MESSAGE_REQUEST);
 		}
 	}
 
+	verbose.level = level;
 	if (exchange->response != NULL) {
 		vdbg("response:");
+		verbose.level++;
 		FOR_EACH_ITEM(t, exchange->response) {
 			vdbg_transition(verbose, t);
 		}
 	}
 
+	verbose.level = level;
 	vassert(exchange->subplot != NULL);
 	vassert(from->v2.secured == exchange->secured);
 
@@ -909,7 +931,7 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 
 	if (from->v2.child_transition != NULL) {
 		verbose.level = level;
-		vdbg("transitions:");
+		vdbg("child transition:");
 		verbose.level++;
 		validate_state_child_transition(verbose, from, from->v2.child_transition);
 	}
