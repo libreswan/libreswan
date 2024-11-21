@@ -861,6 +861,17 @@ static void validate_state_child_transition(struct verbose verbose,
 	vassert(t->llog_success == NULL);
 }
 
+static void validate_state_exchange_transition(struct verbose verbose,
+					       const struct v2_transition *transition,
+					       enum message_role recv_role,
+					       const struct v2_exchange *exchange)
+{
+	vdbg_transition(verbose, transition);
+	vassert(transition->llog_success != NULL);
+	vassert(transition->recv_role == recv_role);
+	vassert(transition->exchange == exchange->type);
+}
+
 static void validate_state_exchange(struct verbose verbose,
 				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
@@ -876,7 +887,7 @@ static void validate_state_exchange(struct verbose verbose,
 	if (exchange->initiate != NULL) {
 		vdbg("initiator:");
 		verbose.level++;
-		vdbg_transition(verbose, exchange->initiate);
+		validate_state_exchange_transition(verbose, exchange->initiate, NO_MESSAGE, exchange);
 	}
 
 	verbose.level = level;
@@ -884,7 +895,7 @@ static void validate_state_exchange(struct verbose verbose,
 		vdbg("responder:");
 		verbose.level++;
 		FOR_EACH_ITEM(t, exchange->responder) {
-			vdbg_transition(verbose, t);
+			validate_state_exchange_transition(verbose, t, MESSAGE_REQUEST, exchange);
 		}
 	}
 
@@ -893,7 +904,7 @@ static void validate_state_exchange(struct verbose verbose,
 		vdbg("response:");
 		verbose.level++;
 		FOR_EACH_ITEM(t, exchange->response) {
-			vdbg_transition(verbose, t);
+			validate_state_exchange_transition(verbose, t, MESSAGE_RESPONSE, exchange);
 		}
 	}
 
