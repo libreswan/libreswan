@@ -723,7 +723,7 @@ void find_and_active_redirect_states(const char *conn_name,
 	free_redirect_dests(&active_dests);
 }
 
-stf_status process_v2_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
+stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							struct child_sa *child,
 							struct msg_digest *md)
 {

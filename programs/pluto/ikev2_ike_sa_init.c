@@ -70,8 +70,9 @@
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
 static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;		/* forward decl and type assertion */
-static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
+static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
+static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
 static void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike);
 static void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike);
@@ -1185,10 +1186,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	return STF_SUSPEND;
 }
 
-static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
-							  struct msg_digest *md,
-							  struct dh_local_secret *local_secret,
-							  chunk_t *nonce)
+stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
+						   struct msg_digest *md,
+						   struct dh_local_secret *local_secret,
+						   chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
@@ -1485,9 +1486,9 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
  * IKE_INTERMEDIATE paths.
  */
 
-static stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
-						  struct child_sa *unused_child UNUSED,
-						  struct msg_digest *md)
+stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
+					   struct child_sa *unused_child UNUSED,
+					   struct msg_digest *md)
 {
 	v2_notification_t n;
 	struct connection *c = ike->sa.st_connection;
@@ -1831,7 +1832,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
-	  .processor  = process_v2_IKE_SA_INIT_v2N_REDIRECT_response,
+	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},

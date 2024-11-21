@@ -77,7 +77,7 @@ extern void find_and_active_redirect_states(const char *conn_name,
 					    const char *active_redirect_dests,
 					    struct logger *logger);
 
-extern stf_status process_v2_IKE_SA_INIT_v2N_REDIRECT_response(struct ike_sa *ike,
+extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							       struct child_sa *child,
 							       struct msg_digest *md);
 

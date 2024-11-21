@@ -554,7 +554,6 @@ diag_t find_v2_unsecured_transition(struct logger *logger,
 		str_enum_short(&message_role_names, v2_msg_role(md), &rb));
 	indent = 1;
 
-
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	(*transition) = find_v2_transition(logger, indent, transitions, md,
 					   &message_payload_status, NULL);
