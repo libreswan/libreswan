@@ -302,8 +302,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * Does the message match the (only) expected transition?
 	 */
 	const struct v2_transition *transition = NULL;
-	diag_t d = find_v2_unsecured_transition(md->logger, v2_IKE_SA_INIT_exchange.responder,
-						md, &transition);
+	diag_t d = find_v2_unsecured_request_transition(md->logger, &state_v2_UNSECURED_R,
+							md, &transition);
 	if (transition == NULL) {
 		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL, str_diag(d));
 		pfree_diag(&d);
@@ -344,7 +344,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	struct ike_sa *ike = new_v2_ike_sa_responder(c, &state_v2_IKE_SA_INIT_R0, md);
+	struct ike_sa *ike = new_v2_ike_sa_responder(c, &state_v2_UNSECURED_R, md);
 
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 	/* XXX: keep test results happy */
@@ -440,10 +440,8 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 	}
 
 	/* transition? */
-	const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 	const struct v2_transition *transition = NULL;
-	diag_t d = find_v2_unsecured_transition(ike->sa.logger, exchange->response,
-						md, &transition);
+	diag_t d = find_v2_unsecured_response_transition(ike, md, &transition);
 	if (transition == NULL) {
 		lset_t rc_flags = log_limiter_rc_flags(ike->sa.logger, PAYLOAD_ERRORS_LOG_LIMITER);
 		if (rc_flags != LEMPTY) {
@@ -487,3 +485,8 @@ void process_v2_UNSECURED_message(struct msg_digest *md)
 	}
 
 }
+
+V2_STATE(UNSECURED_R,
+	 "larval unsecured IKE SA responder",
+	 CAT_HALF_OPEN_IKE_SA, /*secured*/false,
+	 &v2_IKE_SA_INIT_exchange);

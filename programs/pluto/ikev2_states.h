@@ -23,9 +23,9 @@ struct msg_digest;
 struct logger;
 
 #define S(KIND, ...) extern const struct finite_state state_v2_##KIND
+S(UNSECURED_R);
 S(IKE_SA_INIT_I0);
 S(IKE_SA_INIT_I);
-S(IKE_SA_INIT_R0);
 S(IKE_SA_INIT_R);
 S(IKE_SA_INIT_IR);
 S(IKE_INTERMEDIATE_I);
@@ -49,11 +49,26 @@ S(ZOMBIE);
 
 bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md);
 
-/* used by the IKE_SA_INIT code to find initial transitions only */
-diag_t find_v2_unsecured_transition(struct logger *logger,
-				    const struct v2_transitions *transitions,
-				    const struct msg_digest *md,
-				    const struct v2_transition **transition);
+/*
+ * Used by the unsecured IKE_SA_INIT code to find initial transition.
+ *
+ * The request lookup happens before the IKE SA has been created, so
+ * that a failure avoids that work.  Hence the lack of an IKE
+ * parameter.
+ */
+
+diag_t find_v2_unsecured_request_transition(struct logger *logger,
+					    const struct finite_state *state,
+					    const struct msg_digest *md,
+					    const struct v2_transition **transition);
+
+diag_t find_v2_unsecured_response_transition(struct ike_sa *ike,
+					     const struct msg_digest *md,
+					     const struct v2_transition **transition);
+
+/*
+ * Used to process secured exchanges.
+ */
 
 const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 						       const struct msg_digest *md,
