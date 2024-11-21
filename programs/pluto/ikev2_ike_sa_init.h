@@ -8,12 +8,20 @@
 #ifndef IKEV2_IKE_SA_INIT_H
 #define IKEV2_IKE_SA_INIT_H
 
-#include "ikev2.h"		/* for ikev2_state_transition_fn */
+#include <stdbool.h>
+
+#include "shunk.h"
+
+#include "state.h"
+#include "pluto_timing.h"	/* for threadtime_t */
 
 struct msg_digest;
 struct ike_sa;
+struct child_policy;
+struct connection;
+struct state;
 
-void process_v2_IKE_SA_INIT(struct msg_digest *md);
+void process_unsecured_v2_message(struct msg_digest *md);
 
 struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					       struct state *predecessor,

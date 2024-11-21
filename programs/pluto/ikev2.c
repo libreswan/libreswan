@@ -76,6 +76,7 @@
 #include "unpack.h"
 #include "pending.h"		/* for release_pending_whacks() */
 #include "ikev2_host_pair.h"
+#include "ikev2_unsecured.h"
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_informational.h"
 #include "ikev2_create_child_sa.h"
@@ -841,7 +842,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	}
 
 	/*
-	 * Handle the unprotected IKE_SA_INIT exchange.
+	 * Handle the unsecured IKE_SA_INIT exchange.
 	 *
 	 * Unlike for later exchanges (which requires an existing
 	 * secured IKE SA), the code processing an unsecured
@@ -856,7 +857,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 */
 
 	if (ix == ISAKMP_v2_IKE_SA_INIT) {
-		process_v2_IKE_SA_INIT(md);
+		process_v2_UNSECURED_message(md);
 		return;
 	}
 

@@ -18,6 +18,7 @@
 
 #include "shunk.h"
 #include "lset.h"
+#include "ikev2.h"	/* for ikev2_state_transition_fn */
 
 struct ike_sa;
 struct child_sa;

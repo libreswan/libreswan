@@ -17,6 +17,11 @@
 #ifndef IKEV2_STATE_H
 #define IKEV2_STATE_H
 
+struct v2_transition;
+struct v2_transitions;
+struct msg_digest;
+struct logger;
+
 #define S(KIND, ...) extern const struct finite_state state_v2_##KIND
 S(IKE_SA_INIT_I0);
 S(IKE_SA_INIT_I);
