@@ -1595,7 +1595,7 @@ void start_v2_exchange(struct ike_sa *ike,
 		       const struct v2_exchange *exchange,
 		       where_t where)
 {
-	set_v2_transition(&ike->sa, exchange->initiate, where);
+	set_v2_transition(&ike->sa, exchange->initiate.transition, where);
 	v2_msgid_start(ike, exchange, NULL, HERE);
 }
 

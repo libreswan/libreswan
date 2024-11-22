@@ -930,10 +930,39 @@ static void validate_state_exchange(struct verbose verbose,
 	const unsigned level = ++verbose.level;
 
 	verbose.level = level;
-	if (exchange->initiate != NULL) {
+	if (verbose.rc_flags != 0) {
+		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "from:");
+			FOR_EACH_ELEMENT(f, exchange->initiate.from) {
+				if ((*f) == NULL) {
+					break;
+				}
+				jam_string(buf, " ");
+				jam_string(buf, (*f)->short_name);
+			}
+		}
+	}
+
+	verbose.level = level;
+	if (exchange->initiate.transition != NULL) {
 		vdbg("initiator:");
 		verbose.level++;
-		validate_state_exchange_transition(verbose, exchange->initiate, NO_MESSAGE, exchange);
+		validate_state_exchange_transition(verbose, exchange->initiate.transition, NO_MESSAGE, exchange);
+		FOR_EACH_ELEMENT(f, exchange->initiate.from) {
+			bool found_exchange_from = false;
+			FOR_EACH_ELEMENT(g, exchange->initiate.transition->from) {
+				found_exchange_from |= (*g) == (*f);
+			}
+			vexpect(found_exchange_from);
+		}
+		FOR_EACH_ELEMENT(f, exchange->initiate.transition->from) {
+			bool found_initiate_from = false;
+			FOR_EACH_ELEMENT(g, exchange->initiate.from) {
+				found_initiate_from |= (*g) == (*f);
+			}
+			vexpect(found_initiate_from);
+		}
 	}
 
 	verbose.level = level;

@@ -250,6 +250,7 @@ static const struct v2_transitions v2_INFORMATIONAL_responder_transitions = {
 
 const struct v2_exchange v2_INFORMATIONAL_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.subplot = "informational exchange",
 	.secured = true,
 	.responder = &v2_INFORMATIONAL_responder_transitions,

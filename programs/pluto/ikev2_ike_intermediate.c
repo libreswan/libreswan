@@ -707,4 +707,5 @@ V2_STATE(IKE_INTERMEDIATE_R,
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
-	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true,
+	    &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR);

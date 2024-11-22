@@ -1870,4 +1870,5 @@ V2_STATE(IKE_SA_INIT_R,
 
 V2_EXCHANGE(IKE_SA_INIT, "initiate IKE SA",
 	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
-	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false,
+	    &state_v2_IKE_SA_INIT_I0);

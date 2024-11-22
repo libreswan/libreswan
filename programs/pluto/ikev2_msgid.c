@@ -71,12 +71,12 @@ static void jam_old_new_exchange(struct jambuf *buf,
 	if (old == new || (*old) != (*new)) {
 		jam_old_new_prefix(buf, prefix, what);
 		if (*old != NULL) {
-			jam_string(buf, (*old)->initiate->story);
+			jam_string(buf, (*old)->initiate.transition->story);
 		}
 		if (old != new) {
 			jam_string(buf, "->");
 			if (*new != NULL) {
-				jam_string(buf, (*new)->initiate->story);
+				jam_string(buf, (*new)->initiate.transition->story);
 			}
 		}
 	}
@@ -481,8 +481,8 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 	unsigned ranking = 0;
 	struct v2_msgid_pending **pp = &ike->sa.st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
-		if (exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL
-		    && (*pp)->exchange->initiate->exchange != ISAKMP_v2_INFORMATIONAL) {
+		if (exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL
+		    && (*pp)->exchange->initiate.transition->exchange != ISAKMP_v2_INFORMATIONAL) {
 			break;
 		}
 		ranking++;
@@ -509,7 +509,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 		LLOG_JAMBUF(stream, logger, buf) {
 			jam_string(buf, "adding ");
 			jam_enum_short(buf, &ikev2_exchange_names,
-				       exchange->initiate->exchange);
+				       exchange->initiate.transition->exchange);
 			jam_string(buf, " request to IKE SA ");
 			jam_so(buf, ike->sa.st_serialno);
 			jam_string(buf, "'s message queue");
@@ -521,7 +521,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 				jam_so(buf, (*pp)->who_for);
 				jam_string(buf, "'s ");
 				jam_enum_short(buf, &ikev2_exchange_names,
-					       (*pp)->exchange->initiate->exchange);
+					       (*pp)->exchange->initiate.transition->exchange);
 				jam_string(buf, " exchange");
 			}
 		}
@@ -578,7 +578,8 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			enum_buf xb;
 			dbg_v2_msgid(ike,
 				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
-				     str_enum(&ikev2_exchange_names, pending.exchange->initiate->exchange, &xb),
+				     str_enum(&ikev2_exchange_names,
+					      pending.exchange->initiate.transition->exchange, &xb),
 				     pri_so(pending.child), unack);
 			continue;
 		}
@@ -591,10 +592,10 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		/*
 		 * try to check that the transition still applies ...
 		 */
-		if (!v2_transition_from(pending.exchange->initiate, ike->sa.st_state)) {
+		if (!v2_transition_from(pending.exchange->initiate.transition, ike->sa.st_state)) {
 			LLOG_JAMBUF(RC_LOG, who_for->logger, buf) {
 				jam(buf, "dropping transition ");
-				jam_v2_transition(buf, pending.exchange->initiate);
+				jam_v2_transition(buf, pending.exchange->initiate.transition);
 				jam(buf, " as IKE SA is in state %s",
 				    ike->sa.st_state->short_name);
 			}
@@ -619,7 +620,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		start_v2_exchange(ike, pending.exchange, HERE);
 		/* pexpect(initiator->wip_sa == NULL); */
 		initiator->wip_sa = child;
-		stf_status status = pending.exchange->initiate->processor(ike, child, NULL);
+		stf_status status = pending.exchange->initiate.transition->processor(ike, child, NULL);
 		complete_v2_state_transition(ike, NULL/*initiate so no md*/, status);
 
 		/*

@@ -111,7 +111,10 @@ struct v2_exchange {
 	const enum ikev2_exchange type;
 	const char *subplot;
 	bool secured;
-	const struct v2_transition *initiate;
+	struct {
+		const struct v2_transition *transition;
+		const struct finite_state *from[3];	/* grow as needed */
+	} initiate;
 	const struct v2_transitions *responder;
 	const struct v2_transitions *response;
 };
@@ -155,10 +158,10 @@ struct v2_exchanges {
 		.type = ISAKMP_v2_##KIND,				\
 		.subplot = SUBPLOT,					\
 		.secured = SECURED,					\
-		.initiate = &v2_##KIND##_initiate_transition,		\
+		.initiate.transition = &v2_##KIND##_initiate_transition, \
+		.initiate.from = { __VA_ARGS__ },			\
 		.responder = &v2_##KIND##_responder_transitions,	\
 		.response = &v2_##KIND##_response_transitions,		\
-		##__VA_ARGS__,						\
 	}
 
 #define V2_STATE(KIND, STORY, CAT, SECURED, ...)			\
