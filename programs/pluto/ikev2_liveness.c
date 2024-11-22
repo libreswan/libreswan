@@ -36,19 +36,25 @@
 #include "ikev2_liveness.h"
 #include "ikev2_states.h"
 #include "demux.h"			/* for v2_msg_role() */
+#include "ikev2_mobike.h"		/* for mobike_possibly_send_recorded() */
 
-static stf_status send_v2_liveness_request(struct ike_sa *ike,
-					   struct child_sa *child UNUSED,
-					   struct msg_digest *md UNUSED)
+static ikev2_state_transition_fn initiate_v2_INFORMATIONAL_liveness_request;
+static ikev2_state_transition_fn process_v2_INFORMATIONAL_liveness_request;
+static ikev2_state_transition_fn process_v2_INFORMATIONAL_liveness_response;
+
+void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
-	pstats_ike_dpd_sent++;
-	if (!record_v2_INFORMATIONAL_request("liveness probe informational request",
-					     ike->sa.logger, ike, /*child*/NULL,
-					     NULL/*no payloads to emit*/)) {
-		return STF_INTERNAL_ERROR;
+	const struct v2_exchange *exchange = &v2_INFORMATIONAL_liveness_exchange;
+	if (!v2_transition_from(exchange->initiate, ike->sa.st_state)) {
+		llog_sa(RC_LOG, ike,
+			"liveness: IKE SA in state %s but should be in state ESTABLISHED_IKE_SA; liveness for "PRI_SO" ignored",
+			ike->sa.st_state->short_name,
+			pri_so(who_for));
+		return;
 	}
 
-	return STF_OK;
+	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+	v2_msgid_queue_exchange(ike, NULL, exchange);
 }
 
 static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_contact,
@@ -273,9 +279,78 @@ void event_v2_liveness(struct state *st)
 			  "backup for liveness probe");
 }
 
-static stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
-							     struct child_sa *null_child,
-							     struct msg_digest *md)
+stf_status initiate_v2_INFORMATIONAL_liveness_request(struct ike_sa *ike,
+						      struct child_sa *child,
+						      struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, child == NULL);
+	PEXPECT(ike->sa.logger, md == NULL);
+
+	pstats_ike_dpd_sent++;
+	if (!record_v2_INFORMATIONAL_request("liveness probe informational request",
+					     ike->sa.logger, ike, /*child*/NULL,
+					     NULL/*no payloads to emit*/)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	return STF_OK;
+}
+
+stf_status process_v2_INFORMATIONAL_liveness_request(struct ike_sa *ike,
+							    struct child_sa *child,
+							    struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, child == NULL);
+
+	ldbg(ike->sa.logger, "received an INFORMATIONAL liveness check request");
+	pstats_ike_dpd_replied++;
+
+	/*
+	 * Expect an empty message; as matched by transition.
+	 */
+	PEXPECT(ike->sa.logger, md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE);
+
+	/*
+	 * The response is always empty.
+	 */
+	if (!record_v2_INFORMATIONAL_response("liveness response",
+					      ike->sa.logger,
+					      ike, /*child*/NULL, md,
+					      /*emit-function*/NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	/*
+	 * If the source port isn't as expected, and mobike is
+	 * enabled, also send the liveness probe back to the alternate
+	 * port.
+	 *
+	 * The RFC, in <<3.5.  Changing Addresses in IPsec SAs>> says
+	 * that the initiator:
+	 *
+	 *    o Updates the IKE_SA with the new addresses, and sets
+	 *      the "pending_update" flag in the IKE_SA.
+	 *
+	 *    o If there are outstanding IKEv2 requests (requests for
+	 *      which the initiator has not yet received a reply),
+	 *      continues retransmitting them using the addresses in
+	 *      the IKE_SA (the new addresses).
+	 *
+	 * Which means that the peer sending a liveness probe from an
+	 * old and failed interface may switch and send the same
+	 * liveness probe from the new working interface and expect a
+	 * response to be sent back to same.
+	 *
+	 * This tries to handle this.
+	 */
+	mobike_possibly_send_recorded(ike, md);
+
+	return STF_OK;
+}
+
+stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
+						      struct child_sa *null_child,
+						      struct msg_digest *md)
 {
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
 	PEXPECT(ike->sa.logger, null_child == NULL);
@@ -286,7 +361,7 @@ static stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
 }
 
 /*
- * XXX: where to put this?
+ * The exchange.
  */
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition = {
@@ -294,9 +369,29 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition 
 	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
-	.processor = send_v2_liveness_request,
-	.llog_success = ldbg_v2_success,
+	.processor = initiate_v2_INFORMATIONAL_liveness_request,
+	.llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
 	.timeout_event =  EVENT_RETAIN,
+};
+
+static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition[] = {
+	{ .story      = "Informational Request (liveness probe)",
+	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
+	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .message_payloads.required = v2P(SK),
+	  /* strictly match empty message */
+	  .encrypted_payloads.exact_match = true,
+	  .encrypted_payloads.optional = LEMPTY,
+	  .encrypted_payloads.required = LEMPTY,
+	  .processor  = process_v2_INFORMATIONAL_liveness_request,
+	  .llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	  .timeout_event = EVENT_RETAIN, },
+};
+
+static const struct v2_transitions v2_INFORMATIONAL_liveness_responder_transitions = {
+	ARRAY_REF(v2_INFORMATIONAL_liveness_responder_transition),
 };
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[] = {
@@ -308,7 +403,7 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .processor  = process_v2_INFORMATIONAL_liveness_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
 	  .timeout_event = EVENT_RETAIN, },
 };
 
@@ -321,20 +416,6 @@ const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.subplot = "liveness probe",
 	.secured = true,
 	.initiate = &v2_INFORMATIONAL_liveness_initiate_transition,
+	.responder = &v2_INFORMATIONAL_liveness_responder_transitions,
 	.response = &v2_INFORMATIONAL_liveness_response_transitions,
 };
-
-void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
-{
-	const struct v2_exchange *exchange = &v2_INFORMATIONAL_liveness_exchange;
-	if (!v2_transition_from(exchange->initiate, ike->sa.st_state)) {
-		llog_sa(RC_LOG, ike,
-			"liveness: IKE SA in state %s but should be in state ESTABLISHED_IKE_SA; liveness for "PRI_SO" ignored",
-			ike->sa.st_state->short_name,
-			pri_so(who_for));
-		return;
-	}
-
-	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
-	v2_msgid_queue_exchange(ike, NULL, exchange);
-}

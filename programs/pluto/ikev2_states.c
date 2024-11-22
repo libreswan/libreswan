@@ -44,6 +44,7 @@
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_ike_intermediate.h"
 #include "ikev2_informational.h"
+#include "ikev2_liveness.h"
 #include "ikev2_cookie.h"
 #include "ikev2_redirect.h"
 #include "ikev2_eap.h"
@@ -261,10 +262,18 @@ V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
 
 V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
 	 CAT_ESTABLISHED_IKE_SA, /*secured*/true,
-	 /* informational */
+	 /*
+	  * Informational.  Order is important.
+	  *
+	  * The liveness probe, which strictly matches an empty
+	  * message must be before the generic informational exchange.
+	  * Otherwise the generic exchange, which can accept an empty
+	  * message, would do the processing.
+	  */
 	 &v2_INFORMATIONAL_v2DELETE_exchange,
 	 &v2_INFORMATIONAL_v2N_REDIRECT_exchange,
-	 &v2_INFORMATIONAL_exchange,
+	 &v2_INFORMATIONAL_liveness_exchange,
+	 &v2_INFORMATIONAL_exchange, /* last; matches mobike! */
 	 /*
 	  * Create/Rekey IKE/Child SAs.  Danger: order is important.
 	  */
