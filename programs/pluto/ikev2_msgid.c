@@ -590,9 +590,10 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			     pri_so(pending.who_for), unack);
 
 		/*
-		 * try to check that the transition still applies ...
+		 * Try to check that the exchange is still allowed.
+		 * For instance, liveness queued up behind a rekey?
 		 */
-		if (!v2_transition_from(pending.exchange->initiate.transition, ike->sa.st_state)) {
+		if (!v2_ike_sa_can_initiate_exchange(ike, pending.exchange)) {
 			LLOG_JAMBUF(RC_LOG, who_for->logger, buf) {
 				jam(buf, "dropping transition ");
 				jam_v2_transition(buf, pending.exchange->initiate.transition);

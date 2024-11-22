@@ -45,7 +45,7 @@ static ikev2_state_transition_fn process_v2_INFORMATIONAL_liveness_response;
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
 	const struct v2_exchange *exchange = &v2_INFORMATIONAL_liveness_exchange;
-	if (!v2_transition_from(exchange->initiate.transition, ike->sa.st_state)) {
+	if (!v2_ike_sa_can_initiate_exchange(ike, exchange)) {
 		llog_sa(RC_LOG, ike,
 			"liveness: IKE SA in state %s but should be in state ESTABLISHED_IKE_SA; liveness for "PRI_SO" ignored",
 			ike->sa.st_state->short_name,

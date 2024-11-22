@@ -230,5 +230,6 @@ stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
 
 extern void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transition);
 extern bool v2_transition_from(const struct v2_transition *transition, const struct finite_state *state);
+bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_exchange *exchange);
 
 #endif

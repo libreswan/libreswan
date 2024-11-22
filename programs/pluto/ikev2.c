@@ -2025,3 +2025,16 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 		jam_string(buf, transition->to->short_name);
 	}
 }
+
+bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_exchange *exchange)
+{
+	const struct finite_state *state = ike->sa.st_state;
+	ldbg(ike->sa.logger, "looking for exchange '%s' in state '%s'",
+	     exchange->subplot, state->short_name);
+	FOR_EACH_ELEMENT(f, exchange->initiate.from) {
+		if (*f == state) {
+			return true;
+		}
+	}
+	return false;
+}
