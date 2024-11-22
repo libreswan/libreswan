@@ -30,6 +30,7 @@
 #include "pluto_timing.h"
 #include "refcnt.h"
 #include "where.h"
+#include "crypt_mac.h"
 
 struct state;   /* forward declaration of tag */
 struct iface_endpoint;
@@ -149,7 +150,9 @@ struct msg_digest {
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
-	bool new_iv_set;			/* (v1) */
+	struct crypt_mac v1_decrypt_iv;		/* (v1) needed to
+						 * decrypt the
+						 * message */
 	struct state *v1_st;			/* (v1) current state object */
 	struct logger *logger;			/* logger for this MD */
 

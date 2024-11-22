@@ -509,7 +509,6 @@ void process_v1_packet(struct msg_digest *md)
 	 */
 	struct child_sa *child = NULL;
 	struct ike_sa *ike = NULL;
-	bool new_iv_set = false;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 	switch (md->hdr.isa_xchg) {
@@ -665,7 +664,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			ike->sa.st_v1_new_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							     "IKE received encrypted ISAKMP_XCHG_INFO", HERE);
-			new_iv_set = true;
+			md->v1_decrypt_iv = ike->sa.st_v1_new_iv;
 			from_state = STATE_INFO_PROTECTED;
 		} else {
 			/* see IF above */
@@ -798,7 +797,7 @@ void process_v1_packet(struct msg_digest *md)
 			/* Quick Mode Initial IV */
 			ike->sa.st_v1_new_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							     "IKE received encrypted first QUICK request", HERE);
-			new_iv_set = true;
+			md->v1_decrypt_iv = ike->sa.st_v1_new_iv;
 
 			/* send to state machine */
 			from_state = STATE_QUICK_R0;
@@ -892,7 +891,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			ike->sa.st_v1_new_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							     "IKE received encrypted ISAKMP_XCHG_MODE_CFG", HERE);
-			new_iv_set = true;
+			md->v1_decrypt_iv = ike->sa.st_v1_new_iv;
 
 			/*
 			 * okay, now we have to figure out if we are receiving a bogus
@@ -1233,7 +1232,6 @@ void process_v1_packet(struct msg_digest *md)
 	 */
 	md->v1_st = st;
 	md->smc = smc;
-	md->new_iv_set = new_iv_set;
 
 	/*
 	 * look for encrypt packets. We cannot handle them if we have not
@@ -1335,9 +1333,6 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 	const struct state_v1_microcode *smc = md->smc;
 	enum state_kind from_state = smc->state;
-	bool new_iv_set = md->new_iv_set;
-
-	ldbg(LOGGER, "phase2_iv: recovered new_iv_set=%s from MD", bool_str(new_iv_set));
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 
@@ -1397,16 +1392,24 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * scribbling on the .new_iv for one of those.
 		 */
 
-		if (!new_iv_set) {
+		if (md->v1_decrypt_iv.len == 0) {
 			if (st->st_v1_iv.len == 0) {
 				st->st_v1_new_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 								 "something decrypting message, .st_v1_iv.len==0", HERE);
+				md->v1_decrypt_iv = st->st_v1_new_iv;
 			} else {
 				/* use old IV */
 				pdbg(st->logger, "phase2_iv: something restoring new IV from .st_v1_iv");
 				st->st_v1_new_iv = st->st_v1_iv;
+				md->v1_decrypt_iv = st->st_v1_new_iv;
 			}
 		}
+
+#if 0
+		pexpect(md->v1_decrypt_iv.len == cipher->enc_blocksize);
+#endif
+		passert(md->v1_decrypt_iv.len >= cipher->enc_blocksize);
+		md->v1_decrypt_iv.len = cipher->enc_blocksize;
 
 		passert(st->st_v1_new_iv.len >= cipher->enc_blocksize);
 		st->st_v1_new_iv.len = cipher->enc_blocksize;   /* truncate */
@@ -1417,21 +1420,25 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				 (unsigned) pbs_left(&md->message_pbs),
 				 cipher->common.fqn);
 			LDBG_log(ike->sa.logger, "IV before:");
-			LDBG_hunk(ike->sa.logger, st->st_v1_new_iv);
+			LDBG_hunk(ike->sa.logger, md->v1_decrypt_iv);
 		}
 
 		/* Decrypt everything after header */
 		size_t cipher_start = (md->message_pbs.cur - md->message_pbs.start);
 		chunk_t cipher_text = chunk2(md->message_pbs.start + cipher_start,
 					     pbs_left(&md->message_pbs));
+
+		passert(hunk_eq(md->v1_decrypt_iv, st->st_v1_new_iv));
 		cipher_ikev1(cipher, DECRYPT,
 			     cipher_text,
-			     &st->st_v1_new_iv,
+			     &md->v1_decrypt_iv,
 			     ike->sa.st_enc_key_nss,
 			     ike->sa.logger);
+		st->st_v1_new_iv = md->v1_decrypt_iv;
+
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "IV after:");
-			LDBG_hunk(ike->sa.logger, st->st_v1_new_iv);
+			LDBG_hunk(ike->sa.logger, md->v1_decrypt_iv);
 			LDBG_log(ike->sa.logger,
 				 "decrypted payload (starts at offset %td):",
 				 md->message_pbs.cur - md->message_pbs.roof);
