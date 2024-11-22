@@ -1251,18 +1251,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	/*
 	 * Initiate the calculation of g^xy.
-	 *
-	 * Form and pass in the full SPI[ir] that will eventually be
-	 * used by this IKE SA.  Only once DH has been computed and
-	 * the SA is secure (but not authenticated) should the state's
-	 * IKE SPIr be updated.
 	 */
-
-	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
-	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
-		.initiator = ike->sa.st_ike_spis.initiator,
-		.responder = md->hdr.isa_ike_responder_spi,
-	};
 
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 				ike->sa.st_gr/*initiator needs responder KE*/,
@@ -1288,6 +1277,19 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
 		return STF_FATAL;
 	}
+
+	/*
+	 * Form and pass in the full SPI[ir] that will eventually be
+	 * used by this IKE SA.  Only once DH has been computed and
+	 * the SA is secure (but not authenticated) should the state's
+	 * IKE SPIr be updated.
+	 */
+
+	pexpect(ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
+	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
+		.initiator = ike->sa.st_ike_spis.initiator,
+		.responder = md->hdr.isa_ike_responder_spi,
+	};
 
 	if (!calc_v2_new_ike_keymat(ike, &ike->sa.st_ike_rekey_spis, HERE)) {
 		/* already logged */
