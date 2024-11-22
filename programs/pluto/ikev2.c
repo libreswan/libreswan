@@ -1353,20 +1353,6 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	struct connection *c = ike->sa.st_connection;
 
-#if 0
-	/*
-	 * XXX: the transition's from state can lie - it may be
-	 * different to the ST's state!
-	 *
-	 * XXX: this fails.
-	 *
-	 * The problem is that the IKE SA, during IKE_AUTH, gets its
-	 * state changed midway through the transition: after
-	 * authentication but before Child SA processing.  Perhaps
-	 * that is no longer needed?
-	 */
-	pexpect(transition->from == ike->sa.st_state);
-#endif
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, ike->sa.logger, buf) {
 			jam(buf, "IKE SA in state %s transitioning ",
@@ -1698,23 +1684,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	/* statistics */
 	pstat(stf_status, result);
-
-#if 0
-	/*
-	 * XXX: this fails.
-	 *
-	 * The problem is that the IKE SA, during IKE_AUTH, gets its
-	 * state changed midway through the transition: after
-	 * authentication but before Child SA processing.
-	 *
-	 * Perhaps that is no longer needed?
-	 *
-	 * Part of the hack is to get the IKE SA established message
-	 * out _before_ the Child SA processing occurs.  Is that the
-	 * only reason?
-	 */
-	pexpect(transition->from == ike->sa.st_state->kind);
-#endif
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
