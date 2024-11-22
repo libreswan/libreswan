@@ -714,6 +714,14 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
+		if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY) {
+			if (md->hdr.isa_np != ISAKMP_NEXT_IKE_FRAGMENTATION) {
+				ldbg(md->logger, "unfragmented Quick Mode messages need to be encrypted");
+				send_v1_notification_from_md(md, v1N_INVALID_FLAGS);
+				return;
+			}
+		}
+
 		/*
 		 * Quick mode requires an IKE (ISAKMP) SA.
 		 *
