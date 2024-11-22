@@ -1324,7 +1324,6 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.story      = "initiating IKE_AUTH",
-	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.processor  = initiate_v2_IKE_AUTH_request,
@@ -1335,7 +1334,6 @@ static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_AUTH request",
-	  .from = { &state_v2_IKE_SA_INIT_R, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -1348,7 +1346,6 @@ static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "processing IKE_AUTH request",
-	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -1375,7 +1372,6 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 	 */
 
 	{ .story      = "Initiator: process IKE_AUTH response",
-	  .from = { &state_v2_IKE_AUTH_I, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
@@ -1389,7 +1385,6 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
-	  .from = { &state_v2_IKE_AUTH_I, },
 	  .to = &state_v2_IKE_AUTH_I,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_RESPONSE,

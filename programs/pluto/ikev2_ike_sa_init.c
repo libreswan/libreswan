@@ -1772,7 +1772,6 @@ static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	 * HDR, SAi1, KEi, Ni -->
 	 */
 	.story      = "initiating IKE_SA_INIT",
-	.from = { &state_v2_IKE_SA_INIT_I0, },
 	.to = &state_v2_IKE_SA_INIT_I,
 	.exchange   = ISAKMP_v2_IKE_SA_INIT,
 	.processor  = NULL, /* XXX: should be set */
@@ -1786,7 +1785,6 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
-	  .from = { &state_v2_IKE_SA_INIT_R0, },
 	  .to = &state_v2_IKE_SA_INIT_R,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -1804,7 +1802,6 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	 */
 
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
-	  .from = { &state_v2_IKE_SA_INIT_I, },
 	  .to = &state_v2_IKE_SA_INIT_I0,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -1815,7 +1812,6 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
-	  .from = { &state_v2_IKE_SA_INIT_I, },
 	  .to = &state_v2_IKE_SA_INIT_I0,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -1826,7 +1822,6 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
-	  .from = { &state_v2_IKE_SA_INIT_I, },
 	  .to = &state_v2_IKE_SA_INIT_I0, /* XXX: never happens STF_SUSPEND */
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -1844,7 +1839,6 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	 *      TSi, TSr}      -->
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
-	  .from = { &state_v2_IKE_SA_INIT_I, },
 	  .to = &state_v2_IKE_SA_INIT_IR, /* next exchange does IKE_AUTH | IKE_INTERMEDIATE */
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,

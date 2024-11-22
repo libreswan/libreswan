@@ -839,7 +839,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "process initial IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_SA_INIT_R, &state_v2_IKE_INTERMEDIATE_R, },
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -851,7 +850,6 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "process continuing IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_AUTH_EAP_R, },
 	  .to = &state_v2_IKE_AUTH_EAP_R,
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -862,7 +860,6 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "process final IKE_AUTH(EAP) request",
-	  .from = { &state_v2_IKE_AUTH_EAP_R, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_IKE_AUTH,

@@ -916,6 +916,7 @@ static void validate_state_exchange_transition(struct verbose verbose,
 	vassert(transition->llog_success != NULL);
 	vassert(transition->recv_role == recv_role);
 	vassert(transition->exchange == exchange->type);
+	vassert(transition->from[0] == NULL);
 }
 
 static void validate_state_exchange(struct verbose verbose,
@@ -949,20 +950,6 @@ static void validate_state_exchange(struct verbose verbose,
 		vdbg("initiator:");
 		verbose.level++;
 		validate_state_exchange_transition(verbose, exchange->initiate.transition, NO_MESSAGE, exchange);
-		FOR_EACH_ELEMENT(f, exchange->initiate.from) {
-			bool found_exchange_from = false;
-			FOR_EACH_ELEMENT(g, exchange->initiate.transition->from) {
-				found_exchange_from |= (*g) == (*f);
-			}
-			vexpect(found_exchange_from);
-		}
-		FOR_EACH_ELEMENT(f, exchange->initiate.transition->from) {
-			bool found_initiate_from = false;
-			FOR_EACH_ELEMENT(g, exchange->initiate.from) {
-				found_initiate_from |= (*g) == (*f);
-			}
-			vexpect(found_initiate_from);
-		}
 	}
 
 	verbose.level = level;

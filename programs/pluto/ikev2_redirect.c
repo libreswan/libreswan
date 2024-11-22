@@ -618,7 +618,6 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_response(struct ike_sa *
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition = {
 	.story = "redirect IKE SA",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = send_v2_INFORMATIONAL_v2N_REDIRECT_request,
@@ -628,7 +627,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transit
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transition[] = {
 	{ .story      = "Informational Request",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -646,7 +644,6 @@ static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_responder_trans
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transition[] = {
 	{ .story      = "Informational Response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
