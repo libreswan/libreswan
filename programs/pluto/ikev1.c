@@ -834,6 +834,39 @@ void process_v1_packet(struct msg_digest *md)
 			if (pbad(child->sa.st_clonedfrom != ike->sa.st_serialno)) {
 				return;
 			}
+
+			/*
+			 * For Quick Mode Messages I1 and R1, the receipent:
+			 *
+			 * - decrypts the message, updating .st_v1_new_iv
+			 *
+			 * - verifies the message using the HASH
+			 *
+			 * - offloads the message to perform DH/PFS
+			 *
+			 * - once crypto completes, update .st_v1_iv
+			 *
+			 * This means that when a duplicate arrives:
+			 * the responder, processing I1, has .st_v1_iv
+			 * empty; and the initiator, processing R1,
+			 * has .st_v1_iv still containing the old
+			 * value.
+			 *
+			 * Instead, .st_v1_iv should be updated after
+			 * the message has been verified, i.e., before
+			 * the offload.
+			 *
+			 * As something of a work-around, drop the
+			 * message if the Child SA is found to be
+			 * busy.
+			 */
+			if (verbose_v1_state_busy(&child->sa)) {
+				return;
+			}
+
+			PEXPECT(child->sa.logger, hunk_eq(child->sa.st_v1_iv, child->sa.st_v1_new_iv));
+			PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0);
+			md->v1_decrypt_iv = child->sa.st_v1_iv;
 			from_state = child->sa.st_state->kind;
 		}
 
