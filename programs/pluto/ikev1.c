@@ -508,8 +508,8 @@ void process_v1_packet(struct msg_digest *md)
 	 * and, possibly, CHILD.
 	 */
 	struct child_sa *child = NULL;
-	struct ike_sa *ike = NULL;
-	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
+	struct ike_sa *ike;
+	enum state_kind from_state;   /* TBD state we started in */
 
 	switch (md->hdr.isa_xchg) {
 	case ISAKMP_XCHG_AGGR:
@@ -558,57 +558,60 @@ void process_v1_packet(struct msg_digest *md)
 				}
 				return;
 			}
-			/* don't build a state until the message looks tasty */
+			/*
+			 * Don't build a state until the message looks
+			 * tasty.
+			 */
 			passert(ike == NULL); /* new state needed */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
-		} else {
+			break;
+		}
+
+		/*
+		 * Possibly not an initial message.  Possibly from
+		 * initiator.  Possibly from responder.
+		 *
+		 * Possibly.  Which is probably hopeless.
+		 */
+
+		ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
 			/*
-			 * Possibly not an initial message.  Possibly
-			 * from initiator.  Possibly from responder.
+			 * Perhaps this is a first message from the
+			 * responder and contains a responder cookie
+			 * that we've not yet seen.
 			 *
-			 * Possibly.  Which is probably hopeless.
+			 * Perhaps this is a random message with a
+			 * bogus non-zero responder IKE SPI.
 			 */
-
-			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+			ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
 			if (ike == NULL) {
-				/*
-				 * Perhaps this is a first message
-				 * from the responder and contains a
-				 * responder cookie that we've not yet
-				 * seen.
-				 *
-				 * Perhaps this is a random message
-				 * with a bogus non-zero responder IKE
-				 * SPI.
-				 */
-				ike = find_v1_isakmp_by_initiator_spi(&md->hdr.isa_ike_initiator_spi);
-				if (ike == NULL) {
-					llog(RC_LOG, md->logger,
-					     "phase 1 message is part of an unknown exchange");
-					/* XXX Could send notification back */
-					return;
-				}
-
-				if (ike->sa.st_state->kind == STATE_AGGR_R0) {
-					/*
-					 * The only way for this to
-					 * happen is for the attacker
-					 * to guess the responder's
-					 * IKE SPI that hasn't been
-					 * sent over the wire?
-					 *
-					 * Well that or played 1/2^32
-					 * odds.
-					 */
-					llog_pexpect(md->logger, HERE,
-						     "phase 1 message matching AGGR_R0 state");
-					return;
-				}
+				llog(RC_LOG, md->logger,
+				     "phase 1 message is part of an unknown exchange");
+				/* XXX Could send notification back */
+				return;
 			}
 
-			from_state = ike->sa.st_state->kind;
+			if (ike->sa.st_state->kind == STATE_AGGR_R0) {
+				/*
+				 * The only way for this to
+				 * happen is for the attacker
+				 * to guess the responder's
+				 * IKE SPI that hasn't been
+				 * sent over the wire?
+				 *
+				 * Well that or played 1/2^32
+				 * odds.
+				 */
+				llog_pexpect(md->logger, HERE,
+					     "phase 1 message matching AGGR_R0 state");
+				return;
+			}
 		}
+
+		passert(ike != NULL);
+		from_state = ike->sa.st_state->kind;
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
@@ -664,32 +667,37 @@ void process_v1_packet(struct msg_digest *md)
 
 			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							  "IKE received encrypted ISAKMP_XCHG_INFO", HERE);
+			passert(ike != NULL);
 			from_state = STATE_INFO_PROTECTED;
-		} else {
-			/* see IF above */
-			passert((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY);
-			if (ike != NULL) {
-				if (IS_V1_ISAKMP_AUTHENTICATED(ike->sa.st_state)) {
-					llog(RC_LOG, ike->sa.logger,
-					     "Informational Exchange message must be encrypted");
-					/* XXX Could send notification back */
-					return;
-				}
-				/*
-				 * There's an IKE (ISAKMP) SA but it isn't yet
-				 * secured. Presumably this is some sort of
-				 * notification.
-				 */
-				from_state = STATE_INFO;
-			} else {
-				/*
-				 * There's no IKE (ISAKMP) SA at all.
-				 * New exchange!?!?  or just bogus and
-				 * should be dropped?
-				 */
-				from_state = STATE_INFO;
-			}
+			break;
 		}
+
+		/* see IF above */
+		passert((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY);
+		if (ike != NULL) {
+			if (IS_V1_ISAKMP_AUTHENTICATED(ike->sa.st_state)) {
+				llog(RC_LOG, ike->sa.logger,
+				     "Informational Exchange message must be encrypted");
+				/* XXX Could send notification back */
+				return;
+			}
+			/*
+			 * There's an IKE (ISAKMP) SA but it isn't yet
+			 * secured. Presumably this is some sort of
+			 * notification.
+			 */
+			passert(ike != NULL);
+			from_state = STATE_INFO;
+			break;
+		}
+
+		/*
+		 * There's no IKE (ISAKMP) SA at all.
+		 * New exchange!?!?  or just bogus and
+		 * should be dropped?
+		 */
+		passert(ike == NULL);
+		from_state = STATE_INFO;
 		break;
 	}
 
@@ -805,71 +813,71 @@ void process_v1_packet(struct msg_digest *md)
 			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							  "IKE received encrypted first QUICK request", HERE);
 			/* send to state machine */
+			passert(ike != NULL);
 			from_state = STATE_QUICK_R0;
-		} else {
-			/*
-			 * XXX:
-			 *
-			 * How can a Child SA be doing an xauth exchange?
-			 *
-			 * Perhaps it is from the ISAKMP being cloned
-			 * (and .st_oakly copied) too early.
-			 *
-			 * Or is it because the child lookup found
-			 * isakmp states, confusing things?
-			 */
-			if (pbad(child->sa.st_oakley.doing_xauth)) {
-				llog(RC_LOG, child->sa.logger, "Cannot do Quick Mode until XAUTH done.");
-				return;
-			}
-			/*
-			 * Because only the Child SA is passed down to
-			 * the message processor, code uses
-			 * .st_clonedfrom to re-find the IKE (ISAKMP)
-			 * SA (it could also use SPIs (COOKIES)).
-			 *
-			 * Hence, having these mis-match is pretty
-			 * bad.
-			 */
-			if (pbad(child->sa.st_clonedfrom != ike->sa.st_serialno)) {
-				return;
-			}
-
-			/*
-			 * For Quick Mode Messages I1 and R1, the receipent:
-			 *
-			 * - decrypts the message, updating .st_v1_new_iv
-			 *
-			 * - verifies the message using the HASH
-			 *
-			 * - offloads the message to perform DH/PFS
-			 *
-			 * - once crypto completes, update .st_v1_iv
-			 *
-			 * This means that when a duplicate arrives:
-			 * the responder, processing I1, has .st_v1_iv
-			 * empty; and the initiator, processing R1,
-			 * has .st_v1_iv still containing the old
-			 * value.
-			 *
-			 * Instead, .st_v1_iv should be updated after
-			 * the message has been verified, i.e., before
-			 * the offload.
-			 *
-			 * As something of a work-around, drop the
-			 * message if the Child SA is found to be
-			 * busy.
-			 */
-			if (verbose_v1_state_busy(&child->sa)) {
-				return;
-			}
-
-			PEXPECT(child->sa.logger, hunk_eq(child->sa.st_v1_iv, child->sa.st_v1_new_iv));
-			PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0);
-			md->v1_decrypt_iv = child->sa.st_v1_iv;
-			from_state = child->sa.st_state->kind;
+			break;
 		}
 
+		/*
+		 * XXX:
+		 *
+		 * How can a Child SA be doing an xauth exchange?
+		 *
+		 * Perhaps it is from the ISAKMP being cloned (and
+		 * .st_oakly copied) too early.
+		 *
+		 * Or is it because the child lookup found isakmp
+		 * states, confusing things?
+		 */
+		if (pbad(child->sa.st_oakley.doing_xauth)) {
+			llog(RC_LOG, child->sa.logger, "Cannot do Quick Mode until XAUTH done.");
+			return;
+		}
+
+		/*
+		 * Because only the Child SA is passed down to the
+		 * message processor, code uses .st_clonedfrom to
+		 * re-find the IKE (ISAKMP) SA (it could also use SPIs
+		 * (COOKIES)).
+		 *
+		 * Hence, having these mis-match is pretty bad.
+		 */
+		if (pbad(child->sa.st_clonedfrom != ike->sa.st_serialno)) {
+			return;
+		}
+
+		/*
+		 * For Quick Mode Messages I1 and R1, the receipent:
+		 *
+		 * - decrypts the message, updating .st_v1_new_iv
+		 *
+		 * - verifies the message using the HASH
+		 *
+		 * - offloads the message to perform DH/PFS
+		 *
+		 * - once crypto completes, update .st_v1_iv
+		 *
+		 * This means that when a duplicate arrives: the
+		 * responder, processing I1, has .st_v1_iv empty; and
+		 * the initiator, processing R1, has .st_v1_iv still
+		 * containing the old value.
+		 *
+		 * Instead, .st_v1_iv should be updated after the
+		 * message has been verified, i.e., before the
+		 * offload.
+		 *
+		 * As something of a work-around, drop the message if
+		 * the Child SA is found to be busy.
+		 */
+		if (verbose_v1_state_busy(&child->sa)) {
+			return;
+		}
+
+		PEXPECT(child->sa.logger, hunk_eq(child->sa.st_v1_iv, child->sa.st_v1_new_iv));
+		PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0);
+		md->v1_decrypt_iv = child->sa.st_v1_iv;
+		passert(ike != NULL);
+		from_state = child->sa.st_state->kind;
 		break;
 	}
 
@@ -894,111 +902,7 @@ void process_v1_packet(struct msg_digest *md)
 		}
 
 		ike = find_v1_phase15_isakmp_sa(&md->hdr.isa_ike_spis, md->hdr.isa_msgid);
-		if (ike == NULL) {
-			/* No appropriate Mode Config state.
-			 * See if we have a Main Mode state.
-			 * ??? what if this is a duplicate of another message?
-			 */
-			ldbg(md->logger, "no appropriate Mode Config state yet. See if we have a Main Mode state");
-
-			ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
-			if (ike == NULL) {
-				ldbg(md->logger, "Mode Config message is for a non-existent (expired?) ISAKMP SA");
-				/* XXX Could send notification back */
-				/* ??? ought to log something (not just DBG)? */
-				return;
-			}
-
-			const struct spd_end *this = ike->sa.st_connection->spd->local;
-			esb_buf b;
-			ldbg(ike->sa.logger,
-			     " processing received isakmp_xchg_type %s; this is a%s%s%s%s",
-			     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-			     this->host->config->xauth.server ? " xauthserver" : "",
-			     this->host->config->xauth.client ? " xauthclient" : "",
-			     this->host->config->modecfg.server ? " modecfgserver" : "",
-			     this->host->config->modecfg.client ? " modecfgclient" : "");
-
-			if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
-				ldbg(ike->sa.logger,
-				     "Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
-				     ike->sa.st_state->name);
-				/* XXX Could send notification back */
-				return;
-			}
-
-			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
-							  "IKE received encrypted ISAKMP_XCHG_MODE_CFG", HERE);
-
-			/*
-			 * okay, now we have to figure out if we are receiving a bogus
-			 * new message in an outstanding XAUTH server conversation
-			 * (i.e. a reply to our challenge)
-			 * (this occurs with some broken other implementations).
-			 *
-			 * or if receiving for the first time, an XAUTH challenge.
-			 *
-			 * or if we are getting a MODECFG request.
-			 *
-			 * we distinguish these states because we cannot both be an
-			 * XAUTH server and client, and our policy tells us which
-			 * one we are.
-			 *
-			 * to complicate further, it is normal to start a new msgid
-			 * when going from one state to another, or when restarting
-			 * the challenge.
-			 *
-			 */
-
-			if (this->host->config->xauth.server &&
-			    ike->sa.st_state->kind == STATE_XAUTH_R1 &&
-			    ike->sa.st_v1_quirks.xauth_ack_msgid) {
-				from_state = STATE_XAUTH_R1;
-				ldbg(ike->sa.logger,
-				     " set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
-				     ike->sa.st_state->name);
-			} else if (this->host->config->xauth.client &&
-				   IS_V1_PHASE1(ike->sa.st_state->kind)) {
-				from_state = STATE_XAUTH_I0;
-				ldbg(ike->sa.logger,
-				     " set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
-				     ike->sa.st_state->name);
-			} else if (this->host->config->xauth.client &&
-				   ike->sa.st_state->kind == STATE_XAUTH_I1) {
-				/*
-				 * in this case, we got a new MODECFG message after I0, maybe
-				 * because it wants to start over again.
-				 */
-				from_state = STATE_XAUTH_I0;
-				ldbg(ike->sa.logger,
-				     " set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
-				     ike->sa.st_state->name);
-			} else if (this->host->config->modecfg.server &&
-				   IS_V1_PHASE1(ike->sa.st_state->kind)) {
-				from_state = STATE_MODE_CFG_R0;
-				ldbg(ike->sa.logger,
-				     " set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
-				     ike->sa.st_state->name);
-			} else if (this->host->config->modecfg.client &&
-				   IS_V1_PHASE1(ike->sa.st_state->kind)) {
-				from_state = STATE_MODE_CFG_R1;
-				ldbg(ike->sa.logger,
-				     " set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
-				     ike->sa.st_state->name);
-			} else {
-				esb_buf b;
-				ldbg(ike->sa.logger,
-				     "received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
-				     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-				     ike->sa.st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
-				     ike->sa.st_connection->local->host.config->xauth.client ? " xauthclient" : "",
-				     ike->sa.st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
-				     ike->sa.st_connection->local->host.config->modecfg.client ? " modecfgclient" : "",
-				     ike->sa.st_state->name);
-				return;
-			}
-			/* from_state set above */
-		} else {
+		if (ike != NULL) {
 			if (ike->sa.st_connection->local->host.config->xauth.server &&
 			    IS_V1_PHASE1(ike->sa.st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
@@ -1006,10 +910,121 @@ void process_v1_packet(struct msg_digest *md)
 				change_v1_state(&ike->sa, STATE_XAUTH_R0);
 			}
 
-			/* otherwise, this is fine, we continue in the state we are in */
+			/* otherwise, this is fine, we continue in the
+			 * state we are in */
+			passert(ike != NULL);
 			from_state = ike->sa.st_state->kind;
+			break;
 		}
 
+		/*
+		 * No appropriate Mode Config state.  See if we have a
+		 * Main Mode state.
+		 *
+		 * ??? what if this is a duplicate of another message?
+		 */
+		ldbg(md->logger, "no appropriate Mode Config state yet. See if we have a Main Mode state");
+
+		ike = find_v1_isakmp_sa(&md->hdr.isa_ike_spis);
+		if (ike == NULL) {
+			ldbg(md->logger, "Mode Config message is for a non-existent (expired?) ISAKMP SA");
+			/* XXX Could send notification back */
+			/* ??? ought to log something (not just DBG)? */
+			return;
+		}
+
+		const struct spd_end *this = ike->sa.st_connection->spd->local;
+		esb_buf b;
+		ldbg(ike->sa.logger,
+		     " processing received isakmp_xchg_type %s; this is a%s%s%s%s",
+		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+		     this->host->config->xauth.server ? " xauthserver" : "",
+		     this->host->config->xauth.client ? " xauthclient" : "",
+		     this->host->config->modecfg.server ? " modecfgserver" : "",
+		     this->host->config->modecfg.client ? " modecfgclient" : "");
+
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
+			ldbg(ike->sa.logger,
+			     "Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
+			     ike->sa.st_state->name);
+			/* XXX Could send notification back */
+			return;
+		}
+
+		md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
+						  "IKE received encrypted ISAKMP_XCHG_MODE_CFG", HERE);
+
+		/*
+		 * okay, now we have to figure out if we are receiving
+		 * a bogus new message in an outstanding XAUTH server
+		 * conversation (i.e. a reply to our challenge) (this
+		 * occurs with some broken other implementations).
+		 *
+		 * or if receiving for the first time, an XAUTH
+		 * challenge.
+		 *
+		 * or if we are getting a MODECFG request.
+		 *
+		 * we distinguish these states because we cannot both
+		 * be an XAUTH server and client, and our policy tells
+		 * us which one we are.
+		 *
+		 * to complicate further, it is normal to start a new
+		 * msgid when going from one state to another, or when
+		 * restarting the challenge.
+		 */
+
+		enum state_kind old_state;
+		if (this->host->config->xauth.server &&
+		    ike->sa.st_state->kind == STATE_XAUTH_R1 &&
+		    ike->sa.st_v1_quirks.xauth_ack_msgid) {
+			old_state = STATE_XAUTH_R1;
+			ldbg(ike->sa.logger,
+			     " set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
+			     ike->sa.st_state->name);
+		} else if (this->host->config->xauth.client &&
+			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
+			old_state = STATE_XAUTH_I0;
+			ldbg(ike->sa.logger,
+			     " set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name);
+		} else if (this->host->config->xauth.client &&
+			   ike->sa.st_state->kind == STATE_XAUTH_I1) {
+			/*
+			 * in this case, we got a new MODECFG message
+			 * after I0, maybe because it wants to start
+			 * over again.
+			 */
+			old_state = STATE_XAUTH_I0;
+			ldbg(ike->sa.logger,
+			     " set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
+			     ike->sa.st_state->name);
+		} else if (this->host->config->modecfg.server &&
+			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
+			old_state = STATE_MODE_CFG_R0;
+			ldbg(ike->sa.logger,
+			     " set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name);
+		} else if (this->host->config->modecfg.client &&
+			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
+			old_state = STATE_MODE_CFG_R1;
+			ldbg(ike->sa.logger,
+			     " set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name);
+		} else {
+			esb_buf b;
+			ldbg(ike->sa.logger,
+			     "received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
+			     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+			     ike->sa.st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
+			     ike->sa.st_connection->local->host.config->xauth.client ? " xauthclient" : "",
+			     ike->sa.st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
+			     ike->sa.st_connection->local->host.config->modecfg.client ? " modecfgclient" : "",
+			     ike->sa.st_state->name);
+			return;
+		}
+		passert(ike != NULL);
+		from_state = old_state;
 		break;
 	}
 
