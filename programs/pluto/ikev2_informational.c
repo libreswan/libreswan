@@ -44,6 +44,10 @@
 #include "ikev2.h"
 #include "ikev2_states.h"
 
+static stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
+						   struct child_sa *null_child,
+						   struct msg_digest *md);
+
 /*
  ***************************************************************
  *                       Notify                            *****
@@ -85,28 +89,13 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	pexpect(null_child == NULL);
 
 	/*
-	 * we need connection and boolean below
-	 * in a separate variables because we
-	 * do something with them after we delete
-	 * the state.
-	 *
-	 * XXX: which is of course broken; code should return
-	 * STF_ZOMBIFY and and let state machine clean things up.
+	 * Don't expect empty requests; they should be handled by the
+	 * dedicated liveness exchange code.
 	 */
-	struct connection *c = ike->sa.st_connection;
-	bool do_unroute = ike->sa.st_sent_redirect && is_permanent(c);
+	PEXPECT(ike->sa.logger, md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np != ISAKMP_NEXT_NONE);
 
 	/*
-	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive/REDIRECT)
-	 *
-	 * There can be at most one Delete Payload for an IKE SA.
-	 * It means that this very SA is to be deleted.
-	 *
-	 * For each non-IKE Delete Payload we receive,
-	 * we respond with a corresponding Delete Payload.
-	 * Note that that means we will have an empty response
-	 * if no Delete Payloads came in or if the only
-	 * Delete Payload is for an IKE SA.
+	 * Response packet preparation: eg MOBIKE
 	 *
 	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
@@ -124,6 +113,10 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		if (!process_v2N_requests(ike, md, response.pbs)) {
+			/*
+			 * This creates a new response, throwing away
+			 * the above.
+			 */
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
 			/*
@@ -139,16 +132,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	/*
 	 * We've now build up the content (if any) of the Response:
 	 *
-	 * - empty, if there were no Delete Payloads or if we are
-	 *   responding to v2N_REDIRECT payload (RFC 5685 Chapter 5).
-	 *   Treat as a check for liveness.  Correct response is this
-	 *   empty Response.
-	 *
-	 * - if an ISAKMP SA is mentioned in input message, we are
-	 *   sending an empty Response, as per standard.
-	 *
-	 * - for IPsec SA mentioned, we are sending its mate.
-	 *
 	 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a
          *   COOKIE2
 	 *
@@ -160,28 +143,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	}
 
 	mobike_possibly_send_recorded(ike, md);
-
-	/*
-	 * This is a special case. When we have site to site connection
-	 * and one site redirects other in IKE_AUTH reply, he doesn't
-	 * unroute. It seems like it was easier to add here this part
-	 * than in delete_ipsec_sa() in kernel.c where it should be
-	 * (at least it seems like it should be there).
-	 *
-	 * The need for this special case was discovered by running
-	 * various test cases.
-	 */
-	if (do_unroute) {
-		connection_unroute(c, HERE);
-	}
-
-	/*
-	 * Only count empty requests as liveness probes.
-	 */
-	if (md->chain[ISAKMP_NEXT_v2SK]->payload.v2gen.isag_np == ISAKMP_NEXT_NONE) {
-		dbg("received an INFORMATIONAL liveness check request");
-		pstats_ike_dpd_replied++;
-	}
 
 	return STF_OK;
 }
@@ -263,26 +224,12 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 	 *
 	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
 	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
-	*
-	 * A liveness exchange is a special empty message.
 	 *
-	 * XXX: since these just generate an empty response, they
-	 * might as well have a dedicated liveness function.
+	 * Note: the below transition matches almost any informational
+	 * exchange, including liveness with the empty payload.
 	 *
-	 * XXX: rather than all this transition duplication, the
-	 * established states should share common transition stored
-	 * outside of this table.
+	 * Hence this must be last.
 	 */
-
-	{ .story      = "Informational Request (liveness probe)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .processor  = process_v2_INFORMATIONAL_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Request",
 	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
@@ -290,7 +237,7 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.optional = v2P(N) | v2P(D) | v2P(CP),
+	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },

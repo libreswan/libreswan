@@ -23,4 +23,6 @@ struct child_sa;
 void event_v2_liveness(struct state *st);
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t);
 
+extern const struct v2_exchange v2_INFORMATIONAL_liveness_exchange;
+
 #endif

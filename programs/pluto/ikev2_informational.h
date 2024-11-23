@@ -17,10 +17,6 @@
 #ifndef IKEV2_INFORMATIONAL_H
 #define IKEV2_INFORMATIONAL_H
 
-stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
-					    struct child_sa *null_child,
-					    struct msg_digest *md);
-
 typedef bool emit_v2_INFORMATIONAL_request_payload_fn(struct ike_sa *ike,
 						      struct child_sa *child,
 						      struct pbs_out *pbs);

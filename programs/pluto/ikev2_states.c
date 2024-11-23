@@ -44,6 +44,7 @@
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_ike_intermediate.h"
 #include "ikev2_informational.h"
+#include "ikev2_liveness.h"
 #include "ikev2_cookie.h"
 #include "ikev2_redirect.h"
 #include "ikev2_eap.h"
@@ -83,6 +84,18 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest
 		.v2.child_transition = &v2_##KIND##_transition,		\
 		##__VA_ARGS__,						\
 	}
+
+static void jam_expected_payloads(struct jambuf *buf,
+				  const struct ikev2_expected_payloads *payloads)
+{
+	jam_string(buf, "(");
+	jam_lset_short(buf, &ikev2_payload_names, "+",
+		       payloads->required);
+	jam_string(buf, ")[");
+	jam_lset_short(buf, &ikev2_payload_names, "_",
+		       payloads->optional);
+	jam_string(buf, "]");
+}
 
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
@@ -249,10 +262,18 @@ V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
 
 V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
 	 CAT_ESTABLISHED_IKE_SA, /*secured*/true,
-	 /* informational */
+	 /*
+	  * Informational.  Order is important.
+	  *
+	  * The liveness probe, which strictly matches an empty
+	  * message must be before the generic informational exchange.
+	  * Otherwise the generic exchange, which can accept an empty
+	  * message, would do the processing.
+	  */
 	 &v2_INFORMATIONAL_v2DELETE_exchange,
 	 &v2_INFORMATIONAL_v2N_REDIRECT_exchange,
-	 &v2_INFORMATIONAL_exchange,
+	 &v2_INFORMATIONAL_liveness_exchange,
+	 &v2_INFORMATIONAL_exchange, /* last; matches mobike! */
 	 /*
 	  * Create/Rekey IKE/Child SAs.  Danger: order is important.
 	  */
@@ -340,14 +361,20 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 		seen |= v2P(SK);
 	}
 
+	/*
+	 * LIVENESS really does want to only match an empty message
+	 * and, hence, does not want everywhere_payloads in the
+	 * responder.
+	 */
+	lset_t opt_payloads = (payloads->exact_match ? payloads->optional :
+			       payloads->optional | everywhere_payloads);
 	lset_t req_payloads = payloads->required;
-	lset_t opt_payloads = payloads->optional;
 
 	struct ikev2_payload_errors errors = {
 		.bad = false,
 		.excessive = summary->repeated & ~repeatable_payloads,
 		.missing = req_payloads & ~seen,
-		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
+		.unexpected = seen & ~req_payloads & ~opt_payloads,
 	};
 
 	if ((errors.excessive | errors.missing | errors.unexpected) != LEMPTY) {
@@ -404,7 +431,11 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
 		if (message_payload_errors.bad) {
-			vdbg_ft("message payloads do not match");
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam(buf, "message payloads do not match ");
+				jam_expected_payloads(buf, &transition->message_payloads);
+			}
 			/* save error for last pattern!?! */
 			*message_payload_status = message_payload_errors;
 			continue;
@@ -417,7 +448,11 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 		 */
 		if (encrypted_payload_status == NULL) {
 			vexpect((transition->message_payloads.required & v2P(SK)) == LEMPTY);
-			vdbg_ft("unsecured message matched");
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam(buf, "unsecured message matched ");
+				jam_expected_payloads(buf, &transition->message_payloads);
+			}
 			return transition;
 		}
 
@@ -436,13 +471,23 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
-			vdbg_ft("secured payloads do not match");
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam_string(buf, "secured payloads do not match ");
+				jam_expected_payloads(buf, &transition->encrypted_payloads);
+			}
 			/* save error for last pattern!?! */
 			*encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
 
-		vdbg_ft("secured message matched");
+		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "secured message matched ");
+			jam_expected_payloads(buf, &transition->message_payloads);
+			jam_string(buf, " ");
+			jam_expected_payloads(buf, &transition->encrypted_payloads);
+		}
 		return transition;
 	}
 
