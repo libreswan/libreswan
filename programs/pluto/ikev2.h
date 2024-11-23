@@ -49,6 +49,8 @@ extern void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child);
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child);
 
 struct ikev2_expected_payloads {
+	/* For liveness, so that no payloads means no payloads */
+	bool exact_match;
 	/* required payloads: one of each type must be present */
 	lset_t required;
 	/* optional payloads: up to one of each type can be present */

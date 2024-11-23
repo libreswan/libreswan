@@ -352,14 +352,20 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest *md,
 		seen |= v2P(SK);
 	}
 
+	/*
+	 * LIVENESS really does want to only match an empty message
+	 * and, hence, does not want everywhere_payloads in the
+	 * responder.
+	 */
+	lset_t opt_payloads = (payloads->exact_match ? payloads->optional :
+			       payloads->optional | everywhere_payloads);
 	lset_t req_payloads = payloads->required;
-	lset_t opt_payloads = payloads->optional;
 
 	struct ikev2_payload_errors errors = {
 		.bad = false,
 		.excessive = summary->repeated & ~repeatable_payloads,
 		.missing = req_payloads & ~seen,
-		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
+		.unexpected = seen & ~req_payloads & ~opt_payloads,
 	};
 
 	if ((errors.excessive | errors.missing | errors.unexpected) != LEMPTY) {
