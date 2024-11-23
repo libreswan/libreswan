@@ -84,6 +84,18 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest
 		##__VA_ARGS__,						\
 	}
 
+static void jam_expected_payloads(struct jambuf *buf,
+				  const struct ikev2_expected_payloads *payloads)
+{
+	jam_string(buf, "(");
+	jam_lset_short(buf, &ikev2_payload_names, "+",
+		       payloads->required);
+	jam_string(buf, ")[");
+	jam_lset_short(buf, &ikev2_payload_names, "_",
+		       payloads->optional);
+	jam_string(buf, "]");
+}
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -404,7 +416,11 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 			= ikev2_verify_payloads(md, &md->message_payloads,
 						&transition->message_payloads);
 		if (message_payload_errors.bad) {
-			vdbg_ft("message payloads do not match");
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam(buf, "message payloads do not match ");
+				jam_expected_payloads(buf, &transition->message_payloads);
+			}
 			/* save error for last pattern!?! */
 			*message_payload_status = message_payload_errors;
 			continue;
@@ -417,7 +433,11 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 		 */
 		if (encrypted_payload_status == NULL) {
 			vexpect((transition->message_payloads.required & v2P(SK)) == LEMPTY);
-			vdbg_ft("unsecured message matched");
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam(buf, "unsecured message matched ");
+				jam_expected_payloads(buf, &transition->message_payloads);
+			}
 			return transition;
 		}
 
@@ -436,13 +456,23 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&transition->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
-			vdbg_ft("secured payloads do not match");
+			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+				jam(buf, PRI_VERBOSE, pri_verbose);
+				jam_string(buf, "secured payloads do not match ");
+				jam_expected_payloads(buf, &transition->encrypted_payloads);
+			}
 			/* save error for last pattern!?! */
 			*encrypted_payload_status = encrypted_payload_errors;
 			continue;
 		}
 
-		vdbg_ft("secured message matched");
+		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "secured message matched ");
+			jam_expected_payloads(buf, &transition->message_payloads);
+			jam_string(buf, " ");
+			jam_expected_payloads(buf, &transition->encrypted_payloads);
+		}
 		return transition;
 	}
 
