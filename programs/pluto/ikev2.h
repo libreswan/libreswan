@@ -14,6 +14,8 @@
 
 #include "fd.h"
 
+#include "message_role.h"
+
 struct pending;
 struct pluto_crypto_req;
 struct spd;
@@ -23,6 +25,13 @@ struct payload_digest;
 struct ikev2_ipseckey_dns;
 struct hash_signature;
 enum payload_security;
+struct msg_digest;
+struct state;
+struct ike_sa;
+struct child_sa;
+struct pbs_in;
+struct dh_desc;
+struct connection;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);

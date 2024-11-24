@@ -290,9 +290,9 @@ V2_STATE(ZOMBIE, "deleted state", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
+	S(UNSECURED_R),
 	S(IKE_SA_INIT_I0),
 	S(IKE_SA_INIT_I),
-	S(IKE_SA_INIT_R0),
 	S(IKE_SA_INIT_R),
 	S(IKE_SA_INIT_IR),
 	S(IKE_INTERMEDIATE_I),
@@ -494,6 +494,44 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 	return NULL;
 }
 
+static const struct v2_transition *find_v2_exchange_transition(struct verbose verbose,
+							       const struct msg_digest *md,
+							       const struct v2_exchanges *exchanges,
+							       struct ikev2_payload_errors *message_payload_status,
+							       struct ikev2_payload_errors *encrypted_payload_status)
+{
+	const unsigned level = verbose.level;
+	/*
+	 * Does the message match one of the responder state's
+	 * exchanges?
+	 *
+	 * For instance, the IKE_SA_INIT responder state accepts a
+	 * request for the IKE_AUTH and IKE_INTERMEDIATE exchanges.
+	 * With a matching exchange, look for a matching transition.
+	 */
+	FOR_EACH_ITEM(exchangep, exchanges) {
+		const struct v2_exchange *exchange = (*exchangep);
+
+		verbose.level = level;
+		vdbg("trying exchange %s ...", exchange->subplot);
+		verbose.level++;
+
+		if (exchange->type != md->hdr.isa_xchg) {
+			vdbg_ft("wrong exchange type");
+			continue;
+		}
+		const struct v2_transition *t =
+			find_v2_transition(verbose, md,
+					   exchange->responder,
+					   message_payload_status,
+					   encrypted_payload_status);
+		if (t != NULL) {
+			return t;
+		}
+	}
+	return NULL;
+}
+
 const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 						       const struct msg_digest *md,
 						       bool *secured_payload_failed)
@@ -517,35 +555,13 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		break;
 	case MESSAGE_REQUEST:
 	{
-		/*
-		 * Does the message match one of the responder state's
-		 * exchanges?
-		 *
-		 * For instance, the IKE_SA_INIT responder state
-		 * accepts a request for the IKE_AUTH and
-		 * IKE_INTERMEDIATE exchanges.  With a matching
-		 * exchange, look for a matching transition.
-		 */
-		const unsigned level = verbose.level;
-		FOR_EACH_ITEM(exchangep, ike->sa.st_state->v2.ike_exchanges) {
-			const struct v2_exchange *exchange = (*exchangep);
-
-			verbose.level = level;
-			vdbg_ft("trying exchange %s ...", exchange->subplot);
-			verbose.level++;
-
-			if (exchange->type != md->hdr.isa_xchg) {
-				vdbg_ft("wrong exchange type");
-				continue;
-			}
-			const struct v2_transition *t =
-				find_v2_transition(verbose, md,
-						   exchange->responder,
-						   &message_payload_status,
-						   &encrypted_payload_status);
-			if (t != NULL) {
-				return t;
-			}
+		const struct v2_transition *t =
+			find_v2_exchange_transition(verbose, md,
+						    ike->sa.st_state->v2.ike_exchanges,
+						    &message_payload_status,
+						    &encrypted_payload_status);
+		if (t != NULL) {
+			return t;
 		}
 		break;
 	}
@@ -597,10 +613,10 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 	return NULL;
 }
 
-diag_t find_v2_unsecured_transition(struct logger *logger,
-				    const struct v2_transitions *transitions,
-				    const struct msg_digest *md,
-				    const struct v2_transition **transition)
+diag_t find_v2_unsecured_request_transition(struct logger *logger,
+					    const struct finite_state *state,
+					    const struct msg_digest *md,
+					    const struct v2_transition **transition)
 {
 	enum message_role role = v2_msg_role(md);
 
@@ -609,17 +625,54 @@ diag_t find_v2_unsecured_transition(struct logger *logger,
 		     "looking for an unsecured transition matching exchange %s %s ...",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     str_enum_short(&message_role_names, role, &rb));
+	vassert(role == MESSAGE_REQUEST);
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
-	(*transition) = find_v2_transition(verbose, md, transitions,
+	(*transition) = find_v2_exchange_transition(verbose, md,
+						    state->v2.ike_exchanges,
+						    &message_payload_status, NULL);
+	if ((*transition) != NULL) {
+		return NULL; /*no-diag*/
+	}
+
+	/*
+	 * A very messed up message - none of the state transitions
+	 * recognized it!.
+	 */
+	diag_t d = NULL;
+	JAMBUF(buf) {
+		jam_v2_payload_errors(buf, md, &message_payload_status);
+		d = diag_jambuf(buf);
+	}
+	return d;
+}
+
+diag_t find_v2_unsecured_response_transition(struct ike_sa *ike,
+					     const struct msg_digest *md,
+					     const struct v2_transition **transition)
+{
+	enum_buf xb, rb;
+	enum message_role role = v2_msg_role(md);
+	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
+		     "looking for an unsecured transition matching exchange %s %s ...",
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&message_role_names, role, &rb));
+
+	vassert(role == MESSAGE_RESPONSE);
+
+	struct ikev2_payload_errors message_payload_status = { .bad = false };
+
+	const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+	vassert(exchange != NULL);
+	(*transition) = find_v2_transition(verbose, md, exchange->response,
 					   &message_payload_status, NULL);
 	if (*transition != NULL) {
 		return NULL;
 	}
 
 	/*
-	 * A very messed up message - none of the state
-	 * transitions recognized it!.
+	 * A very messed up message - none of the state transitions
+	 * recognized it!
 	 */
 	diag_t d = NULL;
 	JAMBUF(buf) {
