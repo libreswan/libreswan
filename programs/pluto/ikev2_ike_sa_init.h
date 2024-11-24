@@ -24,6 +24,10 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
 
+bool calc_v2_new_ike_keymat(struct ike_sa *ike,
+			    const ike_spis_t *new_ike_spis,
+			    where_t where);
+
 extern const struct v2_exchange v2_IKE_SA_INIT_exchange;
 
 #endif

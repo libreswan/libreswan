@@ -57,6 +57,8 @@
 #include "ikev2_parent.h"
 #include "ikev2_delete.h"
 #include "ikev2_states.h"
+#include "ikev2_prf.h"
+#include "crypt_symkey.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 
@@ -1567,6 +1569,35 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
  * to the message queue.
  */
 
+static bool calc_v2_rekey_ike_keymat(struct ike_sa *old_ike,
+				     struct child_sa *larval_ike,
+				     const ike_spis_t *new_ike_spis,
+				     where_t where)
+{
+	struct logger *logger = larval_ike->sa.logger;
+	PK11SymKey *shared = larval_ike->sa.st_dh_shared_secret;
+
+	const struct prf_desc *old_prf = old_ike->sa.st_oakley.ta_prf;
+	PK11SymKey *old_d = old_ike->sa.st_skey_d_nss;
+	ldbg(logger, "calculating rekey skeyseed using prf=%s",
+	     old_prf->common.fqn);
+
+	PK11SymKey *skeyseed =
+		ikev2_ike_sa_rekey_skeyseed(old_prf, old_d,
+					    shared,
+					    larval_ike->sa.st_ni,
+					    larval_ike->sa.st_nr,
+					    logger);
+	if (skeyseed == NULL) {
+		llog_pexpect(logger, where, "rekey SKEYSEED failed");
+		return false;
+	}
+
+	calc_v2_ike_keymat(&larval_ike->sa, skeyseed, new_ike_spis);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	return true;
+}
+
 struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 						     bool detach_whack)
 {
@@ -1907,10 +1938,12 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 		return STF_FATAL; /* IKE family is doomed */
 	}
 
-	calc_v2_keymat(&larval_ike->sa,
-		       ike->sa.st_skey_d_nss, /* only IKE has SK_d */
-		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-		       &larval_ike->sa.st_ike_rekey_spis);
+	if (!calc_v2_rekey_ike_keymat(ike, larval_ike,
+				      &larval_ike->sa.st_ike_rekey_spis,
+				      HERE)) {
+		/* already logged */
+		return STF_FATAL;
+	}
 
 	if (!record_v2_rekey_ike_message(ike, larval_ike, /*responder*/request_md)) {
 		return STF_INTERNAL_ERROR;
@@ -2060,10 +2093,12 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(&larval_ike->sa,
-		       ike->sa.st_skey_d_nss, /* only IKE has SK_d */
-		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
-		       &larval_ike->sa.st_ike_rekey_spis/* new SPIs */);
+	if (!calc_v2_rekey_ike_keymat(ike, larval_ike,
+				      &larval_ike->sa.st_ike_rekey_spis/* new SPIs */,
+				      HERE)) {
+		/* already logged */
+		return STF_FATAL;
+	}
 
 	pexpect(larval_ike->sa.st_v2_rekey_pred == ike->sa.st_serialno); /*wow!*/
 	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_v2_rekey_pred);

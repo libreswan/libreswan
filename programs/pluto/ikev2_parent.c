@@ -480,10 +480,10 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(&ike->sa,
-		       NULL /* no old keymat; not a rekey */,
-		       NULL /* no old prf; not a rekey */,
-		       &ike->sa.st_ike_spis);
+	if (!calc_v2_new_ike_keymat(ike, &ike->sa.st_ike_spis, HERE)) {
+		/* already logged */
+		return STF_FATAL;
+	}
 
 	/*
 	 * Try to decrypt the fragments; the result could be no

@@ -37,6 +37,8 @@
 #include "ikev2_states.h"
 #include "ikev2_eap.h"
 #include "secrets.h"
+#include "crypt_cipher.h"
+#include "ikev2_prf.h"
 
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
@@ -361,6 +363,67 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
+static void recalc_v2_ppk_interm_keymat(struct ike_sa *ike,
+					const shunk_t *ppk,
+					const ike_spis_t *new_ike_spis)
+{
+	struct logger *logger = ike->sa.logger;
+	PASSERT(logger, ppk != NULL);
+
+	const ike_spis_t *ike_spis = new_ike_spis;
+
+	ldbgf(DBG_CRYPT, logger, "NSS: Started key computation");
+
+	const struct encrypt_desc *cipher = ike->sa.st_oakley.ta_encrypt;
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
+	const struct integ_desc *integ = ike->sa.st_oakley.ta_integ;
+
+	PASSERT(logger, cipher != NULL);
+	PASSERT(logger, prf != NULL);
+
+	size_t key_size = ike->sa.st_oakley.enckeylen / BITS_IN_BYTE;
+	size_t salt_size = cipher->salt_size;
+
+	ldbg(logger, "calculating skeyseed' (ppk interm) using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+	     prf->common.fqn,
+	     (integ != NULL ? integ->common.fqn : "n/a"),
+	     key_size, salt_size);
+
+	/*
+	 * We need old_skey_d to recalculate SKEYSEED'.
+	 */
+	PK11SymKey *old_skey_d = symkey_addref(logger, "SK_d", ike->sa.st_skey_d_nss);
+
+	/* release old keys, salts and cipher contexts */
+	symkey_delref(logger, "SK_d", &ike->sa.st_skey_d_nss);
+	symkey_delref(logger, "SK_ai", &ike->sa.st_skey_ai_nss);
+	symkey_delref(logger, "SK_ar", &ike->sa.st_skey_ar_nss);
+	symkey_delref(logger, "SK_ei", &ike->sa.st_skey_ei_nss);
+	symkey_delref(logger, "SK_er", &ike->sa.st_skey_er_nss);
+	symkey_delref(logger, "SK_pi", &ike->sa.st_skey_pi_nss);
+	symkey_delref(logger, "SK_pr", &ike->sa.st_skey_pr_nss);
+	free_chunk_content(&ike->sa.st_skey_chunk_SK_pi);
+	free_chunk_content(&ike->sa.st_skey_chunk_SK_pr);
+	free_chunk_content(&ike->sa.st_skey_initiator_salt);
+	free_chunk_content(&ike->sa.st_skey_responder_salt);
+	cipher_context_destroy(&ike->sa.st_ike_encrypt_cipher_context, logger);
+	cipher_context_destroy(&ike->sa.st_ike_decrypt_cipher_context, logger);
+
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
+
+	PK11SymKey *skeyseed =
+		ikev2_ike_sa_ppk_interm_skeyseed(prf, old_skey_d, ppk_key, logger);
+
+	symkey_delref(logger, "PPK key", &ppk_key);
+	passert(skeyseed != NULL);
+
+	/* now we have to generate the keys for everything */
+
+	calc_v2_ike_keymat(&ike->sa, skeyseed, ike_spis);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	symkey_delref(logger, "SK_d", &old_skey_d);
+}
+
 stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					       struct child_sa *unused_child UNUSED,
 					       struct msg_digest *md)
@@ -497,9 +560,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	record_v2_message(&response.message, response.story, response.outgoing_fragments);
 
 	if (found_one) {
-		recalc_v2_ppk_interm_keymat(&ike->sa,
-					    ike->sa.st_skey_d_nss,
-					    &ppk->key,
+		recalc_v2_ppk_interm_keymat(ike, &ppk->key,
 					    &ike->sa.st_ike_spis);
 		llog_sa(RC_LOG, ike,
 			"PPK used in IKE_INTERMEDIATE as responder");
@@ -617,9 +678,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 					   /*index*/0);
 		free_chunk_content(&payl.ppk_id);
 
-		recalc_v2_ppk_interm_keymat(&ike->sa,
-					    ike->sa.st_skey_d_nss,
-					    &ppk->key,
+		recalc_v2_ppk_interm_keymat(ike, &ppk->key,
 					    &ike->sa.st_ike_spis);
 		llog_sa(RC_LOG, ike,
 			"PPK used in IKE_INTERMEDIATE as initiator");

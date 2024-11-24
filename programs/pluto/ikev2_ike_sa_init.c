@@ -66,6 +66,8 @@
 #include "ikev2_parent.h"
 #include "ikev2_eap.h"
 #include "log_limiter.h"
+#include "ikev2_prf.h"
+#include "crypt_symkey.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -138,6 +140,30 @@ void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike)
 			 ISAKMP_v2_IKE_AUTH);
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 	}
+}
+
+bool calc_v2_new_ike_keymat(struct ike_sa *ike,
+			    const ike_spis_t *new_ike_spis,
+			    where_t where)
+{
+	struct logger *logger = ike->sa.logger;
+	PK11SymKey *shared = ike->sa.st_dh_shared_secret;
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
+
+	ldbg(logger, "calculating new skeyseed using prf=%s",
+	     prf->common.fqn);
+
+	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ike->sa.st_ni, ike->sa.st_nr,
+						     shared, logger);
+	if (skeyseed == NULL) {
+		llog_pexpect(logger, where, "rekey SKEYSEED failed");
+		return false;
+	}
+
+	calc_v2_ike_keymat(&ike->sa, skeyseed, new_ike_spis);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	return true;
 }
 
 static void record_first_v2_packet(struct ike_sa *ike, struct msg_digest *md,
@@ -1725,10 +1751,10 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 		return STF_FATAL;
 	}
 
-	calc_v2_keymat(&ike->sa,
-		       NULL /* no old keymat; not a rekey */,
-		       NULL /* no old prf; not a rekey */,
-		       &ike->sa.st_ike_rekey_spis);
+	if (!calc_v2_new_ike_keymat(ike, &ike->sa.st_ike_rekey_spis, HERE)) {
+		/* already logged */
+		return STF_FATAL;
+	}
 
 	/*
 	 * All systems are go.
