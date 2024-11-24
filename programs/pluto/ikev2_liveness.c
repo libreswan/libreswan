@@ -45,7 +45,7 @@ static ikev2_state_transition_fn process_v2_INFORMATIONAL_liveness_response;
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 {
 	const struct v2_exchange *exchange = &v2_INFORMATIONAL_liveness_exchange;
-	if (!v2_transition_from(exchange->initiate, ike->sa.st_state)) {
+	if (!v2_ike_sa_can_initiate_exchange(ike, exchange)) {
 		llog_sa(RC_LOG, ike,
 			"liveness: IKE SA in state %s but should be in state ESTABLISHED_IKE_SA; liveness for "PRI_SO" ignored",
 			ike->sa.st_state->short_name,
@@ -53,7 +53,7 @@ void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 		return;
 	}
 
-	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+	pexpect(exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
 	v2_msgid_queue_exchange(ike, NULL, exchange);
 }
 
@@ -366,7 +366,6 @@ stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition = {
 	.story = "liveness probe",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_liveness_request,
@@ -376,7 +375,6 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition 
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition[] = {
 	{ .story      = "Informational Request (liveness probe)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -396,7 +394,6 @@ static const struct v2_transitions v2_INFORMATIONAL_liveness_responder_transitio
 
 static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[] = {
 	{ .story      = "Informational Response (liveness probe)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
@@ -415,7 +412,8 @@ const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "liveness probe",
 	.secured = true,
-	.initiate = &v2_INFORMATIONAL_liveness_initiate_transition,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_INFORMATIONAL_liveness_initiate_transition,
 	.responder = &v2_INFORMATIONAL_liveness_responder_transitions,
 	.response = &v2_INFORMATIONAL_liveness_response_transitions,
 };

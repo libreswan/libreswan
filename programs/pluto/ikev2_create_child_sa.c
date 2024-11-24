@@ -555,7 +555,6 @@ static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 
 static const struct v2_transition v2_CREATE_CHILD_SA_rekey_child_initiate_transition = {
 	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
@@ -581,7 +580,6 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_child_responder_trans
 	 */
 
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -603,7 +601,6 @@ static const struct v2_transitions v2_CREATE_CHILD_SA_rekey_child_responder_tran
 static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -615,7 +612,6 @@ static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "process Child SA response (new or rekey) (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -628,7 +624,6 @@ static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "process CREATE_CHILD_SA failure response (new or rekey Child SA, rekey IKE SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -649,7 +644,8 @@ const struct v2_exchange v2_CREATE_CHILD_SA_rekey_child_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.subplot = "rekey Child SA",
 	.secured = true,
-	.initiate = &v2_CREATE_CHILD_SA_rekey_child_initiate_transition,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_CREATE_CHILD_SA_rekey_child_initiate_transition,
 	.responder = &v2_CREATE_CHILD_SA_rekey_child_responder_transitions,
 	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
@@ -929,7 +925,6 @@ static void llog_v2_success_new_child_request(struct ike_sa *ike)
 
 static const struct v2_transition v2_CREATE_CHILD_SA_new_child_initiate_transition = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
@@ -955,7 +950,6 @@ static const struct v2_transition v2_CREATE_CHILD_SA_new_child_responder_transit
 	 */
 
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -977,7 +971,8 @@ const struct v2_exchange v2_CREATE_CHILD_SA_new_child_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.subplot = "new Child SA",
 	.secured = true,
-	.initiate = &v2_CREATE_CHILD_SA_new_child_initiate_transition,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_CREATE_CHILD_SA_new_child_initiate_transition,
 	.responder = &v2_CREATE_CHILD_SA_new_child_responder_transitions,
 	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };
@@ -1665,7 +1660,6 @@ static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 
 static const struct v2_transition v2_CREATE_CHILD_SA_rekey_ike_initiate_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
@@ -1690,7 +1684,6 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_ike_responder_transit
 	 */
 
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
@@ -1712,7 +1705,8 @@ const struct v2_exchange v2_CREATE_CHILD_SA_rekey_ike_exchange = {
 	.type = ISAKMP_v2_CREATE_CHILD_SA,
 	.subplot = "rekey IKE SA",
 	.secured = true,
-	.initiate = &v2_CREATE_CHILD_SA_rekey_ike_initiate_transition,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_CREATE_CHILD_SA_rekey_ike_initiate_transition,
 	.responder = &v2_CREATE_CHILD_SA_rekey_ike_responder_transitions,
 	.response = &v2_CREATE_CHILD_SA_response_transitions,
 };

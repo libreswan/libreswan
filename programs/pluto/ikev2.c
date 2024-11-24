@@ -1355,7 +1355,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, ike->sa.logger, buf) {
-			jam(buf, "IKE SA in state %s transitioning ",
+			jam(buf, "IKE SA in state %s transitioning to ",
 			    ike->sa.st_state->short_name);
 			jam_v2_transition(buf, transition);
 		}
@@ -1595,7 +1595,7 @@ void start_v2_exchange(struct ike_sa *ike,
 		       const struct v2_exchange *exchange,
 		       where_t where)
 {
-	set_v2_transition(&ike->sa, exchange->initiate, where);
+	set_v2_transition(&ike->sa, exchange->initiate.transition, where);
 	v2_msgid_start(ike, exchange, NULL, HERE);
 }
 
@@ -1686,14 +1686,11 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	pstat(stf_status, result);
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
-		if (!v2_transition_from(transition, ike->sa.st_state)) {
-			jam(buf, " in state %s", ike->sa.st_state->short_name);
-		}
-		jam(buf, " ");
-		jam_v2_transition(buf, transition);
-		jam(buf, " with status ");
+		jam(buf, "#%lu complete_v2_state_transition() status ", ike->sa.st_serialno);
 		jam_enum(buf, &stf_status_names, result);
+		jam(buf, " transitioning from state %s to ",
+		    ike->sa.st_state->short_name);
+		jam_v2_transition(buf, transition);
 	}
 
 	switch (result) {
@@ -2011,17 +2008,27 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 {
 	if (transition == NULL) {
 		jam_string(buf, "<null-transition>");
-	} else {
-		jam_string(buf, transition->story);
-		const char *sep = " from "; /* at least one */
-		FOR_EACH_ELEMENT(from, transition->from) {
-			if (*from != NULL) {
-				jam_string(buf, sep);
-				jam_string(buf, (*from)->short_name);
-				sep = "+";
-			}
-		}
-		jam_string(buf, " to ");
-		jam_string(buf, transition->to->short_name);
+		return;
 	}
+	jam_string(buf, transition->to->short_name);
+	jam_string(buf, " (");
+	jam_enum(buf, &ikev2_exchange_names, transition->exchange);
+	jam_string(buf, " ");
+	jam_enum(buf, &message_role_names, transition->recv_role);
+	jam_string(buf, ": ");
+	jam_string(buf, transition->story);
+	jam_string(buf, ")");
+}
+
+bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_exchange *exchange)
+{
+	const struct finite_state *state = ike->sa.st_state;
+	ldbg(ike->sa.logger, "looking for exchange '%s' in state '%s'",
+	     exchange->subplot, state->short_name);
+	FOR_EACH_ELEMENT(f, exchange->initiate.from) {
+		if (*f == state) {
+			return true;
+		}
+	}
+	return false;
 }

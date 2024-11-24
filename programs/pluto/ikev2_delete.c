@@ -232,7 +232,7 @@ static void llog_v2_success_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
 	const struct v2_exchange *exchange = &v2_INFORMATIONAL_v2DELETE_exchange;
-	pexpect(exchange->initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+	pexpect(exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
 	if (child == NULL) {
 		/*
 		 * IKE SA is no longer viable - reviving Child SA's
@@ -551,7 +551,6 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition = {
 	.story = "initiate Informational Delete IKE or Child SA",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
@@ -561,7 +560,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition 
 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_responder_transition[] = {
 	{ .story      = "process Informational Delete IKE or Child SA request",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -579,7 +577,6 @@ static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_responder_transitio
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[] = {
 
 	{ .story      = "process Informational Delete IKE or Child SA response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -600,7 +597,8 @@ const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "delete IKE or Child SA",
 	.secured = true,
-	.initiate = &v2_INFORMATIONAL_v2DELETE_initiate_transition,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_INFORMATIONAL_v2DELETE_initiate_transition,
 	.responder = &v2_INFORMATIONAL_v2DELETE_responder_transitions,
 	.response = &v2_INFORMATIONAL_v2DELETE_response_transitions,
 };

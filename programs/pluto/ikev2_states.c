@@ -916,6 +916,7 @@ static void validate_state_exchange_transition(struct verbose verbose,
 	vassert(transition->llog_success != NULL);
 	vassert(transition->recv_role == recv_role);
 	vassert(transition->exchange == exchange->type);
+	vassert(transition->from[0] == NULL);
 }
 
 static void validate_state_exchange(struct verbose verbose,
@@ -930,10 +931,25 @@ static void validate_state_exchange(struct verbose verbose,
 	const unsigned level = ++verbose.level;
 
 	verbose.level = level;
-	if (exchange->initiate != NULL) {
+	if (verbose.rc_flags != 0) {
+		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "from:");
+			FOR_EACH_ELEMENT(f, exchange->initiate.from) {
+				if ((*f) == NULL) {
+					break;
+				}
+				jam_string(buf, " ");
+				jam_string(buf, (*f)->short_name);
+			}
+		}
+	}
+
+	verbose.level = level;
+	if (exchange->initiate.transition != NULL) {
 		vdbg("initiator:");
 		verbose.level++;
-		validate_state_exchange_transition(verbose, exchange->initiate, NO_MESSAGE, exchange);
+		validate_state_exchange_transition(verbose, exchange->initiate.transition, NO_MESSAGE, exchange);
 	}
 
 	verbose.level = level;

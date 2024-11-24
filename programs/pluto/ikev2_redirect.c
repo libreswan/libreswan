@@ -618,7 +618,6 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_response(struct ike_sa *
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition = {
 	.story = "redirect IKE SA",
-	.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = send_v2_INFORMATIONAL_v2N_REDIRECT_request,
@@ -628,7 +627,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transit
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transition[] = {
 	{ .story      = "Informational Request",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -646,7 +644,6 @@ static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_responder_trans
 
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transition[] = {
 	{ .story      = "Informational Response",
-	  .from = { &state_v2_ESTABLISHED_IKE_SA, },
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange   = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -665,7 +662,8 @@ const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "redirect IKE SA",
 	.secured = true,
-	.initiate = &v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition,
+	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
+	.initiate.transition = &v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition,
 	.responder = &v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions,
 	.response = &v2_INFORMATIONAL_v2N_REDIRECT_response_transitions,
 };
@@ -700,7 +698,7 @@ void find_and_active_redirect_states(const char *conn_name,
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
 			cnt++;
-			pexpect(v2_INFORMATIONAL_v2N_REDIRECT_exchange.initiate->exchange == ISAKMP_v2_INFORMATIONAL);
+			pexpect(v2_INFORMATIONAL_v2N_REDIRECT_exchange.initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
 			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
 		}
 	}

@@ -710,7 +710,6 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 
 static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
-	.from = { &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR, },
 	.to = &state_v2_IKE_INTERMEDIATE_I,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
@@ -721,7 +720,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
-	  .from = { &state_v2_IKE_SA_INIT_R, },
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -733,7 +731,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "processing IKE_INTERMEDIATE request",
-	  .from = { &state_v2_IKE_INTERMEDIATE_R, },
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
@@ -748,7 +745,6 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
-	  .from = { &state_v2_IKE_INTERMEDIATE_I, },
 	  .to = &state_v2_IKE_INTERMEDIATE_IR,
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
@@ -766,4 +762,5 @@ V2_STATE(IKE_INTERMEDIATE_R,
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "key IKE SA",
 	    ", initiating IKE_INTERMEDIATE or IKE_AUTH",
-	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true);
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true,
+	    &state_v2_IKE_SA_INIT_IR, &state_v2_IKE_INTERMEDIATE_IR);
