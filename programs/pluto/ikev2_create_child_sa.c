@@ -1574,8 +1574,8 @@ static bool calc_v2_rekey_ike_keymat(struct ike_sa *old_ike,
 
 	const struct prf_desc *old_prf = old_ike->sa.st_oakley.ta_prf;
 	PK11SymKey *old_d = old_ike->sa.st_skey_d_nss;
-	ldbg(logger, "calculating rekey skeyseed using prf=%s",
-	     old_prf->common.fqn);
+	ldbg(logger, "%s() calculating skeyseed using prf %s",
+	     __func__, old_prf->common.fqn);
 
 	PK11SymKey *skeyseed =
 		ikev2_ike_sa_rekey_skeyseed(old_prf, old_d,

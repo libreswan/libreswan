@@ -370,12 +370,13 @@ static void recalc_v2_ppk_interm_keymat(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	PASSERT(logger, ppk != NULL);
 
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
+	ldbg(logger, "%s() calculating skeyseed using prf %s",
+	     __func__, prf->common.fqn);
+
 	const ike_spis_t *ike_spis = new_ike_spis;
 
-	ldbgf(DBG_CRYPT, logger, "NSS: Started key computation");
-
 	const struct encrypt_desc *cipher = ike->sa.st_oakley.ta_encrypt;
-	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 	const struct integ_desc *integ = ike->sa.st_oakley.ta_integ;
 
 	PASSERT(logger, cipher != NULL);

@@ -146,8 +146,8 @@ bool calc_v2_new_ike_keymat(struct ike_sa *ike,
 	PK11SymKey *shared = ike->sa.st_dh_shared_secret;
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 
-	ldbg(logger, "calculating new skeyseed using prf=%s",
-	     prf->common.fqn);
+	ldbg(logger, "%s() calculating skeyseed using prf=%s",
+	     __func__, prf->common.fqn);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
 	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ike->sa.st_ni, ike->sa.st_nr,
