@@ -175,7 +175,8 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 
 bool close_and_encrypt_v1_message(struct ike_sa *ike,
 				  struct pbs_out *pbs,
-				  struct state *st)
+				  struct state *st,
+				  struct crypt_mac *iv_out)
 {
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
@@ -258,7 +259,8 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		     ike->sa.st_enc_key_nss,
 		     st->logger);
 
-	st->st_v1_iv = st->st_v1_new_iv;
+	PASSERT(ike->sa.logger, iv_out == &st->st_v1_iv);
+	(*iv_out) = st->st_v1_new_iv;
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("next IV:", st->st_v1_iv);
 	}

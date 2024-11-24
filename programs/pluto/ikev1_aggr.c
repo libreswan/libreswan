@@ -785,7 +785,8 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	/* updates .st_v1_iv and .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa))
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
+					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG

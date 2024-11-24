@@ -801,7 +801,8 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	child->sa.st_v1_new_iv = ike->sa.st_v1_new_iv;
 
 	/* updates .st_v1_iv and .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa,
+					  &child->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1609,7 +1610,8 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 
 	/* encrypt message, except for fixed part of header */
 	/* updates .st_v1_iv and .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa,
+					  &child->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -1798,7 +1800,8 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 	/* encrypt message, except for fixed part of header */
 
 	/* updates .st_v1_iv and .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa,
+					  &child->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
