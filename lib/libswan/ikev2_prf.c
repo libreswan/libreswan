@@ -90,12 +90,17 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 }
 
 PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
-					    PK11SymKey *old_SK_d,
-					    PK11SymKey *ppk_key,
-					    struct logger *logger)
+					     PK11SymKey *old_SK_d,
+					     shunk_t ppk,
+					     struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->prfplus(prf_desc, ppk_key, old_SK_d,
-						prf_desc->prf_key_size, logger);
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk, logger);
+	PK11SymKey *skeyseed = prf_desc->prf_ikev2_ops->prfplus(prf_desc, ppk_key,
+								old_SK_d,
+								prf_desc->prf_key_size,
+								logger);
+	symkey_delref(logger, "PPK key", &ppk_key);
+	return skeyseed;
 }
 
 /*
