@@ -203,8 +203,9 @@ static void send_v1_notification(struct logger *logger,
 		}
 		ike->sa.st_v1_new_iv = new_phase2_iv(ike, msgid,
 						     "IKE encrypting notification", HERE);
-		/* updates .st_v1_iv and .st_v1_new_iv */
+		/* stores updated IV in .st_v1_new_iv */
 		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &ike->sa,
+						     ike->sa.st_v1_new_iv,
 						     &ike->sa.st_v1_iv));
 
 		/* get back old IV for this state */

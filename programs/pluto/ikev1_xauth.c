@@ -467,8 +467,9 @@ static stf_status modecfg_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	/* updates .st_v1_iv and .st_v1_new_iv */
+	/* stores updated IV in .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa,
+					  ike->sa.st_v1_new_iv,
 					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR;
 
@@ -632,8 +633,9 @@ stf_status xauth_send_request(struct ike_sa *ike)
 	ike->sa.st_v1_new_iv =
 		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending xauth request", HERE);
 
-	/* updates .st_v1_iv and .st_v1_new_iv */
+	/* stores updated IV in .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
+					  ike->sa.st_v1_new_iv,
 					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR;
 
@@ -746,8 +748,9 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 	ike->sa.st_v1_new_iv =
 		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending mode cfg request", HERE);
 
-	/* updates .st_v1_iv and .st_v1_new_iv */
+	/* stores updated IV in .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
+					  ike->sa.st_v1_new_iv,
 					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR;
 
@@ -830,8 +833,9 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 	ike->sa.st_v1_new_iv = new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15,
 					     "IKE sending xauth status", HERE);
 
-	/* updates .st_v1_iv and .st_v1_new_iv */
+	/* stores updated IV in .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
+					  ike->sa.st_v1_new_iv,
 					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR;
 
@@ -2223,8 +2227,9 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	/* updates .st_v1_iv and .st_v1_new_iv */
+	/* stores updated IV in .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa,
+					  ike->sa.st_v1_new_iv,
 					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR;
 
@@ -2487,8 +2492,9 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	/* updates .st_v1_iv and .st_v1_new_iv */
+	/* stores updated IV in .st_v1_new_iv */
 	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa,
+					  ike->sa.st_v1_new_iv,
 					  &ike->sa.st_v1_iv))
 		return STF_INTERNAL_ERROR;
 

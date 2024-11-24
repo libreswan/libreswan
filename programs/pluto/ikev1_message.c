@@ -176,6 +176,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 bool close_and_encrypt_v1_message(struct ike_sa *ike,
 				  struct pbs_out *pbs,
 				  struct state *st,
+				  struct crypt_mac iv,
 				  struct crypt_mac *iv_out)
 {
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
@@ -223,10 +224,12 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 
 	/*
 	 * XXX: should be redundant?  Phase2 truncates the generated
-	 * MAC to length, Phase1?
+	 * MAC to length.  What about Phase1 and Phase15 and the
+	 * result returned by encryption?
 	 */
-	PASSERT(st->logger, st->st_v1_new_iv.len >= e->enc_blocksize);
-	st->st_v1_new_iv.len = e->enc_blocksize;   /* truncate */
+	PASSERT(st->logger, hunk_eq(iv, st->st_v1_new_iv));
+	PASSERT(st->logger, iv.len >= e->enc_blocksize);
+	iv.len = e->enc_blocksize;   /* truncate */
 
 	/*
 	 * Finally, re-pad the entire message (header and body) to
@@ -250,19 +253,18 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump("encrypting:", padded_encrypt.ptr, padded_encrypt.len);
-		DBG_dump_hunk("IV:", st->st_v1_new_iv);
+		DBG_dump_hunk("IV:", iv);
 	}
 
-	cipher_ikev1(e, ENCRYPT,
-		     padded_encrypt,
-		     &st->st_v1_new_iv,
-		     ike->sa.st_enc_key_nss,
+	cipher_ikev1(e, ENCRYPT, padded_encrypt,
+		     &iv, ike->sa.st_enc_key_nss,
 		     st->logger);
 
 	PASSERT(ike->sa.logger, iv_out == &st->st_v1_iv);
-	(*iv_out) = st->st_v1_new_iv;
+	(*iv_out) = iv;
+	st->st_v1_new_iv = iv;
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("next IV:", st->st_v1_iv);
+		DBG_dump_hunk("next IV:", iv);
 	}
 
 	return true;
