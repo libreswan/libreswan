@@ -192,26 +192,22 @@ static void send_v1_notification(struct logger *logger,
 		/* calculate hash value and patch into Hash Payload */
 		fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, r_hdr_pbs.cur);
 
-		/* Encrypt message (preserve st_iv) */
-		/* ??? why not preserve st_new_iv? */
+		/*
+		 * XXX: this is useless; new_phase2_iv() expects
+		 * .st_v1_ph1_iv.
+		 */
 		struct crypt_mac saved_iv = ike->sa.st_v1_iv;
-		struct crypt_mac saved_new_iv = ike->sa.st_v1_new_iv;
-		struct crypt_mac saved_ph1_iv = ike->sa.st_v1_ph1_iv; /* mostly harmless */
-
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
 			ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 		}
-		ike->sa.st_v1_new_iv = new_phase2_iv(ike, msgid,
-						     "IKE encrypting notification", HERE);
-		/* stores updated IV in .st_v1_new_iv */
-		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &ike->sa,
-						     ike->sa.st_v1_new_iv,
-						     &ike->sa.st_v1_iv));
-
-		/* get back old IV for this state */
+		struct crypt_mac iv = new_phase2_iv(ike, msgid,
+						    "IKE encrypting notification", HERE);
 		ike->sa.st_v1_iv = saved_iv;
-		ike->sa.st_v1_new_iv = saved_new_iv;
-		ike->sa.st_v1_ph1_iv = saved_ph1_iv;
+
+		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs,
+						     NULL/*don't-update.st_v1_new_iv*/,
+						     iv,
+						     NULL/*discard-IV*/));
 	} else {
 		close_output_pbs(&r_hdr_pbs);
 	}

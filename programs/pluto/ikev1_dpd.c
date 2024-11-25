@@ -744,30 +744,19 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 	fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, rbody.cur);
 
 	/*
-	 * save old IV (this prevents from copying a whole new state object
-	 * for NOTIFICATION / DELETE messages we don't need to maintain a state
-	 * because there are no retransmissions...
+	 * For NOTIFICATION / DELETE messages we don't need to
+	 * maintain a state because there are no retransmissions ...
 	 */
-	{
-		struct crypt_mac saved_iv = ike->sa.st_v1_iv;
-		struct crypt_mac saved_new_iv = ike->sa.st_v1_new_iv;
-		struct crypt_mac saved_ph1_iv = ike->sa.st_v1_ph1_iv; /* harmless */
-
-		ike->sa.st_v1_new_iv = new_phase2_iv(ike, msgid,
-						     "IKE sending DPD", HERE);
-		/* stores updated IV in .st_v1_new_iv */
-		if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
-						  ike->sa.st_v1_new_iv,
-						  &ike->sa.st_v1_iv))
-			return STF_INTERNAL_ERROR;
-
-		send_pbs_out_using_state(&ike->sa, "ISAKMP notify", &reply_stream);
-
-		/* get back old IV for this state */
-		ike->sa.st_v1_iv = saved_iv;
-		ike->sa.st_v1_new_iv = saved_new_iv;
-		ike->sa.st_v1_ph1_iv = saved_ph1_iv;
+	struct crypt_mac iv = new_phase2_iv(ike, msgid,
+					    "IKE sending DPD", HERE);
+	if (!close_and_encrypt_v1_message(ike, &rbody,
+					  NULL/*don't-update.st_v1_new_iv*/,
+					  iv,
+					  NULL/*discard-IV*/)) {
+		return STF_INTERNAL_ERROR;
 	}
+
+	send_pbs_out_using_state(&ike->sa, "ISAKMP notify", &reply_stream);
 
 	return STF_IGNORE;
 }

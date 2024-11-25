@@ -224,32 +224,17 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 	fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, r_hdr_pbs.cur);
 
 	/*
-	 * Do a dance to avoid needing a new state object.
-	 * We use the Phase 1 State. This is the one with right
-	 * IV, for one thing.
-	 * The tricky bits are:
-	 * - we need to preserve (save/restore) st_iv (but not st_iv_new)
-	 * - we need to preserve (save/restore) st_tpacket.
+	 * We use the Phase 1 State.  This is the one with right IV,
+	 * for one thing.
 	 */
-	{
-		struct crypt_mac saved_iv = ike->sa.st_v1_iv;
-		struct crypt_mac saved_new_iv = ike->sa.st_v1_new_iv;
-		struct crypt_mac saved_ph1_iv = ike->sa.st_v1_ph1_iv; /* harmless */
+	struct crypt_mac iv = new_phase2_iv(ike, msgid,
+					    "IKE sending delete", HERE);
+	passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs,
+					     NULL/*don't-update.st_v1_new_iv*/,
+					     iv,
+					     NULL/*discard-iv*/));
 
-		ike->sa.st_v1_new_iv = new_phase2_iv(ike, msgid,
-						     "IKE sending delete", HERE);
-		/* stores updated IV in .st_v1_new_iv */
-		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &ike->sa,
-						     ike->sa.st_v1_new_iv,
-						     &ike->sa.st_v1_iv));
-
-		send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);
-
-		/* get back old IV for this state */
-		ike->sa.st_v1_iv = saved_iv;
-		ike->sa.st_v1_new_iv = saved_new_iv;
-		ike->sa.st_v1_ph1_iv = saved_ph1_iv;
-	}
+	send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);
 }
 
 void llog_n_maybe_send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)

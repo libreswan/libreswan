@@ -175,10 +175,13 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 
 bool close_and_encrypt_v1_message(struct ike_sa *ike,
 				  struct pbs_out *pbs,
-				  struct state *st,
+				  struct state *st_or_null,
 				  struct crypt_mac iv,
-				  struct crypt_mac *iv_out)
+				  struct crypt_mac *iv_out_or_null)
 {
+	struct logger *logger = (pbs->logger != NULL ? pbs->logger :
+				 st_or_null != NULL ? st_or_null->logger :
+				 ike->sa.logger);
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
 	/*
@@ -227,8 +230,8 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * MAC to length.  What about Phase1 and Phase15 and the
 	 * result returned by encryption?
 	 */
-	PASSERT(st->logger, hunk_eq(iv, st->st_v1_new_iv));
-	PASSERT(st->logger, iv.len >= e->enc_blocksize);
+	PASSERT(logger, st_or_null == NULL || hunk_eq(iv, st_or_null->st_v1_new_iv));
+	PASSERT(logger, iv.len >= e->enc_blocksize);
 	iv.len = e->enc_blocksize;   /* truncate */
 
 	/*
@@ -251,20 +254,28 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	/* XXX: not ldbg(pbs->logger) as can be NULL */
 	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",
 	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("encrypting:", padded_encrypt.ptr, padded_encrypt.len);
-		DBG_dump_hunk("IV:", iv);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "encrypting:");
+		LDBG_hunk(logger, padded_encrypt);
+		LDBG_log(logger, "IV:");
+		LDBG_hunk(logger, iv);
 	}
 
 	cipher_ikev1(e, ENCRYPT, padded_encrypt,
 		     &iv, ike->sa.st_enc_key_nss,
-		     st->logger);
+		     logger);
 
-	PASSERT(ike->sa.logger, iv_out == &st->st_v1_iv);
-	(*iv_out) = iv;
-	st->st_v1_new_iv = iv;
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("next IV:", iv);
+	/* no half measures */
+	PASSERT(logger, (iv_out_or_null == NULL) == (st_or_null == NULL));
+	if (iv_out_or_null != NULL && st_or_null != NULL) {
+		PASSERT(logger, iv_out_or_null == &st_or_null->st_v1_iv);
+		(*iv_out_or_null) = iv;
+		st_or_null->st_v1_new_iv = iv;
+	}
+
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "next IV:");
+		LDBG_hunk(logger, iv);
 	}
 
 	return true;
