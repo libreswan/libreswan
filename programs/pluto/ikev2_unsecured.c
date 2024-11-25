@@ -376,6 +376,9 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 		return;
 	}
 
+	intmax_t msgid = md->hdr.isa_msgid;
+	PASSERT(md->logger, msgid == 0); /* checked in process_v2_UNSECURED_message() */
+
 	/*
 	 * 2.6.  IKE SA SPIs and Cookies:
 	 *
@@ -406,31 +409,115 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 		 * initiator's IKE SPIs.  Since there isn't someone's
 		 * playing games.  Drop the packet.
 		 */
-		llog_md(md, "dropping IKE_SA_INIT response no matching IKE ISA");
+		name_buf xb;
+		limited_llog(md->logger, UNSECURED_LOG_LIMITER,
+			     "dropping unrecognized %s response with Message ID %jd, no matching IKE SA",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid);
 		return;
 	}
 
 	/*
-	 * While the IKE SA is initiating, .sent==-1, .recv==-1, and
-	 * .wip==0.  Once the message is sent, .sent==0, .recv==-1,
-	 * and .wip==-1.
+	 * Log too-old messages early.  Else code ends up complaining
+	 * that an old message has the wrong exchange type.
+	 *
+	 * XXX: similar logic is scattered across this file and
+	 * ikev2.c.  However, that isn't good reason to re-merge.
+	 * Instead ikev2_msgid.c should publish a function to check
+	 * this.
 	 */
-	if (ike->sa.st_state->kind != STATE_V2_IKE_SA_INIT_I ||
-	    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
-	    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
-	    ike->sa.st_v2_msgid_windows.initiator.wip != -1 ||
-	    ike->sa.st_v2_msgid_windows.initiator.exchange == NULL) {
-		/*
-		 * This doesn't seem right; drop the packet.
-		 *
-		 * Log against MD as source may not match IKE.
-		 */
-		llog_md(md, "dropping IKE_SA_INIT response as not expected by IKE SA #%lu",
-			ike->sa.st_serialno);
+
+	if (msgid < ike->sa.st_v2_msgid_windows.initiator.recv) {
+		name_buf xb;
+		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
+			     "dropping %s response with to-old Message ID %jd, IKE SA in state %s has processed response %jd",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name,
+			     ike->sa.st_v2_msgid_windows.initiator.recv);
 		return;
 	}
 
-	dbg("unpacking clear payloads");
+	if (msgid == ike->sa.st_v2_msgid_windows.initiator.recv) {
+		name_buf xb;
+		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
+			     "dropping %s response with duplicate Message ID %jd, IKE SA in state %s has already processed response",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name);
+		return;
+	}
+
+	/*
+	 * Weed out current message with wrong exchange.
+	 */
+
+	const struct v2_exchange *outstanding_exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
+	if (outstanding_exchange == NULL) {
+		name_buf xb;
+		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
+			     "dropping unexpected %s response with Message ID %jd, IKE SA in state %s has no outstanding exchange",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name);
+		return;
+	}
+
+	if (outstanding_exchange->type != md->hdr.isa_xchg) {
+		name_buf xb;
+		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
+			     "dropping unexpected %s response with Message ID %jd, IKE SA in state %s is waiting for %s response",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name,
+			     str_enum_short(&ikev2_exchange_names, outstanding_exchange->type, &xb));
+		return;
+	}
+
+	/*
+	 * Now that the message has the correct type and message ID,
+	 * weed out in-progress.
+	 */
+
+	if (msgid == ike->sa.st_v2_msgid_windows.initiator.wip) {
+		name_buf xb;
+		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
+			     "dropping %s response with in-progress Message ID %jd, IKE SA in state %s is currently processing an earlier response with the same ID",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name);
+		return;
+	}
+
+	/*
+	 * XXX: Just to be sure.  This should be completely redundant
+	 * as above assures below!?!
+	 *
+	 * While the larval IKE SA is getting ready, .sent==-1,
+	 * .recv==-1, and .wip==0.  Once the message is sent,
+	 * .sent==0, .recv==-1, and .wip==-1.
+	 */
+
+	if (ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
+	    ike->sa.st_v2_msgid_windows.initiator.wip != -1 ||
+	    ike->sa.st_v2_msgid_windows.initiator.recv != -1) {
+		/* windows don't seem right */
+		name_buf xb;
+		llog_pexpect(ike->sa.logger, HERE,
+			     "dropping %s response with Message ID %jd, IKE SA in state %s has strange Message IDs",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name);
+		return;
+	}
+
+	/*
+	 * XXX: Probably made redundant by v2_exchange above, but no
+	 * harm.
+	 */
+	if (ike->sa.st_state != &state_v2_IKE_SA_INIT_I) {
+		name_buf xb;
+		limited_llog(ike->sa.logger, UNSECURED_LOG_LIMITER,
+			     "dropping %s response with Message ID %jd, IKE SA is in state %s",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
+			     ike->sa.st_state->short_name);
+		return;
+	}
+
+	ldbg(ike->sa.logger, "unpacking clear payloads");
 	md->message_payloads = ikev2_decode_payloads(ike->sa.logger, md,
 						     &md->message_pbs,
 						     md->hdr.isa_np);

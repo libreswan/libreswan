@@ -36,6 +36,10 @@ struct limiter log_limiters[LOG_LIMITER_ROOF] = {
 		.limit = RATE_LIMIT,
 		.what = "message digest",
 	},
+	[UNSECURED_LOG_LIMITER] = {
+		.limit = RATE_LIMIT,
+		.what = "unsecured message",
+	},
 	[CERTIFICATE_LOG_LIMITER] = {
 		.limit = 10,
 		.what = "bad certificate",
@@ -86,6 +90,18 @@ lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter log_limiter)
 	}
 
 	return RC_LOG;
+}
+
+void limited_llog(struct logger *logger, enum log_limiter log_limiter,
+		  const char *format, ...)
+{
+	lset_t rc_flags = log_limiter_rc_flags(logger, log_limiter);
+	if (rc_flags != LEMPTY) {
+		va_list ap;
+		va_start(ap, format);
+		llog_va_list(rc_flags, logger, format, ap);
+		va_end(ap);
+	}
 }
 
 static global_timer_cb reset_log_limiter;	/* type check */
