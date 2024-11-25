@@ -114,6 +114,19 @@ static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type 
 
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
+static void update_child_iv(struct child_sa *child, struct msg_digest *md)
+{
+	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
+		jam_string(buf, "updating Child SA IV from ");
+		jam_hex_hunk(buf, child->sa.st_v1_iv);
+		jam_string(buf, " to ");
+		jam_hex_hunk(buf, md->v1_decrypt_iv);
+	}
+        PEXPECT(child->sa.logger, md->v1_decrypt_iv.len > 0);
+        PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
+	child->sa.st_v1_iv = md->v1_decrypt_iv;
+}
+
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
@@ -794,15 +807,21 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	/* finish computing HASH(1), inserting it in output */
 	fixup_v1_HASH(&child->sa, &hash_fixup, child->sa.st_v1_msgid.id, rbody.cur);
 
-	/* encrypt message, except for fixed part of header */
+	/*
+	 * Quick Mode uses its own IV generated from Phase1+MSGID.
+	 */
 
-	ike->sa.st_v1_new_iv = new_phase2_iv(ike, child->sa.st_v1_msgid.id,
-					     "IKE sending quick message", HERE);
-	child->sa.st_v1_new_iv = ike->sa.st_v1_new_iv;
+	PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0); /* unused */
+	PEXPECT(child->sa.logger, child->sa.st_v1_iv.len == 0);
+	/* MD->v1_decrypt_iv N/A as initiating */
 
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa,
-					  child->sa.st_v1_new_iv,
+	/* uses ike->sa.st_v1_ph1_iv */
+	child->sa.st_v1_iv = new_phase2_iv(ike, child->sa.st_v1_msgid.id,
+					   "IKE sending quick message", HERE);
+
+	/* Save updated IV ready for response. */
+	if (!close_and_encrypt_v1_message(ike, &rbody, NULL/*ST*/,
+					  child->sa.st_v1_iv,
 					  &child->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -974,12 +993,6 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		local_client = selector_from_address(c->local->host.addr);
 		remote_client = selector_from_address(c->remote->host.addr);
 	}
-
-	/*
-	 * This will be copied to the Child SA, below, so that it is
-	 * ready for the next cipher op.
-	 */
-	struct crypt_mac new_iv = ike->sa.st_v1_new_iv;
 
 	struct hidden_variables hv;
 
@@ -1220,11 +1233,22 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * first: fill in missing bits of our new state object note:
 	 * we don't copy over st_peer_pubkey, the public key that
 	 * authenticated the ISAKMP SA.  We only need it in this
-	 * routine, so we can "reach back" to p1st to get it.
+	 * routine, so we can "reach back" to p1st to get The.
 	 */
 
+	/*
+	 * Since
+	 *
+	 *   the decrypted message has passed a basic sanity check and
+	 *   has been determined to actually advance the IKE state
+	 *   machine
+	 *
+	 * (which includes progressing to a rejected Child SA) advance
+	 * the IV.
+	 */
+	update_child_iv(child, md);
+
 	child->sa.st_v1_msgid.id = md->hdr.isa_msgid;
-	child->sa.st_v1_new_iv = new_iv; /* from IKE SA, above */
 
 	switch_md_st(md, &child->sa, HERE);	/* feed back new state */
 
@@ -1610,12 +1634,13 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* encrypt message, except for fixed part of header */
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa,
-					  child->sa.st_v1_new_iv,
+	if (!close_and_encrypt_v1_message(ike, &rbody, NULL,
+					  child->sa.st_v1_iv,
 					  &child->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
+
+        PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
 
 	dbg("finished processing quick inI1");
 	return STF_OK;
@@ -1643,6 +1668,18 @@ stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 		     __func__, pri_so(child->sa.st_clonedfrom));
 		return STF_FATAL;
 	}
+
+	/*
+	 * Since
+	 *
+	 *   the decrypted message has passed a basic sanity check and
+	 *   has been determined to actually advance the IKE state
+	 *   machine
+	 *
+	 * (which includes progressing to a rejected Child SA) advance
+	 * the IV.
+	 */
+	update_child_iv(child, md);
 
 	/* SA in */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
@@ -1801,12 +1838,13 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 
 	/* encrypt message, except for fixed part of header */
 
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa,
-					  child->sa.st_v1_new_iv,
+	if (!close_and_encrypt_v1_message(ike, &rbody, NULL/*st*/,
+					  child->sa.st_v1_iv,
 					  &child->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
+
+        PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
 
 	if (dpd_init(&child->sa) != STF_OK) {
 		return STF_FAIL_v1N;
@@ -1820,7 +1858,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
  * (see RFC 2409 "IKE" 5.5)
  * Installs outbound IPsec SAs, routing, etc.
  */
-stf_status quick_inI2(struct state *child_sa, struct msg_digest *md UNUSED)
+stf_status quick_inI2(struct state *child_sa, struct msg_digest *md)
 {
 	struct child_sa *child = pexpect_child_sa(child_sa);
 	if (pbad(child == NULL)) {
@@ -1829,12 +1867,33 @@ stf_status quick_inI2(struct state *child_sa, struct msg_digest *md UNUSED)
 
 	struct ike_sa *ike = isakmp_sa_where(child, HERE);
 	if (ike == NULL) {
-		/* phase1 state got deleted while cryptohelper was working */
+		/*
+		 * Phase1 state got deleted while crypto-helper was
+		 * working.
+		 *
+		 * XXX: but the IKE SA is needed to decrypt the packet
+		 * and no crypto work was needed?!?
+		 */
 		llog(RC_LOG, child->sa.logger,
 		     "%s() failed because parent ISAKMP "PRI_SO" is gone",
 		     __func__, pri_so(child->sa.st_clonedfrom));
 		return STF_FATAL;
 	}
+
+	/*
+	 * Since
+	 *
+	 *   the decrypted message has passed a basic sanity check and
+	 *   has been determined to actually advance the IKE state
+	 *   machine
+	 *
+	 * (which includes progressing to a rejected Child SA) advance
+	 * the IV.
+	 *
+	 * Since there are no further exchanges, this isn't necessary;
+	 * but it is tidy.
+	 */
+	update_child_iv(child, md);
 
 	/* Tell the kernel to establish the outbound and routing part of the new SA
 	 * (the previous state established inbound)
@@ -1845,8 +1904,6 @@ stf_status quick_inI2(struct state *child_sa, struct msg_digest *md UNUSED)
 
 	if (!connection_establish_outbound(ike, child, HERE))
 		return STF_FAIL_v1N;
-
-	child->sa.st_v1_iv = child->sa.st_v1_new_iv;  /* not actually used, but tidy */
 
 	/*
 	 * If we have dpd delay and dpdtimeout set, then we are doing DPD

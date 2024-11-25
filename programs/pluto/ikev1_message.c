@@ -230,7 +230,6 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * MAC to length.  What about Phase1 and Phase15 and the
 	 * result returned by encryption?
 	 */
-	PASSERT(logger, st_or_null == NULL || hunk_eq(iv, st_or_null->st_v1_new_iv));
 	PASSERT(logger, iv.len >= e->enc_blocksize);
 	iv.len = e->enc_blocksize;   /* truncate */
 
@@ -265,11 +264,10 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		     &iv, ike->sa.st_enc_key_nss,
 		     logger);
 
-	/* no half measures */
-	PASSERT(logger, (iv_out_or_null == NULL) == (st_or_null == NULL));
-	if (iv_out_or_null != NULL && st_or_null != NULL) {
-		PASSERT(logger, iv_out_or_null == &st_or_null->st_v1_iv);
+	if (iv_out_or_null != NULL) {
 		(*iv_out_or_null) = iv;
+	}
+	if (st_or_null != NULL) {
 		st_or_null->st_v1_new_iv = iv;
 	}
 

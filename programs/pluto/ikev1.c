@@ -849,8 +849,6 @@ void process_v1_packet(struct msg_digest *md)
 		/*
 		 * For Quick Mode Messages I1 and R1, the receipent:
 		 *
-		 * - decrypts the message, updating .st_v1_new_iv
-		 *
 		 * - verifies the message using the HASH
 		 *
 		 * - offloads the message to perform DH/PFS
@@ -873,7 +871,7 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		PEXPECT(child->sa.logger, hunk_eq(child->sa.st_v1_iv, child->sa.st_v1_new_iv));
+		PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
 		PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0);
 		md->v1_decrypt_iv = child->sa.st_v1_iv;
 		passert(ike != NULL);
@@ -1493,9 +1491,16 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * Ready for update of .st_v1_iv, once the message has
 		 * passed basic checks such as hash(?).
 		 *
-		 * Code should use .v1_decrypt_iv directly.
+		 * Code should use .v1_decrypt_iv directly, and this
+		 * line should be removed.
+		 *
+		 * The hack stops the Child SA being updated, but
+		 * doesn't stop a post-phase1 message scribbling on
+		 * the IKE SA's field.
 		 */
-		st->st_v1_new_iv = md->v1_decrypt_iv;
+		if (IS_ISAKMP_SA(st)) {
+			st->st_v1_new_iv = md->v1_decrypt_iv;
+		}
 	} else {
 		/* packet was not encrypted -- should it have been? */
 		if (smc->flags & SMF_INPUT_ENCRYPTED) {
