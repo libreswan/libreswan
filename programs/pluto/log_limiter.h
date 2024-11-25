@@ -16,6 +16,7 @@
 #ifndef LOG_LIMITER_H
 #define LOG_LIMITER_H
 
+#include "lswcdefs.h"
 #include "lset.h"
 
 struct msg_digest;
@@ -27,6 +28,7 @@ struct logger;
 
 enum log_limiter {
 	MD_LOG_LIMITER,
+	UNSECURED_LOG_LIMITER,
 	CERTIFICATE_LOG_LIMITER,
 	PAYLOAD_ERRORS_LOG_LIMITER,
 #define LOG_LIMITER_ROOF (PAYLOAD_ERRORS_LOG_LIMITER+1)
@@ -44,6 +46,9 @@ enum log_limiter {
  */
 
 lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter limiter);
+
+void limited_llog(struct logger *logger, enum log_limiter limiter,
+		  const char *format, ...) PRINTF_LIKE(3);
 
 void init_log_limiter(struct logger *logger);
 
