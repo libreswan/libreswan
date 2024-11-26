@@ -13,6 +13,6 @@ east #
 initdone
 east #
  grep '^[^|].*INVALID_MAJOR_VERSION' /tmp/pluto.log
-packet from 192.1.2.45:500: responding to IKE_SA_INIT (34) message (Message ID 0) with unencrypted notification INVALID_MAJOR_VERSION
+packet from 192.1.2.45:500: responding to IKE_SA_INIT request with Message ID 0 with unencrypted notification INVALID_MAJOR_VERSION, message contains unsupported IKE major version '3'
 east #
  

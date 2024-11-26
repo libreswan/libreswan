@@ -44,7 +44,7 @@ connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: timeout out
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
 connection from 192.1.2.45:EPHEM: dropping packet with mangled IKE header: not enough room in input packet for ISAKMP Message (remain=1, sd->size=28)
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
-connection from 192.1.2.45:EPHEM: responding to IKE_SA_INIT request (Message ID 0; no payloads, missing SA,KE,Ni) with unencrypted notification INVALID_SYNTAX
+connection from 192.1.2.45:EPHEM: responding to IKE_SA_INIT request with Message ID 0 with unencrypted notification INVALID_SYNTAX, IKE_SA_INIT request (Message ID 0; no payloads, missing SA,KE,Ni)
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
 connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: timeout out before first message received
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection

@@ -65,7 +65,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * i.e., in the request, I must be set
 	 */
 	if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I)) {
-		llog_md(md, "IKE_SA_INIT request has I (IKE Initiator) flag clear; dropping packet");
+		limited_llog(md->logger, UNSECURED_LOG_LIMITER,
+			     "IKE_SA_INIT request has I (IKE Initiator) flag clear; dropping packet");
 		return;
 	}
 
@@ -80,7 +81,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * work)
 	 */
 	if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
-		llog_md(md, "IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet");
+		limited_llog(md->logger, UNSECURED_LOG_LIMITER,
+			     "IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet");
 		return;
 	}
 
@@ -97,7 +99,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * know the responder's SPI).
 	 */
 	if (!ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
-		llog_md(md, "IKE_SA_INIT request has non-zero IKE SA Responder SPI; dropping packet");
+		limited_llog(md->logger, UNSECURED_LOG_LIMITER,
+			     "IKE_SA_INIT request has non-zero IKE SA Responder SPI; dropping packet");
 		return;
 	}
 
@@ -166,7 +169,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 		PEXPECT(md->logger, msgid == 0); /* per above */
 		/* XXX: keep test results happy */
 		if (md->fake_clone) {
-			llog_sa(RC_LOG, old, "IMPAIR: processing a fake (cloned) message");
+			llog(RC_LOG, old->sa.logger, "IMPAIR: processing a fake (cloned) message");
 		}
 
 		if (old->sa.st_state != &state_v2_IKE_SA_INIT_R) {
@@ -174,8 +177,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 			 * For a duplicate, the IKE SA can't have
 			 * advanced beyond IKE_SA_INIT.
 			 */
-			llog_sa(RC_LOG, old,
-				"received old IKE_SA_INIT request; packet dropped");
+			limited_llog(old->sa.logger, UNSECURED_LOG_LIMITER,
+				     "received old IKE_SA_INIT request; packet dropped");
 			return;
 		}
 
@@ -198,8 +201,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 			 * one.
 			 */
 			PEXPECT(old->sa.logger, old->sa.st_v2_msgid_windows.responder.wip == 1);
-			llog_sa(RC_LOG, old,
-				"received IKE_SA_INIT request from previous exchange; packet dropped");
+			limited_llog(old->sa.logger, UNSECURED_LOG_LIMITER,
+				     "received IKE_SA_INIT request from previous exchange; packet dropped");
 		}
 
 		if (hunk_eq(old->sa.st_firstpacket_peer, pbs_in_all(&md->message_pbs))) {
@@ -210,8 +213,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 			 * is_duplicate_request() - keep test results
 			 * happy.
 			 */
-			llog_sa(RC_LOG, old,
-				"received duplicate IKE_SA_INIT request; retransmitting response");
+			limited_llog(old->sa.logger, UNSECURED_LOG_LIMITER,
+				     "received duplicate IKE_SA_INIT request; retransmitting response");
 			send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
 						 old->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			return;
@@ -225,7 +228,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 		 * XXX: Log message matches is_duplicate_request() -
 		 * keep test results happy.
 		 */
-		llog_sa(RC_LOG, old, "received too old IKE_SA_INIT retransmit");
+		limited_llog(old->sa.logger, UNSECURED_LOG_LIMITER,
+			     "received too old IKE_SA_INIT retransmit");
 		return;
 	}
 
@@ -254,13 +258,14 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		if (require_ddos_cookies()) {
-			dbg("DDOS so not responding to invalid packet");
-		} else {
-			shunk_t data = shunk2(md->message_payloads.data,
-					      md->message_payloads.data_size);
-			send_v2N_response_from_md(md, md->message_payloads.n,
-						  &data, NULL);
+			ldbg(md->logger, "DDOS so not responding to invalid packet");
+			return;
 		}
+
+		shunk_t data = shunk2(md->message_payloads.data,
+				      md->message_payloads.data_size);
+		send_v2N_response_from_md(md, md->message_payloads.n,
+					  &data, "contains invalid paylod");
 		return;
 	}
 
@@ -268,7 +273,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * Do I want a cookie?
 	 */
 	if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
-		dbg("pluto is overloaded and demanding cookies; dropping new exchange");
+		ldbg(md->logger, "pluto is overloaded and demanding cookies; dropping new exchange");
 		return;
 	}
 
@@ -295,7 +300,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 				dbg("Dropped IKE request for Opportunistic IPsec by global policy");
 				return;
 			}
-			dbg("Processing IKE request for Opportunistic IPsec");
+			ldbg(md->logger, "Processing IKE request for Opportunistic IPsec");
 			break;
 		}
 	}
@@ -307,7 +312,8 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	diag_t d = find_v2_unsecured_request_transition(md->logger, &state_v2_UNSECURED_R,
 							md, &transition);
 	if (transition == NULL) {
-		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL, str_diag(d));
+		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL,
+					  "%s", str_diag(d));
 		pfree_diag(&d);
 		return;
 	}
@@ -318,12 +324,6 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	bool send_reject_response = true;
 	struct connection *c = find_v2_host_pair_connection(md, &send_reject_response);
 	if (c == NULL) {
-		endpoint_buf b;
-		enum_buf xb;
-		llog(RC_LOG, md->logger,
-		     "%s message received on %s but no suitable connection found with IKEv2 policy",
-		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-		     str_endpoint(&md->iface->local_endpoint, &b));
 		if (send_reject_response) {
 			/*
 			 * NO_PROPOSAL_CHOSEN is used when the list of
@@ -337,8 +337,18 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 			 * sent.  Should its message be merged with
 			 * the above?
 			 */
-			send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL, NULL);
+			send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL,
+						  "no suitable connection found with IKEv2 policy");
+			return;
 		}
+
+		endpoint_buf lb, rb;
+		enum_buf xb;
+		limited_llog(md->logger, UNSECURED_LOG_LIMITER,
+			     "dropping %s request from %s received on %s, no suitable connection found with IKEv2 policy",
+			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+			     str_endpoint(&md->sender, &rb),
+			     str_endpoint(&md->iface->local_endpoint, &lb));
 		return;
 	}
 
@@ -351,7 +361,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 	/* XXX: keep test results happy */
 	if (md->fake_clone) {
-		llog_sa(RC_LOG, ike, "IMPAIR: processing a fake (cloned) message");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: processing a fake (cloned) message");
 	}
 	v2_dispatch(ike, md, transition);
 	statetime_stop(&start, "%s()", __func__);

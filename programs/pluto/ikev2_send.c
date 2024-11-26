@@ -40,6 +40,7 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
 #include "kernel.h"	/* for get_my_cpi() */
+#include "log_limiter.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"	/* for set_ike_mark_out() */
@@ -400,7 +401,7 @@ void record_v2N_response(struct logger *logger,
 void send_v2N_response_from_md(struct msg_digest *md,
 			       v2_notification_t ntype,
 			       const shunk_t *ndata,
-			       const char *details)
+			       const char *details, ...)
 {
 	passert(md != NULL); /* always a response */
 
@@ -416,17 +417,19 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	LLOG_JAMBUF(RC_LOG, md->logger, buf) {
-		jam_string(buf, "responding to ");
-		if (details != NULL) {
-			jam_string(buf, details);
-		} else {
-			jam(buf, "%s (%d) message (Message ID %u)",
-			    exchange_name.buf, exchange_type,
-			    md->hdr.isa_msgid);
+	lset_t rc_flags = log_limiter_rc_flags(md->logger, UNSECURED_LOG_LIMITER);
+	if (rc_flags != LEMPTY) {
+		LLOG_JAMBUF(rc_flags, md->logger, buf) {
+			jam_string(buf, "responding to ");
+			jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
+			jam(buf, " request with Message ID %u", md->hdr.isa_msgid);
+			jam(buf, " with unencrypted notification %s, ",
+			    notify_name.buf);
+			va_list ap;
+			va_start(ap, details);
+			jam_va_list(buf, details, ap);
+			va_end(ap);
 		}
-		jam(buf, " with unencrypted notification %s",
-		    notify_name.buf);
 	}
 
 	/*

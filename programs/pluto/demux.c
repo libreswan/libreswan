@@ -213,7 +213,6 @@ void process_md(struct msg_digest *md)
 	}
 
 	default:
-		llog_md(md, "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
 		 * of an IKE SA, [...] the message is always sent
@@ -251,8 +250,8 @@ void process_md(struct msg_digest *md)
 		 * or reject IKEv++ messages by responding with an
 		 * INVALID_MAJOR_VERSION.  Presumably the latter.
 		 */
-		send_v2N_response_from_md(md, v2N_INVALID_MAJOR_VERSION,
-					  NULL/*no data*/, NULL);
+		send_v2N_response_from_md(md, v2N_INVALID_MAJOR_VERSION, NULL/*no data*/,
+					  "message contains unsupported IKE major version '%d'", vmaj);
 		return;
 	}
 }

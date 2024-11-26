@@ -272,7 +272,9 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	send_v2N_response_from_md(md, v2N_REDIRECT, &data, NULL);
+
+	send_v2N_response_from_md(md, v2N_REDIRECT, &data,
+				  "redirecting initiator to "PRI_SHUNK, pri_shunk(dest));
 	pstats_ikev2_redirect_completed++;
 	return true;
 }
