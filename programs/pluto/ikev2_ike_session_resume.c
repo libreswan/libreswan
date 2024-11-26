@@ -74,30 +74,61 @@ static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response; /* type
 
 /*
  * Ticket that will be serialized and sent to client.
+ *
+ * A.1.  Example "Ticket by Value" Format
+ *
+ *  struct {
+ *      [authenticated] struct {
+ *          octet format_version;    // 1 for this version of the protocol
+ *          octet reserved[3];       // sent as 0, ignored by receiver.
+ *          octet key_id[8];         // arbitrary byte string
+ *          opaque IV[0..255];       // actual length (possibly 0) depends
+ *                                   // on the encryption algorithm
+ *
+ *          [encrypted] struct {
+ *              opaque IDi, IDr;     // the full payloads
+ *              octet SPIi[8], SPIr[8];
+ *              opaque SA;           // the full SAr payload
+ *              octet SK_d[0..255];  // actual length depends on SA value
+ *              enum ... authentication_method;
+ *              int32 expiration;    // an absolute time value, seconds
+ *                                   // since Jan. 1, 1970
+ *          } ikev2_state;
+ *      } protected_part;
+ *      opaque MAC[0..255];          // the length (possibly 0) depends
+ *                                   // on the integrity algorithm
+ *  } ticket;
  */
 
-struct ticket_by_val {
+struct ticket {
+	struct protected {
+		unsigned magic; /* use whack_magic() */
+		uint8_t iv[16];
+		struct encrypted {
 
-	so_serial_t sr_serialco;
-	id_buf sr_peer_id;
+			so_serial_t sr_serialco;
+			id_buf sr_peer_id;
 
-	/* copy of sk_d_old */
-	struct {
-		uint8_t ptr[255];
-		size_t len;
-	} sk_d_old;
+			/* copy of sk_d_old */
+			struct {
+				uint8_t ptr[255];
+				size_t len;
+			} sk_d_old;
 
-	/*
-	 * All the chosen Algorithm Description as serializable values
-	 * (i.e., not pointers).
-	 */
-	enum ikev2_trans_type_encr sr_encr;
-	enum ikev2_trans_type_prf sr_prf;
-	enum ikev2_trans_type_integ sr_integ;
-	enum ike_trans_type_dh sr_dh;
-	unsigned sr_enc_keylen;
+			/*
+			 * All the chosen Algorithm Description as serializable values
+			 * (i.e., not pointers).
+			 */
+			enum ikev2_trans_type_encr sr_encr;
+			enum ikev2_trans_type_prf sr_prf;
+			enum ikev2_trans_type_integ sr_integ;
+			enum ike_trans_type_dh sr_dh;
+			unsigned sr_enc_keylen;
 
-	enum keyword_auth sr_auth_method;
+			enum keyword_auth sr_auth_method;
+		} state;
+	} protected;
+	uint8_t mac[16];
 };
 
 struct session {
@@ -161,33 +192,34 @@ void jam_session(struct jambuf *buf, const struct session *session)
 
 static chunk_t ike_to_ticket(const struct ike_sa *ike)
 {
-	struct ticket_by_val tkt;
-	zero(&tkt); /* zap the gaps between fields */
+	struct ticket ticket = {
+		.protected.magic = whack_magic(),
+	};
 
-	tkt.sr_serialco = ike->sa.st_connection->serialno;
-	str_id(&ike->sa.st_connection->local->host.id, &tkt.sr_peer_id);
+	ticket.protected.state.sr_serialco = ike->sa.st_connection->serialno;
+	str_id(&ike->sa.st_connection->local->host.id, &ticket.protected.state.sr_peer_id);
 
 	/* old skeyseed */
 	chunk_t sk = chunk_from_symkey("sk_d_old", ike->sa.st_skey_d_nss, ike->sa.logger);
-	PASSERT(ike->sa.logger, sk.len <= elemsof(tkt.sk_d_old.ptr/*array*/));
-	memcpy(tkt.sk_d_old.ptr, sk.ptr, sk.len);
-	tkt.sk_d_old.len = sk.len;
+	PASSERT(ike->sa.logger, sk.len <= elemsof(ticket.protected.state.sk_d_old.ptr/*array*/));
+	memcpy(ticket.protected.state.sk_d_old.ptr, sk.ptr, sk.len);
+	ticket.protected.state.sk_d_old.len = sk.len;
 	free_chunk_content(&sk);
 
 	/*Algorithm description*/
 #define ID(ALG) ((ALG) != NULL ? (ALG)->common.ikev2_alg_id : 0);
-	tkt.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
-	tkt.sr_prf = ID(ike->sa.st_oakley.ta_prf);
-	tkt.sr_integ = ID(ike->sa.st_oakley.ta_integ);
-	tkt.sr_dh = ID(ike->sa.st_oakley.ta_dh);
+	ticket.protected.state.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
+	ticket.protected.state.sr_prf = ID(ike->sa.st_oakley.ta_prf);
+	ticket.protected.state.sr_integ = ID(ike->sa.st_oakley.ta_integ);
+	ticket.protected.state.sr_dh = ID(ike->sa.st_oakley.ta_dh);
 #undef ID
 
-	tkt.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
+	ticket.protected.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
 
-	tkt.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
+	ticket.protected.state.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
 
 	/* caller is responsible for freeing this */
-	return clone_bytes_as_chunk(&tkt, sizeof(struct ticket_by_val), "IKEv2 ticket_by_val");
+	return clone_bytes_as_chunk(&ticket, sizeof(struct ticket), "IKEv2 ticket_by_val");
 }
 
 /*
@@ -275,7 +307,7 @@ bool emit_v2N_TICKET_OPAQUE(chunk_t ticket, struct pbs_out *pbs)
 bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 {
 	diag_t d;
-	struct ticket_by_val ticket;
+	struct ticket ticket;
 
 	llog_pexpect(ike->sa.logger, HERE, "the ticket security is not implemented");
 
@@ -291,11 +323,19 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 		return false;
 	}
 
-	/* validate */
-	if (ticket.sk_d_old.len == 0 ||
-	    ticket.sk_d_old.len > sizeof(ticket.sk_d_old.ptr/*array*/)) {
+	/* basic sanity check */
+
+	if (ticket.protected.magic != whack_magic()) {
+		llog(RC_LOG, ike->sa.logger, "invalid ticket: magic number is wrong");
+		return false;
+	}
+
+	/* decrypt!?! */
+
+	if (ticket.protected.state.sk_d_old.len == 0 ||
+	    ticket.protected.state.sk_d_old.len > sizeof(ticket.protected.state.sk_d_old.ptr/*array*/)) {
 		llog(RC_LOG, ike->sa.logger, "invalid key length %zu",
-		     ticket.sk_d_old.len);
+		     ticket.protected.state.sk_d_old.len);
 		return false;
 	}
 
@@ -303,7 +343,7 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 	PASSERT(ike->sa.logger, ike->sa.st_skey_d_nss == NULL);
 
 	ike->sa.st_skey_d_nss = symkey_from_hunk("sk_d_old",
-						 ticket.sk_d_old,
+						 ticket.protected.state.sk_d_old,
 						 ike->sa.logger);
 	if (ike->sa.st_skey_d_nss == NULL) {
 		llog(RC_LOG, ike->sa.logger, "failed to re-animate peer's key");
@@ -311,9 +351,9 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 	}
 
 	set_ikev2_accepted_proposal(ike,
-				    ticket.sr_encr, ticket.sr_prf,
-				    ticket.sr_integ, ticket.sr_dh,
-				    ticket.sr_enc_keylen);
+				    ticket.protected.state.sr_encr, ticket.protected.state.sr_prf,
+				    ticket.protected.state.sr_integ, ticket.protected.state.sr_dh,
+				    ticket.protected.state.sr_enc_keylen);
 
 	return true;
 }
