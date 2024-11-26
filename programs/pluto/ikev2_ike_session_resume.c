@@ -190,7 +190,7 @@ void jam_session(struct jambuf *buf, const struct session *session)
 	}
 }
 
-static chunk_t ike_to_ticket(const struct ike_sa *ike)
+static struct ticket ike_to_ticket(const struct ike_sa *ike)
 {
 	struct ticket ticket = {
 		.protected.magic = whack_magic(),
@@ -218,8 +218,7 @@ static chunk_t ike_to_ticket(const struct ike_sa *ike)
 
 	ticket.protected.state.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
 
-	/* caller is responsible for freeing this */
-	return clone_bytes_as_chunk(&ticket, sizeof(struct ticket), "IKEv2 ticket_by_val");
+	return ticket;
 }
 
 /*
@@ -244,7 +243,7 @@ static chunk_t build_resume_notification(struct ike_sa *ike)
 		 : c->config->sa_ipsec_max_lifetime);
 	tl.sr_lifetime = deltasecs(lifetime);
 
-	chunk_t ticket = ike_to_ticket(ike);
+	struct ticket ticket = ike_to_ticket(ike);
 
 	/*
 	 * Dummy pbs we need for more elegant notification
@@ -258,13 +257,11 @@ static chunk_t build_resume_notification(struct ike_sa *ike)
 	if (!out_struct(&tl, &ikev2_ticket_lifetime_desc, &resume_pbs, NULL))
 		return empty_chunk;
 
-	if (!pbs_out_raw(&resume_pbs, ticket.ptr, ticket.len,
-			 "resume (encrypted) ticket data")) {
+	if (!pbs_out_thing(&resume_pbs, ticket, "resume (encrypted) ticket data")) {
 		return empty_chunk;
 	}
 
 	close_output_pbs(&resume_pbs);
-	free_chunk_content(&ticket);
 
 	/* please make sure callee frees this chunk */
 	return clone_pbs_out_all(&resume_pbs, "redirect notify data");
