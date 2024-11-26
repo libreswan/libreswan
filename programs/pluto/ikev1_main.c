@@ -98,6 +98,7 @@
 #include "ikev1_cert.h"
 #include "terminate.h"
 
+static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
 static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
@@ -658,57 +659,6 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 	return STF_SUSPEND;
 }
 
-/*
- * main_inI2_outR2_calcdone is unlike every other crypto_req_cont_func:
- * the state that it is working for may not yet care about the result.
- * We are precomputing the DH.
- * This also means that it isn't good at reporting an NSS error.
- */
-
-static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
-					    struct msg_digest *null_md)
-{
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	if (ike == NULL) {
-		return STF_INTERNAL_ERROR;
-	}
-	ldbg(ike->sa.logger, "%s() for "PRI_SO": after dh-shared",
-	     __func__, pri_so(ike->sa.st_serialno));
-
-	/*no-md:in-background*/
-	PEXPECT(ike->sa.logger, null_md == NULL);
-	ike->sa.st_v1_offloaded_task_in_background = false;
-
-	/*
-	 * Ignore error.  It will be handled handled when the next
-	 * message arrives?!?
-	 */
-	if (ike->sa.st_dh_shared_secret != NULL) {
-		ike->sa.st_v1_new_iv = calc_v1_skeyid_and_iv(ike);
-		ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
-	}
-
-	/*
-	 * If there was a packet received while we were calculating,
-	 * then process it now.
-	 *
-	 * Otherwise, the result awaits the packet.
-	 */
-	if (ike->sa.st_v1_background_md != NULL) {
-		/* steal */
-		struct msg_digest *md = ike->sa.st_v1_background_md;
-		ike->sa.st_v1_background_md = NULL;
-		/*
-		 * This will call complete_v1_state_transition() when
-		 * needed.
-		 */
-		process_v1_packet_tail(ike, NULL/*no-child*/, md);
-		md_delref(&md);
-	}
-	return STF_SKIP_COMPLETE_STATE_TRANSITION;
-}
-
-
 static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 					    struct msg_digest *md,
 					    struct dh_local_secret *local_secret,
@@ -837,6 +787,56 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 }
 
 /*
+ * main_inI2_outR2_calcdone is unlike every other crypto_req_cont_func:
+ * the state that it is working for may not yet care about the result.
+ * We are precomputing the DH.
+ * This also means that it isn't good at reporting an NSS error.
+ */
+
+static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
+					    struct msg_digest *null_md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO": after dh-shared",
+	     __func__, pri_so(ike->sa.st_serialno));
+
+	/*no-md:in-background*/
+	PEXPECT(ike->sa.logger, null_md == NULL);
+	ike->sa.st_v1_offloaded_task_in_background = false;
+
+	/*
+	 * Ignore error.  It will be handled handled when the next
+	 * message arrives?!?
+	 */
+	if (ike->sa.st_dh_shared_secret != NULL) {
+		ike->sa.st_v1_new_iv = calc_v1_skeyid_and_iv(ike);
+		ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
+	}
+
+	/*
+	 * If there was a packet received while we were calculating,
+	 * then process it now.
+	 *
+	 * Otherwise, the result awaits the packet.
+	 */
+	if (ike->sa.st_v1_background_md != NULL) {
+		/* steal */
+		struct msg_digest *md = ike->sa.st_v1_background_md;
+		ike->sa.st_v1_background_md = NULL;
+		/*
+		 * This will call complete_v1_state_transition() when
+		 * needed.
+		 */
+		process_v1_packet_tail(ike, NULL/*no-child*/, md);
+		md_delref(&md);
+	}
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
+
+/*
  * STATE_MAIN_I2:
  * SMF_PSK_AUTH: HDR, KE, Nr --> HDR*, IDi1, HASH_I
  * SMF_DS_AUTH: HDR, KE, Nr --> HDR*, IDi1, [ CERT, ] SIG_I
@@ -847,8 +847,6 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
  * SMF_RPKE_AUTH: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  *	    --> HDR*, HASH_I
  */
-
-static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 
 stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 {
