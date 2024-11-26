@@ -9,7 +9,7 @@ east #
 "ipv4-psk-ikev2": added IKEv2 connection
 east #
  ipsec auto --status | grep iptfs
-"ipv4-psk-ikev2":   iptfs: yes; dont-frag: yes; pkt-size: 1400; max-queue-size: 10240 drop-time: 111 init-delay: 777 reorder-window: 13
+"ipv4-psk-ikev2":   iptfs: yes; fragmentation: no; pkt-size: 1400; max-queue-size: 10240 drop-time: 111 init-delay: 777 reorder-window: 13
 east #
  ipsec whack --impair suppress-retransmits
 east #

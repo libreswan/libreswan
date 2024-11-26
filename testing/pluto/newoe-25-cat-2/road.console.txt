@@ -111,7 +111,7 @@ Connection list:
 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "block":   sec_label:unset;
 "block":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%;
-"block":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"block":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "block":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "block":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "block":   policy: IKEv2+AUTH_NEVER+ROUTE+GROUP+REJECT+NEVER_NEGOTIATE;
@@ -131,7 +131,7 @@ Connection list:
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear":   sec_label:unset;
 "clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%;
-"clear":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"clear":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "clear":   policy: IKEv2+AUTH_NEVER+ROUTE+GROUP+PASS+NEVER_NEGOTIATE;
@@ -207,7 +207,7 @@ Connection list:
 "clear-or-private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "clear-or-private":   sec_label:unset;
 "clear-or-private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"clear-or-private":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"clear-or-private":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "clear-or-private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear-or-private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "clear-or-private":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+NEGO_PASS+failurePASS;
@@ -227,7 +227,7 @@ Connection list:
 "private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "private":   sec_label:unset;
 "private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"private":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"private":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
@@ -247,7 +247,7 @@ Connection list:
 "private-or-clear":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "private-or-clear":   sec_label:unset;
 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"private-or-clear":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"private-or-clear":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private-or-clear":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+NEGO_PASS+failurePASS;

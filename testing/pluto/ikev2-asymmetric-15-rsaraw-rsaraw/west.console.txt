@@ -34,7 +34,7 @@ west #
 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2":   sec_label:unset;
 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"westnet-eastnet-ikev2":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"westnet-eastnet-ikev2":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

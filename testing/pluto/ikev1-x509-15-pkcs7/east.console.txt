@@ -23,7 +23,7 @@ east #
 "westnet-eastnet-x509":   sec_label:unset;
 "westnet-eastnet-x509":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-x509":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"westnet-eastnet-x509":   iptfs: no; dont-frag: no; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
+"westnet-eastnet-x509":   iptfs: no; fragmentation: yes; pkt-size: 0; max-queue-size: 0 drop-time: 0 init-delay: 0 reorder-window: 0
 "westnet-eastnet-x509":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-x509":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-x509":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
