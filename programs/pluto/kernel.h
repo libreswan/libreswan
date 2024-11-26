@@ -200,7 +200,7 @@ struct kernel_state {
 	uint32_t tfcpad;
 
 	bool iptfs;
-	bool iptfs_dont_frag;
+	bool iptfs_fragmentation;
 	uint32_t iptfs_pkt_size;
 	uint32_t iptfs_max_qsize;
 	uint32_t iptfs_drop_time;

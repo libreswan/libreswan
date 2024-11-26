@@ -316,7 +316,7 @@ struct whack_message {
 	bool send_no_esp_tfc;
 
 	enum yn_options iptfs;
-	enum yn_options iptfs_dont_frag;
+	enum yn_options iptfs_fragmentation;
 	uintmax_t iptfs_pkt_size; /* 0 for PMTU */
 	uintmax_t iptfs_max_qsize;
 	uintmax_t iptfs_drop_time;

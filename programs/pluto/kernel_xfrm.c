@@ -2024,7 +2024,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_PKT_SIZE, sa->iptfs_pkt_size);
 			if (sa->iptfs_init_delay != 0)
 				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_INIT_DELAY, sa->iptfs_init_delay);
-			if (sa->iptfs_dont_frag)
+			if (!sa->iptfs_fragmentation)
+				/* reverse linux's polarity */
 				nl_addattr_l(&req.n, maxlen, XFRMA_IPTFS_DONT_FRAG, NULL, 0);
 		} else {
 			if (sa->iptfs_drop_time != 0)

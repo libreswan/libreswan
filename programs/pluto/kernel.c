@@ -1437,14 +1437,14 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 				ldbg(child->sa.logger, "kernel: Enabling IPTFS with PMTU packet size");
 			}
 			said_next->iptfs = true;
-			said_next->iptfs_dont_frag = c->config->child_sa.iptfs_dont_frag;
+			said_next->iptfs_fragmentation = c->config->child_sa.iptfs_fragmentation;
 			said_next->iptfs_pkt_size = c->config->child_sa.iptfs_pkt_size;
 			said_next->iptfs_max_qsize = c->config->child_sa.iptfs_max_qsize;
 			said_next->iptfs_drop_time = c->config->child_sa.iptfs_drop_time;
 			said_next->iptfs_init_delay = c->config->child_sa.iptfs_init_delay;
 			said_next->iptfs_reord_win = c->config->child_sa.iptfs_reord_win;
-			ldbg(child->sa.logger, "kernel: IPTFS with%s dont_frag set",
-				c->config->child_sa.iptfs_dont_frag ? "out" : "");
+			ldbg(child->sa.logger, "kernel: IPTFS with fragmentation=%s",
+			     bool_str(c->config->child_sa.iptfs_fragmentation));
 			ldbg(child->sa.logger, "kernel: IPTFS max_qsize=%ju, drop_time=%ju, init_delay=%ju, reord_win=%ju",
 				c->config->child_sa.iptfs_max_qsize, c->config->child_sa.iptfs_drop_time,
 				c->config->child_sa.iptfs_init_delay, c->config->child_sa.iptfs_reord_win);

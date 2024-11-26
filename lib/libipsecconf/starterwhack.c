@@ -476,7 +476,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.aggressive = conn->values[KNCF_AGGRESSIVE].option; /* yn_options */
 
 	msg.iptfs = conn->values[KNCF_IPTFS].option; /* yn_options */
-	msg.iptfs_dont_frag = conn->values[KNCF_IPTFS_DONT_FRAG].option; /* yn_options */
+	msg.iptfs_fragmentation = conn->values[KNCF_IPTFS_FRAGMENTATION].option; /* yn_options */
 	msg.iptfs_pkt_size = conn->values[KNCF_IPTFS_PKT_SIZE].option;
 	msg.iptfs_max_qsize = conn->values[KNCF_IPTFS_MAX_QUEUE].option;
 	msg.iptfs_init_delay = conn->values[KNCF_IPTFS_INIT_DELAY].option;

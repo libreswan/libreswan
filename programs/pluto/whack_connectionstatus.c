@@ -658,7 +658,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		jam(buf, " iptfs: %s;", bool_str(c->config->child_sa.iptfs));
-		jam(buf, " dont-frag: %s;", bool_str(c->config->child_sa.iptfs_dont_frag));
+		jam(buf, " fragmentation: %s;", bool_str(c->config->child_sa.iptfs_fragmentation));
 		jam(buf, " pkt-size: %ju;", c->config->child_sa.iptfs_pkt_size);
 		jam(buf, " max-queue-size: %ju", c->config->child_sa.iptfs_max_qsize);
 		jam(buf, " drop-time: %ju", c->config->child_sa.iptfs_drop_time);

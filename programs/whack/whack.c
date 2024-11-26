@@ -113,10 +113,12 @@ static void help(void)
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
 		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
 		"	[--iptfs[={yes,no}] \\\n"
-		"       [--iptfs-dont-fragment] [--iptfs-packet-size <size>] \\\n"
-		"	[--iptfs-max-queue-size <size>] [--iptfs-init-delay <ms>] \\\n"
-		"       [--iptfs-drop-time <ms> ] \\\n"
-		"	[--iptfs-reorder-window <window>] \\\n"
+		"         [--iptfs-fragmentation[={yes,no}]] \\\n"
+		"         [--iptfs-packet-size <size>] \\\n"
+		"	  [--iptfs-max-queue-size <size>] \\\n"
+		"         [--iptfs-init-delay <ms>] \\\n"
+		"         [--iptfs-drop-time <ms> ] \\\n"
+		"	  [--iptfs-reorder-window <window>] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--narrowing {yes,no}] \\\n"
 		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
@@ -513,7 +515,7 @@ enum option_enums {
 	CD_REAUTH,
 
 	CD_IPTFS,
-	CD_IPTFS_DONT_FRAG,
+	CD_IPTFS_FRAGMENTATION,
 	CD_IPTFS_PKT_SIZE,
 	CD_IPTFS_MAX_QSIZE,
 	CD_IPTFS_INIT_DELAY,
@@ -836,7 +838,7 @@ const struct option long_opts[] = {
 	{ "encapsulation", optional_argument, NULL, CD_ENCAPSULATION },
 
 	{ "iptfs", optional_argument, NULL, CD_IPTFS, },
-	{ "iptfs-dont-fragment", no_argument, NULL, CD_IPTFS_DONT_FRAG, },
+	{ "iptfs-fragmentation", optional_argument, NULL, CD_IPTFS_FRAGMENTATION, },
 	{ "iptfs-packet-size", required_argument, NULL, CD_IPTFS_PKT_SIZE },
 	{ "iptfs-max-queue-size", required_argument, NULL, CD_IPTFS_MAX_QSIZE },
 	{ "iptfs-init-delay", required_argument, NULL, CD_IPTFS_INIT_DELAY },
@@ -1788,8 +1790,8 @@ int main(int argc, char **argv)
 		case CD_IPTFS: /* --iptfs[={yes,no}] */
 			msg.iptfs = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
-		case CD_IPTFS_DONT_FRAG: /* --iptfs-dont-fragment */
-			msg.iptfs = YN_YES;
+		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
+			msg.iptfs_fragmentation = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 		case CD_IPTFS_PKT_SIZE:	/* --iptfs-packet-size */
 			msg.iptfs_pkt_size = optarg_uintmax();
