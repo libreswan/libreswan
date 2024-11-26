@@ -68,7 +68,8 @@ extern void submit_dh_shared_secret(struct state *task_st,
 				    dh_shared_secret_cb *callback, where_t where);
 
 /* internal */
-void calc_v1_skeyid_and_iv(struct ike_sa *ike);
+
+struct crypt_mac calc_v1_skeyid_and_iv(struct ike_sa *ike);
 
 void calc_v2_ike_keymat(struct state *larval_ike,
 			PK11SymKey *skeyseed,

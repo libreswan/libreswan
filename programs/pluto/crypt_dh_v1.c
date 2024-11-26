@@ -42,7 +42,7 @@
  */
 /* MUST BE THREAD-SAFE */
 
-void calc_v1_skeyid_and_iv(struct ike_sa *ike)
+struct crypt_mac calc_v1_skeyid_and_iv(struct ike_sa *ike)
 {
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 	const struct encrypt_desc *cipher = ike->sa.st_oakley.ta_encrypt;
@@ -130,7 +130,9 @@ void calc_v1_skeyid_and_iv(struct ike_sa *ike)
 	struct crypt_hash *ctx = crypt_hash_init("new IV", prf->hasher, ike->sa.logger);
 	crypt_hash_digest_hunk(ctx, "GI", gi);
 	crypt_hash_digest_hunk(ctx, "GR", gr);
-	ike->sa.st_v1_new_iv = crypt_hash_final_mac(&ctx);
+	struct crypt_mac iv = crypt_hash_final_mac(&ctx);
 
 	ike->sa.hidden_variables.st_skeyid_calculated = true;
+	/* XXX: truncate IV.len */
+	return iv;
 }
