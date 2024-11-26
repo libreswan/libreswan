@@ -52,6 +52,7 @@
 #include "crypt_dh.h"
 #include "crypt_cipher.h"
 #include "instantiate.h"
+#include "ikev2_notification.h"
 
 static bool skeyseed_v2_sr(struct ike_sa *ike,
 			   const ike_spis_t *new_spis,

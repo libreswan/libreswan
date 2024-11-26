@@ -30,9 +30,10 @@
 
 #include "defs.h"
 #include "log.h"
-#include "ikev2_notify.h"
+#include "ikev2_notification.h"
 #include "demux.h"
 #include "pluto_stats.h"
+#include "ikev2_message.h"	/* for build_ikev2_critical() */
 
 enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
@@ -144,4 +145,131 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
 	md->pd[v2_pd] = notify;
+}
+
+/*
+ * ship_v2N: add notify payload to the rbody
+ * (See also specialized versions ship_v2Nsp and ship_v2Ns.)
+ *
+ * - RFC 7296 3.10 "Notify Payload" says:
+ *
+ * o  Protocol ID (1 octet) - If this notification concerns an existing
+ *    SA whose SPI is given in the SPI field, this field indicates the
+ *    type of that SA.  For notifications concerning Child SAs, this
+ *    field MUST contain either (2) to indicate AH or (3) to indicate
+ *    ESP.  Of the notifications defined in this document, the SPI is
+ *    included only with INVALID_SELECTORS, REKEY_SA, and
+ *    CHILD_SA_NOT_FOUND.  If the SPI field is empty, this field MUST be
+ *    sent as zero and MUST be ignored on receipt.
+ *
+ * o  SPI Size (1 octet) - Length in octets of the SPI as defined by the
+ *    IPsec protocol ID or zero if no SPI is applicable.  For a
+ *    notification concerning the IKE SA, the SPI Size MUST be zero and
+ *    the field must be empty.
+ *
+ *    Since all IKEv2 implementations MUST implement the NOTIFY type
+ *    payload, these payloads NEVER have the Critical Flag set.
+ */
+
+bool open_v2N_SA_output_pbs(struct pbs_out *outs,
+			    v2_notification_t ntype,
+			    enum ikev2_sec_proto_id protocol_id,
+			    const ipsec_spi_t *spi, /* optional */
+			    struct pbs_out *sub_payload)
+{
+	struct pbs_out tmp;
+	if (PBAD(outs->logger, sub_payload == NULL)) {
+		sub_payload = &tmp;
+	}
+
+	/* See RFC 5996 section 3.10 "Notify Payload" */
+	if (!PEXPECT(outs->logger, (impair.emitting ||
+					 protocol_id == PROTO_v2_RESERVED ||
+					 protocol_id == PROTO_v2_AH ||
+					 protocol_id == PROTO_v2_ESP))) {
+		return false;
+	}
+
+	size_t spi_size = (spi == NULL ? 0 : sizeof(*spi));
+
+	switch (ntype) {
+	case v2N_INVALID_SELECTORS:
+	case v2N_REKEY_SA:
+	case v2N_CHILD_SA_NOT_FOUND:
+		if (protocol_id == PROTO_v2_RESERVED || spi_size == 0) {
+			ldbg(outs->logger, "XXX: type requires SA; missing");
+		}
+		break;
+	default:
+		if (protocol_id != PROTO_v2_RESERVED || spi_size > 0) {
+			ldbg(outs->logger, "XXX: type forbids SA but SA present");
+		}
+		break;
+	}
+
+	ldbg(outs->logger, "adding a v2N Payload");
+
+	struct ikev2_notify n = {
+		.isan_critical = build_ikev2_critical(false, outs->logger),
+		.isan_protoid = protocol_id,
+		.isan_spisize = spi_size,
+		.isan_type = ntype,
+	};
+
+	if (!pbs_out_struct(outs, &ikev2_notify_desc,
+			    &n, sizeof(n), sub_payload)) {
+		return false;
+	}
+
+	if (spi != NULL) {
+		if (!pbs_out_thing(sub_payload, *spi, "SPI")) {
+			/* already logged */
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/* emit a v2 Notification payload, with optional sub-payload */
+bool open_v2N_output_pbs(struct pbs_out *outs,
+			 v2_notification_t ntype,
+			 struct pbs_out *sub_payload)
+{
+	return open_v2N_SA_output_pbs(outs, ntype, PROTO_v2_RESERVED, NULL, sub_payload);
+}
+
+/* emit a v2 Notification payload, with bytes as sub-payload */
+bool emit_v2N_bytes(v2_notification_t ntype,
+		    const void *bytes, size_t size, /* optional */
+		    struct pbs_out *outs)
+{
+	if (impair.omit_v2_notification.enabled &&
+	    impair.omit_v2_notification.value == ntype) {
+		enum_buf eb;
+		llog(RC_LOG, outs->logger,
+		     "IMPAIR: omitting %s notification",
+		     str_enum_short(&v2_notification_names, ntype, &eb));
+		return true;
+	}
+
+	struct pbs_out pl;
+	if (!open_v2N_output_pbs(outs, ntype, &pl)) {
+		return false;
+	}
+
+	if (!pbs_out_raw(&pl, bytes, size, "Notify data")) {
+		/* already logged */
+		return false;
+	}
+
+	close_output_pbs(&pl);
+	return true;
+}
+
+/* output a v2 simple Notification payload */
+bool emit_v2N(v2_notification_t ntype,
+	       struct pbs_out *outs)
+{
+	return emit_v2N_bytes(ntype, NULL, 0, outs);
 }

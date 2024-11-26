@@ -79,7 +79,7 @@ OBJS += ikev2_informational.o
 # payloads
 OBJS += ikev2_cert.o
 OBJS += ikev2_certreq.o
-OBJS += ikev2_notify.o
+OBJS += ikev2_notification.o
 OBJS += ikev2_cp.o
 OBJS += ikev2_ts.o
 

@@ -78,7 +78,7 @@
 #include "addr_lookup.h"
 #include "impair.h"
 #include "ikev2_message.h"
-#include "ikev2_notify.h"
+#include "ikev2_notification.h"
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
 #include "crypt_ke.h"

@@ -52,6 +52,7 @@
 #include "crypt_prf.h"
 #include "ikev2_states.h"
 #include "ikev2_auth.h"
+#include "ikev2_notification.h"
 
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_start;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_final;

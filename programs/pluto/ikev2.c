@@ -73,7 +73,7 @@
 #include "ip_endpoint.h"
 #include "kernel.h"
 #include "iface.h"
-#include "ikev2_notify.h"
+#include "ikev2_notification.h"
 #include "unpack.h"
 #include "pending.h"		/* for release_pending_whacks() */
 #include "ikev2_host_pair.h"

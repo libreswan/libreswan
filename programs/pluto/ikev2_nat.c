@@ -38,6 +38,7 @@
 #include "ike_alg_hash.h"
 #include "ikev2_send.h"
 #include "log.h"
+#include "ikev2_notification.h"
 
 /*
  * Add NAT-Traversal IKEv2 Notify payload (v2N)

@@ -48,6 +48,7 @@
 #include "iface.h"
 #include "ip_protocol.h"
 #include "ikev2_send.h"
+#include "ikev2_notification.h"
 
 /*
  * Determine the IKE version we will use for the IKE packet

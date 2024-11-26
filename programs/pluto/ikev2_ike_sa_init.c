@@ -64,6 +64,7 @@
 #include "ikev2.h"		/* for ikev2_state_transition_fn */
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
+#include "ikev2_notification.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */

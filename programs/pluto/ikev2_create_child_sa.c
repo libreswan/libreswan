@@ -59,6 +59,7 @@
 #include "ikev2_states.h"
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
+#include "ikev2_notification.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 

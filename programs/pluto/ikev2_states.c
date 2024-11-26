@@ -38,7 +38,7 @@
 #include "ikev2.h"
 #include "log.h"
 #include "connections.h"
-#include "ikev2_notify.h"
+#include "ikev2_notification.h"
 #include "ikev2_retransmit.h"
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_ike_auth.h"

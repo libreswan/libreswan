@@ -48,6 +48,7 @@
 #include "ikev2.h"
 #include "ikev2_states.h"
 #include "ikev2_informational.h"
+#include "ikev2_notification.h"
 
 static emit_v2_INFORMATIONAL_request_payload_fn add_mobike_payloads; /* type check */
 
