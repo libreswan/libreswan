@@ -1,5 +1,4 @@
-/*
- * IPsec IKEv1 DOI Quick Mode functions.
+/* IPsec IKEv1 DOI Quick Mode functions.
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
@@ -114,17 +113,25 @@ static dh_shared_secret_cb quick_inI1_outR1_continue2;	/* forward decl and type 
 
 static ke_and_nonce_cb quick_outI1_continue;	/* type assertion */
 
-static void update_child_iv(struct child_sa *child, struct msg_digest *md)
+static void update_quick_iv(struct child_sa *child,
+			    struct crypt_mac iv,
+			    where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
-		jam_string(buf, "updating Child SA IV from ");
+		jam_string(buf, "updating Quick Mode Child IV .st_v1_iv from ");
 		jam_hex_hunk(buf, child->sa.st_v1_iv);
 		jam_string(buf, " to ");
-		jam_hex_hunk(buf, md->v1_decrypt_iv);
+		jam_hex_hunk(buf, iv);
+		jam_string(buf, " ( .st_v1_new iv ");
+		jam_hex_hunk(buf, child->sa.st_v1_new_iv);
+		jam_string(buf, " .st_v1_ph1_iv ");
+		jam_hex_hunk(buf, child->sa.st_v1_ph1_iv);
+		jam_string(buf, ") ");
+		jam_where(buf, where);
 	}
-        PEXPECT(child->sa.logger, md->v1_decrypt_iv.len > 0);
+        PEXPECT(child->sa.logger, iv.len > 0);
         PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
-	child->sa.st_v1_iv = md->v1_decrypt_iv;
+	child->sa.st_v1_iv = iv;
 }
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
@@ -816,8 +823,9 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	/* MD->v1_decrypt_iv N/A as initiating */
 
 	/* uses ike->sa.st_v1_ph1_iv */
-	child->sa.st_v1_iv = new_phase2_iv(ike, child->sa.st_v1_msgid.id,
-					   "IKE sending quick message", HERE);
+	update_quick_iv(child, new_phase2_iv(ike, child->sa.st_v1_msgid.id,
+					     "IKE sending quick message", HERE),
+			HERE);
 
 	/* Save updated IV ready for response. */
 	if (!close_and_encrypt_v1_message(ike, &rbody, NULL/*ST*/,
@@ -1246,7 +1254,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * (which includes progressing to a rejected Child SA) advance
 	 * the IV.
 	 */
-	update_child_iv(child, md);
+	update_quick_iv(child, md->v1_decrypt_iv, HERE);
 
 	child->sa.st_v1_msgid.id = md->hdr.isa_msgid;
 
@@ -1679,7 +1687,7 @@ stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 	 * (which includes progressing to a rejected Child SA) advance
 	 * the IV.
 	 */
-	update_child_iv(child, md);
+	update_quick_iv(child, md->v1_decrypt_iv, HERE);
 
 	/* SA in */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
@@ -1893,7 +1901,7 @@ stf_status quick_inI2(struct state *child_sa, struct msg_digest *md)
 	 * Since there are no further exchanges, this isn't necessary;
 	 * but it is tidy.
 	 */
-	update_child_iv(child, md);
+	update_quick_iv(child, md->v1_decrypt_iv, HERE);
 
 	/* Tell the kernel to establish the outbound and routing part of the new SA
 	 * (the previous state established inbound)
