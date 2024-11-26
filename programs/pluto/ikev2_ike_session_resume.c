@@ -298,7 +298,7 @@ bool emit_v2N_TICKET_OPAQUE(chunk_t ticket, struct pbs_out *pbs)
 		return false;
 	}
 
-	bool ret = emit_v2N_bytes(v2N_TICKET_OPAQUE, ticket.ptr, ticket.len, pbs);
+	bool ret = emit_v2N_hunk(v2N_TICKET_OPAQUE, ticket, pbs);
 	return ret;
 }
 
