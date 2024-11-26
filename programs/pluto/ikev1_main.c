@@ -1,5 +1,4 @@
-/*
- * IPsec DOI and Oakley resolution routines
+/* IPsec DOI and Oakley resolution routines
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -102,6 +101,28 @@ static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
 static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
+
+static void update_main_iv(struct ike_sa *ike,
+			   struct crypt_mac iv,
+			   where_t where)
+{
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
+		jam_string(buf, "updating Main Mode IKE IV .st_v1_ph1_iv from ");
+		jam_hex_hunk(buf, ike->sa.st_v1_ph1_iv);
+		jam_string(buf, " to ");
+		jam_hex_hunk(buf, iv);
+		jam_string(buf, " ( .st_v1_iv ");
+		jam_hex_hunk(buf, ike->sa.st_v1_iv);
+		jam_string(buf, " .st_v1_new_iv ");
+		jam_hex_hunk(buf, ike->sa.st_v1_new_iv);
+		jam_string(buf, ") ");
+		jam_where(buf, where);
+	}
+	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
+	ike->sa.st_v1_iv = iv;
+	ike->sa.st_v1_new_iv = iv;
+	ike->sa.st_v1_ph1_iv = iv;
+}
 
 static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa *ike)
 {
@@ -245,6 +266,10 @@ struct ike_sa *main_outI1(struct connection *c,
 	}
 
 	statetime_stop(&start, "%s()", __func__);
+
+	/* outI1 is not encrypted */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outI1*/
+
 	return ike;
 }
 
@@ -394,6 +419,10 @@ stf_status main_inI1_outR1(struct state *null_st,
 	struct ike_sa *ike = new_v1_rstate(c, md);
 	md->v1_st = &ike->sa;
 
+	/* inI1 is not encrypted */
+	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == 0); /*inI1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*inI1*/
+
 	/* delref stack connection pointer */
 	connection_delref(&c, md->logger);
 	c = ike->sa.st_connection;
@@ -480,6 +509,9 @@ stf_status main_inI1_outR1(struct state *null_st,
 	/* save initiator SA for HASH */
 	replace_chunk(&ike->sa.st_p1isa, pbs_in_all(&sa_pd->pbs), __func__);
 
+	/* outR1 is not encrypted */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outR1*/
+
 	return STF_OK;
 }
 
@@ -505,6 +537,10 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 		dbg("dropping Main Mode I2 packet as per impair");
 		return STF_IGNORE;
 	}
+
+	/* inR1 is not encrypted */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*inR1*/
+	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == 0); /*inR1*/
 
 	/* verify echoed SA */
 	{
@@ -613,6 +649,8 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 	/* Reinsert the state, using the responder cookie we just received */
 	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
+	/* outI2 is not encrypted */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outI2*/
 	return STF_OK;
 }
 
@@ -783,6 +821,8 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	dbg("#%lu %s:%u ike->sa.st_calculating = false;", ike->sa.st_serialno, __func__, __LINE__);
 	ike->sa.st_v1_offloaded_task_in_background = true;
 
+	/* outR2 is not encrypted; but callback will be filling in IV */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outR2*/
 	return STF_OK;
 }
 
@@ -812,8 +852,9 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 	 * message arrives?!?
 	 */
 	if (ike->sa.st_dh_shared_secret != NULL) {
-		ike->sa.st_v1_new_iv = calc_v1_skeyid_and_iv(ike);
-		ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
+		update_main_iv(ike, calc_v1_skeyid_and_iv(ike), HERE);
+		/* IV ready for inI3 */
+		PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inI2_outR2_continue2*/
 	}
 
 	/*
@@ -903,7 +944,9 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
-	ike->sa.st_v1_new_iv = calc_v1_skeyid_and_iv(ike);
+	/* ready for encrypted outI3 */
+	update_main_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /*main_inR2_outI3_continue*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inR2_outI3_continue*/
 
 	struct pbs_out rbody[1]; /* hack */
 	ikev1_init_pbs_out_from_md_hdr(md, true,
@@ -1098,13 +1141,15 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* encrypt message, except for fixed part of header */
 
-	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_new_iv)) {
+	/* stores updated IV in .st_v1_ph1_iv */
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_ph1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
-	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
+	update_main_iv(ike, ike->sa.st_v1_ph1_iv, HERE); /* post-encrypt-hack main_inR2_outI3_continue */
+
+	/* outI3 is encrypted */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*outI3*/
 	return STF_OK;
 }
 
@@ -1122,6 +1167,10 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		return STF_INTERNAL_ERROR;
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
+	/* inI3 is encrypted */
+	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len > 0); /*inI3*/
+	update_main_iv(ike, md->v1_decrypt_iv, HERE); /*inI3*/
 
 	pexpect(&ike->sa == md->v1_st);
 
@@ -1344,19 +1393,13 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* encrypt message, sans fixed part of header */
 
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+	/* stores updated IV in .st_v1_ph1_iv */
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_ph1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
-	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
-	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("last encrypted block of Phase 1:",
-			      ike->sa.st_v1_new_iv);
-	}
-
-	ike->sa.st_v1_ph1_iv = ike->sa.st_v1_new_iv;
+	update_main_iv(ike, ike->sa.st_v1_ph1_iv, HERE); /* post-encrypt-hack inI3-outR3 */
+	ldbg(ike->sa.logger, "phase1 IV finished");
 
 	/*
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
@@ -1378,6 +1421,9 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	}
 
 	ISAKMP_SA_established(ike);
+
+	/* outR3 is encrypted */
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*outR3*/
 	return STF_OK;
 }
 
@@ -1394,6 +1440,16 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 		return STF_INTERNAL_ERROR;
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
+	/*
+	 * save last IV from phase 1 so it can be restored later so anything
+	 * between the end of phase 1 and the start of phase 2 i.e. mode config
+	 * payloads etc. will not lose our IV
+	 */
+	/* inR3 is encrypted */
+	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len > 0); /*inR3*/
+	update_main_iv(ike, md->v1_decrypt_iv, HERE);
+	ldbg(ike->sa.logger, "phase1 IV finalized");
 
 	if (!v1_decode_certs(md)) {
 		llog(RC_LOG, ike->sa.logger, "X509: CERT payload bogus or revoked");
@@ -1446,13 +1502,6 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 
 	ISAKMP_SA_established(ike);
 
-	/*
-	 * save last IV from phase 1 so it can be restored later so anything
-	 * between the end of phase 1 and the start of phase 2 i.e. mode config
-	 * payloads etc. will not lose our IV
-	 */
-	ike->sa.st_v1_ph1_iv = ike->sa.st_v1_new_iv;
-	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;	 /* finalize our Phase 1 IV */
-
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inR3*/
 	return STF_OK;
 }
