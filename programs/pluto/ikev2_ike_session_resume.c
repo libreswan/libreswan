@@ -223,52 +223,6 @@ static struct ticket ike_to_ticket(const struct ike_sa *ike)
 }
 
 /*
- * builds notificaton payload data for ticket_lt_opaque
- */
-
-static chunk_t build_resume_notification(struct ike_sa *ike)
-{
-	struct connection *c = ike->sa.st_connection;
-	struct ikev2_ticket_lifetime tl;
-
-	/*
-	 * RFC 5723 Section 6.2
-	 *
-	 * The lifetime of the ticket sent by the gateway SHOULD be the minimum
-	 * of the IKE SA lifetime (per the gateway's local policy) and its re-
-	 * authentication time.
-	 */
-	deltatime_t lifetime =
-		(deltatime_cmp(c->config->sa_ike_max_lifetime, <, c->config->sa_ipsec_max_lifetime)
-		 ? c->config->sa_ike_max_lifetime
-		 : c->config->sa_ipsec_max_lifetime);
-	tl.sr_lifetime = deltasecs(lifetime);
-
-	struct ticket ticket = ike_to_ticket(ike);
-
-	/*
-	 * Dummy pbs we need for more elegant notification
-	 * data construction (using out_struct and et. al.)
-	 */
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	struct pbs_out resume_pbs = open_pbs_out("entire resume ticket",
-						 buf, sizeof(buf),
-						 ike->sa.logger);
-
-	if (!out_struct(&tl, &ikev2_ticket_lifetime_desc, &resume_pbs, NULL))
-		return empty_chunk;
-
-	if (!pbs_out_thing(&resume_pbs, ticket, "resume (encrypted) ticket data")) {
-		return empty_chunk;
-	}
-
-	close_output_pbs(&resume_pbs);
-
-	/* please make sure callee frees this chunk */
-	return clone_pbs_out_all(&resume_pbs, "redirect notify data");
-}
-
-/*
  * Emit IKEv2 Notify TICKET_OPAQUE payload.
  *
  * @param *ticket chunk_t stored encrypted ticket chunk at the client
@@ -277,17 +231,40 @@ static chunk_t build_resume_notification(struct ike_sa *ike)
 
 bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 {
-	chunk_t data = build_resume_notification(ike);
+	struct connection *c = ike->sa.st_connection;
 
-	if (data.len == 0) {
-		llog(RC_LOG, ike->sa.logger,
-		     "failed to build session resumption ticket - skipping notify payload");
+	/*
+	 * RFC 5723 Section 6.2
+	 *
+	 * The lifetime of the ticket sent by the gateway SHOULD be
+	 * the minimum of the IKE SA lifetime (per the gateway's local
+	 * policy) and its re- authentication time.
+	 */
+	deltatime_t lifetime =
+		(deltatime_cmp(c->config->sa_ike_max_lifetime, <, c->config->sa_ipsec_max_lifetime)
+		 ? c->config->sa_ike_max_lifetime
+		 : c->config->sa_ipsec_max_lifetime);
+	struct ikev2_ticket_lifetime tl = {
+		.sr_lifetime = deltasecs(lifetime),
+	};
+
+	struct ticket ticket = ike_to_ticket(ike);
+
+	struct pbs_out resume_pbs;
+	if (!open_v2N_output_pbs(pbs, v2N_TICKET_LT_OPAQUE, &resume_pbs)) {
 		return false;
 	}
 
-	bool ret = emit_v2N_bytes(v2N_TICKET_LT_OPAQUE, data.ptr, data.len, pbs);
-	free_chunk_content(&data);
-	return ret;
+	if (!out_struct(&tl, &ikev2_ticket_lifetime_desc, &resume_pbs, NULL))
+		return false;
+
+	if (!pbs_out_thing(&resume_pbs, ticket, "resume (encrypted) ticket data")) {
+		return false;
+	}
+
+	close_output_pbs(&resume_pbs);
+
+	return true;
 }
 
 bool emit_v2N_TICKET_OPAQUE(chunk_t ticket, struct pbs_out *pbs)
