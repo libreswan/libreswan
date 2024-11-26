@@ -79,15 +79,88 @@ static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
 static ke_and_nonce_cb aggr_outI1_continue_tail;
 
 /*
- * for aggressive mode, this is sub-optimal, since we should have
- * had the crypto helper actually do everything, but we need to do
- * some additional work to set that all up, so this is fine for now.
+ * Initiate an Oakley Aggressive Mode exchange.
+ * --> HDR, SA, KE, Ni, IDii
  */
 
-static stf_status aggr_inI1_outR1_continue1(struct state *ike_sa,
-					    struct msg_digest *md,
-					    struct dh_local_secret *local_secret,
-					    chunk_t *nonce)
+/* No initial state for aggr_outI1:
+ * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
+ * -->HDR, SA, KE, Ni, IDii
+ *
+ * Not implemented:
+ * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
+ * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
+ */
+
+struct ike_sa *aggr_outI1(struct connection *c,
+			  struct ike_sa *predecessor,
+			  const struct child_policy *policy,
+			  const threadtime_t *inception,
+			  bool detach_whack)
+{
+	/* set up new state */
+	struct ike_sa *ike = new_v1_istate(c, STATE_AGGR_I1);
+	if (ike == NULL) {
+		return NULL;
+	}
+
+	statetime_t start = statetime_backdate(&ike->sa, inception);
+
+	if (c->local->host.config->auth == AUTH_PSK &&
+	    c->config->aggressive) {
+		llog_sa(RC_LOG, ike,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	}
+
+	if (!init_aggr_st_oakley(ike)) {
+		/*
+		 * This is only the case if NO IKE proposal was specified in the
+		 * configuration file.  It's not the case if there were multiple
+		 * configurations, even conflicting multiple DH groups.  So this
+		 * should tell the user to add a proper proposal policy
+		 */
+		llog_sa(RC_AGGRALGO, ike,
+			"no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
+		return NULL;
+	}
+
+	if (has_child_policy(policy)) {
+		/*
+		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
+		 * so that a Child SA isn't also initiated and this
+		 * code is skipped.
+		 */
+		append_pending(ike, c, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->sa.st_serialno),
+			       null_shunk, true /*part of initiate*/,
+			       detach_whack);
+	}
+
+	if (predecessor == NULL) {
+		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");
+	} else {
+		move_pending(predecessor, ike);
+		llog_sa(RC_LOG, ike,
+			"initiating IKEv1 Aggressive Mode connection "PRI_SO" to replace "PRI_SO,
+			pri_so(ike->sa.st_serialno),
+			pri_so(predecessor->sa.st_serialno));
+	}
+
+	/*
+	 * Calculate KE and Nonce.
+	 */
+	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, /*no-md*/NULL,
+			    ike->sa.st_oakley.ta_dh,
+			    aggr_outI1_continue,
+			    /*detach_whack*/false, HERE);
+	statetime_stop(&start, "%s()", __func__);
+	return ike;
+}
+
+static stf_status aggr_outI1_continue(struct state *ike_sa,
+				      struct msg_digest *unused_md,
+				      struct dh_local_secret *local_secret,
+				      chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
@@ -95,23 +168,124 @@ static stf_status aggr_inI1_outR1_continue1(struct state *ike_sa,
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
-	/* unpack first calculation */
-	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gr);
+	stf_status e = aggr_outI1_continue_tail(&ike->sa, unused_md,
+						local_secret, nonce); /* may return FAIL */
 
-	/* unpack nonce too */
-	unpack_nonce(&ike->sa.st_nr, nonce);
+	pexpect(e == STF_IGNORE);	/* ??? what would be better? */
+	complete_v1_state_transition(&ike->sa, NULL, STF_IGNORE);
 
-	/* set up second calculation */
-	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
-				ike->sa.st_gi/*initiator's KE*/,
-				aggr_inI1_outR1_continue2, HERE);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
 
-	/*
-	 * XXX: Since more crypto has been requested, MD needs to be re
-	 * suspended.  If the original crypto request did everything
-	 * this wouldn't be needed.
-	 */
-	return STF_SUSPEND;
+static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
+					   struct msg_digest *null_md,
+					   struct dh_local_secret *local_secret,
+					   chunk_t *nonce)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
+	PASSERT(ike->sa.logger, null_md == NULL); /* no packet */
+	struct connection *c = ike->sa.st_connection;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
+	bool send_cr = (mycert != NULL &&
+			!remote_has_preloaded_pubkey(ike) &&
+			(c->local->host.config->sendcert == CERT_SENDIFASKED ||
+			 c->local->host.config->sendcert == CERT_ALWAYSSEND));
+
+	dbg("aggr_outI1_tail for #%lu", ike->sa.st_serialno);
+
+	/* make sure HDR is at start of a clean buffer */
+	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), ike->sa.logger);
+
+	/* HDR out */
+	struct pbs_out rbody;
+	{
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION,
+			.isa_xchg = ISAKMP_XCHG_AGGR,
+		};
+		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+		/* R-cookie, flags and MessageID are left zero */
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
+				&rbody)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
+	/* SA out */
+	{
+		uint8_t *sa_start = rbody.cur;
+
+		if (!ikev1_out_aggr_sa(&rbody, ike)) {
+			return STF_INTERNAL_ERROR;
+		}
+
+		/* save initiator SA for later HASH */
+		passert(ike->sa.st_p1isa.ptr == NULL); /* no leak! */
+		ike->sa.st_p1isa = clone_bytes_as_chunk(sa_start, rbody.cur - sa_start,
+						    "sa in aggr_outI1");
+	}
+
+	/* KE out */
+	if (!ikev1_ship_KE(&ike->sa, local_secret, &ike->sa.st_gi, &rbody))
+		return STF_INTERNAL_ERROR;
+
+	/* Ni out */
+	if (!ikev1_ship_nonce(&ike->sa.st_ni, nonce, &rbody, "Ni"))
+		return STF_INTERNAL_ERROR;
+
+	/* IDii out */
+	{
+		shunk_t id_b;
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
+
+		struct pbs_out id_pbs;
+		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
+				&rbody, &id_pbs) ||
+		    !out_hunk(id_b, &id_pbs, "my identity"))
+			return STF_INTERNAL_ERROR;
+
+		close_output_pbs(&id_pbs);
+	}
+
+	/* CERTREQ out */
+	if (send_cr) {
+		llog(RC_LOG, ike->sa.logger, "I am sending a certificate request");
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.config->ca, &rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* send Vendor IDs */
+	if (!out_v1VID_set(&rbody, c))
+		return STF_INTERNAL_ERROR;
+
+	/* as Initiator, spray NAT VIDs */
+	if (!emit_nat_traversal_vid(&rbody, c))
+		return STF_INTERNAL_ERROR;
+
+	/* finish message */
+
+	if (!close_v1_message(&rbody, ike))
+		return STF_INTERNAL_ERROR;
+
+	close_output_pbs(&reply_stream);
+
+	/* Transmit */
+	record_and_send_v1_ike_msg(&ike->sa, &reply_stream, "aggr_outI1");
+
+	/* Set up a retransmission event, half a minute hence */
+	delete_v1_event(&ike->sa);
+	clear_retransmits(&ike->sa);
+	start_retransmits(&ike->sa);
+
+	llog(RC_LOG, ike->sa.logger, "%s", ike->sa.st_state->story);
+	return STF_IGNORE;
 }
 
 /* STATE_AGGR_R0:
@@ -280,6 +454,42 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			    ike->sa.st_oakley.ta_dh,
 			    aggr_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
+	return STF_SUSPEND;
+}
+
+/*
+ * for aggressive mode, this is sub-optimal, since we should have
+ * had the crypto helper actually do everything, but we need to do
+ * some additional work to set that all up, so this is fine for now.
+ */
+
+static stf_status aggr_inI1_outR1_continue1(struct state *ike_sa,
+					    struct msg_digest *md,
+					    struct dh_local_secret *local_secret,
+					    chunk_t *nonce)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
+	/* unpack first calculation */
+	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gr);
+
+	/* unpack nonce too */
+	unpack_nonce(&ike->sa.st_nr, nonce);
+
+	/* set up second calculation */
+	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
+				ike->sa.st_gi/*initiator's KE*/,
+				aggr_inI1_outR1_continue2, HERE);
+
+	/*
+	 * XXX: Since more crypto has been requested, MD needs to be re
+	 * suspended.  If the original crypto request did everything
+	 * this wouldn't be needed.
+	 */
 	return STF_SUSPEND;
 }
 
@@ -979,214 +1189,4 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 
 	ISAKMP_SA_established(ike);
 	return STF_OK;
-}
-
-/*
- * Initiate an Oakley Aggressive Mode exchange.
- * --> HDR, SA, KE, Ni, IDii
- */
-
-/* No initial state for aggr_outI1:
- * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
- * -->HDR, SA, KE, Ni, IDii
- *
- * Not implemented:
- * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
- * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
- */
-
-struct ike_sa *aggr_outI1(struct connection *c,
-			  struct ike_sa *predecessor,
-			  const struct child_policy *policy,
-			  const threadtime_t *inception,
-			  bool detach_whack)
-{
-	/* set up new state */
-	struct ike_sa *ike = new_v1_istate(c, STATE_AGGR_I1);
-	if (ike == NULL) {
-		return NULL;
-	}
-
-	statetime_t start = statetime_backdate(&ike->sa, inception);
-
-	if (c->local->host.config->auth == AUTH_PSK &&
-	    c->config->aggressive) {
-		llog_sa(RC_LOG, ike,
-			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
-	}
-
-	if (!init_aggr_st_oakley(ike)) {
-		/*
-		 * This is only the case if NO IKE proposal was specified in the
-		 * configuration file.  It's not the case if there were multiple
-		 * configurations, even conflicting multiple DH groups.  So this
-		 * should tell the user to add a proper proposal policy
-		 */
-		llog_sa(RC_AGGRALGO, ike,
-			"no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
-		return NULL;
-	}
-
-	if (has_child_policy(policy)) {
-		/*
-		 * When replacing the IKE (ISAKMP) SA, policy=LEMPTY
-		 * so that a Child SA isn't also initiated and this
-		 * code is skipped.
-		 */
-		append_pending(ike, c, policy,
-			       (predecessor == NULL ? SOS_NOBODY : predecessor->sa.st_serialno),
-			       null_shunk, true /*part of initiate*/,
-			       detach_whack);
-	}
-
-	if (predecessor == NULL) {
-		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");
-	} else {
-		move_pending(predecessor, ike);
-		llog_sa(RC_LOG, ike,
-			"initiating IKEv1 Aggressive Mode connection "PRI_SO" to replace "PRI_SO,
-			pri_so(ike->sa.st_serialno),
-			pri_so(predecessor->sa.st_serialno));
-	}
-
-	/*
-	 * Calculate KE and Nonce.
-	 */
-	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&ike->sa, /*no-md*/NULL,
-			    ike->sa.st_oakley.ta_dh,
-			    aggr_outI1_continue,
-			    /*detach_whack*/false, HERE);
-	statetime_stop(&start, "%s()", __func__);
-	return ike;
-}
-
-static stf_status aggr_outI1_continue(struct state *ike_sa,
-				      struct msg_digest *unused_md,
-				      struct dh_local_secret *local_secret,
-				      chunk_t *nonce)
-{
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	if (ike == NULL) {
-		return STF_INTERNAL_ERROR;
-	}
-	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
-
-	stf_status e = aggr_outI1_continue_tail(&ike->sa, unused_md,
-						local_secret, nonce); /* may return FAIL */
-
-	pexpect(e == STF_IGNORE);	/* ??? what would be better? */
-	complete_v1_state_transition(&ike->sa, NULL, STF_IGNORE);
-
-	return STF_SKIP_COMPLETE_STATE_TRANSITION;
-}
-
-static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
-					   struct msg_digest *null_md,
-					   struct dh_local_secret *local_secret,
-					   chunk_t *nonce)
-{
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	if (ike == NULL) {
-		return STF_INTERNAL_ERROR;
-	}
-	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
-
-	PASSERT(ike->sa.logger, null_md == NULL); /* no packet */
-	struct connection *c = ike->sa.st_connection;
-	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
-	bool send_cr = (mycert != NULL &&
-			!remote_has_preloaded_pubkey(ike) &&
-			(c->local->host.config->sendcert == CERT_SENDIFASKED ||
-			 c->local->host.config->sendcert == CERT_ALWAYSSEND));
-
-	dbg("aggr_outI1_tail for #%lu", ike->sa.st_serialno);
-
-	/* make sure HDR is at start of a clean buffer */
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), ike->sa.logger);
-
-	/* HDR out */
-	struct pbs_out rbody;
-	{
-		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_AGGR,
-		};
-		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
-		/* R-cookie, flags and MessageID are left zero */
-
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
-
-	/* SA out */
-	{
-		uint8_t *sa_start = rbody.cur;
-
-		if (!ikev1_out_aggr_sa(&rbody, ike)) {
-			return STF_INTERNAL_ERROR;
-		}
-
-		/* save initiator SA for later HASH */
-		passert(ike->sa.st_p1isa.ptr == NULL); /* no leak! */
-		ike->sa.st_p1isa = clone_bytes_as_chunk(sa_start, rbody.cur - sa_start,
-						    "sa in aggr_outI1");
-	}
-
-	/* KE out */
-	if (!ikev1_ship_KE(&ike->sa, local_secret, &ike->sa.st_gi, &rbody))
-		return STF_INTERNAL_ERROR;
-
-	/* Ni out */
-	if (!ikev1_ship_nonce(&ike->sa.st_ni, nonce, &rbody, "Ni"))
-		return STF_INTERNAL_ERROR;
-
-	/* IDii out */
-	{
-		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
-
-		struct pbs_out id_pbs;
-		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&rbody, &id_pbs) ||
-		    !out_hunk(id_b, &id_pbs, "my identity"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&id_pbs);
-	}
-
-	/* CERTREQ out */
-	if (send_cr) {
-		llog(RC_LOG, ike->sa.logger, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.config->ca, &rbody))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/* send Vendor IDs */
-	if (!out_v1VID_set(&rbody, c))
-		return STF_INTERNAL_ERROR;
-
-	/* as Initiator, spray NAT VIDs */
-	if (!emit_nat_traversal_vid(&rbody, c))
-		return STF_INTERNAL_ERROR;
-
-	/* finish message */
-
-	if (!close_v1_message(&rbody, ike))
-		return STF_INTERNAL_ERROR;
-
-	close_output_pbs(&reply_stream);
-
-	/* Transmit */
-	record_and_send_v1_ike_msg(&ike->sa, &reply_stream, "aggr_outI1");
-
-	/* Set up a retransmission event, half a minute hence */
-	delete_v1_event(&ike->sa);
-	clear_retransmits(&ike->sa);
-	start_retransmits(&ike->sa);
-
-	llog(RC_LOG, ike->sa.logger, "%s", ike->sa.st_state->story);
-	return STF_IGNORE;
 }
