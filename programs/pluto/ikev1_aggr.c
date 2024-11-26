@@ -995,10 +995,10 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey

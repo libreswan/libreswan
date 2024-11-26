@@ -204,10 +204,7 @@ static void send_v1_notification(struct logger *logger,
 						    "IKE encrypting notification", HERE);
 		ike->sa.st_v1_iv = saved_iv;
 
-		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs,
-						     NULL/*don't-update.st_v1_new_iv*/,
-						     iv,
-						     NULL/*discard-IV*/));
+		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &iv));
 	} else {
 		close_output_pbs(&r_hdr_pbs);
 	}

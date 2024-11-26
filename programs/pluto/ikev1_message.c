@@ -175,12 +175,9 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 
 bool close_and_encrypt_v1_message(struct ike_sa *ike,
 				  struct pbs_out *pbs,
-				  struct state *st_or_null,
-				  struct crypt_mac iv,
-				  struct crypt_mac *iv_out_or_null)
+				  struct crypt_mac *iv)
 {
 	struct logger *logger = (pbs->logger != NULL ? pbs->logger :
-				 st_or_null != NULL ? st_or_null->logger :
 				 ike->sa.logger);
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
@@ -230,8 +227,8 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * MAC to length.  What about Phase1 and Phase15 and the
 	 * result returned by encryption?
 	 */
-	PASSERT(logger, iv.len >= e->enc_blocksize);
-	iv.len = e->enc_blocksize;   /* truncate */
+	PASSERT(logger, iv->len >= e->enc_blocksize);
+	iv->len = e->enc_blocksize;   /* truncate */
 
 	/*
 	 * Finally, re-pad the entire message (header and body) to
@@ -257,23 +254,16 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		LDBG_log(logger, "encrypting:");
 		LDBG_hunk(logger, padded_encrypt);
 		LDBG_log(logger, "IV:");
-		LDBG_hunk(logger, iv);
+		LDBG_hunk(logger, *iv);
 	}
 
 	cipher_ikev1(e, ENCRYPT, padded_encrypt,
-		     &iv, ike->sa.st_enc_key_nss,
+		     iv, ike->sa.st_enc_key_nss,
 		     logger);
-
-	if (iv_out_or_null != NULL) {
-		(*iv_out_or_null) = iv;
-	}
-	if (st_or_null != NULL) {
-		st_or_null->st_v1_new_iv = iv;
-	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "next IV:");
-		LDBG_hunk(logger, iv);
+		LDBG_hunk(logger, *iv);
 	}
 
 	return true;

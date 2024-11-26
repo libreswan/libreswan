@@ -749,10 +749,7 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 	 */
 	struct crypt_mac iv = new_phase2_iv(ike, msgid,
 					    "IKE sending DPD", HERE);
-	if (!close_and_encrypt_v1_message(ike, &rbody,
-					  NULL/*don't-update.st_v1_new_iv*/,
-					  iv,
-					  NULL/*discard-IV*/)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 

@@ -468,10 +468,10 @@ static stf_status modecfg_resp(struct ike_sa *ike,
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	return STF_OK;
 }
@@ -634,10 +634,10 @@ stf_status xauth_send_request(struct ike_sa *ike)
 		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending xauth request", HERE);
 
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* Transmit */
 	if (!impair.send_no_xauth_r0) {
@@ -749,10 +749,10 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending mode cfg request", HERE);
 
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* Transmit */
 	record_and_send_v1_ike_msg(&ike->sa, &reply, "modecfg: req");
@@ -834,10 +834,10 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 					     "IKE sending xauth status", HERE);
 
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with main thread */
@@ -2228,10 +2228,10 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	return STF_OK;
 }
@@ -2493,10 +2493,10 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
 	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa,
-					  ike->sa.st_v1_new_iv,
-					  &ike->sa.st_v1_iv))
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_new_iv)) {
 		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	return STF_OK;
 }
