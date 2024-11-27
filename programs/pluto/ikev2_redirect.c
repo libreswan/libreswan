@@ -131,46 +131,6 @@ static shunk_t next_redirect_dest(struct redirect_dests *rl)
  * payload from the given string or ip.
  */
 
-static shunk_t build_redirect_notification_data_common(enum gw_identity_type gwit,
-						       shunk_t id,
-						       const shunk_t *nonce, /* optional */
-						       uint8_t *buf, size_t sizeof_buf,
-						       struct logger *logger)
-{
-	if (id.len > 0xFF) {
-		llog(RC_LOG, logger,
-		     "redirect destination longer than 255 octets; ignoring");
-		return empty_shunk;
-	}
-
-	struct ikev2_redirect_part gwi = {
-		/* note: struct has no holes */
-		.gw_identity_type = gwit,
-		.gw_identity_len = id.len
-	};
-
-	/*
-	 * Create a free-standing PBS in which to build notification data.
-	 */
-	struct pbs_out gwid_pbs = open_pbs_out("gwid_pbs",
-					       buf, sizeof_buf,
-					       logger);
-	if (!out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL)) {
-		return empty_shunk;
-	}
-	if (!pbs_out_hunk(&gwid_pbs, id, "redirect ID")) {
-		/* already logged */
-		return empty_shunk;
-	}
-	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
-	{
-		close_output_pbs(&gwid_pbs);
-		return pbs_out_all(&gwid_pbs);
-	}
-
-	return empty_shunk;
-}
-
 static bool emit_redirect_common(struct pbs_out *pbs,
 				 enum gw_identity_type gwit,
 				 shunk_t id,
@@ -206,30 +166,6 @@ static bool emit_redirect_common(struct pbs_out *pbs,
 	return true;
 }
 
-static shunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
-						   const shunk_t *nonce, /* optional */
-						   uint8_t *buf, size_t sizeof_buf,
-						   struct logger *logger)
-{
-	enum gw_identity_type gwit;
-
-	const struct ip_info *afi = address_type(dest_ip);
-	passert(afi != NULL);
-	switch (afi->af) {
-	case AF_INET:
-		gwit = GW_IPV4;
-		break;
-	case AF_INET6:
-		gwit = GW_IPV6;
-		break;
-	default:
-		bad_case(afi->af);
-	}
-
-	return build_redirect_notification_data_common(gwit, address_as_shunk(dest_ip), nonce,
-						       buf, sizeof_buf, logger);
-}
-
 static bool emit_redirect_ip(struct pbs_out *pbs,
 			     const ip_address *dest_ip,
 			     shunk_t nonce)
@@ -252,28 +188,6 @@ static bool emit_redirect_ip(struct pbs_out *pbs,
 	return emit_redirect_common(pbs, gwit, address_as_shunk(dest_ip), nonce);
 }
 
-/* function caller should ensure dest is non-empty string */
-static shunk_t build_redirect_notification_data_str(const shunk_t dest,
-						    const shunk_t *nonce, /* optional */
-						    uint8_t *buf, size_t sizeof_buf,
-						    struct logger *logger)
-{
-	ip_address ip_addr;
-	err_t ugh = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
-
-	if (ugh != NULL) {
-		/*
-		* ttoaddr_num failed: just ship dest_str as a FQDN
-		* ??? it may be a bogus string
-		*/
-		return build_redirect_notification_data_common(GW_FQDN, dest, nonce,
-							       buf, sizeof_buf, logger);
-	} else {
-		return build_redirect_notification_data_ip(&ip_addr, nonce,
-							   buf, sizeof_buf, logger);
-	}
-}
-
 static bool emit_redirect_destination(struct pbs_out *pbs,
 				      shunk_t dest,
 				      shunk_t nonce)
@@ -290,6 +204,28 @@ static bool emit_redirect_destination(struct pbs_out *pbs,
 	}
 
 	return emit_redirect_ip(pbs, &ip_addr, nonce);
+}
+
+struct emit_v2_response_context {
+	shunk_t Ni;
+	shunk_t dest;
+};
+
+static emit_v2_response_fn emit_v2N_REDIRECT_response; /* type check*/
+bool emit_v2N_REDIRECT_response(struct pbs_out *pbs,
+				struct emit_v2_response_context *context)
+{
+	struct pbs_out redirect;
+	if (!open_v2N_output_pbs(pbs, v2N_REDIRECT, &redirect)) {
+		return false;
+	}
+
+	if (!emit_redirect_destination(&redirect, context->dest, context->Ni)) {
+		return false;
+	}
+
+	close_output_pbs(&redirect);
+	return true;
 }
 
 bool redirect_global(struct msg_digest *md)
@@ -336,21 +272,19 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	shunk_t data = build_redirect_notification_data_str(dest, &Ni,
-							    buf, sizeof(buf),
-							    logger);
+	struct emit_v2_response_context context = {
+		.dest = dest,
+		.Ni = Ni,
+	};
 
-	if (data.len == 0) {
-		llog(RC_LOG, logger,
-			    "failed to construct REDIRECT notification data");
+	if (send_v2_response_from_md(md, "REDIRECT",
+				     emit_v2N_REDIRECT_response,
+				     &context)) {
+		llog(RC_LOG, logger, "failed to send REDIRECT response");
 		pstats_ikev2_redirect_failed++;
 		return true;
 	}
 
-
-	send_v2N_response_from_md(md, v2N_REDIRECT, &data,
-				  "redirecting initiator to "PRI_SHUNK, pri_shunk(dest));
 	pstats_ikev2_redirect_completed++;
 	return true;
 }
