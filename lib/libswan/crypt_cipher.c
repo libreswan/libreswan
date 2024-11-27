@@ -155,6 +155,12 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 			    size_t text_size, size_t tag_size,
 			    struct logger *logger)
 {
+	if (cipher_context->cipher->aead_tag_size != tag_size) {
+		llog(RC_LOG, logger, "tag size %zu is invalid for %s",
+		     tag_size, cipher_context->cipher->common.fqn);
+		return false;
+	}
+
 	if (!cipher_context->cipher->encrypt_ops->cipher_op_aead(cipher_context->cipher,
 								 cipher_context->op_context,
 								 cipher_context->op,
@@ -162,10 +168,13 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 								 cipher_context->symkey,
 								 HUNK_AS_SHUNK(cipher_context->salt),
 								 wire_iv, aad,
-								 text_and_tag, text_size, tag_size,
+								 text_and_tag,
+								 text_size,
+								 tag_size,
 								 logger)) {
 		return false;
 	}
+
 	verify_wire_iv(cipher_context, wire_iv, logger);
 	return true;
 }
