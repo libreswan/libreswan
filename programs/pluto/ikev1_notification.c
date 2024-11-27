@@ -191,19 +191,8 @@ static void send_v1_notification(struct logger *logger,
 		struct ike_sa *ike = isakmp_encrypt; /* use first class name */
 		/* calculate hash value and patch into Hash Payload */
 		fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, r_hdr_pbs.cur);
-
-		/*
-		 * XXX: this is useless; new_phase2_iv() expects
-		 * .st_v1_ph1_iv.
-		 */
-		struct crypt_mac saved_iv = ike->sa.st_v1_iv;
-		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
-			ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
-		}
 		struct crypt_mac iv = new_phase2_iv(ike, msgid,
 						    "IKE encrypting notification", HERE);
-		ike->sa.st_v1_iv = saved_iv;
-
 		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &iv));
 	} else {
 		close_output_pbs(&r_hdr_pbs);
