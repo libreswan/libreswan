@@ -129,6 +129,12 @@ chunk_t chunk_from_symkey_bytes(const char *prefix, PK11SymKey *symkey,
 				size_t chunk_start, size_t sizeof_chunk,
 				struct logger *logger, where_t where);
 
+PK11SymKey *cipher_symkey(const char *name,
+			  const struct encrypt_desc *encrypt,
+			  unsigned size,
+			  struct logger *logger,
+			  where_t where);
+
 /*
  * Create a key suitable for ALG.
  *
@@ -147,6 +153,7 @@ PK11SymKey *encrypt_key_from_bytes(const char *name,
 /* XXX: can't pass HERE aka '{,}' to macros */
 #define encrypt_key_from_hunk(NAME, ENCRYPT, HUNK, LOGGER)		\
 	encrypt_key_from_bytes(NAME, ENCRYPT, (HUNK).ptr, (HUNK).len, HERE, LOGGER)
+
 
 PK11SymKey *prf_key_from_bytes(const char *name,
 			       const struct prf_desc *prf,

@@ -123,6 +123,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
+		.key_gen = CKM_AES_KEY_GEN,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.pad_to_blocksize = false,
@@ -163,6 +164,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
+		.key_gen = CKM_AES_KEY_GEN,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
@@ -204,6 +206,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
+		.key_gen = CKM_AES_KEY_GEN,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,

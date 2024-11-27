@@ -425,6 +425,10 @@ struct encrypt_desc {
 		 * has no meaning in this context so it is safe.
 		 */
 		CK_MECHANISM_TYPE mechanism;
+		/*
+		 * When creating a key for the algorithm, its !?!
+		 */
+		CK_MECHANISM_TYPE key_gen;
 	} nss;
 
 	/*

@@ -616,3 +616,29 @@ PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs, struct logger *logger
 				  CKM_CONCATENATE_BASE_AND_DATA,
 				  logger);
 }
+
+PK11SymKey *cipher_symkey(const char *name,
+			  const struct encrypt_desc *cipher,
+			  unsigned bits,
+			  struct logger *logger,
+			  where_t where)
+{
+	bool valid_key_length = false;
+	FOR_EACH_ELEMENT(key, cipher->key_bit_lengths) {
+		if (*key == bits) {
+			valid_key_length = true;
+			break;
+		}
+	}
+	PASSERT(logger, valid_key_length);
+	PASSERT(logger, cipher->nss.key_gen != 0);
+
+	PK11SlotInfo *slot = PK11_GetBestSlot(cipher->nss.key_gen,
+					      lsw_nss_get_password_context(logger));
+	PK11SymKey *symkey = PK11_KeyGen(slot, cipher->nss.key_gen,
+					 /*param*/NULL, BYTES_FOR_BITS(bits),
+					 /*wincx*/NULL);
+
+	ldbg_alloc(logger, name, symkey, where);
+	return symkey;
+}

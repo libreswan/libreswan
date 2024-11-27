@@ -947,10 +947,10 @@ V2_EXCHANGE(IKE_SESSION_RESUME, "initiate IKE SESSION RESUME",
 
 void init_ike_session_resume(struct logger *logger)
 {
-	PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
-					      lsw_nss_get_password_context(logger));
-	PK11SymKey *symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN, NULL, 128/8, NULL);
-	dbg_alloc("symkey", symkey, HERE);
+	PK11SymKey *symkey = cipher_symkey("ike-session-resume",
+					   &ike_alg_encrypt_aes_gcm_16,
+					   128, logger, HERE);
+
 	uint32_t salt = get_rnd_uintmax();
 	encrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
 					ENCRYPT,
