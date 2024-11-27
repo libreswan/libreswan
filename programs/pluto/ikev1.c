@@ -610,8 +610,17 @@ void process_v1_packet(struct msg_digest *md)
 			}
 		}
 
+		/*
+		 * Depending on the exchange, this may be copying an
+		 * empty value.  Should the code also cross-check with
+		 * ike->sa.hidden_variables.st_skeyid_calculated or an
+		 * IS_*() macro?
+		 */
 		passert(ike != NULL);
+		PEXPECT(ike->sa.logger, (ike->sa.hidden_variables.st_skeyid_calculated ==
+					 (ike->sa.st_v1_ph1_iv.len > 0)));
 		from_state = ike->sa.st_state->kind;
+		md->v1_decrypt_iv = ike->sa.st_v1_ph1_iv;
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
