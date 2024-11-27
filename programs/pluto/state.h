@@ -383,7 +383,7 @@ struct state {
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
-	chunk_t st_active_redirect_gw;		/* needed for sending of REDIRECT in informational */
+	char *st_active_redirect_gw;		/* needed for sending of REDIRECT in informational */
 
 	/*
 	 * IKEv2 intermediate exchange.

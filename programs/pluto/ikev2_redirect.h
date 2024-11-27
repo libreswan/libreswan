@@ -59,9 +59,7 @@ bool emit_v2N_REDIRECTED_FROM(const ip_address *old_gateway,
  * @param destination string of IPv4/IPv6/FQDN address.
  * @param pbs output stream
  */
-extern bool emit_redirect_notification(
-		const shunk_t destination,
-		struct pbs_out *pbs);
+bool emit_v2N_REDIRECT(const char *destination, struct pbs_out *pbs);
 
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *status);
 
