@@ -295,9 +295,7 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 		crypt_hash_init("Phase 2 IV", h, logger);
 
 	/* the established phase1 IV */
-#if 0
-	PEXPECT_WHERE(logger, ike->sa.st_v1_ph1_iv.len > 0, where);
-#endif
+	PASSERT_WHERE(logger, where, ike->sa.st_v1_ph1_iv.len > 0);
 	crypt_hash_digest_hunk(ctx, "PH1_IV", ike->sa.st_v1_ph1_iv);
 
 	/* plus the MSGID in network order */
