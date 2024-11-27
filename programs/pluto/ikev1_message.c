@@ -280,17 +280,16 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 			       const char *why, where_t where)
 {
 	struct logger *logger = ike->sa.logger;
-	const struct hash_desc *h = ike->sa.st_oakley.ta_prf->hasher;
-	passert(h != NULL);
 
 	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "last Phase 1 IV:");
-		LDBG_hunk(logger, ike->sa.st_v1_ph1_iv);
-		LDBG_log(logger, "current Phase 1 IV:");
-		LDBG_hunk(logger, ike->sa.st_v1_iv);
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
+		jam_string(buf, "Phase 1 IV: ");
+		jam_hex_hunk(buf, ike->sa.st_v1_ph1_iv);
+		jam(buf, " msgid: %"PRIu32, msgid);
 	}
 
+	const struct hash_desc *h = ike->sa.st_oakley.ta_prf->hasher;
+	PASSERT_WHERE(logger, where, h != NULL);
 	struct crypt_hash *ctx =
 		crypt_hash_init("Phase 2 IV", h, logger);
 
@@ -299,8 +298,8 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	crypt_hash_digest_hunk(ctx, "PH1_IV", ike->sa.st_v1_ph1_iv);
 
 	/* plus the MSGID in network order */
-	passert(msgid != 0); /* because phase2 (or phase15) */
-	passert(sizeof(msgid_t) == sizeof(uint32_t));
+	PASSERT_WHERE(logger, where, sizeof(msgid_t) == sizeof(uint32_t));
+	PASSERT_WHERE(logger, where, msgid > 0); /* i.e., not Phase 1! */
 	msgid_t raw_msgid = htonl(msgid);
 	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
 
@@ -309,7 +308,7 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 
 	/* truncate it when needed */
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
-	PASSERT(ike->sa.logger, iv.len >= e->enc_blocksize);
+	PASSERT_WHERE(ike->sa.logger, where, iv.len >= e->enc_blocksize);
 	iv.len = e->enc_blocksize;   /* truncate */
 
 	return iv;
