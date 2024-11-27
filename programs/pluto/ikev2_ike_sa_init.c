@@ -477,9 +477,9 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
 	if (address_is_specified(c->redirect.ip)) {
-		if (!emit_redirected_from_notification(&c->redirect.old_gw_address,
-						       request.pbs))
+		if (!emit_v2N_REDIRECTED_FROM(&c->redirect.old_gw_address, request.pbs)) {
 			return false;
+		}
 	} else if (c->config->redirect.accept) {
 		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, request.pbs))
 			return false;

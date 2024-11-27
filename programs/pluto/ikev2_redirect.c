@@ -171,6 +171,41 @@ static shunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	return empty_shunk;
 }
 
+static bool emit_redirect_common(struct pbs_out *pbs,
+				 enum gw_identity_type gwit,
+				 shunk_t id,
+				 shunk_t nonce)
+{
+	if (id.len > 0xFF) {
+		llog(RC_LOG, pbs->logger,
+		     "redirect destination longer than 255 octets; ignoring");
+		return false;
+	}
+
+	struct ikev2_redirect_part gwi = {
+		/* note: struct has no holes */
+		.gw_identity_type = gwit,
+		.gw_identity_len = id.len
+	};
+
+	if (!pbs_out_struct(pbs, &ikev2_redirect_desc,
+			    &gwi, sizeof(gwi), /*inner-pbs*/NULL)) {
+		return false;
+	}
+
+	if (!pbs_out_hunk(pbs, id, "redirect ID")) {
+		/* already logged */
+		return false;
+	}
+
+	if (nonce.len > 0 &&
+	    !pbs_out_hunk(pbs, nonce, "nonce in redirect notify")) {
+		return false;
+	}
+
+	return true;
+}
+
 static shunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
 						   const shunk_t *nonce, /* optional */
 						   uint8_t *buf, size_t sizeof_buf,
@@ -193,6 +228,28 @@ static shunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
 
 	return build_redirect_notification_data_common(gwit, address_as_shunk(dest_ip), nonce,
 						       buf, sizeof_buf, logger);
+}
+
+static bool emit_redirect_ip(struct pbs_out *pbs,
+			     const ip_address *dest_ip,
+			     shunk_t nonce)
+{
+	enum gw_identity_type gwit;
+
+	const struct ip_info *afi = address_type(dest_ip);
+	passert(afi != NULL);
+	switch (afi->af) {
+	case AF_INET:
+		gwit = GW_IPV4;
+		break;
+	case AF_INET6:
+		gwit = GW_IPV6;
+		break;
+	default:
+		bad_case(afi->af);
+	}
+
+	return emit_redirect_common(pbs, gwit, address_as_shunk(dest_ip), nonce);
 }
 
 /* function caller should ensure dest is non-empty string */
@@ -292,14 +349,19 @@ bool emit_redirect_notification(const shunk_t dest_str, struct pbs_out *outs)
 	return data.len > 0 && emit_v2N_hunk(v2N_REDIRECT, data, outs);
 }
 
-bool emit_redirected_from_notification(const ip_address *ip_addr, struct pbs_out *outs)
+bool emit_v2N_REDIRECTED_FROM(const ip_address *old_gateway, struct pbs_out *outs)
 {
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	shunk_t data = build_redirect_notification_data_ip(ip_addr, NULL,
-							   buf, sizeof(buf),
-							   outs->logger);
+	struct pbs_out redirected_from;
+	if (!open_v2N_output_pbs(outs, v2N_REDIRECTED_FROM, &redirected_from)) {
+		return false;
+	}
 
-	return data.len > 0 && emit_v2N_hunk(v2N_REDIRECTED_FROM, data, outs);
+	if (!emit_redirect_ip(&redirected_from, old_gateway, empty_shunk)) {
+		return false;
+	}
+
+	close_output_pbs(&redirected_from);
+	return true;
 }
 
 /*
