@@ -63,12 +63,12 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 	},
 	{
 		.description = "two blocks with associated data",
-		.key = "0x006c458100fc5f4d62949d2c833b82d1",
-		.salted_iv = "0xa4e9c4bc5725a21ff42c82b2",
-		.ciphertext = "0xf39b4db3542d8542fb73fd2d66be568f26d7f814b3f87d1eceac3dd09a8d697e",
-		.aad = "0x2efb14fb3657cdd6b9a8ff1a5f5a39b9",
-		.tag = "0x39f045cb23b698c925db134d56c5",
-		.plaintext = "0xf381d3bfbee0a879f7a4e17b623278cedd6978053dd313530a18f1a836100950",
+		.key = "0x95bcde70c094f04e3dd8259cafd88ce8",
+		.salted_iv = "0x12cf097ad22380432ff40a5c",
+		.ciphertext = "0x8a023ba477f5b809bddcda8f55e09064d6d88aaec99c1e141212ea5b08503660",
+		.aad = "0xc783a0cca10a8d9fb8d27d69659463f2",
+		.tag = "0x562f500dae635d60a769b466e15acd1e",
+		.plaintext = "0x32f51e837a9748838925066d69e87180f34a6437e6b396e5643b34cb2ee4f7b1",
 	},
 	{
 		.key = NULL,
