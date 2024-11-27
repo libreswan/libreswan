@@ -49,4 +49,7 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs);
 bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 				  const struct payload_digest *pd);
 
+void init_ike_session_resume(struct logger *logger);
+void shutdown_ike_session_resume(struct logger *logger);
+
 #endif

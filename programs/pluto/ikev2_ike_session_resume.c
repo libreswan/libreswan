@@ -14,6 +14,8 @@
  * for more details.
  */
 
+#include "ike_alg_encrypt.h"
+
 #include "defs.h"
 #include "ikev2_ike_session_resume.h"
 #include "state.h"
@@ -53,6 +55,7 @@
 #include "crypt_cipher.h"
 #include "instantiate.h"
 #include "ikev2_notification.h"
+#include "rnd.h"
 
 static bool skeyseed_v2_sr(struct ike_sa *ike,
 			   const ike_spis_t *new_spis,
@@ -72,6 +75,9 @@ static ke_and_nonce_cb initiate_v2_IKE_SESSION_RESUME_request_continue;	/* type 
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT;
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_request;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response; /* type assertion */
+
+struct cipher_context *encrypt;
+struct cipher_context *decrypt;
 
 /*
  * Ticket that will be serialized and sent to client.
@@ -102,9 +108,14 @@ static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response; /* type
  */
 
 struct ticket {
-	struct protected {
+	struct {
 		unsigned magic; /* use whack_magic() */
-		uint8_t iv[16];
+	} aad;
+	struct {
+		/* plus salt+counter */
+		uint8_t bytes[8];
+	} iv;
+	struct {
 		struct encrypted {
 
 			so_serial_t sr_serialco;
@@ -128,8 +139,8 @@ struct ticket {
 
 			enum keyword_auth sr_auth_method;
 		} state;
-	} protected;
-	uint8_t mac[16];
+		uint8_t tag[16];
+	} secured;
 };
 
 struct session {
@@ -191,35 +202,47 @@ void jam_session(struct jambuf *buf, const struct session *session)
 	}
 }
 
-static struct ticket ike_to_ticket(const struct ike_sa *ike)
+static bool ike_to_ticket(const struct ike_sa *ike,
+			  struct ticket *ticket)
 {
-	struct ticket ticket = {
-		.protected.magic = whack_magic(),
-	};
+	zero(ticket);
 
-	ticket.protected.state.sr_serialco = ike->sa.st_connection->serialno;
-	str_id(&ike->sa.st_connection->local->host.id, &ticket.protected.state.sr_peer_id);
+	ticket->aad.magic = whack_magic(),
+
+	ticket->secured.state.sr_serialco = ike->sa.st_connection->serialno;
+	str_id(&ike->sa.st_connection->local->host.id, &ticket->secured.state.sr_peer_id);
 
 	/* old skeyseed */
 	chunk_t sk = chunk_from_symkey("sk_d_old", ike->sa.st_skey_d_nss, ike->sa.logger);
-	PASSERT(ike->sa.logger, sk.len <= elemsof(ticket.protected.state.sk_d_old.ptr/*array*/));
-	memcpy(ticket.protected.state.sk_d_old.ptr, sk.ptr, sk.len);
-	ticket.protected.state.sk_d_old.len = sk.len;
+	PASSERT(ike->sa.logger, sk.len <= elemsof(ticket->secured.state.sk_d_old.ptr/*array*/));
+	memcpy(ticket->secured.state.sk_d_old.ptr, sk.ptr, sk.len);
+	ticket->secured.state.sk_d_old.len = sk.len;
 	free_chunk_content(&sk);
 
 	/*Algorithm description*/
 #define ID(ALG) ((ALG) != NULL ? (ALG)->common.ikev2_alg_id : 0);
-	ticket.protected.state.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
-	ticket.protected.state.sr_prf = ID(ike->sa.st_oakley.ta_prf);
-	ticket.protected.state.sr_integ = ID(ike->sa.st_oakley.ta_integ);
-	ticket.protected.state.sr_dh = ID(ike->sa.st_oakley.ta_dh);
+	ticket->secured.state.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
+	ticket->secured.state.sr_prf = ID(ike->sa.st_oakley.ta_prf);
+	ticket->secured.state.sr_integ = ID(ike->sa.st_oakley.ta_integ);
+	ticket->secured.state.sr_dh = ID(ike->sa.st_oakley.ta_dh);
 #undef ID
 
-	ticket.protected.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
+	ticket->secured.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
 
-	ticket.protected.state.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
+	ticket->secured.state.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
 
-	return ticket;
+	if (!cipher_context_op_aead(encrypt,
+				    THING_AS_CHUNK(ticket->iv),
+				    THING_AS_SHUNK(ticket->aad),
+				    THING_AS_CHUNK(ticket->secured),
+				    /*text-size*/sizeof(ticket->secured.state),
+				    /*tag-size*/sizeof(ticket->secured.tag),
+				    ike->sa.logger)) {
+		llog(RC_LOG, ike->sa.logger, "crypto failed");
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -248,7 +271,11 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 		.sr_lifetime = deltasecs(lifetime),
 	};
 
-	struct ticket ticket = ike_to_ticket(ike);
+	struct ticket ticket;
+	if (!ike_to_ticket(ike, &ticket)) {
+		llog(RC_LOG, ike->sa.logger, "encryption failed");
+		return false;
+	}
 
 	struct pbs_out resume_pbs;
 	if (!open_v2N_output_pbs(pbs, v2N_TICKET_LT_OPAQUE, &resume_pbs)) {
@@ -300,17 +327,28 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 
 	/* basic sanity check */
 
-	if (ticket.protected.magic != whack_magic()) {
+	if (ticket.aad.magic != whack_magic()) {
 		llog(RC_LOG, ike->sa.logger, "invalid ticket: magic number is wrong");
 		return false;
 	}
 
 	/* decrypt!?! */
 
-	if (ticket.protected.state.sk_d_old.len == 0 ||
-	    ticket.protected.state.sk_d_old.len > sizeof(ticket.protected.state.sk_d_old.ptr/*array*/)) {
+	if (!cipher_context_op_aead(decrypt,
+				    THING_AS_CHUNK(ticket.iv),
+				    THING_AS_SHUNK(ticket.aad),
+				    THING_AS_CHUNK(ticket.secured),
+				    /*text-size*/sizeof(ticket.secured.state),
+				    /*tag-size*/sizeof(ticket.secured.tag),
+				    ike->sa.logger)) {
+		llog(RC_LOG, ike->sa.logger, "crypto failed");
+		return false;
+	}
+
+	if (ticket.secured.state.sk_d_old.len == 0 ||
+	    ticket.secured.state.sk_d_old.len > sizeof(ticket.secured.state.sk_d_old.ptr/*array*/)) {
 		llog(RC_LOG, ike->sa.logger, "invalid key length %zu",
-		     ticket.protected.state.sk_d_old.len);
+		     ticket.secured.state.sk_d_old.len);
 		return false;
 	}
 
@@ -318,7 +356,7 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 	PASSERT(ike->sa.logger, ike->sa.st_skey_d_nss == NULL);
 
 	ike->sa.st_skey_d_nss = symkey_from_hunk("sk_d_old",
-						 ticket.protected.state.sk_d_old,
+						 ticket.secured.state.sk_d_old,
 						 ike->sa.logger);
 	if (ike->sa.st_skey_d_nss == NULL) {
 		llog(RC_LOG, ike->sa.logger, "failed to re-animate peer's key");
@@ -326,9 +364,11 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 	}
 
 	set_ikev2_accepted_proposal(ike,
-				    ticket.protected.state.sr_encr, ticket.protected.state.sr_prf,
-				    ticket.protected.state.sr_integ, ticket.protected.state.sr_dh,
-				    ticket.protected.state.sr_enc_keylen);
+				    ticket.secured.state.sr_encr,
+				    ticket.secured.state.sr_prf,
+				    ticket.secured.state.sr_integ,
+				    ticket.secured.state.sr_dh,
+				    ticket.secured.state.sr_enc_keylen);
 
 	return true;
 }
@@ -904,3 +944,29 @@ V2_STATE(IKE_SESSION_RESUME_R,
 V2_EXCHANGE(IKE_SESSION_RESUME, "initiate IKE SESSION RESUME",
 	    ", preparing IKE_AUTH request",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
+
+void init_ike_session_resume(struct logger *logger)
+{
+	PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
+					      lsw_nss_get_password_context(logger));
+	PK11SymKey *symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN, NULL, 128/8, NULL);
+	uint32_t salt = get_rnd_uintmax();
+	encrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
+					ENCRYPT,
+					FILL_WIRE_IV,
+					symkey,
+					THING_AS_SHUNK(salt),
+					logger);
+	decrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
+					DECRYPT,
+					USE_WIRE_IV,
+					symkey,
+					THING_AS_SHUNK(salt),
+					logger);
+}
+
+void shutdown_ike_session_resume(struct logger *logger)
+{
+	cipher_context_destroy(&encrypt, logger);
+	cipher_context_destroy(&decrypt, logger);
+}

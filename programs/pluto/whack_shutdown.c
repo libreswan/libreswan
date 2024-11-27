@@ -59,6 +59,7 @@
 #include "impair_message.h"	/* for free_impair_message() */
 #include "state_db.h"		/* for check_state_db() */
 #include "connection_db.h"	/* for check_connection_db() */
+#include "ikev2_ike_session_resume.h"	/* for shutdown_ike_session_resume() */
 #include "spd_db.h"	/* for check_spd_db() */
 #include "server_fork.h"	/* for check_server_fork() */
 #include "pending.h"
@@ -216,6 +217,7 @@ void exit_epilogue(void)
 
 	shutdown_ifaces(logger);	/* free interface list from memory */
 	shutdown_kernel(logger);
+	shutdown_ike_session_resume(logger); /* before NSS! */
 	shutdown_nss();
 	delete_lock();	/* delete any lock files */
 #ifdef USE_DNSSEC
