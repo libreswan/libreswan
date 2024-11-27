@@ -350,7 +350,7 @@ struct config {
 		bool ipcomp;
 
 		bool iptfs;
-		bool iptfs_dont_frag;
+		bool iptfs_fragmentation;
 		uintmax_t iptfs_pkt_size;
 		uintmax_t iptfs_max_qsize;
 		uintmax_t iptfs_drop_time;

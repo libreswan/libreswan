@@ -2461,7 +2461,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 				    kernel_ops->interface_name, err);
 		}
 		config->child_sa.iptfs = true;
-		config->child_sa.iptfs_dont_frag = extract_yn("", "iptfs-dont-fragment", wm->iptfs_dont_frag, /*default*/false, wm, c->logger);
 		config->child_sa.iptfs_pkt_size = wm->iptfs_pkt_size;
 		config->child_sa.iptfs_max_qsize = wm->iptfs_max_qsize;
 		config->child_sa.iptfs_drop_time = wm->iptfs_drop_time;
@@ -2471,6 +2470,16 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		config->child_sa.iptfs_reord_win = wm->iptfs_reord_win;
 	}
+
+	/*
+	 * Extract iptfs parameters regardless; so that the default is
+	 * consistent and toggling iptfs= doesn't seem to change the
+	 * field.  Could warn about this but meh.
+	 */
+	config->child_sa.iptfs_fragmentation = extract_yn("", "iptfs-fragmentation",
+							  wm->iptfs_fragmentation,
+							  /*default*/true, wm, c->logger);
+
 
 	/*
 	 * RFC 5685 - IKEv2 Redirect mechanism.

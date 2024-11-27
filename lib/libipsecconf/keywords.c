@@ -459,7 +459,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "send-no-esp-tfc",  kv_conn,  kt_bool,  KNCF_NO_ESP_TFC, NULL, NULL, },
 
   { "iptfs",  kv_conn,  kt_sparse_name,  KNCF_IPTFS, &yn_option_names, NULL, },
-  { "iptfs-dont-frag",  kv_conn,  kt_sparse_name,  KNCF_IPTFS_DONT_FRAG, &yn_option_names, NULL, },
+  { "iptfs-fragmentation",  kv_conn,  kt_sparse_name,  KNCF_IPTFS_FRAGMENTATION, &yn_option_names, NULL, },
   { "iptfs-packet-size",  kv_conn,  kt_binary,  KNCF_IPTFS_PKT_SIZE, NULL, NULL, },
   { "iptfs-max-queue-size",  kv_conn,  kt_binary,  KNCF_IPTFS_MAX_QUEUE, NULL, NULL, },
   { "iptfs-init-delay",  kv_conn,  kt_binary,  KNCF_IPTFS_INIT_DELAY, NULL, NULL, },
