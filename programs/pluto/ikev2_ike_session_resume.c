@@ -950,6 +950,7 @@ void init_ike_session_resume(struct logger *logger)
 	PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
 					      lsw_nss_get_password_context(logger));
 	PK11SymKey *symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN, NULL, 128/8, NULL);
+	dbg_alloc("symkey", symkey, HERE);
 	uint32_t salt = get_rnd_uintmax();
 	encrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
 					ENCRYPT,
@@ -963,6 +964,7 @@ void init_ike_session_resume(struct logger *logger)
 					symkey,
 					THING_AS_SHUNK(salt),
 					logger);
+	symkey_delref(logger, "symkey", &symkey);
 }
 
 void shutdown_ike_session_resume(struct logger *logger)
