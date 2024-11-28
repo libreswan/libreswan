@@ -870,7 +870,11 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 		/*
 		 * This will call complete_v1_state_transition() when
 		 * needed.
+		 *
+		 * Now that decryption has been completed, update the
+		 * IV needed to decrypt.
 		 */
+		md->v1_decrypt_iv = ike->sa.st_v1_ph1_iv;
 		process_v1_packet_tail(ike, NULL/*no-child*/, md);
 		md_delref(&md);
 	}
