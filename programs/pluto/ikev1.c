@@ -1480,28 +1480,10 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 */
 		md->raw_packet = clone_pbs_in_all(&md->packet_pbs, "raw packet");
 
-		/*
-		 * Determine the IV to use.
-		 *
-		 * Here ST could be ike or child!  Which means it is
-		 * scribbling on the .new_iv for one of those.
-		 */
-
-		if (md->v1_decrypt_iv.len == 0) {
-			if (st->st_v1_iv.len == 0) {
-				md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
-								  "something decrypting message, .st_v1_iv.len==0", HERE);
-			} else {
-				/* use old IV */
-				pdbg(st->logger, "phase2_iv: something chaining decrypt IV using .st_v1_iv");
-				md->v1_decrypt_iv = st->st_v1_iv;
-			}
-		}
-
 #if 0
 		pexpect(md->v1_decrypt_iv.len == cipher->enc_blocksize);
 #endif
-		passert(md->v1_decrypt_iv.len >= cipher->enc_blocksize);
+		PASSERT(ike->sa.logger, md->v1_decrypt_iv.len >= cipher->enc_blocksize);
 		md->v1_decrypt_iv.len = cipher->enc_blocksize;
 
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
