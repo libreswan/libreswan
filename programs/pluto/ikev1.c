@@ -917,16 +917,22 @@ void process_v1_packet(struct msg_digest *md)
 				change_v1_state(&ike->sa, STATE_XAUTH_R0);
 			}
 
-			/* otherwise, this is fine, we continue in the
-			 * state we are in */
+			/*
+			 * Otherwise, this is fine, we continue in the
+			 * state we are in.
+			 */
 			passert(ike != NULL);
 			from_state = ike->sa.st_state->kind;
+			if (!PEXPECT(md->logger, ike->sa.st_v1_iv.len > 0)) {
+				return;
+			}
+			md->v1_decrypt_iv = ike->sa.st_v1_iv;
 			break;
 		}
 
 		/*
-		 * No appropriate Mode Config state.  See if we have a
-		 * Main Mode state.
+		 * No appropriate in-progress Mode Config state.  See
+		 * if we have a Main Mode state.
 		 *
 		 * ??? what if this is a duplicate of another message?
 		 */
