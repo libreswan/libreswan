@@ -48,6 +48,7 @@
 #include "log_limiter.h"
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_ike_session_resume.h"
+#include "ikev2_notification.h"
 
 static void process_v2_UNSECURED_request(struct msg_digest *md)
 {

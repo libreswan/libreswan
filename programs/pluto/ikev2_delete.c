@@ -23,10 +23,12 @@
 #include "log.h"
 #include "demux.h"
 #include "connections.h"
+#include "ikev2_notification.h"
 #include "ikev2_informational.h"
 
 static bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike,
 				      struct msg_digest *md, struct pbs_out *pbs);
+
 static emit_v2_INFORMATIONAL_request_payload_fn emit_v2DELETE;
 static ikev2_state_transition_fn initiate_v2_INFORMATIONAL_v2DELETE_request;
 static ikev2_state_transition_fn process_v2_INFORMATIONAL_v2DELETE_request;

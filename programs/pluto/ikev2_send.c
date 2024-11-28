@@ -131,180 +131,13 @@ bool emit_v2UNKNOWN(const char *victim,
 	return true;
 }
 
-/*
- *
- ***************************************************************
- *                       NOTIFICATION_OUT Complete packet  *****
- ***************************************************************
- *
- */
-
-/*
- * This short/sharp notification is always tied to the IKE SA.
- *
- * For a CREATE_CHILD_SA, things have presumably screwed up so badly
- * that the larval child state is about to be deleted.
- */
-
-static bool emit_v2N_spi_response(struct v2_message *response,
-				  struct ike_sa *ike,
-				  struct msg_digest *md,
-				  enum ikev2_sec_proto_id protoid,
-				  ipsec_spi_t *spi,
-				  v2_notification_t ntype,
-				  const chunk_t *ndata /* optional */)
-{
-	enum_buf notify_name;
-	enum_name_short(&v2_notification_names, ntype, &notify_name);
-
-	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
-	enum_buf exchange_name;
-	enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name);
-
-	/*
-	 * XXX: this will prefix with cur_state.  For this code path
-	 * is it ever different to the IKE SA?
-	 */
-	endpoint_buf b;
-	llog(RC_LOG, response->logger,
-	     "responding to %s message (ID %u) from %s with %s notification %s",
-	     exchange_name.buf,
-	     md->hdr.isa_msgid,
-	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
-	     response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
-	     notify_name.buf);
-
-	/* actual data */
-
-	/*
-	 * 3.10.  Notify Payload: Of the notifications defined in this
-	 * document, the SPI is included only with INVALID_SELECTORS,
-	 * REKEY_SA, and CHILD_SA_NOT_FOUND.
-	*/
-	switch (ntype) {
-	case v2N_INVALID_SELECTORS:
-		/*
-		 * MAY be sent in an IKE INFORMATIONAL exchange when a
-		 * node receives an ESP or AH packet whose selectors
-		 * do not match those of the SA on which it was
-		 * delivered (and that caused the packet to be
-		 * dropped).  The Notification Data contains the start
-		 * of the offending packet (as in ICMP messages) and
-		 * the SPI field of the notification is set to match
-		 * the SPI of the Child SA.
-		*/
-		llog_pexpect(response->logger, HERE,
-			     "trying to send unimplemented %s notification",
-			     notify_name.buf);
-		return false;
-	case v2N_REKEY_SA:
-		llog_pexpect(response->logger, HERE,
-			     "%s notification cannot be part of a response",
-			     notify_name.buf);
-		return false;
-	default:
-		break;
-	}
-
-	struct pbs_out n_pbs;
-	if (!open_v2N_SA_output_pbs(response->pbs, ntype, protoid, spi, &n_pbs)) {
-		return false;
-	}
-
-	if (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data")) {
-		return false;
-	}
-
-	close_output_pbs(&n_pbs);
-	return true;
-}
-
-void record_v2N_spi_response(struct logger *logger,
-			     struct ike_sa *ike,
-			     struct msg_digest *md,
-			     enum ikev2_sec_proto_id protoid,
-			     ipsec_spi_t *spi,
-			     v2_notification_t ntype,
-			     const chunk_t *ndata /* optional */,
-			     enum payload_security security)
-{
-	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	struct v2_message response;
-
-	/*
-	 * Never send a response to a response.
-	 */
-	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
-		/* always responding */
-		return;
-	}
-
-	if (!open_v2_message("v2N response", ike, logger,
-			     md/*response*/, md->hdr.isa_xchg/*same exchange type*/,
-			     buf, sizeof(buf), &response, security)) {
-		return;
-	}
-
-	if (!emit_v2N_spi_response(&response, ike, md,
-				   protoid, spi, ntype, ndata)) {
-		return;
-	}
-
-	if (!close_and_record_v2_message(&response)) {
-		return;
-	}
-	pstat(ikev2_sent_notifies_e, ntype);
-}
-
-void record_v2N_response(struct logger *logger,
-			 struct ike_sa *ike,
-			 struct msg_digest *md,
-			 v2_notification_t ntype,
-			 const chunk_t *ndata /* optional */,
-			 enum payload_security security)
-{
-	record_v2N_spi_response(logger, ike, md,
-				PROTO_v2_RESERVED, NULL/*SPI*/,
-				ntype, ndata, security);
-}
-
-/*
- * This is called with a pretty messed up MD so trust nothing.  For
- * instance when the version number is wrong.
- */
-void send_v2N_response_from_md(struct msg_digest *md,
-			       v2_notification_t ntype,
-			       const shunk_t *ndata,
-			       const char *details, ...)
+bool send_v2_response_from_md(struct msg_digest *md, const char *what,
+			      emit_v2_response_fn *emit_v2_response,
+			      struct emit_v2_response_context *context)
 {
 	passert(md != NULL); /* always a response */
 
-	enum_buf notify_name;
-	PASSERT(md->logger, enum_name_short(&v2_notification_names, ntype, &notify_name));
-
-	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
-	enum_buf exchange_name;
-	if (!enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
-		/* when responding to crud, name may not be known */
-		exchange_name.buf = "UNKNOWN";
-		dbg("message request contains unknown exchange type %d",
-		    exchange_type);
-	}
-
-	lset_t rc_flags = log_limiter_rc_flags(md->logger, UNSECURED_LOG_LIMITER);
-	if (rc_flags != LEMPTY) {
-		LLOG_JAMBUF(rc_flags, md->logger, buf) {
-			jam_string(buf, "responding to ");
-			jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
-			jam(buf, " request with Message ID %u", md->hdr.isa_msgid);
-			jam(buf, " with unencrypted notification %s, ",
-			    notify_name.buf);
-			va_list ap;
-			va_start(ap, details);
-			jam_va_list(buf, details, ap);
-			va_end(ap);
-		}
-	}
+	enum ikev2_exchange exchange = md->hdr.isa_xchg;
 
 	/*
 	 * Normally an unencrypted response is only valid for
@@ -313,35 +146,40 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 * respond to other crud using the initiator's exchange type
 	 * and Message ID and an unencrypted response.
 	 */
-	switch (exchange_type) {
+	switch (exchange) {
 	case ISAKMP_v2_IKE_SA_INIT:
 	case ISAKMP_v2_IKE_SESSION_RESUME:
 	case ISAKMP_v2_IKE_AUTH:
 		break;
 	default:
-		dbg("normally exchange type %s is encrypted", exchange_name.buf);
+	{
+		name_buf eb;
+		ldbg(md->logger, "normally exchange type %s is encrypted",
+		     str_enum_short(&ikev2_exchange_names, exchange, &eb));
+		break;
+	}
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	struct v2_message response;
-	if (!open_v2_message("unencrypted notification response",
-			     NULL/*no-IKE*/, md->logger, md/*response*/,
-			     exchange_type,
-			     buf, sizeof(buf),
+	if (!open_v2_message(what, NULL/*no-IKE*/, md->logger, md/*response*/,
+			     exchange, buf, sizeof(buf),
 			     &response, UNENCRYPTED_PAYLOAD)) {
+		name_buf eb;
 		llog_pexpect(md->logger, HERE,
-			     "error building header for unencrypted %s %s notification with message ID %u",
-			     exchange_name.buf, notify_name.buf, md->hdr.isa_msgid);
-		return;
+			     "error emitting header of unencrypted %s %s response with Message ID %u",
+			     str_enum_short(&ikev2_exchange_names, exchange, &eb),
+			     what, md->hdr.isa_msgid);
+		return false;
 	}
 
-	/* build and add v2N payload to the packet */
-	shunk_t nhunk = ndata == NULL ? empty_shunk : *ndata;
-	if (!emit_v2N_hunk(ntype, nhunk, response.pbs)) {
+	if (!emit_v2_response(response.pbs, context)) {
+		name_buf eb;
 		llog_pexpect(md->logger, HERE,
-			     "error building unencrypted %s %s notification with message ID %u",
-			     exchange_name.buf, notify_name.buf, md->hdr.isa_msgid);
-		return;
+			     "error emitting body of unencrypted %s %s response with message ID %u",
+			     str_enum_short(&ikev2_exchange_names, exchange, &eb),
+			     what, md->hdr.isa_msgid);
+		return false;
 	}
 
 	close_v2_message(&response);
@@ -350,9 +188,8 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	 * This notification is fire-and-forget (not a proper
 	 * exchange, one with retrying) so it is not saved.
 	 */
-	send_pbs_out_using_md(md, "v2 notify", &response.message);
-
-	pstat(ikev2_sent_notifies_e, ntype);
+	send_pbs_out_using_md(md, what, &response.message);
+	return true;
 }
 
 void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)

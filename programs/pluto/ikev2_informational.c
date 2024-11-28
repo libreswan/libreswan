@@ -43,6 +43,7 @@
 #include "ikev2_delete.h"
 #include "ikev2.h"
 #include "ikev2_states.h"
+#include "ikev2_notification.h"
 
 static stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 						   struct child_sa *null_child,

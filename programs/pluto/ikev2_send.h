@@ -89,29 +89,15 @@ struct v2_outgoing_fragment {
  * authenticated)?
  */
 
-void record_v2N_response(struct logger *logger,
-			 struct ike_sa *ike,
-			 struct msg_digest *md,
-			 v2_notification_t type,
-			 const chunk_t *data /* optional */,
-			 enum payload_security security);
-
-void record_v2N_spi_response(struct logger *logger,
-			     struct ike_sa *st,
-			     struct msg_digest *md,
-			     enum ikev2_sec_proto_id protoid,
-			     ipsec_spi_t *spi,
-			     v2_notification_t type,
-			     const chunk_t *data /* optional */,
-			     enum payload_security security);
-
 bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
 			      struct v2_outgoing_fragment *frags);
 
-void send_v2N_response_from_md(struct msg_digest *md,
-			       v2_notification_t type,
-			       const shunk_t *data,
-			       const char *format, ...) PRINTF_LIKE(4);
+struct emit_v2_response_context;
+typedef bool emit_v2_response_fn(struct pbs_out *pbs, struct emit_v2_response_context *context);
+
+bool send_v2_response_from_md(struct msg_digest *md, const char *what,
+			      emit_v2_response_fn *emit_v2_response,
+			      struct emit_v2_response_context *context);
 
 void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 const char *what,

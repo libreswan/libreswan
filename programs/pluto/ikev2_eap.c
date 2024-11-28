@@ -761,8 +761,9 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	 * message with a DELETE payload.
 	 */
 	if (send_redirect) {
-		if (!emit_redirect_notification(shunk1(c->config->redirect.to), response.pbs))
+		if (!emit_v2N_REDIRECT(c->config->redirect.to, response.pbs)) {
 			return STF_INTERNAL_ERROR;
+		}
 		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
 

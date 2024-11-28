@@ -40,6 +40,7 @@
 #include "keys.h"
 #include "ikev2_psk.h"
 #include "ikev2_send.h"
+#include "ikev2_notification.h"
 
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct crypt_mac *idhash,

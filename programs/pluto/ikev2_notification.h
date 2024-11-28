@@ -23,6 +23,7 @@ struct ike_sa;
 struct logger;
 struct payload_digest;
 struct pbs_out;
+enum payload_security;
 
 /*
  * Construct IKEv2 notification payloads.
@@ -61,5 +62,26 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 			const struct payload_digest *notify);
 
 enum v2_pd v2_pd_from_notification(v2_notification_t);
+
+void record_v2N_response(struct logger *logger,
+			 struct ike_sa *ike,
+			 struct msg_digest *md,
+			 v2_notification_t type,
+			 const chunk_t *data /* optional */,
+			 enum payload_security security);
+
+void record_v2N_spi_response(struct logger *logger,
+			     struct ike_sa *st,
+			     struct msg_digest *md,
+			     enum ikev2_sec_proto_id protoid,
+			     ipsec_spi_t *spi,
+			     v2_notification_t type,
+			     const chunk_t *data /* optional */,
+			     enum payload_security security);
+
+void send_v2N_response_from_md(struct msg_digest *md,
+			       v2_notification_t type,
+			       const shunk_t *data,
+			       const char *format, ...) PRINTF_LIKE(4);
 
 #endif

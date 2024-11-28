@@ -1165,7 +1165,7 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_banner);
 
 	free_chunk_content(&st->st_no_ppk_auth);
-	free_chunk_content(&st->st_active_redirect_gw);
+	pfreeany(st->st_active_redirect_gw);
 
 	free_logger(&st->logger, HERE);
 	messup(st);

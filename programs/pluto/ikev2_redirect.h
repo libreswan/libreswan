@@ -49,9 +49,9 @@ extern bool redirect_global(struct msg_digest *md);
  * @param ip_addr IP Address of the previous gateway.
  * @param pbs output stream
  */
-extern bool emit_redirected_from_notification(
-		const ip_address *ip_addr,
-		struct pbs_out *pbs);
+
+bool emit_v2N_REDIRECTED_FROM(const ip_address *old_gateway,
+			      struct pbs_out *outs);
 
 /*
  * Emit IKEv2 Notify REDIRECT payload.
@@ -59,9 +59,7 @@ extern bool emit_redirected_from_notification(
  * @param destination string of IPv4/IPv6/FQDN address.
  * @param pbs output stream
  */
-extern bool emit_redirect_notification(
-		const shunk_t destination,
-		struct pbs_out *pbs);
+bool emit_v2N_REDIRECT(const char *destination, struct pbs_out *pbs);
 
 bool redirect_ike_auth(struct ike_sa *ike, struct msg_digest *md, stf_status *status);
 
