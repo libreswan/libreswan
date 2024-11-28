@@ -373,7 +373,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
   { "virtual_private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, }, /* obsolete variant, very common */
   { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, NULL, },
-  { "keep-alive",  kv_config,  kt_unsigned,  KBF_KEEPALIVE, NULL, NULL, },
+  { "keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL, NULL, },
 
   { "listen-tcp", kv_config, kt_bool, KBF_LISTEN_TCP, NULL, NULL },
   { "listen-udp", kv_config, kt_bool, KBF_LISTEN_UDP, NULL, NULL },

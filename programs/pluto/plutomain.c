@@ -768,7 +768,7 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
-	deltatime_t keep_alive = deltatime(0);
+	deltatime_t keep_alive = {0}; /* aka unset */
 
 	pluto_shunt_lifetime = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
 	bare_shunt_interval = SHUNT_SCAN_INTERVAL;
@@ -1211,9 +1211,6 @@ int main(int argc, char **argv)
 		case '2':	/* --keep-alive <delay_secs> */
 			check_diag(ttodeltatime(optarg, &keep_alive, &timescale_seconds),
 				   longindex, logger);
-			if (deltatime_cmp(keep_alive, >, deltatime(secs_per_day))) {
-				fatal_opt(longindex, logger, "exceeds 1 day");
-			}
 			continue;
 
 		case '5':	/* --selftest */
@@ -1398,7 +1395,7 @@ int main(int argc, char **argv)
 			}
 
 			pluto_nss_seedbits = cfg->values[KBF_SEEDBITS].option;
-			keep_alive = deltatime(cfg->values[KBF_KEEPALIVE].option);
+			keep_alive = cfg->values[KBF_KEEP_ALIVE].deltatime;
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 

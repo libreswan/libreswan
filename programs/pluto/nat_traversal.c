@@ -47,14 +47,28 @@
 
 deltatime_t nat_keepalive_period = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);
 
-void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger)
+void init_nat_traversal_timer(deltatime_t keep_alive, struct logger *logger)
 {
-	if (milliseconds_from_deltatime(keep_alive_period) != 0) {
-		nat_keepalive_period = keep_alive_period;
+	if (keep_alive.is_set) {
+		/* truncate */
+		if (deltatime_cmp(keep_alive, <, one_second)) {
+			deltatime_buf db;
+			llog(RC_LOG, logger,
+			     "NAT-Traversal: ignoring too small keep-alive period %s (less than 1 second)",
+			     str_deltatime(keep_alive, &db));
+		} else if (deltatime_cmp(keep_alive, >, one_day)) {
+			deltatime_buf db;
+			llog(RC_LOG, logger,
+			     "NAT-Traversal: ignoring too big keep-alive period %s (more than 1 day)",
+			     str_deltatime(keep_alive, &db));
+		} else {
+			nat_keepalive_period = keep_alive;
+		}
 	}
 
-	llog(RC_LOG, logger, "NAT-Traversal: keep-alive period %jds",
-	     deltasecs(nat_keepalive_period));
+	deltatime_buf db;
+	llog(RC_LOG, logger, "NAT-Traversal: keep-alive period %ss",
+	     str_deltatime(nat_keepalive_period, &db));
 }
 
 struct crypt_mac natd_hash(const struct hash_desc *hasher,
