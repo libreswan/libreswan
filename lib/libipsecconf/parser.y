@@ -470,11 +470,11 @@ static bool parser_kw_bool(struct keyword *kw, const char *yytext,
 }
 
 static bool parser_kw_deltatime(struct keyword *kw, const char *yytext,
-				const struct timescale *timescale,
+				enum timescale default_timescale,
 				deltatime_t *deltatime,
 				struct logger *logger)
 {
-	diag_t diag = ttodeltatime(yytext, deltatime, timescale);
+	diag_t diag = ttodeltatime(yytext, deltatime, default_timescale);
 	if (diag != NULL) {
 		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
@@ -638,12 +638,12 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		break;
 
 	case kt_seconds:
-		ok = parser_kw_deltatime(kw, string, &timescale_seconds,
+		ok = parser_kw_deltatime(kw, string, TIMESCALE_SECONDS,
 					 &deltatime, logger);
 		break;
 
 	case kt_milliseconds:
-		ok = parser_kw_deltatime(kw, string, &timescale_milliseconds,
+		ok = parser_kw_deltatime(kw, string, TIMESCALE_MILLISECONDS,
 					 &deltatime, logger);
 		break;
 

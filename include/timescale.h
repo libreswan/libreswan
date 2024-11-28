@@ -17,26 +17,24 @@
 #ifndef TIMESCALE_H
 #define TIMESCALE_H    /* seen it, no need to see it again */
 
-#include <stdint.h>	/* for uintmax_t */
-
 #include "shunk.h"
+#include "scale.h"
 
-struct timescale {
-	const char *suffix;
-	uintmax_t us;
+enum timescale {
+	TIMESCALE_MICROSECONDS,
+	TIMESCALE_MILLISECONDS,
+	TIMESCALE_SECONDS,
+	TIMESCALE_MINUTES,
+	TIMESCALE_HOURS,
+	TIMESCALE_DAYS,
+	TIMESCALE_WEEKS,
 };
 
-extern const struct timescale timescale_microseconds;
-extern const struct timescale timescale_milliseconds;
-extern const struct timescale timescale_seconds;
-extern const struct timescale timescale_minutes;
-extern const struct timescale timescale_hours;
-extern const struct timescale timescale_days;
-extern const struct timescale timescale_weeks;
+const struct scale *timescale(enum timescale);
 
 #define PRI_TIMESCALE "1%s(%juus)"
-#define pri_timescale(TS) (TS).suffix, (TS).us
+#define pri_timescale(TS) timescale(TS)->suffix, timescale(TS)->multiplier
 
-const struct timescale *ttotimescale(shunk_t s, const struct timescale *default_scale);
+const struct scale *ttotimescale(shunk_t s, enum timescale default_scale);
 
 #endif

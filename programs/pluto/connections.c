@@ -3258,7 +3258,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			config->sa_rekey_margin = new_rkm;
 		}
 
-		const struct timescale *const dpd_timescale = &timescale_seconds;
+		const enum timescale dpd_timescale = TIMESCALE_SECONDS;
 		switch (wm->ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */

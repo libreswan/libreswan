@@ -16,39 +16,34 @@
 
 #include "timescale.h"
 
+#include "scale.h"
+
 #include "lswcdefs.h"
 #include "constants.h"		/* for secs_per_* */
+#include "passert.h"
 
-const struct timescale timescale_microseconds = { "us", .us = (uintmax_t)1, };
-const struct timescale timescale_milliseconds = { "ms", .us = (uintmax_t)1 * 1000, };
-const struct timescale timescale_seconds =      { "s",  .us = (uintmax_t)1 * 1000 * 1000, };
-const struct timescale timescale_minutes =      { "m",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_minute, };
-const struct timescale timescale_hours =        { "h",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_hour, };
-const struct timescale timescale_days =         { "d",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_day, };
-const struct timescale timescale_weeks =        { "w",  .us = (uintmax_t)1 * 1000 * 1000 * secs_per_day * 7, };
-
-static const struct timescale *timescales[] = {
-	&timescale_microseconds,
-	&timescale_milliseconds,
-	&timescale_seconds,
-	&timescale_minutes,
-	&timescale_hours,
-	&timescale_days,
-	&timescale_weeks,
+static const struct scale scales[] = {
+	[TIMESCALE_MICROSECONDS] = { "us", (uintmax_t)1, },
+	[TIMESCALE_MILLISECONDS] = { "ms", (uintmax_t)1 * 1000, },
+	[TIMESCALE_SECONDS]      = { "s",  (uintmax_t)1 * 1000 * 1000, },
+	[TIMESCALE_MINUTES]      = { "m",  (uintmax_t)1 * 1000 * 1000 * secs_per_minute, },
+	[TIMESCALE_HOURS]        = { "h",  (uintmax_t)1 * 1000 * 1000 * secs_per_hour, },
+	[TIMESCALE_DAYS]         = { "d",  (uintmax_t)1 * 1000 * 1000 * secs_per_day, },
+	[TIMESCALE_WEEKS]        = { "w",  (uintmax_t)1 * 1000 * 1000 * secs_per_day * 7, },
 };
 
-const struct timescale *ttotimescale(shunk_t cursor, const struct timescale *default_scale)
+const struct scales timescales = {
+	.base = 10,
+	.scale = { ARRAY_REF(scales) },
+};
+
+const struct scale *ttotimescale(shunk_t cursor, enum timescale default_timescale)
 {
-	if (cursor.len == 0) {
-		/* default scaling */
-		return default_scale;
-	}
+	return ttoscale(cursor, &timescales, default_timescale);
+}
 
-	FOR_EACH_ELEMENT(scale, timescales) {
-		if (hunk_strcaseeq(cursor, (*scale)->suffix)) {
-			return *scale;
-		}
-	}
-
-	return NULL;
+const struct scale *timescale(enum timescale scale)
+{
+	passert(scale < elemsof(scales));
+	return &scales[scale];
 }

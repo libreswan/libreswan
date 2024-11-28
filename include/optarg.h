@@ -27,10 +27,12 @@ struct logger;
 extern unsigned verbose;			/* defined by optarg.c */
 extern int long_index; 				/* defined by optarg.c */
 extern const struct option long_opts[]; 	/* defined by program */
+enum timescale;
 
 void optarg_init(const struct logger *logger);
 
-deltatime_t optarg_deltatime(const struct timescale *timescale);
+deltatime_t optarg_deltatime(enum timescale default_timescale);
+
 uintmax_t optarg_uintmax(void);
 /* non-zero OPTIONAL provides default */
 uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names);

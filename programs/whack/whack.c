@@ -1954,19 +1954,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
-			msg.retransmit_timeout = optarg_deltatime(&timescale_seconds);
+			msg.retransmit_timeout = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			msg.retransmit_interval = optarg_deltatime(&timescale_milliseconds);
+			msg.retransmit_interval = optarg_deltatime(TIMESCALE_MILLISECONDS);
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			msg.ikelifetime = optarg_deltatime(&timescale_seconds);
+			msg.ikelifetime = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			msg.ipsec_lifetime = optarg_deltatime(&timescale_seconds);
+			msg.ipsec_lifetime = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
@@ -1978,7 +1978,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
-			msg.rekeymargin = optarg_deltatime(&timescale_seconds);
+			msg.rekeymargin = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
 
 		case CD_RKFUZZ:	/* --rekeyfuzz <percentage> */

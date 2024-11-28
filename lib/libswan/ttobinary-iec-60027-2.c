@@ -41,29 +41,21 @@ diag_t ttobinary(const char *t, uint64_t *r, bool prefix_B)
 			    suffix,  t, err);
 	}
 
-	const struct binaryscale *scale = prefix_B ?
-		ttobinarybytesscale(cursor) :
-		ttobinaryscale(cursor);
+	const struct scale *scale =
+		(prefix_B ? ttobinarybytesscale(cursor) :
+		 ttobinaryscale(cursor));
 
 	if (scale == NULL) {
 		return diag("unrecognized binary%s multiplier \""PRI_SHUNK"\"",
 			    suffix, pri_shunk(cursor));
 	}
 
-	if (UINTMAX_MAX / scale->b < decimal) {
-		return diag("binary%s value \"%s\" overflows", suffix, t);
+	uintmax_t binary;
+	err_t e = scale_decimal(scale, decimal, numerator, denominator, &binary);
+	if (e != NULL) {
+		return diag("invalid binary%s \"%s\", %s", suffix, t, e);
 	}
 
-	uintmax_t b = decimal * scale->b;
-
-	if (numerator > 0 && denominator > 0) {
-		if (denominator > scale->b) {
-			return diag("binary%s value \"%s\" has sub-byte resolution", suffix, t);
-		}
-		/* fails on really small fractions? */
-		b += (numerator * (scale->b / denominator));
-	}
-
-	*r = b;
+	*r = binary;
 	return NULL;
 }
