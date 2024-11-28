@@ -949,7 +949,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case '9':	/* --expire-shunt-interval <interval> */
-			check_diag(ttodeltatime(optarg, &bare_shunt_interval, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &bare_shunt_interval, TIMESCALE_SECONDS),
 				   longindex, logger);
 			check_diag(deltatime_ok(bare_shunt_interval, 1, 1000),
 				   longindex, logger);
@@ -1016,7 +1016,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'I':	/* --curl-timeout */
-			check_diag(ttodeltatime(optarg, &curl_timeout, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &curl_timeout, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define CURL_TIMEOUT_OK deltatime_ok(curl_timeout, 1, 1000)
 			check_diag(CURL_TIMEOUT_OK, longindex, logger);
@@ -1027,7 +1027,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'x':	/* --crlcheckinterval <seconds> */
-			check_diag(ttodeltatime(optarg, &crl_check_interval, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &crl_check_interval, TIMESCALE_SECONDS),
 				   longindex, logger);
 			continue;
 
@@ -1048,7 +1048,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'T':	/* --ocsp-timeout <seconds> */
-			check_diag(ttodeltatime(optarg, &ocsp_timeout, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &ocsp_timeout, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define OCSP_TIMEOUT_OK deltatime_ok(ocsp_timeout, 1, 1000)
 			check_diag(OCSP_TIMEOUT_OK, longindex, logger);
@@ -1069,7 +1069,7 @@ int main(int argc, char **argv)
 		}
 
 		case 'G':	/* --ocsp-cache-min-age <seconds> */
-			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define OCSP_CACHE_MIN_AGE_OK deltatime_ok(ocsp_cache_min_age, 1, -1)
 			check_diag(OCSP_CACHE_MIN_AGE_OK, longindex, logger);
@@ -1081,7 +1081,7 @@ int main(int argc, char **argv)
 			 * disabled.  We use 0 for disabled, and a
 			 * large number for unlimited.
 			 */
-			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define OCSP_CACHE_MAX_AGE_OK deltatime_ok(ocsp_cache_max_age, 0, -1)
 			check_diag(OCSP_CACHE_MAX_AGE_OK, longindex, logger);
@@ -1209,7 +1209,7 @@ int main(int argc, char **argv)
 		}
 
 		case '2':	/* --keep-alive <delay_secs> */
-			check_diag(ttodeltatime(optarg, &keep_alive, &timescale_seconds),
+			check_diag(ttodeltatime(optarg, &keep_alive, TIMESCALE_SECONDS),
 				   longindex, logger);
 			continue;
 

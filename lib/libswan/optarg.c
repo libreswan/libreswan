@@ -23,6 +23,7 @@
 #include "ip_info.h"
 #include "lmod.h"
 #include "names_constant.h"		/* for debug_lmod_info */
+#include "timescale.h"
 
 int long_index;
 unsigned verbose;
@@ -63,12 +64,12 @@ static void fatal_optarg(const char *fmt, ...)
 	exit(PLUTO_EXIT_FAIL);
 }
 
-deltatime_t optarg_deltatime(const struct timescale *timescale)
+deltatime_t optarg_deltatime(enum timescale default_timescale)
 {
 	passert((long_opts[long_index].has_arg == required_argument) ||
 		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
 	deltatime_t deltatime;
-	diag_t diag = ttodeltatime(optarg, &deltatime, timescale);
+	diag_t diag = ttodeltatime(optarg, &deltatime, default_timescale);
 	if (diag != NULL) {
 		fatal_optarg("%s", str_diag(diag));
 	}

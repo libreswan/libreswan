@@ -22,7 +22,7 @@
 #include "passert.h"
 #include "lswlog.h"
 
-diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *default_scale)
+diag_t ttodeltatime(const char *t, deltatime_t *d, enum timescale default_timescale)
 {
 	*d = deltatime_zero;
 
@@ -47,40 +47,18 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *defau
 	}
 
 	/* [<SCALE>] */
-	const struct timescale *scale = ttotimescale(cursor, default_scale);
+	const struct scale *scale = ttotimescale(cursor, default_timescale);
 	if (scale == NULL) {
 		return diag("duration \"%s\" has an unrecognized multiplier \""PRI_SHUNK"\"",
 			    t, pri_shunk(cursor));
 	}
 
-	ldbgf(DBG_TMI, &global_logger,
-	      "%s() %s, decimal=%ju numerator=%ju denominator=%ju "PRI_TIMESCALE"\n",
-	      __func__, t, decimal, numerator, denominator, pri_timescale(*scale));
+	uintmax_t microseconds;
+	err_t e = scale_decimal(scale, decimal, numerator, denominator, &microseconds);
 
-	/*
-	 * Check that converting DECIMAL to microseconds (1/1.000.000
-	 * seconds) doesn't overflow.  It shouldn't:
-	 *
-	 * $(( 2 ** 62 / 365 / 24 / 60 / 60 / 1000 / 1000 )) = 145 Years!
-	 */
-
-	uintmax_t years = UINTMAX_MAX / 365 / 24 / 60 / 60 / 1000 / 1000;
-	if (UINTMAX_MAX / scale->us < decimal) {
-		return diag("duration \"%s\" overflows (greater than %ju years)",
-			    t, years);
+	if (e != NULL) {
+		return diag("invalid duration \"%s\", %s", t, e);
 	}
-
-	uintmax_t microseconds = decimal * scale->us;
-
-	if (numerator > 0 && denominator > 0) {
-		if (denominator > scale->us) {
-			return diag("duration \"%s\" has sub-microsecond resolution", t);
-		}
-		/* fails on really small fractions? */
-		microseconds += (numerator * (scale->us / denominator));
-	}
-
-	/* now add in fraction */
 
 	*d = deltatime_from_microseconds(microseconds);
 	return NULL;

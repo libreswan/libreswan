@@ -171,15 +171,6 @@ deltatime_t deltatime_from_timeval(struct timeval t)
  * Try to be smart by only printing the precision necessary.  For
  * instance 1, 0.5, ...
  */
-static size_t frac(struct jambuf *buf, intmax_t usec)
-{
-	int precision = 6;
-	while (usec % 10 == 0 && precision > 1) {
-		precision--;
-		usec = usec / 10;
-	}
-	return jam(buf, ".%0*jd", precision, usec);
-}
 
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d)
 {
@@ -188,10 +179,7 @@ size_t jam_deltatime(struct jambuf *buf, deltatime_t d)
 		s += jam(buf, "-");
 		d.dt = negate_timeval(d.dt);
 	}
-	s += jam(buf, "%jd", (intmax_t)d.dt.tv_sec);
-	if (d.dt.tv_usec != 0) {
-		frac(buf, d.dt.tv_usec);
-	}
+	jam_decimal(buf, d.dt.tv_sec, d.dt.tv_usec, 1000000/*us*/);
 	return s;
 }
 

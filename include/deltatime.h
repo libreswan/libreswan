@@ -28,7 +28,7 @@
 #include "shunk.h"
 
 struct jambuf;
-struct timescale;
+enum timescale;
 
 /*
  * deltatime_t: relative time between events.  Presumed continuous.
@@ -101,7 +101,7 @@ typedef struct {
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
 
-diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *default_scale);
+diag_t ttodeltatime(const char *t, deltatime_t *d, enum timescale default_timescale);
 
 /*
  * Primitives used to implement times; try to avoid timeval

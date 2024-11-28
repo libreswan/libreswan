@@ -59,64 +59,64 @@ static void check_ttodeltatime(void)
 	static const struct test_ttodeltatime {
 		const char *str;
 		intmax_t us;
-		const struct timescale *scale;
+		enum timescale timescale;
 		bool ok;
 	} test_ttodeltatime[] = {
 		/* scale */
-		{ "1",   (uintmax_t)1,                      &timescale_microseconds, true, },
-		{ "1",   (uintmax_t)1*1000,                 &timescale_milliseconds, true, },
-		{ "1",   (uintmax_t)1*1000*1000,            &timescale_seconds, true, },
-		{ "1",   (uintmax_t)1*1000*1000*60,         &timescale_minutes, true, },
-		{ "1",   (uintmax_t)1*1000*1000*60*60,      &timescale_hours, true, },
-		{ "1",   (uintmax_t)1*1000*1000*60*60*24,   &timescale_days, true, },
-		{ "1",   (uintmax_t)1*1000*1000*60*60*24*7, &timescale_weeks, true, },
+		{ "1",   (uintmax_t)1,                      TIMESCALE_MICROSECONDS, true, },
+		{ "1",   (uintmax_t)1*1000,                 TIMESCALE_MILLISECONDS, true, },
+		{ "1",   (uintmax_t)1*1000*1000,            TIMESCALE_SECONDS, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60,         TIMESCALE_MINUTES, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60*60,      TIMESCALE_HOURS, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60*60*24,   TIMESCALE_DAYS, true, },
+		{ "1",   (uintmax_t)1*1000*1000*60*60*24*7, TIMESCALE_WEEKS, true, },
 
 		/* suffix */
-		{ "1us", (uintmax_t)1,                      &timescale_seconds, true, },
-		{ "1ms", (uintmax_t)1*1000,                 &timescale_seconds, true, },
-		{ "1s",  (uintmax_t)1*1000*1000,            &timescale_seconds, true, },
-		{ "1m",  (uintmax_t)1*1000*1000*60,         &timescale_seconds, true, },
-		{ "1h",  (uintmax_t)1*1000*1000*60*60,      &timescale_seconds, true, },
-		{ "1d",  (uintmax_t)1*1000*1000*60*60*24,   &timescale_seconds, true, },
-		{ "1w",  (uintmax_t)1*1000*1000*60*60*24*7, &timescale_seconds, true, },
+		{ "1us", (uintmax_t)1,                      TIMESCALE_SECONDS, true, },
+		{ "1ms", (uintmax_t)1*1000,                 TIMESCALE_SECONDS, true, },
+		{ "1s",  (uintmax_t)1*1000*1000,            TIMESCALE_SECONDS, true, },
+		{ "1m",  (uintmax_t)1*1000*1000*60,         TIMESCALE_SECONDS, true, },
+		{ "1h",  (uintmax_t)1*1000*1000*60*60,      TIMESCALE_SECONDS, true, },
+		{ "1d",  (uintmax_t)1*1000*1000*60*60*24,   TIMESCALE_SECONDS, true, },
+		{ "1w",  (uintmax_t)1*1000*1000*60*60*24*7, TIMESCALE_SECONDS, true, },
 
 		/* fractions */
-		{ "1.234", (uintmax_t)1234*1000,            &timescale_seconds, true, },
-		{ ".034",  (uintmax_t)  34*1000,            &timescale_seconds, true, },
-		{ "2.",    (uintmax_t)2000*1000,            &timescale_seconds, true, },
-		{ "0.1ms", (uintmax_t)      100,            &timescale_seconds, true, },
-		{ "0.5m",  (uintmax_t)  30*1000*1000,       &timescale_seconds, true, },
+		{ "1.234", (uintmax_t)1234*1000,            TIMESCALE_SECONDS, true, },
+		{ ".034",  (uintmax_t)  34*1000,            TIMESCALE_SECONDS, true, },
+		{ "2.",    (uintmax_t)2000*1000,            TIMESCALE_SECONDS, true, },
+		{ "0.1ms", (uintmax_t)      100,            TIMESCALE_SECONDS, true, },
+		{ "0.5m",  (uintmax_t)  30*1000*1000,       TIMESCALE_SECONDS, true, },
 
 		/* error */
-		{ "",    (uintmax_t)0,                      &timescale_seconds, false, },
-		{ "1x",  (uintmax_t)0,                      &timescale_milliseconds, false, },
-		{ "x1",  (uintmax_t)0,                      &timescale_milliseconds, false, },
-		{ "1mm", (uintmax_t)0,                      &timescale_milliseconds, false, },
-		{ "1seconds", (uintmax_t)0,                 &timescale_milliseconds, false, },
-		{ "1 s", (uintmax_t)0,                      &timescale_milliseconds, false, },
-		{ "0x10", (uintmax_t)0,                     &timescale_seconds, false, },
-		{ "0.1",  (uintmax_t)0,                     &timescale_microseconds, false, },
-		{ "0.1x", (uintmax_t)0,                     &timescale_seconds, false, },
-		{ ".ms",  (uintmax_t)0,                     &timescale_seconds, false, },
-		{ ".",  (uintmax_t)0,                       &timescale_seconds, false, },
+		{ "",    (uintmax_t)0,                      TIMESCALE_SECONDS, false, },
+		{ "1x",  (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
+		{ "x1",  (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
+		{ "1mm", (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
+		{ "1seconds", (uintmax_t)0,                 TIMESCALE_MILLISECONDS, false, },
+		{ "1 s", (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
+		{ "0x10", (uintmax_t)0,                     TIMESCALE_SECONDS, false, },
+		{ "0.1",  (uintmax_t)0,                     TIMESCALE_MICROSECONDS, false, },
+		{ "0.1x", (uintmax_t)0,                     TIMESCALE_SECONDS, false, },
+		{ ".ms",  (uintmax_t)0,                     TIMESCALE_SECONDS, false, },
+		{ ".",  (uintmax_t)0,                       TIMESCALE_SECONDS, false, },
 	};
 
 	for (unsigned i = 0; i < elemsof(test_ttodeltatime); i++) {
 		const struct test_ttodeltatime *t = &test_ttodeltatime[i];
-		fprintf(stdout, "ttodeltatime(%s, "PRI_TIMESCALE") ok=%s\n",
-			t->str, pri_timescale(*t->scale), bool_str(t->ok));
+		fprintf(stdout, "ttodeltatime(%s, "PRI_SCALE") ok=%s\n",
+			t->str, pri_timescale(t->timescale), bool_str(t->ok));
 		deltatime_t d;
-		diag_t diag = ttodeltatime(t->str, &d, t->scale);
+		diag_t diag = ttodeltatime(t->str, &d, t->timescale);
 		if (t->ok) {
 			if (diag != NULL) {
 				fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly returned: %s\n",
-					t->str, pri_timescale(*t->scale), str_diag(diag));
+					t->str, pri_timescale(t->timescale), str_diag(diag));
 				fails++;
 				return;
 			}
 		} else if (diag == NULL) {
 			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly succeeded\n",
-				t->str, pri_timescale(*t->scale));
+				t->str, pri_timescale(t->timescale));
 			fails++;
 			return;
 		} else {
@@ -125,7 +125,7 @@ static void check_ttodeltatime(void)
 		intmax_t microseconds = microseconds_from_deltatime(d);
 		if (microseconds != t->us) {
 			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, expecting %jd\n",
-				t->str, pri_timescale(*t->scale), microseconds, t->us);
+				t->str, pri_timescale(t->timescale), microseconds, t->us);
 			fails++;
 			return;
 		}
