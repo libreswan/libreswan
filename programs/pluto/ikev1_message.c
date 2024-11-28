@@ -177,8 +177,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 				  struct pbs_out *pbs,
 				  struct crypt_mac *iv)
 {
-	struct logger *logger = (pbs->logger != NULL ? pbs->logger :
-				 ike->sa.logger);
+	struct logger *logger = pbs->logger;
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
 	/*
