@@ -47,6 +47,10 @@ typedef struct {
 } deltatime_t;
 
 extern const deltatime_t deltatime_zero;
+extern const deltatime_t one_day;
+extern const deltatime_t one_hour;
+extern const deltatime_t one_minute;
+extern const deltatime_t one_second;
 
 #define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), }, .is_set = true, }
 
@@ -79,8 +83,9 @@ deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
 
 intmax_t microseconds_from_deltatime(deltatime_t d);
 intmax_t milliseconds_from_deltatime(deltatime_t d);
-intmax_t deltasecs(deltatime_t d);
-deltatime_t deltatime_scale(deltatime_t d, int num, int denom);
+time_t seconds_from_deltatime(deltatime_t d);
+#define deltasecs seconds_from_deltatime
+deltatime_t deltatime_scale(deltatime_t d, int num, int denom); /* D*NUM/DENOM */
 
 /* Convert to/from struct timeval - time used by libevent. */
 struct timeval timeval_from_deltatime(deltatime_t);

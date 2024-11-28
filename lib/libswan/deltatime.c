@@ -24,6 +24,10 @@
 #include "lswlog.h"
 
 const deltatime_t deltatime_zero = { .is_set = true, };
+const deltatime_t one_day = DELTATIME_INIT(secs_per_day);
+const deltatime_t one_hour = DELTATIME_INIT(secs_per_hour);
+const deltatime_t one_minute = DELTATIME_INIT(secs_per_minute);
+const deltatime_t one_second = DELTATIME_INIT(1);
 
 /*
  * Rather than deal with the 'bias' in a -ve timeval, this code
@@ -140,7 +144,7 @@ intmax_t milliseconds_from_deltatime(deltatime_t d)
 	return milliseconds_from(d.dt);
 }
 
-intmax_t deltasecs(deltatime_t d)
+intmax_t seconds_from_deltatime(deltatime_t d)
 {
 	/* XXX: ignore .tv_usec's bias, don't round */
 	return seconds_from(d.dt);
