@@ -17,22 +17,10 @@
 #ifndef BINARYSCALE_H
 #define BINARYSCALE_H    /* seen it, no need to see it again */
 
-#include <stdint.h>	/* for uintmax_t */
-
+#include "scale.h"
 #include "shunk.h"
 
-struct binaryscale {
-	const char *suffix;
-	uint64_t b;
-};
-
-extern const struct binaryscale bin_default;
-extern const struct binaryscale bin_bytedefult;
-
-#define PRI_BINARYSCALE "1%s(%ju%s)"
-#define pri_binaryscale(B) (B).suffix, (B).b, (B).prefix
-
-const struct binaryscale *ttobinaryscale(shunk_t s);
-const struct binaryscale *ttobinarybytesscale(shunk_t s);
+const struct scale *ttobinaryscale(shunk_t s);
+const struct scale *ttobinarybytesscale(shunk_t s);
 
 #endif
