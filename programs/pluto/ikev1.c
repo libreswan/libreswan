@@ -565,6 +565,7 @@ void process_v1_packet(struct msg_digest *md)
 			passert(ike == NULL); /* new state needed */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
+			zero(&md->v1_decrypt_iv);
 			break;
 		}
 
@@ -681,10 +682,10 @@ void process_v1_packet(struct msg_digest *md)
 			}
 			ike->sa.st_v1_msgid.reserved = false;
 
-			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
-							  "IKE received encrypted ISAKMP_XCHG_INFO", HERE);
 			passert(ike != NULL);
 			from_state = STATE_INFO_PROTECTED;
+			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
+							  "IKE received encrypted ISAKMP_XCHG_INFO", HERE);
 			break;
 		}
 
@@ -704,6 +705,7 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 			passert(ike != NULL);
 			from_state = STATE_INFO;
+			zero(&md->v1_decrypt_iv);
 			break;
 		}
 
@@ -714,6 +716,7 @@ void process_v1_packet(struct msg_digest *md)
 		 */
 		passert(ike == NULL);
 		from_state = STATE_INFO;
+		zero(&md->v1_decrypt_iv);
 		break;
 	}
 
@@ -825,12 +828,12 @@ void process_v1_packet(struct msg_digest *md)
 			}
 			ike->sa.st_v1_msgid.reserved = false;
 
-			/* Quick Mode Initial IV */
-			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
-							  "IKE received encrypted first QUICK request", HERE);
 			/* send to state machine */
 			passert(ike != NULL);
 			from_state = STATE_QUICK_R0;
+			/* Quick Mode Initial IV */
+			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
+							  "IKE received encrypted first QUICK request", HERE);
 			break;
 		}
 
@@ -887,11 +890,13 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
-		PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0);
-		md->v1_decrypt_iv = child->sa.st_v1_iv;
+		if (!PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0) ||
+		    !PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0)) {
+			return;
+		}
 		passert(ike != NULL);
 		from_state = child->sa.st_state->kind;
+		md->v1_decrypt_iv = child->sa.st_v1_iv;
 		break;
 	}
 
@@ -971,9 +976,6 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
-						  "IKE received encrypted ISAKMP_XCHG_MODE_CFG", HERE);
-
 		/*
 		 * okay, now we have to figure out if we are receiving
 		 * a bogus new message in an outstanding XAUTH server
@@ -1045,6 +1047,9 @@ void process_v1_packet(struct msg_digest *md)
 		}
 		passert(ike != NULL);
 		from_state = old_state;
+		md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
+						  "IKE received encrypted ISAKMP_XCHG_MODE_CFG", HERE);
+
 		break;
 	}
 
@@ -1070,10 +1075,24 @@ void process_v1_packet(struct msg_digest *md)
 	 * Dump the result.
 	 */
 
-	ldbg(md->logger, "found IKE (ISAKMP) SA "PRI_SO" and Child (IPsec) SA "PRI_SO" ("PRI_SO" for not found)",
-	     pri_so(ike != NULL ? ike->sa.st_serialno : SOS_NOBODY),
-	     pri_so(child != NULL ? child->sa.st_serialno : SOS_NOBODY),
-	     pri_so(SOS_NOBODY));
+	LDBGP_JAMBUF(DBG_BASE, md->logger, buf) {
+		jam_string(buf, "found:");
+		if (STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF) {
+			jam_string(buf, " from_state ");
+			jam_string(buf, finite_states[from_state]->name);
+			jam_string(buf, ";");
+		}
+		if (ike != NULL) {
+			jam(buf, " IKE (ISAKMP) SA "PRI_SO";", pri_so(ike->sa.st_serialno));
+		}
+		if (child != NULL) {
+			jam(buf, " Child (IPsec) SA "PRI_SO";", pri_so(child->sa.st_serialno));
+		}
+		if (md->v1_decrypt_iv.len > 0) {
+			jam_string(buf, " IV ");
+			jam_hex_hunk(buf, md->v1_decrypt_iv);
+		}
+	}
 	if (!PEXPECT(md->logger, (ike != NULL) >= (child != NULL))) {
 		return;
 	}
@@ -1317,7 +1336,9 @@ void process_v1_packet(struct msg_digest *md)
 	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) &&
 	    st != NULL &&
 	    !st->hidden_variables.st_skeyid_calculated) {
-		PEXPECT(st->logger, st->st_v1_offloaded_task_in_background);
+		if (!PEXPECT(st->logger, st->st_v1_offloaded_task_in_background)) {
+			return;
+		}
 		endpoint_buf b;
 		ldbg(logger, "received encrypted packet from %s but exponentiation still in progress",
 		     str_endpoint(&md->sender, &b));
@@ -1329,7 +1350,9 @@ void process_v1_packet(struct msg_digest *md)
 		 * XXX: since the presence of .st_v1_background_md
 		 * flags the state as busy, this shouldn't happen!?!
 		 */
-		PEXPECT(st->logger, st->st_v1_background_md == NULL);
+		if (!PEXPECT(st->logger, st->st_v1_background_md == NULL)) {
+			return;
+		}
 		if (st->st_v1_background_md != NULL) {
 			ldbg(logger, "suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
 			     st->st_serialno, st->st_v1_background_md,
