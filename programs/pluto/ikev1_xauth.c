@@ -1534,11 +1534,16 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 				return stat;
 			}
 
-			/* stores updated IV in .st_v1_new_iv */
-			if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+			/*
+			 * process_v1_packet_tail() still copies
+			 * .v1_decrypt_iv into .st_v1_new_iv.
+			 */
+			PEXPECT(ike->sa.logger, hunk_eq(md->v1_decrypt_iv,
+							ike->sa.st_v1_new_iv));
+			ike->sa.st_v1_iv = md->v1_decrypt_iv;
+			if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
 				return STF_INTERNAL_ERROR;
 			}
-			ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 		}
 
@@ -1676,11 +1681,16 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 		return stat;
 	}
 
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+	/*
+	 * process_v1_packet_tail() still copies .v1_decrypt_iv into
+	 * .st_v1_new_iv.
+	 */
+	PEXPECT(ike->sa.logger, hunk_eq(md->v1_decrypt_iv,
+					ike->sa.st_v1_new_iv));
+	ike->sa.st_v1_iv = md->v1_decrypt_iv;
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
-	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/*
 	 * we are done with this exchange, clear things so
