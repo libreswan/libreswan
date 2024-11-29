@@ -257,15 +257,23 @@ extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 extern void close_output_pbs(struct pbs_out *pbs);
 
 /*
- * A, hopefully, unfragmented packet.
+ * For sending packets (such as notifications) that won't fragment.
+ *
+ * MIN_MAX_UDP_DATA_v[46] is the largest a UDP packet can be before it
+ * can be fragmented in transit.  i.e., UDP messages smaller than that
+ * don't fragment..
+ *
+ * Filling this buffer is sure sign of code that needs to fragment the
+ * message (IKEv2 code uses a code path that always fragments when
+ * need; IKEv1 does not).
  */
 
-struct packet_pbs_out {
+struct fragment_pbs_out {
 	struct pbs_out pbs;
-	uint8_t buffer[1500];
+	uint8_t buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
 };
 
-void open_packet_pbs_out(const char *name, struct packet_pbs_out *pbs, struct logger *logger);
+bool open_fragment_pbs_out(const char *name, struct fragment_pbs_out *pbs, struct logger *logger);
 
 struct large_pbs_out {
 	struct pbs_out pbs;

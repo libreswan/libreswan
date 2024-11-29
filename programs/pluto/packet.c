@@ -1816,11 +1816,14 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 	return outs;
 }
 
-void open_packet_pbs_out(const char *name, struct packet_pbs_out *pbs, struct logger *logger)
+bool open_fragment_pbs_out(const char *name,
+			   struct fragment_pbs_out *pbs,
+			   struct logger *logger)
 {
 	pbs->pbs = open_pbs_out(name, pbs->buffer,
 				sizeof(pbs->buffer),
 				logger);
+	return true;
 }
 
 void open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger)
