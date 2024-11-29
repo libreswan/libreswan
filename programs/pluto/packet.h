@@ -256,12 +256,16 @@ extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
 extern void close_output_pbs(struct pbs_out *pbs);
 
-struct small_pbs_out {
+/*
+ * A, hopefully, unfragmented packet.
+ */
+
+struct packet_pbs_out {
 	struct pbs_out pbs;
-	uint8_t buffer[1024];
+	uint8_t buffer[1500];
 };
 
-void open_small_pbs_out(const char *name, struct small_pbs_out *pbs, struct logger *logger);
+void open_packet_pbs_out(const char *name, struct packet_pbs_out *pbs, struct logger *logger);
 
 struct large_pbs_out {
 	struct pbs_out pbs;
