@@ -476,9 +476,16 @@ static stf_status emit_modecfg(struct ike_sa *ike,
  * @param st State Structure
  * @return stf_status
  */
-stf_status modecfg_start_set(struct ike_sa *ike)
+stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 {
+	/*
+	 * Danger: if this was triggered by the final Main or
+	 * Aggressive message, the IV is effectively .st_v1_ph1_iv.
+	 * Should it be re-generated to include the below msgid()?
+	 */
+
 	if (ike->sa.st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
+		llog_pexpect(ike->sa.logger, HERE, "GENERATING Phase-1.5 Message ID WITHOUT GENERATING IV"); 
 		/* pick a new message id */
 		ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
 	}
@@ -487,7 +494,7 @@ stf_status modecfg_start_set(struct ike_sa *ike)
 	/* set up reply */
 	uint8_t buf[256];
 	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), ike->sa.logger);
-	change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
+	change_v1_state(&ike->sa, STATE_MODE_CFG_R1); /* redundant; see caller */
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -526,11 +533,10 @@ stf_status modecfg_start_set(struct ike_sa *ike)
 	if (stat != STF_OK)
 		return stat;
 
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+	ike->sa.st_v1_iv = iv;
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
-	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* Transmit */
 	record_and_send_v1_ike_msg(&ike->sa, &reply, "ModeCfg set");

@@ -2470,14 +2470,21 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    !st->st_connection->config->modecfg.pull) {
 			/* note IS_V1_ISAKMP_SA_ESTABLISHED() above */
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
 			llog(RC_LOG, ike->sa.logger, "Sending MODE CONFIG set");
 			/*
 			 * ??? we ignore the result of modecfg.
-			 * But surely, if it fails, we ought to terminate this exchange.
-			 * What do the RFCs say?
+			 *
+			 * But surely, if it fails, we ought to
+			 * terminate this exchange.  What do the RFCs
+			 * say?
+			 *
+			 * If this is triggered by the final Main or
+			 * Aggressive Mode message .v1_decrypt_iv is
+			 * .st_v1_ph1_iv.  Else it is from chaining
+			 * the XAUTH exchange.
 			 */
-			modecfg_start_set(ike);
+			PASSERT(ike->sa.logger, md != NULL);
+			modecfg_start_set(ike, md->v1_decrypt_iv);
 			break;
 		}
 

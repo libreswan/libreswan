@@ -23,7 +23,8 @@ struct msg_digest;	/* so demux.h is not a prerequisite */
 
 extern stf_status xauth_send_request(struct ike_sa *ike);
 
-extern stf_status modecfg_start_set(struct ike_sa *ike);
+extern stf_status modecfg_start_set(struct ike_sa *ike,
+				    struct crypt_mac iv);
 
 /* XAUTH state transitions */
 
