@@ -341,7 +341,8 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
  * @param ap_id ISAMA Identifier
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
-static stf_status modecfg_resp(struct ike_sa *ike,
+
+static stf_status emit_modecfg(struct ike_sa *ike,
 			       lset_t resp,
 			       struct pbs_out *rbody,
 			       uint16_t replytype,
@@ -467,12 +468,6 @@ static stf_status modecfg_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	/* stores updated IV in .st_v1_new_iv */
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_new_iv)) {
-		return STF_INTERNAL_ERROR;
-	}
-	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
-
 	return STF_OK;
 }
 
@@ -515,16 +510,23 @@ static stf_status modecfg_send_set(struct ike_sa *ike)
 			  LELEM(IKEv1_INTERNAL_IP4_SUBNET) | \
 			  LELEM(IKEv1_INTERNAL_IP4_DNS))
 
-	stf_status stat = modecfg_resp(ike,
+	stf_status stat = emit_modecfg(ike,
 				       MODECFG_SET_ITEM,
 				       &rbody,
 				       ISAKMP_CFG_SET,
 				       /*use_modecfg_addr_as_client_addr*/true,
 				       0 /* XXX ID */);
 
+#undef MODECFG_SET_ITEM
+
 	if (stat != STF_OK)
 		return stat;
-#undef MODECFG_SET_ITEM
+
+	/* stores updated IV in .st_v1_new_iv */
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/* Transmit */
 	record_and_send_v1_ike_msg(&ike->sa, &reply, "ModeCfg set");
@@ -1520,7 +1522,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 						       reply_buffer, sizeof(reply_buffer),
 						       &rbody, ike->sa.logger);
 
-			stf_status stat = modecfg_resp(ike, resp,
+			stf_status stat = emit_modecfg(ike, resp,
 						       &rbody,
 						       ISAKMP_CFG_REPLY,
 						       /*use_modecfg_addr_as_client_addr*/true,
@@ -1531,6 +1533,13 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 				md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 				return stat;
 			}
+
+			/* stores updated IV in .st_v1_new_iv */
+			if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+				return STF_INTERNAL_ERROR;
+			}
+			ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
+
 		}
 
 		/* they asked us, we responded, msgid is done */
@@ -1655,7 +1664,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
-	stf_status stat = modecfg_resp(ike, resp,
+	stf_status stat = emit_modecfg(ike, resp,
 				       &rbody,
 				       ISAKMP_CFG_ACK,
 				       /*use_modecfg_addr_as_client_addr*/false,
@@ -1666,6 +1675,12 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 		return stat;
 	}
+
+	/* stores updated IV in .st_v1_new_iv */
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_new_iv)) {
+		return STF_INTERNAL_ERROR;
+	}
+	ike->sa.st_v1_iv = ike->sa.st_v1_new_iv;
 
 	/*
 	 * we are done with this exchange, clear things so
