@@ -2079,10 +2079,21 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
  * @return stf_status
  */
 static stf_status xauth_client_resp(struct ike_sa *ike,
+				    struct msg_digest *md,
 				    lset_t xauth_resp,
-				    struct pbs_out *rbody,
 				    uint16_t ap_id)
 {
+	/*
+	 * Send back the password.
+	 *
+	 * Danger: the caller, ikev1.c, will record'n'send the
+	 * global REPLY_STREAM being built here!
+	 */
+	struct pbs_out rbody[1]; /*hack*/
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
+				       rbody, ike->sa.logger);
+
 	char xauth_username[MAX_XAUTH_USERNAME_LEN];
 
 	struct v1_hash_fixup hash_fixup;
@@ -2461,18 +2472,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 			}
 		}
 
-		/*
-		 * Send back the password.
-		 *
-		 * Danger: the caller, ikev1.c, will record'n'send the
-		 * global REPLY_STREAM being built here!
-		 */
-		struct pbs_out rbody;
-		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-					       reply_buffer, sizeof(reply_buffer),
-					       &rbody, ike->sa.logger);
-		stat = xauth_client_resp(ike, xauth_resp,
-					 &rbody,
+		stat = xauth_client_resp(ike, md, xauth_resp,
 					 md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 	}
 
