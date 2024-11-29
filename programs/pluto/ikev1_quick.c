@@ -552,17 +552,39 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	return !bad_proposal;
 }
 
-struct child_sa *quick_outI1(struct ike_sa *isakmp,
+static bool child_has_client(struct ike_sa *ike, struct child_sa *child)
+{
+	struct connection *c = child->sa.st_connection;
+
+#define HAS_CLIENT(P)						\
+	if (P) {						\
+		pdbg(child->sa.logger, "has_client: " #P);	\
+		return true;					\
+	}
+	HAS_CLIENT(c->local->child.has_client);
+	HAS_CLIENT(c->remote->child.has_client);
+	HAS_CLIENT(c->spd->local->client.ipproto != 0);
+	HAS_CLIENT(c->spd->remote->client.ipproto != 0);
+	HAS_CLIENT(c->spd->local->client.hport != 0);
+	HAS_CLIENT(c->spd->remote->client.hport != 0);
+	HAS_CLIENT(nat_traversal_detected(&ike->sa) && ike->sa.hidden_variables.st_nated_host);
+#undef HAS_CLIENT
+
+	pdbg(child->sa.logger, "has_client: no!");
+	return false;
+}
+
+struct child_sa *quick_outI1(struct ike_sa *ike,
 			     struct connection *c,
 			     const struct child_policy *policy,
 			     so_serial_t replacing)
 {
 	passert(c != NULL);
-	struct child_sa *child = new_v1_child_sa(c, isakmp, SA_INITIATOR);
+	struct child_sa *child = new_v1_child_sa(c, ike, SA_INITIATOR);
 
 	child->sa.st_policy = (*policy);
 
-	child->sa.st_v1_msgid.id = generate_msgid(&isakmp->sa);
+	child->sa.st_v1_msgid.id = generate_msgid(&ike->sa);
 	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
 	binlog_refresh_state(&child->sa);
@@ -581,7 +603,7 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 		 * very likely supported.
 		 */
 		if (child->sa.st_pfs_group == NULL)
-			child->sa.st_pfs_group = isakmp->sa.st_oakley.ta_dh;
+			child->sa.st_pfs_group = ike->sa.st_oakley.ta_dh;
 	}
 
 	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
@@ -591,7 +613,7 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			jam(buf, " to replace #%lu", replacing);
 		}
 		jam(buf, " {using isakmp"PRI_SO" msgid:%08" PRIx32 " proposal=",
-		    pri_so(isakmp->sa.st_serialno), child->sa.st_v1_msgid.id);
+		    pri_so(ike->sa.st_serialno), child->sa.st_v1_msgid.id);
 		if (child->sa.st_connection->config->child_sa.proposals.p != NULL) {
 			jam_proposals(buf, child->sa.st_connection->config->child_sa.proposals.p);
 		} else {
@@ -602,6 +624,10 @@ struct child_sa *quick_outI1(struct ike_sa *isakmp,
 			jam_string(buf, child->sa.st_pfs_group->common.fqn);
 		} else {
 			jam_string(buf, "no-pfs");
+		}
+		if (child_has_client(ike, child)) {
+			jam_string(buf, " ");
+			jam_selector_pair(buf, &c->spd->local->client, &c->spd->remote->client);
 		}
 		jam(buf, "}");
 	}
@@ -678,20 +704,12 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 
 	struct connection *c = child->sa.st_connection;
 	struct pbs_out rbody;
-	bool has_client = (c->local->child.has_client ||
-			   c->remote->child.has_client ||
-			   c->spd->local->client.ipproto != 0 ||
-			   c->spd->remote->client.ipproto != 0 ||
-			   c->spd->local->client.hport != 0 ||
-			   c->spd->remote->client.hport != 0);
+	bool has_client = child_has_client(ike, child);
 
 	if (nat_traversal_detected(&ike->sa)) {
 		/* Duplicate nat_traversal status in new state */
 		child->sa.hidden_variables.st_nat_traversal =
 			ike->sa.hidden_variables.st_nat_traversal;
-		if (ike->sa.hidden_variables.st_nated_host) {
-			has_client = true;
-		}
 		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
 		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
@@ -2139,13 +2157,6 @@ static struct connection *fc_try(const struct connection *c,
 		struct connection *d = hpf.c;
 		struct verbose verbose = hpf.search.verbose;
 
-		connection_buf cb;
-		selector_pair_buf sb;
-		vdbg("looking at "PRI_CONNECTION" with %s",
-		     pri_connection(d, &cb),
-		     str_selector_pair(&d->spd->local->client, &d->spd->remote->client, &sb));
-		verbose.level++;
-
 		if (is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 			vdbg("skipping unauthenticated connection instance with ID_NULL");
 			continue;
@@ -2193,60 +2204,51 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
-		vdbg("checking connection's SPDs");
-		verbose.level++;
-
+		unsigned level = verbose.level;
 		FOR_EACH_ITEM(d_spd, &d->child.spds) {
+			verbose.level = level;
 
-			selector_buf s1, d1;
-			selector_buf s3, d3;
-			vdbg("trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
-			     c->name,
-			     str_selector_subnet_port(local_client, &s1),
-			     c->spd->local->client.ipproto,
-			     c->spd->local->client.hport,
-			     str_selector_subnet_port(remote_client, &d1),
-			     c->spd->remote->client.ipproto,
-			     c->spd->remote->client.hport,
-			     (is_virtual_remote(c, verbose) ? "(virt)" : ""),
-			     d->name,
-			     str_selector_subnet_port(&d_spd->local->client, &s3),
-			     d_spd->local->client.ipproto,
-			     d_spd->local->client.hport,
-			     str_selector_subnet_port(&d_spd->remote->client, &d3),
-			     d_spd->remote->client.ipproto,
-			     d_spd->remote->client.hport,
-			     (is_virtual_spd_end(d_spd->remote, verbose) ? "(virt)" : ""));
+			selector_pair_buf sb;
+			vdbg("trying %s SPD %s virt=%s",
+			     d->prefix,
+			     str_selector_pair(&d_spd->local->client, &d_spd->remote->client, &sb),
+			     bool_str(is_virtual_spd_end(d_spd->remote, verbose)));
+
+			verbose.level++;
+
+			/* compare ranges, protocols and ports */
 
 			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
-				selector_buf s1, s3;
-				vdbg("our client (%s) not in local_net (%s)",
-				     str_selector_subnet_port(&d_spd->local->client, &s3),
-				     str_selector_subnet_port(local_client, &s1));
+				selector_buf s1, s2;
+				vdbg("skipping SPD, local range %s does not match peer %s",
+				     str_selector(&d_spd->local->client, &s1),
+				     str_selector(local_client, &s2));
 				continue;
 			}
 
-			/* compare protocol and ports */
-
 			if (d_spd->local->client.ipproto != local_client->ipproto) {
-				vdbg("skipping connection SPD with wrong local protocol");
+				vdbg("skipping SPD, local protocol %d does not match peer %d",
+				     d_spd->local->client.ipproto, local_client->ipproto);
 				continue;
 			}
 
 			if (d_spd->remote->client.ipproto != remote_client->ipproto) {
-				vdbg("skipping connection SPD with wrong remote protocol");
+				vdbg("skipping SPD, remote protocol %d does not match peer %d",
+				     d_spd->remote->client.ipproto, remote_client->ipproto);
 				continue;
 			}
 
 			if (d_spd->local->client.hport != 0 &&
 			    d_spd->local->client.hport != local_client->hport) {
-				vdbg("skipping connection SPD with wrong local port");
+				vdbg("skipping SPD, local port %d does not match peer %d",
+				     d_spd->local->client.hport, local_client->hport);
 				continue;
 			}
 
 			if (!d->remote->config->child.protoport.has_port_wildcard &&
 			    d_spd->remote->client.hport != remote_client->hport) {
-				vdbg("skipping connection with wrong remote port");
+				vdbg("skipping SPD, remote port %d does not match peer %d",
+				     d_spd->remote->client.hport, remote_client->hport);
 				continue;
 			}
 
