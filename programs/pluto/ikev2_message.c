@@ -1108,16 +1108,15 @@ static bool record_outbound_fragment(struct logger *logger,
 				     unsigned int number, unsigned int total,
 				     const char *desc)
 {
-	/* make sure HDR is at start of a clean buffer */
-	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
-	struct pbs_out frag_stream = open_pbs_out("reply frag packet",
-						  frag_buffer, sizeof(frag_buffer),
-						  logger);
+	struct fragment_pbs_out message_fragment;
+	if (!open_fragment_pbs_out("fragment", &message_fragment, logger)) {
+		return false;
+	}
 
 	/* HDR out */
 
 	struct pbs_out body;
-	if (!pbs_out_struct(&frag_stream, &isakmp_hdr_desc, hdr, sizeof(*hdr), &body))
+	if (!pbs_out_struct(&message_fragment.pbs, &isakmp_hdr_desc, hdr, sizeof(*hdr), &body))
 		return false;
 
 	/*
@@ -1187,7 +1186,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	}
 
 	close_output_pbs(&body);
-	close_output_pbs(&frag_stream);
+	close_output_pbs(&message_fragment.pbs);
 
 	if (!encrypt_v2SK_payload(&skf)) {
 		llog(RC_LOG, logger, "error encrypting fragment %u", number);
@@ -1195,7 +1194,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	}
 
 	dbg("recording fragment %u", number);
-	record_v2_outgoing_fragment(&frag_stream, desc, fragp);
+	record_v2_outgoing_fragment(&message_fragment.pbs, desc, fragp);
 	return true;
 }
 
