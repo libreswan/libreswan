@@ -1551,8 +1551,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
  * @return stf_status
  */
 static stf_status modecfg_inI2(struct ike_sa *ike,
-			       struct msg_digest *md,
-			       struct pbs_out *rbody)
+			       struct msg_digest *md)
 {
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
@@ -1644,19 +1643,28 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	}
 	/* log_state(LOG_DEBUG, st, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
 
-	/* ack things */
-	{
-		stf_status stat = modecfg_resp(ike, resp,
-					       rbody,
-					       ISAKMP_CFG_ACK,
-					       false,
-					       isama_id);
+	/*
+	 * Build the response.
+	 *
+	 * Danger: the caller, ikev1.c, will record'n'send the global
+	 * REPLY_STREAM being built here!
+	 */
 
-		if (stat != STF_OK) {
-			/* notification payload - not exactly the right choice, but okay */
-			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
-			return stat;
-		}
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
+				       &rbody, ike->sa.logger);
+
+	stf_status stat = modecfg_resp(ike, resp,
+				       &rbody,
+				       ISAKMP_CFG_ACK,
+				       /*use_modecfg_addr_as_client_addr*/false,
+				       isama_id);
+
+	if (stat != STF_OK) {
+		/* notification payload - not exactly the right choice, but okay */
+		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
+		return stat;
 	}
 
 	/*
@@ -2271,15 +2279,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	bool got_status = false;
 
 	if (ike->sa.hidden_variables.st_xauth_client_done) {
-		/*
-		 * Danger: the caller, ikev1.c, will record'n'send the
-		 * global REPLY_STREAM being built here!
-		 */
-		struct pbs_out rbody;
-		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-					       reply_buffer, sizeof(reply_buffer),
-					       &rbody, ike->sa.logger);
-		return modecfg_inI2(ike, md, &rbody);
+		return modecfg_inI2(ike, md);
 	}
 
 	dbg("arrived in xauth_inI0");
@@ -2551,15 +2551,7 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 
 	if (ike->sa.hidden_variables.st_xauth_client_done) {
 		dbg("st_xauth_client_done, moving into modecfg_inI2");
-		/*
-		 * Danger: the caller, ikev1.c, will record'n'send the
-		 * global REPLY_STREAM being built here!
-		 */
-		struct pbs_out rbody;
-		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-					       reply_buffer, sizeof(reply_buffer),
-					       &rbody, ike->sa.logger);
-		return modecfg_inI2(ike, md, &rbody);
+		return modecfg_inI2(ike, md);
 	}
 
 	dbg("Continuing with xauth_inI1");
