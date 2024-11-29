@@ -476,13 +476,19 @@ static stf_status emit_modecfg(struct ike_sa *ike,
  * @param st State Structure
  * @return stf_status
  */
-static stf_status modecfg_send_set(struct ike_sa *ike)
+stf_status modecfg_start_set(struct ike_sa *ike)
 {
+	if (ike->sa.st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
+		/* pick a new message id */
+		ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
+	}
+	ike->sa.hidden_variables.st_modecfg_vars_set = true;
+
 	/* set up reply */
 	uint8_t buf[256];
 	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), ike->sa.logger);
-
 	change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
+
 	/* HDR out */
 	struct pbs_out rbody;
 	{
@@ -505,18 +511,16 @@ static stf_status modecfg_send_set(struct ike_sa *ike)
 			return STF_INTERNAL_ERROR;
 	}
 
-/* XXX This does not include IPv6 at this point */
+	/* XXX This does not include IPv6 at this point */
 #define MODECFG_SET_ITEM (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) | \
 			  LELEM(IKEv1_INTERNAL_IP4_SUBNET) | \
 			  LELEM(IKEv1_INTERNAL_IP4_DNS))
-
 	stf_status stat = emit_modecfg(ike,
 				       MODECFG_SET_ITEM,
 				       &rbody,
 				       ISAKMP_CFG_SET,
 				       /*use_modecfg_addr_as_client_addr*/true,
 				       0 /* XXX ID */);
-
 #undef MODECFG_SET_ITEM
 
 	if (stat != STF_OK)
@@ -538,22 +542,6 @@ static stf_status modecfg_send_set(struct ike_sa *ike)
 	}
 
 	return STF_OK;
-}
-
-/** Set MODE_CONFIG data to client.  Pack IP Addresses, DNS, etc... and ship
- *
- * @param st State Structure
- * @return stf_status
- */
-stf_status modecfg_start_set(struct ike_sa *ike)
-{
-	if (ike->sa.st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
-		/* pick a new message id */
-		ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
-	}
-	ike->sa.hidden_variables.st_modecfg_vars_set = true;
-
-	return modecfg_send_set(ike);
 }
 
 /*
