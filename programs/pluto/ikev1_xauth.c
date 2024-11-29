@@ -1456,11 +1456,6 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-				       reply_buffer, sizeof(reply_buffer),
-				       &rbody, ike->sa.logger);
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	lset_t resp = LEMPTY;
@@ -1515,6 +1510,16 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 		}
 
 		{
+			/*
+			 * Danger: the caller, ikev1.c, will
+			 * record'n'send the global REPLY_STREAM being
+			 * built here!
+			 */
+			struct pbs_out rbody;
+			ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+						       reply_buffer, sizeof(reply_buffer),
+						       &rbody, ike->sa.logger);
+
 			stf_status stat = modecfg_resp(ike, resp,
 						       &rbody,
 						       ISAKMP_CFG_REPLY,
@@ -1776,10 +1781,13 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
-	struct pbs_out rbody;
+	/*
+	 * XXX: does this go anywhere?  RBODY isn't used.
+	 */
+	struct pbs_out unused_rbody;
 	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
 				       reply_buffer, sizeof(reply_buffer),
-				       &rbody, ike->sa.logger);
+				       &unused_rbody, ike->sa.logger);
 
 	struct connection *c = ike->sa.st_connection;
 
@@ -2252,11 +2260,6 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-				       reply_buffer, sizeof(reply_buffer),
-				       &rbody, ike->sa.logger);
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	lset_t xauth_resp = LEMPTY;
@@ -2267,8 +2270,17 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	bool gotset = false;
 	bool got_status = false;
 
-	if (ike->sa.hidden_variables.st_xauth_client_done)
+	if (ike->sa.hidden_variables.st_xauth_client_done) {
+		/*
+		 * Danger: the caller, ikev1.c, will record'n'send the
+		 * global REPLY_STREAM being built here!
+		 */
+		struct pbs_out rbody;
+		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+					       reply_buffer, sizeof(reply_buffer),
+					       &rbody, ike->sa.logger);
 		return modecfg_inI2(ike, md, &rbody);
+	}
 
 	dbg("arrived in xauth_inI0");
 
@@ -2395,7 +2407,16 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	}
 
 	if (gotset && got_status) {
-		/* ACK whatever it was that we got */
+		/*
+		 * ACK whatever it was that we got.
+		 *
+		 * Danger: the caller, ikev1.c, will record'n'send the
+		 * global REPLY_STREAM being built here!
+		 */
+		struct pbs_out rbody;
+		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+					       reply_buffer, sizeof(reply_buffer),
+					       &rbody, ike->sa.logger);
 		stat = xauth_client_ackstatus(ike, &rbody,
 					      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
@@ -2405,13 +2426,13 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 			llog(RC_LOG, ike->sa.logger, "XAUTH: Successfully Authenticated");
 			ike->sa.st_oakley.doing_xauth = false;
 			return STF_OK;
-		} else {
-			enum_buf sb;
-			llog(RC_LOG, ike->sa.logger, "xauth: xauth_client_ackstatus() returned %s",
-			     str_enum(&stf_status_names, stat, &sb));
-			llog(RC_LOG, ike->sa.logger, "XAUTH: aborting entire IKE Exchange");
-			return STF_FATAL;
 		}
+
+		enum_buf sb;
+		llog(RC_LOG, ike->sa.logger, "xauth: xauth_client_ackstatus() returned %s",
+		     str_enum(&stf_status_names, stat, &sb));
+		llog(RC_LOG, ike->sa.logger, "XAUTH: aborting entire IKE Exchange");
+		return STF_FATAL;
 	}
 
 	if (gotrequest) {
@@ -2431,6 +2452,16 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 			}
 		}
 
+		/*
+		 * Send back the password.
+		 *
+		 * Danger: the caller, ikev1.c, will record'n'send the
+		 * global REPLY_STREAM being built here!
+		 */
+		struct pbs_out rbody;
+		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+					       reply_buffer, sizeof(reply_buffer),
+					       &rbody, ike->sa.logger);
 		stat = xauth_client_resp(ike, xauth_resp,
 					 &rbody,
 					 md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
@@ -2510,11 +2541,6 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-				       reply_buffer, sizeof(reply_buffer),
-				       &rbody, ike->sa.logger);
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	bool got_status = false;
@@ -2525,8 +2551,17 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 
 	if (ike->sa.hidden_variables.st_xauth_client_done) {
 		dbg("st_xauth_client_done, moving into modecfg_inI2");
+		/*
+		 * Danger: the caller, ikev1.c, will record'n'send the
+		 * global REPLY_STREAM being built here!
+		 */
+		struct pbs_out rbody;
+		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+					       reply_buffer, sizeof(reply_buffer),
+					       &rbody, ike->sa.logger);
 		return modecfg_inI2(ike, md, &rbody);
 	}
+
 	dbg("Continuing with xauth_inI1");
 
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
@@ -2591,6 +2626,17 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 		change_v1_state(&ike->sa, STATE_XAUTH_I0);
 		return xauth_inI0(&ike->sa, md);
 	}
+
+	/*
+	 * build response.
+	 *
+	 * Danger: the caller, ikev1.c, will record'n'send the global
+	 * REPLY_STREAM being built here!
+	 */
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
+				       &rbody, ike->sa.logger);
 
 	/* ACK whatever it was that we got */
 	stat = xauth_client_ackstatus(ike, &rbody,
