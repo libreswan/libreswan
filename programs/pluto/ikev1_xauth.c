@@ -519,7 +519,7 @@ static stf_status modecfg_send_set(struct ike_sa *ike)
 				       MODECFG_SET_ITEM,
 				       &rbody,
 				       ISAKMP_CFG_SET,
-				       true,
+				       /*use_modecfg_addr_as_client_addr*/true,
 				       0 /* XXX ID */);
 
 	if (stat != STF_OK)
@@ -1457,8 +1457,8 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
@@ -1518,7 +1518,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 			stf_status stat = modecfg_resp(ike, resp,
 						       &rbody,
 						       ISAKMP_CFG_REPLY,
-						       true,
+						       /*use_modecfg_addr_as_client_addr*/true,
 						       ma->isama_identifier);
 
 			if (stat != STF_OK) {
@@ -1777,8 +1777,8 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	struct connection *c = ike->sa.st_connection;
@@ -2253,8 +2253,8 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
@@ -2511,8 +2511,8 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;

@@ -1550,8 +1550,8 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 
 	/* HDR* out */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, child->sa.logger);
 
 	struct v1_hash_fixup hash_fixup;
@@ -1741,8 +1741,8 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 	struct connection *c = child->sa.st_connection;
 
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, child->sa.logger);
 
 	if (nat_traversal_detected(&child->sa) &&

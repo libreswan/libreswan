@@ -598,8 +598,8 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 	 * depends on the type of Auth (eventually).
 	 */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, false,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/false, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	/* KE out */
@@ -728,8 +728,8 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 
 	/* HDR out */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, false,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/false, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	/* KE out */
@@ -953,8 +953,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inR2_outI3_continue*/
 
 	struct pbs_out rbody[1]; /* hack */
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       rbody, ike->sa.logger);
 
 	const struct connection *c = ike->sa.st_connection;
@@ -1256,8 +1256,8 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	 * be first payload.
 	 */
 	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, true,
-				       &reply_stream, reply_buffer, sizeof(reply_buffer),
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
 	enum next_payload_types_ikev1 auth_payload = ike->sa.st_oakley.auth == OAKLEY_PRESHARED_KEY ?
