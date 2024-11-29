@@ -83,7 +83,7 @@
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct ike_sa *ike,
-					 struct pbs_out *rbody,
+					 struct msg_digest *md,
 					 uint16_t ap_id);
 
 /* CISCO_SPLIT_INC example payload
@@ -2420,17 +2420,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	}
 
 	if (gotset && got_status) {
-		/*
-		 * ACK whatever it was that we got.
-		 *
-		 * Danger: the caller, ikev1.c, will record'n'send the
-		 * global REPLY_STREAM being built here!
-		 */
-		struct pbs_out rbody;
-		ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-					       reply_buffer, sizeof(reply_buffer),
-					       &rbody, ike->sa.logger);
-		stat = xauth_client_ackstatus(ike, &rbody,
+		stat = xauth_client_ackstatus(ike, md,
 					      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
 		/* must have gotten a status */
@@ -2501,9 +2491,20 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
  * @return stf_status
  */
 static stf_status xauth_client_ackstatus(struct ike_sa *ike,
-					 struct pbs_out *rbody,
+					 struct msg_digest *md,
 					 uint16_t ap_id)
 {
+	/*
+	 * ACK whatever it was that we got.
+	 *
+	 * Danger: the caller, ikev1.c, will record'n'send the
+	 * global REPLY_STREAM being built here!
+	 */
+	struct pbs_out rbody[1]; /*hack*/
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
+				       rbody, ike->sa.logger);
+
 	struct v1_hash_fixup hash_fixup;
 	if (!emit_xauth_hash(ike, "XAUTH: ack status", &hash_fixup, rbody)) {
 		return STF_INTERNAL_ERROR;
@@ -2632,19 +2633,8 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 		return xauth_inI0(&ike->sa, md);
 	}
 
-	/*
-	 * build response.
-	 *
-	 * Danger: the caller, ikev1.c, will record'n'send the global
-	 * REPLY_STREAM being built here!
-	 */
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-				       reply_buffer, sizeof(reply_buffer),
-				       &rbody, ike->sa.logger);
-
 	/* ACK whatever it was that we got */
-	stat = xauth_client_ackstatus(ike, &rbody,
+	stat = xauth_client_ackstatus(ike, md,
 				      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_identifier);
 
 	/* must have gotten a status */
