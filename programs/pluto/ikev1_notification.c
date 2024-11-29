@@ -341,25 +341,11 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	send_pbs_out_using_md(md, "notification packet", &packet.pbs);
 }
 
-void send_v1_notification_from_ike(struct ike_sa *ike, v1_notification_t type)
+void send_encrypted_v1_notification_from_ike(struct ike_sa *ike, v1_notification_t type)
 {
-	pstats(ikev1_sent_notifies_e, type);
-	enum state_kind from_state = ike->sa.st_state->kind;
-
-	if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
-		send_v1_notification(ike->sa.logger,
-				     &ike->sa, type,
-				     ike, generate_msgid(&ike->sa),
-				     ike->sa.st_ike_spis.initiator.bytes,
-				     ike->sa.st_ike_spis.responder.bytes,
-				     PROTO_ISAKMP);
-		return;
-	}
-
-	/* no ISAKMP SA established - don't encrypt notification */
 	send_v1_notification(ike->sa.logger,
 			     &ike->sa, type,
-			     /*no-ISAKMP*/NULL, v1_MAINMODE_MSGID/*0*/,
+			     ike, generate_msgid(&ike->sa),
 			     ike->sa.st_ike_spis.initiator.bytes,
 			     ike->sa.st_ike_spis.responder.bytes,
 			     PROTO_ISAKMP);

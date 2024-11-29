@@ -487,17 +487,16 @@ static void send_v1_notification_from_isakmp(struct ike_sa *ike,
 					     struct msg_digest *md,
 					     v1_notification_t n)
 {
-	if (pbad(ike == NULL)) {
+	if (PBAD(md->logger, ike == NULL)) {
 		return;
 	}
-	if (ike->sa.st_state->kind != STATE_AGGR_R0 &&
-	    ike->sa.st_state->kind != STATE_AGGR_R1 &&
-	    ike->sa.st_state->kind != STATE_MAIN_R0) {
-		/* i.e., somewhat useful */
-		send_v1_notification_from_ike(ike, n);
-	} else {
-		send_v1_notification_from_md(md, n);
+
+	if (IS_V1_ISAKMP_ENCRYPTED(ike->sa.st_state->kind)) {
+		send_encrypted_v1_notification_from_ike(ike, n);
+		return;
 	}
+
+	send_v1_notification_from_md(md, n);
 }
 
 /* process an input packet, possibly generating a reply.

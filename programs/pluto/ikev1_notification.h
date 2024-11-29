@@ -26,8 +26,8 @@ struct ike_sa;
 void send_v1_notification_from_state(struct state *st,
 				     enum state_kind from_state,
 				     v1_notification_t type);
-void send_v1_notification_from_ike(struct ike_sa *ike,
-				   v1_notification_t type);
+void send_encrypted_v1_notification_from_ike(struct ike_sa *ike,
+					     v1_notification_t type);
 void send_v1_notification_from_md(struct msg_digest *md,
 				  v1_notification_t type);
 
