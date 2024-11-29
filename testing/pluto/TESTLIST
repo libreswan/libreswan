@@ -953,6 +953,7 @@ kvmplutotest	xauth-pluto-28-twobehindnat	good
 kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
 kvmplutotest	ikev1-xauth-31-one-each-way		wip	github/633
 kvmplutotest	ikev1-xauth-32-lost-mode-cfg		good	github/1785
+kvmplutotest	ikev1-xauth-33-quick-narrows		wip	github/1857
 
 #
 # Aggressive Mode Pluto Tests
