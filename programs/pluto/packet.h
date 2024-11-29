@@ -254,7 +254,9 @@ diag_t pbs_in_shunk(struct pbs_in *pbs, size_t len, shunk_t *shunk,
  */
 extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
-extern void close_output_pbs(struct pbs_out *pbs);
+
+bool close_pbs_out(struct pbs_out *pbs);
+#define close_output_pbs close_pbs_out
 
 /*
  * For sending packets (such as notifications) that won't fragment.
@@ -280,7 +282,7 @@ struct large_pbs_out {
 	uint8_t buffer[MAX_OUTPUT_UDP_SIZE];
 };
 
-void open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger);
+bool open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger);
 
 /*
  * Map/clone the current contents (i.e., everything written so far)

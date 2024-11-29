@@ -1826,9 +1826,10 @@ bool open_fragment_pbs_out(const char *name,
 	return true;
 }
 
-void open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger)
+bool open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logger *logger)
 {
 	pbs->pbs = open_pbs_out(name, pbs->buffer, sizeof(pbs->buffer), logger);
+	return true;
 }
 
 struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
@@ -2542,7 +2543,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
  *
  * If obj_pbs is non-NULL, its pbs describes a new output stream set up
  * to contain the object.  The cursor will be left at the variable part.
- * This new stream must subsequently be finalized by close_output_pbs().
+ * This new stream must subsequently be finalized by close_pbs_out().
  *
  * The value of any field of type ft_len is computed, not taken
  * from the input struct.  The length is actually filled in when
@@ -2757,7 +2758,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 				/* We can't check the length because it must
 				 * be filled in after variable part is supplied.
 				 * We do record where this is so that it can be
-				 * filled in by a subsequent close_output_pbs().
+				 * filled in by a subsequent close_pbs_out().
 				 */
 				passert(obj.lenfld == NULL);    /* only one ft_len allowed */
 				obj.lenfld = cur;
@@ -2805,7 +2806,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			/* obj.lenfld* and obj.previous_np* already set */
 
 			if (obj_pbs == NULL) {
-				close_output_pbs(&obj); /* fill in length field, if any */
+				close_pbs_out(&obj); /* fill in length field, if any */
 			} else {
 				/* We set outs->cur to outs->roof so that
 				 * any attempt to output something into outs
@@ -2856,7 +2857,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 		return false;
 	}
 
-	close_output_pbs(&pbs);
+	close_pbs_out(&pbs);
 	return true;
 }
 
@@ -2972,15 +2973,15 @@ bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
 uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /*
- * close_output_pbs: record current length and check previous_NP
+ * close_pbs_out: record current length and check previous_NP
  *
  * Note: currently, this may be repeated any number of times;
  * the last call's setting of the length wins.
  */
 
-void close_output_pbs(struct pbs_out *pbs)
+bool close_pbs_out(struct pbs_out *pbs)
 {
-	pexpect(pbs->logger != NULL);
+	PASSERT(pbs->logger, pbs->logger != NULL);
 
 	if (pbs->lenfld != NULL) {
 		size_t len = (pbs->cur - pbs->start);
@@ -2988,7 +2989,7 @@ void close_output_pbs(struct pbs_out *pbs)
 		if (pbs->lenfld_desc->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
 
-		dbg("emitting length of %s: %zu", pbs->name, len);
+		ldbg(pbs->logger, "emitting length of %s: %zu", pbs->name, len);
 
 		/*
 		 * Emit SIZE octets of (host) length in network order.
@@ -3005,6 +3006,7 @@ void close_output_pbs(struct pbs_out *pbs)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 	/* don't log against a closed pbs */
 	pbs->logger = NULL;
+	return true;
 }
 
 diag_t pbs_in_address(struct pbs_in *input_pbs,
