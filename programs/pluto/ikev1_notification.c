@@ -55,6 +55,30 @@ static monotime_t last_v1N_PAYLOAD_MALFORMED = MONOTIME_EPOCH;
  * Note: msgid is in different order here from other calls :/
  */
 
+static bool emit_v1_notification(struct pbs_out *pbs,
+				 v1_notification_t type,
+				 uint8_t protoid)
+{
+
+	/* Notification Payload */
+
+	struct isakmp_notification notification = {
+		.isan_doi = ISAKMP_DOI_IPSEC,
+		.isan_type = type,
+		.isan_spisize = 0,
+		.isan_protoid = protoid,
+	};
+
+	if (!pbs_out_struct(pbs, &isakmp_notification_desc,
+			    &notification, sizeof(notification),
+			    NULL/*no-inner-payload*/)) {
+		llog(RC_LOG, pbs->logger, "failed to build notification");
+		return false;
+	}
+
+	return true;
+}
+
 static void send_v1_notification(struct logger *logger,
 				 struct state *sndst,
 				 v1_notification_t type,
@@ -64,7 +88,6 @@ static void send_v1_notification(struct logger *logger,
 				 uint8_t *rcookie,
 				 uint8_t protoid)
 {
-	struct pbs_out r_hdr_pbs;
 	const monotime_t now = mononow();
 
 	switch (type) {
@@ -136,24 +159,27 @@ static void send_v1_notification(struct logger *logger,
 		     str_endpoint(&sndst->st_remote_endpoint, &b));
 	}
 
-	uint8_t buffer[1024];	/* ??? large enough for any notification? */
-	struct pbs_out pbs = open_pbs_out("notification msg", buffer, sizeof(buffer), logger);
+	struct fragment_pbs_out packet;
+	if (!open_fragment_pbs_out("notification msg", &packet, logger)) {
+		return;
+	}
 
 	/* HDR* */
-	{
-		/* ??? "keep it around for TPM" */
-		struct isakmp_hdr hdr = {
-			.isa_version = (ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-					ISAKMP_MINOR_VERSION),
-			.isa_xchg = ISAKMP_XCHG_INFO,
-			.isa_msgid = msgid,
-			.isa_flags = (isakmp_encrypt != NULL ? ISAKMP_FLAGS_v1_ENCRYPTION : 0),
-		};
-		if (icookie != NULL)
-			memcpy(hdr.isa_ike_initiator_spi.bytes, icookie, COOKIE_SIZE);
-		if (rcookie != NULL)
-			memcpy(hdr.isa_ike_responder_spi.bytes, rcookie, COOKIE_SIZE);
-		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
+
+	struct pbs_out hdr_pbs;
+	struct isakmp_hdr hdr = {
+		.isa_version = (ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				ISAKMP_MINOR_VERSION),
+		.isa_xchg = ISAKMP_XCHG_INFO,
+		.isa_msgid = msgid,
+		.isa_flags = (isakmp_encrypt != NULL ? ISAKMP_FLAGS_v1_ENCRYPTION : 0),
+	};
+	if (icookie != NULL)
+		memcpy(hdr.isa_ike_initiator_spi.bytes, icookie, COOKIE_SIZE);
+	if (rcookie != NULL)
+		memcpy(hdr.isa_ike_responder_spi.bytes, rcookie, COOKIE_SIZE);
+	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &hdr_pbs)) {
+		return;
 	}
 
 	/* HASH -- value to be filled later */
@@ -161,44 +187,34 @@ static void send_v1_notification(struct logger *logger,
 	if (isakmp_encrypt != NULL) {
 		if (!emit_v1_HASH(V1_HASH_1, "send notification",
 				  IMPAIR_v1_NOTIFICATION_EXCHANGE,
-				  &isakmp_encrypt->sa, &hash_fixup, &r_hdr_pbs)) {
+				  &isakmp_encrypt->sa, &hash_fixup, &hdr_pbs)) {
 			/* return STF_INTERNAL_ERROR; */
 			return;
 		}
 	}
 
 	/* Notification Payload */
-	{
-		struct pbs_out not_pbs;
-		struct isakmp_notification isan = {
-			.isan_doi = ISAKMP_DOI_IPSEC,
-			.isan_type = type,
-			.isan_spisize = 0,
-			.isan_protoid = protoid,
-		};
 
-		if (!out_struct(&isan, &isakmp_notification_desc,
-					&r_hdr_pbs, &not_pbs)) {
-			llog(RC_LOG, logger,
-				    "failed to build notification in send_notification");
-			return;
-		}
-
-		close_output_pbs(&not_pbs);
+	if (!emit_v1_notification(&hdr_pbs, type, protoid)) {
+		return;
 	}
 
 	if (isakmp_encrypt != NULL) {
 		struct ike_sa *ike = isakmp_encrypt; /* use first class name */
 		/* calculate hash value and patch into Hash Payload */
-		fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, r_hdr_pbs.cur);
+		fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, hdr_pbs.cur);
 		struct crypt_mac iv = new_phase2_iv(ike, msgid,
 						    "IKE encrypting notification", HERE);
-		passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &iv));
+		if (!close_and_encrypt_v1_message(ike, &hdr_pbs, &iv)) {
+			return;
+		}
 	} else {
-		close_output_pbs(&r_hdr_pbs);
+		if (!close_pbs_out(&hdr_pbs)) {
+			return;
+		}
 	}
 
-	send_pbs_out_using_state(sndst, "notification packet", &pbs);
+	send_pbs_out_using_state(sndst, "notification packet", &packet.pbs);
 }
 
 void send_v1_notification_from_state(struct state *st, enum state_kind from_state,
@@ -265,7 +281,6 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 {
 	pstats(ikev1_sent_notifies_e, type);
 
-	struct pbs_out r_hdr_pbs;
 	const monotime_t now = mononow();
 
 	switch (type) {
@@ -292,50 +307,36 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	     str_enum_short(&v1_notification_names, type, &nb),
 	     str_endpoint(&md->sender, &b));
 
-	uint8_t buffer[1024];	/* ??? large enough for any notification? */
-	struct pbs_out pbs = open_pbs_out("notification msg",
-					  buffer, sizeof(buffer),
-					  md->logger);
+	struct fragment_pbs_out packet;
+	if (!open_fragment_pbs_out("notification msg", &packet, md->logger)) {
+		return;
+	}
 
 	/* HDR* */
 
-	{
-		/* ??? "keep it around for TPM" */
-		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_INFO,
-			.isa_msgid = 0,
-			.isa_flags = 0,
-			.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi,
-			.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
-		};
-		passert(out_struct(&hdr, &isakmp_hdr_desc, &pbs, &r_hdr_pbs));
+	struct pbs_out hdr_pbs;
+	struct isakmp_hdr hdr = {
+		.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+		ISAKMP_MINOR_VERSION,
+		.isa_xchg = ISAKMP_XCHG_INFO,
+		.isa_msgid = 0,
+		.isa_flags = 0,
+		.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi,
+		.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
+	};
+
+	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &hdr_pbs)) {
+		return;
 	}
 
 	/* Notification Payload */
 
-	{
-		struct pbs_out not_pbs;
-		struct isakmp_notification isan = {
-			.isan_doi = ISAKMP_DOI_IPSEC,
-			.isan_type = type,
-			.isan_spisize = 0,
-			.isan_protoid = PROTO_ISAKMP,
-		};
-
-		if (!out_struct(&isan, &isakmp_notification_desc,
-					&r_hdr_pbs, &not_pbs)) {
-			llog(RC_LOG, md->logger,
-			     "failed to build notification in send_notification");
-			return;
-		}
-
-		close_output_pbs(&not_pbs);
+	if (!emit_v1_notification(&hdr_pbs, type, PROTO_ISAKMP)) {
+		return;
 	}
 
-	close_output_pbs(&r_hdr_pbs);
-	send_pbs_out_using_md(md, "notification packet", &pbs);
+	close_output_pbs(&hdr_pbs);
+	send_pbs_out_using_md(md, "notification packet", &packet.pbs);
 }
 
 void send_v1_notification_from_ike(struct ike_sa *ike, v1_notification_t type)
