@@ -82,12 +82,17 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 					     shunk_t salt,
 					     struct logger *logger)
 {
-	if (DBGP(DBG_BASE)) {
-		LDBG_log(logger, "%s() %s %s %s symkey %p",
+	if (LDBGP(DBG_BASE, logger)) {
+		bool dump_salt = (LDBGP(DBG_CRYPT, logger) && salt.len > 0);
+		LDBG_log(logger, "%s() %s %s %s symkey %p%s",
 			 __func__, cipher->common.fqn,
-			 str_cipher_op(op), str_cipher_iv_source(iv_source),
-			 symkey);
-		LDBG_hunk(logger, salt);
+			 str_cipher_op(op),
+			 str_cipher_iv_source(iv_source),
+			 symkey,
+			 (dump_salt ? ", salt: " : ""));
+		if (dump_salt) {
+			LDBG_hunk(logger, salt);
+		}
 	}
 	struct cipher_context *cipher_context = alloc_thing(struct cipher_context, __func__);
 	cipher_context->cipher = cipher;
