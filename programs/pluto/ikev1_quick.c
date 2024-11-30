@@ -2135,8 +2135,6 @@ static struct connection *fc_try(const struct connection *c,
 
 	struct connection *best = NULL;
 	connection_priority_t best_prio = BOTTOM_PRIORITY;
-	const bool remote_is_host = selector_eq_address(*remote_client,
-							c->remote->host.addr);
 
 	err_t virtualwhy = NULL;
 	struct connection_filter hpf = {
@@ -2275,9 +2273,20 @@ static struct connection *fc_try(const struct connection *c,
 					vdbg("virtual net not allowed");
 					continue;
 				}
-			} else if (!remote_is_host) {
-				vdbg("not remote_is_host, so!?!");
-				continue;
+			} else {
+				/*
+				 * Since there's no client, is this
+				 * transport mode?
+				 */
+				if (!selector_eq_address(*remote_client,
+							 c->remote->host.addr)) {
+					selector_buf sb;
+					address_buf ab;
+					vdbg("connection's remote address %s does not match peer's remote client %s (transport mode check?)",
+					     str_address(&c->remote->host.addr, &ab),
+					     str_selector(remote_client, &sb));
+					continue;
+				}
 			}
 
 			/*
