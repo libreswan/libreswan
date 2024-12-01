@@ -2193,7 +2193,9 @@ static struct connection *fc_try(const struct connection *c,
 		 * appropriate test:
 		 *
 		 * If d has a peer client, it must match remote_net.
-		 * If d has no peer client, remote_net must just have peer itself.
+		 *
+		 * If d has no peer client, remote_net must just have
+		 * peer itself.
 		 */
 
 		unsigned level = verbose.level;
@@ -2212,62 +2214,71 @@ static struct connection *fc_try(const struct connection *c,
 
 			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
 				selector_buf s1, s2;
-				vdbg("skipping SPD, local range %s does not match peer %s",
+				vdbg("skipping SPD, local client %s must match range %s",
 				     str_selector(&d_spd->local->client, &s1),
 				     str_selector(local_client, &s2));
 				continue;
 			}
 
 			if (d_spd->local->client.ipproto != local_client->ipproto) {
-				vdbg("skipping SPD, local protocol %d does not match peer %d",
-				     d_spd->local->client.ipproto, local_client->ipproto);
+				vdbg("skipping SPD, local protocol %d must match %d",
+				     d_spd->local->client.ipproto,
+				     local_client->ipproto);
 				continue;
 			}
 
 			if (d_spd->remote->client.ipproto != remote_client->ipproto) {
-				vdbg("skipping SPD, remote protocol %d does not match peer %d",
-				     d_spd->remote->client.ipproto, remote_client->ipproto);
+				vdbg("skipping SPD, remote protocol %d must match %d",
+				     d_spd->remote->client.ipproto,
+				     remote_client->ipproto);
 				continue;
 			}
 
 			if (d_spd->local->client.hport != 0 &&
 			    d_spd->local->client.hport != local_client->hport) {
-				vdbg("skipping SPD, local port %d does not match peer %d",
-				     d_spd->local->client.hport, local_client->hport);
+				vdbg("skipping SPD, local port %d (or wildcard) must match %d",
+				     d_spd->local->client.hport,
+				     local_client->hport);
 				continue;
 			}
 
 			if (!d->remote->config->child.protoport.has_port_wildcard &&
 			    d_spd->remote->client.hport != remote_client->hport) {
 				vdbg("skipping SPD, remote port %d does not match peer %d",
-				     d_spd->remote->client.hport, remote_client->hport);
+				     d_spd->remote->client.hport,
+				     remote_client->hport);
 				continue;
 			}
 
 			if (d_spd->remote->child->has_client) {
 
-				if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client) &&
-				    !is_virtual_spd_end(d_spd->remote, verbose)) {
-					selector_buf d1, d3;
-					vdbg("their client (%s) not in same remote_net (%s)",
-					     str_selector_subnet_port(&d_spd->remote->client, &d3),
-					     str_selector_subnet_port(remote_client, &d1));
-					continue;
+				if (is_virtual_spd_end(d_spd->remote, verbose)) {
+					/* non-NULL when rejected; saved for later */
+					virtualwhy = check_virtual_net_allowed(d,
+									       selector_subnet(*remote_client),
+									       d_spd->remote->host->addr,
+									       verbose);
+					if (virtualwhy != NULL) {
+						vdbg("skipping SPD, virtual net not allowed: %s", virtualwhy);
+						continue;
+					}
+					if (is_virtual_net_used(d, remote_client,
+								&d_spd->remote->host->id)) {
+						vdbg("skipping SPD, is_virtual_net_used()");
+						continue;
+					}
+				} else {
+					if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client)) {
+						selector_buf d1, d3;
+						vdbg("skipping SPD, remote range %s does not match %s",
+						     str_selector_subnet_port(&d_spd->remote->client, &d3),
+						     str_selector_subnet_port(remote_client, &d1));
+						continue;
+					}
 				}
 
-				virtualwhy = check_virtual_net_allowed(d,
-								       selector_subnet(*remote_client),
-								       d_spd->remote->host->addr,
-								       verbose);
-
-				if (is_virtual_spd_end(d_spd->remote, verbose) &&
-				    (virtualwhy != NULL ||
-				     is_virtual_net_used(d, remote_client,
-							 &d_spd->remote->host->id))) {
-					vdbg("virtual net not allowed");
-					continue;
-				}
 			} else {
+
 				/*
 				 * Since there's no client, is this
 				 * transport mode?
@@ -2276,7 +2287,7 @@ static struct connection *fc_try(const struct connection *c,
 							 c->remote->host.addr)) {
 					selector_buf sb;
 					address_buf ab;
-					vdbg("connection's remote address %s does not match peer's remote client %s (transport mode check?)",
+					vdbg("skipping SPD, remote address %s does not match client %s (transport mode check?)",
 					     str_address(&c->remote->host.addr, &ab),
 					     str_selector(remote_client, &sb));
 					continue;
