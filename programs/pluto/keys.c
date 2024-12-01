@@ -247,7 +247,8 @@ static bool try_all_keys(enum cert_origin cert_origin,
 		}
 
 		int pl;	/* value ignored */
-		if (!trusted_ca(key->issuer, ASN1(s->remote->config->ca), &pl)) {
+		if (!trusted_ca(key->issuer, ASN1(s->remote->config->ca),
+				&pl, verbose)) {
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",

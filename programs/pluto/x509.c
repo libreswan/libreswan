@@ -104,7 +104,7 @@ static const char *dntoasi(dn_buf *dst, SECItem si)
  * does our CA match one of the requested CAs?
  */
 bool match_requested_ca(const generalName_t *requested_ca, chunk_t our_ca,
-			int *our_pathlen)
+			int *our_pathlen, struct verbose verbose)
 {
 	/* if no ca is requested than any ca will match */
 	if (requested_ca == NULL) {
@@ -117,7 +117,8 @@ bool match_requested_ca(const generalName_t *requested_ca, chunk_t our_ca,
 	while (requested_ca != NULL) {
 		int pathlen;
 
-		if (trusted_ca(ASN1(our_ca), ASN1(requested_ca->name), &pathlen) &&
+		if (trusted_ca(ASN1(our_ca), ASN1(requested_ca->name),
+			       &pathlen, verbose) &&
 		    pathlen < *our_pathlen)
 			*our_pathlen = pathlen;
 		requested_ca = requested_ca->next;
@@ -182,23 +183,24 @@ static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
 
 /*
  * Checks if CA a is trusted by CA b
- * This very well could end up being condensed into
- * an NSS call or two. TBD.
+ *
+ * This very well could end up being condensed into an NSS call or
+ * two. TBD.
  */
-bool trusted_ca(asn1_t a, asn1_t b, int *pathlen)
+
+bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 {
-	if (DBGP(DBG_BASE)) {
-		if (a.ptr != NULL) {
-			dn_buf abuf;
-	    		DBG_log("%s: trustee A = '%s'", __func__,
-				str_dn(a, &abuf));
-		}
-		if (b.ptr != NULL) {
-			dn_buf bbuf;
-	    		DBG_log("%s: trustor B = '%s'", __func__,
-				str_dn(b, &bbuf));
-		}
+	if (verbose.rc_flags != LEMPTY) {
+		dn_buf abuf;
+		llog(verbose.rc_flags, verbose.logger,
+		     PRI_VERBOSE"trustee A = '%s'",
+		     pri_verbose, str_dn(a, &abuf));
+		dn_buf bbuf;
+		llog(verbose.rc_flags, verbose.logger,
+		     PRI_VERBOSE"trustor B = '%s'",
+		     pri_verbose, str_dn(b, &bbuf));
 	}
+	verbose.level++;
 
 	/* no CA b specified => any CA a is accepted */
 	if (b.ptr == NULL) {
@@ -248,7 +250,7 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen)
 
 		if (match) {
 			/* we have a match: exit the loop */
-			dbg("%s: A is a subordinate of B", __func__);
+			vdbg("%s: A is a subordinate of B", __func__);
 			break;
 		}
 

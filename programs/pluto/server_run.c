@@ -35,8 +35,9 @@
 #include "verbose.h"
 #include "log.h"
 
-bool server_run(const char *verb, const char *verb_suffix, const char *cmd,
-		struct logger *logger)
+bool server_run(const char *verb, const char *verb_suffix,
+		const char *cmd,
+		struct verbose verbose)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
 	if (DBGP(DBG_BASE)) {
@@ -76,14 +77,13 @@ bool server_run(const char *verb, const char *verb_suffix, const char *cmd,
 				 * Try system(), though it will not give us
 				 * output
 				 */
-				DBG_log("unable to popen(), falling back to system()");
+				vlog("unable to popen(), falling back to system()");
 				system(cmd);
 				return true;
 			}
 #endif
-			llog(RC_LOG, logger,
-				    "unable to popen %s%s command",
-				    verb, verb_suffix);
+			vlog("unable to popen %s%s command",
+			     verb, verb_suffix);
 			return false;
 		}
 
@@ -97,7 +97,7 @@ bool server_run(const char *verb, const char *verb_suffix, const char *cmd,
 
 			if (fgets(resp, sizeof(resp), f) == NULL) {
 				if (ferror(f)) {
-					llog_error(logger, errno,
+					llog_error(verbose.logger, errno,
 						   "fgets failed on output of %s%s command",
 						   verb, verb_suffix);
 					pclose(f);
@@ -111,8 +111,7 @@ bool server_run(const char *verb, const char *verb_suffix, const char *cmd,
 
 				if (e > resp && e[-1] == '\n')
 					e[-1] = '\0'; /* trim trailing '\n' */
-				llog(RC_LOG, logger, "%s%s output: %s", verb,
-					    verb_suffix, resp);
+				vlog("%s%s output: %s", verb, verb_suffix, resp);
 			}
 		}
 
@@ -121,27 +120,24 @@ bool server_run(const char *verb, const char *verb_suffix, const char *cmd,
 			int r = pclose(f);
 
 			if (r == -1) {
-				llog_error(logger, errno,
+				llog_error(verbose.logger, errno,
 					   "pclose failed for %s%s command",
 					   verb, verb_suffix);
 				return false;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {
-					llog(RC_LOG, logger,
-						    "%s%s command exited with status %d",
-						    verb, verb_suffix,
-						    WEXITSTATUS(r));
+					vlog("%s%s command exited with status %d",
+					     verb, verb_suffix,
+					     WEXITSTATUS(r));
 					return false;
 				}
 			} else if (WIFSIGNALED(r)) {
-				llog(RC_LOG, logger,
-					    "%s%s command exited with signal %d",
-					    verb, verb_suffix, WTERMSIG(r));
+				vlog("%s%s command exited with signal %d",
+				     verb, verb_suffix, WTERMSIG(r));
 				return false;
 			} else {
-				llog(RC_LOG, logger,
-					    "%s%s command exited with unknown status %d",
-					    verb, verb_suffix, r);
+				vlog("%s%s command exited with unknown status %d",
+				     verb, verb_suffix, r);
 				return false;
 			}
 		}

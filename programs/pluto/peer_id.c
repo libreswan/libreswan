@@ -439,10 +439,12 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 */
 	bool matching_peer_ca = trusted_ca(peer_ca,
 					   ASN1(d->remote->host.config->ca),
-					   &score->peer_pathlen);
+					   &score->peer_pathlen,
+					   verbose);
 	bool matching_requested_ca = match_requested_ca(requested_ca,
 							d->local->host.config->ca,
-							&score->our_pathlen);
+							&score->our_pathlen,
+							verbose);
 	dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
 		bool_str(matching_peer_ca), score->peer_pathlen,
 		bool_str(matching_requested_ca), score->our_pathlen);

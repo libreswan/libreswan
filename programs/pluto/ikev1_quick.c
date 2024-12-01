@@ -2183,7 +2183,8 @@ static struct connection *fc_try(const struct connection *c,
 				continue;
 			}
 			if (!trusted_ca(ASN1(c->remote->host.config->ca),
-					ASN1(d->remote->host.config->ca), &pathlen)) {
+					ASN1(d->remote->host.config->ca),
+					&pathlen, verbose)) {
 				vdbg("skipping connection with same connalias but untrusted CA (logic is too complex)");
 				continue;
 			}

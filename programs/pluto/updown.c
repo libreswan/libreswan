@@ -80,7 +80,8 @@ static bool fmt_common_shell_out(char *buf,
 				 const struct connection *c,
 				 const struct spd *sr,
 				 struct child_sa *child,
-				 struct updown_env updown_env)
+				 struct updown_env updown_env,
+				 struct verbose verbose/*C-or-CHILD*/)
 {
 	struct jambuf jb = array_as_jambuf(buf, blen);
 	const bool tunneling = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
@@ -161,7 +162,8 @@ static bool fmt_common_shell_out(char *buf,
 		int pathlen;	/* value ignored */
 		if (key->content.type == &pubkey_type_rsa &&
 		    same_id(&c->remote->host.id, &key->id) &&
-		    trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca), &pathlen)) {
+		    trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca),
+			       &pathlen, verbose)) {
 			jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
 			break;
 		}
@@ -252,9 +254,9 @@ static bool fmt_common_shell_out(char *buf,
 		} else {
 			address_buf bpeer;
 			selector_buf peerclient_str;
-			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
-			    str_address(&sr->remote->host->addr, &bpeer),
-			    str_selector_subnet_port(&sr->remote->client, &peerclient_str));
+			vdbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
+			     str_address(&sr->remote->host->addr, &bpeer),
+			     str_selector_subnet_port(&sr->remote->client, &peerclient_str));
 			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
@@ -287,17 +289,16 @@ static bool do_updown_verb(const char *verb,
 			   const struct connection *c,
 			   const struct spd *spd,
 			   struct child_sa *child,
-			   /* either st, or c's logger */
-			   struct logger *logger,
-			   struct updown_env updown_env)
+			   struct updown_env updown_env,
+			   struct verbose verbose/*C-or-CHILD*/)
 {
 	if (c->child.spds.len > 1) {
 		/* i.e., more selectors than just this */
 		selector_pair_buf sb;
-		llog(RC_LOG, logger, "running updown %s %s", verb,
+		vlog("running updown %s %s", verb,
 		     str_selector_pair(&spd->local->client, &spd->remote->client, &sb));
 	} else {
-		ldbg(logger, "kernel: running updown command \"%s\" for verb %s ",
+		vdbg("kernel: running updown command \"%s\" for verb %s ",
 		     c->local->config->child.updown, verb);
 	}
 
@@ -310,7 +311,8 @@ static bool do_updown_verb(const char *verb,
 		const struct ip_info *host_afi = address_info(spd->local->host->addr);
 		const struct ip_info *child_afi = selector_info(spd->local->client);
 		if (host_afi == NULL || child_afi == NULL) {
-			llog_pexpect(logger, HERE, "unknown address family");
+			llog_pexpect(verbose.logger, HERE,
+				     "unknown address family");
 			return false;
 		}
 
@@ -341,15 +343,14 @@ static bool do_updown_verb(const char *verb,
 		verb_suffix = selector_range_eq_address(spd->local->client, spd->local->host->addr) ? hs : cs;
 	}
 
-	dbg("kernel: command executing %s%s", verb, verb_suffix);
+	vdbg("kernel: command executing %s%s", verb, verb_suffix);
 
 	char common_shell_out_str[2048];
 	if (!fmt_common_shell_out(common_shell_out_str,
 				  sizeof(common_shell_out_str), c, spd,
-				  child, updown_env)) {
-		llog(RC_LOG, logger,
-			    "%s%s command too long!", verb,
-			    verb_suffix);
+				  child, updown_env, verbose)) {
+		vlog("%s%s command too long!", verb,
+		     verb_suffix);
 		return false;
 	}
 
@@ -362,13 +363,12 @@ static bool do_updown_verb(const char *verb,
 				 common_shell_out_str,
 				 c->local->config->child.updown);
 	if (cmd == NULL) {
-		llog(RC_LOG, logger,
-			    "%s%s command too long!", verb,
-			    verb_suffix);
+		vlog("%s%s command too long!", verb,
+		     verb_suffix);
 		return false;
 	}
 
-	bool ok = server_run(verb, verb_suffix, cmd, logger);
+	bool ok = server_run(verb, verb_suffix, cmd, verbose);
 	pfree(cmd);
 	return ok;
 }
@@ -377,9 +377,8 @@ static bool do_updown_1(enum updown updown_verb,
 			const struct connection *c,
 			const struct spd *spd,
 			struct child_sa *child,
-			/* either st, or c's logger */
-			struct logger *logger,
-			struct updown_env updown_env)
+			struct updown_env updown_env,
+			struct verbose verbose/*C-or-CHILD*/)
 {
 #if 0
 	/*
@@ -414,22 +413,22 @@ static bool do_updown_1(enum updown updown_verb,
 	 * Same for never_negotiate().
 	 */
 	if (c->local->config->child.updown == NULL) {
-		ldbg(logger, "kernel: skipped updown %s command - disabled per policy", verb);
+		vdbg("kernel: skipped updown %s command - disabled per policy", verb);
 		return true;
 	}
 
-	return do_updown_verb(verb, c, spd, child, logger, updown_env);
+	return do_updown_verb(verb, c, spd, child, updown_env, verbose);
 }
 
 bool do_updown(enum updown updown_verb,
 	       const struct connection *c,
 	       const struct spd *spd,
 	       struct child_sa *child,
-	       /* either st, or c's logger */
-	       struct logger *logger)
+	       struct logger *logger/*C-or-CHILD*/)
 {
-	return do_updown_1(updown_verb, c, spd, child, logger,
-			   (struct updown_env) {0});
+	VERBOSE_DBGP(DBG_BASE, logger, "%s()", __func__);
+	return do_updown_1(updown_verb, c, spd, child,
+			   (struct updown_env) {0}, verbose);
 }
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child)
@@ -449,8 +448,9 @@ void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger,
 			   struct updown_env updown_env)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "%s()", __func__);
 	if (owner->bare_route == NULL) {
 		do_updown_1(UPDOWN_UNROUTE, spd->connection,
-			    spd, child, logger, updown_env);
+			    spd, child, updown_env, verbose);
 	}
 }

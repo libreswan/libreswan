@@ -1460,7 +1460,8 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 					       &d->remote->host.id,
 					       &wildcards, verbose) &&
 				      trusted_ca(ASN1(cc->remote->host.config->ca),
-						 ASN1(d->remote->host.config->ca), &pathlen))) {
+						 ASN1(d->remote->host.config->ca),
+						 &pathlen, verbose))) {
 					connection_buf cb;
 					dbg_ts("skipping "PRI_CONNECTION" does not match IDs or CA of current connection \"%s\"",
 					       pri_connection(d, &cb), cc->name);

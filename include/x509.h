@@ -27,6 +27,7 @@
 
 #include <cert.h>		/* dep:libnss3-dev */
 
+#include "verbose.h"
 #include "deltatime.h"
 #include "chunk.h"
 #include "err.h"
@@ -98,7 +99,8 @@ extern bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 				     const struct id *keyid,
 				     CERTCertificate *cert,
 				     struct logger *logger);
-extern bool trusted_ca(asn1_t a, asn1_t b, int *pathlen);
+extern bool trusted_ca(asn1_t a, asn1_t b, int *pathlen,
+		       struct verbose verbose);
 extern CERTCertList *get_all_certificates(struct logger *logger);
 
 /*
