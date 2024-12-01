@@ -798,21 +798,11 @@ $(KVM_TEST_NETWORKS): \
 $(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
 	: @=$@
 	: *=$*
-	./kvm-uninstall-network.sh $@
-	rm -f '$@.tmp'
-	echo "<network ipv6='yes'>" 					>> '$@.tmp'
-	echo "  <name>$*</name>"					>> '$@.tmp'
-	echo "  <bridge name='$*'"					>> '$@.tmp'
-	echo "          stp='on' delay='0'/>"				>> '$@.tmp'
-	echo "$(if $(patsubst 198.%,, $(patsubst 192.%,, $*)), <!--)" 	>> '$@.tmp'
-	echo "  <ip address='$(subst _,.,$*).253'/>" 				>> '$@.tmp'
-	echo "$(if $(patsubst 198.%,, $(patsubst 192.%,, $*)), -->)" 	>> '$@.tmp'
-	echo "</network>"						>> '$@.tmp'
-	: create a transient network
-	: - immediately started
-	: - auto-delete on shutdown+reboot
-	$(VIRSH) net-create $@.tmp
-	mv $@.tmp $@
+	-sudo ip link set $* down
+	-sudo ip link del name $*
+	sudo ip link add $* type bridge
+	sudo ip link set $* up
+	touch $@
 
 .PHONY: kvm-gateway
 kvm-gateway:
@@ -824,7 +814,7 @@ kvm-install-test-networks: $(KVM_TEST_NETWORKS)
 
 .PHONY: kvm-uninstall-test-networks
 kvm-uninstall-test-networks:
-	./kvm-uninstall-network.sh $(KVM_TEST_NETWORKS)
+	$(foreach network, $(KVM_TEST_NETWORKS), sudo ip link set $(notdir $(network)) down ; sudo ip link del name $(notdir $(network)) ; rm -f $(network) ; )
 .PHONY: kvm-uninstall-gateway
 kvm-uninstall-gateway:
 	./kvm-uninstall-network.sh $(KVM_GATEWAY)
