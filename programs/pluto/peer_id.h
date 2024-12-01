@@ -34,4 +34,14 @@ diag_t update_peer_id(struct ike_sa *ike,
 
 diag_t update_peer_id_certs(struct ike_sa *ike);
 
+struct connection_id_score {
+	int wildcards;
+	int pathlen;
+};
+
+bool compare_connection_id(const struct connection *c,
+			   const struct connection *d,
+			   struct connection_id_score *score,
+			   struct verbose verbose);
+
 #endif

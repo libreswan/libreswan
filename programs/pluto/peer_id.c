@@ -844,3 +844,50 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 
 	return NULL;
 }
+
+bool compare_connection_id(const struct connection *c,
+			   const struct connection *d,
+			   struct connection_id_score *score,
+			   struct verbose verbose)
+{
+	if (c->config->connalias != NULL &&
+	    d->config->connalias != NULL &&
+	    streq(c->config->connalias, d->config->connalias)) {
+		/*
+		 * conns created as aliases from the same
+		 * source have identical ID/CA.
+		 */
+		vdbg("connalias %s match, skipping ID check",
+		     c->config->connalias);
+		return true;
+	}
+
+	/* local */
+	if (!same_id(&c->local->host.id, &d->local->host.id)) {
+		id_buf cb, db;
+		vdbg("skipping connection, local ID %s needs to be the same as %s",
+		     str_id(&d->local->host.id, &db),
+		     str_id(&c->local->host.id, &cb));
+		return false;
+	}
+
+	/* remote */
+	if (!match_id(&c->remote->host.id, &d->remote->host.id,
+		      &score->wildcards, verbose)) {
+		id_buf cb, db;
+		vdbg("skipping connection, remote ID %s needs to match %s",
+		     str_id(&d->remote->host.id, &db),
+		     str_id(&c->remote->host.id, &cb));
+		return false;
+	}
+
+	/* remote */
+	if (!trusted_ca(ASN1(c->remote->host.config->ca),
+			ASN1(d->remote->host.config->ca),
+			&score->pathlen, verbose)) {
+		vdbg("skipping connection, remote CA 'B' needs to trust CA 'A'");
+		return false;
+	}
+
+	return true;
+}

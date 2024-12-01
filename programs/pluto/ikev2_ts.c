@@ -38,6 +38,7 @@
 #include "spd_db.h"	/* for spd_route_db_add_connection() */
 #include "instantiate.h"
 #include "ikev2_states.h"
+#include "peer_id.h"
 
 #define TS_MAX 16 /* arbitrary */
 
@@ -1449,24 +1450,10 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			 * If they are not, just use same_id
 			 */
 
-			/* conns created as aliases from the same source have identical ID/CA */
-			if (!(cc->config->connalias != NULL &&
-			      d->config->connalias != NULL &&
-			      streq(cc->config->connalias, d->config->connalias))) {
-				int wildcards;	/* value ignored */
-				int pathlen;	/* value ignored */
-				if (!(same_id(&cc->local->host.id, &d->local->host.id) &&
-				      match_id(&cc->remote->host.id,
-					       &d->remote->host.id,
-					       &wildcards, verbose) &&
-				      trusted_ca(ASN1(cc->remote->host.config->ca),
-						 ASN1(d->remote->host.config->ca),
-						 &pathlen, verbose))) {
-					connection_buf cb;
-					dbg_ts("skipping "PRI_CONNECTION" does not match IDs or CA of current connection \"%s\"",
-					       pri_connection(d, &cb), cc->name);
-					continue;
-				}
+			struct connection_id_score unused_id_score = {0};
+			if (!compare_connection_id(cc, d, &unused_id_score, verbose)) {
+				/* already logged */
+				continue;
 			}
 
 			struct narrowed_selector_payloads nsps = {0};

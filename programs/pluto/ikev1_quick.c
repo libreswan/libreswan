@@ -89,6 +89,7 @@
 #include "addresspool.h"
 #include "ipsec_interface.h"
 #include "verbose.h"
+#include "peer_id.h"
 
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,
@@ -2162,32 +2163,24 @@ static struct connection *fc_try(const struct connection *c,
 
 		/*
 		 * ??? what should wildcards and pathlen default to?
-		 * Coverity Scan detected that they could be referenced without initialization.
-		 * This happens if the connaliases match.
-		 * This bug was introduced in 605c8010007.
+		 *
+		 * Coverity Scan detected that they could be
+		 * referenced without initialization.  This happens if
+		 * the connaliases match.  This bug was introduced in
+		 * 605c8010007.
+		 *
 		 * For now, I've defaulted them to the largest values.
+		 *
+		 * Same code in ikev2_ts.c
 		 */
-		int wildcards = MAX_WILDCARDS;
-		int pathlen = MAX_CA_PATH_LEN;
+		struct connection_id_score score = {
+			.wildcards = MAX_WILDCARDS,
+			.pathlen = MAX_CA_PATH_LEN,
+		};
 
-		if (!(c->config->connalias != NULL &&
-		      d->config->connalias != NULL &&
-		      streq(c->config->connalias, d->config->connalias))) {
-			if (!same_id(&c->local->host.id, &d->local->host.id)) {
-				vdbg("skipping connection with same connalias but different IDs (logic is too complex)");
-				continue;
-			}
-			if (!match_id(&c->remote->host.id, &d->remote->host.id,
-				      &wildcards, verbose)) {
-				vdbg("skipping connection with same connalias but mismatched ID (logic is too complex)");
-				continue;
-			}
-			if (!trusted_ca(ASN1(c->remote->host.config->ca),
-					ASN1(d->remote->host.config->ca),
-					&pathlen, verbose)) {
-				vdbg("skipping connection with same connalias but untrusted CA (logic is too complex)");
-				continue;
-			}
+		if (!compare_connection_id(c, d, &score, verbose)) {
+			/* already logged */
+			continue;
 		}
 
 		/*
@@ -2305,8 +2298,8 @@ static struct connection *fc_try(const struct connection *c,
 			 */
 			connection_priority_t prio =
 				PRIO_WEIGHT * kernel_route_installed(d) +
-				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
-				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
+				WILD_WEIGHT * (MAX_WILDCARDS - score.wildcards) +
+				PATH_WEIGHT * (MAX_CA_PATH_LEN - score.pathlen) +
 				(c == d ? 1 : 0) +
 				1;
 			if (prio <= best_prio) {
