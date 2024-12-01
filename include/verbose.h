@@ -48,6 +48,11 @@ struct verbose {
 	int level;
 };
 
+/*
+ * vlog() output indented logs
+ * verbose() outputs indented logs
+ * vdbg() outputs indented debug logs when DBG_BASE
+ */
 #define VERBOSE_LOG(LOGGER, MESSAGE, ...)		\
 	struct verbose verbose = {			\
 		.logger = (LOGGER),			\
@@ -56,6 +61,11 @@ struct verbose {
 	verbose(MESSAGE, ##__VA_ARGS__);		\
 	verbose.level++;
 
+/*
+ * vlog() outputs flat logs
+ * verbose() outputs indented debug logs when DBG_BASE
+ * vdbg() outputs indented debug logs when DBG_BASE
+ */
 #define VERBOSE_DBGP(COND, LOGGER, MESSAGE, ...)			\
 	struct verbose verbose = {					\
 		.logger = (LOGGER),					\
