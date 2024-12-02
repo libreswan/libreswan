@@ -509,7 +509,7 @@ void process_v1_packet(struct msg_digest *md)
 	 */
 	struct child_sa *child = NULL;
 	struct ike_sa *ike;
-	enum state_kind from_state;   /* TBD state we started in */
+	const struct finite_state *from_state;   /* TBD state we started in */
 
 	switch (md->hdr.isa_xchg) {
 	case ISAKMP_XCHG_AGGR:
@@ -564,7 +564,7 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 			passert(ike == NULL); /* new state needed */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
-				      STATE_MAIN_R0 : STATE_AGGR_R0);
+				      finite_states[STATE_MAIN_R0] : finite_states[STATE_AGGR_R0]);
 			zero(&md->v1_decrypt_iv);
 			break;
 		}
@@ -627,7 +627,7 @@ void process_v1_packet(struct msg_digest *md)
 					      (ike->sa.st_v1_phase_1_iv.len > 0)))) {
 			return;
 		}
-		from_state = ike->sa.st_state->kind;
+		from_state = ike->sa.st_state;
 		md->v1_decrypt_iv = ike->sa.st_v1_phase_1_iv;
 		break;
 
@@ -683,7 +683,7 @@ void process_v1_packet(struct msg_digest *md)
 			ike->sa.st_v1_msgid.reserved = false;
 
 			passert(ike != NULL);
-			from_state = STATE_INFO_PROTECTED;
+			from_state = finite_states[STATE_INFO_PROTECTED];
 			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							  "IKE received encrypted ISAKMP_XCHG_INFO", HERE);
 			break;
@@ -704,7 +704,7 @@ void process_v1_packet(struct msg_digest *md)
 			 * notification.
 			 */
 			passert(ike != NULL);
-			from_state = STATE_INFO;
+			from_state = finite_states[STATE_INFO];
 			zero(&md->v1_decrypt_iv);
 			break;
 		}
@@ -715,7 +715,7 @@ void process_v1_packet(struct msg_digest *md)
 		 * should be dropped?
 		 */
 		passert(ike == NULL);
-		from_state = STATE_INFO;
+		from_state = finite_states[STATE_INFO];
 		zero(&md->v1_decrypt_iv);
 		break;
 	}
@@ -830,7 +830,7 @@ void process_v1_packet(struct msg_digest *md)
 
 			/* send to state machine */
 			passert(ike != NULL);
-			from_state = STATE_QUICK_R0;
+			from_state = finite_states[STATE_QUICK_R0];
 			/* Quick Mode Initial IV */
 			md->v1_decrypt_iv = new_phase2_iv(ike, md->hdr.isa_msgid,
 							  "IKE received encrypted first QUICK request", HERE);
@@ -894,7 +894,7 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 		passert(ike != NULL);
-		from_state = child->sa.st_state->kind;
+		from_state = child->sa.st_state;
 		md->v1_decrypt_iv = child->sa.st_v1_phase_2_iv;
 		break;
 	}
@@ -933,7 +933,7 @@ void process_v1_packet(struct msg_digest *md)
 			 * state we are in.
 			 */
 			passert(ike != NULL);
-			from_state = ike->sa.st_state->kind;
+			from_state = ike->sa.st_state;
 			if (!PEXPECT(md->logger, ike->sa.st_v1_phase_2_iv.len > 0)) {
 				return;
 			}
@@ -995,20 +995,20 @@ void process_v1_packet(struct msg_digest *md)
 		 * restarting the challenge.
 		 */
 
-		enum state_kind old_state;
+		const struct finite_state *old_state;
 		if (this->host->config->xauth.server &&
 		    ike->sa.st_state->kind == STATE_XAUTH_R1 &&
 		    ike->sa.st_v1_quirks.xauth_ack_msgid) {
-			old_state = STATE_XAUTH_R1;
+			old_state = finite_states[STATE_XAUTH_R1];
 			ldbg(ike->sa.logger,
-			     " set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
-			     ike->sa.st_state->name);
+			     "switch from_state %s to %s, already XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
+			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->xauth.client &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
-			old_state = STATE_XAUTH_I0;
+			old_state = finite_states[STATE_XAUTH_I0];
 			ldbg(ike->sa.logger,
-			     " set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
-			     ike->sa.st_state->name);
+			     "switch from_state %s to %s, this is xauthclient and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->xauth.client &&
 			   ike->sa.st_state->kind == STATE_XAUTH_I1) {
 			/*
@@ -1016,22 +1016,22 @@ void process_v1_packet(struct msg_digest *md)
 			 * after I0, maybe because it wants to start
 			 * over again.
 			 */
-			old_state = STATE_XAUTH_I0;
+			old_state = finite_states[STATE_XAUTH_I0];
 			ldbg(ike->sa.logger,
-			     " set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
-			     ike->sa.st_state->name);
+			     "switch from_state %s to %s this is xauthclient and state == STATE_XAUTH_I1",
+			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->modecfg.server &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
-			old_state = STATE_MODE_CFG_R0;
+			old_state = finite_states[STATE_MODE_CFG_R0];
 			ldbg(ike->sa.logger,
-			     " set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
-			     ike->sa.st_state->name);
+			     "switch from_state %s to %s this is modecfgserver and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->modecfg.client &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
-			old_state = STATE_MODE_CFG_R1;
+			old_state = finite_states[STATE_MODE_CFG_R1];
 			ldbg(ike->sa.logger,
-			     " set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
-			     ike->sa.st_state->name);
+			     "switch from_state %s to %s this is modecfgclient and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name, old_state->name);
 		} else {
 			esb_buf b;
 			ldbg(ike->sa.logger,
@@ -1076,11 +1076,9 @@ void process_v1_packet(struct msg_digest *md)
 
 	LDBGP_JAMBUF(DBG_BASE, md->logger, buf) {
 		jam_string(buf, "found:");
-		if (STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF) {
-			jam_string(buf, " from_state ");
-			jam_string(buf, finite_states[from_state]->name);
-			jam_string(buf, ";");
-		}
+		jam_string(buf, " from_state ");
+		jam_string(buf, from_state->name);
+		jam_string(buf, ";");
 		if (ike != NULL) {
 			jam(buf, " IKE (ISAKMP) SA "PRI_SO";", pri_so(ike->sa.st_serialno));
 		}
@@ -1267,10 +1265,7 @@ void process_v1_packet(struct msg_digest *md)
 	 * Look up the appropriate microcode based on state and
 	 * possibly Oakley Auth type.
 	 */
-	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
-	const struct finite_state *fs = finite_states[from_state];
-	passert(fs != NULL);
-	const struct state_v1_microcode *smc = fs->v1.transitions;
+	const struct state_v1_microcode *smc = from_state->v1.transitions;
 	passert(smc != NULL);
 
 	/*
@@ -1292,7 +1287,7 @@ void process_v1_packet(struct msg_digest *md)
 
 		while (!LHAS(smc->flags, baseauth)) {
 			smc++;
-			passert(smc->state == from_state);
+			passert(smc->state == from_state->kind);
 		}
 	}
 
