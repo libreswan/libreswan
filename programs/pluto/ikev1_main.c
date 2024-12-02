@@ -107,21 +107,15 @@ static void update_main_iv(struct ike_sa *ike,
 			   where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam_string(buf, "updating Main Mode IKE IV .st_v1_ph1_iv from ");
-		jam_hex_hunk(buf, ike->sa.st_v1_ph1_iv);
+		jam_string(buf, "updating Main Mode IKE IV .st_v1_phase_1_iv from ");
+		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
 		jam_string(buf, " to ");
 		jam_hex_hunk(buf, iv);
-		jam_string(buf, " ( .st_v1_iv ");
-		jam_hex_hunk(buf, ike->sa.st_v1_iv);
-		jam_string(buf, " .st_v1_new_iv ");
-		jam_hex_hunk(buf, ike->sa.st_v1_new_iv);
-		jam_string(buf, ") ");
+		jam_string(buf, " ");
 		jam_where(buf, where);
 	}
 	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
-	ike->sa.st_v1_iv = iv;
-	ike->sa.st_v1_new_iv = iv;
-	ike->sa.st_v1_ph1_iv = iv;
+	ike->sa.st_v1_phase_1_iv = iv;
 }
 
 static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa *ike)
@@ -268,7 +262,7 @@ struct ike_sa *main_outI1(struct connection *c,
 	statetime_stop(&start, "%s()", __func__);
 
 	/* outI1 is not encrypted */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outI1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*outI1*/
 
 	return ike;
 }
@@ -421,7 +415,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 
 	/* inI1 is not encrypted */
 	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == 0); /*inI1*/
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*inI1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*inI1*/
 
 	/* delref stack connection pointer */
 	connection_delref(&c, md->logger);
@@ -510,7 +504,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 	replace_chunk(&ike->sa.st_p1isa, pbs_in_all(&sa_pd->pbs), __func__);
 
 	/* outR1 is not encrypted */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outR1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*outR1*/
 
 	return STF_OK;
 }
@@ -539,7 +533,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	}
 
 	/* inR1 is not encrypted */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*inR1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*inR1*/
 	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == 0); /*inR1*/
 
 	/* verify echoed SA */
@@ -650,7 +644,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
 
 	/* outI2 is not encrypted */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outI2*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*outI2*/
 	return STF_OK;
 }
 
@@ -822,7 +816,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	ike->sa.st_v1_offloaded_task_in_background = true;
 
 	/* outR2 is not encrypted; but callback will be filling in IV */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*outR2*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*outR2*/
 	return STF_OK;
 }
 
@@ -854,7 +848,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 	if (ike->sa.st_dh_shared_secret != NULL) {
 		update_main_iv(ike, calc_v1_skeyid_and_iv(ike), HERE);
 		/* IV ready for inI3 */
-		PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inI2_outR2_continue2*/
+		PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*main_inI2_outR2_continue2*/
 	}
 
 	/*
@@ -874,7 +868,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 		 * Now that decryption has been completed, update the
 		 * IV needed to decrypt.
 		 */
-		md->v1_decrypt_iv = ike->sa.st_v1_ph1_iv;
+		md->v1_decrypt_iv = ike->sa.st_v1_phase_1_iv;
 		process_v1_packet_tail(ike, NULL/*no-child*/, md);
 		md_delref(&md);
 	}
@@ -950,7 +944,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* ready for encrypted outI3 */
 	update_main_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /*main_inR2_outI3_continue*/
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inR2_outI3_continue*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*main_inR2_outI3_continue*/
 
 	struct pbs_out rbody[1]; /* hack */
 	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
@@ -1145,15 +1139,15 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* encrypt message, except for fixed part of header */
 
-	/* stores updated IV in .st_v1_ph1_iv */
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_ph1_iv)) {
+	/* stores updated IV in .st_v1_phase_1_iv */
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_phase_1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	update_main_iv(ike, ike->sa.st_v1_ph1_iv, HERE); /* post-encrypt-hack main_inR2_outI3_continue */
+	update_main_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack main_inR2_outI3_continue */
 
 	/* outI3 is encrypted */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*outI3*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*outI3*/
 	return STF_OK;
 }
 
@@ -1397,12 +1391,12 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* encrypt message, sans fixed part of header */
 
-	/* stores updated IV in .st_v1_ph1_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_ph1_iv)) {
+	/* stores updated IV in .st_v1_phase_1_iv */
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	update_main_iv(ike, ike->sa.st_v1_ph1_iv, HERE); /* post-encrypt-hack inI3-outR3 */
+	update_main_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack inI3-outR3 */
 	ldbg(ike->sa.logger, "phase1 IV finished");
 
 	/*
@@ -1427,7 +1421,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	ISAKMP_SA_established(ike);
 
 	/* outR3 is encrypted */
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*outR3*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*outR3*/
 	return STF_OK;
 }
 
@@ -1506,6 +1500,6 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 
 	ISAKMP_SA_established(ike);
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*main_inR3*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*main_inR3*/
 	return STF_OK;
 }

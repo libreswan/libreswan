@@ -169,8 +169,6 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
  * IV is fetched from st->st_new_iv and stored into st->st_iv.
  * The theory is that there will be no "backing out", so we commit to IV.
  * We also close the pbs.
- *
- * updates .st_v1_iv and .st_v1_new_iv
  */
 
 bool close_and_encrypt_v1_message(struct ike_sa *ike,
@@ -283,7 +281,7 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
 	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 		jam_string(buf, "Phase 1 IV: ");
-		jam_hex_hunk(buf, ike->sa.st_v1_ph1_iv);
+		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
 		jam(buf, " msgid: %"PRIu32, msgid);
 	}
 
@@ -293,8 +291,8 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 		crypt_hash_init("Phase 2 IV", h, logger);
 
 	/* the established phase1 IV */
-	PASSERT_WHERE(logger, where, ike->sa.st_v1_ph1_iv.len > 0);
-	crypt_hash_digest_hunk(ctx, "PH1_IV", ike->sa.st_v1_ph1_iv);
+	PASSERT_WHERE(logger, where, ike->sa.st_v1_phase_1_iv.len > 0);
+	crypt_hash_digest_hunk(ctx, "PH1_IV", ike->sa.st_v1_phase_1_iv);
 
 	/* plus the MSGID in network order */
 	PASSERT_WHERE(logger, where, sizeof(msgid_t) == sizeof(uint32_t));

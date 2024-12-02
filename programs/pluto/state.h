@@ -357,9 +357,8 @@ struct state {
 
 	/* Initialization Vectors for IKEv1 IKE encryption */
 
-	struct crypt_mac st_v1_new_iv;	/* tentative IV (calculated from current packet) */
-	struct crypt_mac st_v1_iv;		/* accepted IV (after packet passes muster) */
-	struct crypt_mac st_v1_ph1_iv;	/* IV at end of phase 1 */
+	struct crypt_mac st_v1_phase_1_iv;	/* IV for Phase 1 exchange */
+	struct crypt_mac st_v1_phase_2_iv;	/* IV for Phase 2 (and Phase 1.5 exchanges */
 
 	/* end of IKEv1-only things */
 #endif

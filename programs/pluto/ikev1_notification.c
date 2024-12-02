@@ -114,11 +114,13 @@ static void send_v1_notification(struct logger *logger,
 			return;
 		}
 
-		if (sndst->st_v1_iv.len != 0) {
+		if (sndst->st_v1_phase_2_iv.len != 0) {
 			LLOG_JAMBUF(RC_LOG, logger, buf) {
-				jam(buf, "payload malformed.  IV: ");
-				jam_dump_bytes(buf, sndst->st_v1_iv.ptr,
-					       sndst->st_v1_iv.len);
+				jam(buf, "payload malformed,");
+				jam_string(buf, " Phase 1 IV: ");
+				jam_dump_hunk(buf, sndst->st_v1_phase_1_iv);
+				jam_string(buf, " Phase 2 IV: ");
+				jam_dump_hunk(buf, sndst->st_v1_phase_2_iv);
 			}
 		}
 

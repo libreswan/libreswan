@@ -119,20 +119,15 @@ static void update_quick_iv(struct child_sa *child,
 			    where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
-		jam_string(buf, "updating Quick Mode Child IV .st_v1_iv from ");
-		jam_hex_hunk(buf, child->sa.st_v1_iv);
+		jam_string(buf, "updating Quick Mode Child IV .st_v1_phase_2_iv from ");
+		jam_hex_hunk(buf, child->sa.st_v1_phase_2_iv);
 		jam_string(buf, " to ");
 		jam_hex_hunk(buf, iv);
-		jam_string(buf, " ( .st_v1_new iv ");
-		jam_hex_hunk(buf, child->sa.st_v1_new_iv);
-		jam_string(buf, " .st_v1_ph1_iv ");
-		jam_hex_hunk(buf, child->sa.st_v1_ph1_iv);
-		jam_string(buf, ") ");
+		jam_string(buf, " ");
 		jam_where(buf, where);
 	}
         PEXPECT(child->sa.logger, iv.len > 0);
-        PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
-	child->sa.st_v1_iv = iv;
+	child->sa.st_v1_phase_2_iv = iv;
 }
 
 const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
@@ -837,17 +832,16 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	 * Quick Mode uses its own IV generated from Phase1+MSGID.
 	 */
 
-	PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0); /* unused */
-	PEXPECT(child->sa.logger, child->sa.st_v1_iv.len == 0);
+	PEXPECT(child->sa.logger, child->sa.st_v1_phase_2_iv.len == 0);
 	/* MD->v1_decrypt_iv N/A as initiating */
 
-	/* uses ike->sa.st_v1_ph1_iv */
+	/* uses ike->sa.st_v1_phase_1_iv */
 	update_quick_iv(child, new_phase2_iv(ike, child->sa.st_v1_msgid.id,
 					     "IKE sending quick message", HERE),
 			HERE);
 
 	/* Save updated IV ready for response. */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa.st_v1_iv)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1659,11 +1653,9 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* encrypt message, except for fixed part of header */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa.st_v1_iv)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
-
-        PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
 
 	dbg("finished processing quick inI1");
 	return STF_OK;
@@ -1861,11 +1853,9 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa.st_v1_iv)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &child->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
-
-        PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0);
 
 	if (dpd_init(&child->sa) != STF_OK) {
 		return STF_FAIL_v1N;

@@ -480,7 +480,7 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 {
 	/*
 	 * Danger: if this was triggered by the final Main or
-	 * Aggressive message, the IV is effectively .st_v1_ph1_iv.
+	 * Aggressive message, the IV is effectively .st_v1_phase_1_iv.
 	 * Should it be re-generated to include the below msgid()?
 	 */
 
@@ -533,8 +533,8 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 	if (stat != STF_OK)
 		return stat;
 
-	ike->sa.st_v1_iv = iv;
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
+	ike->sa.st_v1_phase_2_iv = iv;
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -626,10 +626,10 @@ stf_status xauth_send_request(struct ike_sa *ike)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	ike->sa.st_v1_iv =
+	ike->sa.st_v1_phase_2_iv =
 		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending xauth request", HERE);
 
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -739,10 +739,10 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	ike->sa.st_v1_iv =
+	ike->sa.st_v1_phase_2_iv =
 		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending mode cfg request", HERE);
 
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -822,10 +822,10 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	ike->sa.st_v1_iv = new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15,
+	ike->sa.st_v1_phase_2_iv = new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15,
 					 "IKE sending xauth status", HERE);
 
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1528,14 +1528,8 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 				return stat;
 			}
 
-			/*
-			 * process_v1_packet_tail() still copies
-			 * .v1_decrypt_iv into .st_v1_new_iv.
-			 */
-			PEXPECT(ike->sa.logger, hunk_eq(md->v1_decrypt_iv,
-							ike->sa.st_v1_new_iv));
-			ike->sa.st_v1_iv = md->v1_decrypt_iv;
-			if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
+			ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+			if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 				return STF_INTERNAL_ERROR;
 			}
 
@@ -1675,14 +1669,8 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 		return stat;
 	}
 
-	/*
-	 * process_v1_packet_tail() still copies .v1_decrypt_iv into
-	 * .st_v1_new_iv.
-	 */
-	PEXPECT(ike->sa.logger, hunk_eq(md->v1_decrypt_iv,
-					ike->sa.st_v1_new_iv));
-	ike->sa.st_v1_iv = md->v1_decrypt_iv;
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_iv)) {
+	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2267,14 +2255,8 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
-	/*
-	 * process_v1_packet_tail() still copies
-	 * .v1_decrypt_iv into .st_v1_new_iv.
-	 */
-	PEXPECT(ike->sa.logger, hunk_eq(md->v1_decrypt_iv,
-					ike->sa.st_v1_new_iv));
-	ike->sa.st_v1_iv = md->v1_decrypt_iv;
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_iv)) {
+	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -2541,14 +2523,9 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
-	/*
-	 * process_v1_packet_tail() still copies .v1_decrypt_iv into
-	 * .st_v1_new_iv.
-	 */
-	PEXPECT(ike->sa.logger, hunk_eq(md->v1_decrypt_iv,
-					ike->sa.st_v1_new_iv));
-	ike->sa.st_v1_iv = md->v1_decrypt_iv;
-	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_iv)) {
+
+	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+	if (!close_and_encrypt_v1_message(ike, rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return STF_INTERNAL_ERROR;
 	}
 

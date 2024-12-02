@@ -84,20 +84,15 @@ static void update_aggr_iv(struct ike_sa *ike,
 {
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam_string(buf, "updating Aggressive Mode IKE IV from ");
-		jam_hex_hunk(buf, ike->sa.st_v1_ph1_iv);
+		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
 		jam_string(buf, " to ");
 		jam_hex_hunk(buf, iv);
-		jam_string(buf, " ( .st_v1_iv ");
-		jam_hex_hunk(buf, ike->sa.st_v1_iv);
-		jam_string(buf, " .st_v1_new_iv ");
-		jam_hex_hunk(buf, ike->sa.st_v1_new_iv);
-		jam_string(buf, ") ");
+		jam_string(buf, " ");
 		jam_where(buf, where);
 	}
 	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
-	ike->sa.st_v1_iv = iv;
-	ike->sa.st_v1_new_iv = iv;
-	ike->sa.st_v1_ph1_iv = iv;
+	ike->sa.st_v1_phase_1_iv = iv;
+
 }
 
 /*
@@ -177,7 +172,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 			    /*detach_whack*/false, HERE);
 	statetime_stop(&start, "%s()", __func__);
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*aggr_outI1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*aggr_outI1*/
 	return ike;
 }
 
@@ -195,7 +190,7 @@ static stf_status aggr_outI1_continue(struct state *ike_sa,
 	stf_status e = aggr_outI1_continue_tail(&ike->sa, unused_md,
 						local_secret, nonce); /* may return FAIL */
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*aggr_outI1_continue*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*aggr_outI1_continue*/
 
 	pexpect(e == STF_IGNORE);	/* ??? what would be better? */
 	complete_v1_state_transition(&ike->sa, NULL, STF_IGNORE);
@@ -312,7 +307,7 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 
 	llog(RC_LOG, ike->sa.logger, "%s", ike->sa.st_state->story);
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*aggr_outI1_tail*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*aggr_outI1_tail*/
 
 	return STF_IGNORE;
 }
@@ -484,7 +479,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			    aggr_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*aggr_outI1_outR1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*aggr_outI1_outR1*/
 
 	return STF_SUSPEND;
 }
@@ -523,7 +518,7 @@ static stf_status aggr_inI1_outR1_continue1(struct state *ike_sa,
 	 * this wouldn't be needed.
 	 */
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*aggr_outI1_outR1_continue1*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*aggr_outI1_outR1_continue1*/
 
 	return STF_SUSPEND;
 }
@@ -761,7 +756,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*aggr_outI1_outR1_continue2*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*aggr_outI1_outR1_continue2*/
 
 	return STF_OK;
 }
@@ -857,7 +852,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 				ike->sa.st_gr/*initiator needs responder's KE*/,
 				aggr_inR1_outI2_crypto_continue, HERE);
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len == 0); /*aggr_inR1_outI2*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*aggr_inR1_outI2*/
 
 	return STF_SUSPEND;
 }
@@ -1039,8 +1034,8 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 	/* RFC2408 says we must encrypt at this point */
 
-	/* stores updated IV in .st_v1_ph1_iv */
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_ph1_iv)) {
+	/* stores updated IV in .st_v1_phase_1_iv */
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_1_iv)) {
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -1049,7 +1044,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	 * anything between the end of phase 1 and the start of phase
 	 * 2 i.e. mode config payloads etc. will not lose our IV
 	 */
-	update_aggr_iv(ike, ike->sa.st_v1_ph1_iv, HERE); /* post-encrypt-hack inR1_outI2 */
+	update_aggr_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack inR1_outI2 */
 	ldbg(ike->sa.logger, "phase 1 IV completed");
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
@@ -1083,7 +1078,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 	ISAKMP_SA_established(ike);
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*aggr_inR1_outI2_crypto_continue*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*aggr_inR1_outI2_crypto_continue*/
 
 	return STF_OK;
 }
@@ -1101,7 +1096,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 	}
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
-	PEXPECT(ike->sa.logger, ike->sa.st_v1_ph1_iv.len > 0); /*aggr_inI2*/
+	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*aggr_inI2*/
 
 	/*
 	 * Save last IV from phase 1 so it can be restored later so

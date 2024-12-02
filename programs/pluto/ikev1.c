@@ -624,11 +624,11 @@ void process_v1_packet(struct msg_digest *md)
 		 */
 		passert(ike != NULL);
 		if (!PEXPECT(ike->sa.logger, (ike->sa.hidden_variables.st_skeyid_calculated ==
-					      (ike->sa.st_v1_ph1_iv.len > 0)))) {
+					      (ike->sa.st_v1_phase_1_iv.len > 0)))) {
 			return;
 		}
 		from_state = ike->sa.st_state->kind;
-		md->v1_decrypt_iv = ike->sa.st_v1_ph1_iv;
+		md->v1_decrypt_iv = ike->sa.st_v1_phase_1_iv;
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
@@ -872,14 +872,14 @@ void process_v1_packet(struct msg_digest *md)
 		 *
 		 * - offloads the message to perform DH/PFS
 		 *
-		 * - once crypto completes, update .st_v1_iv
+		 * - once crypto completes, update .st_v1_phase_2_iv
 		 *
 		 * This means that when a duplicate arrives: the
-		 * responder, processing I1, has .st_v1_iv empty; and
-		 * the initiator, processing R1, has .st_v1_iv still
+		 * responder, processing I1, has .st_v1_phase_2_iv empty; and
+		 * the initiator, processing R1, has .st_v1_phase_2_iv still
 		 * containing the old value.
 		 *
-		 * Instead, .st_v1_iv should be updated after the
+		 * Instead, .st_v1_phase_2_iv should be updated after the
 		 * message has been verified, i.e., before the
 		 * offload.
 		 *
@@ -890,13 +890,12 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		if (!PEXPECT(child->sa.logger, child->sa.st_v1_new_iv.len == 0) ||
-		    !PEXPECT(child->sa.logger, child->sa.st_v1_iv.len > 0)) {
+		if (!PEXPECT(child->sa.logger, child->sa.st_v1_phase_2_iv.len > 0)) {
 			return;
 		}
 		passert(ike != NULL);
 		from_state = child->sa.st_state->kind;
-		md->v1_decrypt_iv = child->sa.st_v1_iv;
+		md->v1_decrypt_iv = child->sa.st_v1_phase_2_iv;
 		break;
 	}
 
@@ -935,10 +934,10 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 			passert(ike != NULL);
 			from_state = ike->sa.st_state->kind;
-			if (!PEXPECT(md->logger, ike->sa.st_v1_iv.len > 0)) {
+			if (!PEXPECT(md->logger, ike->sa.st_v1_phase_2_iv.len > 0)) {
 				return;
 			}
-			md->v1_decrypt_iv = ike->sa.st_v1_iv;
+			md->v1_decrypt_iv = ike->sa.st_v1_phase_2_iv;
 			break;
 		}
 
@@ -1513,20 +1512,6 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				 md->message_pbs.cur - md->message_pbs.roof);
 			LDBG_dump(ike->sa.logger, md->message_pbs.start,
 				  md->message_pbs.roof - md->message_pbs.start);
-		}
-		/*
-		 * Ready for update of .st_v1_iv, once the message has
-		 * passed basic checks such as hash(?).
-		 *
-		 * Code should use .v1_decrypt_iv directly, and this
-		 * line should be removed.
-		 *
-		 * The hack stops the Child SA being updated, but
-		 * doesn't stop a post-phase1 message scribbling on
-		 * the IKE SA's field.
-		 */
-		if (IS_ISAKMP_SA(st)) {
-			st->st_v1_new_iv = md->v1_decrypt_iv;
 		}
 	} else {
 		/* packet was not encrypted -- should it have been? */
@@ -2480,7 +2465,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 *
 			 * If this is triggered by the final Main or
 			 * Aggressive Mode message .v1_decrypt_iv is
-			 * .st_v1_ph1_iv.  Else it is from chaining
+			 * .st_v1_phase_1_iv.  Else it is from chaining
 			 * the XAUTH exchange.
 			 */
 			PASSERT(ike->sa.logger, md != NULL);
