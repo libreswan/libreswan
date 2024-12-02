@@ -3,8 +3,10 @@ See also https://libreswan.org/
 v5.2 (unreleased)
 * IKEv2:
   - PPK in INTERMEDIATE exchange, draft-ietf-ipsecme-ikev2-qr-alt-04 [Vukasin]
+  - add initial support for RFC-5723 IKE_SESSION_RESUME [Nupur Agrawal, Andrew]
 * IKEv1:
   - removed compile-time SOFTREMOTE_CLIENT_WORKAROUND [Andrew]
+  - fix INVALID_ID_INFORMATION response using corrupt IV [Andrew, #1830]
 * Linux:
   - packet offload counters supported in 6.7+ [Paul]
   - Add IPTFS support [Paul / Antony]
