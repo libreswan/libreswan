@@ -552,6 +552,13 @@ stf_status initiate_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_sa,
 	return record_v2_IKE_SESSION_RESUME_request(ike) ? STF_OK : STF_INTERNAL_ERROR;
 }
 
+static void record_v2N_TICKET_NACK(struct ike_sa *ike, struct msg_digest *md)
+{
+	record_v2N_response(ike->sa.logger, ike, md,
+			    v2N_TICKET_NACK, NULL/*no-data*/,
+			    UNENCRYPTED_PAYLOAD);
+}
+
 stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 						 struct child_sa *child,
 						 struct msg_digest *md)
@@ -574,11 +581,15 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 
 	/* the transition requires this notify! */
 	if (PBAD(ike->sa.logger, md->pd[PD_v2N_TICKET_OPAQUE] == NULL)) {
+		/* already exploded */
+		record_v2N_TICKET_NACK(ike, md);
 		return STF_FATAL;
 	}
 
 	struct pbs_in pbs = md->pd[PD_v2N_TICKET_OPAQUE]->pbs;
 	if(!decrypt_ticket(pbs, ike)) {
+		/* already logged */
+		record_v2N_TICKET_NACK(ike, md);
 		return STF_FATAL;
 	}
 
@@ -591,6 +602,7 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 					   &ike->sa.st_oakley, ike->sa.logger)) {
 		llog_sa(RC_LOG, ike, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
+		record_v2N_TICKET_NACK(ike, md);
 		return STF_FATAL;
 	}
 
