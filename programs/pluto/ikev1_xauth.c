@@ -186,12 +186,11 @@ static void fixup_xauth_hash(struct ike_sa *ike,
  * @param st State structure
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
-static stf_status isakmp_add_attr(struct pbs_out *strattr,
-				  const int attr_type,
-				  const ip_address ia,
-				  const struct ike_sa *ike)
+static bool isakmp_add_attr(struct pbs_out *strattr,
+			    const int attr_type,
+			    const ip_address ia,
+			    const struct ike_sa *ike)
 {
-	bool ok = true;
 	struct connection *c = ike->sa.st_connection;
 
 	/* ISAKMP attr out */
@@ -200,18 +199,18 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 	};
 
 	struct pbs_out attrval;
-	if (!out_struct(&attr,
-			&isakmp_xauth_attribute_desc,
-			strattr,
-			&attrval))
-		return STF_INTERNAL_ERROR;
+	if (!pbs_out_struct(strattr,
+			    &isakmp_xauth_attribute_desc,
+			    &attr, sizeof(attr),
+			    &attrval))
+		return false;
 
 	switch (attr_type) {
 	case IKEv1_INTERNAL_IP4_ADDRESS:
 	{
 		if (!pbs_out_address(&attrval, ia, "IP_addr")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 		break;
 	}
@@ -221,12 +220,12 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 		ip_address addr = selector_prefix(c->spd->local->client);
 		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 		ip_address mask = selector_prefix_mask(c->spd->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_subnet(mask)")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 		break;
 	}
@@ -236,7 +235,7 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 		ip_address mask = selector_prefix_mask(c->spd->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 		break;
 	}
@@ -257,7 +256,7 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 			/* emit attribute's value */
 			if (!pbs_out_address(&attrval, *dns, "IP4_dns")) {
 				/* already logged */
-				return STF_INTERNAL_ERROR;
+				return false;
 			}
 
 			if (dns + 1 < end) {
@@ -265,11 +264,12 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 				close_output_pbs(&attrval);
 
 				/* start the next attribute */
-				if (!out_struct(&attr,
-						&isakmp_xauth_attribute_desc,
-						strattr,
-						&attrval))
-					return STF_INTERNAL_ERROR;
+				if (!pbs_out_struct(strattr,
+						    &isakmp_xauth_attribute_desc,
+						    &attr, sizeof(attr),
+						    &attrval)) {
+					return false;
+				}
 			}
 		}
 		break;
@@ -283,19 +283,30 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 		 * more then one, so we just send the first one configured.
 		 */
 		if (c->config->modecfg.domains != NULL) {
+			ldbg(ike->sa.logger, "we are sending '"PRI_SHUNK"' as domain",
+			     pri_shunk(c->config->modecfg.domains[0]));
 			shunk_t first = c->config->modecfg.domains[0];
-			ok = out_raw(first.ptr, first.len, &attrval, "MODECFG_DOMAIN");
+			if (!out_raw(first.ptr, first.len, &attrval, "MODECFG_DOMAIN")) {
+				return false;
+			}
 		}
 		break;
 	}
 
 	case MODECFG_BANNER:
-		ok = out_raw(c->config->modecfg.banner,
+		ldbg(ike->sa.logger, "we are sending '%s' as banner",
+		     c->config->modecfg.banner);
+		if (!out_raw(c->config->modecfg.banner,
 			     strlen(c->config->modecfg.banner),
-			     &attrval, "");
+			     &attrval, "")) {
+			return false;
+		}
 		break;
 
-	/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
+	/*
+	 * XXX: not sending if our end is 0.0.0.0/0 equals previous
+	 * previous behaviour.
+	 */
 	case CISCO_SPLIT_INC:
 	{
 		/* XXX: bitstomask(c->spd->local->client.maskbits), */
@@ -304,9 +315,12 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 		struct CISCO_split_item i = {0};
 		memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
 		memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
-		ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
+		if (!pbs_out_struct(&attrval, &CISCO_split_desc, &i, sizeof(i), NULL)) {
+			return false;
+		}
 		break;
 	}
+
 	default:
 	{
 		esb_buf b;
@@ -317,12 +331,11 @@ static stf_status isakmp_add_attr(struct pbs_out *strattr,
 	}
 	}
 
-	if (!ok)
-		return STF_INTERNAL_ERROR;
+	if (!close_pbs_out(&attrval)) {
+		return false;
+	}
 
-	close_output_pbs(&attrval);
-
-	return STF_OK;
+	return true;
 }
 
 /**
@@ -420,9 +433,9 @@ static stf_status emit_modecfg(struct ike_sa *ike,
 		attr_type = 0;
 		while (resp != LEMPTY) {
 			if (resp & 1) {
-				stf_status ret = isakmp_add_attr(&strattr, attr_type, ia, ike);
-				if (ret != STF_OK)
-					return ret;
+				if (!isakmp_add_attr(&strattr, attr_type, ia, ike)) {
+					return STF_INTERNAL_ERROR;
+				}
 			}
 			attr_type++;
 			resp >>= 1;
