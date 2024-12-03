@@ -168,6 +168,8 @@ struct ticket {
 		struct encrypted {
 
 			so_serial_t sr_serialco;
+			realtime_t expiration;
+
 			id_buf sr_peer_id;
 
 			/* copy of sk_d_old */
@@ -252,7 +254,8 @@ void jam_session(struct jambuf *buf, const struct session *session)
 }
 
 static bool ike_to_ticket(const struct ike_sa *ike,
-			  struct ticket *ticket)
+			  struct ticket *ticket,
+			  realtime_t expiration)
 {
 	zero(ticket);
 
@@ -265,6 +268,7 @@ static bool ike_to_ticket(const struct ike_sa *ike,
 
 	ticket->secured.state.sr_serialco = ike->sa.st_connection->serialno;
 	str_id(&ike->sa.st_connection->local->host.id, &ticket->secured.state.sr_peer_id);
+	ticket->secured.state.expiration = expiration;
 
 	/* old skeyseed */
 	chunk_t sk = chunk_from_symkey("sk_d_old", ike->sa.st_skey_d_nss, ike->sa.logger);
@@ -302,6 +306,9 @@ static bool ike_to_ticket(const struct ike_sa *ike,
 /*
  * Emit IKEv2 Notify TICKET_OPAQUE payload.
  *
+ * Return false for fatal errors, true for success or something to
+ * ignore.
+ *
  * @param *ticket chunk_t stored encrypted ticket chunk at the client
  * side @param pbs output stream
  */
@@ -315,18 +322,33 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 	 *
 	 * The lifetime of the ticket sent by the gateway SHOULD be
 	 * the minimum of the IKE SA lifetime (per the gateway's local
-	 * policy) and its re- authentication time.
+	 * policy) and re-authentication time (and the resume session
+	 * key lifetime).
+	 *
+	 * Pluto only knows about the rekey time.  Oops!
+	 *
+	 * Should also take into account when the IKE SA was created,
+	 * as MAX_LIFETIME is from that date.
 	 */
-	deltatime_t lifetime =
-		(deltatime_cmp(c->config->sa_ike_max_lifetime, <, c->config->sa_ipsec_max_lifetime)
-		 ? c->config->sa_ike_max_lifetime
-		 : c->config->sa_ipsec_max_lifetime);
+	realtime_t ike_expires = realtime_add(ike->sa.st_inception,
+					      c->config->sa_ike_max_lifetime);
+	realtime_t now = realnow();
+	if (realtime_cmp(now, >=, ike_expires)) {
+		llog_pexpect(ike->sa.logger, HERE, "larval IKE SA has already expired");
+		return false;
+	}
+
+	/* XXX: missing replace time */
+	deltatime_t lifetime = deltatime_min(realtime_diff(ike_expires, now),
+					     deltatime(EVENT_REINIT_SECRET_DELAY));
+	realtime_t expiration = realtime_add(now, lifetime);
+
 	struct ikev2_ticket_lifetime tl = {
 		.sr_lifetime = deltasecs(lifetime),
 	};
 
 	struct ticket ticket;
-	if (!ike_to_ticket(ike, &ticket)) {
+	if (!ike_to_ticket(ike, &ticket, expiration)) {
 		llog(RC_LOG, ike->sa.logger, "encryption failed");
 		return false;
 	}
@@ -343,7 +365,13 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 		return false;
 	}
 
-	close_output_pbs(&resume_pbs);
+	if (!close_pbs_out(&resume_pbs)) {
+		return false;
+	}
+
+	realtime_buf rtb;
+	llog(RC_LOG, ike->sa.logger, "sending IKE_SESSION_RESUME ticket, expires %s",
+	     str_realtime(expiration, /*utc*/false, &rtb));
 
 	return true;
 }
@@ -407,6 +435,13 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 				    /*tag-size*/sizeof(ticket.secured.tag),
 				    ike->sa.logger)) {
 		llog(RC_LOG, ike->sa.logger, "crypto failed");
+		return false;
+	}
+
+	if (realtime_cmp(ticket.secured.state.expiration, <, realnow())) {
+		realtime_buf rtb;
+		llog(RC_LOG, ike->sa.logger, "ticket expired %s",
+		     str_realtime(ticket.secured.state.expiration, /*utc*/false, &rtb));
 		return false;
 	}
 
