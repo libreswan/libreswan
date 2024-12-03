@@ -1937,9 +1937,14 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 	pexpect(st == md->v1_st); /* could be NULL */
 
 	if (md->chain[ISAKMP_NEXT_D] != NULL) {
-	     if (!handle_v1_delete_payloads(&st, md)) {
-		     return;
-	     }
+		/*
+		 * Danger: this can delete IKE_OR_NULL and/or
+		 * CHILD_OR_NULL (although the latter would have to be
+		 * pretty bizare as it would mean a D payload in a
+		 * Quick message).
+		 */
+		handle_v1_delete_payloads(&ike_or_null, md);
+		return;
 	}
 
 	pexpect(st == md->v1_st); /* could be NULL */

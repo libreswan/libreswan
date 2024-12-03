@@ -42,7 +42,7 @@ struct payload_digest;
 void send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where);
 void llog_n_maybe_send_v1_delete(struct ike_sa *isakmp, struct state *st, where_t where);
 
-bool handle_v1_delete_payloads(struct state **st,
+void handle_v1_delete_payloads(struct ike_sa **ike_or_null,
 			       struct msg_digest *md);
 
 #endif
