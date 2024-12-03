@@ -1267,9 +1267,10 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 	bool gotpassword = false;
 
 	name = shunk2(unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 
 	/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
-	switch (md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_type) {
+	switch (ma->isama_type) {
 	case ISAKMP_CFG_REPLY:
 	case ISAKMP_CFG_ACK:
 		break;	/* OK */
@@ -1277,10 +1278,8 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 	{
 		enum_buf mb;
 		llog(RC_LOG, ike->sa.logger,
-		     "Expecting MODE_CFG_REPLY; got %s instead.",
-		     str_enum(&attr_msg_type_names,
-			      md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute.isama_type,
-			      &mb));
+		     "expecting MODE_CFG_REPLY or ISAKMP_CFG_ACK; got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 	}
@@ -1461,15 +1460,6 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
-	default:
-	{
-		enum_buf tb;
-		llog(RC_LOG, ike->sa.logger,
-		     "Expecting ISAKMP_CFG_REQUEST, got %s instead (ignored).",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
-		/* ??? what should we do here?  Pretend all is well? */
-		break;
-	}
 
 	case ISAKMP_CFG_REQUEST:
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -1537,6 +1527,17 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 
 		/* they asked us, we responded, msgid is done */
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		break;
+
+	default:
+	{
+		enum_buf tb;
+		llog(RC_LOG, ike->sa.logger,
+		     "expecting ISAKMP_CFG_REQUEST, got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
+		/* ??? what should we do here?  Pretend all is well? */
+		break;
+	}
 	}
 
 	llog(RC_LOG, ike->sa.logger, "modecfg_inR0(STF_OK)");
@@ -1568,11 +1569,19 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 
 	/* CHECK that SET has been received. */
 
-	if (ma->isama_type != ISAKMP_CFG_SET) {
+	switch (ma->isama_type) {
+
+	case ISAKMP_CFG_SET:
+		break;
+
+	default:
+	{
+		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
-			  "Expecting MODE_CFG_SET, got %x instead.",
-			  ma->isama_type);
+		     "expecting MODE_CFG_SET, got %s instead; message ignored.",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
+	}
 	}
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -1815,14 +1824,6 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
-	default:
-	{
-		llog(RC_LOG, ike->sa.logger,
-		     "Expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %x instead.",
-		     ma->isama_type);
-		return STF_IGNORE;
-		break;
-	}
 
 	case ISAKMP_CFG_ACK:
 		/* CHECK that ACK has been received. */
@@ -2046,6 +2047,16 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 			}
 		}
 		break;
+
+	default:
+	{
+		name_buf mb;
+		llog(RC_LOG, ike->sa.logger,
+		     "expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		return STF_IGNORE;
+	}
+
 	}
 
 	/* we are done with this exchange, clear things so that we can start phase 2 properly */
@@ -2309,15 +2320,6 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
-	default:
-	{
-		enum_buf tb;
-		llog(RC_LOG, ike->sa.logger,
-		     "Expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead (ignored).",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
-		/* ??? what are we supposed to do here?  Original code fell through to next case! */
-		return STF_FAIL_v1N;
-	}
 
 	case ISAKMP_CFG_SET:
 		gotset = true;
@@ -2326,6 +2328,16 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	case ISAKMP_CFG_REQUEST:
 		gotrequest = true;
 		break;
+
+	default:
+	{
+		enum_buf tb;
+		llog(RC_LOG, ike->sa.logger,
+		     "expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
+		/* ??? what are we supposed to do here?  Original code fell through to next case! */
+		return STF_FAIL_v1N;
+	}
 	}
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -2565,10 +2577,6 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
 	switch (ma->isama_type) {
-	default:
-		llog(RC_LOG, ike->sa.logger, "Expecting MODE_CFG_SET, got %x instead.",
-		     ma->isama_type);
-		return STF_IGNORE;
 
 	case ISAKMP_CFG_SET:
 		/* CHECK that SET has been received. */
@@ -2614,6 +2622,14 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 			}
 		}
 		break;
+
+	default:
+	{
+		name_buf mb;
+		llog(RC_LOG, ike->sa.logger, "expecting MODE_CFG_SET, got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		return STF_IGNORE;
+	}
 	}
 
 	/* first check if we might be done! */

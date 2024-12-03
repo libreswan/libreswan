@@ -688,14 +688,16 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 				 uint16_t type, const void *data,
 				 size_t len)
 {
-	msgid_t msgid;
-	struct pbs_out rbody;
+	msgid_t msgid = generate_msgid(&ike->sa);
 
-	msgid = generate_msgid(&ike->sa);
-
-	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), ike->sa.logger);
+	struct fragment_pbs_out packet;
+	if (!open_fragment_pbs_out("DPD request", &packet, ike->sa.logger)) {
+		return STF_FATAL;
+	}
 
 	/* HDR* */
+	struct pbs_out rbody;
+
 	{
 		struct isakmp_hdr hdr = {
 			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
@@ -706,7 +708,7 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 		};
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &packet.pbs, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -753,7 +755,7 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	send_pbs_out_using_state(&ike->sa, "ISAKMP notify", &reply_stream);
+	send_pbs_out_using_state(&ike->sa, "ISAKMP notify", &packet.pbs);
 
 	return STF_IGNORE;
 }
