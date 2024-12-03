@@ -76,8 +76,57 @@ static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_REDI
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_request;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response; /* type assertion */
 
-struct cipher_context *encrypt;
-struct cipher_context *decrypt;
+static unsigned session_resume_magic; /* current session resume key */
+static struct session_resume_key {
+	struct cipher_context *encrypt;
+	struct cipher_context *decrypt;
+	unsigned magic;
+} session_resume_keys[2];
+
+static void init_session_resume_key(struct session_resume_key *key,
+				    struct logger *logger)
+{
+	PK11SymKey *symkey = cipher_symkey("ike-session-resume",
+					   &ike_alg_encrypt_aes_gcm_16,
+					   128, logger, HERE);
+
+	uint32_t salt = get_rnd_uintmax();
+	key->encrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
+					     ENCRYPT,
+					     FILL_WIRE_IV,
+					     symkey,
+					     THING_AS_SHUNK(salt),
+					     logger);
+	key->decrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
+					     DECRYPT,
+					     USE_WIRE_IV,
+					     symkey,
+					     THING_AS_SHUNK(salt),
+					     logger);
+	symkey_delref(logger, "symkey", &symkey);
+}
+
+static void destroy_session_resume_key(struct session_resume_key *key,
+					struct logger *logger)
+{
+	cipher_context_destroy(&key->encrypt, logger);
+	cipher_context_destroy(&key->decrypt, logger);
+	key->magic = 0;
+}
+
+void refresh_v2_ike_session_resume(struct logger *logger)
+{
+	session_resume_magic++;
+	/* replace next key */
+	unsigned key_nr = session_resume_magic % elemsof(session_resume_keys);
+	struct session_resume_key *key = &session_resume_keys[key_nr];
+	destroy_session_resume_key(key, logger);
+	init_session_resume_key(key, logger);
+	key->magic = session_resume_magic;
+	/* log the roll over */
+	llog(RC_LOG, logger, "refreshed session resume keys, issuing key %u",
+	     session_resume_magic);
+}
 
 /*
  * Ticket that will be serialized and sent to client.
@@ -109,7 +158,7 @@ struct cipher_context *decrypt;
 
 struct ticket {
 	struct {
-		unsigned magic; /* use whack_magic() */
+		unsigned magic;
 	} aad;
 	struct {
 		/* plus salt+counter */
@@ -207,7 +256,12 @@ static bool ike_to_ticket(const struct ike_sa *ike,
 {
 	zero(ticket);
 
-	ticket->aad.magic = whack_magic(),
+	unsigned key_nr = session_resume_magic % elemsof(session_resume_keys);
+	struct session_resume_key *key = &session_resume_keys[key_nr];
+
+	llog(RC_LOG, ike->sa.logger, "using session resume key number %u",
+	     key->magic);
+	ticket->aad.magic = key->magic;
 
 	ticket->secured.state.sr_serialco = ike->sa.st_connection->serialno;
 	str_id(&ike->sa.st_connection->local->host.id, &ticket->secured.state.sr_peer_id);
@@ -231,7 +285,7 @@ static bool ike_to_ticket(const struct ike_sa *ike,
 
 	ticket->secured.state.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
 
-	if (!cipher_context_op_aead(encrypt,
+	if (!cipher_context_op_aead(key->encrypt,
 				    THING_AS_CHUNK(ticket->iv),
 				    THING_AS_SHUNK(ticket->aad),
 				    THING_AS_CHUNK(ticket->secured),
@@ -325,16 +379,27 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 		return false;
 	}
 
-	/* basic sanity check */
+	/*
+	 * Basic sanity check; can't trust .aad.key.
+	 *
+	 * Just trying to avoid a decrypt, the check that matters is
+	 * .decrypt being non-NULL as initially not all the keys are
+	 * valid.
+	 */
 
-	if (ticket.aad.magic != whack_magic()) {
-		llog(RC_LOG, ike->sa.logger, "invalid ticket: magic number is wrong");
+	unsigned key_nr = (ticket.aad.magic % elemsof(session_resume_keys));
+	struct session_resume_key *key = &session_resume_keys[key_nr];
+	if (ticket.aad.magic != key->magic) {
+		llog(RC_LOG, ike->sa.logger, "invalid ticket: bad magic number");
 		return false;
 	}
 
+	llog(RC_LOG, ike->sa.logger, "using session resume key %u",
+	     key->magic);
+
 	/* decrypt!?! */
 
-	if (!cipher_context_op_aead(decrypt,
+	if (!cipher_context_op_aead(key->decrypt,
 				    THING_AS_CHUNK(ticket.iv),
 				    THING_AS_SHUNK(ticket.aad),
 				    THING_AS_CHUNK(ticket.secured),
@@ -957,30 +1022,17 @@ V2_EXCHANGE(IKE_SESSION_RESUME, "initiate IKE SESSION RESUME",
 	    ", preparing IKE_AUTH request",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
 
+#if 0
 void init_ike_session_resume(struct logger *logger)
 {
-	PK11SymKey *symkey = cipher_symkey("ike-session-resume",
-					   &ike_alg_encrypt_aes_gcm_16,
-					   128, logger, HERE);
-
-	uint32_t salt = get_rnd_uintmax();
-	encrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
-					ENCRYPT,
-					FILL_WIRE_IV,
-					symkey,
-					THING_AS_SHUNK(salt),
-					logger);
-	decrypt = cipher_context_create(&ike_alg_encrypt_aes_gcm_16,
-					DECRYPT,
-					USE_WIRE_IV,
-					symkey,
-					THING_AS_SHUNK(salt),
-					logger);
-	symkey_delref(logger, "symkey", &symkey);
+	/* not needed as hourly will call refresh_v2_ike_session_resume() */
+	init_first_session_resume_key(logger);
 }
+#endif
 
 void shutdown_ike_session_resume(struct logger *logger)
 {
-	cipher_context_destroy(&encrypt, logger);
-	cipher_context_destroy(&decrypt, logger);
+	FOR_EACH_ELEMENT(key, session_resume_keys) {
+		destroy_session_resume_key(key, logger);
+	}
 }

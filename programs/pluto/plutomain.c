@@ -78,7 +78,6 @@
 #include "server_pool.h"
 #include "show.h"
 #include "enum_names.h"		/* for init_enum_names() */
-#include "ikev2_ike_session_resume.h"	/* for init_ike_session_resume() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1840,8 +1839,6 @@ int main(int argc, char **argv)
 	test_ike_alg(logger);
 
 	init_vendorid(logger);
-
-	init_ike_session_resume(logger);
 
 	if (selftest_only) {
 		/*

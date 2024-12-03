@@ -26,8 +26,9 @@
 
 #include "ike_spi.h"		/* for refresh_ike_spi_secret() */
 #include "ikev2_cookie.h"	/* for refresh_v2_cookie_secret() */
+#include "ikev2_ike_session_resume.h"
 
-static void refresh_secrets(struct logger *unused_logger UNUSED)
+static void refresh_secrets(struct logger *logger)
 {
 	/*
 	 * Generate the secret value for responder cookies, and
@@ -35,6 +36,7 @@ static void refresh_secrets(struct logger *unused_logger UNUSED)
 	 */
 	refresh_ike_spi_secret();
 	refresh_v2_cookie_secret();
+	refresh_v2_ike_session_resume(logger);
 }
 
 void init_secret_timer(struct logger *logger)
