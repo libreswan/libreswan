@@ -351,7 +351,7 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	const struct state_event *lifetime_event = st_v2_lifetime_event(rst);
 	deltatime_t lifetime = deltatime(0);
 	if (lifetime_event != NULL) {
-		lifetime = monotimediff(lifetime_event->ev_time, mononow());
+		lifetime = monotime_diff(lifetime_event->ev_time, mononow());
 	}
 
 	deltatime_buf lb;

@@ -57,16 +57,17 @@ extern const monotime_t monotime_epoch;
 bool is_monotime_epoch(monotime_t t);
 
 monotime_t mononow(void);
+
 monotime_t monotime_max(monotime_t l, monotime_t r);
 monotime_t monotime_min(monotime_t l, monotime_t r);
 monotime_t monotime_add(monotime_t l, deltatime_t r);
 monotime_t monotime_sub(monotime_t l, deltatime_t r);
+deltatime_t monotime_diff(monotime_t l, monotime_t r);
 
 /* sign(a - b); see timercmp() for hacks origin */
 int monotime_sub_sign(monotime_t l, monotime_t r);
 #define monotime_cmp(L, OP, R) (monotime_sub_sign(L, R) OP 0)
 
-deltatime_t monotimediff(monotime_t a, monotime_t b);
 intmax_t monosecs(monotime_t m);
 
 /* for pthread_cond_timedwait() */

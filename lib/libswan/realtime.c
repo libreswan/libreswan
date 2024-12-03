@@ -32,10 +32,17 @@ realtime_t realtime(time_t seconds)
 	return (realtime_t) { .rt = from_seconds(seconds), };
 }
 
-realtime_t realtimesum(realtime_t t, deltatime_t d)
+realtime_t realtime_add(realtime_t t, deltatime_t d)
 {
 	realtime_t s;
 	timeradd(&t.rt, &d.dt, &s.rt);
+	return s;
+}
+
+realtime_t realtime_sub(realtime_t t, deltatime_t d)
+{
+	realtime_t s;
+	timersub(&t.rt, &d.dt, &s.rt);
 	return s;
 }
 
@@ -50,7 +57,7 @@ int realtime_sub_sign(realtime_t l, realtime_t r)
 	return timeval_sub_sign(l.rt, r.rt);
 }
 
-deltatime_t realtimediff(realtime_t a, realtime_t b)
+deltatime_t realtime_diff(realtime_t a, realtime_t b)
 {
 	return deltatime_timevals_diff(a.rt, b.rt);
 }

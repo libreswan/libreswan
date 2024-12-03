@@ -197,7 +197,7 @@ enum retransmit_action retransmit(struct state *st)
 	unsigned long nr_retransmits = retransmit_count(st);
 	bool retransmit_count_exceeded = nr_retransmits >= rt->limit;
 	bool deltatime_exceeds_limit = deltatime_cmp(rt->delays, >=, rt->timeout);
-	deltatime_t waited = monotimediff(now, rt->start);
+	deltatime_t waited = monotime_diff(now, rt->start);
 	bool monotime_exceeds_limit = deltatime_cmp(waited, >=, rt->timeout);
 	monotime_buf mb;
 

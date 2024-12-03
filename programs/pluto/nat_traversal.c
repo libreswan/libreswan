@@ -322,7 +322,7 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 * eg, if short LIVENESS timers are used we can skip this.
 	 */
 	if (!is_monotime_epoch(ike->sa.st_v2_msgid_windows.last_sent) &&
-	    deltasecs(monotimediff(mononow(), ike->sa.st_v2_msgid_windows.last_sent)) < DEFAULT_KEEP_ALIVE_SECS) {
+	    deltasecs(monotime_diff(mononow(), ike->sa.st_v2_msgid_windows.last_sent)) < DEFAULT_KEEP_ALIVE_SECS) {
 		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA recently sent a request");
 		return;
 	}

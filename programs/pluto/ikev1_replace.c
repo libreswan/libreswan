@@ -123,7 +123,7 @@ void event_v1_replace(struct state *st, monotime_t now)
 		 */
 		ldbg(st->logger,
 		     "not replacing stale %s SA: inactive for %jds",
-		     satype, deltasecs(monotimediff(now, st->st_outbound_time)));
+		     satype, deltasecs(monotime_diff(now, st->st_outbound_time)));
 	} else {
 		ldbg(st->logger, "replacing stale %s SA", satype);
 		/*

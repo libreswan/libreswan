@@ -794,7 +794,7 @@ static const char *check_expiry(realtime_t expiration_date, time_t warning_inter
 	if (is_realtime_epoch(expiration_date))
 		return "ok (expires never)";
 
-	time_t time_left = deltasecs(realtimediff(expiration_date, realnow()));
+	time_t time_left = deltasecs(realtime_diff(expiration_date, realnow()));
 
 	if (time_left < 0)
 		return "fatal (expired)";

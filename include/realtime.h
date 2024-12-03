@@ -68,14 +68,17 @@ size_t jam_realtime(struct jambuf *buf, realtime_t r, bool utc);
  * math
  */
 
-realtime_t realtimesum(realtime_t t, deltatime_t d);
 bool is_realtime_epoch(realtime_t t);
+
+realtime_t realtime_add(realtime_t r, deltatime_t d);
+realtime_t realtime_sub(realtime_t r, deltatime_t d);
+
+deltatime_t realtime_diff(realtime_t l, realtime_t r);
 
 /* sign(a - b); see timercmp() for hacks origin */
 int realtime_sub_sign(realtime_t l, realtime_t r);
 #define realtime_cmp(L, OP, R) (realtime_sub_sign(L, R) OP 0)
 
-deltatime_t realtimediff(realtime_t a, realtime_t b);
 realtime_t realnow(void);
 
 struct realtm {

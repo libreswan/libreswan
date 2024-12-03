@@ -2000,7 +2000,7 @@ bool was_eroute_idle(struct child_sa *child, deltatime_t since_when)
 		/* snafu; assume idle!?! */
 		return true;
 	}
-	deltatime_t idle_time = realtimediff(realnow(), first_proto_info->inbound.last_used);
+	deltatime_t idle_time = realtime_diff(realnow(), first_proto_info->inbound.last_used);
 	return deltatime_cmp(idle_time, >=, since_when);
 }
 
@@ -2021,7 +2021,7 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
 			p2->inbound.last_used = now;
 		}
 		if (ago != NULL) {
-			*ago = realtimediff(now, p2->inbound.last_used);
+			*ago = realtime_diff(now, p2->inbound.last_used);
 		}
 	} else {
 		if (bytes > p2->outbound.bytes) {
@@ -2029,7 +2029,7 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
 			p2->outbound.last_used = now;
 		}
 		if (ago != NULL)
-			*ago = realtimediff(now, p2->outbound.last_used);
+			*ago = realtime_diff(now, p2->outbound.last_used);
 	}
 }
 
@@ -2223,7 +2223,7 @@ static void expire_bare_shunts(struct logger *logger)
 	dbg("kernel: checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
-		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
+		time_t age = deltasecs(monotime_diff(mononow(), bsp->last_activity));
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			ldbg_bare_shunt(logger, "expiring old", bsp);

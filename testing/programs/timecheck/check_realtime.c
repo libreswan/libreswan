@@ -38,7 +38,7 @@ void check_realtime(void)
 		const struct test_realtimediff *t = &test_realtimediff[i];
 		realtime_t l = realtime(t->l);
 		realtime_t r = realtime(t->r);
-		deltatime_t d = realtimediff(l, r);
+		deltatime_t d = realtime_diff(l, r);
 		deltatime_buf buf;
 		const char *str = str_deltatime(d, &buf);
 

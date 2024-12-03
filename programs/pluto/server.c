@@ -368,7 +368,7 @@ static void list_global_timers(struct show *s, const monotime_t now)
 		if (event_initialized(&gt->ev) &&
 		    event_pending(&gt->ev, EV_TIMEOUT, &due.mt) > 0) {
 			const char *what = (event_get_events(&gt->ev) & EV_PERSIST) ? "periodic" : "one-shot";
-			deltatime_t delay = monotimediff(due, now);
+			deltatime_t delay = monotime_diff(due, now);
 			deltatime_buf delay_buf;
 			show(s, "global %s timer %s is scheduled for %jd (in %s seconds)",
 				     what, gt->name,

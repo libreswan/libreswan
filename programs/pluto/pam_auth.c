@@ -130,7 +130,7 @@ static stf_status pam_callback(struct state *st,
 			jam(buf, "ABORTED (%s)", pamauth->aborted);
 		}
 		jam(buf, " after ");
-		jam_deltatime(buf, monotimediff(mononow(), pamauth->start_time));
+		jam_deltatime(buf, monotime_diff(mononow(), pamauth->start_time));
 		jam(buf, " seconds");
 	}
 

@@ -423,7 +423,7 @@ err_t process_dns_resp(struct p_dns_req *dnsr)
 
 void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 {
-	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	deltatime_t served_delta = realtime_diff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
 	llog(RC_LOG, dnsr->logger,
 	     "the state is gone; %s returned %s elapsed time %s seconds",
@@ -433,7 +433,7 @@ void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 
 void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 {
-	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	deltatime_t served_delta = realtime_diff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
 	dbg("%s returned %s cache=%s elapsed time %s seconds",
 	    dnsr->log_buf,

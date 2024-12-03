@@ -52,7 +52,7 @@ static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 				       struct p_dns_req *dnsr,
 				       const char *err)
 {
-	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	deltatime_t served_delta = realtime_diff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
 	llog_sa(RC_LOG, ike,
 		"%s returned %s rr parse error %s elapsed time %s seconds",
@@ -112,7 +112,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		diag_t d = unpack_dns_ipseckey(keyid, /*dns_auth_level*/al,
 					       dns_pubkey->algorithm_type,
 					       install_time,
-					       realtimesum(install_time, deltatime(ttl_used)),
+					       realtime_add(install_time, deltatime(ttl_used)),
 					       ttl,
 					       dns_pubkey->pubkey,
 					       NULL/*don't-return-pubkey*/, &pluto_pubkeys);

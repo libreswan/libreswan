@@ -210,7 +210,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		for (const struct state_event **event = events; event < events+nr_events; event++) {
 			jam_string(buf, " ");
 			jam_enum_short(buf, &event_type_names, (*event)->ev_type);
-			intmax_t delta = deltasecs(monotimediff((*event)->ev_time, now));
+			intmax_t delta = deltasecs(monotime_diff((*event)->ev_time, now));
 			jam(buf, " in %jds;", delta);
 		}
 
@@ -233,7 +233,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			/* XXX: because config uses -1 for disabled? */
 			jam(buf, " lastdpd=%jds(seq in:%u out:%u);",
 			    (!is_monotime_epoch(st->st_last_dpd) ?
-			     deltasecs(monotimediff(now, st->st_last_dpd)) :
+			     deltasecs(monotime_diff(now, st->st_last_dpd)) :
 			     (intmax_t)-1),
 			    st->st_dpd_seqno,
 			    st->st_dpd_expectseqno);
@@ -243,7 +243,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 				struct state *pst = state_by_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					jam(buf, " lastlive=%jds;",
-					    deltasecs(monotimediff(now, pst->st_v2_msgid_windows.last_recv)));
+					    deltasecs(monotime_diff(now, pst->st_v2_msgid_windows.last_recv)));
 				}
 			}
 		} else if (st->st_ike_version == IKEv1) {
@@ -276,7 +276,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 		if (c->negotiating_child_sa == child->sa.st_serialno &&
 		    child->sa.st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
-			    deltasecs(monotimediff(now , child->sa.st_outbound_time)));
+			    deltasecs(monotime_diff(now , child->sa.st_outbound_time)));
 		}
 
 #define add_said(ADDRESS, PROTOCOL, SPI)				\

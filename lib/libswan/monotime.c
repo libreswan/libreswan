@@ -112,7 +112,7 @@ int monotime_sub_sign(monotime_t l, monotime_t r)
 	return timeval_sub_sign(l.mt, r.mt);
 }
 
-deltatime_t monotimediff(monotime_t a, monotime_t b)
+deltatime_t monotime_diff(monotime_t a, monotime_t b)
 {
 	return deltatime_timevals_diff(a.mt, b.mt);
 }
@@ -120,7 +120,7 @@ deltatime_t monotimediff(monotime_t a, monotime_t b)
 size_t jam_monotime(struct jambuf *buf, monotime_t m)
 {
 	/* convert it to time-since-epoch and log that */
-	return jam_deltatime(buf, monotimediff(m, monotime_epoch));
+	return jam_deltatime(buf, monotime_diff(m, monotime_epoch));
 }
 
 const char *str_monotime(monotime_t m, monotime_buf *buf)

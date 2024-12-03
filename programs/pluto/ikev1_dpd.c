@@ -297,7 +297,7 @@ stf_status dpd_init(struct state *st)
 		}
 
 		if (st->st_v1_dpd_event == NULL ||
-		    deltatime_cmp(monotimediff(st->st_v1_dpd_event->ev_time, mononow()),
+		    deltatime_cmp(monotime_diff(st->st_v1_dpd_event->ev_time, mononow()),
 				  <,
 				  st->st_connection->config->dpd.delay)) {
 			event_delete(EVENT_v1_DPD, st);
@@ -363,7 +363,7 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	monotime_t last = monotime_max(p1->sa.st_last_dpd, st->st_last_dpd);
 
 	monotime_t next_time = monotime_add(last, delay);
-	deltatime_t next_delay = monotimediff(next_time, now);
+	deltatime_t next_delay = monotime_diff(next_time, now);
 
 	/* has there been enough activity of late? */
 	if (deltatime_cmp(next_delay, >, deltatime(0))) {

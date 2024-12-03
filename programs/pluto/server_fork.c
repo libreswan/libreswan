@@ -306,7 +306,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->logger);
 			} else {
 				if (DBGP(DBG_CPU_USAGE)) {
-					deltatime_t took = monotimediff(mononow(), pid_entry->start_time);
+					deltatime_t took = monotime_diff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;
 					DBG_log("#%lu waited %s for '%s' fork()",
 						st->st_serialno, str_deltatime(took, &dtb),

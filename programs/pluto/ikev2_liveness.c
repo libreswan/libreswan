@@ -210,7 +210,7 @@ void event_v2_liveness(struct state *st)
 	 */
 	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
 	pexpect(!is_monotime_epoch(our->last_recv));
-	if (recent_last_contact(child, monotimediff(now, our->last_recv),
+	if (recent_last_contact(child, monotime_diff(now, our->last_recv),
 				"successful exchange")) {
 		return;
 	}
@@ -233,7 +233,7 @@ void event_v2_liveness(struct state *st)
 	 * them.
 	 */
 	struct v2_msgid_window *peer = &ike->sa.st_v2_msgid_windows.responder;
-	if (recent_last_contact(child, monotimediff(now, peer->last_recv),
+	if (recent_last_contact(child, monotime_diff(now, peer->last_recv),
 				"peer contact")) {
 		return;
 	}
@@ -261,7 +261,7 @@ void event_v2_liveness(struct state *st)
 		 NULL);
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
 		deltatime_t since =
-			realtimediff(realnow(), first_ipsec_proto->inbound.last_used);
+			realtime_diff(realnow(), first_ipsec_proto->inbound.last_used);
 		if (recent_last_contact(child, since, "recent IPsec traffic")) {
 			return;
 		}

@@ -87,19 +87,19 @@ void check_monotime(void)
 {
 	char what[1000];
 
-	static const struct test_monotimediff {
+	static const struct test_monotime_diff {
 		intmax_t l, r;
 		const char *diff;
-	} test_monotimediff[] = {
+	} test_monotime_diff[] = {
 		{ 1, 1, "0", },
 		{ 2, 1, "1", },
 		{ 1, 2, "-1", },
 	};
-	for (unsigned i = 0; i < elemsof(test_monotimediff); i++) {
-		const struct test_monotimediff *t = &test_monotimediff[i];
+	for (unsigned i = 0; i < elemsof(test_monotime_diff); i++) {
+		const struct test_monotime_diff *t = &test_monotime_diff[i];
 		monotime_t l = monotime(t->l);
 		monotime_t r = monotime(t->r);
-		deltatime_t d = monotimediff(l, r);
+		deltatime_t d = monotime_diff(l, r);
 		deltatime_buf buf;
 		const char *str = str_deltatime(d, &buf);
 

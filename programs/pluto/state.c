@@ -799,7 +799,7 @@ void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 		jam_string(buf, ")");
 		/* aged NNNs */
 		jam_string(buf, " aged ");
-		jam_deltatime(buf, realtimediff(realnow(), st->st_inception));
+		jam_deltatime(buf, realtime_diff(realnow(), st->st_inception));
 		jam_string(buf, "s");
 		if (ike == NULL) {
 			jam_string(buf, " and NOT sending notification");
@@ -1867,7 +1867,7 @@ static void list_state_event(struct show *s, struct state *st,
 			jam_string(buf, " schd: ");
 			jam(buf, "%jds", monosecs(pe->ev_time));
 			jam_string(buf, " (in ");
-			jam(buf, "%jds", deltasecs(monotimediff(pe->ev_time, now)));
+			jam(buf, "%jds", deltasecs(monotime_diff(pe->ev_time, now)));
 			jam_string(buf, ") ");
 			jam_prefix(buf, st->logger);
 		}
