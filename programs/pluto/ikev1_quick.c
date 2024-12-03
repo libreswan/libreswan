@@ -2256,7 +2256,7 @@ static struct connection *fc_try(const struct connection *c,
 								&d_spd->remote->host->id)) {
 						vdbg("skipping SPD, is_virtual_net_used()");
 						continue;
-					}
+ 					}
 				} else {
 					if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client)) {
 						selector_buf d1, d3;
@@ -2267,11 +2267,36 @@ static struct connection *fc_try(const struct connection *c,
 					}
 				}
 
+			} else if (c == d) {
+
+				/*
+				 * From merging in an alternative
+				 * loop.
+				 *
+				 * Apply the less strict check that
+				 * the ranges are the same.  This
+				 * allows narrowing.
+				 */
+				if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client)) {
+					selector_buf s1, s3;
+					vdbg("skipping SPD, C's remote client%s does not match range %s",
+					     str_selector_subnet_port(&d_spd->remote->client, &s3),
+					     str_selector_subnet_port(remote_client, &s1));
+					continue;
+				}
+
 			} else {
 
 				/*
 				 * Since there's no client, is this
 				 * transport mode?
+				 *
+				 * This seems to be asking the
+				 * question: is C (NOT D) for
+				 * transport mode, yet it doesn't
+				 * check the transport BIT and doesn't
+				 * know if the other end needs
+				 * transport.
 				 */
 				if (!selector_eq_address(*remote_client,
 							 c->remote->host.addr)) {
@@ -2374,74 +2399,6 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	 * but even greater priority to a routed concrete connection.
 	 */
 
-	struct connection *d;
-	int srnum = -1;
-	struct connection *unrouted = NULL;
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		srnum++;
-
-		selector_buf s2;
-		selector_buf d2;
-		vdbg("concrete checking against sr#%d %s -> %s", srnum,
-		     str_selector_subnet_port(&spd->local->client, &s2),
-		     str_selector_subnet_port(&spd->remote->client, &d2));
-
-		/* compare selector ranges */
-
-		if (!selector_range_eq_selector_range(spd->local->client, *local_client)) {
-			selector_buf s1, s3;
-			vdbg("our client (%s) does not have a matching local selector range (%s)",
-			     str_selector_subnet_port(&spd->local->client, &s3),
-			     str_selector_subnet_port(local_client, &s1));
-			continue;
-		}
-
-		if (!selector_range_eq_selector_range(spd->remote->client, *remote_client)) {
-			selector_buf s1, s3;
-			vdbg("our client (%s) does not have a matching remote selector range (%s)",
-			     str_selector_subnet_port(&spd->remote->client, &s3),
-			     str_selector_subnet_port(remote_client, &s1));
-			continue;
-		}
-
-		/* compare protocol */
-
-		if (spd->local->client.ipproto != local_client->ipproto) {
-			vdbg("skipping connection SPD with wrong local protocol");
-			continue;
-		}
-
-		if (spd->remote->client.ipproto != remote_client->ipproto) {
-			vdbg("skipping connection SPD with wrong remote protocol");
-			continue;
-		}
-
-		/* compare port */
-
-		if (spd->local->client.hport != 0 &&
-		    spd->local->client.hport != local_client->hport) {
-			vdbg("skipping connection SPD with wrong local port");
-			continue;
-		}
-
-		if (spd->remote->client.hport != 0 &&
-		    spd->remote->client.hport != remote_client->hport) {
-			vdbg("skipping connection with wrong remote port");
-			continue;
-		}
-
-		/* instant winner */
-		if (kernel_route_installed(c)) {
-			vdbg("connection has route installed; instant winner!");
-			return c;
-		}
-
-		/* save for after fc_try() */
-		vdbg("saving unrouted connection for later");
-		unrouted = c;
-	}
 
 	/* exact match? */
 	/*
@@ -2452,6 +2409,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	 * If so, the caller must have passed NULL for it and earlier
 	 * references would be wrong (segfault).
 	 */
+	struct connection *d;
 	d = fc_try(c, c->local->host.addr, c->remote->host.addr,
 		   local_client, remote_client, verbose);
 	if (d != NULL) {
@@ -2459,13 +2417,6 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		vdbg("success! fc_try %s gives "PRI_CONNECTION,
 		     c->name, pri_connection(d, &cb));
 		return d;
-	}
-
-	if (unrouted != NULL) {
-		connection_buf cb;
-		vdbg("success! early search gave unrouted "PRI_CONNECTION,
-		     pri_connection(unrouted, &cb));
-		return unrouted;
 	}
 
 	/*
