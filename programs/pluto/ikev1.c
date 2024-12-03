@@ -287,101 +287,111 @@ stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion
  */
-stf_status informational(struct state *st, struct msg_digest *md)
+stf_status informational(struct state *ike_sa_or_null,
+			 struct msg_digest *md)
 {
-	/*
-	 * XXX: Danger: ST is deleted midway through this function.
-	 */
-	pexpect(st == md->v1_st);
-	st = md->v1_st;    /* may be NULL */
+	pexpect(ike_sa_or_null == md->v1_st); ike_sa_or_null = md->v1_st;    /* may be NULL */
+	name_buf eb;
 
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
-
-	/* If the Notification Payload is not null... */
-	if (n_pld != NULL) {
-		struct pbs_in *const n_pbs = &n_pld->pbs;
-		struct isakmp_notification *const n =
-			&n_pld->payload.notification;
-
-		/* Switch on Notification Type (enum) */
-		/* note that we _can_ get notification payloads unencrypted
-		 * once we are at least in R3/I4.
-		 * and that the handler is expected to treat them suspiciously.
-		 */
-		enum_buf eb;
-		dbg("processing informational %s (%d)",
-		    str_enum_short(&v1_notification_names, n->isan_type, &eb),
-		    n->isan_type);
-
-		pstats(ikev1_recv_notifies_e, n->isan_type);
-
-		switch (n->isan_type) {
+	if (n_pld == NULL) {
 		/*
-		 * We answer DPD probes even if they claimed not to support
-		 * Dead Peer Detection.
-		 * We would have to send some kind of reply anyway to prevent
-		 * a retransmit, so rather then send an error, we might as
-		 * well just send a DPD reply
+		 * Warn if we didn't find any Delete or Notify payload
+		 * in packet.
+		 *
+		 * Since process_v1_packet_tail() intercepts D
+		 * payloads and bypasses this code, there can't be
+		 * any.
 		 */
-		case v1N_R_U_THERE:
-			if (st == NULL) {
-				llog(RC_LOG, md->logger,
-				     "received bogus R_U_THERE informational message");
-				return STF_IGNORE;
-			}
-			return dpd_inI_outR(st, n, n_pbs);
+		const struct logger *logger = (ike_sa_or_null != NULL ? ike_sa_or_null->logger :
+					       md->logger);
+		PEXPECT(md->logger, md->chain[ISAKMP_NEXT_D] == NULL);
+		llog(RC_LOG, logger,
+		     "received and ignored empty informational notification payload");
+		return STF_IGNORE;
+	}
 
-		case v1N_R_U_THERE_ACK:
-			if (st == NULL) {
-				llog(RC_LOG, md->logger,
-				     "received bogus R_U_THERE_ACK informational message");
-				return STF_IGNORE;
-			}
-			return dpd_inR(st, n, n_pbs);
+	struct pbs_in *const n_pbs = &n_pld->pbs;
+	struct isakmp_notification *const n = &n_pld->payload.notification;
 
-		case v1N_PAYLOAD_MALFORMED:
-			if (st != NULL) {
-				st->hidden_variables.st_malformed_received++;
+	if (ike_sa_or_null == NULL) {
+		llog(RC_LOG, md->logger, "ignoring %s (%d) informational, no matching ISAKMP",
+		     str_enum_short(&v1_notification_names, n->isan_type, &eb),
+		     n->isan_type);
+		return STF_IGNORE;
+	}
 
-				log_state(RC_LOG, st, "received %u malformed payload notifies",
-					  st->hidden_variables.st_malformed_received);
+	/*
+	 * Have notification and IKE SA, time to upgrade!
+	 */
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa_or_null);
 
-				if (st->hidden_variables.st_malformed_sent >
-				    MAXIMUM_MALFORMED_NOTIFY / 2 &&
-				    ((st->hidden_variables.st_malformed_sent +
-				      st->hidden_variables.
-				      st_malformed_received) >
-				     MAXIMUM_MALFORMED_NOTIFY)) {
-					log_state(RC_LOG, st, "too many malformed payloads (we sent %u and received %u",
-						  st->hidden_variables.st_malformed_sent,
-						  st->hidden_variables.st_malformed_received);
-					connection_delete_v1_state(&st, HERE);
-					md->v1_st = st = NULL;
-				}
-			}
+	/*
+	 * Switch on Notification Type (enum)
+	 *
+	 * Note that we _can_ get notification payloads
+	 * unencrypted once we are at least in R3/I4.  and
+	 * that the handler is expected to treat them
+	 * suspiciously.
+	 */
+	ldbg(ike->sa.logger, "processing informational %s (%d)",
+	     str_enum_short(&v1_notification_names, n->isan_type, &eb),
+	     n->isan_type);
 
-			return STF_IGNORE;
+	pstats(ikev1_recv_notifies_e, n->isan_type);
 
-		default:
-		{
-			struct logger *logger = st != NULL ? st->logger :
-							     md->logger;
-			enum_buf eb;
-			llog(RC_LOG, logger,
-			     "received and ignored notification payload: %s",
-			     str_enum_short(&v1_notification_names, n->isan_type, &eb));
-			return STF_IGNORE;
-		}
-		}
-	} else {
-		/* warn if we didn't find any Delete or Notify payload in packet */
-		if (md->chain[ISAKMP_NEXT_D] == NULL) {
-			const struct logger *logger = (st != NULL ? st->logger :
-						 md->logger);
-			llog(RC_LOG, logger,
-				    "received and ignored empty informational notification payload");
+	switch (n->isan_type) {
+
+	case v1N_R_U_THERE:
+		/*
+		 * We answer DPD probes even if they claimed not to
+		 * support Dead Peer Detection.
+		 *
+		 * We would have to send some kind of reply anyway to
+		 * prevent a retransmit, so rather then send an error,
+		 * we might as well just send a DPD reply
+		 */
+		return dpd_inI_outR(&ike->sa, n, n_pbs);
+
+	case v1N_R_U_THERE_ACK:
+		return dpd_inR(&ike->sa, n, n_pbs);
+
+	case v1N_PAYLOAD_MALFORMED:
+
+		ike->sa.hidden_variables.st_malformed_received++;
+		llog(RC_LOG, ike->sa.logger,
+		     "received %u malformed payload notifies",
+		     ike->sa.hidden_variables.st_malformed_received);
+		if (ike->sa.hidden_variables.st_malformed_sent >
+		    MAXIMUM_MALFORMED_NOTIFY / 2 &&
+		    ((ike->sa.hidden_variables.st_malformed_sent +
+		      ike->sa.hidden_variables.
+		      st_malformed_received) >
+		     MAXIMUM_MALFORMED_NOTIFY)) {
+			llog(RC_LOG, ike->sa.logger,
+			     "too many malformed payloads (we sent %u and received %u",
+			     ike->sa.hidden_variables.st_malformed_sent,
+			     ike->sa.hidden_variables.st_malformed_received);
+			return STF_FATAL;
 		}
 		return STF_IGNORE;
+
+	default:
+		if (md->encrypted) {
+			llog(RC_LOG, ike->sa.logger,
+			     "ignoring secured informational payload %s, msgid=%08"PRIx32", length=%d",
+			     str_enum_short(&v1_notification_names, n->isan_type, &eb),
+			     md->hdr.isa_msgid,
+			     n->isan_length);
+		} else {
+			/* unsecured payloads always have MSGID=0 */
+			llog(RC_LOG, ike->sa.logger,
+			     "ignoring unsecured informational payload %s, length=%d",
+			     str_enum_short(&v1_notification_names, n->isan_type, &eb),
+			     n->isan_length);
+		}
+		return STF_IGNORE;
+
 	}
 }
 
@@ -1878,61 +1888,70 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 	/*
 	 * Ignore payloads that we don't handle:
+	 *
+	 * This intersects informational() which also logs payloads
+	 * that are ignored.
 	 */
-	/* XXX Handle Notifications */
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
-	     p != NULL; p = p->next) {
-
-		enum_buf nname;
-		str_enum_short(&v1_notification_names,
-			       p->payload.notification.isan_type,
-			       &nname);
-		switch (p->payload.notification.isan_type) {
-		case v1N_R_U_THERE:
-		case v1N_R_U_THERE_ACK:
-		case v1N_PAYLOAD_MALFORMED:
-		case v1N_INVALID_MESSAGE_ID:
-		case v1N_IPSEC_RESPONDER_LIFETIME:
-			if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
-				/* these are handled later on in informational() */
-				if (LDBGP(DBG_BASE, LOGGER)) {
-					shunk_t header = pbs_in_to_cursor(&p->pbs);
-					LDBG_log(LOGGER, "%s", p->pbs.name);
-					LDBG_hunk(LOGGER, header);
-				}
-				continue;
-			}
-		}
-
-		if (st == NULL) {
-			ldbg(LOGGER, "ignoring informational payload %s, no corresponding state",
-			     nname.buf);
-		} else {
-			if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
-				ldbg(st->logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
-				/* skip non-ESP marker if needed */
-				size_t skip = (st->st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
-				size_t spis = sizeof(md->hdr.isa_ike_spis);
-				PASSERT(st->logger, st->st_v1_tpacket.len >= skip + spis);
-				memcpy(st->st_v1_tpacket.ptr + skip, &md->hdr.isa_ike_spis, spis);
+	if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
+		ldbg(LOGGER, "informational() will process notifications");
+	} else if (md->chain[ISAKMP_NEXT_N] == NULL) {
+		ldbg(LOGGER, "no notification headers to play with");
+	} else if (ike_or_null == NULL) {
+		struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
+		struct isakmp_notification *const n = &p->payload.notification;
+		name_buf nname;
+		ldbg(md->logger,
+		     "ignoring informational payload %s, no corresponding state",
+		     str_enum_short(&v1_notification_names,
+				    n->isan_type,
+				    &nname));
+	} else {
+		struct ike_sa *ike = ike_or_null; /*upgrade!*/
+		/*
+		 * see ikev1-aggr-08-copy-r1-spis-to-i1
+		 */
+		if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
+			ldbg(ike->sa.logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
+			/* skip non-ESP marker if needed */
+			size_t skip = (ike->sa.st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
+			size_t spis = sizeof(md->hdr.isa_ike_spis);
+			PASSERT(ike->sa.logger, ike->sa.st_v1_tpacket.len >= skip + spis);
+			memcpy(ike->sa.st_v1_tpacket.ptr + skip, &md->hdr.isa_ike_spis, spis);
 #if 0
-				uint8_t *flags = (uint8_t*)st->st_v1_tpacket.ptr + skip + spis + 3;
-				*flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
+			uint8_t *flags = (uint8_t*)st->st_v1_tpacket.ptr + skip + spis + 3;
+			*flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
 #endif
-				sleep(2);
-				resend_recorded_v1_ike_msg(st, "IMPAIR: retransmitting mangled packet");
-			}
-			llog(RC_LOG, LOGGER,
-			     "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
-			     nname.buf, st->st_v1_msgid.id,
-			     p->payload.notification.isan_length);
+			sleep(2);
+			resend_recorded_v1_ike_msg(&ike->sa, "IMPAIR: retransmitting mangled packet");
 		}
-		if (LDBGP(DBG_BASE, LOGGER)) {
-			shunk_t header = pbs_in_to_cursor(&p->pbs);
-			LDBG_log(LOGGER, "%s", p->pbs.name);
-			LDBG_hunk(LOGGER, header);
+		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
+		     p != NULL; p = p->next) {
+
+			struct isakmp_notification *const n = &p->payload.notification;
+
+			if (md->encrypted) {
+				name_buf eb;
+				llog(RC_LOG, ike->sa.logger,
+				     "ignoring secured informational payload %s, msgid=%08"PRIx32", length=%d",
+				     str_enum_short(&v1_notification_names, n->isan_type, &eb),
+				     md->hdr.isa_msgid,
+				     n->isan_length);
+			} else {
+				/* unsecured payloads always have MSGID=0 */
+				name_buf eb;
+				llog(RC_LOG, ike->sa.logger,
+				     "ignoring unsecured informational payload %s, length=%d",
+				     str_enum_short(&v1_notification_names, n->isan_type, &eb),
+				     n->isan_length);
+			}
+			if (LDBGP(DBG_BASE, LOGGER)) {
+				shunk_t header = pbs_in_to_cursor(&p->pbs);
+				LDBG_log(LOGGER, "%s", p->pbs.name);
+				LDBG_hunk(LOGGER, header);
+			}
 		}
 	}
+
 
 	pexpect(st == md->v1_st); /* could be NULL */
 
