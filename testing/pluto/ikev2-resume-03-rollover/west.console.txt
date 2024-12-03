@@ -1,0 +1,80 @@
+../../guestbin/swan-prep --nokeys # PSK
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add west-east
+"west-east": added IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ # create snapshot
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-east" #1: asking for session resume ticket
+"west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-east" #1: received v2N_TICKET_LT_OPAQUE
+"west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec whack --suspend --name west-east
+west #
+ # resume after one key rollover
+west #
+ ipsec up west-east
+"west-east" #3: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
+"west-east" #3: initiator processed IKE_SESSION_RESUME; processed IKE_SESSION_RESUME response, preparing IKE_AUTH request
+"west-east" #3: asking for session resume ticket
+"west-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-east" #3: initiator established IKE SA; authenticated peer using authby=session-resume
+"west-east" #3: received v2N_TICKET_LT_OPAQUE
+"west-east" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#4: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec whack --suspend --name west-east
+west #
+ # resume after two key rollovers - ticket expired
+west #
+ ipsec up west-east
+"west-east" #5: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
+"west-east" #5: received TICKET_NACK notification response to IKE_SESSION_RESUME request, retrying using IKE_SA_INIT
+"west-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #5: deleting IKE SA (sent IKE_SESSION_RESUME request)
+"west-east": reviving connection which delete IKE SA but must remain up per local policy (serial $1)
+"west-east" #6: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #6: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #6: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-east" #6: asking for session resume ticket
+"west-east" #6: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-east" #6: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west-east" #6: received v2N_TICKET_LT_OPAQUE
+"west-east" #7: initiator established Child SA using #6; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+up UNEXPECTED
+# ping -n -c 1  -i 2 -w 1   -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.0.2.254 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec trafficstatus
+#7: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec whack --suspend --name west-east
+west #
+ 

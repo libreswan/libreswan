@@ -1,0 +1,25 @@
+../../guestbin/swan-prep --nokeys # PSK
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add west-east
+"west-east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --impair trigger:EVENT_REINIT_SECRET
+IMPAIR: injecting timer event EVENT_REINIT_SECRET
+refreshed session resume keys, issuing key 2
+east #
+ ipsec whack --impair trigger:EVENT_REINIT_SECRET --impair trigger:EVENT_REINIT_SECRET
+IMPAIR: injecting timer event EVENT_REINIT_SECRET
+refreshed session resume keys, issuing key 3
+IMPAIR: injecting timer event EVENT_REINIT_SECRET
+refreshed session resume keys, issuing key 4
+east #
+ 
