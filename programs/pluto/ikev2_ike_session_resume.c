@@ -72,6 +72,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response_continue(struct state *ike_sa,
 							   struct msg_digest *md);
 
 static ke_and_nonce_cb initiate_v2_IKE_SESSION_RESUME_request_continue;	/* type assertion */
+static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK;
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT;
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_request;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response; /* type assertion */
@@ -812,6 +813,23 @@ stf_status process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT(struct ike_sa *ik
 	return process_v2_IKE_SA_INIT_response_v2N_REDIRECT(ike, child, md);
 }
 
+stf_status process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK(struct ike_sa *ike,
+								  struct child_sa *child UNUSED,
+								  struct msg_digest *md UNUSED)
+{
+	/* dropping the ticket */
+	pfree_session(&ike->sa.st_connection->session);
+	llog(RC_LOG, ike->sa.logger, "received TICKET_NACK notification response to IKE_SESSION_RESUME request, retrying using IKE_SA_INIT");
+	/*
+	 * Succeed yet fail ...
+	 *
+	 * This should trigger revival and, with no ticket, use
+	 * IKE_SA_INIT.
+	 */
+	connection_attach(ike->sa.st_connection, ike->sa.logger);
+	return STF_OK_INITIATOR_DELETE_IKE;
+}
+
 stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 						  struct child_sa *unused_child UNUSED,
 						  struct msg_digest *md)
@@ -1027,6 +1045,16 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 	  .message_payloads = { .required = v2P(N), .notification = v2N_REDIRECT, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT,
 	  .llog_success = llog_v2_success_exchange_processed,
+	  .timeout_event = EVENT_v2_DISCARD,
+	},
+
+	{ .story      = "received TICKET_NACK notification response; aborting resumption and initating IKE_SA_INIT exchange",
+	  .to = &state_v2_IKE_SESSION_RESUME_I0, /* XXX: never happens STF_SUSPEND */
+	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads = { .required = v2P(N), .notification = v2N_TICKET_NACK, },
+	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
