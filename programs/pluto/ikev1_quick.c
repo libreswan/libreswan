@@ -2240,24 +2240,32 @@ static struct connection *fc_try(const struct connection *c,
 				continue;
 			}
 
+			unsigned level = verbose.level;
 			if (d_spd->remote->child->has_client) {
 
+				vdbg("SPD has client (has_client==true)");
+				verbose.level++;
+
 				if (is_virtual_spd_end(d_spd->remote, verbose)) {
+					vdbg("SPD has is_virtual_spd_end()");
+					verbose.level++;
 					/* non-NULL when rejected; saved for later */
 					virtualwhy = check_virtual_net_allowed(d,
 									       selector_subnet(*remote_client),
 									       d_spd->remote->host->addr,
 									       verbose);
 					if (virtualwhy != NULL) {
-						vdbg("skipping SPD, virtual net not allowed: %s", virtualwhy);
+						vdbg("skipping SPD, is_virtual_spd_end() and virtual net not allowed: %s", virtualwhy);
 						continue;
 					}
 					if (is_virtual_net_used(d, remote_client,
 								&d_spd->remote->host->id)) {
-						vdbg("skipping SPD, is_virtual_net_used()");
+						vdbg("skipping SPD, is_virtual_spd_end() and is_virtual_net_used()");
 						continue;
  					}
 				} else {
+					vdbg("SPD has no is_virtual_spd_end()");
+					verbose.level++;
 					if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client)) {
 						selector_buf d1, d3;
 						vdbg("skipping SPD, remote range %s does not match %s",
@@ -2269,6 +2277,8 @@ static struct connection *fc_try(const struct connection *c,
 
 			} else if (c == d) {
 
+				vdbg("SPD: has no client and is for current connection (has_client=false, C==D)");
+				verbose.level++;
 				/*
 				 * From merging in an alternative
 				 * loop.
@@ -2279,13 +2289,16 @@ static struct connection *fc_try(const struct connection *c,
 				 */
 				if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client)) {
 					selector_buf s1, s3;
-					vdbg("skipping SPD, C's remote client%s does not match range %s",
+					vdbg("skipping SPD, C's remote client %s does not match range %s",
 					     str_selector_subnet_port(&d_spd->remote->client, &s3),
 					     str_selector_subnet_port(remote_client, &s1));
 					continue;
 				}
 
 			} else {
+
+				vdbg("SPD has no client and is for different connection (has_client==false; C!=D");
+				verbose.level++;
 
 				/*
 				 * Since there's no client, is this
@@ -2308,6 +2321,7 @@ static struct connection *fc_try(const struct connection *c,
 					continue;
 				}
 			}
+			verbose.level = level;
 
 			/*
 			 * We've run the gauntlet -- success:
