@@ -491,6 +491,52 @@ static bool emit_modecfg(struct ike_sa *ike,
 	return true;
 }
 
+static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
+					     lset_t set_items,
+					     enum internal_address_from internal_address_from)
+{
+	struct fragment_pbs_out packet;
+	if (!open_fragment_pbs_out("Modecfg(setI1)", &packet, ike->sa.logger)) {
+		return false;
+	}
+
+	/* HDR out */
+
+	struct isakmp_hdr hdr = {
+		.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+			ISAKMP_MINOR_VERSION,
+		.isa_xchg = ISAKMP_XCHG_MODE_CFG,
+		.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
+		.isa_msgid = ike->sa.st_v1_msgid.phase15,
+	};
+
+	if (impair.send_bogus_isakmp_flag) {
+		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+	}
+
+	hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
+	hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
+
+	struct pbs_out rbody;
+	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &rbody))
+		return false;
+
+	/* XXX This does not include IPv6 at this point */
+	if (!emit_modecfg(ike, ISAKMP_CFG_SET, set_items, &rbody,
+			  internal_address_from, 0 /* XXX ID */)) {
+		return false;
+	}
+
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
+		return false;
+	}
+
+	/* Transmit */
+
+	record_and_send_v1_ike_msg(&ike->sa, &packet.pbs, "ModeCfg set");
+	return true;
+}
+
 /*
  * Danger: the caller, ikev1.c, will
  * record'n'send the global REPLY_STREAM being
@@ -542,52 +588,29 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 		/* pick a new message id */
 		ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
 	}
+
 	ike->sa.hidden_variables.st_modecfg_vars_set = true;
+	change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
 
-	/* set up reply */
-	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), ike->sa.logger);
-	change_v1_state(&ike->sa, STATE_MODE_CFG_R1); /* redundant; see caller */
-
-	/* HDR out */
-	struct pbs_out rbody;
-	{
-		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = ike->sa.st_v1_msgid.phase15,
-		};
-
-		if (impair.send_bogus_isakmp_flag) {
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-		}
-
-		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
-
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/* XXX This does not include IPv6 at this point */
-#define MODECFG_SET_ITEM (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) | \
-			  LELEM(IKEv1_INTERNAL_IP4_SUBNET) | \
-			  LELEM(IKEv1_INTERNAL_IP4_DNS))
-	if (!emit_modecfg(ike, ISAKMP_CFG_SET, MODECFG_SET_ITEM, &rbody,
-			  INTERNAL_ADDRESS_FROM_LEASE, 0 /* XXX ID */)) {
-		return STF_INTERNAL_ERROR;
-	}
-#undef MODECFG_SET_ITEM
-
+	/*
+	 * Update the IV ready for the encrypt; it was either
+	 * generated above or from MD's .v1_decrypt_iv
+	 *
+	 * Oh wait!  Above doesn't generate IV, oops!
+	 */
 	ike->sa.st_v1_phase_2_iv = iv;
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
-		return STF_INTERNAL_ERROR;
-	}
 
-	/* Transmit */
-	record_and_send_v1_ike_msg(&ike->sa, &reply, "ModeCfg set");
+	/*
+	 * ISAKMP responder, get client's address from a lease when
+	 * available.
+	 */
+	if (!record_n_send_v1_modecfg_request(ike,
+					      (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) |
+					       LELEM(IKEv1_INTERNAL_IP4_SUBNET) |
+					       LELEM(IKEv1_INTERNAL_IP4_DNS)),
+					      INTERNAL_ADDRESS_FROM_LEASE)) {
+		return STF_FATAL;
+	}
 
 	if (*state_event_slot(&ike->sa, EVENT_v1_RETRANSMIT) == NULL) {
 		delete_v1_event(&ike->sa);
