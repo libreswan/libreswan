@@ -13,7 +13,7 @@ west #
 west #
  ipsec connectionstatus | grep -i -e resume -e ticket
 "west-east":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RESUME;
-"west-east":   ticket: none
+"west-east":   session resume ticket: none
 west #
  echo "initdone"
 initdone
@@ -35,7 +35,7 @@ west #
 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec status | grep ticket
-"west-east":   ticket: 808 bytes expires: 28815.769598
+"west-east":   session resume ticket: length: B bytes; expires-in: Ns;
 west #
  ipsec whack --suspend --name west-east
 west #

@@ -28,3 +28,8 @@ s/seq in:[1-9][0-9]* out:[0-9]*/seq in:XXXXX out:YYYYY/g
 # XXX: this shouldn't be sanitizing out audit_log=yes
 /pluto_version=/d
 s/^SElinux=.*/SElinux=XXXXX/
+
+/ session resume ticket: / {
+  s/ length: [0-9]* bytes;/ length: B bytes;/
+  s/ expires-in: [0-9]*s;/ expires-in: Ns;/
+}
