@@ -176,7 +176,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 			    v2_notification_t ntype,
 			    enum ikev2_sec_proto_id protocol_id,
-			    const ipsec_spi_t *spi, /* optional */
+			    const ipsec_spi_t *spi_or_null, /* optional */
 			    struct pbs_out *sub_payload)
 {
 	struct pbs_out tmp;
@@ -192,7 +192,7 @@ bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 		return false;
 	}
 
-	size_t spi_size = (spi == NULL ? 0 : sizeof(*spi));
+	size_t spi_size = (spi_or_null == NULL ? 0 : sizeof(*spi_or_null));
 
 	switch (ntype) {
 	case v2N_INVALID_SELECTORS:
@@ -223,7 +223,8 @@ bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 		return false;
 	}
 
-	if (spi != NULL) {
+	if (spi_or_null != NULL) {
+		const ipsec_spi_t *spi = spi_or_null; /*not-null*/
 		if (!pbs_out_thing(sub_payload, *spi, "SPI")) {
 			/* already logged */
 			return false;
@@ -292,12 +293,11 @@ bool emit_v2N(v2_notification_t ntype,
  */
 
 static bool emit_v2N_spi_response(struct v2_message *response,
-				  struct ike_sa *ike,
 				  struct msg_digest *md,
 				  enum ikev2_sec_proto_id protoid,
-				  ipsec_spi_t *spi,
+				  ipsec_spi_t *spi_or_null,
 				  v2_notification_t ntype,
-				  const chunk_t *ndata /* optional */)
+				  const chunk_t *ndata /*optional*/)
 {
 	enum_buf notify_name;
 	enum_name_short(&v2_notification_names, ntype, &notify_name);
@@ -315,7 +315,7 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 	     "responding to %s message (ID %u) from %s with %s notification %s",
 	     exchange_name.buf,
 	     md->hdr.isa_msgid,
-	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
+	     str_endpoint_sensitive(&md->sender, &b),
 	     response->security == ENCRYPTED_PAYLOAD ? "encrypted" : "unencrypted",
 	     notify_name.buf);
 
@@ -352,12 +352,15 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 	}
 
 	struct pbs_out n_pbs;
-	if (!open_v2N_SA_output_pbs(response->pbs, ntype, protoid, spi, &n_pbs)) {
+	if (!open_v2N_SA_output_pbs(response->pbs, ntype,
+				    protoid, spi_or_null,
+				    &n_pbs)) {
 		return false;
 	}
 
 	if (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data")) {
 		return false;
+
 	}
 
 	close_output_pbs(&n_pbs);
@@ -368,7 +371,7 @@ void record_v2N_spi_response(struct logger *logger,
 			     struct ike_sa *ike,
 			     struct msg_digest *md,
 			     enum ikev2_sec_proto_id protoid,
-			     ipsec_spi_t *spi,
+			     ipsec_spi_t *spi_or_null,/*depends-on-protoid*/
 			     v2_notification_t ntype,
 			     const chunk_t *ndata /* optional */,
 			     enum payload_security security)
@@ -390,8 +393,9 @@ void record_v2N_spi_response(struct logger *logger,
 		return;
 	}
 
-	if (!emit_v2N_spi_response(&response, ike, md,
-				   protoid, spi, ntype, ndata)) {
+	if (!emit_v2N_spi_response(&response, md,
+				   protoid, spi_or_null,
+				   ntype, ndata)) {
 		return;
 	}
 
