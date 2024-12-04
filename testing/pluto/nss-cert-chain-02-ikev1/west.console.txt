@@ -48,8 +48,7 @@ west #
 "nss-cert-chain" #1: I am sending a CA cert chain
 "nss-cert-chain" #1: I am sending a certificate request
 "nss-cert-chain" #1: sent Main Mode I3
-"nss-cert-chain" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-"nss-cert-chain" #1: received and ignored notification payload: INVALID_ID_INFORMATION
+"nss-cert-chain" #1: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
 "nss-cert-chain" #1: IMPAIR: retransmit so timing out SA (may retry)
 "nss-cert-chain" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert-chain" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification

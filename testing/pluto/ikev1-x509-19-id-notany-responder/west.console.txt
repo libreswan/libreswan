@@ -28,8 +28,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: I am sending my cert
 "ikev2-westnet-eastnet-x509-cr" #1: I am sending a certificate request
 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode I3
-"ikev2-westnet-eastnet-x509-cr" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-"ikev2-westnet-eastnet-x509-cr" #1: received and ignored notification payload: INVALID_ID_INFORMATION
+"ikev2-westnet-eastnet-x509-cr" #1: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
 "ikev2-westnet-eastnet-x509-cr" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "ikev2-westnet-eastnet-x509-cr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ikev2-westnet-eastnet-x509-cr" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification

@@ -18,12 +18,10 @@ initdone
 east #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
-"westnet-eastnet-ipv4-psk-slow" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
+"westnet-eastnet-ipv4-psk-slow" #1: ignoring unsecured informational payload INVALID_KEY_INFORMATION, length=12
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #2: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
-"westnet-eastnet-ipv4-psk-slow" #2: received and ignored notification payload: INVALID_KEY_INFORMATION
+"westnet-eastnet-ipv4-psk-slow" #2: ignoring unsecured informational payload INVALID_KEY_INFORMATION, length=12
 east #
  

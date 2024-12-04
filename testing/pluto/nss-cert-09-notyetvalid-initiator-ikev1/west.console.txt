@@ -38,8 +38,7 @@ west #
 "nss-cert" #1: I am sending my cert
 "nss-cert" #1: I am sending a certificate request
 "nss-cert" #1: sent Main Mode I3
-"nss-cert" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-"nss-cert" #1: received and ignored notification payload: INVALID_ID_INFORMATION
+"nss-cert" #1: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
 "nss-cert" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "nss-cert" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert" #1: IMPAIR: revival: skip scheduling revival event

@@ -52,8 +52,7 @@ west #
 "aes128" #3: IMPAIR: stripping key-length
 "aes128" #3: IMPAIR: duplicating key-length
 "aes128" #3: sent Main Mode request
-"aes128" #3: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
-"aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
+"aes128" #3: ignoring unsecured informational payload BAD_PROPOSAL_SYNTAX, length=12
 "aes128" #3: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #3: IMPAIR: revival: skip scheduling revival event
@@ -100,8 +99,7 @@ west #
 "aes128" #6: IMPAIR: stripping key-length
 "aes128" #6: IMPAIR: sending key-length attribute value 0
 "aes128" #6: sent Main Mode request
-"aes128" #6: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-"aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"aes128" #6: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 "aes128" #6: IMPAIR: retransmit so timing out SA (may retry)
 "aes128" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "aes128" #6: IMPAIR: revival: skip scheduling revival event
@@ -290,8 +288,7 @@ west #
 "3des" #19: initiating IKEv1 Main Mode connection
 "3des" #19: IMPAIR: sending key-length attribute value 0
 "3des" #19: sent Main Mode request
-"3des" #19: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-"3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"3des" #19: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 "3des" #19: IMPAIR: retransmit so timing out SA (may retry)
 "3des" #19: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "3des" #19: IMPAIR: revival: skip scheduling revival event

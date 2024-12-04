@@ -55,8 +55,7 @@ west #
 "road-x509" #3: I am sending my cert
 "road-x509" #3: I am sending a certificate request
 "road-x509" #3: sent Main Mode I3
-"road-x509" #3: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-"road-x509" #3: received and ignored notification payload: INVALID_ID_INFORMATION
+"road-x509" #3: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
 "road-x509" #3: IMPAIR: retransmit so timing out SA (may retry)
 "road-x509" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "road-x509" #3: deleting ISAKMP SA (MAIN_I3) and NOT sending notification

@@ -19,8 +19,7 @@ west #
  ipsec auto --up ikev1
 "ikev1" #1: initiating IKEv1 Main Mode connection
 "ikev1" #1: sent Main Mode request
-"ikev1" #1: ignoring informational payload INVALID_MAJOR_VERSION, msgid=00000000, length=12
-"ikev1" #1: received and ignored notification payload: INVALID_MAJOR_VERSION
+"ikev1" #1: ignoring unsecured informational payload INVALID_MAJOR_VERSION, length=12
 "ikev1" #1: IMPAIR: retransmit so timing out SA (may retry)
 "ikev1" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ikev1" #1: IMPAIR: revival: skip scheduling revival event

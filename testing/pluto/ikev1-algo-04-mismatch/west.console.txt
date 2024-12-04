@@ -35,8 +35,7 @@ done
 west #
  grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 |    Notify Message Type: v1N_NO_PROPOSAL_CHOSEN (0xe)
-"westnet-eastnet-ipv4-psk-ikev1" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 | processing informational NO_PROPOSAL_CHOSEN (14)
-"westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"westnet-eastnet-ipv4-psk-ikev1" #1: ignoring secured informational payload NO_PROPOSAL_CHOSEN, msgid=MSGID, length=12
 west #
  

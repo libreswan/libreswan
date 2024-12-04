@@ -23,7 +23,7 @@ road #
 "road-east-modecfg-yes" #1: I am sending my cert
 "road-east-modecfg-yes" #1: I am sending a certificate request
 "road-east-modecfg-yes" #1: sent Main Mode I3
-"road-east-modecfg-yes" #1: ignoring informational payload IPSEC_INITIAL_CONTACT, msgid=00000000, length=28
+"road-east-modecfg-yes" #1: ignoring secured informational payload IPSEC_INITIAL_CONTACT, msgid=00000000, length=28
 "road-east-modecfg-yes" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "road-east-modecfg-yes" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road-east-modecfg-yes" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
@@ -59,7 +59,7 @@ road #
 "road-east-modecfg-no" #3: I am sending my cert
 "road-east-modecfg-no" #3: I am sending a certificate request
 "road-east-modecfg-no" #3: sent Main Mode I3
-"road-east-modecfg-no" #3: ignoring informational payload IPSEC_INITIAL_CONTACT, msgid=00000000, length=28
+"road-east-modecfg-no" #3: ignoring secured informational payload IPSEC_INITIAL_CONTACT, msgid=00000000, length=28
 "road-east-modecfg-no" #3: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "road-east-modecfg-no" #3: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road-east-modecfg-no" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}

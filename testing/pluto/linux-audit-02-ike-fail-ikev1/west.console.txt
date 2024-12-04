@@ -28,14 +28,11 @@ west #
  ipsec auto --up ikev1-failtest # sanitze-retransmits
 "ikev1-failtest" #1: initiating IKEv1 Main Mode connection
 "ikev1-failtest" #1: sent Main Mode request
-"ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-"ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"ikev1-failtest" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-"ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-"ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"ikev1-failtest" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
-"ikev1-failtest" #1: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
-"ikev1-failtest" #1: received and ignored notification payload: NO_PROPOSAL_CHOSEN
+"ikev1-failtest" #1: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 "ikev1-failtest" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ikev1-failtest" #1: IMPAIR: revival: skip scheduling revival event

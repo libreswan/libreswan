@@ -25,7 +25,7 @@ s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
 s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
 s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
 s/\(sent Quick Mode reply, .*\) {.*/\1/
-s,{msgid.*},,
+/msgid=00000000/! { s,msgid=[0-9a-z]*,msgid=MSGID, ; }
 
 s,; \([a-z0-9A-Z_]\+\) in [0-9]\+s,; \1 in XXs,g
 s, remaining life [0-9][0-9\.]*s, remaining life XXs,
