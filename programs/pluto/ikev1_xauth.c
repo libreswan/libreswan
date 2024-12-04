@@ -578,15 +578,16 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 {
 	/*
-	 * Danger: if this was triggered by the final Main or
-	 * Aggressive message, the IV is effectively .st_v1_phase_1_iv.
-	 * Should it be re-generated to include the below msgid()?
+	 * When this is the first Phase 1.5 exchange, need to generate
+	 * fresh IV and MSGID.
 	 */
-
-	if (ike->sa.st_v1_msgid.phase15 == v1_MAINMODE_MSGID) {
-		llog_pexpect(ike->sa.logger, HERE, "GENERATING Phase-1.5 Message ID WITHOUT GENERATING IV"); 
+	if (ike->sa.st_v1_msgid.phase15 == v1_MAINMODE_MSGID/*0*/) {
+		ldbg(ike->sa.logger, "MODECFG SET generating Phase-1.5 Message ID and IV");
 		/* pick a new message id */
 		ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
+		/* update the IV */
+		iv = new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15,
+				   "IKE sending MODECFG set", HERE);
 	}
 
 	ike->sa.hidden_variables.st_modecfg_vars_set = true;
@@ -595,8 +596,6 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 	/*
 	 * Update the IV ready for the encrypt; it was either
 	 * generated above or from MD's .v1_decrypt_iv
-	 *
-	 * Oh wait!  Above doesn't generate IV, oops!
 	 */
 	ike->sa.st_v1_phase_2_iv = iv;
 
