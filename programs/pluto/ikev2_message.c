@@ -1398,15 +1398,29 @@ bool open_v2_message(const char *story,
 
 	switch (security) {
 	case ENCRYPTED_PAYLOAD:
-		/* never encrypt an IKE_SA_INIT exchange */
+		/*
+		 * Never encrypt the initial exchange (peer requires
+		 * Nr in response before it can compute keys and
+		 * decrypt it).
+		 */
 		if (exchange_type == ISAKMP_v2_IKE_SA_INIT ||
 		    exchange_type == ISAKMP_v2_IKE_SESSION_RESUME) {
+			name_buf nb;
 			llog_pexpect(message->logger, HERE,
-				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
+				     "exchange type %s is invalid for encrypted notification",
+				     str_enum_short(&ikev2_exchange_names, exchange_type, &nb));
 			return false;
 		}
-		/* check things are at least protected */
-		if (!pexpect(ike != NULL && ike->sa.hidden_variables.st_skeyid_calculated)) {
+		/*
+		 * Encrypting requires an IKE SA for the keys.
+		 */
+		if (PBAD(message->logger, ike == NULL)) {
+			return false;
+		}
+		/*
+		 * Encryption requires the IKE SA to have keys.
+		 */
+		if (!PEXPECT(message->logger, ike->sa.hidden_variables.st_skeyid_calculated)) {
 			return false;
 		}
 		if (!open_body_v2SK_payload(&message->body, ike, logger, &message->sk)) {
@@ -1420,8 +1434,25 @@ bool open_v2_message(const char *story,
 		}
 		break;
 	case UNENCRYPTED_PAYLOAD:
-		/* unsecured payload when secured allowed? */
-		pexpect(ike == NULL || !ike->sa.hidden_variables.st_skeyid_calculated);
+		/*
+		 * Only send the initial exchange unencrypted (peer
+		 * needs unencrypted response containing Nr before it
+		 * can generate keys; all following exchanges should
+		 * be encrypted).
+		 *
+		 * Note that .ST_SKEYID_CALCULATED may be set. With
+		 * IKE_SESSION_RESUME, it is computed before building
+		 * the response (for IKE_SA_INIT it is only computed
+		 * upon the arrival of the IKE_AUTH message).
+		 */
+		if (exchange_type != ISAKMP_v2_IKE_SA_INIT &&
+		    exchange_type != ISAKMP_v2_IKE_SESSION_RESUME) {
+			name_buf nb;
+			llog_pexpect(message->logger, HERE,
+				     "exchange type %s is invalid for encrypted notification",
+				     str_enum_short(&ikev2_exchange_names, exchange_type, &nb));
+			return false;
+		}
 		message->pbs = &message->body;
 		break;
 	}

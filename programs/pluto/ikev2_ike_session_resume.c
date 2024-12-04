@@ -757,7 +757,11 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	/* Record first packet for later checking of signature.  */
 	record_first_v2_packet(ike, md, HERE);
 
-	/* make sure HDR is at start of a clean buffer */
+	/*
+	 * The response needs to be sent in the clear so that the
+	 * initiator can access an unencrypted "Nr" value and use that
+	 * to generate its copy of the keys.
+	 */
 
 	struct v2_message response;
 	if (!open_v2_message("IKE_SA_INIT response",
