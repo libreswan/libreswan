@@ -390,8 +390,6 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 	diag_t d;
 	struct ticket ticket;
 
-	llog_pexpect(ike->sa.logger, HERE, "the ticket security is not implemented");
-
 	if (pbs_in_left(&pbs).len != sizeof(ticket)) {
 		llog(RC_LOG, ike->sa.logger, "invalid ticket: wrong length");
 		return false;
