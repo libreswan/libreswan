@@ -33,7 +33,7 @@ struct prf_desc;
 struct payload_digest;
 
 void pfree_session(struct session **session);
-void jam_session(struct jambuf *buf, const struct session *session);
+void jam_resume_ticket(struct jambuf *buf, const struct session *session);
 
 struct ike_sa *initiate_v2_IKE_SESSION_RESUME_request(struct connection *c,
 						      const struct child_policy *policy,

@@ -916,7 +916,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_string(buf, ":  ");
 			/* ticket */
 			jam_string(buf, " ");
-			jam_session(buf, c->session);
+			jam_resume_ticket(buf, c->session);
 		}
 	}
 

@@ -214,11 +214,9 @@ struct session {
 	enum keyword_auth sr_auth_method;
 
 	/*
-	 * time that ticket was received, and peer specified lifetime;
-	 * our_expire+server_expire is expiration.
+	 * Monotime that ticket will expire.
 	 */
-	monotime_t sr_our_expire;
-	deltatime_t sr_server_expire;
+	monotime_t sr_expires;
 
 	/*
 	 * Blob from peer that contains their equivalent and needs to
@@ -239,18 +237,16 @@ void pfree_session(struct session **session)
 	(*session) = NULL;
 }
 
-void jam_session(struct jambuf *buf, const struct session *session)
+void jam_resume_ticket(struct jambuf *buf, const struct session *session)
 {
-	jam_string(buf, "ticket: ");
+	jam_string(buf, "session resume ticket:");
 	if (session == NULL) {
-		jam_string(buf, "none");
+		jam_string(buf, " none");
 	} else {
-		jam(buf, "%zu bytes", session->ticket.len);
-		jam_string(buf, " expires: ");
-		monotime_t expire =
-			monotime_add(session->sr_our_expire,
-				     session->sr_server_expire);
-		jam_monotime(buf, expire);
+		jam(buf, " length: %zu bytes;", session->ticket.len);
+		deltatime_t remaining = monotime_diff(session->sr_expires,
+						      mononow());
+		jam(buf, " expires-in: %jds;", deltasecs(remaining));
 	}
 }
 
@@ -589,12 +585,11 @@ struct ike_sa *initiate_v2_IKE_SESSION_RESUME_request(struct connection *c,
 						      shunk_t sec_label UNUSED,
 						      bool detach_whack)
 {
-	monotime_t expire = monotime_add(c->session->sr_our_expire,
-					 c->session->sr_server_expire);
-	if (monotime_cmp(expire, <,  mononow())) {
+	monotime_t expires = c->session->sr_expires;
+	if (monotime_cmp(expires, <,  mononow())) {
 		monotime_buf mb;
 		llog(RC_LOG, c->logger, "ticket expired %s, dropping it",
-		     str_monotime(expire, &mb));
+		     str_monotime(expires, &mb));
 		pfree_session(&c->session);
 		return initiate_v2_IKE_SA_INIT_request(c, NULL, policy,
 						       inception, sec_label,
@@ -982,8 +977,8 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 	PASSERT(ike->sa.logger, c->session == NULL);
 
 	c->session = alloc_thing(struct session, __func__);
-	c->session->sr_our_expire = mononow();
-	c->session->sr_server_expire = deltatime(tl.sr_lifetime);
+	c->session->sr_expires = monotime_add(mononow(),
+					      deltatime(tl.sr_lifetime));
 	c->session->ticket = clone_hunk(ticket, __func__);
 
 	c->session->sr_serialco = c->serialno;
