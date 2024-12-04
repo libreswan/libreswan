@@ -2275,6 +2275,25 @@ static struct connection *fc_try(const struct connection *c,
 					}
 				}
 
+			} else if (is_template(d)) {
+
+				/*
+				 * For templates, let the initiator
+				 * (peer) narrow the remote client.
+				 *
+				 * Up until 5.1 this was happening
+				 * unofficially - the code was letting
+				 * templates with %any slip through.
+				 */
+				vexpect(c != d); /* C can't be a template */
+				if (!selector_in_selector(*remote_client, d_spd->remote->client)) {
+					selector_buf s1, s3;
+					vdbg("skipping SPD template, remote client %s does not contain %s",
+					     str_selector_subnet_port(&d_spd->remote->client, &s3),
+					     str_selector_subnet_port(remote_client, &s1));
+					continue;
+				}
+
 			} else if (c == d) {
 
 				vdbg("SPD: has no client and is for current connection (has_client=false, C==D)");
