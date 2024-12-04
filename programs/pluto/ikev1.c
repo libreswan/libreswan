@@ -701,6 +701,16 @@ void process_v1_packet(struct msg_digest *md)
 		/* see IF above */
 		passert((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) == LEMPTY);
 		if (ike != NULL) {
+			/*
+			 * XXX: not ENCRYPTED.
+			 *
+			 * When the peer fails to generate its crypto
+			 * material (because it was sent a bogus KE in
+			 * the last message), it responds with an
+			 * unencrypted packet.  This might as well, at
+			 * least, be logged, hence wait for full
+			 * authentication.
+			 */
 			if (IS_V1_ISAKMP_AUTHENTICATED(ike->sa.st_state)) {
 				llog(RC_LOG, ike->sa.logger,
 				     "Informational Exchange message must be encrypted");
