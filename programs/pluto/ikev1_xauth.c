@@ -43,7 +43,6 @@
 #include <crypt.h>
 #endif
 
-
 #include "lswalloc.h"
 
 #include "sysdep.h"
@@ -488,6 +487,37 @@ static bool emit_modecfg(struct ike_sa *ike,
 		return false;
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
+
+	return true;
+}
+
+/*
+ * Danger: the caller, ikev1.c, will
+ * record'n'send the global REPLY_STREAM being
+ * built here!
+ */
+static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
+						     unsigned cfg_message,
+						     lset_t attrs,
+						     struct msg_digest *md,
+						     enum internal_address_from internal_address_from)
+{
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+
+	struct pbs_out rbody;
+	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
+				       reply_buffer, sizeof(reply_buffer),
+				       &rbody, ike->sa.logger);
+
+	if (!emit_modecfg(ike, cfg_message, attrs, &rbody,
+			  internal_address_from, ma->isama_identifier)) {
+		return false;
+	}
+
+	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
+		return false;
+	}
 
 	return true;
 }
@@ -1513,31 +1543,15 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 			}
 		}
 
-		{
-			/*
-			 * Danger: the caller, ikev1.c, will
-			 * record'n'send the global REPLY_STREAM being
-			 * built here!
-			 */
-			struct pbs_out rbody;
-			ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-						       reply_buffer, sizeof(reply_buffer),
-						       &rbody, ike->sa.logger);
+		/*
+		 * ISAKMP responder, get client address from lease
+		 * when possible.
+		 */
 
-			if (!emit_modecfg(ike, ISAKMP_CFG_REPLY, resp, &rbody,
-					  INTERNAL_ADDRESS_FROM_LEASE,
-					  ma->isama_identifier)) {
-				/* notification payload - not exactly
-				 * the right choice, but okay */
-				md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
-				return STF_INTERNAL_ERROR;
-			}
-
-			ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
-			if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
-				return STF_INTERNAL_ERROR;
-			}
-
+		if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_REPLY, resp, md,
+							      INTERNAL_ADDRESS_FROM_LEASE)) {
+			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
+			return STF_FATAL;
 		}
 
 		/* they asked us, we responded, msgid is done */
@@ -1575,7 +1589,6 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	uint16_t isama_id = ma->isama_identifier;
 	lset_t resp = LEMPTY;
 
 	dbg("modecfg_inI2");
@@ -1674,25 +1687,15 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	 *
 	 * Danger: the caller, ikev1.c, will record'n'send the global
 	 * REPLY_STREAM being built here!
+	 *
+	 * ISAKMP initiator, propose remote SPD as address.
 	 */
 
-	struct pbs_out rbody;
-	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
-				       reply_buffer, sizeof(reply_buffer),
-				       &rbody, ike->sa.logger);
-
-	if (!emit_modecfg(ike, ISAKMP_CFG_ACK, resp, &rbody,
-			  INTERNAL_ADDRESS_FROM_REMOTE_SPD,
-			  isama_id)) {
-		/* notification payload - not exactly the right
-		 * choice, but okay */
+	if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_ACK, resp, md,
+						      INTERNAL_ADDRESS_FROM_REMOTE_SPD)) {
+		/* something to send back */
 		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
-		return STF_INTERNAL_ERROR;
-	}
-
-	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
-		return STF_INTERNAL_ERROR;
+		return STF_FATAL;
 	}
 
 	/*
