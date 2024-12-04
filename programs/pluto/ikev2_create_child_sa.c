@@ -356,8 +356,8 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 			str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		record_v2N_spi_response(ike->sa.logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
-					v2N_CHILD_SA_NOT_FOUND,
-					NULL/*empty data*/, ENCRYPTED_PAYLOAD);
+					v2N_CHILD_SA_NOT_FOUND, empty_shunk/*empty data*/,
+					ENCRYPTED_PAYLOAD);
 		return true;
 	}
 
@@ -825,8 +825,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 	struct child_sa *predecessor = NULL;
 	if (!find_v2N_REKEY_SA_child(ike, md, &predecessor)) {
-		record_v2N_response(ike->sa.logger, ike, md, v2N_INVALID_SYNTAX,
-				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_INVALID_SYNTAX, empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}
 
@@ -848,7 +849,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 	if (!verify_rekey_child_request_ts(larval_child, md)) {
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
+				    v2N_TS_UNACCEPTABLE, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1104,8 +1105,8 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	if (!process_v2TS_request_payloads(larval_child, md)) {
 		/* already logged */
 		record_v2N_response(larval_child->sa.logger, ike, md,
-				    v2N_TS_UNACCEPTABLE,
-				    NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+				    v2N_TS_UNACCEPTABLE, empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_OK; /*IKE*/
@@ -1134,7 +1135,7 @@ static stf_status reject_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	 * STF_OK.
 	 */
 	record_v2N_response(ike->sa.logger, ike, md,
-			    n, NULL/*no-data*/,
+			    n, empty_shunk/*no-data*/,
 			    ENCRYPTED_PAYLOAD);
 	/*
 	 * Child could have been partially routed; need to move it on.
@@ -1166,7 +1167,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 		 * implicitly kills the family.
 		 */
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    v2N_INVALID_SYNTAX, empty_shunk/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1282,7 +1283,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		log_state(RC_LOG, &larval_child->sa, "DH failed");
 		record_v2N_response(larval_child->sa.logger, ike, request_md,
-				    v2N_INVALID_SYNTAX, NULL,
+				    v2N_INVALID_SYNTAX, empty_shunk,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_child);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1791,7 +1792,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		 * Already logged?
 		 */
 		record_v2N_response(ike->sa.logger, ike, request_md,
-				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    v2N_INVALID_SYNTAX, empty_shunk/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1813,7 +1814,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(larval_ike->sa.logger, ike, request_md,
-				    n, NULL, ENCRYPTED_PAYLOAD);
+				    n, empty_shunk,
+				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /* IKE */
@@ -1923,7 +1925,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 
 	if (larval_ike->sa.st_dh_shared_secret == NULL) {
 		record_v2N_response(ike->sa.logger, ike, request_md,
-				    v2N_INVALID_SYNTAX, NULL,
+				    v2N_INVALID_SYNTAX, empty_shunk,
 				    ENCRYPTED_PAYLOAD);
 		delete_child_sa(&larval_ike);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;

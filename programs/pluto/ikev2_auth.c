@@ -610,7 +610,7 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
 		dbg("submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}
@@ -675,7 +675,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		}
 		if (ike->sa.st_v2_digsig.hash == NULL) {
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		}
@@ -724,7 +724,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		}

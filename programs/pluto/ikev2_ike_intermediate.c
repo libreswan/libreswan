@@ -516,7 +516,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			llog_sa(RC_LOG, ike, "No matching (PPK_ID, PPK) found and connection requires \
 					      a valid PPK. Abort!");
 			record_v2N_response(ike->sa.logger, ike, md,
-					v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		} else {

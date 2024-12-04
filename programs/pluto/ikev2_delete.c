@@ -170,7 +170,8 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 	bool del_ike = false;
 	if (!process_v2DELETE_requests(&del_ike, ike, md, response.pbs)) {
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
+				    v2N_INVALID_SYNTAX, empty_shunk,
+				    ENCRYPTED_PAYLOAD);
 		/*
 		 * STF_FATAL will send the recorded message
 		 * and then kill the IKE SA.  Should it

@@ -67,7 +67,7 @@ void record_v2N_response(struct logger *logger,
 			 struct ike_sa *ike,
 			 struct msg_digest *md,
 			 v2_notification_t type,
-			 const chunk_t *data /* optional */,
+			 shunk_t data/*optional*/,
 			 enum payload_security security);
 
 void record_v2N_spi_response(struct logger *logger,
@@ -76,7 +76,7 @@ void record_v2N_spi_response(struct logger *logger,
 			     enum ikev2_sec_proto_id protoid,
 			     ipsec_spi_t *spi,
 			     v2_notification_t type,
-			     const chunk_t *data /* optional */,
+			     shunk_t data /*optional*/,
 			     enum payload_security security);
 
 void send_v2N_response_from_md(struct msg_digest *md,

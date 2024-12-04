@@ -949,7 +949,7 @@ void ikev2_process_packet(struct msg_digest *md)
  */
 
 static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg_digest *md,
-						  v2_notification_t n, chunk_t *data)
+						  v2_notification_t n, shunk_t data)
 {
 	PASSERT(ike->sa.logger, md != NULL);
 	enum message_role recv_role = v2_msg_role(md);
@@ -1015,7 +1015,8 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	switch (v2_msg_role(md)) {
 	case MESSAGE_REQUEST:
 		record_v2N_response(ike->sa.logger, ike, md,
-				    n, data, ENCRYPTED_PAYLOAD);
+				    n, data,
+				    ENCRYPTED_PAYLOAD);
 		break;
 	case MESSAGE_RESPONSE:
 		break;
@@ -1270,9 +1271,9 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md, &sk->pbs,
 						       sk->payload.generic.isag_np);
 	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
-		chunk_t data = chunk2(md->encrypted_payloads.data,
+		shunk_t data = shunk2(md->encrypted_payloads.data,
 				      md->encrypted_payloads.data_size);
-		complete_protected_but_fatal_exchange(ike, md, md->encrypted_payloads.n, &data);
+		complete_protected_but_fatal_exchange(ike, md, md->encrypted_payloads.n, data);
 		return;
 	}
 
@@ -1296,7 +1297,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 		}
 		pexpect(secured_payload_failed);
 		/* XXX: calls delete_ike_sa() */
-		complete_protected_but_fatal_exchange(ike, md, v2N_INVALID_SYNTAX, NULL);
+		complete_protected_but_fatal_exchange(ike, md, v2N_INVALID_SYNTAX, empty_shunk);
 		return;
 	}
 

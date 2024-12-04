@@ -119,7 +119,8 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 			 * the above.
 			 */
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
+					    v2N_INVALID_SYNTAX, empty_shunk,
+					    ENCRYPTED_PAYLOAD);
 			/*
 			 * STF_FATAL will send the recorded message
 			 * and then kill the IKE SA.  Should it

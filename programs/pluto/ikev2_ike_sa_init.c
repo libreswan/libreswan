@@ -601,7 +601,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(ike->sa.logger, ike, md,
-				    n, NULL, UNENCRYPTED_PAYLOAD);
+				    n, empty_shunk,
+				    UNENCRYPTED_PAYLOAD);
 		/*
 		 * STF_FATAL will send the recorded message and then
 		 * kill the IKE SA.  Should it instead zombify the IKE
@@ -669,8 +670,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	if (c->config->ppk.insist && ike->sa.st_v2_ike_ppk == PPK_DISABLED) {
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_NO_PROPOSAL_CHOSEN,
-				    NULL, UNENCRYPTED_PAYLOAD);
+				    v2N_NO_PROPOSAL_CHOSEN, empty_shunk,
+				    UNENCRYPTED_PAYLOAD);
 		llog_sa(RC_LOG, ike,
 			"connection has ppk=insist but peer does not support PPK");
 		return STF_FATAL;
@@ -703,7 +704,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 		if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_INVALID_SYNTAX, NULL, UNENCRYPTED_PAYLOAD);
+					    v2N_INVALID_SYNTAX, empty_shunk,
+					    UNENCRYPTED_PAYLOAD);
 			/*
 			 * STF_FATAL will send the recorded
 			 * message and then kill the IKE SA.
@@ -776,7 +778,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		 * family, hence FATAL.
 		 */
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    v2N_INVALID_SYNTAX, empty_shunk/*no-data*/,
 				    UNENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}

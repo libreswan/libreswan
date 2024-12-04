@@ -297,7 +297,7 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 				  enum ikev2_sec_proto_id protoid,
 				  ipsec_spi_t *spi_or_null,
 				  v2_notification_t ntype,
-				  const chunk_t *ndata /*optional*/)
+				  shunk_t ndata /*optional*/)
 {
 	enum_buf notify_name;
 	enum_name_short(&v2_notification_names, ntype, &notify_name);
@@ -358,9 +358,10 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 		return false;
 	}
 
-	if (ndata != NULL && !out_hunk(*ndata, &n_pbs, "Notify data")) {
-		return false;
-
+	if (ndata.len > 0) {
+		if (!pbs_out_hunk(&n_pbs, ndata, "Notify data")) {
+			return false;
+		}
 	}
 
 	close_output_pbs(&n_pbs);
@@ -373,7 +374,7 @@ void record_v2N_spi_response(struct logger *logger,
 			     enum ikev2_sec_proto_id protoid,
 			     ipsec_spi_t *spi_or_null,/*depends-on-protoid*/
 			     v2_notification_t ntype,
-			     const chunk_t *ndata /* optional */,
+			     shunk_t ndata /*optional*/,
 			     enum payload_security security)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
@@ -409,7 +410,7 @@ void record_v2N_response(struct logger *logger,
 			 struct ike_sa *ike,
 			 struct msg_digest *md,
 			 v2_notification_t ntype,
-			 const chunk_t *ndata /* optional */,
+			 shunk_t ndata /*optional*/,
 			 enum payload_security security)
 {
 	record_v2N_spi_response(logger, ike, md,

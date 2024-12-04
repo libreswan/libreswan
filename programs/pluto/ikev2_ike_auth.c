@@ -465,7 +465,7 @@ static stf_status ikev2_pam_continue(struct ike_sa *ike,
 
 	if (!success) {
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		return STF_FATAL; /* STF_ZOMBIFY */
@@ -544,7 +544,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		pfree_diag(&d);
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}
@@ -636,7 +636,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			llog_sa(RC_LOG, ike,
 				"Requested PPK_ID not found and connection requires a valid PPK");
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		}
@@ -678,7 +678,7 @@ stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
 	if (err) {
 		/* already logged?! */
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}
@@ -724,7 +724,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			pfree_diag(&d);
 			dbg("no PPK auth failed");
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
@@ -750,7 +750,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			pfree_diag(&d);
 			dbg("NULL_auth from Notify Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
@@ -767,7 +767,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			pfree_diag(&d);
 			dbg("I2 Auth Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
-					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
@@ -812,7 +812,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 		 * AUTH payload succeed
 		 */
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}

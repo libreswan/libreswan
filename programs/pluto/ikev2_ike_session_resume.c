@@ -656,7 +656,7 @@ stf_status initiate_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_sa,
 static void record_v2N_TICKET_NACK(struct ike_sa *ike, struct msg_digest *md)
 {
 	record_v2N_response(ike->sa.logger, ike, md,
-			    v2N_TICKET_NACK, NULL/*no-data*/,
+			    v2N_TICKET_NACK, empty_shunk/*no-data*/,
 			    UNENCRYPTED_PAYLOAD);
 }
 
@@ -715,7 +715,7 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 		 * family, hence FATAL.
 		 */
 		record_v2N_response(ike->sa.logger, ike, md,
-				    v2N_INVALID_SYNTAX, NULL/*no-data*/,
+				    v2N_INVALID_SYNTAX, empty_shunk/*no-data*/,
 				    UNENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}

@@ -1081,7 +1081,7 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 		connection_delete_child(&ike->sa.st_v2_msgid_windows.responder.wip_sa, HERE);
 		if (v2_notification_fatal(cn)) {
 			record_v2N_response(ike->sa.logger, ike, md,
-					    cn, NULL/*no-data*/,
+					    cn, empty_shunk/*no-data*/,
 					    ENCRYPTED_PAYLOAD);
 			return false;
 		}

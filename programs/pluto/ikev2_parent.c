@@ -220,9 +220,8 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
 		/* convert group to a raw buffer */
 		uint16_t gr = htons(accepted_dh->group);
-		chunk_t nd = THING_AS_CHUNK(gr);
 		record_v2N_response(st->logger, ike, md,
-				    v2N_INVALID_KE_PAYLOAD, &nd,
+				    v2N_INVALID_KE_PAYLOAD, THING_AS_SHUNK(gr),
 				    security);
 		return false;
 	}
@@ -232,8 +231,8 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		       md->chain[ISAKMP_NEXT_v2KE], st->logger)) {
 		/* already logged? */
 		record_v2N_response(st->logger, ike, md,
-				    v2N_INVALID_SYNTAX,
-				    NULL, security);
+				    v2N_INVALID_SYNTAX, empty_shunk,
+				    security);
 		return false;
 	}
 
