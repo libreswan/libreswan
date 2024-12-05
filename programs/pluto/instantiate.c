@@ -401,62 +401,6 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 }
 
 /*
- * XXX: unlike update_selectors(), this code has to handle the remote
- * subnet
- */
-static void update_refined_selectors(struct connection *d,
-				     const ip_selector *remote_subnet,
-				     struct verbose verbose)
-{
-	selector_buf sb; /*handles NULL*/
-	vdbg("%s() %s ...", __func__, str_selector(remote_subnet, &sb));
-	verbose.level++;
-	FOR_EACH_ELEMENT(end, d->end) {
-		const char *leftright = end->config->leftright;
-		if (end->child.config->selectors.len > 0) {
-			vdbg("%s.child has %d configured selectors",
-			     leftright, end->child.config->selectors.len);
-			end->child.selectors.proposed = end->child.config->selectors;
-		} else if (remote_subnet != NULL &&
-			   &end->child == &d->remote->child &&
-			   d->remote->config->child.virt != NULL) {
-			PASSERT(d->logger, &end->host == &d->remote->host);
-			set_end_selector(end, *remote_subnet, d->logger);
-			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
-				ldbg(d->logger,
-				     "forcing remote %s.spd.has_client=false",
-				     d->spd->remote->config->leftright);
-				set_child_has_client(d, remote, false);
-			}
-		} else if (end->host.config->pool_ranges.len > 0) {
-			/*
-			 * Make space for the selectors that will be
-			 * assigned from the addresspool.
-			 */
-			vdbg("%s() %s selectors formed from address pool",
-			     __func__, leftright);
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
-					append_end_selector(end, afi, afi->selector.all,
-							    d->logger, HERE);
-				}
-			}
-		} else {
-			vdbg("%s() %s selector formed from host",
-			     __func__, leftright);
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(end->host.addr,
-								end->child.config->protoport);
-			set_end_selector(end, selector, d->logger);
-		}
-	}
-}
-
-/*
  * In addition to instantiate() also clone the SPD entries.
  *
  * XXX: it's arguable that SPD entries are being created far too early
@@ -599,7 +543,8 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	update_refined_selectors(d, NULL, verbose);
+	/* real selectors are still unknown */
+	update_selectors(d, verbose);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
@@ -608,6 +553,63 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 			__func__, pri_connection(t, &tb));
 	return d;
 
+}
+
+/*
+ * XXX: unlike update_selectors(), this code has to handle the remote
+ * subnet.
+ */
+
+static void update_v1_quick_n_dirty_selectors(struct connection *d,
+					      const ip_selector *remote_subnet,
+					      struct verbose verbose)
+{
+	selector_buf sb; /*handles NULL*/
+	vdbg("%s() %s ...", __func__, str_selector(remote_subnet, &sb));
+	verbose.level++;
+	FOR_EACH_ELEMENT(end, d->end) {
+		const char *leftright = end->config->leftright;
+		if (end->child.config->selectors.len > 0) {
+			vdbg("%s.child has %d configured selectors",
+			     leftright, end->child.config->selectors.len);
+			end->child.selectors.proposed = end->child.config->selectors;
+		} else if (remote_subnet != NULL &&
+			   &end->child == &d->remote->child &&
+			   d->remote->config->child.virt != NULL) {
+			PASSERT(d->logger, &end->host == &d->remote->host);
+			set_end_selector(end, *remote_subnet, d->logger);
+			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
+				ldbg(d->logger,
+				     "forcing remote %s.spd.has_client=false",
+				     d->spd->remote->config->leftright);
+				set_child_has_client(d, remote, false);
+			}
+		} else if (end->host.config->pool_ranges.len > 0) {
+			/*
+			 * Make space for the selectors that will be
+			 * assigned from the addresspool.
+			 */
+			vdbg("%s() %s selectors formed from address pool",
+			     __func__, leftright);
+			FOR_EACH_ELEMENT(afi, ip_families) {
+				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
+					append_end_selector(end, afi, afi->selector.all,
+							    d->logger, HERE);
+				}
+			}
+		} else {
+			vdbg("%s() %s selector formed from host",
+			     __func__, leftright);
+			/*
+			 * Default the end's child selector (client) to a
+			 * subnet containing only the end's host address.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(end->host.addr,
+								end->child.config->protoport);
+			set_end_selector(end, selector, d->logger);
+		}
+	}
 }
 
 struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *t,
@@ -630,7 +632,7 @@ struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	update_refined_selectors(d, remote_subnet, verbose);
+	update_v1_quick_n_dirty_selectors(d, remote_subnet, verbose);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
