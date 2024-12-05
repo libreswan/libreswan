@@ -365,31 +365,11 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
 
-static bool emit_modecfg(struct ike_sa *ike,
-			 uint16_t modecfg_type,
-			 lset_t attrs,
-			 struct pbs_out *rbody,
-			 uint16_t modecfg_id)
+static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
+				struct ike_sa *ike,
+				lset_t attrs)
 {
 	struct connection *c = ike->sa.st_connection;
-
-	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash(ike, "mode config",
-			     &hash_fixup, rbody)) {
-		return false;
-	}
-
-	/* ATTR out */
-
-	struct isakmp_mode_attr attrh = {
-		.isama_type = modecfg_type,
-		.isama_identifier = modecfg_id,
-	};
-
-	struct pbs_out attr_pbs;
-	if (!pbs_out_struct(rbody, &isakmp_attr_desc,
-			    &attrh, sizeof(attrh), &attr_pbs))
-		return false;
 
 	/*
 	 * If there's a DNS name, add that as a bonus.
@@ -407,7 +387,7 @@ static bool emit_modecfg(struct ike_sa *ike,
 	int attr_type = 0;
 	while (attrs != LEMPTY) {
 		if (attrs & 1) {
-			if (!isakmp_add_attr(&attr_pbs, attr_type, ike))
+			if (!isakmp_add_attr(attr_pbs, attr_type, ike))
 				return false;
 		}
 		attr_type++;
@@ -429,13 +409,13 @@ static bool emit_modecfg(struct ike_sa *ike,
 	 * XXX: potentially yes.
 	 */
 	if (c->config->modecfg.domains != NULL) {
-		isakmp_add_attr(&attr_pbs, MODECFG_DOMAIN, ike);
+		isakmp_add_attr(attr_pbs, MODECFG_DOMAIN, ike);
 	} else {
 		dbg("we are not sending a domain");
 	}
 
 	if (c->config->modecfg.banner != NULL) {
-		isakmp_add_attr(&attr_pbs, MODECFG_BANNER, ike);
+		isakmp_add_attr(attr_pbs, MODECFG_BANNER, ike);
 	} else {
 		dbg("We are not sending a banner");
 	}
@@ -445,13 +425,8 @@ static bool emit_modecfg(struct ike_sa *ike,
 		dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 	} else {
 		dbg("We are sending our subnet as CISCO_SPLIT_INC");
-		isakmp_add_attr(&attr_pbs, CISCO_SPLIT_INC, ike);
+		isakmp_add_attr(attr_pbs, CISCO_SPLIT_INC, ike);
 	}
-
-	if (!close_v1_message(&attr_pbs, ike))
-		return false;
-
-	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
 
 	return true;
 }
@@ -528,10 +503,33 @@ static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
 	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &rbody))
 		return false;
 
-	/* XXX This does not include IPv6 at this point */
-	if (!emit_modecfg(ike, ISAKMP_CFG_SET, set_items, &rbody, 0 /* XXX ID */)) {
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash(ike, "mode config",
+			     &hash_fixup, &rbody)) {
 		return false;
 	}
+
+	/* ATTR out */
+
+	struct isakmp_mode_attr attrh = {
+		.isama_type = ISAKMP_CFG_SET,
+		.isama_identifier = 0 /* XXX ID XXX: !?! */,
+	};
+
+	struct pbs_out attr_pbs;
+	if (!pbs_out_struct(&rbody, &isakmp_attr_desc,
+			    &attrh, sizeof(attrh), &attr_pbs))
+		return false;
+
+	/* XXX This does not include IPv6 at this point */
+	if (!emit_mode_cfg_attrs(&attr_pbs, ike, set_items)) {
+		return false;
+	}
+
+	if (!close_v1_message(&attr_pbs, ike))
+		return false;
+
+	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 
 	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
 		return false;
@@ -560,9 +558,32 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
-	if (!emit_modecfg(ike, cfg_message, attrs, &rbody, ma->isama_identifier)) {
+	struct v1_hash_fixup hash_fixup;
+	if (!emit_xauth_hash(ike, "mode config",
+			     &hash_fixup, &rbody)) {
 		return false;
 	}
+
+	/* ATTR out */
+
+	struct isakmp_mode_attr attrh = {
+		.isama_type = cfg_message,
+		.isama_identifier = ma->isama_identifier,
+	};
+
+	struct pbs_out attr_pbs;
+	if (!pbs_out_struct(&rbody, &isakmp_attr_desc,
+			    &attrh, sizeof(attrh), &attr_pbs))
+		return false;
+
+	if (!emit_mode_cfg_attrs(&attr_pbs, ike, attrs)) {
+		return false;
+	}
+
+	if (!close_v1_message(&attr_pbs, ike))
+		return false;
+
+	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 
 	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
 	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
