@@ -559,6 +559,17 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 			}
 		}
 		break;
+	case ISAKMP_CFG_REQUEST:
+		FOR_EACH_ELEMENT(attr, default_attrs) {
+			struct isakmp_attribute attrh = {
+				.isaat_af_type = *attr,
+			};
+			if (!pbs_out_struct(&attr_pbs, &isakmp_xauth_attribute_desc,
+					    &attrh, sizeof(attrh), NULL)) {
+				return false;
+			}
+		}
+		break;
 	default:
 		bad_case(mode_cfg_type);
 	}
@@ -803,84 +814,17 @@ stf_status xauth_send_request(struct ike_sa *ike)
 
 stf_status modecfg_send_request(struct ike_sa *ike)
 {
-	/* set up reply */
-	uint8_t buf[256];
-	struct pbs_out reply = open_pbs_out("xauth_buf", buf, sizeof(buf), ike->sa.logger);
-
 	log_state(RC_LOG, &ike->sa, "modecfg: Sending IP request (MODECFG_I1)");
 
 	/* this is the beginning of a new exchange */
 	ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);
+	ike->sa.st_v1_phase_2_iv = new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15,
+						 "IKE sending mode cfg request", HERE);
 	change_v1_state(&ike->sa, STATE_MODE_CFG_I1);
 
-	/* HDR out */
-	struct pbs_out rbody;
-	{
-		struct isakmp_hdr hdr = {
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = ike->sa.st_v1_msgid.phase15,
-		};
-
-		if (impair.send_bogus_isakmp_flag) {
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-		}
-
-		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
-		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
-
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
-			return STF_INTERNAL_ERROR;
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REQUEST)) {
+		return false;
 	}
-
-	struct v1_hash_fixup hash_fixup;
-	if (!emit_xauth_hash(ike, "XAUTH: mode config request",
-			     &hash_fixup, &rbody)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* ATTR out */
-	{
-		struct isakmp_mode_attr attrh = {
-			.isama_type = ISAKMP_CFG_REQUEST,
-			.isama_identifier = 0,
-		};
-		struct pbs_out strattr;
-
-		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
-			return STF_INTERNAL_ERROR;
-
-		/* generate LOT of empty attributes */
-		static const uint16_t at[] = {
-			IKEv1_INTERNAL_IP4_ADDRESS, IKEv1_INTERNAL_IP4_NETMASK,
-			IKEv1_INTERNAL_IP4_DNS, MODECFG_BANNER, MODECFG_DOMAIN,
-			CISCO_SPLIT_INC, 0  };
-
-		for (const uint16_t *p = at; *p != 0; p++) {
-			struct isakmp_attribute attr = {
-				.isaat_af_type = *p,
-			};
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
-		}
-
-		if (!close_v1_message(&strattr, ike))
-			return STF_INTERNAL_ERROR;
-	}
-
-	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
-	ike->sa.st_v1_phase_2_iv =
-		new_phase2_iv(ike, ike->sa.st_v1_msgid.phase15, "IKE sending mode cfg request", HERE);
-
-	if (!close_and_encrypt_v1_message(ike, &rbody, &ike->sa.st_v1_phase_2_iv)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* Transmit */
-	record_and_send_v1_ike_msg(&ike->sa, &reply, "modecfg: req");
 
 	if (*state_event_slot(&ike->sa, EVENT_v1_RETRANSMIT) == NULL) {
 		delete_v1_event(&ike->sa);
