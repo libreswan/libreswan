@@ -1669,3 +1669,4 @@ kvmplutotest	ikev2-aws-updown			good	github/1828
 kvmplutotest	ikev2-resume-01-psk			good	github/436
 kvmplutotest	ikev2-resume-02-x509			good	github/436
 kvmplutotest	ikev2-resume-03-rollover		good	github/1949
+kvmplutotest	ikev2-resume-04-instance		wip	github/1951
