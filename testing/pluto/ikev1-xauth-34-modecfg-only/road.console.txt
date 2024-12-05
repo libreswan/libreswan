@@ -26,5 +26,16 @@ road #
 "road-east" #1: Received IPv4 address: 192.0.2.101/32
 "road-east" #1: Received DNS server 1.2.3.4
 "road-east" #1: Received DNS server 5.6.7.8
-"road-east" #1: received ModeCfg Ack {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
->>>>>>>>>> TIMEOUT while running command 03-road-up.sh road# ipsec up road-east <<<<<<<<<<
+"road-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east" #2: sent Quick Mode request
+"road-east" #2: up-client output: updating resolvconf
+"road-east" #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.23:4500 DPD=passive}
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+#2: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
+road #
+ 
