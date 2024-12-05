@@ -40,14 +40,44 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port remote_port,
 				     where_t where);
 
+/*
+ * A packet arrived, no clue other than the initiator's address.
+ *
+ * - peer's identity is unknown
+ * - peer's selectors are unknown
+ */
+
 struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where);
-extern struct connection *rw_responder_refined_instantiate(struct connection *t,
-							   const ip_address peer_addr,
-							   const ip_selector *peer_subnet,
-							   const struct id *peer_id,
-							   where_t where);
+
+/*
+ * Now, in addition to the initiator's address, the initiator's ID is
+ * known (and proven).
+ *
+ * - peer's selectors are still unknown.
+ */
+
+struct connection *rw_responder_id_instantiate(struct connection *t,
+					       const ip_address peer_addr,
+					       const struct id *peer_id,
+					       where_t where);
+
+/*
+ * IKEv1, where the initiator's address, ID and selectors are known.
+ *
+ * However:
+ * - the peer may not have taken a lease (skipped MODECFG)
+ * - tunnel VS transport is resolved later; big oops
+ *
+ * IKEv2 uses spd_instantiate() below.
+ */
+
+struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *t,
+							     const ip_address peer_addr,
+							     const ip_selector *peer_subnet,
+							     const struct id *peer_id,
+							     where_t where);
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
 					      ip_packet packet,

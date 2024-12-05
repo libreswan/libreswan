@@ -749,9 +749,8 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 			 * ID.
 			 */
 			pexpect(is_template(r));
-			r = rw_responder_refined_instantiate(r, ike->sa.st_connection->remote->host.addr,
-							    NULL/*not-yet-known*/,
-							    peer_id, HERE);
+			r = rw_responder_id_instantiate(r, ike->sa.st_connection->remote->host.addr,
+							peer_id, HERE);
 		} else {
 			r = connection_addref(r, ike->sa.logger);
 		}

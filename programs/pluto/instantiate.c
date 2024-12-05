@@ -564,14 +564,42 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	return d;
 }
 
-struct connection *rw_responder_refined_instantiate(struct connection *t,
-						    const ip_address remote_addr,
-						    const ip_selector *remote_subnet,
-						    const struct id *remote_id,
-						    where_t where)
+struct connection *rw_responder_id_instantiate(struct connection *t,
+					       const ip_address remote_addr,
+					       const struct id *remote_id,
+					       where_t where)
 {
 	PASSERT(t->logger, !is_opportunistic(t));
 	PASSERT(t->logger, !is_labeled(t));
+	PASSERT(t->logger, remote_id != NULL);
+
+	/*
+	 * XXX: this function is never called when there are
+	 * sec_labels?
+	 */
+	struct connection *d = instantiate(t, remote_addr, remote_id,
+					   empty_shunk, __func__, where);
+
+	update_refined_selectors(d, NULL);
+	add_connection_spds(d, address_info(d->local->host.addr));
+
+	connection_buf tb;
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(t, &tb));
+	return d;
+
+}
+
+struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *t,
+							     const ip_address remote_addr,
+							     const ip_selector *remote_subnet,
+							     const struct id *remote_id,
+							     where_t where)
+{
+	PASSERT(t->logger, !is_opportunistic(t));
+	PASSERT(t->logger, !is_labeled(t));
+	PASSERT(t->logger, remote_subnet != NULL);
+	PASSERT(t->logger, remote_id != NULL);
 
 	/*
 	 * XXX: this function is never called when there are
