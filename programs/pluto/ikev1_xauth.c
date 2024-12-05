@@ -365,30 +365,65 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
 
+static bool emit_mode_cfg_attr(struct pbs_out *attr_pbs, unsigned attr, struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	switch (attr) {
+
+	case IKEv1_INTERNAL_IP4_DNS:
+		/*
+		 * If there's a DNS name, add that as a bonus.
+		 *
+		 * XXX: could this, with misconfiguration, cause the
+		 * client to send the DNS name to the server?
+		 */
+		if (c->config->modecfg.dns.len == 0) {
+			ldbg(ike->sa.logger, "we are not sending internal DNS");
+			return true;
+		}
+		return isakmp_add_attr(attr_pbs, attr, ike);
+
+	case MODECFG_DOMAIN:
+		if (c->config->modecfg.domains == NULL) {
+			ldbg(ike->sa.logger, "we are not sending a domain");
+			return true;
+		}
+		return isakmp_add_attr(attr_pbs, MODECFG_DOMAIN, ike);
+
+	case MODECFG_BANNER:
+		if (c->config->modecfg.banner == NULL) {
+			ldbg(ike->sa.logger, "We are not sending a banner");
+			return true;
+		}
+		return isakmp_add_attr(attr_pbs, MODECFG_BANNER, ike);
+
+	case CISCO_SPLIT_INC:
+		if (selector_is_unset(&c->spd->local->client) ||
+		    selector_is_all(c->spd->local->client)) {
+			ldbg(ike->sa.logger, "We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+			return true;
+		}
+		ldbg(ike->sa.logger, "We are sending our subnet as CISCO_SPLIT_INC");
+		return isakmp_add_attr(attr_pbs, CISCO_SPLIT_INC, ike);
+
+	default:
+		return isakmp_add_attr(attr_pbs, attr, ike);
+
+	}
+}
+
 static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
 				struct ike_sa *ike,
 				lset_t attrs)
 {
-	struct connection *c = ike->sa.st_connection;
-
-	/*
-	 * If there's a DNS name, add that as a bonus.
-	 *
-	 * XXX: could this, with misconfiguration, cause the client to
-	 * send the DNS name to the server?
-	 */
-	if (c->config->modecfg.dns.len > 0) {
-		attrs |= LELEM(IKEv1_INTERNAL_IP4_DNS);
-	} else {
-		attrs &= ~LELEM(IKEv1_INTERNAL_IP4_DNS);
-	}
-
 	/* Send the attributes requested by the client. */
 	int attr_type = 0;
 	while (attrs != LEMPTY) {
 		if (attrs & 1) {
-			if (!isakmp_add_attr(attr_pbs, attr_type, ike))
+			if (!emit_mode_cfg_attr(attr_pbs, attr_type, ike)) {
 				return false;
+			}
 		}
 		attr_type++;
 		attrs >>= 1;
@@ -408,25 +443,9 @@ static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
 	 *
 	 * XXX: potentially yes.
 	 */
-	if (c->config->modecfg.domains != NULL) {
-		isakmp_add_attr(attr_pbs, MODECFG_DOMAIN, ike);
-	} else {
-		dbg("we are not sending a domain");
-	}
-
-	if (c->config->modecfg.banner != NULL) {
-		isakmp_add_attr(attr_pbs, MODECFG_BANNER, ike);
-	} else {
-		dbg("We are not sending a banner");
-	}
-
-	if (selector_is_unset(&c->spd->local->client) ||
-	    selector_is_all(c->spd->local->client)) {
-		dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
-	} else {
-		dbg("We are sending our subnet as CISCO_SPLIT_INC");
-		isakmp_add_attr(attr_pbs, CISCO_SPLIT_INC, ike);
-	}
+	emit_mode_cfg_attr(attr_pbs, MODECFG_DOMAIN, ike);
+	emit_mode_cfg_attr(attr_pbs, MODECFG_BANNER, ike);
+	emit_mode_cfg_attr(attr_pbs, CISCO_SPLIT_INC, ike);
 
 	return true;
 }
