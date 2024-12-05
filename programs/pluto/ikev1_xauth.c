@@ -493,11 +493,11 @@ static bool get_internal_address(struct ike_sa *ike)
 	return true;
 }
 
-static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
-					     lset_t set_items)
+static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
+				      unsigned mode_cfg_type)
 {
 	struct fragment_pbs_out packet;
-	if (!open_fragment_pbs_out("Modecfg(setI1)", &packet, ike->sa.logger)) {
+	if (!open_fragment_pbs_out("MODE_CFG", &packet, ike->sa.logger)) {
 		return false;
 	}
 
@@ -509,14 +509,13 @@ static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
 		.isa_xchg = ISAKMP_XCHG_MODE_CFG,
 		.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
 		.isa_msgid = ike->sa.st_v1_msgid.phase15,
+		.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator,
+		.isa_ike_responder_spi = ike->sa.st_ike_spis.responder,
 	};
 
 	if (impair.send_bogus_isakmp_flag) {
 		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
-
-	hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
-	hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
 	struct pbs_out rbody;
 	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &rbody))
@@ -531,18 +530,37 @@ static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
 	/* ATTR out */
 
 	struct isakmp_mode_attr attrh = {
-		.isama_type = ISAKMP_CFG_SET,
-		.isama_identifier = 0 /* XXX ID XXX: !?! */,
+		.isama_type = mode_cfg_type,
+		.isama_identifier = 0 /* XXX ID !?! */,
 	};
 
 	struct pbs_out attr_pbs;
 	if (!pbs_out_struct(&rbody, &isakmp_attr_desc,
-			    &attrh, sizeof(attrh), &attr_pbs))
+			    &attrh, sizeof(attrh), &attr_pbs)) {
 		return false;
+	}
 
-	/* XXX This does not include IPv6 at this point */
-	if (!emit_mode_cfg_attrs(&attr_pbs, ike, set_items)) {
-		return false;
+	/* will never include IPv6 */
+
+	static const unsigned default_attrs[] = {
+		IKEv1_INTERNAL_IP4_ADDRESS,
+		IKEv1_INTERNAL_IP4_SUBNET,
+		IKEv1_INTERNAL_IP4_DNS,
+		MODECFG_DOMAIN,
+		MODECFG_BANNER,
+		CISCO_SPLIT_INC,
+	};
+
+	switch (mode_cfg_type) {
+	case ISAKMP_CFG_SET:
+		FOR_EACH_ELEMENT(attr, default_attrs) {
+			if (!emit_mode_cfg_attr(&attr_pbs, *attr, ike)) {
+				return false;
+			}
+		}
+		break;
+	default:
+		bad_case(mode_cfg_type);
 	}
 
 	if (!close_v1_message(&attr_pbs, ike))
@@ -652,10 +670,7 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 		return STF_FATAL;
 	}
 
-	if (!record_n_send_v1_modecfg_request(ike,
-					      (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) |
-					       LELEM(IKEv1_INTERNAL_IP4_SUBNET) |
-					       LELEM(IKEv1_INTERNAL_IP4_DNS)))) {
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_SET)) {
 		return STF_FATAL;
 	}
 
