@@ -956,6 +956,7 @@ kvmplutotest	ikev1-xauth-31-one-each-way		wip	github/633
 kvmplutotest	ikev1-xauth-32-lost-mode-cfg		good	github/1785
 kvmplutotest	ikev1-xauth-33-quick-narrows		wip	github/1857
 kvmplutotest	ikev1-xauth-34-modecfg-only		wip	github/1954
+kvmplutotest	ikev1-xauth-35-xauth-only		wip	github/1955
 
 #
 # Aggressive Mode Pluto Tests

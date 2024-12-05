@@ -1,0 +1,23 @@
+../../guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add any-east
+"any-east": added IKEv1 connection
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo initdone
+initdone
+east #
+ # on EAST, dump the state of the initial SAs
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ 

@@ -1,0 +1,11 @@
+ikev1 Main+XAUTH:SET+Quick+LEASE i.e., skipping mode config
+
+- server initiates XAUTH
+- server skips MODECFG
+
+client then asks for child but ends up with 0.0.0.0/0 for remote
+
+Note: to get this behaviour modecfgserver=no modecfgclient=no
+modeconfigpull=yes is needed, see github/1961.
+
+For background see github/1955
