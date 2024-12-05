@@ -65,7 +65,9 @@ bool initiate_connection(struct connection *c,
 			 bool background,
 			 struct logger *logger)
 {
-	ldbg_connection(c, HERE, "initiate: remote_host=%s",
+	VERBOSE_DBGP(DBG_BASE, c->logger, "%s()", __func__);
+	vdbg_connection(c, verbose, HERE,
+			"initiate: remote_host=%s",
 			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
 	connection_attach(c, logger);
 	bool ok = initiate_connection_1_basics(c, remote_host, background);
@@ -315,10 +317,12 @@ void initiate(struct connection *c,
 	      enum initiated_by initiated_by,
 	      where_t where)
 {
+	VERBOSE_DBGP(DBG_BASE, c->logger, "%s()", __func__);
 	enum_buf ifnb;
 	child_policy_buf pb;
 	enum_buf epb;
-	ldbg_connection(c, where, "%s() by %s policy=%s proto=%s sec_label="PRI_SHUNK,
+	vdbg_connection(c, verbose, where,
+			"%s() by %s policy=%s proto=%s sec_label="PRI_SHUNK,
 			__func__,
 			str_enum_short(&initiated_by_names, initiated_by, &ifnb),
 			str_child_policy(policy, &pb),

@@ -107,70 +107,86 @@
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
-void ldbg_connection(const struct connection *c, where_t where,
+void vdbg_connection(const struct connection *c,
+		     struct verbose verbose, where_t where,
 		     const char *message, ...)
 {
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
-			va_list ap;
-			va_start(ap, message);
-			jam_va_list(buf, message, ap);
-			va_end(ap);
-			jam_string(buf, " ");
-			jam_where(buf, where);
+	if (LDBGP(DBG_BASE, c->logger)) {
+		return;
+	}
+	verbose.rc_flags = DEBUG_STREAM;
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		va_list ap;
+		va_start(ap, message);
+		jam_va_list(buf, message, ap);
+		va_end(ap);
+		jam_string(buf, " ");
+		jam_where(buf, where);
+	}
+	verbose.level++;
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "connection ");
+		jam_connection_co(buf, c);
+		if (c->clonedfrom != 0) {
+			jam_string(buf, " clonedfrom ");
+			jam_connection_co(buf, c->clonedfrom);
 		}
-		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-			jam_string(buf, "  connection ");
-			jam_connection_co(buf, c);
-			if (c->clonedfrom != 0) {
-				jam_string(buf, " clonedfrom ");
-				jam_connection_co(buf, c->clonedfrom);
-			}
-			jam_string(buf, ": ");
-			jam_connection(buf, c);
-		}
-		enum_buf rb, kb;
-		LDBG_log(c->logger, "    routing+kind: %s %s",
-			 str_enum_short(&routing_names, c->routing.state, &rb),
-			 str_enum_short(&connection_kind_names, c->local->kind, &kb));
-		address_buf clb, crb;
-		LDBG_log(c->logger, "    host: %s->%s",
-			 str_address(&c->local->host.addr, &clb),
-			 str_address(&c->remote->host.addr, &crb));
-		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-			jam_string(buf, "    selectors:");
-			const char *sep = " ->";
-			FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
-				FOR_EACH_ITEM(selector, &end->selectors.proposed) {
-					jam_string(buf, " ");
-					jam_selector(buf, selector);
-				}
-				jam_string(buf, sep); sep = "";
-			}
-		}
-		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-			jam_string(buf, "    spds:");
-			FOR_EACH_ITEM(spd, &c->child.spds) {
+		jam_string(buf, ": ");
+		jam_connection(buf, c);
+	}
+	verbose.level++;
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "routing+kind: ");
+		jam_enum_short(buf, &routing_names, c->routing.state);
+		jam_string(buf, " ");
+		jam_enum_short(buf, &connection_kind_names, c->local->kind);
+	}
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "host: ");
+		jam_address(buf, &c->local->host.addr);
+		jam_string(buf, "->");
+		jam_address(buf, &c->remote->host.addr);
+	}
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "selectors:");
+		const char *sep = " ->";
+		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
+			FOR_EACH_ITEM(selector, &end->selectors.proposed) {
 				jam_string(buf, " ");
-				jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+				jam_selector(buf, selector);
 			}
-		}
-		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-			jam_string(buf, "    policy: ");
-			jam_connection_policies(buf, c);
-		}
-		if (c->config->sec_label.len > 0) {
-			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-				jam_string(buf, "    sec_label: ");
-				if (c->child.sec_label.len > 0) {
-					jam(buf, PRI_SHUNK, pri_shunk(c->child.sec_label));
-					jam_string(buf, " <= ");
-				}
-				jam(buf, PRI_SHUNK, pri_shunk(c->config->sec_label));
-			}
+			jam_string(buf, sep); sep = "";
 		}
 	}
-
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "spds:");
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			jam_string(buf, " ");
+			jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+		}
+	}
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "policy: ");
+		jam_connection_policies(buf, c);
+	}
+	if (c->config->sec_label.len > 0) {
+		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+			jam(buf, PRI_VERBOSE, pri_verbose);
+			jam_string(buf, "sec_label: ");
+			if (c->child.sec_label.len > 0) {
+				jam(buf, PRI_SHUNK, pri_shunk(c->child.sec_label));
+				jam_string(buf, " <= ");
+			}
+			jam(buf, PRI_SHUNK, pri_shunk(c->config->sec_label));
+		}
+	}
 }
 
 static bool never_negotiate_wm(const struct whack_message *wm)

@@ -45,6 +45,7 @@
 #include "ipsec_interface.h"
 #include "virtual_ip.h"
 #include "kernel.h"
+#include "verbose.h"
 
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
@@ -130,8 +131,10 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port remote_port,
 				     where_t where)
 {
+	VERBOSE_DBGP(DBG_BASE, group->logger, "%s() ...", __func__);
 	subnet_buf rsb;
-	ldbg_connection(group, where, "%s: "PRI_HPORT" %s -> [%s]:"PRI_HPORT,
+	vdbg_connection(group, verbose, where,
+			"%s: "PRI_HPORT" %s -> [%s]:"PRI_HPORT,
 			__func__,
 			pri_hport(local_port),
 			protocol->name,
@@ -239,8 +242,7 @@ struct connection *group_instantiate(struct connection *group,
 	t->local->kind = t->remote->kind = CK_TEMPLATE;
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
-	ldbg(t->logger,
-	     "%s t.child.reqid="PRI_REQID" because group->sa_reqid="PRI_REQID" (%s)",
+	vdbg("%s t.child.reqid="PRI_REQID" because group->sa_reqid="PRI_REQID" (%s)",
 	     t->name,
 	     pri_reqid(t->child.reqid),
 	     pri_reqid(t->config->sa_reqid),
@@ -253,7 +255,8 @@ struct connection *group_instantiate(struct connection *group,
 	add_connection_spds(t, address_info(t->local->host.addr));
 
 	connection_buf gb;
-	ldbg_connection(t, HERE, "%s: from "PRI_CONNECTION,
+	vdbg_connection(t, verbose, HERE,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(group, &gb));
 	return t;
 }
@@ -277,19 +280,22 @@ static struct connection *instantiate(struct connection *t,
 				      const ip_address remote_addr,
 				      const struct id *peer_id,
 				      shunk_t sec_label, /* for ldbg() message only */
-				      const char *func, where_t where)
+				      const char *func,
+				      struct verbose verbose,
+				      where_t where)
 {
 	address_buf ab;
 	id_buf idb;
 	enum_buf kb;
-	ldbg_connection(t, where, "%s: remote=%s id=%s kind=%s sec_label="PRI_SHUNK,
+	vdbg_connection(t, verbose, where,
+			"%s: remote=%s id=%s kind=%s sec_label="PRI_SHUNK,
 			func, str_address(&remote_addr, &ab),
 			str_id(peer_id, &idb),
 			str_enum_short(&connection_kind_names, t->local->kind, &kb),
 			pri_shunk(sec_label));
 
-	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
-	PASSERT(t->logger, (is_template(t) ||
+	vassert(address_is_specified(remote_addr)); /* always */
+	vassert((is_template(t) ||
 			    is_labeled_template(t) ||
 			    is_labeled_parent(t)));
 
@@ -354,15 +360,15 @@ static struct connection *instantiate(struct connection *t,
  * for the entire address range.
  */
 
-static void update_selectors(struct connection *d)
+static void update_selectors(struct connection *d, struct verbose verbose)
 {
+	vdbg("%s() ...", __func__);
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 		PASSERT(d->logger, end->child.selectors.proposed.list == NULL);
 		PASSERT(d->logger, end->child.selectors.proposed.len == 0);
 		if (end->child.config->selectors.len > 0) {
-			ldbg(d->logger,
-			     "%s() %s selectors from %d child.selectors",
+			vdbg("%s() %s selectors from %d child.selectors",
 			     __func__, leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
 		} else if (end->host.config->pool_ranges.len > 0) {
@@ -370,8 +376,7 @@ static void update_selectors(struct connection *d)
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 */
-			ldbg(d->logger,
-			     "%s() %s selectors formed from address pool",
+			vdbg("%s() %s selectors formed from address pool",
 			     __func__, leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
@@ -380,8 +385,7 @@ static void update_selectors(struct connection *d)
 				}
 			}
 		} else {
-			ldbg(d->logger,
-			     "%s() %s.child selector formed from host address+protoport",
+			vdbg("%s() %s.child selector formed from host address+protoport",
 			     __func__, leftright);
 			/*
 			 * Default the end's child selector (client) to a
@@ -401,13 +405,16 @@ static void update_selectors(struct connection *d)
  * subnet
  */
 static void update_refined_selectors(struct connection *d,
-				     const ip_selector *remote_subnet)
+				     const ip_selector *remote_subnet,
+				     struct verbose verbose)
 {
+	selector_buf sb; /*handles NULL*/
+	vdbg("%s() %s ...", __func__, str_selector(remote_subnet, &sb));
+	verbose.level++;
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 		if (end->child.config->selectors.len > 0) {
-			ldbg(d->logger,
-			     "%s.child has %d configured selectors",
+			vdbg("%s.child has %d configured selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
 		} else if (remote_subnet != NULL &&
@@ -426,8 +433,7 @@ static void update_refined_selectors(struct connection *d,
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 */
-			ldbg(d->logger,
-			     "%s() %s selectors formed from address pool",
+			vdbg("%s() %s selectors formed from address pool",
 			     __func__, leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
@@ -436,8 +442,7 @@ static void update_refined_selectors(struct connection *d,
 				}
 			}
 		} else {
-			ldbg(d->logger,
-			     "%s() %s selector formed from host",
+			vdbg("%s() %s selector formed from host",
 			     __func__, leftright);
 			/*
 			 * Default the end's child selector (client) to a
@@ -463,12 +468,14 @@ struct connection *spd_instantiate(struct connection *t,
 				   const ip_address remote_addr,
 				   where_t where)
 {
-	PASSERT(t->logger, !is_labeled(t));
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(!is_labeled(t));
 
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   empty_shunk, __func__, where);
+					   empty_shunk, __func__,
+					   verbose, where);
 
-	update_selectors(d);
+	update_selectors(d, verbose);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
@@ -476,7 +483,8 @@ struct connection *spd_instantiate(struct connection *t,
 	pexpect(d->routing.state == RT_UNROUTED);
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(d, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(t, &tb));
 
 	return d;
@@ -491,19 +499,22 @@ struct connection *labeled_template_instantiate(struct connection *t,
 						const ip_address remote_address,
 						where_t where)
 {
-	PASSERT(t->logger, is_labeled_template(t));
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(is_labeled_template(t));
 
 	struct connection *p = instantiate(t, remote_address, /*peer-id*/NULL,
-					   empty_shunk, __func__, where);
+					   empty_shunk, __func__,
+					   verbose, where);
 
-	update_selectors(p);
+	update_selectors(p, verbose);
 	add_connection_spds(p, address_info(p->local->host.addr));
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
 	pexpect(p->routing.state == RT_UNROUTED);
 
 	connection_buf tb;
-	ldbg_connection(p, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(p, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(t, &tb));
 
 	return p;
@@ -519,11 +530,13 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 					      where_t where)
 {
 	struct connection *p = ike->sa.st_connection;
-	PASSERT(p->logger, is_labeled_parent(p));
+	VERBOSE_DBGP(DBG_BASE, p->logger, "%s() ...", __func__);
+	vassert(is_labeled_parent(p));
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	struct connection *c = instantiate(p, remote_addr, /*peer-id*/NULL,
-					   sec_label, __func__, where);
+					   sec_label, __func__,
+					   verbose, where);
 
 	/*
 	 * Install the sec_label from either an acquire or child
@@ -532,14 +545,15 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
 	c->child.sec_label = clone_hunk(sec_label, __func__);
 
-	update_selectors(c);
+	update_selectors(c, verbose);
 	add_connection_spds(c, address_info(c->local->host.addr));
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
 	pexpect(c->routing.state == RT_UNROUTED);
 
 	connection_buf tb;
-	ldbg_connection(c, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(c, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(p, &tb));
 
 	return c;
@@ -549,17 +563,20 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where)
 {
-	PASSERT(t->logger, !is_opportunistic(t));
-	PASSERT(t->logger, !is_labeled(t));
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(!is_opportunistic(t));
+	vassert(!is_labeled(t));
 
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
-					   empty_shunk, __func__, where);
+					   empty_shunk, __func__,
+					   verbose, where);
 
-	update_selectors(d);
+	update_selectors(d, verbose);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(d, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(t, &tb));
 	return d;
 }
@@ -569,22 +586,25 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					       const struct id *remote_id,
 					       where_t where)
 {
-	PASSERT(t->logger, !is_opportunistic(t));
-	PASSERT(t->logger, !is_labeled(t));
-	PASSERT(t->logger, remote_id != NULL);
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(!is_opportunistic(t));
+	vassert(!is_labeled(t));
+	vassert(remote_id != NULL);
 
 	/*
 	 * XXX: this function is never called when there are
 	 * sec_labels?
 	 */
 	struct connection *d = instantiate(t, remote_addr, remote_id,
-					   empty_shunk, __func__, where);
+					   empty_shunk, __func__,
+					   verbose, where);
 
-	update_refined_selectors(d, NULL);
+	update_refined_selectors(d, NULL, verbose);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(d, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(t, &tb));
 	return d;
 
@@ -596,36 +616,40 @@ struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *
 							     const struct id *remote_id,
 							     where_t where)
 {
-	PASSERT(t->logger, !is_opportunistic(t));
-	PASSERT(t->logger, !is_labeled(t));
-	PASSERT(t->logger, remote_subnet != NULL);
-	PASSERT(t->logger, remote_id != NULL);
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(!is_opportunistic(t));
+	vassert(!is_labeled(t));
+	vassert(remote_subnet != NULL);
+	vassert(remote_id != NULL);
 
 	/*
 	 * XXX: this function is never called when there are
 	 * sec_labels?
 	 */
 	struct connection *d = instantiate(t, remote_addr, remote_id,
-					   empty_shunk, __func__, where);
+					   empty_shunk, __func__,
+					   verbose, where);
 
-	update_refined_selectors(d, remote_subnet);
+	update_refined_selectors(d, remote_subnet, verbose);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(d, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			__func__, pri_connection(t, &tb));
 	return d;
-
 }
 
 static struct connection *oppo_instantiate(struct connection *t,
 					   const ip_address remote_address,
-					   const char *func, where_t where)
+					   const char *func,
+					   struct verbose verbose,
+					   where_t where)
 {
-	PASSERT(t->logger, is_template(t));
-	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
-	PASSERT(t->logger, t->local->child.selectors.proposed.len == 1);
-	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
+	vassert(is_template(t));
+	vassert(oriented(t)); /* else won't instantiate */
+	vassert(t->local->child.selectors.proposed.len == 1);
+	vassert(t->remote->child.selectors.proposed.len == 1);
 
 	/*
 	 * Instance inherits remote ID of child; exception being when
@@ -633,7 +657,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 	 */
 
 	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL,
-					   empty_shunk, func, where);
+					   empty_shunk, func,
+					   verbose, where);
 
 	PASSERT(d->logger, is_instance(d));
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
@@ -663,7 +688,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+	vdbg_connection(d, verbose, where,
+			"%s: from "PRI_CONNECTION,
 			func, pri_connection(t, &tb));
 	return d;
 }
@@ -680,10 +706,11 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 	 * it falls within the selector's range (can't match port as
 	 * not yet known).
 	 */
-	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(t->remote->child.selectors.proposed.len == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
-	PASSERT(t->logger, address_in_selector_range(remote_address, remote_template));
-	return oppo_instantiate(t, remote_address, __func__, where);
+	vassert(address_in_selector_range(remote_address, remote_template));
+	return oppo_instantiate(t, remote_address, __func__, verbose, where);
 }
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
@@ -697,12 +724,13 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	 * endpoint that needs to be negotiated.  Hence this endpoint
 	 * must be fully within the template's selector).
 	 */
-	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vassert(t->remote->child.selectors.proposed.len == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
 	ip_endpoint remote_endpoint = packet_dst_endpoint(packet);
-	PASSERT(t->logger, endpoint_in_selector(remote_endpoint, remote_template));
+	vassert(endpoint_in_selector(remote_endpoint, remote_template));
 	ip_address local_address = packet_src_address(packet);
 	PEXPECT(t->logger, address_eq_address(local_address, t->local->host.addr));
 	ip_address remote_address = endpoint_address(remote_endpoint);
-	return oppo_instantiate(t, remote_address, __func__, where);
+	return oppo_instantiate(t, remote_address, __func__, verbose, where);
 }

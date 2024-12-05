@@ -1089,8 +1089,9 @@ bool dpd_active_locally(const struct connection *c);
 
 ip_address spd_end_sourceip(const struct spd_end *spde);
 
-PRINTF_LIKE(3)
-void ldbg_connection(const struct connection *c, where_t where,
+PRINTF_LIKE(4)
+void vdbg_connection(const struct connection *c,
+		     struct verbose verbose, where_t where,
 		     const char *message, ...);
 
 void init_connection_spd(struct connection *c, struct spd *spd);
