@@ -1,0 +1,20 @@
+IKEv1 ipsec-interface needing lease but skipping MODE_CFG
+
+This means that the Quick Mode exchange is responsible for updating
+policy and obtaining the lease.
+
+In both 4.x and 5.0, the Quick Mode code bumbled a check and
+determined that the connection was in TRANSPORT_MODE, and, hence, the
+child's selectors were fine (no lease required).  Consequently, what
+evern was in the connection was installed as policy.
+
+- in 4.x, the connection was instantiated with the child selectors set
+
+- in 5.0, the policy was left unset
+
+See github:
+
+  Version 5.x: xfrmi+xauth+modecfg+addresspool: server overwrites
+  default route when the client don't use modecfg #1955
+
+Test from Wolfgang.
