@@ -187,7 +187,6 @@ static void fixup_xauth_hash(struct ike_sa *ike,
  */
 static bool isakmp_add_attr(struct pbs_out *strattr,
 			    const int attr_type,
-			    const ip_address ia,
 			    const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -207,7 +206,13 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
 	switch (attr_type) {
 	case IKEv1_INTERNAL_IP4_ADDRESS:
 	{
-		if (!pbs_out_address(&attrval, ia, "IP_addr")) {
+		/* YES, REMOTE, as leased */
+		if (!PEXPECT(ike->sa.logger, c->spd->remote->client.is_set)) {
+			return false;
+		}
+		if (!pbs_out_address(&attrval,
+				     selector_prefix(c->spd->remote->client),
+				     "IP_addr")) {
 			/* already logged */
 			return false;
 		}
@@ -216,6 +221,9 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
 
 	case IKEv1_INTERNAL_IP4_SUBNET:
 	{
+		if (!PEXPECT(ike->sa.logger, c->spd->local->client.is_set)) {
+			return false;
+		}
 		ip_address addr = selector_prefix(c->spd->local->client);
 		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
 			/* already logged */
@@ -231,6 +239,9 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
 
 	case IKEv1_INTERNAL_IP4_NETMASK:
 	{
+		if (!PEXPECT(ike->sa.logger, c->spd->local->client.is_set)) {
+			return false;
+		}
 		ip_address mask = selector_prefix_mask(c->spd->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
 			/* already logged */
@@ -354,16 +365,10 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
 
-enum internal_address_from {
-	INTERNAL_ADDRESS_FROM_LEASE,
-	INTERNAL_ADDRESS_FROM_REMOTE_SPD,
-};
-
 static bool emit_modecfg(struct ike_sa *ike,
 			 uint16_t modecfg_type,
 			 lset_t attrs,
 			 struct pbs_out *rbody,
-			 enum internal_address_from internal_address_from,
 			 uint16_t modecfg_id)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -387,45 +392,6 @@ static bool emit_modecfg(struct ike_sa *ike,
 		return false;
 
 	/*
-	 * Get an inside IP address,
-	 *
-	 * IKEv1_INTERNAL_IP4_ADDRESS and DNS if any for a connection
-	 *
-	 * XXX: like for ikev2-hostpair-02, could this be re-assigning
-	 * the same address?
-	 *
-	 * XXX: IKEv1 only implements IPv4 leases.
-	 */
-
-	ip_address internal_address;
-	const char *address_from;
-	if (internal_address_from == INTERNAL_ADDRESS_FROM_LEASE &&
-	    c->pool[IPv4_INDEX] != NULL) {
-
-		err_t e = lease_that_address(c, ike->sa.st_xauth_username,
-					     &ipv4_info, ike->sa.logger);
-		if (e != NULL) {
-			llog(RC_LOG, ike->sa.logger, "lease_an_address failure %s", e);
-			return false;
-		}
-
-		ldbg(c->logger, "another hack to get the SPD in sync");
-		c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
-		spd_db_rehash_remote_client(c->spd);
-
-		internal_address = selector_prefix(c->spd->remote->client);
-		address_from = "lease";
-
-	} else {
-		pexpect(!selector_is_unset(&c->spd->remote->client));
-		internal_address = selector_prefix(c->spd->remote->client);
-		address_from = "remote SPD";
-	}
-	address_buf iab;
-	ldbg(ike->sa.logger, "internal address %s from %s",
-	     str_address(&internal_address, &iab), address_from);
-
-	/*
 	 * If there's a DNS name, add that as a bonus.
 	 *
 	 * XXX: could this, with misconfiguration, cause the client to
@@ -441,8 +407,7 @@ static bool emit_modecfg(struct ike_sa *ike,
 	int attr_type = 0;
 	while (attrs != LEMPTY) {
 		if (attrs & 1) {
-			if (!isakmp_add_attr(&attr_pbs, attr_type,
-					     internal_address, ike))
+			if (!isakmp_add_attr(&attr_pbs, attr_type, ike))
 				return false;
 		}
 		attr_type++;
@@ -464,13 +429,13 @@ static bool emit_modecfg(struct ike_sa *ike,
 	 * XXX: potentially yes.
 	 */
 	if (c->config->modecfg.domains != NULL) {
-		isakmp_add_attr(&attr_pbs, MODECFG_DOMAIN, unset_address/*unused*/, ike);
+		isakmp_add_attr(&attr_pbs, MODECFG_DOMAIN, ike);
 	} else {
 		dbg("we are not sending a domain");
 	}
 
 	if (c->config->modecfg.banner != NULL) {
-		isakmp_add_attr(&attr_pbs, MODECFG_BANNER, unset_address/*unused*/, ike);
+		isakmp_add_attr(&attr_pbs, MODECFG_BANNER, ike);
 	} else {
 		dbg("We are not sending a banner");
 	}
@@ -480,7 +445,7 @@ static bool emit_modecfg(struct ike_sa *ike,
 		dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 	} else {
 		dbg("We are sending our subnet as CISCO_SPLIT_INC");
-		isakmp_add_attr(&attr_pbs, CISCO_SPLIT_INC, unset_address/*unused*/, ike);
+		isakmp_add_attr(&attr_pbs, CISCO_SPLIT_INC, ike);
 	}
 
 	if (!close_v1_message(&attr_pbs, ike))
@@ -491,9 +456,51 @@ static bool emit_modecfg(struct ike_sa *ike,
 	return true;
 }
 
+/*
+ * Get an inside IP address,
+ *
+ * IKEv1_INTERNAL_IP4_ADDRESS and DNS if any for a connection
+ *
+ * XXX: like for ikev2-hostpair-02, could this be re-assigning the
+ * same address?
+ *
+ * XXX: IKEv1 only implements IPv4 leases.
+ */
+
+static bool get_internal_address(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	const char *from;
+	if (c->pool[IPv4_INDEX] != NULL) {
+		/* our IKEv1 doesn't do IPv6 */
+		err_t e = lease_that_address(c, ike->sa.st_xauth_username,
+					     &ipv4_info, ike->sa.logger);
+		if (e != NULL) {
+			llog(RC_LOG, ike->sa.logger, "lease_an_address failure %s", e);
+			return false;
+		}
+
+		ldbg(c->logger, "another hack to get the SPD in sync");
+		c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
+		spd_db_rehash_remote_client(c->spd);
+
+		from = "lease";
+	} else if (PEXPECT(ike->sa.logger, c->spd->remote->client.is_set)) {
+		from = "remote SPD";
+	} else {
+		return false;
+	}
+	selector_buf iab;
+	ldbg(ike->sa.logger, "internal address %s from %s",
+	     str_selector(&c->spd->remote->client, &iab),
+	     from);
+
+	return true;
+}
+
 static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
-					     lset_t set_items,
-					     enum internal_address_from internal_address_from)
+					     lset_t set_items)
 {
 	struct fragment_pbs_out packet;
 	if (!open_fragment_pbs_out("Modecfg(setI1)", &packet, ike->sa.logger)) {
@@ -522,8 +529,7 @@ static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
 		return false;
 
 	/* XXX This does not include IPv6 at this point */
-	if (!emit_modecfg(ike, ISAKMP_CFG_SET, set_items, &rbody,
-			  internal_address_from, 0 /* XXX ID */)) {
+	if (!emit_modecfg(ike, ISAKMP_CFG_SET, set_items, &rbody, 0 /* XXX ID */)) {
 		return false;
 	}
 
@@ -545,8 +551,7 @@ static bool record_n_send_v1_modecfg_request(struct ike_sa *ike,
 static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 						     unsigned cfg_message,
 						     lset_t attrs,
-						     struct msg_digest *md,
-						     enum internal_address_from internal_address_from)
+						     struct msg_digest *md)
 {
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 
@@ -555,8 +560,7 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 				       reply_buffer, sizeof(reply_buffer),
 				       &rbody, ike->sa.logger);
 
-	if (!emit_modecfg(ike, cfg_message, attrs, &rbody,
-			  internal_address_from, ma->isama_identifier)) {
+	if (!emit_modecfg(ike, cfg_message, attrs, &rbody, ma->isama_identifier)) {
 		return false;
 	}
 
@@ -603,11 +607,15 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 	 * ISAKMP responder, get client's address from a lease when
 	 * available.
 	 */
+
+	if (!get_internal_address(ike)) {
+		return STF_FATAL;
+	}
+
 	if (!record_n_send_v1_modecfg_request(ike,
 					      (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) |
 					       LELEM(IKEv1_INTERNAL_IP4_SUBNET) |
-					       LELEM(IKEv1_INTERNAL_IP4_DNS)),
-					      INTERNAL_ADDRESS_FROM_LEASE)) {
+					       LELEM(IKEv1_INTERNAL_IP4_DNS)))) {
 		return STF_FATAL;
 	}
 
@@ -1570,8 +1578,12 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 		 * when possible.
 		 */
 
-		if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_REPLY, resp, md,
-							      INTERNAL_ADDRESS_FROM_LEASE)) {
+		if (!get_internal_address(ike)) {
+			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
+			return STF_FATAL;
+		}
+
+		if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_REPLY, resp, md)) {
 			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 			return STF_FATAL;
 		}
@@ -1713,8 +1725,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	 * ISAKMP initiator, propose remote SPD as address.
 	 */
 
-	if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_ACK, resp, md,
-						      INTERNAL_ADDRESS_FROM_REMOTE_SPD)) {
+	if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_ACK, resp, md)) {
 		/* something to send back */
 		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 		return STF_FATAL;
