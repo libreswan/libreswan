@@ -494,7 +494,8 @@ static bool get_internal_address(struct ike_sa *ike)
 }
 
 static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
-				      unsigned mode_cfg_type)
+				      unsigned mode_cfg_type,
+				      lset_t attrs)
 {
 	struct fragment_pbs_out packet;
 	if (!open_fragment_pbs_out("MODE_CFG", &packet, ike->sa.logger)) {
@@ -552,6 +553,11 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 	};
 
 	switch (mode_cfg_type) {
+	case ISAKMP_CFG_REPLY:
+		if (!emit_mode_cfg_attrs(&attr_pbs, ike, attrs)) {
+			return false;
+		}
+		break;
 	case ISAKMP_CFG_SET:
 		FOR_EACH_ELEMENT(attr, default_attrs) {
 			if (!emit_mode_cfg_attr(&attr_pbs, *attr, ike)) {
@@ -681,7 +687,7 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 		return STF_FATAL;
 	}
 
-	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_SET)) {
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_SET, LEMPTY)) {
 		return STF_FATAL;
 	}
 
@@ -822,7 +828,7 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 						 "IKE sending mode cfg request", HERE);
 	change_v1_state(&ike->sa, STATE_MODE_CFG_I1);
 
-	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REQUEST)) {
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REQUEST, LEMPTY)) {
 		return false;
 	}
 
@@ -1582,13 +1588,15 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 			return STF_FATAL;
 		}
 
-		if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_REPLY, resp, md)) {
+		ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+		if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REPLY, resp)) {
 			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 			return STF_FATAL;
 		}
 
 		/* they asked us, we responded, msgid is done */
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+		zero(&ike->sa.st_v1_phase_2_iv);
 		break;
 
 	default:
