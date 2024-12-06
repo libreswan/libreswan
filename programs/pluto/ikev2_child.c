@@ -279,7 +279,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
-	if (!send_use_transport && cc->config->child_sa.iptfs &&
+	if (!send_use_transport && cc->config->child_sa.iptfs.enabled &&
 	    !emit_v2N(v2N_USE_AGGFRAG, pbs)) {
 		return false;
 	}
@@ -368,7 +368,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	bool expecting_iptfs = cc->config->child_sa.iptfs;
+	bool expecting_iptfs = cc->config->child_sa.iptfs.enabled;
 	if (request_md->pd[PD_v2N_USE_AGGFRAG] != NULL) {
 		if (!expecting_iptfs) {
 			/*
@@ -823,7 +823,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
  	}
 
 	if (md->pd[PD_v2N_USE_AGGFRAG] != NULL) {
-		if (!c->config->child_sa.iptfs) {
+		if (!c->config->child_sa.iptfs.enabled) {
 			/*
 			 * This means we did not send
 			 * v2N_USE_AGGFRAG, however responder is

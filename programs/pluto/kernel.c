@@ -1429,27 +1429,28 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		}
 
 		/* IPTFS kernel options */
-		if (c->config->child_sa.iptfs && child->sa.st_seen_and_use_iptfs) {
-			if (c->config->child_sa.iptfs_pkt_size != 0) {
+		if (c->config->child_sa.iptfs.enabled && child->sa.st_seen_and_use_iptfs) {
+			if (c->config->child_sa.iptfs.packet_size != 0) {
 				ldbg(child->sa.logger, "kernel: Enabling IPTFS with %ju byte packet size",
-					c->config->child_sa.iptfs_pkt_size);
+					c->config->child_sa.iptfs.packet_size);
 			} else {
 				ldbg(child->sa.logger, "kernel: Enabling IPTFS with PMTU packet size");
 			}
 			said_next->iptfs = true;
-			said_next->iptfs_fragmentation = c->config->child_sa.iptfs_fragmentation;
-			said_next->iptfs_pkt_size = c->config->child_sa.iptfs_pkt_size;
-			said_next->iptfs_max_qsize = c->config->child_sa.iptfs_max_qsize;
-			said_next->iptfs_drop_time = milliseconds_from_deltatime(c->config->child_sa.iptfs_drop_time);
-			said_next->iptfs_init_delay = milliseconds_from_deltatime(c->config->child_sa.iptfs_init_delay);
-			said_next->iptfs_reord_win = c->config->child_sa.iptfs_reord_win;
+			said_next->iptfs_fragmentation = c->config->child_sa.iptfs.fragmentation;
+			said_next->iptfs_pkt_size = c->config->child_sa.iptfs.packet_size;
+			said_next->iptfs_max_qsize = c->config->child_sa.iptfs.max_queue_size;
+			said_next->iptfs_drop_time = milliseconds_from_deltatime(c->config->child_sa.iptfs.drop_time);
+			said_next->iptfs_init_delay = milliseconds_from_deltatime(c->config->child_sa.iptfs.init_delay);
+			said_next->iptfs_reord_win = c->config->child_sa.iptfs.reorder_window;
 			ldbg(child->sa.logger, "kernel: IPTFS with fragmentation=%s",
-			     bool_str(c->config->child_sa.iptfs_fragmentation));
-			ldbg(child->sa.logger, "kernel: IPTFS max_qsize=%ju, drop_time=%"PRIu32", init_delay=%"PRIu32", reord_win=%ju",
-			     c->config->child_sa.iptfs_max_qsize,
+			     bool_str(c->config->child_sa.iptfs.fragmentation));
+			ldbg(child->sa.logger,
+			     "kernel: IPTFS max_qsize=%"PRIu32", drop_time=%"PRIu32", init_delay=%"PRIu32", reord_win=%"PRIu32,
+			     said_next->iptfs_max_qsize,
 			     said_next->iptfs_drop_time,
 			     said_next->iptfs_init_delay,
-			     c->config->child_sa.iptfs_reord_win);
+			     said_next->iptfs_reord_win);
 		}
 
 		if (c->config->decap_dscp && direction == DIRECTION_INBOUND) {

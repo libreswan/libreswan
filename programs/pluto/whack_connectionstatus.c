@@ -657,15 +657,15 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
-		jam(buf, " iptfs: %s;", bool_str(c->config->child_sa.iptfs));
-		jam(buf, " fragmentation: %s;", bool_str(c->config->child_sa.iptfs_fragmentation));
-		jam(buf, " pkt-size: %ju;", c->config->child_sa.iptfs_pkt_size);
-		jam(buf, " max-queue-size: %ju", c->config->child_sa.iptfs_max_qsize);
+		jam(buf, " iptfs: %s;", bool_str(c->config->child_sa.iptfs.enabled));
+		jam(buf, " fragmentation: %s;", bool_str(c->config->child_sa.iptfs.fragmentation));
+		jam(buf, " pkt-size: %ju;", c->config->child_sa.iptfs.packet_size);
+		jam(buf, " max-queue-size: %ju", c->config->child_sa.iptfs.max_queue_size);
 		jam(buf, " drop-time: ");
-		jam_deltatime(buf, c->config->child_sa.iptfs_drop_time);
+		jam_deltatime(buf, c->config->child_sa.iptfs.drop_time);
 		jam_string(buf, " init-delay: ");
-		jam_deltatime(buf, c->config->child_sa.iptfs_init_delay);
-		jam(buf, " reorder-window: %ju", c->config->child_sa.iptfs_reord_win);
+		jam_deltatime(buf, c->config->child_sa.iptfs.init_delay);
+		jam(buf, " reorder-window: %ju", c->config->child_sa.iptfs.reorder_window);
 	}
 
 	SHOW_JAMBUF(s, buf) {

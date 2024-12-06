@@ -516,10 +516,10 @@ enum option_enums {
 
 	CD_IPTFS,
 	CD_IPTFS_FRAGMENTATION,
-	CD_IPTFS_PKT_SIZE,
-	CD_IPTFS_MAX_QSIZE,
+	CD_IPTFS_PACKET_SIZE,
+	CD_IPTFS_MAX_QUEUE_SIZE,
 	CD_IPTFS_INIT_DELAY,
-	CD_IPTFS_REORD_WIN,
+	CD_IPTFS_REORDER_WINDOW,
 	CD_IPTFS_DROP_TIME,
 
 	CD_RETRANSMIT_TIMEOUT,
@@ -839,10 +839,10 @@ const struct option long_opts[] = {
 
 	{ "iptfs", optional_argument, NULL, CD_IPTFS, },
 	{ "iptfs-fragmentation", optional_argument, NULL, CD_IPTFS_FRAGMENTATION, },
-	{ "iptfs-packet-size", required_argument, NULL, CD_IPTFS_PKT_SIZE },
-	{ "iptfs-max-queue-size", required_argument, NULL, CD_IPTFS_MAX_QSIZE },
+	{ "iptfs-packet-size", required_argument, NULL, CD_IPTFS_PACKET_SIZE },
+	{ "iptfs-max-queue-size", required_argument, NULL, CD_IPTFS_MAX_QUEUE_SIZE },
 	{ "iptfs-init-delay", required_argument, NULL, CD_IPTFS_INIT_DELAY },
-	{ "iptfs-reorder-window", required_argument, NULL, CD_IPTFS_REORD_WIN },
+	{ "iptfs-reorder-window", required_argument, NULL, CD_IPTFS_REORDER_WINDOW },
 	{ "iptfs-drop-time", required_argument, NULL, CD_IPTFS_DROP_TIME },
 
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
@@ -1793,11 +1793,11 @@ int main(int argc, char **argv)
 		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
 			msg.iptfs_fragmentation = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
-		case CD_IPTFS_PKT_SIZE:	/* --iptfs-packet-size */
-			msg.iptfs_pkt_size = optarg_uintmax();
+		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
+			msg.iptfs_packet_size = optarg_uintmax();
 			continue;
-		case CD_IPTFS_MAX_QSIZE: /* --iptfs-max-queue-size */
-			msg.iptfs_max_qsize = optarg_uintmax();
+		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
+			msg.iptfs_max_queue_size = optarg_uintmax();
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
 			msg.iptfs_drop_time = optarg_deltatime(TIMESCALE_SECONDS);
@@ -1805,8 +1805,8 @@ int main(int argc, char **argv)
 		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
 			msg.iptfs_init_delay = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
-		case CD_IPTFS_REORD_WIN: /* --iptfs-reorder-window */
-			msg.iptfs_reord_win = optarg_uintmax();
+		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
+			msg.iptfs_reorder_window = optarg_uintmax();
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
