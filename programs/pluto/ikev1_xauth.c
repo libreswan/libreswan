@@ -580,6 +580,30 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 			}
 		}
 		break;
+	case ISAKMP_CFG_ACK:
+	{
+		/* send back empty entries */
+		int attr_type = 0;
+		while (attrs != LEMPTY) {
+			if (attrs & 1) {
+				struct isakmp_attribute attrh = {
+					.isaat_af_type = attr_type,
+				};
+				if (!pbs_out_struct(&attr_pbs, &isakmp_xauth_attribute_desc,
+						    &attrh, sizeof(attrh), NULL)) {
+					return false;
+				}
+			}
+			attr_type++;
+			attrs >>= 1;
+		}
+		/*
+		 * XXX: should also, possibly send back ACK for
+		 * MODECFG_DOMAIN, MODECFG_BANNER, and CISCO_SPLIT_INC
+		 * but ignore that.
+		 */
+		break;
+	}
 	default:
 		bad_case(mode_cfg_type);
 	}
@@ -655,11 +679,15 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
  * Set MODE_CONFIG data to client.  Pack IP Addresses, DNS, etc... and
  * ship
  *
+ * Caller transitions to STATE_MODE_CFG_RACK ready for ACK.
+ *
  * @param st State Structure
  * @return stf_status
  */
-stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
+stf_status initiate_MODE_CFG_SET(struct ike_sa *ike, struct crypt_mac iv)
 {
+	llog(RC_LOG, ike->sa.logger, "initiating MODE_CFG SET");
+
 	/*
 	 * When this is the first Phase 1.5 exchange, need to generate
 	 * fresh IV and MSGID.
@@ -674,7 +702,6 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 	}
 
 	ike->sa.hidden_variables.st_modecfg_vars_set = true;
-	change_v1_state(&ike->sa, STATE_MODE_CFG_R1);
 
 	/*
 	 * Update the IV ready for the encrypt; it was either
@@ -701,6 +728,7 @@ stf_status modecfg_start_set(struct ike_sa *ike, struct crypt_mac iv)
 		start_retransmits(&ike->sa);
 	}
 
+	change_v1_state(&ike->sa, STATE_MODE_CFG_SERVER_WAITING_FOR_ACK);
 	return STF_OK;
 }
 
@@ -2128,6 +2156,113 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	return STF_OK;
 }
 
+stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
+	lset_t resp = LEMPTY;
+
+	switch (ma->isama_type) {
+
+	case ISAKMP_CFG_SET:
+	{
+		diag_t d = process_mode_cfg_attrs(ike, attrs, &resp);
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
+		}
+		break;
+	}
+
+	default:
+	{
+		name_buf mb;
+		llog(RC_LOG, ike->sa.logger,
+		     "expecting ISAKMP_CFG_SET, got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		return STF_IGNORE;
+	}
+
+	}
+
+	/*
+	 * From RFC draft:
+	 *
+	 *   The Acknowledge code MUST return the zero length
+	 *   attributes that it accepted.
+	 */
+
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_ACK, resp)) {
+		return STF_FATAL;
+	}
+
+	/*
+	 * We are done with this exchange, clear things so that Phase
+	 * 2 can start, and the state machine doesn't bumble its way
+	 * into a Phase 1.5 message.
+	 */
+	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+	zero(&ike->sa.st_v1_phase_2_iv);
+
+	if (resp != LEMPTY) {
+		ike->sa.hidden_variables.st_modecfg_vars_set = true;
+	}
+
+	return STF_OK;
+}
+
+stf_status modecfg_server_inACK(struct state *ike_sa, struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+
+	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
+
+	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
+	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
+
+	switch (ma->isama_type) {
+
+	case ISAKMP_CFG_ACK:
+		break;
+
+	default:
+	{
+		name_buf mb;
+		llog(RC_LOG, ike->sa.logger,
+		     "expecting ISAKMP_CFG_ACK, got %s instead; message ignored",
+		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		return STF_IGNORE;
+	}
+
+	}
+
+	llog(RC_LOG, ike->sa.logger, "processed MODE_CFG ACK");
+
+	/*
+	 * We are done with this exchange, clear things so that Phase
+	 * 2 can start, and the state machine doesn't bumble its way
+	 * into a Phase 1.5 message.
+	 */
+	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
+	zero(&ike->sa.st_v1_phase_2_iv);
+
+	return STF_OK;
+}
+
 /** XAUTH client code - response to challenge.  May open filehandle to console
  * in order to prompt user for password
  *
@@ -2137,6 +2272,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
  * @param ap_id
  * @return stf_status
  */
+
 static stf_status xauth_client_resp(struct ike_sa *ike,
 				    struct msg_digest *md,
 				    lset_t xauth_resp,

@@ -938,8 +938,18 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
+		/*
+		 * Based on the MSGID, is there already an IKE SA
+		 * processing this Phase 1.5 exchange?
+		 */
 		ike = find_v1_phase15_isakmp_sa(&md->hdr.isa_ike_spis, md->hdr.isa_msgid);
 		if (ike != NULL) {
+			/*
+			 * XXX: this makes no sense, an IKE SA
+			 * processing a Phase 1.5 exchange should have
+			 * transitioned to one of the Phase 1.5
+			 * states.
+			 */
 			if (ike->sa.st_connection->local->host.config->xauth.server &&
 			    IS_V1_PHASE1(ike->sa.st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
@@ -976,16 +986,6 @@ void process_v1_packet(struct msg_digest *md)
 			return;
 		}
 
-		const struct spd_end *this = ike->sa.st_connection->spd->local;
-		esb_buf b;
-		ldbg(ike->sa.logger,
-		     " processing received isakmp_xchg_type %s; this is a%s%s%s%s",
-		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-		     this->host->config->xauth.server ? " xauthserver" : "",
-		     this->host->config->xauth.client ? " xauthclient" : "",
-		     this->host->config->modecfg.server ? " modecfgserver" : "",
-		     this->host->config->modecfg.client ? " modecfgclient" : "");
-
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(&ike->sa)) {
 			ldbg(ike->sa.logger,
 			     "Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
@@ -1012,7 +1012,26 @@ void process_v1_packet(struct msg_digest *md)
 		 * to complicate further, it is normal to start a new
 		 * msgid when going from one state to another, or when
 		 * restarting the challenge.
+		 *
+		 * XXX: this is happening too early - the packet is
+		 * neither decrypted nor authenticated.  As a result,
+		 * this code has to guess.
+		 *
+		 * Instead, post decryption, the MODE_CFG payload type
+		 * should be checked and acted on accordingly.
 		 */
+
+		const struct spd_end *this = ike->sa.st_connection->spd->local;
+		esb_buf b;
+		pdbg(ike->sa.logger,
+		     " %s processing received isakmp_xchg_type %s; xauthserver=%s xauthclient=%s modecfgserver=%s modecfgclient=%s modecfgpull=%s",
+		     ike->sa.st_state->name,
+		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+		     bool_str(this->host->config->xauth.server),
+		     bool_str(this->host->config->xauth.client),
+		     bool_str(this->host->config->modecfg.server),
+		     bool_str(this->host->config->modecfg.client),
+		     bool_str(ike->sa.st_connection->config->modecfg.pull));
 
 		const struct finite_state *old_state;
 		if (this->host->config->xauth.server &&
@@ -1044,6 +1063,14 @@ void process_v1_packet(struct msg_digest *md)
 			old_state = finite_states[STATE_MODE_CFG_R0];
 			ldbg(ike->sa.logger,
 			     "switch from_state %s to %s this is modecfgserver and IS_PHASE1() is TRUE",
+			     ike->sa.st_state->name, old_state->name);
+		} else if (this->host->config->modecfg.client &&
+			   ike->sa.st_connection->config->modecfg.pull == false && /* i.e.passive */
+			   ike->sa.hidden_variables.st_modecfg_vars_set == false &&
+			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
+			old_state = finite_states[STATE_MODE_CFG_CLIENT_RESPONDING];
+			ldbg(ike->sa.logger,
+			     "switch from_state %s to %s this is modecfgclient=yes and modecfgpull=no and IS_PHASE1() is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else if (this->host->config->modecfg.client &&
 			   IS_V1_PHASE1(ike->sa.st_state->kind)) {
@@ -1285,7 +1312,9 @@ void process_v1_packet(struct msg_digest *md)
 	 * possibly Oakley Auth type.
 	 */
 	const struct state_v1_microcode *smc = from_state->v1.transitions;
-	passert(smc != NULL);
+	if (PBAD(logger, smc == NULL)) {
+		return;
+	}
 
 	/*
 	 * Find the state's the state transitions that has matching
@@ -2481,9 +2510,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !st->st_connection->config->modecfg.pull) {
-			/* note IS_V1_ISAKMP_SA_ESTABLISHED() above */
-			struct ike_sa *ike = pexpect_ike_sa(st);
-			llog(RC_LOG, ike->sa.logger, "Sending MODE CONFIG set");
 			/*
 			 * ??? we ignore the result of modecfg.
 			 *
@@ -2493,11 +2519,14 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 *
 			 * If this is triggered by the final Main or
 			 * Aggressive Mode message .v1_decrypt_iv is
-			 * .st_v1_phase_1_iv.  Else it is from chaining
-			 * the XAUTH exchange.
+			 * .st_v1_phase_1_iv.  Else it is from the
+			 * last crypto operation from the XAUTH
+			 * exchange.
 			 */
+			struct ike_sa *ike = pexpect_ike_sa(st); /* since IS_V1_ISAKMP_SA_ESTABLISHED() */
 			PASSERT(ike->sa.logger, md != NULL);
-			modecfg_start_set(ike, md->v1_decrypt_iv);
+			initiate_MODE_CFG_SET(ike, md->v1_decrypt_iv);
+			PEXPECT(ike->sa.logger, ike->sa.st_state->kind == STATE_MODE_CFG_SERVER_WAITING_FOR_ACK);
 			break;
 		}
 

@@ -538,6 +538,11 @@ enum state_kind {
 	/* Xauth states */
 	STATE_XAUTH_R0,         /* server state has sent request, awaiting reply */
 	STATE_XAUTH_R1,         /* server state has sent success/fail, awaiting reply */
+	STATE_MODE_CFG_SERVER_WAITING_FOR_ACK,	/* server initiated
+						 * SET, waiting for
+						 * ACK */
+	STATE_MODE_CFG_CLIENT_RESPONDING,	/* non-pullclient got
+						 * a likely request */
 	STATE_MODE_CFG_R0,      /* these states are used on the responder */
 	STATE_MODE_CFG_R1,
 	STATE_MODE_CFG_R2,
@@ -643,7 +648,8 @@ extern const struct enum_names perspective_names;
 				     LELEM(STATE_AGGR_I2) | \
 				     LELEM(STATE_XAUTH_I0) |	\
 				     LELEM(STATE_XAUTH_I1) |	\
-				     LELEM(STATE_MODE_CFG_I1))
+				     LELEM(STATE_MODE_CFG_I1) | \
+				     LELEM(STATE_MODE_CFG_CLIENT_RESPONDING))
 
 #define IS_V1_PHASE1(ST) (STATE_MAIN_R0 <= (ST) && (ST) <= STATE_AGGR_R2)
 
@@ -670,10 +676,12 @@ extern const struct enum_names perspective_names;
 					  LELEM(STATE_AGGR_R2) | \
 					  LELEM(STATE_XAUTH_R0) |	\
 					  LELEM(STATE_XAUTH_R1) |	\
+					  LELEM(STATE_MODE_CFG_SERVER_WAITING_FOR_ACK) |	\
 					  LELEM(STATE_MODE_CFG_R0) |	\
 					  LELEM(STATE_MODE_CFG_R1) |	\
 					  LELEM(STATE_MODE_CFG_R2) |	\
 					  LELEM(STATE_MODE_CFG_I1) |	\
+					  LELEM(STATE_MODE_CFG_CLIENT_RESPONDING) |	\
 					  LELEM(STATE_XAUTH_I0) |	\
 					  LELEM(STATE_XAUTH_I1))
 
