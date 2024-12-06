@@ -85,6 +85,10 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 					 struct msg_digest *md,
 					 uint16_t ap_id);
 
+static diag_t process_mode_cfg_attrs(struct ike_sa *ike,
+				     struct pbs_in *attrs,
+				     lset_t *received);
+
 /* CISCO_SPLIT_INC example payload
  *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
  *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
@@ -1852,6 +1856,182 @@ static void append_cisco_split_spd(struct connection *c,
  * @return stf_status
  */
 
+diag_t process_mode_cfg_attrs(struct ike_sa *ike,
+			      struct pbs_in *attrs,
+			      lset_t *received)
+{
+	struct connection *c = ike->sa.st_connection;
+
+	lset_t resp = LEMPTY;
+	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
+		struct isakmp_attribute attr;
+		struct pbs_in strattr;
+
+		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
+					 &attr, sizeof(attr), &strattr);
+		if (d != NULL) {
+			return d;
+		}
+
+		switch (attr.isaat_af_type) {
+		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+		{
+			struct connection *c = ike->sa.st_connection;
+
+			ip_address a;
+			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+			if (d != NULL) {
+				return d;
+			}
+			set_child_has_client(c, local, true);
+			const struct ip_info *afi = address_info(a);
+			c->local->child.lease[afi->ip_index] = a;
+			update_end_selector(c, c->local->config->index,
+					    selector_from_address(a),
+					    "^*(&^(* IKEv1 doing something with the address it received");
+
+			subnet_buf caddr;
+			str_selector_subnet(&c->spd->local->client, &caddr);
+			llog(RC_LOG, ike->sa.logger,
+			     "Received IPv4 address: %s",
+			     caddr.buf);
+
+			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			break;
+		}
+
+		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+		{
+			ip_address a;
+			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+			if (d != NULL) {
+				return d;
+			}
+
+			address_buf b;
+			dbg("Received IP4 NETMASK %s", str_address(&a, &b));
+			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			break;
+		}
+
+		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+		{
+			ip_address a;
+			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+			if (d != NULL) {
+				return d;
+			}
+
+			address_buf a_buf;
+			const char *a_str = str_address(&a, &a_buf);
+			bool ignore = c->config->ignore_peer_dns;
+			llog(RC_LOG, ike->sa.logger, "Received %sDNS server %s",
+			     ignore ? "and ignored " : "",
+			     a_str);
+
+			append_st_cfg_dns(&ike->sa, a_str);
+
+			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			break;
+		}
+
+		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+			append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
+								       false/*don't-ignore*/,
+								       ike->sa.logger));
+			break;
+
+		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+			ike->sa.st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
+								     false/*don't-ignore*/,
+								     ike->sa.logger);
+			break;
+
+		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+		{
+			struct connection *c = ike->sa.st_connection;
+
+			/* make sure that other side isn't an endpoint */
+			if (!c->remote->child.has_client) {
+				passert(c->child.spds.len == 1);
+				set_child_has_client(c, remote, true);
+				update_first_selector(c, remote, ipv4_info.selector.all);
+				spd_db_rehash_remote_client(c->spd);
+			}
+
+			while (pbs_left(&strattr) > 0) {
+				struct CISCO_split_item i;
+
+				diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
+							 &i, sizeof(i), NULL);
+				if (d != NULL) {
+					llog(RC_LOG, ike->sa.logger,
+					     "ignoring malformed CISCO_SPLIT_INC payload: %s",
+					     str_diag(d));
+					pfree_diag(&d);
+					break;
+				}
+
+				ip_address base = address_from_in_addr(&i.cs_addr);
+				ip_address mask = address_from_in_addr(&i.cs_mask);
+				ip_subnet wire_subnet;
+				err_t ugh = address_mask_to_subnet(base, mask, &wire_subnet);
+				if (ugh != NULL) {
+					llog(RC_LOG, ike->sa.logger,
+					     "ignoring malformed CISCO_SPLIT_INC subnet: %s",
+					     ugh);
+					break;
+				}
+
+#ifdef USE_CISCO_SPLIT
+				ip_selector wire_selector = selector_from_subnet(wire_subnet);
+				bool already_split = false;
+				FOR_EACH_ITEM(spd, &c->child.spds) {
+					if (selector_range_eq_selector_range(wire_selector, spd->remote->client)) {
+						/* duplicate entry: ignore */
+						subnet_buf pretty_subnet;
+						llog(RC_LOG, ike->sa.logger,
+						     "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
+						     str_subnet(&wire_subnet, &pretty_subnet));
+						already_split = true;
+						break;
+					}
+				}
+
+				if (!already_split) {
+					append_cisco_split_spd(c, wire_selector);
+				}
+#else
+				subnet_buf pretty_subnet;
+				llog(RC_LOG, ike->sa.logger,
+				     "received and ignored CISCO_SPLIT_INC subnet %s",
+				     str_subnet(&wire_subnet, &pretty_subnet));
+#endif
+			}
+
+			/*
+			 * ??? this won't work because CISCO_SPLIT_INC is way bigger than LELEM_ROOF
+			 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			 */
+			break;
+		}
+
+		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
+			llog(RC_LOG, ike->sa.logger, "received and ignored obsoleted Cisco NetBEUI NS info");
+			break;
+
+		default:
+			log_bad_attr("modecfg (CISCO_SPLIT_INC)", &modecfg_attr_names, attr.isaat_af_type);
+			break;
+
+		}
+	}
+
+	*received = resp;
+	return NULL;
+}
+
 stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
@@ -1867,8 +2047,6 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	ikev1_init_pbs_out_from_md_hdr(md, /*encrypt*/true, &reply_stream,
 				       reply_buffer, sizeof(reply_buffer),
 				       &unused_rbody, ike->sa.logger);
-
-	struct connection *c = ike->sa.st_connection;
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -1920,188 +2098,15 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 		break;
 
 	case ISAKMP_CFG_REPLY:
-		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
-			struct isakmp_attribute attr;
-			struct pbs_in strattr;
-
-			diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
-						 &attr, sizeof(attr), &strattr);
-			if (d != NULL) {
-				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-				pfree_diag(&d);
-				/* reject malformed */
-				return STF_FAIL_v1N;
-			}
-
-			switch (attr.isaat_af_type) {
-			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			{
-				struct connection *c = ike->sa.st_connection;
-
-				ip_address a;
-				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
-				if (d != NULL) {
-					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-					pfree_diag(&d);
-					return STF_FATAL;
-				}
-				set_child_has_client(c, local, true);
-				const struct ip_info *afi = address_info(a);
-				c->local->child.lease[afi->ip_index] = a;
-				update_end_selector(c, c->local->config->index,
-						    selector_from_address(a),
-						    "^*(&^(* IKEv1 doing something with the address it received");
-
-				subnet_buf caddr;
-				str_selector_subnet(&c->spd->local->client, &caddr);
-				llog(RC_LOG, ike->sa.logger,
-				     "Received IPv4 address: %s",
-				     caddr.buf);
-
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-			}
-
-			case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			{
-				ip_address a;
-				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
-				if (d != NULL) {
-					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-					pfree_diag(&d);
-					return STF_FATAL;
-				}
-
-				address_buf b;
-				dbg("Received IP4 NETMASK %s", str_address(&a, &b));
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-			}
-
-			case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			{
-				ip_address a;
-				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
-				if (d != NULL) {
-					llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-					pfree_diag(&d);
-					return STF_FATAL;
-				}
-
-				address_buf a_buf;
-				const char *a_str = str_address(&a, &a_buf);
-				bool ignore = c->config->ignore_peer_dns;
-				llog(RC_LOG, ike->sa.logger, "Received %sDNS server %s",
-				     ignore ? "and ignored " : "",
-				     a_str);
-
-				append_st_cfg_dns(&ike->sa, a_str);
-
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-			}
-
-			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
-			{
-				append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
-									       false/*don't-ignore*/,
-									       ike->sa.logger));
-				break;
-			}
-
-			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
-			{
-				ike->sa.st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
-									 false/*don't-ignore*/,
-									 ike->sa.logger);
-				break;
-			}
-
-			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-			{
-				struct connection *c = ike->sa.st_connection;
-
-				/* make sure that other side isn't an endpoint */
-				if (!c->remote->child.has_client) {
-					passert(c->child.spds.len == 1);
-					set_child_has_client(c, remote, true);
-					update_first_selector(c, remote, ipv4_info.selector.all);
-					spd_db_rehash_remote_client(c->spd);
-				}
-
-				while (pbs_left(&strattr) > 0) {
-					struct CISCO_split_item i;
-
-					diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
-								 &i, sizeof(i), NULL);
-					if (d != NULL) {
-						llog(RC_LOG, ike->sa.logger,
-						     "ignoring malformed CISCO_SPLIT_INC payload: %s",
-						     str_diag(d));
-						pfree_diag(&d);
-						break;
-					}
-
-					ip_address base = address_from_in_addr(&i.cs_addr);
-					ip_address mask = address_from_in_addr(&i.cs_mask);
-					ip_subnet wire_subnet;
-					err_t ugh = address_mask_to_subnet(base, mask, &wire_subnet);
-					if (ugh != NULL) {
-						llog(RC_LOG, ike->sa.logger,
-						     "ignoring malformed CISCO_SPLIT_INC subnet: %s",
-						     ugh);
-						break;
-					}
-
-#ifdef USE_CISCO_SPLIT
-					ip_selector wire_selector = selector_from_subnet(wire_subnet);
-					bool already_split = false;
-					FOR_EACH_ITEM(spd, &c->child.spds) {
-						if (selector_range_eq_selector_range(wire_selector, spd->remote->client)) {
-							/* duplicate entry: ignore */
-							subnet_buf pretty_subnet;
-							llog(RC_LOG, ike->sa.logger,
-							     "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
-							     str_subnet(&wire_subnet, &pretty_subnet));
-							already_split = true;
-							break;
-						}
-					}
-
-					if (!already_split) {
-						append_cisco_split_spd(c, wire_selector);
-					}
-#else
-					subnet_buf pretty_subnet;
-					llog(RC_LOG, ike->sa.logger,
-					     "received and ignored CISCO_SPLIT_INC subnet %s",
-					     str_subnet(&wire_subnet, &pretty_subnet));
-#endif
-				}
-
-				/*
-				 * ??? this won't work because CISCO_SPLIT_INC is way bigger than LELEM_ROOF
-				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				 */
-				break;
-			}
-
-			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
-			{
-				llog(RC_LOG, ike->sa.logger, "received and ignored obsoleted Cisco NetBEUI NS info");
-				break;
-			}
-
-			default:
-			{
-				log_bad_attr("modecfg (CISCO_SPLIT_INC)", &modecfg_attr_names, attr.isaat_af_type);
-				break;
-			}
-
-			}
+	{
+		diag_t d = process_mode_cfg_attrs(ike, attrs, &resp);
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
 		}
 		break;
+	}
 
 	default:
 	{
