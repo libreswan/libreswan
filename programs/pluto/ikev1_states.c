@@ -112,6 +112,8 @@ S(MODE_CFG_R2, "received ModeCfg Ack", CAT_ESTABLISHED_IKE_SA);
 S(INFO, "received unencrypted Informational Exchange message", CAT_INFORMATIONAL);
 S(INFO_PROTECTED, "received encrypted Informational Exchange message", CAT_INFORMATIONAL);
 S(MODE_CFG_R0, "received ModeCfg request, reply sent", CAT_INFORMATIONAL);
+S(MODE_CFG_CLIENT_RESPONDING, "non-pull client received MODE_CFG", CAT_INFORMATIONAL);
+S(MODE_CFG_SERVER_WAITING_FOR_ACK, "server sent MODE_CFG SET, waiting for MODE_CFG ACK", CAT_INFORMATIONAL);
 
 #undef S
 
@@ -145,6 +147,8 @@ struct finite_state *v1_states[] = {
 	S(INFO),
 	S(INFO_PROTECTED),
 	S(MODE_CFG_R0),
+	S(MODE_CFG_CLIENT_RESPONDING),
+	S(MODE_CFG_SERVER_WAITING_FOR_ACK),
 #undef S
 };
 
@@ -585,6 +589,14 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  /* RFC ????: */
 	  .hash_type = V1_HASH_1, },
 
+	{ STATE_MODE_CFG_SERVER_WAITING_FOR_ACK, STATE_MAIN_R3,
+	  SMF_ALL_AUTH | SMF_ENCRYPTED,
+	  v1P(MODECFG) | v1P(HASH), v1P(VID),
+	  EVENT_v1_REPLACE,
+	  FM(modecfg_server_inACK),
+	  /* RFC ????: */
+	  .hash_type = V1_HASH_1, },
+
 	{ STATE_MODE_CFG_R1, STATE_MODE_CFG_R2,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
 	  v1P(MODECFG) | v1P(HASH), v1P(VID),
@@ -599,6 +611,14 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  EVENT_NULL,
 	  FM(unexpected),
 	  .hash_type = V1_HASH_NONE, },
+
+	{ STATE_MODE_CFG_CLIENT_RESPONDING, STATE_MAIN_I4,
+	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RETRANSMIT_ON_DUPLICATE | SMF_RELEASE_PENDING_P2,
+	  v1P(MODECFG) | v1P(HASH), v1P(VID),
+	  EVENT_v1_REPLACE,
+	  FM(modecfg_client_inSET),
+	  /* RFC ????: */
+	  .hash_type = V1_HASH_1, },
 
 	{ STATE_MODE_CFG_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,

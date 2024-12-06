@@ -1,0 +1,10 @@
+ikev1 Main+ModeCFG:SET+Quick
+
+- server skips XAUTH
+- server initiates MODECFG set
+
+this means the server goes straight from receiving Main's final
+request to initiating a MODECFG set message.
+
+That message needs to use the IV from the most recent decrypt (i.e.,
+the final Phase 1 IV) else the peer can't decrypt it.

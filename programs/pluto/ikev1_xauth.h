@@ -23,20 +23,27 @@ struct msg_digest;	/* so demux.h is not a prerequisite */
 
 extern stf_status xauth_send_request(struct ike_sa *ike);
 
-extern stf_status modecfg_start_set(struct ike_sa *ike,
-				    struct crypt_mac iv);
-
 /* XAUTH state transitions */
 
 extern ikev1_state_transition_fn xauth_inR0;
 extern ikev1_state_transition_fn xauth_inR1;
-extern ikev1_state_transition_fn modecfg_inR0;
-extern ikev1_state_transition_fn modecfg_inR1;
 extern ikev1_state_transition_fn xauth_inI0;
 extern ikev1_state_transition_fn xauth_inI1;
+
+/* MODE_CFG state transitions; R means? */
+
+ikev1_state_transition_fn modecfg_server_inACK;
+ikev1_state_transition_fn modecfg_client_inSET;
+
+extern ikev1_state_transition_fn modecfg_inR0;
+extern ikev1_state_transition_fn modecfg_inR1;
 
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
 
 extern stf_status modecfg_send_request(struct ike_sa *ike);
+
+/* modecfgserver=yes modecfgpull=no */
+
+stf_status initiate_MODE_CFG_SET(struct ike_sa *ike, struct crypt_mac iv);
 
 #endif  /* XAUTH_H */
