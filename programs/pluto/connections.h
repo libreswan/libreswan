@@ -353,10 +353,9 @@ struct config {
 		bool iptfs_fragmentation;
 		uintmax_t iptfs_pkt_size;
 		uintmax_t iptfs_max_qsize;
-		uintmax_t iptfs_drop_time;
-		uintmax_t iptfs_init_delay;
 		uintmax_t iptfs_reord_win;
-
+		deltatime_t iptfs_drop_time;
+		deltatime_t iptfs_init_delay;
 
 		enum encap_proto encap_proto;	/* ESP or AH */
 		enum encap_mode encap_mode;	/* tunnel or transport */

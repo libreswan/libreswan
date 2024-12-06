@@ -462,9 +462,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "iptfs-fragmentation",  kv_conn,  kt_sparse_name,  KNCF_IPTFS_FRAGMENTATION, &yn_option_names, NULL, },
   { "iptfs-packet-size",  kv_conn,  kt_binary,  KNCF_IPTFS_PKT_SIZE, NULL, NULL, },
   { "iptfs-max-queue-size",  kv_conn,  kt_binary,  KNCF_IPTFS_MAX_QUEUE, NULL, NULL, },
-  { "iptfs-init-delay",  kv_conn,  kt_binary,  KNCF_IPTFS_INIT_DELAY, NULL, NULL, },
   { "iptfs-reorder-window",  kv_conn,  kt_binary,  KNCF_IPTFS_REORD_WIN, NULL, NULL, },
-  { "iptfs-drop-time",  kv_conn,  kt_binary,  KNCF_IPTFS_DROP_TIME, NULL, NULL, },
+  { "iptfs-init-delay",  kv_conn,  kt_seconds,  KNCF_IPTFS_INIT_DELAY, NULL, NULL, },
+  { "iptfs-drop-time",  kv_conn,  kt_seconds,  KNCF_IPTFS_DROP_TIME, NULL, NULL, },
 
   { "fake-strongswan",  kv_conn,  kt_bool,  KNCF_VID_STRONGSWAN, NULL, NULL, },
   { "send-vendorid",  kv_conn,  kt_bool,  KNCF_SEND_VENDORID, NULL, NULL, },
