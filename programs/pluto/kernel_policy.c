@@ -290,14 +290,10 @@ bool add_sec_label_kernel_policy(const struct spd *spd,
 		.ah = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
 	};
 
-	bool iptfs = false;
-	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
-	if (child != NULL && child->sa.st_seen_and_use_iptfs)
-		iptfs = true;
-
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_spd(policy, spd, kernel_mode,
-				       iptfs, direction,
+				       c->config->child_sa.iptfs.enabled,
+				       direction,
 				       &nic_offload,
 				       logger, where);
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
