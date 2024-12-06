@@ -661,8 +661,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " fragmentation: %s;", bool_str(c->config->child_sa.iptfs_fragmentation));
 		jam(buf, " pkt-size: %ju;", c->config->child_sa.iptfs_pkt_size);
 		jam(buf, " max-queue-size: %ju", c->config->child_sa.iptfs_max_qsize);
-		jam(buf, " drop-time: %ju", c->config->child_sa.iptfs_drop_time);
-		jam(buf, " init-delay: %ju", c->config->child_sa.iptfs_init_delay);
+		jam(buf, " drop-time: ");
+		jam_deltatime(buf, c->config->child_sa.iptfs_drop_time);
+		jam_string(buf, " init-delay: ");
+		jam_deltatime(buf, c->config->child_sa.iptfs_init_delay);
 		jam(buf, " reorder-window: %ju", c->config->child_sa.iptfs_reord_win);
 	}
 

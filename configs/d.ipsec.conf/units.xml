@@ -42,7 +42,7 @@
 
   <refsect2 id='unit_duration'>
     <title>
-      TIME DURATION
+      DURATION
     </title>
     <para>
       Options, such as <option>retransmit-timeout</option>, that

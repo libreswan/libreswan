@@ -58,29 +58,29 @@
   </listitem>
 </varlistentry>
 <varlistentry>
-  <term><option>iptfs-drop-time</option></term>
+  <term><option>iptfs-drop-time=<replaceable>duration</replaceable></option></term>
   <listitem>
     <para>
-      The default IP-TFS drop time in microseconds. The drop time is
-      the amount of time before a missing out-of-order IP-TFS tunnel
-      packet is considered lost. See also the reorder window.
+      The amount of time before a missing out-of-order IP-TFS tunnel
+      packet is considered lost.  See also
+      <option>iptfs-reorder-window</option>.
     </para>
     <para>
-      Default is 1s (1000000)
+      The default is 1s.  The default time unit is seconds (see
+      <replaceable>duration</replaceable>).
     </para>
   </listitem>
 </varlistentry>
 <varlistentry>
-  <term><option>iptfs-in-delay</option></term>
+  <term><option>iptfs-init-delay=<replaceable>duration</replaceable></option></term>
   <listitem>
     <para>
-      The default IP-TFS initial output delay in microseconds. The
-      initial output delay is the amount of time prior to servicing
-      the output queue after queueing the first packet on said
-      queue.
+      The amount of time prior to servicing the output queue after
+      queueing the first packet on said queue.
     </para>
     <para>
-      Default is 0.
+      The default is 0s.  The default time unit is seconds (see
+      <replaceable>duration</replaceable>).
     </para>
   </listitem>
 </varlistentry>

@@ -319,9 +319,9 @@ struct whack_message {
 	enum yn_options iptfs_fragmentation;
 	uintmax_t iptfs_pkt_size; /* 0 for PMTU */
 	uintmax_t iptfs_max_qsize;
-	uintmax_t iptfs_drop_time;
-	uintmax_t iptfs_init_delay;
 	uintmax_t iptfs_reord_win;
+	deltatime_t iptfs_drop_time;
+	deltatime_t iptfs_init_delay;
 
 	reqid_t sa_reqid;
 	int nflog_group;

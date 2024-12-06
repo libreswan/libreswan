@@ -2544,11 +2544,27 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("IPTFS support is not enabled for %s kernel interface: %s",
 				    kernel_ops->interface_name, err);
 		}
+
+		deltatime_t uint32_max = deltatime_from_microseconds(UINT32_MAX);
+
 		config->child_sa.iptfs = true;
 		config->child_sa.iptfs_pkt_size = wm->iptfs_pkt_size;
 		config->child_sa.iptfs_max_qsize = wm->iptfs_max_qsize;
+
+		if (deltatime_cmp(wm->iptfs_drop_time, >=, uint32_max)) {
+			deltatime_buf tb;
+			return diag("iptfs-drop-time cannnot larger than %s",
+				    str_deltatime(uint32_max, &tb));
+		}
 		config->child_sa.iptfs_drop_time = wm->iptfs_drop_time;
+
+			if (deltatime_cmp(wm->iptfs_init_delay, >=, uint32_max)) {
+			deltatime_buf tb;
+			return diag("iptfs-init-delay cannnot larger than %s",
+				    str_deltatime(uint32_max, &tb));
+		}
 		config->child_sa.iptfs_init_delay = wm->iptfs_init_delay;
+
 		if (wm->iptfs_reord_win > 65535) {
 			return diag("iptfs reorder window cannot be larger than 65535");
 		}

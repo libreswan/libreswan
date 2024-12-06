@@ -116,8 +116,8 @@ static void help(void)
 		"         [--iptfs-fragmentation[={yes,no}]] \\\n"
 		"         [--iptfs-packet-size <size>] \\\n"
 		"	  [--iptfs-max-queue-size <size>] \\\n"
-		"         [--iptfs-init-delay <ms>] \\\n"
-		"         [--iptfs-drop-time <ms> ] \\\n"
+		"         [--iptfs-init-delay <s>] \\\n"
+		"         [--iptfs-drop-time <s> ] \\\n"
 		"	  [--iptfs-reorder-window <window>] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--narrowing {yes,no}] \\\n"
@@ -1800,10 +1800,10 @@ int main(int argc, char **argv)
 			msg.iptfs_max_qsize = optarg_uintmax();
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
-			msg.iptfs_drop_time = optarg_uintmax();
+			msg.iptfs_drop_time = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
 		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
-			msg.iptfs_init_delay = optarg_uintmax();
+			msg.iptfs_init_delay = optarg_deltatime(TIMESCALE_SECONDS);
 			continue;
 		case CD_IPTFS_REORD_WIN: /* --iptfs-reorder-window */
 			msg.iptfs_reord_win = optarg_uintmax();
