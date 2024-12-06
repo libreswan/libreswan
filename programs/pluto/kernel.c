@@ -1429,7 +1429,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		}
 
 		/* IPTFS kernel options */
-		if (c->config->child_sa.iptfs.enabled && child->sa.st_seen_and_use_iptfs) {
+		if (child->sa.st_seen_and_use_iptfs) {
 			if (c->config->child_sa.iptfs.packet_size != 0) {
 				ldbg(child->sa.logger, "kernel: Enabling IPTFS with %ju byte packet size",
 					c->config->child_sa.iptfs.packet_size);

@@ -368,22 +368,11 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	bool expecting_iptfs = cc->config->child_sa.iptfs.enabled;
-	if (request_md->pd[PD_v2N_USE_AGGFRAG] != NULL) {
-		if (!expecting_iptfs) {
-			/*
-			 * RFC9347 allows us to ignore their (mismatched) request
-			 */
-			llog_sa(RC_LOG, larval_child,
-				"policy does not allow IPTFS Mode, ignoring peer's request for IPTFS");
-		} else {
-			dbg("local policy is IPTFS and received USE_AGGFRAG, setting CHILD SA to IPTFS");
-			larval_child->sa.st_seen_and_use_iptfs = true;
-			// also set something in larval_child->sa.st_esp.attrs.mode ??
-		}
-	} else if (expecting_iptfs) {
-		dbg("local policy allows iptfs but peer did not request this");
-	}
+	larval_child->sa.st_seen_and_use_iptfs =
+		accept_v2_notification(v2N_USE_AGGFRAG,
+				       larval_child->sa.logger,
+				       request_md,
+				       cc->config->child_sa.iptfs.enabled);
 
 	larval_child->sa.st_kernel_mode = required_mode;
 
@@ -442,10 +431,10 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		dbg("policy suggested compression, but peer did not offer support");
 	}
 
-	if (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL) {
-		dbg("received ESP_TFC_PADDING_NOT_SUPPORTED");
-		larval_child->sa.st_seen_no_tfc = true;
-	}
+	/* is not not negotiated */
+	larval_child->sa.st_seen_no_tfc = (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	ldbg(larval_child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
+	     bool_str(larval_child->sa.st_seen_no_tfc));
 
 	ikev2_derive_child_keys(ike, larval_child);
 
@@ -822,30 +811,19 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
  		return v2N_NO_PROPOSAL_CHOSEN;
  	}
 
-	if (md->pd[PD_v2N_USE_AGGFRAG] != NULL) {
-		if (!c->config->child_sa.iptfs.enabled) {
-			/*
-			 * This means we did not send
-			 * v2N_USE_AGGFRAG, however responder is
-			 * sending it in now, seems incorrect
-			 */
-			dbg("Initiator policy is IPTFS, responder sends v2N_USE_AGGFRAG notification in inR2, ignoring it");
-		} else {
-			if (c->config->child_sa.encap_mode != ENCAP_MODE_TUNNEL) {
-				llog_sa(RC_LOG, child,
-					"Unexpected IPTFS agreed upon while not using Tunnel Mode ? Ignoring IPTFS request");
-			}
-			dbg("Initiator policy is IPTFS, responder sends v2N_USE_AGGFRAG, setting CHILD SA to IPTFS");
-			child->sa.st_seen_and_use_iptfs = true;
-		}
-	}
+	child->sa.st_seen_and_use_iptfs =
+		accept_v2_notification(v2N_USE_AGGFRAG, child->sa.logger, md,
+				       c->config->child_sa.iptfs.enabled);
 
 	enum_buf rmb;
 	ldbg_sa(child, "local policy is %s and received matching notify",
 		str_enum(&kernel_mode_stories, required_mode, &rmb));
 	child->sa.st_kernel_mode = required_mode;
 
-	child->sa.st_seen_no_tfc = md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
+	child->sa.st_seen_no_tfc = (md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	ldbg(child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
+	     bool_str(child->sa.st_seen_no_tfc));
+
 	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		struct pbs_in pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
 		size_t len = pbs_left(&pbs);
@@ -1207,8 +1185,6 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	/* AUTH is ok, we can trust the notify payloads */
 
 	child->sa.st_ikev2_anon = ike->sa.st_ikev2_anon; /* was set after duplicate_state() (?!?) */
-	child->sa.st_seen_no_tfc = response_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL;
-	child->sa.st_seen_and_use_iptfs = response_md->pd[PD_v2N_USE_AGGFRAG] != NULL;
 
 	/* examine and accept SA ESP/AH proposals */
 
