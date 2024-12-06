@@ -2012,26 +2012,28 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, sa_dir);
 	}
 
-	if (sa->level == 0 && sa->iptfs) {
+	if (sa->level == 0 && sa->iptfs != NULL) {
 		unsigned short maxlen = sizeof(req.data);
 
 		ldbg(logger, "%s() setting all IPTFS xfrm options", __func__);
 
 		if (sa->direction == DIRECTION_OUTBOUND) {
-			if (sa->iptfs_max_qsize != 0)
-				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_MAX_QSIZE, sa->iptfs_max_qsize);
-			if (sa->iptfs_pkt_size != 0)
-				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_PKT_SIZE, sa->iptfs_pkt_size);
-			if (sa->iptfs_init_delay != 0)
-				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_INIT_DELAY, sa->iptfs_init_delay);
-			if (!sa->iptfs_fragmentation)
+			if (sa->iptfs->max_queue_size != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_MAX_QSIZE, sa->iptfs->max_queue_size);
+			if (sa->iptfs->packet_size != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_PKT_SIZE, sa->iptfs->packet_size);
+			uintmax_t init_delay = microseconds_from_deltatime(sa->iptfs->init_delay);
+			if (init_delay != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_INIT_DELAY, init_delay);
+			if (sa->iptfs->fragmentation == false)
 				/* reverse linux's polarity */
 				nl_addattr_l(&req.n, maxlen, XFRMA_IPTFS_DONT_FRAG, NULL, 0);
 		} else {
-			if (sa->iptfs_drop_time != 0)
-				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_DROP_TIME, sa->iptfs_drop_time);
-			if (sa->iptfs_reord_win != 0)
-				nl_addattr16(&req.n, maxlen, XFRMA_IPTFS_REORDER_WINDOW, sa->iptfs_reord_win);
+			uintmax_t drop_time = microseconds_from_deltatime(sa->iptfs->drop_time);
+			if (drop_time != 0)
+				nl_addattr32(&req.n, maxlen, XFRMA_IPTFS_DROP_TIME, drop_time);
+			if (sa->iptfs->reorder_window != 0)
+				nl_addattr16(&req.n, maxlen, XFRMA_IPTFS_REORDER_WINDOW, sa->iptfs->reorder_window);
 		}
 	}
 
@@ -2989,40 +2991,36 @@ static void kernel_xfrm_plug_holes(struct logger *logger)
 }
 
 static bool qry_xfrm_iptfs_support(struct logger *logger) {
-	struct kernel_state sa;
 
-	zero(&sa);
+	const struct config_iptfs iptfs = {
+		.enabled = true,
+	};
 
-	ip_address ipaddr;
-	ipaddr.is_set = true;
-	ipaddr.version = IPv4;
+	uint8_t fakekey[max(AES_BLOCK_SIZE, SHA2_256_DIGEST_SIZE)];
+	get_rnd_bytes(&fakekey, sizeof(fakekey));
 
-	enum_buf b;
-	const struct encrypt_desc *encrypt = ikev2_encrypt_desc(IKEv2_ENCR_AES_CBC, &b);
-	const struct integ_desc *integ = ikev2_integ_desc(IKEv2_INTEG_HMAC_SHA2_256_128, &b);
-	uint8_t fakekey[AES_BLOCK_SIZE];
-	get_rnd_bytes(fakekey, AES_BLOCK_SIZE);
-	shunk_t encrypt_key;
-	shunk_t integ_key;
-	encrypt_key.ptr = fakekey;
-	encrypt_key.len = AES_BLOCK_SIZE;
-	integ_key.ptr = fakekey;
-	encrypt_key.len = SHA2_256_DIGEST_SIZE;
+	const struct encrypt_desc *cipher = &ike_alg_encrypt_aes_cbc;
+	shunk_t cipher_key = shunk2(fakekey, AES_BLOCK_SIZE);
 
-	sa.mode = KERNEL_MODE_TUNNEL;
-	sa.src.address = ipaddr;
-	sa.dst.address = ipaddr;
-	sa.proto = &ip_protocol_esp;
-	sa.direction = DIRECTION_OUTBOUND;
-	sa.iptfs = true;
-	sa.spi = 1;
-	sa.state_id = DEFAULT_KERNEL_STATE_ID;
-	sa.reqid = 1;
-	sa.story = "IPTFS Support Probe";
-	sa.encrypt = encrypt;
-	sa.integ = integ;
-	sa.encrypt_key = encrypt_key;
-	sa.integ_key = integ_key;
+	const struct integ_desc *integ = &ike_alg_integ_sha2_256;
+	shunk_t integ_key = shunk2(fakekey, SHA2_256_DIGEST_SIZE);
+
+	const struct kernel_state sa = {
+		.mode = KERNEL_MODE_TUNNEL,
+		.src.address = ipv4_info.address.unspec,
+		.dst.address = ipv4_info.address.unspec,
+		.proto = &ip_protocol_esp,
+		.direction = DIRECTION_OUTBOUND,
+		.iptfs = &iptfs,
+		.spi = 1,
+		.state_id = DEFAULT_KERNEL_STATE_ID,
+		.reqid = 1,
+		.story = "IPTFS Support Probe",
+		.encrypt = cipher,
+		.integ = integ,
+		.encrypt_key = cipher_key,
+		.integ_key = integ_key,
+	};
 
 	if (netlink_add_sa(&sa, false, logger)) {
 		ldbg(logger, "kernel: IPTFS supported");

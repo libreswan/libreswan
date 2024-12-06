@@ -1261,7 +1261,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.dst.route = route.dst.route,
 		.direction = direction,
 		.mode = route.mode,
-		.iptfs = child->sa.st_seen_and_use_iptfs,
+		.iptfs = (child->sa.st_seen_and_use_iptfs ? &c->config->child_sa.iptfs : NULL),
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
@@ -1430,27 +1430,17 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 		/* IPTFS kernel options */
 		if (child->sa.st_seen_and_use_iptfs) {
-			if (c->config->child_sa.iptfs.packet_size != 0) {
-				ldbg(child->sa.logger, "kernel: Enabling IPTFS with %ju byte packet size",
-					c->config->child_sa.iptfs.packet_size);
-			} else {
-				ldbg(child->sa.logger, "kernel: Enabling IPTFS with PMTU packet size");
-			}
-			said_next->iptfs = true;
-			said_next->iptfs_fragmentation = c->config->child_sa.iptfs.fragmentation;
-			said_next->iptfs_pkt_size = c->config->child_sa.iptfs.packet_size;
-			said_next->iptfs_max_qsize = c->config->child_sa.iptfs.max_queue_size;
-			said_next->iptfs_drop_time = milliseconds_from_deltatime(c->config->child_sa.iptfs.drop_time);
-			said_next->iptfs_init_delay = milliseconds_from_deltatime(c->config->child_sa.iptfs.init_delay);
-			said_next->iptfs_reord_win = c->config->child_sa.iptfs.reorder_window;
-			ldbg(child->sa.logger, "kernel: IPTFS with fragmentation=%s",
-			     bool_str(c->config->child_sa.iptfs.fragmentation));
+			said_next->iptfs = &c->config->child_sa.iptfs;
+			deltatime_buf dtb, idb;
 			ldbg(child->sa.logger,
-			     "kernel: IPTFS max_qsize=%"PRIu32", drop_time=%"PRIu32", init_delay=%"PRIu32", reord_win=%"PRIu32,
-			     said_next->iptfs_max_qsize,
-			     said_next->iptfs_drop_time,
-			     said_next->iptfs_init_delay,
-			     said_next->iptfs_reord_win);
+			     "kernel: IPTFS fragmentation=%s max-queue-size=%ju, packet-size=%ju %s, drop-time=%s, init-delay=%s, reorder-window=%ju",
+			     bool_str(said_next->iptfs->fragmentation),
+			     said_next->iptfs->max_queue_size,
+			     said_next->iptfs->packet_size,
+			     (said_next->iptfs->packet_size > 0 ? "bytes" : "PMTU"),
+			     str_deltatime(said_next->iptfs->drop_time, &dtb),
+			     str_deltatime(said_next->iptfs->init_delay, &idb),
+			     said_next->iptfs->reorder_window);
 		}
 
 		if (c->config->decap_dscp && direction == DIRECTION_INBOUND) {

@@ -199,14 +199,7 @@ struct kernel_state {
 	bool nopmtudisc;
 	uint32_t tfcpad;
 
-	bool iptfs;
-	bool iptfs_fragmentation;
-	uint32_t iptfs_pkt_size;
-	uint32_t iptfs_max_qsize;
-	uint32_t iptfs_drop_time;
-	uint32_t iptfs_init_delay;
-	uint32_t iptfs_reord_win;
-
+	const struct config_iptfs *iptfs;	/* non-NULL when enabled */
 };
 
 struct kernel_ops {
