@@ -1162,6 +1162,16 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		 * Instantiate will carry over authenticated peer ID.
 		 * Don't try to update the instantiated template's
 		 * address when it is already set.
+		 *
+		 * Note: fc_try() should have checked that the peer's
+		 * local/remote client fall within this connection
+		 * template (but is this true when it's an address
+		 * pool?).
+		 *
+		 * XXX: Should this call also update local/remote
+		 * selectors based on what the client requested?  It
+		 * would overlap part of the lease_that_selector()
+		 * code.
 		 */
 		connection_buf cib;
 		vdbg("instantiating template "PRI_CONNECTION"", pri_connection(p, &cib));
@@ -1169,6 +1179,31 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 							      remote_client,
 							      &c->remote->host.id,
 							      verbose, HERE); /* must delref */
+		/*
+		 * Now try to refine C further by taking a lease.
+		 * Remember, IKEv1 only does IPv4 leases.
+		 */
+		if (c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0) {
+			err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
+						      &remote_client, ike->sa.logger);
+			if (e != NULL) {
+				selector_buf cb;
+				llog(RC_LOG, ike->sa.logger,
+				     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
+				     str_selector(&remote_client, &cb), e);
+				connection_delref(&c, ike->sa.logger);
+				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+			}
+
+			selector_buf sb;
+			llog(RC_LOG, ike->sa.logger,
+			     "Quick Mode without mode-config, assigned lease %s",
+			     str_selector(&remote_client, &sb));
+
+			vdbg("another hack to get the SPD in sync");
+			c->spd->remote->client = remote_client;
+			spd_db_rehash_remote_client(c->spd);
+		}
 	} else {
 		connection_buf cib;
 		llog_pexpect(verbose.logger, HERE,
