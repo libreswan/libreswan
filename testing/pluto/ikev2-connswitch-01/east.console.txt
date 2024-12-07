@@ -8,35 +8,10 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv2 connection
-east #
- ipsec auto --add distraction
+ ../../guestbin/ipsec-add.sh distraction westnet-eastnet
 "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
 "distraction": added IKEv2 connection
-east #
- ipsec auto --status | grep westnet-eastnet
-"westnet-eastnet": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any; unrouted; my_ip=unset; their_ip=unset;
-"westnet-eastnet":   host: oriented; local: 192.1.2.23; remote: %any;
-"westnet-eastnet":   mycert=east; my_updown=ipsec _updown;
-"westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-"westnet-eastnet":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-"westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet":   sec_label:unset;
-"westnet-eastnet":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-"westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"westnet-eastnet":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
-"westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-"westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"westnet-eastnet":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"westnet-eastnet":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %none; their id=(none)
-"westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s
-"westnet-eastnet":   routing: unrouted;
-"westnet-eastnet":   conn serial: $1;
+"westnet-eastnet": added IKEv2 connection
 east #
  echo "initdone"
 initdone
@@ -73,5 +48,10 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
+east #
+ # on east expect a switch away from distraction
+east #
+ grep -e '^"distraction".*switched' /tmp/pluto.log
+"distraction"[1] 192.1.2.45 #1: switched to "westnet-eastnet"[1] 192.1.2.45
 east #
  

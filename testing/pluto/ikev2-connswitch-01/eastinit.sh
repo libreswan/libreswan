@@ -2,7 +2,5 @@
 ipsec certutil -D -n west
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet
-ipsec auto --add distraction
-ipsec auto --status | grep westnet-eastnet
+../../guestbin/ipsec-add.sh distraction westnet-eastnet
 echo "initdone"
