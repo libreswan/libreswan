@@ -1132,34 +1132,49 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
-	/* did we find a better connection? */
-	if (p != c) {
-		/*
-		 * We've got a better connection: it can support the
-		 * specified clients.  But it may need instantiation.
-		 */
-		if (is_template(p)) {
-			/*
-			 * Plain Road Warrior because no OPPO for
-			 * IKEv1 instantiate, carrying over
-			 * authenticated peer ID
-			 *
-			 * Don't try to update the instantiated
-			 * template's address when it is already set.
-			 */
-			p = rw_responder_v1_quick_n_dirty_instantiate(p,
-								      c->remote->host.addr,
-								      remote_client,
-								      &c->remote->host.id,
-								      verbose, HERE); /* must delref */
-		} else {
-			p = connection_addref(p, p->logger); /* must delref */
-		}
+	/*
+	 * Switch C to the better connection P.  If necessary,
+	 * instantiate.
+	 *
+	 * Note:
+	 *
+	 * All code paths give this function a local reference to C.
+	 * That reference will need to be delref'd before returning.
+	 * Code then, effectively transfers it to the child (using
+	 * addref/delref juggling).
+	 */
+	if (p == c) {
 		connection_buf cib;
-		vdbg("using connection "PRI_CONNECTION"", pri_connection(p, &cib));
-		c = p;
+		vdbg("sticking with existing "PRI_CONNECTION"", pri_connection(p, &cib));
+		c = connection_addref(p, c->logger); /* must delref */
+	} else if (is_permanent(p)) {
+		connection_buf cib;
+		vdbg("switching to permanent "PRI_CONNECTION"", pri_connection(p, &cib));
+		c = connection_addref(p, p->logger); /* must delref */
+	} else if (is_instance(p)) {
+		connection_buf cib;
+		vdbg("switching to instance "PRI_CONNECTION"", pri_connection(p, &cib));
+		c = connection_addref(p, p->logger); /* must delref */
+	} else if (is_template(p)) {
+		/*
+		 * Plain Road Warrior because no OPPO for IKEv1.
+		 *
+		 * Instantiate will carry over authenticated peer ID.
+		 * Don't try to update the instantiated template's
+		 * address when it is already set.
+		 */
+		connection_buf cib;
+		vdbg("instantiating template "PRI_CONNECTION"", pri_connection(p, &cib));
+		c = rw_responder_v1_quick_n_dirty_instantiate(p, c->remote->host.addr,
+							      remote_client,
+							      &c->remote->host.id,
+							      verbose, HERE); /* must delref */
 	} else {
-		c = connection_addref(c, c->logger); /* must delref */
+		connection_buf cib;
+		llog_pexpect(verbose.logger, HERE,
+			     "unexpected connection type "PRI_CONNECTION"",
+			     pri_connection(p, &cib));
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	/* fill in the client's true ip address/subnet */
