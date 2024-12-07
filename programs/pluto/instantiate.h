@@ -28,6 +28,7 @@ struct ike_sa;
 struct connection;
 struct id;
 struct kernel_acquire;
+struct verbose;
 
 /*
  * Given some sort of connection template or group, instantiate it.
@@ -75,8 +76,9 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 
 struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *t,
 							     const ip_address peer_addr,
-							     const ip_selector *peer_subnet,
+							     const ip_selector peer_subnet,
 							     const struct id *peer_id,
+							     struct verbose verbose,
 							     where_t where);
 
 struct connection *oppo_initiator_instantiate(struct connection *t,

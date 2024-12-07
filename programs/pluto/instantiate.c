@@ -560,34 +560,51 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
  * subnet.
  */
 
-static void update_v1_quick_n_dirty_selectors(struct connection *d,
-					      const ip_selector *remote_subnet,
+static bool update_v1_quick_n_dirty_selectors(struct connection *d,
+					      const ip_selector remote_subnet,
 					      struct verbose verbose)
 {
 	selector_buf sb; /*handles NULL*/
-	vdbg("%s() %s ...", __func__, str_selector(remote_subnet, &sb));
+	vdbg("%s() %s ...", __func__, str_selector(&remote_subnet, &sb));
 	verbose.level++;
+
+	/*
+	 * Need to fill in selectors for both left and right.
+	 */
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
+
+		/* subnet=... */
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s.child has %d configured selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
-		} else if (remote_subnet != NULL &&
-			   &end->child == &d->remote->child &&
-			   d->remote->config->child.virt != NULL) {
+			continue;
+		}
+
+		/* remote is virtual-ip */
+		if (&end->child == &d->remote->child &&
+		    d->remote->config->child.virt != NULL) {
+			vdbg("%s.child is virtual", leftright);
 			PASSERT(d->logger, &end->host == &d->remote->host);
-			set_end_selector(end, *remote_subnet, d->logger);
-			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
+			set_end_selector(end, remote_subnet, d->logger);
+			if (selector_eq_address(remote_subnet, d->remote->host.addr)) {
 				ldbg(d->logger,
 				     "forcing remote %s.spd.has_client=false",
 				     d->spd->remote->config->leftright);
 				set_child_has_client(d, remote, false);
 			}
-		} else if (end->host.config->pool_ranges.len > 0) {
+			continue;
+		}
+
+		/* address-pool */
+		if (end->host.config->pool_ranges.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
+			 *
+			 * Remember, IKEv1 only does IPv4 address
+			 * pool?!?
 			 */
 			vdbg("%s() %s selectors formed from address pool",
 			     __func__, leftright);
@@ -597,31 +614,36 @@ static void update_v1_quick_n_dirty_selectors(struct connection *d,
 							    d->logger, HERE);
 				}
 			}
-		} else {
-			vdbg("%s() %s selector formed from host",
-			     __func__, leftright);
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(end->host.addr,
-								end->child.config->protoport);
-			set_end_selector(end, selector, d->logger);
+			continue;
 		}
+
+		vdbg("%s() %s selector formed from host",
+		     __func__, leftright);
+		/*
+		 * Default the end's child selector (client) to a
+		 * subnet containing only the end's host address.
+		 */
+		ip_selector selector =
+			selector_from_address_protoport(end->host.addr,
+							end->child.config->protoport);
+		set_end_selector(end, selector, d->logger);
 	}
+
+	return true;
 }
 
 struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *t,
 							     const ip_address remote_addr,
-							     const ip_selector *remote_subnet,
+							     const ip_selector remote_subnet,
 							     const struct id *remote_id,
+							     struct verbose verbose,
 							     where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	vassert(!is_opportunistic(t));
 	vassert(!is_labeled(t));
-	vassert(remote_subnet != NULL);
 	vassert(remote_id != NULL);
 
 	/*
