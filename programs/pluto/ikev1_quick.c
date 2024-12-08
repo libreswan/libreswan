@@ -2218,35 +2218,38 @@ static struct connection *fc_try(const struct connection *c,
 
 			verbose.level++;
 
-			/* compare ranges, protocols and ports */
+			/*
+			 * Compare local selectors.  Note that the
+			 * ranges must exactly match - it's an IKEv1
+			 * thing (but why?!?).
+			 */
 
-			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
+			if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
 				selector_buf s1, s2;
-				vdbg("skipping SPD, local client %s must match range %s",
-				     str_selector(&d_spd->local->client, &s1),
-				     str_selector(local_client, &s2));
+				vdbg("skipping SPD, initiator's local client range %s must match %s",
+				     str_selector(local_client, &s2),
+				     str_selector(&d_spd->local->client, &s1));
 				continue;
 			}
 
-			if (d_spd->local->client.ipproto != local_client->ipproto) {
-				vdbg("skipping SPD, local protocol %d must match %d",
-				     d_spd->local->client.ipproto,
-				     local_client->ipproto);
+			if (!selector_in_selector(*local_client, d_spd->local->client)) {
+				selector_buf s1, s2;
+				vdbg("skipping SPD, initiator's local client select %s must be within %s",
+				     str_selector(local_client, &s2),
+				     str_selector(&d_spd->local->client, &s1));
 				continue;
 			}
+
+			/*
+			 * Compare remote selectors.
+			 *
+			 * Now things get weird.
+			 */
 
 			if (d_spd->remote->client.ipproto != remote_client->ipproto) {
 				vdbg("skipping SPD, remote protocol %d must match %d",
 				     d_spd->remote->client.ipproto,
 				     remote_client->ipproto);
-				continue;
-			}
-
-			if (d_spd->local->client.hport != 0 &&
-			    d_spd->local->client.hport != local_client->hport) {
-				vdbg("skipping SPD, local port %d (or wildcard) must match %d",
-				     d_spd->local->client.hport,
-				     local_client->hport);
 				continue;
 			}
 
