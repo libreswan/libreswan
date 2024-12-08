@@ -32,12 +32,14 @@
 
 const ip_range unset_range; /* all zeros */
 
-ip_range range_from_raw(where_t where, enum ip_version version,
-			const struct ip_bytes start, const struct ip_bytes end)
+ip_range range_from_raw(where_t where,
+			const struct ip_info *afi,
+			const struct ip_bytes start,
+			const struct ip_bytes end)
 {
 	ip_range r = {
 		.is_set = true,
-		.version = version,
+		.version = afi->ip_version,
 		.start = start,
 		.end = end,
 	};
@@ -115,7 +117,7 @@ ip_range range_from_address(const ip_address address)
 		return unset_range;
 	}
 
-	return range_from_raw(HERE, address.version,
+	return range_from_raw(HERE, afi,
 			      address.bytes, address.bytes);
 }
 
@@ -127,7 +129,7 @@ ip_range range_from_subnet(const ip_subnet subnet)
 		return unset_range;
 	}
 
-	return range_from_raw(HERE, afi->ip_version,
+	return range_from_raw(HERE, afi,
 			      ip_bytes_blit(afi, subnet.bytes,
 					    &keep_routing_prefix,
 					    &clear_host_identifier,
@@ -275,7 +277,7 @@ ip_address range_start(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(HERE, range.version, range.start);
+	return address_from_raw(HERE, afi, range.start);
 }
 
 ip_address range_end(const ip_range range)
@@ -285,7 +287,7 @@ ip_address range_end(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(HERE, range.version, range.end);
+	return address_from_raw(HERE, afi, range.end);
 }
 
 bool range_overlaps_range(const ip_range l, const ip_range r)
@@ -309,34 +311,37 @@ bool range_overlaps_range(const ip_range l, const ip_range r)
 	return true;
 }
 
-err_t addresses_to_nonzero_range(const ip_address start, const ip_address end, ip_range *dst)
+err_t addresses_to_nonzero_range(const ip_address lo, const ip_address hi, ip_range *dst)
 {
 	*dst = unset_range;
 
-	if (address_is_unset(&start)) {
+	const struct ip_info *lo_afi = address_info(lo);
+	if (lo_afi == NULL) {
 		/* NULL+unset+unknown */
 		return "start address invalid";
 	}
 
-	if (address_is_unset(&end)) {
+	const struct ip_info *hi_afi = address_info(hi);
+	if (hi_afi == NULL) {
 		/* NULL+unset+unknown */
 		return "end address invalid";
 	}
 
-	if (start.version != end.version) {
+	if (lo_afi != hi_afi) {
 		return "conflicting address types";
 	}
 
 	/* reject both 0 */
-	if (thingeq(start.bytes, unset_ip_bytes) && thingeq(end.bytes, unset_ip_bytes)) {
+	if (thingeq(lo.bytes, unset_ip_bytes) &&
+	    thingeq(hi.bytes, unset_ip_bytes)) {
 		return "zero address range";
 	}
 
-	if (addrcmp(&start, &end) > 0) {
+	if (addrcmp(&lo, &hi) > 0) {
 		return "out-of-order";
 	}
 
-	*dst = range_from_raw(HERE, start.version, start.bytes, end.bytes);
+	*dst = range_from_raw(HERE, lo_afi, lo.bytes, hi.bytes);
 	return NULL;
 }
 
@@ -358,7 +363,7 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 		return "address range is not a subnet";
 	}
 
-	*dst = subnet_from_raw(HERE, afi->ip_version, range.start, prefix_bits);
+	*dst = subnet_from_raw(HERE, afi, range.start, prefix_bits);
 	return NULL;
 }
 
@@ -391,7 +396,7 @@ err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address
 		return "address overflow";
 	}
 
-	ip_address tmp = address_from_raw(HERE, range.version, sum);
+	ip_address tmp = address_from_raw(HERE, afi, sum);
 	if (!address_in_range(tmp, range)) {
 		return "range overflow";
 	}

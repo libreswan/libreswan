@@ -43,8 +43,9 @@ void pexpect_range(const ip_range *r, where_t where);
 #define prange(R) pexpect_range(R, HERE)
 
 /* caller knows best */
-ip_range range_from_raw(where_t where, enum ip_version version,
-			const struct ip_bytes start, const struct ip_bytes end);
+ip_range range_from_raw(where_t where, const struct ip_info *afi,
+			const struct ip_bytes start,
+			const struct ip_bytes end);
 
 ip_range range_from_address(const ip_address subnet);
 ip_range range_from_subnet(const ip_subnet subnet);

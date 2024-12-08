@@ -68,8 +68,9 @@ void pexpect_subnet(const ip_subnet *s, where_t where);
  * Constructors
  */
 
-ip_subnet subnet_from_raw(where_t where, enum ip_version version,
-			  const struct ip_bytes prefix, unsigned prefix_length);
+ip_subnet subnet_from_raw(where_t where, const struct ip_info *afi,
+			  const struct ip_bytes prefix,
+			  unsigned prefix_length);
 
 /* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address address);

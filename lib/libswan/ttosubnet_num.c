@@ -106,6 +106,6 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 		*nonzero_host = address;
 	}
 
-	*dst = subnet_from_raw(HERE, afi->ip_version, routing_prefix, prefix_length);
+	*dst = subnet_from_raw(HERE, afi, routing_prefix, prefix_length);
 	return NULL;
 }

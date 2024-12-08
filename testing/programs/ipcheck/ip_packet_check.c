@@ -82,8 +82,8 @@ void ip_packet_check(void)
 
 		/* src is a selector */
 		ip_selector packet_src = packet_src_selector(packet);
-		ip_selector src_selector = selector_from_raw(HERE,
-							     afi->ip_version, src_address.bytes, afi->mask_cnt,
+		ip_selector src_selector = selector_from_raw(HERE, afi,
+							     src_address.bytes, afi->mask_cnt,
 							     t->protocol, src_port);
 		if (!selector_eq_selector(packet_src, src_selector)) {
 			selector_buf psb, sb;
@@ -94,8 +94,8 @@ void ip_packet_check(void)
 
 		/* dst is an endpoint */
 		ip_endpoint packet_dst = packet_dst_endpoint(packet);
-		ip_endpoint dst_endpoint = endpoint_from_raw(HERE,
-							     afi->ip_version, dst_address.bytes,
+		ip_endpoint dst_endpoint = endpoint_from_raw(HERE, afi,
+							     dst_address.bytes,
 							     t->protocol, dst_port);
 		if (!endpoint_eq_endpoint(packet_dst, dst_endpoint)) {
 			endpoint_buf pdb, db;

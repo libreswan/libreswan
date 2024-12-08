@@ -49,7 +49,7 @@ void pexpect_cidr(const ip_cidr a, where_t where);
 extern const ip_cidr unset_cidr;
 
 /* convert CIDR address/mask; does not judge the result */
-ip_cidr cidr_from_raw(where_t where, enum ip_version version,
+ip_cidr cidr_from_raw(where_t where, const struct ip_info *afi,
 		      const struct ip_bytes bytes,
 		      unsigned prefix_bits);
 

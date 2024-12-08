@@ -74,7 +74,7 @@ static void check_iprange_bits(void)
 			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
 		}
 
-		ip_range lo_hi = range_from_raw(HERE, lo.version, lo.bytes, hi.bytes);
+		ip_range lo_hi = range_from_raw(HERE, afi, lo.bytes, hi.bytes);
 		int host_lo2hi = range_host_len(lo_hi);
 		if (t->range != host_lo2hi) {
 			FAIL("iprange_bits(lo,hi) returned '%d', expected '%d'",
@@ -334,7 +334,7 @@ static void check_range_is(void)
 		}
 
 		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
-				range_from_raw(HERE, lo.version, lo.bytes, hi.bytes));
+				range_from_raw(HERE, afi, lo.bytes, hi.bytes));
 		ip_range *range = &tmp;
 		CHECK_TYPE(range);
 		CHECK_STR2(range);

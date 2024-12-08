@@ -25,12 +25,14 @@
 
 const ip_subnet unset_subnet; /* all zeros */
 
-ip_subnet subnet_from_raw(where_t where, enum ip_version version,
-			  const struct ip_bytes bytes, unsigned prefix_len)
+ip_subnet subnet_from_raw(where_t where,
+			  const struct ip_info *afi,
+			  const struct ip_bytes bytes,
+			  unsigned prefix_len)
 {
 	ip_subnet s = {
 		.is_set = true,
-		.version = version,
+		.version = afi->ip_version,
 		.bytes = bytes,
 		.maskbits = prefix_len,
 	};
@@ -45,7 +47,7 @@ ip_subnet subnet_from_address(const ip_address address)
 		return unset_subnet;
 	}
 
-	return subnet_from_raw(HERE, address.version, address.bytes, afi->mask_cnt);
+	return subnet_from_raw(HERE, afi, address.bytes, afi->mask_cnt);
 }
 
 ip_subnet subnet_from_cidr(const ip_cidr cidr)
@@ -55,7 +57,7 @@ ip_subnet subnet_from_cidr(const ip_cidr cidr)
 		return unset_subnet;
 	}
 
-	return subnet_from_raw(HERE, cidr.version,
+	return subnet_from_raw(HERE, afi,
 			       ip_bytes_blit(afi, cidr.bytes,
 					     &keep_routing_prefix,
 					     &clear_host_identifier,
@@ -86,7 +88,7 @@ err_t address_mask_to_subnet(const ip_address address,
 					       &keep_routing_prefix,
 					       &clear_host_identifier,
 					       prefix_bits);
-	*subnet = subnet_from_raw(HERE, afi->ip_version, prefix, prefix_bits);
+	*subnet = subnet_from_raw(HERE, afi, prefix, prefix_bits);
 	return NULL;
 }
 
@@ -102,7 +104,7 @@ ip_address subnet_prefix(const ip_subnet subnet)
 					       &keep_routing_prefix,
 					       &clear_host_identifier,
 					       subnet.maskbits);
-	return address_from_raw(HERE, afi->ip_version, prefix);
+	return address_from_raw(HERE, afi, prefix);
 }
 
 const struct ip_info *subnet_type(const ip_subnet *subnet)
@@ -180,7 +182,7 @@ ip_address subnet_prefix_mask(const ip_subnet subnet)
 					     &set_routing_prefix,
 					     &clear_host_identifier,
 					     subnet.maskbits);
-	return address_from_raw(HERE, afi->ip_version, mask);
+	return address_from_raw(HERE, afi, mask);
 }
 
 unsigned subnet_prefix_bits(const ip_subnet subnet)

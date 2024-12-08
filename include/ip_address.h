@@ -76,7 +76,7 @@ void pexpect_address(const ip_address *a, where_t where);
  * Constructors.
  */
 
-ip_address address_from_raw(where_t where, enum ip_version version,
+ip_address address_from_raw(where_t where, const struct ip_info *afi,
 			    const struct ip_bytes bytes);
 
 ip_address address_from_in_addr(const struct in_addr *in);

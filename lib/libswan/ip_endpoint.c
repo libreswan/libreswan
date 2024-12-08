@@ -25,14 +25,15 @@
 
 const ip_endpoint unset_endpoint; /* all zeros */
 
-ip_endpoint endpoint_from_raw(where_t where, enum ip_version version,
+ip_endpoint endpoint_from_raw(where_t where,
+			      const struct ip_info *afi,
 			      const struct ip_bytes bytes,
 			      const struct ip_protocol *protocol,
 			      ip_port port)
 {
 	ip_endpoint endpoint = {
 		.is_set = true,
-		.version = version,
+		.version = afi->ip_version,
 		.bytes = bytes,
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
@@ -45,7 +46,13 @@ ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
 						const struct ip_protocol *protocol,
 						ip_port port)
 {
-	return endpoint_from_raw(HERE, address.version, address.bytes,
+	const struct ip_info *afi = address_info(address);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return unset_endpoint; /* empty_address? */
+	}
+
+	return endpoint_from_raw(HERE, afi, address.bytes,
 				 protocol, port);
 }
 
@@ -57,7 +64,7 @@ ip_address endpoint_address(const ip_endpoint endpoint)
 		return unset_address; /* empty_address? */
 	}
 
-	return address_from_raw(HERE, endpoint.version, endpoint.bytes);
+	return address_from_raw(HERE, afi, endpoint.bytes);
 }
 
 int endpoint_hport(const ip_endpoint endpoint)

@@ -151,7 +151,7 @@ err_t ttoselector_num(shunk_t cursor,
 
 	/* check host-part is zero */
 
-	*dst = selector_from_raw(HERE, afi->ip_version,
+	*dst = selector_from_raw(HERE, afi,
 				 routing_prefix, prefix_length,
 				 protocol, port);
 	return NULL;

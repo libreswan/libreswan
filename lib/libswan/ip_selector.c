@@ -228,15 +228,16 @@ size_t jam_selectors(struct jambuf *buf, ip_selectors selectors)
 }
 
 
-ip_selector selector_from_raw(where_t where, enum ip_version version,
+ip_selector selector_from_raw(where_t where,
+			      const struct ip_info *afi,
 			      const struct ip_bytes bytes, unsigned prefix_bits,
 			      const struct ip_protocol *protocol, const ip_port port)
 {
 	ip_selector selector = {
 		.is_set = true,
-		.maskbits = prefix_bits,
-		.version = version,
+		.version = afi->ip_version,
 		.bytes = bytes,
+		.maskbits = prefix_bits,
 		.ipproto = protocol->ipproto,
 		.hport = port.hport,
 	};
@@ -251,7 +252,7 @@ ip_selector selector_from_address(const ip_address address)
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, address.version,
+	return selector_from_raw(HERE, afi,
 				 address.bytes, afi->mask_cnt,
 				 &ip_protocol_all, unset_port);
 }
@@ -264,7 +265,7 @@ ip_selector selector_from_address_protocol(const ip_address address,
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, address.version,
+	return selector_from_raw(HERE, afi,
 				 address.bytes, afi->mask_cnt,
 				 protocol, unset_port);
 }
@@ -277,7 +278,7 @@ ip_selector selector_from_address_protocol_port(const ip_address address,
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, address.version,
+	return selector_from_raw(HERE, afi,
 				 address.bytes, afi->mask_cnt,
 				 protocol, port);
 }
@@ -289,7 +290,7 @@ ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, endpoint.version,
+	return selector_from_raw(HERE, afi,
 				 endpoint.bytes, afi->mask_cnt,
 				 endpoint_protocol(endpoint),
 				 endpoint_port(endpoint));
@@ -302,7 +303,7 @@ ip_selector selector_from_cidr(const ip_cidr cidr)
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, cidr.version,
+	return selector_from_raw(HERE, afi,
 				 ip_bytes_blit(afi, cidr.bytes,
 					       &keep_routing_prefix,
 					       &clear_host_identifier,
@@ -318,7 +319,7 @@ ip_selector selector_from_subnet(const ip_subnet subnet)
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, subnet.version,
+	return selector_from_raw(HERE, afi,
 				 subnet.bytes, subnet.maskbits,
 				 &ip_protocol_all, unset_port);
 }
@@ -327,11 +328,12 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port)
 {
-	if (subnet_is_unset(&subnet)) {
+	const struct ip_info *afi = subnet_info(subnet);
+	if (afi == NULL) {
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, subnet.version,
+	return selector_from_raw(HERE, afi,
 				 subnet.bytes, subnet.maskbits,
 				 protocol, port);
 }
@@ -345,13 +347,14 @@ ip_selector selector_from_range_protocol_port(const ip_range range,
 					      const struct ip_protocol *protocol,
 					      const ip_port port)
 {
-	if (range_is_unset(&range)) {
+	const struct ip_info *afi = range_info(range);
+	if (afi == NULL) {
 		return unset_selector;
 	}
 
 	ip_subnet subnet;
 	happy(range_to_subnet(range, &subnet));
-	return selector_from_raw(HERE, subnet.version,
+	return selector_from_raw(HERE, afi,
 				 subnet.bytes, subnet.maskbits,
 				 protocol, port);
 }
@@ -429,7 +432,7 @@ ip_range selector_range(const ip_selector selector)
 					    &keep_routing_prefix,
 					    &set_host_identifier,
 					    selector.maskbits);
-	return range_from_raw(HERE, afi->ip_version, start, end);
+	return range_from_raw(HERE, afi, start, end);
 }
 
 ip_address selector_prefix(const ip_selector selector)
@@ -440,7 +443,7 @@ ip_address selector_prefix(const ip_selector selector)
 		return unset_address;
 	}
 
-	return address_from_raw(HERE, selector.version, selector.bytes);
+	return address_from_raw(HERE, afi, selector.bytes);
 }
 
 unsigned selector_prefix_bits(const ip_selector selector)
@@ -460,7 +463,7 @@ ip_address selector_prefix_mask(const ip_selector selector)
 					       &set_routing_prefix,
 					       &clear_host_identifier,
 					       selector.maskbits);
-	return address_from_raw(HERE, afi->ip_version, prefix);
+	return address_from_raw(HERE, afi, prefix);
 }
 
 bool selector_eq_address(const ip_selector selector, const ip_address address)
@@ -622,7 +625,7 @@ ip_subnet selector_subnet(const ip_selector selector)
 		return unset_subnet;
 	}
 
-	return subnet_from_raw(HERE, selector.version,
+	return subnet_from_raw(HERE, afi,
 			       selector.bytes, selector.maskbits);
 }
 

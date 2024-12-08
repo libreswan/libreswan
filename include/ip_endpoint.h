@@ -71,7 +71,7 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where);
  * Constructors.
  */
 
-ip_endpoint endpoint_from_raw(where_t where, enum ip_version version,
+ip_endpoint endpoint_from_raw(where_t where, const struct ip_info *afi,
 			      const struct ip_bytes bytes,
 			      const struct ip_protocol *protocol,
 			      ip_port port);

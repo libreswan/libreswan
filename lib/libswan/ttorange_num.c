@@ -58,8 +58,9 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 	case '\0':
 	{
 		/* single address */
-		*dst = range_from_raw(HERE, start_address.version,
-				      start_address.bytes, start_address.bytes);
+		*dst = range_from_raw(HERE, afi,
+				      start_address.bytes,
+				      start_address.bytes);
 		return NULL;
 	}
 	case '/':
@@ -74,7 +75,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 			return "too large";
 		}
 		/* XXX: should this reject bad addresses */
-		*dst = range_from_raw(HERE, afi->ip_version,
+		*dst = range_from_raw(HERE, afi,
 				      ip_bytes_blit(afi, start_address.bytes,
 						    &keep_routing_prefix,
 						    &clear_host_identifier,
@@ -100,8 +101,9 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 				 end_address.version, end_address.bytes) > 0) {
 			return "start of range is greater than end";
 		}
-		*dst = range_from_raw(HERE, afi->ip_version,
-				      start_address.bytes, end_address.bytes);
+		*dst = range_from_raw(HERE, afi,
+				      start_address.bytes,
+				      end_address.bytes);
 		return NULL;
 	}
 	default:

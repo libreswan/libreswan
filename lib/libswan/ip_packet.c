@@ -56,8 +56,7 @@ static const char *unset(const ip_packet *packet)
 ip_address packet_src_address(const ip_packet packet)
 {
 	if (packet.is_set) {
-		return address_from_raw(HERE,
-					 packet.info->ip_version,
+		return address_from_raw(HERE, packet.info,
 					 packet.src.bytes);
 	} else {
 		return unset_address;
@@ -67,8 +66,7 @@ ip_address packet_src_address(const ip_packet packet)
 ip_address packet_dst_address(const ip_packet packet)
 {
 	if (packet.is_set) {
-		return address_from_raw(HERE,
-					 packet.info->ip_version,
+		return address_from_raw(HERE, packet.info,
 					 packet.dst.bytes);
 	} else {
 		return unset_address;
@@ -78,8 +76,7 @@ ip_address packet_dst_address(const ip_packet packet)
 ip_endpoint packet_dst_endpoint(const ip_packet packet)
 {
 	if (packet.is_set) {
-		return endpoint_from_raw(HERE,
-					 packet.info->ip_version,
+		return endpoint_from_raw(HERE, packet.info,
 					 packet.dst.bytes,
 					 packet.protocol,
 					 ip_hport(packet.dst.hport));
@@ -92,7 +89,7 @@ ip_selector packet_src_selector(const ip_packet packet)
 {
 	if (packet.is_set) {
 		return selector_from_raw(HERE,
-					 packet.info->ip_version,
+					 packet.info,
 					 packet.src.bytes,
 					 packet.info->mask_cnt,
 					 packet.protocol,
@@ -106,7 +103,7 @@ ip_selector packet_dst_selector(const ip_packet packet)
 {
 	if (packet.is_set) {
 		return selector_from_raw(HERE,
-					 packet.info->ip_version,
+					 packet.info,
 					 packet.dst.bytes,
 					 packet.info->mask_cnt,
 					 packet.protocol,
