@@ -1055,60 +1055,6 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		vdbg("using existing connection; nothing better and current is virtual-private");
 	}
 
-	/*
-	 * The lookup can fail because the peer things it has a lease
-	 * but the connection has not because the peer skipped CONFIG.
-	 *
-	 * For instance, the peer was put to sleep (laptop lid closed)
-	 * leading to a DPD failure and connection delete.  When the
-	 * peer wakes it should use MODE-CONFIG to renew the lease but
-	 * that seems to be skipped (perhaps it hasn't expired?).
-	 *
-	 * For instance, this end crashes, the peer then tries to
-	 * quickly re-establish.  Even though INITIAL_CONTACT is sent
-	 * at the end of MAIN mode, the peer still assumes it has the
-	 * lease and skips MODE-CONFIG.
-	 *
-	 * The lease may be available.  But if it isn't what next?
-	 * And even if it is there's no guarentee that the rest of the
-	 * MODE-CONFIG, such as DNS, is correct.
-	 *
-	 * XXX: IKEv1 only does IPv4.
-	 */
-	if (p == NULL &&
-	    c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0 &&
-	    !c->remote->child.lease[IPv4_INDEX].is_set) {
-
-		if (!selector_eq_selector(local_client, c->spd->local->client)) {
-			selector_buf lb, cb;
-			llog(RC_LOG, ike->sa.logger,
-			     "Quick Mode request rejected, peer requested lease but proposed local selector %s does not match connection %s; deleting ISAKMP SA",
-			     str_selector(&local_client, &lb),
-			     str_selector(&c->spd->local->client, &cb));
-			return STF_FATAL;
-		}
-
-		err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
-					      &remote_client, ike->sa.logger);
-		if (e != NULL) {
-			selector_buf cb;
-			llog(RC_LOG, ike->sa.logger,
-			     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
-			     str_selector(&remote_client, &cb), e);
-			return STF_FATAL;
-		}
-
-		p = c;
-		selector_buf sb;
-		llog(RC_LOG, ike->sa.logger,
-		     "Quick Mode without mode-config, recovered previously assigned lease %s",
-		     str_selector(&remote_client, &sb));
-
-		vdbg("another hack to get the SPD in sync");
-		c->spd->remote->client = remote_client;
-		spd_db_rehash_remote_client(c->spd);
-	}
-
 	if (p == NULL) {
 		LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 			jam(buf, "cannot respond to IPsec SA request because no connection is known for ");
@@ -1182,6 +1128,27 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		/*
 		 * Now try to refine C further by taking a lease.
 		 * Remember, IKEv1 only does IPv4 leases.
+		 *
+		 * Normally, MODE_CFG will have assigned the lease
+		 * before reaching this point.  But when MODE_CFG is
+		 * skipped, that doesn't work.
+		 *
+		 * For instance, the client is put to sleep (laptop
+		 * lid closed) leading to the server timing out and
+		 * deleting the connection.  When the client wakes it
+		 * skips MODE_CFG since, from its POV, it still
+		 * "holds" the lease.
+		 *
+		 * For instance, this end crashes, the peer then tries
+		 * to quickly re-establish.  Even though
+		 * INITIAL_CONTACT is sent at the end of MAIN mode,
+		 * the peer still assumes it has the lease and skips
+		 * MODE-CONFIG.
+		 *
+		 * For instance, the client was configured to skip
+		 * MODE_CFG.
+		 *
+		 * XXX: IKEv1 only does IPv4.
 		 */
 		if (c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0) {
 			err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
