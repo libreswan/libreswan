@@ -139,7 +139,7 @@ extern const struct ip_info unspec_ip_info;
 
 extern const struct ip_info *aftoinfo(int af);
 
-const struct ip_info *ip_version_info(unsigned version);
+const struct ip_info *ip_version_info(enum ip_version version);
 
 /*
  * Internal.
