@@ -91,7 +91,7 @@ ip_selector packet_src_selector(const ip_packet packet)
 		return selector_from_raw(HERE,
 					 packet.info,
 					 packet.src.bytes,
-					 packet.info->mask_cnt,
+					 packet.src.bytes,
 					 packet.protocol,
 					 ip_hport(packet.src.hport));
 	} else {
@@ -105,7 +105,7 @@ ip_selector packet_dst_selector(const ip_packet packet)
 		return selector_from_raw(HERE,
 					 packet.info,
 					 packet.dst.bytes,
-					 packet.info->mask_cnt,
+					 packet.dst.bytes,
 					 packet.protocol,
 					 ip_hport(packet.dst.hport));
 	} else {

@@ -83,7 +83,8 @@ void ip_packet_check(void)
 		/* src is a selector */
 		ip_selector packet_src = packet_src_selector(packet);
 		ip_selector src_selector = selector_from_raw(HERE, afi,
-							     src_address.bytes, afi->mask_cnt,
+							     src_address.bytes,
+							     src_address.bytes,
 							     t->protocol, src_port);
 		if (!selector_eq_selector(packet_src, src_selector)) {
 			selector_buf psb, sb;

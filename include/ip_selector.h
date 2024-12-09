@@ -82,7 +82,8 @@ void pexpect_selector(const ip_selector *s, where_t where);
 #define pselector(S) pexpect_selector(S, HERE)
 
 ip_selector selector_from_raw(where_t where, const struct ip_info *afi,
-			      const struct ip_bytes prefix, unsigned prefix_length,
+			      const struct ip_bytes lo,
+			      const struct ip_bytes hi,
 			      const struct ip_protocol *protocol, const ip_port port);
 
 ip_selector selector_from_address(const ip_address address);

@@ -149,10 +149,15 @@ err_t ttoselector_num(shunk_t cursor,
 		*nonzero_host = address;
 	}
 
+	struct ip_bytes hi = ip_bytes_blit(afi, routing_prefix,
+					   &keep_routing_prefix,
+					   &set_host_identifier,
+					   prefix_length);
+
 	/* check host-part is zero */
 
 	*dst = selector_from_raw(HERE, afi,
-				 routing_prefix, prefix_length,
+				 routing_prefix, hi,
 				 protocol, port);
 	return NULL;
 }

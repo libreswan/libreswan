@@ -230,14 +230,16 @@ size_t jam_selectors(struct jambuf *buf, ip_selectors selectors)
 
 ip_selector selector_from_raw(where_t where,
 			      const struct ip_info *afi,
-			      const struct ip_bytes bytes, unsigned prefix_bits,
+			      const struct ip_bytes lo,
+			      const struct ip_bytes hi,
 			      const struct ip_protocol *protocol, const ip_port port)
 {
+	unsigned prefix_len = ip_bytes_prefix_len(afi, lo, hi);
 	ip_selector selector = {
 		.is_set = true,
 		.version = afi->ip_version,
-		.bytes = bytes,
-		.maskbits = prefix_bits,
+		.bytes = lo,
+		.maskbits = prefix_len,
 		.ipproto = protocol->ipproto,
 		.hport = port.hport,
 	};
@@ -253,7 +255,7 @@ ip_selector selector_from_address(const ip_address address)
 	}
 
 	return selector_from_raw(HERE, afi,
-				 address.bytes, afi->mask_cnt,
+				 address.bytes, address.bytes,
 				 &ip_protocol_all, unset_port);
 }
 
@@ -266,7 +268,7 @@ ip_selector selector_from_address_protocol(const ip_address address,
 	}
 
 	return selector_from_raw(HERE, afi,
-				 address.bytes, afi->mask_cnt,
+				 address.bytes, address.bytes,
 				 protocol, unset_port);
 }
 
@@ -279,7 +281,7 @@ ip_selector selector_from_address_protocol_port(const ip_address address,
 	}
 
 	return selector_from_raw(HERE, afi,
-				 address.bytes, afi->mask_cnt,
+				 address.bytes, address.bytes,
 				 protocol, port);
 }
 
@@ -291,7 +293,7 @@ ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 	}
 
 	return selector_from_raw(HERE, afi,
-				 endpoint.bytes, afi->mask_cnt,
+				 endpoint.bytes, endpoint.bytes,
 				 endpoint_protocol(endpoint),
 				 endpoint_port(endpoint));
 }
@@ -303,12 +305,17 @@ ip_selector selector_from_cidr(const ip_cidr cidr)
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, afi,
-				 ip_bytes_blit(afi, cidr.bytes,
-					       &keep_routing_prefix,
-					       &clear_host_identifier,
-					       cidr.prefix_len),
-				 cidr.prefix_len,
+	struct ip_bytes lo = ip_bytes_blit(afi, cidr.bytes,
+					   &keep_routing_prefix,
+					   &clear_host_identifier,
+					   cidr.prefix_len);
+
+	struct ip_bytes hi = ip_bytes_blit(afi, cidr.bytes,
+					   &keep_routing_prefix,
+					   &set_host_identifier,
+					   cidr.prefix_len);
+
+	return selector_from_raw(HERE, afi, lo, hi,
 				 &ip_protocol_all, unset_port);
 }
 
@@ -319,8 +326,17 @@ ip_selector selector_from_subnet(const ip_subnet subnet)
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, afi,
-				 subnet.bytes, subnet.maskbits,
+	struct ip_bytes lo = ip_bytes_blit(afi, subnet.bytes,
+					   &keep_routing_prefix,
+					   &clear_host_identifier,
+					   subnet.maskbits);
+
+	struct ip_bytes hi = ip_bytes_blit(afi, subnet.bytes,
+					   &keep_routing_prefix,
+					   &set_host_identifier,
+					   subnet.maskbits);
+
+	return selector_from_raw(HERE, afi, lo, hi,
 				 &ip_protocol_all, unset_port);
 }
 
@@ -333,8 +349,17 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 		return unset_selector;
 	}
 
-	return selector_from_raw(HERE, afi,
-				 subnet.bytes, subnet.maskbits,
+	struct ip_bytes lo = ip_bytes_blit(afi, subnet.bytes,
+					   &keep_routing_prefix,
+					   &clear_host_identifier,
+					   subnet.maskbits);
+
+	struct ip_bytes hi = ip_bytes_blit(afi, subnet.bytes,
+					   &keep_routing_prefix,
+					   &set_host_identifier,
+					   subnet.maskbits);
+
+	return selector_from_raw(HERE, afi, lo, hi,
 				 protocol, port);
 }
 
@@ -352,10 +377,8 @@ ip_selector selector_from_range_protocol_port(const ip_range range,
 		return unset_selector;
 	}
 
-	ip_subnet subnet;
-	happy(range_to_subnet(range, &subnet));
 	return selector_from_raw(HERE, afi,
-				 subnet.bytes, subnet.maskbits,
+				 range.start, range.end,
 				 protocol, port);
 }
 
