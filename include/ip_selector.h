@@ -56,7 +56,8 @@ typedef struct {
 	 * possible (struct in_addr requires htonl() which is run-time
 	 * only).
 	 */
-	struct ip_bytes bytes;
+	struct ip_bytes lo;
+	struct ip_bytes hi;
 	/*
 	 * (routing prefix) bits.
 	 */
@@ -68,13 +69,14 @@ typedef struct {
 	int hport;
 } ip_selector;
 
-#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES"]:%u/%u>"
+#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES".."PRI_IP_BYTES"]:%u/%u>"
 #define pri_selector(S)						\
 		((S)->is_set ? "set" : "unset"),		\
 		(S)->version,					\
 		((S)->ipproto > 255 ? "IPPROTO>255" :		\
 		 protocol_from_ipproto((S)->ipproto)->name),	\
-		pri_ip_bytes((S)->bytes),			\
+		pri_ip_bytes((S)->lo),				\
+		pri_ip_bytes((S)->hi),				\
 		(S)->hport,					\
 		(S)->maskbits
 

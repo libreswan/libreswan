@@ -33,7 +33,7 @@ static size_t jam_spd(struct jambuf *buf, const struct spd *sr)
 
 static hash_t hash_spd_remote_client(const ip_selector *sr)
 {
-	return hash_thing(sr->bytes, zero_hash);
+	return hash_thing(sr->lo, zero_hash);
 }
 
 HASH_TABLE(spd, remote_client, .remote->client, STATE_TABLE_SIZE);

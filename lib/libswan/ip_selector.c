@@ -63,8 +63,12 @@ bool selector_contains_one_address(const ip_selector selector)
 	}
 
 	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	return (!thingeq(selector.bytes, unset_ip_bytes) &&
-		selector.maskbits == afi->mask_cnt &&
+	if (thingeq(selector.hi, unset_ip_bytes)) {
+		/* Since .hi is zero, so must .lo */
+		return false;
+	}
+
+	return (selector.maskbits == afi->mask_cnt &&
 		selector.ipproto == 0 &&
 		selector.hport == 0);
 }
@@ -238,7 +242,8 @@ ip_selector selector_from_raw(where_t where,
 	ip_selector selector = {
 		.is_set = true,
 		.version = afi->ip_version,
-		.bytes = lo,
+		.lo = lo,
+		.hi = hi,
 		.maskbits = prefix_len,
 		.ipproto = protocol->ipproto,
 		.hport = port.hport,
@@ -447,15 +452,7 @@ ip_range selector_range(const ip_selector selector)
 		return unset_range;
 	}
 
-	struct ip_bytes start = ip_bytes_blit(afi, selector.bytes,
-					      &keep_routing_prefix,
-					      &clear_host_identifier,
-					      selector.maskbits);
-	struct ip_bytes end = ip_bytes_blit(afi, selector.bytes,
-					    &keep_routing_prefix,
-					    &set_host_identifier,
-					    selector.maskbits);
-	return range_from_raw(HERE, afi, start, end);
+	return range_from_raw(HERE, afi, selector.lo, selector.hi);
 }
 
 ip_address selector_prefix(const ip_selector selector)
@@ -466,7 +463,7 @@ ip_address selector_prefix(const ip_selector selector)
 		return unset_address;
 	}
 
-	return address_from_raw(HERE, afi, selector.bytes);
+	return address_from_raw(HERE, afi, selector.lo);
 }
 
 unsigned selector_prefix_bits(const ip_selector selector)
@@ -482,7 +479,7 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
-	struct ip_bytes prefix = ip_bytes_blit(afi, selector.bytes,
+	struct ip_bytes prefix = ip_bytes_blit(afi, selector.lo,
 					       &set_routing_prefix,
 					       &clear_host_identifier,
 					       selector.maskbits);
@@ -533,7 +530,7 @@ bool range_in_selector(const ip_range range, const ip_selector selector)
 
 bool selector_in_selector(const ip_selector i, const ip_selector o)
 {
-	const struct ip_info *afi = selector_type(&i);
+	const struct ip_info *afi = selector_info(i);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
@@ -542,7 +539,7 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 	/* version wild card? (actually version is 4/6) */
 
 	/* work in */
-	if (selector_type(&o) != afi) {
+	if (selector_info(o) != afi) {
 		return false;
 	}
 
@@ -551,13 +548,13 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 		return false;
 	}
 
-	/* ib=i.prefix[0 .. o.bits] == ob=o.prefix[0 .. o.bits] */
-	struct ip_bytes ib = ip_bytes_blit(afi,
-					   /*INNER*/i.bytes,
-					   &keep_routing_prefix,
-					   &clear_host_identifier,
-					   /*OUTER*/o.maskbits);
-	if (!thingeq(ib, o.bytes)) {
+	if (ip_bytes_cmp(i.version, i.lo, o.version, o.lo) < 0) {
+		/* inner.lo < outer.lo */
+		return false;
+	}
+
+	if (ip_bytes_cmp(i.version, i.hi, o.version, o.hi) > 0) {
+		/* inner.hi > outer.hi */
 		return false;
 	}
 
@@ -607,7 +604,8 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 
 	/* must compare individual fields */
 	return (l.version == r.version &&
-		thingeq(l.bytes, r.bytes) &&
+		thingeq(l.lo, r.lo) &&
+		thingeq(l.hi, r.hi) &&
 		l.maskbits == r.maskbits &&
 		l.ipproto == r.ipproto &&
 		l.hport == r.hport);
@@ -649,7 +647,7 @@ ip_subnet selector_subnet(const ip_selector selector)
 	}
 
 	return subnet_from_raw(HERE, afi,
-			       selector.bytes, selector.maskbits);
+			       selector.lo, selector.maskbits);
 }
 
 bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs)

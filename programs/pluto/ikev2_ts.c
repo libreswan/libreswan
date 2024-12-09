@@ -372,6 +372,7 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 static ip_selector impair_selector_to_subnet(ip_selector ts)
 {
 	const struct ip_info *afi = selector_info(ts);
+	ts.hi = ts.lo;
 	ts.maskbits = afi->mask_cnt;
 	return ts;
 }
@@ -379,7 +380,8 @@ static ip_selector impair_selector_to_subnet(ip_selector ts)
 static ip_selector impair_selector_to_supernet(ip_selector ts)
 {
 	ts.maskbits = 0;
-	ts.bytes = unset_ip_bytes;
+	ts.lo = unset_ip_bytes;
+	ts.hi = unset_ip_bytes;
 	return ts;
 }
 
