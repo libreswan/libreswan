@@ -1946,149 +1946,6 @@ stf_status quick_inI2(struct state *child_sa, struct msg_digest *md)
 }
 
 /*
- * With virtual addressing, we must not allow someone to use an already
- * used (by another id) addr/net.
- */
-static bool is_virtual_net_used(struct connection *c,
-				const ip_selector *peer_net,
-				const struct id *peer_id)
-{
-	struct connection_filter cq = {
-		.ike_version = IKEv1,
-		.search = {
-			.order = NEW2OLD,
-			.verbose.logger = c->logger,
-			.where = HERE,
-		},
-	};
-	while (next_connection(&cq)) {
-		struct connection *d = cq.c;
-		switch (d->local->kind) {
-		case CK_PERMANENT:
-		case CK_TEMPLATE:
-		case CK_INSTANCE:
-
-			if (is_template(d) &&
-			    d->remote->config->child.selectors.len > 0) {
-				/*
-				 * For instance when the template''s
-				 * peer's protoport=udp/%any but
-				 * peers' subnet is not set.  The
-				 * peer's .client is constructed from
-				 * %any:udp/%any.
-				 *
-				 * Since this has to be narrowed, any
-				 * comparison is pointless.
-				 */
-				connection_buf dcb;
-				enum_buf kb;
-				dbg(" skipping %s "PRI_CONNECTION" as remote's %ssubnet is wild (not set)",
-				    str_enum_short(&connection_kind_names, d->local->kind, &kb),
-				    pri_connection(d, &dcb),
-				    d->remote->config->leftright);
-				continue;
-			}
-
-			if (!selector_overlaps_selector(*peer_net, d->spd->remote->client)) {
-				/*
-				 * For instance when PEER_NET is IPv6
-				 * and remote .client is IPv4 (but can
-				 * be pretty much anything that
-				 * doesn't intersect).
-				 */
-				connection_buf dcb;
-				enum_buf kb;
-				dbg(" skipping %s "PRI_CONNECTION" as there is no overlap",
-				    str_enum_short(&connection_kind_names, d->local->kind, &kb),
-				    pri_connection(d, &dcb));
-				continue;
-			}
-
-			if (same_id(&d->remote->host.id, peer_id)) {
-				/*
-				 * Assumed to be a replace?
-				 */
-				connection_buf dcb;
-				enum_buf kb;
-				id_buf idb;
-				dbg(" skipping %s "PRI_CONNECTION" as it has the same id: %s",
-				    str_enum_short(&connection_kind_names, d->local->kind, &kb),
-				    pri_connection(d, &dcb),
-				    str_id(&d->remote->host.id, &idb));
-				continue;
-			}
-
-			if (!kernel_ops->overlap_supported) {
-				connection_buf cbuf;
-				subnet_buf pcb, dcb;
-				llog(RC_LOG, c->logger,
-				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
-				     str_selector_subnet(peer_net, &pcb),
-				     str_selector_subnet(&d->spd->remote->client, &dcb),
-				     pri_connection(d, &cbuf),
-				     kernel_ops->interface_name);
-				return true;
-			}
-
-			if (c->config->overlapip && d->config->overlapip) {
-				connection_buf cbuf;
-				subnet_buf pcb, dcb;
-				llog(RC_LOG, c->logger,
-				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" permitted by mutual consent (and kernel support)",
-				     str_selector_subnet(peer_net, &pcb),
-				     pri_connection(d, &cbuf),
-				     str_selector_subnet(&d->spd->remote->client, &dcb));
-				/*
-				 * Look for another overlap to report
-				 * on.
-				 */
-				continue;
-			}
-
-			/*
-			 * We're not allowed to overlap.  Carefully
-			 * report.
-			 */
-
-			if (c->config->overlapip) {
-				/* not C; must be D objecting */
-				connection_buf cbuf;
-				subnet_buf pcb, dcb;
-				llog(RC_LOG, c->logger,
-				     "peer Virtual IP %s overlapping %s forbidden by "PRI_CONNECTION" policy",
-				     str_selector_subnet(peer_net, &pcb),
-				     pri_connection(d, &cbuf),
-				     str_selector_subnet(&d->spd->remote->client, &dcb));
-			} else if (d->config->overlapip) {
-				/* not D; must be C objecting */
-				connection_buf cbuf;
-				subnet_buf pcb, dcb;
-				llog(RC_LOG, c->logger,
-				     "policy forbids peer Virtual IP %s overlapping %s from "PRI_CONNECTION"",
-				     str_selector_subnet(peer_net, &pcb),
-				     pri_connection(d, &cbuf),
-				     str_selector_subnet(&d->spd->remote->client, &dcb));
-			} else {
-				/* must be both D and C objecting */
-				connection_buf cbuf;
-				subnet_buf pcb, dcb;
-				llog(RC_LOG, c->logger,
-				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is forbidden (neither agrees)",
-				     str_selector_subnet(peer_net, &pcb),
-				     str_selector_subnet(&d->spd->remote->client, &dcb),
-				     pri_connection(d, &cbuf));
-			}
-
-			return true; /* already used by another one */
-
-		default:
-			break;
-		}
-	}
-	return false; /* you can safely use it */
-}
-
-/*
  * find_client_connection: given a connection suitable for ISAKMP
  * (i.e. the hosts match), find a one suitable for IPSEC
  * (i.e. with matching clients).
@@ -2282,19 +2139,11 @@ static struct connection *fc_try(const struct connection *c,
 					vdbg("SPD has is_virtual_spd_end()");
 					verbose.level++;
 					/* non-NULL when rejected; saved for later */
-					virtualwhy = check_virtual_net_allowed(d,
-									       selector_subnet(*remote_client),
-									       d_spd->remote->host->addr,
-									       verbose);
+					virtualwhy = is_virtual_net_allowed(d, *remote_client, verbose);
 					if (virtualwhy != NULL) {
 						vdbg("skipping SPD, is_virtual_spd_end() and virtual net not allowed: %s", virtualwhy);
 						continue;
 					}
-					if (is_virtual_net_used(d, remote_client,
-								&d_spd->remote->host->id)) {
-						vdbg("skipping SPD, is_virtual_spd_end() and is_virtual_net_used()");
-						continue;
- 					}
 				} else {
 					vdbg("SPD has no is_virtual_spd_end()");
 					verbose.level++;

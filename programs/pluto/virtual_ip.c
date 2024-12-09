@@ -26,6 +26,7 @@
 #include "refcnt.h"
 #include "ip_info.h"
 #include "show.h"
+#include "kernel.h"		/* for .overlap_supported */
 
 #define F_VIRTUAL_NO		1	/* %no (subnet must be host/32) */
 #define F_VIRTUAL_PRIVATE	2	/* %priv (list held in private_net_{incl,excl} */
@@ -404,10 +405,11 @@ static bool net_in_list(const ip_subnet peer_net, const ip_subnet *list,
  * @param peers_addr Peers IP Address
  * @return err_t NULL if allowed, diagnostic otherwise
  */
-err_t check_virtual_net_allowed(const struct connection *c,
-				const ip_subnet peer_net,
-				const ip_address peers_addr,
-				struct verbose verbose)
+
+static err_t check_virtual_net_allowed(const struct connection *c,
+				       const ip_subnet peer_net,
+				       const ip_address peers_addr,
+				       struct verbose verbose)
 {
 	vdbg("virt: %s() spd %s/%s; config %s/%s",
 	     __func__,
@@ -466,6 +468,125 @@ err_t check_virtual_net_allowed(const struct connection *c,
 
 	/* ??? if why is NULL, this seems to be success-by-default.  Is that intended? */
 	return why;
+}
+
+/*
+ * With virtual addressing, we must not allow someone to use an
+ * already used (by another id) addr/net.
+ */
+
+static err_t is_virtual_net_used(const ip_selector remote_client,
+				 const struct id *peer_id,
+				 struct verbose verbose)
+{
+	vdbg("%s()", __func__);
+	verbose.level++;
+
+	struct connection_filter cq = {
+		.ike_version = IKEv1,
+		.search = {
+			.order = NEW2OLD,
+			.verbose = verbose,
+			.where = HERE,
+		},
+	};
+	while (next_connection(&cq)) {
+		struct verbose verbose = cq.search.verbose;
+
+		struct connection *d = cq.c;
+		switch (d->local->kind) {
+		case CK_PERMANENT:
+		case CK_TEMPLATE:
+		case CK_INSTANCE:
+
+			if (is_template(d) &&
+			    d->remote->config->child.selectors.len > 0) {
+				/*
+				 * For instance when the template''s
+				 * peer's protoport=udp/%any but
+				 * peers' subnet is not set.  The
+				 * peer's .client is constructed from
+				 * %any:udp/%any.
+				 *
+				 * Since this has to be narrowed, any
+				 * comparison is pointless.
+				 */
+				connection_buf dcb;
+				enum_buf kb;
+				vdbg("skipping %s "PRI_CONNECTION" as remote's %ssubnet is wild (not set)",
+				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
+				     pri_connection(d, &dcb),
+				     d->remote->config->leftright);
+				continue;
+			}
+
+			if (!selector_overlaps_selector(remote_client, d->spd->remote->client)) {
+				/*
+				 * For instance when REMOTE_CLIENT is IPv6
+				 * and remote .client is IPv4 (but can
+				 * be pretty much anything that
+				 * doesn't intersect).
+				 */
+				connection_buf dcb;
+				enum_buf kb;
+				vdbg("skipping %s "PRI_CONNECTION" as there is no overlap",
+				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
+				     pri_connection(d, &dcb));
+				continue;
+			}
+
+			if (same_id(&d->remote->host.id, peer_id)) {
+				/*
+				 * Assumed to be a replace?
+				 */
+				connection_buf dcb;
+				enum_buf kb;
+				id_buf idb;
+				vdbg("skipping %s "PRI_CONNECTION" as it has the same id: %s",
+				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
+				     pri_connection(d, &dcb),
+				     str_id(&d->remote->host.id, &idb));
+				continue;
+			}
+
+			connection_buf cbuf;
+			subnet_buf pcb, dcb;
+			llog(RC_LOG, verbose.logger,
+			     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
+			     str_selector_subnet(&remote_client, &pcb),
+			     str_selector_subnet(&d->spd->remote->client, &dcb),
+			     pri_connection(d, &cbuf),
+			     kernel_ops->interface_name);
+
+			return "Virtual IP overlap";
+
+		default:
+			break;
+		}
+	}
+
+	return NULL;
+}
+
+err_t is_virtual_net_allowed(const struct connection *d,
+			     const ip_selector remote_client,
+			     struct verbose verbose)
+{
+	vdbg("%s()", __func__);
+	verbose.level++;
+
+	err_t oops = check_virtual_net_allowed(d, selector_subnet(remote_client),
+					       d->remote->host.addr, verbose);
+	if (oops != NULL) {
+		return oops;
+	}
+
+	oops = is_virtual_net_used(remote_client, &d->remote->host.id, verbose);
+	if (oops != NULL) {
+		return oops;
+	}
+
+	return NULL;
 }
 
 static void show_virtual_private_kind(struct show *s,

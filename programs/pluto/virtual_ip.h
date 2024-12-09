@@ -40,10 +40,14 @@ bool is_virtual_spd_end(const struct spd_end *that, struct verbose verbose);
 bool is_virtual_remote(const struct connection *c, struct verbose verbose);
 
 extern bool is_virtual_vhost(const struct spd_end *that);
-extern err_t check_virtual_net_allowed(const struct connection *c,
-				       const ip_subnet peer_net,
-				       const ip_address peers_addr,
-				       struct verbose verbose);
+
+/*
+ * With virtual addressing, we must not allow someone to use an
+ * already used (by another id) addr/net.
+ */
+
+err_t is_virtual_net_allowed(const struct connection *d,
+			     const ip_selector remote_client,
+			     struct verbose verbose);
 
 #endif /* VIRTUAL_IP_H */
-
