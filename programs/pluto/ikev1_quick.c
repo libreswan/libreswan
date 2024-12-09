@@ -2219,9 +2219,10 @@ static struct connection *fc_try(const struct connection *c,
 			verbose.level++;
 
 			/*
-			 * Compare local selectors.  Note that the
-			 * ranges must exactly match - it's an IKEv1
-			 * thing (but why?!?).
+			 * Compare local selectors.
+			 *
+			 * Note that the ranges must exactly match -
+			 * it's an IKEv1 thing (but why?!?).
 			 */
 
 			if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
@@ -2245,6 +2246,16 @@ static struct connection *fc_try(const struct connection *c,
 			 *
 			 * Now things get weird.
 			 */
+
+			if (is_instance(d) || is_permanent(d)) {
+				if (!selector_range_eq_selector_range(*remote_client, d_spd->remote->client)) {
+					selector_buf s1, s2;
+					vdbg("skipping instance|permanent SPD, initiator's remote client range %s must match %s",
+					     str_selector(remote_client, &s2),
+					     str_selector(&d_spd->remote->client, &s1));
+					continue;
+				}
+			}
 
 			if (d_spd->remote->client.ipproto != remote_client->ipproto) {
 				vdbg("skipping SPD, remote protocol %d must match %d",
