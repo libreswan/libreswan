@@ -32,16 +32,15 @@
 
 const ip_range unset_range; /* all zeros */
 
-ip_range range_from_raw(where_t where,
-			const struct ip_info *afi,
-			const struct ip_bytes start,
-			const struct ip_bytes end)
+ip_range range_from_raw(where_t where, const struct ip_info *afi,
+			const struct ip_bytes lo,
+			const struct ip_bytes hi)
 {
 	ip_range r = {
 		.is_set = true,
 		.version = afi->ip_version,
-		.start = start,
-		.end = end,
+		.lo = lo,
+		.hi = hi,
 	};
 	pexpect_range(&r, where);
 	return r;
@@ -60,7 +59,7 @@ int range_prefix_len(const ip_range range)
 		return -1;
 	}
 
-	struct ip_bytes diff = ip_bytes_sub(afi, range.end, range.start);
+	struct ip_bytes diff = ip_bytes_sub(afi, range.hi, range.lo);
 	int fsb = ip_bytes_first_set_bit(afi, diff);
 	return fsb;
 }
@@ -73,7 +72,7 @@ int range_host_len(const ip_range range)
 		return -1;
 	}
 
-	struct ip_bytes diff = ip_bytes_sub(afi, range.end, range.start);
+	struct ip_bytes diff = ip_bytes_sub(afi, range.hi, range.lo);
 	int fsb = ip_bytes_first_set_bit(afi, diff);
 	return (afi->ip_size * 8) - fsb;
 }
@@ -90,14 +89,14 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	}
 
 	size_t s = 0;
-	s += afi->jam.address(buf, afi, &range->start);
+	s += afi->jam.address(buf, afi, &range->lo);
 	/* when a subnet, try to calculate the prefix-bits */
-	int prefix_bits = (range->is_subnet ? ip_bytes_prefix_len(afi, range->start, range->end) : -1);
+	int prefix_bits = (range->is_subnet ? ip_bytes_prefix_len(afi, range->lo, range->hi) : -1);
 	if (prefix_bits >= 0) {
 		s += jam(buf, "/%d", prefix_bits);
 	} else {
 		s += jam(buf, "-");
-		s += afi->jam.address(buf, afi, &range->end);
+		s += afi->jam.address(buf, afi, &range->hi);
 	}
 	return s;
 }
@@ -196,7 +195,7 @@ uintmax_t range_size(const ip_range range)
 		return 0;
 	}
 
-	struct ip_bytes diff_bytes = ip_bytes_sub(afi, range.end, range.start);
+	struct ip_bytes diff_bytes = ip_bytes_sub(afi, range.hi, range.lo);
 
 	/* more than uintmax_t-bits of host-prefix always overflows. */
 	unsigned prefix_bits = ip_bytes_first_set_bit(afi, diff_bytes);
@@ -240,10 +239,10 @@ bool range_eq_range(const ip_range l, const ip_range r)
 		return false;
 	}
 
-	return (ip_bytes_cmp(l.version, l.start,
-			     r.version, r.start) == 0 &&
-		ip_bytes_cmp(l.version, l.end,
-			     r.version, r.end) == 0);
+	return (ip_bytes_cmp(l.version, l.lo,
+			     r.version, r.lo) == 0 &&
+		ip_bytes_cmp(l.version, l.hi,
+			     r.version, r.hi) == 0);
 }
 
 bool address_in_range(const ip_address address, const ip_range range)
@@ -264,10 +263,10 @@ bool range_in_range(const ip_range inner, const ip_range outer)
 		return false;
 	}
 
-	return (ip_bytes_cmp(inner.version, inner.start,
-			     outer.version, outer.start) >= 0 &&
-		ip_bytes_cmp(inner.version, inner.end,
-			     outer.version, outer.end) <= 0);
+	return (ip_bytes_cmp(inner.version, inner.lo,
+			     outer.version, outer.lo) >= 0 &&
+		ip_bytes_cmp(inner.version, inner.hi,
+			     outer.version, outer.hi) <= 0);
 }
 
 ip_address range_start(const ip_range range)
@@ -277,7 +276,7 @@ ip_address range_start(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(HERE, afi, range.start);
+	return address_from_raw(HERE, afi, range.lo);
 }
 
 ip_address range_end(const ip_range range)
@@ -287,7 +286,7 @@ ip_address range_end(const ip_range range)
 		return unset_address;
 	}
 
-	return address_from_raw(HERE, afi, range.end);
+	return address_from_raw(HERE, afi, range.hi);
 }
 
 bool range_overlaps_range(const ip_range l, const ip_range r)
@@ -298,13 +297,13 @@ bool range_overlaps_range(const ip_range l, const ip_range r)
 	}
 
 	/* l before r */
-	if (ip_bytes_cmp(l.version, l.end,
-			 r.version, r.start) < 0) {
+	if (ip_bytes_cmp(l.version, l.hi,
+			 r.version, r.lo) < 0) {
 		return false;
 	}
 	/* l after r */
-	if (ip_bytes_cmp(l.version, l.start,
-			 r.version, r.end) > 0) {
+	if (ip_bytes_cmp(l.version, l.lo,
+			 r.version, r.hi) > 0) {
 		return false;
 	}
 
@@ -358,12 +357,12 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	 * matching leading bits of FROM and TO.  Trailing bits
 	 * (subnet address) must be either all 0 (from) or 1 (to).
 	 */
-	int prefix_bits = ip_bytes_prefix_len(afi, range.start, range.end);
+	int prefix_bits = ip_bytes_prefix_len(afi, range.lo, range.hi);
 	if (prefix_bits < 0) {
 		return "address range is not a subnet";
 	}
 
-	*dst = subnet_from_raw(HERE, afi, range.start, prefix_bits);
+	*dst = subnet_from_raw(HERE, afi, range.lo, prefix_bits);
 	return NULL;
 }
 
@@ -383,7 +382,7 @@ err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address
 		unsigned add = offset & 0xff;
 		offset >>= 8;
 		/* update */
-		unsigned val = range.start.byte[j] + add + carry;
+		unsigned val = range.lo.byte[j] + add + carry;
 		carry = val > 0xff;
 		sum.byte[j] = val; /* truncates */
 	}
@@ -422,7 +421,7 @@ err_t address_to_range_offset(const ip_range range, const ip_address address, ui
 		return "address out-of-bounds";
 	}
 
-	struct ip_bytes diff = ip_bytes_sub(afi, address.bytes, range.start);
+	struct ip_bytes diff = ip_bytes_sub(afi, address.bytes, range.lo);
 
 	*offset = raw_ntoh(diff.byte, afi->ip_size);
 
@@ -446,7 +445,7 @@ void pexpect_range(const ip_range *r, where_t where)
 
 	if (r->is_set == false ||
 	    r->version == 0 ||
-	    ip_bytes_cmp(r->version, r->start, r->version, r->end) > 0) {
+	    ip_bytes_cmp(r->version, r->lo, r->version, r->hi) > 0) {
 		llog_pexpect(&global_logger, where, "invalid range: "PRI_RANGE, pri_range(r));
 	}
 }

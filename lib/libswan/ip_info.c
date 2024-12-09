@@ -188,7 +188,7 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 
 		/* ip_range - .range.any matches grep */
 		.range.zero = { .is_set = true, .version = IPv4, },
-		.range.all = { .is_set = true, .version = IPv4, .end = IPv4_FF, },
+		.range.all = { .is_set = true, .version = IPv4, .hi = IPv4_FF, },
 
 		/* ip_selector - .selector.any matches grep */
 		.selector.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
@@ -248,7 +248,7 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 
 		/* ip_range - .range.any matches grep */
 		.range.zero = { .is_set = true, .version = IPv6, },
-		.range.all = { .is_set = true, .version = IPv6, .end = IPv6_FF, },
+		.range.all = { .is_set = true, .version = IPv6, .hi = IPv6_FF, },
 
 		/* ip_selector - .selector.any matches grep */
 		.selector.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */

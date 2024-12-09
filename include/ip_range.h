@@ -28,16 +28,16 @@ typedef struct {
 	bool is_set;
 	bool is_subnet; /* hint for jam_range */
 	enum ip_version version;
-	struct ip_bytes start;
-	struct ip_bytes end;
+	struct ip_bytes lo;
+	struct ip_bytes hi;
 } ip_range;
 
 #define PRI_RANGE "<range-%s:IPv%d["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>"
 #define pri_range(R)					\
 		((R)->is_set ? "set" : "unset"),	\
 		(R)->version,				\
-		pri_ip_bytes((R)->start),		\
-		pri_ip_bytes((R)->end)
+		pri_ip_bytes((R)->lo),			\
+		pri_ip_bytes((R)->hi)
 
 void pexpect_range(const ip_range *r, where_t where);
 #define prange(R) pexpect_range(R, HERE)

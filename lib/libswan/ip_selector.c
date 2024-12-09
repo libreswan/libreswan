@@ -383,7 +383,7 @@ ip_selector selector_from_range_protocol_port(const ip_range range,
 	}
 
 	return selector_from_raw(HERE, afi,
-				 range.start, range.end,
+				 range.lo, range.hi,
 				 protocol, port);
 }
 
