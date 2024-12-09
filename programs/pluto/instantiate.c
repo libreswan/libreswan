@@ -363,30 +363,40 @@ static struct connection *instantiate(struct connection *t,
 static void update_selectors(struct connection *d, struct verbose verbose)
 {
 	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 		PASSERT(d->logger, end->child.selectors.proposed.list == NULL);
 		PASSERT(d->logger, end->child.selectors.proposed.len == 0);
 		if (end->child.config->selectors.len > 0) {
-			vdbg("%s() %s selectors from %d child.selectors",
-			     __func__, leftright, end->child.config->selectors.len);
+			vdbg("%s selectors from %d child.selectors",
+			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
 		} else if (end->host.config->pool_ranges.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
+			 *
+			 * XXX: should this instead assign the
+			 * selectors to the range?
+			 *
+			 * XXX: if there are multiple address pools
+			 * for an IP address, what happens - this
+			 * doesn't add enough selectors.  Presumably
+			 * that isn't allowed.
 			 */
-			vdbg("%s() %s selectors formed from address pool",
-			     __func__, leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
+					vdbg("%s selectors formed from %s address pool",
+					     leftright, afi->ip_name);
 					append_end_selector(end, afi, afi->selector.all,
 							    d->logger, HERE);
 				}
 			}
 		} else {
-			vdbg("%s() %s.child selector formed from host address+protoport",
-			     __func__, leftright);
+			vdbg("%s selector formed from host address+protoport",
+			     leftright);
 			/*
 			 * Default the end's child selector (client) to a
 			 * subnet containing only the end's host address.
