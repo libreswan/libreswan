@@ -363,22 +363,21 @@ static struct connection *instantiate(struct connection *t,
 static void update_selectors(struct connection *d, struct verbose verbose)
 {
 	vdbg("%s() ...", __func__);
-	verbose.indent++;
-
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 		PASSERT(d->logger, end->child.selectors.proposed.list == NULL);
 		PASSERT(d->logger, end->child.selectors.proposed.len == 0);
 		if (end->child.config->selectors.len > 0) {
-			vdbg("%s child selectors from %d child.selectors",
-			     leftright, end->child.config->selectors.len);
+			vdbg("%s() %s selectors from %d child.selectors",
+			     __func__, leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
 		} else if (end->host.config->pool_ranges.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 */
-			vdbg("%s %s selectors formed from address pool", leftright);
+			vdbg("%s() %s selectors formed from address pool",
+			     __func__, leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
 					append_end_selector(end, afi, afi->selector.all,
@@ -386,8 +385,8 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 				}
 			}
 		} else {
-			vdbg("%s child selector formed from host address+protoport",
-			     leftright);
+			vdbg("%s() %s.child selector formed from host address+protoport",
+			     __func__, leftright);
 			/*
 			 * Default the end's child selector (client) to a
 			 * subnet containing only the end's host address.
@@ -508,9 +507,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where)
 {
-	address_buf pab;
-	VERBOSE_DBGP(DBG_BASE, t->logger, " peer_address=%s ...",
-		     str_address(&peer_addr, &pab));
+	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
 	vassert(!is_opportunistic(t));
 	vassert(!is_labeled(t));
 
