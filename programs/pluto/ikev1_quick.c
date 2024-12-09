@@ -2048,6 +2048,18 @@ static struct connection *fc_try(const struct connection *c,
 			continue;
 		}
 
+		if (is_virtual_remote(d, verbose)) {
+			/* non-NULL when rejected; saved for later */
+			virtualwhy = is_virtual_net_allowed(d, (*remote_client), verbose);
+			if (virtualwhy != NULL) {
+				vdbg("skipping virtual connection: %s",
+				     virtualwhy);
+				continue;
+			}
+			/* allow spd code to execute; should skip the
+			 * remote part */
+		}
+
 		/*
 		 * non-Opportunistic case: local_client must match.
 		 *
