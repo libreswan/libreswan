@@ -29,8 +29,9 @@
 enum kernel_mode {
 #define KERNEL_MODE_FLOOR 1
 	KERNEL_MODE_TRANSPORT = 1,
-	KERNEL_MODE_TUNNEL = 2,
-#define KERNEL_MODE_ROOF (KERNEL_MODE_TUNNEL+1)
+	KERNEL_MODE_TUNNEL,
+	KERNEL_MODE_IPTFS,
+#define KERNEL_MODE_ROOF (KERNEL_MODE_IPTFS+1)
 };
 
 extern const struct enum_names kernel_mode_names;

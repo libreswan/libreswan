@@ -406,6 +406,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		break;
 	}
 	case KERNEL_MODE_TUNNEL:
+	case KERNEL_MODE_IPTFS:
 		break;
 	}
 
