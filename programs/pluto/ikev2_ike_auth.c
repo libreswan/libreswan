@@ -94,6 +94,9 @@ static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *i
 
 static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
 
+static stf_status process_v2_IKE_AUTH_request_skip_cert_decode(struct ike_sa *ike,
+							       struct msg_digest *md);
+
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
 static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
@@ -496,14 +499,25 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
-	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
-	if (cert_payloads != NULL) {
-		submit_v2_cert_decode(ike, md, cert_payloads,
-				      process_v2_IKE_AUTH_request_post_cert_decode, HERE);
-		return STF_SUSPEND;
+	if (ike->sa.st_resuming) {
+		ldbg(ike->sa.logger, "skipping cert decode; ike session resume");
+		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
 	}
 
-	dbg("no certs to decode");
+	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
+	if (cert_payloads == NULL) {
+		ldbg(ike->sa.logger, "skipping cert decode; there are none");
+		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
+	}
+
+	submit_v2_cert_decode(ike, md, cert_payloads,
+			      process_v2_IKE_AUTH_request_post_cert_decode, HERE);
+	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_AUTH_request_skip_cert_decode(struct ike_sa *ike,
+							struct msg_digest *md)
+{
 	ike->sa.st_remote_certs.processed = true;
 	ike->sa.st_remote_certs.harmless = true;
 	return process_v2_IKE_AUTH_request_post_cert_decode(&ike->sa, md);
@@ -528,7 +542,11 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * The RFCs do discuss the idea of using this to refine the
 	 * connection.  Since the ID is available, why bother.
 	 */
-	process_v2CERTREQ_payload(ike, md);
+	if (ike->sa.st_resuming) {
+		ldbg(ike->sa.logger, "ignoring any CERTREQ payload; is session resume");
+	} else {
+		process_v2CERTREQ_payload(ike, md);
+	}
 
 	/*
 	 * This both decodes the initiator's ID and, when necessary,
