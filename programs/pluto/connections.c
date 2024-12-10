@@ -1352,7 +1352,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			}
 
 			const ip_range *pool_range = host_config->pool_ranges.ip[pool_afi->ip_index].list;
-			if (pool_afi == &ipv6_info && !pool_range->is_subnet) {
+			if (pool_afi == &ipv6_info && !range_is_cidr(*pool_range)) {
 				range_buf rb;
 				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
 					    leftright, src->addresspool,

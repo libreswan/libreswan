@@ -99,11 +99,11 @@ static void check_ttorange__to__str_range(void)
 		uintmax_t range_size;
 	} tests[] = {
 		/* single address */
-		{ LN, 4, "4.3.2.1", "4.3.2.1-4.3.2.1", 1, },
-		{ LN, 6, "::1", "::1-::1", 1, },
-		{ LN, 4, "4.3.2.1-4.3.2.1", "4.3.2.1-4.3.2.1", 1, },
-		{ LN, 6, "::1-::1", "::1-::1", 1, },
-		{ LN, 4, "4.3.2.1/32", "4.3.2.1-4.3.2.1", 1, },
+		{ LN, 4, "4.3.2.1", "4.3.2.1/32", 1, },
+		{ LN, 6, "::1", "::1/128", 1, },
+		{ LN, 4, "4.3.2.1-4.3.2.1", "4.3.2.1/32", 1, },
+		{ LN, 6, "::1-::1", "::1/128", 1, },
+		{ LN, 4, "4.3.2.1/32", "4.3.2.1/32", 1, },
 		{ LN, 6, "::2/128", "::2/128", 1, },
 		/* normal range */
 		{ LN, 6, "::1-::2", "::1-::2", 2, },
@@ -114,7 +114,7 @@ static void check_ttorange__to__str_range(void)
 		/* ok - largest - overflow - truncate */
 		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffd", "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffd", UINTMAX_MAX-1, },
 		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffe", "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:fffe", UINTMAX_MAX, },
-		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:ffff", "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "1:2:3:4::-1:2:3:4:ffff:ffff:ffff:ffff", "1:2:3:4::/64", UINTMAX_MAX, },
 		{ LN, 6, "1:2:3:4::-1:2:3:5:0000:0000:0000:0000", "1:2:3:4::-1:2:3:5::", UINTMAX_MAX, },
 
 		/* ok - largest - overflow - truncate */
@@ -136,13 +136,13 @@ static void check_ttorange__to__str_range(void)
 		{ LN, 6, "1:2:3:4:0:0:0:3-1:2:3:5::3", "1:2:3:4::3-1:2:3:5::3", UINTMAX_MAX, },
 
 		/* total overflow */
-		{ LN, 6, "8000::0-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "8000::0-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::/1", UINTMAX_MAX, },
 		{ LN, 6, "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "8000::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
-		{ LN, 6, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
+		{ LN, 6, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::/0", UINTMAX_MAX, },
 		{ LN, 6, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
 
 		/* allow mask */
-		{ LN, 4, "1.2.3.0/32", "1.2.3.0-1.2.3.0", 1, },
+		{ LN, 4, "1.2.3.0/32", "1.2.3.0/32", 1, },
 		{ LN, 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", 1, },
 		{ LN, 6, "2001:db8:0:9:1:2::/112", "2001:db8:0:9:1:2::/112", 65536, },
 		{ LN, 6, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", 1, },
@@ -162,10 +162,10 @@ static void check_ttorange__to__str_range(void)
 		{ LN, 4, "1.2.3.4-1.2.3.3", NULL, -1, },
 		{ LN, 6, "::2-::1", NULL, -1, },
 		/* can contain %any */
-		{ LN, 4, "0.0.0.0-0.0.0.0", "0.0.0.0-0.0.0.0", 1, },
-		{ LN, 4, "0.0.0.0-0.0.0.1", "0.0.0.0-0.0.0.1", 2, },
-		{ LN, 6, "::-::", "::-::", 1, },
-		{ LN, 6, "::-::1", "::-::1", 2, },
+		{ LN, 4, "0.0.0.0-0.0.0.0", "0.0.0.0/32", 1, },
+		{ LN, 4, "0.0.0.0-0.0.0.1", "0.0.0.0/31", 2, },
+		{ LN, 6, "::-::", "::/128", 1, },
+		{ LN, 6, "::-::1", "::/127", 2, },
 		{ LN, 6, "::/97", "::/97", ((uintmax_t)UINT32_MAX + 1) >> 1, },
 		{ LN, 6, "::0/64", "::/64", UINT64_MAX, },
 		{ LN, 6, "::0/127", "::/127", 2, },
@@ -298,10 +298,10 @@ static void check_range_is(void)
 	} tests[] = {
 		{ LN, 0, "", "",                "<unset-range>",   .is_unset = true, },
 
-		{ LN, 4, "0.0.0.0", "0.0.0.0",  "0.0.0.0-0.0.0.0", .is_zero = true, .size = 1, },
+		{ LN, 4, "0.0.0.0", "0.0.0.0",  "0.0.0.0/32", .is_zero = true, .size = 1, },
 		{ LN, 4, "0.0.0.1", "0.0.0.2",  "0.0.0.1-0.0.0.2", .size = 2, },
 
-		{ LN, 6, "::", "::",            "::-::",           .is_zero = true, .size = 1, },
+		{ LN, 6, "::", "::",            "::/128",           .is_zero = true, .size = 1, },
 		{ LN, 6, "::1", "::2",          "::1-::2",         .size = 2, },
 	};
 

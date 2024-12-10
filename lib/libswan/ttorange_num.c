@@ -84,7 +84,6 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 						    &keep_routing_prefix,
 						    &set_host_identifier,
 						    maskbits));
-		dst->is_subnet = (afi == &ipv6_info);
 		return NULL;
 	}
 	case '-':

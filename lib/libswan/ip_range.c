@@ -91,7 +91,7 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	size_t s = 0;
 	s += afi->jam.address(buf, afi, &range->lo);
 	/* when a subnet, try to calculate the prefix-bits */
-	int prefix_bits = (range->is_subnet ? ip_bytes_prefix_len(afi, range->lo, range->hi) : -1);
+	int prefix_bits = ip_bytes_prefix_len(afi, range->lo, range->hi);
 	if (prefix_bits >= 0) {
 		s += jam(buf, "/%d", prefix_bits);
 	} else {
@@ -186,6 +186,16 @@ bool range_is_all(const ip_range range)
 	}
 
 	return range_eq_range(range, afi->range.all);
+}
+
+bool range_is_cidr(ip_range range)
+{
+	const struct ip_info *afi = range_info(range);
+	if (afi == NULL) {
+		return false;
+	}
+
+	return ip_bytes_prefix_len(afi, range.lo, range.hi) >= 0;
 }
 
 uintmax_t range_size(const ip_range range)

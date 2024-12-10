@@ -146,10 +146,10 @@ static const struct range_test {
 } range_tests[] = {
 	{ LN, 0, NULL,                  "<unset-range>",     .is_unset = true, },
 	{ LN, 0, &unset_range,          "<unset-range>",     .is_unset = true, },
-	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0-0.0.0.0",   .is_zero = true, .size = 1, },
-	{ LN, 6, &ipv6_info.range.zero, "::-::",             .is_zero = true, .size = 1, },
-	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0-"IPv4_MAX,  .is_all = true,  .size = (uintmax_t)1<<32, },
-	{ LN, 6, &ipv6_info.range.all,  "::-"IPv6_MAX,       .is_all = true,  .size = UINTMAX_MAX, },
+	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0/32",   .is_zero = true, .size = 1, },
+	{ LN, 6, &ipv6_info.range.zero, "::/128",             .is_zero = true, .size = 1, },
+	{ LN, 4, &ipv4_info.range.all,  "0.0.0.0/0",  .is_all = true,  .size = (uintmax_t)1<<32, },
+	{ LN, 6, &ipv6_info.range.all,  "::/0",       .is_all = true,  .size = UINTMAX_MAX, },
 };
 
 static const struct selector_test {

@@ -26,7 +26,6 @@
 
 typedef struct {
 	bool is_set;
-	bool is_subnet; /* hint for jam_range */
 	enum ip_version version;
 	struct ip_bytes lo;
 	struct ip_bytes hi;
@@ -107,6 +106,7 @@ const struct ip_info *range_info(const ip_range r);
 
 bool range_is_zero(ip_range range);	/* ::-ffff... or 0.0.0.0-0.0.0.0 */
 bool range_is_all(const ip_range r);	/* ::-:: or 0.0.0.0-0.0.0.0 */
+bool range_is_cidr(ip_range r);		/* prefix/host=0..prefix/host=-1 */
 
 bool range_eq_address(const ip_range range, const ip_address address);
 bool range_eq_subnet(const ip_range range, const ip_subnet subnet);

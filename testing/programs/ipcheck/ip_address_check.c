@@ -520,7 +520,6 @@ static void check_addresses_to(void)
 		ip_range r;
 		range_buf rb;
 		oops = addresses_to_nonzero_range(lo, hi, &r);
-		r.is_subnet = true; /* maybe */
 		str_range(&r, &rb);
 
 		if (oops != NULL) {
