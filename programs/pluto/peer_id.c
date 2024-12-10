@@ -102,18 +102,23 @@ static bool idr_wildmatch(const struct host_end *this, const struct id *idr, str
 }
 
 /*
- * Extracts the peer's ca from the chained list of public keys.
+ * Given ID, find and return the CA that issued the pubkey in the
+ * PUBKEY_DB.
+ *
+ * XXX: why does this only look at pubkey_type_rsa?
  */
-static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
-			   const struct id *peer_id)
+static asn1_t get_ca(struct pubkey_list *const *pubkey_db,
+		     const struct id *id)
 {
 	struct pubkey_list *p;
 
 	for (p = *pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-		if (key->content.type == &pubkey_type_rsa && same_id(peer_id, &key->id))
+		if (key->content.type == &pubkey_type_rsa && same_id(id, &key->id)) {
 			return key->issuer;
+		}
 	}
+
 	return null_shunk;
 }
 
@@ -176,7 +181,7 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 struct score {
 	bool matching_peer_id;
 	int v1_requested_ca_pathlen;
-	int peer_pathlen;
+	int initiator_ca_pathlen;
 	int wildcards;
 	struct connection *connection;
 };
@@ -185,7 +190,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 				  lset_t proposed_authbys,
 				  const struct id *peer_id,
 				  const struct id *tarzan_id,
-				  asn1_t peer_ca,
+				  asn1_t initiator_ca,
 				  struct score *score,
 				  struct verbose verbose)
 {
@@ -451,32 +456,19 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 	/*
 	 * XXX: When there are no certificates at all
-	 * (PEER_CA and THAT.CA are NULL; REQUESTED_CA
+	 * (INITIATOR_CA and THAT.CA are NULL; REQUESTED_CA
 	 * is NULL), these lookups return TRUE and
 	 * *_pathlen==0 - a perfect match.
 	 */
-	bool matching_peer_ca = trusted_ca(peer_ca,
-					   ASN1(d->remote->host.config->ca),
-					   &score->peer_pathlen,
-					   verbose);
-
-	dbg_rhc("matching_peer_ca=%s(%d)",
-		bool_str(matching_peer_ca), score->peer_pathlen);
-	verbose.level++;
-
-	/*
-	 * Both matching_peer_ca and
-	 * matched_v1_requested_ca are required.
-	 *
-	 * XXX: Remember, when there are no
-	 * certificates, both are forced to TRUE.
-	 *
-	 * For IKEv2, MATCHED_V1_REQUESTED_CA is always true.
-	 */
-	if (!matching_peer_ca) {
-		dbg_rhc("skipping because !matching_peer_ca");
+	if (!trusted_ca(initiator_ca,
+			ASN1(d->remote->host.config->ca),
+			&score->initiator_ca_pathlen,
+			verbose)) {
+		dbg_rhc("skipping because trusted_ca() failed");
 		return false;
 	}
+
+	dbg_rhc("initiator_ca_pathlen=%d", score->initiator_ca_pathlen);
 
 	/*
 	 * Paul: We need to check all the other relevant policy bits,
@@ -500,7 +492,7 @@ static bool exact_id_match(struct score score)
 	return (score.connection != NULL &&
 		score.matching_peer_id &&
 		score.wildcards == 0 &&
-		score.peer_pathlen == 0 &&
+		score.initiator_ca_pathlen == 0 &&
 		score.v1_requested_ca_pathlen == 0 &&
 		(is_permanent(score.connection) ||
 		 is_instance(score.connection)));
@@ -523,14 +515,14 @@ static bool better_score(struct score best, struct score score, struct logger *l
 	/*
 	 * ??? the logic involving *_pathlen looks wrong.
 	 *
-	 * ??? which matters more peer_pathlen or v1_requested_ca_pathlen
+	 * ??? which matters more initiator_ca_pathlen or v1_requested_ca_pathlen
 	 * minimization?
 	 *
 	 * XXX: presumably peer as we're more worried about
 	 * authenticating the peer using the best match?
 	 */
-	if (score.peer_pathlen != best.peer_pathlen) {
-		return (score.peer_pathlen < best.peer_pathlen);
+	if (score.initiator_ca_pathlen != best.initiator_ca_pathlen) {
+		return (score.initiator_ca_pathlen < best.initiator_ca_pathlen);
 	}
 
 	if (score.v1_requested_ca_pathlen != best.v1_requested_ca_pathlen) {
@@ -578,9 +570,9 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	 * Find the PEER's CA, check the per-state DB first.
 	 */
 	PEXPECT(ike->sa.logger, ike->sa.st_remote_certs.processed);
-	asn1_t peer_ca = get_peer_ca(&ike->sa.st_remote_certs.pubkey_db, peer_id);
-	if (hunk_isempty(peer_ca)) {
-		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
+	asn1_t initiator_ca = get_ca(&ike->sa.st_remote_certs.pubkey_db, peer_id);
+	if (hunk_isempty(initiator_ca)) {
+		initiator_ca = get_ca(&pluto_pubkeys, peer_id);
 	}
 
 	/*
@@ -623,7 +615,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	struct score c_score = { .connection = c, };
 	if (score_host_connection(ike,
 				  proposed_authbys,
-				  peer_id, tarzan_id, peer_ca,
+				  peer_id, tarzan_id,
+				  initiator_ca,
 				  &c_score, verbose)) {
 		best = c_score;
 		if (exact_id_match(best)) {
@@ -669,7 +662,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			};
 			if (!score_host_connection(ike,
 						   proposed_authbys,
-						   peer_id, tarzan_id, peer_ca,
+						   peer_id, tarzan_id,
+						   initiator_ca,
 						   &score, verbose)) {
 				continue;
 			}
@@ -694,13 +688,13 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 * exact match doesn't come along.
 			 *
 			 * ??? the logic involving *_pathlen looks wrong.
-			 * ??? which matters more peer_pathlen or v1_requested_ca_pathlen minimization?
+			 * ??? which matters more initiator_ca_pathlen or v1_requested_ca_pathlen minimization?
 			 */
 			if (better_score(best, score, ike->sa.logger)) {
 				connection_buf cib;
-				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
+				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, initiator_ca_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
-					score.wildcards, score.peer_pathlen,
+					score.wildcards, score.initiator_ca_pathlen,
 					score.v1_requested_ca_pathlen);
 				best = score;
 			}
