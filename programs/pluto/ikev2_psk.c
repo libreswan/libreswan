@@ -73,7 +73,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	     __func__, ike->sa.st_state->name,
 	     str_enum_short(&perspective_names, perspective, &pb),
 	     str_enum(&keyword_auth_names, authby, &an),
-	     bool_str(ike->sa.st_resuming));
+	     bool_str(ike->sa.st_v2_resume_session != NULL));
 
 	/* this is the IKE_AUTH exchange, so a given */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
@@ -188,7 +188,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	 * IKE_SESSION_RESUME has its own idea of how to do crypto.
 	 */
 
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		/*
 		 * RFC 5723 6.2:
 		 * AUTH = prf(SK_px, <message octets>)
@@ -353,7 +353,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 		     "?"));
 		/* all methods log this string */
 		jam_string(buf, "authenticated peer ");
-		if (ike->sa.st_resuming) {
+		if (ike->sa.st_v2_resume_session != NULL) {
 			jam_string(buf, "using authby=session-resume");
 		} else {
 			/* what was in the AUTH payload */

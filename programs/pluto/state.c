@@ -956,6 +956,9 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_v2_ike_intermediate.initiator);
 	free_chunk_content(&st->st_v2_ike_intermediate.responder);
 
+	/* session resumption */
+	pfreeany(st->st_v2_resume_session);
+
 	/* if there's an IKEv1 backgroud md, release it */
 	if (st->st_v1_background_md != NULL) {
 		ldbg(st->logger, "releasing IKEv1 MD received during background task");

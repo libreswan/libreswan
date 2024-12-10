@@ -167,6 +167,11 @@ struct ticket {
 	} iv;
 	struct {
 		struct encrypted {
+			/*
+			 * Stuff to attach to the IKE_SA so that IKE_AUTH can finish
+			 * session resumption.
+			 */
+			struct resume_session resume;
 
 			so_serial_t sr_serialco;
 			realtime_t expiration;
@@ -188,14 +193,18 @@ struct ticket {
 			enum ikev2_trans_type_integ sr_integ;
 			enum ike_trans_type_dh sr_dh;
 			unsigned sr_enc_keylen;
-
-			enum keyword_auth sr_auth_method;
 		} state;
 		uint8_t tag[16];
 	} secured;
 };
 
 struct session {
+	/*
+	 * Stuff to attach to the IKE_SA so that IKE_AUTH can finish
+	 * session resumption.
+	 */
+	struct resume_session resume;
+
 	/*
 	 * Local IKE SA parameters used to re-animate the
 	 * initiating session-revival IKE SA.
@@ -210,8 +219,6 @@ struct session {
 	enum ikev2_trans_type_integ sr_integ;
 	enum ike_trans_type_dh sr_dh;
 	unsigned sr_enc_keylen;
-
-	enum keyword_auth sr_auth_method;
 
 	/*
 	 * Monotime that ticket will expire.
@@ -284,7 +291,7 @@ static bool ike_to_ticket(const struct ike_sa *ike,
 
 	ticket->secured.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
 
-	ticket->secured.state.sr_auth_method = ike->sa.st_connection->local->config->host.auth;
+	ticket->secured.state.resume.auth_method = ike->sa.st_connection->local->config->host.auth;
 
 	if (!cipher_context_op_aead(key->encrypt,
 				    THING_AS_CHUNK(ticket->iv),
@@ -465,6 +472,9 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 				    ticket.secured.state.sr_dh,
 				    ticket.secured.state.sr_enc_keylen);
 
+	/* save what is needed */
+	ike->sa.st_v2_resume_session = clone_thing(ticket.secured.state.resume, __func__);
+
 	return true;
 }
 
@@ -599,7 +609,7 @@ struct ike_sa *initiate_v2_IKE_SESSION_RESUME_request(struct connection *c,
 		return NULL;
 	}
 
-	ike->sa.st_resuming = true;
+	ike->sa.st_v2_resume_session = clone_thing(c->session->resume, __func__);
 
 	if (has_child_policy(policy)) {
 		struct connection *cc;
@@ -671,8 +681,6 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 	passert(ike->sa.st_state == &state_v2_UNSECURED_R);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 
-	ike->sa.st_resuming = true;
-
 	/* the transition requires this notify! */
 	if (PBAD(ike->sa.logger, md->pd[PD_v2N_TICKET_OPAQUE] == NULL)) {
 		/* already exploded */
@@ -684,6 +692,10 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 	if(!decrypt_ticket(pbs, ike)) {
 		/* already logged */
 		record_v2N_TICKET_NACK(ike, md);
+		return STF_FATAL;
+	}
+
+	if (PBAD(ike->sa.logger, ike->sa.st_v2_resume_session == NULL)) {
 		return STF_FATAL;
 	}
 
@@ -998,7 +1010,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 #undef ID
 	c->session->sr_enc_keylen = ike->sa.st_oakley.enckeylen;
 
-	c->session->sr_auth_method = c->remote->config->host.auth;
+	c->session->resume.auth_method = c->remote->config->host.auth;
 	return true;
 }
 

@@ -32,6 +32,10 @@ struct connection;
 struct prf_desc;
 struct payload_digest;
 
+struct resume_session {
+	enum keyword_auth auth_method;
+};
+
 void pfree_session(struct session **session);
 void jam_resume_ticket(struct jambuf *buf, const struct session *session);
 

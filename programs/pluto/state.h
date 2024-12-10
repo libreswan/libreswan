@@ -278,10 +278,11 @@ struct state {
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
 
-	bool st_resuming;		/* IKE SA is from Session
-					 * Resumption; IKE_AUTH uses
-					 * this to skip non resume
-					 * stuff. */
+	/*
+	 * IKE SA is from Session Resumption; IKE_AUTH uses this to
+	 * skip non resume stuff.
+	 */
+	struct resume_session *st_v2_resume_session;
 
 	/*
 	 * Digital Signature authentication.

@@ -117,7 +117,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 
 enum keyword_auth local_v2_auth(struct ike_sa *ike)
 {
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		return AUTH_PSK;
 	}
 

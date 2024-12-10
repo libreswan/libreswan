@@ -213,7 +213,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, never sending CERT payload");
 	} else if (ikev2_send_cert_decision(ike)) {
 		stf_status certstat = emit_v2CERT(ike->sa.st_connection, request.pbs);
@@ -223,7 +223,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send CERTREQ */
 
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, never sending CERTREQ payload");
 	} else if (need_v2CERTREQ_in_IKE_AUTH_request(ike)) {
 		dn_buf buf;
@@ -240,7 +240,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			  pc->remote->host.id.name.len != 0) ||
 			 pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
 
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, never sending IDr payload");
 	} else if (send_idr) {
 		ldbg(ike->sa.logger, "sending IDr");
@@ -498,7 +498,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	 */
 	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, skipping cert decode");
 		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
 	}
@@ -541,7 +541,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * The RFCs do discuss the idea of using this to refine the
 	 * connection.  Since the ID is available, why bother.
 	 */
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, skipping any CERTREQ payload");
 	} else {
 		process_v2CERTREQ_payload(ike, md);
@@ -710,7 +710,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process AUTH payload */
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth initiator_auth = (ike->sa.st_resuming ? AUTH_PSK :
+	enum keyword_auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
 					    c->remote->host.config->auth);
 	struct authby initiator_authby = c->remote->host.config->authby;
 	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
@@ -1003,7 +1003,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * upon which our received I2 CERTREQ is ignored,
 	 * but ultimately should go into the CERT decision
 	 */
-	if (ike->sa.st_resuming) {
+	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, never sending CERT payload");
 	} else if (ikev2_send_cert_decision(ike)) {
 		stf_status certstat = emit_v2CERT(ike->sa.st_connection, response.pbs);
@@ -1096,7 +1096,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth responder_auth = (ike->sa.st_resuming ? AUTH_PSK :
+	enum keyword_auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
 					    c->remote->host.config->auth);
 
 	passert(responder_auth != AUTH_NEVER && responder_auth != AUTH_UNSET);
