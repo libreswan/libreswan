@@ -62,13 +62,13 @@ bool ikev1_decode_peer_id_initiator(struct ike_sa *ike, struct msg_digest *md)
 bool ikev1_decode_peer_id_aggr_mode_responder(struct ike_sa *ike,
 					      struct msg_digest *md)
 {
-	struct id peer;
-	if (!decode_peer_id(ike, md, &peer)) {
+	struct id initiator_id;
+	if (!decode_peer_id(ike, md, &initiator_id)) {
 		/* already logged */
 		return false;
 	}
 
-	diag_t d = update_peer_id(ike,  &peer, NULL/*IKEv2:tarzan*/);
+	diag_t d = update_peer_id(ike,  &initiator_id, NULL/*IKEv2:tarzan*/);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -85,8 +85,8 @@ bool ikev1_decode_peer_id_aggr_mode_responder(struct ike_sa *ike,
 
 bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_digest *md)
 {
-	struct id peer_id; /* pointer hack */
-	if (!decode_peer_id(ike, md, &peer_id)) {
+	struct id initiator_id;
+	if (!decode_peer_id(ike, md, &initiator_id)) {
 		/* already logged */
 		return false;
 	}
@@ -148,10 +148,10 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 	 * This may change ike->sa.st_connection!
 	 * Our caller might be surprised!
 	 */
-	refine_host_connection_of_state_on_responder(ike, proposed_authbys, &peer_id,
+	refine_host_connection_of_state_on_responder(ike, proposed_authbys, &initiator_id,
 						     /* IKEv1 does not support 'you Tarzan, me Jane' */NULL);
 
-	diag_t d = update_peer_id(ike, &peer_id, NULL/*tarzan*/);
+	diag_t d = update_peer_id(ike, &initiator_id, NULL/*tarzan*/);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
