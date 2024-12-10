@@ -282,14 +282,14 @@ static bool score_host_connection(const struct ike_sa *ike,
 	}
 
 	/*
-	 * 'You Tarzan, me Jane' check based on
-	 * received IDr (remember, this is the
-	 * responder).
+	 * 'You Tarzan, me Jane' check based on received IDr
+	 * (remember, this is the responder being told our ID by the
+	 * initiator).
 	 */
-	if (responder_id != NULL) {
+	if (responder_id != NULL && responder_id->kind != ID_NONE) {
 		id_buf tzb;
 		esb_buf tzesb;
-		dbg_rhc("peer expects us to be %s (%s) according to its IDr payload",
+		dbg_rhc("peer expects us to be %s (%s) according to its IDr (tarzan) payload",
 			str_id(responder_id, &tzb),
 			str_enum(&ike_id_type_names, responder_id->kind, &tzesb));
 		id_buf usb;
@@ -299,11 +299,11 @@ static bool score_host_connection(const struct ike_sa *ike,
 			str_enum(&ike_id_type_names, d->local->host.id.kind, &usesb));
 		/* ??? pexpect(d->spd->spd_next == NULL); */
 		if (!idr_wildmatch(&d->local->host, responder_id, ike->sa.logger)) {
-			dbg_rhc("skipping because peer IDr payload does not match our expected ID");
+			dbg_rhc("skipping because peer IDr (tarzan) payload does not match our expected ID");
 			return false;
 		}
 	} else {
-		dbg_rhc("no IDr payload received from peer, skipping check");
+		dbg_rhc("no IDr (tarzan) payload received from peer, skipping check");
 	}
 
 	/*

@@ -60,63 +60,38 @@ static diag_t decode_v2ID(const char *peer, const struct payload_digest *const p
 	return NULL;
 }
 
-diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md,
-					   lset_t proposed_authbys)
+diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike, struct msg_digest *md,
+					    struct id *initiator_id,
+					    struct id *responder_id)
 {
 	/* c = ike->sa.st_connection; <- not yet known */
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
+	zero(initiator_id);
+	zero(responder_id);
 
 	const struct payload_digest *const IDi = md->chain[ISAKMP_NEXT_v2IDi];
 	if (IDi == NULL) {
 		return diag("authentication failed: initiator did not include IDi payload");
 	}
 
-	struct id initiator_id;
-	diag_t d = decode_v2ID("initiator", IDi, &initiator_id);
+	diag_t d = decode_v2ID("initiator", IDi, initiator_id);
 	if (d != NULL) {
 		return d;
 	}
 
 	/* You Tarzan, me Jane? */
-	struct id responder_id_val;	/* may be unset */
-	struct id *responder_id = NULL;	/* responder ID pointer (or NULL) */
 	const struct payload_digest *IDr = md->chain[ISAKMP_NEXT_v2IDr];
 	if (IDr != NULL) {
-		diag_t d = decode_v2ID("responder", IDr, &responder_id_val);
+		diag_t d = decode_v2ID("responder", IDr, responder_id);
 		if (d != NULL) {
 			return d;
 		}
-		responder_id = &responder_id_val;
 		id_buf idb;
 		ldbg(ike->sa.logger,
 		     "received IDr - our alleged ID '%s'", str_id(responder_id, &idb));
 	}
 
-	/*
-	 * IS_MOST_REFINED is subtle.
-	 *
-	 * IS_MOST_REFINED: the state's (possibly updated) connection
-	 * is known to be the best there is (best can include the
-	 * current connection).
-	 *
-	 * !IS_MOST_REFINED: is less specific.  For IKEv1, the search
-	 * didn't find a best; for IKEv2 it can additionally mean that
-	 * there was no search because the initiator proposed
-	 * AUTH_NULL.  AUTH_NULL never switches as it is assumed
-	 * that the perfect connection was chosen during IKE_SA_INIT.
-	 *
-	 * Either way, !IS_MOST_REFINED leads to a same_id() and other
-	 * checks.
-	 *
-	 * This may change st->st_connection!
-	 * Our caller might be surprised!
-	 */
-       if (!LHAS(proposed_authbys, AUTH_NULL)) {
-	       refine_host_connection_of_state_on_responder(ike, proposed_authbys,
-							    &initiator_id, responder_id);
-       }
-
-       return update_peer_id(ike, &initiator_id, responder_id);
+	return NULL;
 }
 
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)

@@ -21,10 +21,12 @@
 
 struct ike_sa;
 struct msg_digest;
+struct id;
 
-diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike,
-					   struct msg_digest *md,
-					   lset_t proposed_authbys) MUST_USE_RESULT;
+diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike, struct msg_digest *md,
+					    struct id *initiator_id,
+					    struct id *responder_id) MUST_USE_RESULT;
+
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md) MUST_USE_RESULT;
 
 #endif

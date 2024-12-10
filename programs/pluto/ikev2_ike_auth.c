@@ -588,7 +588,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * switch based on the contents of the CERTREQ.
 	 */
 
-	diag_t d = ikev2_responder_decode_initiator_id(ike, md, proposed_authbys);
+	struct id initiator_id, responder_id;
+	diag_t d = ikev2_responder_decode_v2ID_payloads(ike, md, &initiator_id, &responder_id);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -598,6 +599,51 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
 	}
+
+	/*
+	 * IS_MOST_REFINED is subtle.
+	 *
+	 * IS_MOST_REFINED: the state's (possibly updated) connection
+	 * is known to be the best there is (best can include the
+	 * current connection).
+	 *
+	 * !IS_MOST_REFINED: is less specific.  For IKEv1, the search
+	 * didn't find a best; for IKEv2 it can additionally mean that
+	 * there was no search because the initiator proposed
+	 * AUTH_NULL.  AUTH_NULL never switches as it is assumed
+	 * that the perfect connection was chosen during IKE_SA_INIT.
+	 *
+	 * Either way, !IS_MOST_REFINED leads to a same_id() and other
+	 * checks.
+	 *
+	 * This may change ike->sa.st_connection!
+	 *
+	 * We might be surprised!  Which is why C is only captured
+	 * _after_ this operation.
+	 */
+       if (!LHAS(proposed_authbys, AUTH_NULL)) {
+	       refine_host_connection_of_state_on_responder(ike, proposed_authbys,
+							    &initiator_id,
+							    &responder_id);
+       }
+
+       d = update_peer_id(ike, &initiator_id, &responder_id);
+       if (d != NULL) {
+		pfree_diag(&d);
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+       }
+
+	/*
+	 * This both decodes the initiator's ID and, when necessary,
+	 * switches connection based on that ID.
+	 *
+	 * Conceivably, in a multi-homed scenario, it could also
+	 * switch based on the contents of the CERTREQ.
+	 */
 
 	const struct connection *c = ike->sa.st_connection;
 	bool found_ppk = false;
