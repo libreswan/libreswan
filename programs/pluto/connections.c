@@ -1340,35 +1340,39 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
 		}
 
-		FOR_EACH_ELEMENT(pool_afi, ip_families) {
+		unsigned family[IP_INDEX_ROOF] = {0};
 
-			/* allow at most one */
-			switch (host_config->pool_ranges.ip[pool_afi->ip_index].len) {
-			case 0: continue;
-			case 1: break;
-			default:
+		FOR_EACH_ITEM(range, &host_config->pool_ranges) {
+
+			/* only allow one of each type */
+			const struct ip_info *afi = range_type(range);
+			if (family[afi->ip_index]++ > 0) {
 				return diag("%saddresspool=%s invalid, multiple %s ranges",
-					    leftright, src->addresspool, pool_afi->ip_name);
+					    leftright, src->addresspool, afi->ip_name);
 			}
 
-			const ip_range *pool_range = host_config->pool_ranges.ip[pool_afi->ip_index].list;
-			if (pool_afi == &ipv6_info && !range_is_cidr(*pool_range)) {
+			if (wm->ike_version == IKEv1 && afi == &ipv6_info) {
+				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
+					    leftright, src->addresspool);
+			}
+
+			if (afi == &ipv6_info && !range_is_cidr((*range))) {
 				range_buf rb;
 				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
 					    leftright, src->addresspool,
-					    str_range(pool_range, &rb));
+					    str_range(range, &rb));
 			}
 
 			/* Check for overlap with existing pools */
 			diag_t d;
 			struct addresspool *pool; /* ignore */
-			d = find_addresspool(*pool_range, &pool);
+			d = find_addresspool(*range, &pool);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);
 			}
 
-			d = install_addresspool(*pool_range, c, logger);
+			d = install_addresspool(*range, c, logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);
@@ -1749,6 +1753,8 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 {
 	/*
 	 * Fill in selectors.
+	 *
+	 * Identical to update_selectors()?
 	 */
 	FOR_EACH_ELEMENT(end, c->end) {
 		const char *leftright = end->config->leftright;
@@ -1765,13 +1771,12 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 */
-			ldbg(c->logger, "%s() %s selectors from unset address pool family",
-			     __func__, leftright);
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
-					append_end_selector(end, afi, afi->selector.all,
-							    c->logger, HERE);
-				}
+			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
+				const struct ip_info *afi = range_type(range);
+				ldbg(c->logger, "%s selectors formed from %s address pool",
+				     leftright, afi->ip_name);
+				append_end_selector(end, afi, afi->selector.all,
+						    c->logger, HERE);
 			}
 		} else if (address_is_specified(end->host.addr)) {
 			/*
@@ -3751,12 +3756,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 				}
 			}
 		} else if (pools->len > 0) {
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (pools->ip[afi->ip_index].len > 0) {
-					end_family[end][afi->ip_index].used = true;
-					end_family[end][afi->ip_index].field = "addresspool";
-					end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
-				}
+			FOR_EACH_ITEM(range, pools) {
+				const struct ip_info *afi = range_type(range);
+				/* only one for now */
+				passert(end_family[end][afi->ip_index].used == false);
+				end_family[end][afi->ip_index].used = true;
+				end_family[end][afi->ip_index].field = "addresspool";
+				end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
 			}
 		} else {
 			end_family[end][host_afi->ip_index].used = true;

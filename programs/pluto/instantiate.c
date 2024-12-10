@@ -386,13 +386,12 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 			 * doesn't add enough selectors.  Presumably
 			 * that isn't allowed.
 			 */
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
-					vdbg("%s selectors formed from %s address pool",
-					     leftright, afi->ip_name);
-					append_end_selector(end, afi, afi->selector.all,
-							    d->logger, HERE);
-				}
+			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
+				const struct ip_info *afi = range_type(range);
+				vdbg("%s selectors formed from %s address pool",
+				     leftright, afi->ip_name);
+				append_end_selector(end, afi, afi->selector.all,
+						    d->logger, HERE);
 			}
 		} else {
 			vdbg("%s selector formed from host address+protoport",
@@ -616,13 +615,12 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			 * Remember, IKEv1 only does IPv4 address
 			 * pool?!?
 			 */
-			vdbg("%s() %s selectors formed from address pool",
-			     __func__, leftright);
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
-					append_end_selector(end, afi, afi->selector.all,
-							    d->logger, HERE);
-				}
+			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
+				const struct ip_info *afi = range_type(range);
+				vdbg("%s selectors formed from %s address pool",
+				     leftright, afi->ip_name);
+				append_end_selector(end, afi, afi->selector.all,
+						    d->logger, HERE);
 			}
 			continue;
 		}

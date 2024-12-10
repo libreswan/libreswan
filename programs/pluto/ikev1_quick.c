@@ -1150,7 +1150,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		 *
 		 * XXX: IKEv1 only does IPv4.
 		 */
-		if (c->remote->config->host.pool_ranges.ip[IPv4_INDEX].len > 0) {
+		if (c->remote->config->host.pool_ranges.len > 0) {
 			err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
 						      &remote_client, ike->sa.logger);
 			if (e != NULL) {

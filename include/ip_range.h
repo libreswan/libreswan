@@ -59,10 +59,6 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst) MUST
 /* comma/space separated list */
 
 typedef struct {
-	struct {
-		unsigned len;
-		ip_range *list;
-	} ip[IP_INDEX_ROOF];
 	unsigned len;
 	ip_range *list;
 } ip_ranges;
