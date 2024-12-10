@@ -2061,6 +2061,32 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		/*
+		 * The SPD's selector should be set to the address
+		 * pool range, but isn't.  Instead ot is ANY so need
+		 * to do an explicit check here.
+		 *
+		 * The type of connection - template or instance
+		 * (can't be permanent) - really doesn't matter as in
+		 * both cases the address must fit.
+		 *
+		 * In xauth-pluto-26 there's a configured address pool
+		 * but then the XAUTH exchange replaces it with one
+		 * from a file.
+		 */
+		if (c->pool[IPv4_INDEX] != NULL) {
+			ip_range remote_range = selector_range(*remote_client);
+			ip_range pool_range = addresspool_range(c->pool[IPv4_INDEX]);
+			if (!range_in_range(remote_range, pool_range)) {
+				range_buf rb;
+				selector_buf cb;
+				vdbg("skipping connection with address pool %s, remote client %s is not in range",
+				     str_range(&pool_range, &rb),
+				     str_selector(remote_client, &cb));
+				continue;
+			}
+		}
+
+		/*
 		 * non-Opportunistic case: local_client must match.
 		 *
 		 * So must remote_client, but the testing is

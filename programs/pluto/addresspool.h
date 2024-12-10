@@ -40,6 +40,8 @@ extern err_t lease_that_address(struct connection *c, const char *xauth_username
 extern void free_that_address_lease(struct connection *c, const struct ip_info *afi,
 				    struct logger *logger);
 
+ip_range addresspool_range(struct addresspool *pool);
+
 extern void show_addresspool_status(struct show *s);
 
 #endif /* _ADDRESSPOOL_H */

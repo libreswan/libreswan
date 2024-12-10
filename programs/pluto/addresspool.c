@@ -206,6 +206,11 @@ struct addresspool {
 
 static struct addresspool *pluto_pools = NULL;
 
+ip_range addresspool_range(struct addresspool *pool)
+{
+	return pool->r;
+}
+
 static void free_lease_content(struct lease *lease)
 {
 	pfreeany(lease->reusable_name);
