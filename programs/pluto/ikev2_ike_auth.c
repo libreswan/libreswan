@@ -74,6 +74,7 @@
 #include "ikev2_states.h"
 #include "ikev2_ike_session_resume.h"
 #include "ikev2_notification.h"
+#include "peer_id.h"
 
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 
@@ -548,14 +549,46 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	}
 
 	/*
-	 * This both decodes the initiator's ID and, when necessary,
-	 * switches connection based on that ID.
+	 * Convert the proposed connections into something this
+	 * responder might accept.
+	 *
+	 * + DIGITAL_SIGNATURE code seems a bit dodgy, should this be
+	 * looking inside the auth proposal to see what is actually
+	 * required?
+	 *
+	 * + the legacy ECDSA_SHA2* methods also seem to be a bit
+	 * dodgy, shouldn't they also specify the SHA algorithm so
+	 * that can be matched?
+	 */
+
+	if (PBAD(ike->sa.logger, md->chain[ISAKMP_NEXT_v2AUTH] == NULL)) {
+		return STF_FATAL;
+	}
+
+	lset_t proposed_authbys;
+	if (ike->sa.st_v2_resume_session) {
+		proposed_authbys = LELEM(ike->sa.st_v2_resume_session->auth_method);
+	} else {
+		proposed_authbys = proposed_v2AUTH(ike, md);
+	}
+
+	if (proposed_authbys == LEMPTY) {
+		/* already logged */
+		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
+	/*
+	 * Decode the peer IDs ready for refining the connection.
 	 *
 	 * Conceivably, in a multi-homed scenario, it could also
 	 * switch based on the contents of the CERTREQ.
 	 */
 
-	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
+	diag_t d = ikev2_responder_decode_initiator_id(ike, md, proposed_authbys);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);

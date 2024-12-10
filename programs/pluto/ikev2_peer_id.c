@@ -61,7 +61,8 @@ static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const i
 	return NULL;
 }
 
-diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md)
+diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest *md,
+					   lset_t proposed_authbys)
 {
 	/* c = ike->sa.st_connection; <- not yet known */
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
@@ -88,48 +89,6 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 			id_buf idb;
 			dbg("received IDr - our alleged ID '%s'", str_id(tarzan_id, &idb));
 		}
-	}
-
-	/*
-	 * Convert the proposed connections into something this
-	 * responder might accept.
-	 *
-	 * + DIGITAL_SIGNATURE code seems a bit dodgy, should this be
-	 * looking inside the auth proposal to see what is actually
-	 * required?
-	 *
-	 * + the legacy ECDSA_SHA2* methods also seem to be a bit
-	 * dodgy, shouldn't they also specify the SHA algorithm so
-	 * that can be matched?
-	 */
-
-	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
-		return NULL; // Cannot refine without knowing peer ID
-	}
-	enum ikev2_auth_method atype =
-		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	enum keyword_auth proposed_authbys;
-	switch (atype) {
-	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
-		proposed_authbys = LELEM(AUTH_RSASIG);
-		break;
-	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		proposed_authbys = LELEM(AUTH_ECDSA);
-		break;
-	case IKEv2_AUTH_SHARED_KEY_MAC:
-		proposed_authbys = LELEM(AUTH_PSK);
-		break;
-	case IKEv2_AUTH_NULL:
-		proposed_authbys = LELEM(AUTH_NULL);
-		break;
-	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		proposed_authbys = LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA);
-		break;
-	default:
-		dbg("ikev2 skipping refine_host_connection due to unknown policy");
-		return NULL;
 	}
 
 	/*

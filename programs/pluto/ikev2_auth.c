@@ -995,3 +995,44 @@ struct crypt_mac v2_remote_id_hash(const struct ike_sa *ike,
 	crypt_prf_update_bytes(id_ctx, id_name, id_start, id_size);
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
+
+/*
+ * Convert the proposed connections into something this responder
+ * might accept.
+ *
+ * + DIGITAL_SIGNATURE code seems a bit dodgy, should this be looking
+ * inside the auth proposal to see what is actually required?
+ *
+ * + the legacy ECDSA_SHA2* methods also seem to be a bit dodgy,
+ * shouldn't they also specify the SHA algorithm so that can be
+ * matched?
+ */
+
+lset_t proposed_v2AUTH(struct ike_sa *ike,
+		       struct msg_digest *md)
+{
+	enum ikev2_auth_method atype =
+		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	switch (atype) {
+	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
+		return LELEM(AUTH_RSASIG);
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		return LELEM(AUTH_ECDSA);
+	case IKEv2_AUTH_SHARED_KEY_MAC:
+		return LELEM(AUTH_PSK);
+	case IKEv2_AUTH_NULL:
+		return LELEM(AUTH_NULL);
+	case IKEv2_AUTH_DIGITAL_SIGNATURE:
+		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA);
+	default:
+	{
+		name_buf nb;
+		llog(RC_LOG, ike->sa.logger, "auth method %s unrecognized",
+		     str_enum_short(&ikev2_auth_method_names,
+				    atype, &nb));
+		return LEMPTY;
+	}
+	}
+}
