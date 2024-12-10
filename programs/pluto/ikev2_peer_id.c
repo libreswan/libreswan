@@ -40,14 +40,13 @@
 #include "peer_id.h"
 #include "ikev2_certreq.h"
 
-static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const id_peer, struct id *peer_id)
+static diag_t decode_v2ID(const char *peer, const struct payload_digest *const pd, struct id *id)
 {
-	if (id_peer == NULL) {
-		return diag("authentication failed: %s did not include ID payload", peer);
+	if (pbad(pd == NULL)) {
+		return diag("INTERNAL ERROR");
 	}
 
-	diag_t d = unpack_peer_id(id_peer->payload.v2id.isai_type /* Peers Id Kind */,
-				  peer_id, &id_peer->pbs);
+	diag_t d = unpack_id(/*ID kind*/pd->payload.v2id.isai_type, id, &pd->pbs);
 	if (d != NULL) {
 		return diag_diag(&d, "authentication failed: %s ID payload invalid: ", peer);
 	}
@@ -55,8 +54,8 @@ static diag_t decode_v2_peer_id(const char *peer, struct payload_digest *const i
 	id_buf idb;
 	esb_buf esb;
 	dbg("%s ID is %s: '%s'", peer,
-	    str_enum(&ike_id_type_names, peer_id->kind, &esb),
-	    str_id(peer_id, &idb));
+	    str_enum(&ike_id_type_names, id->kind, &esb),
+	    str_id(id, &idb));
 
 	return NULL;
 }
@@ -66,28 +65,30 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	/* c = ike->sa.st_connection; <- not yet known */
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
 
-	struct id peer_id;
-	diag_t d = decode_v2_peer_id("initiator", md->chain[ISAKMP_NEXT_v2IDi], &peer_id);
+	const struct payload_digest *const IDi = md->chain[ISAKMP_NEXT_v2IDi];
+	if (IDi == NULL) {
+		return diag("authentication failed: initiator did not include IDi payload");
+	}
+
+	struct id initiator_id;
+	diag_t d = decode_v2ID("initiator", IDi, &initiator_id);
 	if (d != NULL) {
 		return d;
 	}
 
 	/* You Tarzan, me Jane? */
-	struct id tarzan_id_val;	/* may be unset */
-	struct id *tarzan_id = NULL;	/* tarzan ID pointer (or NULL) */
-	{
-		const struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
-
-		if (tarzan_pld != NULL) {
-			diag_t d = unpack_peer_id(tarzan_pld->payload.v2id.isai_type,
-						  &tarzan_id_val, &tarzan_pld->pbs);
-			if (d != NULL) {
-				return diag_diag(&d, "IDr payload extraction failed: ");
-			}
-			tarzan_id = &tarzan_id_val;
-			id_buf idb;
-			dbg("received IDr - our alleged ID '%s'", str_id(tarzan_id, &idb));
+	struct id responder_id_val;	/* may be unset */
+	struct id *responder_id = NULL;	/* responder ID pointer (or NULL) */
+	const struct payload_digest *IDr = md->chain[ISAKMP_NEXT_v2IDr];
+	if (IDr != NULL) {
+		diag_t d = decode_v2ID("responder", IDr, &responder_id_val);
+		if (d != NULL) {
+			return d;
 		}
+		responder_id = &responder_id_val;
+		id_buf idb;
+		ldbg(ike->sa.logger,
+		     "received IDr - our alleged ID '%s'", str_id(responder_id, &idb));
 	}
 
 	/*
@@ -153,23 +154,29 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 */
        if (!LHAS(proposed_authbys, AUTH_NULL)) {
 	       refine_host_connection_of_state_on_responder(ike, proposed_authbys,
-							    &peer_id, tarzan_id);
+							    &initiator_id, responder_id);
        }
 
-       return update_peer_id(ike, &peer_id, tarzan_id);
+       return update_peer_id(ike, &initiator_id, responder_id);
 }
 
 diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest *md)
 {
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 
+	const struct payload_digest *const IDr = md->chain[ISAKMP_NEXT_v2IDr];
+	if (IDr == NULL) {
+		return diag("authentication failed: responder did not include IDr payload");
+	}
+
 	struct id responder_id;
- 	diag_t d = decode_v2_peer_id("responder", md->chain[ISAKMP_NEXT_v2IDr], &responder_id);
+ 	diag_t d = decode_v2ID("responder", IDr, &responder_id);
 	if (d != NULL) {
 		return d;
 	}
 
 	/* start considering connection */
-	return update_peer_id(ike, &responder_id, NULL/*tarzan isn't interesting*/);
+	return update_peer_id(ike, &responder_id,
+			      NULL/*tarzan isn't interesting*/);
 
 }

@@ -202,7 +202,7 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
 		/* return false; */
 	}
 
-	diag_t d = unpack_peer_id(id->isaid_idtype, peer, &id_pld->pbs);
+	diag_t d = unpack_id(id->isaid_idtype, peer, &id_pld->pbs);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);

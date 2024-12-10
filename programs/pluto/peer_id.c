@@ -45,6 +45,7 @@
 #include "pluto_x509.h"
 #include "instantiate.h"
 #include "orient.h"		/* for oriented()! */
+#include "ip_info.h"
 
 /*
  * This is to support certificates with SAN using wildcard, eg SAN
@@ -889,4 +890,97 @@ bool compare_connection_id(const struct connection *c,
 	}
 
 	return true;
+}
+
+/*
+ * Decode the ID payload.
+ *
+ * IKEv2 uses this to decode both IDi and IDr.
+ *
+ * IKEv1 Phase 1 (main_inI3_outR3 and main_inR3) Clears *peer to avoid
+ * surprises.
+ *
+ * Note: what we discover may oblige Pluto to switch connections.  We
+ * must be called before SIG or HASH are decoded since we may change
+ * the peer's RSA key or ID.
+ */
+
+diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
+{
+	struct pbs_in in_pbs = *id_pbs; /* local copy */
+	shunk_t name = pbs_in_left(&in_pbs);
+
+	*peer = (struct id) {.kind = kind };	/* clears everything */
+
+	switch (kind) {
+
+	/* ident types mostly match between IKEv1 and IKEv2 */
+	case ID_IPV4_ADDR:
+		/* failure mode for initaddr is probably inappropriate address length */
+		return pbs_in_address(&in_pbs, &peer->ip_addr, &ipv4_info, "peer ID");
+
+	case ID_IPV6_ADDR:
+		/* failure mode for initaddr is probably inappropriate address length */
+		return pbs_in_address(&in_pbs, &peer->ip_addr, &ipv6_info, "peer ID");
+
+	/* seems odd to continue as ID_FQDN? */
+	case ID_USER_FQDN:
+#if 0
+		if (memchr(name.ptr, '@', name.len) == NULL) {
+			llog(RC_LOG, logger,
+				    "peer's ID_USER_FQDN contains no @: %.*s",
+				    (int) left, id_pbs->cur);
+			/* return false; */
+		}
+#endif
+		if (memchr(name.ptr, '\0', name.len) != NULL) {
+			esb_buf b;
+			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				    str_enum(&ike_id_type_names, kind, &b));
+		}
+		/* ??? ought to do some more sanity check, but what? */
+		peer->name = name;
+		break;
+
+	case ID_FQDN:
+		if (memchr(name.ptr, '\0', name.len) != NULL) {
+			esb_buf b;
+			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				    str_enum(&ike_id_type_names, kind, &b));
+		}
+		/* ??? ought to do some more sanity check, but what? */
+		peer->name = name;
+		break;
+
+	case ID_KEY_ID:
+		peer->name = name;
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk("KEY ID:", peer->name);
+		}
+		break;
+
+	case ID_DER_ASN1_DN:
+		peer->name = name;
+		if (DBGP(DBG_BASE)) {
+		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
+		}
+		break;
+
+	case ID_NULL:
+		if (name.len != 0) {
+			if (DBGP(DBG_BASE)) {
+				DBG_dump_hunk("unauthenticated NULL ID:", name);
+			}
+		}
+		break;
+
+	default:
+	{
+		esb_buf b;
+		return diag("Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
+			    str_enum(&ike_id_type_names, kind, &b));
+	}
+	}
+
+	return NULL;
 }

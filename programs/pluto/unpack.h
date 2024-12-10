@@ -27,8 +27,8 @@
  */
 
 
-#ifndef MESSAGE_H
-#define MESSAGE_H
+#ifndef UNPACK_H
+#define UNPACK_H
 
 #include "chunk.h"
 #include "diag.h"
@@ -43,8 +43,5 @@ bool unpack_KE(chunk_t *dest, const char *val_name,
 	       struct logger *logger);
 
 void unpack_nonce(chunk_t *n, chunk_t *nonce);
-
-diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs);
-
 
 #endif

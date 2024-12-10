@@ -44,4 +44,7 @@ bool compare_connection_id(const struct connection *c,
 			   struct connection_id_score *score,
 			   struct verbose verbose);
 
+diag_t unpack_id(enum ike_id_type kind, struct id *peer,
+		 const struct pbs_in *id_pbs);
+
 #endif
