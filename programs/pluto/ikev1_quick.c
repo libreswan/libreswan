@@ -2090,21 +2090,22 @@ static struct connection *fc_try(const struct connection *c,
 			/*
 			 * Compare local selectors.
 			 *
-			 * Note that the ranges must exactly match -
-			 * it's an IKEv1 thing (but why?!?).
+			 * In addition to the obvious (IN), need to
+			 * check that the ranges exactly match.  Why?
+			 * IKEv1 doesn't do narrowing, mostly.
 			 */
 
-			if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
+			if (!selector_in_selector(*local_client, d_spd->local->client)) {
 				selector_buf s1, s2;
-				vdbg("skipping SPD, initiator's local client range %s must match %s",
+				vdbg("skipping SPD, initiator's local client select %s must be within %s",
 				     str_selector(local_client, &s2),
 				     str_selector(&d_spd->local->client, &s1));
 				continue;
 			}
 
-			if (!selector_in_selector(*local_client, d_spd->local->client)) {
+			if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
 				selector_buf s1, s2;
-				vdbg("skipping SPD, initiator's local client select %s must be within %s",
+				vdbg("skipping SPD, initiator's local client range %s must match %s",
 				     str_selector(local_client, &s2),
 				     str_selector(&d_spd->local->client, &s1));
 				continue;
@@ -2116,6 +2117,14 @@ static struct connection *fc_try(const struct connection *c,
 			 * Now things get weird.
 			 */
 
+			if (!selector_in_selector(*remote_client, d_spd->remote->client)) {
+				selector_buf s1, s2;
+				vdbg("skipping SPD, initiator's remote client select %s must be within %s",
+				     str_selector(remote_client, &s2),
+				     str_selector(&d_spd->remote->client, &s1));
+				continue;
+			}
+
 			if (is_instance(d) || is_permanent(d)) {
 				if (!selector_range_eq_selector_range(*remote_client, d_spd->remote->client)) {
 					selector_buf s1, s2;
@@ -2124,21 +2133,6 @@ static struct connection *fc_try(const struct connection *c,
 					     str_selector(&d_spd->remote->client, &s1));
 					continue;
 				}
-			}
-
-			if (d_spd->remote->client.ipproto != remote_client->ipproto) {
-				vdbg("skipping SPD, remote protocol %d must match %d",
-				     d_spd->remote->client.ipproto,
-				     remote_client->ipproto);
-				continue;
-			}
-
-			if (!d->remote->config->child.protoport.has_port_wildcard &&
-			    d_spd->remote->client.hport != remote_client->hport) {
-				vdbg("skipping SPD, remote port %d does not match peer %d",
-				     d_spd->remote->client.hport,
-				     remote_client->hport);
-				continue;
 			}
 
 			unsigned level = verbose.level;
