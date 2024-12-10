@@ -1412,18 +1412,6 @@ static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
-	{ .story      = "processing IKE_AUTH request",
-	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
-	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
-	  .processor  = process_v2_IKE_AUTH_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_v2_REPLACE, },
-
 };
 
 static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
