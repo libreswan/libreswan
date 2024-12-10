@@ -33,6 +33,8 @@ struct prf_desc;
 struct payload_digest;
 
 struct resume_session {
+	char initiator_id[256];
+	char responder_id[256];
 	enum keyword_auth auth_method;
 };
 

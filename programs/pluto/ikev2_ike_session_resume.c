@@ -176,8 +176,6 @@ struct ticket {
 			so_serial_t sr_serialco;
 			realtime_t expiration;
 
-			id_buf sr_peer_id;
-
 			/* copy of sk_d_old */
 			struct {
 				uint8_t ptr[255];
@@ -210,7 +208,6 @@ struct session {
 	 * initiating session-revival IKE SA.
 	 */
 	co_serial_t sr_serialco;
-	id_buf peer_id;
 
 	PK11SymKey *sk_d_old;
 
@@ -257,9 +254,20 @@ void jam_resume_ticket(struct jambuf *buf, const struct session *session)
 	}
 }
 
-static bool ike_to_ticket(const struct ike_sa *ike,
-			  struct ticket *ticket,
-			  realtime_t expiration)
+static void set_resume_session(struct resume_session *session,
+			       const struct connection_end *initiator,
+			       const struct connection_end *responder)
+{
+	struct jambuf initiator_buf = ARRAY_AS_JAMBUF(session->initiator_id);
+	jam_id(&initiator_buf, &initiator->host.id);
+	struct jambuf responder_buf = ARRAY_AS_JAMBUF(session->responder_id);
+	jam_id(&responder_buf, &responder->host.id);
+	session->auth_method = initiator->host.config->auth;
+}
+
+static bool ike_responder_to_ticket(const struct ike_sa *ike,
+				    struct ticket *ticket,
+				    realtime_t expiration)
 {
 	zero(ticket);
 
@@ -271,7 +279,15 @@ static bool ike_to_ticket(const struct ike_sa *ike,
 	ticket->aad.magic = key->magic;
 
 	ticket->secured.state.sr_serialco = ike->sa.st_connection->serialno;
-	str_id(&ike->sa.st_connection->local->host.id, &ticket->secured.state.sr_peer_id);
+
+	/*
+	 * Remember, responder local/remote are rereversed for
+	 * initiator/responder.
+	 */
+	set_resume_session(&ticket->secured.state.resume,
+			   /*initiator*/ike->sa.st_connection->remote,
+			   /*responder*/ike->sa.st_connection->local);
+
 	ticket->secured.state.expiration = expiration;
 
 	/* old skeyseed */
@@ -352,7 +368,7 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 	};
 
 	struct ticket ticket;
-	if (!ike_to_ticket(ike, &ticket, expiration)) {
+	if (!ike_responder_to_ticket(ike, &ticket, expiration)) {
 		llog(RC_LOG, ike->sa.logger, "encryption failed");
 		return false;
 	}
@@ -996,7 +1012,11 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 	c->session->ticket = clone_hunk(ticket, __func__);
 
 	c->session->sr_serialco = c->serialno;
-	str_id(&c->local->host.id, &c->session->peer_id);
+
+	set_resume_session(&c->session->resume,
+			   /*initiator*/c->local,
+			   /*responder*/c->remote);
+
 	c->session->sk_d_old = symkey_addref(ike->sa.logger,
 					     "session.sk_d_old",
 					     ike->sa.st_skey_d_nss);
@@ -1009,8 +1029,6 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 	c->session->sr_integ = ID(ta_integ);
 #undef ID
 	c->session->sr_enc_keylen = ike->sa.st_oakley.enckeylen;
-
-	c->session->resume.auth_method = c->remote->config->host.auth;
 	return true;
 }
 
