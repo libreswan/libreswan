@@ -198,20 +198,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* actual data */
 
-	/* decide whether to send CERT payload */
-
-	bool send_cert = ikev2_send_cert_decision(ike);
-	bool send_idr = ((pc->remote->host.id.kind != ID_NULL && pc->remote->host.id.name.len != 0) ||
-				pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
-
-	if (impair.send_no_idr) {
-		llog_sa(RC_LOG, ike, "IMPAIR: omitting IDr payload");
-		send_idr = false;
-	}
-
-	dbg("IDr payload will %sbe sent", send_idr ? "" : "NOT ");
-
-	/* send out the IDi payload */
+	/* send out the IDi payload (always) */
 
 	{
 		struct pbs_out i_id_pbs;
@@ -226,7 +213,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 
-	if (!ike->sa.st_resuming && send_cert) {
+	if (ike->sa.st_resuming) {
+		ldbg(ike->sa.logger, "resuming, never sending CERT payload");
+	} else if (ikev2_send_cert_decision(ike)) {
 		stf_status certstat = emit_v2CERT(ike->sa.st_connection, request.pbs);
 		if (certstat != STF_OK)
 			return certstat;
@@ -234,17 +223,27 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send CERTREQ */
 
-	if (!ike->sa.st_resuming && need_v2CERTREQ_in_IKE_AUTH_request(ike)) {
-		if (DBGP(DBG_BASE)) {
-			dn_buf buf;
-			DBG_log("Sending [CERTREQ] of %s",
-				str_dn(ASN1(ike->sa.st_connection->remote->host.config->ca), &buf));
-		}
+	if (ike->sa.st_resuming) {
+		ldbg(ike->sa.logger, "resuming, never sending CERTREQ payload");
+	} else if (need_v2CERTREQ_in_IKE_AUTH_request(ike)) {
+		dn_buf buf;
+		ldbg(ike->sa.logger, "sending [CERTREQ] of %s",
+		     str_dn(ASN1(ike->sa.st_connection->remote->host.config->ca), &buf));
 		emit_v2CERTREQ(ike, request.pbs);
 	}
 
 	/* you Tarzan, me Jane support */
-	if (!ike->sa.st_resuming && send_idr) {
+
+	/* decide whether to send CERT payload */
+
+	bool send_idr = ((pc->remote->host.id.kind != ID_NULL &&
+			  pc->remote->host.id.name.len != 0) ||
+			 pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
+
+	if (ike->sa.st_resuming) {
+		ldbg(ike->sa.logger, "resuming, never sending IDr payload");
+	} else if (send_idr) {
+		ldbg(ike->sa.logger, "sending IDr");
 		switch (pc->remote->host.id.kind) {
 		case ID_DER_ASN1_DN:
 		case ID_FQDN:
@@ -268,8 +267,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		default:
 		{
 			esb_buf b;
-			dbg("Not sending IDr payload for remote ID type %s",
-			    str_enum(&ike_id_type_names, pc->remote->host.id.kind, &b));
+			ldbg(ike->sa.logger, "not sending IDr payload for remote ID type %s",
+			     str_enum(&ike_id_type_names, pc->remote->host.id.kind, &b));
 			break;
 		}
 		}
@@ -500,7 +499,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
 
 	if (ike->sa.st_resuming) {
-		ldbg(ike->sa.logger, "skipping cert decode; ike session resume");
+		ldbg(ike->sa.logger, "resuming, skipping cert decode");
 		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
 	}
 
@@ -543,7 +542,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * connection.  Since the ID is available, why bother.
 	 */
 	if (ike->sa.st_resuming) {
-		ldbg(ike->sa.logger, "ignoring any CERTREQ payload; is session resume");
+		ldbg(ike->sa.logger, "resuming, skipping any CERTREQ payload");
 	} else {
 		process_v2CERTREQ_payload(ike, md);
 	}
@@ -940,7 +939,6 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	}
 
 	/* decide to send CERT payload before we generate IDr */
-	bool send_cert = ikev2_send_cert_decision(ike);
 
 	/* send any NOTIFY payloads */
 	if (ike->sa.st_v2_mobike.enabled) {
@@ -1005,7 +1003,9 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * upon which our received I2 CERTREQ is ignored,
 	 * but ultimately should go into the CERT decision
 	 */
-	if (!ike->sa.st_resuming && send_cert) {
+	if (ike->sa.st_resuming) {
+		ldbg(ike->sa.logger, "resuming, never sending CERT payload");
+	} else if (ikev2_send_cert_decision(ike)) {
 		stf_status certstat = emit_v2CERT(ike->sa.st_connection, response.pbs);
 		if (certstat != STF_OK)
 			return certstat;
