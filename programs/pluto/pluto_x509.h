@@ -46,9 +46,9 @@ extern generalName_t *collect_rw_ca_candidates(ip_address local_address,
 extern void load_authcerts(const char *type, const char *path,
 			   uint8_t auth_flags);
 
-extern bool match_requested_ca(const generalName_t *requested_ca,
-			       chunk_t our_ca, int *our_pathlen,
-			       struct verbose verbose);
+extern bool match_v1_requested_ca(const struct ike_sa *ike,
+				  chunk_t our_ca, int *our_pathlen,
+				  struct verbose verbose);
 
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 			  const struct cert *end_cert, bool full_chain);

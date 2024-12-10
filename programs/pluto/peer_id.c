@@ -175,7 +175,7 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 
 struct score {
 	bool matching_peer_id;
-	int our_pathlen;
+	int v1_requested_ca_pathlen;
 	int peer_pathlen;
 	int wildcards;
 	struct connection *connection;
@@ -189,7 +189,6 @@ static bool score_host_connection(const struct ike_sa *ike,
 				  struct score *score,
 				  struct verbose verbose)
 {
-	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
 	struct connection *c = ike->sa.st_connection;
 	struct connection *d = score->connection;
 	PEXPECT(ike->sa.logger, oriented(d));
@@ -433,6 +432,24 @@ static bool score_host_connection(const struct ike_sa *ike,
 	}
 
 	/*
+	 * IKEv2 doesn't have v1_requested_ca so can be ignored.
+	 *
+	 * match_v1_requested_ca() succeeds when there's no
+	 * .st_v1_requested_ca to match.
+	 */
+	score->v1_requested_ca_pathlen = 0;
+	if (ike->sa.st_ike_version == IKEv1) {
+		if (!match_v1_requested_ca(ike, d->local->host.config->ca,
+					   &score->v1_requested_ca_pathlen,
+					   verbose)) {
+			dbg_rhc("skipping because match_v1_requested_ca() failed");
+			return false;
+		}
+
+		dbg_rhc("v1_requested_ca_pathlen=%d", score->v1_requested_ca_pathlen);
+	}
+
+	/*
 	 * XXX: When there are no certificates at all
 	 * (PEER_CA and THAT.CA are NULL; REQUESTED_CA
 	 * is NULL), these lookups return TRUE and
@@ -442,24 +459,22 @@ static bool score_host_connection(const struct ike_sa *ike,
 					   ASN1(d->remote->host.config->ca),
 					   &score->peer_pathlen,
 					   verbose);
-	bool matching_requested_ca = match_requested_ca(requested_ca,
-							d->local->host.config->ca,
-							&score->our_pathlen,
-							verbose);
-	dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
-		bool_str(matching_peer_ca), score->peer_pathlen,
-		bool_str(matching_requested_ca), score->our_pathlen);
+
+	dbg_rhc("matching_peer_ca=%s(%d)",
+		bool_str(matching_peer_ca), score->peer_pathlen);
 	verbose.level++;
 
 	/*
 	 * Both matching_peer_ca and
-	 * matching_requested_ca are required.
+	 * matched_v1_requested_ca are required.
 	 *
 	 * XXX: Remember, when there are no
 	 * certificates, both are forced to TRUE.
+	 *
+	 * For IKEv2, MATCHED_V1_REQUESTED_CA is always true.
 	 */
-	if (!matching_peer_ca || !matching_requested_ca) {
-		dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
+	if (!matching_peer_ca) {
+		dbg_rhc("skipping because !matching_peer_ca");
 		return false;
 	}
 
@@ -486,7 +501,7 @@ static bool exact_id_match(struct score score)
 		score.matching_peer_id &&
 		score.wildcards == 0 &&
 		score.peer_pathlen == 0 &&
-		score.our_pathlen == 0 &&
+		score.v1_requested_ca_pathlen == 0 &&
 		(is_permanent(score.connection) ||
 		 is_instance(score.connection)));
 }
@@ -508,7 +523,7 @@ static bool better_score(struct score best, struct score score, struct logger *l
 	/*
 	 * ??? the logic involving *_pathlen looks wrong.
 	 *
-	 * ??? which matters more peer_pathlen or our_pathlen
+	 * ??? which matters more peer_pathlen or v1_requested_ca_pathlen
 	 * minimization?
 	 *
 	 * XXX: presumably peer as we're more worried about
@@ -518,8 +533,8 @@ static bool better_score(struct score best, struct score score, struct logger *l
 		return (score.peer_pathlen < best.peer_pathlen);
 	}
 
-	if (score.our_pathlen != best.our_pathlen) {
-		return (score.our_pathlen < best.our_pathlen);
+	if (score.v1_requested_ca_pathlen != best.v1_requested_ca_pathlen) {
+		return (score.v1_requested_ca_pathlen < best.v1_requested_ca_pathlen);
 	}
 
 	/*
@@ -679,14 +694,14 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 * exact match doesn't come along.
 			 *
 			 * ??? the logic involving *_pathlen looks wrong.
-			 * ??? which matters more peer_pathlen or our_pathlen minimization?
+			 * ??? which matters more peer_pathlen or v1_requested_ca_pathlen minimization?
 			 */
 			if (better_score(best, score, ike->sa.logger)) {
 				connection_buf cib;
 				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
 					score.wildcards, score.peer_pathlen,
-					score.our_pathlen);
+					score.v1_requested_ca_pathlen);
 				best = score;
 			}
 		}
