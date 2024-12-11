@@ -32,8 +32,14 @@ struct connection;
 struct prf_desc;
 struct payload_digest;
 struct resume_session;
+struct id;
 
 enum keyword_auth resume_session_auth(const struct resume_session *session);
+
+bool verify_resume_session_id(const struct resume_session *session,
+			      const struct id *initiator_id,
+			      const struct id *responder_id,
+			      struct logger *logger);
 
 void pfree_session(struct session **session);
 void jam_resume_ticket(struct jambuf *buf, const struct session *session);

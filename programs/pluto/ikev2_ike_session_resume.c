@@ -168,6 +168,45 @@ enum keyword_auth resume_session_auth(const struct resume_session *session)
 	return session->auth_method;
 }
 
+
+/*
+ * IKE_SESSION_RESUME 4.3.3.  IKE_AUTH Exchange:
+ *
+ *   The IDi value sent in the IKE_AUTH exchange MUST be identical to
+ *   the value included in the ticket.  A CERT payload MUST NOT be
+ *   included in this exchange, and therefore a new IDr value cannot
+ *   be negotiated (since it would not be authenticated).  As a
+ *   result, the IDr value sent (by the gateway, and optionally by the
+ *   client) in this exchange MUST also be identical to the value
+ *   included in the ticket.
+ */
+
+bool verify_resume_session_id(const struct resume_session *session,
+			      const struct id *initiator_id,
+			      const struct id *responder_id,
+			      struct logger *logger)
+{
+	id_buf idb; /*idb.buf[] always set */
+
+	/* IDi must match */
+	if (!streq(str_id(initiator_id, &idb), session->initiator_id)) {
+		llog(RC_LOG, logger, "initiator ID '%s' does not match session resume ID '%s'",
+		     idb.buf, session->initiator_id);
+		return false;
+	}
+
+	/* IDr, when present, must match */
+	if (responder_id->kind != ID_NONE) {
+		if (!streq(str_id(responder_id, &idb), session->responder_id)) {
+			llog(RC_LOG, logger, "responder ID '%s' does not match session resume ID '%s'",
+			     idb.buf, session->responder_id);
+			return false;
+		}
+	}
+
+	return true;
+}
+
 struct ticket {
 	struct {
 		unsigned magic;
