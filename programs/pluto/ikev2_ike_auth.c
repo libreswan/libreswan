@@ -203,13 +203,18 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	{
 		struct pbs_out i_id_pbs;
-		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_i_desc,
-				request.pbs,
-				&i_id_pbs) ||
-		    !out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
+		if (!pbs_out_struct(request.pbs, &ikev2_id_i_desc,
+				    &ike->sa.st_v2_id_payload.header,
+				    sizeof(ike->sa.st_v2_id_payload.header),
+				    &i_id_pbs)) {
 			return STF_INTERNAL_ERROR;
-		close_output_pbs(&i_id_pbs);
+		}
+		if (!pbs_out_hunk(&i_id_pbs, ike->sa.st_v2_id_payload.data, "my identity")) {
+			return STF_INTERNAL_ERROR;
+		}
+		if (!close_pbs_out(&i_id_pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
@@ -241,9 +246,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			  pc->remote->host.id.name.len != 0) ||
 			 pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
 
-	if (ike->sa.st_v2_resume_session != NULL) {
-		ldbg(ike->sa.logger, "resuming, never sending IDr payload");
-	} else if (send_idr) {
+	if (send_idr) {
 		ldbg(ike->sa.logger, "sending IDr");
 		switch (pc->remote->host.id.kind) {
 		case ID_DER_ASN1_DN:
@@ -257,12 +260,17 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 				build_v2_id_payload(&pc->remote->host, &id_b,
 						    "their IDr", ike->sa.logger);
 			struct pbs_out r_id_pbs;
-			if (!out_struct(&r_id, &ikev2_id_r_desc, request.pbs,
-				&r_id_pbs) ||
-			    !out_hunk(id_b, &r_id_pbs, "their IDr"))
+			if (!pbs_out_struct(request.pbs, &ikev2_id_r_desc,
+					    &r_id, sizeof(r_id),
+					    &r_id_pbs)) {
 				return STF_INTERNAL_ERROR;
-
-			close_output_pbs(&r_id_pbs);
+			}
+			if (!pbs_out_hunk(&r_id_pbs, id_b, "their IDr")) {
+				return STF_INTERNAL_ERROR;
+			}
+			if (!close_pbs_out(&r_id_pbs)) {
+				return STF_INTERNAL_ERROR;
+			}
 			break;
 		}
 		default:
@@ -567,7 +575,13 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	lset_t proposed_authbys;
 	if (ike->sa.st_v2_resume_session) {
-		proposed_authbys = LELEM(ike->sa.st_v2_resume_session->auth_method);
+		enum keyword_auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
+		name_buf rn, an;
+		ldbg(ike->sa.logger, "resuming, ignoring v2AUTH method %s, using %s",
+		     str_enum_short(&ikev2_auth_method_names,
+				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
+		     str_enum_short(&keyword_auth_names, auth, &rn));
+		proposed_authbys = LELEM(auth);
 	} else {
 		proposed_authbys = proposed_v2AUTH(ike, md);
 	}
@@ -598,6 +612,32 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
 				    ENCRYPTED_PAYLOAD);
 		return STF_FATAL;
+	}
+
+	/*
+	 * IKE_SESSION_RESUME 4.3.3.  IKE_AUTH Exchange:
+	 *
+	 *   The IDi value sent in the IKE_AUTH exchange MUST be
+	 *   identical to the value included in the ticket.  A CERT
+	 *   payload MUST NOT be included in this exchange, and
+	 *   therefore a new IDr value cannot be negotiated (since it
+	 *   would not be authenticated).  As a result, the IDr value
+	 *   sent (by the gateway, and optionally by the client) in
+	 *   this exchange MUST also be identical to the value
+	 *   included in the ticket.
+	 */
+
+	if (ike->sa.st_v2_resume_session != NULL) {
+		if (!verify_resume_session_id(ike->sa.st_v2_resume_session,
+					      &initiator_id, &responder_id,
+					      ike->sa.logger)) {
+			/* already logged */
+			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+			record_v2N_response(ike->sa.logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		}
 	}
 
 	/*

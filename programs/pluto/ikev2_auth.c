@@ -1013,6 +1013,10 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 {
 	enum ikev2_auth_method atype =
 		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	name_buf nb;
+	ldbg(ike->sa.logger, "converting v2AUTH %s into authbys set",
+	     str_enum_short(&ikev2_auth_method_names, atype, &nb));
+
 	switch (atype) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
 		return LELEM(AUTH_RSASIG);
