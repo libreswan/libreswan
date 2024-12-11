@@ -1,3 +1,6 @@
-Dump all enum_name tables.
+verify all enum values
 
-This provides a simple way of spotting unintended enum changes.
+(by dumping all enum_name tables)
+
+This provides a simple way of spotting unintended enum changes.  For
+instance, unintentionally changing an IETF constant.

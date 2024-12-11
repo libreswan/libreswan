@@ -3960,7 +3960,7 @@ name for -1 present (should be absent)
          jam_enum_short 44: IKE_FOLLOWUP_KE OK
          jam_enum_human 44: ike-followup-ke OK
          match IKE_FOLLOWUP_KE [short]: OK
-  kernel_mode_names: [1..3)
+  kernel_mode_names: [1..4)
     1 -> KERNEL_MODE_TRANSPORT
          jam_enum 1: KERNEL_MODE_TRANSPORT OK
          search KERNEL_MODE_TRANSPORT: OK
@@ -3977,7 +3977,15 @@ name for -1 present (should be absent)
          jam_enum_short 2: TUNNEL OK
          jam_enum_human 2: tunnel OK
          match TUNNEL [short]: OK
-  kernel_mode_stories: [1..3)
+    3 -> KERNEL_MODE_IPTFS
+         jam_enum 3: KERNEL_MODE_IPTFS OK
+         search KERNEL_MODE_IPTFS: OK
+         match KERNEL_MODE_IPTFS: OK
+         short_name 3: IPTFS OK
+         jam_enum_short 3: IPTFS OK
+         jam_enum_human 3: iptfs OK
+         match IPTFS [short]: OK
+  kernel_mode_stories: [1..4)
     1 -> Transport Mode
          jam_enum 1: Transport Mode OK
          search Transport Mode: OK
@@ -3992,6 +4000,13 @@ name for -1 present (should be absent)
          short_name 2: Tunnel Mode OK
          jam_enum_short 2: Tunnel Mode OK
          jam_enum_human 2: tunnel mode OK
+    3 -> IP-TFS Mode
+         jam_enum 3: IP-TFS Mode OK
+         search IP-TFS Mode: OK
+         match IP-TFS Mode: OK
+         short_name 3: IP-TFS Mode OK
+         jam_enum_short 3: IP-TFS Mode OK
+         jam_enum_human 3: ip-tfs mode OK
   keyword_auth_names: [0..7)
     0 -> unset
          jam_enum 0: unset OK
