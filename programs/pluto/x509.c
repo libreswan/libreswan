@@ -103,9 +103,11 @@ static const char *dntoasi(dn_buf *dst, SECItem si)
 /*
  * does our CA match one of the requested CAs?
  */
-bool match_requested_ca(const generalName_t *requested_ca, chunk_t our_ca,
-			int *our_pathlen, struct verbose verbose)
+bool match_v1_requested_ca(const struct ike_sa *ike, chunk_t our_ca,
+			   int *our_pathlen, struct verbose verbose)
 {
+	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
+
 	/* if no ca is requested than any ca will match */
 	if (requested_ca == NULL) {
 		*our_pathlen = 0;

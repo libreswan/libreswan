@@ -25,12 +25,12 @@ struct ike_sa;
 
 bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  lset_t proposed_authbys,
-						  const struct id *peer_id,
-						  const struct id *tarzan_id);
+						  const struct id *initiator_id,
+						  const struct id *responder_id/*could-be-null*/);
 
 diag_t update_peer_id(struct ike_sa *ike,
-		      const struct id *peer_id,
-		      const struct id *tarzan_id);
+		      const struct id *initiator_id,
+		      const struct id *responder_id/*could-be-null*/);
 
 diag_t update_peer_id_certs(struct ike_sa *ike);
 
@@ -43,5 +43,8 @@ bool compare_connection_id(const struct connection *c,
 			   const struct connection *d,
 			   struct connection_id_score *score,
 			   struct verbose verbose);
+
+diag_t unpack_id(enum ike_id_type kind, struct id *peer,
+		 const struct pbs_in *id_pbs);
 
 #endif

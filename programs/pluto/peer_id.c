@@ -45,6 +45,7 @@
 #include "pluto_x509.h"
 #include "instantiate.h"
 #include "orient.h"		/* for oriented()! */
+#include "ip_info.h"
 
 /*
  * This is to support certificates with SAN using wildcard, eg SAN
@@ -101,18 +102,23 @@ static bool idr_wildmatch(const struct host_end *this, const struct id *idr, str
 }
 
 /*
- * Extracts the peer's ca from the chained list of public keys.
+ * Given ID, find and return the CA that issued the pubkey in the
+ * PUBKEY_DB.
+ *
+ * XXX: why does this only look at pubkey_type_rsa?
  */
-static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
-			   const struct id *peer_id)
+static asn1_t get_ca(struct pubkey_list *const *pubkey_db,
+		     const struct id *id)
 {
 	struct pubkey_list *p;
 
 	for (p = *pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-		if (key->content.type == &pubkey_type_rsa && same_id(peer_id, &key->id))
+		if (key->content.type == &pubkey_type_rsa && same_id(id, &key->id)) {
 			return key->issuer;
+		}
 	}
+
 	return null_shunk;
 }
 
@@ -173,22 +179,21 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 #define dbg_rhc(FORMAT, ...) pdbg(verbose.logger, "rhc:%*s "FORMAT, verbose.level*2, "", ##__VA_ARGS__)
 
 struct score {
-	bool matching_peer_id;
-	int our_pathlen;
-	int peer_pathlen;
+	bool initiator_id_matched;
+	int v1_requested_ca_pathlen;
+	int initiator_ca_pathlen;
 	int wildcards;
 	struct connection *connection;
 };
 
 static bool score_host_connection(const struct ike_sa *ike,
 				  lset_t proposed_authbys,
-				  const struct id *peer_id,
-				  const struct id *tarzan_id,
-				  asn1_t peer_ca,
+				  const struct id *initiator_id,/*IDi*/
+				  const struct id *responder_id,/*IDr*/
+				  asn1_t initiator_ca,
 				  struct score *score,
 				  struct verbose verbose)
 {
-	const generalName_t *requested_ca = ike->sa.st_v1_requested_ca;
 	struct connection *c = ike->sa.st_connection;
 	struct connection *d = score->connection;
 	PEXPECT(ike->sa.logger, oriented(d));
@@ -281,24 +286,24 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 * received IDr (remember, this is the
 	 * responder).
 	 */
-	if (tarzan_id != NULL) {
+	if (responder_id != NULL) {
 		id_buf tzb;
 		esb_buf tzesb;
 		dbg_rhc("peer expects us to be %s (%s) according to its IDr payload",
-			str_id(tarzan_id, &tzb),
-			str_enum(&ike_id_type_names, tarzan_id->kind, &tzesb));
+			str_id(responder_id, &tzb),
+			str_enum(&ike_id_type_names, responder_id->kind, &tzesb));
 		id_buf usb;
 		esb_buf usesb;
 		dbg_rhc("this connection's local id is %s (%s)",
 			str_id(&d->local->host.id, &usb),
 			str_enum(&ike_id_type_names, d->local->host.id.kind, &usesb));
 		/* ??? pexpect(d->spd->spd_next == NULL); */
-		if (!idr_wildmatch(&d->local->host, tarzan_id, ike->sa.logger)) {
+		if (!idr_wildmatch(&d->local->host, responder_id, ike->sa.logger)) {
 			dbg_rhc("skipping because peer IDr payload does not match our expected ID");
 			return false;
 		}
 	} else {
-		dbg_rhc("no IDr payload received from peer");
+		dbg_rhc("no IDr payload received from peer, skipping check");
 	}
 
 	/*
@@ -410,57 +415,60 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 * were used.
 	 */
 
-	score->matching_peer_id = match_id(peer_id,
-					   &d->remote->host.id,
-					   &score->wildcards,
-					   verbose);
+	score->initiator_id_matched = match_id(initiator_id,
+					       &d->remote->host.id,
+					       &score->wildcards,
+					       verbose);
 
 	/*
-	 * Check if peer_id matches, exactly or after
+	 * Check if initiator_id matches, exactly or after
 	 * instantiation.
 	 *
 	 * Check for the match but also check to see
 	 * if it's the %fromcert + peer id match
 	 * result. - matt
 	 */
-	if (!score->matching_peer_id) {
+	if (!score->initiator_id_matched) {
 		/* must be checking certs */
 		if (d->remote->host.id.kind != ID_FROMCERT) {
-			dbg_rhc("skipping because peer_id does not match and that.id.kind is not a cert");
+			dbg_rhc("skipping because initiator_id does not match and that.id.kind is not a cert");
 			return false;
 		}
 	}
 
 	/*
+	 * IKEv2 doesn't have v1_requested_ca so can be ignored.
+	 *
+	 * match_v1_requested_ca() succeeds when there's no
+	 * .st_v1_requested_ca to match.
+	 */
+	score->v1_requested_ca_pathlen = 0;
+	if (ike->sa.st_ike_version == IKEv1) {
+		if (!match_v1_requested_ca(ike, d->local->host.config->ca,
+					   &score->v1_requested_ca_pathlen,
+					   verbose)) {
+			dbg_rhc("skipping because match_v1_requested_ca() failed");
+			return false;
+		}
+
+		dbg_rhc("v1_requested_ca_pathlen=%d", score->v1_requested_ca_pathlen);
+	}
+
+	/*
 	 * XXX: When there are no certificates at all
-	 * (PEER_CA and THAT.CA are NULL; REQUESTED_CA
+	 * (INITIATOR_CA and THAT.CA are NULL; REQUESTED_CA
 	 * is NULL), these lookups return TRUE and
 	 * *_pathlen==0 - a perfect match.
 	 */
-	bool matching_peer_ca = trusted_ca(peer_ca,
-					   ASN1(d->remote->host.config->ca),
-					   &score->peer_pathlen,
-					   verbose);
-	bool matching_requested_ca = match_requested_ca(requested_ca,
-							d->local->host.config->ca,
-							&score->our_pathlen,
-							verbose);
-	dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
-		bool_str(matching_peer_ca), score->peer_pathlen,
-		bool_str(matching_requested_ca), score->our_pathlen);
-	verbose.level++;
-
-	/*
-	 * Both matching_peer_ca and
-	 * matching_requested_ca are required.
-	 *
-	 * XXX: Remember, when there are no
-	 * certificates, both are forced to TRUE.
-	 */
-	if (!matching_peer_ca || !matching_requested_ca) {
-		dbg_rhc("skipping because !matching_peer_ca || !matching_requested_ca");
+	if (!trusted_ca(initiator_ca,
+			ASN1(d->remote->host.config->ca),
+			&score->initiator_ca_pathlen,
+			verbose)) {
+		dbg_rhc("skipping because trusted_ca() failed");
 		return false;
 	}
+
+	dbg_rhc("initiator_ca_pathlen=%d", score->initiator_ca_pathlen);
 
 	/*
 	 * Paul: We need to check all the other relevant policy bits,
@@ -482,10 +490,10 @@ static bool score_host_connection(const struct ike_sa *ike,
 static bool exact_id_match(struct score score)
 {
 	return (score.connection != NULL &&
-		score.matching_peer_id &&
+		score.initiator_id_matched &&
 		score.wildcards == 0 &&
-		score.peer_pathlen == 0 &&
-		score.our_pathlen == 0 &&
+		score.initiator_ca_pathlen == 0 &&
+		score.v1_requested_ca_pathlen == 0 &&
 		(is_permanent(score.connection) ||
 		 is_instance(score.connection)));
 }
@@ -507,18 +515,18 @@ static bool better_score(struct score best, struct score score, struct logger *l
 	/*
 	 * ??? the logic involving *_pathlen looks wrong.
 	 *
-	 * ??? which matters more peer_pathlen or our_pathlen
+	 * ??? which matters more initiator_ca_pathlen or v1_requested_ca_pathlen
 	 * minimization?
 	 *
 	 * XXX: presumably peer as we're more worried about
 	 * authenticating the peer using the best match?
 	 */
-	if (score.peer_pathlen != best.peer_pathlen) {
-		return (score.peer_pathlen < best.peer_pathlen);
+	if (score.initiator_ca_pathlen != best.initiator_ca_pathlen) {
+		return (score.initiator_ca_pathlen < best.initiator_ca_pathlen);
 	}
 
-	if (score.our_pathlen != best.our_pathlen) {
-		return (score.our_pathlen < best.our_pathlen);
+	if (score.v1_requested_ca_pathlen != best.v1_requested_ca_pathlen) {
+		return (score.v1_requested_ca_pathlen < best.v1_requested_ca_pathlen);
 	}
 
 	/*
@@ -541,8 +549,8 @@ static bool better_score(struct score best, struct score score, struct logger *l
 
 static struct connection *refine_host_connection_on_responder(const struct ike_sa *ike,
 							      lset_t proposed_authbys,
-							      const struct id *peer_id,
-							      const struct id *tarzan_id,
+							      const struct id *initiator_id,
+							      const struct id *responder_id,
 							      struct verbose verbose)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -562,9 +570,9 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	 * Find the PEER's CA, check the per-state DB first.
 	 */
 	PEXPECT(ike->sa.logger, ike->sa.st_remote_certs.processed);
-	asn1_t peer_ca = get_peer_ca(&ike->sa.st_remote_certs.pubkey_db, peer_id);
-	if (hunk_isempty(peer_ca)) {
-		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
+	asn1_t initiator_ca = get_ca(&ike->sa.st_remote_certs.pubkey_db, initiator_id);
+	if (hunk_isempty(initiator_ca)) {
+		initiator_ca = get_ca(&pluto_pubkeys, initiator_id);
 	}
 
 	/*
@@ -583,7 +591,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	 *
 	 * We need to match:
 	 *
-	 * - peer_id (slightly complicated by instantiation)
+	 * - initiator_id (slightly complicated by instantiation)
 	 * - if PSK auth, the key must not change (we used it to decode message)
 	 * - policy-as-used must be acceptable to new connection
 	 * - if initiator, also:
@@ -605,9 +613,9 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	struct score best = {0};
 
 	struct score c_score = { .connection = c, };
-	if (score_host_connection(ike,
-				  proposed_authbys,
-				  peer_id, tarzan_id, peer_ca,
+	if (score_host_connection(ike, proposed_authbys,
+				  initiator_id, responder_id,
+				  initiator_ca,
 				  &c_score, verbose)) {
 		best = c_score;
 		if (exact_id_match(best)) {
@@ -651,9 +659,9 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			struct score score = {
 				.connection = d,
 			};
-			if (!score_host_connection(ike,
-						   proposed_authbys,
-						   peer_id, tarzan_id, peer_ca,
+			if (!score_host_connection(ike, proposed_authbys,
+						   initiator_id, responder_id,
+						   initiator_ca,
 						   &score, verbose)) {
 				continue;
 			}
@@ -678,14 +686,16 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 * exact match doesn't come along.
 			 *
 			 * ??? the logic involving *_pathlen looks wrong.
-			 * ??? which matters more peer_pathlen or our_pathlen minimization?
+			 *
+			 * ??? which matters more initiator_ca_pathlen
+			 * or v1_requested_ca_pathlen minimization?
 			 */
 			if (better_score(best, score, ike->sa.logger)) {
 				connection_buf cib;
-				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, peer_pathlen=%d/our=%d)",
+				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, initiator_ca_pathlen=%d/our=%d)",
 					pri_connection(d, &cib),
-					score.wildcards, score.peer_pathlen,
-					score.our_pathlen);
+					score.wildcards, score.initiator_ca_pathlen,
+					score.v1_requested_ca_pathlen);
 				best = score;
 			}
 		}
@@ -695,8 +705,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 
 bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  lset_t proposed_authbys,
-						  const struct id *peer_id,
-						  const struct id *tarzan_id)
+						  const struct id *initiator_id,
+						  const struct id *responder_id)
 {
 	struct verbose verbose = { .logger = ike->sa.logger, };
 	connection_buf cib;
@@ -707,7 +717,7 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 
 	struct connection *r = refine_host_connection_on_responder(ike,
 								   proposed_authbys,
-								   peer_id, tarzan_id,
+								   initiator_id, responder_id,
 								   verbose);
 	if (r == NULL) {
 		dbg_rhc("returning FALSE because nothing is sufficiently refined");
@@ -750,7 +760,7 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 			 */
 			pexpect(is_template(r));
 			r = rw_responder_id_instantiate(r, ike->sa.st_connection->remote->host.addr,
-							peer_id, HERE);
+							initiator_id, HERE);
 		} else {
 			r = connection_addref(r, ike->sa.logger);
 		}
@@ -800,6 +810,13 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
        return diag_diag(&d, "X509: authentication failed; ");
        return NULL;
 }
+
+/*
+ * IKEv2: PEER_ID could be either IDi or IDr, when non-NULL TARZAN_ID
+ * is IDr on responder.
+ *
+ * IKEv1: PEER_ID is the peer id.
+ */
 
 diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct id *tarzan_id)
 {
@@ -889,4 +906,97 @@ bool compare_connection_id(const struct connection *c,
 	}
 
 	return true;
+}
+
+/*
+ * Decode the ID payload.
+ *
+ * IKEv2 uses this to decode both IDi and IDr.
+ *
+ * IKEv1 Phase 1 (main_inI3_outR3 and main_inR3) Clears *peer to avoid
+ * surprises.
+ *
+ * Note: what we discover may oblige Pluto to switch connections.  We
+ * must be called before SIG or HASH are decoded since we may change
+ * the peer's RSA key or ID.
+ */
+
+diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
+{
+	struct pbs_in in_pbs = *id_pbs; /* local copy */
+	shunk_t name = pbs_in_left(&in_pbs);
+
+	*peer = (struct id) {.kind = kind };	/* clears everything */
+
+	switch (kind) {
+
+	/* ident types mostly match between IKEv1 and IKEv2 */
+	case ID_IPV4_ADDR:
+		/* failure mode for initaddr is probably inappropriate address length */
+		return pbs_in_address(&in_pbs, &peer->ip_addr, &ipv4_info, "peer ID");
+
+	case ID_IPV6_ADDR:
+		/* failure mode for initaddr is probably inappropriate address length */
+		return pbs_in_address(&in_pbs, &peer->ip_addr, &ipv6_info, "peer ID");
+
+	/* seems odd to continue as ID_FQDN? */
+	case ID_USER_FQDN:
+#if 0
+		if (memchr(name.ptr, '@', name.len) == NULL) {
+			llog(RC_LOG, logger,
+				    "peer's ID_USER_FQDN contains no @: %.*s",
+				    (int) left, id_pbs->cur);
+			/* return false; */
+		}
+#endif
+		if (memchr(name.ptr, '\0', name.len) != NULL) {
+			esb_buf b;
+			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				    str_enum(&ike_id_type_names, kind, &b));
+		}
+		/* ??? ought to do some more sanity check, but what? */
+		peer->name = name;
+		break;
+
+	case ID_FQDN:
+		if (memchr(name.ptr, '\0', name.len) != NULL) {
+			esb_buf b;
+			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				    str_enum(&ike_id_type_names, kind, &b));
+		}
+		/* ??? ought to do some more sanity check, but what? */
+		peer->name = name;
+		break;
+
+	case ID_KEY_ID:
+		peer->name = name;
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk("KEY ID:", peer->name);
+		}
+		break;
+
+	case ID_DER_ASN1_DN:
+		peer->name = name;
+		if (DBGP(DBG_BASE)) {
+		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
+		}
+		break;
+
+	case ID_NULL:
+		if (name.len != 0) {
+			if (DBGP(DBG_BASE)) {
+				DBG_dump_hunk("unauthenticated NULL ID:", name);
+			}
+		}
+		break;
+
+	default:
+	{
+		esb_buf b;
+		return diag("Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
+			    str_enum(&ike_id_type_names, kind, &b));
+	}
+	}
+
+	return NULL;
 }

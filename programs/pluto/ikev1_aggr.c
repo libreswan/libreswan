@@ -352,7 +352,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	struct id peer_id;
 	struct id *ppeer_id = NULL;
 
-	d = unpack_peer_id(id->isaid_idtype, &peer_id, &id_pld->pbs);
+	d = unpack_id(id->isaid_idtype, &peer_id, &id_pld->pbs);
 	if (d != NULL) {
 		dbg("IKEv1 aggressive mode peer ID unpacking failed - ignored peer ID to find connection");
 	} else {
