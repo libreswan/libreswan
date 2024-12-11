@@ -1,10 +1,32 @@
-test connection switching. A conn "distraction" is loaded that
-looks like it could match, but it doesn't. east needs to
-figure this out after the SAN does not match and switch to the
-real conn. This looks like:
+test a very distracted IKE_SESSION_RESUME
 
-"distraction"[1] 192.1.2.45 #1: X509: CERT payload does not match connection ID
-"distraction"[1] 192.1.2.45 #1: switched from "distraction"[1] 192.1.2.45 to "westnet-eastnet"
-"westnet-eastnet"[1] 192.1.2.45 #1: deleting connection "distraction"[1] 192.1.2.45 instance with peer 192.1.2.45 {isakmp=#0/ipsec=#0}
-"westnet-eastnet"[1] 192.1.2.45 #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+EAST has three connections:
 
+- distraction
+
+  -> matches IKE_SA_INIT
+
+  -> should not match IKE_SESSION_RESUME as that requires
+     session-resumption=yes
+
+- resume-distraction
+
+  -> matches IKE_SA_INIT (except DISTRACTION above matches first)
+
+  -> matches IKE_SESSION_RESUME as has required session-resumption=yes
+
+- any-east
+
+  both of above should switch to this during IKE_AUTH
+
+Hence:
+
+- initial connection
+
+  - during IKE_SA_INIT instantiates DISTRACTION
+  - during IKE_AUTH switches to and instantiates ANY-EAST
+
+- session resume
+
+  - during IKE_SESSION_RESUME instantiates RESUME-DISTRACTION
+  - during IKE_AUTH switches to and instantiates ANY-EAST

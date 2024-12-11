@@ -86,4 +86,12 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 west #
+ # on east should see IKE_AUTH switch from distraction to any-east and
+west #
+ # then the IKE_SESSION_RESUME switch from resume-distraction to
+west #
+ # any-east.
+west #
+ grep -e ': switched to ' /tmp/pluto.log
+west #
  
