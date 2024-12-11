@@ -186,6 +186,14 @@ struct connection *group_instantiate(struct connection *group,
 	 */
 	t->next_instance_serial = 1;
 
+#define set_end_selector(END, SELECTOR, LOGGER)				\
+	{								\
+		PASSERT(LOGGER, (END)->child.selectors.proposed.list == NULL); \
+		PASSERT(LOGGER, (END)->child.selectors.proposed.len == 0); \
+		append_end_selector(END, selector_info(SELECTOR),	\
+				    SELECTOR, LOGGER, HERE);		\
+	}
+
 	/*
 	 * For the remote end, just use what ever the group specified
 	 * (i.e., ignore protoport=).

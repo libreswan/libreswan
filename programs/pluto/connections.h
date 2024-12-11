@@ -607,14 +607,6 @@ void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector s,
 			 struct logger *logger, where_t where);
 
-#define set_end_selector(END, SELECTOR, LOGGER)				\
-	{								\
-		PASSERT(LOGGER, (END)->child.selectors.proposed.list == NULL); \
-		PASSERT(LOGGER, (END)->child.selectors.proposed.len == 0); \
-		append_end_selector(END, selector_info(SELECTOR),	\
-				    SELECTOR, LOGGER, HERE);		\
-	}
-
 struct spd_end {
 	ip_selector client;
 

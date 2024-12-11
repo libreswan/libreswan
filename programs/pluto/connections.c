@@ -1890,7 +1890,6 @@ void add_connection_spds(struct connection *c,
 					const struct child_end_config *child_end = &c->end[end].config->child;
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
-					/* NOT set_end_selector() */
 					spd_end->client = *selector;
 					spd_end->virt = virtual_ip_addref(child_end->virt);
 					selector_buf sb;
