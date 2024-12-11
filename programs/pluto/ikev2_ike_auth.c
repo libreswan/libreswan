@@ -567,6 +567,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	lset_t proposed_authbys;
 	if (ike->sa.st_v2_resume_session) {
+		name_buf rn, an;
+		ldbg(ike->sa.logger, "resuming, ignoring v2AUTH method %s, using %s",
+		     str_enum_short(&ikev2_auth_method_names,
+				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
+		     str_enum_short(&ikev2_auth_method_names,
+				    ike->sa.st_v2_resume_session->auth_method, &rn));
 		proposed_authbys = LELEM(ike->sa.st_v2_resume_session->auth_method);
 	} else {
 		proposed_authbys = proposed_v2AUTH(ike, md);
