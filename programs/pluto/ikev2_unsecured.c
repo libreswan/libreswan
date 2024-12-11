@@ -323,7 +323,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 * Is there a connection that matches the message?
 	 */
 	bool send_reject_response = true;
-	struct connection *c = find_v2_host_pair_connection(md, &send_reject_response);
+	struct connection *c = find_v2_unsecured_host_pair_connection(md, &send_reject_response);
 	if (c == NULL) {
 		if (send_reject_response) {
 			/*
