@@ -184,7 +184,6 @@ struct ticket {
 			 */
 			struct resume_session resume;
 
-			so_serial_t sr_serialco;
 			realtime_t expiration;
 
 			/* copy of sk_d_old */
@@ -213,12 +212,6 @@ struct session {
 	 * session resumption.
 	 */
 	struct resume_session resume;
-
-	/*
-	 * Local IKE SA parameters used to re-animate the
-	 * initiating session-revival IKE SA.
-	 */
-	co_serial_t sr_serialco;
 
 	PK11SymKey *sk_d_old;
 
@@ -288,8 +281,6 @@ static bool ike_responder_to_ticket(const struct ike_sa *ike,
 	llog(RC_LOG, ike->sa.logger, "using session resume key number %u",
 	     key->magic);
 	ticket->aad.magic = key->magic;
-
-	ticket->secured.state.sr_serialco = ike->sa.st_connection->serialno;
 
 	/*
 	 * Remember, responder local/remote are rereversed for
@@ -1021,8 +1012,6 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 	c->session->sr_expires = monotime_add(mononow(),
 					      deltatime(tl.sr_lifetime));
 	c->session->ticket = clone_hunk(ticket, __func__);
-
-	c->session->sr_serialco = c->serialno;
 
 	set_resume_session(&c->session->resume,
 			   /*initiator*/c->local,
