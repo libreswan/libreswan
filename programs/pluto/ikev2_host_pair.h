@@ -30,7 +30,7 @@
 
 struct msg_digest;
 
-struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
-						bool *send_reject_response);
+struct connection *find_v2_unsecured_host_pair_connection(const struct msg_digest *md,
+							  bool *send_reject_response);
 
 #endif

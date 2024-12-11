@@ -35,6 +35,7 @@
 
 static bool match_v2_connection(const struct connection *c,
 				const struct authby remote_authby,
+				const enum ikev2_exchange ix,
 				bool *send_reject_response,
 				struct verbose verbose)
 {
@@ -47,6 +48,18 @@ static bool match_v2_connection(const struct connection *c,
 		vdbg("skipping "PRI_CONNECTION", ID_NULL instance",
 		     pri_connection(c, &cb));
 		return false;
+	}
+
+	/*
+	 * Connection allow exchange?
+	 */
+	if (ix == ISAKMP_v2_IKE_SESSION_RESUME) {
+		if (!c->config->session_resumption) {
+			connection_buf cb;
+			vdbg("skipping "PRI_CONNECTION", does not allow IKE_SESSION_RESUME",
+			     pri_connection(c, &cb));
+			return false;
+		}
 	}
 
 	/*
@@ -75,7 +88,7 @@ static bool match_v2_connection(const struct connection *c,
 		 * But there's a problem, BLOCK and CLEAR don't have
 		 * the OPPORTUNISTIC bit set.  Fortunately they do
 		 * have GROUPINSTANCE!  Hence the some what convoluted
-		 * logic to detect these cases and clear 
+		 * logic to detect these cases and clear.
 		 */
 		enum shunt_policy shunt = c->config->never_negotiate_shunt;
 		if (shunt == SHUNT_PASS/*clear*/ ||
@@ -114,6 +127,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 {
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
+	const enum ikev2_exchange ix = md->hdr.isa_xchg;
 
 	/* just the address */
 	ip_address local_address = endpoint_address(*local_endpoint);
@@ -146,7 +160,8 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 	while (next_connection(&hpf)) {
 		struct connection *d = hpf.c;
 
-		if (!match_v2_connection(d, remote_authby, send_reject_response, verbose)){
+		if (!match_v2_connection(d, remote_authby, ix,
+					 send_reject_response, verbose)){
 			continue;
 		}
 
@@ -213,6 +228,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	struct connection *c = NULL;
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
+	const enum ikev2_exchange ix = md->hdr.isa_xchg;
 
 	/* just the address */
 	ip_address local_address = endpoint_address(*local_endpoint);
@@ -226,6 +242,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	     str_address(&remote_address, &rb),
 	     str_authby(remote_authby, &pb));
 	verbose.level++;
+
 
 	/*
 	 * See if a wildcarded connection can be found.  We cannot
@@ -253,7 +270,8 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	while (next_connection(&hpf_unset)) {
 		struct connection *d = hpf_unset.c;
 
-		if (!match_v2_connection(d, remote_authby, send_reject_response, verbose)) {
+		if (!match_v2_connection(d, remote_authby, ix,
+					 send_reject_response, verbose)) {
 			continue;
 		}
 
@@ -367,8 +385,8 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	return rw_responder_instantiate(c, remote_address, HERE);
 }
 
-struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
-						bool *send_reject_response)
+struct connection *find_v2_unsecured_host_pair_connection(const struct msg_digest *md,
+							  bool *send_reject_response)
 {
 	struct verbose verbose = {
 		.logger = md->logger,

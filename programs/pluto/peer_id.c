@@ -225,6 +225,15 @@ static bool score_host_connection(const struct ike_sa *ike,
 		return false;
 	}
 
+	if (ike->sa.st_v2_resume_session != NULL) {
+		if (!d->config->session_resumption) {
+			connection_buf cb;
+			dbg_rhc("skipping non-IKE_SESSION_RESUME connection "PRI_CONNECTION"",
+				pri_connection(d, &cb));
+			return false;
+		}
+	}
+
 	/*
 	 * An Opportunistic connection is never better.
 	 *
@@ -644,6 +653,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 				.where = HERE,
 			},
 		};
+
 		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
 			if (c == d) {
