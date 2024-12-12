@@ -2151,7 +2151,11 @@ static struct connection *fc_try(const struct connection *c,
 				continue;
 			}
 
-			if (is_instance(d) || is_permanent(d)) {
+			if (c->pool[IPv4_INDEX] != NULL) {
+				selector_buf s2;
+				vdbg("initiator's remote client range %s is within address-pool, continuing",
+				     str_selector(remote_client, &s2));
+			} else if (is_instance(d) || is_permanent(d)) {
 				if (!selector_range_eq_selector_range(*remote_client, d_spd->remote->client)) {
 					selector_buf s1, s2;
 					vdbg("skipping instance|permanent SPD, initiator's remote client range %s must match %s",
