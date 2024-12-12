@@ -1,0 +1,12 @@
+IKEv1 x509 xauth but no modecfg; client has hardwired lease
+
+- establish using main mode
+- server authenticates client using XAUTH
+
+MODE_CFG is skipped
+
+- client then initiates Quick Mode proposing the hardwired lease
+
+Since lease is available it is accepted.
+
+For background see github/1955

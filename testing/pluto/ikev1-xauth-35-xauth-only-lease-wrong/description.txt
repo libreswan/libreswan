@@ -1,0 +1,15 @@
+ikev1 xauth but no modecfg; quick request has invalid hardwired lease
+
+- establish using main mode
+- server authenticates client using XAUTH
+
+MODE_CFG is skipped
+
+- client then initiates Quick Mode proposing hardwired but wrong lease
+
+it gets rejected
+
+Note: to get this behaviour modecfgserver=no modecfgclient=no
+modeconfigpull=yes is needed, see github/1961.
+
+For background see github/1955

@@ -1,0 +1,33 @@
+../../guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add any-east
+"any-east": added IKEv1 connection
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo initdone
+initdone
+east #
+ # on EAST, dump the state of the initial SAs
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+east #
+ # On EAST, expect to see the peer proposing EAST and WEST as the child
+east #
+ # selectors.  Hence it is rejected.
+east #
+ grep '#1: the peer proposed' /tmp/pluto.log
+"any-east"[1] 192.1.2.254 #1: the peer proposed: 0.0.0.0/0===1.2.3.4/32
+east #
+ grep '#1: sending encrypted notification' /tmp/pluto.log
+"any-east"[1] 192.1.2.254 #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.254:EPHEM
+east #
+ 

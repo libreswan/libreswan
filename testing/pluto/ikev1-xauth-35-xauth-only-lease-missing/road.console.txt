@@ -1,0 +1,56 @@
+../../guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec whack --impair suppress_retransmits
+road #
+ ipsec whack --impair revival
+road #
+ ipsec add road-east
+"road-east": added IKEv1 connection
+road #
+ ipsec whack --xauthname 'gooduser90' --xauthpass 'use1pass' --name road-east --initiate
+"road-east" #1: initiating IKEv1 Main Mode connection
+"road-east" #1: sent Main Mode request
+"road-east" #1: sent Main Mode I2
+"road-east" #1: I am sending my cert
+"road-east" #1: I am sending a certificate request
+"road-east" #1: sent Main Mode I3
+"road-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"road-east" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"road-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east" #1: prompt for Username:
+"road-east" #1: prompt for Password:
+"road-east" #1: XAUTH: Answering XAUTH challenge with user='gooduser90'
+"road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east" #1: XAUTH: Successfully Authenticated
+"road-east" #1: XAUTH completed; ModeCFG skipped as per configuration
+"road-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"road-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east" #2: sent Quick Mode request
+"road-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+"road-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"road-east" #2: IMPAIR: revival: skip scheduling revival event
+"road-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
+ERROR: "road-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.3.209: No such process (errno 3)
+road #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
+unexpected status 2
+# ping -n -c 1  -i 6 -w 5   -I 192.0.2.101 192.0.2.254
+ping: bind: Cannot assign requested address
+road #
+ ipsec whack --trafficstatus
+road #
+ # On EAST, expect to see the peer proposing EAST and WEST as the child
+road #
+ # selectors.  Hence it is rejected.
+road #
+ grep '#1: the peer proposed' /tmp/pluto.log
+road #
+ grep '#1: sending encrypted notification' /tmp/pluto.log
+road #
+ 

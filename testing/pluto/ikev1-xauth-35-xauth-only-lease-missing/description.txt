@@ -1,0 +1,20 @@
+ikev1 xauth but no modecfg; client misconfigured (missing subnet=)
+
+- establish using main mode
+- server authenticates client using XAUTH
+
+MODE_CFG is skipped
+
+- misconfigured client then initiates Quick Mode proposing HOST
+  address as client
+
+it gets rejected
+
+This illustrates historic behaviour where, a missing subnet=
+assumes transport and tries to use host addresses.
+
+Note: to get this behaviour modecfgserver=no modecfgclient=no
+
+modeconfigpull=yes is needed, see github/1961.
+
+For background see github/1955

@@ -959,7 +959,10 @@ kvmplutotest	ikev1-xauth-32-lost-mode-cfg				good	github/1785
 kvmplutotest	ikev1-xauth-33-quick-narrows				wip	github/1857
 kvmplutotest	ikev1-xauth-34-modecfg-push-only			good	github/1954
 kvmplutotest	ikev1-xauth-34-modecfg-pull-only			good	github/1954
-kvmplutotest	ikev1-xauth-35-xauth-only				good	github/1955
+kvmplutotest	ikev1-xauth-35-xauth-only-lease-wrong			good	github/1955
+kvmplutotest	ikev1-xauth-35-xauth-only-lease-missing			good	github/1955
+kvmplutotest	ikev1-xauth-35-xauth-only-lease-psk			good	github/1955
+kvmplutotest	ikev1-xauth-35-xauth-only-lease-x509			good	github/1955
 
 #
 # Aggressive Mode Pluto Tests
