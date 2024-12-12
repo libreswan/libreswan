@@ -382,7 +382,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	/* rebuild the SPDs */
 	discard_connection_spds(cc);
 	PEXPECT(cc->logger, oriented(cc));
-	add_connection_spds(cc, address_info(cc->local->host.addr));
+	add_connection_spds(cc);
 
 	return true;
 }

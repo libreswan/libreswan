@@ -1090,7 +1090,7 @@ void vdbg_connection(const struct connection *c,
 void init_connection_spd(struct connection *c, struct spd *spd);
 void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
-void add_connection_spds(struct connection *c, const struct ip_info *host_afi);
+void add_connection_spds(struct connection *c);
 
 /*
  * Format the topology of a connection end, leaving out defaults.

@@ -260,7 +260,7 @@ struct connection *group_instantiate(struct connection *group,
 	connection_db_add(t);
 
 	/* fill in the SPDs */
-	add_connection_spds(t, address_info(t->local->host.addr));
+	add_connection_spds(t);
 
 	connection_buf gb;
 	vdbg_connection(t, verbose, HERE,
@@ -437,7 +437,7 @@ struct connection *spd_instantiate(struct connection *t,
 					   verbose, where);
 
 	update_selectors(d, verbose);
-	add_connection_spds(d, address_info(d->local->host.addr));
+	add_connection_spds(d);
 
 	/* leave breadcrumb */
 	pexpect(d->negotiating_child_sa == SOS_NOBODY);
@@ -468,7 +468,7 @@ struct connection *labeled_template_instantiate(struct connection *t,
 					   verbose, where);
 
 	update_selectors(p, verbose);
-	add_connection_spds(p, address_info(p->local->host.addr));
+	add_connection_spds(p);
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
 	pexpect(p->routing.state == RT_UNROUTED);
@@ -507,7 +507,7 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	c->child.sec_label = clone_hunk(sec_label, __func__);
 
 	update_selectors(c, verbose);
-	add_connection_spds(c, address_info(c->local->host.addr));
+	add_connection_spds(c);
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
 	pexpect(c->routing.state == RT_UNROUTED);
@@ -533,7 +533,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   verbose, where);
 
 	update_selectors(d, verbose);
-	add_connection_spds(d, address_info(d->local->host.addr));
+	add_connection_spds(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,
@@ -562,7 +562,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 
 	/* real selectors are still unknown */
 	update_selectors(d, verbose);
-	add_connection_spds(d, address_info(d->local->host.addr));
+	add_connection_spds(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,
@@ -671,7 +671,7 @@ struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *
 					   verbose, where);
 
 	update_v1_quick_n_dirty_selectors(d, remote_subnet, verbose);
-	add_connection_spds(d, address_info(d->local->host.addr));
+	add_connection_spds(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,
@@ -725,7 +725,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	set_end_selector(d->remote, remote_selector, d->logger);
 
 	PEXPECT(d->logger, oriented(d));
-	add_connection_spds(d, address_info(d->local->host.addr));
+	add_connection_spds(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,

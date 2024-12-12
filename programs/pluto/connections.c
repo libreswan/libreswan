@@ -1839,8 +1839,7 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 	}
 }
 
-void add_connection_spds(struct connection *c,
-			 const struct ip_info *host_afi UNUSED /*XXX: suspect need to fudge up IPv[46] entry to match no-op selector entry, see above and unset_selector */)
+void add_connection_spds(struct connection *c)
 {
 	unsigned indent = 0;
 	ldbg(c->logger, "%*sadding connection spds using proposed", indent, "");
@@ -3844,7 +3843,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Generate the SPDs from the populated selectors.  Is this
 	 * needed now?
 	 */
-	add_connection_spds(c, host_afi);
+	add_connection_spds(c);
 	if (!pexpect(c->spd != NULL)) {
 		return diag("internal error");
 	}

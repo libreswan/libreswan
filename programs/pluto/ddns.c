@@ -179,7 +179,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	pdbg(c->logger, "  adding SPDs");
-	add_connection_spds(c, address_info(c->local->host.addr));
+	add_connection_spds(c);
 
 	/*
 	 * Caller holds reference.
