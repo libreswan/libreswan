@@ -3854,15 +3854,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	set_connection_selector_proposals(c, host_afi);
 
 	/*
-	 * Generate the SPDs from the populated selectors.  Is this
-	 * needed now?
-	 */
-	add_connection_spds(c);
-	if (!pexpect(c->spd != NULL)) {
-		return diag("internal error");
-	}
-
-	/*
 	 * All done, enter it into the databases.  Since orient() may
 	 * switch ends, triggering an spd rehash, insert things into
 	 * the database first.
@@ -3870,9 +3861,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	connection_db_add(c);
 
 	/*
-	 * Force orientation (currently kind of unoriented?).  If the
-	 * connection orients,the SPDs and host-pair hash tables are
-	 * updated.
+	 * Force orientation (currently kind of unoriented?).
+	 *
+	 * If the connection orients,the SPDs and host-pair hash
+	 * tables are updated.
 	 *
 	 * This function holds the just allocated reference.
 	 */

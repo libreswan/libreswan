@@ -137,6 +137,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	/*
 	 * Pull any existing routing based on current SPDs.  Remember,
 	 * per above, the connection isn't established.
+	 *
+	 * Note: disorient() also deletes any SPDs, orient() will put
+	 * them back.
 	 */
 	pdbg(c->logger, "  unrouting");
 	connection_unroute(c, HERE);
@@ -151,8 +154,6 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	/* propagate remote address */
 	pdbg(c->logger, "  updating hosts");
 	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
-	pdbg(c->logger, "  discarding SPDs");
-	discard_connection_spds(c);
 
 	if (c->remote->child.config->selectors.len > 0) {
 		pdbg(c->logger, "  %s.child already has hard-wired selectors; skipping",
@@ -177,9 +178,6 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		append_end_selector(c->remote, selector_info(remote), remote,
 				    c->logger, HERE);
 	}
-
-	pdbg(c->logger, "  adding SPDs");
-	add_connection_spds(c);
 
 	/*
 	 * Caller holds reference.
