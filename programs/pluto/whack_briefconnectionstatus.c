@@ -113,19 +113,19 @@ static void show_one_spd_brief(struct show *s,
 	SHOW_JAMBUF(s, buf) {
 		if (local_client_eq_host == false && remote_client_eq_host == false) {
 			// subnet-to-subnet
-			jam_end_client(buf, c, spd->local, LEFT_END, NULL);
+			jam_end_spd(buf, c, spd->local, LEFT_END, NULL);
 			jam_string(buf, " <==> ");
-			jam_end_client(buf, c, spd->remote, RIGHT_END, NULL);
+			jam_end_spd(buf, c, spd->remote, RIGHT_END, NULL);
 		} else if (local_client_eq_host == false) {
 			// subnet-to-host
-			jam_end_client(buf, c, spd->local, LEFT_END, NULL);
+			jam_end_spd(buf, c, spd->local, LEFT_END, NULL);
 			jam_string(buf, " <==> ");
 			jam_end_host(buf, c, spd->remote->host);
 		} else if (remote_client_eq_host == false) {
 			// host-to-subnet
 			jam_end_host(buf, c, spd->local->host);
 			jam_string(buf, " <==> ");
-			jam_end_client(buf, c, spd->remote, RIGHT_END, NULL);
+			jam_end_spd(buf, c, spd->remote, RIGHT_END, NULL);
 		} else {
 			// if local_client_eq_host == true && remote_client_eq_host == true
 			// then its a host-to-host transport tunnel

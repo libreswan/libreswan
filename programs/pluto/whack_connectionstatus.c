@@ -134,9 +134,11 @@ void jam_end_host(struct jambuf *buf,
 	}
 }
 
-void jam_end_client(struct jambuf *buf, const struct connection *c,
-		    const struct spd_end *this, enum left_right left_right,
-		    const char *separator)
+void jam_end_spd(struct jambuf *buf,
+		 const struct connection *c,
+		 const struct spd_end *this,
+		 enum left_right left_right,
+		 const char *separator)
 {
 	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
 
@@ -184,23 +186,24 @@ void jam_end_client(struct jambuf *buf, const struct connection *c,
 	}
 }
 
-static void jam_end_id(struct jambuf *buf, const struct spd_end *this)
+
+static void jam_end_id(struct jambuf *buf, const struct connection_end *this)
 {
 	/* id, if different from host */
 	bool open_paren = false;
-	if (!(this->host->id.kind == ID_NONE ||
-	      (id_is_ipaddr(&this->host->id) &&
-	       sameaddr(&this->host->id.ip_addr, &this->host->addr)))) {
+	if (!(this->host.id.kind == ID_NONE ||
+	      (id_is_ipaddr(&this->host.id) &&
+	       sameaddr(&this->host.id.ip_addr, &this->host.addr)))) {
 		open_paren = true;
 		jam_string(buf, "[");
-		jam_id_bytes(buf, &this->host->id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &this->host.id, jam_sanitized_bytes);
 	}
 
-	if (this->host->config->modecfg.server ||
-	    this->host->config->modecfg.client ||
-	    this->host->config->xauth.server ||
-	    this->host->config->xauth.client ||
-	    this->host->config->sendcert != cert_defaultcertpolicy) {
+	if (this->host.config->modecfg.server ||
+	    this->host.config->modecfg.client ||
+	    this->host.config->xauth.server ||
+	    this->host.config->xauth.client ||
+	    this->host.config->sendcert != cert_defaultcertpolicy) {
 
 		if (open_paren) {
 			jam_string(buf, ",");
@@ -209,18 +212,18 @@ static void jam_end_id(struct jambuf *buf, const struct spd_end *this)
 			jam_string(buf, "[");
 		}
 
-		if (this->host->config->modecfg.server)
+		if (this->host.config->modecfg.server)
 			jam_string(buf, "MS");
-		if (this->host->config->modecfg.client)
+		if (this->host.config->modecfg.client)
 			jam_string(buf, "+MC");
-		if (this->child->config->has_client_address_translation)
+		if (this->child.config->has_client_address_translation)
 			jam_string(buf, "+CAT");
-		if (this->host->config->xauth.server)
+		if (this->host.config->xauth.server)
 			jam_string(buf, "+XS");
-		if (this->host->config->xauth.client)
+		if (this->host.config->xauth.client)
 			jam_string(buf, "+XC");
 
-		switch (this->host->config->sendcert) {
+		switch (this->host.config->sendcert) {
 		case CERT_NEVERSEND:
 			jam(buf, "+S-C");
 			break;
@@ -240,18 +243,20 @@ static void jam_end_id(struct jambuf *buf, const struct spd_end *this)
 	}
 }
 
-static void jam_end_nexthop(struct jambuf *buf, const struct spd_end *this,
-			    const struct spd_end *that, bool skip_next_hop,
+static void jam_end_nexthop(struct jambuf *buf,
+			    const struct host_end *this,
+			    const struct host_end *that,
+			    bool skip_next_hop,
 			    enum left_right left_right)
 {
 	/* [---hop] */
 	if (!skip_next_hop &&
-	    address_is_specified(this->host->nexthop) &&
-	    !address_eq_address(this->host->nexthop, that->host->addr)) {
+	    address_is_specified(this->nexthop) &&
+	    !address_eq_address(this->nexthop, that->addr)) {
 		if (left_right == LEFT_END) {
 			jam_string(buf, "---");
 		}
-		jam_address(buf, &this->host->nexthop);
+		jam_address(buf, &this->nexthop);
 		if (left_right == RIGHT_END) {
 			jam_string(buf, "---");
 		}
@@ -262,27 +267,38 @@ void jam_spd_end(struct jambuf *buf, const struct connection *c,
 		 const struct spd_end *this, const struct spd_end *that,
 		 enum left_right left_right, bool skip_next_hop)
 {
+	enum left_right index = this->config->index;
 	switch (left_right) {
 	case LEFT_END:
 		/* CLIENT/PROTOCOL:PORT=== */
-		jam_end_client(buf, c, this, left_right, END_SEPARATOR);
+		jam_end_spd(buf, c, this, left_right, END_SEPARATOR);
 		/* HOST */
 		jam_end_host(buf, c, this->host);
 		/* [ID+OPTS] */
-		jam_end_id(buf, this);
+		jam_end_id(buf, &c->end[index]);
 		/* ---NEXTHOP */
-		jam_end_nexthop(buf, this, that, skip_next_hop, left_right);
+		jam_end_nexthop(buf, this->host, that->host, skip_next_hop, left_right);
 		break;
 	case RIGHT_END:
 		/* HOPNEXT--- */
-		jam_end_nexthop(buf, this, that, skip_next_hop, left_right);
+		jam_end_nexthop(buf, this->host, that->host, skip_next_hop, left_right);
 		/* HOST */
 		jam_end_host(buf, c, this->host);
 		/* [ID+OPTS] */
-		jam_end_id(buf, this);
+		jam_end_id(buf, &c->end[index]);
 		/* ===CLIENT/PROTOCOL:PORT */
-		jam_end_client(buf, c, this, left_right, END_SEPARATOR);
+		jam_end_spd(buf, c, this, left_right, END_SEPARATOR);
 		break;
+	}
+}
+
+static void jam_routing(struct jambuf *buf, const struct connection *c)
+{
+	if (!oriented(c)) {
+		jam_string(buf, "unoriented");
+ 		pexpect(c->routing.state == RT_UNROUTED);
+	} else {
+		jam_enum_human(buf, &routing_names, c->routing.state);
 	}
 }
 
@@ -291,15 +307,6 @@ void jam_spd_end(struct jambuf *buf, const struct connection *c,
  * Two symmetric ends separated by ...
  */
 
-static void jam_spd_topology(struct jambuf *buf, const struct spd *spd)
-{
-	jam_spd_end(buf, spd->connection, spd->local, spd->remote,
-		    LEFT_END, false);
-	jam_string(buf, "...");
-	jam_spd_end(buf, spd->connection, spd->remote, spd->local,
-		    RIGHT_END, oriented(spd->connection));
-}
-
 static void show_one_spd(struct show *s,
 			 const struct connection *c,
 			 const struct spd *spd)
@@ -307,19 +314,19 @@ static void show_one_spd(struct show *s,
 	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
 		jam_string(buf, ":");
+
 		/* one SPD */
 		jam_string(buf, " ");
-		jam_spd_topology(buf, spd);
+		jam_spd_end(buf, c, spd->local, spd->remote, LEFT_END, false);
+		jam_string(buf, "...");
+		jam_spd_end(buf, c, spd->remote, spd->local, RIGHT_END, oriented(c));
 		jam_string(buf, ";");
+
 		/* routing/orienting */
 		jam_string(buf, " ");
-		if (!oriented(c)) {
-			jam_string(buf, "unoriented");
-			PEXPECT(show_logger(s), c->routing.state == RT_UNROUTED);
-		} else {
-			jam_enum_human(buf, &routing_names, c->routing.state);
-		}
+		jam_routing(buf, c);
 		jam_string(buf, ";");
+
 #define OPT_HOST(H)					\
 		if (address_is_specified(H)) {		\
 			jam_address(buf, &(H));		\
@@ -338,8 +345,6 @@ static void show_one_spd(struct show *s,
 		jam_string(buf, ";");
 #undef OPT_HOST
 	}
-
-
 }
 
 static void jam_connection_owners(struct jambuf *buf,

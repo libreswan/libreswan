@@ -31,9 +31,11 @@ void show_connection_statuses(struct show *s);
 void jam_end_host(struct jambuf *buf,
 		  const struct connection *c,
 		  const struct host_end *end);
-void jam_end_client(struct jambuf *buf, const struct connection *c,
-		    const struct spd_end *this, enum left_right left_right,
-		    const char *separator);
+void jam_end_spd(struct jambuf *buf,
+		 const struct connection *c,
+		 const struct spd_end *this,
+		 enum left_right left_right,
+		 const char *separator);
 
 
 #endif
