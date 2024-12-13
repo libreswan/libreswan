@@ -342,6 +342,19 @@ void jam_spd_ends(struct jambuf *buf, const struct connection *c,
 	jam_client_ends(buf, c, &this, sep, &that);
 }
 
+static struct client proposal_client(const struct connection_end *this,
+				     const ip_selector *this_selector)
+{
+	struct client client = {
+		.client = *this_selector,
+		.virt = this->child.config->virt,
+		.host = &this->host,
+		.child = &this->child,
+		.sourceip = end_sourceip(this_selector, this->child.config),
+	};
+	return client;
+}
+
 static void jam_routing(struct jambuf *buf, const struct connection *c)
 {
 	if (!oriented(c)) {
@@ -446,10 +459,20 @@ static void jam_connection_owners(struct jambuf *buf,
 static void show_connection_status(struct show *s, const struct connection *c)
 {
 	/* Show topology. */
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		struct client this = spd_client(spd->local);
-		struct client that = spd_client(spd->remote);
-		show_one_client(s, c, &this, &that);
+	if (oriented(c)) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			struct client this = spd_client(spd->local);
+			struct client that = spd_client(spd->remote);
+			show_one_client(s, c, &this, &that);
+		}
+	} else {
+		FOR_EACH_ITEM(local, &c->local->child.selectors.proposed) {
+			struct client this = proposal_client(c->local, local);
+			FOR_EACH_ITEM(remote, &c->remote->child.selectors.proposed) {
+				struct client that = proposal_client(c->remote, remote);
+				show_one_client(s, c, &this, &that);
+			}
+		}
 	}
 
 	SHOW_JAMBUF(s, buf) {
