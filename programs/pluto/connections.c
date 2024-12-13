@@ -4569,16 +4569,28 @@ struct connection **sort_connections(void)
 	return connections;
 }
 
+ip_address end_sourceip(const ip_selector *client, const struct child_end_config *end)
+{
+	/*
+	 * Find a sourceip within the client.
+	 */
+	FOR_EACH_ITEM(sourceip, &end->sourceip) {
+		if (address_in_selector(*sourceip, *client)) {
+			return (*sourceip);
+		}
+	}
+
+	return unset_address;
+}
+
 ip_address spd_end_sourceip(const struct spd_end *spde)
 {
 	/*
-	 * Find a sourceip within the SPD selector.
+	 * Find a configured sourceip within the SPD's client.
 	 */
-	const ip_addresses *sourceip = &spde->child->config->sourceip;
-	FOR_EACH_ITEM(s, sourceip) {
-		if (address_in_selector(*s, spde->client)) {
-			return *s;
-		}
+	ip_address sourceip = end_sourceip(&spde->client, spde->child->config);
+	if (sourceip.is_set) {
+		return sourceip;
 	}
 
 	/*
