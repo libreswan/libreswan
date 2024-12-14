@@ -105,4 +105,7 @@
 		(VARTYPE)tmp;						\
 	})
 
+#define is_set(POINTER_TO_THING) ((POINTER_TO_THING) != NULL && (POINTER_TO_THING)->is_set)
+#define is_unset(POINTER_TO_THING) (!is_set(POINTER_TO_THING))
+
 #endif
