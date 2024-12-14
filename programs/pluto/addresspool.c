@@ -569,6 +569,62 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
+static err_t grow_addresspool(struct addresspool *pool,
+			      struct logger *logger)
+{
+	/* try to grow the address pool */
+	if (pool->nr_leases >= pool->size) {
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_pool(logger, true, pool, "no free address and no space to grow");
+		}
+		return "no free address in addresspool"; /* address pool exhausted */
+	}
+
+	unsigned old_nr_leases = pool->nr_leases;
+	if (pool->nr_leases == 0) {
+		pool->nr_leases = min(1U, pool->size);
+	} else {
+		pool->nr_leases = min(pool->nr_leases * 2, pool->size);
+	}
+	realloc_things(pool->leases, old_nr_leases, pool->nr_leases, "leases");
+
+	range_buf rb;
+	llog(RC_LOG, logger, "pool %s: growing address pool from %u to %u",
+	     str_range(&pool->r, &rb), old_nr_leases, pool->nr_leases);
+
+	/* initialize new leases (and add to free list) */
+	for (unsigned l = old_nr_leases; l < pool->nr_leases; l++) {
+		struct lease *lease = &pool->leases[l];
+		/*
+		 * Danger: must initialize entire
+		 * struct as resize_things(), which
+		 * may use realloc(), can leave the
+		 * data uninitialized.
+		 */
+		*lease = (struct lease) {
+			.free_entry = empty_entry,
+			.reusable_entry = empty_entry,
+			.reusable_bucket = empty_list,
+		};
+		PREPEND(pool, free_list, free_entry, lease);
+	}
+	/* destroy existing hash table */
+	for (unsigned l = 0; l < old_nr_leases; l++) {
+		struct lease *lease = &pool->leases[l];
+		lease->reusable_entry = empty_entry;
+		lease->reusable_bucket = empty_list;
+	}
+	/* build a new hash table containing old */
+	pool->nr_reusable = 0;
+	for (unsigned l = 0; l < old_nr_leases; l++) {
+		struct lease *lease = &pool->leases[l];
+		if (lease->reusable_name != NULL) {
+			hash_lease_id(pool, lease);
+		}
+	}
+
+	return NULL;
+}
 
 err_t lease_that_selector(struct connection *c, const char *xauth_username,
 			  const ip_selector *remote_client, struct logger *logger)
@@ -676,60 +732,17 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 
 	struct lease *new_lease = NULL;
 	const char *story;
-	if (reusable) {
+
+	if (new_lease == NULL && reusable) {
 		new_lease = recover_lease(c, thatstr, afi, logger);
 		story = "recovered";
 	}
+
 	if (new_lease == NULL) {
 		if (IS_EMPTY(pool, free_list)) {
-			/* try to grow the address pool */
-			if (pool->nr_leases >= pool->size) {
-				if (LDBGP(DBG_BASE, logger)) {
-					LDBG_pool(logger, true, pool, "no free address and no space to grow");
-				}
-				return "no free address in addresspool"; /* address pool exhausted */
-			}
-			unsigned old_nr_leases = pool->nr_leases;
-			if (pool->nr_leases == 0) {
-				pool->nr_leases = min(1U, pool->size);
-			} else {
-				pool->nr_leases = min(pool->nr_leases * 2, pool->size);
-			}
-			realloc_things(pool->leases, old_nr_leases, pool->nr_leases, "leases");
-
-			range_buf rb;
-			llog(RC_LOG, logger, "pool %s: growing address pool from %u to %u",
-			     str_range(&pool->r, &rb), old_nr_leases, pool->nr_leases);
-
-			/* initialize new leases (and add to free list) */
-			for (unsigned l = old_nr_leases; l < pool->nr_leases; l++) {
-				struct lease *lease = &pool->leases[l];
-				/*
-				 * Danger: must initialize entire
-				 * struct as resize_things(), which
-				 * may use realloc(), can leave the
-				 * data uninitialized.
-				 */
-				*lease = (struct lease) {
-					.free_entry = empty_entry,
-					.reusable_entry = empty_entry,
-					.reusable_bucket = empty_list,
-				};
-				PREPEND(pool, free_list, free_entry, lease);
-			}
-			/* destroy existing hash table */
-			for (unsigned l = 0; l < old_nr_leases; l++) {
-				struct lease *lease = &pool->leases[l];
-				lease->reusable_entry = empty_entry;
-				lease->reusable_bucket = empty_list;
-			}
-			/* build a new hash table containing old */
-			pool->nr_reusable = 0;
-			for (unsigned l = 0; l < old_nr_leases; l++) {
-				struct lease *lease = &pool->leases[l];
-				if (lease->reusable_name != NULL) {
-					hash_lease_id(pool, lease);
-				}
+			err_t e = grow_addresspool(pool, logger);
+			if (e != NULL) {
+				return e;
 			}
 		}
 		new_lease = HEAD(pool, free_list, free_entry);
