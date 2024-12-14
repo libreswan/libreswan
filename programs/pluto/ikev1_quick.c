@@ -1158,8 +1158,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	if (c->remote->config->host.pool_ranges.len == 0) {
 		vdbg("connection has no address pool");
 	} else {
-		err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
-					      &remote_client, ike->sa.logger);
+		ip_address lease_address = selector_prefix(remote_client);
+		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
+					      address_info(lease_address),
+					      &lease_address, ike->sa.logger);
 		if (e != NULL) {
 			selector_buf cb;
 			llog(RC_LOG, ike->sa.logger,

@@ -472,8 +472,9 @@ static bool get_internal_address(struct ike_sa *ike)
 	const char *from;
 	if (c->pool[IPv4_INDEX] != NULL) {
 		/* our IKEv1 doesn't do IPv6 */
-		err_t e = lease_that_address(c, ike->sa.st_xauth_username,
-					     &ipv4_info, ike->sa.logger);
+		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
+					      &ipv4_info, /*remote-address*/NULL,
+					      ike->sa.logger);
 		if (e != NULL) {
 			llog(RC_LOG, ike->sa.logger, "lease_an_address failure %s", e);
 			return false;

@@ -214,6 +214,7 @@ ip_range addresspool_range(struct addresspool *pool)
 static void free_lease_content(struct lease *lease)
 {
 	pfreeany(lease->reusable_name);
+	lease->assigned_to = SOS_NOBODY;
 }
 
 static unsigned hasher(const char *name)
@@ -667,8 +668,11 @@ static bool unfree_lease(struct addresspool *pool,
 	return stolen;
 }
 
-err_t lease_that_address(struct connection *c, const char *xauth_username,
-			 const struct ip_info *afi, struct logger *logger)
+err_t assign_remote_lease(struct connection *c,
+			  const char *xauth_username,
+			  const struct ip_info *afi,
+			  const ip_address *lease_address,
+			  struct logger *logger)
 {
 	if (c->remote->child.lease[afi->ip_index].is_set &&
 	    connection_lease(c, afi, logger) != NULL) {
@@ -706,11 +710,97 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 	struct lease *new_lease = NULL;
 	const char *story;
 
+	/*
+	 * Using the mangled ID (THATSTR), see of there is an existing
+	 * lease.
+	 */
 	if (new_lease == NULL && reusable) {
 		new_lease = recover_lease(c, thatstr, afi, logger);
 		story = "recovered";
 	}
 
+	/*
+	 * If the peer's given a prefered address try to assign that.
+	 *
+	 * XXX: some of this is identical to code in
+	 * connection_lease().
+	 */
+	if (new_lease == NULL && is_set(lease_address)) {
+
+		/*
+		 * Determine where the lease should be in the lease
+		 * table.
+		 *
+		 * Earlier code checked address in range, hence
+		 * shouldn't fail!
+		 */
+		uintmax_t offset;
+		err_t err = address_to_range_offset(pool->r, (*lease_address), &offset);
+		if (err != NULL) {
+			llog_pexpect(logger, HERE, "offset of address in range failed: %s", err);
+			return "confused, address should be within addresspool";
+		}
+
+		passert(pool->nr_leases <= pool->size);
+		passert(offset < pool->size); /* by above */
+
+		if (offset < pool->nr_leases) {
+			/*
+			 * Is the lease available?
+			 *
+			 * IKEv1: must fail as Quick Mode has no way
+			 * to send back an alternative lease.
+			 *
+			 * IKEv2: should not fail, instead the
+			 * proposed lease should be ignored and a new
+			 * one assigned.
+			 *
+			 * Later.
+			 */
+			struct lease *lease = &pool->leases[offset];
+			if (lease->assigned_to != COS_NOBODY) {
+				if (LDBGP(DBG_BASE, logger)) {
+					LDBG_lease(logger, true, pool, lease, "owned by "PRI_CO,
+						   pri_co(lease->assigned_to));
+				}
+				return "lease address already in use";
+			}
+
+			/*
+			 * This returns true when the lease had a previous
+			 * owner and the story needs to be updated.
+			 */
+			if (unfree_lease(pool, (reusable ? thatstr : NULL),
+					 lease, logger)) {
+				story = "request reclaimed";
+			} else {
+				story = "request available";
+			}
+			new_lease = lease;
+
+		} else {
+
+			/* grow the lease if necessary */
+			while (offset >= pool->nr_leases) {
+				grow_addresspool(pool, logger);
+			}
+
+			passert(offset < pool->nr_leases);
+			struct lease *lease = &pool->leases[offset];
+			if (!pexpect(lease->assigned_to == COS_NOBODY)) {
+				return "confused, just allocated lease in use";
+			}
+
+			new_lease = lease;
+			story = "request grown";
+		}
+
+	}
+
+	/*
+	 * Allocate the next lease from the free list; if necessary,
+	 * grow the pool.
+	 */
 	if (new_lease == NULL) {
 		if (IS_EMPTY(pool, free_list)) {
 			err_t e = grow_addresspool(pool, logger);
@@ -718,6 +808,7 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 				return e;
 			}
 		}
+
 		/* grab the next lease on the free list */
 		new_lease = HEAD(pool, free_list, free_entry);
 		passert(new_lease != NULL);
@@ -730,12 +821,15 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 	}
 
 	/*
-	 * convert index i in range to an IP_address
-	 *
-	 * XXX: does this update that.client addr as a side effect?
-	 *
-	 * Can't assert that .assigned_to is unset as this connection
-	 * may be in the process of stealing the lease.
+	 * No lease (above should have returned), but play save.
+	 */
+
+	if (pbad(new_lease == NULL)) {
+		return "confused, no lease";
+	}
+
+	/*
+	 * Convert the leases offset into range, into an IP_address.
 	 */
 	ip_address ia;
 	err_t err = pool_lease_to_address(pool, new_lease, &ia);
@@ -744,9 +838,8 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 		return "bad address";
 	}
 
+	/* assign and back link */
 	scribble_remote_lease(c, ia, next_lease_nr, logger, HERE);
-
-	/* back link */
 	new_lease->assigned_to = c->serialno;
 
 	if (LDBGP(DBG_BASE, logger)) {
@@ -761,74 +854,6 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 			   thatstr,
 			   str_address(&ia, &ab));
 	}
-
-	return NULL;
-}
-
-err_t lease_that_selector(struct connection *c, const char *xauth_username,
-			  const ip_selector *remote_client, struct logger *logger)
-{
-	const struct ip_info *afi = selector_type(remote_client);
-	unsigned next_lease_nr = nr_child_leases(c->remote);
-
-	if (c->remote->child.lease[afi->ip_index].is_set &&
-	    connection_lease(c, afi, logger) != NULL) {
-		ldbg(logger, "connection both thinks it has, and really has a lease");
-		return NULL;
-	}
-
-	struct addresspool *pool = c->pool[afi->ip_index];
-	if (pool == NULL) {
-		return "no address pool";
-	}
-
-	bool reusable = client_can_reuse_lease(c);
-	if (!reusable) {
-		return "lease is not reusable";
-	}
-
-	/*
-	 * Combine the ID with the XAUTH_USERNAME so that, when xauth
-	 * with a shared ID is used, the result is still unique.
-	 */
-	id_buf remote_idb; /* same scope as remote_id */
-	const char *remote_id = str_id(&c->remote->host.id, &remote_idb);
-	char thatstr[sizeof(id_buf) + MAX_XAUTH_USERNAME_LEN];
-	jam_str(thatstr, sizeof(thatstr), remote_id);
-	if (xauth_username != NULL && xauth_username[0] != '\0') {
-		add_str(thatstr, sizeof(thatstr), thatstr, xauth_username);
-	}
-
-	if (LDBGP(DBG_BASE, logger)) {
-		connection_buf cb;
-		LDBG_pool(logger, false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s'",
-			  reusable ? "reusable" : "one-time",
-			  pri_connection(c, &cb), thatstr);
-	}
-
-	struct lease *new_lease = recover_lease(c, thatstr, afi, logger);
-	if (new_lease == NULL) {
-		return "no lease";
-	}
-
-	ip_address ia;
-	err_t err = pool_lease_to_address(pool, new_lease, &ia);
-	if (err != NULL) {
-		llog_pexpect(logger, HERE, "%s", err);
-		free_that_address_lease(c, afi, logger);
-		return "bogus lease";
-	}
-
-	ip_selector is = selector_from_address(ia);
-	if (!selector_eq_selector(is, *remote_client)) {
-		free_that_address_lease(c, afi, logger);
-		return "wrong address";
-	}
-
-	scribble_remote_lease(c, ia, next_lease_nr, logger, HERE);
-
-	/* back link */
-	new_lease->assigned_to = c->serialno;
 
 	return NULL;
 }
