@@ -627,6 +627,46 @@ static err_t grow_addresspool(struct addresspool *pool,
 	return NULL;
 }
 
+/*
+ * Remove a lease from the .free_list which has the effect of making
+ * it in-use.
+ *
+ * When NEW_OWNER, also update .reusable_name (and hash table).
+ *
+ * Note: this only updates the lease.  The lease still needs to be
+ * assigned to the connection.
+ */
+
+static bool unfree_lease(struct addresspool *pool,
+			 const char *new_owner,
+			 struct lease *new_lease,
+			 struct logger *logger)
+{
+	bool stolen = false;
+	REMOVE(pool, free_list, free_entry, new_lease);
+	pool->nr_in_use++;
+
+	/* unhash before freeing */
+	if (new_lease->reusable_name != NULL) {
+		/* oops; takeing over this lingering lease */
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_lease(logger, false, pool, new_lease,
+				   "stealing reusable lease from '%s'",
+				   new_lease->reusable_name);
+		}
+		unhash_lease_id(pool, new_lease);
+		stolen = true;
+	}
+
+	free_lease_content(new_lease);
+	if (new_owner != NULL) {
+		new_lease->reusable_name = clone_str(new_owner, "lease name");
+		hash_lease_id(pool, new_lease);
+	}
+
+	return stolen;
+}
+
 err_t lease_that_selector(struct connection *c, const char *xauth_username,
 			  const ip_selector *remote_client, struct logger *logger)
 {
@@ -746,27 +786,14 @@ err_t lease_that_address(struct connection *c, const char *xauth_username,
 				return e;
 			}
 		}
+		/* grab the next lease on the free list */
 		new_lease = HEAD(pool, free_list, free_entry);
 		passert(new_lease != NULL);
-		REMOVE(pool, free_list, free_entry, new_lease);
-		pool->nr_in_use++;
-		if (new_lease->reusable_name != NULL) {
-			/* oops; takeing over this lingering lease */
-			if (LDBGP(DBG_BASE, logger)) {
-				LDBG_lease(logger, false, pool, new_lease,
-					   "stealing reusable lease from '%s'",
-					   new_lease->reusable_name);
-			}
-			unhash_lease_id(pool, new_lease);
+		if (unfree_lease(pool, (reusable ? thatstr : NULL),
+				 new_lease, logger)) {
 			story = "stolen";
 		} else {
 			story = "unused";
-		}
-		free_lease_content(new_lease);
-		if (reusable) {
-			new_lease->reusable_name = clone_str(thatstr, "lease name");
-			hash_lease_id(pool, new_lease);
-
 		}
 	}
 
