@@ -35,20 +35,17 @@ src 192.1.2.254 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
  ../../guestbin/ipsec-kernel-policy.sh
-wrong - should specify lease
-src 0.0.0.0/0 dst 0.0.0.0/0
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-wrong - should specify lease
-src 0.0.0.0/0 dst 0.0.0.0/0
+src 192.0.2.101/32 dst 0.0.0.0/0
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-wrong - should specify lease
-src 0.0.0.0/0 dst 0.0.0.0/0
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
 east #
  
