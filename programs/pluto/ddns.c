@@ -70,8 +70,8 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	if (c->remote->config->child.protoport.has_port_wildcard) {
-		pdbg(c->logger, "pending ddns: skipping connection, remote has wildcard protoport");
+	if (!is_permanent(c)) {
+		pdbg(c->logger, "pending ddns: skipping connection, is not permanent");
 		return;
 	}
 
