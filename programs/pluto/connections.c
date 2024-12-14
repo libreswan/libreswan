@@ -2044,12 +2044,11 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	FOR_EACH_THING(we, this, that) {
-		if (we->protoport.has_port_wildcard) {
-			ldbg(logger, "%s connection is CK_TEMPLATE: %s child has wildcard protoport",
-			     this->leftright, we->leftright);
-			return CK_TEMPLATE;
-		}
+	if (that->protoport.is_set /*technically-redundant*/ &&
+	    that->protoport.has_port_wildcard) {
+		ldbg(logger, "%s connection is CK_TEMPLATE: %s child has protoport wildcard port",
+		     this->leftright, that->leftright);
+		return CK_TEMPLATE;
 	}
 	FOR_EACH_THING(we, this, that) {
 		if (!never_negotiate_wm(wm) &&
