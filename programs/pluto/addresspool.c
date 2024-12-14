@@ -297,7 +297,7 @@ static void LDBG_lease(struct logger *logger, bool verbose,
 			jam(buf, "["PEXPECT_PREFIX"%s]", err);
 		}
 		jam_address(buf, &addr);
-		if (co_serial_is_set(lease->assigned_to)) {
+		if (lease->assigned_to != COS_NOBODY) {
 			jam(buf, " "PRI_CO, pri_co(lease->assigned_to));
 		} else {
 			jam(buf, " unassigned");
@@ -443,20 +443,20 @@ static struct lease *connection_lease(struct connection *c, const struct ip_info
 	struct lease *lease = &pool->leases[offset];
 
 	/*
-	 * Has the lease been "stolen" by a newer connection with the
-	 * same ID?
+	 * Has the lease been "stolen" by a newer connection instance
+	 * with the same ID?
 	 */
-	if (co_serial_cmp(lease->assigned_to, >, c->serialno)) {
+	if (lease->assigned_to > c->serialno) {
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_lease(logger, true, pool, lease, "stolen by "PRI_CO, pri_co(lease->assigned_to));
 		}
 		return NULL;
 	}
 	/*
-	 * The lease is still assigned to this connection (if it weren't the
-	 * connection wouldn't have .has_lease).
+	 * The lease is still assigned to this connection instance (if
+	 * it weren't the connection wouldn't have .has_lease).
 	 */
-	if (!pexpect(co_serial_cmp(lease->assigned_to, ==, c->serialno))) {
+	if (!pexpect(lease->assigned_to == c->serialno)) {
 		return NULL;
 	}
 	return lease;
@@ -515,7 +515,7 @@ void free_that_address_lease(struct connection *c, const struct ip_info *afi, st
 
 	/* break the link */
 	c->remote->child.lease[afi->ip_index] = unset_address;
-	lease->assigned_to = UNSET_CO_SERIAL;
+	lease->assigned_to = COS_NOBODY;
 }
 
 /*
@@ -545,7 +545,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 			if (IS_INSERTED(lease, free_entry)) {
 				/* unused */
 				REMOVE(pool, free_list, free_entry, lease);
-				pexpect(co_serial_is_unset(lease->assigned_to));
+				pexpect(lease->assigned_to == COS_NOBODY);
 				pool->nr_in_use++;
 				if (LDBGP(DBG_BASE, logger)) {
 					connection_buf cb;
@@ -554,8 +554,9 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 						   pri_connection(c, &cb), that_name);
 				}
 			} else {
-				/* still assigned to older connection */
-				pexpect(co_serial_cmp(lease->assigned_to, <, c->serialno));
+				/* still assigned to older connection
+				 * instance */
+				pexpect(lease->assigned_to < c->serialno);
 				if (LDBGP(DBG_BASE, logger)) {
 					connection_buf cb;
 					LDBG_lease(logger, false, pool, lease,

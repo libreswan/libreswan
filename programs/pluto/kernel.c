@@ -281,7 +281,7 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, "    %s", bs->why);
-	if (bs->restore_serialno != UNSET_CO_SERIAL) {
+	if (bs->restore_serialno != COS_NOBODY) {
 		jam(buf, " "PRI_CO, pri_co(bs->restore_serialno));
 	}
 }
@@ -1104,7 +1104,7 @@ void show_shunt_status(struct show *s)
 			jam_enum(buf, &shunt_policy_percent_names, bs->shunt_policy);
 			jam_string(buf, "    ");
 			jam_string(buf, bs->why);
-			if (bs->restore_serialno != UNSET_CO_SERIAL) {
+			if (bs->restore_serialno != COS_NOBODY) {
 				jam_string(buf, " ");
 				jam_co(buf, bs->restore_serialno);
 			}
@@ -2188,7 +2188,7 @@ void orphan_holdpass(struct connection *c,
 		    selector_eq_selector(dst, t->remote->child.selectors.proposed.list[0])) {
 			restore = t->serialno;
 		} else {
-			restore = UNSET_CO_SERIAL;
+			restore = COS_NOBODY;
 		}
 
 		/*
@@ -2220,7 +2220,7 @@ static void expire_bare_shunts(struct logger *logger)
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			ldbg_bare_shunt(logger, "expiring old", bsp);
-			if (co_serial_is_set(bsp->restore_serialno)) {
+			if (bsp->restore_serialno != COS_NOBODY) {
 				/*
 				 * Time to restore the connection's
 				 * shunt.  Presumably the bare shunt
