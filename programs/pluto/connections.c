@@ -2761,15 +2761,28 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
-	config->narrowing =
+	/*
+	 * narrowing=?
+	 *
+	 * In addition to explicit narrowing=yes, seeing any sort of
+	 * port wildcard (tcp/%any) implies narrowing.  This is
+	 * largely IKEv1 and L2TP (it's the only test) but nothing
+	 * implies that they can't.
+	 */
+
+	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
 			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
 							 wm->right.addresspool != NULL)),
 			   wm, c->logger);
-	if (config->narrowing &&
-	    wm->ike_version < IKEv2) {
+	if (narrowing && wm->ike_version < IKEv2) {
 		return diag("narrowing=yes requires IKEv2");
 	}
+	FOR_EACH_THING(end, &wm->left, &wm->right) {
+		narrowing |= (end->protoport.is_set &&
+			      end->protoport.has_port_wildcard);
+	}
+	config->narrowing = narrowing;
 
 	config->rekey = extract_yn("", "rekey", wm->rekey,
 				   /*default*/true, wm, c->logger);
