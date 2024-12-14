@@ -1178,11 +1178,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		}
 	}
 
-	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
-		return diag("%sprotoport cannot specify non-zero port %d for prototcol 0",
-			    src->leftright, src->protoport.hport);
-	}
-
 	if (src->groundhog != NULL) {
 		err_t e = ttobool(src->groundhog, &host_config->groundhog);
 		if (e != NULL) {
