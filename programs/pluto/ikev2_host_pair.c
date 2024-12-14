@@ -203,7 +203,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 	}
 
 	if (is_template(c) &&
-	    c->config->ikev2_allow_narrowing) {
+	    c->config->narrowing) {
 		vdbg("local endpoint has narrowing=yes - needs instantiation");
 		return rw_responder_instantiate(c, remote_address, HERE);
 	}

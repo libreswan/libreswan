@@ -2767,12 +2767,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
-	config->ikev2_allow_narrowing =
+	config->narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
 			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
 							 wm->right.addresspool != NULL)),
 			   wm, c->logger);
-	if (config->ikev2_allow_narrowing &&
+	if (config->narrowing &&
 	    wm->ike_version < IKEv2) {
 		return diag("narrowing=yes requires IKEv2");
 	}
@@ -4144,7 +4144,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(aggressive, AGGRESSIVE);
 	CT(overlapip, OVERLAPIP);
 
-	CT(ikev2_allow_narrowing, IKEV2_ALLOW_NARROWING);
+	CT(narrowing, IKEV2_ALLOW_NARROWING);
 
 	CT(ikev2_pam_authorize, IKEV2_PAM_AUTHORIZE);
 

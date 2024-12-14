@@ -193,12 +193,12 @@ static bool initiate_connection_2_address(struct connection *c,
 		 */
 
 		if (c->config->dnshostname != NULL) {
-			if (c->config->ikev2_allow_narrowing) {
+			if (c->config->narrowing) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				     str_enum(&connection_kind_names, c->local->kind, &b),
-				     bool_str(c->config->ikev2_allow_narrowing));
+				     bool_str(c->config->narrowing));
 			} else {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -209,12 +209,12 @@ static bool initiate_connection_2_address(struct connection *c,
 			return true;
 		}
 
-		if (c->config->ikev2_allow_narrowing) {
+		if (c->config->narrowing) {
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
 			     str_enum(&connection_kind_names, c->local->kind, &b),
-			     bool_str(c->config->ikev2_allow_narrowing));
+			     bool_str(c->config->narrowing));
 		} else {
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
@@ -259,7 +259,7 @@ static bool initiate_connection_3_template(struct connection *c,
 
 	if (is_template(c) &&
 	    c->config->ike_version == IKEv2 &&
-	    c->config->ikev2_allow_narrowing) {
+	    c->config->narrowing) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
 		connection_attach(d, c->logger);
 		/*

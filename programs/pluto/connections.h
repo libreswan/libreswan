@@ -262,7 +262,7 @@ struct config {
 
 	bool rekey;				/* rekey state either Phase */
 	bool reauth;				/* IKEv2 only initiate re-authentication */
-	bool ikev2_allow_narrowing;
+	bool narrowing;
 	bool send_no_esp_tfc;
 	bool send_initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool send_vendorid;			/* Send our vendorid? Security vs Debugging help */
