@@ -1178,11 +1178,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		}
 	}
 
-	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
-		return diag("%sprotoport cannot specify non-zero port %d for prototcol 0",
-			    src->leftright, src->protoport.hport);
-	}
-
 	if (src->groundhog != NULL) {
 		err_t e = ttobool(src->groundhog, &host_config->groundhog);
 		if (e != NULL) {
@@ -2049,12 +2044,11 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	FOR_EACH_THING(we, this, that) {
-		if (we->protoport.has_port_wildcard) {
-			ldbg(logger, "%s connection is CK_TEMPLATE: %s child has wildcard protoport",
-			     this->leftright, we->leftright);
-			return CK_TEMPLATE;
-		}
+	if (that->protoport.is_set /*technically-redundant*/ &&
+	    that->protoport.has_port_wildcard) {
+		ldbg(logger, "%s connection is CK_TEMPLATE: %s child has protoport wildcard port",
+		     this->leftright, that->leftright);
+		return CK_TEMPLATE;
 	}
 	FOR_EACH_THING(we, this, that) {
 		if (!never_negotiate_wm(wm) &&
@@ -2767,15 +2761,28 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
-	config->ikev2_allow_narrowing =
+	/*
+	 * narrowing=?
+	 *
+	 * In addition to explicit narrowing=yes, seeing any sort of
+	 * port wildcard (tcp/%any) implies narrowing.  This is
+	 * largely IKEv1 and L2TP (it's the only test) but nothing
+	 * implies that they can't.
+	 */
+
+	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
 			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
 							 wm->right.addresspool != NULL)),
 			   wm, c->logger);
-	if (config->ikev2_allow_narrowing &&
-	    wm->ike_version < IKEv2) {
+	if (narrowing && wm->ike_version < IKEv2) {
 		return diag("narrowing=yes requires IKEv2");
 	}
+	FOR_EACH_THING(end, &wm->left, &wm->right) {
+		narrowing |= (end->protoport.is_set &&
+			      end->protoport.has_port_wildcard);
+	}
+	config->narrowing = narrowing;
 
 	config->rekey = extract_yn("", "rekey", wm->rekey,
 				   /*default*/true, wm, c->logger);
@@ -4144,7 +4151,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(aggressive, AGGRESSIVE);
 	CT(overlapip, OVERLAPIP);
 
-	CT(ikev2_allow_narrowing, IKEV2_ALLOW_NARROWING);
+	CT(narrowing, IKEV2_ALLOW_NARROWING);
 
 	CT(ikev2_pam_authorize, IKEV2_PAM_AUTHORIZE);
 

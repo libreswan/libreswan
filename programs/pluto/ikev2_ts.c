@@ -1288,7 +1288,7 @@ static bool fit_connection_for_v2TS_request(struct connection *d,
 {
 	/* responder -- note D! */
 	enum fit responder_selector_fit;
-	if (d->config->ikev2_allow_narrowing) {
+	if (d->config->narrowing) {
 		if (is_template(d)) {
 			/*
 			 * A template starts wider
@@ -1876,7 +1876,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	 * smaller than the END.
 	 */
 	enum fit initiator_selector_fit =
-		(c->config->ikev2_allow_narrowing ? END_WIDER_THAN_TS
+		(c->config->narrowing ? END_WIDER_THAN_TS
 		 : END_EQUALS_TS);
 	/*
 	 * The responders sec_label must exactly match what was
