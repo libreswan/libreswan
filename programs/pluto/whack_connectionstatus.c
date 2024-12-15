@@ -134,17 +134,9 @@ void jam_end_host(struct jambuf *buf,
 	}
 }
 
-struct client {
-	const struct host_end *host;
-	const struct child_end *child;
-	const ip_selector client;
-	const ip_address sourceip;
-	const struct virtual_ip *virt;
-};
-
-static struct client spd_client(const struct spd_end *spd)
+static struct connection_client connection_spd_client(const struct spd_end *spd)
 {
-	struct client client = {
+	struct connection_client client = {
 		.client = spd->client,
 		.virt = spd->virt,
 		.host = spd->host,
@@ -154,9 +146,22 @@ static struct client spd_client(const struct spd_end *spd)
 	return client;
 }
 
+static struct connection_client connection_config_client(const struct connection_end *this,
+							 const ip_selector *this_selector)
+{
+	struct connection_client client = {
+		.client = *this_selector,
+		.virt = this->child.config->virt,
+		.host = &this->host,
+		.child = &this->child,
+		.sourceip = end_sourceip(this_selector, this->child.config),
+	};
+	return client;
+}
+
 static void jam_end_client(struct jambuf *buf,
 			   const struct connection *c,
-			   const struct client *this,
+			   const struct connection_client *this,
 			   enum left_right side,
 			   const char *separator)
 {
@@ -210,7 +215,7 @@ void jam_end_spd(struct jambuf *buf,
 		 enum left_right side,
 		 const char *separator)
 {
-	struct client this = spd_client(this_spd);
+	struct connection_client this = connection_spd_client(this_spd);
 	jam_end_client(buf, c, &this, side, separator);
 }
 
@@ -294,8 +299,8 @@ static void jam_end_nexthop(struct jambuf *buf,
 }
 
 static void jam_client_end(struct jambuf *buf, const struct connection *c,
-			   const struct client *this,
-			   const struct client *that,
+			   const struct connection_client *this,
+			   const struct connection_client *that,
 			   enum left_right side, bool skip_next_hop)
 {
 	switch (side) {
@@ -323,9 +328,9 @@ static void jam_client_end(struct jambuf *buf, const struct connection *c,
 }
 
 static void jam_client_ends(struct jambuf *buf, const struct connection *c,
-			    const struct client *this,
+			    const struct connection_client *this,
 			    const char *sep,
-			    const struct client *that)
+			    const struct connection_client *that)
 {
 	jam_client_end(buf, c, this, that, LEFT_END, false);
 	jam_string(buf, sep);
@@ -337,22 +342,9 @@ void jam_spd_ends(struct jambuf *buf, const struct connection *c,
 		  const char *sep,
 		  const struct spd_end *that_spd)
 {
-	struct client this = spd_client(this_spd);
-	struct client that = spd_client(that_spd);
+	struct connection_client this = connection_spd_client(this_spd);
+	struct connection_client that = connection_spd_client(that_spd);
 	jam_client_ends(buf, c, &this, sep, &that);
-}
-
-static struct client proposal_client(const struct connection_end *this,
-				     const ip_selector *this_selector)
-{
-	struct client client = {
-		.client = *this_selector,
-		.virt = this->child.config->virt,
-		.host = &this->host,
-		.child = &this->child,
-		.sourceip = end_sourceip(this_selector, this->child.config),
-	};
-	return client;
 }
 
 static void jam_routing(struct jambuf *buf, const struct connection *c)
@@ -370,10 +362,10 @@ static void jam_routing(struct jambuf *buf, const struct connection *c)
  * Two symmetric ends separated by ...
  */
 
-static void show_one_client(struct show *s,
-			    const struct connection *c,
-			    const struct client *this,
-			    const struct client *that)
+static void show_connection_client(struct show *s,
+				   const struct connection *c,
+				   const struct connection_client *this,
+				   const struct connection_client *that)
 {
 	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);
@@ -456,24 +448,38 @@ static void jam_connection_owners(struct jambuf *buf,
 	}
 }
 
-static void show_connection_status(struct show *s, const struct connection *c)
+void show_connection_clients(struct show *s, const struct connection *c,
+			     void (*show_client)(struct show *s,
+						 const struct connection *c,
+						 const struct connection_client *this,
+						 const struct connection_client *that))
 {
 	/* Show topology. */
 	if (oriented(c)) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
-			struct client this = spd_client(spd->local);
-			struct client that = spd_client(spd->remote);
-			show_one_client(s, c, &this, &that);
+			struct connection_client this =
+				connection_spd_client(spd->local);
+			struct connection_client that =
+				connection_spd_client(spd->remote);
+			show_client(s, c, &this, &that);
 		}
 	} else {
 		FOR_EACH_ITEM(local, &c->local->child.selectors.proposed) {
-			struct client this = proposal_client(c->local, local);
+			struct connection_client this =
+				connection_config_client(c->local, local);
 			FOR_EACH_ITEM(remote, &c->remote->child.selectors.proposed) {
-				struct client that = proposal_client(c->remote, remote);
-				show_one_client(s, c, &this, &that);
+				struct connection_client that =
+					connection_config_client(c->remote, remote);
+				show_client(s, c, &this, &that);
 			}
 		}
 	}
+}
+
+static void show_connection_status(struct show *s, const struct connection *c)
+{
+	/* Show topology. */
+	show_connection_clients(s, c, show_connection_client);
 
 	SHOW_JAMBUF(s, buf) {
 		jam_connection_short(buf, c);

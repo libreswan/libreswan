@@ -16,6 +16,8 @@
 #ifndef WHACK_CONNECTIONSTATUS_H
 #define WHACK_CONNECTIONSTATUS_H
 
+#include "ip_selector.h"
+
 struct whack_message;
 struct show;
 enum left_right;
@@ -47,5 +49,19 @@ void jam_spd_ends(struct jambuf *buf, const struct connection *c,
 		  const struct spd_end *this,
 		  const char *sep, /* probably ... */
 		  const struct spd_end *that);
+
+struct connection_client {
+	const struct host_end *host;
+	const struct child_end *child;
+	const ip_selector client;
+	const ip_address sourceip;
+	const struct virtual_ip *virt;
+};
+
+void show_connection_clients(struct show *s, const struct connection *c,
+			     void (*show_client)(struct show *s,
+						 const struct connection *c,
+						 const struct connection_client *this,
+						 const struct connection_client *that));
 
 #endif
