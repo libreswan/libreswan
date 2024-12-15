@@ -28,14 +28,14 @@
 #include "show.h"
 #include "kernel.h"		/* for .overlap_supported */
 
-#define F_VIRTUAL_NO		1	/* %no (subnet must be host/32) */
-#define F_VIRTUAL_PRIVATE	2	/* %priv (list held in private_net_{incl,excl} */
-#define F_VIRTUAL_ALL		4	/* %all [only for testing] */
-#define F_VIRTUAL_HOST		8	/* vhost (vnet has no representation) */
-
 struct virtual_ip {
 	refcnt_t refcnt;
-	unsigned short flags;	/* union of F_VIRTUAL_* */
+	struct virtual_flags {
+		bool no;	/* %no (subnet must be host/32) */
+		bool private;	/* %priv (list held in private_net_{incl,excl} */
+		bool all;	/* %all [only for testing] */
+		bool host;	/* vhost (vnet has no representation) */
+	} virtual;	/* union of F_VIRTUAL_* */
 	unsigned short n_net;
 	ip_subnet net[0 /*n_net*/];	/* 0-length array is a GCC extension */
 };
@@ -218,11 +218,11 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
 {
 	passert(string != NULL && string[0] != '\0');
 
-	unsigned short flags = 0;
+	struct virtual_flags flags = {0};
 	const char *str = string;
 
 	if (eat(str, "vhost:")) {
-		flags |= F_VIRTUAL_HOST;
+		flags.host = true;
 	} else if (eat(str, "vnet:")) {
 		/* represented in flags by the absence of F_VIRTUAL_HOST */
 	} else {
@@ -249,11 +249,11 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
 		ip_subnet sub;	/* sink -- value never used */
 
 		if (eat(str, "%no")) {
-			flags |= F_VIRTUAL_NO;
+			flags.no = true;
 		} else if (eat(str, "%priv")) {
-			flags |= F_VIRTUAL_PRIVATE;
+			flags.private = true;
 		} else if (eat(str, "%all")) {
-			flags |= F_VIRTUAL_ALL;
+			flags.all = true;
 		} else {
 			/* don't allow ! form */
 			err_t e = read_subnet(shunk2(str, len), &sub, NULL);
@@ -287,7 +287,7 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
 						/*extra*/(n_net * sizeof(ip_subnet)),
 						HERE);
 
-	v->flags = flags;
+	v->virtual = flags;
 	v->n_net = n_net;
 	if (n_net > 0) {
 		passert(first_net != NULL);
@@ -375,7 +375,7 @@ bool is_virtual_vhost(const struct spd_end *end)
 {
 	struct verbose verbose = { .logger = &global_logger, };
 	return (is_virtual_spd_end(end, verbose) &&
-		(end->virt->flags & F_VIRTUAL_HOST) != 0);
+		end->virt->virtual.host);
 }
 
 /*
@@ -421,14 +421,14 @@ static err_t check_virtual_net_allowed(const struct connection *c,
 	if (virt == NULL)
 		return NULL;
 
-	if (virt->flags & F_VIRTUAL_HOST && subnet_size(peer_net) != 1) {
+	if (virt->virtual.host && subnet_size(peer_net) != 1) {
 		return "only virtual host single IPs are allowed";
 	}
 
 	if (private_net_incl == NULL)
 		return NULL;
 
-	if (virt->flags & F_VIRTUAL_NO) {
+	if (virt->virtual.no) {
 		if (subnet_eq_address(peer_net, peers_addr)) {
 			return NULL;
 		}
@@ -438,7 +438,7 @@ static err_t check_virtual_net_allowed(const struct connection *c,
 	/* last failure; ignored on subsequent success; ??? default is success */
 	err_t why = NULL;
 
-	if (virt->flags & F_VIRTUAL_PRIVATE) {
+	if (virt->virtual.private) {
 		if (!net_in_list(peer_net, private_net_incl,
 				private_net_incl_len)) {
 			why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=) since it is in use elsewhere";
@@ -457,11 +457,11 @@ static err_t check_virtual_net_allowed(const struct connection *c,
 		why = "a specific network IP was required, but the proposed IP did not match our list (subnet=vhost:list)";
 	}
 
-	if (virt->flags & F_VIRTUAL_ALL) {
+	if (virt->virtual.all) {
 		/* %all must only be used for testing - log it */
 		llog(RC_LOG, c->logger,
 		     "WARNING: v%s:%%all must only be used for testing",
-		     (virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
+		     (virt->virtual.host ? "host" : "net"));
 
 		return NULL;	/* success */
 	}
