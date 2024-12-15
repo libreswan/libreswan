@@ -29,17 +29,6 @@ struct host_end;
 void whack_connectionstatus(const struct whack_message *m, struct show *s);
 void show_connection_statuses(struct show *s);
 
-/* Shared with <<ipsec briefconnectionstatus>> */
-void jam_end_host(struct jambuf *buf,
-		  const struct connection *c,
-		  const struct host_end *end);
-
-void jam_end_spd(struct jambuf *buf,
-		 const struct connection *c,
-		 const struct spd_end *this,
-		 enum left_right left_right,
-		 const char *separator);
-
 /*
  * Format the topology of a connection end, leaving out defaults.
  * Largest left end looks like: client === host : port [ host_id ] ---
@@ -50,6 +39,8 @@ void jam_spd_ends(struct jambuf *buf, const struct connection *c,
 		  const char *sep, /* probably ... */
 		  const struct spd_end *that);
 
+/* Shared with <<ipsec briefconnectionstatus>> */
+
 struct connection_client {
 	const struct host_end *host;
 	const struct child_end *child;
@@ -57,6 +48,16 @@ struct connection_client {
 	const ip_address sourceip;
 	const struct virtual_ip *virt;
 };
+
+void jam_end_host(struct jambuf *buf,
+		  const struct connection *c,
+		  const struct host_end *end);
+
+void jam_end_client(struct jambuf *buf,
+		    const struct connection *c,
+		    const struct connection_client *this,
+		    enum left_right side,
+		    const char *separator);
 
 void show_connection_clients(struct show *s, const struct connection *c,
 			     void (*show_client)(struct show *s,

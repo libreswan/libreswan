@@ -159,11 +159,11 @@ static struct connection_client connection_config_client(const struct connection
 	return client;
 }
 
-static void jam_end_client(struct jambuf *buf,
-			   const struct connection *c,
-			   const struct connection_client *this,
-			   enum left_right side,
-			   const char *separator)
+void jam_end_client(struct jambuf *buf,
+		    const struct connection *c,
+		    const struct connection_client *this,
+		    enum left_right side,
+		    const char *separator)
 {
 	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
 
@@ -208,17 +208,6 @@ static void jam_end_client(struct jambuf *buf,
 		jam_string(buf, separator);
 	}
 }
-
-void jam_end_spd(struct jambuf *buf,
-		 const struct connection *c,
-		 const struct spd_end *this_spd,
-		 enum left_right side,
-		 const char *separator)
-{
-	struct connection_client this = connection_spd_client(this_spd);
-	jam_end_client(buf, c, &this, side, separator);
-}
-
 
 static void jam_end_id(struct jambuf *buf,
 		       const struct host_end *host,

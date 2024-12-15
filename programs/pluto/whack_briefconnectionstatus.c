@@ -95,49 +95,50 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 	return bytes;
 }
 
-static void show_one_spd_brief(struct show *s,
-			 const struct connection *c,
-			 const struct spd *spd)
+static void show_one_client_brief(struct show *s,
+				  const struct connection *c,
+				  const struct connection_client *this,
+				  const struct connection_client *that)
 {
 	bool local_client_eq_host = false;
 	bool remote_client_eq_host = false;
 
 	// jam_end_client() will do nothing if client == host
-	if (selector_eq_address(spd->local->client, spd->local->host->addr)) {
+	if (selector_eq_address(this->client, this->host->addr)) {
 		local_client_eq_host = true;
 	}
-	if (selector_eq_address(spd->remote->client, spd->remote->host->addr)) {
+	if (selector_eq_address(that->client, that->host->addr)) {
 		remote_client_eq_host = true;
 	}
 
 	SHOW_JAMBUF(s, buf) {
 		if (local_client_eq_host == false && remote_client_eq_host == false) {
 			// subnet-to-subnet
-			jam_end_spd(buf, c, spd->local, LEFT_END, NULL);
+			jam_end_client(buf, c, this, LEFT_END, NULL);
 			jam_string(buf, " <==> ");
-			jam_end_spd(buf, c, spd->remote, RIGHT_END, NULL);
+			jam_end_client(buf, c, that, RIGHT_END, NULL);
 		} else if (local_client_eq_host == false) {
 			// subnet-to-host
-			jam_end_spd(buf, c, spd->local, LEFT_END, NULL);
+			jam_end_client(buf, c, this, LEFT_END, NULL);
 			jam_string(buf, " <==> ");
-			jam_end_host(buf, c, spd->remote->host);
+			jam_end_host(buf, c, that->host);
 		} else if (remote_client_eq_host == false) {
 			// host-to-subnet
-			jam_end_host(buf, c, spd->local->host);
+			jam_end_host(buf, c, this->host);
 			jam_string(buf, " <==> ");
-			jam_end_spd(buf, c, spd->remote, RIGHT_END, NULL);
+			jam_end_client(buf, c, that, RIGHT_END, NULL);
 		} else {
 			// if local_client_eq_host == true && remote_client_eq_host == true
 			// then its a host-to-host transport tunnel
-			jam_end_host(buf, c, spd->local->host);
+			jam_end_host(buf, c, this->host);
 			jam_string(buf, " <==> ");
-			jam_end_host(buf, c, spd->remote->host);
+			jam_end_host(buf, c, that->host);
 		}
 
 		jam_string(buf, "\tfrom ");
-		jam_end_host(buf, c, spd->local->host);
+		jam_end_host(buf, c, this->host);
 		jam_string(buf, " to ");
-		jam_end_host(buf, c, spd->remote->host);
+		jam_end_host(buf, c, that->host);
 		jam_humber_uintmax(buf, " (", get_child_bytes(c, DIRECTION_INBOUND), "B");
 		jam_humber_uintmax(buf, "/", get_child_bytes(c, DIRECTION_OUTBOUND), "B)\t");
 
@@ -149,9 +150,7 @@ static void show_one_spd_brief(struct show *s,
 static void show_brief_connection_status(struct show *s, const struct connection *c)
 {
 	/* Show topology. */
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		show_one_spd_brief(s, c, spd);
-	}
+	show_connection_clients(s, c, show_one_client_brief);
 }
 
 static void show_brief_connection_statuses(struct show *s)
