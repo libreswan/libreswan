@@ -1066,14 +1066,13 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			 */
 
 			struct spd_end local = *c->spd->local;
-			local.client = local_client;
-			jam_spd_end(buf, c, &local, NULL, LEFT_END, oriented(c));
-
-			jam_string(buf, "...");
-
 			struct spd_end remote = *c->spd->remote;
+			local.client = local_client;
 			remote.client = remote_client;
-			jam_spd_end(buf, c, &remote, NULL, RIGHT_END, oriented(c));
+
+			jam_spd_end(buf, c, &local, &remote, LEFT_END, false);
+			jam_string(buf, "...");
+			jam_spd_end(buf, c, &remote, &local, RIGHT_END, oriented(c));
 		}
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
@@ -1231,7 +1230,8 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam(buf, "setting phase 2 virtual values to ");
-			jam_spd_end(buf, c, c->spd->remote, NULL, LEFT_END, oriented(c));
+			jam_spd_end(buf, c, c->spd->remote, c->spd->local,
+				    LEFT_END, oriented(c));
 		}
 	}
 
