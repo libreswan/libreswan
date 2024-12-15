@@ -31,11 +31,21 @@ void show_connection_statuses(struct show *s);
 void jam_end_host(struct jambuf *buf,
 		  const struct connection *c,
 		  const struct host_end *end);
+
 void jam_end_spd(struct jambuf *buf,
 		 const struct connection *c,
 		 const struct spd_end *this,
 		 enum left_right left_right,
 		 const char *separator);
 
+/*
+ * Format the topology of a connection end, leaving out defaults.
+ * Largest left end looks like: client === host : port [ host_id ] ---
+ * hop Note: if that==NULL, skip nexthop
+ */
+void jam_spd_ends(struct jambuf *buf, const struct connection *c,
+		  const struct spd_end *this,
+		  const char *sep, /* probably ... */
+		  const struct spd_end *that);
 
 #endif

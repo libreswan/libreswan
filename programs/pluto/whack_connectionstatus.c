@@ -322,14 +322,24 @@ static void jam_client_end(struct jambuf *buf, const struct connection *c,
 	}
 }
 
-void jam_spd_end(struct jambuf *buf, const struct connection *c,
-		 const struct spd_end *this_spd,
-		 const struct spd_end *that_spd,
-		 enum left_right side, bool skip_next_hop)
+static void jam_client_ends(struct jambuf *buf, const struct connection *c,
+			    const struct client *this,
+			    const char *sep,
+			    const struct client *that)
+{
+	jam_client_end(buf, c, this, that, LEFT_END, false);
+	jam_string(buf, sep);
+	jam_client_end(buf, c, that, this, RIGHT_END, oriented(c));
+}
+
+void jam_spd_ends(struct jambuf *buf, const struct connection *c,
+		  const struct spd_end *this_spd,
+		  const char *sep,
+		  const struct spd_end *that_spd)
 {
 	struct client this = spd_client(this_spd);
 	struct client that = spd_client(that_spd);
-	jam_client_end(buf, c, &this, &that, side, skip_next_hop);
+	jam_client_ends(buf, c, &this, sep, &that);
 }
 
 static void jam_routing(struct jambuf *buf, const struct connection *c)
@@ -358,9 +368,7 @@ static void show_one_client(struct show *s,
 
 		/* one SPD */
 		jam_string(buf, " ");
-		jam_client_end(buf, c, this, that, LEFT_END, false);
-		jam_string(buf, "...");
-		jam_client_end(buf, c, that, this, RIGHT_END, oriented(c));
+		jam_client_ends(buf, c, this, "...", that);
 		jam_string(buf, ";");
 
 		/* routing/orienting */

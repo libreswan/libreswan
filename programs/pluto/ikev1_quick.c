@@ -90,6 +90,7 @@
 #include "ipsec_interface.h"
 #include "verbose.h"
 #include "peer_id.h"
+#include "whack_connectionstatus.h"	/* for jam_spd_ends() */
 
 struct connection *find_v1_client_connection(struct connection *c,
 					     const ip_selector *local_client,
@@ -1070,9 +1071,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			local.client = local_client;
 			remote.client = remote_client;
 
-			jam_spd_end(buf, c, &local, &remote, LEFT_END, false);
-			jam_string(buf, "...");
-			jam_spd_end(buf, c, &remote, &local, RIGHT_END, oriented(c));
+			jam_spd_ends(buf, c, &local, "...", &remote);
 		}
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
@@ -1227,11 +1226,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			set_child_has_client(c, remote, false);
 		}
 
-		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
 			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam(buf, "setting phase 2 virtual values to ");
-			jam_spd_end(buf, c, c->spd->remote, c->spd->local,
-				    LEFT_END, oriented(c));
+			jam_spd_ends(buf, c, c->spd->remote, "...", c->spd->local);
 		}
 	}
 
@@ -1626,9 +1624,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 		jam(buf, "    us: ");
 		const struct connection *c = child->sa.st_connection;
 		const struct spd *sr = c->spd;
-		jam_spd_end(buf, c, sr->local, sr->remote, LEFT_END, oriented(c));
-		jam_string(buf, "  them: ");
-		jam_spd_end(buf, c, sr->remote, sr->local, RIGHT_END, oriented(c));
+		jam_spd_ends(buf, c, sr->local, "  them: ", sr->remote);
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/

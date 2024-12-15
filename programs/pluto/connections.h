@@ -1093,15 +1093,6 @@ void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
 void add_connection_spds(struct connection *c);
 
-/*
- * Format the topology of a connection end, leaving out defaults.
- * Largest left end looks like: client === host : port [ host_id ] ---
- * hop Note: if that==NULL, skip nexthop
- */
-void jam_spd_end(struct jambuf *buf, const struct connection *c,
-		 const struct spd_end *this, const struct spd_end *that,
-		 enum left_right left_right, bool filter_rnh);
-
 /* connections */
 
 struct connection *alloc_connection(const char *name,
