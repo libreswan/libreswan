@@ -1125,58 +1125,60 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 							      remote_client,
 							      &c->remote->host.id,
 							      verbose, HERE); /* must delref */
-		/*
-		 * Now try to refine C further by taking a lease.
-		 * Remember, IKEv1 only does IPv4 leases.
-		 *
-		 * Normally, MODE_CFG will have assigned the lease
-		 * before reaching this point.  But when MODE_CFG is
-		 * skipped, that doesn't work.
-		 *
-		 * For instance, the client is put to sleep (laptop
-		 * lid closed) leading to the server timing out and
-		 * deleting the connection.  When the client wakes it
-		 * skips MODE_CFG since, from its POV, it still
-		 * "holds" the lease.
-		 *
-		 * For instance, this end crashes, the peer then tries
-		 * to quickly re-establish.  Even though
-		 * INITIAL_CONTACT is sent at the end of MAIN mode,
-		 * the peer still assumes it has the lease and skips
-		 * MODE-CONFIG.
-		 *
-		 * For instance, the client was configured to skip
-		 * MODE_CFG.
-		 *
-		 * XXX: IKEv1 only does IPv4.
-		 */
-		if (c->remote->config->host.pool_ranges.len > 0) {
-			err_t e = lease_that_selector(c, ike->sa.st_xauth_username,
-						      &remote_client, ike->sa.logger);
-			if (e != NULL) {
-				selector_buf cb;
-				llog(RC_LOG, ike->sa.logger,
-				     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
-				     str_selector(&remote_client, &cb), e);
-				connection_delref(&c, ike->sa.logger);
-				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
-			}
-
-			selector_buf sb;
-			llog(RC_LOG, ike->sa.logger,
-			     "Quick Mode without mode-config, assigned lease %s",
-			     str_selector(&remote_client, &sb));
-
-			vdbg("another hack to get the SPD in sync");
-			c->spd->remote->client = remote_client;
-			spd_db_rehash_remote_client(c->spd);
-		}
 	} else {
 		connection_buf cib;
 		llog_pexpect(verbose.logger, HERE,
 			     "unexpected connection type "PRI_CONNECTION"",
 			     pri_connection(p, &cib));
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+	}
+
+	/*
+	 * Now try to refine C further by taking a lease.  Remember,
+	 * IKEv1 only does IPv4 leases.
+	 *
+	 * Normally, MODE_CFG will have assigned the lease before
+	 * reaching this point.  But when MODE_CFG is skipped, that
+	 * doesn't happen.
+	 *
+	 * For instance, the client is put to sleep (laptop lid
+	 * closed) leading to the server timing out and deleting the
+	 * connection.  When the client wakes it skips MODE_CFG since,
+	 * from its POV, it still "holds" the lease.
+	 *
+	 * For instance, this end crashes, the peer then tries to
+	 * quickly re-establish.  Even though INITIAL_CONTACT is sent
+	 * at the end of MAIN mode, the peer still assumes it has the
+	 * lease and skips MODE-CONFIG.
+	 *
+	 * For instance, the client was configured to skip MODE_CFG.
+	 *
+	 * XXX: IKEv1 only does IPv4.
+	 */
+	if (c->remote->config->host.pool_ranges.len == 0) {
+		vdbg("connection has no address pool");
+	} else {
+		ip_address lease_address = selector_prefix(remote_client);
+		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
+					      address_info(lease_address),
+					      &lease_address, ike->sa.logger);
+		if (e != NULL) {
+			selector_buf cb;
+			llog(RC_LOG, ike->sa.logger,
+			     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
+			     str_selector(&remote_client, &cb), e);
+			connection_delref(&c, ike->sa.logger);
+			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
+		}
+
+		selector_buf sb;
+		llog(RC_LOG, ike->sa.logger,
+		     "Quick Mode without mode-config, assigned lease %s",
+		     str_selector(&remote_client, &sb));
+
+		vdbg("another hack to get the SPD in sync");
+		c->spd->remote->client = remote_client;
+		spd_db_rehash_remote_client(c->spd);
 	}
 
 	/* fill in the client's true ip address/subnet */
@@ -2074,9 +2076,17 @@ static struct connection *fc_try(const struct connection *c,
 		 * from a file.
 		 */
 		if (c->pool[IPv4_INDEX] != NULL) {
-			ip_range remote_range = selector_range(*remote_client);
 			ip_range pool_range = addresspool_range(c->pool[IPv4_INDEX]);
-			if (!range_in_range(remote_range, pool_range)) {
+			if (!selector_contains_one_address(*remote_client)) {
+				range_buf rb;
+				selector_buf cb;
+				vdbg("skipping connection with address pool %s, remote client %s is not an address",
+				     str_range(&pool_range, &rb),
+				     str_selector(remote_client, &cb));
+				continue;
+			}
+			ip_address remote_address = selector_prefix(*remote_client);
+			if (!address_in_range(remote_address, pool_range)) {
 				range_buf rb;
 				selector_buf cb;
 				vdbg("skipping connection with address pool %s, remote client %s is not in range",

@@ -40,20 +40,13 @@
  *   value forces it to unsigned
  */
 
-typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
+typedef enum { COS_NOBODY = 0, COS_MAX = UINT_MAX, } co_serial_t;
 
 #define PRI_CO "$%u"
 #define pri_co(CO) (CO)
 #define jam_co(BUF, CO) jam(BUF, PRI_CO, pri_co(CO))
-#define pri_connection_co(C) ((C) == NULL ? UNSET_CO_SERIAL : (C)->serialno)
+#define pri_connection_co(C) ((C) == NULL ? COS_NOBODY : (C)->serialno)
 #define jam_connection_co(BUF, C) jam(BUF, PRI_CO, pri_connection_co(C))
-
-#define co_serial_is_unset(CO) ((CO) == UNSET_CO_SERIAL)
-#define co_serial_is_set(CO)   ((CO) != UNSET_CO_SERIAL)
-/* as in co_serial_cmp(L,>=,R); unset never matches */
-#define co_serial_cmp(L, OP, R) ((L) != UNSET_CO_SERIAL && \
-				 (R) != UNSET_CO_SERIAL && \
-				 (L) OP (R))
 
 /*
  * Type of serial number of a state object.

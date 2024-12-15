@@ -938,7 +938,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		/* serial */
 		jam(buf, " conn serial: "PRI_CO,
 		    pri_co(c->serialno));
-		if (c->clonedfrom != UNSET_CO_SERIAL) {
+		if (c->clonedfrom != COS_NOBODY) {
 			jam(buf, ", instantiated from: "PRI_CO,
 			    pri_connection_co(c->clonedfrom));
 		}

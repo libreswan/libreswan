@@ -313,7 +313,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			f->proto = proto;
 			f->sport = sport;
 			f->dport = dport;
-			f->serialno = UNSET_CO_SERIAL;
+			f->serialno = COS_NOBODY;
 			*pp = f;
 		}
 	}
@@ -421,10 +421,10 @@ void load_groups(struct logger *logger)
 				 */
 				ldbg(op->group->logger,
 				     "transferring "PRI_CO, pri_co(op->serialno));
-				passert(op->serialno != UNSET_CO_SERIAL);
-				passert(np->serialno == UNSET_CO_SERIAL);
+				passert(op->serialno != COS_NOBODY);
+				passert(np->serialno == COS_NOBODY);
 				np->serialno = op->serialno;
-				op->serialno = UNSET_CO_SERIAL;
+				op->serialno = COS_NOBODY;
 				/* free old; advance new */
 				*opp = op->next;
 				pfree_target(&op);
@@ -462,7 +462,7 @@ void load_groups(struct logger *logger)
 							connection_route(t, HERE);
 						}
 						ldbg(g->logger, "setting "PRI_CO, pri_co(t->serialno));
-						passert(np->serialno == UNSET_CO_SERIAL);
+						passert(np->serialno == COS_NOBODY);
 						np->serialno = t->serialno;
 						/* advance new */
 						npp = &np->next;
