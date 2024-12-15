@@ -39,7 +39,8 @@ void virtual_ip_delref_where(struct virtual_ip **vip, where_t where);
 bool is_virtual_spd_end(const struct spd_end *that, struct verbose verbose);
 bool is_virtual_remote(const struct connection *c, struct verbose verbose);
 
-extern bool is_virtual_vhost(const struct spd_end *that);
+bool is_virtual_host(const struct virtual_ip *that);
+bool is_virtual_net(const struct virtual_ip *that);
 
 /*
  * With virtual addressing, we must not allow someone to use an

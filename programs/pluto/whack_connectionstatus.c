@@ -168,12 +168,10 @@ void jam_end_spd(struct jambuf *buf,
 		jam_string(buf, separator);
 	}
 
-	struct verbose verbose = { .logger = &global_logger, };
-	if (is_virtual_spd_end(this, verbose)) {
-		if (is_virtual_vhost(this))
-			jam_string(buf, "vhost:?");
-		else
-			jam_string(buf,  "vnet:?");
+	if (is_virtual_host(this->virt)) {
+		jam_string(buf, "vhost:?");
+	} else if (is_virtual_net(this->virt)) {
+		jam_string(buf,  "vnet:?");
 	} else {
 		jam_selector(buf, &this->client);
 		if (selector_is_zero(this->client)) {

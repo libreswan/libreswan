@@ -366,16 +366,20 @@ bool is_virtual_remote(const struct connection *c,
 }
 
 /*
- * is_virtual_vhost - is the virt set to a host or a net?
+ * is_virtual_host - is the virt set to a host or a net?
  *
  * @param that end structure
  * @return bool True if we do
  */
-bool is_virtual_vhost(const struct spd_end *end)
+
+bool is_virtual_host(const struct virtual_ip *virt)
 {
-	struct verbose verbose = { .logger = &global_logger, };
-	return (is_virtual_spd_end(end, verbose) &&
-		end->virt->virtual.host);
+	return (virt != NULL && virt->virtual.host);
+}
+
+bool is_virtual_net(const struct virtual_ip *virt)
+{
+	return (virt != NULL && !virt->virtual.host);
 }
 
 /*
