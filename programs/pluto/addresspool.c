@@ -791,6 +791,10 @@ err_t assign_remote_lease(struct connection *c,
 				return "confused, just allocated lease in use";
 			}
 
+			/* fresh lease can't have previous owner */
+			passert(unfree_lease(pool, (reusable ? thatstr : NULL),
+					     lease, logger) == false);
+
 			new_lease = lease;
 			story = "request grown";
 		}
