@@ -2778,10 +2778,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (narrowing && wm->ike_version < IKEv2) {
 		return diag("narrowing=yes requires IKEv2");
 	}
+#if 0
+	/*
+	 * Not yet: tcp/%any means narrow past the selector and down
+	 * to a single port; while narrwing means narrow down to the
+	 * selector.
+	 */
 	FOR_EACH_THING(end, &wm->left, &wm->right) {
 		narrowing |= (end->protoport.is_set &&
 			      end->protoport.has_port_wildcard);
 	}
+#endif
 	config->narrowing = narrowing;
 
 	config->rekey = extract_yn("", "rekey", wm->rekey,
