@@ -2777,14 +2777,23 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * implies that they can't.
 	 */
 
+	if (wm->narrowing == YN_NO && wm->ike_version < IKEv2) {
+		return diag("narrowing=yes requires IKEv2");
+	}
+	if (wm->narrowing == YN_NO) {
+		FOR_EACH_THING(end, &wm->left, &wm->right) {
+			if (end->addresspool != NULL) {
+				return diag("narrowing=no conflicts with %saddresspool=%s",
+					    end->leftright,
+					    end->addresspool);
+			}
+		}
+	}
 	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
 			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
 							 wm->right.addresspool != NULL)),
 			   wm, c->logger);
-	if (narrowing && wm->ike_version < IKEv2) {
-		return diag("narrowing=yes requires IKEv2");
-	}
 #if 0
 	/*
 	 * Not yet: tcp/%any means narrow past the selector and down
