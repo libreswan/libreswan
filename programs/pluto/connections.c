@@ -1755,13 +1755,17 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 		const char *leftright = end->config->leftright;
 		PASSERT(c->logger, end->child.selectors.proposed.list == NULL);
 		PASSERT(c->logger, end->child.selectors.proposed.len == 0);
+
 		if (end->child.config->selectors.len > 0) {
 			ldbg(c->logger, "%s() %s selector from %d child.selectors",
 			     __func__, leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
 			/* see also clone_connection */
 			set_end_child_has_client(c, end->config->index, true);
-		} else if (end->host.config->pool_ranges.len > 0) {
+			continue;
+		}
+
+		if (end->host.config->pool_ranges.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
@@ -1773,7 +1777,10 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 				append_end_selector(end, afi, afi->selector.all,
 						    c->logger, HERE);
 			}
-		} else if (address_is_specified(end->host.addr)) {
+			continue;
+		}
+
+		if (address_is_specified(end->host.addr)) {
 			/*
 			 * Default the end's child selector (client)
 			 * to a subnet containing only the end's host
@@ -1790,17 +1797,17 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 								end->child.config->protoport);
 			append_end_selector(end, host_afi, selector,
 					    c->logger, HERE);
-		} else {
-			/*
-			 * to-be-determined from the host or the
-			 * opportunistic group but make space
-			 * regardless.
-			 */
-			ldbg(c->logger, "%s() %s selector proposals from unset host family",
-			     __func__, leftright);
-			append_end_selector(end, host_afi, unset_selector,
-					    c->logger, HERE);
+			continue;
 		}
+
+		/*
+		 * to-be-determined from the host or the opportunistic
+		 * group but make space regardless.
+		 */
+		ldbg(c->logger, "%s() %s selector proposals from unset host family",
+		     __func__, leftright);
+		append_end_selector(end, host_afi, unset_selector,
+				    c->logger, HERE);
 	}
 }
 

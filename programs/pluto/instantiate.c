@@ -377,22 +377,21 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 		const char *leftright = end->config->leftright;
 		PASSERT(d->logger, end->child.selectors.proposed.list == NULL);
 		PASSERT(d->logger, end->child.selectors.proposed.len == 0);
+
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
-		} else if (end->host.config->pool_ranges.len > 0) {
+			continue;
+		}
+
+		if (end->host.config->pool_ranges.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 *
 			 * XXX: should this instead assign the
 			 * selectors to the range?
-			 *
-			 * XXX: if there are multiple address pools
-			 * for an IP address, what happens - this
-			 * doesn't add enough selectors.  Presumably
-			 * that isn't allowed.
 			 */
 			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
 				const struct ip_info *afi = range_type(range);
@@ -401,19 +400,20 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 				append_end_selector(end, afi, afi->selector.all,
 						    d->logger, HERE);
 			}
-		} else {
-			vdbg("%s selector formed from host address+protoport",
-			     leftright);
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(end->host.addr,
-								end->child.config->protoport);
-			append_end_selector(end, selector_info(selector), selector,
-					    d->logger, HERE);
+			continue;
 		}
+
+		vdbg("%s selector formed from host address+protoport",
+		     leftright);
+		/*
+		 * Default the end's child selector (client) to a
+		 * subnet containing only the end's host address.
+		 */
+		ip_selector selector =
+			selector_from_address_protoport(end->host.addr,
+							end->child.config->protoport);
+		append_end_selector(end, selector_info(selector), selector,
+				    d->logger, HERE);
 	}
 }
 
