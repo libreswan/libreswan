@@ -3966,9 +3966,7 @@ void jam_connection_priority(struct jambuf *buf, const struct connection *c)
 	/* 1-bit never zero */
 	pp >>= 1;
 	/* 1-bit instance */
-#if 0
 	unsigned instance = pp & 1;
-#endif
 	pp >>= 1;
 	/* 8-bit remote */
 	unsigned remote = pp & 0xff;
@@ -3977,11 +3975,7 @@ void jam_connection_priority(struct jambuf *buf, const struct connection *c)
 	unsigned local = pp & 0xff;
 	pp >>= 8;
 
-#if 0
 	jam(buf, "%u,%u,%u", local, remote, instance);
-#else
-	jam(buf, "%u,%u", local, remote);
-#endif
 }
 
 /*
