@@ -4265,6 +4265,13 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	while (next_connection(&cq)) {
 		struct connection *c = cq.c;
 
+		if (!oriented(c)) {
+			connection_buf cb;
+			ldbg(logger, "    skipping "PRI_CONNECTION"; not oriented",
+			     pri_connection(c, &cb));
+			continue;
+		}
+
 		if (is_group(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; a food group",
@@ -4331,13 +4338,12 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 			 is_instance(c) &&
 			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
 			 kernel_route_installed(c->clonedfrom));
-		if (!kernel_route_installed(c) && !instance_initiation_ok &&
+		if (!kernel_route_installed(c) &&
+		    !instance_initiation_ok &&
 		    c->config->sec_label.len == 0) {
 			connection_buf cb;
-			selector_pair_buf sb;
-			ldbg(logger, "    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
-			     pri_connection(c, &cb),
-			     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb));
+			ldbg(logger, "    skipping "PRI_CONNECTION"; !routed,!instance_initiation_ok,!sec_label",
+			     pri_connection(c, &cb));
 			continue;
 		}
 
