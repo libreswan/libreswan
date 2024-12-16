@@ -804,11 +804,12 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	SHOW_JAMBUF(s, buf) {
-		connection_priority_buf prio;
 		jam_connection_short(buf, c);
 		jam_string(buf, ":  ");
 		/* priority */
-		jam(buf, " conn_prio: %s;", str_connection_priority(c, &prio));
+		jam_string(buf, " conn_prio: ");
+		jam_connection_priority(buf, c);
+		jam_string(buf, ";");
 		/* .interface: [id_rname@][id_vname] */
 		jam_string(buf, " interface: ");
 		if (c->config->ipsec_interface.enabled) {
