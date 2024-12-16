@@ -42,3 +42,6 @@ ipsec auto --add bad-server
 
 ipsec auto --add subnet-vs-addresspool
 ipsec auto --add subnets-vs-addresspool
+
+ipsec auto --add narrowing=no-addresspool=yes
+ipsec auto --add narrowing=yes-addresspool=yes

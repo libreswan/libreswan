@@ -103,4 +103,10 @@ west #
  ipsec auto --add subnets-vs-addresspool
 "subnets-vs-addresspool/1x0": failed to add connection: cannot specify both leftaddresspool= and leftsubnets=
 west #
+ ipsec auto --add narrowing=no-addresspool=yes
+"narrowing=no-addresspool=yes": failed to add connection: narrowing=no conflicts with leftaddresspool=192.168.1.0/24
+west #
+ ipsec auto --add narrowing=yes-addresspool=yes
+"narrowing=yes-addresspool=yes": added IKEv2 connection
+west #
  
