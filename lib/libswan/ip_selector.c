@@ -466,7 +466,7 @@ ip_address selector_prefix(const ip_selector selector)
 	return address_from_raw(HERE, afi, selector.lo);
 }
 
-unsigned selector_prefix_bits(const ip_selector selector)
+unsigned selector_prefix_len(const ip_selector selector)
 {
 	return selector.maskbits;
 }

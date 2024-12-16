@@ -77,7 +77,7 @@ Connection list:
 "road-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "road-east":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+MODECFG_PULL+ACCEPT_REDIRECT_YES+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-east":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"road-east":   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road-east":   conn_prio: 32,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-east":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

@@ -28,7 +28,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "roadnet-eastnet-ipv4-psk-ikev1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "roadnet-eastnet-ipv4-psk-ikev1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"roadnet-eastnet-ipv4-psk-ikev1":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"roadnet-eastnet-ipv4-psk-ikev1":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "roadnet-eastnet-ipv4-psk-ikev1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "roadnet-eastnet-ipv4-psk-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "roadnet-eastnet-ipv4-psk-ikev1":   dpd: passive; delay:0s; timeout:0s
@@ -48,7 +48,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn_prio: 32,32,1; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   dpd: passive; delay:0s; timeout:0s

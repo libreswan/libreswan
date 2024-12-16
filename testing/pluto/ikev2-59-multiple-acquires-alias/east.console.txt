@@ -36,7 +36,7 @@ east #
 "north-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "north-eastnets/0x1":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "north-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"north-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"north-eastnets/0x1":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-eastnets/0x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 "north-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
@@ -58,7 +58,7 @@ east #
 "north-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "north-eastnets/0x2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "north-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"north-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"north-eastnets/0x2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-eastnets/0x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
 "north-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

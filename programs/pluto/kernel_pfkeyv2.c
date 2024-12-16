@@ -362,7 +362,7 @@ static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 				  protocol != NULL ? protocol->ipproto :
 				  pexpect(0));
 	ip_address prefix = selector_prefix(selector);
-	unsigned prefix_len = selector_prefix_bits(selector);
+	unsigned prefix_len = selector_prefix_len(selector);
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst_exttype,
 			     .sadb_address_proto = proto,

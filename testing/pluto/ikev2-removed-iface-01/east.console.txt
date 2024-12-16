@@ -36,9 +36,9 @@ interface eth1 192.1.2.23:UDP/4500 (NAT)
 interface eth1 192.1.2.23:UDP/500
 interface eth3 192.1.3.1:UDP/4500 (NAT)
 interface eth3 192.1.3.1:UDP/500
-"test1":   conn_prio: 32,32; interface: eth3; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"test2":   conn_prio: 32,32; interface: eth3; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"test3":   conn_prio: 32,32; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"test1":   conn_prio: 32,32,0; interface: eth3; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"test2":   conn_prio: 32,32,0; interface: eth3; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"test3":   conn_prio: 32,32,0; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 east #
  ipsec auto --status | grep "[.][.][.]"
 "test1": 192.1.3.1...192.1.3.2; unrouted; my_ip=unset; their_ip=unset;

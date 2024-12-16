@@ -114,7 +114,7 @@ Connection list:
 "rw-eastnet-ipv6":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "rw-eastnet-ipv6":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rw-eastnet-ipv6":   v2-auth-hash-policy: none;
-"rw-eastnet-ipv6":   conn_prio: 64,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"rw-eastnet-ipv6":   conn_prio: 64,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "rw-eastnet-ipv6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "rw-eastnet-ipv6":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
 "rw-eastnet-ipv6":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

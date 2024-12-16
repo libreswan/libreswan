@@ -22,7 +22,7 @@ west #
 "order-test":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "order-test":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"order-test":   conn_prio: 128,128; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"order-test":   conn_prio: 128,128,0; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "order-test":   our idtype: ID_FQDN; our id=@foo; their idtype: ID_FQDN; their id=@bar
 "order-test":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

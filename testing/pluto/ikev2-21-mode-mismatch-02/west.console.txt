@@ -28,7 +28,7 @@ west #
 "ipv4-psk-ikev2-transport":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "ipv4-psk-ikev2-transport":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "ipv4-psk-ikev2-transport":   v2-auth-hash-policy: none;
-"ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"ipv4-psk-ikev2-transport":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "ipv4-psk-ikev2-transport":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

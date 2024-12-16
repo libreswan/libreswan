@@ -44,7 +44,7 @@ west #
 "westnet-eastnet-6in4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-6in4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-6in4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"westnet-eastnet-6in4":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-6in4":   conn_prio: 64,64,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-6in4":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-6in4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

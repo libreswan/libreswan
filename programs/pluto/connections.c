@@ -3944,44 +3944,47 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	return NULL;
 }
 
-/* priority formatting */
-size_t jam_connection_priority(struct jambuf *buf, const struct connection *c)
+static connection_priority_t max_prefix_len(struct connection_end *end)
 {
-	connection_priority_t pp = connection_priority(c);
-	if (pp == BOTTOM_PRIORITY) {
-		return jam_string(buf, "0");
+	unsigned len = 0;
+	FOR_EACH_ITEM(selector, &end->child.selectors.proposed) {
+		len = max(len, selector_prefix_len((*selector)));
 	}
-
-	return jam(buf, "%" PRIu32 ",%" PRIu32,
-		   pp >> 17, (pp & ~(~(connection_priority_t)0 << 17)) >> 8);
-}
-
-const char *str_connection_priority(const struct connection *c, connection_priority_buf *buf)
-{
-	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
-	jam_connection_priority(&jb, c);
-	return buf->buf;
-}
-
-static connection_priority_t end_maskbits(const struct connection *c,
-					  struct connection_end *end)
-{
-	if (c->spd != NULL) {
-		return c->spd->end[end->config->index].client.maskbits;
-	}
-	if (end->child.selectors.proposed.len > 0) {
-		return end->child.selectors.proposed.list[0].maskbits;
-	}
-	return 0;
+	return len;
 }
 
 connection_priority_t connection_priority(const struct connection *c)
 {
 	connection_priority_t pp = 0;
-	pp |= end_maskbits(c, c->local) << 17;
-	pp |= end_maskbits(c, c->remote) << 8;
-	pp |= 1;
+	/* space for IPv6 mask which is /128 */
+	pp |= max_prefix_len(c->local);
+	pp <<= 8;
+	pp |= max_prefix_len(c->remote);
+	pp <<= 1;
+	pp |= is_instance(c);
+	pp <<= 1;
+	pp |= 1; /* never return zero aka BOTTOM_PRIORITY */
 	return pp;
+}
+
+void jam_connection_priority(struct jambuf *buf, const struct connection *c)
+{
+	connection_priority_t pp = connection_priority(c);
+	/* reverse the above */
+
+	/* 1-bit never zero */
+	pp >>= 1;
+	/* 1-bit instance */
+	unsigned instance = pp & 1;
+	pp >>= 1;
+	/* 8-bit remote */
+	unsigned remote = pp & 0xff;
+	pp >>= 8;
+	/* 8-bit local */
+	unsigned local = pp & 0xff;
+	pp >>= 8;
+
+	jam(buf, "%u,%u,%u", local, remote, instance);
 }
 
 /*
@@ -4428,9 +4431,9 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * above).
 		 */
 		connection_priority_t priority =
-			(8 * (connection_priority(c) + is_instance(c)) +
-			 (src - 1/*strip 1 added above*/) +
-			 (dst - 1/*strip 1 added above*/));
+			((connection_priority(c) << 3)/*space-for-2-bits+overflow*/ +
+			 (src - 1/*2-bits, strip 1 added above*/) +
+			 (dst - 1/*2-bits, strip 1 added above*/));
 
 		if (best_connection != NULL &&
 		    priority <= best_priority) {

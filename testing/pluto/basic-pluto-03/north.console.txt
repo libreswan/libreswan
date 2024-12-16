@@ -119,7 +119,7 @@ Connection list:
 "northnet-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "northnet-eastnet-nonat":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "northnet-eastnet-nonat":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"northnet-eastnet-nonat":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"northnet-eastnet-nonat":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "northnet-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "northnet-eastnet-nonat":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 "northnet-eastnet-nonat":   dpd: passive; delay:0s; timeout:0s

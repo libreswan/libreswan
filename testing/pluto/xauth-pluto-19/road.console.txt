@@ -32,7 +32,7 @@ road #
 "modecfg-road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "modecfg-road-eastnet-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "modecfg-road-eastnet-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"modecfg-road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"modecfg-road-eastnet-psk":   conn_prio: 32,24,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "modecfg-road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "modecfg-road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
 "modecfg-road-eastnet-psk":   dpd: passive; delay:0s; timeout:0s

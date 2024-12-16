@@ -240,7 +240,7 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 		ip_selector client_ = (CLIENT);				\
 		ip_address address = selector_prefix(client_);		\
 		(REQ).L##addr = xfrm_from_address(&address);		\
-		(REQ).prefixlen_##L = selector_prefix_bits(client_);	\
+		(REQ).prefixlen_##L = selector_prefix_len(client_);	\
 		(REQ).L##port = nport(selector_port(client_));		\
 	}
 

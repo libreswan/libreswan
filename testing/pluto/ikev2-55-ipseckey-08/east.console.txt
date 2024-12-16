@@ -23,7 +23,7 @@ east #
 "east-any":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "east-any":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES; +rKOD;
 "east-any":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"east-any":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-any":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

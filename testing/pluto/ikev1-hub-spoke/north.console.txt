@@ -119,7 +119,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "northnet-westnet-ipv4-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "northnet-westnet-ipv4-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"northnet-westnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"northnet-westnet-ipv4-psk":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
 "northnet-westnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s

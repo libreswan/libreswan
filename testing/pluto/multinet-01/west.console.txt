@@ -41,7 +41,7 @@ west #
 "westnet-eastnet-subnets/1x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/1x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/1x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/1x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/1x1":   conn_prio: 28,28,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/1x1":   dpd: passive; delay:0s; timeout:0s
@@ -61,7 +61,7 @@ west #
 "westnet-eastnet-subnets/1x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/1x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/1x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/1x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/1x2":   conn_prio: 28,30,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/1x2":   dpd: passive; delay:0s; timeout:0s
@@ -81,7 +81,7 @@ west #
 "westnet-eastnet-subnets/2x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/2x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/2x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/2x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/2x1":   conn_prio: 28,28,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/2x1":   dpd: passive; delay:0s; timeout:0s
@@ -101,7 +101,7 @@ west #
 "westnet-eastnet-subnets/2x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/2x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/2x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/2x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/2x2":   conn_prio: 28,30,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/2x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/2x2":   dpd: passive; delay:0s; timeout:0s
@@ -191,7 +191,7 @@ west #
 "westnet-eastnet-subnets/1x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/1x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/1x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/1x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/1x1":   conn_prio: 28,28,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/1x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/1x1":   dpd: passive; delay:0s; timeout:0s
@@ -211,7 +211,7 @@ west #
 "westnet-eastnet-subnets/1x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/1x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/1x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/1x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/1x2":   conn_prio: 28,30,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/1x2":   dpd: passive; delay:0s; timeout:0s
@@ -231,7 +231,7 @@ west #
 "westnet-eastnet-subnets/2x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/2x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/2x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/2x1":   conn_prio: 28,28; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/2x1":   conn_prio: 28,28,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/2x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/2x1":   dpd: passive; delay:0s; timeout:0s
@@ -251,7 +251,7 @@ west #
 "westnet-eastnet-subnets/2x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-subnets/2x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-subnets/2x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-subnets/2x2":   conn_prio: 28,30; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-subnets/2x2":   conn_prio: 28,30,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-subnets/2x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 "westnet-eastnet-subnets/2x2":   dpd: passive; delay:0s; timeout:0s
