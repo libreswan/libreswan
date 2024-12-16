@@ -66,6 +66,10 @@ void disorient(struct connection *c)
 		PASSERT(c->logger, !oriented(c));
 		ipsec_interface_delref(&c->ipsec_interface, c->logger, HERE);
 		/*
+		 * Discard the SPDs and their hashes.
+		 */
+		discard_connection_spds(c);
+		/*
 		 * Move to a special disoriented hash.
 		 */
 		connection_db_rehash_host_pair(c);
@@ -364,18 +368,16 @@ bool orient(struct connection *c, struct logger *logger)
 	c->local = local;
 	c->remote = remote;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd->local = &spd->end[matching_end];
-		spd->remote = &spd->end[!matching_end];
-	}
+	/*
+	 * Now that things are oriented, generate tentative kernel
+	 * policies from the selectors (which also enters them into
+	 * the SPD_DB.
+	 */
+	add_connection_spds(c);
 
 	/* rehash end dependent hashes */
-	connection_db_rehash_that_id(c);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd_db_rehash_remote_client(spd);
-	}
 
-	/* the ends may have flipped */
+	connection_db_rehash_that_id(c);
 	connection_db_rehash_host_pair(c);
 
 	/*
