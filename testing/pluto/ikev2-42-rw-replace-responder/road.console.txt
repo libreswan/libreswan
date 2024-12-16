@@ -150,7 +150,7 @@ Connection list:
 "road-east-x509-ipv4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-east-x509-ipv4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road-east-x509-ipv4":   conn_prio: 0,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-east-x509-ipv4":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
@@ -171,7 +171,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-east-x509-ipv4"[1]:   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"road-east-x509-ipv4"[1]:   conn_prio: 32,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road-east-x509-ipv4"[1]:   conn_prio: 32,0,1; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "road-east-x509-ipv4"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s

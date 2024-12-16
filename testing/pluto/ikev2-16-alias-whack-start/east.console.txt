@@ -27,7 +27,7 @@ east #
 "northnet-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "northnet-eastnets/0x1":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "northnet-eastnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"northnet-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"northnet-eastnets/0x1":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "northnet-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "northnet-eastnets/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 "northnet-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
@@ -49,7 +49,7 @@ east #
 "northnet-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "northnet-eastnets/0x2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "northnet-eastnets/0x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"northnet-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"northnet-eastnets/0x2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "northnet-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "northnet-eastnets/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 "northnet-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

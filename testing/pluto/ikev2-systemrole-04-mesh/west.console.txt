@@ -160,7 +160,7 @@ Connection list:
 "clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "clear":   policy: IKEv2+AUTH_NEVER+ROUTE+GROUP+PASS+NEVER_NEGOTIATE;
 "clear":   v2-auth-hash-policy: none;
-"clear":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"clear":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "clear":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %none; their id=(none)
 "clear":   liveness: passive; dpddelay:0s; retransmit-timeout:0s
@@ -180,7 +180,7 @@ Connection list:
 "clear#192.1.2.254/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "clear#192.1.2.254/32":   policy: IKEv2+AUTH_NEVER+GROUPINSTANCE+ROUTE+PASS+NEVER_NEGOTIATE;
 "clear#192.1.2.254/32":   v2-auth-hash-policy: none;
-"clear#192.1.2.254/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"clear#192.1.2.254/32":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "clear#192.1.2.254/32":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: %none; their id=(none)
 "clear#192.1.2.254/32":   liveness: passive; dpddelay:0s; retransmit-timeout:0s
@@ -201,7 +201,7 @@ Connection list:
 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
 "private":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"private":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"private":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
@@ -222,7 +222,7 @@ Connection list:
 "private#10.1.0.0/24":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private#10.1.0.0/24":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failureDROP;
 "private#10.1.0.0/24":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"private#10.1.0.0/24":   conn_prio: 32,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"private#10.1.0.0/24":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private#10.1.0.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private#10.1.0.0/24":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private#10.1.0.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
@@ -243,7 +243,7 @@ Connection list:
 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private-or-clear":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failurePASS;
 "private-or-clear":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"private-or-clear":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"private-or-clear":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private-or-clear":   liveness: passive; dpddelay:0s; retransmit-timeout:2s
@@ -264,7 +264,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "private-or-clear#192.1.2.0/24":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failurePASS;
 "private-or-clear#192.1.2.0/24":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"private-or-clear#192.1.2.0/24":   conn_prio: 32,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"private-or-clear#192.1.2.0/24":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "private-or-clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "private-or-clear#192.1.2.0/24":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "private-or-clear#192.1.2.0/24":   liveness: passive; dpddelay:0s; retransmit-timeout:2s

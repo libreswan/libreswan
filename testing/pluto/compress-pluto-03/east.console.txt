@@ -21,7 +21,7 @@ east #
 "westnet-eastnet-esp-3des-alg":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-esp-3des-alg":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-esp-3des-alg":   policy: IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-esp-3des-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-esp-3des-alg":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-esp-3des-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-esp-3des-alg":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-esp-3des-alg":   dpd: passive; delay:0s; timeout:0s

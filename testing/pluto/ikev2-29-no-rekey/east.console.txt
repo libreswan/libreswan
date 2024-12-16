@@ -111,7 +111,7 @@ Connection list:
 "westnet-eastnet-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-ikev2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s

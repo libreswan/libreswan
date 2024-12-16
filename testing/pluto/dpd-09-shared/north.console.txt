@@ -70,7 +70,7 @@ north #
 "north-a-dpd":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "north-a-dpd":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "north-a-dpd":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"north-a-dpd":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"north-a-dpd":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "north-a-dpd":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-a-dpd":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "north-a-dpd":   dpd: action:restart; delay:3; timeout:10

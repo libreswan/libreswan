@@ -48,7 +48,7 @@ Connection list:
 "east-any":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "east-any":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+MODECFG_PULL+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "east-any":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-"east-any":   conn_prio: 0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"east-any":   conn_prio: 0,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
