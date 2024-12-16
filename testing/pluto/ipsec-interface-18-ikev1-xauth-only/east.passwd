@@ -1,11 +1,1 @@
-road:$apr1$898RP...$9gJFVFuZIvsD0dTGADcv10:xauth-road-eastnet
-use1:xOzlFlqtwJIu2:xauth-road-eastnet
-use2:xOzlFlqtwJIu2:xauth-road-eastnet-psk
-use3:xOzlFlqtwJIu2:modecfg-road-eastnet-psk
-use3:xOzlFlqtwJIu2:xauth-road-eastnet
-use4:xOzlFlqtwJIu2:east-any
-use5:xOzlFlqtwJIu2:east-any:192.0.2.100
-use6:xOzlFlqtwJIu2:east-any:192.0.2.101-192.0.2.200
-nopw:xO0YtyPGNSXJo:xauth-road-eastnet-psk
-# used in xauth-pluto-26
-xroad:xOzlFlqtwJIu2:east-any:192.0.2.201
+use3:xOzlFlqtwJIu2:any-east

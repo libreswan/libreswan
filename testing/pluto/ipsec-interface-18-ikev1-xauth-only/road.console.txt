@@ -6,50 +6,46 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- ipsec auto --add modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": created ipsec-interface ipsec1@eth0
-"modecfg-road-eastnet-psk": added IKEv1 connection
+ ipsec auto --add road-east
+"road-east": created ipsec-interface ipsec1@eth0
+"road-east": added IKEv1 connection
 road #
  echo "initdone"
 initdone
 road #
- ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-eastnet-psk --initiate
-"modecfg-road-eastnet-psk" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
-"modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
-"modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-"modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
-"modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
-"modecfg-road-eastnet-psk" #1: initiating IKEv1 Aggressive Mode connection
-"modecfg-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
-"modecfg-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
-"modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
-"modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
-"modecfg-road-eastnet-psk" #1: sent Aggressive Mode request
-"modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
-"modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-"modecfg-road-eastnet-psk" #1: prompt for Username:
-"modecfg-road-eastnet-psk" #1: prompt for Password:
-"modecfg-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
-"modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-"modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
-"modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-"modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
-"modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
-"modecfg-road-eastnet-psk" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
-"modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
-"modecfg-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
-"modecfg-road-eastnet-psk" #2: sent Quick Mode request
-"modecfg-road-eastnet-psk" #2: added 192.0.2.209/32 to ipsec-interface ipsec1@eth0
-"modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
+ ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name road-east --initiate
+"road-east" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
+"road-east" #1: multiple DH groups in aggressive mode can cause interop failure
+"road-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"road-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
+"road-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
+"road-east" #1: initiating IKEv1 Aggressive Mode connection
+"road-east" #1: multiple DH groups in aggressive mode can cause interop failure
+"road-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
+"road-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
+"road-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
+"road-east" #1: sent Aggressive Mode request
+"road-east" #1: Peer ID is ID_FQDN: '@east'
+"road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+"road-east" #1: prompt for Username:
+"road-east" #1: prompt for Password:
+"road-east" #1: XAUTH: Answering XAUTH challenge with user='use3'
+"road-east" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+"road-east" #1: XAUTH: Successfully Authenticated
+"road-east" #1: XAUTH completed; ModeCFG skipped as per configuration
+"road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
+"road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east" #2: sent Quick Mode request
+"road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 road #
  ipsec whack --trafficstatus
-#2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, lease=192.0.2.209/32
+#2: "road-east", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-#2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.209/32
+#2: "road-east", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
 road #
  echo done
 done
@@ -61,7 +57,6 @@ src 192.1.3.209 dst 192.1.2.23
 	output-mark 0x1/0xffffffff
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
 	if_id 0x1
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -69,7 +64,6 @@ src 192.1.2.23 dst 192.1.3.209
 	output-mark 0x1/0xffffffff
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -93,4 +87,14 @@ src 192.0.2.209/32 dst 192.0.2.0/24
 		proto esp reqid REQID mode tunnel
 	if_id 0x1
 road #
- 
+ ../../guestbin/ip.sh ru
+0:	from all lookup local
+32766:	from all lookup main
+32767:	from all lookup default
+road #
+ ../../guestbin/ip.sh r
+default via 192.1.3.254 dev eth0
+192.0.2.0/24 dev ipsec1 scope link
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+road #
+
