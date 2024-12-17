@@ -1769,13 +1769,25 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
+			 *
+			 * Use ALL so that any code testing
+			 * selector_in_selector() will succeed,
+			 * provided the family is correct.
+			 *
+			 * IKEv2: addresspool implies narrowing so
+			 * peer sending ::/0 will be allowed to narrow
+			 * down to the addresspool range.
+			 *
+			 * IKEv1: peer is expected to send a narrowed
+			 * subnet obtained earlier (either MODE_CFG,
+			 * or hard-wired).
 			 */
 			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
-				const struct ip_info *afi = range_type(range);
-				ldbg(c->logger, "%s selectors formed from %s address pool",
-				     leftright, afi->ip_name);
-				append_end_selector(end, afi, afi->selector.all,
-						    c->logger, HERE);
+				ip_selector selector = selector_from_range((*range));
+				selector_buf sb;
+				ldbg(c->logger, "%s selector formed from address pool %s",
+				     leftright, str_selector(&selector, &sb));
+				append_end_selector(end, selector_info(selector), selector, c->logger, HERE);
 			}
 			continue;
 		}
