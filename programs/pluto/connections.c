@@ -3948,7 +3948,10 @@ static connection_priority_t max_prefix_len(struct connection_end *end)
 {
 	int len = 0;
 	FOR_EACH_ITEM(selector, &end->child.selectors.proposed) {
-		len = max(len, selector_prefix_len((*selector)));
+		int prefix_len = selector_prefix_len((*selector));
+		if (prefix_len >= 0) {
+			len = max(len, prefix_len);
+		}
 	}
 	return len;
 }
