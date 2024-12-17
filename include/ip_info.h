@@ -33,9 +33,6 @@ struct ip_info {
 		size_t (*address)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
 		/* N.N.N.N or [MM:MM:MM...] */
 		size_t (*address_wrapped)(struct jambuf *buf, const struct ip_info *info, const struct ip_bytes *bytes);
-		/* N.N.N.N:PORT or [N:..:N]:PORT */
-		size_t (*address_wrapped_port)(struct jambuf *buf, const struct ip_info *info,
-					       const struct ip_bytes *bytes, unsigned hport);
 	} jam;
 
 	/*

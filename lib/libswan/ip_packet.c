@@ -134,11 +134,13 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 		 */
 		s += afi->jam.address_wrapped(buf, afi, &packet->src.bytes);
 	} else {
-		s += afi->jam.address_wrapped_port(buf, afi, &packet->src.bytes, packet->src.hport);
+		s += afi->jam.address_wrapped(buf, afi, &packet->src.bytes);
+		s += jam(buf, ":%u", packet->src.hport);
 	}
 	/* DST port is always valid */
 	s += jam(buf, "-%s->", packet->protocol->name);
-	s += afi->jam.address_wrapped_port(buf, afi, &packet->dst.bytes, packet->dst.hport);
+	s += afi->jam.address_wrapped(buf, afi, &packet->dst.bytes);
+	s += jam(buf, ":%u", packet->dst.hport);
 	return s;
 }
 

@@ -43,16 +43,6 @@ static size_t jam_ipv4_address(struct jambuf *buf, const struct ip_info *afi, co
 	return s;
 }
 
-static size_t jam_ipv4_address_wrapped_port(struct jambuf *buf, const struct ip_info *afi,
-					    const struct ip_bytes *bytes, unsigned hport)
-{
-	size_t s = 0;
-	/* N.N.N.N:PORT */
-	s += jam_ipv4_address(buf, afi, bytes);
-	s += jam(buf, ":%u", hport);
-	return s;
-}
-
 /*
  * Find longest run of zero pairs that should be suppressed (need at
  * least two).
@@ -122,16 +112,6 @@ static size_t jam_ipv6_address_wrapped(struct jambuf *buf, const struct ip_info 
 	return s;
 }
 
-static size_t jam_ipv6_address_wrapped_port(struct jambuf *buf, const struct ip_info *afi,
-					    const struct ip_bytes *bytes, unsigned hport)
-{
-	size_t s = 0;
-	/* [N:..:N]:PORT */
-	s += jam_ipv6_address_wrapped(buf, afi, bytes);
-	s += jam(buf, ":%u", hport);
-	return s;
-}
-
 static ip_address address_from_ipv4_sockaddr(const ip_sockaddr sa)
 {
 	passert(sa.sa.sa.sa_family == AF_INET);
@@ -176,7 +156,6 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		/* formatting */
 		.jam.address = jam_ipv4_address,
 		.jam.address_wrapped = jam_ipv4_address,
-		.jam.address_wrapped_port = jam_ipv4_address_wrapped_port,
 
 		/* ip_address - .address.any matches grep */
 		.address.unspec = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
@@ -236,7 +215,6 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		/* formatting */
 		.jam.address = jam_ipv6_address,
 		.jam.address_wrapped = jam_ipv6_address_wrapped,
-		.jam.address_wrapped_port = jam_ipv6_address_wrapped_port,
 
 		/* ip_address - .address.any matches grep */
 		.address.unspec = { .is_set = true, .version = IPv6, }, /* :: */

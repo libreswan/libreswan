@@ -184,7 +184,10 @@ size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 		return jam_string(buf, "<unknown-endpoint>");
 	}
 
-	return afi->jam.address_wrapped_port(buf, afi, &endpoint->bytes, endpoint->hport);
+	size_t s = 0;
+	s += afi->jam.address_wrapped(buf, afi, &endpoint->bytes);
+	s += jam(buf, ":%d", endpoint->hport);
+	return s;
 }
 
 const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
