@@ -30,7 +30,7 @@ struct selector {
 struct from_test {
 	int line;
 	struct selector from;
-	const char *subnet;
+	const char *selector;
 	const char *lo;
 	const char *hi;
 	unsigned ipproto;
@@ -45,12 +45,12 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 
 	for (size_t ti = 0; ti < nr_tests; ti++) {
 		const struct from_test *t = &tests[ti];
-		PRINT("%s %s=%s protoport=%s subnet=%s range=%s-%s ipproto=%u hport=%u nport=%02x%02x",
+		PRINT("%s %s=%s protoport=%s selector=%s lo=%s hi=%s ipproto=%u hport=%u nport=%02x%02x",
 		      pri_family(t->from.family),
 		      what,
 		      (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 		      (t->from.protoport != NULL ? t->from.protoport : "N/A"),
-		      (t->subnet != NULL ? t->subnet : "N/A"),
+		      (t->selector != NULL ? t->selector : "N/A"),
 		      (t->lo != NULL ? t->lo : "N/A"),
 		      (t->hi != NULL ? t->hi : "N/A"),
 		      t->ipproto,
@@ -59,7 +59,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 
 		ip_selector tmp, *selector = &tmp;
 		err_t err = tto(&t->from, selector);
-		if (t->lo != NULL || t->subnet || t->hi != NULL) {
+		if (t->selector != NULL) {
 			if (err != NULL) {
 				FAIL("%s(%s %s %s) failed: %s",
 				     what,
@@ -80,12 +80,14 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 
 #define str_selector str_selector_subnet_port
 		CHECK_FAMILY(t->from.family, selector, selector);
+#undef str_selector
 
-		ip_subnet subnet = selector_subnet(*selector);
-		subnet_buf sb;
-		str_subnet(&subnet, &sb);
-		if (!streq(sb.buf, t->subnet)) {
-			FAIL("str_subnet() was %s, expected %s", sb.buf, t->subnet);
+		if (t->selector != NULL) {
+			selector_buf sb;
+			str_selector(selector, &sb);
+			if (!streq(sb.buf, t->selector)) {
+				FAIL("str_selector() was %s, expected %s", sb.buf, t->selector);
+			}
 		}
 
 		ip_range range = selector_range(*selector);
@@ -125,7 +127,8 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 	}
 }
 
-static err_t do_ttoaddress_ttoprotoport(const struct selector *s, ip_selector *selector)
+static err_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
+						      ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -148,18 +151,19 @@ static err_t do_ttoaddress_ttoprotoport(const struct selector *s, ip_selector *s
 	return NULL;
 }
 
-static void check_selector_from_address(void)
+static void check_selector_from_address_protoport(void)
 {
 	static const struct from_test tests[] = {
 		{ LN, { 4, "128.0.0.0", "0/0", }, "128.0.0.0/32", "128.0.0.0", "128.0.0.0", 0, 0, { 0, 0, }, },
-		{ LN, { 6, "8000::", "16/10", }, "8000::/128", "8000::", "8000::", 16, 10, { 0, 10, }, },
+		{ LN, { 6, "8000::", "16/10", }, "8000::/128/CHAOS/10", "8000::", "8000::", 16, 10, { 0, 10, }, },
 	};
-	check_selector_from(tests, elemsof(tests), "ttoaddress+ttoprotoport",
-			    do_ttoaddress_ttoprotoport);
+	check_selector_from(tests, elemsof(tests),
+			    "selector(ttoaddress(),ttoprotoport())",
+			    do_selector_from_ttoaddress_ttoprotoport);
 }
 
-static err_t do_ttosubnet_ttoprotoport(const struct selector *s,
-				       ip_selector *selector)
+static err_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
+						     ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -206,18 +210,18 @@ static void check_selector_from_subnet_protoport(void)
 		{ LN, { 4, "101.102.103.104/32", "0/0", }, "101.102.103.104/32", "101.102.103.104", "101.102.103.104", 0, 0, { 0, 0, }, },
 		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 0, 0, { 0, 0, }, },
 		/* non-zero port mixed with mask; only allow when /32/128? */
-		{ LN, { 4, "0.0.0.0/0", "16/65534", }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 16, 65534, { 255, 254, }, },
-		{ LN, { 6, "::0/0", "16/65534", }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 16, 65534, { 255, 254, }, },
-		{ LN, { 4, "101.102.0.0/16", "16/65534", }, "101.102.0.0/16", "101.102.0.0", "101.102.255.255", 16, 65534, { 255, 254, }, },
-		{ LN, { 6, "1001:1002:1003:1004::/64", "16/65534", }, "1001:1002:1003:1004::/64", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 16, 65534, { 255, 254, }, },
-		{ LN, { 4, "101.102.103.104/32", "16/65534", }, "101.102.103.104/32", "101.102.103.104", "101.102.103.104", 16, 65534, { 255, 254, }, },
-		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 16, 65534, { 255, 254, }, },
+		{ LN, { 4, "0.0.0.0/0", "16/65534", }, "0.0.0.0/0/CHAOS/65534", "0.0.0.0", "255.255.255.255", 16, 65534, { 255, 254, }, },
+		{ LN, { 6, "::0/0", "16/65534", }, "::/0/CHAOS/65534", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 16, 65534, { 255, 254, }, },
+		{ LN, { 4, "101.102.0.0/16", "16/65534", }, "101.102.0.0/16/CHAOS/65534", "101.102.0.0", "101.102.255.255", 16, 65534, { 255, 254, }, },
+		{ LN, { 6, "1001:1002:1003:1004::/64", "16/65534", }, "1001:1002:1003:1004::/64/CHAOS/65534", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 16, 65534, { 255, 254, }, },
+		{ LN, { 4, "101.102.103.104/32", "16/65534", }, "101.102.103.104/32/CHAOS/65534", "101.102.103.104", "101.102.103.104", 16, 65534, { 255, 254, }, },
+		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008/128/CHAOS/65534", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 16, 65534, { 255, 254, }, },
 	};
-	check_selector_from(tests, elemsof(tests), "ttosubnet+ttoprotoport",
-			    do_ttosubnet_ttoprotoport);
+	check_selector_from(tests, elemsof(tests), "selector(ttosubnet(),ttoprotoport())",
+			    do_selector_from_ttosubnet_ttoprotoport);
 }
 
-static err_t do_ttoselector(const struct selector *s, ip_selector *selector)
+static err_t do_selector_from_ttoselector(const struct selector *s, ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -252,14 +256,14 @@ static void check_ttoselector_num(void)
 		/* address/mask/protocol */
 		{ LN, { 4, "1.2.0.0/16/0", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 0, 0, { 0, 0, }, },
 		{ LN, { 6, "1:2:3:4::/64/0", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.0.0/16/udp", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 17, 0, { 0, 0, }, },
-		{ LN, { 6, "1:2:3:4::/64/udp", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 17, 0, { 0, 0, }, },
+		{ LN, { 4, "1.2.0.0/16/udp", NULL, }, "1.2.0.0/16/UDP", "1.2.0.0", "1.2.255.255", 17, 0, { 0, 0, }, },
+		{ LN, { 6, "1:2:3:4::/64/udp", NULL, }, "1:2:3:4::/64/UDP", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 17, 0, { 0, 0, }, },
 		/* address/mask/protocol/port */
-		{ LN, { 4, "1.2.0.0/16/udp/65534", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 17, 65534, { 255, 254, }, },
-		{ LN, { 6, "1:2:3:4::/64/udp/65534", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 17, 65534, { 255, 254, }, },
+		{ LN, { 4, "1.2.0.0/16/udp/65534", NULL, }, "1.2.0.0/16/UDP/65534", "1.2.0.0", "1.2.255.255", 17, 65534, { 255, 254, }, },
+		{ LN, { 6, "1:2:3:4::/64/udp/65534", NULL, }, "1:2:3:4::/64/UDP/65534", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 17, 65534, { 255, 254, }, },
 		/* hex/octal */
-		{ LN, { 4, "1.2.0.0/16/tcp/0xfffe", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 6, 65534, { 255, 254, }, },
-		{ LN, { 6, "1:2:3:4::/64/udp/0177776", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 17, 65534, { 255, 254, }, },
+		{ LN, { 4, "1.2.0.0/16/tcp/0xfffe", NULL, }, "1.2.0.0/16/TCP/65534", "1.2.0.0", "1.2.255.255", 6, 65534, { 255, 254, }, },
+		{ LN, { 6, "1:2:3:4::/64/udp/0177776", NULL, }, "1:2:3:4::/64/UDP/65534", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 17, 65534, { 255, 254, }, },
 		/* invalid */
 		{ LN, { 4, "", NULL, }, NULL, NULL, NULL, 0, 0, { 0, 0, }, },
 		{ LN, { 4, "1.2.3.4/33", NULL, }, NULL, NULL, NULL, 0, 0, { 0, 0, }, },
@@ -269,8 +273,37 @@ static void check_ttoselector_num(void)
 		{ LN, { 4, "1.2.3.0/24/none/", NULL, }, NULL, NULL, NULL, 0, 0, { 0, 0, }, },
 	};
 
-	check_selector_from(tests, elemsof(tests), "ttoselector",
-			    do_ttoselector);
+	check_selector_from(tests, elemsof(tests), "selector(ttoselector())",
+			    do_selector_from_ttoselector);
+}
+
+static err_t do_selector_from_ttorange(const struct selector *s,
+				       ip_selector *selector)
+{
+	if (s->family == 0) {
+		*selector = unset_selector;
+		return NULL;
+	}
+
+	ip_range range;
+	err_t err = ttorange_num(shunk1(s->addresses), IP_TYPE(s->family), &range);
+	if (err != NULL) {
+		return err;
+	}
+
+	*selector = selector_from_range(range);
+	return NULL;
+}
+
+static void check_selector_from_range(void)
+{
+	static const struct from_test tests[] = {
+		{ LN, { 4, "0.1.2.3-0.1.2.7", "0/0", }, "[0.1.2.3-0.1.2.7]", "0.1.2.3", "0.1.2.7", 0, 0, { 0, 0, }, },
+		{ LN, { 6, "0123::-0127::", "0/0", }, "[123::-127::]", "123::", "127::", 0, 0, { 0, 10, }, },
+	};
+	check_selector_from(tests, elemsof(tests),
+			    "selector(ttorange())",
+			    do_selector_from_ttorange);
 }
 
 static void check_selector_is(void)
@@ -312,7 +345,7 @@ static void check_selector_is(void)
 		      bool_str(t->contains_one_address));
 
 		ip_selector tmp, *selector = &tmp;
-		err = do_ttoselector(&t->from, selector);
+		err = do_selector_from_ttoselector(&t->from, selector);
 		if (err != NULL) {
 			FAIL("to_selector() failed: %s", err);
 		}
@@ -501,7 +534,8 @@ static void check_selector_op_selector(void)
 
 void ip_selector_check(struct logger *logger UNUSED)
 {
-	check_selector_from_address();
+	check_selector_from_range();
+	check_selector_from_address_protoport();
 	check_selector_from_subnet_protoport();
 	check_selector_is();
 	check_ttoselector_num();

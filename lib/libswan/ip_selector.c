@@ -90,10 +90,22 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 
 	size_t s = 0;
 
+	int prefix_len = ip_bytes_prefix_len(afi, selector->lo, selector->hi);
+	if (prefix_len >= 0) {
 	/* always <address>/<length> */
-	ip_address sa = selector_prefix(*selector);
-	s += jam_address(buf, &sa);
-	s += jam(buf, "/%u", selector->maskbits);
+		ip_address sa = selector_prefix(*selector);
+		s += jam_address(buf, &sa);
+		s += jam(buf, "/%u", selector->maskbits);
+	} else {
+		ip_range range = selector_range(*selector);
+		jam_string(buf, "[");
+		ip_address lo = range_start(range);
+		jam_address(buf, &lo);
+		jam_string(buf, "-");
+		ip_address hi = range_end(range);
+		jam_address(buf, &hi);
+		jam_string(buf, "]");
+	}
 
 	/* optionally /<protocol>/<port> */
 	if (selector->ipproto != 0 || selector->hport != 0) {

@@ -191,7 +191,7 @@ bool selector_overlaps_selector(const ip_selector l, const ip_selector r);
 /* printing */
 
 typedef struct {
-	char buf[sizeof(address_buf) + 4/*"/NNN"*/ + 6/*:65535*/];
+	char buf[(sizeof(address_buf) + 4/*/NNN*/ + 6/*/CHAOS*/ + 6/*/65535*/)*2 + 1/*-*/];
 } selector_buf;
 
 const char *str_selector(const ip_selector *selector, selector_buf *out);
