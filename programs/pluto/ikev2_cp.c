@@ -48,23 +48,23 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-			const struct host_end_config *end = &cc->end[lr].config->host;
+			const struct config_end *end = cc->end[lr].config;
 			jam_string(buf, "; ");
 			jam_string(buf, end->leftright);
 			jam_string(buf, ":");
-			if (end == &cc->local->config->host) {
+			if (end == cc->local->config) {
 				jam_string(buf, " local");
 			}
-			if (end == &cc->remote->config->host) {
+			if (end == cc->remote->config) {
 				jam_string(buf, " remote");
 			}
-			if (end->modecfg.client) {
+			if (end->host.modecfg.client) {
 				jam_string(buf, " client");
 			}
-			if (end->modecfg.server) {
+			if (end->host.modecfg.server) {
 				jam_string(buf, " server");
 			}
-			if (end->pool_ranges.len > 0) {
+			if (end->child.addresspools.len > 0) {
 				jam_string(buf, " addresspool");
 			}
 		}

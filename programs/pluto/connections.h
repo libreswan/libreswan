@@ -114,8 +114,6 @@ struct host_end_config {
 		bool client;	/* request address for local end */
 	} modecfg;
 
-	ip_ranges pool_ranges;	/* see also connection .pool */
-
 	struct {
 		bool server;
 		bool client;
@@ -146,6 +144,19 @@ struct child_end_config {
 
 	ip_selectors selectors;
 	ip_addresses sourceip;
+
+	/*
+	 * Danger: IKEv1 uses c-pool, and will update it during XAUTH
+	 * when the config specifies that the pool comes from a file.
+	 *
+	 * Should more than one pool for each address be allowed?
+	 * Should an addresspool combined with selectors be allowed?
+	 */
+	ip_ranges addresspools;
+#if 0
+	struct addresspool *addresspool[IP_INDEX_ROOF];
+#endif
+
 	/*
 	 * When set, put this on the ipsec-interface.  Should there be
 	 * one for IPv4 and one for IPv6 like sourceip?

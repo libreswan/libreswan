@@ -385,7 +385,7 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 			continue;
 		}
 
-		if (end->host.config->pool_ranges.len > 0) {
+		if (end->child.config->addresspools.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
@@ -393,7 +393,7 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 			 * XXX: should this instead assign the
 			 * selectors to the range?
 			 */
-			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
+			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				const struct ip_info *afi = range_type(range);
 				vdbg("%s selectors formed from %s address pool",
 				     leftright, afi->ip_name);
@@ -615,7 +615,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		}
 
 		/* address-pool */
-		if (end->host.config->pool_ranges.len > 0) {
+		if (end->child.config->addresspools.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
@@ -623,7 +623,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			 * Remember, IKEv1 only does IPv4 address
 			 * pool?!?
 			 */
-			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
+			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				const struct ip_info *afi = range_type(range);
 				vdbg("%s selectors formed from %s address pool",
 				     leftright, afi->ip_name);

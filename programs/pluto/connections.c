@@ -530,12 +530,12 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
 			pfreeany(end->host.addr_name);
-			pfree_list(&end->host.pool_ranges);
 			/* child */
 			pfreeany(end->child.updown);
 			pfree_list(&end->child.selectors);
 			pfree_list(&end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
+			pfree_list(&end->child.addresspools);
 		}
 		pfree(c->root_config);
 	}
@@ -808,8 +808,7 @@ static char *extract_str(const char *leftright, const char *name,
 	return clone_str(str, name);
 }
 
-static diag_t extract_host_end(struct connection *c, /* for POOL */
-			       struct host_end *host,
+static diag_t extract_host_end(struct host_end *host,
 			       struct host_end_config *host_config,
 			       struct host_end_config *other_host_config,
 			       const struct whack_message *wm,
@@ -1265,17 +1264,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	 */
 
 	if (src->addresspool != NULL) {
-		if (src->subnets != NULL) {
-			return diag("cannot specify both %saddresspool= and %ssubnets=",
-				    leftright, leftright);
-		}
-		if (src->subnet != NULL) {
-			return diag("cannot specify both %saddresspool= and %ssubnet=",
-				    leftright, leftright);
-		}
-	}
-
-	if (src->addresspool != NULL) {
 		/*
 		 */
 		other_host_config->modecfg.server = true;
@@ -1315,70 +1303,12 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		pfree_diag(&d);
 	}
 
-	/*
-	 * Note: IKEv1's XAUTH code will replace this address pool
-	 * with one based on the auth file.
-	 *
-	 * Note: The selector code will use the addresspool ranges to
-	 * generate the selectors.
-	 */
-
-	if (src->addresspool != NULL) {
-
-		/* both ends can't add an address pool */
-		passert(c->pool[IPv4_INDEX] == NULL &&
-			c->pool[IPv6_INDEX] == NULL);
-
-		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL,
-					 &host_config->pool_ranges);
-		if (d != NULL) {
-			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
-		}
-
-		unsigned family[IP_INDEX_ROOF] = {0};
-
-		FOR_EACH_ITEM(range, &host_config->pool_ranges) {
-
-			/* only allow one of each type */
-			const struct ip_info *afi = range_type(range);
-			if (family[afi->ip_index]++ > 0) {
-				return diag("%saddresspool=%s invalid, multiple %s ranges",
-					    leftright, src->addresspool, afi->ip_name);
-			}
-
-			if (wm->ike_version == IKEv1 && afi == &ipv6_info) {
-				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
-					    leftright, src->addresspool);
-			}
-
-			if (afi == &ipv6_info && !range_is_cidr((*range))) {
-				range_buf rb;
-				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
-					    leftright, src->addresspool,
-					    str_range(range, &rb));
-			}
-
-			/* Check for overlap with existing pools */
-			diag_t d;
-			struct addresspool *pool; /* ignore */
-			d = find_addresspool(*range, &pool);
-			if (d != NULL) {
-				return diag_diag(&d, "%saddresspool=%s invalid, ",
-						 leftright, src->addresspool);
-			}
-
-			d = install_addresspool(*range, c, logger);
-			if (d != NULL) {
-				return diag_diag(&d, "%saddresspool=%s invalid, ",
-						 leftright, src->addresspool);
-			}
-		}
-	}
 	return NULL;
 }
 
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
+				       struct connection *c,
 				       struct child_end_config *child_config,
 				       struct logger *logger)
 {
@@ -1447,13 +1377,77 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			 clone_str(src->updown, "child_config.updown"));
 	}
 
+
 	ip_selectors *child_selectors = &child_config->selectors;
 
 	/*
 	 * Figure out the end's child selectors.
 	 */
-	if (src->subnet != NULL && (wm->ike_version == IKEv1 ||
-				    src->protoport.is_set)) {
+	if (src->addresspool != NULL) {
+
+		/* both ends can't add an address pool (cross
+		 * checked) */
+		passert(c->pool[IPv4_INDEX] == NULL &&
+			c->pool[IPv6_INDEX] == NULL);
+
+		if (src->subnets != NULL) {
+			return diag("cannot specify both %saddresspool= and %ssubnets=",
+				    leftright, leftright);
+		}
+
+		if (src->subnet != NULL) {
+			return diag("cannot specify both %saddresspool= and %ssubnet=",
+				    leftright, leftright);
+		}
+
+		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL,
+					 &child_config->addresspools);
+		if (d != NULL) {
+			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
+		}
+
+		unsigned family[IP_INDEX_ROOF] = {0};
+
+		FOR_EACH_ITEM(range, &child_config->addresspools) {
+
+			/* only allow one of each type */
+			const struct ip_info *afi = range_type(range);
+			if (family[afi->ip_index]++ > 0) {
+				return diag("%saddresspool=%s invalid, multiple %s ranges",
+					    leftright, src->addresspool, afi->ip_name);
+			}
+
+			if (wm->ike_version == IKEv1 && afi == &ipv6_info) {
+				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
+					    leftright, src->addresspool);
+			}
+
+			if (afi == &ipv6_info && !range_is_cidr((*range))) {
+				range_buf rb;
+				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
+					    leftright, src->addresspool,
+					    str_range(range, &rb));
+			}
+
+			/* Check for overlap with existing pools */
+			diag_t d;
+			struct addresspool *pool; /* ignore */
+			d = find_addresspool(*range, &pool);
+			if (d != NULL) {
+				return diag_diag(&d, "%saddresspool=%s invalid, ",
+						 leftright, src->addresspool);
+			}
+
+			d = install_addresspool(*range, c, logger);
+			if (d != NULL) {
+				return diag_diag(&d, "%saddresspool=%s invalid, ",
+						 leftright, src->addresspool);
+			}
+		}
+
+	} else if (src->subnet != NULL && (wm->ike_version == IKEv1 ||
+					   src->protoport.is_set)) {
+
 		/*
 		 * Legacy syntax:
 		 *
@@ -1484,7 +1478,9 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		const struct ip_info *afi = subnet_info(subnet);
 		child_selectors->ip[afi->ip_index].len = 1;
 		child_selectors->ip[afi->ip_index].list = child_selectors->list;
+
 	} else if (src->subnet != NULL) {
+
 		/*
 		 * Parse new syntax (protoport= is not used).
 		 *
@@ -1765,12 +1761,12 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 			continue;
 		}
 
-		if (end->host.config->pool_ranges.len > 0) {
+		if (end->child.config->addresspools.len > 0) {
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 */
-			FOR_EACH_ITEM(range, &end->host.config->pool_ranges) {
+			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				const struct ip_info *afi = range_type(range);
 				ldbg(c->logger, "%s selectors formed from %s address pool",
 				     leftright, afi->ip_name);
@@ -3585,7 +3581,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		diag_t d;
 		int that = (this + 1) % END_ROOF;
-		d = extract_host_end(c, &c->end[this].host,
+		d = extract_host_end(&c->end[this].host,
 				     &config->end[this].host, &config->end[that].host,
 				     wm, whack_ends[this], whack_ends[that],
 				     &same_ca[this], c->logger);
@@ -3751,7 +3747,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		d = extract_child_end_config(wm, whack_ends[end],
-					     &config->end[end].child,
+					     c, &config->end[end].child,
 					     c->logger);
 		if (d != NULL) {
 			return d;
@@ -3774,7 +3770,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	} end_family[END_ROOF][IP_INDEX_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
-		const ip_ranges *const pools = &c->end[end].config->host.pool_ranges;
+		const ip_ranges *const pools = &c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (selectors->ip[afi->ip_index].len > 0) {
@@ -4810,7 +4806,7 @@ err_t connection_requires_tss(const struct connection *c)
 		return NULL;
 	}
 	FOR_EACH_ELEMENT(end, c->end) {
-		if (end->config->host.pool_ranges.len > 1) {
+		if (end->config->child.addresspools.len > 1) {
 			return "addresspools";
 		}
 		if (end->config->child.selectors.len > 1) {

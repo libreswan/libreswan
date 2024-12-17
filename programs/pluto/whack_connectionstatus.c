@@ -180,7 +180,7 @@ void jam_end_client(struct jambuf *buf,
 			/* booring */
 			return;
 		}
-		if (this->host->config->pool_ranges.len > 0) {
+		if (this->child->config->addresspools.len > 0) {
 			/*
 			 * Suppress zero selectors that were probably derived
 			 * from the address pool.
