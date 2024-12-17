@@ -310,8 +310,8 @@ static err_t do_selector_from_ttorange(const struct selector *s,
 static void check_selector_from_range(void)
 {
 	static const struct from_test tests[] = {
-		{ LN, { 4, "0.1.2.3-0.1.2.7", "0/0", }, "[0.1.2.3-0.1.2.7]", "0.1.2.3", "0.1.2.7", -1, -1, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "0123::-0127::", "0/0", }, "[123::-127::]", "123::", "127::", -1, -1, 0, 0, { 0, 10, }, },
+		{ LN, { 4, "0.1.2.3-0.1.2.7", "0/0", }, "0.1.2.3-0.1.2.7", "0.1.2.3", "0.1.2.7", -1, -1, 0, 0, { 0, 0, }, },
+		{ LN, { 6, "0123::-0127::", "0/0", }, "123::-127::", "123::", "127::", -1, -1, 0, 0, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests),
 			    "selector(ttorange())",

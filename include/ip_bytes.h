@@ -104,4 +104,9 @@ bool ip_bytes_is_zero(const struct ip_bytes *bytes);
 	 IP->protocol == NULL ? "protocol-unset" :	\
 	 NULL)
 
+size_t jam_ip_bytes_range(struct jambuf *buf,
+			  const struct ip_info *afi,
+			  const struct ip_bytes lo,
+			  const struct ip_bytes hi);
+
 #endif

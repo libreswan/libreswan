@@ -79,7 +79,7 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 		return jam_string(buf, "<null-selector>");
 	}
 
-	if (!selector->is_set) {
+	if (selector_is_unset(selector)) {
 		return jam_string(buf, "<unset-selector>");
 	}
 
@@ -90,22 +90,7 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 
 	size_t s = 0;
 
-	int prefix_len = ip_bytes_prefix_len(afi, selector->lo, selector->hi);
-	if (prefix_len >= 0) {
-	/* always <address>/<length> */
-		ip_address sa = selector_prefix(*selector);
-		s += jam_address(buf, &sa);
-		s += jam(buf, "/%u", selector->maskbits);
-	} else {
-		ip_range range = selector_range(*selector);
-		jam_string(buf, "[");
-		ip_address lo = range_start(range);
-		jam_address(buf, &lo);
-		jam_string(buf, "-");
-		ip_address hi = range_end(range);
-		jam_address(buf, &hi);
-		jam_string(buf, "]");
-	}
+	s += jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 
 	/* optionally /<protocol>/<port> */
 	if (selector->ipproto != 0 || selector->hport != 0) {
@@ -138,14 +123,10 @@ size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-selector>");
+		return jam(buf, PRI_SELECTOR, pri_selector(selector));
 	}
 
-	size_t s = 0;
-	ip_address sa = selector_prefix(*selector);
-	s += jam_address(buf, &sa); /* sensitive? */
-	s += jam(buf, "/%u", selector->maskbits);
-	return s;
+	return jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 }
 
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *out)
@@ -167,9 +148,9 @@ size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
 	}
 
 	size_t s = 0;
-	ip_address sa = selector_prefix(*selector);
-	s += jam_address(buf, &sa);
-	s += jam(buf, "/%u", selector->maskbits);
+
+	s += jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
+
 	if (selector->ipproto != 0 || selector->hport != 0) {
 		s += jam(buf, ":%d", selector->hport);
 	}
@@ -242,7 +223,6 @@ size_t jam_selectors(struct jambuf *buf, ip_selectors selectors)
 	s += jam_string(buf, "]");
 	return s;
 }
-
 
 ip_selector selector_from_raw(where_t where,
 			      const struct ip_info *afi,

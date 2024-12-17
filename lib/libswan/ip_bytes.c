@@ -222,3 +222,22 @@ bool ip_bytes_is_zero(const struct ip_bytes *bytes)
 {
 	return thingeq(*bytes, unset_ip_bytes);
 }
+
+size_t jam_ip_bytes_range(struct jambuf *buf,
+			  const struct ip_info *afi,
+			  const struct ip_bytes lo,
+			  const struct ip_bytes hi)
+{
+	int prefix_len = ip_bytes_prefix_len(afi, lo, hi);
+	size_t s = 0;
+	if (prefix_len >= 0) {
+		/* always <address>/<length> */
+		s += afi->jam.address(buf, afi, &lo);
+		s += jam(buf, "/%u", prefix_len);
+	} else {
+		s += afi->jam.address(buf, afi, &lo);
+		s += jam_string(buf, "-");
+		s += afi->jam.address(buf, afi, &hi);
+	}
+	return s;
+}
