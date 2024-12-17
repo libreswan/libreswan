@@ -31,27 +31,31 @@ static void check_iprange_bits(void)
 		int family;
 		const char *lo;
 		const char *hi;
-		int range;
+		int prefix_len;
+		int host_len;
 	} tests[] = {
-		{ LN, 4, "1.2.254.255", "1.2.255.0", 1 },
-		{ LN, 4, "1.2.3.0", "1.2.3.7", 3 },
-		{ LN, 4, "1.2.3.0", "1.2.3.255", 8 },
-		{ LN, 4, "1.2.3.240", "1.2.3.255", 4 },
-		{ LN, 4, "0.0.0.0", "255.255.255.255", 32 },
-		{ LN, 4, "1.2.3.4", "1.2.3.4", 0 },
-		{ LN, 4, "1.2.3.0", "1.2.3.254", 8 },
-		{ LN, 4, "1.2.3.0", "1.2.3.126", 7 },
-		{ LN, 4, "1.2.3.0", "1.2.3.125", 7 },
-		{ LN, 4, "1.2.0.0", "1.2.255.255", 16 },
-		{ LN, 4, "1.2.0.0", "1.2.0.255", 8 },
-		{ LN, 4, "1.2.255.0", "1.2.255.255", 8 },
-		{ LN, 4, "1.2.255.1", "1.2.255.255", 8 },
-		{ LN, 4, "1.2.0.1", "1.2.255.255", 16 },
-		{ LN, 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:ffff", 16 },
-		{ LN, 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:fff", 12 },
-		{ LN, 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", 4 },
-		{ LN, 6, "2000::", "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 125},
-		{ LN, 6, "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 127},
+		{ LN, 4, "1.2.254.255", "1.2.255.0", -1, -1 },
+		{ LN, 4, "1.2.3.0", "1.2.3.7", 29, 3 },
+		{ LN, 4, "1.2.3.0", "1.2.3.255", 24, 8 },
+		{ LN, 4, "1.2.3.240", "1.2.3.255", 28, 4 },
+		{ LN, 4, "0.0.0.0", "255.255.255.255", 0, 32 },
+		{ LN, 4, "1.2.3.4", "1.2.3.4", 32, 0 },
+		{ LN, 4, "1.2.3.0", "1.2.3.254", -1, -1 },
+		/* across boundary */
+		{ LN, 4, "1.2.3.0", "1.2.3.126", -1, -1 },
+		{ LN, 4, "1.2.3.0", "1.2.3.127", 25, 7 },
+		{ LN, 4, "1.2.3.0", "1.2.3.128", -1, -1 },
+		/* 16-bit */
+		{ LN, 4, "1.2.0.0", "1.2.255.255", 16, 16 },
+		{ LN, 4, "1.2.0.0", "1.2.0.255", 24, 8 },
+		{ LN, 4, "1.2.255.0", "1.2.255.255", 24, 8 },
+		{ LN, 4, "1.2.255.1", "1.2.255.255", -1, -1 },
+		{ LN, 4, "1.2.0.1", "1.2.255.255", -1, -1 },
+		{ LN, 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:ffff", 112, 16 },
+		{ LN, 6, "1:2:3:4:5:6:7:0", "1:2:3:4:5:6:7:fff", 116, 12 },
+		{ LN, 6, "1:2:3:4:5:6:7:f0", "1:2:3:4:5:6:7:ff", 124, 4 },
+		{ LN, 6, "2000::", "3fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 3, 125},
+		{ LN, 6, "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 1, 127},
 	};
 
 	const char *oops;
@@ -74,17 +78,17 @@ static void check_iprange_bits(void)
 			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
 		}
 
-		ip_range lo_hi = range_from_raw(HERE, afi, lo.bytes, hi.bytes);
-		int host_lo2hi = range_host_len(lo_hi);
-		if (t->range != host_lo2hi) {
-			FAIL("iprange_bits(lo,hi) returned '%d', expected '%d'",
-			     host_lo2hi, t->range);
+		ip_range range = range_from_raw(HERE, afi, lo.bytes, hi.bytes);
+		int host_len = range_host_len(range);
+		if (host_len != t->host_len) {
+			FAIL("range_host_len(range) returned '%d', expected '%d'",
+			     host_len, t->host_len);
 		}
-		int prefix_lo2hi = range_prefix_len(lo_hi);
-		int t_prefix = afi->mask_cnt - t->range;
-		if (t_prefix != prefix_lo2hi) {
-			FAIL("iprange_bits(lo,hi) returned '%d', expected '%d'",
-			     prefix_lo2hi, t_prefix);
+
+		int prefix_len = range_prefix_len(range);
+		if (prefix_len != t->prefix_len) {
+			FAIL("range_prefix_len(range) returned '%d', expected '%d'",
+			     prefix_len, t->prefix_len);
 		}
 	}
 }

@@ -397,8 +397,8 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		PEXPECT(logger, selector_info(sa->dst.route) == afi);
 		if (DBGP(DBG_BASE)) {
 			/* XXX: no test triggers these!?! */
-			PEXPECT(logger, selector_prefix_len(sa->src.route) == afi->mask_cnt);
-			PEXPECT(logger, selector_prefix_len(sa->dst.route) == afi->mask_cnt);
+			PEXPECT(logger, selector_prefix_len(sa->src.route) == (int)afi->mask_cnt);
+			PEXPECT(logger, selector_prefix_len(sa->dst.route) == (int)afi->mask_cnt);
 			/* don't know which of .D/.S is .L/.R */
 			PEXPECT(logger, address_eq_address(sa->src.address, selector_prefix(sa->src.route)));
 			PEXPECT(logger, address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));

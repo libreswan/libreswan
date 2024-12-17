@@ -170,7 +170,9 @@ int selector_hport(const ip_selector selector);
 /* assuming a subnet like XFRM does */
 ip_address selector_prefix(const ip_selector selector);
 ip_address selector_prefix_mask(const ip_selector selector);
-unsigned selector_prefix_len(const ip_selector selector);
+
+int selector_prefix_len(const ip_selector selector); /* <0 when non-CIDR*/
+int selector_host_len(const ip_selector selector); /* <0 when non-CIDR*/
 
 bool selector_contains_one_address(const ip_selector selector);
 

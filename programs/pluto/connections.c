@@ -3946,7 +3946,7 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 
 static connection_priority_t max_prefix_len(struct connection_end *end)
 {
-	unsigned len = 0;
+	int len = 0;
 	FOR_EACH_ITEM(selector, &end->child.selectors.proposed) {
 		len = max(len, selector_prefix_len((*selector)));
 	}

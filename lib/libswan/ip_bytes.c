@@ -190,6 +190,18 @@ int ip_bytes_prefix_len(const struct ip_info *afi,
 	return prefix_bits;
 }
 
+int ip_bytes_host_len(const struct ip_info *afi,
+		      const struct ip_bytes lo,
+		      const struct ip_bytes hi)
+{
+	int prefix_len = ip_bytes_prefix_len(afi, lo, hi);
+	if (prefix_len < 0) {
+		return -1;
+	}
+
+	return afi->mask_cnt - prefix_len;
+}
+
 /*
  * bytes_cmp - compare two raw addresses
  */

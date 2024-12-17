@@ -82,6 +82,9 @@ int ip_bytes_first_set_bit(const struct ip_info *afi,
 int ip_bytes_prefix_len(const struct ip_info *afi,
 			const struct ip_bytes lo,
 			const struct ip_bytes hi);
+int ip_bytes_host_len(const struct ip_info *afi,
+		      const struct ip_bytes lo,
+		      const struct ip_bytes hi);
 
 int ip_bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 		 enum ip_version r_version, const struct ip_bytes r_bytes);

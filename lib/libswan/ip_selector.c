@@ -478,9 +478,26 @@ ip_address selector_prefix(const ip_selector selector)
 	return address_from_raw(HERE, afi, selector.lo);
 }
 
-unsigned selector_prefix_len(const ip_selector selector)
+int selector_prefix_len(const ip_selector selector)
 {
-	return selector.maskbits;
+	const struct ip_info *afi = selector_info(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return -1;
+	}
+
+	return ip_bytes_prefix_len(afi, selector.lo, selector.hi);
+}
+
+int selector_host_len(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_info(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return -1;
+	}
+
+	return ip_bytes_host_len(afi, selector.lo, selector.hi);
 }
 
 ip_address selector_prefix_mask(const ip_selector selector)

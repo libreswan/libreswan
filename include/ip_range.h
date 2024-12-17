@@ -119,10 +119,11 @@ bool range_overlaps_range(const ip_range l, const ip_range r);
  * size of the range.  floor(log2(|high-low| + 1)).
  *
  * If RANGE is CIDR then this returns the number of HOST IDENTIFIER
- * bits, otherwise it returns something slightly higher.
+ * bits.
  */
-int range_host_len(const ip_range range);
-int range_prefix_len(const ip_range range);
+
+int range_host_len(const ip_range range); /* <0 when non-CIDR */
+int range_prefix_len(const ip_range range); /* <0 when non-CIDR */
 
 /*
  * range_size: the number of IP addresses within an ip_range.

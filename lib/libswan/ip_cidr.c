@@ -121,7 +121,7 @@ ip_address cidr_prefix(const ip_cidr cidr)
 					      cidr.prefix_len));
 }
 
-unsigned cidr_prefix_len(const ip_cidr cidr)
+int cidr_prefix_len(const ip_cidr cidr)
 {
 	return cidr.prefix_len;
 }

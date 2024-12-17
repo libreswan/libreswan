@@ -48,7 +48,7 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 
 /*
  * Calculate the number of significant bits in the size of the range.
- * floor(lg(|high-low| + 1))
+ * floor(lg(|high-low| + 1)); or -1.
  */
 
 int range_prefix_len(const ip_range range)
@@ -59,9 +59,7 @@ int range_prefix_len(const ip_range range)
 		return -1;
 	}
 
-	struct ip_bytes diff = ip_bytes_sub(afi, range.hi, range.lo);
-	int fsb = ip_bytes_first_set_bit(afi, diff);
-	return fsb;
+	return ip_bytes_prefix_len(afi, range.lo, range.hi);
 }
 
 int range_host_len(const ip_range range)
@@ -72,9 +70,7 @@ int range_host_len(const ip_range range)
 		return -1;
 	}
 
-	struct ip_bytes diff = ip_bytes_sub(afi, range.hi, range.lo);
-	int fsb = ip_bytes_first_set_bit(afi, diff);
-	return (afi->ip_size * 8) - fsb;
+	return ip_bytes_host_len(afi, range.lo, range.hi);
 }
 
 size_t jam_range(struct jambuf *buf, const ip_range *range)
