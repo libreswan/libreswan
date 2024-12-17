@@ -47,6 +47,7 @@ struct connection_client {
 	const ip_selector client;
 	const ip_address sourceip;
 	const struct virtual_ip *virt;
+	bool is_addresspool;
 };
 
 void jam_end_host(struct jambuf *buf,

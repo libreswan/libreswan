@@ -142,6 +142,7 @@ static struct connection_client connection_spd_client(const struct spd_end *spd)
 		.host = spd->host,
 		.child = spd->child,
 		.sourceip = spd_end_sourceip(spd),
+		.is_addresspool = (spd->host->config->pool_ranges.len > 0),
 	};
 	return client;
 }
@@ -155,6 +156,7 @@ static struct connection_client connection_config_client(const struct connection
 		.host = &this->host,
 		.child = &this->child,
 		.sourceip = end_sourceip(this_selector, this->child.config),
+		.is_addresspool = (this->host.config->pool_ranges.len > 0),
 	};
 	return client;
 }
@@ -198,9 +200,15 @@ void jam_end_client(struct jambuf *buf,
 	} else if (is_virtual_net(this->virt)) {
 		jam_string(buf,  "vnet:?");
 	} else {
+		if (this->is_addresspool) {
+			jam_string(buf, "{");
+		}
 		jam_selector(buf, &this->client);
 		if (selector_is_zero(this->client)) {
 			jam_string(buf, "?");
+		}
+		if (this->is_addresspool) {
+			jam_string(buf, "}");
 		}
 	}
 
