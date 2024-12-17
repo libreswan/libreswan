@@ -23,7 +23,7 @@ west #
  ipsec connectionstatus
 Connection list:
  
-"east-any": 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...%any[%fromcert,+MC+S=C]; unrouted; my_ip=unset; their_ip=unset;
+"east-any": 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...%any[%fromcert,+MC+S=C]==={192.0.2.101-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "east-any":   host: oriented; local: 192.1.2.45; remote: %any;
 "east-any":   mycert=east; my_updown=ipsec _updown;
 "east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -44,7 +44,7 @@ Connection list:
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;
 "east-any":   conn serial: $1;
-"east-any"[1]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]===192.0.2.101/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.101;
+"east-any"[1]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]==={192.0.2.101/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.101;
 "east-any"[1]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.209; established IKE SA: #1;
 "east-any"[1]:   mycert=east; my_updown=ipsec _updown;
 "east-any"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -67,7 +67,7 @@ Connection list:
 "east-any"[1]:   conn serial: $2, instantiated from: $1;
 "east-any"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "east-any"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
-"east-any"[2]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org,+MC+S=C]===192.0.2.102/32; routed-tunnel; my_ip=unset; their_ip=192.0.2.102;
+"east-any"[2]: 0.0.0.0/0===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org,+MC+S=C]==={192.0.2.102/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.102;
 "east-any"[2]:   host: oriented; local: 192.1.2.45; remote: 192.1.3.33; established IKE SA: #3;
 "east-any"[2]:   mycert=east; my_updown=ipsec _updown;
 "east-any"[2]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

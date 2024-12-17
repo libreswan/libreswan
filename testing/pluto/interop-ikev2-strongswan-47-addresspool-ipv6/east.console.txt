@@ -101,7 +101,7 @@ stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs=
  
 Connection list:
  
-"rw-eastnet-ipv6": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS+S=C]...%any[+MC+S=C]; unrouted; my_ip=unset; their_ip=unset;
+"rw-eastnet-ipv6": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS+S=C]...%any[+MC+S=C]==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;
 "rw-eastnet-ipv6":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "rw-eastnet-ipv6":   my_updown=ipsec _updown;
 "rw-eastnet-ipv6":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -114,7 +114,7 @@ Connection list:
 "rw-eastnet-ipv6":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "rw-eastnet-ipv6":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "rw-eastnet-ipv6":   v2-auth-hash-policy: none;
-"rw-eastnet-ipv6":   conn_prio: 64,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"rw-eastnet-ipv6":   conn_prio: 64,97,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "rw-eastnet-ipv6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "rw-eastnet-ipv6":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
 "rw-eastnet-ipv6":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
