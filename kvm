@@ -431,6 +431,34 @@ run()
     fi
 }
 
+run_pid()
+{
+    if test -r ${kvm_pidfile} ; then
+	local pid=$(cat ${kvm_pidfile})
+	if ps www --no-headers ${pid} ; then
+	    echo "it looks like KVM is already running?"
+	    exit 1
+	fi
+    fi
+
+    if test -n "${echo}" ; then
+	echo "$@"
+	return
+    fi
+
+    echo "$@" 1>&2
+    trap "set -x ; rm -f ${kvm_pidfile}" EXIT
+    echo $$ > ${kvm_pidfile}
+    if "$@" ; then
+	# clean up after every command
+	rm ${kvm_pidfile}
+    else
+	status=$?
+	rm ${kvm_pidfile}
+	exit ${status}
+    fi
+}
+
 kvmresults()
 {
     ./testing/utils/kvmresults.py \
@@ -462,6 +490,7 @@ kill_command()
     fi
     local pid=$(cat ${kvm_pidfile})
     echo "killing ${pid}" 1>&2
+    rm -f ${kvm_pidfile}
     kill ${pid}
 }
 
@@ -506,20 +535,20 @@ while test $i -lt ${#ops[@]} ; do
 		targets=$(for platform in ${platforms[@]} ; do
 			      echo kvm-${op}-${platform}
 			  done)
-		run ${gnumake} ${targets} "${makeflags[@]}" || exit $?
+		run_pid ${gnumake} ${targets} "${makeflags[@]}"
 	    else
-		run ${gnumake} kvm-${op} "${makeflags[@]}" || exit $?
+		run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    fi
 	    ;;
 	base* | upgrade* | transmogrify* | build* | install* | \
         shutdown* | uninstall* | downgrade* | demolish* | purge* )
-	    run ${gnumake} kvm-${op} "${makeflags[@]}" || exit $?
+	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    ;;
 	gateway | config | check-clean | clean )
-	    run ${gnumake} kvm-${op} "${makeflags[@]}" || exit $?
+	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    ;;
 	check | recheck )
-	    run ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="${directories[*]}" || exit $?
+	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}" KVM_TESTS="${directories[*]}"
 	    ;;
 	diffs )
 	    run diffs_command "${directories[@]}"
@@ -543,7 +572,7 @@ while test $i -lt ${#ops[@]} ; do
 	    run diffs_command "${directories[@]}" | patch -p1
 	    ;;
 	keys )
-	    run ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}"
+	    run_pid ${gnumake} kvm-keys-clean kvm-keys "${vars[@]}"
 	    ;;
 	restart )
 	    run sudo systemctl restart libvirtd
