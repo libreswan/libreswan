@@ -52,14 +52,10 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 		return NULL;
 	}
 
-	/* split the input into ADDR "/" MASK */
-	char slash;
+	/* split the input into ADDR [ "/" MASK ] */
+	char slash = '\0';
 	shunk_t addr = shunk_token(&src, &slash, "/");
 	shunk_t mask = src;
-	if (slash == '\0') {
-		/* consumed entire input */
-		return "no / in subnet specification";
-	}
 
 	/* parse ADDR */
 	ip_address address;
@@ -73,25 +69,29 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 	}
 	passert(afi != NULL);
 
-	/* parse MASK */
+	/* parse [ "/" MASK ] */
 
-	uintmax_t prefix_length;
-	oops = shunk_to_uintmax(mask, NULL, 10, &prefix_length);
-	if (oops != NULL || prefix_length > afi->mask_cnt) {
-		if (afi == &ipv4_info) {
-			ip_address masktmp;
-			oops = ttoaddress_num(mask, afi, &masktmp);
-			if (oops != NULL) {
-				return oops;
-			}
+	uintmax_t prefix_len = afi->mask_cnt;
+	if (slash == '/') {
+		/* eat entire MASK */
+		oops = shunk_to_uintmax(mask, NULL, 10, &prefix_len);
+		if (oops != NULL || prefix_len > afi->mask_cnt) {
+			if (afi == &ipv4_info) {
+				/*1.2.3.0/255.255.255.0?*/
+				ip_address masktmp;
+				oops = ttoaddress_num(mask, afi, &masktmp);
+				if (oops != NULL) {
+					return oops;
+				}
 
-			int i = masktocount(&masktmp);
-			if (i < 0) {
-				return "non-contiguous or otherwise erroneous mask";
+				int i = masktocount(&masktmp);
+				if (i < 0) {
+					return "non-contiguous or otherwise erroneous mask";
+				}
+				prefix_len = i;
+			} else {
+				return "masks are not permitted for IPv6 addresses";
 			}
-			prefix_length = i;
-		} else {
-			return "masks are not permitted for IPv6 addresses";
 		}
 	}
 
@@ -100,12 +100,12 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 	struct ip_bytes routing_prefix = ip_bytes_blit(afi, address.bytes,
 						       &keep_routing_prefix,
 						       &clear_host_identifier,
-						       prefix_length);
+						       prefix_len);
 	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
 			 afi->ip_version, address.bytes) != 0) {
 		*nonzero_host = address;
 	}
 
-	*dst = subnet_from_raw(HERE, afi, routing_prefix, prefix_length);
+	*dst = subnet_from_raw(HERE, afi, routing_prefix, prefix_len);
 	return NULL;
 }

@@ -24,7 +24,7 @@ west #
 "s2-s2": added IKEv2 connection
 west #
  ipsec auto --add s0-ss1
-"s0-ss1": failed to add connection: leftsubnet= invalid, no / in subnet specification
+"s0-ss1": failed to add connection: leftsubnet= invalid, empty string
 west #
  ipsec auto --add s1-ss1
 "s1-ss1/0x1": added IKEv2 connection
