@@ -225,8 +225,7 @@ static bool set_whack_end(struct whack_end *w,
 
 	w->modecfgserver = l->values[KNCF_MODECONFIGSERVER].option;
 	w->modecfgclient = l->values[KNCF_MODECONFIGCLIENT].option;
-	if (l->values[KNCF_CAT].set)
-		w->cat = l->values[KNCF_CAT].option;
+	w->cat = l->values[KNCF_CAT].option;		/* yn_options */
 
 	w->addresspool = l->values[KSCF_ADDRESSPOOL].string;
 	return true;

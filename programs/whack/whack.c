@@ -144,6 +144,9 @@ static void help(void)
 		"	[--modecfgdns <ip-address, ip-address>  \\\n"
 		"	[--modecfgdomains <dns-domain, dns-domain, ..>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
+#ifdef USE_CAT
+		"	[--cat[={yes,no}]] \\\n"
+#endif
 		"	[--metric <metric>] \\\n"
 #ifdef USE_NFLOG
 		"	[--nflog-group <groupnum>] \\\n"
@@ -471,6 +474,7 @@ enum option_enums {
 	END_VTIIP,
 	END_AUTHBY,
 	END_AUTHEAP,
+	END_CAT,
 	END_UPDOWN,
 
 #define LAST_END_OPT		END_UPDOWN	/* last end description*/
@@ -869,6 +873,7 @@ const struct option long_opts[] = {
 	{ "modecfgpull", optional_argument, NULL, CD_MODECFGPULL },
 	{ "modecfgserver", optional_argument, NULL, END_MODECFGSERVER },
 	{ "modecfgclient", optional_argument, NULL, END_MODECFGCLIENT },
+	{ "cat", optional_argument, NULL, END_CAT },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL },
 	{ "modecfgdns", required_argument, NULL, CD_MODECFGDNS },
 	{ "modecfgdomains", required_argument, NULL, CD_MODECFGDOMAINS },
@@ -2244,6 +2249,10 @@ int main(int argc, char **argv)
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
 			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass), optarg) - xauthpass + 1;
+			continue;
+
+		case END_CAT:		/* --cat */
+			end->cat = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */

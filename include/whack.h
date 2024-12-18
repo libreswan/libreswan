@@ -94,7 +94,7 @@ struct whack_end {
 	bool xauth_server;	/* for XAUTH */
 	bool xauth_client;
 	char *xauth_username;
-	bool cat;		/* IPv4 Client Address Translation */
+	enum yn_options cat;		/* IPv4 Client Address Translation */
 	enum certpolicy sendcert;
 	enum eap_options eap;
 	bool send_ca;

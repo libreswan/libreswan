@@ -417,7 +417,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
 #if defined(USE_CAT)
-  { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
+  { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_CAT, &yn_option_names, NULL, },
 #endif
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
   { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },
