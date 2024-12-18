@@ -139,8 +139,8 @@ static void help(void)
 		"	[--ikev1-natt <both|rfc|drafts>] [--no-nat_keepalive] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--xauthserver | --xauthclient] \\\n"
-		"	[--modecfgserver | --modecfgclient] [--modecfgpull] \\\n"
 		"	[--addresspool <network range>] \\\n"
+		"	[--modecfgserver[={yes,no}] | --modecfgclient[={yes,no}]] [--modecfgpull[={yes,no}]] \\\n"
 		"	[--modecfgdns <ip-address, ip-address>  \\\n"
 		"	[--modecfgdomains <dns-domain, dns-domain, ..>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
@@ -866,9 +866,9 @@ const struct option long_opts[] = {
 	{ "xauthclient", no_argument, NULL, END_XAUTHCLIENT },
 	{ "xauthby", required_argument, NULL, CD_XAUTHBY },
 	{ "xauthfail", required_argument, NULL, CD_XAUTHFAIL },
-	{ "modecfgpull", no_argument, NULL, CD_MODECFGPULL },
-	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER },
-	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT },
+	{ "modecfgpull", optional_argument, NULL, CD_MODECFGPULL },
+	{ "modecfgserver", optional_argument, NULL, END_MODECFGSERVER },
+	{ "modecfgclient", optional_argument, NULL, END_MODECFGCLIENT },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL },
 	{ "modecfgdns", required_argument, NULL, CD_MODECFGDNS },
 	{ "modecfgdomains", required_argument, NULL, CD_MODECFGDOMAINS },
@@ -1879,11 +1879,6 @@ int main(int argc, char **argv)
 			msg.aggressive = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
-		/* --modecfgpull */
-		case CD_MODECFGPULL:
-			msg.modecfgpull = YN_YES;
-			continue;
-
 		/* --allow-cert-without-san-id */
 		case CD_ALLOW_CERT_WITHOUT_SAN_ID:
 			msg.require_id_on_certificate = YN_NO;
@@ -2251,16 +2246,18 @@ int main(int argc, char **argv)
 			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass), optarg) - xauthpass + 1;
 			continue;
 
-		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			end->modecfg_client = true;
-			continue;
-
-		case END_MODECFGSERVER:	/* --modeconfigserver */
-			end->modecfg_server = true;
-			continue;
-
 		case END_ADDRESSPOOL:	/* --addresspool */
 			end->addresspool = optarg;
+			continue;
+
+		case END_MODECFGCLIENT:	/* --modeconfigclient */
+			end->modecfgclient = optarg_sparse(YN_YES, &yn_option_names);
+			continue;
+		case END_MODECFGSERVER:	/* --modeconfigserver */
+			end->modecfgserver = optarg_sparse(YN_YES, &yn_option_names);
+			continue;
+		case CD_MODECFGPULL:	/* --modecfgpull */
+			msg.modecfgpull = optarg_sparse(YN_YES, &yn_option_names);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */

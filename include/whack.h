@@ -94,13 +94,14 @@ struct whack_end {
 	bool xauth_server;	/* for XAUTH */
 	bool xauth_client;
 	char *xauth_username;
-	bool modecfg_server;	/* for MODECFG */
-	bool modecfg_client;
 	bool cat;		/* IPv4 Client Address Translation */
 	enum certpolicy sendcert;
 	enum eap_options eap;
 	bool send_ca;
 	enum ike_cert_type certtype;
+
+	enum yn_options modecfgserver;	/* for MODECFG */
+	enum yn_options modecfgclient;
 
 	char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME
 				 * pluto will convert to IP address again,

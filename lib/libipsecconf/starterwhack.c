@@ -223,10 +223,8 @@ static bool set_whack_end(struct whack_end *w,
 	if (l->values[KSCF_GROUNDHOG].set)
 		w->groundhog = l->values[KSCF_GROUNDHOG].string;
 
-	if (l->values[KNCF_MODECONFIGSERVER].set)
-		w->modecfg_server = l->values[KNCF_MODECONFIGSERVER].option;
-	if (l->values[KNCF_MODECONFIGCLIENT].set)
-		w->modecfg_client = l->values[KNCF_MODECONFIGCLIENT].option;
+	w->modecfgserver = l->values[KNCF_MODECONFIGSERVER].option;
+	w->modecfgclient = l->values[KNCF_MODECONFIGCLIENT].option;
 	if (l->values[KNCF_CAT].set)
 		w->cat = l->values[KNCF_CAT].option;
 
