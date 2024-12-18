@@ -32,12 +32,15 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 		bool zeroed;	/* true means host part was zeroed */
 	} tests[] = {
 		{ LN, 4, "", NULL, false, },
+
+		{ LN, 4, "0.0.0.0/0", "0.0.0.0/0", false, },
+		{ LN, 6, "::/0", "::/0", false, },
+
 		{ LN, 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24", false, },
 		{ LN, 4, "1.2.3.0/24", "1.2.3.0/24", false, },
 		{ LN, 4, "1.2.3.0/255.255.255.240", "1.2.3.0/28", false, },
 		{ LN, 4, "1.2.3.1/32", "1.2.3.1/32", false, },
 		{ LN, 4, "1.2.3.1/31", "1.2.3.0/31", true, },
-		{ LN, 4, "0.0.0.0/0", "0.0.0.0/0", false, },
 /*	{4, "1.2.3.0/255.255.127.0",	"1.2.3.0/255.255.127.0"}, */
 		{ LN, 4, "1.2.3.1/255.255.127.0", NULL, false, },
 		{ LN, 4, "1.2.3.1/255.255.128.0", "1.2.0.0/17", true, },
@@ -60,13 +63,11 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 		{ LN, 4, "10.0.1.0/24", "10.0.1.0/24", false, },
 		{ LN, 4, "_", NULL, false, },
 		{ LN, 4, "_/_", NULL, false, },
-		{ LN, 4, "1.2.3.1", NULL, false, },
 		{ LN, 4, "1.2.3.1/_", NULL, false, },
 		{ LN, 4, "1.2.3.1/24._", NULL, false, },
 		{ LN, 4, "1.2.3.1/99", NULL, false, },
 		{ LN, 4, "localhost/32", NULL, false, },
-		{ LN, 4, "%default", "0.0.0.0/0", false, },
-		{ LN, 6, "::/0", "::/0", false, },
+
 		{ LN, 6, "3049:1::8007:2040/128", "3049:1::8007:2040/128", false, },
 		{ LN, 6, "3049:1::192.168.0.1/128", NULL, false, },	/*"3049:1::c0a8:1/128",*/
 		{ LN, 6, "3049:1::8007::2040/128", NULL, false, },
@@ -96,7 +97,13 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 		{ LN, 6, "3049:12::9000:3200/ffff:", NULL, false, },
 		{ LN, 6, "3049:12::9000:3200/128_", NULL, false, },
 		{ LN, 6, "3049:12::9000:3200/", NULL, false, },
+
+		{ LN, 4, "%default", "0.0.0.0/0", false, },
 		{ LN, 6, "%default", "::/0", false, },
+
+		/* no mask */
+		{ LN, 4, "1.2.3.4", "1.2.3.4/32", false, },
+		{ LN, 6, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8/128", false },
 
 		/* any:0 */
 		{ LN, 4, "0.0.0.0/0:0", NULL, false, },
