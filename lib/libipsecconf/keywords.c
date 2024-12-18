@@ -409,15 +409,15 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ca",  kv_conn | kv_leftright,  kt_string,  KSCF_CA, NULL, NULL, },
   { "xauthserver",  kv_conn | kv_leftright,  kt_bool,  KNCF_XAUTHSERVER, NULL, NULL, },
   { "xauthclient",  kv_conn | kv_leftright,  kt_bool,  KNCF_XAUTHCLIENT, NULL, NULL, },
-  { "modecfgserver",  kv_conn | kv_leftright,  kt_bool,  KNCF_MODECONFIGSERVER, NULL, NULL, },
-  { "modecfgclient",  kv_conn | kv_leftright,  kt_bool,  KNCF_MODECONFIGCLIENT, NULL, NULL, },
+  { "modecfgserver",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_MODECONFIGSERVER, &yn_option_names, NULL, },
+  { "modecfgclient",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_MODECONFIGCLIENT, &yn_option_names, NULL, },
   { "username",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME, NULL, NULL, },
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME, NULL, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
 #if defined(USE_CAT)
-  { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
+  { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_CAT, &yn_option_names, NULL, },
 #endif
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
   { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },

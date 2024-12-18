@@ -1201,22 +1201,23 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	/*
-	 * Set client/server based on modecfg flags.
-	 *
-	 * And check that modecfg client, server, and CAT are all
-	 * consistent.
-	 *
-	 * The update uses OR so that the truth is blended with the
-	 * ADDRESSPOOL code's truth (see further down).
+	 * Check for consistency between modecfgclient=,
+	 * modecfgserver=, cat= and addresspool=.
 	 *
 	 * Danger:
 	 *
-	 * OE configurations have leftmodecfgclient=yes
-	 * leftmodecfgserver=yes which creates a the connection that
-	 * is both a client and a server.
+	 * Since OE configurations can be both the client and the
+	 * server they allow contradictions such as both
+	 * leftmodecfgclient=yes leftmodecfgserver=yes.
+	 *
+	 * Danger:
+	 *
+	 * It's common practice to specify leftmodecfgclient=yes
+	 * rightmodecfgserver=yes even though "right" isn't properly
+	 * configured (for instance expecting leftaddresspool).
 	 */
 
-	if (src->modecfg_server && src->modecfg_client) {
+	if (src->modecfgserver == YN_YES && src->modecfgclient == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(wm)) {
@@ -1226,7 +1227,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfg_server && src->cat) {
+	if (src->modecfgserver == YN_YES && src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(wm)) {
@@ -1236,7 +1237,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfg_client && other_src->cat) {
+	if (src->modecfgclient == YN_YES && other_src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(wm)) {
@@ -1246,36 +1247,9 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	/* only update, may already be set below */
-	host_config->modecfg.server |= src->modecfg_server;
-	host_config->modecfg.client |= src->modecfg_client;
-
-	/*
-	 * Set client/server based on addresspool
-	 *
-	 * This end having an addresspool should imply that this host
-	 * is the client and the other host is the server.  Right?
-	 *
-	 * Unfortunately, no!
-	 *
-	 * OE configurations have leftmodecfgclient=yes
-	 * rightaddresspool= which creates a the connection that is
-	 * both a client and a server.
-	 */
-
-	if (src->addresspool != NULL) {
-		/*
-		 */
-		other_host_config->modecfg.server = true;
-		host_config->modecfg.client = true;
-		dbg("forced %s modecfg client=%s %s modecfg server=%s",
-		    host_config->leftright, bool_str(host_config->modecfg.client),
-		    other_host_config->leftright, bool_str(other_host_config->modecfg.server));
-	}
-
-	if (src->modecfg_server && src->addresspool != NULL) {
-		diag_t d = diag("%smodecfgserver=yes expects %saddresspool= and not %saddresspool=",
-				leftright, other_src->leftright, leftright);
+	if (src->modecfgserver == YN_YES && src->addresspool != NULL) {
+		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
+				leftright, src->leftright);
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
@@ -1283,7 +1257,35 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->cat && other_src->addresspool != NULL) {
+	/*
+	 * XXX: this can't be rejected.  For instance, in
+	 * ikev1-psk-dual-behind-nat-01, road has
+	 * <east>modecfgserver=yes, but doesn't specify the address
+	 * pool.  Arguably modecfgserver= should be ignored?
+	 */
+#if 0
+	if (src->modecfgserver == YN_YES && other_src->addresspool == NULL) {
+		diag_t d = diag("%smodecfgserver=yes expects %saddresspool=",
+				leftright, other_src->leftright);
+		if (!is_opportunistic_wm(wm)) {
+			return d;
+		}
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
+	}
+#endif
+
+	if (src->modecfgclient == YN_YES && other_src->addresspool != NULL) {
+		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
+				leftright, other_src->leftright);
+		if (!is_opportunistic_wm(wm)) {
+			return d;
+		}
+		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		pfree_diag(&d);
+	}
+
+	if (src->cat == YN_YES && other_src->addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(wm)) {
@@ -1293,14 +1295,32 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfg_client && other_src->addresspool != NULL) {
-		diag_t d = diag("both %smodecfgclient=yes and %saddresspool= defined",
-				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(wm)) {
-			return d;
-		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
-		pfree_diag(&d);
+	/*
+	 * Update client/server based on config and addresspool
+	 *
+	 * The update uses OR so that the truth is blended with both
+	 * the ADDRESSPOOL code's truth (see further down) and the
+	 * reverse calls sense of truth.
+	 *
+	 * Unfortunately, no!
+	 *
+	 * This end having an addresspool should imply that this host
+	 * is the client and the other host is the server.  Right?
+	 *
+	 * OE configurations have leftmodecfgclient=yes
+	 * rightaddresspool= which creates a the connection that is
+	 * both a client and a server.
+	 */
+
+	host_config->modecfg.server |= (src->modecfgserver == YN_YES);
+	host_config->modecfg.client |= (src->modecfgclient == YN_YES);
+
+	if (src->addresspool != NULL) {
+		other_host_config->modecfg.server = true;
+		host_config->modecfg.client = true;
+		dbg("forced %s modecfg client=%s %s modecfg server=%s",
+		    host_config->leftright, bool_str(host_config->modecfg.client),
+		    other_host_config->leftright, bool_str(other_host_config->modecfg.server));
 	}
 
 	return NULL;
@@ -1317,14 +1337,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	switch (wm->ike_version) {
 	case IKEv2:
 #ifdef USE_CAT
-		child_config->has_client_address_translation = src->cat;
+		child_config->has_client_address_translation = (src->cat == YN_YES);
 #endif
 		break;
 	case IKEv1:
-		if (src->cat) {
+		if (src->cat != YN_UNSET) {
+			name_buf nb;
 			llog(RC_LOG, logger,
 			     "warning: IKEv1, ignoring %scat=%s (client address translation)",
-			     leftright, bool_str(src->cat));
+			     leftright, str_sparse(&yn_option_names, src->cat, &nb));
 		}
 		break;
 	default:
@@ -3544,12 +3565,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Look for contradictions.
 	 */
 
-	if (wm->left.addresspool != NULL && wm->right.addresspool != NULL) {
-		return diag("both left and right define addresspool=");
+	if (wm->left.addresspool != NULL &&
+	    wm->right.addresspool != NULL) {
+		return diag("both leftaddresspool= and rightaddresspool= defined");
 	}
 
-	if (wm->left.modecfg_server && wm->right.modecfg_server) {
-		diag_t d = diag("both left and right define modecfgserver=yes");
+	if (wm->left.modecfgserver == YN_YES &&
+	    wm->right.modecfgserver == YN_YES) {
+		diag_t d = diag("both leftmodecfgserver=yes and rightmodecfgserver=yes defined");
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
@@ -3557,8 +3580,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->left.modecfg_client && wm->right.modecfg_client) {
-		diag_t d = diag("both left and right define modecfgclient=yes");
+	if (wm->left.modecfgclient == YN_YES &&
+	    wm->right.modecfgclient == YN_YES) {
+		diag_t d = diag("both leftmodecfgclient=yes and rightmodecfgclient=yes defined");
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
@@ -3566,8 +3590,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->left.cat && wm->right.cat) {
-		diag_t d = diag("both left and right define cat=yes");
+	if (wm->left.cat == YN_YES && wm->right.cat == YN_YES) {
+		diag_t d = diag("both leftcat=yes and rightcat=yes defined");
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
@@ -3576,10 +3600,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	if (wm->left.virt != NULL && wm->right.virt != NULL) {
-		return diag("both left and right define virtual subnets");
+		return diag("both leftvirt= and rightvirt= defined");
 	}
 
-	if ((c->end[LEFT_END].kind == CK_GROUP || c->end[RIGHT_END].kind == CK_GROUP) &&
+	if ((c->end[LEFT_END].kind == CK_GROUP ||
+	     c->end[RIGHT_END].kind == CK_GROUP) &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
 	}
