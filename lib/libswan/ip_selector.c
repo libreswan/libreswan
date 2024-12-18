@@ -552,27 +552,24 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 		return false;
 	}
 
-	/* more maskbits => more prefix & smaller subnet */
-	if (i.maskbits < o.maskbits) {
-		return false;
-	}
+	/* I.lo >= O.lo && I.hi <= O.hi */
 
 	if (ip_bytes_cmp(i.version, i.lo, o.version, o.lo) < 0) {
-		/* inner.lo < outer.lo */
 		return false;
 	}
 
 	if (ip_bytes_cmp(i.version, i.hi, o.version, o.hi) > 0) {
-		/* inner.hi > outer.hi */
 		return false;
 	}
 
-	/* protocol wildcards */
+	/* protocol or wildcard wildcards */
+
 	if (o.ipproto != 0 && i.ipproto != o.ipproto) {
 		return false;
 	}
 
 	/* port wildcard; XXX: assumes UDP/TCP */
+
 	if (o.hport != 0 && i.hport != o.hport) {
 		return false;
 	}
@@ -586,8 +583,8 @@ bool address_in_selector_range(const ip_address address, const ip_selector selec
 		return false;
 	}
 
-	ip_subnet subnet = selector_subnet(selector);
-	return address_in_subnet(address, subnet);
+	ip_range range = selector_range(selector);
+	return address_in_range(address, range);
 }
 
 bool endpoint_in_selector(const ip_endpoint endpoint, const ip_selector selector)

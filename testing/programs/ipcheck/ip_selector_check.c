@@ -473,6 +473,19 @@ static void check_selector_op_selector(void)
 		{ LN, "0.0.0.0/32/udp/10", "0.0.0.0/32/0/0",   true,  true,  true, },
 		{ LN, "::/128/udp/10", "::/128/0/0",           true,  true,  true, },
 
+		/* ranges */
+
+		{ LN, "192.0.2.101",             "192.0.2.101-192.0.2.200", true, true, true, },
+		{ LN, "192.0.2.200",             "192.0.2.101-192.0.2.200", true, true, true, },
+
+		{ LN, "192.0.2.100/31",          "192.0.2.101-192.0.2.200", false, false, false, },
+		{ LN, "192.0.2.200/31",          "192.0.2.101-192.0.2.200", false, true, true, },
+
+		{ LN, "192.0.2.101-192.0.2.102", "192.0.2.101-192.0.2.200", true, true, true, },
+		{ LN, "192.0.2.199-192.0.2.200", "192.0.2.101-192.0.2.200", true, true, true, },
+
+		{ LN, "192.0.2.100-192.0.2.101", "192.0.2.101-192.0.2.200", false, false, false, },
+		{ LN, "192.0.2.200-192.0.2.201", "192.0.2.101-192.0.2.200", false, true, true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -487,8 +500,14 @@ static void check_selector_op_selector(void)
 		ip_address nonzero_host;
 
 		ip_selector inner_selector;
-		err = ttoselector_num(shunk1(t->inner), NULL,
-				      &inner_selector, &nonzero_host);
+		if (strchr(t->inner, '-') != NULL) {
+			ip_range inner_range;
+			err = ttorange_num(shunk1(t->inner), NULL, &inner_range);
+			inner_selector = selector_from_range(inner_range);
+		} else {
+			err = ttoselector_num(shunk1(t->inner), NULL,
+					      &inner_selector, &nonzero_host);
+		}
 		if (err != NULL) {
 			FAIL("ttoselector_num(%s) failed: %s", t->inner, err);
 		}
@@ -497,8 +516,14 @@ static void check_selector_op_selector(void)
 		}
 
 		ip_selector outer_selector;
-		err = ttoselector_num(shunk1(t->outer), NULL,
-				      &outer_selector, &nonzero_host);
+		if (strchr(t->outer, '-') != NULL) {
+			ip_range outer_range;
+			err = ttorange_num(shunk1(t->outer), NULL, &outer_range);
+			outer_selector = selector_from_range(outer_range);
+		} else {
+			err = ttoselector_num(shunk1(t->outer), NULL,
+					      &outer_selector, &nonzero_host);
+		}
 		if (err != NULL) {
 			FAIL("ttoselector_num(%s) failed: %s", t->outer, err);
 		}
