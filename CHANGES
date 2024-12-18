@@ -2,21 +2,27 @@ See also https://libreswan.org/
 
 v5.2 (unreleased)
 * IKEv2:
-  - PPK in INTERMEDIATE exchange, draft-ietf-ipsecme-ikev2-qr-alt-04 [Vukasin]
+  - add PPK in INTERMEDIATE exchange, draft-ietf-ipsecme-ikev2-qr-alt-04 [Vukasin]
   - add initial support for RFC-5723 IKE_SESSION_RESUME [Nupur Agrawal, Andrew]
+  - fix crash in <<ipsec rereadsecrets>> [Andrew, Ilya Maximets #1994]
+  - fix bogus ERROR when deleting connection [Andrew, Ilya Maximets #1914]
 * IKEv1:
   - removed compile-time SOFTREMOTE_CLIENT_WORKAROUND [Andrew]
-  - fix INVALID_ID_INFORMATION response using corrupt IV [Andrew, #1830]
+  - fix INVALID_ID_INFORMATION response using corrupt IV [Andrew #1830]
+  - fix reconnect with addresspool after restart [Andrew #1790]
 * Linux:
   - packet offload counters supported in 6.7+ [Paul]
-  - Add IPTFS support [Paul / Antony]
+  - Add IPTFS support [Paul / Antony / Andrew]
   - 6.10+ need replay-window 0 on OUTBOUND SA [Paul]
   - Do not set nopmtudisc on inbound SA [Paul]
   - Set DSCP options only on the relevant direction SA [Paul]
+* BSD:
+  - implement ipsec-interface= on FreeBSD+OpenBSD [Andrew]
 * whack:
   - fix "duplicated flag ctlsocket" error introduced in 5.0 #1840 [Andrew]
 * building:
-  - fix build with USE_LIBCURL=false [Andrew]
+  - fix build with USE_LIBCURL=false [Hans de Graaff #1845, Andrew]
+  - fix build on OpenBSD 7.6 [Andrew]
 
 v5.1 (Oct 8, 2024)
 * IKEv2:
