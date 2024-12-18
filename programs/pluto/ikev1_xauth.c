@@ -998,9 +998,12 @@ static bool add_xauth_addresspool(struct connection *c,
 		return false;
 	}
 
-	/* install new addresspool */
+	/*
+	 * Install new addresspool
+	 *
+	 * First delete any existing pool if it exists.
+	 */
 
-	/* delete existing pool if it exists */
 	if (c->pool[IPv4_INDEX] != NULL) {
 		free_that_address_lease(c, &ipv4_info, logger);
 		addresspool_delref(&c->pool[IPv4_INDEX], logger);

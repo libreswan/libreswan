@@ -27,6 +27,11 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool) MU
 
 diag_t install_addresspool(const ip_range pool_range, struct connection *c,
 			   struct logger *logger) MUST_USE_RESULT;
+
+bool install_addresspools(struct connection *c);
+void uninstall_addresspools(struct connection *c,
+			    struct logger *logger/*c->logger could be bogus*/);
+
 void addresspool_delref(struct addresspool **pool, struct logger *logger);
 struct addresspool *addresspool_addref(struct addresspool *pool);
 

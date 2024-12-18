@@ -146,16 +146,15 @@ struct child_end_config {
 	ip_addresses sourceip;
 
 	/*
-	 * Danger: IKEv1 uses c-pool, and will update it during XAUTH
-	 * when the config specifies that the pool comes from a file.
+	 * During orient, this is turned into c->pool
+	 *
+	 * Danger: IKEv1 further updates c->pool during XAUTH using
+	 * something from a file.
 	 *
 	 * Should more than one pool for each address be allowed?
 	 * Should an addresspool combined with selectors be allowed?
 	 */
 	ip_ranges addresspools;
-#if 0
-	struct addresspool *addresspool[IP_INDEX_ROOF];
-#endif
 
 	/*
 	 * When set, put this on the ipsec-interface.  Should there be

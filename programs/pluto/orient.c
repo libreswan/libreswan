@@ -36,6 +36,7 @@
 #include "sparse_names.h"
 #include "initiate.h"
 #include "ipsec_interface.h"
+#include "addresspool.h"
 
 static void terminate_and_disorient_connection(struct connection *c,
 					       where_t where)
@@ -73,6 +74,10 @@ void disorient(struct connection *c)
 		 * Move to a special disoriented hash.
 		 */
 		connection_db_rehash_host_pair(c);
+		/*
+		 * Scrub any address pools
+		 */
+		uninstall_addresspools(c, c->logger);
 	}
 }
 
@@ -349,6 +354,12 @@ bool orient(struct connection *c, struct logger *logger)
 	 * Switch interfaces (still not properly oriented).
 	 */
 	PASSERT(c->logger, matching_end != END_ROOF);
+
+	/*
+	 * Start by scrubbing anything hanging over from the old
+	 * orientation.
+	 */
+
 	disorient(c);
 
 	/* ignoring ipsec-interface=no */
@@ -374,6 +385,11 @@ bool orient(struct connection *c, struct logger *logger)
 	 * the SPD_DB.
 	 */
 	add_connection_spds(c);
+
+	if (!install_addresspools(c)) {
+		/* already logged */
+		return false;
+	}
 
 	/* rehash end dependent hashes */
 

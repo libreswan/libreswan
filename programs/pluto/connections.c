@@ -453,9 +453,10 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (c->pool[afi->ip_index] != NULL) {
 			free_that_address_lease(c, afi, c->logger);
-			addresspool_delref(&c->pool[afi->ip_index], c->logger);
 		}
 	}
+
+	uninstall_addresspools(c, c->logger);
 
 	/* find and delete c from the host pair list */
 #if 0
@@ -1406,17 +1407,22 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 */
 	if (src->addresspool != NULL) {
 
-		/* both ends can't add an address pool (cross
-		 * checked) */
-		passert(c->pool[IPv4_INDEX] == NULL &&
-			c->pool[IPv6_INDEX] == NULL);
+		/*
+		 * Both ends can't add an address pool (cross
+		 * checked).
+		 */
+		FOR_EACH_ELEMENT(pool, c->pool) {
+			PASSERT(logger, (*pool) == NULL);
+		}
 
 		if (src->subnets != NULL) {
+			/* XXX: why? */
 			return diag("cannot specify both %saddresspool= and %ssubnets=",
 				    leftright, leftright);
 		}
 
 		if (src->subnet != NULL) {
+			/* XXX: why? */
 			return diag("cannot specify both %saddresspool= and %ssubnet=",
 				    leftright, leftright);
 		}
@@ -1459,11 +1465,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						 leftright, src->addresspool);
 			}
 
-			d = install_addresspool(*range, c, logger);
-			if (d != NULL) {
-				return diag_diag(&d, "%saddresspool=%s invalid, ",
-						 leftright, src->addresspool);
-			}
 		}
 
 	} else if (src->subnet != NULL && (wm->ike_version == IKEv1 ||

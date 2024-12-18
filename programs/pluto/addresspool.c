@@ -888,6 +888,26 @@ struct addresspool *addresspool_addref(struct addresspool *pool)
 	return addref_where(pool, HERE);
 }
 
+bool install_addresspools(struct connection *c)
+{
+	FOR_EACH_ITEM(range, &c->remote->child.config->addresspools) {
+		diag_t d = install_addresspool((*range), c, c->logger);
+		if (d != NULL) {
+			llog_pexpect(c->logger, HERE, "%s", str_diag(d));
+			pfree_diag(&d);
+			return false;
+		}
+	}
+	return true;
+}
+
+void uninstall_addresspools(struct connection *c, struct logger *logger)
+{
+	FOR_EACH_ELEMENT(pool, c->pool) {
+		addresspool_delref(pool, logger);
+	}
+}
+
 /*
  * Finds an ip_pool that has exactly matching bounds.
  *
