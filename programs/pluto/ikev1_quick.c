@@ -2151,7 +2151,7 @@ static struct connection *fc_try(const struct connection *c,
 
 			if (!selector_in_selector(*remote_client, d_spd->remote->client)) {
 				selector_buf s1, s2;
-				vdbg("skipping SPD, initiator's remote client select %s must be within %s",
+				vdbg("skipping SPD, initiator's remote client selector %s must be within %s",
 				     str_selector(remote_client, &s2),
 				     str_selector(&d_spd->remote->client, &s1));
 				continue;
