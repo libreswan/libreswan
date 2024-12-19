@@ -1009,7 +1009,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		addresspool_delref(&c->pool[IPv4_INDEX], logger);
 	}
 
-	diag_t d = install_addresspool(pool_range, c, logger);
+	diag_t d = install_addresspool(pool_range, c->pool, logger);
 	if (d != NULL) {
 		llog(RC_CLASH, logger, "XAUTH: invalid addresspool for the conn %s user %s: %s",
 		     c->name, userid, str_diag(d));

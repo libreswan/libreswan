@@ -77,7 +77,9 @@ void disorient(struct connection *c)
 		/*
 		 * Scrub any address pools
 		 */
-		uninstall_addresspools(c, c->logger);
+		FOR_EACH_ELEMENT(pool, c->pool) {
+			addresspool_delref(pool, c->logger);
+		}
 	}
 }
 
@@ -386,9 +388,10 @@ bool orient(struct connection *c, struct logger *logger)
 	 */
 	add_connection_spds(c);
 
-	if (!install_addresspools(c)) {
-		/* already logged */
-		return false;
+	for (enum ip_index i = 0; i < IP_INDEX_ROOF; i++) {
+		if (c->remote->config->child.addresspool[i] != NULL) {
+			c->pool[i] = addresspool_addref(c->remote->config->child.addresspool[i]);
+		}
 	}
 
 	/* rehash end dependent hashes */

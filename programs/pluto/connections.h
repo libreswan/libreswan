@@ -155,6 +155,7 @@ struct child_end_config {
 	 * Should an addresspool combined with selectors be allowed?
 	 */
 	ip_ranges addresspools;
+	struct addresspool *addresspool[IP_INDEX_ROOF]; /* list? */
 
 	/*
 	 * When set, put this on the ipsec-interface.  Should there be

@@ -888,26 +888,6 @@ struct addresspool *addresspool_addref(struct addresspool *pool)
 	return addref_where(pool, HERE);
 }
 
-bool install_addresspools(struct connection *c)
-{
-	FOR_EACH_ITEM(range, &c->remote->child.config->addresspools) {
-		diag_t d = install_addresspool((*range), c, c->logger);
-		if (d != NULL) {
-			llog_pexpect(c->logger, HERE, "%s", str_diag(d));
-			pfree_diag(&d);
-			return false;
-		}
-	}
-	return true;
-}
-
-void uninstall_addresspools(struct connection *c, struct logger *logger)
-{
-	FOR_EACH_ELEMENT(pool, c->pool) {
-		addresspool_delref(pool, logger);
-	}
-}
-
 /*
  * Finds an ip_pool that has exactly matching bounds.
  *
@@ -921,7 +901,7 @@ void uninstall_addresspools(struct connection *c, struct logger *logger)
  * Otherwise (nothing matches), return NULL and *POOL=NULL.
  */
 
-diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
+static diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
 {
 	struct addresspool *h;
 
@@ -948,7 +928,9 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
  * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-diag_t install_addresspool(const ip_range pool_range, struct connection *c, struct logger *logger)
+diag_t install_addresspool(const ip_range pool_range,
+			   struct addresspool *addresspool[],
+			   struct logger *logger)
 {
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);
@@ -983,7 +965,7 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c, stru
 	}
 
 	const struct ip_info *afi = range_info(pool_range);
-	if (c->pool[afi->ip_index] != NULL) {
+	if (addresspool[afi->ip_index] != NULL) {
 		return diag("connection already has a %s address pool", afi->ip_name);
 	}
 
@@ -992,7 +974,7 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c, stru
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_pool(logger, true, existing_pool, "reusing existing address pool@%p", existing_pool);
 		}
-		c->pool[afi->ip_index] = addresspool_addref(existing_pool);
+		addresspool[afi->ip_index] = addresspool_addref(existing_pool);
 		return NULL;
 	}
 
@@ -1012,7 +994,8 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c, stru
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_pool(logger, false, new_pool, "creating new address pool@%p", new_pool);
 	}
-	c->pool[afi->ip_index] = new_pool;
+
+	addresspool[afi->ip_index] = new_pool;
 	return NULL;
 }
 

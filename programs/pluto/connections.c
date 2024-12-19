@@ -453,10 +453,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (c->pool[afi->ip_index] != NULL) {
 			free_that_address_lease(c, afi, c->logger);
+			addresspool_delref(&c->pool[afi->ip_index], c->logger);
 		}
 	}
-
-	uninstall_addresspools(c, c->logger);
 
 	/* find and delete c from the host pair list */
 #if 0
@@ -537,6 +536,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			pfree_list(&end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);
 			pfree_list(&end->child.addresspools);
+			FOR_EACH_ELEMENT(pool, end->child.addresspool) {
+				addresspool_delref(pool, logger);
+			}
 		}
 		pfree(c->root_config);
 	}
@@ -1433,16 +1435,9 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
 		}
 
-		unsigned family[IP_INDEX_ROOF] = {0};
-
 		FOR_EACH_ITEM(range, &child_config->addresspools) {
 
-			/* only allow one of each type */
 			const struct ip_info *afi = range_type(range);
-			if (family[afi->ip_index]++ > 0) {
-				return diag("%saddresspool=%s invalid, multiple %s ranges",
-					    leftright, src->addresspool, afi->ip_name);
-			}
 
 			if (wm->ike_version == IKEv1 && afi == &ipv6_info) {
 				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
@@ -1456,10 +1451,19 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					    str_range(range, &rb));
 			}
 
-			/* Check for overlap with existing pools */
-			diag_t d;
-			struct addresspool *pool; /* ignore */
-			d = find_addresspool(*range, &pool);
+			/*
+			 * Create the address pool regardless of
+			 * orientation.  Orienting will then add a
+			 * reference as needed.
+			 *
+			 * This way, conflicting addresspools are
+			 * detected early (OTOH, they may be detected
+			 * when they don't matter).
+			 *
+			 * This also detetects and rejects multiple
+			 * pools with the same address family.
+			 */
+			diag_t d = install_addresspool((*range), child_config->addresspool, logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);
