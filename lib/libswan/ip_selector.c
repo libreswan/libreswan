@@ -488,10 +488,19 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
+	int prefix_len = ip_bytes_prefix_len(afi, selector.lo, selector.hi);
+	if (prefix_len < 0) {
+		selector_buf sb;
+		prefix_len = afi->mask_cnt;
+		llog_pexpect(&global_logger, HERE,
+			     "attempt to extract prefix mask from non-CIDR selector %s, forcing prefix-len=%d",
+			     str_selector(&selector, &sb), prefix_len);
+	}
+
 	struct ip_bytes prefix = ip_bytes_blit(afi, selector.lo,
 					       &set_routing_prefix,
 					       &clear_host_identifier,
-					       selector.maskbits);
+					       prefix_len);
 	return address_from_raw(HERE, afi, prefix);
 }
 
