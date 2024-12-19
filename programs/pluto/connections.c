@@ -796,19 +796,38 @@ static enum yna_options extract_yna(const char *leftright, const char *name,
 			      &yna_option_names, wm, logger);
 }
 
+/* terrible name */
+
+static bool can_extract_str(const char *leftright,
+			    const char *name,
+			    const char *value,
+			    const struct whack_message *wm,
+			    struct logger *logger)
+{
+	if (value == NULL) {
+		return false;
+	}
+
+	if (never_negotiate_wm(wm)) {
+		llog(RC_LOG, logger,
+		     "warning: %s%s=%s ignored for never-negotiate connection",
+		     leftright, name, value);
+		return false;
+	}
+
+	return true;
+}
+
 static char *extract_str(const char *leftright, const char *name,
 			 const char *str,
-			 const struct whack_message *wm, struct logger *logger)
+			 const struct whack_message *wm,
+			 struct logger *logger)
 {
-	if (never_negotiate_wm(wm)) {
-		if (str != NULL) {
-			llog(RC_LOG, logger,
-			     "warning: %s%s=%s ignored for never-negotiate connection",
-			     leftright, name, str);
-		}
-		return NULL;
+	if (can_extract_str(leftright, name, str, wm, logger)) {
+		return clone_str(str, name);
 	}
-	return clone_str(str, name);
+
+	return NULL;
 }
 
 static diag_t extract_host_end(struct host_end *host,
@@ -2502,8 +2521,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->ikepad = extract_yn("", "ikepad", wm->ikepad, /*default*/true, wm, c->logger);
 	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
 						       /*default*/true/*YES-TRUE*/,wm, c->logger);
-	config->modecfg.pull = extract_yn("", "modecfg", wm->modecfgpull,
-					  /*default*/false, wm, c->logger);
 
 	if (wm->aggressive == YN_YES && wm->ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
@@ -3426,6 +3443,24 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
+		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
+		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
+		if (config->ppk_ids != NULL) {
+			config->ppk_ids_shunks = shunks(shunk1(config->ppk_ids),
+							", ",
+							EAT_EMPTY_SHUNKS,
+							HERE); /* process into shunks once */
+		}
+	}
+
+	/*
+	 * modecfg/cp
+	 */
+
+	config->modecfg.pull = extract_yn("", "modecfgpull", wm->modecfgpull,
+					  /*default*/false, wm, c->logger);
+
+	if (can_extract_str("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
@@ -3433,7 +3468,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (d != NULL) {
 			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->modecfgdns);
 		}
+	}
 
+	if (can_extract_str("", "modecfgdomains", wm->modecfgdomains, wm, c->logger)) {
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
 							     ", ", HERE);
 		if (wm->ike_version == IKEv1 &&
@@ -3444,56 +3481,55 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     wm->modecfgdomains);
 			config->modecfg.domains[1] = null_shunk;
 		}
-
-		config->modecfg.banner = clone_str(wm->modecfgbanner, "connection modecfg_banner");
-
-		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
-		if (config->ppk_ids != NULL) {
-			config->ppk_ids_shunks = shunks(shunk1(config->ppk_ids),
-							", ",
-							EAT_EMPTY_SHUNKS,
-							HERE); /* process into shunks once */
-		}
-
-		/*
-		 * parse mark and mask values form the mark/mask string
-		 * acceptable string formats are
-		 * ( -1 | <nat> | <hex> ) [ / ( <nat> | <hex> ) ]
-		 * examples:
-		 *   10
-		 *   10/0xffffffff
-		 *   0xA/0xFFFFFFFF
-		 *
-		 * defaults:
-		 *  if mark is provided and mask is not mask will default to 0xFFFFFFFF
-		 *  if nothing is provided mark and mask are set to 0;
-		 */
-
-		/* mark-in= and mark-out= overwrite mark= */
-		if (wm->mark != NULL) {
-			mark_parse(wm->mark, &c->sa_marks.in, c->logger);
-			mark_parse(wm->mark, &c->sa_marks.out, c->logger);
-			if (wm->mark_in != NULL || wm->mark_out != NULL) {
-				llog(RC_LOG, c->logger,
-				     "conflicting mark specifications");
-			}
-		}
-		if (wm->mark_in != NULL)
-			mark_parse(wm->mark_in, &c->sa_marks.in, c->logger);
-		if (wm->mark_out != NULL)
-			mark_parse(wm->mark_out, &c->sa_marks.out, c->logger);
 	}
 
-	/* ipsec-interface */
+	config->modecfg.banner = extract_str("", "modecfgbanner", wm->modecfgbanner,
+					     wm, c->logger);
 
-	if (never_negotiate_wm(wm)) {
-		if (wm->ipsec_interface != NULL) {
-			llog(RC_LOG, c->logger,
-			     "warning: ipsec-interface=%s ignored for never-negotiate connection",
-			     wm->ipsec_interface);
+	/*
+	 * Marks.
+	 *
+	 * parse mark and mask values form the mark/mask string
+	 * acceptable string formats are
+	 * ( -1 | <nat> | <hex> ) [ / ( <nat> | <hex> ) ]
+	 * examples:
+	 *   10
+	 *   10/0xffffffff
+	 *   0xA/0xFFFFFFFF
+	 *
+	 * defaults:
+	 *  if mark is provided and mask is not mask will default to 0xFFFFFFFF
+	 *  if nothing is provided mark and mask are set to 0;
+	 *
+	 * mark-in= and mark-out= overwrite mark=
+	 */
+
+	if (can_extract_str("", "mark", wm->mark, wm, c->logger)) {
+		mark_parse(wm->mark, &c->sa_marks.in, c->logger);
+		mark_parse(wm->mark, &c->sa_marks.out, c->logger);
+	}
+
+	if (can_extract_str("", "mark-in", wm->mark_in, wm, c->logger)) {
+		if (wm->mark != NULL) {
+			llog(RC_LOG, c->logger, "warning: mark-in=%s overrides mark=%s",
+			     wm->mark_in, wm->mark);
 		}
-	} else if (wm->ipsec_interface != NULL) {
+		mark_parse(wm->mark_in, &c->sa_marks.in, c->logger);
+	}
+
+	if (can_extract_str("", "mark-out", wm->mark_out, wm, c->logger)) {
+		if (wm->mark != NULL) {
+			llog(RC_LOG, c->logger, "warning: mark-out=%s overrides mark=%s",
+			     wm->mark_out, wm->mark);
+		}
+		mark_parse(wm->mark_out, &c->sa_marks.out, c->logger);
+	}
+
+	/*
+	 * ipsec-interface
+	 */
+
+	if (can_extract_str("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
 		diag_t d;
 		d = parse_ipsec_interface(config, wm->ipsec_interface, c->logger);
 		if (d != NULL) {
