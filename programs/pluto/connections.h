@@ -612,7 +612,7 @@ void update_end_selector_where(struct connection *c, enum left_right end,
 
 void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector s,
-			 struct logger *logger, where_t where);
+			 const struct logger *logger, where_t where);
 
 struct spd_end {
 	ip_selector client;

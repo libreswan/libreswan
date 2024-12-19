@@ -4784,7 +4784,7 @@ bool dpd_active_locally(const struct connection *c)
 
 void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector selector/*could be unset*/,
-			 struct logger *logger, where_t where)
+			 const struct logger *logger, where_t where)
 {
 	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
 				      selector_info(selector) == afi));
