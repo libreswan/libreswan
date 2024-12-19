@@ -164,48 +164,26 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			continue;
 		}
 
-		/* address or address/mask */
+		/*
+		 * Parse subnet (simple addresses are also accepted).
+		 */
 		ip_subnet sn;
-		if (strchr(flp->tok, '/') == NULL) {
-			/* no /, so treat as /32 or V6 equivalent */
-			ip_address t;
-			err_t err = ttoaddress_num(shunk1(flp->tok), NULL, &t);
-			if (err != NULL) {
-				llog(RC_LOG, flp->logger,
-					    "ignored, '%s' is not an address: %s",
-					    flp->tok, err);
-				flushline(flp, NULL/*shh*/);
-				continue;
-			}
-			sn = subnet_from_address(t);
-		} else {
-			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
-			ip_subnet snn;
-			ip_address nonzero_host;
-			err_t err = ttosubnet_num(shunk1(flp->tok), afi, &snn, &nonzero_host);
-			if (err != NULL) {
-				llog(RC_LOG, flp->logger,
-				     "ignored, '%s' is not a subnet: %s",
-				     flp->tok, err);
-				flushline(flp, NULL/*shh*/);
-				continue;
-			}
-			if (nonzero_host.is_set) {
-				address_buf hb;
-				llog(RC_LOG, flp->logger,
-				     "zeroing non-zero host identifier %s in '%s'",
-				     str_address(&nonzero_host, &hb), flp->tok);
-			}
-			sn = snn;
-		}
+		ip_address nonzero_host;
+		err_t err = ttosubnet_num(shunk1(flp->tok), NULL, &sn, &nonzero_host);
 
-		const struct ip_info *afi = subnet_info(sn);
-		if (afi == NULL) {
+		if (err != NULL) {
 			llog(RC_LOG, flp->logger,
-				    "ignored, unsupported Address Family \"%s\"",
-				    flp->tok);
+			     "ignored, '%s' is not a subnet: %s",
+			     flp->tok, err);
 			flushline(flp, NULL/*shh*/);
 			continue;
+		}
+
+		if (nonzero_host.is_set) {
+			address_buf hb;
+			llog(RC_LOG, flp->logger,
+			     "zeroing non-zero host identifier %s in '%s'",
+			     str_address(&nonzero_host, &hb), flp->tok);
 		}
 
 		const struct ip_protocol *proto = &ip_protocol_all;
