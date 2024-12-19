@@ -135,12 +135,44 @@ static int subnetcmp(const ip_subnet a, const ip_subnet b)
 	return r;
 }
 
+/*
+ * rangecmp() compares the two ip_range values A and B.
+ *
+ * It returns -1, 0, or +1 if A is, in broad terms, less than, equal
+ * to, or greater than B.
+ */
+
+static int rangecmp(const ip_range a, const ip_range b)
+{
+	/* a.lo vs b.lo? */
+	{
+		ip_address al = range_start(a);
+		ip_address bl = range_start(b);
+		int r = addrcmp(&al, &bl);
+		if (r != 0) {
+			return r;
+		}
+	}
+
+	/* a.hi vs b.hi? */
+	{
+		ip_address ah = range_end(a);
+		ip_address bh = range_end(b);
+		int r = addrcmp(&ah, &bh);
+		if (r != 0) {
+			return r;
+		}
+	}
+
+	/* {a,b}.{lo,hi} are identical */
+	return 0;
+}
+
 static void read_foodgroup(struct file_lex_position *oflp,
 			   struct connection *g,
 			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->name;
-	const ip_subnet lsn = selector_subnet(g->spd->local->client);
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
@@ -250,6 +282,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		pexpect(flp->bdry == B_record || flp->bdry == B_file);
 
 		/* Find where new entry ought to go in new_targets. */
+		ip_range lsn = selector_range(g->spd->local->client);
 		struct fg_targets **pp;
 		int r;
 
@@ -259,7 +292,8 @@ static void read_foodgroup(struct file_lex_position *oflp,
 				r = -1; /* end of list is infinite */
 				break;
 			}
-			r = subnetcmp(lsn, selector_subnet((*pp)->group->spd->local->client));
+
+			r = rangecmp(lsn, selector_range((*pp)->group->spd->local->client));
 			if (r == 0) {
 				r = subnetcmp(sn, (*pp)->subnet);
 			}
@@ -274,13 +308,13 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		}
 
 		if (r == 0) {
-			subnet_buf source;
+			range_buf source;
 			subnet_buf dest;
 			llog(RC_LOG, flp->logger,
 			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already \"%s\"",
 			     str_subnet(&sn, &dest),
 			     proto->ipproto, pri_hport(sport), pri_hport(dport),
-			     str_subnet(&lsn, &source),
+			     str_range(&lsn, &source),
 			     (*pp)->group->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
