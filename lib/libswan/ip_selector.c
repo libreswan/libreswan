@@ -612,7 +612,6 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 	return (l.version == r.version &&
 		thingeq(l.lo, r.lo) &&
 		thingeq(l.hi, r.hi) &&
-		l.maskbits == r.maskbits &&
 		l.ipproto == r.ipproto &&
 		l.hport == r.hport);
 }
