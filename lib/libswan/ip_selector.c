@@ -660,8 +660,16 @@ ip_subnet selector_subnet(const ip_selector selector)
 		return unset_subnet;
 	}
 
-	return subnet_from_raw(HERE, afi,
-			       selector.lo, selector.maskbits);
+	int prefix_len = ip_bytes_prefix_len(afi, selector.lo, selector.hi);
+	if (prefix_len < 0) {
+		selector_buf sb;
+		prefix_len = afi->mask_cnt;
+		llog_pexpect(&global_logger, HERE,
+			     "attempt to extract subnet from non-CIDR selector %s, forcing prefix-len=%u",
+			     str_selector(&selector, &sb), prefix_len);
+	}
+
+	return subnet_from_raw(HERE, afi, selector.lo, prefix_len);
 }
 
 bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs)
