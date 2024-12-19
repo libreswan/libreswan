@@ -389,16 +389,13 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 			/*
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
-			 *
-			 * XXX: should this instead assign the
-			 * selectors to the range?
 			 */
 			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
-				const struct ip_info *afi = range_type(range);
-				vdbg("%s selectors formed from %s address pool",
-				     leftright, afi->ip_name);
-				append_end_selector(end, afi, afi->selector.all,
-						    d->logger, HERE);
+				ip_selector selector = selector_from_range((*range));
+				selector_buf sb;
+				vdbg("%s selector formed from address pool %s",
+				     leftright, str_selector(&selector, &sb));
+				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
 			}
 			continue;
 		}
