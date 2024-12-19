@@ -68,7 +68,7 @@ bool selector_contains_one_address(const ip_selector selector)
 		return false;
 	}
 
-	return (selector.maskbits == afi->mask_cnt &&
+	return (thingeq(selector.lo, selector.hi) &&
 		selector.ipproto == 0 &&
 		selector.hport == 0);
 }
@@ -488,10 +488,19 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
+	int prefix_len = ip_bytes_prefix_len(afi, selector.lo, selector.hi);
+	if (prefix_len < 0) {
+		selector_buf sb;
+		prefix_len = afi->mask_cnt;
+		llog_pexpect(&global_logger, HERE,
+			     "attempt to extract prefix mask from non-CIDR selector %s, forcing prefix-len=%d",
+			     str_selector(&selector, &sb), prefix_len);
+	}
+
 	struct ip_bytes prefix = ip_bytes_blit(afi, selector.lo,
 					       &set_routing_prefix,
 					       &clear_host_identifier,
-					       selector.maskbits);
+					       prefix_len);
 	return address_from_raw(HERE, afi, prefix);
 }
 
@@ -612,7 +621,6 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 	return (l.version == r.version &&
 		thingeq(l.lo, r.lo) &&
 		thingeq(l.hi, r.hi) &&
-		l.maskbits == r.maskbits &&
 		l.ipproto == r.ipproto &&
 		l.hport == r.hport);
 }
@@ -652,8 +660,16 @@ ip_subnet selector_subnet(const ip_selector selector)
 		return unset_subnet;
 	}
 
-	return subnet_from_raw(HERE, afi,
-			       selector.lo, selector.maskbits);
+	int prefix_len = ip_bytes_prefix_len(afi, selector.lo, selector.hi);
+	if (prefix_len < 0) {
+		selector_buf sb;
+		prefix_len = afi->mask_cnt;
+		llog_pexpect(&global_logger, HERE,
+			     "attempt to extract subnet from non-CIDR selector %s, forcing prefix-len=%u",
+			     str_selector(&selector, &sb), prefix_len);
+	}
+
+	return subnet_from_raw(HERE, afi, selector.lo, prefix_len);
 }
 
 bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs)

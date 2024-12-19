@@ -28,31 +28,37 @@ const struct ip_bytes unset_ip_bytes;
  */
 
 struct ip_routing_prefix_blit {
+	const char *op;
 	uint8_t and;	/* first operation */
 	uint8_t or;	/* second operation */
 };
 
 struct ip_host_identifier_blit {
+	const char *op;
 	uint8_t and;	/* first operation */
 	uint8_t or;	/* second operation */
 };
 
-const struct ip_routing_prefix_blit clear_routing_prefix = { .and = 0x00, .or = 0x00, };
-const struct ip_routing_prefix_blit set_routing_prefix = { .and = 0x00/*don't care*/, .or = 0xff, };
-const struct ip_routing_prefix_blit keep_routing_prefix = { .and = 0xff, .or = 0x00, };
+const struct ip_routing_prefix_blit clear_routing_prefix = { .op = "clear", .and = 0x00, .or = 0x00, };
+const struct ip_routing_prefix_blit set_routing_prefix =   { .op = "set",   .and = 0x00, .or = 0xff, };
+const struct ip_routing_prefix_blit keep_routing_prefix =  { .op = "keep",  .and = 0xff, .or = 0x00, };
 
-const struct ip_host_identifier_blit clear_host_identifier = { .and = 0x00, .or = 0x00, };
-const struct ip_host_identifier_blit set_host_identifier = { .and = 0x00/*don't care*/, .or = 0xff, };
-const struct ip_host_identifier_blit keep_host_identifier = { .and = 0xff, .or = 0x00, };
+const struct ip_host_identifier_blit clear_host_identifier = { .op = "clear", .and = 0x00, .or = 0x00, };
+const struct ip_host_identifier_blit set_host_identifier =   { .op = "set",   .and = 0x00, .or = 0xff, };
+const struct ip_host_identifier_blit keep_host_identifier =  { .op = "keep",  .and = 0xff, .or = 0x00, };
 
 struct ip_bytes ip_bytes_blit(const struct ip_info *afi,
 			      const struct ip_bytes in,
 			      const struct ip_routing_prefix_blit *routing_prefix,
 			      const struct ip_host_identifier_blit *host_identifier,
-			      unsigned prefix_len)
+			      int prefix_len)
 {
-	if (!pexpect(prefix_len <= afi->mask_cnt)) {
-		return unset_ip_bytes;	/* "can't happen" */
+	if (prefix_len < 0 || prefix_len > (int)afi->mask_cnt) {
+		llog_pexpect(&global_logger, HERE, "prefix_len=%d <= afi->mask_cnt=%u prefix=%s host=%s "PRI_IP_BYTES,
+			     prefix_len, afi->mask_cnt,
+			     routing_prefix->op, host_identifier->op,
+			     pri_ip_bytes(in));
+		return unset_ip_bytes;
 	}
 
 	struct ip_bytes out = in;
