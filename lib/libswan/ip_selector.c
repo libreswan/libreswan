@@ -68,7 +68,7 @@ bool selector_contains_one_address(const ip_selector selector)
 		return false;
 	}
 
-	return (selector.maskbits == afi->mask_cnt &&
+	return (thingeq(selector.lo, selector.hi) &&
 		selector.ipproto == 0 &&
 		selector.hport == 0);
 }
