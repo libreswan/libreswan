@@ -95,7 +95,7 @@ west #
 "good-server": added IKEv2 connection
 west #
  ipsec auto --add bad-server
-"bad-server": failed to add connection: leftmodecfgserver=yes does not expect rightaddresspool=
+"bad-server": failed to add connection: leftmodecfgserver=yes does not expect leftaddresspool=
 west #
  ipsec auto --add subnet-vs-addresspool
 "subnet-vs-addresspool": failed to add connection: cannot specify both leftaddresspool= and leftsubnet=
