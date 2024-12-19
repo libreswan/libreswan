@@ -67,7 +67,7 @@ struct ip_bytes ip_bytes_blit(const struct ip_info *afi,
 			      const struct ip_bytes bytes,
 			      const struct ip_routing_prefix_blit *routing_prefix,
 			      const struct ip_host_identifier_blit *host_identifier,
-			      unsigned prefix_len);
+			      int prefix_len);
 
 /* Calculate l-r using unsigned arithmetic */
 struct ip_bytes ip_bytes_sub(const struct ip_info *afi,
