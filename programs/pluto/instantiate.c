@@ -528,7 +528,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	vassert(!is_opportunistic(t));
 	vassert(!is_labeled(t));
 
-	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
+	struct connection *d = instantiate(t, peer_addr,
+					   /*TBD-peer_id*/NULL,
 					   empty_shunk, __func__,
 					   verbose, where);
 

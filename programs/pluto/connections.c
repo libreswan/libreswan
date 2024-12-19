@@ -115,6 +115,7 @@ void vdbg_connection(const struct connection *c,
 		return;
 	}
 	verbose.rc_flags = DEBUG_STREAM;
+	/* MESSAGE ... */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		va_list ap;
@@ -125,6 +126,7 @@ void vdbg_connection(const struct connection *c,
 		jam_where(buf, where);
 	}
 	verbose.level++;
+	/* connection ... */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "connection ");
@@ -137,13 +139,7 @@ void vdbg_connection(const struct connection *c,
 		jam_connection(buf, c);
 	}
 	verbose.level++;
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
-		jam(buf, PRI_VERBOSE, pri_verbose);
-		jam_string(buf, "routing+kind: ");
-		jam_enum_short(buf, &routing_names, c->routing.state);
-		jam_string(buf, " ");
-		jam_enum_short(buf, &connection_kind_names, c->local->kind);
-	}
+	/* host local->remote */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "host: ");
@@ -151,18 +147,45 @@ void vdbg_connection(const struct connection *c,
 		jam_string(buf, "->");
 		jam_address(buf, &c->remote->host.addr);
 	}
+	/* host id */
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "id: ");
+		jam_id(buf, &c->local->host.id);
+		jam_string(buf, " -> ");
+		jam_id(buf, &c->remote->host.id);
+	}
+	/* routing+kind ... */
+	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		jam(buf, PRI_VERBOSE, pri_verbose);
+		jam_string(buf, "routing+kind: ");
+		jam_enum_short(buf, &routing_names, c->routing.state);
+		jam_string(buf, " ");
+		jam_enum_short(buf, &connection_kind_names, c->local->kind);
+	}
+	/* selectors local->remote */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "selectors:");
-		const char *sep = " ->";
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
 			FOR_EACH_ITEM(selector, &end->selectors.proposed) {
 				jam_string(buf, " ");
 				jam_selector(buf, selector);
 			}
-			jam_string(buf, sep); sep = "";
+			jam_string(buf, " ->");
+		}
+		jam_string(buf, "; lease:");
+		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
+			FOR_EACH_ELEMENT(lease, end->lease) {
+				if (lease->is_set) {
+					jam_string(buf, " ");
+					jam_address(buf, lease);
+				}
+			}
+			jam_string(buf, " ->");
 		}
 	}
+	/* SPDs local->remote */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "spds:");
@@ -171,11 +194,13 @@ void vdbg_connection(const struct connection *c,
 			jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 		}
 	}
+	/* policy */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "policy: ");
 		jam_connection_policies(buf, c);
 	}
+	/* sec-label */
 	if (c->config->sec_label.len > 0) {
 		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 			jam(buf, PRI_VERBOSE, pri_verbose);
