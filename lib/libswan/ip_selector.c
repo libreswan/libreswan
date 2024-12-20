@@ -683,17 +683,6 @@ bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector r
 	return range_eq_range(lhs_range, rhs_range);
 }
 
-bool selector_range_in_selector_range(const ip_selector lhs, const ip_selector rhs)
-{
-	if (selector_is_unset(&lhs) || selector_is_unset(&rhs)) {
-		return false;
-	}
-
-	ip_subnet lhs_subnet = selector_subnet(lhs);
-	ip_subnet rhs_subnet = selector_subnet(rhs);
-	return subnet_in_subnet(lhs_subnet, rhs_subnet);
-}
-
 bool selector_range_eq_address(const ip_selector selector, const ip_address address)
 {
 	if (address_is_unset(&address) || selector_is_unset(&selector)) {

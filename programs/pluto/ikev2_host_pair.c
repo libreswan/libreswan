@@ -327,8 +327,8 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 */
 
 		if (c != NULL &&
-		    selector_range_in_selector_range(c->spd->remote->client,
-						     d->spd->remote->client)) {
+		    range_in_range(selector_range(c->spd->remote->client),
+				   selector_range(d->spd->remote->client))) {
 			selector_buf s1, s2;
 			connection_buf cb;
 			vdbg("skipping "PRI_CONNECTION", as best range of %s is narrower than %s",

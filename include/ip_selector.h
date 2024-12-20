@@ -227,7 +227,6 @@ size_t jam_selector_pair_sensitive(struct jambuf *buf, const ip_selector *src, c
 
 ip_subnet selector_subnet(const ip_selector selector);
 bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs);
-bool selector_range_in_selector_range(const ip_selector lhs, const ip_selector rhs);
 bool selector_range_eq_address(const ip_selector selector, const ip_address address);
 bool address_in_selector_range(const ip_address l, const ip_selector r);
 
