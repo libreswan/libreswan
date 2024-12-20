@@ -208,6 +208,44 @@ int ip_bytes_host_len(const struct ip_info *afi,
 	return afi->mask_cnt - prefix_len;
 }
 
+/* -1 if not valid mask */
+
+int ip_bytes_mask_len(const struct ip_info *afi, const struct ip_bytes bytes)
+{
+	const uint8_t *p = bytes.byte;
+	const uint8_t *stop = bytes.byte + afi->ip_size;
+
+	/* skip leading 0xff bytes */
+	int n = 0;
+	while (p < stop && *p == 0xff) {
+		p++;
+		n += 8;
+	}
+
+	/* boundary in mid-byte? */
+	if (p < stop && *p != 0) {
+		uint8_t b = *p++;
+		while (b & 0x80) {
+			b <<= 1;
+			n++;
+		}
+		if (b != 0) {
+			return -1;	/* bits not contiguous */
+		}
+	}
+
+	/* check trailing 0x00 bytes */
+	while (p < stop && *p == 0) {
+		p++;
+	}
+
+	if (p != stop) {
+		return -1;
+	}
+
+	return n;
+}
+
 /*
  * bytes_cmp - compare two raw addresses
  */

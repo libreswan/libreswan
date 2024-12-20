@@ -57,7 +57,7 @@ OBJS += constants.o \
 	lex.o \
 	lswconf.o \
 	sameaddr.o \
-	subnettypeof.o ttodata.o \
+	ttodata.o \
 	ttosaid.o \
 	secitem_chunk.o \
 	lswnss.o \
