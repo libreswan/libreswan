@@ -62,7 +62,7 @@ static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
-	const struct ip_info *afi = endpoint_type(&md->iface->local_endpoint);
+	const struct ip_info *afi = endpoint_info(md->iface->local_endpoint);
 
 	/*
 	 * AA_201705 is this the right way to find Child SA(s)?
@@ -84,7 +84,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	}
 
 	/* check for all conditions before updating IPsec SA's */
-	if (afi != address_type(&c->remote->host.addr)) {
+	if (afi != address_info(c->remote->host.addr)) {
 		llog_sa(RC_LOG, ike,
 			  "MOBIKE: AF change switching between v4 and v6 not supported");
 		return false;

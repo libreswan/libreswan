@@ -77,7 +77,7 @@ static int cmp_iface(const void *lv, const void *rv)
 	/* return l - r */
 	int i;
 	/* protocol */
-	i = address_type(&l->addr)->af - address_type(&r->addr)->af;
+	i = address_info(l->addr)->af - address_info(r->addr)->af;
 	if (i != 0) {
 		return i;
 	}

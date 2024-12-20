@@ -106,7 +106,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDipaddr("PLUTO_ME", sr->local->host->addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
 	jam(&jb, "PLUTO_CLIENT_FAMILY='ipv%d' ", selector_info(sr->local->client)->ip_version);
-	JDemitter("PLUTO_MY_CLIENT", jam_selector_subnet(&jb, &sr->local->client));
+	JDemitter("PLUTO_MY_CLIENT", jam_selector_range(&jb, &sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local->client));
 
@@ -141,9 +141,9 @@ static bool fmt_common_shell_out(char *buf,
 	    child->sa.hidden_variables.st_nated_peer) {
 		/* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
 		jam_address(&jb, &sr->remote->host->addr);
-		jam(&jb, "/%d", address_type(&sr->local->host->addr)->mask_cnt/*32 or 128*/);
+		jam(&jb, "/%d", address_info(sr->local->host->addr)->mask_cnt/*32 or 128*/);
 	} else {
-		jam_selector_subnet(&jb, &sr->remote->client);
+		jam_selector_range(&jb, &sr->remote->client);
 	}
 	jam_string(&jb, "' ");
 
@@ -183,7 +183,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
 	JDemitter("PLUTO_CONN_KIND", jam_enum(&jb, &connection_kind_names, c->local->kind));
-	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->local->host->addr)->ip_version);
+	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_info(sr->local->host->addr)->ip_version);
 	JDuint("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 
 	if (child != NULL && child->sa.st_xauth_username[0] != '\0') {
@@ -256,7 +256,7 @@ static bool fmt_common_shell_out(char *buf,
 			selector_buf peerclient_str;
 			vdbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
 			     str_address(&sr->remote->host->addr, &bpeer),
-			     str_selector_subnet_port(&sr->remote->client, &peerclient_str));
+			     str_selector_range_port(&sr->remote->client, &peerclient_str));
 			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
@@ -316,31 +316,37 @@ static bool do_updown_verb(const char *verb,
 			return false;
 		}
 
-		const char *hs;
+		const char *host_suffix;
 		switch (host_afi->af) {
 		case AF_INET:
-			hs = "-host";
+			host_suffix = "-host";
 			break;
 		case AF_INET6:
-			hs = "-host-v6";
+			host_suffix = "-host-v6";
 			break;
 		default:
 			bad_case(host_afi->af);
 		}
 
-		const char *cs;
+		const char *child_suffix;
 		switch (child_afi->af) {
 		case AF_INET:
-			cs = "-client"; /* really child; legacy name */
+			child_suffix = "-client"; /* really child; legacy name */
 			break;
 		case AF_INET6:
-			cs = "-client-v6"; /* really child; legacy name */
+			child_suffix = "-client-v6"; /* really child; legacy name */
 			break;
 		default:
 			bad_case(child_afi->af);
 		}
 
-		verb_suffix = selector_range_eq_address(spd->local->client, spd->local->host->addr) ? hs : cs;
+		/*
+		 * Use the HOST_SUFFIX when the selector is just the
+		 * host.addr (perhaps with a sprinkling of protoport).
+		 */
+		ip_range client_range = selector_range(spd->local->client);
+		bool client_is_host = range_eq_address(client_range, spd->local->host->addr);
+		verb_suffix = (client_is_host ? host_suffix : child_suffix);
 	}
 
 	vdbg("kernel: command executing %s%s", verb, verb_suffix);

@@ -32,7 +32,7 @@ bool selector_is_unset(const ip_selector *selector)
 
 bool selector_is_zero(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown+any */
 		return false;
@@ -44,7 +44,7 @@ bool selector_is_zero(const ip_selector selector)
 
 bool selector_is_all(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown+any */
 		return false;
@@ -56,7 +56,7 @@ bool selector_is_all(const ip_selector selector)
 
 bool selector_contains_one_address(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
@@ -75,17 +75,9 @@ bool selector_contains_one_address(const ip_selector selector)
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return jam_string(buf, "<null-selector>");
-	}
-
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
-	}
-
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam(buf, PRI_SELECTOR, pri_selector(selector));
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	size_t s = 0;
@@ -112,39 +104,28 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 	return out->buf;
 }
 
-size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
+size_t jam_selector_range(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return jam_string(buf, "<null-selector>");
-	}
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
-	}
-
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam(buf, PRI_SELECTOR, pri_selector(selector));
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	return jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 }
 
-const char *str_selector_subnet(const ip_selector *selector, subnet_buf *out)
+const char *str_selector_range(const ip_selector *selector, subnet_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_selector_subnet(&buf, selector);
+	jam_selector_range(&buf, selector);
 	return out->buf;
 }
 
-size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
+size_t jam_selector_range_port(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
-	}
-
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-selector>");
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	size_t s = 0;
@@ -157,10 +138,10 @@ size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
 	return s;
 }
 
-const char *str_selector_subnet_port(const ip_selector *selector, selector_buf *out)
+const char *str_selector_range_port(const ip_selector *selector, selector_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_selector_subnet_port(&buf, selector);
+	jam_selector_range_port(&buf, selector);
 	return out->buf;
 }
 
@@ -246,7 +227,7 @@ ip_selector selector_from_raw(where_t where,
 
 ip_selector selector_from_address(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -259,7 +240,7 @@ ip_selector selector_from_address(const ip_address address)
 ip_selector selector_from_address_protocol(const ip_address address,
 					   const struct ip_protocol *protocol)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -272,7 +253,7 @@ ip_selector selector_from_address_protocol(const ip_address address,
 ip_selector selector_from_address_protocol_port(const ip_address address,
 						const struct ip_protocol *protocol,
 						const ip_port port)
-{	const struct ip_info *afi = address_type(&address);
+{	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -284,7 +265,7 @@ ip_selector selector_from_address_protocol_port(const ip_address address,
 
 ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -438,7 +419,7 @@ const struct ip_protocol *selector_protocol(const ip_selector selector)
 
 ip_range selector_range(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_range;
@@ -449,7 +430,7 @@ ip_range selector_range(const ip_selector selector)
 
 ip_address selector_prefix(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
@@ -482,7 +463,7 @@ int selector_host_len(const ip_selector selector)
 
 ip_address selector_prefix_mask(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
@@ -681,14 +662,4 @@ bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector r
 	ip_range lhs_range = selector_range(lhs);
 	ip_range rhs_range = selector_range(rhs);
 	return range_eq_range(lhs_range, rhs_range);
-}
-
-bool selector_range_eq_address(const ip_selector selector, const ip_address address)
-{
-	if (address_is_unset(&address) || selector_is_unset(&selector)) {
-		return false;
-	}
-
-	ip_subnet subnet = selector_subnet(selector);
-	return subnet_eq_address(subnet, address);
 }

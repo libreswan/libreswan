@@ -132,7 +132,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 {
 	struct state *st = state_by_serialno(dnsr->so_serial);
 	ip_address ipaddr;
-	const struct ip_info *afi = endpoint_type(&st->st_remote_endpoint);
+	const struct ip_info *afi = endpoint_info(st->st_remote_endpoint);
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
 		return;

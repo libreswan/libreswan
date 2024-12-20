@@ -196,7 +196,7 @@ static bool emit_subnet_id(enum perspective perspective,
 			   uint16_t port,
 			   struct pbs_out *outs)
 {
-	const struct ip_info *ai = subnet_type(&net);
+	const struct ip_info *ai = subnet_info(net);
 	const bool usehost = (subnet_prefix_bits(net) == ai->mask_cnt);
 	struct pbs_out id_pbs;
 
@@ -998,7 +998,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 					jam(buf, "IDci was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_subnet_port(buf, &remote_client);
+					jam_selector_range_port(buf, &remote_client);
 					jam(buf, " as IDci");
 				}
 			}
@@ -1007,7 +1007,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		/*
 		 * Implicit IDci and IDcr: peer and self.
 		 */
-		if (address_type(&c->local->host.addr) != address_type(&c->remote->host.addr))
+		if (address_info(c->local->host.addr) != address_info(c->remote->host.addr))
 			return STF_FAIL_v1N;
 
 		local_client = selector_from_address(c->local->host.addr);
@@ -1822,7 +1822,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_subnet(buf, &child->sa.st_connection->spd->remote->client);
+					jam_selector_range(buf, &child->sa.st_connection->spd->remote->client);
 					jam(buf, " as IDcr");
 				}
 			}

@@ -598,7 +598,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route, struct logg
 	struct starter_end this = {
 		.addrtype = KH_DEFAULTROUTE,
 		.nexttype = KH_DEFAULTROUTE,
-		.host_family = address_type(&dest),
+		.host_family = address_info(dest),
 	};
 
 	struct starter_end that = {

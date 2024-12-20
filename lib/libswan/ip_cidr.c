@@ -102,7 +102,7 @@ const struct ip_info *cidr_info(const ip_cidr cidr)
 
 ip_address cidr_address(const ip_cidr cidr)
 {
-	const struct ip_info *afi = cidr_type(&cidr);
+	const struct ip_info *afi = cidr_info(cidr);
 	if (afi == NULL) {
 		return unset_address;
 	}
@@ -112,7 +112,7 @@ ip_address cidr_address(const ip_cidr cidr)
 
 ip_address cidr_prefix(const ip_cidr cidr)
 {
-	const struct ip_info *afi = cidr_type(&cidr);
+	const struct ip_info *afi = cidr_info(cidr);
 	if (afi == NULL) {
 		return unset_address;
 	}
@@ -180,11 +180,8 @@ chunk_t cidr_as_chunk(ip_cidr *cidr)
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
-	if (cidr == NULL) {
-		return jam_string(buf, "<null-cidr>");
-	}
-
-	if (!cidr->is_set) {
+	const struct ip_info *afi = cidr_type(cidr);
+	if (afi == NULL) {
 		return jam_string(buf, "<unset-cidr>");
 	}
 

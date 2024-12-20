@@ -337,7 +337,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 			   const char *nm)
 {
 	struct isakmp_nat_oa natoa = {
-		.isanoa_idtype = address_type(&ip)->id_ip_addr,
+		.isanoa_idtype = address_info(ip)->id_ip_addr,
 	};
 
 	struct pbs_out pbs;

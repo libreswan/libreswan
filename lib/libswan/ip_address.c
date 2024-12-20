@@ -116,13 +116,9 @@ chunk_t address_as_chunk(ip_address *address)
 
 size_t jam_address(struct jambuf *buf, const ip_address *address)
 {
-	if (address_is_unset(address)) {
-		return jam_string(buf, "<unset-address>");
-	}
-
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-address>");
+		return jam_string(buf, "<unset-address>");
 	}
 
 	return afi->jam.address(buf, afi, &address->bytes);
@@ -130,13 +126,9 @@ size_t jam_address(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 {
-	if (address_is_unset(address)) {
-		return jam_string(buf, "<unset-address>");
-	}
-
 	const struct ip_info *afi = address_type(address);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-address>");
+		return jam_string(buf, "<unset-address>");
 	}
 
 	return afi->jam.address_wrapped(buf, afi, &address->bytes);
@@ -228,7 +220,7 @@ bool address_is_unset(const ip_address *address)
 
 bool address_is_specified(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return false;
 	}
@@ -257,7 +249,7 @@ bool address_eq_address(const ip_address l, const ip_address r)
 
 bool address_is_loopback(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;

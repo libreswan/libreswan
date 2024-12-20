@@ -996,7 +996,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			tmpl->optional = (rule->proto == KERNEL_PROTO_IPCOMP &&
 					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
-			tmpl->family = address_type(&policy->dst.host)->af;
+			tmpl->family = address_info(policy->dst.host)->af;
 
 			/* set mode (tunnel or transport); then switch to transport */
 			tmpl->mode = mode;

@@ -4127,13 +4127,14 @@ static size_t jam_connection_child(struct jambuf *b,
 	if (selectors == NULL) {
 		/* no point */
 	} else if (selectors->len == 1 &&
-		   selector_range_eq_address(selectors->list[0], host_addr)) {
+		   /* i.e., selector==host.addr+protoport */
+		   range_eq_address(selector_range(selectors->list[0]), host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
 		FOR_EACH_ITEM(selector, selectors) {
 			if (pexpect(selector->is_set)) {
-				s += jam_selector_subnet(b, selector);
+				s += jam_selector_range(b, selector);
 				if (selector_is_zero(*selector)) {
 					s += jam_string(b, "?");
 				}

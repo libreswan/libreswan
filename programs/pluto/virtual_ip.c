@@ -557,8 +557,8 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 			subnet_buf pcb, dcb;
 			llog(RC_LOG, verbose.logger,
 			     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
-			     str_selector_subnet(&remote_client, &pcb),
-			     str_selector_subnet(&d->spd->remote->client, &dcb),
+			     str_selector_range(&remote_client, &pcb),
+			     str_selector_range(&d->spd->remote->client, &dcb),
 			     pri_connection(d, &cbuf),
 			     kernel_ops->interface_name);
 

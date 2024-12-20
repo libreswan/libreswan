@@ -144,7 +144,7 @@ static const struct range_test {
 	bool is_all;
 	uintmax_t size;
 } range_tests[] = {
-	{ LN, 0, NULL,                  "<null-range>",     .is_unset = true, },
+	{ LN, 0, NULL,                  "<unset-range>",     .is_unset = true, },
 	{ LN, 0, &unset_range,          "<unset-range>",     .is_unset = true, },
 	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0/32",   .is_zero = true, .size = 1, },
 	{ LN, 6, &ipv6_info.range.zero, "::/128",             .is_zero = true, .size = 1, },
@@ -427,8 +427,6 @@ static void check_ip_info_selector(void)
 
 		const ip_selector *selector = t->selector;
 
-#define str_selector str_selector_subnet_port
-#define jam_selector jam_selector_subnet_port
 		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
 

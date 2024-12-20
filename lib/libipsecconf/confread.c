@@ -303,7 +303,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
 		} else {
-			pexpect(end->host_family == address_type(&end->addr));
+			pexpect(end->host_family == address_info(end->addr));
 		}
 
 		break;

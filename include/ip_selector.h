@@ -197,12 +197,12 @@ typedef struct {
 } selector_buf;
 
 const char *str_selector(const ip_selector *selector, selector_buf *out);
-const char *str_selector_subnet(const ip_selector *selector, subnet_buf *buf);
-const char *str_selector_subnet_port(const ip_selector *selector, selector_buf *out);
+const char *str_selector_range(const ip_selector *selector, subnet_buf *buf);
+const char *str_selector_range_port(const ip_selector *selector, selector_buf *out);
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector);
-size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector);
-size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector);
+size_t jam_selector_range(struct jambuf *buf, const ip_selector *selector);
+size_t jam_selector_range_port(struct jambuf *buf, const ip_selector *selector);
 
 typedef struct {
 	char buf[sizeof(selector_buf) + sizeof("=UNKNOWN=UNKNOWN=>") + sizeof(selector_buf)];
@@ -227,7 +227,6 @@ size_t jam_selector_pair_sensitive(struct jambuf *buf, const ip_selector *src, c
 
 ip_subnet selector_subnet(const ip_selector selector);
 bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs);
-bool selector_range_eq_address(const ip_selector selector, const ip_address address);
 bool address_in_selector_range(const ip_address l, const ip_selector r);
 
 #endif

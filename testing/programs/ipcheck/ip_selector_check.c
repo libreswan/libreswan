@@ -80,9 +80,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			continue;
 		}
 
-#define str_selector str_selector_subnet_port
 		CHECK_FAMILY(t->from.family, selector, selector);
-#undef str_selector
 
 		if (t->selector != NULL) {
 			selector_buf sb;
@@ -535,8 +533,8 @@ static void check_selector_op_selector(void)
 		if (selector != t->selector) {
 			selector_buf si, so;
 			FAIL("selector_in_selector(%s, %s) returned %s, expecting %s",
-			     str_selector_subnet_port(&inner_selector, &si),
-			     str_selector_subnet_port(&outer_selector, &so),
+			     str_selector(&inner_selector, &si),
+			     str_selector(&outer_selector, &so),
 			     bool_str(selector), bool_str(t->selector));
 		}
 
@@ -545,9 +543,9 @@ static void check_selector_op_selector(void)
 		if (address != t->address) {
 			address_buf ab;
 			selector_buf sb;
-			FAIL("address_in_selector_subnet(%s, %s) returned %s, expecting %s",
+			FAIL("address_in_selector_range(%s, %s) returned %s, expecting %s",
 			     str_address(&inner_address, &ab),
-			     str_selector_subnet_port(&outer_selector, &sb),
+			     str_selector(&outer_selector, &sb),
 			     bool_str(address), bool_str(t->address));
 		}
 
@@ -562,7 +560,7 @@ static void check_selector_op_selector(void)
 				selector_buf sb;
 				FAIL("endpoint_in_selector(%s, %s) returned %s, expecting %s",
 				     str_endpoint(&inner_endpoint, &eb),
-				     str_selector_subnet_port(&outer_selector, &sb),
+				     str_selector(&outer_selector, &sb),
 				     bool_str(endpoint), bool_str(t->endpoint));
 			}
 		}

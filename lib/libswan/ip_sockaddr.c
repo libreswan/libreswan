@@ -78,7 +78,7 @@ ip_sockaddr sockaddr_from_address_port(const ip_address address, ip_port port)
 		return unset_sockaddr;
 	}
 
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	shunk_t src_addr = address_as_shunk(&address);
 	chunk_t dst_addr;
 	ip_sockaddr sa = unset_sockaddr;
