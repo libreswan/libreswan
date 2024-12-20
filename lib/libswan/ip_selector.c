@@ -75,17 +75,9 @@ bool selector_contains_one_address(const ip_selector selector)
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return jam_string(buf, "<null-selector>");
-	}
-
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
-	}
-
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam(buf, PRI_SELECTOR, pri_selector(selector));
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	size_t s = 0;
@@ -114,16 +106,9 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 
 size_t jam_selector_range(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return jam_string(buf, "<null-selector>");
-	}
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
-	}
-
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam(buf, PRI_SELECTOR, pri_selector(selector));
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	return jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
@@ -138,13 +123,9 @@ const char *str_selector_range(const ip_selector *selector, subnet_buf *out)
 
 size_t jam_selector_range_port(struct jambuf *buf, const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
-		return jam_string(buf, "<unset-selector>");
-	}
-
 	const struct ip_info *afi = selector_type(selector);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-selector>");
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	size_t s = 0;

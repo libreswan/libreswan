@@ -144,7 +144,7 @@ static const struct range_test {
 	bool is_all;
 	uintmax_t size;
 } range_tests[] = {
-	{ LN, 0, NULL,                  "<null-range>",     .is_unset = true, },
+	{ LN, 0, NULL,                  "<unset-range>",     .is_unset = true, },
 	{ LN, 0, &unset_range,          "<unset-range>",     .is_unset = true, },
 	{ LN, 4, &ipv4_info.range.zero, "0.0.0.0/32",   .is_zero = true, .size = 1, },
 	{ LN, 6, &ipv6_info.range.zero, "::/128",             .is_zero = true, .size = 1, },
@@ -162,7 +162,7 @@ static const struct selector_test {
 	bool is_all;
 	bool contains_one_address;
 } selector_tests[] = {
-	{ LN, 0, NULL,                     "<null-selector>", .is_unset = true, },
+	{ LN, 0, NULL,                     "<unset-selector>", .is_unset = true, },
 	{ LN, 0, &unset_selector,          "<unset-selector>", .is_unset = true, },
 	{ LN, 4, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, },
 	{ LN, 6, &ipv6_info.selector.zero, "::/128",           .is_zero = true, },

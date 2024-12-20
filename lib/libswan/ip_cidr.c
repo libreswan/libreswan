@@ -180,11 +180,8 @@ chunk_t cidr_as_chunk(ip_cidr *cidr)
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
-	if (cidr == NULL) {
-		return jam_string(buf, "<null-cidr>");
-	}
-
-	if (!cidr->is_set) {
+	const struct ip_info *afi = cidr_type(cidr);
+	if (afi == NULL) {
 		return jam_string(buf, "<unset-cidr>");
 	}
 

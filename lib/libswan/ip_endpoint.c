@@ -175,13 +175,9 @@ bool endpoint_is_specified(const ip_endpoint endpoint)
 
 size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
-		return jam_string(buf, "<unset-endpoint>");
-	}
-
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-endpoint>");
+		return jam_string(buf, "<unset-endpoint>");
 	}
 
 	size_t s = 0;
@@ -226,13 +222,9 @@ const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *ds
 
 size_t jam_endpoint_address_protocol_port(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	if (endpoint_is_unset(endpoint)) {
-		return jam_string(buf, "<unset-endpoint>");
-	}
-
 	const struct ip_info *afi = endpoint_type(endpoint);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-endpoint>");
+		return jam_string(buf, "<unset-endpoint>");
 	}
 
 	size_t s = 0;

@@ -192,13 +192,9 @@ unsigned subnet_prefix_bits(const ip_subnet subnet)
 
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
-		return jam_string(buf, "<unset-subnet>");
-	}
-
 	const struct ip_info *afi = subnet_type(subnet);
 	if (afi == NULL) {
-		return jam_string(buf, "<unknown-subnet>");
+		return jam_string(buf, "<unset-subnet>");
 	}
 
 	size_t s = 0;

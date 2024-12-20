@@ -75,17 +75,9 @@ int range_host_len(const ip_range range)
 
 size_t jam_range(struct jambuf *buf, const ip_range *range)
 {
-	if (range == NULL) {
-		return jam_string(buf, "<null-range>");
-	}
-
-	if (is_unset(range)) {
-		return jam_string(buf, "<unset-range>");
-	}
-
 	const struct ip_info *afi = range_type(range);
 	if (afi == NULL) {
-		return jam(buf, PRI_RANGE, pri_range(range));
+		return jam_string(buf, "<unset-range>");
 	}
 
 	return jam_ip_bytes_range(buf, afi, range->lo, range->hi);
