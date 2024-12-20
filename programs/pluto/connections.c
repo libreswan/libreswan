@@ -1812,6 +1812,7 @@ static void mark_parse(/*const*/ char *wmmark,
 
 static void set_connection_selector_proposals(struct connection *c, const struct ip_info *host_afi)
 {
+	VERBOSE_DBGP(DBG_BASE, c->logger, "%s() ...", __func__);
 	/*
 	 * Fill in selectors.
 	 *
@@ -1833,27 +1834,23 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 
 		if (end->child.config->addresspools.len > 0) {
 			/*
-			 * Make space for the selectors that will be
-			 * assigned from the addresspool.
-			 *
-			 * Use ALL so that any code testing
-			 * selector_in_selector() will succeed,
-			 * provided the family is correct.
+			 * Set the selectors to the pool range:
 			 *
 			 * IKEv2: addresspool implies narrowing so
 			 * peer sending ::/0 will be allowed to narrow
 			 * down to the addresspool range.
 			 *
-			 * IKEv1: peer is expected to send a narrowed
-			 * subnet obtained earlier (either MODE_CFG,
-			 * or hard-wired).
+			 * IKEv1: peer is expected to send the lease
+			 * it obtained earlier (either during
+			 * MODE_CFG, or hard-wired in the config
+			 * file).
 			 */
 			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				ip_selector selector = selector_from_range((*range));
 				selector_buf sb;
-				ldbg(c->logger, "%s selector formed from address pool %s",
+				vdbg("%s selector formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector_info(selector), selector, c->logger, HERE);
+				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
 			}
 			continue;
 		}

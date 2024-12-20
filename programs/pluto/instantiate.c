@@ -387,8 +387,16 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 
 		if (end->child.config->addresspools.len > 0) {
 			/*
-			 * Make space for the selectors that will be
-			 * assigned from the addresspool.
+			 * Set the selectors to the pool range:
+			 *
+			 * IKEv2: addresspool implies narrowing so
+			 * peer sending ::/0 will be allowed to narrow
+			 * down to the addresspool range.
+			 *
+			 * IKEv1: peer is expected to send the lease
+			 * it obtained earlier (either during
+			 * MODE_CFG, or hard-wired in the config
+			 * file).
 			 */
 			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				ip_selector selector = selector_from_range((*range));
@@ -615,18 +623,23 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		/* address-pool */
 		if (end->child.config->addresspools.len > 0) {
 			/*
-			 * Make space for the selectors that will be
-			 * assigned from the addresspool.
+			 * Set the selectors to the pool range:
 			 *
-			 * Remember, IKEv1 only does IPv4 address
-			 * pool?!?
+			 * IKEv2: addresspool implies narrowing so
+			 * peer sending ::/0 will be allowed to narrow
+			 * down to the addresspool range.
+			 *
+			 * IKEv1: peer is expected to send the lease
+			 * it obtained earlier (either during
+			 * MODE_CFG, or hard-wired in the config
+			 * file).
 			 */
 			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
-				const struct ip_info *afi = range_type(range);
-				vdbg("%s selectors formed from %s address pool",
-				     leftright, afi->ip_name);
-				append_end_selector(end, afi, afi->selector.all,
-						    d->logger, HERE);
+				ip_selector selector = selector_from_range((*range));
+				selector_buf sb;
+				vdbg("%s selector formed from address pool %s",
+				     leftright, str_selector(&selector, &sb));
+				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
 			}
 			continue;
 		}
