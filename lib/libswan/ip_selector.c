@@ -682,13 +682,3 @@ bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector r
 	ip_range rhs_range = selector_range(rhs);
 	return range_eq_range(lhs_range, rhs_range);
 }
-
-bool selector_range_eq_address(const ip_selector selector, const ip_address address)
-{
-	if (address_is_unset(&address) || selector_is_unset(&selector)) {
-		return false;
-	}
-
-	ip_subnet subnet = selector_subnet(selector);
-	return subnet_eq_address(subnet, address);
-}
