@@ -1163,4 +1163,7 @@ struct child_policy child_sa_policy(const struct connection *c);
 bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);
 
+void add_proposals(struct connection *c, const struct ip_info *host_afi,
+		   struct verbose verbose);
+
 #endif

@@ -375,16 +375,23 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
-		PASSERT(d->logger, end->child.selectors.proposed.list == NULL);
-		PASSERT(d->logger, end->child.selectors.proposed.len == 0);
 
+		vassert(end->child.selectors.proposed.list == NULL);
+		vassert(end->child.selectors.proposed.len == 0);
+
+		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
+#if 0 /* extract_connection() does this */
+			/* see also clone_connection */
+			set_end_child_has_client(c, end->config->index, true);
+#endif
 			continue;
 		}
 
+		/* {left,right}addresspool= */
 		if (end->child.config->addresspools.len > 0) {
 			/*
 			 * Set the selectors to the pool range:
@@ -408,17 +415,51 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 			continue;
 		}
 
-		vdbg("%s selector formed from host address+protoport",
-		     leftright);
+		/* {left,right}= */
+		if (address_is_specified(end->host.addr)) {
+			/*
+			 * Default the end's child selector (client)
+			 * to a subnet containing only the end's host
+			 * address.
+			 *
+			 * If the other end has multiple child
+			 * selectors then the combination becomes a
+			 * list.
+			 */
+			address_buf ab;
+			protoport_buf pb;
+			vdbg("%s selector proposals from host address+protoport %s %s",
+			     leftright,
+			     str_address(&end->host.addr, &ab),
+			     str_protoport(&end->child.config->protoport, &pb));
+			ip_selector selector =
+				selector_from_address_protoport(end->host.addr,
+								end->child.config->protoport);
+			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+			continue;
+		}
+
+#if 0
 		/*
-		 * Default the end's child selector (client) to a
-		 * subnet containing only the end's host address.
+		 * to-be-determined from the host (for instance,
+		 * waiting on DNS) or the opportunistic group (needs
+		 * to be expanded).
+		 *
+		 * Make space regardless so that loops have something
+		 * to iterate over.
 		 */
-		ip_selector selector =
-			selector_from_address_protoport(end->host.addr,
-							end->child.config->protoport);
-		append_end_selector(end, selector_info(selector), selector,
-				    d->logger, HERE);
+		if (vbad(host_afi == NULL)) {
+			return;
+		}
+
+		vexpect(is_permanent(c) || is_group(c) || is_template(c));
+		vdbg("%s selector proposals from unset host family %s",
+		     leftright, host_afi->ip_name);
+		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
+#else
+		llog_pexpect(verbose.logger, HERE, "no address");
+		return;
+#endif
 	}
 }
 
@@ -597,11 +638,18 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		/* subnet=... */
+		vassert(end->child.selectors.proposed.list == NULL);
+		vassert(end->child.selectors.proposed.len == 0);
+
+		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
-			vdbg("%s.child has %d configured selectors",
+			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
+#if 0 /* extract_connection() does this */
+			/* see also clone_connection */
+			set_end_child_has_client(c, end->config->index, true);
+#endif
 			continue;
 		}
 
@@ -620,7 +668,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			continue;
 		}
 
-		/* address-pool */
+		/* {left,right}addresspool= */
 		if (end->child.config->addresspools.len > 0) {
 			/*
 			 * Set the selectors to the pool range:
@@ -644,16 +692,51 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			continue;
 		}
 
-		vdbg("%s() %s selector formed from host",
-		     __func__, leftright);
+		/* {left,right}= */
+		if (address_is_specified(end->host.addr)) {
+			/*
+			 * Default the end's child selector (client)
+			 * to a subnet containing only the end's host
+			 * address.
+			 *
+			 * If the other end has multiple child
+			 * selectors then the combination becomes a
+			 * list.
+			 */
+			address_buf ab;
+			protoport_buf pb;
+			vdbg("%s selector proposals from host address+protoport %s %s",
+			     leftright,
+			     str_address(&end->host.addr, &ab),
+			     str_protoport(&end->child.config->protoport, &pb));
+			ip_selector selector =
+				selector_from_address_protoport(end->host.addr,
+								end->child.config->protoport);
+			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+			continue;
+		}
+
+#if 0
 		/*
-		 * Default the end's child selector (client) to a
-		 * subnet containing only the end's host address.
+		 * to-be-determined from the host (for instance,
+		 * waiting on DNS) or the opportunistic group (needs
+		 * to be expanded).
+		 *
+		 * Make space regardless so that loops have something
+		 * to iterate over.
 		 */
-		ip_selector selector =
-			selector_from_address_protoport(end->host.addr,
-							end->child.config->protoport);
-		set_end_selector(end, selector, d->logger);
+		if (vbad(host_afi == NULL)) {
+			return;
+		}
+
+		vexpect(is_permanent(c) || is_group(c) || is_template(c));
+		vdbg("%s selector proposals from unset host family %s",
+		     leftright, host_afi->ip_name);
+		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
+#else
+		llog_pexpect(verbose.logger, HERE, "no address");
+		return false;
+#endif
 	}
 
 	return true;

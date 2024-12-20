@@ -1810,28 +1810,36 @@ static void mark_parse(/*const*/ char *wmmark,
 	}
 }
 
-static void set_connection_selector_proposals(struct connection *c, const struct ip_info *host_afi)
-{
-	VERBOSE_DBGP(DBG_BASE, c->logger, "%s() ...", __func__);
-	/*
-	 * Fill in selectors.
-	 *
-	 * Identical to update_selectors()?
-	 */
-	FOR_EACH_ELEMENT(end, c->end) {
-		const char *leftright = end->config->leftright;
-		PASSERT(c->logger, end->child.selectors.proposed.list == NULL);
-		PASSERT(c->logger, end->child.selectors.proposed.len == 0);
+/*
+ * XXX: unlike update_subnet_selectors() this must set each selector
+ * to something valid?  For instance, of the end has addresspool, ask
+ * for the entire address range.
+ */
 
+void add_proposals(struct connection *d, const struct ip_info *host_afi,
+		   struct verbose verbose)
+{
+	vdbg("%s() host-afi=%s", __func__, (host_afi == NULL ? "N/A" : host_afi->ip_name));
+	verbose.level++;
+
+	FOR_EACH_ELEMENT(end, d->end) {
+		const char *leftright = end->config->leftright;
+
+		vassert(end->child.selectors.proposed.list == NULL);
+		vassert(end->child.selectors.proposed.len == 0);
+
+		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
-			ldbg(c->logger, "%s() %s selector from %d child.selectors",
-			     __func__, leftright, end->child.config->selectors.len);
+			vdbg("%s selectors from %d child.selectors",
+			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
+			/* XXX: instantiate() doesn't do this */
 			/* see also clone_connection */
-			set_end_child_has_client(c, end->config->index, true);
+			set_end_child_has_client(d, end->config->index, true);
 			continue;
 		}
 
+		/* {left,right}addresspool= */
 		if (end->child.config->addresspools.len > 0) {
 			/*
 			 * Set the selectors to the pool range:
@@ -1855,6 +1863,7 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 			continue;
 		}
 
+		/* {left,right}= */
 		if (address_is_specified(end->host.addr)) {
 			/*
 			 * Default the end's child selector (client)
@@ -1865,24 +1874,35 @@ static void set_connection_selector_proposals(struct connection *c, const struct
 			 * selectors then the combination becomes a
 			 * list.
 			 */
-			ldbg(c->logger, "%s() %s selector proposals from host address+protoport",
-			     __func__, leftright);
+			address_buf ab;
+			protoport_buf pb;
+			vdbg("%s selector proposals from host address+protoport %s %s",
+			     leftright,
+			     str_address(&end->host.addr, &ab),
+			     str_protoport(&end->child.config->protoport, &pb));
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			append_end_selector(end, host_afi, selector,
-					    c->logger, HERE);
+			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
 			continue;
 		}
 
 		/*
-		 * to-be-determined from the host or the opportunistic
-		 * group but make space regardless.
+		 * to-be-determined from the host (for instance,
+		 * waiting on DNS) or the opportunistic group (needs
+		 * to be expanded).
+		 *
+		 * Make space regardless so that loops have something
+		 * to iterate over.
 		 */
-		ldbg(c->logger, "%s() %s selector proposals from unset host family",
-		     __func__, leftright);
-		append_end_selector(end, host_afi, unset_selector,
-				    c->logger, HERE);
+		if (vbad(host_afi == NULL)) {
+			return;
+		}
+
+		vexpect(is_permanent(d) || is_group(d) || is_template(d));
+		vdbg("%s selector proposals from unset host family %s",
+		     leftright, host_afi->ip_name);
+		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
 	}
 }
 
@@ -3963,7 +3983,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * might use subnet or host or addresspool.
 	 */
 
-	set_connection_selector_proposals(c, host_afi);
+	VERBOSE_DBGP(DBG_BASE, c->logger, "%s() ...", __func__);
+	add_proposals(c, host_afi, verbose);
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
