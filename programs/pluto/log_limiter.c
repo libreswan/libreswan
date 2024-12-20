@@ -67,29 +67,39 @@ lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter log_limiter)
 	/* allow imparing to override specified limit */
 	unsigned limit = log_limit(limiter);
 
-	bool is_limited;
+	enum limiting {
+		UNDER_LIMIT,
+		AT_LIMIT,
+		OVER_LIMIT,
+	} limiting;
+
 	pthread_mutex_lock(&limiter->mutex);
 	{
 		if (limiter->count > limit) {
-			is_limited = true;
+			limiting = OVER_LIMIT;
 		} else if (limiter->count == limit) {
-			llog(LOG_STREAM/*not-whack*/, logger,
-			     "%s rate limited log reached limit of %u entries",
-			     limiter->what, limit);
+			limiting = AT_LIMIT;
 			limiter->count++;
-			is_limited = false;
 		} else {
+			limiting = UNDER_LIMIT;
 			limiter->count++;
-			is_limited = false;
 		}
 	}
 	pthread_mutex_unlock(&limiter->mutex);
 
-	if (is_limited) {
+	switch (limiting) {
+	case UNDER_LIMIT:
+		return RC_LOG;
+	case AT_LIMIT:
+		llog(RC_LOG, logger,
+		     "%s rate limited log reached limit of %u entries",
+		     limiter->what, limit);
+		return RC_LOG; /* let this one through */
+	case OVER_LIMIT:
 		return (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : LEMPTY);
 	}
 
-	return RC_LOG;
+	bad_case(limiting);
 }
 
 void limited_llog(struct logger *logger, enum log_limiter log_limiter,
