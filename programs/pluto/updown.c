@@ -316,31 +316,37 @@ static bool do_updown_verb(const char *verb,
 			return false;
 		}
 
-		const char *hs;
+		const char *host_suffix;
 		switch (host_afi->af) {
 		case AF_INET:
-			hs = "-host";
+			host_suffix = "-host";
 			break;
 		case AF_INET6:
-			hs = "-host-v6";
+			host_suffix = "-host-v6";
 			break;
 		default:
 			bad_case(host_afi->af);
 		}
 
-		const char *cs;
+		const char *child_suffix;
 		switch (child_afi->af) {
 		case AF_INET:
-			cs = "-client"; /* really child; legacy name */
+			child_suffix = "-client"; /* really child; legacy name */
 			break;
 		case AF_INET6:
-			cs = "-client-v6"; /* really child; legacy name */
+			child_suffix = "-client-v6"; /* really child; legacy name */
 			break;
 		default:
 			bad_case(child_afi->af);
 		}
 
-		verb_suffix = selector_range_eq_address(spd->local->client, spd->local->host->addr) ? hs : cs;
+		/*
+		 * Use the HOST_SUFFIX when the selector is just the
+		 * host.addr (perhaps with a sprinkling of protoport).
+		 */
+		ip_range client_range = selector_range(spd->local->client);
+		bool client_is_host = range_eq_address(client_range, spd->local->host->addr);
+		verb_suffix = (client_is_host ? host_suffix : child_suffix);
 	}
 
 	vdbg("kernel: command executing %s%s", verb, verb_suffix);
