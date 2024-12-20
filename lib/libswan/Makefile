@@ -75,6 +75,7 @@ OBJS += sparse_names.o
 OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
 OBJS += ttoaddresses_num.o
+OBJS += ttocidr_num.o
 OBJS += ttoprotocol.o
 OBJS += ttorange_num.o
 OBJS += ttoranges_num.o
