@@ -998,7 +998,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 					jam(buf, "IDci was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_subnet_port(buf, &remote_client);
+					jam_selector_range_port(buf, &remote_client);
 					jam(buf, " as IDci");
 				}
 			}
@@ -1822,7 +1822,7 @@ stf_status quick_inR1_outI2_continue_tail(struct ike_sa *ike, struct child_sa *c
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_subnet(buf, &child->sa.st_connection->spd->remote->client);
+					jam_selector_range(buf, &child->sa.st_connection->spd->remote->client);
 					jam(buf, " as IDcr");
 				}
 			}

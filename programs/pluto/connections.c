@@ -4113,7 +4113,7 @@ static size_t jam_connection_child(struct jambuf *b,
 		s += jam_string(b, prefix);
 		FOR_EACH_ITEM(selector, selectors) {
 			if (pexpect(selector->is_set)) {
-				s += jam_selector_subnet(b, selector);
+				s += jam_selector_range(b, selector);
 				if (selector_is_zero(*selector)) {
 					s += jam_string(b, "?");
 				}

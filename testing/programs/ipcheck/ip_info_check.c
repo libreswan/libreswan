@@ -162,7 +162,7 @@ static const struct selector_test {
 	bool is_all;
 	bool contains_one_address;
 } selector_tests[] = {
-	{ LN, 0, NULL,                     "<unset-selector>", .is_unset = true, },
+	{ LN, 0, NULL,                     "<null-selector>", .is_unset = true, },
 	{ LN, 0, &unset_selector,          "<unset-selector>", .is_unset = true, },
 	{ LN, 4, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, },
 	{ LN, 6, &ipv6_info.selector.zero, "::/128",           .is_zero = true, },
@@ -427,8 +427,6 @@ static void check_ip_info_selector(void)
 
 		const ip_selector *selector = t->selector;
 
-#define str_selector str_selector_subnet_port
-#define jam_selector jam_selector_subnet_port
 		CHECK_TYPE(selector);
 		CHECK_STR2(selector);
 

@@ -374,7 +374,7 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_subnet_port(&t->group->spd->local->client, &asource),
+				str_selector_range_port(&t->group->spd->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->name);
@@ -385,7 +385,7 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_subnet_port(&t->group->spd->local->client, &asource),
+				str_selector_range_port(&t->group->spd->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->name);

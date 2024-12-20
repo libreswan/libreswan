@@ -112,7 +112,7 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 	return out->buf;
 }
 
-size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
+size_t jam_selector_range(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector == NULL) {
 		return jam_string(buf, "<null-selector>");
@@ -129,14 +129,14 @@ size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 	return jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 }
 
-const char *str_selector_subnet(const ip_selector *selector, subnet_buf *out)
+const char *str_selector_range(const ip_selector *selector, subnet_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_selector_subnet(&buf, selector);
+	jam_selector_range(&buf, selector);
 	return out->buf;
 }
 
-size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
+size_t jam_selector_range_port(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector_is_unset(selector)) {
 		return jam_string(buf, "<unset-selector>");
@@ -157,10 +157,10 @@ size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
 	return s;
 }
 
-const char *str_selector_subnet_port(const ip_selector *selector, selector_buf *out)
+const char *str_selector_range_port(const ip_selector *selector, selector_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_selector_subnet_port(&buf, selector);
+	jam_selector_range_port(&buf, selector);
 	return out->buf;
 }
 

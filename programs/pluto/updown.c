@@ -106,7 +106,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDipaddr("PLUTO_ME", sr->local->host->addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
 	jam(&jb, "PLUTO_CLIENT_FAMILY='ipv%d' ", selector_info(sr->local->client)->ip_version);
-	JDemitter("PLUTO_MY_CLIENT", jam_selector_subnet(&jb, &sr->local->client));
+	JDemitter("PLUTO_MY_CLIENT", jam_selector_range(&jb, &sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local->client));
 
@@ -143,7 +143,7 @@ static bool fmt_common_shell_out(char *buf,
 		jam_address(&jb, &sr->remote->host->addr);
 		jam(&jb, "/%d", address_type(&sr->local->host->addr)->mask_cnt/*32 or 128*/);
 	} else {
-		jam_selector_subnet(&jb, &sr->remote->client);
+		jam_selector_range(&jb, &sr->remote->client);
 	}
 	jam_string(&jb, "' ");
 
@@ -256,7 +256,7 @@ static bool fmt_common_shell_out(char *buf,
 			selector_buf peerclient_str;
 			vdbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
 			     str_address(&sr->remote->host->addr, &bpeer),
-			     str_selector_subnet_port(&sr->remote->client, &peerclient_str));
+			     str_selector_range_port(&sr->remote->client, &peerclient_str));
 			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}

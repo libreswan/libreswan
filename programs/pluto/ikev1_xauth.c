@@ -1735,7 +1735,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			c->local->child.lease[afi->ip_index] = a;
 
 			subnet_buf caddr;
-			str_selector_subnet(&c->spd->local->client, &caddr);
+			str_selector_range(&c->spd->local->client, &caddr);
 			llog(RC_LOG, ike->sa.logger, "Received IP address %s", caddr.buf);
 
 			/*
@@ -1938,7 +1938,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 					    "^*(&^(* IKEv1 doing something with the address it received");
 
 			subnet_buf caddr;
-			str_selector_subnet(&c->spd->local->client, &caddr);
+			str_selector_range(&c->spd->local->client, &caddr);
 			llog(RC_LOG, ike->sa.logger,
 			     "Received IPv4 address: %s",
 			     caddr.buf);
