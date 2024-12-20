@@ -969,6 +969,8 @@ static bool add_xauth_addresspool(struct connection *c,
 				  const char *addresspool,
 				  struct logger *logger)
 {
+	VERBOSE_DBGP(DBG_BASE, logger, "%s() ...", __func__);
+
 	dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
 	    addresspool, c->name, userid);
 
@@ -1016,6 +1018,19 @@ static bool add_xauth_addresspool(struct connection *c,
 		pfree_diag(&d);
 		return false;
 	}
+
+	/*
+	 * Now update the selectors, and re-build the SPDs.
+	 */
+	zero(&c->remote->child.selectors.proposed);
+	ip_selector selector = selector_from_range(pool_range);
+	selector_buf sb;
+	vdbg("%s selector formed from address pool %s",
+	     c->remote->config->leftright, str_selector(&selector, &sb));
+	append_end_selector(c->remote, selector_info(selector), selector, verbose.logger, HERE);
+
+	discard_connection_spds(c);
+	add_connection_spds(c);
 
 	return true;
 }
