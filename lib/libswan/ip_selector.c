@@ -32,7 +32,7 @@ bool selector_is_unset(const ip_selector *selector)
 
 bool selector_is_zero(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown+any */
 		return false;
@@ -44,7 +44,7 @@ bool selector_is_zero(const ip_selector selector)
 
 bool selector_is_all(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown+any */
 		return false;
@@ -56,7 +56,7 @@ bool selector_is_all(const ip_selector selector)
 
 bool selector_contains_one_address(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
@@ -246,7 +246,7 @@ ip_selector selector_from_raw(where_t where,
 
 ip_selector selector_from_address(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -259,7 +259,7 @@ ip_selector selector_from_address(const ip_address address)
 ip_selector selector_from_address_protocol(const ip_address address,
 					   const struct ip_protocol *protocol)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -272,7 +272,7 @@ ip_selector selector_from_address_protocol(const ip_address address,
 ip_selector selector_from_address_protocol_port(const ip_address address,
 						const struct ip_protocol *protocol,
 						const ip_port port)
-{	const struct ip_info *afi = address_type(&address);
+{	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -284,7 +284,7 @@ ip_selector selector_from_address_protocol_port(const ip_address address,
 
 ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		return unset_selector;
 	}
@@ -438,7 +438,7 @@ const struct ip_protocol *selector_protocol(const ip_selector selector)
 
 ip_range selector_range(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_range;
@@ -449,7 +449,7 @@ ip_range selector_range(const ip_selector selector)
 
 ip_address selector_prefix(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
@@ -482,7 +482,7 @@ int selector_host_len(const ip_selector selector)
 
 ip_address selector_prefix_mask(const ip_selector selector)
 {
-	const struct ip_info *afi = selector_type(&selector);
+	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;

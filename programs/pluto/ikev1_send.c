@@ -65,7 +65,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 	 * max_data_len is the maximum data length that will fit within it.
 	 */
 	const size_t max_data_len =
-		endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size
+		endpoint_info(st->st_remote_endpoint)->ikev1_max_fragment_size
 		-
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
@@ -169,7 +169,7 @@ static bool should_fragment_v1_ike_msg(struct state *st, size_t len, bool resend
 	 *
 	 * ??? the following test does not account for natt_bonus
 	 */
-	return len >= endpoint_type(&st->st_remote_endpoint)->ikev1_max_fragment_size &&
+	return len >= endpoint_info(st->st_remote_endpoint)->ikev1_max_fragment_size &&
 	    (   (resending &&
 		 st->st_connection->config->ike_frag.allow &&
 		 st->st_v1_seen_fragmentation_supported) ||

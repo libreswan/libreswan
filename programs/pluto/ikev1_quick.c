@@ -196,7 +196,7 @@ static bool emit_subnet_id(enum perspective perspective,
 			   uint16_t port,
 			   struct pbs_out *outs)
 {
-	const struct ip_info *ai = subnet_type(&net);
+	const struct ip_info *ai = subnet_info(net);
 	const bool usehost = (subnet_prefix_bits(net) == ai->mask_cnt);
 	struct pbs_out id_pbs;
 
@@ -1007,7 +1007,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		/*
 		 * Implicit IDci and IDcr: peer and self.
 		 */
-		if (address_type(&c->local->host.addr) != address_type(&c->remote->host.addr))
+		if (address_info(c->local->host.addr) != address_info(c->remote->host.addr))
 			return STF_FAIL_v1N;
 
 		local_client = selector_from_address(c->local->host.addr);

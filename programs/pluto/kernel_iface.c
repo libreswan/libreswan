@@ -192,7 +192,7 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		}
 
 		/* ignore all but AF_INET interfaces (redundant) */
-		if (!pexpect(address_type(&addr) == afi)) {
+		if (!pexpect(address_info(addr) == afi)) {
 			dbg("  ignoring non-%s interface %s",
 			    afi->ip_name, ifname);
 			continue; /* not interesting */

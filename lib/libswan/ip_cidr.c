@@ -102,7 +102,7 @@ const struct ip_info *cidr_info(const ip_cidr cidr)
 
 ip_address cidr_address(const ip_cidr cidr)
 {
-	const struct ip_info *afi = cidr_type(&cidr);
+	const struct ip_info *afi = cidr_info(cidr);
 	if (afi == NULL) {
 		return unset_address;
 	}
@@ -112,7 +112,7 @@ ip_address cidr_address(const ip_cidr cidr)
 
 ip_address cidr_prefix(const ip_cidr cidr)
 {
-	const struct ip_info *afi = cidr_type(&cidr);
+	const struct ip_info *afi = cidr_info(cidr);
 	if (afi == NULL) {
 		return unset_address;
 	}

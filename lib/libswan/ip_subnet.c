@@ -70,12 +70,12 @@ err_t address_mask_to_subnet(const ip_address address,
 			     ip_subnet *subnet)
 {
 	*subnet = unset_subnet;
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return "invalid address";
 	}
 
-	if (address_type(&mask) != afi) {
+	if (address_info(mask) != afi) {
 		return "invalid mask";
 	}
 
@@ -94,7 +94,7 @@ err_t address_mask_to_subnet(const ip_address address,
 
 ip_address subnet_prefix(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
+	const struct ip_info *afi = subnet_info(subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
@@ -138,7 +138,7 @@ bool subnet_is_unset(const ip_subnet *subnet)
 
 bool subnet_is_zero(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
+	const struct ip_info *afi = subnet_info(subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
@@ -149,7 +149,7 @@ bool subnet_is_zero(const ip_subnet subnet)
 
 bool subnet_is_all(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
+	const struct ip_info *afi = subnet_info(subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;
@@ -172,7 +172,7 @@ uintmax_t subnet_size(const ip_subnet subnet)
 
 ip_address subnet_prefix_mask(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
+	const struct ip_info *afi = subnet_info(subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address;
@@ -263,7 +263,7 @@ bool subnet_eq_subnet(const ip_subnet l, const ip_subnet r)
 
 bool subnet_eq_address(const ip_subnet subnet, const ip_address address)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
+	const struct ip_info *afi = subnet_info(subnet);
 	if (afi == NULL) {
 		return false;
 	}
@@ -277,12 +277,12 @@ bool subnet_eq_address(const ip_subnet subnet, const ip_address address)
 
 bool subnet_in_subnet(const ip_subnet l, const ip_subnet r)
 {
-	const struct ip_info *afi = subnet_type(&l);
+	const struct ip_info *afi = subnet_info(l);
 	if (afi == NULL) {
 		return false;
 	}
 
-	if (subnet_type(&r) != afi) {
+	if (subnet_info(r) != afi) {
 		return false;
 	}
 
@@ -302,12 +302,12 @@ bool subnet_in_subnet(const ip_subnet l, const ip_subnet r)
 
 bool address_in_subnet(const ip_address l, const ip_subnet r)
 {
-	const struct ip_info *afi = address_type(&l);
+	const struct ip_info *afi = address_info(l);
 	if (afi == NULL) {
 		return false;
 	}
 
-	if (subnet_type(&r) != afi) {
+	if (subnet_info(r) != afi) {
 		return false;
 	}
 

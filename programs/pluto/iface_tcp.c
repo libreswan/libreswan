@@ -293,7 +293,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		}
 
 		if (kernel_ops->poke_ipsec_policy_hole != NULL &&
-		    !kernel_ops->poke_ipsec_policy_hole((*ifp)->fd, address_type(&(*ifp)->ip_dev->local_address), logger)) {
+		    !kernel_ops->poke_ipsec_policy_hole((*ifp)->fd, address_info((*ifp)->ip_dev->local_address), logger)) {
 			/* already logged */
 			iketcp_shutdown(ifp); /* i.e., delete IFP */
 			return NULL;
@@ -465,7 +465,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 {
 	ldbg(logger, "TCP: opening socket");
 	PEXPECT(logger, endpoint_protocol(remote_endpoint) == &ip_protocol_tcp);
-	const struct ip_info *afi = endpoint_type(&remote_endpoint);
+	const struct ip_info *afi = endpoint_info(remote_endpoint);
 
 	int fd = cloexec_socket(afi->socket.domain, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {

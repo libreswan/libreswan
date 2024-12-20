@@ -58,7 +58,7 @@ ip_endpoint endpoint_from_address_protocol_port(const ip_address address,
 
 ip_address endpoint_address(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address; /* empty_address? */
@@ -69,7 +69,7 @@ ip_address endpoint_address(const ip_endpoint endpoint)
 
 int endpoint_hport(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
@@ -82,7 +82,7 @@ int endpoint_hport(const ip_endpoint endpoint)
 
 ip_port endpoint_port(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
@@ -95,7 +95,7 @@ ip_port endpoint_port(const ip_endpoint endpoint)
 
 ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* includes NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
@@ -147,7 +147,7 @@ const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint)
 
 bool endpoint_is_specified(const ip_endpoint endpoint)
 {
-	const struct ip_info *afi = endpoint_type(&endpoint);
+	const struct ip_info *afi = endpoint_info(endpoint);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;

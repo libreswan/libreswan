@@ -228,7 +228,7 @@ bool address_is_unset(const ip_address *address)
 
 bool address_is_specified(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		return false;
 	}
@@ -257,7 +257,7 @@ bool address_eq_address(const ip_address l, const ip_address r)
 
 bool address_is_loopback(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return false;

@@ -386,7 +386,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 			   ##__VA_ARGS__);				\
 	}
 
-	const struct ip_info *afi = address_type(&ifd->local_address);
+	const struct ip_info *afi = address_info(ifd->local_address);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->local_address,
 									 io->protocol, port);
 

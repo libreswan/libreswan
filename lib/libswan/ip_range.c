@@ -53,7 +53,7 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 
 int range_prefix_len(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return -1;
@@ -64,7 +64,7 @@ int range_prefix_len(const ip_range range)
 
 int range_host_len(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return -1;
@@ -100,7 +100,7 @@ const char *str_range(const ip_range *range, range_buf *out)
 
 ip_range range_from_address(const ip_address address)
 {
-	const struct ip_info *afi = address_type(&address);
+	const struct ip_info *afi = address_info(address);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_range;
@@ -112,7 +112,7 @@ ip_range range_from_address(const ip_address address)
 
 ip_range range_from_subnet(const ip_subnet subnet)
 {
-	const struct ip_info *afi = subnet_type(&subnet);
+	const struct ip_info *afi = subnet_info(subnet);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_range;
@@ -160,7 +160,7 @@ bool range_is_unset(const ip_range *range)
 
 bool range_is_zero(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return false;
 	}
@@ -170,7 +170,7 @@ bool range_is_zero(const ip_range range)
 
 bool range_is_all(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return false;
 	}
@@ -190,7 +190,7 @@ bool range_is_cidr(ip_range range)
 
 uintmax_t range_size(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return 0;
 	}
@@ -271,7 +271,7 @@ bool range_in_range(const ip_range inner, const ip_range outer)
 
 ip_address range_start(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return unset_address;
 	}
@@ -281,7 +281,7 @@ ip_address range_start(const ip_range range)
 
 ip_address range_end(const ip_range range)
 {
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return unset_address;
 	}
@@ -347,7 +347,7 @@ err_t addresses_to_nonzero_range(const ip_address lo, const ip_address hi, ip_ra
 err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 {
 	*dst = unset_subnet;
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return "invalid range";
 	}
@@ -370,7 +370,7 @@ err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address
 {
 	*address = unset_address;
 
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return "invalid range";
 	}
@@ -408,12 +408,12 @@ err_t address_to_range_offset(const ip_range range, const ip_address address, ui
 {
 	*offset = UINTMAX_MAX;
 
-	const struct ip_info *afi = range_type(&range);
+	const struct ip_info *afi = range_info(range);
 	if (afi == NULL) {
 		return "range invalid";
 	}
 
-	if (address_type(&address) != afi) {
+	if (address_info(address) != afi) {
 		return "address is not from range";
 	}
 

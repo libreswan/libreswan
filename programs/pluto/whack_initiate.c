@@ -107,7 +107,7 @@ void whack_oppo_initiate(const struct whack_message *m, struct show *s)
 
 	const struct ip_protocol *protocol = protocol_from_ipproto(m->oppo.ipproto);
 	ip_packet packet = packet_from_raw(HERE,
-					   address_type(&m->oppo.local.address),
+					   address_info(m->oppo.local.address),
 					   &m->oppo.local.address.bytes,
 					   &m->oppo.remote.address.bytes,
 					   protocol,

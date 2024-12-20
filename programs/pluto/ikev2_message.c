@@ -1220,7 +1220,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	 * function above be left to do the computation on-the-fly?
 	 */
 
-	unsigned int len = endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
+	unsigned int len = endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
 
 	/*
 	 * If we are doing NAT, so that the other end doesn't mistake
@@ -1339,7 +1339,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	/* IPv4 and IPv6 have different fragment sizes */
 	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
 	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
-	    len >= endpoint_type(&sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
+	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		if (!record_outbound_fragments(msg, sk, what, outgoing_fragments)) {
 			dbg("record outbound fragments failed");
 			return STF_INTERNAL_ERROR;

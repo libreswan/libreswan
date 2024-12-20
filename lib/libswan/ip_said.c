@@ -128,7 +128,7 @@ const struct ip_info *said_info(const ip_said said)
 
 ip_address said_address(const ip_said said)
 {
-	const struct ip_info *afi = said_type(&said);
+	const struct ip_info *afi = said_info(said);
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		return unset_address; /* empty_address? */

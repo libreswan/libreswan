@@ -51,7 +51,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 	}
 
 	/* get real AFI */
-	afi = address_type(&start_address);
+	afi = address_info(start_address);
 	passert(afi != NULL);
 
 	switch (sep) {
@@ -95,7 +95,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 			/* includes IPv4 vs IPv6 */
 			return err;
 		}
-		passert(afi == address_type(&end_address));
+		passert(afi == address_info(end_address));
 		if (ip_bytes_cmp(start_address.version, start_address.bytes,
 				 end_address.version, end_address.bytes) > 0) {
 			return "start of range is greater than end";

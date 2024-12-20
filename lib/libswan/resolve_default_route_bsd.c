@@ -201,7 +201,7 @@ static enum route_status get_route_1(int s, ip_address dst,
 enum route_status get_route(ip_address dst, struct ip_route *route, struct logger *logger)
 {
 	zero(route);
-	const struct ip_info *afi = address_type(&dst);
+	const struct ip_info *afi = address_info(dst);
 	int s = cloexec_socket(PF_ROUTE, SOCK_RAW, afi->af);
 	if (s < 0) {
 		llog_errno(ERROR_STREAM, logger, errno,

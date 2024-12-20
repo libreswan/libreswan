@@ -713,7 +713,7 @@ void llog_sadb_ext(struct verbose verbose,
 	{
 		shunk_t x_nat_t_type_cursor;
 		const struct sadb_x_nat_t_type *x_nat_t_type =
-			get_sadb_x_nat_t_type(&ext_cursor, &x_nat_t_type_cursor, verbose);
+			get_sadb_x_nat_t_info(ext_cursor, &x_nat_t_type_cursor, verbose);
 		if (x_nat_t_type == NULL) {
 			return;
 		}
