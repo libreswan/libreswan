@@ -79,16 +79,16 @@ err_t address_mask_to_subnet(const ip_address address,
 		return "invalid mask";
 	}
 
-	int prefix_bits =  masktocount(&mask);
-	if (prefix_bits < 0) {
+	int prefix_len =  ip_bytes_mask_len(afi, mask.bytes);
+	if (prefix_len < 0) {
 		return "invalid mask";
 	}
 
 	struct ip_bytes prefix = ip_bytes_blit(afi, address.bytes,
 					       &keep_routing_prefix,
 					       &clear_host_identifier,
-					       prefix_bits);
-	*subnet = subnet_from_raw(HERE, afi, prefix, prefix_bits);
+					       prefix_len);
+	*subnet = subnet_from_raw(HERE, afi, prefix, prefix_len);
 	return NULL;
 }
 

@@ -189,9 +189,6 @@ chunk_t address_as_chunk(ip_address *address);
  * Old style.
  */
 
-/* misc. conversions and related */
-extern int masktocount(const ip_address *src);
-
 /* tests */
 extern bool sameaddr(const ip_address *a, const ip_address *b);
 extern int addrcmp(const ip_address *a, const ip_address *b);

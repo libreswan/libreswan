@@ -75,7 +75,7 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 	if (slash == '/') {
 		/* eat entire MASK */
 		oops = shunk_to_uintmax(mask, NULL, 10, &prefix_len);
-		if (oops != NULL || prefix_len > afi->mask_cnt) {
+		if (oops != NULL) {
 			if (afi == &ipv4_info) {
 				/*1.2.3.0/255.255.255.0?*/
 				ip_address masktmp;
@@ -84,7 +84,7 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 					return oops;
 				}
 
-				int i = masktocount(&masktmp);
+				int i = ip_bytes_mask_len(afi, masktmp.bytes);
 				if (i < 0) {
 					return "non-contiguous or otherwise erroneous mask";
 				}
@@ -92,6 +92,8 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 			} else {
 				return "masks are not permitted for IPv6 addresses";
 			}
+		} else  if (prefix_len > afi->mask_cnt) {
+			return "mask is too big";
 		}
 	}
 
