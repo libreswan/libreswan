@@ -1154,7 +1154,9 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * XXX: IKEv1 only does IPv4.
 	 */
 	if (c->remote->config->child.addresspools.len == 0) {
-		vdbg("connection has no address pool");
+		vdbg("connection has no addresspool");
+	} else if (c->remote->child.lease[IPv4_INDEX].is_set) {
+		vdbg("connection already has a lease");
 	} else {
 		ip_address lease_address = selector_prefix(remote_client);
 		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
