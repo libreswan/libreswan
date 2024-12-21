@@ -211,13 +211,11 @@ ip_selector selector_from_raw(where_t where,
 			      const struct ip_bytes hi,
 			      const struct ip_protocol *protocol, const ip_port port)
 {
-	unsigned prefix_len = ip_bytes_prefix_len(afi, lo, hi);
 	ip_selector selector = {
 		.is_set = true,
 		.version = afi->ip_version,
 		.lo = lo,
 		.hi = hi,
-		.maskbits = prefix_len,
 		.ipproto = protocol->ipproto,
 		.hport = port.hport,
 	};

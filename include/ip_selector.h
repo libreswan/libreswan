@@ -58,10 +58,6 @@ typedef struct {
 	 */
 	struct ip_bytes lo;
 	struct ip_bytes hi;
-	/*
-	 * (routing prefix) bits.
-	 */
-	unsigned maskbits;
 	unsigned ipproto;
 	/*
 	 * For moment, one port
@@ -69,7 +65,7 @@ typedef struct {
 	int hport;
 } ip_selector;
 
-#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES".."PRI_IP_BYTES"]:%u/%u>"
+#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES".."PRI_IP_BYTES"]:%u>"
 #define pri_selector(S)						\
 		((S)->is_set ? "set" : "unset"),		\
 		(S)->version,					\
@@ -77,8 +73,7 @@ typedef struct {
 		 protocol_from_ipproto((S)->ipproto)->name),	\
 		pri_ip_bytes((S)->lo),				\
 		pri_ip_bytes((S)->hi),				\
-		(S)->hport,					\
-		(S)->maskbits
+		(S)->hport
 
 void pexpect_selector(const ip_selector *s, where_t where);
 #define pselector(S) pexpect_selector(S, HERE)
