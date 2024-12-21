@@ -164,7 +164,7 @@ static struct connection_client connection_config_client(const struct connection
 void jam_end_client(struct jambuf *buf,
 		    const struct connection *c,
 		    const struct connection_client *this,
-		    enum left_right side,
+		    enum end side,
 		    const char *separator)
 {
 	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
@@ -279,7 +279,7 @@ static void jam_end_nexthop(struct jambuf *buf,
 			    const struct host_end *this,
 			    const struct host_end *that,
 			    bool skip_next_hop,
-			    enum left_right side)
+			    enum end side)
 {
 	/* [---hop] */
 	if (!skip_next_hop &&
@@ -298,7 +298,7 @@ static void jam_end_nexthop(struct jambuf *buf,
 static void jam_client_end(struct jambuf *buf, const struct connection *c,
 			   const struct connection_client *this,
 			   const struct connection_client *that,
-			   enum left_right side, bool skip_next_hop)
+			   enum end side, bool skip_next_hop)
 {
 	switch (side) {
 	case LEFT_END:

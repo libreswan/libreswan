@@ -617,7 +617,7 @@ ip_port local_host_port(const struct connection *c)
 	return end_host_port(&c->local->host, &c->remote->host);
 }
 
-void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
+void update_hosts_from_end_host_addr(struct connection *c, enum end e,
 				     ip_address host_addr, where_t where)
 {
 	struct host_end *end = &c->end[e].host;
@@ -2296,8 +2296,8 @@ struct connection *alloc_connection(const char *name,
 	 * to work.
 	 */
 
-	enum left_right local = (t == NULL ? LEFT_END : t->local->config->index);
-	enum left_right remote = (t == NULL ? RIGHT_END : t->remote->config->index);
+	enum end local = (t == NULL ? LEFT_END : t->local->config->index);
+	enum end remote = (t == NULL ? RIGHT_END : t->remote->config->index);
 
 	c->local = &c->end[local];	/* this; clone must update */
 	c->remote = &c->end[remote];	/* that; clone must update */
@@ -2408,7 +2408,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * hack.
 	 */
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		enum left_right that = (this + 1) % END_ROOF;
+		enum end that = (this + 1) % END_ROOF;
 		c->end[this].kind =
 			extract_connection_end_kind(wm,
 						    whack_ends[this],
@@ -4840,7 +4840,7 @@ void append_end_selector(struct connection_end *end,
 	     pri_where(where));
 }
 
-void update_end_selector_where(struct connection *c, enum left_right lr,
+void update_end_selector_where(struct connection *c, enum end lr,
 			       ip_selector new_selector,
 			       const char *excuse, where_t where)
 {
