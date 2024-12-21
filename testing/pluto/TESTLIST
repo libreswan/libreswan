@@ -947,12 +947,12 @@ kvmplutotest	xauth-pluto-21-aggr-xr0-drop 	wip
 kvmplutotest	xauth-pluto-22		good
 kvmplutotest	xauth-pluto-23		good
 kvmplutotest	xauth-pluto-24-static-addresspool good
-kvmplutotest	xauth-pluto-25-mixed-addresspool		wip	github:409
-kvmplutotest	xauth-pluto-25-lsw299				wip	github:409
+kvmplutotest	xauth-pluto-25-lsw299				wip	github/509
 kvmplutotest	xauth-pluto-26		good
 kvmplutotest	xauth-pluto-27		good
 kvmplutotest	xauth-pluto-28-twobehindnat	good
 
+kvmplutotest	ikev1-xauth-25-mixed-addresspool			good	github/509
 kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
 kvmplutotest	ikev1-xauth-31-one-each-way				wip	github/633
 kvmplutotest	ikev1-xauth-32-lost-mode-cfg				good	github/1785

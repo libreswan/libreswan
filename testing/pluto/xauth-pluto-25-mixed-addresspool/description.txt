@@ -1,5 +1,0 @@
-Two road warriors, north and road connect to east, IKEv1, xauth authby=secret with modecfg and one global addresspool and one static addresspool in /etc/ipsec.d/passwd
-
-note: there is an unexplained race condition happening here, causing packet flow issues
-that trigger a test failure
-

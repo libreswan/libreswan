@@ -33,6 +33,7 @@ north #
 "north-east" #1: Received IPv4 address: 192.0.2.201/32
 "north-east" #1: Received DNS server 1.2.3.4
 "north-east" #1: Received DNS server 5.6.7.8
+"north-east" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
 "north-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "north-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "north-east" #2: sent Quick Mode request
@@ -43,9 +44,9 @@ north #
 up
 north #
  ipsec whack --trafficstatus
-#2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
+#2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.201/32
 north #
  ipsec whack --trafficstatus
-#2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
+#2: "north-east", username=xnorth, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.201/32
 north #
  

@@ -1,0 +1,5 @@
+ikev1 xauth+modecfg with global and xauth(static) addresspools
+
+Two road warriors, north and road connect to east, IKEv1, xauth
+authby=secret with modecfg and one global addresspool and one static
+addresspool in /etc/ipsec.d/passwd (east.passwd).
