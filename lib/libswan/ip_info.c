@@ -170,8 +170,8 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.range.all = { .is_set = true, .version = IPv4, .hi = IPv4_FF, },
 
 		/* ip_selector - .selector.any matches grep */
-		.selector.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
-		.selector.all = { .is_set = true, .version = IPv4, .hi = IPv4_FF, .maskbits = 0, }, /* 0.0.0.0/0 */
+		.selector.zero = { .is_set = true, .version = IPv4, }, /* 0.0.0.0/0 */
+		.selector.all = { .is_set = true, .version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0/0 */
 
 		/* ike */
 		.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
@@ -229,8 +229,8 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.range.all = { .is_set = true, .version = IPv6, .hi = IPv6_FF, },
 
 		/* ip_selector - .selector.any matches grep */
-		.selector.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */
-		.selector.all = { .is_set = true, .version = IPv6, .hi = IPv6_FF, .maskbits = 0, }, /* ::/0 */
+		.selector.zero = { .is_set = true, .version = IPv6, }, /* ::/0 */
+		.selector.all = { .is_set = true, .version = IPv6, .hi = IPv6_FF, }, /* ::/0 */
 
 		/* ike */
 		.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,
