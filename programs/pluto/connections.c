@@ -2379,6 +2379,28 @@ static diag_t extract_connection(const struct whack_message *wm,
 	};
 
 	/*
+	 * Unpack and verify the ends.
+	 */
+
+	bool same_ca[END_ROOF] = { false, };
+
+	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
+		diag_t d;
+		int that = (this + 1) % END_ROOF;
+		d = extract_host_end(&c->end[this].host,
+				     &config->end[this].host,
+				     &config->end[that].host,
+				     wm,
+				     whack_ends[this],
+				     whack_ends[that],
+				     &same_ca[this],
+				     c->logger);
+		if (d != NULL) {
+			return d;
+		}
+	}
+
+	/*
 	 * Determine the connection KIND from the wm.
 	 *
 	 * Save it in a local variable so code can use that (and be
@@ -3690,24 +3712,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	     c->end[RIGHT_END].kind == CK_GROUP) &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
-	}
-
-	/*
-	 * Unpack and verify the ends.
-	 */
-
-	bool same_ca[END_ROOF] = { false, };
-
-	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		diag_t d;
-		int that = (this + 1) % END_ROOF;
-		d = extract_host_end(&c->end[this].host,
-				     &config->end[this].host, &config->end[that].host,
-				     wm, whack_ends[this], whack_ends[that],
-				     &same_ca[this], c->logger);
-		if (d != NULL) {
-			return d;
-		}
 	}
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {

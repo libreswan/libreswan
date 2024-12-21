@@ -75,7 +75,8 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	if (id_has_wildcards(&c->remote->host.id)) {
+	/* should have been handled by above */
+	if (pbad(id_has_wildcards(&c->remote->host.id))) {
 		pdbg(c->logger, "pending ddns: skipping connection, remote has wildcard ID");
 		return;
 	}
