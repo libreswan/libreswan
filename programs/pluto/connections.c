@@ -4127,11 +4127,15 @@ static size_t jam_connection_child(struct jambuf *b,
 	if (selectors == NULL) {
 		/* no point */
 	} else if (selectors->len == 1 &&
-		   /* i.e., selector==host.addr+protoport */
+		   /* i.e., selector==host.addr[+protoport] */
 		   range_eq_address(selector_range(selectors->list[0]), host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
+		if (child->config->addresspools.len > 0) {
+			s += jam_string(b, "{");
+		}
+		const char *sep = "";
 		FOR_EACH_ITEM(selector, selectors) {
 			if (pexpect(selector->is_set)) {
 				s += jam_selector_range(b, selector);
@@ -4141,6 +4145,10 @@ static size_t jam_connection_child(struct jambuf *b,
 			} else {
 				s += jam_string(b, "?");
 			}
+			jam_string(b, sep); sep = ",";
+		}
+		if (child->config->addresspools.len > 0) {
+			s += jam_string(b, "}");
 		}
 		s += jam_string(b, suffix);
 	}
