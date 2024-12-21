@@ -2858,7 +2858,7 @@ bool verbose_v1_state_busy(const struct state *st)
 	/* not whack */
 	/* XXX: why not whack? */
 	/* XXX: can this and below be merged; is there always an offloaded task? */
-	log_state(LOG_STREAM/*not-whack*/, st,
+	log_state(RC_LOG, st,
 		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
 		  st->st_state->name);
 	return true;

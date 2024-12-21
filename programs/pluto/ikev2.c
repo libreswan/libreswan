@@ -642,7 +642,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 */
 
 	if (ike->sa.st_v2_msgid_windows.responder.wip == msgid) {
-		llog(LOG_STREAM/*not-whack*/, ike->sa.logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "discarding packet received during asynchronous work (DNS or crypto) in %s",
 		     ike->sa.st_state->name);
 		return true;
