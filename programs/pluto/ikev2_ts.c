@@ -369,20 +369,24 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 	return true;
 }
 
+/* narrow TS to one address */
 static ip_selector impair_selector_to_subnet(ip_selector ts)
 {
 	const struct ip_info *afi = selector_info(ts);
-	ts.hi = ts.lo;
-	ts.maskbits = afi->mask_cnt;
-	return ts;
+	return selector_from_raw(HERE, afi,
+				 ts.lo, ts.lo,
+				 selector_protocol(ts),
+				 selector_port(ts));
 }
 
+/* widen TS to all addresses */
 static ip_selector impair_selector_to_supernet(ip_selector ts)
 {
-	ts.maskbits = 0;
-	ts.lo = unset_ip_bytes;
-	ts.hi = unset_ip_bytes;
-	return ts;
+	const struct ip_info *afi = selector_info(ts);
+	return selector_from_raw(HERE, afi,
+				 unset_ip_bytes, unset_ip_bytes,
+				 selector_protocol(ts),
+				 selector_port(ts));
 }
 
 static bool emit_v2TS_payload(struct pbs_out *outpbs,
