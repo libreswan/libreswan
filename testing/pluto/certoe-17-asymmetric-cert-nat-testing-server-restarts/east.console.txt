@@ -27,7 +27,7 @@ east #
  # confirm tunnel is up
 east #
  ipsec whack --trafficstatus
-#2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
+#2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 east #
  # restart ipsec; give OE conns time to load
 east #
@@ -43,10 +43,10 @@ east #
  # A tunnel should have established with non-zero byte counters
 east #
  ipsec whack --trafficstatus
-#2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
+#2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32}, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=10.0.10.1/32
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32 #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===10.0.10.1/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.254:EPHEM DPD=passive}
+"clear-or-private#192.1.2.254/32"[1] ...192.1.2.254==={10.0.10.1/32} #2: responder established Child SA using #1; IPsec tunnel [192.1.2.23/32===10.0.10.1/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.254:EPHEM DPD=passive}
 east #
  grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
