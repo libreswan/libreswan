@@ -157,11 +157,19 @@ spd_priority_t spd_priority(const struct spd *spd)
 	 * set based on the host_addr parameters.
 	 *
 	 * A longer prefix wins over a shorter prefix, hence the
-	 * reversal.  Value needs to fit 0-128, hence 8 bits.
+	 * reversal.
+	 *
+	 * Note: Value needs to fit 0-128, hence 8 bits wide.
+	 *
+	 * Note: should CLIENT be non-CIDR, prefix_len() returns -1
+	 * and the below scores 129 - very poor.  Hopefully client
+	 * isn't CIDR.
 	 */
-	unsigned srcw = 128 - spd->local->client.maskbits;
+	int srcp = selector_prefix_len(spd->local->client);
+	int dstp = selector_prefix_len(spd->remote->client);
+	unsigned srcw = 128 - srcp;
 	prio = (prio << 8) | srcw;
-	unsigned dstw = 128 - spd->remote->client.maskbits;
+	unsigned dstw = 128 - dstp;
 	prio = (prio << 8) | dstw;
 
 	/*
