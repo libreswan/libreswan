@@ -28,7 +28,7 @@ static void check_sockaddr_as_endpoint(void)
 {
 	static const struct test {
 		int line;
-		const int family;
+		const struct ip_info *afi;
 		const char *in;
 		uint8_t addr[16];
 		int port;
@@ -36,25 +36,25 @@ static void check_sockaddr_as_endpoint(void)
 		const char *err;
 		const char *out;
 	} tests[] = {
-		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in), NULL, NULL, },
-		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6), NULL, NULL, },
+		{ LN, &ipv4_info, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in), NULL, NULL, },
+		{ LN, &ipv6_info, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6), NULL, NULL, },
 		/* far too small */
-		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, 0, "too small", "<unset-endpoint>", },
-		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, 0, "too small", "<unset-endpoint>", },
+		{ LN, &ipv4_info, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, 0, "too small", "<unset-endpoint>", },
+		{ LN, &ipv6_info, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, 0, "too small", "<unset-endpoint>", },
 		/* somewhat too small */
 #define SIZE (offsetof(struct sockaddr, sa_family) + sizeof(sa_family_t))
-		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, SIZE, "address truncated", "<unset-endpoint>", },
-		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, SIZE, "address truncated", "<unset-endpoint>", },
+		{ LN, &ipv4_info, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, SIZE, "address truncated", "<unset-endpoint>", },
+		{ LN, &ipv6_info, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, SIZE, "address truncated", "<unset-endpoint>", },
 		/* too big */
-		{ LN, 4, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in) + 1, NULL, NULL, },
-		{ LN, 6, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6) + 1, NULL, NULL, },
+		{ LN, &ipv4_info, "1.2.3.4:65535", { 1, 2, 3, 4, }, 65535, sizeof(struct sockaddr_in) + 1, NULL, NULL, },
+		{ LN, &ipv6_info, "[1::1]:65535", { [1] = 1, [15] = 1, }, 65535, sizeof(struct sockaddr_in6) + 1, NULL, NULL, },
 	};
 #undef SIZE
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		const char *expect_out = t->out == NULL ? t->in : t->out;
-		PRINT("%s '%s' -> '%s' len=%zd", pri_family(t->family), t->in, expect_out, t->size);
+		PRINT("%s '%s' -> '%s' len=%zd", pri_afi(t->afi), t->in, expect_out, t->size);
 
 		/* construct a raw sockaddr */
 		struct {
@@ -65,8 +65,8 @@ static void check_sockaddr_as_endpoint(void)
 				.len = t->size,
 			}
 		};
-		switch (t->family) {
-		case 4:
+		switch (t->afi->ip_version) {
+		case IPv4:
 			memcpy(&raw.sa.sa.sin.sin_addr, t->addr, sizeof(raw.sa.sa.sin.sin_addr));
 			raw.sa.sa.sin.sin_family = AF_INET;
 			raw.sa.sa.sin.sin_port = htons(t->port);
@@ -74,7 +74,7 @@ static void check_sockaddr_as_endpoint(void)
                 	raw.sa.sa.sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 			break;
-		case 6:
+		case IPv6:
 			memcpy(&raw.sa.sa.sin6.sin6_addr, t->addr, sizeof(raw.sa.sa.sin6.sin6_addr));
 			raw.sa.sa.sin6.sin6_family = AF_INET6;
 			raw.sa.sa.sin6.sin6_port = htons(t->port);
@@ -106,7 +106,7 @@ static void check_sockaddr_as_endpoint(void)
 			FAIL("sockaddr_to_address_port() should have failed: %s", t->err);
 		} else {
 			endpoint = endpoint_from_address_protocol_port(*address, &ip_protocol_udp, port);
-			CHECK_TYPE(address);
+			CHECK_INFO(address);
 		}
 
 		/* as a string */

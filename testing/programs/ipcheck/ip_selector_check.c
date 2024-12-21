@@ -22,7 +22,7 @@
 #include "ip_selector.h"	/* should be in ip_selector_check.c */
 
 struct selector {
-	int family;
+	const struct ip_info *afi;
 	const char *addresses;
 	const char *protoport;
 };
@@ -48,7 +48,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 	for (size_t ti = 0; ti < nr_tests; ti++) {
 		const struct from_test *t = &tests[ti];
 		PRINT("%s %s=%s protoport=%s selector=%s lo=%s hi=%s ipproto=%u hport=%u nport=%02x%02x",
-		      pri_family(t->from.family),
+		      pri_afi(t->from.afi),
 		      what,
 		      (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 		      (t->from.protoport != NULL ? t->from.protoport : "N/A"),
@@ -65,7 +65,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			if (err != NULL) {
 				FAIL("%s(%s %s %s) failed: %s",
 				     what,
-				     pri_family(t->from.family),
+				     pri_afi(t->from.afi),
 				     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 				     (t->from.protoport != NULL ? t->from.protoport : "N/A"),
 				     err);
@@ -73,14 +73,14 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 		} else if (err == NULL) {
 			FAIL("%s(%s %s %s) should have failed",
 			     what,
-			     pri_family(t->from.family),
+			     pri_afi(t->from.afi),
 			     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 			     (t->from.protoport != NULL ? t->from.protoport : "N/A"));
 		} else {
 			continue;
 		}
 
-		CHECK_FAMILY(t->from.family, selector, selector);
+		CHECK_AFI(t->from.afi, selector, selector);
 
 		if (t->selector != NULL) {
 			selector_buf sb;
@@ -140,13 +140,13 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 static err_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
 						      ip_selector *selector)
 {
-	if (s->family == 0) {
+	if (s->afi == NULL) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
 	ip_address address;
-	err_t err = ttoaddress_num(shunk1(s->addresses), IP_TYPE(s->family), &address);
+	err_t err = ttoaddress_num(shunk1(s->addresses), s->afi, &address);
 	if (err != NULL) {
 		return err;
 	}
@@ -164,8 +164,8 @@ static err_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
 static void check_selector_from_address_protoport(void)
 {
 	static const struct from_test tests[] = {
-		{ LN, { 4, "128.0.0.0", "0/0", }, "128.0.0.0/32", "128.0.0.0", "128.0.0.0", 32, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "8000::", "16/10", }, "8000::/128/CHAOS/10", "8000::", "8000::", 128, 0, 16, 10, { 0, 10, }, },
+		{ LN, { &ipv4_info, "128.0.0.0", "0/0", }, "128.0.0.0/32", "128.0.0.0", "128.0.0.0", 32, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "8000::", "16/10", }, "8000::/128/CHAOS/10", "8000::", "8000::", 128, 0, 16, 10, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests),
 			    "selector(ttoaddress(),ttoprotoport())",
@@ -175,14 +175,14 @@ static void check_selector_from_address_protoport(void)
 static err_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
 						     ip_selector *selector)
 {
-	if (s->family == 0) {
+	if (s->afi == NULL) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
 	ip_subnet subnet;
 	ip_address nonzero_host;
-	err_t err = ttosubnet_num(shunk1(s->addresses), IP_TYPE(s->family),
+	err_t err = ttosubnet_num(shunk1(s->addresses), s->afi,
 				  &subnet, &nonzero_host);
 	if (err != NULL) {
 		return err;
@@ -206,26 +206,26 @@ static void check_selector_from_subnet_protoport(void)
 {
 	static const struct from_test tests[] = {
 		/* zero port implied */
-		{ LN, { 4, "0.0.0.0/0", "0/0", }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 0, 32, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "::0/0", "0/0", }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "101.102.0.0/16", "0/0", }, "101.102.0.0/16", "101.102.0.0", "101.102.255.255", 16, 16, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1001:1002:1003:1004::/64", "0/0", }, "1001:1002:1003:1004::/64", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "101.102.103.104/32", "0/0", }, "101.102.103.104/32", "101.102.103.104", "101.102.103.104", 32, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 128, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "0.0.0.0/0", "0/0", }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 0, 32, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "::0/0", "0/0", }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "101.102.0.0/16", "0/0", }, "101.102.0.0/16", "101.102.0.0", "101.102.255.255", 16, 16, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1001:1002:1003:1004::/64", "0/0", }, "1001:1002:1003:1004::/64", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "101.102.103.104/32", "0/0", }, "101.102.103.104/32", "101.102.103.104", "101.102.103.104", 32, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1001:1002:1003:1004:1005:1006:1007:1008/128", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 128, 0, 0, 0, { 0, 0, }, },
 		/* "reserved" zero port specified; reject? */
-		{ LN, { 4, "0.0.0.0/0", "0/0", }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 0, 32, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "::0/0", "0/0", }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "101.102.0.0/16", "0/0", }, "101.102.0.0/16", "101.102.0.0", "101.102.255.255", 16, 16, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1001:1002:1003:1004::/64", "0/0", }, "1001:1002:1003:1004::/64", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "101.102.103.104/32", "0/0", }, "101.102.103.104/32", "101.102.103.104", "101.102.103.104", 32, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 128, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "0.0.0.0/0", "0/0", }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 0, 32, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "::0/0", "0/0", }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "101.102.0.0/16", "0/0", }, "101.102.0.0/16", "101.102.0.0", "101.102.255.255", 16, 16, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1001:1002:1003:1004::/64", "0/0", }, "1001:1002:1003:1004::/64", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "101.102.103.104/32", "0/0", }, "101.102.103.104/32", "101.102.103.104", "101.102.103.104", 32, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1001:1002:1003:1004:1005:1006:1007:1008/128", "0/0", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 128, 0, 0, 0, { 0, 0, }, },
 		/* non-zero port mixed with mask; only allow when /32/128? */
-		{ LN, { 4, "0.0.0.0/0", "16/65534", }, "0.0.0.0/0/CHAOS/65534", "0.0.0.0", "255.255.255.255", 0, 32, 16, 65534, { 255, 254, }, },
-		{ LN, { 6, "::0/0", "16/65534", }, "::/0/CHAOS/65534", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 16, 65534, { 255, 254, }, },
-		{ LN, { 4, "101.102.0.0/16", "16/65534", }, "101.102.0.0/16/CHAOS/65534", "101.102.0.0", "101.102.255.255", 16, 16, 16, 65534, { 255, 254, }, },
-		{ LN, { 6, "1001:1002:1003:1004::/64", "16/65534", }, "1001:1002:1003:1004::/64/CHAOS/65534", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 64, 64, 16, 65534, { 255, 254, }, },
-		{ LN, { 4, "101.102.103.104/32", "16/65534", }, "101.102.103.104/32/CHAOS/65534", "101.102.103.104", "101.102.103.104", 32, 0, 16, 65534, { 255, 254, }, },
-		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008/128/CHAOS/65534", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 128, 0, 16, 65534, { 255, 254, }, },
+		{ LN, { &ipv4_info, "0.0.0.0/0", "16/65534", }, "0.0.0.0/0/CHAOS/65534", "0.0.0.0", "255.255.255.255", 0, 32, 16, 65534, { 255, 254, }, },
+		{ LN, { &ipv6_info, "::0/0", "16/65534", }, "::/0/CHAOS/65534", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 16, 65534, { 255, 254, }, },
+		{ LN, { &ipv4_info, "101.102.0.0/16", "16/65534", }, "101.102.0.0/16/CHAOS/65534", "101.102.0.0", "101.102.255.255", 16, 16, 16, 65534, { 255, 254, }, },
+		{ LN, { &ipv6_info, "1001:1002:1003:1004::/64", "16/65534", }, "1001:1002:1003:1004::/64/CHAOS/65534", "1001:1002:1003:1004::", "1001:1002:1003:1004:ffff:ffff:ffff:ffff", 64, 64, 16, 65534, { 255, 254, }, },
+		{ LN, { &ipv4_info, "101.102.103.104/32", "16/65534", }, "101.102.103.104/32/CHAOS/65534", "101.102.103.104", "101.102.103.104", 32, 0, 16, 65534, { 255, 254, }, },
+		{ LN, { &ipv6_info, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008/128/CHAOS/65534", "1001:1002:1003:1004:1005:1006:1007:1008", "1001:1002:1003:1004:1005:1006:1007:1008", 128, 0, 16, 65534, { 255, 254, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "selector(ttosubnet(),ttoprotoport())",
 			    do_selector_from_ttosubnet_ttoprotoport);
@@ -233,13 +233,13 @@ static void check_selector_from_subnet_protoport(void)
 
 static err_t do_selector_from_ttoselector(const struct selector *s, ip_selector *selector)
 {
-	if (s->family == 0) {
+	if (s->afi == NULL) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
 	ip_address nonzero_host;
-	err_t e = ttoselector_num(shunk1(s->addresses), IP_TYPE(s->family),
+	err_t e = ttoselector_num(shunk1(s->addresses), s->afi,
 				  selector, &nonzero_host);
 	if (e != NULL) {
 		return e;
@@ -254,33 +254,33 @@ static void check_ttoselector_num(void)
 {
 	static const struct from_test tests[] = {
 		/* address (no mask) */
-		{ LN, { 4, "1.2.3.4", NULL, }, "1.2.3.4/32", "1.2.3.4", "1.2.3.4", 32, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1:2:3:4:5:6:7:8", NULL, }, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", 128, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.4", NULL, }, "1.2.3.4/32", "1.2.3.4", "1.2.3.4", 32, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1:2:3:4:5:6:7:8", NULL, }, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", 128, 0, 0, 0, { 0, 0, }, },
 		/* address/mask */
-		{ LN, { 4, "0.0.0.0/0", NULL, }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 0, 32, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.0.0/16", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 16, 16, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.3.4/32", NULL, }, "1.2.3.4/32", "1.2.3.4", "1.2.3.4", 32, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "::0/0", NULL, }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1:2:3:4::/64", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1:2:3:4:5:6:7:8/128", NULL, }, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", 128, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "0.0.0.0/0", NULL, }, "0.0.0.0/0", "0.0.0.0", "255.255.255.255", 0, 32, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.0.0/16", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 16, 16, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.4/32", NULL, }, "1.2.3.4/32", "1.2.3.4", "1.2.3.4", 32, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "::0/0", NULL, }, "::/0", "::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 0, 128, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1:2:3:4::/64", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1:2:3:4:5:6:7:8/128", NULL, }, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", 128, 0, 0, 0, { 0, 0, }, },
 		/* address/mask/protocol */
-		{ LN, { 4, "1.2.0.0/16/0", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 16, 16, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "1:2:3:4::/64/0", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.0.0/16/udp", NULL, }, "1.2.0.0/16/UDP", "1.2.0.0", "1.2.255.255", 16, 16, 17, 0, { 0, 0, }, },
-		{ LN, { 6, "1:2:3:4::/64/udp", NULL, }, "1:2:3:4::/64/UDP", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 17, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.0.0/16/0", NULL, }, "1.2.0.0/16", "1.2.0.0", "1.2.255.255", 16, 16, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1:2:3:4::/64/0", NULL, }, "1:2:3:4::/64", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.0.0/16/udp", NULL, }, "1.2.0.0/16/UDP", "1.2.0.0", "1.2.255.255", 16, 16, 17, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "1:2:3:4::/64/udp", NULL, }, "1:2:3:4::/64/UDP", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 17, 0, { 0, 0, }, },
 		/* address/mask/protocol/port */
-		{ LN, { 4, "1.2.0.0/16/udp/65534", NULL, }, "1.2.0.0/16/UDP/65534", "1.2.0.0", "1.2.255.255", 16, 16, 17, 65534, { 255, 254, }, },
-		{ LN, { 6, "1:2:3:4::/64/udp/65534", NULL, }, "1:2:3:4::/64/UDP/65534", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 17, 65534, { 255, 254, }, },
+		{ LN, { &ipv4_info, "1.2.0.0/16/udp/65534", NULL, }, "1.2.0.0/16/UDP/65534", "1.2.0.0", "1.2.255.255", 16, 16, 17, 65534, { 255, 254, }, },
+		{ LN, { &ipv6_info, "1:2:3:4::/64/udp/65534", NULL, }, "1:2:3:4::/64/UDP/65534", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 17, 65534, { 255, 254, }, },
 		/* hex/octal */
-		{ LN, { 4, "1.2.0.0/16/tcp/0xfffe", NULL, }, "1.2.0.0/16/TCP/65534", "1.2.0.0", "1.2.255.255", 16, 16, 6, 65534, { 255, 254, }, },
-		{ LN, { 6, "1:2:3:4::/64/udp/0177776", NULL, }, "1:2:3:4::/64/UDP/65534", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 17, 65534, { 255, 254, }, },
+		{ LN, { &ipv4_info, "1.2.0.0/16/tcp/0xfffe", NULL, }, "1.2.0.0/16/TCP/65534", "1.2.0.0", "1.2.255.255", 16, 16, 6, 65534, { 255, 254, }, },
+		{ LN, { &ipv6_info, "1:2:3:4::/64/udp/0177776", NULL, }, "1:2:3:4::/64/UDP/65534", "1:2:3:4::", "1:2:3:4:ffff:ffff:ffff:ffff", 64, 64, 17, 65534, { 255, 254, }, },
 		/* invalid */
-		{ LN, { 4, "", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.3.4/33", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.3.4/24", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.3.0/24:-1/-1", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.3.0/24/-1/-1", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
-		{ LN, { 4, "1.2.3.0/24/none/", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.4/33", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.4/24", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.0/24:-1/-1", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.0/24/-1/-1", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv4_info, "1.2.3.0/24/none/", NULL, }, NULL, NULL, NULL, 0, 0, 0, 0, { 0, 0, }, },
 	};
 
 	check_selector_from(tests, elemsof(tests), "selector(ttoselector())",
@@ -290,13 +290,13 @@ static void check_ttoselector_num(void)
 static err_t do_selector_from_ttorange(const struct selector *s,
 				       ip_selector *selector)
 {
-	if (s->family == 0) {
+	if (s->afi == NULL) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
 	ip_range range;
-	err_t err = ttorange_num(shunk1(s->addresses), IP_TYPE(s->family), &range);
+	err_t err = ttorange_num(shunk1(s->addresses), s->afi, &range);
 	if (err != NULL) {
 		return err;
 	}
@@ -308,8 +308,8 @@ static err_t do_selector_from_ttorange(const struct selector *s,
 static void check_selector_from_range(void)
 {
 	static const struct from_test tests[] = {
-		{ LN, { 4, "0.1.2.3-0.1.2.7", "0/0", }, "0.1.2.3-0.1.2.7", "0.1.2.3", "0.1.2.7", -1, -1, 0, 0, { 0, 0, }, },
-		{ LN, { 6, "0123::-0127::", "0/0", }, "123::-127::", "123::", "127::", -1, -1, 0, 0, { 0, 10, }, },
+		{ LN, { &ipv4_info, "0.1.2.3-0.1.2.7", "0/0", }, "0.1.2.3-0.1.2.7", "0.1.2.3", "0.1.2.7", -1, -1, 0, 0, { 0, 0, }, },
+		{ LN, { &ipv6_info, "0123::-0127::", "0/0", }, "123::-127::", "123::", "127::", -1, -1, 0, 0, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests),
 			    "selector(ttorange())",
@@ -329,24 +329,24 @@ static void check_selector_is(void)
 		/* all */
 		{ LN, { 0, NULL, NULL, },            .is_unset = true, },
 		/* all */
-		{ LN, { 4, "0.0.0.0/0", "0/0", },    .is_all = true, },
-		{ LN, { 6, "::/0", "0/0", },         .is_all = true, },
+		{ LN, { &ipv4_info, "0.0.0.0/0", "0/0", },    .is_all = true, },
+		{ LN, { &ipv6_info, "::/0", "0/0", },         .is_all = true, },
 		/* some */
-		{ LN, { 4, "127.0.0.0/31", "0/0", }, .is_unset = false, },
-		{ LN, { 6, "8000::/127", "0/0", },   .is_unset = false, },
+		{ LN, { &ipv4_info, "127.0.0.0/31", "0/0", }, .is_unset = false, },
+		{ LN, { &ipv6_info, "8000::/127", "0/0", },   .is_unset = false, },
 		/* one */
-		{ LN, { 4, "127.0.0.1/32", "0/0", }, .contains_one_address = true, },
-		{ LN, { 6, "8000::/128", "0/0", },   .contains_one_address = true, },
+		{ LN, { &ipv4_info, "127.0.0.1/32", "0/0", }, .contains_one_address = true, },
+		{ LN, { &ipv6_info, "8000::/128", "0/0", },   .contains_one_address = true, },
 		/* none */
-		{ LN, { 4, "0.0.0.0/32", "0/0", },   .is_zero = true, },
-		{ LN, { 6, "::/128", "0/0", },       .is_zero = true, },
+		{ LN, { &ipv4_info, "0.0.0.0/32", "0/0", },   .is_zero = true, },
+		{ LN, { &ipv6_info, "::/128", "0/0", },       .is_zero = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		err_t err;
 		const struct test *t = &tests[ti];
 		PRINT("%s subnet=%s protoport=%s unset=%s zero=%s all=%s one=%s",
-		      pri_family(t->from.family),
+		      pri_afi(t->from.afi),
 		      t->from.addresses != NULL ? t->from.addresses : "<unset>",
 		      t->from.protoport != NULL ? t->from.protoport : "<unset>",
 		      bool_str(t->is_unset),

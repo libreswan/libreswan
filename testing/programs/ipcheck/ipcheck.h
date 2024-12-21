@@ -48,19 +48,7 @@ extern void ip_packet_check(void);
 extern unsigned fails;
 extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 
-#define pri_family(FAMILY) ((FAMILY) == 0 ? "0" :	\
-			    (FAMILY) == 4 ? "IPv4" :	\
-			    (FAMILY) == 6 ? "IPv6" :	\
-			    " ???")
-
-#define SA_FAMILY(FAMILY) ((FAMILY) == 0 ? AF_UNSPEC :	\
-			   (FAMILY) == 4 ? AF_INET :	\
-			   (FAMILY) == 6 ? AF_INET6 :	\
-			   -1)
-
-#define IP_TYPE(FAMILY) ((FAMILY) == 4 ? &ipv4_info :	\
-			 (FAMILY) == 6 ? &ipv6_info :	\
-			 NULL)
+#define pri_afi(AFI) ((AFI) == NULL ? "0" : (AFI)->ip_name)
 
 #define PREFIX(FILE)							\
 	{								\
@@ -105,10 +93,10 @@ extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 		continue;						\
 	}
 
-#define CHECK_FAMILY(FAMILY, T, V)					\
+#define CHECK_AFI(AFI, T, V)						\
 	{								\
 		const struct ip_info *actual = T##_type(V);		\
-		const struct ip_info *expected = IP_TYPE(FAMILY);	\
+		const struct ip_info *expected = (AFI);			\
 		if (expected != actual) {				\
 			T##_buf tb;					\
 			const char *en = (actual == NULL ? "unset" :	\
@@ -120,8 +108,8 @@ extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 		}							\
 	}
 
-#define CHECK_TYPE(T)				\
-	CHECK_FAMILY(t->family, T, T)
+#define CHECK_INFO(T)				\
+	CHECK_AFI(t->afi, T, T)
 
 #define CHECK_STR(BUF, OP, EXPECTED, ...)				\
 		{							\

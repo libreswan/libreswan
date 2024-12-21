@@ -25,39 +25,39 @@ static void check__ttocidr_num(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *str;
 	} tests[] = {
-		{ LN, 4, "128.0.0.0/0", "128.0.0.0/0", },
-		{ LN, 6, "8000::/0", "8000::/0", },
+		{ LN, &ipv4_info, "128.0.0.0/0", "128.0.0.0/0", },
+		{ LN, &ipv6_info, "8000::/0", "8000::/0", },
 
-		{ LN, 4, "128.0.0.0/1", "128.0.0.0/1", },
-		{ LN, 6, "8000::/1", "8000::/1", },
+		{ LN, &ipv4_info, "128.0.0.0/1", "128.0.0.0/1", },
+		{ LN, &ipv6_info, "8000::/1", "8000::/1", },
 
-		{ LN, 4, "1.2.255.4/23", "1.2.255.4/23", },
-		{ LN, 4, "1.2.255.255/24", "1.2.255.255/24", },
-		{ LN, 4, "1.2.3.255/25", "1.2.3.255/25", },
+		{ LN, &ipv4_info, "1.2.255.4/23", "1.2.255.4/23", },
+		{ LN, &ipv4_info, "1.2.255.255/24", "1.2.255.255/24", },
+		{ LN, &ipv4_info, "1.2.3.255/25", "1.2.3.255/25", },
 
-		{ LN, 6, "1:2:3:ffff::/63", "1:2:3:ffff::/63", },
-		{ LN, 6, "1:2:3:ffff:ffff::/64", "1:2:3:ffff:ffff::/64", },
-		{ LN, 6, "1:2:3:4:ffff::/65", "1:2:3:4:ffff::/65", },
+		{ LN, &ipv6_info, "1:2:3:ffff::/63", "1:2:3:ffff::/63", },
+		{ LN, &ipv6_info, "1:2:3:ffff:ffff::/64", "1:2:3:ffff:ffff::/64", },
+		{ LN, &ipv6_info, "1:2:3:4:ffff::/65", "1:2:3:4:ffff::/65", },
 
-		{ LN, 4, "1.2.3.255/31", "1.2.3.255/31", },
-		{ LN, 4, "1.2.3.255/32", "1.2.3.255/32", },
-		{ LN, 6, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:ffff/127", },
-		{ LN, 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff/128", },
+		{ LN, &ipv4_info, "1.2.3.255/31", "1.2.3.255/31", },
+		{ LN, &ipv4_info, "1.2.3.255/32", "1.2.3.255/32", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:ffff/127", "1:2:3:4:5:6:7:ffff/127", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff/128", },
 
 		/* no mask */
-		{ LN, 4, "1.2.3.4",  "1.2.3.4/32", },
-		{ LN, 6, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8/128", },
+		{ LN, &ipv4_info, "1.2.3.4",  "1.2.3.4/32", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8/128", },
 
 		/* empty */
-		{ LN, 4, "", NULL, },
-		{ LN, 6, "", NULL, },
+		{ LN, &ipv4_info, "", NULL, },
+		{ LN, &ipv6_info, "", NULL, },
 		/* mask out-of-bounds */
-		{ LN, 4, "1.2.3.255/33", NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:ffff/129", NULL, },
+		{ LN, &ipv4_info, "1.2.3.255/33", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:ffff/129", NULL, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -65,7 +65,7 @@ static void check__ttocidr_num(void)
 		PRINT("%s %s ", t->in, t->str != NULL ? t->str : "ERROR");
 
 		ip_cidr tmp, *cidr = &tmp;
-		err_t err = ttocidr_num(shunk1(t->in), IP_TYPE(t->family), cidr);
+		err_t err = ttocidr_num(shunk1(t->in), t->afi, cidr);
 		if (err != NULL) {
 			if (t->str != NULL) {
 				FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
@@ -75,7 +75,7 @@ static void check__ttocidr_num(void)
 			FAIL("numeric_to_cidr() unexpectedly succeeded");
 		}
 
-		CHECK_TYPE(cidr);
+		CHECK_INFO(cidr);
 		CHECK_STR2(cidr);
 	}
 }
@@ -84,24 +84,24 @@ static void check_cidr_is()
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		bool specified;
 	} tests[] = {
 		/* default route */
-		{ LN, 4, "0.0.0.0/0", false, },
-		{ LN, 6, "::/0", false, },
+		{ LN, &ipv4_info, "0.0.0.0/0", false, },
+		{ LN, &ipv6_info, "::/0", false, },
 
 		/* unspecified address */
-		{ LN, 4, "0.0.0.0/32", false, },
-		{ LN, 4, "0.0.0.0/24", false, },
-		{ LN, 4, "0.0.0.0/16", false, },
-		{ LN, 6, "::/128", false, },
-		{ LN, 6, "::/64", false, },
+		{ LN, &ipv4_info, "0.0.0.0/32", false, },
+		{ LN, &ipv4_info, "0.0.0.0/24", false, },
+		{ LN, &ipv4_info, "0.0.0.0/16", false, },
+		{ LN, &ipv6_info, "::/128", false, },
+		{ LN, &ipv6_info, "::/64", false, },
 
 		/* something valid */
-		{ LN, 4, "127.0.0.1/32", true, },
-		{ LN, 6, "::1/128", true, },
+		{ LN, &ipv4_info, "127.0.0.1/32", true, },
+		{ LN, &ipv6_info, "::1/128", true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -109,7 +109,7 @@ static void check_cidr_is()
 		PRINT("%s %s ", t->in, bool_str(t->specified));
 
 		ip_cidr cidr;
-		err_t err = ttocidr_num(shunk1(t->in), IP_TYPE(t->family), &cidr);
+		err_t err = ttocidr_num(shunk1(t->in), t->afi, &cidr);
 		if (err != NULL) {
 			FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
 		}

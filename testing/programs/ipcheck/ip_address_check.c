@@ -28,7 +28,7 @@ static void check_ttoaddress_num(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *str;
 	} tests[] = {
@@ -37,95 +37,95 @@ static void check_ttoaddress_num(void)
 		{ LN, 0, "", NULL, },
 
 		/* any */
-		{ LN, 4, "0.0.0.0", "0.0.0.0", },
-		{ LN, 6, "::", "::", },
-		{ LN, 6, "0:0:0:0:0:0:0:0", "::", },
+		{ LN, &ipv4_info, "0.0.0.0", "0.0.0.0", },
+		{ LN, &ipv6_info, "::", "::", },
+		{ LN, &ipv6_info, "0:0:0:0:0:0:0:0", "::", },
 
 		/* local (zero's fill) */
-		{ LN, 4, "127.1", "127.0.0.1", },
-		{ LN, 4, "127.0.1", "127.0.0.1", },
-		{ LN, 4, "127.0.0.1", "127.0.0.1", },
-		{ LN, 6, "::1", "::1", },
-		{ LN, 6, "0:0:0:0:0:0:0:1", "::1", },
+		{ LN, &ipv4_info, "127.1", "127.0.0.1", },
+		{ LN, &ipv4_info, "127.0.1", "127.0.0.1", },
+		{ LN, &ipv4_info, "127.0.0.1", "127.0.0.1", },
+		{ LN, &ipv6_info, "::1", "::1", },
+		{ LN, &ipv6_info, "0:0:0:0:0:0:0:1", "::1", },
 
 		/* mask - and buffer overflow */
-		{ LN, 4, "255.255.255.255", "255.255.255.255", },
-		{ LN, 6, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ LN, &ipv4_info, "255.255.255.255", "255.255.255.255", },
+		{ LN, &ipv6_info, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 
 		/* all bytes */
-		{ LN, 4, "1.2.3.4", "1.2.3.4", },
-		{ LN, 6, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
+		{ LN, &ipv4_info, "1.2.3.4", "1.2.3.4", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
 
 		/* last digit is a big num - see wikepedia */
-		{ LN, 4, "127.254", "127.0.0.254", },
-		{ LN, 4, "127.65534", "127.0.255.254", },
-		{ LN, 4, "127.16777214", "127.255.255.254", },
+		{ LN, &ipv4_info, "127.254", "127.0.0.254", },
+		{ LN, &ipv4_info, "127.65534", "127.0.255.254", },
+		{ LN, &ipv4_info, "127.16777214", "127.255.255.254", },
 		/* last digit overflow */
-		{ LN, 4, "127.16777216", NULL, },
-		{ LN, 4, "127.0.65536", NULL, },
-		{ LN, 4, "127.0.0.256", NULL, },
+		{ LN, &ipv4_info, "127.16777216", NULL, },
+		{ LN, &ipv4_info, "127.0.65536", NULL, },
+		{ LN, &ipv4_info, "127.0.0.256", NULL, },
 
 		/* hex/octal */
-		{ LN, 4, "0x01.0x02.0x03.0x04", "1.2.3.4", },
-		{ LN, 4, "0001.0002.0003.0004", "1.2.3.4", },
-		{ LN, 4, "0x01020304", "1.2.3.4", },
+		{ LN, &ipv4_info, "0x01.0x02.0x03.0x04", "1.2.3.4", },
+		{ LN, &ipv4_info, "0001.0002.0003.0004", "1.2.3.4", },
+		{ LN, &ipv4_info, "0x01020304", "1.2.3.4", },
 
 		/* trailing garbage */
-		{ LN, 4, "1.2.3.4.", NULL, },
-		{ LN, 4, "1.2.3.4a", NULL, },
-		{ LN, 4, "1.2.3.0a", NULL, },
+		{ LN, &ipv4_info, "1.2.3.4.", NULL, },
+		{ LN, &ipv4_info, "1.2.3.4a", NULL, },
+		{ LN, &ipv4_info, "1.2.3.0a", NULL, },
 
 		/* bad digits */
-		{ LN, 4, "256.2.3.4", NULL, },
-		{ LN, 4, "0008.2.3.4", NULL, },
-		{ LN, 4, "0x0g.2.3.4", NULL, },
+		{ LN, &ipv4_info, "256.2.3.4", NULL, },
+		{ LN, &ipv4_info, "0008.2.3.4", NULL, },
+		{ LN, &ipv4_info, "0x0g.2.3.4", NULL, },
 
 		/* good :: */
 
 		/* suppress leading zeros - 01 vs 1 */
-		{ LN, 6, "0001:0012:0003:0014:0005:0016:0007:0018", "1:12:3:14:5:16:7:18", },
+		{ LN, &ipv6_info, "0001:0012:0003:0014:0005:0016:0007:0018", "1:12:3:14:5:16:7:18", },
 		/* drop leading 0:0: */
-		{ LN, 6, "::3:4:5:6:7:8", "::3:4:5:6:7:8", },
-		{ LN, 6, "0:0:3:4:5:6:7:8", "::3:4:5:6:7:8", },
+		{ LN, &ipv6_info, "::3:4:5:6:7:8", "::3:4:5:6:7:8", },
+		{ LN, &ipv6_info, "0:0:3:4:5:6:7:8", "::3:4:5:6:7:8", },
 		/* drop middle 0:...:0 */
-		{ LN, 6, "1:2::7:8", "1:2::7:8", },
-		{ LN, 6, "1:2:0:0:0:0:7:8", "1:2::7:8", },
+		{ LN, &ipv6_info, "1:2::7:8", "1:2::7:8", },
+		{ LN, &ipv6_info, "1:2:0:0:0:0:7:8", "1:2::7:8", },
 		/* drop trailing :0..:0 */
-		{ LN, 6, "1:2:3:4:5::", "1:2:3:4:5::", },
-		{ LN, 6, "1:2:3:4:5:0:0:0", "1:2:3:4:5::", },
+		{ LN, &ipv6_info, "1:2:3:4:5::", "1:2:3:4:5::", },
+		{ LN, &ipv6_info, "1:2:3:4:5:0:0:0", "1:2:3:4:5::", },
 		/* drop first 0:..:0 */
-		{ LN, 6, "1:2::5:6:0:0", "1:2::5:6:0:0", },
-		{ LN, 6, "1:2:0:0:5:6:0:0", "1:2::5:6:0:0", },
+		{ LN, &ipv6_info, "1:2::5:6:0:0", "1:2::5:6:0:0", },
+		{ LN, &ipv6_info, "1:2:0:0:5:6:0:0", "1:2::5:6:0:0", },
 		/* drop logest 0:..:0 */
-		{ LN, 6, "0:0:3::7:8", "0:0:3::7:8", },
-		{ LN, 6, "0:0:3:0:0:0:7:8", "0:0:3::7:8", },
+		{ LN, &ipv6_info, "0:0:3::7:8", "0:0:3::7:8", },
+		{ LN, &ipv6_info, "0:0:3:0:0:0:7:8", "0:0:3::7:8", },
 		/* need two 0 */
-		{ LN, 6, "0:2:0:4:0:6:0:8", "0:2:0:4:0:6:0:8", },
+		{ LN, &ipv6_info, "0:2:0:4:0:6:0:8", "0:2:0:4:0:6:0:8", },
 
 		/* bad: ::: */
-		{ LN, 6, ":::", NULL, },
-		{ LN, 6, "::::", NULL, },
-		{ LN, 6, "1:::", NULL, },
-		{ LN, 6, ":::1", NULL, },
-		{ LN, 6, "1:::1", NULL, },
+		{ LN, &ipv6_info, ":::", NULL, },
+		{ LN, &ipv6_info, "::::", NULL, },
+		{ LN, &ipv6_info, "1:::", NULL, },
+		{ LN, &ipv6_info, ":::1", NULL, },
+		{ LN, &ipv6_info, "1:::1", NULL, },
 
 		/* bad: ::..:: */
-		{ LN, 6, "::1::", NULL, },
-		{ LN, 6, "1::1::", NULL, },
-		{ LN, 6, "::1::1", NULL, },
-		{ LN, 6, "1::1::1", NULL, },
+		{ LN, &ipv6_info, "::1::", NULL, },
+		{ LN, &ipv6_info, "1::1::", NULL, },
+		{ LN, &ipv6_info, "::1::1", NULL, },
+		{ LN, &ipv6_info, "1::1::1", NULL, },
 
 		/* bad: too short / too long */
-		{ LN, 6, "1:2:3:4:5:6:7", NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:8:9", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8:9", NULL, },
 
 		/* bad: leading/trailing : */
-		{ LN, 6, "1:2:3:4:5:6:7:", NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:8:", NULL, },
-		{ LN, 6, ":2:3:4:5:6:7:8", NULL, },
-		{ LN, 6, ":1:2:3:4:5:6:7:8", NULL, },
-		{ LN, 6, ":2:3:4:5:6:7:", NULL, },
-		{ LN, 6, ":1:2:3:4:5:6:7:8:", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8:", NULL, },
+		{ LN, &ipv6_info, ":2:3:4:5:6:7:8", NULL, },
+		{ LN, &ipv6_info, ":1:2:3:4:5:6:7:8", NULL, },
+		{ LN, &ipv6_info, ":2:3:4:5:6:7:", NULL, },
+		{ LN, &ipv6_info, ":1:2:3:4:5:6:7:8:", NULL, },
 	};
 
 	err_t err;
@@ -143,9 +143,12 @@ static void check_ttoaddress_num(void)
 		 *   ttoaddress_dns() (but only when it should work)
 		 */
 
-		FOR_EACH_THING(family, 0, 4, 6) {
-			const struct ip_info *afi = IP_TYPE(family);
-			bool err_expected = (t->str == NULL || (family != 0 && family != t->family));
+		const struct ip_info *afis[] = { 0, &ipv4_info, &ipv6_info, };
+
+		FOR_EACH_ELEMENT(afip, afis) {
+			const struct ip_info *afi = (*afip);
+			bool err_expected = (t->str == NULL ||
+					     (afi != NULL && afi != t->afi));
 
 			struct lookup {
 				const char *name;
@@ -177,7 +180,7 @@ static void check_ttoaddress_num(void)
 				bool skip = (lookup->need_dns && have_dns != DNS_YES);
 
 				PRINT("%s('%s', %s) -> '%s'%s",
-				      lookup->name, t->in, pri_family(family),
+				      lookup->name, t->in, pri_afi(afi),
 				      err_expected ? "ERROR" : t->str,
 				      skip ? "; skipped as no DNS" : "");
 
@@ -190,13 +193,13 @@ static void check_ttoaddress_num(void)
 				if (err_expected) {
 					if (err == NULL) {
 						FAIL("%s(%s, %s) unexpecedly succeeded",
-						     lookup->name, t->in, pri_family(family));
+						     lookup->name, t->in, pri_afi(afi));
 					}
 					PRINT("%s(%s, %s) returned: %s",
-					      lookup->name, t->in, pri_family(family), err);
+					      lookup->name, t->in, pri_afi(afi), err);
 				} else if (err != NULL) {
 					FAIL("%s(%s, %s) unexpecedly failed: %s",
-					     lookup->name, t->in, pri_family(family), err);
+					     lookup->name, t->in, pri_afi(afi), err);
 				} else {
 					CHECK_STR2(address);
 				}
@@ -209,7 +212,7 @@ static void check_ttoaddress_dns(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *str;
 		bool need_dns;
@@ -217,20 +220,20 @@ static void check_ttoaddress_dns(void)
 
 		/* localhost is found in /etc/hosts on all platforms */
 		{ LN, 0, "localhost", "127.0.0.1", false, },
-		{ LN, 4, "localhost", "127.0.0.1", false, },
-		{ LN, 6, "localhost", "::1",       false, },
+		{ LN, &ipv4_info, "localhost", "127.0.0.1", false, },
+		{ LN, &ipv6_info, "localhost", "::1",       false, },
 
 		{ LN, 0, "www.libreswan.org", "188.127.201.229", true, },
-		{ LN, 4, "www.libreswan.org", "188.127.201.229", true, },
-		{ LN, 6, "www.libreswan.org", "2a00:1190:c00a:f00::229", true, },
+		{ LN, &ipv4_info, "www.libreswan.org", "188.127.201.229", true, },
+		{ LN, &ipv6_info, "www.libreswan.org", "2a00:1190:c00a:f00::229", true, },
 
 		{ LN, 0, "nowhere.libreswan.org", NULL, true, },
-		{ LN, 4, "nowhere.libreswan.org", NULL, true, },
-		{ LN, 6, "nowhere.libreswan.org", NULL, true, },
+		{ LN, &ipv4_info, "nowhere.libreswan.org", NULL, true, },
+		{ LN, &ipv6_info, "nowhere.libreswan.org", NULL, true, },
 
 		{ LN, 0, "", NULL, false, },
-		{ LN, 4, "", NULL, false, },
-		{ LN, 6, "", NULL, false, },
+		{ LN, &ipv4_info, "", NULL, false, },
+		{ LN, &ipv6_info, "", NULL, false, },
 
 	};
 
@@ -238,11 +241,11 @@ static void check_ttoaddress_dns(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		const struct ip_info *afi = IP_TYPE(t->family);
+		const struct ip_info *afi = t->afi;
 		bool skip = (have_dns == DNS_NO || (have_dns != DNS_YES && t->need_dns));
 
 		PRINT("%s '%s' -> str: '%s' lookup: %s%s",
-		      pri_family(t->family), t->in,
+		      pri_afi(t->afi), t->in,
 		      t->str == NULL ? "ERROR" : t->str,
 		      (t->need_dns ? "DNS" : "/etc/hosts"),
 		      (skip ? "; skipped as no DNS" : ""));
@@ -256,22 +259,22 @@ static void check_ttoaddress_dns(void)
 		if (err != NULL) {
 			if (t->str != NULL) {
 				FAIL("ttoaddress_dns(%s, %s) unexpecedly failed: %s",
-				     t->in, pri_family(t->family), err);
+				     t->in, pri_afi(t->afi), err);
 			}
 			PRINT("ttoaddress_dns(%s, %s) failed as expected: %s",
-			      t->in, pri_family(t->family), err);
+			      t->in, pri_afi(t->afi), err);
 		} else if (t->str == NULL) {
 			address_buf b;
 			FAIL("ttoaddress_dns(%s, %s) unexpecedly succeeded with %s",
-			     t->in, pri_family(t->family),
+			     t->in, pri_afi(t->afi),
 			     str_address(address, &b));
 		} else {
 			address_buf b;
 			PRINT("ttoaddress_dns(%s, %s) succeeded with %s",
-			      t->in, pri_family(t->family),
+			      t->in, pri_afi(t->afi),
 			      str_address(address, &b));
-			if (t->family != 0) {
-				CHECK_TYPE(address);
+			if (t->afi != NULL) {
+				CHECK_INFO(address);
 			}
 			/* and back */
 			CHECK_STR2(address);
@@ -283,17 +286,17 @@ static void check_str_address_sensitive(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *out;
 	} tests[] = {
-		{ LN, 4, "1.2.3.4",			"<address>" },
-		{ LN, 6, "1:12:3:14:5:16:7:18",	"<address>" },
+		{ LN, &ipv4_info, "1.2.3.4",			"<address>" },
+		{ LN, &ipv6_info, "1:12:3:14:5:16:7:18",	"<address>" },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> '%s'", pri_family(t->family), t->in, t->out);
+		PRINT("%s '%s' -> '%s'", pri_afi(t->afi), t->in, t->out);
 
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
@@ -302,7 +305,7 @@ static void check_str_address_sensitive(void)
 		if (err != NULL) {
 			FAIL("ttoaddress_num() failed: %s", err);
 		}
-		CHECK_TYPE(address);
+		CHECK_INFO(address);
 		CHECK_STR(address_buf, address_sensitive, t->out, address);
 	}
 }
@@ -311,19 +314,19 @@ static void check_str_address_reversed(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *out;                   /* NULL means error expected */
 	} tests[] = {
-		{ LN, 4, "1.2.3.4", "4.3.2.1.IN-ADDR.ARPA." },
+		{ LN, &ipv4_info, "1.2.3.4", "4.3.2.1.IN-ADDR.ARPA." },
 		/* 0 1 2 3 4 5 6 7 8 9 a b c d e f 0 1 2 3 4 5 6 7 8 9 a b c d e f */
-		{ LN, 6, "0123:4567:89ab:cdef:1234:5678:9abc:def0",
+		{ LN, &ipv6_info, "0123:4567:89ab:cdef:1234:5678:9abc:def0",
 		  "0.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.f.e.d.c.b.a.9.8.7.6.5.4.3.2.1.0.IP6.ARPA.", }
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> '%s", pri_family(t->family), t->in, t->out);
+		PRINT("%s '%s' -> '%s", pri_afi(t->afi), t->in, t->out);
 
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
@@ -332,7 +335,7 @@ static void check_str_address_reversed(void)
 		if (err != NULL) {
 			FAIL("ttoaddress_num() returned: %s", err);
 		}
-		CHECK_TYPE(address);
+		CHECK_INFO(address);
 		CHECK_STR(address_reversed_buf, address_reversed, t->out, address);
 	}
 }
@@ -341,28 +344,28 @@ static void check_in_addr(void)
 {
 	static const struct test {
 		int line;
-		const int family;
+		const struct ip_info *afi;
 		const char *in;
 		uint8_t addr[16];
 	} tests[] = {
-		{ LN, 4, "1.2.3.4", { 1, 2, 3, 4, }, },
-		{ LN, 6, "102:304:506:708:90a:b0c:d0e:f10", { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, }, },
+		{ LN, &ipv4_info, "1.2.3.4", { 1, 2, 3, 4, }, },
+		{ LN, &ipv6_info, "102:304:506:708:90a:b0c:d0e:f10", { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, }, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> '%s'", pri_family(t->family), t->in, t->in);
+		PRINT("%s '%s' -> '%s'", pri_afi(t->afi), t->in, t->in);
 
 		ip_address a;
-		switch (t->family) {
-		case 4:
+		switch (t->afi->ip_version) {
+		case IPv4:
 		{
 			struct in_addr in;
 			memcpy(&in, t->addr, sizeof(in));
 			a = address_from_in_addr(&in);
 			break;
 		}
-		case 6:
+		case IPv6:
 		{
 			struct in6_addr in6;
 			memcpy(&in6, t->addr, sizeof(in6));
@@ -370,7 +373,8 @@ static void check_in_addr(void)
 			break;
 		}
 		default:
-			FAIL("test %zd has invalid family %d", ti, t->family);
+			FAIL("test %zd has invalid family %s", ti,
+			     pri_afi(t->afi));
 		}
 
 		/* as a string */
@@ -390,29 +394,29 @@ static void check_address_is(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		bool is_unset;
 		bool is_specified;
 		bool is_loopback;
 	} tests[] = {
 		{ LN, 0, "<invalid>",		.is_unset = true, },
-		{ LN, 4, "0.0.0.0",		.is_unset = false, },
-		{ LN, 6, "::",			.is_unset = false, },
-		{ LN, 4, "1.2.3.4",		.is_specified = true, },
-		{ LN, 6, "1:12:3:14:5:16:7:18",	.is_specified = true, },
-		{ LN, 4, "127.0.0.1",		.is_specified = true, .is_loopback = true, },
-		{ LN, 6, "::1",			.is_specified = true, .is_loopback = true, },
+		{ LN, &ipv4_info, "0.0.0.0",		.is_unset = false, },
+		{ LN, &ipv6_info, "::",			.is_unset = false, },
+		{ LN, &ipv4_info, "1.2.3.4",		.is_specified = true, },
+		{ LN, &ipv6_info, "1:12:3:14:5:16:7:18",	.is_specified = true, },
+		{ LN, &ipv4_info, "127.0.0.1",		.is_specified = true, .is_loopback = true, },
+		{ LN, &ipv6_info, "::1",			.is_specified = true, .is_loopback = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s'-> unset: %s, specified: %s", pri_family(t->family), t->in,
+		PRINT("%s '%s'-> unset: %s, specified: %s", pri_afi(t->afi), t->in,
 		      bool_str(t->is_unset), bool_str(t->is_specified));
 
 		/* convert it *to* internal format */
 		ip_address tmp, *address = &tmp;
-		if (t->family == 0) {
+		if (t->afi == NULL) {
 			tmp = unset_address;
 		} else {
 			const struct ip_info *type = NULL;
@@ -432,7 +436,7 @@ static void check_addresses_to(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *lo;
 		const char *hi;
 		const char *subnet;	/* NULL means error expected */
@@ -440,40 +444,40 @@ static void check_addresses_to(void)
 	} tests[] = {
 
 		/* zero-zero; zero-one */
-		{ LN, 4, "0.0.0.0", "0.0.0.0", NULL, NULL, },
-		{ LN, 6, "::",      "::",      NULL, NULL, },
-		{ LN, 4, "0.0.0.0", "0.0.0.1", "0.0.0.0/31", NULL, },
-		{ LN, 6, "::",      "::1",     "::/127", NULL, },
+		{ LN, &ipv4_info, "0.0.0.0", "0.0.0.0", NULL, NULL, },
+		{ LN, &ipv6_info, "::",      "::",      NULL, NULL, },
+		{ LN, &ipv4_info, "0.0.0.0", "0.0.0.1", "0.0.0.0/31", NULL, },
+		{ LN, &ipv6_info, "::",      "::1",     "::/127", NULL, },
 
 		/* single address */
-		{ LN, 4, "1.2.3.0",    "1.2.3.0",   "1.2.3.0/32", NULL, },
-		{ LN, 6, "::1",        "::1",       "::1/128", NULL, },
-		{ LN, 4, "1.2.3.4",    "1.2.3.4",   "1.2.3.4/32", NULL, },
+		{ LN, &ipv4_info, "1.2.3.0",    "1.2.3.0",   "1.2.3.0/32", NULL, },
+		{ LN, &ipv6_info, "::1",        "::1",       "::1/128", NULL, },
+		{ LN, &ipv4_info, "1.2.3.4",    "1.2.3.4",   "1.2.3.4/32", NULL, },
 
 		/* subnet */
-		{ LN, 4, "1.2.3.8",    "1.2.3.15", "1.2.3.8/29", NULL, },
-		{ LN, 4, "1.2.3.240",  "1.2.3.255", "1.2.3.240/28", NULL, },
-		{ LN, 4, "0.0.0.0",    "255.255.255.255", "0.0.0.0/0", NULL, },
-		{ LN, 4, "1.2.0.0",    "1.2.255.255", "1.2.0.0/16", NULL, },
-		{ LN, 4, "1.2.0.0",    "1.2.0.255", "1.2.0.0/24", NULL, },
-		{ LN, 4, "1.2.255.0",  "1.2.255.255", "1.2.255.0/24", NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112", NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116", NULL, },
-		{ LN, 6, "1:2:3:4:5:6:7:f0",  "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124", NULL, },
+		{ LN, &ipv4_info, "1.2.3.8",    "1.2.3.15", "1.2.3.8/29", NULL, },
+		{ LN, &ipv4_info, "1.2.3.240",  "1.2.3.255", "1.2.3.240/28", NULL, },
+		{ LN, &ipv4_info, "0.0.0.0",    "255.255.255.255", "0.0.0.0/0", NULL, },
+		{ LN, &ipv4_info, "1.2.0.0",    "1.2.255.255", "1.2.0.0/16", NULL, },
+		{ LN, &ipv4_info, "1.2.0.0",    "1.2.0.255", "1.2.0.0/24", NULL, },
+		{ LN, &ipv4_info, "1.2.255.0",  "1.2.255.255", "1.2.255.0/24", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:ffff", "1:2:3:4:5:6:7:0/112", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:0",   "1:2:3:4:5:6:7:fff", "1:2:3:4:5:6:7:0/116", NULL, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:f0",  "1:2:3:4:5:6:7:ff", "1:2:3:4:5:6:7:f0/124", NULL, },
 
 		/* range only */
-		{ LN, 4, "1.2.3.0",    "1.2.3.254", NULL, "1.2.3.0-1.2.3.254", },
-		{ LN, 4, "1.2.3.0",    "1.2.3.126", NULL, "1.2.3.0-1.2.3.126", },
-		{ LN, 4, "1.2.3.0",    "1.2.3.125", NULL, "1.2.3.0-1.2.3.125", },
-		{ LN, 4, "1.2.255.1",  "1.2.255.255", NULL, "1.2.255.1-1.2.255.255", },
-		{ LN, 4, "1.2.0.1",    "1.2.255.255", NULL, "1.2.0.1-1.2.255.255", },
+		{ LN, &ipv4_info, "1.2.3.0",    "1.2.3.254", NULL, "1.2.3.0-1.2.3.254", },
+		{ LN, &ipv4_info, "1.2.3.0",    "1.2.3.126", NULL, "1.2.3.0-1.2.3.126", },
+		{ LN, &ipv4_info, "1.2.3.0",    "1.2.3.125", NULL, "1.2.3.0-1.2.3.125", },
+		{ LN, &ipv4_info, "1.2.255.1",  "1.2.255.255", NULL, "1.2.255.1-1.2.255.255", },
+		{ LN, &ipv4_info, "1.2.0.1",    "1.2.255.255", NULL, "1.2.0.1-1.2.255.255", },
 
 		/* all */
-		{ LN, 4, "0.0.0.0", IPv4_MAX, "0.0.0.0/0", NULL, },
-		{ LN, 6, "::",      IPv6_MAX, "::/0",      NULL, },
+		{ LN, &ipv4_info, "0.0.0.0", IPv4_MAX, "0.0.0.0/0", NULL, },
+		{ LN, &ipv6_info, "::",      IPv6_MAX, "::/0",      NULL, },
 
 		/* wrong order */
-		{ LN, 4, "1.2.255.0",  "1.2.254.255", NULL, NULL, },
+		{ LN, &ipv4_info, "1.2.255.0",  "1.2.254.255", NULL, NULL, },
 	};
 
 	const char *oops;
@@ -486,7 +490,7 @@ static void check_addresses_to(void)
 		      t->range == NULL ? "<bad-range>" : t->range,
 		      t->subnet == NULL ? "<bad-subnet>" : t->subnet);
 
-		const struct ip_info *type = IP_TYPE(t->family);
+		const struct ip_info *type = t->afi;
 
 		ip_address lo;
 		oops = ttoaddress_num(shunk1(t->lo), type, &lo);

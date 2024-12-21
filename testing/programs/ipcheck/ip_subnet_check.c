@@ -26,103 +26,103 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		char *in;
 		char *str;	/* NULL means error expected */
 		bool zeroed;	/* true means host part was zeroed */
 	} tests[] = {
-		{ LN, 4, "", NULL, false, },
+		{ LN, &ipv4_info, "", NULL, false, },
 
-		{ LN, 4, "0.0.0.0/0", "0.0.0.0/0", false, },
-		{ LN, 6, "::/0", "::/0", false, },
+		{ LN, &ipv4_info, "0.0.0.0/0", "0.0.0.0/0", false, },
+		{ LN, &ipv6_info, "::/0", "::/0", false, },
 
-		{ LN, 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24", false, },
-		{ LN, 4, "1.2.3.0/24", "1.2.3.0/24", false, },
-		{ LN, 4, "1.2.3.0/255.255.255.240", "1.2.3.0/28", false, },
-		{ LN, 4, "1.2.3.1/32", "1.2.3.1/32", false, },
-		{ LN, 4, "1.2.3.1/31", "1.2.3.0/31", true, },
+		{ LN, &ipv4_info, "1.2.3.0/255.255.255.0", "1.2.3.0/24", false, },
+		{ LN, &ipv4_info, "1.2.3.0/24", "1.2.3.0/24", false, },
+		{ LN, &ipv4_info, "1.2.3.0/255.255.255.240", "1.2.3.0/28", false, },
+		{ LN, &ipv4_info, "1.2.3.1/32", "1.2.3.1/32", false, },
+		{ LN, &ipv4_info, "1.2.3.1/31", "1.2.3.0/31", true, },
 /*	{4, "1.2.3.0/255.255.127.0",	"1.2.3.0/255.255.127.0"}, */
-		{ LN, 4, "1.2.3.1/255.255.127.0", NULL, false, },
-		{ LN, 4, "1.2.3.1/255.255.128.0", "1.2.0.0/17", true, },
-		{ LN, 4, "128.0007.0000.0032/32", "128.7.0.26/32", false, },
-		{ LN, 4, "128.0x0f.0.32/32", "128.15.0.32/32", false, },
-		{ LN, 4, "0x80090020/32", "128.9.0.32/32", false, },
-		{ LN, 4, "0x800x0020/32", NULL, false, },
-		{ LN, 4, "128.9.0.0/0xffFF0000", "128.9.0.0/16", false, },
-		{ LN, 4, "128.9.0.32/0xff0000FF", NULL, false, },
-		{ LN, 4, "128.9.0.32/0x0000ffFF", NULL, false, },
-		{ LN, 4, "128.9.0.32/0x00ffFF0000", NULL, false, },
-		{ LN, 4, "128.9.0.32/0xffFF", NULL, false, },
-		{ LN, 4, "128.9.0.32.27/32", NULL, false, },
-		{ LN, 4, "128.9.0k32/32", NULL, false, },
-		{ LN, 4, "328.9.0.32/32", NULL, false, },
-		{ LN, 4, "128.9..32/32", NULL, false, },
-		{ LN, 4, "10/8", "10.0.0.0/8", false, },
-		{ LN, 4, "10.0/8", "10.0.0.0/8", false, },
-		{ LN, 4, "10.0.0/8", "10.0.0.0/8", false, },
-		{ LN, 4, "10.0.1.0/24", "10.0.1.0/24", false, },
-		{ LN, 4, "_", NULL, false, },
-		{ LN, 4, "_/_", NULL, false, },
-		{ LN, 4, "1.2.3.1/_", NULL, false, },
-		{ LN, 4, "1.2.3.1/24._", NULL, false, },
-		{ LN, 4, "1.2.3.1/99", NULL, false, },
-		{ LN, 4, "localhost/32", NULL, false, },
+		{ LN, &ipv4_info, "1.2.3.1/255.255.127.0", NULL, false, },
+		{ LN, &ipv4_info, "1.2.3.1/255.255.128.0", "1.2.0.0/17", true, },
+		{ LN, &ipv4_info, "128.0007.0000.0032/32", "128.7.0.26/32", false, },
+		{ LN, &ipv4_info, "128.0x0f.0.32/32", "128.15.0.32/32", false, },
+		{ LN, &ipv4_info, "0x80090020/32", "128.9.0.32/32", false, },
+		{ LN, &ipv4_info, "0x800x0020/32", NULL, false, },
+		{ LN, &ipv4_info, "128.9.0.0/0xffFF0000", "128.9.0.0/16", false, },
+		{ LN, &ipv4_info, "128.9.0.32/0xff0000FF", NULL, false, },
+		{ LN, &ipv4_info, "128.9.0.32/0x0000ffFF", NULL, false, },
+		{ LN, &ipv4_info, "128.9.0.32/0x00ffFF0000", NULL, false, },
+		{ LN, &ipv4_info, "128.9.0.32/0xffFF", NULL, false, },
+		{ LN, &ipv4_info, "128.9.0.32.27/32", NULL, false, },
+		{ LN, &ipv4_info, "128.9.0k32/32", NULL, false, },
+		{ LN, &ipv4_info, "328.9.0.32/32", NULL, false, },
+		{ LN, &ipv4_info, "128.9..32/32", NULL, false, },
+		{ LN, &ipv4_info, "10/8", "10.0.0.0/8", false, },
+		{ LN, &ipv4_info, "10.0/8", "10.0.0.0/8", false, },
+		{ LN, &ipv4_info, "10.0.0/8", "10.0.0.0/8", false, },
+		{ LN, &ipv4_info, "10.0.1.0/24", "10.0.1.0/24", false, },
+		{ LN, &ipv4_info, "_", NULL, false, },
+		{ LN, &ipv4_info, "_/_", NULL, false, },
+		{ LN, &ipv4_info, "1.2.3.1/_", NULL, false, },
+		{ LN, &ipv4_info, "1.2.3.1/24._", NULL, false, },
+		{ LN, &ipv4_info, "1.2.3.1/99", NULL, false, },
+		{ LN, &ipv4_info, "localhost/32", NULL, false, },
 
-		{ LN, 6, "3049:1::8007:2040/128", "3049:1::8007:2040/128", false, },
-		{ LN, 6, "3049:1::192.168.0.1/128", NULL, false, },	/*"3049:1::c0a8:1/128",*/
-		{ LN, 6, "3049:1::8007::2040/128", NULL, false, },
-		{ LN, 6, "3049:1::8007:2040/ffff:0", NULL, false, },
-		{ LN, 6, "3049:1::/64", "3049:1::/64", false, },
-		{ LN, 6, "3049:1::8007:2040/ffff:", NULL, false, },
-		{ LN, 6, "3049:1::8007:2040/0000:ffff::0", NULL, false, },
-		{ LN, 6, "3049:1::8007:2040/ff1f:0", NULL, false, },
-		{ LN, 6, "3049:1::8007:x:2040/128", NULL, false, },
-		{ LN, 6, "3049:1t::8007:2040/128", NULL, false, },
-		{ LN, 6, "3049:1::80071:2040/128", NULL, false, },
-		{ LN, 6, "::/21", "::/21", false, },
-		{ LN, 6, "::1/128", "::1/128", false, },
-		{ LN, 6, "::1/127", "::/127", true, },
-		{ LN, 6, "1::/21", "1::/21", false, },
-		{ LN, 6, "1::2/128", "1::2/128", false, },
-		{ LN, 6, "1:0:0:0:0:0:0:2/128", "1::2/128", false, },
-		{ LN, 6, "1:0:0:0:3:0:0:2/128", "1::3:0:0:2/128", false, },
-		{ LN, 6, "1:0:0:3:0:0:0:2/128", "1:0:0:3::2/128", false, },
-		{ LN, 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", false, },
-		{ LN, 6, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", false, },
-		{ LN, 6, "3049:1::8007:2040/ffff:ffff:", NULL, false, },
-		{ LN, 6, "3049:1::8007:2040/ffff:88:", NULL, false, },
-		{ LN, 6, "3049:12::9000:3200/ffff:fff0", NULL, false, },
-		{ LN, 6, "3049:10::/28", "3049:10::/28", false, },
-		{ LN, 6, "3049:12::9000:3200/ff00:", NULL, false, },
-		{ LN, 6, "3049:12::9000:3200/ffff:", NULL, false, },
-		{ LN, 6, "3049:12::9000:3200/128_", NULL, false, },
-		{ LN, 6, "3049:12::9000:3200/", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/128", "3049:1::8007:2040/128", false, },
+		{ LN, &ipv6_info, "3049:1::192.168.0.1/128", NULL, false, },	/*"3049:1::c0a8:1/128",*/
+		{ LN, &ipv6_info, "3049:1::8007::2040/128", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/ffff:0", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::/64", "3049:1::/64", false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/ffff:", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/0000:ffff::0", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/ff1f:0", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::8007:x:2040/128", NULL, false, },
+		{ LN, &ipv6_info, "3049:1t::8007:2040/128", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::80071:2040/128", NULL, false, },
+		{ LN, &ipv6_info, "::/21", "::/21", false, },
+		{ LN, &ipv6_info, "::1/128", "::1/128", false, },
+		{ LN, &ipv6_info, "::1/127", "::/127", true, },
+		{ LN, &ipv6_info, "1::/21", "1::/21", false, },
+		{ LN, &ipv6_info, "1::2/128", "1::2/128", false, },
+		{ LN, &ipv6_info, "1:0:0:0:0:0:0:2/128", "1::2/128", false, },
+		{ LN, &ipv6_info, "1:0:0:0:3:0:0:2/128", "1::3:0:0:2/128", false, },
+		{ LN, &ipv6_info, "1:0:0:3:0:0:0:2/128", "1:0:0:3::2/128", false, },
+		{ LN, &ipv6_info, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", false, },
+		{ LN, &ipv6_info, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/ffff:ffff:", NULL, false, },
+		{ LN, &ipv6_info, "3049:1::8007:2040/ffff:88:", NULL, false, },
+		{ LN, &ipv6_info, "3049:12::9000:3200/ffff:fff0", NULL, false, },
+		{ LN, &ipv6_info, "3049:10::/28", "3049:10::/28", false, },
+		{ LN, &ipv6_info, "3049:12::9000:3200/ff00:", NULL, false, },
+		{ LN, &ipv6_info, "3049:12::9000:3200/ffff:", NULL, false, },
+		{ LN, &ipv6_info, "3049:12::9000:3200/128_", NULL, false, },
+		{ LN, &ipv6_info, "3049:12::9000:3200/", NULL, false, },
 
-		{ LN, 4, "%default", "0.0.0.0/0", false, },
-		{ LN, 6, "%default", "::/0", false, },
+		{ LN, &ipv4_info, "%default", "0.0.0.0/0", false, },
+		{ LN, &ipv6_info, "%default", "::/0", false, },
 
 		/* no mask */
-		{ LN, 4, "1.2.3.4", "1.2.3.4/32", false, },
-		{ LN, 6, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8/128", false },
+		{ LN, &ipv4_info, "1.2.3.4", "1.2.3.4/32", false, },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8/128", false },
 
 		/* any:0 */
-		{ LN, 4, "0.0.0.0/0:0", NULL, false, },
-		{ LN, 6, "::/0:0", NULL, false, },
+		{ LN, &ipv4_info, "0.0.0.0/0:0", NULL, false, },
+		{ LN, &ipv6_info, "::/0:0", NULL, false, },
 		/* longest:port */
-		{ LN, 4, "101.102.103.104/32:65535", NULL, false, },
-		{ LN, 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", NULL, false, },
+		{ LN, &ipv4_info, "101.102.103.104/32:65535", NULL, false, },
+		{ LN, &ipv6_info, "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", NULL, false, },
 	};
 
 	const char *oops;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> '%s'", pri_family(t->family), t->in,
+		PRINT("%s '%s' -> '%s'", pri_afi(t->afi), t->in,
 		      t->str == NULL ? "<error>" : t->str);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+		oops = ttosubnet_num(shunk1(t->in), t->afi,
 				     subnet, &nonzero_host);
 		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
@@ -140,7 +140,7 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 			     t->in, bool_str(nonzero_host.is_set), bool_str(t->zeroed));
 		}
 
-		CHECK_TYPE(subnet);
+		CHECK_INFO(subnet);
 		CHECK_STR2(subnet);
 	}
 }
@@ -149,31 +149,31 @@ static void check_subnet_mask(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *mask;
 	} tests[] = {
-		{ LN, 4, "0.0.0.0/1", "128.0.0.0", },
-		{ LN, 4, "1.2.0.0/23", "255.255.254.0", },
-		{ LN, 4, "1.2.3.0/24", "255.255.255.0", },
-		{ LN, 4, "1.2.3.0/25", "255.255.255.128", },
-		{ LN, 4, "1.2.3.4/31", "255.255.255.254", },
-		{ LN, 4, "1.2.3.4/32", "255.255.255.255", },
-		{ LN, 6, "0::/1", "8000::", },
-		{ LN, 6, "1:2:3:4::/63", "ffff:ffff:ffff:fffe::", },
-		{ LN, 6, "1:2:3:4::/64", "ffff:ffff:ffff:ffff::", },
-		{ LN, 6, "1:2:3:4::/65", "ffff:ffff:ffff:ffff:8000::", },
-		{ LN, 6, "1:2:3:4:5:6:7:8/127", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", },
-		{ LN, 6, "1:2:3:4:5:6:7:8/128", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ LN, &ipv4_info, "0.0.0.0/1", "128.0.0.0", },
+		{ LN, &ipv4_info, "1.2.0.0/23", "255.255.254.0", },
+		{ LN, &ipv4_info, "1.2.3.0/24", "255.255.255.0", },
+		{ LN, &ipv4_info, "1.2.3.0/25", "255.255.255.128", },
+		{ LN, &ipv4_info, "1.2.3.4/31", "255.255.255.254", },
+		{ LN, &ipv4_info, "1.2.3.4/32", "255.255.255.255", },
+		{ LN, &ipv6_info, "0::/1", "8000::", },
+		{ LN, &ipv6_info, "1:2:3:4::/63", "ffff:ffff:ffff:fffe::", },
+		{ LN, &ipv6_info, "1:2:3:4::/64", "ffff:ffff:ffff:ffff::", },
+		{ LN, &ipv6_info, "1:2:3:4::/65", "ffff:ffff:ffff:ffff:8000::", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8/127", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8/128", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->mask);
+		PRINT("%s '%s' -> %s", pri_afi(t->afi), t->in, t->mask);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+		err_t oops = ttosubnet_num(shunk1(t->in), t->afi,
 					   subnet, &nonzero_host);
 		if (oops != NULL) {
 			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
@@ -182,7 +182,7 @@ static void check_subnet_mask(void)
 			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
 		}
 
-		CHECK_TYPE(subnet);
+		CHECK_INFO(subnet);
 
 		address_buf buf;
 		const char *out;
@@ -193,7 +193,7 @@ static void check_subnet_mask(void)
 			FAIL("subnet_mask() returned '%s', expected '%s'",
 				out, t->mask);
 		}
-		CHECK_FAMILY(t->family, address, &mask);
+		CHECK_AFI(t->afi, address, &mask);
 	}
 }
 
@@ -201,33 +201,33 @@ static void check_subnet_prefix(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *out;
 	} tests[] = {
-		{ LN, 4, "128.0.0.0/1", "128.0.0.0", },
-		{ LN, 6, "8000::/1", "8000::", },
+		{ LN, &ipv4_info, "128.0.0.0/1", "128.0.0.0", },
+		{ LN, &ipv6_info, "8000::/1", "8000::", },
 
-		{ LN, 4, "1.2.254.0/23", "1.2.254.0", },
-		{ LN, 4, "1.2.255.0/24", "1.2.255.0", },
-		{ LN, 4, "1.2.255.128/25", "1.2.255.128", },
-		{ LN, 6, "1:2:3:fffe::/63", "1:2:3:fffe::", },
-		{ LN, 6, "1:2:3:ffff::/64", "1:2:3:ffff::", },
-		{ LN, 6, "1:2:3:ffff:8000::/65", "1:2:3:ffff:8000::", },
+		{ LN, &ipv4_info, "1.2.254.0/23", "1.2.254.0", },
+		{ LN, &ipv4_info, "1.2.255.0/24", "1.2.255.0", },
+		{ LN, &ipv4_info, "1.2.255.128/25", "1.2.255.128", },
+		{ LN, &ipv6_info, "1:2:3:fffe::/63", "1:2:3:fffe::", },
+		{ LN, &ipv6_info, "1:2:3:ffff::/64", "1:2:3:ffff::", },
+		{ LN, &ipv6_info, "1:2:3:ffff:8000::/65", "1:2:3:ffff:8000::", },
 
-		{ LN, 4, "1.2.3.254/31", "1.2.3.254", },
-		{ LN, 4, "1.2.3.255/32", "1.2.3.255", },
-		{ LN, 6, "1:2:3:4:5:6:7:fffe/127", "1:2:3:4:5:6:7:fffe", },
-		{ LN, 6, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff", },
+		{ LN, &ipv4_info, "1.2.3.254/31", "1.2.3.254", },
+		{ LN, &ipv4_info, "1.2.3.255/32", "1.2.3.255", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:fffe/127", "1:2:3:4:5:6:7:fffe", },
+		{ LN, &ipv6_info, "1:2:3:4:5:6:7:ffff/128", "1:2:3:4:5:6:7:ffff", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->out);
+		PRINT("%s '%s' -> %s", pri_afi(t->afi), t->in, t->out);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+		err_t oops = ttosubnet_num(shunk1(t->in), t->afi,
 					   subnet, &nonzero_host);
 		if (oops != NULL) {
 			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
@@ -236,10 +236,10 @@ static void check_subnet_prefix(void)
 			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
 		}
 
-		CHECK_TYPE(subnet);
+		CHECK_INFO(subnet);
 
 		ip_address prefix = subnet_prefix(*subnet);
-		CHECK_FAMILY(t->family, address, &prefix);
+		CHECK_AFI(t->afi, address, &prefix);
 
 		address_buf buf;
 		const char *out = str_address(&prefix, &buf);
@@ -254,7 +254,7 @@ static void check_subnet_is(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		bool is_unset;
 		uintmax_t size;
@@ -264,23 +264,23 @@ static void check_subnet_is(void)
 		/* unset */
 		{ LN, 0, NULL,           .is_unset = true, },
 		/* no_addresses */
-		{ LN, 4, "0.0.0.0/32",   .size = 1, .is_zero = true, },
-		{ LN, 6, "::/128",       .size = 1, .is_zero = true, },
+		{ LN, &ipv4_info, "0.0.0.0/32",   .size = 1, .is_zero = true, },
+		{ LN, &ipv6_info, "::/128",       .size = 1, .is_zero = true, },
 		/* one_address */
-		{ LN, 4, "127.0.0.1/32", .size = 1, },
-		{ LN, 6, "::1/128",      .size = 1, },
+		{ LN, &ipv4_info, "127.0.0.1/32", .size = 1, },
+		{ LN, &ipv6_info, "::1/128",      .size = 1, },
 		/* some_address+one_address? */
-		{ LN, 4, "127.0.0.0/31", .size = 2, },
-		{ LN, 6, "1::/127",      .size = 2, },
+		{ LN, &ipv4_info, "127.0.0.0/31", .size = 2, },
+		{ LN, &ipv6_info, "1::/127",      .size = 2, },
 		/* all addresses */
-		{ LN, 4, "0.0.0.0/0",    .size = (uintmax_t)1 << 32, .is_all = true, },
-		{ LN, 6, "::/0",         .size = UINTMAX_MAX,        .is_all = true, },
+		{ LN, &ipv4_info, "0.0.0.0/0",    .size = (uintmax_t)1 << 32, .is_all = true, },
+		{ LN, &ipv6_info, "::/0",         .size = UINTMAX_MAX,        .is_all = true, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s %s unset=%s size=%ju zero=%s all=%s",
-		      pri_family(t->family),
+		      pri_afi(t->afi),
 		      t->in != NULL ? t->in : "<unset>",
 		      bool_str(t->is_unset),
 		      t->size,
@@ -288,9 +288,9 @@ static void check_subnet_is(void)
 		      bool_str(t->is_all));
 
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
-		if (t->family != 0) {
+		if (t->afi != NULL) {
 			ip_address nonzero_host;
-			err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+			err_t oops = ttosubnet_num(shunk1(t->in), t->afi,
 						   &tmp, &nonzero_host);
 			if (oops != NULL) {
 				FAIL("ttosubnet(%s) failed: %s", t->in, oops);
@@ -298,7 +298,7 @@ static void check_subnet_is(void)
 			if (nonzero_host.is_set) {
 				FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 			}
-			CHECK_TYPE(subnet);
+			CHECK_INFO(subnet);
 		}
 
 		CHECK_COND(subnet, is_unset);
@@ -312,21 +312,21 @@ static void check_subnet_from_address(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		const char *prefix_mask;
 	} tests[] = {
-		{ LN, 4, "0.0.0.0",   "255.255.255.255", },
-		{ LN, 6, "::",        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
-		{ LN, 4, "127.0.0.1", "255.255.255.255", },
-		{ LN, 6, "::1",       "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ LN, &ipv4_info, "0.0.0.0",   "255.255.255.255", },
+		{ LN, &ipv6_info, "::",        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
+		{ LN, &ipv4_info, "127.0.0.1", "255.255.255.255", },
+		{ LN, &ipv6_info, "::1",       "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s'", pri_family(t->family), t->in);
+		PRINT("%s '%s'", pri_afi(t->afi), t->in);
 
-		const struct ip_info *type = IP_TYPE(t->family);
+		const struct ip_info *type = t->afi;
 
 		ip_address a;
 		err_t oops = ttoaddress_num(shunk1(t->in), type, &a);
@@ -336,7 +336,7 @@ static void check_subnet_from_address(void)
 
 		ip_subnet tmp = subnet_from_address(a), *subnet = &tmp;
 
-		CHECK_TYPE(subnet);
+		CHECK_INFO(subnet);
 
 		ip_address prefix = subnet_prefix(*subnet);
 		if (!sameaddr(&prefix, &a)) {

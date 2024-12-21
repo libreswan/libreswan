@@ -31,7 +31,7 @@ void ip_endpoint_check(void)
 	 */
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const char *in;
 		uint16_t hport;
 		const char *str;
@@ -41,25 +41,25 @@ void ip_endpoint_check(void)
 		bool is_any;
 	} tests[] = {
 		/* anything else? */
-		{ LN, 4, "1.2.3.4",	65535, "1.2.3.4:65535", { 255, 255, }, .is_specified = true, },
-		{ LN, 4, "255.255.255.255",	65535, "255.255.255.255:65535", { 255, 255, }, .is_specified = true, },
-		{ LN, 6, "1:12:3:14:5:16:7:18", 65535, "[1:12:3:14:5:16:7:18]:65535", { 255, 255, }, .is_specified = true, },
-		{ LN, 6, "11:22:33:44:55:66:77:88",	65535, "[11:22:33:44:55:66:77:88]:65535", { 255, 255, }, .is_specified = true, },
+		{ LN, &ipv4_info, "1.2.3.4",	65535, "1.2.3.4:65535", { 255, 255, }, .is_specified = true, },
+		{ LN, &ipv4_info, "255.255.255.255",	65535, "255.255.255.255:65535", { 255, 255, }, .is_specified = true, },
+		{ LN, &ipv6_info, "1:12:3:14:5:16:7:18", 65535, "[1:12:3:14:5:16:7:18]:65535", { 255, 255, }, .is_specified = true, },
+		{ LN, &ipv6_info, "11:22:33:44:55:66:77:88",	65535, "[11:22:33:44:55:66:77:88]:65535", { 255, 255, }, .is_specified = true, },
 
 		/* treat special different ? */
-		{ LN, 4, "0.0.0.1", 65535, "0.0.0.1:65535", { 255, 255, }, .is_specified = true, },
-		{ LN, 6, "::1", 65535, "[::1]:65535", { 255, 255, }, .is_specified = true, },
+		{ LN, &ipv4_info, "0.0.0.1", 65535, "0.0.0.1:65535", { 255, 255, }, .is_specified = true, },
+		{ LN, &ipv6_info, "::1", 65535, "[::1]:65535", { 255, 255, }, .is_specified = true, },
 
 		/* never suppress the port */
-		{ LN, 4, "0.0.0.0", 0, "0.0.0.0:0", { 0, 0, }, .is_any = true, },
-		{ LN, 6, "::", 0, "[::]:0", { 0, 0, }, .is_any = true, },
+		{ LN, &ipv4_info, "0.0.0.0", 0, "0.0.0.0:0", { 0, 0, }, .is_any = true, },
+		{ LN, &ipv6_info, "::", 0, "[::]:0", { 0, 0, }, .is_any = true, },
 		/* not valid, hence not specified */
-		{ LN, 4, "0.0.0.0", 1, "0.0.0.0:1", { 0, 1, }, .is_specified = false, },
-		{ LN, 6, "::", 1, "[::]:1", { 0, 1, }, .is_specified = false, },
+		{ LN, &ipv4_info, "0.0.0.0", 1, "0.0.0.0:1", { 0, 1, }, .is_specified = false, },
+		{ LN, &ipv6_info, "::", 1, "[::]:1", { 0, 1, }, .is_specified = false, },
 
 		/* longest */
-		{ LN, 4, "101.102.103.104", 65534, "101.102.103.104:65534", { 255, 254, }, .is_specified = true, },
-		{ LN, 6, "1001:1002:1003:1004:1005:1006:1007:1008", 65534, "[1001:1002:1003:1004:1005:1006:1007:1008]:65534", { 255, 254, }, .is_specified = true, },
+		{ LN, &ipv4_info, "101.102.103.104", 65534, "101.102.103.104:65534", { 255, 254, }, .is_specified = true, },
+		{ LN, &ipv6_info, "1001:1002:1003:1004:1005:1006:1007:1008", 65534, "[1001:1002:1003:1004:1005:1006:1007:1008]:65534", { 255, 254, }, .is_specified = true, },
 
 	};
 
@@ -67,9 +67,9 @@ void ip_endpoint_check(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s'%d->%s", pri_family(t->family), t->in, t->hport, t->str);
+		PRINT("%s '%s'%d->%s", pri_afi(t->afi), t->in, t->hport, t->str);
 
-		const struct ip_info *type = IP_TYPE(t->family);
+		const struct ip_info *type = t->afi;
 
 		ip_address a;
 		oops = ttoaddress_num(shunk1(t->in), type, &a);
@@ -97,7 +97,7 @@ void ip_endpoint_check(void)
 			};
 		}
 
-		CHECK_TYPE(endpoint);
+		CHECK_INFO(endpoint);
 
 		/*
 		 * str_endpoint() / jam_endpoint()

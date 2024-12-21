@@ -28,7 +28,7 @@ void ip_packet_check(void)
 {
 	static const struct test {
 		int line;
-		int family;
+		const struct ip_info *afi;
 		const struct ip_protocol *protocol;
 		const char *sa;
 		int sp;
@@ -37,11 +37,11 @@ void ip_packet_check(void)
 		const char *str;
 	} tests[] = {
 		/* normal */
-		{ LN, 4, &ip_protocol_tcp, "1.2.3.4", 1, "1.2.3.4", 65535, "1.2.3.4:1-TCP->1.2.3.4:65535", },
-		{ LN, 6, &ip_protocol_tcp, "::1", 1, "::2", 65535, "[::1]:1-TCP->[::2]:65535", },
+		{ LN, &ipv4_info, &ip_protocol_tcp, "1.2.3.4", 1, "1.2.3.4", 65535, "1.2.3.4:1-TCP->1.2.3.4:65535", },
+		{ LN, &ipv6_info, &ip_protocol_tcp, "::1", 1, "::2", 65535, "[::1]:1-TCP->[::2]:65535", },
 		/* ephemeral source port */
-		{ LN, 4, &ip_protocol_tcp, "1.2.3.4", 0, "1.2.3.4", 65535, "1.2.3.4-TCP->1.2.3.4:65535", },
-		{ LN, 6, &ip_protocol_tcp, "::1", 0, "::2", 65535, "[::1]-TCP->[::2]:65535", },
+		{ LN, &ipv4_info, &ip_protocol_tcp, "1.2.3.4", 0, "1.2.3.4", 65535, "1.2.3.4-TCP->1.2.3.4:65535", },
+		{ LN, &ipv6_info, &ip_protocol_tcp, "::1", 0, "::2", 65535, "[::1]-TCP->[::2]:65535", },
 	};
 
 	const char *oops;
@@ -51,7 +51,7 @@ void ip_packet_check(void)
 		PRINT("[%s]:%d %s [%s]:%d => %s",
 		      t->sa, t->sp, t->protocol->name, t->da, t->dp, t->str);
 
-		const struct ip_info *afi = IP_TYPE(t->family);
+		const struct ip_info *afi = t->afi;
 
 		ip_port src_port = ip_hport(t->sp);
 		ip_port dst_port = ip_hport(t->dp);
