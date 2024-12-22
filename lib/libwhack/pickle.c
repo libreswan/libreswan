@@ -365,8 +365,8 @@ static bool pickle_whack_message(struct whackpacker *wp,
 				 struct logger *logger)
 {
 	return (PICKLE_STRING(&wp->msg->name) && /* first */
-		pickle_whack_end(wp, "left", &wp->msg->left, pickle, logger) &&
-		pickle_whack_end(wp, "right",&wp->msg->right, pickle, logger) &&
+		pickle_whack_end(wp, "left", &wp->msg->end[LEFT_END], pickle, logger) &&
+		pickle_whack_end(wp, "right",&wp->msg->end[RIGHT_END], pickle, logger) &&
 		PICKLE_STRING(&wp->msg->keyid) &&
 		PICKLE_STRING(&wp->msg->ike) &&
 		PICKLE_STRING(&wp->msg->esp) &&

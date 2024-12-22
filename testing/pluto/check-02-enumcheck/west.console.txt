@@ -715,6 +715,36 @@ west #
          jam_enum_short 4: DROP OK
          jam_enum_human 4: drop OK
          match DROP [short]: OK
+  end_names: [0..2)
+    0 -> LEFT_END
+         jam_enum 0: LEFT_END OK
+         search LEFT_END: OK
+         match LEFT_END: OK
+         short_name 0: LEFT_END OK
+         jam_enum_short 0: LEFT_END OK
+         jam_enum_human 0: left-end OK
+    1 -> RIGHT_END
+         jam_enum 1: RIGHT_END OK
+         search RIGHT_END: OK
+         match RIGHT_END: OK
+         short_name 1: RIGHT_END OK
+         jam_enum_short 1: RIGHT_END OK
+         jam_enum_human 1: right-end OK
+  end_stories: [0..2)
+    0 -> left
+         jam_enum 0: left OK
+         search left: OK
+         match left: OK
+         short_name 0: left OK
+         jam_enum_short 0: left OK
+         jam_enum_human 0: left OK
+    1 -> right
+         jam_enum 1: right OK
+         search right: OK
+         match right: OK
+         short_name 1: right OK
+         jam_enum_short 1: right OK
+         jam_enum_human 1: right OK
   esp_transformid_names: [1..254)
     1 -> IKEv1_ESP_DES_IV64
          jam_enum 1: IKEv1_ESP_DES_IV64 OK

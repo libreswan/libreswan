@@ -182,7 +182,8 @@ static void add_iface_endpoints(struct connection *c)
 	add_iface_endpoint(pluto_listen_tcp, c, &iketcp_iface_io);
 }
 
-static bool host_end_matches_iface(const struct connection *c, enum left_right end,
+static bool host_end_matches_iface(const struct connection *c,
+				   enum end end,
 				   const struct iface_device *iface)
 {
 	const struct host_end *this = &c->end[end].host;
@@ -196,7 +197,7 @@ static bool host_end_matches_iface(const struct connection *c, enum left_right e
 	return address_eq_address(this->addr, iface->local_address);
 }
 
-static void LDBG_orient_end(struct connection *c, enum left_right end)
+static void LDBG_orient_end(struct connection *c, enum end end)
 {
 	const struct host_end *this = &c->end[end].host;
 	const struct host_end *that = &c->end[!end].host;
@@ -240,7 +241,7 @@ bool orient(struct connection *c, struct logger *logger)
 	bool need_offload = ((c->config->nic_offload == NIC_OFFLOAD_PACKET) ||
 				(c->config->nic_offload == NIC_OFFLOAD_CRYPTO));
 
-	enum left_right matching_end = END_ROOF;/*invalid*/
+	enum end matching_end = END_ROOF;/*invalid*/
 	struct iface_device *matching_iface = NULL;
 
 	for (struct iface_device *iface = next_iface_device(NULL);
@@ -276,7 +277,7 @@ bool orient(struct connection *c, struct logger *logger)
 		}
 
 		passert(left != right); /* only one */
-		enum left_right end = (left ? LEFT_END :
+		enum end end = (left ? LEFT_END :
 				       right ? RIGHT_END :
 				       END_ROOF);
 		passert(end != END_ROOF);

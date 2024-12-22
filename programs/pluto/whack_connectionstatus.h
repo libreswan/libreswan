@@ -20,7 +20,7 @@
 
 struct whack_message;
 struct show;
-enum left_right;
+enum end;
 struct jambuf;
 struct spd_end;
 struct connection;
@@ -57,7 +57,7 @@ void jam_end_host(struct jambuf *buf,
 void jam_end_client(struct jambuf *buf,
 		    const struct connection *c,
 		    const struct connection_client *this,
-		    enum left_right side,
+		    enum end side,
 		    const char *separator);
 
 void show_connection_clients(struct show *s, const struct connection *c,

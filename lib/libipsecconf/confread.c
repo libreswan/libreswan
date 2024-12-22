@@ -145,17 +145,17 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->sighash_policy = POL_SIGHASH_DEFAULTS;
 
-	d->left.leftright = "left";
-	d->left.host_family = NULL;
-	d->left.addr = unset_address;
-	d->left.nexttype = KH_NOTSET;
-	d->left.nexthop = unset_address;
+	d->end[LEFT_END].leftright = "left";
+	d->end[LEFT_END].host_family = NULL;
+	d->end[LEFT_END].addr = unset_address;
+	d->end[LEFT_END].nexttype = KH_NOTSET;
+	d->end[LEFT_END].nexthop = unset_address;
 
-	d->right.leftright = "right";
-	d->right.host_family = NULL;
-	d->right.addr = unset_address;
-	d->right.nexttype = KH_NOTSET;
-	d->right.nexthop = unset_address;
+	d->end[RIGHT_END].leftright = "right";
+	d->end[RIGHT_END].host_family = NULL;
+	d->end[RIGHT_END].addr = unset_address;
+	d->end[RIGHT_END].nexttype = KH_NOTSET;
+	d->end[RIGHT_END].nexthop = unset_address;
 
 	d->xfrm_if_id = UINT32_MAX;
 
@@ -611,13 +611,13 @@ static bool translate_conn(struct starter_conn *conn,
 			if (kw->keyword.keyleft) {
 				serious_err |=
 					translate_leftright(conn, cfgp, sl, assigned_value,
-							    kw, &conn->left,
+							    kw, &conn->end[LEFT_END],
 							    logger);
 			}
 			if (kw->keyword.keyright) {
 				serious_err |=
 					translate_leftright(conn, cfgp, sl, assigned_value,
-							    kw, &conn->right,
+							    kw, &conn->end[RIGHT_END],
 							    logger);
 			}
 		} else {
@@ -835,7 +835,7 @@ static bool load_conn(struct starter_conn *conn,
 
 	const struct ip_info *afi = aftoinfo(conn->values[KNCF_HOSTADDRFAMILY].option);
 	if (afi == NULL) {
-		FOR_EACH_THING(end, &conn->left, &conn->right) {
+		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
 			FOR_EACH_THING(ips,
 				       end->values[KW_IP].string,
 				       end->values[KW_NEXTHOP].string) {
@@ -858,10 +858,10 @@ static bool load_conn(struct starter_conn *conn,
 	if (afi == NULL) {
 		afi = &ipv4_info;
 	}
-	conn->left.host_family = conn->right.host_family = afi;
+	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
 
-	err |= validate_end(conn, &conn->left, logger);
-	err |= validate_end(conn, &conn->right, logger);
+	err |= validate_end(conn, &conn->end[LEFT_END], logger);
+	err |= validate_end(conn, &conn->end[RIGHT_END], logger);
 
 	return err;
 }
@@ -892,9 +892,9 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	/* handle starter_end strings */
 
-# define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
+# define STR_FIELD_END(f) { STR_FIELD(end[LEFT_END].f); STR_FIELD(end[RIGHT_END].f); }
 
-	for (unsigned i = 0; i < elemsof(conn->left.values); i++)
+	for (unsigned i = 0; i < elemsof(conn->end[LEFT_END].values); i++)
 		STR_FIELD_END(values[i].string);
 
 # undef STR_FIELD_END
@@ -1019,9 +1019,9 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	/* handle starter_end strings */
 
-# define STR_FIELD_END(f) { STR_FIELD(left.f); STR_FIELD(right.f); }
+# define STR_FIELD_END(f) { STR_FIELD(end[LEFT_END].f); STR_FIELD(end[RIGHT_END].f); }
 
-	for (unsigned i = 0; i < elemsof(conn->left.values); i++)
+	for (unsigned i = 0; i < elemsof(conn->end[LEFT_END].values); i++)
 		STR_FIELD_END(values[i].string);
 
 # undef STR_FIELD_END

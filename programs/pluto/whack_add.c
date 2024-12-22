@@ -156,8 +156,8 @@ static const struct ip_info *next_subnet(struct whack_end *end,
 static void free_wam(struct whack_message *wam)
 {
 	pfreeany(wam->name);
-	pfreeany(wam->left.subnet);
-	pfreeany(wam->right.subnet);
+	pfreeany(wam->end[LEFT_END].subnet);
+	pfreeany(wam->end[RIGHT_END].subnet);
 }
 
 /*
@@ -238,8 +238,8 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			 * Either .subnet is !.is_set or is valid.
 			 * {left,right}_afi can be NULL.
 			 */
-			const struct ip_info *left_afi = next_subnet(&wam.left, &left->subnets, left_i);
-			const struct ip_info *right_afi = next_subnet(&wam.right, &right->subnets, right_i);
+			const struct ip_info *left_afi = next_subnet(&wam.end[LEFT_END], &left->subnets, left_i);
+			const struct ip_info *right_afi = next_subnet(&wam.end[RIGHT_END], &right->subnets, right_i);
 
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
@@ -252,11 +252,11 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 					return;
 				}
 			} else {
-				PEXPECT(logger, (wam.left.subnet != NULL &&
-						 wam.right.subnet != NULL));
+				PEXPECT(logger, (wam.end[LEFT_END].subnet != NULL &&
+						 wam.end[RIGHT_END].subnet != NULL));
 				llog(RC_LOG, logger,
 				     "\"%s\": warning: skipping mismatched leftsubnets=%s rightsubnets=%s",
-				     wm->name, wam.left.subnet, wam.right.subnet);
+				     wm->name, wam.end[LEFT_END].subnet, wam.end[RIGHT_END].subnet);
 			}
 
 			free_wam(&wam);
@@ -272,13 +272,13 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 	 * {left,right}subnet=a,b
 	 */
 	bool have_subnets = false;
-	FOR_EACH_THING(subnets, &wm->left, &wm->right) {
+	FOR_EACH_THING(subnets, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
 		if (subnets->subnets == NULL) {
 			continue;
 		}
 		have_subnets = true;
 		/* have subnets=... */
-		FOR_EACH_THING(subnet, &wm->left, &wm->right) {
+		FOR_EACH_THING(subnet, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
 			if (subnet->subnet == NULL) {
 				continue;
 			}
@@ -305,13 +305,13 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 	}
 
 	struct subnets left = {0};
-	if (!parse_subnets(&left, wm, &wm->left, logger)) {
+	if (!parse_subnets(&left, wm, &wm->end[LEFT_END], logger)) {
 		pfreeany(left.subnets.list);
 		return;
 	}
 
 	struct subnets right = {0};
-	if (!parse_subnets(&right, wm, &wm->right, logger)) {
+	if (!parse_subnets(&right, wm, &wm->end[RIGHT_END], logger)) {
 		pfreeany(left.subnets.list);
 		pfreeany(right.subnets.list);
 		return;

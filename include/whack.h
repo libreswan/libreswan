@@ -42,6 +42,7 @@
 #include "encap_proto.h"
 #include "sa_type.h"
 #include "constants.h"		/* for enum keyword_auth; et.al. */
+#include "end.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -329,11 +330,7 @@ struct whack_message {
 
 	char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
 
-	/*  note that each end contains string 2/5.id, string 3/6 cert,
-	 *  and string 4/7 updown
-	 */
-	struct whack_end left;
-	struct whack_end right;
+	struct whack_end end[END_ROOF];
 
 	/* names match field */
 	const struct ip_info *host_afi;

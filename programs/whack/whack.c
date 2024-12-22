@@ -1040,9 +1040,9 @@ int main(int argc, char **argv)
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
-	clear_end("left", &msg.left);
-	clear_end("right", &msg.right);
-	struct whack_end *end = &msg.left;
+	clear_end("left", &msg.end[LEFT_END]);
+	clear_end("right", &msg.end[RIGHT_END]);
+	struct whack_end *end = &msg.end[LEFT_END];
 
 	struct family host_family = { 0, };
 	struct family child_family = { 0, };
@@ -1597,7 +1597,7 @@ int main(int argc, char **argv)
 				end->host_type = KH_OPPOGROUP;
 				end->host_addr = optarg_any(&host_family);
 				end->key_from_DNS_on_demand = true;
-			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
+			} else if (msg.end[LEFT_END].id != NULL && !streq(optarg, "%null")) {
 				/*
 				 * This is pretty bespoke.
 				 *
@@ -1759,7 +1759,7 @@ int main(int argc, char **argv)
 				diagw("connection missing --host before --to");
 			}
 
-			end = &msg.right;
+			end = &msg.end[RIGHT_END];
 			for (enum option_enums e = FIRST_END_OPT; e <= LAST_END_OPT; e++) {
 				seen[e] = false;
 			}
@@ -2572,8 +2572,8 @@ int main(int argc, char **argv)
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if (!authby_is_set(msg.authby) &&
-			    msg.left.auth == AUTH_NEVER &&
-			    msg.right.auth == AUTH_NEVER)
+			    msg.end[LEFT_END].auth == AUTH_NEVER &&
+			    msg.end[RIGHT_END].auth == AUTH_NEVER)
 				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 			/*
 			 * ??? this test can never fail:
@@ -2581,7 +2581,8 @@ int main(int argc, char **argv)
 			 * These interlocking tests should be redone.
 			 */
 			if (msg.never_negotiate_shunt != SHUNT_UNSET &&
-			    (msg.left.subnet != NULL || msg.right.subnet != NULL))
+			    (msg.end[LEFT_END].subnet != NULL ||
+			     msg.end[RIGHT_END].subnet != NULL))
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
 

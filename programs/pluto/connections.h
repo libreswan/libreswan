@@ -41,6 +41,7 @@
 #include "refcnt.h"
 #include "encap_mode.h"
 #include "verbose.h"
+#include "end.h"
 
 #include "defs.h"
 #include "proposals.h"
@@ -69,14 +70,6 @@ struct kernel_acquire;
  */
 
 struct connection *connection_by_serialno(co_serial_t serialno);
-
-/*
- * An extract of the original configuration information for
- * the connection's end sent over by whack.
- */
-
-enum left_right { LEFT_END, RIGHT_END, };
-#define END_ROOF 2
 
 /*
  * IKE SA configuration.
@@ -177,7 +170,7 @@ struct child_end_config {
 };
 
 struct config_end {
-	enum left_right index;
+	enum end index;
 	const char *leftright;
 	struct host_end_config host;
 	struct child_end_config child;
@@ -558,7 +551,7 @@ struct child_end {
 	bool has_client;
 #define set_end_child_has_client(C, END, VALUE)				\
 	{								\
-		enum left_right end_ = END;				\
+		enum end end_ = END;				\
 		where_t where_ = HERE;					\
 		bool has_client_ = VALUE;				\
 		struct connection *c_ = C;				\
@@ -600,7 +593,7 @@ struct connection_end {
 	struct child_end child;
 };
 
-void update_end_selector_where(struct connection *c, enum left_right end,
+void update_end_selector_where(struct connection *c, enum end end,
 			       ip_selector s,
 			       const char *excuse, where_t where);
 
@@ -901,7 +894,7 @@ extern bool same_peer_ids(const struct connection *c,
 
 diag_t add_connection(const struct whack_message *wm, struct logger *logger);
 
-void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
+void update_hosts_from_end_host_addr(struct connection *c, enum end end,
 				     ip_address host_addr, where_t where);
 
 void delete_connection_where(struct connection **cp, where_t where);

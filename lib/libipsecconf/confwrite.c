@@ -338,8 +338,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		fprintf(out, "# begin conn %s\n", conn->name);
 
 	fprintf(out, "conn %s\n", conn->name);
-	confwrite_side(out, &conn->left);
-	confwrite_side(out, &conn->right);
+	confwrite_side(out, &conn->end[LEFT_END]);
+	confwrite_side(out, &conn->end[RIGHT_END]);
 	/* fprintf(out, "# confwrite_int:\n"); */
 	confwrite_int(out, "", kv_conn, conn->values);
 	/* fprintf(out, "# confwrite_str:\n"); */
@@ -395,8 +395,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwyn("pfs", KNCF_PFS);
 			cwyn("ikepad", KNCF_IKEPAD);
 
-			if (conn->left.values[KNCF_AUTH].option == k_unset ||
-			    conn->right.values[KNCF_AUTH].option == k_unset) {
+			if (conn->end[LEFT_END].values[KNCF_AUTH].option == k_unset ||
+			    conn->end[RIGHT_END].values[KNCF_AUTH].option == k_unset) {
 				authby_buf ab;
 				cwf("authby", str_authby(conn->authby, &ab));
 			}
