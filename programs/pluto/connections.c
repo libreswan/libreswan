@@ -2379,10 +2379,25 @@ static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c,
 				 struct config *config)
 {
+	diag_t d;
+
 	const struct whack_end *whack_ends[] = {
 		[LEFT_END] = &wm->end[LEFT_END],
 		[RIGHT_END] = &wm->end[RIGHT_END],
 	};
+
+	/*
+	 * Determine the Host's address family.
+	 */
+	const struct ip_info *host_afi = NULL;
+	d = extract_host_afi(wm, &host_afi);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (host_afi == NULL) {
+		return diag("host address family unknown");
+	}
 
 	/*
 	 * Unpack and verify the ends.
@@ -2422,7 +2437,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 						    c->logger);
 	}
 
-	diag_t d;
 	passert(c->name != NULL); /* see alloc_connection() */
 
 	/*
@@ -2853,23 +2867,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->end[RIGHT_END].protoport.has_port_wildcard && wm->end[LEFT_END].protoport.has_port_wildcard) {
 		return diag("cannot have protoports with wildcard (%%any) ports on both sides");
-	}
-
-	/*
-	 * Determine the host/client's family.
-	 *
-	 * XXX: idle speculation: if traffic selectors with different
-	 * address families are to be supported then these will need
-	 * to be nested within some sort of loop.  One for host, one
-	 * for client, one for IPv4, and one for IPv6.
-	 */
-	const struct ip_info *host_afi = NULL;
-	d = extract_host_afi(wm, &host_afi);
-	if (d != NULL) {
-		return d;
-	}
-	if (host_afi == NULL) {
-		return diag("host address family unknown");
 	}
 
 	/*
