@@ -34,6 +34,7 @@
 #include "ip_cidr.h"
 #include "lswcdefs.h"
 #include "authby.h"
+#include "end.h"
 
 struct logger;
 
@@ -91,7 +92,7 @@ struct starter_conn {
 	lset_t sighash_policy;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
-	struct starter_end left, right;
+	struct starter_end end[END_ROOF];
 
 	const struct ip_info *clientaddrfamily;
 

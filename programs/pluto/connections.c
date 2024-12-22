@@ -228,8 +228,8 @@ static bool is_opportunistic_wm_end(const struct whack_end *end)
 
 static bool is_opportunistic_wm(const struct whack_message *wm)
 {
-	return (is_opportunistic_wm_end(&wm->left) ||
-		is_opportunistic_wm_end(&wm->right));
+	return (is_opportunistic_wm_end(&wm->end[LEFT_END]) ||
+		is_opportunistic_wm_end(&wm->end[RIGHT_END]));
 }
 
 static bool is_group_wm_end(const struct whack_end *end)
@@ -240,8 +240,8 @@ static bool is_group_wm_end(const struct whack_end *end)
 
 static bool is_group_wm(const struct whack_message *wm)
 {
-	return (is_group_wm_end(&wm->left) ||
-		is_group_wm_end(&wm->right));
+	return (is_group_wm_end(&wm->end[LEFT_END]) ||
+		is_group_wm_end(&wm->end[RIGHT_END]));
 }
 
 /*
@@ -712,7 +712,7 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 	const char *leftright;
 	const char *name;
 	char value[sizeof(selector_buf)];
-	FOR_EACH_THING(w, &wm->left, &wm->right) {
+	FOR_EACH_THING(w, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
 		EXTRACT_AFI(""/*left""=,right""=*/, w->host_addr);
 		EXTRACT_AFI("nexthop", w->host_nexthop);
 	}
@@ -2374,8 +2374,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 				 struct config *config)
 {
 	const struct whack_end *whack_ends[] = {
-		[LEFT_END] = &wm->left,
-		[RIGHT_END] = &wm->right,
+		[LEFT_END] = &wm->end[LEFT_END],
+		[RIGHT_END] = &wm->end[RIGHT_END],
 	};
 
 	/*
@@ -2845,7 +2845,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* some port stuff */
 
-	if (wm->right.protoport.has_port_wildcard && wm->left.protoport.has_port_wildcard) {
+	if (wm->end[RIGHT_END].protoport.has_port_wildcard && wm->end[LEFT_END].protoport.has_port_wildcard) {
 		return diag("cannot have protoports with wildcard (%%any) ports on both sides");
 	}
 
@@ -2873,8 +2873,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * MAKE this more sane in the face of unresolved IP
 	 * addresses.
 	 */
-	if (wm->left.host_type != KH_IPHOSTNAME && !address_is_specified(wm->left.host_addr) &&
-	    wm->right.host_type != KH_IPHOSTNAME && !address_is_specified(wm->right.host_addr)) {
+	if (wm->end[LEFT_END].host_type != KH_IPHOSTNAME && !address_is_specified(wm->end[LEFT_END].host_addr) &&
+	    wm->end[RIGHT_END].host_type != KH_IPHOSTNAME && !address_is_specified(wm->end[RIGHT_END].host_addr)) {
 		return diag("must specify host IP address for our side");
 	}
 
@@ -2896,7 +2896,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("narrowing=yes requires IKEv2");
 	}
 	if (wm->narrowing == YN_NO) {
-		FOR_EACH_THING(end, &wm->left, &wm->right) {
+		FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
 			if (end->addresspool != NULL) {
 				return diag("narrowing=no conflicts with %saddresspool=%s",
 					    end->leftright,
@@ -2906,8 +2906,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
-			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
-							 wm->right.addresspool != NULL)),
+			   (wm->ike_version == IKEv2 && (wm->end[LEFT_END].addresspool != NULL ||
+							 wm->end[RIGHT_END].addresspool != NULL)),
 			   wm, c->logger);
 #if 0
 	/*
@@ -2915,7 +2915,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * to a single port; while narrwing means narrow down to the
 	 * selector.
 	 */
-	FOR_EACH_THING(end, &wm->left, &wm->right) {
+	FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
 		narrowing |= (end->protoport.is_set &&
 			      end->protoport.has_port_wildcard);
 	}
@@ -3670,13 +3670,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Look for contradictions.
 	 */
 
-	if (wm->left.addresspool != NULL &&
-	    wm->right.addresspool != NULL) {
+	if (wm->end[LEFT_END].addresspool != NULL &&
+	    wm->end[RIGHT_END].addresspool != NULL) {
 		return diag("both leftaddresspool= and rightaddresspool= defined");
 	}
 
-	if (wm->left.modecfgserver == YN_YES &&
-	    wm->right.modecfgserver == YN_YES) {
+	if (wm->end[LEFT_END].modecfgserver == YN_YES &&
+	    wm->end[RIGHT_END].modecfgserver == YN_YES) {
 		diag_t d = diag("both leftmodecfgserver=yes and rightmodecfgserver=yes defined");
 		if (!is_opportunistic_wm(wm)) {
 			return d;
@@ -3685,8 +3685,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->left.modecfgclient == YN_YES &&
-	    wm->right.modecfgclient == YN_YES) {
+	if (wm->end[LEFT_END].modecfgclient == YN_YES &&
+	    wm->end[RIGHT_END].modecfgclient == YN_YES) {
 		diag_t d = diag("both leftmodecfgclient=yes and rightmodecfgclient=yes defined");
 		if (!is_opportunistic_wm(wm)) {
 			return d;
@@ -3695,7 +3695,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->left.cat == YN_YES && wm->right.cat == YN_YES) {
+	if (wm->end[LEFT_END].cat == YN_YES && wm->end[RIGHT_END].cat == YN_YES) {
 		diag_t d = diag("both leftcat=yes and rightcat=yes defined");
 		if (!is_opportunistic_wm(wm)) {
 			return d;
@@ -3704,13 +3704,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->left.virt != NULL && wm->right.virt != NULL) {
+	if (wm->end[LEFT_END].virt != NULL && wm->end[RIGHT_END].virt != NULL) {
 		return diag("both leftvirt= and rightvirt= defined");
 	}
 
 	if ((c->end[LEFT_END].kind == CK_GROUP ||
 	     c->end[RIGHT_END].kind == CK_GROUP) &&
-	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
+	    (wm->end[LEFT_END].virt != NULL || wm->end[RIGHT_END].virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
 	}
 

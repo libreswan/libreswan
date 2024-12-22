@@ -305,11 +305,11 @@ int starter_whack_add_conn(const char *ctlsocket,
 		.name = conn->name,
 	};
 
-	msg.host_afi = conn->left.host_family;
+	msg.host_afi = conn->end[LEFT_END].host_family;
 	msg.child_afi = conn->clientaddrfamily;
 
-	if (conn->right.addrtype == KH_IPHOSTNAME)
-		msg.dnshostname = conn->right.values[KW_IP].string;
+	if (conn->end[RIGHT_END].addrtype == KH_IPHOSTNAME)
+		msg.dnshostname = conn->end[RIGHT_END].values[KW_IP].string;
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
 	if (conn->values[KNCF_IKELIFETIME].set) {
@@ -493,9 +493,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_XAUTHFAIL].set)
 		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
 
-	if (!set_whack_end(&msg.left, &conn->left, logger))
+	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END], logger))
 		return -1;
-	if (!set_whack_end(&msg.right, &conn->right, logger))
+	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
 		return -1;
 
 	msg.esp = conn->values[KSCF_ESP].string;
@@ -505,10 +505,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 	 * Save the "computed" pubkeys and IDs before the pointers in
 	 * MSG are pickled.
 	 */
-	const char *left_pubkey = msg.left.pubkey;
-	const char *right_pubkey = msg.right.pubkey;
-	char *left_id = msg.left.id;
-	char *right_id = msg.right.id;
+	const char *left_pubkey = msg.end[LEFT_END].pubkey;
+	const char *right_pubkey = msg.end[RIGHT_END].pubkey;
+	char *left_id = msg.end[LEFT_END].id;
+	char *right_id = msg.end[RIGHT_END].id;
 
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
@@ -523,7 +523,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (left_id != NULL && left_pubkey != NULL) {
 		int r = starter_whack_add_pubkey("left", ctlsocket, conn,
 						 left_id, left_pubkey,
-						 msg.left.pubkey_alg,
+						 msg.end[LEFT_END].pubkey_alg,
 						 logger);
 		if (r != 0) {
 			return r;
@@ -532,7 +532,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (right_id != NULL && right_pubkey != NULL) {
 		int r = starter_whack_add_pubkey("right", ctlsocket, conn,
 						 right_id, right_pubkey,
-						 msg.right.pubkey_alg,
+						 msg.end[RIGHT_END].pubkey_alg,
 						 logger);
 		if (r != 0) {
 			return r;
