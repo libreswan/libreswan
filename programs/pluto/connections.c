@@ -868,6 +868,12 @@ static diag_t extract_host_end(struct host_end *host,
 	const char *leftright = host_config->leftright;
 
 	/*
+	 * Could be unset; will be patched up later by
+	 * update_hosts_from_end_host_addr().
+	 */
+	host->nexthop = src->host_nexthop;
+
+	/*
 	 * Decode id, if any.
 	 *
 	 * For %fromcert, the load_end_cert*() call will update it.
@@ -3768,7 +3774,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	ip_address host_addr[END_ROOF];
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[end];
-		struct host_end *host = &c->end[end].host;
 		host_addr[end] = host_afi->address.unspec;
 		if (address_is_specified(we->host_addr)) {
 			host_addr[end] = we->host_addr;
@@ -3784,7 +3789,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 				host_addr[end] = addr;
 			}
 		}
-		host->nexthop = we->host_nexthop;
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
