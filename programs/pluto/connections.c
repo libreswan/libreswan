@@ -2400,6 +2400,38 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * Determine the host topology.
+	 *
+	 * Needs two passes: first pass extracts tentative
+	 * host/nexthop; scecond propagates that to other dependent
+	 * fields.
+	 *
+	 * XXX: the host lookup is blocking; should instead do it
+	 * asynchronously using unbound.
+	 *
+	 * XXX: move the find nexthop code to here?
+	 */
+	ip_address host_addr[END_ROOF];
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const struct whack_end *we = whack_ends[end];
+		host_addr[end] = host_afi->address.unspec;
+		if (address_is_specified(we->host_addr)) {
+			host_addr[end] = we->host_addr;
+		} else if (we->host_type == KH_IPHOSTNAME) {
+			ip_address addr;
+			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
+						  host_afi, &addr);
+			if (er != NULL) {
+				llog(RC_LOG, c->logger,
+				     "failed to resolve '%s=%s' at load time: %s",
+				     we->leftright, we->host_addr_name, er);
+			} else {
+				host_addr[end] = addr;
+			}
+		}
+	}
+
+	/*
 	 * Unpack and verify the ends.
 	 */
 
@@ -3754,38 +3786,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
-	}
-
-	/*
-	 * Determine the host topology.
-	 *
-	 * Needs two passes: first pass extracts tentative
-	 * host/nexthop; scecond propagates that to other dependent
-	 * fields.
-	 *
-	 * XXX: the host lookup is blocking; should instead do it
-	 * asynchronously using unbound.
-	 *
-	 * XXX: move the find nexthop code to here?
-	 */
-	ip_address host_addr[END_ROOF];
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const struct whack_end *we = whack_ends[end];
-		host_addr[end] = host_afi->address.unspec;
-		if (address_is_specified(we->host_addr)) {
-			host_addr[end] = we->host_addr;
-		} else if (we->host_type == KH_IPHOSTNAME) {
-			ip_address addr;
-			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
-						  host_afi, &addr);
-			if (er != NULL) {
-				llog(RC_LOG, c->logger,
-				     "failed to resolve '%s=%s' at load time: %s",
-				     we->leftright, we->host_addr_name, er);
-			} else {
-				host_addr[end] = addr;
-			}
-		}
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
