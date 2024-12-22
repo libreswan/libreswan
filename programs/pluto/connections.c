@@ -3708,9 +3708,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("both leftvirt= and rightvirt= defined");
 	}
 
-	if ((c->end[LEFT_END].kind == CK_GROUP ||
-	     c->end[RIGHT_END].kind == CK_GROUP) &&
-	    (wm->end[LEFT_END].virt != NULL || wm->end[RIGHT_END].virt != NULL)) {
+	if (is_group_wm(wm) && (wm->end[LEFT_END].virt != NULL ||
+				wm->end[RIGHT_END].virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
 	}
 
