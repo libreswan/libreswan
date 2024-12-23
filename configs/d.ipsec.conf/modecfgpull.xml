@@ -5,6 +5,7 @@
   <listitem>
     <para>
       Pull the Mode Config network information from the server.
+      Both server and client must use same setting.
       Acceptable values are <option>yes</option> or
       <option>no</option> (the default).
     </para>
