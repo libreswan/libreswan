@@ -387,6 +387,8 @@ static void update_selectors(struct connection *d, struct verbose verbose)
 #if 0 /* extract_connection() does this */
 			/* see also clone_connection */
 			set_end_child_has_client(c, end->config->index, true);
+#else
+			vexpect(end->child.has_client);
 #endif
 			continue;
 		}
