@@ -617,43 +617,45 @@ ip_port local_host_port(const struct connection *c)
 	return end_host_port(&c->local->host, &c->remote->host);
 }
 
-void update_hosts_from_end_host_addr(struct connection *c, enum end e,
-				     ip_address host_addr, where_t where)
+void update_hosts_from_end_host_addr(struct connection *c,
+				     enum end end,
+				     ip_address host_addr,
+				     where_t where)
 {
-	struct host_end *end = &c->end[e].host;
-	struct host_end *other_end = &c->end[!e].host;
+	struct host_end *host = &c->end[end].host;
+	struct host_end *other_host = &c->end[!end].host;
 
 	address_buf hab;
 	ldbg(c->logger, "updating host ends from %s.host.addr %s",
-	     end->config->leftright, str_address(&host_addr, &hab));
+	     host->config->leftright, str_address(&host_addr, &hab));
 
 	/* could be %any but can't be an address */
-	PASSERT_WHERE(c->logger, where, !address_is_specified(end->addr));
+	PASSERT_WHERE(c->logger, where, !address_is_specified(host->addr));
 
 	/* can't be unset; but could be %any[46] */
 	const struct ip_info *afi = address_info(host_addr);
 	PASSERT_WHERE(c->logger, where, afi != NULL); /* since specified */
 
-	end->addr = host_addr;
-	end->first_addr = host_addr;
-	if (!address_is_specified(host_addr)) {
-		return;
-	}
+	host->addr = host_addr;
+	host->first_addr = host_addr;
 
 	/*
-	 * Default ID to IP (but only if not NO_IP -- WildCard).
+	 * Update the %any ID to HOST_ADDR, but only when it set to a
+	 * proper address, i.e., is set and not %any aka 0.0.0 --
+	 * WildCard.
 	 */
-	if (end->id.kind == ID_NONE) {
+	if (address_is_specified(host_addr) &&
+	    host->id.kind == ID_NONE) {
 		struct id id = {
 			.kind = afi->id_ip_addr,
-			.ip_addr = end->addr,
+			.ip_addr = host->addr,
 		};
 		id_buf old, new;
 		dbg("  updated %s.id from %s to %s",
-		    end->config->leftright,
-		    str_id(&end->id, &old),
+		    host->config->leftright,
+		    str_id(&host->id, &old),
 		    str_id(&id, &new));
-		end->id = id;
+		host->id = id;
 	}
 
 	/*
@@ -661,24 +663,32 @@ void update_hosts_from_end_host_addr(struct connection *c, enum end e,
 	 * prefixed), then END must send from either IKEPORT or the
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
-	unsigned host_port = hport(end_host_port(end, other_end));
-	dbg("  updated %s.host_port from %u to %u",
-	    end->config->leftright,
-	    end->port, host_port);
-	end->port = host_port;
+	if (address_is_specified(host_addr)) {
+		unsigned host_port = hport(end_host_port(host, other_host));
+		dbg("  updated %s.host_port from %u to %u",
+		    host->config->leftright,
+		    host->port, host_port);
+		host->port = host_port;
+	}
 
 	/*
-	 * Propagate end.HOST_ADDR to other_end.NEXTHOP.
-	 * As in: other_end.addr -> other_end.NEXTHOP -> END.
+	 * Set the other end's NEXTHOP.
+	 *
+	 * When not specified by the config, use this end's HOST_ADDR,
+	 * as in:
+	 *
+	 *   other_host.ADDR -> other_host.NEXTHOP -> ADDR.
 	 */
-	if (!address_is_specified(other_end->nexthop)) {
-		address_buf old, new;
-		dbg("  updated %s.host_nexthop from %s to %s",
-		    other_end->config->leftright,
-		    str_address(&other_end->nexthop, &old),
-		    str_address(&end->addr, &new));
-		other_end->nexthop = end->addr;
+	other_host->nexthop = other_host->config->nexthop;
+	if (address_is_specified(host_addr) &&
+	    !address_is_specified(other_host->nexthop)) {
+		other_host->nexthop = host_addr;
 	}
+	address_buf old, new;
+	dbg("  updated %s.host_nexthop from %s to %s",
+	    other_host->config->leftright,
+	    str_address(&other_host->config->nexthop, &old),
+	    str_address(&other_host->nexthop, &new));
 }
 
 /*
@@ -714,7 +724,7 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 	char value[sizeof(selector_buf)];
 	FOR_EACH_THING(w, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
 		EXTRACT_AFI(""/*left""=,right""=*/, w->host_addr);
-		EXTRACT_AFI("nexthop", w->host_nexthop);
+		EXTRACT_AFI("nexthop", w->nexthop);
 	}
 	return NULL;
 }
@@ -868,10 +878,12 @@ static diag_t extract_host_end(struct host_end *host,
 	const char *leftright = host_config->leftright;
 
 	/*
-	 * Could be unset; will be patched up later by
-	 * update_hosts_from_end_host_addr().
+	 * Save the whack value, update_hosts_from_end_host_addr()
+	 * will set the actual .nexthop value for the connection.
+	 * Either now, during extraction, or later, during
+	 * instantiation.
 	 */
-	host->nexthop = src->host_nexthop;
+	host_config->nexthop = src->nexthop;
 
 	/*
 	 * Decode id, if any.
@@ -2408,8 +2420,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 *
 	 * XXX: the host lookup is blocking; should instead do it
 	 * asynchronously using unbound.
-	 *
-	 * XXX: move the find nexthop code to here?
 	 */
 	ip_address host_addr[END_ROOF];
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {

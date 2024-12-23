@@ -79,7 +79,7 @@ struct whack_end {
 	enum keyword_host host_type;
 	ip_address host_addr;
 	unsigned host_ikeport;
-	ip_address host_nexthop;
+	ip_address nexthop;		/* host */
 	char *sourceip;
 	ip_cidr host_vtiip;
 	char *interface_ip;		/* for ipsec-interface */

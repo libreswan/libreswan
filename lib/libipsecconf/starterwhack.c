@@ -112,16 +112,18 @@ static bool set_whack_end(struct whack_end *w,
 
 	switch (l->nexttype) {
 	case KH_IPADDR:
-		w->host_nexthop = l->nexthop;
+		w->nexthop = l->nexthop;
 		break;
 
 	case KH_DEFAULTROUTE: /* acceptable to set nexthop to %defaultroute */
 	case KH_NOTSET:	/* acceptable to not set nexthop */
 		/*
 		 * but, get the family set up right
-		 * XXX the nexthop type has to get into the whack message!
+		 *
+		 * XXX the nexthop type has to get into the whack
+		 * message!
 		 */
-		w->host_nexthop = l->host_family->address.unspec;
+		w->nexthop = l->host_family->address.unspec;
 		break;
 
 	default:
