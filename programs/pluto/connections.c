@@ -650,11 +650,12 @@ void update_hosts_from_end_host_addr(struct connection *c,
 			.kind = afi->id_ip_addr,
 			.ip_addr = host->addr,
 		};
-		id_buf old, new;
-		dbg("  updated %s.id from %s to %s",
+		id_buf hid, cid, nid;
+		dbg("  updated %s.id from %s (config=%s) to %s",
 		    host->config->leftright,
-		    str_id(&host->id, &old),
-		    str_id(&id, &new));
+		    str_id(&host->id, &hid),
+		    str_id(&host->config->id, &cid),
+		    str_id(&id, &nid));
 		host->id = id;
 	}
 
@@ -889,15 +890,14 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Decode id, if any.
 	 *
 	 * For %fromcert, the load_end_cert*() call will update it.
+	 *
+	 * For unset, update_hosts_from_end_host_addr(), will fill it
+	 * on from the HOST address (assuming it can be resolved).
+	 *
+	 * Else it remains unset and acts like a wildcard.
 	 */
-	if (src->id == NULL) {
-		/*
-		 * The id will be set to the host by
-		 * update_hosts_from_end_host_addr() which is after it
-		 * has been resolved.
-		 */
-		host->id.kind = ID_NONE;
-	} else {
+	pexpect(host_config->id.kind == ID_NONE);
+	if (src->id != NULL) { /*can_extract_str()*/
 		/*
 		 * Treat any atoid() failure as fatal.  One wart is
 		 * something like id=foo.  ttoaddress_dns() fails
@@ -906,12 +906,16 @@ static diag_t extract_host_end(struct host_end *host,
 		 * In 4.x the error was ignored and ID=<HOST_IP> was
 		 * used.
 		 */
-		err_t e = atoid(src->id, &host->id);
+		err_t e = atoid(src->id, &host_config->id);
 		if (e != NULL) {
 			return diag("%sid=%s invalid: %s",
 				    leftright, src->id, e);
 		}
 	}
+
+	id_buf idb;
+	ldbg(logger, "setting id to %s", str_id(&host_config->id, &idb));
+	host->id = host_config->id;
 
 	/* decode CA distinguished name, if any */
 	host_config->ca = empty_chunk;

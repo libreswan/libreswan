@@ -95,6 +95,7 @@ struct host_end_config {
 	enum keyword_auth auth;
 	struct authby authby;
 
+	struct id id;			/* or ID_NONE aka %any aka set to host-addr */
 	cert_t cert;			/* end certificate */
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
