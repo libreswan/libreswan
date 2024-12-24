@@ -78,17 +78,6 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 
 	c->iface = iface_addref(t->iface);
 
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		/*
-		 * Need to propagate template's .has_client to
-		 * instance.  Should selector code setting up SPDs
-		 * instead handle this.
-		 */
-		bool has_client = t->end[end].child.has_client;
-		set_end_child_has_client(c, end, has_client);
-		PEXPECT(t->logger, (has_client == (t->end[end].child.config->selectors.len > 0)));
-	}
-
 	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
 	c->remote->host.id = clone_id((peer_id != NULL ? peer_id : &t->remote->host.id),
 				      "unshare remote connection id");
@@ -363,107 +352,6 @@ static struct connection *instantiate(struct connection *t,
 }
 
 /*
- * XXX: unlike update_subnet_selectors() this must set each selector
- * to something valid?  For instance, of the end has addresspool, ask
- * for the entire address range.
- */
-
-static void update_selectors(struct connection *d, struct verbose verbose)
-{
-	vdbg("%s() ...", __func__);
-	verbose.level++;
-
-	FOR_EACH_ELEMENT(end, d->end) {
-		const char *leftright = end->config->leftright;
-
-		vassert(end->child.selectors.proposed.list == NULL);
-		vassert(end->child.selectors.proposed.len == 0);
-
-		/* {left,right}subnet=... */
-		if (end->child.config->selectors.len > 0) {
-			vdbg("%s selectors from %d child.selectors",
-			     leftright, end->child.config->selectors.len);
-			end->child.selectors.proposed = end->child.config->selectors;
-#if 0 /* extract_connection() does this */
-			/* see also clone_connection */
-			set_end_child_has_client(c, end->config->index, true);
-#endif
-			continue;
-		}
-
-		/* {left,right}addresspool= */
-		if (end->child.config->addresspools.len > 0) {
-			/*
-			 * Set the selectors to the pool range:
-			 *
-			 * IKEv2: addresspool implies narrowing so
-			 * peer sending ::/0 will be allowed to narrow
-			 * down to the addresspool range.
-			 *
-			 * IKEv1: peer is expected to send the lease
-			 * it obtained earlier (either during
-			 * MODE_CFG, or hard-wired in the config
-			 * file).
-			 */
-			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
-				ip_selector selector = selector_from_range((*range));
-				selector_buf sb;
-				vdbg("%s selector formed from address pool %s",
-				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
-			}
-			continue;
-		}
-
-		/* {left,right}= */
-		if (address_is_specified(end->host.addr)) {
-			/*
-			 * Default the end's child selector (client)
-			 * to a subnet containing only the end's host
-			 * address.
-			 *
-			 * If the other end has multiple child
-			 * selectors then the combination becomes a
-			 * list.
-			 */
-			address_buf ab;
-			protoport_buf pb;
-			vdbg("%s selector proposals from host address+protoport %s %s",
-			     leftright,
-			     str_address(&end->host.addr, &ab),
-			     str_protoport(&end->child.config->protoport, &pb));
-			ip_selector selector =
-				selector_from_address_protoport(end->host.addr,
-								end->child.config->protoport);
-			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
-			continue;
-		}
-
-#if 0
-		/*
-		 * to-be-determined from the host (for instance,
-		 * waiting on DNS) or the opportunistic group (needs
-		 * to be expanded).
-		 *
-		 * Make space regardless so that loops have something
-		 * to iterate over.
-		 */
-		if (vbad(host_afi == NULL)) {
-			return;
-		}
-
-		vexpect(is_permanent(c) || is_group(c) || is_template(c));
-		vdbg("%s selector proposals from unset host family %s",
-		     leftright, host_afi->ip_name);
-		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
-#else
-		llog_pexpect(verbose.logger, HERE, "no address");
-		return;
-#endif
-	}
-}
-
-/*
  * In addition to instantiate() also clone the SPD entries.
  *
  * XXX: it's arguable that SPD entries are being created far too early
@@ -482,7 +370,7 @@ struct connection *spd_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	update_selectors(d, verbose);
+	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(d);
 
 	/* leave breadcrumb */
@@ -513,7 +401,7 @@ struct connection *labeled_template_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	update_selectors(p, verbose);
+	add_proposals(p, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(p);
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
@@ -552,7 +440,7 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
 	c->child.sec_label = clone_hunk(sec_label, __func__);
 
-	update_selectors(c, verbose);
+	add_proposals(c, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(c);
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
@@ -579,7 +467,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	update_selectors(d, verbose);
+	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(d);
 
 	connection_buf tb;
@@ -608,7 +496,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					   verbose, where);
 
 	/* real selectors are still unknown */
-	update_selectors(d, verbose);
+	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(d);
 
 	connection_buf tb;
@@ -640,16 +528,15 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 
 		vassert(end->child.selectors.proposed.list == NULL);
 		vassert(end->child.selectors.proposed.len == 0);
+		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
-#if 0 /* extract_connection() does this */
 			/* see also clone_connection */
-			set_end_child_has_client(c, end->config->index, true);
-#endif
+			set_end_child_has_client(d, end->config->index, true);
 			continue;
 		}
 
@@ -663,7 +550,6 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 				ldbg(d->logger,
 				     "forcing remote %s.spd.has_client=false",
 				     d->spd->remote->config->leftright);
-				set_child_has_client(d, remote, false);
 			}
 			continue;
 		}

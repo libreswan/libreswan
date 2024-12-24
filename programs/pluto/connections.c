@@ -1829,9 +1829,7 @@ static void mark_parse(/*const*/ char *wmmark,
 }
 
 /*
- * XXX: unlike update_subnet_selectors() this must set each selector
- * to something valid?  For instance, of the end has addresspool, ask
- * for the entire address range.
+ * Turn the config selectors / addresspool / host-addr into proposals.
  */
 
 void add_proposals(struct connection *d, const struct ip_info *host_afi,
@@ -1845,14 +1843,19 @@ void add_proposals(struct connection *d, const struct ip_info *host_afi,
 
 		vassert(end->child.selectors.proposed.list == NULL);
 		vassert(end->child.selectors.proposed.len == 0);
+		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
 			vdbg("%s selectors from %d child.selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
-			/* XXX: instantiate() doesn't do this */
-			/* see also clone_connection */
+			/*
+			 * This is important, but why?
+			 *
+			 * IKEv1: the initiator should send the client
+			 * ID during quick mode.
+			 */
 			set_end_child_has_client(d, end->config->index, true);
 			continue;
 		}
