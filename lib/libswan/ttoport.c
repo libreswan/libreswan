@@ -28,7 +28,27 @@ err_t ttoport(shunk_t service_name, ip_port *port)
 	*port = unset_port;
 
 	/*
-	 * Extract port by trying to resolve it by name.
+	 * Try converting it to a number; use SHUNK's variant of strtoul()
+	 * as it is more strict around using the full string.
+	 *
+	 * Number conversion should be checked first, because the service
+	 * name lookup is very expensive in comparision.
+	 */
+	uintmax_t l;
+	err_t e = shunk_to_uintmax(service_name,
+				   NULL/*trailing-chars-not-allowed*/,
+				   0/*any-base*/, &l);
+	if (e == NULL) {
+		if (l > 0xffff)
+			return "must be between 0 and 65535";
+
+		/* success */
+		*port = ip_hport(l);
+		return NULL;
+	}
+
+	/*
+	 * It's not a number, so trying to resolve it by name.
 	 *
 	 * XXX: the getservbyname() call requires a NUL terminated
 	 * string but SERVICE_NAME, being a shunk_t may not include
@@ -43,25 +63,6 @@ err_t ttoport(shunk_t service_name, ip_port *port)
 		return NULL;
 	}
 
-	/*
-	 * Now try converting it to a number; use SHUNK's variant of
-	 * strtoul() as it is more strict around using the full
-	 * string.
-	 */
-	uintmax_t l;
-	err_t e = shunk_to_uintmax(service_name,
-				   NULL/*trailing-chars-not-allowed*/,
-				   0/*any-base*/, &l);
-	if (e != NULL) {
-		*port = unset_port;
-		return e;
-	}
-
-	if (l > 0xffff) {
-		*port = unset_port;
-		return "must be between 0 and 65535";
-	}
-
-	*port = ip_hport(l);
-	return NULL;
+	/* 'e' still holds a number conversion error. */
+	return e;
 }
