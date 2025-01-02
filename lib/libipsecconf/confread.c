@@ -935,8 +935,76 @@ static bool init_load_conn(struct starter_config *cfg,
 	return connerr;
 }
 
+static bool should_load_conn(const struct section_list *sconn,
+			     const struct starter_conn *default_conn,
+			     const struct config_parsed *cfgp,
+			     size_t n_allowed, char **allowed)
+
+{
+	/* If the list is not provided, load everything. */
+	if (!n_allowed || !allowed)
+		return true;
+
+	/* Check if the name is in the list of allowed connections. */
+	for (size_t i = 0; i < n_allowed; i++) {
+		if (streq(allowed[i], sconn->name))
+			return true;
+	}
+
+	/*
+	 * Name was not found, check the aliases.
+	 *
+	 * First checking aliases of the default connection as they will match
+	 * for every other connection.
+	 */
+	if (default_conn->values[KSCF_CONNALIAS].set) {
+		const char *alias = default_conn->values[KSCF_CONNALIAS].string;
+
+		for (size_t i = 0; i < n_allowed; i++) {
+			if (lsw_alias_cmp(allowed[i], alias))
+				return true;
+		}
+	}
+	/*
+	 * Now checking aliases set for the connection itself and recursively
+	 * for connections referenced via 'also'.
+	 */
+	for (const struct kw_list *kw = sconn->kw; kw != NULL; kw = kw->next) {
+		if (kw->keyword.keydef->field == KSCF_ALSO) {
+			const struct section_list *addin;
+			const char *seeking = kw->string;
+
+			for (addin = TAILQ_FIRST(&cfgp->sections);
+			     addin != NULL && !streq(seeking, addin->name);
+			     addin = TAILQ_NEXT(addin, link))
+				;
+			if (addin == NULL) {
+				/*
+				 * The configuration is not correct, let it
+				 * be parsed and the error logged from the
+				 * connection loading code.
+				 */
+				return true;
+			}
+			if (should_load_conn(addin, default_conn, cfgp,
+					     n_allowed, allowed)) {
+				return true;
+			}
+		}
+
+		if (kw->keyword.keydef->field == KSCF_CONNALIAS) {
+			for (size_t i = 0; i < n_allowed; i++) {
+				if (lsw_alias_cmp(allowed[i], kw->string))
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
+				     size_t n_allowed, char **allowed,
 				     struct logger *logger)
 {
 	/**
@@ -990,7 +1058,9 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
 		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
-			if (!streq(sconn->name, "%default"))
+			if (!streq(sconn->name, "%default")
+			    && should_load_conn(sconn, &cfg->conn_default, cfgp,
+						n_allowed, allowed))
 				err |= init_load_conn(cfg, cfgp, sconn,
 						      false/*default conn*/,
 						      logger);

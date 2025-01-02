@@ -123,6 +123,7 @@ extern void parser_freeany_config_parsed(struct config_parsed **cfg);
 
 extern struct starter_config *confread_load(const char *file,
 					    bool setuponly,
+					    size_t n_allowed, char **allowed,
 					    struct logger *logger);
 
 extern void confread_free(struct starter_config *cfg);

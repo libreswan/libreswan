@@ -139,7 +139,8 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, false, logger);
+	struct starter_config *cfg = confread_load(configfile, false,
+						   0, NULL, logger);
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);

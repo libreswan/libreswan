@@ -333,7 +333,7 @@ static struct starter_config *read_cfg_file(char *configfile, long longindex, st
 {
 	struct starter_config *cfg = NULL;
 
-	cfg = confread_load(configfile, true, logger);
+	cfg = confread_load(configfile, true, 0, NULL, logger);
 	if (cfg == NULL) {
 		/* details already logged */
 		fatal_opt(longindex, logger, "cannot load config file '%s'\n", configfile);
