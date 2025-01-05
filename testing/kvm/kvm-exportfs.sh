@@ -9,9 +9,15 @@ set -e
 
 # check NFS is installed and start it (no need to enable it).
 
+RUN()
+{
+    echo "$@"
+    shift
+    "$@"
+}
+
 if test -f /lib/systemd/system/nfs-server.service ; then
-    echo "starting NFS ..."
-    sudo systemctl start nfs-server
+    RUN "starting NFS:" sudo systemctl start nfs-server
 #elif some other os ...
 else
     echo "is NFS installed?" 1>&2
@@ -29,9 +35,8 @@ for d in "$@" ; do
     if sudo exportfs -s | grep "^${d} " ; then
 	echo ${d} already exported
     else
-	echo "exporting ${d} ${gateway} ..."
 	#sudo exportfs -r
-	sudo exportfs -o rw,all_squash,anonuid=$(id -u),anongid=$(id -g) ${gateway}:${d}
+	RUN "exporting ${d} ${gateway}:" sudo exportfs -o rw,all_squash,anonuid=$(id -u),anongid=$(id -g) ${gateway}:${d}
     fi
 done
 
@@ -49,10 +54,10 @@ if test -f /lib/systemd/system/firewalld.service && systemctl status firewalld >
     # sudo firewall-cmd --permanent --zone=swandefault --add-service=nfs
     # sudo firewall-cmd --permanent --zone=swandefault --add-service=mountd
     # sudo firewall-cmd --permanent --zone=swandefault --add-service=rpc-bind
-    sudo firewall-cmd --permanent --zone=libvirt --add-service=nfs
-    sudo firewall-cmd --permanent --zone=libvirt --add-service=mountd
-    sudo firewall-cmd --permanent --zone=libvirt --add-service=rpc-bind
-    sudo firewall-cmd --reload
+    RUN "allowing NFS:"        sudo firewall-cmd --permanent --zone=libvirt --add-service=nfs
+    RUN "allowing MOUNTD:"     sudo firewall-cmd --permanent --zone=libvirt --add-service=mountd
+    RUN "allowing RPC-BIND:"   sudo firewall-cmd --permanent --zone=libvirt --add-service=rpc-bind
+    RUN "reloading:"           sudo firewall-cmd --reload
 else
     echo "assuming firewall is disabled"
 fi
