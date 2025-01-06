@@ -20,7 +20,7 @@
 #define _PLUTO_STATS_H
 
 enum sa_type;
-enum delete_reason;
+enum terminate_reason;
 
 struct pluto_stat {
 	const enum_names *names;
@@ -109,7 +109,7 @@ extern void clear_pluto_stats(void);
 	}
 
 void pstat_sa_started(struct state *st, enum sa_type sa_type);
-void pstat_sa_failed(struct state *st, enum delete_reason reason);
+void pstat_sa_failed(struct state *st, enum terminate_reason reason);
 void pstat_sa_established(struct state *st);
 void pstat_sa_deleted(struct state *st);
 

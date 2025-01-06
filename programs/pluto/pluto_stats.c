@@ -130,7 +130,7 @@ PLUTO_STAT(ikev2_recv_notifies_s, &v2_notification_names,
  */
 
 static unsigned long pstats_sa_started[IKE_VERSION_ROOF][SA_TYPE_ROOF];
-static unsigned long pstats_sa_finished[IKE_VERSION_ROOF][SA_TYPE_ROOF][DELETE_REASON_ROOF];
+static unsigned long pstats_sa_finished[IKE_VERSION_ROOF][SA_TYPE_ROOF][TERMINATE_REASON_ROOF];
 static unsigned long pstats_sa_established[IKE_VERSION_ROOF][SA_TYPE_ROOF];
 
 static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
@@ -144,22 +144,10 @@ static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
 	},
 };
 
-static const char *pstats_sa_reasons[DELETE_REASON_ROOF] = {
-	[REASON_UNKNOWN] = "other",
-	[REASON_COMPLETED] = "completed",
-	[REASON_EXCHANGE_TIMEOUT] = "exchange-timeout",
-	[REASON_CRYPTO_TIMEOUT] = "crypto-timeout",
-	[REASON_TOO_MANY_RETRANSMITS] = "too-many-retransmits",
-	[REASON_SUPERSEDED_BY_NEW_SA] = "superseeded-by-new-sa",
-	[REASON_AUTH_FAILED] = "auth-failed",
-	[REASON_TRAFFIC_SELECTORS_FAILED] = "ts-unacceptable",
-	[REASON_CRYPTO_FAILED] = "crypto-failed",
-};
-
 void pstat_sa_started(struct state *st, enum sa_type sa_type)
 {
 	st->st_pstats.sa_type = sa_type;
-	st->st_pstats.delete_reason = REASON_UNKNOWN;
+	st->st_pstats.terminate_reason = REASON_UNKNOWN;
 
 	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
 	dbg("pstats #%lu %s started", st->st_serialno, name);
@@ -167,25 +155,27 @@ void pstat_sa_started(struct state *st, enum sa_type sa_type)
 	pstats_sa_started[st->st_ike_version][st->st_pstats.sa_type]++;
 }
 
-void pstat_sa_failed(struct state *st, enum delete_reason r)
+void pstat_sa_failed(struct state *st, enum terminate_reason r)
 {
 	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
-	const char *reason = pstats_sa_reasons[r];
-	if (st->st_pstats.delete_reason == REASON_UNKNOWN) {
-		dbg("pstats #%lu %s failed %s", st->st_serialno, name, reason);
-		st->st_pstats.delete_reason = r;
+	name_buf rb;
+	const char *reason = str_enum(&terminate_reason_names, r, &rb);
+	if (st->st_pstats.terminate_reason == REASON_UNKNOWN) {
+		ldbg(st->logger, "pstats #%lu %s failed %s", st->st_serialno, name, reason);
+		st->st_pstats.terminate_reason = r;
 	} else {
-		dbg("pstats #%lu %s re-failed %s", st->st_serialno, name, reason);
+		ldbg(st->logger, "pstats #%lu %s re-failed %s", st->st_serialno, name, reason);
 	}
 }
 
 void pstat_sa_deleted(struct state *st)
 {
 	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
-	const char *reason = pstats_sa_reasons[st->st_pstats.delete_reason];
-	dbg("pstats #%lu %s deleted %s", st->st_serialno, name, reason);
+	name_buf rb;
+	const char *reason = str_enum(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
+	ldbg(st->logger, "pstats #%lu %s deleted %s", st->st_serialno, name, reason);
 
-	pstats_sa_finished[st->st_ike_version][st->st_pstats.sa_type][st->st_pstats.delete_reason]++;
+	pstats_sa_finished[st->st_ike_version][st->st_pstats.sa_type][st->st_pstats.terminate_reason]++;
 
 	/*
 	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
@@ -216,8 +206,8 @@ void pstat_sa_deleted(struct state *st)
 		 * going on.
 		 */
 		pexpect(st->st_ike_version == IKEv1 || exiting_pluto ||
-			(st->st_pstats.delete_reason != REASON_UNKNOWN &&
-			 fail != (st->st_pstats.delete_reason == REASON_COMPLETED)));
+			(st->st_pstats.terminate_reason != REASON_UNKNOWN &&
+			 fail != (st->st_pstats.terminate_reason == REASON_COMPLETED)));
 #endif
 	}
 }
@@ -314,8 +304,8 @@ void pstat_sa_established(struct state *st)
 	 * right (IKEv1 is known to be broken).
 	 */
 	pexpect(st->st_ike_version == IKEv1 ||
-		st->st_pstats.delete_reason == REASON_UNKNOWN);
-	st->st_pstats.delete_reason = REASON_COMPLETED;
+		st->st_pstats.terminate_reason == REASON_UNKNOWN);
+	st->st_pstats.terminate_reason = REASON_COMPLETED;
 
 	switch (st->st_pstats.sa_type) {
 	case IKE_SA: pstat_ike_sa_established(st); break;
@@ -433,14 +423,14 @@ void show_pluto_stats(struct show *s)
 			show(s, "total.%s.established=%lu",
 				    name, pstats_sa_established[v][t]);
 			unsigned long finished = 0;
-			for (enum delete_reason r = DELETE_REASON_FLOOR; r < DELETE_REASON_ROOF; r++) {
-				const char *reason = pstats_sa_reasons[r];
-				pexpect(reason != NULL);
+			for (enum terminate_reason r = TERMINATE_REASON_FLOOR; r < TERMINATE_REASON_ROOF; r++) {
+				name_buf reason;
+				PEXPECT(show_logger(s), enum_name(&terminate_reason_names, r, &reason));
 				unsigned long count = pstats_sa_finished[v][t][r];
 				finished += count;
 				if (count > 0) {
 					show(s, "total.%s.finished.%s=%lu",
-						    name, reason, count);
+						    name, reason.buf, count);
 				}
 			}
 			show(s, "total.%s.finished=%lu",
