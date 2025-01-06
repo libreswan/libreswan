@@ -8,8 +8,8 @@ mkdir -p /source /testing
 sed -e '/:/d' /etc/fstab > /tmp/fstab
 
 cat <<EOF >> /tmp/fstab
-@@GATEWAY@@:@@SOURCEDIR@@   /source         nfs     rw
-@@GATEWAY@@:@@TESTINGDIR@@  /testing        nfs     rw
+@@GATEWAY@@:@@SOURCEDIR@@   /source         nfs     rw	0 0
+@@GATEWAY@@:@@TESTINGDIR@@  /testing        nfs     rw	0 0
 EOF
 
 mv /tmp/fstab /etc/fstab
