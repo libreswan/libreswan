@@ -49,25 +49,35 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		return;
 	}
 
-	/* if this connection has a newer Child SA than this state
-	 * this negotiation is not relevant any more.  would this
-	 * cover if there are multiple CREATE_CHILD_SA pending on this
-	 * IKE negotiation ???
-	 *
+	/*
 	 * XXX: Suspect this is to handle a race where the other end
 	 * brings up the connection first?  For that case, shouldn't
 	 * this state have been deleted?
 	 *
-	 * NOTE: a larger serialno does not mean superseded. crossed
+	 * NOTE: a larger serialno does not mean superseded.  Crossed
 	 * streams could mean the lower serial established later and
-	 * is the "newest". Should > be replaced with != ?
+	 * is the "newest".  Hence the equality check (and not >).
 	 */
 
 	struct connection *c = ike->sa.st_connection;
-	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->established_ike_sa > ike->sa.st_serialno) {
-		llog_sa(RC_LOG, ike,
-			  "suppressing retransmit because IKE SA was superseded #%lu; drop this negotiation",
-			  c->established_ike_sa);
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->established_ike_sa != SOS_NOBODY) {
+		/*
+		 * The connection is established, yet this IKE SA is
+		 * not.  Presumably this means that the peer also
+		 * initiated and established an IKE SA leaving this
+		 * IKE SA in limbo.
+		 *
+		 * Note: since it isn't established it can't be the
+		 * connection's established IKE SA.
+		 *
+		 * Note: this may also leave the Child SA for the
+		 * connection in limbo.  Hopefully revival code will
+		 * pick that up.
+		 */
+		PEXPECT(ike->sa.logger, c->established_ike_sa != ike->sa.st_serialno);
+		llog(RC_LOG, ike->sa.logger,
+		     "suppressing retransmit because IKE SA was superseded by #%lu; drop this negotiation",
+		     c->established_ike_sa);
 		pstat_sa_failed(&ike->sa, REASON_SUPERSEDED_BY_NEW_SA);
 		connection_delete_ike_family(&ike, HERE);
 		return;
