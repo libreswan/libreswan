@@ -23,6 +23,8 @@ v5.2 (unreleased)
 * building:
   - fix build with USE_LIBCURL=false [Hans de Graaff #1845, Andrew]
   - fix build on OpenBSD 7.6 [Andrew]
+* testing:
+  - update OpenBSD: 7.6; NetBSD: 10.1; FreeBSD: 14.2; Alpine: 3.21;
 
 v5.1 (Oct 8, 2024)
 * IKEv2:

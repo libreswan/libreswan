@@ -62,8 +62,8 @@ def install_base(child, param):
 
     # setup NFS mounts of test directories
 
-    rs(child, '# ', 'echo '+param.gateway+':'+param.pooldir+' /pool nfs rw | tee -a /etc/fstab\n')
-    rs(child, '# ', 'echo '+param.gateway+':'+param.benchdir+' /bench nfs rw | tee -a /etc/fstab\n')
+    rs(child, '# ', 'echo '+param.gateway+':'+param.pooldir+'  /pool  nfs rw 0 0 | tee -a /etc/fstab\n')
+    rs(child, '# ', 'echo '+param.gateway+':'+param.benchdir+' /bench nfs rw 0 0 | tee -a /etc/fstab\n')
     rs(child, '# ', 'cat /etc/fstab\n')
     rs(child, '# ', 'mkdir -p /pool /bench\n')
 

@@ -278,7 +278,7 @@ err_t shunk_to_decimal(shunk_t input, shunk_t *cursor, uintmax_t *decimal,
 			return "invalid decimal fraction";
 		}
 		*denominator = 1;
-		for (unsigned s = 0; s < input.ptr - tmp.ptr; s++) {
+		for (ptrdiff_t s = 0; s < input.ptr - tmp.ptr; s++) {
 			(*denominator) *= 10;
 		}
 	} else if (!have_decimal) {
