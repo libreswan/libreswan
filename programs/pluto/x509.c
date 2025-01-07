@@ -271,20 +271,6 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 	return match;
 }
 
-/*
- * choose either subject DN or a subjectAltName as connection end ID
- */
-void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
-{
-	if (end_id->kind == ID_FROMCERT) {
-		dbg("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName);
-		chunk_t name = clone_secitem_as_chunk(cert->derSubject, "cert id");
-		end_id->name = ASN1(name);
-		end_id->scratch = name.ptr;
-		end_id->kind = ID_DER_ASN1_DN;
-	}
-}
-
 generalName_t *collect_rw_ca_candidates(ip_address local_address,
 					enum ike_version ike_version)
 {

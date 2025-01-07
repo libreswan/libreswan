@@ -1727,14 +1727,16 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 		SECKEY_DestroyPublicKey(pk);
 	}
 
-	/* XXX: should this be after validity check? */
-	select_nss_cert_id(cert, &host_end->id);
-
 	/* check validity of cert */
-	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
-	    secCertTimeValid) {
+	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) != secCertTimeValid) {
 		return diag("%s certificate '%s' is expired or not yet valid",
 			    leftright, nickname);
+	}
+
+	/* XXX: should this be after validity check? */
+	if (host_end->id.kind == ID_FROMCERT) {
+		free_id_content(&host_end->id);
+		host_end->id = id_from_cert(cert);
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
