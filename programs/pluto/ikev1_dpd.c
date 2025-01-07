@@ -129,7 +129,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			     pri_so(child->sa.st_serialno));
 			state_attach(&child->sa, logger);
 			llog_n_maybe_send_v1_delete(ike, &child->sa, HERE);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 		}
 	}
 
@@ -158,7 +158,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 				established_isakmp_sa_for_state(sf.st, /*viable-parent*/false);
 			llog_n_maybe_send_v1_delete(isakmp, sf.st, HERE);
 			struct child_sa *child = pexpect_child_sa(sf.st);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 		}
 	}
 

@@ -1228,11 +1228,6 @@ void connection_teardown_child(struct child_sa **child,
 	free_logger(&logger, HERE);
 }
 
-void connection_delete_child(struct child_sa **child, where_t where)
-{
-	connection_teardown_child(child, REASON_DELETED, where);
-}
-
 /*
  * If there's an established IKE SA and it isn't this one (i.e., not
  * owner) skip the route change.

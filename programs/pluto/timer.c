@@ -377,7 +377,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			llog_pexpect(child->sa.logger, HERE,
 				     "Child SA lost its IKE SA #%lu",
 				     child->sa.st_clonedfrom);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 			st = NULL;
 		} else if (IS_IKE_SA_ESTABLISHED(st)) {
 			/* IKEv2 parent, delete children too */
@@ -399,7 +399,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			state_attach(&child->sa, logger);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 			st = NULL;
 		}
 		break;
@@ -478,7 +478,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 		}
 		st = NULL;
 		break;
@@ -544,7 +544,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			pstat_sa_failed(&child->sa, REASON_CRYPTO_TIMEOUT);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 		}
 		/* note: no md->st to clear */
 		break;

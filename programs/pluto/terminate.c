@@ -78,7 +78,7 @@ static void terminate_v1_states(struct connection *c,
 		return;
 	case WHACK_LURKING_CHILD:
 		state_attach(&(*child)->sa, c->logger);
-		connection_delete_child(child, HERE);
+		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case WHACK_LURKING_IKE:
 		state_attach(&(*ike)->sa, c->logger);
@@ -99,14 +99,14 @@ static void terminate_v1_states(struct connection *c,
 			established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
 		/* IKEv1 has cuckoos */
 		llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
-		connection_delete_child(child, HERE);
+		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	}
 	case WHACK_ORPHAN:
 		/* IKEv1 has orphans */
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
-		connection_delete_child(child, HERE);
+		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case WHACK_SIBLING:
 		/*
@@ -154,12 +154,12 @@ static void terminate_v2_states(struct connection *c,
 		return;
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
-		connection_delete_child(child, HERE);
+		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case WHACK_CUCKOO:
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
-		connection_delete_child(child, HERE);
+		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case WHACK_ORPHAN:
 		state_attach(&(*child)->sa, c->logger);
@@ -170,7 +170,7 @@ static void terminate_v2_states(struct connection *c,
 		return;
 	case WHACK_SIBLING:
 		state_attach(&(*child)->sa, c->logger);
-		connection_delete_child(child, HERE);
+		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case WHACK_IKE:
 		connection_terminate_ike_family(ike, REASON_DELETED, HERE);
@@ -610,7 +610,7 @@ void connection_delete_v1_state(struct state **st, where_t where)
 		connection_teardown_ike(&ike, REASON_DELETED, where);
 	} else {
 		struct child_sa *child = pexpect_child_sa(*st);
-		connection_delete_child(&child, where);
+		connection_teardown_child(&child, REASON_DELETED, where);
 	}
 	(*st) = NULL;
 }

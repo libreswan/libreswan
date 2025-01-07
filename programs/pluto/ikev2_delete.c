@@ -416,7 +416,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 						"too many SPIs in Delete Notification payload; ignoring outbound SPI "PRI_IPSEC_SPI,
 						pri_ipsec_spi(outbound_spi));
 				}
-				connection_delete_child(&child, HERE);
+				connection_teardown_child(&child, REASON_DELETED, HERE);
 
 			} /* for each spi */
 
@@ -504,7 +504,7 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_response(struct ike_sa *ike,
 	 */
 	PEXPECT(ike->sa.logger, &ike->sa != &dead_child->sa);
 	PEXPECT(ike->sa.logger, ike->sa.st_serialno == dead_child->sa.st_clonedfrom);
-	connection_delete_child(&dead_child, HERE);
+	connection_teardown_child(&dead_child, REASON_DELETED, HERE);
 
 	return STF_OK;
 }
