@@ -112,8 +112,6 @@ void connection_teardown_child(struct child_sa **child, enum terminate_reason re
 
 void connection_delete_child(struct child_sa **child, where_t where);
 
-void connection_delete_ike(struct ike_sa **ike, where_t where);
-
 bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, where_t where);
 bool connection_establish_inbound(struct child_sa *child, where_t where);
 bool connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where);

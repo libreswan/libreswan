@@ -125,7 +125,7 @@ static void terminate_v1_states(struct connection *c,
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, &(*ike)->sa, HERE);
-		connection_delete_ike(ike, HERE);
+		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
 	}
 	}
@@ -607,7 +607,7 @@ void connection_delete_v1_state(struct state **st, where_t where)
 	PEXPECT((*st)->logger, (*st)->st_ike_version == IKEv1);
 	if (IS_PARENT_SA(*st)) {
 		struct ike_sa *ike = pexpect_parent_sa(*st);
-		connection_delete_ike(&ike, where);
+		connection_teardown_ike(&ike, REASON_DELETED, where);
 	} else {
 		struct child_sa *child = pexpect_child_sa(*st);
 		connection_delete_child(&child, where);

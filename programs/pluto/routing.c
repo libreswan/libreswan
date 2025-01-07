@@ -1282,11 +1282,6 @@ void connection_teardown_ike(struct ike_sa **ike,
 	free_logger(&logger, HERE);
 }
 
-void connection_delete_ike(struct ike_sa **ike, where_t where)
-{
-	connection_teardown_ike(ike, REASON_DELETED, where);
-}
-
 /*
  * Stop reviving children trying to use this IKE SA.
  */

@@ -186,7 +186,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 				established_isakmp_sa_for_state(sf.st, /*viable-parent*/false);
 			llog_n_maybe_send_v1_delete(isakmp, sf.st, HERE);
 			struct ike_sa *ike = pexpect_ike_sa(sf.st);
-			connection_delete_ike(&ike, HERE);
+			connection_teardown_ike(&ike, REASON_DELETED, HERE);
 		}
 	}
 

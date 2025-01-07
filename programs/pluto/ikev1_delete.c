@@ -421,7 +421,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			 * is to delete both then two messages are
 			 * sent.
 			 */
-			connection_delete_ike(&dst, HERE);
+			connection_teardown_ike(&dst, REASON_DELETED, HERE);
 			if (self_inflicted) {
 				/* bail; IKE SA no longer viable */
 				md->v1_st = NULL;
