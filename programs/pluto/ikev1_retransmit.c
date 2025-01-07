@@ -67,8 +67,6 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 		break;
 	}
 
-	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
-
 	/* placed here because IKEv1 doesn't do a proper state change
 	 * to STF_FAIL_v1N/STF_FATAL */
 	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
@@ -80,7 +78,8 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 	}
 
 	struct child_sa *child = pexpect_child_sa(st);
-	connection_timeout_child(&child, HERE);
+	pstat_sa_failed(&child->sa, REASON_TOO_MANY_RETRANSMITS);
+	connection_teardown_child(&child, REASON_TOO_MANY_RETRANSMITS, HERE);
 	/* note: no md->st to clear */
 }
 #endif

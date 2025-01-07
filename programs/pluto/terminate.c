@@ -459,9 +459,10 @@ void terminate_and_delete_connections(struct connection **cp,
  * IKE_SA_INIT).
  */
 
-static bool zap_connection_child(struct ike_sa **ike,
-				 void (*zap_child)(struct child_sa **child, where_t where),
-				 struct child_sa **child, where_t where)
+static bool terminate_connection_child(struct ike_sa **ike,
+				       enum terminate_reason reason,
+				       struct child_sa **child,
+				       where_t where)
 {
 
 	bool dispatched_to_child;
@@ -480,7 +481,7 @@ static bool zap_connection_child(struct ike_sa **ike,
 		state_attach(&(*child)->sa, (*ike)->sa.logger);
 		/* will delete child and its logger */
 		dispatched_to_child = true;
-		zap_child(child, where); /* always dispatches here*/
+		connection_teardown_child(child, reason, where); /* always dispatches here*/
 		PEXPECT((*ike)->sa.logger, dispatched_to_child);
 		PEXPECT((*ike)->sa.logger, (*child) == NULL); /*gone!*/
 		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->negotiating_child_sa == SOS_NOBODY);
@@ -489,7 +490,7 @@ static bool zap_connection_child(struct ike_sa **ike,
 	return dispatched_to_child;
 }
 
-static void zap_v1_child(struct ike_sa **ike, struct child_sa *child)
+static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
 {
 	/*
 	 * With IKEv1, deleting an ISAKMP SA only deletes larval
@@ -511,9 +512,9 @@ static void zap_v1_child(struct ike_sa **ike, struct child_sa *child)
 	}
 }
 
-static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
-			 void (*zap_child)(struct child_sa **child, where_t where),
-			 where_t where)
+static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
+			       enum terminate_reason reason,
+			       where_t where)
 {
 
 	/*
@@ -533,9 +534,9 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 	if (cc->established_child_sa == child->sa.st_serialno) {
 		PEXPECT((*ike)->sa.logger, IS_IPSEC_SA_ESTABLISHED(&child->sa));
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.logger, "    zapping established Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "    teardown established Child SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
-		zap_child(&child, where);
+		connection_teardown_child(&child, reason, where);
 		return;
 	}
 
@@ -552,9 +553,9 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 
 	if (cc->negotiating_child_sa == child->sa.st_serialno) {
 		/* will delete child and its logger */
-		ldbg_routing((*ike)->sa.logger, "    zapping larval Child SA "PRI_SO,
+		ldbg_routing((*ike)->sa.logger, "    teardown larval Child SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
-		zap_child(&child, where);
+		connection_teardown_child(&child, reason, where);
 		return;
 	}
 
@@ -569,15 +570,14 @@ static void zap_v2_child(struct ike_sa **ike, struct child_sa *child,
 		return;
 	}
 
-	ldbg_routing((*ike)->sa.logger, "    zapping Child SA "PRI_SO,
+	ldbg_routing((*ike)->sa.logger, "    delete Child SA "PRI_SO,
 		     pri_so(child->sa.st_serialno));
 	delete_child_sa(&child);
 }
 
-static void connection_zap_ike_family(struct ike_sa **ike,
-				      void (*zap_ike)(struct ike_sa **ike, where_t where),
-				      void (*zap_child)(struct child_sa **child, where_t where),
-				      where_t where)
+static void connection_terminate_ike_family(struct ike_sa **ike,
+					    enum terminate_reason reason,
+					    where_t where)
 {
 	ldbg_routing((*ike)->sa.logger, "%s()", __func__);
 
@@ -585,7 +585,7 @@ static void connection_zap_ike_family(struct ike_sa **ike,
 	(*ike)->sa.st_viable_parent = false;
 
 	struct child_sa *connection_child = NULL;
-	zap_connection_child(ike, zap_child, &connection_child, where);
+	terminate_connection_child(ike, reason, &connection_child, where);
 
 	/*
 	 * We are a parent: prune any remaining children and then
@@ -605,27 +605,27 @@ static void connection_zap_ike_family(struct ike_sa **ike,
 
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
-			zap_v1_child(ike, child);
+			terminate_v1_child(ike, child);
 			break;
 		case IKEv2:
-			zap_v2_child(ike, child, zap_child, where);
+			terminate_v2_child(ike, child, reason, where);
 			break;
 		}
 	}
 
 	/* delete self */
-	zap_ike(ike, where);
+	connection_teardown_ike(ike, reason, where);
 }
 
 void connection_timeout_ike_family(struct ike_sa **ike, where_t where)
 {
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	connection_zap_ike_family(ike, connection_timeout_ike, connection_timeout_child, where);
+	connection_terminate_ike_family(ike, REASON_TOO_MANY_RETRANSMITS, where);
 }
 
 void connection_delete_ike_family(struct ike_sa **ike, where_t where)
 {
-	connection_zap_ike_family(ike, connection_delete_ike, connection_delete_child, where);
+	connection_terminate_ike_family(ike, REASON_DELETED, where);
 }
 
 void connection_delete_v1_state(struct state **st, where_t where)

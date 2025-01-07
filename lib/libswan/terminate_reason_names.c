@@ -46,6 +46,7 @@ static const char *terminate_reason_name[] = {
 	[REASON_AUTH_FAILED] = "auth-failed",
 	[REASON_TRAFFIC_SELECTORS_FAILED] = "ts-unacceptable",
 	[REASON_CRYPTO_FAILED] = "crypto-failed",
+	[REASON_DELETED] = "deleted",
 };
 
 const struct enum_names terminate_reason_names = {
