@@ -958,7 +958,6 @@ int connection_compare(const struct connection *ca,
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
-					    struct host_end *host_end,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
 					    struct logger *logger);

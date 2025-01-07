@@ -555,6 +555,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
 			pfreeany(end->host.addr_name);
+			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown);
 			pfree_list(&end->child.selectors);
@@ -913,10 +914,6 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 	}
 
-	id_buf idb;
-	ldbg(logger, "setting id to %s", str_id(&host_config->id, &idb));
-	host->id = host_config->id;
-
 	/* decode CA distinguished name, if any */
 	host_config->ca = empty_chunk;
 	if (src->ca != NULL) {
@@ -974,7 +971,7 @@ static diag_t extract_host_end(struct host_end *host,
 			return diag("%s certificate '%s' not found in the NSS database",
 				    leftright, src->cert);
 		}
-		diag_t diag = add_end_cert_and_preload_private_key(cert, host, host_config,
+		diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
 								   *same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -1088,7 +1085,7 @@ static diag_t extract_host_end(struct host_end *host,
 		 */
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert, host, host_config,
+			diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
 									   *same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1115,6 +1112,11 @@ static diag_t extract_host_end(struct host_end *host,
 			}
 		}
 	}
+
+	id_buf idb;
+	ldbg(logger, "setting %s-id to %s from host_config->id)",
+	     leftright, str_id(&host_config->id, &idb));
+	host->id = clone_id(&host_config->id, __func__);
 
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = src->host_type;
@@ -1696,7 +1698,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
-					    struct host_end *host_end,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
 					    struct logger *logger)
@@ -1733,20 +1734,32 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 			    leftright, nickname);
 	}
 
-	/* XXX: should this be after validity check? */
-	if (host_end->id.kind == ID_FROMCERT) {
-		free_id_content(&host_end->id);
-		host_end->id = id_from_cert(cert);
-	}
-
-	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
-	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &host_end->id, cert, logger)) {
+	/*
+	 * Note: this is passing in the pre-%fromcert updated ID.
+	 *
+	 * add_pubkey_from_nss_cert() adds pubkeys under: the cert's
+	 * subject name, and cert's subject alt names (SAN).  It then,
+	 * when ID isn't %fromcert, or DN (i.e., subject name making
+	 * it redundant), adds a further pubkey under the ID's name
+	 * (for instance @east?).
+	 *
+	 * Hence, using the non-updated ID from config is fine.
+	 */
+	ldbg(logger, "adding %s certificate \'%s\' pubkey", leftright, cert->nickname);
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &host_end_config->id, cert, logger)) {
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
-		return diag("%s certificate \'%s\' pubkey could not be loaded",
-			    leftright, nickname);
+		return diag("%s certificate \'%s\' pubkey could not be loaded", leftright, cert->nickname);
 	}
 
 	host_end_config->cert.nss_cert = cert;
+
+	if (host_end_config->id.kind == ID_FROMCERT) {
+		free_id_content(&host_end_config->id); /*technically pointless*/
+		host_end_config->id = id_from_cert(cert);
+		id_buf idb;
+		ldbg(logger, "replaced %s-id=%%fromcert with certificate's .derSubject: %s",
+		     leftright, str_id(&host_end_config->id, &idb));
+	}
 
 	/*
 	 * If no CA is defined, use issuer as default; but only when
