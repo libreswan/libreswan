@@ -72,8 +72,8 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 	linux_audit_conn(st, IS_IKE_SA(st) ? LAK_PARENT_FAIL : LAK_CHILD_FAIL);
 
 	if (IS_V1_ISAKMP_SA(st)) {
-		struct ike_sa *isakmp = pexpect_ike_sa(st);
-		connection_timeout_ike_family(&isakmp, HERE);
+		struct ike_sa *ike = pexpect_ike_sa(st);
+		connection_terminate_ike_family(&ike, REASON_TOO_MANY_RETRANSMITS, HERE);
 		return;
 	}
 

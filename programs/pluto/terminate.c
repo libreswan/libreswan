@@ -62,10 +62,10 @@
 #include "pluto_stats.h"
 #include "revival.h"
 
-static void delete_v1_states(struct connection *c,
-			     struct ike_sa **ike,
-			     struct child_sa **child,
-			     enum whack_state whacamole)
+static void terminate_v1_states(struct connection *c,
+				struct ike_sa **ike,
+				struct child_sa **child,
+				enum whack_state whacamole)
 {
 	switch (whacamole) {
 	case WHACK_START_IKE:
@@ -132,10 +132,10 @@ static void delete_v1_states(struct connection *c,
 	bad_case(whacamole);
 }
 
-static void delete_v2_states(struct connection *c,
-			     struct ike_sa **ike,
-			     struct child_sa **child,
-			     enum whack_state whacamole)
+static void terminate_v2_states(struct connection *c,
+				struct ike_sa **ike,
+				struct child_sa **child,
+				enum whack_state whacamole)
 {
 	switch (whacamole) {
 	case WHACK_START_IKE:
@@ -150,7 +150,7 @@ static void delete_v2_states(struct connection *c,
 		return;
 	case WHACK_LURKING_IKE:
 		state_attach(&(*ike)->sa, c->logger);
-		connection_delete_ike_family(ike, HERE);
+		connection_terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
@@ -173,7 +173,7 @@ static void delete_v2_states(struct connection *c,
 		connection_delete_child(child, HERE);
 		return;
 	case WHACK_IKE:
-		connection_delete_ike_family(ike, HERE);
+		connection_terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 	case WHACK_STOP_IKE:
 		delete_ike_sa(ike);
@@ -186,11 +186,11 @@ struct whack_state_context {
 	unsigned count;
 };
 
-static void delete_states(struct connection *c,
-			  struct ike_sa **ike,
-			  struct child_sa **child,
-			  enum whack_state whacamole,
-			  struct whack_state_context *context)
+static void terminate_connection_states(struct connection *c,
+					struct ike_sa **ike,
+					struct child_sa **child,
+					enum whack_state whacamole,
+					struct whack_state_context *context)
 {
 	if (context->count == 0) {
 		llog(RC_LOG, c->logger, "terminating SAs using this connection");
@@ -198,10 +198,10 @@ static void delete_states(struct connection *c,
 	context->count++;
 	switch (c->config->ike_version) {
 	case IKEv1:
-		delete_v1_states(c, ike, child, whacamole);
+		terminate_v1_states(c, ike, child, whacamole);
 		return;
 	case IKEv2:
-		delete_v2_states(c, ike, child, whacamole);
+		terminate_v2_states(c, ike, child, whacamole);
 		return;
 	}
 	bad_case(c->config->ike_version);
@@ -210,7 +210,7 @@ static void delete_states(struct connection *c,
 void terminate_all_connection_states(struct connection *c, where_t where)
 {
 	struct whack_state_context context = {0};
-	whack_connection_states(c, delete_states, &context, where);
+	whack_connection_states(c, terminate_connection_states, &context, where);
 	/* caller must hold a reference */
 	pmemory(c);
 }
@@ -529,11 +529,12 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 	delete_child_sa(&child);
 }
 
-static void connection_terminate_ike_family(struct ike_sa **ike,
-					    enum terminate_reason reason,
-					    where_t where)
+void connection_terminate_ike_family(struct ike_sa **ike,
+				     enum terminate_reason reason,
+				     where_t where)
 {
 	ldbg_routing((*ike)->sa.logger, "%s()", __func__);
+	pstat_sa_failed(&(*ike)->sa, reason);
 
 	ldbg((*ike)->sa.logger, "  IKE SA is no longer viable");
 	(*ike)->sa.st_viable_parent = false;
@@ -599,17 +600,6 @@ static void connection_terminate_ike_family(struct ike_sa **ike,
 
 	/* delete self */
 	connection_teardown_ike(ike, reason, where);
-}
-
-void connection_timeout_ike_family(struct ike_sa **ike, where_t where)
-{
-	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	connection_terminate_ike_family(ike, REASON_TOO_MANY_RETRANSMITS, where);
-}
-
-void connection_delete_ike_family(struct ike_sa **ike, where_t where)
-{
-	connection_terminate_ike_family(ike, REASON_DELETED, where);
 }
 
 void connection_delete_v1_state(struct state **st, where_t where)

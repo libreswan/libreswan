@@ -475,7 +475,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 */
 		if (IS_IKE_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			connection_delete_ike_family(&ike, HERE);
+			connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			connection_delete_child(&child, HERE);
@@ -498,7 +498,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		     "initiator/responder/response processor timeout after %s seconds",
 		     str_deltatime(event_delay, &dtb));
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		connection_timeout_ike_family(&ike, HERE);
+		connection_terminate_ike_family(&ike, REASON_EXCHANGE_TIMEOUT, HERE);
 		st = NULL;
 		break;
 	}
@@ -538,12 +538,12 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		state_attach(st, logger);
 		ldbg(st->logger, "event crypto_failed on state #%lu, aborting",
 		     st->st_serialno);
-		pstat_sa_failed(st, REASON_CRYPTO_TIMEOUT);
 		if (IS_PARENT_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			connection_delete_ike_family(&ike, HERE);
+			connection_terminate_ike_family(&ike, REASON_CRYPTO_TIMEOUT, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
+			pstat_sa_failed(&child->sa, REASON_CRYPTO_TIMEOUT);
 			connection_delete_child(&child, HERE);
 		}
 		/* note: no md->st to clear */

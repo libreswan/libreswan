@@ -21,6 +21,7 @@
 struct connection;
 struct logger;
 struct ike_sa;
+enum terminate_reason;
 
 /*
  * Terminate the connection.  Delete any states, pendings and
@@ -57,8 +58,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 
 void terminate_and_delete_connections(struct connection **cp, struct logger *logger, where_t where);
 
-void connection_timeout_ike_family(struct ike_sa **ike, where_t where);
-void connection_delete_ike_family(struct ike_sa **ike, where_t where);
+void connection_terminate_ike_family(struct ike_sa **ike, enum terminate_reason reason, where_t where);
 
 void connection_delete_v1_state(struct state **st, where_t where);
 

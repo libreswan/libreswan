@@ -1769,7 +1769,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		send_v1_delete(established_isakmp, &established_isakmp->sa, where);
 	}
 
-	connection_delete_ike_family(ike, where);
+	connection_terminate_ike_family(ike, REASON_DELETED, where);
 }
 
 bool require_ddos_cookies(void)
