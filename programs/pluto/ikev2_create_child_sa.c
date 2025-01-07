@@ -730,9 +730,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 *
 		 * The older child should have discarded this state.
 		 */
-		llog_sa(LOG_STREAM/*not-whack*/, larval_child,
-			"Child SA to rekey #%lu vanished abort this exchange",
-			larval_child->sa.st_v2_rekey_pred);
+		llog_pexpect(larval_child->sa.logger, HERE,
+			     "Child SA to rekey #%lu vanished abort this exchange",
+			     larval_child->sa.st_v2_rekey_pred);
 		return STF_INTERNAL_ERROR;
 	}
 
