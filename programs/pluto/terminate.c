@@ -444,52 +444,6 @@ void terminate_and_delete_connections(struct connection **cp,
 	bad_enum((*cp)->logger, &connection_kind_names, (*cp)->local->kind);
 }
 
-/*
- * If the IKE SA's connection has a direct Child SA (shares
- * connection) that owns the route then send a delete/timeout to that
- * Child SA first.
- *
- * This way the IKE SA's connection can jump to the front of the
- * revival queue (without this an IKE SA with multiple children ends
- * up with its chilren squabbling over which SA should be revived
- * first).
- *
- * Also remember if there was a direct child.  The event only gets
- * dispatched to the IKE SA when there wasn't a child (such as during
- * IKE_SA_INIT).
- */
-
-static bool terminate_connection_child(struct ike_sa **ike,
-				       enum terminate_reason reason,
-				       struct child_sa **child,
-				       where_t where)
-{
-
-	bool dispatched_to_child;
-	(*child) = child_sa_by_serialno((*ike)->sa.st_connection->negotiating_child_sa);
-	if ((*child) == NULL) {
-		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.logger, "  IKE SA's connection has no Child SA "PRI_SO,
-			     pri_so((*ike)->sa.st_connection->negotiating_child_sa));
-	} else if ((*child)->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
-		dispatched_to_child = false;
-		ldbg_routing((*ike)->sa.logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
-			     pri_so((*child)->sa.st_serialno));
-	} else {
-		ldbg_routing((*ike)->sa.logger, "  dispatching delete to Child SA "PRI_SO,
-			     pri_so((*child)->sa.st_serialno));
-		state_attach(&(*child)->sa, (*ike)->sa.logger);
-		/* will delete child and its logger */
-		dispatched_to_child = true;
-		connection_teardown_child(child, reason, where); /* always dispatches here*/
-		PEXPECT((*ike)->sa.logger, dispatched_to_child);
-		PEXPECT((*ike)->sa.logger, (*child) == NULL); /*gone!*/
-		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->negotiating_child_sa == SOS_NOBODY);
-		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->established_child_sa == SOS_NOBODY);
-	}
-	return dispatched_to_child;
-}
-
 static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
 {
 	/*
@@ -584,8 +538,38 @@ static void connection_terminate_ike_family(struct ike_sa **ike,
 	ldbg((*ike)->sa.logger, "  IKE SA is no longer viable");
 	(*ike)->sa.st_viable_parent = false;
 
-	struct child_sa *connection_child = NULL;
-	terminate_connection_child(ike, reason, &connection_child, where);
+	/*
+	 * When the IKE SA's connection has a direct Child SA (i.e.,
+	 * shares connection) that owns the route then teardown that
+	 * Child SA first.
+	 *
+	 * This way the IKE SA's connection can jump to the front of
+	 * the revival queue (without this an IKE SA with multiple
+	 * children ends up with its chilren squabbling over which SA
+	 * should be revived first).
+	 *
+	 * When this isn't the case, the for-each-child will instead
+	 * do the terminating.
+	 */
+
+	struct child_sa *connection_child = child_sa_by_serialno((*ike)->sa.st_connection->negotiating_child_sa);
+	if (connection_child == NULL) {
+		ldbg_routing((*ike)->sa.logger, "  IKE SA's connection has no Child SA "PRI_SO,
+			     pri_so((*ike)->sa.st_connection->negotiating_child_sa));
+	} else if (connection_child->sa.st_clonedfrom != (*ike)->sa.st_serialno) {
+		ldbg_routing((*ike)->sa.logger, "  IKE SA is not the parent of the connection's Child SA "PRI_SO,
+			     pri_so(connection_child->sa.st_serialno));
+		connection_child = NULL;
+	} else {
+		ldbg_routing((*ike)->sa.logger, "  dispatching delete to Child SA "PRI_SO,
+			     pri_so(connection_child->sa.st_serialno));
+		state_attach(&connection_child->sa, (*ike)->sa.logger);
+		/* will delete child and its logger */
+		connection_teardown_child(&connection_child, reason, where); /* always dispatches here*/
+		PEXPECT((*ike)->sa.logger, connection_child == NULL); /*gone!*/
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->negotiating_child_sa == SOS_NOBODY);
+		PEXPECT((*ike)->sa.logger, (*ike)->sa.st_connection->established_child_sa == SOS_NOBODY);
+	}
 
 	/*
 	 * We are a parent: prune any remaining children and then
@@ -596,7 +580,7 @@ static void connection_terminate_ike_family(struct ike_sa **ike,
 		.clonedfrom = (*ike)->sa.st_serialno,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose.logger = (*ike)->sa.logger,
 			.where = HERE,
 		},
 	};
