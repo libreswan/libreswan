@@ -867,6 +867,64 @@ static char *extract_str(const char *leftright, const char *name,
 	return NULL;
 }
 
+static diag_t extract_host_ckaid(struct host_end_config *host_config,
+				 const struct whack_end *src,
+				 bool *same_ca,
+				 struct logger *logger/*connection "..."*/)
+{
+	const char *leftright = src->leftright;
+	ckaid_t ckaid;
+	err_t err = string_to_ckaid(src->ckaid, &ckaid);
+	if (err != NULL) {
+		return diag("%s-ckaid='%s' invalid: %s",
+			    leftright, src->ckaid, err);
+	}
+
+	/*
+	 * Always save the CKAID so that a delayed load of the private
+	 * key can work.
+	 */
+	host_config->ckaid = clone_thing(ckaid, "end ckaid");
+
+	/*
+	 * See if there's a certificate matching the CKAID, if not
+	 * assume things will later find the private key (or cert on a
+	 * later attempt).
+	 */
+	CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
+	if (cert != NULL) {
+		diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
+								   *same_ca/*preserve_ca*/,
+								   logger);
+		if (diag != NULL) {
+			CERT_DestroyCertificate(cert);
+			return diag;
+		}
+		return NULL;
+	}
+
+	ldbg(logger, "%s-ckaid=%s did not match a certificate in the NSS database",
+	     leftright, src->ckaid);
+
+	/* try to pre-load the private key */
+	bool load_needed;
+	err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
+	if (err != NULL) {
+		ckaid_buf ckb;
+		ldbg(logger, "no private key matching %s-ckaid=%s: %s",
+		     leftright, str_ckaid(host_config->ckaid, &ckb), err);
+		return NULL;
+	}
+
+	ckaid_buf ckb;
+	llog(LOG_STREAM/*not-whack-for-now*/, logger,
+	     "loaded private key matching %s-ckaid=%s",
+	     leftright,
+	     str_ckaid(host_config->ckaid, &ckb));
+	return NULL;
+}
+
+
 static diag_t extract_host_end(struct host_end *host,
 			       struct host_end_config *host_config,
 			       struct host_end_config *other_host_config,
@@ -1067,49 +1125,11 @@ static diag_t extract_host_end(struct host_end *host,
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     str_ckaid(host_config->ckaid, &ckb));
 		}
+
 	} else if (src->ckaid != NULL) {
-		ckaid_t ckaid;
-		err_t err = string_to_ckaid(src->ckaid, &ckaid);
-		if (err != NULL) {
-			return diag("%s CKAID '%s' invalid: %s",
-				    leftright, src->ckaid, err);
-		}
-		/*
-		 * Always save the CKAID so lazy load of the private
-		 * key will work.
-		 */
-		host_config->ckaid = clone_thing(ckaid, "end ckaid");
-		/*
-		 * See if there's a certificate matching the CKAID, if
-		 * not assume things will later find the private key.
-		 */
-		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
-		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
-									   *same_ca/*preserve_ca*/,
-									   logger);
-			if (diag != NULL) {
-				CERT_DestroyCertificate(cert);
-				return diag;
-			}
-		} else {
-			dbg("%s CKAID '%s' did not match a certificate in the NSS database",
-			    leftright, src->ckaid);
-			/* try to pre-load the private key */
-			bool load_needed;
-			err_t err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
-			if (err != NULL) {
-				ckaid_buf ckb;
-				dbg("no private key matching %s CKAID %s: %s",
-				    leftright,
-				    str_ckaid(host_config->ckaid, &ckb), err);
-			} else {
-				ckaid_buf ckb;
-				llog(LOG_STREAM/*not-whack-for-now*/, logger,
-				     "loaded private key matching %s CKAID %s",
-				     leftright,
-				     str_ckaid(host_config->ckaid, &ckb));
-			}
+		diag_t d = extract_host_ckaid(host_config, src, same_ca, logger);
+		if (d != NULL) {
+			return d;
 		}
 	}
 
