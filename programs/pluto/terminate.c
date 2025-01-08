@@ -198,12 +198,33 @@ static void terminate_v2_states(struct connection *c,
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case CONNECTION_CHILDLESS_IKE:
+	{
 		/*
-		 * Is connection_teardown_ike() is sufficient?  XXX:
-		 * all children would have been terminated.
+		 * Since connection_teardown_child() was not
+		 * dispatched the IKE SA gets to to the teardown.
+		 *
+		 * At this point the IKE SA should have no children.
 		 */
-		terminate_ike_family(ike, REASON_DELETED, HERE);
+		struct state_filter child = {
+			.clonedfrom = (*ike)->sa.st_serialno,
+			.search = {
+				.order = NEW2OLD,
+				.verbose.logger = c->logger,
+				.where = HERE,
+			},
+		};
+		if (next_state(&child)) {
+			llog_pexpect(c->logger, child.search.where,
+				     "IKE SA "PRI_SO" has unexpected Child SA "PRI_SO,
+				     pri_so((*ike)->sa.st_serialno),
+				     pri_so(child.st->st_serialno));
+			/* get out of Dodge! */
+			return;
+		}
+		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
+	}
+
 	case CONNECTION_IKE_POST:
 		delete_ike_sa(ike);
 		return;
