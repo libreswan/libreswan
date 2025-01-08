@@ -1764,7 +1764,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
-		connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
+		terminate_ike_family(&ike, REASON_DELETED, HERE);
 		pexpect(ike == NULL);
 		return;
 
@@ -1778,7 +1778,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		v2_msgid_finish(ike, md, HERE);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
-		connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
+		terminate_ike_family(&ike, REASON_DELETED, HERE);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
 		return;
@@ -1803,7 +1803,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		/* do the deed; record'n'send logs */
 		record_n_send_n_log_v2_delete(ike, HERE);
 		/* do the deed */
-		connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
+		terminate_ike_family(&ike, REASON_DELETED, HERE);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
 		return;
@@ -1836,7 +1836,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		}
 
 		on_delete(&ike->sa, skip_send_delete);
-		connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
+		terminate_ike_family(&ike, REASON_DELETED, HERE);
 		pexpect(ike == NULL);
 		return;
 
@@ -1853,7 +1853,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		     transition->story,
 		     str_enum(&v2_notification_names, notification, &nb));
 	on_delete(&ike->sa, skip_send_delete);
-	connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
+	terminate_ike_family(&ike, REASON_DELETED, HERE);
 }
 
 static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void *arg)

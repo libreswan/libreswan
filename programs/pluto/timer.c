@@ -475,7 +475,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 */
 		if (IS_IKE_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			connection_terminate_ike_family(&ike, REASON_DELETED, HERE);
+			terminate_ike_family(&ike, REASON_DELETED, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
@@ -498,7 +498,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		     "initiator/responder/response processor timeout after %s seconds",
 		     str_deltatime(event_delay, &dtb));
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		connection_terminate_ike_family(&ike, REASON_EXCHANGE_TIMEOUT, HERE);
+		terminate_ike_family(&ike, REASON_EXCHANGE_TIMEOUT, HERE);
 		st = NULL;
 		break;
 	}
@@ -540,7 +540,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		     st->st_serialno);
 		if (IS_PARENT_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
-			connection_terminate_ike_family(&ike, REASON_CRYPTO_TIMEOUT, HERE);
+			terminate_ike_family(&ike, REASON_CRYPTO_TIMEOUT, HERE);
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
 			pstat_sa_failed(&child->sa, REASON_CRYPTO_TIMEOUT);

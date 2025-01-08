@@ -150,7 +150,7 @@ static void terminate_v2_states(struct connection *c,
 		return;
 	case WHACK_LURKING_IKE:
 		state_attach(&(*ike)->sa, c->logger);
-		connection_terminate_ike_family(ike, REASON_DELETED, HERE);
+		terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 	case WHACK_CHILD:
 		state_attach(&(*child)->sa, c->logger);
@@ -173,7 +173,7 @@ static void terminate_v2_states(struct connection *c,
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case WHACK_IKE:
-		connection_terminate_ike_family(ike, REASON_DELETED, HERE);
+		terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 	case WHACK_STOP_IKE:
 		delete_ike_sa(ike);
@@ -529,9 +529,9 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 	delete_child_sa(&child);
 }
 
-void connection_terminate_ike_family(struct ike_sa **ike,
-				     enum terminate_reason reason,
-				     where_t where)
+void terminate_ike_family(struct ike_sa **ike,
+			  enum terminate_reason reason,
+			  where_t where)
 {
 	ldbg_routing((*ike)->sa.logger, "%s()", __func__);
 	pstat_sa_failed(&(*ike)->sa, reason);
