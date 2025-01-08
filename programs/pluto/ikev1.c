@@ -2677,7 +2677,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 */
 			struct ike_sa *ike = pexpect_ike_sa(st);
 			ldbg_sa(ike, "r0 delete");
-			connection_delete_ike(&ike, HERE);
+			connection_teardown_ike(&ike, REASON_DELETED, HERE);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
 		}

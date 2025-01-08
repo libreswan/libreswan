@@ -1197,10 +1197,14 @@ static void teardown_child_post_op(const struct routing_annex *e)
 	delete_child_sa(e->child);
 }
 
-static void teardown_child(struct child_sa **child, const char *story, where_t where)
+void connection_teardown_child(struct child_sa **child,
+			       enum terminate_reason reason,
+			       where_t where)
 {
 	struct connection *cc = (*child)->sa.st_connection;
 	struct logger *logger = clone_logger((*child)->sa.logger, HERE); /* must free */
+
+	name_buf rb;
 
 	struct routing_annex annex = {
 		.child = child,
@@ -1210,7 +1214,9 @@ static void teardown_child(struct child_sa **child, const char *story, where_t w
 		 */
 		.dispatch_ok = teardown_child_dispatch_ok,
 		.post_op = teardown_child_post_op,
-		.story = story,
+		.story = (reason == REASON_DELETED ? "delete Child SA" : /* logging compat hack */
+			  reason == REASON_TOO_MANY_RETRANSMITS ? "timeout Child SA" : /* logging compat hack */
+			  str_enum(&terminate_reason_names, reason, &rb)),
 	};
 
 	/*
@@ -1220,16 +1226,6 @@ static void teardown_child(struct child_sa **child, const char *story, where_t w
 
 	PEXPECT(logger, (*child) == NULL);
 	free_logger(&logger, HERE);
-}
-
-void connection_delete_child(struct child_sa **child, where_t where)
-{
-	teardown_child(child, "delete Child SA", where);
-}
-
-void connection_timeout_child(struct child_sa **child, where_t where)
-{
-	teardown_child(child, "timeout Child SA", where);
 }
 
 /*
@@ -1258,12 +1254,17 @@ static void teardown_ike_post_op(const struct routing_annex *e)
 	delete_ike_sa(e->ike);
 }
 
-static void teardown_ike(struct ike_sa **ike, const char *story, where_t where)
+void connection_teardown_ike(struct ike_sa **ike,
+			     enum terminate_reason reason,
+			     where_t where)
 {
 	struct connection *c = (*ike)->sa.st_connection;
 	struct logger *logger = clone_logger((*ike)->sa.logger, HERE);
+	name_buf rb;
 	struct routing_annex annex = {
-		.story = story,
+		.story = (reason == REASON_DELETED ? "delete IKE SA" : /* logging compat hack */
+			  reason == REASON_TOO_MANY_RETRANSMITS ? "timeout IKE SA" : /* logging compat hack */
+			  str_enum(&terminate_reason_names, reason, &rb)),
 		.ike = ike,
 		.where = where,
 		.dispatch_ok = teardown_ike_dispatch_ok,
@@ -1274,16 +1275,6 @@ static void teardown_ike(struct ike_sa **ike, const char *story, where_t where)
 
 	PEXPECT(logger, (*ike) == NULL); /* no logger */
 	free_logger(&logger, HERE);
-}
-
-void connection_delete_ike(struct ike_sa **ike, where_t where)
-{
-	teardown_ike(ike, "delete IKE SA", where);
-}
-
-void connection_timeout_ike(struct ike_sa **ike, where_t where)
-{
-	teardown_ike(ike, "timeout IKE SA", where);
 }
 
 /*

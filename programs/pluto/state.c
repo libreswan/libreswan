@@ -716,12 +716,12 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		case IKEv1:
 			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 				state_attach(&child->sa, ike->sa.logger);
-				connection_delete_child(&child, HERE);
+				connection_teardown_child(&child, REASON_DELETED, HERE);
 			}
 			continue;
 		case IKEv2:
 			state_attach(&child->sa, ike->sa.logger);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 			continue;
 		}
 		bad_enum(ike->sa.logger, &ike_version_names, child->sa.st_ike_version);
@@ -1755,11 +1755,11 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 			if (established_isakmp != NULL) {
 				send_v1_delete(established_isakmp, &child->sa, where);
 			}
-			connection_delete_child(&child, where);
+			connection_teardown_child(&child, REASON_DELETED, where);
 			break;
 		case IKEv2:
 			/* nothing to say? */
-			connection_delete_child(&child, where);
+			connection_teardown_child(&child, REASON_DELETED, where);
 			break;
 		}
 	}
@@ -1769,7 +1769,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 		send_v1_delete(established_isakmp, &established_isakmp->sa, where);
 	}
 
-	connection_delete_ike_family(ike, where);
+	connection_terminate_ike_family(ike, REASON_DELETED, where);
 }
 
 bool require_ddos_cookies(void)

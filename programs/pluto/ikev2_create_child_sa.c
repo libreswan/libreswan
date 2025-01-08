@@ -705,7 +705,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		llog_sa(RC_LOG, larval_child,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
-		connection_delete_child(&larval_child, HERE);
+		connection_teardown_child(&larval_child, REASON_DELETED, HERE);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1033,7 +1033,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		llog_sa(RC_LOG, larval_child,
 			"IKE SA #%lu no longer viable for initiating a Child SA",
 			ike->sa.st_serialno);
-		connection_delete_child(&larval_child, HERE);
+		connection_teardown_child(&larval_child, REASON_DELETED, HERE);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
 	}
@@ -1140,7 +1140,7 @@ static stf_status reject_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	/*
 	 * Child could have been partially routed; need to move it on.
 	 */
-	connection_delete_child(larval, where);
+	connection_teardown_child(larval, REASON_DELETED, where);
 	ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 	return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 }
@@ -2207,7 +2207,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 		state_detach(replacing, (*larval_child)->sa.logger);
 	}
 
-	connection_delete_child(larval_child, HERE);
+	connection_teardown_child(larval_child, REASON_DELETED, HERE);
 
 	return status; /* IKE */
 }

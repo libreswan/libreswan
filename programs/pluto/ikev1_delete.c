@@ -421,7 +421,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			 * is to delete both then two messages are
 			 * sent.
 			 */
-			connection_delete_ike(&dst, HERE);
+			connection_teardown_ike(&dst, REASON_DELETED, HERE);
 			if (self_inflicted) {
 				/* bail; IKE SA no longer viable */
 				md->v1_st = NULL;
@@ -472,7 +472,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 				"received Delete SA payload via "PRI_SO,
 				pri_so((*ike)->sa.st_serialno));
 			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/
-			connection_delete_child(&p2d, HERE);
+			connection_teardown_child(&p2d, REASON_DELETED, HERE);
 
 		}
 	}

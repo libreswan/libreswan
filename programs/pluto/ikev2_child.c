@@ -1056,7 +1056,7 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 
 	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, child, md, sk_pbs);
 	if (cn != v2N_NOTHING_WRONG) {
-		connection_delete_child(&ike->sa.st_v2_msgid_windows.responder.wip_sa, HERE);
+		connection_teardown_child(&ike->sa.st_v2_msgid_windows.responder.wip_sa, REASON_DELETED, HERE);
 		if (v2_notification_fatal(cn)) {
 			record_v2N_response(ike->sa.logger, ike, md,
 					    cn, empty_shunk/*no-data*/,
@@ -1159,7 +1159,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			    ike->sa.st_serialno, child->sa.st_serialno,
 			    pri_connection(child->sa.st_connection, &cb));
 			unpend(ike, child->sa.st_connection);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
 			/* handled */
 			return v2N_NOTHING_WRONG;

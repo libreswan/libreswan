@@ -6444,6 +6444,77 @@ name for -1 present (should be absent)
          short_name 9: STF_FAIL_v1N OK
          jam_enum_short 9: STF_FAIL_v1N OK
          jam_enum_human 9: stf-fail-v1n OK
+  terminate_reason_names: [0..10)
+    0 -> other
+         jam_enum 0: other OK
+         search other: OK
+         match other: OK
+         short_name 0: other OK
+         jam_enum_short 0: other OK
+         jam_enum_human 0: other OK
+    1 -> crypto-timeout
+         jam_enum 1: crypto-timeout OK
+         search crypto-timeout: OK
+         match crypto-timeout: OK
+         short_name 1: crypto-timeout OK
+         jam_enum_short 1: crypto-timeout OK
+         jam_enum_human 1: crypto-timeout OK
+    2 -> exchange-timeout
+         jam_enum 2: exchange-timeout OK
+         search exchange-timeout: OK
+         match exchange-timeout: OK
+         short_name 2: exchange-timeout OK
+         jam_enum_short 2: exchange-timeout OK
+         jam_enum_human 2: exchange-timeout OK
+    3 -> too-many-retransmits
+         jam_enum 3: too-many-retransmits OK
+         search too-many-retransmits: OK
+         match too-many-retransmits: OK
+         short_name 3: too-many-retransmits OK
+         jam_enum_short 3: too-many-retransmits OK
+         jam_enum_human 3: too-many-retransmits OK
+    4 -> superseeded-by-new-sa
+         jam_enum 4: superseeded-by-new-sa OK
+         search superseeded-by-new-sa: OK
+         match superseeded-by-new-sa: OK
+         short_name 4: superseeded-by-new-sa OK
+         jam_enum_short 4: superseeded-by-new-sa OK
+         jam_enum_human 4: superseeded-by-new-sa OK
+    5 -> crypto-failed
+         jam_enum 5: crypto-failed OK
+         search crypto-failed: OK
+         match crypto-failed: OK
+         short_name 5: crypto-failed OK
+         jam_enum_short 5: crypto-failed OK
+         jam_enum_human 5: crypto-failed OK
+    6 -> auth-failed
+         jam_enum 6: auth-failed OK
+         search auth-failed: OK
+         match auth-failed: OK
+         short_name 6: auth-failed OK
+         jam_enum_short 6: auth-failed OK
+         jam_enum_human 6: auth-failed OK
+    7 -> ts-unacceptable
+         jam_enum 7: ts-unacceptable OK
+         search ts-unacceptable: OK
+         match ts-unacceptable: OK
+         short_name 7: ts-unacceptable OK
+         jam_enum_short 7: ts-unacceptable OK
+         jam_enum_human 7: ts-unacceptable OK
+    8 -> deleted
+         jam_enum 8: deleted OK
+         search deleted: OK
+         match deleted: OK
+         short_name 8: deleted OK
+         jam_enum_short 8: deleted OK
+         jam_enum_human 8: deleted OK
+    9 -> completed
+         jam_enum 9: completed OK
+         search completed: OK
+         match completed: OK
+         short_name 9: completed OK
+         jam_enum_short 9: completed OK
+         jam_enum_human 9: completed OK
   v1_notification_names: [1..40504)
     1 -> v1N_INVALID_PAYLOAD_TYPE
          jam_enum 1: v1N_INVALID_PAYLOAD_TYPE OK

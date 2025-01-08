@@ -81,7 +81,7 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 		switch (ike->sa.st_ike_version) {
 		case IKEv1:
 			llog_n_maybe_send_v1_delete(ike, &ike->sa, HERE);
-			connection_delete_ike(&ike, HERE);
+			connection_teardown_ike(&ike, REASON_DELETED, HERE);
 			break;
 		case IKEv2:
 			submit_v2_delete_exchange(ike, NULL);
@@ -97,7 +97,7 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 		case IKEv2:
 			break;
 		}
-		connection_delete_ike(&ike, HERE);
+		connection_teardown_ike(&ike, REASON_DELETED, HERE);
 	} else {
 		struct child_sa *child = pexpect_child_sa(st);
 		switch (child->sa.st_ike_version) {
@@ -106,7 +106,7 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 			struct ike_sa *isakmp =
 				established_isakmp_sa_for_state(&child->sa, /*viable-parent*/false);
 			llog_n_maybe_send_v1_delete(isakmp, &child->sa, HERE);
-			connection_delete_child(&child, HERE);
+			connection_teardown_child(&child, REASON_DELETED, HERE);
 			st = NULL;
 			break;
 		}
@@ -116,7 +116,7 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 			if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 				submit_v2_delete_exchange(ike, child);
 			} else {
-				connection_delete_child(&child, HERE);
+				connection_teardown_child(&child, REASON_DELETED, HERE);
 			}
 			break;
 		}

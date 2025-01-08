@@ -25,6 +25,7 @@
 #include "pluto_timing.h"	/* for threadtime_t */
 #include "connection_owner.h"
 
+enum terminate_reason;
 struct connection;
 struct logger;
 struct state;
@@ -105,11 +106,9 @@ void connection_suspend(struct child_sa *child, where_t where);
 /*
  * Both delete_ike and timeout are close to identical?
  */
-void connection_timeout_child(struct child_sa **child, where_t where);
-void connection_delete_child(struct child_sa **child, where_t where);
 
-void connection_timeout_ike(struct ike_sa **ike, where_t where);
-void connection_delete_ike(struct ike_sa **ike, where_t where);
+void connection_teardown_ike(struct ike_sa **ike, enum terminate_reason reason, where_t where);
+void connection_teardown_child(struct child_sa **child, enum terminate_reason reason, where_t where);
 
 bool connection_establish_child(struct ike_sa *ike, struct child_sa *child, where_t where);
 bool connection_establish_inbound(struct child_sa *child, where_t where);

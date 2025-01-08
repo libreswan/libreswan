@@ -62,6 +62,7 @@
 #include "sa_role.h"
 #include "packet.h"
 #include "state_category.h"
+#include "terminate_reason.h"
 
 struct whack_message;
 struct v2_transition;
@@ -171,23 +172,6 @@ struct hidden_variables {
 						 * should be used. */
 	ip_address st_nat_oa;
 	ip_address st_natd;
-};
-
-/*
- * For auditing, why an SA is being deleted.
- */
-enum delete_reason {
-#define DELETE_REASON_FLOOR 0
-	REASON_UNKNOWN = DELETE_REASON_FLOOR, /* aka other */
-	REASON_CRYPTO_TIMEOUT,
-	REASON_EXCHANGE_TIMEOUT,
-	REASON_TOO_MANY_RETRANSMITS,
-	REASON_SUPERSEDED_BY_NEW_SA,
-	REASON_CRYPTO_FAILED,
-	REASON_AUTH_FAILED,
-	REASON_TRAFFIC_SELECTORS_FAILED,
-	REASON_COMPLETED,
-#define DELETE_REASON_ROOF (REASON_COMPLETED + 1)
 };
 
 /*
@@ -520,7 +504,7 @@ struct state {
 	 */
 	struct {
 		enum sa_type sa_type;
-		enum delete_reason delete_reason;
+		enum terminate_reason terminate_reason;
 	} st_pstats;
 
 	retransmit_t st_retransmit;	/* retransmit counters; opaque */
