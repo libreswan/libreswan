@@ -21,7 +21,7 @@
 #include "server.h"		/* for listen; */
 #include "show.h"
 #include "log.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 #include "ipsec_interface.h"
 
 static unsigned maybe_route_connection(struct connection *c)

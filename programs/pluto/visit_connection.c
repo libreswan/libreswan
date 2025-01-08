@@ -23,7 +23,7 @@
  * for more details.
  */
 
-#include "whack_connection.h"
+#include "visit_connection.h"
 
 #include "show.h"
 #include "connections.h"
@@ -407,65 +407,99 @@ void whack_connections_bottom_up(const struct whack_message *m,
 			  &each);
 }
 
-void whack_connection_states(struct connection *c,
-			     void (whack_state)(struct connection *c,
-						struct ike_sa **ike,
-						struct child_sa **child,
-						enum whack_state,
-						struct whack_state_context *context),
-			     struct whack_state_context *context,
+void visit_connection_states(struct connection *c,
+			     void (visit_connection_state)(struct connection *c,
+							   struct ike_sa **ike,
+							   struct child_sa **child,
+							   enum connection_visit_kind visit_kind,
+							   struct visit_connection_state_context *context),
+			     struct visit_connection_state_context *context,
 			     where_t where)
 {
-	pdbg(c->logger,
-	     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
-	     __func__,
-	     pri_so(c->negotiating_ike_sa),
-	     pri_so(c->established_ike_sa),
-	     pri_so(c->negotiating_child_sa),
-	     pri_so(c->established_child_sa));
+	VERBOSE_DBGP(DBG_BASE, c->logger,
+		     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
+		     __func__,
+		     pri_so(c->negotiating_ike_sa),
+		     pri_so(c->established_ike_sa),
+		     pri_so(c->negotiating_child_sa),
+		     pri_so(c->established_child_sa));
+
+	/*
+	 * Start by visiting the the connection's IKE SA, when there
+	 * is one.
+	 *
+	 * Cases when there isn't include IKEv1 where the ISAKMP was
+	 * deleted, and IKEv2 when the connection is a cuckoo (i.e.,
+	 * the Child SA is using another connection's IKE SA).
+	 */
 
 	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa); /* could be NULL */
 	if (ike != NULL) {
-		pdbg(c->logger, "%s()  dispatching START to "PRI_SO,
-		     __func__, pri_so(ike->sa.st_serialno));
-		whack_state(c, &ike, NULL, WHACK_START_IKE, context);
+		vdbg("dispatching START to "PRI_SO, pri_so(ike->sa.st_serialno));
+		visit_connection_state(c, &ike, NULL, CONNECTION_IKE_PREP, context);
+		/*
+		 * START_IKE does _not_ delete the IKE SA, thus
+		 * ensuring that .establised_ike_sa is still valid.
+		 * IKEv1 children need the IKE SA to send their delete
+		 * notifications, and IKEv2 children are never
+		 * orphaned.
+		 *
+		 * Additionally, code below uses .established_ike_sa
+		 * to detect a Child SA using another connection's IKE
+		 * SA (a.k.a. cuckoo).
+		 */
+		PEXPECT(c->logger, ike != NULL);
 	} else {
-		pdbg(c->logger, "%s()  skipping START, no IKE", __func__);
+		vdbg("skipping START, no IKE");
 	}
 
 	/*
-	 * Notify the connection's child.
+	 * Notify the connection's Child SA before, notifying any
+	 * other children.
 	 *
-	 * Do this before any siblings.  If this isn't done, the IKE
-	 * SAs children constantly swap the revival pole position.
+	 * This is to ensure that the connection's Child SA is the
+	 * first with an opportunity to put the connection on the
+	 * revival queue.  Without this, one of the siblings and their
+	 * connection ends up going first and this results in each
+	 * revival using a different connection (very confusing).
+	 *
+	 * Only need to visit the connection with the IKE SA (ignoring
+	 * start/stop) when the connection wasn't visited with the
+	 * Child SA.
 	 */
 
-	bool whack_ike;
+	bool visit_ike;
 	struct child_sa *connection_child =
 		child_sa_by_serialno(c->negotiating_child_sa);
 	if (connection_child == NULL) {
-		pdbg(c->logger, "%s()  skipping Child SA, as no "PRI_SO,
-		     __func__, pri_so(c->negotiating_child_sa));
-		whack_ike = true;
+		vdbg("skipping Child SA, as no "PRI_SO, pri_so(c->negotiating_child_sa));
+		visit_ike = true;
 	} else if (connection_child->sa.st_clonedfrom != c->established_ike_sa) {
-		/* st_clonedfrom can't be be SOS_NOBODY */
-		pdbg(c->logger, "%s()  dispatch cuckoo Child SA "PRI_SO,
-		     __func__,
+		/*
+		 * i.e., the connection's Child SA is not using the
+		 * connection's IKE SA (.established_ike_sa is for a
+		 * different IKE SA), or the connection has no IKE SA
+		 * (.established_ike_sa == SOS_NOBODY).
+		 *
+		 * Note: CONNECTION_START does not delete the IKE SA
+		 * (see pexpect() above) which means that, when there
+		 * is an IKE SA, .established_ike_sa is still valid
+		 * (not SOS_NOBODY).
+		 */
+		vdbg("dispatch cuckoo Child SA "PRI_SO,
 		     pri_so(connection_child->sa.st_serialno));
-		whack_ike = true;
-		whack_state(c, NULL, &connection_child, WHACK_CUCKOO, context);
+		visit_ike = true;
+		visit_connection_state(c, NULL, &connection_child, CONNECTION_CUCKOO_CHILD, context);
 	} else if (ike == NULL) {
-		pdbg(c->logger, "%s()  dispatch orphaned Child SA "PRI_SO,
-		     __func__,
+		vdbg("dispatch orphaned Child SA "PRI_SO,
 		     pri_so(connection_child->sa.st_serialno));
-		whack_ike = false;
-		whack_state(c, NULL, &connection_child, WHACK_ORPHAN, context);
+		visit_ike = false;
+		visit_connection_state(c, NULL, &connection_child, CONNECTION_ORPHAN_CHILD, context);
 	} else {
-		pdbg(c->logger, "%s()  dispatch Child SA "PRI_SO,
-		     __func__,
+		vdbg("dispatch Child SA "PRI_SO,
 		     pri_so(connection_child->sa.st_serialno));
-		whack_ike = false;
-		whack_state(c, &ike, &connection_child, WHACK_CHILD, context);
+		visit_ike = false;
+		visit_connection_state(c, &ike, &connection_child, CONNECTION_IKE_CHILD, context);
 	}
 
 	/*
@@ -485,50 +519,57 @@ void whack_connection_states(struct connection *c,
 	 * Typically these states can be deleted outright.
 	 */
 
-	pdbg(c->logger, "%s()  weeding out larval and lingering SAs", __func__);
+	vdbg("weeding out larval and lingering SAs");
+
 	struct state_filter weed = {
 		.connection_serialno = c->serialno,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = verbose,
 			.where = where,
 		},
 	};
 	unsigned nr_parents = 0;
 	unsigned nr_children = 0;
 	while (next_state(&weed)) {
+		struct verbose verbose = weed.search.verbose;
+
 		if (weed.st->st_serialno == c->established_ike_sa) {
-			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest IKE SA",
-			      __func__, pri_so(weed.st->st_serialno));
+			vdbg("skipping "PRI_SO" as newest IKE SA",
+			     pri_so(weed.st->st_serialno));
 			continue;
 		}
+
 		if (weed.st->st_serialno == c->established_child_sa) {
-			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest Child SA",
-			      __func__, pri_so(weed.st->st_serialno));
+			vdbg("skipping "PRI_SO" as newest Child SA",
+			      pri_so(weed.st->st_serialno));
 			continue;
 		}
+
 		if (weed.st->st_serialno == c->negotiating_child_sa) {
-			pdbg(c->logger, "%s()    skipping "PRI_SO" as newest routing SA",
-			      __func__, pri_so(weed.st->st_serialno));
+			vdbg("skipping "PRI_SO" as newest routing SA",
+			      pri_so(weed.st->st_serialno));
 			continue;
 		}
+
 		if (IS_PARENT_SA(weed.st)) {
-			pdbg(c->logger, "%s()    dispatch lurking IKE SA to "PRI_SO,
-			     __func__, pri_so(weed.st->st_serialno));
+			vdbg("dispatch lurking IKE SA to "PRI_SO,
+			     pri_so(weed.st->st_serialno));
 			struct ike_sa *lingering_ike = pexpect_ike_sa(weed.st);
-			whack_state(c, &lingering_ike, NULL, WHACK_LURKING_IKE, context);
+			visit_connection_state(c, &lingering_ike, NULL, CONNECTION_LURKING_IKE, context);
 			nr_parents++;
-		} else {
-			pdbg(c->logger, "%s()    dispatch lurking Child SA to "PRI_SO,
-			     __func__, pri_so(weed.st->st_serialno));
-			struct child_sa *lingering_child = pexpect_child_sa(weed.st);
-			/* may not have IKE as parent? */
-			nr_children++;
-			whack_state(c, NULL, &lingering_child, WHACK_LURKING_CHILD, context);
+			continue;
 		}
+
+		vdbg("dispatch lurking Child SA to "PRI_SO,
+		     pri_so(weed.st->st_serialno));
+		struct child_sa *lingering_child = pexpect_child_sa(weed.st);
+		/* may not have IKE as parent? */
+		nr_children++;
+		visit_connection_state(c, NULL, &lingering_child, CONNECTION_LURKING_CHILD, context);
 	}
-	pdbg(c->logger, "%s()    weeded %u parents and %u children",
-	     __func__, nr_parents, nr_children);
+
+	vdbg("weeded %u parents and %u children", nr_parents, nr_children);
 
 	/*
 	 * Now go through any remaining children.
@@ -538,25 +579,27 @@ void whack_connection_states(struct connection *c,
 	 */
 
 	if (ike != NULL) {
-		pdbg(c->logger, "%s()  poking siblings", __func__);
+		vdbg("poking siblings");
 		struct state_filter child_filter = {
 			.clonedfrom = ike->sa.st_serialno,
 			.search = {
 				.order = NEW2OLD,
-				.verbose.logger = &global_logger,
+				.verbose = verbose,
 				.where = where,
 			},
 		};
 		unsigned nr = 0;
 		while (next_state(&child_filter)) {
+			struct verbose verbose = child_filter.search.verbose;
+
 			struct child_sa *child = pexpect_child_sa(child_filter.st);
 			state_buf sb;
-			pdbg(c->logger, "%s()    dispatching to sibling Child SA "PRI_STATE,
-			     __func__, pri_state(&child->sa, &sb));
-			whack_state(c, &ike, &child, WHACK_SIBLING, context);
+			vdbg("dispatching to sibling Child SA "PRI_STATE,
+			     pri_state(&child->sa, &sb));
+			visit_connection_state(c, &ike, &child, CONNECTION_CHILD_SIBLING, context);
 			nr++;
 		}
-		pdbg(c->logger, "%s()    poked %u siblings", __func__, nr);
+		vdbg("poked %u siblings", nr);
 	}
 
 	/*
@@ -564,17 +607,16 @@ void whack_connection_states(struct connection *c,
 	 * SA.
 	 */
 
-	if (ike != NULL && whack_ike) {
-		pdbg(c->logger, "%s()  dispatch to IKE SA "PRI_SO" as child skipped",
-		     __func__, pri_so(ike->sa.st_serialno));
-		whack_state(c, &ike, NULL,
-			    WHACK_IKE, context);
+	if (ike != NULL && visit_ike) {
+		vdbg("dispatch to IKE SA "PRI_SO" as child skipped",
+		     pri_so(ike->sa.st_serialno));
+		visit_connection_state(c, &ike, NULL, CONNECTION_CHILDLESS_IKE, context);
 	}
 
 	if (ike != NULL) {
-		pdbg(c->logger, "%s()  dispatch STOP as reached end", __func__);
-		whack_state(c, &ike, NULL, WHACK_STOP_IKE, context);
+		vdbg("dispatch STOP as reached end");
+		visit_connection_state(c, &ike, NULL, CONNECTION_IKE_POST, context);
 	} else {
-		pdbg(c->logger, "%s()  skipping STOP, no IKE", __func__);
+		vdbg("skipping STOP, no IKE");
 	}
 }

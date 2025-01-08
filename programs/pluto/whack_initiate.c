@@ -31,7 +31,7 @@
 #include "server.h"		/* for listening; */
 #include "log.h"
 #include "show.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 #include "connections.h"
 #include "initiate.h"
 #include "kernel.h"		/* for struct kernel_acquire [oppo] */

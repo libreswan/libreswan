@@ -15,7 +15,8 @@
 
 #include "whack_briefconnectionstatus.h"
 #include "whack_connectionstatus.h"
-#include "whack_connection.h"
+
+#include "visit_connection.h"
 
 #include "ike_alg.h"
 

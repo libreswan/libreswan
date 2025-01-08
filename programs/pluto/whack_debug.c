@@ -29,7 +29,7 @@
 #include "log.h"
 #include "show.h"
 #include "fips_mode.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 
 static unsigned whack_debug_connection(const struct whack_message *m,
 				       struct show *s,

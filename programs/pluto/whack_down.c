@@ -27,7 +27,7 @@
 #include "show.h"
 #include "log.h"
 #include "pending.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 #include "ikev2_delete.h"
 #include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */

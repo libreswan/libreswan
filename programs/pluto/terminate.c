@@ -56,36 +56,32 @@
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
 #include "terminate.h"
-#include "whack_connection.h"		/* for whack_connection() */
+#include "visit_connection.h"		/* for whack_connection() */
 #include "ikev1_delete.h"
 #include "ikev2_delete.h"
 #include "pluto_stats.h"
 #include "revival.h"
 
-static void terminate_v1_states(struct connection *c,
-				struct ike_sa **ike,
-				struct child_sa **child,
-				enum whack_state whacamole)
+static void terminate_v1_state(struct connection *c,
+			       struct ike_sa **ike,
+			       struct child_sa **child,
+			       enum connection_visit_kind visit_kind)
 {
-	switch (whacamole) {
-	case WHACK_START_IKE:
+	switch (visit_kind) {
+
+	case CONNECTION_IKE_PREP:
 		/*
+		 * Prepare the IKE SA for deletion.
+		 *
 		 * IKEv1 announces the death of the ISAKMP SA after
 		 * all the children have gone (reverse of IKEv2).
 		 */
 		state_attach(&(*ike)->sa, c->logger);
 		(*ike)->sa.st_viable_parent = false;
 		return;
-	case WHACK_LURKING_CHILD:
-		state_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case WHACK_LURKING_IKE:
-		state_attach(&(*ike)->sa, c->logger);
-		delete_ike_sa(ike);
-		return;
-	case WHACK_CHILD:
-	case WHACK_CUCKOO:
+
+	case CONNECTION_IKE_CHILD:
+	case CONNECTION_CUCKOO_CHILD:
 	{
 		/*
 		 * Can't always assume IKE is suitable for sending
@@ -102,25 +98,37 @@ static void terminate_v1_states(struct connection *c,
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	}
-	case WHACK_ORPHAN:
+	case CONNECTION_ORPHAN_CHILD:
 		/* IKEv1 has orphans */
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case WHACK_SIBLING:
+
+	case CONNECTION_LURKING_CHILD:
+		state_attach(&(*child)->sa, c->logger);
+		connection_teardown_child(child, REASON_DELETED, HERE);
+		return;
+	case CONNECTION_LURKING_IKE:
+		state_attach(&(*ike)->sa, c->logger);
+		delete_ike_sa(ike);
+		return;
+
+	case CONNECTION_CHILD_SIBLING:
 		/*
 		 * When IKEv1 deletes an IKE SA any siblings are
 		 * orphaned.
 		 */
 		return;
-	case WHACK_IKE:
+	case CONNECTION_CHILDLESS_IKE:
 		/*
 		 * When IKEv1 deletes an IKE SA it always sends a
-		 * delete notify; hence handle this in WHACK_STOP_IKE.
+		 * delete notify; hence handle this in
+		 * CONNECTION_IKE_POST.
 		 */
 		return;
-	case WHACK_STOP_IKE:
+
+	case CONNECTION_IKE_POST:
 	{
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
@@ -128,69 +136,91 @@ static void terminate_v1_states(struct connection *c,
 		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
 	}
+
 	}
-	bad_case(whacamole);
+	bad_case(visit_kind);
 }
 
 static void terminate_v2_states(struct connection *c,
 				struct ike_sa **ike,
 				struct child_sa **child,
-				enum whack_state whacamole)
+				enum connection_visit_kind visit_kind)
 {
-	switch (whacamole) {
-	case WHACK_START_IKE:
-		/* announce to the world */
+	switch (visit_kind) {
+	case CONNECTION_IKE_PREP:
+		/*
+		 * Prepare the IKE SA for deletion.
+		 *
+		 * IKEv2 announces the death first.
+		 */
 		state_attach(&(*ike)->sa, c->logger);
 		(*ike)->sa.st_viable_parent = false;
 		record_n_send_n_log_v2_delete(*ike, HERE);
 		return;
-	case WHACK_LURKING_CHILD:
-		state_attach(&(*child)->sa, c->logger);
-		delete_child_sa(child);
-		return;
-	case WHACK_LURKING_IKE:
-		state_attach(&(*ike)->sa, c->logger);
-		terminate_ike_family(ike, REASON_DELETED, HERE);
-		return;
-	case WHACK_CHILD:
+
+	case CONNECTION_IKE_CHILD:
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case WHACK_CUCKOO:
+	case CONNECTION_CUCKOO_CHILD:
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case WHACK_ORPHAN:
+	case CONNECTION_ORPHAN_CHILD:
 		state_attach(&(*child)->sa, c->logger);
 		llog_pexpect(c->logger, HERE, "unexpected orphan Child SA "PRI_SO,
 			     (*child)->sa.st_serialno);
 		PEXPECT(c->logger, ike == NULL);
 		delete_child_sa(child);
 		return;
-	case WHACK_SIBLING:
+
+	case CONNECTION_LURKING_CHILD:
+		state_attach(&(*child)->sa, c->logger);
+		delete_child_sa(child);
+		return;
+	case CONNECTION_LURKING_IKE:
+		/*
+		 * For instance, a larval IKE SA, either stuck waiting
+		 * for IKE_SA_INIT response crossed by the peer
+		 * establishing the IKE SA.
+		 *
+		 * This will strip the connection of the IKE SA.  If
+		 * the IKE SA has children then they too are deleted,
+		 * but when would this be the case?
+		 */
+		state_attach(&(*ike)->sa, c->logger);
+		terminate_ike_family(ike, REASON_DELETED, HERE);
+		return;
+
+	case CONNECTION_CHILD_SIBLING:
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case WHACK_IKE:
+	case CONNECTION_CHILDLESS_IKE:
+		/*
+		 * Is connection_teardown_ike() is sufficient?  XXX:
+		 * all children would have been terminated.
+		 */
 		terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
-	case WHACK_STOP_IKE:
+	case CONNECTION_IKE_POST:
 		delete_ike_sa(ike);
 		return;
 	}
-	bad_case(whacamole);
+
+	bad_case(visit_kind);
 }
 
-struct whack_state_context {
+struct visit_connection_state_context {
 	unsigned count;
 };
 
 static void terminate_connection_states(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
-					enum whack_state whacamole,
-					struct whack_state_context *context)
+					enum connection_visit_kind visit_kind,
+					struct visit_connection_state_context *context)
 {
 	if (context->count == 0) {
 		llog(RC_LOG, c->logger, "terminating SAs using this connection");
@@ -198,10 +228,11 @@ static void terminate_connection_states(struct connection *c,
 	context->count++;
 	switch (c->config->ike_version) {
 	case IKEv1:
-		terminate_v1_states(c, ike, child, whacamole);
+		terminate_v1_state(c, ike, child, visit_kind);
 		return;
 	case IKEv2:
-		terminate_v2_states(c, ike, child, whacamole);
+		/* may need to delete IKE tree */
+		terminate_v2_states(c, ike, child, visit_kind);
 		return;
 	}
 	bad_case(c->config->ike_version);
@@ -209,8 +240,8 @@ static void terminate_connection_states(struct connection *c,
 
 void terminate_all_connection_states(struct connection *c, where_t where)
 {
-	struct whack_state_context context = {0};
-	whack_connection_states(c, terminate_connection_states, &context, where);
+	struct visit_connection_state_context context = {0};
+	visit_connection_states(c, terminate_connection_states, &context, where);
 	/* caller must hold a reference */
 	pmemory(c);
 }
