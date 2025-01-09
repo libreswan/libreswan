@@ -96,6 +96,8 @@ import time
 from datetime import datetime, timedelta
 import pexpect
 from OpenSSL import crypto
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import pkcs12
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
 
@@ -148,18 +150,27 @@ def run(command, events=None, logfile=None):
         print("")
         throw
 
-def writeout_cert(filename, item,
-                  type=crypto.FILETYPE_PEM):
+def writeout_cert(filename, cert):
     global dirbase
+    blob = cert.public_bytes(serialization.Encoding.PEM)
     with open(dirbase + filename, "wb") as f:
-        f.write(crypto.dump_certificate(type, item))
+        f.write(blob)
 
 
-def writeout_privkey(filename, item,
-                     type=crypto.FILETYPE_PEM):
+def writeout_privkey(filename, key):
     global dirbase
+    blob = key.private_bytes(serialization.Encoding.PEM,
+                             serialization.PrivateFormat.TraditionalOpenSSL,
+                             serialization.NoEncryption())
     with open(dirbase + filename, "wb") as f:
-        f.write(crypto.dump_privatekey(type, item))
+        f.write(blob)
+
+
+def writeout_cert_and_key(certdir, name, cert, privkey):
+    """ Write the cert and key files
+    """
+    writeout_cert(certdir + name + ".crt", cert)
+    writeout_privkey("keys/" + name + ".key", privkey)
 
 
 def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
@@ -406,13 +417,6 @@ def store_cert_and_key(name, cert, key):
             end_certs[name] = cert, key
 
 
-def writeout_cert_and_key(certdir, name, cert, privkey):
-    """ Write the cert and key files
-    """
-    writeout_cert(certdir + name + ".crt", cert)
-    writeout_privkey("keys/" + name + ".key", privkey)
-
-
 def create_basic_pluto_cas(ca_names):
     """ Create the core root certs
     """
@@ -422,20 +426,18 @@ def create_basic_pluto_cas(ca_names):
         ca, key = create_root_ca(CN="Libreswan test CA for " + name,
                                  START=dates['OK_NOW'],
                                  END=dates['FUTURE_END'])
-        writeout_cert_and_key("cacerts/", name, ca, key)
+        writeout_cert_and_key("cacerts/", name, ca.to_cryptography(), key.to_cryptography_key())
         store_cert_and_key(name, ca, key)
 
 
-def create_pkcs12(path, name, cert, key, ca_cert):
+def writeout_pkcs12(path, name, cert, key, ca_cert):
     """ Package and write out a .p12 file
     """
-    p12 = crypto.PKCS12()
-    p12.set_certificate(cert)
-    p12.set_privatekey(key)
-    p12.set_friendlyname(name.encode('utf-8'))
-    p12.set_ca_certificates([ca_cert])
+    blob = pkcs12.serialize_key_and_certificates(name.encode('utf-8'),
+                                                 key, cert, [ca_cert],
+                                                 serialization.BestAvailableEncryption(b"foobar"))
     with open(dirbase + path + name + ".p12", "wb") as f:
-        f.write(p12.export(passphrase = b"foobar"))
+        f.write(blob)
 
 
 def create_mainca_end_certs(mainca_end_certs):
@@ -509,10 +511,11 @@ def create_mainca_end_certs(mainca_end_certs):
                                     START=startdate, END=enddate,
                                     keybits=keysize,
                                     sign_alg=alg, ocsp=ocsp_resp)
-        writeout_cert_and_key("certs/", name, cert, key)
+        writeout_cert_and_key("certs/", name, cert.to_cryptography(), key.to_cryptography_key())
         store_cert_and_key(name, cert, key)
-        create_pkcs12("pkcs12/"+ signer + '/',
-                      name, cert, key, ca_certs[signer][0])
+        writeout_pkcs12("pkcs12/"+ signer + '/', name,
+                        cert.to_cryptography(), key.to_cryptography_key(),
+                        ca_certs[signer][0].to_cryptography())
         serial += 1
 
 
@@ -549,7 +552,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                       emailAddress="%s@testing.libreswan.org"%cname,
                                       isCA=True, ocsp=False)
 
-            writeout_cert_and_key("certs/", cname, ca, key)
+            writeout_cert_and_key("certs/", cname, ca.to_cryptography(), key.to_cryptography_key())
             store_cert_and_key(cname, ca, key)
             lastca = cname
             serial += 1
@@ -566,9 +569,11 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endcert_name, ecert, ekey)
+                writeout_cert_and_key("certs/", endcert_name, ecert.to_cryptography(), ekey.to_cryptography_key())
                 store_cert_and_key(endcert_name, ecert, ekey)
-                create_pkcs12("pkcs12/", endcert_name, ecert, ekey, signpair[0])
+                writeout_pkcs12("pkcs12/", endcert_name,
+                                ecert.to_cryptography(), ekey.to_cryptography_key(),
+                                signpair[0].to_cryptography())
                 serial += 1
 
                 endrev_name = prefix + chainca + "_revoked"
@@ -580,9 +585,11 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endrev_name, ercert, erkey)
+                writeout_cert_and_key("certs/", endrev_name, ercert.to_cryptography(), erkey.to_cryptography_key())
                 store_cert_and_key(endrev_name, ercert, erkey)
-                create_pkcs12("pkcs12/", endrev_name, ercert, erkey, signpair[0])
+                writeout_pkcs12("pkcs12/", endrev_name,
+                                ercert.to_cryptography(), erkey.to_cryptography_key(),
+                                signpair[0].to_cryptography())
 
 # this special crl was for a openswan/nss freebl combo bug, both of which should
 # long be done with.
