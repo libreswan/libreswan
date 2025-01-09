@@ -14,8 +14,9 @@
  *
  */
 
-#include "whack_connection.h"
 #include "whack_delete.h"
+
+#include "visit_connection.h"
 #include "show.h"
 #include "log.h"
 #include "connections.h"

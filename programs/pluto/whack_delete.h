@@ -17,6 +17,8 @@
 #ifndef WHACK_DELETE_H
 #define WHACK_DELETE_H
 
+#include <stdbool.h>
+
 #include "where.h"
 
 struct connection;

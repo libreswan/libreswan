@@ -18,7 +18,7 @@
 #include "show.h"
 #include "log.h"
 #include "terminate.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 #include "whack.h"
 #include "connections.h"
 

@@ -27,7 +27,7 @@
 #include "timer.h"
 #include "whack_sa.h"
 #include "show.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 #include "ikev2_delete.h"
 
 static bool whack_rekey_sa(struct state *st)

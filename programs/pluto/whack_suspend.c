@@ -21,7 +21,7 @@
 #include "connections.h"
 #include "log.h"
 #include "whack_suspend.h"
-#include "whack_connection.h"
+#include "visit_connection.h"
 #include "terminate.h"
 
 static unsigned whack_suspend_connection(const struct whack_message *m UNUSED,

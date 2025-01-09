@@ -78,7 +78,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		llog(RC_LOG, ike->sa.logger,
 		     "suppressing retransmit because IKE SA was superseded by #%lu; drop this negotiation",
 		     c->established_ike_sa);
-		connection_terminate_ike_family(&ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
+		terminate_ike_family(&ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
 		return;
 	}
 
@@ -99,7 +99,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		 * Tell the connection so it can revive/retry if
 		 * needed and then delete the state.
 		 */
-		connection_terminate_ike_family(&ike, REASON_TOO_MANY_RETRANSMITS, HERE);
+		terminate_ike_family(&ike, REASON_TOO_MANY_RETRANSMITS, HERE);
 		return;
 
 	}
