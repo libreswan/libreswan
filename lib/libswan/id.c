@@ -514,9 +514,9 @@ enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shun
 /*
  * choose either subject DN or a subjectAltName as connection end ID
  */
-struct id id_from_cert(CERTCertificate *cert)
+struct id id_from_cert(const struct cert *cert)
 {
-	chunk_t name = clone_secitem_as_chunk(cert->derSubject, "cert id");
+	chunk_t name = clone_secitem_as_chunk(cert->nss_cert->derSubject, "cert id");
 	struct id id = {
 		.name = ASN1(name),
 		.scratch = name.ptr,

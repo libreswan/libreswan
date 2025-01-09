@@ -24,7 +24,7 @@
 #include "jambuf.h"		/* for typedef jam_bytes_fn */
 #include "verbose.h"
 
-struct CERTCertificateStr;
+struct cert;
 
 struct id {
 	enum ike_id_type kind;
@@ -102,6 +102,6 @@ extern bool id_has_wildcards(const struct id *id);
 /* returns ID Type; and points body at Identification Data */
 enum ike_id_type id_to_payload(const struct id *id, const ip_address *host, shunk_t *body);
 
-struct id id_from_cert(struct CERTCertificateStr *cert);
+struct id id_from_cert(const struct cert *cert);
 
 #endif

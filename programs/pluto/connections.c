@@ -1113,10 +1113,18 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 	}
 
-	id_buf idb;
-	ldbg(logger, "setting %s-id to %s from host_config->id)",
-	     leftright, str_id(&host_config->id, &idb));
-	host->id = clone_id(&host_config->id, __func__);
+	if (host_config->id.kind == ID_FROMCERT &&
+	    host_config->cert.nss_cert != NULL) {
+		host->id = id_from_cert(&host_config->cert);
+		id_buf idb;
+		ldbg(logger, "setting %s-id to '%s' as host->config->id=%%fromcert",
+		     leftright, str_id(&host->id, &idb));
+	} else {
+		id_buf idb;
+		ldbg(logger, "setting %s-id to '%s' as host->config->id)",
+		     leftright, str_id(&host_config->id, &idb));
+		host->id = clone_id(&host_config->id, __func__);
+	}
 
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = src->host_type;
@@ -1753,18 +1761,9 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 
 	host_end_config->cert.nss_cert = cert;
 
-	if (host_end_config->id.kind == ID_FROMCERT) {
-		free_id_content(&host_end_config->id); /*technically pointless*/
-		host_end_config->id = id_from_cert(cert);
-		id_buf idb;
-		ldbg(logger, "replaced %s-id=%%fromcert with certificate's .derSubject: %s",
-		     leftright, str_id(&host_end_config->id, &idb));
-	}
-
 	/*
 	 * If no CA is defined, use issuer as default; but only when
-	 * update is ok.
-	 *
+	 * update is ok (when reloading certs it is never ok).
 	 */
 	if (preserve_ca || host_end_config->ca.ptr != NULL) {
 		dbg("preserving existing %s ca", leftright);
