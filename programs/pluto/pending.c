@@ -419,8 +419,8 @@ void flush_pending_by_state(struct ike_sa *ike)
 }
 
 /*
- * A connection is been deleted; look for and remove the connection
- * from the host-pair pending list.
+ * A connection is been taken down or deleted; look for and remove the
+ * connection from the host-pair pending list.
  *
  * The host-pair pending list contains all connections waiting for an
  * IKE SA to establish between the two ends.
