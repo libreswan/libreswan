@@ -8,8 +8,7 @@
 #include "nss_cert_load.h"
 #include "whack.h"
 
-static void reread_end_cert(struct host_end *host_end,
-			    struct host_end_config *host_end_config,
+static void reread_end_cert(struct host_end_config *host_end_config,
 			    struct logger *logger)
 {
 	if (host_end_config->cert.nss_cert == NULL) {
@@ -37,8 +36,7 @@ static void reread_end_cert(struct host_end *host_end,
 	CERTCertificate *old_cert = host_end_config->cert.nss_cert; /* must free/save */
 	host_end_config->cert.nss_cert = NULL;
 
-	diag_t diag = add_end_cert_and_preload_private_key(new_cert,
-							   host_end, host_end_config,
+	diag_t diag = add_end_cert_and_preload_private_key(new_cert, host_end_config,
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
@@ -65,10 +63,9 @@ static void reread_cert(struct connection *c, struct logger *logger)
 	connection_attach(c, logger);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		struct host_end *host_end = &c->end[end].host;
 		struct host_end_config *host_end_config =
 			&c->root_config->end[end].host;
-		reread_end_cert(host_end, host_end_config, c->logger);
+		reread_end_cert(host_end_config, c->logger);
 	}
 
 	connection_detach(c, logger);

@@ -271,20 +271,6 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 	return match;
 }
 
-/*
- * choose either subject DN or a subjectAltName as connection end ID
- */
-void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
-{
-	if (end_id->kind == ID_FROMCERT) {
-		dbg("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName);
-		chunk_t name = clone_secitem_as_chunk(cert->derSubject, "cert id");
-		end_id->name = ASN1(name);
-		end_id->scratch = name.ptr;
-		end_id->kind = ID_DER_ASN1_DN;
-	}
-}
-
 generalName_t *collect_rw_ca_candidates(ip_address local_address,
 					enum ike_version ike_version)
 {
@@ -437,17 +423,6 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 	*gn_out = pgn_list;
 }
 
-static diag_t create_cert_subjectdn_pubkey(CERTCertificate *cert,
-					   struct pubkey **pk,
-					   struct logger *logger)
-{
-	struct id id = {
-		.kind = ID_DER_ASN1_DN,
-		.name = same_secitem_as_shunk(cert->derSubject),
-	};
-	return create_pubkey_from_cert(&id, cert, pk, logger);
-}
-
 static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 				 CERTCertificate *cert,
 				 struct logger *logger)
@@ -490,25 +465,48 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			      const struct id *keyid, CERTCertificate *cert,
 			      struct logger *logger)
 {
+	/*
+	 * Create a pubkey with ID set to the subject and add it.
+	 *
+	 * Note: the SUBJECT ID sharing NAME with .derSubject is ok.
+	 * create_pubkey_from_cert() clones SUBJECT removing the
+	 * shared link.
+	 */
+
+	ldbg(logger, "create and add/replace pubkey using cert subject name");
+	struct id subject = {
+		.kind = ID_DER_ASN1_DN,
+		.name = same_secitem_as_shunk(cert->derSubject),
+	};
 	struct pubkey *pk = NULL;
-	diag_t d = create_cert_subjectdn_pubkey(cert, &pk, logger);
+	diag_t d = create_pubkey_from_cert(&subject, cert, &pk, logger);
 	if (d != NULL) {
 		llog(RC_LOG, logger, "%s", str_diag(d));
 		pfree_diag(&d);
-		dbg("failed to create subjectdn_pubkey from cert");
+		ldbg(logger, "failed to create subjectdn_pubkey from cert");
 		return false;
 	}
 
-	ldbg(logger, "adding cert using subject name");
 	replace_public_key(pubkey_db, &pk);
-	passert(pk == NULL); /*stolen*/
+	PASSERT(logger, pk == NULL); /*stolen*/
 
-	ldbg(logger, "adding cert using general names");
+	/*
+	 * Add further pubkeys using the cert's subject-alt-name aka
+	 * SAN or general name.
+	 */
+
+	ldbg(logger, "adding/replacing pubkey using cert's subject-alt-names");
 	add_cert_san_pubkeys(pubkey_db, cert, logger);
 
-	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
-			     keyid->kind != ID_NONE &&
-			     keyid->kind != ID_FROMCERT) {
+	/*
+	 * Finally, when the keyid isn't the cert's subject name (or
+	 * could be), add a pubkey with that ID name.
+	 */
+
+	if (keyid != NULL &&
+	    keyid->kind != ID_DER_ASN1_DN &&
+	    keyid->kind != ID_NONE &&
+	    keyid->kind != ID_FROMCERT) {
 		id_buf idb;
 		ldbg(logger, "adding cert using keyid %s", str_id(keyid, &idb));
 		struct pubkey *pk2 = NULL;
