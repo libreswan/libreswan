@@ -96,8 +96,10 @@ import time
 from datetime import datetime, timedelta
 import pexpect
 from OpenSSL import crypto
+
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives import hashes
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
 
@@ -183,7 +185,8 @@ def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
 
 def create_csr(pkey, CN,
                C=None, ST=None, L=None, O=None, OU=None,
-               emailAddress=None, algo='sha256'):
+               emailAddress=None,
+               sign_alg=hashes.SHA256):
     """ Create the certreq
     """
     req = crypto.X509Req()
@@ -197,7 +200,7 @@ def create_csr(pkey, CN,
     subject.CN = CN
     subject.emailAddress = emailAddress
     req.set_pubkey(pkey)
-    req.sign(pkey, algo)
+    req.sign(pkey, sign_alg.name)
     return req
 
 def add_ext(cert, kind, crit, string):
@@ -319,7 +322,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
                     ty=crypto.TYPE_RSA, keybits=2048,
-                    sign_alg='sha256', isCA=False, ocsp=False):
+                    sign_alg=hashes.SHA256, isCA=False, ocsp=False):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
@@ -343,7 +346,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
         ocspuri = True
 
     set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
-    cert.sign(CAkey, sign_alg)
+    cert.sign(CAkey, sign_alg.name)
 
     return cert, certkey
 
@@ -353,7 +356,7 @@ def create_root_ca(CN, START, END,
                    O='Libreswan', OU='Test Department',
                    emailAddress='testing@libreswan.org',
                    ty=crypto.TYPE_RSA, keybits=2048,
-                   sign_alg='sha256'):
+                   sign_alg=hashes.SHA256):
     """ Create a root CA - Returns the cert, key tuple
     """
     cakey = create_keypair(ty, keybits)
@@ -370,7 +373,7 @@ def create_root_ca(CN, START, END,
     cacert.set_version(2)
 
     set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
-    cacert.sign(cakey, sign_alg)
+    cacert.sign(cakey, sign_alg.name)
 
     return cacert, cakey
 
@@ -491,9 +494,9 @@ def create_mainca_end_certs(mainca_end_certs):
             common_name = name + '.testing.libreswan.org'
 
         if name == 'hashsha1':
-            alg = 'sha1'
+            sign_alg = hashes.SHA1
         else:
-            alg = 'sha256'
+            sign_alg = hashes.SHA256
 
         if " " in common_name:
             emailAddress = "root@testing.libreswan.org"
@@ -510,7 +513,7 @@ def create_mainca_end_certs(mainca_end_certs):
                                     emailAddress=emailAddress,
                                     START=startdate, END=enddate,
                                     keybits=keysize,
-                                    sign_alg=alg, ocsp=ocsp_resp)
+                                    sign_alg=sign_alg, ocsp=ocsp_resp)
         writeout_cert_and_key("certs/", name, cert.to_cryptography(), key.to_cryptography_key())
         store_cert_and_key(name, cert, key)
         writeout_pkcs12("pkcs12/"+ signer + '/', name,
