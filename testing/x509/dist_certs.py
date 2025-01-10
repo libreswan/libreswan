@@ -97,6 +97,7 @@ from datetime import datetime, timedelta
 import pexpect
 from OpenSSL import crypto
 
+from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -408,13 +409,18 @@ def store_cert_and_key(name, cert, key):
     global ca_certs
     global end_certs
 
-    ext = crypto.X509.from_cryptography(cert).get_extension(0)
-    if ext.get_short_name() == b'basicConstraints':
-        # compare the bytes for CA:True
-        if name == "badca" or b'0\x03\x01\x01\xff' == ext.get_data():
+    if name == "badca":
+        ca_certs[name] = cert, key
+        return
+
+    try:
+        if cert.extensions.get_extension_for_class(x509.BasicConstraints).value.ca:
             ca_certs[name] = cert, key
-        else:
-            end_certs[name] = cert, key
+            return
+    except x509.extensions.ExtensionNotFound:
+        pass
+
+    end_certs[name] = cert, key
 
 
 def create_basic_pluto_cas(ca_names):
