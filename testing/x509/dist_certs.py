@@ -327,6 +327,8 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
     This could be a CA for an intermediate, or not for an EE
     """
     cakey = crypto.PKey.from_cryptography_key(CAkey)
+    cacert = crypto.X509.from_cryptography(CACert)
+
     certkey = create_keypair(ty, keybits)
     certreq = create_csr(certkey,
                          CN, C, ST, L, O, OU,
@@ -336,7 +338,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
     cert.set_serial_number(snum)
     cert.set_notBefore(START.encode('utf-8'))
     cert.set_notAfter(END.encode('utf-8'))
-    cert.set_issuer(CACert.get_subject())
+    cert.set_issuer(cacert.get_subject())
     cert.set_subject(certreq.get_subject())
     cert.set_pubkey(certreq.get_pubkey())
     cert.set_version(2)
@@ -346,10 +348,10 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
     else:
         ocspuri = True
 
-    set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
+    set_cert_extensions(cert, cacert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
     cert.sign(cakey, sign_alg.name)
 
-    return cert, certkey.to_cryptography_key()
+    return cert.to_cryptography(), certkey.to_cryptography_key()
 
 
 def create_root_ca(CN, START, END,
@@ -376,7 +378,7 @@ def create_root_ca(CN, START, END,
     set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
     cacert.sign(cakey, sign_alg.name)
 
-    return cacert, cakey.to_cryptography_key()
+    return cacert.to_cryptography(), cakey.to_cryptography_key()
 
 
 def gmc(timestamp):
@@ -412,7 +414,7 @@ def store_cert_and_key(name, cert, key):
     global ca_certs
     global end_certs
 
-    ext = cert.get_extension(0)
+    ext = crypto.X509.from_cryptography(cert).get_extension(0)
     if ext.get_short_name() == b'basicConstraints':
         # compare the bytes for CA:True
         if name == "badca" or b'0\x03\x01\x01\xff' == ext.get_data():
@@ -430,7 +432,7 @@ def create_basic_pluto_cas(ca_names):
         ca, key = create_root_ca(CN="Libreswan test CA for " + name,
                                  START=dates['OK_NOW'],
                                  END=dates['FUTURE_END'])
-        writeout_cert_and_key("cacerts/", name, ca.to_cryptography(), key)
+        writeout_cert_and_key("cacerts/", name, ca, key)
         store_cert_and_key(name, ca, key)
 
 
@@ -515,11 +517,10 @@ def create_mainca_end_certs(mainca_end_certs):
                                     START=startdate, END=enddate,
                                     keybits=keysize,
                                     sign_alg=sign_alg, ocsp=ocsp_resp)
-        writeout_cert_and_key("certs/", name, cert.to_cryptography(), key)
+        writeout_cert_and_key("certs/", name, cert, key)
         store_cert_and_key(name, cert, key)
         writeout_pkcs12("pkcs12/"+ signer + '/', name,
-                        cert.to_cryptography(), key,
-                        ca_certs[signer][0].to_cryptography())
+                        cert, key, ca_certs[signer][0])
         serial += 1
 
 
@@ -556,7 +557,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                       emailAddress="%s@testing.libreswan.org"%cname,
                                       isCA=True, ocsp=False)
 
-            writeout_cert_and_key("certs/", cname, ca.to_cryptography(), key)
+            writeout_cert_and_key("certs/", cname, ca, key)
             store_cert_and_key(cname, ca, key)
             lastca = cname
             serial += 1
@@ -573,11 +574,10 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endcert_name, ecert.to_cryptography(), ekey)
+                writeout_cert_and_key("certs/", endcert_name, ecert, ekey)
                 store_cert_and_key(endcert_name, ecert, ekey)
                 writeout_pkcs12("pkcs12/", endcert_name,
-                                ecert.to_cryptography(), ekey,
-                                signpair[0].to_cryptography())
+                                ecert, ekey, signpair[0])
                 serial += 1
 
                 endrev_name = prefix + chainca + "_revoked"
@@ -589,11 +589,10 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endrev_name, ercert.to_cryptography(), erkey)
+                writeout_cert_and_key("certs/", endrev_name, ercert, erkey)
                 store_cert_and_key(endrev_name, ercert, erkey)
                 writeout_pkcs12("pkcs12/", endrev_name,
-                                ercert.to_cryptography(), erkey,
-                                signpair[0].to_cryptography())
+                                ercert, erkey, signpair[0])
 
 # this special crl was for a openswan/nss freebl combo bug, both of which should
 # long be done with.
@@ -647,18 +646,18 @@ def create_crlsets():
     future_revoked.set_rev_date(dates['FUTURE'].encode('utf-8'))
     # the get_serial_number method results in a hex str like '0x17'
     # but set_serial needs a hex str like '17'
-    ser = hex(end_certs['revoked'][0].get_serial_number())[2:]
+    ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
     revoked.set_serial(ser.encode('utf-8'))
-    ser = hex(end_certs['west_chain_revoked'][0].get_serial_number())[2:]
+    ser = hex(crypto.X509.from_cryptography(end_certs['west_chain_revoked'][0]).get_serial_number())[2:]
     chainrev.set_serial(ser.encode('utf-8'))
-    ser = hex(end_certs['revoked'][0].get_serial_number())[2:]
+    ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
     future_revoked.set_serial(ser.encode('utf-8'))
 
     needupdate = crypto.CRL()
     needupdate.add_revoked(revoked)
     needupdate.add_revoked(chainrev)
     with open(dirbase + "crls/needupdate.crl", "wb") as f:
-        f.write(needupdate.export(ca_certs['mainca'][0],
+        f.write(needupdate.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                                   crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                   type=crypto.FILETYPE_ASN1,
                                   days=0, digest='sha256'.encode('utf-8')))
@@ -669,7 +668,7 @@ def create_crlsets():
     validcrl.add_revoked(revoked)
     validcrl.add_revoked(chainrev)
     with open(dirbase + "crls/cacrlvalid.crl", "wb") as f:
-        f.write(validcrl.export(ca_certs['mainca'][0],
+        f.write(validcrl.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                                 crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                 type=crypto.FILETYPE_ASN1,
                                 days=15, digest='sha256'.encode('utf-8')))
@@ -678,7 +677,7 @@ def create_crlsets():
     othercrl.add_revoked(revoked)
     othercrl.add_revoked(chainrev)
     with open(dirbase + "crls/othercacrl.crl", "wb") as f:
-        f.write(othercrl.export(ca_certs['otherca'][0],
+        f.write(othercrl.export(crypto.X509.from_cryptography(ca_certs['otherca'][0]),
                                 crypto.PKey.from_cryptography_key(ca_certs['otherca'][1]),
                                 type=crypto.FILETYPE_ASN1,
                                 days=15, digest='sha256'.encode('utf-8')))
@@ -686,7 +685,7 @@ def create_crlsets():
     notyet = crypto.CRL()
     notyet.add_revoked(future_revoked)
     with open(dirbase + "crls/futurerevoke.crl", "wb") as f:
-        f.write(notyet.export(ca_certs['mainca'][0],
+        f.write(notyet.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                               crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                               type=crypto.FILETYPE_ASN1,
                               days=15, digest='sha256'.encode('utf-8')))
