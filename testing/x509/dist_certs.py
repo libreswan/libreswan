@@ -99,6 +99,7 @@ from OpenSSL import crypto
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import hashes
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
@@ -175,20 +176,13 @@ def writeout_cert_and_key(certdir, name, cert, privkey):
     writeout_privkey("keys/" + name + ".key", privkey)
 
 
-def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
-    """ Create an OpenSSL keypair
-    """
-    pkey = crypto.PKey()
-    pkey.generate_key(algo, bits)
-    return pkey
-
-
-def create_csr(pkey, CN,
+def create_csr(key, CN,
                C=None, ST=None, L=None, O=None, OU=None,
                emailAddress=None,
                sign_alg=hashes.SHA256):
     """ Create the certreq
     """
+    pkey = crypto.PKey.from_cryptography_key(key)
     req = crypto.X509Req()
     subject = req.get_subject()
     subject.CN = CN
@@ -317,19 +311,18 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
     if '-crlOmit' not in cnstr:
         add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
 
-def create_sub_cert(CN, CACert, CAkey, snum, START, END,
+def create_sub_cert(CN, CACert, cakey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
-                    ty=crypto.TYPE_RSA, keybits=2048,
+                    keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=2048),
                     sign_alg=hashes.SHA256, isCA=False, ocsp=False):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
-    cakey = crypto.PKey.from_cryptography_key(CAkey)
     cacert = crypto.X509.from_cryptography(CACert)
 
-    certkey = create_keypair(ty, keybits)
+    certkey = keypair()
     certreq = create_csr(certkey,
                          CN, C, ST, L, O, OU,
                          emailAddress, sign_alg)
@@ -349,20 +342,21 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
         ocspuri = True
 
     set_cert_extensions(cert, cacert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
-    cert.sign(cakey, sign_alg.name)
+    cert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
 
-    return cert.to_cryptography(), certkey.to_cryptography_key()
+    return cert.to_cryptography(), certkey
 
 
 def create_root_ca(CN, START, END,
                    C='CA', ST='Ontario', L='Toronto',
                    O='Libreswan', OU='Test Department',
                    emailAddress='testing@libreswan.org',
+                   keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=2048),
                    ty=crypto.TYPE_RSA, keybits=2048,
                    sign_alg=hashes.SHA256):
     """ Create a root CA - Returns the cert, key tuple
     """
-    cakey = create_keypair(ty, keybits)
+    cakey = keypair()
     careq = create_csr(cakey, CN, C, ST, L, O, OU,
                        emailAddress, sign_alg)
 
@@ -376,9 +370,9 @@ def create_root_ca(CN, START, END,
     cacert.set_version(2)
 
     set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
-    cacert.sign(cakey, sign_alg.name)
+    cacert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
 
-    return cacert.to_cryptography(), cakey.to_cryptography_key()
+    return cacert.to_cryptography(), cakey
 
 
 def gmc(timestamp):
@@ -515,7 +509,7 @@ def create_mainca_end_certs(mainca_end_certs):
                                     serial, O=org,
                                     emailAddress=emailAddress,
                                     START=startdate, END=enddate,
-                                    keybits=keysize,
+                                    keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=keysize),
                                     sign_alg=sign_alg, ocsp=ocsp_resp)
         writeout_cert_and_key("certs/", name, cert, key)
         store_cert_and_key(name, cert, key)
