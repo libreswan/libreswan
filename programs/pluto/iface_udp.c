@@ -45,6 +45,7 @@
 #include "demux.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
 #include "log.h"
+#include "log_limiter.h"
 #include "ip_info.h"
 #include "ip_sockaddr.h"
 
@@ -522,7 +523,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 			if (errno == EAGAIN) {
 				/* 32 is picked from thin air */
 				if (again_count == 32) {
-					llog(RC_LOG, logger,
+					limited_llog(logger, MSG_ERRQUEUE_LOG_LIMITER,
 						    "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
 					return false;
 				}
