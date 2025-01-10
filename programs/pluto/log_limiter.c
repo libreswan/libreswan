@@ -44,6 +44,10 @@ struct limiter log_limiters[LOG_LIMITER_ROOF] = {
 		.limit = 10,
 		.what = "bad certificate",
 	},
+	[MSG_ERRQUEUE_LOG_LIMITER] = {
+		.what = "msg errorqueue",
+		.limit = RATE_LIMIT,
+	},
 	[PAYLOAD_ERRORS_LOG_LIMITER] = {
 		.what = "payload errors",
 		.limit = RATE_LIMIT,
