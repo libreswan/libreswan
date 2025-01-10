@@ -195,7 +195,7 @@ def create_csr(key, CN,
     subject.emailAddress = emailAddress
     req.set_pubkey(pkey)
     req.sign(pkey, sign_alg.name)
-    return req
+    return req.to_cryptography()
 
 def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
@@ -332,8 +332,8 @@ def create_sub_cert(CN, CACert, cakey, snum, START, END,
     cert.set_notBefore(START.encode('utf-8'))
     cert.set_notAfter(END.encode('utf-8'))
     cert.set_issuer(cacert.get_subject())
-    cert.set_subject(certreq.get_subject())
-    cert.set_pubkey(certreq.get_pubkey())
+    cert.set_subject(crypto.X509Req.from_cryptography(certreq).get_subject())
+    cert.set_pubkey(crypto.X509Req.from_cryptography(certreq).get_pubkey())
     cert.set_version(2)
 
     if CN == 'nic-nourl.testing.libreswan.org':
@@ -364,9 +364,9 @@ def create_root_ca(CN, START, END,
     cacert.set_serial_number(0)
     cacert.set_notBefore(START.encode('utf-8'))
     cacert.set_notAfter(END.encode('utf-8'))
-    cacert.set_issuer(careq.get_subject())
-    cacert.set_subject(careq.get_subject())
-    cacert.set_pubkey(careq.get_pubkey())
+    cacert.set_issuer(crypto.X509Req.from_cryptography(careq).get_subject())
+    cacert.set_subject(crypto.X509Req.from_cryptography(careq).get_subject())
+    cacert.set_pubkey(crypto.X509Req.from_cryptography(careq).get_pubkey())
     cacert.set_version(2)
 
     set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
