@@ -662,31 +662,13 @@ $(KVM_KEYS): $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh
 $(KVM_KEYS): | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
 $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
-	: disable FIPS
+	: generate the keys using $(KVM_KEYS_DOMAIN)
 	:
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) rm -f /etc/system-fips
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) guestbin/fipsoff
+	$(KVMSH) $(KVM_KEYS_DOMAIN) /testing/guestbin/keys.sh
 	:
-	: Copy the scripts to the empty /tmp/x509 directory
+	: extract the tarball containing the keys
 	:
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) rm -rf /tmp/x509
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) mkdir /tmp/x509
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) cp -f x509/dist_certs.py /tmp/x509
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) cp -f x509/openssl.cnf /tmp/x509
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) cp -f x509/strongswan-ec-gen.sh /tmp/x509
-	:
-	: run key scripts in /tmp/x509
-	:
-	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) ./dist_certs.py
-	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) ./strongswan-ec-gen.sh
-	:
-	: copy the certs from guest to host in a tar ball to avoid 9fs bug
-	:
-	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
-	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) tar cf kvm-keys.tar '*/' nss-pw
-	$(KVMSH) --chdir /tmp/x509 $(KVM_KEYS_DOMAIN) cp kvm-keys.tar /pool/$(KVM_PREFIX)kvm-keys.tar
-	cd $(KVM_TESTINGDIR)/x509 && tar xf $(KVM_POOLDIR_PREFIX)kvm-keys.tar
-	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
+	cd $(KVM_TESTINGDIR)/x509 && tar xf kvm-keys.tar && rm kvm-keys.tar
 	:
 	: Also regenerate the DNSSEC keys
 	:

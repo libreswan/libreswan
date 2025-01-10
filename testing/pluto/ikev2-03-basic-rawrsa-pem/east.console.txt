@@ -14,9 +14,9 @@ east #
  cp ../../x509/keys/${key}.key OUTPUT/
 east #
  cat OUTPUT/${key}.key
------BEGIN PRIVATE KEY-----
+-----BEGIN RSA PRIVATE KEY-----
 ...
------END PRIVATE KEY-----
+-----END RSA PRIVATE KEY-----
 east #
  # create a CSR and using that ...
 east #
@@ -42,9 +42,9 @@ east #
  cp ../../x509/keys/${key}.key OUTPUT/
 east #
  cat OUTPUT/${key}.key
------BEGIN PRIVATE KEY-----
+-----BEGIN RSA PRIVATE KEY-----
 ...
------END PRIVATE KEY-----
+-----END RSA PRIVATE KEY-----
 east #
  # create a CSR and using that ...
 east #
