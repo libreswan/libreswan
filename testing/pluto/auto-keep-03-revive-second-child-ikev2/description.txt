@@ -1,0 +1,2 @@
+east has auto=keep with two multinets, second is deleted; east should revive
+

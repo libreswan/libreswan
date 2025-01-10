@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ../../guestbin/ifconfig.sh eth0 add 2001:db8:0:20::254/64
+    inet6 2001:db8:0:20::254/64 scope global 
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ #ipsec auto --add east
+east #
+ echo "initdone"
+initdone
+east #
+ # non-zero counts confirm encrypted traffic flowing
+east #
+ ipsec trafficstatus
+#2: "east/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+#3: "east/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+east #
+ ../../guestbin/wait-for-pluto.sh --match '#4: IPsec SA established'
+"east/0x2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+east #
+ # non-zero counts confirm encrypted traffic flowing
+east #
+ ipsec trafficstatus
+#2: "east/0x1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+#4: "east/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+east #
+ 

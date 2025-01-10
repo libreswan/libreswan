@@ -1561,8 +1561,10 @@ kvmplutotest	ikev2-systemrole-04-mesh		good	github/534,github/1751
 kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good
 
-kvmplutotest	ikev2-revival-through-nat-01-down	good
-kvmplutotest	ikev2-revival-through-nat-02-cleanfail	good	github/992,github/1427
+kvmplutotest	auto-keep-01-revival-through-nat-down-ikev2		good
+kvmplutotest	auto-keep-02-revival-through-nat-cleanfail-ikev2	good	github/992,github/1427
+kvmplutotest	auto-keep-03-revive-second-child-ikev1			good	github/1986
+kvmplutotest	auto-keep-03-revive-second-child-ikev2			good	github/1986
 
 # crossing the stream race conditions
 
