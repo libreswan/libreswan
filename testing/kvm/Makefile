@@ -1297,6 +1297,7 @@ $(KVM_POOLDIR_PREFIX)%: \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
 		-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
+		-e 's;@@PLATFORM@@;$*;' \
 		$*/transmogrify.sh \
 		> $@.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \

@@ -2,8 +2,6 @@
 
 set -xe ; exec < /dev/null
 
- . /etc/os-release
-
 :
 : systemd-networkd
 :
@@ -22,7 +20,7 @@ test -x /usr/sbin/restorecon && restorecon -R /etc/systemd/network
 cat > /etc/systemd/network/zzz.eth0.network << EOF
 [Match]
 Name=eth0
-Host=${ID}
+Host=${PLATFORM}
 [Network]
 Description=fallback for when no other interface matches
 DHCP=yes

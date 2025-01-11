@@ -26,6 +26,7 @@ import re
 import alpine
 import debian
 import fedora
+import linux
 import freebsd
 import netbsd
 import openbsd
@@ -54,7 +55,7 @@ OS = {
     "debian": debian,
     "fedora": fedora,
     "freebsd": freebsd,
-    "linux": fedora,
+    "linux": linux,
     "netbsd": netbsd,
     "openbsd": openbsd
 }
