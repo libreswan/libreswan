@@ -37,7 +37,7 @@ east #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@east'
 east #
  echo "initdone"

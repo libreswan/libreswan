@@ -37,7 +37,7 @@ east #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_IPV4_ADDR '192.1.2.23'
 east #
  echo "initdone"
@@ -49,7 +49,7 @@ east #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus

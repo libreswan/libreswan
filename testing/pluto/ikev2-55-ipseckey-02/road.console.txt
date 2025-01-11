@@ -20,9 +20,9 @@ road #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (no private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@east'
-TIMESTAMP, 3104 RSA Key AQPHFfpyJ (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 3104 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@road.testing.libreswan.org'
 road #
  ipsec auto --up road-east-1
@@ -45,9 +45,9 @@ road #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (no private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@east'
-TIMESTAMP, 3104 RSA Key AQPHFfpyJ (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 3104 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@road.testing.libreswan.org'
 road #
  # prepare for road restart with new keys
