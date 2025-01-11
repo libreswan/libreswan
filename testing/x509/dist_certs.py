@@ -101,6 +101,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
@@ -177,26 +178,32 @@ def writeout_cert_and_key(certdir, name, cert, privkey):
     writeout_privkey("keys/" + name + ".key", privkey)
 
 
-def create_csr(key, CN,
-               C=None, ST=None, L=None, O=None, OU=None,
-               emailAddress=None,
-               sign_alg=hashes.SHA256):
+def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
+    """ Create an OpenSSL keypair
+    """
+    pkey = crypto.PKey()
+    pkey.generate_key(algo, bits)
+    return pkey
+
+
+def create_csr(key, hash_alg=hashes.SHA256,
+               CN=None, C=None, ST=None, L=None, O=None, OU=None,
+               emailAddress=None):
     """ Create the certreq
     """
-    pkey = crypto.PKey.from_cryptography_key(key)
-    req = crypto.X509Req()
-    subject = req.get_subject()
-    subject.CN = CN
-    subject.C = C
-    subject.ST = ST
-    subject.L = L
-    subject.O = O
-    subject.OU = OU
-    subject.CN = CN
-    subject.emailAddress = emailAddress
-    req.set_pubkey(pkey)
-    req.sign(pkey, sign_alg.name)
-    return req.to_cryptography()
+    subjects = [
+        x509.NameAttribute(NameOID.COUNTRY_NAME, C),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, ST),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, L),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, O),
+        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, OU),
+        x509.NameAttribute(NameOID.COMMON_NAME, CN),
+        x509.NameAttribute(NameOID.EMAIL_ADDRESS, emailAddress),
+    ]
+    csr = x509.CertificateSigningRequestBuilder() \
+              .subject_name(x509.Name(subjects)) \
+              .sign(key, hash_alg())
+    return csr
 
 def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
@@ -312,7 +319,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
     if '-crlOmit' not in cnstr:
         add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
 
-def create_sub_cert(CN, CACert, cakey, snum, START, END,
+def create_sub_cert(CN, cacert, cakey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
@@ -321,18 +328,17 @@ def create_sub_cert(CN, CACert, cakey, snum, START, END,
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
-    cacert = crypto.X509.from_cryptography(CACert)
 
     certkey = keypair()
     certreq = create_csr(certkey,
-                         CN, C, ST, L, O, OU,
-                         emailAddress, sign_alg)
+                         CN=CN, C=C, ST=ST, L=L, O=O, OU=OU,
+                         emailAddress=emailAddress)
 
     cert = crypto.X509()
     cert.set_serial_number(snum)
     cert.set_notBefore(START.encode('utf-8'))
     cert.set_notAfter(END.encode('utf-8'))
-    cert.set_issuer(cacert.get_subject())
+    cert.set_issuer(crypto.X509.from_cryptography(cacert).get_subject())
     cert.set_subject(crypto.X509Req.from_cryptography(certreq).get_subject())
     cert.set_pubkey(crypto.X509Req.from_cryptography(certreq).get_pubkey())
     cert.set_version(2)
@@ -342,7 +348,8 @@ def create_sub_cert(CN, CACert, cakey, snum, START, END,
     else:
         ocspuri = True
 
-    set_cert_extensions(cert, cacert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
+    set_cert_extensions(cert, crypto.X509.from_cryptography(cacert),
+                        isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
     cert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
 
     return cert.to_cryptography(), certkey
@@ -358,8 +365,8 @@ def create_root_ca(CN, START, END,
     """ Create a root CA - Returns the cert, key tuple
     """
     cakey = keypair()
-    careq = create_csr(cakey, CN, C, ST, L, O, OU,
-                       emailAddress, sign_alg)
+    careq = create_csr(cakey, CN=CN, C=C, ST=ST, L=L, O=O, OU=OU,
+                       emailAddress=emailAddress)
 
     cacert = crypto.X509()
     cacert.set_serial_number(0)
