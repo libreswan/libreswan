@@ -3,7 +3,7 @@ s/^secctx-attr-value=.*/secctx-attr-type=XXXX/g
 s/\/usr\/local/PATH/g
 s/\/usr/PATH/g
 s/used [0-9]*s ago/used XXs ago/g
-s/RSA Key Aw[^ ]* /RSA Key AwXXXXXXX /g
+s/RSA Key A[wQ][^ ]* /RSA Key AwXXXXXXX /g
 s/ECDSA Key [^ ]* /ECDSA Key BXXXXXXXX /g
 
 # Try not to sanitize {esp,ah,comp}.0@

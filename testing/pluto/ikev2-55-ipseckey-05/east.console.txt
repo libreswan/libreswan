@@ -37,7 +37,7 @@ east #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_IPV4_ADDR '192.1.2.23'
 east #
  echo "initdone"
@@ -51,11 +51,11 @@ east #
  
 List of Public Keys:
  
-TIMESTAMP, 3104 RSA Key AQPHFfpyJ (no private key), until TIMESTAMP warning (expires in X days)
+TIMESTAMP, 3104 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
        ID_FQDN '@road.testing.libreswan.org'
 TIMESTAMP, 3184 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
        ID_FQDN '@road.testing.libreswan.org'
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus

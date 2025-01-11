@@ -21,7 +21,7 @@ road #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec whack --trafficstatus
@@ -35,7 +35,7 @@ road #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec auto --up road-east-ikev2
@@ -64,9 +64,9 @@ road #
  
 List of Public Keys:
  
-TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until TIMESTAMP warning (expires in X days)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
        ID_IPV4_ADDR '192.1.2.23'
-TIMESTAMP, 2192 RSA Key AQPl33O2P (has private key), until --- -- --:--:-- ---- ok (expires never)
+TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
        ID_FQDN '@north.testing.libreswan.org'
 road #
  ipsec whack --trafficstatus

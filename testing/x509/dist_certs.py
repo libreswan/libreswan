@@ -96,8 +96,12 @@ import time
 from datetime import datetime, timedelta
 import pexpect
 from OpenSSL import crypto
+
+from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import hashes
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
 
@@ -173,19 +177,13 @@ def writeout_cert_and_key(certdir, name, cert, privkey):
     writeout_privkey("keys/" + name + ".key", privkey)
 
 
-def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
-    """ Create an OpenSSL keypair
-    """
-    pkey = crypto.PKey()
-    pkey.generate_key(algo, bits)
-    return pkey
-
-
-def create_csr(pkey, CN,
+def create_csr(key, CN,
                C=None, ST=None, L=None, O=None, OU=None,
-               emailAddress=None, algo='sha256'):
+               emailAddress=None,
+               sign_alg=hashes.SHA256):
     """ Create the certreq
     """
+    pkey = crypto.PKey.from_cryptography_key(key)
     req = crypto.X509Req()
     subject = req.get_subject()
     subject.CN = CN
@@ -197,8 +195,8 @@ def create_csr(pkey, CN,
     subject.CN = CN
     subject.emailAddress = emailAddress
     req.set_pubkey(pkey)
-    req.sign(pkey, algo)
-    return req
+    req.sign(pkey, sign_alg.name)
+    return req.to_cryptography()
 
 def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
@@ -314,16 +312,18 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
     if '-crlOmit' not in cnstr:
         add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
 
-def create_sub_cert(CN, CACert, CAkey, snum, START, END,
+def create_sub_cert(CN, CACert, cakey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
-                    ty=crypto.TYPE_RSA, keybits=2048,
-                    sign_alg='sha256', isCA=False, ocsp=False):
+                    keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=2048),
+                    sign_alg=hashes.SHA256, isCA=False, ocsp=False):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
-    certkey = create_keypair(ty, keybits)
+    cacert = crypto.X509.from_cryptography(CACert)
+
+    certkey = keypair()
     certreq = create_csr(certkey,
                          CN, C, ST, L, O, OU,
                          emailAddress, sign_alg)
@@ -332,9 +332,9 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
     cert.set_serial_number(snum)
     cert.set_notBefore(START.encode('utf-8'))
     cert.set_notAfter(END.encode('utf-8'))
-    cert.set_issuer(CACert.get_subject())
-    cert.set_subject(certreq.get_subject())
-    cert.set_pubkey(certreq.get_pubkey())
+    cert.set_issuer(cacert.get_subject())
+    cert.set_subject(crypto.X509Req.from_cryptography(certreq).get_subject())
+    cert.set_pubkey(crypto.X509Req.from_cryptography(certreq).get_pubkey())
     cert.set_version(2)
 
     if CN == 'nic-nourl.testing.libreswan.org':
@@ -342,21 +342,22 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
     else:
         ocspuri = True
 
-    set_cert_extensions(cert, CACert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
-    cert.sign(CAkey, sign_alg)
+    set_cert_extensions(cert, cacert, isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
+    cert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
 
-    return cert, certkey
+    return cert.to_cryptography(), certkey
 
 
 def create_root_ca(CN, START, END,
                    C='CA', ST='Ontario', L='Toronto',
                    O='Libreswan', OU='Test Department',
                    emailAddress='testing@libreswan.org',
+                   keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=2048),
                    ty=crypto.TYPE_RSA, keybits=2048,
-                   sign_alg='sha256'):
+                   sign_alg=hashes.SHA256):
     """ Create a root CA - Returns the cert, key tuple
     """
-    cakey = create_keypair(ty, keybits)
+    cakey = keypair()
     careq = create_csr(cakey, CN, C, ST, L, O, OU,
                        emailAddress, sign_alg)
 
@@ -364,15 +365,15 @@ def create_root_ca(CN, START, END,
     cacert.set_serial_number(0)
     cacert.set_notBefore(START.encode('utf-8'))
     cacert.set_notAfter(END.encode('utf-8'))
-    cacert.set_issuer(careq.get_subject())
-    cacert.set_subject(careq.get_subject())
-    cacert.set_pubkey(careq.get_pubkey())
+    cacert.set_issuer(crypto.X509Req.from_cryptography(careq).get_subject())
+    cacert.set_subject(crypto.X509Req.from_cryptography(careq).get_subject())
+    cacert.set_pubkey(crypto.X509Req.from_cryptography(careq).get_pubkey())
     cacert.set_version(2)
 
     set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
-    cacert.sign(cakey, sign_alg)
+    cacert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
 
-    return cacert, cakey
+    return cacert.to_cryptography(), cakey
 
 
 def gmc(timestamp):
@@ -408,13 +409,18 @@ def store_cert_and_key(name, cert, key):
     global ca_certs
     global end_certs
 
-    ext = cert.get_extension(0)
-    if ext.get_short_name() == b'basicConstraints':
-        # compare the bytes for CA:True
-        if name == "badca" or b'0\x03\x01\x01\xff' == ext.get_data():
+    if name == "badca":
+        ca_certs[name] = cert, key
+        return
+
+    try:
+        if cert.extensions.get_extension_for_class(x509.BasicConstraints).value.ca:
             ca_certs[name] = cert, key
-        else:
-            end_certs[name] = cert, key
+            return
+    except x509.extensions.ExtensionNotFound:
+        pass
+
+    end_certs[name] = cert, key
 
 
 def create_basic_pluto_cas(ca_names):
@@ -426,7 +432,7 @@ def create_basic_pluto_cas(ca_names):
         ca, key = create_root_ca(CN="Libreswan test CA for " + name,
                                  START=dates['OK_NOW'],
                                  END=dates['FUTURE_END'])
-        writeout_cert_and_key("cacerts/", name, ca.to_cryptography(), key.to_cryptography_key())
+        writeout_cert_and_key("cacerts/", name, ca, key)
         store_cert_and_key(name, ca, key)
 
 
@@ -491,9 +497,9 @@ def create_mainca_end_certs(mainca_end_certs):
             common_name = name + '.testing.libreswan.org'
 
         if name == 'hashsha1':
-            alg = 'sha1'
+            sign_alg = hashes.SHA1
         else:
-            alg = 'sha256'
+            sign_alg = hashes.SHA256
 
         if " " in common_name:
             emailAddress = "root@testing.libreswan.org"
@@ -509,13 +515,12 @@ def create_mainca_end_certs(mainca_end_certs):
                                     serial, O=org,
                                     emailAddress=emailAddress,
                                     START=startdate, END=enddate,
-                                    keybits=keysize,
-                                    sign_alg=alg, ocsp=ocsp_resp)
-        writeout_cert_and_key("certs/", name, cert.to_cryptography(), key.to_cryptography_key())
+                                    keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=keysize),
+                                    sign_alg=sign_alg, ocsp=ocsp_resp)
+        writeout_cert_and_key("certs/", name, cert, key)
         store_cert_and_key(name, cert, key)
         writeout_pkcs12("pkcs12/"+ signer + '/', name,
-                        cert.to_cryptography(), key.to_cryptography_key(),
-                        ca_certs[signer][0].to_cryptography())
+                        cert, key, ca_certs[signer][0])
         serial += 1
 
 
@@ -552,7 +557,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                       emailAddress="%s@testing.libreswan.org"%cname,
                                       isCA=True, ocsp=False)
 
-            writeout_cert_and_key("certs/", cname, ca.to_cryptography(), key.to_cryptography_key())
+            writeout_cert_and_key("certs/", cname, ca, key)
             store_cert_and_key(cname, ca, key)
             lastca = cname
             serial += 1
@@ -569,11 +574,10 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endcert_name, ecert.to_cryptography(), ekey.to_cryptography_key())
+                writeout_cert_and_key("certs/", endcert_name, ecert, ekey)
                 store_cert_and_key(endcert_name, ecert, ekey)
                 writeout_pkcs12("pkcs12/", endcert_name,
-                                ecert.to_cryptography(), ekey.to_cryptography_key(),
-                                signpair[0].to_cryptography())
+                                ecert, ekey, signpair[0])
                 serial += 1
 
                 endrev_name = prefix + chainca + "_revoked"
@@ -585,11 +589,10 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endrev_name, ercert.to_cryptography(), erkey.to_cryptography_key())
+                writeout_cert_and_key("certs/", endrev_name, ercert, erkey)
                 store_cert_and_key(endrev_name, ercert, erkey)
                 writeout_pkcs12("pkcs12/", endrev_name,
-                                ercert.to_cryptography(), erkey.to_cryptography_key(),
-                                signpair[0].to_cryptography())
+                                ercert, erkey, signpair[0])
 
 # this special crl was for a openswan/nss freebl combo bug, both of which should
 # long be done with.
@@ -643,19 +646,19 @@ def create_crlsets():
     future_revoked.set_rev_date(dates['FUTURE'].encode('utf-8'))
     # the get_serial_number method results in a hex str like '0x17'
     # but set_serial needs a hex str like '17'
-    ser = hex(end_certs['revoked'][0].get_serial_number())[2:]
+    ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
     revoked.set_serial(ser.encode('utf-8'))
-    ser = hex(end_certs['west_chain_revoked'][0].get_serial_number())[2:]
+    ser = hex(crypto.X509.from_cryptography(end_certs['west_chain_revoked'][0]).get_serial_number())[2:]
     chainrev.set_serial(ser.encode('utf-8'))
-    ser = hex(end_certs['revoked'][0].get_serial_number())[2:]
+    ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
     future_revoked.set_serial(ser.encode('utf-8'))
 
     needupdate = crypto.CRL()
     needupdate.add_revoked(revoked)
     needupdate.add_revoked(chainrev)
     with open(dirbase + "crls/needupdate.crl", "wb") as f:
-        f.write(needupdate.export(ca_certs['mainca'][0],
-                                  ca_certs['mainca'][1],
+        f.write(needupdate.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
+                                  crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                   type=crypto.FILETYPE_ASN1,
                                   days=0, digest='sha256'.encode('utf-8')))
 
@@ -665,8 +668,8 @@ def create_crlsets():
     validcrl.add_revoked(revoked)
     validcrl.add_revoked(chainrev)
     with open(dirbase + "crls/cacrlvalid.crl", "wb") as f:
-        f.write(validcrl.export(ca_certs['mainca'][0],
-                                ca_certs['mainca'][1],
+        f.write(validcrl.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
+                                crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                 type=crypto.FILETYPE_ASN1,
                                 days=15, digest='sha256'.encode('utf-8')))
 
@@ -674,16 +677,16 @@ def create_crlsets():
     othercrl.add_revoked(revoked)
     othercrl.add_revoked(chainrev)
     with open(dirbase + "crls/othercacrl.crl", "wb") as f:
-        f.write(othercrl.export(ca_certs['otherca'][0],
-                                ca_certs['otherca'][1],
+        f.write(othercrl.export(crypto.X509.from_cryptography(ca_certs['otherca'][0]),
+                                crypto.PKey.from_cryptography_key(ca_certs['otherca'][1]),
                                 type=crypto.FILETYPE_ASN1,
                                 days=15, digest='sha256'.encode('utf-8')))
 
     notyet = crypto.CRL()
     notyet.add_revoked(future_revoked)
     with open(dirbase + "crls/futurerevoke.crl", "wb") as f:
-        f.write(notyet.export(ca_certs['mainca'][0],
-                              ca_certs['mainca'][1],
+        f.write(notyet.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
+                              crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                               type=crypto.FILETYPE_ASN1,
                               days=15, digest='sha256'.encode('utf-8')))
 
