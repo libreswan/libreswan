@@ -396,16 +396,13 @@ def gen_gmtime_dates():
 
     ok_stamp = ssl.cert_time_to_seconds(
             time.strftime(gmtfmt, time.gmtime())) - (60*60*24)
-    two_days_ago_stamp = ok_stamp - (60*60*48)
-    two_days_ago_end_stamp = two_days_ago_stamp + (60*60*24)
-        # Make future certs only +300 days, so we have a time overlap
-        # between currently valid certs (1 year) and these futuristic certs
+    # Make future certs only +300 days, so we have a time overlap
+    # between currently valid certs (1 year) and these futuristic
+    # certs
     future_stamp = ok_stamp + (60*60*24*365*1)
     future_end_stamp = future_stamp + (60*60*24*365*2)
 
     return dict(OK_NOW=gmc(ok_stamp),
-                OLD=gmc(two_days_ago_stamp),
-                OLD_END=gmc(two_days_ago_end_stamp),
                 FUTURE=gmc(future_stamp),
                 FUTURE_END=gmc(future_end_stamp))
 
