@@ -71,6 +71,8 @@ nss-tools
 nss-util-devel
 pam-devel
 python3-pexpect
+strongswan
+strongswan-sqlite
 systemd-networkd
 tcpdump
 unbound
