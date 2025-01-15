@@ -1354,7 +1354,7 @@ kvmplutotest	nss-cert-crl-01			good
 kvmplutotest	nss-cert-crl-01-strict		good
 kvmplutotest	nss-cert-crl-02			good
 kvmplutotest	nss-cert-crl-03			good
-kvmplutotest	nss-cert-crl-03-strict		good
+kvmplutotest	nss-cert-crl-03-strict		wip	github/1935
 kvmplutotest	nss-cert-crl-04-additional-crl	wip
 kvmplutotest	nss-cert-nosecret		good
 kvmplutotest	nss-cert-ocsp-01-ikev1			good
