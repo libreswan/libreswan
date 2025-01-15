@@ -5,8 +5,6 @@ west #
 west #
  ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 west #
- ipsec certutil -D -n "east-ec"
-west #
  # confirm that the network is alive
 west #
  ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254

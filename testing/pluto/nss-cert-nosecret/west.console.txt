@@ -62,20 +62,6 @@ End certificate "north" - SN: 0xXX
   not after: TIMESTAMP
   3072 bit RSA
  
-End certificate "hashsha1" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
- 
-Root End certificate "east-ec" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  384 bit(other)
- 
 End certificate "nic" - SN: 0xXX
   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
@@ -147,8 +133,6 @@ west                                                         u,u,u
 Libreswan test CA for mainca - Libreswan                     CT,, 
 road                                                         P,,  
 north                                                        P,,  
-hashsha1                                                     P,,  
-east-ec                                                      P,,  
 nic                                                          P,,  
 west #
  ipsec auto --listall
@@ -201,20 +185,6 @@ End certificate "north" - SN: 0xXX
   not before: TIMESTAMP
   not after: TIMESTAMP
   3072 bit RSA
- 
-End certificate "hashsha1" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  3072 bit RSA
- 
-Root End certificate "east-ec" - SN: 0xXX
-  subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
-  issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east-ec.testing.libreswan.org, E=testing@libreswan.org
-  not before: TIMESTAMP
-  not after: TIMESTAMP
-  384 bit(other)
  
 End certificate "nic" - SN: 0xXX
   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org

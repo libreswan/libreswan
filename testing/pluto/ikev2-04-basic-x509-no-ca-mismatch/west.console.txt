@@ -5,8 +5,6 @@ west #
 west #
  ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 west #
- ipsec certutil -D -n "east-ec"
-west #
  ipsec start
 Redirecting to: [initsystem]
 west #

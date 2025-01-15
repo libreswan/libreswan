@@ -5,8 +5,6 @@ east #
 east #
  ipsec certutil -D -n west
 east #
- ipsec certutil -D -n west-ec
-east #
  ipsec start
 Redirecting to: [initsystem]
 east #
