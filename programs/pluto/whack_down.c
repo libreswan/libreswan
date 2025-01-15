@@ -61,41 +61,77 @@ static bool shared_phase1_connection(struct ike_sa *ike)
 	return false;
 }
 
-static void down_ikev1_connection_states(struct connection *c)
+static void down_ikev1_connection_state(struct connection *c UNUSED,
+					struct ike_sa **ike,
+					struct child_sa **child,
+					enum connection_visit_kind visit_kind,
+					struct visit_connection_state_context *context UNUSED)
 {
-	/*
-	 * Danger:
-	 *
-	 * Either of IKE and CHILD could be NULL.
-	 *
-	 * For IKEv1, when IKE is NULL the CHILD could have some other
-	 * parent.
-	 *
-	 * XXX: should "down" down the routing_sa when ipsec_sa is
-	 * NULL?
-	 */
-	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa);
-	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
+	switch (visit_kind) {
 
-	if (shared_phase1_connection(ike)) {
-		llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
-		     c->config->ike_info->parent_sa_name,
-		     c->config->ike_info->child_sa_name);
-		if (child != NULL) {
-			state_attach(&child->sa, c->logger);
+	case CONNECTION_IKE_PREP:
+		return;
+
+	case CONNECTION_IKE_CHILD:
+		if (shared_phase1_connection((*ike))) {
+			llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
+			     c->config->ike_info->parent_sa_name,
+			     c->config->ike_info->child_sa_name);
+			state_attach(&(*child)->sa, c->logger);
 			/*
-			 * IKE may not be the best ISAKMP SA for this
-			 * child!
+			 * IKE, above, may not be the best
+			 * ISAKMP SA for this child!
 			 */
 			struct ike_sa *isakmp =
-				established_isakmp_sa_for_state(&child->sa, /*viable-parent*/false);
-			llog_n_maybe_send_v1_delete(isakmp, &child->sa, HERE);
-			connection_teardown_child(&child, REASON_DELETED, HERE);
+				established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
+			llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
+			connection_teardown_child(child, REASON_DELETED, HERE);
+		} else {
+			dbg("connection not shared - terminating IKE and IPsec SA");
+			(*ike) = NULL;
+			(*child) = NULL;
+			terminate_all_connection_states(c, HERE);
 		}
-	} else {
-		dbg("connection not shared - terminating IKE and IPsec SA");
+		return;
+
+	case CONNECTION_CUCKOO_CHILD:
+		ldbg(c->logger, "connection not shared - terminating IKE and IPsec SA");
+		(*child) = NULL;
 		terminate_all_connection_states(c, HERE);
+		return;
+
+	case CONNECTION_ORPHAN_CHILD:
+		ldbg(c->logger, "connection not shared - terminating IKE and IPsec SA");
+		(*child) = NULL;
+		terminate_all_connection_states(c, HERE);
+		return;
+
+	case CONNECTION_LURKING_CHILD:
+		state_attach(&(*child)->sa, c->logger);
+		connection_teardown_child(child, REASON_DELETED, HERE);
+		return;
+
+	case CONNECTION_LURKING_IKE:
+		state_attach(&(*ike)->sa, c->logger);
+		connection_teardown_ike(ike, REASON_DELETED, HERE);
+		return;
+
+	case CONNECTION_CHILD_SIBLING:
+		/* IKEv1 orphans siblings */
+		return;
+
+	case CONNECTION_CHILDLESS_IKE:
+		ldbg(c->logger, "connection not shared - terminating IKE and IPsec SA");
+		(*ike) = NULL;
+		terminate_all_connection_states(c, HERE);
+		return;
+
+	case CONNECTION_IKE_POST:
+		return;
+
 	}
+
+	bad_case(visit_kind);
 }
 
 static void down_ikev2_connection_states(struct connection *c)
@@ -142,7 +178,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 
 	switch (c->config->ike_version) {
 	case IKEv1:
-		down_ikev1_connection_states(c);
+		visit_connection_states(c, down_ikev1_connection_state, NULL, HERE);
 		break;
 	case IKEv2:
 		down_ikev2_connection_states(c);
