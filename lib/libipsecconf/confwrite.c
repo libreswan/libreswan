@@ -313,11 +313,9 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			str_cidr(&end->vti_ip, &as));
 	}
 
-	if (end->protoport.is_set) {
-		protoport_buf buf;
+	if (end->values[KSCF_PROTOPORT].set)
 		fprintf(out, "\t%sprotoport=%s\n", side,
-			str_protoport(&end->protoport, &buf));
-	}
+			end->values[KSCF_PROTOPORT].string);
 
 	confwrite_int(out, side,
 		      kv_conn | kv_leftright,

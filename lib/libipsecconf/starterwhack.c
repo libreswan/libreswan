@@ -151,7 +151,17 @@ static bool set_whack_end(struct whack_end *w,
 
 	w->subnets = l->values[KSCF_SUBNETS].string;
 	w->host_ikeport = l->values[KNCF_IKEPORT].option;
-	w->protoport = l->protoport;
+
+	if (l->values[KSCF_PROTOPORT].set) {
+		char *value = l->values[KSCF_PROTOPORT].string;
+		err_t ugh = ttoprotoport(value, &w->protoport);
+
+		if (ugh != NULL) {
+			llog_error(logger, 0, "bad %sprotoport=%s [%s]",
+				   lr, value, ugh);
+			return false;
+		}
+	}
 
 	w->cert = l->values[KSCF_CERT].string;
 	w->ckaid = l->values[KSCF_CKAID].string;

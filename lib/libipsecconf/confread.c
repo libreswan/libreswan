@@ -370,16 +370,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	/* copy certificate path name */
-
-	if (end->values[KSCF_PROTOPORT].set) {
-		char *value = end->values[KSCF_PROTOPORT].string;
-		err_t ugh = ttoprotoport(value, &end->protoport);
-		if (ugh != NULL)
-			ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value,
-				  ugh);
-	}
-
 	return err;
 #  undef ERR_FOUND
 }
