@@ -80,8 +80,6 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 	struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
 
 	if (shared_phase1_connection(ike)) {
-		del_policy(c, policy.up);
-		remove_connection_from_pending(c);
 		llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
 		     c->config->ike_info->parent_sa_name,
 		     c->config->ike_info->child_sa_name);
@@ -109,15 +107,11 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 		}
 	} else if (ike != NULL && ike->sa.st_ike_version == IKEv2) {
 		llog(RC_LOG, c->logger, "terminating SAs using this connection");
-		del_policy(c, policy.up);
-		remove_connection_from_pending(c);
 		PEXPECT(ike->sa.logger, IS_PARENT_SA_ESTABLISHED(&ike->sa));
 		state_attach(&ike->sa, logger);
 		submit_v2_delete_exchange(ike, NULL);
 	} else {
 		dbg("connection not shared - terminating IKE and IPsec SA");
-		del_policy(c, policy.up);
-		remove_connection_from_pending(c);
 		terminate_all_connection_states(c, HERE);
 	}
 
@@ -138,7 +132,14 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 static unsigned whack_down_connection(const struct whack_message *m UNUSED,
 				      struct show *s, struct connection *c)
 {
-	del_policy(c, policy.up); /* XXX: where to put this? */
+	/*
+	 * Stop the connection comming back.
+	 *
+	 * While only PERMANENT, INSTANCE and LABELED_PARENT can be
+	 * pending, just call regardless.
+	 */
+	del_policy(c, policy.up);
+	remove_connection_from_pending(c);
 
 	unsigned nr = 0;
 	switch (c->local->kind) {

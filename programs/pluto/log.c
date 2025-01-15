@@ -431,7 +431,8 @@ size_t jam_state(struct jambuf *buf, const struct state *st)
 		s += jam_connection(buf, st->st_connection);
 	}
 	/* state number */
-	s += jam(buf, " "PRI_SO, pri_so(st->st_serialno));
+	s += jam_string(buf, " ");
+	s += jam_so(buf, st->st_serialno);
 	return s;
 }
 

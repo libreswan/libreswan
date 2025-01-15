@@ -138,10 +138,6 @@ void log_state(lset_t rc_flags, const struct state *st,
 #define PRI_STATE PRI_CONNECTION" "PRI_SO
 #define pri_state(ST, B) pri_connection((ST)->st_connection, B), pri_so((ST)->st_serialno)
 
-#define sa_buf state_buf
-#define PRI_SA PRI_STATE
-#define pri_sa(SA, B) pri_connection((SA)->sa.st_connection, B), pri_so((SA)->sa.st_serialno)
-
 size_t jam_state(struct jambuf *buf, const struct state *st);
 
 extern void show_setup_plutomain(struct show *s);
