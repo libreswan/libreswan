@@ -55,8 +55,6 @@ Libreswan test CA for mainca - Libreswan                     CT,,
 east                                                         P,,  
 road                                                         P,,  
 north                                                        P,,  
-hashsha1                                                     P,,  
-east-ec                                                      P,,  
 nic                                                          P,,  
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

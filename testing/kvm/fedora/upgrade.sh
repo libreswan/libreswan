@@ -71,9 +71,11 @@ nss-tools
 nss-util-devel
 pam-devel
 python3-pexpect
+python3-pyOpenSSL
 strongswan
 strongswan-sqlite
 systemd-networkd
+tar
 tcpdump
 unbound
 unbound-devel

@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep --x509
 # delete the CA, both ends hardcode both certificates
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-ipsec certutil -D -n "east-ec"
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

@@ -65,8 +65,6 @@ west                                                         u,u,u
 Libreswan test CA for mainca - Libreswan                     CT,, 
 road                                                         P,,  
 north                                                        P,,  
-hashsha1                                                     P,,  
-east-ec                                                      P,,  
 nic                                                          P,,  
 usage-both                                                   u,u,u
 west #

@@ -635,7 +635,7 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
             shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
 
             # pre-import certs for all other hosts
-            for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec", "nic"):
+            for certname in ("west", "east", "road", "north", "nic"):
                 if not hostname in certname:
                     shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
                           (certname, nssdir, certname, util_pw))
