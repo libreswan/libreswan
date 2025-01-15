@@ -70,6 +70,11 @@ static void down_ikev1_connection_state(struct connection *c UNUSED,
 	switch (visit_kind) {
 
 	case CONNECTION_IKE_PREP:
+		/*
+		 * Since the connection is down, the IKE SA is off
+		 * limits for anything trying to establish or revive.
+		 */
+		(*ike)->sa.st_viable_parent = false;
 		return;
 
 	case CONNECTION_IKE_CHILD:
@@ -143,6 +148,11 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 	switch (visit_kind) {
 
 	case CONNECTION_IKE_PREP:
+		/*
+		 * Since the connection is down, the IKE SA is off
+		 * limits for anything trying to establish or revive.
+		 */
+		(*ike)->sa.st_viable_parent = false;
 		return;
 
 	case CONNECTION_IKE_CHILD:
