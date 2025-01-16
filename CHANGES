@@ -18,8 +18,9 @@ v5.2 (unreleased)
   - Set DSCP options only on the relevant direction SA [Paul]
 * BSD:
   - implement ipsec-interface= on FreeBSD+OpenBSD [Andrew]
-* whack:
+* whack/addconn:
   - fix "duplicated flag ctlsocket" error introduced in 5.0 #1840 [Andrew]
+  - orders of magnitude speedup of 'ipsec add' w/ protoports= [Ilya Maximets #1987]
 * building:
   - fix build with USE_LIBCURL=false [Hans de Graaff #1845, Andrew]
   - fix build on OpenBSD 7.6 [Andrew]
