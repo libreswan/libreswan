@@ -56,9 +56,6 @@ east #
  ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=nic.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
- ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=hashsha1.testing.libreswan.org'
-imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha1.testing.libreswan.org, E=user-hashsha1@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
-east #
  ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=north.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
