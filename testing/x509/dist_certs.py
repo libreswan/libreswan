@@ -778,19 +778,6 @@ def create_mainec_certs():
             '-out pkcs12/mainec/'+name+'-mainec.p12 '
             '-passin pass:foobar -passout pass:foobar')
 
-def create_self_signed():
-    """ Create self-signed certs - uses openssl >= 1.1.1 syntax
-    """
-    for name in ['east', 'west', 'north', 'road']:
-        cmd = 'openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes -keyout ' \
-            +name+'-selfsigned.key -out '+name+'-selfsigned.cert -subj /CN=' \
-            +name+'-selfsigned.testing.libreswan.org -addext subjectAltName=DNS:' \
-            +name+'.testing.libreswan.org'
-        run(cmd)
-        cmd = 'openssl pkcs12 -export -out '+name+'-selfsigned.p12 -inkey '+name+'-selfsigned.key -in ' \
-              +name+'-selfsigned.cert -certfile '+name+'-selfsigned.cert -passout=file:../nss-pw'
-        run(cmd)
-
 def run_dist_certs():
     """ Generate the pluto test harness x509
     certificates, p12 files, keys, and CRLs
@@ -871,9 +858,6 @@ def main():
     dirbase = ""
 
     create_nss_pw()
-    os.chdir("selfsigned/")
-    create_self_signed()
-    os.chdir(cwd)
 
     print("finished!")
 
