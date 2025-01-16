@@ -1,0 +1,34 @@
+IKE exchange crosses, initiator conswitches peer's child leaving local ike hanging
+
+each end has two connections that can share their IKE SA
+
+- WEST sends "a":IKE_SA_INIT to EAST
+  - creates IKE SA #1
+  - initiator sets "a".{routing,negotiating}_ike_sa to #1
+
+- EAST sends "b":IKE_SA_INIT to WEST
+
+- WEST responds to EAST'S "b":IKE_SA_INIT
+  - creates IKE_SA #2 using connection "a"
+  - responder leaves "a".{routing,negotiating}_ike_sa et.al. untouched
+
+- EAST sends "b":IKE_AUTH to WEST
+
+- WEST responds to EAST's "b":IKE_AUTH
+  IKE
+  - establishes IKE SA #2
+  - sets "a".{established,negotiating}_ike_sa #2
+  - leaves "a".routing_sa set to #1
+  Child:
+  - creates Child SA #3
+  - connswitches Child SA #3 to "b"
+  - establishes Child SA #3
+  - sets "b".{routing,negotiating,established}_child_sa to #3
+
+- WEST retransmits "a":IKE_SA_INIT #1 to EAST
+  - sees .established_ike_sa(?) is #2 stops negotiation
+    "tun-out-1" #1: suppressing retransmit because IKE SA was superseded #2; drop this negotiation
+  - tries to revive:
+    EXPECTATION FAILED: "a" #1: revival: skipping, .negotiating_ike_sa #2 is is not us
+
+ref github #1989
