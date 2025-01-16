@@ -61,7 +61,6 @@ west #
 "old-west" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  ipsec auto --down old-west
-"old-west": terminating SAs using this connection
 "old-west" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec auto --up new-west
