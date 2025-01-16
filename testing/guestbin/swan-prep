@@ -660,9 +660,10 @@ if userland == "strongswan" and args.keys == Keys.X509:
                 ca, "/etc/strongswan/ipsec.d/cacerts/")
     shutil.copy("/testing/x509/keys/%s.key" % key, "/etc/strongswan/ipsec.d/private/")
 
-    for certname in ("west", "east", "road", "north", "hashsha1", "west-ec", "east-ec"):
+    for certname in ("west", "east", "road", "north"):
         shutil.copy("/testing/x509/certs/%s.crt" %
                     certname, "/etc/strongswan/ipsec.d/certs/")
+
 if args.namespace:
     # good idea for namespace. KVM sysctl.conf get copid.
     subprocess.getoutput("sysctl -p /testing/baseconfigs/all/etc/sysctl.conf")
