@@ -29,6 +29,7 @@ cp /testing/x509/selfsigned.sh        /tmp/x509
 : Generate the keys in /tmp/x509
 :
 
+/testing/x509/nss.sh /tmp/x509
 { cd /tmp/x509 && ./dist_certs.py ; }
 { cd /tmp/x509 && ./strongswan-ec-gen.sh ; }
 { cd /tmp/x509 && ./selfsigned.sh /tmp/x509/selfsigned ; }

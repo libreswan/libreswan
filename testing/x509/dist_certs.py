@@ -124,18 +124,7 @@ def reset_files():
                 'pkcs12/mainca',
                 'pkcs12/otherca',
                 'pkcs12/badca',
-                'crls/',
-                'fake',
-                'fake/keys/',
-                'fake/cacerts/',
-                'fake/certs/',
-                'fake/pkcs12/',
-                'fake/pkcs12/curveca',
-                'fake/pkcs12/mainec',
-                'fake/pkcs12/mainca',
-                'fake/pkcs12/otherca',
-                'fake/pkcs12/badca',
-                'fake/crls/' ]:
+                'crls/' ]:
         if os.path.isdir(dir):
             shutil.rmtree(dir)
         os.mkdir(dir)
@@ -850,12 +839,6 @@ def main():
 
     dirbase = ""
     run_dist_certs()
-    # create identical set to act as forged with identical parameters
-    dirbase = "fake/"
-    run_dist_certs()
-    # only fake
-    create_mainec_certs()
-    dirbase = ""
 
     create_nss_pw()
 
