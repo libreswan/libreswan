@@ -1,0 +1,183 @@
+/testing/guestbin/swan-prep --46 --hostkeys
+Creating NSS database containing host keys
+west #
+ # confirm that the network is alive
+west #
+ ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # ensure that clear text does not get through
+west #
+ ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -j DROP
+west #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-6in4
+"westnet-eastnet-6in4": created ipsec-interface ipsec1@eth1
+"westnet-eastnet-6in4": added IKEv2 connection
+west #
+ ipsec status | grep westnet-eastnet-6in4
+"westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2001:db8:0:2::/64; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-6in4":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-6in4":   my_updown=ipsec _updown;
+"westnet-eastnet-6in4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-6in4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
+"westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-6in4":   sec_label:unset;
+"westnet-eastnet-6in4":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-6in4":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"westnet-eastnet-6in4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-6in4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-6in4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"westnet-eastnet-6in4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+"westnet-eastnet-6in4":   conn_prio: 64,64,0; interface: ipsec1@eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"westnet-eastnet-6in4":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-6in4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-6in4":   nat-traversal: encapsulation:auto; keepalive:20s
+"westnet-eastnet-6in4":   routing: unrouted;
+"westnet-eastnet-6in4":   conn serial: $1;
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-6in4
+"westnet-eastnet-6in4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-6in4" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-6in4" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet-eastnet-6in4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-6in4" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
+"westnet-eastnet-6in4" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	if_id 0x1
+	dir out
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+	dir in
+west #
+ ip xfrm policy
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir out priority PRIORITY ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir fwd priority PRIORITY ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir in priority PRIORITY ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir out priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir fwd priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir in priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir out priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir fwd priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir in priority PRIORITY ptype main 
+west #
+ 

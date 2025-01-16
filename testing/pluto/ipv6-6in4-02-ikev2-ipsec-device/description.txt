@@ -1,4 +1,4 @@
-IPv6 over IPv4 (both sides XFRM):
+IPv6 over IPv4 (both sides XFRM, and both sides using an XFRMi interface)
 
 "westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===2001:db8:0:2::/64
 
