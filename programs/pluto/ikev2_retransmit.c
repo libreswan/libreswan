@@ -50,11 +50,15 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 	}
 
 	/*
-	 * XXX: Suspect this is to handle a race where the other end
-	 * brings up the connection first?  For that case, shouldn't
-	 * this state have been deleted?
+	 * Handle IKE SAs crossing-streams.
 	 *
-	 * NOTE: a larger serialno does not mean superseded.  Crossed
+	 * Note: can't assume the connection's Child SA as been
+	 * established as peer's established IKE SA can connswitch the
+	 * Child leaving this negotiation in limbo.
+	 *
+	 * terminate_ike_family() gets to handle this.
+	 *
+	 * Note: a larger serialno does not mean superseded.  Crossed
 	 * streams could mean the lower serial established later and
 	 * is the "newest".  Hence the equality check (and not >).
 	 */
@@ -76,7 +80,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		 */
 		PEXPECT(ike->sa.logger, c->established_ike_sa != ike->sa.st_serialno);
 		llog(RC_LOG, ike->sa.logger,
-		     "suppressing retransmit because IKE SA was superseded by #%lu; drop this negotiation",
+		     "dropping negotiation as superseeded by established IKE SA #%lu",
 		     c->established_ike_sa);
 		terminate_ike_family(&ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
 		return;

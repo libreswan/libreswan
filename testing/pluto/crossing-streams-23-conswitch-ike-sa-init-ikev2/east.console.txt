@@ -1,0 +1,74 @@
+/testing/guestbin/swan-prep --nokey
+Creating empty NSS database
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec add a
+"a": added IKEv2 connection
+east #
+ ipsec add b
+"b": added IKEv2 connection
+east #
+ # Initiate "b" from EAST.
+east #
+ #
+east #
+ # On WEST this is will match and establish connection "a" with IKE SA
+east #
+ # #2, and then switch to connection "b" for Child SA #3.
+east #
+ ipsec up b
+"b" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
+"b" #1: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
+"b" #1: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"b" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500
+"b" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'
+"b" #2: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+east #
+ # non-zero counts confirm encrypted traffic flowing
+east #
+ ipsec trafficstatus
+#2: "b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+east #
+ # do things line up?
+east #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.3.0/24 dst 192.0.20.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.20.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.20.0/24 dst 192.0.3.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+east #
+ 
