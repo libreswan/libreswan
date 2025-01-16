@@ -697,79 +697,6 @@ def create_crlsets():
      #create_leading_zero_crl()
 
 
-def create_ec_certs():
-    """ The OpenSSL module doesn't appear to have
-    support for curves so we do it with pexpect
-    """
-    # skip for non-base for now
-    if dirbase != '':
-        return
-
-    print("creating EC certs")
-    #create CA
-    pexpect.run('openssl ecparam -out keys/curveca.key '
-                '-name secp384r1 -genkey -noout')
-    child = pexpect.spawn('openssl req -x509 '
-                          '-new -key keys/curveca.key '
-                          '-out cacerts/curveca.crt '
-                          '-days 3650 -set_serial 1')
-    child.expect('Country Name')
-    child.sendline('CA')
-    child.expect('State')
-    child.sendline('Ontario')
-    child.expect('Locality')
-    child.sendline('Toronto')
-    child.expect('Organization')
-    child.sendline('Libreswan')
-    child.expect('Organizational')
-    child.sendline('Test Department')
-    child.expect('Common')
-    child.sendline('Libreswan test EC CA')
-    child.expect('Email')
-    child.sendline('testing@libreswan.org')
-    child.expect(pexpect.EOF)
-
-    serial = 2
-    for name in ['east', 'west', 'north', 'road']:
-        print("- creating %s-ec"% name)
-        #create end certs
-        if name == 'west':
-            pexpect.run('openssl ecparam -out keys/' + name +
-                    '-ec.key -name secp256r1 -genkey -noout')
-        else:
-            pexpect.run('openssl ecparam -out keys/' + name +
-                    '-ec.key -name secp384r1 -genkey -noout')
-        child = pexpect.spawn('openssl req -extensions ec-addon -config openssl.cnf -x509 '
-                              '-new -key keys/curveca.key '
-                              '-out certs/' + name +
-                              '-ec.crt -days 365 -set_serial ' +
-                              str(serial))
-        child.expect('Country Name')
-        child.sendline('CA')
-        child.expect('State')
-        child.sendline('Ontario')
-        child.expect('Locality')
-        child.sendline('Toronto')
-        child.expect('Organization')
-        child.sendline('Libreswan')
-        child.expect('Organizational')
-        child.sendline('Test Department')
-        child.expect('Common')
-        child.sendline(name + '-ec.testing.libreswan.org')
-        child.expect('Email')
-        child.sendline('testing@libreswan.org')
-        child.expect(pexpect.EOF)
-        serial += 1
-        #package p12
-        pexpect.run('openssl pkcs12 -export '
-                    '-inkey keys/%s-ec.key '
-                    '-in certs/%s-ec.crt -name %s-ec '
-                    '-certfile cacerts/curveca.crt '
-                    '-caname "curveca" '
-                    '-out pkcs12/curveca/%s-ec.p12 '
-                    '-passin pass:foobar -passout pass:foobar'
-                    % (name, name, name, name))
-
 def create_mainec_certs():
     """ The OpenSSL module doesn't appear to have
     support for curves so we do it with pexpect
@@ -913,7 +840,6 @@ def run_dist_certs():
     create_chained_certs(chain_ca_roots, 9, 'long_')
     create_chained_certs(chain_ca_roots, 10, 'too_long_')
     create_crlsets()
-    create_ec_certs()
 
 def create_nss_pw():
     print("creating nss-pw")
