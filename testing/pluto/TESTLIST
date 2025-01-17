@@ -1143,7 +1143,7 @@ kvmplutotest	sourceip-01				good
 #################################################################
 kvmplutotest	ipv6-6in4-01-ikev1			good
 kvmplutotest	ipv6-6in4-02-ikev2			good
-kvmplutotest	ipv6-6in4-02-ikev2-ipsec-device 	good
+kvmplutotest	ipv6-6in4-02-ikev2-ipsec-device 	wip	github/2005
 kvmplutotest	ipv6-6in6-01-ikev1			good
 kvmplutotest	ipv6-6in6-02-ikev2			good
 kvmplutotest	ipv6-4in6-01-ikev1			good
