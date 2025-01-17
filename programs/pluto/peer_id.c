@@ -176,8 +176,6 @@ static asn1_t get_ca(struct pubkey_list *const *pubkey_db,
  * as nothing already used is changed.
  */
 
-#define dbg_rhc(FORMAT, ...) pdbg(verbose.logger, "rhc:%*s "FORMAT, verbose.level*2, "", ##__VA_ARGS__)
-
 struct score {
 	bool initiator_id_matched;
 	int v1_requested_ca_pathlen;
@@ -213,23 +211,23 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 	if (c != d && is_instance(d) && d->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
-		dbg_rhc("skipping ID_NULL instance "PRI_CONNECTION"",
-			pri_connection(d, &cb));
+		vdbg("skipping ID_NULL instance "PRI_CONNECTION"",
+		     pri_connection(d, &cb));
 		return false;
 	}
 
 	if (ike->sa.st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
 		connection_buf cb;
-		dbg_rhc("skipping non-groundhog instance "PRI_CONNECTION"",
-			pri_connection(d, &cb));
+		vdbg("skipping non-groundhog instance "PRI_CONNECTION"",
+		     pri_connection(d, &cb));
 		return false;
 	}
 
 	if (ike->sa.st_v2_resume_session != NULL) {
 		if (!d->config->session_resumption) {
 			connection_buf cb;
-			dbg_rhc("skipping non-IKE_SESSION_RESUME connection "PRI_CONNECTION"",
-				pri_connection(d, &cb));
+			vdbg("skipping non-IKE_SESSION_RESUME connection "PRI_CONNECTION"",
+			     pri_connection(d, &cb));
 			return false;
 		}
 	}
@@ -243,8 +241,8 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 	if (c != d && is_opportunistic(d)) {
 		connection_buf cb;
-		dbg_rhc("skipping opportunistic connection "PRI_CONNECTION"",
-			pri_connection(d, &cb));
+		vdbg("skipping opportunistic connection "PRI_CONNECTION"",
+		     pri_connection(d, &cb));
 		return false;
 	}
 
@@ -255,8 +253,8 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 	if (is_labeled_child(d)) {
 		connection_buf cb;
-		dbg_rhc("skipping labeled child "PRI_CONNECTION,
-			pri_connection(d, &cb));
+		vdbg("skipping labeled child "PRI_CONNECTION,
+		     pri_connection(d, &cb));
 		return false;
 	}
 
@@ -266,8 +264,8 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 	if (is_group(d)) {
 		connection_buf cb;
-		dbg_rhc("skipping group template connection "PRI_CONNECTION,
-			pri_connection(d, &cb));
+		vdbg("skipping group template connection "PRI_CONNECTION,
+		     pri_connection(d, &cb));
 		return false;
 	}
 
@@ -280,13 +278,13 @@ static bool score_host_connection(const struct ike_sa *ike,
 
 	if (d->local->host.config->xauth.server != c->local->host.config->xauth.server) {
 		/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-		dbg_rhc("skipping because mismatched xauth_server");
+		vdbg("skipping because mismatched xauth_server");
 		return false;
 	}
 
 	if (d->local->host.config->xauth.client != c->local->host.config->xauth.client) {
 		/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
-		dbg_rhc("skipping because mismatched xauth_client");
+		vdbg("skipping because mismatched xauth_client");
 		return false;
 	}
 
@@ -298,21 +296,21 @@ static bool score_host_connection(const struct ike_sa *ike,
 	if (responder_id != NULL && responder_id->kind != ID_NONE) {
 		id_buf tzb;
 		esb_buf tzesb;
-		dbg_rhc("peer expects us to be %s (%s) according to its IDr (tarzan) payload",
-			str_id(responder_id, &tzb),
-			str_enum(&ike_id_type_names, responder_id->kind, &tzesb));
+		vdbg("peer expects us to be %s (%s) according to its IDr (tarzan) payload",
+		     str_id(responder_id, &tzb),
+		     str_enum(&ike_id_type_names, responder_id->kind, &tzesb));
 		id_buf usb;
 		esb_buf usesb;
-		dbg_rhc("this connection's local id is %s (%s)",
-			str_id(&d->local->host.id, &usb),
-			str_enum(&ike_id_type_names, d->local->host.id.kind, &usesb));
+		vdbg("this connection's local id is %s (%s)",
+		     str_id(&d->local->host.id, &usb),
+		     str_enum(&ike_id_type_names, d->local->host.id.kind, &usesb));
 		/* ??? pexpect(d->spd->spd_next == NULL); */
 		if (!idr_wildmatch(&d->local->host, responder_id, ike->sa.logger)) {
-			dbg_rhc("skipping because peer IDr (tarzan) payload does not match our expected ID");
+			vdbg("skipping because peer IDr (tarzan) payload does not match our expected ID");
 			return false;
 		}
 	} else {
-		dbg_rhc("no IDr (tarzan) payload received from peer, skipping check");
+		vdbg("no IDr (tarzan) payload received from peer, skipping check");
 	}
 
 	/*
@@ -322,24 +320,24 @@ static bool score_host_connection(const struct ike_sa *ike,
 	switch (ike->sa.st_ike_version) {
 	case IKEv1:
 		if (d->config->aggressive) {
-			dbg_rhc("skipping because AGGRESSIVE isn't right");
+			vdbg("skipping because AGGRESSIVE isn't right");
 			return false;	/* differ about aggressive mode */
 		}
 		if (LHAS(proposed_authbys, AUTH_PSK)) {
 			if (!(d->remote->host.config->auth == AUTH_PSK)) {
 				/* there needs to be a key */
-				dbg_rhc("skipping because no PSK in POLICY");
+				vdbg("skipping because no PSK in POLICY");
 				return false;
 			}
 			if (get_connection_psk(d) == NULL) {
 				/* there needs to be a key */
-				dbg_rhc("skipping because PSK and no secret");
+				vdbg("skipping because PSK and no secret");
 				return false; /* no secret */
 			}
 		}
 		if (LHAS(proposed_authbys, AUTH_RSASIG)) {
 			if (!(d->remote->host.config->auth == AUTH_RSASIG)) {
-				dbg_rhc("skipping because not RSASIG in POLICY");
+				vdbg("skipping because not RSASIG in POLICY");
 				return false;	/* no key */
 			}
 			if (get_local_private_key(d, &pubkey_type_rsa,
@@ -348,7 +346,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 				 * We must at least be able to find
 				 * our private key.
 				 */
-				dbg_rhc("skipping because RSASIG and no private key");
+				vdbg("skipping because RSASIG and no private key");
 				return false;	/* no key */
 			}
 		}
@@ -368,7 +366,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		 * ECDSA?
 		 */
 		if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {
-			dbg_rhc("skipping because mismatched authby");
+			vdbg("skipping because mismatched authby");
 			return false;
 		}
 		/* check that the chosen one has a key */
@@ -382,33 +380,33 @@ static bool score_host_connection(const struct ike_sa *ike,
 			if (get_connection_psk(d) == NULL) {
 				/* need a key */
 #if 0
-				dbg_rhc("skipping because PSK and no secret");
+				vdbg("skipping because PSK and no secret");
 				return false; /* no secret */
 #else
-				dbg_rhc("has no PSK; why?");
+				vdbg("has no PSK; why?");
 			}
 #endif
 			break;
 		case AUTH_RSASIG:
 			if (get_local_private_key(d, &pubkey_type_rsa,
 						  ike->sa.logger) == NULL) {
-				dbg_rhc("skipping because RSASIG and no private key");
+				vdbg("skipping because RSASIG and no private key");
 				return false;	/* no key */
 			}
 			break;
 		case AUTH_ECDSA:
 			if (get_local_private_key(d, &pubkey_type_ecdsa,
 						  ike->sa.logger) == NULL) {
-				dbg_rhc("skipping because ECDSA and no private key");
+				vdbg("skipping because ECDSA and no private key");
 				return false;	/* no key */
 			}
 			break;
 		default:
 		{
 			lset_buf eb;
-			dbg_rhc("%s so no authby checks performed",
-				str_lset_short(&keyword_auth_names, "+",
-					       proposed_authbys, &eb));
+			vdbg("%s so no authby checks performed",
+			     str_lset_short(&keyword_auth_names, "+",
+					    proposed_authbys, &eb));
 			break;
 		}
 		}
@@ -440,7 +438,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 	if (!score->initiator_id_matched) {
 		/* must be checking certs */
 		if (d->remote->host.id.kind != ID_FROMCERT) {
-			dbg_rhc("skipping because initiator_id does not match and that.id.kind is not a cert");
+			vdbg("skipping because initiator_id does not match and that.id.kind is not a cert");
 			return false;
 		}
 	}
@@ -456,11 +454,11 @@ static bool score_host_connection(const struct ike_sa *ike,
 		if (!match_v1_requested_ca(ike, d->local->host.config->ca,
 					   &score->v1_requested_ca_pathlen,
 					   verbose)) {
-			dbg_rhc("skipping because match_v1_requested_ca() failed");
+			vdbg("skipping because match_v1_requested_ca() failed");
 			return false;
 		}
 
-		dbg_rhc("v1_requested_ca_pathlen=%d", score->v1_requested_ca_pathlen);
+		vdbg("v1_requested_ca_pathlen=%d", score->v1_requested_ca_pathlen);
 	}
 
 	/*
@@ -473,11 +471,11 @@ static bool score_host_connection(const struct ike_sa *ike,
 			ASN1(d->remote->host.config->ca),
 			&score->initiator_ca_pathlen,
 			verbose)) {
-		dbg_rhc("skipping because trusted_ca() failed");
+		vdbg("skipping because trusted_ca() failed");
 		return false;
 	}
 
-	dbg_rhc("initiator_ca_pathlen=%d", score->initiator_ca_pathlen);
+	vdbg("initiator_ca_pathlen=%d", score->initiator_ca_pathlen);
 
 	/*
 	 * Paul: We need to check all the other relevant policy bits,
@@ -628,7 +626,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 				  &c_score, verbose)) {
 		best = c_score;
 		if (exact_id_match(best)) {
-			dbg_rhc("returning initial connection because exact (peer) ID match");
+			vdbg("returning initial connection because exact (peer) ID match");
 			return best.connection;
 		}
 	}
@@ -638,8 +636,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 
 		verbose.level = 1;
 		address_buf lb, rb;
-		dbg_rhc("trying connections matching %s->%s",
-			str_address(&local, &lb), str_address(&remote, &rb));
+		vdbg("trying connections matching %s->%s",
+		     str_address(&local, &lb), str_address(&remote, &rb));
 
 		struct connection_filter hpf = {
 			.host_pair = {
@@ -663,7 +661,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 
 			connection_buf b2;
 			verbose.level = 2;
-			dbg_rhc("checking "PRI_CONNECTION, pri_connection(d, &b2));
+			vdbg("checking "PRI_CONNECTION, pri_connection(d, &b2));
 			verbose.level++;
 
 			struct score score = {
@@ -685,8 +683,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 */
 			if (exact_id_match(score)) {
 				connection_buf dcb;
-				dbg_rhc("returning "PRI_CONNECTION" because exact (peer) ID match",
-					pri_connection(d, &dcb));
+				vdbg("returning "PRI_CONNECTION" because exact (peer) ID match",
+				     pri_connection(d, &dcb));
 				return d;
 			}
 
@@ -702,10 +700,10 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 */
 			if (better_score(best, score, ike->sa.logger)) {
 				connection_buf cib;
-				dbg_rhc("picking new best "PRI_CONNECTION" (wild=%d, initiator_ca_pathlen=%d/our=%d)",
-					pri_connection(d, &cib),
-					score.wildcards, score.initiator_ca_pathlen,
-					score.v1_requested_ca_pathlen);
+				vdbg("picking new best "PRI_CONNECTION" (wild=%d, initiator_ca_pathlen=%d/our=%d)",
+				     pri_connection(d, &cib),
+				     score.wildcards, score.initiator_ca_pathlen,
+				     score.v1_requested_ca_pathlen);
 				best = score;
 			}
 		}
@@ -718,11 +716,12 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  const struct id *initiator_id,
 						  const struct id *responder_id)
 {
-	struct verbose verbose = { .logger = ike->sa.logger, };
 	connection_buf cib;
-	dbg_rhc("looking for an %s connection more refined than "PRI_CONNECTION"",
-		ike->sa.st_connection->config->ike_info->version_name,
-	    pri_connection(ike->sa.st_connection, &cib));
+	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
+		     "looking for an %s connection more refined than "PRI_CONNECTION"",
+		     ike->sa.st_connection->config->ike_info->version_name,
+		     pri_connection(ike->sa.st_connection, &cib));
+	verbose.prefix = "rhc:";
 	verbose.level = 1;
 
 	struct connection *r = refine_host_connection_on_responder(ike,
@@ -730,13 +729,13 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 								   initiator_id, responder_id,
 								   verbose);
 	if (r == NULL) {
-		dbg_rhc("returning FALSE because nothing is sufficiently refined");
+		vdbg("returning FALSE because nothing is sufficiently refined");
 		return false;
 	}
 
 	connection_buf bfb;
-	dbg_rhc("returning TRUE as "PRI_CONNECTION" is most refined",
-		pri_connection(r, &bfb));
+	vdbg("returning TRUE as "PRI_CONNECTION" is most refined",
+	     pri_connection(r, &bfb));
 
 	if (r != ike->sa.st_connection) {
 		/*
@@ -782,8 +781,8 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 	}
 
 	connection_buf bcb;
-	dbg_rhc("most refined is "PRI_CONNECTION,
-		pri_connection(ike->sa.st_connection, &bcb));
+	vdbg("most refined is "PRI_CONNECTION,
+	     pri_connection(ike->sa.st_connection, &bcb));
 	return true;
 }
 
