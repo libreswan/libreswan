@@ -416,9 +416,11 @@ void visit_connection_states(struct connection *c,
 			     struct visit_connection_state_context *context,
 			     where_t where)
 {
+	connection_buf cb;
 	VERBOSE_DBGP(DBG_BASE, c->logger,
-		     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
-		     __func__,
+		     PRI_CONNECTION" .routing_ike_sa "PRI_SO" .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
+		     pri_connection(c, &cb),
+		     pri_so(c->routing_sa),
 		     pri_so(c->negotiating_ike_sa),
 		     pri_so(c->established_ike_sa),
 		     pri_so(c->negotiating_child_sa),
@@ -449,6 +451,12 @@ void visit_connection_states(struct connection *c,
 		 * SA (a.k.a. cuckoo).
 		 */
 		PEXPECT(c->logger, ike != NULL);
+	} else if (c->established_ike_sa != SOS_NOBODY) {
+		llog_pexpect(c->logger, HERE,
+			     "connection's established IKE SA "PRI_SO" is missing",
+			     pri_so(c->established_ike_sa));
+		/* try to patch up mess!?! */
+		c->established_ike_sa = SOS_NOBODY;
 	} else {
 		vdbg("skipping START, no IKE");
 	}
