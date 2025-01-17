@@ -25,14 +25,12 @@ struct timer_event;
 void revive_connection(struct connection *c, const char *subplot,
 		       const threadtime_t *inception);
 
-bool scheduled_revival(struct connection *c, struct state *st, /*could-be-NULL*/
-		       const char *subplot, struct logger *logger);
-
 /*
  * As in the SA's connection should be kept up so the call scheduled a
  * revival.  Caller should adjust routing accordingly.
  */
 
+bool scheduled_connection_revival(struct connection *c, const char *subplot);
 bool scheduled_child_revival(struct child_sa *child, const char *subplot);
 bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot);
 

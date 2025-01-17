@@ -104,14 +104,27 @@ static bool connection_cannot_die(enum routing_event event,
 				  struct logger *logger,
 				  const struct routing_annex *e)
 {
-	struct state *st = (e->child != NULL && (*e->child) != NULL ? &(*e->child)->sa :
-			    e->ike != NULL && (*e->ike) != NULL ? &(*e->ike)->sa :
-			    NULL);
 	const char *subplot = (event == CONNECTION_TEARDOWN_IKE ? e->story :
 			       event == CONNECTION_TEARDOWN_CHILD ? e->story :
 			       event == CONNECTION_RESCHEDULE ? e->story :
 			       "???");
-	return scheduled_revival(c, st, subplot, logger);
+	if (e->child != NULL) {
+		struct child_sa *child = (*e->child);
+		if (child != NULL) {
+			PEXPECT(logger, child->sa.st_connection == c);
+			return scheduled_child_revival(child, subplot);
+		}
+	}
+
+	if (e->ike != NULL) {
+		struct ike_sa *ike = (*e->ike);
+		if (ike != NULL) {
+			PEXPECT(logger, ike->sa.st_connection == c);
+			return scheduled_ike_revival(ike, subplot);
+		}
+	}
+
+	return scheduled_connection_revival(c, subplot);
 }
 
 static void jam_sa(struct jambuf *buf, struct state *st, const char **sep)
