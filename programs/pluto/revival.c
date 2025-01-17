@@ -261,21 +261,26 @@ bool scheduled_child_revival(struct child_sa *child, const char *subplot)
 bool scheduled_ike_revival(struct ike_sa *ike, const char *subplot)
 {
 	struct connection *c = ike->sa.st_connection;
+	if (c->routing_sa != ike->sa.st_serialno) {
+		llog_pexpect(ike->sa.logger, HERE,
+			     "revival: skipping, .routing_sa "PRI_SO" is is not us",
+			     pri_so(c->routing_sa));
+		return false;
+	}
 	if (c->negotiating_ike_sa != SOS_NOBODY &&
 	    c->negotiating_ike_sa != ike->sa.st_serialno) {
-		/* should be covered by above */
-		llog_pexpect(ike->sa.logger, HERE,
-			     "revival: skipping, .negotiating_ike_sa "PRI_SO" is is not us",
-			     pri_so(c->negotiating_ike_sa));
-		return false;
+		/*
+		 * For instance, crossing stream establishes IKE SA,
+		 * but some other Child SA, leaving .routing_sa
+		 * hanging.
+		 */
+		ldbg(ike->sa.logger, "revival: .negotiating_ike_sa "PRI_SO" is is not us",
+		     pri_so(c->negotiating_ike_sa));
 	}
 	if (c->established_ike_sa != SOS_NOBODY &&
 	    c->established_ike_sa != ike->sa.st_serialno) {
-		/* should be covered by above */
-		llog_pexpect(ike->sa.logger, HERE,
-			     "revival: skipping, .established_ike_sa "PRI_SO" is is not us",
-			     pri_so(c->established_ike_sa));
-		return false;
+		ldbg(ike->sa.logger, "revival: .established_ike_sa "PRI_SO" is is not us",
+		     pri_so(c->established_ike_sa));
 	}
 	return scheduled_revival(c, &ike->sa, subplot, ike->sa.logger);
 }
