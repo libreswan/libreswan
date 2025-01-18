@@ -416,9 +416,11 @@ void visit_connection_states(struct connection *c,
 			     struct visit_connection_state_context *context,
 			     where_t where)
 {
+	connection_buf cb;
 	VERBOSE_DBGP(DBG_BASE, c->logger,
-		     "%s() .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
-		     __func__,
+		     PRI_CONNECTION" .routing_ike_sa "PRI_SO" .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
+		     pri_connection(c, &cb),
+		     pri_so(c->routing_sa),
 		     pri_so(c->negotiating_ike_sa),
 		     pri_so(c->established_ike_sa),
 		     pri_so(c->negotiating_child_sa),
@@ -449,6 +451,12 @@ void visit_connection_states(struct connection *c,
 		 * SA (a.k.a. cuckoo).
 		 */
 		PEXPECT(c->logger, ike != NULL);
+	} else if (c->established_ike_sa != SOS_NOBODY) {
+		llog_pexpect(c->logger, HERE,
+			     "connection's established IKE SA "PRI_SO" is missing",
+			     pri_so(c->established_ike_sa));
+		/* try to patch up mess!?! */
+		c->established_ike_sa = SOS_NOBODY;
 	} else {
 		vdbg("skipping START, no IKE");
 	}
@@ -468,38 +476,32 @@ void visit_connection_states(struct connection *c,
 	 * Child SA.
 	 */
 
-	bool visit_ike;
-	struct child_sa *connection_child =
+	enum connection_visit_kind visited_child;
+	struct child_sa *child =
 		child_sa_by_serialno(c->negotiating_child_sa);
-	if (connection_child == NULL) {
+	if (child == NULL) {
 		vdbg("skipping Child SA, as no "PRI_SO, pri_so(c->negotiating_child_sa));
-		visit_ike = true;
-	} else if (connection_child->sa.st_clonedfrom != c->established_ike_sa) {
+		visited_child = 0;
+	} else if (c->established_ike_sa == child->sa.st_clonedfrom) {
+		vdbg("dispatch Child SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
+		visited_child = CONNECTION_IKE_CHILD;
+		visit_connection_state(c, &ike, &child, visited_child, context);
+	} else if (c->established_ike_sa != SOS_NOBODY) {
 		/*
 		 * i.e., the connection's Child SA is not using the
 		 * connection's IKE SA (.established_ike_sa is for a
 		 * different IKE SA), or the connection has no IKE SA
 		 * (.established_ike_sa == SOS_NOBODY).
-		 *
-		 * Note: CONNECTION_START does not delete the IKE SA
-		 * (see pexpect() above) which means that, when there
-		 * is an IKE SA, .established_ike_sa is still valid
-		 * (not SOS_NOBODY).
 		 */
-		vdbg("dispatch cuckoo Child SA "PRI_SO,
-		     pri_so(connection_child->sa.st_serialno));
-		visit_ike = true;
-		visit_connection_state(c, NULL, &connection_child, CONNECTION_CUCKOO_CHILD, context);
-	} else if (ike == NULL) {
-		vdbg("dispatch orphaned Child SA "PRI_SO,
-		     pri_so(connection_child->sa.st_serialno));
-		visit_ike = false;
-		visit_connection_state(c, NULL, &connection_child, CONNECTION_ORPHAN_CHILD, context);
+		vdbg("dispatch cuckoo Child SA "PRI_SO, pri_so(child->sa.st_serialno));
+		visited_child = CONNECTION_CUCKOO_CHILD;
+		visit_connection_state(c, NULL, &child, visited_child, context);
 	} else {
-		vdbg("dispatch Child SA "PRI_SO,
-		     pri_so(connection_child->sa.st_serialno));
-		visit_ike = false;
-		visit_connection_state(c, &ike, &connection_child, CONNECTION_IKE_CHILD, context);
+		vdbg("dispatch orphaned Child SA "PRI_SO,
+		     pri_so(child->sa.st_serialno));
+		visited_child = CONNECTION_ORPHAN_CHILD;
+		visit_connection_state(c, NULL, &child, visited_child, context);
 	}
 
 	/*
@@ -607,7 +609,7 @@ void visit_connection_states(struct connection *c,
 	 * SA.
 	 */
 
-	if (ike != NULL && visit_ike) {
+	if (ike != NULL && visited_child == 0) {
 		vdbg("dispatch to IKE SA "PRI_SO" as child skipped",
 		     pri_so(ike->sa.st_serialno));
 		visit_connection_state(c, &ike, NULL, CONNECTION_CHILDLESS_IKE, context);

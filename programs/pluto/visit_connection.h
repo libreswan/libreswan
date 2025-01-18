@@ -125,13 +125,10 @@ enum connection_visit_kind {
 	 * IKE_CHILD: the connection's Child SA is using the same
 	 * connection for its IKE SA and both exist.
 	 *
-	 * ORPHAN_CHILD: the connection's Child SA no longer has an
-	 * IKE SA (in IKEv1 this happens when the ISAKMP is deleted
-	 * leaving children behind, in IKEv2 this is a no-no).
+	 * ORPHAN_CHILD: the connection has a Child SA but no IKE SA.
 	 *
-	 * CUCKOO_CHILD: the connection's Child SA is not using the
-	 * connection's IKE SA (and has instead hitched a lift on some
-	 * other connection's IKE SA).
+	 * CUCKOO_CHILD: the connection's Child SA isn't for the IKE
+	 * SA.
 	 */
 	CONNECTION_IKE_CHILD,
 	CONNECTION_ORPHAN_CHILD,

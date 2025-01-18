@@ -46,6 +46,7 @@ struct verbose {
 	const struct logger *logger;
 	lset_t rc_flags;
 	int level;
+	const char *prefix;
 };
 
 /*
@@ -57,6 +58,7 @@ struct verbose {
 	struct verbose verbose = {			\
 		.logger = (LOGGER),			\
 		.rc_flags = RC_LOG,			\
+		.prefix = "",				\
 	};						\
 	verbose(MESSAGE, ##__VA_ARGS__);		\
 	verbose.level++;
@@ -70,12 +72,13 @@ struct verbose {
 	struct verbose verbose = {					\
 		.logger = (LOGGER),					\
 		.rc_flags = (LDBGP(COND, LOGGER) ? DEBUG_STREAM : 0),	\
+		.prefix = "",						\
 	};								\
-	verbose("%s() "MESSAGE, __func__, ##__VA_ARGS__);		\
+	verbose(MESSAGE, ##__VA_ARGS__);				\
 	verbose.level++;
 
-#define PRI_VERBOSE "%*s"
-#define pri_verbose (verbose.level * 2), ""
+#define PRI_VERBOSE "%s%*s"
+#define pri_verbose "", (verbose.level * 2), ""
 
 /*
  * Normal logging: the message is always logged (no indentation); just

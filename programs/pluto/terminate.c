@@ -80,8 +80,9 @@ static void terminate_v1_state(struct connection *c,
 		(*ike)->sa.st_viable_parent = false;
 		return;
 
-	case CONNECTION_IKE_CHILD:
+	case CONNECTION_IKE_CHILD: /* ignore IKE */
 	case CONNECTION_CUCKOO_CHILD:
+	case CONNECTION_ORPHAN_CHILD:
 	{
 		/*
 		 * Can't always assume IKE is suitable for sending
@@ -98,12 +99,6 @@ static void terminate_v1_state(struct connection *c,
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	}
-	case CONNECTION_ORPHAN_CHILD:
-		/* IKEv1 has orphans */
-		state_attach(&(*child)->sa, c->logger);
-		PEXPECT(c->logger, ike == NULL);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
 
 	case CONNECTION_LURKING_CHILD:
 		state_attach(&(*child)->sa, c->logger);
@@ -163,16 +158,10 @@ static void terminate_v2_states(struct connection *c,
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case CONNECTION_CUCKOO_CHILD:
+	case CONNECTION_ORPHAN_CHILD:
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
 		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case CONNECTION_ORPHAN_CHILD:
-		state_attach(&(*child)->sa, c->logger);
-		llog_pexpect(c->logger, HERE, "unexpected orphan Child SA "PRI_SO,
-			     (*child)->sa.st_serialno);
-		PEXPECT(c->logger, ike == NULL);
-		delete_child_sa(child);
 		return;
 
 	case CONNECTION_LURKING_CHILD:
