@@ -496,12 +496,18 @@ void visit_connection_states(struct connection *c,
 		 */
 		vdbg("dispatch cuckoo Child SA "PRI_SO, pri_so(child->sa.st_serialno));
 		visited_child = CONNECTION_CUCKOO_CHILD;
-		visit_connection_state(c, NULL, &child, visited_child, context);
+		visit_connection_state(c, &ike, &child, visited_child, context);
 	} else {
 		vdbg("dispatch orphaned Child SA "PRI_SO,
 		     pri_so(child->sa.st_serialno));
 		visited_child = CONNECTION_ORPHAN_CHILD;
 		visit_connection_state(c, NULL, &child, visited_child, context);
+	}
+
+	/* debug-log when callback zapps IKE SA */
+	if (c->established_ike_sa != SOS_NOBODY && ike == NULL) {
+		vdbg("IKE SA "PRI_SO" wiped when visiting child",
+		     pri_so(c->established_ike_sa));
 	}
 
 	/*
