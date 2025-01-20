@@ -45,7 +45,7 @@ west #
 #3: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec down west-cuckold
-"west-cuckold": IKE SA is shared - only terminating Child SA
+"west-cuckold": only deleting Child SA #2, IKE SA #1 is shared with "west-cuckoo"
 "west-cuckold" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
