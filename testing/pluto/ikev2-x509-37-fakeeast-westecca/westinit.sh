@@ -1,11 +1,9 @@
 /testing/guestbin/swan-prep --eccert
 
-# import real west+mainca
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
-# delete real main CA
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-# so only CA is bogus
-ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainec/mainec.p12
+# import real west+key (no CA)
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
+# import the fake EC ca (could also use real EC CA?)
+ipsec certutil -A -t C,, -n mainec -i /testing/x509/fake/mainec/root.cert
 # confirm
 ipsec certutil -L
 

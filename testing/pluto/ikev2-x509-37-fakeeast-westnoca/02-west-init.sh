@@ -1,9 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
-# import real west+mainca
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
-# delete real main CA so cannot validate
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+# import real west only, there's no root CA
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
 # confirm
 ipsec certutil -L
 

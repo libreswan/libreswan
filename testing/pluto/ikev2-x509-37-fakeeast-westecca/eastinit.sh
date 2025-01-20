@@ -1,13 +1,9 @@
 /testing/guestbin/swan-prep --nokeys
 
-# import real west+mainca
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
-# delete real main CA
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-# import fake east cert and fake main CA
-ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainca/east.p12
-# remove main CA - so real-west cannot be verified - rely on cert=west
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+# import west's cert (no CA)
+ipsec certutil -A -t P,, -n west -i /testing/x509/real/mainca/west.end.cert
+# import fake east cert+key (again no CA)
+ipsec pk12util -W foobar -K '' -i /testing/x509/fake/mainca/east.end.p12
 # confirm
 ipsec certutil -L
 

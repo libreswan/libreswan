@@ -1,7 +1,7 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
 
-# remove CA
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+ipsec pk12util -W foobar -i /testing/x509/real/mainca/east.end.p12
+ipsec certutil -A -t P,,, -n west -i /testing/x509/real/mainca/west.end.cert
 # this leaves real east and real west certs. other end will use
 # different fake west cert
 ipsec certutil -L
