@@ -83,6 +83,29 @@ static bool shared_phase1_connection(struct connection *c,
 	return true;
 }
 
+static void delete_ikev1_child(struct connection *c, struct child_sa **child, where_t where)
+{
+	/*
+	 * Can't assume the IKE SA is the best available for the
+	 * Child.
+	 */
+	state_attach(&(*child)->sa, c->logger);
+	struct ike_sa *ike =
+		established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
+	llog_n_maybe_send_v1_delete(ike, &(*child)->sa, where);
+	connection_teardown_child(child, REASON_DELETED, where);
+}
+
+static void delete_ikev1_ike(struct connection *c, struct ike_sa **ike, where_t where)
+{
+	/*
+	 * Assume the established IKE SA can delete itself.
+	 */
+	state_attach(&(*ike)->sa, c->logger);
+	llog_n_maybe_send_v1_delete((*ike), &(*ike)->sa, HERE);
+	connection_teardown_ike(ike, REASON_DELETED, where);
+}
+
 static void down_ikev1_connection_state(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
@@ -101,21 +124,19 @@ static void down_ikev1_connection_state(struct connection *c,
 
 	case CONNECTION_IKE_CHILD:
 		if (shared_phase1_connection(c, (*ike), (*child))) {
-			/*
-			 * IKE, above, may not be the best
-			 * ISAKMP SA for this child!
-			 */
-			state_attach(&(*child)->sa, c->logger);
-			struct ike_sa *isakmp =
-				established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
-			llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
-			connection_teardown_child(child, REASON_DELETED, HERE);
-		} else {
-			dbg("connection not shared - terminating IKE and IPsec SA");
-			(*ike) = NULL;
-			(*child) = NULL;
-			terminate_all_connection_states(c, HERE);
+			delete_ikev1_child(c, child, HERE);
+			(*ike) = NULL; /* hands off IKE */
+			return;
 		}
+
+		/* log in the order that they will be deleted */
+		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO" and %s "PRI_SO,
+		     c->config->ike_info->child_sa_name,
+		     pri_so((*child)->sa.st_serialno),
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*ike)->sa.st_serialno));
+		delete_ikev1_child(c, child, HERE);
+		delete_ikev1_ike(c, ike, HERE);
 		return;
 
 	case CONNECTION_CUCKOO_CHILD:

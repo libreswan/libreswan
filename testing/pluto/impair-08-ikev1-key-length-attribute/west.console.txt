@@ -31,7 +31,7 @@ west #
 "aes128" #2: sent Quick Mode request
 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"aes128": terminating SAs using this connection
+"aes128": deleting connection's IPsec SA #2 and ISAKMP SA #1
 "aes128" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "aes128" #2: ESP traffic information: in=84B out=84B
 "aes128" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -154,7 +154,7 @@ west #
 "aes128" #10: sent Quick Mode request
 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"aes128": terminating SAs using this connection
+"aes128": deleting connection's IPsec SA #10 and ISAKMP SA #9
 "aes128" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
 "aes128" #10: ESP traffic information: in=84B out=84B
 "aes128" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -210,7 +210,7 @@ west #
 "aes128" #14: sent Quick Mode request
 "aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"aes128": terminating SAs using this connection
+"aes128": deleting connection's IPsec SA #14 and ISAKMP SA #13
 "aes128" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
 "aes128" #14: ESP traffic information: in=84B out=84B
 "aes128" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -268,7 +268,7 @@ west #
 "3des" #18: sent Quick Mode request
 "3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"3des": terminating SAs using this connection
+"3des": deleting connection's IPsec SA #18 and ISAKMP SA #17
 "3des" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
 "3des" #18: ESP traffic information: in=84B out=84B
 "3des" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -317,7 +317,7 @@ west #
 "3des" #21: sent Quick Mode request
 "3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"3des": terminating SAs using this connection
+"3des": deleting connection's IPsec SA #21 and ISAKMP SA #20
 "3des" #21: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #20
 "3des" #21: ESP traffic information: in=84B out=84B
 "3des" #20: deleting ISAKMP SA (MAIN_I4) and sending notification

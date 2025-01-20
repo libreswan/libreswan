@@ -28,7 +28,7 @@ west #
 "nss-cert" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --down nss-cert
-"nss-cert": terminating SAs using this connection
+"nss-cert": deleting connection's IPsec SA #2 and ISAKMP SA #1
 "nss-cert" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "nss-cert" #2: ESP traffic information: in=0B out=0B
 "nss-cert" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

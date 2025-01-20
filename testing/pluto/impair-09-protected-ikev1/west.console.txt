@@ -49,7 +49,7 @@ west #
 "westnet-eastnet" #2: sent Quick Mode request
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -160,7 +160,7 @@ west #
 "westnet-eastnet" #10: sent Quick Mode request
 "westnet-eastnet" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #10 and ISAKMP SA #9
 "westnet-eastnet" #10: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #9
 "westnet-eastnet" #10: IMPAIR: omitting HASH payload for send delete
 "westnet-eastnet" #10: ESP traffic information: in=84B out=84B
@@ -184,7 +184,7 @@ west #
 "westnet-eastnet" #12: sent Quick Mode request
 "westnet-eastnet" #12: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #12 and ISAKMP SA #11
 "westnet-eastnet" #12: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #11
 "westnet-eastnet" #12: IMPAIR: sending HASH payload with no data for send delete
 "westnet-eastnet" #12: ESP traffic information: in=84B out=84B
@@ -208,7 +208,7 @@ west #
 "westnet-eastnet" #14: sent Quick Mode request
 "westnet-eastnet" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #14 and ISAKMP SA #13
 "westnet-eastnet" #14: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #13
 "westnet-eastnet" #14: IMPAIR: setting HASH payload bytes to 00
 "westnet-eastnet" #14: ESP traffic information: in=84B out=84B
@@ -245,7 +245,7 @@ west #
 "westnet-eastnet" #16: sent Quick Mode request
 "westnet-eastnet" #16: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #16 and ISAKMP SA #15
 "westnet-eastnet" #16: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #15
 "westnet-eastnet" #16: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #15: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -267,7 +267,7 @@ west #
 "westnet-eastnet" #18: sent Quick Mode request
 "westnet-eastnet" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #18 and ISAKMP SA #17
 "westnet-eastnet" #18: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #17
 "westnet-eastnet" #18: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -289,7 +289,7 @@ west #
 "westnet-eastnet" #20: sent Quick Mode request
 "westnet-eastnet" #20: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #20 and ISAKMP SA #19
 "westnet-eastnet" #20: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #19
 "westnet-eastnet" #20: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #19: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -324,7 +324,7 @@ west #
 "westnet-eastnet" #22: sent Quick Mode request
 "westnet-eastnet" #22: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #22 and ISAKMP SA #21
 "westnet-eastnet" #22: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #21
 "westnet-eastnet" #22: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #21: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -346,7 +346,7 @@ west #
 "westnet-eastnet" #24: sent Quick Mode request
 "westnet-eastnet" #24: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #24 and ISAKMP SA #23
 "westnet-eastnet" #24: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #23
 "westnet-eastnet" #24: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #23: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -368,7 +368,7 @@ west #
 "westnet-eastnet" #26: sent Quick Mode request
 "westnet-eastnet" #26: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IPsec SA #26 and ISAKMP SA #25
 "westnet-eastnet" #26: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #25
 "westnet-eastnet" #26: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #25: deleting ISAKMP SA (MAIN_I4) and sending notification

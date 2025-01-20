@@ -62,7 +62,7 @@ road #
  # confirm resolv.conf is restored on down
 road #
  ipsec auto --down modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": terminating SAs using this connection
+"modecfg-road-eastnet-psk": deleting connection's IPsec SA #2 and ISAKMP SA #1
 "modecfg-road-eastnet-psk" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "modecfg-road-eastnet-psk" #2: down-client output: restoring resolvconf
 "modecfg-road-eastnet-psk" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
