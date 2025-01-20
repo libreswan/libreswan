@@ -663,6 +663,90 @@ static bool unfree_lease(struct addresspool *pool,
 	return stolen;
 }
 
+/*
+ * returns ERR_T when something fatal happens, else leaves NEW_LEASE
+ * NULL when lease can't be assigned.
+ */
+static err_t assign_requested_lease(struct connection *c,
+				    struct addresspool *pool,
+				    char **reusable_id,
+				    const ip_address *lease_address,
+				    struct lease **new_lease,
+				    const char **story,
+				    struct verbose verbose)
+{
+	address_buf lab;
+	vdbg("assigning the requested lease %s",
+	     str_address_sensitive(lease_address, &lab));
+	verbose.level++;
+	/*
+	 * Determine the requested LEASE_ADDRESS's offset into the
+	 * address pool.
+	 *
+	 * Earlier code has checked that the LEASE_ADDRESS is within
+	 * the address pool's range, hence pexpect.
+	 */
+	uintmax_t offset;
+	err_t err = address_to_range_offset(pool->r, (*lease_address), &offset);
+	if (err != NULL) {
+		llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
+		return "confused, address should be within addresspool";
+	}
+
+	vassert(pool->nr_leases <= pool->size);
+	vassert(offset < pool->size); /* by above */
+
+	if (offset < pool->nr_leases) {
+		/*
+		 * Is the lease available?
+		 *
+		 * IKEv1: must fail as Quick Mode has no way to send
+		 * back an alternative lease.
+		 *
+		 * IKEv2: should not fail, instead the proposed lease
+		 * should be ignored and a new one assigned.
+		 *
+		 * Later.
+		 */
+		struct lease *lease = &pool->leases[offset];
+		if (lease->assigned_to != COS_NOBODY) {
+			vdbg_lease(verbose, pool, lease, c, "owned by "PRI_CO,
+				   pri_co(lease->assigned_to));
+			return "lease address already in use";
+		}
+
+		/*
+		 * This returns true when the lease had a previous
+		 * owner and the story needs to be updated.
+		 */
+		(*story) = (unfree_lease(pool, reusable_id, lease, verbose)
+			    ? "request reclaimed"
+			    : "request available");
+		vassert((*reusable_id) == NULL); /* stolen */
+		(*new_lease) = lease;
+		return NULL;
+	}
+
+	/* grow the lease if necessary */
+	while (offset >= pool->nr_leases) {
+		grow_addresspool(pool, verbose);
+	}
+
+	vassert(offset < pool->nr_leases);
+	struct lease *lease = &pool->leases[offset];
+	if (!pexpect(lease->assigned_to == COS_NOBODY)) {
+		return "confused, just allocated lease in use";
+	}
+
+	/* fresh lease can't have previous owner */
+	vassert(unfree_lease(pool, reusable_id, lease, verbose) == false);
+
+	vassert(reusable_id == NULL); /* stolen */
+	(*new_lease) = lease;
+	(*story) = "request grown";
+	return NULL;
+}
+
 err_t assign_remote_lease(struct connection *c,
 			  const char *xauth_username,
 			  const struct ip_info *afi,
@@ -721,87 +805,14 @@ err_t assign_remote_lease(struct connection *c,
 
 	/*
 	 * If the peer's given a prefered address try to assign that.
-	 *
-	 * XXX: some of this is identical to code in
-	 * connection_lease().
 	 */
 	if (new_lease == NULL && is_set(lease_address)) {
-
-		/*
-		 * Determine where the lease should be in the lease
-		 * table.
-		 *
-		 * Earlier code checked address in range, hence
-		 * shouldn't fail!
-		 */
-		uintmax_t offset;
-		err_t err = address_to_range_offset(pool->r, (*lease_address), &offset);
-		if (err != NULL) {
-			llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
+		err_t e = assign_requested_lease(c, pool, &reusable_id, lease_address,
+						 &new_lease, &story, verbose);
+		if (e != NULL) {
 			pfreeany(reusable_id);
-			return "confused, address should be within addresspool";
+			return e;
 		}
-
-		vassert(pool->nr_leases <= pool->size);
-		vassert(offset < pool->size); /* by above */
-
-		if (offset < pool->nr_leases) {
-			/*
-			 * Is the lease available?
-			 *
-			 * IKEv1: must fail as Quick Mode has no way
-			 * to send back an alternative lease.
-			 *
-			 * IKEv2: should not fail, instead the
-			 * proposed lease should be ignored and a new
-			 * one assigned.
-			 *
-			 * Later.
-			 */
-			struct lease *lease = &pool->leases[offset];
-			if (lease->assigned_to != COS_NOBODY) {
-				vdbg_lease(verbose, pool, lease, NULL,
-					   "owned by "PRI_CO,
-					   pri_co(lease->assigned_to));
-				pfreeany(reusable_id);
-				return "lease address already in use";
-			}
-
-			/*
-			 * This returns true when the lease had a previous
-			 * owner and the story needs to be updated.
-			 */
-			if (unfree_lease(pool, &reusable_id, lease, verbose)) {
-				story = "request reclaimed";
-			} else {
-				story = "request available";
-			}
-			vassert(reusable_id == NULL); /* stolen */
-			new_lease = lease;
-
-		} else {
-
-			/* grow the lease if necessary */
-			while (offset >= pool->nr_leases) {
-				grow_addresspool(pool, verbose);
-			}
-
-			vassert(offset < pool->nr_leases);
-			struct lease *lease = &pool->leases[offset];
-			if (!pexpect(lease->assigned_to == COS_NOBODY)) {
-				pfreeany(reusable_id);
-				return "confused, just allocated lease in use";
-			}
-
-			/* fresh lease can't have previous owner */
-			vassert(unfree_lease(pool, &reusable_id,
-					     lease, verbose) == false);
-
-			vassert(reusable_id == NULL); /* stolen */
-			new_lease = lease;
-			story = "request grown";
-		}
-
 	}
 
 	/*
