@@ -37,7 +37,7 @@ terminating all connections with alias "west"
 "west-cuckoo": terminating SAs using this connection
 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo" #3: ESP traffic information: in=0B out=0B
-"west-cuckold": terminating SAs using this connection
+"west-cuckold": deleting connection's IPsec SA #2 and ISAKMP SA #1
 "west-cuckold" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-cuckold" #2: ESP traffic information: in=0B out=0B
 "west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
@@ -68,7 +68,7 @@ terminating all connections with alias "west"
 "west-cuckoo": terminating SAs using this connection
 "west-cuckoo" #6: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #4
 "west-cuckoo" #6: ESP traffic information: in=0B out=0B
-"west-cuckold": terminating SAs using this connection
+"west-cuckold": deleting connection's IPsec SA #5 and ISAKMP SA #4
 "west-cuckold" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #4
 "west-cuckold" #5: ESP traffic information: in=0B out=0B
 "west-cuckold" #4: deleting ISAKMP SA (MAIN_I4) and sending notification

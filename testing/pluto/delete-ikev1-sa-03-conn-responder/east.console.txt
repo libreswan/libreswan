@@ -13,7 +13,7 @@ east #
 initdone
 east #
  ipsec down west-east
-"west-east": terminating SAs using this connection
+"west-east": deleting connection's IPsec SA #2 and ISAKMP SA #1
 "west-east" #2: deleting IPsec SA (QUICK_R2) and sending notification using ISAKMP SA #1
 "west-east" #2: ESP traffic information: in=84B out=84B
 "west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification

@@ -56,7 +56,7 @@ north #
 two
 north #
  ipsec auto --down northnet-eastnet-nat
-"northnet-eastnet-nat": terminating SAs using this connection
+"northnet-eastnet-nat": deleting connection's IPsec SA #4 and ISAKMP SA #3
 "northnet-eastnet-nat" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #3
 "northnet-eastnet-nat" #4: ESP traffic information: in=0B out=0B
 "northnet-eastnet-nat" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
