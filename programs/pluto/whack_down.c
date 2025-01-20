@@ -161,9 +161,11 @@ static void down_ikev1_connection_state(struct connection *c,
 		return;
 
 	case CONNECTION_CHILDLESS_IKE:
-		ldbg(c->logger, "connection not shared - terminating IKE and IPsec SA");
-		(*ike) = NULL;
-		terminate_all_connection_states(c, HERE);
+		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO,
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*ike)->sa.st_serialno));
+
+		delete_ikev1_ike(c, ike, HERE);
 		return;
 
 	case CONNECTION_IKE_POST:
