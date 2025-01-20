@@ -4,6 +4,8 @@
 ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
 # delete real main CA so cannot validate
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+# confirm
+ipsec certutil -L
 
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254

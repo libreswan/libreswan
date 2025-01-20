@@ -19,6 +19,14 @@ east #
 east #
  ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 east #
+ # confirm
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west                                                         u,u,u
+east                                                         u,u,u
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #

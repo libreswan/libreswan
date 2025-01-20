@@ -14,6 +14,14 @@ west #
  ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainec/mainec.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
+ # confirm
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west                                                         u,u,u
+mainec                                                       u,u,u
+west #
  # confirm that the network is alive
 west #
  ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254

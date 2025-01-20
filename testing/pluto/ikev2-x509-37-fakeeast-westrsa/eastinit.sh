@@ -8,6 +8,8 @@ ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainca/east.p12
 # remove main CA - so real-west cannot be verified - rely on cert=west
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+# confirm
+ipsec certutil -L
 
 ipsec start
 ../../guestbin/wait-until-pluto-started

@@ -5,7 +5,18 @@ east #
 east #
  ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 east #
- # this leaves real east and real west certs. other end will use different fake west cert
+ # this leaves real east and real west certs. other end will use
+east #
+ # different fake west cert
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+west                                                         P,,  
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
 east #
  ipsec start
 Redirecting to: [initsystem]
