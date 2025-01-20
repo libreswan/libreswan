@@ -37,13 +37,10 @@
  * Is a connection in use by some state?
  */
 
-static bool shared_phase1_connection(struct ike_sa *ike)
+static bool shared_phase1_connection(struct connection *c,
+				     struct ike_sa *ike,
+				     struct child_sa *child)
 {
-	if (ike == NULL) {
-		/* can't share what doesn't exist? */
-		return false;
-	}
-
 	struct state_filter sf = {
 		.clonedfrom = ike->sa.st_serialno,
 		.search = {
@@ -53,15 +50,40 @@ static bool shared_phase1_connection(struct ike_sa *ike)
 		},
 	};
 	while (next_state(&sf)) {
-		struct state *st = sf.st;
-		if (st->st_connection != ike->sa.st_connection)
-			return true;
+		if (sf.st->st_connection != c) {
+			break;
+		}
 	}
 
-	return false;
+	if (sf.st == NULL) {
+		return false;
+	}
+
+	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+		if (child != NULL) {
+			jam_string(buf, "only deleting ");
+			jam_string(buf, c->config->ike_info->child_sa_name);
+			jam_string(buf, " ");
+			jam_so(buf, child->sa.st_serialno);
+			jam_string(buf, ", ");
+		}
+		jam_string(buf, c->config->ike_info->parent_sa_name);
+		jam_string(buf, " ");
+		jam_so(buf, ike->sa.st_serialno);
+		jam_string(buf, " is shared with ");
+		const char *sep = "";
+		do {
+			if (sf.st->st_connection != c) {
+				jam_string(buf, sep); sep = ", ";
+				jam_connection(buf, sf.st->st_connection);
+			}
+		} while (next_state(&sf));
+	}
+
+	return true;
 }
 
-static void down_ikev1_connection_state(struct connection *c UNUSED,
+static void down_ikev1_connection_state(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
@@ -78,15 +100,12 @@ static void down_ikev1_connection_state(struct connection *c UNUSED,
 		return;
 
 	case CONNECTION_IKE_CHILD:
-		if (shared_phase1_connection((*ike))) {
-			llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
-			     c->config->ike_info->parent_sa_name,
-			     c->config->ike_info->child_sa_name);
-			state_attach(&(*child)->sa, c->logger);
+		if (shared_phase1_connection(c, (*ike), (*child))) {
 			/*
 			 * IKE, above, may not be the best
 			 * ISAKMP SA for this child!
 			 */
+			state_attach(&(*child)->sa, c->logger);
 			struct ike_sa *isakmp =
 				established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
 			llog_n_maybe_send_v1_delete(isakmp, &(*child)->sa, HERE);
@@ -156,10 +175,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		return;
 
 	case CONNECTION_IKE_CHILD:
-		if (shared_phase1_connection((*ike))) {
-			llog(RC_LOG, c->logger, "%s is shared - only terminating %s",
-			     c->config->ike_info->parent_sa_name,
-			     c->config->ike_info->child_sa_name);
+		if (shared_phase1_connection(c, (*ike), (*child))) {
 			state_attach(&(*child)->sa, c->logger);
 			submit_v2_delete_exchange((*ike), (*child));
 		} else {
