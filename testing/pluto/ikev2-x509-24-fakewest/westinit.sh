@@ -1,11 +1,10 @@
-/testing/guestbin/swan-prep --x509
-# delete real west cert and real main CA
-ipsec certutil -D -n west
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-# import fake one
-ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainca/west.p12
-# remove (fake) CA
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+/testing/guestbin/swan-prep --nokeys
+
+ipsec certutil -A -t P,,, -n east -i /testing/x509/real/mainca/east.end.cert
+ipsec pk12util -W foobar -i /testing/x509/fake/mainca/west.end.p12
+# confirm
+ipsec certutil -L
+
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

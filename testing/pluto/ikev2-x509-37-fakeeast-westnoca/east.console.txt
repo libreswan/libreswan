@@ -1,23 +1,22 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- # import real west+mainca
+ # import real west certificate only, rely on cert=west
 east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
+ ipsec certutil -A -t P,, -n west -i /testing/x509/real/mainca/west.end.cert
+east #
+ # import fake east cert+key, again rely on cert=west
+east #
+ ipsec pk12util -W foobar -K '' -i /testing/x509/fake/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- # delete real main CA
+ # confirm
 east #
- ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-east #
- # import fake east cert and fake main CA
-east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainca/east.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-east #
- # remove main CA - so real-west cannot be verified - rely on cert=west
-east #
- ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west                                                         P,,  
+east                                                         u,u,u
 east #
  ipsec start
 Redirecting to: [initsystem]

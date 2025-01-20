@@ -1,18 +1,21 @@
 /testing/guestbin/swan-prep --eccert
 west #
- # import real west+mainca
+ # import real west+key (no CA)
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- # delete real main CA
+ # import the fake EC ca (could also use real EC CA?)
 west #
- ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+ ipsec certutil -A -t C,, -n mainec -i /testing/x509/fake/mainec/root.cert
 west #
- # so only CA is bogus
+ # confirm
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainec/mainec.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west                                                         u,u,u
+mainec                                                       C,,  
 west #
  # confirm that the network is alive
 west #
@@ -50,7 +53,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
+"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate C=CA,ST=Ontario,L=Toronto,O=Libreswan,OU=Test Department,CN=east.testing.libreswan.org,E=user-east@testing.libreswan.org invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state IKE_AUTH_I
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

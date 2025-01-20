@@ -1,6 +1,3 @@
-Basic pluto with IKEv2 and X.509 certs. 
-Both ends have each others certificate preloaded.
-Except here, west has a different cert with the exact same ID and parameters
-as the real west cert.
+IKEv2 and X.509 certs, WEST uses an identical looking but wrong cert
 
-The connection should fail
+Authentication should fail on EAST.
