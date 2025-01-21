@@ -56,7 +56,7 @@ west #
  # this should not be necessary
 west #
  ipsec down west-cuckold
-"west-cuckold": terminating SAs using this connection
+"west-cuckold": deleting connection's IKE SA #1
 "west-cuckold" #1: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #1: deleting IKE SA (established IKE SA)
 west #

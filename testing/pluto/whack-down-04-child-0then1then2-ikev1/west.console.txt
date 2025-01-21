@@ -59,22 +59,23 @@ west #
 #4: "west-cuckoo-2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec down west-cuckold
-"west-cuckold": deleting connection's ISAKMP SA #1
-"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+"west-cuckold": marking connection down, ISAKMP SA #1 is shared with "west-cuckoo-2", "west-cuckoo-1"
 west #
  ipsec down west-cuckoo-1
 "west-cuckoo-1": deleting connection's ISAKMP SA #3
-"west-cuckoo-1" #3: deleting IPsec SA (QUICK_I2) and NOT sending notification
+"west-cuckoo-1" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo-1" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckoo-2
 "west-cuckoo-2": deleting connection's ISAKMP SA #4
-"west-cuckoo-2" #4: deleting IPsec SA (QUICK_I2) and NOT sending notification
+"west-cuckoo-2" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo-2" #4: ESP traffic information: in=84B out=84B
 west #
  # should not be needed
 west #
  ipsec down west-cuckold
+"west-cuckold": deleting connection's ISAKMP SA #1
+"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #
