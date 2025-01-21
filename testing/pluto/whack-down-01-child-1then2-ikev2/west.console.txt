@@ -53,6 +53,13 @@ west #
 "west-cuckoo": terminating SAs using this connection
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
+ # this should not be necessary
+west #
+ ipsec down west-cuckold
+"west-cuckold": terminating SAs using this connection
+"west-cuckold" #1: sent INFORMATIONAL request to delete IKE SA
+"west-cuckold" #1: deleting IKE SA (established IKE SA)
+west #
  # non-zero counts confirm encrypted traffic flowing
 west #
  ipsec trafficstatus

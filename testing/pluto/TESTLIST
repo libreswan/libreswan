@@ -1431,11 +1431,15 @@ kvmplutotest	whack-up-02-config			good	github/1726
 
 kvmplutotest	whack-down-01-child-1then2-ikev1	good
 kvmplutotest	whack-down-01-child-1then2-ikev2	good
-kvmplutotest	whack-down-01-child-2then1-ikev1	good
-kvmplutotest	whack-down-01-child-2then1-ikev2	good
+kvmplutotest	whack-down-02-child-2then1-ikev1	good
+kvmplutotest	whack-down-02-child-2then1-ikev2	good
+kvmplutotest	whack-down-03-child-1then2then0-ikev1	good
+kvmplutotest	whack-down-03-child-1then2then0-ikev2	good
+kvmplutotest	whack-down-04-child-0then1then2-ikev1	wip	github/2010
+kvmplutotest	whack-down-04-child-0then1then2-ikev2	wip	github/2010
 
-kvmplutotest	whack-down-03-ikev1-quick-responder	good	github/1531
-kvmplutotest	whack-down-03-ikev1-quick-initiator	good	github/1531
+kvmplutotest	whack-down-10-ikev1-quick-responder	good	github/1531
+kvmplutotest	whack-down-10-ikev1-quick-initiator	good	github/1531
 
 kvmplutotest	whack-delete-01-child-1then2-ikev1	good
 kvmplutotest	whack-delete-01-child-1then2-ikev2	good

@@ -57,6 +57,12 @@ west #
 "west-cuckoo" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
+ # this should not be necessary
+west #
+ ipsec down west-cuckold
+"west-cuckold": deleting connection's ISAKMP SA #1
+"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
+west #
  # non-zero counts confirm encrypted traffic flowing
 west #
  ipsec trafficstatus

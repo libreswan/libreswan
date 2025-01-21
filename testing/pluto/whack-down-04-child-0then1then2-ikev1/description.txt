@@ -1,0 +1,17 @@
+an IKE only connection, that has 2 Child SAs from other connections
+
+- establish IKE, then 1 and 2
+  abuse revival to make the connection childless
+
+- down IKE
+  because there are children it should not be
+  deleted
+
+- down 1
+
+- down 2
+
+  because IKE is down with no children it should self destruct
+  (hint it currently doesn/t)
+
+- re-down IKE
