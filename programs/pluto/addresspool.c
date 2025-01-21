@@ -712,18 +712,26 @@ static err_t assign_requested_lease(struct connection *c,
 		if (lease->assigned_to != COS_NOBODY) {
 			vdbg_lease(verbose, pool, lease, c, "owned by "PRI_CO,
 				   pri_co(lease->assigned_to));
-			return "lease address already in use";
+			return "lease address is in use";
+		}
+
+		if (lease->reusable_name != NULL) {
+			vdbg_lease(verbose, pool, lease, c, "owned by "PRI_CO,
+				   pri_co(lease->assigned_to));
+			return "lease address is reserved";
 		}
 
 		/*
 		 * This returns true when the lease had a previous
 		 * owner and the story needs to be updated.
 		 */
-		(*story) = (unfree_lease(pool, reusable_id, lease, verbose)
-			    ? "request reclaimed"
-			    : "request available");
-		vassert((*reusable_id) == NULL); /* stolen */
+		if (vbad(unfree_lease(pool, reusable_id, lease, verbose))) {
+			return "confused, unreserved lease was stolen";
+		}
+
+		vassert((*reusable_id) == NULL); /* ownership transfered to lease */
 		(*new_lease) = lease;
+		(*story) = "request available";
 		return NULL;
 	}
 
@@ -739,9 +747,11 @@ static err_t assign_requested_lease(struct connection *c,
 	}
 
 	/* fresh lease can't have previous owner */
-	vassert(unfree_lease(pool, reusable_id, lease, verbose) == false);
+	if (vbad(unfree_lease(pool, reusable_id, lease, verbose))) {
+		return "confused, just allocated lease was stolen";
+	}
 
-	vassert(reusable_id == NULL); /* stolen */
+	vassert((*reusable_id) == NULL); /* ownership transfered to lease */
 	(*new_lease) = lease;
 	(*story) = "request grown";
 	return NULL;
