@@ -120,7 +120,6 @@ dirbase=""
 def reset_files():
     for dir in ['keys/', 'cacerts/', 'certs/', 'selfsigned/',
                 'pkcs12/',
-                'pkcs12/curveca',
                 'pkcs12/mainca',
                 'pkcs12/otherca',
                 'pkcs12/badca',

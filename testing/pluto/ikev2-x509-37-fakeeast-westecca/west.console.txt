@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep --eccert
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  # import real west+key (no CA)
 west #
