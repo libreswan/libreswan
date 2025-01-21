@@ -94,7 +94,6 @@ import shutil
 import subprocess
 import time
 from datetime import datetime, timedelta
-import pexpect
 from OpenSSL import crypto
 
 from cryptography import x509
@@ -115,7 +114,6 @@ ca_certs = {}
 end_certs = {}
 endrev_name = ""
 top_caname=""
-dirbase=""
 
 def reset_files():
     for dir in ['keys/', 'cacerts/', 'certs/', 'selfsigned/',
@@ -131,31 +129,17 @@ def reset_files():
         if os.path.isfile(file):
             os.remove(file)
 
-def run(command, events=None, logfile=None):
-    # logfile=sys.stdout.buffer
-    print("", command)
-    output, status = pexpect.run(command, withexitstatus=True, events=events,
-                                 logfile=logfile,
-                                 cwd=dirbase and dirbase or ".")
-    if status:
-        print("")
-        print(output)
-        print("")
-        throw
-
 def writeout_cert(filename, cert):
-    global dirbase
     blob = cert.public_bytes(serialization.Encoding.PEM)
-    with open(dirbase + filename, "wb") as f:
+    with open(filename, "wb") as f:
         f.write(blob)
 
 
 def writeout_privkey(filename, key):
-    global dirbase
     blob = key.private_bytes(serialization.Encoding.PEM,
                              serialization.PrivateFormat.TraditionalOpenSSL,
                              serialization.NoEncryption())
-    with open(dirbase + filename, "wb") as f:
+    with open(filename, "wb") as f:
         f.write(blob)
 
 
@@ -434,7 +418,7 @@ def writeout_pkcs12(path, name, cert, key, ca_cert):
     blob = pkcs12.serialize_key_and_certificates(name.encode('utf-8'),
                                                  key, cert, [ca_cert],
                                                  serialization.BestAvailableEncryption(b"foobar"))
-    with open(dirbase + path + name + ".p12", "wb") as f:
+    with open(path + name + ".p12", "wb") as f:
         f.write(blob)
 
 
@@ -618,7 +602,7 @@ def create_leading_zero_crl():
         if good:
             print(nl)
             print("found after %d signatures!"% days)
-            with open(dirbase + "crls/crl-leading-zero-byte.crl", "wb") as f:
+            with open("crls/crl-leading-zero-byte.crl", "wb") as f:
                 f.write(der)
             break
 
@@ -648,7 +632,7 @@ def create_crlsets():
     needupdate = crypto.CRL()
     needupdate.add_revoked(revoked)
     needupdate.add_revoked(chainrev)
-    with open(dirbase + "crls/needupdate.crl", "wb") as f:
+    with open("crls/needupdate.crl", "wb") as f:
         f.write(needupdate.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                                   crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                   type=crypto.FILETYPE_ASN1,
@@ -659,7 +643,7 @@ def create_crlsets():
     validcrl = crypto.CRL()
     validcrl.add_revoked(revoked)
     validcrl.add_revoked(chainrev)
-    with open(dirbase + "crls/cacrlvalid.crl", "wb") as f:
+    with open("crls/cacrlvalid.crl", "wb") as f:
         f.write(validcrl.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                                 crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                 type=crypto.FILETYPE_ASN1,
@@ -668,7 +652,7 @@ def create_crlsets():
     othercrl = crypto.CRL()
     othercrl.add_revoked(revoked)
     othercrl.add_revoked(chainrev)
-    with open(dirbase + "crls/othercacrl.crl", "wb") as f:
+    with open("crls/othercacrl.crl", "wb") as f:
         f.write(othercrl.export(crypto.X509.from_cryptography(ca_certs['otherca'][0]),
                                 crypto.PKey.from_cryptography_key(ca_certs['otherca'][1]),
                                 type=crypto.FILETYPE_ASN1,
@@ -676,7 +660,7 @@ def create_crlsets():
 
     notyet = crypto.CRL()
     notyet.add_revoked(future_revoked)
-    with open(dirbase + "crls/futurerevoke.crl", "wb") as f:
+    with open("crls/futurerevoke.crl", "wb") as f:
         f.write(notyet.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                               crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                               type=crypto.FILETYPE_ASN1,
@@ -748,7 +732,6 @@ def main():
     if outdir:
         os.chdir(outdir)
     global dates
-    global dirbase
     reset_files()
     dates = gen_gmtime_dates()
     print("format dates being used for this run:")
@@ -756,9 +739,7 @@ def main():
     for n, s in dates.items():
         print("%s : %s"% (n, s))
 
-    dirbase = ""
     run_dist_certs()
-
     create_nss_pw()
 
     print("finished!")
