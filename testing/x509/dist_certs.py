@@ -327,34 +327,6 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
     return cert.to_cryptography(), certkey
 
 
-def create_root_ca(CN, START, END,
-                   C='CA', ST='Ontario', L='Toronto',
-                   O='Libreswan', OU='Test Department',
-                   emailAddress='testing@libreswan.org',
-                   keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=2048),
-                   ty=crypto.TYPE_RSA, keybits=2048,
-                   sign_alg=hashes.SHA256):
-    """ Create a root CA - Returns the cert, key tuple
-    """
-    cakey = keypair()
-    careq = create_csr(cakey, CN=CN, C=C, ST=ST, L=L, O=O, OU=OU,
-                       emailAddress=emailAddress)
-
-    cacert = crypto.X509()
-    cacert.set_serial_number(0)
-    cacert.set_notBefore(START.encode('utf-8'))
-    cacert.set_notAfter(END.encode('utf-8'))
-    cacert.set_issuer(crypto.X509Req.from_cryptography(careq).get_subject())
-    cacert.set_subject(crypto.X509Req.from_cryptography(careq).get_subject())
-    cacert.set_pubkey(crypto.X509Req.from_cryptography(careq).get_pubkey())
-    cacert.set_version(2)
-
-    set_cert_extensions(cacert, cacert, isCA=True, isRoot=True, ocsp=True, ocspuri=True)
-    cacert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
-
-    return cacert.to_cryptography(), cakey
-
-
 def gmc(timestamp):
     return time.strftime("%Y%m%d%H%M%SZ",
                          time.gmtime(timestamp))
@@ -398,19 +370,18 @@ def store_cert_and_key(name, cert, key):
 
     end_certs[name] = cert, key
 
-
 def create_basic_pluto_cas(ca_names):
     """ Create the core root certs
     """
     print("creating CA certs")
     for name in ca_names:
-        print(" - creating %s"% name)
-        ca, key = create_root_ca(CN="Libreswan test CA for " + name,
-                                 START=dates['OK_NOW'],
-                                 END=dates['FUTURE_END'])
+        p12="real/" + name + "/root.p12"
+        print(" - loading %s" % (p12))
+        with open(p12, "rb") as f:
+            blob = f.read()
+            key, ca, chain = pkcs12.load_key_and_certificates(blob, b"foobar")
         writeout_cert_and_key("cacerts/", name, ca, key)
         store_cert_and_key(name, ca, key)
-
 
 def writeout_pkcs12(path, name, cert, key, ca_cert):
     """ Package and write out a .p12 file

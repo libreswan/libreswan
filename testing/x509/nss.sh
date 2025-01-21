@@ -199,7 +199,7 @@ generate_host_cert()
 
 for kind in ${KINDS} ; do
 
-    while read rootname ca key param ; do
+    while read rootname ca generate_ee key param ; do
 
 	certdir=${OUTDIR}/${kind}/${rootname}
 	mkdir -p ${certdir}
@@ -213,24 +213,25 @@ for kind in ${KINDS} ; do
 	    exit 1
 	fi
 
-	for host in nic east west road north rise set ; do
-	    serial=$((serial + 1))
-	    log=${certdir}/${host}.log
+	case $generate_ee in
+	    y )
+		for host in nic east west road north rise set ; do
+		    serial=$((serial + 1))
+		    log=${certdir}/${host}.log
+		    if ! generate_host_cert ${certdir} ${rootname} ${host} ${serial} ${key} ${param} > ${log} 2>&1 ; then
+			cat ${log}
+			exit 1
+		    fi
+		done
+		;;
+	esac
 
-	    if ! generate_host_cert ${certdir} ${rootname} ${host} ${serial} ${key} ${param} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
-
-	done
-
-	# BASE CA? KEY PARAM...
+	# BASE CA? GENERATE_EE KEY PARAM...
     done <<EOF
-mainca    y  rsa -Z SHA256
-mainec    y  ec  -Z SHA256 -q secp384r1
+mainca    y  y  rsa -Z SHA256
+mainec    y  y  ec  -Z SHA256 -q secp384r1
+badca     n  n  rsa -Z SHA256
+otherca   y  n  rsa -Z SHA256
 EOF
-
-# badca     n  rsa -Z SHA256
-# otherca   y  rsa -Z SHA256
 
 done
