@@ -66,6 +66,8 @@ static bool shared_phase1_connection(struct connection *c,
 			jam_string(buf, " ");
 			jam_so(buf, child->sa.st_serialno);
 			jam_string(buf, ", ");
+		} else {
+			jam_string(buf, "marking connection down, ");
 		}
 		jam_string(buf, c->config->ike_info->parent_sa_name);
 		jam_string(buf, " ");
@@ -162,6 +164,11 @@ static void down_ikev1_connection_state(struct connection *c,
 		return;
 
 	case CONNECTION_CHILDLESS_IKE:
+		if (shared_phase1_connection(c, (*ike), NULL)) {
+			/* nothing to do! */
+			return;
+		}
+
 		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO,
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno));
@@ -231,7 +238,14 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		return;
 
 	case CONNECTION_CHILDLESS_IKE:
-		llog(RC_LOG, c->logger, "terminating SAs using this connection");
+		if (shared_phase1_connection(c, (*ike), NULL)) {
+			/* nothing to do! */
+			return;
+		}
+
+		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO,
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*ike)->sa.st_serialno));
 		state_attach(&(*ike)->sa, c->logger);
 		submit_v2_delete_exchange((*ike), NULL);
 		return;
