@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --eccert
+/testing/guestbin/swan-prep --nokeys
 
 # import real west+key (no CA)
 ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
