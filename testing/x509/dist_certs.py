@@ -94,7 +94,6 @@ import shutil
 import subprocess
 import time
 from datetime import datetime, timedelta
-import pexpect
 from OpenSSL import crypto
 
 from cryptography import x509
@@ -130,18 +129,6 @@ def reset_files():
     for file in ['nss-pw']:
         if os.path.isfile(file):
             os.remove(file)
-
-def run(command, events=None, logfile=None):
-    # logfile=sys.stdout.buffer
-    print("", command)
-    output, status = pexpect.run(command, withexitstatus=True, events=events,
-                                 logfile=logfile,
-                                 cwd=dirbase and dirbase or ".")
-    if status:
-        print("")
-        print(output)
-        print("")
-        throw
 
 def writeout_cert(filename, cert):
     global dirbase
