@@ -404,8 +404,6 @@ def create_mainca_end_certs(mainca_end_certs):
         keysize = 3072
         if name == 'smallkey':
             keysize = 1024
-        if name == 'mediumkey':
-            keysize = 2048
         if name == 'key2032':
             keysize = 2032
         if name == 'key4096':
@@ -426,27 +424,14 @@ def create_mainca_end_certs(mainca_end_certs):
         else:
             ocsp_resp = False
 
-        if name == 'wrongdnorg':
-            org = "No Such Agency"
-        else:
-            org = "Libreswan"
+        org = "Libreswan"
 
-        if name == 'unwisechar':
-            common_name = 'unwisechar ~!@#$%^&*()-'\
-                          '_=+;:/?<>.testing.libreswan.org'
-        elif name == 'spaceincn':
-            common_name = 'space invaders.testing.libreswan.org'
-        elif name == 'cnofca':
-            common_name = 'Libreswan test CA for mainca'
-        elif 'other' in name:
+        if 'other' in name:
             common_name = name + '.other.libreswan.org'
         else:
             common_name = name + '.testing.libreswan.org'
 
-        if name == 'hashsha1':
-            sign_alg = hashes.SHA1
-        else:
-            sign_alg = hashes.SHA256
+        sign_alg = hashes.SHA256
 
         if " " in common_name:
             emailAddress = "root@testing.libreswan.org"
@@ -649,37 +634,27 @@ def run_dist_certs():
     basic_pluto_cas =  ('mainca', 'otherca', 'badca')
     # Add end certs here
     mainca_end_certs = ('nic','east','west', 'road', 'north', # standard certs
-                        'west-eku-clientAuth', 'east-eku-clientAuth', # should be enough to validate
-                        'west-eku-serverAuth', 'east-eku-serverAuth', # should be enough to validate
-                        'west-bcOmit', 'eastbcOmit', # Basic Constraints should not be needed
-                        'west-kuOmit', 'east-kuOmit', # Key Usage should not be needed
-                        'west-ekuOmit', 'east-ekuOmit', # Extended Key Usage should not be needed
-                        # openssl refuses to generate these
-                        # 'west-kuEmpty', 'east-kuEmpty', # Key Usage may be empty
-                        # 'west-ekuEmpty', 'east-ekuEmpty', # Extended Key Usage may be empty
+                        'west-kuOmit', # Key Usage should not be needed
+                        'west-eku-clientAuth', # should be enough to validate
+                        'west-eku-serverAuth', # should be enough to validate
+                        'west-bcOmit', # Basic Constraints should not be needed
+                        'west-ekuOmit', # Extended Key Usage should not be needed
                         'west-nosan', 'east-nosan', # No Subject Alt Names
-                        'west-sanCritical', 'east-sanCritical', # should work
-                        'west-bcCritical', 'east-bcCritical', # Basic Constraints critical flag should be ignored
-                        'west-kuCritical', 'east-kuCritical', # Key Usage critical flag should be ignored
-                        'west-ekuCritical', 'east-ekuCritical', # Extended Key Usage critical flag should be ignored ??
-                        # openssl refuses to generate these
-                        # 'west-kuBOGUS-bad', 'east-kuBOGUS-bad', # Should fail because it needs digitalSignature or nonRepudiation
-                        'west-ku-keyAgreement-digitalSignature','east-ku-keyAgreement-digitalSignature', # Should work
-                        'west-ku-keyAgreement-bad', 'east-ku-keyAgreement-bad', # Should fail without digitalSignature or nonRepudiation
-                        'west-ku-nonRepudiation', 'east-ku-nonRepudiation', # Should work
-                        'west-ekuBOGUS-bad', 'east-ekuBOGUS-bad', # Should fail because it needs a recognised EKU
-                        # openssl refuses to generate these
-                        # 'west-ku-nonRepudiation-kuBOGUS-bad', 'east-ku-nonRepudiation-kuBOGUS-bad', # Should fail
-                        # 'west-eku-emailProtection-ekuBOGUS', 'east-eku-emailProtection-ekuBOGUS', # Should work
-                        'west-eku-ipsecIKE', 'east-eku-ipsecIKE', # Should work
-                        'west-ekuCritical-eku-ipsecIKE', 'east-ekuCritical-eku-ipsecIKE', # Should still work
-                        'west-ekuCritical-eku-emailProtection', 'east-ekuCritical-eku-emailProtection', # Should still work
+                        'west-sanCritical', # should work
+                        'west-bcCritical', # Basic Constraints critical flag should be ignored
+                        'west-kuCritical', # Key Usage critical flag should be ignored
+                        'west-ekuCritical', # Extended Key Usage critical flag should be ignored ??
+                        'west-ku-keyAgreement-digitalSignature', # Should work
+                        'west-ku-nonRepudiation', # Should work
+                        'west-ekuBOGUS-bad', # Should fail because it needs a recognised EKU
+                        'west-eku-ipsecIKE', # Should work
+                        'west-ekuCritical-eku-ipsecIKE', # Should still work
+                        'west-ekuCritical-eku-emailProtection', # Should still work
                         'usage-server', 'usage-client', 'usage-both',
-                        'nic-noext', 'nic-nourl',
-                        'smallkey', 'mediumkey', 'key2032', 'key4096',
-                        'signedbyother','otherwest','othereast','wrongdnorg',
-                        'unwisechar','spaceincn','hashsha1',
-                        'cnofca','revoked', 'badwest', 'badeast', 'semiroad')
+                        'nic-nourl',
+                        'smallkey', 'key2032', 'key4096',
+                        'signedbyother','otherwest','othereast',
+                        'revoked', 'badwest', 'badeast', 'semiroad')
     # Add chain roots here
     chain_ca_roots =   ('east_chain', 'west_chain')
 
