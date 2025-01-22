@@ -25,14 +25,14 @@ east #
 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  ipsec auto --status | grep westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[E=user-east@testing.libreswan.org, CN=east.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA]...192.1.2.45[E=user-west@testing.libreswan.org, CN=west.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "westnet-eastnet-ikev2":   mycert=east; peercert=west; my_updown=ipsec _updown;
 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2":   sec_label:unset;
-"westnet-eastnet-ikev2":   CAs: 'E=testing@libreswan.org, CN=Libreswan test CA for mainca, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA'...'E=testing@libreswan.org, CN=Libreswan test CA for mainca, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA'
+"westnet-eastnet-ikev2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -41,7 +41,7 @@ east #
 "westnet-eastnet-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "westnet-eastnet-ikev2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-ikev2":   our idtype: ID_DER_ASN1_DN; our id=E=user-east@testing.libreswan.org, CN=east.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA; their idtype: ID_DER_ASN1_DN; their id=E=user-west@testing.libreswan.org, CN=west.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA
+"westnet-eastnet-ikev2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org
 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2":   routing: unrouted;

@@ -52,7 +52,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
-"ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSASSA-PSS with SHA2_512 and 'E=user-east@testing.libreswan.org, CN=east.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA'
+"ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSASSA-PSS with SHA2_512 and 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (IKE_AUTH_I) and sending notification
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ikev2-westnet-eastnet-x509-cr" #2: IMPAIR: revival: skip scheduling revival event
