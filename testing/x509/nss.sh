@@ -28,10 +28,14 @@ for kind in ${KINDS} ; do
 done
 
 :
-: Generate the basic certificates using NSS
+: Subject DN - NSS wants things local..global
 :
 
-SUBJECT='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department'
+SUBJECT="OU=Test Department, O=Libreswan,L=Toronto, ST=Ontario, C=CA"
+
+:
+: Generate the basic certificates using NSS
+:
 
 echo_2_basic_constraints()
 {
@@ -64,9 +68,10 @@ generate_root_cert()
     local ca=$1 ; shift
     local key=$1 ; shift
 
+    # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
-    subject="${subject}, CN=Libreswan test CA for ${rootname}"
-    subject="${subject}, E=testing@libreswan.org"
+    subject="CN=Libreswan test CA for ${rootname}, ${subject}"
+    subject="E=testing@libreswan.org, ${subject}"
 
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
@@ -120,9 +125,10 @@ generate_host_cert()
     local serial=$1 ; shift
     local key=$1 ; shift
 
+    # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
-    subject="${subject}, CN=${nickname}.testing.libreswan.org"
-    subject="${subject}, E=user-${nickname}@testing.libreswan.org"
+    subject="CN=${nickname}.testing.libreswan.org, ${subject}"
+    subject="E=user-${nickname}@testing.libreswan.org, ${subject}"
 
     local hash_alg=SHA256
     local ca=n
