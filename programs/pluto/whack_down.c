@@ -61,7 +61,7 @@ static bool shared_phase1_connection(struct connection *c,
 
 	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 		if (child != NULL) {
-			jam_string(buf, "only deleting ");
+			jam_string(buf, "deleting connection's ");
 			jam_string(buf, c->config->ike_info->child_sa_name);
 			jam_string(buf, " ");
 			jam_so(buf, child->sa.st_serialno);
