@@ -1,0 +1,13 @@
+connection with only established IKE SA, with two other connections
+
+- establish IKE only connection
+  abuse revival to cause this
+
+- establish connections 1 and 2
+  they use IKE
+
+- down 1, then 2
+
+- IKE should remain up
+
+- down IKE
