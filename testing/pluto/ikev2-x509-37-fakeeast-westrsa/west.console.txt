@@ -50,7 +50,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate C=CA,ST=Ontario,L=Toronto,O=Libreswan,OU=Test Department,CN=Libreswan test CA for mainca,E=testing@libreswan.org invalid: SEC_ERROR_BAD_SIGNATURE: Peer's certificate has an invalid signature.
+"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_BAD_SIGNATURE: Peer's certificate has an invalid signature.
 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state IKE_AUTH_I
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

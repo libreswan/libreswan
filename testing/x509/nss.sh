@@ -28,10 +28,14 @@ for kind in ${KINDS} ; do
 done
 
 :
-: Generate the basic certificates using NSS
+: Subject DN - NSS wants things local..global
 :
 
-SUBJECT='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department'
+SUBJECT="OU=Test Department, O=Libreswan,L=Toronto, ST=Ontario, C=CA"
+
+:
+: Generate the basic certificates using NSS
+:
 
 echo_2_basic_constraints()
 {
@@ -64,9 +68,10 @@ generate_root_cert()
     local ca=$1 ; shift
     local key=$1 ; shift
 
+    # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
-    subject="${subject}, CN=Libreswan test CA for ${rootname}"
-    subject="${subject}, E=testing@libreswan.org"
+    subject="CN=Libreswan test CA for ${rootname}, ${subject}"
+    subject="E=testing@libreswan.org, ${subject}"
 
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
@@ -120,9 +125,10 @@ generate_host_cert()
     local serial=$1 ; shift
     local key=$1 ; shift
 
+    # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
-    subject="${subject}, CN=${nickname}.testing.libreswan.org"
-    subject="${subject}, E=user-${nickname}@testing.libreswan.org"
+    subject="CN=${nickname}.testing.libreswan.org, ${subject}"
+    subject="E=user-${nickname}@testing.libreswan.org, ${subject}"
 
     local hash_alg=SHA256
     local ca=n
@@ -193,7 +199,7 @@ generate_host_cert()
 
 for kind in ${KINDS} ; do
 
-    while read rootname ca key param ; do
+    while read rootname ca generate_ee key param ; do
 
 	certdir=${OUTDIR}/${kind}/${rootname}
 	mkdir -p ${certdir}
@@ -207,24 +213,25 @@ for kind in ${KINDS} ; do
 	    exit 1
 	fi
 
-	for host in nic east west road north rise set ; do
-	    serial=$((serial + 1))
-	    log=${certdir}/${host}.log
+	case $generate_ee in
+	    y )
+		for host in nic east west road north rise set ; do
+		    serial=$((serial + 1))
+		    log=${certdir}/${host}.log
+		    if ! generate_host_cert ${certdir} ${rootname} ${host} ${serial} ${key} ${param} > ${log} 2>&1 ; then
+			cat ${log}
+			exit 1
+		    fi
+		done
+		;;
+	esac
 
-	    if ! generate_host_cert ${certdir} ${rootname} ${host} ${serial} ${key} ${param} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
-
-	done
-
-	# BASE CA? KEY PARAM...
+	# BASE CA? GENERATE_EE KEY PARAM...
     done <<EOF
-mainca    y  rsa -Z SHA256
-mainec    y  ec  -Z SHA256 -q secp384r1
+mainca    y  y  rsa -Z SHA256
+mainec    y  y  ec  -Z SHA256 -q secp384r1
+badca     n  n  rsa -Z SHA256
+otherca   y  n  rsa -Z SHA256
 EOF
-
-# badca     n  rsa -Z SHA256
-# otherca   y  rsa -Z SHA256
 
 done
