@@ -203,11 +203,18 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		if (shared_phase1_connection(c, (*ike), (*child))) {
 			state_attach(&(*child)->sa, c->logger);
 			submit_v2_delete_exchange((*ike), (*child));
-		} else {
-			llog(RC_LOG, c->logger, "terminating SAs using this connection");
-			state_attach(&(*ike)->sa, c->logger);
-			submit_v2_delete_exchange((*ike), NULL);
+			(*ike) = NULL; /* also handled IKE */
+			return;
 		}
+
+		/* remember, deleting the IKE SA deletes the child */
+		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO" (and %s "PRI_SO")",
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*ike)->sa.st_serialno),
+		     c->config->ike_info->child_sa_name,
+		     pri_so((*child)->sa.st_serialno));
+		state_attach(&(*ike)->sa, c->logger);
+		submit_v2_delete_exchange((*ike), NULL);
 		return;
 
 	case CONNECTION_CUCKOO_CHILD:
