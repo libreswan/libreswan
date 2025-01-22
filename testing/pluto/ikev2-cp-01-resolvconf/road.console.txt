@@ -50,7 +50,7 @@ road #
  # confirm resolv.conf is restored on down
 road #
  ipsec auto --down eastnet-any
-"eastnet-any"[1] 192.1.2.23: terminating SAs using this connection
+"eastnet-any"[1] 192.1.2.23: deleting connection's IKE SA #1 (and Child SA #2)
 "eastnet-any"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "eastnet-any"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B

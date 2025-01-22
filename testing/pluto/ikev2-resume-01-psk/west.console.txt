@@ -52,7 +52,7 @@ west #
 up
 west #
  ipsec down west-east
-"west-east": terminating SAs using this connection
+"west-east": deleting connection's IKE SA #3 (and Child SA #4)
 "west-east" #3: sent INFORMATIONAL request to delete IKE SA
 "west-east" #4: ESP traffic information: in=84B out=84B
 "west-east" #3: deleting IKE SA (established IKE SA)

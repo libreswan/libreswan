@@ -38,7 +38,7 @@ west #
 "ike=chacha20poly1305-sha2-dh19" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=chacha20poly1305-sha2-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=chacha20poly1305-sha2-dh19": terminating SAs using this connection
+"ike=chacha20poly1305-sha2-dh19": deleting connection's IKE SA #1 (and Child SA #2)
 "ike=chacha20poly1305-sha2-dh19" #1: sent INFORMATIONAL request to delete IKE SA
 "ike=chacha20poly1305-sha2-dh19" #2: ESP traffic information: in=84B out=84B
 "ike=chacha20poly1305-sha2-dh19" #1: deleting IKE SA (established IKE SA)
@@ -52,7 +52,7 @@ west #
 "ike=aes128-sha2-dh19" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha2-dh19" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-sha2-dh19": terminating SAs using this connection
+"ike=aes128-sha2-dh19": deleting connection's IKE SA #3 (and Child SA #4)
 "ike=aes128-sha2-dh19" #3: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha2-dh19" #4: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh19" #3: deleting IKE SA (established IKE SA)
@@ -66,7 +66,7 @@ west #
 "ike=aes128-sha2-dh20" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha2-dh20" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-sha2-dh20": terminating SAs using this connection
+"ike=aes128-sha2-dh20": deleting connection's IKE SA #5 (and Child SA #6)
 "ike=aes128-sha2-dh20" #5: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha2-dh20" #6: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh20" #5: deleting IKE SA (established IKE SA)
@@ -80,7 +80,7 @@ west #
 "ike=aes128-sha2-dh21" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha2-dh21" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-sha2-dh21": terminating SAs using this connection
+"ike=aes128-sha2-dh21": deleting connection's IKE SA #7 (and Child SA #8)
 "ike=aes128-sha2-dh21" #7: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha2-dh21" #8: ESP traffic information: in=84B out=84B
 "ike=aes128-sha2-dh21" #7: deleting IKE SA (established IKE SA)
@@ -94,7 +94,7 @@ west #
 "ike=aes128-sha1-dh19" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha1-dh19" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-sha1-dh19": terminating SAs using this connection
+"ike=aes128-sha1-dh19": deleting connection's IKE SA #9 (and Child SA #10)
 "ike=aes128-sha1-dh19" #9: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha1-dh19" #10: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh19" #9: deleting IKE SA (established IKE SA)
@@ -108,7 +108,7 @@ west #
 "ike=aes128-sha1-dh20" #11: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha1-dh20" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-sha1-dh20": terminating SAs using this connection
+"ike=aes128-sha1-dh20": deleting connection's IKE SA #11 (and Child SA #12)
 "ike=aes128-sha1-dh20" #11: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha1-dh20" #12: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh20" #11: deleting IKE SA (established IKE SA)
@@ -122,7 +122,7 @@ west #
 "ike=aes128-sha1-dh21" #13: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-sha1-dh21" #14: initiator established Child SA using #13; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-sha1-dh21": terminating SAs using this connection
+"ike=aes128-sha1-dh21": deleting connection's IKE SA #13 (and Child SA #14)
 "ike=aes128-sha1-dh21" #13: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-sha1-dh21" #14: ESP traffic information: in=84B out=84B
 "ike=aes128-sha1-dh21" #13: deleting IKE SA (established IKE SA)
@@ -136,7 +136,7 @@ west #
 "ike=aes_ctr128-sha1-dh21" #15: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes_ctr128-sha1-dh21" #16: initiator established Child SA using #15; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes_ctr128-sha1-dh21": terminating SAs using this connection
+"ike=aes_ctr128-sha1-dh21": deleting connection's IKE SA #15 (and Child SA #16)
 "ike=aes_ctr128-sha1-dh21" #15: sent INFORMATIONAL request to delete IKE SA
 "ike=aes_ctr128-sha1-dh21" #16: ESP traffic information: in=84B out=84B
 "ike=aes_ctr128-sha1-dh21" #15: deleting IKE SA (established IKE SA)
@@ -150,7 +150,7 @@ west #
 "ike=3des-sha2-modp2048" #17: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=3des-sha2-modp2048" #18: initiator established Child SA using #17; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=3des-sha2-modp2048": terminating SAs using this connection
+"ike=3des-sha2-modp2048": deleting connection's IKE SA #17 (and Child SA #18)
 "ike=3des-sha2-modp2048" #17: sent INFORMATIONAL request to delete IKE SA
 "ike=3des-sha2-modp2048" #18: ESP traffic information: in=84B out=84B
 "ike=3des-sha2-modp2048" #17: deleting IKE SA (established IKE SA)
@@ -164,7 +164,7 @@ west #
 "ike=aes128-aes_xcbc-modp2048" #19: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ike=aes128-aes_xcbc-modp2048" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 up
-"ike=aes128-aes_xcbc-modp2048": terminating SAs using this connection
+"ike=aes128-aes_xcbc-modp2048": deleting connection's IKE SA #19 (and Child SA #20)
 "ike=aes128-aes_xcbc-modp2048" #19: sent INFORMATIONAL request to delete IKE SA
 "ike=aes128-aes_xcbc-modp2048" #20: ESP traffic information: in=84B out=84B
 "ike=aes128-aes_xcbc-modp2048" #19: deleting IKE SA (established IKE SA)

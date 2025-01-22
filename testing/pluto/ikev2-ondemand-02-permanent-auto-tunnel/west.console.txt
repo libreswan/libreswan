@@ -71,7 +71,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
  ipsec auto --down west
-"west": terminating SAs using this connection
+"west": deleting connection's IKE SA #1 (and Child SA #2)
 "west" #1: sent INFORMATIONAL request to delete IKE SA
 "west" #2: ESP traffic information: in=84B out=84B
 "west" #1: deleting IKE SA (established IKE SA)

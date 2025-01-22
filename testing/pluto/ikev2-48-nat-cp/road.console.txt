@@ -54,7 +54,7 @@ road #
 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.0.2.1/32
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B

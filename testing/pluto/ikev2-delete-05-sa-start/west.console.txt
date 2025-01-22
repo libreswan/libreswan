@@ -33,7 +33,7 @@ west #
  # sending delete/notify should cause east to re-initiate
 west #
  ipsec auto --down westnet-eastnet-auto
-"westnet-eastnet-auto": terminating SAs using this connection
+"westnet-eastnet-auto": deleting connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-auto" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-auto" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-auto" #1: deleting IKE SA (established IKE SA)
