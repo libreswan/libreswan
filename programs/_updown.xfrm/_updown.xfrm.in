@@ -734,7 +734,7 @@ doroute() {
 		;;
 	    "::/0")
 		# in case of default route we use half routes
-		peer_interface=$(ip -${FAMILY} -o route list exact 2000::/3 | \
+		peer_interface=$(ip -${FAMILY} -o route list exact ::/1 | \
 		    sed "s/^.*dev \([^ ]*\) .*/\1/")
 		;;
 	    *)
@@ -788,7 +788,8 @@ doroute() {
 	"::/0")
 	    # need to provide route that eclipses default, without
 	    # replacing it.
-	    it="ip -${FAMILY} route ${cmd} 2000::/3 ${parms2}"
+	    it="ip -${FAMILY} route ${cmd} ::/1 ${parms2} && \
+	        ip -${FAMILY} route ${cmd} 8000::/1 ${parms2}"
 	    ;;
 	*)
 	    it="ip -${FAMILY} route ${cmd} ${parms} ${parms2}"

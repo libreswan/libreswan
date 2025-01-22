@@ -121,8 +121,9 @@ road #
  ../../guestbin/ip.sh -6 route
 2001:db8:0:3:1:: dev lo proto kernel metric 256 pref medium
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
-2000::/3 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
+::/1 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
+8000::/1 via fe80::1000:ff:fe32:64ba dev eth0 src 2001:db8:0:3:1:: metric 1024 pref medium
 default via fe80::1000:ff:fe32:64ba dev eth0
 road #
  ../../guestbin/ip.sh route get to 2001:db8:1:2::23
@@ -149,7 +150,7 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
   opening non-blocking netlink socket
   sent 48 byte netlink message
   reading into 32768 byte buffer
-  processing 1432 byte response
+  processing 1588 byte response
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=2001:db8:0:3:1::
@@ -164,18 +165,26 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
       using src=<unset-address> prefsrc=<unset-address> gateway=<unset-address> dst=2001:db8:1:3:: dev='eth0' priority=256 pref=0 table=254 +cacheinfo
     parsing route entry (RTA payloads)
       RTA_TABLE=254
-      RTA_DST=2000::
+      RTA_DST=::
       RTA_PREFSRC=2001:db8:0:3:1::
       RTA_PRIORITY=1024
       RTA_GATEWAY=fe80::1000:ff:fe32:64ba
       RTA_PREF=0
-      using src=<unset-address> prefsrc=2001:db8:0:3:1:: gateway=fe80::1000:ff:fe32:64ba dst=2000:: dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
+      using src=<unset-address> prefsrc=2001:db8:0:3:1:: gateway=fe80::1000:ff:fe32:64ba dst=:: dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_DST=fe80::
       RTA_PRIORITY=256
       RTA_PREF=0
       using src=<unset-address> prefsrc=<unset-address> gateway=<unset-address> dst=fe80:: dev='eth0' priority=256 pref=0 table=254 +cacheinfo
+    parsing route entry (RTA payloads)
+      RTA_TABLE=254
+      RTA_DST=8000::
+      RTA_PREFSRC=2001:db8:0:3:1::
+      RTA_PRIORITY=1024
+      RTA_GATEWAY=fe80::1000:ff:fe32:64ba
+      RTA_PREF=0
+      using src=<unset-address> prefsrc=2001:db8:0:3:1:: gateway=fe80::1000:ff:fe32:64ba dst=8000:: dev='eth0' priority=1024 pref=0 table=254 +cacheinfo
     parsing route entry (RTA payloads)
       RTA_TABLE=254
       RTA_PRIORITY=1024

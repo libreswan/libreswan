@@ -18,6 +18,8 @@ v5.2 (unreleased)
   - Set DSCP options only on the relevant direction SA [Paul]
 * BSD:
   - implement ipsec-interface= on FreeBSD & OpenBSD [Andrew]
+* updown:
+  - Use half-routes for IPv6 to cover whole address space #1994 [Tuomo]
 * whack/addconn:
   - fix "duplicated flag ctlsocket" regression in 5.0 #1840 [Andrew, Ilya Maximets #1840]
   - orders of magnitude speedup of 'ipsec add' w/ protoports= [Ilya Maximets #1987]
