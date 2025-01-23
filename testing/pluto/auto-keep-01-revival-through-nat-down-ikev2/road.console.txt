@@ -30,7 +30,7 @@ road #
 #2: "road-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
  ipsec auto --down road-eastnet-ikev2
-"road-eastnet-ikev2": terminating SAs using this connection
+"road-eastnet-ikev2": deleting connection's IKE SA #1 (and Child SA #2)
 "road-eastnet-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 "road-eastnet-ikev2" #1: deleting IKE SA (established IKE SA)

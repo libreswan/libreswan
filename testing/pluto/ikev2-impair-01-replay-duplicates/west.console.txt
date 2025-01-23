@@ -162,7 +162,7 @@ west #
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec auto --down  westnet-eastnet
-"westnet-eastnet": terminating SAs using this connection
+"westnet-eastnet": deleting connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)

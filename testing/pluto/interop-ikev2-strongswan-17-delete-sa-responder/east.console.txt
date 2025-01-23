@@ -13,7 +13,7 @@ east #
 initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
-"westnet-eastnet-ikev2": terminating SAs using this connection
+"westnet-eastnet-ikev2": deleting connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-ikev2" #1: deleting IKE SA (established IKE SA)

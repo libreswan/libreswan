@@ -72,7 +72,7 @@ west #
 "new-west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.2.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down new-west
-"new-west": terminating SAs using this connection
+"new-west": deleting connection's IKE SA #4 (and Child SA #5)
 "new-west" #4: sent INFORMATIONAL request to delete IKE SA
 "new-west" #5: ESP traffic information: in=0B out=0B
 "new-west" #4: deleting IKE SA (established IKE SA)
@@ -86,7 +86,7 @@ west #
 "hog-west" #7: initiator established Child SA using #6; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down hog-west
-"hog-west": terminating SAs using this connection
+"hog-west": deleting connection's IKE SA #6 (and Child SA #7)
 "hog-west" #6: sent INFORMATIONAL request to delete IKE SA
 "hog-west" #7: ESP traffic information: in=0B out=0B
 "hog-west" #6: deleting IKE SA (established IKE SA)

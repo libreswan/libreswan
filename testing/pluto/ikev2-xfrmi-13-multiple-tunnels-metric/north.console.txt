@@ -48,7 +48,7 @@ north #
 up
 north #
  ipsec auto --down north-east-gw
-"north-east-gw": terminating SAs using this connection
+"north-east-gw": deleting connection's IKE SA #1 (and Child SA #2)
 "north-east-gw" #1: sent INFORMATIONAL request to delete IKE SA
 "north-east-gw" #2: ESP traffic information: in=168B out=168B
 "north-east-gw" #1: deleting IKE SA (established IKE SA)

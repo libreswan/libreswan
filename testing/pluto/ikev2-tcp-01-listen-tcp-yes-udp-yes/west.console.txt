@@ -38,7 +38,7 @@ west #
 "tcp" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "tcp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
-"tcp": terminating SAs using this connection
+"tcp": deleting connection's IKE SA #1 (and Child SA #2)
 "tcp" #1: sent INFORMATIONAL request to delete IKE SA
 "tcp" #2: ESP traffic information: in=84B out=84B
 "tcp" #1: deleting IKE SA (established IKE SA)
@@ -51,7 +51,7 @@ west #
 "udp" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "udp" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
-"udp": terminating SAs using this connection
+"udp": deleting connection's IKE SA #3 (and Child SA #4)
 "udp" #3: sent INFORMATIONAL request to delete IKE SA
 "udp" #4: ESP traffic information: in=84B out=84B
 "udp" #3: deleting IKE SA (established IKE SA)
