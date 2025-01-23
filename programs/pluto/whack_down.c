@@ -243,10 +243,14 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		return;
 
 	case CONNECTION_ORPHAN_CHILD:
-		/* never happens! */
-		dbg("connection not shared - terminating IKE and IPsec SA");
-		*child = NULL;
-		terminate_all_connection_states(c, HERE);
+		llog(RC_LOG, c->logger,
+		     "initiating delete of connection's %s "PRI_SO" using %s "PRI_SO,
+		     c->config->ike_info->child_sa_name,
+		     pri_so((*child)->sa.st_serialno),
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*child)->sa.st_clonedfrom));
+		state_attach(&(*child)->sa, c->logger);
+		submit_v2_delete_exchange(ike_sa(&(*child)->sa, HERE), (*child));
 		return;
 
 	case CONNECTION_LURKING_CHILD:
