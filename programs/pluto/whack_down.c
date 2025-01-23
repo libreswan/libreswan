@@ -143,8 +143,8 @@ static void down_ikev1_connection_state(struct connection *c,
 		return;
 
 	case CONNECTION_ORPHAN_CHILD:
-		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO,
-		     c->config->ike_info->parent_sa_name,
+		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
+		     c->config->ike_info->child_sa_name,
 		     pri_so((*child)->sa.st_serialno));
 		delete_ikev1_child(c, child, HERE);
 		return;
