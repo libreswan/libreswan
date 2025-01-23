@@ -218,9 +218,28 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		return;
 
 	case CONNECTION_CUCKOO_CHILD:
-		dbg("connection not shared - terminating IKE and IPsec SA");
-		*child = NULL;
-		terminate_all_connection_states(c, HERE);
+		if (shared_phase1_connection(c, (*ike), (*child))) {
+			/* don't touch IKE */
+			state_attach(&(*child)->sa, c->logger);
+			submit_v2_delete_exchange(ike_sa(&(*child)->sa, HERE), (*child));
+			return;
+		}
+
+		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" and %s "PRI_SO" (%s has %s "PRI_SO")",
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*ike)->sa.st_serialno),
+		     c->config->ike_info->child_sa_name,
+		     pri_so((*child)->sa.st_serialno),
+		     c->config->ike_info->child_sa_name,
+		     c->config->ike_info->parent_sa_name,
+		     pri_so((*child)->sa.st_clonedfrom));
+
+		/* and zap this IKE SA */
+		state_attach(&(*ike)->sa, c->logger);
+		submit_v2_delete_exchange((*ike), NULL);
+		/* zap the other connection's child */
+		state_attach(&(*child)->sa, c->logger);
+		submit_v2_delete_exchange(ike_sa(&(*child)->sa, HERE), (*child));
 		return;
 
 	case CONNECTION_ORPHAN_CHILD:
