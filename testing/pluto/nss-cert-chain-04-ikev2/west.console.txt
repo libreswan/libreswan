@@ -8,6 +8,17 @@ west #
 west #
  ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "east_chain_2" -t "CT,,"
 west #
+ # check
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+mainca                                                       CT,, 
+nic                                                          P,,  
+west_chain_endcert                                           u,u,u
+west_chain_int_2                                             CT,, 
+west_chain_int_1                                             CT,, 
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #

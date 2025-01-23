@@ -4,6 +4,18 @@ east #
  ipsec start
 Redirecting to: [initsystem]
 east #
+ # check
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+Libreswan test CA for mainca - Libreswan                     CT,, 
+west                                                         P,,  
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert

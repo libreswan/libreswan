@@ -4,6 +4,9 @@ ipsec pk12util -i /testing/x509/pkcs12/east.p12 -W "foobar"
 #ipsec certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "west_chain_1" -t "CT,,"
 #ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -t "CT,,"
 ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t "CT,,"
+# check
+ipsec certutil -L
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ../../guestbin/ipsec-add.sh road-A road-chain-B

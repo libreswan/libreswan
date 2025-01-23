@@ -6,6 +6,17 @@ west #
 west #
  ipsec certutil -D -n east
 west #
+ # check
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+signedbyother                                                u,u,u
+Libreswan test CA for otherca - Libreswan                    CT,, 
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #

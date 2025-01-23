@@ -1323,19 +1323,20 @@ kvmplutotest	interop-ikev1-strongswan-06-kdf		good
 #################################################################
 # X.509 NSS tests
 #################################################################
-kvmplutotest	nss-cert-01			good
+kvmplutotest	nss-cert-01-ikev1		good
 kvmplutotest	nss-cert-01-ikev2		good
-kvmplutotest	nss-cert-02			good
 kvmplutotest	nss-cert-02-eku			good
 kvmplutotest	nss-cert-02-eku-combined	good
+kvmplutotest	nss-cert-02-ikev1		good
 kvmplutotest	nss-cert-02-ikev2		good
-kvmplutotest	nss-cert-03			good
+kvmplutotest	nss-cert-03-ikev1		good
 kvmplutotest	nss-cert-03-ikev2		good
-kvmplutotest	nss-cert-04			good
+kvmplutotest	nss-cert-04-ikev1		good
 kvmplutotest	nss-cert-04-ikev2		good
-kvmplutotest	nss-cert-05			good
+kvmplutotest	nss-cert-05-ikev1		good
 kvmplutotest	nss-cert-05-ikev2		good
-kvmplutotest	nss-cert-06			good
+kvmplutotest	nss-cert-06-ikev1		good
+kvmplutotest	nss-cert-06-ikev2		good
 kvmplutotest	nss-cert-11-ca-expiring-responder-perm-ikev2			wip	github/1006
 kvmplutotest	nss-cert-11-ca-expiring-responder-switch-ikev2			good
 kvmplutotest	nss-cert-11-ca-expiring-responder-switch-ikev2-overlapip	good

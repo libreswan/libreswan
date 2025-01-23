@@ -3,6 +3,9 @@
 #ipsec certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "west_chain_1" -t "CT,,"
 #ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -t "CT,,"
 ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t "CT,,"
+# check
+ipsec certutil -L
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add road-chain-B

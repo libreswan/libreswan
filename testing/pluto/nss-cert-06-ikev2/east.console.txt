@@ -5,23 +5,35 @@ east #
 east #
  ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t 'CT,,'
 east #
+ # check
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+Libreswan test CA for mainca - Libreswan                     CT,, 
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+otherca                                                      CT,, 
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert-correct
-"nss-cert-correct": added IKEv1 connection
+"nss-cert-correct": added IKEv2 connection
 east #
  ipsec auto --add nss-cert-wrong
-"nss-cert-wrong": added IKEv1 connection
+"nss-cert-wrong": added IKEv2 connection
 east #
  ipsec auto --status |grep nss-cert
 "nss-cert-correct": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any[@west.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "nss-cert-correct":   host: oriented; local: 192.1.2.23; remote: %any;
 "nss-cert-correct":   mycert=east; my_updown=ipsec _updown;
 "nss-cert-correct":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-"nss-cert-correct":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"nss-cert-correct":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-correct":   sec_label:unset;
 "nss-cert-correct":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
@@ -29,19 +41,20 @@ east #
 "nss-cert-correct":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-correct":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-correct":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"nss-cert-correct":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-correct":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-correct":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "nss-cert-correct":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert-correct":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "nss-cert-correct":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_FQDN; their id=@west.testing.libreswan.org
-"nss-cert-correct":   dpd: passive; delay:0s; timeout:0s
-"nss-cert-correct":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
+"nss-cert-correct":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"nss-cert-correct":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-correct":   routing: unrouted;
 "nss-cert-correct":   conn serial: $1;
 "nss-cert-wrong": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=user-signedbyother@testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "nss-cert-wrong":   host: oriented; local: 192.1.2.23; remote: %any;
 "nss-cert-wrong":   mycert=east; my_updown=ipsec _updown;
 "nss-cert-wrong":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-"nss-cert-wrong":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+"nss-cert-wrong":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-wrong":   sec_label:unset;
 "nss-cert-wrong":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
@@ -49,12 +62,13 @@ east #
 "nss-cert-wrong":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "nss-cert-wrong":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "nss-cert-wrong":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"nss-cert-wrong":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-wrong":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"nss-cert-wrong":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "nss-cert-wrong":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert-wrong":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "nss-cert-wrong":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=user-signedbyother@testing.libreswan.org
-"nss-cert-wrong":   dpd: passive; delay:0s; timeout:0s
-"nss-cert-wrong":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
+"nss-cert-wrong":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"nss-cert-wrong":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-wrong":   routing: unrouted;
 "nss-cert-wrong":   conn serial: $2;
 east #
