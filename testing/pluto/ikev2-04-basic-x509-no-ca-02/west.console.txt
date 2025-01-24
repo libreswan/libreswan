@@ -1,16 +1,17 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- # delete the CA, both ends hardcode both certificates
+ # only the end, both ends hardcode certs
 west #
- ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-west #
- # load a distraction CA
-west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/otherwest.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- ipsec certutil -M -n 'Libreswan test CA for otherca - Libreswan' -t 'CT,,'
+ ipsec certutil -A -n east -t P,, -i /testing/x509/real/mainca/east.end.cert
+west #
+ # load a distraction CA and Cert
+west #
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # check result
 west #
@@ -19,11 +20,8 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west                                                         u,u,u
 east                                                         P,,  
-road                                                         P,,  
-north                                                        P,,  
-nic                                                          P,,  
 otherwest                                                    u,u,u
-Libreswan test CA for otherca - Libreswan                    CT,, 
+otherca                                                      ,,   
 west #
  # confirm that the network is alive
 west #

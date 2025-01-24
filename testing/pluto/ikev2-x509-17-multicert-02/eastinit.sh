@@ -1,7 +1,7 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n west
-# add second identity/cert
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/othereast.p12
+/testing/guestbin/swan-prep --nokeys
+
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/othereast.all.p12
 ipsec checknss --settrusts
 # check
 ipsec certutil -L
