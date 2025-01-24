@@ -50,7 +50,8 @@ west #
 "west-cuckold" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckoo
-"west-cuckoo": terminating SAs using this connection
+"west-cuckoo": initiating delete of connection's Child SA #3 using IKE SA #1
+"west-cuckoo" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  # this should not be necessary
