@@ -1,6 +1,7 @@
 #!/bin/sh
 
-set -ex
+set -e
+exec 3>&1  # save 3
 
 if test $# -ne 1 ; then
     cat <<EOF 1>&2
@@ -18,14 +19,8 @@ PASSPHRASE=foobar
 : clean up
 :
 
-OUTDIR=$(realpath $1)
-mkdir -p ${OUTDIR}
-
-KINDS="real fake"
-
-for kind in ${KINDS} ; do
-    rm -rf ${OUTDIR}/${kind}/
-done
+OUTDIR=$1 ; shift
+rm -rf ${OUTDIR}/real ${OUTDIR}/fake
 
 :
 : Subject DN - NSS wants things local..global
@@ -60,13 +55,30 @@ echo_4_crl_constraints()
     echo n     # Is this a critical extension [y/N]?
 }
 
-generate_root_cert()
+serial()
 {
     local certdir=$1 ; shift
-    local rootname=$1 ; shift
-    local serial=$1 ; shift
-    local ca=$1 ; shift
-    local key=$1 ; shift
+    local serial
+    read serial < ${certdir}/root.serial
+    serial=$((serial + 1))
+    echo ${serial} > ${certdir}/root.serial
+    echo ${serial}
+}
+
+generate_root_cert()
+(
+    set -x
+
+    local certdir=$1 ; shift
+    echo generating root certificate: ${certdir} 1>&3
+
+    local rootname=$(basename ${certdir})
+
+    local ca ; read ca < ${certdir}/root.ca
+    local param ; read param < ${certdir}/root.param
+    local domain ; read domain < ${certdir}/root.domain
+
+    local serial=$(serial ${certdir})
 
     # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
@@ -75,7 +87,7 @@ generate_root_cert()
 
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
-    local cfg=${certdir}/${rootname}.cfg
+    local cfg=${certdir}/root}.cfg
     {
 	echo_2_basic_constraints ${ca}
 	echo_4_crl_constraints
@@ -96,7 +108,7 @@ generate_root_cert()
 	     --extKeyUsage serverAuth,clientAuth,codeSigning,ocspResponder \
 	     -t "CT,C,C" \
 	     -z ${NOISE_FILE} \
-	     -k ${key} "$@" \
+	     ${param} \
 	     -2 -4 < ${cfg}
 
     # root key + cert
@@ -115,40 +127,57 @@ generate_root_cert()
 	-n ${rootname} \
 	-a > ${certdir}/root.cert # PEM
 
-}
+)
 
-generate_host_cert()
-{
+generate_end_cert()
+(
+    set -x
+
     local certdir=$1 ; shift
-    local rootname=$1 ; shift
-    local nickname=$1 ; shift
-    local serial=$1 ; shift
-    local key=$1 ; shift
+    local cert=$1 ; shift
+    echo generating end certificate: ${certdir} ${cert} 1>&3
+
+    local rootname=$(basename ${certdir})
+
+    local param ; read param < ${certdir}/root.param
+    local domain ; read domain < ${certdir}/root.domain
+
+    local serial=$(serial ${certdir})
+    local cn=${cert}.${domain}		# common name
+    local email=user-${cert}@${domain}	# email
 
     # NSS wants subject to be local..global/root
-    local subject=${SUBJECT}
-    subject="CN=${nickname}.testing.libreswan.org, ${subject}"
-    subject="E=user-${nickname}@testing.libreswan.org, ${subject}"
-
+    local subject="E=${email}, CN=${cn}, ${SUBJECT}"
     local hash_alg=SHA256
     local ca=n
 
+    # build the SAN
+    local san=dns:${cn},email:${email}
+    if test "$#" -gt 0 ; then
+	san="${san},$@"
+    fi
+
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
-    local cfg=${certdir}/${nickname}.cfg
+    local cfg=${certdir}/${cert}.cfg
     {
 	echo_2_basic_constraints ${ca}
 	echo_4_crl_constraints
     } > ${cfg}
 
-    certutil -S -d ${certdir} \
+    certutil -S \
+	     -d ${certdir} \
 	     -s "${subject}" \
-	     -n "${host}" \
+	     -n "${cert}" \
 	     -z ${NOISE_FILE} \
+	     -w ${NOW_OFFSET_MONTHS} \
+	     -v ${NOW_VALID_MONTHS} \
 	     -c "${rootname}" \
-	     -t ",,," \
+	     -t "P,," \
 	     -m ${serial} \
-	     -k ${key} "$@" \
+	     -g 3072 \
+	     --extSAN ${san} \
+	     ${param} \
 	     --keyUsage nonRepudiation,digitalSignature,keyEncipherment \
 	     --extKeyUsage serverAuth \
 	     -2 -4 < ${cfg}
@@ -157,17 +186,17 @@ generate_host_cert()
 
     pk12util \
 	-d ${certdir} \
-	-n ${host} \
+	-n ${cert} \
 	-W ${PASSPHRASE} \
-	-o ${certdir}/${host}.all.p12
+	-o ${certdir}/${cert}.all.p12
 
     # end cert
 
     certutil \
 	-L \
 	-d ${certdir} \
-	-n ${host} \
-	-a > ${certdir}/${host}.end.cert # PEM
+	-n ${cert} \
+	-a > ${certdir}/${cert}.end.cert # PEM
 
     # private key
 
@@ -177,8 +206,8 @@ generate_host_cert()
 	-passout pass:${PASSPHRASE} \
 	-password pass:${PASSPHRASE} \
 	-nocerts \
-	-in  ${certdir}/${host}.all.p12 \
-	-out ${certdir}/${host}.end.key
+	-in  ${certdir}/${cert}.all.p12 \
+	-out ${certdir}/${cert}.end.key
 
     # private key + end cert
 
@@ -187,51 +216,93 @@ generate_host_cert()
 	-export \
 	-passin pass:${PASSPHRASE} \
 	-password pass:${PASSPHRASE} \
-	-in ${certdir}/${host}.end.cert \
-	-inkey ${certdir}/${host}.end.key \
-	-name ${host} \
-	-out ${certdir}/${host}.end.p12
+	-in ${certdir}/${cert}.end.cert \
+	-inkey ${certdir}/${cert}.end.key \
+	-name ${cert} \
+	-out ${certdir}/${cert}.end.p12
 
-}
+    # print the chain
 
+    certutil \
+	-O \
+	-d ${certdir} \
+	-n ${cert} \
+	1>&3
+
+)
+
+
+# generate ca directories
+
+while read base domain ca param ; do
+
+    echo creating cert directory: ${base} ${domain} ${ca} ${param} 1>&2
+
+    certdir=${OUTDIR}/${base}
+    mkdir -p ${certdir}
+    modutil -create -dbdir "${certdir}" < /dev/null
+
+    log=${certdir}/root.log
+
+    echo 0           > ${certdir}/root.serial
+
+    echo "${param}"  > ${certdir}/root.param
+    echo "${domain}" > ${certdir}/root.domain
+    echo "${ca}"     > ${certdir}/root.ca
+
+    # BASE DOMAIN CA? PARAM...
+done <<EOF
+fake/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
+fake/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
+real/badca     testing.libreswan.org   n  -k rsa -Z SHA256
+real/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
+real/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
+real/otherca   other.libreswan.org     y  -k rsa -Z SHA256
+EOF
 
 # generate root certificates
 
-for kind in ${KINDS} ; do
+for rootdir in ${OUTDIR}/real/* ${OUTDIR}/fake/* ; do
 
-    while read rootname ca generate_ee key param ; do
-
-	certdir=${OUTDIR}/${kind}/${rootname}
-	mkdir -p ${certdir}
-	modutil -create -dbdir "${certdir}" < /dev/null
-
-	serial=1 # from above
-	log=${certdir}/${rootname}.log
-
-	if ! generate_root_cert ${certdir} ${rootname} ${serial} ${ca} ${key} ${param} > ${log} 2>&1 ; then
-	    cat ${log}
-	    exit 1
-	fi
-
-	case $generate_ee in
-	    y )
-		for host in nic east west road north rise set ; do
-		    serial=$((serial + 1))
-		    log=${certdir}/${host}.log
-		    if ! generate_host_cert ${certdir} ${rootname} ${host} ${serial} ${key} ${param} > ${log} 2>&1 ; then
-			cat ${log}
-			exit 1
-		    fi
-		done
-		;;
-	esac
-
-	# BASE CA? GENERATE_EE KEY PARAM...
-    done <<EOF
-mainca    y  y  rsa -Z SHA256
-mainec    y  y  ec  -Z SHA256 -q secp384r1
-badca     n  n  rsa -Z SHA256
-otherca   y  n  rsa -Z SHA256
-EOF
+    log=${rootdir}/${root}/root.log
+    if ! generate_root_cert ${rootdir} > ${log} 2>&1 ; then
+	cat ${log}
+	exit 1
+    fi
 
 done
+
+# generate end certs where needed
+
+while read cert san ; do
+    for kind in real fake ; do
+	for root in mainca mainec ; do
+	    certdir=${OUTDIR}/${kind}/${root}
+	    log=${certdir}/${cert}.log
+	    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
+		cat ${log}
+		exit 1
+	    fi
+	done
+    done
+done <<EOF
+nic
+east	ip:192.1.2.23,ip:2001:db8:1:2::23,email:east@testing.libreswan.org
+west	ip:192.1.2.45,ip:2001:db8:1:2::45,email:east@testing.libreswan.org
+road
+north
+rise
+set
+EOF
+
+while read root cert san ; do
+    certdir=${OUTDIR}/real/${root}
+    log=${certdir}/${cert}.log
+    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
+	cat ${log}
+	exit 1
+    fi
+done <<EOF
+otherca otherwest
+otherca othereast
+EOF
