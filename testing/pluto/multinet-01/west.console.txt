@@ -146,10 +146,10 @@ initiating 4 connections
 "westnet-eastnet-subnets/2x1" #4: sent Quick Mode request
 "westnet-eastnet-subnets/1x1" #2: IMPAIR: job 7 helper 0 #2/#2 quick_inR1_outI2 (dh): helper is warped by 7 milliseconds
 "westnet-eastnet-subnets/1x2" #3: IMPAIR: job 8 helper 0 #3/#3 quick_inR1_outI2 (dh): helper is warped by 8 milliseconds
-"westnet-eastnet-subnets/1x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 "westnet-eastnet-subnets/2x2" #5: IMPAIR: job 9 helper 0 #5/#5 quick_inR1_outI2 (dh): helper is warped by 9 milliseconds
-"westnet-eastnet-subnets/1x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-subnets/1x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 "westnet-eastnet-subnets/2x1" #4: IMPAIR: job 10 helper 0 #4/#4 quick_inR1_outI2 (dh): helper is warped by 10 milliseconds
+"westnet-eastnet-subnets/1x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 "westnet-eastnet-subnets/2x2" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 "westnet-eastnet-subnets/2x1" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -163,13 +163,13 @@ west #
 west #
  ipsec auto --down westnet-eastnet-subnets || echo "return code failed - should be 0"
 terminating all connections with alias "westnet-eastnet-subnets"
-"westnet-eastnet-subnets/2x2": deleting connection's ISAKMP SA #5
+"westnet-eastnet-subnets/2x2": initiating delete of connection's IPsec SA #5
 "westnet-eastnet-subnets/2x2" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/2x2" #5: ESP traffic information: in=0B out=0B
-"westnet-eastnet-subnets/2x1": deleting connection's ISAKMP SA #4
+"westnet-eastnet-subnets/2x1": initiating delete of connection's IPsec SA #4
 "westnet-eastnet-subnets/2x1" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/2x1" #4: ESP traffic information: in=0B out=0B
-"westnet-eastnet-subnets/1x2": deleting connection's ISAKMP SA #3
+"westnet-eastnet-subnets/1x2": initiating delete of connection's IPsec SA #3
 "westnet-eastnet-subnets/1x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/1x2" #3: ESP traffic information: in=0B out=0B
 "westnet-eastnet-subnets/1x1": deleting connection's IPsec SA #2 and ISAKMP SA #1
