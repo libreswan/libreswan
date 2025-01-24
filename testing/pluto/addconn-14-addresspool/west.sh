@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
@@ -45,3 +45,18 @@ ipsec auto --add subnets-vs-addresspool
 
 ipsec auto --add narrowing=no-addresspool=yes
 ipsec auto --add narrowing=yes-addresspool=yes
+
+ipsec auto --add ipv4-range-starts-at-zero
+ipsec auto --add ipv4-cidr-starts-at-zero
+
+ipsec auto --add ipv6-range-starts-at-zero
+ipsec auto --add ipv6-cidr-starts-at-zero
+
+ipsec auto --add ipv4-range-overlap-slash-28
+ipsec auto --add ipv4-range-overlap-slash-24
+ipsec auto --add ipv6-range-overlap-slash-120
+ipsec auto --add ipv6-range-overlap-slash-124
+
+ipsec auto --add ipv6-range-overflow-slash-96
+ipsec auto --add ipv6-range-overflow-slash-95
+ipsec auto --add ipv6-range-overflow-slash-63
