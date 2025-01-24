@@ -572,8 +572,9 @@ static err_t grow_addresspool(struct addresspool *pool,
 {
 	/* try to grow the address pool */
 	if (pool->nr_leases >= pool->size) {
-		vdbg_pool(verbose, pool, NULL, "no free address and no space to grow");
-		return "no free address in addresspool"; /* address pool exhausted */
+		vdbg_pool(verbose, pool, NULL, "address pool exhausted: %u >= %u",
+			  pool->nr_leases, pool->size);
+		return "address pool exhausted";
 	}
 
 	unsigned old_nr_leases = pool->nr_leases;
