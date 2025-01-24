@@ -1,6 +1,7 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n east
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/otherwest.p12
+/testing/guestbin/swan-prep --nokeys
+
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.all.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
 # check
 ipsec certutil -L
 
