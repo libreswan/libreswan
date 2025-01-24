@@ -943,7 +943,7 @@ static diag_t find_addresspool(const ip_range pool_range, struct addresspool **p
 		if (range_overlaps_range(pool_range, h->r)) {
 			/* bad */
 			range_buf hbuf;
-			return diag("range INEXACTLY OVERLAPS existing address pool %s.",
+			return diag("range inexactly overlaps existing address pool %s",
 				    str_range(&h->r, &hbuf));
 		}
 	}
@@ -965,18 +965,30 @@ diag_t install_addresspool(const ip_range pool_range,
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);
 	if (pool_size == 0) {
+		/*
+		 * Minimum address pool size is 1, so can't happen
+		 * (unless caller fed us an invalid address pool).
+		 */
 		range_buf rb;
-		return diag("address pool %s is empty",
-			    str_range(&pool_range, &rb));
+		llog_pexpect(logger, HERE, "address pool %s is empty",
+			     str_range(&pool_range, &rb));
+		return diag("confused, address pool is empty");
 	}
 
 	if (pool_size >= UINT32_MAX) {
 		/*
+		 * POOL_SIZE is truncated to UINTMAX_MAX when there's
+		 * major overflow.  Hence, it's value isn't always
+		 * correct.
+		 *
 		 * uint32_t overflow, 2001:db8:0:3::/64 truncated to UINT32_MAX
 		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
 		 */
+		humber_buf psb;
 		pool_size = UINT32_MAX;
-		vdbg("WARNING addresspool size overflow truncated to %ju", pool_size);
+		llog(RC_LOG, logger, "warning: limiting the address pool %s to %s addresses",
+		     str_range(&pool_range, &rb),
+		     str_humber(pool_size, &psb));
 	}
 
 	/* can't start at 0 */
@@ -996,7 +1008,9 @@ diag_t install_addresspool(const ip_range pool_range,
 
 	const struct ip_info *afi = range_info(pool_range);
 	if (addresspool[afi->ip_index] != NULL) {
-		return diag("connection already has a %s address pool", afi->ip_name);
+		llog_pexpect(verbose.logger, HERE,
+			     "connection already has a %s address pool", afi->ip_name);
+		return diag("confused, connection has an address pool");
 	}
 
 	if (existing_pool != NULL) {
