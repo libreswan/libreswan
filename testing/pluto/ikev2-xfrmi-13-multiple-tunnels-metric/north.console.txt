@@ -41,7 +41,8 @@ north #
 up
 north #
  ipsec auto --down north-east-sn
-"north-east-sn": terminating SAs using this connection
+"north-east-sn": initiating delete of connection's Child SA #3 using IKE SA #1
+"north-east-sn" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "north-east-sn" #3: ESP traffic information: in=84B out=84B
 north #
  ../../guestbin/ping-once.sh --up -I 192.1.3.33 192.1.2.23

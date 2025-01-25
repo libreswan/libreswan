@@ -111,7 +111,7 @@ table inet ipsec-log {
 }
 west #
  ipsec auto --down west-east-nflog
-"west-east-nflog": deleting connection's ISAKMP SA #3
+"west-east-nflog": initiating delete of connection's IPsec SA #3
 "west-east-nflog" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-nflog" #1
 "west-east-nflog" #3: ESP traffic information: in=168B out=168B
 west #

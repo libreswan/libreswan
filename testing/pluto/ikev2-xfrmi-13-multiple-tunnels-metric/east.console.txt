@@ -33,7 +33,6 @@ east #
 32767:	from all lookup default
 east #
  ../../guestbin/ip.sh route show table 50
-192.1.3.33 via 192.1.2.254 dev eth1 metric 2049
 east #
  ../../guestbin/ip.sh route
 default via 192.1.2.254 dev eth1
@@ -41,7 +40,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
 192.0.21.0/24 dev eth0 proto kernel scope link src 192.0.21.254
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-192.1.3.33 dev ipsec1 scope link metric 2049
 east #
  ../../guestbin/ip.sh -d link show type xfrm
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
