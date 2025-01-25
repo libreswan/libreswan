@@ -1,5 +1,8 @@
 /testing/guestbin/swan-prep --x509 --signedbyother
 ipsec certutil -D -n east
+# check
+ipsec certutil -L
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair timeout_on_retransmit

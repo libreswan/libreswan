@@ -3,6 +3,19 @@ Preparing X.509 files
 west #
  ipsec certutil -D -n east
 west #
+ # start
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west                                                         u,u,u
+Libreswan test CA for mainca - Libreswan                     CT,, 
+signedbyother                                                u,u,u
+Libreswan test CA for otherca - Libreswan                    ,,   
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
