@@ -47,7 +47,7 @@ road #
 #2: "road-east-modecfg-yes", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.2.101/32
 road #
  ipsec down road-east-modecfg-yes
-"road-east-modecfg-yes": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"road-east-modecfg-yes": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "road-east-modecfg-yes" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "road-east-modecfg-yes" #2: ESP traffic information: in=84B out=84B XAUTHuser=xroad
 "road-east-modecfg-yes" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

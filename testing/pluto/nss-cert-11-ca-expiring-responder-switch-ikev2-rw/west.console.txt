@@ -52,7 +52,7 @@ west #
 "old-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down old-west
-"old-west": deleting connection's IKE SA #1 (and Child SA #2)
+"old-west": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "old-west" #1: sent INFORMATIONAL request to delete IKE SA
 "old-west" #2: ESP traffic information: in=0B out=0B
 "old-west" #1: deleting IKE SA (established IKE SA)
@@ -67,7 +67,7 @@ west #
 "new-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down new-west
-"new-west": deleting connection's IKE SA #3 (and Child SA #4)
+"new-west": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "new-west" #3: sent INFORMATIONAL request to delete IKE SA
 "new-west" #4: ESP traffic information: in=0B out=0B
 "new-west" #3: deleting IKE SA (established IKE SA)
@@ -82,7 +82,7 @@ west #
 "old-west" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down old-west
-"old-west": deleting connection's IKE SA #5 (and Child SA #6)
+"old-west": initiating delete of connection's IKE SA #5 (and Child SA #6)
 "old-west" #5: sent INFORMATIONAL request to delete IKE SA
 "old-west" #6: ESP traffic information: in=0B out=0B
 "old-west" #5: deleting IKE SA (established IKE SA)
@@ -97,7 +97,7 @@ west #
 "new-west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down new-west
-"new-west": deleting connection's IKE SA #7 (and Child SA #8)
+"new-west": initiating delete of connection's IKE SA #7 (and Child SA #8)
 "new-west" #7: sent INFORMATIONAL request to delete IKE SA
 "new-west" #8: ESP traffic information: in=0B out=0B
 "new-west" #7: deleting IKE SA (established IKE SA)

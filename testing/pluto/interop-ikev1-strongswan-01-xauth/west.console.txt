@@ -59,7 +59,7 @@ west #
  # confirm --down is processed properly too
 west #
  ipsec auto --down westnet-eastnet-ikev1
-"westnet-eastnet-ikev1": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"westnet-eastnet-ikev1": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet-ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
 "westnet-eastnet-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

@@ -36,7 +36,7 @@ west #
 "westnet-eastnet-esp-null-md5" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-esp-null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
 up
-"westnet-eastnet-esp-null-md5": deleting connection's IKE SA #1 (and Child SA #2)
+"westnet-eastnet-esp-null-md5": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-esp-null-md5" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-esp-null-md5" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-esp-null-md5" #1: deleting IKE SA (established IKE SA)
@@ -50,7 +50,7 @@ west #
 "westnet-eastnet-esp-null-sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-esp-null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 up
-"westnet-eastnet-esp-null-sha1": deleting connection's IKE SA #3 (and Child SA #4)
+"westnet-eastnet-esp-null-sha1": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "westnet-eastnet-esp-null-sha1" #3: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-esp-null-sha1" #4: ESP traffic information: in=84B out=84B
 "westnet-eastnet-esp-null-sha1" #3: deleting IKE SA (established IKE SA)

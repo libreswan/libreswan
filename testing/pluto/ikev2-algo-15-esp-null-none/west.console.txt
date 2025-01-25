@@ -51,7 +51,7 @@ west #
 "esp=null-none" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "esp=null-none" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
 up
-"esp=null-none": deleting connection's IKE SA #1 (and Child SA #2)
+"esp=null-none": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "esp=null-none" #1: sent INFORMATIONAL request to delete IKE SA
 "esp=null-none" #2: ESP traffic information: in=84B out=84B
 "esp=null-none" #1: deleting IKE SA (established IKE SA)
@@ -71,7 +71,7 @@ west #
 "esp=null-none" #3: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "esp=null-none" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
 up
-"esp=null-none": deleting connection's IKE SA #3 (and Child SA #4)
+"esp=null-none": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "esp=null-none" #3: sent INFORMATIONAL request to delete IKE SA
 "esp=null-none" #4: ESP traffic information: in=84B out=84B
 "esp=null-none" #3: deleting IKE SA (established IKE SA)

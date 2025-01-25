@@ -40,7 +40,7 @@ west #
 "ikev2-defaults" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ikev2-defaults" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
-"ikev2-defaults": deleting connection's IKE SA #1 (and Child SA #2)
+"ikev2-defaults": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "ikev2-defaults" #1: sent INFORMATIONAL request to delete IKE SA
 "ikev2-defaults" #2: ESP traffic information: in=84B out=84B
 "ikev2-defaults" #1: deleting IKE SA (established IKE SA)
@@ -56,7 +56,7 @@ west #
 "ikev2-ike=aes128-sha2" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ikev2-ike=aes128-sha2" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
-"ikev2-ike=aes128-sha2": deleting connection's IKE SA #3 (and Child SA #4)
+"ikev2-ike=aes128-sha2": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "ikev2-ike=aes128-sha2" #3: sent INFORMATIONAL request to delete IKE SA
 "ikev2-ike=aes128-sha2" #4: ESP traffic information: in=84B out=84B
 "ikev2-ike=aes128-sha2" #3: deleting IKE SA (established IKE SA)

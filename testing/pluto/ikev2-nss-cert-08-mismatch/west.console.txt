@@ -36,7 +36,7 @@ west #
 "nss-cert-correct" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --down nss-cert-correct
-"nss-cert-correct": deleting connection's IKE SA #1 (and Child SA #2)
+"nss-cert-correct": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "nss-cert-correct" #1: sent INFORMATIONAL request to delete IKE SA
 "nss-cert-correct" #2: ESP traffic information: in=0B out=0B
 "nss-cert-correct" #1: deleting IKE SA (established IKE SA)

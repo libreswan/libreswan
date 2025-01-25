@@ -69,7 +69,7 @@ west #
 "west-cuckoo-2" #4: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckold
-"west-cuckold": deleting connection's ISAKMP SA #1
+"west-cuckold": initiating delete of connection's ISAKMP SA #1
 "west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # non-zero counts confirm encrypted traffic flowing

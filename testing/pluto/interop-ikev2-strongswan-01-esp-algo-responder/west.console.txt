@@ -34,7 +34,7 @@ west #
 "esp=null-md5" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "esp=null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
 up
-"esp=null-md5": deleting connection's IKE SA #1 (and Child SA #2)
+"esp=null-md5": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "esp=null-md5" #1: sent INFORMATIONAL request to delete IKE SA
 "esp=null-md5" #2: ESP traffic information: in=84B out=84B
 "esp=null-md5" #1: deleting IKE SA (established IKE SA)
@@ -48,7 +48,7 @@ west #
 "esp=null-sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "esp=null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 up
-"esp=null-sha1": deleting connection's IKE SA #3 (and Child SA #4)
+"esp=null-sha1": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "esp=null-sha1" #3: sent INFORMATIONAL request to delete IKE SA
 "esp=null-sha1" #4: ESP traffic information: in=84B out=84B
 "esp=null-sha1" #3: deleting IKE SA (established IKE SA)
@@ -62,7 +62,7 @@ west #
 "esp=null_auth_aes_gmac-null" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "esp=null_auth_aes_gmac-null" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE DPD=passive}
 up
-"esp=null_auth_aes_gmac-null": deleting connection's IKE SA #5 (and Child SA #6)
+"esp=null_auth_aes_gmac-null": initiating delete of connection's IKE SA #5 (and Child SA #6)
 "esp=null_auth_aes_gmac-null" #5: sent INFORMATIONAL request to delete IKE SA
 "esp=null_auth_aes_gmac-null" #6: ESP traffic information: in=84B out=84B
 "esp=null_auth_aes_gmac-null" #5: deleting IKE SA (established IKE SA)
@@ -76,7 +76,7 @@ west #
 "esp=chacha20_poly1305-null" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "esp=chacha20_poly1305-null" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE DPD=passive}
 up
-"esp=chacha20_poly1305-null": deleting connection's IKE SA #7 (and Child SA #8)
+"esp=chacha20_poly1305-null": initiating delete of connection's IKE SA #7 (and Child SA #8)
 "esp=chacha20_poly1305-null" #7: sent INFORMATIONAL request to delete IKE SA
 "esp=chacha20_poly1305-null" #8: ESP traffic information: in=84B out=84B
 "esp=chacha20_poly1305-null" #7: deleting IKE SA (established IKE SA)

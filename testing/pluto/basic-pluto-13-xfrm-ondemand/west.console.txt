@@ -84,7 +84,7 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		proto esp reqid REQID mode tunnel
 west #
  ipsec down westnet-eastnet-route
-"westnet-eastnet-route": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"westnet-eastnet-route": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet-route" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-route" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-route" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

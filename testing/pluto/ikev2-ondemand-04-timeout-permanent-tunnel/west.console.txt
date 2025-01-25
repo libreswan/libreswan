@@ -105,7 +105,7 @@ west #
  # confirm shutdown/cleanup
 west #
  ipsec auto --down west
-"west": deleting connection's IKE SA #2 (and Child SA #3)
+"west": initiating delete of connection's IKE SA #2 (and Child SA #3)
 "west" #2: sent INFORMATIONAL request to delete IKE SA
 "west" #3: ESP traffic information: in=84B out=84B
 "west" #2: deleting IKE SA (established IKE SA)

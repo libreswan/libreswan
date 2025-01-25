@@ -32,7 +32,7 @@ west #
 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec down west-east
-"west-east": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"west-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-east" #2: ESP traffic information: in=84B out=84B
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

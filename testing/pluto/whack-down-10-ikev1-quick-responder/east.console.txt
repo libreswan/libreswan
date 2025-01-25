@@ -18,7 +18,7 @@ east #
 "west-to-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation transport mode
 east #
  ipsec down west-to-east
-"west-to-east": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"west-to-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "west-to-east" #2: deleting IPsec SA (QUICK_R1) and sending notification using ISAKMP SA #1
 ERROR: "west-to-east" #2: kernel: xfrm XFRM_MSG_DELPOLICY delete response for flow (out): No such file or directory (errno 2)
 ERROR: "west-to-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)

@@ -65,7 +65,7 @@ west #
 "west-cuckoo-2" #4: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckold
-"west-cuckold": deleting connection's IKE SA #1
+"west-cuckold": initiating delete of connection's IKE SA #1
 "west-cuckold" #1: sent INFORMATIONAL request to delete IKE SA
 "west-cuckold" #1: deleting IKE SA (established IKE SA)
 west #

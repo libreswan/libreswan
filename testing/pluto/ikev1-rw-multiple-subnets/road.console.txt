@@ -23,7 +23,7 @@ terminating all connections with alias "road"
 "road/0x2": initiating delete of connection's IPsec SA #3
 "road/0x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "road/0x1" #1
 "road/0x2" #3: ESP traffic information: in=84B out=84B
-"road/0x1": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"road/0x1": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "road/0x1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "road/0x1" #2: ESP traffic information: in=84B out=84B
 "road/0x1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
