@@ -54,7 +54,7 @@ west #
  # test delete
 west #
  ipsec down westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": deleting connection's IKE SA #1 (and Child SA #3)
+"westnet-eastnet-ipv4-psk-ikev2": initiating delete of connection's IKE SA #1 (and Child SA #3)
 "westnet-eastnet-ipv4-psk-ikev2" #2: AH traffic information: in=84B out=84B
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #3: AH traffic information: in=0B out=0B

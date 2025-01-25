@@ -92,7 +92,7 @@ north #
  # down before unroute; everything but trap cleared
 north #
  ipsec auto --down initiator
-"initiator": deleting connection's IKE SA #1 (and Child SA #2)
+"initiator": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "initiator" #1: sent INFORMATIONAL request to delete IKE SA
 "initiator" #2: ESP traffic information: in=84B out=84B
 "initiator" #1: deleting IKE SA (established IKE SA)

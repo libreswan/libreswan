@@ -86,7 +86,7 @@ west #
 up
 west #
  ipsec auto --down westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": deleting connection's IKE SA #1 (and Child SA #2)
+"westnet-eastnet-ikev2": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-ikev2" #1: sent INFORMATIONAL request to delete IKE SA
 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
 "westnet-eastnet-ikev2" #1: deleting IKE SA (established IKE SA)

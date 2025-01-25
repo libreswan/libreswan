@@ -31,7 +31,6 @@
 #include "ikev2_delete.h"
 #include "ikev1.h"			/* for established_isakmp_for_state() */
 #include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */
-#include "terminate.h"			/* for terminate_connection_states() */
 
 /*
  * Is a connection in use by some state?
@@ -61,7 +60,7 @@ static bool shared_phase1_connection(struct connection *c,
 
 	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 		if (child != NULL) {
-			jam_string(buf, "deleting connection's ");
+			jam_string(buf, "initiating delete of connection's ");
 			jam_string(buf, c->config->ike_info->child_sa_name);
 			jam_string(buf, " ");
 			jam_so(buf, child->sa.st_serialno);
@@ -133,7 +132,7 @@ static void down_ikev1_connection_state(struct connection *c,
 		}
 
 		/* log in the order that they will be deleted */
-		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO" and %s "PRI_SO,
+		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" and %s "PRI_SO,
 		     c->config->ike_info->child_sa_name,
 		     pri_so((*child)->sa.st_serialno),
 		     c->config->ike_info->parent_sa_name,
@@ -169,7 +168,7 @@ static void down_ikev1_connection_state(struct connection *c,
 			return;
 		}
 
-		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO,
+		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno));
 		delete_ikev1_ike(c, ike, HERE);
@@ -208,7 +207,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		}
 
 		/* remember, deleting the IKE SA deletes the child */
-		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO" (and %s "PRI_SO")",
+		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" (and %s "PRI_SO")",
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno),
 		     c->config->ike_info->child_sa_name,
@@ -273,7 +272,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 			return;
 		}
 
-		llog(RC_LOG, c->logger, "deleting connection's %s "PRI_SO,
+		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno));
 		state_attach(&(*ike)->sa, c->logger);

@@ -166,7 +166,7 @@ west #
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec auto --down  westnet-eastnet
-"westnet-eastnet": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"westnet-eastnet": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification

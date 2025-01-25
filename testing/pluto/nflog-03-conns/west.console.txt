@@ -94,7 +94,7 @@ west #
 up
 west #
  ipsec auto --down westnet-eastnet-nflog
-"westnet-eastnet-nflog": deleting connection's IPsec SA #2, ISAKMP SA #1 is shared with "west-east-nflog"
+"westnet-eastnet-nflog": initiating delete of connection's IPsec SA #2, ISAKMP SA #1 is shared with "west-east-nflog"
 "westnet-eastnet-nflog" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-nflog" #2: ESP traffic information: in=168B out=168B
 west #

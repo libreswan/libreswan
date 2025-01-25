@@ -45,7 +45,7 @@ west #
 "west" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --down west
-"west": deleting connection's IKE SA #1 (and Child SA #3)
+"west": initiating delete of connection's IKE SA #1 (and Child SA #3)
 "west" #1: sent INFORMATIONAL request to delete IKE SA
 "west" #3: ESP traffic information: in=0B out=0B
 "west" #1: deleting IKE SA (established IKE SA)

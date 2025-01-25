@@ -105,7 +105,7 @@ north #
  # confirm shutdown/cleanup
 north #
  ipsec auto --down north
-"north": deleting connection's IKE SA #2 (and Child SA #3)
+"north": initiating delete of connection's IKE SA #2 (and Child SA #3)
 "north" #2: sent INFORMATIONAL request to delete IKE SA
 "north" #3: ESP traffic information: in=84B out=84B
 "north" #2: deleting IKE SA (established IKE SA)

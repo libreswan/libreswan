@@ -87,7 +87,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 		proto esp reqid REQID mode transport
 west #
  ipsec auto --down ikev2-west-east
-"ikev2-west-east": deleting connection's IKE SA #1 (and Child SA #2)
+"ikev2-west-east": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "ikev2-west-east" #1: sent INFORMATIONAL request to delete IKE SA
 "ikev2-west-east" #2: ESP traffic information: in=64B out=64B
 "ikev2-west-east" #1: deleting IKE SA (established IKE SA)

@@ -23,7 +23,7 @@ west #
 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec --config $PWD/ipsec.conf down west
-"west": deleting connection's IKE SA #1 (and Child SA #2)
+"west": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "west" #1: sent INFORMATIONAL request to delete IKE SA
 "west" #2: ESP traffic information: in=0B out=0B
 "west" #1: deleting IKE SA (established IKE SA)
@@ -42,7 +42,7 @@ west #
 "west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec down --config $PWD/ipsec.conf west
-"west": deleting connection's IKE SA #3 (and Child SA #4)
+"west": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "west" #3: sent INFORMATIONAL request to delete IKE SA
 "west" #4: ESP traffic information: in=0B out=0B
 "west" #3: deleting IKE SA (established IKE SA)

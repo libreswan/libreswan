@@ -34,7 +34,7 @@ west #
 "ah=md5" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ah=md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_MD5_96 DPD=passive}
 up
-"ah=md5": deleting connection's IKE SA #1 (and Child SA #2)
+"ah=md5": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "ah=md5" #1: sent INFORMATIONAL request to delete IKE SA
 "ah=md5" #2: AH traffic information: in=84B out=84B
 "ah=md5" #1: deleting IKE SA (established IKE SA)
@@ -48,7 +48,7 @@ west #
 "ah=sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "ah=sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 up
-"ah=sha1": deleting connection's IKE SA #3 (and Child SA #4)
+"ah=sha1": initiating delete of connection's IKE SA #3 (and Child SA #4)
 "ah=sha1" #3: sent INFORMATIONAL request to delete IKE SA
 "ah=sha1" #4: AH traffic information: in=84B out=84B
 "ah=sha1" #3: deleting IKE SA (established IKE SA)

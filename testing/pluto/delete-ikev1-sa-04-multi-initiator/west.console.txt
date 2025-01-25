@@ -43,7 +43,7 @@ west #
 "west-east-c" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec down west-east
-"west-east": deleting connection's IPsec SA #2, ISAKMP SA #1 is shared with "west-east-c", "west-east-b"
+"west-east": initiating delete of connection's IPsec SA #2, ISAKMP SA #1 is shared with "west-east-c", "west-east-b"
 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "west-east" #2: ESP traffic information: in=0B out=0B
 west #

@@ -172,7 +172,7 @@ terminating all connections with alias "westnet-eastnet-subnets"
 "westnet-eastnet-subnets/1x2": initiating delete of connection's IPsec SA #3
 "westnet-eastnet-subnets/1x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/1x2" #3: ESP traffic information: in=0B out=0B
-"westnet-eastnet-subnets/1x1": deleting connection's IPsec SA #2 and ISAKMP SA #1
+"westnet-eastnet-subnets/1x1": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet-subnets/1x1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
 "westnet-eastnet-subnets/1x1" #2: ESP traffic information: in=0B out=0B
 "westnet-eastnet-subnets/1x1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
