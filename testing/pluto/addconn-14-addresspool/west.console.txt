@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -33,13 +33,13 @@ west #
 "6toXin4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with right=192.1.2.23
 west #
  ipsec auto --add 6toXin6
-"6toXin6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
+"6toXin6": added IKEv2 connection
 west #
  ipsec auto --add 4to4in4
 "4to4in4": added IKEv2 connection
 west #
  ipsec auto --add 4to4in6
-"4to4in6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
+"4to4in6": added IKEv2 connection
 west #
  ipsec auto --add 4to6in4
 "4to6in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
@@ -57,27 +57,33 @@ west #
 "6to6in4": added IKEv2 connection
 west #
  ipsec auto --add 6to6in6
-"6to6in6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
+"6to6in6": added IKEv2 connection
 west #
  ipsec auto --add 46to4in4
+"46to4in4": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "46to4in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 64to4in4
+"64to4in4": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "64to4in4": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 46to6in6
+"46to6in6": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "46to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 64to6in6
+"64to6in6": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "64to6in6": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 46to64in4
+"46to64in4": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "46to64in4": connection is using multiple addresspools
 "46to64in4": added IKEv2 connection
 west #
  ipsec auto --add 64to46in6
+"64to46in6": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "64to46in6": connection is using multiple addresspools
-"64to46in6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
+"64to46in6": added IKEv2 connection
 west #
  ipsec auto --add good-cat
 "good-cat": added IKEv2 connection
@@ -108,5 +114,41 @@ west #
 west #
  ipsec auto --add narrowing=yes-addresspool=yes
 "narrowing=yes-addresspool=yes": added IKEv2 connection
+west #
+ ipsec auto --add ipv4-range-starts-at-zero
+"ipv4-range-starts-at-zero": failed to add connection: leftaddresspool=0.0.0.0-0.0.0.254 invalid, address pool 0.0.0.0-0.0.0.254 starts at address zero
+west #
+ ipsec auto --add ipv4-cidr-starts-at-zero
+"ipv4-cidr-starts-at-zero": failed to add connection: leftaddresspool=0.0.0.0/24 invalid, address pool 0.0.0.0/24 starts at address zero
+west #
+ ipsec auto --add ipv6-range-starts-at-zero
+"ipv6-range-starts-at-zero": failed to add connection: leftaddresspool=::-::ffff invalid, address pool ::/112 starts at address zero
+west #
+ ipsec auto --add ipv6-cidr-starts-at-zero
+"ipv6-cidr-starts-at-zero": failed to add connection: leftaddresspool=::/120 invalid, address pool ::/120 starts at address zero
+west #
+ ipsec auto --add ipv4-range-overlap-slash-28
+"ipv4-range-overlap-slash-28": added IKEv2 connection
+west #
+ ipsec auto --add ipv4-range-overlap-slash-24
+"ipv4-range-overlap-slash-24": failed to add connection: leftaddresspool=1.2.3.0/24 invalid, range inexactly overlaps existing address pool 1.2.3.0/28
+west #
+ ipsec auto --add ipv6-range-overlap-slash-120
+"ipv6-range-overlap-slash-120": added IKEv2 connection
+west #
+ ipsec auto --add ipv6-range-overlap-slash-124
+"ipv6-range-overlap-slash-124": failed to add connection: leftaddresspool=1::/124 invalid, range inexactly overlaps existing address pool 1::/120
+west #
+ ipsec auto --add ipv6-range-overflow-slash-96
+"ipv6-range-overflow-slash-96": warning: limiting the address pool 2::/96 to 3Gi addresses
+"ipv6-range-overflow-slash-96": added IKEv2 connection
+west #
+ ipsec auto --add ipv6-range-overflow-slash-95
+"ipv6-range-overflow-slash-95": warning: limiting the address pool 3::/95 to 3Gi addresses
+"ipv6-range-overflow-slash-95": added IKEv2 connection
+west #
+ ipsec auto --add ipv6-range-overflow-slash-63
+"ipv6-range-overflow-slash-63": warning: limiting the address pool 4::/63 to 3Gi addresses
+"ipv6-range-overflow-slash-63": added IKEv2 connection
 west #
  
