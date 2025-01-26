@@ -1,35 +1,40 @@
-/testing/guestbin/swan-prep --x509 --signedbyother
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -D -n east
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- # start
+ ipsec certutil -M -n mainca -t CT,,
+west #
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -M -n otherca -t CT,,
+west #
+ # check
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west                                                         u,u,u
-Libreswan test CA for mainca - Libreswan                     CT,, 
-signedbyother                                                u,u,u
-Libreswan test CA for otherca - Libreswan                    ,,   
-road                                                         P,,  
-north                                                        P,,  
-nic                                                          P,,  
+mainca                                                       CT,, 
+otherwest                                                    u,u,u
+otherca                                                      CT,, 
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --impair suppress_retransmits
+ ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add nss-cert
 "nss-cert": added IKEv2 connection
 west #
  ipsec auto --status |grep nss-cert
-"nss-cert": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.other.libreswan.org, E=user-signedbyother@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
+"nss-cert": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=otherwest.other.libreswan.org, E=user-otherwest@other.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"nss-cert":   mycert=signedbyother; my_updown=ipsec _updown;
+"nss-cert":   mycert=otherwest; my_updown=ipsec _updown;
 "nss-cert":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 "nss-cert":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -43,7 +48,7 @@ west #
 "nss-cert":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "nss-cert":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.other.libreswan.org, E=user-signedbyother@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=otherwest.other.libreswan.org, E=user-otherwest@other.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "nss-cert":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "nss-cert":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert":   routing: unrouted;

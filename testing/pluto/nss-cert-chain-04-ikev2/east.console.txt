@@ -1,16 +1,13 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- ipsec pk12util -i /testing/x509/pkcs12/east.p12 -W "foobar"
-pk12util: File Open failed: /testing/x509/pkcs12/east.p12: PR_FILE_NOT_FOUND_ERROR: File not found
-east #
  # east MUST NOT have intermediate ceritificates available - they are changing target like end target
 east #
  #ipsec certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "west_chain_1" -t "CT,,"
 east #
  #ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -t "CT,,"
 east #
- ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t "CT,,"
+ ipsec certutil -A  -n "otherca" -t "CT,," -i /testing/x509/real/otherca/root.cert
 east #
  # check
 east #
@@ -30,11 +27,13 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ../../guestbin/ipsec-add.sh road-A road-chain-B
-"road-A": added IKEv2 connection
+ ipsec auto --add road-chain-B
 "road-chain-B": added IKEv2 connection
 east #
- ipsec status | sed -n -e '/road/ { s/conn serial: [^;]*;/conn serial: .../; p; }'
+ ipsec auto --add road-A
+"road-A": added IKEv2 connection
+east #
+ ipsec auto --status |grep road
 "road-A": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "road-A":   host: oriented; local: 192.1.2.23; remote: %any;
 "road-A":   mycert=east; my_updown=ipsec _updown;
@@ -55,7 +54,7 @@ east #
 "road-A":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-A":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-A":   routing: unrouted;
-"road-A":   conn serial: ...
+"road-A":   conn serial: $2;
 "road-chain-B": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
 "road-chain-B":   host: oriented; local: 192.1.2.23; remote: %any;
 "road-chain-B":   mycert=east; my_updown=ipsec _updown;
@@ -76,7 +75,7 @@ east #
 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-chain-B":   routing: unrouted;
-"road-chain-B":   conn serial: ...
+"road-chain-B":   conn serial: $1;
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
@@ -93,6 +92,5 @@ east #
 initdone
 east #
  hostname | grep east > /dev/null && grep "switched to" /tmp/pluto.log
-"road-A"[1] 192.1.2.45 #1: switched to "road-chain-B"[1] 192.1.2.45
 east #
  

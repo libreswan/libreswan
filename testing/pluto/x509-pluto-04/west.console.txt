@@ -1,21 +1,21 @@
-/testing/guestbin/swan-prep --x509 --x509name ../otherca/signedbyother
-Preparing X.509 files
-command 'PATH/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d -t 'CT,,'' failed with status 255: certutil: could not find certificate named "Libreswan test CA for mainca - Libreswan": SEC_ERROR_...
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -M -n 'Libreswan test CA for otherca - Libreswan' -t 'CT,,'
+ ipsec certutil -A -n east -t ,, -i /testing/x509/real/mainca/east.all.cert
+certutil:  unable to open "/testing/x509/real/mainca/east.all.cert" for reading (-5950, 2).
 west #
- ipsec certutil -D -n east
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -M -n otherca -t 'CT,,'
 west #
  # check
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-signedbyother                                                u,u,u
-Libreswan test CA for otherca - Libreswan                    CT,, 
-road                                                         P,,  
-north                                                        P,,  
-nic                                                          P,,  
+otherwest                                                    u,u,u
+otherca                                                      CT,, 
 west #
  ipsec start
 Redirecting to: [initsystem]

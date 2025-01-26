@@ -1,8 +1,10 @@
-/testing/guestbin/swan-prep --x509 --x509name north
-# delete the CA, both ends hardcode both certificates
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
-# add a random cert and CA, unrelated to the actual test
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/otherwest.p12
+/testing/guestbin/swan-prep --nokeys
+
+ipsec certutil -A -n east -t P,, -i /testing/x509/real/mainca/east.end.cert
+# WEST will send NORTHs cert
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/north.end.p12
+# I guess this is a distraction?
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
 # check
 ipsec certutil -L
 

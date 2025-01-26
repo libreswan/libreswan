@@ -1,6 +1,8 @@
-/testing/guestbin/swan-prep --x509
-# remove west's cert so it must come via IKE
-ipsec certutil -D -n west
+/testing/guestbin/swan-prep --nokeys
+
+# east and a root cert
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
+ipsec certutil -M -n mainca -t 'CT,,'
 # check
 ipsec certutil -L
 

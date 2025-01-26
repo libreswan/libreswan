@@ -689,7 +689,7 @@ kvmplutotest 	newoe-27-replace-sa-auth-authnull	good
 kvmplutotest 	newoe-27-replace-sa-authnull-authnull	good
 
 kvmplutotest 	certoe-01-whack				good
-kvmplutotest 	certoe-02-whack-badca			good
+kvmplutotest 	certoe-02-whack-otherca			good
 kvmplutotest 	certoe-03-cop-whack			good
 kvmplutotest 	certoe-03-poc-whack			good
 kvmplutotest	certoe-04-poc-packet			good
