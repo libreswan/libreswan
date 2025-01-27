@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ../../guestbin/block-non-ipsec.sh
+road #
+ ipsec add ikev1-road-east
+"ikev1-road-east": added IKEv1 connection
+road #
+ echo initdone
+initdone
+road #
+ ipsec up ikev1-road-east
+"ikev1-road-east" #1: initiating IKEv1 Main Mode connection
+"ikev1-road-east" #1: sent Main Mode request
+"ikev1-road-east" #1: sent Main Mode I2
+"ikev1-road-east" #1: sent Main Mode I3
+"ikev1-road-east" #1: Peer ID is ID_FQDN: '@east'
+"ikev1-road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"ikev1-road-east" #1: modecfg: Sending IP request (MODECFG_I1)
+"ikev1-road-east" #1: Received IPv4 address: 192.0.2.102/32
+"ikev1-road-east" #1: Received DNS server 1.2.3.4
+"ikev1-road-east" #1: Received DNS server 5.6.7.8
+"ikev1-road-east" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
+"ikev1-road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"ikev1-road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"ikev1-road-east" #2: sent Quick Mode request
+"ikev1-road-east" #2: up-client output: updating resolvconf
+"ikev1-road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+road #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+#2: "ikev1-road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.0.2.102/32
+road #
+ ipsec whack --trafficstatus
+#2: "ikev1-road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.0.2.102/32
+road #
+ 

@@ -1169,6 +1169,8 @@ kvmplutotest	addresspool-6in4-ikev2				good
 kvmplutotest	addresspool-6in6-ikev2				good
 kvmplutotest	addresspool-6in6-defaultroute-ikev2		good
 
+kvmplutotest	addresspool-4in4-shared-ikev1-ikev2		good
+
 kvmplutotest	addresspool-4in4-static-static-overlap-xauth-ikev1	good
 kvmplutotest	addresspool-4in4-global-static-xauth-ikev1		good	github/509
 
