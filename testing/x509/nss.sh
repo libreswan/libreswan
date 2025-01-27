@@ -274,6 +274,12 @@ done
 
 # generate end certs where needed
 
+east_ipv4=192.1.2.23
+east_ipv6=2001:db8:1:2::23
+
+west_ipv4=192.1.2.45
+west_ipv6=2001:db8:1:2::45
+
 while read cert san ; do
     for kind in real fake ; do
 	for root in mainca mainec ; do
@@ -287,22 +293,27 @@ while read cert san ; do
     done
 done <<EOF
 nic
-east	ip:192.1.2.23,ip:2001:db8:1:2::23,email:east@testing.libreswan.org
-west	ip:192.1.2.45,ip:2001:db8:1:2::45,email:east@testing.libreswan.org
+east	ip:${east_ipv4},ip:${east_ipv6}
+west	ip:${west_ipv4},ip:${west_ipv6}
 road
 north
 rise
 set
 EOF
 
-while read root cert san ; do
-    certdir=${OUTDIR}/real/${root}
-    log=${certdir}/${cert}.log
-    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
-	cat ${log}
-	exit 1
-    fi
+while read cert san ; do
+    for kind in real ; do
+	for root in otherca ; do
+	    certdir=${OUTDIR}/${kind}/${root}
+	    log=${certdir}/${cert}.log
+	    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
+		cat ${log}
+		exit 1
+	    fi
+	done
+    done
 done <<EOF
-otherca otherwest
-otherca othereast
+otherwest  ip:${east_ipv4},ip:${east_ipv6}
+othereast  ip:${west_ipv4},ip:${west_ipv6}
 EOF
+
