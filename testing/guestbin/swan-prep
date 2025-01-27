@@ -244,8 +244,6 @@ parser.add_argument('--x509name', '-X', action='store', default="",
                     help='create X509 NSS file by importing test certs')
 parser.add_argument('--revoked', '-r', action='store_true',
                     help='import the revoked certificate into the NSS database')
-parser.add_argument('--signedbyother', '-o', action='store_true',
-                    help='import the signedbyother certificate into the NSS database')
 parser.add_argument('--certchain', '-c', action='store_true',
                     help='import the ca-chain test certificates into the NSS database')
 
@@ -254,8 +252,6 @@ parser.add_argument('--fips', '-f', action='store_true',
 
 exclusive_grp_dnsserver.add_argument('--dnssec', '-d', action='store_true',
                     help='start nsd and unbound for DNSSEC - meant only for nic')
-exclusive_grp_dnsserver.add_argument('--nsd', action='store_true',
-                    help='start nsd only for DNSSEC')
 
 parser.add_argument('--46', '--64', action='store_true',
                     help='Do not disable IPv6. Default is disable IPv6 ', dest='ipv46', default=False)
@@ -263,8 +259,6 @@ parser.add_argument('--verbose', '-v', action='store_true',
                     help='more verbose')
 parser.add_argument('--namespace', action='store_true',
         default='', help='Running inside name sapace')
-parser.add_argument('--no-eth0', action='store_true',
-        default=False, help='Disable eth0 check')
 
 args = parser.parse_args()
 
@@ -283,9 +277,9 @@ if not os.path.isdir(testpath):
 
 testname = os.path.basename(testpath)
 
-# dnssec is only run on nic, but nic isn't supposed to run swan-prep ever :/
-# when using namespaces, nic has no eth0
-if not args.no_eth0 and not args.dnssec:
+# dnssec is only run on nic, but nic isn't supposed to run swan-prep
+# ever :/ when using namespaces, nic has no eth0
+if not args.dnssec:
     o = subprocess.run(['ip' , '-o', 'link' , 'show', 'dev', 'eth0'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="ascii")
     ifname = o.stdout.split(' ')[1]
     if o.returncode:
@@ -619,10 +613,6 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
                 shell(
                     "/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:%s %s%s" % (nssdir, pw, p12cmd_pw))
 
-            if args.signedbyother:
-                shell(
-                    "/usr/bin/pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:%s %s%s" % (nssdir, pw, p12cmd_pw))
-
             # fix trust import from p12
             # is pw needed?
             shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
@@ -662,7 +652,7 @@ if hostname != "nic" and not args.ipv46:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
 
-if args.nsd or args.dnssec:
+if args.dnssec:
     if args.namespace:
         dst = "/etc/nsd"
         src = "%s%s" % (nsbasepath, dst)
