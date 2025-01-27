@@ -1,0 +1,2 @@
+IKEv1 and IKEv2 roadwarries sharing an addresspool
+
