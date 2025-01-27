@@ -25,8 +25,8 @@
 struct logger;
 
 extern unsigned verbose;			/* defined by optarg.c */
-extern int long_index; 				/* defined by optarg.c */
-extern const struct option long_opts[]; 	/* defined by program */
+extern int optarg_index;			/* defined by optarg.c */
+extern const struct option optarg_options[]; 	/* defined by program */
 enum timescale;
 
 void optarg_init(const struct logger *logger);
@@ -37,15 +37,22 @@ uintmax_t optarg_uintmax(void);
 /* non-zero OPTIONAL provides default */
 uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names);
 
-struct family {
+/*
+ * Adddres family dependent options.
+ *
+ * The struct keeps track of the selected value and which param
+ * used/specified it so it can be logged when a conflict occures.
+ */
+
+struct optarg_family {
 	const char *used_by;
 	const struct ip_info *type;
 };
 
-ip_address optarg_address_dns(struct family *);
-ip_cidr optarg_cidr_num(struct family *);
-void optarg_family(struct family *family, const struct ip_info *info);
-ip_address optarg_any(struct family *family);
+ip_address optarg_address_dns(struct optarg_family *);
+ip_cidr optarg_cidr_num(struct optarg_family *);
+void optarg_family(struct optarg_family *family, const struct ip_info *info);
+ip_address optarg_any(struct optarg_family *family);
 
 /*
  * Call optarg_verbose() whenever --verbose is encountered.

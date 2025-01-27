@@ -52,7 +52,7 @@ enum opt {
 	OPT_DEBUG,
 };
 
-const struct option long_opts[] =
+const struct option optarg_options[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
 	{ "conn",                required_argument, NULL, 'c' },
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
 
-	while ((opt = getopt_long(argc, argv, "", long_opts, 0)) != EOF) {
+	while ((opt = getopt_long(argc, argv, "", optarg_options, 0)) != EOF) {
 		switch (opt) {
 		case 'h':
 			/* usage: */

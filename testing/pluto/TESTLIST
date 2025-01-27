@@ -946,13 +946,11 @@ kvmplutotest	xauth-pluto-21-main-xr0-drop 	wip
 kvmplutotest	xauth-pluto-21-aggr-xr0-drop 	wip
 kvmplutotest	xauth-pluto-22		good
 kvmplutotest	xauth-pluto-23		good
-kvmplutotest	xauth-pluto-24-static-addresspool good
 kvmplutotest	xauth-pluto-25-lsw299				wip	github/509
 kvmplutotest	xauth-pluto-26		good
 kvmplutotest	xauth-pluto-27		good
 kvmplutotest	xauth-pluto-28-twobehindnat	good
 
-kvmplutotest	ikev1-xauth-25-mixed-addresspool			good	github/509
 kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
 kvmplutotest	ikev1-xauth-31-one-each-way				wip	github/633
 kvmplutotest	ikev1-xauth-32-lost-mode-cfg				good	github/1785
@@ -1156,24 +1154,29 @@ kvmplutotest	ipv6-transport-ts-mode-04-xfrm-xfrm	good	github/1875
 kvmplutotest	ipv6-tunnel-mode-03-rw			good
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
 kvmplutotest	ikev2-ipv6-transport-mode-02-xfrm-xfrm	good
-kvmplutotest	interop-ikev2-strongswan-47-addresspool-ipv6	good
 
 # address pool tests
-kvmplutotest	ikev2-addresspool-46in4			good
-kvmplutotest	ikev2-addresspool-46in4-4only		good
-kvmplutotest	ikev2-addresspool-46in4-6only		good
-kvmplutotest	ikev2-addresspool-46in6			good
-kvmplutotest	ikev2-addresspool-46in6-4only		good
-kvmplutotest	ikev2-addresspool-46in6-6only		good
-kvmplutotest	ikev2-addresspool-4in4			good
-kvmplutotest	ikev2-addresspool-4in6			good
-kvmplutotest	ikev2-addresspool-6in4			good
-kvmplutotest	ikev2-addresspool-6in6			good
-kvmplutotest	ikev2-addresspool-6in6-defaultroute	good
 
-kvmplutotest	ipv6-addresspool-02-3-clients-ikev2	good
-kvmplutotest	ikev2-ipv6-addresspool-04-src-address-selection good
-kvmplutotest 	ipv6-addresspool-05-dual-stack		wip
+kvmplutotest	addresspool-46in4-ikev2				good
+kvmplutotest	addresspool-46in4-4only-ikev2			good
+kvmplutotest	addresspool-46in4-6only-ikev2			good
+kvmplutotest	addresspool-46in6-ikev2				good
+kvmplutotest	addresspool-46in6-4only-ikev2			good
+kvmplutotest	addresspool-46in6-6only-ikev2			good
+kvmplutotest	addresspool-4in4-ikev2				good
+kvmplutotest	addresspool-4in6-ikev2				good
+kvmplutotest	addresspool-6in4-ikev2				good
+kvmplutotest	addresspool-6in6-ikev2				good
+kvmplutotest	addresspool-6in6-defaultroute-ikev2		good
+
+kvmplutotest	addresspool-4in4-static-static-overlap-xauth-ikev1	good
+kvmplutotest	addresspool-4in4-global-static-xauth-ikev1		good	github/509
+
+kvmplutotest	addresspool-6in6-strongswan-initiator-ikev2	good
+
+kvmplutotest	addresspool-6in6-6in-6in-ikev2			wip	github/2015
+kvmplutotest	addresspool-6in6-defaultroute-src-selection-ikev2 good
+kvmplutotest 	addresspool-6in6-defaultroute-dual-dns-ikev2	wip
 
 
 
