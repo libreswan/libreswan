@@ -1,6 +1,8 @@
+/testing/guestbin/swan-prep --nokeys
 # added different CA
-/testing/guestbin/swan-prep --x509 --signedbyother
-ipsec certutil -D -n east
+
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+ipsec certutil -M -n otherca -t CT,,
 # check
 ipsec certutil -L
 

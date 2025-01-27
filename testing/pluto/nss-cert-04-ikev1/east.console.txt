@@ -1,5 +1,18 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+east #
+ ipsec certutil -M -n mainca -t CT,,
+east #
+ # check
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+mainca                                                       CT,, 
 east #
  ipsec start
 Redirecting to: [initsystem]

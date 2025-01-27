@@ -7,7 +7,7 @@ east #
 east #
  #ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -t "CT,,"
 east #
- ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t "CT,,"
+ ipsec certutil -A  -n "otherca" -t "CT,," -i /testing/x509/real/otherca/root.cert
 east #
  # check
 east #

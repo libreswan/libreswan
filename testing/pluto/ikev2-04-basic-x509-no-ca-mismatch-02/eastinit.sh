@@ -1,6 +1,8 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
+
 # delete the CA, both ends hardcode both certificates
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.end.p12
+ipsec certutil -A -n west -t P,, -i /testing/x509/real/mainca/west.end.cert
 # check
 ipsec certutil -L
 

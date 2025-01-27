@@ -119,7 +119,6 @@ def reset_files():
     for dir in ['keys/', 'cacerts/', 'certs/', 'selfsigned/',
                 'pkcs12/',
                 'pkcs12/mainca',
-                'pkcs12/otherca',
                 'pkcs12/badca',
                 'crls/' ]:
         if os.path.isdir(dir):
@@ -216,8 +215,6 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
                     SAN += ", IP:192.1.2.23, IP:2001:db8:1:2::23"
                 if ee == "semiroad":
                     SAN += ", IP:192.1.3.209, IP:2001:db8:1:3::209"
-            if ee == "otherwest" or ee == "othereast":
-                SAN += ", email:%s@other.libreswan.org"%ee
         if 'sanCritical' in cnstr:
             add_ext(cert, 'subjectAltName', True, SAN)
         else:
@@ -412,9 +409,7 @@ def create_mainca_end_certs(mainca_end_certs):
         startdate = dates['OK_NOW']
         enddate = dates['FUTURE_END']
 
-        if 'other' in name:
-            signer = 'otherca'
-        elif name[:3] == 'bad':
+        if name[:3] == 'bad':
             signer = 'badca'
         else:
             signer = 'mainca'
@@ -426,10 +421,7 @@ def create_mainca_end_certs(mainca_end_certs):
 
         org = "Libreswan"
 
-        if 'other' in name:
-            common_name = name + '.other.libreswan.org'
-        else:
-            common_name = name + '.testing.libreswan.org'
+        common_name = name + '.testing.libreswan.org'
 
         sign_alg = hashes.SHA256
 
@@ -605,15 +597,6 @@ def create_crlsets():
                                 type=crypto.FILETYPE_ASN1,
                                 days=15, digest='sha256'.encode('utf-8')))
 
-    othercrl = crypto.CRL()
-    othercrl.add_revoked(revoked)
-    othercrl.add_revoked(chainrev)
-    with open("crls/othercacrl.crl", "wb") as f:
-        f.write(othercrl.export(crypto.X509.from_cryptography(ca_certs['otherca'][0]),
-                                crypto.PKey.from_cryptography_key(ca_certs['otherca'][1]),
-                                type=crypto.FILETYPE_ASN1,
-                                days=15, digest='sha256'.encode('utf-8')))
-
     notyet = crypto.CRL()
     notyet.add_revoked(future_revoked)
     with open("crls/futurerevoke.crl", "wb") as f:
@@ -631,7 +614,7 @@ def run_dist_certs():
     certificates, p12 files, keys, and CRLs
     """
     # Add root CAs here
-    basic_pluto_cas =  ('mainca', 'otherca', 'badca')
+    basic_pluto_cas =  ('mainca', 'badca')
     # Add end certs here
     mainca_end_certs = ('nic','east','west', 'road', 'north', # standard certs
                         'west-kuOmit', # Key Usage should not be needed

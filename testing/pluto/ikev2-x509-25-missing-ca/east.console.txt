@@ -17,6 +17,18 @@ east #
  ipsec pk12util -W foobar -K '' -i /testing//x509/pkcs12/badca/badeast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
+ # check
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+badeast                                                      u,u,u
+testing@libreswan.org                                        ,,   
+east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 east #

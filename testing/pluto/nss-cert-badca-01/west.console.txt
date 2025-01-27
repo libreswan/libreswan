@@ -10,6 +10,18 @@ west #
  ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/badca/badwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
+ # check
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+badca                                                        CT,, 
+badwest                                                      u,u,u
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #

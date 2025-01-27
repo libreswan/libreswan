@@ -1,5 +1,11 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -A -n 'otherca' -t 'CT,,' -i /testing/x509/cacerts/otherca.crt
+/testing/guestbin/swan-prep --nokeys
+
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
+ipsec certutil -M -n mainca -t CT,,
+ipsec certutil -A -n 'otherca' -t 'CT,,' -i /testing/x509/real/otherca/root.cert
+# check
+ipsec certutil -L
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add nss-cert

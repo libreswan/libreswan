@@ -1,22 +1,20 @@
-# added different CA
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- /testing/guestbin/swan-prep --x509 --signedbyother
-Preparing X.509 files
+ # added different CA
 west #
- ipsec certutil -D -n east
+ ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -M -n otherca -t CT,,
 west #
  # check
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west                                                         u,u,u
-Libreswan test CA for mainca - Libreswan                     CT,, 
-signedbyother                                                u,u,u
-Libreswan test CA for otherca - Libreswan                    ,,   
-road                                                         P,,  
-north                                                        P,,  
-nic                                                          P,,  
+otherwest                                                    u,u,u
+otherca                                                      CT,, 
 west #
  cp policies/* /etc/ipsec.d/policies/
 west #
