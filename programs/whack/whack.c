@@ -665,7 +665,7 @@ enum option_enums {
 #define OPTION_ENUMS_ROOF	(OPTION_ENUMS_LAST+1)
 };
 
-const struct option long_opts[] = {
+const struct option optarg_options[] = {
 
 	/* name, has_arg, flag, val */
 
@@ -991,7 +991,7 @@ static char *ctlsocket = NULL;
  * This is pretty bespoke.
  */
 
-static void msg_host_name(struct family *family, ip_address *address, char **dns_name)
+static void msg_host_name(struct optarg_family *family, ip_address *address, char **dns_name)
 {
 	if (ttoaddress_num(shunk1(optarg), family->type, address) == NULL) {
 		/*
@@ -1044,8 +1044,8 @@ int main(int argc, char **argv)
 	clear_end("right", &msg.end[RIGHT_END]);
 	struct whack_end *end = &msg.end[LEFT_END];
 
-	struct family host_family = { 0, };
-	struct family child_family = { 0, };
+	struct optarg_family host_family = { 0, };
+	struct optarg_family child_family = { 0, };
 
 	msg.whack_from = WHACK_FROM_WHACK;		/* use whack defaults */
 
@@ -1088,7 +1088,7 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c = getopt_long(argc, argv, "", long_opts, &long_index);
+		int c = getopt_long(argc, argv, "", optarg_options, &optarg_index);
 
 		/* end of flags? exit loop */
 		if (c < 0) {
@@ -1109,7 +1109,7 @@ int main(int argc, char **argv)
 			 */
 			if (seen[c]) {
 				diagq("duplicated flag",
-				      long_opts[long_index].name);
+				      optarg_options[optarg_index].name);
 			}
 			seen[c] = true;
 			opts_seen |= NORMAL_OPT_SEEN;
@@ -1137,7 +1137,7 @@ int main(int argc, char **argv)
 			 */
 			if (seen[c])
 				diagq("duplicated flag",
-				      long_opts[long_index].name);
+				      optarg_options[optarg_index].name);
 			seen[c] = true;
 			opts_seen |= END_OPT_SEEN;
 			opts_seen |= CONN_OPT_SEEN;
@@ -1148,7 +1148,7 @@ int main(int argc, char **argv)
 			 */
 			if (seen[c])
 				diagq("duplicated flag",
-				      long_opts[long_index].name);
+				      optarg_options[optarg_index].name);
 			seen[c] = true;
 			opts_seen |= CONN_OPT_SEEN;
 #if 0
@@ -2047,7 +2047,7 @@ int main(int argc, char **argv)
 
 		case CD_OBSOLETE:
 			llog(RC_LOG, logger,
-			     "obsolete --%s option ignored", long_opts[long_index].name);
+			     "obsolete --%s option ignored", optarg_options[optarg_index].name);
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
@@ -2182,7 +2182,7 @@ int main(int argc, char **argv)
 				/* i.e., --host ::1 --ipv4; useful? wrong message? */
 				diagq("--ipv4 must precede", host_family.used_by);
 			}
-			host_family.used_by = long_opts[long_index].name;
+			host_family.used_by = optarg_options[optarg_index].name;
 			host_family.type = &ipv4_info;
 			continue;
 
@@ -2201,7 +2201,7 @@ int main(int argc, char **argv)
 				/* i.e., --host 0.0.0.1 --ipv6; useful? wrong message? */
 				diagq("--ipv6 must precede", host_family.used_by);
 			}
-			host_family.used_by = long_opts[long_index].name;
+			host_family.used_by = optarg_options[optarg_index].name;
 			host_family.type = &ipv6_info;
 			continue;
 
@@ -2211,7 +2211,7 @@ int main(int argc, char **argv)
 			}
 			if (child_family.used_by != NULL)
 				diagq("--tunnelipv4 must precede", child_family.used_by);
-			child_family.used_by = long_opts[long_index].name;
+			child_family.used_by = optarg_options[optarg_index].name;
 			child_family.type = &ipv4_info;
 			continue;
 
@@ -2221,7 +2221,7 @@ int main(int argc, char **argv)
 			}
 			if (child_family.used_by != NULL)
 				diagq("--tunnelipv6 must precede", child_family.used_by);
-			child_family.used_by = long_opts[long_index].name;
+			child_family.used_by = optarg_options[optarg_index].name;
 			child_family.type = &ipv6_info;
 			continue;
 

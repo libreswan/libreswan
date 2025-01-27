@@ -195,7 +195,7 @@ enum opt {
 	OPT_DEFAULTROUTENEXTHOP,
 };
 
-const struct option long_opts[] =
+const struct option optarg_options[] =
 {
 	{ "config", required_argument, NULL, OPT_CONFIG, },
 	{ "debug", no_argument, NULL, OPT_DEBUG, },
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 	enum opt opt;
-	while ((opt = getopt_long(argc, argv, "", long_opts, 0)) != EOF) {
+	while ((opt = getopt_long(argc, argv, "", optarg_options, 0)) != EOF) {
 		switch (opt) {
 		case OPT_HELP:
 			/* usage: */

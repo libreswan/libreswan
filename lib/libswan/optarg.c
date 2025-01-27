@@ -25,7 +25,7 @@
 #include "names_constant.h"		/* for debug_lmod_info */
 #include "timescale.h"
 
-int long_index;
+int optarg_index = -1;
 unsigned verbose;
 
 static const struct logger *optarg_logger;
@@ -47,8 +47,8 @@ static void fatal_optarg(const char *fmt, ...)
 	 * Not exit_pluto() or fatal() as pluto isn't yet up and
 	 * running?
 	 */
-	passert(long_index >= 0);
-	const char *optname = long_opts[long_index].name;
+	passert(optarg_index >= 0);
+	const char *optname = optarg_options[optarg_index].name;
 	LLOG_JAMBUF(WHACK_STREAM, optarg_logger, buf) {
 		if (optarg == NULL) {
 			jam(buf, "option --%s invalid: ", optname);
@@ -66,8 +66,8 @@ static void fatal_optarg(const char *fmt, ...)
 
 deltatime_t optarg_deltatime(enum timescale default_timescale)
 {
-	passert((long_opts[long_index].has_arg == required_argument) ||
-		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
+	passert((optarg_options[optarg_index].has_arg == required_argument) ||
+		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
 	deltatime_t deltatime;
 	diag_t diag = ttodeltatime(optarg, &deltatime, default_timescale);
 	if (diag != NULL) {
@@ -78,8 +78,8 @@ deltatime_t optarg_deltatime(enum timescale default_timescale)
 
 uintmax_t optarg_uintmax(void)
 {
-	passert((long_opts[long_index].has_arg == required_argument) ||
-		(long_opts[long_index].has_arg == optional_argument && optarg != NULL));
+	passert((optarg_options[optarg_index].has_arg == required_argument) ||
+		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
 	uintmax_t val;
 	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, &val);
 	if (err != NULL) {
@@ -98,7 +98,7 @@ uintmax_t optarg_uintmax(void)
 uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names)
 {
 	if (optarg == NULL) {
-		passert(long_opts[long_index].has_arg == optional_argument);
+		passert(optarg_options[optarg_index].has_arg == optional_argument);
 		passert(optional != 0);
 		return optional;
 	}
@@ -118,15 +118,15 @@ uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names)
  * Addresses.
  */
 
-void optarg_family(struct family *family, const struct ip_info *info)
+void optarg_family(struct optarg_family *family, const struct ip_info *info)
 {
 	if (family != NULL && family->type == NULL) {
 		family->type = info;
-		family->used_by = long_opts[long_index].name;
+		family->used_by = optarg_options[optarg_index].name;
 	}
 }
 
-ip_address optarg_address_dns(struct family *family)
+ip_address optarg_address_dns(struct optarg_family *family)
 {
 	ip_address address;
 	err_t err = ttoaddress_dns(shunk1(optarg), family->type, &address);
@@ -137,7 +137,7 @@ ip_address optarg_address_dns(struct family *family)
 	return address;
 }
 
-ip_cidr optarg_cidr_num(struct family *family)
+ip_cidr optarg_cidr_num(struct optarg_family *family)
 {
 	ip_cidr cidr;
 	err_t err = ttocidr_num(shunk1(optarg), family->type, &cidr);
@@ -148,7 +148,7 @@ ip_cidr optarg_cidr_num(struct family *family)
 	return cidr;
 }
 
-ip_address optarg_any(struct family *family)
+ip_address optarg_any(struct optarg_family *family)
 {
 	optarg_family(family, &ipv4_info);
 	return family->type->address.unspec;
