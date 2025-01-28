@@ -468,15 +468,17 @@ static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
 static bool get_internal_address(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
+	/* our IKEv1 doesn't do IPv6 */
+	const struct ip_info *afi = &ipv4_info;
 
 	const char *from;
-	if (c->pool[IPv4_INDEX] != NULL) {
-		/* our IKEv1 doesn't do IPv6 */
+	if (c->pool[afi->ip_index] != NULL) {
 		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
-					      &ipv4_info, /*remote-address*/NULL,
+					      afi, /*remote-address*/NULL,
 					      ike->sa.logger);
 		if (e != NULL) {
-			llog(RC_LOG, ike->sa.logger, "lease_an_address failure %s", e);
+			llog(RC_LOG, ike->sa.logger, "leasing %s address failed: %s",
+			     afi->ip_name, e);
 			return false;
 		}
 
