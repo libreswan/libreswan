@@ -1,5 +1,5 @@
 ../../guestbin/ip.sh route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1
-192.0.2.254 via 192.1.2.23 dev eth1 src 192.1.2.45 uid 0 
+192.0.2.254 via 192.1.2.23 dev eth1 src 192.1.2.45 uid 0
 west #
  /testing/guestbin/swan-prep
 west #
@@ -9,7 +9,11 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
+"westnet-eastnet": created ipsec-interface ipsec1@eth1
 "westnet-eastnet": added IKEv1 connection
+west #
+ echo "initdone"
+initdone
 west #
  ipsec auto --up westnet-eastnet
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
@@ -31,18 +35,15 @@ west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
- echo "initdone"
-initdone
-west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    168        2        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    168        2        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           168       2      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           168       2      0       0       0       0 
 west #
  ../../guestbin/ip.sh rule show
 0:	from all lookup local

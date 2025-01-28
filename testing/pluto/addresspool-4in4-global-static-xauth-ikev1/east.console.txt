@@ -11,10 +11,10 @@ east #
  echo initdone
 initdone
 east #
- ../../guestbin/wait-for-pluto.sh '^[^|].* #2: IPsec SA established'
+ ../../guestbin/wait-for-pluto.sh '#2: IPsec SA established'
 "any-east"[1] 192.1.3.33 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=xnorth}
 east #
- ../../guestbin/wait-for-pluto.sh '^[^|].* #4: IPsec SA established'
+ ../../guestbin/wait-for-pluto.sh '#4: IPsec SA established'
 "any-east"[2] 192.1.3.209 #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=xroad}
 east #
  ipsec whack --trafficstatus
