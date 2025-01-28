@@ -1,0 +1,9 @@
+name: Task
+description: A specific work item
+type: task
+body:
+  - type: textarea
+    attributes:
+      label: What needs to be done
+    validations:
+      required: true
