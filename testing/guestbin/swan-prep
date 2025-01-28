@@ -564,17 +564,10 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
                   "WARNING: no mainca.key file, did you run testing/x509/dist_certs.py?\n"
                   "---------------------------------------------------------------------\n")
 
-        if args.x509name:
-            p12 = args.x509name
-        else:
-            p12 = hostname
-        ca = "mainca"
         pw = "-w /testing/x509/nss-pw"
 
         if args.certchain:
             icanum = 2
-            pw = "-w /testing/x509/nss-pw"
-            root = "mainca"
             ica_p = hostname + "_chain_int_"
             ee = hostname + "_chain_endcert"
 
@@ -585,8 +578,8 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
             # 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
             # mainca and nic import
-            shell("/usr/bin/certutil -A -n %s -t 'CT,,' -d sql:%s -a -i /testing/x509/cacerts/%s.crt%s" %
-                  (root, nssdir, root, util_pw))
+            shell("/usr/bin/certutil -A -n mainca -t 'CT,,' -d sql:%s -a -i /testing/x509/cacerts/mainca.crt%s" %
+                  (nssdir, util_pw))
             shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:%s -a -i /testing/x509/certs/nic.crt%s" % (nssdir, util_pw))
 
             # install ee
@@ -602,20 +595,32 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
                 shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d sql:%s s%s" %
                       (hostname + "_chain", nssdir, pw, p12cmd_pw))
 
+        elif args.x509name:
+
+            # is pw needed? Perhaps when FIPS, but has it been set?
+
+            # import then fix trust
+            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d sql:%s %s%s" %
+                  (args.x509name, nssdir, pw, p12cmd_pw))
+            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
+
+            # pre-import certs for all other hosts
+            for certname in ("west", "east", "road", "north", "nic"):
+                if not hostname in certname:
+                    shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
+                          (certname, nssdir, certname, util_pw))
+
         else:
-            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d sql:%s %s%s" %
-                (ca, p12, nssdir, pw, p12cmd_pw))
-            # install all other public certs
-            # libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not
-            # sourced
+
+            # is pw needed? Perahps when FIPS, but has it been set?
+
+            # import then fix trust
+            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d sql:%s %s%s" %
+                  (hostname, nssdir, pw, p12cmd_pw))
+            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
 
             if args.revoked:
-                shell(
-                    "/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:%s %s%s" % (nssdir, pw, p12cmd_pw))
-
-            # fix trust import from p12
-            # is pw needed?
-            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
+                shell("/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:%s %s%s" % (nssdir, pw, p12cmd_pw))
 
             # pre-import certs for all other hosts
             for certname in ("west", "east", "road", "north", "nic"):
@@ -633,11 +638,9 @@ if args.fips:
 # Strong swan has simple files.
 if userland == "strongswan" and args.keys == Keys.X509:
 
-    ca = "mainca"
     key = hostname
 
-    shutil.copy("/testing/x509/cacerts/%s.crt" %
-                ca, "/etc/strongswan/ipsec.d/cacerts/")
+    shutil.copy("/testing/x509/cacerts/mainca.crt", "/etc/strongswan/ipsec.d/cacerts/")
     shutil.copy("/testing/x509/keys/%s.key" % key, "/etc/strongswan/ipsec.d/private/")
 
     for certname in ("west", "east", "road", "north"):
