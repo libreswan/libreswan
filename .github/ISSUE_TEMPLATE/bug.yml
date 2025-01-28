@@ -5,18 +5,40 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!  As you fill in the details, here's a few things to consider:
-        - Which version of libreswan?
-          If possible, please try mainline.  Knowing it is still happening in the latest version is really helpful.
-          If you require support for an old libreswan version, please see https://libreswan.org/wiki/Support
-        - Is the peer running libreswan, or something else?
-          Having access to the peer and its logs is often needed when diagnosing a problem.
-        - IKEv1 or IKEv2?
-          IKEv1 is obsolete; do you know if the problem happens with IKEv2?
-        - ESP or AH?
-          AH is obsolete; do you know if the problem happens with ESP using NULL authentication
-        - VTI?
-          VTI is obsolete; do you know if the problem happens with `ipsec-interface=` (XFRMI on Linux)
+        Thanks for taking the time to fill out this bug report!
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Your System details
+      description: Please provide the output from `ipsec whack --version` and `uname -a`.  If the other end is different, please provide that as well.
+    validations:
+      required: true
+  - type: checkboxes
+    id: ike_version
+    attributes:
+      label: IKE Version
+      options:
+        - label: IKEv1
+        - label: IKEv2 (if you can, please try reproducing the problem using IKEv2)
+    validations:
+      required: true
+  - type: checkboxes
+    id: protocol
+    attributes:
+      label: Protocol
+      options:
+        - label: ESP
+        - label: AH (if you can, please try reproducing the problem using ESP and NULL authentication)
+    validations:
+      required: false
+  - type: checkboxes
+    id: interface
+    attributes:
+      label: IPsec or Virtual Interface?
+      options:
+        - label: IPsec Interface
+        - label: VTI (if you can, please try reproducing the problem using `ipsec-interface=` and NULL authentication)
     validations:
       required: false
   - type: textarea
@@ -30,6 +52,8 @@ body:
       label: Your configuration
       description: Please copy and past your configuration file.
       placeholder: |
+        - if necessary remove sensitive details
+          but keep as much information as possible
         - this will be automatically formatted into code, so no need for backticks
       render: shell
     validations:
@@ -40,7 +64,7 @@ body:
       description: Please copy and paste the relevant log output
       placeholder: |
         - if necessary remove sensitive details
-        - keep as much information as possible
+          but keep as much information as possible
         - there is no need to include debug output
           most problems are better understood with just the standard logs
         - this will be automatically formatted into code, so no need for backticks.
