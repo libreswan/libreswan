@@ -313,7 +313,22 @@ while read cert san ; do
 	done
     done
 done <<EOF
-otherwest  ip:${east_ipv4},ip:${east_ipv6}
 othereast  ip:${west_ipv4},ip:${west_ipv6}
+otherwest  ip:${east_ipv4},ip:${east_ipv6}
 EOF
 
+while read cert san ; do
+    for kind in real ; do
+	for root in badca ; do
+	    certdir=${OUTDIR}/${kind}/${root}
+	    log=${certdir}/${cert}.log
+	    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
+		cat ${log}
+		exit 1
+	    fi
+	done
+    done
+done <<EOF
+badeast  ip:${west_ipv4},ip:${west_ipv6}
+badwest  ip:${east_ipv4},ip:${east_ipv6}
+EOF

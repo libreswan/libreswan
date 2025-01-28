@@ -1,8 +1,11 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n west
-ipsec certutil -D -n east
-ipsec certutil -A -i /testing/x509/cacerts/badca.crt -n "badca" -t "CT,,"
-ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/badca/badeast.p12
+/testing/guestbin/swan-prep --nokeys
+
+# pull in the full east
+ipsec pk12util -W foobar -i /testing/x509/real/mainca/east.all.p12
+ipsec certutil -M -n mainca -t CT,,
+
+ipsec pk12util -W foobar -K '' -i /testing/x509/real/badca/badeast.all.p12
+ipsec certutil -M -n badca -t CT,,
 # check
 ipsec certutil -L
 

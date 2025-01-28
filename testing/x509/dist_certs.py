@@ -119,7 +119,6 @@ def reset_files():
     for dir in ['keys/', 'cacerts/', 'certs/', 'selfsigned/',
                 'pkcs12/',
                 'pkcs12/mainca',
-                'pkcs12/badca',
                 'crls/' ]:
         if os.path.isdir(dir):
             shutil.rmtree(dir)
@@ -187,10 +186,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 
     # Create Basic Constraints
     if isCA:
-        if "badca" in str(issuer.get_subject().commonName):
-            bc = "CA:FALSE"
-        else:
-            bc = "CA:TRUE"
+        bc = "CA:TRUE"
     else:
         bc = "CA:FALSE"
 
@@ -354,10 +350,6 @@ def store_cert_and_key(name, cert, key):
     global ca_certs
     global end_certs
 
-    if name == "badca":
-        ca_certs[name] = cert, key
-        return
-
     try:
         if cert.extensions.get_extension_for_class(x509.BasicConstraints).value.ca:
             ca_certs[name] = cert, key
@@ -409,10 +401,7 @@ def create_mainca_end_certs(mainca_end_certs):
         startdate = dates['OK_NOW']
         enddate = dates['FUTURE_END']
 
-        if name[:3] == 'bad':
-            signer = 'badca'
-        else:
-            signer = 'mainca'
+        signer = 'mainca'
 
         if name == 'nic':
             ocsp_resp = True
@@ -614,7 +603,7 @@ def run_dist_certs():
     certificates, p12 files, keys, and CRLs
     """
     # Add root CAs here
-    basic_pluto_cas =  ('mainca', 'badca')
+    basic_pluto_cas =  ['mainca']
     # Add end certs here
     mainca_end_certs = ('nic','east','west', 'road', 'north', # standard certs
                         'west-kuOmit', # Key Usage should not be needed
@@ -637,7 +626,7 @@ def run_dist_certs():
                         'nic-nourl',
                         'smallkey', 'key2032', 'key4096',
                         'signedbyother','otherwest','othereast',
-                        'revoked', 'badwest', 'badeast', 'semiroad')
+                        'revoked', 'semiroad')
     # Add chain roots here
     chain_ca_roots =   ('east_chain', 'west_chain')
 

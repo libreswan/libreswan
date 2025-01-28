@@ -1,26 +1,21 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -D -n east
+ ipsec certutil -A -i /testing/x509/real/mainca/root.cert -n "mainca" -t "CT,,"
 west #
- ipsec certutil -D -n west
-west #
- ipsec certutil -A -i /testing/x509/cacerts/badca.crt -n "badca" -t "CT,,"
-west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/badca/badwest.p12
+ ipsec pk12util -W foobar -i /testing/x509/real/badca/badwest.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -M -n badca -t CT,,
 west #
  # check
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-road                                                         P,,  
-north                                                        P,,  
-nic                                                          P,,  
-badca                                                        CT,, 
+mainca                                                       CT,, 
 badwest                                                      u,u,u
+badca                                                        CT,, 
 west #
  ipsec start
 Redirecting to: [initsystem]
