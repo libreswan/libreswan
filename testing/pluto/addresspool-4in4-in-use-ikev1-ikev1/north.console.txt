@@ -1,0 +1,51 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ ../../guestbin/block-non-ipsec.sh
+north #
+ ipsec whack --impair revival
+north #
+ ipsec whack --impair suppress_retransmits
+north #
+ ipsec add north-east
+"north-east": added IKEv1 connection
+north #
+ echo initdone
+initdone
+north #
+ ipsec up north-east
+"north-east" #1: initiating IKEv1 Main Mode connection
+"north-east" #1: sent Main Mode request
+"north-east" #1: sent Main Mode I2
+"north-east" #1: I am sending my cert
+"north-east" #1: I am sending a certificate request
+"north-east" #1: sent Main Mode I3
+"north-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"north-east" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"north-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"north-east" #1: Received IPv4 address: 192.0.2.101/32
+"north-east" #1: Received DNS server 1.2.3.4
+"north-east" #1: Received DNS server 5.6.7.8
+"north-east" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
+"north-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"north-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"north-east" #2: sent Quick Mode request
+"north-east" #2: up-client output: updating resolvconf
+"north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+north #
+ # keep in use
+north #
+ # ipsec down north-east
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254
+up
+north #
+ ipsec whack --trafficstatus
+#2: "north-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
+north #
+ 
