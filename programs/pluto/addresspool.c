@@ -775,8 +775,8 @@ err_t assign_remote_lease(struct connection *c,
 	}
 
 	struct addresspool *pool = c->pool[afi->ip_index];
-	if (pool == NULL) {
-		return "no address pool";
+	if (PBAD(logger, pool == NULL)) {
+		return "confused, no address pool";
 	}
 
 	unsigned next_lease_nr = nr_child_leases(c->remote);
