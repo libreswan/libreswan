@@ -19,11 +19,11 @@ road #
 "road-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "road-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"road-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.101
-"road-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
-"road-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
-"road-east" #2: up-client output: updating resolvconf
-"road-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.101/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road-east" #2: IKE_AUTH response rejected Child SA with INTERNAL_ADDRESS_FAILURE
+"road-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+road #
+ ../../guestbin/ping-once.sh --error -I 192.0.2.102 192.0.2.254
+bind: Cannot assign requested address
 road #
  ipsec whack --trafficstatus
 road #

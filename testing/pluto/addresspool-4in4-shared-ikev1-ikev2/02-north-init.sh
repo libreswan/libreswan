@@ -3,6 +3,6 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ../../guestbin/block-non-ipsec.sh
-ipsec add ikev2-north-east
+ipsec add north-east
 
 echo initdone

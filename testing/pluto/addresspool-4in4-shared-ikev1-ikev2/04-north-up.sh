@@ -1,2 +1,2 @@
-ipsec up ikev2-north-east
+ipsec up north-east
 
