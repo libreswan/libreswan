@@ -129,6 +129,12 @@ generate_root_cert()
 
 )
 
+east_ipv4=192.1.2.23
+east_ipv6=2001:db8:1:2::23
+
+west_ipv4=192.1.2.45
+west_ipv6=2001:db8:1:2::45
+
 generate_end_cert()
 (
     set -x
@@ -153,6 +159,10 @@ generate_end_cert()
 
     # build the SAN
     local san=dns:${cn},email:${email}
+    case ${cert} in
+	*east ) san="${san},ip:${east_ipv4},ip:${east_ipv6}" ;;
+	*west ) san="${san},ip:${west_ipv4},ip:${west_ipv6}" ;;
+    esac
     if test "$#" -gt 0 ; then
 	san="${san},$@"
     fi
@@ -274,12 +284,6 @@ done
 
 # generate end certs where needed
 
-east_ipv4=192.1.2.23
-east_ipv6=2001:db8:1:2::23
-
-west_ipv4=192.1.2.45
-west_ipv6=2001:db8:1:2::45
-
 while read cert san ; do
     for kind in real fake ; do
 	for root in mainca mainec ; do
@@ -293,8 +297,8 @@ while read cert san ; do
     done
 done <<EOF
 nic
-east	ip:${east_ipv4},ip:${east_ipv6}
-west	ip:${west_ipv4},ip:${west_ipv6}
+east
+west
 road
 north
 rise
@@ -313,8 +317,8 @@ while read cert san ; do
 	done
     done
 done <<EOF
-othereast  ip:${west_ipv4},ip:${west_ipv6}
-otherwest  ip:${east_ipv4},ip:${east_ipv6}
+othereast
+otherwest
 EOF
 
 while read cert san ; do
@@ -329,6 +333,6 @@ while read cert san ; do
 	done
     done
 done <<EOF
-badeast  ip:${west_ipv4},ip:${west_ipv6}
-badwest  ip:${east_ipv4},ip:${east_ipv6}
+badeast
+badwest
 EOF
