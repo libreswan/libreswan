@@ -1,7 +1,13 @@
-# we want to load east's certificate for west
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- /testing/guestbin/swan-prep --x509 --x509name east
-Preparing X.509 files
+ # we want to load east's certificate for west
+west #
+ /testing/x509/import.sh real/mainca/east.end.cert
+ipsec certutil -A -n east -t ,, -i real/mainca/east.end.cert
+west #
+ /testing/x509/import.sh real/mainca/root.cert
+ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
 west #
  # confirm that the network is alive
 west #

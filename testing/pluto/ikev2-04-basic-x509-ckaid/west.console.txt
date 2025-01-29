@@ -1,12 +1,28 @@
-/testing/guestbin/swan-prep --x509 --x509name east
-Preparing X.509 files
+# Import EAST's cert and extract its CKAID
+west #
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/east.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  eastckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 west #
- /testing/guestbin/swan-prep --x509
-Preparing X.509 files
+ # Import WEST's cert and extract its CKAID
+west #
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/west.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+west #
+ /testing/x509/import.sh real/mainca/east.end.cert
+ipsec certutil -A -n east -t ,, -i real/mainca/east.end.cert
 west #
  echo west ckaid: $westckaid east ckaid: $eastckaid
 west ckaid: <<CKAID#1>> east ckaid: <<CKAID#2>>

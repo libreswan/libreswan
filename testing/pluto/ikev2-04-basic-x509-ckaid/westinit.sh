@@ -1,9 +1,18 @@
-/testing/guestbin/swan-prep --x509 --x509name east
+# Import EAST's cert and extract its CKAID
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/east.end.p12
 eastckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
-/testing/guestbin/swan-prep --x509
+
+# Import WEST's cert and extract its CKAID
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/west.all.p12
 westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
+
+/testing/x509/import.sh real/mainca/east.end.cert
+
 echo west ckaid: $westckaid east ckaid: $eastckaid
 sed -i -e "s/WESTCKAID/$westckaid/" -e "s/EASTCKAID/$eastckaid/" /etc/ipsec.conf
+
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

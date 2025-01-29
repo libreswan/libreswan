@@ -762,8 +762,8 @@ kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good
 kvmplutotest	ikev2-asymmetric-17-auth-mismatch-reverse	good
 
 # test harnass needs to be able to install raw keys and certs
-kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	wip
-kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	wip
+kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	good
+kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	good
 
 
 # RFC 3706 DPD
