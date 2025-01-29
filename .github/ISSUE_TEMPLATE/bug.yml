@@ -2,43 +2,48 @@ name: Bug Report
 description: File a bug report.
 type: bug
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for taking the time to fill out this bug report!
-    validations:
-      required: false
   - type: textarea
     attributes:
-      label: Your System details
-      description: Please provide the output from `ipsec whack --version` and `uname -a`.  If the other end is different, please provide that as well.
+      label: Please Tell Us About Your System
+      description: |
+        Please provide the output from `ipsec whack --version` and `uname -a`.
+        If the other end is different, then include that as well.
     validations:
       required: true
   - type: checkboxes
     id: ike_version
     attributes:
       label: IKE Version
+      description: |
+        Please note that IKEv1 is (depreciated)[https://www.rfc-editor.org/rfc/rfc9395].
+        If you can, please try reproducing the problem using IKEv2.
       options:
         - label: IKEv1
-        - label: IKEv2 (if you can, please try reproducing the problem using IKEv2)
+        - label: IKEv2
     validations:
       required: true
   - type: checkboxes
     id: protocol
     attributes:
       label: Protocol
+      description: |
+        Please note that AH has, for the most part, been made obsolete by ESP with NULL integrity
+        (the exception is AH combined with transport mode).
       options:
         - label: ESP
-        - label: AH (if you can, please try reproducing the problem using ESP and NULL authentication)
+        - label: AH
     validations:
       required: false
   - type: checkboxes
     id: interface
     attributes:
-      label: IPsec or Virtual Interface?
+      label: Is IPsec or VTI involved?
+      description: |
+        Please note that on Linux, VTI has been replaced by XFRMI (enabled using `ipsec-interface=`).
+        (The BSD IPsec devices are only supported using `ipsec-interface=`).
       options:
         - label: IPsec Interface
-        - label: VTI (if you can, please try reproducing the problem using `ipsec-interface=` and NULL authentication)
+        - label: VTI
     validations:
       required: false
   - type: textarea
@@ -69,5 +74,11 @@ body:
           most problems are better understood with just the standard logs
         - this will be automatically formatted into code, so no need for backticks.
       render: shell
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
     validations:
       required: false
