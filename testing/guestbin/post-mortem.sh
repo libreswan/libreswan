@@ -131,7 +131,7 @@ if ! ${pluto} ; then
     SKIP as pluto was not running
 elif ${core} ; then
     SKIP as pluto core dumped
-elif awk -f /testing/utils/refcnt.awk /tmp/pluto.log ; then
+elif gawk -f /testing/utils/refcnt.gawk /tmp/pluto.log ; then
     PASS
 else
     FAIL

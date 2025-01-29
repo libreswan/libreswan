@@ -24,6 +24,7 @@ ln -s "${pkgdir}" /var/db/pkgin/cache
 : pkg_add git crashes, do not know why
 pkgin -y install git
 pkgin -y install gmake
+pkgin -y install gawk
 pkgin -y install nss
 pkgin -y install unbound
 pkgin -y install bison

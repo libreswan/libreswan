@@ -21,6 +21,7 @@ done <<EOF
 bison
 build-essential
 flex
+gawk
 libcap-ng-dev
 libcurl4-nss-dev
 libevent-dev

@@ -24,6 +24,7 @@ EOF
 
 pkg install -y gmake
 pkg install -y git
+pkg install -y gawk
 pkg install -y pkgconf # aka pkg-config; grrr
 pkg install -y nss
 pkg install -y libevent

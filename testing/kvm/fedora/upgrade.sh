@@ -62,6 +62,7 @@ sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 upgrade="
 audit-libs-devel
 fping
+gawk
 ldns-devel
 libcurl-devel
 libseccomp-devel

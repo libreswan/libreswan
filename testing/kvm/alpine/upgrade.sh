@@ -27,6 +27,7 @@ add bsd-compat-headers
 add coreutils coreutils-doc
 add curl-dev curl-doc
 add flex flex-doc
+add gawk gawk-doc
 add gcc gcc-doc
 add git git-doc
 add gmp-dev gmp-doc

@@ -19,6 +19,7 @@ add() {
 }
 
 add fping
+add gawk
 add gmake
 add nss
 add libevent
