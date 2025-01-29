@@ -1,8 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # east and a root cert
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
-ipsec certutil -M -n mainca -t 'CT,,'
+/testing/x509/import.sh real/mainca/east.all.p12
 # check
 ipsec certutil -L
 

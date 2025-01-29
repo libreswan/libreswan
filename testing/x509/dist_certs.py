@@ -123,9 +123,6 @@ def reset_files():
         if os.path.isdir(dir):
             shutil.rmtree(dir)
         os.mkdir(dir)
-    for file in ['nss-pw']:
-        if os.path.isfile(file):
-            os.remove(file)
 
 def writeout_cert(filename, cert):
     blob = cert.public_bytes(serialization.Encoding.PEM)
@@ -359,6 +356,8 @@ def store_cert_and_key(name, cert, key):
 
     end_certs[name] = cert, key
 
+PASSPHRASE = ""	# set below
+
 def create_basic_pluto_cas(ca_names):
     """ Create the core root certs
     """
@@ -368,7 +367,7 @@ def create_basic_pluto_cas(ca_names):
         print(" - loading %s" % (p12))
         with open(p12, "rb") as f:
             blob = f.read()
-            key, ca, chain = pkcs12.load_key_and_certificates(blob, b"foobar")
+            key, ca, chain = pkcs12.load_key_and_certificates(blob, PASSPHRASE)
         writeout_cert_and_key("cacerts/", name, ca, key)
         store_cert_and_key(name, ca, key)
 
@@ -377,7 +376,7 @@ def writeout_pkcs12(path, name, cert, key, ca_cert):
     """
     blob = pkcs12.serialize_key_and_certificates(name.encode('utf-8'),
                                                  key, cert, [ca_cert],
-                                                 serialization.BestAvailableEncryption(b"foobar"))
+                                                 serialization.BestAvailableEncryption(PASSPHRASE))
     with open(path + name + ".p12", "wb") as f:
         f.write(blob)
 
@@ -638,12 +637,6 @@ def run_dist_certs():
     create_chained_certs(chain_ca_roots, 10, 'too_long_')
     create_crlsets()
 
-def create_nss_pw():
-    print("creating nss-pw")
-    f = open("nss-pw","w")
-    f.write("foobar")
-    f.close()
-
 def main():
     outdir = os.path.dirname(sys.argv[0])
     cwd = os.getcwd()
@@ -657,8 +650,13 @@ def main():
     for n, s in dates.items():
         print("%s : %s"% (n, s))
 
+    print("reading passphrase")
+    global PASSPHRASE
+    with open("nss-pw", "rb") as f:
+        PASSPHRASE = f.read()
+    print("passphrase: ", PASSPHRASE)
+
     run_dist_certs()
-    create_nss_pw()
 
     print("finished!")
 

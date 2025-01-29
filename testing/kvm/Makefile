@@ -683,7 +683,6 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 kvm-clean-keys kvm-keys-clean:
 	: careful output mixed with repo files
 	rm -rf $(KVM_TESTINGDIR)/x509/*/
-	rm -f $(KVM_TESTINGDIR)/x509/nss-pw
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/signed/*.signed
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.key
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.private

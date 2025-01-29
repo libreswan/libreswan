@@ -13,7 +13,6 @@ fi
 NOISE_FILE=$0
 NOW_VALID_MONTHS=24
 NOW_OFFSET_MONTHS=-11
-PASSPHRASE=foobar
 
 :
 : clean up
@@ -21,6 +20,15 @@ PASSPHRASE=foobar
 
 OUTDIR=$1 ; shift
 rm -rf ${OUTDIR}/real ${OUTDIR}/fake
+
+PW=${OUTDIR}/nss-pw
+if test ! -r ${PW} ; then
+    cat <<EOF 1>&2
+Missing password file ${PW}
+EOF
+    exit 1
+fi
+PASSPHRASE=$(cat ${PW})
 
 :
 : Subject DN - NSS wants things local..global
@@ -233,11 +241,12 @@ generate_end_cert()
 
     # print the chain
 
+    echo 1>&3
     certutil \
 	-O \
 	-d ${certdir} \
 	-n ${cert} \
-	1>&3
+	| sed -e 's/^/  /' 1>&3
 
 )
 

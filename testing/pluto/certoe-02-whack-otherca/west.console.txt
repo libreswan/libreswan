@@ -3,10 +3,10 @@ Creating empty NSS database
 west #
  # added different CA
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+ /testing/x509/import.sh real/otherca/otherwest.all.p12
+ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-west #
- ipsec certutil -M -n otherca -t CT,,
+ipsec certutil -M -n otherca -t CT,,
 west #
  # check
 west #

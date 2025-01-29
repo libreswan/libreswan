@@ -3,15 +3,15 @@ Creating empty NSS database
 east #
  # pull in the full east
 east #
- ipsec pk12util -W foobar -i /testing/x509/real/mainca/east.all.p12
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 east #
- ipsec certutil -M -n mainca -t CT,,
-east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/badca/badeast.all.p12
+ /testing/x509/import.sh real/badca/badeast.all.p12
+ipsec pk12util -w nss-pw -i real/badca/badeast.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-east #
- ipsec certutil -M -n badca -t CT,,
+ipsec certutil -M -n badca -t CT,,
 east #
  # check
 east #
