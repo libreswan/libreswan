@@ -33,7 +33,10 @@ static void check_jambuf(bool ok, const char *expect, ...)
 		const char *op = ops[i];
 		printf("%s: %s '%s' %s\n", __func__, op, expect, oks);
 		/* 10 characters + NUL + SENTINEL */
-		char array[12] = "abcdefghijkl";
+		char array[12] = {
+			'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+			'k', 'l'
+		};
 		struct jambuf buf = ARRAY_AS_JAMBUF(array);
 #define FAIL(FMT, ...)							\
 		{							\
