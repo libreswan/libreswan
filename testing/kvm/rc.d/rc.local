@@ -1,28 +1,48 @@
 #!/bin/sh
 
-case $(uname) in
-    NetBSD )  eth=vioif ; default=netbsd ;;
+uname=$(uname)
+case ${uname} in
+    NetBSD )  eth=vioif ; default=netbsd  ;;
     OpenBSD ) eth=vio   ; default=openbsd ;;
     FreeBSD ) eth=vtnet ; default=freebsd ;;
 esac
 
-config_eth()
+run()
+{
+    echo "$@" 1>&2
+    "$@"
+}
+
+ifconfig_eth()
 {
     local n=$1
     local ip4=$2
     local ip6=$3
-    echo if=${eth}${n} ip4=${ip4} ip6=${ip6} 1>&2
-    ifconfig ${eth}${n} inet ${ip4}/24
-    ifconfig ${eth}${n} inet6 ${ip6}/64
-    if test ${n} -eq 1 ; then
-	ifconfig ${eth}${n} up
-    fi
+    local dad
+    case ${uname} in
+	NetBSD )  dad="" ;;
+	OpenBSD ) dad="-tentative" ;;
+	FreeBSD ) dad="-auto_linklocal" ;;
+    esac
+    run ifconfig ${eth}${n} inet         ${ip4}/24
+    run ifconfig ${eth}${n} inet6 ${dad} ${ip6}/64
+}
+
+ifconfig_up()
+{
+    local n=$1
+    case ${uname} in
+	NetBSD )  dad="-W 0" ;;
+	OpenBSD ) dad="" ;;
+	FreeBSD ) dad="" ;;
+    esac
+    run ifconfig ${dad} ${eth}${n} up
 }
 
 config_host()
 {
     local hostname=$1
-    hostname ${hostname}
+    run hostname ${hostname}
 }
 
 mac=$(ifconfig ${eth}1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
@@ -31,27 +51,36 @@ echo mac=$mac 1>&2
 case "$mac" in
     12:00:00:64:64:23 ) # EAST
 	config_host east
-	config_eth 1 192.1.2.23 2001:db8:1:2::23
-	config_eth 2 192.0.2.254 2001:db8:0:2::254
+	ifconfig_eth 1 192.1.2.23 2001:db8:1:2::23
+	ifconfig_eth 2 192.0.2.254 2001:db8:0:2::254
+	ifconfig_up 1
 	;;
     12:00:00:64:64:45 ) # WEST
 	config_host west
-	config_eth 1 192.1.2.45 2001:db8:1:2::45
-	config_eth 2 192.0.1.254 2001:db8:0:1::254
+	ifconfig_eth 1 192.1.2.45 2001:db8:1:2::45
+	ifconfig_eth 2 192.0.1.254 2001:db8:0:1::254
+	ifconfig_up 1
 	;;
     12:52:49:53:45:01 ) # RISE
 	config_host rise
-	#config_eth 1 198.18.12.12 2001:db8:12::12
-	config_eth 1 192.0.2.12 2001:db8:0:2::12
-	config_eth 2 198.18.1.12 2001:db8:1::12
+	#ifconfig_eth 1 198.18.12.12 2001:db8:12::12
+	ifconfig_eth 1 192.0.2.12 2001:db8:0:2::12
+	ifconfig_eth 2 198.18.1.12 2001:db8:1::12
+	ifconfig_up 1
 	;;
     12:00:53:45:54:01 ) # SET
 	config_host set
-	#config_eth 1 198.18.15.15 2001:db8:15::15
-	config_eth 1 192.0.1.15 2001:db8:0:1::15
-	config_eth 2 198.18.1.15 2001:db8:1::15
+	#ifconfig_eth 1 198.18.15.15 2001:db8:15::15
+	ifconfig_eth 1 192.0.1.15 2001:db8:0:1::15
+	ifconfig_eth 2 198.18.1.15 2001:db8:1::15
+	ifconfig_up 1
 	;;
     * )
+	case ${uname} in
+	    NetBSD )  default=netbsd  ;;
+	    OpenBSD ) default=openbsd ;;
+	    FreeBSD ) default=freebsd ;;
+	esac
 	config_host ${default}
 	;;
 esac
