@@ -77,4 +77,10 @@ west #
  add sourceip-vs-interface-ip
 "sourceip-vs-interface-ip": failed to add connection: cannot specify leftinterface-ip=1.2.3.4/32 and leftssourceip=1.0.0.1
 west #
+ add sourceip-ipv4-ipv6-ipv4
+"sourceip-ipv4-ipv6-ipv4": failed to add connection: leftsourceip=1.0.0.1,1::1,1.0.0.2 invalid, multiple IPv4 addresses (1.0.0.1 and 1.0.0.2) specified
+west #
+ add sourceip-ipv6-ipv4-ipv6
+"sourceip-ipv6-ipv4-ipv6": failed to add connection: leftsourceip=1::1,1.0.0.1,1::2 invalid, multiple IPv6 addresses (1::1 and 1::2) specified
+west #
  

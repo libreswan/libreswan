@@ -31,3 +31,6 @@ add sourceip-inside-selector-protocol-port
 add sourceip-outside-selector-protocol-port
 
 add sourceip-vs-interface-ip
+
+add sourceip-ipv4-ipv6-ipv4
+add sourceip-ipv6-ipv4-ipv6
