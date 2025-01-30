@@ -1,7 +1,7 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n west
-# remove CA cert
-ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+/testing/guestbin/swan-prep --nokeys
+# no CA, no peer cert
+/testing/x509/import.sh real/mainca/east.end.p12
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add ikev2-westnet-eastnet-x509-cr
