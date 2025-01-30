@@ -56,6 +56,7 @@
 kvmplutotest	check-01			good
 kvmplutotest	check-02-enumcheck		good
 kvmplutotest	check-03-vendoridcheck		good
+kvmplutotest	check-04-pki			wip
 
 # interconnect
 kvmplutotest	check-10-network-fedora		good
