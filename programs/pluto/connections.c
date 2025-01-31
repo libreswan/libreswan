@@ -1653,11 +1653,27 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					 src->leftright, src->sourceip);
 		}
 		/* valid? */
+		ip_address seen[IP_INDEX_ROOF] = {0};
 		FOR_EACH_ITEM(sourceip, &child_config->sourceip) {
+
+			/* i.e., not :: and not 0.0.0.0 */
 			if (!address_is_specified(*sourceip)) {
 				return diag("%ssourceip=%s invalid, must be a valid address",
 					    leftright, src->sourceip);
 			}
+
+			/* i.e., not 1::1,1::2 */
+			const struct ip_info *afi = address_type(sourceip);
+			PASSERT(logger, afi != NULL); /* since specified */
+			if (seen[afi->ip_index].is_set) {
+				address_buf sb, ipb;
+				return diag("%ssourceip=%s invalid, multiple %s addresses (%s and %s) specified",
+					    leftright, src->sourceip, afi->ip_name,
+					    str_address(&seen[afi->ip_index], &sb),
+					    str_address(sourceip, &ipb));
+			}
+			seen[afi->ip_index] = (*sourceip);
+
 			if (child_config->selectors.len > 0) {
 				/* skip aliases; they hide the selectors list */
 				if (wm->connalias != NULL) {
@@ -1666,12 +1682,18 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				bool within = false;
 				FOR_EACH_ITEM(sel, &child_config->selectors) {
 					/*
-					 * Only compare the address against
-					 * the selector's address range (not
-					 * the /protocol/port).  For instance
-					 * when the selector is
-					 * 1::/128/tcp/22, the sourceip=1:: is
-					 * still ok.
+					 * Only compare the address
+					 * against the selector's
+					 * address range (not the
+					 * /protocol/port).
+					 *
+					 * For instance when the
+					 * selector is:
+					 *
+					 *   1::/128/tcp/22
+					 *
+					 * the sourceip=1:: is still
+					 * ok.
 					 */
 					if (address_in_selector_range(*sourceip, *sel)) {
 						within = true;
@@ -4764,14 +4786,15 @@ struct connection **sort_connections(void)
 	return connections;
 }
 
-ip_address end_sourceip(const ip_selector *client, const struct child_end_config *end)
+/*
+ * Find a sourceip for the address family.
+ */
+ip_address config_end_sourceip(const ip_selector client, const struct child_end_config *end)
 {
-	/*
-	 * Find a sourceip within the client.
-	 */
+	const struct ip_info *afi = selector_info(client);
 	FOR_EACH_ITEM(sourceip, &end->sourceip) {
-		if (address_in_selector(*sourceip, *client)) {
-			return (*sourceip);
+		if (afi == address_type(sourceip)) {
+			return *sourceip;
 		}
 	}
 
@@ -4783,7 +4806,7 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	/*
 	 * Find a configured sourceip within the SPD's client.
 	 */
-	ip_address sourceip = end_sourceip(&spde->client, spde->child->config);
+	ip_address sourceip = config_end_sourceip(spde->client, spde->child->config);
 	if (sourceip.is_set) {
 		return sourceip;
 	}

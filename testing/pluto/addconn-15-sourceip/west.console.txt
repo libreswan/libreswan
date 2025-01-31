@@ -44,7 +44,7 @@ west #
 west #
  add sourceip-outside-subnets
 "sourceip-outside-subnets/1x0": added IKEv2 connection
-"sourceip-outside-subnets/1x0": 2.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"sourceip-outside-subnets/1x0": 2.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=1.0.0.1; their_ip=unset;
 west #
  add sourceip-inside-subnets
 "sourceip-inside-subnets/1x0": added IKEv2 connection
@@ -62,19 +62,25 @@ west #
 west #
  add sourceip-inside-subnet-protoport
 "sourceip-inside-subnet-protoport": added IKEv2 connection
-"sourceip-inside-subnet-protoport": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"sourceip-inside-subnet-protoport": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=1.0.0.1; their_ip=unset;
 west #
  add sourceip-outside-subnet-protoport
 "sourceip-outside-subnet-protoport": failed to add connection: leftsourceip=1.0.0.1 invalid, address 1.0.0.1 is not within leftsubnet=1.2.3.4/32
 west #
  add sourceip-inside-selector-protocol-port
 "sourceip-inside-selector-protocol-port": added IKEv2 connection
-"sourceip-inside-selector-protocol-port": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"sourceip-inside-selector-protocol-port": 1.0.0.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=1.0.0.1; their_ip=unset;
 west #
  add sourceip-outside-selector-protocol-port
 "sourceip-outside-selector-protocol-port": failed to add connection: leftsourceip=1.0.0.1 invalid, address 1.0.0.1 is not within leftsubnet=1.2.3.4/32/tcp/22
 west #
  add sourceip-vs-interface-ip
 "sourceip-vs-interface-ip": failed to add connection: cannot specify leftinterface-ip=1.2.3.4/32 and leftssourceip=1.0.0.1
+west #
+ add sourceip-ipv4-ipv6-ipv4
+"sourceip-ipv4-ipv6-ipv4": failed to add connection: leftsourceip=1.0.0.1,1::1,1.0.0.2 invalid, multiple IPv4 addresses (1.0.0.1 and 1.0.0.2) specified
+west #
+ add sourceip-ipv6-ipv4-ipv6
+"sourceip-ipv6-ipv4-ipv6": failed to add connection: leftsourceip=1::1,1.0.0.1,1::2 invalid, multiple IPv6 addresses (1::1 and 1::2) specified
 west #
  

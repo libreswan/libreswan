@@ -156,7 +156,7 @@ static struct connection_client connection_config_client(const struct connection
 		.virt = this->child.config->virt,
 		.host = &this->host,
 		.child = &this->child,
-		.sourceip = end_sourceip(this_selector, this->child.config),
+		.sourceip = config_end_sourceip(*this_selector, this->child.config),
 		.is_addresspool = (this->child.config->addresspools.len > 0),
 	};
 	return client;

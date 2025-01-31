@@ -1081,7 +1081,7 @@ void spd_db_rehash_remote_client(struct spd *sr);
 
 bool dpd_active_locally(const struct connection *c);
 
-ip_address end_sourceip(const ip_selector *client, const struct child_end_config *end);
+ip_address config_end_sourceip(const ip_selector client, const struct child_end_config *end);
 ip_address spd_end_sourceip(const struct spd_end *spde);
 
 PRINTF_LIKE(4)
