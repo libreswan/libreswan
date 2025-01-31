@@ -17,6 +17,13 @@ IP 192.1.2.254.44500 > 192.1.2.23.ipsec-nat-t: NONESP-encap: isakmp: child_sa  i
 IP 192.1.2.254.44500 > 192.1.2.23.ipsec-nat-t: NONESP-encap: isakmp: child_sa  ikev2_auth[I]
 IP 192.1.2.254.44500 > 192.1.2.23.ipsec-nat-t: NONESP-encap: isakmp: child_sa  ikev2_auth[I]
 IP 192.1.2.254.44500 > 192.1.2.23.ipsec-nat-t: NONESP-encap: isakmp: child_sa  ikev2_auth[I]
+IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: NONESP-encap: isakmp: child_sa  ikev2_auth[R]
+IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: NONESP-encap: isakmp: child_sa  ikev2_auth[R]
+IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: NONESP-encap: isakmp: child_sa  ikev2_auth[R]
+IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: NONESP-encap: isakmp: child_sa  ikev2_auth[R]
+IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: NONESP-encap: isakmp: child_sa  ikev2_auth[R]
+IP 192.1.2.254.44500 > 192.1.2.23.ipsec-nat-t: UDP-encap: ESP(spi=0xSPISPI,seq=0x1), length XXX
+IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: UDP-encap: ESP(spi=0xSPISPI,seq=0x1), length XXX
 nic #
  ../../guestbin/nic-nat.sh 192.1.3.0/24 192.1.2.254 50000 1
 192.1.3.0/24:500 -udp-> 192.1.2.254:50500-50500

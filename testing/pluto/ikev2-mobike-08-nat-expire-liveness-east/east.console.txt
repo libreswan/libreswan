@@ -66,9 +66,9 @@ XfrmAcquireError        	0
 XfrmOutStateDirError    	0
 XfrmInStateDirError     	0
 east #
- # the ping stops liveness
+ # the ping stops liveness; this is a debug message!
 east #
- ../../guestbin/wait-for-pluto.sh --match 'recent IPsec traffic' | sed -e 's/ [^ ]* seconds/ NNN seconds/g'
+ ../../guestbin/wait-for.sh --match 'recent IPsec traffic' -- cat /tmp/pluto.log | sed -e 's/ [^ ]* seconds/ NNN seconds/g'
 | liveness: #2 scheduling next check for 192.1.2.254:EPHEM in NNN seconds (recent IPsec traffic was NNN seconds ago)
 east #
  # but no further pings let liveness continue
