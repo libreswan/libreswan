@@ -5,7 +5,7 @@ east #
 east #
  # add second identity/cert
 east #
- #ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/othereast.p12
+ #/testing/x509/import.sh real/otherca/othereast.all.p12
 east #
  ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/north.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
