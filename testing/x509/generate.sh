@@ -68,8 +68,7 @@ serial()
     local certdir=$1 ; shift
     local serial
     read serial < ${certdir}/root.serial
-    serial=$((serial + 1))
-    echo ${serial} > ${certdir}/root.serial
+    echo $((serial + 1)) > ${certdir}/root.serial
     echo ${serial}
 }
 
@@ -265,7 +264,7 @@ while read base domain ca param ; do
 
     log=${certdir}/root.log
 
-    echo 0           > ${certdir}/root.serial
+    echo 1           > ${certdir}/root.serial	# next
 
     echo "${param}"  > ${certdir}/root.param
     echo "${domain}" > ${certdir}/root.domain
