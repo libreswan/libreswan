@@ -1,12 +1,13 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec certutil -A -i /testing/x509/real/mainca/root.cert -n "mainca" -t "CT,,"
+ /testing/x509/import.sh real/mainca/root.cert
+ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
 west #
- ipsec pk12util -W foobar -i /testing/x509/real/badca/badwest.all.p12
+ /testing/x509/import.sh real/badca/badwest.all.p12
+ipsec pk12util -w nss-pw -i real/badca/badwest.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-west #
- ipsec certutil -M -n badca -t CT,,
+ipsec certutil -M -n badca -t CT,,
 west #
  # check
 west #

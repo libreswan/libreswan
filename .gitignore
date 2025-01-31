@@ -24,7 +24,6 @@ testing/x509/*/*
 testing/x509/index.*
 testing/x509/crlnumber.*
 testing/x509/serial*
-testing/x509/nss-pw
 osxApp/build
 Makefile.inc.local
 .ycm_extra_conf.py

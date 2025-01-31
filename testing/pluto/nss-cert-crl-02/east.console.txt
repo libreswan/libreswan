@@ -5,6 +5,15 @@ east #
 east #
  ipsec certutil -D -n west
 east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+Libreswan test CA for mainca - Libreswan                     CT,, 
+road                                                         P,,  
+north                                                        P,,  
+nic                                                          P,,  
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #

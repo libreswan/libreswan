@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+east #
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+mainca                                                       CT,, 
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/wait-for-pluto.sh '#1: .* established IKE SA'
+"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer using preloaded certificate '@west' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
+east #
+ 

@@ -1,5 +1,9 @@
+/testing/guestbin/swan-prep --nokeys
+
 # we want to load east's certificate for west
-/testing/guestbin/swan-prep --x509 --x509name east
+/testing/x509/import.sh real/mainca/east.end.cert
+/testing/x509/import.sh real/mainca/root.cert
+
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

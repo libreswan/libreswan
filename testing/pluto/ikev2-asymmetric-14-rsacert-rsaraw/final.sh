@@ -1,1 +1,2 @@
-grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" OUTPUT/*pluto.log
+#../../guestbin/wait-for-pluto.sh '#1: .* established IKE SA'
+

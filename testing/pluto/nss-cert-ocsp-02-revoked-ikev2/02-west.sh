@@ -1,5 +1,8 @@
-/testing/guestbin/swan-prep --x509 --revoked
+/testing/guestbin/swan-prep --x509
 ipsec certutil -D -n east
+ipsec pk12util -w /testing/x509/nss-pw -i /testing/x509/pkcs12/mainca/revoked.p12
+ipsec certutil -L
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits

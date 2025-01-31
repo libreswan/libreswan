@@ -56,6 +56,7 @@
 kvmplutotest	check-01			good
 kvmplutotest	check-02-enumcheck		good
 kvmplutotest	check-03-vendoridcheck		good
+kvmplutotest	check-04-pki			wip
 
 # interconnect
 kvmplutotest	check-10-network-fedora		good
@@ -172,6 +173,7 @@ kvmplutotest	ikev2-04-basic-x509-no-ca		good
 kvmplutotest	ikev2-04-basic-x509-no-ca-02		good
 kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch	good
 kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch-02	good
+kvmplutotest	ikev2-x509-pluto-05-forged		skiptest	github/
 kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-05-basic-psk-oneconf-namespaces	good
 kvmplutotest	ikev2-05-basic-psk-missing-initiator	good
@@ -761,8 +763,8 @@ kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good
 kvmplutotest	ikev2-asymmetric-17-auth-mismatch-reverse	good
 
 # test harnass needs to be able to install raw keys and certs
-kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	wip
-kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	wip
+kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	good
+kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	good
 
 
 # RFC 3706 DPD

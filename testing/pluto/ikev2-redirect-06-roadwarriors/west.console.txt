@@ -1,5 +1,12 @@
-/testing/guestbin/swan-prep --x509 --x509name east
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ # pretend to be EAST
+west #
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  ../../guestbin/ip.sh route del 192.0.2.0/24
 west #

@@ -1,10 +1,10 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-east #
- ipsec certutil -M -n mainca -t CT,,
+ipsec certutil -M -n mainca -t CT,,
 east #
  # check
 east #

@@ -1,11 +1,9 @@
 /testing/guestbin/swan-prep --nokeys
 
 # pull in the full east
-ipsec pk12util -W foobar -i /testing/x509/real/mainca/east.all.p12
-ipsec certutil -M -n mainca -t CT,,
+/testing/x509/import.sh real/mainca/east.all.p12
 
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/badca/badeast.all.p12
-ipsec certutil -M -n badca -t CT,,
+/testing/x509/import.sh real/badca/badeast.all.p12
 # check
 ipsec certutil -L
 

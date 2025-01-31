@@ -1,0 +1,343 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec certutil -A -i /testing/x509/cacerts/mainca.crt -n mainca -t "CT,,"
+west #
+ ipsec pk12util -W foobar -i /testing/x509/pkcs12/mainca/west.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+mainca                                                       CT,, 
+west                                                         u,u,u
+west #
+ ipsec certutil -L -n mainca | sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d'
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 0 (0x0)
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is a CA with no maximum path length.
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
+                    CRL Signing
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+                Code Signing Certificate
+                OCSP Responder Certificate
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Valid CA
+            Trusted CA
+            Trusted Client CA
+        Email Flags:
+        Object Signing Flags:
+west #
+ ipsec certutil -L -n west | sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d'
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 4 (0x4)
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west@testing.libreswan.org,CN=west.testing.libreswan
+            .org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Subject Alt Name
+            DNS name: "west.testing.libreswan.org"
+            RFC822 Name: "west@testing.libreswan.org"
+            IP Address: 192.1.2.45
+            IP Address: 2001:db8:1:2::45
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+west #
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n otherca -t "CT,,"
+west #
+ ipsec pk12util -W foobar -i /testing/x509/pkcs12/otherca/otherwest.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+otherca                                                      CT,, 
+otherwest                                                    u,u,u
+west #
+ ipsec certutil -L -n otherca | sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d'
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 0 (0x0)
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU
+            =Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is a CA with no maximum path length.
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
+                    CRL Signing
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+                Code Signing Certificate
+                OCSP Responder Certificate
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Valid CA
+            Trusted CA
+            Trusted Client CA
+        Email Flags:
+        Object Signing Flags:
+west #
+ ipsec certutil -L -n otherwest | sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d'
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 51 (0x33)
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-otherwest@testing.libreswan.org,CN=otherwest.other.l
+            ibreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,
+            C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Subject Alt Name
+            DNS name: "otherwest.other.libreswan.org"
+            RFC822 Name: "otherwest@other.libreswan.org"
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+west #
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec certutil -A -i /testing/x509/cacerts/badca.crt -n badca -t "CT,,"
+west #
+ ipsec pk12util -W foobar -i /testing/x509/pkcs12/badca/badwest.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+badca                                                        CT,, 
+badwest                                                      u,u,u
+west #
+ ipsec certutil -L -n badca | sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d'
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 0 (0x0)
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for badca,OU=Te
+            st Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=testing@libreswan.org,CN=Libreswan test CA for badca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
+                    CRL Signing
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+                Code Signing Certificate
+                OCSP Responder Certificate
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Valid CA
+            Trusted CA
+            Trusted Client CA
+        Email Flags:
+        Object Signing Flags:
+west #
+ ipsec certutil -L -n badwest | sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d'
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 59 (0x3b)
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for badca,OU=Te
+            st Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-badwest@testing.libreswan.org,CN=badwest.testing.lib
+            reswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=
+            CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Subject Alt Name
+            DNS name: "badwest.testing.libreswan.org"
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+west #
+ 
