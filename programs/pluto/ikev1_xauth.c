@@ -1743,6 +1743,12 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			/*
 			 * When the sourceip set in the config file,
 			 * log the generated value.
+			 *
+			 * XXX: actually the opposite!  When sourceip=
+			 * is absent from the config file, log that
+			 * that the MODE_CFG address is being used as
+			 * the SOURCEIP.  This is because sourceip=
+			 * overrides the MODE_CFG address.
 			 */
 			if (c->local->config->child.sourceip.len == 0) {
 				ip_address sourceip = spd_end_sourceip(c->spd->local);
