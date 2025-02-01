@@ -384,11 +384,16 @@ def writeout_pkcs12(path, name, cert, key, ca_cert):
 def create_mainca_end_certs(mainca_end_certs):
     """ Create the core set of end certs from mainca
     """
-    serial = 2
+
+    # load the next serial file in the CA's directory
+    serial = 0
+    with open("real/mainca/root.serial", "r") as f:
+        serial = int(f.read())
+
     print("creating mainca's end certs")
     for name in mainca_end_certs:
         # put special cert handling here
-        print(" - creating %s"% name)
+        print(" - creating %s %d" % (name, serial))
         keysize = 3072
         if name == 'smallkey':
             keysize = 1024
@@ -434,6 +439,10 @@ def create_mainca_end_certs(mainca_end_certs):
         writeout_pkcs12("pkcs12/"+ signer + '/', name,
                         cert, key, ca_certs[signer][0])
         serial += 1
+
+    # update the next serial file in the CA's directory
+    with open("real/mainca/root.serial", "w") as f:
+        f.write("%d\n" % serial)
 
 
 def create_chained_certs(chain_ca_roots, max_path, prefix=''):

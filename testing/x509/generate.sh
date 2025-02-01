@@ -68,8 +68,7 @@ serial()
     local certdir=$1 ; shift
     local serial
     read serial < ${certdir}/root.serial
-    serial=$((serial + 1))
-    echo ${serial} > ${certdir}/root.serial
+    echo $((serial + 1)) > ${certdir}/root.serial
     echo ${serial}
 }
 
@@ -158,15 +157,17 @@ generate_end_cert()
 
     local serial=$(serial ${certdir})
     local cn=${cert}.${domain}		# common name
-    local email=user-${cert}@${domain}	# email
+    local e=user-${cert}@${domain}	# email
 
     # NSS wants subject to be local..global/root
-    local subject="E=${email}, CN=${cn}, ${SUBJECT}"
+    local subject="E=${e}, CN=${cn}, ${SUBJECT}"
     local hash_alg=SHA256
     local ca=n
 
     # build the SAN
-    local san=dns:${cn},email:${email}
+    #
+    # Note: SAN's EMAIL and DN's E are deliberately different.
+    local san=dns:${cn},email:${cert}@${domain}
     case ${cert} in
 	*east ) san="${san},ip:${east_ipv4},ip:${east_ipv6}" ;;
 	*west ) san="${san},ip:${west_ipv4},ip:${west_ipv6}" ;;
@@ -263,7 +264,7 @@ while read base domain ca param ; do
 
     log=${certdir}/root.log
 
-    echo 0           > ${certdir}/root.serial
+    echo 1           > ${certdir}/root.serial	# next
 
     echo "${param}"  > ${certdir}/root.param
     echo "${domain}" > ${certdir}/root.domain

@@ -1,6 +1,19 @@
 #!/bin/sh
 
-# this assumes nss-pki.sh
+if test $# -lt 1 ; then
+    echo "usage: $(basename $0) <file-generated-by-generate.sh>" 1>&2
+    exit 1
+fi
+
+certutil='ipsec certutil'
+pk12util='ipsec pk12util'
+
+if test -r /run/pluto/nsspw ; then
+    certutil="${certutil} -f /run/pluto/nsspw"
+    pk12util="${pk12util} -k /run/pluto/nsspw"
+fi
+
+# this assumes generate.sh
 
 cd $(dirname $0)
 
@@ -18,43 +31,43 @@ run()
 import_root_p12()
 {
     ca=$(basename $(dirname $1))
-    run ipsec pk12util -w nss-pw -i $1
-    run ipsec certutil -M -n "${ca}" -t CT,,
+    run ${pk12util} -w nss-pw -i $1
+    run ${certutil} -M -n "${ca}" -t CT,,
 }
 
 import_root_cert()
 {
     ca=$(basename $(dirname $1))
-    run ipsec certutil -A -n "${ca}" -t CT,, -i $1
+    run ${certutil} -A -n "${ca}" -t CT,, -i $1
 }
 
 import_end_p12()
 {
     n=$(basename $1 .all.p12)
     ca=$(basename $(dirname $1))
-    run ipsec pk12util -w nss-pw -i $1
+    run ${pk12util} -w nss-pw -i $1
 }
 
 import_all_p12()
 {
     n=$(basename $1 .all.p12)
     ca=$(basename $(dirname $1))
-    run ipsec pk12util -w nss-pw -i $1
-    run ipsec certutil -M -n "${ca}" -t CT,,
+    run ${pk12util} -w nss-pw -i $1
+    run ${certutil} -M -n "${ca}" -t CT,,
 }
 
 import_end_cert()
 {
     n=$(basename $1 .end.cert)
-    run ipsec certutil -A -n "${n}" -t ,, -i $1
+    run ${certutil} -A -n "${n}" -t ,, -i $1
 }
 
 import_all_cert()
 {
     n=$(basename $1 .all.cert)
     ca=$(basename $(dirname $1))
-    run ipsec certutil -A -n "${n}" -t ,, -i $1
-    run ipsec certutil -M -n "${ca}" -t CT,,
+    run ${certutil} -A -n "${n}" -t ,, -i $1
+    run ${certutil} -M -n "${ca}" -t CT,,
 }
 
 for file in "$@" ; do
