@@ -1,5 +1,6 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil  -D -n mainca
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/west.end.cert
+/testing/x509/import.sh real/mainca/`hostname`.end.p12
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-x509-nosend
