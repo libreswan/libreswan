@@ -1,14 +1,10 @@
+# scrub the nssdb
 /testing/guestbin/swan-prep --nokeys
-
-# scrub the nssdb (is there a swan-prep option?)
-rm /etc/ipsec.d/*.db
-modutil -create -dbdir /etc/ipsec.d -force
 
 key=east
 
 # start with the raw key
 cp ../../x509/keys/${key}.key OUTPUT/
-cat OUTPUT/${key}.key
 # create a CSR and using that ...
 openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}
@@ -21,7 +17,6 @@ key=west
 
 # start with the raw key
 cp ../../x509/keys/${key}.key OUTPUT/
-cat OUTPUT/${key}.key
 # create a CSR and using that ...
 openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}
