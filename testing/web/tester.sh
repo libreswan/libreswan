@@ -147,6 +147,8 @@ STATUS "config loaded: summarydir=${summarydir} rutdir=${rutdir} prefix=${prefix
 
 STATUS "updating repository"
 
+# in case scripts deleted something
+git -C ${rutdir} reset --hard HEAD
 git -C ${rutdir} fetch || true
 git -C ${rutdir} merge --quiet --ff-only
 
