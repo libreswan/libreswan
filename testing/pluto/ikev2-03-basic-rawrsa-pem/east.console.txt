@@ -1,22 +1,13 @@
-/testing/guestbin/swan-prep --nokeys
+# scrub the nssdb
+east #
+ /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
-east #
- # scrub the nssdb (is there a swan-prep option?)
-east #
- rm /etc/ipsec.d/*.db
-east #
- modutil -create -dbdir /etc/ipsec.d -force
 east #
  key=east
 east #
  # start with the raw key
 east #
  cp ../../x509/keys/${key}.key OUTPUT/
-east #
- cat OUTPUT/${key}.key
------BEGIN RSA PRIVATE KEY-----
-...
------END RSA PRIVATE KEY-----
 east #
  # create a CSR and using that ...
 east #
@@ -40,11 +31,6 @@ east #
  # start with the raw key
 east #
  cp ../../x509/keys/${key}.key OUTPUT/
-east #
- cat OUTPUT/${key}.key
------BEGIN RSA PRIVATE KEY-----
-...
------END RSA PRIVATE KEY-----
 east #
  # create a CSR and using that ...
 east #

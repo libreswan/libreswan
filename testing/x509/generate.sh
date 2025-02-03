@@ -217,13 +217,12 @@ generate_end_cert()
 	-n ${cert} \
 	-a > ${certdir}/${cert}.end.cert # PEM
 
-    # private key
+    # private key (tests expect it unprotected)
 
     openssl \
 	pkcs12 \
 	-passin pass:${PASSPHRASE} \
-	-passout pass:${PASSPHRASE} \
-	-password pass:${PASSPHRASE} \
+	-noenc \
 	-nocerts \
 	-in  ${certdir}/${cert}.all.p12 \
 	-out ${certdir}/${cert}.end.key
@@ -233,8 +232,7 @@ generate_end_cert()
     openssl \
 	pkcs12 \
 	-export \
-	-passin pass:${PASSPHRASE} \
-	-password pass:${PASSPHRASE} \
+	-passout pass:${PASSPHRASE} \
 	-in ${certdir}/${cert}.end.cert \
 	-inkey ${certdir}/${cert}.end.key \
 	-name ${cert} \

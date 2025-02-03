@@ -1,8 +1,12 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil  -D -n mainca
-certutil: could not find certificate named "mainca": SEC_ERROR_...
+ /testing/x509/import.sh real/mainca/east.end.cert
+ipsec certutil -A -n east -t ,, -i real/mainca/east.end.cert
+west #
+ /testing/x509/import.sh real/mainca/`hostname`.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # confirm that the network is alive
 west #
