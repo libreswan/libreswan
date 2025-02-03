@@ -46,7 +46,7 @@ echo_2_basic_constraints()
     # -2 - basic constraints
     echo ${ca} # Is this a CA certificate [y/N]?
     echo       # Enter the path length constraint, enter to skip
-    echo       # Is this a critical extension [y/N]?
+    echo n     # Is this a critical extension [y/N]?
 }
 
 echo_4_crl_constraints()
@@ -57,10 +57,19 @@ echo_4_crl_constraints()
     echo http://nic.testing.libreswan.org/revoked.crl  # Enter data:
     echo 0     # Select one of the following general name type: 0 - Any other number to finish
     echo 0     # Select one of the following for the reason flags: 0 - unused
-    echo       # Enter value for the CRL Issuer name:
     echo 0     # Select one of the following general name type: 0 - Any other number to finish
     echo n     # Enter another value for the CRLDistributionPoint extension [y/N]?
     echo n     # Is this a critical extension [y/N]?
+}
+
+echo_extAIA_authority_information_access()
+{
+    echo 2	# Enter access method type for ...: 2 - OCSP
+    echo 7	# Select one of the following general name type: 7 - uniformResourceidentifier
+    echo http://nic.testing.libreswan.org:2560
+    echo 0	# Select one of the following general name type: 0 - Any other number to finish
+    echo n	# Add another location to the Authority Information Access extension [y/N]
+    echo n	# Is this a critical extension [y/N]?
 }
 
 serial()
@@ -94,15 +103,12 @@ generate_root_cert()
 
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
-    local cfg=${certdir}/root}.cfg
+    local cfg=${certdir}/root.cfg
     {
 	echo_2_basic_constraints ${ca}
 	echo_4_crl_constraints
+	echo_extAIA_authority_information_access
     } > ${cfg}
-
-    local crl_distribution_point_type=1 # full name
-    local crl_general_name_type=7 # URI
-    local crl_distribution_point=http://nic.testing.libreswan.org/revoked.crl
 
     certutil -S -d ${certdir} \
 	     -m ${serial} \
@@ -116,7 +122,10 @@ generate_root_cert()
 	     -t "CT,C,C" \
 	     -z ${NOISE_FILE} \
 	     ${param} \
-	     -2 -4 < ${cfg}
+	     -2 \
+	     -4 \
+	     --extAIA \
+	     < ${cfg}
 
     # root key + cert
 
@@ -134,6 +143,13 @@ generate_root_cert()
 	-n ${rootname} \
 	-a > ${certdir}/root.cert # PEM
 
+    # print the chain
+
+    chain=$(certutil \
+		-O \
+		-d ${certdir} \
+		-n ${rootname}) || exit 1
+    printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
 )
 
 east_ipv4=192.1.2.23
@@ -156,8 +172,8 @@ generate_end_cert()
     local domain ; read domain < ${certdir}/root.domain
 
     local serial=$(serial ${certdir})
-    local cn=${cert}.${domain}		# common name
-    local e=user-${cert}@${domain}	# email
+    local cn=${cert}.${domain}			# common name
+    local e=user-${cert}@testing.libreswan.org	# email
 
     # NSS wants subject to be local..global/root
     local subject="E=${e}, CN=${cn}, ${SUBJECT}"
@@ -166,7 +182,7 @@ generate_end_cert()
 
     # build the SAN
     #
-    # Note: SAN's EMAIL and DN's E are deliberately different.
+    # Note: SAN's EMAIL and DN's E are unexplainably different.
     local san=dns:${cn},email:${cert}@${domain}
     case ${cert} in
 	*east ) san="${san},ip:${east_ipv4},ip:${east_ipv6}" ;;
@@ -182,6 +198,7 @@ generate_end_cert()
     {
 	echo_2_basic_constraints ${ca}
 	echo_4_crl_constraints
+	echo_extAIA_authority_information_access
     } > ${cfg}
 
     certutil -S \
@@ -192,14 +209,17 @@ generate_end_cert()
 	     -w ${NOW_OFFSET_MONTHS} \
 	     -v ${NOW_VALID_MONTHS} \
 	     -c "${rootname}" \
-	     -t "P,," \
+	     -t P,, \
 	     -m ${serial} \
 	     -g 3072 \
 	     --extSAN ${san} \
 	     ${param} \
-	     --keyUsage nonRepudiation,digitalSignature,keyEncipherment \
-	     --extKeyUsage serverAuth \
-	     -2 -4 < ${cfg}
+	     --keyUsage digitalSignature \
+	     --extKeyUsage serverAuth,clientAuth \
+	     -2 \
+	     -4 \
+	     --extAIA \
+	     < ${cfg}
 
     # private key + cert chain
 
@@ -240,12 +260,11 @@ generate_end_cert()
 
     # print the chain
 
-    echo 1>&3
-    certutil \
-	-O \
-	-d ${certdir} \
-	-n ${cert} \
-	| sed -e 's/^/  /' 1>&3
+    chain=$(certutil \
+		-O \
+		-d ${certdir} \
+		-n ${cert}) || exit 1
+    printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
 
 )
 
@@ -270,12 +289,12 @@ while read base domain ca param ; do
 
     # BASE DOMAIN CA? PARAM...
 done <<EOF
-fake/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
-fake/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
-real/badca     testing.libreswan.org   n  -k rsa -Z SHA256
 real/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
 real/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
 real/otherca   other.libreswan.org     y  -k rsa -Z SHA256
+fake/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
+fake/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
+real/badca     testing.libreswan.org   n  -k rsa -Z SHA256
 EOF
 
 # generate root certificates
