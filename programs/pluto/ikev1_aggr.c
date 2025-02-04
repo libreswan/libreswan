@@ -1039,12 +1039,6 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	/*
-	 * Save last IV from phase 1 so it can be restored later so
-	 * anything between the end of phase 1 and the start of phase
-	 * 2 i.e. mode config payloads etc. will not lose our IV
-	 */
-	update_aggr_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack inR1_outI2 */
 	ldbg(ike->sa.logger, "phase 1 IV completed");
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
