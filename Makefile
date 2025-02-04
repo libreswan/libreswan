@@ -117,7 +117,6 @@ distclean:
 	: generated test keys
 	: careful output mixed with repo files
 	rm -rf testing/x509/*/
-	rm -f testing/x509/nss-pw
 	rm -f testing/baseconfigs/all/etc/bind/signed/*.signed
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
