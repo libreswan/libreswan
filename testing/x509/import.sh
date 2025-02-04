@@ -53,7 +53,7 @@ import_all_cert()
 {
     n=$(basename $1 .all.cert)
     ca=$(basename $(dirname $1))
-    run ${certutil} -A -n "${n}" -t ,, -i $1
+    run ${certutil} -A -n "${n}" -t P,, -i $1
     run ${certutil} -M -n "${ca}" -t CT,,
 }
 
