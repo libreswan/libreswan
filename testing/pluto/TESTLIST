@@ -1647,13 +1647,17 @@ kvmplutotest	pfkeyv2-tunnel-6in6-ah-ikev2		good
 kvmplutotest	pfkeyv2-tunnel-6in6-esp-ipcomp-ikev2	good	github/713
 kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		good
 
-kvmplutotest	interop-ikev1-racoon-01-aggr		good
-kvmplutotest	interop-ikev1-racoon-02-main		good
-
 kvmplutotest	pfkeyv2-esn-esp-freebsd			good
 kvmplutotest	pfkeyv2-esn-ah-freebsd			good
 
 kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
+
+# Racoon interop
+
+kvmplutotest	interop-racoon-10-aggr-initiator-ikev1		good
+kvmplutotest	interop-racoon-11-aggr-responder-ikev1		good
+kvmplutotest	interop-racoon-20-main-initiator-ikev1		good
+kvmplutotest	interop-racoon-21-main-responder-ikev1		good
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01-iked-responder		good

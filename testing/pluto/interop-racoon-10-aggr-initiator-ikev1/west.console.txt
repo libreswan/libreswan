@@ -1,0 +1,66 @@
+../../guestbin/prep.sh
+west.racoon.conf -> /etc/racoon/racoon.conf
+west.psk.txt -> /etc/racoon/psk.txt
+west #
+ left=192.1.2.45
+west #
+ right=192.1.2.23
+west #
+ leftsubnet=192.0.1.0/24
+west #
+ rightsubnet=192.0.2.0/24
+west #
+ racoon -l /tmp/racoon.log
+west #
+ # create a partial state on east, don't hold the hack for retransmit
+west #
+ racoonctl establish-sa -w isakmp inet ${left} ${right}
+VPN connexion established
+west #
+ echo "spdadd ${leftsubnet}[any] ${rightsubnet}[any] any -P out ipsec esp/tunnel/${left}-${right}/require;" | setkey -c
+west #
+ echo "spdadd ${rightsubnet}[any] ${leftsubnet}[any] any -P in  ipsec esp/tunnel/${right}-${left}/require;" | setkey -c
+west #
+ racoonctl establish-sa -w esp inet ${leftsubnet}/255 ${rightsubnet}/255 any
+Phase 2 established : 192.1.2.45[500] -> 192.1.2.23[500]
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+192.1.2.23 192.1.2.45 
+	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=0(0x00000000)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=4 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 43200(s)	soft: 34560(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
+192.1.2.45 192.1.2.23 
+	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=0(0x00000000)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=4 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 43200(s)	soft: 34560(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
+	in ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/require
+	spid=2 seq=1 pid=PID
+	refcnt=0
+192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
+	out ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/require
+	spid=1 seq=0 pid=PID
+	refcnt=0
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ 
