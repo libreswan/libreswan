@@ -53,6 +53,8 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike);
 
 /* macros to manipulate IVs in state */
 
+void update_v1_phase_1_iv(struct ike_sa *ike, struct crypt_mac iv, where_t where);
+
 struct crypt_mac new_phase2_iv(const struct ike_sa *ike, const msgid_t msgid,
 			       const char *why, where_t where);
 

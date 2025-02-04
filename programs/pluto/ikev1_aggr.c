@@ -78,23 +78,6 @@ static dh_shared_secret_cb aggr_inR1_outI2_crypto_continue;	/* forward decl and 
 static ke_and_nonce_cb aggr_outI1_continue;	/* type assertion */
 static ke_and_nonce_cb aggr_outI1_continue_tail;
 
-static void update_aggr_iv(struct ike_sa *ike,
-			   struct crypt_mac iv,
-			   where_t where)
-{
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam_string(buf, "updating Aggressive Mode IKE IV from ");
-		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
-		jam_string(buf, " to ");
-		jam_hex_hunk(buf, iv);
-		jam_string(buf, " ");
-		jam_where(buf, where);
-	}
-	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
-	ike->sa.st_v1_phase_1_iv = iv;
-
-}
-
 /*
  * Initiate an Oakley Aggressive Mode exchange.
  * --> HDR, SA, KE, Ni, IDii
@@ -552,7 +535,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	 * point looking for a close_and_encrypt_v1_message() call).
 	 */
 
-	update_aggr_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /* inI1-outR1 */
+	update_v1_phase_1_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /* inI1-outR1 */
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(ike, md);
@@ -875,7 +858,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
-	update_aggr_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /* inR1-outI2 */
+	update_v1_phase_1_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /* inR1-outI2 */
 
 	/* HASH_R or SIG_R in */
 
@@ -1097,7 +1080,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 	 * anything between the end of phase 1 and the start of phase
 	 * 2 i.e. mode config payloads etc. will not lose our IV
 	 */
-	update_aggr_iv(ike, md->v1_decrypt_iv, HERE); /* inI2() */
+	update_v1_phase_1_iv(ike, md->v1_decrypt_iv, HERE); /* inI2() */
 	ldbg(ike->sa.logger, "phase 1 IV finalized");
 
 	struct connection *c = ike->sa.st_connection;

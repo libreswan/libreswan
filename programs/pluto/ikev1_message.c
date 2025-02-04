@@ -279,26 +279,20 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 
 	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
-	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
-		jam_string(buf, "Phase 1 IV: ");
-		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
-		jam(buf, " msgid: %"PRIu32, msgid);
-	}
 
 	const struct hash_desc *h = ike->sa.st_oakley.ta_prf->hasher;
 	PASSERT_WHERE(logger, where, h != NULL);
-	struct crypt_hash *ctx =
-		crypt_hash_init("Phase 2 IV", h, logger);
+	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h, logger);
 
 	/* the established phase1 IV */
 	PASSERT_WHERE(logger, where, ike->sa.st_v1_phase_1_iv.len > 0);
-	crypt_hash_digest_hunk(ctx, "PH1_IV", ike->sa.st_v1_phase_1_iv);
+	crypt_hash_digest_hunk(ctx, "Phase 1 IV", ike->sa.st_v1_phase_1_iv);
 
 	/* plus the MSGID in network order */
 	PASSERT_WHERE(logger, where, sizeof(msgid_t) == sizeof(uint32_t));
 	PASSERT_WHERE(logger, where, msgid > 0); /* i.e., not Phase 1! */
 	msgid_t raw_msgid = htonl(msgid);
-	crypt_hash_digest_thing(ctx, "MSGID", raw_msgid);
+	crypt_hash_digest_thing(ctx, "Message ID", raw_msgid);
 
 	/* save in new */
 	struct crypt_mac iv = crypt_hash_final_mac(&ctx);
@@ -309,4 +303,18 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	iv.len = e->enc_blocksize;   /* truncate */
 
 	return iv;
+}
+
+void update_v1_phase_1_iv(struct ike_sa *ike, struct crypt_mac iv, where_t where)
+{
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
+		jam_string(buf, "updating Phase 1 IV .st_v1_phase_1_iv from ");
+		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
+		jam_string(buf, " to ");
+		jam_hex_hunk(buf, iv);
+		jam_string(buf, " ");
+		jam_where(buf, where);
+	}
+	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
+	ike->sa.st_v1_phase_1_iv = iv;
 }
