@@ -127,10 +127,18 @@ struct crypt_mac calc_v1_skeyid_and_iv(struct ike_sa *ike)
 		LDBG_log(ike->sa.logger, "DH_r");
 		LDBG_hunk(ike->sa.logger, gr);
 	}
+
 	struct crypt_hash *ctx = crypt_hash_init("new IV", prf->hasher, ike->sa.logger);
 	crypt_hash_digest_hunk(ctx, "GI", gi);
 	crypt_hash_digest_hunk(ctx, "GR", gr);
 	struct crypt_mac iv = crypt_hash_final_mac(&ctx);
+
+	PASSERT(ike->sa.logger, iv.len >= cipher->enc_blocksize);
+	if (iv.len > cipher->enc_blocksize) {
+		ldbg(ike->sa.logger, "truncating %zd byte IV to block size %zd",
+		     iv.len, cipher->enc_blocksize);
+		iv.len = cipher->enc_blocksize;
+	}
 
 	ike->sa.hidden_variables.st_skeyid_calculated = true;
 	/* XXX: truncate IV.len */

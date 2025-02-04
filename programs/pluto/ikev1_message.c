@@ -220,14 +220,6 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 					    padded_message.len);
 
 	/*
-	 * XXX: should be redundant?  Phase2 truncates the generated
-	 * MAC to length.  What about Phase1 and Phase15 and the
-	 * result returned by encryption?
-	 */
-	PASSERT(logger, iv->len >= e->enc_blocksize);
-	iv->len = e->enc_blocksize;   /* truncate */
-
-	/*
 	 * Finally, re-pad the entire message (header and body) to
 	 * message alignment.
 	 *
@@ -254,6 +246,11 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		LDBG_hunk(logger, *iv);
 	}
 
+	/*
+	 * The IV is always truncated down to .enc_blocksize.
+	 */
+	PASSERT(logger, iv->len == e->enc_blocksize);
+
 	cipher_ikev1(e, ENCRYPT, padded_encrypt,
 		     iv, ike->sa.st_enc_key_nss,
 		     logger);
@@ -277,6 +274,7 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 			       const char *why, where_t where)
 {
 	struct logger *logger = ike->sa.logger;
+	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
 	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
 
@@ -284,8 +282,13 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	PASSERT_WHERE(logger, where, h != NULL);
 	struct crypt_hash *ctx = crypt_hash_init("Phase 2 IV", h, logger);
 
-	/* the established phase1 IV */
-	PASSERT_WHERE(logger, where, ike->sa.st_v1_phase_1_iv.len > 0);
+	/*
+	 * Start with the Phase 1 IV.
+	 *
+	 * This is the output block from the last encrypt/decrypt
+	 * operation.  Hence, it is .enc_blocksize long.
+	 */
+	PASSERT_WHERE(logger, where, ike->sa.st_v1_phase_1_iv.len == e->enc_blocksize);
 	crypt_hash_digest_hunk(ctx, "Phase 1 IV", ike->sa.st_v1_phase_1_iv);
 
 	/* plus the MSGID in network order */
@@ -297,8 +300,12 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	/* save in new */
 	struct crypt_mac iv = crypt_hash_final_mac(&ctx);
 
-	/* truncate it when needed */
-	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
+	/*
+	 * The Phase 2 IV.
+	 *
+	 * Again, this is the size of an encryption block, ready for
+	 * feeding into the encryption algorithm.
+	 */
 	PASSERT_WHERE(ike->sa.logger, where, iv.len >= e->enc_blocksize);
 	iv.len = e->enc_blocksize;   /* truncate */
 
@@ -315,6 +322,13 @@ void update_v1_phase_1_iv(struct ike_sa *ike, struct crypt_mac iv, where_t where
 		jam_string(buf, " ");
 		jam_where(buf, where);
 	}
-	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
+
+	/*
+	 * The Phase 1 IV, is always truncated down to the
+	 * .enc_blocksize.
+	 */
+	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
+	PASSERT_WHERE(ike->sa.logger, where, iv.len == e->enc_blocksize);
+
 	ike->sa.st_v1_phase_1_iv = iv;
 }
