@@ -1144,8 +1144,6 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	update_main_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack main_inR2_outI3_continue */
-
 	/* outI3 is encrypted */
 	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*outI3*/
 	return STF_OK;
@@ -1396,7 +1394,6 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	update_main_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack inI3-outR3 */
 	ldbg(ike->sa.logger, "phase1 IV finished");
 
 	/*
