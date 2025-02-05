@@ -32,7 +32,7 @@ west #
 "nss-cert": added IKEv1 connection
 west #
  ipsec auto --status |grep nss-cert
-"nss-cert": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=otherwest.other.libreswan.org, E=user-otherwest@other.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
+"nss-cert": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=otherwest.other.libreswan.org, E=user-otherwest@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "nss-cert":   mycert=otherwest; my_updown=ipsec _updown;
 "nss-cert":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -47,7 +47,7 @@ west #
 "nss-cert":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "nss-cert":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=otherwest.other.libreswan.org, E=user-otherwest@other.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=otherwest.other.libreswan.org, E=user-otherwest@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 "nss-cert":   dpd: passive; delay:0s; timeout:0s
 "nss-cert":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "nss-cert":   routing: unrouted;
