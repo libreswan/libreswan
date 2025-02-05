@@ -252,7 +252,7 @@ fi
 BACKUP_RESOLV_CONF=@@RUNDIR@@/libreswan-resolv-conf-backup
 ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
-case "${PLUTO_CONN_ADDRFAMILY}" in
+case "${PLUTO_CLIENT_ADDRFAMILY}" in
     ipv4)
 	HOST_FAMILY=4
 	HOST_MAX_CIDR=32
@@ -282,7 +282,7 @@ case "${PLUTO_CLIENT_FAMILY}" in
 	SCOPE=global
 	;;
     *)
-	echo "unknown address family \"${PLUTO_CONN_ADDRFAMILY}\"" >&2
+	echo "unknown address family \"${PLUTO_CLIENT_FAMILY}\"" >&2
 	exit 1
 	;;
 esac
@@ -808,7 +808,7 @@ doroute() {
     fi
 
     if [ "${xfrmi_rule}" = "yes" ]; then
-	espipro="ip -${HOST_FAMILY} route ${cmd} ${PLUTO_PEER}/${HOST_MAX_CIDR} ${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
+	espipro="ip -${FAMILY} route ${cmd} ${PLUTO_PEER}/${HOST_MAX_CIDR} ${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
 	do_ip "${espipro}"
 
 	st=$?
@@ -821,7 +821,7 @@ doroute() {
 	    iprulecmd="add"
 	fi
 
-	ipru="ip -${HOST_FAMILY} rule ${iprulecmd} prio 100 to ${parms}"
+	ipru="ip -${FAMILY} rule ${iprulecmd} prio 100 to ${parms}"
 	ipru="${ipru} fwmark ${PLUTO_XFRMI_FWMARK} lookup ${route_table}"
 
 	do_ip "${ipru}"
