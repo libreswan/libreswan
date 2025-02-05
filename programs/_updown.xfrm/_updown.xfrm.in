@@ -282,7 +282,7 @@ case "${PLUTO_CLIENT_FAMILY}" in
 	SCOPE=global
 	;;
     *)
-	echo "unknown address family \"${PLUTO_CONN_ADDRFAMILY}\"" >&2
+	echo "unknown address family \"${PLUTO_CLIENT_FAMILY}\"" >&2
 	exit 1
 	;;
 esac
