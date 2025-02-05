@@ -8,7 +8,7 @@ ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  /testing/x509/import.sh real/mainca/west.end.cert
-ipsec certutil -A -n west -t ,, -i real/mainca/west.end.cert
+ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
 east #
  ipsec start
 Redirecting to: [initsystem]

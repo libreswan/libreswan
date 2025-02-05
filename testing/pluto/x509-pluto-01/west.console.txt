@@ -2,7 +2,7 @@
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t ,, -i real/mainca/east.end.cert
+ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
  /testing/x509/import.sh real/mainca/`hostname`.end.p12
 ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
