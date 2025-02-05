@@ -67,7 +67,7 @@ import_end_p12()
 import_end_cert()
 {
     n=$(basename $1 .end.cert)
-    run ${certutil} -A -n "${n}" -t ,, -i $1
+    run ${certutil} -A -n "${n}" -t P,, -i $1
 }
 
 for file in "$@" ; do
