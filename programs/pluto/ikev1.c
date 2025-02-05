@@ -1521,12 +1521,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * detection).
 		 */
 		md->raw_packet = clone_pbs_in_all(&md->packet_pbs, "raw packet");
-
-#if 0
-		pexpect(md->v1_decrypt_iv.len == cipher->enc_blocksize);
-#endif
-		PASSERT(ike->sa.logger, md->v1_decrypt_iv.len >= cipher->enc_blocksize);
-		md->v1_decrypt_iv.len = cipher->enc_blocksize;
+		PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == cipher->enc_blocksize);
 
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger,

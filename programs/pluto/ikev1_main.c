@@ -102,22 +102,6 @@ static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */
 static ke_and_nonce_cb main_inI2_outR2_continue1; /* type assertion */
 static dh_shared_secret_cb main_inI2_outR2_continue2;	/* type assertion */
 
-static void update_main_iv(struct ike_sa *ike,
-			   struct crypt_mac iv,
-			   where_t where)
-{
-	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam_string(buf, "updating Main Mode IKE IV .st_v1_phase_1_iv from ");
-		jam_hex_hunk(buf, ike->sa.st_v1_phase_1_iv);
-		jam_string(buf, " to ");
-		jam_hex_hunk(buf, iv);
-		jam_string(buf, " ");
-		jam_where(buf, where);
-	}
-	PEXPECT_WHERE(ike->sa.logger, where, iv.len > 0);
-	ike->sa.st_v1_phase_1_iv = iv;
-}
-
 static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa *ike)
 {
 	struct isakmp_notification isan = {
@@ -846,7 +830,7 @@ static stf_status main_inI2_outR2_continue2(struct state *ike_sa,
 	 * message arrives?!?
 	 */
 	if (ike->sa.st_dh_shared_secret != NULL) {
-		update_main_iv(ike, calc_v1_skeyid_and_iv(ike), HERE);
+		update_v1_phase_1_iv(ike, calc_v1_skeyid_and_iv(ike), HERE);
 		/* IV ready for inI3 */
 		PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*main_inI2_outR2_continue2*/
 	}
@@ -943,7 +927,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	}
 
 	/* ready for encrypted outI3 */
-	update_main_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /*main_inR2_outI3_continue*/
+	update_v1_phase_1_iv(ike, calc_v1_skeyid_and_iv(ike), HERE); /*main_inR2_outI3_continue*/
 	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*main_inR2_outI3_continue*/
 
 	struct pbs_out rbody[1]; /* hack */
@@ -1144,8 +1128,6 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	update_main_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack main_inR2_outI3_continue */
-
 	/* outI3 is encrypted */
 	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len > 0); /*outI3*/
 	return STF_OK;
@@ -1168,7 +1150,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* inI3 is encrypted */
 	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len > 0); /*inI3*/
-	update_main_iv(ike, md->v1_decrypt_iv, HERE); /*inI3*/
+	update_v1_phase_1_iv(ike, md->v1_decrypt_iv, HERE); /*inI3*/
 
 	pexpect(&ike->sa == md->v1_st);
 
@@ -1396,7 +1378,6 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	update_main_iv(ike, ike->sa.st_v1_phase_1_iv, HERE); /* post-encrypt-hack inI3-outR3 */
 	ldbg(ike->sa.logger, "phase1 IV finished");
 
 	/*
@@ -1446,7 +1427,7 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 	 */
 	/* inR3 is encrypted */
 	PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len > 0); /*inR3*/
-	update_main_iv(ike, md->v1_decrypt_iv, HERE);
+	update_v1_phase_1_iv(ike, md->v1_decrypt_iv, HERE);
 	ldbg(ike->sa.logger, "phase1 IV finalized");
 
 	if (!v1_decode_certs(md)) {
