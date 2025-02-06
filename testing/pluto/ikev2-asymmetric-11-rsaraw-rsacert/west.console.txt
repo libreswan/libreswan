@@ -2,12 +2,12 @@
 Creating NSS database containing host keys
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t ,, -i real/mainca/east.end.cert
+ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east                                                         ,,   
+east                                                         P,,  
 west #
  # confirm that the network is alive
 west #

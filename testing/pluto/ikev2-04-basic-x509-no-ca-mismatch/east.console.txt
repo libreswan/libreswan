@@ -9,14 +9,14 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
 east #
  /testing/x509/import.sh real/mainca/west.end.cert
-ipsec certutil -A -n west -t ,, -i real/mainca/west.end.cert
+ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
 mainca                                                       CT,, 
-west                                                         ,,   
+west                                                         P,,  
 east #
  ipsec start
 Redirecting to: [initsystem]

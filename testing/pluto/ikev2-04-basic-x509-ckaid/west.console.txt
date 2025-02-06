@@ -22,7 +22,7 @@ west #
  westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t ,, -i real/mainca/east.end.cert
+ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
  echo west ckaid: $westckaid east ckaid: $eastckaid
 west ckaid: <<CKAID#1>> east ckaid: <<CKAID#2>>
