@@ -2707,7 +2707,19 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/* IKEv2 only; IKEv1 uses xauth=pam */
 	config->ikev2_pam_authorize = extract_yn("", "pam-authorize", wm->pam_authorize,
 						 /*default*/false, wm, c->logger);
-	config->ikepad = extract_yn("", "ikepad", wm->ikepad, /*default*/true, wm, c->logger);
+
+	if (wm->ike_version >= IKEv2) {
+		if (wm->ikepad != YN_UNSET) {
+			name_buf vn, pn;
+			llog(RC_LOG, c->logger, "warning: %s connection ignores ikepad=%s",
+			     str_enum(&ike_version_names, wm->ike_version, &vn),
+			     str_sparse(&yn_option_names, wm->ikepad, &pn));
+		}
+		config->ikepad = true;
+	} else {
+		config->ikepad = extract_yn("", "ikepad", wm->ikepad, /*default*/true, wm, c->logger);
+	}
+
 	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
 						       /*default*/true/*YES-TRUE*/,wm, c->logger);
 

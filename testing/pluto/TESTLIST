@@ -160,6 +160,7 @@ kvmplutotest	addconn-43-x-comment				good
 kvmplutotest	addconn-44-narrowing				good
 kvmplutotest	addconn-45-unknown-parameter			good
 kvmplutotest	addconn-46-iptfs				good
+kvmplutotest	addconn-47-ikepad				good
 
 #################################################################
 # IKEv2 tests
