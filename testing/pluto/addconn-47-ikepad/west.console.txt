@@ -14,6 +14,9 @@ west #
  ipsec add ikev1-ikepad=no
 "ikev1-ikepad=no": added IKEv1 connection
 west #
+ ipsec add ikev1-ikepad=auto
+"ikev1-ikepad=auto": added IKEv1 connection
+west #
  ipsec add ikev2-ikepad=
 "ikev2-ikepad=": added IKEv2 connection
 west #
@@ -25,7 +28,12 @@ west #
 "ikev2-ikepad=no": warning: IKEv2 connection ignores ikepad=no
 "ikev2-ikepad=no": added IKEv2 connection
 west #
+ ipsec add ikev2-ikepad=auto
+"ikev2-ikepad=auto": warning: IKEv2 connection ignores ikepad=auto
+"ikev2-ikepad=auto": added IKEv2 connection
+west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\([A-Z_]*IKEPAD[A-Z_]*\).*/\1 \2/p' | sort
-"ikev1-ikepad=no":   policy: IKEPAD
+"ikev1-ikepad=no":   policy: IKEPAD_NO
+"ikev1-ikepad=yes":   policy: IKEPAD_YES
 west #
  
