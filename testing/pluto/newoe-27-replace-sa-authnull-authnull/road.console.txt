@@ -42,7 +42,10 @@ road #
 road #
  ipsec whack --impair send_no_delete
 road #
- ipsec restart
+ ipsec whack --shutdown
+Pluto is shutting down
+road #
+ ipsec start
 Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
@@ -69,7 +72,10 @@ road #
 road #
  # client doesn't kill 1st client
 road #
- killall -9 pluto
+ ipsec whack --impair send_no_delete
+road #
+ ipsec whack --shutdown
+Pluto is shutting down
 road #
  ../../guestbin/ip.sh address del 192.1.3.209/24 dev eth0
 road #
@@ -79,7 +85,7 @@ road #
 road #
  # wait on OE to load; give it a different byte count
 road #
- ipsec restart
+ ipsec start
 Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
