@@ -160,7 +160,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 		return false;
 	}
 
-	if (ike->sa.st_connection->config->ikepad) {
+	if (ike->sa.st_connection->config->v1_ikepad.message) {
 		if (!emit_v1_zero_padding(pbs)) {
 			/* already logged */
 			return false; /*fatal*/
@@ -190,7 +190,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * which is normally 4-bytes.
 	 */
 
-	if (ike->sa.st_connection->config->ikepad) {
+	if (ike->sa.st_connection->config->v1_ikepad.message) {
 		if (!emit_v1_zero_padding(pbs)) {
 			/* already logged */
 			return false; /*fatal*/
@@ -245,7 +245,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * pbs_out_close(), when closing an XAUTH / MODECFG payload.
 	 */
 
-	if (ike->sa.st_connection->config->ikepad) {
+	if (ike->sa.st_connection->config->v1_ikepad.message) {
 		if (!emit_v1_zero_padding(pbs)) {
 			/* already logged */
 			return false; /*fatal*/

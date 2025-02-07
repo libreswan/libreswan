@@ -298,8 +298,14 @@ struct config {
 					 * authorize call on ID */
 	bool ignore_peer_dns;		/* install obtained DNS
 					 * servers locally */
-	bool ikepad;			/* pad ike packets to 4 bytes
-					 * or not */
+	struct {
+		bool message;		/* per RFC, pad message to 4
+					 * bytes */
+		bool modecfg;		/* per broken libreswan, pad
+					 * some modecfg packets to 4
+					 * bytes */
+	} v1_ikepad;
+
 	bool require_id_on_certificate;	/* require certificates to
 					 * have IKE ID on cert SAN */
 	bool aggressive;		/* do we do aggressive
