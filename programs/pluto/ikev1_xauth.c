@@ -189,7 +189,39 @@ static void fixup_xauth_hash(struct ike_sa *ike,
  * @param st State structure
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
-static bool isakmp_add_attr(struct pbs_out *strattr,
+
+struct modecfg_pbs {
+	struct pbs_out pbs;
+};
+
+static bool modecfg_out_open(struct pbs_out *rbody,
+			     struct modecfg_pbs *modecfg_pbs,
+			     const struct isakmp_mode_attr *attrh)
+{
+	return pbs_out_struct(rbody, &isakmp_attr_desc,
+			      attrh, sizeof(*attrh), &modecfg_pbs->pbs);
+}
+
+static bool modecfg_out_attr(struct modecfg_pbs *modecfg_pbs,
+			     const struct isakmp_attribute *attr,
+			     struct pbs_out *attrval)
+{
+	return pbs_out_struct(&modecfg_pbs->pbs,
+			      &isakmp_xauth_attribute_desc,
+			      attr, sizeof(*attr),
+			      attrval);
+}
+
+static bool modecfg_out_close(struct modecfg_pbs *modecfg_pbs, struct ike_sa *ike)
+{
+	if (ike != NULL && ike->sa.st_connection->config->ikepad) {
+		emit_v1_zero_padding(&modecfg_pbs->pbs);
+	}
+
+	return close_pbs_out(&modecfg_pbs->pbs);
+}
+
+static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 			    const int attr_type,
 			    const struct ike_sa *ike)
 {
@@ -201,11 +233,9 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
 	};
 
 	struct pbs_out attrval;
-	if (!pbs_out_struct(strattr,
-			    &isakmp_xauth_attribute_desc,
-			    &attr, sizeof(attr),
-			    &attrval))
+	if (!modecfg_out_attr(modecfg_pbs, &attr, &attrval)) {
 		return false;
+	}
 
 	switch (attr_type) {
 	case IKEv1_INTERNAL_IP4_ADDRESS:
@@ -278,10 +308,7 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
 				close_output_pbs(&attrval);
 
 				/* start the next attribute */
-				if (!pbs_out_struct(strattr,
-						    &isakmp_xauth_attribute_desc,
-						    &attr, sizeof(attr),
-						    &attrval)) {
+				if (!modecfg_out_attr(modecfg_pbs, &attr, &attrval)) {
 					return false;
 				}
 			}
@@ -369,7 +396,8 @@ static bool isakmp_add_attr(struct pbs_out *strattr,
  * @return stf_status STF_OK or STF_INTERNAL_ERROR
  */
 
-static bool emit_mode_cfg_attr(struct pbs_out *attr_pbs, unsigned attr, struct ike_sa *ike)
+static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
+			       unsigned attr, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -386,21 +414,21 @@ static bool emit_mode_cfg_attr(struct pbs_out *attr_pbs, unsigned attr, struct i
 			ldbg(ike->sa.logger, "we are not sending internal DNS");
 			return true;
 		}
-		return isakmp_add_attr(attr_pbs, attr, ike);
+		return isakmp_add_attr(modecfg_pbs, attr, ike);
 
 	case MODECFG_DOMAIN:
 		if (c->config->modecfg.domains == NULL) {
 			ldbg(ike->sa.logger, "we are not sending a domain");
 			return true;
 		}
-		return isakmp_add_attr(attr_pbs, MODECFG_DOMAIN, ike);
+		return isakmp_add_attr(modecfg_pbs, MODECFG_DOMAIN, ike);
 
 	case MODECFG_BANNER:
 		if (c->config->modecfg.banner == NULL) {
 			ldbg(ike->sa.logger, "We are not sending a banner");
 			return true;
 		}
-		return isakmp_add_attr(attr_pbs, MODECFG_BANNER, ike);
+		return isakmp_add_attr(modecfg_pbs, MODECFG_BANNER, ike);
 
 	case CISCO_SPLIT_INC:
 		if (selector_is_unset(&c->spd->local->client) ||
@@ -409,15 +437,15 @@ static bool emit_mode_cfg_attr(struct pbs_out *attr_pbs, unsigned attr, struct i
 			return true;
 		}
 		ldbg(ike->sa.logger, "We are sending our subnet as CISCO_SPLIT_INC");
-		return isakmp_add_attr(attr_pbs, CISCO_SPLIT_INC, ike);
+		return isakmp_add_attr(modecfg_pbs, CISCO_SPLIT_INC, ike);
 
 	default:
-		return isakmp_add_attr(attr_pbs, attr, ike);
+		return isakmp_add_attr(modecfg_pbs, attr, ike);
 
 	}
 }
 
-static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
+static bool emit_mode_cfg_attrs(struct modecfg_pbs *modecfg_pbs,
 				struct ike_sa *ike,
 				lset_t attrs)
 {
@@ -425,7 +453,7 @@ static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
 	int attr_type = 0;
 	while (attrs != LEMPTY) {
 		if (attrs & 1) {
-			if (!emit_mode_cfg_attr(attr_pbs, attr_type, ike)) {
+			if (!emit_mode_cfg_attr(modecfg_pbs, attr_type, ike)) {
 				return false;
 			}
 		}
@@ -447,9 +475,9 @@ static bool emit_mode_cfg_attrs(struct pbs_out *attr_pbs,
 	 *
 	 * XXX: potentially yes.
 	 */
-	emit_mode_cfg_attr(attr_pbs, MODECFG_DOMAIN, ike);
-	emit_mode_cfg_attr(attr_pbs, MODECFG_BANNER, ike);
-	emit_mode_cfg_attr(attr_pbs, CISCO_SPLIT_INC, ike);
+	emit_mode_cfg_attr(modecfg_pbs, MODECFG_DOMAIN, ike);
+	emit_mode_cfg_attr(modecfg_pbs, MODECFG_BANNER, ike);
+	emit_mode_cfg_attr(modecfg_pbs, CISCO_SPLIT_INC, ike);
 
 	return true;
 }
@@ -542,9 +570,8 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 		.isama_identifier = 0 /* XXX ID !?! */,
 	};
 
-	struct pbs_out attr_pbs;
-	if (!pbs_out_struct(&rbody, &isakmp_attr_desc,
-			    &attrh, sizeof(attrh), &attr_pbs)) {
+	struct modecfg_pbs modecfg_pbs;
+	if (!modecfg_out_open(&rbody, &modecfg_pbs, &attrh)) {
 		return false;
 	}
 
@@ -561,13 +588,13 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 
 	switch (mode_cfg_type) {
 	case ISAKMP_CFG_REPLY:
-		if (!emit_mode_cfg_attrs(&attr_pbs, ike, attrs)) {
+		if (!emit_mode_cfg_attrs(&modecfg_pbs, ike, attrs)) {
 			return false;
 		}
 		break;
 	case ISAKMP_CFG_SET:
 		FOR_EACH_ELEMENT(attr, default_attrs) {
-			if (!emit_mode_cfg_attr(&attr_pbs, *attr, ike)) {
+			if (!emit_mode_cfg_attr(&modecfg_pbs, *attr, ike)) {
 				return false;
 			}
 		}
@@ -577,8 +604,7 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 			struct isakmp_attribute attrh = {
 				.isaat_af_type = *attr,
 			};
-			if (!pbs_out_struct(&attr_pbs, &isakmp_xauth_attribute_desc,
-					    &attrh, sizeof(attrh), NULL)) {
+			if (!modecfg_out_attr(&modecfg_pbs, &attrh, NULL)) {
 				return false;
 			}
 		}
@@ -592,8 +618,7 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 				struct isakmp_attribute attrh = {
 					.isaat_af_type = attr_type,
 				};
-				if (!pbs_out_struct(&attr_pbs, &isakmp_xauth_attribute_desc,
-						    &attrh, sizeof(attrh), NULL)) {
+				if (!modecfg_out_attr(&modecfg_pbs, &attrh, NULL)) {
 					return false;
 				}
 			}
@@ -611,8 +636,9 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 		bad_case(mode_cfg_type);
 	}
 
-	if (!close_v1_message(&attr_pbs, ike))
+	if (!modecfg_out_close(&modecfg_pbs, ike)) {
 		return false;
+	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 
@@ -656,17 +682,18 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 		.isama_identifier = ma->isama_identifier,
 	};
 
-	struct pbs_out attr_pbs;
-	if (!pbs_out_struct(&rbody, &isakmp_attr_desc,
-			    &attrh, sizeof(attrh), &attr_pbs))
-		return false;
-
-	if (!emit_mode_cfg_attrs(&attr_pbs, ike, attrs)) {
+	struct modecfg_pbs modecfg_pbs;
+	if (!modecfg_out_open(&rbody, &modecfg_pbs, &attrh)) {
 		return false;
 	}
 
-	if (!close_v1_message(&attr_pbs, ike))
+	if (!emit_mode_cfg_attrs(&modecfg_pbs, ike, attrs)) {
 		return false;
+	}
+
+	if (!modecfg_out_close(&modecfg_pbs, ike)) {
+		return false;
+	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
 
@@ -789,25 +816,30 @@ stf_status xauth_send_request(struct ike_sa *ike)
 			.isama_type = ISAKMP_CFG_REQUEST,
 			.isama_identifier = 0,
 		};
-		struct pbs_out strattr;
+		struct modecfg_pbs modecfg_pbs;
+		if (!modecfg_out_open(&rbody, &modecfg_pbs, &attrh)) {
+			return STF_INTERNAL_ERROR;
+		}
 
 		/* Empty name attribute */
 		struct isakmp_attribute nm = {
 			.isaat_af_type = IKEv1_ATTR_XAUTH_USER_NAME,
 		};
+		if (!modecfg_out_attr(&modecfg_pbs, &nm, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
 
 		/* Empty password attribute */
 		struct isakmp_attribute pw = {
 			.isaat_af_type = IKEv1_ATTR_XAUTH_USER_PASSWORD,
 		};
-
-		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
-		    !out_struct(&nm, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !out_struct(&pw, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !close_v1_message(&strattr, ike))
+		if (!modecfg_out_attr(&modecfg_pbs, &pw, NULL)) {
 			return STF_INTERNAL_ERROR;
+		}
+
+		if (!modecfg_out_close(&modecfg_pbs, ike)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
@@ -925,18 +957,23 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 			.isama_type = ISAKMP_CFG_SET,
 			.isama_identifier = 0,
 		};
-		struct pbs_out strattr;
+		struct modecfg_pbs modecfg_pbs;
+		if (!modecfg_out_open(&rbody, &modecfg_pbs, &attrh)) {
+			return STF_INTERNAL_ERROR;
+		}
+
 		/* ISAKMP attr out (status) */
 		struct isakmp_attribute attr = {
 			.isaat_af_type = IKEv1_ATTR_XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
 			.isaat_lv = status,
 		};
-
-		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
-		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !close_v1_message(&strattr, ike))
+		if (!modecfg_out_attr(&modecfg_pbs, &attr, NULL)) {
 			return STF_INTERNAL_ERROR;
+		}
+
+		if (!modecfg_out_close(&modecfg_pbs, ike)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody.cur);
@@ -2325,16 +2362,13 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 	/* MODECFG out */
 	{
-		struct pbs_out strattr;
-
-		{
-			struct isakmp_mode_attr attrh = {
-				.isama_type = ISAKMP_CFG_REPLY,
-				.isama_identifier = ap_id,
-			};
-
-			if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
-				return STF_INTERNAL_ERROR;
+		struct isakmp_mode_attr attrh = {
+			.isama_type = ISAKMP_CFG_REPLY,
+			.isama_identifier = ap_id,
+		};
+		struct modecfg_pbs modecfg_pbs;
+		if (!modecfg_out_open(rbody, &modecfg_pbs, &attrh)) {
+			return STF_INTERNAL_ERROR;
 		}
 
 		/* lset_t xauth_resp is used as a secondary index variable */
@@ -2343,29 +2377,31 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 		     xauth_resp != LEMPTY; attr_type++) {
 			if (xauth_resp & 1) {
 				/* ISAKMP attr out */
-				struct isakmp_attribute attr;
-				struct pbs_out attrval;
 
 				switch (attr_type) {
 				case IKEv1_ATTR_XAUTH_TYPE:
-					attr.isaat_af_type = attr_type |
-							     ISAKMP_ATTR_AF_TV;
-					attr.isaat_lv = IKEv1_XAUTH_TYPE_GENERIC;
-					if (!out_struct(&attr,
-							&isakmp_xauth_attribute_desc,
-							&strattr,
-							NULL))
+				{
+					struct isakmp_attribute attr = {
+						.isaat_af_type = (attr_type |
+								  ISAKMP_ATTR_AF_TV),
+						.isaat_lv = IKEv1_XAUTH_TYPE_GENERIC,
+					};
+					if (!modecfg_out_attr(&modecfg_pbs, &attr, NULL)) {
 						return STF_INTERNAL_ERROR;
+					}
 					break;
+				}
 
 				case IKEv1_ATTR_XAUTH_USER_NAME:
-					attr.isaat_af_type = attr_type |
-							     ISAKMP_ATTR_AF_TLV;
-					if (!out_struct(&attr,
-							&isakmp_xauth_attribute_desc,
-							&strattr,
-							&attrval))
+				{
+					struct isakmp_attribute attr = {
+						.isaat_af_type = (attr_type |
+								  ISAKMP_ATTR_AF_TLV),
+					};
+					struct pbs_out attrval;
+					if (!modecfg_out_attr(&modecfg_pbs, &attr, &attrval)) {
 						return STF_INTERNAL_ERROR;
+					}
 
 					if (ike->sa.st_xauth_username[0] == '\0') {
 						if (!whack_prompt_for(ike,
@@ -2397,13 +2433,15 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 					close_output_pbs(&attrval);
 
 					break;
+				}
 
 				case IKEv1_ATTR_XAUTH_USER_PASSWORD:
-					attr.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV;
-					if (!out_struct(&attr,
-							&isakmp_xauth_attribute_desc,
-							&strattr, &attrval))
-					{
+				{
+					struct isakmp_attribute attr = {
+						.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV,
+					};
+					struct pbs_out attrval;
+					if (!modecfg_out_attr(&modecfg_pbs, &attr, &attrval)) {
 						return STF_INTERNAL_ERROR;
 					}
 
@@ -2465,6 +2503,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 					}
 					close_output_pbs(&attrval);
 					break;
+				}
 
 				default:
 				{
@@ -2481,7 +2520,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 		}
 
 		/* do not PAD here, */
-		close_output_pbs(&strattr);
+		close_output_pbs(&modecfg_pbs.pbs);
 	}
 
 	llog(RC_LOG, ike->sa.logger, "XAUTH: Answering XAUTH challenge with user='%s'",
@@ -2744,17 +2783,22 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 			.isama_type = ISAKMP_CFG_ACK,
 			.isama_identifier = ap_id,
 		};
-		struct pbs_out strattr;
+		struct modecfg_pbs modecfg_pbs;
+		if (!modecfg_out_open(rbody, &modecfg_pbs, &attrh)) {
+			return STF_INTERNAL_ERROR;
+		}
+
 		struct isakmp_attribute attr = {
 			.isaat_af_type = IKEv1_ATTR_XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
 			.isaat_lv = XAUTH_STATUS_OK,
 		};
-
-		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr) ||
-		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !close_v1_message(&strattr, ike))
+		if (!modecfg_out_attr(&modecfg_pbs, &attr, NULL)) {
 			return STF_INTERNAL_ERROR;
+		}
+
+		if (!modecfg_out_close(&modecfg_pbs, ike)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	fixup_xauth_hash(ike, &hash_fixup, rbody->cur);
