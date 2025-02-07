@@ -112,33 +112,38 @@ bool ikev1_ship_KE(struct state *st, struct dh_local_secret *local_secret,
 }
 
 /*
- * In IKEv1, some implementations (including freeswan/openswan/libreswan)
- * interpreted the RFC that the whole IKE message must padded to a multiple
- * of 4 octets, but other implementations (i.e. Checkpoint in Aggressive Mode)
- * drop padded IKE packets. Some of the text on this topic can be found in the
- * IKEv1 RFC 2408 section 3.6 Transform Payload.
+ * In IKEv1, some implementations (including
+ * freeswan/openswan/libreswan) interpreted the RFC that the whole IKE
+ * message must padded to a multiple of 4 octets, but other
+ * implementations (i.e. Checkpoint in Aggressive Mode) drop padded
+ * IKE packets.
  *
+ * It's not clear this came from as:
+ *
+ *   IKEv1 RFC 2409, describes how block cipher's always need to be
+ *   padded (with the last byte the pad length) (Libreswan instead
+ *   zero pads).
+ *
+ *   IKEv1 RFC 2408, section 3.6 Transform Payload, just states that
+ *   the payload isn't padded so the message may need to be 4-byte
+ *   padded (suspect there's an underlying assumption that all packets
+ *   are 4-byte aligned).
+ *
+ * Also note that MODECFG (which includes XAUTH) code was calling
+ * close_v1_message() and that caused MODECFG attributes to be padded.
+ * This is really broken.  The only thing saving us is implementations
+ * seeing a truncated attribute with a zero length (if it had been
+ * non-zero, hmm...).
+
  * The ikepad= option can be set to yes or no on a per-connection basis,
  * and defaults to yes.
- *
- * In IKEv2, there is no padding specified in the RFC and some implementations
- * will reject IKEv2 messages that are padded. As there are no known IKEv2
- * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
- * clients are discovered in the wild, we will revisit this - please contact
- * the libreswan developers if you find such an implementation.
- * Therefore the ikepad= option has no effect on IKEv2 connections.
- *
- * @param pbs PB Stream
  */
 
-static bool emit_v1_message_padding(struct pbs_out *pbs, const struct ike_sa *ike)
+bool emit_v1_zero_padding(struct pbs_out *pbs)
 {
 	size_t padding = pad_up(pbs_out_all(pbs).len, 4);
 	if (padding == 0) {
 		ldbg(pbs->logger, "no IKEv1 message padding required");
-	} else if (!ike->sa.st_connection->config->ikepad) {
-		ldbg(pbs->logger, "IKEv1 message padding of %zu bytes skipped by policy",
-		     padding);
 	} else {
 		ldbg(pbs->logger, "padding IKEv1 message with %zu bytes", padding);
 		if (!pbs_out_zero(pbs, padding, "message padding")) {
@@ -155,9 +160,11 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 		return false;
 	}
 
-	if (!emit_v1_message_padding(pbs, ike)) {
-		/* already logged */
-		return false; /*fatal*/
+	if (ike->sa.st_connection->config->ikepad) {
+		if (!emit_v1_zero_padding(pbs)) {
+			/* already logged */
+			return false; /*fatal*/
+		}
 	}
 
 	close_output_pbs(pbs);
@@ -183,9 +190,11 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * which is normally 4-bytes.
 	 */
 
-	if (!emit_v1_message_padding(pbs, ike)) {
-		/* already logged */
-		return false; /*fatal*/
+	if (ike->sa.st_connection->config->ikepad) {
+		if (!emit_v1_zero_padding(pbs)) {
+			/* already logged */
+			return false; /*fatal*/
+		}
 	}
 
 	/*
@@ -196,7 +205,13 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * the header.  See the description associated with the
 	 * definition of struct isakmp_hdr in packet.h.
 	 *
-	 * The alignment is probably 16-bytes, but can be 1-byte!
+	 * For a block cipher the alignment is probably 16-bytes, but
+	 * for other ciphers it can be 1-byte!
+	 *
+	 * XXX: The RFC says that the final pad byte should be the
+	 * length (see IKEv2) which means that there is never zero
+	 * bytes of padding, but this code doesn't do this.
+	 * Fortunately, everything ignores that byte.
 	 */
 	shunk_t message = pbs_out_all(pbs);
 	shunk_t unpadded_encrypt = hunk_slice(message, sizeof(struct isakmp_hdr), message.len);
@@ -226,12 +241,15 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * This should be a no-op?
 	 *
 	 * XXX: note the double padding (triple if you count the code
-	 * paths that call ikev1_close_message() before encrypting.
+	 * paths that call close_v1_message(), instead of
+	 * pbs_out_close(), when closing an XAUTH / MODECFG payload.
 	 */
 
-	if (!emit_v1_message_padding(pbs, ike)) {
-		/* already logged */
-		return false; /*fatal*/
+	if (ike->sa.st_connection->config->ikepad) {
+		if (!emit_v1_zero_padding(pbs)) {
+			/* already logged */
+			return false; /*fatal*/
+		}
 	}
 
 	close_output_pbs(pbs);
