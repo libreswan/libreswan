@@ -7,6 +7,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
-cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
+cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/
 ../../guestbin/strongswan-start.sh
 echo "initdone"
