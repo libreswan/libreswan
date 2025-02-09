@@ -4,7 +4,7 @@ nic #
 nic #
  cp /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
 nic #
- cp /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
+ cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
 nic #
  cp /testing/x509/ocspd.conf /etc/ocspd/
 nic #

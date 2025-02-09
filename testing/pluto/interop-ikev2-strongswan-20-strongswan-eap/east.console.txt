@@ -4,7 +4,7 @@ east #
 east #
  cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
 east #
- cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
+ cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/
 east #
  ../../guestbin/strongswan-start.sh
 east #

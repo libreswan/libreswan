@@ -4,7 +4,7 @@ road #
 road #
  cp /testing/x509/keys/road.key /etc/strongswan/ipsec.d/private/
 road #
- cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
+ cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/
 road #
  ../../guestbin/strongswan-start.sh
 road #

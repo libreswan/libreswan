@@ -18,7 +18,7 @@ down
 west #
  cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
 west #
- cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
+ cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/
 west #
  ../../guestbin/strongswan-start.sh
 west #

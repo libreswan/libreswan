@@ -557,9 +557,9 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
     # this section is getting rough. could use a nice refactoring
     if args.keys == Keys.X509:
 
-        if not os.path.isfile("/testing/x509/keys/mainca.key"):
+        if not os.path.isfile("/testing/x509/real/mainca/root.p12"):
             print("\n\n---------------------------------------------------------------------\n"
-                  "WARNING: no mainca.key file, did you run testing/x509/dist_certs.py?\n"
+                  "WARNING: no root.p12 file, did you run './kvm keys'?\n"
                   "---------------------------------------------------------------------\n")
 
         pw = "-w /testing/x509/nss-pw"
@@ -576,8 +576,7 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
             # 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
             # mainca and nic import
-            shell("/usr/bin/certutil -A -n mainca -t 'CT,,' -d sql:%s -a -i /testing/x509/cacerts/mainca.crt%s" %
-                  (nssdir, util_pw))
+            shell("/testing/x509/import.sh real/mainca/root.cert");
             shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:%s -a -i /testing/x509/certs/nic.crt%s" % (nssdir, util_pw))
 
             # install ee
@@ -632,7 +631,7 @@ if userland == "strongswan" and args.keys == Keys.X509:
 
     key = hostname
 
-    shutil.copy("/testing/x509/cacerts/mainca.crt", "/etc/strongswan/ipsec.d/cacerts/")
+    shutil.copy("/testing/x509/real/mainca/root.cert", "/etc/strongswan/ipsec.d/cacerts/mainca.crt")
     shutil.copy("/testing/x509/keys/%s.key" % key, "/etc/strongswan/ipsec.d/private/")
 
     for certname in ("west", "east", "road", "north"):
