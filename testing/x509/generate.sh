@@ -56,7 +56,8 @@ echo_4_crl_constraints()
     echo 7     # Select one of the following general name type: 7 - uniformResourceidentifier
     echo http://nic.testing.libreswan.org/revoked.crl  # Enter data:
     echo 0     # Select one of the following general name type: 0 - Any other number to finish
-    echo 0     # Select one of the following for the reason flags: 0 - unused
+    echo 8     # Select one of the following for the reason flags: 8 - other
+    # Enter value for the CRL Issuer name:
     echo 0     # Select one of the following general name type: 0 - Any other number to finish
     echo n     # Enter another value for the CRLDistributionPoint extension [y/N]?
     echo n     # Is this a critical extension [y/N]?
