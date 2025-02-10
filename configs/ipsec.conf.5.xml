@@ -164,7 +164,6 @@
 <!ENTITY retransmit-interval SYSTEM "d.ipsec.conf/retransmit-interval.xml">
 <!ENTITY retransmit-timeout SYSTEM "d.ipsec.conf/retransmit-timeout.xml">
 <!ENTITY salifetime SYSTEM "d.ipsec.conf/salifetime.xml">
-<!ENTITY sareftrack SYSTEM "d.ipsec.conf/sareftrack.xml">
 <!ENTITY seccomp SYSTEM "d.ipsec.conf/seccomp.xml">
 <!ENTITY secretsfile SYSTEM "d.ipsec.conf/secretsfile.xml">
 <!ENTITY see_also SYSTEM "d.ipsec.conf/see_also.xml">
@@ -293,7 +292,6 @@
 	&encap-dscp;
 	&nopmtudisc;
 	&narrowing;
-	&sareftrack;
 	&nic-offload;
 	&leftid;
 	&leftrsasigkey;
