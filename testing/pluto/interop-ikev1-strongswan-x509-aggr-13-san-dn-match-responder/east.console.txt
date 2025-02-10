@@ -1,12 +1,10 @@
-setenforce 0
+/testing/guestbin/swan-prep --userland strongswan
 east #
- /testing/guestbin/swan-prep --userland strongswan --x509
+ cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 east #
- # strongswan expects the certs in /etc/strongswan/certs for some reason
+ cp /testing/x509/keys/`hostname`.key /etc/strongswan/ipsec.d/private/
 east #
- mkdir -p /etc/strongswan/certs
-east #
- cp -a /etc/strongswan/ipsec.d/certs/* /etc/strongswan/certs/
+ cp /testing/x509/certs/`hostname`.crt /etc/strongswan/ipsec.d/certs/
 east #
  ../../guestbin/strongswan-start.sh
 east #
