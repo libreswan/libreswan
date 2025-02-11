@@ -1,14 +1,25 @@
 ../../guestbin/prep.sh
 rise #
- ifconfig ipsec1 create
+ # force the kernel to use fixed IDs
 rise #
- ifconfig ipsec1 -link2
+ sysctl -w net.ipsecif.use_fixed_reqid=1
+net.ipsecif.use_fixed_reqid: 0 -> 1
 rise #
- ifconfig ipsec1 inet tunnel 198.18.1.12 198.18.1.15
+ unit=1
 rise #
- ifconfig ipsec1 inet 198.18.12.12/24 198.18.15.15
+ reqid_ipv4=$(($(sysctl -n net.ipsecif.reqid_base) + 2 * unit))
 rise #
- ifconfig ipsec1
+ reqid_ipv6=$(($(sysctl -n net.ipsecif.reqid_base) + 2 * unit + 1))
+rise #
+ ifconfig ipsec${unit} create
+rise #
+ ifconfig ipsec${unit} -link2
+rise #
+ ifconfig ipsec${unit} inet tunnel 198.18.1.12 198.18.1.15
+rise #
+ ifconfig ipsec${unit} inet 198.18.12.12/24 198.18.15.15
+rise #
+ ifconfig ipsec${unit}
 ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
 	tunnel inet 198.18.1.12 --> 198.18.1.15
 	status: active
@@ -18,7 +29,7 @@ rise #
  ../../guestbin/ipsec-kernel-policy.sh
 198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	in ipsec
-	esp/transport//unique#16385
+	esp/transport//unique:8194
 	spid=1 seq=3 pid=PID
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
@@ -27,7 +38,7 @@ rise #
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	out ipsec
-	esp/transport//unique#16386
+	esp/transport//unique:8194
 	spid=2 seq=1 pid=PID
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 41(ipv6)
@@ -35,13 +46,13 @@ rise #
 	spid=4 seq=0 pid=PID
 	refcnt=0
 rise #
- echo 'add 198.18.1.12 198.18.1.15 esp 4523 -m transport -u 16386 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
+ echo 'add 198.18.1.12 198.18.1.15 esp 4523 -m transport -u '${reqid_ipv4}' -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
 rise #
- echo 'add 198.18.1.15 198.18.1.12 esp 2345 -m transport -u 16385 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
+ echo 'add 198.18.1.15 198.18.1.12 esp 2345 -m transport -u '${reqid_ipv4}'  -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
 rise #
  ../../guestbin/ipsec-kernel-state.sh
 198.18.1.12 198.18.1.15 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
@@ -52,7 +63,7 @@ rise #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 198.18.1.15 198.18.1.12 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
@@ -68,7 +79,7 @@ up
 rise #
  ../../guestbin/ipsec-kernel-state.sh
 198.18.1.12 198.18.1.15 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=0 flags=0x00000040 state=mature 
@@ -79,7 +90,7 @@ rise #
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 198.18.1.15 198.18.1.12 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=0 flags=0x00000040 state=mature 
@@ -93,7 +104,7 @@ rise #
  ../../guestbin/ipsec-kernel-policy.sh
 198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	in ipsec
-	esp/transport//unique#16385
+	esp/transport//unique:8194
 	spid=1 seq=3 pid=PID
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
@@ -102,7 +113,7 @@ rise #
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	out ipsec
-	esp/transport//unique#16386
+	esp/transport//unique:8194
 	spid=2 seq=1 pid=PID
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 41(ipv6)

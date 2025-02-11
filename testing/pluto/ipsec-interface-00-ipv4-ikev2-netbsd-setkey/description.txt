@@ -6,6 +6,16 @@ On NetBSD with ipsecif(4):
 - add tunnel describing ESP
 - add inet describing what is tunneled
 
-Now the magic!  the generated kernel policy contains the MSG ID in the
-form unique#NNNN, that needs to be extrated and then fed to the
-transport mode kernel state.
+Now the magic!
+
+By default, NetBSD assigns IDs sequentially starting at 16384.  This
+behaviour can be changed by setting:
+
+  net.ipsecif.use_fixed_reqid=1
+
+causing the kernel to predictably assign interface ipsec<UNIT>, the IDs:
+
+  IPv4: net.ipsecif.requid_base + 2 * UNIT
+  IPv6: net.ipsecif.requid_base + 2 * UNIT + 1
+
+(credit to Michael van Elst and #netbsd)

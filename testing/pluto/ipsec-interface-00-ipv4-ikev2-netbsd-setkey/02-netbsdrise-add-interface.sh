@@ -1,9 +1,16 @@
 ../../guestbin/prep.sh
 
-ifconfig ipsec1 create
-ifconfig ipsec1 -link2
-ifconfig ipsec1 inet tunnel 198.18.1.12 198.18.1.15
-ifconfig ipsec1 inet 198.18.12.12/24 198.18.15.15
+# force the kernel to use fixed IDs
 
-ifconfig ipsec1
+sysctl -w net.ipsecif.use_fixed_reqid=1
+unit=1
+reqid_ipv4=$(($(sysctl -n net.ipsecif.reqid_base) + 2 * unit))
+reqid_ipv6=$(($(sysctl -n net.ipsecif.reqid_base) + 2 * unit + 1))
+
+ifconfig ipsec${unit} create
+ifconfig ipsec${unit} -link2
+ifconfig ipsec${unit} inet tunnel 198.18.1.12 198.18.1.15
+ifconfig ipsec${unit} inet 198.18.12.12/24 198.18.15.15
+
+ifconfig ipsec${unit}
 ../../guestbin/ipsec-kernel-policy.sh
