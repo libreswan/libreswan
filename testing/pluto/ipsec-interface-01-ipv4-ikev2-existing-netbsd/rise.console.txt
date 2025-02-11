@@ -14,13 +14,13 @@ rise #
 ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
 	tunnel inet 198.18.1.12 --> 198.18.1.15
 	status: active
-	inet6 fe80::4f3:8d5f:332a:9410%ipsec1/64 ->  flags 0x2<TENTATIVE> scopeid 0x5
+	inet6 fe80::4f3:8d5f:332a:9410%ipsec1/64 ->  flags 0 scopeid 0x5
 	inet 198.18.12.12/24 -> 198.18.15.15 flags 0
 rise #
  ../../guestbin/ipsec-kernel-policy.sh
 198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	in ipsec
-	esp/transport//unique#16385
+	esp/transport//unique:8194
 	spid=1 seq=3 pid=PID
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
@@ -29,7 +29,7 @@ rise #
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	out ipsec
-	esp/transport//unique#16386
+	esp/transport//unique:8194
 	spid=2 seq=1 pid=PID
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 41(ipv6)
@@ -45,10 +45,16 @@ rise #
  ../../guestbin/wait-until-pluto-started
 rise #
  ipsec add rise-set
+"rise-set": command: 'sysctl' '-n' 'net.ipsecif.use_fixed_reqid'
+"rise-set": output: 1\n
+"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set": command: 'sysctl' '-n' 'net.ipsecif.reqid_base'
+"rise-set": output: 8192\n
+"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "rise-set": command: 'ifconfig' 'ipsec1'
 "rise-set": output: ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\ttunnel inet 198.18.1.12 --> 198.18.
-"rise-set": output: 1.15\n\tstatus: active\n\tinet6 fe80::4f3:8d5f:332a:9410%ipsec1/64 ->  flags 0x2<TENTATIVE> scopeid 0x5\n
-"rise-set": output: \tinet 198.18.12.12/24 -> 198.18.15.15 flags 0\n
+"rise-set": output: 1.15\n\tstatus: active\n\tinet6 fe80::4f3:8d5f:332a:9410%ipsec1/64 ->  flags 0 scopeid 0x5\n\tinet 198.18.
+"rise-set": output: 12.12/24 -> 198.18.15.15 flags 0\n
 "rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "rise-set": added IKEv2 connection
 rise #
@@ -65,38 +71,36 @@ rise #
 "rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #
  ../../guestbin/ping-once.sh --up -I 198.18.12.12 198.18.15.15
-down UNEXPECTED
-# fping  -c 1  --timeout 5s   --src 198.18.12.12 198.18.15.15
-198.18.15.15 : [0], timed out (NaN avg, 100% loss) 198.18.15.15 : xmt/rcv/%loss = 1/0/100%
+up
 rise #
  ../../guestbin/ipsec-kernel-state.sh
 198.18.1.12 198.18.1.15 
-	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=16 flags=0x00000000 state=mature 
+	seq=0x00000002 replay=16 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
+	current: 304(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 198.18.1.15 198.18.1.12 
-	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=16 flags=0x00000000 state=mature 
+	seq=0x00000002 replay=16 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
+	current: 208(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 rise #
  ../../guestbin/ipsec-kernel-policy.sh
 198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	in ipsec
-	esp/transport//unique#16385
+	esp/transport//unique:8194
 	spid=1 seq=3 pid=PID
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
@@ -105,7 +109,7 @@ rise #
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	out ipsec
-	esp/transport//unique#16386
+	esp/transport//unique:8194
 	spid=2 seq=1 pid=PID
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 41(ipv6)

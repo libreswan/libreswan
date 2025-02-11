@@ -18,7 +18,7 @@ set #
  ../../guestbin/ipsec-kernel-policy.sh
 198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	in ipsec
-	esp/transport//unique#16385
+	esp/transport//unique:8194
 	spid=1 seq=3 pid=PID
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 41(ipv6)
@@ -27,7 +27,7 @@ set #
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	out ipsec
-	esp/transport//unique#16386
+	esp/transport//unique:8194
 	spid=2 seq=1 pid=PID
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
@@ -64,36 +64,38 @@ set #
 	sadb_seq=0 pid=PID refcnt=0
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
-up
+down UNEXPECTED
+# fping  -c 1  --timeout 5s   --src 198.18.15.15 198.18.12.12
+198.18.12.12 : [0], timed out (NaN avg, 100% loss) 198.18.12.12 : xmt/rcv/%loss = 1/0/100%
 set #
  ../../guestbin/ipsec-kernel-state.sh
 198.18.1.12 198.18.1.15 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16385(0x00004001)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 104(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 1	hard: 0	soft: 0
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 198.18.1.15 198.18.1.12 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16386(0x00004002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 1	hard: 0	soft: 0
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 set #
  ../../guestbin/ipsec-kernel-policy.sh
 198.18.1.12[any] 198.18.1.15[any] 4(ipv4)
 	in ipsec
-	esp/transport//unique#16385
+	esp/transport//unique:8194
 	spid=1 seq=3 pid=PID
 	refcnt=0
 198.18.1.12[any] 198.18.1.15[any] 41(ipv6)
@@ -102,7 +104,7 @@ set #
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 4(ipv4)
 	out ipsec
-	esp/transport//unique#16386
+	esp/transport//unique:8194
 	spid=2 seq=1 pid=PID
 	refcnt=0
 198.18.1.15[any] 198.18.1.12[any] 41(ipv6)
