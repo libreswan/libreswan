@@ -2,9 +2,9 @@
 west #
  cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 west #
- cp /testing/x509/keys/`hostname`.key /etc/strongswan/ipsec.d/private/
+ cp /testing/x509/real/mainca/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
 west #
- cp /testing/x509/certs/`hostname`.crt /etc/strongswan/ipsec.d/certs/
+ cp /testing/x509/real/mainca/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 west #
  ../../guestbin/strongswan-start.sh
 west #

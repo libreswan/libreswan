@@ -1,10 +1,10 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- cp /testing/x509/keys/east.key /etc/strongswan/ipsec.d/private/
-east #
- cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
-east #
  cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/
+east #
+ cp /testing/x509/real/mainca/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
+east #
+ cp /testing/x509/real/mainca/east.end.cert /etc/strongswan/ipsec.d/certs/east.crt
 east #
  ../../guestbin/strongswan-start.sh
 east #

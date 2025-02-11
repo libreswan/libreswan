@@ -1,5 +1,9 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
+ cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
+west #
+ cp /testing/x509/real/mainca/east.end.cert /etc/strongswan/ipsec.d/certs/east.crt
+west #
  # confirm that the network is alive
 west #
  ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
@@ -15,10 +19,6 @@ west #
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
-west #
- cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
-west #
- cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/
 west #
  ../../guestbin/strongswan-start.sh
 west #
