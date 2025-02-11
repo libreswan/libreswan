@@ -35,7 +35,7 @@ pkgin -y install pkgconf
 pkgin -y install fping
 pkgin -y install bash
 pkgin -y install racoon2
-pkgin -y install pkg_developer
+#pkgin -y install pkg_developer
 
 pkg_admin fetch-pkg-vulnerabilities
 pkg_admin audit || true
