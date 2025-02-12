@@ -482,7 +482,7 @@ kvmplutotest	ikev2-x509-31-wifi-assist-nonat		good
 kvmplutotest	ikev2-x509-38-failureshunt		good
 kvmplutotest	ikev2-x509-39-OU-comma			good
 kvmplutotest	ikev2-x509-40-dn-wildcard		good
-kvmplutotest	ikev2-x509-41-rightid=fromcert-rightid=ip good	github:600
+kvmplutotest	ikev2-x509-41-rightid-fromcert-rightid-ip good	github/600
 
 # wildcard ID related tests
 kvmplutotest	ikev1-x509-17-id-any			good
