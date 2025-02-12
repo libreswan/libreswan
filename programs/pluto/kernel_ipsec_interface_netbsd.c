@@ -15,6 +15,7 @@
  */
 
 #include "ip_info.h"
+#include "reqid.h"
 
 #include "ipsec_interface.h"
 #include "kernel_ipsec_interface.h"
@@ -22,6 +23,8 @@
 #include "server_run.h"
 
 #include "log.h"
+
+static reqid_t reqid_base;
 
 static bool netbsd_ipsec_interface_has_cidr(const char *ipsec_if_name,
 					      ip_cidr cidr,
@@ -139,10 +142,60 @@ static void netbsd_ipsec_interface_check_stale(struct verbose verbose)
 	vdbg("%s() nothing to do", __func__);
 }
 
+static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbose)
+{
+	const char *sysctl[] = {
+		"sysctl",
+		"-n",
+		ctl,
+		NULL,
+	};
+	chunk_t chunk = server_runv_chunk(sysctl, verbose);
+	if (chunk.len == 0) {
+		return "problem reading ..., no output";
+	}
+	shunk_t shunk = HUNK_AS_SHUNK(chunk);
+	err_t e = shunk_to_uintmax(shunk, &shunk, 10, value);
+	if (e != NULL) {
+		return "problem reading ..., invalid number";
+	}
+	free_chunk_content(&chunk);
+	return NULL;
+}
+
 static err_t netbsd_ipsec_interface_supported(struct verbose verbose)
 {
-	vdbg("%s() nothing to do", __func__);
+	err_t e;
+	/* check net.ipsecif.use_fixed_reqid=1 */
+	uintmax_t fixed;
+	e = read_sysctl("net.ipsecif.use_fixed_reqid", &fixed, verbose);
+	if (e != NULL) {
+		return e;
+	}
+	if (fixed == 0) {
+		return "net.ipsecif.use_fixed_reqid should be 1";
+	}
+	/* extract base */
+	uintmax_t base;
+	e = read_sysctl("net.ipsecif.reqid_base", &base, verbose);
+	if (e != NULL) {
+		return e;
+	}
+	if (base < 8192) {
+		return "net.ipsecif.reqid_base is too small";
+	}
+	if (base >= 16384/*magic*/) {
+		return "net.ipsecif.reqid_base is too big";
+	}
+	reqid_base = base;
 	return NULL;
+}
+
+static reqid_t netbsd_ipsec_interface_reqid(ipsec_interface_id_t if_id,
+					    struct verbose verbose)
+{
+	vdbg("()");
+	return reqid_base + (if_id * 2);
 }
 
 const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
@@ -155,6 +208,8 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
 	.add = netbsd_ipsec_interface_add,
 	.up = netbsd_ipsec_interface_up,
 	.del = netbsd_ipsec_interface_del,
+
+	.reqid = netbsd_ipsec_interface_reqid,
 
 	.match = netbsd_ipsec_interface_match,
 	.check_stale = netbsd_ipsec_interface_check_stale,

@@ -3713,12 +3713,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * ipsec-interface
 	 */
 
+	struct ipsec_interface_config ipsec_interface = {0};
 	if (can_extract_str("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
 		diag_t d;
-		d = parse_ipsec_interface(config, wm->ipsec_interface, c->logger);
+		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, c->logger);
 		if (d != NULL) {
 			return d;
 		}
+		config->ipsec_interface = ipsec_interface;
 	}
 
 #ifdef HAVE_NM
@@ -3757,8 +3759,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * pre-assign it.
 	 */
 	config->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
-			    wm->ike_version != IKEv2 ? /*generated later*/0 :
 			    wm->sec_label != NULL ? gen_reqid() :
+			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, c->logger) :
 			    /*generated later*/0);
 	ldbg(c->logger,
 	     "c->sa_reqid="PRI_REQID" because wm->sa_reqid="PRI_REQID" and sec-label=%s",
@@ -4061,11 +4063,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Is spd.reqid necessary for all c?  CK_INSTANCE or
 	 * CK_PERMANENT need one.  Does CK_TEMPLATE need one?
 	 */
-	c->child.reqid = (c->config->sa_reqid == 0 ? gen_reqid() : c->config->sa_reqid);
-	ldbg(c->logger, "child.reqid="PRI_REQID" because c->sa_reqid="PRI_REQID" (%s)",
-	     pri_reqid(c->child.reqid),
-	     pri_reqid(c->config->sa_reqid),
-	     (c->config->sa_reqid == 0 ? "generate" : "use"));
+	c->child.reqid = child_reqid(c->config, c->logger);
 
 	/*
 	 * Fill in the child's selector proposals from the config.  It
@@ -5432,4 +5430,15 @@ bool connections_can_share_parent(const struct connection *c, const struct conne
 	}
 
 	return true;
+}
+
+reqid_t child_reqid(const struct config *config, struct logger *logger)
+{
+	reqid_t reqid = (config->sa_reqid != 0 ? config->sa_reqid :
+			 gen_reqid());
+	ldbg(logger, "child.reqid="PRI_REQID" because c->sa_reqid="PRI_REQID" (%s)",
+	     pri_reqid(reqid),
+	     pri_reqid(config->sa_reqid),
+	     (config->sa_reqid == 0 ? "generate" : "use"));
+	return reqid;
 }

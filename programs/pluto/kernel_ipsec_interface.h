@@ -63,6 +63,8 @@ struct kernel_ipsec_interface {
 	bool (*match)(struct ipsec_interface_match *match,
 		      struct verbose verbose);
 
+	reqid_t (*reqid)(ipsec_interface_id_t if_id, struct verbose verbose);
+
 	void (*check_stale)(struct verbose verbose);
 	err_t (*supported)(struct verbose verbose);
 };

@@ -21,11 +21,13 @@
 #include <net/if.h>		/* for IFNAMSIZ */
 #include <stdbool.h>
 
+#include "reqid.h"
 #include "err.h"
 #include "ip_cidr.h"
 #include "refcnt.h"
 #include "ip_endpoint.h"
 
+struct ipsec_interface_config;
 struct connection;
 struct logger;
 struct ipsec_interface;	/* forward */
@@ -75,7 +77,9 @@ const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if, ipsec_in
 
 /* Both add_ipsec_interface() return true on success, false otherwise */
 
-diag_t parse_ipsec_interface(struct config *config, const char *ipsec_interface, struct logger *logger);
+diag_t parse_ipsec_interface(const char *ipsec_interface,
+			     struct ipsec_interface_config *config,
+			     struct logger *logger);
 bool add_ipsec_interface(struct connection *c, const struct iface_device *iface);
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 					       struct logger *logger, where_t where);
@@ -92,5 +96,7 @@ void check_stale_ipsec_interfaces(struct logger *logger);
 
 size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t if_id);
 const char *str_ipsec_interface_id(ipsec_interface_id_t if_id, ipsec_interface_buf *buf);
+
+reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger);
 
 #endif

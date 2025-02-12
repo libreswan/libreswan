@@ -500,8 +500,8 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 		     ipsec_interface, ipsec_interface->name, ipsec_interface->if_id);
 }
 
-diag_t parse_ipsec_interface(struct config *config,
-			     const char *ipsec_interface,
+diag_t parse_ipsec_interface(const char *ipsec_interface,
+			     struct ipsec_interface_config *config,
 			     struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "adding %s to config", ipsec_interface);
@@ -564,8 +564,8 @@ diag_t parse_ipsec_interface(struct config *config,
 	vdbg("ipsec-interface=%s parsed to %s",
 	     ipsec_interface, str_ipsec_interface_id(if_id, &ib));
 
-	config->ipsec_interface.enabled = true;
-	config->ipsec_interface.id = if_id;
+	config->enabled = true;
+	config->id = if_id;
 
 	return NULL;
 }
@@ -658,4 +658,15 @@ void check_stale_ipsec_interfaces(struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "...");
 	kernel_ipsec_interface_check_stale(verbose);
+}
+
+reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger)
+{
+	VERBOSE_DBGP(DBG_BASE, logger, "%s:%s() if_id=%d",
+		     kernel_ops->ipsec_interface->name, __func__,
+		     if_id);
+	if (kernel_ops->ipsec_interface->reqid != NULL) {
+		return kernel_ops->ipsec_interface->reqid(if_id, verbose);
+	}
+	return 0;
 }
