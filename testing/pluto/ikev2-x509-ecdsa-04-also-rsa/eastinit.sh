@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep 
-ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw
+/testing/x509/import.sh real/mainec/`hostname`.all.p12
 # Tuomo: why doesn't ipsec checknss --settrust work here?
 ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
 #ipsec start

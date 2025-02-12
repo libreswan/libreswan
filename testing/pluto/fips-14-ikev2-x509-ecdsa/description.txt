@@ -1,6 +1,4 @@
-IKEv2 ECDSA certificate based authentication in FIPS mode
-
-Using CA for verification
+IKEv2 ECDSA certificate based authentication
 
 Test for leaks as well
 

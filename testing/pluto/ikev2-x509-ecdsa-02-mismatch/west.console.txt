@@ -1,32 +1,15 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- # confirm that the network is alive
+ # ECDSA, peer is RSA
 west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
- ipsec pk12util -i /testing/x509/strongswan/strongWest.p12 -w /testing/x509/nss-pw
+ /testing/x509/import.sh real/mainec/`hostname`.all.p12
+ipsec pk12util -w nss-pw -i real/mainec/west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainec -t CT,,
 west #
- # Tuomo: why doesn't ipsec checknss --settrust work here?
-west #
- ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
-west #
- #ipsec start
-west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec start
+Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
