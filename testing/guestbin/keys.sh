@@ -21,7 +21,6 @@ mkdir /tmp/x509
 :
 
 cp /testing/x509/nss-pw		      /tmp/x509
-cp /testing/x509/openssl.cnf          /tmp/x509
 cp /testing/x509/dist_certs.py	      /tmp/x509
 
 :

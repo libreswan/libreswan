@@ -656,8 +656,6 @@ kvm-keys:
 	$(MAKE) $(KVM_KEYS)
 
 $(KVM_KEYS): $(KVM_TESTINGDIR)/x509/dist_certs.py
-$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/openssl.cnf
-$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/strongswan-ec-gen.sh
 $(KVM_KEYS): $(KVM_TESTINGDIR)/x509/generate.sh
 $(KVM_KEYS): $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh
 $(KVM_KEYS): | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
