@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 
+#include "lswalloc.h"
 #include "server_run.h"
 
 #include "verbose.h"
@@ -195,4 +196,58 @@ bool server_runv(const char *argv[], const struct verbose verbose)
 		}
 	}
 	return true;
+}
+
+chunk_t server_runv_chunk(const char *argv[], const struct verbose verbose)
+{
+	char command[LOG_WIDTH];
+	struct jambuf buf[] = { ARRAY_AS_JAMBUF(command), };
+	const char *sep = "";
+	for (const char **c = argv; *c != NULL; c++) {
+		jam_string(buf, sep); sep = " ";
+		jam_string(buf, "'");
+		jam_shell_quoted_hunk(buf, shunk1(*c));
+		jam_string(buf, "'");
+	}
+	if (!vexpect(jambuf_ok(buf))) {
+		return (chunk_t) NULL_HUNK;
+	}
+	vlog("command: %s", command);
+
+	FILE *out = popen(command, "re");	/*'e' is an extension
+						 * for close on
+						 * exec */
+	if (out == NULL) {
+		llog_error(verbose.logger, errno, "command '%s' failed: ", command);
+		return (chunk_t) NULL_HUNK;
+	}
+
+	chunk_t output = NULL_HUNK;
+	while (true) {
+		char inp[100];
+		int n = fread(inp, 1, sizeof(inp), out);
+		if (n > 0) {
+			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+				jam_string(buf, "output: ");
+				jam_sanitized_hunk(buf, shunk2(inp, n));
+			}
+			append_chunk_hunk("output", &output, shunk2(inp, n));
+			continue;
+		}
+		if (feof(out) || ferror(out)) {
+			const char *why = (feof(out) ? "eof" :
+					   ferror(out) ? "error" :
+					   "???");
+			int wstatus = pclose(out);
+			llog(RC_LOG, verbose.logger,
+			     "%s: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s",
+			     why, wstatus,
+			     bool_str(WIFEXITED(wstatus)), WEXITSTATUS(wstatus),
+			     bool_str(WIFSIGNALED(wstatus)), WTERMSIG(wstatus),
+			     bool_str(WIFSTOPPED(wstatus)), WSTOPSIG(wstatus),
+			     bool_str(WCOREDUMP(wstatus)));
+			break;
+		}
+	}
+	return output;
 }

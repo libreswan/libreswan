@@ -22,6 +22,8 @@
 
 #include <stdbool.h>
 
+#include "chunk.h"
+
 struct verbose;
 struct logger;
 
@@ -30,5 +32,7 @@ bool server_run(const char *verb, const char *verb_suffix,
 		struct verbose verbose);
 
 bool server_runv(const char *argv[], struct verbose verbose);
+
+chunk_t server_runv_chunk(const char *argv[], struct verbose verbose);
 
 #endif

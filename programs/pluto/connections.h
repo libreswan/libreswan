@@ -400,7 +400,7 @@ struct config {
 		bool insist;
 	} ppk;
 
-	struct {
+	struct ipsec_interface_config {
 		bool enabled;
 		uint32_t id;
 	} ipsec_interface;
@@ -1159,5 +1159,7 @@ bool connections_can_share_parent(const struct connection *c,
 
 void add_proposals(struct connection *c, const struct ip_info *host_afi,
 		   struct verbose verbose);
+
+reqid_t child_reqid(const struct config *config, struct logger *logger);
 
 #endif

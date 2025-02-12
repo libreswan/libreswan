@@ -54,4 +54,6 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 			      const ip_address *src, const ip_address *dst,
 			      struct logger *logger);
 
+bool kernel_reqid();
+
 #endif

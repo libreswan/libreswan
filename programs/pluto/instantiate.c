@@ -237,13 +237,7 @@ struct connection *group_instantiate(struct connection *group,
 	 * inherited resulting in instance+group aka GROUPINSTANCE
 	 * also. */
 	t->local->kind = t->remote->kind = CK_TEMPLATE;
-	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
-			  t->config->sa_reqid);
-	vdbg("%s t.child.reqid="PRI_REQID" because group->sa_reqid="PRI_REQID" (%s)",
-	     t->name,
-	     pri_reqid(t->child.reqid),
-	     pri_reqid(t->config->sa_reqid),
-	     (t->config->sa_reqid == 0 ? "generate" : "use"));
+	t->child.reqid = child_reqid(t->config, t->logger);
 
 	PEXPECT(t->logger, oriented(t));
 	connection_db_add(t);
@@ -321,13 +315,7 @@ static struct connection *instantiate(struct connection *t,
 						remote_addr, HERE); /* from whack initiate */
 	}
 
-	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
-	pdbg(d->logger,
-	     "%s .child.reqid="PRI_REQID" because t.config.sa_requid="PRI_REQID" (%s)",
-	     d->name,
-	     pri_reqid(d->child.reqid),
-	     pri_reqid(t->config->sa_reqid),
-	     (t->config->sa_reqid == 0 ? "generate" : "use"));
+	d->child.reqid = child_reqid(t->config, d->logger);
 
 	/*
 	 * assumption: orientation is the same as c's - while the
