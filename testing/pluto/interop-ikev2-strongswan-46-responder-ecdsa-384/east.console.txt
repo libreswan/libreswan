@@ -1,16 +1,10 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- rm -f /etc/strongswan/ipsec.d/cacerts/*
+ cp /testing/x509/real/mainec/root.cert /etc/strongswan/ipsec.d/cacerts/mainec.crt
 east #
- rm -f /etc/strongswan/ipsec.d/certs/*
+ cp /testing/x509/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 east #
- rm -f /etc/strongswan/ipsec.d/private/*
-east #
- cp /testing/x509/strongswan/strongCAcert.der /etc/strongswan/ipsec.d/cacerts/
-east #
- cp /testing/x509/strongswan/strongEastCert.der /etc/strongswan/ipsec.d/certs/
-east #
- cp /testing/x509/strongswan/strongEastKey.der /etc/strongswan/ipsec.d/private/
+ cp /testing/x509/real/mainec/east.end.key /etc/strongswan/ipsec.d/private/east.key
 east #
  chmod 600 /etc/strongswan/ipsec.d/private/*
 east #
@@ -28,7 +22,7 @@ Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[C=CH, O=strongSwan, CN=strongEast]...192.1.2.45[C=CH, O=strongSwan, CN=strongWest]
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24
 east #

@@ -1,10 +1,9 @@
 /testing/guestbin/swan-prep --userland strongswan
-rm -f /etc/strongswan/ipsec.d/cacerts/*
-rm -f /etc/strongswan/ipsec.d/certs/*
-rm -f /etc/strongswan/ipsec.d/private/*
-cp /testing/x509/strongswan/strongCAcert.der /etc/strongswan/ipsec.d/cacerts/
-cp /testing/x509/strongswan/strongEastCert.der /etc/strongswan/ipsec.d/certs/
-cp /testing/x509/strongswan/strongEastKey.der /etc/strongswan/ipsec.d/private/
+
+cp /testing/x509/real/mainec/root.cert /etc/strongswan/ipsec.d/cacerts/mainec.crt
+cp /testing/x509/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
+cp /testing/x509/real/mainec/east.end.key /etc/strongswan/ipsec.d/private/east.key
 chmod 600 /etc/strongswan/ipsec.d/private/*
+
 ../../guestbin/strongswan-start.sh
 echo "initdone"

@@ -1,12 +1,10 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw
+ /testing/x509/import.sh real/mainec/`hostname`.all.p12
+ipsec pk12util -w nss-pw -i real/mainec/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-east #
- # Because we cannot run ipsec import, fixup trust bits manually
-east #
- ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
+ipsec certutil -M -n mainec -t CT,,
 east #
  ipsec start
 Redirecting to: [initsystem]

@@ -1,16 +1,13 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw
+ /testing/x509/import.sh real/mainec/`hostname`.all.p12
+ipsec pk12util -w nss-pw -i real/mainec/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainec -t CT,,
 east #
- # Tuomo: why doesn't ipsec checknss --settrust work here?
-east #
- ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
-east #
- #ipsec start
-east #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec start
+Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #

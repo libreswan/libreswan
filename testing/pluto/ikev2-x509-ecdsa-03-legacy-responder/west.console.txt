@@ -1,32 +1,13 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm clear text does not get through
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
- ipsec pk12util -i /testing/x509/strongswan/strongWest.p12 -w /testing/x509/nss-pw
+ /testing/x509/import.sh real/mainec/`hostname`.all.p12
+ipsec pk12util -w nss-pw -i real/mainec/west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainec -t CT,,
 west #
- # Tuomo: why doesn't ipsec checknss --settrust work here?
-west #
- ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
-west #
- #ipsec start
-west #
- ipsec pluto --config /etc/ipsec.conf --leak-detective
+ ipsec start
+Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
@@ -43,25 +24,37 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CH, O=strongSwan, CN=strongEast' and P-384 ECDSA with SHA2_384 signature issued by 'C=CH, O=strongSwan, CN=strongSwan CA'
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and P-384 ECDSA with SHA2_384 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus
-#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CH, O=strongSwan, CN=strongEast'
+#2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='E=user-east@testing.libreswan.org, CN=east.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA'
 west #
  ipsec whack --listpubkeys
  
 List of Public Keys:
  
 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
-       ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
-       Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+       ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
+TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+       ID_USER_FQDN 'user-west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
        ID_FQDN '@west.testing.libreswan.org'
-       Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
+TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+       ID_USER_FQDN 'west@testing.libreswan.org'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
+TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+       ID_IPV4_ADDR '192.1.2.45'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
+TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+       ID_IPV6_ADDR '2001:db8:1:2::45'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org'
 west #
  # test delete/free
 west #

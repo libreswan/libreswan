@@ -1,18 +1,12 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
- rm -f /etc/strongswan/ipsec.d/cacerts/*
+ cp /testing/x509/real/mainec/root.cert /etc/strongswan/ipsec.d/cacerts/mainec.crt
 west #
- rm -f /etc/strongswan/ipsec.d/certs/*
+ cp /testing/x509/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 west #
- rm -f /etc/strongswan/ipsec.d/private/*
+ cp /testing/x509/real/mainec/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
 west #
- cp /testing/x509/strongswan/strongCAcert.der /etc/strongswan/ipsec.d/cacerts/
-west #
- cp /testing/x509/strongswan/strongWestCert.der /etc/strongswan/ipsec.d/certs/
-west #
- cp /testing/x509/strongswan/strongWestKey.der /etc/strongswan/ipsec.d/private/
-west #
- chmod 600 /etc/strongswan/ipsec.d/private/*
+ chmod 600 /etc/strongswan/ipsec.d/*/*
 west #
  ../../guestbin/strongswan-start.sh
 west #
@@ -32,27 +26,41 @@ sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(HASH_ALG) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) CERTREQ ]
 selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/ECP_256
-sending cert request for "C=CH, O=strongSwan, CN=strongSwan CA"
-authentication of 'C=CH, O=strongSwan, CN=strongWest' (myself) with ECDSA_WITH_SHA384_DER successful
-sending end entity cert "C=CH, O=strongSwan, CN=strongWest"
+sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org"
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' (myself) with ECDSA_WITH_SHA384_DER successful
+sending end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org"
 establishing CHILD_SA westnet-eastnet-ikev2{1}
 generating IKE_AUTH request 1 [ IDi CERT N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+splitting IKE message (XXX bytes) into 2 fragments
+generating IKE_AUTH request 1 [ EF(1/2) ]
+generating IKE_AUTH request 1 [ EF(2/2) ]
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(1/2) ]
-received fragment #1 of 2, waiting for complete IKE message
+parsed IKE_AUTH response 1 [ EF(1/3) ]
+received fragment #1 of 3, waiting for complete IKE message
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(2/2) ]
-received fragment #2 of 2, reassembled fragmented IKE message (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(2/3) ]
+received fragment #2 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ EF(3/3) ]
+received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr CERT AUTH SA TSi TSr ]
-received end entity cert "C=CH, O=strongSwan, CN=strongEast"
-  using certificate "C=CH, O=strongSwan, CN=strongEast"
-  using trusted ca certificate "C=CH, O=strongSwan, CN=strongSwan CA"
+received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainec, E=testing@libreswan.org"
   reached self-signed root ca with a path length of 0
-checking certificate status of "C=CH, O=strongSwan, CN=strongEast"
+checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
+ocsp request to http://nic.testing.libreswan.org:2560 failed
+ocsp check failed, fallback to crl
+  fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
+crl fetching failed
 certificate status is not available
-authentication of 'C=CH, O=strongSwan, CN=strongEast' with ECDSA_WITH_SHA384_DER successful
-IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CH, O=strongSwan, CN=strongWest]...192.1.2.23[C=CH, O=strongSwan, CN=strongEast]
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with ECDSA_WITH_SHA384_DER successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
@@ -77,7 +85,7 @@ Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[C=CH, O=strongSwan, CN=strongWest]...192.1.2.23[C=CH, O=strongSwan, CN=strongEast]
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #

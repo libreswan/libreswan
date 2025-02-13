@@ -1,12 +1,9 @@
-/testing/guestbin/swan-prep --fips
-rm /etc/ipsec.d/*db
-ipsec initnss > /dev/null 2> /dev/null
-ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw -k /testing/x509/nss-pw
-# Tuomo: why doesn't ipsec checknss --settrust work here?
-ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
-#ipsec start
-ipsec pluto --config /etc/ipsec.conf --leak-detective
+/testing/guestbin/swan-prep --nokeys --fips
+
+/testing/x509/import.sh real/mainec/`hostname`.all.p12
+
+ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
+ipsec auto --add east
 ipsec whack --impair suppress_retransmits
 echo "initdone"
