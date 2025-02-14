@@ -269,7 +269,6 @@ generate_end_cert()
 
 )
 
-
 # generate ca directories
 
 while read base domain ca param ; do
@@ -312,55 +311,22 @@ done
 
 # generate end certs where needed
 
-while read cert san ; do
-    for kind in real fake ; do
-	for root in mainca mainec ; do
-	    certdir=${OUTDIR}/${kind}/${root}
-	    log=${certdir}/${cert}.log
-	    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
+while read kinds roots certs san ; do
+    for kind in $(eval echo ${kinds}) ; do
+	for root in $(eval echo ${roots}) ; do
+	    for cert in $(eval echo ${certs}) ; do
+		certdir=${OUTDIR}/${kind}/${root}
+		log=${certdir}/${cert}.log
+		if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
+		    cat ${log}
+		    exit 1
+		fi
+	    done
 	done
     done
 done <<EOF
-nic
-east
-west
-road
-north
-rise
-set
-EOF
-
-while read cert san ; do
-    for kind in real ; do
-	for root in otherca ; do
-	    certdir=${OUTDIR}/${kind}/${root}
-	    log=${certdir}/${cert}.log
-	    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
-	done
-    done
-done <<EOF
-othereast
-otherwest
-EOF
-
-while read cert san ; do
-    for kind in real ; do
-	for root in badca ; do
-	    certdir=${OUTDIR}/${kind}/${root}
-	    log=${certdir}/${cert}.log
-	    if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
-		cat ${log}
-		exit 1
-	    fi
-	done
-    done
-done <<EOF
-badeast
-badwest
+{real,fake} {mainca,mainec} {nic,east,west,road,north,rise,set}
+real	    mainca          revoked
+real        otherca         other{east,west}
+real        badca           bad{east,west}
 EOF

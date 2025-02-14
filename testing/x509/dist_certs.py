@@ -515,44 +515,6 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                 writeout_pkcs12("pkcs12/", endrev_name,
                                 ercert, erkey, signpair[0])
 
-# this special crl was for a openswan/nss freebl combo bug, both of which should
-# long be done with.
-
-def create_leading_zero_crl():
-    """ Create our special crl with a signature that starts out with '00:'
-    This signs a CRL and checks for a '00' beginning. Each try increments
-    the days parameter to result in a different signature
-    """
-    zerosig = crypto.CRL()
-    signcert, signkey = ca_certs['mainca']
-    days = 1
-
-    print("creating a CRL with a leading zero byte signature..")
-    while True:
-        good = False
-        nl = ''
-
-        crl = zerosig.export(signcert, signkey,
-                             type=crypto.FILETYPE_TEXT, days=days, digest='sha256')
-        der = zerosig.export(signcert, signkey,
-                             type=crypto.FILETYPE_ASN1, days=days, digest='sha256')
-
-        for index, line in enumerate(crl.splitlines()):
-            if "Signature Algorithm" in line and index >= 5:
-                nl = crl.splitlines()[index + 1].strip()
-                if nl.startswith('00'):
-                    good = True
-                    break
-
-        if good:
-            print(nl)
-            print("found after %d signatures!"% days)
-            with open("crls/crl-leading-zero-byte.crl", "wb") as f:
-                f.write(der)
-            break
-
-        days += 1
-
 
 def create_crlsets():
     """ Create test CRLs
@@ -601,8 +563,6 @@ def create_crlsets():
                               crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                               type=crypto.FILETYPE_ASN1,
                               days=15, digest='sha256'.encode('utf-8')))
-
-     #create_leading_zero_crl()
 
 
 
