@@ -1,9 +1,13 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
- ipsec crlutil -I -i /testing/x509/crls/needupdate.crl
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 east #
- ipsec certutil  -D -n west
+ /testing/x509/import.sh real/mainca/crl-is-out-of-date.crl
+ipsec crlutil -I -i real/mainca/crl-is-out-of-date.crl
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -41,7 +45,7 @@ east #
  # Check that mainca is present
 east #
  ipsec crlutil -L | grep mainca
-Libreswan test CA for mainca - Libreswan CRL  
+mainca                                   CRL  
 east #
  # DANGER: race.
 east #
@@ -52,15 +56,6 @@ east #
  # The first fetch, which happens happens after 5s, may or may-not be
 east #
  # too quick for the exchange.
-east #
- ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=nic.testing.libreswan.org'
-imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
-east #
- ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=north.testing.libreswan.org'
-imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
-east #
- ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=road.testing.libreswan.org'
-imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
 east #
  ../../guestbin/wait-for-pluto.sh 'imported CRL.*CN=east.testing.libreswan.org'
 imported CRL for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' from: http://nic.testing.libreswan.org/revoked.crl
