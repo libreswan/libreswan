@@ -143,9 +143,9 @@ def writeout_cert_and_key(certdir, name, cert, privkey):
     """
     writeout_cert(certdir + name + ".crt", cert)
     writeout_privkey("keys/" + name + ".key", privkey)
-    with open(certdir + name + ".serial") as f:
-        serial = cert.get_serial_number()
-        f.write(f"${serial}\n")
+    with open(certdir + name + ".serial", "w") as f:
+        serial = cert.serial_number
+        f.write(f"{serial}\n")
 
 
 def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
@@ -445,7 +445,7 @@ def create_mainca_end_certs(mainca_end_certs):
 
     # update the next serial file in the CA's directory
     with open("real/mainca/serial", "w") as f:
-        f.write("%d\n" % serial)
+        f.write(f"{serial}\n")
 
 
 def create_chained_certs(chain_ca_roots, max_path, prefix=''):
