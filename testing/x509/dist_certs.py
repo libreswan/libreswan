@@ -537,19 +537,6 @@ def create_crlsets():
     ser = hex(crypto.X509.from_cryptography(end_certs['west_chain_revoked'][0]).get_serial_number())[2:]
     chainrev.set_serial(ser.encode('utf-8'))
 
-    needupdate = crypto.CRL()
-    needupdate.add_revoked(revoked)
-    needupdate.add_revoked(chainrev)
-    with open("crls/needupdate.crl", "wb") as f:
-        f.write(needupdate.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
-                                  crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
-                                  type=crypto.FILETYPE_ASN1,
-                                  days=0,
-                                  digest='sha256'.encode('utf-8')))
-
-    print("sleeping for needupdate/valid crl time difference")
-    time.sleep(5)
-
     validcrl = crypto.CRL()
     validcrl.add_revoked(revoked)
     validcrl.add_revoked(chainrev)
