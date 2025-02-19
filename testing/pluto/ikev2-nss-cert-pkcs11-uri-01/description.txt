@@ -1,10 +1,1 @@
-
-
-This test blows away all the softhsm tokens on the system. USE WITH CARE
-
-Basic pluto with IKEv2 on the initiator (west), and on the responder.
-It uses certificates
-
-Now the east certificate is not coming from the native NSS store, but from
-a PKCS#11 token. This test case uses softhsm.
-
+IKEv2 with EAST using a PKCS#11 token from an external store

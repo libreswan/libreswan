@@ -1398,9 +1398,7 @@ kvmplutotest	nss-cert-10-notyetvalid-responder-ikev2	good
 #
 kvmplutotest	nss-cert-badca-01		good
 
-# this test is really "good", but installing softhsm causes lots
-# of crashers in pluto shutdown, so we cannot run it for now.
-kvmplutotest	ikev2-nss-cert-pkcs11-uri-01		skiptest
+kvmplutotest	ikev2-nss-cert-pkcs11-uri-01		good
 
 kvmplutotest	ikev1-2behind-nat-01		wip
 
