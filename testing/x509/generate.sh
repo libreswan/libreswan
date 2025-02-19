@@ -77,8 +77,8 @@ serial()
 {
     local certdir=$1 ; shift
     local serial
-    read serial < ${certdir}/root.serial
-    echo $((serial + 1)) > ${certdir}/root.serial
+    read serial < ${certdir}/serial
+    echo $((serial + 1)) > ${certdir}/serial
     echo ${serial}
 }
 
@@ -96,6 +96,7 @@ generate_root_cert()
     local domain ; read domain < ${certdir}/root.domain
 
     local serial=$(serial ${certdir})
+    echo ${serial} > ${certdir}/root.serial
 
     # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
@@ -173,6 +174,8 @@ generate_end_cert()
     local domain ; read domain < ${certdir}/root.domain
 
     local serial=$(serial ${certdir})
+    echo ${serial} > ${certdir}/${cert}.serial
+
     local cn=${cert}.${domain}			# common name
     local e=user-${cert}@testing.libreswan.org	# email
 
@@ -281,7 +284,7 @@ while read base domain ca param ; do
 
     log=${certdir}/root.log
 
-    echo 1           > ${certdir}/root.serial	# next
+    echo 1           > ${certdir}/serial	# next
 
     echo "${param}"  > ${certdir}/root.param
     echo "${domain}" > ${certdir}/root.domain

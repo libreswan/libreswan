@@ -143,6 +143,9 @@ def writeout_cert_and_key(certdir, name, cert, privkey):
     """
     writeout_cert(certdir + name + ".crt", cert)
     writeout_privkey("keys/" + name + ".key", privkey)
+    with open(certdir + name + ".serial", "w") as f:
+        serial = cert.serial_number
+        f.write(f"{serial}\n")
 
 
 def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
@@ -387,7 +390,7 @@ def create_mainca_end_certs(mainca_end_certs):
 
     # load the next serial file in the CA's directory
     serial = 0
-    with open("real/mainca/root.serial", "r") as f:
+    with open("real/mainca/serial", "r") as f:
         serial = int(f.read())
 
     print("creating mainca's end certs")
@@ -441,8 +444,8 @@ def create_mainca_end_certs(mainca_end_certs):
         serial += 1
 
     # update the next serial file in the CA's directory
-    with open("real/mainca/root.serial", "w") as f:
-        f.write("%d\n" % serial)
+    with open("real/mainca/serial", "w") as f:
+        f.write(f"{serial}\n")
 
 
 def create_chained_certs(chain_ca_roots, max_path, prefix=''):
@@ -520,33 +523,20 @@ def create_crlsets():
     """ Create test CRLs
     """
     print("creating crl set")
-    revoked = crypto.Revoked()
-    chainrev = crypto.Revoked()
-    future_revoked = crypto.Revoked()
 
-    revoked.set_rev_date(dates['OK_NOW'].encode('utf-8'))
-    chainrev.set_rev_date(dates['OK_NOW'].encode('utf-8'))
-    future_revoked.set_rev_date(dates['FUTURE'].encode('utf-8'))
     # the get_serial_number method results in a hex str like '0x17'
     # but set_serial needs a hex str like '17'
+
+    revoked = crypto.Revoked()
+    revoked.set_rev_date(dates['OK_NOW'].encode('utf-8'))
     ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
     revoked.set_serial(ser.encode('utf-8'))
+
+    chainrev = crypto.Revoked()
+    chainrev.set_rev_date(dates['OK_NOW'].encode('utf-8'))
     ser = hex(crypto.X509.from_cryptography(end_certs['west_chain_revoked'][0]).get_serial_number())[2:]
     chainrev.set_serial(ser.encode('utf-8'))
-    ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
-    future_revoked.set_serial(ser.encode('utf-8'))
 
-    needupdate = crypto.CRL()
-    needupdate.add_revoked(revoked)
-    needupdate.add_revoked(chainrev)
-    with open("crls/needupdate.crl", "wb") as f:
-        f.write(needupdate.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
-                                  crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
-                                  type=crypto.FILETYPE_ASN1,
-                                  days=0, digest='sha256'.encode('utf-8')))
-
-    print("sleeping for needupdate/valid crl time difference")
-    time.sleep(5)
     validcrl = crypto.CRL()
     validcrl.add_revoked(revoked)
     validcrl.add_revoked(chainrev)
@@ -554,16 +544,8 @@ def create_crlsets():
         f.write(validcrl.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
                                 crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
                                 type=crypto.FILETYPE_ASN1,
-                                days=15, digest='sha256'.encode('utf-8')))
-
-    notyet = crypto.CRL()
-    notyet.add_revoked(future_revoked)
-    with open("crls/futurerevoke.crl", "wb") as f:
-        f.write(notyet.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
-                              crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
-                              type=crypto.FILETYPE_ASN1,
-                              days=15, digest='sha256'.encode('utf-8')))
-
+                                days=15,
+                                digest='sha256'.encode('utf-8')))
 
 
 def run_dist_certs():
