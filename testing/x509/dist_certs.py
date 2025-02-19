@@ -116,7 +116,7 @@ endrev_name = ""
 top_caname=""
 
 def reset_files():
-    for dir in ['keys/', 'cacerts/', 'certs/', 'selfsigned/',
+    for dir in ['keys/', 'certs/', 'selfsigned/',
                 'pkcs12/',
                 'pkcs12/mainca',
                 'crls/' ]:
@@ -138,12 +138,12 @@ def writeout_privkey(filename, key):
         f.write(blob)
 
 
-def writeout_cert_and_key(certdir, name, cert, privkey):
+def writeout_cert_and_key(name, cert, privkey):
     """ Write the cert and key files
     """
-    writeout_cert(certdir + name + ".crt", cert)
+    writeout_cert("certs/" + name + ".crt", cert)
     writeout_privkey("keys/" + name + ".key", privkey)
-    with open(certdir + name + ".serial", "w") as f:
+    with open("certs/" + name + ".serial", "w") as f:
         serial = cert.serial_number
         f.write(f"{serial}\n")
 
@@ -371,7 +371,6 @@ def create_basic_pluto_cas(ca_names):
         with open(p12, "rb") as f:
             blob = f.read()
             key, ca, chain = pkcs12.load_key_and_certificates(blob, PASSPHRASE)
-        writeout_cert_and_key("cacerts/", name, ca, key)
         store_cert_and_key(name, ca, key)
 
 def writeout_pkcs12(path, name, cert, key, ca_cert):
@@ -437,7 +436,7 @@ def create_mainca_end_certs(mainca_end_certs):
                                     START=startdate, END=enddate,
                                     keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=keysize),
                                     sign_alg=sign_alg, ocsp=ocsp_resp)
-        writeout_cert_and_key("certs/", name, cert, key)
+        writeout_cert_and_key(name, cert, key)
         store_cert_and_key(name, cert, key)
         writeout_pkcs12("pkcs12/"+ signer + '/', name,
                         cert, key, ca_certs[signer][0])
@@ -481,7 +480,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                       emailAddress="%s@testing.libreswan.org"%cname,
                                       isCA=True, ocsp=False)
 
-            writeout_cert_and_key("certs/", cname, ca, key)
+            writeout_cert_and_key(cname, ca, key)
             store_cert_and_key(cname, ca, key)
             lastca = cname
             serial += 1
@@ -498,7 +497,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endcert_name, ecert, ekey)
+                writeout_cert_and_key(endcert_name, ecert, ekey)
                 store_cert_and_key(endcert_name, ecert, ekey)
                 writeout_pkcs12("pkcs12/", endcert_name,
                                 ecert, ekey, signpair[0])
@@ -513,7 +512,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                               START=dates['OK_NOW'],
                                               END=dates['FUTURE'])
 
-                writeout_cert_and_key("certs/", endrev_name, ercert, erkey)
+                writeout_cert_and_key(endrev_name, ercert, erkey)
                 store_cert_and_key(endrev_name, ercert, erkey)
                 writeout_pkcs12("pkcs12/", endrev_name,
                                 ercert, erkey, signpair[0])
