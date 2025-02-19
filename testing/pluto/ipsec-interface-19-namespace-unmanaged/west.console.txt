@@ -1,0 +1,166 @@
+/testing/guestbin/swan-prep
+west #
+ # build the IPsec interface device
+west #
+ ../../guestbin/ip.sh link add dev ipsec9 type xfrm dev eth1 if_id 0x1
+west #
+ ../../guestbin/ip.sh addr add 192.0.1.251/24 dev ipsec9
+west #
+ ../../guestbin/ip.sh link show ipsec9 type xfrm
+X: ipsec9@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+west #
+ ../../guestbin/ip.sh addr show ipsec9
+X: ipsec9@eth1: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    inet 192.0.1.251/24 scope global ipsec9
+       valid_lft forever preferred_lft forever
+west #
+ # move it into the name space
+west #
+ ../../guestbin/ip.sh netns add ns
+west #
+ ../../guestbin/ip.sh link set ipsec9 netns ns
+west #
+ ../../guestbin/ip.sh -n ns link show ipsec9 type xfrm
+X: ipsec9@if3: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+west #
+ ../../guestbin/ip.sh -n ns addr show ipsec9
+X: ipsec9@if3: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+west #
+ # add the address and mark it up
+west #
+ ../../guestbin/ip.sh -n ns addr add 192.0.1.251/24 dev ipsec9
+west #
+ ../../guestbin/ip.sh -n ns link set ipsec9 up
+west #
+ ../../guestbin/ip.sh -n ns link show ipsec9
+X: ipsec9@if3: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+west #
+ ../../guestbin/ip.sh -n ns addr show ipsec9
+X: ipsec9@if3: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    inet 192.0.1.251/24 scope global ipsec9
+       valid_lft forever preferred_lft forever
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+       valid_lft forever preferred_lft forever
+west #
+ ../../guestbin/ip.sh -n ns -4 route add 192.0.2.0/24 dev ipsec9
+west #
+ # ../../guestbin/ip.sh monitor all all-nsid &
+west #
+ ../../guestbin/ip.sh -n ns link show ipsec9
+X: ipsec9@if3: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+west #
+ # move it into a namespace
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ #
+west #
+ # Existing ipsec-interface with address
+west #
+ #
+west #
+ # Neither the ipsec-interface nor the address are created by pluto, so
+west #
+ # pluto leaves both behind.
+west #
+ ipsec add westnet4-eastnet4
+"westnet4-eastnet4": added IKEv2 connection
+west #
+ ipsec up westnet4-eastnet4
+"westnet4-eastnet4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet4-eastnet4" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet4-eastnet4" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"westnet4-eastnet4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet4-eastnet4" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+EXPECTATION FAILED: "westnet4-eastnet4" #2: not (getaddr.match.ipsec_if_index == 0) (xfrm_ipsec_interface_has_cidr() +693 programs/pluto/kernel_xfrm_interface.c)
+"westnet4-eastnet4" #2: added 192.0.1.251/24 to ipsec-interface ipsec1@eth1
+"westnet4-eastnet4" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ip.sh netns exec ns ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "westnet4-eastnet4", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	if_id 0x1
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x1/0xffffffff
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	if_id 0x1
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+	if_id 0x1
+west #
+ cat /proc/net/xfrm_stat
+XfrmInError             	0
+XfrmInBufferError       	0
+XfrmInHdrError          	0
+XfrmInNoStates          	0
+XfrmInStateProtoError   	0
+XfrmInStateModeError    	0
+XfrmInStateSeqError     	0
+XfrmInStateExpired      	0
+XfrmInStateMismatch     	0
+XfrmInStateInvalid      	0
+XfrmInTmplMismatch      	0
+XfrmInNoPols            	0
+XfrmInPolBlock          	0
+XfrmInPolError          	0
+XfrmOutError            	0
+XfrmOutBundleGenError   	0
+XfrmOutBundleCheckError 	0
+XfrmOutNoStates         	0
+XfrmOutStateProtoError  	0
+XfrmOutStateModeError   	0
+XfrmOutStateSeqError    	0
+XfrmOutStateExpired     	0
+XfrmOutPolBlock         	0
+XfrmOutPolDead          	0
+XfrmOutPolError         	0
+XfrmFwdHdrError         	0
+XfrmOutStateInvalid     	0
+XfrmAcquireError        	0
+XfrmOutStateDirError    	0
+XfrmInStateDirError     	0
+west #
+ ipsec delete westnet4-eastnet4
+"westnet4-eastnet4": terminating SAs using this connection
+"westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@eth1 IP [192.0.1.251/24], not created by pluto
+"westnet4-eastnet4" #2: ESP traffic information: in=84B out=84B
+west #
+ 
