@@ -69,8 +69,4 @@ west #
  echo done
 done
 west #
- grep -i -e "^[^|].*certificate revoked" /tmp/pluto.log
-west #
- grep ERROR /tmp/pluto.log
-west #
  

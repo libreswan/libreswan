@@ -1,21 +1,19 @@
 #start ocsp server here
 nic #
- cp -r /testing/x509/keys/nic-nourl.key /etc/ocspd/private/nic_key.pem
-nic #
- cp -r /testing/x509/certs/nic-nourl.crt /etc/ocspd/certs/nic.pem
-nic #
- cp -r /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
-nic #
- cp /testing/x509/ocspd.conf /etc/ocspd/
-nic #
+ ../../guestbin/ocspd.sh --start nic-nourl
+ cp /testing/x509/keys/nic-nourl.key /etc/ocspd/private/nic_key.pem
+ cp /testing/x509/certs/nic-nourl.crt /etc/ocspd/certs/nic.pem
+ cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
+ cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
-nic #
- #stock ocspd.conf, used separate ones for different configs
-nic #
  restorecon -R /etc/ocspd
-nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #
  echo "done."
 done.
-
+nic #
+ ../../guestbin/ocspd.sh --log
+INFO::CORE::Connection from [192.1.2.23]
+request for certificate serial 42
+nic #
+ 

@@ -31,19 +31,7 @@ east #
  echo "initdone"
 initdone
 east #
- # on east, revocation should show up
-east #
- hostname | grep east && grep "certificate revoked" /tmp/pluto.log
-east
-east #
- # should show a hit
-east #
- hostname |grep east && grep ERROR /tmp/pluto.log
-east
+ grep -v -e '|' /tmp/pluto.log | grep -e 'certificate revoked' -e ERROR
 "nss-cert-ocsp" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_REVOKED_CERTIFICATE: Peer's Certificate has been revoked.
-east #
- # should not show a hit
-east #
- hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
 east #
  
