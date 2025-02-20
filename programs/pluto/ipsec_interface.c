@@ -646,12 +646,6 @@ bool add_ipsec_interface(struct connection *c,
 	return true;
 }
 
-void check_stale_ipsec_interfaces(struct logger *logger)
-{
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
-	kernel_ipsec_interface_check_stale(verbose);
-}
-
 reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s:%s() if_id=%d",
@@ -680,4 +674,28 @@ void config_ipsec_interface(enum yn_options managed, struct logger *logger)
 		return;
 	}
 	bad_case(managed);
+}
+
+enum yn_options init_ipsec_interface(struct logger *logger)
+{
+	name_buf nb;
+	VERBOSE_DBGP(DBG_BASE, logger, "%s() managed=%s",
+		     __func__, str_sparse(&yn_option_names, ipsec_interface_managed, &nb));
+
+	if (kernel_ops->ipsec_interface == NULL) {
+		ipsec_interface_managed = YN_UNSET;
+		vlog("ipsec-interface is not supported");
+		return YN_UNSET;
+	}
+
+	if (ipsec_interface_managed == YN_YES) {
+		err_t err = kernel_ops->ipsec_interface->init(verbose);
+		if (err != NULL) {
+			ipsec_interface_managed = YN_UNSET;
+			vlog("ipsec-interface is not working: %s", err);
+			return YN_UNSET;
+		}
+	}
+
+	return ipsec_interface_managed;
 }

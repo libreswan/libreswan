@@ -137,12 +137,7 @@ static bool freebsd_ipsec_interface_match(struct ipsec_interface_match *match,
 	return ok;
 }
 
-static void freebsd_ipsec_interface_check_stale(struct verbose verbose)
-{
-	vdbg("%s() nothing to do", __func__);
-}
-
-static err_t freebsd_ipsec_interface_supported(struct verbose verbose)
+static err_t freebsd_ipsec_interface_init(struct verbose verbose)
 {
 	vdbg("%s() nothing to do", __func__);
 	return NULL;
@@ -160,7 +155,6 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
 	.del = freebsd_ipsec_interface_del,
 
 	.match = freebsd_ipsec_interface_match,
-	.check_stale = freebsd_ipsec_interface_check_stale,
-	.supported = freebsd_ipsec_interface_supported,
+	.init = freebsd_ipsec_interface_init,
 
 };

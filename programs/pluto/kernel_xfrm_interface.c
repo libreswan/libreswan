@@ -862,6 +862,18 @@ static void xfrm_check_stale(struct verbose verbose)
 	return;
 }
 
+static err_t xfrm_ipsec_interface_init(struct verbose verbose)
+{
+	err_t e = xfrm_iface_supported(verbose);
+	if (e != NULL) {
+		return e;
+	}
+
+	xfrm_check_stale(verbose);
+	return NULL;
+}
+
+
 void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 {
 	bool set_mark = false;
@@ -909,6 +921,5 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 
 	.match = xfrm_ipsec_interface_match,
 
-	.check_stale = xfrm_check_stale,
-	.supported = xfrm_iface_supported,
+	.init = xfrm_ipsec_interface_init,
 };

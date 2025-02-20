@@ -112,13 +112,6 @@ static void do_whacklisten(struct logger *logger)
 	listening = true;
 	find_ifaces(true /* remove dead interfaces */, logger);
 
-	/* only do on first listen !?! */
-	static bool checked_stale_ipsec_interfaces = false;
-	if (!checked_stale_ipsec_interfaces) {
-		checked_stale_ipsec_interfaces = true;
-		check_stale_ipsec_interfaces(logger);
-	}
-
 	load_preshared_secrets(logger);
 	load_groups(logger);
 #ifdef USE_SYSTEMD_WATCHDOG

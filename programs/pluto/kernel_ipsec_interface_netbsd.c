@@ -137,11 +137,6 @@ static bool netbsd_ipsec_interface_match(struct ipsec_interface_match *match UNU
 	return ok;
 }
 
-static void netbsd_ipsec_interface_check_stale(struct verbose verbose)
-{
-	vdbg("%s() nothing to do", __func__);
-}
-
 static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbose)
 {
 	const char *sysctl[] = {
@@ -163,7 +158,7 @@ static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbo
 	return NULL;
 }
 
-static err_t netbsd_ipsec_interface_supported(struct verbose verbose)
+static err_t netbsd_ipsec_interface_init(struct verbose verbose)
 {
 	err_t e;
 	/* check net.ipsecif.use_fixed_reqid=1 */
@@ -212,7 +207,6 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_ifconfig = {
 	.reqid = netbsd_ipsec_interface_reqid,
 
 	.match = netbsd_ipsec_interface_match,
-	.check_stale = netbsd_ipsec_interface_check_stale,
-	.supported = netbsd_ipsec_interface_supported,
+	.init = netbsd_ipsec_interface_init,
 
 };
