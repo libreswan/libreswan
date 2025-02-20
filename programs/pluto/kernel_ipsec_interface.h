@@ -93,6 +93,5 @@ bool kernel_ipsec_interface_match(struct ipsec_interface_match *match,
 				  struct verbose verbose);
 
 void kernel_ipsec_interface_check_stale(struct verbose verbose);
-err_t kernel_ipsec_interface_supported(struct verbose verbose);
 
 #endif

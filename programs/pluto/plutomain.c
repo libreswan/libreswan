@@ -78,6 +78,7 @@
 #include "server_pool.h"
 #include "show.h"
 #include "enum_names.h"		/* for init_enum_names() */
+#include "ipsec_interface.h"	/* for config_ipsec_interface() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1399,6 +1400,8 @@ int main(int argc, char **argv)
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
 			set_global_redirect_dests(cfg->values[KSF_GLOBAL_REDIRECT_TO].string);
+
+			config_ipsec_interface(cfg->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			nhelpers = cfg->values[KBF_NHELPERS].option;
 			cur_debugging = cfg->values[KW_DEBUG].option;

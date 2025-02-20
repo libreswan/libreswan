@@ -27,6 +27,7 @@
 #include "refcnt.h"
 #include "ip_endpoint.h"
 
+enum yn_options;
 struct ipsec_interface_config;
 struct connection;
 struct logger;
@@ -98,5 +99,7 @@ size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t if_id);
 const char *str_ipsec_interface_id(ipsec_interface_id_t if_id, ipsec_interface_buf *buf);
 
 reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger);
+
+void config_ipsec_interface(enum yn_options managed, struct logger *logger);
 
 #endif

@@ -71,6 +71,9 @@ enum keywords {
 	KW_ECDSAKEY,
 	KW_PUBKEY,
 
+	KWYN_IPSEC_INTERFACE_MANAGED,
+	KWS_IPSEC_INTERFACE,
+
 	/*
 	 * By convention, these are global configuration strings and
 	 * only appear in the "config setup" section (KSF == Keyword
@@ -160,7 +163,6 @@ enum keywords {
 	KSCF_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
 
-	KSCF_IPSEC_INTERFACE,
 	KSCF_AUTHBY,
 	KSCF_PPK_IDS,
 	KSCF_MODECFGDNS,
