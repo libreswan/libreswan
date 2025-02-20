@@ -63,6 +63,7 @@ upgrade="
 audit-libs-devel
 fping
 gawk
+gnutls-utils
 ldns-devel
 libcurl-devel
 libseccomp-devel
@@ -81,6 +82,7 @@ tcpdump
 unbound
 unbound-devel
 xmlto
+gnu-tls
 "
 
 # only install

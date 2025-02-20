@@ -105,7 +105,9 @@ bind-dnssec-utils
 bind-utils
 conntrack-tools
 fping
+gawk
 gdb
+gnutls-utils				used by soft tokens
 ike-scan
 iptables
 libcap-ng-utils
@@ -123,6 +125,7 @@ python3-pyOpenSSL
 rsync
 selinux-policy-devel
 socat
+softhsm-devel				used by soft tokens
 sshpass					used by ansible-playbook
 strace
 strongswan
