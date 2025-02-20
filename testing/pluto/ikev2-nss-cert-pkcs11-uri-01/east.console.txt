@@ -1,14 +1,16 @@
 # Do not populate NSS DB, check it is empty
 east #
- /testing/guestbin/swan-prep
+ /testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
- ipsec certutl -L
--bash: certutl: command not found
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 east #
  # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
 east #
  PATH/bin/update-crypto-policies
-Setting system policy to DEFAULT
+Setting system policy to LEGACY
 Note: System-wide crypto policies are applied on application start-up.
 It is recommended to restart the system for the change of policies
 to fully take place.
@@ -25,6 +27,8 @@ east #
 east #
  export GNUTLS_NEW_SO_PIN=12345678
 east #
+ export PKCS11_URI='pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan'
+east #
  # delete any old libreswan softhsm token - bug in p11tool that it does not delete everything ?
 east #
  #OLDSOFTHSM=$(p11tool --list-tokens |grep libreswan |grep URL| sed "s/URL://")
@@ -38,23 +42,21 @@ east #
  softhsm2-util --init-token --slot 0 --label libreswan --so-pin ${GNUTLS_SO_PIN} --pin ${GNUTLS_PIN}
 The token has been initialized and is reassigned to slot XXXXX
 east #
- p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-certificate /testing/x509/certs/east.crt --label eastCert --login
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-certificate /testing/x509/real/mainca/east.end.cert --label eastCert --login
 east #
- p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/keys/east.key --label eastKey --login
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/real/mainca/east.end.key --label eastKey --login
 east #
  # note: --trusted --ca does not seem to set the trust bits needed for CA for nss - so fixup afterwards
 east #
- p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --trusted --ca --load-certificate /testing/x509/cacerts/mainca.crt --label eastCA --so-login
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --trusted --ca --load-certificate /testing/x509/real/mainca/root.cert --label eastCA --so-login
 east #
- echo -n "123456" > /tmp/pin
+ echo -n "${GNUTLS_PIN}" > /tmp/pin
 east #
- ipsec certutil -h "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" -M -t CT,, -n "libreswan:eastCA" -f /tmp/pin
+ ipsec certutil -h "${PKCS11_URI}" -M -t CT,, -n "libreswan:eastCA" -f /tmp/pin
 east #
- #p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login
+ CERT_URI=$(p11tool --list-all "${PKCS11_URI}" --login | grep eastCert | grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
 east #
- CERT_URI=$(p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login | grep eastCert |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
-east #
- KEY_URI=$(p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login | grep eastKey |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
+ KEY_URI=$(p11tool --list-all "${PKCS11_URI}" --login | grep eastKey |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
 east #
  echo "CERT_URI=${CERT_URI}"
 CERT_URI=pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;serial=XXXXXXXX;token=libreswan;id=%01;object=eastCert;type=cert
@@ -94,6 +96,9 @@ TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
        ID_IPV4_ADDR '192.1.2.23'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+       ID_IPV6_ADDR '2001:db8:1:2::23'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
  
 List of Pre-shared secrets (from /etc/ipsec.secrets)
  
@@ -101,6 +106,7 @@ List of Pre-shared secrets (from /etc/ipsec.secrets)
        ckaid: 01
  
 List of X.509 End Certificates:
+adding the CA+root cert E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
  
 List of X.509 CA Certificates:
  
