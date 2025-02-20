@@ -604,20 +604,14 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	 * - if initiator, also:
 	 *   + our ID must not change (we sent it in previous message)
 	 *   + our RSA key must not change (we used in in previous message)
-	 *
-	 * PASS 0: Score the existing connection to kick-start the
-	 * search and check for an instant winner
-	 *
-	 * PASS 1: Match anything with the exact same SRC->DST. This
-	 * list contains instantiated templates and oriented permanent
-	 * connections.
-	 *
-	 * PASS 2: Match matching SRC->%any.  This list contains
-	 * oriented template connections (since the remote address is
-	 * %any).
 	 */
 
 	struct score best = {0};
+
+	/*
+	 * PASS 0: Score the existing connection to kick-start the
+	 * search and check for an instant winner
+	 */
 
 	struct score c_score = { .connection = c, };
 	if (score_host_connection(ike, proposed_authbys,
@@ -630,6 +624,20 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			return best.connection;
 		}
 	}
+
+	/*
+	 * PASS 1: Match anything with the exact same
+	 * initiator/remote==SRC->responder/local==DST
+	 *
+	 * This list contains instantiated templates and oriented
+	 * permanent connections.
+	 *
+	 * PASS 2: Match matching with a wildcard remote
+	 * initiator/remote==%ANY->responder/local==DST
+	 *
+	 * This list contains oriented template connections (since the
+	 * remote address is %any).
+	 */
 
 	ip_address local = c->iface->local_address;
 	FOR_EACH_THING(remote, endpoint_address(ike->sa.st_remote_endpoint), unset_address) {
