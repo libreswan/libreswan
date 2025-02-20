@@ -578,7 +578,7 @@ kvmplutotest	ipsec-interface-00-ipv4-ikev2-openbsd-iked	good
 kvmplutotest	ipsec-interface-00-ipv4-ikev2-fedora-xfrm	good
 
 kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-freebsd	good
-#kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	good
+kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-netbsd	good
 kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-openbsd	good
 kvmplutotest	ipsec-interface-01-ipv4-ikev2-existing-fedora	good
 
