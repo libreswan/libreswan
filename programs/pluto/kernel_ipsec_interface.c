@@ -105,19 +105,3 @@ bool kernel_ipsec_interface_match(struct ipsec_interface_match *match,
 	verbose.level++;
 	return kernel_ops->ipsec_interface->match(match, verbose);
 }
-
-void kernel_ipsec_interface_check_stale(struct verbose verbose)
-{
-	vdbg("%s:%s() ...",
-	     kernel_ops->ipsec_interface->name, __func__);
-	verbose.level++;
-	kernel_ops->ipsec_interface->check_stale(verbose);
-}
-
-err_t kernel_ipsec_interface_supported(struct verbose verbose)
-{
-	vdbg("%s:%s() ...",
-	     kernel_ops->ipsec_interface->name, __func__);
-	verbose.level++;
-	return kernel_ops->ipsec_interface->supported(verbose);
-}

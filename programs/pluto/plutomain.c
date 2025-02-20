@@ -78,6 +78,7 @@
 #include "server_pool.h"
 #include "show.h"
 #include "enum_names.h"		/* for init_enum_names() */
+#include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1400,6 +1401,8 @@ int main(int argc, char **argv)
 
 			set_global_redirect_dests(cfg->values[KSF_GLOBAL_REDIRECT_TO].string);
 
+			config_ipsec_interface(cfg->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
+
 			nhelpers = cfg->values[KBF_NHELPERS].option;
 			cur_debugging = cfg->values[KW_DEBUG].option;
 
@@ -1831,6 +1834,13 @@ int main(int argc, char **argv)
 	init_ddns();
 
 	init_virtual_ip(virtual_private, logger);
+
+	enum yn_options ipsec_interface_managed = init_ipsec_interface(logger);
+	llog(RC_LOG, logger, "IPsec Interface [%s]",
+	     (ipsec_interface_managed == YN_UNSET ? "disabled" :
+	      ipsec_interface_managed == YN_NO ? "unmanaged" :
+	      ipsec_interface_managed == YN_YES ? "managed" :
+	      "!?!"));
 
 	/* require NSS */
 	init_root_certs();

@@ -80,24 +80,22 @@ west #
  ip addr add 2001:db8:0:1::251/64 dev ipsec1
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": ipsec-interface  exists but is invalid, IFLA_XFRM_LINK attribute is zero, check 'ip -d link show dev ipsec1'
-"westnet4-eastnet4": failed to add connection: ipsec-interface=yes not supported: device name conflict in xfrm_iface_supported()
+ERROR: "westnet4-eastnet4": existing ipsec-interface ipsec1 is not valid: IFLA_XFRM_LINK attribute is zero, check 'ip -d link show dev ipsec1'
+"westnet4-eastnet4": added unoriented IKEv2 connection (neither left=192.1.2.45 nor right=192.1.2.23 match an interface)
 west #
  ipsec add westnet6-eastnet6
-"westnet6-eastnet6": ipsec-interface  exists but is invalid, IFLA_XFRM_LINK attribute is zero, check 'ip -d link show dev ipsec1'
-"westnet6-eastnet6": failed to add connection: ipsec-interface=yes not supported: device name conflict in xfrm_iface_supported()
+ERROR: "westnet6-eastnet6": existing ipsec-interface ipsec1 is not valid: IFLA_XFRM_LINK attribute is zero, check 'ip -d link show dev ipsec1'
+"westnet6-eastnet6": added unoriented IKEv2 connection (neither left=2001:db8:1:2::45 nor right=2001:db8:1:2::23 match an interface)
 west #
  ipsec up westnet4-eastnet4
-no connection or alias named "westnet4-eastnet4"'
+"westnet4-eastnet4": we cannot identify ourselves with either end of this connection.  192.1.2.45 or 192.1.2.23 are not usable
 west #
  ipsec up westnet6-eastnet6
-no connection or alias named "westnet6-eastnet6"'
+"westnet6-eastnet6": we cannot identify ourselves with either end of this connection.  2001:db8:1:2::45 or 2001:db8:1:2::23 are not usable
 west #
  ipsec delete westnet4-eastnet4
-no connection or alias named "westnet4-eastnet4"'
 west #
  ipsec delete westnet6-eastnet6
-no connection or alias named "westnet6-eastnet6"'
 west #
  ip --color=never link show ipsec1
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000

@@ -3,7 +3,7 @@ set #
  # force the kernel to use fixed IDs
 set #
  sysctl -w net.ipsecif.use_fixed_reqid=1
-net.ipsecif.use_fixed_reqid: 0 -> 1
+net.ipsecif.use_fixed_reqid: 1 -> 1
 set #
  unit=1
 set #
@@ -75,32 +75,30 @@ set #
 	sadb_seq=0 pid=PID refcnt=0
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
-down UNEXPECTED
-# fping  -c 1  --timeout 5s   --src 198.18.15.15 198.18.12.12
-198.18.12.12 : [0], timed out (NaN avg, 100% loss) 198.18.12.12 : xmt/rcv/%loss = 1/0/100%
+up
 set #
  ../../guestbin/ipsec-kernel-state.sh
 198.18.1.12 198.18.1.15 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
+	current: 104(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 198.18.1.15 198.18.1.12 
 	esp mode=transport spi=SPISPI(0xSPISPI) reqid=8194(0x00002002)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 0(s)	soft: 0(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
+	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 set #
  ../../guestbin/ipsec-kernel-policy.sh

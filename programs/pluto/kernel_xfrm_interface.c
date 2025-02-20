@@ -103,9 +103,6 @@ struct linux_netlink_context {
 	struct getlink_context *getlink;
 };
 
-/* -1 missing; 0 uninitialized; 1 present */
-static int xfrm_interface_support = 0;
-
 /*
  * Perform a simple netlink operation.  Send the request; and only
  * look for immediate error responses (i.e., NLM_F_ACK is not set).
@@ -712,10 +709,6 @@ static bool xfrm_ipsec_interface_has_cidr(const char *ipsec_if_name,
 
 static err_t xfrm_iface_supported(struct verbose verbose)
 {
-	if (xfrm_interface_support > 0) {
-		return NULL;
-	}
-
 	/*
 	 * Use a wildcard check to match any existing ipsec-interface
 	 * (for instance, a pre-existing "ipsec1").  If it succeeds
@@ -732,7 +725,6 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	if (kernel_ipsec_interface_match(&wildcard_match, verbose)) {
 		vdbg("existing xfrmi ipsec-interface %s found; ipsec-must be supported",
 		     wildcard_match.found);
-		xfrm_interface_support = 1; /* permanent success */
 		return NULL; /* success: there is already xfrmi interface */
 	}
 
@@ -831,7 +823,6 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	vdbg("xfrmi supported, successfully created %s bound to %s; now deleting it",
 	     ipsec_if_name, physical_if_name);
 	kernel_ipsec_interface_del(ipsec_if_name, verbose); /* ignore return value??? */
-	xfrm_interface_support = 1; /* permanent success */
 	return NULL;
 }
 
@@ -870,6 +861,18 @@ static void xfrm_check_stale(struct verbose verbose)
 	vdbg("no stale xfrmi interface '%s' found", if_name);
 	return;
 }
+
+static err_t xfrm_ipsec_interface_init(struct verbose verbose)
+{
+	err_t e = xfrm_iface_supported(verbose);
+	if (e != NULL) {
+		return e;
+	}
+
+	xfrm_check_stale(verbose);
+	return NULL;
+}
+
 
 void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 {
@@ -918,6 +921,5 @@ const struct kernel_ipsec_interface kernel_ipsec_interface_xfrm = {
 
 	.match = xfrm_ipsec_interface_match,
 
-	.check_stale = xfrm_check_stale,
-	.supported = xfrm_iface_supported,
+	.init = xfrm_ipsec_interface_init,
 };

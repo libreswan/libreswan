@@ -514,7 +514,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti-interface",  kv_conn,  kt_string,  KSCF_VTI_INTERFACE, NULL, NULL, },
   { "vti-routing",  kv_conn,  kt_sparse_name,  KNCF_VTI_ROUTING, &yn_option_names, NULL, },
   { "vti-shared",  kv_conn,  kt_sparse_name,  KNCF_VTI_SHARED, &yn_option_names, NULL, },
-  { "ipsec-interface", kv_conn, kt_string, KSCF_IPSEC_INTERFACE, NULL, NULL, },
+  { "ipsec-interface-managed", kv_config, kt_sparse_name, KWYN_IPSEC_INTERFACE_MANAGED, &yn_option_names, NULL, },
+  { "ipsec-interface", kv_conn, kt_string, KWS_IPSEC_INTERFACE, NULL, NULL, },
 
   { "nic-offload",  kv_conn,  kt_sparse_name,  KNCF_NIC_OFFLOAD, &nic_offload_option_names, NULL, },
 

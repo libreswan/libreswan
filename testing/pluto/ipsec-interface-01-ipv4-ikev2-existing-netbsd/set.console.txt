@@ -45,12 +45,6 @@ set #
  ../../guestbin/wait-until-pluto-started
 set #
  ipsec add rise-set
-"rise-set": command: 'sysctl' '-n' 'net.ipsecif.use_fixed_reqid'
-"rise-set": output: 1\n
-"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
-"rise-set": command: 'sysctl' '-n' 'net.ipsecif.reqid_base'
-"rise-set": output: 8192\n
-"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
 "rise-set": command: 'ifconfig' 'ipsec1'
 "rise-set": output: ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\ttunnel inet 198.18.1.15 --> 198.18.
 "rise-set": output: 1.12\n\tstatus: active\n\tinet6 fe80::ccae:eeba:9b4a:4c5e%ipsec1/64 ->  flags 0 scopeid 0x5\n\tinet 198.18
