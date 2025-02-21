@@ -75,8 +75,6 @@ west #
 "westnet4-eastnet4" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet4-eastnet4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "westnet4-eastnet4" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-EXPECTATION FAILED: "westnet4-eastnet4" #2: not (getaddr.match.ipsec_if_index == 0) (xfrm_ipsec_interface_has_cidr() +693 programs/pluto/kernel_xfrm_interface.c)
-"westnet4-eastnet4" #2: added 192.0.1.251/24 to ipsec-interface ipsec1@eth1
 "westnet4-eastnet4" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ip.sh netns exec ns ../../guestbin/ping-once.sh --up -I 192.0.1.251 192.0.2.254
@@ -160,7 +158,6 @@ west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@eth1 IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #2: ESP traffic information: in=84B out=84B
 west #
  
