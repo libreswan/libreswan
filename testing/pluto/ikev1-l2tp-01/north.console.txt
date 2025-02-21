@@ -63,7 +63,7 @@ north #
 quit
 north #
  ../../guestbin/ip.sh address show dev ppp0 | sed "s/ qdisc.*$//"
-4: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395
+5: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395
     link/ppp
     inet 192.0.2.128 peer 192.0.2.254/32 scope global ppp0
        valid_lft forever preferred_lft forever
