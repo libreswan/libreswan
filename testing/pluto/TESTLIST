@@ -593,7 +593,7 @@ kvmplutotest	ipsec-interface-17-ipcomp-ah		good	github/1879
 kvmplutotest	ipsec-interface-17-ipcomp-esp		good	github/1879
 
 kvmplutotest	ipsec-interface-18-ikev1-xauth-only	wip	github/1955
-kvmplutotest	ipsec-interface-19-namespace-unmanaged	wip	github/2030
+kvmplutotest	ipsec-interface-19-namespace-unmanaged	good	github/2030
 
 kvmplutotest	ikev2-decap-dscp-01			good
 kvmplutotest	ikev2-dont-encap-dscp-01		good
