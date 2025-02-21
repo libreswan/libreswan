@@ -19,25 +19,29 @@ run()
 
 start()
 {
-    local key=nic
     if test "$#" -gt 0 ; then
 	key=$1
+	run cp /testing/x509/keys/${key}.key /etc/ocspd/private/nic_key.pem
+	run cp /testing/x509/certs/${key}.crt /etc/ocspd/certs/nic.pem
+	run cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
+    else
+	key=nic
+	run cp /testing/x509/real/mainca/${key}.end.key /etc/ocspd/private/nic_key.pem
+	run cp /testing/x509/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
+	run cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
     fi
-    run cp /testing/x509/keys/${key}.key /etc/ocspd/private/nic_key.pem
-    run cp /testing/x509/certs/${key}.crt /etc/ocspd/certs/nic.pem
-    run cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
     run cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
-    run openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+    run openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
     run restorecon -R /etc/ocspd
     run ocspd -v -d -c /etc/ocspd/ocspd.conf
 }
 
 log()
 {
-    east=$(cat /testing/x509/certs/east.serial)
-    west=$(cat /testing/x509/certs/west.serial)
-    nic=$(cat /testing/x509/certs/nic.serial)
-    revoked=$(cat /testing/x509/certs/revoked.serial)
+    east=$(cat /testing/x509/real/mainca/east.serial)
+    west=$(cat /testing/x509/real/mainca/west.serial)
+    nic=$(cat /testing/x509/real/mainca/nic.serial)
+    revoked=$(cat /testing/x509/real/mainca/revoked.serial)
     east_chain_endcert=$(cat /testing/x509/certs/east_chain_endcert.serial)
     west_chain_endcert=$(cat /testing/x509/certs/west_chain_endcert.serial)
     {
