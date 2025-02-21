@@ -69,16 +69,4 @@ west #
  echo done
 done
 west #
- # on east, revocation should show up
-west #
- hostname | grep east && grep "certificate revoked" /tmp/pluto.log
-west #
- # should show a hit
-west #
- hostname |grep east && grep ERROR /tmp/pluto.log
-west #
- # should not show a hit
-west #
- hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
-west #
  

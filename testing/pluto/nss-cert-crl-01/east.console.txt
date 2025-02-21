@@ -1,9 +1,16 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
- ipsec crlutil -I -i /testing/x509/crls/cacrlvalid.crl
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 east #
- ipsec certutil -D -n west
+ /testing/x509/import.sh real/mainca/nic.end.cert
+ipsec certutil -A -n nic -t P,, -i real/mainca/nic.end.cert
+east #
+ /testing/x509/import.sh real/mainca/crl-is-up-to-date.crl
+ipsec crlutil -I -i real/mainca/crl-is-up-to-date.crl
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -39,7 +46,7 @@ east #
 initdone
 east #
  ipsec crlutil -L | grep mainca
-Libreswan test CA for mainca - Libreswan CRL  
+mainca                                   CRL  
 east #
  ipsec auto --listall | grep -A10 "List of CRLs" | grep -E 'Issuer|Entry|Serial'
 east #

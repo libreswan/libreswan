@@ -1,17 +1,28 @@
-cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
+#start ocsp server here
 nic #
+ ../../guestbin/ocspd.sh --start
  cp /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
-nic #
  cp /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
-nic #
  cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
-nic #
+ cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
-nic #
  restorecon -R /etc/ocspd
-nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #
  echo "done."
 done.
-
+nic #
+ ../../guestbin/ocspd.sh --log
+INFO::CORE::Connection from [192.1.2.23]
+ERROR::No Content-Length in REQ Headers
+ERROR::Can not parse REQ
+INFO::CORE::Connection from [192.1.2.23]
+request for certificate serial 10
+status VALID for 10
+INFO::CORE::Connection from [192.1.2.23]
+request for certificate serial 42
+nic #
+ grep -i -e "^[^|].*SEC_ERROR" /tmp/pluto.log
+grep: /tmp/pluto.log: No such file or directory
+nic #
+ 
