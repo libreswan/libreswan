@@ -87,6 +87,7 @@ generate_root_cert()
     set -x
 
     local certdir=$1 ; shift
+    local eku=$1 ; shift
     echo generating root certificate: ${certdir} 1>&3
 
     local rootname=$(basename ${certdir})
@@ -120,7 +121,7 @@ generate_root_cert()
 	     -w ${NOW_OFFSET_MONTHS} \
 	     -v ${NOW_VALID_MONTHS} \
 	     --keyUsage digitalSignature,certSigning,crlSigning \
-	     --extKeyUsage serverAuth,clientAuth,codeSigning,ocspResponder \
+	     --extKeyUsage ${eku} \
 	     -t "CT,C,C" \
 	     -z ${NOISE_FILE} \
 	     ${param} \
@@ -166,7 +167,8 @@ generate_end_cert()
 
     local certdir=$1 ; shift
     local cert=$1 ; shift
-    echo generating end certificate: ${certdir} ${cert} 1>&3
+    locak eku=$1 ; shift
+    echo generating end certificate: ${certdir} ${cert} ${eku} 1>&3
 
     local rootname=$(basename ${certdir})
 
@@ -219,7 +221,7 @@ generate_end_cert()
 	     --extSAN ${san} \
 	     ${param} \
 	     --keyUsage digitalSignature \
-	     --extKeyUsage serverAuth,clientAuth \
+	     --extKeyUsage ${eku} \
 	     -2 \
 	     -4 \
 	     --extAIA \
@@ -274,53 +276,51 @@ generate_end_cert()
 
 # generate ca directories
 
-while read base domain ca param ; do
+while read base domain ca eku param ; do
 
     echo creating cert directory: ${base} ${domain} ${ca} ${param} 1>&2
 
     certdir=${OUTDIR}/${base}
     mkdir -p ${certdir}
+
+    # configure NSS
+
     modutil -create -dbdir "${certdir}" < /dev/null
 
-    log=${certdir}/root.log
+    # configure root certificate
 
     echo 1           > ${certdir}/serial	# next
-
     echo "${param}"  > ${certdir}/root.param
     echo "${domain}" > ${certdir}/root.domain
     echo "${ca}"     > ${certdir}/root.ca
 
-    # BASE DOMAIN CA? PARAM...
-done <<EOF
-real/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
-real/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
-real/otherca   other.libreswan.org     y  -k rsa -Z SHA256
-fake/mainca    testing.libreswan.org   y  -k rsa -Z SHA256
-fake/mainec    testing.libreswan.org   y  -k ec  -Z SHA256 -q secp384r1
-real/badca     testing.libreswan.org   n  -k rsa -Z SHA256
-EOF
+    # generate root certificate
 
-# generate root certificates
-
-for rootdir in ${OUTDIR}/real/* ${OUTDIR}/fake/* ; do
-
-    log=${rootdir}/${root}/root.log
-    if ! generate_root_cert ${rootdir} > ${log} 2>&1 ; then
+    log=${certdir}/root.log
+    if ! generate_root_cert ${certdir} ${eku} > ${log} 2>&1 ; then
 	cat ${log}
 	exit 1
     fi
 
-done
+    # BASE DOMAIN CA? EKU PARAM...
+done <<EOF
+real/mainca   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
+real/mainec   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k ec  -Z SHA256 -q secp384r1
+real/otherca  other.libreswan.org   y serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
+fake/mainca   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
+fake/mainec   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k ec  -Z SHA256 -q secp384r1
+real/badca    testing.libreswan.org n serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
+EOF
 
 # generate end certs where needed
 
-while read kinds roots certs san ; do
+while read kinds roots certs eku ; do
     for kind in $(eval echo ${kinds}) ; do
 	for root in $(eval echo ${roots}) ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${kind}/${root}
 		log=${certdir}/${cert}.log
-		if ! generate_end_cert ${certdir} ${cert} ${san} > ${log} 2>&1 ; then
+		if ! generate_end_cert ${certdir} ${cert} ${eku} > ${log} 2>&1 ; then
 		    cat ${log}
 		    exit 1
 		fi
@@ -328,8 +328,9 @@ while read kinds roots certs san ; do
 	done
     done
 done <<EOF
-{real,fake} {mainca,mainec} {nic,east,west,road,north,rise,set}
-real	    mainca          revoked
-real        otherca         other{east,west}
-real        badca           bad{east,west}
+{real,fake} {mainca,mainec} nic                             serverAuth,clientAuth,codeSigning,ocspResponder
+{real,fake} {mainca,mainec} {east,west,road,north,rise,set} serverAuth,clientAuth
+real	    mainca          revoked                         serverAuth,clientAuth
+real        otherca         other{east,west}                serverAuth,clientAuth
+real        badca           bad{east,west}                  serverAuth,clientAuth
 EOF
