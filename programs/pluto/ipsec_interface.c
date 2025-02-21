@@ -51,6 +51,10 @@ static unsigned unmap_id(ipsec_interface_id_t ipsec_if_id)
 
 size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t ipsec_if_id)
 {
+	if (ipsec_interface_managed == YN_NO) {
+		return jam(buf, "%s[%u]", kernel_ops->ipsec_interface->name, ipsec_if_id);
+	}
+
 	/* Map the IPSEC_IF_ID back to the name's number, when
 	 * needed */
 	unsigned id = unmap_id(ipsec_if_id);
@@ -421,7 +425,8 @@ static struct ipsec_interface *find_ipsec_interface_by_id(ipsec_interface_id_t i
 	return ret;
 }
 
-static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_if_id)
+static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_if_id,
+						     const struct iface_device *iface)
 {
 	/*
 	 * Create a new ref-counted ipsec_interface, it is not added
@@ -436,6 +441,7 @@ static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_
 			 kernel_ops->ipsec_interface->name,
 			 unmap_id(ipsec_if_id));
 	passert(l < IFNAMSIZ);
+	jam_str(p->physical, sizeof(p->physical), iface->real_device_name);
 	/* add to known interfaces */
 	p->next = ipsec_interfaces;
 	ipsec_interfaces = p;
@@ -586,6 +592,16 @@ bool add_ipsec_interface(struct connection *c,
 		find_ipsec_interface_by_id(c->config->ipsec_interface.id);
 	if (ipsec_if != NULL) {
 		c->ipsec_interface = ipsec_interface_addref(ipsec_if, c->logger, HERE);
+		ipsec_interface_buf ib;
+		vdbg("reusing ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
+		return true;
+	}
+
+	if (ipsec_interface_managed == YN_NO) {
+		c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id, iface);
+		ipsec_interface_buf ib;
+		vdbg("using un-managed ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
+		return true;
 		return true;
 	}
 
@@ -604,9 +620,7 @@ bool add_ipsec_interface(struct connection *c,
 						iface, verbose)) {
 			return false;
 		}
-		c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id);
-		jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
-			iface->real_device_name);
+		c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id, iface);
 		c->ipsec_interface->pluto_added = true;
 		ipsec_interface_buf ib;
 		vlog("created ipsec-interface %s",
@@ -638,11 +652,9 @@ bool add_ipsec_interface(struct connection *c,
 		return false;
 	}
 
-	c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id);
-	jam_str(c->ipsec_interface->physical, sizeof(c->ipsec_interface->physical),
-		iface->real_device_name);
+	c->ipsec_interface = alloc_ipsec_interface(c->config->ipsec_interface.id, iface);
 	ipsec_interface_buf ib;
-	vdbg("using ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
+	vdbg("using managed ipsec-interface %s", str_ipsec_interface(c->ipsec_interface, &ib));
 	return true;
 }
 
