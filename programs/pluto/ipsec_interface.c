@@ -376,6 +376,11 @@ bool add_kernel_ipsec_interface_address(struct connection *c,
 		return true;
 	}
 
+	if (ipsec_interface_managed != YN_YES) {
+		vdbg("skipped; ipsec-interface is unmanaged");
+		return true;
+	}
+
 	if (vbad(c->iface == NULL) ||
 	    vbad(c->iface->real_device_name == NULL)) {
 		return false;
@@ -397,6 +402,12 @@ void del_kernel_ipsec_interface_address(struct connection *c,
 
 	if (c->ipsec_interface == NULL) {
 		vdbg("skipped; no ipsec-interface");
+		return;
+	}
+
+	if (ipsec_interface_managed != YN_YES) {
+		vdbg("skipped; ipsec-interface is unmanaged");
+		vexpect(c->ipsec_interface_address == NULL);
 		return;
 	}
 
