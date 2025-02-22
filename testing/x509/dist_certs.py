@@ -515,8 +515,7 @@ def run_dist_certs():
     # Add root CAs here
     basic_pluto_cas =  ['mainca']
     # Add end certs here
-    mainca_end_certs = ('nic','east','west', 'road', 'north', # standard certs
-                        'west-kuOmit', # Key Usage should not be needed
+    mainca_end_certs = ('west-kuOmit', # Key Usage should not be needed
                         'west-eku-clientAuth', # should be enough to validate
                         'west-eku-serverAuth', # should be enough to validate
                         'west-bcOmit', # Basic Constraints should not be needed
