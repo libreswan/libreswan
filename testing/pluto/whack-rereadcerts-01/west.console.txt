@@ -78,7 +78,7 @@ adding the CA+root cert E=testing@libreswan.org,CN=Libreswan test CA for mainca,
  
 List of X.509 CA Certificates:
  
-Root CA certificate "Libreswan test CA for mainca - Libreswan" - SN: 0xXX
+Root CA certificate "mainca" - SN: 0xXX
   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
   not before: TIMESTAMP
