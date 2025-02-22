@@ -5,7 +5,7 @@ nic #
  cp /testing/x509/certs/nic-nourl.crt /etc/ocspd/certs/nic.pem
  cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
  cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
- openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+ openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
  restorecon -R /etc/ocspd
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #

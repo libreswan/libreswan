@@ -1,6 +1,11 @@
 /testing/guestbin/swan-prep --x509 --certchain
 Preparing X.509 files
 west #
+ ipsec certutil -D -n nic
+west #
+ /testing/x509/import.sh real/mainca/nic.end.cert
+ipsec certutil -A -n nic -t P,, -i real/mainca/nic.end.cert
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
