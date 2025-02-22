@@ -22,7 +22,7 @@ east #
  ipsec initnss
 Initializing NSS database
 east #
- ipsec pk12util -i /testing/x509/pkcs12/mainca/east.p12 -w /testing/x509/nss-pw
+ ipsec pk12util -i /testing/x509/real/mainca/east.all.p12 -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # test config for syntax errors

@@ -7,7 +7,7 @@ east #
 east #
  # start with the raw key
 east #
- cp ../../x509/keys/${key}.key OUTPUT/
+ cp /testing/x509/real/mainca/${key}.end.key OUTPUT/${key}.key
 east #
  # create a CSR and using that ...
 east #
@@ -30,7 +30,7 @@ east #
 east #
  # start with the raw key
 east #
- cp ../../x509/keys/${key}.key OUTPUT/
+ cp /testing/x509/real/mainca/${key}.end.key OUTPUT/${key}.key
 east #
  # create a CSR and using that ...
 east #

@@ -20,7 +20,7 @@ ipsec auto --add test
 ipsec auto --delete test
 
 # put east back
-ipsec certutil -A -i ../../x509/certs/east.crt -n east -t "P,,"
+ipsec certutil -A -i /testing/x509/real/mainca/east.end.cert -n east -t "P,,"
 
 # re-load should not dump core
 ipsec auto --add test
