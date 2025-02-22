@@ -1,0 +1,52 @@
+<varlistentry>
+  <term>
+    <option>ipsec-interface-managed</option>
+  </term>
+  <listitem>
+    <para>
+      Specify whether the IPsec Interface specifed by
+      <option>ipsec-interface</option> managed by
+      &Libreswan;.  Possible values are:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term>
+	  <option>yes</option> (default)
+	</term>
+	<listitem>
+	  <para>
+	    &Libreswan; is responsible for managing the IPsec
+	    Interface.  For instance, creating it when needed, adding
+	    the address specified by <option>interface-ip</option>,
+	    installing any kernel policy or state, and marking it
+	    <option>up</option> and <option>down</option>.
+	  </para>
+	  <para>
+	    In this mode <option>ipsec-interface</option> identifies
+	    the IPsec interface network device.  For instance,
+	    <option>ipsec-interface=1</option> specifies the network
+	    device <option>ipsec1</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <option>no</option>
+	</term>
+	<listitem>
+	  <para>
+	    &Libreswan; assumes that the IPsec interface specified by
+	    <option>ipsec-interface</option> exists and &Libreswan; is
+	    only responsible for managing kernel policy and state.
+	  </para>
+	  <para>
+	    In this mode <option>ipsec-interface</option> identifies
+	    the low level kernel ID.  For instance, on &Linux;,
+	    <option>ipsec-interface=1</option> identifies the device
+	    with the XFRM if_id 1.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </listitem>
+</varlistentry>

@@ -72,6 +72,7 @@
 <!ENTITY interface-ip SYSTEM "d.ipsec.conf/interface-ip.xml">
 <!ENTITY intermediate SYSTEM "d.ipsec.conf/intermediate.xml">
 <!ENTITY ipsec-interface SYSTEM "d.ipsec.conf/ipsec-interface.xml">
+<!ENTITY ipsec-interface-managed SYSTEM "d.ipsec.conf/ipsec-interface-managed.xml">
 <!ENTITY ipsec-max-bytes SYSTEM "d.ipsec.conf/ipsec-max-bytes.xml">
 <!ENTITY ipsec-max-packets SYSTEM "d.ipsec.conf/ipsec-max-packets.xml">
 <!ENTITY ipsecdir SYSTEM "d.ipsec.conf/ipsecdir.xml">
@@ -188,6 +189,12 @@
 <!ENTITY xauthby SYSTEM "d.ipsec.conf/xauthby.xml">
 <!ENTITY xauthfail SYSTEM "d.ipsec.conf/xauthfail.xml">
 <!ENTITY xfrmlifetime SYSTEM "d.ipsec.conf/xfrmlifetime.xml">
+
+<!ENTITY Libreswan '<application>Libreswan</application>'>
+<!ENTITY Linux '<application>Linux</application>'>
+<!ENTITY NetBSD '<application>NetBSD</application>'>
+<!ENTITY FreeBSD '<application>FreeBSD</application>'>
+<!ENTITY OpenBSD '<application>OpenBSD</application>'>
 ]>
 
 <refentry>
@@ -437,6 +444,7 @@
       &dnssec-enable;
       &dnssec-rootkey-file;
       &dnssec-anchors;
+      &ipsec-interface-managed;
     </variablelist>
   </refsect1>
 
