@@ -6,18 +6,20 @@ v5.2 (unreleased)
   - add initial support for RFC-5723 IKE_SESSION_RESUME [Nupur Agrawal, Andrew]
   - fix crash in <<ipsec rereadsecrets>> [Andrew, Ilya Maximets #1894]
   - fix bogus ERROR when deleting connection [Andrew, Ilya Maximets #1914]
+* IPsec Interface:
+  - add support on FreeBSD, NetBSD and OpenBSD [Andrew]
+  - add ipsec-interface-managed=no for namespaces [Andrew]
 * IKEv1:
   - removed compile-time SOFTREMOTE_CLIENT_WORKAROUND [Andrew]
   - fix INVALID_ID_INFORMATION response using corrupt IV [Andrew #1830]
   - fix reconnect with addresspool after restart [Andrew #1790]
+  - fix padding of modecfg payloads [Andrew wmasilva #2023]
 * Linux:
   - packet offload counters supported in 6.7+ [Paul]
   - Add IPTFS support [Paul / Antony / Andrew]
   - 6.10+ need replay-window 0 on OUTBOUND SA [Paul]
   - Do not set nopmtudisc on inbound SA [Paul]
   - Set DSCP options only on the relevant direction SA [Paul]
-* BSD:
-  - implement ipsec-interface= on FreeBSD, NetBSD & OpenBSD [Andrew]
 * updown:
   - Use half-routes for IPv6 to cover whole address space #1994 [Tuomo]
 * whack/addconn:
@@ -29,7 +31,7 @@ v5.2 (unreleased)
   - fix build with GCC 15 / C 23 [Daiki Ueno]
 * testing:
   - update OpenBSD: 7.6; NetBSD: 10.1; FreeBSD: 14.2; Alpine: 3.21 [Andrew]
-  - use pyca/cryptography when CSRs and PKCS12 files [Andrew #1990 #1996]
+  - eliminate pyOpenSSL dependency when generating CRLs and PKCS12 files [Andrew #1990 #1996]
 
 v5.1 (Oct 8, 2024)
 * IKEv2:
