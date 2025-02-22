@@ -147,14 +147,6 @@ def writeout_cert_and_key(name, cert, privkey):
         f.write(f"{serial}\n")
 
 
-def create_keypair(algo=crypto.TYPE_RSA, bits=2048):
-    """ Create an OpenSSL keypair
-    """
-    pkey = crypto.PKey()
-    pkey.generate_key(algo, bits)
-    return pkey
-
-
 def create_csr(key, hash_alg=hashes.SHA256,
                CN=None, C=None, ST=None, L=None, O=None, OU=None,
                emailAddress=None):
@@ -178,7 +170,7 @@ def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
     cert.add_extensions([crypto.X509Extension(kind.encode('utf-8'), crit, string.encode('utf-8'))])
 
-def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocspuri=True):
+def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
     ocspeku = 'serverAuth,clientAuth,codeSigning,OCSPSigning'
     cnstr = str(cert.get_subject().commonName)
 
@@ -287,13 +279,13 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
-                    keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=2048),
-                    sign_alg=hashes.SHA256, isCA=False, ocsp=False):
+                    keysize=2048,
+                    isCA=False, ocsp=False):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
 
-    certkey = keypair()
+    certkey = rsa.generate_private_key(public_exponent=3, key_size=keysize)
     certreq = create_csr(certkey,
                          CN=CN, C=C, ST=ST, L=L, O=O, OU=OU,
                          emailAddress=emailAddress)
@@ -312,9 +304,8 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
     else:
         ocspuri = True
 
-    set_cert_extensions(cert, crypto.X509.from_cryptography(cacert),
-                        isCA=isCA, isRoot=False, ocsp=ocsp, ocspuri=ocspuri)
-    cert.sign(crypto.PKey.from_cryptography_key(cakey), sign_alg.name)
+    set_cert_extensions(cert, isCA=isCA, ocsp=ocsp, ocspuri=ocspuri)
+    cert.sign(crypto.PKey.from_cryptography_key(cakey), hashes.SHA256.name)
 
     return cert.to_cryptography(), certkey
 
@@ -417,8 +408,6 @@ def create_mainca_end_certs(mainca_end_certs):
 
         common_name = name + '.testing.libreswan.org'
 
-        sign_alg = hashes.SHA256
-
         if " " in common_name:
             emailAddress = "root@testing.libreswan.org"
         else:
@@ -433,8 +422,8 @@ def create_mainca_end_certs(mainca_end_certs):
                                     serial, O=org,
                                     emailAddress=emailAddress,
                                     START=startdate, END=enddate,
-                                    keypair=lambda: rsa.generate_private_key(public_exponent=3, key_size=keysize),
-                                    sign_alg=sign_alg, ocsp=ocsp_resp)
+                                    keysize=keysize,
+                                    ocsp=ocsp_resp)
         writeout_cert_and_key(name, cert, key)
         store_cert_and_key(name, cert, key)
         writeout_pkcs12("pkcs12/"+ signer + '/', name,
@@ -473,11 +462,13 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
             signpair = ca_certs[lastca]
             print(" - creating %s with the last ca of %s"% (cname, lastca))
             ca, key = create_sub_cert(cname + '.testing.libreswan.org',
-                                      signpair[0], signpair[1], serial,
+                                      signpair[0], signpair[1],
+                                      serial,
                                       START=dates['OK_NOW'],
                                       END=dates['FUTURE'],
                                       emailAddress="%s@testing.libreswan.org"%cname,
-                                      isCA=True, ocsp=False)
+                                      isCA=True,
+                                      ocsp=False)
 
             writeout_cert_and_key(cname, ca, key)
             store_cert_and_key(cname, ca, key)
