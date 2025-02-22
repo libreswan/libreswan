@@ -215,8 +215,9 @@ struct whack_message {
 	enum yn_options ignore_peer_dns;	/* install obtained
 						 * DNS servers
 						 * locally */
-	enum yn_options ikepad;		/* pad ike packets to 4 bytes
-					 * or not */
+	enum yna_options ikepad;	/* pad ike packets and
+					 * payloads to 4 bytes or
+					 * not */
 	enum yn_options require_id_on_certificate;
 					/* require certificates to
 					 * have IKE ID on cert SAN */

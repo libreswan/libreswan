@@ -479,7 +479,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.dns_match_id = conn->values[KNCF_DNS_MATCH_ID].option; /* yn_options */
 	msg.pam_authorize = conn->values[KNCF_PAM_AUTHORIZE].option; /* yn_options */
 	msg.ignore_peer_dns = conn->values[KNCF_IGNORE_PEER_DNS].option; /* yn_options */
-	msg.ikepad = conn->values[KNCF_IKEPAD].option; /* yn_options */
+	msg.ikepad = conn->values[KNCF_IKEPAD].option; /* yna_options */
 	msg.require_id_on_certificate = conn->values[KNCF_REQUIRE_ID_ON_CERTIFICATE].option; /* yn_options */
 	msg.modecfgpull = conn->values[KNCF_MODECFGPULL].option; /* yn_options */
 	msg.aggressive = conn->values[KNCF_AGGRESSIVE].option; /* yn_options */

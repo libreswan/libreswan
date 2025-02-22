@@ -2709,15 +2709,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 						 /*default*/false, wm, c->logger);
 
 	if (wm->ike_version >= IKEv2) {
-		if (wm->ikepad != YN_UNSET) {
+		if (wm->ikepad != YNA_UNSET) {
 			name_buf vn, pn;
 			llog(RC_LOG, c->logger, "warning: %s connection ignores ikepad=%s",
 			     str_enum(&ike_version_names, wm->ike_version, &vn),
-			     str_sparse(&yn_option_names, wm->ikepad, &pn));
+			     str_sparse(&yna_option_names, wm->ikepad, &pn));
 		}
-		config->ikepad = true;
+		/* default */
+		config->v1_ikepad.message = true;
+		config->v1_ikepad.modecfg = false;
 	} else {
-		config->ikepad = extract_yn("", "ikepad", wm->ikepad, /*default*/true, wm, c->logger);
+		config->v1_ikepad.modecfg = (wm->ikepad == YNA_YES);
+		config->v1_ikepad.message = (wm->ikepad != YNA_NO);
 	}
 
 	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
@@ -4297,32 +4300,37 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	size_t s = 0;
 	enum shunt_policy shunt;
 
+	/* Show [S]tring */
 #define CS(S)					\
 	{					\
 		s += jam_string(buf, sep);	\
 		s += jam_string(buf, S);	\
 		sep = "+";			\
 	}
+	/* Show when True (and negotiate) */
 #define CT(C, N)				\
 	if (!never_negotiate(c) &&		\
 	    c->config->C) {			\
 		/* show when true */		\
 		CS(#N);				\
 	}
+	/* Show when False (and negotiate) */
 #define CF(C, N)				\
 	if (!never_negotiate(c) &&		\
 	    !c->config->C) {			\
 		/* show when false */		\
 		CS(#N);				\
 	}
+	/* Show when [P]redicate (and negotiate) */
 #define CP(P, N)				\
 	if (!never_negotiate(c) &&		\
 	    P) {				\
 		/* show when true */		\
 		CS(#N);				\
 	}
-#define CNN(C,N)				\
-	if (C) {				\
+	/* Show when Predicate */
+#define CNN(P,N)				\
+	if (P) {				\
 		/* show when never-negotiate */	\
 		CS(#N);				\
 	}
@@ -4396,8 +4404,17 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(ike_frag.allow, IKE_FRAG_ALLOW);
 	CT(ike_frag.v1_force, IKE_FRAG_FORCE);
 
-	/* need to flip parity */
-	CF(ikepad, NO_IKEPAD);
+	/* need to reconstruct */
+	if (c->config->v1_ikepad.message) {
+		if (c->config->v1_ikepad.modecfg) {
+			CS("IKEPAD_YES");
+		}
+		/* else is RFC */
+	} else if (c->config->v1_ikepad.modecfg) {
+		CS("IKEPAD_MODECFG"); /* can't happen!?! */
+	} else {
+		CS("IKEPAD_NO");
+	}
 
 	CT(mobike, MOBIKE);
 	CT(ppk.allow, PPK_ALLOW);

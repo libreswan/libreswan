@@ -214,7 +214,7 @@ static bool modecfg_out_attr(struct modecfg_pbs *modecfg_pbs,
 
 static bool modecfg_out_close(struct modecfg_pbs *modecfg_pbs, struct ike_sa *ike)
 {
-	if (ike != NULL && ike->sa.st_connection->config->ikepad) {
+	if (ike != NULL && ike->sa.st_connection->config->v1_ikepad.modecfg) {
 		emit_v1_zero_padding(&modecfg_pbs->pbs);
 	}
 
