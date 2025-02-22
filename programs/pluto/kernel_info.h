@@ -32,6 +32,7 @@ enum kinfo_os {
 extern const struct sparse_names kinfo_os_names;
 
 bool kernel_ge(enum kinfo_os, unsigned major, unsigned minor, unsigned patch);
+#define kernel_xfrmi_req_phy() (kernel_ge(KINFO_LINUX, 5, 3, 0))
 
 extern void init_kernel_info(struct logger *logger);
 
