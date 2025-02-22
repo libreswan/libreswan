@@ -118,8 +118,7 @@ top_caname=""
 def reset_files():
     for dir in ['keys/', 'certs/', 'selfsigned/',
                 'pkcs12/',
-                'pkcs12/mainca',
-                'crls/' ]:
+                'pkcs12/mainca']:
         if os.path.isdir(dir):
             shutil.rmtree(dir)
         os.mkdir(dir)
@@ -518,35 +517,6 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                 ercert, erkey, signpair[0])
 
 
-def create_crlsets():
-    """ Create test CRLs
-    """
-    print("creating crl set")
-
-    # the get_serial_number method results in a hex str like '0x17'
-    # but set_serial needs a hex str like '17'
-
-    revoked = crypto.Revoked()
-    revoked.set_rev_date(dates['OK_NOW'].encode('utf-8'))
-    ser = hex(crypto.X509.from_cryptography(end_certs['revoked'][0]).get_serial_number())[2:]
-    revoked.set_serial(ser.encode('utf-8'))
-
-    chainrev = crypto.Revoked()
-    chainrev.set_rev_date(dates['OK_NOW'].encode('utf-8'))
-    ser = hex(crypto.X509.from_cryptography(end_certs['west_chain_revoked'][0]).get_serial_number())[2:]
-    chainrev.set_serial(ser.encode('utf-8'))
-
-    validcrl = crypto.CRL()
-    validcrl.add_revoked(revoked)
-    validcrl.add_revoked(chainrev)
-    with open("crls/cacrlvalid.crl", "wb") as f:
-        f.write(validcrl.export(crypto.X509.from_cryptography(ca_certs['mainca'][0]),
-                                crypto.PKey.from_cryptography_key(ca_certs['mainca'][1]),
-                                type=crypto.FILETYPE_ASN1,
-                                days=15,
-                                digest='sha256'.encode('utf-8')))
-
-
 def run_dist_certs():
     """ Generate the pluto test harness x509
     certificates, p12 files, keys, and CRLs
@@ -585,7 +555,6 @@ def run_dist_certs():
     create_chained_certs(chain_ca_roots, 3)
     create_chained_certs(chain_ca_roots, 9, 'long_')
     create_chained_certs(chain_ca_roots, 10, 'too_long_')
-    create_crlsets()
 
 def main():
     outdir = os.path.dirname(sys.argv[0])

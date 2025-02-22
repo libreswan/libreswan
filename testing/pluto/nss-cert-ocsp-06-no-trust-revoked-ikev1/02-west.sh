@@ -1,6 +1,8 @@
-/testing/guestbin/swan-prep --x509
-ipsec certutil -D -n east
-ipsec pk12util -w /testing/x509/nss-pw -i /testing/x509/pkcs12/mainca/revoked.p12
+/testing/guestbin/swan-prep --nokeys
+
+/testing/x509/import.sh real/mainca/`hostname`.all.p12
+
+/testing/x509/import.sh real/mainca/revoked.all.p12
 ipsec certutil -L
 
 ipsec start
