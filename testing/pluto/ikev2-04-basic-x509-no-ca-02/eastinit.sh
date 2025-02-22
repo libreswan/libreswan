@@ -2,7 +2,7 @@
 
 # delete the CA, both ends hardcode both certificates
 ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.end.p12
-ipsec certutil -A -n west -t P,, -i /testing/x509/real/mainca/west.end.cert
+/testing/x509/import.sh /testing/x509/real/mainca/west.end.cert
 # check result
 ipsec certutil -L
 

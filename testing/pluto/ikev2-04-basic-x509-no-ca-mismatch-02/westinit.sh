@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 
-ipsec certutil -A -n east -t P,, -i /testing/x509/real/mainca/east.end.cert
+/testing/x509/import.sh real/mainca/east.end.cert
 # WEST will send NORTHs cert
 ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/north.end.p12
 # I guess this is a distraction?

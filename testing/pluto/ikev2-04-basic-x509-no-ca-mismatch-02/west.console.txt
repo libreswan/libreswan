@@ -1,7 +1,8 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec certutil -A -n east -t P,, -i /testing/x509/real/mainca/east.end.cert
+ /testing/x509/import.sh real/mainca/east.end.cert
+ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
  # WEST will send NORTHs cert
 west #

@@ -3,7 +3,8 @@ Creating empty NSS database
 east #
  # import real west end cert
 east #
- ipsec certutil -A -t P,, -n west -i /testing/x509/real/mainca/west.end.cert
+ /testing/x509/import.sh real/mainca/west.end.cert
+ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
 east #
  # import fake east end cert
 east #

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # import real west certificate only, rely on cert=west
-ipsec certutil -A -t P,, -n west -i /testing/x509/real/mainca/west.end.cert
+/testing/x509/import.sh real/mainca/west.end.cert
 # import fake east cert+key, again rely on cert=west
 ipsec pk12util -W foobar -K '' -i /testing/x509/fake/mainca/east.end.p12
 # confirm

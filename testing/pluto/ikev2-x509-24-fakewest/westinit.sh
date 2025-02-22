@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 
-ipsec certutil -A -t P,,, -n east -i /testing/x509/real/mainca/east.end.cert
+/testing/x509/import.sh real/mainca/east.end.cert
 ipsec pk12util -W foobar -i /testing/x509/fake/mainca/west.end.p12
 # confirm
 ipsec certutil -L

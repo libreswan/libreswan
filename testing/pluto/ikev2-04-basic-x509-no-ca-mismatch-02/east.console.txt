@@ -6,7 +6,8 @@ east #
  ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- ipsec certutil -A -n west -t P,, -i /testing/x509/real/mainca/west.end.cert
+ /testing/x509/import.sh /testing/x509/real/mainca/west.end.cert
+ipsec certutil -A -n west -t P,, -i /testing/x509/real/mainca/west.end.cert
 east #
  # check
 east #

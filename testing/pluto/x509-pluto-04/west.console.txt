@@ -1,8 +1,8 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec certutil -A -n east -t ,, -i /testing/x509/real/mainca/east.all.cert
-certutil:  unable to open "/testing/x509/real/mainca/east.all.cert" for reading (-5950, 2).
+ /testing/x509/import.sh real/mainca/east.all.cert
+missing file: real/mainca/east.all.cert
 west #
  /testing/x509/import.sh real/otherca/otherwest.all.p12
 ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12

@@ -8,7 +8,8 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # import the fake EC ca (could also use real EC CA?)
 west #
- ipsec certutil -A -t C,, -n mainec -i /testing/x509/fake/mainec/root.cert
+ /testing/x509/import.sh fake/mainec/root.cert
+ipsec certutil -A -n mainec -t CT,, -i fake/mainec/root.cert
 west #
  # confirm
 west #
@@ -16,7 +17,7 @@ west #
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west                                                         u,u,u
-mainec                                                       C,,  
+mainec                                                       CT,, 
 west #
  # confirm that the network is alive
 west #
