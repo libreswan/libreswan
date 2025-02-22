@@ -17,10 +17,11 @@ INFO::CORE::Connection from [192.1.2.23]
 ERROR::No Content-Length in REQ Headers
 ERROR::Can not parse REQ
 INFO::CORE::Connection from [192.1.2.23]
-request for certificate serial 10
-status VALID for 10
+request for certificate serial <NIC>
+status VALID for <NIC>
 INFO::CORE::Connection from [192.1.2.23]
-request for certificate serial 42
+request for certificate serial <REVOKED>
+Status for <REVOKED> is REVOKED
 nic #
  grep -i -e "^[^|].*SEC_ERROR" /tmp/pluto.log
 grep: /tmp/pluto.log: No such file or directory

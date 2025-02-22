@@ -17,17 +17,19 @@ INFO::CORE::Connection from [192.1.2.23]
 ERROR::No Content-Length in REQ Headers
 ERROR::Can not parse REQ
 INFO::CORE::Connection from [192.1.2.23]
-request for certificate serial 10
-status VALID for 10
+request for certificate serial <NIC>
+status VALID for <NIC>
 INFO::CORE::Connection from [192.1.2.45]
 ERROR::No Content-Length in REQ Headers
 ERROR::Can not parse REQ
 INFO::CORE::Connection from [192.1.2.45]
-request for certificate serial 10
-status VALID for 10
+request for certificate serial <NIC>
+status VALID for <NIC>
 INFO::CORE::Connection from [192.1.2.23]
-request for certificate serial 40
+request for certificate serial <WEST_CHAIN_ENDCERT>
+request for non recognized CA [serial <WEST_CHAIN_ENDCERT>]
 INFO::CORE::Connection from [192.1.2.45]
-request for certificate serial 36
+request for certificate serial <EAST_CHAIN_ENDCERT>
+request for non recognized CA [serial <EAST_CHAIN_ENDCERT>]
 nic #
  
