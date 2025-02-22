@@ -34,16 +34,38 @@ start()
 
 log()
 {
+    east=$(cat /testing/x509/certs/east.serial)
+    west=$(cat /testing/x509/certs/west.serial)
+    nic=$(cat /testing/x509/certs/nic.serial)
+    revoked=$(cat /testing/x509/certs/revoked.serial)
+    east_chain_endcert=$(cat /testing/x509/certs/east_chain_endcert.serial)
+    west_chain_endcert=$(cat /testing/x509/certs/west_chain_endcert.serial)
     {
 	journalctl /sbin/ocspd --no-pager
     } | {
 	tee OUTPUT/`hostname`.ocspd.log
     } | {
-	sed -n \
-	    -e '/: request for certificate/ s/.*: //p' \
-	    -e '/: status / s/.*: //p' \
-	    -e '/: INFO::CORE/ s/.*: //p' \
-	    -e '/: ERROR/ s/.*: //p'
+	sed \
+	    -e '/: OpenCA OCSPD/,/: Configuration loaded/d' \
+	    -e '/ got connd /d' \
+	    -e '/: INFO::Local Address/d' \
+	    -e '/: INFO::OPENCA_SRV_INFO_TREAD/d' \
+	    \
+    	    -e 's;\([ ]\)'${east}'$;\1<EAST>;' \
+	    -e 's;\([ ]\)'${west}'$;\1<WEST>;' \
+	    -e 's;\([ ]\)'${nic}'$;\1<NIC>;' \
+	    -e 's;\([ ]\)'${revoked}'$;\1<REVOKED>;' \
+	    -e 's;\([ ]\)'${east_chain_endcert}'$;\1<EAST_CHAIN_ENDCERT>;' \
+	    -e 's;\([ ]\)'${west_chain_endcert}'$;\1<WEST_CHAIN_ENDCERT>;' \
+	    \
+    	    -e 's;\([ ]\)'${east}'\([] ]\);\1<EAST>\2;' \
+	    -e 's;\([ ]\)'${west}'\([] ]\);\1<WEST>\2;' \
+	    -e 's;\([ ]\)'${nic}'\([] ]\);\1<NIC>\2;' \
+	    -e 's;\([ ]\)'${revoked}'\([] ]\);\1<REVOKED>\2;' \
+	    -e 's;\([ ]\)'${east_chain_endcert}'\([] ]\);\1<EAST_CHAIN_ENDCERT>\2;' \
+	    -e 's;\([ ]\)'${west_chain_endcert}'\([] ]\);\1<WEST_CHAIN_ENDCERT>\2;' \
+	    \
+	    -e 's;^.*: ;;'
     }
 }
 
