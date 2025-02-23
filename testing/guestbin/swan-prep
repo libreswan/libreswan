@@ -576,8 +576,8 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
             # 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
             # mainca and nic import
-            shell("/testing/x509/import.sh real/mainca/root.cert");
-            shell("/usr/bin/certutil -A -n nic -t 'P,,' -d sql:%s -a -i /testing/x509/certs/nic.crt%s" % (nssdir, util_pw))
+            shell("/testing/x509/import.sh real/mainca/root.cert")
+            shell("/testing/x509/import.sh real/mainca/nic.end.cert")
 
             # install ee
             shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:%s %s%s" %
@@ -601,23 +601,19 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic":
             # pre-import certs for all other hosts
             for certname in ("west", "east", "road", "north", "nic"):
                 if not hostname in certname:
-                    shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
-                          (certname, nssdir, certname, util_pw))
+                    shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
 
         else:
 
             # is pw needed? Perahps when FIPS, but has it been set?
 
             # import then fix trust
-            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d sql:%s %s%s" %
-                  (hostname, nssdir, pw, p12cmd_pw))
-            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
+            shell("/testing/x509/import.sh real/mainca/%s.all.p12" % (hostname))
 
             # pre-import certs for all other hosts
             for certname in ("west", "east", "road", "north", "nic"):
                 if not hostname in certname:
-                    shell("/usr/bin/certutil -A -n %s -t 'P,,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
-                          (certname, nssdir, certname, util_pw))
+                    shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
 
 # Don't enable FIPS mode until after NSS DBS are created.  See:
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1531267

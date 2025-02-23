@@ -78,7 +78,7 @@ default via 192.1.3.254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
+mainca                                                       CT,, 
 east-ec                                                      P,,  
 hashsha1                                                     P,,  
 nic                                                          P,,  
@@ -175,7 +175,7 @@ default via 192.1.3.254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
+mainca                                                       CT,, 
 east-ec                                                      P,,  
 hashsha1                                                     P,,  
 nic                                                          P,,  
