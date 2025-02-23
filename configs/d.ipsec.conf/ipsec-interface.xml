@@ -78,8 +78,8 @@
 	    Enable "Routing based IPsec VPNs" using the device
 	    <replaceable>number</replaceable>.  For instance,
 	    <option>ipsec-interface=5</option> will use
-	    <option>ipsec5</option> in managed mode, and kernel device
-	    <option>1</option> in unmanaged mode.
+	    <option>ipsec5</option> in managed mode, and kernel xfrm interface
+	    with if_id <option>5</option> in unmanaged mode.
 	  </para>
 	</listitem>
       </varlistentry>
