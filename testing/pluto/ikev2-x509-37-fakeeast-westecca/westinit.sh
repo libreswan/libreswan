@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # import real west+key (no CA)
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
+/testing/x509/import.sh real/mainca/west.end.p12
 # import the fake EC ca (could also use real EC CA?)
 /testing/x509/import.sh fake/mainec/root.cert
 # confirm

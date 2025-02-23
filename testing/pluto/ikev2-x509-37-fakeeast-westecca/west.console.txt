@@ -3,7 +3,8 @@ Creating empty NSS database
 west #
  # import real west+key (no CA)
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
+ /testing/x509/import.sh real/mainca/west.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # import the fake EC ca (could also use real EC CA?)

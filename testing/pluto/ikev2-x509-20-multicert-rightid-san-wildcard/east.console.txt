@@ -7,8 +7,10 @@ east #
 east #
  #/testing/x509/import.sh real/otherca/othereast.all.p12
 east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/north.all.p12
+ /testing/x509/import.sh real/mainca/north.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/north.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 east #
  ipsec start
 Redirecting to: [initsystem]

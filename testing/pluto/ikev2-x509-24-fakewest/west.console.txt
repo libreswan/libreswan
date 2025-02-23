@@ -4,7 +4,8 @@ west #
  /testing/x509/import.sh real/mainca/east.end.cert
 ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
- ipsec pk12util -W foobar -i /testing/x509/fake/mainca/west.end.p12
+ /testing/x509/import.sh fake/mainca/west.end.p12
+ipsec pk12util -w nss-pw -i fake/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # confirm

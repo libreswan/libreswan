@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep --nokeys
 
 # add first identity/cert
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
+/testing/x509/import.sh real/mainca/east.all.p12
 # add second identity/cert
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/othereast.all.p12
+/testing/x509/import.sh real/otherca/othereast.all.p12
 # check
 ipsec certutil -L
 

@@ -3,15 +3,18 @@ Creating empty NSS database
 east #
  # east, but without root
 east #
- ipsec pk12util -W foobar -i /testing/x509/real/mainca/east.end.p12
+ /testing/x509/import.sh real/mainca/east.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # Insert a different, broken, CAcert chain
 east #
  # Avoids NSS aborting for having no CA at all (?!?)
 east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/badca/badeast.all.p12
+ /testing/x509/import.sh real/badca/badeast.all.p12
+ipsec pk12util -w nss-pw -i real/badca/badeast.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n badca -t CT,,
 east #
  # Don't add CT to root bad cert; otherwise the message:
 east #
@@ -28,7 +31,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
 badeast                                                      u,u,u
-badca                                                        ,,   
+badca                                                        CT,, 
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -42,6 +45,5 @@ east #
 initdone
 east #
  hostname | grep east > /dev/null && grep -E "no Certificate Authority in NSS Certificate DB|authentication using rsasig failed" /tmp/pluto.log
-"ikev2-westnet-eastnet-x509-cr" #1: no Certificate Authority in NSS Certificate DB! certificate payloads discarded
 east #
  
