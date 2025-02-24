@@ -3,15 +3,19 @@ Creating empty NSS database
 west #
  # only the end, both ends hardcode certs
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
+ /testing/x509/import.sh real/mainca/west.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- ipsec certutil -A -n east -t P,, -i /testing/x509/real/mainca/east.end.cert
+ /testing/x509/import.sh real/mainca/east.end.cert
+ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
  # load a distraction CA and Cert
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+ /testing/x509/import.sh real/otherca/otherwest.all.p12
+ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n otherca -t CT,,
 west #
  # check result
 west #
@@ -21,7 +25,7 @@ Certificate Nickname                                         Trust Attributes
 west                                                         u,u,u
 east                                                         P,,  
 otherwest                                                    u,u,u
-otherca                                                      ,,   
+otherca                                                      CT,, 
 west #
  # confirm that the network is alive
 west #

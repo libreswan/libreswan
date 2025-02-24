@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.all.p12
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/othereast.all.p12
+/testing/x509/import.sh real/mainca/east.all.p12
+/testing/x509/import.sh real/otherca/othereast.all.p12
 ipsec checknss --settrusts
 # check
 ipsec certutil -L

@@ -1,10 +1,10 @@
 /testing/guestbin/swan-prep --nokeys
 
 # only the end, both ends hardcode certs
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
-ipsec certutil -A -n east -t P,, -i /testing/x509/real/mainca/east.end.cert
+/testing/x509/import.sh real/mainca/west.end.p12
+/testing/x509/import.sh real/mainca/east.end.cert
 # load a distraction CA and Cert
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/otherca/otherwest.all.p12
+/testing/x509/import.sh real/otherca/otherwest.all.p12
 # check result
 ipsec certutil -L
 

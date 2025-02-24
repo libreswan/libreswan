@@ -3,12 +3,14 @@ Creating empty NSS database
 west #
  # import real west+key (no CA)
 west #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
+ /testing/x509/import.sh real/mainca/west.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # import the fake EC ca (could also use real EC CA?)
 west #
- ipsec certutil -A -t C,, -n mainec -i /testing/x509/fake/mainec/root.cert
+ /testing/x509/import.sh fake/mainec/root.cert
+ipsec certutil -A -n mainec -t CT,, -i fake/mainec/root.cert
 west #
  # confirm
 west #
@@ -16,7 +18,7 @@ west #
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west                                                         u,u,u
-mainec                                                       C,,  
+mainec                                                       CT,, 
 west #
  # confirm that the network is alive
 west #

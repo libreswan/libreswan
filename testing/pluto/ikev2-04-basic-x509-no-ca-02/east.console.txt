@@ -3,10 +3,12 @@ Creating empty NSS database
 east #
  # delete the CA, both ends hardcode both certificates
 east #
- ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/east.end.p12
+ /testing/x509/import.sh real/mainca/east.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- ipsec certutil -A -n west -t P,, -i /testing/x509/real/mainca/west.end.cert
+ /testing/x509/import.sh /testing/x509/real/mainca/west.end.cert
+ipsec certutil -A -n west -t P,, -i /testing/x509/real/mainca/west.end.cert
 east #
  # check result
 east #

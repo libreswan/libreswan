@@ -37,7 +37,8 @@ no connection or alias named "test"'
 east #
  # put east back
 east #
- ipsec certutil -A -i /testing/x509/real/mainca/east.end.cert -n east -t "P,,"
+ /testing/x509/import.sh real/mainca/east.end.cert
+ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 east #
  # re-load should not dump core
 east #

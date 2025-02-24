@@ -8,7 +8,7 @@ mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
 # initnss normally happens in the initsystem - but not for namespace testing
 # ../../guestbin/if-namespace.sh ipsec initnss
 ipsec initnss
-ipsec pk12util -i /testing/x509/real/mainca/west.all.p12 -w /testing/x509/nss-pw
+/testing/x509/import.sh real/mainca/west.all.p12
 # test config for syntax errors
 ipsec addconn --checkconfig --config /etc/ipsec.conf
 # start for test

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # import real west only, there's no root CA
-ipsec pk12util -W foobar -K '' -i /testing/x509/real/mainca/west.end.p12
+/testing/x509/import.sh real/mainca/west.end.p12
 # confirm
 ipsec certutil -L
 

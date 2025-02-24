@@ -20,8 +20,10 @@ west #
  ipsec initnss
 Initializing NSS database
 west #
- ipsec pk12util -i /testing/x509/real/mainca/west.all.p12 -w /testing/x509/nss-pw
+ /testing/x509/import.sh real/mainca/west.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  # test config for syntax errors
 west #
