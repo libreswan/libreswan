@@ -1,4 +1,5 @@
-#!/sbin/runscript
+#!/sbin/openrc-run
+# -*- mode: sh; sh-shell: sh -*-
 
 name="ipsec pluto daemon"
 extra_commands="configtest"
