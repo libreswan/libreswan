@@ -2793,7 +2793,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("IPTFS is not compatible with phase2=%s",
 				    str_enum(&encap_proto_story, wm->phase2, &sb));
 		}
-		/* probe the interface */
+		if (kernel_ops->directional_ipsec_sa_is_enabled == NULL) {
+			return diag("IPTFS requires Directional SA support which is not available on this kernel");
+		}
 		if (kernel_ops->iptfs_ipsec_sa_is_enabled == NULL) {
 			return diag("IPTFS is not supported by %s kernel interface",
 				    kernel_ops->interface_name);

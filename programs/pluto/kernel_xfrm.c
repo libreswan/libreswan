@@ -122,6 +122,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      int *recv_errno,
 			      struct logger *logger);
 static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger);
+static err_t xfrm_directional_ipsec_sa_is_enabled(struct logger *logger);
 
 static struct {
 	bool icmpv6;
@@ -1997,12 +1998,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 	/*
-	 * We cannot detect XFRM DIRECTION support, but we know it came in just
-	 * before IPTFS, which we can detect, so we use IPTS to detect DIRECTION
-	 * support.
-	 *
-	 * We also use netlink_add_sa() to detect IPTFS support, so avoid infinite loop.
-	 *
+	 * We also use netlink_add_sa() to detect directional SA support, so avoid infinite loop.
 	 */
 	if (xfrm_direction_supported != XFRM_DIR_SUP_NO ) {
 		uint8_t sa_dir = sa->direction == DIRECTION_OUTBOUND ? XFRM_SA_DIR_OUT : XFRM_SA_DIR_IN;
@@ -2749,7 +2745,8 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	req.spi.min = min;
 	req.spi.max = max;
 
-	nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, XFRM_SA_DIR_IN);
+	if (xfrm_direction_supported)
+		nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, XFRM_SA_DIR_IN);
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
@@ -2990,11 +2987,12 @@ static void kernel_xfrm_plug_holes(struct logger *logger)
 	}
 }
 
-static bool qry_xfrm_iptfs_support(struct logger *logger) {
+static bool qry_xfrm_base_support(struct logger *logger, bool check_iptfs, bool check_directional) {
 
-	const struct config_iptfs iptfs = {
-		.enabled = true,
-	};
+	if (!check_iptfs && !check_directional) {
+		ldbg(logger, "kernel: unexpected use of qry_xfrm_base_support()");
+		return false;
+	}
 
 	uint8_t fakekey[max(AES_BLOCK_SIZE, SHA2_256_DIGEST_SIZE)];
 	get_rnd_bytes(&fakekey, sizeof(fakekey));
@@ -3005,35 +3003,54 @@ static bool qry_xfrm_iptfs_support(struct logger *logger) {
 	const struct integ_desc *integ = &ike_alg_integ_sha2_256;
 	shunk_t integ_key = shunk2(fakekey, SHA2_256_DIGEST_SIZE);
 
-	const struct kernel_state sa = {
+	struct kernel_state sa = {
 		.mode = KERNEL_MODE_TUNNEL,
 		.src.address = ipv4_info.address.unspec,
 		.dst.address = ipv4_info.address.unspec,
 		.proto = &ip_protocol_esp,
 		.direction = DIRECTION_OUTBOUND,
-		.iptfs = &iptfs,
 		.spi = 1,
 		.state_id = DEFAULT_KERNEL_STATE_ID,
 		.reqid = 1,
-		.story = "IPTFS Support Probe",
+		.story = "Support Probe",
 		.encrypt = cipher,
 		.integ = integ,
 		.encrypt_key = cipher_key,
 		.integ_key = integ_key,
 	};
+	if (check_iptfs) {
+		const struct config_iptfs iptfs = {
+			.enabled = true
+		};
+		sa.iptfs = &iptfs;
+	}
 
 	if (netlink_add_sa(&sa, false, logger)) {
-		ldbg(logger, "kernel: IPTFS supported");
+		ldbg(logger, "kernel: directional SAs supported");
+		if (check_iptfs)
+			ldbg(logger, "kernel: IPTFS supported");
 		if (!xfrm_del_ipsec_spi(sa.spi, sa.proto,
 			&sa.src.address, &sa.dst.address,
 			"del probe", logger)) {
-			llog(RC_LOG, logger, "kernel: IPTFS probe sa deletion failed - ignored");
+			llog(RC_LOG, logger, "kernel: probe SA deletion failed - ignored");
 		}
 		return true;
 	}
-	ldbg(logger, "kernel: IPTFS not supported");
+	if (!check_iptfs)
+		ldbg(logger, "kernel: directional SA not supported");
+	else
+		ldbg(logger, "kernel: IPTFS not supported");
 	return false;
 }
+
+static bool qry_xfrm_directional_support(struct logger *logger) {
+	return qry_xfrm_base_support(logger, false, true);
+}
+
+static bool qry_xfrm_iptfs_support(struct logger *logger) {
+	return qry_xfrm_base_support(logger, true, true);
+}
+
 
 static bool qry_xfrm_migrate_support(struct logger *logger)
 {
@@ -3141,15 +3158,16 @@ static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
-static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+static err_t xfrm_directional_ipsec_sa_is_enabled(struct logger *logger)
 {
+
 	static enum {
 		UNKNOWN, ENABLED, DISABLED,
 	} state = UNKNOWN;
-	static const char disabled_message[] = "requires option CONFIG_IPTFS";
+	static const char disabled_message[] = "requires kernel with Directional SA support";
 	switch (state) {
 	case UNKNOWN:
-		state = (qry_xfrm_iptfs_support(logger) ? ENABLED : DISABLED);
+		state = (qry_xfrm_directional_support(logger) ? ENABLED : DISABLED);
 		xfrm_direction_supported = (state == ENABLED) ? XFRM_DIR_SUP_YES : XFRM_DIR_SUP_NO;
 		return state == ENABLED ? NULL : disabled_message;
 	case ENABLED:
@@ -3160,6 +3178,31 @@ static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 		bad_case(state);
 	}
 }
+
+static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+{
+	static enum {
+		UNKNOWN, ENABLED, DISABLED,
+	} state = UNKNOWN;
+	static const char disabled_iptfs[] = "requires option CONFIG_XFRM_IPTFS";
+	static const char disabled_directional[] = "requires directional SA support";
+
+	if (xfrm_direction_supported == XFRM_DIR_SUP_NO)
+		return disabled_directional;
+
+	switch (state) {
+	case UNKNOWN:
+		state = (qry_xfrm_iptfs_support(logger) ? ENABLED : DISABLED);
+		return state == ENABLED ? NULL : disabled_iptfs;
+	case ENABLED:
+		return NULL;
+	case DISABLED:
+		return disabled_iptfs;
+	default:
+		bad_case(state);
+	}
+}
+
 static bool netlink_poke_ipsec_offload_policy_hole(struct nic_offload *nic_offload, struct logger *logger)
 {
 	if (nic_offload->type != KERNEL_OFFLOAD_PACKET)
@@ -3297,6 +3340,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,
 	.migrate_ipsec_sa_is_enabled = xfrm_migrate_ipsec_sa_is_enabled,
+	.directional_ipsec_sa_is_enabled = xfrm_directional_ipsec_sa_is_enabled,
 	.iptfs_ipsec_sa_is_enabled = xfrm_iptfs_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,

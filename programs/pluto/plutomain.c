@@ -1882,6 +1882,29 @@ int main(int argc, char **argv)
 	}
 #endif
 
+	/*
+	 * Initialize the stack probes so we have some control of order
+	 * of the probes
+	 */
+	err_t msg;
+	msg = kernel_ops->directional_ipsec_sa_is_enabled(logger);
+	if (msg != NULL)
+		llog(RC_LOG, logger, "kernel: directional ipsec SA error: %s", msg);
+	else
+		llog(RC_LOG, logger, "kernel: directional SA supported by kernel");
+
+	msg = kernel_ops->iptfs_ipsec_sa_is_enabled(logger);
+	if (msg != NULL)
+		llog(RC_LOG, logger, "kernel: IPTFS ipsec SA error: %s", msg);
+	else
+		llog(RC_LOG, logger, "kernel: IPTFS SA supported by kernel");
+
+	msg = kernel_ops->migrate_ipsec_sa_is_enabled(logger);
+	if (msg != NULL)
+		llog(RC_LOG, logger, "kernel: MIGRATE ipsec SA error: %s", msg);
+	else
+		llog(RC_LOG, logger, "kernel: MIGRATE SA supported by kernel");
+
 	run_server(conffile, logger);
 }
 
