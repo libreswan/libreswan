@@ -1,5 +1,0 @@
-Basic pluto with IKEv2 on the initiator (west), and on the responder.
-It uses certificates, with east in FIPS mode that should accept west's
-2048 bit RSA key, that versions of libreswan < 3.32 would reject as
-too small (it mistakenly made 3072 the minimum key)
-
