@@ -163,14 +163,14 @@ def choose_config_file(hostname, testpath, config_path, strict):
         return path
 
     # pass 2: look in base configs
-    if userland in ("libreswan", "openswan",  "strongswan"):
-        # what about BSD?
-        paths = []
-        paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
-        paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
-        for path in paths:
-            if os.path.isfile(path):
-                return path
+    match args.userland:
+        case "libreswan"|"strongswan":
+            paths = []
+            paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
+            paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
+            for path in paths:
+                if os.path.isfile(path):
+                    return path
 
     # dump all the paths?
     return None
@@ -321,12 +321,11 @@ if hostname != "nic":
         os.mkdir(outputdir)
         os.chmod(outputdir, 0o777)
 
-    if args.userland in ("libreswan", "openswan"):
-        dname = "pluto"
-    elif args.userland == "strongswan":
-        dname = "charon"
-    else:
-        dname = "iked"
+    match args.userland:
+        case "libreswan":
+            dname = "pluto"
+        case "strongswan":
+            dname = "charon"
 
     daemonlogfile = "%s/%s.%s.log" % (outputdir, hostname, dname)
     tmplink = "/tmp/%s.log" % dname
@@ -339,12 +338,11 @@ if hostname != "nic":
     else :
         os.symlink(daemonlogfile, tmplink)
 
-if args.userland:
-    if not args.userland in ("libreswan", "strongswan", "openswan"):
+match args.userland:
+    case "libreswan" | "strongswan":
+        None
+    case _:
         sys.exit("swan-prep: unknown userland type '%s'" % args.userland)
-    userland = args.userland
-else:
-    userland = "libreswan"
 
 # print "swan-prep running on %s for test %s with userland
 # %s"%(hostname,testname,userland)
@@ -397,63 +395,71 @@ fp.write(pattern)
 fp.close()
 
 if hostname != "nic":
-    dst = "/etc/strongswan/" if userland == "strongswan" else ipsecdir
+    match args.userland:
+        case "strongswan":
+            dst = "/etc/strongswan"
+        case _:
+            dst = ipsecdir
+
     src = "%s%s" % (nsbasepath, dst)
     lsw_init_dir(src, dst)
 
-    if args.userland in ("libreswan", "openswan"):
-        dst = "/run/pluto"
-        if nssdir and ipsecdir != nssdir:
-            src = "%s%s" % (nsbasepath, nssdir)
-            lsw_init_dir(src, nssdir)
-    elif args.userland in ("strongswan"):
-        dst="/run/strongswan"
-    elif args.namespace:
-        print("Unknown run directory fatal in namespace")
-        sys.exit(1)
+    match args.userland:
+        case "libreswan":
+            dst = "/run/pluto"
+            if nssdir and ipsecdir != nssdir:
+                src = "%s%s" % (nsbasepath, nssdir)
+                lsw_init_dir(src, nssdir)
+        case "strongswan":
+            dst="/run/strongswan"
+        case _:
+            sys.exit("Unknown run directory")
+
     src = "%s%s" % (nsbasepath, dst)
     lsw_init_dir(src, dst)
 
-    if args.userland in ("libreswan", "openswan"):
+    match args.userland:
 
-        # fill in any missing dirs
-        for dir in ("/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
-            if not os.path.isdir(dir):
-                os.mkdir(dir)
-                if "private" in dir:
-                    os.chmod(dir, 0o700)
-            else:
-                oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
-                for oldfile in oldfiles:
-                    os.unlink(oldfile)
+        case "libreswan":
 
-        copy_config_file(hostname, testpath, "/etc/ipsec.conf", nsprefix=nsbasepath)
-        copy_config_file(hostname, testpath, "/etc/ipsec.secrets", nsprefix=nsbasepath)
+            # fill in any missing dirs
+            for dir in ("/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
+                if not os.path.isdir(dir):
+                    os.mkdir(dir)
+                    if "private" in dir:
+                        os.chmod(dir, 0o700)
+                else:
+                    oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
+                    for oldfile in oldfiles:
+                        os.unlink(oldfile)
 
-    elif args.userland == "strongswan":
+            copy_config_file(hostname, testpath, "/etc/ipsec.conf", nsprefix=nsbasepath)
+            copy_config_file(hostname, testpath, "/etc/ipsec.secrets", nsprefix=nsbasepath)
 
-        # check version and spew all over test output
-        output = subprocess.getoutput("strongswan version")
-        strongswan_version = "U5.9.14"
-        if args.strongswan_version:
-            strongswan_version = args.strongswan_version
-        if not strongswan_version in output:
-            print("strongswan %s must be installed" % (strongswan_version))
-            print("")
-            print(output)
+        case "strongswan":
 
-        # required to write log file in /tmp
-        subprocess.getoutput("setenforce 0")
+            # check version and spew all over test output
+            output = subprocess.getoutput("strongswan version")
+            strongswan_version = "U5.9.14"
+            if args.strongswan_version:
+                strongswan_version = args.strongswan_version
+            if not strongswan_version in output:
+                print("strongswan %s must be installed" % (strongswan_version))
+                print("")
+                print(output)
 
-        for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
-            dst = os.path.join("/etc/strongswan", directory)
-            if os.path.isdir(dst):
-                shutil.rmtree(dst)
-            os.mkdir(dst)
-        copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf", strict=True)
-        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
-        copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
-        copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", strict=True, optional=True)
+            # required to write log file in /tmp
+            subprocess.getoutput("setenforce 0")
+
+            for directory in ("ipsec.d/", "ipsec.d/aacerts/", "ipsec.d/ocspcerts/", "ipsec.d/cacerts/", "ipsec.d/private/", "ipsec.d/certs/"):
+                dst = os.path.join("/etc/strongswan", directory)
+                if os.path.isdir(dst):
+                    shutil.rmtree(dst)
+                os.mkdir(dst)
+            copy_config_file(hostname, testpath, "/etc/strongswan/strongswan.conf", strict=True)
+            copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.conf")
+            copy_config_file(hostname, testpath, "/etc/strongswan/ipsec.secrets")
+            copy_config_file(hostname, testpath, "/etc/strongswan/swanctl/swanctl.conf", strict=True, optional=True)
 
     # test specific files
     xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
@@ -486,8 +492,8 @@ sysconfigd = "%s/etc/sysconfig" % (nsbasepath)
 if not os.path.isdir(sysconfigd):
     os.makedirs(sysconfigd)
 
-if args.userland in ("libreswan", "openswan") and hostname != "nic" and not args.namespace:
-    if args.fips and args.userland in ("libreswan", "openswan"):
+if args.userland in ("libreswan") and hostname != "nic" and not args.namespace:
+    if args.fips:
         # the test also requires using a modutil cmd which we cannot run here
         shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
     else:
@@ -500,7 +506,7 @@ if args.userland in ("libreswan", "openswan") and hostname != "nic" and not args
 #
 # Stuff above will have emptied and re-created the directory.
 
-if args.userland in ("libreswan", "openswan") and hostname != "nic":
+if args.userland in ("libreswan") and hostname != "nic":
 
     # Determine the NSS password and save
     if args.nsspw or args.fips:
