@@ -543,7 +543,6 @@ def run_dist_certs():
     create_basic_pluto_cas(basic_pluto_cas)
     create_mainca_end_certs(mainca_end_certs)
     create_chained_certs(chain_ca_roots, 3)
-    create_chained_certs(chain_ca_roots, 9, 'long_')
 
 def main():
     outdir = os.path.dirname(sys.argv[0])
