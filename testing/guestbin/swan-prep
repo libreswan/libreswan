@@ -423,15 +423,7 @@ if hostname != "nic":
         case "libreswan":
 
             # fill in any missing dirs
-            for dir in ("/etc/ipsec.d/policies", "/etc/ipsec.d/cacerts", "/etc/ipsec.d/crls", "/etc/ipsec.d/certs", "/etc/ipsec.d/private"):
-                if not os.path.isdir(dir):
-                    os.mkdir(dir)
-                    if "private" in dir:
-                        os.chmod(dir, 0o700)
-                else:
-                    oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
-                    for oldfile in oldfiles:
-                        os.unlink(oldfile)
+            os.mkdir("/etc/ipsec.d/policies")
 
             copy_config_file(hostname, testpath, "/etc/ipsec.conf", nsprefix=nsbasepath)
             copy_config_file(hostname, testpath, "/etc/ipsec.secrets", nsprefix=nsbasepath)
