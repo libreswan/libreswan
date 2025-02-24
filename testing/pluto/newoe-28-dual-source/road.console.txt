@@ -1,0 +1,172 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private
+road #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-2
+road #
+ ip addr add 192.1.3.208/24 dev eth0
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ # give OE policies time to load and route
+road #
+ sleep 5
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
+[x] PID
+road #
+ echo "initdone"
+initdone
+road #
+ ../../guestbin/ping-once.sh --down -I 192.1.3.208 192.1.2.23
+down
+road #
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
+road #
+ sleep 5
+road #
+ # should show tunnels and no shunts
+road #
+ ipsec whack --trafficstatus
+#2: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+#4: "private-2#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+road #
+ ipsec whack --shuntstatus
+Bare Shunt list:
+ 
+road #
+ # ping should succeed through tunnel
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.208 192.1.2.23
+up
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+road #
+ ipsec whack --trafficstatus
+#2: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+#4: "private-2#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+road #
+ echo done
+done
+road #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	dir out
+	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
+src 192.1.3.208 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
+	dir out
+src 192.1.2.23 dst 192.1.3.208
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
+src 192.1.3.208 dst 192.1.2.23
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	dir out
+	sel src 192.1.3.208/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
+road #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.253/32 dst 192.1.3.208/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.253/32 dst 192.1.3.208/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.3.208/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.3.208/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.208/32 dst 192.1.2.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.208/32 dst 192.1.2.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.208/32 dst 192.1.3.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.208/32 dst 192.1.3.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.3.208/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.3.208/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.254/32 dst 192.1.3.208/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.254/32 dst 192.1.3.208/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.23/32 dst 192.1.3.208/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.208
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.208/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.208
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.208/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.208 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.208/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ grep "^[^|].* established Child SA" /tmp/pluto.log
+"private#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.208/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"private-2#192.1.2.0/24"[1] ...192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+road #
+ 
