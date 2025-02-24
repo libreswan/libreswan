@@ -691,6 +691,7 @@ kvmplutotest 	newoe-25-cat-5				wip	github/896
 kvmplutotest 	newoe-26-poc-poc-host			good
 kvmplutotest 	newoe-27-replace-sa-auth-authnull	good
 kvmplutotest 	newoe-27-replace-sa-authnull-authnull	good
+kvmplutotest 	newoe-28-dual-source			good
 
 kvmplutotest 	certoe-01-whack				good
 kvmplutotest 	certoe-02-whack-otherca			good
