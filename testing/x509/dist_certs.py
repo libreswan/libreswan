@@ -435,7 +435,7 @@ def create_mainca_end_certs(mainca_end_certs):
         f.write(f"{serial}\n")
 
 
-def create_chained_certs(chain_ca_roots, max_path, prefix=''):
+def create_chained_certs(chain_ca_roots, max_path):
     """ Create the EE->IA1->IA2->IAx-->CA chains.
     Last in the chain is the end cert
     TODO: Add more complex trust chain situations
@@ -452,7 +452,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
         #signpair = ()
         print("creating %s chain"% chainca)
         for level in range(min_path, max_path):
-            cname = prefix + chainca + '_int_' + str(level)
+            cname = chainca + '_int_' + str(level)
 
             print("level %d cname %s serial %d"% (level, cname, serial))
 
@@ -477,7 +477,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
             ca_cnt += 1
 
             if level == max_path - 1:
-                endcert_name = prefix + chainca + "_endcert"
+                endcert_name = chainca + "_endcert"
 
                 signpair = ca_certs[lastca]
                 print(" - creating %s"% endcert_name)
@@ -493,7 +493,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
                                 ecert, ekey, signpair[0])
                 serial += 1
 
-                endrev_name = prefix + chainca + "_revoked"
+                endrev_name = chainca + "_revoked"
                 top_caname = cname
                 print(" - creating %s"% endrev_name)
                 ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
