@@ -29,6 +29,7 @@ v5.2 (unreleased)
   - fix build with USE_LIBCURL=false [Hans de Graaff #1845, Andrew]
   - fix build on OpenBSD 7.6 [Andrew]
   - fix build with GCC 15 / C 23 [Daiki Ueno]
+  - fix init script on Alpine [Andrew #2042]
 * testing:
   - update OpenBSD: 7.6; NetBSD: 10.1; FreeBSD: 14.2; Alpine: 3.21 [Andrew]
   - eliminate pyOpenSSL dependency when generating CRLs and PKCS12 files [Andrew #1990 #1996]
