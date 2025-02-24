@@ -534,8 +534,7 @@ def run_dist_certs():
                         'usage-server', 'usage-client', 'usage-both',
                         'nic-nourl',
                         'smallkey', 'key2032', 'key4096',
-                        'signedbyother','otherwest','othereast',
-                        'revoked', 'semiroad')
+                        'semiroad')
     # Add chain roots here
     chain_ca_roots =   ('east_chain', 'west_chain')
 
