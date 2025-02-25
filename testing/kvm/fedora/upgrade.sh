@@ -82,7 +82,6 @@ tcpdump
 unbound
 unbound-devel
 xmlto
-gnu-tls
 "
 
 # only install
