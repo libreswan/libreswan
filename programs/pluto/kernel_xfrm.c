@@ -597,9 +597,15 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			}
 			/* ignore */
 		} else {
-			llog_error(logger, -rsp.u.e.error,
+			/* Probe failures are not real ERRORs */
+			if (streq(story, "Probe Test")) {
+				if (DBGP(DBG_BASE))
+					LDBG_log(logger, "netlink response for %s %s", description, story);
+			} else {
+				llog_error(logger, -rsp.u.e.error,
 				   "netlink response for %s %s", description, story);
-			llog_ext_ack(RC_LOG, logger, &rsp.n);
+				llog_ext_ack(RC_LOG, logger, &rsp.n);
+			}
 			return false;
 		}
 	}
@@ -3012,7 +3018,7 @@ static bool qry_xfrm_base_support(struct logger *logger, bool check_iptfs, bool 
 		.spi = 1,
 		.state_id = DEFAULT_KERNEL_STATE_ID,
 		.reqid = 1,
-		.story = "Support Probe",
+		.story = "Probe Test",
 		.encrypt = cipher,
 		.integ = integ,
 		.encrypt_key = cipher_key,
