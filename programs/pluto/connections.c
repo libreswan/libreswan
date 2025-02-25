@@ -2796,8 +2796,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(c->logger);
 		if (err != NULL) {
-			return diag("IPTFS support is not enabled for %s kernel interface: %s",
-				    kernel_ops->interface_name, err);
+			return diag("IPTFS is not supported by the kernel: %s", err);
 		}
 
 		deltatime_t uint32_max = deltatime_from_microseconds(UINT32_MAX);
