@@ -1777,17 +1777,23 @@ static void kernel_pfkeyv2_shutdown(struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 }
-static bool kernel_directional_ipsec_is_enabled(struct logger *logger)
+
+static err_t kernel_directional_ipsec_is_enabled(struct logger *logger)
 {
-	return false;
+	ldbg(logger, "%s() called; nothing to do", __func__);
+	return "not supported";
 }
-static bool kernel_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+
+static err_t kernel_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 {
-	return false;
+	ldbg(logger, "%s() called; nothing to do", __func__);
+	return "not supported";
 }
-static bool kernel_migrate_ipsec_sa_is_enabled(struct logger *logger)
+
+static err_t kernel_migrate_ipsec_sa_is_enabled(struct logger *logger)
 {
-	return false;
+	ldbg(logger, "%s() called; nothing to do", __func__);
+	return "not supported";
 }
 
 static const char *pfkeyv2_protostack_names[] = {
@@ -1830,7 +1836,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.policy_del = kernel_pfkeyv2_policy_del,
 	.policy_add = kernel_pfkeyv2_policy_add,
 	.ipsec_interface = &kernel_ipsec_interface_ifconfig,
-	.directional_ipsec_sa_is_enabled = &kernel_directional_ipsec_is_enabled,
-	.iptfs_ipsec_sa_is_enabled = &kernel_iptfs_ipsec_sa_is_enabled,
-	.migrate_ipsec_sa_is_enabled = &kernel_migrate_ipsec_sa_is_enabled,
+	.directional_ipsec_sa_is_enabled = kernel_directional_ipsec_is_enabled,
+	.iptfs_ipsec_sa_is_enabled = kernel_iptfs_ipsec_sa_is_enabled,
+	.migrate_ipsec_sa_is_enabled = kernel_migrate_ipsec_sa_is_enabled,
 };
