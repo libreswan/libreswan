@@ -2004,9 +2004,10 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 	/*
-	 * We also use netlink_add_sa() to detect directional SA support, so avoid infinite loop.
+	 * We also use netlink_add_sa() to detect directional SA
+	 * support, so avoid infinite loop.
 	 */
-	if (xfrm_direction_supported != XFRM_DIR_SUP_NO ) {
+	if (xfrm_direction_supported != XFRM_DIR_SUP_NO) {
 		uint8_t sa_dir = sa->direction == DIRECTION_OUTBOUND ? XFRM_SA_DIR_OUT : XFRM_SA_DIR_IN;
 
 		ldbg(logger, "%s() setting XFRM SA direction to %s", __func__,
@@ -2751,8 +2752,9 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	req.spi.min = min;
 	req.spi.max = max;
 
-	if (xfrm_direction_supported)
+	if (xfrm_direction_supported != XFRM_DIR_SUP_NO) {
 		nl_addattr8(&req.n, sizeof(req.data), XFRMA_SA_DIR, XFRM_SA_DIR_IN);
+	}
 
 	int recv_errno;
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWSA, &rsp,
