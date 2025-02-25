@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case OPT_VERBOSE:
-			optarg_verbose(LEMPTY);
+			optarg_verbose(logger, LEMPTY);
 			break;
 		case OPT_DEBUG:
 			optarg_debug(/*enable*/true);
