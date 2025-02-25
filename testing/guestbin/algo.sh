@@ -65,7 +65,7 @@ case $d in
 esac
 
 if ${install} ; then
-    ../../guestbin/swan-prep --46
+    rm -rf /etc/ipsec.d/*
 fi
 
 echo /etc/ipsec.conf ...
