@@ -61,8 +61,9 @@ const char *bool_str(bool b)
  * The result is a pointer to the NUL at the end of the string in dest.
  *
  * Warning: no indication of truncation is returned.
- * An earlier version did indicate truncation, but that feature was never used.
- * This version is more robust and has a simpler contract.
+ * An earlier version did indicate truncation, but that feature was
+ * never used.  This version is more robust and has a simpler
+ * contract.
  */
 char *jam_str(char *dest, size_t size, const char *src)
 {
@@ -81,58 +82,38 @@ char *jam_str(char *dest, size_t size, const char *src)
 /*
  * Add a string to a partially filled buffer of limited size
  *
- * This is similar to what people mistakenly think strncat does
- * but add_str matches jam_str so the arguments are quite different.
+ * This is similar to what people mistakenly think strncat() does but
+ * add_str() matches jam_str() so the arguments are quite different.
  * OpenBSD's strlcat serves the same purpose.
  *
  * The buffer bound (size) must be greater than 0.
  * That allows a guarantee that the result is NUL-terminated.
  *
- * The hint argument allows code that knows the end of the
- * The string in dest to be more efficient.  If it is unknown,
- * just pass a pointer to a character within the string such as
- * the first one.
- *
  * The result is a pointer:
  *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
- * The results of jam_str and add_str provide suitable values for hint
- * for subsequent calls.
- *
- * If the hint points at the roof of dest, add_str does nothing and
- * returns that as the result (thus overflow will be sticky).
- *
- * For example
- *	(void)add_str(buf, sizeof(buf), jam_str(buf, sizeof(buf), "first"),
- *		" second");
- * That is slightly more efficient than
- *	(void)jam_str(buf, sizeof(buf), "first");
- *	(void)add_str(buf, sizeof(buf), buf, " second");
- *
  * Warning: strncat's bound is NOT on the whole buffer!
- * strncat(dest, src, n) adds at most n+1 bytes after the contents of dest.
- * Many people think that the limit is n bytes.
+ * strncat(dest, src, n) adds at most n+1 bytes after the contents of
+ * dest.  Many people think that the limit is n bytes.
  *
- * Warning: Is it really wise to silently truncate?  Only the caller knows.
- * The caller SHOULD check by seeing if the result equals dest's roof.
- * Overflow at any point in a chain of jam_str and add_str calls will
- * be reflected in the final return result so checking of intermediate
- * return values is not required.
+ * Warning: Is it really wise to silently truncate?  Only the caller
+ * knows.  The caller SHOULD check by seeing if the result equals
+ * dest's roof.  Overflow at any point in a chain of jam_str and
+ * add_str calls will be reflected in the final return result so
+ * checking of intermediate return values is not required.
  */
-char *add_str(char *buf, size_t size, char *hint, const char *src)
-{
-	passert(size > 0 && buf <= hint && hint <= buf + size);
-	if (hint == buf + size)
-		return hint;	/* already full */
 
+char *add_str(char *buf, size_t size, const char *src)
+{
+	passert(size > 0);
 	/*
 	 * skip to end of existing string (if we're not already there)
 	 */
-	hint += strlen(hint);
+	char *end = buf + strlen(buf);
+	passert(end < buf + size);	/* must be within buffer */
 
-	passert(hint < buf + size);	/* must be within buffer */
-	return jam_str(hint, size - (hint-buf), src);
+	return jam_str(end, size - (end-buf), src);
 }
 
 static const char *const perspective_name[] = {
