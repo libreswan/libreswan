@@ -1777,15 +1777,15 @@ static void kernel_pfkeyv2_shutdown(struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 }
-static void kernel_directional_ipsec_is_enabled(struct logger *logger)
+static bool kernel_directional_ipsec_is_enabled(struct logger *logger)
 {
 	return false;
 }
-static void kernel_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+static bool kernel_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 {
 	return false;
 }
-static void kernel_migrate_ipsec_sa_is_enabled(struct logger *logger)
+static bool kernel_migrate_ipsec_sa_is_enabled(struct logger *logger)
 {
 	return false;
 }
