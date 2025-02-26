@@ -144,7 +144,7 @@ intmax_t milliseconds_from_deltatime(deltatime_t d)
 	return milliseconds_from(d.dt);
 }
 
-intmax_t seconds_from_deltatime(deltatime_t d)
+time_t seconds_from_deltatime(deltatime_t d)
 {
 	/* XXX: ignore .tv_usec's bias, don't round */
 	return seconds_from(d.dt);

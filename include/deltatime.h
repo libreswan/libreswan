@@ -111,7 +111,7 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, enum timescale default_timesc
 struct timeval from_seconds(time_t seconds);
 struct timeval from_milliseconds(intmax_t milliseconds);
 struct timeval from_microseconds(intmax_t microseconds);
-intmax_t seconds_from(struct timeval);
+time_t seconds_from(struct timeval);
 intmax_t milliseconds_from(struct timeval);
 intmax_t microseconds_from(struct timeval);
 
