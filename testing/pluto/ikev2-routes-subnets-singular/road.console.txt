@@ -39,10 +39,10 @@ done
 road #
  # two remote subnets should have route with sourceip
 road #
- ip ro li
-default via [35m192.1.3.254 [0mdev [36meth0 [0m
-[35m192.0.2.0/24 [0mvia [35m192.1.3.254 [0mdev [36meth0 [0msrc [35m192.0.3.254 [0m
-[35m192.0.20.0/24 [0mvia [35m192.1.3.254 [0mdev [36meth0 [0msrc [35m192.0.3.254 [0m
-[35m192.1.3.0/24 [0mdev [36meth0 [0mproto kernel scope link src [35m192.1.3.209 [0m
+ ../../guestbin/ip.sh route list
+default via 192.1.3.254 dev eth0
+192.0.2.0/24 via 192.1.3.254 dev eth0 src 192.0.3.254
+192.0.20.0/24 via 192.1.3.254 dev eth0 src 192.0.3.254
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
  

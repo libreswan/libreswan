@@ -17,10 +17,10 @@ initdone
 east #
  # two remote subnets should have route with sourceip
 east #
- ip ro li
-default via [35m192.1.2.254 [0mdev [36meth1 [0m
-[35m192.0.1.0/24 [0mvia [35m192.1.2.45 [0mdev [36meth1 [0m
-[35m192.0.2.0/24 [0mdev [36meth0 [0mproto kernel scope link src [35m192.0.2.254 [0m
-[35m192.1.2.0/24 [0mdev [36meth1 [0mproto kernel scope link src [35m192.1.2.23 [0m
+ ../../guestbin/ip.sh route list
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
 east #
  
