@@ -461,6 +461,10 @@ enum {
 	OPT_DNSSEC_TRUSTED,
 };
 
+#define METAOPT_RENAME "\0>"
+#define METAOPT_OBSOLETE "\0!"
+#define METAOPT_NEWLINE "\0^"
+
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
 	{ "help\0", no_argument, NULL, 'h' },
@@ -500,7 +504,7 @@ static const struct option long_opts[] = {
 #ifdef KERNEL_XFRM
 	{ "use-xfrm\0", no_argument, NULL, 'K' },
 #endif
-	{ "interface\0!<ifname|ifaddr>", required_argument, NULL, 'i' }, /* reserved; not implemented */
+	{ "interface"METAOPT_OBSOLETE"<ifname|ifaddr>", required_argument, NULL, 'i' }, /* reserved; not implemented */
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
@@ -540,7 +544,7 @@ static const struct option long_opts[] = {
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
 	{ "efence-protect\0", required_argument, NULL, OPT_EFENCE_PROTECT, },
-	{ "debug-none\0^", no_argument, NULL, 'N' },
+	{ "debug-none"METAOPT_NEWLINE, no_argument, NULL, 'N' },
 	{ "debug-all\0", no_argument, NULL, 'A' },
 	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
 	{ "impair\0", required_argument, NULL, OPT_IMPAIR, },
@@ -627,52 +631,95 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 /* print full usage (from long_opts[]) */
 static void usage(FILE *stream, const char *progname)
 {
-	const struct option *opt;
 	char line[72];
-	size_t lw;
-
 	snprintf(line, sizeof(line), "Usage: %s", progname);
-	lw = strlen(line);
 
-	for (opt = long_opts; opt->name != NULL; opt++) {
+	for (const struct option *opt = long_opts; opt->name != NULL; opt++) {
+
 		const char *nm = opt->name;
-		const char *meta = nm + strlen(nm) + 1;
-		bool force_nl = false;
-		char chunk[sizeof(line) - 1];
-		int cw;
 
-		switch (*meta) {
-		case '_':
-		case '>':
-		case '!':
-			/* ignore these entries */
+		/*
+		 * "\0heading"
+		 *
+		 * A zero length option string.  Assume the meta is a
+		 * heading.
+		 */
+		if (*nm == '\0') {
+			/* dump current line */
+			fprintf(stream, "%s\n", line);
+			jam_str(line, sizeof(line), "\t");
+			/* output heading */
+			fprintf(stream, "    %s\n", nm + 1);
+			continue;
+		}
+
+		/* parse '\0...' meta characters */
+		const char *meta = nm + strlen(nm);
+
+		if (memeq(meta, METAOPT_RENAME, 2)) {
+			/*
+			 * Option has been renamed, don't show old
+			 * name.
+			 */
+			continue;
+		}
+
+		if (memeq(meta, METAOPT_OBSOLETE, 2)) {
+			/*
+			 * Option is no longer valid, skip.
+			 */
+			continue;
+		}
+
+		bool nl = false; /* true is sticky */
+		if (memeq(meta, METAOPT_NEWLINE, 2)) {
+			/*
+			 * Option should appear on a new line.
+			 */
+			nl = true;
+			meta += 2; /* skip '\0^' */
+		} else if (meta[1] == '<') {
+			/*
+			 * Looks like the argument to an option, skip
+			 * '\0'.
+			 */
+			meta++; /* skip \0 */
+		}
+
+		/* handle entry that forgot the argument */
+		const char *argument = (*meta == '\0' ? "<argument>" : meta);
+
+		char chunk[sizeof(line) - 1];
+		switch (opt->has_arg) {
+		case no_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
+			break;
+		case optional_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s[=%s]]", nm, argument);
+			break;
+		case required_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, argument);
 			break;
 		default:
-			if (*meta == '^') {
-				force_nl = true;
-				meta++;	/* eat ^ */
-			}
-			if (*meta == '\0')
-				snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
-			else
-				snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, meta);
-			cw = strlen(chunk);
-
-			if (force_nl || lw + cw + 2 >= sizeof(line)) {
-				fprintf(stream, "%s\n", line);
-				line[0] = '\t';
-				lw = 1;
-			} else {
-				line[lw++] = ' ';
-			}
-			passert(lw + cw + 1 < sizeof(line));
-			strcpy(&line[lw], chunk);
-			lw += cw;
+			bad_case(opt->has_arg);
 		}
+
+		/* enough space? allow for separator, and null? */
+		if (strlen(line) + strlen(chunk) + 2 >= sizeof(line)) {
+			nl = true;
+		}
+
+		if (nl) {
+			fprintf(stream, "%s\n", line);
+			jam_str(line, sizeof(line), "\t");
+		} else {
+			add_str(line, sizeof(line), " ");
+		}
+
+		add_str(line, sizeof(line), chunk);
 	}
 
 	fprintf(stream, "%s\n", line);
-
 	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 }
 
@@ -788,21 +835,15 @@ int main(int argc, char **argv)
 		if (longindex >= 0) {
 			passert(c != '?' && c != ':'); /* no error */
 			const char *optname = long_opts[longindex].name;
-			const char *optmeta = optname + strlen(optname) + 1;	/* after '\0' */
-			switch (optmeta[0]) {
-			case '_':
+			const char *optmeta = optname + strlen(optname);	/* at '\0?' */
+			if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
 				llog(RC_LOG, logger,
-					    "warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
-					    optname);
-				break;
-			case '>':
-				llog(RC_LOG, logger,
-					    "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta + 1);
-				break;
-			case '!':
-				llog(RC_LOG, logger,
-					    "warning: option \"--%s\" is obsolete; ignored", optname);
+				     "warning: option \"--%s\" is obsolete; ignored", optname);
 				continue;	/* ignore it! */
+			}
+			if (memeq(optmeta, METAOPT_RENAME, 2)) {
+				llog(RC_LOG, logger,
+				     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
 			}
 		}
 
