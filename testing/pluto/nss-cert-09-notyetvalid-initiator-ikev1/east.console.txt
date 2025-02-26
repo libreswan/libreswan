@@ -33,7 +33,7 @@ initdone
 east #
  # will only show up on east - note "expired" is wrong and should be "not yet valid"
 east #
- grep "ERROR" /tmp/pluto.log
+ grep "ERROR" /tmp/pluto.log | grep -v NLMSG_ERROR
 "nss-cert" #1: NSS: ERROR: IPsec certificate CN=west-notyetvalid invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 east #
  
