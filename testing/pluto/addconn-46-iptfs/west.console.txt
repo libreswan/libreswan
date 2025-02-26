@@ -1,29 +1,42 @@
 /testing/guestbin/swan-prep
 west #
+ ipsec initnss
+Initializing NSS database
+/var/lib/ipsec/nss not reset as customized by admin to unconfined_u:object_r:svirt_image_t:s0
+/var/lib/ipsec/nss/pkcs11.txt not reset as customized by admin to unconfined_u:object_r:svirt_image_t:s0
+/var/lib/ipsec/nss/cert9.db not reset as customized by admin to unconfined_u:object_r:svirt_image_t:s0
+/var/lib/ipsec/nss/key4.db not reset as customized by admin to unconfined_u:object_r:svirt_image_t:s0
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add addconn
+
 "addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--iptfs=no
+
 "addconn--iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--iptfs=yes
-ERROR: "addconn--iptfs=yes": netlink response for Add SA IPTFS Support Probe: Invalid argument (errno 22)
-"addconn--iptfs=yes": netlink ext_ack: Unsupported mode
-"addconn--iptfs=yes": failed to add connection: IPTFS support is not enabled for xfrm kernel interface: requires option CONFIG_IPTFS
+
+"addconn--iptfs=yes": failed to add connection: IPTFS is not supported by the kernel: requires option CONFIG_XFRM_IPTFS
+west #
+ 
 west #
  ipsec add addconn--type=passthrough
+
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--iptfs=no
+
 "addconn--type=passthrough--iptfs=no": warning: iptfs=no ignored for never-negotiate connection
 "addconn--type=passthrough--iptfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--iptfs=yes
+
 "addconn--type=passthrough--iptfs=yes": warning: iptfs=yes ignored for never-negotiate connection
 "addconn--type=passthrough--iptfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
@@ -31,13 +44,15 @@ west #
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--iptfs      --iptfs     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--iptfs": failed to add connection: IPTFS support is not enabled for xfrm kernel interface: requires option CONFIG_IPTFS
+"whack--iptfs": failed to add connection: IPTFS is not supported by the kernel: requires option CONFIG_XFRM_IPTFS
 west #
  ipsec whack --name whack--iptfs=no   --iptfs=no  --encrypt --host 1.2.3.4 --to --host 5.6.7.8
 "whack--iptfs=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--iptfs=yes  --iptfs=yes --encrypt --host 1.2.3.4 --to --host 5.6.7.8
-"whack--iptfs=yes": failed to add connection: IPTFS support is not enabled for xfrm kernel interface: requires option CONFIG_IPTFS
+"whack--iptfs=yes": failed to add connection: IPTFS is not supported by the kernel: requires option CONFIG_XFRM_IPTFS
+west #
+ 
 west #
  ipsec whack --name whack--passthrough                     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
 "whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)

@@ -1,4 +1,5 @@
 /testing/guestbin/swan-prep
+ipsec initnss
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
