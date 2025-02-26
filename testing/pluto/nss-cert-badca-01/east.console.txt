@@ -58,7 +58,7 @@ initdone
 east #
  # Error only expected to show up on east
 east #
- grep ERROR /tmp/pluto.log
+ grep ERROR /tmp/pluto.log | grep -v NLMSG_ERROR
 "nss-cert" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for badca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_CA_CERT_INVALID: Issuer certificate is invalid.
 east #
  
