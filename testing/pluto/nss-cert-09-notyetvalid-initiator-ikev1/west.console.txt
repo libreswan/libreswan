@@ -47,8 +47,10 @@ west #
  echo done
 done
 west #
- # will only show up on east - note "expired" is wrong and should be "not yet valid"
+ # will only show up on east - note "expired" is wrong and should be
 west #
- grep "ERROR" /tmp/pluto.log | grep -v NLMSG_ERROR
+ # "not yet valid"
+west #
+ grep '^[^|].*ERROR' /tmp/pluto.log
 west #
  
