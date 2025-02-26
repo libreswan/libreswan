@@ -11,6 +11,7 @@
     MANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\
+    SBINDIR=%{_sbindir} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
     USE_DNSSEC=true \\\
     USE_LABELED_IPSEC=true \\\
