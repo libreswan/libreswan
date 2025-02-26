@@ -516,8 +516,6 @@ int main(int argc, char *argv[])
 				conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
 			}
 
-			printf("\n"); /* close printf line */
-
 			resolve_default_routes(conn, logger);
 			exit_status = starter_whack_add_conn(ctlsocket,
 							     conn, logger);
