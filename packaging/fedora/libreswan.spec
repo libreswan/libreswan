@@ -79,6 +79,13 @@ Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
 
+%if "%{_sbindir}" == "%{_bindir}"
+# Compat symlinks for Requires in other packages.
+# We rely on filesystem to create the symlinks for us.
+Requires:       filesystem(unmerged-sbin-symlinks)
+Provides:       /usr/sbin/ipsec
+%endif
+
 %description
 Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
 the Internet Protocol Security and uses strong cryptography to provide
