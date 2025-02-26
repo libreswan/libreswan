@@ -75,6 +75,6 @@ done
 west #
  # Error only expected to show up on east
 west #
- grep ERROR /tmp/pluto.log | grep -v NLMSG_ERROR
+ grep '^[^|].*ERROR' /tmp/pluto.log
 west #
  
