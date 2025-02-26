@@ -81,9 +81,15 @@ deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar);
 /* a/s */
 deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
 
+/*
+ * Note: seconds_from*() returns INTMAX_T and not TIME_T so that
+ * functions match the format %jd (there is no TIME_T format modifier
+ * and TIME_T's size changes across platforms).
+ */
+
 intmax_t microseconds_from_deltatime(deltatime_t d);
 intmax_t milliseconds_from_deltatime(deltatime_t d);
-time_t seconds_from_deltatime(deltatime_t d);
+intmax_t seconds_from_deltatime(deltatime_t d);
 #define deltasecs seconds_from_deltatime
 deltatime_t deltatime_scale(deltatime_t d, int num, int denom); /* D*NUM/DENOM */
 
@@ -106,12 +112,16 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, enum timescale default_timesc
 /*
  * Primitives used to implement times; try to avoid timeval
  * explicitly.
+ *
+ * Note: seconds_from*() returns INTMAX_T and not TIME_T so that
+ * functions match the format %jd (there is no TIME_T format modifier
+ * and TIME_T's size changes across platforms).
  */
 
 struct timeval from_seconds(time_t seconds);
 struct timeval from_milliseconds(intmax_t milliseconds);
 struct timeval from_microseconds(intmax_t microseconds);
-time_t seconds_from(struct timeval);
+intmax_t seconds_from(struct timeval);
 intmax_t milliseconds_from(struct timeval);
 intmax_t microseconds_from(struct timeval);
 

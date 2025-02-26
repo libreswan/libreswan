@@ -144,7 +144,7 @@ intmax_t milliseconds_from_deltatime(deltatime_t d)
 	return milliseconds_from(d.dt);
 }
 
-time_t seconds_from_deltatime(deltatime_t d)
+intmax_t seconds_from_deltatime(deltatime_t d)
 {
 	/* XXX: ignore .tv_usec's bias, don't round */
 	return seconds_from(d.dt);
@@ -231,7 +231,7 @@ struct timeval from_microseconds(intmax_t us)
 	return tv;
 }
 
-time_t seconds_from(struct timeval v)
+intmax_t seconds_from(struct timeval v)
 {
 	return v.tv_sec;
 }
