@@ -14,7 +14,7 @@ east #
  # road came up, east should now have an interface
 east #
  ../../guestbin/ip.sh link show dev ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 east #
  ipsec trafficstatus
 #2: "east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
@@ -22,13 +22,13 @@ east #
  # check the interface is gone now that road is gone - apparently not?
 east #
  ../../guestbin/ip.sh link show dev ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 east #
  # check with connection removed
 east #
  ipsec auto --delete east
 "east": terminating SAs using this connection
-"east": delete ipsec-interface ipsec1@eth0 added by pluto
+"east": delete ipsec-interface ipsec1@NONE added by pluto
 east #
  ../../guestbin/ip.sh link show dev ipsec1
 Device "ipsec1" does not exist.

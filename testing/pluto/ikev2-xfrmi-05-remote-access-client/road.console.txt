@@ -33,7 +33,7 @@ road #
  # did we get our IP
 road #
  ../../guestbin/ip.sh address show dev ipsec1
-X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 100.64.13.2/32 scope global ipsec1
        valid_lft forever preferred_lft forever
 road #
@@ -69,7 +69,7 @@ road #
  # did we get our IP cleaned up
 road #
  ../../guestbin/ip.sh address show dev ipsec1
-X: ipsec1@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 road #
  echo done
 done

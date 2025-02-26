@@ -9,7 +9,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-"north-east": created ipsec-interface ipsec2@eth1
+"north-east": created ipsec-interface ipsec2@NONE
 "north-east": added IKEv2 connection
 north #
  echo "initdone"
@@ -36,7 +36,7 @@ north #
 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/ip.sh -s link show ipsec2
-X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
              0       0      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -53,7 +53,7 @@ north #
 up
 north #
  ../../guestbin/ip.sh -s link show ipsec2
-X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
             84       1      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           

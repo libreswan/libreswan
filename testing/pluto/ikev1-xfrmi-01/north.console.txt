@@ -17,7 +17,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north
-"north": created ipsec-interface ipsec1@eth1
+"north": created ipsec-interface ipsec1@NONE
 "north": added IKEv1 connection
 north #
  echo "initdone"
@@ -50,7 +50,7 @@ north #
 up
 north #
  ../../guestbin/ip.sh -s link show ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
             84       1      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           

@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add westnet-eastnet
-"westnet-eastnet": created ipsec-interface ipsec1@eth1
+"westnet-eastnet": created ipsec-interface ipsec1@NONE
 "westnet-eastnet": added IKEv2 connection
 west #
  echo "initdone"
@@ -18,7 +18,7 @@ west #
 "westnet-eastnet" #1: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
 "westnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet-eastnet" #2: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@eth1
+"westnet-eastnet" #2: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@NONE
 "westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
@@ -31,7 +31,7 @@ west #
 up
 west #
  ../../guestbin/ip.sh address show dev ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet6 2001:db8:0:1::251/64 scope global
        valid_lft forever preferred_lft forever
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
@@ -44,7 +44,7 @@ west #
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=312, outBytes=312, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh -s link show ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            312       3      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -114,11 +114,11 @@ west #
  ipsec auto --down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet" #1: sent INFORMATIONAL request to delete IKE SA
-"westnet-eastnet" #2: delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64] added by pluto
+"westnet-eastnet" #2: delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64] added by pluto
 "westnet-eastnet" #2: ESP traffic information: in=312B out=312B
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec auto --delete westnet-eastnet
-"westnet-eastnet": delete ipsec-interface ipsec1@eth1 added by pluto
+"westnet-eastnet": delete ipsec-interface ipsec1@NONE added by pluto
 west #
  

@@ -10,7 +10,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": created ipsec-interface ipsec1@eth1
+"westnet-eastnet": created ipsec-interface ipsec1@NONE
 "westnet-eastnet": added IKEv1 connection
 west #
  echo "initdone"
@@ -39,7 +39,7 @@ west #
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh -s link show ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            168       2      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           

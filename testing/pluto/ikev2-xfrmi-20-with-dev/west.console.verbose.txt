@@ -1,0 +1,132 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ip address del 192.0.1.254/24 dev eth0 >/dev/null
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ip.sh link set dev eth0 down 2>/dev/null
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ip.sh link set dev ipsec17 down 2>/dev/null
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev 1]# >>>>>>>>>>cutnonzeroexit>>>>>>>>>> exit status 1 westinit.sh '../../guestbin/ip.sh link set dev ipsec17 down 2>/dev/null' <<<<<<<<<<tuc<<<<<<<<<<../../guestbin/ip.sh link delete ipsec17 2>/dev/null
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev 1]# >>>>>>>>>>cutnonzeroexit>>>>>>>>>> exit status 1 westinit.sh '../../guestbin/ip.sh link delete ipsec17 2>/dev/null' <<<<<<<<<<tuc<<<<<<<<<<../../guestbin/ip.sh route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1
+192.0.2.254 via 192.1.2.23 dev eth1 src 192.1.2.45 uid 0
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# # keep "dev eth1" in the next line, to test corner cases
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ip.sh link add ipsec17 type xfrm if_id 17 dev eth1
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ip.sh -d link show dev ipsec17
+2: ipsec17@eth1: <NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/none  promiscuity 0 allmulti 0 minmtu 68 maxmtu 65535 
+    xfrm if_id 0x11 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ip address add 192.0.1.254/24 dev ipsec17
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ip-addr-show.sh
+==== cut ====
+1: [36mlo: [0m<LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback [33m00:00:00:00:00:00[0m brd [33m00:00:00:00:00:00[0m
+    inet [35m127.0.0.1[0m/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: [36mipsec17@eth1: [0m<NOARP> mtu 1500 qdisc noop state [31mDOWN [0mgroup default qlen 1000
+    link/none 
+    inet [35m192.0.1.254[0m/24 scope global ipsec17
+       valid_lft forever preferred_lft forever
+58: [36meth0@if59: [0m<BROADCAST,MULTICAST> mtu 1500 qdisc noqueue state [31mDOWN [0mgroup default qlen 1000
+    link/ether [33m12:00:00:ab:cd:ff[0m brd [33mff:ff:ff:ff:ff:ff[0m link-netnsid 0
+60: [36meth1@if61: [0m<BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state [32mUP [0mgroup default qlen 1000
+    link/ether [33m12:00:00:64:64:45[0m brd [33mff:ff:ff:ff:ff:ff[0m link-netnsid 0
+    inet [35m192.1.2.45[0m/24 scope global eth1
+       valid_lft forever preferred_lft forever
+==== tuc ====
+eth1 inet 192.1.2.45/24
+ipsec17 inet 192.0.1.254/24
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# # ensure that clear text does not get through
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+==== cut ====
+ping -n -c 1  -i 2 -w 1   -I 192.0.1.254 192.0.2.254
+==== tuc ====
+==== cut ====
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+
+--- 192.0.2.254 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+==== tuc ====
+down
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ipsec start
+/usr/bin/nsenter --mount=/run/mountns/west-ikev2-xfrmi-20-with-dev --net=/run/netns/west-ikev2-xfrmi-20-with-dev --uts=/run/utsns/west-ikev2-xfrmi-20-with-dev /bin/bash
+Redirecting to: namespaces direct start via ipsec pluto
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/wait-until-pluto-started
+==== cut ====
+  PID  Process
+addconn exited
+==== tuc ====
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ipsec auto --add west
+WARNING: ipsec auto has been deprecated
+"west": added IKEv2 connection
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# echo "initdone"
+initdone
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ipsec auto --up west
+WARNING: ipsec auto has been deprecated
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0x2f52cd5c <0x329ed53b xfrm=AES_GCM_16_256-NONE DPD=passive}
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+==== cut ====
+ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
+==== tuc ====
+==== cut ====
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.105 ms
+
+--- 192.0.2.254 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.105/0.105/0.105/0.000 ms
+==== tuc ====
+up
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ip.sh -s link show ipsec17
+2: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/none 
+    RX:  bytes packets errors dropped  missed   mcast           
+            84       1      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+            84       1      0       0       0       0 
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# echo done
+done
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ipsec whack --trafficstatus
+#2: "west", type=ESP, add_time=1741457823, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0x2f52cd5c reqid 16389 mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x11/0xffffffff
+	aead rfc4106(gcm(aes)) 0x464d84d2864d9453bf14a32ba049f308bb4e0e522214eacd419d8d9e9bd8b29bc04e39a7 128
+	lastused 2025-03-08 18:17:03
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0x0, oseq-hi 0x0, oseq 0x1
+	 replay_window 0, bitmap-length 0
+	if_id 0x11
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0x329ed53b reqid 16389 mode tunnel
+	replay-window 0 flag af-unspec esn
+	output-mark 0x11/0xffffffff
+	aead rfc4106(gcm(aes)) 0x0a768355741ad8aea145e4f6363fb25b269568434f46c7bd16c99caebbb71a42362cc13a 128
+	lastused 2025-03-08 18:17:03
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0x1, oseq-hi 0x0, oseq 0x0
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 00000001 
+	if_id 0x11
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 1757393 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+	if_id 0x11
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 1757393 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16389 mode tunnel
+	if_id 0x11
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 1757393 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16389 mode tunnel
+	if_id 0x11
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@west ikev2-xfrmi-20-with-dev]# >>>>>>>>>>cut>>>>>>>>>> done <<<<<<<<<<tuc<<<<<<<<<<

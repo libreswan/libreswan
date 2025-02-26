@@ -13,19 +13,19 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east-21
-"north-east-21": created ipsec-interface ipsec21@eth1
+"north-east-21": created ipsec-interface ipsec21@NONE
 "north-east-21": added IKEv2 connection
 north #
  ipsec auto --add north-east-22
-"north-east-22": created ipsec-interface ipsec22@eth1
+"north-east-22": created ipsec-interface ipsec22@NONE
 "north-east-22": added IKEv2 connection
 north #
  ipsec auto --add north-east-23
-"north-east-23": created ipsec-interface ipsec23@eth1
+"north-east-23": created ipsec-interface ipsec23@NONE
 "north-east-23": added IKEv2 connection
 north #
  ipsec auto --add north-east-24
-"north-east-24": created ipsec-interface ipsec24@eth1
+"north-east-24": created ipsec-interface ipsec24@NONE
 "north-east-24": added IKEv2 connection
 north #
  echo "initdone"
@@ -64,10 +64,10 @@ north #
 "north-east-24" #8: initiator established Child SA using #7; IPsec tunnel [192.0.34.0/24===192.0.24.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ../../guestbin/ip.sh link show type xfrm
-X: ipsec21@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-X: ipsec22@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-X: ipsec23@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-X: ipsec24@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec21@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec22@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec23@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec24@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 north #
  ../../guestbin/ip.sh address add 192.0.31.254/24 dev ipsec21 2>/dev/null
 north #
@@ -124,13 +124,13 @@ default via 192.1.3.254 dev eth1
 192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
 north #
  ../../guestbin/ip.sh -d link show type xfrm
-X: ipsec21@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec21@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x15 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
-X: ipsec22@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec22@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x16 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
-X: ipsec23@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec23@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x17 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
-X: ipsec24@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec24@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x18 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 north #
  

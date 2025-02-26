@@ -7,10 +7,10 @@ west #
  ../../guestbin/ip.sh addr add 192.0.1.251/24 dev ipsec9
 west #
  ../../guestbin/ip.sh link show ipsec9 type xfrm
-X: ipsec9@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec9@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ../../guestbin/ip.sh addr show ipsec9
-X: ipsec9@eth1: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+X: ipsec9@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
     inet 192.0.1.251/24 scope global ipsec9
        valid_lft forever preferred_lft forever
 west #

@@ -7,14 +7,14 @@ set #
  ../../guestbin/ip.sh link set ipsec1 up
 set #
  ../../guestbin/ip.sh addr show ipsec1
-X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 198.18.15.15/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
        valid_lft forever preferred_lft forever
 set #
  ../../guestbin/ip.sh link show ipsec1
-X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 set #
  ../../guestbin/ipsec-kernel-policy.sh
 set #

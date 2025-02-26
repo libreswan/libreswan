@@ -1,0 +1,2 @@
+ipsec-ineterface is added manually with "dev eth1" simulating systemd
+or OpenWRT behaviour. Pluto will use the interface configured ipsec-interface=17
