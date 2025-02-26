@@ -30,6 +30,17 @@ extern int optarg_index;			/* defined by optarg.c */
 extern const struct option optarg_options[]; 	/* defined by program */
 
 /*
+ * Wrap getopt_long() and dispense with common cases such as ':', '?',
+ * and '\0'.
+ *
+ * Danger: this expect option strings to have the form:
+ *    option\0[MAGIC]<arg>
+ * see below.
+ */
+
+int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options);
+
+/*
  * Using OPTARG_OPTIONS[] table, which is assumed to contain METAOPT
  * suffixes, generate a usage message.
  *
@@ -41,8 +52,8 @@ extern const struct option optarg_options[]; 	/* defined by program */
  * always works.
  */
 
-#define METAOPT_RENAME "\0>"
-#define METAOPT_OBSOLETE "\0!"
+#define METAOPT_RENAME "\0>"		/* warn that option was renamed */
+#define METAOPT_OBSOLETE "\0!"		/* warn, and ignore, option */
 #define METAOPT_NEWLINE "\0^"
 /* heading: \0HEADING */
 /* argument: \0<argument> */

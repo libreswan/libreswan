@@ -778,43 +778,16 @@ int main(int argc, char **argv)
 
 	/* handle arguments */
 	for (;; ) {
+
 		/*
-		 * Note: we don't like the way short options get parsed
-		 * by getopt_long, so we simply pass an empty string as
-		 * the list.  It could be "hvdenp:l:s:" "NARXPECK".
+		 * Note: we don't like the way short options get
+		 * parsed by getopt_long, so we simply pass an empty
+		 * string as the list.  It could be "hvdenp:l:s:"
+		 * "NARXPECK".
 		 */
-		int longindex = -1;
-		int c = getopt_long(argc, argv, "", optarg_options, &longindex);
-		if (c < 0)
+		int c = optarg_getopt(logger, argc, argv, "");
+		if (c < 0) {
 			break;
-
-		if (longindex >= 0) {
-			passert(c != '?' && c != ':'); /* no error */
-			const char *optname = optarg_options[longindex].name;
-			const char *optmeta = optname + strlen(optname);	/* at '\0?' */
-			if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
-				llog(RC_LOG, logger,
-				     "warning: option \"--%s\" is obsolete; ignored", optname);
-				continue;	/* ignore it! */
-			}
-			if (memeq(optmeta, METAOPT_RENAME, 2)) {
-				llog(RC_LOG, logger,
-				     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
-			}
-		}
-
-		switch (c) {
-		case 0:
-			/*
-			 * Long option already handled by getopt_long.
-			 * Not currently used since we always set flag to NULL.
-			 */
-			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
-		case ':':	/* diagnostic already printed by getopt_long */
-		case '?':	/* diagnostic already printed by getopt_long */
-			fprintf(stderr, "For usage information: %s --help\n", argv[0]);
-			fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
-			exit(PLUTO_EXIT_FAIL);
 		}
 
 		switch ((enum opt)c) {
@@ -863,10 +836,10 @@ int main(int argc, char **argv)
 				uintmax_t u;
 				check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
 							   0/*any-base*/, &u),
-					  longindex, logger);
+					  optarg_index, logger);
 				/* arbitrary */
 				if (u > 1000) {
-					fatal_opt(longindex, logger, "too big, more than 1000");
+					fatal_opt(optarg_index, logger, "too big, more than 1000");
 				}
 				nhelpers = u; /* no loss; within INT_MAX */
 			}
@@ -948,9 +921,9 @@ int main(int argc, char **argv)
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
 			check_diag(ttodeltatime(optarg, &bare_shunt_interval, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 			check_diag(deltatime_ok(bare_shunt_interval, 1, 1000),
-				   longindex, logger);
+				   optarg_index, logger);
 			continue;
 
 		case OPT_LISTEN:	/* --listen ip_addr */
@@ -1011,9 +984,9 @@ int main(int argc, char **argv)
 
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
 			check_diag(ttodeltatime(optarg, &curl_timeout, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 #define CURL_TIMEOUT_OK deltatime_ok(curl_timeout, 1, 1000)
-			check_diag(CURL_TIMEOUT_OK, longindex, logger);
+			check_diag(CURL_TIMEOUT_OK, optarg_index, logger);
 			continue;
 
 		case OPT_CRL_STRICT:	/* --crl-strict */
@@ -1022,7 +995,7 @@ int main(int argc, char **argv)
 
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
 			check_diag(ttodeltatime(optarg, &crl_check_interval, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 			continue;
 
 		case OPT_OCSP_STRICT:
@@ -1043,9 +1016,9 @@ int main(int argc, char **argv)
 
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
 			check_diag(ttodeltatime(optarg, &ocsp_timeout, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 #define OCSP_TIMEOUT_OK deltatime_ok(ocsp_timeout, 1, 1000)
-			check_diag(OCSP_TIMEOUT_OK, longindex, logger);
+			check_diag(OCSP_TIMEOUT_OK, optarg_index, logger);
 			continue;
 
 		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
@@ -1053,10 +1026,10 @@ int main(int argc, char **argv)
 			uintmax_t u;
 			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
 						   0/*any-base*/, &u),
-				  longindex, logger);
+				  optarg_index, logger);
 			/* Why 64k? UDP payload size? */
 			if (u > 0xffff) {
-				fatal_opt(longindex, logger, "too big, more than 0xffff");
+				fatal_opt(optarg_index, logger, "too big, more than 0xffff");
 			}
 			ocsp_cache_size = u; /* no loss; within INT_MAX */
 			continue;
@@ -1064,9 +1037,9 @@ int main(int argc, char **argv)
 
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
 			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 #define OCSP_CACHE_MIN_AGE_OK deltatime_ok(ocsp_cache_min_age, 1, -1)
-			check_diag(OCSP_CACHE_MIN_AGE_OK, longindex, logger);
+			check_diag(OCSP_CACHE_MIN_AGE_OK, optarg_index, logger);
 			continue;
 
 		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
@@ -1076,9 +1049,9 @@ int main(int argc, char **argv)
 			 * large number for unlimited.
 			 */
 			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 #define OCSP_CACHE_MAX_AGE_OK deltatime_ok(ocsp_cache_max_age, 0, -1)
-			check_diag(OCSP_CACHE_MAX_AGE_OK, longindex, logger);
+			check_diag(OCSP_CACHE_MAX_AGE_OK, optarg_index, logger);
 			continue;
 
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
@@ -1089,7 +1062,7 @@ int main(int argc, char **argv)
 				if (streq(optarg, "get")) {
 					ocsp_method = OCSP_METHOD_GET;
 				} else {
-					fatal_opt(longindex, logger, "ocsp-method is either 'post' or 'get'");
+					fatal_opt(optarg_index, logger, "ocsp-method is either 'post' or 'get'");
 				}
 			}
 			continue;
@@ -1115,14 +1088,14 @@ int main(int argc, char **argv)
 			check_err(shunk_to_uintmax(shunk1(optarg),
 						   NULL/*all*/,
 						   0/*any-base*/, &u),
-				  longindex, logger);
+				  optarg_index, logger);
 			/* 64k is max size for UDP */
 			if (u > 0xffff) {
-				fatal_opt(longindex, logger, "too big, more than 0xffff");
+				fatal_opt(optarg_index, logger, "too big, more than 0xffff");
 			}
 			/* but it must be >= 10?!? */
 			if (u == 0) {
-				fatal_opt(longindex, logger, "must not be 0");
+				fatal_opt(optarg_index, logger, "must not be 0");
 			}
 			pluto_sock_bufsize = u;
 			continue;
@@ -1146,7 +1119,7 @@ int main(int argc, char **argv)
 			 */
 			if (snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
 				     "%s/pluto.ctl", optarg) == -1) {
-				fatal_opt(longindex, logger, "--rundir argument is invalid for sun_path socket");
+				fatal_opt(optarg_index, logger, "--rundir argument is invalid for sun_path socket");
 			}
 
 			pfree(pluto_lock_filename);
@@ -1179,7 +1152,7 @@ int main(int argc, char **argv)
 		{
 			ip_address rip;
 			check_err(ttoaddress_dns(shunk1(optarg), NULL/*UNSPEC*/, &rip),
-				  longindex, logger);
+				  optarg_index, logger);
 			set_global_redirect_dests(optarg);
 			llog(RC_LOG, logger,
 				    "all IKE_SA_INIT requests will from now on be redirected to: %s\n",
@@ -1204,7 +1177,7 @@ int main(int argc, char **argv)
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
 			check_diag(ttodeltatime(optarg, &keep_alive, TIMESCALE_SECONDS),
-				   longindex, logger);
+				   optarg_index, logger);
 			continue;
 
 		case OPT_SELFTEST:	/* --selftest */
@@ -1229,7 +1202,7 @@ int main(int argc, char **argv)
 			pfree(conffile);
 			conffile = clone_str(optarg, "conffile via getopt");
 			/* may not return */
-			struct starter_config *cfg = read_cfg_file(conffile, longindex, logger);
+			struct starter_config *cfg = read_cfg_file(conffile, optarg_index, logger);
 
 			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
 #ifdef USE_DNSSEC
@@ -1461,7 +1434,7 @@ int main(int argc, char **argv)
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 				if (!process_impair(&impairment, NULL, true, logger)) {
-					fatal_opt(longindex, logger, "not valid from the command line");
+					fatal_opt(optarg_index, logger, "not valid from the command line");
 				}
 				continue;
 			case IMPAIR_ERROR:

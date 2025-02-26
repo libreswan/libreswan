@@ -30,6 +30,40 @@
 int optarg_index = -1;
 unsigned verbose;
 
+int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options)
+{
+	while (true) {
+		int c = getopt_long(argc, argv, options, optarg_options, &optarg_index);
+		switch (c) {
+		case ':':	/* diagnostic already printed by getopt_long */
+		case '?':	/* diagnostic already printed by getopt_long */
+			llog(RC_LOG|NO_PREFIX, logger, "For usage information: %s --help\n", argv[0]);
+			exit(PLUTO_EXIT_FAIL);
+		case EOF:
+			return EOF;
+		case 0:
+			/*
+			 * Long option already handled by getopt_long.
+			 * Not currently used since we always set flag
+			 * to NULL.
+			 */
+			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
+		}
+		const char *optname = optarg_options[optarg_index].name;
+		const char *optmeta = optname + strlen(optname);	/* at '\0?' */
+		if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
+			llog(RC_LOG|NO_PREFIX, logger,
+			     "warning: option \"--%s\" is obsolete; ignored", optname);
+			continue;	/* ignore it! */
+		}
+		if (memeq(optmeta, METAOPT_RENAME, 2)) {
+			llog(RC_LOG, logger,
+			     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
+		}
+		return c;
+	}
+}
+
 /*
  * XXX: almost identical code lives in plutomain.c
  */
