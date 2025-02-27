@@ -1,3 +1,7 @@
+# Before the release
+
+- review milestone
+
 # During the Release
 
 - Bump mk/version.mk
@@ -16,10 +20,16 @@
 - push commits to github (or wait 15 mins): ssh build@vaul.libreswan.org ./bin/github-push.sh
 
 # After the release
+
 - Start new section in CHANGES with x.y+1 (unreleased)
-- Post to announce@libreswan.org (causes mail approval msgs for swan and dev as well)
+
+- Post to announce@libreswan.org (causes mail approval msgs for swan
+  and dev as well)
+
 - Build fedora release
+
 - future: build copr releases for Centos Stream
+
 - twitter: announce using libreswan account [no longer done]
 
 ## Update testing.libreswan.org
