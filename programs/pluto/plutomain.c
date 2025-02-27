@@ -452,96 +452,161 @@ deltatime_t crl_check_interval = DELTATIME_INIT(0);
  * The table should be ordered to maximize the clarity of --help.
  */
 
-enum {
+enum opt {
 	OPT_OFFSET = 256, /* larger than largest char */
 	OPT_EFENCE_PROTECT,
 	OPT_DEBUG,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
 	OPT_DNSSEC_TRUSTED,
+	OPT_HELP,
+	OPT_CONFIG,
+	OPT_VERSION,
+	OPT_NOFORK,
+	OPT_STDERRLOG,
+	OPT_LOGFILE,
+	OPT_LOG_NO_TIME,
+	OPT_LOG_NO_APPEND,
+	OPT_LOG_NO_IP,
+	OPT_LOG_NO_AUDIT,
+	OPT_DROP_OPPO_NULL,
+	OPT_FORCE_BUSY,
+	OPT_FORCE_UNLIMITED,
+	OPT_CRL_STRICT,
+	OPT_OCSP_STRICT,
+	OPT_OCSP_ENABLE,
+	OPT_OCSP_URI,
+	OPT_OCSP_TIMEOUT,
+	OPT_OCSP_TRUSTNAME,
+	OPT_OCSP_CACHE_SIZE,
+	OPT_OCSP_CACHE_MIN_AGE,
+	OPT_OCSP_CACHE_MAX_AGE,
+	OPT_OCSP_METHOD,
+	OPT_CRLCHECKINTERVAL,
+	OPT_UNIQUEIDS,
+	OPT_NO_DNSSEC,
+	OPT_USE_PFKEYV2,
+	OPT_USE_XFRM,
+	OPT_INTERFACE,
+	OPT_CURL_IFACE,
+	OPT_CURL_TIMEOUT,
+	OPT_LISTEN,
+	OPT_LISTEN_TCP,
+	OPT_NO_LISTEN_UDP,
+	OPT_IKE_SOCKET_BUFSIZE,
+	OPT_IKE_SOCKET_NO_ERRQUEUE,
+	OPT_NFLOG_ALL,
+	OPT_RUNDIR,
+	OPT_SECRETSFILE,
+	OPT_GLOBAL_REDIRECT,
+	OPT_GLOBAL_REDIRECT_TO,
+	OPT_COREDIR,
+	OPT_DUMPDIR,
+	OPT_STATSBIN,
+	OPT_IPSECDIR,
+	OPT_FOODGROUPSDIR,
+	OPT_NSSDIR,
+	OPT_KEEP_ALIVE,
+	OPT_VIRTUAL_PRIVATE,
+	OPT_NHELPERS,
+	OPT_EXPIRE_SHUNT_INTERVAL,
+	OPT_SEEDBITS,
+	OPT_IKEV1_SECCTX_ATTR_TYPE,
+	OPT_IKEV1_REJECT,
+	OPT_IKEV1_DROP,
+	OPT_SECCOMP_ENABLED,
+	OPT_SECCOMP_TOLERANT,
+	OPT_VENDORID,
+	OPT_SELFTEST,
+	OPT_LEAK_DETECTIVE,
+	OPT_DEBUG_NONE,
+	OPT_DEBUG_ALL,
 };
+
+#define METAOPT_RENAME "\0>"
+#define METAOPT_OBSOLETE "\0!"
+#define METAOPT_NEWLINE "\0^"
 
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
-	{ "help\0", no_argument, NULL, 'h' },
-	{ "version\0", no_argument, NULL, 'v' },
-	{ "config\0<filename>", required_argument, NULL, 'z' },
-	{ "nofork\0", no_argument, NULL, '0' },
-	{ "stderrlog\0", no_argument, NULL, 'e' },
-	{ "logfile\0<filename>", required_argument, NULL, 'g' },
+	{ "help\0", no_argument, NULL, OPT_HELP },
+	{ "version\0", no_argument, NULL, OPT_VERSION },
+	{ "config\0<filename>", required_argument, NULL, OPT_CONFIG },
+	{ "nofork\0", no_argument, NULL, OPT_NOFORK },
+	{ "stderrlog\0", no_argument, NULL, OPT_STDERRLOG },
+	{ "logfile\0<filename>", required_argument, NULL, OPT_LOGFILE },
 #ifdef USE_DNSSEC
-	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL,
-		OPT_DNSSEC_ROOTKEY_FILE },
-	{ "dnssec-trusted\0<filename>", required_argument, NULL,
-		OPT_DNSSEC_TRUSTED },
+	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
+	{ "dnssec-trusted\0<filename>", required_argument, NULL, OPT_DNSSEC_TRUSTED },
 #endif
-	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
-	{ "log-no-append\0", no_argument, NULL, '7' },
-	{ "log-no-ip\0", no_argument, NULL, '<' },
-	{ "log-no-audit\0", no_argument, NULL, 'a' },
-	{ "force-busy\0", no_argument, NULL, 'D' },
-	{ "force-unlimited\0", no_argument, NULL, 'U' },
-	{ "crl-strict\0", no_argument, NULL, 'r' },
-	{ "ocsp-strict\0", no_argument, NULL, 'o' },
-	{ "ocsp-enable\0", no_argument, NULL, 'O' },
-	{ "ocsp-uri\0", required_argument, NULL, 'Y' },
-	{ "ocsp-timeout\0", required_argument, NULL, 'T' },
-	{ "ocsp-trustname\0", required_argument, NULL, 'J' },
-	{ "ocsp-cache-size\0", required_argument, NULL, 'E' },
-	{ "ocsp-cache-min-age\0", required_argument, NULL, 'G' },
-	{ "ocsp-cache-max-age\0", required_argument, NULL, 'H' },
-	{ "ocsp-method\0", required_argument, NULL, 'B' },
-	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
-	{ "uniqueids\0", no_argument, NULL, 'u' },
-	{ "no-dnssec\0", no_argument, NULL, 'R' },
+	{ "log-no-time\0", no_argument, NULL, OPT_LOG_NO_TIME }, /* was --plutostderrlogtime */
+	{ "log-no-append\0", no_argument, NULL, OPT_LOG_NO_APPEND },
+	{ "log-no-ip\0", no_argument, NULL, OPT_LOG_NO_IP },
+	{ "log-no-audit\0", no_argument, NULL, OPT_LOG_NO_AUDIT },
+	{ "force-busy\0", no_argument, NULL, OPT_FORCE_BUSY },
+	{ "force-unlimited\0", no_argument, NULL, OPT_FORCE_UNLIMITED },
+	{ "crl-strict\0", no_argument, NULL, OPT_CRL_STRICT },
+	{ "ocsp-strict\0", no_argument, NULL, OPT_OCSP_STRICT },
+	{ "ocsp-enable\0", no_argument, NULL, OPT_OCSP_ENABLE },
+	{ "ocsp-uri\0", required_argument, NULL, OPT_OCSP_URI },
+	{ "ocsp-timeout\0", required_argument, NULL, OPT_OCSP_TIMEOUT },
+	{ "ocsp-trustname\0", required_argument, NULL, OPT_OCSP_TRUSTNAME },
+	{ "ocsp-cache-size\0", required_argument, NULL, OPT_OCSP_CACHE_SIZE },
+	{ "ocsp-cache-min-age\0", required_argument, NULL, OPT_OCSP_CACHE_MIN_AGE },
+	{ "ocsp-cache-max-age\0", required_argument, NULL, OPT_OCSP_CACHE_MAX_AGE },
+	{ "ocsp-method\0", required_argument, NULL, OPT_OCSP_METHOD },
+	{ "crlcheckinterval\0", required_argument, NULL, OPT_CRLCHECKINTERVAL },
+	{ "uniqueids\0", no_argument, NULL, OPT_UNIQUEIDS },
+	{ "no-dnssec\0", no_argument, NULL, OPT_NO_DNSSEC },
 #ifdef KERNEL_PFKEYV2
-	{ "use-pfkeyv2\0",   no_argument, NULL, 'P' },
+	{ "use-pfkeyv2\0",   no_argument, NULL, OPT_USE_PFKEYV2 },
 #endif
 #ifdef KERNEL_XFRM
-	{ "use-xfrm\0", no_argument, NULL, 'K' },
+	{ "use-xfrm\0", no_argument, NULL, OPT_USE_XFRM },
 #endif
-	{ "interface\0!<ifname|ifaddr>", required_argument, NULL, 'i' }, /* reserved; not implemented */
-	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
-	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
-	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
-	{ "listen-tcp\0", no_argument, NULL, 'm' },
-	{ "no-listen-udp\0", no_argument, NULL, 'p' },
-	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
-	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
+	{ "interface"METAOPT_OBSOLETE"<ifname|ifaddr>", required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
+	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, OPT_CURL_IFACE },
+	{ "curl-timeout\0<secs>", required_argument, NULL, OPT_CURL_TIMEOUT },
+	{ "listen\0<ifaddr>", required_argument, NULL, OPT_LISTEN },
+	{ "listen-tcp\0", no_argument, NULL, OPT_LISTEN_TCP },
+	{ "no-listen-udp\0", no_argument, NULL, OPT_NO_LISTEN_UDP },
+	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
+	{ "ike-socket-no-errqueue\0", no_argument, NULL, OPT_IKE_SOCKET_NO_ERRQUEUE },
 #ifdef USE_NFLOG
-	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
+	{ "nflog-all\0<group-number>", required_argument, NULL, OPT_NFLOG_ALL },
 #endif
-	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
-	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
-	{ "global-redirect\0", required_argument, NULL, 'Q'},
-	{ "global-redirect-to\0", required_argument, NULL, 'y'},
-	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
-	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
-	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
-	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
-	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
-	{ "nssdir\0<path>", required_argument, NULL, 'd' },	/* nss-tools use -d */
-	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
-	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
-	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
-	{ "expire-shunt-interval\0<secs>", required_argument, NULL, '9' },
-	{ "seedbits\0<number>", required_argument, NULL, 'c' },
+	{ "rundir\0<path>", required_argument, NULL, OPT_RUNDIR }, /* was ctlbase */
+	{ "secretsfile\0<secrets-file>", required_argument, NULL, OPT_SECRETSFILE },
+	{ "global-redirect\0", required_argument, NULL, OPT_GLOBAL_REDIRECT},
+	{ "global-redirect-to\0", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO},
+	{ "coredir\0>dumpdir", required_argument, NULL, OPT_DUMPDIR },	/* redundant spelling */
+	{ "dumpdir\0<dirname>", required_argument, NULL, OPT_DUMPDIR },
+	{ "statsbin\0<filename>", required_argument, NULL, OPT_STATSBIN },
+	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, OPT_IPSECDIR },
+	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, OPT_IPSECDIR },	/* redundant spelling */
+	{ "nssdir\0<path>", required_argument, NULL, OPT_NSSDIR },	/* nss-tools use -d */
+	{ "keep-alive\0<delay_secs>", required_argument, NULL, OPT_KEEP_ALIVE },
+	{ "virtual-private\0<network_list>", required_argument, NULL, OPT_VIRTUAL_PRIVATE },
+	{ "nhelpers\0<number>", required_argument, NULL, OPT_NHELPERS },
+	{ "expire-shunt-interval\0<secs>", required_argument, NULL, OPT_EXPIRE_SHUNT_INTERVAL },
+	{ "seedbits\0<number>", required_argument, NULL, OPT_SEEDBITS },
 	/* really an attribute type, not a value */
-	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, 'w' },
-	{ "ikev1-reject\0", no_argument, NULL, 'k' },
-	{ "ikev1-drop\0", no_argument, NULL, 'l' },
+	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, OPT_IKEV1_SECCTX_ATTR_TYPE },
+	{ "ikev1-reject\0", no_argument, NULL, OPT_IKEV1_REJECT },
+	{ "ikev1-drop\0", no_argument, NULL, OPT_IKEV1_DROP },
 #ifdef USE_SECCOMP
-	{ "seccomp-enabled\0", no_argument, NULL, '3' },
-	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
+	{ "seccomp-enabled\0", no_argument, NULL, OPT_SECCOMP_ENABLED },
+	{ "seccomp-tolerant\0", no_argument, NULL, OPT_SECCOMP_TOLERANT },
 #endif
-	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
+	{ "vendorid\0<vendorid>", required_argument, NULL, OPT_VENDORID },
 
-	{ "selftest\0", no_argument, NULL, '5' },
+	{ "selftest\0", no_argument, NULL, OPT_SELFTEST },
 
-	{ "leak-detective\0", no_argument, NULL, 'X' },
+	{ "leak-detective\0", no_argument, NULL, OPT_LEAK_DETECTIVE },
 	{ "efence-protect\0", required_argument, NULL, OPT_EFENCE_PROTECT, },
-	{ "debug-none\0^", no_argument, NULL, 'N' },
-	{ "debug-all\0", no_argument, NULL, 'A' },
+	{ "drop-oppo-null", no_argument, NULL, OPT_DROP_OPPO_NULL, },
+	{ "debug-none"METAOPT_NEWLINE, no_argument, NULL, OPT_DEBUG_NONE },
+	{ "debug-all\0", no_argument, NULL, OPT_DEBUG_ALL },
 	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
 	{ "impair\0", required_argument, NULL, OPT_IMPAIR, },
 
@@ -627,52 +692,95 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 /* print full usage (from long_opts[]) */
 static void usage(FILE *stream, const char *progname)
 {
-	const struct option *opt;
 	char line[72];
-	size_t lw;
-
 	snprintf(line, sizeof(line), "Usage: %s", progname);
-	lw = strlen(line);
 
-	for (opt = long_opts; opt->name != NULL; opt++) {
+	for (const struct option *opt = long_opts; opt->name != NULL; opt++) {
+
 		const char *nm = opt->name;
-		const char *meta = nm + strlen(nm) + 1;
-		bool force_nl = false;
-		char chunk[sizeof(line) - 1];
-		int cw;
 
-		switch (*meta) {
-		case '_':
-		case '>':
-		case '!':
-			/* ignore these entries */
+		/*
+		 * "\0heading"
+		 *
+		 * A zero length option string.  Assume the meta is a
+		 * heading.
+		 */
+		if (*nm == '\0') {
+			/* dump current line */
+			fprintf(stream, "%s\n", line);
+			jam_str(line, sizeof(line), "\t");
+			/* output heading */
+			fprintf(stream, "    %s\n", nm + 1);
+			continue;
+		}
+
+		/* parse '\0...' meta characters */
+		const char *meta = nm + strlen(nm);
+
+		if (memeq(meta, METAOPT_RENAME, 2)) {
+			/*
+			 * Option has been renamed, don't show old
+			 * name.
+			 */
+			continue;
+		}
+
+		if (memeq(meta, METAOPT_OBSOLETE, 2)) {
+			/*
+			 * Option is no longer valid, skip.
+			 */
+			continue;
+		}
+
+		bool nl = false; /* true is sticky */
+		if (memeq(meta, METAOPT_NEWLINE, 2)) {
+			/*
+			 * Option should appear on a new line.
+			 */
+			nl = true;
+			meta += 2; /* skip '\0^' */
+		} else if (meta[1] == '<') {
+			/*
+			 * Looks like the argument to an option, skip
+			 * '\0'.
+			 */
+			meta++; /* skip \0 */
+		}
+
+		/* handle entry that forgot the argument */
+		const char *argument = (*meta == '\0' ? "<argument>" : meta);
+
+		char chunk[sizeof(line) - 1];
+		switch (opt->has_arg) {
+		case no_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
+			break;
+		case optional_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s[=%s]]", nm, argument);
+			break;
+		case required_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, argument);
 			break;
 		default:
-			if (*meta == '^') {
-				force_nl = true;
-				meta++;	/* eat ^ */
-			}
-			if (*meta == '\0')
-				snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
-			else
-				snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, meta);
-			cw = strlen(chunk);
-
-			if (force_nl || lw + cw + 2 >= sizeof(line)) {
-				fprintf(stream, "%s\n", line);
-				line[0] = '\t';
-				lw = 1;
-			} else {
-				line[lw++] = ' ';
-			}
-			passert(lw + cw + 1 < sizeof(line));
-			strcpy(&line[lw], chunk);
-			lw += cw;
+			bad_case(opt->has_arg);
 		}
+
+		/* enough space? allow for separator, and null? */
+		if (strlen(line) + strlen(chunk) + 2 >= sizeof(line)) {
+			nl = true;
+		}
+
+		if (nl) {
+			fprintf(stream, "%s\n", line);
+			jam_str(line, sizeof(line), "\t");
+		} else {
+			add_str(line, sizeof(line), " ");
+		}
+
+		add_str(line, sizeof(line), chunk);
 	}
 
 	fprintf(stream, "%s\n", line);
-
 	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 }
 
@@ -788,44 +896,39 @@ int main(int argc, char **argv)
 		if (longindex >= 0) {
 			passert(c != '?' && c != ':'); /* no error */
 			const char *optname = long_opts[longindex].name;
-			const char *optmeta = optname + strlen(optname) + 1;	/* after '\0' */
-			switch (optmeta[0]) {
-			case '_':
+			const char *optmeta = optname + strlen(optname);	/* at '\0?' */
+			if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
 				llog(RC_LOG, logger,
-					    "warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
-					    optname);
-				break;
-			case '>':
-				llog(RC_LOG, logger,
-					    "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta + 1);
-				break;
-			case '!':
-				llog(RC_LOG, logger,
-					    "warning: option \"--%s\" is obsolete; ignored", optname);
+				     "warning: option \"--%s\" is obsolete; ignored", optname);
 				continue;	/* ignore it! */
+			}
+			if (memeq(optmeta, METAOPT_RENAME, 2)) {
+				llog(RC_LOG, logger,
+				     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
 			}
 		}
 
 		switch (c) {
-
 		case 0:
 			/*
 			 * Long option already handled by getopt_long.
 			 * Not currently used since we always set flag to NULL.
 			 */
 			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
-
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
 			fprintf(stderr, "For usage information: %s --help\n", argv[0]);
 			fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
 			exit(PLUTO_EXIT_FAIL);
+		}
 
-		case 'h':	/* --help */
+		switch ((enum opt)c) {
+
+		case OPT_HELP:	/* --help */
 			usage(stdout, argv[0]); /* so <<| more>> works */
 			exit(PLUTO_EXIT_OK);
 
-		case 'X':	/* --leak-detective */
+		case OPT_LEAK_DETECTIVE:	/* --leak-detective */
 			/*
 			 * This flag was already processed at the start of main()
 			 * because leak_detective must be immutable from before
@@ -836,28 +939,28 @@ int main(int argc, char **argv)
 			passert(leak_detective);
 			continue;
 
-		case 'C':	/* --coredir */
+		case OPT_DUMPDIR:	/* --dumpdir */
 			pfree(coredir);
 			coredir = clone_str(optarg, "coredir via getopt");
 			continue;
 
-		case 'V':	/* --vendorid */
+		case OPT_VENDORID:	/* --vendorid */
 			pfree(pluto_vendorid);
 			pluto_vendorid = clone_str(optarg, "pluto_vendorid via getopt");
 			continue;
 
-		case 'S':	/* --statsdir */
+		case OPT_STATSBIN:	/* --statsdir */
 			pfreeany(pluto_stats_binary);
 			pluto_stats_binary = clone_str(optarg, "statsbin");
 			continue;
 
-		case 'v':	/* --version */
+		case OPT_VERSION:	/* --version */
 			printf("%s%s\n", ipsec_version_string(), /* ok */
 			       compile_time_interop_options);
 			/* not exit_pluto because we are not initialized yet */
 			exit(PLUTO_EXIT_OK);
 
-		case 'j':	/* --nhelpers */
+		case OPT_NHELPERS:	/* --nhelpers */
 			if (streq(optarg, "-1")) {
 				/* use number of CPUs */
 				nhelpers = -1;
@@ -874,7 +977,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case 'c':	/* --seedbits */
+		case OPT_SEEDBITS:	/* --seedbits */
 			pluto_nss_seedbits = atoi(optarg);
 			if (pluto_nss_seedbits == 0) {
 				llog(RC_LOG, logger, "seedbits must be an integer > 0");
@@ -883,27 +986,27 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case 'w':	/* --secctx-attr-type */
+		case OPT_IKEV1_SECCTX_ATTR_TYPE:	/* --secctx-attr-type */
 			llog(RC_LOG, logger, "--secctx-attr-type not supported");
 			continue;
 
-		case 'k':	/* --ikev1-reject */
+		case OPT_IKEV1_REJECT:	/* --ikev1-reject */
 			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
 			continue;
 
-		case 'l':	/* --ikev1-drop */
+		case OPT_IKEV1_DROP:	/* --ikev1-drop */
 			pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			continue;
 
-		case '0':	/* --nofork*/
+		case OPT_NOFORK:	/* --nofork*/
 			fork_desired = false;
 			continue;
 
-		case 'e':	/* --stderrlog */
+		case OPT_STDERRLOG:	/* --stderrlog */
 			log_param.log_to_stderr = true;
 			continue;
 
-		case 'g':	/* --logfile */
+		case OPT_LOGFILE:	/* --logfile */
 			replace_value(&log_param.log_to_file, optarg);
 			continue;
 
@@ -928,34 +1031,34 @@ int main(int argc, char **argv)
 			continue;
 #endif  /* USE_DNSSEC */
 
-		case 't':	/* --log-no-time */
+		case OPT_LOG_NO_TIME:	/* --log-no-time */
 			log_param.log_with_timestamp = false;
 			continue;
 
-		case '7':	/* --log-no-append */
+		case OPT_LOG_NO_APPEND:	/* --log-no-append */
 			log_param.append = false;
 			continue;
 
-		case '<':	/* --log-no-ip */
+		case OPT_LOG_NO_IP:	/* --log-no-ip */
 			log_ip = false;
 			continue;
 
-		case 'a':	/* --log-no-audit */
+		case OPT_LOG_NO_AUDIT:	/* --log-no-audit */
 			log_to_audit = false;
 			continue;
 
-		case '8':	/* --drop-oppo-null */
+		case OPT_DROP_OPPO_NULL:	/* --drop-oppo-null */
 			pluto_drop_oppo_null = true;
 			continue;
 
-		case '9':	/* --expire-shunt-interval <interval> */
+		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
 			check_diag(ttodeltatime(optarg, &bare_shunt_interval, TIMESCALE_SECONDS),
 				   longindex, logger);
 			check_diag(deltatime_ok(bare_shunt_interval, 1, 1000),
 				   longindex, logger);
 			continue;
 
-		case 'L':	/* --listen ip_addr */
+		case OPT_LISTEN:	/* --listen ip_addr */
 		{
 			ip_address lip;
 			err_t e = ttoaddress_num(shunk1(optarg), NULL/*UNSPEC*/, &lip);
@@ -975,11 +1078,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case 'F':	/* --use-bsdkame */
-			llog(RC_LOG, logger, "--use-bsdkame not supported");
-			continue;
-
-		case 'P':	/* --use-pfkeyv2 */
+		case OPT_USE_PFKEYV2:	/* --use-pfkeyv2 */
 #ifdef KERNEL_PFKEYV2
 			kernel_ops = &pfkeyv2_kernel_ops;
 #else
@@ -987,7 +1086,7 @@ int main(int argc, char **argv)
 #endif
 			continue;
 
-		case 'K':	/* --use-netkey */
+		case OPT_USE_XFRM:	/* --use-netkey */
 #ifdef KERNEL_XFRM
 			kernel_ops = &xfrm_kernel_ops;
 #else
@@ -995,66 +1094,66 @@ int main(int argc, char **argv)
 #endif
 			continue;
 
-		case 'D':	/* --force-busy */
+		case OPT_FORCE_BUSY:	/* --force-busy */
 			pluto_ddos_mode = DDOS_FORCE_BUSY;
 			continue;
-		case 'U':	/* --force-unlimited */
+		case OPT_FORCE_UNLIMITED:	/* --force-unlimited */
 			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
 #ifdef USE_SECCOMP
-		case '3':	/* --seccomp-enabled */
+		case OPT_SECCOMP_ENABLED:	/* --seccomp-enabled */
 			pluto_seccomp_mode = SECCOMP_ENABLED;
 			continue;
-		case '4':	/* --seccomp-tolerant */
+		case OPT_SECCOMP_TOLERANT:	/* --seccomp-tolerant */
 			pluto_seccomp_mode = SECCOMP_TOLERANT;
 			continue;
 #endif
 
-		case 'Z':	/* --curl-iface */
+		case OPT_CURL_IFACE:	/* --curl-iface */
 			curl_iface = clone_str(optarg, "curl_iface");
 			continue;
 
-		case 'I':	/* --curl-timeout */
+		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
 			check_diag(ttodeltatime(optarg, &curl_timeout, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define CURL_TIMEOUT_OK deltatime_ok(curl_timeout, 1, 1000)
 			check_diag(CURL_TIMEOUT_OK, longindex, logger);
 			continue;
 
-		case 'r':	/* --crl-strict */
+		case OPT_CRL_STRICT:	/* --crl-strict */
 			crl_strict = true;
 			continue;
 
-		case 'x':	/* --crlcheckinterval <seconds> */
+		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
 			check_diag(ttodeltatime(optarg, &crl_check_interval, TIMESCALE_SECONDS),
 				   longindex, logger);
 			continue;
 
-		case 'o':
+		case OPT_OCSP_STRICT:
 			ocsp_strict = true;
 			continue;
 
-		case 'O':
+		case OPT_OCSP_ENABLE:
 			ocsp_enable = true;
 			continue;
 
-		case 'Y':
+		case OPT_OCSP_URI:
 			replace_value(&ocsp_uri, optarg);
 			continue;
 
-		case 'J':
+		case OPT_OCSP_TRUSTNAME:
 			replace_value(&ocsp_trust_name, optarg);
 			continue;
 
-		case 'T':	/* --ocsp-timeout <seconds> */
+		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
 			check_diag(ttodeltatime(optarg, &ocsp_timeout, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define OCSP_TIMEOUT_OK deltatime_ok(ocsp_timeout, 1, 1000)
 			check_diag(OCSP_TIMEOUT_OK, longindex, logger);
 			continue;
 
-		case 'E':	/* --ocsp-cache-size <entries> */
+		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
 		{
 			uintmax_t u;
 			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
@@ -1068,14 +1167,14 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case 'G':	/* --ocsp-cache-min-age <seconds> */
+		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
 			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, TIMESCALE_SECONDS),
 				   longindex, logger);
 #define OCSP_CACHE_MIN_AGE_OK deltatime_ok(ocsp_cache_min_age, 1, -1)
 			check_diag(OCSP_CACHE_MIN_AGE_OK, longindex, logger);
 			continue;
 
-		case 'H':	/* --ocsp-cache-max-age <seconds> */
+		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
 			/*
 			 * NSS uses 0 for unlimited and -1 for
 			 * disabled.  We use 0 for disabled, and a
@@ -1087,7 +1186,7 @@ int main(int argc, char **argv)
 			check_diag(OCSP_CACHE_MAX_AGE_OK, longindex, logger);
 			continue;
 
-		case 'B':	/* --ocsp-method get|post */
+		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
 				ocsp_method = OCSP_METHOD_POST;
 				ocsp_post = true;
@@ -1100,22 +1199,22 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case 'u':	/* --uniqueids */
+		case OPT_UNIQUEIDS:	/* --uniqueids */
 			uniqueIDs = true;
 			continue;
 
-		case 'R':	/* --no-dnssec */
+		case OPT_NO_DNSSEC:	/* --no-dnssec */
 			do_dnssec = false;
 			continue;
 
-		case 'i':	/* --interface <ifname|ifaddr> */
+		case OPT_INTERFACE:	/* --interface <ifname|ifaddr> */
 			continue;
 
-		case '1':	/* --ike-socket-no-errqueue */
+		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
 			pluto_sock_errqueue = false;
 			continue;
 
-		case 'W':	/* --ike-socket-bufsize <bufsize> */
+		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
 		{
 			uintmax_t u;
 			check_err(shunk_to_uintmax(shunk1(optarg),
@@ -1134,15 +1233,15 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case 'p':	/* --no-listen-udp */
+		case OPT_NO_LISTEN_UDP:	/* --no-listen-udp */
 			pluto_listen_udp = false;
 			continue;
 
-		case 'm':	/* --listen-tcp */
+		case OPT_LISTEN_TCP:	/* --listen-tcp */
 			pluto_listen_tcp = true;
 			continue;
 
-		case 'b':	/* --rundir <path> */
+		case OPT_RUNDIR:	/* --rundir <path> */
 			/*
 			 * ??? work to be done here:
 			 *
@@ -1161,27 +1260,27 @@ int main(int argc, char **argv)
 			rundir = clone_str(optarg, "rundir");
 			continue;
 
-		case 's':	/* --secretsfile <secrets-file> */
+		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
 			lsw_conf_secretsfile(optarg);
 			continue;
 
-		case 'f':	/* --ipsecdir <ipsec-dir> */
+		case OPT_IPSECDIR:	/* --ipsecdir <ipsec-dir> */
 			lsw_conf_confddir(optarg, logger);
 			continue;
 
-		case 'd':	/* --nssdir <path> */
+		case OPT_NSSDIR:	/* --nssdir <path> */
 			lsw_conf_nssdir(optarg, logger);
 			continue;
 
-		case 'N':	/* --debug-none */
+		case OPT_DEBUG_NONE:	/* --debug-none */
 			cur_debugging = DBG_NONE;
 			continue;
 
-		case 'A':	/* --debug-all */
+		case OPT_DEBUG_ALL:	/* --debug-all */
 			cur_debugging = DBG_ALL;
 			continue;
 
-		case 'y':	/* --global-redirect-to */
+		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
 		{
 			ip_address rip;
 			check_err(ttoaddress_dns(shunk1(optarg), NULL/*UNSPEC*/, &rip),
@@ -1193,7 +1292,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case 'Q':	/* --global-redirect */
+		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
 		{
 			if (streq(optarg, "yes")) {
 				global_redirect = GLOBAL_REDIRECT_YES;
@@ -1208,23 +1307,23 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case '2':	/* --keep-alive <delay_secs> */
+		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
 			check_diag(ttodeltatime(optarg, &keep_alive, TIMESCALE_SECONDS),
 				   longindex, logger);
 			continue;
 
-		case '5':	/* --selftest */
+		case OPT_SELFTEST:	/* --selftest */
 			selftest_only = true;
 			log_param.log_to_stderr = true;
 			log_param.log_with_timestamp = false;
 			fork_desired = false;
 			continue;
 
-		case '6':	/* --virtual-private */
+		case OPT_VIRTUAL_PRIVATE:	/* --virtual-private */
 			replace_value(&virtual_private, optarg);
 			continue;
 
-		case 'z':	/* --config */
+		case OPT_CONFIG:	/* --config */
 		{
 			/*
 			 * Config struct to variables mapper.  This
