@@ -1,5 +1,7 @@
 See also https://libreswan.org/
 
+v5.3 (unreleased)
+
 v5.2 (Feb 26, 2025)
 * IKEv2:
   - add PPK in INTERMEDIATE exchange, draft-ietf-ipsecme-ikev2-qr-alt-04 [Vukasin]
