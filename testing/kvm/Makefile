@@ -243,14 +243,16 @@ KVM_OS += $(if $(filter true, $(KVM_LINUX)),   linux)
 KVM_OS += $(if $(filter true, $(KVM_NETBSD)),  netbsd)
 KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 
-# fed into virt-install --os-variant; linux is fedora!
-KVM_ALPINE_OS_VARIANT  ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_DEBIAN_OS_VARIANT  ?= $(shell osinfo-query os | awk '/debian[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_FEDORA_OS_VARIANT  ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_FREEBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_LINUX_OS_VARIANT   ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_NETBSD_OS_VARIANT  ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
+# fed into virt-install:
+#   - linux is really fedora
+#   - 32-bit debian confuses libvirt so use linux
+KVM_ALPINE_OSINFO  ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_DEBIAN_OSINFO  ?= $(shell osinfo-query os | awk '/linux[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_FEDORA_OSINFO  ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_FREEBSD_OSINFO ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_LINUX_OSINFO   ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_NETBSD_OSINFO  ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_OPENBSD_OSINFO ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 
 #
 # Hosts and Domains
@@ -845,7 +847,7 @@ $(KVM_POOLDIR_PREFIX)%-base: \
 			--vcpus=$(call kvm-flag-value, KVM_BASE_CPUS) \
 			--memory=$(call kvm-flag-value, KVM_BASE_MEMORY) \
 			--name=$(notdir $@) \
-			--os-variant=$(KVM_$($*)_OS_VARIANT) \
+			--osinfo $(KVM_$($*)_OSINFO) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(VIRT_POOLDIR) \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
@@ -927,13 +929,14 @@ $(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
 
 KVM_DEBIAN_RELEASE ?= 12.2.0
 KVM_DEBIAN_BUILD ?= 1
+KVM_DEBIAN_MACHINE ?= i386
 
 # https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
-KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/amd64/iso-dvd
+KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/$(KVM_DEBIAN_MACHINE)/iso-dvd
 
-KVM_DEBIAN_ISO = $(KVM_POOLDIR)/debian-$(KVM_DEBIAN_RELEASE)-amd64-DVD-$(KVM_DEBIAN_BUILD).iso
+KVM_DEBIAN_ISO = $(KVM_POOLDIR)/debian-$(KVM_DEBIAN_RELEASE)-$(KVM_DEBIAN_MACHINE)-DVD-$(KVM_DEBIAN_BUILD).iso
 KVM_DEBIAN_ISO_HASH = SHA256
-KVM_DEBIAN_ISO_CKSUM = d969b315de093bc065b4f12ab0dd3f5601b52d67a0c622627c899f1d35834b82
+KVM_DEBIAN_ISO_CKSUM = 7733a6017c6aab330f4457ab3a73fcbf0aa0165778d0aa2115adb0fb18a65d0c
 KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/$(notdir $(KVM_DEBIAN_ISO))
 
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
@@ -1215,7 +1218,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: \
 		--vcpus=$(call kvm-flag-value, KVM_UPGRADE_CPUS) \
 		--memory=$(call kvm-flag-value, KVM_UPGRADE_MEMORY) \
 		--name=$(notdir $@) \
-		--os-variant=$(KVM_$($*)_OS_VARIANT) \
+		--osinfo=$(KVM_$($*)_OSINFO) \
 		--disk=cache=writeback,path=$@.qcow2 \
 		$(VIRT_POOLDIR) \
 		$(VIRT_BENCHDIR) \
@@ -1279,7 +1282,7 @@ $(KVM_POOLDIR_PREFIX)%: \
 		--vcpus=$(call kvm-flag-value, KVM_BUILD_CPUS) \
 		--memory=$(call kvm-flag-value, KVM_BUILD_MEMORY) \
 		--name=$(notdir $@) \
-		--os-variant=$(KVM_$($*)_OS_VARIANT) \
+		--osinfo=$(KVM_$($*)_OSINFO) \
 		--disk=cache=writeback,path=$@.qcow2 \
 		$(VIRT_BENCHDIR) \
 		$(VIRT_POOLDIR) \
@@ -1658,7 +1661,7 @@ $(call kvm-var-value,KVM_MAKEFLAGS)
 
  $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_MAKEFLAGS)$(crlf))
 
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_OS_VARIANT)$(crlf))
+ $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_OSINFO)$(crlf))
 
 $(call kvm-var-value,KVM_BASE_HOST_NAMES)
 
