@@ -18,7 +18,6 @@ east# ipsec whack --impair suppress_retransmits
 east# ipsec auto --add east-west
 
 WARNING: ipsec auto has been deprecated
-
 "east-west": added IKEv2 connection
 
 #

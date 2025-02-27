@@ -16,7 +16,6 @@ netbsde# ../../guestbin/wait-until-pluto-started
 netbsde# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
-
 "eastnet-westnet-ikev2": added IKEv2 connection
 
 netbsde# ipsec whack --impair suppress_retransmits
