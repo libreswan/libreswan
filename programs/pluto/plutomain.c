@@ -447,8 +447,7 @@ deltatime_t crl_check_interval = DELTATIME_INIT(0);
  */
 
 enum opt {
-	OPT_OFFSET = 256, /* larger than largest char */
-	OPT_EFENCE_PROTECT,
+	OPT_EFENCE_PROTECT = 256, /* larger than a character */
 	OPT_DEBUG,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
@@ -489,16 +488,16 @@ enum opt {
 	OPT_NO_LISTEN_UDP,
 	OPT_IKE_SOCKET_BUFSIZE,
 	OPT_IKE_SOCKET_NO_ERRQUEUE,
+#ifdef USE_NFLOG
 	OPT_NFLOG_ALL,
+#endif
 	OPT_RUNDIR,
 	OPT_SECRETSFILE,
 	OPT_GLOBAL_REDIRECT,
 	OPT_GLOBAL_REDIRECT_TO,
-	OPT_COREDIR,
 	OPT_DUMPDIR,
 	OPT_STATSBIN,
 	OPT_IPSECDIR,
-	OPT_FOODGROUPSDIR,
 	OPT_NSSDIR,
 	OPT_KEEP_ALIVE,
 	OPT_VIRTUAL_PRIVATE,
@@ -1077,6 +1076,12 @@ int main(int argc, char **argv)
 
 		case OPT_INTERFACE:	/* --interface <ifname|ifaddr> */
 			continue;
+
+#ifdef USE_NFLOG
+		case OPT_NFLOG_ALL:	/* --nflog-all <group-number> */
+			pluto_nflog_group = optarg_uintmax(logger);
+			continue;
+#endif
 
 		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
 			pluto_sock_errqueue = false;
