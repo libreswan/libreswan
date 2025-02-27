@@ -72,7 +72,7 @@ point_index=0
 # The longest untested run of commits.
 #
 # The RUN_BIAS (a count of TAG, MERGE and BRANCH commits) is used to
-# perfer earlier shorter runs.
+# prefer earlier shorter runs.
 #
 # non-zero index indicates an untested commit
 

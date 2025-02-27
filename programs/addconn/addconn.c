@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 			    autostart != AUTOSTART_ADD) {
 				if (verbose) {
 					name_buf nb;
-					printf("  overiding auto=%s with auto=add\n",
+					printf("  overriding auto=%s with auto=add\n",
 					       str_sparse(&autostart_names, autostart, &nb));
 				}
 				conn->values[KNCF_AUTO].option = AUTOSTART_ADD;

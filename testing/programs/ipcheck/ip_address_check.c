@@ -192,13 +192,13 @@ static void check_ttoaddress_num(void)
 				err = lookup->ttoaddress(shunk1(t->in), afi, address);
 				if (err_expected) {
 					if (err == NULL) {
-						FAIL("%s(%s, %s) unexpecedly succeeded",
+						FAIL("%s(%s, %s) unexpectedly succeeded",
 						     lookup->name, t->in, pri_afi(afi));
 					}
 					PRINT("%s(%s, %s) returned: %s",
 					      lookup->name, t->in, pri_afi(afi), err);
 				} else if (err != NULL) {
-					FAIL("%s(%s, %s) unexpecedly failed: %s",
+					FAIL("%s(%s, %s) unexpectedly failed: %s",
 					     lookup->name, t->in, pri_afi(afi), err);
 				} else {
 					CHECK_STR2(address);
@@ -258,14 +258,14 @@ static void check_ttoaddress_dns(void)
 		err = ttoaddress_dns(shunk1(t->in), afi, address);
 		if (err != NULL) {
 			if (t->str != NULL) {
-				FAIL("ttoaddress_dns(%s, %s) unexpecedly failed: %s",
+				FAIL("ttoaddress_dns(%s, %s) unexpectedly failed: %s",
 				     t->in, pri_afi(t->afi), err);
 			}
 			PRINT("ttoaddress_dns(%s, %s) failed as expected: %s",
 			      t->in, pri_afi(t->afi), err);
 		} else if (t->str == NULL) {
 			address_buf b;
-			FAIL("ttoaddress_dns(%s, %s) unexpecedly succeeded with %s",
+			FAIL("ttoaddress_dns(%s, %s) unexpectedly succeeded with %s",
 			     t->in, pri_afi(t->afi),
 			     str_address(address, &b));
 		} else {

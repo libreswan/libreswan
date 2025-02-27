@@ -539,7 +539,7 @@ static bool better_score(struct score best, struct score score, struct logger *l
 	/*
 	 * Prefer an existing instance over a template and/or
 	 * permanent.  Presumably so that established connections are
-	 * re-used.  Also matches legacy behaviour where instances
+	 * reused.  Also matches legacy behaviour where instances
 	 * were checked before templates.
 	 *
 	 * This leaves the question of permanent vs template open.
@@ -589,7 +589,7 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 	 * During IKE_SA_INIT the connection was chosen based on the
 	 * peer's address.  Now its time to refine that connection,
 	 * looking for something that also matches the information,
-	 * noteably the proof-of-identity, provided by IKE_AUTH (For
+	 * notably the proof-of-identity, provided by IKE_AUTH (For
 	 * IKEv1 main mode, things are the same, just the exchange
 	 * names are changed).
 	 *

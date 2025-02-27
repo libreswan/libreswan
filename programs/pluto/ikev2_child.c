@@ -957,7 +957,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	}
 
 	/*
-	 * Process TS (but only when there's no CP); what woh no way!
+	 * Process TS (but only when there's no CP); what woah no way!
 	 *
 	 * The CP payload's result should be checked against the TS
 	 * payload except libreswan will change connection based on

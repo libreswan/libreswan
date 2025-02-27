@@ -525,7 +525,7 @@ struct host_end {
 	ip_address first_addr;		/* The address to use when
 					 * first initiating or
 					 * reviving a connection; a
-					 * connection establised after
+					 * connection established after
 					 * a redirect ends up with
 					 * .addr pointing at the
 					 * redirect. */

@@ -250,7 +250,7 @@ void schedule_v2_nat_keepalive(struct ike_sa *ike, where_t where)
 
 	/*
 	 * crossing-streams can result in this established IKE SA is
-	 * not being the most current.  Thats OK.  Need to still keep
+	 * not being the most current.  That's OK.  Need to still keep
 	 * NAT open so it can later shutdown.
 	 */
 	if (ike->sa.st_connection->established_ike_sa != ike->sa.st_serialno) {

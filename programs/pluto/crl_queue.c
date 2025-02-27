@@ -108,7 +108,7 @@ static void unlocked_append_distribution_point(struct crl_distribution_point *vo
 			.url = clone_hunk_as_string(url, "dp url"),
 			.next = NULL,
 		};
-		*dp = clone_thing(new_point, "add distributin point");
+		*dp = clone_thing(new_point, "add distribution point");
 	}
 }
 

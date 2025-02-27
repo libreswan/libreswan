@@ -4,7 +4,7 @@ east: liveness=5s timeout=15s
 west: liveness=1s timeout=15s
 
 - west establishes
-- because west is aggressively sending probles; east has nothing to do
+- because west is aggressively sending probes; east has nothing to do
 - west is killed
 - east starts ending probes
 - east times out and clears

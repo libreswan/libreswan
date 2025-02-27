@@ -65,7 +65,7 @@ void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
  *
  * Search OLD2NEW so that a template connection matching name is found
  * before any of its instantiated instances (which have the same name,
- * ugh).  WHACK_CONNECTIONS() will then vist it any any instances.
+ * ugh).  WHACK_CONNECTIONS() will then visit it any any instances.
  */
 
 static bool whack_connections_by_name(const struct whack_message *m,

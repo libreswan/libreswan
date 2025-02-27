@@ -730,7 +730,7 @@ static err_t assign_requested_lease(struct connection *c,
 			return "confused, unreserved lease was stolen";
 		}
 
-		vassert((*reusable_id) == NULL); /* ownership transfered to lease */
+		vassert((*reusable_id) == NULL); /* ownership transferred to lease */
 		(*new_lease) = lease;
 		(*story) = "request available";
 		return NULL;
@@ -752,7 +752,7 @@ static err_t assign_requested_lease(struct connection *c,
 		return "confused, just allocated lease was stolen";
 	}
 
-	vassert((*reusable_id) == NULL); /* ownership transfered to lease */
+	vassert((*reusable_id) == NULL); /* ownership transferred to lease */
 	(*new_lease) = lease;
 	(*story) = "request grown";
 	return NULL;
@@ -815,7 +815,7 @@ err_t assign_remote_lease(struct connection *c,
 	}
 
 	/*
-	 * If the peer's given a prefered address try to assign that.
+	 * If the peer's given a preferred address try to assign that.
 	 */
 	if (new_lease == NULL && is_set(lease_address)) {
 		err_t e = assign_requested_lease(c, pool, &reusable_id, lease_address,

@@ -15,7 +15,7 @@ west #
  # create a partial state on east, don't hold the hack for retransmit
 west #
  racoonctl establish-sa -w isakmp inet ${left} ${right}
-VPN connexion established
+VPN connection established
 west #
  echo "spdadd ${leftsubnet}[any] ${rightsubnet}[any] any -P out ipsec esp/tunnel/${left}-${right}/require;" | setkey -c
 west #

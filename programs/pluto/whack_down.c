@@ -321,7 +321,7 @@ static unsigned whack_down_connection(const struct whack_message *m UNUSED,
 				      struct show *s, struct connection *c)
 {
 	/*
-	 * Stop the connection comming back.
+	 * Stop the connection coming back.
 	 *
 	 * While only PERMANENT, INSTANCE and LABELED_PARENT can be
 	 * pending, just call regardless.

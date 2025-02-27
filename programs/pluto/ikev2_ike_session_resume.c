@@ -1114,7 +1114,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
-	{ .story      = "received TICKET_NACK notification response; aborting resumption and initating IKE_SA_INIT exchange",
+	{ .story      = "received TICKET_NACK notification response; aborting resumption and initiating IKE_SA_INIT exchange",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0, /* XXX: never happens STF_SUSPEND */
 	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
 	  .recv_role  = MESSAGE_RESPONSE,

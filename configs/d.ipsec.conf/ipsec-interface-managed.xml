@@ -4,7 +4,7 @@
   </term>
   <listitem>
     <para>
-      Specify whether the IPsec Interface specifed by
+      Specify whether the IPsec Interface specified by
       <option>ipsec-interface</option> managed by
       &Libreswan;.  Possible values are:
     </para>

@@ -546,7 +546,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				break;
 			default:
 				llog(RC_LOG, logger,
-				     "remote proposal %u transform %d has unknown attribute %d or unexpeced attribute encoding",
+				     "remote proposal %u transform %d has unknown attribute %d or unexpected attribute encoding",
 				     remote_propnum, remote_transform_nr,
 				     attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
 				jam_string(remote_jam_buf, "[unknown-attribute]");

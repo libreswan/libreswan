@@ -745,7 +745,7 @@ v3.25 (June 27, 2018)
 * IKEv2: process INITIAL_CONTACT and delete old states from a connection [Paul]
 * IKEv2: Only retransmit fragments on receiving first fragment [Andrew]
 * IKEv2: When sending fragments, also update st_msgid_lastreplied [Paul]
-* IKEv2: Encrypt IKE_AUTH reply when authenticaion failed [Andrew]
+* IKEv2: Encrypt IKE_AUTH reply when authentication failed [Andrew]
 * IKEv2: Fix handling of corrupt encrypted packets [Andrew]
 * IKEv2: Do not call ISAKMP_SA_established() during CREATE_CHILD_SA [Paul]
 * IKEv2: When receiving Initial Contact, delete old IPsec SA's [Paul]

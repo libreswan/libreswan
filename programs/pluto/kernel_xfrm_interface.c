@@ -134,7 +134,7 @@ static bool simple_netlink_op(const struct nlmsghdr *req,
 		return false;
 	}
 
-	vdbg("%s() succeded for %s %s", __func__, context, if_name);
+	vdbg("%s() succeeded for %s %s", __func__, context, if_name);
 	return true;
 }
 

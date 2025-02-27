@@ -76,7 +76,7 @@ struct encrypt_ops {
 	 *
 	 * All sizes are in 8-bit bytes.
 	 *
-	 * Danger: TEXT and TAG are clearly contigious.
+	 * Danger: TEXT and TAG are clearly contiguous.
 	 */
 
 	bool (*const cipher_op_aead)(const struct encrypt_desc *cipher,

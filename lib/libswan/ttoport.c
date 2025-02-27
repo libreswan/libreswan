@@ -32,7 +32,7 @@ err_t ttoport(shunk_t service_name, ip_port *port)
 	 * as it is more strict around using the full string.
 	 *
 	 * Number conversion should be checked first, because the service
-	 * name lookup is very expensive in comparision.
+	 * name lookup is very expensive in comparison.
 	 */
 	uintmax_t l;
 	err_t e = shunk_to_uintmax(service_name,

@@ -58,7 +58,7 @@ west #
  # this is where pluto realises that the stream crossed
 west #
  ../../guestbin/wait-for-pluto.sh --match '#1: dropping negotiation'
-"a" #1: dropping negotiation as superseeded by established IKE SA #2
+"a" #1: dropping negotiation as superseded by established IKE SA #2
 west #
  ../../guestbin/wait-for-pluto.sh --match '"a" #4: initiator established Child SA using #2'
 "a" #4: initiator established Child SA using #2; IPsec tunnel [192.0.3.253/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}

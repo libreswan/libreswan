@@ -26,7 +26,7 @@
 
 size_t jam_humber(struct jambuf *buf, uintmax_t num)
 {
-	/* in assending order */
+	/* in ascending order */
 	static const struct {
 		uintmax_t binary_per;
 		const char *suffix;

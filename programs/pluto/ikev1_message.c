@@ -199,7 +199,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 
 	/*
 	 * Next pad the encrypted part of the payload so it is
-	 * alligned with the encryption's blocksize.
+	 * aligned with the encryption's blocksize.
 	 *
 	 * Since the header is isn't encrypted, this doesn't include
 	 * the header.  See the description associated with the
