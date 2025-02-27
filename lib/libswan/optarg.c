@@ -76,7 +76,7 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	 */
 	passert(optarg_index >= 0);
 	const char *optname = optarg_options[optarg_index].name;
-	LLOG_JAMBUF(WHACK_STREAM, logger, buf) {
+	LLOG_JAMBUF(ERROR_STREAM, logger, buf) {
 		if (optarg == NULL) {
 			jam(buf, "option --%s invalid: ", optname);
 		} else {
