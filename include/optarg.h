@@ -29,6 +29,26 @@ extern unsigned verbose;			/* defined by optarg.c */
 extern int optarg_index;			/* defined by optarg.c */
 extern const struct option optarg_options[]; 	/* defined by program */
 
+/*
+ * Using OPTARG_OPTIONS[] table, which is assumed to contain METAOPT
+ * suffixes, generate a usage message.
+ *
+ * Danger: at time of writing, only pluto had the correctly structured
+ * table.
+ *
+ * Note: this function always writes to STDOUT.  This is so that:
+ *    cmd -h | more
+ * always works.
+ */
+
+#define METAOPT_RENAME "\0>"
+#define METAOPT_OBSOLETE "\0!"
+#define METAOPT_NEWLINE "\0^"
+/* heading: \0HEADING */
+/* argument: \0<argument> */
+
+void optarg_usage(const char *progname);
+
 NEVER_RETURNS PRINTF_LIKE(2) void optarg_fatal(const struct logger *logger,
 					       const char *fmt, ...);
 
