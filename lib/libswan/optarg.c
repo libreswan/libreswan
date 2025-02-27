@@ -28,20 +28,11 @@
 int optarg_index = -1;
 unsigned verbose;
 
-static const struct logger *optarg_logger;
-
-void optarg_init(const struct logger *logger)
-{
-	optarg_logger = logger;
-}
-
 /*
  * XXX: almost identical code lives in plutomain.c
  */
 
-NEVER_RETURNS
-PRINTF_LIKE(1)
-static void fatal_optarg(const char *fmt, ...)
+void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 {
 	/*
 	 * Not exit_pluto() or fatal() as pluto isn't yet up and
@@ -49,7 +40,7 @@ static void fatal_optarg(const char *fmt, ...)
 	 */
 	passert(optarg_index >= 0);
 	const char *optname = optarg_options[optarg_index].name;
-	LLOG_JAMBUF(WHACK_STREAM, optarg_logger, buf) {
+	LLOG_JAMBUF(WHACK_STREAM, logger, buf) {
 		if (optarg == NULL) {
 			jam(buf, "option --%s invalid: ", optname);
 		} else {
@@ -64,26 +55,26 @@ static void fatal_optarg(const char *fmt, ...)
 	exit(PLUTO_EXIT_FAIL);
 }
 
-deltatime_t optarg_deltatime(enum timescale default_timescale)
+deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale)
 {
 	passert((optarg_options[optarg_index].has_arg == required_argument) ||
 		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
 	deltatime_t deltatime;
 	diag_t diag = ttodeltatime(optarg, &deltatime, default_timescale);
 	if (diag != NULL) {
-		fatal_optarg("%s", str_diag(diag));
+		optarg_fatal(logger, "%s", str_diag(diag));
 	}
 	return deltatime;
 }
 
-uintmax_t optarg_uintmax(void)
+uintmax_t optarg_uintmax(const struct logger *logger)
 {
 	passert((optarg_options[optarg_index].has_arg == required_argument) ||
 		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
 	uintmax_t val;
 	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, &val);
 	if (err != NULL) {
-		fatal_optarg("%s", err);
+		optarg_fatal(logger, "%s", err);
 	}
 	return val;
 }
@@ -95,7 +86,7 @@ uintmax_t optarg_uintmax(void)
  * optional=0 when required_argument).
  */
 
-uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names)
+uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const struct sparse_names *names)
 {
 	if (optarg == NULL) {
 		passert(optarg_options[optarg_index].has_arg == optional_argument);
@@ -108,7 +99,7 @@ uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names)
 		JAMBUF(buf) {
 			jam(buf, "'%s' is not recognised, valid arguments are: ", optarg);
 			jam_sparse_names(buf, names, ", ");
-			fatal_optarg(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+			optarg_fatal(logger, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 	}
 	return name->value;
@@ -126,23 +117,23 @@ void optarg_family(struct optarg_family *family, const struct ip_info *info)
 	}
 }
 
-ip_address optarg_address_dns(struct optarg_family *family)
+ip_address optarg_address_dns(const struct logger *logger, struct optarg_family *family)
 {
 	ip_address address;
 	err_t err = ttoaddress_dns(shunk1(optarg), family->type, &address);
 	if (err != NULL) {
-		fatal_optarg("%s", err);
+		optarg_fatal(logger, "%s", err);
 	}
 	optarg_family(family, address_info(address));
 	return address;
 }
 
-ip_cidr optarg_cidr_num(struct optarg_family *family)
+ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *family)
 {
 	ip_cidr cidr;
 	err_t err = ttocidr_num(shunk1(optarg), family->type, &cidr);
 	if (err != NULL) {
-		fatal_optarg("%s", err);
+		optarg_fatal(logger, "%s", err);
 	}
 	optarg_family(family, cidr_info(cidr));
 	return cidr;
@@ -154,7 +145,7 @@ ip_address optarg_any(struct optarg_family *family)
 	return family->type->address.unspec;
 }
 
-void optarg_verbose(lset_t start)
+void optarg_verbose(const struct logger *logger, lset_t start)
 {
 	verbose++;
 	if (verbose == 1) {
@@ -176,7 +167,7 @@ void optarg_verbose(lset_t start)
 	}
 
 	/* logged when true; log once at end? */
-	LDBGP_JAMBUF(DEBUG_STREAM, optarg_logger, buf) {
+	LDBGP_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam_string(buf, "debugging: ");
 		jam_lset(buf, &debug_names, cur_debugging);
 	}

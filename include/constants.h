@@ -176,7 +176,7 @@ err_t ttobool(const char *t, bool *b);	/* string -> bool */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
-extern char *add_str(char *buf, size_t size, char *hint, const char *src);
+extern char *add_str(char *buf, size_t size, const char *src);
 
 /* Routines to check and display values.
  *

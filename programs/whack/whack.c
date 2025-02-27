@@ -1024,7 +1024,6 @@ static void msg_host_name(struct optarg_family *family, ip_address *address, cha
 int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
-	optarg_init(logger); /* merge into tool logger? */
 
 	struct whack_message msg;
 	char esp_buf[256];	/* uses snprintf */
@@ -1227,7 +1226,7 @@ int main(int argc, char **argv)
 
 		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
 		{
-			uintmax_t opt_whole = optarg_uintmax();
+			uintmax_t opt_whole = optarg_uintmax(logger);
 			if (opt_whole < 1500) {
 				diagw("Ignoring extremely unwise IKE buffer size choice");
 			} else {
@@ -1329,7 +1328,7 @@ int main(int argc, char **argv)
 			msg.whack_suspend = true;
 			continue;
 		case CD_SESSION_RESUMPTION:
-			msg.session_resumption = optarg_sparse(YN_YES, &yn_option_names);
+			msg.session_resumption = optarg_sparse(logger, YN_YES, &yn_option_names);
 			break;
 
 		case OPT_DELETE:	/* --delete */
@@ -1342,12 +1341,12 @@ int main(int argc, char **argv)
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			msg.whack_deletestate = true;
-			msg.whack_deletestateno = optarg_uintmax();
+			msg.whack_deletestateno = optarg_uintmax(logger);
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
 			msg.whack_crash = true;
-			msg.whack_crash_peer = optarg_address_dns(&host_family);
+			msg.whack_crash_peer = optarg_address_dns(logger, &host_family);
 			if (!address_is_specified(msg.whack_crash_peer)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
@@ -1507,7 +1506,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
-			msg.oppo.local.address = optarg_address_dns(&child_family);
+			msg.oppo.local.address = optarg_address_dns(logger, &child_family);
 			if (!address_is_specified(msg.oppo.local.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
@@ -1517,7 +1516,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
-			msg.oppo.remote.address = optarg_address_dns(&child_family);
+			msg.oppo.remote.address = optarg_address_dns(logger, &child_family);
 			if (!address_is_specified(msg.oppo.remote.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
@@ -1608,7 +1607,7 @@ int main(int argc, char **argv)
 				 */
 				msg_host_name(&host_family, &end->host_addr, &msg.dnshostname);
 			} else {
-				end->host_addr = optarg_address_dns(&host_family);
+				end->host_addr = optarg_address_dns(logger, &host_family);
 			}
 
 			if (end->host_type == KH_GROUP ||
@@ -1669,7 +1668,7 @@ int main(int argc, char **argv)
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
 		{
-			uintmax_t opt_whole = optarg_uintmax();
+			uintmax_t opt_whole = optarg_uintmax(logger);
 			if (opt_whole <= 0 || opt_whole >= 0x10000) {
 				diagq("<port-number> must be a number between 1 and 65535",
 					optarg);
@@ -1682,7 +1681,7 @@ int main(int argc, char **argv)
 			if (streq(optarg, "%direct")) {
 				end->nexthop = optarg_any(&host_family);
 			} else {
-				end->nexthop = optarg_address_dns(&host_family);
+				end->nexthop = optarg_address_dns(logger, &host_family);
 			}
 			continue;
 
@@ -1695,7 +1694,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			end->host_vtiip = optarg_cidr_num(&child_family);
+			end->host_vtiip = optarg_cidr_num(logger, &child_family);
 			continue;
 
 		/*
@@ -1779,7 +1778,7 @@ int main(int argc, char **argv)
 
 		/* --allow-narrowing */
 		case CD_NARROWING:
-			msg.narrowing = optarg_sparse(YN_YES, &yn_option_names);
+			msg.narrowing = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --donotrekey */
@@ -1793,29 +1792,29 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPTFS: /* --iptfs[={yes,no}] */
-			msg.iptfs = optarg_sparse(YN_YES, &yn_option_names);
+			msg.iptfs = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
-			msg.iptfs_fragmentation = optarg_sparse(YN_YES, &yn_option_names);
+			msg.iptfs_fragmentation = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
-			msg.iptfs_packet_size = optarg_uintmax();
+			msg.iptfs_packet_size = optarg_uintmax(logger);
 			continue;
 		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
-			msg.iptfs_max_queue_size = optarg_uintmax();
+			msg.iptfs_max_queue_size = optarg_uintmax(logger);
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
-			msg.iptfs_drop_time = optarg_deltatime(TIMESCALE_SECONDS);
+			msg.iptfs_drop_time = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
-			msg.iptfs_init_delay = optarg_deltatime(TIMESCALE_SECONDS);
+			msg.iptfs_init_delay = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
-			msg.iptfs_reorder_window = optarg_uintmax();
+			msg.iptfs_reorder_window = optarg_uintmax(logger);
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
-			msg.compress = optarg_sparse(YN_YES, &yn_option_names);
+			msg.compress = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
@@ -1841,7 +1840,7 @@ int main(int argc, char **argv)
 			continue;
 		/* --esn */
 		case CD_ESN:
-			msg.esn = optarg_sparse((msg.esn == YNE_EITHER ? YNE_EITHER :
+			msg.esn = optarg_sparse(logger, (msg.esn == YNE_EITHER ? YNE_EITHER :
 						 msg.esn == YNE_NO ? YNE_EITHER : YNE_YES),
 						&yne_option_names);
 			continue;
@@ -1861,27 +1860,27 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_FRAGMENTATION: /* --fragmentation {yes,no,force} */
-			msg.fragmentation = optarg_sparse(YNF_YES, &ynf_option_names);
+			msg.fragmentation = optarg_sparse(logger, YNF_YES, &ynf_option_names);
 			continue;
 
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
-			msg.nopmtudisc = optarg_sparse(YN_YES, &yn_option_names);
+			msg.nopmtudisc = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --decap-dscp */
 		case CD_DECAP_DSCP:
-			msg.decap_dscp = optarg_sparse(YN_YES, &yn_option_names);
+			msg.decap_dscp = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --encap-dscp */
 		case CD_ENCAP_DSCP:
-			msg.encap_dscp = optarg_sparse(YN_YES, &yn_option_names);
+			msg.encap_dscp = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --aggressive | --aggrmode */
 		case CD_AGGRESSIVE:
-			msg.aggressive = optarg_sparse(YN_YES, &yn_option_names);
+			msg.aggressive = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --allow-cert-without-san-id */
@@ -1891,45 +1890,45 @@ int main(int argc, char **argv)
 
 		/* --no-ikepad */
 		case CD_IKEPAD:
-			msg.ikepad = optarg_sparse(YN_YES, &yn_option_names);
+			msg.ikepad = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --ignore-peer-dns */
 		case CD_IGNORE_PEER_DNS:
-			msg.ignore_peer_dns = optarg_sparse(YN_YES, &yn_option_names);
+			msg.ignore_peer_dns = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --dns-match-id */
 		case CD_DNS_MATCH_ID:
-			msg.dns_match_id = optarg_sparse(YN_YES, &yn_option_names);
+			msg.dns_match_id = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --ms-dh-downgrade */
 		case CD_MS_DH_DOWNGRADE:
-			msg.ms_dh_downgrade = optarg_sparse(YN_YES, &yn_option_names);
+			msg.ms_dh_downgrade = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[=yes] */
-			msg.pfs_rekey_workaround = optarg_sparse(YN_YES, &yn_option_names);
+			msg.pfs_rekey_workaround = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --overlapip */
 		case CD_OVERLAPIP:
-			msg.overlapip = optarg_sparse(YN_YES, &yn_option_names);
+			msg.overlapip = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --sha2-truncbug or --sha2_truncbug */
 		case CD_SHA2_TRUNCBUG:
-			msg.sha2_truncbug = optarg_sparse(YN_YES, &yn_option_names);
+			msg.sha2_truncbug = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
-			msg.intermediate = optarg_sparse(YN_YES, &yn_option_names);
+			msg.intermediate = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		/* --mobike */
 		case CD_MOBIKE:
-			msg.mobike = optarg_sparse(YN_YES, &yn_option_names);
+			msg.mobike = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
@@ -1954,40 +1953,40 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
-			msg.retransmit_timeout = optarg_deltatime(TIMESCALE_SECONDS);
+			msg.retransmit_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			msg.retransmit_interval = optarg_deltatime(TIMESCALE_MILLISECONDS);
+			msg.retransmit_interval = optarg_deltatime(logger, TIMESCALE_MILLISECONDS);
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			msg.ikelifetime = optarg_deltatime(TIMESCALE_SECONDS);
+			msg.ikelifetime = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			msg.ipsec_lifetime = optarg_deltatime(TIMESCALE_SECONDS);
+			msg.ipsec_lifetime = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
-			msg.sa_ipsec_max_bytes = optarg_uintmax(); /* TODO accept K/M/G/T etc */
+			msg.sa_ipsec_max_bytes = optarg_uintmax(logger); /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
-			msg.sa_ipsec_max_packets = optarg_uintmax(); /* TODO accept K/M/G/T etc */
+			msg.sa_ipsec_max_packets = optarg_uintmax(logger); /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
-			msg.rekeymargin = optarg_deltatime(TIMESCALE_SECONDS);
+			msg.rekeymargin = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case CD_RKFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.sa_rekeyfuzz_percent = optarg_uintmax();
+			msg.sa_rekeyfuzz_percent = optarg_uintmax(logger);
 			continue;
 
 		case CD_KTRIES:	/* --keyingtries <count> */
 			msg.keyingtries.set = true;
-			msg.keyingtries.value = optarg_uintmax();
+			msg.keyingtries.value = optarg_uintmax(logger);
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
@@ -1997,7 +1996,7 @@ int main(int argc, char **argv)
 			 * processing the message.  The value is
 			 * relatively small.
 			 */
-			msg.replay_window = optarg_uintmax();
+			msg.replay_window = optarg_uintmax(logger);
 			continue;
 
 		case CD_SEND_CA:	/* --sendca */
@@ -2010,11 +2009,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */
-			msg.encapsulation = optarg_sparse(YNA_YES, &yna_option_names);
+			msg.encapsulation = optarg_sparse(logger, YNA_YES, &yna_option_names);
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
-			msg.nic_offload = optarg_sparse(0, &nic_offload_option_names);
+			msg.nic_offload = optarg_sparse(logger, 0, &nic_offload_option_names);
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
@@ -2022,7 +2021,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			msg.nat_ikev1_method = optarg_sparse(0, &nat_ikev1_method_option_names);
+			msg.nat_ikev1_method = optarg_sparse(logger, 0, &nat_ikev1_method_option_names);
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initialcontact */
@@ -2051,11 +2050,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
-			msg.send_redirect = optarg_sparse(0, &yna_option_names);
+			msg.send_redirect = optarg_sparse(logger, 0, &yna_option_names);
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-			msg.accept_redirect = optarg_sparse(0, &yn_option_names);
+			msg.accept_redirect = optarg_sparse(logger, 0, &yn_option_names);
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
@@ -2084,7 +2083,7 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_NM
 		case CD_NM_CONFIGURED:		/* --nm-configured */
-			msg.nm_configured = optarg_sparse(YN_YES, &yn_option_names);
+			msg.nm_configured = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 #endif
 
@@ -2252,7 +2251,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CAT:		/* --cat */
-			end->cat = optarg_sparse(YN_YES, &yn_option_names);
+			end->cat = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
@@ -2260,13 +2259,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			end->modecfgclient = optarg_sparse(YN_YES, &yn_option_names);
+			end->modecfgclient = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 		case END_MODECFGSERVER:	/* --modeconfigserver */
-			end->modecfgserver = optarg_sparse(YN_YES, &yn_option_names);
+			end->modecfgserver = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 		case CD_MODECFGPULL:	/* --modecfgpull */
-			msg.modecfgpull = optarg_sparse(YN_YES, &yn_option_names);
+			msg.modecfgpull = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
@@ -2293,10 +2292,10 @@ int main(int argc, char **argv)
 			msg.vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
-			msg.vti_routing = optarg_sparse(YN_YES, &yn_option_names);
+			msg.vti_routing = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
-			msg.vti_shared = optarg_sparse(YN_YES, &yn_option_names);
+			msg.vti_shared = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
@@ -2335,19 +2334,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_METRIC:	/* --metric */
-			msg.metric = optarg_uintmax();
+			msg.metric = optarg_uintmax(logger);
 			continue;
 
 		case CD_MTU:	/* --mtu */
-			msg.mtu = optarg_uintmax();
+			msg.mtu = optarg_uintmax(logger);
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
-			msg.priority = optarg_uintmax();
+			msg.priority = optarg_uintmax(logger);
 			continue;
 
 		case CD_TFC:	/* --tfc */
-			msg.tfc = optarg_uintmax();
+			msg.tfc = optarg_uintmax(logger);
 			continue;
 
 		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */
@@ -2355,12 +2354,12 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_PFS:	/* --pfs */
-			msg.pfs = optarg_sparse(YN_YES, &yn_option_names);
+			msg.pfs = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
 		{
-			uintmax_t opt_whole = optarg_uintmax();
+			uintmax_t opt_whole = optarg_uintmax(logger);
 			if (opt_whole <= 0  ||
 			    opt_whole > 65535) {
 				char buf[120];
@@ -2376,7 +2375,7 @@ int main(int argc, char **argv)
 
 		case CD_REQID:	/* --reqid */
 		{
-			uintmax_t opt_whole = optarg_uintmax();
+			uintmax_t opt_whole = optarg_uintmax(logger);
 			if (opt_whole <= 0  ||
 			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
 				char buf[120];
@@ -2464,7 +2463,7 @@ int main(int argc, char **argv)
 			 * build's WHACK_MAGIC number.  Else force
 			 * .magic to the given value.
 			 */
-			unsigned magic = optarg_uintmax();
+			unsigned magic = optarg_uintmax(logger);
 			msg.basic.magic = (magic == 0 ? whack_magic() : magic);
 			continue;
 		}

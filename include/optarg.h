@@ -23,19 +23,21 @@
 #include "lmod.h"
 
 struct logger;
+enum timescale;
 
 extern unsigned verbose;			/* defined by optarg.c */
 extern int optarg_index;			/* defined by optarg.c */
 extern const struct option optarg_options[]; 	/* defined by program */
-enum timescale;
 
-void optarg_init(const struct logger *logger);
+NEVER_RETURNS PRINTF_LIKE(2) void optarg_fatal(const struct logger *logger,
+					       const char *fmt, ...);
 
-deltatime_t optarg_deltatime(enum timescale default_timescale);
+deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale);
 
-uintmax_t optarg_uintmax(void);
+uintmax_t optarg_uintmax(const struct logger *logger);
+
 /* non-zero OPTIONAL provides default */
-uintmax_t optarg_sparse(unsigned optional, const struct sparse_names *names);
+uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const struct sparse_names *names);
 
 /*
  * Adddres family dependent options.
@@ -49,8 +51,8 @@ struct optarg_family {
 	const struct ip_info *type;
 };
 
-ip_address optarg_address_dns(struct optarg_family *);
-ip_cidr optarg_cidr_num(struct optarg_family *);
+ip_address optarg_address_dns(const struct logger *logger, struct optarg_family *);
+ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *);
 void optarg_family(struct optarg_family *family, const struct ip_info *info);
 ip_address optarg_any(struct optarg_family *family);
 
@@ -64,7 +66,7 @@ ip_address optarg_any(struct optarg_family *family);
  * DBG_BASE, DBG_ALL and DBG_TMI are each added in turn.
  */
 
-void optarg_verbose(lset_t start);
+void optarg_verbose(const struct logger *logger, lset_t start);
 
 /*
  * parse --debug and --no-debug options

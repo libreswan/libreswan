@@ -57,7 +57,6 @@ const struct option optarg_options[] = {
 int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
-	optarg_init(logger);
 
 	if (argc == 1) {
 		llog(WHACK_STREAM|NO_PREFIX, logger, "Usage:");
@@ -84,7 +83,7 @@ int main(int argc, char **argv)
 			optarg_family(&family, &ipv4_info);
 			break;
 		case OPT_VERBOSE:
-			optarg_verbose(LEMPTY);
+			optarg_verbose(logger, LEMPTY);
 			break;
 		case OPT_EOF:
 			break;
