@@ -18,7 +18,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -34,9 +33,7 @@
 
 static void usage(void)
 {
-	/* print usage */
-	printf("Usage: %s [--config <file>] [--nosetup] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>] [--conn conn_name]\n",
-		progname);
+	optarg_usage("ipsec readwriteconf", "");
 	exit(0);
 }
 
@@ -47,21 +44,26 @@ static void usage(void)
  */
 
 enum opt {
-	OPT_EOF = -1,
 	OPT_VERBOSE = 256,
 	OPT_DEBUG,
+	OPT_CONFIG = 'C',
+	OPT_CONN = 'c',
+	OPT_ROOTDIR = 'R',
+	OPT_ROOTDIR2 = 'S',
+	OPT_HELP = 'h',
+	OPT_NOSETUP = 'n',
 };
 
 const struct option optarg_options[] =
 {
-	{ "config",              required_argument, NULL, 'C' },
-	{ "conn",                required_argument, NULL, 'c' },
-	{ "debug",               no_argument, NULL, OPT_DEBUG, },
-	{ "verbose",             no_argument, NULL, OPT_VERBOSE, },
-	{ "rootdir",             required_argument, NULL, 'R' },
-	{ "rootdir2",            required_argument, NULL, 'S' },
-	{ "nosetup",             no_argument, NULL, 'n' },
-	{ "help",                no_argument, NULL, 'h' },
+	{ "config\0<file>",      required_argument, NULL, OPT_CONFIG },
+	{ "conn\0<conn-name>",   required_argument, NULL, OPT_CONN },
+	{ "debug\0",             no_argument, NULL, OPT_DEBUG, },
+	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
+	{ "rootdir\0<dir>",      required_argument, NULL, OPT_ROOTDIR },
+	{ "rootdir2\0<dir2>",    required_argument, NULL, OPT_ROOTDIR2 },
+	{ "nosetup",             no_argument, NULL, OPT_NOSETUP },
+	{ "help",                no_argument, NULL, OPT_HELP },
 	{ 0, 0, 0, 0 }
 };
 
@@ -69,7 +71,6 @@ int main(int argc, char *argv[])
 {
 	struct logger *logger = tool_logger(argc, argv);
 
-	int opt;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
@@ -78,46 +79,49 @@ int main(int argc, char *argv[])
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
 
-	while ((opt = getopt_long(argc, argv, "", optarg_options, 0)) != EOF) {
-		switch (opt) {
-		case 'h':
+	while (true) {
+		int c = optarg_getopt(logger, argc, argv, "");
+		if (c < 0) {
+			break;
+		}
+
+		switch ((enum opt)c) {
+
+		case OPT_HELP:
 			/* usage: */
 			usage();
-			break;
+			continue;
 
-		case 'n':
+		case OPT_NOSETUP:
 			setup = false;
-			break;
+			continue;
 
 		case OPT_VERBOSE:
 			optarg_verbose(logger, LEMPTY);
-			break;
+			continue;
 		case OPT_DEBUG:
 			optarg_debug(/*enable*/true);
-			break;
+			continue;
 
-		case 'C':
+		case OPT_CONFIG:
 			configfile = clone_str(optarg, "config file name");
-			break;
+			continue;
 
-		case 'R':
+		case OPT_ROOTDIR:
 			printf("#setting rootdir=%s\n", optarg);
 			jam_str(rootdir, sizeof(rootdir), optarg);
-			break;
+			continue;
 
-		case 'S':
+		case OPT_ROOTDIR2:
 			printf("#setting rootdir2=%s\n", optarg);
 			jam_str(rootdir2, sizeof(rootdir2), optarg);
-			break;
-		case 'c':
+			continue;
+		case OPT_CONN:
 			name = optarg;
-			break;
-		case '?':
-			exit(5);
-		default:
-			fprintf(stderr, "%s: getopt returned %d\n", progname, opt);
-			exit(6);
+			continue;
 		}
+
+		bad_case(c);
 	}
 
 	if (optind != argc) {

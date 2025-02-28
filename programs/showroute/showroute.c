@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-
 #include "lswtool.h"
 #include "lswlog.h"
 #include "addr_lookup.h"
@@ -25,11 +24,6 @@
 #include "optarg.h"
 
 enum opt {
-	OPT_EOF = -1,
-	OPT_FLAG = 0,
-	OPT_MISSING = ':',
-	OPT_INVALID = '?',
-
 	OPT_HELP = 'h',
 	OPT_VERBOSE = 'v',
 	OPT_DEBUG = 'd',
@@ -44,61 +38,62 @@ static int show_gateway = false;
 static int show_destination = false;
 
 const struct option optarg_options[] = {
-	{ "source", no_argument, &show_source, true, },
-	{ "gateway", no_argument, &show_gateway, true, },
-	{ "destination", no_argument, &show_destination, true, },
-	{ "debug", no_argument, NULL, OPT_DEBUG, },
-	{ "ipv4", no_argument, NULL, OPT_IPv4, },
-	{ "ipv6", no_argument, NULL, OPT_IPv6, },
-	{ "verbose", no_argument, NULL, OPT_VERBOSE, },
+	{ "source\0", no_argument, &show_source, true, },
+	{ "gateway\0", no_argument, &show_gateway, true, },
+	{ "destination\0", no_argument, &show_destination, true, },
+	{ "debug\0", no_argument, NULL, OPT_DEBUG, },
+	{ "ipv4\0", no_argument, NULL, OPT_IPv4, },
+	{ "ipv6\0", no_argument, NULL, OPT_IPv6, },
+	{ "verbose\0", no_argument, NULL, OPT_VERBOSE, },
+	{ "help\0", no_argument, NULL, OPT_HELP, },
 	{0},
 };
+
+static void usage(void)
+{
+	/* use stdout */
+	optarg_usage(progname, "<destination>");
+	fprintf(stdout, "\n");
+	fprintf(stdout, "Prints:");
+	fprintf(stdout, "\n");
+	fprintf(stdout, "  <source-address> <gateway-address> <destination-address>");
+	fprintf(stdout, "\n");
+	fprintf(stdout, "for the given <destination>");
+	fprintf(stdout, "\n");
+	exit(1);
+}
 
 int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
 
 	if (argc == 1) {
-		llog(WHACK_STREAM|NO_PREFIX, logger, "Usage:");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute [-4|-6] [--debug] [--source|--gateway|--destination] <destination>");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "prints:");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "  <source-address> <gateway-address> <destination-address>");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "for the given <destination>");
-		exit(1);
+		usage();
 	}
 
 	while (true) {
-		enum opt c = getopt_long(argc, argv, "vd46", optarg_options, &optarg_index);
-		if (c == -1) {
+		int c = optarg_getopt(logger, argc, argv, "vd46");
+		if (c < 0) {
 			break;
 		}
-		switch (c) {
+		switch ((enum opt)c) {
 		case OPT_DEBUG:
 			optarg_debug(true);
-			break;
+			continue;
 		case OPT_IPv4:
 			optarg_family(&family, &ipv4_info);
-			break;
+			continue;
 		case OPT_IPv6:
 			optarg_family(&family, &ipv4_info);
-			break;
+			continue;
 		case OPT_VERBOSE:
 			optarg_verbose(logger, LEMPTY);
-			break;
-		case OPT_EOF:
-			break;
-		case OPT_FLAG:
-			/* flag updated */
-			break;
-		case OPT_INVALID:
-			llog(ERROR_STREAM, logger, "invalid option: %s", argv[optarg_index]);
-			exit(1);
-		case OPT_MISSING:
-			llog(ERROR_STREAM, logger, "missing parameter: %s", argv[optarg_index]);
-			exit(1);
-		default:
-			bad_case(c);
+			continue;
+		case OPT_HELP:
+			usage();
+			continue;
 		}
+		bad_case(c);
 	}
 
 	if (optind == argc) {
