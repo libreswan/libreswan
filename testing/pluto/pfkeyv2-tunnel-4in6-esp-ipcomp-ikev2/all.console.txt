@@ -42,7 +42,6 @@ netbsdw# ../../guestbin/wait-until-pluto-started
 netbsdw# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
-
 "eastnet-westnet-ikev2": added IKEv2 connection
 
 netbsdw# echo "initdone"

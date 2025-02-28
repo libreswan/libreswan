@@ -45,7 +45,6 @@ IMPAIR: block all inbound messages: no -> yes
 west# ipsec auto --add east-west
 
 WARNING: ipsec auto has been deprecated
-
 "east-west": added IKEv2 connection
 
 #
