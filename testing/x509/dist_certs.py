@@ -531,7 +531,6 @@ def run_dist_certs():
                         'west-eku-ipsecIKE', # Should work
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
                         'west-ekuCritical-eku-emailProtection', # Should still work
-                        'usage-server', 'usage-client', 'usage-both',
                         'nic-nourl',
                         'smallkey', 'key2032', 'key4096',
                         'semiroad')

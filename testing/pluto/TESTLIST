@@ -1340,8 +1340,6 @@ kvmplutotest	interop-ikev1-strongswan-06-kdf		good
 #################################################################
 kvmplutotest	nss-cert-01-ikev1		good
 kvmplutotest	nss-cert-01-ikev2		good
-kvmplutotest	nss-cert-02-eku			good
-kvmplutotest	nss-cert-02-eku-combined	good
 kvmplutotest	nss-cert-02-ikev1		good
 kvmplutotest	nss-cert-02-ikev2		good
 kvmplutotest	nss-cert-03-ikev1		good
