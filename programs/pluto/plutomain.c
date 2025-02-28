@@ -36,9 +36,9 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <fcntl.h>
-#include <getopt.h>
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
+#include "optarg.h"
 #include "deltatime.h"
 #include "timescale.h"
 #include "lswversion.h"
@@ -99,8 +99,6 @@
 #ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
-
-static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
 static pthread_t main_thread;
 
@@ -323,21 +321,15 @@ void delete_lock(void)
 	}
 }
 
-/*
- * parser.l and keywords.c need these global variables
- * FIXME: move them to confread_load() parameters
- */
-int verbose = 0;
-
 /* Read config file. exit() on error. */
-static struct starter_config *read_cfg_file(char *configfile, long longindex, struct logger *logger)
+static struct starter_config *read_cfg_file(char *configfile, struct logger *logger)
 {
 	struct starter_config *cfg = NULL;
 
 	cfg = confread_load(configfile, true, logger);
 	if (cfg == NULL) {
 		/* details already logged */
-		fatal_opt(longindex, logger, "cannot load config file '%s'\n", configfile);
+		optarg_fatal(logger, "cannot load config file '%s'\n", configfile);
 	}
 
 	return cfg;
@@ -453,8 +445,7 @@ deltatime_t crl_check_interval = DELTATIME_INIT(0);
  */
 
 enum opt {
-	OPT_OFFSET = 256, /* larger than largest char */
-	OPT_EFENCE_PROTECT,
+	OPT_EFENCE_PROTECT = 256, /* larger than a character */
 	OPT_DEBUG,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
@@ -495,16 +486,16 @@ enum opt {
 	OPT_NO_LISTEN_UDP,
 	OPT_IKE_SOCKET_BUFSIZE,
 	OPT_IKE_SOCKET_NO_ERRQUEUE,
+#ifdef USE_NFLOG
 	OPT_NFLOG_ALL,
+#endif
 	OPT_RUNDIR,
 	OPT_SECRETSFILE,
 	OPT_GLOBAL_REDIRECT,
 	OPT_GLOBAL_REDIRECT_TO,
-	OPT_COREDIR,
 	OPT_DUMPDIR,
 	OPT_STATSBIN,
 	OPT_IPSECDIR,
-	OPT_FOODGROUPSDIR,
 	OPT_NSSDIR,
 	OPT_KEEP_ALIVE,
 	OPT_VIRTUAL_PRIVATE,
@@ -523,11 +514,7 @@ enum opt {
 	OPT_DEBUG_ALL,
 };
 
-#define METAOPT_RENAME "\0>"
-#define METAOPT_OBSOLETE "\0!"
-#define METAOPT_NEWLINE "\0^"
-
-static const struct option long_opts[] = {
+const struct option optarg_options[] = {
 	/* name, has_arg, flag, val */
 	{ "help\0", no_argument, NULL, OPT_HELP },
 	{ "version\0", no_argument, NULL, OPT_VERSION },
@@ -617,40 +604,17 @@ static const struct option long_opts[] = {
  * HACK: check UGH, and if it is bad, log it along with the option.
  */
 
-static void fatal_opt(int longindex, struct logger *logger, const char *fmt, ...)
-{
-	/*
-	 * Not exit_pluto() or fatal() as pluto isn't yet up and
-	 * running?
-	 */
-	passert(longindex >= 0);
-	const char *optname = long_opts[longindex].name;
-	LLOG_JAMBUF(RC_LOG, logger, buf) {
-		if (optarg == NULL) {
-			jam(buf, "option --%s invalid: ", optname);
-		} else {
-			jam(buf, "option --%s \"%s\" invalid: ", optname, optarg);
-		}
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-	}
-	/* not exit_pluto as pluto isn't yet up and running? */
-	exit(PLUTO_EXIT_FAIL);
-}
-
-static void check_err(err_t ugh, int longindex, struct logger *logger)
+static void check_err(struct logger *logger, err_t ugh)
 {
 	if (ugh != NULL) {
-		fatal_opt(longindex, logger, "%s", ugh);
+		optarg_fatal(logger, "%s", ugh);
 	}
 }
 
-static void check_diag(diag_t d, int longindex, struct logger *logger)
+static void check_diag(struct logger *logger, diag_t d)
 {
 	if (d != NULL) {
-		fatal_opt(longindex, logger, "%s", str_diag(d));
+		optarg_fatal(logger, "%s", str_diag(d));
 	}
 }
 
@@ -687,101 +651,6 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 		return diag("too big, more than %us", upper);
 	}
 	return NULL;
-}
-
-/* print full usage (from long_opts[]) */
-static void usage(FILE *stream, const char *progname)
-{
-	char line[72];
-	snprintf(line, sizeof(line), "Usage: %s", progname);
-
-	for (const struct option *opt = long_opts; opt->name != NULL; opt++) {
-
-		const char *nm = opt->name;
-
-		/*
-		 * "\0heading"
-		 *
-		 * A zero length option string.  Assume the meta is a
-		 * heading.
-		 */
-		if (*nm == '\0') {
-			/* dump current line */
-			fprintf(stream, "%s\n", line);
-			jam_str(line, sizeof(line), "\t");
-			/* output heading */
-			fprintf(stream, "    %s\n", nm + 1);
-			continue;
-		}
-
-		/* parse '\0...' meta characters */
-		const char *meta = nm + strlen(nm);
-
-		if (memeq(meta, METAOPT_RENAME, 2)) {
-			/*
-			 * Option has been renamed, don't show old
-			 * name.
-			 */
-			continue;
-		}
-
-		if (memeq(meta, METAOPT_OBSOLETE, 2)) {
-			/*
-			 * Option is no longer valid, skip.
-			 */
-			continue;
-		}
-
-		bool nl = false; /* true is sticky */
-		if (memeq(meta, METAOPT_NEWLINE, 2)) {
-			/*
-			 * Option should appear on a new line.
-			 */
-			nl = true;
-			meta += 2; /* skip '\0^' */
-		} else if (meta[1] == '<') {
-			/*
-			 * Looks like the argument to an option, skip
-			 * '\0'.
-			 */
-			meta++; /* skip \0 */
-		}
-
-		/* handle entry that forgot the argument */
-		const char *argument = (*meta == '\0' ? "<argument>" : meta);
-
-		char chunk[sizeof(line) - 1];
-		switch (opt->has_arg) {
-		case no_argument:
-			snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
-			break;
-		case optional_argument:
-			snprintf(chunk, sizeof(chunk),  "[--%s[=%s]]", nm, argument);
-			break;
-		case required_argument:
-			snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, argument);
-			break;
-		default:
-			bad_case(opt->has_arg);
-		}
-
-		/* enough space? allow for separator, and null? */
-		if (strlen(line) + strlen(chunk) + 2 >= sizeof(line)) {
-			nl = true;
-		}
-
-		if (nl) {
-			fprintf(stream, "%s\n", line);
-			jam_str(line, sizeof(line), "\t");
-		} else {
-			add_str(line, sizeof(line), " ");
-		}
-
-		add_str(line, sizeof(line), chunk);
-	}
-
-	fprintf(stream, "%s\n", line);
-	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 }
 
 #ifdef USE_DNSSEC
@@ -883,49 +752,22 @@ int main(int argc, char **argv)
 
 	/* handle arguments */
 	for (;; ) {
+
 		/*
-		 * Note: we don't like the way short options get parsed
-		 * by getopt_long, so we simply pass an empty string as
-		 * the list.  It could be "hvdenp:l:s:" "NARXPECK".
+		 * Note: we don't like the way short options get
+		 * parsed by getopt_long, so we simply pass an empty
+		 * string as the list.  It could be "hvdenp:l:s:"
+		 * "NARXPECK".
 		 */
-		int longindex = -1;
-		int c = getopt_long(argc, argv, "", long_opts, &longindex);
-		if (c < 0)
+		int c = optarg_getopt(logger, argc, argv, "");
+		if (c < 0) {
 			break;
-
-		if (longindex >= 0) {
-			passert(c != '?' && c != ':'); /* no error */
-			const char *optname = long_opts[longindex].name;
-			const char *optmeta = optname + strlen(optname);	/* at '\0?' */
-			if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
-				llog(RC_LOG, logger,
-				     "warning: option \"--%s\" is obsolete; ignored", optname);
-				continue;	/* ignore it! */
-			}
-			if (memeq(optmeta, METAOPT_RENAME, 2)) {
-				llog(RC_LOG, logger,
-				     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
-			}
-		}
-
-		switch (c) {
-		case 0:
-			/*
-			 * Long option already handled by getopt_long.
-			 * Not currently used since we always set flag to NULL.
-			 */
-			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
-		case ':':	/* diagnostic already printed by getopt_long */
-		case '?':	/* diagnostic already printed by getopt_long */
-			fprintf(stderr, "For usage information: %s --help\n", argv[0]);
-			fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
-			exit(PLUTO_EXIT_FAIL);
 		}
 
 		switch ((enum opt)c) {
 
 		case OPT_HELP:	/* --help */
-			usage(stdout, argv[0]); /* so <<| more>> works */
+			optarg_usage("ipsec pluto"); /* writes to STDOUT so <<| more>> works */
 			exit(PLUTO_EXIT_OK);
 
 		case OPT_LEAK_DETECTIVE:	/* --leak-detective */
@@ -965,24 +807,19 @@ int main(int argc, char **argv)
 				/* use number of CPUs */
 				nhelpers = -1;
 			} else {
-				uintmax_t u;
-				check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
-							   0/*any-base*/, &u),
-					  longindex, logger);
+				uintmax_t u = optarg_uintmax(logger);
 				/* arbitrary */
 				if (u > 1000) {
-					fatal_opt(longindex, logger, "too big, more than 1000");
+					optarg_fatal(logger, "too big, more than 1000");
 				}
 				nhelpers = u; /* no loss; within INT_MAX */
 			}
 			continue;
 
 		case OPT_SEEDBITS:	/* --seedbits */
-			pluto_nss_seedbits = atoi(optarg);
+			pluto_nss_seedbits = optarg_uintmax(logger);
 			if (pluto_nss_seedbits == 0) {
-				llog(RC_LOG, logger, "seedbits must be an integer > 0");
-				/* not exit_pluto because we are not initialized yet */
-				exit(PLUTO_EXIT_NSS_FAIL);
+				optarg_fatal(logger, "seedbits must be an integer > 0");
 			}
 			continue;
 
@@ -1052,10 +889,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
-			check_diag(ttodeltatime(optarg, &bare_shunt_interval, TIMESCALE_SECONDS),
-				   longindex, logger);
-			check_diag(deltatime_ok(bare_shunt_interval, 1, 1000),
-				   longindex, logger);
+			bare_shunt_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
 			continue;
 
 		case OPT_LISTEN:	/* --listen ip_addr */
@@ -1115,10 +950,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
-			check_diag(ttodeltatime(optarg, &curl_timeout, TIMESCALE_SECONDS),
-				   longindex, logger);
+			curl_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
 #define CURL_TIMEOUT_OK deltatime_ok(curl_timeout, 1, 1000)
-			check_diag(CURL_TIMEOUT_OK, longindex, logger);
+			check_diag(logger, CURL_TIMEOUT_OK);
 			continue;
 
 		case OPT_CRL_STRICT:	/* --crl-strict */
@@ -1126,8 +960,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
-			check_diag(ttodeltatime(optarg, &crl_check_interval, TIMESCALE_SECONDS),
-				   longindex, logger);
+			crl_check_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case OPT_OCSP_STRICT:
@@ -1147,31 +980,28 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
-			check_diag(ttodeltatime(optarg, &ocsp_timeout, TIMESCALE_SECONDS),
-				   longindex, logger);
+			ocsp_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
 #define OCSP_TIMEOUT_OK deltatime_ok(ocsp_timeout, 1, 1000)
-			check_diag(OCSP_TIMEOUT_OK, longindex, logger);
+			check_diag(logger, OCSP_TIMEOUT_OK);
 			continue;
 
 		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
 		{
 			uintmax_t u;
-			check_err(shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
-						   0/*any-base*/, &u),
-				  longindex, logger);
+			check_err(logger, shunk_to_uintmax(shunk1(optarg), NULL/*all*/,
+							   0/*any-base*/, &u));
 			/* Why 64k? UDP payload size? */
 			if (u > 0xffff) {
-				fatal_opt(longindex, logger, "too big, more than 0xffff");
+				optarg_fatal(logger, "too big, more than 0xffff");
 			}
 			ocsp_cache_size = u; /* no loss; within INT_MAX */
 			continue;
 		}
 
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
-			check_diag(ttodeltatime(optarg, &ocsp_cache_min_age, TIMESCALE_SECONDS),
-				   longindex, logger);
+			ocsp_cache_min_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
 #define OCSP_CACHE_MIN_AGE_OK deltatime_ok(ocsp_cache_min_age, 1, -1)
-			check_diag(OCSP_CACHE_MIN_AGE_OK, longindex, logger);
+			check_diag(logger, OCSP_CACHE_MIN_AGE_OK);
 			continue;
 
 		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
@@ -1180,22 +1010,19 @@ int main(int argc, char **argv)
 			 * disabled.  We use 0 for disabled, and a
 			 * large number for unlimited.
 			 */
-			check_diag(ttodeltatime(optarg, &ocsp_cache_max_age, TIMESCALE_SECONDS),
-				   longindex, logger);
+			ocsp_cache_max_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
 #define OCSP_CACHE_MAX_AGE_OK deltatime_ok(ocsp_cache_max_age, 0, -1)
-			check_diag(OCSP_CACHE_MAX_AGE_OK, longindex, logger);
+			check_diag(logger, OCSP_CACHE_MAX_AGE_OK);
 			continue;
 
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
 			if (streq(optarg, "post")) {
 				ocsp_method = OCSP_METHOD_POST;
 				ocsp_post = true;
+			} else if (streq(optarg, "get")) {
+				ocsp_method = OCSP_METHOD_GET;
 			} else {
-				if (streq(optarg, "get")) {
-					ocsp_method = OCSP_METHOD_GET;
-				} else {
-					fatal_opt(longindex, logger, "ocsp-method is either 'post' or 'get'");
-				}
+				optarg_fatal(logger, "method is either 'post' or 'get'");
 			}
 			continue;
 
@@ -1210,24 +1037,26 @@ int main(int argc, char **argv)
 		case OPT_INTERFACE:	/* --interface <ifname|ifaddr> */
 			continue;
 
+#ifdef USE_NFLOG
+		case OPT_NFLOG_ALL:	/* --nflog-all <group-number> */
+			pluto_nflog_group = optarg_uintmax(logger);
+			continue;
+#endif
+
 		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
 			pluto_sock_errqueue = false;
 			continue;
 
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
 		{
-			uintmax_t u;
-			check_err(shunk_to_uintmax(shunk1(optarg),
-						   NULL/*all*/,
-						   0/*any-base*/, &u),
-				  longindex, logger);
+			uintmax_t u = optarg_uintmax(logger);
 			/* 64k is max size for UDP */
 			if (u > 0xffff) {
-				fatal_opt(longindex, logger, "too big, more than 0xffff");
+				optarg_fatal(logger, "too big, more than 0xffff");
 			}
 			/* but it must be >= 10?!? */
 			if (u == 0) {
-				fatal_opt(longindex, logger, "must not be 0");
+				optarg_fatal(logger, "must not be 0");
 			}
 			pluto_sock_bufsize = u;
 			continue;
@@ -1242,16 +1071,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_RUNDIR:	/* --rundir <path> */
-			/*
-			 * ??? work to be done here:
-			 *
-			 * snprintf returns the required space if there
-			 * isn't enough, not -1.
-			 * -1 indicates another kind of error.
-			 */
-			if (snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
-				     "%s/pluto.ctl", optarg) == -1) {
-				fatal_opt(longindex, logger, "--rundir argument is invalid for sun_path socket");
+		{
+			int n = snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
+					 "%s/pluto.ctl", optarg);
+			if (n < 0 || n >= (ssize_t)sizeof(ctl_addr.sun_path)) {
+				optarg_fatal(logger, "argument is invalid for sun_path socket");
 			}
 
 			pfree(pluto_lock_filename);
@@ -1259,6 +1083,7 @@ int main(int argc, char **argv)
 			pfreeany(rundir);
 			rundir = clone_str(optarg, "rundir");
 			continue;
+		}
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
 			lsw_conf_secretsfile(optarg);
@@ -1283,12 +1108,11 @@ int main(int argc, char **argv)
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
 		{
 			ip_address rip;
-			check_err(ttoaddress_dns(shunk1(optarg), NULL/*UNSPEC*/, &rip),
-				  longindex, logger);
+			check_err(logger, ttoaddress_dns(shunk1(optarg), NULL/*UNSPEC*/, &rip));
 			set_global_redirect_dests(optarg);
 			llog(RC_LOG, logger,
-				    "all IKE_SA_INIT requests will from now on be redirected to: %s\n",
-				    optarg);
+			     "all IKE_SA_INIT requests will from now on be redirected to: %s\n",
+			     optarg);
 			continue;
 		}
 
@@ -1302,14 +1126,13 @@ int main(int argc, char **argv)
 				global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
 				llog(RC_LOG, logger,
-					    "invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
+				     "invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
 			}
 			continue;
 		}
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
-			check_diag(ttodeltatime(optarg, &keep_alive, TIMESCALE_SECONDS),
-				   longindex, logger);
+			keep_alive = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case OPT_SELFTEST:	/* --selftest */
@@ -1328,13 +1151,14 @@ int main(int argc, char **argv)
 			/*
 			 * Config struct to variables mapper.  This
 			 * will overwrite all previously set options.
-			 * Keep this in the same order as long_opts[]
-			 * is.
+			 *
+			 * Keep this in the same order as
+			 * optarg_options[] is.
 			 */
 			pfree(conffile);
 			conffile = clone_str(optarg, "conffile via getopt");
 			/* may not return */
-			struct starter_config *cfg = read_cfg_file(conffile, longindex, logger);
+			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
 #ifdef USE_DNSSEC
@@ -1566,7 +1390,7 @@ int main(int argc, char **argv)
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 				if (!process_impair(&impairment, NULL, true, logger)) {
-					fatal_opt(longindex, logger, "not valid from the command line");
+					optarg_fatal(logger, "not valid from the command line");
 				}
 				continue;
 			case IMPAIR_ERROR:

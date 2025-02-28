@@ -14,6 +14,7 @@
  */
 
 #include <stdlib.h>		/* for exit() */
+#include <stdio.h>		/* for output */
 
 #include "optarg.h"
 
@@ -24,9 +25,44 @@
 #include "lmod.h"
 #include "names_constant.h"		/* for debug_lmod_info */
 #include "timescale.h"
+#include "lswversion.h"
 
 int optarg_index = -1;
 unsigned verbose;
+
+int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options)
+{
+	while (true) {
+		int c = getopt_long(argc, argv, options, optarg_options, &optarg_index);
+		switch (c) {
+		case ':':	/* diagnostic already printed by getopt_long */
+		case '?':	/* diagnostic already printed by getopt_long */
+			llog(RC_LOG|NO_PREFIX, logger, "For usage information: %s --help\n", argv[0]);
+			exit(PLUTO_EXIT_FAIL);
+		case EOF:
+			return EOF;
+		case 0:
+			/*
+			 * Long option already handled by getopt_long.
+			 * Not currently used since we always set flag
+			 * to NULL.
+			 */
+			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
+		}
+		const char *optname = optarg_options[optarg_index].name;
+		const char *optmeta = optname + strlen(optname);	/* at '\0?' */
+		if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
+			llog(RC_LOG|NO_PREFIX, logger,
+			     "warning: option \"--%s\" is obsolete; ignored", optname);
+			continue;	/* ignore it! */
+		}
+		if (memeq(optmeta, METAOPT_RENAME, 2)) {
+			llog(RC_LOG, logger,
+			     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
+		}
+		return c;
+	}
+}
 
 /*
  * XXX: almost identical code lives in plutomain.c
@@ -40,7 +76,7 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	 */
 	passert(optarg_index >= 0);
 	const char *optname = optarg_options[optarg_index].name;
-	LLOG_JAMBUF(WHACK_STREAM, logger, buf) {
+	LLOG_JAMBUF(ERROR_STREAM, logger, buf) {
 		if (optarg == NULL) {
 			jam(buf, "option --%s invalid: ", optname);
 		} else {
@@ -53,6 +89,102 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	}
 	/* not exit_pluto as pluto isn't yet up and running? */
 	exit(PLUTO_EXIT_FAIL);
+}
+
+void optarg_usage(const char *progname)
+{
+	FILE *stream = stdout;
+
+	char line[72];
+	snprintf(line, sizeof(line), "Usage: %s", progname);
+
+	for (const struct option *opt = optarg_options; opt->name != NULL; opt++) {
+
+		const char *nm = opt->name;
+
+		/*
+		 * "\0heading"
+		 *
+		 * A zero length option string.  Assume the meta is a
+		 * heading.
+		 */
+		if (*nm == '\0') {
+			/* dump current line */
+			fprintf(stream, "%s\n", line);
+			jam_str(line, sizeof(line), "\t");
+			/* output heading */
+			fprintf(stream, "    %s\n", nm + 1);
+			continue;
+		}
+
+		/* parse '\0...' meta characters */
+		const char *meta = nm + strlen(nm);
+
+		if (memeq(meta, METAOPT_RENAME, 2)) {
+			/*
+			 * Option has been renamed, don't show old
+			 * name.
+			 */
+			continue;
+		}
+
+		if (memeq(meta, METAOPT_OBSOLETE, 2)) {
+			/*
+			 * Option is no longer valid, skip.
+			 */
+			continue;
+		}
+
+		bool nl = false; /* true is sticky */
+		if (memeq(meta, METAOPT_NEWLINE, 2)) {
+			/*
+			 * Option should appear on a new line.
+			 */
+			nl = true;
+			meta += 2; /* skip '\0^' */
+		} else if (meta[1] == '<') {
+			/*
+			 * Looks like the argument to an option, skip
+			 * '\0'.
+			 */
+			meta++; /* skip \0 */
+		}
+
+		/* handle entry that forgot the argument */
+		const char *argument = (*meta == '\0' ? "<argument>" : meta);
+
+		char chunk[sizeof(line) - 1];
+		switch (opt->has_arg) {
+		case no_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
+			break;
+		case optional_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s[=%s]]", nm, argument);
+			break;
+		case required_argument:
+			snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, argument);
+			break;
+		default:
+			bad_case(opt->has_arg);
+		}
+
+		/* enough space? allow for separator, and null? */
+		if (strlen(line) + strlen(chunk) + 2 >= sizeof(line)) {
+			nl = true;
+		}
+
+		if (nl) {
+			fprintf(stream, "%s\n", line);
+			jam_str(line, sizeof(line), "\t");
+		} else {
+			add_str(line, sizeof(line), " ");
+		}
+
+		add_str(line, sizeof(line), chunk);
+	}
+
+	fprintf(stream, "%s\n", line);
+	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 }
 
 deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale)
