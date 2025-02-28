@@ -12,7 +12,7 @@ PREFIX=@@PREFIX@@
 
 for repo in fedora-cisco-openh264 ; do
     echo disabling: ${repo}
-    dnf config-manager --set-disable ${repo}
+    dnf config-manager setopt ${repo}.enabled=0
 done
 
 
@@ -22,7 +22,7 @@ done
 
 for repo in fedora-debuginfo updates-debuginfo ; do
     echo enabling: ${repo}
-    dnf config-manager --set-enable ${repo}
+    dnf config-manager setopt ${repo}.enabled=1
 done
 
 
@@ -31,8 +31,8 @@ done
 :
 
 cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}.${VERSION_ID} )
-dnf config-manager --save --setopt=keepcache=True
-dnf config-manager --save --setopt=cachedir=${cachedir}
+dnf config-manager setopt keepcache=1
+dnf config-manager setopt cachedir=${cachedir}
 
 #dnf config-manager --save --setopt=makecache=0
 
