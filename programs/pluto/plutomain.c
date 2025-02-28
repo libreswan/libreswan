@@ -767,7 +767,7 @@ int main(int argc, char **argv)
 		switch ((enum opt)c) {
 
 		case OPT_HELP:	/* --help */
-			optarg_usage("ipsec pluto"); /* writes to STDOUT so <<| more>> works */
+			optarg_usage("ipsec pluto", ""); /* writes to STDOUT so <<| more>> works */
 			exit(PLUTO_EXIT_OK);
 
 		case OPT_LEAK_DETECTIVE:	/* --leak-detective */

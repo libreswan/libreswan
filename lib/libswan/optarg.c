@@ -34,20 +34,14 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 {
 	while (true) {
 		int c = getopt_long(argc, argv, options, optarg_options, &optarg_index);
+		if (c < 0) {
+			return c;
+		}
 		switch (c) {
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
 			llog(RC_LOG|NO_PREFIX, logger, "For usage information: %s --help\n", argv[0]);
 			exit(PLUTO_EXIT_FAIL);
-		case EOF:
-			return EOF;
-		case 0:
-			/*
-			 * Long option already handled by getopt_long.
-			 * Not currently used since we always set flag
-			 * to NULL.
-			 */
-			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
 		}
 		const char *optname = optarg_options[optarg_index].name;
 		const char *optmeta = optname + strlen(optname);	/* at '\0?' */
@@ -59,6 +53,12 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 		if (memeq(optmeta, METAOPT_RENAME, 2)) {
 			llog(RC_LOG, logger,
 			     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
+		}
+		if (c == 0) {
+			/*
+			 * Long option already handled by getopt_long.
+			 */
+			continue;
 		}
 		return c;
 	}
@@ -91,7 +91,7 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	exit(PLUTO_EXIT_FAIL);
 }
 
-void optarg_usage(const char *progname)
+void optarg_usage(const char *progname, const char *arguments)
 {
 	FILE *stream = stdout;
 
@@ -183,7 +183,15 @@ void optarg_usage(const char *progname)
 		add_str(line, sizeof(line), chunk);
 	}
 
-	fprintf(stream, "%s\n", line);
+	if (arguments == NULL || strlen(arguments) == 0) {
+		fprintf(stream, "%s\n", line);
+	} else if (strlen(line) + strlen(arguments) + 2 >= sizeof(line)) {
+		fprintf(stream, "%s\n", line);
+		fprintf(stream, "\t%s\n", arguments);
+	} else {
+		fprintf(stream, "%s %s\n", line, arguments);
+	}
+
 	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 }
 
