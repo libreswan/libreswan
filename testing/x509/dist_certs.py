@@ -434,12 +434,13 @@ def create_mainca_end_certs(mainca_end_certs):
         cmd = (f"openssl pkcs12" +
 	       f" -export" +
 	       f" -passout pass:foobar" +
-               f" -certfile real/mainca/root.cert" +
 	       f" -in certs/{name}.crt" +
 	       f" -inkey keys/{name}.key" +
 	       f" -name {name}" +
-	       f" -out pkcs12/{signer}/{name}.p12")
-        print(subprocess.getoutput(cmd))
+	       f" -out pkcs12/{signer}/{name}.p12" +
+               f" -certfile real/mainca/root.cert" +
+               f"")
+        print(cmd, subprocess.getoutput(cmd))
 
         serial += 1
 
@@ -502,23 +503,39 @@ def create_chained_certs(chain_ca_roots, max_path):
 
                 writeout_cert_and_key(endcert_name, ecert, ekey)
                 store_cert_and_key(endcert_name, ecert, ekey)
-                writeout_pkcs12("pkcs12/", endcert_name,
-                                ecert, ekey, signpair[0])
+                cmd = (f"openssl pkcs12" +
+	               f" -export" +
+	               f" -passout pass:foobar" +
+	               f" -in certs/{endcert_name}.crt" +
+	               f" -inkey keys/{endcert_name}.key" +
+	               f" -name {endcert_name}" +
+	               f" -out pkcs12/{endcert_name}.p12" +
+                       f" -certfile real/mainca/root.cert" +
+                       f"")
+                print(cmd, subprocess.getoutput(cmd))
                 serial += 1
 
                 endrev_name = chainca + "_revoked"
                 top_caname = cname
                 print(" - creating %s"% endrev_name)
                 ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
-                                              signpair[0], signpair[1], serial,
-                                              emailAddress="%s@testing.libreswan.org"%endcert_name,
-                                              START=NOW,
-                                              END=FUTURE)
+                                                signpair[0], signpair[1], serial,
+                                                emailAddress="%s@testing.libreswan.org"%endcert_name,
+                                                START=NOW,
+                                                END=FUTURE)
 
                 writeout_cert_and_key(endrev_name, ercert, erkey)
                 store_cert_and_key(endrev_name, ercert, erkey)
-                writeout_pkcs12("pkcs12/", endrev_name,
-                                ercert, erkey, signpair[0])
+                cmd = (f"openssl pkcs12" +
+	               f" -export" +
+	               f" -passout pass:foobar" +
+	               f" -in certs/{endrev_name}.crt" +
+	               f" -inkey keys/{endrev_name}.key" +
+	               f" -name {endrev_name}" +
+	               f" -out pkcs12/{endrev_name}.p12" +
+                       f" -certfile real/mainca/root.cert" +
+                       f"")
+                print(cmd, subprocess.getoutput(cmd))
 
 
 def main():
