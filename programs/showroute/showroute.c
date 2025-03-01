@@ -14,7 +14,6 @@
  */
 
 #include <stdlib.h>
-#include <getopt.h>
 
 #include "lswtool.h"
 #include "lswlog.h"
