@@ -245,8 +245,7 @@ generate_end_cert()
 
     # private key (tests expect it unprotected)
 
-    openssl \
-	pkcs12 \
+    openssl pkcs12 \
 	-passin pass:${PASSPHRASE} \
 	-noenc \
 	-nocerts \
@@ -255,8 +254,7 @@ generate_end_cert()
 
     # private key + end cert
 
-    openssl \
-	pkcs12 \
+    openssl pkcs12 \
 	-export \
 	-passout pass:${PASSPHRASE} \
 	-in ${certdir}/${cert}.end.cert \

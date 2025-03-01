@@ -105,11 +105,10 @@ from cryptography.hazmat.primitives import hashes
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
 
-valid_ku_list = ( 'digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment', 'keyAgreement', 'keyCertSign', 'cRLSign', 'encipherOnly', 'decipherOnly' )
+NOW = ""
+FUTURE = ""
+FUTURE_END = ""
 
-valid_eku_list = ( 'serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'timeStamping', 'OCSPSigning', 'ipsecIKE', 'msCodeInd', 'msCodeCom', 'msCTLSign', 'msEFS' )
-
-dates = {}
 ca_certs = {}
 end_certs = {}
 endrev_name = ""
@@ -212,10 +211,12 @@ def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
     ku_str = 'digitalSignature'
     if isCA or ocsp:
         ku_str = 'digitalSignature,keyCertSign,cRLSign'
+
     # check for custom Key Usage
     if '-ku-' in cnstr:
         ku_str = ''
-        for ku_entry in valid_ku_list:
+        for ku_entry in ( 'digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment',
+                          'keyAgreement', 'keyCertSign', 'cRLSign', 'encipherOnly', 'decipherOnly' ):
             if ku_entry in cnstr:
                 ku_str = ku_str + "," + ku_entry
         if 'kuBOGUS' in cnstr:
@@ -235,7 +236,8 @@ def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
     # check for custom Key Usage
     if '-eku-' in cnstr:
         eku_str = ''
-        for eku_entry in valid_eku_list:
+        for eku_entry in ( 'serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'timeStamping',
+                           'OCSPSigning', 'ipsecIKE', 'msCodeInd', 'msCodeCom', 'msCTLSign', 'msEFS' ):
             if eku_entry in cnstr:
                 eku_str = eku_str + "," + eku_entry
         # some informal names mapping to non-openssl supported OIDs
@@ -290,6 +292,8 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
                          CN=CN, C=C, ST=ST, L=L, O=O, OU=OU,
                          emailAddress=emailAddress)
 
+    print(f"START-END: {START}-{END}")
+
     cert = crypto.X509()
     cert.set_serial_number(snum)
     cert.set_notBefore(START.encode('utf-8'))
@@ -329,9 +333,13 @@ def gen_gmtime_dates():
     future_stamp = ok_stamp + (60*60*24*365*1)
     future_end_stamp = future_stamp + (60*60*24*365*2)
 
-    return dict(OK_NOW=gmc(ok_stamp),
-                FUTURE=gmc(future_stamp),
-                FUTURE_END=gmc(future_end_stamp))
+    global NOW
+    global FUTURE
+    global FUTURE_END
+
+    NOW = gmc(ok_stamp)
+    FUTURE = gmc(future_stamp)
+    FUTURE_END = gmc(future_end_stamp)
 
 
 def store_cert_and_key(name, cert, key):
@@ -351,16 +359,13 @@ def store_cert_and_key(name, cert, key):
 
 PASSPHRASE = ""	# set below
 
-def create_basic_pluto_cas(ca_names):
-    """ Create the core root certs
-    """
-    print("creating CA certs")
-    for name in ca_names:
-        p12="real/" + name + "/root.p12"
-        print(" - loading %s" % (p12))
-        with open(p12, "rb") as f:
-            blob = f.read()
-            key, ca, chain = pkcs12.load_key_and_certificates(blob, PASSPHRASE)
+def load_mainca_cas():
+    name = 'mainca'
+    p12="real/" + name + "/root.p12"
+    print("Loading %s" % (p12))
+    with open(p12, "rb") as f:
+        blob = f.read()
+        key, ca, chain = pkcs12.load_key_and_certificates(blob, PASSPHRASE)
         store_cert_and_key(name, ca, key)
 
 def writeout_pkcs12(path, name, cert, key, ca_cert):
@@ -394,8 +399,8 @@ def create_mainca_end_certs(mainca_end_certs):
         if name == 'key4096':
             keysize = 4096
 
-        startdate = dates['OK_NOW']
-        enddate = dates['FUTURE_END']
+        startdate = NOW
+        enddate = FUTURE_END
 
         signer = 'mainca'
 
@@ -426,8 +431,17 @@ def create_mainca_end_certs(mainca_end_certs):
                                     ocsp=ocsp_resp)
         writeout_cert_and_key(name, cert, key)
         store_cert_and_key(name, cert, key)
-        writeout_pkcs12("pkcs12/"+ signer + '/', name,
-                        cert, key, ca_certs[signer][0])
+        cmd = (f"openssl pkcs12" +
+	       f" -export" +
+	       f" -passout pass:foobar" +
+	       f" -in certs/{name}.crt" +
+	       f" -inkey keys/{name}.key" +
+	       f" -name {name}" +
+	       f" -out pkcs12/{signer}/{name}.p12" +
+               f" -certfile real/mainca/root.cert" +
+               f"")
+        print(cmd, subprocess.getoutput(cmd))
+
         serial += 1
 
     # update the next serial file in the CA's directory
@@ -464,8 +478,8 @@ def create_chained_certs(chain_ca_roots, max_path):
             ca, key = create_sub_cert(cname + '.testing.libreswan.org',
                                       signpair[0], signpair[1],
                                       serial,
-                                      START=dates['OK_NOW'],
-                                      END=dates['FUTURE'],
+                                      START=NOW,
+                                      END=FUTURE,
                                       emailAddress="%s@testing.libreswan.org"%cname,
                                       isCA=True,
                                       ocsp=False)
@@ -484,36 +498,68 @@ def create_chained_certs(chain_ca_roots, max_path):
                 ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",
                                               signpair[0], signpair[1], serial,
                                               emailAddress="%s@testing.libreswan.org"%endcert_name,
-                                              START=dates['OK_NOW'],
-                                              END=dates['FUTURE'])
+                                              START=NOW,
+                                              END=FUTURE)
 
                 writeout_cert_and_key(endcert_name, ecert, ekey)
                 store_cert_and_key(endcert_name, ecert, ekey)
-                writeout_pkcs12("pkcs12/", endcert_name,
-                                ecert, ekey, signpair[0])
+                cmd = (f"openssl pkcs12" +
+	               f" -export" +
+	               f" -passout pass:foobar" +
+	               f" -in certs/{endcert_name}.crt" +
+	               f" -inkey keys/{endcert_name}.key" +
+	               f" -name {endcert_name}" +
+	               f" -out pkcs12/{endcert_name}.p12" +
+                       f" -certfile real/mainca/root.cert" +
+                       f"")
+                print(cmd, subprocess.getoutput(cmd))
                 serial += 1
 
                 endrev_name = chainca + "_revoked"
                 top_caname = cname
                 print(" - creating %s"% endrev_name)
                 ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
-                                              signpair[0], signpair[1], serial,
-                                              emailAddress="%s@testing.libreswan.org"%endcert_name,
-                                              START=dates['OK_NOW'],
-                                              END=dates['FUTURE'])
+                                                signpair[0], signpair[1], serial,
+                                                emailAddress="%s@testing.libreswan.org"%endcert_name,
+                                                START=NOW,
+                                                END=FUTURE)
 
                 writeout_cert_and_key(endrev_name, ercert, erkey)
                 store_cert_and_key(endrev_name, ercert, erkey)
-                writeout_pkcs12("pkcs12/", endrev_name,
-                                ercert, erkey, signpair[0])
+                cmd = (f"openssl pkcs12" +
+	               f" -export" +
+	               f" -passout pass:foobar" +
+	               f" -in certs/{endrev_name}.crt" +
+	               f" -inkey keys/{endrev_name}.key" +
+	               f" -name {endrev_name}" +
+	               f" -out pkcs12/{endrev_name}.p12" +
+                       f" -certfile real/mainca/root.cert" +
+                       f"")
+                print(cmd, subprocess.getoutput(cmd))
 
 
-def run_dist_certs():
-    """ Generate the pluto test harness x509
-    certificates, p12 files, keys, and CRLs
-    """
-    # Add root CAs here
-    basic_pluto_cas =  ['mainca']
+def main():
+    outdir = os.path.dirname(sys.argv[0])
+    cwd = os.getcwd()
+    if outdir:
+        os.chdir(outdir)
+    global dates
+    reset_files()
+
+    gen_gmtime_dates()
+
+    print("format dates being used for this run:")
+    print(f"NOW : {NOW}")
+    print(f"FUTURE : {FUTURE}")
+    print(f"FUTURE_END : {FUTURE_END}")
+
+    print("reading passphrase")
+    global PASSPHRASE
+    with open("nss-pw", "rb") as f:
+        PASSPHRASE = f.read()
+    print("passphrase: ", PASSPHRASE)
+
+
     # Add end certs here
     mainca_end_certs = ('west-kuOmit', # Key Usage should not be needed
                         'west-eku-clientAuth', # should be enough to validate
@@ -538,30 +584,9 @@ def run_dist_certs():
     chain_ca_roots =   ('east_chain', 'west_chain')
 
     # Put special case code for new certs in the following functions
-    create_basic_pluto_cas(basic_pluto_cas)
+    load_mainca_cas()
     create_mainca_end_certs(mainca_end_certs)
     create_chained_certs(chain_ca_roots, 3)
-
-def main():
-    outdir = os.path.dirname(sys.argv[0])
-    cwd = os.getcwd()
-    if outdir:
-        os.chdir(outdir)
-    global dates
-    reset_files()
-    dates = gen_gmtime_dates()
-    print("format dates being used for this run:")
-    # TODO: print the display GMT times
-    for n, s in dates.items():
-        print("%s : %s"% (n, s))
-
-    print("reading passphrase")
-    global PASSPHRASE
-    with open("nss-pw", "rb") as f:
-        PASSPHRASE = f.read()
-    print("passphrase: ", PASSPHRASE)
-
-    run_dist_certs()
 
     print("finished!")
 

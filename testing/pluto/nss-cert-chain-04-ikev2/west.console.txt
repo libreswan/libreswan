@@ -16,8 +16,8 @@ Certificate Nickname                                         Trust Attributes
 mainca                                                       CT,, 
 nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_2                                             CT,, 
 west_chain_int_1                                             CT,, 
+west_chain_int_2                                             CT,, 
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -56,8 +56,8 @@ Certificate Nickname                                         Trust Attributes
 mainca                                                       CT,, 
 nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_2                                             CT,, 
 west_chain_int_1                                             CT,, 
+west_chain_int_2                                             CT,, 
 west #
  ipsec whack --impair suppress_retransmits
 west #

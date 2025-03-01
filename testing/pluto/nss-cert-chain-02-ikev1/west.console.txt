@@ -62,8 +62,8 @@ Certificate Nickname                                         Trust Attributes
 mainca                                                       CT,, 
 nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_2                                             ,,   
 west_chain_int_1                                             ,,   
+west_chain_int_2                                             ,,   
 west #
  # catch any cert chain specific leaks
 west #
