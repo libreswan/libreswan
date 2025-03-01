@@ -15,28 +15,7 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <getopt.h>
-#include <assert.h>
-#include <stdarg.h>
-
-#include "sysdep.h"
-#include "constants.h"
-#include "lswalloc.h"
-#include "lswlog.h"
 #include "whack.h"
-#include "lswlog.h"
-#include "ip_info.h"
 
 void clear_end(const char *leftright, struct whack_end *e)
 {
