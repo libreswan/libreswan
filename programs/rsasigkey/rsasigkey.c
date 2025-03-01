@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <getopt.h>
 #include <prerror.h>
 #include <prinit.h>
 #include <prmem.h>
@@ -50,6 +49,7 @@
 
 #include <arpa/nameser.h> /* for NS_MAXDNAME */
 
+#include "optarg.h"
 #include "rnd.h"
 #include "ttodata.h"
 #include "constants.h"
@@ -78,25 +78,29 @@
 /* No longer use E=3 to comply to FIPS 186-4, section B.3.1 */
 #define F4	65537
 
-char usage[] =
-	"rsasigkey [--verbose] [ --debug ] [--seeddev <device>] [--nssdir <dir>]\n"
-	"        [--password <password>] [--seedbits bits] [<keybits>]";
-
 enum opt {
+	OPT_VERBOSE = 'v',
+	OPT_SEEDDEV = 'S',
+	OPT_HELP = 'h',
+	OPT_VERSION = 'V',
+	OPT_NSSDIR = 'd',
+	OPT_PASSWORD = 'P',
+	OPT_SEEDBITS = 's',
 	OPT_DEBUG = 256,
 };
 
-struct option opts[] = {
-	{ "debug",      0,      NULL,   OPT_DEBUG, },
-	{ "verbose",    0,      NULL,   'v', },
-	{ "seeddev",    1,      NULL,   'S', },
-	{ "help",       0,      NULL,   'h', },
-	{ "version",    0,      NULL,   'V', },
-	{ "nssdir",     1,      NULL,   'd', }, /* nss-tools use -d */
-	{ "password",   1,      NULL,   'P', },
-	{ "seedbits",   1,      NULL,   's', },
-	{ 0,            0,      NULL,   0, }
+const struct option optarg_options[] = {
+	{ "debug\0",               no_argument,        NULL,   OPT_DEBUG, },
+	{ "verbose\0",             no_argument,        NULL,   OPT_VERBOSE, },
+	{ "seeddev\0<device>",     required_argument,  NULL,   OPT_SEEDDEV, },
+	{ "help\0",                no_argument,        NULL,   OPT_HELP, },
+	{ "version\0",             no_argument,        NULL,   OPT_VERSION, },
+	{ "nssdir\0<dir>",         required_argument,  NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
+	{ "password\0<password>",  required_argument,  NULL,   OPT_PASSWORD, },
+	{ "seedbits\0<bits>",      required_argument,  NULL,   OPT_SEEDBITS, },
+	{ 0, 0, NULL, 0, }
 };
+
 char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
@@ -136,38 +140,43 @@ int main(int argc, char *argv[])
 	log_to_stderr = false;
 	struct logger *logger = tool_logger(argc, argv);
 
-	int opt;
 	int seedbits = DEFAULT_SEED_BITS;
 
-	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF)
-		switch (opt) {
-		case 'v':       /* verbose description */
-			log_to_stderr = true;
+	while (true) {
+
+		int c = optarg_getopt(logger, argc, argv, "");
+		if (c < 0) {
 			break;
+		}
+
+		switch ((enum opt)c) {
+		case OPT_VERBOSE:       /* verbose description */
+			log_to_stderr = true;
+			continue;
 
 		case OPT_DEBUG:
 			cur_debugging = -1;
-			break;
+			continue;
 
-		case 'S':       /* nonstandard random device for seed */
+		case OPT_SEEDDEV:       /* nonstandard random device for seed */
 			device = optarg;
-			break;
+			continue;
 
-		case 'h':       /* help */
-			printf("Usage:\t%s\n", usage);
+		case OPT_HELP:       /* help */
+			optarg_usage("ipsec rsasigkey", "[<keybits>]");
 			exit(0);
-			break;
-		case 'V':       /* version */
+			continue;
+		case OPT_VERSION:       /* version */
 			printf("%s %s\n", progname, ipsec_version_code());
 			exit(0);
-			break;
-		case 'd':       /* -d is used for nssdirdir with nss tools */
+			continue;
+		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
 			lsw_conf_nssdir(optarg, logger);
-			break;
-		case 'P':       /* token authentication password */
+			continue;
+		case OPT_PASSWORD:       /* token authentication password */
 			lsw_conf_nsspassword(optarg);
-			break;
-		case 's': /* seed bits */
+			continue;
+		case OPT_SEEDBITS: /* seed bits */
 			seedbits = atoi(optarg);
 			if (PK11_IsFIPS()) {
 				if (seedbits < DEFAULT_SEED_BITS) {
@@ -176,12 +185,11 @@ int main(int argc, char *argv[])
 					exit(1);
 				}
 			}
-			break;
-		case '?':
-		default:
-			printf("Usage:\t%s\n", usage);
-			exit(2);
+			continue;
 		}
+
+		bad_case(c);
+	}
 
 	/*
 	 * Don't fetch the config options until after they have been
