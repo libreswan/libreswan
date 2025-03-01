@@ -35,7 +35,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/utsname.h>
@@ -56,6 +55,7 @@
 #include "lswnss.h"
 #include "lswtool.h"
 #include "ip_info.h"
+#include "optarg.h"
 
 #include <keyhi.h>
 #include <prerror.h>
@@ -69,7 +69,7 @@ struct secret_pubkey_context {
 typedef int (*secret_pubkey_func)(struct secret_pubkey_stuff *pks,
 				  struct secret_pubkey_context *context);
 
-char usage[] =
+const char usage[] =
 	"Usage:\n"
 	"   showhostkey --version\n"
 	"   showhostkey { --dump | --list }\n"
@@ -118,7 +118,7 @@ enum opt {
 
 const char short_opts[] = "v?d:lrg";
 
-struct option long_opts[] = {
+const struct option optarg_options[] = {
 	{ "help",       no_argument,            NULL,   OPT_HELP, },
 	{ "left",       no_argument,            NULL,   OPT_LEFT, },
 	{ "right",      no_argument,            NULL,   OPT_RIGHT, },
@@ -437,7 +437,6 @@ int main(int argc, char *argv[])
 	log_to_stderr = false;
 	struct logger *logger = tool_logger(argc, argv);
 
-	int opt;
 	bool left_flg = false;
 	bool right_flg = false;
 	bool dump_flg = false;
@@ -450,34 +449,40 @@ int main(int argc, char *argv[])
 	char *ckaid = NULL;
 	char *rsaid = NULL;
 
-	while ((opt = getopt_long(argc, argv, short_opts, long_opts, NULL)) != EOF) {
-		switch (opt) {
+	while (true) {
+
+		int c = optarg_getopt(logger, argc, argv, short_opts);
+		if (c < 0) {
+			break;
+		}
+
+		switch ((enum opt)c) {
 		case OPT_HELP:
 			goto usage;
-			break;
+			continue;
 
 		case OPT_LEFT:
 			left_flg = true;
-			break;
+			continue;
 		case OPT_RIGHT:
 			right_flg = true;
-			break;
+			continue;
 
 		case OPT_DUMP:
 			dump_flg = true;
-			break;
+			continue;
 
 		case OPT_IPSECKEY:
 			ipseckey_flg = true;
-			break;
+			continue;
 
 		case OPT_PEM:
 			pem_flg = true;
-			break;
+			continue;
 
 		case OPT_PUBKEY:
 			pubkey_flg = true;
-			break;
+			continue;
 
 		case OPT_PRECIDENCE:
 			{
@@ -498,48 +503,48 @@ int main(int argc, char *argv[])
 				}
 				precedence = u;
 			}
-			break;
+			continue;
 		case OPT_LIST:
 			list_flg = true;
-			break;
+			continue;
 
 		case OPT_GATEWAY:
 			ipseckey_flg = true;
 			gateway = clone_str(optarg, "gateway");
-			break;
+			continue;
 
 		case OPT_CKAID:
 			ckaid = clone_str(optarg, "ckaid");
-			break;
+			continue;
 
 		case OPT_RSAID:
 			rsaid = clone_str(optarg, "rsaid");
-			break;
+			continue;
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case OPT_NSSDIR:
 			lsw_conf_nssdir(optarg, logger);
-			break;
+			continue;
 
 		case OPT_PASSWORD:
 			lsw_conf_nsspassword(optarg);
-			break;
+			continue;
 
 		case OPT_VERBOSE:
 			log_to_stderr = true;
-			break;
+			continue;
 
 		case OPT_DEBUG:
 			cur_debugging = -1;
-			break;
+			continue;
 
 		case OPT_VERSION:
 			fprintf(stdout, "%s\n", ipsec_version_string());
 			exit(0);
 
-		default:
-			goto usage;
 		}
+
+		bad_case(c);
 	}
 
 	if (!(left_flg + right_flg + ipseckey_flg + pem_flg + dump_flg + list_flg)) {
