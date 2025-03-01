@@ -431,8 +431,16 @@ def create_mainca_end_certs(mainca_end_certs):
                                     ocsp=ocsp_resp)
         writeout_cert_and_key(name, cert, key)
         store_cert_and_key(name, cert, key)
-        writeout_pkcs12("pkcs12/"+ signer + '/', name,
-                        cert, key, ca_certs[signer][0])
+        cmd = (f"openssl pkcs12" +
+	       f" -export" +
+	       f" -passout pass:foobar" +
+               f" -certfile real/mainca/root.cert" +
+	       f" -in certs/{name}.crt" +
+	       f" -inkey keys/{name}.key" +
+	       f" -name {name}" +
+	       f" -out pkcs12/{signer}/{name}.p12")
+        print(subprocess.getoutput(cmd))
+
         serial += 1
 
     # update the next serial file in the CA's directory
