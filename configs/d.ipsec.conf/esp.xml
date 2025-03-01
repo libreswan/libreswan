@@ -20,7 +20,7 @@
     <para>
       During startup,
       <citerefentry>
-	<refentrytitle>ipsec_pluto</refentrytitle>
+	<refentrytitle>ipsec-pluto</refentrytitle>
 	<manvolnum>8</manvolnum>
       </citerefentry>
       will log all supported ESP algorithms.
@@ -58,7 +58,7 @@
       these defaults for instance: <command>ipsec algparse
       esp=</command> (see
       <citerefentry>
-	<refentrytitle>ipsec_algparse</refentrytitle>
+	<refentrytitle>ipsec-algparse</refentrytitle>
 	<manvolnum>8</manvolnum> </citerefentry>).
     </para>
     <para>

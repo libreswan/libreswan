@@ -19,7 +19,7 @@
     <para>
       During startup,
       <citerefentry>
-	<refentrytitle>ipsec_pluto</refentrytitle>
+	<refentrytitle>ipsec-pluto</refentrytitle>
 	<manvolnum>8</manvolnum>
       </citerefentry>
       will log all supported AH algorithms.
