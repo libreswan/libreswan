@@ -52,5 +52,4 @@ run crlutil -d ${certdir} -G -o ${crl} -n mainca <<EOF
 update=${present}
 nextupdate=${future}
 addcert $(cat ${certdir}/revoked.serial) ${present}
-addcert $(cat ${OUTDIR}/certs/west_chain_revoked.serial) ${present}
 EOF

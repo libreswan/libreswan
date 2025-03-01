@@ -510,28 +510,6 @@ def create_chained_certs(chain_ca_roots):
         print(cmd, subprocess.getoutput(cmd))
         serial += 1
 
-        endrev_name = chainca + "_revoked"
-        top_caname = cname
-        print(" - creating %s"% endrev_name)
-        ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
-                                        signpair[0], signpair[1], serial,
-                                        emailAddress="%s@testing.libreswan.org"%endcert_name,
-                                        START=NOW,
-                                        END=FUTURE)
-
-        writeout_cert_and_key(endrev_name, ercert, erkey)
-        store_cert_and_key(endrev_name, ercert, erkey)
-        cmd = (f"openssl pkcs12" +
-               f" -export" +
-               f" -passout pass:foobar" +
-               f" -in certs/{endrev_name}.crt" +
-               f" -inkey keys/{endrev_name}.key" +
-               f" -name {endrev_name}" +
-               f" -out pkcs12/{endrev_name}.p12" +
-               f" -certfile real/mainca/root.cert" +
-               f"")
-        print(cmd, subprocess.getoutput(cmd))
-
 
 def main():
     outdir = os.path.dirname(sys.argv[0])
