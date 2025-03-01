@@ -1,3 +1,7 @@
+/testing/guestbin/swan-prep
+ipsec start
+../../guestbin/wait-until-pluto-started
+echo "initdone"
 cp /usr/share/crypto-policies/back-ends/DEFAULT/libreswan.config /tmp/west-add.conf
 ipsec auto --add test
 ipsec status | grep algorithms: # DEFAULT

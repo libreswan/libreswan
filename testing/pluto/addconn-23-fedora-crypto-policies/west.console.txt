@@ -11,7 +11,6 @@ west #
  cp PATH/share/crypto-policies/back-ends/DEFAULT/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-"test": ikev2=yes has been replaced by keyexchange=ikev2
 "test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # DEFAULT
@@ -25,7 +24,6 @@ west #
  cp PATH/share/crypto-policies/back-ends/FIPS/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-"test": ikev2=yes has been replaced by keyexchange=ikev2
 "test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # FIPS
@@ -39,7 +37,6 @@ west #
  cp PATH/share/crypto-policies/back-ends/FUTURE/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-"test": ikev2=yes has been replaced by keyexchange=ikev2
 "test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # FUTURE
@@ -53,7 +50,6 @@ west #
  cp PATH/share/crypto-policies/back-ends/LEGACY/libreswan.config /tmp/west-add.conf
 west #
  ipsec auto --add test
-"test": ikev2=yes has been replaced by keyexchange=ikev2
 "test": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec status | grep algorithms: # LEGACY
