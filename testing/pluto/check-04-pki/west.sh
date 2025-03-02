@@ -14,13 +14,13 @@ ipsec_cert otherca otherwest
 ipsec_cert badca badwest
 
 /testing/guestbin/swan-prep --nokeys
-ipsec certutil -A -n west_chain_int_1 -t ,, -i /testing/x509/certs/west_chain_int_1.crt
+/testing/x509/import.sh real/mainca/west_chain_int_1.end.cert
 ipsec_cert west_chain_int_1
 
 /testing/guestbin/swan-prep --nokeys
-ipsec certutil -A -n west_chain_int_2 -t ,, -i /testing/x509/certs/west_chain_int_2.crt
+/testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
 ipsec_cert west_chain_int_2
 
 /testing/guestbin/swan-prep --nokeys
-ipsec pk12util -W foobar -i /testing/x509/pkcs12/west_chain_endcert.p12
+/testing/x509/import.sh real/mainca/west_chain_endcert.all.p12
 ipsec_cert west_chain_endcert

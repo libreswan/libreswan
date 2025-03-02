@@ -428,7 +428,8 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec certutil -A -n west_chain_int_1 -t ,, -i /testing/x509/certs/west_chain_int_1.crt
+ /testing/x509/import.sh real/mainca/west_chain_int_1.end.cert
+ipsec certutil -A -n west_chain_int_1 -t P,, -i real/mainca/west_chain_int_1.end.cert
 west #
  ipsec_cert west_chain_int_1
 Certificate Nickname                                         Trust Attributes
@@ -442,7 +443,7 @@ west_chain_int_1                                             ,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 26 (0x1a)
+        Serial Number: 13 (0xd)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -456,17 +457,11 @@ Certificate:
             Public Key Algorithm: PKCS #1 RSA Encryption
             RSA Public Key:
                 Modulus:
-                Exponent: 3 (0x3)
+                Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Basic Constraints
-            Data: Is a CA with no maximum path length.
-            Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
+            Name: Certificate Subject Alt Name
+            DNS name: "west_chain_int_1.testing.libreswan.org"
+            RFC822 Name: "west_chain_int_1@testing.libreswan.org"
             Name: Authority Information Access
             Method: PKIX Online Certificate Status Protocol
             Location: 
@@ -474,6 +469,15 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is a CA with no maximum path length.
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
+                    CRL Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
@@ -487,7 +491,8 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec certutil -A -n west_chain_int_2 -t ,, -i /testing/x509/certs/west_chain_int_2.crt
+ /testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
+ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
 west #
  ipsec_cert west_chain_int_2
 Certificate Nickname                                         Trust Attributes
@@ -501,7 +506,7 @@ west_chain_int_2                                             ,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 27 (0x1b)
+        Serial Number: 14 (0xe)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
@@ -516,17 +521,11 @@ Certificate:
             Public Key Algorithm: PKCS #1 RSA Encryption
             RSA Public Key:
                 Modulus:
-                Exponent: 3 (0x3)
+                Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Basic Constraints
-            Data: Is a CA with no maximum path length.
-            Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
+            Name: Certificate Subject Alt Name
+            DNS name: "west_chain_int_2.testing.libreswan.org"
+            RFC822 Name: "west_chain_int_2@testing.libreswan.org"
             Name: Authority Information Access
             Method: PKIX Online Certificate Status Protocol
             Location: 
@@ -534,6 +533,15 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is a CA with no maximum path length.
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
+                    CRL Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
@@ -547,14 +555,18 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- ipsec pk12util -W foobar -i /testing/x509/pkcs12/west_chain_endcert.p12
+ /testing/x509/import.sh real/mainca/west_chain_endcert.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  ipsec_cert west_chain_endcert
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west_chain_endcert                                           u,u,u
-Libreswan test CA for mainca - Libreswan                     ,,   
+west_chain_int_2                                             ,,   
+west_chain_int_1                                             ,,   
+mainca                                                       CT,, 
 *
 *
 * west_chain_endcert
@@ -563,7 +575,7 @@ Libreswan test CA for mainca - Libreswan                     ,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 28 (0x1c)
+        Serial Number: 15 (0xf)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
@@ -578,17 +590,11 @@ Certificate:
             Public Key Algorithm: PKCS #1 RSA Encryption
             RSA Public Key:
                 Modulus:
-                Exponent: 3 (0x3)
+                Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Subject Alt Name
             DNS name: "west_chain_endcert.testing.libreswan.org"
-            Name: Certificate Key Usage
-            Usages: Digital Signature
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
+            RFC822 Name: "west_chain_endcert@testing.libreswan.org"
             Name: Authority Information Access
             Method: PKIX Online Certificate Status Protocol
             Location: 
@@ -596,6 +602,13 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
