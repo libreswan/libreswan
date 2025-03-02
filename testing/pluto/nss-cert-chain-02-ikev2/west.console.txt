@@ -1,5 +1,12 @@
-/testing/guestbin/swan-prep --x509 --certchain
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/west_chain_endcert.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.end.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ /testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
+ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -57,11 +64,8 @@ west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
-nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_1                                             ,,   
-west_chain_int_2                                             ,,   
+west_chain_int_2                                             P,,  
 west #
  # catch any cert chain specific leaks
 west #

@@ -1,7 +1,22 @@
-/testing/guestbin/swan-prep --x509 --certchain
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
- ipsec certutil -A -i /testing/x509/certs/west_chain_int_1.crt -t ",," -n "west_chain_int_1"
+ # what we send to peer
+east #
+ /testing/x509/import.sh real/mainca/east_chain_endcert.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/east_chain_endcert.end.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+east #
+ /testing/x509/import.sh real/mainca/east_chain_int_2.end.cert
+ipsec certutil -A -n east_chain_int_2 -t P,, -i real/mainca/east_chain_int_2.end.cert
+east #
+ # how we authenticate peer
+east #
+ /testing/x509/import.sh real/mainca/west_chain_int_1.end.cert
+ipsec certutil -A -n west_chain_int_1 -t P,, -i real/mainca/west_chain_int_1.end.cert
+east #
+ /testing/x509/import.sh real/mainca/root.cert
+ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -34,18 +49,18 @@ east #
 "nss-cert-chain":   routing: unrouted;
 "nss-cert-chain":   conn serial: $1;
 east #
+ ipsec whack --impair suppress_retransmits
+east #
  echo "initdone"
 initdone
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
-nic                                                          P,,  
 east_chain_endcert                                           u,u,u
-east_chain_int_1                                             ,,   
-east_chain_int_2                                             ,,   
-west_chain_int_1                                             ,,   
+east_chain_int_2                                             P,,  
+west_chain_int_1                                             P,,  
+mainca                                                       CT,, 
 east #
  # catch any cert chain specific leaks
 east #

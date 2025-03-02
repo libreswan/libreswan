@@ -1,5 +1,12 @@
-/testing/guestbin/swan-prep --x509 --certchain
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/west_chain_endcert.end.p12
+ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.end.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ /testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
+ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -48,7 +55,7 @@ west #
 "nss-cert-chain" #1: I am sending a CA cert chain
 "nss-cert-chain" #1: I am sending a certificate request
 "nss-cert-chain" #1: sent Main Mode I3
-"nss-cert-chain" #1: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
+"nss-cert-chain" #1: ignoring secured informational payload INVALID_KEY_INFORMATION, msgid=MSGID, length=12
 "nss-cert-chain" #1: IMPAIR: retransmit so timing out SA (may retry)
 "nss-cert-chain" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "nss-cert-chain" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
@@ -59,11 +66,8 @@ west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
-nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_1                                             ,,   
-west_chain_int_2                                             ,,   
+west_chain_int_2                                             P,,  
 west #
  # catch any cert chain specific leaks
 west #
