@@ -242,8 +242,6 @@ parser.add_argument('--nsspw', action='store_true',
 
 parser.add_argument('--x509name', '-X', action='store', default="",
                     help='create X509 NSS file by importing test certs')
-parser.add_argument('--certchain', '-c', action='store_true',
-                    help='import the ca-chain test certificates into the NSS database')
 
 parser.add_argument('--fips', '-f', action='store_true',
                     help='prepare /etc/ipsec.d for running in FIPS mode')
@@ -562,32 +560,7 @@ if args.userland in ("libreswan") and hostname != "nic":
 
         pw = "-w /testing/x509/nss-pw"
 
-        if args.certchain:
-            icanum = 2
-            ica_p = hostname + "_chain_int_"
-            ee = hostname + "_chain_endcert"
-
-            # a note about DB trusts
-            # 'CT,,' is our root's trust. T is important!! it is for verifying "SSLClient" x509 KU
-            # ',,' is an intermediate's trust
-            # 'P,,' (trusted peer) is nic's for OCSP
-            # 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
-
-            # mainca and nic import
-            shell("/testing/x509/import.sh real/mainca/root.cert")
-            shell("/testing/x509/import.sh real/mainca/nic.end.cert")
-
-            # install ee
-            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:%s %s%s" %
-                (ee, nssdir, pw, p12cmd_pw))
-
-            # install intermediates
-            for i in range(1, icanum + 1):
-                acrt = ica_p + str(i)
-                shell("/usr/bin/certutil -A -n %s -t ',,' -d sql:%s -a -i /testing/x509/certs/%s.crt%s" %
-                    (acrt, nssdir, acrt, util_pw))
-
-        elif args.x509name:
+        if args.x509name:
 
             # is pw needed? Perhaps when FIPS, but has it been set?
 
