@@ -1780,9 +1780,39 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	/* check validity of cert */
-	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) != secCertTimeValid) {
-		return diag("%s certificate '%s' is expired or not yet valid",
-			    leftright, nickname);
+	SECCertTimeValidity validity = CERT_CheckCertValidTimes(cert, PR_Now(), false);
+	switch (validity) {
+	case secCertTimeValid:
+		ldbg(logger, "%s certificate '%s' time is valid", leftright, nickname);
+		break;
+	case secCertTimeExpired:
+		if (!host_end_config->groundhog) {
+			return diag("%s certificate '%s' has expired",
+				    leftright, nickname);
+		}
+		llog(RC_LOG, logger,
+		     "WARNING: groundhog %s certificate '%s' has expired",
+		     leftright, nickname);
+		break;
+	case secCertTimeNotValidYet:
+		if (!host_end_config->groundhog) {
+			return diag("%s certificate '%s' is not yet valid",
+				    leftright, nickname);
+		}
+		llog(RC_LOG, logger,
+		     "WARNING: groundhog %s certificate '%s' is not yet valid",
+		     leftright, nickname);
+		break;
+	default:
+	case secCertTimeUndetermined:
+		if (!host_end_config->groundhog) {
+			return diag("%s certificate '%s' has undetermined time",
+				    leftright, nickname);
+		}
+		llog(RC_LOG, logger,
+		     "WARNING: groundhog %s certificate '%s' has undetermined time",
+		     leftright, nickname);
+		break;
 	}
 
 	/*
