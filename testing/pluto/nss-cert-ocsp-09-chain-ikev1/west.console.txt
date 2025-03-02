@@ -1,7 +1,10 @@
-/testing/guestbin/swan-prep --x509 --certchain
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -D -n nic
+ /testing/x509/import.sh real/mainca/west_chain_endcert.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  /testing/x509/import.sh real/mainca/nic.end.cert
 ipsec certutil -A -n nic -t P,, -i real/mainca/nic.end.cert
@@ -48,7 +51,7 @@ west #
 "nss-cert-ocsp" #1: I am sending a certificate request
 "nss-cert-ocsp" #1: sent Main Mode I3
 "nss-cert-ocsp" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org'
-"nss-cert-ocsp" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org' and 2nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=east_chain_int_2@testing.libreswan.org'
+"nss-cert-ocsp" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=east_chain_int_2@testing.libreswan.org'
 "nss-cert-ocsp" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "nss-cert-ocsp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "nss-cert-ocsp" #2: sent Quick Mode request

@@ -42,8 +42,8 @@ log()
     west=$(cat /testing/x509/real/mainca/west.serial)
     nic=$(cat /testing/x509/real/mainca/nic.serial)
     revoked=$(cat /testing/x509/real/mainca/revoked.serial)
-    east_chain_endcert=$(cat /testing/x509/certs/east_chain_endcert.serial)
-    west_chain_endcert=$(cat /testing/x509/certs/west_chain_endcert.serial)
+    east_chain_endcert=$(cat /testing/x509/real/mainca/east_chain_endcert.serial)
+    west_chain_endcert=$(cat /testing/x509/real/mainca/west_chain_endcert.serial)
     {
 	journalctl /sbin/ocspd --no-pager
     } | {

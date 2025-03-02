@@ -1,23 +1,20 @@
-/testing/guestbin/swan-prep --x509 --certchain
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec pk12util -i /testing/x509/pkcs12/west_chain_endcert.p12 -W "foobar"
+ /testing/x509/import.sh real/mainca/west_chain_endcert.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-west #
- ipsec certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "east_chain_1" -t "CT,,"
-west #
- ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "east_chain_2" -t "CT,,"
+ipsec certutil -M -n mainca -t CT,,
 west #
  # check
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
-nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_1                                             CT,, 
-west_chain_int_2                                             CT,, 
+west_chain_int_2                                             ,,   
+west_chain_int_1                                             ,,   
+mainca                                                       CT,, 
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -52,11 +49,10 @@ west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
-nic                                                          P,,  
 west_chain_endcert                                           u,u,u
-west_chain_int_1                                             CT,, 
-west_chain_int_2                                             CT,, 
+west_chain_int_2                                             ,,   
+west_chain_int_1                                             ,,   
+mainca                                                       CT,, 
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -81,13 +77,9 @@ west #
  echo done
 done
 west #
- ipsec certutil -L
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-mainca                                                       CT,, 
-nic                                                          P,,  
-west_chain_endcert                                           u,u,u
-west_chain_int_1                                             CT,, 
-west_chain_int_2                                             CT,, 
+ grep -e '^[^|]*#1: switched to' /tmp/pluto.log
+west #
+ ipsec trafficstatus
+#2: "road-chain-B", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east.testing.libreswan.org'
 west #
  

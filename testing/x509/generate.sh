@@ -90,7 +90,7 @@ generate_root_cert()
     local eku=$1 ; shift
     echo generating root certificate: ${certdir} 1>&3
 
-    local rootname=$(basename ${certdir})
+    local root=$(basename ${certdir})
 
     local ca ; read ca < ${certdir}/root.ca
     local param ; read param < ${certdir}/root.param
@@ -101,7 +101,7 @@ generate_root_cert()
 
     # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
-    subject="CN=Libreswan test CA for ${rootname}, ${subject}"
+    subject="CN=Libreswan test CA for ${root}, ${subject}"
     subject="E=testing@libreswan.org, ${subject}"
 
     # Generate a file containing the constraints that CERTUTIL expects
@@ -113,14 +113,16 @@ generate_root_cert()
 	echo_extAIA_authority_information_access
     } > ${cfg}
 
+    ku=digitalSignature,certSigning,crlSigning
+
     certutil -S -d ${certdir} \
 	     -m ${serial} \
 	     -x \
-	     -n "${rootname}" \
+	     -n "${root}" \
 	     -s "${subject}" \
 	     -w ${NOW_OFFSET_MONTHS} \
 	     -v ${NOW_VALID_MONTHS} \
-	     --keyUsage digitalSignature,certSigning,crlSigning \
+	     --keyUsage ${ku} \
 	     --extKeyUsage ${eku} \
 	     -t "CT,C,C" \
 	     -z ${NOISE_FILE} \
@@ -134,7 +136,7 @@ generate_root_cert()
 
     pk12util \
 	-d ${certdir} \
-	-n ${rootname} \
+	-n ${root} \
 	-W ${PASSPHRASE} \
 	-o ${certdir}/root.p12
 
@@ -143,7 +145,7 @@ generate_root_cert()
     certutil \
 	-L \
 	-d ${certdir} \
-	-n ${rootname} \
+	-n ${root} \
 	-a > ${certdir}/root.cert # PEM
 
     # print the chain
@@ -151,7 +153,7 @@ generate_root_cert()
     chain=$(certutil \
 		-O \
 		-d ${certdir} \
-		-n ${rootname}) || exit 1
+		-n ${root}) || exit 1
     printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
 )
 
@@ -161,16 +163,18 @@ east_ipv6=2001:db8:1:2::23
 west_ipv4=192.1.2.45
 west_ipv6=2001:db8:1:2::45
 
-generate_end_cert()
+generate_cert()
 (
     set -x
 
     local certdir=$1 ; shift
+    local root=$1 ; shift
     local cert=$1 ; shift
-    locak eku=$1 ; shift
-    echo generating end certificate: ${certdir} ${cert} ${eku} 1>&3
-
-    local rootname=$(basename ${certdir})
+    local user=$1 ; shift
+    local ca=$1 ; shift
+    local ku=$1 ; shift   # key usage
+    local eku=$1 ; shift  # extended key usage
+    echo generating certificate: ${certdir} root=${root} cert=${cert} user=${user} ca=${ca} ku=${ku} eku=${eku} 1>&3
 
     local param ; read param < ${certdir}/root.param
     local domain ; read domain < ${certdir}/root.domain
@@ -179,12 +183,11 @@ generate_end_cert()
     echo ${serial} > ${certdir}/${cert}.serial
 
     local cn=${cert}.${domain}			# common name
-    local e=user-${cert}@testing.libreswan.org	# email
+    local e=${user}@testing.libreswan.org	# email
 
     # NSS wants subject to be local..global/root
     local subject="E=${e}, CN=${cn}, ${SUBJECT}"
     local hash_alg=SHA256
-    local ca=n
 
     # build the SAN
     #
@@ -214,13 +217,13 @@ generate_end_cert()
 	     -z ${NOISE_FILE} \
 	     -w ${NOW_OFFSET_MONTHS} \
 	     -v ${NOW_VALID_MONTHS} \
-	     -c "${rootname}" \
+	     -c ${root} \
 	     -t P,, \
 	     -m ${serial} \
 	     -g 3072 \
 	     --extSAN ${san} \
 	     ${param} \
-	     --keyUsage digitalSignature \
+	     --keyUsage ${ku} \
 	     --extKeyUsage ${eku} \
 	     -2 \
 	     -4 \
@@ -274,7 +277,7 @@ generate_end_cert()
 
 # generate ca directories
 
-while read base domain ca eku param ; do
+while read base domain ca param ; do
 
     echo creating cert directory: ${base} ${domain} ${ca} ${param} 1>&2
 
@@ -294,6 +297,8 @@ while read base domain ca eku param ; do
 
     # generate root certificate
 
+    eku=serverAuth,clientAuth,codeSigning,ocspResponder
+
     log=${certdir}/root.log
     if ! generate_root_cert ${certdir} ${eku} > ${log} 2>&1 ; then
 	cat ${log}
@@ -302,12 +307,12 @@ while read base domain ca eku param ; do
 
     # BASE DOMAIN CA? EKU PARAM...
 done <<EOF
-real/mainca   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
-real/mainec   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k ec  -Z SHA256 -q secp384r1
-real/otherca  other.libreswan.org   y serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
-fake/mainca   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
-fake/mainec   testing.libreswan.org y serverAuth,clientAuth,codeSigning,ocspResponder -k ec  -Z SHA256 -q secp384r1
-real/badca    testing.libreswan.org n serverAuth,clientAuth,codeSigning,ocspResponder -k rsa -Z SHA256
+real/mainca   testing.libreswan.org  y  -k rsa -Z SHA256
+real/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
+real/otherca  other.libreswan.org    y  -k rsa -Z SHA256
+fake/mainca   testing.libreswan.org  y  -k rsa -Z SHA256
+fake/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
+real/badca    testing.libreswan.org  n  -k rsa -Z SHA256
 EOF
 
 # generate end certs where needed
@@ -318,7 +323,7 @@ while read kinds roots certs eku ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${kind}/${root}
 		log=${certdir}/${cert}.log
-		if ! generate_end_cert ${certdir} ${cert} ${eku} > ${log} 2>&1 ; then
+		if ! generate_cert ${certdir} ${root} ${cert} user-${cert} n digitalSignature ${eku} > ${log} 2>&1 ; then
 		    cat ${log}
 		    exit 1
 		fi
@@ -331,4 +336,21 @@ done <<EOF
 real	    mainca          revoked                         serverAuth,clientAuth
 real        otherca         other{east,west}                serverAuth,clientAuth
 real        badca           bad{east,west}                  serverAuth,clientAuth
+EOF
+
+while read cert ca root ku eku ; do
+    eku=serverAuth,clientAuth
+    certdir=${OUTDIR}/real/mainca
+    log=${certdir}/${cert}.log
+    if ! generate_cert ${certdir} ${root} ${cert} ${cert} ${ca} ${ku} ${eku} > ${log} 2>&1 ; then
+	cat ${log}
+	exit 1
+    fi
+done <<EOF
+east_chain_int_1   y  mainca            digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
+east_chain_int_2   y  east_chain_int_1  digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
+east_chain_endcert n  east_chain_int_2  digitalSignature                         serverAuth,clientAuth
+west_chain_int_1   y  mainca            digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
+west_chain_int_2   y  west_chain_int_1  digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
+west_chain_endcert n  west_chain_int_2  digitalSignature                         digitalSignature,certSigning,crlSigning  serverAuth,clientAuth
 EOF
