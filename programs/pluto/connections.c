@@ -937,6 +937,20 @@ static diag_t extract_host_end(struct host_end *host,
 	err_t err;
 	const char *leftright = host_config->leftright;
 
+	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
+				    false, wm, logger);
+	if (groundhog) {
+		if (is_fips_mode()) {
+			return diag("%sgroundhog=yes is invalid in FIPS mode",
+				    leftright);
+		}
+		host_config->groundhog = groundhog;
+		groundhogday |= groundhog;
+		llog(RC_LOG, logger, "WARNING: %s is a groundhog", leftright);
+	} else {
+		ldbg(logger, "connection is not a groundhog");
+	}
+
 	/*
 	 * Save the whack value, update_hosts_from_end_host_addr()
 	 * will set the actual .nexthop value for the connection.
@@ -1276,19 +1290,6 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 	}
 
-	if (src->groundhog != NULL) {
-		err_t e = ttobool(src->groundhog, &host_config->groundhog);
-		if (e != NULL) {
-			return diag("%sgroundhog=%s, %s", leftright, src->groundhog, e);
-		}
-		if (host_config->groundhog && is_fips_mode()) {
-			return diag("%sgroundhog=%s is invalid in FIPS mode",
-				    leftright, src->groundhog);
-		}
-		groundhogday |= host_config->groundhog;
-		llog(RC_LOG, logger,
-		     "WARNING: %s is a groundhog", leftright);
-	}
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
 	host_config->ikeport = src->host_ikeport;

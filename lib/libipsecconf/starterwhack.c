@@ -232,8 +232,7 @@ static bool set_whack_end(struct whack_end *w,
 		w->xauth_client = l->values[KNCF_XAUTHCLIENT].option;
 	if (l->values[KSCF_USERNAME].set)
 		w->xauth_username = l->values[KSCF_USERNAME].string;
-	if (l->values[KSCF_GROUNDHOG].set)
-		w->groundhog = l->values[KSCF_GROUNDHOG].string;
+	w->groundhog = l->values[KSCF_GROUNDHOG].option;
 
 	w->modecfgserver = l->values[KNCF_MODECONFIGSERVER].option;
 	w->modecfgclient = l->values[KNCF_MODECONFIGCLIENT].option;

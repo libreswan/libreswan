@@ -421,7 +421,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #endif
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
   { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },
-  { "groundhog",  kv_conn | kv_leftright,  kt_string,  KSCF_GROUNDHOG, NULL, NULL, },
+  { "groundhog",  kv_conn | kv_leftright,  kt_sparse_name,  KSCF_GROUNDHOG, &yn_option_names, NULL, },
 
   /* these are conn statements which are not left/right */
 
