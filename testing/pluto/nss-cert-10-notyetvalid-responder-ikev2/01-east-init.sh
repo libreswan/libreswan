@@ -13,6 +13,6 @@ ipsec certutil -L -a -n `hostname`-notyetvalid -o OUTPUT/`hostname`-notyetvalid.
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
-# beware the groundhog
+# beware the groundhog!
 ipsec add nss-cert
 echo "initdone"

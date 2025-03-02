@@ -1,16 +1,18 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep --nokeys
 
-ipsec certutil -D -n east
-ipsec pk12util -i OUTPUT/west-notyetvalid.p12 -W secret
+# Import the root CA, and use that to generate a cert+pubkey that's
+# valid in 1 month (-w 1) and expires in 12 months (-v 12).
+/testing/x509/import.sh real/mainca/root.p12
+ipsec certutil -m 2 -S -k rsa -c mainca -n `hostname`-notyetvalid -s CN=`hostname`-notyetvalid -w 1 -v 12 -t CT,, -z east.conf
+ipsec certutil -L
 
-mkdir -p /var/run/pluto
+# verify the result
+ipsec certutil -L -a -n `hostname`-notyetvalid -o OUTPUT/`hostname`-notyetvalid.crt
+! ipsec vfychain -v -u 12 -p -p -p -a OUTPUT/`hostname`-notyetvalid.crt
 
-# Set a time in the future so notyetvalid and east certs are valid
-# here.  Invoke pluto directly so that it is the root of the shared
-# faketime tree.
-LD_PRELOAD=/usr/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
+ipsec start
 ../../guestbin/wait-until-pluto-started
 
-# if faketime works, adding conn should not give a warning about cert
-ipsec auto --add nss-cert
+# beware the groundhog
+ipsec add nss-cert
 echo "initdone"
