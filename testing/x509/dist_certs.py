@@ -449,68 +449,6 @@ def create_mainca_end_certs(mainca_end_certs):
         f.write(f"{serial}\n")
 
 
-def create_chained_certs(chain_ca_roots):
-    """ Create the EE->IA1->IA2->IAx-->CA chains.
-    Last in the chain is the end cert
-    TODO: Add more complex trust chain situations
-    """
-    global endrev_name
-    global top_caname
-    ca_cnt = 0
-
-    for chainca in chain_ca_roots:
-
-        serial = len(end_certs) + ca_cnt
-        lastca = "mainca"
-
-        #note there's an issue with the authkeyid in the chain
-        #signpair = ()
-        print("creating %s chain"% chainca)
-        for level in range(1, 3): # [1..3)
-
-            cname = chainca + '_int_' + str(level)
-            print(f"level {level} cname {cname} serial {serial} lastca {lastca}")
-
-            signpair = ca_certs[lastca]
-            print(" - creating %s with the last ca of %s"% (cname, lastca))
-            ca, key = create_sub_cert(cname + '.testing.libreswan.org',
-                                      signpair[0], signpair[1],
-                                      serial,
-                                      START=NOW,
-                                      END=FUTURE,
-                                      emailAddress="%s@testing.libreswan.org"%cname,
-                                      isCA=True,
-                                      ocsp=False)
-
-            writeout_cert_and_key(cname, ca, key)
-            store_cert_and_key(cname, ca, key)
-            lastca = cname
-            serial += 1
-            ca_cnt += 1
-
-        endcert_name = chainca + "_endcert"
-        signpair = ca_certs[lastca]
-        print(" - creating %s"% endcert_name)
-        ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",
-                                      signpair[0], signpair[1], serial,
-                                      emailAddress="%s@testing.libreswan.org"%endcert_name,
-                                      START=NOW,
-                                      END=FUTURE)
-        writeout_cert_and_key(endcert_name, ecert, ekey)
-        store_cert_and_key(endcert_name, ecert, ekey)
-        cmd = (f"openssl pkcs12" +
-               f" -export" +
-               f" -passout pass:foobar" +
-               f" -in certs/{endcert_name}.crt" +
-               f" -inkey keys/{endcert_name}.key" +
-               f" -name {endcert_name}" +
-               f" -out pkcs12/{endcert_name}.p12" +
-               f" -certfile real/mainca/root.cert" +
-               f"")
-        print(cmd, subprocess.getoutput(cmd))
-        serial += 1
-
-
 def main():
     outdir = os.path.dirname(sys.argv[0])
     cwd = os.getcwd()
@@ -553,13 +491,10 @@ def main():
                         'nic-nourl',
                         'smallkey', 'key2032', 'key4096',
                         'semiroad')
-    # Add chain roots here
-    chain_ca_roots =   ('east_chain', 'west_chain')
 
     # Put special case code for new certs in the following functions
     load_mainca_cas()
     create_mainca_end_certs(mainca_end_certs)
-    create_chained_certs(chain_ca_roots)
 
     print("finished!")
 
