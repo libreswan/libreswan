@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -xe ; exec < /dev/null
+exec </dev/null
+set -xe
+set -o pipefail
 
 PREFIX=@@PREFIX@@
 
