@@ -111,7 +111,6 @@ gnutls-utils				used by soft tokens
 ike-scan
 iptables
 libcap-ng-utils
-libfaketime
 linux-system-roles
 nc
 net-tools

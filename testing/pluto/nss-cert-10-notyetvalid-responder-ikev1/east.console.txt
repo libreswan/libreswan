@@ -1,27 +1,44 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 east #
- ipsec certutil -D -n west
+ # Import the root CA, and use that to generate a cert+pubkey that's
 east #
- ipsec pk12util -i OUTPUT/east-notyetvalid.p12 -W secret
+ # valid in 1 month (-w 1) and expires in 12 months (-v 12).
+east #
+ /testing/x509/import.sh real/mainca/root.p12
+ipsec pk12util -w nss-pw -i real/mainca/root.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 east #
- mkdir -p /var/run/pluto
+ ipsec certutil -m 2 -S -k rsa -c mainca -n `hostname`-notyetvalid -s CN=`hostname`-notyetvalid -w 1 -v 12 -t CT,, -z east.conf
+Generating key.  This may take a few moments...
 east #
- # Set a time in the future so notyetvalid and east certs are valid
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+mainca                                                       CTu,u,u
+east-notyetvalid                                             CTu,u,u
 east #
- # here.  Invoke pluto directly so that it is the root of the shared
+ # verify the result
 east #
- # faketime tree.
+ ipsec certutil -L -a -n `hostname`-notyetvalid -o OUTPUT/`hostname`-notyetvalid.crt
 east #
- LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=+370d ipsec pluto  --config /etc/ipsec.conf
-PATH/libexec/ipsec/pluto: unexpected open file descriptor 3
+ ! ipsec vfychain -v -u 12 -p -p -p -a OUTPUT/`hostname`-notyetvalid.crt
+Chain is bad!
+PROBLEM WITH THE CERT CHAIN:
+CERT 0. east-notyetvalid :
+  ERROR -8181: Peer's Certificate has expired.
+east #
+ ipsec start
+Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- # if faketime works, adding conn should not give a warning about cert
+ # beware the groundhog!
 east #
- ipsec auto --add nss-cert
+ ipsec add nss-cert
+"nss-cert": WARNING: right is a groundhog
+"nss-cert": WARNING: groundhog right certificate 'east-notyetvalid' is not yet valid
 "nss-cert": added IKEv1 connection
 east #
  echo "initdone"
@@ -29,6 +46,6 @@ initdone
 east #
  # only expected to show failure on west
 east #
- grep "certificate payload rejected" /tmp/pluto.log
+ grep -e '^[^|].*ERROR' /tmp/pluto.log
 east #
  

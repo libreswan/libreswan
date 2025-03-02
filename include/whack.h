@@ -108,7 +108,7 @@ struct whack_end {
 				 * pluto will convert to IP address again,
 				 * if this is non-NULL when conn fails.
 				 */
-	char *groundhog;	/* Is this end a groundhog? */
+	enum yn_options groundhog;	/* Is this end a groundhog? */
 };
 
 /*

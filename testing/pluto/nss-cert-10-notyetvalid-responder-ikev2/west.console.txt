@@ -1,18 +1,10 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -D -n east
-west #
- ipsec certutil -m 2 -S -k rsa -c west -n east-notyetvalid -s CN=east-notyetvalid -w 1 -v 12 -t u,u,u  -z east.conf
-Generating key.  This may take a few moments...
-Notice: Trust flag u is set automatically if the private key is present.
-west #
- ipsec pk12util -W secret -o OUTPUT/east-notyetvalid.p12 -n east-notyetvalid
-pk12util: PKCS12 EXPORT SUCCESSFUL
-west #
- ipsec certutil -L -n east-notyetvalid -a > OUTPUT/east-notyetvalid.crt
-west #
- ipsec certutil -F -n east-notyetvalid
+ /testing/x509/import.sh real/mainca/west.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/west.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -48,7 +40,7 @@ done
 west #
  # only expected to show failure on west
 west #
- grep "certificate payload rejected" /tmp/pluto.log
-"nss-cert" #1: X509: certificate payload rejected for this connection
+ grep -e '^[^|].*ERROR' /tmp/pluto.log
+"nss-cert" #1: NSS: ERROR: IPsec certificate CN=east-notyetvalid invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 west #
  
