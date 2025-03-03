@@ -1,12 +1,19 @@
-/testing/guestbin/swan-prep --x509 --x509name key2032
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ # so this end can sign its own cert
+west #
+ /testing/x509/import.sh real/mainca/key2032.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/key2032.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair revival
@@ -32,6 +39,6 @@ west #
  echo done
 done
 west #
- grep "FIPS: rejecting" /tmp/pluto.log
+ grep '^[^|].*FIPS: ' /tmp/pluto.log
 west #
  

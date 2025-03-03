@@ -1,7 +1,0 @@
-Basic pluto X.509 test with weak key to confirm it gets rejected.
-
-WIP: currently shows:
-
-003 "ikev2-westnet-eastnet-x509-cr" #1: NSS: RSA DSS sign function failed: SEC_ERROR 3 (0x3): security library: output length error.
-
-maybe try using strongswan as initiator ?

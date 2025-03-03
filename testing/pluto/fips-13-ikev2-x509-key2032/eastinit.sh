@@ -1,5 +1,8 @@
-/testing/guestbin/swan-prep --x509 --fips
+/testing/guestbin/swan-prep --nokeys --fips
+
+/testing/x509/import.sh real/mainca/east.all.p12
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ikev2
+ipsec add westnet-eastnet-ikev2
 echo "initdone"

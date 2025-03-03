@@ -1,7 +1,13 @@
-/testing/guestbin/swan-prep --46 --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --46 --nokeys
+Creating empty NSS database
 east #
- certutil -A -n key4096 -t P,, -d  sql:/etc/ipsec.d -i /testing/x509/certs/key4096.crt
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
+east #
+ /testing/x509/import.sh real/mainca/key4096.end.cert
+ipsec certutil -A -n key4096 -t P,, -i real/mainca/key4096.end.cert
 east #
  ../../guestbin/ip.sh link set dev eth1 mtu 1480
 east #
@@ -10,7 +16,7 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add v6-tunnel
+ ipsec add v6-tunnel
 "v6-tunnel": added IKEv2 connection
 east #
  echo "initdone"
