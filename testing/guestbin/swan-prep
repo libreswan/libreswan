@@ -240,9 +240,6 @@ nsspassword="s3cret"
 parser.add_argument('--nsspw', action='store_true',
                     help='set the security password on the NSS database to '+nsspassword)
 
-parser.add_argument('--x509name', '-X', action='store', default="",
-                    help='create X509 NSS file by importing test certs')
-
 parser.add_argument('--fips', '-f', action='store_true',
                     help='prepare /etc/ipsec.d for running in FIPS mode')
 
@@ -560,31 +557,15 @@ if args.userland in ("libreswan") and hostname != "nic":
 
         pw = "-w /testing/x509/nss-pw"
 
-        if args.x509name:
+        # is pw needed? Perahps when FIPS, but has it been set?
 
-            # is pw needed? Perhaps when FIPS, but has it been set?
+        # import then fix trust
+        shell("/testing/x509/import.sh real/mainca/%s.all.p12" % (hostname))
 
-            # import then fix trust
-            shell("/usr/bin/pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d sql:%s %s%s" %
-                  (args.x509name, nssdir, pw, p12cmd_pw))
-            shell("/usr/bin/certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:%s -t 'CT,,'%s" % (nssdir, util_pw))
-
-            # pre-import certs for all other hosts
-            for certname in ("west", "east", "road", "north", "nic"):
-                if not hostname in certname:
-                    shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
-
-        else:
-
-            # is pw needed? Perahps when FIPS, but has it been set?
-
-            # import then fix trust
-            shell("/testing/x509/import.sh real/mainca/%s.all.p12" % (hostname))
-
-            # pre-import certs for all other hosts
-            for certname in ("west", "east", "road", "north", "nic"):
-                if not hostname in certname:
-                    shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
+        # pre-import certs for all other hosts
+        for certname in ("west", "east", "road", "north", "nic"):
+            if not hostname in certname:
+                shell("/testing/x509/import.sh real/mainca/%s.end.cert" % (certname))
 
 # Don't enable FIPS mode until after NSS DBS are created.  See:
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1531267
