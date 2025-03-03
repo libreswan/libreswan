@@ -163,6 +163,9 @@ east_ipv6=2001:db8:1:2::23
 west_ipv4=192.1.2.45
 west_ipv6=2001:db8:1:2::45
 
+semiroad_ipv4=192.1.3.209
+semiroad_ipv6=2001:db8:1:3::209
+
 generate_cert()
 (
     set -x
@@ -211,6 +214,7 @@ generate_cert()
 	case ${cert} in
 	    *east ) san="${san},ip:${east_ipv4},ip:${east_ipv6}" ;;
 	    *west ) san="${san},ip:${west_ipv4},ip:${west_ipv6}" ;;
+	    *semiroad) san="${san},ip:${semiroad_ipv4},ip:${semiroad_ipv6}" ;;
 	esac
     fi
     echo " san=${san}" 1>&3
@@ -354,6 +358,7 @@ real        badca           bad{east,west}                  y serverAuth,clientA
 real        mainca          key2032                         y serverAuth,clientAuth -k rsa -g 2032
 real        mainca          key4096                         y serverAuth,clientAuth -k rsa -g 4096
 real        mainca          {east,west}-nosan               n serverAuth,clientAuth
+real        mainca          semiroad                        y serverAuth,clientAuth
 EOF
 
 while read cert is_ca root ku eku ; do

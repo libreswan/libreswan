@@ -193,14 +193,12 @@ def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
         if "." in cnstr:
             ee = cnstr.split(".")[0]
             print("EE:%s"% ee)
-            if ee == "west" or ee == "east" or ee == "semiroad":
+            if ee == "west" or ee == "east":
                 SAN += ", email:%s@testing.libreswan.org"%ee
                 if ee == "west":
                     SAN += ", IP:192.1.2.45, IP:2001:db8:1:2::45"
                 if ee == "east":
                     SAN += ", IP:192.1.2.23, IP:2001:db8:1:2::23"
-                if ee == "semiroad":
-                    SAN += ", IP:192.1.3.209, IP:2001:db8:1:3::209"
         if 'sanCritical' in cnstr:
             add_ext(cert, 'subjectAltName', True, SAN)
         else:
@@ -481,8 +479,7 @@ def main():
                         'west-eku-ipsecIKE', # Should work
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
                         'west-ekuCritical-eku-emailProtection', # Should still work
-                        'nic-nourl',
-                        'semiroad')
+                        'nic-nourl')
 
     # Put special case code for new certs in the following functions
     load_mainca_cas()
