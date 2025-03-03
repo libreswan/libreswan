@@ -171,16 +171,27 @@ generate_cert()
     local root=$1 ; shift
     local cert=$1 ; shift
     local user=$1 ; shift
-    local ca=$1 ; shift
-    local ku=$1 ; shift   # key usage
-    local eku=$1 ; shift  # extended key usage
-    echo generating certificate: ${certdir} root=${root} cert=${cert} user=${user} ca=${ca} ku=${ku} eku=${eku} 1>&3
+    echo "generating certificate: ${certdir} root=${root} cert=${cert} user=${user}" 1>&3
 
-    local param ; read param < ${certdir}/root.param
-    local domain ; read domain < ${certdir}/root.domain
+    local ca=$1  ; shift ; echo " ca=${ca}" 1>&3
+    local ku=$1  ; shift ; echo " ku=${ku}" 1>&3    # key usage
+    local eku=$1 ; shift ; echo " eku=${eku}" 1>&3  # extended key usage
+
+    local param
+    if test "$#" -gt 0 ; then
+	param="$@"
+    else
+	read param < ${certdir}/root.param
+    fi
+    echo " param=${param}" 1>&3
+
+    local domain
+    read domain < ${certdir}/root.domain
+    echo " domain=${domain}" 1>&3
 
     local serial=$(serial ${certdir})
     echo ${serial} > ${certdir}/${cert}.serial
+    echo " serial=${serial}" 1>&3
 
     local cn=${cert}.${domain}			# common name
     local e=${user}@testing.libreswan.org	# email
@@ -197,9 +208,6 @@ generate_cert()
 	*east ) san="${san},ip:${east_ipv4},ip:${east_ipv6}" ;;
 	*west ) san="${san},ip:${west_ipv4},ip:${west_ipv6}" ;;
     esac
-    if test "$#" -gt 0 ; then
-	san="${san},$@"
-    fi
 
     # Generate a file containing the constraints that CERTUTIL expects
     # on stdin.
@@ -317,13 +325,15 @@ EOF
 
 # generate end certs where needed
 
-while read kinds roots certs eku ; do
+while read kinds roots certs eku param ; do
     for kind in $(eval echo ${kinds}) ; do
 	for root in $(eval echo ${roots}) ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${kind}/${root}
 		log=${certdir}/${cert}.log
-		if ! generate_cert ${certdir} ${root} ${cert} user-${cert} n digitalSignature ${eku} > ${log} 2>&1 ; then
+		ca=n
+		ku=digitalSignature
+		if ! generate_cert ${certdir} ${root} ${cert} user-${cert} ${ca} ${ku} ${eku} ${param} > ${log} 2>&1 ; then
 		    cat ${log}
 		    exit 1
 		fi
@@ -336,10 +346,11 @@ done <<EOF
 real	    mainca          revoked                         serverAuth,clientAuth
 real        otherca         other{east,west}                serverAuth,clientAuth
 real        badca           bad{east,west}                  serverAuth,clientAuth
+real        mainca          key2032                         serverAuth,clientAuth -k rsa -g 2032
+real        mainca          key4096                         serverAuth,clientAuth -k rsa -g 4096
 EOF
 
 while read cert ca root ku eku ; do
-    eku=serverAuth,clientAuth
     certdir=${OUTDIR}/real/mainca
     log=${certdir}/${cert}.log
     if ! generate_cert ${certdir} ${root} ${cert} ${cert} ${ca} ${ku} ${eku} > ${log} 2>&1 ; then
@@ -352,5 +363,5 @@ east_chain_int_2   y  east_chain_int_1  digitalSignature,certSigning,crlSigning 
 east_chain_endcert n  east_chain_int_2  digitalSignature                         serverAuth,clientAuth
 west_chain_int_1   y  mainca            digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
 west_chain_int_2   y  west_chain_int_1  digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
-west_chain_endcert n  west_chain_int_2  digitalSignature                         digitalSignature,certSigning,crlSigning  serverAuth,clientAuth
+west_chain_endcert n  west_chain_int_2  digitalSignature                         serverAuth,clientAuth
 EOF
