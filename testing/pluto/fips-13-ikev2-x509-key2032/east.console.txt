@@ -1,20 +1,25 @@
-/testing/guestbin/swan-prep --x509 --fips
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys --fips
+Creating empty NSS database
 Password changed successfully.
 FIPS mode enabled.
+east #
+ /testing/x509/import.sh real/mainca/east.all.p12
+ipsec pk12util -k /run/pluto/nsspw -w nss-pw -i real/mainca/east.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -f /run/pluto/nsspw -M -n mainca -t CT,,
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- grep "FIPS: rejecting" /tmp/pluto.log
+ grep '^[^|].*FIPS: ' /tmp/pluto.log
 "westnet-eastnet-ikev2" #1: FIPS: rejecting peer cert with key size 2032 under 2048: E=user-key2032@testing.libreswan.org,CN=key2032.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 east #
  

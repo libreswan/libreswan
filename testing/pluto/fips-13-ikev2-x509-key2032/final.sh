@@ -1,1 +1,1 @@
-grep "FIPS: rejecting" /tmp/pluto.log
+grep '^[^|].*FIPS: ' /tmp/pluto.log
