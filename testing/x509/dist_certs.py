@@ -471,7 +471,6 @@ def main():
                         'west-eku-serverAuth', # should be enough to validate
                         'west-bcOmit', # Basic Constraints should not be needed
                         'west-ekuOmit', # Extended Key Usage should not be needed
-                        'west-nosan', 'east-nosan', # No Subject Alt Names
                         'west-sanCritical', # should work
                         'west-bcCritical', # Basic Constraints critical flag should be ignored
                         'west-kuCritical', # Key Usage critical flag should be ignored
@@ -483,7 +482,6 @@ def main():
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
                         'west-ekuCritical-eku-emailProtection', # Should still work
                         'nic-nourl',
-                        'key4096',
                         'semiroad')
 
     # Put special case code for new certs in the following functions
