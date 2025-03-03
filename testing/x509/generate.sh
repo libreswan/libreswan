@@ -63,7 +63,7 @@ echo_4_crl_constraints()
     echo n     # Is this a critical extension [y/N]?
 }
 
-echo_extAIA_authority_information_access()
+echo_extAIA_ocsp()
 {
     echo 2	# Enter access method type for ...: 2 - OCSP
     echo 7	# Select one of the following general name type: 7 - uniformResourceidentifier
@@ -82,7 +82,7 @@ serial()
     echo ${serial}
 }
 
-generate_root_cert()
+generate_root_ca()
 (
     set -x
 
@@ -110,7 +110,7 @@ generate_root_cert()
     {
 	echo_2_basic_constraints ${is_ca}
 	echo_4_crl_constraints
-	echo_extAIA_authority_information_access
+	echo_extAIA_ocsp
     } > ${cfg}
 
     ku=digitalSignature,certSigning,crlSigning
@@ -176,11 +176,13 @@ generate_cert()
     local root=$1    ; shift ; echo " root=${root}" 1>&3
     local cert=$1    ; shift ; echo " cert=${cert}" 1>&3
 
-    local user=$1    ; shift ; echo " user=${user}" 1>&3
-    local is_ca=$1   ; shift ; echo " is_ca=${is_ca}" 1>&3
-    local has_san=$1 ; shift ; echo " has_san=${has_san}" 1>&3
-    local ku=$1      ; shift ; echo " ku=${ku}" 1>&3    # key usage
-    local eku=$1     ; shift ; echo " eku=${eku}" 1>&3  # extended key usage
+    local user=$1     ; shift ; echo " user=${user}" 1>&3
+    local is_ca=$1    ; shift ; echo " is_ca=${is_ca}" 1>&3
+    local add_san=$1  ; shift ; echo " add_san=${add_san}" 1>&3   # Subject Alt Name
+    local add_ocsp=$1 ; shift ; echo " add_ocsp=${add_ocsp}" 1>&3 # OCSP (in Authority Information Access)
+    local add_crl=$1  ; shift ; echo " add_crl=${add_crl}" 1>&3   # Certificate Revocation List
+    local ku=$1       ; shift ; echo " ku=${ku}" 1>&3    # key usage
+    local eku=$1      ; shift ; echo " eku=${eku}" 1>&3  # extended key usage
 
     local param
     if test "$#" -gt 0 ; then
@@ -209,13 +211,15 @@ generate_cert()
     #
     # Note: SAN's EMAIL and DN's E are unexplainably different.
     san=
-    if test ${has_san} = y ; then
+    if test ${add_san} -gt 0 ; then
 	local san=dns:${cn},email:${cert}@${domain}
 	case ${cert} in
 	    *east ) san="${san},ip:${east_ipv4},ip:${east_ipv6}" ;;
 	    *west ) san="${san},ip:${west_ipv4},ip:${west_ipv6}" ;;
 	    *semiroad) san="${san},ip:${semiroad_ipv4},ip:${semiroad_ipv6}" ;;
 	esac
+    else
+	san=-
     fi
     echo " san=${san}" 1>&3
 
@@ -224,8 +228,8 @@ generate_cert()
     local cfg=${certdir}/${cert}.cfg
     {
 	echo_2_basic_constraints ${is_ca}
-	echo_4_crl_constraints
-	echo_extAIA_authority_information_access
+	test ${add_crl}  -gt 0 && echo_4_crl_constraints ${add_crl}
+	test ${add_ocsp} -gt 0 && echo_extAIA_ocsp ${add_ocsp}
     } > ${cfg}
 
     certutil -S \
@@ -238,13 +242,13 @@ generate_cert()
 	     -c ${root} \
 	     -t P,, \
 	     -m ${serial} \
-	     $(if test -n "${san}" ; then echo --extSAN ${san} ; fi) \
 	     ${param} \
-	     --keyUsage ${ku} \
-	     --extKeyUsage ${eku} \
+	     $(test "${san}" != - && echo --extSAN ${san}) \
+	     $(test "${ku}"  != - && echo --keyUsage ${ku}) \
+	     $(test "${eku}" != - && echo --extKeyUsage ${eku}) \
 	     -2 \
-	     -4 \
-	     --extAIA \
+	     $(test ${add_crl}  -gt 0 && echo -4) \
+	     $(test ${add_ocsp} -gt 0 && echo --extAIA) \
 	     < ${cfg}
 
     # private key + cert chain
@@ -282,7 +286,12 @@ generate_cert()
 	-name ${cert} \
 	-out ${certdir}/${cert}.end.p12
 
-    # print the chain
+    # dump the cert, log the chain
+
+    certutil \
+	-L \
+	-d ${certdir} \
+	-n ${cert}
 
     chain=$(certutil \
 		-O \
@@ -303,7 +312,7 @@ while read base domain is_ca param ; do
 
     # configure NSS
 
-    modutil -create -dbdir "${certdir}" < /dev/null
+    modutil -create -dbdir "${certdir}" < /dev/null > /dev/null
 
     # configure root certificate
 
@@ -316,7 +325,7 @@ while read base domain is_ca param ; do
     eku=serverAuth,clientAuth,codeSigning,ocspResponder
 
     log=${certdir}/root.log
-    if ! generate_root_cert ${certdir} ${is_ca} ${eku} > ${log} 2>&1 ; then
+    if ! generate_root_ca ${certdir} ${is_ca} ${eku} > ${log} 2>&1 ; then
 	cat ${log}
 	exit 1
     fi
@@ -333,15 +342,14 @@ EOF
 
 # generate end certs where needed
 
-while read kinds roots certs has_san eku param ; do
+while read kinds roots certs add_san add_ocsp add_crl ku eku param ; do
     for kind in $(eval echo ${kinds}) ; do
 	for root in $(eval echo ${roots}) ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${kind}/${root}
 		log=${certdir}/${cert}.log
 		is_ca=n
-		ku=digitalSignature
-		if ! generate_cert ${certdir} ${root} ${cert} user-${cert} ${is_ca} ${has_san} ${ku} ${eku} ${param} > ${log} 2>&1 ; then
+		if ! generate_cert ${certdir} ${root} ${cert} user-${cert} ${is_ca} ${add_san} ${add_ocsp} ${add_crl} ${ku} ${eku} ${param} > ${log} 2>&1 ; then
 		    cat ${log}
 		    exit 1
 		fi
@@ -349,22 +357,25 @@ while read kinds roots certs has_san eku param ; do
 	done
     done
 done <<EOF
-{real,fake} {mainca,mainec} nic                             y serverAuth,clientAuth,codeSigning,ocspResponder
-{real,fake} {mainca,mainec} {east,west,road,north,rise,set} y serverAuth,clientAuth
-real	    mainca          revoked                         y serverAuth,clientAuth
-real        otherca         other{east,west}                y serverAuth,clientAuth
-real        badca           bad{east,west}                  y serverAuth,clientAuth
-real        mainca          key2032                         y serverAuth,clientAuth -k rsa -g 2032
-real        mainca          key4096                         y serverAuth,clientAuth -k rsa -g 4096
-real        mainca          {east,west}-nosan               n serverAuth,clientAuth
-real        mainca          semiroad                        y serverAuth,clientAuth
+{real,fake} {mainca,mainec} nic                             1  1  1  digitalSignature  serverAuth,clientAuth,codeSigning,ocspResponder
+{real,fake} {mainca,mainec} {east,west,road,north,rise,set} 1  1  1  digitalSignature  serverAuth,clientAuth
+real	    mainca          revoked                         1  1  1  digitalSignature  serverAuth,clientAuth
+real        mainca          key2032                         1  1  1  digitalSignature  serverAuth,clientAuth  -k rsa -g 2032
+real        mainca          key4096                         1  1  1  digitalSignature  serverAuth,clientAuth  -k rsa -g 4096
+real        mainca          {east,west}-nosan               0  1  1  digitalSignature  serverAuth,clientAuth
+real        mainca          semiroad                        1  1  1  digitalSignature  serverAuth,clientAuth
+real        mainca          nic-no-ocsp                     1  0  1  digitalSignature  serverAuth,clientAuth
+real        otherca         other{east,west}                1  1  1  digitalSignature  serverAuth,clientAuth
+real        badca           bad{east,west}                  1  1  1  digitalSignature  serverAuth,clientAuth
 EOF
 
 while read cert is_ca root ku eku ; do
     certdir=${OUTDIR}/real/mainca
     log=${certdir}/${cert}.log
-    has_san=y
-    if ! generate_cert ${certdir} ${root} ${cert} ${cert} ${is_ca} ${has_san} ${ku} ${eku} > ${log} 2>&1 ; then
+    add_san=1  # Subject Alt Name
+    add_ocsp=1 # Authority Information Access (OCSP)
+    add_crl=1  # Certificate Revocation List
+    if ! generate_cert ${certdir} ${root} ${cert} ${cert} ${is_ca} ${add_san} ${add_ocsp} ${add_crl} ${ku} ${eku} > ${log} 2>&1 ; then
 	cat ${log}
 	exit 1
     fi
