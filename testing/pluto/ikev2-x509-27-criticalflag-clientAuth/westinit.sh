@@ -1,5 +1,7 @@
-/testing/guestbin/swan-prep --x509 --x509name west-ekuCritical
-ipsec certutil -D -n east
+/testing/guestbin/swan-prep --nokeys
+
+ipsec pk12util -W foobar -i /testing/x509/pkcs12/mainca/west-ekuCritical.p12
+
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

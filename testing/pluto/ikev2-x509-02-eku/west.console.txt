@@ -1,7 +1,8 @@
-/testing/guestbin/swan-prep --x509 --x509name west-eku-ipsecIKE
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- ipsec certutil -D -n east
+ ipsec pk12util -W foobar -i /testing/x509/pkcs12/mainca/west-eku-ipsecIKE.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # confirm that the network is alive
 west #
