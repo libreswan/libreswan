@@ -392,10 +392,6 @@ def create_mainca_end_certs(mainca_end_certs):
         # put special cert handling here
         print(" - creating %s %d" % (name, serial))
         keysize = 3072
-        if name == 'key2032':
-            keysize = 2032
-        if name == 'key4096':
-            keysize = 4096
 
         startdate = NOW
         enddate = FUTURE_END
@@ -487,7 +483,7 @@ def main():
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
                         'west-ekuCritical-eku-emailProtection', # Should still work
                         'nic-nourl',
-                        'key2032', 'key4096',
+                        'key4096',
                         'semiroad')
 
     # Put special case code for new certs in the following functions
