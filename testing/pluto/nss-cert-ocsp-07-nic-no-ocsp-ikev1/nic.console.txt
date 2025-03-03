@@ -1,8 +1,8 @@
 #start ocsp server here
 nic #
- ../../guestbin/ocspd.sh --start nic-nourl
- cp /testing/x509/keys/nic-nourl.key /etc/ocspd/private/nic_key.pem
- cp /testing/x509/certs/nic-nourl.crt /etc/ocspd/certs/nic.pem
+ ../../guestbin/ocspd.sh --start nic-no-ocsp
+ cp /testing/x509/real/mainca/nic-no-ocsp.end.key /etc/ocspd/private/nic_key.pem
+ cp /testing/x509/real/mainca/nic-no-ocsp.end.cert /etc/ocspd/certs/nic.pem
  cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
  cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
  openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem

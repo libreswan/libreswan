@@ -1385,7 +1385,8 @@ kvmplutotest	nss-cert-ocsp-05-no-trust-ikev1		good
 kvmplutotest	nss-cert-ocsp-05-no-trust-ikev2		good
 kvmplutotest	nss-cert-ocsp-05-no-trust-strict-ikev1	good
 kvmplutotest	nss-cert-ocsp-06-no-trust-revoked-ikev1	good
-kvmplutotest	nss-cert-ocsp-07-nourl-ikev1		good
+kvmplutotest	nss-cert-ocsp-07-nic-no-ocsp-ikev1	good
+kvmplutotest	nss-cert-ocsp-07-nic-no-ocsp-ikev2	good
 kvmplutotest	nss-cert-ocsp-08-post-ikev1		good
 kvmplutotest	nss-cert-ocsp-09-chain-ikev1		good
 #
