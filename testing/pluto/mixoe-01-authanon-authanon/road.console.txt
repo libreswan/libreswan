@@ -1,7 +1,10 @@
-/testing/guestbin/swan-prep --x509 --x509name semiroad
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 road #
- ipsec certutil -D -n east
+ /testing/x509/import.sh real/mainca/semiroad.all.p12
+ipsec pk12util -w nss-pw -i real/mainca/semiroad.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
 road #
  cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 road #
