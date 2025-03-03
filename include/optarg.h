@@ -74,7 +74,7 @@ uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const st
  * Adddres family dependent options.
  *
  * The struct keeps track of the selected value and which param
- * used/specified it so it can be logged when a conflict occures.
+ * used/specified it so it can be logged when a conflict occurs.
  */
 
 struct optarg_family {

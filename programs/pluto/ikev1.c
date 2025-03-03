@@ -424,7 +424,7 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 }
 
 /*
- * Recognise and, if necesssary, respond to an IKEv1 duplicate.
+ * Recognise and, if necessary, respond to an IKEv1 duplicate.
  *
  * Use .st_state, which is the true current state, and not MD
  * .FROM_STATE (which is derived from some convoluted magic) when
@@ -878,7 +878,7 @@ void process_v1_packet(struct msg_digest *md)
 		 * re-find the IKE (ISAKMP) SA (it could also use SPIs
 		 * (COOKIES)).
 		 *
-		 * Hence, having these mis-match is pretty bad.
+		 * Hence, having these mismatch is pretty bad.
 		 */
 		if (pbad(child->sa.st_clonedfrom != ike->sa.st_serialno)) {
 			return;
@@ -1272,7 +1272,7 @@ void process_v1_packet(struct msg_digest *md)
 					 * from first fragment.
 					 *
 					 * XXX: DANGER! this code is
-					 * re-using FRAG.
+					 * reusing FRAG.
 					 */
 					frag = st->st_v1_rfrags;
 					uint8_t *buffer = whole_md->packet_pbs.start;
@@ -1992,7 +1992,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		/*
 		 * Danger: this can delete IKE_OR_NULL and/or
 		 * CHILD_OR_NULL (although the latter would have to be
-		 * pretty bizare as it would mean a D payload in a
+		 * pretty bizarre as it would mean a D payload in a
 		 * Quick message).
 		 */
 		handle_v1_delete_payloads(&ike_or_null, md);

@@ -743,7 +743,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 #endif
 
-	/* luckly last !?! */
+	/* luckily last !?! */
 	if (m->whack_leave_state) {
 		dbg_whack(s, "leave_state: start");
 		whack_shutdown(logger, true);

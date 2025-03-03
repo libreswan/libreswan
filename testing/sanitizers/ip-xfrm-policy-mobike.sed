@@ -1,6 +1,6 @@
 # this is an optional sanitizer in addition to guest-ip-xfrm-*.sed
 # which is always run
-# aggressivly sanitize "ip xfrm policy" for mobike tests
+# aggressively sanitize "ip xfrm policy" for mobike tests
 #
 / spi 0x[^ ]* /d
 / reqid [1-9][0-9]* /d

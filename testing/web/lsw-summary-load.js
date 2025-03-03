@@ -180,7 +180,7 @@ function lsw_summary_commits(test_run) {
 	    continue
 	}
 	// back link this commit to the same test, acts as a loop
-	// sentinal.
+	// sentinel.
 	// parent.test_run = test_run
 	test_run.commits.push(parent)
 	parents = parents.concat(parent.parents)

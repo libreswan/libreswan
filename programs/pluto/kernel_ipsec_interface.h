@@ -1,4 +1,4 @@
-/* Kernel interace to IPsec Interface, for libreswan
+/* Kernel interface to IPsec Interface, for libreswan
  *
  * Copyright (C) 2024 Andrew Cagney
  *

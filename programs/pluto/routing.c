@@ -2517,7 +2517,7 @@ void jam_routing_sa(struct jambuf *buf, const struct connection *c)
 	 *
 	 * Work backwards through established / negotiating Child SA,
 	 * established /negotiating IKE SA.  One should match.  The
-	 * routing SA acts as a backstop guarenteeing someting is
+	 * routing SA acts as a backstop guaranteeing something is
 	 * logged.
 	 */
 	for (enum connection_owner owner = CONNECTION_OWNER_ROOF-1;

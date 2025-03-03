@@ -60,7 +60,7 @@ A testcase demonstrating Libreswan authenticating a peer using a
 [FreeRADIUS](https://www.freeradius.org/) server for CHAP
 authentication.
 
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming.\
 Writing documentation and test cases, Internet Protocols
@@ -73,7 +73,7 @@ TBD
 
 175 Hours
 
-#### Dificulty
+#### Difficulty
 
 Intermediate.
 
@@ -96,7 +96,7 @@ on what is permitted by the systems cryptographic policy.
 Test case demonstrating Libreswan accepting / rejecting IKE algorithms
 based on the system's crypto policy.
 
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -109,7 +109,7 @@ TBD
 
 175 Hours
 
-#### Dificulty
+#### Difficulty
 
 Intermediate.
 
@@ -118,7 +118,7 @@ Intermediate.
 ### [(draft)](https://datatracker.ietf.org/doc/draft-ietf-ipsecme-g-ikev2/) Group Key Management using IKEv2
 
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -129,14 +129,14 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [(draft)](https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-qr-alt/) Mixing Preshared Keys in the IKE_INTERMEDIATE and in the CREATE_CHILD_SA Exchanges of IKEv2 for Post-quantum Security
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -147,14 +147,14 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [RFC 9611](https://www.rfc-editor.org/rfc/rfc9593.html): Support for Per-Resource Child Security Associations (SAs)
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -165,14 +165,14 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [RFC 9593](https://www.rfc-editor.org/rfc/rfc9593.html): Announcing Supported Authentication Methods ...
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming.
 Writing documentation and test cases, Internet Protocols
@@ -183,14 +183,14 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [RFC 9464](https://www.rfc-editor.org/rfc/rfc9464.html): Configuration for Encrypted DNS; huh?
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming.
 Writing documentation and test cases, Internet Protocols
@@ -201,7 +201,7 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [RFC 9370](https://www.rfc-editor.org/rfc/rfc9370.html): Intermediate Exchange in the IKEv2 Protocol
@@ -211,7 +211,7 @@ pull-request for some of the work; but not IKE_FOLLOWUP_KE
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -222,14 +222,14 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [RFC 8598](https://www.rfc-editor.org/rfc/rfc8598.html): Split DNS Configuration
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -240,14 +240,14 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.
 
 ### [RFC 7670](https://www.rfc-editor.org/rfc/rfc7670.html): Generic Raw public key support
 
 more detailed description of the project (2-5 sentences)
 #### Expected outcomes
-#### Skills Required/prefered
+#### Skills Required/Preferred
 
 C programming\
 Writing documentation and test cases, Internet Protocols
@@ -258,5 +258,5 @@ TBD
 
 #### Expected size
 (90, 175 or 350 hour)
-#### Dificulty
+#### Difficulty
 An easy, intermediate or hard/difficult rating of each project.

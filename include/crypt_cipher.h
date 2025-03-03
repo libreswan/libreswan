@@ -40,7 +40,7 @@ enum cipher_op {
 	})
 
 /*
- * Normally USE_IV:DECRYPT and FILL_IV:ENCRIPT each come as a pair.
+ * Normally USE_IV:DECRYPT and FILL_IV:ENCRYPT each come as a pair.
  * The exception is testing where encryption can't generate its own
  * IV.
  */

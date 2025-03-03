@@ -106,7 +106,7 @@ struct verbose {
  * logged, prefixed by indentation.
  *
  * Use this for messages that, depending on the caller, should be
- * supressed, pretty-logged or pretty-debug-logged.
+ * suppressed, pretty-logged or pretty-debug-logged.
  */
 
 #define verbose(FMT, ...)							\

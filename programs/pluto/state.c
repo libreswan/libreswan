@@ -959,7 +959,7 @@ void delete_state(struct state *st)
 	/* session resumption */
 	pfreeany(st->st_v2_resume_session);
 
-	/* if there's an IKEv1 backgroud md, release it */
+	/* if there's an IKEv1 background md, release it */
 	if (st->st_v1_background_md != NULL) {
 		ldbg(st->logger, "releasing IKEv1 MD received during background task");
 		md_delref(&st->st_v1_background_md);
@@ -1262,7 +1262,7 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 	struct child_sa *child = duplicate_state(c, ike, CHILD_SA, sa_role);
 
 	/*
-	 * Propogate IKEv1's IKE (ISAKMP) bits to the child so that
+	 * Propagate IKEv1's IKE (ISAKMP) bits to the child so that
 	 * they are still available after the ISAKMP has been deleted.
 	 */
 	child->sa.st_v1_seen_fragmentation_supported =
@@ -1297,7 +1297,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 	PASSERT(c->logger, transition != NULL);
 
 	/*
-	 * Propogate IKEv2 IKE SA bits to the larval IKE SA replacement.
+	 * Propagate IKEv2 IKE SA bits to the larval IKE SA replacement.
 	 *
 	 * XXX: Handle this in emancipate?
 	 * XXX: are these all really IKE SA bits?

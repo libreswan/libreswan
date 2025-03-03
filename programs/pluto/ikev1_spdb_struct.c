@@ -380,7 +380,7 @@ static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
 
 	dbg("%s() initial trans_cnt=%d", __func__, trans_cnt);
 
-	/*	pass aprox. number of transforms and attributes */
+	/*	pass approx. number of transforms and attributes */
 	struct db_context *ctx_new = db_prop_new(protoid, trans_cnt, trans_cnt * 2);
 
 	/*

@@ -76,7 +76,7 @@ static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
 			       size_t text_len, size_t tag_len,
 			       struct logger *logger)
 {
-	/* must be contigious */
+	/* must be contiguous */
 	PASSERT(logger, text_len + tag_len == text_and_tag.len);
 
 	CK_GENERATOR_FUNCTION generator;
@@ -131,7 +131,7 @@ static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
 			       out_len, text_and_tag.len);
 		ok = false;
 	} else {
-		ldbg(logger, "AEAD encryption using %s_%u and PK11_AEADOp() succeded returning %d bytes",
+		ldbg(logger, "AEAD encryption using %s_%u and PK11_AEADOp() succeeded returning %d bytes",
 		     cipher->common.fqn,
 		     PK11_GetKeyLength(symkey) * BITS_IN_BYTE,
 		     out_len);

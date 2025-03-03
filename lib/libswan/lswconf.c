@@ -83,7 +83,7 @@ static void lsw_conf_calculate(void)
 	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/crls"), global_oco.confddir);
 	subst(&global_oco.crls_dir, buf, "crls path");
 
-	/* old OE policies - might get re-used in the near future */
+	/* old OE policies - might get reused in the near future */
 	snprintf(buf, sizeof(buf), "%s/policies", global_oco.confddir);
 	subst(&global_oco.policies_dir, buf, "policies path");
 

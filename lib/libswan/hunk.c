@@ -34,7 +34,7 @@ char *raw_clone_as_string(const void *ptr, size_t maxlen, const char *name)
 	char *out = alloc_things(char, len + 1, name);
 	memcpy(out, ptr, len);
 
-	/* explict; but redundant as done by alloc_things() */
+	/* explicit; but redundant as done by alloc_things() */
 	out[len] = '\0';
 	return out;
 }

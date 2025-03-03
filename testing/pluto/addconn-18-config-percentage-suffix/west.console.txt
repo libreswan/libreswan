@@ -23,7 +23,7 @@ west #
 opening file: /etc/ipsec.conf
 ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
 loading named conns: percentage-wip
-  overiding auto=ignore with auto=add
+  overriding auto=ignore with auto=add
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
@@ -38,7 +38,7 @@ west #
 opening file: /etc/ipsec.conf
 ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
 loading named conns: percentage-wip
-  overiding auto=ignore with auto=add
+  overriding auto=ignore with auto=add
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45

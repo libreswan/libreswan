@@ -6,7 +6,7 @@ Usage:
 
   $0 <from-src> <to-src> <to-port> [ <nr-ports> ]
 
-Configure teh NAT to map outbound TCP and UDP connections from
+Configure the NAT to map outbound TCP and UDP connections from
 <from-src> and ports 500 and 4500 to be from <to-src> and starting
 ports <to-port>+500 and <to-port>+4500.  For instance:
 

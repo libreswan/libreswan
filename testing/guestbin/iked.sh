@@ -14,7 +14,7 @@ case $1 in
 	kill `cat /tmp/iked.pid`
 	;;
     * )
-	echo "unrecongized: $1" 1>&2
+	echo "unrecognized: $1" 1>&2
 	exit 1
 	;;
 esac

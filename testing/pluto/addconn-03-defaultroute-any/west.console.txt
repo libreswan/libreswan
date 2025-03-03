@@ -11,7 +11,7 @@ west #
  ipsec addconn --verbose test
 opening file: /etc/ipsec.conf
 loading named conns: test
-  overiding auto=ignore with auto=add
+  overriding auto=ignore with auto=add
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer <any>
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH

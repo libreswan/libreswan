@@ -303,7 +303,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 * Hence use in_selector_range() and in_selector().
 		 *
 		 * Since the connections are searched OLD2NEW so the
-		 * first connection in the config file is prefered
+		 * first connection in the config file is preferred
 		 * (but this isn't documented).
 		 */
 

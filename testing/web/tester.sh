@@ -23,7 +23,7 @@ bindir=$(dirname ${tester})
 web_makedir=$(dirname ${tester})
 benchdir=$(realpath $(dirname ${tester})/../..)
 
-# run from BENCHDIR so relative make varibles work
+# run from BENCHDIR so relative make variables work
 # and ./kvm doesn't get confused
 cd ${benchdir}
 

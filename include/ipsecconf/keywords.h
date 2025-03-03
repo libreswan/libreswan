@@ -143,7 +143,7 @@ enum keywords {
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
 
 	/*
-	 * By convention, these are connnection strings (KSCF is
+	 * By convention, these are connection strings (KSCF is
 	 * Keyword String Connection Flag?).  The initial ones come in
 	 * left/right variants.
 	 */

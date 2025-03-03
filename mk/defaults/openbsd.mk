@@ -12,7 +12,7 @@ CC=clang-17
 WARNING_CFLAGS += -Wself-assign
 USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
 
-# hack around broken LDNS header refering to undefined USE_ED448
+# hack around broken LDNS header referring to undefined USE_ED448
 USERLAND_CFLAGS += -DUSE_ED448=LDNS_BUILD_CONFIG_USE_ED448
 
 USERLAND_INCLUDES += -I$(PKG_BASE)/include

@@ -587,7 +587,7 @@ void terminate_ike_family(struct ike_sa **ike,
 	 *
 	 * This way the IKE SA's connection can jump to the front of
 	 * the revival queue (without this an IKE SA with multiple
-	 * children ends up with its chilren squabbling over which SA
+	 * children ends up with its children squabbling over which SA
 	 * should be revived first).
 	 *
 	 * When this isn't the case, the for-each-child will instead

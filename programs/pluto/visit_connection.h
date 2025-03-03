@@ -118,7 +118,7 @@ enum connection_visit_kind {
 	 * This is visited before any siblings, thus ensuring that it
 	 * gets gets in first for things like revival (without this,
 	 * siblings and their connections would jump the queue and get
-	 * revived first causing conection flip-flops).
+	 * revived first causing connection flip-flops).
 	 *
 	 * It comes in three flavours:
 	 *

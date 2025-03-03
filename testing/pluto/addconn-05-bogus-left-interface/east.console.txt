@@ -8,7 +8,7 @@ east #
  ipsec addconn --verbose east
 opening file: /etc/ipsec.conf
 loading named conns: east
-  overiding auto=ignore with auto=add
+  overriding auto=ignore with auto=add
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45

@@ -384,7 +384,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 	/*
 	 * Will encrypt .cleartext + .padding (they are assumed to be
-	 * contigious).
+	 * contiguous).
 	 *
 	 * Just note that .cleartext doesn't include the padding.
 	 * This is because when .cleartext gets chopped up into

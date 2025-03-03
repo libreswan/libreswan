@@ -172,7 +172,7 @@ statetime_t statetime_start(struct state *st)
 	if (st->st_timing.level > 0 && !DBGP(DBG_CPU_USAGE)) {
 		/*
 		 * When DBG_CPU_USAGE isn't enabled, only time the
-		 * outer most leve.
+		 * outer most level.
 		 */
 		return disabled_statetime;
 	}
