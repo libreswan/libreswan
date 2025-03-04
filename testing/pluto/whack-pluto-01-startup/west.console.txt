@@ -1,0 +1,39 @@
+../../guestbin/prep.sh
+'west.conf' -> '/etc/ipsec.conf'
+west #
+ ipsec initnss
+Initializing NSS database
+Relabeled /etc/ipsec.d from unconfined_u:object_r:etc_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
+Relabeled /etc/ipsec.d/pkcs11.txt from unconfined_u:object_r:etc_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
+Relabeled /etc/ipsec.d/cert9.db from unconfined_u:object_r:etc_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
+Relabeled /etc/ipsec.d/key4.db from unconfined_u:object_r:etc_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
+west #
+ # --efence-protect; prior to 5.3 it had required_argument, oops
+west #
+ ipsec pluto --efence-protect xxx --config /etc/ipsec.conf # <=5.2 expected this
+PATH/libexec/ipsec/pluto: unexpected trailing argument: xxx
+west #
+ ipsec whack --shutdown # not running
+ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
+west #
+ ipsec pluto --efence-protect     --config /etc/ipsec.conf # >=5.3
+west #
+ # wait to startup to finish; shutting down early causes leaks.
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ # leak-detective
+west #
+ ipsec pluto --leak-detective --config /etc/ipsec.conf
+west #
+ # wait to startup to finish; shutting down early causes leaks.
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ 

@@ -1480,6 +1480,8 @@ kvmplutotest	whack-unroute-01-ikev1-quick-initiator	good	github/1531
 
 kvmplutotest	whack-shutdown-01-magic			good	github/1709
 
+kvmplutotest	whack-pluto-01-startup			good	github/2048
+
 # PPK
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
 kvmplutotest	ikev2-ppk-static-02-insist-insist		good
