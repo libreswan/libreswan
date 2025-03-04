@@ -590,7 +590,7 @@ const struct option optarg_options[] = {
 	{ "selftest\0", no_argument, NULL, OPT_SELFTEST },
 
 	{ "leak-detective\0", no_argument, NULL, OPT_LEAK_DETECTIVE },
-	{ "efence-protect\0", required_argument, NULL, OPT_EFENCE_PROTECT, },
+	{ "efence-protect\0", no_argument, NULL, OPT_EFENCE_PROTECT, },
 	{ "drop-oppo-null", no_argument, NULL, OPT_DROP_OPPO_NULL, },
 	{ "debug-none"METAOPT_NEWLINE, no_argument, NULL, OPT_DEBUG_NONE },
 	{ "debug-all\0", no_argument, NULL, OPT_DEBUG_ALL },
@@ -680,21 +680,24 @@ int main(int argc, char **argv)
 	 * DANGER!
 	 *
 	 * Some options MUST be processed before the first malloc()
-	 * call, so scan for them here.
+	 * call, so scan for them here:
 	 *
 	 * - leak-detective is immutable, it must come before the
 	 *   first malloc()
 	 *
 	 * - efence-protect seems to be less strict, but enabling it
-	 *   early must be a good thing (TM) right
+	 *   early must be a good thing (TM) right?
 	 */
 	for (int i = 1; i < argc; ++i) {
-		if (streq(argv[i], "--leak-detective"))
+		if (streq(argv[i], "--leak-detective")) {
 			leak_detective = true;
+			continue;
+		}
 #ifdef USE_EFENCE
-		else if (streq(argv[i], "--efence-protect")) {
+		if (streq(argv[i], "--efence-protect")) {
 			EF_PROTECT_BELOW = 1;
 			EF_PROTECT_FREE = 1;
+			continue;
 		}
 #endif
 	}

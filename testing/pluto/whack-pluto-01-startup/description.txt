@@ -1,0 +1,4 @@
+test starting pluto directly using: ipsec pluto ...
+
+5.2 handled --efence-protect incorrectly
+
