@@ -292,10 +292,7 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
     cert.set_pubkey(crypto.X509Req.from_cryptography(certreq).get_pubkey())
     cert.set_version(2)
 
-    if CN == 'nic-nourl.testing.libreswan.org':
-        ocspuri = False
-    else:
-        ocspuri = True
+    ocspuri = True
 
     set_cert_extensions(cert, ocsp=ocsp, ocspuri=ocspuri)
     cert.sign(crypto.PKey.from_cryptography_key(cakey), hashes.SHA256.name)
@@ -469,8 +466,7 @@ def main():
                         'west-ekuBOGUS-bad', # Should fail because it needs a recognised EKU
                         'west-eku-ipsecIKE', # Should work
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
-                        'west-ekuCritical-eku-emailProtection', # Should still work
-                        'nic-nourl')
+                        'west-ekuCritical-eku-emailProtection') # Should still work
 
     # Put special case code for new certs in the following functions
     load_mainca_cas()
