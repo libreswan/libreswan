@@ -1,0 +1,20 @@
+#start ocsp server here
+nic #
+ ../../guestbin/ocspd.sh --start nic-no-ocsp
+ cp /testing/x509/real/mainca/nic-no-ocsp.end.key /etc/ocspd/private/nic_key.pem
+ cp /testing/x509/real/mainca/nic-no-ocsp.end.cert /etc/ocspd/certs/nic.pem
+ cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
+ cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
+ openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
+ restorecon -R /etc/ocspd
+ ocspd -v -d -c /etc/ocspd/ocspd.conf
+nic #
+ echo "done."
+done.
+nic #
+ ../../guestbin/ocspd.sh --log
+INFO::CORE::Connection from [192.1.2.23]
+request for certificate serial <REVOKED>
+Status for <REVOKED> is REVOKED
+nic #
+ 

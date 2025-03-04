@@ -6,21 +6,15 @@ ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
 east #
- /testing/x509/import.sh real/mainca/nic.end.cert
-ipsec certutil -A -n nic -t P,, -i real/mainca/nic.end.cert
-east #
- # replace nic with the nic-no url cert
-east #
- ipsec certutil -D -n nic
-east #
- ipsec certutil -A -i /testing/x509/certs/nic-nourl.crt -n nic -t "P,,"
+ /testing/x509/import.sh real/mainca/nic-no-ocsp.end.cert
+ipsec certutil -A -n nic-no-ocsp -t P,, -i real/mainca/nic-no-ocsp.end.cert
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
 mainca                                                       CT,, 
-nic                                                          P,,  
+nic-no-ocsp                                                  P,,  
 east #
  ipsec start
 Redirecting to: [initsystem]

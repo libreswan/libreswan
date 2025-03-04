@@ -167,8 +167,7 @@ def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
     cert.add_extensions([crypto.X509Extension(kind.encode('utf-8'), crit, string.encode('utf-8'))])
 
-def set_cert_extensions(cert, ocsp=False, ocspuri=True):
-    ocspeku = 'serverAuth,clientAuth,codeSigning,OCSPSigning'
+def set_cert_extensions(cert):
     cnstr = str(cert.get_subject().commonName)
 
 
@@ -199,8 +198,6 @@ def set_cert_extensions(cert, ocsp=False, ocspuri=True):
 
     # Create Key Usage (KU)
     ku_str = 'digitalSignature'
-    if ocsp:
-        ku_str = 'digitalSignature,keyCertSign,cRLSign'
 
     # check for custom Key Usage
     if '-ku-' in cnstr:
@@ -245,8 +242,6 @@ def set_cert_extensions(cert, ocsp=False, ocspuri=True):
             eku_str = eku_str + ",1.3.6.1.5.5.8.2.1"
         if '-ekuBOGUS' in cnstr:
             eku_str = eku_str + ",'1.3.6.1.5.5.42.42.42'" # bogus OID
-    if ocsp:
-        eku_str = ocspeku
     if 'ekuEmpty' in cnstr:
         eku_str = ''
     if '-ekuOmit' not in cnstr:
@@ -259,9 +254,8 @@ def set_cert_extensions(cert, ocsp=False, ocspuri=True):
 
 
     # Create OCSP
-    if ocspuri:
-            add_ext(cert, 'authorityInfoAccess', False,
-                  'OCSP;URI:http://nic.testing.libreswan.org:2560')
+    add_ext(cert, 'authorityInfoAccess', False,
+            'OCSP;URI:http://nic.testing.libreswan.org:2560')
 
     # Create CRL DP
     add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
@@ -270,8 +264,7 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
-                    keysize=2048,
-                    ocsp=False):
+                    keysize=2048):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
@@ -292,12 +285,7 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
     cert.set_pubkey(crypto.X509Req.from_cryptography(certreq).get_pubkey())
     cert.set_version(2)
 
-    if CN == 'nic-nourl.testing.libreswan.org':
-        ocspuri = False
-    else:
-        ocspuri = True
-
-    set_cert_extensions(cert, ocsp=ocsp, ocspuri=ocspuri)
+    set_cert_extensions(cert)
     cert.sign(crypto.PKey.from_cryptography_key(cakey), hashes.SHA256.name)
 
     return cert.to_cryptography(), certkey
@@ -387,11 +375,6 @@ def create_mainca_end_certs(mainca_end_certs):
 
         signer = 'mainca'
 
-        if name == 'nic':
-            ocsp_resp = True
-        else:
-            ocsp_resp = False
-
         org = "Libreswan"
 
         common_name = name + '.testing.libreswan.org'
@@ -410,8 +393,7 @@ def create_mainca_end_certs(mainca_end_certs):
                                     serial, O=org,
                                     emailAddress=emailAddress,
                                     START=startdate, END=enddate,
-                                    keysize=keysize,
-                                    ocsp=ocsp_resp)
+                                    keysize=keysize)
         writeout_cert_and_key(name, cert, key)
         store_cert_and_key(name, cert, key)
         cmd = (f"openssl pkcs12" +
@@ -469,8 +451,7 @@ def main():
                         'west-ekuBOGUS-bad', # Should fail because it needs a recognised EKU
                         'west-eku-ipsecIKE', # Should work
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
-                        'west-ekuCritical-eku-emailProtection', # Should still work
-                        'nic-nourl')
+                        'west-ekuCritical-eku-emailProtection') # Should still work
 
     # Put special case code for new certs in the following functions
     load_mainca_cas()
