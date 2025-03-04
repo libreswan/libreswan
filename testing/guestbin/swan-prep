@@ -132,7 +132,7 @@ def shell(command, out=False):
         print(output)
     return output
 
-def choose_config_file(hostname, testpath, config_path, strict):
+def choose_config_file(hostname, testpath, config_path, strict, default=None):
     (config_absdir, config_file) = os.path.split(config_path)
     if os.path.isabs(config_absdir):
         config_dir = config_absdir[1:] # drop slash; better?
@@ -162,9 +162,15 @@ def choose_config_file(hostname, testpath, config_path, strict):
     if path:
         return path
 
-    # pass 2: look in base configs
+    # pass 2: look in default
+    if default:
+        if not os.path.isfile(default):
+            sys.exit(f"the default {default} for {config_path} is not a file")
+        return default
+
+    # pass 3: look in baseconfigs/
     match args.userland:
-        case "libreswan"|"strongswan":
+        case "strongswan":
             paths = []
             paths.append(os.path.join("/testing/baseconfigs", hostname, config_dir, config_file))
             paths.append(os.path.join("/testing/baseconfigs/all/", config_dir, config_file))
@@ -183,8 +189,10 @@ def get_configsetup(key=None):
     o = subprocess.run(cmd, shell=True, capture_output=True, encoding="ascii", check=True,)
     return o.stdout.strip().replace("'", '')
 
-def copy_config_file(hostname, testpath, config_path, strict=False, optional=False, nsprefix=""):
-    src = choose_config_file(hostname, testpath, config_path, strict)
+def copy_config_file(hostname, testpath, config_path,
+                     strict=False, optional=False, nsprefix="", default=None):
+    src = choose_config_file(hostname, testpath, config_path, strict,
+                             default=default)
     if src:
         # config_absdir has a leading / so below is always valid
         dst = nsprefix + config_path
@@ -420,8 +428,12 @@ if hostname != "nic":
             # fill in any missing dirs
             os.mkdir("/etc/ipsec.d/policies")
 
-            copy_config_file(hostname, testpath, "/etc/ipsec.conf", nsprefix=nsbasepath)
-            copy_config_file(hostname, testpath, "/etc/ipsec.secrets", nsprefix=nsbasepath)
+            copy_config_file(hostname, testpath, "/etc/ipsec.conf",
+                             default="/usr/local/share/doc/libreswan/ipsec.conf-sample",
+                             nsprefix=nsbasepath)
+            copy_config_file(hostname, testpath, "/etc/ipsec.secrets",
+                             default="/usr/local/share/doc/libreswan/ipsec.secrets-sample",
+                             nsprefix=nsbasepath)
 
         case "strongswan":
 
