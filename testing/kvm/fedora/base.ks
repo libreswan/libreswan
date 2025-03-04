@@ -28,13 +28,12 @@ network --hostname fedora
 
 bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 plymouth.enable=0 net.ifnames=0 biosdevname=0 mitigations=off"
 
-# Start with a blank disk (ignoring that it is already).  Force GPT
-# (F37 likely doesn't support MBR?); add a biosboot partition since
-# installer demands it.
+# Start with a blank disk (ignoring that it is already).  Force
+# standard label (was --disklabel gpt) (F37 likely doesn't support
+# MBR?); required machine dependent partitions; add /; don't add swap!
 
-clearpart --all --disklabel gpt
-zerombr
-part biosboot --size 1
+clearpart --all --initlabel
+reqpart
 part / --asprimary --grow
 # part swap --size 1024
 
