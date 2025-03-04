@@ -238,7 +238,6 @@ generate_cert()
 	     -c ${root} \
 	     -t P,, \
 	     -m ${serial} \
-	     -g 3072 \
 	     $(if test -n "${san}" ; then echo --extSAN ${san} ; fi) \
 	     ${param} \
 	     --keyUsage ${ku} \
@@ -324,12 +323,12 @@ while read base domain is_ca param ; do
 
     # BASE DOMAIN IS_CA EKU PARAM...
 done <<EOF
-real/mainca   testing.libreswan.org  y  -k rsa -Z SHA256
+real/mainca   testing.libreswan.org  y  -k rsa -Z SHA256 -g 3072
 real/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
-real/otherca  other.libreswan.org    y  -k rsa -Z SHA256
-fake/mainca   testing.libreswan.org  y  -k rsa -Z SHA256
+real/otherca  other.libreswan.org    y  -k rsa -Z SHA256 -g 3072
+fake/mainca   testing.libreswan.org  y  -k rsa -Z SHA256 -g 3072
 fake/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
-real/badca    testing.libreswan.org  n  -k rsa -Z SHA256
+real/badca    testing.libreswan.org  n  -k rsa -Z SHA256 -g 3072
 EOF
 
 # generate end certs where needed

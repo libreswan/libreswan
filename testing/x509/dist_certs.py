@@ -115,9 +115,7 @@ endrev_name = ""
 top_caname=""
 
 def reset_files():
-    for dir in ['keys/', 'certs/', 'selfsigned/',
-                'pkcs12/',
-                'pkcs12/mainca']:
+    for dir in ['keys/', 'certs/', 'pkcs12/', 'pkcs12/mainca']:
         if os.path.isdir(dir):
             shutil.rmtree(dir)
         os.mkdir(dir)
@@ -169,16 +167,13 @@ def add_ext(cert, kind, crit, string):
     #print("DEBUG: %s"%string)
     cert.add_extensions([crypto.X509Extension(kind.encode('utf-8'), crit, string.encode('utf-8'))])
 
-def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
+def set_cert_extensions(cert, ocsp=False, ocspuri=True):
     ocspeku = 'serverAuth,clientAuth,codeSigning,OCSPSigning'
     cnstr = str(cert.get_subject().commonName)
 
 
     # Create Basic Constraints
-    if isCA:
-        bc = "CA:TRUE"
-    else:
-        bc = "CA:FALSE"
+    bc = "CA:FALSE"
 
     if 'bcOmit' not in cnstr:
         cf = False
@@ -186,28 +181,25 @@ def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
             cf = True
         add_ext(cert, 'basicConstraints', False, bc)
 
-
     # Create Subject Alt Name (SAN)
-    if not isCA and '-nosan' not in cnstr:
-        SAN = "DNS: " + cnstr
-        if "." in cnstr:
-            ee = cnstr.split(".")[0]
-            print("EE:%s"% ee)
-            if ee == "west" or ee == "east":
-                SAN += ", email:%s@testing.libreswan.org"%ee
-                if ee == "west":
-                    SAN += ", IP:192.1.2.45, IP:2001:db8:1:2::45"
-                if ee == "east":
-                    SAN += ", IP:192.1.2.23, IP:2001:db8:1:2::23"
-        if 'sanCritical' in cnstr:
-            add_ext(cert, 'subjectAltName', True, SAN)
-        else:
-            add_ext(cert, 'subjectAltName', False, SAN)
-
+    SAN = "DNS: " + cnstr
+    if "." in cnstr:
+        ee = cnstr.split(".")[0]
+        print("EE:%s"% ee)
+        if ee == "west" or ee == "east":
+            SAN += ", email:%s@testing.libreswan.org"%ee
+            if ee == "west":
+                SAN += ", IP:192.1.2.45, IP:2001:db8:1:2::45"
+            if ee == "east":
+                SAN += ", IP:192.1.2.23, IP:2001:db8:1:2::23"
+    if 'sanCritical' in cnstr:
+        add_ext(cert, 'subjectAltName', True, SAN)
+    else:
+        add_ext(cert, 'subjectAltName', False, SAN)
 
     # Create Key Usage (KU)
     ku_str = 'digitalSignature'
-    if isCA or ocsp:
+    if ocsp:
         ku_str = 'digitalSignature,keyCertSign,cRLSign'
 
     # check for custom Key Usage
@@ -267,20 +259,19 @@ def set_cert_extensions(cert, isCA=False, ocsp=False, ocspuri=True):
 
 
     # Create OCSP
-    if ocspuri and '-ocspOmit' not in cnstr:
+    if ocspuri:
             add_ext(cert, 'authorityInfoAccess', False,
                   'OCSP;URI:http://nic.testing.libreswan.org:2560')
 
     # Create CRL DP
-    if '-crlOmit' not in cnstr:
-        add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
+    add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
 
 def create_sub_cert(CN, cacert, cakey, snum, START, END,
                     C='CA', ST='Ontario', L='Toronto',
                     O='Libreswan', OU='Test Department',
                     emailAddress='',
                     keysize=2048,
-                    isCA=False, ocsp=False):
+                    ocsp=False):
     """ Create a subordinate cert and return the cert, key tuple
     This could be a CA for an intermediate, or not for an EE
     """
@@ -306,7 +297,7 @@ def create_sub_cert(CN, cacert, cakey, snum, START, END,
     else:
         ocspuri = True
 
-    set_cert_extensions(cert, isCA=isCA, ocsp=ocsp, ocspuri=ocspuri)
+    set_cert_extensions(cert, ocsp=ocsp, ocspuri=ocspuri)
     cert.sign(crypto.PKey.from_cryptography_key(cakey), hashes.SHA256.name)
 
     return cert.to_cryptography(), certkey
