@@ -77,7 +77,7 @@ Root CA certificate "mainca" - SN: 0xXX
   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
   not before: TIMESTAMP
   not after: TIMESTAMP
-  2048 bit RSA
+  3072 bit RSA
  
 List of CRLs:
  
@@ -200,7 +200,7 @@ Root CA certificate "mainca" - SN: 0xXX
   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
   not before: TIMESTAMP
   not after: TIMESTAMP
-  2048 bit RSA
+  3072 bit RSA
  
 List of CRLs:
  

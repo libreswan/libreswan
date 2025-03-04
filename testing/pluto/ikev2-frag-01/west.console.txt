@@ -48,6 +48,7 @@ west #
 |    fragment number: 3 (00 03)
 |    fragment number: 4 (00 04)
 |    fragment number: 5 (00 05)
+|    fragment number: 6 (00 06)
 |    fragment number: 1 (00 01)
 | received IKE encrypted fragment number '1', total number '5', next payload '36'
 |    fragment number: 2 (00 02)
