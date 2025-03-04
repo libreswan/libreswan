@@ -97,6 +97,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 	LSW_SECCOMP_ADD(epoll_wait);
 	LSW_SECCOMP_ADD(epoll_pwait);
 	LSW_SECCOMP_ADD(exit_group);
+	LSW_SECCOMP_ADD(faccessat);
 	LSW_SECCOMP_ADD(fcntl);
 	LSW_SECCOMP_ADD(fstat);
 	LSW_SECCOMP_ADD(futex);
