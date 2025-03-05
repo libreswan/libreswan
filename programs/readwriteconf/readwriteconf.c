@@ -31,13 +31,6 @@
 #include "ipsecconf/parser-controls.h"
 #include "optarg.h"
 
-static void usage(void)
-{
-	optarg_usage("ipsec readwriteconf", "");
-	exit(0);
-}
-
-
 /*
  * XXX: the letters below are meaningless as getopt_long() isn't
  * passing in an option string.
@@ -89,8 +82,7 @@ int main(int argc, char *argv[])
 
 		case OPT_HELP:
 			/* usage: */
-			usage();
-			continue;
+			optarg_usage(argv[0], "", "");
 
 		case OPT_NOSETUP:
 			setup = false;

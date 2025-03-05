@@ -40,7 +40,7 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 		switch (c) {
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
-			llog(RC_LOG|NO_PREFIX, logger, "For usage information: %s --help\n", argv[0]);
+			llog(RC_LOG|NO_PREFIX, logger, "For usage information: %s --help", argv[0]);
 			exit(PLUTO_EXIT_FAIL);
 		}
 		const char *optname = optarg_options[optarg_index].name;
@@ -91,7 +91,8 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	exit(PLUTO_EXIT_FAIL);
 }
 
-void optarg_usage(const char *progname, const char *arguments)
+void optarg_usage(const char *progname, const char *arguments,
+		  const char *details)
 {
 	FILE *stream = stdout;
 
@@ -192,7 +193,12 @@ void optarg_usage(const char *progname, const char *arguments)
 		fprintf(stream, "%s %s\n", line, arguments);
 	}
 
+	if (details != NULL) {
+		fprintf(stream, "%s", details);
+	}
+
 	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
+	exit(0);
 }
 
 deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale)

@@ -48,27 +48,9 @@ const struct option optarg_options[] = {
 	{0},
 };
 
-static void usage(void)
-{
-	/* use stdout */
-	optarg_usage(progname, "<destination>");
-	fprintf(stdout, "\n");
-	fprintf(stdout, "Prints:");
-	fprintf(stdout, "\n");
-	fprintf(stdout, "  <source-address> <gateway-address> <destination-address>");
-	fprintf(stdout, "\n");
-	fprintf(stdout, "for the given <destination>");
-	fprintf(stdout, "\n");
-	exit(1);
-}
-
 int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
-
-	if (argc == 1) {
-		usage();
-	}
 
 	while (true) {
 		int c = optarg_getopt(logger, argc, argv, "vd46");
@@ -89,14 +71,17 @@ int main(int argc, char **argv)
 			optarg_verbose(logger, LEMPTY);
 			continue;
 		case OPT_HELP:
-			usage();
-			continue;
+			/* use stdout */
+			optarg_usage(progname, "<destination>",
+				     "Prints:\n"
+				     "  <source-address> <gateway-address> <destination-address>\n"
+				     "for the given <destination>\n");
 		}
 		bad_case(c);
 	}
 
 	if (optind == argc) {
-		llog(ERROR_STREAM, logger, "missing destination");
+		llog(ERROR_STREAM, logger, "missing <destination>");
 		exit(1);
 	}
 

@@ -58,7 +58,8 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 /* heading: \0HEADING */
 /* argument: \0<argument> */
 
-void optarg_usage(const char *progname, const char *arguments);
+void optarg_usage(const char *progname, const char *arguments,
+		  const char *details) NEVER_RETURNS;
 
 NEVER_RETURNS PRINTF_LIKE(2) void optarg_fatal(const struct logger *logger,
 					       const char *fmt, ...);

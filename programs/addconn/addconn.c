@@ -153,13 +153,6 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 }
 #endif
 
-static void usage(void)
-{
-	/* print usage */
-	optarg_usage("ipsec addconn", "<names>");
-	exit(10);
-}
-
 enum opt {
 	OPT_HELP = 'h',
 	OPT_CONFIG = 256,
@@ -244,9 +237,7 @@ int main(int argc, char *argv[])
 
 		switch ((enum opt)c) {
 		case OPT_HELP:
-			/* usage: */
-			usage();
-			continue;
+			optarg_usage("ipsec addconn", "[<names>]", "");
 
 		case OPT_AUTOALL:
 			autoall = true;
@@ -321,8 +312,10 @@ int main(int argc, char *argv[])
 
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist && !configsetup &&
-	    !checkconfig)
-		usage();
+	    !checkconfig) {
+		llog(RC_LOG, logger, "nothing to do, see --help");
+		exit(1);
+	}
 
 	/* some variables depend on verbose */
 	lex_verbosity = verbose;
