@@ -319,7 +319,7 @@ enum opt_seen_ix {
 				 * seen. */
 };
 
-enum option_enums {
+enum opt {
 
 	OPT_HELP = 'h',
 	OPT_VERSION = 'v',
@@ -330,7 +330,7 @@ enum option_enums {
  * with ASCII options.
  */
 
-#define OPT_START 356
+#define OPT_START 256
 
 /*
  * Normal options don't fall into the connection category (better
@@ -1087,9 +1087,7 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c = getopt_long(argc, argv, "", optarg_options, &optarg_index);
-
-		/* end of flags? exit loop */
+		int c = optarg_getopt(logger, argc, argv, "");
 		if (c < 0) {
 			break;
 		}
@@ -1165,23 +1163,8 @@ int main(int argc, char **argv)
 		 *
 		 * Note: no "default:".  Instead missing cases fall
 		 * off the end and hit the bad_case.
-		 *
-		 * XXX: should cast C to enum option_enums; can't
-		 * because some ranges are missing.
 		 */
-		switch (c) {
-
-		case 0:	/* long option already handled */
-			continue;
-
-		/* diagnostic already printed by getopt_long */
-		case ':':
-		/* diagnostic already printed by getopt_long */
-		case '?':
-			/* print no additional diagnostic, but exit sadly */
-			diagw(NULL);
-			/* not actually reached */
-			break;
+		switch (/*(enum opt)*/c) {
 
 		case OPT_HELP:	/* --help */
 			help();
@@ -1759,7 +1742,7 @@ int main(int argc, char **argv)
 			}
 
 			end = &msg.end[RIGHT_END];
-			for (enum option_enums e = FIRST_END_OPT; e <= LAST_END_OPT; e++) {
+			for (enum opt e = FIRST_END_OPT; e <= LAST_END_OPT; e++) {
 				seen[e] = false;
 			}
 			continue;
@@ -2536,7 +2519,7 @@ int main(int argc, char **argv)
 		 */
 		if ((opts_seen & CONN_OPT_SEEN) && !(opts_seen & END_OPT_SEEN)) {
 			bool scrub = false;
-			for (enum option_enums e = FIRST_CONN_OPT; e <= LAST_CONN_OPT; e++) {
+			for (enum opt e = FIRST_CONN_OPT; e <= LAST_CONN_OPT; e++) {
 				if (e != CD_TUNNELIPV4 &&
 				    e != CD_TUNNELIPV6 &&
 				    seen[e]) {
