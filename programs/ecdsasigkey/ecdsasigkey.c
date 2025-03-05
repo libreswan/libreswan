@@ -165,9 +165,8 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_HELP:       /* help */
-			optarg_usage("ipsec ecdsasigkey", "[<curve-name>]");
-			exit(0);
-			continue;
+			optarg_usage("ipsec ecdsasigkey", "[<curve-name>]", "");
+
 		case OPT_VERSION:       /* version */
 			printf("%s %s\n", progname, ipsec_version_code());
 			exit(0);

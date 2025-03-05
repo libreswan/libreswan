@@ -67,7 +67,15 @@ struct logger *tool_logger(int argc UNUSED, char *argv[])
 	/* snprintf() returns length, not size */
 	passert(name_size > snprintf(name, name_size, "ipsec %s", last_name));
 
-	progname_logger.object = progname = name;
+	/*
+	 * Also stop on ARGV[0]!
+	 *
+	 * This is a hack so that getopt() prints something reasonable
+	 * as the prefix when reporting errors.
+	 *
+	 * Note: this does not affect PS.
+	 */
+	progname_logger.object = progname = argv[0] = name;
 
 	/* redundant? */
 	setbuf(stderr, NULL);
