@@ -1,6 +1,8 @@
 See also https://libreswan.org/
 
 v5.3 (unreleased)
+* config:
+  - Obsoleted virtual_private and plutostderrlog keywords [Tuomo]
 
 v5.2 (Feb 26, 2025)
 * IKEv2:
