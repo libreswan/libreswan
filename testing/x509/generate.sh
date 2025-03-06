@@ -123,7 +123,7 @@ generate_root_ca()
 	     -w ${NOW_OFFSET_MONTHS} \
 	     -v ${NOW_VALID_MONTHS} \
 	     --keyUsage ${ku} \
-	     --extKeyUsage ${eku} \
+	     $(test ${eku} != - && echo --extKeyUsage ${eku}) \
 	     -t "CT,C,C" \
 	     -z ${NOISE_FILE} \
 	     ${param} \
@@ -342,13 +342,12 @@ EOF
 
 # generate end certs where needed
 
-while read kinds roots certs add_san add_ocsp add_crl ku eku param ; do
+while read kinds roots certs is_ca add_san add_ocsp add_crl ku eku param ; do
     for kind in $(eval echo ${kinds}) ; do
 	for root in $(eval echo ${roots}) ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${kind}/${root}
 		log=${certdir}/${cert}.log
-		is_ca=n
 		if ! generate_cert ${certdir} ${root} ${cert} user-${cert} ${is_ca} ${add_san} ${add_ocsp} ${add_crl} ${ku} ${eku} ${param} > ${log} 2>&1 ; then
 		    cat ${log}
 		    exit 1
@@ -357,33 +356,30 @@ while read kinds roots certs add_san add_ocsp add_crl ku eku param ; do
 	done
     done
 done <<EOF
-{real,fake} {mainca,mainec} nic                             1  1  1  digitalSignature  serverAuth,clientAuth,codeSigning,ocspResponder
-{real,fake} {mainca,mainec} {east,west,road,north,rise,set} 1  1  1  digitalSignature  serverAuth,clientAuth
-real	    mainca          revoked                         1  1  1  digitalSignature  serverAuth,clientAuth
-real        mainca          key2032                         1  1  1  digitalSignature  serverAuth,clientAuth  -k rsa -g 2032
-real        mainca          key4096                         1  1  1  digitalSignature  serverAuth,clientAuth  -k rsa -g 4096
-real        mainca          {east,west}-nosan               0  1  1  digitalSignature  serverAuth,clientAuth
-real        mainca          semiroad                        1  1  1  digitalSignature  serverAuth,clientAuth
-real        mainca          nic-no-ocsp                     1  0  1  digitalSignature  serverAuth,clientAuth
-real        otherca         other{east,west}                1  1  1  digitalSignature  serverAuth,clientAuth
-real        badca           bad{east,west}                  1  1  1  digitalSignature  serverAuth,clientAuth
+{real,fake} {mainca,mainec} nic                             n 1  1  1  digitalSignature  ocspResponder
+{real,fake} {mainca,mainec} {east,west,road,north,rise,set} n 1  1  1  digitalSignature  -
+real	    mainca          revoked                         n 1  1  1  digitalSignature  -
+real        mainca          key2032                         n 1  1  1  digitalSignature  -  -k rsa -g 2032
+real        mainca          key4096                         n 1  1  1  digitalSignature  -  -k rsa -g 4096
+real        mainca          {east,west}-nosan               n 0  1  1  digitalSignature  -
+real        mainca          semiroad                        n 1  1  1  digitalSignature  -
+real        mainca          nic-no-ocsp                     n 1  0  1  digitalSignature  -
+real        otherca         other{east,west}                n 1  1  1  digitalSignature  -
+real        badca           bad{east,west}                  n 1  1  1  digitalSignature  -
 EOF
 
-while read cert is_ca root ku eku ; do
+while read root cert is_ca add_san add_ocsp add_crl ku eku param ; do
     certdir=${OUTDIR}/real/mainca
     log=${certdir}/${cert}.log
-    add_san=1  # Subject Alt Name
-    add_ocsp=1 # Authority Information Access (OCSP)
-    add_crl=1  # Certificate Revocation List
-    if ! generate_cert ${certdir} ${root} ${cert} ${cert} ${is_ca} ${add_san} ${add_ocsp} ${add_crl} ${ku} ${eku} > ${log} 2>&1 ; then
+    if ! generate_cert ${certdir} ${root} ${cert} ${cert} ${is_ca} ${add_san} ${add_ocsp} ${add_crl} ${ku} ${eku} ${param} > ${log} 2>&1 ; then
 	cat ${log}
 	exit 1
     fi
 done <<EOF
-east_chain_int_1   y  mainca            digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
-east_chain_int_2   y  east_chain_int_1  digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
-east_chain_endcert n  east_chain_int_2  digitalSignature                         serverAuth,clientAuth
-west_chain_int_1   y  mainca            digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
-west_chain_int_2   y  west_chain_int_1  digitalSignature,certSigning,crlSigning  serverAuth,clientAuth,codeSigning
-west_chain_endcert n  west_chain_int_2  digitalSignature                         serverAuth,clientAuth
+mainca           east_chain_int_1   y  1  1  1 digitalSignature,certSigning,crlSigning  -
+east_chain_int_1 east_chain_int_2   y  1  1  1 digitalSignature,certSigning,crlSigning  -
+east_chain_int_2 east_chain_endcert n  1  1  1 digitalSignature                         -
+mainca           west_chain_int_1   y  1  1  1 digitalSignature,certSigning,crlSigning  -
+west_chain_int_1 west_chain_int_2   y  1  1  1 digitalSignature,certSigning,crlSigning  -
+west_chain_int_2 west_chain_endcert n  1  1  1 digitalSignature                         -
 EOF
