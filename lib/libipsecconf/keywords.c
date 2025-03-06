@@ -323,7 +323,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "debug",       kv_config|kv_conn, kt_lset, KW_DEBUG, NULL, &debug_lmod_info, },
 
   { "logfile",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, },
-  { "plutostderrlog",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, }, /* obsolete name, but very common :/ */
+  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete name, but very common :/ */
   { "logtime",  kv_config,  kt_bool,  KBF_LOGTIME, NULL, NULL, },
   { "logappend",  kv_config,  kt_bool,  KBF_LOGAPPEND, NULL, NULL, },
   { "logip",  kv_config,  kt_bool,  KBF_LOGIP, NULL, NULL, },
@@ -371,7 +371,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "xfrmlifetime",  kv_config,  kt_unsigned,  KBF_XFRMLIFETIME, NULL, NULL, },
 #endif
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
-  { "virtual_private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, }, /* obsolete variant, very common */
+  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete variant, very common */
   { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, NULL, },
   { "keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL, NULL, },
 
