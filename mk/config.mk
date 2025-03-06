@@ -504,14 +504,6 @@ NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
 SSL_LDFLAGS ?= -lssl3
 
-# Use nss IPsec profile for X509 validation. This is less restrictive
-# on EKU's. Enable when using NSS >= 3.41 (or RHEL-7.6 / RHEL-8.0)
-# See https://bugzilla.mozilla.org/show_bug.cgi?id=1252891
-USE_NSS_IPSEC_PROFILE ?= true
-ifeq ($(USE_NSS_IPSEC_PROFILE),true)
-USERLAND_CFLAGS += -DNSS_IPSEC_PROFILE
-endif
-
 # -levent can mean two things?
 LIBEVENT_LDFLAGS ?= -levent_core -levent_pthreads
 

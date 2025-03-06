@@ -21,7 +21,6 @@
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
     USE_NM=true \\\
-    USE_NSS_IPSEC_PROFILE=true \\\
     USE_NSS_KDF=true \\\
     USE_SECCOMP=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
