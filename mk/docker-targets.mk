@@ -30,7 +30,6 @@ DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 32	# default release
 
 D_USE_DNSSEC ?= false
-D_USE_NSS_IPSEC_PROFILE ?= false
 
 DOCKERFILE ?= $(D)/dockerfile
 

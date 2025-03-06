@@ -109,9 +109,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is not a CA.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -162,9 +159,6 @@ Certificate:
             Name: Certificate Basic Constraints
             Data: Is not a CA.
             Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
-                Code Signing Certificate
                 OCSP Responder Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
@@ -285,9 +279,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is not a CA.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -407,9 +398,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is not a CA.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -434,7 +422,7 @@ west #
  ipsec_cert west_chain_int_1
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west_chain_int_1                                             ,,   
+west_chain_int_1                                             P,,  
 *
 *
 * west_chain_int_1
@@ -443,7 +431,7 @@ west_chain_int_1                                             ,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 13 (0xd)
+        Serial Number: 19 (0x13)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -471,9 +459,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is a CA with no maximum path length.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
                     Certificate Signing
@@ -485,6 +470,8 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
         Email Flags:
         Object Signing Flags:
 west #
@@ -497,7 +484,7 @@ west #
  ipsec_cert west_chain_int_2
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west_chain_int_2                                             ,,   
+west_chain_int_2                                             P,,  
 *
 *
 * west_chain_int_2
@@ -506,7 +493,7 @@ west_chain_int_2                                             ,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 14 (0xe)
+        Serial Number: 20 (0x14)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
@@ -535,9 +522,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is a CA with no maximum path length.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
                     Certificate Signing
@@ -549,6 +533,8 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
         Email Flags:
         Object Signing Flags:
 west #
@@ -575,7 +561,7 @@ mainca                                                       CT,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 15 (0xf)
+        Serial Number: 21 (0x15)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
@@ -604,9 +590,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is not a CA.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption

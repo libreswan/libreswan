@@ -216,9 +216,7 @@ static bool verify_end_cert(struct logger *logger,
 	};
 
 	static const struct usage_desc usages[] = {
-#ifdef NSS_IPSEC_PROFILE
 		{ certificateUsageIPsec, "IPsec" },
-#endif
 		{ certificateUsageSSLClient, "TLS Client" },
 		{ certificateUsageSSLServer, "TLS Server" }
 	};
