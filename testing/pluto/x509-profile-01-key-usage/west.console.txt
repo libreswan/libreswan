@@ -1,0 +1,178 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ echo done
+done
+west #
+ run() { /testing/x509/import.sh real/mainca/$1.all.p12 ; ../../guestbin/dump-cert-extensions.sh $1 ; ../../guestbin/ipsec-start-stop.sh $1 ; }
+west #
+ run west-ku-missing
+ipsec pk12util -w nss-pw -i real/mainca/west-ku-missing.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
++ ipsec certutil -L -n west-ku-missing
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "west-ku-missing.testing.libreswan.org"
+            RFC822 Name: "west-ku-missing@testing.libreswan.org"
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add west-ku-missing
+"west-ku-missing": added IKEv2 connection
++ ipsec up west-ku-missing
+"west-ku-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ku-missing" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ku-missing" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ku-missing" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ku-missing" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ku-missing" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
++ ipsec stop
+Redirecting to: [initsystem]
+west #
+ run west-ku-digitalSignature
+ipsec pk12util -w nss-pw -i real/mainca/west-ku-digitalSignature.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
++ ipsec certutil -L -n west-ku-digitalSignature
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "west-ku-digitalSignature.testing.libreswan.org"
+            RFC822 Name: "west-ku-digitalSignature@testing.libreswan.org"
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Key Usage
+            Usages: Digital Signature
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add west-ku-digitalSignature
+"west-ku-digitalSignature": added IKEv2 connection
++ ipsec up west-ku-digitalSignature
+"west-ku-digitalSignature" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ku-digitalSignature" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ku-digitalSignature" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ku-digitalSignature" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ku-digitalSignature" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ku-digitalSignature" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
++ ipsec stop
+Redirecting to: [initsystem]
+west #
+ run west-ku-nonRepudiation
+ipsec pk12util -w nss-pw -i real/mainca/west-ku-nonRepudiation.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
++ ipsec certutil -L -n west-ku-nonRepudiation
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "west-ku-nonRepudiation.testing.libreswan.org"
+            RFC822 Name: "west-ku-nonRepudiation@testing.libreswan.org"
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Key Usage
+            Usages: Non-Repudiation
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add west-ku-nonRepudiation
+"west-ku-nonRepudiation": added IKEv2 connection
++ ipsec up west-ku-nonRepudiation
+"west-ku-nonRepudiation" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ku-nonRepudiation" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ku-nonRepudiation" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ku-nonRepudiation" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ku-nonRepudiation" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ku-nonRepudiation" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
++ ipsec stop
+Redirecting to: [initsystem]
+west #
+ run west-ku-certSigning
+ipsec pk12util -w nss-pw -i real/mainca/west-ku-certSigning.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
++ ipsec certutil -L -n west-ku-certSigning
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "west-ku-certSigning.testing.libreswan.org"
+            RFC822 Name: "west-ku-certSigning@testing.libreswan.org"
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Key Usage
+            Usages: Certificate Signing
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add west-ku-certSigning
+"west-ku-certSigning": added IKEv2 connection
++ ipsec up west-ku-certSigning
+"west-ku-certSigning" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ku-certSigning" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ku-certSigning" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ku-certSigning" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ku-certSigning" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"west-ku-certSigning" #1: encountered fatal error in state IKE_AUTH_I
+"west-ku-certSigning" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-ku-certSigning" #2: IMPAIR: revival: skip scheduling revival event
+"west-ku-certSigning" #1: deleting IKE SA (sent IKE_AUTH request)
++ ipsec stop
+Redirecting to: [initsystem]
+west #
+ run west-ku-digitalSignature-certSigning
+ipsec pk12util -w nss-pw -i real/mainca/west-ku-digitalSignature-certSigning.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
++ ipsec certutil -L -n west-ku-digitalSignature-certSigning
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "west-ku-digitalSignature-certSigning.testing.libreswan
+                .org"
+            RFC822 Name: "west-ku-digitalSignature-certSigning@testing.libres
+                wan.org"
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add west-ku-digitalSignature-certSigning
+conn 'west-ku-digitalSignature-certSigning': not found (tried aliases)
++ ipsec up west-ku-digitalSignature-certSigning
+no connection or alias named "west-ku-digitalSignature-certSigning"'
++ ipsec stop
+Redirecting to: [initsystem]
+west #
+ 
