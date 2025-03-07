@@ -317,6 +317,10 @@ generate_cert()
 
 while read base domain is_ca param ; do
 
+    case "${base}" in
+	'#*' ) continue ;;
+    esac
+
     echo creating cert directory: ${base} ${domain} ${is_ca} ${param} 1>&2
 
     certdir=${OUTDIR}/${base}
@@ -355,12 +359,18 @@ EOF
 # generate end certs where needed
 
 while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
+
+    case "${subdirs}" in
+	'#*' ) continue ;;
+    esac
+
     for subdir in $(eval echo ${subdirs}) ; do
 	for root in $(eval echo ${roots}) ; do
 	    for cert in $(eval echo ${certs}) ; do
 		certdir=${OUTDIR}/${subdir}/${root}
 		log=${certdir}/${cert}.log
 		user=user-${cert}
+
 		if generate_cert \
 		     ${certdir} ${root} ${cert} ${user} \
 		     ${add_san} ${add_ocsp} ${add_crl} \
@@ -371,6 +381,7 @@ while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
 		    cat ${log}
 		    exit 1
 		fi
+
 	    done
 	done
     done
@@ -385,12 +396,24 @@ real        mainca           semiroad                        1 1 1 n digitalSign
 real        mainca           nic-no-ocsp                     1 0 1 n digitalSignature  /
 real        otherca          other{east,west}                1 1 1 n digitalSignature  /
 real        badca            bad{east,west}                  1 1 1 n digitalSignature  /
+# Key Usage aka KU
+real        mainca           west-ku-missing                      1 1 1 n /                             /
+real        mainca           west-ku-digitalSignature             1 1 1 n digitalSignature              /
+real        mainca           west-ku-nonRepudiation               1 1 1 n nonRepudiation                /
+real        mainca           west-ku-digitalSignature-certSigning 1 1 1 n digitalSignature,certSigning  /
+real        mainca           west-ku-certSigning                  1 1 1 n certSigning                   /
 EOF
 
 while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
+
+    case "${subdir}" in
+	'#*' ) continue ;;
+    esac
+
     certdir=${OUTDIR}/${subdir}
     log=${certdir}/${cert}.log
     user=${cert}
+
     if generate_cert \
 	   ${certdir} ${root} ${cert} ${user} \
 	   ${add_san} ${add_ocsp} ${add_crl} \
