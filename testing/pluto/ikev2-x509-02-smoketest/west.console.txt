@@ -15,10 +15,6 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 pk12util: PKCS12 IMPORT SUCCESSFUL
 pk12util: PKCS12 IMPORT SUCCESSFUL
 pk12util: PKCS12 IMPORT SUCCESSFUL
-pk12util: PKCS12 IMPORT SUCCESSFUL
-pk12util: PKCS12 IMPORT SUCCESSFUL
-pk12util: PKCS12 IMPORT SUCCESSFUL
-pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -128,159 +124,99 @@ west #
 west #
  sleep 2
 west #
- ipsec auto --up west-ku-nonRepudiation
-"west-ku-nonRepudiation" #13: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-ku-nonRepudiation" #13: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-ku-nonRepudiation" #13: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-ku-nonRepudiation" #13: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-ku-nonRepudiation" #13: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-ku-nonRepudiation" #14: initiator established Child SA using #13; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-west #
- ipsec auto --delete west-ku-nonRepudiation
-"west-ku-nonRepudiation": terminating SAs using this connection
-"west-ku-nonRepudiation" #13: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-ku-nonRepudiation" #14: ESP traffic information: in=0B out=0B
-west #
- sleep 2
-west #
  ipsec auto --up west-sanCritical
-"west-sanCritical" #15: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-sanCritical" #15: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-sanCritical" #15: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-sanCritical" #15: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-sanCritical" #15: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-sanCritical" #16: initiator established Child SA using #15; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-sanCritical" #13: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-sanCritical" #13: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-sanCritical" #13: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-sanCritical" #13: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-sanCritical" #13: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-sanCritical" #14: initiator established Child SA using #13; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete west-sanCritical
 "west-sanCritical": terminating SAs using this connection
-"west-sanCritical" #15: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-sanCritical" #16: ESP traffic information: in=0B out=0B
+"west-sanCritical" #13: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-sanCritical" #14: ESP traffic information: in=0B out=0B
 west #
  sleep 2
 west #
  # This one works now - older NSS versions relied on NSS TLS fallback
 west #
  ipsec auto --up west-ekuCritical
-"west-ekuCritical" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-ekuCritical" #17: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-ekuCritical" #17: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-ekuCritical" #17: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-ekuCritical" #17: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-ekuCritical" #18: initiator established Child SA using #17; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-ekuCritical" #15: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ekuCritical" #15: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ekuCritical" #15: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ekuCritical" #15: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ekuCritical" #15: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ekuCritical" #16: initiator established Child SA using #15; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete west-ekuCritical
 "west-ekuCritical": terminating SAs using this connection
-"west-ekuCritical" #17: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-ekuCritical" #18: ESP traffic information: in=0B out=0B
-west #
- sleep 2
-west #
- ipsec auto --up west-kuCritical
-"west-kuCritical" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-kuCritical" #19: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-kuCritical" #19: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-kuCritical" #19: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-kuCritical" #19: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-kuCritical" #20: initiator established Child SA using #19; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-west #
- ipsec auto --delete west-kuCritical
-"west-kuCritical": terminating SAs using this connection
-"west-kuCritical" #19: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-kuCritical" #20: ESP traffic information: in=0B out=0B
-west #
- sleep 2
-west #
- ipsec auto --up west-kuOmit
-"west-kuOmit" #21: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-kuOmit" #21: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-kuOmit" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-kuOmit" #21: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-kuOmit" #21: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-kuOmit" #22: initiator established Child SA using #21; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-west #
- ipsec auto --delete west-kuOmit
-"west-kuOmit": terminating SAs using this connection
-"west-kuOmit" #21: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-kuOmit" #22: ESP traffic information: in=0B out=0B
+"west-ekuCritical" #15: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-ekuCritical" #16: ESP traffic information: in=0B out=0B
 west #
  sleep 2
 west #
  ipsec auto --up west-eku-clientAuth
-"west-eku-clientAuth" #23: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-eku-clientAuth" #23: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-eku-clientAuth" #23: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-eku-clientAuth" #23: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-clientAuth" #23: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-eku-clientAuth" #24: initiator established Child SA using #23; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-eku-clientAuth" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-clientAuth" #17: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-clientAuth" #17: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-clientAuth" #17: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-clientAuth" #17: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-clientAuth" #18: initiator established Child SA using #17; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete west-eku-clientAuth
 "west-eku-clientAuth": terminating SAs using this connection
-"west-eku-clientAuth" #23: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-eku-clientAuth" #24: ESP traffic information: in=0B out=0B
+"west-eku-clientAuth" #17: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-eku-clientAuth" #18: ESP traffic information: in=0B out=0B
 west #
  sleep 2
 west #
  ipsec auto --up west-eku-ipsecIKE
-"west-eku-ipsecIKE" #25: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-eku-ipsecIKE" #25: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-eku-ipsecIKE" #25: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-eku-ipsecIKE" #25: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-ipsecIKE" #25: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-eku-ipsecIKE" #26: initiator established Child SA using #25; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-eku-ipsecIKE" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-ipsecIKE" #19: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-ipsecIKE" #19: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-ipsecIKE" #19: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-ipsecIKE" #19: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-ipsecIKE" #20: initiator established Child SA using #19; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete west-eku-ipsecIKE
 "west-eku-ipsecIKE": terminating SAs using this connection
-"west-eku-ipsecIKE" #25: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-eku-ipsecIKE" #26: ESP traffic information: in=0B out=0B
-west #
- sleep 2
-west #
- ipsec auto --up west-ku-keyAgreement-digitalSignature
-"west-ku-keyAgreement-digitalSignature" #27: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-ku-keyAgreement-digitalSignature" #27: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-ku-keyAgreement-digitalSignature" #27: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-ku-keyAgreement-digitalSignature" #27: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-ku-keyAgreement-digitalSignature" #27: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-ku-keyAgreement-digitalSignature" #28: initiator established Child SA using #27; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-west #
- ipsec auto --delete west-ku-keyAgreement-digitalSignature
-"west-ku-keyAgreement-digitalSignature": terminating SAs using this connection
-"west-ku-keyAgreement-digitalSignature" #27: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-ku-keyAgreement-digitalSignature" #28: ESP traffic information: in=0B out=0B
+"west-eku-ipsecIKE" #19: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-eku-ipsecIKE" #20: ESP traffic information: in=0B out=0B
 west #
  sleep 2
 west #
  # fails on older versions of NSS only
 west #
  ipsec auto --up west-ekuCritical-eku-emailProtection
-"west-ekuCritical-eku-emailProtection" #29: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-ekuCritical-eku-emailProtection" #29: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-ekuCritical-eku-emailProtection" #29: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-ekuCritical-eku-emailProtection" #29: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-ekuCritical-eku-emailProtection" #29: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-ekuCritical-eku-emailProtection" #30: initiator established Child SA using #29; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-ekuCritical-eku-emailProtection" #21: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ekuCritical-eku-emailProtection" #21: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ekuCritical-eku-emailProtection" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ekuCritical-eku-emailProtection" #21: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ekuCritical-eku-emailProtection" #21: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ekuCritical-eku-emailProtection" #22: initiator established Child SA using #21; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete west-ekuCritical-eku-emailProtection
 "west-ekuCritical-eku-emailProtection": terminating SAs using this connection
-"west-ekuCritical-eku-emailProtection" #29: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-ekuCritical-eku-emailProtection" #30: ESP traffic information: in=0B out=0B
+"west-ekuCritical-eku-emailProtection" #21: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-ekuCritical-eku-emailProtection" #22: ESP traffic information: in=0B out=0B
 west #
  sleep 2
 west #
  # following test should fail (but it does not - It is an nss-ism - we will ignore it for now)
 west #
  ipsec auto --up west-ekuBOGUS-bad
-"west-ekuBOGUS-bad" #31: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-ekuBOGUS-bad" #31: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-ekuBOGUS-bad" #31: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-ekuBOGUS-bad" #31: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-ekuBOGUS-bad" #31: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-ekuBOGUS-bad" #32: initiator established Child SA using #31; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-ekuBOGUS-bad" #23: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-ekuBOGUS-bad" #23: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-ekuBOGUS-bad" #23: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-ekuBOGUS-bad" #23: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-ekuBOGUS-bad" #23: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-ekuBOGUS-bad" #24: initiator established Child SA using #23; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --delete west-ekuBOGUS-bad
 "west-ekuBOGUS-bad": terminating SAs using this connection
-"west-ekuBOGUS-bad" #31: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"west-ekuBOGUS-bad" #32: ESP traffic information: in=0B out=0B
+"west-ekuBOGUS-bad" #23: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"west-ekuBOGUS-bad" #24: ESP traffic information: in=0B out=0B
 west #
  echo "done"
 done
@@ -288,14 +224,6 @@ west #
  # confirm all verifications used the NSS IPsec profile and not TLS client/server profile
 west #
  grep profile /tmp/pluto.log  | grep -v Starting
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec

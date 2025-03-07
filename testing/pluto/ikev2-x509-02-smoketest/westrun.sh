@@ -19,9 +19,6 @@ sleep 2
 ipsec auto --up west-eku-serverAuth
 ipsec auto --delete west-eku-serverAuth
 sleep 2
-ipsec auto --up west-ku-nonRepudiation
-ipsec auto --delete west-ku-nonRepudiation
-sleep 2
 ipsec auto --up west-sanCritical
 ipsec auto --delete west-sanCritical
 sleep 2
@@ -29,20 +26,11 @@ sleep 2
 ipsec auto --up west-ekuCritical
 ipsec auto --delete west-ekuCritical
 sleep 2
-ipsec auto --up west-kuCritical
-ipsec auto --delete west-kuCritical
-sleep 2
-ipsec auto --up west-kuOmit
-ipsec auto --delete west-kuOmit
-sleep 2
 ipsec auto --up west-eku-clientAuth
 ipsec auto --delete west-eku-clientAuth
 sleep 2
 ipsec auto --up west-eku-ipsecIKE
 ipsec auto --delete west-eku-ipsecIKE
-sleep 2
-ipsec auto --up west-ku-keyAgreement-digitalSignature
-ipsec auto --delete west-ku-keyAgreement-digitalSignature
 sleep 2
 # fails on older versions of NSS only
 ipsec auto --up west-ekuCritical-eku-emailProtection

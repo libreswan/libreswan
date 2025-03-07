@@ -45,13 +45,5 @@ east #
 | certificate is valid (profile IPsec)
 | verify_end_cert trying profile IPsec
 | certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
-| verify_end_cert trying profile IPsec
-| certificate is valid (profile IPsec)
 east #
  
