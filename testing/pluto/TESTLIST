@@ -883,6 +883,9 @@ kvmplutotest	x509-pluto-frag-03	good
 kvmplutotest	x509-pluto-frag-04	good
 kvmplutotest	x509-ikev2-frag-01-ike-aes_gcm	good
 
+# test PKI x.509 aka PKIX profiles aka RFC 4945
+kvmplutotest	x509-profile-01-key-usage	good
+
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
 kvmplutotest	nat-pluto-03		good

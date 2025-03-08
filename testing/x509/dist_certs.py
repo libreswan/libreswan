@@ -197,26 +197,7 @@ def set_cert_extensions(cert):
         add_ext(cert, 'subjectAltName', False, SAN)
 
     # Create Key Usage (KU)
-    ku_str = 'digitalSignature'
-
-    # check for custom Key Usage
-    if '-ku-' in cnstr:
-        ku_str = ''
-        for ku_entry in ( 'digitalSignature', 'nonRepudiation', 'keyEncipherment', 'dataEncipherment',
-                          'keyAgreement', 'keyCertSign', 'cRLSign', 'encipherOnly', 'decipherOnly' ):
-            if ku_entry in cnstr:
-                ku_str = ku_str + "," + ku_entry
-        if 'kuBOGUS' in cnstr:
-            ku_str = ku_str + ",1.3.6.1.5.5.42.42.42" # bogus OID
-    if 'kuEmpty' in cnstr:
-        ku_str = ''
-    if '-kuOmit' not in cnstr:
-        cf = False
-        if 'kuCritical' in cnstr:
-            cf = True
-        if ku_str != '' and ku_str[0] == ',':
-            ku_str = ku_str[1:]
-        add_ext(cert, 'keyUsage', cf, ku_str)
+    add_ext(cert, 'keyUsage', False, 'digitalSignature')
 
     # Create Extended Key Usage (KU)
     eku_str = 'serverAuth,clientAuth' # arbitrary default most often used in the wild
@@ -437,17 +418,13 @@ def main():
 
 
     # Add end certs here
-    mainca_end_certs = ('west-kuOmit', # Key Usage should not be needed
-                        'west-eku-clientAuth', # should be enough to validate
+    mainca_end_certs = ('west-eku-clientAuth', # should be enough to validate
                         'west-eku-serverAuth', # should be enough to validate
                         'west-bcOmit', # Basic Constraints should not be needed
                         'west-ekuOmit', # Extended Key Usage should not be needed
                         'west-sanCritical', # should work
                         'west-bcCritical', # Basic Constraints critical flag should be ignored
-                        'west-kuCritical', # Key Usage critical flag should be ignored
                         'west-ekuCritical', # Extended Key Usage critical flag should be ignored ??
-                        'west-ku-keyAgreement-digitalSignature', # Should work
-                        'west-ku-nonRepudiation', # Should work
                         'west-ekuBOGUS-bad', # Should fail because it needs a recognised EKU
                         'west-eku-ipsecIKE', # Should work
                         'west-ekuCritical-eku-ipsecIKE', # Should still work
