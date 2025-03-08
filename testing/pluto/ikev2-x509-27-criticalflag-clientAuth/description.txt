@@ -1,7 +1,0 @@
-
-Test X509 certificates with a non-empty EKU section with critical
-flag set. This fails verification on NSS 3.41 using the IPsec profile,
-and requires working fallback to the NSS TLS profile for verification.
-
-This is identical to ikev2-x509-26-criticalflag, except we ALSO do not set
-serverAuth, so we only have clientAuth we can use to pass verification.

@@ -1,0 +1,27 @@
+Test RFC 4945 PKI Profile for IKE/ISAKMP/PKIX's Extended Key Usage
+
+See https://datatracker.ietf.org/doc/html/rfc4945#section-5.1.3.12
+
+   Implementations that do support EKU MUST support the following
+   logic for certificate validation:
+
+   o  If no EKU extension, continue.
+
+   o  If EKU present AND contains either id-kp-ipsecIKE or
+      anyExtendedKeyUsage, continue.
+
+   o  Otherwise, reject cert.
+
+this tests:
+
+  west-eku-missing                      establish
+  west-eku-anyExtendedKeyUsage          establish
+  west-eku-ipsecIKE			establish
+  west-eku-serverAuth			requires config
+  west-eku-clientAuth			requires config
+  west-eku-codeSigning			reject
+  west-eku-ipsecIKE-codeSigning		establish
+
+Note: the basic certs all have no EKU so the test with
+west-eku-missing is redundant
+
