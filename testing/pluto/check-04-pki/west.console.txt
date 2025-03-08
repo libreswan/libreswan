@@ -431,7 +431,7 @@ west_chain_int_1                                             P,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 24 (0x18)
+        Serial Number: 31 (0x1f)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -493,7 +493,7 @@ west_chain_int_2                                             P,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 25 (0x19)
+        Serial Number: 32 (0x20)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
@@ -561,7 +561,7 @@ mainca                                                       CT,,
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 26 (0x1a)
+        Serial Number: 33 (0x21)
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
