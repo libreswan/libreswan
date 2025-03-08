@@ -4,13 +4,31 @@ west #
  echo done
 done
 west #
- run() { /testing/x509/import.sh real/mainca/$1.all.p12 ; ../../guestbin/dump-cert-extensions.sh $1 ; ../../guestbin/ipsec-start-stop.sh $1 ; }
+ run() { local l=$1 ; /testing/x509/import.sh real/mainca/$l.all.p12 ; set ipsec certutil -L -n $l ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $l ; }
 west #
  run west-ku-missing
 ipsec pk12util -w nss-pw -i real/mainca/west-ku-missing.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
-+ ipsec certutil -L -n west-ku-missing
+ ipsec certutil -L -n west-ku-missing
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-ku-missing@testing.libreswan.org,CN=west-ku-mis
+            sing.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toron
+            to,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
         Signed Extensions:
             Name: Certificate Subject Alt Name
             DNS name: "west-ku-missing.testing.libreswan.org"
@@ -24,6 +42,18 @@ ipsec certutil -M -n mainca -t CT,,
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is not a CA.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
 + ipsec start
 Redirecting to: [initsystem]
 + ipsec add west-ku-missing
@@ -42,7 +72,25 @@ west #
 ipsec pk12util -w nss-pw -i real/mainca/west-ku-digitalSignature.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
-+ ipsec certutil -L -n west-ku-digitalSignature
+ ipsec certutil -L -n west-ku-digitalSignature
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-ku-digitalSignature@testing.libreswan.org,CN=we
+            st-ku-digitalSignature.testing.libreswan.org,OU=Test Department,O
+            =Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
         Signed Extensions:
             Name: Certificate Subject Alt Name
             DNS name: "west-ku-digitalSignature.testing.libreswan.org"
@@ -58,6 +106,18 @@ ipsec certutil -M -n mainca -t CT,,
             Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
 + ipsec start
 Redirecting to: [initsystem]
 + ipsec add west-ku-digitalSignature
@@ -76,7 +136,25 @@ west #
 ipsec pk12util -w nss-pw -i real/mainca/west-ku-nonRepudiation.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
-+ ipsec certutil -L -n west-ku-nonRepudiation
+ ipsec certutil -L -n west-ku-nonRepudiation
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-ku-nonRepudiation@testing.libreswan.org,CN=west
+            -ku-nonRepudiation.testing.libreswan.org,OU=Test Department,O=Lib
+            reswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
         Signed Extensions:
             Name: Certificate Subject Alt Name
             DNS name: "west-ku-nonRepudiation.testing.libreswan.org"
@@ -92,6 +170,18 @@ ipsec certutil -M -n mainca -t CT,,
             Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Non-Repudiation
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
 + ipsec start
 Redirecting to: [initsystem]
 + ipsec add west-ku-nonRepudiation
@@ -110,7 +200,25 @@ west #
 ipsec pk12util -w nss-pw -i real/mainca/west-ku-certSigning.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
-+ ipsec certutil -L -n west-ku-certSigning
+ ipsec certutil -L -n west-ku-certSigning
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-ku-certSigning@testing.libreswan.org,CN=west-ku
+            -certSigning.testing.libreswan.org,OU=Test Department,O=Libreswan
+            ,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
         Signed Extensions:
             Name: Certificate Subject Alt Name
             DNS name: "west-ku-certSigning.testing.libreswan.org"
@@ -126,6 +234,18 @@ ipsec certutil -M -n mainca -t CT,,
             Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Certificate Signing
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
 + ipsec start
 Redirecting to: [initsystem]
 + ipsec add west-ku-certSigning
@@ -147,7 +267,25 @@ west #
 ipsec pk12util -w nss-pw -i real/mainca/west-ku-digitalSignature-certSigning.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
-+ ipsec certutil -L -n west-ku-digitalSignature-certSigning
+ ipsec certutil -L -n west-ku-digitalSignature-certSigning
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-ku-digitalSignature-certSigning@testing.libresw
+            an.org,CN=west-ku-digitalSignature-certSigning.testing.libreswan.
+            org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
         Signed Extensions:
             Name: Certificate Subject Alt Name
             DNS name: "west-ku-digitalSignature-certSigning.testing.libreswan
@@ -166,6 +304,18 @@ ipsec certutil -M -n mainca -t CT,,
             Name: Certificate Key Usage
             Usages: Digital Signature
                     Certificate Signing
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
 + ipsec start
 Redirecting to: [initsystem]
 + ipsec add west-ku-digitalSignature-certSigning

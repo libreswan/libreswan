@@ -1,5 +1,6 @@
 # match: certutil
 
+/^[a-z]# ipsec certutil / b next-ipsec-certutil
 /^ certutil / b next-ipsec-certutil
 /^ ipsec certutil / b next-ipsec-certutil
 
@@ -19,6 +20,13 @@ b end-ipsec-certutil
   # next command?
   /^[a-z][a-z]*#/ b end-ipsec-certutil
   /^[a-z][a-z]* #/ b end-ipsec-certutil
+
+  # strip out any raw keys
+  /^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ b drop-ipsec-certutil
+
+  s/Serial Number: .*/Serial Number: SERIAL/
+  s/Not Before: .*/Not Before: TIMESTAMP/
+  s/Not After : .*/Not After : TIMESTAMP/
 
   # f28 gets different NSS errors compared to f22
   s/: SEC_ERROR_UNRECOGNIZED_OID: Unrecognized Object Identifier./: SEC_ERROR_.../

@@ -1,4 +1,4 @@
-run() { /testing/x509/import.sh real/mainca/$1.all.p12 ; ../../guestbin/dump-cert-extensions.sh $1 ; ../../guestbin/ipsec-start-stop.sh $1 ; }
+run() { local l=$1 ; /testing/x509/import.sh real/mainca/$l.all.p12 ; set ipsec certutil -L -n $l ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $l ; }
 
 run west-eku-missing
 run west-eku-ipsecIKE

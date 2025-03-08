@@ -1,4 +1,4 @@
-ipsec_cert() { ipsec certutil -L ; for n in "$@" ; do printf "*\n*\n* ${n}\n*\n*\n" ; ipsec certutil -L -n ${n} |  sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d' ; done ; }
+ipsec_cert() { ipsec certutil -L ; for n in "$@" ; do printf "*\n*\n* ${n}\n*\n*\n" ; set ipsec certutil -L -n ${n} ; echo " $@" ; "$@" ; done ; }
 
 /testing/guestbin/swan-prep --nokeys
 /testing/x509/import.sh real/mainca/west.all.p12

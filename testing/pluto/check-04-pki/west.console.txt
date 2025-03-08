@@ -1,4 +1,4 @@
-ipsec_cert() { ipsec certutil -L ; for n in "$@" ; do printf "*\n*\n* ${n}\n*\n*\n" ; ipsec certutil -L -n ${n} |  sed -e '/^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ d' ; done ; }
+ipsec_cert() { ipsec certutil -L ; for n in "$@" ; do printf "*\n*\n* ${n}\n*\n*\n" ; set ipsec certutil -L -n ${n} ; echo " $@" ; "$@" ; done ; }
 west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
@@ -24,10 +24,11 @@ nic                                                          u,u,u
 * mainca
 *
 *
+ ipsec certutil -L -n mainca
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 1 (0x1)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -77,10 +78,11 @@ Certificate:
 * west
 *
 *
+ ipsec certutil -L -n west
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 4 (0x4)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -128,10 +130,11 @@ Certificate:
 * nic
 *
 *
+ ipsec certutil -L -n nic
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 2 (0x2)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -193,10 +196,11 @@ otherca                                                      CT,,
 * otherca
 *
 *
+ ipsec certutil -L -n otherca
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 1 (0x1)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=
             Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -246,10 +250,11 @@ Certificate:
 * otherwest
 *
 *
+ ipsec certutil -L -n otherwest
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 3 (0x3)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=
             Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -312,10 +317,11 @@ badca                                                        CT,,
 * badca
 *
 *
+ ipsec certutil -L -n badca
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 1 (0x1)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for badca,OU=Te
             st Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -365,10 +371,11 @@ Certificate:
 * badwest
 *
 *
+ ipsec certutil -L -n badwest
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 3 (0x3)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for badca,OU=Te
             st Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -428,10 +435,11 @@ west_chain_int_1                                             P,,
 * west_chain_int_1
 *
 *
+ ipsec certutil -L -n west_chain_int_1
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 31 (0x1f)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -490,10 +498,11 @@ west_chain_int_2                                             P,,
 * west_chain_int_2
 *
 *
+ ipsec certutil -L -n west_chain_int_2
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 32 (0x20)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
@@ -558,10 +567,11 @@ mainca                                                       CT,,
 * west_chain_endcert
 *
 *
+ ipsec certutil -L -n west_chain_endcert
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: 33 (0x21)
+        Serial Number: SERIAL
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2
             .testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,S
