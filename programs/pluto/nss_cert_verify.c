@@ -217,8 +217,10 @@ static bool verify_end_cert(struct logger *logger,
 
 	static const struct usage_desc usages[] = {
 		{ certificateUsageIPsec, "IPsec" },
+#if 0
 		{ certificateUsageSSLClient, "TLS Client" },
 		{ certificateUsageSSLServer, "TLS Server" }
+#endif
 	};
 
 	if (DBGP(DBG_BASE)) {
