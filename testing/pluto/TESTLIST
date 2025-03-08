@@ -443,8 +443,6 @@ kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
 kvmplutotest	ikev2-x509-01				good
 kvmplutotest	ikev2-x509-01-nss-debug			skiptest
-kvmplutotest	ikev2-x509-02-eku			good
-# smoketest will replace -eku test
 kvmplutotest	ikev2-x509-02-smoketest			good
 kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
@@ -473,8 +471,6 @@ kvmplutotest	ikev2-x509-22-pkcs7			good
 kvmplutotest	ikev2-x509-23-no-ca			good
 kvmplutotest	ikev2-x509-24-fakewest			good
 kvmplutotest	ikev2-x509-25-missing-ca		good
-kvmplutotest	ikev2-x509-26-criticalflag		good
-kvmplutotest	ikev2-x509-27-criticalflag-clientAuth	good
 kvmplutotest	ikev2-x509-28-del-nssdb-cert		good
 kvmplutotest	ikev2-x509-29-selfsigned		wip	github:542
 kvmplutotest	ikev2-x509-30-mismatch-ignore		good
@@ -884,7 +880,8 @@ kvmplutotest	x509-pluto-frag-04	good
 kvmplutotest	x509-ikev2-frag-01-ike-aes_gcm	good
 
 # test PKI x.509 aka PKIX profiles aka RFC 4945
-kvmplutotest	x509-profile-01-key-usage	good
+kvmplutotest	x509-profile-01-key-usage  		good
+kvmplutotest	x509-profile-02-extended-key-usage	good
 
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good

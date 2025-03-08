@@ -200,39 +200,7 @@ def set_cert_extensions(cert):
     add_ext(cert, 'keyUsage', False, 'digitalSignature')
 
     # Create Extended Key Usage (KU)
-    eku_str = 'serverAuth,clientAuth' # arbitrary default most often used in the wild
-    # check for custom Key Usage
-    if '-eku-' in cnstr:
-        eku_str = ''
-        for eku_entry in ( 'serverAuth', 'clientAuth', 'codeSigning', 'emailProtection', 'timeStamping',
-                           'OCSPSigning', 'ipsecIKE', 'msCodeInd', 'msCodeCom', 'msCTLSign', 'msEFS' ):
-            if eku_entry in cnstr:
-                eku_str = eku_str + "," + eku_entry
-        # some informal names mapping to non-openssl supported OIDs
-        if '-ipsecEndSystem' in cnstr:
-            eku_str = eku_str + ",1.3.6.1.5.5.7.3.5"
-        if '-ipsecTunnel' in cnstr:
-            eku_str = eku_str + ",1.3.6.1.5.5.7.3.6"
-        if '-ipsecUser' in cnstr:
-            eku_str = eku_str + ",1.3.6.1.5.5.7.3.7"
-        if '-ipsecIKE' in cnstr:
-            eku_str = eku_str + ",1.3.6.1.5.5.7.3.17"
-        if '-iKEIntermediate' in cnstr:
-            eku_str = eku_str + ",1.3.6.1.5.5.8.2.2"
-        if '-iKEEnd' in cnstr:
-            eku_str = eku_str + ",1.3.6.1.5.5.8.2.1"
-        if '-ekuBOGUS' in cnstr:
-            eku_str = eku_str + ",'1.3.6.1.5.5.42.42.42'" # bogus OID
-    if 'ekuEmpty' in cnstr:
-        eku_str = ''
-    if '-ekuOmit' not in cnstr:
-        cf = False
-        if 'ekuCritical' in cnstr:
-            cf = True
-        if eku_str != '' and eku_str[0] == ',':
-            eku_str = eku_str[1:]
-        add_ext(cert, 'extendedKeyUsage', cf, eku_str)
-
+    add_ext(cert, 'extendedKeyUsage', False, 'ipsecIKE')
 
     # Create OCSP
     add_ext(cert, 'authorityInfoAccess', False,
@@ -418,17 +386,9 @@ def main():
 
 
     # Add end certs here
-    mainca_end_certs = ('west-eku-clientAuth', # should be enough to validate
-                        'west-eku-serverAuth', # should be enough to validate
-                        'west-bcOmit', # Basic Constraints should not be needed
-                        'west-ekuOmit', # Extended Key Usage should not be needed
+    mainca_end_certs = ('west-bcOmit', # Basic Constraints should not be needed
                         'west-sanCritical', # should work
-                        'west-bcCritical', # Basic Constraints critical flag should be ignored
-                        'west-ekuCritical', # Extended Key Usage critical flag should be ignored ??
-                        'west-ekuBOGUS-bad', # Should fail because it needs a recognised EKU
-                        'west-eku-ipsecIKE', # Should work
-                        'west-ekuCritical-eku-ipsecIKE', # Should still work
-                        'west-ekuCritical-eku-emailProtection') # Should still work
+                        'west-bcCritical') # Basic Constraints critical flag should be ignored
 
     # Put special case code for new certs in the following functions
     load_mainca_cas()

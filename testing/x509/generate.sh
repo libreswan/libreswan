@@ -402,6 +402,14 @@ real        mainca           west-ku-digitalSignature             1 1 1 n digita
 real        mainca           west-ku-nonRepudiation               1 1 1 n nonRepudiation                /
 real        mainca           west-ku-digitalSignature-certSigning 1 1 1 n digitalSignature,certSigning  /
 real        mainca           west-ku-certSigning                  1 1 1 n certSigning                   /
+# Extended Key Usage aka EKU
+real        mainca           west-eku-missing                     1 1 1 n digitalSignature /
+real        mainca           west-eku-ipsecIKE                    1 1 1 n digitalSignature ipsecIKE
+real        mainca           west-eku-x509Any                     1 1 1 n digitalSignature x509Any
+real        mainca           west-eku-serverAuth                  1 1 1 n digitalSignature serverAuth
+real        mainca           west-eku-clientAuth                  1 1 1 n digitalSignature clientAuth
+real        mainca           west-eku-codeSigning                 1 1 1 n digitalSignature codeSigning
+real        mainca           west-eku-ipsecIKE-codeSigning        1 1 1 n digitalSignature ipsecIKE,codeSigning
 EOF
 
 while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
