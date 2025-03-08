@@ -1,8 +1,4 @@
-/testing/guestbin/swan-prep --nokeys
-
-# scrub the nssdb (is there a swan-prep option?)
-rm /etc/ipsec.d/*.db
-modutil -create -dbdir /etc/ipsec.d -force
+/testing/guestbin/swan-prep --nokeys # empty NSS DB
 
 # import fiddled keys
 ipsec pk12util -i OUTPUT/west.p12 -W foobar
