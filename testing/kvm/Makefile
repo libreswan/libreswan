@@ -126,7 +126,6 @@ VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 # $(KVM_<FLAG>).
 
 # On Linux, override linux defaults
-KVM_LINUX_NSSDIR ?= $(SYSCONFDIR)/ipsec.d
 KVM_LINUX_SD_RESTART_TYPE ?= no
 KVM_LINUX_USE_EFENCE ?= true
 KVM_LINUX_USE_LABELED_IPSEC ?= true

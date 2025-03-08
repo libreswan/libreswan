@@ -1,24 +1,22 @@
-# rhbz#1313816
+# rhbz#1313816: should abort, not crash, due to missing nss
+west #
+ ../../guestbin/swan-prep # no NSS DB init!
 west #
  mkdir /tmp/rhbz1313816
-west #
- rm -f /etc/ipsec.d/*.*
-west #
- # should abort, not crash, due to missing nss
 west #
  ipsec pluto --rundir /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
 Starting Pluto (Libreswan Version ...) pid:PID
 operating system: ...
 core dump dir: /run/pluto
 secrets file: /etc/ipsec.secrets
-Initializing NSS using read-only database "sql:/etc/ipsec.d"
-FATAL ERROR: NSS: initialization using read-only database "sql:/etc/ipsec.d" failed: SEC_ERROR_BAD_DATABASE: security library: bad database.
+Initializing NSS using read-only database "sql:/var/lib/ipsec/nss"
+FATAL ERROR: NSS: initialization using read-only database "sql:/var/lib/ipsec/nss" failed: SEC_ERROR_BAD_DATABASE: security library: bad database.
 west #
- # rhbz#1041576 start pluto in dir not owned by root
+ # rhbz#1041576 start pluto in dir not owned by root; should not fail
 west #
- # should not fail with "pluto: unable to create lock dir:"
+ # with "pluto: unable to create lock dir:" not using /tmp or /var/tmp/
 west #
- # not using /tmp or /var/tmp/ due to specialness of parent dir in test
+ # due to specialness of parent dir in test
 west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
@@ -26,8 +24,6 @@ west #
  rm -rf /var/cache/otheruser
 west #
  mkdir -p /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
-west #
- cp /etc/ipsec.d/*.* /var/cache/otheruser/etc/
 west #
  mv /etc/ipsec.conf /var/cache/otheruser/etc/
 west #

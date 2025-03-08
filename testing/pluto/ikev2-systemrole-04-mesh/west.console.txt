@@ -1,27 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- # System Role deployment on nic will push configurations to our machine
-west #
- # into /etc/ipsec.d/
-west #
- rm -rf OUTPUT/west/ipsec.d
-west #
- mkdir -p OUTPUT/west/ipsec.d/policies
-west #
- chmod 777 OUTPUT/west
-west #
- mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
-west #
- ( cd /etc/ipsec.d/policies; touch private private-or-clear clear block )
-west #
- # initnss normally happens in the initsystem - but not for namespace testing
-west #
- # ../../guestbin/if-namespace.sh ipsec initnss
-west #
- ipsec initnss
-Initializing NSS database
-west #
  /testing/x509/import.sh real/mainca/west.all.p12
 ipsec pk12util -w nss-pw -i real/mainca/west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL

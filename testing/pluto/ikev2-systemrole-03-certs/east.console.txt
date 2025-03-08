@@ -1,27 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- # System Role deployment on nic will push configurations to our machine
-east #
- # into /etc/ipsec.d/
-east #
- # because it will change files, we can't mount bind them. So use a fressh empty dir
-east #
- rm -rf OUTPUT/east/ipsec.d
-east #
- mkdir -p OUTPUT/east/ipsec.d
-east #
- chmod 777 OUTPUT/east
-east #
- mount -o bind,rw OUTPUT/east/ipsec.d /etc/ipsec.d
-east #
- # initnss normally happens in the initsystem - but not for namespace testing
-east #
- # ../../guestbin/if-namespace.sh ipsec initnss
-east #
- ipsec initnss
-Initializing NSS database
-east #
  /testing/x509/import.sh real/mainca/east.all.p12
 ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL

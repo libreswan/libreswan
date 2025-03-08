@@ -1,11 +1,5 @@
-/testing/guestbin/swan-prep --nokeys
+/testing/guestbin/swan-prep --nokeys # empty NSS DB
 Creating empty NSS database
-west #
- # scrub the nssdb (is there a swan-prep option?)
-west #
- rm /etc/ipsec.d/*.db
-west #
- modutil -create -dbdir /etc/ipsec.d -force
 west #
  # import fiddled keys
 west #

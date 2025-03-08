@@ -1,13 +1,4 @@
 /testing/guestbin/swan-prep --nokeys
-# System Role deployment on nic will push configurations to our machine
-# into /etc/ipsec.d/
-rm -rf OUTPUT/west/ipsec.d
-mkdir -p OUTPUT/west/ipsec.d
-chmod 777 OUTPUT/west
-mount -o bind,rw OUTPUT/west/ipsec.d /etc/ipsec.d
-# initnss normally happens in the initsystem - but not for namespace testing
-# ../../guestbin/if-namespace.sh ipsec initnss
-ipsec initnss
 /testing/x509/import.sh real/mainca/west.all.p12
 # test config for syntax errors
 ipsec addconn --checkconfig --config /etc/ipsec.conf
