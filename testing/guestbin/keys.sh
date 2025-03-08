@@ -21,7 +21,6 @@ mkdir /tmp/x509
 :
 
 cp /testing/x509/nss-pw		      /tmp/x509
-cp /testing/x509/dist_certs.py	      /tmp/x509
 
 :
 : Generate the keys in /tmp/x509
@@ -30,9 +29,7 @@ cp /testing/x509/dist_certs.py	      /tmp/x509
 :
 
 /testing/x509/generate.sh /tmp/x509
-{ cd /tmp/x509 && ./dist_certs.py ; }
 /testing/x509/crl.sh /tmp/x509
-
 /testing/x509/selfsigned.sh /tmp/x509/selfsigned
 
 :

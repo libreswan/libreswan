@@ -632,19 +632,9 @@ kvm-diffs:
 # Make certain everything is shutdown.  Can't directly depend on the
 # phony target kvm-shutdown as that triggers an unconditional rebuild.
 # Instead invoke that rule inline.
-#
-# "dist_certs.py" can't create a directory called "certs/" on a 9p
-# mounted file system (OSError: [Errno 13] Permission denied:
-# 'certs/').  In fact, "mkdir xxx/ certs/" half fails (only xxx/ is
-# created) so it might even be a problem with the mkdir call!  Get
-# around this by first creating the certs in /tmp on the guest, and
-# then copying back using a tar file.
-#
-# "dist_certs.py" always writes its certificates to $(dirname $0).
-# Get around this by running a copy of dist_certs.py placed in /tmp.
 
 # file to mark keys are up-to-date
-KVM_KEYS = $(KVM_TESTINGDIR)/x509/keys/up-to-date
+KVM_KEYS = $(KVM_TESTINGDIR)/x509/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
 KVM_KEYS_EXPIRED = find $(KVM_TESTINGDIR)/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
 KVM_KEYS_DOMAIN = $(addprefix $(KVM_PREFIX), linux)
@@ -656,7 +646,7 @@ kvm-keys:
 	$(MAKE) kvm-clean-keys
 	$(MAKE) $(KVM_KEYS)
 
-$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/dist_certs.py
+$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/selfsigned.sh
 $(KVM_KEYS): $(KVM_TESTINGDIR)/x509/generate.sh
 $(KVM_KEYS): $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh
 $(KVM_KEYS): | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
@@ -683,6 +673,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 kvm-clean-keys kvm-keys-clean:
 	: careful output mixed with repo files
 	rm -rf $(KVM_TESTINGDIR)/x509/*/
+	rm -f $(KVM_KEYS)
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/signed/*.signed
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.key
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.private
