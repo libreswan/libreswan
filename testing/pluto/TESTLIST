@@ -1395,7 +1395,6 @@ kvmplutotest	nss-cert-09-notyetvalid-initiator-ikev2	good
 kvmplutotest	nss-cert-10-notyetvalid-responder-ikev1	good
 kvmplutotest	nss-cert-10-notyetvalid-responder-ikev2	good
 #
-kvmplutotest	nss-cert-badca-01		good
 
 kvmplutotest	ikev2-nss-cert-pkcs11-uri-01		good
 
