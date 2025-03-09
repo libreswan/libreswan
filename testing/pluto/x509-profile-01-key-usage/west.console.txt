@@ -315,4 +315,6 @@ no connection or alias named "west-ku-digitalSignature-certSigning"'
 + ipsec stop
 Redirecting to: [initsystem]
 west #
+ grep '^[^|].*ERROR:' /tmp/pluto.log
+west #
  
