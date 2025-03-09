@@ -109,8 +109,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -159,8 +157,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 OCSP Responder Certificate
             Name: Certificate Key Usage
@@ -282,8 +278,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -403,8 +397,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -598,8 +590,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption

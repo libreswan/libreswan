@@ -386,30 +386,30 @@ while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
 	done
     done
 done <<EOF
-{real,fake} {mainca,mainec}  nic                             1 1 1 n digitalSignature  ocspResponder
-{real,fake} {mainca,mainec}  {east,west,road,north,rise,set} 1 1 1 n digitalSignature  /
-real        mainca           revoked                         1 1 1 n digitalSignature  /
-real        mainca           key2032                         1 1 1 n digitalSignature  /  -k rsa -g 2032
-real        mainca           key4096                         1 1 1 n digitalSignature  /  -k rsa -g 4096
-real        mainca           {east,west}-nosan               0 1 1 n digitalSignature  /
-real        mainca           semiroad                        1 1 1 n digitalSignature  /
-real        mainca           nic-no-ocsp                     1 0 1 n digitalSignature  /
-real        otherca          other{east,west}                1 1 1 n digitalSignature  /
-real        badca            bad{east,west}                  1 1 1 n digitalSignature  /
+{real,fake} {mainca,mainec}  nic                             1 1 1 / digitalSignature  ocspResponder
+{real,fake} {mainca,mainec}  {east,west,road,north,rise,set} 1 1 1 / digitalSignature  /
+real        mainca           revoked                         1 1 1 / digitalSignature  /
+real        mainca           key2032                         1 1 1 / digitalSignature  /  -k rsa -g 2032
+real        mainca           key4096                         1 1 1 / digitalSignature  /  -k rsa -g 4096
+real        mainca           {east,west}-nosan               0 1 1 / digitalSignature  /
+real        mainca           semiroad                        1 1 1 / digitalSignature  /
+real        mainca           nic-no-ocsp                     1 0 1 / digitalSignature  /
+real        otherca          other{east,west}                1 1 1 / digitalSignature  /
+real        badca            bad{east,west}                  1 1 1 / digitalSignature  /
 # Key Usage aka KU
-real        mainca           west-ku-missing                      1 1 1 n /                             /
-real        mainca           west-ku-digitalSignature             1 1 1 n digitalSignature              /
-real        mainca           west-ku-nonRepudiation               1 1 1 n nonRepudiation                /
-real        mainca           west-ku-digitalSignature-certSigning 1 1 1 n digitalSignature,certSigning  /
-real        mainca           west-ku-certSigning                  1 1 1 n certSigning                   /
+real        mainca           west-ku-missing                      1 1 1 / /                             /
+real        mainca           west-ku-digitalSignature             1 1 1 / digitalSignature              /
+real        mainca           west-ku-nonRepudiation               1 1 1 / nonRepudiation                /
+real        mainca           west-ku-digitalSignature-certSigning 1 1 1 / digitalSignature,certSigning  /
+real        mainca           west-ku-certSigning                  1 1 1 / certSigning                   /
 # Extended Key Usage aka EKU
-real        mainca           west-eku-missing                     1 1 1 n digitalSignature /
-real        mainca           west-eku-ipsecIKE                    1 1 1 n digitalSignature ipsecIKE
-real        mainca           west-eku-x509Any                     1 1 1 n digitalSignature x509Any
-real        mainca           west-eku-serverAuth                  1 1 1 n digitalSignature serverAuth
-real        mainca           west-eku-clientAuth                  1 1 1 n digitalSignature clientAuth
-real        mainca           west-eku-codeSigning                 1 1 1 n digitalSignature codeSigning
-real        mainca           west-eku-ipsecIKE-codeSigning        1 1 1 n digitalSignature ipsecIKE,codeSigning
+real        mainca           west-eku-missing                     1 1 1 / digitalSignature /
+real        mainca           west-eku-ipsecIKE                    1 1 1 / digitalSignature ipsecIKE
+real        mainca           west-eku-x509Any                     1 1 1 / digitalSignature x509Any
+real        mainca           west-eku-serverAuth                  1 1 1 / digitalSignature serverAuth
+real        mainca           west-eku-clientAuth                  1 1 1 / digitalSignature clientAuth
+real        mainca           west-eku-codeSigning                 1 1 1 / digitalSignature codeSigning
+real        mainca           west-eku-ipsecIKE-codeSigning        1 1 1 / digitalSignature ipsecIKE,codeSigning
 EOF
 
 while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
@@ -435,8 +435,8 @@ while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
 done <<EOF
 real/mainca  mainca           east_chain_int_1                1 1 1 y digitalSignature,certSigning,crlSigning  /
 real/mainca  east_chain_int_1 east_chain_int_2                1 1 1 y digitalSignature,certSigning,crlSigning  /
-real/mainca  east_chain_int_2 east_chain_endcert              1 1 1 n digitalSignature                         /
+real/mainca  east_chain_int_2 east_chain_endcert              1 1 1 / digitalSignature                         /
 real/mainca  mainca           west_chain_int_1                1 1 1 y digitalSignature,certSigning,crlSigning  /
 real/mainca  west_chain_int_1 west_chain_int_2                1 1 1 y digitalSignature,certSigning,crlSigning  /
-real/mainca  west_chain_int_2 west_chain_endcert              1 1 1 n digitalSignature                         /
+real/mainca  west_chain_int_2 west_chain_endcert              1 1 1 / digitalSignature                         /
 EOF
