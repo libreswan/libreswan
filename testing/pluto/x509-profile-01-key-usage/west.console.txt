@@ -40,8 +40,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
@@ -102,8 +100,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -166,8 +162,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Non-Repudiation
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -230,8 +224,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Certificate Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -299,8 +291,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
                     Certificate Signing
@@ -324,5 +314,7 @@ conn 'west-ku-digitalSignature-certSigning': not found (tried aliases)
 no connection or alias named "west-ku-digitalSignature-certSigning"'
 + ipsec stop
 Redirecting to: [initsystem]
+west #
+ grep '^[^|].*ERROR:' /tmp/pluto.log
 west #
  

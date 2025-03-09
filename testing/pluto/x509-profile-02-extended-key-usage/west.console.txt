@@ -40,8 +40,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -104,8 +102,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 IPsec IKE Certificate
             Name: Certificate Key Usage
@@ -170,8 +166,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 Any Extended Key Usage
             Name: Certificate Key Usage
@@ -236,8 +230,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 TLS Web Server Authentication Certificate
             Name: Certificate Key Usage
@@ -302,8 +294,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
@@ -368,8 +358,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 Code Signing Certificate
             Name: Certificate Key Usage
@@ -437,8 +425,6 @@ Certificate:
             Name: CRL Distribution Points
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
-            Name: Certificate Basic Constraints
-            Data: Is not a CA.
             Name: Extended Key Usage
                 IPsec IKE Certificate
                 Code Signing Certificate
@@ -469,5 +455,7 @@ Redirecting to: [initsystem]
 "west-eku-ipsecIKE-codeSigning" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 + ipsec stop
 Redirecting to: [initsystem]
+west #
+ grep '^[^|].*ERROR:' /tmp/pluto.log
 west #
  

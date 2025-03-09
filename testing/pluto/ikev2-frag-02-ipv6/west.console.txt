@@ -35,11 +35,9 @@ west #
 |    fragment number: 2 (00 02)
 |    fragment number: 3 (00 03)
 |    fragment number: 1 (00 01)
-| received IKE encrypted fragment number '1', total number '3', next payload '36'
+| received IKE encrypted fragment number '1', total number '2', next payload '36'
 |    fragment number: 2 (00 02)
-| received IKE encrypted fragment number '2', total number '3', next payload '0'
-|    fragment number: 3 (00 03)
-| received IKE encrypted fragment number '3', total number '3', next payload '0'
+| received IKE encrypted fragment number '2', total number '2', next payload '0'
 west #
  echo done
 done
