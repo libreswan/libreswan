@@ -129,15 +129,16 @@ case "$1" in
 		@@RC_D_DIR@@/pluto onestop
 		;;
 	    namespaces )
-		echo "Redirecting to: namespaces direct stop via ipsec whack --shutdown"
-		ipsec whack --shutdown
-		ip xfrm state flush
-		ipsec --stopnflog > /dev/null
+		what="ipsec whack --shutdown"
+		echo "Redirecting to: namespaces direct stop via ${what}"
+		${what}
+		ipsec stopnflog > /dev/null
 		;;
 	    "" )
 		what="ipsec whack --shutdown"
 		echo "Redirecting to: ${what} [stop manually]"
 		${what}
+		ipsec stopnflog > /dev/null
 		;;
 	    * )
 		echo "Unknown init system ${initsystem} in use - aborted"
