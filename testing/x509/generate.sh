@@ -318,7 +318,7 @@ generate_cert()
 while read base domain is_ca param ; do
 
     case "${base}" in
-	'#*' ) continue ;;
+	'#'* ) continue ;;
     esac
 
     echo creating cert directory: ${base} ${domain} ${is_ca} ${param} 1>&2
@@ -361,7 +361,7 @@ EOF
 while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
 
     case "${subdirs}" in
-	'#*' ) continue ;;
+	'#'* ) continue ;;
     esac
 
     for subdir in $(eval echo ${subdirs}) ; do
@@ -415,7 +415,7 @@ EOF
 while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
 
     case "${subdir}" in
-	'#*' ) continue ;;
+	'#'* ) continue ;;
     esac
 
     certdir=${OUTDIR}/${subdir}
@@ -432,6 +432,7 @@ while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
 	cat ${log}
 	exit 1
     fi
+
 done <<EOF
 real/mainca  mainca           east_chain_int_1                1 1 1 y digitalSignature,certSigning,crlSigning  /
 real/mainca  east_chain_int_1 east_chain_int_2                1 1 1 y digitalSignature,certSigning,crlSigning  /
@@ -439,4 +440,11 @@ real/mainca  east_chain_int_2 east_chain_endcert              1 1 1 / digitalSig
 real/mainca  mainca           west_chain_int_1                1 1 1 y digitalSignature,certSigning,crlSigning  /
 real/mainca  west_chain_int_1 west_chain_int_2                1 1 1 y digitalSignature,certSigning,crlSigning  /
 real/mainca  west_chain_int_2 west_chain_endcert              1 1 1 / digitalSignature                         /
+# Basic Constraints aka BC
+real/mainca  mainca                     west-bc-missing            1 1 1  /  /                             /
+real/mainca  mainca                     west-bc-ca-n               1 1 1  n  /                             /
+real/mainca  mainca                     west-bc-ca-n-critical      1 1 1 +n  /                             /
+real/mainca  mainca                     west-bc-ca-y-critical      1 1 1 +y  /                             /
+real/mainca  mainca                     west-bc-missing-chain-int  1 1 1  /  certSigning                            /
+real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1  /  /
 EOF
