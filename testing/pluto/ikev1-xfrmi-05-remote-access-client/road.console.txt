@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": created ipsec-interface ipsec1@eth0
+"modecfg-road-eastnet-psk": created ipsec-interface ipsec1@NONE
 "modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  echo "initdone"
@@ -39,7 +39,7 @@ road #
 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "modecfg-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "modecfg-road-eastnet-psk" #2: sent Quick Mode request
-"modecfg-road-eastnet-psk" #2: added 192.0.2.209/32 to ipsec-interface ipsec1@eth0
+"modecfg-road-eastnet-psk" #2: added 192.0.2.209/32 to ipsec-interface ipsec1@NONE
 "modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 road #
  ipsec whack --trafficstatus

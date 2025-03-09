@@ -22,10 +22,10 @@ west #
  ip addr add 2001:db8:0:1::251/64 dev ipsec1
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ip --color=never addr show ipsec1 # addresses
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 2001:db8:0:1::251/64 scope global 
@@ -38,10 +38,10 @@ west #
 "westnet6-eastnet6": added IKEv2 connection
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ip --color=never addr show ipsec1 # addresses
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 2001:db8:0:1::251/64 scope global 
@@ -64,10 +64,10 @@ west #
 "westnet6-eastnet6" #4: initiator established Child SA using #3; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ip --color=never addr show ipsec1 # addresses
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 2001:db8:0:1::251/64 scope global 
@@ -78,20 +78,20 @@ west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@eth1 IP [192.0.1.251/24], not created by pluto
+"westnet4-eastnet4" #2: cannot delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
 "westnet6-eastnet6" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64], not created by pluto
+"westnet6-eastnet6" #4: cannot delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #4: ESP traffic information: in=0B out=0B
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ip --color=never addr show ipsec1 # addresses
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 2001:db8:0:1::251/64 scope global 
@@ -114,7 +114,7 @@ west #
  ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ipsec add westnet4-eastnet4
 "westnet4-eastnet4": added IKEv2 connection
@@ -123,10 +123,10 @@ west #
 "westnet6-eastnet6": added IKEv2 connection
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ip --color=never addr show ipsec1 # missing addresses
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
 west #
  ipsec up westnet4-eastnet4
 "westnet4-eastnet4" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -134,7 +134,7 @@ west #
 "westnet4-eastnet4" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet4-eastnet4" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "westnet4-eastnet4" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet4-eastnet4" #6: added 192.0.1.251/24 to ipsec-interface ipsec1@eth1
+"westnet4-eastnet4" #6: added 192.0.1.251/24 to ipsec-interface ipsec1@NONE
 "westnet4-eastnet4" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec up westnet6-eastnet6
@@ -143,14 +143,14 @@ west #
 "westnet6-eastnet6" #7: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet6-eastnet6" #7: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
 "westnet6-eastnet6" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"westnet6-eastnet6" #8: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@eth1
+"westnet6-eastnet6" #8: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@NONE
 "westnet6-eastnet6" #8: initiator established Child SA using #7; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ip --color=never addr show ipsec1 # addresses
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 2001:db8:0:1::251/64 scope global 
@@ -161,20 +161,20 @@ west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet4-eastnet4" #6: delete ipsec-interface ipsec1@eth1 IP [192.0.1.251/24] added by pluto
+"westnet4-eastnet4" #6: delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24] added by pluto
 "westnet4-eastnet4" #6: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
 "westnet6-eastnet6" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet6-eastnet6" #8: delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64] added by pluto
+"westnet6-eastnet6" #8: delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64] added by pluto
 "westnet6-eastnet6" #8: ESP traffic information: in=0B out=0B
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ip --color=never addr show ipsec1 # missing addresses
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll 
        valid_lft forever preferred_lft forever
 west #
@@ -194,17 +194,17 @@ west #
 Device "ipsec1" does not exist.
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": created ipsec-interface ipsec1@eth1
+"westnet4-eastnet4": created ipsec-interface ipsec1@NONE
 "westnet4-eastnet4": added IKEv2 connection
 west #
  ipsec add westnet6-eastnet6
 "westnet6-eastnet6": added IKEv2 connection
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ip --color=never addr show ipsec1 # missing addresses
-X: ipsec1@eth1: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
 west #
  ip addr add 192.0.1.251/24 dev ipsec1
 west #
@@ -227,10 +227,10 @@ west #
 "westnet6-eastnet6" #12: initiator established Child SA using #11; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ip --color=never link show ipsec1 # interface
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ip --color=never addr show ipsec1 # addresses
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
     inet6 2001:db8:0:1::251/64 scope global 
@@ -241,15 +241,15 @@ west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
 "westnet4-eastnet4" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet4-eastnet4" #10: cannot delete ipsec-interface ipsec1@eth1 IP [192.0.1.251/24], not created by pluto
+"westnet4-eastnet4" #10: cannot delete ipsec-interface ipsec1@NONE IP [192.0.1.251/24], not created by pluto
 "westnet4-eastnet4" #10: ESP traffic information: in=0B out=0B
 west #
  ipsec delete westnet6-eastnet6
 "westnet6-eastnet6": terminating SAs using this connection
 "westnet6-eastnet6" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet6-eastnet6" #12: cannot delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64], not created by pluto
+"westnet6-eastnet6" #12: cannot delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64], not created by pluto
 "westnet6-eastnet6" #12: ESP traffic information: in=0B out=0B
-"westnet6-eastnet6": delete ipsec-interface ipsec1@eth1 added by pluto
+"westnet6-eastnet6": delete ipsec-interface ipsec1@NONE added by pluto
 west #
  ip --color=never link show ipsec1 # missing interface
 Device "ipsec1" does not exist.

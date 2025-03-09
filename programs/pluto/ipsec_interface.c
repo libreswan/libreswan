@@ -26,6 +26,7 @@
 #include "log.h"
 #include "verbose.h"
 #include "iface.h"
+#include "kernel_info.h"
 
 static enum yn_options ipsec_interface_managed = YN_YES;
 
@@ -452,7 +453,12 @@ static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_
 			 kernel_ops->ipsec_interface->name,
 			 unmap_id(ipsec_if_id));
 	passert(l < IFNAMSIZ);
-	jam_str(p->physical, sizeof(p->physical), iface->real_device_name);
+	if (kernel_xfrmi_req_phy()) {
+		char *none = "NONE";
+		jam_str(p->physical, sizeof(none), none);
+	} else {
+		jam_str(p->physical, sizeof(p->physical), iface->real_device_name);
+	}
 	/* add to known interfaces */
 	p->next = ipsec_interfaces;
 	ipsec_interfaces = p;

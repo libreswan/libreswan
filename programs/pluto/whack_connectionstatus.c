@@ -53,6 +53,7 @@
 #include "sparse_names.h"
 #include "monotime.h"
 #include "ikev2_ike_session_resume.h"	/* for show_session_resume() */
+#include "kernel_info.h"
 
 /* Passed in to jam_end_client() */
 static const char END_SEPARATOR[] = "===";
@@ -826,7 +827,12 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam_string(buf, "@");
 		}
 		if (oriented(c)) {
-			jam_string(buf, c->iface->real_device_name);
+			if (kernel_xfrmi_req_phy() && c->config->ipsec_interface.enabled) {
+				char *none = "NONE";
+				jam_string(buf, none);
+			} else {
+				jam_string(buf, c->iface->real_device_name);
+			}
 		}
 		jam_string(buf, ";");
 		/* .metric */

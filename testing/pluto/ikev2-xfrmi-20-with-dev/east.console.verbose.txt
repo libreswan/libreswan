@@ -1,0 +1,53 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# ipsec start
+/usr/bin/nsenter --mount=/run/mountns/east-ikev2-xfrmi-20-with-dev --net=/run/netns/east-ikev2-xfrmi-20-with-dev --uts=/run/utsns/east-ikev2-xfrmi-20-with-dev /bin/bash
+Redirecting to: namespaces direct start via ipsec pluto
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# ../../guestbin/wait-until-pluto-started
+==== cut ====
+  PID  Process
+1202898  addconn
+1202898  addconn
+try again
+  PID  Process
+addconn exited
+==== tuc ====
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# ipsec auto --add westnet-eastnet
+WARNING: ipsec auto has been deprecated
+"westnet-eastnet": added IKEv2 connection
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# echo "initdone"
+initdone
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# ipsec whack --trafficstatus
+#2: "westnet-eastnet", type=ESP, add_time=1741457823, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0x329ed53b reqid 16389 mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0x0a768355741ad8aea145e4f6363fb25b269568434f46c7bd16c99caebbb71a42362cc13a 128
+	lastused 2025-03-08 18:17:03
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0x0, oseq-hi 0x0, oseq 0x1
+	 replay_window 0, bitmap-length 0
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0x2f52cd5c reqid 16389 mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0x464d84d2864d9453bf14a32ba049f308bb4e0e522214eacd419d8d9e9bd8b29bc04e39a7 128
+	lastused 2025-03-08 18:17:03
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0x1, oseq-hi 0x0, oseq 0x0
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 00000001 
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1757393 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1757393 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16389 mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1757393 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16389 mode tunnel
+]0;root@swantest:/home/build/libreswan/testing/pluto/ikev2-xfrmi-20-with-dev[root@east ikev2-xfrmi-20-with-dev]# >>>>>>>>>>cut>>>>>>>>>> done <<<<<<<<<<tuc<<<<<<<<<<

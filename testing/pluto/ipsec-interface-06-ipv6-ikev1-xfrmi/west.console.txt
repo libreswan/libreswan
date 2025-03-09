@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add westnet-eastnet
-"westnet-eastnet": created ipsec-interface ipsec1@eth1
+"westnet-eastnet": created ipsec-interface ipsec1@NONE
 "westnet-eastnet": added IKEv1 connection
 west #
  echo "initdone"
@@ -21,7 +21,7 @@ west #
 "westnet-eastnet" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet" #2: sent Quick Mode request
-"westnet-eastnet" #2: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@eth1
+"westnet-eastnet" #2: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@NONE
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::251 2001:db8:0:2::254
@@ -34,7 +34,7 @@ west #
 up
 west #
  ../../guestbin/ip.sh address show dev ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet6 2001:db8:0:1::251/64 scope global
        valid_lft forever preferred_lft forever
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
@@ -47,7 +47,7 @@ west #
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=312, outBytes=312, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh -s link show ipsec1
-X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            312       3      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -116,11 +116,11 @@ west #
  ipsec auto --down westnet-eastnet
 "westnet-eastnet": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"westnet-eastnet" #2: delete ipsec-interface ipsec1@eth1 IP [2001:db8:0:1::251/64] added by pluto
+"westnet-eastnet" #2: delete ipsec-interface ipsec1@NONE IP [2001:db8:0:1::251/64] added by pluto
 "westnet-eastnet" #2: ESP traffic information: in=312B out=312B
 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  ipsec auto --delete westnet-eastnet
-"westnet-eastnet": delete ipsec-interface ipsec1@eth1 added by pluto
+"westnet-eastnet": delete ipsec-interface ipsec1@NONE added by pluto
 west #
  

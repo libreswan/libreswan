@@ -11,11 +11,11 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-east
-"north-east": created ipsec-interface ipsec3@eth1
+"north-east": created ipsec-interface ipsec3@NONE
 "north-east": added IKEv2 connection
 north #
  ipsec auto --add north-west
-"north-west": created ipsec-interface ipsec2@eth1
+"north-west": created ipsec-interface ipsec2@NONE
 "north-west": added IKEv2 connection
 north #
  echo "initdone"
@@ -31,7 +31,7 @@ north #
 "north-west" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ../../guestbin/ip.sh -s link show ipsec2
-X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
              0       0      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -46,7 +46,7 @@ PING 192.0.1.254 (192.0.1.254) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ../../guestbin/ip.sh -s link show ipsec2
-X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            336       4      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -66,7 +66,7 @@ north #
 "north-east" #4: initiator established Child SA using #3; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
  ../../guestbin/ip.sh -s link show ipsec2
-X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
            336       4      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -78,7 +78,7 @@ north #
 up
 north #
  ../../guestbin/ip.sh -s link show ipsec3
-X: ipsec3@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec3@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
             84       1      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           

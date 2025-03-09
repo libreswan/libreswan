@@ -29,6 +29,8 @@
 #include <stdint.h>
 #include <net/if.h>
 
+#include "kernel_info.h"
+
 #define XFRMI_SUCCESS 0
 #define XFRMI_FAILURE 1
 
@@ -239,14 +241,18 @@ static bool nl_newlink(const char *ipsec_if_name,
 			 */
 			nl_addattr32(&req.n, sizeof(req.data), IFLA_XFRM_IF_ID, ipsec_if_id);	/* see USE_XFRM_INTERFACE_IFLA_HEADER */
 
-			/* e.g link id of the interface, eth0 */
-			unsigned physical_if_index = if_nametoindex(physical_if_name);
-			if (physical_if_index == 0) {
-				llog_error(verbose.logger, errno,
-					   "cannot find interface index for physical interface device %s", physical_if_name);
-				return false;
+			if (!kernel_xfrmi_req_phy()) {
+				/* e.g link id of the interface, eth0 */
+				unsigned physical_if_index = if_nametoindex(physical_if_name);
+				if (physical_if_index == 0) {
+					llog_error(verbose.logger, errno,
+							"cannot find interface index for physical interface device %s", physical_if_name);
+					return false;
+				}
+
+				nl_addattr32(&req.n, sizeof(req.data), IFLA_XFRM_LINK,
+						physical_if_index);
 			}
-			nl_addattr32(&req.n, sizeof(req.data), IFLA_XFRM_LINK, physical_if_index);
 		}
 		nl_addattr_nest_end(&req.n, info_data);
 	}
@@ -350,21 +356,22 @@ static diag_t check_ipsec_interface_linkinfo_data(const char *ipsec_if_name,
 	 * next one.
 	 */
 
-	if (xfrm_link_attr == NULL) {
+	if (xfrm_link_attr == NULL && !kernel_xfrmi_req_phy())
 		return diag("IFLA_XFRM_LINK attribute is missing");
-	}
 
 	/* XXX: portable? */
 	uint32_t xfrm_link = *((const uint32_t *)RTA_DATA(xfrm_link_attr));
-	if (xfrm_link == 0) {
+	if (xfrm_link == 0 && !kernel_xfrmi_req_phy()) {
 		/* not good! see if_nametoindex() */
 		return diag("IFLA_XFRM_LINK attribute is zero");
 	}
-	if (ifi_rsp->match->iface_if_index == 0) {
+	if (ifi_rsp->match->iface_if_index == 0 ||
+	    (kernel_xfrmi_req_phy() && xfrm_link == 0)) {
 		vdbg("%s wildcard matched IFLA_XFRM_LINK %d", ipsec_if_name, xfrm_link);
 	} else if (ifi_rsp->match->iface_if_index == xfrm_link) {
 		vdbg("%s matched IFLA_XFRM_LINK %d to .iface_if_index %u",
 		     ipsec_if_name, xfrm_link, ifi_rsp->match->iface_if_index);
+	} else if (kernel_xfrmi_req_phy() && xfrm_link == 0) {
 	} else {
 		char iface_buf[IFNAMSIZ] = "", link_buf[IFNAMSIZ] = "";
 		const char *iface_name = if_indextoname(ifi_rsp->match->iface_if_index, iface_buf);

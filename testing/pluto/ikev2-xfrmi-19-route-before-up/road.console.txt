@@ -11,7 +11,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add road
-"road": created ipsec-interface ipsec0[16384]@eth0
+"road": created ipsec-interface ipsec0[16384]@NONE
 "road": added IKEv2 connection
 road #
  ipsec auto --route road
@@ -37,7 +37,7 @@ road #
 up
 road #
  ../../guestbin/ip.sh -s link show ipsec0
-X: ipsec0@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
             84       1      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
@@ -91,7 +91,7 @@ road #
 "road": terminating SAs using this connection
 "road" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "road" #2: ESP traffic information: in=84B out=84B
-"road": delete ipsec-interface ipsec0[16384]@eth0 added by pluto
+"road": delete ipsec-interface ipsec0[16384]@NONE added by pluto
 road #
  ../../guestbin/ipsec-kernel-state.sh
 road #
