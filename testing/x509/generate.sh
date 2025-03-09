@@ -353,7 +353,7 @@ real/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
 real/otherca  other.libreswan.org    y  -k rsa -Z SHA256 -g 3072
 fake/mainca   testing.libreswan.org  y  -k rsa -Z SHA256 -g 3072
 fake/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
-real/badca    testing.libreswan.org  n  -k rsa -Z SHA256 -g 3072
+real/bc-n-ca  testing.libreswan.org  n  -k rsa -Z SHA256 -g 3072
 EOF
 
 # generate end certs where needed
@@ -395,7 +395,6 @@ real        mainca           {east,west}-nosan               0 1 1 / digitalSign
 real        mainca           semiroad                        1 1 1 / digitalSignature  /
 real        mainca           nic-no-ocsp                     1 0 1 / digitalSignature  /
 real        otherca          other{east,west}                1 1 1 / digitalSignature  /
-real        badca            bad{east,west}                  1 1 1 / digitalSignature  /
 # Key Usage aka KU
 real        mainca           west-ku-missing                      1 1 1 / /                             /
 real        mainca           west-ku-digitalSignature             1 1 1 / digitalSignature              /
@@ -447,4 +446,6 @@ real/mainca  mainca                     west-bc-ca-n-critical      1 1 1 +n  /  
 real/mainca  mainca                     west-bc-ca-y-critical      1 1 1 +y  /                             /
 real/mainca  mainca                     west-bc-missing-chain-int  1 1 1  /  certSigning                            /
 real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1  /  /
+# Use the CA with BC=n to sign some certs
+real/bc-n-ca bc-n-ca                    bc-n-ca-west               1 1 1  /  /
 EOF

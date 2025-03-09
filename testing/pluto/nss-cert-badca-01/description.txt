@@ -1,5 +1,0 @@
-This test uses Bad CA which is a CA that did NOT set the Basic Constraint
-CA:TRUE for its CA. It should be rejected as a valid CA for certificate
-validation, even if imported into the NSS db with a trust flag (CT,,) set
-
-The connection should fail

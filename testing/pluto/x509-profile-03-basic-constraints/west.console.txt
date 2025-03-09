@@ -4,9 +4,13 @@ west #
  echo done
 done
 west #
- run() { local l=$1 ; /testing/x509/import.sh real/mainca/$l.all.p12 ; set ipsec certutil -L -n $l ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $l ; }
+ run() { local c=$(basename $1) ; /testing/x509/import.sh real/$1.all.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
 west #
- run west-bc-missing
+ # playing with end cert Basic Constraint should have no effect, these
+west #
+ # all establish
+west #
+ run mainca/west-bc-missing
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-missing.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
@@ -66,7 +70,7 @@ Redirecting to: [initsystem]
 + ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-bc-ca-n
+ run mainca/west-bc-ca-n
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-ca-n.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
@@ -128,7 +132,7 @@ Redirecting to: [initsystem]
 + ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-bc-ca-n-critical
+ run mainca/west-bc-ca-n-critical
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-ca-n-critical.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
@@ -191,7 +195,7 @@ Redirecting to: [initsystem]
 + ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-bc-ca-y-critical
+ run mainca/west-bc-ca-y-critical
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-ca-y-critical.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
@@ -257,7 +261,11 @@ Redirecting to: [initsystem]
 + ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-bc-missing-chain-end
+ # this should fail as the intermediate has no BC=CA; also dump
+west #
+ # intermediate
+west #
+ run mainca/west-bc-missing-chain-end
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-missing-chain-end.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
@@ -321,8 +329,6 @@ Redirecting to: [initsystem]
 + ipsec stop
 Redirecting to: [initsystem]
 west #
- # for completeness
-west #
  ipsec certutil -L -n west-bc-missing-chain-end
 Certificate:
     Data:
@@ -366,6 +372,125 @@ Certificate:
             User
         Object Signing Flags:
             User
+west #
+ # this should fail as the root CA that signed it, and is in EAST's NSS
+west #
+ # DB, has CA=no
+west #
+ run bc-n-ca/bc-n-ca-west
+ipsec pk12util -w nss-pw -i real/bc-n-ca/bc-n-ca-west.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n bc-n-ca -t CT,,
+ ipsec certutil -L -n bc-n-ca-west
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=bc-n-ca-west@testing.libreswan.org,CN=bc-n-ca-west.testin
+            g.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontar
+            io,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "bc-n-ca-west.testing.libreswan.org"
+            RFC822 Name: "bc-n-ca-west@testing.libreswan.org"
+            IP Address: 192.1.2.45
+            IP Address: 2001:db8:1:2::45
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add bc-n-ca-west
+"bc-n-ca-west": added IKEv2 connection
++ ipsec up bc-n-ca-west
+"bc-n-ca-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"bc-n-ca-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"bc-n-ca-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"bc-n-ca-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"bc-n-ca-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"bc-n-ca-west" #1: encountered fatal error in state IKE_AUTH_I
+"bc-n-ca-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"bc-n-ca-west" #2: IMPAIR: revival: skip scheduling revival event
+"bc-n-ca-west" #1: deleting IKE SA (sent IKE_AUTH request)
++ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ipsec certutil -L -n bc-n-ca
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU
+            =Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                TLS Web Client Authentication Certificate
+                Code Signing Certificate
+                OCSP Responder Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+                    Certificate Signing
+                    CRL Signing
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Valid CA
+            Trusted CA
+            Trusted Client CA
+        Email Flags:
+        Object Signing Flags:
 west #
  grep '^[^|].*ERROR:' /tmp/pluto.log
 west #

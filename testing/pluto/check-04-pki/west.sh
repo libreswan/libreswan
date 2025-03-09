@@ -10,10 +10,6 @@ ipsec_cert mainca west nic
 ipsec_cert otherca otherwest
 
 /testing/guestbin/swan-prep --nokeys
-/testing/x509/import.sh real/badca/badwest.all.p12
-ipsec_cert badca badwest
-
-/testing/guestbin/swan-prep --nokeys
 /testing/x509/import.sh real/mainca/west_chain_int_1.end.cert
 ipsec_cert west_chain_int_1
 

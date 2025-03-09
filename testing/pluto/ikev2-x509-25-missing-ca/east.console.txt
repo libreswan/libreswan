@@ -7,22 +7,14 @@ east #
 ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- # Insert a different, broken, CAcert chain
+ # Add a distracting CA; avoids NSS aborting for having no CA at all
 east #
- # Avoids NSS aborting for having no CA at all (?!?)
+ # (?!?)
 east #
- /testing/x509/import.sh real/badca/badeast.all.p12
-ipsec pk12util -w nss-pw -i real/badca/badeast.all.p12
+ /testing/x509/import.sh real/otherca/othereast.all.p12
+ipsec pk12util -w nss-pw -i real/otherca/othereast.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n badca -t CT,,
-east #
- # Don't add CT to root bad cert; otherwise the message:
-east #
- #    no Certificate Authority in NSS Certificate DB
-east #
- # doesn't appear (but doesn't that contradict above?)
-east #
- # # ipsec certutil -M -n badca -t CT,,
+ipsec certutil -M -n otherca -t CT,,
 east #
  # check
 east #
@@ -30,8 +22,8 @@ east #
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
-badeast                                                      u,u,u
-badca                                                        CT,, 
+othereast                                                    u,u,u
+otherca                                                      CT,, 
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -44,6 +36,9 @@ east #
  echo "initdone"
 initdone
 east #
- hostname | grep east > /dev/null && grep -E "no Certificate Authority in NSS Certificate DB|authentication using rsasig failed" /tmp/pluto.log
+ # on east, expect Peer's Certificate issuer is not recognized
+east #
+ grep -e '^[^|].*ERROR' /tmp/pluto.log
+"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 east #
  
