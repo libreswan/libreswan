@@ -443,7 +443,6 @@ kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
 kvmplutotest	ikev2-x509-01				good
 kvmplutotest	ikev2-x509-01-nss-debug			skiptest
-kvmplutotest	ikev2-x509-02-smoketest			good
 kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-05-san-firstemail-match-responder	good

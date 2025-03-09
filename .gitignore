@@ -21,9 +21,7 @@ modobj26
 testing/*/*/OUTPUT*
 testing/*/*/NS*
 testing/x509/*/*
-testing/x509/index.*
-testing/x509/crlnumber.*
-testing/x509/serial*
+testing/x509/up-to-date
 osxApp/build
 Makefile.inc.local
 .ycm_extra_conf.py
