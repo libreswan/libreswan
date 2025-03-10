@@ -145,16 +145,19 @@ static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbo
 		ctl,
 		NULL,
 	};
-	chunk_t chunk = server_runv_chunk(sysctl, verbose);
-	if (chunk.len == 0) {
-		return "problem reading ..., no output";
+	struct server_run result = server_runv_chunk(sysctl, null_shunk, verbose);
+	if (result.status != 0) {
+		return "sysctl exited with a non-zero status";
 	}
-	shunk_t shunk = HUNK_AS_SHUNK(chunk);
+	if (result.output.len == 0) {
+		return "sysctl exited with no output";
+	}
+	shunk_t shunk = HUNK_AS_SHUNK(result.output);
 	err_t e = shunk_to_uintmax(shunk, &shunk, 10, value);
 	if (e != NULL) {
-		return "problem reading ..., invalid number";
+		return "sysctl output is non-numeric";
 	}
-	free_chunk_content(&chunk);
+	free_chunk_content(&result.output);
 	return NULL;
 }
 

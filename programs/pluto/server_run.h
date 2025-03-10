@@ -33,6 +33,13 @@ bool server_run(const char *verb, const char *verb_suffix,
 
 bool server_runv(const char *argv[], struct verbose verbose);
 
-chunk_t server_runv_chunk(const char *argv[], struct verbose verbose);
+/* sends INPUT, returns OUTPUT */
+
+struct server_run {
+	chunk_t output;
+	int status;
+};
+
+struct server_run server_runv_chunk(const char *argv[], shunk_t input, struct verbose verbose);
 
 #endif

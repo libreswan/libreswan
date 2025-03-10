@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "lswalloc.h"
 #include "server_run.h"
@@ -198,56 +200,97 @@ bool server_runv(const char *argv[], const struct verbose verbose)
 	return true;
 }
 
-chunk_t server_runv_chunk(const char *argv[], const struct verbose verbose)
+struct server_run server_runv_chunk(const char *argv[], shunk_t input,
+				    const struct verbose verbose)
 {
-	char command[LOG_WIDTH];
-	struct jambuf buf[] = { ARRAY_AS_JAMBUF(command), };
-	const char *sep = "";
-	for (const char **c = argv; *c != NULL; c++) {
-		jam_string(buf, sep); sep = " ";
-		jam_string(buf, "'");
-		jam_shell_quoted_hunk(buf, shunk1(*c));
-		jam_string(buf, "'");
-	}
-	if (!vexpect(jambuf_ok(buf))) {
-		return (chunk_t) NULL_HUNK;
-	}
-	vlog("command: %s", command);
-
-	FILE *out = popen(command, "re");	/*'e' is an extension
-						 * for close on
-						 * exec */
-	if (out == NULL) {
-		llog_error(verbose.logger, errno, "command '%s' failed: ", command);
-		return (chunk_t) NULL_HUNK;
+	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+		jam_string(buf, "command:");
+		for (const char **arg = argv; (*arg) != NULL; arg++) {
+			jam_string(buf, " ");
+			jam_shell_quoted_hunk(buf, shunk1(*arg));
+		}
 	}
 
-	chunk_t output = NULL_HUNK;
+	int fd[2];
+	if (pipe(fd) == -1) {
+		llog_error(verbose.logger, errno, "pipe(): ");
+		return (struct server_run) { .status = -1, };
+	}
+
+	pid_t child = fork();
+	if (child < 0) {
+		llog_error(verbose.logger, errno, "fork(): ");
+		return (struct server_run) { .status = -1, };
+	}
+
+	if (child == 0) {
+
+		/* dup() write side, fd[1], of pipe to STDOUT */
+		if (fd[1] != STDOUT_FILENO) {
+			if (dup2(fd[1], STDOUT_FILENO) < 0) {
+				llog_error(verbose.logger, errno, "dup2(fd[1], STDOUT): ");
+				exit(127);
+			}
+			if (close(fd[1]) < 0) {
+				llog_error(verbose.logger, errno, "close(fd[1]): ");
+				exit(127);
+			}
+		}
+
+		/* dup() read side, fd[0], of pipe() to child's STDIN */
+		if (fd[0] != STDIN_FILENO) {
+			/* switch fd[0] to STDIN */
+			if (dup2(fd[0], STDIN_FILENO) < 0) {
+				llog_error(verbose.logger, errno, "dup2(fd[0], STDIN): ");
+				exit(127);
+			}
+			if (close(fd[0]) < 0) {
+				llog_error(verbose.logger, errno, "close(fd[0]): ");
+				exit(127);
+			}
+		}
+
+		execvp(argv[0], (char**)argv);
+		llog_error(verbose.logger, errno, "execve(): ");
+		exit(127);
+	}
+
+	if (input.len > 0 &&
+	    write(fd[1], input.ptr, input.len) != (ssize_t)input.len) {
+		llog_error(verbose.logger, errno, "partial write: ");
+		/* stumble on to waitpid() */
+	}
+
+	if (close(fd[1]) < 0) {
+		llog_error(verbose.logger, errno, "close(fd[1])");
+		/* stumble on to waitpid() */
+	}
+
+	struct server_run result = {0};
+
 	while (true) {
 		char inp[100];
-		int n = fread(inp, 1, sizeof(inp), out);
+		ssize_t n = read(fd[0], inp, sizeof(inp));
 		if (n > 0) {
 			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
 				jam_string(buf, "output: ");
 				jam_sanitized_hunk(buf, shunk2(inp, n));
 			}
-			append_chunk_hunk("output", &output, shunk2(inp, n));
+			append_chunk_hunk("output", &result.output, shunk2(inp, n));
 			continue;
 		}
-		if (feof(out) || ferror(out)) {
-			const char *why = (feof(out) ? "eof" :
-					   ferror(out) ? "error" :
-					   "???");
-			int wstatus = pclose(out);
-			llog(RC_LOG, verbose.logger,
-			     "%s: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s",
-			     why, wstatus,
-			     bool_str(WIFEXITED(wstatus)), WEXITSTATUS(wstatus),
-			     bool_str(WIFSIGNALED(wstatus)), WTERMSIG(wstatus),
-			     bool_str(WIFSTOPPED(wstatus)), WSTOPSIG(wstatus),
-			     bool_str(WCOREDUMP(wstatus)));
-			break;
-		}
+
+		const char *why = (n == 0 ? "EOF" : strerror(errno));
+		waitpid(child, &result.status, 0);
+		vlog("wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
+		     result.status,
+		     bool_str(WIFEXITED(result.status)), WEXITSTATUS(result.status),
+		     bool_str(WIFSIGNALED(result.status)), WTERMSIG(result.status),
+		     bool_str(WIFSTOPPED(result.status)), WSTOPSIG(result.status),
+		     bool_str(WCOREDUMP(result.status)),
+		     why);
+		break;
 	}
-	return output;
+
+	return result;
 }
