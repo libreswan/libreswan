@@ -552,7 +552,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_list & LIST_CRLS) {
 		dbg_whack(s, "listcrls: start:");
 		list_crls(s);
-#if defined(LIBCURL) || defined(LIBLDAP)
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
 		list_crl_fetch_requests(s, m->whack_utc);
 #endif
 		dbg_whack(s, "listcrls: stop:");

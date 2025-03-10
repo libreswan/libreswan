@@ -51,7 +51,7 @@ deltatime_t curl_timeout = DELTATIME_INIT(FETCH_CMD_TIMEOUT);
 
 static pthread_t fetch_thread_id;
 
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 
 #include <curl/curl.h>		/* rpm:libcurl-devel dep:libcurl4-nss-dev */
 
@@ -149,7 +149,7 @@ static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 	return strlen(errorbuffer) > 0 ? "libcurl error" : NULL;
 }
 
-#else	/* LIBCURL */
+#else	/* USE_LIBCURL */
 
 static err_t fetch_curl(const char *url,
 			chunk_t *blob,
@@ -159,10 +159,9 @@ static err_t fetch_curl(const char *url,
 	return "not compiled with libcurl support";
 }
 
-#endif	/* LIBCURL */
+#endif	/* USE_LIBCURL */
 
-
-#ifdef LIBLDAP
+#ifdef USE_LDAP
 
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
@@ -519,7 +518,7 @@ void start_crl_fetch_helper(struct logger *logger)
 
 	int status;
 
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 	/* init curl */
 	status = curl_global_init(CURL_GLOBAL_DEFAULT);
 	if (status != 0) {
@@ -571,7 +570,7 @@ void stop_crl_fetch_helper(struct logger *logger)
 
 void free_crl_fetch(void)
 {
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 	if (deltasecs(crl_check_interval) > 0) {
 		/* cleanup curl */
 		curl_global_cleanup();

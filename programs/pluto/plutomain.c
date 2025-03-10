@@ -221,10 +221,10 @@ static const char compile_time_interop_options[] = ""
 #ifdef HAVE_NM
 	" NETWORKMANAGER"
 #endif
-#ifdef LIBCURL
+#ifdef USE_LIBCURL
 	" CURL(non-NSS)"
 #endif
-#ifdef LIBLDAP
+#ifdef USE_LDAP
 	" LDAP(non-NSS)"
 #endif
 #ifdef USE_EFENCE
@@ -1787,7 +1787,7 @@ int main(int argc, char **argv)
 
 	start_server_helpers(nhelpers, logger);
 	init_kernel(logger);
-#if defined(LIBCURL) || defined(LIBLDAP)
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
 	start_crl_fetch_helper(logger);
 #endif
 	init_labeled_ipsec(logger);

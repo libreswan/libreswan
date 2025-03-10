@@ -187,7 +187,7 @@ void exit_epilogue(void)
 	 * forget to do this.
 	 */
 
-#if defined(LIBCURL) || defined(LIBLDAP)
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
 	/*
 	 * Wait for the CRL fetch handler to finish its current task.
 	 * Without this CRL fetch requests are left hanging and, after

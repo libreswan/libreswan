@@ -54,7 +54,7 @@ extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 			  const struct cert *end_cert, bool full_chain);
 extern void free_auth_chain(chunk_t *chain, int chain_len);
 
-#if defined(LIBCURL) || defined(LIBLDAP)
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
 bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c);
 #endif
 
