@@ -6,13 +6,17 @@
     <para>
       whether to send a STRONGSWAN Vendor ID payload to the peer.
       Acceptable values are: <option>no</option> (the
-      default) and <option>yes</option>.  This used to
-      be required because strongswan rejects certain proposals with
-      private use numbers such as esp=twofish or esp=serpent unless it
-      receives a strongswan vendorid by the peer. This option sends
-      such an (unversioned) vendor id. Note that libreswan and
-      strongswan no longer support twofish or serpent, so enabling
-      this option likely will no longer do anything.
+      default) and <option>yes</option>. Strongswan enables some
+      non-standard features and private algorithms only when it detects
+      the strongswan Vendor ID. The exact capabilities depend on the
+      strongswan version. At the time of writing this entry this option
+      can enable negotiation of BEET mode (until the IETF assigns a
+      code point), enable some private algorithms (eg some experimental
+      post-quantum algorithms) and eanbles forwarding RADIUS attributes
+      (which should not have any affects with the current EAP support
+      in libreswan). Note that experimental algorithms on strongswan
+      can also be enabled using charon.accept_private_algs and then this
+      option is not needed.
     </para>
   </listitem>
 </varlistentry>
