@@ -1,5 +1,6 @@
 /* Dynamic fetching of X.509 CRLs, for libreswan
  *
+ * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
  * Copyright (C) 2002 Stephane Laroche <stephane.laroche@colubris.com>
  * Copyright (C) 2002-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
@@ -24,6 +25,8 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>		/* for WIFEXITED() et.al. */
 
 #include <cert.h>
 #include <certdb.h>
@@ -37,7 +40,6 @@
 #include "x509.h"
 #include "fetch.h"
 #include "secrets.h"
-#include "nss_crl_import.h"
 #include "keys.h"
 #include "crl_queue.h"
 #include "server.h"
@@ -341,6 +343,138 @@ static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logg
 	if (ugh != NULL)
 		free_chunk_content(blob);
 	return ugh;
+}
+
+/*
+ * Calls the _import_crl process to add a CRL to the NSS db.
+ */
+static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger *logger)
+{
+	if (der == NULL || len < 1) {
+		llog(RC_LOG, logger, "CRL buffer error");
+		return -1;
+	}
+
+	char lenarg[32];
+	snprintf(lenarg, sizeof(lenarg), "%zu", len);
+	char *arg[] = {
+		IPSEC_EXECDIR "/_import_crl",
+		(char*)url,
+		lenarg,
+		NULL,
+	};
+
+	dbg("Calling %s to import CRL - url: %s, der size: %s",
+	    arg[0],
+	    arg[1],
+	    arg[2]);
+
+	int pfd[2];
+	if (pipe(pfd) == -1) {
+		dbg("pipe() error: %s", strerror(errno));
+		return -1;
+	}
+
+	pid_t child = fork();
+
+	if (child < 0) {
+		llog_error(logger, errno, "fork(_import_crl)");
+		return -1;
+	}
+
+	if (child == 0) {
+		if (close(pfd[1]) == -1) {
+			llog_error(logger, errno, "close(pfd[1])");
+			exit(127);
+		}
+
+		if (pfd[0] != STDIN_FILENO) {
+			if (dup2(pfd[0], STDIN_FILENO) == -1) {
+				llog_error(logger, errno, "dup2(pfd[0], STDIN)");
+				exit(127);
+			}
+			if (close(pfd[0]) == -1) {
+				llog_error(logger, errno, "close(pfd[0])");
+				exit(127);
+			}
+		}
+		execve(arg[0], arg, NULL);
+		llog_error(logger, errno, "execve()");
+		exit(127);
+	}
+
+	/*parent*/
+
+	if (close(pfd[0]) == -1) {
+		llog_error(logger, errno, "close(pfd[0])");
+		return -1;
+	}
+
+	if (write(pfd[1], der, len) != (ssize_t)len) {
+		llog_error(logger, errno, "write(pfd[1])");
+		return -1;
+	}
+
+	if (close(pfd[1]) == -1) {
+		llog_error(logger, errno, "close(pfd[1])");
+		return -1;
+	}
+
+	int wstatus;
+	waitpid(child, &wstatus, 0);
+
+	if (!WIFEXITED(wstatus)) {
+		llog_error(logger, 0, "CRL helper aborted status: %d", wstatus);
+		return -1;
+	}
+
+	int ret = WEXITSTATUS(wstatus);
+	if (ret != 0) {
+		llog_error(logger, 0, "CRL helper exited with status: %d", ret);
+		return -1;
+	}
+
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
+	/*
+	 * Since the import worked, get the issuer and flush it's
+	 * cache.
+	 *
+	 * ARENA owned by CRL (or reverse)?
+	 */
+
+	SECItem crl_si = {
+		.len = len,
+		.data = der,
+		.type = siBuffer,
+	};
+	PLArenaPool *arena = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
+	CERTSignedCrl *crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE);
+	if (crl == NULL) {
+		ldbg_nss_error(logger, "decoding CRL using CERT_DecodeDERCrl() failed");
+		PORT_FreeArena(arena, false);
+		return -1;
+	}
+
+	CERTCertificate *cacert =  CERT_FindCertByName(handle, &crl->crl.derName);
+	if (cacert == NULL) {
+		ldbg_nss_error(logger, "finding cert by name using CERT_FindCertByName() failed");
+		PORT_FreeArena(arena, false);
+		return -1;
+	}
+
+	CERT_CRLCacheRefreshIssuer(handle, &cacert->derSubject);
+	CERT_DestroyCertificate(cacert);
+	PORT_FreeArena(arena, false);
+
+	return 0;
 }
 
 /* Note: insert_crl_nss frees *blob */
