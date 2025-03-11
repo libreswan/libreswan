@@ -64,6 +64,8 @@ struct pid_entry {
 	monotime_t start_time;
 	int fd; /* valid when fdl != NULL */
 	struct fd_read_listener *fdl; /* stdout+stderr; may be NULL */
+	enum stream stream;
+	chunk_t output;
 	struct logger *logger;
 };
 
@@ -154,13 +156,18 @@ static struct pid_entry *add_pid(const char *name,
 static void free_pid_entry(struct pid_entry **p)
 {
 	free_logger(&(*p)->logger, HERE);
+	free_chunk_content(&(*p)->output);
 	md_delref(&(*p)->md);
 	dbg_free("pid", *p, HERE);
 	pfree(*p);
 	*p = NULL;
 }
 
-static bool dump_fd(struct pid_entry *pid_entry)
+/*
+ * Drain PID_ENTRY's output FD, saving output, and possibly logging.
+ */
+
+static bool drain_fd(struct pid_entry *pid_entry)
 {
 	if (pid_entry->fdl == NULL) {
 		ldbg(pid_entry->logger, "%s: fd %d is closed",
@@ -185,24 +192,32 @@ static bool dump_fd(struct pid_entry *pid_entry)
 	}
 
 	/*
-	 * Split the output into lines and then send it to the log
-	 * file only.
-	 *
-	 * Don't write it to whack/addconn as they will copy it to
-	 * stdout causing it to end up back here!
+	 * Accumulate output.
 	 */
-
-	char sep;
 	shunk_t output = shunk2(buf, len);
-	while (true) {
-		shunk_t line = shunk_token(&output, &sep, "\n");
-		if (line.ptr == NULL) {
-			break;
-		}
-		LLOG_JAMBUF(LOG_STREAM/*not-whack*/, pid_entry->logger, buf) {
-			jam_string(buf, pid_entry->name);
-			jam_string(buf, ": ");
-			jam_sanitized_hunk(buf, line);
+	append_chunk_hunk("output", &pid_entry->output, output);
+
+	if (pid_entry->stream != 0) {
+		/*
+		 * Split the output into lines and then send it to the log
+		 * file only.
+		 *
+		 * .stream can't include WHACK/ADDCONN as they copy it
+		 * to stdout causing it to end up back here!
+		 */
+		PEXPECT(pid_entry->logger, (pid_entry->stream != WHACK_STREAM &&
+					    pid_entry->stream != ALL_STREAMS));
+		char sep;
+		while (true) {
+			shunk_t line = shunk_token(&output, &sep, "\n");
+			if (line.ptr == NULL) {
+				break;
+			}
+			LLOG_JAMBUF(pid_entry->stream, pid_entry->logger, buf) {
+				jam_string(buf, pid_entry->name);
+				jam_string(buf, ": ");
+				jam_sanitized_hunk(buf, line);
+			}
 		}
 	}
 
@@ -290,10 +305,17 @@ void server_fork_sigchld_handler(struct logger *logger)
 				}
 				continue;
 			}
+			/* drain output using blocking read */
+			if (pid_entry->fdl != NULL) {
+				int flags = fcntl(pid_entry->fd, F_GETFL);
+				fcntl(pid_entry->fd, F_SETFL, flags & ~O_NONBLOCK);
+				while (drain_fd(pid_entry));
+			}
 			/* log against pid_entry->logger; must cleanup */
 			struct state *st = state_by_serialno(pid_entry->serialno);
 			if (pid_entry->serialno == SOS_NOBODY) {
 				pid_entry->callback(NULL, NULL, status,
+						    HUNK_AS_SHUNK(pid_entry->output),
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else if (st == NULL) {
@@ -302,6 +324,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					jam_string(buf, " disappeared");
 				}
 				pid_entry->callback(NULL, NULL, status,
+						    HUNK_AS_SHUNK(pid_entry->output),
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
@@ -315,6 +338,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 				statetime_t start = statetime_start(st);
 				const enum ike_version ike_version = st->st_ike_version;
 				stf_status ret = pid_entry->callback(st, pid_entry->md, status,
+								     HUNK_AS_SHUNK(pid_entry->output),
 								     pid_entry->context,
 								     pid_entry->logger);
 				if (ret == STF_SKIP_COMPLETE_STATE_TRANSITION) {
@@ -326,12 +350,6 @@ void server_fork_sigchld_handler(struct logger *logger)
 				}
 				statetime_stop(&start, "callback for %s",
 					       pid_entry->name);
-			}
-			/* drain output using blocking read */
-			if (pid_entry->fdl != NULL) {
-				int flags = fcntl(pid_entry->fd, F_GETFL);
-				fcntl(pid_entry->fd, F_SETFL, flags & ~O_NONBLOCK);
-				while (dump_fd(pid_entry));
 			}
 			/* clean it up */
 			pid_entry_db_del(pid_entry);
@@ -350,12 +368,15 @@ static void child_output_listener(int fd, void *arg, struct logger *logger)
 	struct pid_entry *pid_entry = arg;
 	PASSERT(logger, pid_entry->fdl != NULL);
 	PASSERT(logger, pid_entry->fd == fd);
-	dump_fd(pid_entry);
+	drain_fd(pid_entry);
 }
 
 void server_fork_exec(const char *path,
 		      char *argv[], char *envp[],
-		      server_fork_cb *callback, void *callback_context,
+		      shunk_t input,
+		      enum stream output_stream,
+		      server_fork_cb *callback,
+		      void *callback_context,
 		      struct logger *logger)
 {
 	const char *what = argv[0];
@@ -407,9 +428,22 @@ void server_fork_exec(const char *path,
 	/* parent */
 	ldbg(logger, "created %s helper (pid:%d) using %s+execve",
 	     what, pid, USE_VFORK ? "vfork" : "fork");
+
+	/* send the input; then close */
+	if (input.len > 0) {
+		ssize_t n = write(fds[1/*write-fd*/], input.ptr, input.len);
+		if (n < 0) {
+			llog_error(logger, errno, "write to %d failed", pid);
+		} else if (n != (ssize_t)input.len) {
+			llog_error(logger, 0, "write to %d truncated", pid);
+		}
+	}
 	close(fds[1/*write-fd*/]);
+
 	struct pid_entry *entry = add_pid(what, SOS_NOBODY, /*md*/NULL,
 					  pid, callback, callback_context, logger);
+	/* save stream */
+	entry->stream = output_stream;
 	/* save the FD */
 	entry->fd = fds[0/*read-fd*/];
 	/* enable nonblock */
