@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 
 # build the IPsec interface device
-../../guestbin/ip.sh link add dev ipsec9 type xfrm dev eth1 if_id 0x1
+../../guestbin/ip.sh link add dev ipsec9 type xfrm if_id 0x1
 ../../guestbin/ip.sh addr add 192.0.1.251/24 dev ipsec9
 ../../guestbin/ip.sh link show ipsec9 type xfrm
 ../../guestbin/ip.sh addr show ipsec9

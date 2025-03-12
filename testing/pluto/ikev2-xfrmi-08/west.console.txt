@@ -9,14 +9,14 @@ west #
 west #
  ../../guestbin/ip.sh link delete ipsec17 2>/dev/null
 west #
- ../../guestbin/ip.sh route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23
+ ../../guestbin/ip.sh route get to 192.0.2.254 | grep eth1 && ip route del 192.0.2.0/24 via 192.1.2.23 dev eth1
 192.0.2.254 via 192.1.2.23 dev eth1 src 192.1.2.45 uid 0
 west #
- ../../guestbin/ip.sh link add ipsec17 type xfrm if_id 17 dev eth1
+ ../../guestbin/ip.sh link add ipsec17 type xfrm if_id 17
 west #
  ../../guestbin/ip.sh -d link show dev ipsec17
 X: ipsec17@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
-    xfrm if_id 0x11 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536
+    xfrm if_id 0x11 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 west #
  ip address add 192.0.1.254/24 dev ipsec17
 west #
@@ -57,10 +57,10 @@ up
 west #
  ../../guestbin/ip.sh -s link show ipsec17
 X: ipsec17@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX:  bytes packets errors dropped  missed   mcast
-            84       1      0       0       0       0
-    TX:  bytes packets errors dropped carrier collsns
-            84       1      0       0       0       0
+    RX:  bytes packets errors dropped  missed   mcast           
+            84       1      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+            84       1      0       0       0       0 
 west #
  echo done
 done
@@ -88,7 +88,7 @@ src 192.1.2.23 dst 192.1.2.45
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX
+	 00000000 00000000 00000000 XXXXXXXX 
 	if_id 0x11
 west #
  ../../guestbin/ipsec-kernel-policy.sh
@@ -108,4 +108,4 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		proto esp reqid REQID mode tunnel
 	if_id 0x11
 west #
-
+ 

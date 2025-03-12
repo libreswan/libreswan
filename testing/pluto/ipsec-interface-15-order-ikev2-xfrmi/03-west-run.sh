@@ -4,7 +4,7 @@
 # Neither the ipsec-interface nor the address are created by pluto, so
 # pluto leaves both behind.
 
-ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
+ip link add dev ipsec1 type xfrm if_id 0x1
 ip addr add 192.0.1.251/24 dev ipsec1
 ip addr add 2001:db8:0:1::251/64 dev ipsec1
 
@@ -38,7 +38,7 @@ ip link del dev ipsec1
 # Pluto deletes the address it added, but leaves the pre-existing
 # interface alone.
 
-ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
+ip link add dev ipsec1 type xfrm if_id 0x1
 
 ip --color=never link show ipsec1 # interface
 
