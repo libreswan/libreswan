@@ -577,11 +577,15 @@ static bool xfrm_ipsec_interface_match(struct ipsec_interface_match *match,
 	}
 
 	vexpect(match->diag == NULL);
-	char xfrm_link_name[IF_NAMESIZE];
-	if_indextoname(getlink.result.xfrm_link, xfrm_link_name);
+	char xfrm_link_name[IF_NAMESIZE] = "";
+	if (getlink.result.xfrm_link > 0) {
+		if_indextoname(getlink.result.xfrm_link, xfrm_link_name);
+	}
 	vdbg("support found existing %s@%s (xfrm) .xfrm_if_id %d .xfrm_link %d",
-	     match->found, xfrm_link_name,
-	     getlink.result.xfrm_if_id, getlink.result.xfrm_link);
+	     match->found,
+	     xfrm_link_name,
+	     getlink.result.xfrm_if_id,
+	     getlink.result.xfrm_link);
 	return true;
 }
 
