@@ -51,16 +51,8 @@ Certificate:
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
+            Critical: True
             Data: Is a CA with no maximum path length.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
-                Code Signing Certificate
-                OCSP Responder Certificate
-            Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
@@ -219,16 +211,8 @@ Certificate:
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
+            Critical: True
             Data: Is a CA with no maximum path length.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
-                Code Signing Certificate
-                OCSP Responder Certificate
-            Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
@@ -339,11 +323,11 @@ Certificate:
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
+            Critical: True
             Data: Is a CA with no maximum path length.
             Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
+            Critical: True
+            Usages: Certificate Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
@@ -403,11 +387,11 @@ Certificate:
             Distribution point:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
+            Critical: True
             Data: Is a CA with no maximum path length.
             Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
+            Critical: True
+            Usages: Certificate Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):

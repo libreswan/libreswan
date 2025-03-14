@@ -45,10 +45,10 @@ echo_2_basic_constraints()
     local ca
     local critical
     case $1 in
-	+y )   ca=y ; critical=y ;;
-	-y|y ) ca=y ; critical=n ;;
-	+n )   ca=n ; critical=y ;;
-	-n|n ) ca=n ; critical=n ;;
+	Y ) ca=y ; critical=y ;;
+	y ) ca=y ; critical=n ;;
+	N ) ca=n ; critical=y ;;
+	n ) ca=n ; critical=n ;;
     esac
     # -2 - basic constraints
     echo ${ca}        # Is this a CA certificate [y/N]?
@@ -93,22 +93,30 @@ generate_root_ca()
 (
     set -x
 
-    local certdir=$1 ; shift
-    local is_ca=$1 ; shift
-    local eku=$1 ; shift
-    echo generating root certificate: ${certdir} 1>&3
+    echo "generating root certificiate: $@" 1>&3
+    local certdir=$1 ; shift ; echo " certdir=${certdir}" 1>&3
+    local ca=$1      ; shift ; echo " ca=${ca}" 1>&3
+    local is_ca=$1   ; shift ; echo " is_ca=${is_ca}" 1>&3
+    local ku=$1      ; shift ; echo " ku=${ku}" 1>&3
+    local eku=$1     ; shift ; echo " eku=${eku}" 1>&3
 
-    local root=$(basename ${certdir})
+    cert=${ca}
 
     local param ; read param < ${certdir}/param
+    echo "${param}" > ${certdir}/${cert}.param
+    echo " param=${param}" 1>&3
+
     local domain ; read domain < ${certdir}/domain
+    echo "${domain}" > ${certdir}/${cert}.domain
+    echo " domain=${domain}" 1>&3
 
     local serial=$(serial ${certdir})
+    echo "${serial}" > ${certdir}/${cert}.serial
     echo ${serial} > ${certdir}/root.serial
 
     # NSS wants subject to be local..global/root
     local subject=${SUBJECT}
-    subject="CN=Libreswan test CA for ${root}, ${subject}"
+    subject="CN=Libreswan test CA for ${ca}, ${subject}"
     subject="E=testing@libreswan.org, ${subject}"
 
     # Generate a file containing the constraints that CERTUTIL expects
@@ -120,17 +128,15 @@ generate_root_ca()
 	echo_extAIA_ocsp
     } > ${cfg}
 
-    ku=digitalSignature,certSigning,crlSigning
-
     certutil -S -d ${certdir} \
 	     -m ${serial} \
 	     -x \
-	     -n "${root}" \
+	     -n "${ca}" \
 	     -s "${subject}" \
 	     -w ${NOW_OFFSET_MONTHS} \
 	     -v ${NOW_VALID_MONTHS} \
-	     --keyUsage ${ku} \
-	     $(test ${eku} != - && echo --extKeyUsage ${eku}) \
+	     $(test ${eku} != / && echo --keyUsage ${ku}) \
+	     $(test ${eku} != / && echo --extKeyUsage ${eku}) \
 	     -t "CT,C,C" \
 	     -z ${NOISE_FILE} \
 	     ${param} \
@@ -143,7 +149,7 @@ generate_root_ca()
 
     pk12util \
 	-d ${certdir} \
-	-n ${root} \
+	-n ${ca} \
 	-W ${PASSPHRASE} \
 	-o ${certdir}/root.p12
 
@@ -152,7 +158,7 @@ generate_root_ca()
     certutil \
 	-L \
 	-d ${certdir} \
-	-n ${root} \
+	-n ${ca} \
 	-a > ${certdir}/root.cert # PEM
 
     # print the chain
@@ -160,7 +166,7 @@ generate_root_ca()
     chain=$(certutil \
 		-O \
 		-d ${certdir} \
-		-n ${root}) || exit 1
+		-n ${ca}) || exit 1
     printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
 )
 
@@ -180,7 +186,7 @@ generate_cert()
     echo "generating certificate: $@" 1>&3
 
     local certdir=$1  ; shift ; echo " certdir=${certdir}" 1>&3
-    local root=$1     ; shift ; echo " root=${root}" 1>&3
+    local ca=$1       ; shift ; echo " ca=${ca}" 1>&3
     local cert=$1     ; shift ; echo " cert=${cert}" 1>&3
 
     local user=$1     ; shift ; echo " user=${user}" 1>&3
@@ -197,10 +203,12 @@ generate_cert()
     else
 	read param < ${certdir}/param
     fi
+    echo "${param}" > ${certdir}/${cert}.param
     echo " param=${param}" 1>&3
 
     local domain
     read domain < ${certdir}/domain
+    echo "${domain}" > ${certdir}/${cert}.domain
     echo " domain=${domain}" 1>&3
 
     local serial=$(serial ${certdir})
@@ -237,7 +245,7 @@ generate_cert()
 	test ${add_ocsp} -gt 0 && echo_extAIA_ocsp ${add_ocsp}
     } > ${cfg}
 
-    if test ${root} = ${cert} ; then
+    if test ${ca} = ${cert} ; then
 	trust=CT,C,C
     else
 	trust=P,,
@@ -247,7 +255,7 @@ generate_cert()
     certutil -S \
 	     -d ${certdir} \
 	     -n ${cert} \
-	     $(test ${root} = ${cert} && echo -x || echo -c ${root}) \
+	     $(test ${ca} = ${cert} && echo -x || echo -c ${ca}) \
 	     -m ${serial} \
 	     -s "${subject}" \
 	     -z ${NOISE_FILE} \
@@ -315,15 +323,15 @@ generate_cert()
 
 # generate ca directories
 
-while read base domain is_ca param ; do
+while read subdir ca domain is_ca ku eku param ; do
 
-    case "${base}" in
+    case "${subdir}" in
 	'#'* ) continue ;;
     esac
 
-    echo creating cert directory: ${base} ${domain} ${is_ca} ${param} 1>&2
+    echo creating cert directory: ${subdir} ${ca} ${domain} ${is_ca} ${param} 1>&2
 
-    certdir=${OUTDIR}/${base}
+    certdir=${OUTDIR}/${subdir}
     mkdir -p ${certdir}
 
     # configure NSS
@@ -338,22 +346,21 @@ while read base domain is_ca param ; do
 
     # generate root certificate
 
-    eku=serverAuth,clientAuth,codeSigning,ocspResponder
-
     log=${certdir}/root.log
-    if ! generate_root_ca ${certdir} ${is_ca} ${eku} > ${log} 2>&1 ; then
+    if ! generate_root_ca ${certdir} ${ca} ${is_ca} ${ku} ${eku} > ${log} 2>&1 ; then
 	cat ${log}
 	exit 1
     fi
 
-    # BASE DOMAIN IS_CA EKU PARAM...
+    # SUBDIR CA DOMAIN IS_CA KU EKU=/ PARAM...
 done <<EOF
-real/mainca   testing.libreswan.org  y  -k rsa -Z SHA256 -g 3072
-real/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
-real/otherca  other.libreswan.org    y  -k rsa -Z SHA256 -g 3072
-fake/mainca   testing.libreswan.org  y  -k rsa -Z SHA256 -g 3072
-fake/mainec   testing.libreswan.org  y  -k ec  -Z SHA256 -q secp384r1
-real/bc-n-ca  testing.libreswan.org  n  -k rsa -Z SHA256 -g 3072
+real/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+fake/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+real/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
+fake/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
+real/otherca  otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+# broken root CA, can't be used to verify
+real/bc-n-ca  bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
 # generate end certs where needed
@@ -365,14 +372,14 @@ while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
     esac
 
     for subdir in $(eval echo ${subdirs}) ; do
-	for root in $(eval echo ${roots}) ; do
+	for ca in $(eval echo ${roots}) ; do
 	    for cert in $(eval echo ${certs}) ; do
-		certdir=${OUTDIR}/${subdir}/${root}
+		certdir=${OUTDIR}/${subdir}/${ca}
 		log=${certdir}/${cert}.log
 		user=user-${cert}
 
 		if generate_cert \
-		     ${certdir} ${root} ${cert} ${user} \
+		     ${certdir} ${ca} ${cert} ${user} \
 		     ${add_san} ${add_ocsp} ${add_crl} \
 		     ${bc} ${ku} ${eku} ${param} \
 		     > ${log} 2>&1 ; then
@@ -386,15 +393,15 @@ while read subdirs roots certs add_san add_ocsp add_crl bc ku eku param ; do
 	done
     done
 done <<EOF
-{real,fake} {mainca,mainec}  nic                             1 1 1 / digitalSignature  ocspResponder
-{real,fake} {mainca,mainec}  {east,west,road,north,rise,set} 1 1 1 / digitalSignature  /
-real        mainca           revoked                         1 1 1 / digitalSignature  /
-real        mainca           key2032                         1 1 1 / digitalSignature  /  -k rsa -g 2032
-real        mainca           key4096                         1 1 1 / digitalSignature  /  -k rsa -g 4096
-real        mainca           {east,west}-nosan               0 1 1 / digitalSignature  /
-real        mainca           semiroad                        1 1 1 / digitalSignature  /
-real        mainca           nic-no-ocsp                     1 0 1 / digitalSignature  /
-real        otherca          other{east,west}                1 1 1 / digitalSignature  /
+{real,fake} {mainca,mainec}  nic                                  1 1 1 / digitalSignature  ocspResponder
+{real,fake} {mainca,mainec}  {east,west,road,north,rise,set}      1 1 1 / digitalSignature  /
+real        mainca           revoked                              1 1 1 / digitalSignature  /
+real        mainca           key2032                              1 1 1 / digitalSignature  /  -k rsa -g 2032
+real        mainca           key4096                              1 1 1 / digitalSignature  /  -k rsa -g 4096
+real        mainca           {east,west}-nosan                    0 1 1 / digitalSignature  /
+real        mainca           semiroad                             1 1 1 / digitalSignature  /
+real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
+real        otherca          other{east,west}                     1 1 1 / digitalSignature  /
 # Key Usage aka KU
 real        mainca           west-ku-missing                      1 1 1 / /                             /
 real        mainca           west-ku-digitalSignature             1 1 1 / digitalSignature              /
@@ -411,7 +418,7 @@ real        mainca           west-eku-codeSigning                 1 1 1 / digita
 real        mainca           west-eku-ipsecIKE-codeSigning        1 1 1 / digitalSignature ipsecIKE,codeSigning
 EOF
 
-while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
+while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
 
     case "${subdir}" in
 	'#'* ) continue ;;
@@ -422,7 +429,7 @@ while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
     user=${cert}
 
     if generate_cert \
-	   ${certdir} ${root} ${cert} ${user} \
+	   ${certdir} ${ca} ${cert} ${user} \
 	   ${add_san} ${add_ocsp} ${add_crl} \
 	   ${bc} ${ku} ${eku} ${param} \
 	   > ${log} 2>&1 ; then
@@ -433,19 +440,21 @@ while read subdir root cert add_san add_ocsp add_crl bc ku eku param ; do
     fi
 
 done <<EOF
-real/mainca  mainca           east_chain_int_1                1 1 1 y digitalSignature,certSigning,crlSigning  /
-real/mainca  east_chain_int_1 east_chain_int_2                1 1 1 y digitalSignature,certSigning,crlSigning  /
-real/mainca  east_chain_int_2 east_chain_endcert              1 1 1 / digitalSignature                         /
-real/mainca  mainca           west_chain_int_1                1 1 1 y digitalSignature,certSigning,crlSigning  /
-real/mainca  west_chain_int_1 west_chain_int_2                1 1 1 y digitalSignature,certSigning,crlSigning  /
-real/mainca  west_chain_int_2 west_chain_endcert              1 1 1 / digitalSignature                         /
+# correct certificate chain
+real/mainca  mainca                     east_chain_int_1           1 1 1 Y  certSigning,critical  /
+real/mainca  mainca                     west_chain_int_1           1 1 1 Y  certSigning,critical  /
+real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  certSigning,critical  /
+real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
+real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
+real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
 # Basic Constraints aka BC
-real/mainca  mainca                     west-bc-missing            1 1 1  /  /                             /
-real/mainca  mainca                     west-bc-ca-n               1 1 1  n  /                             /
-real/mainca  mainca                     west-bc-ca-n-critical      1 1 1 +n  /                             /
-real/mainca  mainca                     west-bc-ca-y-critical      1 1 1 +y  /                             /
-real/mainca  mainca                     west-bc-missing-chain-int  1 1 1  /  certSigning                            /
-real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1  /  /
+real/mainca  mainca                     west-bc-missing            1 1 1 /  /                     /
+real/mainca  mainca                     west-bc-ca-n               1 1 1 n  /                     /
+real/mainca  mainca                     west-bc-ca-n-critical      1 1 1 N  /                     /
+real/mainca  mainca                     west-bc-ca-y               1 1 1 Y  /                     /
+real/mainca  mainca                     west-bc-ca-y-critical      1 1 1 Y  /                     /
+real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
+real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
 # Use the CA with BC=n to sign some certs
-real/bc-n-ca bc-n-ca                    bc-n-ca-west               1 1 1  /  /
+real/bc-n-ca bc-n-ca                    bc-n-ca-west               1 1 1 /  /                     /
 EOF

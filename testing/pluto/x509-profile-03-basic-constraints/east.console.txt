@@ -21,7 +21,7 @@ east #
 initdone
 east #
  grep '^[^|].*ERROR:' /tmp/pluto.log
-"east"[5] 192.1.2.45 #8: NSS: ERROR: IPsec certificate E=west-bc-missing-chain-end@testing.libreswan.org,CN=west-bc-missing-chain-end.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
-"east"[6] 192.1.2.45 #9: NSS: ERROR: IPsec certificate E=bc-n-ca-west@testing.libreswan.org,CN=bc-n-ca-west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
+"east"[6] 192.1.2.45 #9: NSS: ERROR: IPsec certificate E=west-bc-missing-chain-end@testing.libreswan.org,CN=west-bc-missing-chain-end.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
+"east"[7] 192.1.2.45 #10: NSS: ERROR: IPsec certificate E=bc-n-ca-west@testing.libreswan.org,CN=bc-n-ca-west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 east #
  

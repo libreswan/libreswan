@@ -6,6 +6,7 @@ run() { local c=$(basename $1) ; /testing/x509/import.sh real/$1.all.p12 ; set i
 run mainca/west-bc-missing
 run mainca/west-bc-ca-n
 run mainca/west-bc-ca-n-critical
+run mainca/west-bc-ca-y
 run mainca/west-bc-ca-y-critical
 
 # this should fail as the intermediate has no BC=CA; also dump

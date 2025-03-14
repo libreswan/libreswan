@@ -195,6 +195,72 @@ Redirecting to: [initsystem]
 + ipsec stop
 Redirecting to: [initsystem]
 west #
+ run mainca/west-bc-ca-y
+ipsec pk12util -w nss-pw -i real/mainca/west-bc-ca-y.all.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -L -n west-bc-ca-y
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=west-bc-ca-y@testing.libreswan.org,CN=west-bc-ca-y.testin
+            g.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontar
+            io,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Subject Alt Name
+            DNS name: "west-bc-ca-y.testing.libreswan.org"
+            RFC822 Name: "west-bc-ca-y@testing.libreswan.org"
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Critical: True
+            Data: Is a CA with no maximum path length.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
++ ipsec start
+Redirecting to: [initsystem]
++ ipsec add west-bc-ca-y
+"west-bc-ca-y": added IKEv2 connection
++ ipsec up west-bc-ca-y
+"west-bc-ca-y" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-bc-ca-y" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-bc-ca-y" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-bc-ca-y" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-bc-ca-y" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"west-bc-ca-y" #1: encountered fatal error in state IKE_AUTH_I
+"west-bc-ca-y" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-bc-ca-y" #2: IMPAIR: revival: skip scheduling revival event
+"west-bc-ca-y" #1: deleting IKE SA (sent IKE_AUTH request)
++ ipsec stop
+Redirecting to: [initsystem]
+west #
  run mainca/west-bc-ca-y-critical
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-ca-y-critical.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
@@ -470,15 +536,6 @@ Certificate:
                 URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Basic Constraints
             Data: Is not a CA.
-            Name: Extended Key Usage
-                TLS Web Server Authentication Certificate
-                TLS Web Client Authentication Certificate
-                Code Signing Certificate
-                OCSP Responder Certificate
-            Name: Certificate Key Usage
-            Usages: Digital Signature
-                    Certificate Signing
-                    CRL Signing
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
     Signature:
     Fingerprint (SHA-256):
