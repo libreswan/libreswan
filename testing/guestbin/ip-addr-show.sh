@@ -45,10 +45,10 @@ fi
 
 # dump raw version of what ../bin/ip-addr-show.sh manages
 echo ==== cut ====
-ip addr ${ifface}
+ip --color=never addr ${ifface}
 echo ==== tuc ====
 
-ip -o addr ${ifface} | {
+ip --color=never -o addr ${ifface} | {
 		sed 's/^[0-9][0-9]*:\ //;s/\\//;s/\ \ */ /g;/scope\ \(local\|host\|link\)/d'
 	} | {
 		sed 's/scope.*//;s/brd .*//'
