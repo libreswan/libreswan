@@ -4,7 +4,8 @@
   # ConditionFileNotEmpty=|!/etc/hostname
   # need interfaces configured
   After=systemd-networkd-wait-online.service
-  Before=network.target
+  Wants=systemd-networkd-wait-online.service
+  Before=network-online.target
 [Service]
   Type=oneshot
   ExecStart=/usr/local/sbin/hostnamer.sh
