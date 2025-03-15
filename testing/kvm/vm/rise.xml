@@ -10,7 +10,6 @@ You can load this machine definition into libvirt using:
   <os>
     <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
-    <cmdline>root=/dev/vda2 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=east</cmdline>
   </os>
   <features>
     <acpi/>
