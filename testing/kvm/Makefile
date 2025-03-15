@@ -242,17 +242,6 @@ KVM_OS += $(if $(filter true, $(KVM_LINUX)),   linux)
 KVM_OS += $(if $(filter true, $(KVM_NETBSD)),  netbsd)
 KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 
-# fed into virt-install:
-#   - linux is really fedora
-#   - 32-bit debian confuses libvirt so use linux
-KVM_ALPINE_OSINFO  ?= $(shell osinfo-query os | awk '/alpinelinux[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_DEBIAN_OSINFO  ?= $(shell osinfo-query os | awk '/linux[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_FEDORA_OSINFO  ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_FREEBSD_OSINFO ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_LINUX_OSINFO   ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_NETBSD_OSINFO  ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
-KVM_OPENBSD_OSINFO ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
-
 #
 # Hosts and Domains
 #
@@ -837,7 +826,7 @@ $(KVM_POOLDIR_PREFIX)%-base: \
 			--vcpus=$(call kvm-flag-value, KVM_BASE_CPUS) \
 			--memory=$(call kvm-flag-value, KVM_BASE_MEMORY) \
 			--name=$(notdir $@) \
-			--osinfo $(KVM_$($*)_OSINFO) \
+			--osinfo=$(KVM_$($*)_OSINFO) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(VIRT_POOLDIR) \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
@@ -896,6 +885,7 @@ KVM_GET ?= \
 KVM_ALPINE_VERSION ?= v3.21
 KVM_ALPINE_RELEASE ?= 3.21.0
 KVM_ALPINE_MACHINE ?= x86
+KVM_ALPINE_OSINFO  ?= $(strip $(shell osinfo-query -f short-id os | grep ' alpinelinux' | sort -V | tail -1))
 
 KVM_ALPINE_URL ?= https://dl-cdn.alpinelinux.org/alpine/$(KVM_ALPINE_VERSION)/releases/$(KVM_ALPINE_MACHINE)
 
@@ -916,10 +906,22 @@ $(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
 #
 # Debian
 #
+# - debian is trying to track the oldest release
+#
+#   Unfortunately PRESEED only works in debian12+
+#
+# - debian installs 32-bit so that 32-bit GLIBC builts are tested
+#
+#   Unfortunately libbirt doesn't know how to boot 32-bit debian ISOs,
+#   the work-around is to specify generic linux as the OSINFO.
+#
+#   https://gitlab.com/libvirt/libvirt/-/issues/755
 
-KVM_DEBIAN_RELEASE ?= 12.2.0
+KVM_DEBIAN_MAJOR ?= 12
+KVM_DEBIAN_RELEASE ?= ${KVM_DEBIAN_MAJOR}.2.0
 KVM_DEBIAN_BUILD ?= 1
 KVM_DEBIAN_MACHINE ?= i386
+KVM_DEBIAN_OSINFO  ?= linux2022
 
 # https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
 KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/$(KVM_DEBIAN_MACHINE)/iso-dvd
@@ -955,12 +957,15 @@ KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 #
 # Fedora
 #
+# - leading edge (i.e., often newer then linux)
+#
 # - since kickstart is used this is pretty straight forward
 #
-# For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
+#   For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
 KVM_FEDORA_RELEASE ?= 41
 KVM_FEDORA_BUILD ?= 1.4
+KVM_FEDORA_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' fedora' | sort -V | tail -1))
 
 KVM_FEDORA_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
 
@@ -992,13 +997,17 @@ $(KVM_FEDORA_DOMAIN)-base.ks: | $(KVM_FEDORA_KICKSTART_FILE)
 #
 # FreeBSD
 #
+# - leading edge
+#
 # - modifies the install CD
 #
 # - uses DISK 1, and not DVD 1, as the former does not contain
 #   packages; they will be downloaded later
 #
+# - use what ever libvirt supports
 
 KVM_FREEBSD_RELEASE ?= 14.2
+KVM_FREEBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' freebsd' | sort -V | tail -1))
 
 KVM_FREEBSD_URL ?= https://download.freebsd.org/ftp/releases/ISO-IMAGES/$(KVM_FREEBSD_RELEASE)
 
@@ -1033,12 +1042,16 @@ $(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
 #
 # Linux
 #
+# - actually fedora, but not leading edge
+#
 # - since kickstart is used this is pretty straight forward
 #
-# For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
+#   For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
+#
 
 KVM_LINUX_RELEASE ?= 41
 KVM_LINUX_BUILD ?= 1.4
+KVM_LINUX_OSINFO   ?= $(strip $(shell osinfo-query -f short-id os | grep ' fedora' | sort -V | tail -1))
 
 KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
 
@@ -1073,12 +1086,16 @@ $(KVM_LINUX_DOMAIN)-base.ks: | $(KVM_LINUX_KICKSTART_FILE)
 #
 # NetBSD
 #
+# - track leading edge
+#
 # - needs a second serial console boot iso
 #
+# - use what ever version libvirt supports
 
 KVM_NETBSD_MACHINE = amd64
 KVM_NETBSD_RELEASE ?= NetBSD-10.1
 KVM_NETBSD_URL ?= https://cdn.netbsd.org/pub/NetBSD/$(KVM_NETBSD_RELEASE)
+KVM_NETBSD_OSINFO  ?= $(strip $(shell osinfo-query -f short-id os | grep ' netbsd' | sort -V | tail -1))
 
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(KVM_NETBSD_RELEASE)-$(KVM_NETBSD_MACHINE).iso
 KVM_NETBSD_INSTALL_ISO_HASH = SHA512
@@ -1122,13 +1139,19 @@ $(KVM_NETBSD_DOMAIN)-base.iso: | netbsd/base.sh
 #
 # OpenBSD
 #
+# - track leading edge
+#
 # - the downloaded ISO needs mangling
+#
 # - sources are in separate tarballs
+#
+# - use latest OS libvirt supports
 #
 
 # Give the OpenBSD ISO a meaningful name.
 
 KVM_OPENBSD_ISO_RELEASE ?= 7.6
+KVM_OPENBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' openbsd' | sort -V | tail -1))
 
 KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)/amd64/
 
