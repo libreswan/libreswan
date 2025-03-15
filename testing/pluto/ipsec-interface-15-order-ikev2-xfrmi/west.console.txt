@@ -28,7 +28,7 @@ west #
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:1::251/64 scope global
+    inet6 2001:db8:0:1::251/64 scope global 
        valid_lft forever preferred_lft forever
 west #
  ipsec add westnet4-eastnet4
@@ -44,7 +44,7 @@ west #
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:1::251/64 scope global
+    inet6 2001:db8:0:1::251/64 scope global 
        valid_lft forever preferred_lft forever
 west #
  ipsec up westnet4-eastnet4
@@ -70,9 +70,9 @@ west #
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:1::251/64 scope global
+    inet6 2001:db8:0:1::251/64 scope global 
        valid_lft forever preferred_lft forever
-    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll 
        valid_lft forever preferred_lft forever
 west #
  ipsec delete westnet4-eastnet4
@@ -94,9 +94,9 @@ west #
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:1::251/64 scope global
+    inet6 2001:db8:0:1::251/64 scope global 
        valid_lft forever preferred_lft forever
-    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll 
        valid_lft forever preferred_lft forever
 west #
  ip link del dev ipsec1
@@ -111,7 +111,7 @@ west #
 west #
  # interface alone.
 west #
- ip link add dev ipsec1 type xfrm dev eth1 if_id 0x1
+ ip link add dev ipsec1 type xfrm if_id 0x1
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
@@ -153,9 +153,9 @@ west #
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:1::251/64 scope global
+    inet6 2001:db8:0:1::251/64 scope global 
        valid_lft forever preferred_lft forever
-    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll 
        valid_lft forever preferred_lft forever
 west #
  ipsec delete westnet4-eastnet4
@@ -175,7 +175,7 @@ X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ip --color=never addr show ipsec1 # missing addresses
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll 
        valid_lft forever preferred_lft forever
 west #
  ip link del dev ipsec1
@@ -233,9 +233,9 @@ west #
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec1
        valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:1::251/64 scope global
+    inet6 2001:db8:0:1::251/64 scope global 
        valid_lft forever preferred_lft forever
-    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
+    inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll 
        valid_lft forever preferred_lft forever
 west #
  ipsec delete westnet4-eastnet4
@@ -257,4 +257,4 @@ west #
  echo done
 done
 west #
-
+ 

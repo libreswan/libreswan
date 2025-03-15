@@ -21,10 +21,10 @@ west #
  ../../guestbin/ip.sh link set ipsec9 netns ns
 west #
  ../../guestbin/ip.sh -n ns link show ipsec9 type xfrm
-X: ipsec9@if3: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
+X: ipsec9@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ../../guestbin/ip.sh -n ns addr show ipsec9
-X: ipsec9@if3: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+X: ipsec9@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
 west #
  # add the address and mark it up
 west #
@@ -33,10 +33,10 @@ west #
  ../../guestbin/ip.sh -n ns link set ipsec9 up
 west #
  ../../guestbin/ip.sh -n ns link show ipsec9
-X: ipsec9@if3: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec9@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  ../../guestbin/ip.sh -n ns addr show ipsec9
-X: ipsec9@if3: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec9@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     inet 192.0.1.251/24 scope global ipsec9
        valid_lft forever preferred_lft forever
     inet6 fe80::xxxx/64 scope link stable-privacy proto kernel_ll
@@ -47,7 +47,7 @@ west #
  # ../../guestbin/ip.sh monitor all all-nsid &
 west #
  ../../guestbin/ip.sh -n ns link show ipsec9
-X: ipsec9@if3: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+X: ipsec9@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 west #
  # move it into a namespace
 west #

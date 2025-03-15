@@ -5,6 +5,6 @@
 ../../guestbin/ip.sh rule del pref 220 2> /dev/null > /dev/null
 ../../guestbin/ip.sh route del 192.0.2.0/24
 ../../guestbin/ip.sh route del 192.1.2.0/24 dev eth0 table 220 2> /dev/null > /dev/null
-../../guestbin/ip.sh link add ipsec2 type xfrm if_id 2 dev eth0
+../../guestbin/ip.sh link add ipsec2 type xfrm if_id 2
 swanctl  --load-conns
 echo "initdone"

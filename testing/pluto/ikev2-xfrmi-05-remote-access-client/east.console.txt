@@ -6,6 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add eastnet-any
+"eastnet-any": created ipsec-interface ipsec1@NONE
 "eastnet-any": added IKEv2 connection
 east #
  echo initdone
