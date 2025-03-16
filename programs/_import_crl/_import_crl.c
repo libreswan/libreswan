@@ -38,36 +38,12 @@ extern SECStatus NSS_Shutdown(void);
 extern SECStatus NSS_InitReadWrite(const char *configdir);
 #endif
 
-static enum pluto_exit_code import_crl(const char *url, unsigned char *buf, size_t len)
-{
-	CERTSignedCrl *crl = NULL;
-	SECItem si = {siBuffer, NULL, 0};
-	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-
-	if (handle == NULL)
-		return PLUTO_EXIT_FAIL;
-
-	si.data = buf;
-	si.len = len;
-
-	if ((crl = CERT_ImportCRL(handle, &si, (char *)url, SEC_CRL_TYPE,
-							NULL)) == NULL) {
-		return PORT_GetError();
-	}
-
-	SEC_DestroyCrl(crl);
-	return PLUTO_EXIT_OK;
-}
-
 /*
  * _import_crl <url> <der size>
  * the der blob is passed through STDIN from pluto's fork
  */
 int main(int argc, char *argv[])
 {
-	ssize_t rd;
-	int fin;
-
 	struct logger *logger = tool_logger(argc, argv);
 
 	if (argc != 3) {
@@ -102,29 +78,51 @@ int main(int argc, char *argv[])
 	ssize_t tlen = len;
 	uint8_t *tbuf = buf;
 
-	while (tlen != 0 && (rd = read(STDIN_FILENO, buf, len)) != 0) {
+	while (tlen > 0) {
+		ssize_t rd = read(STDIN_FILENO, buf, len);
+		if (rd == 0) {
+			/* EOF */
+			break;
+		}
 		if (rd == -1) {
 			if (errno == EINTR)
 				continue;
-			exit(-1);
+			fatal(PLUTO_EXIT_FAIL, logger, "read error");
 		}
 		tlen -= rd;
-		buf += rd;
+		tbuf += rd;
 	}
 
-	if ((buf - tbuf) != len) {
+	if ((tbuf - buf) != len) {
 		fatal(PLUTO_EXIT_FAIL, logger, "less then %zd bytes read", len);
 	}
 
 	const struct lsw_conf_options *oco = lsw_init_options();
 	init_nss(oco->nssdir, (struct nss_flags){0}, logger);
 
-	fin = import_crl(url, tbuf, len);
+	/* should never fail */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	if (handle == NULL) {
+		return PLUTO_EXIT_FAIL;
+	}
 
-	if (tbuf != NULL)
-		pfree(tbuf);
+	SECItem si = {
+		.type = siBuffer,
+		.data = buf,
+		.len = len,
+	};
 
+	CERTSignedCrl *crl = CERT_ImportCRL(handle, &si, (char *)url, SEC_CRL_TYPE, NULL);
+	if (crl == NULL) {
+		llog_nss_error(RC_LOG, logger, "import of CRL failed, ");
+		return PLUTO_EXIT_FAIL;
+	}
+
+	llog_pem_bytes(RC_LOG|NO_PREFIX, logger, "NAME", crl->crl.derName.data, crl->crl.derName.len);
+
+	pfree(buf);
+	SEC_DestroyCrl(crl);
 	NSS_Shutdown();
 
-	return fin;
+	return 0;
 }

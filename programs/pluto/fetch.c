@@ -375,6 +375,12 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 		return -1;
 	}
 
+	if (PBAD(logger, pfd[0] == STDIN_FILENO) ||
+	    PBAD(logger, pfd[1] == STDERR_FILENO) ||
+	    PBAD(logger, pfd[1] == STDERR_FILENO)) {
+		return -1;
+	}
+
 	pid_t child = fork();
 
 	if (child < 0) {
@@ -383,21 +389,14 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 	}
 
 	if (child == 0) {
-		if (close(pfd[1]) == -1) {
-			llog_error(logger, errno, "close(pfd[1])");
-			exit(127);
-		}
 
-		if (pfd[0] != STDIN_FILENO) {
-			if (dup2(pfd[0], STDIN_FILENO) == -1) {
-				llog_error(logger, errno, "dup2(pfd[0], STDIN)");
-				exit(127);
-			}
-			if (close(pfd[0]) == -1) {
-				llog_error(logger, errno, "close(pfd[0])");
-				exit(127);
-			}
-		}
+		dup2(pfd[1], STDERR_FILENO);
+		dup2(pfd[1], STDOUT_FILENO);
+		dup2(pfd[0], STDIN_FILENO);
+
+		close(pfd[0]);
+		close(pfd[1]);
+
 		execve(arg[0], arg, NULL);
 		llog_error(logger, errno, "execve()");
 		exit(127);
@@ -405,15 +404,11 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 
 	/*parent*/
 
-	if (close(pfd[0]) == -1) {
-		llog_error(logger, errno, "close(pfd[0])");
-		return -1;
-	}
-
 	if (write(pfd[1], der, len) != (ssize_t)len) {
 		llog_error(logger, errno, "write(pfd[1])");
 		return -1;
 	}
+	ldbg(logger, "CRL helper accepted %zu bytes on stdin", len);
 
 	if (close(pfd[1]) == -1) {
 		llog_error(logger, errno, "close(pfd[1])");
@@ -434,6 +429,27 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 		return -1;
 	}
 
+	ldbg(logger, "CRL helper ran successfully");
+
+	uint8_t namebuf[1023];
+	ssize_t l = read(pfd[0], namebuf, sizeof(namebuf));
+	if (l < 0) {
+		llog_error(logger, errno, "read(pfd[0])");
+		return -1;
+	}
+
+	chunk_t der_name = chunk2(namebuf, l);
+	ldbg(logger, "CRL helper output %zu bytes:", l);
+	ldbg_hunk(logger, der_name);
+	pemtobin(&der_name);
+	ldbg(logger, "CRL helper output pem:");
+	ldbg_hunk(logger, der_name);
+
+	if (close(pfd[0]) == -1) {
+		llog_error(logger, errno, "close(pfd[0])");
+		return -1;
+	}
+
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -442,37 +458,21 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
-
-	/*
-	 * Since the import worked, get the issuer and flush it's
-	 * cache.
-	 *
-	 * ARENA owned by CRL (or reverse)?
-	 */
-
-	SECItem crl_si = {
-		.len = len,
-		.data = der,
+	SECItem name = {
 		.type = siBuffer,
+		.data = der_name.ptr,
+		.len = der_name.len,
 	};
-	PLArenaPool *arena = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
-	CERTSignedCrl *crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE);
-	if (crl == NULL) {
-		ldbg_nss_error(logger, "decoding CRL using CERT_DecodeDERCrl() failed");
-		PORT_FreeArena(arena, false);
-		return -1;
-	}
-
-	CERTCertificate *cacert =  CERT_FindCertByName(handle, &crl->crl.derName);
+	CERTCertificate *cacert =  CERT_FindCertByName(handle, &name);
 	if (cacert == NULL) {
 		ldbg_nss_error(logger, "finding cert by name using CERT_FindCertByName() failed");
-		PORT_FreeArena(arena, false);
 		return -1;
 	}
 
 	CERT_CRLCacheRefreshIssuer(handle, &cacert->derSubject);
+	ldbg(logger, "CRL issuer %s flushed", cacert->nickname);
+
 	CERT_DestroyCertificate(cacert);
-	PORT_FreeArena(arena, false);
 
 	return 0;
 }
