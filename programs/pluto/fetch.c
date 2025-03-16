@@ -47,74 +47,28 @@
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 
 static pthread_t fetch_thread_id;
-
-/*
- * fetch an ASN.1 blob coded in PEM or DER format from a URL
- * Returns error message or NULL.
- * Iff no error, *blob contains fetched ASN.1 blob (to be freed by caller).
- */
-
-static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logger)
-{
-	err_t ugh = "CRL support not built in";
-
-	*blob = EMPTY_CHUNK;
-	if (startswith(url, "ldap:")) {
-#ifdef USE_LDAP
-		ugh = fetch_ldap(url, blob, logger);
-#endif
-	} else {
-#ifdef USE_LIBCURL
-		ugh = fetch_curl(url, blob, logger);
-#endif
-	}
-	if (ugh != NULL) {
-		free_chunk_content(blob);
-		return ugh;
-	}
-
-	ugh = asn1_ok(ASN1(*blob));
-	if (ugh == NULL) {
-		dbg("  fetched blob coded in DER format");
-	} else {
-		ugh = pemtobin(blob);
-		if (ugh != NULL) {
-		} else if (asn1_ok(ASN1(*blob)) == NULL) {
-			dbg("  fetched blob coded in PEM format");
-		} else {
-			ugh = "Blob coded in unknown format (within PEM)";
-		}
-	}
-	if (ugh == NULL && blob->len == 0)
-		ugh = "empty ASN.1 blob";
-	if (ugh != NULL)
-		free_chunk_content(blob);
-	return ugh;
-}
+static fetch_crl_fn fetch_crl; /* type check */
 
 /*
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
-static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger *logger)
+static int send_crl_to_import(const char *url, struct logger *logger)
 {
-	if (der == NULL || len < 1) {
-		llog(RC_LOG, logger, "CRL buffer error");
-		return -1;
-	}
+	deltatime_buf td;
 
-	char lenarg[32];
-	snprintf(lenarg, sizeof(lenarg), "%zu", len);
 	char *arg[] = {
 		IPSEC_EXECDIR "/_import_crl",
 		(char*)url,
-		lenarg,
+		(char*)str_deltatime(crl_fetch_timeout, &td),
+		(curl_iface == NULL ? "" : curl_iface),
 		NULL,
 	};
 
-	dbg("Calling %s to import CRL - url: %s, der size: %s",
+	dbg("Calling %s to import CRL - url: %s %s %s",
 	    arg[0],
 	    arg[1],
-	    arg[2]);
+	    arg[2],
+	    arg[3]);
 
 	int pfd[2];
 	if (pipe(pfd) == -1) {
@@ -150,12 +104,6 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 	}
 
 	/*parent*/
-
-	if (write(pfd[1], der, len) != (ssize_t)len) {
-		llog_error(logger, errno, "write(pfd[1])");
-		return -1;
-	}
-	ldbg(logger, "CRL helper accepted %zu bytes on stdin", len);
 
 	if (close(pfd[1]) == -1) {
 		llog_error(logger, errno, "close(pfd[1])");
@@ -224,11 +172,19 @@ static int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct 
 	return 0;
 }
 
-/* Note: insert_crl_nss frees *blob */
-static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const char *url, struct logger *logger)
+/*
+ * try to fetch the crls defined by the fetch requests
+ */
+
+static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 {
+	/* err?!?! */
+	if (!pexpect(url != NULL && strlen(url) > 0)) {
+		return false;
+	}
+
 	/* for CRL use the name passed to helper for the uri */
-	int r = send_crl_to_import(blob.ptr, blob.len, url, logger);
+	int r = send_crl_to_import(url, logger);
 	bool ret;
 	if (r == -1) {
 		ret = false;
@@ -240,36 +196,11 @@ static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const char *url, struct
 		ret = true;
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "imported CRL for '");
-			jam_dn(buf, ASN1(issuer), jam_sanitized_bytes);
+			jam_dn(buf, ASN1(issuer_dn), jam_sanitized_bytes);
 			jam(buf, "' from: %s", url);
 		}
 	}
 	return ret;
-}
-
-/*
- * try to fetch the crls defined by the fetch requests
- */
-
-static fetch_crl_fn fetch_crl; /* type check */
-
-static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
-{
-	/* err?!?! */
-	if (!pexpect(url != NULL && strlen(url) > 0)) {
-		return false;
-	}
-
-	chunk_t blob = empty_chunk; /* must free */
-	err_t ugh = fetch_asn1_blob(url, &blob, logger);
-	if (ugh != NULL) {
-		dbg("CRL: fetch failed:  %s", ugh);
-		return false;
-	}
-
-	bool ok = insert_crl_nss(blob, issuer_dn, url, logger);
-	free_chunk_content(&blob);
-	return ok;
 }
 
 /*
@@ -397,10 +328,6 @@ void start_crl_fetch_helper(struct logger *logger)
 		return;
 	}
 
-#ifdef USE_LIBCURL
-	init_curl(logger);
-#endif
-
 	int status;
 	status = pthread_create(&fetch_thread_id, NULL,
 				fetch_thread, NULL);
@@ -445,9 +372,6 @@ void stop_crl_fetch_helper(struct logger *logger)
 
 void free_crl_fetch(void)
 {
-#ifdef USE_LIBCURL
-	shutdown_curl();
-#endif
 }
 
 char *curl_iface = NULL;

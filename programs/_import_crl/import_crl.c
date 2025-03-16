@@ -29,6 +29,9 @@
 #include "lswtool.h"
 #include "lswalloc.h"
 #include "lswlog.h"		/* for fatal() */
+#include "import_crl.h"
+#include "pem.h"
+#include "timescale.h"
 
 #ifdef __clang__
 /*
@@ -38,6 +41,46 @@ extern SECStatus NSS_Shutdown(void);
 extern SECStatus NSS_InitReadWrite(const char *configdir);
 #endif
 
+static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logger)
+{
+	err_t ugh = "CRL support not built in";
+
+	*blob = EMPTY_CHUNK;
+	if (startswith(url, "ldap:")) {
+#ifdef USE_LDAP
+		ugh = fetch_ldap(url, blob, logger);
+#endif
+	} else {
+#ifdef USE_LIBCURL
+		init_curl(logger);
+		ugh = fetch_curl(url, blob, logger);
+		shutdown_curl();
+#endif
+	}
+	if (ugh != NULL) {
+		free_chunk_content(blob);
+		return ugh;
+	}
+
+	ugh = asn1_ok(ASN1(*blob));
+	if (ugh == NULL) {
+		dbg("  fetched blob coded in DER format");
+	} else {
+		ugh = pemtobin(blob);
+		if (ugh != NULL) {
+		} else if (asn1_ok(ASN1(*blob)) == NULL) {
+			dbg("  fetched blob coded in PEM format");
+		} else {
+			ugh = "Blob coded in unknown format (within PEM)";
+		}
+	}
+	if (ugh == NULL && blob->len == 0)
+		ugh = "empty ASN.1 blob";
+	if (ugh != NULL)
+		free_chunk_content(blob);
+	return ugh;
+}
+
 /*
  * _import_crl <url> <der size>
  * the der blob is passed through STDIN from pluto's fork
@@ -46,55 +89,26 @@ int main(int argc, char *argv[])
 {
 	struct logger *logger = tool_logger(argc, argv);
 
-	if (argc != 3) {
-		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <der-size>");
+	if (argc != 4) {
+		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <crl-fetch-timeout> <curl-iface>");
 	}
 
 	/* <url */
-	const char *url = argv[1];
+	char *url = argv[1];
 
-	/* <der-size> */
-	const char *len_str = argv[2];
-	char *len_end;
-	errno = 0; /* strtol() doesn't clear errno; see "pertinent standards" */
-	ssize_t len = strtol(len_str, &len_end, 0);
-	if (len_end == len_str) {
-		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> is not a number: %s", len_str);
-	} else if (*len_end != '\0') {
-		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> contains grailing garbage: %s", len_str);
-	} else if (errno != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "<der-size> '%s' is out-of-range", len_str);
+	/* crl_fetch_timeout */
+	diag_t d = ttodeltatime(argv[2], &crl_fetch_timeout, TIMESCALE_SECONDS);
+	if (d != NULL) {
+		fatal(PLUTO_EXIT_FAIL, logger, "invalid crl_fetch_timeout %s: %s",
+		      argv[2], str_diag(d));
 	}
 
-	if (len <= 0) {
-		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> must be positive: %s", len_str);
-	}
+	curl_iface = (argv[3][0] == '\0' ? NULL : argv[3]);
 
-	uint8_t *buf = alloc_things(uint8_t, len, "der buf");
-	if (buf == NULL)
-		exit(-1);
-
-	ssize_t tlen = len;
-	uint8_t *tbuf = buf;
-
-	while (tlen > 0) {
-		ssize_t rd = read(STDIN_FILENO, buf, len);
-		if (rd == 0) {
-			/* EOF */
-			break;
-		}
-		if (rd == -1) {
-			if (errno == EINTR)
-				continue;
-			fatal(PLUTO_EXIT_FAIL, logger, "read error");
-		}
-		tlen -= rd;
-		tbuf += rd;
-	}
-
-	if ((tbuf - buf) != len) {
-		fatal(PLUTO_EXIT_FAIL, logger, "less then %zd bytes read", len);
+	chunk_t blob;
+	err_t e = fetch_asn1_blob(url, &blob, logger);
+	if (e != NULL) {
+		fatal(PLUTO_EXIT_FAIL, logger, "fetch failed: %s", e);
 	}
 
 	const struct lsw_conf_options *oco = lsw_init_options();
@@ -108,11 +122,11 @@ int main(int argc, char *argv[])
 
 	SECItem si = {
 		.type = siBuffer,
-		.data = buf,
-		.len = len,
+		.data = blob.ptr,
+		.len = blob.len,
 	};
 
-	CERTSignedCrl *crl = CERT_ImportCRL(handle, &si, (char *)url, SEC_CRL_TYPE, NULL);
+	CERTSignedCrl *crl = CERT_ImportCRL(handle, &si, url, SEC_CRL_TYPE, NULL);
 	if (crl == NULL) {
 		llog_nss_error(RC_LOG, logger, "import of CRL failed, ");
 		return PLUTO_EXIT_FAIL;
@@ -120,9 +134,14 @@ int main(int argc, char *argv[])
 
 	llog_pem_bytes(RC_LOG|NO_PREFIX, logger, "NAME", crl->crl.derName.data, crl->crl.derName.len);
 
-	pfree(buf);
+	free_chunk_content(&blob);
+
 	SEC_DestroyCrl(crl);
 	NSS_Shutdown();
 
 	return 0;
 }
+
+/* globals */
+deltatime_t crl_fetch_timeout;
+char *curl_iface;

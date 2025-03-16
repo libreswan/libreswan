@@ -23,7 +23,7 @@
 #define LDAP_DEPRECATED 1
 #include <ldap.h>		/* dnf openldap-devel */
 
-#include "fetch.h"
+#include "import_crl.h"
 
 #include "err.h"
 #include "lswlog.h"

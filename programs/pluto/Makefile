@@ -168,12 +168,6 @@ endif
 # PKIX: Public-Key Infrastructure using X.509
 OBJS += x509.o
 OBJS += fetch.o
-ifeq ($(USE_LIBCURL),true)
-OBJS += fetch_curl.o
-endif
-ifeq ($(USE_LDAP),true)
-OBJS += fetch_ldap.o
-endif
 OBJS += crl_queue.o
 
 OBJS += addresspool.o
@@ -203,8 +197,6 @@ endif
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 OBJS += pluto_sd.o
 endif
-
-USERLAND_LDFLAGS += $(CURL_LDFLAGS)
 
 OBJS += ikev1_db_ops.o
 
@@ -248,7 +240,6 @@ USERLAND_LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 OBJS += linux_audit.o
 
 USERLAND_LDFLAGS += $(LIBEVENT_LDFLAGS)
-USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 
 OBJS += connections.o
 OBJS += instantiate.o

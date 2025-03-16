@@ -25,7 +25,7 @@
 #include <stdlib.h>	/* danger; using malloc() */
 #include <string.h>
 
-#include "fetch.h"
+#include "import_crl.h"
 
 #include "err.h"
 #include "lswlog.h"
@@ -137,8 +137,5 @@ void init_curl(struct logger *logger)
 
 void shutdown_curl(void)
 {
-	if (deltasecs(crl_check_interval) > 0) {
-		/* cleanup curl */
-		curl_global_cleanup();
-	}
+	curl_global_cleanup();
 }
