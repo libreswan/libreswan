@@ -46,264 +46,7 @@
 #include "lswnss.h"			/* for llog_nss_error() */
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 
-#define FETCH_CMD_TIMEOUT       5       /* seconds */
-
-char *curl_iface = NULL;
-deltatime_t curl_timeout = DELTATIME_INIT(FETCH_CMD_TIMEOUT);
-
 static pthread_t fetch_thread_id;
-
-#ifdef USE_LIBCURL
-
-#include <curl/curl.h>		/* rpm:libcurl-devel dep:libcurl4-nss-dev */
-
-/*
- * Appends *ptr into (chunk_t *)data.
- * A call-back used with libcurl.
- */
-static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
-{
-	size_t realsize = size * nmemb;
-	chunk_t *mem = (chunk_t *)data;
-
-	/* note: memory allocated by realloc(3) */
-	unsigned char *m = realloc(mem->ptr, mem->len + realsize);
-
-	if (m == NULL) {
-		/* don't overwrite mem->ptr */
-		return 0;	/* failure */
-	} else {
-		memcpy(&(m[mem->len]), ptr, realsize);
-		mem->ptr = m;
-		mem->len += realsize;
-		return realsize;
-	}
-}
-
-/*
- * fetches a binary blob from a url with libcurl
- */
-static err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
-{
-	char errorbuffer[CURL_ERROR_SIZE] = "?";
-	chunk_t response = EMPTY_CHUNK;	/* managed by realloc/free */
-	long timeout = deltasecs(curl_timeout);
-
-	/* get it with libcurl */
-	CURL *curl = curl_easy_init();
-
-	if (curl == NULL)
-		return "cannot initialize curl";
-
-	dbg("Trying cURL '%s' with connect timeout of %ld", url, timeout);
-
-	CURLcode res = CURLE_OK;
-
-#	define CESO(optype, optarg) { \
-		if (res == CURLE_OK) { \
-			res = curl_easy_setopt(curl, optype, optarg); \
-			if (res != CURLE_OK) { \
-				dbg("curl_easy_setopt " #optype " failed %d", res); \
-			} \
-		} \
-	}
-
-	CESO(CURLOPT_URL, url);
-	CESO(CURLOPT_WRITEFUNCTION, write_buffer);
-	/*
-	 * coverity scan:
-	 * "bad_sizeof: Taking the size of &response, which is the address of an object, is suspicious."
-	 * In fact, this code is correct.
-	 */
-	CESO(CURLOPT_WRITEDATA, (void *)&response);
-	CESO(CURLOPT_ERRORBUFFER, errorbuffer);
-	CESO(CURLOPT_CONNECTTIMEOUT, timeout);
-	CESO(CURLOPT_TIMEOUT, 2 * timeout);
-	CESO(CURLOPT_NOSIGNAL, 1);	/* work around for libcurl signal bug */
-
-	if (curl_iface != NULL)
-		CESO(CURLOPT_INTERFACE, curl_iface);
-
-#	undef CESO
-
-	if (res == CURLE_OK)
-		res = curl_easy_perform(curl);
-
-	if (res == CURLE_OK) {
-		/* clone from realloc(3)ed memory to pluto-allocated memory */
-		errorbuffer[0] = '\0';
-		*blob = clone_hunk(response, "curl blob");
-	} else {
-		llog(RC_LOG, logger,
-		     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);
-	}
-	curl_easy_cleanup(curl);
-
-	/* ??? where/how should this be logged? */
-	if (errorbuffer[0] != '\0') {
-		dbg("libcurl(%s) yielded %s", url, errorbuffer);
-	}
-
-	if (response.ptr != NULL)
-		free(response.ptr);	/* allocated via realloc(3) */
-
-	/* ??? should this return errorbuffer instead? */
-	return strlen(errorbuffer) > 0 ? "libcurl error" : NULL;
-}
-
-#else	/* USE_LIBCURL */
-
-static err_t fetch_curl(const char *url,
-			chunk_t *blob,
-			struct logger *logger)
-{
-	ldbg(logger, "%s() ignoring %s %p", __func__, url, blob->ptr);
-	return "not compiled with libcurl support";
-}
-
-#endif	/* USE_LIBCURL */
-
-#ifdef USE_LDAP
-
-#define LDAP_DEPRECATED 1
-#include <ldap.h>
-
-/*
- * parses the result returned by an ldap query
- */
-static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
-			       struct logger *logger)
-{
-	err_t ugh = NULL;
-
-	LDAPMessage *entry = ldap_first_entry(ldap, result);
-
-	if (entry != NULL) {
-		BerElement *ber = NULL;
-		char *attr = ldap_first_attribute(ldap, entry, &ber);
-
-		if (attr != NULL) {
-			struct berval **values = ldap_get_values_len(ldap,
-								     entry,
-								     attr);
-
-			if (values != NULL) {
-				if (values[0] != NULL) {
-					*blob = clone_bytes_as_chunk(
-						values[0]->bv_val,
-						values[0]->bv_len,
-						"ldap blob");
-					if (values[1] != NULL)
-						llog(RC_LOG, logger,
-							    "warning: more than one value was fetched from LDAP URL");
-				} else {
-					ugh = "no values in attribute";
-				}
-				ldap_value_free_len(values);
-			} else {
-				ugh = ldap_err2string(
-					ldap_result2error(ldap, entry, 0));
-			}
-			ldap_memfree(attr);
-		} else {
-			ugh = ldap_err2string(
-				ldap_result2error(ldap, entry, 0));
-		}
-		ber_free(ber, 0);
-	} else {
-		ugh = ldap_err2string(ldap_result2error(ldap, result, 0));
-	}
-	return ugh;
-}
-
-/*
- * fetches a binary blob from an ldap url
- */
-static err_t fetch_ldap_url(const char *url, chunk_t *blob, struct logger *logger)
-{
-	LDAPURLDesc *lurl;
-	err_t ugh = NULL;
-	int rc;
-
-	dbg("Trying LDAP URL '%s'", url);
-
-	rc = ldap_url_parse(url, &lurl);
-
-	if (rc == LDAP_SUCCESS) {
-		LDAP *ldap = ldap_init(lurl->lud_host, lurl->lud_port);
-
-		if (ldap != NULL) {
-			struct timeval timeout;
-
-			timeout.tv_sec  = FETCH_CMD_TIMEOUT;
-			timeout.tv_usec = 0;
-			const int ldap_version = LDAP_VERSION3;
-			ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION,
-					&ldap_version);
-			ldap_set_option(ldap, LDAP_OPT_NETWORK_TIMEOUT,
-					&timeout);
-
-			int msgid = ldap_simple_bind(ldap, NULL, NULL);
-
-			LDAPMessage *result;
-			rc = ldap_result(ldap, msgid, 1, &timeout, &result);
-
-			switch (rc) {
-			case -1:
-				ldap_msgfree(result);
-				return "ldap_simple_bind error";
-
-			case 0:
-				ldap_msgfree(result);
-				return "ldap_simple_bind timeout";
-
-			case LDAP_RES_BIND:
-				ldap_msgfree(result);
-				timeout.tv_sec = FETCH_CMD_TIMEOUT;
-				timeout.tv_usec = 0;
-
-				rc = ldap_search_st(ldap, lurl->lud_dn,
-						    lurl->lud_scope,
-						    lurl->lud_filter,
-						    lurl->lud_attrs,
-						    0, &timeout, &result);
-
-				if (rc == LDAP_SUCCESS) {
-					ugh = parse_ldap_result(ldap,
-								result,
-								blob,
-								logger);
-					ldap_msgfree(result);
-				} else {
-					ugh = ldap_err2string(rc);
-				}
-				break;
-
-			default:
-				/* ??? should we ldap_msgfree(result);? */
-				ugh = ldap_err2string(rc);
-			}
-			ldap_unbind_s(ldap);
-		} else {
-			ugh = "ldap init";
-		}
-		ldap_free_urldesc(lurl);
-	} else {
-		ugh = ldap_err2string(rc);
-	}
-	return ugh;
-}
-
-#else
-
-static err_t fetch_ldap_url(const char *url UNUSED,
-			    chunk_t *blob UNUSED,
-			    struct logger *logger UNUSED)
-{
-	return "LDAP URL fetching not activated in pluto source code";
-}
-
-#endif
 
 /*
  * fetch an ASN.1 blob coded in PEM or DER format from a URL
@@ -313,13 +56,17 @@ static err_t fetch_ldap_url(const char *url UNUSED,
 
 static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logger)
 {
-	err_t ugh = NULL;
+	err_t ugh = "CRL support not built in";
 
 	*blob = EMPTY_CHUNK;
 	if (startswith(url, "ldap:")) {
-		ugh = fetch_ldap_url(url, blob, logger);
+#ifdef USE_LDAP
+		ugh = fetch_ldap(url, blob, logger);
+#endif
 	} else {
+#ifdef USE_LIBCURL
 		ugh = fetch_curl(url, blob, logger);
+#endif
 	}
 	if (ugh != NULL) {
 		free_chunk_content(blob);
@@ -650,17 +397,11 @@ void start_crl_fetch_helper(struct logger *logger)
 		return;
 	}
 
-	int status;
-
 #ifdef USE_LIBCURL
-	/* init curl */
-	status = curl_global_init(CURL_GLOBAL_DEFAULT);
-	if (status != 0) {
-		fatal(PLUTO_EXIT_FAIL, logger,
-		      "libcurl could not be initialized, status = %d", status);
-	}
+	init_curl(logger);
 #endif
 
+	int status;
 	status = pthread_create(&fetch_thread_id, NULL,
 				fetch_thread, NULL);
 	if (status != 0) {
@@ -705,9 +446,11 @@ void stop_crl_fetch_helper(struct logger *logger)
 void free_crl_fetch(void)
 {
 #ifdef USE_LIBCURL
-	if (deltasecs(crl_check_interval) > 0) {
-		/* cleanup curl */
-		curl_global_cleanup();
-	}
+	shutdown_curl();
 #endif
 }
+
+char *curl_iface = NULL;
+deltatime_t crl_fetch_timeout = DELTATIME_INIT(5/*seconds*/);
+/* 0 is special and default: do not check crls dynamically */
+deltatime_t crl_check_interval = DELTATIME_INIT(0);

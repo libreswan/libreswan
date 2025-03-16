@@ -416,9 +416,6 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 	}
 }
 
-/* 0 is special and default: do not check crls dynamically */
-deltatime_t crl_check_interval = DELTATIME_INIT(0);
-
 /*
  * Table of Pluto command-line options.
  *
@@ -951,8 +948,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
-			curl_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define CURL_TIMEOUT_OK deltatime_ok(curl_timeout, 1, 1000)
+			crl_fetch_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define CURL_TIMEOUT_OK deltatime_ok(crl_fetch_timeout, 1, 1000)
 			check_diag(logger, CURL_TIMEOUT_OK);
 			continue;
 
@@ -1288,7 +1285,7 @@ int main(int argc, char **argv)
 			}
 
 			if (cfg->values[KBF_CURL_TIMEOUT_SECONDS].set) {
-				curl_timeout = cfg->values[KBF_CURL_TIMEOUT_SECONDS].deltatime;
+				crl_fetch_timeout = cfg->values[KBF_CURL_TIMEOUT_SECONDS].deltatime;
 				check_conf(CURL_TIMEOUT_OK, "curl-timeout", logger);
 				/* checked below */
 			}

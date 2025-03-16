@@ -168,6 +168,12 @@ endif
 # PKIX: Public-Key Infrastructure using X.509
 OBJS += x509.o
 OBJS += fetch.o
+ifeq ($(USE_LIBCURL),true)
+OBJS += fetch_curl.o
+endif
+ifeq ($(USE_LDAP),true)
+OBJS += fetch_ldap.o
+endif
 OBJS += crl_queue.o
 
 OBJS += addresspool.o

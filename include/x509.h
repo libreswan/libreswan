@@ -75,7 +75,6 @@ struct generalName {
 /*
  * check periodically for expired crls
  */
-extern deltatime_t crl_check_interval;
 
 extern bool same_dn(asn1_t a, asn1_t b);
 extern bool match_dn(asn1_t a, asn1_t b, int *wildcards);

@@ -16,16 +16,35 @@
 #ifndef FETCH_H
 #define FETCH_H
 
+#include <stdbool.h>
+
+#include "chunk.h"
+#include "err.h"
+#include "deltatime.h"
+
+struct logger;
+
 extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
 extern void free_crl_fetch(void);
 
+#ifdef USE_LIBCURL
+err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger);
+void init_curl(struct logger *logger);
+void shutdown_curl(void);
+#endif
+
+#ifdef USE_LDAP
+err_t fetch_ldap(const char *url, chunk_t *blob, struct logger *logger);
+#endif
+
+extern deltatime_t crl_fetch_timeout;
 extern char *curl_iface;
-extern deltatime_t curl_timeout;
 extern bool crl_strict;
 extern bool ocsp_strict;
 extern bool ocsp_enable;
 extern bool ocsp_post;
+extern deltatime_t crl_check_interval;
 
 #endif
