@@ -222,18 +222,33 @@ if test -f /sbin/ausearch ; then
 fi
 
 
-echo :
-echo : unload any selinux modules
-echo :
+CHECK unload any selinux modules
 
 # it's assumed that the name starts with ipsecspd.  This really needs
 # to happen as if it isn't unloaded it will be re-loaded after a
 # reboot.
+#
+# XXX: since VMs are created from scratch, this is no longer needed?
 
-semodule -l | grep ^ipsecspd | while read module ; do
-    echo Unloading ${module}
-    RUN semodule -r ${module}
-done
+if test -x /usr/bin/semodule ; then
+    semodule -l | grep ^ipsecspd | while read module ; do
+	echo Unloading ${module}
+	RUN semodule -r ${module}
+    done
+    PASS
+else
+    SKIP
+fi
+
+
+CHECK system logs
+
+if test -x /usr/bin/journalctl ; then
+    journalctl --dmesg --boot -0 > ${log_prefix}.journal.log
+    PASS
+else
+    SKIP
+fi
 
 
 # tell kvmrunner
