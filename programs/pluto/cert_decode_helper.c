@@ -32,6 +32,7 @@
 #include "demux.h"
 #include "state.h"
 #include "pluto_x509.h"
+#include "x509_ocsp.h"
 #include "server_pool.h"
 #include "cert_decode_helper.h"
 #include "pluto_stats.h"
@@ -54,7 +55,6 @@ struct task {
 	struct payload_digest *cert_payloads; /* ref into md */
 	cert_decode_cb *cb;
 	struct id id;
-	struct rev_opts rev_opts;
 	enum ike_version ike_version;
 	struct root_certs *root_certs; /* counted reference */
 	/* output */
@@ -83,12 +83,6 @@ void submit_v2_cert_decode(struct ike_sa *ike,
 		.cb = cb,
 		.ike_version = ike->sa.st_ike_version,
 		.id = ike->sa.st_connection->remote->host.id, /* XXX: safe? */
-		.rev_opts = {
-			.ocsp = ocsp_enable,
-			.ocsp_strict = ocsp_strict,
-			.ocsp_post = ocsp_post,
-			.crl_strict = crl_strict,
-		},
 	};
 	submit_task(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 		    /*detach_whack*/false,
@@ -101,7 +95,7 @@ static void cert_decode_computer(struct logger *logger,
 				 int my_thread UNUSED)
 {
 	task->verified = find_and_verify_certs(logger, task->ike_version,
-					       task->cert_payloads, &task->rev_opts,
+					       task->cert_payloads,
 					       task->root_certs, &task->id);
 }
 

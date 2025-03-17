@@ -39,6 +39,7 @@
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
 #include "optarg.h"
+#include "sparse_names.h"
 #include "deltatime.h"
 #include "timescale.h"
 #include "lswversion.h"
@@ -46,7 +47,7 @@
 #include "fips_mode.h"
 #include "lswnss.h"
 #include "defs.h"
-#include "nss_ocsp.h"
+#include "x509_ocsp.h"
 #include "server_fork.h"		/* for init_server_fork() */
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
@@ -121,14 +122,6 @@ static bool do_dnssec = false;
 static char *pluto_dnssec_rootkey_file = NULL;
 static char *pluto_dnssec_trusted = NULL;
 
-static char *ocsp_uri = NULL;
-static char *ocsp_trust_name = NULL;
-static deltatime_t ocsp_timeout = DELTATIME_INIT(OCSP_DEFAULT_TIMEOUT);
-static int ocsp_method = OCSP_METHOD_GET;
-static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
-static deltatime_t ocsp_cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE);
-static deltatime_t ocsp_cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE);
-
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
 
@@ -145,8 +138,8 @@ void free_pluto_main(void)
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	pfree(pluto_vendorid);
-	pfreeany(ocsp_uri);
-	pfreeany(ocsp_trust_name);
+	pfreeany(x509_ocsp.uri);
+	pfreeany(x509_ocsp.trust_name);
 	pfreeany(curl_iface);
 	pfreeany(pluto_dnssec_rootkey_file);
 	pfreeany(pluto_dnssec_trusted);
@@ -962,24 +955,24 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OCSP_STRICT:
-			ocsp_strict = true;
+			x509_ocsp.strict = true;
 			continue;
 
 		case OPT_OCSP_ENABLE:
-			ocsp_enable = true;
+			x509_ocsp.enable = true;
 			continue;
 
 		case OPT_OCSP_URI:
-			replace_value(&ocsp_uri, optarg);
+			replace_value(&x509_ocsp.uri, optarg);
 			continue;
 
 		case OPT_OCSP_TRUSTNAME:
-			replace_value(&ocsp_trust_name, optarg);
+			replace_value(&x509_ocsp.trust_name, optarg);
 			continue;
 
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
-			ocsp_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_TIMEOUT_OK deltatime_ok(ocsp_timeout, 1, 1000)
+			x509_ocsp.timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define OCSP_TIMEOUT_OK deltatime_ok(x509_ocsp.timeout, 1, 1000)
 			check_diag(logger, OCSP_TIMEOUT_OK);
 			continue;
 
@@ -992,13 +985,13 @@ int main(int argc, char **argv)
 			if (u > 0xffff) {
 				optarg_fatal(logger, "too big, more than 0xffff");
 			}
-			ocsp_cache_size = u; /* no loss; within INT_MAX */
+			x509_ocsp.cache_size = u; /* no loss; within INT_MAX */
 			continue;
 		}
 
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
-			ocsp_cache_min_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_CACHE_MIN_AGE_OK deltatime_ok(ocsp_cache_min_age, 1, -1)
+			x509_ocsp.cache_min_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define OCSP_CACHE_MIN_AGE_OK deltatime_ok(x509_ocsp.cache_min_age, 1, -1)
 			check_diag(logger, OCSP_CACHE_MIN_AGE_OK);
 			continue;
 
@@ -1008,20 +1001,13 @@ int main(int argc, char **argv)
 			 * disabled.  We use 0 for disabled, and a
 			 * large number for unlimited.
 			 */
-			ocsp_cache_max_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_CACHE_MAX_AGE_OK deltatime_ok(ocsp_cache_max_age, 0, -1)
+			x509_ocsp.cache_max_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define OCSP_CACHE_MAX_AGE_OK deltatime_ok(x509_ocsp.cache_max_age, 0, -1)
 			check_diag(logger, OCSP_CACHE_MAX_AGE_OK);
 			continue;
 
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
-			if (streq(optarg, "post")) {
-				ocsp_method = OCSP_METHOD_POST;
-				ocsp_post = true;
-			} else if (streq(optarg, "get")) {
-				ocsp_method = OCSP_METHOD_GET;
-			} else {
-				optarg_fatal(logger, "method is either 'post' or 'get'");
-			}
+			x509_ocsp.method = optarg_sparse(logger, 0, &ocsp_method_names);
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
@@ -1194,26 +1180,27 @@ int main(int argc, char **argv)
 				pluto_shunt_lifetime = cfg->values[KBF_SHUNTLIFETIME].deltatime;
 			}
 
-			ocsp_enable = cfg->values[KBF_OCSP_ENABLE].option;
-			ocsp_strict = cfg->values[KBF_OCSP_STRICT].option;
+			x509_ocsp.enable = cfg->values[KBF_OCSP_ENABLE].option;
+			x509_ocsp.strict = cfg->values[KBF_OCSP_STRICT].option;
 			if (cfg->values[KBF_OCSP_TIMEOUT_SECONDS].set) {
-				ocsp_timeout = cfg->values[KBF_OCSP_TIMEOUT_SECONDS].deltatime;
+				x509_ocsp.timeout = cfg->values[KBF_OCSP_TIMEOUT_SECONDS].deltatime;
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
-			ocsp_method = cfg->values[KBF_OCSP_METHOD].option;
-			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
-			ocsp_cache_size = cfg->values[KBF_OCSP_CACHE_SIZE].option;
+			if (cfg->values[KBF_OCSP_METHOD].set) {
+				x509_ocsp.method = cfg->values[KBF_OCSP_METHOD].option;
+			}
+			x509_ocsp.cache_size = cfg->values[KBF_OCSP_CACHE_SIZE].option;
 			if (cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].set) {
-				ocsp_cache_min_age = cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].deltatime;
+				x509_ocsp.cache_min_age = cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].deltatime;
 				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
 			}
 			if (cfg->values[KBF_OCSP_CACHE_MAX_AGE_SECONDS].set) {
-				ocsp_cache_max_age = cfg->values[KBF_OCSP_CACHE_MAX_AGE_SECONDS].deltatime;
+				x509_ocsp.cache_max_age = cfg->values[KBF_OCSP_CACHE_MAX_AGE_SECONDS].deltatime;
 				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
 			}
 
-			replace_when_cfg_setup(&ocsp_uri, cfg, KSF_OCSP_URI);
-			replace_when_cfg_setup(&ocsp_trust_name, cfg, KSF_OCSP_TRUSTNAME);
+			replace_when_cfg_setup(&x509_ocsp.uri, cfg, KSF_OCSP_URI);
+			replace_when_cfg_setup(&x509_ocsp.trust_name, cfg, KSF_OCSP_TRUSTNAME);
 
 			char *tmp_global_redirect = cfg->values[KSF_GLOBAL_REDIRECT].string;
 			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
@@ -1640,12 +1627,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (ocsp_enable) {
+	if (x509_ocsp.enable) {
 		/* may not return */
-		diag_t d = init_nss_ocsp(ocsp_uri, ocsp_trust_name,
-					 ocsp_timeout, ocsp_strict, ocsp_cache_size,
-					 ocsp_cache_min_age, ocsp_cache_min_age,
-					 (ocsp_method == OCSP_METHOD_POST), logger);
+		diag_t d = init_x509_ocsp(logger);
 		if (d != NULL) {
 			fatal(PLUTO_EXIT_NSS_FAIL, logger,
 			      "initializing NSS OCSP failed: %s",
@@ -1892,24 +1876,24 @@ void show_setup_plutomain(struct show *s)
 
 	show(s,
 		     "ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%ju, ocsp-uri=%s",
-		     bool_str(ocsp_enable),
-		     bool_str(ocsp_strict),
-		     deltasecs(ocsp_timeout),
-		     ocsp_uri != NULL ? ocsp_uri : "<unset>"
+		     bool_str(x509_ocsp.enable),
+		     bool_str(x509_ocsp.strict),
+		     deltasecs(x509_ocsp.timeout),
+		     x509_ocsp.uri != NULL ? x509_ocsp.uri : "<unset>"
 		);
 	show(s,
 		"ocsp-trust-name=%s",
-		ocsp_trust_name != NULL ? ocsp_trust_name : "<unset>"
+		x509_ocsp.trust_name != NULL ? x509_ocsp.trust_name : "<unset>"
 		);
 
 	SHOW_JAMBUF(s, buf) {
-		jam(buf, "ocsp-cache-size=%d", ocsp_cache_size);
+		jam(buf, "ocsp-cache-size=%d", x509_ocsp.cache_size);
 		jam_string(buf, ", ocsp-cache-min-age=");
-		jam_deltatime(buf, ocsp_cache_min_age);
+		jam_deltatime(buf, x509_ocsp.cache_min_age);
 		jam_string(buf, ", ocsp-cache-max-age=");
-		jam_deltatime(buf, ocsp_cache_max_age);
+		jam_deltatime(buf, x509_ocsp.cache_max_age);
 		jam_string(buf, ", ocsp-method=");
-		jam_string(buf, (ocsp_method == OCSP_METHOD_GET ? "get" : "post"));
+		jam_sparse(buf, &ocsp_method_names, x509_ocsp.method);
 	}
 
 	SHOW_JAMBUF(s, buf) {

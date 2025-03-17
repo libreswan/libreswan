@@ -85,11 +85,6 @@
 #include "crl_queue.h"
 #include "ip_info.h"
 
-bool crl_strict = false;
-bool ocsp_strict = false;
-bool ocsp_enable = false;
-bool ocsp_post = false;
-
 SECItem same_shunk_as_dercert_secitem(shunk_t shunk)
 {
 	return same_shunk_as_secitem(shunk, siDERCertBuffer);

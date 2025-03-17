@@ -46,6 +46,7 @@ OBJS += encap_type_names.o
 OBJS += encap_mode_names.o
 OBJS += encap_proto_names.o
 OBJS += initiated_by_names.o
+OBJS += ocsp_method_names.o
 OBJS += connection_owner_names.o
 OBJS += sa_type.o
 OBJS += fips_mode.o

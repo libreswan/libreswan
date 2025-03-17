@@ -375,6 +375,7 @@ void free_crl_fetch(void)
 }
 
 char *curl_iface = NULL;
+bool crl_strict = false;
 deltatime_t crl_fetch_timeout = DELTATIME_INIT(5/*seconds*/);
 /* 0 is special and default: do not check crls dynamically */
 deltatime_t crl_check_interval = DELTATIME_INIT(0);

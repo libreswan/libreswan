@@ -144,11 +144,6 @@ enum keyword_xauthfail {
 #define OCSP_DEFAULT_CACHE_MAX_AGE 24 * 3600
 #define OCSP_DEFAULT_TIMEOUT 2
 
-enum keyword_ocsp_method {
-	OCSP_METHOD_GET = 0, /* really GET plus POST - see NSS code */
-	OCSP_METHOD_POST = 1, /* only POST */
-};
-
 enum global_ikev1_policy {
 	GLOBAL_IKEv1_ACCEPT = 0,
 	GLOBAL_IKEv1_REJECT = 1,

@@ -13,18 +13,31 @@
  * for more details.
  *
  */
-#ifndef _NSS_OCSP_H
-#define _NSS_OCSP_H
+#ifndef X509_OCSP_H
+#define X509_OCSP_H
+
+#include <stdbool.h>
 
 #include "diag.h"
 #include "deltatime.h"
+#include "ocsp_method.h"
 
 struct logger;
 
+extern diag_t init_x509_ocsp(struct logger *logger);
 
-extern diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
-			    deltatime_t timeout, bool strict, int cache_size,
-			    deltatime_t cache_min, deltatime_t cache_max,
-			    bool ocsp_post, struct logger *logger);
+struct x509_ocsp_config {
+	bool enable;
+	bool strict;
+	char *uri;
+	char *trust_name;
+	deltatime_t timeout;
+	enum ocsp_method method;
+	int cache_size;
+	deltatime_t cache_min_age;
+	deltatime_t cache_max_age;
+};
 
-#endif /* _NSS_OCSP_H */
+extern struct x509_ocsp_config x509_ocsp;
+
+#endif
