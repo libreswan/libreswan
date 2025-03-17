@@ -40,9 +40,13 @@ void list_crl_fetch_requests(struct show *s, bool utc);
 extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
-extern deltatime_t crl_fetch_timeout;
-extern char *curl_iface;
-extern bool crl_strict;
-extern deltatime_t crl_check_interval;
+struct x509_crl_config {
+	deltatime_t fetch_timeout;
+	char *curl_iface;
+	bool strict;
+	deltatime_t check_interval;
+};
+
+extern struct x509_crl_config x509_crl;
 
 #endif

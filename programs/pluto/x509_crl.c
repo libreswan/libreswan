@@ -339,8 +339,8 @@ static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 	char *arg[] = {
 		IPSEC_EXECDIR "/_import_crl",
 		(char*)url,
-		(char*)str_deltatime(crl_fetch_timeout, &td),
-		(curl_iface == NULL ? "" : curl_iface),
+		(char*)str_deltatime(x509_crl.fetch_timeout, &td),
+		(x509_crl.curl_iface == NULL ? "" : x509_crl.curl_iface),
 		NULL,
 	};
 
@@ -493,13 +493,13 @@ static void check_crls(struct logger *logger)
 	 */
 	struct crl_fetch_request *requests = NULL;
 
-	if (deltasecs(crl_check_interval) <= 0) {
+	if (deltasecs(x509_crl.check_interval) <= 0) {
 		llog(RC_LOG, logger, "config crlcheckinterval= is unset");
 		return;
 	}
 
 	/* schedule the next probe */
-	schedule_oneshot_timer(EVENT_CHECK_CRLS, crl_check_interval);
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval);
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -643,7 +643,7 @@ void start_crl_fetch_helper(struct logger *logger)
 	 * loaded before this function was called? yes).
 	 */
 	init_oneshot_timer(EVENT_CHECK_CRLS, check_crls);
-	if (deltasecs(crl_check_interval) <= 0) {
+	if (deltasecs(x509_crl.check_interval) <= 0) {
 		dbg("CRL: checking disabled");
 		return;
 	}
@@ -673,7 +673,7 @@ void start_crl_fetch_helper(struct logger *logger)
 
 void stop_crl_fetch_helper(struct logger *logger)
 {
-	if (deltasecs(crl_check_interval) > 0) {
+	if (deltasecs(x509_crl.check_interval) > 0) {
 		/*
 		 * Log before blocking.  If the CRL fetch helper is
 		 * currently fetching a CRL, this could take a bit.
@@ -690,8 +690,10 @@ void stop_crl_fetch_helper(struct logger *logger)
 	}
 }
 
-char *curl_iface = NULL;
-bool crl_strict = false;
-deltatime_t crl_fetch_timeout = DELTATIME_INIT(5/*seconds*/);
-/* 0 is special and default: do not check crls dynamically */
-deltatime_t crl_check_interval = DELTATIME_INIT(0);
+struct x509_crl_config x509_crl = {
+	.curl_iface = NULL,
+	.strict = false,
+	.fetch_timeout = DELTATIME_INIT(5/*seconds*/),
+	/* 0 is special and default: do not check crls dynamically */
+	.check_interval = DELTATIME_INIT(0),
+};

@@ -139,7 +139,7 @@ void free_pluto_main(void)
 	pfree(pluto_vendorid);
 	pfreeany(x509_ocsp.uri);
 	pfreeany(x509_ocsp.trust_name);
-	pfreeany(curl_iface);
+	pfreeany(x509_crl.curl_iface);
 	pfreeany(pluto_dnssec_rootkey_file);
 	pfreeany(pluto_dnssec_trusted);
 	pfreeany(rundir);
@@ -936,21 +936,21 @@ int main(int argc, char **argv)
 #endif
 
 		case OPT_CURL_IFACE:	/* --curl-iface */
-			curl_iface = clone_str(optarg, "curl_iface");
+			replace_value(&x509_crl.curl_iface, optarg);
 			continue;
 
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
-			crl_fetch_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define CURL_TIMEOUT_OK deltatime_ok(crl_fetch_timeout, 1, 1000)
+			x509_crl.fetch_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define CURL_TIMEOUT_OK deltatime_ok(x509_crl.fetch_timeout, 1, 1000)
 			check_diag(logger, CURL_TIMEOUT_OK);
 			continue;
 
 		case OPT_CRL_STRICT:	/* --crl-strict */
-			crl_strict = true;
+			x509_crl.strict = true;
 			continue;
 
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
-			crl_check_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			x509_crl.check_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
 		case OPT_OCSP_STRICT:
@@ -1173,7 +1173,7 @@ int main(int argc, char **argv)
 			pluto_ddos_threshold = cfg->values[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->values[KBF_MAX_HALFOPEN_IKE].option;
 
-			crl_strict = cfg->values[KBF_CRL_STRICT].option;
+			x509_crl.strict = cfg->values[KBF_CRL_STRICT].option;
 
 			if (cfg->values[KBF_SHUNTLIFETIME].set) {
 				pluto_shunt_lifetime = cfg->values[KBF_SHUNTLIFETIME].deltatime;
@@ -1214,7 +1214,7 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			crl_check_interval = cfg->values[KBF_CRL_CHECKINTERVAL].deltatime;
+			x509_crl.check_interval = cfg->values[KBF_CRL_CHECKINTERVAL].deltatime;
 			uniqueIDs = cfg->values[KBF_UNIQUEIDS].option;
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->values[KBF_DO_DNSSEC].option;
@@ -1264,14 +1264,11 @@ int main(int argc, char **argv)
 			}
 
 			if (cfg->values[KSF_CURLIFACE].string) {
-				pfreeany(curl_iface);
-				/* curl-iface= */
-				curl_iface = clone_str(cfg->values[KSF_CURLIFACE].string,
-						       "curl-iface= via --config");
+				replace_value(&x509_crl.curl_iface, cfg->values[KSF_CURLIFACE].string);
 			}
 
 			if (cfg->values[KBF_CURL_TIMEOUT_SECONDS].set) {
-				crl_fetch_timeout = cfg->values[KBF_CURL_TIMEOUT_SECONDS].deltatime;
+				x509_crl.fetch_timeout = cfg->values[KBF_CURL_TIMEOUT_SECONDS].deltatime;
 				check_conf(CURL_TIMEOUT_OK, "curl-timeout", logger);
 				/* checked below */
 			}
@@ -1867,8 +1864,8 @@ void show_setup_plutomain(struct show *s)
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_sock_bufsize,
 		bool_str(pluto_sock_errqueue),
-		bool_str(crl_strict),
-		deltasecs(crl_check_interval),
+		bool_str(x509_crl.strict),
+		deltasecs(x509_crl.check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
 		);
