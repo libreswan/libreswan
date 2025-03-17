@@ -37,6 +37,8 @@
 #include "timer.h"
 #include "keys.h"		/* for pluto_pubkeys; */
 
+static pthread_t fetch_thread_id;
+
 /*
  * List of lists.
  *
@@ -273,59 +275,6 @@ void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger)
 	submit_crl_fetch_requests(&requests, logger);
 }
 
-void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_logger UNUSED)
-{
-	pthread_mutex_lock(&crl_queue_mutex);
-	while (!exiting_pluto) {
-		/* if there's something process it */
-		dbg("CRL: the sleeping dragon awakes");
-		unsigned requests_processed = 0;
-		for (struct crl_fetch_queue *volatile *volatile reqp = &crl_fetch_queue;
-		     *reqp != NULL && !exiting_pluto; ) {
-			requests_processed++;
-			struct crl_fetch_queue *req = *reqp;
-			pexpect(req->distribution_points != NULL);
-			bool fetched = false;
-			for (struct crl_distribution_point *volatile dp = req->distribution_points;
-			     dp != NULL && !fetched && !exiting_pluto; dp = dp->next) {
-				/*
-				 * While fetching unlock the QUEUE.
-				 *
-				 * While the table is unlocked, the
-				 * main thread can append to either
-				 * crl_fetch_request list, or its
-				 * crl_distribution_point list.
-				 */
-				dbg("CRL:   unlocking crl queue");
-				pthread_mutex_unlock(&crl_queue_mutex);
-				dn_buf dnb;
-				dbg("CRL:     fetching: %s",
-				    str_dn(ASN1(req->issuer_dn), &dnb));
-				if (fetch_crl(req->issuer_dn, dp->url, req->logger)) {
-					fetched = true;
-				}
-				dbg("CRL:   locked crl queue");
-				pthread_mutex_lock(&crl_queue_mutex);
-			}
-			if (fetched) {
-				*reqp = req->next;
-				free_crl_fetch_request(&req);
-			} else {
-				req->trials++;
-				reqp = &req->next;
-			}
-		}
-		if (exiting_pluto) {
-			break;
-		}
-		dbg("CRL: %u requests processed, the dragon sleeps",
-		    requests_processed);
-		int status = pthread_cond_wait(&crl_queue_cond, &crl_queue_mutex);
-		passert(status == 0);
-	}
-	pthread_mutex_unlock(&crl_queue_mutex);
-}
-
 /*
  * list all fetch requests
  */
@@ -378,9 +327,6 @@ void free_crl_queue(void)
 	}
 	pthread_mutex_unlock(&crl_queue_mutex);
 }
-
-static pthread_t fetch_thread_id;
-static fetch_crl_fn fetch_crl; /* type check */
 
 /*
  * Calls the _import_crl process to add a CRL to the NSS db.
@@ -638,7 +584,55 @@ static void *fetch_thread(void *arg UNUSED)
 	dbg("CRL: fetch thread started");
 	/* XXX: on thread so no whack */
 	struct logger *logger = string_logger(HERE, "crl thread: "); /* must free */
-	process_crl_fetch_requests(fetch_crl, logger);
+	pthread_mutex_lock(&crl_queue_mutex);
+	while (!exiting_pluto) {
+		/* if there's something process it */
+		dbg("CRL: the sleeping dragon awakes");
+		unsigned requests_processed = 0;
+		for (struct crl_fetch_queue *volatile *volatile reqp = &crl_fetch_queue;
+		     *reqp != NULL && !exiting_pluto; ) {
+			requests_processed++;
+			struct crl_fetch_queue *req = *reqp;
+			pexpect(req->distribution_points != NULL);
+			bool fetched = false;
+			for (struct crl_distribution_point *volatile dp = req->distribution_points;
+			     dp != NULL && !fetched && !exiting_pluto; dp = dp->next) {
+				/*
+				 * While fetching unlock the QUEUE.
+				 *
+				 * While the table is unlocked, the
+				 * main thread can append to either
+				 * crl_fetch_request list, or its
+				 * crl_distribution_point list.
+				 */
+				dbg("CRL:   unlocking crl queue");
+				pthread_mutex_unlock(&crl_queue_mutex);
+				dn_buf dnb;
+				dbg("CRL:     fetching: %s",
+				    str_dn(ASN1(req->issuer_dn), &dnb));
+				if (fetch_crl(req->issuer_dn, dp->url, req->logger)) {
+					fetched = true;
+				}
+				dbg("CRL:   locked crl queue");
+				pthread_mutex_lock(&crl_queue_mutex);
+			}
+			if (fetched) {
+				*reqp = req->next;
+				free_crl_fetch_request(&req);
+			} else {
+				req->trials++;
+				reqp = &req->next;
+			}
+		}
+		if (exiting_pluto) {
+			break;
+		}
+		dbg("CRL: %u requests processed, the dragon sleeps",
+		    requests_processed);
+		int status = pthread_cond_wait(&crl_queue_cond, &crl_queue_mutex);
+		passert(status == 0);
+	}
+	pthread_mutex_unlock(&crl_queue_mutex);
 	free_logger(&logger, HERE);
 	dbg("CRL: fetch thread stopped");
 	return NULL;

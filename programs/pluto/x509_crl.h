@@ -34,9 +34,6 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url/*could be empty*/,
 			   struct crl_fetch_request **requests,
 			   struct logger *logger);
 
-typedef bool (fetch_crl_fn)(chunk_t issuer, const char *url, struct logger *logger);
-void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger);
-
 void free_crl_queue(void);
 void list_crl_fetch_requests(struct show *s, bool utc);
 
