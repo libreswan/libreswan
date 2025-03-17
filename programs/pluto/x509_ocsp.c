@@ -150,4 +150,3 @@ deltatime_t ocsp_cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE);
 deltatime_t ocsp_cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE);
 bool ocsp_strict = false;
 bool ocsp_enable = false;
-bool ocsp_post = false;

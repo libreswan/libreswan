@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <sys/types.h>
 
+#include "sparse_names.h"
 #include "sysdep.h"
 #include "lswnss.h"
 #include "constants.h"
@@ -47,6 +48,7 @@
 #include "log.h"
 #include "log_limiter.h"
 #include "x509_ocsp.h"
+#include "fetch.h"	/* for crl_strict */
 
 bool groundhogday;
 
@@ -128,29 +130,31 @@ static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
 	rev->chainTests.cert_rev_flags_per_method = cflags;
 }
 
-static unsigned int rev_val_flags(PRBool strict, PRBool post)
+static unsigned int rev_val_flags(void)
 {
 	unsigned int flags = CERT_REV_M_TEST_USING_THIS_METHOD;
 
-	if (strict) {
+	if (ocsp_strict) {
 		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
 		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
 	}
 
-	if (post) {
+	if (ocsp_method == OCSP_METHOD_POST) {
 		flags |= CERT_REV_M_FORCE_POST_METHOD_FOR_OCSP;
 	}
 	return flags;
 }
 
-static void set_rev_params(CERTRevocationFlags *rev,
-			   const struct rev_opts *rev_opts)
+static void set_rev_params(CERTRevocationFlags *rev)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
-	dbg("crl_strict: %d, ocsp: %d, ocsp_strict: %d, ocsp_post: %d",
-	    rev_opts->crl_strict, rev_opts->ocsp,
-	    rev_opts->ocsp_strict, rev_opts->ocsp_post);
+	name_buf omb;
+	dbg("crl_strict: %s, ocsp: %s, ocsp_strict: %s, ocsp_post: %s",
+	    bool_str(crl_strict),
+	    bool_str(ocsp_enable),
+	    bool_str(ocsp_strict),
+	    str_sparse(&ocsp_method_names, ocsp_method, &omb));
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -158,9 +162,8 @@ static void set_rev_params(CERTRevocationFlags *rev,
 	rf[cert_revocation_method_crl] |= CERT_REV_M_TEST_USING_THIS_METHOD;
 	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 
-	if (rev_opts->ocsp) {
-		rf[cert_revocation_method_ocsp] = rev_val_flags(rev_opts->ocsp_strict,
-								rev_opts->ocsp_post);
+	if (ocsp_enable) {
+		rf[cert_revocation_method_ocsp] = rev_val_flags();
 	}
 }
 
@@ -171,7 +174,6 @@ static void set_rev_params(CERTRevocationFlags *rev,
 
 static bool verify_end_cert(struct logger *logger,
 			    const CERTCertList *trustcl,
-			    const struct rev_opts *rev_opts,
 			    PRTime groundhogtime,
 			    CERTCertificate *end_cert)
 {
@@ -182,7 +184,7 @@ static bool verify_end_cert(struct logger *logger,
 	PRUint64 revFlagsChain[2] = { 0, 0 };
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
-	set_rev_params(&rev, rev_opts);
+	set_rev_params(&rev);
 
 	ldbg(logger, "groundhogtime is %ju", (uintmax_t)groundhogtime);
 
@@ -193,7 +195,7 @@ static bool verify_end_cert(struct logger *logger,
 		},
 		{
 			.type = cert_pi_useAIACertFetch,
-			.value = { .scalar = { .b = rev_opts->ocsp ? PR_TRUE : PR_FALSE } }
+			.value = { .scalar = { .b = ocsp_enable ? PR_TRUE : PR_FALSE } }
 		},
 		{
 			.type = cert_pi_trustAnchors,
@@ -518,7 +520,6 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 struct verified_certs find_and_verify_certs(struct logger *logger,
 					    enum ike_version ike_version,
 					    struct payload_digest *cert_payloads,
-					    const struct rev_opts *rev_opts,
 					    struct root_certs *root_certs,
 					    const struct id *keyid)
 {
@@ -589,9 +590,9 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	bool crl_update_needed = crl_update_check(handle, result.cert_chain);
 	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
-		if (rev_opts->crl_strict) {
+		if (crl_strict) {
 			llog(RC_LOG, logger,
-				    "missing or expired CRL in strict mode, failing pending update and forcing CRL update");
+			     "missing or expired CRL in strict mode, failing pending update and forcing CRL update");
 			release_certs(&result.cert_chain);
 			result.crl_update_needed = true;
 			result.harmless = false;
@@ -601,7 +602,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 
 	logtime_t verify_time = logtime_start(logger);
-	bool end_ok = verify_end_cert(logger, root_certs->trustcl, rev_opts,
+	bool end_ok = verify_end_cert(logger, root_certs->trustcl,
 				      0, end_cert);
 	if (!end_ok && groundhogday) {
 		/*
@@ -633,7 +634,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 			};
 			PR_INSERT_LINK(&ground_cert.links, &ground_certs.list);
 
-			if (verify_end_cert(logger, &ground_certs, rev_opts,
+			if (verify_end_cert(logger, &ground_certs,
 					    groundhogtime, end_cert)) {
 				result.groundhog = true;
 				end_ok = true;

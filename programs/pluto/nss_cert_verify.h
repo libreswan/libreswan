@@ -33,14 +33,6 @@ struct logger;
  * certs were discarded.
  */
 
-/* rev_opts index */
-struct rev_opts {
-	bool ocsp;
-	bool ocsp_strict;
-	bool ocsp_post;
-	bool crl_strict;
-};
-
 struct verified_certs {
 	struct certs *cert_chain;
 	struct pubkey_list *pubkey_db;
@@ -52,7 +44,6 @@ struct verified_certs {
 struct verified_certs find_and_verify_certs(struct logger *log,
 					    enum ike_version ike_version,
 					    struct payload_digest *cert_payloads,
-					    const struct rev_opts *rev_opts,
 					    struct root_certs *root_cert,
 					    const struct id *keyid);
 

@@ -28,7 +28,6 @@ extern diag_t init_x509_ocsp(struct logger *logger);
 
 extern bool ocsp_strict;
 extern bool ocsp_enable;
-extern bool ocsp_post;
 extern char *ocsp_uri;
 extern char *ocsp_trust_name;
 extern deltatime_t ocsp_timeout;

@@ -1008,7 +1008,6 @@ int main(int argc, char **argv)
 
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
 			ocsp_method = optarg_sparse(logger, 0, &ocsp_method_names);
-			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
@@ -1190,7 +1189,6 @@ int main(int argc, char **argv)
 			if (cfg->values[KBF_OCSP_METHOD].set) {
 				ocsp_method = cfg->values[KBF_OCSP_METHOD].option;
 			}
-			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->values[KBF_OCSP_CACHE_SIZE].option;
 			if (cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].set) {
 				ocsp_cache_min_age = cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].deltatime;
