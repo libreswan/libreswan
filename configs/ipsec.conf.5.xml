@@ -32,9 +32,9 @@
 <!ENTITY compress SYSTEM "d.ipsec.conf/compress.xml">
 <!ENTITY connsections SYSTEM "d.ipsec.conf/connsections.xml">
 <!ENTITY crl-strict SYSTEM "d.ipsec.conf/crl-strict.xml">
+<!ENTITY crl-timeout SYSTEM "d.ipsec.conf/crl-timeout.xml">
 <!ENTITY crlcheckinterval SYSTEM "d.ipsec.conf/crlcheckinterval.xml">
 <!ENTITY curl-iface SYSTEM "d.ipsec.conf/curl-iface.xml">
-<!ENTITY curl-timeout SYSTEM "d.ipsec.conf/curl-timeout.xml">
 <!ENTITY ddos-ike-threshold SYSTEM "d.ipsec.conf/ddos-ike-threshold.xml">
 <!ENTITY ddos-mode SYSTEM "d.ipsec.conf/ddos-mode.xml">
 <!ENTITY debug SYSTEM "d.ipsec.conf/debug.xml">
@@ -409,8 +409,8 @@
       &ikev1-policy;
       &crlcheckinterval;
       &crl-strict;
+      &crl-timeout;
       &curl-iface;
-      &curl-timeout;
       &ocsp-enable;
       &ocsp-strict;
       &ocsp-method;

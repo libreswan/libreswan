@@ -339,7 +339,7 @@ static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 	char *arg[] = {
 		IPSEC_EXECDIR "/_import_crl",
 		(char*)url,
-		(char*)str_deltatime(x509_crl.fetch_timeout, &td),
+		(char*)str_deltatime(x509_crl.timeout, &td),
 		(x509_crl.curl_iface == NULL ? "" : x509_crl.curl_iface),
 		NULL,
 	};
@@ -693,7 +693,7 @@ void stop_crl_fetch_helper(struct logger *logger)
 struct x509_crl_config x509_crl = {
 	.curl_iface = NULL,
 	.strict = false,
-	.fetch_timeout = DELTATIME_INIT(5/*seconds*/),
+	.timeout = DELTATIME_INIT(5/*seconds*/),
 	/* 0 is special and default: do not check crls dynamically */
 	.check_interval = DELTATIME_INIT(0),
 };

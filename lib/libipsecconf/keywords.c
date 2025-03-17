@@ -297,7 +297,6 @@ static const struct sparse_names kw_eap_names = {
 const struct keyword_def ipsec_conf_keywords[] = {
   { "ikev1-policy",  kv_config,  kt_sparse_name,  KBF_GLOBAL_IKEv1, &kw_global_ikev1_names, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
-  { "curl-timeout",  kv_config,  kt_seconds,  KBF_CURL_TIMEOUT_SECONDS, NULL, NULL, },
 
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
@@ -328,6 +327,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
   { "crlcheckinterval",  kv_config,  kt_seconds,  KBF_CRL_CHECKINTERVAL, NULL, NULL, },
+  { "crl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, NULL, },
+  { "curl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, NULL, }, /* legacy */
 
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
   { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE, NULL, NULL, },

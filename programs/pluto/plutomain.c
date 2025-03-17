@@ -467,7 +467,7 @@ enum opt {
 	OPT_USE_XFRM,
 	OPT_INTERFACE,
 	OPT_CURL_IFACE,
-	OPT_CURL_TIMEOUT,
+	OPT_CURL_TIMEOUT, /* legacy, don't replace */
 	OPT_LISTEN,
 	OPT_LISTEN_TCP,
 	OPT_NO_LISTEN_UDP,
@@ -540,7 +540,7 @@ const struct option optarg_options[] = {
 #endif
 	{ "interface"METAOPT_OBSOLETE"<ifname|ifaddr>", required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, OPT_CURL_IFACE },
-	{ "curl-timeout\0<secs>", required_argument, NULL, OPT_CURL_TIMEOUT },
+	{ "curl-timeout\0<secs>", required_argument, NULL, OPT_CURL_TIMEOUT }, /* legacy */
 	{ "listen\0<ifaddr>", required_argument, NULL, OPT_LISTEN },
 	{ "listen-tcp\0", no_argument, NULL, OPT_LISTEN_TCP },
 	{ "no-listen-udp\0", no_argument, NULL, OPT_NO_LISTEN_UDP },
@@ -940,9 +940,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
-			x509_crl.fetch_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define CURL_TIMEOUT_OK deltatime_ok(x509_crl.fetch_timeout, 1, 1000)
-			check_diag(logger, CURL_TIMEOUT_OK);
+			x509_crl.timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define CRL_TIMEOUT_OK deltatime_ok(x509_crl.timeout, 1, 1000)
+			check_diag(logger, CRL_TIMEOUT_OK);
 			continue;
 
 		case OPT_CRL_STRICT:	/* --crl-strict */
@@ -1267,9 +1267,9 @@ int main(int argc, char **argv)
 				replace_value(&x509_crl.curl_iface, cfg->values[KSF_CURLIFACE].string);
 			}
 
-			if (cfg->values[KBF_CURL_TIMEOUT_SECONDS].set) {
-				x509_crl.fetch_timeout = cfg->values[KBF_CURL_TIMEOUT_SECONDS].deltatime;
-				check_conf(CURL_TIMEOUT_OK, "curl-timeout", logger);
+			if (cfg->values[KBF_CRL_TIMEOUT_SECONDS].set) {
+				x509_crl.timeout = cfg->values[KBF_CRL_TIMEOUT_SECONDS].deltatime;
+				check_conf(CRL_TIMEOUT_OK, "crl-timeout", logger);
 				/* checked below */
 			}
 

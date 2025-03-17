@@ -41,7 +41,7 @@ extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
 struct x509_crl_config {
-	deltatime_t fetch_timeout;
+	deltatime_t timeout;
 	char *curl_iface;
 	bool strict;
 	deltatime_t check_interval;
