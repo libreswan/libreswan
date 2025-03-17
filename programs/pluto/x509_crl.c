@@ -331,9 +331,10 @@ void free_crl_queue(void)
 /*
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
-static int send_crl_to_import(const char *url, struct logger *logger)
+static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 {
 	deltatime_buf td;
+	dn_buf idn;
 
 	char *arg[] = {
 		IPSEC_EXECDIR "/_import_crl",
@@ -343,29 +344,29 @@ static int send_crl_to_import(const char *url, struct logger *logger)
 		NULL,
 	};
 
-	dbg("Calling %s to import CRL - url: %s %s %s",
-	    arg[0],
-	    arg[1],
-	    arg[2],
-	    arg[3]);
+	ldbg(logger, "importing CRL for %s using: %s %s %s %s",
+	     str_dn(ASN1(issuer_dn), &idn),
+	     arg[0], arg[1], arg[2], arg[3]);
 
 	int pfd[2];
 	if (pipe(pfd) == -1) {
-		dbg("pipe() error: %s", strerror(errno));
-		return -1;
+		llog_error(logger, errno, "importing CRL for %s failed, pipe()",
+			   str_dn(ASN1(issuer_dn), &idn));
+		return false;
 	}
 
 	if (PBAD(logger, pfd[0] == STDIN_FILENO) ||
 	    PBAD(logger, pfd[1] == STDERR_FILENO) ||
 	    PBAD(logger, pfd[1] == STDERR_FILENO)) {
-		return -1;
+		return false;
 	}
 
 	pid_t child = fork();
 
 	if (child < 0) {
-		llog_error(logger, errno, "fork(_import_crl)");
-		return -1;
+		llog_error(logger, errno, "importing CRL for %s failed, fork()",
+			   str_dn(ASN1(issuer_dn), &idn));
+		return false;
 	}
 
 	if (child == 0) {
@@ -378,51 +379,61 @@ static int send_crl_to_import(const char *url, struct logger *logger)
 		close(pfd[1]);
 
 		execve(arg[0], arg, NULL);
-		llog_error(logger, errno, "execve()");
+		llog_error(logger, errno, "importing CRL for %s failed, execve()",
+			   str_dn(ASN1(issuer_dn), &idn));
 		exit(127);
 	}
 
 	/*parent*/
 
 	if (close(pfd[1]) == -1) {
-		llog_error(logger, errno, "close(pfd[1])");
-		return -1;
+		llog_error(logger, errno, "importing CRL for %s failed, close(pfd[1])",
+			   str_dn(ASN1(issuer_dn), &idn));
+		return false;
 	}
 
 	int wstatus;
 	waitpid(child, &wstatus, 0);
 
 	if (!WIFEXITED(wstatus)) {
-		llog_error(logger, 0, "CRL helper aborted status: %d", wstatus);
-		return -1;
+		llog_error(logger, 0, "importing CRL for %s failed, helper aborted with waitpid status %d",
+			   str_dn(ASN1(issuer_dn), &idn), wstatus);
+		return false;
 	}
 
 	int ret = WEXITSTATUS(wstatus);
 	if (ret != 0) {
-		llog_error(logger, 0, "CRL helper exited with status: %d", ret);
-		return -1;
+		llog_error(logger, 0, "importing CRL for %s failed, helper exited with non-zero status %d",
+			   str_dn(ASN1(issuer_dn), &idn), ret);
+		return false;
 	}
 
-	ldbg(logger, "CRL helper ran successfully");
+	ldbg(logger, "CRL helper for %s ran successfully",
+	     str_dn(ASN1(issuer_dn), &idn));
 
 	uint8_t namebuf[1023];
 	ssize_t l = read(pfd[0], namebuf, sizeof(namebuf));
 	if (l < 0) {
-		llog_error(logger, errno, "read(pfd[0])");
-		return -1;
+		llog_error(logger, errno, "importing CRL for %s failed, read(pfd[0])",
+			   str_dn(ASN1(issuer_dn), &idn));
+		return false;
 	}
 
-	chunk_t der_name = chunk2(namebuf, l);
-	ldbg(logger, "CRL helper output %zu bytes:", l);
-	ldbg_hunk(logger, der_name);
-	pemtobin(&der_name);
-	ldbg(logger, "CRL helper output pem:");
-	ldbg_hunk(logger, der_name);
+	ldbg(logger, "CRL helper for %s output %zu bytes:",
+	     str_dn(ASN1(issuer_dn), &idn), l);
 
 	if (close(pfd[0]) == -1) {
-		llog_error(logger, errno, "close(pfd[0])");
-		return -1;
+		llog_error(logger, errno, "importing CRL for %s failed, close(pfd[0])",
+			   str_dn(ASN1(issuer_dn), &idn));
+		return false;
 	}
+
+	chunk_t sign_dn = chunk2(namebuf, l);
+	ldbg_hunk(logger, sign_dn);
+	pemtobin(&sign_dn);
+	ldbg(logger, "CRL helper for %s output pem:",
+	     str_dn(ASN1(issuer_dn), &idn));
+	ldbg_hunk(logger, sign_dn);
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -434,52 +445,34 @@ static int send_crl_to_import(const char *url, struct logger *logger)
 	passert(handle != NULL);
 	SECItem name = {
 		.type = siBuffer,
-		.data = der_name.ptr,
-		.len = der_name.len,
+		.data = sign_dn.ptr,
+		.len = sign_dn.len,
 	};
 	CERTCertificate *cacert =  CERT_FindCertByName(handle, &name);
 	if (cacert == NULL) {
-		ldbg_nss_error(logger, "finding cert by name using CERT_FindCertByName() failed");
-		return -1;
-	}
-
-	CERT_CRLCacheRefreshIssuer(handle, &cacert->derSubject);
-	ldbg(logger, "CRL issuer %s flushed", cacert->nickname);
-
-	CERT_DestroyCertificate(cacert);
-
-	return 0;
-}
-
-/*
- * try to fetch the crls defined by the fetch requests
- */
-
-static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
-{
-	/* err?!?! */
-	if (!pexpect(url != NULL && strlen(url) > 0)) {
+		dn_buf sdn;
+		ldbg_nss_error(logger, "importing CRL for %s failed, could not find cert by name %s",
+			       str_dn(ASN1(issuer_dn), &idn),
+			       str_dn(ASN1(sign_dn), &sdn));
 		return false;
 	}
 
-	/* for CRL use the name passed to helper for the uri */
-	int r = send_crl_to_import(url, logger);
-	bool ret;
-	if (r == -1) {
-		ret = false;
-		llog(RC_LOG, logger, "_import_crl internal error");
-	} else if (r != 0) {
-		ret = false;
-		llog_nss_error_code(RC_LOG, logger, r, "CRL import error");
-	} else {
-		ret = true;
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "imported CRL for '");
-			jam_dn(buf, ASN1(issuer_dn), jam_sanitized_bytes);
-			jam(buf, "' from: %s", url);
-		}
+	CERT_CRLCacheRefreshIssuer(handle, &cacert->derSubject);
+	ldbg(logger, "CRL issuer %s flushed %s",
+	     str_dn(ASN1(issuer_dn), &idn), cacert->nickname);
+
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
+		jam_string(buf, "imported CRL for '");
+		jam_dn(buf, ASN1(issuer_dn), jam_sanitized_bytes);
+		jam_string(buf, "' signed by '");
+		jam_dn(buf, ASN1(sign_dn), jam_sanitized_bytes);
+		jam_string(buf, "' from "); 
+		jam_string(buf, url);
 	}
-	return ret;
+
+	CERT_DestroyCertificate(cacert);
+
+	return true;
 }
 
 /*
