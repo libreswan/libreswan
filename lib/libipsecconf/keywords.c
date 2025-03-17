@@ -35,6 +35,7 @@
 #include "lswcdefs.h"		/* for elemsof() */
 #include "sparse_names.h"
 #include "encap_proto.h"
+#include "ocsp_method.h"
 #include "lswalloc.h"
 
 #include "ipsecconf/keywords.h"
@@ -272,24 +273,6 @@ static const struct sparse_names kw_sendcert_names = {
 	},
 };
 
-/*
- * Values for ocsp-method={get|post}
- *
- * This sets the NSS forcePost option for the OCSP request.
- * If forcePost is set, OCSP requests will only be sent using the HTTP POST
- * method. When forcePost is not set, OCSP requests will be sent using the
- * HTTP GET method, with a fallback to POST when we fail to receive a response
- * and/or when we receive an uncacheable response like "Unknown".
- */
-
-static const struct sparse_names kw_ocsp_method_names = {
-	.list = {
-		SPARSE("get",      OCSP_METHOD_GET),
-		SPARSE("post",     OCSP_METHOD_POST),
-		SPARSE_NULL
-	},
-};
-
 static const struct sparse_names kw_global_ikev1_names = {
 	.list = {
 		SPARSE("accept",   GLOBAL_IKEv1_ACCEPT),
@@ -354,7 +337,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
   { "ocsp-cache-min-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS, NULL, NULL, },
   { "ocsp-cache-max-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS, NULL, NULL, },
-  { "ocsp-method",  kv_config | kv_processed,  kt_sparse_name,  KBF_OCSP_METHOD, &kw_ocsp_method_names, NULL, },
+  { "ocsp-method",  kv_config | kv_processed,  kt_sparse_name,  KBF_OCSP_METHOD, &ocsp_method_names, NULL, },
 
   { "ddos-mode",  kv_config | kv_processed ,  kt_sparse_name,  KBF_DDOS_MODE, &kw_ddos_names, NULL, },
 #ifdef USE_SECCOMP

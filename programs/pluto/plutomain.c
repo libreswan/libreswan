@@ -39,6 +39,7 @@
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
 #include "optarg.h"
+#include "sparse_names.h"
 #include "deltatime.h"
 #include "timescale.h"
 #include "lswversion.h"
@@ -1014,14 +1015,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
-			if (streq(optarg, "post")) {
-				ocsp_method = OCSP_METHOD_POST;
-				ocsp_post = true;
-			} else if (streq(optarg, "get")) {
-				ocsp_method = OCSP_METHOD_GET;
-			} else {
-				optarg_fatal(logger, "method is either 'post' or 'get'");
-			}
+			ocsp_method = optarg_sparse(logger, 0, &ocsp_method_names);
+			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
@@ -1200,7 +1195,9 @@ int main(int argc, char **argv)
 				ocsp_timeout = cfg->values[KBF_OCSP_TIMEOUT_SECONDS].deltatime;
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
-			ocsp_method = cfg->values[KBF_OCSP_METHOD].option;
+			if (cfg->values[KBF_OCSP_METHOD].set) {
+				ocsp_method = cfg->values[KBF_OCSP_METHOD].option;
+			}
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->values[KBF_OCSP_CACHE_SIZE].option;
 			if (cfg->values[KBF_OCSP_CACHE_MIN_AGE_SECONDS].set) {
@@ -1909,7 +1906,7 @@ void show_setup_plutomain(struct show *s)
 		jam_string(buf, ", ocsp-cache-max-age=");
 		jam_deltatime(buf, ocsp_cache_max_age);
 		jam_string(buf, ", ocsp-method=");
-		jam_string(buf, (ocsp_method == OCSP_METHOD_GET ? "get" : "post"));
+		jam_sparse(buf, &ocsp_method_names, ocsp_method);
 	}
 
 	SHOW_JAMBUF(s, buf) {

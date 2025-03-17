@@ -1,6 +1,6 @@
-/* OCSP initialization for NSS
+/* OCSP method, for libreswan
  *
- * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2016 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,19 +13,15 @@
  * for more details.
  *
  */
-#ifndef _NSS_OCSP_H
-#define _NSS_OCSP_H
 
-#include "diag.h"
-#include "deltatime.h"
-#include "ocsp_method.h"
+#ifndef OCSP_METHOD_H
+#define OCSP_METHOD_H
 
-struct logger;
+enum ocsp_method {
+	OCSP_METHOD_GET = 1, /* really GET plus POST - see NSS code */
+	OCSP_METHOD_POST = 2, /* only POST */
+};
 
+extern const struct sparse_names ocsp_method_names;
 
-extern diag_t init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
-			    deltatime_t timeout, bool strict, int cache_size,
-			    deltatime_t cache_min, deltatime_t cache_max,
-			    bool ocsp_post, struct logger *logger);
-
-#endif /* _NSS_OCSP_H */
+#endif
