@@ -45,8 +45,7 @@
 #include "root_certs.h"		/* for free_root_certs() */
 #include "keys.h"		/* for free_preshared_secrets() */
 #include "connections.h"
-#include "fetch.h"		/* for stop_crl_fetch_helper() et.al. */
-#include "crl_queue.h"		/* for free_crl_queue() */
+#include "x509_crl.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for shutdown_ifaces() */
 #include "kernel.h"		/* for kernel_ops.shutdown() and free_kernel() */
 #include "virtual_ip.h"		/* for free_virtual_ip() */

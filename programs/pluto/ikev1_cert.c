@@ -38,9 +38,8 @@
 #include "connections.h"
 #include "secrets.h"
 #include "nss_cert_verify.h"
-#include "fetch.h"		/* for oscb_enable et.al. */
 #include "pluto_x509.h"		/* for find_crl_fetch_dn() */
-#include "crl_queue.h"		/* for submit_crl_fetch_request() */
+#include "x509_crl.h"		/* for submit_crl_fetch_request() */
 
 /*
  * Decode the CERT payload of Phase 1.

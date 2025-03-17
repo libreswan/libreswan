@@ -39,10 +39,9 @@
 #include "id.h"
 #include "nss_cert_verify.h"
 #include "connections.h"
-#include "fetch.h"
 #include "root_certs.h"
 #include "x509.h"
-#include "crl_queue.h"
+#include "x509_crl.h"		/* for crl_check_interval; */
 #include "log.h"
 
 /*

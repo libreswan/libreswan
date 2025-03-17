@@ -54,7 +54,6 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "ikev1_quick.h"
 #include "whack.h"
-#include "fetch.h"
 #include "asn1.h"
 #include "crypto.h"
 #include "secrets.h"

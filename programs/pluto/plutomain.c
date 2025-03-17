@@ -56,7 +56,6 @@
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "hourly.h"
-#include "fetch.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendorid.h"
@@ -73,7 +72,7 @@
 #include "ikev2_states.h"	/* for init_ikev2_states() */
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "ddns.h"		/* for init_ddns() */
-#include "crl_queue.h"		/* for free_crl_queue() */
+#include "x509_crl.h"		/* for free_crl_queue() */
 #include "iface.h"		/* for pluto_listen; */
 #include "kernel_info.h"	/* for init_kernel_interface() */
 #include "server_pool.h"

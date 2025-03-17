@@ -48,7 +48,7 @@
 #include "log.h"
 #include "log_limiter.h"
 #include "x509_ocsp.h"
-#include "fetch.h"	/* for crl_strict */
+#include "x509_crl.h"		/* for crl_strict; */
 
 bool groundhogday;
 

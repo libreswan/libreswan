@@ -168,8 +168,7 @@ endif
 # PKIX: Public-Key Infrastructure using X.509
 OBJS += x509.o
 OBJS += x509_ocsp.o
-OBJS += fetch.o
-OBJS += crl_queue.o
+OBJS += x509_crl.o
 
 OBJS += addresspool.o
 

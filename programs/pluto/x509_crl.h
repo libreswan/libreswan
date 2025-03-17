@@ -1,6 +1,6 @@
-/* Dynamic fetching of X.509 CRLs
- * Copyright (C) 2002 Stephane Laroche <stephane.laroche@colubris.com>
- * Copyright (C) 2002-2004 Andreas Steffen, Zuercher Hochschule Winterthur
+/* CRL fetch queue, for libreswan
+ *
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,16 +13,32 @@
  * for more details.
  */
 
-#ifndef FETCH_H
-#define FETCH_H
+#ifndef X509_CRL
+#define X509_CRL
 
 #include <stdbool.h>
 
 #include "chunk.h"
-#include "err.h"
-#include "deltatime.h"
+#include "shunk.h"
+#include "realtime.h"
+#include "asn1.h"
 
 struct logger;
+struct crl_fetch_request;
+struct show;
+
+void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger);
+void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger);
+
+void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url/*could be empty*/,
+			   struct crl_fetch_request **requests,
+			   struct logger *logger);
+
+typedef bool (fetch_crl_fn)(chunk_t issuer, const char *url, struct logger *logger);
+void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger);
+
+void free_crl_queue(void);
+void list_crl_fetch_requests(struct show *s, bool utc);
 
 extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
