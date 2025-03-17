@@ -134,12 +134,12 @@ static unsigned int rev_val_flags(void)
 {
 	unsigned int flags = CERT_REV_M_TEST_USING_THIS_METHOD;
 
-	if (ocsp_strict) {
+	if (x509_ocsp.strict) {
 		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
 		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
 	}
 
-	if (ocsp_method == OCSP_METHOD_POST) {
+	if (x509_ocsp.method == OCSP_METHOD_POST) {
 		flags |= CERT_REV_M_FORCE_POST_METHOD_FOR_OCSP;
 	}
 	return flags;
@@ -152,9 +152,9 @@ static void set_rev_params(CERTRevocationFlags *rev)
 	name_buf omb;
 	dbg("crl_strict: %s, ocsp: %s, ocsp_strict: %s, ocsp_post: %s",
 	    bool_str(crl_strict),
-	    bool_str(ocsp_enable),
-	    bool_str(ocsp_strict),
-	    str_sparse(&ocsp_method_names, ocsp_method, &omb));
+	    bool_str(x509_ocsp.enable),
+	    bool_str(x509_ocsp.strict),
+	    str_sparse(&ocsp_method_names, x509_ocsp.method, &omb));
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -162,7 +162,7 @@ static void set_rev_params(CERTRevocationFlags *rev)
 	rf[cert_revocation_method_crl] |= CERT_REV_M_TEST_USING_THIS_METHOD;
 	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 
-	if (ocsp_enable) {
+	if (x509_ocsp.enable) {
 		rf[cert_revocation_method_ocsp] = rev_val_flags();
 	}
 }
@@ -195,7 +195,7 @@ static bool verify_end_cert(struct logger *logger,
 		},
 		{
 			.type = cert_pi_useAIACertFetch,
-			.value = { .scalar = { .b = ocsp_enable ? PR_TRUE : PR_FALSE } }
+			.value = { .scalar = { .b = x509_ocsp.enable ? PR_TRUE : PR_FALSE } }
 		},
 		{
 			.type = cert_pi_trustAnchors,

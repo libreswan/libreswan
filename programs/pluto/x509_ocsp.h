@@ -26,15 +26,18 @@ struct logger;
 
 extern diag_t init_x509_ocsp(struct logger *logger);
 
-extern bool ocsp_strict;
-extern bool ocsp_enable;
-extern char *ocsp_uri;
-extern char *ocsp_trust_name;
-extern deltatime_t ocsp_timeout;
-extern enum ocsp_method ocsp_method;
-extern int ocsp_cache_size;
-extern deltatime_t ocsp_cache_min_age;
-extern deltatime_t ocsp_cache_max_age;
+struct x509_ocsp_config {
+	bool enable;
+	bool strict;
+	char *uri;
+	char *trust_name;
+	deltatime_t timeout;
+	enum ocsp_method method;
+	int cache_size;
+	deltatime_t cache_min_age;
+	deltatime_t cache_max_age;
+};
+
+extern struct x509_ocsp_config x509_ocsp;
 
 #endif
-

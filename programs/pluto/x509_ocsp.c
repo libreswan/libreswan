@@ -49,12 +49,12 @@ diag_t init_x509_ocsp(struct logger *logger)
 	/*
 	 * enable a default responder
 	 */
-	if (ocsp_uri != NULL && ocsp_trust_name != NULL) {
-		dbg("OCSP default responder url: %s", ocsp_uri);
-		dbg("OCSP responder cert NSS nickname: %s", ocsp_trust_name);
+	if (x509_ocsp.uri != NULL && x509_ocsp.trust_name != NULL) {
+		dbg("OCSP default responder url: %s", x509_ocsp.uri);
+		dbg("OCSP responder cert NSS nickname: %s", x509_ocsp.trust_name);
 
-		rv = CERT_SetOCSPDefaultResponder(handle, ocsp_uri,
-							  ocsp_trust_name);
+		rv = CERT_SetOCSPDefaultResponder(handle, x509_ocsp.uri,
+							  x509_ocsp.trust_name);
 
 
 		if (rv == SECSuccess) {
@@ -64,7 +64,7 @@ diag_t init_x509_ocsp(struct logger *logger)
 				if (err == SEC_ERROR_OCSP_RESPONDER_CERT_INVALID) {
 					llog(RC_LOG, logger,
 					     "responder certificate %s is invalid. please verify its keyUsage extensions for OCSP",
-					     ocsp_trust_name);
+					     x509_ocsp.trust_name);
 				} else {
 					llog_nss_error(RC_LOG, logger,
 						       "error enabling OCSP default responder");
@@ -75,7 +75,7 @@ diag_t init_x509_ocsp(struct logger *logger)
 			if (err == SEC_ERROR_UNKNOWN_CERT) {
 				llog(RC_LOG, logger,
 				     "OCSP responder cert \"%s\" not found in NSS",
-				     ocsp_trust_name);
+				     x509_ocsp.trust_name);
 			} else {
 				/* uses global value */
 				llog_nss_error(RC_LOG, logger, "error setting default responder");
@@ -83,15 +83,15 @@ diag_t init_x509_ocsp(struct logger *logger)
 		}
 	}
 
-	if (deltatime_cmp(ocsp_timeout, >, deltatime_zero)) {
-		dbg("OCSP timeout of %ju seconds", deltasecs(ocsp_timeout));
-		if (CERT_SetOCSPTimeout(deltasecs(ocsp_timeout)) != SECSuccess) {
+	if (deltatime_cmp(x509_ocsp.timeout, >, deltatime_zero)) {
+		dbg("OCSP timeout of %ju seconds", deltasecs(x509_ocsp.timeout));
+		if (CERT_SetOCSPTimeout(deltasecs(x509_ocsp.timeout)) != SECSuccess) {
 			/* don't shoot pluto over this */
-			llog_nss_error(RC_LOG, logger, "error setting OCSP timeout to %ju", deltasecs(ocsp_timeout));
+			llog_nss_error(RC_LOG, logger, "error setting OCSP timeout to %ju", deltasecs(x509_ocsp.timeout));
 		}
 	}
 
-	if (ocsp_strict) {
+	if (x509_ocsp.strict) {
 		rv = CERT_SetOCSPFailureMode(ocspMode_FailureIsVerificationFailure);
 	} else {
 		rv = CERT_SetOCSPFailureMode(ocspMode_FailureIsNotAVerificationFailure);
@@ -101,7 +101,7 @@ diag_t init_x509_ocsp(struct logger *logger)
 		return diag_nss_error("error setting OCSP failure mode");
 	}
 
-	switch (ocsp_method) {
+	switch (x509_ocsp.method) {
 	case OCSP_METHOD_POST:
 		rv = CERT_ForcePostMethodForOCSP(true);
 		ldbg(logger, "OCSP will use POST method");
@@ -121,32 +121,33 @@ diag_t init_x509_ocsp(struct logger *logger)
 	 * NSS uses 0 for unlimited and -1 for disabled. We use 0 for
 	 * disabled and just a large number for a large cache.
 	 */
-	int nss_max = deltasecs(ocsp_cache_max_age);
+	int nss_max = deltasecs(x509_ocsp.cache_max_age);
 	if (nss_max == 0) {
 		nss_max = -1;
 	}
 
-	rv = CERT_OCSPCacheSettings(ocsp_cache_size, deltasecs(ocsp_cache_min_age), nss_max);
+	rv = CERT_OCSPCacheSettings(x509_ocsp.cache_size, deltasecs(x509_ocsp.cache_min_age), nss_max);
 	if (rv != SECSuccess) {
 		/* don't shoot pluto over this */
 		deltatime_buf minb, maxb;
 		llog_nss_error(RC_LOG, logger,
 			       "error setting OCSP cache parameters (size=%d, min=%s, max=%s)",
-			       ocsp_cache_size,
-			       str_deltatime(ocsp_cache_min_age, &minb),
-			       str_deltatime(ocsp_cache_max_age, &maxb));
+			       x509_ocsp.cache_size,
+			       str_deltatime(x509_ocsp.cache_min_age, &minb),
+			       str_deltatime(x509_ocsp.cache_max_age, &maxb));
 	}
 
 	return NULL;
 }
 
-
-char *ocsp_uri = NULL;
-char *ocsp_trust_name = NULL;
-deltatime_t ocsp_timeout = DELTATIME_INIT(OCSP_DEFAULT_TIMEOUT);
-enum ocsp_method ocsp_method = OCSP_METHOD_GET;
-int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
-deltatime_t ocsp_cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE);
-deltatime_t ocsp_cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE);
-bool ocsp_strict = false;
-bool ocsp_enable = false;
+struct x509_ocsp_config x509_ocsp = {
+	.uri = NULL,
+	.trust_name = NULL,
+	.timeout = DELTATIME_INIT(OCSP_DEFAULT_TIMEOUT),
+	.method = OCSP_METHOD_GET,
+	.cache_size = OCSP_DEFAULT_CACHE_SIZE,
+	.cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE),
+	.cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE),
+	.strict = false,
+	.enable = false,
+};
