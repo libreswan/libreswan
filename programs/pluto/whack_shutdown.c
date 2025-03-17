@@ -194,11 +194,6 @@ void exit_epilogue(void)
 	 */
 	stop_crl_fetch_helper(logger);
 	/*
-	 * free the crl list that the fetch-helper is currently
-	 * processing
-	 */
-	free_crl_fetch();
-	/*
 	 * free the crl requests that are waiting to be picked and
 	 * processed by the fetch-helper.
 	 */

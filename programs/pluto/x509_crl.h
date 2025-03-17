@@ -43,8 +43,6 @@ void list_crl_fetch_requests(struct show *s, bool utc);
 extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
-extern void free_crl_fetch(void);
-
 extern deltatime_t crl_fetch_timeout;
 extern char *curl_iface;
 extern bool crl_strict;

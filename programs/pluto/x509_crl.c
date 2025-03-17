@@ -703,10 +703,6 @@ void stop_crl_fetch_helper(struct logger *logger)
 	}
 }
 
-void free_crl_fetch(void)
-{
-}
-
 char *curl_iface = NULL;
 bool crl_strict = false;
 deltatime_t crl_fetch_timeout = DELTATIME_INIT(5/*seconds*/);
