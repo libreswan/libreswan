@@ -167,6 +167,7 @@ endif
 
 # PKIX: Public-Key Infrastructure using X.509
 OBJS += x509.o
+OBJS += x509_ocsp.o
 OBJS += fetch.o
 OBJS += crl_queue.o
 
@@ -305,7 +306,6 @@ OBJS += ikev2_nat.o
 OBJS += virtual_ip.o
 OBJS += packet.o pluto_constants.o
 OBJS += nss_cert_verify.o
-OBJS += nss_ocsp.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
 OBJS += nss_cert_reread.o

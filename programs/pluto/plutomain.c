@@ -47,7 +47,7 @@
 #include "fips_mode.h"
 #include "lswnss.h"
 #include "defs.h"
-#include "nss_ocsp.h"
+#include "x509_ocsp.h"
 #include "server_fork.h"		/* for init_server_fork() */
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
@@ -121,14 +121,6 @@ static int nhelpers = -1;
 static bool do_dnssec = false;
 static char *pluto_dnssec_rootkey_file = NULL;
 static char *pluto_dnssec_trusted = NULL;
-
-static char *ocsp_uri = NULL;
-static char *ocsp_trust_name = NULL;
-static deltatime_t ocsp_timeout = DELTATIME_INIT(OCSP_DEFAULT_TIMEOUT);
-static int ocsp_method = OCSP_METHOD_GET;
-static int ocsp_cache_size = OCSP_DEFAULT_CACHE_SIZE;
-static deltatime_t ocsp_cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE);
-static deltatime_t ocsp_cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE);
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
@@ -1639,10 +1631,7 @@ int main(int argc, char **argv)
 
 	if (ocsp_enable) {
 		/* may not return */
-		diag_t d = init_nss_ocsp(ocsp_uri, ocsp_trust_name,
-					 ocsp_timeout, ocsp_strict, ocsp_cache_size,
-					 ocsp_cache_min_age, ocsp_cache_min_age,
-					 (ocsp_method == OCSP_METHOD_POST), logger);
+		diag_t d = init_x509_ocsp(logger);
 		if (d != NULL) {
 			fatal(PLUTO_EXIT_NSS_FAIL, logger,
 			      "initializing NSS OCSP failed: %s",

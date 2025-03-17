@@ -30,6 +30,7 @@
 #include "defs.h"
 #include "root_certs.h"
 
+#include "x509_ocsp.h"
 #include "ikev1_cert.h"
 #include "log.h"
 #include "demux.h"

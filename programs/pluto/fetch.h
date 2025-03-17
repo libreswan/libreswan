@@ -32,9 +32,6 @@ extern void free_crl_fetch(void);
 extern deltatime_t crl_fetch_timeout;
 extern char *curl_iface;
 extern bool crl_strict;
-extern bool ocsp_strict;
-extern bool ocsp_enable;
-extern bool ocsp_post;
 extern deltatime_t crl_check_interval;
 
 #endif

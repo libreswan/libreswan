@@ -26,6 +26,7 @@
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>
+
 #include "sysdep.h"
 #include "lswnss.h"
 #include "constants.h"
@@ -45,6 +46,7 @@
 #include "ip_info.h"
 #include "log.h"
 #include "log_limiter.h"
+#include "x509_ocsp.h"
 
 bool groundhogday;
 
