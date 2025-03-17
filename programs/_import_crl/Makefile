@@ -13,15 +13,25 @@
 # for more details.
 
 PROGRAM=_import_crl
-OBJS += $(PROGRAM).o
+PROGRAM_MANPAGE =
+
+include ../../mk/dirs.mk
+include $(top_srcdir)/mk/config.mk
+
+OBJS += import_crl.o
+
+ifeq ($(USE_LIBCURL),true)
+OBJS += fetch_curl.o
+endif
+ifeq ($(USE_LDAP),true)
+OBJS += fetch_ldap.o
+endif
+
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
-PROGRAM_MANPAGE =
+USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
+USERLAND_LDFLAGS += $(CURL_LDFLAGS)
 
-ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
-else
-include ../../mk/program.mk
-endif

@@ -47,10 +47,9 @@
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
-#include "lswconf.h"
 
-#include "defs.h"		/* for so_serial_t */
-#include "log.h"
+#include "lswconf.h"
+#include "lswlog.h"
 
 /*
  * check the presence of a pattern in a character string

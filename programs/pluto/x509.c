@@ -591,7 +591,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
 	return j;
 }
 
-#if defined(LIBCURL) || defined(LIBLDAP)
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
 /*
  * Do our best to find the CA for the fetch request
  * However, this might be overkill, and only spd.this.ca should be used

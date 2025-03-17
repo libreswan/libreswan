@@ -116,7 +116,7 @@ static stf_status cert_decode_completed(struct state *st,
 
 	/* if there's an error, log it */
 
-#if defined(LIBCURL) || defined(LIBLDAP)
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
 	if (task->verified.crl_update_needed &&
 	    deltasecs(crl_check_interval) > 0) {
 		/*

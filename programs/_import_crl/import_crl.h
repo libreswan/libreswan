@@ -1,6 +1,6 @@
-/* CRL importer
+/* Dynamic fetching of X.509 CRLs, for libreswan
  *
- * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2025  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -11,12 +11,29 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
  */
-#ifndef _NSS_CRL_IMPORT
-#define _NSS_CRL_IMPORT
+
+#ifndef FETCH_H
+#define FETCH_H
+
+#include "err.h"
+#include "chunk.h"
+#include "deltatime.h"
 
 struct logger;
 
-extern int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger *logger);
+extern deltatime_t crl_fetch_timeout;
+extern char *curl_iface;
 
-#endif /* _NSS_CRL_IMPORT */
+#ifdef USE_LIBCURL
+err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger);
+void init_curl(struct logger *logger);
+void shutdown_curl(void);
+#endif
+
+#ifdef USE_LDAP
+err_t fetch_ldap(const char *url, chunk_t *blob, struct logger *logger);
+#endif
+
+#endif

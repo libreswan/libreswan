@@ -198,8 +198,6 @@ ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 OBJS += pluto_sd.o
 endif
 
-USERLAND_LDFLAGS += $(CURL_LDFLAGS)
-
 OBJS += ikev1_db_ops.o
 
 # libefence is a free memory allocation debugger
@@ -242,7 +240,6 @@ USERLAND_LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 OBJS += linux_audit.o
 
 USERLAND_LDFLAGS += $(LIBEVENT_LDFLAGS)
-USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 
 OBJS += connections.o
 OBJS += instantiate.o
@@ -307,8 +304,8 @@ OBJS += nat_traversal.o
 OBJS += ikev2_nat.o
 OBJS += virtual_ip.o
 OBJS += packet.o pluto_constants.o
-OBJS += pem.o nss_cert_verify.o
-OBJS += nss_ocsp.o nss_crl_import.o
+OBJS += nss_cert_verify.o
+OBJS += nss_ocsp.o
 OBJS += root_certs.o
 OBJS += pluto_timing.o
 OBJS += nss_cert_reread.o

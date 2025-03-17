@@ -92,7 +92,7 @@ OBJS += ttoport.o
 OBJS += binaryscale-iec-60027-2.o
 OBJS += alloc.o
 OBJS += alloc_printf.o
-
+OBJS += pem.o
 OBJS += diag.o
 OBJS += passert.o
 OBJS += pexpect.o
