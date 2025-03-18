@@ -58,7 +58,6 @@
 #include "rnd.h"
 #include "ipsec_doi.h" /* needs demux.h and state.h */
 #include "whack.h"
-#include "fetch.h"
 #include "asn1.h"
 #include "pending.h"
 #include "ikev1_hash.h"

@@ -57,7 +57,6 @@
 #include "connections.h"
 #include "state.h"
 #include "whack.h"
-#include "fetch.h"
 #include "secrets.h"
 #include "ip_address.h"
 #include "ikev2_message.h"	/* for build_ikev2_critical() */
@@ -82,7 +81,6 @@
 #include <secder.h>
 #include <ocsp.h>
 #include "crypt_hash.h"
-#include "crl_queue.h"
 #include "ip_info.h"
 
 SECItem same_shunk_as_dercert_secitem(shunk_t shunk)

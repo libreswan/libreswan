@@ -45,7 +45,6 @@
 #include "whack.h"      /* for RC_LOG */
 #include "timer.h"
 
-#include "fetch.h"
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
 #include "crypt_mac.h"

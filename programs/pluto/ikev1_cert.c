@@ -38,9 +38,8 @@
 #include "connections.h"
 #include "secrets.h"
 #include "nss_cert_verify.h"
-#include "fetch.h"		/* for oscb_enable et.al. */
 #include "pluto_x509.h"		/* for find_crl_fetch_dn() */
-#include "crl_queue.h"		/* for submit_crl_fetch_request() */
+#include "x509_crl.h"		/* for submit_crl_fetch_request() */
 
 /*
  * Decode the CERT payload of Phase 1.
@@ -129,7 +128,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	/* either something went wrong, or there were no certs */
 	if (certs.cert_chain == NULL) {
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-		if (certs.crl_update_needed && deltasecs(crl_check_interval) > 0) {
+		if (certs.crl_update_needed && deltasecs(x509_crl.check_interval) > 0) {
 			/*
 			 * When a strict crl check fails, the certs
 			 * are deleted and CRL_NEEDED is set.

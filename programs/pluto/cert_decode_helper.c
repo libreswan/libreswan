@@ -39,10 +39,9 @@
 #include "id.h"
 #include "nss_cert_verify.h"
 #include "connections.h"
-#include "fetch.h"
 #include "root_certs.h"
 #include "x509.h"
-#include "crl_queue.h"
+#include "x509_crl.h"		/* for crl_check_interval; */
 #include "log.h"
 
 /*
@@ -112,14 +111,14 @@ static stf_status cert_decode_completed(struct state *st,
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	if (task->verified.crl_update_needed &&
-	    deltasecs(crl_check_interval) > 0) {
+	    deltasecs(x509_crl.check_interval) > 0) {
 		/*
 		 * When a strict crl check fails, the certs are
-		 * deleted and CRL_NEEDED is set.
+		 * deleted and X509_CRL.NEEDED is set.
 		 *
 		 * When a non-strict crl check fails, it is left to
 		 * the crl fetch job to do a refresh (and
-		 * crl_update_needed is left unset).
+		 * x509_crl.update_needed is left unset).
 		 *
 		 * Trigger a refresh.
 		 */

@@ -48,7 +48,7 @@
 #include "log.h"
 #include "log_limiter.h"
 #include "x509_ocsp.h"
-#include "fetch.h"	/* for crl_strict */
+#include "x509_crl.h"		/* for crl_strict; */
 
 bool groundhogday;
 
@@ -151,7 +151,7 @@ static void set_rev_params(CERTRevocationFlags *rev)
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
 	name_buf omb;
 	dbg("crl_strict: %s, ocsp: %s, ocsp_strict: %s, ocsp_post: %s",
-	    bool_str(crl_strict),
+	    bool_str(x509_crl.strict),
 	    bool_str(x509_ocsp.enable),
 	    bool_str(x509_ocsp.strict),
 	    str_sparse(&ocsp_method_names, x509_ocsp.method, &omb));
@@ -590,7 +590,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	bool crl_update_needed = crl_update_check(handle, result.cert_chain);
 	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
-		if (crl_strict) {
+		if (x509_crl.strict) {
 			llog(RC_LOG, logger,
 			     "missing or expired CRL in strict mode, failing pending update and forcing CRL update");
 			release_certs(&result.cert_chain);

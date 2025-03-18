@@ -39,7 +39,7 @@
 #include "initiate.h"			/* for initiate_connection() */
 #include "acquire.h"			/* for initiate_ondemand() */
 #include "keys.h"			/* for load_preshared_secrets() */
-#include "crl_queue.h"			/* for submit_crl_fetch_requests() */
+#include "x509_crl.h"			/* for submit_crl_fetch_requests() */
 #include "nss_cert_reread.h"		/* for reread_cert_connections() */
 #include "root_certs.h"			/* for free_root_certs() */
 #include "server.h"			/* for listening; */

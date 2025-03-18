@@ -13,19 +13,19 @@
  * for more details.
  */
 
-#ifndef CRL_QUEUE
-#define CRL_QUEUE
+#ifndef X509_CRL
+#define X509_CRL
 
 #include <stdbool.h>
-
-#include <secitem.h>
 
 #include "chunk.h"
 #include "shunk.h"
 #include "realtime.h"
-#include "lswlog.h"
+#include "asn1.h"
 
+struct logger;
 struct crl_fetch_request;
+struct show;
 
 void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger);
 void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger);
@@ -34,10 +34,19 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url/*could be empty*/,
 			   struct crl_fetch_request **requests,
 			   struct logger *logger);
 
-typedef bool (fetch_crl_fn)(chunk_t issuer, const char *url, struct logger *logger);
-void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *logger);
-
 void free_crl_queue(void);
 void list_crl_fetch_requests(struct show *s, bool utc);
+
+extern void start_crl_fetch_helper(struct logger *logger);
+extern void stop_crl_fetch_helper(struct logger *logger);
+
+struct x509_crl_config {
+	deltatime_t timeout;
+	char *curl_iface;
+	bool strict;
+	deltatime_t check_interval;
+};
+
+extern struct x509_crl_config x509_crl;
 
 #endif
