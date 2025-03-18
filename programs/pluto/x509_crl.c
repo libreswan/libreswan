@@ -682,9 +682,16 @@ void stop_crl_fetch_helper(struct logger *logger)
 		 */
 		llog(RC_LOG, logger, "shutting down the CRL fetch helper thread");
 		pexpect(exiting_pluto);
-		/* wake the sleeping dragon from its slumber */
-		submit_crl_fetch_requests(NULL, logger);
-		/* use a timer? */
+		/*
+		 * Wake the sleeping dragon from its slumber.
+		 */
+		pthread_mutex_lock(&crl_queue_mutex);
+		ldbg(logger, "CRL: poke the sleeping dragon (fetch thread), as shutting down");
+		pthread_cond_signal(&crl_queue_cond);
+		pthread_mutex_unlock(&crl_queue_mutex);
+		/*
+		 * Use a timer?
+		 */
 		int status = pthread_join(fetch_thread_id, NULL);
 		if (status != 0) {
 			llog_error(logger, status, "problem waiting for crl fetch thread to exit");
