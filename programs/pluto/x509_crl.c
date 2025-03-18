@@ -231,6 +231,7 @@ static CERTCrlDistributionPoints *get_cert_distribution_points(CERTCertificate *
 	return dps;
 }
 
+static
 void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url,
 			   struct crl_fetch_request **requests,
 			   struct logger *logger)
@@ -301,11 +302,11 @@ void list_crl_fetch_requests(struct show *s, bool utc)
 			for (struct crl_fetch_queue *req = crl_fetch_queue; req != NULL; req = req->next) {
 				realtime_buf rtb;
 				show(s, "%s, trials: %d",
-					     str_realtime(req->request_time, utc, &rtb),
-					     req->trials);
+				     str_realtime(req->request_time, utc, &rtb),
+				     req->trials);
 				dn_buf buf;
 				show(s, "       issuer:  '%s'",
-					     str_dn(ASN1(req->issuer_dn), &buf));
+				     str_dn(ASN1(req->issuer_dn), &buf));
 				list_distribution_points(s, req->distribution_points);
 			}
 		}
