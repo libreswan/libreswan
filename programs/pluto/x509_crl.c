@@ -1,6 +1,6 @@
 /* CRL fetch queue, for libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2018,2025  Andrew Cagney
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -158,6 +158,7 @@ static void unlocked_append_distribution_points(struct crl_distribution_point *v
 	}
 }
 
+static
 void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger)
 {
 	dbg("CRL: submitting crl fetch requests");
