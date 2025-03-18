@@ -44,8 +44,9 @@ static pthread_cond_t crl_queue_cond = PTHREAD_COND_INITIALIZER;
 static struct crl_distribution_point *volatile crl_distribution_queue = NULL;
 
 struct crl_distribution_point {
-	realtime_t request_time;
-	unsigned trials;
+	realtime_t first_request;
+	realtime_t last_request;
+	unsigned attempts;
 	char *url;
 	struct crl_issuer *issuers;
 	struct crl_distribution_point *next;
@@ -101,6 +102,7 @@ static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 		 */
 		*dp = alloc_thing(struct crl_distribution_point, "add distribution point");
 		(*dp)->url = clone_hunk_as_string(url, "dp url");
+		(*dp)->first_request = realnow();
 	}
 	/*
 	 * Find the issuer.
@@ -225,18 +227,24 @@ void list_crl_fetch_requests(struct show *s, bool utc)
 			show_blank(s);
 			show(s, "List of CRL fetch requests:");
 			show_blank(s);
+			const char prefix[] = "       ";
 			for (struct crl_distribution_point *dp = crl_distribution_queue;
 			     dp != NULL; dp = dp->next) {
 				show(s, "%s", dp->url);
-				realtime_buf rtb;
-				show(s, "       %s, trials: %u",
-				     str_realtime(dp->request_time, utc, &rtb),
-				     dp->trials);
+				SHOW_JAMBUF(s, buf) {
+					jam_string(buf, prefix);
+					jam_realtime(buf, dp->first_request, utc);
+					if (!is_realtime_epoch(dp->last_request)) {
+						jam_string(buf, ", ");
+						jam_realtime(buf, dp->last_request, utc);
+					}
+					jam(buf, ", attempts: %u", dp->attempts);
+				}
 				for (struct crl_issuer *issuer = dp->issuers;
 				     issuer != NULL; issuer = issuer->next) {
 					dn_buf buf;
-					show(s, "       %*s'%s'",
-					     10, (issuer == dp->issuers ? "issuer:" : ""),
+					show(s, "%s%-10s'%s'",
+					     prefix, (issuer == dp->issuers ? "issuer:" : ""),
 					     str_dn(ASN1(issuer->dn), &buf));
 				}
 			}
@@ -261,7 +269,7 @@ void free_crl_queue(void)
 /*
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
-static bool fetch_crl(const char *url, struct logger *logger)
+static bool fetch_crl(const char *url, unsigned attempt, uintmax_t run_nr, struct logger *logger)
 {
 	deltatime_buf td;
 
@@ -273,12 +281,13 @@ static bool fetch_crl(const char *url, struct logger *logger)
 		NULL,
 	};
 
-	ldbg(logger, "importing CRL %s using: %s %s %s %s",
-	     url, arg[0], arg[1], arg[2], arg[3]);
+	ldbg(logger, "CRL %ju: importing %s using: %s %s %s %s",
+	     run_nr, url, arg[0], arg[1], arg[2], arg[3]);
 
 	int pfd[2];
 	if (pipe(pfd) == -1) {
-		llog_error(logger, errno, "importing CRL %s failed, pipe()", url);
+		llog_error(logger, errno, "CRL %ju: importing %s failed, pipe()",
+			   run_nr, url);
 		return false;
 	}
 
@@ -291,7 +300,8 @@ static bool fetch_crl(const char *url, struct logger *logger)
 	pid_t child = fork();
 
 	if (child < 0) {
-		llog_error(logger, errno, "importing CRL %s failed, fork()", url);
+		llog_error(logger, errno, "CRL %ju: importing %s failed, fork()",
+			   run_nr, url);
 		return false;
 	}
 
@@ -305,47 +315,57 @@ static bool fetch_crl(const char *url, struct logger *logger)
 		close(pfd[1]);
 
 		execve(arg[0], arg, NULL);
-		llog_error(logger, errno, "importing CRL %s failed, execve()", url);
+		llog_error(logger, errno, "CRL %ju: importing %s failed, execve()",
+			   run_nr, url);
 		exit(127);
 	}
 
 	/*parent*/
 
 	if (close(pfd[1]) == -1) {
-		llog_error(logger, errno, "importing CRL %s failed, close(pfd[1])", url);
+		llog_error(logger, errno, "CRL %ju: importing %s failed, close(pfd[1])",
+			   run_nr, url);
 		return false;
 	}
 
 	int wstatus;
 	waitpid(child, &wstatus, 0);
 
+	uint8_t namebuf[1023];
+	ssize_t l = read(pfd[0], namebuf, sizeof(namebuf));
+	int error = errno;
+	chunk_t output = chunk2(namebuf, l);
+
+	if (l < 0) {
+		llog_error(logger, error, "CRL %ju: importing %s failed, read(pfd[0])", run_nr, url);
+		llog_dump_hunk(RC_LOG, logger, output);
+		return false;
+	}
+
+
 	if (!WIFEXITED(wstatus)) {
-		llog_error(logger, 0, "importing CRL %s failed, helper aborted with waitpid status %d",
-			   url, wstatus);
+		llog_error(logger, 0, "CRL %ju: importing %s failed, helper aborted with waitpid status %d",
+			   run_nr, url, wstatus);
+		llog_dump_hunk(RC_LOG, logger, output);
 		return false;
 	}
 
 	int ret = WEXITSTATUS(wstatus);
 	if (ret != 0) {
-		llog_error(logger, 0, "importing CRL %s failed, helper exited with non-zero status %d",
-			   url, ret);
+		llog_error(logger, 0, "CRL %ju: importing %s failed, helper exited with non-zero status %d",
+			   run_nr, url, ret);
+		llog_dump_hunk(RC_LOG, logger, output);
 		return false;
 	}
 
-	ldbg(logger, "CRL helper for %s ran successfully", url);
-
-	uint8_t namebuf[1023];
-	ssize_t l = read(pfd[0], namebuf, sizeof(namebuf));
-	if (l < 0) {
-		llog_error(logger, errno, "importing CRL %s failed, read(pfd[0])", url);
-		return false;
-	}
-
+	ldbg(logger, "CRL %ju: import for %s ran successfully",
+	     run_nr, url);
 	ldbg(logger, "CRL helper for %s output %zu bytes:", url, l);
-	ldbg_dump(logger, namebuf, l);
+	ldbg_hunk(logger, output);
 
 	if (close(pfd[0]) == -1) {
-		llog_error(logger, errno, "importing CRL %s failed, close(pfd[0])", url);
+		llog_error(logger, errno, "CRL %ju: importing %s failed, close(pfd[0])",
+			   run_nr, url);
 		return false;
 	}
 
@@ -370,19 +390,19 @@ static bool fetch_crl(const char *url, struct logger *logger)
 	CERTCertificate *cacert =  CERT_FindCertByName(handle, &name);
 	if (cacert == NULL) {
 		dn_buf sdn;
-		ldbg_nss_error(logger, "importing CRL %s failed, could not find cert by name %s",
-			       url, str_dn(ASN1(sign_dn), &sdn));
+		ldbg_nss_error(logger, "CRL %ju: importing %s failed, could not find cert by name %s",
+			       run_nr, url, str_dn(ASN1(sign_dn), &sdn));
 		return false;
 	}
 
 	CERT_CRLCacheRefreshIssuer(handle, &cacert->derSubject);
 
 	LLOG_JAMBUF(RC_LOG, logger, buf) {
-		jam_string(buf, "imported CRL '");
+		jam(buf, "CRL %ju: imported CRL '", run_nr);
 		jam_string(buf, url);
 		jam_string(buf, "' signed by '");
 		jam_dn(buf, ASN1(sign_dn), jam_sanitized_bytes);
-		jam_string(buf, "'");
+		jam(buf, "' after %u attempt(s)", attempt);
 	}
 
 	CERT_DestroyCertificate(cacert);
@@ -475,11 +495,13 @@ static void *fetch_thread(void *arg UNUSED)
 {
 	dbg("CRL: fetch thread started");
 	/* XXX: on thread so no whack */
-	struct logger *logger = string_logger(HERE, "crl thread: "); /* must free */
+	struct logger *logger = string_logger(HERE, "crl thread"); /* must free */
 	pthread_mutex_lock(&crl_queue_mutex);
+	uintmax_t run_nr = 0;
 	while (!exiting_pluto) {
 		/* if there's something process it */
-		ldbg(logger, "CRL: the sleeping dragon awakes");
+		run_nr++;
+		ldbg(logger, "CRL %ju: the sleeping dragon awakes", run_nr);
 		unsigned requests_processed = 0;
 		for (struct crl_distribution_point *volatile *dp = &crl_distribution_queue;
 		     (*dp) != NULL && !exiting_pluto; /*see-below*/) {
@@ -493,12 +515,14 @@ static void *fetch_thread(void *arg UNUSED)
 			 * CRL_DISTRIBUTION_QUEUE or a queue entry's
 			 * ISSUERs.
 			 */
-			ldbg(logger, "CRL:   unlocking crl queue");
+			ldbg(logger, "CRL %ju:   unlocking crl queue", run_nr);
+			(*dp)->attempts++; /* new attempt */
+			(*dp)->last_request = realnow();
 			pthread_mutex_unlock(&crl_queue_mutex);
 			{
-				ldbg(logger, "CRL:   fetching: %s", (*dp)->url);
-				fetched = fetch_crl((*dp)->url, logger);
-				ldbg(logger, "CRL:   locked crl queue");
+				ldbg(logger, "CRL %ju:   fetching: %s", run_nr, (*dp)->url);
+				fetched = fetch_crl((*dp)->url, (*dp)->attempts, run_nr, logger);
+				ldbg(logger, "CRL %ju:   locked crl queue", run_nr);
 			}
 			pthread_mutex_lock(&crl_queue_mutex);
 			if (fetched) {
@@ -506,14 +530,13 @@ static void *fetch_thread(void *arg UNUSED)
 				free_crl_distribution_point(dp);
 				continue;
 			}
-			(*dp)->trials++;
 			dp = &(*dp)->next;
 		}
 		if (exiting_pluto) {
 			break;
 		}
-		ldbg(logger, "CRL: %u requests processed, the dragon sleeps",
-		     requests_processed);
+		ldbg(logger, "CRL %ju: %u requests processed, the dragon sleeps",
+		     run_nr, requests_processed);
 		int status = pthread_cond_wait(&crl_queue_cond, &crl_queue_mutex);
 		passert(status == 0);
 	}
