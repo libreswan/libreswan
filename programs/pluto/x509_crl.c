@@ -117,36 +117,32 @@ static void unlocked_append_distribution_point(struct crl_distribution_point *vo
 }
 
 static void unlocked_append_distribution_points(struct crl_distribution_point *volatile *dps,
-						shunk_t url, CERTCrlDistributionPoints *cert_dps)
+						CERTCrlDistributionPoints *cert_dps)
 {
-	if (cert_dps != NULL) {
+	/*
+	 * Certificate can have multiple distribution points stored in
+	 * a NULL terminated ARRAY.
+	 */
+	for (CRLDistributionPoint **points = cert_dps->distPoints;
+	     points != NULL && *points != NULL; points++) {
+		CRLDistributionPoint *point = *points;
 		/*
-		 * Certificate can have multiple distribution points
-		 * stored in a NULL terminated ARRAY.
+		 * Each point has a circular list of
+		 * CERTGeneralNames.
 		 */
-		for (CRLDistributionPoint **points = cert_dps->distPoints;
-		     points != NULL && *points != NULL; points++) {
-			CRLDistributionPoint *point = *points;
-			/*
-			 * Each point has a circular list of
-			 * CERTGeneralNames.
-			 */
-			if (point->distPointType == generalName &&
-			    point->distPoint.fullName != NULL) {
-				CERTGeneralName *first_name, *name;
-				first_name = name = point->distPoint.fullName;
-				do {
-					if (name->type == certURI) {
-						/* Add single point */
-						shunk_t u = same_secitem_as_shunk(name->name.other);
-						unlocked_append_distribution_point(dps, u);
-					}
-					name = CERT_GetNextGeneralName(name);
-				} while (name != NULL && name != first_name);
-			}
+		if (point->distPointType == generalName &&
+		    point->distPoint.fullName != NULL) {
+			CERTGeneralName *first_name, *name;
+			first_name = name = point->distPoint.fullName;
+			do {
+				if (name->type == certURI) {
+					/* Add single point */
+					shunk_t u = same_secitem_as_shunk(name->name.other);
+					unlocked_append_distribution_point(dps, u);
+				}
+				name = CERT_GetNextGeneralName(name);
+			} while (name != NULL && name != first_name);
 		}
-	} else {
-		unlocked_append_distribution_point(dps, url);
 	}
 }
 
@@ -194,19 +190,13 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
 		return;
 	}
 
-	ldbg(logger, "CRL: submitting crl fetch requests");
+	ldbg(logger, "CRL: submitting crl fetch request");
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
+		/* look for an existing entry */
 		struct crl_fetch_queue *volatile *entry;
 		for (entry = &crl_fetch_queue; *entry != NULL; entry = &(*entry)->next) {
 			if (same_dn(issuer_dn, ASN1((*entry)->issuer_dn))) {
-				/* there is already a fetch request */
-				dn_buf dnb;
-				ldbg(logger, "CRL:   adding distribution point to existing fetch request: %s",
-				     str_dn(issuer_dn, &dnb));
-				/* there might be new distribution points */
-				unlocked_append_distribution_points(&(*entry)->distribution_points,
-								    request_url, request_dps);
 				break;
 			}
 		}
@@ -222,10 +212,17 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
 				.logger = clone_logger(logger, HERE),
 				.next = NULL,
 			};
-			/* copy distribution points */
-			unlocked_append_distribution_points(&new_entry.distribution_points,
-							    request_url, request_dps);
 			*entry = clone_thing(new_entry, "crl entry");
+		} else {
+			dn_buf dnb;
+			ldbg(logger, "CRL:   adding distribution point to existing fetch request: %s",
+			     str_dn(issuer_dn, &dnb));
+		}
+		/* now add the distribution point */
+		if (request_dps != NULL) {
+			unlocked_append_distribution_points(&(*entry)->distribution_points, request_dps);
+		} else {
+			unlocked_append_distribution_point(&(*entry)->distribution_points, request_url);
 		}
 	}
 	ldbg(logger, "CRL: poke the sleeping dragon (fetch thread)");
