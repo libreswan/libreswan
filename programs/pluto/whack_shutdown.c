@@ -188,16 +188,10 @@ void exit_epilogue(void)
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	/*
-	 * Wait for the CRL fetch handler to finish its current task.
-	 * Without this CRL fetch requests are left hanging and, after
-	 * the NSS DB has been closed (below), the helper can crash.
-	 */
-	stop_crl_fetch_helper(logger);
-	/*
 	 * free the crl requests that are waiting to be picked and
 	 * processed by the fetch-helper.
 	 */
-	free_crl_queue();
+	shutdown_x509_crl_queue(logger);
 #endif
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
