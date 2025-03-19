@@ -14,26 +14,26 @@
  *
  */
 
-#ifndef FETCH_H
-#define FETCH_H
+#ifndef IMPORT_CRL_H
+#define IMPORT_CRL_H
 
+#include <sys/types.h>		/* for time_t */
+
+#include "verbose.h"
 #include "err.h"
 #include "chunk.h"
 #include "deltatime.h"
 
 struct logger;
 
-extern deltatime_t crl_fetch_timeout;
 extern char *curl_iface;
 
 #ifdef USE_LIBCURL
-err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger);
-void init_curl(struct logger *logger);
-void shutdown_curl(void);
+err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob, struct verbose verbose);
 #endif
 
 #ifdef USE_LDAP
-err_t fetch_ldap(const char *url, chunk_t *blob, struct logger *logger);
+err_t fetch_ldap(const char *url, time_t timeout, chunk_t *blob, struct verbose verbose);
 #endif
 
 #endif
