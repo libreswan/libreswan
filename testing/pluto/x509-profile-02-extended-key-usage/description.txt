@@ -12,16 +12,36 @@ See https://datatracker.ietf.org/doc/html/rfc4945#section-5.1.3.12
 
    o  Otherwise, reject cert.
 
-this tests:
+See `westrun.sh` for the combinations tried.
 
-  west-eku-missing                      establish
-  west-eku-anyExtendedKeyUsage          establish
-  west-eku-ipsecIKE			establish
-  west-eku-serverAuth			requires config
-  west-eku-clientAuth			requires config
-  west-eku-codeSigning			reject
-  west-eku-ipsecIKE-codeSigning		establish
+The script eku.sh
 
-Note: the basic certs all have no EKU so the test with
-west-eku-missing is redundant
+  - generates a cert using `ipsec certutil` with EKU based on param
 
+  - dumps the cert for visual verification
+
+  - starts pluto
+
+  - generates a connection with name based on param
+
+  - tries to establish the connection
+
+  - shuts down pluto
+
+For instance:
+
+      ./eku.sh codeSigning-ipsecIKE
+
+generate the cert with:
+
+   ipsec certutil -n west-eku-codeSigning-ipsecIKE --extKeyUsage codeSigning,ipsecIKE ...
+
+and the connection with:
+
+   ipsec whack --name west-eku-codeSigning-ipsecIKE --cert=west-eku-codeSigning-ipsecIKE ...
+
+Note: since all the basic certs no EKU the test with west-eku-missing
+(i.e., no EKU) is redundant
+
+Note: pluto is started a-fresh so that each exchange uses the state
+serial numbers #1 and #2.

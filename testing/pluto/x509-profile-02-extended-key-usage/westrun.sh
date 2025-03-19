@@ -1,9 +1,19 @@
-run() { local l=$1 ; /testing/x509/import.sh real/mainca/$l.all.p12 ; set ipsec certutil -L -n $l ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $l ; }
+# these all work
 
-run west-eku-missing
-run west-eku-ipsecIKE
-run west-eku-x509Any
-run west-eku-serverAuth
-run west-eku-clientAuth
-run west-eku-codeSigning
-run west-eku-ipsecIKE-codeSigning
+./eku.sh
+./eku.sh ipsecIKE
+./eku.sh x509Any
+
+# only those containing ipsecIKE should work
+./eku.sh serverAuth
+./eku.sh serverAuth-ipsecIKE
+./eku.sh serverAuth-critical
+./eku.sh clientAuth
+./eku.sh clientAuth-ipsecIKE
+./eku.sh clientAuth-critical
+
+# only those containing ipsecIKE should work
+./eku.sh codeSigning
+./eku.sh codeSigning-ipsecIKE
+./eku.sh codeSigning-serverAuth
+./eku.sh codeSigning-clientAuth
