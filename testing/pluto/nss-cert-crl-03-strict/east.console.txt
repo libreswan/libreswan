@@ -64,7 +64,7 @@ east #
 List of CRLs:
  
 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
-revoked certs: 2
+revoked certs: 1
 updates: this TIMESTAMP
          next TIMESTAMP
 east #
