@@ -169,7 +169,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		     str_endpoint(&remote_endpoint, &rb),
 		     interface->io->protocol->name,
 		     serialno);
-		llog_dump_hunk(DEBUG_STREAM, logger, packet);
+		llog_hunk(DEBUG_STREAM, logger, packet);
 	}
 
 	if (!impair_outbound(interface, packet, &remote_endpoint, logger)) {

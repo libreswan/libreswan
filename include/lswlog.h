@@ -219,7 +219,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 void llog_dump(lset_t rc_flags,
 	       const struct logger *log,
 	       const void *p, size_t len);
-#define llog_dump_hunk(RC_FLAGS, LOGGER, HUNK)				\
+#define llog_hunk(RC_FLAGS, LOGGER, HUNK)				\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
