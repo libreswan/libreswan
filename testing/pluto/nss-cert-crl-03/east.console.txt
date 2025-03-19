@@ -57,8 +57,8 @@ east #
 east #
  # too quick for the exchange.
 east #
- ../../guestbin/wait-for-pluto.sh 'CRL 2: imported CRL'
-crl thread: CRL 2: imported CRL 'http://nic.testing.libreswan.org/revoked.crl' signed by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org' after 1 attempt(s)
+ ../../guestbin/wait-for-pluto.sh 'imported CRL'
+CRL: imported CRL 'http://nic.testing.libreswan.org/revoked.crl' signed by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org' after 1 attempt(s)
 east #
  # check the queue is drained
 east #
