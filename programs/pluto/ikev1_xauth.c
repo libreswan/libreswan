@@ -1234,6 +1234,49 @@ static bool do_file_authentication(struct ike_sa *ike, const char *name,
 static pam_auth_callback_fn ikev1_xauth_callback;	/* type assertion */
 #endif
 
+
+static bool do_file_pam_addresspool(struct ike_sa *ike, const char *name, const char *connname)
+{
+	char addresspoolfilepath[PATH_MAX];
+	char line[1024]; /* we hope that this is more than enough */
+
+	snprintf(addresspoolfilepath, sizeof(addresspoolfilepath), "/tmp/pam-addresspool_%s", name);
+
+	FILE *fp = fopen(addresspoolfilepath, "r");
+	if (fp == NULL) {
+		/* unable to open the password file */
+		llog(RC_LOG, ike->sa.logger, "XAUTH: %s [%s] unable to open pam addresspool file (%s) ", connname, name, addresspoolfilepath);
+		return false;
+	}
+
+	llog(RC_LOG, ike->sa.logger, "XAUTH: %s [%s] pam addresspool file (%s) open.", connname, name, addresspoolfilepath);
+
+	/** simple stuff read in a line then go through positioning
+	 * userid, passwd and conniectionname at the beginning of each of the
+	 * memory locations of our real data and replace the ':' with '\0'
+	 */
+
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		char *addresspool = NULL;
+		/* ignore empty or comment line */
+		if (*line == '\0' || *line == '#')
+			continue;
+
+		/* get userid */
+		addresspool = line;
+		dbg("XAUTH: %s [%s] found addresspool(%s)", connname, name, addresspool);
+
+		if (addresspool != NULL && addresspool[0] != '\0') {
+			add_xauth_addresspool(ike->sa.st_connection, name, addresspool, ike->sa.logger);
+		}
+	}
+
+	fclose(fp);
+	/* remove the temporary file */
+	unlink(addresspoolfilepath);
+	return true;
+}
+
 static stf_status ikev1_xauth_callback(struct ike_sa *ike,
 				       struct msg_digest *md UNUSED,
 				       const char *name, bool results)
@@ -1260,6 +1303,10 @@ static stf_status ikev1_xauth_callback(struct ike_sa *ike,
 		llog(RC_LOG, ike->sa.logger,
 		     "XAUTH: User %s: Authentication Successful",
 		     name);
+
+		/*check for address pool from PAM*/
+		do_file_pam_addresspool(ike, name, ike->sa.st_connection->name);
+
 		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(ike, XAUTH_STATUS_OK);
 
