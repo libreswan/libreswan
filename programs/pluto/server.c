@@ -954,7 +954,8 @@ static server_fork_cb addconn_exited; /* type assertion */
 
 static stf_status addconn_exited(struct state *null_st UNUSED,
 				 struct msg_digest *null_mdp UNUSED,
-				 int status, void *context UNUSED,
+				 int status, shunk_t output UNUSED,
+				 void *context UNUSED,
 				 struct logger *logger UNUSED)
 {
 	dbg("reaped addconn helper child (status %d)", status);
@@ -1063,6 +1064,7 @@ void run_server(char *conffile, struct logger *logger)
 		DISCARD_CONST(char *, "--autoall"), NULL };
 	char *newenv[] = { NULL };
 	server_fork_exec(addconn_path, newargv, newenv,
+			 null_shunk, LOG_STREAM/*not-whack!*/,
 			 addconn_exited, NULL, logger);
 
 	/* parent continues */

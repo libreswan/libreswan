@@ -1765,7 +1765,7 @@ int main(int argc, char **argv)
 	start_server_helpers(nhelpers, logger);
 	init_kernel(logger);
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-	start_crl_fetch_helper(logger);
+	init_x509_crl_queue(logger);
 #endif
 	init_labeled_ipsec(logger);
 #ifdef USE_SYSTEMD_WATCHDOG

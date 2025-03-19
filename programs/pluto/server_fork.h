@@ -16,10 +16,13 @@
 #ifndef SERVER_FORK_H
 #define SERVER_FORK_H
 
+#include "chunk.h"
+
 struct logger;
 struct msg_digest;
 struct state;
 struct show;
+enum stream;
 
 /*
  * Create a child process using fork()
@@ -40,7 +43,8 @@ struct show;
 
 typedef stf_status server_fork_cb(struct state *st,
 				  struct msg_digest *md,
-				  int status, void *context,
+				  int status, shunk_t output,
+				  void *context,
 				  struct logger *logger);
 typedef int server_fork_op(void *context, struct logger *logger);
 
@@ -48,11 +52,15 @@ extern int server_fork(const char *name,
 		       so_serial_t serialno,
 		       struct msg_digest *md,
 		       server_fork_op *op,
-		       server_fork_cb *callback, void *callback_context,
+		       server_fork_cb *callback,
+		       void *callback_context,
 		       struct logger *logger);
+
 void server_fork_exec(const char *path,
 		      char *argv[], char *envp[],
-		      server_fork_cb *callback, void *callback_context,
+		      shunk_t input, enum stream output,
+		      server_fork_cb *callback,
+		      void *callback_context,
 		      struct logger *logger);
 
 void server_fork_sigchld_handler(struct logger *logger);

@@ -109,7 +109,8 @@ static server_fork_cb pam_callback; /* type assertion */
 
 static stf_status pam_callback(struct state *st,
 			       struct msg_digest *md,
-			       int status, void *arg,
+			       int status, shunk_t output UNUSED,
+			       void *arg,
 			       struct logger *logger)
 {
 	struct pam_auth *pamauth = arg;

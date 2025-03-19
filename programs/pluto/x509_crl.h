@@ -29,11 +29,10 @@ struct show;
 
 void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger);
 
-void free_crl_queue(void);
 void list_crl_fetch_requests(struct show *s, bool utc);
 
-extern void start_crl_fetch_helper(struct logger *logger);
-extern void stop_crl_fetch_helper(struct logger *logger);
+extern void init_x509_crl_queue(struct logger *logger);
+void shutdown_x509_crl_queue(struct logger *logger);
 
 struct x509_crl_config {
 	deltatime_t timeout;
