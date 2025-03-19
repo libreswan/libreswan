@@ -402,12 +402,6 @@ real        mainca           {east,west}-nosan                    0 1 1 / digita
 real        mainca           semiroad                             1 1 1 / digitalSignature  /
 real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
 real        otherca          other{east,west}                     1 1 1 / digitalSignature  /
-# Key Usage aka KU
-real        mainca           west-ku-missing                      1 1 1 / /                             /
-real        mainca           west-ku-digitalSignature             1 1 1 / digitalSignature              /
-real        mainca           west-ku-nonRepudiation               1 1 1 / nonRepudiation                /
-real        mainca           west-ku-digitalSignature-certSigning 1 1 1 / digitalSignature,certSigning  /
-real        mainca           west-ku-certSigning                  1 1 1 / certSigning                   /
 EOF
 
 while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
