@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 /testing/x509/import.sh real/mainca/east.all.cert
-/testing/x509/import.sh real/otherca/otherwest.all.p12
+/testing/x509/import.sh otherca/otherwest.p12
 # check
 ipsec certutil -L
 

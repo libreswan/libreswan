@@ -12,8 +12,8 @@ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
 west #
  # load a distraction CA and Cert
 west #
- /testing/x509/import.sh real/otherca/otherwest.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
+ /testing/x509/import.sh otherca/otherwest.p12
+ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n otherca -t CT,,
 west #

@@ -5,7 +5,7 @@
 
 # Add a distracting CA; avoids NSS aborting for having no CA at all
 # (?!?)
-/testing/x509/import.sh real/otherca/othereast.all.p12
+/testing/x509/import.sh otherca/othereast.p12
 
 # check
 ipsec certutil -L
