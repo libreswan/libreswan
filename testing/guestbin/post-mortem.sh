@@ -244,7 +244,7 @@ fi
 CHECK system logs
 
 if test -x /usr/bin/journalctl ; then
-    journalctl --dmesg --boot -0 > ${log_prefix}.journal.log
+    journalctl --boot -0 > ${log_prefix}.journal.log
     PASS
 else
     SKIP
