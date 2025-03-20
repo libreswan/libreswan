@@ -48,6 +48,14 @@
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
 #endif
 
+enum whack_command {
+	WHACK_UNUSED,
+	WHACK_REREADALL,
+	WHACK_FETCHCRLS,
+	WHACK_REREADSECRETS,
+	WHACK_REREADCERTS,
+};
+
 /*
  * Since the message remains on one host, native representation is
  * used.
@@ -147,6 +155,9 @@ struct whack_message {
 	 * If you change anything earlier in this struct, update
 	 * WHACK_BASIC_MAGIC so DO NOT DO THAT!
 	 */
+
+	/* when non-zero, act on this */
+	enum whack_command whack_command;
 
 	bool whack_globalstatus;
 	bool whack_clear_stats;
@@ -426,12 +437,6 @@ struct whack_message {
 	bool whack_checkpubkeys;	/* --checkpubkeys */
 	bool whack_listpubkeys;		/* --listpubkeys */
 	lset_t whack_list;
-
-	/* for WHACK_REREAD */
-
-	bool whack_rereadcerts;
-	bool whack_rereadsecrets;
-	bool whack_fetchcrls;
 
 	/* for connalias string */
 	char *connalias;
