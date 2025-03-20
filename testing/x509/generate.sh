@@ -370,9 +370,9 @@ real/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical
 fake/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 real/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
 fake/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
-real/otherca  otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+otherca       otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 # broken root CA, can't be used to verify
-real/bc-n-ca  bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
+bc-n-ca       bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
 # generate end certs where needed
@@ -413,9 +413,9 @@ real        mainca           key4096                              1 1 1 / digita
 real        mainca           {east,west}-nosan                    0 1 1 / digitalSignature  /
 real        mainca           semiroad                             1 1 1 / digitalSignature  /
 real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
-real        otherca          other{east,west}                     1 1 1 / digitalSignature  /
-# Use the CA with BC=n to sign some certs
-real        bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
+.           otherca          other{east,west}                     1 1 1 / digitalSignature  /
+# Use the (broken) CA with BC=n to sign a cert
+.           bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 EOF
 
 while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
@@ -447,7 +447,7 @@ real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  cert
 real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
 real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
 real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
-# Cert chain with intermediate BC missing
+# Cert chain with intermediate BC CA=Y missing
 real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
 real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
 EOF
