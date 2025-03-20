@@ -30,8 +30,9 @@ struct show;
 void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger);
 
 void list_crl_fetch_requests(struct show *s, bool utc);
+void fetch_x509_crls(struct show *s);
 
-extern void init_x509_crl_queue(struct logger *logger);
+bool init_x509_crl_queue(struct logger *logger);
 void shutdown_x509_crl_queue(struct logger *logger);
 
 struct x509_crl_config {

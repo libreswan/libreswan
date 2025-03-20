@@ -164,6 +164,7 @@ void schedule_callback(const char *story, deltatime_t delay,
 
 void whack_impair_call_global_event_handler(enum global_timer type,
 					    struct logger *logger);
+void call_global_event_handler(enum global_timer type, struct logger *logger);
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
 

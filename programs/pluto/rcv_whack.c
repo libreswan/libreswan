@@ -91,7 +91,7 @@ static void whack_rereadcerts(struct show *s, const struct whack_message *wm UNU
 
 static void whack_fetchcrls(struct show *s, const struct whack_message *wm UNUSED)
 {
-	show(s, "not implemented");
+	fetch_x509_crls(s);
 }
 
 static void whack_rereadall(struct show *s, const struct whack_message *wm)
