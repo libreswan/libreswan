@@ -1,0 +1,26 @@
+Test RFC 4945 PKI Profile for IKE/ISAKMP/PKIX's Basic Constraints on END certs
+
+https://datatracker.ietf.org/doc/html/rfc4945#section-5.1.3.9
+5.1.3.9.  BasicConstraints
+
+   The PKIX certificate profile mandates that CA certificates contain
+   this extension and that it be marked critical.  IKE implementations
+   SHOULD reject CA certificates that do not contain this extension.
+   For backwards compatibility, implementations may accept such
+   certificates if explicitly configured to do so, but the default for
+   this setting MUST be to reject such certificates.
+
+Which is a bit vague.  It's interpreted as:
+
+  - CAs (intermediate and root)
+
+    Need CA=y, and preferably critical (but critical doesn't really
+    matter as NSS supports Basic Constraints).
+
+  - END
+
+    CA=? is ignored (again critical doesn't matter as NSS supports it,
+    allowing it to ignore it).
+
+This test plays with END certs, since Basic Constraint isn't relevant,
+all should be ignored.

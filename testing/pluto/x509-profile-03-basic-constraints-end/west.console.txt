@@ -1,0 +1,296 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/root.p12
+ipsec pk12util -w nss-pw -i real/mainca/root.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n mainca -t CT,,
+west #
+ echo done
+done
+west #
+ # playing with end cert Basic Constraint should have no effect, these
+west #
+ # all establish
+west #
+ ./bc.sh west-bc-ca-missing
+ ipsec certutil -S -n west-bc-ca-missing -c mainca -s E=user-west-bc-ca-missing@testing.libreswan.org,CN=west-bc-ca-missing.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./bc.sh -t P,,
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-bc-ca-missing
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-bc-ca-missing@testing.libreswan.org,CN=west-bc-
+            ca-missing.testing.libreswan.org,OU=Test Department,O=Libreswan,L
+            =Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec whack --name west-bc-ca-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-missing --to --host=192.1.2.23 --id=%any
+"west-bc-ca-missing": added IKEv2 connection
+ ipsec up west-bc-ca-missing
+"west-bc-ca-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-bc-ca-missing" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-bc-ca-missing" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-bc-ca-missing" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-bc-ca-missing" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-bc-ca-missing" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./bc.sh west-bc-ca         n
+ ipsec certutil -S -n west-bc-ca-n -c mainca -s E=user-west-bc-ca-n@testing.libreswan.org,CN=west-bc-ca-n.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./bc.sh -t P,, -2
+Generating key.  This may take a few moments...
+Is this a CA certificate [y/N]?
+Enter the path length constraint, enter to skip [<0 for unlimited path]: > Is this a critical extension [y/N]?
+ ipsec certutil -L -n west-bc-ca-n
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-bc-ca-n@testing.libreswan.org,CN=west-bc-ca-n.t
+            esting.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=
+            Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec whack --name west-bc-ca-n --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n --to --host=192.1.2.23 --id=%any
+"west-bc-ca-n": added IKEv2 connection
+ ipsec up west-bc-ca-n
+"west-bc-ca-n" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-bc-ca-n" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-bc-ca-n" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-bc-ca-n" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-bc-ca-n" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-bc-ca-n" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./bc.sh west-bc-ca         n critical
+ ipsec certutil -S -n west-bc-ca-n-critical -c mainca -s E=user-west-bc-ca-n-critical@testing.libreswan.org,CN=west-bc-ca-n-critical.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./bc.sh -t P,, -2
+Generating key.  This may take a few moments...
+Is this a CA certificate [y/N]?
+Enter the path length constraint, enter to skip [<0 for unlimited path]: > Is this a critical extension [y/N]?
+ ipsec certutil -L -n west-bc-ca-n-critical
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-bc-ca-n-critical@testing.libreswan.org,CN=west-
+            bc-ca-n-critical.testing.libreswan.org,OU=Test Department,O=Libre
+            swan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Critical: True
+            Data: Is not a CA.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec whack --name west-bc-ca-n-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n-critical --to --host=192.1.2.23 --id=%any
+"west-bc-ca-n-critical": added IKEv2 connection
+ ipsec up west-bc-ca-n-critical
+"west-bc-ca-n-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-bc-ca-n-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-bc-ca-n-critical" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-bc-ca-n-critical" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-bc-ca-n-critical" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-bc-ca-n-critical" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./bc.sh west-bc-ca         y
+ ipsec certutil -S -n west-bc-ca-y -c mainca -s E=user-west-bc-ca-y@testing.libreswan.org,CN=west-bc-ca-y.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./bc.sh -t P,, -2
+Generating key.  This may take a few moments...
+Is this a CA certificate [y/N]?
+Enter the path length constraint, enter to skip [<0 for unlimited path]: > Is this a critical extension [y/N]?
+ ipsec certutil -L -n west-bc-ca-y
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-bc-ca-y@testing.libreswan.org,CN=west-bc-ca-y.t
+            esting.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=
+            Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Data: Is a CA with no maximum path length.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec whack --name west-bc-ca-y --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y --to --host=192.1.2.23 --id=%any
+"west-bc-ca-y": added IKEv2 connection
+ ipsec up west-bc-ca-y
+"west-bc-ca-y" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-bc-ca-y" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-bc-ca-y" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-bc-ca-y" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-bc-ca-y" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"west-bc-ca-y" #1: encountered fatal error in state IKE_AUTH_I
+"west-bc-ca-y" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-bc-ca-y" #2: IMPAIR: revival: skip scheduling revival event
+"west-bc-ca-y" #1: deleting IKE SA (sent IKE_AUTH request)
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./bc.sh west-bc-ca         y critical
+ ipsec certutil -S -n west-bc-ca-y-critical -c mainca -s E=user-west-bc-ca-y-critical@testing.libreswan.org,CN=west-bc-ca-y-critical.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./bc.sh -t P,, -2
+Generating key.  This may take a few moments...
+Is this a CA certificate [y/N]?
+Enter the path length constraint, enter to skip [<0 for unlimited path]: > Is this a critical extension [y/N]?
+ ipsec certutil -L -n west-bc-ca-y-critical
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-bc-ca-y-critical@testing.libreswan.org,CN=west-
+            bc-ca-y-critical.testing.libreswan.org,OU=Test Department,O=Libre
+            swan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Certificate Basic Constraints
+            Critical: True
+            Data: Is a CA with no maximum path length.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec whack --name west-bc-ca-y-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y-critical --to --host=192.1.2.23 --id=%any
+"west-bc-ca-y-critical": added IKEv2 connection
+ ipsec up west-bc-ca-y-critical
+"west-bc-ca-y-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-bc-ca-y-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-bc-ca-y-critical" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-bc-ca-y-critical" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-bc-ca-y-critical" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"west-bc-ca-y-critical" #1: encountered fatal error in state IKE_AUTH_I
+"west-bc-ca-y-critical" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-bc-ca-y-critical" #2: IMPAIR: revival: skip scheduling revival event
+"west-bc-ca-y-critical" #1: deleting IKE SA (sent IKE_AUTH request)
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ grep '^[^|].*ERROR:' /tmp/pluto.log
+west #
+ 

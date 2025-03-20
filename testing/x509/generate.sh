@@ -402,6 +402,8 @@ real        mainca           {east,west}-nosan                    0 1 1 / digita
 real        mainca           semiroad                             1 1 1 / digitalSignature  /
 real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
 real        otherca          other{east,west}                     1 1 1 / digitalSignature  /
+# Use the CA with BC=n to sign some certs
+real        bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 EOF
 
 while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
@@ -433,14 +435,7 @@ real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  cert
 real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
 real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
 real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
-# Basic Constraints aka BC
-real/mainca  mainca                     west-bc-missing            1 1 1 /  /                     /
-real/mainca  mainca                     west-bc-ca-n               1 1 1 n  /                     /
-real/mainca  mainca                     west-bc-ca-n-critical      1 1 1 N  /                     /
-real/mainca  mainca                     west-bc-ca-y               1 1 1 Y  /                     /
-real/mainca  mainca                     west-bc-ca-y-critical      1 1 1 Y  /                     /
+# Cert chain with intermediate BC missing
 real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
 real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
-# Use the CA with BC=n to sign some certs
-real/bc-n-ca bc-n-ca                    bc-n-ca-west               1 1 1 /  /                     /
 EOF
