@@ -1,9 +1,9 @@
-run() { local c=$(basename $1) ; /testing/x509/import.sh real/$1.all.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
+run() { local c=$(basename $1) ; /testing/x509/import.sh $1.all.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
 
 # This should fail as the intermediate has no BC=CA; also dump
 # intermediate.
 
-run mainca/west-bc-missing-chain-end
+run real/mainca/west-bc-missing-chain-end
 ipsec certutil -L -n west-bc-missing-chain-end
 
 # This should fail as the root CA that signed it, and is in EAST's NSS

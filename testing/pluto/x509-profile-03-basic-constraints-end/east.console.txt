@@ -6,8 +6,12 @@ ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
 east #
- /testing/x509/import.sh real/bc-n-ca/bc-n-ca.all.p12
-missing file: real/bc-n-ca/bc-n-ca.all.p12
+ # signed peers cert
+east #
+ /testing/x509/import.sh bc-n-ca/root.p12
+ipsec pk12util -w nss-pw -i bc-n-ca/root.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ipsec certutil -M -n bc-n-ca -t CT,,
 east #
  ipsec start
 Redirecting to: [initsystem]

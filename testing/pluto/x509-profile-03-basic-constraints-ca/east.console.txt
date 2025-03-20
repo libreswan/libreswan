@@ -8,8 +8,8 @@ ipsec certutil -M -n mainca -t CT,,
 east #
  # Import a broken root CA (lacks BasicConstraint ca=y)
 east #
- /testing/x509/import.sh real/bc-n-ca/root.p12
-ipsec pk12util -w nss-pw -i real/bc-n-ca/root.p12
+ /testing/x509/import.sh bc-n-ca/root.p12
+ipsec pk12util -w nss-pw -i bc-n-ca/root.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n bc-n-ca -t CT,,
 east #

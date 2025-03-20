@@ -4,7 +4,7 @@
 /testing/x509/import.sh real/mainca/west.end.p12
 /testing/x509/import.sh real/mainca/east.end.cert
 # load a distraction CA and Cert
-/testing/x509/import.sh real/otherca/otherwest.all.p12
+/testing/x509/import.sh otherca/otherwest.p12
 # check result
 ipsec certutil -L
 

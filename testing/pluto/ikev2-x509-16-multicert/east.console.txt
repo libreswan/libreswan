@@ -10,8 +10,8 @@ ipsec certutil -M -n mainca -t CT,,
 east #
  # add second identity/cert
 east #
- /testing/x509/import.sh real/otherca/othereast.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/othereast.all.p12
+ /testing/x509/import.sh otherca/othereast.p12
+ipsec pk12util -w nss-pw -i otherca/othereast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n otherca -t CT,,
 east #

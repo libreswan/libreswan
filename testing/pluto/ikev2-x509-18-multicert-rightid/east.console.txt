@@ -5,7 +5,7 @@ east #
 east #
  # add second identity/cert
 east #
- #/testing/x509/import.sh real/otherca/othereast.all.p12
+ #/testing/x509/import.sh otherca/othereast.p12
 east #
  /testing/x509/import.sh real/mainca/north.all.p12
 ipsec pk12util -w nss-pw -i real/mainca/north.all.p12

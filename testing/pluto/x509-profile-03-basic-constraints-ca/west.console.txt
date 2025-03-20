@@ -9,13 +9,13 @@ west #
  echo done
 done
 west #
- run() { local c=$(basename $1) ; /testing/x509/import.sh real/$1.all.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
+ run() { local c=$(basename $1) ; /testing/x509/import.sh $1.all.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
 west #
  # This should fail as the intermediate has no BC=CA; also dump
 west #
  # intermediate.
 west #
- run mainca/west-bc-missing-chain-end
+ run real/mainca/west-bc-missing-chain-end
 ipsec pk12util -w nss-pw -i real/mainca/west-bc-missing-chain-end.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n mainca -t CT,,
@@ -128,7 +128,7 @@ west #
  # DB, has CA=no
 west #
  run bc-n-ca/bc-n-ca-west
-ipsec pk12util -w nss-pw -i real/bc-n-ca/bc-n-ca-west.all.p12
+ipsec pk12util -w nss-pw -i bc-n-ca/bc-n-ca-west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 ipsec certutil -M -n bc-n-ca -t CT,,
  ipsec certutil -L -n bc-n-ca-west

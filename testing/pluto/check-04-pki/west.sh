@@ -6,7 +6,7 @@ ipsec_cert() { ipsec certutil -L ; for n in "$@" ; do printf "*\n*\n* ${n}\n*\n*
 ipsec_cert mainca west nic
 
 /testing/guestbin/swan-prep --nokeys
-/testing/x509/import.sh real/otherca/otherwest.all.p12
+/testing/x509/import.sh otherca/otherwest.p12
 ipsec_cert otherca otherwest
 
 /testing/guestbin/swan-prep --nokeys
