@@ -1366,12 +1366,19 @@ kvmplutotest	nss-cert-chain-01-ikev2		good
 kvmplutotest	nss-cert-chain-02-ikev2		good
 kvmplutotest	nss-cert-chain-03-ikev2		good
 kvmplutotest	nss-cert-chain-04-ikev2		good
-kvmplutotest	nss-cert-crl-01			good
-kvmplutotest	nss-cert-crl-01-strict		good
-kvmplutotest	nss-cert-crl-02			good
-kvmplutotest	nss-cert-crl-03			good
-kvmplutotest	nss-cert-crl-03-strict		wip	github/1935
-kvmplutotest	nss-cert-crl-04-additional-crl	wip
+
+kvmplutotest	x509-crl-01-revoked-initiator-ikev1	good
+kvmplutotest	x509-crl-01-revoked-initiator-ikev2	good
+kvmplutotest	x509-crl-01-revoked-responder-ikev1	good
+kvmplutotest	x509-crl-01-revoked-responder-ikev2	good
+
+kvmplutotest	x509-crl-02-old-crl-strict-no-ikev1	good
+kvmplutotest	x509-crl-02-old-crl-strict-no-ikev2	good
+kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev1	good
+kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev2	good
+
+kvmplutotest	x509-crl-04-additional-crl		wip
+
 kvmplutotest	nss-cert-nosecret		good
 kvmplutotest	nss-cert-ocsp-01-ikev1			good
 kvmplutotest	nss-cert-ocsp-01-ikev2			good

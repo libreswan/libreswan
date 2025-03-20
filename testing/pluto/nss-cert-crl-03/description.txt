@@ -1,9 +1,0 @@
-IKEv1: an expired crl is loaded by pluto in non-strict mode
-
-- CRL fetch scheduled for 5s
-- connection establishes as non-strict
-- CRL fetch runs
-- can see things fetched and, then, queue drained
-
-Note the magical 5s.  Things should establish within that time but may
-not.
