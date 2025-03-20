@@ -1240,7 +1240,7 @@ static bool do_file_pam_addresspool(struct ike_sa *ike, const char *name, const 
 	char addresspoolfilepath[PATH_MAX];
 	char line[1024]; /* we hope that this is more than enough */
 
-	snprintf(addresspoolfilepath, sizeof(addresspoolfilepath), "/tmp/pam-addresspool_%s", name);
+	snprintf(addresspoolfilepath, sizeof(addresspoolfilepath), "%s/pam-addresspool_%s", IPSEC_RUNDIR, name);
 
 	FILE *fp = fopen(addresspoolfilepath, "r");
 	if (fp == NULL) {
