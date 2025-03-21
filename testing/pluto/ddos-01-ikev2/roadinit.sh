@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+
 ../../guestbin/ip.sh address add 192.1.3.1/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.2/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.3/24 dev eth0
@@ -207,7 +208,7 @@
 ../../guestbin/ip.sh address add 192.1.3.206/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.207/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.208/24 dev eth0
-../../guestbin/ip.sh address add 192.1.3.209/24 dev eth0
+# ../../guestbin/ip.sh address add 192.1.3.209/24 dev eth0 ROAD's IP address
 ../../guestbin/ip.sh address add 192.1.3.210/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.211/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.212/24 dev eth0
@@ -251,6 +252,10 @@
 ../../guestbin/ip.sh address add 192.1.3.250/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.251/24 dev eth0
 ../../guestbin/ip.sh address add 192.1.3.252/24 dev eth0
-ipsec start
+../../guestbin/ip.sh address add 192.1.3.253/24 dev eth0
+../../guestbin/ip.sh address add 192.1.3.254/24 dev eth0
+
+ipsec pluto --config /etc/ipsec.conf --leak-detective
 ../../guestbin/wait-until-pluto-started
+
 echo "initdone"

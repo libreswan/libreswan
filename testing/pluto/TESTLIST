@@ -498,7 +498,7 @@ kvmplutotest	ikev2-no-nhelpers-01			good
 
 kvmplutotest	ikev2-auth-null-01			good
 
-kvmplutotest	ikev2-ddos-01				wip
+kvmplutotest	ddos-01-ikev2				wip	non-deterministic
 
 kvmplutotest	ikev2-switchnat-01			good
 kvmplutotest	ikev1-switchnat-01			good
