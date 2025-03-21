@@ -78,20 +78,27 @@
 #include "whack_showstates.h"
 #include "whack_suspend.h"
 
-static void whack_rereadsecrets(struct show *s)
+static void whack_rereadsecrets(struct show *s, const struct whack_message *wm UNUSED)
 {
 	load_preshared_secrets(show_logger(s));
 }
 
-static void whack_fetchcrls(struct show *s)
-{
-	ldbg(show_logger(s), "not implemented");
-}
-
-static void whack_rereadcerts(struct show *s)
+static void whack_rereadcerts(struct show *s, const struct whack_message *wm UNUSED)
 {
 	reread_cert_connections(show_logger(s));
 	free_root_certs(show_logger(s));
+}
+
+static void whack_fetchcrls(struct show *s, const struct whack_message *wm UNUSED)
+{
+	fetch_x509_crls(s);
+}
+
+static void whack_rereadall(struct show *s, const struct whack_message *wm)
+{
+	whack_rereadsecrets(s, wm);
+	whack_rereadcerts(s, wm);
+	whack_fetchcrls(s, wm);
 }
 
 static void whack_listcacerts(struct show *s)
@@ -309,6 +316,70 @@ static void dispatch(const struct whack_message *const m,
 	}
 }
 
+static void dispatch_command(const struct whack_message *const wm, struct show *s)
+{
+	static const struct command {
+		const char *name;
+		void (*jam)(struct jambuf *buf, const struct whack_message *wm);
+		void (*op)(struct show *s, const struct whack_message *wm);
+	} commands[] = {
+		[WHACK_FETCHCRLS] = {
+			.name = "fetchcrls",
+			.op = whack_fetchcrls,
+		},
+		[WHACK_REREADALL] = {
+			.name = "rereadall",
+			.op = whack_rereadall,
+		},
+		[WHACK_REREADSECRETS] = {
+			.name = "rereadsecrets",
+			.op = whack_rereadsecrets,
+		},
+		[WHACK_REREADCERTS] = {
+			.name = "rereadcerts",
+			.op = whack_rereadcerts,
+		},
+	};
+
+	struct logger *logger = show_logger(s);
+	PASSERT(logger, wm->whack_command < elemsof(commands));
+	const struct command *command = &commands[wm->whack_command];
+
+	if (PBAD(logger, command->name == NULL) ||
+	    PBAD(logger, command->op == NULL)) {
+		return;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "whack: ");
+			jam_string(buf, "start: ");
+			jam_string(buf, command->name);
+			if (command->jam != NULL) {
+				jam_string(buf, ": ");
+				command->jam(buf, wm);
+			}
+			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
+		}
+	}
+
+	command->op(s, wm);
+
+	if (DBGP(DBG_BASE)) {
+		struct logger *logger = show_logger(s);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "whack: ");
+			jam_string(buf, "stop: ");
+			jam_string(buf, command->name);
+			if (command->jam != NULL) {
+				jam_string(buf, ": ");
+				command->jam(buf, wm);
+			}
+			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
+		}
+	}
+}
+
 /*
  * handle a whack message.
  */
@@ -359,6 +430,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			 whack_sa_name(m->whack_sa),
 			 str_enum(&sa_type_names, m->whack_sa_type, &tn),
 			 (m->name == NULL ? "<null>" : m->name));
+	}
+
+	if (m->whack_command != 0) {
+		dispatch_command(m, s);
 	}
 
 	/*
@@ -495,12 +570,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "ddns: stop: %d", m->whack_ddns);
 	}
 
-	if (m->whack_rereadsecrets) {
-		dbg_whack(s, "rereadsecrets: start:");
-		whack_rereadsecrets(s);
-		dbg_whack(s, "rereadsecrets: stop:");
-	}
-
 	if (m->whack_listpubkeys) {
 		dbg_whack(s, "listpubkeys: start:");
 		show_pubkeys(s, m->whack_utc, SHOW_ALL_KEYS);
@@ -517,18 +586,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "purgeocsp: start:");
 		clear_ocsp_cache();
 		dbg_whack(s, "purgeocsp: stop:");
-	}
-
-	if (m->whack_fetchcrls) {
-		dbg_whack(s, "fetchcrls: start:");
-		whack_fetchcrls(s);
-		dbg_whack(s, "fetchcrls: stop:");
-	}
-
-	if (m->whack_rereadcerts) {
-		dbg_whack(s, "rereadcerts: start:");
-		whack_rereadcerts(s);
-		dbg_whack(s, "rereadcerts: stop:");
 	}
 
 	if (m->whack_list & LIST_PSKS) {

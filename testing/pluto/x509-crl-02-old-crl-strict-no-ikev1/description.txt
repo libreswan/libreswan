@@ -1,0 +1,6 @@
+IKEv1 sends revoked cert; initiator has out-of-date CRL and crl-strict=no
+
+Cert is rejected because it is revoked.
+
+Because crl-strict=no, a fetch isn't forced.  Instead the up-to-date
+CRL needs to be fetched manually.
