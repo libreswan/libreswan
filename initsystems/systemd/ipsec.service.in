@@ -1,6 +1,6 @@
 [Unit]
 Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
-Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
+Documentation=man:libreswan(7) man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 Wants=network-online.target
 After=network-online.target
 
@@ -10,12 +10,8 @@ NotifyAccess=all
 Restart=@@SD_RESTART_TYPE@@
 TimeoutStopSec=90s
 WatchdogSec=@@SD_WATCHDOGSEC@@
-
-# Check for nss database status and migration
 ExecStartPre=@@SBINDIR@@/ipsec checknss
-# Check for nflog setup
 ExecStartPre=@@SBINDIR@@/ipsec checknflog
-# Start the actual IKE daemon
 ExecStart=@@LIBEXECDIR@@/pluto @@SD_PLUTO_OPTIONS@@ --config @@IPSEC_CONF@@ --nofork
 ExecStop=@@LIBEXECDIR@@/whack --shutdown
 ExecStopPost=@@SBINDIR@@/ipsec stopnflog
