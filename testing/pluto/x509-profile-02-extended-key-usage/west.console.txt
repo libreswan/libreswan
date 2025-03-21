@@ -4,9 +4,11 @@ west #
  # ready for signing other certs!
 west #
  /testing/x509/import.sh real/mainca/root.p12
-ipsec pk12util -w nss-pw -i real/mainca/root.p12
+ ipsec pk12util -w nss-pw -i real/mainca/root.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  echo done
 done

@@ -26,8 +26,16 @@ fi
 
 run()
 {
-    echo "$@"
+    echo " $@"
     "$@"
+}
+
+print_chain()
+{
+    local cert=$1 ; shift
+    set ipsec certutil -O -n ${cert}
+    echo " $@"
+    "$@" | sed -e '/^$/d'
 }
 
 import_root_p12()
@@ -35,12 +43,14 @@ import_root_p12()
     ca=$(basename $(dirname $1))
     run ${pk12util} -w nss-pw -i $1
     run ${certutil} -M -n "${ca}" -t CT,,
+    print_chain ${ca}
 }
 
 import_root_cert()
 {
     ca=$(basename $(dirname $1))
     run ${certutil} -A -n "${ca}" -t CT,, -i $1
+    print_chain ${ca}
 }
 
 import_all_p12()
@@ -49,6 +59,7 @@ import_all_p12()
     ca=$(basename $(dirname $1))
     run ${pk12util} -w nss-pw -i $1
     run ${certutil} -M -n "${ca}" -t CT,,
+    print_chain ${n}
 }
 
 import_all_cert()
@@ -57,6 +68,7 @@ import_all_cert()
     ca=$(basename $(dirname $1))
     run ${certutil} -A -n "${n}" -t P,, -i $1
     run ${certutil} -M -n "${ca}" -t CT,,
+    print_chain ${n}
 }
 
 import_end_p12()
@@ -64,12 +76,14 @@ import_end_p12()
     n=$(basename $1 .end.p12)
     ca=$(basename $(dirname $1))
     run ${pk12util} -w nss-pw -i $1
+    print_chain ${n}
 }
 
 import_end_cert()
 {
     n=$(basename $1 .end.cert)
     run ${certutil} -A -n "${n}" -t P,, -i $1
+    print_chain ${n}
 }
 
 import_p12()
@@ -86,6 +100,7 @@ import_crt()
     ca=$(basename $(dirname $1))
     run ${certutil} -A -n "${n}" -t P,, -i $1
     run ${certutil} -M -n "${ca}" -t CT,,
+    print_chain ${n}
 }
 
 import_crl()

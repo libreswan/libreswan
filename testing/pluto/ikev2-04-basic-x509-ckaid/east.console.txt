@@ -4,8 +4,10 @@ east #
 Creating empty NSS database
 east #
  /testing/x509/import.sh real/mainca/west.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n west
+"west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 east #
@@ -15,14 +17,20 @@ east #
 Creating empty NSS database
 east #
  /testing/x509/import.sh real/mainca/east.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  eastckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 east #
  /testing/x509/import.sh real/mainca/west.end.cert
-ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
+ ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
+ ipsec certutil -O -n west
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  echo west ckaid: $westckaid east ckaid: $eastckaid
 west ckaid: <<CKAID#1>> east ckaid: <<CKAID#2>>

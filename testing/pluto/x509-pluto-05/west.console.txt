@@ -2,11 +2,15 @@
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/west.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n west
+"west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -O -n east
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec start
 Redirecting to: [initsystem]

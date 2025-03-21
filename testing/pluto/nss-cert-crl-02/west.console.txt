@@ -2,9 +2,12 @@
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/revoked.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/revoked.all.p12
+ ipsec pk12util -w nss-pw -i real/mainca/revoked.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n revoked
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "revoked" [E=user-revoked@testing.libreswan.org,CN=revoked.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes

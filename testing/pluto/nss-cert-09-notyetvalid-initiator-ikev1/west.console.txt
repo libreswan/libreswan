@@ -6,9 +6,11 @@ west #
  # valid in 1 month (-w 1) and expires in 12 months (-v 12).
 west #
  /testing/x509/import.sh real/mainca/root.p12
-ipsec pk12util -w nss-pw -i real/mainca/root.p12
+ ipsec pk12util -w nss-pw -i real/mainca/root.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec certutil -m 2 -S -k rsa -c mainca -n `hostname`-notyetvalid -s CN=`hostname`-notyetvalid -w 1 -v 12 -t CT,, -z east.conf
 Generating key.  This may take a few moments...

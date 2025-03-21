@@ -30,6 +30,6 @@ request for certificate serial <WEST_CHAIN_ENDCERT>
 request for non recognized CA [serial <WEST_CHAIN_ENDCERT>]
 INFO::CORE::Connection from [192.1.2.45]
 request for certificate serial <EAST_CHAIN_ENDCERT>
-request for non recognized CA [serial <EAST_CHAIN_ENDCERT>]
+request for non recognized CA [serial 20]
 nic #
  

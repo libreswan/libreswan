@@ -2,9 +2,11 @@
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/root.p12
-ipsec pk12util -w nss-pw -i real/mainca/root.p12
+ ipsec pk12util -w nss-pw -i real/mainca/root.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  echo done
 done
@@ -16,9 +18,11 @@ west #
  # intermediate.
 west #
  run real/mainca/west-bc-missing-chain-end
-ipsec pk12util -w nss-pw -i real/mainca/west-bc-missing-chain-end.all.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west-bc-missing-chain-end.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west-bc-missing-chain-end
+"west-bc-missing-chain-end" [E=west-bc-missing-chain-end@testing.libreswan.org,CN=west-bc-missing-chain-end.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
  ipsec certutil -L -n west-bc-missing-chain-end
 Certificate:
     Data:
@@ -128,9 +132,12 @@ west #
  # DB, has CA=no
 west #
  run bc-n-ca/bc-n-ca-west
-ipsec pk12util -w nss-pw -i bc-n-ca/bc-n-ca-west.all.p12
+ ipsec pk12util -w nss-pw -i bc-n-ca/bc-n-ca-west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n bc-n-ca -t CT,,
+ ipsec certutil -M -n bc-n-ca -t CT,,
+ ipsec certutil -O -n bc-n-ca-west
+"bc-n-ca" [E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "bc-n-ca-west" [E=user-bc-n-ca-west@testing.libreswan.org,CN=bc-n-ca-west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
  ipsec certutil -L -n bc-n-ca-west
 Certificate:
     Data:
