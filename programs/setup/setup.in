@@ -79,7 +79,8 @@ case "$1" in
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
-		ipsec --checknflog > /dev/null
+		ipsec checknss > /dev/null
+		ipsec checknflog > /dev/null
 		exec ipsec pluto --config @@IPSEC_CONF@@ --leak-detective
 		;;
 	    "" )
