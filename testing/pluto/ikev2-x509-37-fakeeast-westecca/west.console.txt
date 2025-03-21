@@ -4,13 +4,17 @@ west #
  # import real west+key (no CA)
 west #
  /testing/x509/import.sh real/mainca/west.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n west
+"west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # import the fake EC ca (could also use real EC CA?)
 west #
  /testing/x509/import.sh fake/mainec/root.cert
-ipsec certutil -A -n mainec -t CT,, -i fake/mainec/root.cert
+ ipsec certutil -A -n mainec -t CT,, -i fake/mainec/root.cert
+ ipsec certutil -O -n mainec
+"mainec" [E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # confirm
 west #

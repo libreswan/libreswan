@@ -4,10 +4,14 @@ west #
  # we want to load east's certificate for west
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -O -n east
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  /testing/x509/import.sh real/mainca/root.cert
-ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
+ ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # confirm that the network is alive
 west #

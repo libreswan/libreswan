@@ -4,9 +4,12 @@ west #
  # ECDSA, peer is RSA
 west #
  /testing/x509/import.sh real/mainec/`hostname`.all.p12
-ipsec pk12util -w nss-pw -i real/mainec/west.all.p12
+ ipsec pk12util -w nss-pw -i real/mainec/west.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainec -t CT,,
+ ipsec certutil -M -n mainec -t CT,,
+ ipsec certutil -O -n west
+"mainec" [E=testing@libreswan.org,CN=Libreswan test CA for mainec,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec start
 Redirecting to: [initsystem]

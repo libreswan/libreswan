@@ -2,9 +2,9 @@
 Creating empty NSS database
 east #
  /testing/x509/import.sh real/mainca/east-nosan.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/east-nosan.all.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east-nosan.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
 east #
  ipsec start
 Redirecting to: [initsystem]

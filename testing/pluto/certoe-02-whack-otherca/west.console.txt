@@ -4,9 +4,9 @@ west #
  # added different CA
 west #
  /testing/x509/import.sh otherca/otherwest.p12
-ipsec pk12util -w nss-pw -i otherca/otherwest.p12
+ ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
 west #
  # check
 west #

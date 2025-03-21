@@ -2,9 +2,12 @@
 Creating empty NSS database
 road #
  /testing/x509/import.sh real/mainca/key4096.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/key4096.all.p12
+ ipsec pk12util -w nss-pw -i real/mainca/key4096.all.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n key4096
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "key4096" [E=user-key4096@testing.libreswan.org,CN=key4096.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 road #
  ipsec start
 Redirecting to: [initsystem]
