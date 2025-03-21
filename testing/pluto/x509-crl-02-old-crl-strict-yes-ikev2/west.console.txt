@@ -50,7 +50,7 @@ west #
 "nss-cert-crl" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "nss-cert-crl" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "nss-cert-crl" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"nss-cert-crl" #1: missing or expired CRL in strict mode, failing pending update and forcing CRL update
+"nss-cert-crl" #1: certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing, forcing CRL update
 "nss-cert-crl" #1: IMPAIR: not initiating FETCH_CRL
 "nss-cert-crl" #1: X509: certificate payload rejected for this connection
 "nss-cert-crl" #1: encountered fatal error in state IKE_AUTH_I
