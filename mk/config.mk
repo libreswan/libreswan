@@ -550,6 +550,10 @@ endif
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE ?= notify
+# Set WatchdogSec to the amount of time (in seconds) that systemd will wait
+# before restarting an unresponsive pluto.
+# EVENT_SD_WATCHDOG updates the heartbeat every 15 seconds, recommended values
+# are 60, 90, 120. WatchdogSec=0 disables the action, Our default is 200
 SD_WATCHDOGSEC ?= 200
 else
 SD_TYPE ?= simple

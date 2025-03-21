@@ -6,13 +6,8 @@ After=network-online.target
 
 [Service]
 Type=@@SD_TYPE@@
-Restart=@@SD_RESTART_TYPE@@
-
-# Set WatchdogSec to the amount of time (in seconds) that systemd will wait
-# before restarting an unresponsive pluto.
-# EVENT_SD_WATCHDOG updates the heartbeat every 15 seconds, recommended values
-# are 60, 90, 120. WatchdogSec=0 disables the action
 NotifyAccess=all
+Restart=@@SD_RESTART_TYPE@@
 WatchdogSec=@@SD_WATCHDOGSEC@@
 
 # Check configuration file
