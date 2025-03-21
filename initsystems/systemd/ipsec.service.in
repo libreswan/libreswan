@@ -1,14 +1,12 @@
 [Unit]
 Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
+Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 Wants=network-online.target
 After=network-online.target
-Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 
 [Service]
 Type=@@SD_TYPE@@
 Restart=@@SD_RESTART_TYPE@@
-
-#RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 
 # Set WatchdogSec to the amount of time (in seconds) that systemd will wait
 # before restarting an unresponsive pluto.
@@ -25,8 +23,6 @@ ExecStartPre=@@SBINDIR@@/ipsec checknss
 ExecStartPre=@@SBINDIR@@/ipsec checknflog
 # Start the actual IKE daemon
 ExecStart=@@LIBEXECDIR@@/pluto @@SD_PLUTO_OPTIONS@@ --config @@IPSEC_CONF@@ --nofork
-# Enable for portexcludes support
-# ExecStartPost=@@LIBEXECDIR@@/portexcludes
 ExecStop=@@LIBEXECDIR@@/whack --shutdown
 ExecStopPost=@@SBINDIR@@/ipsec stopnflog
 
