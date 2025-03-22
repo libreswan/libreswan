@@ -39,8 +39,20 @@ static unsigned whack_delete_connections(const struct whack_message *m UNUSED,
 	return 1;
 }
 
-void whack_delete(const struct whack_message *m, struct show *s,
-		  bool log_unknown_name)
+void whack_addconn_delete(const struct whack_message *m, struct show *s)
+{
+	/*
+	 * This is old-to-new which means that aliases are processed
+	 * before templates.
+	 */
+	whack_connection(m, s, whack_delete_connections,
+			 /*alias_order*/OLD2NEW,
+			 (struct each) {
+				 .log_unknown_name = false,
+			 });
+}
+
+void whack_delete(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
 		whack_log(RC_FATAL, s,
@@ -55,6 +67,6 @@ void whack_delete(const struct whack_message *m, struct show *s,
 	whack_connection(m, s, whack_delete_connections,
 			 /*alias_order*/OLD2NEW,
 			 (struct each) {
-				 .log_unknown_name = log_unknown_name,
+				 .log_unknown_name = true,
 			 });
 }

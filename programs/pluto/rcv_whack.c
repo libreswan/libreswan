@@ -490,7 +490,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 */
 	if (m->whack_delete) {
 		dbg_whack(s, "delete: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_delete(m, s, /*log_unknown_name*/true);
+		whack_delete(m, s);
 		dbg_whack(s, "delete: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
 	}
 

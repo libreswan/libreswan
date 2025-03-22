@@ -340,7 +340,7 @@ void whack_add(const struct whack_message *wm, struct show *s)
 		 * connection matching name is found, it will delete
 		 * aliases.
 		 */
-		whack_delete(wm, s, /*log_unknown_name*/false);
+		whack_addconn_delete(wm, s);
 		/*
 		 * Confirm above did its job.
 		 */
