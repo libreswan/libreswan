@@ -176,7 +176,7 @@ void whack_impair(const struct whack_message *m, struct show *s)
 				       m->whack_async/*detach_whack*/,
 				       logger);
 		}
-	} else if (!m->whack_add/*connection*/) {
+	} else if (m->whack_command != WHACK_ADD) {
 		ldbg(logger, "per-connection impairment not implemented");
 	}
 }

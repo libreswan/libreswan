@@ -108,13 +108,30 @@ static void whack_listcacerts(struct show *s)
 	root_certs_delref(&roots, show_logger(s));
 }
 
-
 static void whack_fipsstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	bool fips = is_fips_mode();
 	show(s, "FIPS mode %s", !fips ?
 		"disabled" :
 		impair.force_fips ? "enabled [forced]" : "enabled");
+}
+
+static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
+{
+	jam_string(buf, "name=");
+	if (wm->name == NULL) {
+		jam_string(buf, "<none>");
+	} else {
+		jam_string(buf, wm->name);
+	}
+}
+
+static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *wm)
+{
+	jam(buf, "initiate: start: name='%s' remote='%s' async=%s",
+	    (wm->name == NULL ? "<null>" : wm->name),
+	    (wm->remote_host != NULL ? wm->remote_host : "<null>"),
+	    bool_str(wm->whack_async));
 }
 
 static void do_whacklisten(struct logger *logger)
@@ -384,6 +401,47 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "briefconnectionstatus",
 			.op = whack_briefconnectionstatus,
 		},
+		/**/
+		[WHACK_DELETE] = {
+			.name = "delete",
+			.op = whack_delete,
+			.jam = jam_whack_name,
+		},
+		[WHACK_ADD] = {
+			.name = "add",
+			.op = whack_add,
+			.jam = jam_whack_name,
+		},
+		[WHACK_ROUTE] = {
+			.name = "route",
+			.op = whack_route,
+			.jam = jam_whack_name,
+		},
+		[WHACK_UNROUTE] = {
+			.name = "unroute",
+			.op = whack_unroute,
+			.jam = jam_whack_name,
+		},
+		[WHACK_INITIATE] = {
+			.name = "initiate",
+			.op = whack_initiate,
+			.jam = jam_whack_initiate,
+		},
+		[WHACK_SUSPEND] = {
+			.name = "suspend",
+			.op = whack_suspend,
+			.jam = jam_whack_name,
+		},
+		[WHACK_OPPO_INITIATE] = {
+			.name = "oppo-initiate",
+			.op = whack_oppo_initiate,
+		},
+		[WHACK_DOWN] = {
+			.name = "down",
+			.op = whack_down,
+			.jam = jam_whack_name,
+		},
+
 	};
 
 	struct logger *logger = show_logger(s);
@@ -488,11 +546,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * To make this more useful, in only this combination, delete
 	 * will silently ignore the lack of the connection.
 	 */
-	if (m->whack_delete) {
-		dbg_whack(s, "delete: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_delete(m, s);
-		dbg_whack(s, "delete: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
 
 	if (m->whack_deleteuser) {
 		dbg_whack(s, "deleteuser: start: '%s'", (m->name == NULL ? "<null>" : m->name));
@@ -519,13 +572,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "crash: stop: %s", str_address(&m->whack_crash_peer, &pb));
 	}
 
-	if (m->whack_add) {
-		dbg_whack(s, "add: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_add(m, s);
-		dbg_whack(s, "add: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->redirect_to != NULL && !m->whack_add) {
+	if (m->redirect_to != NULL && m->whack_command != WHACK_ADD) {
 		/*
 		 * We are redirecting all peers of one or all
 		 * connections.
@@ -672,48 +719,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		/* add a public key */
 		key_add_request(m, show_logger(s));
 		dbg_whack(s, "key: stop:");
-	}
-
-	if (m->whack_route) {
-		dbg_whack(s, "route: start: \"%s\"", (m->name == NULL ? "<null>" : m->name));
-		whack_route(m, s);
-		dbg_whack(s, "route: stop: \"%s\"", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_unroute) {
-		dbg_whack(s, "unroute: start: \"%s\"", (m->name == NULL ? "<null>" : m->name));
-		whack_unroute(m, s);
-		dbg_whack(s, "unroute: stop: \"%s\"", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_initiate) {
-		dbg_whack(s, "initiate: start: name='%s' remote='%s' async=%s",
-			  (m->name == NULL ? "<null>" : m->name),
-			  (m->remote_host != NULL ? m->remote_host : "<null>"),
-			  bool_str(m->whack_async));
-		whack_initiate(m, s);
-		dbg_whack(s, "initiate: stop: name='%s' remote='%s' async=%s",
-			  (m->name == NULL ? "<null>" : m->name),
-			  m->remote_host != NULL ? m->remote_host : "<null>",
-			  bool_str(m->whack_async));
-	}
-
-	if (m->whack_suspend) {
-		dbg_whack(s, "suspend: start:");
-		whack_suspend(m, s);
-		dbg_whack(s, "suspend: stop:");
-	}
-
-	if (m->whack_oppo_initiate) {
-		dbg_whack(s, "oppo_initiate: start:");
-		whack_oppo_initiate(m, s);
-		dbg_whack(s, "oppo_initiate: stop:");
-	}
-
-	if (m->whack_down) {
-		dbg_whack(s, "down: start: %s", (m->name == NULL ? "<null>" : m->name));
-		whack_down(m, s);
-		dbg_whack(s, "down: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_clear_stats) {

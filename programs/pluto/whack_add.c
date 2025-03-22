@@ -339,6 +339,9 @@ void whack_add(const struct whack_message *wm, struct show *s)
 		 * before this connection is added.  When no
 		 * connection matching name is found, it will delete
 		 * aliases.
+		 *
+		 * This is old-to-new which means that aliases are processed
+		 * before templates.
 		 */
 		whack_addconn_delete(wm, s);
 		/*

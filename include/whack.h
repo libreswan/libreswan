@@ -64,6 +64,16 @@ enum whack_command {
 	WHACK_GLOBALSTATUS,
 	WHACK_TRAFFICSTATUS,
 	WHACK_SHUNTSTATUS,
+	/**/
+	WHACK_DELETE,
+	WHACK_ADD,
+	WHACK_ROUTE,
+	WHACK_UNROUTE,
+	WHACK_INITIATE,
+	WHACK_SUSPND,
+	WHACK_OPPO_INITIATE,
+	WHACK_DOWN,
+	WHACK_SUSPEND,
 };
 
 /*
@@ -189,8 +199,6 @@ struct whack_message {
 		struct whack_impair *list;
 	} impairments;
 
-	bool whack_add;			/* whack or addconn semantics;
-					 * see from; */
 	enum whack_from {
 		WHACK_FROM_WHACK = 1,
 		WHACK_FROM_ADDCONN,
@@ -363,17 +371,6 @@ struct whack_message {
 	/* for REMOTE_HOST */
 	char *remote_host;
 
-	/* for WHACK_ROUTE: */
-	bool whack_route;
-
-	/* for WHACK_UNROUTE: */
-	bool whack_unroute;
-
-	/* for WHACK_INITIATE: */
-	bool whack_initiate;
-
-	/* for WHACK_OPINITIATE */
-	bool whack_oppo_initiate;
 	struct {
 		struct {
 			ip_address address;
@@ -381,12 +378,6 @@ struct whack_message {
 		} local, remote;
 		unsigned ipproto;
 	} oppo;
-
-	/* for WHACK_DOWN: */
-	bool whack_down;
-
-	/* for WHACK_DELETE: */
-	bool whack_delete;
 
 	/* for WHACK_DELETESTATE: */
 	bool whack_deletestate;
@@ -467,9 +458,6 @@ struct whack_message {
 	enum yn_options accept_redirect;
 	char *accept_redirect_to;
 	enum yna_options send_redirect;
-
-	/* for RFC 5723 - IKEv2 Session Resumption */
-	bool whack_suspend;
 
 	/* what metric to put on ipsec routes */
 	int metric;

@@ -1248,19 +1248,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_ROUTE:	/* --route */
-			msg.whack_route = true;
+			msg.whack_command = WHACK_ROUTE;
 			continue;
 
 		case OPT_UNROUTE:	/* --unroute */
-			msg.whack_unroute = true;
+			msg.whack_command = WHACK_UNROUTE;
 			continue;
 
 		case OPT_INITIATE:	/* --initiate */
-			msg.whack_initiate = true;
+			msg.whack_command = WHACK_INITIATE;
 			continue;
 
 		case OPT_DOWN:	/* --down | --terminate */
-			msg.whack_down = true;
+			msg.whack_command = WHACK_DOWN;
 			continue;
 
 		case OPT_REKEY_IKE: /* --rekey-ike */
@@ -1291,14 +1291,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_SUSPEND: /* --suspend */
-			msg.whack_suspend = true;
+			msg.whack_command = WHACK_SUSPEND;
 			continue;
 		case CD_SESSION_RESUMPTION:
 			msg.session_resumption = optarg_sparse(logger, YN_YES, &yn_option_names);
 			break;
 
 		case OPT_DELETE:	/* --delete */
-			msg.whack_delete = true;
+			msg.whack_command = WHACK_DELETE;
 			continue;
 
 		case OPT_DELETEID: /* --deleteid --name <id> */
@@ -2502,7 +2502,7 @@ int main(int argc, char **argv)
 
 	/* check opportunistic initiation simulation request */
 	if (seen[OPT_OPPO_HERE] && seen[OPT_OPPO_THERE]) {
-		msg.whack_oppo_initiate = true;
+		msg.whack_command = WHACK_OPPO_INITIATE;
 		/*
 		 * When the only CD (connection description) option is
 		 * TUNNELIPV[46] scrub that a connection description
@@ -2562,7 +2562,7 @@ int main(int argc, char **argv)
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
 
-		msg.whack_add = true;
+		msg.whack_command = WHACK_ADD;
 	}
 
 	/*
@@ -2608,20 +2608,13 @@ int main(int argc, char **argv)
 	if (!(msg.whack_command != 0 ||
 	      msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
-	      msg.whack_add ||
 	      msg.whack_key ||
-	      msg.whack_delete ||
 	      msg.whack_deleteid ||
 	      msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.redirect_to != NULL ||
 	      msg.global_redirect ||
 	      msg.global_redirect_to ||
-	      msg.whack_initiate ||
-	      msg.whack_oppo_initiate ||
-	      msg.whack_down ||
-	      msg.whack_route ||
-	      msg.whack_unroute ||
 	      msg.whack_listen ||
 	      msg.whack_unlisten ||
 	      msg.whack_list ||
@@ -2637,7 +2630,6 @@ int main(int argc, char **argv)
 	      msg.whack_seccomp_crashtest ||
 	      msg.whack_showstates ||
 	      msg.whack_sa ||
-	      msg.whack_suspend ||
 	      msg.whack_listpubkeys ||
 	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");
