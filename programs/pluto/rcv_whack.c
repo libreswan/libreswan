@@ -78,27 +78,27 @@
 #include "whack_showstates.h"
 #include "whack_suspend.h"
 
-static void whack_rereadsecrets(struct show *s, const struct whack_message *wm UNUSED)
+static void whack_rereadsecrets(const struct whack_message *wm UNUSED, struct show *s)
 {
 	load_preshared_secrets(show_logger(s));
 }
 
-static void whack_rereadcerts(struct show *s, const struct whack_message *wm UNUSED)
+static void whack_rereadcerts(const struct whack_message *wm UNUSED, struct show *s)
 {
 	reread_cert_connections(show_logger(s));
 	free_root_certs(show_logger(s));
 }
 
-static void whack_fetchcrls(struct show *s, const struct whack_message *wm UNUSED)
+static void whack_fetchcrls(const struct whack_message *wm UNUSED, struct show *s)
 {
 	fetch_x509_crls(s);
 }
 
-static void whack_rereadall(struct show *s, const struct whack_message *wm)
+static void whack_rereadall(const struct whack_message *wm UNUSED, struct show *s)
 {
-	whack_rereadsecrets(s, wm);
-	whack_rereadcerts(s, wm);
-	whack_fetchcrls(s, wm);
+	whack_rereadsecrets(wm, s);
+	whack_rereadcerts(wm, s);
+	whack_fetchcrls(wm, s);
 }
 
 static void whack_listcacerts(struct show *s)
@@ -321,7 +321,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 	static const struct command {
 		const char *name;
 		void (*jam)(struct jambuf *buf, const struct whack_message *wm);
-		void (*op)(struct show *s, const struct whack_message *wm);
+		void (*op)(const struct whack_message *wm, struct show *s);
 	} commands[] = {
 		[WHACK_FETCHCRLS] = {
 			.name = "fetchcrls",
@@ -363,7 +363,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		}
 	}
 
-	command->op(s, wm);
+	command->op(wm, s);
 
 	if (DBGP(DBG_BASE)) {
 		struct logger *logger = show_logger(s);
