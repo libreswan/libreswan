@@ -67,7 +67,7 @@ static void show_system_security(struct show *s)
 #endif
 }
 
-void whack_globalstatus(struct show *s)
+void whack_globalstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_globalstate_status(s);
 	show_pluto_stats(s);
@@ -86,9 +86,7 @@ void whack_status(struct show *s, const monotime_t now)
 	show_ike_alg_status(s);
 	show_db_ops_status(s);
 	show_connection_statuses(s);
-	show_brief_status(s);
+	whack_briefstatus(NULL/*wm:ignored*/, s);
 	whack_showstates(s, now);
-#if defined(KERNEL_XFRM)
-	show_shunt_status(s);
-#endif
+	whack_shuntstatus(NULL/*wm:ignored*/, s);
 }

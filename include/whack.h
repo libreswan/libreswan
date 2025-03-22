@@ -54,6 +54,16 @@ enum whack_command {
 	WHACK_FETCHCRLS,
 	WHACK_REREADSECRETS,
 	WHACK_REREADCERTS,
+	/**/
+	WHACK_PROCESSSTATUS,
+	WHACK_ADDRESSPOOLSTATUS,
+	WHACK_CONNECTIONSTATUS,
+	WHACK_BRIEFCONNECTIONSTATUS,
+	WHACK_BRIEFSTATUS,
+	WHACK_FIPSSTATUS,
+	WHACK_GLOBALSTATUS,
+	WHACK_TRAFFICSTATUS,
+	WHACK_SHUNTSTATUS,
 };
 
 /*
@@ -159,18 +169,9 @@ struct whack_message {
 	/* when non-zero, act on this */
 	enum whack_command whack_command;
 
-	bool whack_globalstatus;
 	bool whack_clear_stats;
-	bool whack_trafficstatus;
-	bool whack_shuntstatus;
-	bool whack_fipsstatus;
-	bool whack_briefstatus;
-	bool whack_addresspoolstatus;
-	bool whack_connectionstatus;
-	bool whack_briefconnectionstatus;
 	bool whack_showstates;
 	bool whack_seccomp_crashtest;
-	bool whack_processstatus;
 	bool whack_leave_state;		/* .basic.shutdown should not
 					 * send delete or clean kernel
 					 * state on shutdown */

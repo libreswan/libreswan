@@ -41,6 +41,6 @@ extern void free_that_address_lease(struct connection *c, const struct ip_info *
 
 ip_range addresspool_range(struct addresspool *pool);
 
-extern void show_addresspool_status(struct show *s);
+void whack_addresspoolstatus(const struct whack_message *wm, struct show *s);
 
 #endif /* _ADDRESSPOOL_H */

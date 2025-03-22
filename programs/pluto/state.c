@@ -1602,7 +1602,7 @@ void jam_humber_uintmax(struct jambuf *buf,
 	jam_string(buf, suffix);
 }
 
-void show_brief_status(struct show *s)
+void whack_briefstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
 	show(s, "State Information: DDoS cookies %s, %s new IKE connections",

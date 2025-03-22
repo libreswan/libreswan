@@ -1401,7 +1401,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_GLOBALSTATUS:	/* --globalstatus */
-			msg.whack_globalstatus = true;
+			msg.whack_command = WHACK_GLOBALSTATUS;
 			ignore_errors = true;
 			continue;
 
@@ -1410,42 +1410,42 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_TRAFFICSTATUS:	/* --trafficstatus */
-			msg.whack_trafficstatus = true;
+			msg.whack_command = WHACK_TRAFFICSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_SHUNTSTATUS:	/* --shuntstatus */
-			msg.whack_shuntstatus = true;
+			msg.whack_command = WHACK_SHUNTSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_ADDRESSPOOLSTATUS:	/* --addresspoolstatus */
-			msg.whack_addresspoolstatus = true;
+			msg.whack_command = WHACK_ADDRESSPOOLSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_CONNECTIONSTATUS:	/* --connectionstatus */
-			msg.whack_connectionstatus = true;
+			msg.whack_command = WHACK_CONNECTIONSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_BRIEFCONNECTIONSTATUS:	/* --briefconnectionstatus */
-			msg.whack_briefconnectionstatus = true;
+			msg.whack_command = WHACK_BRIEFCONNECTIONSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_FIPSSTATUS:	/* --fipsstatus */
-			msg.whack_fipsstatus = true;
+			msg.whack_command = WHACK_FIPSSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_BRIEFSTATUS:	/* --briefstatus */
-			msg.whack_briefstatus = true;
+			msg.whack_command = WHACK_BRIEFSTATUS;
 			ignore_errors = true;
 			continue;
 
 		case OPT_PROCESSSTATUS:	/* --processstatus */
-			msg.whack_processstatus = true;
+			msg.whack_command = WHACK_PROCESSSTATUS;
 			ignore_errors = true;
 			continue;
 
@@ -2629,15 +2629,6 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_ddns ||
 	      msg.whack_crash ||
-	      msg.whack_shuntstatus ||
-	      msg.whack_globalstatus ||
-	      msg.whack_trafficstatus ||
-	      msg.whack_addresspoolstatus ||
-	      msg.whack_connectionstatus ||
-	      msg.whack_briefconnectionstatus ||
-	      msg.whack_processstatus ||
-	      msg.whack_fipsstatus ||
-	      msg.whack_briefstatus ||
 	      msg.whack_clear_stats ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||

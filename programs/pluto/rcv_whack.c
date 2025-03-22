@@ -108,6 +108,15 @@ static void whack_listcacerts(struct show *s)
 	root_certs_delref(&roots, show_logger(s));
 }
 
+
+static void whack_fipsstatus(const struct whack_message *wm UNUSED, struct show *s)
+{
+	bool fips = is_fips_mode();
+	show(s, "FIPS mode %s", !fips ?
+		"disabled" :
+		impair.force_fips ? "enabled [forced]" : "enabled");
+}
+
 static void do_whacklisten(struct logger *logger)
 {
 	fflush(stderr);
@@ -338,6 +347,42 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		[WHACK_REREADCERTS] = {
 			.name = "rereadcerts",
 			.op = whack_rereadcerts,
+		},
+		[WHACK_GLOBALSTATUS] = {
+			.name = "globalstatus",
+			.op = whack_globalstatus,
+		},
+		[WHACK_TRAFFICSTATUS] = {
+			.name = "trafficstatus",
+			.op = whack_trafficstatus,
+		},
+		[WHACK_SHUNTSTATUS] = {
+			.name = "shuntstatus",
+			.op = whack_shuntstatus,
+		},
+		[WHACK_FIPSSTATUS] = {
+			.name = "fipsstatus",
+			.op = whack_fipsstatus,
+		},
+		[WHACK_BRIEFSTATUS] = {
+			.name = "briefstatus",
+			.op = whack_briefstatus,
+		},
+		[WHACK_PROCESSSTATUS] = {
+			.name = "processstatus",
+			.op = whack_processstatus,
+		},
+		[WHACK_ADDRESSPOOLSTATUS] = {
+			.name = "addresspoolstatus",
+			.op = whack_addresspoolstatus,
+		},
+		[WHACK_CONNECTIONSTATUS] = {
+			.name = "connectionstatus",
+			.op = whack_connectionstatus,
+		},
+		[WHACK_BRIEFCONNECTIONSTATUS] = {
+			.name = "briefconnectionstatus",
+			.op = whack_briefconnectionstatus,
 		},
 	};
 
@@ -671,64 +716,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "down: stop: %s", (m->name == NULL ? "<null>" : m->name));
 	}
 
-	if (m->whack_globalstatus) {
-		dbg_whack(s, "globalstatus: start:");
-		whack_globalstatus(s);
-		dbg_whack(s, "globalstatus: stop:");
-	}
-
 	if (m->whack_clear_stats) {
 		dbg_whack(s, "clearstats: start:");
 		clear_pluto_stats();
 		dbg_whack(s, "clearstats: stop:");
-	}
-
-	if (m->whack_trafficstatus) {
-		dbg_whack(s, "trafficstatus: start: %s", (m->name == NULL ? "<null>" : m->name));
-		whack_trafficstatus(m, s);
-		dbg_whack(s, "trafficstatus: stop: %s", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_shuntstatus) {
-		dbg_whack(s, "shuntstatus: start");
-		show_shunt_status(s);
-		dbg_whack(s, "shuntstatus: stop");
-	}
-
-	if (m->whack_fipsstatus) {
-		dbg_whack(s, "fipsstatus: start:");
-		show_fips_status(s);
-		dbg_whack(s, "fipsstatus: stop:");
-	}
-
-	if (m->whack_briefstatus) {
-		dbg_whack(s, "briefstatus: start:");
-		show_brief_status(s);
-		dbg_whack(s, "briefstatus: stop:");
-	}
-
-	if (m->whack_processstatus) {
-		dbg_whack(s, "processstatus: start:");
-		show_process_status(s);
-		dbg_whack(s, "processstatus: stop:");
-	}
-
-	if (m->whack_addresspoolstatus) {
-		dbg_whack(s, "addresspoolstatus: start:");
-		show_addresspool_status(s);
-		dbg_whack(s, "addresspoolstatus: stop:");
-	}
-
-	if (m->whack_connectionstatus) {
-		dbg_whack(s, "connectionstatus: start:");
-		whack_connectionstatus(m, s);
-		dbg_whack(s, "connectionstatus: stop:");
-	}
-
-	if (m->whack_briefconnectionstatus) {
-		dbg_whack(s, "briefconnectionstatus: start:");
-		whack_briefconnectionstatus(m, s);
-		dbg_whack(s, "briefconnectionstatus: stop:");
 	}
 
 	if (m->whack_showstates) {

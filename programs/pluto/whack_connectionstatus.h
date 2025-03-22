@@ -26,7 +26,7 @@ struct spd_end;
 struct connection;
 struct host_end;
 
-void whack_connectionstatus(const struct whack_message *m, struct show *s);
+void whack_connectionstatus(const struct whack_message *wm, struct show *s);
 void show_connection_statuses(struct show *s);
 
 /*

@@ -23,8 +23,9 @@
 #include "monotime.h"
 
 struct show;
+struct whack_message;
 
 void whack_status(struct show *s, const monotime_t now);
-void whack_globalstatus(struct show *s);
+void whack_globalstatus(const struct whack_message *wm, struct show *s);
 
 #endif

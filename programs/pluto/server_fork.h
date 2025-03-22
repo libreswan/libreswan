@@ -23,6 +23,7 @@ struct msg_digest;
 struct state;
 struct show;
 enum stream;
+struct whack_message;
 
 /*
  * Create a child process using fork()
@@ -86,6 +87,6 @@ void server_fork_exec(const char *path,
 void server_fork_sigchld_handler(struct logger *logger);
 void init_server_fork(struct logger *logger);
 void check_server_fork(struct logger *logger);
-void show_process_status(struct show *s);
+void whack_processstatus(const struct whack_message *wm, struct show *s);
 
 #endif

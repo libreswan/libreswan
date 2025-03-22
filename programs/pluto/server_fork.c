@@ -113,7 +113,7 @@ static void pid_entry_db_del(struct pid_entry *);
 
 HASH_DB(pid_entry, &pid_entry_pid_hash_table);
 
-void show_process_status(struct show *s)
+void whack_processstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
 	/* XXX: don't sort for now */
