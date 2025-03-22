@@ -126,6 +126,16 @@ static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
 	}
 }
 
+static void jam_whack_deletestateno(struct jambuf *buf, const struct whack_message *wm)
+{
+	jam_so(buf, wm->whack_deletestateno);
+}
+
+static void jam_whack_crash_peer(struct jambuf *buf, const struct whack_message *wm)
+{
+	jam_address(buf, &wm->whack_crash_peer);
+}
+
 static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *wm)
 {
 	jam(buf, "initiate: start: name='%s' remote='%s' async=%s",
@@ -441,6 +451,29 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_down,
 			.jam = jam_whack_name,
 		},
+		/**/
+
+		[WHACK_DELETEUSER] = {
+			.name = "deleteuser",
+			.op = whack_deleteuser,
+			.jam = jam_whack_name,
+		},
+		[WHACK_DELETEID] = {
+			.name = "deleteid",
+			.op = whack_deleteid,
+			.jam = jam_whack_name,
+		},
+		[WHACK_DELETESTATE] = {
+			.name = "deletestate",
+			.op = whack_deletestate,
+			.jam = jam_whack_deletestateno,
+		},
+
+		[WHACK_CRASH] = {
+			.name = "crash",
+			.op = whack_crash,
+			.jam = jam_whack_crash_peer,
+		},
 
 	};
 
@@ -537,39 +570,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_command != 0) {
 		dispatch_command(m, s);
-	}
-
-	/*
-	 * Deleting combined with adding a connection works as
-	 * replace.
-	 *
-	 * To make this more useful, in only this combination, delete
-	 * will silently ignore the lack of the connection.
-	 */
-
-	if (m->whack_deleteuser) {
-		dbg_whack(s, "deleteuser: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_deleteuser(m, s);
-		dbg_whack(s, "deleteuser: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_deleteid) {
-		dbg_whack(s, "deleteid: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		whack_deleteid(m, s);
-		dbg_whack(s, "deleteid: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->whack_deletestate) {
-		dbg_whack(s, "deletestate: start: #%lu", m->whack_deletestateno);
-		whack_deletestate(m, s);
-		dbg_whack(s, "deletestate: stop: #%lu", m->whack_deletestateno);
-	}
-
-	if (m->whack_crash) {
-		address_buf pb;
-		dbg_whack(s, "crash: start: %s", str_address(&m->whack_crash_peer, &pb));
-		whack_crash(m, s);
-		dbg_whack(s, "crash: stop: %s", str_address(&m->whack_crash_peer, &pb));
 	}
 
 	if (m->redirect_to != NULL && m->whack_command != WHACK_ADD) {

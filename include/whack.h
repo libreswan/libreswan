@@ -74,6 +74,11 @@ enum whack_command {
 	WHACK_OPPO_INITIATE,
 	WHACK_DOWN,
 	WHACK_SUSPEND,
+	/**/
+	WHACK_DELETEUSER,
+	WHACK_DELETEID,
+	WHACK_DELETESTATE,
+	WHACK_CRASH,
 };
 
 /*
@@ -380,7 +385,6 @@ struct whack_message {
 	} oppo;
 
 	/* for WHACK_DELETESTATE: */
-	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
 
 	/* initiate rekey/delete/down SA now */
@@ -398,14 +402,6 @@ struct whack_message {
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
 
-	/* for WHACK_DELETEUSER: */
-	bool whack_deleteuser;
-	bool whack_deleteuser_name;
-
-	/* for WHACK_DELETEUSER: */
-	bool whack_deleteid;
-	bool whack_deleteid_name;
-
 	/* for WHACK_PURGEOCSP */
 	bool whack_purgeocsp;
 
@@ -421,7 +417,6 @@ struct whack_message {
 	bool whack_ddns;
 
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
-	bool whack_crash;
 	ip_address whack_crash_peer;
 
 	/* for WHACK_LIST */

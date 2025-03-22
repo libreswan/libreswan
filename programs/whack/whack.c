@@ -1302,16 +1302,16 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DELETEID: /* --deleteid --name <id> */
-			msg.whack_deleteid = true;
+			msg.whack_command = WHACK_DELETEID;
 			continue;
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
-			msg.whack_deletestate = true;
+			msg.whack_command = WHACK_DELETESTATE;
 			msg.whack_deletestateno = optarg_uintmax(logger);
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
-			msg.whack_crash = true;
+			msg.whack_command = WHACK_CRASH;
 			msg.whack_crash_peer = optarg_address_dns(logger, &host_family);
 			if (!address_is_specified(msg.whack_crash_peer)) {
 				/* either :: or 0.0.0.0; unset already rejected */
@@ -1323,7 +1323,7 @@ int main(int argc, char **argv)
 
 		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
-			msg.whack_deleteuser = true;
+			msg.whack_command = WHACK_DELETEUSER;
 			continue;
 
 		case OPT_REDIRECT_TO:	/* --redirect-to */
@@ -2609,9 +2609,6 @@ int main(int argc, char **argv)
 	      msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
 	      msg.whack_key ||
-	      msg.whack_deleteid ||
-	      msg.whack_deletestate ||
-	      msg.whack_deleteuser ||
 	      msg.redirect_to != NULL ||
 	      msg.global_redirect ||
 	      msg.global_redirect_to ||
@@ -2621,7 +2618,6 @@ int main(int argc, char **argv)
 	      msg.ike_buf_size ||
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_ddns ||
-	      msg.whack_crash ||
 	      msg.whack_clear_stats ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
