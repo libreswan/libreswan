@@ -52,7 +52,7 @@
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
 #include "ikev2_redirect.h"		/* for find_and_active_redirect_states() */
 #include "addresspool.h"		/* for show_addresspool_status() */
-#include "pluto_stats.h"		/* for clear_pluto_stats() et.al. */
+#include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
 
@@ -114,6 +114,11 @@ static void whack_fipsstatus(const struct whack_message *wm UNUSED, struct show 
 	show(s, "FIPS mode %s", !fips ?
 		"disabled" :
 		impair.force_fips ? "enabled [forced]" : "enabled");
+}
+
+static void whack_showstates(const struct whack_message *wm UNUSED, struct show *s)
+{
+	show_states(s, mononow());
 }
 
 static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
@@ -474,6 +479,24 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_crash,
 			.jam = jam_whack_crash_peer,
 		},
+		/**/
+
+		[WHACK_DDNS] = {
+			.name = "ddns",
+			.op = whack_ddns,
+		},
+		[WHACK_PURGEOCSP] = {
+			.name = "purgeocsp",
+			.op = whack_purgeocsp,
+		},
+		[WHACK_CLEARSTATS] = {
+			.name = "clearstats",
+			.op = whack_clearstats,
+		},
+		[WHACK_SHOWSTATES] = {
+			.name = "showstates",
+			.op = whack_showstates,
+		},
 
 	};
 
@@ -655,13 +678,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "ddos: stop: %d", m->whack_ddos);
 	}
 
-	if (m->whack_ddns) {
-		dbg_whack(s, "ddns: start: %d", m->whack_ddns);
-		llog(RC_LOG, logger, "updating pending dns lookups");
-		connection_check_ddns(show_logger(s));
-		dbg_whack(s, "ddns: stop: %d", m->whack_ddns);
-	}
-
 	if (m->whack_listpubkeys) {
 		dbg_whack(s, "listpubkeys: start:");
 		show_pubkeys(s, m->whack_utc, SHOW_ALL_KEYS);
@@ -672,12 +688,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "checkpubkeys: start:");
 		show_pubkeys(s, m->whack_utc, SHOW_EXPIRED_KEYS);
 		dbg_whack(s, "checkpubkeys: stop:");
-	}
-
-	if (m->whack_purgeocsp) {
-		dbg_whack(s, "purgeocsp: start:");
-		clear_ocsp_cache();
-		dbg_whack(s, "purgeocsp: stop:");
 	}
 
 	if (m->whack_list & LIST_PSKS) {
@@ -719,18 +729,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		/* add a public key */
 		key_add_request(m, show_logger(s));
 		dbg_whack(s, "key: stop:");
-	}
-
-	if (m->whack_clear_stats) {
-		dbg_whack(s, "clearstats: start:");
-		clear_pluto_stats();
-		dbg_whack(s, "clearstats: stop:");
-	}
-
-	if (m->whack_showstates) {
-		dbg_whack(s, "showstates: start:");
-		whack_showstates(s, now);
-		dbg_whack(s, "showstates: stop:");
 	}
 
 #ifdef USE_SECCOMP

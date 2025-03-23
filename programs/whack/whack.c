@@ -400,7 +400,7 @@ enum opt {
 	OPT_PURGEOCSP,
 
 	OPT_GLOBALSTATUS,
-	OPT_CLEAR_STATS,
+	OPT_CLEARSTATS,
 	OPT_LEAVE_STATE,
 	OPT_TRAFFICSTATUS,
 	OPT_SHUNTSTATUS,
@@ -698,7 +698,7 @@ const struct option optarg_options[] = {
 
 	{ "purgeocsp\0", no_argument, NULL, OPT_PURGEOCSP },
 
-	{ "clearstats\0", no_argument, NULL, OPT_CLEAR_STATS },
+	{ "clearstats\0", no_argument, NULL, OPT_CLEARSTATS },
 
 	{ "status\0", no_argument, NULL, OPT_STATUS },
 	{ "globalstatus\0", no_argument, NULL, OPT_GLOBALSTATUS },
@@ -1364,7 +1364,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DDNS:	/* --ddns */
-			msg.whack_ddns = true;
+			msg.whack_command = WHACK_DDNS;
 			continue;
 
 		case OPT_LISTEN:	/* --listen */
@@ -1392,7 +1392,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_PURGEOCSP:	/* --purgeocsp */
-			msg.whack_purgeocsp = true;
+			msg.whack_command = WHACK_PURGEOCSP;
 			continue;
 
 		case OPT_STATUS:	/* --status */
@@ -1405,8 +1405,8 @@ int main(int argc, char **argv)
 			ignore_errors = true;
 			continue;
 
-		case OPT_CLEAR_STATS:	/* --clearstats */
-			msg.whack_clear_stats = true;
+		case OPT_CLEARSTATS:	/* --clearstats */
+			msg.whack_command = WHACK_CLEARSTATS;
 			continue;
 
 		case OPT_TRAFFICSTATUS:	/* --trafficstatus */
@@ -1450,7 +1450,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_SHOW_STATES:	/* --showstates */
-			msg.whack_showstates = true;
+			msg.whack_command = WHACK_SHOWSTATES;
 			ignore_errors = true;
 			continue;
 #ifdef USE_SECCOMP
@@ -2617,14 +2617,10 @@ int main(int argc, char **argv)
 	      msg.whack_list ||
 	      msg.ike_buf_size ||
 	      msg.whack_ddos != DDOS_undefined ||
-	      msg.whack_ddns ||
-	      msg.whack_clear_stats ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
 	      msg.whack_leave_state ||
-	      msg.whack_purgeocsp ||
 	      msg.whack_seccomp_crashtest ||
-	      msg.whack_showstates ||
 	      msg.whack_sa ||
 	      msg.whack_listpubkeys ||
 	      msg.whack_checkpubkeys)) {

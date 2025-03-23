@@ -79,6 +79,11 @@ enum whack_command {
 	WHACK_DELETEID,
 	WHACK_DELETESTATE,
 	WHACK_CRASH,
+	/**/
+	WHACK_CLEARSTATS,
+	WHACK_DDNS,
+	WHACK_PURGEOCSP,
+	WHACK_SHOWSTATES,
 };
 
 /*
@@ -184,8 +189,6 @@ struct whack_message {
 	/* when non-zero, act on this */
 	enum whack_command whack_command;
 
-	bool whack_clear_stats;
-	bool whack_showstates;
 	bool whack_seccomp_crashtest;
 	bool whack_leave_state;		/* .basic.shutdown should not
 					 * send delete or clean kernel
@@ -402,9 +405,6 @@ struct whack_message {
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
 
-	/* for WHACK_PURGEOCSP */
-	bool whack_purgeocsp;
-
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
 	long unsigned int ike_buf_size;	/* IKE socket recv/snd buffer size */
@@ -412,9 +412,6 @@ struct whack_message {
 
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;
-
-	/* force EVENT_PENDING_DDNS */
-	bool whack_ddns;
 
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
 	ip_address whack_crash_peer;

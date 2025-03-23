@@ -17,9 +17,10 @@
 #ifndef DDNS_H
 #define DDNS_H
 
-struct logger;
+struct show;
+struct whack_message;
 
 void init_ddns(void);
-void connection_check_ddns(struct logger *logger);
+void whack_ddns(const struct whack_message *wm, struct show *s);
 
 #endif

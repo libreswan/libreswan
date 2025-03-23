@@ -67,10 +67,10 @@ static void show_system_security(struct show *s)
 #endif
 }
 
-void whack_globalstatus(const struct whack_message *wm UNUSED, struct show *s)
+void whack_globalstatus(const struct whack_message *wm, struct show *s)
 {
 	show_globalstate_status(s);
-	show_pluto_stats(s);
+	whack_showstats(wm, s);
 }
 
 void whack_status(struct show *s, const monotime_t now)
@@ -87,6 +87,6 @@ void whack_status(struct show *s, const monotime_t now)
 	show_db_ops_status(s);
 	show_connection_statuses(s);
 	whack_briefstatus(NULL/*wm:ignored*/, s);
-	whack_showstates(s, now);
+	show_states(s, now);
 	whack_shuntstatus(NULL/*wm:ignored*/, s);
 }

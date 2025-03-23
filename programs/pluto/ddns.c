@@ -34,6 +34,7 @@
 #include "timer.h"
 #include "initiate.h"
 #include "orient.h"
+#include "show.h"
 
 /* time before retrying DDNS host lookup for phase 1 */
 #define PENDING_DDNS_INTERVAL secs_per_minute
@@ -204,7 +205,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 }
 
-void connection_check_ddns(struct logger *logger)
+static void connection_check_ddns(struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 
@@ -223,6 +224,13 @@ void connection_check_ddns(struct logger *logger)
 	}
 
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
+}
+
+void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	llog(RC_LOG, logger, "updating pending dns lookups");
+	connection_check_ddns(logger);
 }
 
 void init_ddns(void)
