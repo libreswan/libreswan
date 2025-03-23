@@ -481,29 +481,9 @@ struct state {
 	const struct finite_state *st_state;	/* Current FSM state */
 
 	/*
-	 * Account for why an SA is is started, established, and
-	 * finished (deleted).
-	 *
-	 * SA_TYPE indicates the type of SA (IKE or CHILD) that will
-	 * eventually be established.  For instance, when re-keying an
-	 * IKE SA where the state is treated like a child until it is
-	 * emancipated (it has a parent), SA_TYPE=IKE_SA.  While it
-	 * might technically be possible to extract this information
-	 * from enum state_kind this is far more robust.
-	 *
-	 * DELETE_REASON, if the SA establishes it contains
-	 * REASON_COMPLETED, else it is explicitly set to failure
-	 * indication (or defaults to REASON_UNKNOWN).  Note that the
-	 * information can't be reliably extracted from enum
-	 * state_kind in delete_state() because, by that point, state
-	 * may have further transitioned to STATE_V2_IKE_SA_DELETE etc.
-	 * Also, note that the information can't be reliably set in
-	 * complete*transition() as, at least in the case of IKEv2,
-	 * there can be two states involved where one success and one
-	 * fails.
+	 * Account for why an SA is terminated.  Used by pstats.
 	 */
 	struct {
-		enum sa_kind sa_type; /* use .st_sa_kind_when_established */
 		enum terminate_reason terminate_reason;
 	} st_pstats;
 

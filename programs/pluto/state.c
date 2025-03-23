@@ -492,7 +492,7 @@ static struct state *new_state(struct connection *c,
 	     pri_so(st->st_serialno), (void *) st);
 
 	state_db_add(st);
-	pstat_sa_started(st, sa_kind);
+	pstat_sa_started(st);
 
 	return st;
 }

@@ -144,20 +144,21 @@ static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_KIND_ROOF] = {
 	},
 };
 
-void pstat_sa_started(struct state *st, enum sa_kind sa_type)
+void pstat_sa_started(struct state *st)
 {
-	st->st_pstats.sa_type = sa_type;
 	st->st_pstats.terminate_reason = REASON_UNKNOWN;
 
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	dbg("pstats #%lu %s started", st->st_serialno, name);
 
-	pstats_sa_started[st->st_ike_version][st->st_pstats.sa_type]++;
+	pstats_sa_started[st->st_ike_version][sa_kind]++;
 }
 
 void pstat_sa_failed(struct state *st, enum terminate_reason r)
 {
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
 	const char *reason = str_enum(&terminate_reason_names, r, &rb);
 	if (st->st_pstats.terminate_reason == REASON_UNKNOWN) {
@@ -170,12 +171,13 @@ void pstat_sa_failed(struct state *st, enum terminate_reason r)
 
 void pstat_sa_deleted(struct state *st)
 {
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
 	const char *reason = str_enum(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
 	ldbg(st->logger, "pstats #%lu %s deleted %s", st->st_serialno, name, reason);
 
-	pstats_sa_finished[st->st_ike_version][st->st_pstats.sa_type][st->st_pstats.terminate_reason]++;
+	pstats_sa_finished[st->st_ike_version][sa_kind][st->st_pstats.terminate_reason]++;
 
 	/*
 	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
@@ -295,9 +297,10 @@ static void pstat_child_sa_established(struct state *st)
 
 void pstat_sa_established(struct state *st)
 {
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	dbg("pstats #%lu %s established", st->st_serialno, name);
-	pstats_sa_established[st->st_ike_version][st->st_pstats.sa_type]++;
+	pstats_sa_established[st->st_ike_version][sa_kind]++;
 
 	/*
 	 * Check for double billing.  Only care that IKEv2 gets this
@@ -307,7 +310,7 @@ void pstat_sa_established(struct state *st)
 		st->st_pstats.terminate_reason == REASON_UNKNOWN);
 	st->st_pstats.terminate_reason = REASON_COMPLETED;
 
-	switch (st->st_pstats.sa_type) {
+	switch (sa_kind) {
 	case IKE_SA: pstat_ike_sa_established(st); break;
 	case CHILD_SA: pstat_child_sa_established(st); break;
 	}
