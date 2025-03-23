@@ -568,6 +568,48 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
 	}
 
+	/*
+	 * listen/unlisten are handled before other commands.  Is this
+	 * needed?
+	 */
+
+	/* update any socket buffer size before calling listen */
+	if (m->ike_buf_size != 0) {
+		dbg_whack(s, "ike_buf_size: start: %lu", m->ike_buf_size);
+		pluto_sock_bufsize = m->ike_buf_size;
+		llog(RC_LOG, logger,
+			    "set IKE socket buffer to %d", pluto_sock_bufsize);
+		dbg_whack(s, "ike_buf_size: stop %lu", m->ike_buf_size);
+	}
+
+	/* update MSG_ERRQUEUE setting before size before calling listen */
+	if (m->ike_sock_err_toggle) {
+		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_sock_errqueue));
+		pluto_sock_errqueue = !pluto_sock_errqueue;
+		llog(RC_LOG, logger,
+			    "%s IKE socket MSG_ERRQUEUEs",
+			    pluto_sock_errqueue ? "enabling" : "disabling");
+		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_sock_errqueue));
+	}
+
+	/* process "listen" before any operation that could require it */
+	if (m->whack_listen) {
+		dbg_whack(s, "listen: start:");
+		do_whacklisten(logger);
+		dbg_whack(s, "listen: stop:");
+	}
+
+	if (m->whack_unlisten) {
+		dbg_whack(s, "unlisten: start:");
+		llog(RC_LOG, logger, "no longer listening for IKE messages");
+		listening = false;
+		dbg_whack(s, "unlisten: stop:");
+	}
+
+	/*
+	 * Most commands go here.
+	 */
+
 	if (m->whack_command != 0) {
 		dispatch_command(m, s);
 	}
@@ -614,39 +656,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			     str_enum(&allow_global_redirect_names, global_redirect, &rn));
 		}
 		dbg_whack(s, "global_redirect: stop: %d", m->global_redirect);
-	}
-
-	/* update any socket buffer size before calling listen */
-	if (m->ike_buf_size != 0) {
-		dbg_whack(s, "ike_buf_size: start: %lu", m->ike_buf_size);
-		pluto_sock_bufsize = m->ike_buf_size;
-		llog(RC_LOG, logger,
-			    "set IKE socket buffer to %d", pluto_sock_bufsize);
-		dbg_whack(s, "ike_buf_size: stop %lu", m->ike_buf_size);
-	}
-
-	/* update MSG_ERRQUEUE setting before size before calling listen */
-	if (m->ike_sock_err_toggle) {
-		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_sock_errqueue));
-		pluto_sock_errqueue = !pluto_sock_errqueue;
-		llog(RC_LOG, logger,
-			    "%s IKE socket MSG_ERRQUEUEs",
-			    pluto_sock_errqueue ? "enabling" : "disabling");
-		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_sock_errqueue));
-	}
-
-	/* process "listen" before any operation that could require it */
-	if (m->whack_listen) {
-		dbg_whack(s, "listen: start:");
-		do_whacklisten(logger);
-		dbg_whack(s, "listen: stop:");
-	}
-
-	if (m->whack_unlisten) {
-		dbg_whack(s, "unlisten: start:");
-		llog(RC_LOG, logger, "no longer listening for IKE messages");
-		listening = false;
-		dbg_whack(s, "unlisten: stop:");
 	}
 
 	if (m->whack_ddos != DDOS_undefined) {
