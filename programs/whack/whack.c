@@ -1264,30 +1264,24 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REKEY_IKE: /* --rekey-ike */
-			msg.whack_sa = WHACK_REKEY_SA;
-			msg.whack_sa_type = IKE_SA;
+			msg.whack_command = WHACK_REKEY_IKE;
 			continue;
 		case OPT_REKEY_CHILD: /* --rekey-child */
-			msg.whack_sa = WHACK_REKEY_SA;
-			msg.whack_sa_type = CHILD_SA;
+			msg.whack_command = WHACK_REKEY_CHILD;
 			continue;
 
 		case OPT_DELETE_IKE: /* --delete-ike */
-			msg.whack_sa = WHACK_DELETE_SA;
-			msg.whack_sa_type = IKE_SA;
+			msg.whack_command = WHACK_DELETE_IKE;
 			continue;
 		case OPT_DELETE_CHILD: /* --delete-child */
-			msg.whack_sa = WHACK_DELETE_SA;
-			msg.whack_sa_type = CHILD_SA;
+			msg.whack_command = WHACK_DELETE_CHILD;
 			continue;
 
 		case OPT_DOWN_IKE: /* --down-ike */
-			msg.whack_sa = WHACK_DOWN_SA;
-			msg.whack_sa_type = IKE_SA;
+			msg.whack_command = WHACK_DOWN_IKE;
 			continue;
 		case OPT_DOWN_CHILD: /* --down-child */
-			msg.whack_sa = WHACK_DOWN_SA;
-			msg.whack_sa_type = CHILD_SA;
+			msg.whack_command = WHACK_DOWN_CHILD;
 			continue;
 
 		case OPT_SUSPEND: /* --suspend */
@@ -2621,7 +2615,6 @@ int main(int argc, char **argv)
 	      msg.impairments.len > 0 ||
 	      msg.whack_leave_state ||
 	      msg.whack_seccomp_crashtest ||
-	      msg.whack_sa ||
 	      msg.whack_listpubkeys ||
 	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");

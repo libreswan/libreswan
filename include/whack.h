@@ -84,6 +84,27 @@ enum whack_command {
 	WHACK_DDNS,
 	WHACK_PURGEOCSP,
 	WHACK_SHOWSTATES,
+	/**/
+#define whack_sa_name(OP) ((OP) == WHACK_REKEY_IKE ? "rekey-ike" :	\
+			   (OP) == WHACK_REKEY_CHILD ? "rekey-child" :	\
+			   (OP) == WHACK_DELETE_IKE ? "delete-ike" :	\
+			   (OP) == WHACK_DELETE_CHILD ? "delete-child" : \
+			   (OP) == WHACK_DOWN_IKE ? "down-ike" :	\
+			   (OP) == WHACK_DOWN_CHILD ? "down-child" :	\
+			   "???")
+#define whack_sa_kind(OP) ((OP) == WHACK_REKEY_IKE ? IKE_SA :		\
+			   (OP) == WHACK_REKEY_CHILD ? CHILD_SA :	\
+			   (OP) == WHACK_DELETE_IKE ? IKE_SA :		\
+			   (OP) == WHACK_DELETE_CHILD ? CHILD_SA :	\
+			   (OP) == WHACK_DOWN_IKE ? IKE_SA :		\
+			   (OP) == WHACK_DOWN_CHILD ? CHILD_SA :	\
+			   0)
+	WHACK_REKEY_IKE,
+	WHACK_REKEY_CHILD,
+	WHACK_DELETE_IKE,
+	WHACK_DELETE_CHILD,
+	WHACK_DOWN_IKE,
+	WHACK_DOWN_CHILD,
 };
 
 /*
@@ -389,18 +410,6 @@ struct whack_message {
 
 	/* for WHACK_DELETESTATE: */
 	long unsigned int whack_deletestateno;
-
-	/* initiate rekey/delete/down SA now */
-	enum whack_sa {
-		WHACK_REKEY_SA = 1,
-		WHACK_DELETE_SA,
-		WHACK_DOWN_SA,
-	} whack_sa;
-#define whack_sa_name(OP) ((OP) == WHACK_REKEY_SA ? "rekey" :	\
-			   (OP) == WHACK_DELETE_SA ? "delete" :	\
-			   (OP) == WHACK_DOWN_SA ? "down" :	\
-			   "???")
-	enum sa_type whack_sa_type;
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;

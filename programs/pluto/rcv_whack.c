@@ -315,48 +315,6 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-/*
- *
- */
-
-PRINTF_LIKE(5)
-static void dispatch(const struct whack_message *const m,
-		     struct show *s,
-		     void (*op)(const struct whack_message *const m, struct show *s),
-		     const char *name,
-		     const char *fmt, ...)
-{
-	struct logger *logger = show_logger(s);
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "whack: ");
-			jam_string(buf, "start: ");
-			jam_string(buf, name);
-			jam_string(buf, ": ");
-			va_list ap;
-			va_start(ap, fmt);
-			jam_va_list(buf, fmt, ap);
-			va_end(ap);
-			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
-		}
-	}
-	op(m, s);
-	if (DBGP(DBG_BASE)) {
-		struct logger *logger = show_logger(s);
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "whack: ");
-			jam_string(buf, "stop: ");
-			jam_string(buf, name);
-			jam_string(buf, ": ");
-			va_list ap;
-			va_start(ap, fmt);
-			jam_va_list(buf, fmt, ap);
-			va_end(ap);
-			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
-		}
-	}
-}
-
 static void dispatch_command(const struct whack_message *const wm, struct show *s)
 {
 	static const struct command {
@@ -457,7 +415,6 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.jam = jam_whack_name,
 		},
 		/**/
-
 		[WHACK_DELETEUSER] = {
 			.name = "deleteuser",
 			.op = whack_deleteuser,
@@ -473,14 +430,12 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_deletestate,
 			.jam = jam_whack_deletestateno,
 		},
-
+		/**/
 		[WHACK_CRASH] = {
 			.name = "crash",
 			.op = whack_crash,
 			.jam = jam_whack_crash_peer,
 		},
-		/**/
-
 		[WHACK_DDNS] = {
 			.name = "ddns",
 			.op = whack_ddns,
@@ -497,7 +452,37 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "showstates",
 			.op = whack_showstates,
 		},
-
+		/**/
+		[WHACK_REKEY_IKE] = {
+			.name = "rekey-ike",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
+		[WHACK_REKEY_CHILD] = {
+			.name = "rekey-child",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
+		[WHACK_DELETE_IKE] = {
+			.name = "delete-ike",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
+		[WHACK_DELETE_CHILD] = {
+			.name = "delete-child",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
+		[WHACK_DOWN_IKE] = {
+			.name = "down-ike",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
+		[WHACK_DOWN_CHILD] = {
+			.name = "down-child",
+			.op = whack_sa,
+			.jam = jam_whack_name,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -581,14 +566,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "impair: start: %d impairments", m->impairments.len);
 		whack_impair(m, s);
 		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
-	}
-
-	if (m->whack_sa) {
-		enum_buf tn;
-		dispatch(m, s, whack_sa, "whack_sa", "%s %s %s",
-			 whack_sa_name(m->whack_sa),
-			 str_enum(&sa_type_names, m->whack_sa_type, &tn),
-			 (m->name == NULL ? "<null>" : m->name));
 	}
 
 	if (m->whack_command != 0) {
