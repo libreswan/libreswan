@@ -397,28 +397,6 @@ enum_names doi_names = {
 	NULL
 };
 
-/* kind of struct connection */
-static const char *const connection_kind_name[] = {
-#define S(E) [E - CK_INVALID] = #E
-	S(CK_INVALID),
-	S(CK_GROUP),		/* policy group: instantiates to template */
-	S(CK_TEMPLATE),		/* abstract connection, with wildcard */
-	S(CK_PERMANENT),	/* normal connection */
-	S(CK_INSTANCE),		/* instance of template */
-	S(CK_LABELED_TEMPLATE),
-	S(CK_LABELED_PARENT),
-	S(CK_LABELED_CHILD),
-#undef S
-};
-
-enum_names connection_kind_names = {
-	CK_INVALID,
-	CONNECTION_KIND_ROOF - 1,
-	ARRAY_REF(connection_kind_name),
-	"CK_", /* prefix */
-	NULL
-};
-
 /* Payload types (RFC 2408 "ISAKMP" section 3.1) */
 static const char *const payload_name_ikev1[] = {
 #define S(E) [E - ISAKMP_NEXT_NONE] = #E

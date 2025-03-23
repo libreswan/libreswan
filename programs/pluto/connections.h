@@ -52,6 +52,7 @@
 #include "ip_index.h"
 #include "routing.h"
 #include "connection_owner.h"
+#include "connection_kind.h"
 
 /*
  * Note that we include this even if not X509, because we do not want
