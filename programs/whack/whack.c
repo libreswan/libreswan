@@ -1346,14 +1346,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
+			msg.whack_command = WHACK_DDOS;
 			msg.whack_ddos = DDOS_FORCE_BUSY;
 			continue;
 
 		case OPT_DDOS_UNLIMITED:	/* --ddos-unlimited */
+			msg.whack_command = WHACK_DDOS;
 			msg.whack_ddos = DDOS_FORCE_UNLIMITED;
 			continue;
 
 		case OPT_DDOS_AUTO:	/* --ddos-auto */
+			msg.whack_command = WHACK_DDOS;
 			msg.whack_ddos = DDOS_AUTO;
 			continue;
 
@@ -2610,7 +2613,6 @@ int main(int argc, char **argv)
 	      msg.whack_unlisten ||
 	      msg.whack_list ||
 	      msg.ike_buf_size ||
-	      msg.whack_ddos != DDOS_undefined ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
 	      msg.whack_leave_state ||

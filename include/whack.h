@@ -105,6 +105,8 @@ enum whack_command {
 	WHACK_DELETE_CHILD,
 	WHACK_DOWN_IKE,
 	WHACK_DOWN_CHILD,
+	/**/
+	WHACK_DDOS,
 };
 
 /*

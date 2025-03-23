@@ -78,6 +78,11 @@
 #include "whack_showstates.h"
 #include "whack_suspend.h"
 
+static void whack_ddos(const struct whack_message *wm, struct show *s)
+{
+	set_whack_pluto_ddos(wm->whack_ddos, show_logger(s));
+}
+
 static void whack_rereadsecrets(const struct whack_message *wm UNUSED, struct show *s)
 {
 	load_preshared_secrets(show_logger(s));
@@ -483,6 +488,11 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_sa,
 			.jam = jam_whack_name,
 		},
+		[WHACK_DDOS] = {
+			.name = "ddos",
+			.op = whack_ddos,
+		},
+
 	};
 
 	struct logger *logger = show_logger(s);
@@ -656,12 +666,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			     str_enum(&allow_global_redirect_names, global_redirect, &rn));
 		}
 		dbg_whack(s, "global_redirect: stop: %d", m->global_redirect);
-	}
-
-	if (m->whack_ddos != DDOS_undefined) {
-		dbg_whack(s, "ddos: start: %d", m->whack_ddos);
-		set_whack_pluto_ddos(m->whack_ddos, logger);
-		dbg_whack(s, "ddos: stop: %d", m->whack_ddos);
 	}
 
 	if (m->whack_listpubkeys) {
