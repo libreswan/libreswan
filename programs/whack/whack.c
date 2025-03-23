@@ -1452,7 +1452,7 @@ int main(int argc, char **argv)
 			continue;
 #ifdef USE_SECCOMP
 		case OPT_SECCOMP_CRASHTEST:	/* --seccomp-crashtest */
-			msg.whack_seccomp_crashtest = true;
+			msg.whack_command = WHACK_SECCOMP_CRASHTEST;
 			continue;
 #endif
 
@@ -2612,7 +2612,6 @@ int main(int argc, char **argv)
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
 	      msg.whack_leave_state ||
-	      msg.whack_seccomp_crashtest ||
 	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");
 	}

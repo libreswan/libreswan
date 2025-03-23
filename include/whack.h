@@ -218,7 +218,6 @@ struct whack_message {
 	/* when non-zero, act on this */
 	enum whack_command whack_command;
 
-	bool whack_seccomp_crashtest;
 	bool whack_leave_state;		/* .basic.shutdown should not
 					 * send delete or clean kernel
 					 * state on shutdown */

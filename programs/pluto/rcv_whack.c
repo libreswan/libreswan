@@ -612,10 +612,12 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "list",
 			.op = whack_list,
 		},
+#ifdef USE_SECCOMP
 		[WHACK_SECCOMP_CRASHTEST] {
 			.name = "seccomp-crashtest",
 			.op = whack_seccomp_crashtest,
 		},
+#endif
 	};
 
 	struct logger *logger = show_logger(s);
