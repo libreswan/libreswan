@@ -385,15 +385,15 @@ void schedule_v2_replace_event(struct state *st)
 	/*
 	 * Determine the SA's lifetime (in seconds).
 	 *
-	 * Use .st_sa_type_when_established, because, for an IKE SA, it may not
+	 * Use .st_sa_kind_when_established, because, for an IKE SA, it may not
 	 * have been emancipated (so IS_IKE_SA() would still be
 	 * false).
 	 */
 	deltatime_t lifetime;
-	switch (st->st_sa_type_when_established) {
+	switch (st->st_sa_kind_when_established) {
 	case IKE_SA: lifetime = c->config->sa_ike_max_lifetime; break;
 	case CHILD_SA: lifetime = c->config->sa_ipsec_max_lifetime; break;
-	default: bad_case(st->st_sa_type_when_established);
+	default: bad_case(st->st_sa_kind_when_established);
 	}
 
 	enum event_type kind;

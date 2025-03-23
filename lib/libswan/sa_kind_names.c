@@ -13,21 +13,21 @@
  * for more details.
  */
 
-#include "sa_type.h"
+#include "sa_kind.h"
 
 #include "lswcdefs.h"		/* for ARRAY_REF */
 #include "enum_names.h"
 
-static const char *sa_type_name[] = {
-#define S(E) [E - SA_TYPE_FLOOR] = #E
+static const char *sa_kind_name[] = {
+#define S(E) [E - SA_KIND_FLOOR] = #E
 	S(IKE_SA),
 	S(CHILD_SA),
 #undef S
 };
 
-const struct enum_names sa_type_names = {
-	SA_TYPE_FLOOR,
-	SA_TYPE_ROOF-1,
-	ARRAY_REF(sa_type_name),
+const struct enum_names sa_kind_names = {
+	SA_KIND_FLOOR,
+	SA_KIND_ROOF-1,
+	ARRAY_REF(sa_kind_name),
 	.en_prefix = NULL,
 };

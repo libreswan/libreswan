@@ -40,7 +40,7 @@
 #include "ip_cidr.h"
 #include "authby.h"
 #include "encap_proto.h"
-#include "sa_type.h"
+#include "sa_kind.h"
 #include "constants.h"		/* for enum keyword_auth; et.al. */
 #include "end.h"
 
@@ -401,7 +401,7 @@ struct whack_message {
 			   (OP) == WHACK_DELETE_SA ? "delete" :	\
 			   (OP) == WHACK_DOWN_SA ? "down" :	\
 			   "???")
-	enum sa_type whack_sa_type;
+	enum sa_kind whack_sa_type;
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;

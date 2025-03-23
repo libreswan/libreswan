@@ -5320,12 +5320,12 @@ bool is_labeled_child_where(const struct connection *c, where_t where)
 }
 
 bool can_have_sa(const struct connection *c, 
-		 enum sa_type sa_type)
+		 enum sa_kind sa_kind)
 {
 	if (c == NULL) {
 		return false;
 	}
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		switch (c->local->kind) {
 		case CK_INVALID:
@@ -5357,7 +5357,7 @@ bool can_have_sa(const struct connection *c,
 		}
 		bad_enum(c->logger, &connection_kind_names, c->local->kind);
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }
 
 /*
@@ -5390,27 +5390,27 @@ bool is_v1_cisco_split(const struct spd *spd UNUSED, where_t where UNUSED)
 
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
-const char *connection_sa_name(const struct connection *c, enum sa_type sa_type)
+const char *connection_sa_name(const struct connection *c, enum sa_kind sa_kind)
 {
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		return c->config->ike_info->parent_sa_name;
 	case CHILD_SA:
 		return c->config->ike_info->child_sa_name;
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }
 
 /* IKE | ISAKMP || Child | IPsec */
-const char *connection_sa_short_name(const struct connection *c, enum sa_type sa_type)
+const char *connection_sa_short_name(const struct connection *c, enum sa_kind sa_kind)
 {
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		return c->config->ike_info->parent_name;
 	case CHILD_SA:
 		return c->config->ike_info->child_name;
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }
 
 struct child_policy child_sa_policy(const struct connection *c)

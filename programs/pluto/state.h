@@ -50,7 +50,7 @@
 #include "ip_endpoint.h"
 #include "ip_selector.h"
 #include "kernel_mode.h"
-#include "sa_type.h"
+#include "sa_kind.h"
 #include "quirks.h"
 #include "list_entry.h"
 #include "retransmit.h"
@@ -240,7 +240,7 @@ struct state {
 	 * new_state() could use clone_thing(const state on stack).
 	 */
 #define st_ike_version st_connection->config->ike_version
-	/*const*/ enum sa_type st_sa_type_when_established;	/* where is this state going? */
+	/*const*/ enum sa_kind st_sa_kind_when_established;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 
@@ -503,7 +503,7 @@ struct state {
 	 * fails.
 	 */
 	struct {
-		enum sa_type sa_type;
+		enum sa_kind sa_type; /* use .st_sa_kind_when_established */
 		enum terminate_reason terminate_reason;
 	} st_pstats;
 
@@ -800,7 +800,7 @@ struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
-				 enum sa_type sa_type, /*where is this going?*/
+				 enum sa_kind sa_kind, /*where is this going?*/
 				 enum sa_role sa_role,
 				 enum state_kind kind);
 

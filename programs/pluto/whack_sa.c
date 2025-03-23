@@ -38,7 +38,7 @@ static bool whack_rekey_sa(struct state *st)
 
 static bool whack_delete_sa(struct state *st)
 {
-	switch (st->st_sa_type_when_established) {
+	switch (st->st_sa_kind_when_established) {
 	case IKE_SA:
 		submit_v2_delete_exchange(pexpect_ike_sa(st), NULL);
 		return true; /* the connection counts */
@@ -46,7 +46,7 @@ static bool whack_delete_sa(struct state *st)
 		submit_v2_delete_exchange(ike_sa(st, HERE), pexpect_child_sa(st));
 		return true; /* the connection counts */
 	}
-	bad_case(st->st_sa_type_when_established);
+	bad_case(st->st_sa_kind_when_established);
 }
 
 static unsigned whack_connection_sa(const struct whack_message *m,
@@ -131,7 +131,7 @@ void whack_sa(const struct whack_message *m, struct show *s)
 		llog(RC_FATAL, logger,
 		     "received command to %s connection %s, but did not receive the connection name",
 		     whack_sa_name(m->whack_sa),
-		     str_enum(&sa_type_names, m->whack_sa_type, &stb));
+		     str_enum(&sa_kind_names, m->whack_sa_type, &stb));
 		return;
 	}
 

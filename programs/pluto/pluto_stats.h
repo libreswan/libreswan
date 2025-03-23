@@ -19,7 +19,7 @@
 #ifndef _PLUTO_STATS_H
 #define _PLUTO_STATS_H
 
-enum sa_type;
+enum sa_kind;
 enum terminate_reason;
 
 struct pluto_stat {
@@ -108,7 +108,7 @@ extern void clear_pluto_stats(void);
 		}							\
 	}
 
-void pstat_sa_started(struct state *st, enum sa_type sa_type);
+void pstat_sa_started(struct state *st, enum sa_kind sa_type);
 void pstat_sa_failed(struct state *st, enum terminate_reason reason);
 void pstat_sa_established(struct state *st);
 void pstat_sa_deleted(struct state *st);

@@ -428,7 +428,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		enum_buf tn;
 		dispatch(m, s, whack_sa, "whack_sa", "%s %s %s",
 			 whack_sa_name(m->whack_sa),
-			 str_enum(&sa_type_names, m->whack_sa_type, &tn),
+			 str_enum(&sa_kind_names, m->whack_sa_type, &tn),
 			 (m->name == NULL ? "<null>" : m->name));
 	}
 

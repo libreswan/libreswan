@@ -1,4 +1,4 @@
-/* SA type, for libreswan
+/* SA kind, for libreswan
  *
  * Copyright (C) 2019 Andrew Cagney
  *
@@ -14,16 +14,16 @@
  *
  */
 
-#ifndef SA_TYPE_H
-#define SA_TYPE_H
+#ifndef SA_KIND_H
+#define SA_KIND_H
 
-enum sa_type {
-#define SA_TYPE_FLOOR 0
-	IKE_SA = SA_TYPE_FLOOR,
+enum sa_kind {
+#define SA_KIND_FLOOR 0
+	IKE_SA = SA_KIND_FLOOR,
 	CHILD_SA,
-#define SA_TYPE_ROOF (CHILD_SA+1)
+#define SA_KIND_ROOF (CHILD_SA+1)
 };
 
-extern const struct enum_names sa_type_names;
+extern const struct enum_names sa_kind_names;
 
 #endif
