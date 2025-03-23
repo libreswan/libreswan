@@ -703,6 +703,8 @@ int main(int argc, char **argv)
 	 * according to the methods desired, we set the variables for
 	 * those methods
 	 */
+
+	argv[0] = "ipsec pluto";
 	struct logger *logger = init_log(argv[0]);	/* must free */
 
 	struct log_param log_param = {
