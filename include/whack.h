@@ -109,6 +109,10 @@ enum whack_command {
 	WHACK_DDOS,
 	WHACK_LIST,
 	WHACK_CHECKPUBKEYS,
+	/**/
+#ifdef USE_SECCOMP
+	WHACK_SECCOMP_CRASHTEST
+#endif
 };
 
 /*
