@@ -426,12 +426,12 @@ enum opt {
 
 	LST_UTC,
 	LST_CHECKPUBKEYS,
-	LST_PUBKEYS,
-	LST_CERTS,
-	LST_CACERTS,
-	LST_CRLS,
-	LST_PSKS,
-	LST_EVENTS,
+	LST_PUBKEYS = LST_CHECKPUBKEYS + 1 + LIST_PUBKEYS,
+	LST_CERTS =   LST_CHECKPUBKEYS + 1 + LIST_CERTS,
+	LST_CACERTS = LST_CHECKPUBKEYS + 1 + LIST_CACERTS,
+	LST_CRLS =    LST_CHECKPUBKEYS + 1 + LIST_CRLS,
+	LST_PSKS =    LST_CHECKPUBKEYS + 1 + LIST_PSKS,
+	LST_EVENTS =  LST_CHECKPUBKEYS + 1 + LIST_EVENTS,
 	LST_ALL,
 
 #define LAST_NORMAL_OPT		LST_ALL		/* last "normal" option */
@@ -1513,12 +1513,9 @@ int main(int argc, char **argv)
 		case LST_CRLS:	/* --listcrls */
 		case LST_PSKS:	/* --listpsks */
 		case LST_EVENTS:	/* --listevents */
-			msg.whack_list |= LELEM(c - LST_PUBKEYS);
-			ignore_errors = true;
-			continue;
-
 		case LST_PUBKEYS:	/* --listpubkeys */
-			msg.whack_listpubkeys = true;
+			msg.whack_command = WHACK_LIST;
+			msg.whack_list |= LELEM(c - LST_PUBKEYS);
 			ignore_errors = true;
 			continue;
 
@@ -1528,8 +1525,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case LST_ALL:	/* --listall */
-			msg.whack_list = LIST_ALL;
-			msg.whack_listpubkeys = true;
+			msg.whack_command = WHACK_LIST;
+			msg.whack_list = LIST_ALL; /* most!?! */
 			ignore_errors = true;
 			continue;
 
@@ -2611,13 +2608,11 @@ int main(int argc, char **argv)
 	      msg.global_redirect_to ||
 	      msg.whack_listen ||
 	      msg.whack_unlisten ||
-	      msg.whack_list ||
 	      msg.ike_buf_size ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
 	      msg.whack_leave_state ||
 	      msg.whack_seccomp_crashtest ||
-	      msg.whack_listpubkeys ||
 	      msg.whack_checkpubkeys)) {
 		diagw("no action specified; try --help for hints");
 	}

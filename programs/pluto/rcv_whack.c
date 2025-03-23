@@ -320,6 +320,55 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
+static void whack_checkpubkeys(const struct whack_message *wm, struct show *s)
+{
+	show_pubkeys(s, wm->whack_utc, SHOW_EXPIRED_KEYS);
+}
+
+static void whack_list(const struct whack_message *wm, struct show *s)
+{
+	monotime_t now = mononow();
+	if (wm->whack_list & LELEM(LIST_PSKS)) {
+		dbg_whack(s, "list & LIST_PSKS: start:");
+		list_psks(s);
+		dbg_whack(s, "list & LIST_PSKS: stop:");
+	}
+
+	if (wm->whack_list & LELEM(LIST_CERTS)) {
+		dbg_whack(s, "listcerts: start:");
+		list_certs(s);
+		dbg_whack(s, "listcerts: stop:");
+	}
+
+	if (wm->whack_list & LELEM(LIST_CACERTS)) {
+		dbg_whack(s, "listcacerts: start");
+		whack_listcacerts(s);
+		dbg_whack(s, "listcacerts: stop:");
+	}
+
+	if (wm->whack_list & LELEM(LIST_CRLS)) {
+		dbg_whack(s, "listcrls: start:");
+		list_crls(s);
+#if defined(USE_LIBCURL) || defined(USE_LDAP)
+		list_crl_fetch_requests(s, wm->whack_utc);
+#endif
+		dbg_whack(s, "listcrls: stop:");
+	}
+
+	if (wm->whack_list & LELEM(LIST_PUBKEYS)) {
+		dbg_whack(s, "listpubkeys: start:");
+		show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
+		dbg_whack(s, "listpubkeys: stop:");
+	}
+
+	if (wm->whack_list & LELEM(LIST_EVENTS)) {
+		dbg_whack(s, "listevents: start:");
+		list_timers(s, now);
+		list_state_events(s, now);
+		dbg_whack(s, "listevents: stop:");
+	}
+}
+
 static void dispatch_command(const struct whack_message *const wm, struct show *s)
 {
 	static const struct command {
@@ -492,7 +541,14 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "ddos",
 			.op = whack_ddos,
 		},
-
+		[WHACK_CHECKPUBKEYS] = {
+			.name = "checkpubkeys",
+			.op = whack_checkpubkeys,
+		},
+		[WHACK_LIST] = {
+			.name = "list",
+			.op = whack_list,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -540,8 +596,6 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 
 static void whack_process(const struct whack_message *const m, struct show *s)
 {
-	const monotime_t now = mononow();
-
 	/*
 	 * XXX: keep code below compiling.
 	 *
@@ -666,52 +720,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			     str_enum(&allow_global_redirect_names, global_redirect, &rn));
 		}
 		dbg_whack(s, "global_redirect: stop: %d", m->global_redirect);
-	}
-
-	if (m->whack_listpubkeys) {
-		dbg_whack(s, "listpubkeys: start:");
-		show_pubkeys(s, m->whack_utc, SHOW_ALL_KEYS);
-		dbg_whack(s, "listpubkeys: stop:");
-	}
-
-	if (m->whack_checkpubkeys) {
-		dbg_whack(s, "checkpubkeys: start:");
-		show_pubkeys(s, m->whack_utc, SHOW_EXPIRED_KEYS);
-		dbg_whack(s, "checkpubkeys: stop:");
-	}
-
-	if (m->whack_list & LIST_PSKS) {
-		dbg_whack(s, "list & LIST_PSKS: start:");
-		list_psks(s);
-		dbg_whack(s, "list & LIST_PSKS: stop:");
-	}
-
-	if (m->whack_list & LIST_CERTS) {
-		dbg_whack(s, "listcerts: start:");
-		list_certs(s);
-		dbg_whack(s, "listcerts: stop:");
-	}
-
-	if (m->whack_list & LIST_CACERTS) {
-		dbg_whack(s, "listcacerts: start");
-		whack_listcacerts(s);
-		dbg_whack(s, "listcacerts: stop:");
-	}
-
-	if (m->whack_list & LIST_CRLS) {
-		dbg_whack(s, "listcrls: start:");
-		list_crls(s);
-#if defined(USE_LIBCURL) || defined(USE_LDAP)
-		list_crl_fetch_requests(s, m->whack_utc);
-#endif
-		dbg_whack(s, "listcrls: stop:");
-	}
-
-	if (m->whack_list & LIST_EVENTS) {
-		dbg_whack(s, "listevents: start:");
-		list_timers(s, now);
-		list_state_events(s, now);
-		dbg_whack(s, "listevents: stop:");
 	}
 
 	if (m->whack_key) {

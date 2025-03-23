@@ -107,6 +107,8 @@ enum whack_command {
 	WHACK_DOWN_CHILD,
 	/**/
 	WHACK_DDOS,
+	WHACK_LIST,
+	WHACK_CHECKPUBKEYS,
 };
 
 /*
@@ -430,7 +432,6 @@ struct whack_message {
 	/* for WHACK_LIST */
 	bool whack_utc;
 	bool whack_checkpubkeys;	/* --checkpubkeys */
-	bool whack_listpubkeys;		/* --listpubkeys */
 	lset_t whack_list;
 
 	/* for connalias string */
@@ -472,19 +473,22 @@ struct whack_message {
 	unsigned char string[4096];
 };
 
-/* options of whack --list*** command
- * these should be kept in order of option_enums LST_ values
+/*
+ * Options of whack --list*** command
+ *
+ * These should be kept in order of option_enums LST_ values
  */
-#define LIST_NONE	0x0000	/* don't list anything */
-#define LIST_PUBKEYS	0x0001	/* list all public keys */
-#define LIST_CERTS	0x0002	/* list all host/user certs */
-#define LIST_CACERTS	0x0004	/* list all ca certs */
-#define LIST_CRLS	0x0008	/* list all crls */
-#define LIST_PSKS	0x0010	/* list all preshared keys (by name) */
-#define LIST_EVENTS	0x0020	/* list all queued events */
+enum whack_list {
+	LIST_PUBKEYS,	/* list all public keys */
+	LIST_CERTS,	/* list all host/user certs */
+	LIST_CACERTS,	/* list all ca certs */
+	LIST_CRLS,	/* list all crls */
+	LIST_PSKS,	/* list all preshared keys (by name) */
+	LIST_EVENTS,	/* list all queued events */
+};
 
 /* omit events from listing options */
-#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
+#define LIST_ALL	LRANGE(LIST_PUBKEYS, LIST_PSKS)  /* almost all list options */
 
 struct whackpacker {
 	struct whack_message *msg;
