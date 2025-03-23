@@ -30,7 +30,7 @@
 #include "whack_connection.h"
 
 static bool rekey_state(const struct whack_message *m, struct show *s,
-			struct connection *c, enum sa_type sa_type, so_serial_t so)
+			struct connection *c, enum sa_kind sa_kind, so_serial_t so)
 {
 	struct logger *logger = show_logger(s);
 
@@ -38,7 +38,7 @@ static bool rekey_state(const struct whack_message *m, struct show *s,
 	if (st == NULL) {
 		connection_attach(c, logger);
 		llog(RC_LOG, c->logger, "connection does not have %s",
-		     connection_sa_name(c, sa_type));
+		     connection_sa_name(c, sa_kind));
 		connection_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	}
@@ -101,7 +101,7 @@ static unsigned whack_rekey_child(const struct whack_message *m,
 	return rekey_state(m, s, c, CHILD_SA, c->established_child_sa);
 }
 
-void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_type)
+void whack_rekey(const struct whack_message *m, struct show *s, enum sa_kind sa_kind)
 {
 	struct logger *logger = show_logger(s);
 	if (m->name == NULL) {
@@ -111,7 +111,7 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_
 		return;
 	}
 
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		whack_connections_bottom_up(m, s, whack_rekey_ike,
 					    (struct each) {
@@ -125,5 +125,5 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_type sa_
 					    });
 		return;
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }

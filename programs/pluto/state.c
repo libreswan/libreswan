@@ -445,7 +445,7 @@ static struct state *new_state(struct connection *c,
 			       ip_endpoint remote_endpoint,
 			       const ike_spi_t ike_initiator_spi,
 			       const ike_spi_t ike_responder_spi,
-			       enum sa_type sa_type,
+			       enum sa_kind sa_kind,
 			       enum sa_role sa_role,
 			       where_t where)
 {
@@ -479,7 +479,7 @@ static struct state *new_state(struct connection *c,
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
 	st->st_sa_role = sa_role;
-	st->st_sa_type_when_established = sa_type;
+	st->st_sa_kind_when_established = sa_kind;
 	st->st_ike_spis.initiator = ike_initiator_spi;
 	st->st_ike_spis.responder = ike_responder_spi;
 	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
@@ -492,7 +492,7 @@ static struct state *new_state(struct connection *c,
 	     pri_so(st->st_serialno), (void *) st);
 
 	state_db_add(st);
-	pstat_sa_started(st, sa_type);
+	pstat_sa_started(st);
 
 	return st;
 }
@@ -1186,10 +1186,10 @@ void delete_state(struct state *st)
  */
 static struct child_sa *duplicate_state(struct connection *c,
 					struct ike_sa *ike,
-					enum sa_type sa_type,
+					enum sa_kind sa_kind,
 					enum sa_role sa_role)
 {
-	if (sa_type == CHILD_SA) {
+	if (sa_kind == CHILD_SA) {
 		/* record use of the Phase 1 / Parent state */
 		ike->sa.st_outbound_count++;
 		ike->sa.st_outbound_time = mononow();
@@ -1204,12 +1204,12 @@ static struct child_sa *duplicate_state(struct connection *c,
 					   local_iface_endpoint, remote_endpoint,
 					   ike->sa.st_ike_spis.initiator,
 					   ike->sa.st_ike_spis.responder,
-					   sa_type, sa_role, HERE));
+					   sa_kind, sa_role, HERE));
 
 	connection_buf cib;
 	ldbg(ike->sa.logger, "duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
 	     ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
-	     child->sa.st_serialno, sa_type == CHILD_SA ? "IPSEC SA" : "IKE SA");
+	     child->sa.st_serialno, sa_kind == CHILD_SA ? "IPSEC SA" : "IKE SA");
 
 	/*
 	 * Some sloppy value inheritance.
@@ -1229,7 +1229,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	 * Should code instead be copying values explicitly and only
 	 * during IKE_AUTH?
 	 */
-	if (sa_type == CHILD_SA) {
+	if (sa_kind == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
 #   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
@@ -1284,12 +1284,12 @@ struct child_sa *new_v1_child_sa(struct connection *c,
 
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
-				 enum sa_type sa_type,
+				 enum sa_kind sa_kind,
 				 enum sa_role sa_role,
 				 /* const struct v2_transition *transition */
 				 enum state_kind kind)
 {
-	struct child_sa *child = duplicate_state(c, ike, sa_type, sa_role);
+	struct child_sa *child = duplicate_state(c, ike, sa_kind, sa_role);
 
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
@@ -2216,14 +2216,14 @@ void set_sa_expire_next_event(enum sa_expire_kind expire, struct child_sa *child
 const char *state_sa_name(const struct state *st)
 {
 	return connection_sa_name(st->st_connection,
-				  st->st_sa_type_when_established);
+				  st->st_sa_kind_when_established);
 }
 
 /* IKE | ISAKMP || Child | IPsec */
 const char *state_sa_short_name(const struct state *st)
 {
 	return connection_sa_short_name(st->st_connection,
-					st->st_sa_type_when_established);
+					st->st_sa_kind_when_established);
 }
 
 /* print a policy: like bitnamesof, but it also does the non-bitfields.

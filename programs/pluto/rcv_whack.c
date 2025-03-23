@@ -701,20 +701,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
 	}
 
-	/*
-	 * listen/unlisten are handled before other commands.  Is this
-	 * needed?
-	 */
-
-	/* update any socket buffer size before calling listen */
-	if (m->ike_buf_size != 0) {
-		dbg_whack(s, "ike_buf_size: start: %lu", m->ike_buf_size);
-		pluto_sock_bufsize = m->ike_buf_size;
-		llog(RC_LOG, logger,
-			    "set IKE socket buffer to %d", pluto_sock_bufsize);
-		dbg_whack(s, "ike_buf_size: stop %lu", m->ike_buf_size);
-	}
-
 	/* update MSG_ERRQUEUE setting before size before calling listen */
 	if (m->ike_sock_err_toggle) {
 		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_sock_errqueue));

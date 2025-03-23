@@ -34,7 +34,7 @@ static unsigned whack_connection_sa(const struct whack_message *m,
 				    struct show *s,
 				    struct connection *c)
 {
-	enum sa_type sa_kind = whack_sa_kind(m->whack_command);
+	enum sa_kind sa_kind = whack_sa_kind(m->whack_command);
 	struct logger *logger = show_logger(s);
 
 	if (!can_have_sa(c, sa_kind)) {
@@ -123,9 +123,8 @@ void whack_sa(const struct whack_message *m, struct show *s)
 		enum_buf stb;
 		llog(RC_FATAL, logger,
 		     "received command to %s connection %s, but did not receive the connection name",
-
 		     whack_sa_name(m->whack_command),
-		     str_enum(&sa_type_names, whack_sa_kind(m->whack_command), &stb));
+		     str_enum(&sa_kind_names, whack_sa_kind(m->whack_command), &stb));
 		return;
 	}
 

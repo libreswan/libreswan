@@ -730,28 +730,6 @@ extern const struct enum_names perspective_names;
 #define IS_PARENT_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY) /* IKEv1 or IKEv2 */
 #define IS_PARENT_SA_ESTABLISHED(ST) (IS_IKE_SA_ESTABLISHED(ST) || IS_ISAKMP_SA_ESTABLISHED(ST))
 
-/*
- * Kind of struct connection
- *
- * Ordered (mostly) by concreteness.  Order is exploited (for
- * instance, when listing connections the kind is used as the second
- * sort key after name but before instance number which means that
- * templates are grouped, followed by their instances, weird).
- */
-
-enum connection_kind {
-	CK_INVALID = 0,		/* better name? */
-	CK_GROUP,       	/* policy group: instantiates to CK_TEMPLATE+POLICY_GROUPINSTANCE */
-	CK_TEMPLATE,    	/* abstract connection, with wildcard */
-	CK_PERMANENT,   	/* normal connection */
-	CK_INSTANCE,    	/* instance of template, created for a
-				 * particular attempt */
-	CK_LABELED_TEMPLATE,	/* labels are in their own little world */
-	CK_LABELED_PARENT,
-	CK_LABELED_CHILD,
-#define CONNECTION_KIND_ROOF (CK_LABELED_CHILD+1)
-};
-
 enum certpolicy {
 	CERT_NEVERSEND   = 1,
 	CERT_SENDIFASKED = 2,   /* the default */
