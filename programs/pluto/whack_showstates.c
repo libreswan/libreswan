@@ -407,7 +407,7 @@ static void show_pending_child_details(struct show *s,
 	}
 }
 
-void whack_showstates(struct show *s, const monotime_t now)
+void show_states(struct show *s, const monotime_t now)
 {
 	show_separator(s);
 	struct state **array = sort_states(HERE);

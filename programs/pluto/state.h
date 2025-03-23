@@ -849,7 +849,7 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 						  uint8_t protoid,
 						  ipsec_spi_t outbound_spi);
 
-extern void show_brief_status(struct show *s);
+extern void whack_briefstatus(const struct whack_message *wm, struct show *s);
 
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 

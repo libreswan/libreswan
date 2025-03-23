@@ -21,6 +21,6 @@
 struct show;
 struct whack_message;
 
-void whack_showstates(struct show *s, monotime_t now);
+void show_states(struct show *s, monotime_t now);
 
 #endif

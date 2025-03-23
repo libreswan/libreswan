@@ -312,7 +312,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 {
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_add = true,
+		.whack_command = WHACK_ADD,
 		.name = conn->name,
 	};
 

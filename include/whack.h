@@ -54,6 +54,65 @@ enum whack_command {
 	WHACK_FETCHCRLS,
 	WHACK_REREADSECRETS,
 	WHACK_REREADCERTS,
+	/**/
+	WHACK_PROCESSSTATUS,
+	WHACK_ADDRESSPOOLSTATUS,
+	WHACK_CONNECTIONSTATUS,
+	WHACK_BRIEFCONNECTIONSTATUS,
+	WHACK_BRIEFSTATUS,
+	WHACK_FIPSSTATUS,
+	WHACK_GLOBALSTATUS,
+	WHACK_TRAFFICSTATUS,
+	WHACK_SHUNTSTATUS,
+	/**/
+	WHACK_DELETE,
+	WHACK_ADD,
+	WHACK_ROUTE,
+	WHACK_UNROUTE,
+	WHACK_INITIATE,
+	WHACK_SUSPND,
+	WHACK_OPPO_INITIATE,
+	WHACK_DOWN,
+	WHACK_SUSPEND,
+	/**/
+	WHACK_DELETEUSER,
+	WHACK_DELETEID,
+	WHACK_DELETESTATE,
+	WHACK_CRASH,
+	/**/
+	WHACK_CLEARSTATS,
+	WHACK_DDNS,
+	WHACK_PURGEOCSP,
+	WHACK_SHOWSTATES,
+	/**/
+#define whack_sa_name(OP) ((OP) == WHACK_REKEY_IKE ? "rekey-ike" :	\
+			   (OP) == WHACK_REKEY_CHILD ? "rekey-child" :	\
+			   (OP) == WHACK_DELETE_IKE ? "delete-ike" :	\
+			   (OP) == WHACK_DELETE_CHILD ? "delete-child" : \
+			   (OP) == WHACK_DOWN_IKE ? "down-ike" :	\
+			   (OP) == WHACK_DOWN_CHILD ? "down-child" :	\
+			   "???")
+#define whack_sa_kind(OP) ((OP) == WHACK_REKEY_IKE ? IKE_SA :		\
+			   (OP) == WHACK_REKEY_CHILD ? CHILD_SA :	\
+			   (OP) == WHACK_DELETE_IKE ? IKE_SA :		\
+			   (OP) == WHACK_DELETE_CHILD ? CHILD_SA :	\
+			   (OP) == WHACK_DOWN_IKE ? IKE_SA :		\
+			   (OP) == WHACK_DOWN_CHILD ? CHILD_SA :	\
+			   0)
+	WHACK_REKEY_IKE,
+	WHACK_REKEY_CHILD,
+	WHACK_DELETE_IKE,
+	WHACK_DELETE_CHILD,
+	WHACK_DOWN_IKE,
+	WHACK_DOWN_CHILD,
+	/**/
+	WHACK_DDOS,
+	WHACK_LIST,
+	WHACK_CHECKPUBKEYS,
+	/**/
+#ifdef USE_SECCOMP
+	WHACK_SECCOMP_CRASHTEST
+#endif
 };
 
 /*
@@ -159,18 +218,7 @@ struct whack_message {
 	/* when non-zero, act on this */
 	enum whack_command whack_command;
 
-	bool whack_globalstatus;
-	bool whack_clear_stats;
-	bool whack_trafficstatus;
-	bool whack_shuntstatus;
-	bool whack_fipsstatus;
-	bool whack_briefstatus;
-	bool whack_addresspoolstatus;
-	bool whack_connectionstatus;
-	bool whack_briefconnectionstatus;
-	bool whack_showstates;
 	bool whack_seccomp_crashtest;
-	bool whack_processstatus;
 	bool whack_leave_state;		/* .basic.shutdown should not
 					 * send delete or clean kernel
 					 * state on shutdown */
@@ -188,8 +236,6 @@ struct whack_message {
 		struct whack_impair *list;
 	} impairments;
 
-	bool whack_add;			/* whack or addconn semantics;
-					 * see from; */
 	enum whack_from {
 		WHACK_FROM_WHACK = 1,
 		WHACK_FROM_ADDCONN,
@@ -362,17 +408,6 @@ struct whack_message {
 	/* for REMOTE_HOST */
 	char *remote_host;
 
-	/* for WHACK_ROUTE: */
-	bool whack_route;
-
-	/* for WHACK_UNROUTE: */
-	bool whack_unroute;
-
-	/* for WHACK_INITIATE: */
-	bool whack_initiate;
-
-	/* for WHACK_OPINITIATE */
-	bool whack_oppo_initiate;
 	struct {
 		struct {
 			ip_address address;
@@ -381,41 +416,11 @@ struct whack_message {
 		unsigned ipproto;
 	} oppo;
 
-	/* for WHACK_DOWN: */
-	bool whack_down;
-
-	/* for WHACK_DELETE: */
-	bool whack_delete;
-
 	/* for WHACK_DELETESTATE: */
-	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
-
-	/* initiate rekey/delete/down SA now */
-	enum whack_sa {
-		WHACK_REKEY_SA = 1,
-		WHACK_DELETE_SA,
-		WHACK_DOWN_SA,
-	} whack_sa;
-#define whack_sa_name(OP) ((OP) == WHACK_REKEY_SA ? "rekey" :	\
-			   (OP) == WHACK_DELETE_SA ? "delete" :	\
-			   (OP) == WHACK_DOWN_SA ? "down" :	\
-			   "???")
-	enum sa_type whack_sa_type;
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
-
-	/* for WHACK_DELETEUSER: */
-	bool whack_deleteuser;
-	bool whack_deleteuser_name;
-
-	/* for WHACK_DELETEUSER: */
-	bool whack_deleteid;
-	bool whack_deleteid_name;
-
-	/* for WHACK_PURGEOCSP */
-	bool whack_purgeocsp;
 
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
@@ -425,17 +430,12 @@ struct whack_message {
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;
 
-	/* force EVENT_PENDING_DDNS */
-	bool whack_ddns;
-
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
-	bool whack_crash;
 	ip_address whack_crash_peer;
 
 	/* for WHACK_LIST */
 	bool whack_utc;
 	bool whack_checkpubkeys;	/* --checkpubkeys */
-	bool whack_listpubkeys;		/* --listpubkeys */
 	lset_t whack_list;
 
 	/* for connalias string */
@@ -467,9 +467,6 @@ struct whack_message {
 	char *accept_redirect_to;
 	enum yna_options send_redirect;
 
-	/* for RFC 5723 - IKEv2 Session Resumption */
-	bool whack_suspend;
-
 	/* what metric to put on ipsec routes */
 	int metric;
 
@@ -480,19 +477,22 @@ struct whack_message {
 	unsigned char string[4096];
 };
 
-/* options of whack --list*** command
- * these should be kept in order of option_enums LST_ values
+/*
+ * Options of whack --list*** command
+ *
+ * These should be kept in order of option_enums LST_ values
  */
-#define LIST_NONE	0x0000	/* don't list anything */
-#define LIST_PUBKEYS	0x0001	/* list all public keys */
-#define LIST_CERTS	0x0002	/* list all host/user certs */
-#define LIST_CACERTS	0x0004	/* list all ca certs */
-#define LIST_CRLS	0x0008	/* list all crls */
-#define LIST_PSKS	0x0010	/* list all preshared keys (by name) */
-#define LIST_EVENTS	0x0020	/* list all queued events */
+enum whack_list {
+	LIST_PUBKEYS,	/* list all public keys */
+	LIST_CERTS,	/* list all host/user certs */
+	LIST_CACERTS,	/* list all ca certs */
+	LIST_CRLS,	/* list all crls */
+	LIST_PSKS,	/* list all preshared keys (by name) */
+	LIST_EVENTS,	/* list all queued events */
+};
 
 /* omit events from listing options */
-#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
+#define LIST_ALL	LRANGE(LIST_PUBKEYS, LIST_PSKS)  /* almost all list options */
 
 struct whackpacker {
 	struct whack_message *msg;

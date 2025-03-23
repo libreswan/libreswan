@@ -383,7 +383,7 @@ static void show_bytes(struct show *s, const char *prefix, const struct pstats_b
 	show(s, "%s.out=%"PRIu64, prefix, bytes->out);
 }
 
-void show_pluto_stats(struct show *s)
+void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show(s, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
 	show(s, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);
@@ -484,7 +484,7 @@ void show_pluto_stats(struct show *s)
 	show_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
 }
 
-void clear_pluto_stats(void)
+void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s UNUSED)
 {
 	dbg("clearing pluto stats");
 

@@ -42,6 +42,7 @@ struct fd;
 struct show;
 struct id;
 struct root_certs;
+struct whack_message;
 
 /*
  * NSS can actually support a much larger path length
@@ -86,7 +87,7 @@ extern void free_generalNames(generalName_t *gn, bool free_name);
 extern void load_crls(void);
 extern void list_cacerts(struct show *s, struct root_certs *roots);
 extern void list_crls(struct show *s);
-extern void clear_ocsp_cache(void);
+void whack_purgeocsp(const struct whack_message *wm, struct show *s);
 
 /*
  * New NSS x509 converted functions

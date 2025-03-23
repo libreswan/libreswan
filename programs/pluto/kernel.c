@@ -1096,7 +1096,7 @@ unsigned shunt_count(void)
 	return i;
 }
 
-void show_shunt_status(struct show *s)
+void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
 	show(s, "Bare Shunt list:");

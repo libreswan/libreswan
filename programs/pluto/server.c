@@ -922,14 +922,6 @@ void show_debug_status(struct show *s)
 	}
 }
 
-void show_fips_status(struct show *s)
-{
-	bool fips = is_fips_mode();
-	show(s, "FIPS mode %s", !fips ?
-		"disabled" :
-		impair.force_fips ? "enabled [forced]" : "enabled");
-}
-
 static void huphandler_cb(struct logger *logger)
 {
 	llog(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
