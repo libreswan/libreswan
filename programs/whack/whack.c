@@ -1533,7 +1533,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
-			msg.whack_checkpubkeys = true;
+			whack_command(&msg, WHACK_CHECKPUBKEYS);
 			ignore_errors = true;
 			continue;
 
@@ -2612,9 +2612,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!(msg.whack_command != 0 ||
-	      msg.basic.whack_status ||
+	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
+	      msg.whack_command != 0 ||
 	      msg.whack_key ||
 	      msg.redirect_to != NULL ||
 	      msg.global_redirect ||
@@ -2624,8 +2624,7 @@ int main(int argc, char **argv)
 	      msg.ike_buf_size ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
-	      msg.whack_leave_state ||
-	      msg.whack_checkpubkeys)) {
+	      msg.whack_leave_state)) {
 		diagw("no action specified; try --help for hints");
 	}
 
