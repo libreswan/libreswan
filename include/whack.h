@@ -40,7 +40,7 @@
 #include "ip_cidr.h"
 #include "authby.h"
 #include "encap_proto.h"
-#include "sa_type.h"
+#include "sa_kind.h"
 #include "constants.h"		/* for enum keyword_auth; et.al. */
 #include "end.h"
 
