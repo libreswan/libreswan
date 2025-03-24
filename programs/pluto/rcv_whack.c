@@ -391,6 +391,13 @@ static void whack_checkpubkeys(const struct whack_message *wm, struct show *s)
 static void whack_list(const struct whack_message *wm, struct show *s)
 {
 	monotime_t now = mononow();
+
+	if (wm->whack_list & LELEM(LIST_PUBKEYS)) {
+		dbg_whack(s, "listpubkeys: start:");
+		show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
+		dbg_whack(s, "listpubkeys: stop:");
+	}
+
 	if (wm->whack_list & LELEM(LIST_PSKS)) {
 		dbg_whack(s, "list & LIST_PSKS: start:");
 		list_psks(s);
@@ -416,12 +423,6 @@ static void whack_list(const struct whack_message *wm, struct show *s)
 		list_crl_fetch_requests(s, wm->whack_utc);
 #endif
 		dbg_whack(s, "listcrls: stop:");
-	}
-
-	if (wm->whack_list & LELEM(LIST_PUBKEYS)) {
-		dbg_whack(s, "listpubkeys: start:");
-		show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
-		dbg_whack(s, "listpubkeys: stop:");
 	}
 
 	if (wm->whack_list & LELEM(LIST_EVENTS)) {
