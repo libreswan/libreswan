@@ -1426,6 +1426,7 @@ kvmplutotest	seccomp-03-updown		wip
 # Whack/IPSEC UI tests
 #################################################################
 
+kvmplutotest	whack-basics-01				good
 kvmplutotest	whack-globalstatus-01			good
 kvmplutotest	whack-rereadcerts-01			good
 kvmplutotest	whack-rereadsecrets-01-privatekey	good	github/1894
