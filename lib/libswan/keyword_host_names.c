@@ -31,13 +31,11 @@ const struct sparse_names keyword_host_names = {
 	.list = {
 		SPARSE("%defaultroute",  KH_DEFAULTROUTE),
 		SPARSE("%any",           KH_ANY),
-		SPARSE("%",              KH_IFACE),
 		SPARSE("%oppo",          KH_OPPO),
 		SPARSE("%opportunistic", KH_OPPO),
 		SPARSE("%opportunisticgroup", KH_OPPOGROUP),
 		SPARSE("%oppogroup",     KH_OPPOGROUP),
 		SPARSE("%group",         KH_GROUP),
-		SPARSE("%hostname",      KH_IPHOSTNAME), /* makes no sense on input */
 		SPARSE_NULL
 	},
 };
