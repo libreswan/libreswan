@@ -4,7 +4,7 @@ west #
 west #
  cp /testing/x509/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 west #
- cp /testing/x509/real/mainec/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
+ cp /testing/x509/real/mainec/`hostname`.key /etc/strongswan/ipsec.d/private/`hostname`.key
 west #
  chmod 600 /etc/strongswan/ipsec.d/*/*
 west #

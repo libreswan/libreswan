@@ -4,7 +4,7 @@
 key=east
 
 # start with the raw key
-cp /testing/x509/real/mainca/${key}.end.key OUTPUT/${key}.key
+cp /testing/x509/real/mainca/${key}.key OUTPUT/${key}.key
 # create a CSR and using that ...
 openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}
@@ -16,7 +16,7 @@ openssl pkcs12 -export -password pass:foobar -in OUTPUT/${key}.crt -inkey OUTPUT
 key=west
 
 # start with the raw key
-cp /testing/x509/real/mainca/${key}.end.key OUTPUT/${key}.key
+cp /testing/x509/real/mainca/${key}.key OUTPUT/${key}.key
 # create a CSR and using that ...
 openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}

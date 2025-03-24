@@ -1,6 +1,6 @@
 #start ocsp server here
 nic #
- cp /testing/x509/real/mainca/nic.end.key /etc/ocspd/private/nic_key.pem
+ cp /testing/x509/real/mainca/nic.key /etc/ocspd/private/nic_key.pem
 nic #
  cp /testing/x509/real/mainca/nic.end.cert /etc/ocspd/certs/nic.pem
 nic #
