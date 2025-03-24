@@ -7,6 +7,9 @@ west #
  ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n otherwest
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "otherwest" [E=user-otherwest@testing.libreswan.org,CN=otherwest.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # check
 west #

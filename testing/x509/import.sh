@@ -92,6 +92,7 @@ import_p12()
     ca=$(basename $(dirname $1))
     run ${pk12util} -w nss-pw -i $1
     run ${certutil} -M -n "${ca}" -t CT,,
+    print_chain ${n}
 }
 
 import_crt()

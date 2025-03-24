@@ -13,6 +13,9 @@ east #
  ipsec pk12util -w nss-pw -i otherca/othereast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n othereast
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "othereast" [E=user-othereast@testing.libreswan.org,CN=othereast.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  ipsec checknss --settrusts
 east #
