@@ -85,7 +85,6 @@ static const struct enum_names_check pluto_enum_names_checklist[] = {
 	S(shunt_kind_names),
 	S(shunt_policy_names),
 	S(keyword_auth_names),
-	S(keyword_host_names),
 	{ NULL, NULL, },
 };
 
