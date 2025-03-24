@@ -1398,7 +1398,10 @@ kvmplutotest	nss-cert-ocsp-07-nic-no-ocsp-ikev2	good
 kvmplutotest	nss-cert-ocsp-08-post-ikev1		good
 kvmplutotest	nss-cert-ocsp-09-chain-ikev1		good
 #
-kvmplutotest	nss-cert-09-notyetvalid-initiator-ikev1	good
+kvmplutotest	x509-cert-08-expired-initiator-ikev1	good
+kvmplutotest	x509-cert-08-expired-initiator-ikev2	good
+kvmplutotest	x509-cert-08-expired-responder-ikev1	good
+kvmplutotest	x509-cert-08-expired-responder-ikev2	good
 kvmplutotest	nss-cert-09-notyetvalid-initiator-ikev2	good
 kvmplutotest	nss-cert-10-notyetvalid-responder-ikev1	good
 kvmplutotest	nss-cert-10-notyetvalid-responder-ikev2	good
