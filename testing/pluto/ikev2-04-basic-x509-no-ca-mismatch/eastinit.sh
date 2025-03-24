@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # load up EAST
-/testing/x509/import.sh real/mainca/east.all.p12
+/testing/x509/import.sh real/mainca/east.p12
 /testing/x509/import.sh real/mainca/west.end.cert
 ipsec certutil -L
 

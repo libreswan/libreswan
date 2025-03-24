@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # so this end can sign its own cert
-/testing/x509/import.sh real/mainca/key2032.all.p12
+/testing/x509/import.sh real/mainca/key2032.p12
 
 ipsec start
 ../../guestbin/wait-until-pluto-started

@@ -3,8 +3,8 @@ Creating empty NSS database
 west #
  # oops! WEST is loading up NORTH
 west #
- /testing/x509/import.sh real/mainca/north.all.p12
- ipsec pk12util -w nss-pw -i real/mainca/north.all.p12
+ /testing/x509/import.sh real/mainca/north.p12
+ ipsec pk12util -w nss-pw -i real/mainca/north.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n mainca -t CT,,
  ipsec certutil -O -n north

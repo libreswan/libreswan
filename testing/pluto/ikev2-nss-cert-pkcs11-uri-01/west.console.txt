@@ -2,8 +2,8 @@
 Creating empty NSS database
 Password changed successfully.
 west #
- /testing/x509/import.sh real/mainca/`hostname`.all.p12
- ipsec pk12util -k /run/pluto/nsspw -w nss-pw -i real/mainca/west.all.p12
+ /testing/x509/import.sh real/mainca/`hostname`.p12
+ ipsec pk12util -k /run/pluto/nsspw -w nss-pw -i real/mainca/west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -f /run/pluto/nsspw -M -n mainca -t CT,,
  ipsec certutil -O -n west

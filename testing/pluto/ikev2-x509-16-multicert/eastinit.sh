@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # add first identity/cert
-/testing/x509/import.sh real/mainca/east.all.p12
+/testing/x509/import.sh real/mainca/east.p12
 # add second identity/cert
 /testing/x509/import.sh otherca/othereast.p12
 # check

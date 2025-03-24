@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # import real west+mainca
-/testing/x509/import.sh real/mainca/west.all.p12
+/testing/x509/import.sh real/mainca/west.p12
 # confirm
 ipsec certutil -L
 

@@ -5,7 +5,7 @@ eastckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 
 # Import WEST's cert and extract its CKAID
 /testing/guestbin/swan-prep --nokeys
-/testing/x509/import.sh real/mainca/west.all.p12
+/testing/x509/import.sh real/mainca/west.p12
 westckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 
 /testing/x509/import.sh real/mainca/east.end.cert
