@@ -286,6 +286,19 @@ static void diagq(err_t ugh, const char *this)
 	}
 }
 
+static void whack_command(struct whack_message *wm, enum whack_command command)
+{
+	static unsigned last_index;
+	if (wm->whack_command != 0) {
+		fprintf(stderr, "whack error: conflicing command options '--%s' and '--%s'\n",
+			optarg_options[last_index].name,
+			optarg_options[optarg_index].name);
+		exit(RC_WHACK_PROBLEM);
+	}
+	wm->whack_command = command;
+	last_index = optarg_index;
+}
+
 /*
  * complex combined operands return one of these enumerated values
  * Note: these become flags in an lset_t.  Since there could be more
@@ -1248,64 +1261,64 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_ROUTE:	/* --route */
-			msg.whack_command = WHACK_ROUTE;
+			whack_command(&msg, WHACK_ROUTE);
 			continue;
 
 		case OPT_UNROUTE:	/* --unroute */
-			msg.whack_command = WHACK_UNROUTE;
+			whack_command(&msg, WHACK_UNROUTE);
 			continue;
 
 		case OPT_INITIATE:	/* --initiate */
-			msg.whack_command = WHACK_INITIATE;
+			whack_command(&msg, WHACK_INITIATE);
 			continue;
 
 		case OPT_DOWN:	/* --down | --terminate */
-			msg.whack_command = WHACK_DOWN;
+			whack_command(&msg, WHACK_DOWN);
 			continue;
 
 		case OPT_REKEY_IKE: /* --rekey-ike */
-			msg.whack_command = WHACK_REKEY_IKE;
+			whack_command(&msg, WHACK_REKEY_IKE);
 			continue;
 		case OPT_REKEY_CHILD: /* --rekey-child */
-			msg.whack_command = WHACK_REKEY_CHILD;
+			whack_command(&msg, WHACK_REKEY_CHILD);
 			continue;
 
 		case OPT_DELETE_IKE: /* --delete-ike */
-			msg.whack_command = WHACK_DELETE_IKE;
+			whack_command(&msg, WHACK_DELETE_IKE);
 			continue;
 		case OPT_DELETE_CHILD: /* --delete-child */
-			msg.whack_command = WHACK_DELETE_CHILD;
+			whack_command(&msg, WHACK_DELETE_CHILD);
 			continue;
 
 		case OPT_DOWN_IKE: /* --down-ike */
-			msg.whack_command = WHACK_DOWN_IKE;
+			whack_command(&msg, WHACK_DOWN_IKE);
 			continue;
 		case OPT_DOWN_CHILD: /* --down-child */
-			msg.whack_command = WHACK_DOWN_CHILD;
+			whack_command(&msg, WHACK_DOWN_CHILD);
 			continue;
 
 		case OPT_SUSPEND: /* --suspend */
-			msg.whack_command = WHACK_SUSPEND;
+			whack_command(&msg, WHACK_SUSPEND);
 			continue;
 		case CD_SESSION_RESUMPTION:
 			msg.session_resumption = optarg_sparse(logger, YN_YES, &yn_option_names);
 			break;
 
 		case OPT_DELETE:	/* --delete */
-			msg.whack_command = WHACK_DELETE;
+			whack_command(&msg, WHACK_DELETE);
 			continue;
 
 		case OPT_DELETEID: /* --deleteid --name <id> */
-			msg.whack_command = WHACK_DELETEID;
+			whack_command(&msg, WHACK_DELETEID);
 			continue;
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
-			msg.whack_command = WHACK_DELETESTATE;
+			whack_command(&msg, WHACK_DELETESTATE);
 			msg.whack_deletestateno = optarg_uintmax(logger);
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
-			msg.whack_command = WHACK_CRASH;
+			whack_command(&msg, WHACK_CRASH);
 			msg.whack_crash_peer = optarg_address_dns(logger, &host_family);
 			if (!address_is_specified(msg.whack_crash_peer)) {
 				/* either :: or 0.0.0.0; unset already rejected */
@@ -1317,7 +1330,7 @@ int main(int argc, char **argv)
 
 		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
-			msg.whack_command = WHACK_DELETEUSER;
+			whack_command(&msg, WHACK_DELETEUSER);
 			continue;
 
 		case OPT_REDIRECT_TO:	/* --redirect-to */
@@ -1346,22 +1359,22 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
-			msg.whack_command = WHACK_DDOS;
+			whack_command(&msg, WHACK_DDOS);
 			msg.whack_ddos = DDOS_FORCE_BUSY;
 			continue;
 
 		case OPT_DDOS_UNLIMITED:	/* --ddos-unlimited */
-			msg.whack_command = WHACK_DDOS;
+			whack_command(&msg, WHACK_DDOS);
 			msg.whack_ddos = DDOS_FORCE_UNLIMITED;
 			continue;
 
 		case OPT_DDOS_AUTO:	/* --ddos-auto */
-			msg.whack_command = WHACK_DDOS;
+			whack_command(&msg, WHACK_DDOS);
 			msg.whack_ddos = DDOS_AUTO;
 			continue;
 
 		case OPT_DDNS:	/* --ddns */
-			msg.whack_command = WHACK_DDNS;
+			whack_command(&msg, WHACK_DDNS);
 			continue;
 
 		case OPT_LISTEN:	/* --listen */
@@ -1373,23 +1386,23 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
-			msg.whack_command = WHACK_REREADSECRETS;
+			whack_command(&msg, WHACK_REREADSECRETS);
 			continue;
 		case OPT_REREADCERTS:	/* --rereadcerts */
-			msg.whack_command = WHACK_REREADCERTS;
+			whack_command(&msg, WHACK_REREADCERTS);
 			continue;
 		case OPT_FETCHCRLS:	/* --fetchcrls */
-			msg.whack_command = WHACK_FETCHCRLS;
+			whack_command(&msg, WHACK_FETCHCRLS);
 			continue;
 		case OPT_REREADALL:	/* --rereadall */
-			msg.whack_command = WHACK_REREADALL;
+			whack_command(&msg, WHACK_REREADALL);
 			continue;
 		case OPT_REREADCRLS:	/* --rereadcrls */
 			fprintf(stderr, "whack warning: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls\n");
 			continue;
 
 		case OPT_PURGEOCSP:	/* --purgeocsp */
-			msg.whack_command = WHACK_PURGEOCSP;
+			whack_command(&msg, WHACK_PURGEOCSP);
 			continue;
 
 		case OPT_STATUS:	/* --status */
@@ -1398,56 +1411,56 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_GLOBALSTATUS:	/* --globalstatus */
-			msg.whack_command = WHACK_GLOBALSTATUS;
+			whack_command(&msg, WHACK_GLOBALSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_CLEARSTATS:	/* --clearstats */
-			msg.whack_command = WHACK_CLEARSTATS;
+			whack_command(&msg, WHACK_CLEARSTATS);
 			continue;
 
 		case OPT_TRAFFICSTATUS:	/* --trafficstatus */
-			msg.whack_command = WHACK_TRAFFICSTATUS;
+			whack_command(&msg, WHACK_TRAFFICSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_SHUNTSTATUS:	/* --shuntstatus */
-			msg.whack_command = WHACK_SHUNTSTATUS;
+			whack_command(&msg, WHACK_SHUNTSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_ADDRESSPOOLSTATUS:	/* --addresspoolstatus */
-			msg.whack_command = WHACK_ADDRESSPOOLSTATUS;
+			whack_command(&msg, WHACK_ADDRESSPOOLSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_CONNECTIONSTATUS:	/* --connectionstatus */
-			msg.whack_command = WHACK_CONNECTIONSTATUS;
+			whack_command(&msg, WHACK_CONNECTIONSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_BRIEFCONNECTIONSTATUS:	/* --briefconnectionstatus */
-			msg.whack_command = WHACK_BRIEFCONNECTIONSTATUS;
+			whack_command(&msg, WHACK_BRIEFCONNECTIONSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_FIPSSTATUS:	/* --fipsstatus */
-			msg.whack_command = WHACK_FIPSSTATUS;
+			whack_command(&msg, WHACK_FIPSSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_BRIEFSTATUS:	/* --briefstatus */
-			msg.whack_command = WHACK_BRIEFSTATUS;
+			whack_command(&msg, WHACK_BRIEFSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_PROCESSSTATUS:	/* --processstatus */
-			msg.whack_command = WHACK_PROCESSSTATUS;
+			whack_command(&msg, WHACK_PROCESSSTATUS);
 			ignore_errors = true;
 			continue;
 
 		case OPT_SHOW_STATES:	/* --showstates */
-			msg.whack_command = WHACK_SHOWSTATES;
+			whack_command(&msg, WHACK_SHOWSTATES);
 			ignore_errors = true;
 			continue;
 #ifdef USE_SECCOMP
@@ -1514,18 +1527,18 @@ int main(int argc, char **argv)
 		case LST_PSKS:	/* --listpsks */
 		case LST_EVENTS:	/* --listevents */
 		case LST_PUBKEYS:	/* --listpubkeys */
-			msg.whack_command = WHACK_LIST;
+			whack_command(&msg, WHACK_LIST);
 			msg.whack_list |= LELEM(c - LST_PUBKEYS);
 			ignore_errors = true;
 			continue;
 
 		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
-			msg.whack_checkpubkeys = true;
+			whack_command(&msg, WHACK_CHECKPUBKEYS);
 			ignore_errors = true;
 			continue;
 
 		case LST_ALL:	/* --listall */
-			msg.whack_command = WHACK_LIST;
+			whack_command(&msg, WHACK_LIST);
 			msg.whack_list = LIST_ALL; /* most!?! */
 			ignore_errors = true;
 			continue;
@@ -2496,7 +2509,7 @@ int main(int argc, char **argv)
 
 	/* check opportunistic initiation simulation request */
 	if (seen[OPT_OPPO_HERE] && seen[OPT_OPPO_THERE]) {
-		msg.whack_command = WHACK_OPPO_INITIATE;
+		whack_command(&msg, WHACK_OPPO_INITIATE);
 		/*
 		 * When the only CD (connection description) option is
 		 * TUNNELIPV[46] scrub that a connection description
@@ -2556,7 +2569,7 @@ int main(int argc, char **argv)
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
 
-		msg.whack_command = WHACK_ADD;
+		whack_command(&msg, WHACK_ADD);
 	}
 
 	/*
@@ -2599,9 +2612,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!(msg.whack_command != 0 ||
-	      msg.basic.whack_status ||
+	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
+	      msg.whack_command != 0 ||
 	      msg.whack_key ||
 	      msg.redirect_to != NULL ||
 	      msg.global_redirect ||
@@ -2611,8 +2624,7 @@ int main(int argc, char **argv)
 	      msg.ike_buf_size ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0 ||
-	      msg.whack_leave_state ||
-	      msg.whack_checkpubkeys)) {
+	      msg.whack_leave_state)) {
 		diagw("no action specified; try --help for hints");
 	}
 

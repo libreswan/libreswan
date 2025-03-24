@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # beware the groundhog!
+east #
+ ipsec add east
+"east": added IKEv1 connection
+east #
+ ipsec checkpubkeys
+east #
+ echo "initdone"
+initdone
+east #
+ # only expected to show failure on west
+east #
+ grep -e '^[^|].*ERROR' /tmp/pluto.log
+"east" #1: NSS: ERROR: IPsec certificate CN=west-expired invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+east #
+ 
