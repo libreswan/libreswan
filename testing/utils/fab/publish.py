@@ -135,7 +135,7 @@ def test_files(logger, args, result, files={}):
     if not testdir:
         return None
     test = result.test
-    ignore = re.compile(r"[~]$")
+    ignore = re.compile(r"[~]$|OUTPUT")
     for name in os.listdir(test.directory):
         if ignore.search(name):
             continue
