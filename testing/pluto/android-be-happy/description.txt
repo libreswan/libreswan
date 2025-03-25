@@ -21,8 +21,8 @@ Setup:
 
   Make finding the certs easy:
 
-    cp testing/x509/real/mainca/east.all.p12 /tmp
-    cp testing/x509/real/mainca/west.all.p12 /tmp
+    cp testing/x509/real/mainca/east.p12 /tmp
+    cp testing/x509/real/mainca/west.p12 /tmp
 
   From studio, open the simulator's storage using:
 

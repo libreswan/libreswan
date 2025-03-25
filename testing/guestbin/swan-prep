@@ -572,7 +572,7 @@ if args.userland in ("libreswan") and hostname != "nic":
         # is pw needed? Perahps when FIPS, but has it been set?
 
         # import then fix trust
-        shell("/testing/x509/import.sh real/mainca/%s.all.p12" % (hostname))
+        shell("/testing/x509/import.sh real/mainca/%s.p12" % (hostname))
 
         # pre-import certs for all other hosts
         for certname in ("west", "east", "road", "north", "nic"):

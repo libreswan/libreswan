@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # ECDSA, peer is RSA
-/testing/x509/import.sh real/mainec/`hostname`.all.p12
+/testing/x509/import.sh real/mainec/`hostname`.p12
 
 ipsec start
 ../../guestbin/wait-until-pluto-started

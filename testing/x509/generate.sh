@@ -101,7 +101,6 @@ dump_cert()
 	-n ${cert} \
 	-W ${PASSPHRASE} \
 	-o ${certdir}/${cert}.p12
-    cp  ${certdir}/${cert}.p12  ${certdir}/${cert}.all.p12
 
     # end cert
 

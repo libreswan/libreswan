@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 
-/testing/x509/import.sh real/mainca/west.all.p12
+/testing/x509/import.sh real/mainca/west.p12
 /testing/x509/import.sh real/mainca/nic.end.cert
 /testing/x509/import.sh real/mainca/crl-is-out-of-date.crl
 

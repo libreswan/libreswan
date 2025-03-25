@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --nokeys
 
 # oops! WEST is loading up NORTH
-/testing/x509/import.sh real/mainca/north.all.p12
+/testing/x509/import.sh real/mainca/north.p12
 /testing/x509/import.sh real/mainca/east.end.cert
 ipsec certutil -L
 

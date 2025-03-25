@@ -1,4 +1,4 @@
-run() { local c=$(basename $1) ; /testing/x509/import.sh $1.all.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
+run() { local c=$(basename $1) ; /testing/x509/import.sh $1.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
 
 # This should fail as the intermediate has no BC=CA; also dump
 # intermediate.

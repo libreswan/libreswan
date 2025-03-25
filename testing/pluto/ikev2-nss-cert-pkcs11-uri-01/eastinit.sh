@@ -22,7 +22,7 @@ rm -rf /var/lib/softhsm/tokens/*
 # init new one - must use same CKAID for at least key+cert
 softhsm2-util --init-token --slot 0 --label libreswan --so-pin ${GNUTLS_SO_PIN} --pin ${GNUTLS_PIN}
 p11tool --provider /usr/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-certificate /testing/x509/real/mainca/east.end.cert --label eastCert --login
-p11tool --provider /usr/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/real/mainca/east.end.key --label eastKey --login
+p11tool --provider /usr/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/real/mainca/east.key --label eastKey --login
 # note: --trusted --ca does not seem to set the trust bits needed for CA for nss - so fixup afterwards
 p11tool --provider /usr/lib64/pkcs11/libsofthsm2.so --id 01 --write --trusted --ca --load-certificate /testing/x509/real/mainca/root.cert --label eastCA --so-login
 
