@@ -51,6 +51,7 @@ OBJS += initiated_by_names.o
 OBJS += ocsp_method_names.o
 OBJS += connection_owner_names.o
 OBJS += sa_kind_names.o
+OBJS += keyword_host_names.o
 
 OBJS += fips_mode.o
 OBJS += fips_mode_names.o

@@ -304,39 +304,6 @@ enum_names stf_status_names = {
 	NULL
 };
 
-static const char *const keyword_host_name_ipaddr[] = {
-#define S(E) [E - KH_IPADDR] = #E
-	S(KH_IPADDR),
-#undef S
-};
-
-static enum_names keyword_host_names_ipaddr = {
-	KH_IPADDR, KH_IPADDR,
-	ARRAY_REF(keyword_host_name_ipaddr),
-	"KH_", /* prefix */
-	NULL
-};
-
-static const char *const keyword_host_name[] = {
-#define S(E) [E - KH_NOTSET] = #E
-	S(KH_NOTSET),
-	S(KH_DEFAULTROUTE),
-	S(KH_ANY),
-	S(KH_IFACE),
-	S(KH_OPPO),
-	S(KH_OPPOGROUP),
-	S(KH_GROUP),
-	S(KH_IPHOSTNAME),
-#undef S
-};
-
-enum_names keyword_host_names = {
-	KH_NOTSET, KH_IPHOSTNAME,
-	ARRAY_REF(keyword_host_name),
-	"KH_", /* prefix */
-	&keyword_host_names_ipaddr,
-};
-
 /* version */
 static const char *const version_name_1[] = {
 	"ISAKMP Version 1.0 (rfc2407)",

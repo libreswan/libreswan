@@ -913,9 +913,11 @@ enum keyword_host {
 	KH_OPPO         = 4,
 	KH_OPPOGROUP    = 5,
 	KH_GROUP        = 6,
-	KH_IPHOSTNAME   = 7,            /* host_addr invalid, only string */
+	KH_IPHOSTNAME   = 7,            	/* host_addr invalid, only string */
 	KH_IPADDR       = LOOSE_ENUM_OTHER,
 };
+
+extern const struct sparse_names keyword_host_names;
 
 enum type_options {
 	KS_UNSET,

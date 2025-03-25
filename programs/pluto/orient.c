@@ -202,11 +202,11 @@ static void LDBG_orient_end(struct connection *c, enum end end)
 	const struct host_end *this = &c->end[end].host;
 	const struct host_end *that = &c->end[!end].host;
 	address_buf ab;
-	enum_buf enb;
+	name_buf enb;
 	sparse_buf tcpb;
 	LDBG_log(c->logger, "  %s host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s tcp=%s",
 		 this->config->leftright,
-		 str_enum_short(&keyword_host_names, this->config->type, &enb),
+		 str_sparse_short(&keyword_host_names, this->config->type, &enb),
 		 str_address(&this->addr, &ab),
 		 pri_hport(end_host_port(this, that)),
 		 this->config->ikeport,

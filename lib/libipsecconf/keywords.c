@@ -233,21 +233,6 @@ static const struct sparse_names kw_xauthfail_names = {
  * Values for right= and left=
  */
 
-static struct sparse_names kw_host_names = {
-	.list = {
-		SPARSE("%defaultroute",  KH_DEFAULTROUTE),
-		SPARSE("%any",           KH_ANY),
-		SPARSE("%",              KH_IFACE),
-		SPARSE("%oppo",          KH_OPPO),
-		SPARSE("%opportunistic", KH_OPPO),
-		SPARSE("%opportunisticgroup", KH_OPPOGROUP),
-		SPARSE("%oppogroup",     KH_OPPOGROUP),
-		SPARSE("%group",         KH_GROUP),
-		SPARSE("%hostname",      KH_IPHOSTNAME), /* makes no sense on input */
-		SPARSE_NULL
-	},
-};
-
 static const struct sparse_names kw_phase2types_names = {
 	.list = {
 		/* note: these POLICY bits happen to fit in an unsigned int */
@@ -373,7 +358,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /*
    * This is "left=" and "right="
    */
-  { "",  kv_conn | kv_leftright| kv_processed,  kt_host,  KW_IP, &kw_host_names, NULL, },
+  { "",  kv_conn | kv_leftright| kv_processed,  kt_host,  KW_IP, &keyword_host_names, NULL, },
 
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
