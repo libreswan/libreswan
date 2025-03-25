@@ -179,6 +179,10 @@ function lsw_summary_commits(test_run) {
 	    // stop when there is a test_run
 	    continue
 	}
+	if (test_run.commits.includes(parent)) {
+	    // don't process things twice
+	    continue;
+	}
 	// back link this commit to the same test, acts as a loop
 	// sentinel.
 	// parent.test_run = test_run

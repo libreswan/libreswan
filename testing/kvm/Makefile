@@ -584,7 +584,7 @@ kvm-%: kvm-ready kvm-web
 		$(if $(WEB_ENABLED), --publish-hash        $(TESTING_HASH)) \
 		$(if $(WEB_ENABLED), --publish-resultsdir  $(TESTING_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status      $(TESTING_WEBDIR)/status.json) \
-		$(if $(WEB_ENABLED), --publish-result-html $(top_srcdir)/testing/web/result.html) \
+		$(if $(WEB_ENABLED), --publish-result-html $(abs_top_srcdir)/testing/web/result.html) \
 		$(if $(PUBLISH_SOURCE_URL), --publish-source-url $(PUBLISH_SOURCE_URL)) \
 		$(if $(STRIPPED_KVM_TEST_STATUS),   --test-status   '$(STRIPPED_KVM_TEST_STATUS)') \
 		$(if $(STRIPPED_KVM_TEST_NAME),     --test-name     '$(STRIPPED_KVM_TEST_NAME)') \
