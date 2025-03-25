@@ -1626,14 +1626,16 @@ int main(int argc, char **argv)
 	}
 
 	if (x509_ocsp.enable) {
+		llog(RC_LOG, logger, "NSS: OCSP [enabled]");
 		/* may not return */
 		diag_t d = init_x509_ocsp(logger);
 		if (d != NULL) {
 			fatal(PLUTO_EXIT_NSS_FAIL, logger,
-			      "initializing NSS OCSP failed: %s",
+			      "NSS: OCSP initialization failed: %s",
 			      str_diag(d));
 		}
-		llog(RC_LOG, logger, "NSS OCSP started");
+	} else {
+		llog(RC_LOG, logger, "NSS: OCSP [disabled]");
 	}
 
 #ifdef USE_NSS_KDF
@@ -1874,27 +1876,7 @@ void show_setup_plutomain(struct show *s)
 		pluto_nflog_group
 		);
 
-	show(s,
-		     "ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%ju, ocsp-uri=%s",
-		     bool_str(x509_ocsp.enable),
-		     bool_str(x509_ocsp.strict),
-		     deltasecs(x509_ocsp.timeout),
-		     x509_ocsp.uri != NULL ? x509_ocsp.uri : "<unset>"
-		);
-	show(s,
-		"ocsp-trust-name=%s",
-		x509_ocsp.trust_name != NULL ? x509_ocsp.trust_name : "<unset>"
-		);
-
-	SHOW_JAMBUF(s, buf) {
-		jam(buf, "ocsp-cache-size=%d", x509_ocsp.cache_size);
-		jam_string(buf, ", ocsp-cache-min-age=");
-		jam_deltatime(buf, x509_ocsp.cache_min_age);
-		jam_string(buf, ", ocsp-cache-max-age=");
-		jam_deltatime(buf, x509_ocsp.cache_max_age);
-		jam_string(buf, ", ocsp-method=");
-		jam_sparse(buf, &ocsp_method_names, x509_ocsp.method);
-	}
+	show_x509_ocsp(s);
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, "global-redirect=");
