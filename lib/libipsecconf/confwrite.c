@@ -307,12 +307,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 	}
 
-	if (cidr_is_specified(end->vti_ip)) {
-		cidr_buf as;
-		fprintf(out, "\t%svti=%s\n", side,
-			str_cidr(&end->vti_ip, &as));
-	}
-
 	if (end->values[KSCF_PROTOPORT].set)
 		fprintf(out, "\t%sprotoport=%s\n", side,
 			end->values[KSCF_PROTOPORT].string);

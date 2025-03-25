@@ -110,8 +110,8 @@ static bool fmt_common_shell_out(char *buf,
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local->client));
 
-	if (cidr_is_specified(c->local->config->child.host_vtiip)) {
-		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->config->child.host_vtiip));
+	if (cidr_is_specified(c->local->config->child.vti_ip)) {
+		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->config->child.vti_ip));
 	}
 
 	if (cidr_is_specified(c->local->config->child.ipsec_interface_ip)) {
