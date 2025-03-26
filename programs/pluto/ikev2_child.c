@@ -585,7 +585,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 /*expect_ike*/ false,
 				 /*expect_spi*/ true,
 				 expect_accepted_proposal,
-				 is_opportunistic(c),
+				 /*limit-logging*/is_opportunistic(c),
 				 &child->sa.st_v2_accepted_proposal,
 				 child_proposals, child->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {

@@ -1808,7 +1808,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 				 /*expect_ike*/ true,
 				 /*expect_spi*/ true,
 				 /*expect_accepted*/ false,
-				 is_opportunistic(c),
+				 /*limit-logging*/is_opportunistic(c),
 				 &larval_ike->sa.st_v2_accepted_proposal,
 				 ike_proposals, larval_ike->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
@@ -1993,7 +1993,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				 /*expect_ike*/ true,
 				 /*expect_spi*/ true,
 				 /*expect_accepted*/ true,
-				 is_opportunistic(c),
+				 /*limit-logging*/is_opportunistic(c),
 				 &larval_ike->sa.st_v2_accepted_proposal,
 				 larval_ike->sa.st_v2_create_child_sa_proposals,
 				 larval_ike->sa.logger);
