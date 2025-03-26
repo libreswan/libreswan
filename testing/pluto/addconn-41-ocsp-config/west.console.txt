@@ -1,4 +1,15 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ /testing/x509/import.sh real/mainca/nic.p12
+ ipsec pk12util -w nss-pw -i real/mainca/nic.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n nic
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "nic" [E=user-nic@testing.libreswan.org,CN=nic.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
+ # defaults
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -6,18 +17,109 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec status | grep ocsp
-ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
-ocsp-trust-name=<unset>
-ocsp-cache-size=1000, ocsp-cache-min-age=20, ocsp-cache-max-age=40, ocsp-method=get
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
+ocsp-uri=<unset>, ocsp-trust-name=<unset>
+ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
+ grep '^[^|].*OCSP' /tmp/pluto.log
+NSS: OCSP [disabled]
+west #
+ # ocsp-cache-{min,max} defaults
+west #
+ ipsec pluto --config ocsp-cache.conf
+west #
+ ipsec status | grep ocsp
+configdir=/etc, configfile=ocsp-cache.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+ocsp-enable=yes, ocsp-strict=no, ocsp-timeout=2
+ocsp-uri=http://nic.testing.libreswan.org:2560, ocsp-trust-name=nic
+ocsp-cache-size=1000, ocsp-cache-min-age=20, ocsp-cache-max-age=40, ocsp-method=get
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
  ipsec pluto --ocsp-cache-min-age=100  --ocsp-cache-max-age=1000
 west #
  ipsec status | grep ocsp
-ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
-ocsp-trust-name=<unset>
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
+ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=100, ocsp-cache-max-age=1000, ocsp-method=get
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ # ocsp-uri= broken
+west #
+ ./run.sh ocsp-uri-broken.conf
+ ipsec pluto --config ocsp-uri-broken.conf --leak-detective
+ ../../guestbin/wait-until-pluto-started
+ grep ^[^|].*OCSP /tmp/pluto.log
+NSS: OCSP [enabled]
+NSS: OCSP: default responder ocsp-uri='broken://asdfjksadfi' with ocsp-trustname='nic' enabled
+ ipsec whack --shutdown
+Pluto is shutting down
+ cp /tmp/pluto.log OUTPUT/ocsp-uri-broken.log
+west #
+ # ocsp-trustname= broken
+west #
+ ./run.sh ocsp-trustname-broken.conf
+ ipsec pluto --config ocsp-trustname-broken.conf --leak-detective
+ ../../guestbin/wait-until-pluto-started
+ grep ^[^|].*OCSP /tmp/pluto.log
+NSS: OCSP [enabled]
+NSS: OCSP: WARNING: could not set default responder ocsp-uri='http://nic.testing.libreswan.org:2560' ocsp-trustname='asdfjksadfi': error code not saved by NSS
+ ipsec whack --shutdown
+Pluto is shutting down
+ cp /tmp/pluto.log OUTPUT/ocsp-trustname-broken.log
+west #
+ # both ocsp-trustname= and ocsp-uri broken
+west #
+ ./run.sh ocsp-broken.conf
+ ipsec pluto --config ocsp-broken.conf --leak-detective
+ ../../guestbin/wait-until-pluto-started
+ grep ^[^|].*OCSP /tmp/pluto.log
+NSS: OCSP [enabled]
+NSS: OCSP: WARNING: could not set default responder ocsp-uri='broken://asdfjksadfi' ocsp-trustname='broken': error code not saved by NSS
+ ipsec whack --shutdown
+Pluto is shutting down
+ cp /tmp/pluto.log OUTPUT/ocsp-broken.log
+west #
+ # ocsp-uri= wrong
+west #
+ ./run.sh ocsp-uri-wrong.conf
+ ipsec pluto --config ocsp-uri-wrong.conf --leak-detective
+ ../../guestbin/wait-until-pluto-started
+ grep ^[^|].*OCSP /tmp/pluto.log
+NSS: OCSP [enabled]
+NSS: OCSP: default responder ocsp-uri='http://nic.testing.libreswan.org:2222' with ocsp-trustname='nic' enabled
+ ipsec whack --shutdown
+Pluto is shutting down
+ cp /tmp/pluto.log OUTPUT/ocsp-uri-wrong.log
+west #
+ # ocsp-uri= missing
+west #
+ ./run.sh ocsp-uri-missing.conf
+ ipsec pluto --config ocsp-uri-missing.conf --leak-detective
+ ../../guestbin/wait-until-pluto-started
+ grep ^[^|].*OCSP /tmp/pluto.log
+NSS: OCSP [enabled]
+NSS: OCSP: WARNING: default responder invalid, ocsp-trustname=nic requires ocsp-uri=
+ ipsec whack --shutdown
+Pluto is shutting down
+ cp /tmp/pluto.log OUTPUT/ocsp-uri-missing.log
+west #
+ # ocsp-trustname= missing
+west #
+ ./run.sh ocsp-trustname-missing.conf
+ ipsec pluto --config ocsp-trustname-missing.conf --leak-detective
+ ../../guestbin/wait-until-pluto-started
+ grep ^[^|].*OCSP /tmp/pluto.log
+NSS: OCSP [enabled]
+NSS: OCSP: WARNING: default responder invalid, ocsp-uri=http://nic.testing.libreswan.org:2560 requires ocsp-trustname=
+ ipsec whack --shutdown
+Pluto is shutting down
+ cp /tmp/pluto.log OUTPUT/ocsp-trustname-missing.log
 west #
  
