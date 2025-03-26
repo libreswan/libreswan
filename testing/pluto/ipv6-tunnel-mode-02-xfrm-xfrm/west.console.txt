@@ -58,8 +58,8 @@ nhelpers=-1, uniqueids=yes, dnssec-enable=yes, shuntlifetime=900s, xfrmlifetime=
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
-ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
-ocsp-trust-name=<unset>
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
+ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 global-redirect=no, global-redirect-to=<unset>
 debug ...
