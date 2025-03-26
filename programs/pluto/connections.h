@@ -160,6 +160,10 @@ struct child_end_config {
 	 * Given interface-ip= and sourceip= are incompatible and the
 	 * ipsec-interface code checks for a sourceip=, is this
 	 * completely redundant?
+	 *
+	 * The interface-ip is added, during orientation, when the
+	 * interface is created.  The source-ip is added after the
+	 * connection establishes.
 	 */
 	ip_cidr ipsec_interface_ip;
 
@@ -167,8 +171,10 @@ struct child_end_config {
 	 * Weird host related client stuff.
 	 *
 	 * It's only used when there's a Child SA.
+	 *
+	 * UPDOWN variable is called VTI_IP, hence name.
 	 */
-	ip_cidr host_vtiip;
+	ip_cidr vti_ip;
 	struct virtual_ip *virt;
 };
 

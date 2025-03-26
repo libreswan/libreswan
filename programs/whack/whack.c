@@ -77,7 +77,7 @@ static void help(void)
 		"	[--ca <distinguished name>] \\\n"
 		"	[--ikeport <port-number>] \\\n"
 		"	[--sourceip <ip-address>] [--interface-ip <address>/<mask>]\\\n"
-		"	[--vtiip <ip-address>/mask] \\\n"
+		"	[--vti <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | rsa | ecdsa | null | eaponly>] \\\n"
 		"	[--autheap <none | tls>] \\\n"
@@ -478,7 +478,7 @@ enum opt {
 	END_SENDCERT,
 	END_SOURCEIP,
         END_INTERFACE_IP,
-	END_VTIIP,
+	END_VTI,
 	END_AUTHBY,
 	END_AUTHEAP,
 	END_CAT,
@@ -784,7 +784,6 @@ const struct option optarg_options[] = {
 #endif
 	{ "sourceip\0",  required_argument, NULL, END_SOURCEIP },
 	{ "srcip\0",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
-	{ "vtiip\0",  required_argument, NULL, END_VTIIP },
 	{ "interface-ip\0", required_argument, NULL, END_INTERFACE_IP },	/* match config */
 	{ "interfaceip\0", required_argument, NULL, END_INTERFACE_IP },	/* alias / backward compat */
 	{ "authby\0",  required_argument, NULL, END_AUTHBY },
@@ -886,6 +885,8 @@ const struct option optarg_options[] = {
 	{ "conn-mark\0", required_argument, NULL, CD_CONN_MARK },
 	{ "conn-mark-in\0", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out\0", required_argument, NULL, CD_CONN_MARK_OUT },
+	{ "vtiip"METAOPT_RENAME"vti",  required_argument, NULL, END_VTI }, /* backward compat */
+	{ "vti\0",  required_argument, NULL, END_VTI },
 	{ "vti-iface\0", required_argument, NULL, CD_VTI_INTERFACE }, /* backward compat */
 	{ "vti-interface\0", required_argument, NULL, CD_VTI_INTERFACE },
 	{ "vti-routing\0", optional_argument, NULL, CD_VTI_ROUTING },
@@ -1664,8 +1665,8 @@ int main(int argc, char **argv)
 			end->interface_ip = optarg;
 			continue;
 
-		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			end->host_vtiip = optarg_cidr_num(logger, &child_family);
+		case END_VTI:	/* --vti <ip-address/mask> */
+			end->vti = optarg;
 			continue;
 
 		/*

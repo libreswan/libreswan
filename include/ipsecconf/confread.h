@@ -70,7 +70,6 @@ struct starter_end {
 	enum keyword_host nexttype;
 	ip_address addr;
 	ip_address nexthop;
-	ip_cidr vti_ip;
 
 	keyword_values values;
 };

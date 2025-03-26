@@ -148,7 +148,7 @@ struct whack_end {
 	unsigned host_ikeport;
 	ip_address nexthop;		/* host */
 	char *sourceip;
-	ip_cidr host_vtiip;
+	char *vti;			/* host */
 	char *interface_ip;		/* for ipsec-interface */
 
 	char *subnet; /* child */

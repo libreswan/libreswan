@@ -156,7 +156,7 @@ enum keywords {
 	KSCF_CA,	/* left/right */
 	KSCF_PROTOPORT,	/* left/right */
 	KSCF_SOURCEIP,	/* left/right */
-	KSCF_VTI_IP,	/* left/right */
+	KSCF_VTI,	/* left/right */
 	KSCF_INTERFACE_IP,  /* left/right */
 	KSCF_USERNAME,	/* left/right */
 	KSCF_ADDRESSPOOL,	/* left/right */

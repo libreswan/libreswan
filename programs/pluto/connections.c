@@ -1452,15 +1452,19 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(wm->ike_version);
 	}
 
-	child_config->host_vtiip = src->host_vtiip;
-
-	if (never_negotiate_wm(wm)) {
-		if (src->interface_ip != NULL) {
-			llog(RC_LOG, logger,
-			     "warning: %sinterface-ip=%s ignored when never negotiate",
-			     leftright, src->interface_ip);
+	if (can_extract_str(leftright, "vti", src->vti, wm, logger)) {
+		err_t oops = ttocidr_num(shunk1(src->vti), NULL,
+					 &child_config->vti_ip);
+		if (oops != NULL) {
+			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
 		}
-	} else if (src->interface_ip != NULL) {
+		oops = cidr_check(child_config->vti_ip);
+		if (oops != NULL) {
+			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
+		}
+	}
+
+	if (can_extract_str(leftright, "interface-ip", src->interface_ip, wm, logger)) {
 		err_t oops = ttocidr_num(shunk1(src->interface_ip), NULL,
 					 &child_config->ipsec_interface_ip);
 		if (oops != NULL) {

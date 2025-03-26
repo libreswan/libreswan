@@ -327,21 +327,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 	}
 
-	if (end->values[KSCF_VTI_IP].set) {
-		const char *value = end->values[KSCF_VTI_IP].string;
-		err_t oops = ttocidr_num(shunk1(value), NULL, &end->vti_ip);
-		if (oops != NULL) {
-			ERR_FOUND("bad addr %s%s=%s [%s]",
-				  leftright, "vti", value, oops);
-		}
-		oops = cidr_check(end->vti_ip);
-		if (oops != NULL) {
-			ERR_FOUND("bad addr %s%s=%s [%s]",
-				  leftright, "vti", value, oops);
-		}
-		/* XXX: check type? */
-	}
-
 	/*
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
