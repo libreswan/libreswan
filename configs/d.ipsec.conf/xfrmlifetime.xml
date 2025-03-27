@@ -13,10 +13,8 @@
       no new acquires will come in for this connection. The default
       should be fine for most people.  One use case of shortening
       these is if opportunistc encryption is used towards cloud
-      instances that can quickly re-use IP addresses. This value is
-      only used during the libreswan startup process by the ipsec
-      _stackmanager helper. See also <option>failureshunt</option> and
-      <option>negotiationshunt</option>
+      instances that can quickly re-use IP addresses. See also
+      <option>failureshunt</option> and <option>negotiationshunt</option>
     </para>
   </listitem>
 </varlistentry>

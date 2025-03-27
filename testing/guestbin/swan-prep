@@ -685,7 +685,3 @@ if not args.namespace and hostname != "nic": # inside namespace this would kill 
 for pidfile in ("/run/pluto/pluto.pid", "/run/strongswan/charon.pid", "/run/spmd.pid", ):
     if os.path.isfile(pidfile):
         os.unlink(pidfile)
-
-if not args.namespace:
-    # remove stacks so test can start the stack it needs.
-    subprocess.getoutput("ipsec _stackmanager stop")

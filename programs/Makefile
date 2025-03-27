@@ -48,10 +48,6 @@ ifeq ($(USE_XFRM),true)
 SUBDIRS +=  _updown.xfrm
 endif
 
-ifneq ($(LINUX_VARIANT),)
-SUBDIRS += _stackmanager
-endif
-
 ifneq ($(BSD_VARIANT),)
 SUBDIRS += _updown.bsd
 endif
