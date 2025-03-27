@@ -1,0 +1,16 @@
+test /32 negotiation and failure shunts when group is /32
+
+test the interops
+
+- success
+
+- IKE_SA_INIT proposal rejected
+
+- IKE_AUTH proposal rejected
+
+with:
+
+  negotiationshunt={,drop,pass}
+  failureshunt={,none,drop,pass}
+
+the negotiation/failure shunts should eclipse the group's /32

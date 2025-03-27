@@ -687,6 +687,9 @@ kvmplutotest 	newoe-27-replace-sa-auth-authnull	good
 kvmplutotest 	newoe-27-replace-sa-authnull-authnull	good
 kvmplutotest 	newoe-28-dual-source			good
 
+kvmplutotest	newoe-30-shunt-slash24			wip
+kvmplutotest	newoe-30-shunt-slash32			wip
+
 kvmplutotest 	certoe-01-whack				good
 kvmplutotest 	certoe-02-whack-otherca			good
 kvmplutotest 	certoe-03-cop-whack			good

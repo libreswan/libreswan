@@ -1,0 +1,317 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
+[x] PID
+road #
+ cp policy /etc/ipsec.d/policies/road
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ # Load and dump an ipsec.conf connection.  The whack command should
+road #
+ # define something identical, it doesn't:
+road #
+ #
+road #
+ #   - whack, because of %opportunisticgroup sets +rKOD aka remote DNS
+road #
+ #     key on-demand
+road #
+ #
+road #
+ #   - addconn adds CERT_ALWAYSSEND; whack defaults to CERT_SENDIFASKED
+road #
+ ipsec add road
+"road": added IKEv2 connection
+road #
+ ipsec connectionstatus road
+"road": 192.1.3.209[ID_NULL]...%opportunisticgroup[ID_NULL]; unrouted; my_ip=unset; their_ip=unset;
+"road":   host: oriented; local: 192.1.3.209; remote: %opportunisticgroup;
+"road":   my_updown=ipsec _updown;
+"road":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"road":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+"road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"road":   sec_label:unset;
+"road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"road":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"road":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"road":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP;
+"road":   v2-auth-hash-policy: none;
+"road":   conn_prio: 32,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"road":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
+"road":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
+"road":   nat-traversal: encapsulation:auto; keepalive:20s
+"road":   routing: unrouted;
+"road":   conn serial: $1;
+road #
+ echo "initdone"
+initdone
+road #
+ # a good config
+road #
+ ./good.sh
+ :
+ : oe
+ :
+ ipsec stop
+Redirecting to: [initsystem]
+ rm OUTPUT/road.pluto.log
+ ln -s road.pluto.oe.log OUTPUT/road.pluto.log
+ ipsec start
+Redirecting to: [initsystem]
+ ../../guestbin/wait-until-pluto-started
+ ipsec whack --name road --retransmit-timeout 10s --retransmit-interval 10s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+ ipsec route road
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+ ../../guestbin/wait-for-pluto.sh --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+ ../../guestbin/wait-for.sh --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+road #
+ ./ike.sh
+ :
+ : oe.ike-aes
+ :
+ ipsec stop
+Redirecting to: [initsystem]
+ rm OUTPUT/road.pluto.log
+ ln -s road.pluto.oe.ike-aes.log OUTPUT/road.pluto.log
+ ipsec start
+Redirecting to: [initsystem]
+ ../../guestbin/wait-until-pluto-started
+ ipsec whack --name road --retransmit-timeout 10s --retransmit-interval 10s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+ ipsec route road
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+ ../../guestbin/wait-for-pluto.sh --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ../../guestbin/wait-for-pluto.sh --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+ ../../guestbin/wait-for-pluto.sh --match #1: deleting IKE SA
+timeout waiting 30 seconds for #1: deleting IKE SA
+output:   DH19                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_256, ecp256
+output:   DH20                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_384, ecp384
+output:   DH21                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_521, ecp521
+output:   DH31                              IKEv1: IKE         IKEv2: IKE ESP AH       NSS(ECP)     curve25519
+output: IPCOMP algorithms:
+output:   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS             
+output:   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS             
+output:   LZJH                              IKEv1:             IKEv2:     ESP AH  FIPS             
+output: testing CAMELLIA_CBC:
+output:   Camellia: 16 bytes with 128-bit key
+output:   Camellia: 16 bytes with 128-bit key
+output:   Camellia: 16 bytes with 256-bit key
+output:   Camellia: 16 bytes with 256-bit key
+output: testing AES_GCM_16:
+output:   empty string
+output:   one block
+output:   two blocks
+output:   two blocks with associated data
+output: testing AES_CTR:
+output:   Encrypting 16 octets using AES-CTR with 128-bit key
+output:   Encrypting 32 octets using AES-CTR with 128-bit key
+output:   Encrypting 36 octets using AES-CTR with 128-bit key
+output:   Encrypting 16 octets using AES-CTR with 192-bit key
+output:   Encrypting 32 octets using AES-CTR with 192-bit key
+output:   Encrypting 36 octets using AES-CTR with 192-bit key
+output:   Encrypting 16 octets using AES-CTR with 256-bit key
+output:   Encrypting 32 octets using AES-CTR with 256-bit key
+output:   Encrypting 36 octets using AES-CTR with 256-bit key
+output: testing AES_CBC:
+output:   Encrypting 16 bytes (1 block) using AES-CBC with 128-bit key
+output:   Encrypting 32 bytes (2 blocks) using AES-CBC with 128-bit key
+output:   Encrypting 48 bytes (3 blocks) using AES-CBC with 128-bit key
+output:   Encrypting 64 bytes (4 blocks) using AES-CBC with 128-bit key
+output: testing AES_XCBC:
+output:   RFC 3566 Test Case 1: AES-XCBC-MAC-96 with 0-byte input
+output:   RFC 3566 Test Case 2: AES-XCBC-MAC-96 with 3-byte input
+output:   RFC 3566 Test Case 3: AES-XCBC-MAC-96 with 16-byte input
+output:   RFC 3566 Test Case 4: AES-XCBC-MAC-96 with 20-byte input
+output:   RFC 3566 Test Case 5: AES-XCBC-MAC-96 with 32-byte input
+output:   RFC 3566 Test Case 6: AES-XCBC-MAC-96 with 34-byte input
+output:   RFC 3566 Test Case 7: AES-XCBC-MAC-96 with 1000-byte input
+output:   RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 16)
+output:   RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 10)
+output:   RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 18)
+output: testing HMAC_MD5:
+output:   RFC 2104: MD5_HMAC test 1
+output:   RFC 2104: MD5_HMAC test 2
+output:   RFC 2104: MD5_HMAC test 3
+output: testing HMAC_SHA1:
+output:   CAVP: IKEv2 key derivation with HMAC-SHA1
+output: 1 CPU cores online
+output: starting up 1 helper threads
+output: started thread for helper 0
+output: using Linux xfrm kernel support code on #1 SMP PREEMPT_DYNAMIC TIMESTAMP
+output: kernel: /proc/sys/net/ipv6/conf/all/disable_ipv6=1 ignore ipv6 holes
+output: CRL fetch support [disabled]
+output: SELinux support is enabled in PERMISSIVE mode.
+output: systemd watchdog for ipsec service configured with timeout of 200000000 usecs
+output: watchdog: sending probes every 100 secs
+output: kernel: directional SA supported by kernel
+output: kernel: IPTFS ipsec SA error: requires option CONFIG_XFRM_IPTFS
+output: kernel: MIGRATE SA supported by kernel
+output: seccomp security is not enabled
+output: addconn: 
+output: addconn: 
+output: addconn:   Electric Fence 2.2.2 Copyright (C) 1987-1999 Bruce Perens <bruce@perens.com>
+output: addconn: 
+output: listening for IKE messages
+output: Kernel supports NIC esp-hw-offload
+output: adding interface eth0 192.1.3.209:UDP/500
+output: adding interface eth0 192.1.3.209:UDP/4500 (NAT)
+output: adding interface lo 127.0.0.1:UDP/500
+output: adding interface lo 127.0.0.1:UDP/4500 (NAT)
+output: loading secrets from "/etc/ipsec.secrets"
+output: addconn: listening for IKE messages
+output: addconn: Kernel supports NIC esp-hw-offload
+output: addconn: adding interface eth0 192.1.3.209:UDP/500
+output: addconn: adding interface eth0 192.1.3.209:UDP/4500 (NAT)
+output: addconn: adding interface lo 127.0.0.1:UDP/500
+output: addconn: adding interface lo 127.0.0.1:UDP/4500 (NAT)
+output: addconn: loading secrets from "/etc/ipsec.secrets"
+output: addconn: 
+output: "road": IKE SA proposals (connection add):
+output: "road":   1:IKE=AES_CBC_256+AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128-ECP_256+ECP_384+ECP_521+CURVE25519+MODP4096+MODP3072+MODP2048+MODP8192
+output: "road": Child SA proposals (connection add):
+output: "road":   1:ESP=AES_GCM_16_256-NONE-NONE-ESN:YES+NO
+output: "road":   2:ESP=AES_GCM_16_128-NONE-NONE-ESN:YES+NO
+output: "road":   3:ESP=CHACHA20_POLY1305-NONE-NONE-ESN:YES+NO
+output: "road":   4:ESP=AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE-ESN:YES+NO
+output: "road":   5:ESP=AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE-ESN:YES+NO
+output: "road": added IKEv2 connection
+output: listening for IKE messages
+output: loading secrets from "/etc/ipsec.secrets"
+output: loading group "/etc/ipsec.d/policies/road"
+output: "road#192.1.2.0/24"[1] ...192.1.2.23: initiate on-demand for packet 192.1.3.209:8-ICMP->192.1.2.23:0
+output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: IKE_SA_INIT_I: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+output: FATAL: ASSERTION FAILED: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: enum SHUNT_NONE (2) unexpected (kernel_ops_policy_add() +209 programs/pluto/kernel_ops.c)
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ipsec showstates
+ERROR: ipsec whack: connect(pluto_ctl) failed: Connection refused (errno 111)
+road #
+ ./child.sh
+ :
+ : oe.esp-aes
+ :
+ ipsec stop
+Redirecting to: [initsystem]
+ rm OUTPUT/road.pluto.log
+ ln -s road.pluto.oe.esp-aes.log OUTPUT/road.pluto.log
+ ipsec start
+Redirecting to: [initsystem]
+ ../../guestbin/wait-until-pluto-started
+ ipsec whack --name road --retransmit-timeout 10s --retransmit-interval 10s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+ ipsec route road
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+ ../../guestbin/wait-for-pluto.sh --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ../../guestbin/wait-for-pluto.sh --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+ ../../guestbin/wait-for-pluto.sh --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+ ipsec showstates
+ERROR: ipsec whack: connect(pluto_ctl) failed: Connection refused (errno 111)
+road #
+ 
