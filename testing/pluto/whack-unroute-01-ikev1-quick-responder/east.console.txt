@@ -15,7 +15,7 @@ east #
  # to be sure; initiator's already received it
 east #
  ../../guestbin/wait-for-pluto.sh '#2: sent Quick'
-"west-to-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation transport mode
+"west-to-east" #2: sent Quick Mode reply, inbound IPsec SA installed, expecting confirmation transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
  ipsec unroute west-to-east
 "west-to-east": terminating SAs using this connection

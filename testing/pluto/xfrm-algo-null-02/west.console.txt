@@ -153,7 +153,7 @@ west #
 "westnet-eastnet-esp-null-alg" #1: Peer ID is ID_FQDN: '@east'
 "westnet-eastnet-esp-null-alg" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-esp-null-alg" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-esp-null-alg" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-esp-null-alg" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=NULL-HMAC_SHA1_96 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-esp-null-alg" #2: sent Quick Mode request
 "westnet-eastnet-esp-null-alg" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 west #

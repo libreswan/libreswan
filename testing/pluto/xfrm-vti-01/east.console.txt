@@ -13,7 +13,7 @@ east #
 initdone
 east #
  grep -v -P "\t0$" /proc/net/xfrm_stat
-XfrmInTmplMismatch      	1
+XfrmInTmplMismatch      	4
 east #
  ipsec whack --shutdown
 Pluto is shutting down

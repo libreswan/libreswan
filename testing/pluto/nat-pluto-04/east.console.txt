@@ -14,6 +14,7 @@ east #
 "road-eastnet-nat": added IKEv1 connection
 east #
  arp -an
+? (192.1.2.254) at 12:00:00:de:ad:ba [ether] on eth1
 east #
  echo initdone
 initdone

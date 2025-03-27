@@ -22,7 +22,7 @@ road #
 "road-east" #1: sent Aggressive Mode request
 "road-east" #1: Peer ID is ID_FQDN: '@east'
 "road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"road-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 10.0.1.0/24===10.0.2.0/24}
 "road-east" #2: sent Quick Mode request
 "road-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
 road #
@@ -52,7 +52,7 @@ road #
 "runner-east" #3: sent Aggressive Mode request
 "runner-east" #3: Peer ID is ID_FQDN: '@east'
 "runner-east" #3: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"runner-east" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"runner-east" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#3 msgid:MSGID proposal=AES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 10.0.1.0/24===10.0.4.0/24}
 "runner-east" #4: sent Quick Mode request
 "runner-east" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_256_128 DPD=passive}
 road #
