@@ -3310,14 +3310,8 @@ def check_host_xfrm_stack():
 
     v_line = runcmd("ipsec version")
     if not os.path.isfile("/proc/net/xfrm_stat"):
-        logger.debug("no Linux IPsec stack found, try to load it %s", v_line)
-        runcmd("sudo ipsec _stackmanager start --xfrm")
-        v_line = runcmd("ipsec version")
-        if not os.path.isfile("/proc/net/xfrm_stat"):
-            # give up
-            logger.error(
-                "ABORT no Linux IPsec stack found. cannot run test, %s", v_line)
-            return True
+        logger.error( "ABORT no Linux IPsec stack found. cannot run test, %s", v_line)
+        return True
 
 
 def run_docker_q(args, tests, st):
