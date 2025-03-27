@@ -1144,50 +1144,6 @@ static void teardown_unrouted_inbound_negotiation(struct connection *c,
 					   logger, where, story);
 }
 
-static void teardown_routed_negotiation(struct connection *c,
-					struct child_sa *child,
-					struct logger *logger,
-					where_t where,
-					const char *reason)
-{
-	if (scheduled_child_revival(child, reason)) {
-		routed_negotiation_to_routed_ondemand(c, logger, where,
-						      reason);
-		PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
-		return;
-	}
-
-	if (is_instance(c) && is_opportunistic(c)) {
-		/*
-		 * A failed OE initiator, make shunt bare.
-		 */
-		orphan_holdpass(c, c->spd, logger);
-		/*
-		 * Change routing so we don't get cleared out
-		 * when state/connection dies.
-		 */
-		set_routing(c, RT_UNROUTED);
-		return;
-	}
-
-	if (c->policy.route) {
-		routed_negotiation_to_routed_ondemand(c, logger, where,
-						      "restoring ondemand, connection is routed");
-		PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
-		return;
-	}
-
-	/*
-	 * Should this instead install a failure shunt?
-	 *
-	 * A ROUTED_NEGOTIATION doesn't have inbound policy so don't
-	 * expect it.
-	 */
-	routed_kernel_policy_to_unrouted(c, DIRECTIONS_INBOUND,
-					 logger, where, "deleting");
-	PEXPECT(logger, c->routing.state == RT_UNROUTED);
-}
-
 /*
  * Received a message telling us to delete the connection's Child.SA.
  */
@@ -1798,10 +1754,34 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(TEARDOWN_CHILD, ROUTED_NEGOTIATION, PERMANENT):
 		/*
-		 * For instance, things fail during IKE_AUTH.
+		 * For instance, a permanent connection fails during
+		 * IKE_AUTH.
 		 */
-		teardown_routed_negotiation(c, (*e->child), logger,
-					    e->where, "delete Child SA");
+		if (scheduled_child_revival((*e->child), "delete Child SA")) {
+			routed_negotiation_to_routed_ondemand(c, logger,
+							      e->where,
+							      "delete Child SA");
+			PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
+			return true;
+		}
+		if (c->policy.route) {
+			routed_negotiation_to_routed_ondemand(c, logger,
+							      e->where,
+							      "restoring ondemand, connection is routed");
+			PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
+			return true;
+		}
+		/*
+		 * Should this instead install a failure shunt?
+		 *
+		 * A ROUTED_NEGOTIATION doesn't have inbound policy so
+		 * don't expect it.
+		 *
+		 * XXX: overkill?  routed_negotiation_to_unrouted()?
+		 */
+		routed_kernel_policy_to_unrouted(c, DIRECTIONS_INBOUND,
+						 logger, e->where, "deleting");
+		PEXPECT(logger, c->routing.state == RT_UNROUTED);
 		return true;
 
 	case X(TEARDOWN_IKE, ROUTED_NEGOTIATION, INSTANCE):
