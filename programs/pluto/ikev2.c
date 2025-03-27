@@ -1359,8 +1359,6 @@ static void success_v2_state_transition(struct ike_sa *ike,
 {
 	passert(ike != NULL);
 
-	struct connection *c = ike->sa.st_connection;
-
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, ike->sa.logger, buf) {
 			jam(buf, "IKE SA in state %s transitioning to ",
@@ -1570,14 +1568,9 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	/*
 	 * Tell whack and logs of our progress.
-	 *
-	 * If it's OE or a state transition we're not telling anyone
-	 * about, then be quiet.  Sometimes, sort of.
 	 */
 
         if (PBAD(ike->sa.logger, transition->llog_success == NULL)) {
-		ldbg_v2_success(ike);
-	} else if (is_opportunistic(c) && transition->to != &state_v2_IKE_SA_INIT_IR) {
 		ldbg_v2_success(ike);
 	} else {
 		transition->llog_success(ike);
