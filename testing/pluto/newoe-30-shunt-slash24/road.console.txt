@@ -57,39 +57,65 @@ road #
  echo "initdone"
 initdone
 road #
- # a good config
-road #
- ./good.sh
- :
- : oe
- :
+ ./oe-pass.sh
+:
+: oe
+:
+:
+: OE
  ipsec stop
 Redirecting to: [initsystem]
+:
+: OE
  rm OUTPUT/road.pluto.log
+:
+: OE
  ln -s road.pluto.oe.log OUTPUT/road.pluto.log
+:
+: OE
  ipsec start
 Redirecting to: [initsystem]
+:
+: OE
  ../../guestbin/wait-until-pluto-started
- ipsec whack --name road --retransmit-timeout 10s --retransmit-interval 10s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --to --host %opportunisticgroup --authby null --id %null
+:
+: OE
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
+:
+: OE
  ipsec route road
+:
+: OE
  ipsec listen
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
+:
+: OE
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+:
+: OE
  ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 fired and forgotten
- ../../guestbin/wait-for-pluto.sh --match #1: sent IKE_SA_INIT request
+:
+: OE
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
- ../../guestbin/wait-for.sh --match #2 -- ipsec trafficstatus
+:
+: OE
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
+:
+: OE
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
@@ -107,36 +133,67 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+:
+: OE
  ipsec trafficstatus
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE
+ ipsec shuntstatus
+Bare Shunt list:
+ 
 road #
- ./ike.sh
- :
- : oe.ike-aes
- :
+ ./oe-fail-ike.sh
+:
+: oe.ike-aes
+:
+:
+: OE --ike aes
  ipsec stop
 Redirecting to: [initsystem]
+:
+: OE --ike aes
  rm OUTPUT/road.pluto.log
+:
+: OE --ike aes
  ln -s road.pluto.oe.ike-aes.log OUTPUT/road.pluto.log
+:
+: OE --ike aes
  ipsec start
 Redirecting to: [initsystem]
+:
+: OE --ike aes
  ../../guestbin/wait-until-pluto-started
- ipsec whack --name road --retransmit-timeout 10s --retransmit-interval 10s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --to --host %opportunisticgroup --authby null --id %null
+:
+: OE --ike aes
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
+:
+: OE --ike aes
  ipsec route road
+:
+: OE --ike aes
  ipsec listen
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+:
+: OE --ike aes
  ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 fired and forgotten
- ../../guestbin/wait-for-pluto.sh --match #1: sent IKE_SA_INIT request
+:
+: OE --ike aes
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority PRIORITY ptype main
@@ -146,162 +203,252 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
- ../../guestbin/wait-for-pluto.sh --match #1: ignoring IKE_SA_INIT response
+:
+: OE --ike aes
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
- ../../guestbin/wait-for-pluto.sh --match #1: deleting IKE SA
-timeout waiting 30 seconds for #1: deleting IKE SA
-output:   DH19                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_256, ecp256
-output:   DH20                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_384, ecp384
-output:   DH21                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_521, ecp521
-output:   DH31                              IKEv1: IKE         IKEv2: IKE ESP AH       NSS(ECP)     curve25519
-output: IPCOMP algorithms:
-output:   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS             
-output:   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS             
-output:   LZJH                              IKEv1:             IKEv2:     ESP AH  FIPS             
-output: testing CAMELLIA_CBC:
-output:   Camellia: 16 bytes with 128-bit key
-output:   Camellia: 16 bytes with 128-bit key
-output:   Camellia: 16 bytes with 256-bit key
-output:   Camellia: 16 bytes with 256-bit key
-output: testing AES_GCM_16:
-output:   empty string
-output:   one block
-output:   two blocks
-output:   two blocks with associated data
-output: testing AES_CTR:
-output:   Encrypting 16 octets using AES-CTR with 128-bit key
-output:   Encrypting 32 octets using AES-CTR with 128-bit key
-output:   Encrypting 36 octets using AES-CTR with 128-bit key
-output:   Encrypting 16 octets using AES-CTR with 192-bit key
-output:   Encrypting 32 octets using AES-CTR with 192-bit key
-output:   Encrypting 36 octets using AES-CTR with 192-bit key
-output:   Encrypting 16 octets using AES-CTR with 256-bit key
-output:   Encrypting 32 octets using AES-CTR with 256-bit key
-output:   Encrypting 36 octets using AES-CTR with 256-bit key
-output: testing AES_CBC:
-output:   Encrypting 16 bytes (1 block) using AES-CBC with 128-bit key
-output:   Encrypting 32 bytes (2 blocks) using AES-CBC with 128-bit key
-output:   Encrypting 48 bytes (3 blocks) using AES-CBC with 128-bit key
-output:   Encrypting 64 bytes (4 blocks) using AES-CBC with 128-bit key
-output: testing AES_XCBC:
-output:   RFC 3566 Test Case 1: AES-XCBC-MAC-96 with 0-byte input
-output:   RFC 3566 Test Case 2: AES-XCBC-MAC-96 with 3-byte input
-output:   RFC 3566 Test Case 3: AES-XCBC-MAC-96 with 16-byte input
-output:   RFC 3566 Test Case 4: AES-XCBC-MAC-96 with 20-byte input
-output:   RFC 3566 Test Case 5: AES-XCBC-MAC-96 with 32-byte input
-output:   RFC 3566 Test Case 6: AES-XCBC-MAC-96 with 34-byte input
-output:   RFC 3566 Test Case 7: AES-XCBC-MAC-96 with 1000-byte input
-output:   RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 16)
-output:   RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 10)
-output:   RFC 4434 Test Case AES-XCBC-PRF-128 with 20-byte input (key length 18)
-output: testing HMAC_MD5:
-output:   RFC 2104: MD5_HMAC test 1
-output:   RFC 2104: MD5_HMAC test 2
-output:   RFC 2104: MD5_HMAC test 3
-output: testing HMAC_SHA1:
-output:   CAVP: IKEv2 key derivation with HMAC-SHA1
-output: 1 CPU cores online
-output: starting up 1 helper threads
-output: started thread for helper 0
-output: using Linux xfrm kernel support code on #1 SMP PREEMPT_DYNAMIC TIMESTAMP
-output: kernel: /proc/sys/net/ipv6/conf/all/disable_ipv6=1 ignore ipv6 holes
-output: CRL fetch support [disabled]
-output: SELinux support is enabled in PERMISSIVE mode.
-output: systemd watchdog for ipsec service configured with timeout of 200000000 usecs
-output: watchdog: sending probes every 100 secs
-output: kernel: directional SA supported by kernel
-output: kernel: IPTFS ipsec SA error: requires option CONFIG_XFRM_IPTFS
-output: kernel: MIGRATE SA supported by kernel
-output: seccomp security is not enabled
-output: addconn: 
-output: addconn: 
-output: addconn:   Electric Fence 2.2.2 Copyright (C) 1987-1999 Bruce Perens <bruce@perens.com>
-output: addconn: 
-output: listening for IKE messages
-output: Kernel supports NIC esp-hw-offload
-output: adding interface eth0 192.1.3.209:UDP/500
-output: adding interface eth0 192.1.3.209:UDP/4500 (NAT)
-output: adding interface lo 127.0.0.1:UDP/500
-output: adding interface lo 127.0.0.1:UDP/4500 (NAT)
-output: loading secrets from "/etc/ipsec.secrets"
-output: addconn: listening for IKE messages
-output: addconn: Kernel supports NIC esp-hw-offload
-output: addconn: adding interface eth0 192.1.3.209:UDP/500
-output: addconn: adding interface eth0 192.1.3.209:UDP/4500 (NAT)
-output: addconn: adding interface lo 127.0.0.1:UDP/500
-output: addconn: adding interface lo 127.0.0.1:UDP/4500 (NAT)
-output: addconn: loading secrets from "/etc/ipsec.secrets"
-output: addconn: 
-output: "road": IKE SA proposals (connection add):
-output: "road":   1:IKE=AES_CBC_256+AES_CBC_128-HMAC_SHA2_512+HMAC_SHA2_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128-ECP_256+ECP_384+ECP_521+CURVE25519+MODP4096+MODP3072+MODP2048+MODP8192
-output: "road": Child SA proposals (connection add):
-output: "road":   1:ESP=AES_GCM_16_256-NONE-NONE-ESN:YES+NO
-output: "road":   2:ESP=AES_GCM_16_128-NONE-NONE-ESN:YES+NO
-output: "road":   3:ESP=CHACHA20_POLY1305-NONE-NONE-ESN:YES+NO
-output: "road":   4:ESP=AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE-ESN:YES+NO
-output: "road":   5:ESP=AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE-ESN:YES+NO
-output: "road": added IKEv2 connection
-output: listening for IKE messages
-output: loading secrets from "/etc/ipsec.secrets"
-output: loading group "/etc/ipsec.d/policies/road"
-output: "road#192.1.2.0/24"[1] ...192.1.2.23: initiate on-demand for packet 192.1.3.209:8-ICMP->192.1.2.23:0
-output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-output: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: IKE_SA_INIT_I: 10 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-output: FATAL: ASSERTION FAILED: "road#192.1.2.0/24"[1] ...192.1.2.23 #1: enum SHUNT_NONE (2) unexpected (kernel_ops_policy_add() +209 programs/pluto/kernel_ops.c)
+:
+: OE --ike aes
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes
  ../../guestbin/ipsec-kernel-policy.sh
-src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out action block priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+:
+: OE --ike aes
  ipsec showstates
-ERROR: ipsec whack: connect(pluto_ctl) failed: Connection refused (errno 111)
+:
+: OE --ike aes
+ ipsec shuntstatus
+Bare Shunt list:
+ 
 road #
- ./child.sh
- :
- : oe.esp-aes
- :
+ ./oe-fail-child.sh
+:
+: oe.esp-aes
+:
+:
+: OE --esp aes
  ipsec stop
 Redirecting to: [initsystem]
+:
+: OE --esp aes
  rm OUTPUT/road.pluto.log
+:
+: OE --esp aes
  ln -s road.pluto.oe.esp-aes.log OUTPUT/road.pluto.log
+:
+: OE --esp aes
  ipsec start
 Redirecting to: [initsystem]
+:
+: OE --esp aes
  ../../guestbin/wait-until-pluto-started
- ipsec whack --name road --retransmit-timeout 10s --retransmit-interval 10s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --to --host %opportunisticgroup --authby null --id %null
+:
+: OE --esp aes
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
+:
+: OE --esp aes
  ipsec route road
+:
+: OE --esp aes
  ipsec listen
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+:
+: OE --esp aes
  ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 fired and forgotten
- ../../guestbin/wait-for-pluto.sh --match #1: sent IKE_SA_INIT request
+:
+: OE --esp aes
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes
  ../../guestbin/ipsec-kernel-policy.sh
-src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out action block priority PRIORITY ptype main
-	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
- ../../guestbin/wait-for-pluto.sh --match #1: initiator established IKE SA
+:
+: OE --esp aes
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
- ../../guestbin/wait-for-pluto.sh --match #2: IKE_AUTH response rejected Child SA
+:
+: OE --esp aes
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
 "road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-pass.sh        --failnone
+:
+: oe.failnone
+:
+:
+: OE --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --failnone
+ ln -s road.pluto.oe.failnone.log OUTPUT/road.pluto.log
+:
+: OE --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --failnone
+ ipsec route road
+:
+: OE --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --failnone
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --failnone
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --failnone
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --failnone
+:
+: oe.ike-aes-.failnone
+:
+:
+: OE --ike aes --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --failnone
+ ln -s road.pluto.oe.ike-aes-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --failnone
+ ipsec route road
+:
+: OE --ike aes --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --failnone
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority PRIORITY ptype main
@@ -311,7 +458,2721 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+:
+: OE --ike aes --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --failnone
  ipsec showstates
-ERROR: ipsec whack: connect(pluto_ctl) failed: Connection refused (errno 111)
+:
+: OE --ike aes --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-child.sh  --failnone
+:
+: oe.esp-aes-.failnone
+:
+:
+: OE --esp aes --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --failnone
+ ln -s road.pluto.oe.esp-aes-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --failnone
+ ipsec route road
+:
+: OE --esp aes --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --failnone
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --failnone
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-pass.sh        --faildrop
+:
+: oe.faildrop
+:
+:
+: OE --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --faildrop
+ ln -s road.pluto.oe.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --faildrop
+ ipsec route road
+:
+: OE --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --faildrop
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --faildrop
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --faildrop
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --faildrop
+:
+: oe.ike-aes-.faildrop
+:
+:
+: OE --ike aes --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --faildrop
+ ln -s road.pluto.oe.ike-aes-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --faildrop
+ ipsec route road
+:
+: OE --ike aes --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --faildrop
+ ipsec showstates
+:
+: OE --ike aes --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing
+road #
+ ./oe-fail-child.sh  --faildrop
+:
+: oe.esp-aes-.faildrop
+:
+:
+: OE --esp aes --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --faildrop
+ ln -s road.pluto.oe.esp-aes-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --faildrop
+ ipsec route road
+:
+: OE --esp aes --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --faildrop
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --faildrop
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing
+road #
+ ./oe-pass.sh        --failpass
+:
+: oe.failpass
+:
+:
+: OE --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --failpass
+ ln -s road.pluto.oe.failpass.log OUTPUT/road.pluto.log
+:
+: OE --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --failpass
+ ipsec route road
+:
+: OE --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --failpass
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --failpass
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --failpass
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --failpass
+:
+: oe.ike-aes-.failpass
+:
+:
+: OE --ike aes --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --failpass
+ ln -s road.pluto.oe.ike-aes-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --failpass
+ ipsec route road
+:
+: OE --ike aes --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --failpass
+ ipsec showstates
+:
+: OE --ike aes --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+road #
+ ./oe-fail-child.sh  --failpass
+:
+: oe.esp-aes-.failpass
+:
+:
+: OE --esp aes --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --failpass
+ ln -s road.pluto.oe.esp-aes-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --failpass
+ ipsec route road
+:
+: OE --esp aes --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --failpass
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --failpass
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+road #
+ ./oe-pass.sh        --negopass
+:
+: oe.negopass
+:
+:
+: OE --negopass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negopass
+ rm OUTPUT/road.pluto.log
+:
+: OE --negopass
+ ln -s road.pluto.oe.negopass.log OUTPUT/road.pluto.log
+:
+: OE --negopass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negopass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negopass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negopass
+ ipsec route road
+:
+: OE --negopass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negopass
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negopass
+:
+: oe.ike-aes-.negopass
+:
+:
+: OE --ike aes --negopass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass
+ ln -s road.pluto.oe.ike-aes-.negopass.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negopass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negopass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negopass
+ ipsec route road
+:
+: OE --ike aes --negopass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass
+ ipsec showstates
+:
+: OE --ike aes --negopass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-child.sh  --negopass
+:
+: oe.esp-aes-.negopass
+:
+:
+: OE --esp aes --negopass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass
+ ln -s road.pluto.oe.esp-aes-.negopass.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negopass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negopass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negopass
+ ipsec route road
+:
+: OE --esp aes --negopass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negopass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negopass
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negopass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negopass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-pass.sh        --negopass --failnone
+:
+: oe.negopass-.failnone
+:
+:
+: OE --negopass --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negopass --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --negopass --failnone
+ ln -s road.pluto.oe.negopass-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --negopass --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negopass --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negopass --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negopass --failnone
+ ipsec route road
+:
+: OE --negopass --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negopass --failnone
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass --failnone
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass --failnone
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negopass --failnone
+:
+: oe.ike-aes-.negopass-.failnone
+:
+:
+: OE --ike aes --negopass --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass --failnone
+ ln -s road.pluto.oe.ike-aes-.negopass-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negopass --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negopass --failnone
+ ipsec route road
+:
+: OE --ike aes --negopass --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --failnone
+ ipsec showstates
+:
+: OE --ike aes --negopass --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-child.sh  --negopass --failnone
+:
+: oe.esp-aes-.negopass-.failnone
+:
+:
+: OE --esp aes --negopass --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass --failnone
+ ln -s road.pluto.oe.esp-aes-.negopass-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negopass --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negopass --failnone
+ ipsec route road
+:
+: OE --esp aes --negopass --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negopass --failnone
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negopass --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --failnone
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negopass --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-pass.sh        --negopass --faildrop
+:
+: oe.negopass-.faildrop
+:
+:
+: OE --negopass --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negopass --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --negopass --faildrop
+ ln -s road.pluto.oe.negopass-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --negopass --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negopass --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negopass --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negopass --faildrop
+ ipsec route road
+:
+: OE --negopass --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negopass --faildrop
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass --faildrop
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass --faildrop
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negopass --faildrop
+:
+: oe.ike-aes-.negopass-.faildrop
+:
+:
+: OE --ike aes --negopass --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass --faildrop
+ ln -s road.pluto.oe.ike-aes-.negopass-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negopass --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negopass --faildrop
+ ipsec route road
+:
+: OE --ike aes --negopass --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --faildrop
+ ipsec showstates
+:
+: OE --ike aes --negopass --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing
+road #
+ ./oe-fail-child.sh  --negopass --faildrop
+:
+: oe.esp-aes-.negopass-.faildrop
+:
+:
+: OE --esp aes --negopass --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass --faildrop
+ ln -s road.pluto.oe.esp-aes-.negopass-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negopass --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negopass --faildrop
+ ipsec route road
+:
+: OE --esp aes --negopass --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negopass --faildrop
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negopass --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --faildrop
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negopass --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing
+road #
+ ./oe-pass.sh        --negopass --failpass
+:
+: oe.negopass-.failpass
+:
+:
+: OE --negopass --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negopass --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --negopass --failpass
+ ln -s road.pluto.oe.negopass-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --negopass --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negopass --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negopass --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negopass --failpass
+ ipsec route road
+:
+: OE --negopass --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negopass --failpass
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass --failpass
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negopass --failpass
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negopass --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negopass --failpass
+:
+: oe.ike-aes-.negopass-.failpass
+:
+:
+: OE --ike aes --negopass --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass --failpass
+ ln -s road.pluto.oe.ike-aes-.negopass-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negopass --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negopass --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negopass --failpass
+ ipsec route road
+:
+: OE --ike aes --negopass --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negopass --failpass
+ ipsec showstates
+:
+: OE --ike aes --negopass --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+road #
+ ./oe-fail-child.sh  --negopass --failpass
+:
+: oe.esp-aes-.negopass-.failpass
+:
+:
+: OE --esp aes --negopass --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass --failpass
+ ln -s road.pluto.oe.esp-aes-.negopass-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negopass --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negopass --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negopass --failpass
+ ipsec route road
+:
+: OE --esp aes --negopass --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negopass --failpass
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negopass --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negopass --failpass
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negopass --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+road #
+ ./oe-pass.sh        --negodrop
+:
+: oe.negodrop
+:
+:
+: OE --negodrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negodrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --negodrop
+ ln -s road.pluto.oe.negodrop.log OUTPUT/road.pluto.log
+:
+: OE --negodrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negodrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negodrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negodrop
+ ipsec route road
+:
+: OE --negodrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negodrop
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negodrop
+:
+: oe.ike-aes-.negodrop
+:
+:
+: OE --ike aes --negodrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop
+ ln -s road.pluto.oe.ike-aes-.negodrop.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negodrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negodrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negodrop
+ ipsec route road
+:
+: OE --ike aes --negodrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop
+ ipsec showstates
+:
+: OE --ike aes --negodrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-child.sh  --negodrop
+:
+: oe.esp-aes-.negodrop
+:
+:
+: OE --esp aes --negodrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop
+ ln -s road.pluto.oe.esp-aes-.negodrop.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negodrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negodrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negodrop
+ ipsec route road
+:
+: OE --esp aes --negodrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negodrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negodrop
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negodrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negodrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-pass.sh        --negodrop --failnone
+:
+: oe.negodrop-.failnone
+:
+:
+: OE --negodrop --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negodrop --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --negodrop --failnone
+ ln -s road.pluto.oe.negodrop-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --negodrop --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negodrop --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negodrop --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negodrop --failnone
+ ipsec route road
+:
+: OE --negodrop --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negodrop --failnone
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop --failnone
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop --failnone
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negodrop --failnone
+:
+: oe.ike-aes-.negodrop-.failnone
+:
+:
+: OE --ike aes --negodrop --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop --failnone
+ ln -s road.pluto.oe.ike-aes-.negodrop-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negodrop --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negodrop --failnone
+ ipsec route road
+:
+: OE --ike aes --negodrop --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --failnone
+ ipsec showstates
+:
+: OE --ike aes --negodrop --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-child.sh  --negodrop --failnone
+:
+: oe.esp-aes-.negodrop-.failnone
+:
+:
+: OE --esp aes --negodrop --failnone
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop --failnone
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop --failnone
+ ln -s road.pluto.oe.esp-aes-.negodrop-.failnone.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop --failnone
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negodrop --failnone
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negodrop --failnone
+ ipsec route road
+:
+: OE --esp aes --negodrop --failnone
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negodrop --failnone
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negodrop --failnone
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --failnone
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negodrop --failnone
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-pass.sh        --negodrop --faildrop
+:
+: oe.negodrop-.faildrop
+:
+:
+: OE --negodrop --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negodrop --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --negodrop --faildrop
+ ln -s road.pluto.oe.negodrop-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --negodrop --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negodrop --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negodrop --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negodrop --faildrop
+ ipsec route road
+:
+: OE --negodrop --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negodrop --faildrop
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop --faildrop
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop --faildrop
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negodrop --faildrop
+:
+: oe.ike-aes-.negodrop-.faildrop
+:
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop --faildrop
+ ln -s road.pluto.oe.ike-aes-.negodrop-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec route road
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec showstates
+:
+: OE --ike aes --negodrop --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing
+road #
+ ./oe-fail-child.sh  --negodrop --faildrop
+:
+: oe.esp-aes-.negodrop-.faildrop
+:
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop --faildrop
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop --faildrop
+ ln -s road.pluto.oe.esp-aes-.negodrop-.faildrop.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec route road
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negodrop --faildrop
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negodrop --faildrop
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negodrop --faildrop
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing
+road #
+ ./oe-pass.sh        --negodrop --failpass
+:
+: oe.negodrop-.failpass
+:
+:
+: OE --negodrop --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --negodrop --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --negodrop --failpass
+ ln -s road.pluto.oe.negodrop-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --negodrop --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --negodrop --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --negodrop --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --negodrop --failpass
+ ipsec route road
+:
+: OE --negodrop --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --negodrop --failpass
+ ../../guestbin/wait-for.sh --timeout 10 --match #2 -- ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop --failpass
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+:
+: OE --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --negodrop --failpass
+ ipsec trafficstatus
+#2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+:
+: OE --negodrop --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+road #
+ ./oe-fail-ike.sh    --negodrop --failpass
+:
+: oe.ike-aes-.negodrop-.failpass
+:
+:
+: OE --ike aes --negodrop --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop --failpass
+ ln -s road.pluto.oe.ike-aes-.negodrop-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --ike aes --negodrop --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --ike aes --negodrop --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --ike aes --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --ike aes --negodrop --failpass
+ ipsec route road
+:
+: OE --ike aes --negodrop --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: ignoring IKE_SA_INIT response
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+:
+: OE --ike aes --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --ike aes --negodrop --failpass
+ ipsec showstates
+:
+: OE --ike aes --negodrop --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
+road #
+ ./oe-fail-child.sh  --negodrop --failpass
+:
+: oe.esp-aes-.negodrop-.failpass
+:
+:
+: OE --esp aes --negodrop --failpass
+ ipsec stop
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop --failpass
+ rm OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop --failpass
+ ln -s road.pluto.oe.esp-aes-.negodrop-.failpass.log OUTPUT/road.pluto.log
+:
+: OE --esp aes --negodrop --failpass
+ ipsec start
+Redirecting to: [initsystem]
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/wait-until-pluto-started
+:
+: OE --esp aes --negodrop --failpass
+ ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --esp aes --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+:
+: OE --esp aes --negodrop --failpass
+ ipsec route road
+:
+: OE --esp aes --negodrop --failpass
+ ipsec listen
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
+fired and forgotten
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: sent IKE_SA_INIT request
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: initiator established IKE SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/wait-for-pluto.sh --timeout 10 --match #2: IKE_AUTH response rejected Child SA
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+:
+: OE --esp aes --negodrop --failpass
+ echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+../../guestbin/wait-for-pluto.sh --timeout 10 --match #1: deleting IKE SA
+:
+: OE --esp aes --negodrop --failpass
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+:
+: OE --esp aes --negodrop --failpass
+ ipsec showstates
+#1: "road#192.1.2.0/24"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+:
+: OE --esp aes --negodrop --failpass
+ ipsec shuntstatus
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  
