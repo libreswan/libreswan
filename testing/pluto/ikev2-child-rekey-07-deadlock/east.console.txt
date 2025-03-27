@@ -2,7 +2,7 @@
 Creating empty NSS database
 east #
  export EF_DISABLE_BANNER=1; ipsec pluto  --impair helper_thread_delay:5 --config /etc/ipsec.conf
-PATH/libexec/ipsec/pluto: impair: helper_thread_delay: no -> 5
+ipsec pluto: impair: helper_thread_delay: no -> 5
 east #
  ../../guestbin/wait-until-pluto-started
 east #
