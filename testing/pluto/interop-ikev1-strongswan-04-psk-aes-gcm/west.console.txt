@@ -35,7 +35,7 @@ west #
 "westnet-eastnet-ikev1" #1: sent Main Mode I3
 "westnet-eastnet-ikev1" #1: Peer ID is ID_FQDN: '@east'
 "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_GCM_16_256-NONE-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-ikev1" #2: sent Quick Mode request
 "westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #

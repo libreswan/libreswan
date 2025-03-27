@@ -33,7 +33,7 @@ west #
 "ikev1-ipsec-fail" #1: Peer ID is ID_FQDN: '@east-v1'
 "ikev1-ipsec-fail" #1: authenticated peer using preloaded certificate '@east-v1' and 2nnn-bit RSA with SHA1 signature
 "ikev1-ipsec-fail" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-"ikev1-ipsec-fail" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"ikev1-ipsec-fail" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP1536 192.0.1.0/24===66.66.66.0/24}
 "ikev1-ipsec-fail" #2: sent Quick Mode request
 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
 "ikev1-ipsec-fail" #2: STATE_QUICK_I1: retransmission; will wait 1 seconds for response
@@ -52,7 +52,7 @@ west #
 "ikev1-aggr-ipsec-fail" #3: Peer ID is ID_FQDN: '@east-v1'
 "ikev1-aggr-ipsec-fail" #3: authenticated peer using preloaded certificate '@east-v1' and 2nnn-bit RSA with SHA1 signature
 "ikev1-aggr-ipsec-fail" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
-"ikev1-aggr-ipsec-fail" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"ikev1-aggr-ipsec-fail" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#3 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP1536 192.0.1.0/24===66.66.66.0/24}
 "ikev1-aggr-ipsec-fail" #4: sent Quick Mode request
 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 0.5 seconds for response
 "ikev1-aggr-ipsec-fail" #4: STATE_QUICK_I1: retransmission; will wait 1 seconds for response

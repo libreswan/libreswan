@@ -25,12 +25,12 @@ west #
 "westnet-eastnet-port666" #1: Peer ID is ID_FQDN: '@east'
 "westnet-eastnet-port666" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-port666" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-port666" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-port666" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=3DES_CBC-HMAC_MD5_96 pfsgroup=MODP2048 192.0.1.0/24/TCP/666===192.0.2.0/24/TCP/666}
 "westnet-eastnet-port666" #2: sent Quick Mode request
 "westnet-eastnet-port666" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_MD5_96 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-port667
-"westnet-eastnet-port667" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-port667" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96 pfsgroup=MODP2048 192.0.1.0/24/TCP/667===192.0.2.0/24/TCP/667}
 "westnet-eastnet-port667" #3: sent Quick Mode request
 "westnet-eastnet-port667" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

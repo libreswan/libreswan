@@ -42,7 +42,7 @@ west #
 "westnet-eastnet-null" #1: Peer ID is ID_FQDN: '@east'
 "westnet-eastnet-null" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-null" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-"westnet-eastnet-null" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-null" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=NULL_AUTH_AES_GMAC_128-HMAC_SHA1_96 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-null" #2: sent Quick Mode request
 "westnet-eastnet-null" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "westnet-eastnet-null" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
