@@ -155,8 +155,9 @@ static void help(void)
 		"	[--conn-mark-out <mark/mask>] \\\n"
 		"	[--ipsec-interface <num>] \\\n"
 		"	[--vti-interface <iface> ] [--vti-routing] [--vti-shared] \\\n"
-		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
-		"	[--negopass ] \\\n"
+		"       [--pass | --drop | --reject]\\\n"
+		"	[--failnone | --failpass | --faildrop | --failreject]\\\n"
+		"	[--negopass | --negodrop]\\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
 		"	[--nic-offload <packet|crypto|no>] \\\n"
 		"	--to\n"
@@ -625,6 +626,7 @@ enum opt {
 	CDS_NEVER_NEGOTIATE_DROP,
 	CDS_NEVER_NEGOTIATE_REJECT,
 	CDS_NEGOTIATION_PASS,
+	CDS_NEGOTIATION_DROP,
 	CDS_FAILURE_NONE,
 	CDS_FAILURE_PASS,
 	CDS_FAILURE_DROP,
@@ -821,6 +823,7 @@ const struct option optarg_options[] = {
 	{ "reject\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_REJECT },
 
 	{ "negopass\0", no_argument, NULL, CDS_NEGOTIATION_PASS },
+	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_DROP },
 
 	{ "failnone\0", no_argument, NULL, CDS_FAILURE_NONE },
 	{ "failpass\0", no_argument, NULL, CDS_FAILURE_PASS },
@@ -1919,6 +1922,9 @@ int main(int argc, char **argv)
 
 		case CDS_NEGOTIATION_PASS:	/* --negopass */
 			msg.negotiation_shunt = SHUNT_PASS;
+			continue;
+		case CDS_NEGOTIATION_DROP:	/* --negodrop */
+			msg.negotiation_shunt = SHUNT_DROP;
 			continue;
 
 		case CDS_FAILURE_NONE:		/* --failnone */
