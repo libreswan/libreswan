@@ -1,11 +1,16 @@
+#!/bin/sh
 # a config that fails during IKE_AUTH
-./oe.sh --esp aes
+
+set -e
+
+args="--esp aes $@"
+./oe.sh ${args}
 
 RUN() {
     echo :
+    echo : OE ${args}
     echo " $@"
     "$@"
-    echo :
 }
 
 # expect outer trap and possibly a negotation shunt

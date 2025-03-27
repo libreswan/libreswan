@@ -1,13 +1,17 @@
 #!/bin/sh
 
+set -e
+
+args="$@"
+
 RUN() {
     echo :
+    echo : OE ${args}
     echo " $@"
     "$@"
-    echo :
 }
 
-conn=oe$(echo "$@" | sed -e 's/--/./' -e 's/ /-/')
+conn=oe$(echo "$@" | sed -e 's/--/./g' -e 's/ /-/g')
 
 echo :
 echo : ${conn}
@@ -43,4 +47,4 @@ RUN ../../guestbin/ipsec-kernel-policy.sh
 
 # trigger OE; expect things to initiate
 RUN ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
-RUN ../../guestbin/wait-for-pluto.sh --match '#1: sent IKE_SA_INIT request'
+RUN ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: sent IKE_SA_INIT request'

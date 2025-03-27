@@ -157,7 +157,7 @@ static void help(void)
 		"	[--vti-interface <iface> ] [--vti-routing] [--vti-shared] \\\n"
 		"       [--pass | --drop | --reject]\\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject]\\\n"
-		"	[--negopass | --negodrop]\\\n"
+		"	[--negopass | --negohold]\\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
 		"	[--nic-offload <packet|crypto|no>] \\\n"
 		"	--to\n"
@@ -626,7 +626,7 @@ enum opt {
 	CDS_NEVER_NEGOTIATE_DROP,
 	CDS_NEVER_NEGOTIATE_REJECT,
 	CDS_NEGOTIATION_PASS,
-	CDS_NEGOTIATION_DROP,
+	CDS_NEGOTIATION_HOLD,
 	CDS_FAILURE_NONE,
 	CDS_FAILURE_PASS,
 	CDS_FAILURE_DROP,
@@ -818,16 +818,18 @@ const struct option optarg_options[] = {
 
 	{ "initiateontraffic\0", no_argument, NULL, CD_INITIATEONTRAFFIC }, /* obsolete */
 
-	{ "pass\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_PASS },
 	{ "drop\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
+	{ "pass\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_PASS },
 	{ "reject\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_REJECT },
 
+	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
+	{ "negohold\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
 	{ "negopass\0", no_argument, NULL, CDS_NEGOTIATION_PASS },
-	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_DROP },
 
+	{ "faildrop\0", no_argument, NULL, CDS_FAILURE_DROP },
+	{ "failhold\0", no_argument, NULL, CDS_FAILURE_DROP },
 	{ "failnone\0", no_argument, NULL, CDS_FAILURE_NONE },
 	{ "failpass\0", no_argument, NULL, CDS_FAILURE_PASS },
-	{ "faildrop\0", no_argument, NULL, CDS_FAILURE_DROP },
 	{ "failreject\0", no_argument, NULL, CDS_FAILURE_REJECT },
 
 	{ "dontrekey\0", no_argument, NULL, CD_DONT_REKEY, },
@@ -1923,8 +1925,8 @@ int main(int argc, char **argv)
 		case CDS_NEGOTIATION_PASS:	/* --negopass */
 			msg.negotiation_shunt = SHUNT_PASS;
 			continue;
-		case CDS_NEGOTIATION_DROP:	/* --negodrop */
-			msg.negotiation_shunt = SHUNT_DROP;
+		case CDS_NEGOTIATION_HOLD:	/* --negohold */
+			msg.negotiation_shunt = SHUNT_HOLD;
 			continue;
 
 		case CDS_FAILURE_NONE:		/* --failnone */

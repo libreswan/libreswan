@@ -1,11 +1,16 @@
+#!/bin/sh
 # a config that fails during IKE_SA_INIT
-./oe.sh --ike aes "$@"
+
+set -e
+
+args="--ike aes $@"
+./oe.sh ${args}
 
 RUN() {
     echo :
+    echo : OE ${args}
     echo " $@"
     "$@"
-    echo :
 }
 
 # expect outer trap and possibly a negotation shunt
