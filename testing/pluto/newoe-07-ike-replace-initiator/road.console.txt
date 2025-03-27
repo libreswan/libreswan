@@ -32,6 +32,7 @@ road #
 road #
  ipsec whack --rekey-ike --name '#1'
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: initiating rekey to replace IKE SA #1 using IKE SA #1
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: sent CREATE_CHILD_SA request to rekey IKE SA #1 (using IKE SA #1)
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 road #
