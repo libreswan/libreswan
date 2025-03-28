@@ -819,49 +819,6 @@ enum nic_offload_options {
 
 extern const struct sparse_names nic_offload_option_names;
 
-/*
- * ISAKMP policy elements.
- *
- * A pluto policy is stored in a lset_t so we could have up to 64 elements.
- * Certain policies are more than present/absent and take more than one bit.
- *
- * We need both the bit number (*_IX) and the singleton set for each.
- * The bit numbers are assigned automatically in enum sa_policy_bits.
- *
- * The singleton set version is potentially too big for an enum
- * so these are exhaustively defined as macros.  As are derived values.
- */
-
-enum shunt_policy {
-	SHUNT_UNSET,
-	SHUNT_IPSEC,	/* only valid with KIND IPSEC */
-	SHUNT_NONE,
-	SHUNT_HOLD,	/* during negotiation, don't change */
-	SHUNT_TRAP,
-	SHUNT_PASS,
-	SHUNT_DROP,
-	SHUNT_REJECT,
-#define SHUNT_POLICY_ROOF (SHUNT_REJECT+1)
-};
-
-enum shunt_kind {
-#define SHUNT_KIND_FLOOR 0
-	SHUNT_KIND_NONE,
-	SHUNT_KIND_NEVER_NEGOTIATE,
-	SHUNT_KIND_ONDEMAND,		/* always SHUNT_TRAP */
-	SHUNT_KIND_NEGOTIATION,
-	SHUNT_KIND_IPSEC,		/* always SHUNT_IPSEC */
-	SHUNT_KIND_FAILURE,
-	SHUNT_KIND_BLOCK,      		/* always SHUNT_DROP */
-#define never_negotiate_shunt shunt[SHUNT_KIND_NEVER_NEGOTIATE]
-#define negotiation_shunt     shunt[SHUNT_KIND_NEGOTIATION]	/* during */
-#define failure_shunt         shunt[SHUNT_KIND_FAILURE]		/* after */
-#define SHUNT_KIND_ROOF (SHUNT_KIND_BLOCK+1)
-};
-
-extern const struct enum_names shunt_kind_names;
-
-
 enum sa_policy_bits {
 	POLICY_COMPRESS_IX,	/* must be third */
 	POLICY_TUNNEL_IX,

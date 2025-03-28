@@ -131,62 +131,6 @@ enum_names perspective_names = {
 	NULL,
 };
 
-static const char *const shunt_policy_name[] = {
-#define S(E) [E - SHUNT_UNSET] = #E
-	S(SHUNT_UNSET),
-	S(SHUNT_IPSEC),
-	S(SHUNT_HOLD),
-	S(SHUNT_NONE),
-	S(SHUNT_PASS),
-	S(SHUNT_DROP),
-	S(SHUNT_REJECT),
-	S(SHUNT_TRAP),
-#undef S
-};
-
-enum_names shunt_policy_names = {
-	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
-	ARRAY_REF(shunt_policy_name),
-	"SHUNT_", /* prefix */
-	NULL,
-};
-
-static const char *const shunt_kind_name[] = {
-#define S(E) [E - SHUNT_KIND_NONE] = #E
-	S(SHUNT_KIND_NONE),
-	S(SHUNT_KIND_NEVER_NEGOTIATE),
-	S(SHUNT_KIND_ONDEMAND),
-	S(SHUNT_KIND_NEGOTIATION),
-	S(SHUNT_KIND_IPSEC),
-	S(SHUNT_KIND_FAILURE),
-	S(SHUNT_KIND_BLOCK),
-#undef S
-};
-
-enum_names shunt_kind_names = {
-	0, SHUNT_KIND_ROOF-1,
-	ARRAY_REF(shunt_kind_name),
-	"SHUNT_KIND_", /*PREFIX*/
-	NULL,
-};
-
-static const char *const shunt_policy_percent_name[] = {
-	[SHUNT_UNSET] = "<shunt-unset>",
-	[SHUNT_HOLD] = "%hold",
-	[SHUNT_NONE] = "%none",
-	[SHUNT_PASS] = "%pass",
-	[SHUNT_DROP] = "%drop",
-	[SHUNT_REJECT] = "%reject",
-	[SHUNT_TRAP] = "%trap",
-};
-
-enum_names shunt_policy_percent_names = {
-	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
-	ARRAY_REF(shunt_policy_percent_name),
-	"%"/*prefix*/,
-	NULL,
-};
-
 /* NAT methods */
 static const char *const natt_method_name[] = {
 	[NAT_TRAVERSAL_METHOD_none] = "none",

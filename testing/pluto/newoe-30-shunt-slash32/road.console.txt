@@ -439,7 +439,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : --negopass --failpass --ike aes FAILURE SHUNTS
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing $2
 : --negopass --failpass --ike aes FAILURE STATES -- NONE
 : --negopass --failpass --ike aes FAILURE PING
 up
@@ -479,7 +479,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : --negopass --failpass --esp aes FAILURE SHUNTS
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing $2
 : --negopass --failpass --esp aes FAILURE STATES -- NONE
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 : --negopass --failpass --esp aes FAILURE PING
@@ -873,7 +873,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : --negodrop --failpass --ike aes FAILURE SHUNTS
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing $2
 : --negodrop --failpass --ike aes FAILURE STATES -- NONE
 : --negodrop --failpass --ike aes FAILURE PING
 up
@@ -913,7 +913,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 : --negodrop --failpass --esp aes FAILURE SHUNTS
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing $2
 : --negodrop --failpass --esp aes FAILURE STATES -- NONE
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 : --negodrop --failpass --esp aes FAILURE PING
