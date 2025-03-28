@@ -63,23 +63,6 @@ const struct enum_names shunt_kind_names = {
 	NULL,
 };
 
-static const char *const shunt_policy_percent_name[] = {
-	[SHUNT_UNSET] = "<shunt-unset>",
-	[SHUNT_HOLD] = "%hold",
-	[SHUNT_NONE] = "%none",
-	[SHUNT_PASS] = "%pass",
-	[SHUNT_DROP] = "%drop",
-	[SHUNT_REJECT] = "%reject",
-	[SHUNT_TRAP] = "%trap",
-};
-
-const struct enum_names shunt_policy_percent_names = {
-	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
-	ARRAY_REF(shunt_policy_percent_name),
-	"%"/*prefix*/,
-	NULL,
-};
-
 /*
  * Values for failureshunt={passthrough, drop, reject, none}
  */

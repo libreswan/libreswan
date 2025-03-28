@@ -44,7 +44,6 @@ enum shunt_policy {
 };
 
 extern const struct enum_names shunt_policy_names;		/* SHUNT_... */
-extern const struct enum_names shunt_policy_percent_names;	/* %... */
 
 /*
  * Kinds of shunt.
