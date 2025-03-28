@@ -80,7 +80,8 @@ void init_kernel_info(struct logger *logger)
 		}
 	}
 
-	const struct sparse_name *os = sparse_lookup(&kinfo_os_names, shunk1(uts.sysname));
+	const struct sparse_name *os = sparse_lookup_by_name(&kinfo_os_names,
+							     shunk1(uts.sysname));
 	if (os == NULL) {
 		kinfo.os = KINFO_UNKNOWN;
 	} else {

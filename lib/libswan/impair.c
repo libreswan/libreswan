@@ -543,7 +543,7 @@ enum impair_status parse_impair(const char *optarg,
 
 	if (impairment->how_sparse_names != NULL) {
 		/* try the keyword. */
-		const struct sparse_name *sn = sparse_lookup(impairment->how_sparse_names, how);
+		const struct sparse_name *sn = sparse_lookup_by_name(impairment->how_sparse_names, how);
 		if (sn != NULL) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,

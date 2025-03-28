@@ -55,7 +55,7 @@ struct sparse_names {
 	struct sparse_name list[];
 };
 
-const struct sparse_name *sparse_lookup(const struct sparse_names *, shunk_t);
+const struct sparse_name *sparse_lookup_by_name(const struct sparse_names *, shunk_t);
 
 bool sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *b);
 bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b);
