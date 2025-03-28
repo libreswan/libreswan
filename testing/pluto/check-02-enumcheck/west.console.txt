@@ -6165,62 +6165,6 @@ name for -1 present (should be absent)
          jam_enum_short 7: REJECT OK
          jam_enum_human 7: reject OK
          match REJECT [short]: OK
-  shunt_policy_percent_names: [0..8)
-    0 -> <shunt-unset>
-         jam_enum 0: <shunt-unset> OK
-         search <shunt-unset>: OK
-         match <shunt-unset>: OK
-         short_name 0: <shunt-unset> OK
-         jam_enum_short 0: <shunt-unset> OK
-         jam_enum_human 0: <shunt-unset> OK
-    2 -> %none
-         jam_enum 2: %none OK
-         search %none: OK
-         match %none: OK
-         short_name 2: none OK
-         jam_enum_short 2: none OK
-         jam_enum_human 2: none OK
-         match none [short]: OK
-    3 -> %hold
-         jam_enum 3: %hold OK
-         search %hold: OK
-         match %hold: OK
-         short_name 3: hold OK
-         jam_enum_short 3: hold OK
-         jam_enum_human 3: hold OK
-         match hold [short]: OK
-    4 -> %trap
-         jam_enum 4: %trap OK
-         search %trap: OK
-         match %trap: OK
-         short_name 4: trap OK
-         jam_enum_short 4: trap OK
-         jam_enum_human 4: trap OK
-         match trap [short]: OK
-    5 -> %pass
-         jam_enum 5: %pass OK
-         search %pass: OK
-         match %pass: OK
-         short_name 5: pass OK
-         jam_enum_short 5: pass OK
-         jam_enum_human 5: pass OK
-         match pass [short]: OK
-    6 -> %drop
-         jam_enum 6: %drop OK
-         search %drop: OK
-         match %drop: OK
-         short_name 6: drop OK
-         jam_enum_short 6: drop OK
-         jam_enum_human 6: drop OK
-         match drop [short]: OK
-    7 -> %reject
-         jam_enum 7: %reject OK
-         search %reject: OK
-         match %reject: OK
-         short_name 7: reject OK
-         jam_enum_short 7: reject OK
-         jam_enum_human 7: reject OK
-         match reject [short]: OK
   sit_bit_names: [0..3)
     0 -> SIT_IDENTITY_ONLY
          jam_enum 0: SIT_IDENTITY_ONLY OK
