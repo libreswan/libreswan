@@ -3,28 +3,47 @@
 
 set -e
 
-args="--ike aes $@"
-./oe.sh ${args}
+set -- "$@" --ike aes
+
+./oe.sh "$@"
 
 RUN() {
-    echo :
-    echo : OE ${args}
     echo " $@"
     "$@"
 }
 
-# expect outer trap and possibly a negotation shunt
-RUN ../../guestbin/ipsec-kernel-policy.sh
+echo : "$@" NEGOTIATION KERNEL POLICY
+../../guestbin/ipsec-kernel-policy.sh
 
-# ike= rejected
-RUN ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: ignoring IKE_SA_INIT response'
-RUN ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: deleting IKE SA'
+echo : "$@" NEGOTIATION PING
+case "$*" in
+    *negopass* )
+	../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+	;;
+    *negodrop* )
+	../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+	;;
+esac
 
-# expect outer trap and possibly a failure shunt
-RUN ../../guestbin/ipsec-kernel-policy.sh
+echo : "$@" WAIT FOR IKE_SA_INIT TO FAIL
+../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: ignoring IKE_SA_INIT response'
+../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: deleting IKE SA'
 
-# everything should be gone
-RUN ipsec showstates
+echo : "$@" FAILURE KERNEL POLICY
+../../guestbin/ipsec-kernel-policy.sh
 
-# leaving only the bare shunts
-RUN ipsec shuntstatus
+echo : "$@" FAILURE SHUNTS
+ipsec shuntstatus
+
+echo : "$@" FAILURE STATES -- NONE
+ipsec showstates
+
+echo : "$@" FAILURE PING
+case "$*" in
+    *failpass* )
+	../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+	;;
+    *faildrop* )
+	../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+	;;
+esac

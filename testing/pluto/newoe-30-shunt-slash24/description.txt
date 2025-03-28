@@ -6,9 +6,17 @@ test the interops
 
 - IKE_SA_INIT proposal rejected
 
+  once IKE_SA_INIT is sent, should see negotiation shunt; check ping
+
+  once IKE_SA_INIT times out, should see failure shunt; check ping
+
 - IKE_AUTH proposal rejected
+
+  while negotiating, should see negotiation shunt (it's a bit racy).
+
+  once child is rejected, should see failure shunt; check ping
 
 with:
 
-  negotiationshunt={,drop,pass}
-  failureshunt={,none,drop,pass}
+  negotiationshunt={drop,pass}
+  failureshunt={none,drop,pass}
