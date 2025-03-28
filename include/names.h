@@ -23,6 +23,18 @@ typedef struct name_buf {
 	char tmp[((sizeof(unsigned long) * 241 + 99) / 100)*2 + sizeof("_??")];
 } name_buf;
 
+/*
+ * Used by KEYWORD lookup code to report renames et.al.
+ *
+ * It's assumed names are small and the upper bits can be used as
+ * flags.  It's also assumed that enums are >=32-bit.
+ */
+enum name_flags {
+	NAME_IMPLEMENTED_AS = (1<<30),
+	NAME_RENAMED_TO,
+#define NAME_FLAGS (0x3 <<30)
+};
+
 void bad_name(unsigned long val, name_buf *b);
 size_t jam_bad(struct jambuf *buf, const char *prefix, unsigned long val);
 

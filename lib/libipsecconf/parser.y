@@ -251,10 +251,12 @@ void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yy
 			jam(buf, "%s:%u: warning: ",
 			    parser_cur_filename(),
 			    parser_cur_line());
+			/* message */
 			va_list ap;
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
 			va_end(ap);
+			/* what was specified */
 			jam_string(buf, ": ");
 			jam_string(buf, leftright(kw));
 			jam_string(buf, kw->keydef->keyname);
@@ -568,21 +570,36 @@ static bool parser_kw_lset(struct keyword *kw, const char *yytext,
 static bool parser_kw_sparse_name(struct keyword *kw, const char *yytext,
 				  uintmax_t *number, struct logger *logger)
 {
-	PASSERT(logger, kw->keydef->sparse_names != NULL);
+	const struct sparse_names *names = kw->keydef->sparse_names;
+	PASSERT(logger, names != NULL);
 
-	const struct sparse_name *sn = sparse_lookup_by_name(kw->keydef->sparse_names, shunk1(yytext));
-	if (sn != NULL) {
-		(*number) = sn->value;
+	const struct sparse_name *sn = sparse_lookup_by_name(names, shunk1(yytext));
+	if (sn == NULL) {
+		/*
+		 * We didn't find anything, complain.
+		 *
+		 * XXX: call jam_sparse_names() to list what is valid?
+		 */
+		parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
+		return false;
+	}
+
+	enum name_flags flags = (sn->value & NAME_FLAGS);
+	(*number) = sn->value & ~NAME_FLAGS;
+	name_buf new_name;
+
+	switch (flags) {
+	case NAME_IMPLEMENTED_AS:
+		parser_kw_warning(logger, kw, yytext, "%s implemented as %s",
+				  yytext, str_sparse_short(names, (*number), &new_name));
+		return true;
+	case NAME_RENAMED_TO:
+		parser_kw_warning(logger, kw, yytext, "%s renamed to %s",
+				  yytext, str_sparse_short(names, (*number), &new_name));
 		return true;
 	}
 
-	/*
-	 * We didn't find anything, complain.
-	 *
-	 * XXX: call jam_sparse_names() to list what is valid?
-	 */
-	parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
-	return false;
+	return true;
 }
 
 static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
@@ -594,14 +611,15 @@ static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
 
 	const struct sparse_name *sn = sparse_lookup_by_name(kw->keydef->sparse_names,
 							     shunk1(yytext));
-	if (sn != NULL) {
-		PASSERT(logger, sn->value != LOOSE_ENUM_OTHER);
-		(*number) = sn->value;
+	if (sn == NULL) {
+		(*number) = LOOSE_ENUM_OTHER; /* i.e., use string value */
 		return true;
 	}
 
-	(*number) = LOOSE_ENUM_OTHER; /* i.e., use string value */
+	PASSERT(logger, sn->value != LOOSE_ENUM_OTHER);
+	(*number) = sn->value;
 	return true;
+
 }
 
 void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
