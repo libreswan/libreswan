@@ -59,11 +59,14 @@
 #include "sparse_names.h"
 
 /*
- * Print the 'ipsec --whack help' message
+ * Print the 'ipsec --whack help' message on STDOUT, so it can be fed
+ * to MORE, GREP, ...
+ *
+ * Since this was requested this isn't an error.
  */
 static void help(void)
 {
-	fprintf(stderr,
+	fprintf(stdout,
 		"Usage:\n"
 		"\n"
 		"all forms: [--rundir <path>] [--ctlsocket <file>] [--label <string>]\n"
@@ -1167,12 +1170,12 @@ int main(int argc, char **argv)
 		case OPT_HELP:	/* --help */
 			help();
 			/* GNU coding standards say to stop here */
-			return 0;
+			exit(0);
 
 		case OPT_VERSION:	/* --version */
 			printf("%s\n", ipsec_version_string());
 			/* GNU coding standards say to stop here */
-			return 0;
+			exit(0);
 
 		case OPT_LABEL:	/* --label <string> */
 			label = optarg;	/* remember for diagnostics */
