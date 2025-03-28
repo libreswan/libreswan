@@ -35,6 +35,7 @@
 #include "lswcdefs.h"
 #include "authby.h"
 #include "end.h"
+#include "shunt.h"
 
 struct logger;
 

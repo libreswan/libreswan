@@ -43,6 +43,7 @@
 #include "sa_kind.h"
 #include "constants.h"		/* for enum keyword_auth; et.al. */
 #include "end.h"
+#include "shunt.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
