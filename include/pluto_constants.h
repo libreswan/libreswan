@@ -820,22 +820,6 @@ enum nic_offload_options {
 extern const struct sparse_names nic_offload_option_names;
 
 /*
- * Policies for establishing an SA
- *
- * These are used to specify attributes (eg. encryption) and
- * techniques (eg PFS) for an SA.
- *
- * Note: certain CD_ definitions in whack.c parallel these -- keep
- * them in sync!
- */
-
-typedef struct {
-	char buf[512];/*arbitrary*/
-} policy_buf;
-const char *str_policy(lset_t policy, policy_buf *buf);
-size_t jam_policy(struct jambuf *buf, lset_t policy);
-
-/*
  * ISAKMP policy elements.
  *
  * A pluto policy is stored in a lset_t so we could have up to 64 elements.

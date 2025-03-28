@@ -939,6 +939,10 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c);
 size_t jam_connection_short(struct jambuf *buf, const struct connection *c);
 const char *str_connection_short(const struct connection *c);
 
+typedef struct {
+	char buf[512];/*arbitrary*/
+} policy_buf;
+
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c);
 const char *str_connection_policies(const struct connection *c, policy_buf *buf);
 
