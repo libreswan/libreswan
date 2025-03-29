@@ -10,9 +10,14 @@
       <option>transport</option>, signifying host-to-host transport
       mode; <option>passthrough</option>, signifying that no IPsec
       processing should be done at all; <option>drop</option>,
-      signifying that packets should be discarded; and
-      <option>reject</option>, signifying that packets should be
-      discarded and a diagnostic ICMP returned.
+      signifying that packets should be discarded.
+    </para>
+    <para>
+      Historic Note: <application>KLIPS</application> supported the
+      option <option>reject</option> signifying that packets should be
+      discarded and a diagnostic ICMP returned.  Support for
+      <application>KLIPS</application>, and this option, have been
+      removed.
     </para>
   </listitem>
 </varlistentry>
