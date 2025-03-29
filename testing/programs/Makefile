@@ -30,5 +30,6 @@ SUBDIRS += getpeercon_server
 endif
 SUBDIRS += asn1check
 SUBDIRS += vendoridcheck
+SUBDIRS += kernel
 
 include $(top_srcdir)/mk/targets.mk

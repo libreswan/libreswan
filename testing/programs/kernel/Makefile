@@ -1,6 +1,5 @@
-# enumcheck Makefile, for libreswan
-#
-# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+# Makefile for miscellaneous programs
+# Copyright (C) 2002  Michael Richardson	<mcr@freeswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,12 +14,7 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = _enumcheck
-
-OBJS += enumcheck.o
-
-OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWTOOLLIBS)
+PROGRAM = _kernel
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
