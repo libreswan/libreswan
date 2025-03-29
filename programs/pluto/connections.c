@@ -2290,13 +2290,13 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 		},
 		[SHUNT_KIND_NEVER_NEGOTIATE] = {
 			[SHUNT_UNSET] = true,
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		[SHUNT_KIND_NEGOTIATION] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false,
 		},
 		[SHUNT_KIND_FAILURE] = {
-			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		/* hard-wired */
 		[SHUNT_KIND_IPSEC] = { [SHUNT_IPSEC] = true, },

@@ -32,7 +32,6 @@ static const char *const shunt_policy_name[] = {
 	S(SHUNT_NONE),
 	S(SHUNT_PASS),
 	S(SHUNT_DROP),
-	S(SHUNT_REJECT),
 	S(SHUNT_TRAP),
 #undef S
 };

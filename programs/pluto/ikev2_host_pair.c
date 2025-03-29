@@ -90,13 +90,9 @@ static bool match_v2_connection(const struct connection *c,
 		 * have GROUPINSTANCE!  Hence the some what convoluted
 		 * logic to detect these cases and clear.
 		 */
-		enum shunt_policy shunt = c->config->never_negotiate_shunt;
-		if (shunt == SHUNT_PASS/*clear*/ ||
-		    shunt == SHUNT_REJECT/*block*/) {
-			if (is_group_instance(c)) {
-				PEXPECT(verbose.logger, remote_authby.never);
-				(*send_reject_response) = false;
-			}
+		if (is_group_instance(c)) {
+			PEXPECT(verbose.logger, remote_authby.never);
+			(*send_reject_response) = false;
 		}
 		connection_buf cb;
 		vdbg("skipping "PRI_CONNECTION", never negotiate",

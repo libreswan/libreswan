@@ -39,8 +39,7 @@ enum shunt_policy {
 	SHUNT_TRAP,
 	SHUNT_PASS,
 	SHUNT_DROP,
-	SHUNT_REJECT,
-#define SHUNT_POLICY_ROOF (SHUNT_REJECT+1)
+#define SHUNT_POLICY_ROOF (SHUNT_DROP+1)
 };
 
 extern const struct enum_names shunt_policy_names;		/* SHUNT_... */

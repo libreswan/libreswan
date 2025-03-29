@@ -503,7 +503,6 @@ void jam_orientation(struct jambuf *buf,
 		[SHUNT_NONE] = "none",
 		[SHUNT_PASS] = "passthrough",
 		[SHUNT_DROP] = "drop",
-		[SHUNT_REJECT] = "reject",
 	};
 	const char *what =
 		(never_negotiate(c) ? policy_shunt_names[c->config->never_negotiate_shunt] :
