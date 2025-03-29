@@ -158,8 +158,8 @@ static void help(void)
 		"	[--conn-mark-out <mark/mask>] \\\n"
 		"	[--ipsec-interface <num>] \\\n"
 		"	[--vti-interface <iface> ] [--vti-routing] [--vti-shared] \\\n"
-		"       [--pass | --drop | --reject]\\\n"
-		"	[--failnone | --failpass | --faildrop | --failreject]\\\n"
+		"       [--pass | --drop]\\\n"
+		"	[--failnone | --failpass | --faildrop]\\\n"
 		"	[--negopass | --negohold]\\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
 		"	[--nic-offload <packet|crypto|no>] \\\n"
@@ -627,15 +627,13 @@ enum opt {
 
 	CDS_NEVER_NEGOTIATE_PASS,
 	CDS_NEVER_NEGOTIATE_DROP,
-	CDS_NEVER_NEGOTIATE_REJECT,
 	CDS_NEGOTIATION_PASS,
 	CDS_NEGOTIATION_HOLD,
 	CDS_FAILURE_NONE,
 	CDS_FAILURE_PASS,
 	CDS_FAILURE_DROP,
-	CDS_FAILURE_REJECT,
 
-#define LAST_CONN_OPT		CDS_FAILURE_REJECT	/* last connection description */
+#define LAST_CONN_OPT		CDS_FAILURE_DROP	/* last connection description */
 
 /*
  * Debug and impair options.
@@ -823,17 +821,17 @@ const struct option optarg_options[] = {
 
 	{ "drop\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
 	{ "pass\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_PASS },
-	{ "reject\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_REJECT },
+	{ "reject\0>drop", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
 
 	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
 	{ "negohold\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
 	{ "negopass\0", no_argument, NULL, CDS_NEGOTIATION_PASS },
 
 	{ "faildrop\0", no_argument, NULL, CDS_FAILURE_DROP },
-	{ "failhold\0", no_argument, NULL, CDS_FAILURE_DROP },
+	{ "failhold\0faildrop", no_argument, NULL, CDS_FAILURE_DROP },
 	{ "failnone\0", no_argument, NULL, CDS_FAILURE_NONE },
 	{ "failpass\0", no_argument, NULL, CDS_FAILURE_PASS },
-	{ "failreject\0", no_argument, NULL, CDS_FAILURE_REJECT },
+	{ "failreject\0>faildrop", no_argument, NULL, CDS_FAILURE_DROP },
 
 	{ "dontrekey\0", no_argument, NULL, CD_DONT_REKEY, },
 	{ "reauth\0", no_argument, NULL, CD_REAUTH, },
@@ -1921,9 +1919,6 @@ int main(int argc, char **argv)
 		case CDS_NEVER_NEGOTIATE_DROP:	/* --drop */
 			msg.never_negotiate_shunt = SHUNT_DROP;
 			continue;
-		case CDS_NEVER_NEGOTIATE_REJECT:	/* --reject */
-			msg.never_negotiate_shunt = SHUNT_REJECT;
-			continue;
 
 		case CDS_NEGOTIATION_PASS:	/* --negopass */
 			msg.negotiation_shunt = SHUNT_PASS;
@@ -1940,9 +1935,6 @@ int main(int argc, char **argv)
 			continue;
 		case CDS_FAILURE_DROP:		/* --faildrop */
 			msg.failure_shunt = SHUNT_DROP;
-			continue;
-		case CDS_FAILURE_REJECT:	/* --failreject */
-			msg.failure_shunt = SHUNT_REJECT;
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
