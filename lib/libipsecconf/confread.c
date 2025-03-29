@@ -655,8 +655,9 @@ static bool load_conn(struct starter_conn *conn,
 			break;
 
 		case KS_REJECT:
+			llog(RC_LOG, logger, "warning: type=%%reject implemented as type=%%drop");
 			conn->authby = AUTHBY_NONE;
-			conn->never_negotiate_shunt = SHUNT_REJECT;
+			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 		}
 	}
