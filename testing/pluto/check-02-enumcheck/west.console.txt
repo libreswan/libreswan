@@ -6100,7 +6100,7 @@ name for -1 present (should be absent)
          jam_enum_short 6: BLOCK OK
          jam_enum_human 6: block OK
          match BLOCK [short]: OK
-  shunt_policy_names: [0..8)
+  shunt_policy_names: [0..7)
     0 -> SHUNT_UNSET
          jam_enum 0: SHUNT_UNSET OK
          search SHUNT_UNSET: OK
@@ -6157,14 +6157,6 @@ name for -1 present (should be absent)
          jam_enum_short 6: DROP OK
          jam_enum_human 6: drop OK
          match DROP [short]: OK
-    7 -> SHUNT_REJECT
-         jam_enum 7: SHUNT_REJECT OK
-         search SHUNT_REJECT: OK
-         match SHUNT_REJECT: OK
-         short_name 7: REJECT OK
-         jam_enum_short 7: REJECT OK
-         jam_enum_human 7: reject OK
-         match REJECT [short]: OK
   sit_bit_names: [0..3)
     0 -> SIT_IDENTITY_ONLY
          jam_enum 0: SIT_IDENTITY_ONLY OK
