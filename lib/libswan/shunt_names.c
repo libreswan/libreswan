@@ -72,8 +72,8 @@ const struct sparse_names failure_shunt_names = {
 		SPARSE("none",        SHUNT_NONE),
 		SPARSE("passthrough", SHUNT_PASS),
 		SPARSE("drop",        SHUNT_DROP),
-		SPARSE("hold",        SHUNT_DROP), /* alias */
-		SPARSE("reject",      SHUNT_REJECT),
+		SPARSE("hold",        NAME_IMPLEMENTED_AS|SHUNT_DROP), /* alias */
+		SPARSE("reject",      NAME_IMPLEMENTED_AS|SHUNT_DROP),
 		SPARSE_NULL
 	},
 };
