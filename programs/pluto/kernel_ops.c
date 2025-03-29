@@ -179,16 +179,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 				 policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
 				 policy->kind == SHUNT_KIND_BLOCK));
 		break;
-	case SHUNT_REJECT:
-		/*
-		 * For instance, in certoe-10-symmetric-cert-whack, a
-		 * block (reject) kernel policy is installed.
-		 */
-		PASSERT(logger, (dir == DIRECTION_OUTBOUND ||
-				 dir == DIRECTION_INBOUND));
-		PASSERT(logger, policy->nr_rules > 0);
-		PASSERT(logger, (policy->kind == SHUNT_KIND_NEVER_NEGOTIATE));
-		break;
 	case SHUNT_TRAP:
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
 		PASSERT(logger, policy->nr_rules > 0);

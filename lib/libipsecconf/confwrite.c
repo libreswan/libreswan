@@ -447,10 +447,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwf("type", "drop");
 			break;
 
-		case SHUNT_REJECT:
-			cwf("type", "reject");
-			break;
-
 		case SHUNT_IPSEC:
 			cwf("type", "ipsec"); /* can't happen */
 			break

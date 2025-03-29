@@ -1384,10 +1384,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = SADB_X_FLOW_TYPE_DENY;
 		policy_name = "%drop(deny)";
 		break;
-	case SHUNT_REJECT:
-		policy_type = SADB_X_FLOW_TYPE_DENY;
-		policy_name = "%reject(deny)";
-		break;
 	case SHUNT_HOLD:
 		policy_type = SADB_X_FLOW_TYPE_DENY;
 		policy_name = "%hold(deny)";
