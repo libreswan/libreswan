@@ -617,19 +617,23 @@ static bool load_conn(struct starter_conn *conn,
 		s->beenhere = false;
 	}
 
-	/* turn all of the keyword/value pairs into options/strings in left/right */
-	bool err = translate_conn(conn, cfgp, sl,
-				  defaultconn ? k_default : k_set,
-				  logger);
-
-	if (err)
-		return err;
+	/*
+	 * Turn all of the keyword/value pairs into options/strings in
+	 * left/right.
+	 *
+	 * DANGER: returns false on success.
+	 */
+	if (!!translate_conn(conn, cfgp, sl,
+			     defaultconn ? k_default : k_set,
+			     logger)) {
+		return false;
+	}
 
 	if (conn->values[KSCF_ALSO].string != NULL &&
 	    !alsoprocessing) {
 		llog(RC_LOG, logger, "also= is not valid in section '%s'",
 		     sl->name);
-		return true;	/* error */
+		return false;	/* error */
 	}
 
 	if (conn->values[KNCF_TYPE].set) {
@@ -753,7 +757,7 @@ static bool load_conn(struct starter_conn *conn,
 			} else if (conn->ike_version == IKEv1) {
 				llog(RC_LOG, logger,
 				     "ikev1 connection must use authby= of rsasig, secret or never");
-				return true;
+				return false;
 			} else if (hunk_streq(val, "null")) {
 				conn->authby.null = true;
 			} else if (hunk_streq(val, "rsa-sha1")) {
@@ -789,10 +793,10 @@ static bool load_conn(struct starter_conn *conn,
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha1")) {
 				llog(RC_LOG, logger, "authby=ecdsa cannot use sha1, only sha2");
-				return true;
+				return false;
 			} else {
 				llog(RC_LOG, logger, "connection authby= value is unknown");
-				return true;
+				return false;
 			}
 		}
 	}
@@ -834,10 +838,10 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
 
-	err |= validate_end(conn, &conn->end[LEFT_END], logger);
-	err |= validate_end(conn, &conn->end[RIGHT_END], logger);
-
-	return err;
+	bool ok = true;
+	ok &= !validate_end(conn, &conn->end[LEFT_END], logger);
+	ok &= !validate_end(conn, &conn->end[RIGHT_END], logger);
+	return ok;
 }
 
 static void copy_conn_default(struct starter_conn *conn,
@@ -899,14 +903,13 @@ static bool init_load_conn(struct starter_config *cfg,
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger);
-
-	if (connerr) {
+	if (!load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger)) {
 		/* ??? should caller not log perrl? */
-	} else {
-		conn->state = STATE_LOADED;
+		return false;
 	}
-	return connerr;
+
+	conn->state = STATE_LOADED;
+	return true;
 }
 
 struct starter_config *confread_load(const char *file,
@@ -951,11 +954,11 @@ struct starter_config *confread_load(const char *file,
 		     sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
 				ldbg(logger, "loading default conn");
-				ok &= !load_conn(&cfg->conn_default,
-						 cfgp, sconn,
-						 /*also=*/false,
-						 /*default conn*/true,
-						 logger);
+				ok &= load_conn(&cfg->conn_default,
+						cfgp, sconn,
+						/*also=*/false,
+						/*default conn*/true,
+						logger);
 			}
 		}
 
