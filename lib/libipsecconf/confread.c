@@ -256,14 +256,14 @@ static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
 			 struct logger *logger)
 {
+	bool ok = true;
 	const char *leftright = end->leftright;
-	bool err = false;
 
 	passert(end->host_family != NULL);
 	pexpect(end->host_family == &ipv4_info ||
 		end->host_family == &ipv6_info); /* i.e., not NULL */
 
-#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); err = true; }
+#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); ok = false; }
 
 	if (!end->values[KW_IP].set)
 		conn_st->state = STATE_INCOMPLETE;
@@ -353,7 +353,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	return err;
+	return ok;
 #  undef ERR_FOUND
 }
 
@@ -839,8 +839,8 @@ static bool load_conn(struct starter_conn *conn,
 	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
 
 	bool ok = true;
-	ok &= !validate_end(conn, &conn->end[LEFT_END], logger);
-	ok &= !validate_end(conn, &conn->end[RIGHT_END], logger);
+	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
+	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
 	return ok;
 }
 
