@@ -16,9 +16,9 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  sed -n -e '/IMPAIR: start processing inbound duplicate/,/IMPAIR: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log
 packet from 192.1.2.45:500: IMPAIR: start processing inbound duplicate packet 1

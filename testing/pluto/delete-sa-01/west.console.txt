@@ -61,9 +61,9 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  # up to 3.26 we printed a bogus message, this is checking that no longer happens
 west #

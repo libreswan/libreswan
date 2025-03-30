@@ -16,7 +16,7 @@ initdone
 west #
  # trap installed
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -30,7 +30,7 @@ west #
  ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out action block priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -41,7 +41,7 @@ west #
  ../../guestbin/wait-for-pluto.sh ' second timeout exceeded after '
 "west" #1: IKE_SA_INIT_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -49,7 +49,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 west #
  # let larval state expire
 west #
- ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ipsec _kernel state
 west #
  # initiate a connection
 west #
@@ -61,9 +61,9 @@ west #
 west #
  # let larval state expire
 west #
- ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
@@ -77,7 +77,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -110,12 +110,12 @@ west #
 "west" #3: ESP traffic information: in=84B out=84B
 "west" #2: deleting IKE SA (established IKE SA)
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
  

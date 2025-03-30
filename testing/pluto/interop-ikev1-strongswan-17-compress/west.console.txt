@@ -48,7 +48,7 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 

@@ -152,7 +152,7 @@ west #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 #2: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -171,7 +171,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.3.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

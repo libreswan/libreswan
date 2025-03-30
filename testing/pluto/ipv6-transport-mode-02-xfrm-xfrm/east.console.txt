@@ -134,7 +134,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -154,7 +154,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

@@ -172,9 +172,9 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  sed -n -e '/IMPAIR: start processing inbound replay forward/,/IMPAIR: stop processing inbound replay forward/ { /^[^|]/ p }' /tmp/pluto.log | grep -v 'message arrived'
 west #

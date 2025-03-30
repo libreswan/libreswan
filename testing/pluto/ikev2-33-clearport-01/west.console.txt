@@ -19,7 +19,7 @@ west #
 west #
  ipsec auto --route west-east
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -29,7 +29,7 @@ west #
 west #
  ipsec auto --route pass-7
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7
 	dir fwd priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7

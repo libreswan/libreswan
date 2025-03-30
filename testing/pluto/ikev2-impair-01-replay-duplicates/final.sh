@@ -1,3 +1,3 @@
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 sed -n -e '/IMPAIR: start processing inbound duplicate/,/IMPAIR: stop processing inbound duplicate/ { /^[^|]/ p }' /tmp/pluto.log

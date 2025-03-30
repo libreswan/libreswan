@@ -67,7 +67,7 @@ west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-4in6", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn

@@ -73,7 +73,7 @@ src 192.0.1.0/24 dst 192.0.1.0/24
 src 192.0.1.0/24 dst 192.0.1.0/24 
 	dir out priority PRIORITY ptype main 
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	if_id 0x2
 src 192.1.2.23 dst 192.1.2.45

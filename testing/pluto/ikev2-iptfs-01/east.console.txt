@@ -16,7 +16,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode iptfs
 	replay-window 0 flag af-unspec esn
@@ -39,7 +39,7 @@ src 192.1.2.45 dst 192.1.2.23
 	dir in
 	iptfs-opts drop-time 111 reorder-window 13
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45

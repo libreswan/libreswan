@@ -33,9 +33,9 @@ west #
 west #
  # expect policy but no states
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main
@@ -79,7 +79,7 @@ west #
 #2: "labeled"[1][1] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #2: "labeled"[1][1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=40B ESPout=60B ESPmax=2^63B 
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -101,7 +101,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main
@@ -165,7 +165,7 @@ west #
 #3: "labeled"[1][2] 192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
 #3: "labeled"[1][2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=377B ESPout=429B ESPmax=2^63B 
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -207,7 +207,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir fwd priority PRIORITY ptype main

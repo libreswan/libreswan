@@ -55,7 +55,7 @@ src ::/0 dst ::/0
 src ::/0 dst ::/0 
 	socket out priority 0 ptype main 
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -87,9 +87,9 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	lastused YYYY-MM-DD HH:MM:SS
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):

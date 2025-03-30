@@ -17,9 +17,9 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  # confirm east is in unrouted state again
 east #

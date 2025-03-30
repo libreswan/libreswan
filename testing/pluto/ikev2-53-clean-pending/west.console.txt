@@ -86,8 +86,8 @@ west #
 #2: "westnet-eastnet-ipv4-psk-ikev2":500 IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 #2: pending Child SA for "westnet-eastnet-ipv4-psk-ikev2"
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

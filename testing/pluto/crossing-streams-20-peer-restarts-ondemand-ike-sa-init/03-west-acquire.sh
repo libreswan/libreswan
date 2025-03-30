@@ -1,5 +1,5 @@
 # should be the trap
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # west gets an acquire; negotiates up to IKE_AUTH
 
@@ -9,4 +9,4 @@
 ../../guestbin/wait-for-inbound.sh 1
 
 # should be the block
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy

@@ -2,8 +2,8 @@
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec trafficstatus
 ipsec whack --shuntstatus
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 # kill pluto without sending ike delete
 ipsec whack --impair send_no_delete
 ipsec stop

@@ -41,9 +41,9 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

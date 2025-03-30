@@ -42,7 +42,7 @@ road #
 road #
  # note this end should be 192.1.3.209
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
@@ -127,7 +127,7 @@ road #
  ipsec whack --trafficstatus
 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=840, outBytes=840, maxBytes=2^63B, id='192.1.2.23', lease=192.0.3.10/32
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.33.222
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
@@ -142,7 +142,7 @@ src 192.1.33.222 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.3.10/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.33.222

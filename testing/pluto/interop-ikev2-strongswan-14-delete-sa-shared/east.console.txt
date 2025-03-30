@@ -17,8 +17,8 @@ initdone
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  

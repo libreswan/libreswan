@@ -72,13 +72,13 @@ road #
 road #
  ipsec whack --trafficstatus
 road #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 road #
  # try triggering again, ondemand policy should re-trigger OE
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 10.11.12.13/32 dst 192.1.2.253/32
 	dir out priority PRIORITY ptype main
 src 10.11.12.13/32 dst 192.1.2.254/32
@@ -116,12 +116,12 @@ road #
 road #
  # should show established tunnel and no bare shunts
 road #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -140,7 +140,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 10.11.12.13/32 dst 192.1.2.253/32
 	dir out priority PRIORITY ptype main
 src 10.11.12.13/32 dst 192.1.2.254/32

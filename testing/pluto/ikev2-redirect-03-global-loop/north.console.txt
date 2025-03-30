@@ -16,9 +16,9 @@ initdone
 north #
  sleep 2
 north #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 north #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 north #
  # confirm east is in unrouted state again
 north #

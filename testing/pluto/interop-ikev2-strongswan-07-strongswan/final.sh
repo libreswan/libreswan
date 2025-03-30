@@ -1,5 +1,5 @@
 ip xfrm policy
-../../guestbin/ipsec-kernel-state.sh
-if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
-if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ipsec _kernel state
+if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
+if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi

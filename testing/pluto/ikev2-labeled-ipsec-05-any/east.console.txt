@@ -41,7 +41,7 @@ east #
 east #
  # configured ipsec_spd_t label, and no outgoing %trap policy
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -79,7 +79,7 @@ src 192.1.3.209 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	security context unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.2.0/24 dst 192.0.2.219/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority PRIORITY ptype main

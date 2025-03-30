@@ -32,7 +32,7 @@ road #
 "road" #2: running updown up 2001:db8:0:3::/64===2001:db8:0:20::/64
 "road" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3::/64===2001:db8:0:2::/64] [2001:db8:0:3::/64===2001:db8:0:20::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -49,7 +49,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

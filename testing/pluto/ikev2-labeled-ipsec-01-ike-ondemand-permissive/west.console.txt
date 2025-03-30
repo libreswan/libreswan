@@ -26,9 +26,9 @@ west #
 west #
  ipsec auto --route labeled
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir in priority PRIORITY ptype main
@@ -64,7 +64,7 @@ Bare Shunt list:
 west #
  # let larval state expire
 west #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 west #
  echo done
 done
@@ -75,7 +75,7 @@ west #
 west #
  # configured ipsec_spd_t label, and no outgoing %trap policy
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -98,7 +98,7 @@ src 192.1.2.23 dst 192.1.2.45
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 	security context system_u:system_r:ping_t:s0:c1.c256 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir in priority PRIORITY ptype main

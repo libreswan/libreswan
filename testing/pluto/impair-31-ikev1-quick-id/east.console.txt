@@ -17,8 +17,8 @@ east #
 "west" #1: malformed Quick Mode message: when present there must be exactly two ID payloads, only one found
 "west" #1: malformed Quick Mode message: when present there must be exactly two ID payloads, more than two found
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  

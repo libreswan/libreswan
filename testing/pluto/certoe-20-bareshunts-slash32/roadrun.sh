@@ -1,6 +1,6 @@
 # We should already have a %trap policy because we have a
 # 192.1.2.23/32 group-instance
-../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ipsec _kernel policy 192.1.2.23
 
 # Trigger a private-or-clear.  Since the peer is down will fail after
 # several IKE_SA_INIT retransmits.
@@ -12,7 +12,7 @@
 # policy, there are no bare shunts.
 
 ../../guestbin/wait-for-pluto.sh '^".*#1: .*retransmission; will wait 0.5 seconds'
-../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ipsec _kernel policy 192.1.2.23
 ipsec whack --shuntstatus
 ipsec showstates
 
@@ -27,7 +27,7 @@ ipsec showstates
 # owned by a bare shunt.
 
 ../../guestbin/wait-for-pluto.sh '^".*#1:.* 5 second timeout exceeded'
-../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ipsec _kernel policy 192.1.2.23
 ipsec whack --shuntstatus
 ipsec showstates
 
@@ -40,7 +40,7 @@ ipsec showstates
 # Now wait for the bare shunt to expire.
 
 ../../guestbin/wait-for.sh --no-match oe-failing -- ipsec whack --shuntstatus
-../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ipsec _kernel policy 192.1.2.23
 ipsec whack --shuntstatus
 ipsec showstates
 

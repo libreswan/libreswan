@@ -54,7 +54,7 @@ up
 "westnet-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-ikev2": terminating SAs using this connection
 west #
-../../guestbin/ipsec-kernel-state.sh ; ../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state ; ipsec _kernel policy
 west NOW
 XFRM state:
 XFRM policy:

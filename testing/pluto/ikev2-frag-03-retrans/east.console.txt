@@ -32,8 +32,8 @@ east #
 | "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 5 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
 | "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 6 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  

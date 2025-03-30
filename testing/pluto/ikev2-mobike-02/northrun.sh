@@ -2,7 +2,7 @@ ipsec auto --up northnet-eastnet
 ../../guestbin/ping-once.sh --up -I 192.0.3.254  192.0.2.254
 ipsec whack --trafficstatus
 # note this end should be 192.1.3.33
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel state
 ip xfrm policy
 sleep 5
 # remove this end ip next one will take over

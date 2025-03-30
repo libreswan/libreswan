@@ -31,8 +31,8 @@ west #
 ERROR: "westnet-eastnet-ipcomp" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "westnet-eastnet-ipcomp" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

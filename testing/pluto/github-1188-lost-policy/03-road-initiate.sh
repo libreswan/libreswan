@@ -12,4 +12,4 @@ ipsec whack --impair suppress_retransmits
 
 # dump state/policy for larval OE connection
 ipsec showstates
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy

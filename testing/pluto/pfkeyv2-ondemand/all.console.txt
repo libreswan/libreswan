@@ -17,9 +17,9 @@ netbsdw# ipsec auto --add eastnet-westnet-ikev2
 netbsdw# echo "initdone"
 initdone
 netbsdw# ipsec auto --route eastnet-westnet-ikev2
-netbsdw# ../../guestbin/ipsec-kernel-state.sh
+netbsdw# ipsec _kernel state
 No SAD entries.
-netbsdw# ../../guestbin/ipsec-kernel-policy.sh
+netbsdw# ipsec _kernel policy
 192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
 	out ipsec
 	esp/transport//require

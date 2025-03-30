@@ -58,8 +58,8 @@ Connection list:
  
 Total IPsec connections: loaded 1, active 0
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  

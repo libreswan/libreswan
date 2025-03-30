@@ -9,8 +9,8 @@ west #
  ipsec auto --add westnet-eastnet-aggr
 "westnet-eastnet-aggr": failed to add connection: additional PSK in authby=PSK+RSASIG is not supported by IKEv1
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

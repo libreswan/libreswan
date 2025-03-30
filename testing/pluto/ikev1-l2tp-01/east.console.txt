@@ -27,7 +27,7 @@ east #
  echo done
 done
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.3.33
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -47,7 +47,7 @@ src 192.1.3.33 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

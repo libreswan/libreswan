@@ -60,7 +60,7 @@ Security Associations (1 up, 0 connecting):
 road #
  # note this end should be 192.1.3.209
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
@@ -118,7 +118,7 @@ Security Associations (1 up, 0 connecting):
    road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
    road-east{1}:   192.0.3.10/32 === 192.0.2.0/24
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.33.222 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.33.222
@@ -150,9 +150,9 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 road #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
 road #

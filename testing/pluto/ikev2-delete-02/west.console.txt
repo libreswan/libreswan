@@ -46,7 +46,7 @@ west #
  ipsec whack --trafficstatus
 #2: "west-east-delete1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -78,7 +78,7 @@ west #
 west #
  sleep 2
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -98,7 +98,7 @@ west #
 west #
  sleep 2
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

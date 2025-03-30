@@ -39,7 +39,7 @@ RUN ipsec whack --name road \
 ipsec route road
 ipsec listen
 echo : ${args} TRAPPING `cat policy`
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 echo : ${args} TRIGGERING OE
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23

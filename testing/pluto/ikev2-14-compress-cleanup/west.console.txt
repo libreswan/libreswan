@@ -24,7 +24,7 @@ west #
 "westnet-eastnet-ipcomp" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-ipcomp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -68,7 +68,7 @@ west #
 west #
  # XFRM state and policy should be empty of of 192/8 policies and states
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
  ip xfrm policy
 src 0.0.0.0/0 dst 0.0.0.0/0 

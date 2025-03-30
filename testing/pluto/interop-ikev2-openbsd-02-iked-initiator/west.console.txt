@@ -16,7 +16,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes \
 	authkey 0xHASHKEY \
 	enckey 0xENCKEY
@@ -70,7 +70,7 @@ west #
 		0 packets dropped on output
 	replay: rpl 3
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 @0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 @1 flow esp in from 192.0.2.0/24 to 192.1.2.45 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 @2 flow esp in from 192.1.2.23 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require

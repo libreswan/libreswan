@@ -13,7 +13,7 @@ initdone
 west #
  # trap installed
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -33,11 +33,11 @@ west #
 west #
  # wait for larval state to clear; hack
 west #
- ../../guestbin/wait-for.sh --no-match 0x00000000 ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match 0x00000000 ipsec _kernel state
 west #
  # real policy installed
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
@@ -51,7 +51,7 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -78,7 +78,7 @@ west #
 west #
  # only trap
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -86,6 +86,6 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 west #
  # everything cleared out
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
  

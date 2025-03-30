@@ -116,7 +116,7 @@ west #
 west #
  # policies and state should be multiple
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128

@@ -20,7 +20,7 @@ west #
 "interop" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "interop" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -42,7 +42,7 @@ west #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 192.0.2.0/24[any] 192.0.1.0/24[any] any
 	in ipsec
 	esp/tunnel/192.1.2.23-192.1.2.45/require

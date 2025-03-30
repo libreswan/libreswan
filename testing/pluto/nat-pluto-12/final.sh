@@ -2,5 +2,5 @@
 grep 'Result using RFC 3947' /tmp/pluto.log || echo "OK - did not find a match"
 # should not show udp encap
 ip xfrm policy
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel state
 

@@ -81,7 +81,7 @@ north #
  echo done
 done
 north #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.32 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -99,7 +99,7 @@ src 192.1.2.23 dst 192.1.3.32
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 north #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.2.0/24 dst 192.0.3.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.32

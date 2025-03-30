@@ -1,1 +1,1 @@
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy

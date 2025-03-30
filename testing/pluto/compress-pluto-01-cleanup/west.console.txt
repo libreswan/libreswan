@@ -60,7 +60,7 @@ west #
 "westnet-eastnet-compress" #2: sent Quick Mode request
 "westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -96,7 +96,7 @@ src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -152,7 +152,7 @@ west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
 #2: "westnet-eastnet-compress", type=ESP, add_time=1234567890, inBytes=6nn, outBytes=6nn, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -193,7 +193,7 @@ src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -225,8 +225,8 @@ west #
  echo ping
 ping
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

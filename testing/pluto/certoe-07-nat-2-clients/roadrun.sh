@@ -4,8 +4,8 @@
 # wait on OE IKE negotiation; should show established tunnel and no bare shunts
 ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 iptables -t nat -L -n
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt

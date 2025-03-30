@@ -12,13 +12,13 @@ ip xfrm policy add src 10.0.1.0/24 dst 10.0.2.0/24 dir out tmpl src 1.1.1.1 dst 
 ip xfrm policy add src 10.0.2.0/24 dst 10.0.1.0/24 dir fwd tmpl src 2.2.2.2 dst 1.1.1.1 proto esp reqid $ID mode tunnel
 ip xfrm policy add src 10.0.2.0/24 dst 10.0.1.0/24 dir in tmpl src 2.2.2.2 dst 1.1.1.1 proto esp reqid $ID mode tunnel
 
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 
 # start pluto
 ipsec pluto --config /etc/ipsec.conf --leak-detective
 ../../guestbin/wait-until-pluto-started
 
 # check policy/state gone
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy

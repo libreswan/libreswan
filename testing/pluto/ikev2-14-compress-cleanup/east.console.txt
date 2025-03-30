@@ -13,7 +13,7 @@ initdone
 east #
  # XFRM state and policy should be empty of of 192/8 policies and states
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
  ip xfrm policy
 src 0.0.0.0/0 dst 0.0.0.0/0 

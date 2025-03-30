@@ -39,13 +39,13 @@ road #
 road #
  ipsec whack --trafficstatus
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -91,13 +91,13 @@ road #
  echo done
 done
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

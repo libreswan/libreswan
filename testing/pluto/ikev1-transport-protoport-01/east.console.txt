@@ -14,7 +14,7 @@ initdone
 east #
  # verify protoport selectors are there
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -32,7 +32,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1702 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32 proto udp sport 1702 dport 1701
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

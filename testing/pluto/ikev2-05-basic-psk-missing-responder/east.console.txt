@@ -18,8 +18,8 @@ east #
 IMPAIR: start processing outbound drip packet 1
 IMPAIR: stop processing outbound drip packet 1
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  

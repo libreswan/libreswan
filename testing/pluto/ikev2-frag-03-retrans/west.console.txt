@@ -55,8 +55,8 @@ west #
 west #
  sed -n -e '/; retransmitting response/p' -e 's/\(; message dropped\).*/\1/p' /tmp/pluto.log
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

@@ -15,8 +15,8 @@ sleep 50
 echo "road should be retrying again. Remove the block"
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 echo "sleep 110 seconds"
 sleep 60
 ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.1.2.23

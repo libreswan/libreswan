@@ -24,7 +24,7 @@ west #
  racoonctl establish-sa -w esp inet ${leftsubnet}/255 ${rightsubnet}/255 any
 Phase 2 established : 192.1.2.45[500] -> 192.1.2.23[500]
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 192.1.2.23 192.1.2.45 
 	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=0(0x00000000)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -48,7 +48,7 @@ west #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
 	in ipsec
 	esp/tunnel/192.1.2.23-192.1.2.45/require

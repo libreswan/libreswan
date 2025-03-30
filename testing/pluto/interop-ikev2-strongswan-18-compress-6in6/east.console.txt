@@ -7,7 +7,7 @@ initdone
 east #
  # should see ipcomp entries
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 

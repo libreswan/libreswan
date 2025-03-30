@@ -1,7 +1,7 @@
 ipsec auto --up road-eastnet
 # note this end should be 192.1.3.209
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 ../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
 ipsec whack --trafficstatus
 sleep 5

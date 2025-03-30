@@ -9,8 +9,8 @@
 ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 ipsec auto --down westnet-eastnet-compress | sed -e 's/=6[0-9][0-9]B/=6nnB/g'
 echo ping
 

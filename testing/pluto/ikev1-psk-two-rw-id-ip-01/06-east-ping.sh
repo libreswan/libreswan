@@ -1,6 +1,6 @@
 # on east this should show 2 sets of in/fwd/out policies
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 # check both connections still work on east
 ipsec whack --trafficstatus
 ../../guestbin/ping-once.sh --up 192.0.2.101

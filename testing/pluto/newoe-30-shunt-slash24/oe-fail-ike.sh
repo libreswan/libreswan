@@ -13,7 +13,7 @@ RUN() {
 }
 
 echo : "$@" NEGOTIATION KERNEL POLICY
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 echo : "$@" NEGOTIATION PING
 case "$*" in
@@ -30,7 +30,7 @@ echo : "$@" WAIT FOR IKE_SA_INIT TO FAIL
 ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: deleting IKE SA'
 
 echo : "$@" FAILURE KERNEL POLICY
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 echo : "$@" FAILURE SHUNTS
 ipsec shuntstatus

@@ -20,8 +20,8 @@ west #
  ipsec auto --up west-east-transport
 "west-east-transport": we cannot identify ourselves with either end of this connection.  192.1.2.45 or 192.1.2.23 are not usable
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  
