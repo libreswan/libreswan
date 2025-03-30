@@ -1490,10 +1490,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = IPSEC_POLICY_DISCARD;
 		policy_name = "%drop(discard)";
 		break;
-	case SHUNT_REJECT:
-		policy_type = IPSEC_POLICY_DISCARD;
-		policy_name = "%reject(discard)";
-		break;
 	case SHUNT_HOLD:
 		policy_type = IPSEC_POLICY_DISCARD;
 		policy_name = "%hold(discard)";
