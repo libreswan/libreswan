@@ -357,6 +357,14 @@ static bool validate_end(struct starter_conn *conn_st,
 #  undef ERR_FOUND
 }
 
+static bool validate_conn(struct starter_conn *conn, struct logger *logger)
+{
+	bool ok = true;
+	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
+	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
+	return ok;
+}
+
 /**
  * Take keywords from ipsec.conf syntax and load into a conn struct
  *
@@ -840,10 +848,7 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
 
-	bool ok = true;
-	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
-	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
-	return ok;
+	return true;
 }
 
 static void copy_conn_default(struct starter_conn *conn,
@@ -910,6 +915,10 @@ static bool init_load_conn(struct starter_config *cfg,
 		return false;
 	}
 
+	if (!validate_conn(conn, logger)) {
+		return false;
+	}
+
 	conn->state = STATE_LOADED;
 	return true;
 }
@@ -950,17 +959,20 @@ struct starter_config *confread_load(const char *file,
 		 * Load %default conn
 		 * ??? is it correct to accept multiple %default conns?
 		 */
-		bool ok = true;
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-		     ok && sconn != NULL;
-		     sconn = TAILQ_NEXT(sconn, link)) {
+		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
 				ldbg(logger, "loading default conn");
-				ok &= load_conn(&cfg->conn_default,
-						cfgp, sconn,
-						/*also=*/false,
-						/*default conn*/true,
-						logger);
+				if (!load_conn(&cfg->conn_default,
+					       cfgp, sconn,
+					       /*also=*/false,
+					       /*default conn*/true,
+					       logger)) {
+					break;
+				}
+				if (!validate_conn(&cfg->conn_default, logger)) {
+					break;
+				}
 			}
 		}
 
