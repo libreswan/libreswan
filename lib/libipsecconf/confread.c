@@ -378,7 +378,8 @@ static bool translate_field(struct starter_conn *conn,
 			    keyword_values values,
 			    struct logger *logger)
 {
-	bool serious_err = false;
+	bool ok = true;
+
 	unsigned int field = kw->keyword.keydef->field;
 
 	assert(kw->keyword.keydef != NULL);
@@ -396,11 +397,11 @@ static bool translate_field(struct starter_conn *conn,
 			llog(RC_LOG, logger,
 			     "cannot find conn '%s' needed by conn '%s'",
 			     seeking, conn->name);
-			serious_err = true;
+			ok = false;
 			break;
 		}
 		/* translate things, but do not replace earlier settings! */
-		serious_err |= !translate_conn(conn, cfgp, addin, k_set, logger);
+		ok &= translate_conn(conn, cfgp, addin, k_set, logger);
 		break;
 	}
 	case kt_string:
@@ -425,7 +426,7 @@ static bool translate_field(struct starter_conn *conn,
 			    !streq(kw->keyword.string,
 				   values[field].string))
 			{
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -434,7 +435,7 @@ static bool translate_field(struct starter_conn *conn,
 		if (kw->string == NULL) {
 			llog(RC_LOG, logger, "invalid %s value",
 			     kw->keyword.keydef->keyname);
-			serious_err = true;
+			ok = false;
 			break;
 		}
 
@@ -481,7 +482,7 @@ static bool translate_field(struct starter_conn *conn,
 			      streq(kw->keyword.string,
 				    values[field].string)))
 			{
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -513,7 +514,7 @@ static bool translate_field(struct starter_conn *conn,
 
 			/* only fatal if we try to change values */
 			if (values[field].option != (int)kw->number) {
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -534,7 +535,7 @@ static bool translate_field(struct starter_conn *conn,
 
 			/* only fatal if we try to change values */
 			if (deltatime_cmp(values[field].deltatime, !=, kw->deltatime)) {
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -547,11 +548,11 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 
-	return serious_err;
+	return ok;
 }
 
 static bool translate_leftright(struct starter_conn *conn,
-			    const struct config_parsed *cfgp,
+				const struct config_parsed *cfgp,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
 				const struct kw_list *kw,
@@ -585,20 +586,20 @@ static bool translate_conn(struct starter_conn *conn,
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
 		if (kw->keyword.keydef->validity & kv_leftright) {
 			if (kw->keyword.keyleft) {
-				ok &= !translate_leftright(conn, cfgp, sl, assigned_value,
-							   kw, &conn->end[LEFT_END],
-							   logger);
+				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
+							  kw, &conn->end[LEFT_END],
+							  logger);
 			}
 			if (kw->keyword.keyright) {
-				ok &= !translate_leftright(conn, cfgp, sl, assigned_value,
-							   kw, &conn->end[RIGHT_END],
-							   logger);
+				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
+							  kw, &conn->end[RIGHT_END],
+							  logger);
 			}
 		} else {
-			ok &= !translate_field(conn, cfgp, sl, assigned_value, kw,
-					       /*leftright*/"",
-					       conn->values,
-					       logger);
+			ok &= translate_field(conn, cfgp, sl, assigned_value, kw,
+					      /*leftright*/"",
+					      conn->values,
+					      logger);
 		}
 	}
 
