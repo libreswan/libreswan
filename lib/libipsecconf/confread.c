@@ -400,7 +400,7 @@ static bool translate_field(struct starter_conn *conn,
 			break;
 		}
 		/* translate things, but do not replace earlier settings! */
-		serious_err |= translate_conn(conn, cfgp, addin, k_set, logger);
+		serious_err |= !translate_conn(conn, cfgp, addin, k_set, logger);
 		break;
 	}
 	case kt_string:
@@ -572,36 +572,37 @@ static bool translate_conn(struct starter_conn *conn,
 {
 	if (sl->beenhere) {
 		ldbg(logger, "ignore duplicate include");
-		return false;
+		return true; /* ok */
 	}
+
 	sl->beenhere = true;
 
-	/* note: not all errors are considered serious */
-	bool serious_err = false;
+	/*
+	 * Note: not all errors are considered serious (see above).
+	 */
+	bool ok = true;
 
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
 		if (kw->keyword.keydef->validity & kv_leftright) {
 			if (kw->keyword.keyleft) {
-				serious_err |=
-					translate_leftright(conn, cfgp, sl, assigned_value,
-							    kw, &conn->end[LEFT_END],
-							    logger);
+				ok &= !translate_leftright(conn, cfgp, sl, assigned_value,
+							   kw, &conn->end[LEFT_END],
+							   logger);
 			}
 			if (kw->keyword.keyright) {
-				serious_err |=
-					translate_leftright(conn, cfgp, sl, assigned_value,
-							    kw, &conn->end[RIGHT_END],
-							    logger);
+				ok &= !translate_leftright(conn, cfgp, sl, assigned_value,
+							   kw, &conn->end[RIGHT_END],
+							   logger);
 			}
 		} else {
-			serious_err |=
-				translate_field(conn, cfgp, sl, assigned_value, kw,
-						/*leftright*/"",
-						conn->values,
-						logger);
+			ok &= !translate_field(conn, cfgp, sl, assigned_value, kw,
+					       /*leftright*/"",
+					       conn->values,
+					       logger);
 		}
 	}
-	return serious_err;
+
+	return ok;
 }
 
 static bool load_conn(struct starter_conn *conn,
@@ -623,9 +624,9 @@ static bool load_conn(struct starter_conn *conn,
 	 *
 	 * DANGER: returns false on success.
 	 */
-	if (!!translate_conn(conn, cfgp, sl,
-			     defaultconn ? k_default : k_set,
-			     logger)) {
+	if (!translate_conn(conn, cfgp, sl,
+			    defaultconn ? k_default : k_set,
+			    logger)) {
 		return false;
 	}
 
