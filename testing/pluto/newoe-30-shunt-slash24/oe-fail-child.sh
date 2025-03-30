@@ -14,7 +14,7 @@ RUN() {
 
 # this is racy; can't ping
 echo : "$@" NEGOTIATION SHUNT
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 echo : "$@" WAIT FOR IKE_AUTH TO FAIL
 ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: initiator established IKE SA'
@@ -24,7 +24,7 @@ echo : "$@" WAIT FOR IKE_AUTH TO FAIL
 # echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: deleting IKE SA'
 
 echo : "$@" FAILURE KERNEL POLICY
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 echo : "$@" FAILURE SHUNTS
 ipsec shuntstatus

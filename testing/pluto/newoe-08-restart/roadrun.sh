@@ -2,7 +2,7 @@
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23 > /dev/null
 ipsec whack --trafficstatus | sed "s/add_time.*$//"
 ipsec stop
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel state
 ipsec start
 ../../guestbin/wait-until-pluto-started
 # give OE policies time to load

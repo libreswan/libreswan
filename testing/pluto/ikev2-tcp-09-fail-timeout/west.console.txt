@@ -108,9 +108,9 @@ west #
 west #
  # should be gone
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  grep '^connection from' /tmp/pluto.log | grep -v EAGAIN
 west #

@@ -16,9 +16,9 @@ initdone
 east #
  # on EAST, dump the state of the initial SAs
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  # On EAST, expect to see the peer proposing EAST and WEST as the child
 east #

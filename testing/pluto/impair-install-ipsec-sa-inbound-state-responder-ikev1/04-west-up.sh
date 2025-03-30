@@ -2,4 +2,4 @@
 # put on to the revival queue
 ipsec up west-east
 # expect the on-demand kernel policy
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy

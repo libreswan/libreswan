@@ -40,9 +40,9 @@ road #
 Bare Shunt list:
  
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.253/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32
@@ -80,9 +80,9 @@ road #
  echo done
 done
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.253/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32

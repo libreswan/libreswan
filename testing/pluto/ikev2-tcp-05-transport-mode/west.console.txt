@@ -36,7 +36,7 @@ west #
 	encap type espintcp sport 4500 dport EPHEM addr 0.0.0.0
 	encap type espintcp sport EPHEM dport 4500 addr 0.0.0.0
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -60,7 +60,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

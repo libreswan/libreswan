@@ -12,7 +12,7 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 src 192.1.2.254 dst 192.1.2.23
 	encap type espinudp sport NATED6501 dport 4500 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
@@ -24,7 +24,7 @@ src 192.1.2.23 dst 192.1.2.254
 	encap type espinudp sport 4500 sport NATED6501 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 src 192.0.2.0/24 dst 192.0.3.10/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254

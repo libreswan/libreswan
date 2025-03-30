@@ -47,8 +47,8 @@ west #
  grep 'calculating skeyseed' /tmp/pluto.log | wc -l
 1
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

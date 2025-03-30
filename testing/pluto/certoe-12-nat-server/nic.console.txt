@@ -12,9 +12,9 @@ nic #
 nic #
  hostname | grep nic > /dev/null || ipsec trafficstatus
 nic #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 nic #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 nic #
  # you should see both RSA and NULL
 nic #

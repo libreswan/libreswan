@@ -3,8 +3,8 @@
 
 # Since the connection failed and it is OE all the CAT policies should
 # be gone leaving only the template policy.  Ditto for state.
-../../guestbin/ipsec-kernel-policy.sh
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel policy
+ipsec _kernel state
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 
@@ -18,4 +18,4 @@ ipsec whack --shuntstatus
 # With %pass installed, there's no tunnel yet pings work
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy

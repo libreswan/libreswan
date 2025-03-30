@@ -97,7 +97,7 @@ up
 road #
  # let the shunt drain
 road #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 road #
  echo done
 done

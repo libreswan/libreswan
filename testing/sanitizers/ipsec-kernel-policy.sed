@@ -1,6 +1,6 @@
 # match random policy output
 
-/guestbin\/ipsec-kernel-policy.sh/ b next-ipsec-kernel-policy
+/ ipsec _kernel policy/ b next-ipsec-kernel-policy
 /^ ip xfrm policy$/ b next-ipsec-kernel-policy
 /^ ip -4 xfrm policy$/ b next-ipsec-kernel-policy
 /^ ip -6 xfrm policy$/ b next-ipsec-kernel-policy

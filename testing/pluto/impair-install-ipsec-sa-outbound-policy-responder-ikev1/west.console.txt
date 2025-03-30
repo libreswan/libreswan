@@ -47,7 +47,7 @@ west #
 west #
  # expect the on-demand kernel policy
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -1066,9 +1066,9 @@ output: | not behind NAT: no NAT-T KEEP-ALIVE required for conn west-east
 output: |   matches: 2
 output: | spent 0.0605 (0.61) milliseconds in global timer EVENT_NAT_T_KEEPALIVE
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

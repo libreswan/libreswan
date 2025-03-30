@@ -27,7 +27,7 @@ west #
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 2001:db8:0:2::/64[any] 2001:db8:0:1::/64[any] 255(reserved)
 	in ipsec
 	ipcomp/tunnel/192.1.2.23-192.1.2.45/require
@@ -44,7 +44,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 up
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -89,7 +89,7 @@ west #
  ../../guestbin/ping-once.sh --medium --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 up
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX

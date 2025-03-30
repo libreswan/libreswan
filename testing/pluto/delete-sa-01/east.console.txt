@@ -15,9 +15,9 @@ east #
  ipsec whack --name SAwest-east --ikev1 --encrypt --tunnel --pfs --rsasig --host "192.1.2.23"  --nexthop "192.1.2.45" --updown "ipsec _updown" --id "@east" --to --host "%any" --nexthop "%direct" --updown "ipsec _updown" --id "@west" --ipseclifetime "28800" --rekeymargin "540"
 "SAwest-east": added IKEv1 connection
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  # up to 3.26 we printed a bogus message, this is checking that no longer happens
 east #

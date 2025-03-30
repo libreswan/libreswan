@@ -6,6 +6,6 @@
 
 ../../guestbin/ip.sh addr show ipsec1
 ../../guestbin/ip.sh link show ipsec1
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 ip -4 route add 198.18.12.0/24 dev ipsec1

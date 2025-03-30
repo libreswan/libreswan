@@ -64,7 +64,7 @@ west #
 west #
  # should see ipcomp entries
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -101,86 +101,38 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	replay-window 0 
 	lastused YYYY-MM-DD HH:MM:SS
 west #
- ip xfrm policy
-src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto comp reqid REQID mode tunnel
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
-src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
-	dir fwd priority PRIORITY ptype main 
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir fwd priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
-src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
-	dir in priority PRIORITY ptype main 
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir in priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir out priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir fwd priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir in priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir out priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir fwd priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir in priority PRIORITY ptype main 
 west #
  

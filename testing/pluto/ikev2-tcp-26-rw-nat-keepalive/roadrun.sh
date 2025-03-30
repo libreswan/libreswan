@@ -4,6 +4,6 @@ ipsec up road
 ipsec whack --impair send_keepalive:1
 ../../guestbin/ping-once.sh --up 192.0.2.254
 
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 echo done

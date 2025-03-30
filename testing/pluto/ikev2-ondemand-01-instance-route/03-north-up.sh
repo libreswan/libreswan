@@ -1,12 +1,12 @@
 # check policy installed / uninstalled
 ipsec route initiator
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 ipsec unroute initiator
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # put trap back
 ipsec route initiator
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # one ping to trigger IKE
 ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
@@ -15,8 +15,8 @@ ipsec route initiator
 ipsec whack --trafficstatus
 
 # wait for larval state to clear; hack
-../../guestbin/wait-for.sh --no-match 0x00000000 ../../guestbin/ipsec-kernel-state.sh
+../../guestbin/wait-for.sh --no-match 0x00000000 ipsec _kernel state
 
 # real policy installed
-../../guestbin/ipsec-kernel-policy.sh
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel policy
+ipsec _kernel state

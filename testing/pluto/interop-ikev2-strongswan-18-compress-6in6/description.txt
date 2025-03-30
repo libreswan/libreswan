@@ -8,7 +8,7 @@ even if it is really tunnel mode.
 We test with compressible pings to see the counter on the ipcomp SA increase,
 but one the counters always increases even if packets were not compressed.
 
-[root@west ~]# ip xfrm state
+[root@west ~]# ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xe1c4db39 reqid 16389 mode transport
 	replay-window 32 

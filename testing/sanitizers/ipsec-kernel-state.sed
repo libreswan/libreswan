@@ -1,6 +1,6 @@
 # match: setkey ...
 
-/guestbin\/ipsec-kernel-state.sh/ b next-ipsec-kernel-state
+/ ipsec _kernel state/ b next-ipsec-kernel-state
 /^ ip xfrm state$/ b next-ipsec-kernel-state
 /^ ip xfrm state |/ b next-ipsec-kernel-state
 /^ ip -4 xfrm state$/ b next-ipsec-kernel-state

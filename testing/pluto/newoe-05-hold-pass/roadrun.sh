@@ -16,21 +16,21 @@ ipsec whack --trafficstatus
 # up, ping will work
 ../../guestbin/wait-for.sh --timeout 60 --match 7.7.7.7 -- ipsec whack --shuntstatus
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 7.7.7.7
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 # let failureshunt expire - both from bare shunt list as as kernel policy
 # XXX: what is below looking for?  Output doesn't seem to change.
 sleep 60
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 ipsec whack --shuntstatus
 sleep 60
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 ipsec whack --shuntstatus
 sleep 60
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 ipsec whack --shuntstatus
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt

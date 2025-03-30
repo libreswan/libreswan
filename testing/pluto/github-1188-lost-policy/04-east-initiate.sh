@@ -8,4 +8,4 @@ ipsec start
 ../../guestbin/wait-for.sh --match private -- ipsec trafficstatus
 
 # check the policy
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy

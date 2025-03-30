@@ -51,7 +51,7 @@ ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No su
 west #
  # expect the on-demand kernel policy
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -1062,9 +1062,9 @@ output: |   found "west-east" #1
 output: |   matches: 2
 output: | received kernel hard EXPIRE event for IPsec SPI f484df86, but there is no connection with this SPI SPISPI dst 192.1.2.45 bytes 0 packets 0
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

@@ -1,3 +1,3 @@
 ipsec auto --up westnet-eastnet-ipcomp
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel state
 ipsec auto --down westnet-eastnet-ipcomp

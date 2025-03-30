@@ -174,7 +174,7 @@ PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -194,7 +194,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135
@@ -219,7 +219,7 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -239,7 +239,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

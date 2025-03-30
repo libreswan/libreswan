@@ -25,7 +25,7 @@ west #
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
 	in ipsec
 	ah/tunnel/192.1.2.23-192.1.2.45/require
@@ -40,7 +40,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -65,7 +65,7 @@ west #
  ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX

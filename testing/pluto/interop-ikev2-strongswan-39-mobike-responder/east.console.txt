@@ -5,7 +5,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.33.222
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -19,7 +19,7 @@ src 192.1.33.222 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.2.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
 src 192.0.2.0/24 dst 192.0.2.0/24

@@ -18,9 +18,9 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.253/32
 	dir out priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.2.254/32

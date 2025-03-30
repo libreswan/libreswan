@@ -5,7 +5,7 @@ ipsec auto --up north
 # ../../guestbin/ip.sh route add 192.0.2.0/24 dev ipsec1 src 192.0.3.254
 # tcpdump -s 0 -n -w /tmp/ipsec1.pcap -i ipsec1 & echo $! > /tmp/tcpdump.pid
 sleep  2
-ip xfrm state
+ipsec _kernel state
 ../../guestbin/ping-once.sh --up 192.0.2.254
 ../../guestbin/ip.sh -s link show ipsec1
 #kill -9 $(cat /tmp/tcpdump.pid)

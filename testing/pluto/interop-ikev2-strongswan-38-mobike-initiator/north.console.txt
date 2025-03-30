@@ -57,7 +57,7 @@ westnet-eastnet-ikev2{1}:   192.0.3.0/24 === 192.0.2.0/24
 north #
  # note this end is 192.1.3.33
 north #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -69,47 +69,31 @@ src 192.1.2.23 dst 192.1.3.33
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 north #
- ip xfrm policy
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.3.0/24 dst 192.0.3.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.3.0/24 dst 192.0.3.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.3.0/24 dst 192.0.3.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.3.0/24 dst 192.1.3.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.0/24 dst 192.1.3.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.3.0/24 dst 192.1.3.0/24
+	dir out priority PRIORITY ptype main
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp spi 0xSPISPI reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.33
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.33
-		proto esp reqid REQID mode tunnel
-src 192.1.3.0/24 dst 192.1.3.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.3.0/24 dst 192.1.3.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.0/24 dst 192.1.3.0/24 
-	dir out priority PRIORITY ptype main 
-src 192.0.3.0/24 dst 192.0.3.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.0.3.0/24 dst 192.0.3.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.0.3.0/24 dst 192.0.3.0/24 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 north #
  sleep 5
 north #
@@ -140,7 +124,7 @@ north #
  echo done
 done
 north #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.34 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -152,7 +136,7 @@ src 192.1.2.23 dst 192.1.3.34
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 north #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.3.0/24 dst 192.0.3.0/24
 	dir fwd priority PRIORITY ptype main
 src 192.0.3.0/24 dst 192.0.3.0/24

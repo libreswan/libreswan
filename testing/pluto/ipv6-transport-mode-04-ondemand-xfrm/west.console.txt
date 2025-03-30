@@ -39,7 +39,7 @@ west #
  ipsec whack --trafficstatus
 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -63,7 +63,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	replay-window 0 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135
@@ -88,7 +88,7 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -112,7 +112,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	replay-window 0 
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

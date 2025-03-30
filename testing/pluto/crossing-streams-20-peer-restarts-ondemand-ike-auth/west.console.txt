@@ -27,7 +27,7 @@ west #
 west #
  # should be the trap
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -58,7 +58,7 @@ packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
 west #
  # should be the block
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out action block priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -78,7 +78,7 @@ IMPAIR: start processing inbound drip packet 4
 IMPAIR: stop processing inbound drip packet 4
 "east-west" #4: responder established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -103,7 +103,7 @@ src 192.0.1.254 dst 192.0.2.254
 	replay-window 0 
 	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

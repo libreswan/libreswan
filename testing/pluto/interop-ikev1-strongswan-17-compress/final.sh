@@ -1,2 +1,2 @@
-../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+ipsec _kernel state
+ipsec _kernel policy

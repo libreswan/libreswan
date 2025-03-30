@@ -1,10 +1,10 @@
 # on-demand packet triggers IKE to unavailable peer and is blocked
 ipsec auto --route west-east
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # poke a hole to port 7, those packets will be allowed cleartext
 ipsec auto --route pass-7
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # send packet over the clear exception - should return connection
 # refused

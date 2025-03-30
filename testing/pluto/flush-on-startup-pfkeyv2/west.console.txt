@@ -9,7 +9,7 @@ west #
 west #
  setkey -f setkey.in
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 20.1.1.1 10.1.1.1
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=0(0x00000000)
 	E: aes-gcm-16  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -31,7 +31,7 @@ west #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 10.1.1.1[any] 20.1.1.1[any] any
 	out ipsec
 	esp/transport//use
@@ -46,10 +46,10 @@ west #
 west #
  # check policy/state gone
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 No SAD entries.
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 No SPD entries.
 west #
  

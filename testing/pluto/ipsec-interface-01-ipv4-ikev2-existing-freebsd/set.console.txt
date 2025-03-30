@@ -17,10 +17,10 @@ ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 14
 	reqid: 100
 	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
 set #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 No SAD entries.
 set #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
 	esp/tunnel/198.18.1.12-198.18.1.15/unique:100
@@ -60,7 +60,7 @@ set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 up
 set #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 198.18.1.15 198.18.1.12
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -84,7 +84,7 @@ set #
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 set #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 0.0.0.0/0[any] 0.0.0.0/0[any] any
 	in ipsec
 	esp/tunnel/198.18.1.12-198.18.1.15/unique:100

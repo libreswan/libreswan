@@ -17,8 +17,8 @@ east #
  grep 'Notify data: ff$' /tmp/pluto.log
 | Notify data: ff
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  

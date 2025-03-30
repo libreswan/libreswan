@@ -30,7 +30,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.1.0/24
 	dir fwd priority PRIORITY ptype main
 src 192.0.1.0/24 dst 192.0.1.0/24
@@ -56,7 +56,7 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid REQID mode tunnel
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec align4
@@ -68,9 +68,9 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	lastused YYYY-MM-DD HH:MM:SS
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:

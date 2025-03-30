@@ -20,7 +20,7 @@ west #
 "westnet-eastnet-default" #2: sent Quick Mode request
 "westnet-eastnet-default" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
 	 replay_window 128, bitmap-length 4
@@ -46,7 +46,7 @@ west #
 "westnet-eastnet-0" #2: sent Quick Mode request
 "westnet-eastnet-0" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
 west #
@@ -71,7 +71,7 @@ west #
 "westnet-eastnet-64" #2: sent Quick Mode request
 "westnet-eastnet-64" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
 	 replay_window 64, bitmap-length 2
@@ -97,7 +97,7 @@ west #
 "westnet-eastnet-256" #2: sent Quick Mode request
 "westnet-eastnet-256" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	replay-window 0 flag af-unspec
 	replay-window 0 flag af-unspec
 	 replay_window 256, bitmap-length 8
