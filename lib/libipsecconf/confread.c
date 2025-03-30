@@ -168,12 +168,11 @@ static void ipsecconf_default_values(struct starter_config *cfg)
  * @param cfg starter_config structure
  * @param cfgp config_parsed (ie: valid) struct
  * @param perr pointer to store errors in
- * @return bool TRUE if unsuccessful
  */
 static bool load_setup(struct starter_config *cfg,
 		       const struct config_parsed *cfgp)
 {
-	bool err = false;
+	bool ok = true;
 	const struct kw_list *kw;
 
 	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
@@ -224,7 +223,7 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
-			err = true;
+			ok = false;
 			break;
 
 		case kt_also:
@@ -236,7 +235,7 @@ static bool load_setup(struct starter_config *cfg,
 		}
 	}
 
-	return err;
+	return ok;
 }
 
 /**
@@ -257,14 +256,14 @@ static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
 			 struct logger *logger)
 {
+	bool ok = true;
 	const char *leftright = end->leftright;
-	bool err = false;
 
 	passert(end->host_family != NULL);
 	pexpect(end->host_family == &ipv4_info ||
 		end->host_family == &ipv6_info); /* i.e., not NULL */
 
-#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); err = true; }
+#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); ok = false; }
 
 	if (!end->values[KW_IP].set)
 		conn_st->state = STATE_INCOMPLETE;
@@ -354,7 +353,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	return err;
+	return ok;
 #  undef ERR_FOUND
 }
 
@@ -379,7 +378,8 @@ static bool translate_field(struct starter_conn *conn,
 			    keyword_values values,
 			    struct logger *logger)
 {
-	bool serious_err = false;
+	bool ok = true;
+
 	unsigned int field = kw->keyword.keydef->field;
 
 	assert(kw->keyword.keydef != NULL);
@@ -397,11 +397,11 @@ static bool translate_field(struct starter_conn *conn,
 			llog(RC_LOG, logger,
 			     "cannot find conn '%s' needed by conn '%s'",
 			     seeking, conn->name);
-			serious_err = true;
+			ok = false;
 			break;
 		}
 		/* translate things, but do not replace earlier settings! */
-		serious_err |= translate_conn(conn, cfgp, addin, k_set, logger);
+		ok &= translate_conn(conn, cfgp, addin, k_set, logger);
 		break;
 	}
 	case kt_string:
@@ -426,7 +426,7 @@ static bool translate_field(struct starter_conn *conn,
 			    !streq(kw->keyword.string,
 				   values[field].string))
 			{
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -435,7 +435,7 @@ static bool translate_field(struct starter_conn *conn,
 		if (kw->string == NULL) {
 			llog(RC_LOG, logger, "invalid %s value",
 			     kw->keyword.keydef->keyname);
-			serious_err = true;
+			ok = false;
 			break;
 		}
 
@@ -482,7 +482,7 @@ static bool translate_field(struct starter_conn *conn,
 			      streq(kw->keyword.string,
 				    values[field].string)))
 			{
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -514,7 +514,7 @@ static bool translate_field(struct starter_conn *conn,
 
 			/* only fatal if we try to change values */
 			if (values[field].option != (int)kw->number) {
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -535,7 +535,7 @@ static bool translate_field(struct starter_conn *conn,
 
 			/* only fatal if we try to change values */
 			if (deltatime_cmp(values[field].deltatime, !=, kw->deltatime)) {
-				serious_err = true;
+				ok = false;
 				break;
 			}
 		}
@@ -548,11 +548,11 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 
-	return serious_err;
+	return ok;
 }
 
 static bool translate_leftright(struct starter_conn *conn,
-			    const struct config_parsed *cfgp,
+				const struct config_parsed *cfgp,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
 				const struct kw_list *kw,
@@ -573,36 +573,37 @@ static bool translate_conn(struct starter_conn *conn,
 {
 	if (sl->beenhere) {
 		ldbg(logger, "ignore duplicate include");
-		return false;
+		return true; /* ok */
 	}
+
 	sl->beenhere = true;
 
-	/* note: not all errors are considered serious */
-	bool serious_err = false;
+	/*
+	 * Note: not all errors are considered serious (see above).
+	 */
+	bool ok = true;
 
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
 		if (kw->keyword.keydef->validity & kv_leftright) {
 			if (kw->keyword.keyleft) {
-				serious_err |=
-					translate_leftright(conn, cfgp, sl, assigned_value,
-							    kw, &conn->end[LEFT_END],
-							    logger);
+				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
+							  kw, &conn->end[LEFT_END],
+							  logger);
 			}
 			if (kw->keyword.keyright) {
-				serious_err |=
-					translate_leftright(conn, cfgp, sl, assigned_value,
-							    kw, &conn->end[RIGHT_END],
-							    logger);
+				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
+							  kw, &conn->end[RIGHT_END],
+							  logger);
 			}
 		} else {
-			serious_err |=
-				translate_field(conn, cfgp, sl, assigned_value, kw,
-						/*leftright*/"",
-						conn->values,
-						logger);
+			ok &= translate_field(conn, cfgp, sl, assigned_value, kw,
+					      /*leftright*/"",
+					      conn->values,
+					      logger);
 		}
 	}
-	return serious_err;
+
+	return ok;
 }
 
 static bool load_conn(struct starter_conn *conn,
@@ -618,19 +619,23 @@ static bool load_conn(struct starter_conn *conn,
 		s->beenhere = false;
 	}
 
-	/* turn all of the keyword/value pairs into options/strings in left/right */
-	bool err = translate_conn(conn, cfgp, sl,
-				  defaultconn ? k_default : k_set,
-				  logger);
-
-	if (err)
-		return err;
+	/*
+	 * Turn all of the keyword/value pairs into options/strings in
+	 * left/right.
+	 *
+	 * DANGER: returns false on success.
+	 */
+	if (!translate_conn(conn, cfgp, sl,
+			    defaultconn ? k_default : k_set,
+			    logger)) {
+		return false;
+	}
 
 	if (conn->values[KSCF_ALSO].string != NULL &&
 	    !alsoprocessing) {
 		llog(RC_LOG, logger, "also= is not valid in section '%s'",
 		     sl->name);
-		return true;	/* error */
+		return false;	/* error */
 	}
 
 	if (conn->values[KNCF_TYPE].set) {
@@ -754,7 +759,7 @@ static bool load_conn(struct starter_conn *conn,
 			} else if (conn->ike_version == IKEv1) {
 				llog(RC_LOG, logger,
 				     "ikev1 connection must use authby= of rsasig, secret or never");
-				return true;
+				return false;
 			} else if (hunk_streq(val, "null")) {
 				conn->authby.null = true;
 			} else if (hunk_streq(val, "rsa-sha1")) {
@@ -790,10 +795,10 @@ static bool load_conn(struct starter_conn *conn,
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "ecdsa-sha1")) {
 				llog(RC_LOG, logger, "authby=ecdsa cannot use sha1, only sha2");
-				return true;
+				return false;
 			} else {
 				llog(RC_LOG, logger, "connection authby= value is unknown");
-				return true;
+				return false;
 			}
 		}
 	}
@@ -835,10 +840,10 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
 
-	err |= validate_end(conn, &conn->end[LEFT_END], logger);
-	err |= validate_end(conn, &conn->end[RIGHT_END], logger);
-
-	return err;
+	bool ok = true;
+	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
+	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
+	return ok;
 }
 
 static void copy_conn_default(struct starter_conn *conn,
@@ -900,14 +905,13 @@ static bool init_load_conn(struct starter_config *cfg,
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger);
-
-	if (connerr) {
+	if (!load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger)) {
 		/* ??? should caller not log perrl? */
-	} else {
-		conn->state = STATE_LOADED;
+		return false;
 	}
-	return connerr;
+
+	conn->state = STATE_LOADED;
+	return true;
 }
 
 struct starter_config *confread_load(const char *file,
@@ -934,8 +938,7 @@ struct starter_config *confread_load(const char *file,
 	 *
 	 * Danger: reverse fail.
 	 */
-	bool err = load_setup(cfg, cfgp);
-	if (err) {
+	if (!load_setup(cfg, cfgp)) {
 		parser_freeany_config_parsed(&cfgp);
 		confread_free(cfg);
 		return NULL;
@@ -947,16 +950,17 @@ struct starter_config *confread_load(const char *file,
 		 * Load %default conn
 		 * ??? is it correct to accept multiple %default conns?
 		 */
+		bool ok = true;
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-		     (!err) && sconn != NULL;
+		     ok && sconn != NULL;
 		     sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
 				ldbg(logger, "loading default conn");
-				err |= load_conn(&cfg->conn_default,
-						 cfgp, sconn,
-						 /*also=*/false,
-						 true/*default conn*/,
-						 logger);
+				ok &= load_conn(&cfg->conn_default,
+						cfgp, sconn,
+						/*also=*/false,
+						/*default conn*/true,
+						logger);
 			}
 		}
 
@@ -966,9 +970,9 @@ struct starter_config *confread_load(const char *file,
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
 		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
 			if (!streq(sconn->name, "%default"))
-				err |= init_load_conn(cfg, cfgp, sconn,
-						      false/*default conn*/,
-						      logger);
+				init_load_conn(cfg, cfgp, sconn,
+					       /*default conn*/false,
+					       logger);
 		}
 	}
 
