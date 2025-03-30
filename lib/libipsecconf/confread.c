@@ -168,12 +168,11 @@ static void ipsecconf_default_values(struct starter_config *cfg)
  * @param cfg starter_config structure
  * @param cfgp config_parsed (ie: valid) struct
  * @param perr pointer to store errors in
- * @return bool TRUE if unsuccessful
  */
 static bool load_setup(struct starter_config *cfg,
 		       const struct config_parsed *cfgp)
 {
-	bool err = false;
+	bool ok = true;
 	const struct kw_list *kw;
 
 	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
@@ -224,7 +223,7 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
-			err = true;
+			ok = false;
 			break;
 
 		case kt_also:
@@ -236,7 +235,7 @@ static bool load_setup(struct starter_config *cfg,
 		}
 	}
 
-	return err;
+	return ok;
 }
 
 /**
@@ -934,8 +933,7 @@ struct starter_config *confread_load(const char *file,
 	 *
 	 * Danger: reverse fail.
 	 */
-	bool err = load_setup(cfg, cfgp);
-	if (err) {
+	if (!load_setup(cfg, cfgp)) {
 		parser_freeany_config_parsed(&cfgp);
 		confread_free(cfg);
 		return NULL;
@@ -947,15 +945,16 @@ struct starter_config *confread_load(const char *file,
 		 * Load %default conn
 		 * ??? is it correct to accept multiple %default conns?
 		 */
+		bool ok = true;
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-		     (!err) && sconn != NULL;
+		     ok && sconn != NULL;
 		     sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
 				ldbg(logger, "loading default conn");
-				err |= load_conn(&cfg->conn_default,
+				ok &= !load_conn(&cfg->conn_default,
 						 cfgp, sconn,
 						 /*also=*/false,
-						 true/*default conn*/,
+						 /*default conn*/true,
 						 logger);
 			}
 		}
@@ -966,9 +965,9 @@ struct starter_config *confread_load(const char *file,
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
 		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
 			if (!streq(sconn->name, "%default"))
-				err |= init_load_conn(cfg, cfgp, sconn,
-						      false/*default conn*/,
-						      logger);
+				init_load_conn(cfg, cfgp, sconn,
+					       /*default conn*/false,
+					       logger);
 		}
 	}
 
