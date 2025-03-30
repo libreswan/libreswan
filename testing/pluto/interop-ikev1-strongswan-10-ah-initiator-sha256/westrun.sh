@@ -3,5 +3,5 @@ strongswan up westnet-eastnet-ikev1
 # cannot use ipsec _kernel state
 ipsec _kernel policy for strongswan
 ipsec _kernel state
-ip xfrm policy
+ipsec _kernel policy
 echo done

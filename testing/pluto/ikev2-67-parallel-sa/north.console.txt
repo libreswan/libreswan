@@ -18,41 +18,46 @@ north #
 north #
  ipsec auto --up northnet-eastnet
 initiating all connections with alias "northnet-eastnet"
-"northnet-eastnet/0x2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"northnet-eastnet/0x1": queue Child SA; waiting on IKE SA "northnet-eastnet/0x2" #1 negotiating with 192.1.2.23
-"northnet-eastnet/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"northnet-eastnet/0x1" #2: Child SA initiating pending connection using IKE SA #1's IKE_AUTH exchange
-"northnet-eastnet/0x2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"northnet-eastnet/0x2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"northnet-eastnet/0x2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"northnet-eastnet/0x1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"northnet-eastnet/0x2": queue Child SA; waiting on IKE SA "northnet-eastnet/0x1" #1 negotiating with 192.1.2.23
+initiating 2 connections
+"northnet-eastnet/0x1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"northnet-eastnet/0x1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"northnet-eastnet/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"northnet-eastnet/0x1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "northnet-eastnet/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "northnet-eastnet/0x2" #3: initiating Child SA using IKE SA #1
 "northnet-eastnet/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
 "northnet-eastnet/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 north #
- taskset 0x1 ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ taskset 0x1 ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+up
 north #
- taskset 0x2 ping -n -q -c 2 -I 192.0.3.254 192.0.2.254
+ taskset 0x2 ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
 taskset: failed to set pid PID's affinity: Invalid argument
 north #
  ipsec whack --trafficstatus
 #2: "northnet-eastnet/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-#3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
  echo done
 done
 north #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 #2: "northnet-eastnet/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
-#3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
  # policies and state should be multiple
 north #
  ipsec _kernel state
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
 src 192.1.2.23 dst 192.1.3.33
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -66,66 +71,30 @@ src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	 replay_window 0, bitmap-length 0
 src 192.1.2.23 dst 192.1.3.33
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.3.33 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 north #
- ip xfrm policy
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.33
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.33
-		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 north #
  

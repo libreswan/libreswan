@@ -1,4 +1,4 @@
-ip xfrm policy
+ipsec _kernel policy
 ipsec _kernel state
 if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi

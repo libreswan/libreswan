@@ -15,23 +15,21 @@ road #
  ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
 Total IPsec connections: loaded 7, active 0
 road #
- ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
+down
 road #
  sleep 5
 road #
- # should show no tunnels and no bare shunts and a state in IKE_SA_INIT_I
+ # should show no tunnels and no bare shunts and a state in STATE_PARENT_I1
 road #
  ipsec whack --trafficstatus
 road #
  ipsec whack --shuntstatus
 Bare Shunt list:
  
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $7
 road #
- ipsec status |grep STATE_
-#5: "private#192.1.2.23/32"[1] ...192.1.2.23:500 IKE_SA_INIT_I (sent IKE_SA_INIT request); RETRANSMIT in -1s; idle;
+ ipsec showstates
 road #
  # east triggered OE, we still have our #1 which is now obsoleted
 road #
@@ -39,9 +37,10 @@ road #
 road #
  # state #1 should be gone by now. State #2 and #3 should be there.
 road #
- ipsec status |grep STATE_
-#7: "private#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-#8: "private#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
+ ipsec showstates
+#2: "private#192.1.2.23/32"[2] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#3: "private#192.1.2.23/32"[2] ...192.1.2.23:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
+#3: "private#192.1.2.23/32"[2] ...192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 road #
  # confirm it didn't create a shunt and did not nuke out policy
 road #
@@ -49,59 +48,43 @@ road #
 Bare Shunt list:
  
 road #
- ip xfrm policy
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority PRIORITY ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority PRIORITY ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.3.254/32 
-	dir out priority PRIORITY ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.2.254/32 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.3.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.3.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
 road #
  sleep 30
 road #
@@ -113,62 +96,47 @@ road #
 Bare Shunt list:
  
 road #
- ip xfrm policy
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority PRIORITY ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority PRIORITY ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.3.254/32 
-	dir out priority PRIORITY ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir in priority PRIORITY ptype main 
-src 192.1.3.209/32 dst 192.1.2.254/32 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.2.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.3.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.209/32 dst 192.1.3.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
 road #
  # a tunnel should have established
 road #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"private#192.1.2.23/32"[1] ...192.1.2.23 #8: negotiated connection [192.1.3.209/32->192.1.2.23/32]
+"private#192.1.2.23/32"[2] ...192.1.2.23 #3: responder established Child SA using #2; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+road #
 

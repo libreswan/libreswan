@@ -40,72 +40,56 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	replay-window 0 
 	lastused YYYY-MM-DD HH:MM:SS
 east #
- ip xfrm policy
-src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.2.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.2.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64
+	dir fwd priority PRIORITY ptype main
+src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64
+	dir in priority PRIORITY ptype main
+src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64
+	dir out priority PRIORITY ptype main
+src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64
+	dir fwd priority PRIORITY ptype main
+src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64
+	dir in priority PRIORITY ptype main
+src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64
+	dir out priority PRIORITY ptype main
+src fe80::/64 dst fe80::/64
+	dir fwd priority PRIORITY ptype main
+src fe80::/64 dst fe80::/64
+	dir in priority PRIORITY ptype main
+src fe80::/64 dst fe80::/64
+	dir out priority PRIORITY ptype main
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir fwd priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64
+	dir in priority PRIORITY ptype main
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+		level use
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
+	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto comp spi 0xSPISPI reqid REQID mode tunnel
 	tmpl src :: dst ::
 		proto esp spi 0xSPISPI reqid REQID mode transport
-src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-		proto comp reqid REQID mode tunnel
-		level use 
-	tmpl src :: dst ::
-		proto esp reqid REQID mode transport
-src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
-	dir in priority PRIORITY ptype main 
-	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-		proto comp reqid REQID mode tunnel
-		level use 
-	tmpl src :: dst ::
-		proto esp reqid REQID mode transport
-src fe80::/64 dst fe80::/64 
-	dir fwd priority PRIORITY ptype main 
-src fe80::/64 dst fe80::/64 
-	dir in priority PRIORITY ptype main 
-src fe80::/64 dst fe80::/64 
-	dir out priority PRIORITY ptype main 
-src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64 
-	dir fwd priority PRIORITY ptype main 
-src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64 
-	dir in priority PRIORITY ptype main 
-src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64 
-	dir out priority PRIORITY ptype main 
-src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
-	dir fwd priority PRIORITY ptype main 
-src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
-	dir in priority PRIORITY ptype main 
-src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
-	dir out priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir out priority PRIORITY ptype main 
-src 192.0.2.0/24 dst 192.0.2.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.0.2.0/24 dst 192.0.2.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.0.2.0/24 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 east #
  

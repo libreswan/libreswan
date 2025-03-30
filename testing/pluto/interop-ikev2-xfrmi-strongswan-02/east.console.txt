@@ -32,11 +32,11 @@ east #
 initdone
 east #
  ../../guestbin/ip.sh -s link show ipsec0
-X: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+X: ipsec0@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
+    RX:  bytes packets errors dropped  missed   mcast           
+            84       1      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+            84       1      0       0       0       0 
 east #
  ../../guestbin/ip.sh rule show
 0:	from all lookup local

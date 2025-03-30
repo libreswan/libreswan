@@ -55,7 +55,7 @@ default via 192.1.3.254 dev eth0
 192.1.2.23 dev ipsec0 scope link
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
- # check if_id and mark in ip xfrm state
+ # check if_id and mark in ipsec _kernel state
 road #
  ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
@@ -93,23 +93,7 @@ road #
 road #
  ipsec _kernel state
 road #
- ip xfrm policy
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+ ipsec _kernel policy
 road #
  echo done
 done

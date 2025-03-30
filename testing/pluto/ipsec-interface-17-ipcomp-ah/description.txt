@@ -16,4 +16,4 @@ however:
   XFRMI code passes no marks to the kernel, the kernel still feels the
   need to add them, hence the presence of output marks
 
-Note: unsure why "proto 4" in output of ip xfrm state
+Note: unsure why "proto 4" in output of ipsec _kernel state

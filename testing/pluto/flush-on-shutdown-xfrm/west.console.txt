@@ -3,7 +3,7 @@ Creating empty NSS database
 west #
  # expect no holes; not ipsec-kernel-policy.sh as that filters
 west #
- ip xfrm policy
+ ipsec _kernel policy
 west #
  ipsec pluto --config /etc/ipsec.conf --leak-detective
 west #
@@ -11,73 +11,25 @@ west #
 west #
  # expect holes; not ipsec-kernel-policy.sh as that filters
 west #
- ip xfrm policy
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir out priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir fwd priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 135 
-	dir in priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir out priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir fwd priority PRIORITY ptype main 
-src ::/0 dst ::/0 proto ipv6-icmp type 136 
-	dir in priority PRIORITY ptype main 
+ ipsec _kernel policy
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
 west #
  ipsec whack --shutdown
 Pluto is shutting down
 west #
  # expect no holes; not ipsec-kernel-policy.sh as that filters
 west #
- ip xfrm policy
+ ipsec _kernel policy
 west #
  

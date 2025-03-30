@@ -14,52 +14,32 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec status | grep STATE_
+ ipsec showstates
 #1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 #2: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #1; idle;
+#2: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #3; idle;
+#4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 #5: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 #6: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #5; idle;
+#6: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 #7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
+#8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 east #
- ip xfrm policy
-src 192.1.2.23/32 dst 192.0.2.1/32 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.2.1/32 dst 192.1.2.23/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.1/32 dst 192.1.2.23/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.0.2.1/32
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
-src 192.0.2.1/32 dst 192.1.2.23/32 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.1/32 dst 192.1.2.23/32 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 east #
  

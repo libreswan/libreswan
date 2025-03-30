@@ -4,7 +4,7 @@
 ipsec trafficstatus
 ipsec shuntstatus
 # we should see one of each in/fwd/out (confirming %pass shunt delete didn't take out dir out tunnel policy
-ip xfrm policy
+ipsec _kernel policy
 # nic blocks cleartext, so confirm tunnel is working
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23

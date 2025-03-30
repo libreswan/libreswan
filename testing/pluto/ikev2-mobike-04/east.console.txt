@@ -28,15 +28,15 @@ src 192.1.2.23 dst 192.1.33.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 east #
- ip xfrm policy
-src 0.0.0.0/0 dst 192.0.3.10/32 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 0.0.0.0/0 dst 192.0.3.10/32
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.33.209
-src 192.0.3.10/32 dst 0.0.0.0/0 
-	dir fwd priority PRIORITY ptype main 
+src 192.0.3.10/32 dst 0.0.0.0/0
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.33.209 dst 192.1.2.23
-src 192.0.3.10/32 dst 0.0.0.0/0 
-	dir in priority PRIORITY ptype main 
+src 192.0.3.10/32 dst 0.0.0.0/0
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.33.209 dst 192.1.2.23
 east #
  grep "MOBIKE " /tmp/pluto.log | sed -e '/Message ID:/ s/;.*//'

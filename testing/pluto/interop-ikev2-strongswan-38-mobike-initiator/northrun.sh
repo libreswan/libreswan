@@ -3,7 +3,7 @@ strongswan up westnet-eastnet-ikev2
 strongswan status
 # note this end is 192.1.3.33
 ipsec _kernel state
-ip xfrm policy
+ipsec _kernel policy
 sleep 5
 # remove this end ip next one will take over
 ../../guestbin/ip.sh address del 192.1.3.33/24 dev eth1

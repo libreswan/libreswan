@@ -3,7 +3,7 @@ ping -n -q -W 1 -c 2 192.0.2.254
 ipsec whack --trafficstatus
 # note this end should be 192.1.3.209
 ipsec _kernel state
-ip xfrm policy
+ipsec _kernel policy
 sleep 5
 # remove this end ip next one will take over
 ../../guestbin/ip.sh route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254

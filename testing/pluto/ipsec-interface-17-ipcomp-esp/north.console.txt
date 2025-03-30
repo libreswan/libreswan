@@ -41,7 +41,7 @@ north #
 north #
  sleep  2
 north #
- ip xfrm state
+ ipsec _kernel state
 src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn

@@ -2,7 +2,7 @@
 # their reqid cannot be the same.
 ipsec trafficstatus
 ipsec _kernel state
-ip xfrm policy
+ipsec _kernel policy
 # test packet flow
 ../../guestbin/ip.sh address add 192.0.1.254/24 dev eth0
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
