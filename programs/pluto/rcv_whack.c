@@ -388,6 +388,11 @@ static void whack_checkpubkeys(const struct whack_message *wm, struct show *s)
 	show_pubkeys(s, wm->whack_utc, SHOW_EXPIRED_KEYS);
 }
 
+static void whack_shutdown_leave_state(const struct whack_message *wm UNUSED, struct show *s)
+{
+	whack_shutdown(show_logger(s), true);
+}
+
 static void whack_list(const struct whack_message *wm, struct show *s)
 {
 	monotime_t now = mononow();
@@ -619,6 +624,10 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_seccomp_crashtest,
 		},
 #endif
+		[WHACK_SHUTDOWN_LEAVE_STATE] = {
+			.name = "shutdown(leave-state)",
+			.op = whack_shutdown_leave_state,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -783,13 +792,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		/* add a public key */
 		key_add_request(m, show_logger(s));
 		dbg_whack(s, "key: stop:");
-	}
-
-	/* luckily last !?! */
-	if (m->whack_leave_state) {
-		dbg_whack(s, "leave_state: start");
-		whack_shutdown(logger, true);
-		dbg_whack(s, "leave_state: stop");
 	}
 
 	return;

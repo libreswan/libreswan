@@ -112,8 +112,9 @@ enum whack_command {
 	WHACK_CHECKPUBKEYS,
 	/**/
 #ifdef USE_SECCOMP
-	WHACK_SECCOMP_CRASHTEST
+	WHACK_SECCOMP_CRASHTEST,
 #endif
+	WHACK_SHUTDOWN_LEAVE_STATE,
 };
 
 /*
@@ -218,10 +219,6 @@ struct whack_message {
 
 	/* when non-zero, act on this */
 	enum whack_command whack_command;
-
-	bool whack_leave_state;		/* .basic.shutdown should not
-					 * send delete or clean kernel
-					 * state on shutdown */
 
 	/* name is used in connection and initiate */
 	char *name;

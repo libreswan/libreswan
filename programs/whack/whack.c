@@ -1472,18 +1472,16 @@ int main(int argc, char **argv)
 			continue;
 #ifdef USE_SECCOMP
 		case OPT_SECCOMP_CRASHTEST:	/* --seccomp-crashtest */
-			msg.whack_command = WHACK_SECCOMP_CRASHTEST;
+			whack_command(&msg, WHACK_SECCOMP_CRASHTEST);
 			continue;
 #endif
 
 		case OPT_SHUTDOWN:	/* --shutdown */
 			msg.basic.whack_shutdown = true;
 			continue;
-
 		case OPT_LEAVE_STATE:	/* --leave-state */
-			/* ignore --shutdown */
-			msg.basic.whack_shutdown = false;
-			msg.whack_leave_state = true;
+			/* see below; --shutdown is ignored */
+			whack_command(&msg, WHACK_SHUTDOWN_LEAVE_STATE);
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
@@ -2627,9 +2625,13 @@ int main(int argc, char **argv)
 	      msg.whack_unlisten ||
 	      msg.ike_buf_size ||
 	      !lmod_empty(msg.debugging) ||
-	      msg.impairments.len > 0 ||
-	      msg.whack_leave_state)) {
+	      msg.impairments.len > 0)) {
 		diagw("no action specified; try --help for hints");
+	}
+
+	if (msg.whack_command == WHACK_SHUTDOWN_LEAVE_STATE) {
+		/* --leave-state overrides basic shutdown */
+		msg.basic.whack_shutdown = false;
 	}
 
 	/* build esp message as esp="<esp>;<pfsgroup>" */
