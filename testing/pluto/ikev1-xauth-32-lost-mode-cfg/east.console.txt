@@ -14,6 +14,9 @@ east #
  echo initdone
 initdone
 east #
+ ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
+"east-any"[1] 192.1.2.254 #2: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:EPHEM DPD=passive username=xroad}
+east #
  # on EAST, dump the state of the initial SAs
 east #
  ipsec _kernel state
@@ -49,6 +52,9 @@ src 192.0.2.101/32 dst 0.0.0.0/0
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
+east #
+ ../../guestbin/wait-for-pluto.sh '^".*#4: IPsec SA established'
+"east-any"[2] 192.1.2.254 #4: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:EPHEM DPD=passive username=xroad}
 east #
  # on EAST, dump the state of the reconnect SAs
 east #

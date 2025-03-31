@@ -49,7 +49,7 @@ road #
  ipsec down road-east-modecfg-yes
 "road-east-modecfg-yes": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "road-east-modecfg-yes" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"road-east-modecfg-yes" #2: ESP traffic information: in=84B out=140B XAUTHuser=xroad
+"road-east-modecfg-yes" #2: ESP traffic information: in=84B out=84B XAUTHuser=xroad
 "road-east-modecfg-yes" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 road #
  ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east-modecfg-no --initiate
