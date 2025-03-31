@@ -162,6 +162,7 @@ sysctl -q -p || true # still expected to fail!
 TITLE run unbound-keygen once
 
 systemctl start unbound-keygen.service
+systemctl disable unbound-anchor.timer
 
 
 TITLE Clobber some annoying services
