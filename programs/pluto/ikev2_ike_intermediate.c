@@ -266,8 +266,8 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			/* find any matching PPK and PPK_ID */
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk_and_ppk_id(c);
-			ppk_id = ppk->id;
 			if (ppk != NULL) {
+				ppk_id = ppk->id;
 				found_one = true;
 				chunk_t ppk_confirmation =
 					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
