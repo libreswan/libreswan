@@ -356,7 +356,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	if (!encrypt_v2SK_payload(&request.sk)) {
 		llog(RC_LOG, request.logger,
 		     "error encrypting response");
-		return false;
+		return STF_INTERNAL_ERROR;
 	}
 
 	record_v2_message(&request.message, request.story, request.outgoing_fragments);
@@ -541,7 +541,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	if (!encrypt_v2SK_payload(&response.sk)) {
 		llog(RC_LOG, response.logger,
 		     "error encrypting response");
-		return false;
+		return STF_INTERNAL_ERROR;
 	}
 
 	record_v2_message(&response.message, response.story, response.outgoing_fragments);
