@@ -896,7 +896,7 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 	change_v1_state(&ike->sa, STATE_MODE_CFG_I1);
 
 	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REQUEST, LEMPTY)) {
-		return false;
+		return STF_FATAL;
 	}
 
 	if (*state_event_slot(&ike->sa, EVENT_v1_RETRANSMIT) == NULL) {
