@@ -50,19 +50,20 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # wait for a few DPDs
+ ipsec trafficstatus
+#2: "westnet-eastnet-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.1.254/32
 west #
- sleep 11
+ # wait for a DPD; XXX: this is a debug line!
 west #
- grep "R_U_THERE_ACK, seqno received" /tmp/pluto.log >/dev/null || echo DPD failed
-DPD failed
+ ../../guestbin/wait-for.sh --match 'R_U_THERE_ACK, seqno received' -- cat /tmp/pluto.log | sed -e 's/received:.*/received:/'
+| "westnet-eastnet-ikev1" #1: DPD: R_U_THERE_ACK, seqno received:
 west #
  # confirm --down is processed properly too
 west #
  ipsec auto --down westnet-eastnet-ikev1
 "westnet-eastnet-ikev1": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
 "westnet-eastnet-ikev1" #2: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA #1
-"westnet-eastnet-ikev1" #2: ESP traffic information: in=1008B out=980B XAUTHuser=use3
+"westnet-eastnet-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
 "westnet-eastnet-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  echo done
