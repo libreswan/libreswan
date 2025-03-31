@@ -900,29 +900,6 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
-static bool init_load_conn(struct starter_config *cfg,
-			   const struct config_parsed *cfgp,
-			   struct section_list *sconn,
-			   bool defaultconn,
-			   struct logger *logger)
-{
-	ldbg(logger, "loading conn %s", sconn->name);
-
-	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
-
-	if (!load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger)) {
-		/* ??? should caller not log perrl? */
-		return false;
-	}
-
-	if (!validate_conn(conn, logger)) {
-		return false;
-	}
-
-	conn->state = STATE_LOADED;
-	return true;
-}
-
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger)
@@ -981,10 +958,26 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
 		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
-			if (!streq(sconn->name, "%default"))
-				init_load_conn(cfg, cfgp, sconn,
-					       /*default conn*/false,
-					       logger);
+			if (streq(sconn->name, "%default")) {
+				/* %default processed above */
+				continue;
+			}
+
+			ldbg(logger, "loading conn %s", sconn->name);
+			struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
+			if (!load_conn(conn, cfgp, sconn,
+				       /*also*/true,
+				       /*default-conn*/false,
+				       logger)) {
+				/* ??? should caller not log perrl? */
+				continue;
+			}
+
+			conn->state = STATE_LOADED;
+
+			if (!validate_conn(conn, logger)) {
+				continue;
+			}
 		}
 	}
 
