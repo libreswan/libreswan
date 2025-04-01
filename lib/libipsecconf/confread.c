@@ -357,11 +357,23 @@ static bool validate_end(struct starter_conn *conn_st,
 #  undef ERR_FOUND
 }
 
-static bool validate_conn(struct starter_conn *conn, struct logger *logger)
+bool confread_validate_conn(struct starter_conn *conn, struct logger *logger)
 {
 	bool ok = true;
 	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
 	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
+	return ok;
+}
+
+bool confread_validate_conns(struct starter_config *config, struct logger *logger)
+{
+	bool ok = true;
+	struct starter_conn *conn;
+	TAILQ_FOREACH(conn, &config->conns, link) {
+		if (conn->state == STATE_LOADED) {
+			ok &= confread_validate_conn(conn, logger);
+		}
+	}
 	return ok;
 }
 
@@ -934,11 +946,18 @@ struct starter_config *confread_load(const char *file,
 
 		/*
 		 * Load %default conn
+		 *
 		 * ??? is it correct to accept multiple %default conns?
+		 *
+		 * XXX: yes, apparently it's a feature
 		 */
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
 		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
+				/*
+				 * Is failing to load default conn
+				 * fatal?
+				 */
 				ldbg(logger, "loading default conn");
 				if (!load_conn(&cfg->conn_default,
 					       cfgp, sconn,
@@ -947,7 +966,8 @@ struct starter_config *confread_load(const char *file,
 					       logger)) {
 					break;
 				}
-				if (!validate_conn(&cfg->conn_default, logger)) {
+				/* validate each update?!? */
+				if (!confread_validate_conn(&cfg->conn_default, logger)) {
 					break;
 				}
 			}
@@ -974,10 +994,6 @@ struct starter_config *confread_load(const char *file,
 			}
 
 			conn->state = STATE_LOADED;
-
-			if (!validate_conn(conn, logger)) {
-				continue;
-			}
 		}
 	}
 

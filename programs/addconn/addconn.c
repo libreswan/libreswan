@@ -334,6 +334,14 @@ int main(int argc, char *argv[])
 		exit(3);
 	}
 
+	if (!configsetup) {
+		if (!confread_validate_conns(cfg, logger)) {
+			/* already logged? */
+			llog(RC_LOG, logger, "cannot validate config file '%s'", configfile);
+			exit(3);
+		}
+	}
+
 	if (checkconfig) {
 		confread_free(cfg);
 		exit(0);

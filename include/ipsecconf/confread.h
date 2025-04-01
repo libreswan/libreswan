@@ -121,9 +121,15 @@ extern struct config_parsed *parser_load_conf(const char *file,
 					      struct logger *logger);
 extern void parser_freeany_config_parsed(struct config_parsed **cfg);
 
-extern struct starter_config *confread_load(const char *file,
-					    bool setuponly,
-					    struct logger *logger);
+struct starter_config *confread_load(const char *file,
+				     bool setuponly,
+				     struct logger *logger);
+
+bool confread_validate_conn(struct starter_conn *conn,
+			    struct logger *logger);
+bool confread_validate_conns(struct starter_config *config,
+			     struct logger *logger);
+
 
 extern void confread_free(struct starter_config *cfg);
 
