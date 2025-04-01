@@ -63,8 +63,11 @@ static bool translate_conn(struct starter_conn *conn,
  * @param cfg starter_config struct
  * @return void
  */
-static void ipsecconf_default_values(struct starter_config *cfg)
+
+static struct starter_config *alloc_starter_config(void)
 {
+	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
+
 	static const struct starter_config empty_starter_config;	/* zero or null everywhere */
 	*cfg = empty_starter_config;
 
@@ -160,6 +163,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->state = STATE_LOADED;
 	/* ==== end of conn %default ==== */
+
+	return cfg;
 }
 
 /**
@@ -921,16 +926,10 @@ struct starter_config *confread_load(const char *file,
 	 * Load file
 	 */
 	struct config_parsed *cfgp = parser_load_conf(file, logger);
-
 	if (cfgp == NULL)
 		return NULL;
 
-	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
-
-	/**
-	 * Set default values
-	 */
-	ipsecconf_default_values(cfg);
+	struct starter_config *cfg = alloc_starter_config();
 
 	/**
 	 * Load setup
