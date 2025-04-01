@@ -336,12 +336,10 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 		struct config_parsed *cfg = (*cfgp);
 		parser_free_kwlist(cfg->config_setup);
 
-		for (struct section_list *seci = TAILQ_FIRST(&cfg->sections);
-		     seci != NULL; ) {
-			/* step off */
-			struct section_list *sec = seci;
-			seci = TAILQ_NEXT(seci, link);
-
+		/* keep deleting the first entry */
+		struct section_list *sec;
+		while ((sec = TAILQ_FIRST(&cfg->sections)) != NULL) {
+			TAILQ_REMOVE(&cfg->sections, sec, link);
 			pfreeany(sec->name);
 			parser_free_kwlist(sec->kw);
 			pfree(sec);
