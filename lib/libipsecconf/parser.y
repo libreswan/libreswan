@@ -60,10 +60,11 @@ static struct parser {
 static void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
 			      const char *s, ...) PRINTF_LIKE(4);
 
-void parser_kw(struct keyword *kw, const char *string, struct logger *logger);
+void parser_kw(struct parser *parser, struct keyword *kw, const char *string, struct logger *logger);
 
 static void yyerror(struct logger *logger, const char *msg);
-static void new_parser_kw(struct keyword *keyword, const char *string,
+static void new_parser_kw(struct parser *parser,
+			  struct keyword *keyword, const char *string,
 			  uintmax_t number, deltatime_t time,
 			  struct logger *logger);
 
@@ -161,18 +162,18 @@ statement_kw:
 		 */
 		struct keyword kw = $1;
 		const char *value = $3.keydef->keyname;
-		parser_kw(&kw, value, logger);
+		parser_kw(&parser, &kw, value, logger);
 	}
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
 		const char *string = $3;
-		parser_kw(&kw, string, logger);
+		parser_kw(&parser, &kw, string, logger);
 		/* free strings allocated by lexer */
 		pfreeany($3);
 	}
 	| KEYWORD EQUAL {
 		struct keyword kw = $1;
-		parser_kw(&kw, "", logger);
+		parser_kw(&parser, &kw, "", logger);
 	}
 
 	| COMMENT EQUAL STRING {
@@ -354,15 +355,16 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 	}
 }
 
-static void new_parser_kw(struct keyword *kw,
-			  const char *yytext,
-			  uintmax_t number,
-			  deltatime_t deltatime,
-			  struct logger *logger)
+void new_parser_kw(struct parser *parser,
+		   struct keyword *kw,
+		   const char *yytext,
+		   uintmax_t number,
+		   deltatime_t deltatime,
+		   struct logger *logger)
 {
 	/* both means no prefix */
 	const char *section = "???";
-	switch (parser.section) {
+	switch (parser->section) {
 	case SECTION_CONFIG_SETUP:
 		section = "'config setup'";
 		if ((kw->keydef->validity & kv_config) == LEMPTY) {
@@ -396,7 +398,7 @@ static void new_parser_kw(struct keyword *kw,
 
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
-	for (end = parser.kw; (*end) != NULL; end = &(*end)->next) {
+	for (end = parser->kw; (*end) != NULL; end = &(*end)->next) {
 		if ((*end)->keyword.keydef != kw->keydef) {
 			continue;
 		}
@@ -408,7 +410,7 @@ static void new_parser_kw(struct keyword *kw,
 			continue;
 		}
 		/* note the weird behaviour! */
-		if (parser.section == SECTION_CONFIG_SETUP) {
+		if (parser->section == SECTION_CONFIG_SETUP) {
 			parser_kw_warning(logger, kw, yytext,
 					  "overriding earlier %s keyword with new value", section);
 			pfreeany((*end)->string);
@@ -625,7 +627,8 @@ static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
 
 }
 
-void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
+void parser_kw(struct parser *parser, struct keyword *kw,
+	       const char *string, struct logger *logger)
 {
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
@@ -694,6 +697,6 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 	}
 
 	if (ok) {
-		new_parser_kw(kw, string, number, deltatime, logger);
+		new_parser_kw(parser, kw, string, number, deltatime, logger);
 	}
 }
