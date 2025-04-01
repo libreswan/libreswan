@@ -340,7 +340,7 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef USE_SECCOMP
-	switch (cfg->values[KBF_SECCOMP].option) {
+	switch (cfg->setup[KBF_SECCOMP].option) {
 		case SECCOMP_ENABLED:
 			init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
@@ -350,14 +350,14 @@ int main(int argc, char *argv[])
 	case SECCOMP_DISABLED:
 		break;
 	default:
-		bad_case(cfg->values[KBF_SECCOMP].option);
+		bad_case(cfg->setup[KBF_SECCOMP].option);
 	}
 #endif
 
 #ifdef USE_DNSSEC
-	unbound_sync_init(cfg->values[KBF_DO_DNSSEC].option,
-			  cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
-			  cfg->values[KSF_PLUTO_DNSSEC_ANCHORS].string,
+	unbound_sync_init(cfg->setup[KBF_DO_DNSSEC].option,
+			  cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
+			  cfg->setup[KSF_PLUTO_DNSSEC_ANCHORS].string,
 			  logger);
 #endif
 
@@ -575,9 +575,9 @@ int main(int argc, char *argv[])
 
 		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
-				if (cfg->values[kd->field].string) {
+				if (cfg->setup[kd->field].string) {
 					printf("%s\n",
-						cfg->values[kd->field].string);
+						cfg->setup[kd->field].string);
 				} else {
 					/* implicit default */
 					printf("xfrm\n");
@@ -609,28 +609,28 @@ int main(int argc, char *argv[])
 			case kt_filename:
 			case kt_dirname:
 			case kt_host:
-				if (cfg->values[kd->field].string) {
+				if (cfg->setup[kd->field].string) {
 					printf("%s %s%s='%s'\n",
 						export, varprefix, safe_kwname,
-						cfg->values[kd->field].string);
+						cfg->setup[kd->field].string);
 				}
 				break;
 
 			case kt_bool:
 				printf("%s %s%s='%s'\n", export, varprefix,
 					safe_kwname,
-					bool_str(cfg->values[kd->field].option));
+					bool_str(cfg->setup[kd->field].option));
 				break;
 
 			case kt_obsolete:
 				break;
 
 			default:
-				if (cfg->values[kd->field].option ||
-					cfg->values[kd->field].set) {
+				if (cfg->setup[kd->field].option ||
+					cfg->setup[kd->field].set) {
 					printf("%s %s%s='%jd'\n",
 						export, varprefix, safe_kwname,
-						cfg->values[kd->field].option);
+						cfg->setup[kd->field].option);
 				}
 				break;
 			}
