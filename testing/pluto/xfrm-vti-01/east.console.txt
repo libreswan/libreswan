@@ -12,8 +12,11 @@ east #
  echo "initdone"
 initdone
 east #
+ ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
+"westnet-eastnet-vti" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+east #
  grep -v -P "\t0$" /proc/net/xfrm_stat
-XfrmInTmplMismatch      	4
+XfrmInTmplMismatch      	1
 east #
  ipsec whack --shutdown
 Pluto is shutting down

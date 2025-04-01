@@ -38,7 +38,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-vti
+ ipsec up westnet-eastnet-vti
 "westnet-eastnet-vti" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-vti" #1: sent Main Mode request
 "westnet-eastnet-vti" #1: sent Main Mode I2
@@ -54,7 +54,12 @@ west #
 "westnet-eastnet-vti" #2: up-client output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-shared=yes ?
 "westnet-eastnet-vti" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- # since we have vti-routing=no, no marking, so unencrypted packets are dropped
+ echo up
+up
+west #
+ # since we have vti-routing=no, no marking, so unencrypted packets are
+west #
+ # dropped; this triggers an XFRM mismatch(?)
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
@@ -62,9 +67,11 @@ west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ip.sh route add 192.0.2.0/24 dev vti0
+ # now packets into vti0 device will get marked, and encrypted and
 west #
- # now packets into vti0 device will get marked, and encrypted and counted
+ # counted
+west #
+ ../../guestbin/ip.sh route add 192.0.2.0/24 dev vti0
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
