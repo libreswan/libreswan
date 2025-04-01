@@ -19,6 +19,7 @@
 
 #include <sys/queue.h>		/* for TAILQ_* */
 
+#include "shunk.h"
 #include "deltatime.h"
 
 struct logger;
@@ -64,8 +65,9 @@ unsigned parser_cur_line(void);
 void parser_y_init(const char *name, FILE *f );
 void parser_y_include(const char *filename, struct logger *logger);
 
-struct config_parsed *parser_load_conf(const char *file,
-					      struct logger *logger);
+void parser_find_keyword(shunk_t s, struct keyword *kw, struct logger *logger);
+
+struct config_parsed *parser_load_conf(const char *file, struct logger *logger);
 void parser_freeany_config_parsed(struct config_parsed **cfg);
 
 #define THIS_IPSEC_CONF_VERSION 2
