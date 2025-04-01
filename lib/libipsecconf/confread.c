@@ -72,7 +72,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	/* ==== config setup ==== */
 
-# define SOPT(kbf, v)  { cfg->values[kbf].option = (v) ; }
+# define SOPT(kbf, v)  { cfg->setup[kbf].option = (v) ; }
 
 	SOPT(KBF_LOGTIME, true);
 	SOPT(KBF_LOGAPPEND, true);
@@ -101,11 +101,11 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 # undef SOPT
 
-	cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
-	cfg->values[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
-	cfg->values[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
-	cfg->values[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
-	cfg->values[KSF_IPSECDIR].string = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
+	cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
+	cfg->setup[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
+	cfg->setup[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
+	cfg->setup[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
+	cfg->setup[KSF_IPSECDIR].string = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
 
 	/* ==== end of config setup ==== */
 
@@ -189,11 +189,11 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_dirname:
 		case kt_host:
 			/* all treated as strings for now */
-			assert(f < elemsof(cfg->values));
-			pfreeany(cfg->values[f].string);
-			cfg->values[f].string =
+			assert(f < elemsof(cfg->setup));
+			pfreeany(cfg->setup[f].string);
+			cfg->setup[f].string =
 				clone_str(kw->string, "kt_loose_enum kw->string");
-			cfg->values[f].set = true;
+			cfg->setup[f].set = true;
 			break;
 
 		case kt_lset:
@@ -204,17 +204,17 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_binary:
 		case kt_byte:
 			/* all treated as a number for now */
-			assert(f < elemsof(cfg->values));
-			cfg->values[f].option = kw->number;
-			cfg->values[f].set = true;
+			assert(f < elemsof(cfg->setup));
+			cfg->setup[f].option = kw->number;
+			cfg->setup[f].set = true;
 			break;
 
 		case kt_seconds:
 		case kt_milliseconds:
 			/* all treated as a number for now */
-			assert(f < elemsof(cfg->values));
-			cfg->values[f].deltatime = kw->deltatime;
-			cfg->values[f].set = true;
+			assert(f < elemsof(cfg->setup));
+			cfg->setup[f].deltatime = kw->deltatime;
+			cfg->setup[f].set = true;
 			break;
 
 		case kt_bitstring:
@@ -355,6 +355,26 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	return ok;
 #  undef ERR_FOUND
+}
+
+bool confread_validate_conn(struct starter_conn *conn, struct logger *logger)
+{
+	bool ok = true;
+	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
+	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
+	return ok;
+}
+
+bool confread_validate_conns(struct starter_config *config, struct logger *logger)
+{
+	bool ok = true;
+	struct starter_conn *conn;
+	TAILQ_FOREACH(conn, &config->conns, link) {
+		if (conn->state == STATE_LOADED) {
+			ok &= confread_validate_conn(conn, logger);
+		}
+	}
+	return ok;
 }
 
 /**
@@ -840,10 +860,7 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
 
-	bool ok = true;
-	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
-	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
-	return ok;
+	return true;
 }
 
 static void copy_conn_default(struct starter_conn *conn,
@@ -895,25 +912,6 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
-static bool init_load_conn(struct starter_config *cfg,
-			   const struct config_parsed *cfgp,
-			   struct section_list *sconn,
-			   bool defaultconn,
-			   struct logger *logger)
-{
-	ldbg(logger, "loading conn %s", sconn->name);
-
-	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
-
-	if (!load_conn(conn, cfgp, sconn, /*also*/true, defaultconn, logger)) {
-		/* ??? should caller not log perrl? */
-		return false;
-	}
-
-	conn->state = STATE_LOADED;
-	return true;
-}
-
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger)
@@ -948,19 +946,30 @@ struct starter_config *confread_load(const char *file,
 
 		/*
 		 * Load %default conn
+		 *
 		 * ??? is it correct to accept multiple %default conns?
+		 *
+		 * XXX: yes, apparently it's a feature
 		 */
-		bool ok = true;
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-		     ok && sconn != NULL;
-		     sconn = TAILQ_NEXT(sconn, link)) {
+		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
 			if (streq(sconn->name, "%default")) {
+				/*
+				 * Is failing to load default conn
+				 * fatal?
+				 */
 				ldbg(logger, "loading default conn");
-				ok &= load_conn(&cfg->conn_default,
-						cfgp, sconn,
-						/*also=*/false,
-						/*default conn*/true,
-						logger);
+				if (!load_conn(&cfg->conn_default,
+					       cfgp, sconn,
+					       /*also=*/false,
+					       /*default conn*/true,
+					       logger)) {
+					break;
+				}
+				/* validate each update?!? */
+				if (!confread_validate_conn(&cfg->conn_default, logger)) {
+					break;
+				}
 			}
 		}
 
@@ -969,10 +978,22 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
 		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
-			if (!streq(sconn->name, "%default"))
-				init_load_conn(cfg, cfgp, sconn,
-					       /*default conn*/false,
-					       logger);
+			if (streq(sconn->name, "%default")) {
+				/* %default processed above */
+				continue;
+			}
+
+			ldbg(logger, "loading conn %s", sconn->name);
+			struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
+			if (!load_conn(conn, cfgp, sconn,
+				       /*also*/true,
+				       /*default-conn*/false,
+				       logger)) {
+				/* ??? should caller not log perrl? */
+				continue;
+			}
+
+			conn->state = STATE_LOADED;
 		}
 	}
 
@@ -1010,8 +1031,9 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	for (unsigned i = 0; i < elemsof(cfg->values); i++)
-		pfreeany(cfg->values[i].string);
+	for (unsigned i = 0; i < elemsof(cfg->setup); i++) {
+		pfreeany(cfg->setup[i].string);
+	}
 
 	confread_free_conn(&cfg->conn_default);
 

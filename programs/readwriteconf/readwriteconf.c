@@ -141,12 +141,17 @@ int main(int argc, char *argv[])
 		exit(3);
 	}
 
+	if (!confread_validate_conns(cfg, logger)) {
+		/* already logged? */
+		llog(RC_LOG, logger, "cannot validate config file '%s'", configfile);
+		exit(3);
+	}
+
 	/* load all conns marked as auto=add or better */
 	if (verbose) {
-		for (conn = cfg->conns.tqh_first;
-		     conn != NULL;
-		     conn = conn->link.tqe_next)
-				printf("#conn %s loaded\n", conn->name);
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
+			printf("#conn %s loaded\n", conn->name);
+		}
 	}
 
 	confwrite(cfg, stdout, setup, name, verbose);
