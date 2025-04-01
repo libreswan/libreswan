@@ -278,11 +278,17 @@ void yyerror(struct logger *logger, const char *s)
 	}
 }
 
+static struct config_parsed *alloc_config_parsed(void)
+{
+	struct config_parsed *cfgp = alloc_thing(struct config_parsed, __func__);
+	TAILQ_INIT(&cfgp->sections);
+	return cfgp;
+}
+
 struct config_parsed *parser_load_conf(const char *file,
 				       struct logger *logger)
 {
-	parser.cfg = alloc_thing(struct config_parsed, __func__);
-	PASSERT(logger, parser.cfg != NULL);
+	parser.cfg = alloc_config_parsed();
 	ldbg(logger, "allocated config %p", parser.cfg);
 
 	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") :
@@ -296,7 +302,6 @@ struct config_parsed *parser_load_conf(const char *file,
 	yyin = f;
 	parser_y_init(file, f);
 	save_errors = true;
-	TAILQ_INIT(&parser.cfg->sections);
 
 	if (yyparse(logger) != 0) {
 		save_errors = false;
