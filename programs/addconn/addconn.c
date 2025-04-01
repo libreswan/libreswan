@@ -334,15 +334,13 @@ int main(int argc, char *argv[])
 		exit(3);
 	}
 
-	if (!configsetup) {
+	if (checkconfig) {
+		/* call is NO-OP when CONFIGSETUP */
 		if (!confread_validate_conns(cfg, logger)) {
 			/* already logged? */
 			llog(RC_LOG, logger, "cannot validate config file '%s'", configfile);
 			exit(3);
 		}
-	}
-
-	if (checkconfig) {
 		confread_free(cfg);
 		exit(0);
 	}
@@ -402,6 +400,12 @@ int main(int argc, char *argv[])
 			case AUTOSTART_UP:
 			case AUTOSTART_START:
 				break;
+			}
+
+			if (!confread_validate_conn(conn, logger)) {
+				llog(ERROR_STREAM, logger, "conn %s did not validaten",
+				     conn->name);
+				continue;
 			}
 
 			if (verbose > 0) {
@@ -486,6 +490,13 @@ int main(int argc, char *argv[])
 
 			if (conn->state == STATE_FAILED) {
 				fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
+					p1, p2, p3,
+					conn->name);
+				continue;
+			}
+
+			if (!confread_validate_conn(conn, logger)) {
+				fprintf(stderr, "\n%s%s%sconn %s did not validate\n",
 					p1, p2, p3,
 					conn->name);
 				continue;
