@@ -149,10 +149,9 @@ int main(int argc, char *argv[])
 
 	/* load all conns marked as auto=add or better */
 	if (verbose) {
-		for (conn = cfg->conns.tqh_first;
-		     conn != NULL;
-		     conn = conn->link.tqe_next)
-				printf("#conn %s loaded\n", conn->name);
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
+			printf("#conn %s loaded\n", conn->name);
+		}
 	}
 
 	confwrite(cfg, stdout, setup, name, verbose);

@@ -383,26 +383,32 @@ int main(int argc, char *argv[])
 		if (verbose > 0)
 			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
 
-		for (struct starter_conn *conn = cfg->conns.tqh_first;
-		     conn != NULL; conn = conn->link.tqe_next) {
+		struct starter_conn *conn = NULL;
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
 			enum autostart autostart = conn->values[KNCF_AUTO].option;
 			switch (autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:
-				break;
+#if 0
+				if (verbose > 0) {
+					printf("    %s ignored\n", conn->name);
+				}
+#endif
+				continue;
 			case AUTOSTART_ADD:
 			case AUTOSTART_ROUTE:
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
 			case AUTOSTART_START:
-				if (verbose > 0)
-					printf("    %s\n", conn->name);
-				resolve_default_routes(conn, logger);
-				starter_whack_add_conn(ctlsocket,
-						       conn, logger);
 				break;
 			}
+
+			if (verbose > 0) {
+				printf("    %s\n", conn->name);
+			}
+			resolve_default_routes(conn, logger);
+			starter_whack_add_conn(ctlsocket, conn, logger);
 		}
 
 		/*
@@ -441,8 +447,7 @@ int main(int argc, char *argv[])
 
 			/* find first name match, if any */
 			struct starter_conn *conn = NULL;
-			for (conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			TAILQ_FOREACH(conn, &cfg->conns, link)  {
 				if (streq(conn->name, connname)) {
 					break;
 				}
@@ -455,8 +460,7 @@ int main(int argc, char *argv[])
 				p2 = connname;
 				p3 = " ";
 
-				for (conn = cfg->conns.tqh_first;
-				     conn != NULL; conn = conn->link.tqe_next) {
+				TAILQ_FOREACH(conn, &cfg->conns, link) {
 					if (lsw_alias_cmp(connname,
 						conn->values[KSCF_CONNALIAS].string)) {
 						break;
@@ -510,69 +514,79 @@ int main(int argc, char *argv[])
 	}
 
 	if (listall) {
-		if (verbose > 0)
-			printf("listing all conns\n");
-		for (struct starter_conn *conn = cfg->conns.tqh_first;
-		     conn != NULL; conn = conn->link.tqe_next)
-			printf("%s ", conn->name);
-		printf("\n");
-	} else {
-		if (listadd) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=add\n");
 
+		if (verbose > 0) {
+			printf("listing all conns\n");
+		}
+		struct starter_conn *conn;
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
+			printf("%s ", conn->name);
+		}
+		printf("\n");
+
+	} else {
+
+		if (listadd) {
 			/* list all conns marked as auto=add */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=add\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_ADD)
+				if (autostart == AUTOSTART_ADD) {
 					printf("%s ", conn->name);
+				}
 			}
 		}
-		if (listroute) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=route and auto=up\n");
 
+		if (listroute) {
 			/*
 			 * list all conns marked as auto=route or start or
 			 * better
 			 */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=route and auto=up\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_START ||
 				    autostart == AUTOSTART_ROUTE ||
-				    autostart == AUTOSTART_ONDEMAND)
+				    autostart == AUTOSTART_ONDEMAND) {
 					printf("%s ", conn->name);
+				}
 			}
 		}
 
 		if (liststart && !listroute) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=up\n");
-
 			/* list all conns marked as auto=up */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=up\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START)
+				    autostart == AUTOSTART_START) {
 					printf("%s ", conn->name);
+				}
 			}
 		}
 
 		if (listignore) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=ignore\n");
-
 			/* list all conns marked as auto=up */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=ignore\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_IGNORE ||
-				    autostart == AUTOSTART_UNSET)
+				    autostart == AUTOSTART_UNSET) {
 					printf("%s ", conn->name);
+				}
 			}
 			printf("\n");
 		}
@@ -580,7 +594,6 @@ int main(int argc, char *argv[])
 
 	if (liststack) {
 		const struct keyword_def *kd;
-
 		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
 				if (cfg->setup[kd->field].string) {
