@@ -121,7 +121,8 @@ void show_blank(struct show *s)
 struct jambuf *show_jambuf(struct show *s, enum rc_type rc)
 {
 	pexpect(rc == RC_LOG ||
-		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/);
+		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/ ||
+		rc == RC_DEAF/*(oppo)initiate*/);
 	return jambuf_from_logjam(&s->logjam, s->logger,
 				  /*pluto_exit_code*/0,
 				  /*where*/NULL,
