@@ -316,16 +316,11 @@ static struct starter_config *read_cfg_file(char *configfile, struct logger *log
 {
 	struct starter_config *cfg = NULL;
 
+	/* "config setup" only */
 	cfg = confread_load(configfile, true, logger);
 	if (cfg == NULL) {
 		/* details already logged */
 		optarg_fatal(logger, "cannot load config file '%s'\n", configfile);
-	}
-
-	if (!confread_validate_conns(cfg, logger)) {
-		/* already logged? */
-		optarg_fatal(logger, "cannot parse config file '%s'", configfile);
-		exit(3);
 	}
 
 	return cfg;
