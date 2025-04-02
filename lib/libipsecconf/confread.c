@@ -42,6 +42,7 @@
 #include "ip_cidr.h"
 #include "ttodata.h"
 
+#include "ipsecconf/parser.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/interfaces.h"
 
@@ -999,6 +1000,42 @@ struct starter_config *confread_load(const char *file,
 
 			conn->state = STATE_LOADED;
 		}
+	}
+
+	parser_freeany_config_parsed(&cfgp);
+	return cfg;
+}
+
+struct starter_config *confread_argv(const char *name,
+				     char *argv[], int start,
+				     struct logger *logger)
+{
+	/**
+	 * Load file
+	 */
+	struct config_parsed *cfgp = parser_argv_conf(name, argv, start, logger);
+	if (cfgp == NULL)
+		return NULL;
+
+	struct starter_config *cfg = alloc_starter_config();
+	if (cfg == NULL) {
+		parser_freeany_config_parsed(&cfgp);
+		return NULL;
+	}
+
+	/*
+	 * Load other conns
+	 */
+
+	struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
+	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
+	if (!load_conn(conn, cfgp, sconn,
+		       /*also*/true,
+		       /*default conn*/false,
+		       logger)) {
+	    parser_freeany_config_parsed(&cfgp);
+	    /* XXX: leak! */
+	    return NULL;
 	}
 
 	parser_freeany_config_parsed(&cfgp);

@@ -117,6 +117,7 @@ struct starter_config *confread_load(const char *file,
 				     struct logger *logger,
 				     unsigned verbosity,
 				     const char *rootdirs[]);
+struct starter_config *confread_argv(const char *name, char *argv[], int start, struct logger *logger);
 
 bool confread_validate_conn(struct starter_conn *conn,
 			    struct logger *logger);
