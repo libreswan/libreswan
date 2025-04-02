@@ -169,6 +169,7 @@ enum opt {
 	OPT_LISTSTACK,
 	OPT_CHECKCONFIG,
 	OPT_NOEXPORT,
+	OPT_NAME,
 };
 
 const struct option optarg_options[] =
@@ -194,6 +195,7 @@ const struct option optarg_options[] =
 	/* obsoleted, eat and ignore for compatibility */
 	{"defaultroute\0!", required_argument, NULL, 0, },
 	{"defaultroutenexthop\0!", required_argument, NULL, 0, },
+	{"name\0", required_argument, NULL, OPT_NAME, },
 	{ 0, 0, 0, 0 }
 };
 
@@ -217,6 +219,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
+	const char *name = NULL;
 
 #if 0
 	/* efence settings */
@@ -227,7 +230,11 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 
-	while (true) {
+	/*
+	 * NAME terminates argument list early.
+	 */
+
+	while (name == NULL) {
 
 		int c = optarg_getopt(logger, argc, argv, "");
 		if (c < 0) {
@@ -304,6 +311,9 @@ int main(int argc, char *argv[])
 			varprefix = optarg;
 			continue;
 
+		case OPT_NAME:
+			name = optarg;
+			continue;
 		}
 
 		bad_case(c);
@@ -323,7 +333,20 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, configsetup, logger, verbose, NULL);
+	struct starter_config *cfg;
+	if (name != NULL) {
+		if (configsetup) {
+			llog(ERROR_STREAM, logger, "--conn %s conflicts with --configsetup", name);
+			exit(1);
+		}
+		if (autoall) {
+			llog(ERROR_STREAM, logger, "--conn %s conflicts with --autoall", name);
+			exit(1);
+		}
+		cfg = confread_argv(name, argv, optind, logger);
+	} else {
+		cfg = confread_load(configfile, configsetup, logger, verbose, NULL);
+	}
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
@@ -425,6 +448,20 @@ int main(int argc, char *argv[])
 
 		if (verbose > 0)
 			printf("\n");
+	} else if (name != NULL) {
+
+		struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
+		if (conn == NULL) {
+			llog(ERROR_STREAM, logger, "no conn %s to load", name);
+			exit(1);
+		}
+		if (!confread_validate_conn(conn, logger)) {
+			llog(ERROR_STREAM, logger, "%s did not validate", conn->name);
+			exit(1);
+		}
+		resolve_default_routes(conn, logger);
+		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
+
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;
