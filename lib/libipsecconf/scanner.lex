@@ -47,6 +47,7 @@ struct parser;
 #include "lswglob.h"
 #include "lswalloc.h"
 #include "ipsecconf/scanner.h"
+#include "end.h"
 
 #define MAX_INCLUDE_DEPTH	10
 
@@ -313,7 +314,7 @@ static bool parse_leftright(shunk_t s,
 }
 
 /* type is really "token" type, which is actually int */
-void parser_find_keyword(shunk_t s, struct keyword *kw, struct parser *parser)
+void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, struct parser *parser)
 {
 	bool left = false;
 	bool right = false;
@@ -322,12 +323,27 @@ void parser_find_keyword(shunk_t s, struct keyword *kw, struct parser *parser)
 
 	const struct keyword_def *k;
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
+
 		if (hunk_strcaseeq(s, k->keyname)) {
+
+			/* for instance --auth ... --to ... */
+			if (k->validity & kv_leftright) {
+				if (default_end == LEFT_END) {
+					left = true;
+					break;
+				}
+				if (default_end == RIGHT_END) {
+					right = true;
+					break;
+				}
+			}
+
 			if ((k->validity & kv_both) == kv_both) {
 				left = true;
 				right = true;
 				break;
 			}
+
 			if (k->validity & kv_leftright) {
 #if 0 /* see github#663 */
 				left = true;
@@ -530,7 +546,7 @@ include			{ BEGIN VALUE; return INCLUDE; }
 [^\"= \t\n]+		{
 				zero(&yylval);
 				/* does not return when lookup fails */
-				parser_find_keyword(shunk1(yytext), &yylval.k, parser);
+				parser_find_keyword(shunk1(yytext), END_ROOF, &yylval.k, parser);
 				BEGIN KEY;
 				return KEYWORD;
 			}

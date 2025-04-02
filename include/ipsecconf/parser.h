@@ -26,6 +26,7 @@
 struct jambuf;
 struct logger;
 struct parser;
+enum end;
 
 struct keyword {
 	const struct keyword_def *keydef;
@@ -84,7 +85,7 @@ void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 void parser_y_init(const char *name, FILE *f );
 void parser_y_include(const char *filename, struct parser *parser);
 
-void parser_find_keyword(shunk_t s, struct keyword *kw, struct parser *parser);
+void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, struct parser *parser);
 
 struct config_parsed *parser_load_conf(const char *file, struct logger *logger,
 				       unsigned verbosity, const char *rootdirs[]);
