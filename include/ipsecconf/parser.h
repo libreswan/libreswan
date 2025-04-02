@@ -87,6 +87,8 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 
 struct config_parsed *parser_load_conf(const char *file, struct logger *logger,
 				       unsigned verbosity, const char *rootdirs[]);
+struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start, struct logger *logger);
+
 void parser_freeany_config_parsed(struct config_parsed **cfg);
 
 #define THIS_IPSEC_CONF_VERSION 2
