@@ -38,11 +38,11 @@
 
 struct logger;
 #define YY_DECL int yylex(struct logger *logger)
-YY_DECL;
 
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */
 #include "ipsecconf/parser.h"	/* includes parser.tab.h */
+#include "ipsecconf/scanner.h"
 #include "lswlog.h"
 #include "lswglob.h"
 #include "lswalloc.h"
@@ -76,14 +76,9 @@ static struct {
 
 static struct ic_inputsource *stacktop;
 
-const char *parser_cur_filename(void)
+void jam_scanner_file_line(struct jambuf *buf)
 {
-	return stacktop->filename;
-}
-
-unsigned parser_cur_line(void)
-{
-	return stacktop->line;
+	jam(buf, "%s:%u: ", stacktop->filename, stacktop->line);
 }
 
 void parser_y_init (const char *name, FILE *f)
@@ -95,6 +90,7 @@ void parser_y_init (const char *name, FILE *f)
 	ic_private.stack[0].filename = clone_str(name, "filename");
 	stacktop = &ic_private.stack[0];
 	ic_private.stack_ptr = 0;
+	yyin = f;
 }
 
 static void parser_y_close(struct ic_inputsource *iis)

@@ -199,9 +199,8 @@ void parser_warning(struct logger *logger, int error, const char *s, ...)
 {
 	if (save_errors) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "%s:%u: warning: ",
-			    parser_cur_filename(),
-			    parser_cur_line());
+			jam_scanner_file_line(buf);
+			jam_string(buf, "warning: ");
 			va_list ap;
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
@@ -219,9 +218,7 @@ void parser_fatal(struct logger *logger, int error, const char *s, ...)
         struct jambuf *buf = jambuf_from_logjam(&logjam, logger, PLUTO_EXIT_FAIL,
                                                 NULL/*where*/, FATAL_STREAM);
         {
-		jam(buf, "%s:%u: ",
-		    parser_cur_filename(),
-		    parser_cur_line());
+		jam_scanner_file_line(buf);
 		va_list ap;
 		va_start(ap, s);
 		jam_va_list(buf, s, ap);
@@ -249,9 +246,8 @@ void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yy
 {
 	if (save_errors) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "%s:%u: warning: ",
-			    parser_cur_filename(),
-			    parser_cur_line());
+			jam_scanner_file_line(buf);
+			jam_string(buf, "warning: ");
 			/* message */
 			va_list ap;
 			va_start(ap, s);
@@ -271,9 +267,7 @@ void yyerror(struct logger *logger, const char *s)
 {
 	if (save_errors) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "%s:%u: ",
-			    parser_cur_filename(),
-			    parser_cur_line());
+			jam_scanner_file_line(buf);
 			jam_string(buf, s);
 		}
 	}
@@ -300,7 +294,6 @@ struct config_parsed *parser_load_conf(const char *file,
 		goto err;
 	}
 
-	yyin = f;
 	parser_y_init(file, f);
 	save_errors = true;
 
