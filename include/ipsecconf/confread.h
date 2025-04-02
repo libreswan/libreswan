@@ -19,23 +19,18 @@
  * for more details.
  */
 
-#ifndef _IPSEC_CONFREAD_H_
-#define _IPSEC_CONFREAD_H_
+#ifndef IPSECCONF_CONFREAD_H
+#define IPSECCONF_CONFREAD_H
 
 #include <sys/queue.h>		/* for TAILQ_ENTRY() */
+#include <stdint.h>
 
-#include "ipsecconf/keywords.h"
-
-#include "lset.h"
-#include "err.h"
-#include "ip_range.h"
-#include "ip_subnet.h"
-#include "ip_protoport.h"
-#include "ip_cidr.h"
-#include "lswcdefs.h"
+#include "keywords.h"		/* for KW_roof */
+#include "deltatime.h"
+#include "ip_address.h"
 #include "authby.h"
+#include "shunt.h"		/* for SHUNT_KIND_ROOF */
 #include "end.h"
-#include "shunt.h"
 
 struct logger;
 
@@ -117,10 +112,6 @@ struct starter_config {
 	TAILQ_HEAD(, starter_conn) conns;
 };
 
-extern struct config_parsed *parser_load_conf(const char *file,
-					      struct logger *logger);
-extern void parser_freeany_config_parsed(struct config_parsed **cfg);
-
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger);
@@ -130,7 +121,6 @@ bool confread_validate_conn(struct starter_conn *conn,
 bool confread_validate_conns(struct starter_config *config,
 			     struct logger *logger);
 
-
-extern void confread_free(struct starter_config *cfg);
+void confread_free(struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */

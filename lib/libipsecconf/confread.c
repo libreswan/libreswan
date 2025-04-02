@@ -63,8 +63,11 @@ static bool translate_conn(struct starter_conn *conn,
  * @param cfg starter_config struct
  * @return void
  */
-static void ipsecconf_default_values(struct starter_config *cfg)
+
+static struct starter_config *alloc_starter_config(void)
 {
+	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
+
 	static const struct starter_config empty_starter_config;	/* zero or null everywhere */
 	*cfg = empty_starter_config;
 
@@ -160,6 +163,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->state = STATE_LOADED;
 	/* ==== end of conn %default ==== */
+
+	return cfg;
 }
 
 /**
@@ -409,10 +414,11 @@ static bool translate_field(struct starter_conn *conn,
 	{
 		struct section_list *addin;
 		const char *seeking = kw->string;
-		for (addin = TAILQ_FIRST(&cfgp->sections);
-		     addin != NULL && !streq(seeking, addin->name);
-		     addin = TAILQ_NEXT(addin, link))
-			;
+		TAILQ_FOREACH(addin, &cfgp->sections, link) {
+			if (streq(seeking, addin->name)) {
+				break;
+			}
+		}
 		if (addin == NULL) {
 			llog(RC_LOG, logger,
 			     "cannot find conn '%s' needed by conn '%s'",
@@ -634,8 +640,8 @@ static bool load_conn(struct starter_conn *conn,
 		      struct logger *logger)
 {
 	/* reset all of the "beenhere" flags */
-	for (struct section_list *s = TAILQ_FIRST(&cfgp->sections);
-	     s != NULL; s = TAILQ_NEXT(s, link)) {
+	struct section_list *s;
+	TAILQ_FOREACH(s, &cfgp->sections, link) {
 		s->beenhere = false;
 	}
 
@@ -920,16 +926,10 @@ struct starter_config *confread_load(const char *file,
 	 * Load file
 	 */
 	struct config_parsed *cfgp = parser_load_conf(file, logger);
-
 	if (cfgp == NULL)
 		return NULL;
 
-	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
-
-	/**
-	 * Set default values
-	 */
-	ipsecconf_default_values(cfg);
+	struct starter_config *cfg = alloc_starter_config();
 
 	/**
 	 * Load setup
@@ -943,6 +943,7 @@ struct starter_config *confread_load(const char *file,
 	}
 
 	if (!setuponly) {
+		struct section_list *sconn;
 
 		/*
 		 * Load %default conn
@@ -951,8 +952,7 @@ struct starter_config *confread_load(const char *file,
 		 *
 		 * XXX: yes, apparently it's a feature
 		 */
-		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
+		TAILQ_FOREACH(sconn, &cfgp->sections, link) {
 			if (streq(sconn->name, "%default")) {
 				/*
 				 * Is failing to load default conn
@@ -976,8 +976,7 @@ struct starter_config *confread_load(const char *file,
 		/*
 		 * Load other conns
 		 */
-		for (struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-		     sconn != NULL; sconn = TAILQ_NEXT(sconn, link)) {
+		TAILQ_FOREACH(sconn, &cfgp->sections, link) {
 			if (streq(sconn->name, "%default")) {
 				/* %default processed above */
 				continue;
@@ -1001,7 +1000,7 @@ struct starter_config *confread_load(const char *file,
 	return cfg;
 }
 
-static void confread_free_conn(struct starter_conn *conn)
+static void confread_free_conn_content(struct starter_conn *conn)
 {
 	/* Free all strings */
 
@@ -1035,15 +1034,14 @@ void confread_free(struct starter_config *cfg)
 		pfreeany(cfg->setup[i].string);
 	}
 
-	confread_free_conn(&cfg->conn_default);
+	confread_free_conn_content(&cfg->conn_default);
 
-	for (struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
-	     conn != NULL; ) {
-		struct starter_conn *c = conn;
-		/* step off */
-		conn = TAILQ_NEXT(conn, link);
-		confread_free_conn(c);
-		pfree(c);
+	struct starter_conn *conn;
+	while ((conn = TAILQ_FIRST(&cfg->conns)) != NULL) {
+		TAILQ_REMOVE(&cfg->conns, conn, link);
+		confread_free_conn_content(conn);
+		pfree(conn);
 	}
+
 	pfree(cfg);
 }

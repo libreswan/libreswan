@@ -299,25 +299,24 @@ static bool parser_y_eof(struct logger *logger)
 
 /*
  * Look for one of the tokens, and set the value up right.
- *
- * If we don't find it, clone and return the string.
  */
 
-static bool parse_leftright(const char *s,
+static bool parse_leftright(shunk_t s,
 			    const struct keyword_def *k,
 			    const char *leftright)
 {
-	size_t split = strlen(leftright);
-	if (!strncaseeq(s, leftright, strlen(leftright))) {
+	/* gobble up "left|right" */
+	if (!hunk_strcaseeat(&s, leftright)) {
 		return false;
 	}
 
-	/* allow <leftright>-; s[split] could be '\0' */
-	if (s[split] == '-') {
-		split++;
+	/* if present and kw non-empty, gobble up "-" */
+	if (strlen(k->keyname) > 0) {
+		hunk_streat(&s, "-");
 	}
+
 	/* keyword matches? */
-	if (!strcaseeq(s + split, k->keyname)) {
+	if (!hunk_strcaseeq(s, k->keyname)) {
 		return false;
 	}
 
@@ -326,16 +325,16 @@ static bool parse_leftright(const char *s,
 }
 
 /* type is really "token" type, which is actually int */
-static void parser_find_keyword(const char *s, YYSTYPE *lval, struct logger *logger)
+void parser_find_keyword(shunk_t s, struct keyword *kw, struct logger *logger)
 {
 	bool left = false;
 	bool right = false;
 
-	(*lval) = (YYSTYPE) {0};
+	(*kw) = (struct keyword) {0};
 
 	const struct keyword_def *k;
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-		if (strcaseeq(s, k->keyname)) {
+		if (hunk_strcaseeq(s, k->keyname)) {
 			if ((k->validity & kv_both) == kv_both) {
 				left = true;
 				right = true;
@@ -364,13 +363,14 @@ static void parser_find_keyword(const char *s, YYSTYPE *lval, struct logger *log
 
 	/* if we still found nothing */
 	if (k->keyname == NULL) {
-		parser_fatal(logger, /*errno*/0, "unrecognized keyword '%s'", s);
+		parser_fatal(logger, /*errno*/0, "unrecognized keyword '"PRI_SHUNK"'",
+			     pri_shunk(s));
 	}
 
 	/* else, set up llval.k to point, and return KEYWORD */
-	lval->k.keydef = k;
-	lval->k.keyleft = left;
-	lval->k.keyright = right;
+	kw->keydef = k;
+	kw->keyleft = left;
+	kw->keyright = right;
 }
 
 %}
@@ -540,7 +540,9 @@ include			{ BEGIN VALUE; return INCLUDE; }
 			}
 
 [^\"= \t\n]+		{
-				parser_find_keyword(yytext, &yylval, logger);
+				zero(&yylval);
+				/* does not return when lookup fails */
+				parser_find_keyword(shunk1(yytext), &yylval.k, logger);
 				BEGIN KEY;
 				return KEYWORD;
 			}

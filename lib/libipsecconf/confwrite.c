@@ -489,8 +489,8 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	}
 
 	/* output connections */
-	for (struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
-	     conn != NULL; conn = TAILQ_NEXT(conn, link)) {
+	struct starter_conn *conn;
+	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (name == NULL || streq(name, conn->name)) {
 			confwrite_conn(out, conn, verbose);
 		}
