@@ -56,7 +56,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-missing --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-missing --to --host=192.1.2.23 --id=%any
 "west-eku-missing": added IKEv2 connection
  ipsec up west-eku-missing
 "west-eku-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -111,7 +111,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-ipsecIKE --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-ipsecIKE --to --host=192.1.2.23 --id=%any
 "west-eku-ipsecIKE": added IKEv2 connection
  ipsec up west-eku-ipsecIKE
 "west-eku-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -166,7 +166,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-x509Any --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-x509Any --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-x509Any --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-x509Any --to --host=192.1.2.23 --id=%any
 "west-eku-x509Any": added IKEv2 connection
  ipsec up west-eku-x509Any
 "west-eku-x509Any" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -223,7 +223,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-serverAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-serverAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth --to --host=192.1.2.23 --id=%any
 "west-eku-serverAuth": added IKEv2 connection
  ipsec up west-eku-serverAuth
 "west-eku-serverAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -279,7 +279,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-serverAuth-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth-ipsecIKE --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-serverAuth-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth-ipsecIKE --to --host=192.1.2.23 --id=%any
 "west-eku-serverAuth-ipsecIKE": added IKEv2 connection
  ipsec up west-eku-serverAuth-ipsecIKE
 "west-eku-serverAuth-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -335,7 +335,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-serverAuth-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth-critical --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-serverAuth-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth-critical --to --host=192.1.2.23 --id=%any
 "west-eku-serverAuth-critical": added IKEv2 connection
  ipsec up west-eku-serverAuth-critical
 "west-eku-serverAuth-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -390,7 +390,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-clientAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-clientAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth --to --host=192.1.2.23 --id=%any
 "west-eku-clientAuth": added IKEv2 connection
  ipsec up west-eku-clientAuth
 "west-eku-clientAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -446,7 +446,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-clientAuth-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth-ipsecIKE --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-clientAuth-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth-ipsecIKE --to --host=192.1.2.23 --id=%any
 "west-eku-clientAuth-ipsecIKE": added IKEv2 connection
  ipsec up west-eku-clientAuth-ipsecIKE
 "west-eku-clientAuth-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -502,7 +502,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-clientAuth-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth-critical --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-clientAuth-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth-critical --to --host=192.1.2.23 --id=%any
 "west-eku-clientAuth-critical": added IKEv2 connection
  ipsec up west-eku-clientAuth-critical
 "west-eku-clientAuth-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -559,7 +559,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-codeSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-codeSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning --to --host=192.1.2.23 --id=%any
 "west-eku-codeSigning": added IKEv2 connection
  ipsec up west-eku-codeSigning
 "west-eku-codeSigning" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -618,7 +618,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-codeSigning-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-ipsecIKE --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-codeSigning-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-ipsecIKE --to --host=192.1.2.23 --id=%any
 "west-eku-codeSigning-ipsecIKE": added IKEv2 connection
  ipsec up west-eku-codeSigning-ipsecIKE
 "west-eku-codeSigning-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -674,7 +674,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-codeSigning-serverAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-serverAuth --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-codeSigning-serverAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-serverAuth --to --host=192.1.2.23 --id=%any
 "west-eku-codeSigning-serverAuth": added IKEv2 connection
  ipsec up west-eku-codeSigning-serverAuth
 "west-eku-codeSigning-serverAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -730,7 +730,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-eku-codeSigning-clientAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-clientAuth --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-eku-codeSigning-clientAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-clientAuth --to --host=192.1.2.23 --id=%any
 "west-eku-codeSigning-clientAuth": added IKEv2 connection
  ipsec up west-eku-codeSigning-clientAuth
 "west-eku-codeSigning-clientAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

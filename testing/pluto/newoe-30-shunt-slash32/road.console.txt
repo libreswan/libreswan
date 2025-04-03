@@ -67,7 +67,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --failnone LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -124,7 +124,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --failnone --ike aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -166,7 +166,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --failnone --esp aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -209,7 +209,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --faildrop LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -266,7 +266,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --faildrop --ike aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -310,7 +310,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --faildrop --esp aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -355,7 +355,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --failpass LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -412,7 +412,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --failpass --ike aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -454,7 +454,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negopass --failpass --esp aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -495,7 +495,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --failnone LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -552,7 +552,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --failnone --ike aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -596,7 +596,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --failnone --esp aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -639,7 +639,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --faildrop LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -696,7 +696,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --faildrop --ike aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -742,7 +742,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --faildrop --esp aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -787,7 +787,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --failpass LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -844,7 +844,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --failpass --ike aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
@@ -888,7 +888,7 @@ road #
 Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 : --negodrop --failpass --esp aes LOADING CONNECTION
- ipsec whack --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
