@@ -16,7 +16,7 @@
 
 /* things from parser.l */
 
-struct logger;
+struct parser;
 
 #include <limits.h>		/* for PATH_MAX */
 #include "lswcdefs.h"		/* for PRINTF_LIKE() */
@@ -28,10 +28,10 @@ extern char rootdir2[PATH_MAX];	/* when evaluating paths, alternatively prefix t
 
 /* defined in parser.y */
 
-void parser_warning(struct logger *logger, int eerror/*can be 0*/,
+void parser_warning(struct parser *parser, int eerror/*can be 0*/,
 		    const char *s, ...) PRINTF_LIKE(3);
 
-void parser_fatal(struct logger *logger, int eerror/*can be 0*/,
+void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 		  const char *s, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
 /* Dirty trick to dodge bison version differences.

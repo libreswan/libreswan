@@ -14,8 +14,15 @@
  * for more details.
  */
 
-struct logger;
+#ifndef IPSECCONF_SCANNER_H
+#define IPSECCONF_SCANNER_H
 
-/* declared and defined in lex.yy.c (output of flex) */
-extern FILE *yyin;
-extern int yylex(struct logger *logger);
+struct jambuf;
+struct parser;
+
+extern int yylex(struct parser *parser);
+
+/* "<FILE>:<LINE>: " */
+void jam_scanner_file_line(struct jambuf *buf);
+
+#endif
