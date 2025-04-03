@@ -18,9 +18,9 @@
 #define IPSECCONF_SCANNER_H
 
 struct jambuf;
-struct logger;
+struct parser;
 
-extern int yylex(struct logger *logger);
+extern int yylex(struct parser *parser);
 
 /* "<FILE>:<LINE>: " */
 void jam_scanner_file_line(struct jambuf *buf);

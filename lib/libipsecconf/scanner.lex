@@ -36,8 +36,8 @@
 #include <unistd.h>
 #include <limits.h>
 
-struct logger;
-#define YY_DECL int yylex(struct logger *logger)
+struct parser;
+#define YY_DECL int yylex(struct parser *parser)
 
 #include "ipsecconf/keywords.h"
 #define YYDEBUG 1	/* HACK! for ipsecconf/parser.h AND parser.tab.h */
@@ -54,7 +54,7 @@ int lex_verbosity = 0;	/* how much tracing output to show */
 char rootdir[PATH_MAX];		/* when evaluating paths, prefix this to them */
 char rootdir2[PATH_MAX];	/* or... try this one too */
 
-static bool parser_y_eof(struct logger *logger);
+static bool parser_y_eof(struct parser *parser);
 
 /* we want no actual output! */
 #define ECHO
@@ -108,17 +108,17 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
-static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *logger)
+static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct parser *parser)
 {
 	if (iis->fileglob == NULL) {
 		/* EOF */
-		ldbg(logger, "EOF: no .fileglob");
+		ldbg(parser->logger, "EOF: no .fileglob");
 		return false;
 	}
 
 	if (iis->fileglob[iis->fileglobcnt] == NULL) {
 		/* EOF */
-		ldbg(logger, "EOF: .fileglob[%u] == NULL", iis->fileglobcnt);
+		ldbg(parser->logger, "EOF: .fileglob[%u] == NULL", iis->fileglobcnt);
 		return false;
 	}
 
@@ -139,7 +139,7 @@ static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *log
 	FILE *f = fopen(iis->filename, "r");
 	if (f == NULL) {
 		int e = errno;
-		parser_warning(logger, e,
+		parser_warning(parser, e,
 			       "cannot open include filename: '%s'",
 			       iis->fileglob[fcnt]);
 		return false;
@@ -152,6 +152,7 @@ static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct logger *log
 }
 
 struct lswglob_context {
+        struct parser *parser;
 	const char *filename;
 	const char *try;
 };
@@ -163,7 +164,7 @@ static void glob_include(unsigned count, char **files,
 	/* success */
 
 	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
-		parser_warning(logger, /*errno*/0,
+		parser_warning(context->parser, /*errno*/0,
 			       "including '%s' exceeds max inclusion depth of %u",
 			       context->filename, MAX_INCLUDE_DEPTH);
 		return;
@@ -190,10 +191,10 @@ static void glob_include(unsigned count, char **files,
 	}
 	stacktop->fileglob[count] = NULL;
 
-	parser_y_eof(logger);
+	parser_y_eof(context->parser);
 }
 
-void parser_y_include (const char *filename, struct logger *logger)
+void parser_y_include (const char *filename, struct parser *parser)
 {
 	/*
 	 * If there is no rootdir, but there is a rootdir2, swap them.
@@ -206,12 +207,13 @@ void parser_y_include (const char *filename, struct logger *logger)
 
 	struct lswglob_context context = {
 		.filename = filename,
+		.parser = parser,
 	};
 
 	if (filename[0] != '/' || rootdir[0] == '\0') {
 		/* try plain name, with no rootdirs */
 		context.try = filename;
-		if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
+		if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
 			return;
 		}
 		/*
@@ -219,7 +221,7 @@ void parser_y_include (const char *filename, struct logger *logger)
 		 *
 		 * XXX: throw?
 		 */
-		parser_warning(logger, /*errno*/0,
+		parser_warning(parser, /*errno*/0,
 			       "could not open include filename: '%s'",
 			       filename);
 		return;
@@ -230,13 +232,13 @@ void parser_y_include (const char *filename, struct logger *logger)
 	snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
 	context.try = newname;
 
-	if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
+	if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
 		return;
 	}
 
 	if (rootdir2[0] == '\0') {
 		/* not a wildcard, throw error */
-		parser_warning(logger, /*errno*/0,
+		parser_warning(parser, /*errno*/0,
 			       "could not open include filename '%s' (tried '%s')",
 			       filename, newname);
 		return;
@@ -247,33 +249,33 @@ void parser_y_include (const char *filename, struct logger *logger)
 	snprintf(newname2, sizeof(newname2),
 		 "%s%s", rootdir2, filename);
 	context.try = newname2;
-	if (lswglob(context.try, "ipsec.conf", glob_include, &context, logger)) {
+	if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
 		return;
 	}
 
-	parser_warning(logger, /*errno*/0,
+	parser_warning(parser, /*errno*/0,
 		       "could not open include filename: '%s' (tried '%s' and '%s')",
 		       filename, newname, newname2);
 
 	return;
 }
 
-static bool parser_y_eof(struct logger *logger)
+static bool parser_y_eof(struct parser *parser)
 {
 	if (stacktop->state != YY_CURRENT_BUFFER) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 	}
 
-	if (!parser_y_nextglobfile(stacktop, logger)) {
+	if (!parser_y_nextglobfile(stacktop, parser)) {
 		/* no more glob'ed files to process */
 
 		if (lex_verbosity > 0) {
 			int stackp = ic_private.stack_ptr;
 
-			ldbg(logger, "end of file %s", stacktop->filename);
+			ldbg(parser->logger, "end of file %s", stacktop->filename);
 
 			if (stackp > 0) {
-				ldbg(logger, "resuming %s:%u",
+				ldbg(parser->logger, "resuming %s:%u",
 				     ic_private.stack[stackp-1].filename,
 				     ic_private.stack[stackp-1].line);
 			}
@@ -321,7 +323,7 @@ static bool parse_leftright(shunk_t s,
 }
 
 /* type is really "token" type, which is actually int */
-void parser_find_keyword(shunk_t s, struct keyword *kw, struct logger *logger)
+void parser_find_keyword(shunk_t s, struct keyword *kw, struct parser *parser)
 {
 	bool left = false;
 	bool right = false;
@@ -359,7 +361,7 @@ void parser_find_keyword(shunk_t s, struct keyword *kw, struct logger *logger)
 
 	/* if we still found nothing */
 	if (k->keyname == NULL) {
-		parser_fatal(logger, /*errno*/0, "unrecognized keyword '"PRI_SHUNK"'",
+		parser_fatal(parser, /*errno*/0, "unrecognized keyword '"PRI_SHUNK"'",
 			     pri_shunk(s));
 	}
 
@@ -390,7 +392,7 @@ void parser_find_keyword(shunk_t s, struct keyword *kw, struct logger *logger)
 %%
 
 <<EOF>>	{
-	ldbg(logger, "EOF: stacktop->filename = %s",
+	ldbg(parser->logger, "EOF: stacktop->filename = %s",
 	     stacktop->filename == NULL ? "<null>" : stacktop->filename);
 
 	/*
@@ -407,7 +409,7 @@ void parser_find_keyword(shunk_t s, struct keyword *kw, struct logger *logger)
 	 * we've finished this file:
 	 * continue with the file it was included from (if any)
 	 */
-	if (parser_y_eof(logger)) {
+	if (parser_y_eof(parser)) {
 		yyterminate();
 	}
 }
@@ -538,7 +540,7 @@ include			{ BEGIN VALUE; return INCLUDE; }
 [^\"= \t\n]+		{
 				zero(&yylval);
 				/* does not return when lookup fails */
-				parser_find_keyword(shunk1(yytext), &yylval.k, logger);
+				parser_find_keyword(shunk1(yytext), &yylval.k, parser);
 				BEGIN KEY;
 				return KEYWORD;
 			}
@@ -546,7 +548,7 @@ include			{ BEGIN VALUE; return INCLUDE; }
 #.*			{ /* eat comment to end of line */ }
 
 .			{
-				parser_warning(logger, /*errno*/0,
+				parser_warning(parser, /*errno*/0,
 					       "unrecognized: %s", yytext);
 			}
 %%
