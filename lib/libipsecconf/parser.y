@@ -48,7 +48,7 @@
 /**
  * Static Globals
  */
-static bool save_errors;
+static enum stream parser_error_stream = ERROR_STREAM;
 
 static struct parser {
 	struct config_parsed *cfg;
@@ -197,8 +197,8 @@ statement_kw:
 
 void parser_warning(struct logger *logger, int error, const char *s, ...)
 {
-	if (save_errors) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
+	if (parser_error_stream != NO_STREAM) {
+		LLOG_JAMBUF(parser_error_stream, logger, buf) {
 			jam_scanner_file_line(buf);
 			jam_string(buf, "warning: ");
 			va_list ap;
@@ -244,8 +244,8 @@ static const char *leftright(struct keyword *kw)
 void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
 		       const char *s, ...)
 {
-	if (save_errors) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
+	if (parser_error_stream != NO_STREAM) {
+		LLOG_JAMBUF(parser_error_stream, logger, buf) {
 			jam_scanner_file_line(buf);
 			jam_string(buf, "warning: ");
 			/* message */
@@ -265,8 +265,8 @@ void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yy
 
 void yyerror(struct logger *logger, const char *s)
 {
-	if (save_errors) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
+	if (parser_error_stream != NO_STREAM) {
+		LLOG_JAMBUF(parser_error_stream, logger, buf) {
 			jam_scanner_file_line(buf);
 			jam_string(buf, s);
 		}
@@ -295,10 +295,10 @@ struct config_parsed *parser_load_conf(const char *file,
 	}
 
 	parser_y_init(file, f);
-	save_errors = true;
 
 	if (yyparse(logger) != 0) {
-		save_errors = false;
+		/* suppress errors */
+		parser_error_stream = (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
 		do {} while (yyparse(logger) != 0);
 		goto err;
 	}
