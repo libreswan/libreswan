@@ -50,19 +50,19 @@ typedef stf_status server_fork_cb(struct state *st,
 				  struct logger *logger);
 
 /*
- * Call OP() within a child process.
+ * Call OP() within a child process.  OP() returns the exit code.
  *
  * Used to perform a thread unfriendly operation, such as calling PAM.
  */
 
 typedef int server_fork_op(void *context, struct logger *logger);
-extern int server_fork(const char *name,
-		       so_serial_t serialno,
-		       struct msg_digest *md,
-		       server_fork_op *op,
-		       server_fork_cb *callback,
-		       void *callback_context,
-		       struct logger *logger);
+pid_t server_fork(const char *name,
+		  so_serial_t serialno,
+		  struct msg_digest *md,
+		  server_fork_op *op,
+		  server_fork_cb *callback,
+		  void *callback_context,
+		  struct logger *logger);
 
 /*
  * Run a program as a child process in the background.
@@ -76,13 +76,13 @@ extern int server_fork(const char *name,
  * output from the process.
  */
 
-void server_fork_exec(const char *path,
-		      char *argv[], char *envp[],
-		      shunk_t input,
-		      enum stream log_output,
-		      server_fork_cb *callback,
-		      void *callback_context,
-		      struct logger *logger);
+pid_t server_fork_exec(const char *path,
+		       char *argv[], char *envp[],
+		       shunk_t input,
+		       enum stream log_output,
+		       server_fork_cb *callback,
+		       void *callback_context,
+		       struct logger *logger);
 
 void server_fork_sigchld_handler(struct logger *logger);
 void init_server_fork(struct logger *logger);

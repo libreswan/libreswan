@@ -224,12 +224,12 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	return true; /* try again */
 }
 
-int server_fork(const char *name,
-		so_serial_t serialno,
-		struct msg_digest *md,
-		server_fork_op *op,
-		server_fork_cb *callback, void *context,
-		struct logger *logger)
+pid_t server_fork(const char *name,
+		  so_serial_t serialno,
+		  struct msg_digest *md,
+		  server_fork_op *op,
+		  server_fork_cb *callback, void *context,
+		  struct logger *logger)
 {
 	pid_t pid = fork();
 	switch (pid) {
@@ -371,13 +371,13 @@ static void child_output_listener(int fd, void *arg, struct logger *logger)
 	drain_fd(pid_entry);
 }
 
-void server_fork_exec(const char *path,
-		      char *argv[], char *envp[],
-		      shunk_t input,
-		      enum stream output_stream,
-		      server_fork_cb *callback,
-		      void *callback_context,
-		      struct logger *logger)
+pid_t server_fork_exec(const char *path,
+		       char *argv[], char *envp[],
+		       shunk_t input,
+		       enum stream output_stream,
+		       server_fork_cb *callback,
+		       void *callback_context,
+		       struct logger *logger)
 {
 	const char *what = argv[0];
 	/*
@@ -388,7 +388,7 @@ void server_fork_exec(const char *path,
 	int fds[2]; /*0=read,1=write*/
 	if (pipe2(fds, O_CLOEXEC) < 0) {
 		llog_error(logger, errno, "pipe2() failed");
-		return;
+		return -1;
 	}
 
 #if USE_VFORK
@@ -400,7 +400,7 @@ void server_fork_exec(const char *path,
 #endif
 	if (pid < 0) {
 		llog_error(logger, errno, "fork failed");
-		return;
+		return -1;
 	}
 
 	if (pid == 0) {
@@ -452,6 +452,7 @@ void server_fork_exec(const char *path,
 	/* listen */
 	attach_fd_read_listener(&entry->fdl, entry->fd, "fork-exec",
 				child_output_listener, entry);
+	return pid;
 }
 
 void init_server_fork(struct logger *logger)
