@@ -35,7 +35,7 @@
 
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser.h"	/* includes parser.tab.h" */
-#include "ipsecconf/parser-flex.h"
+#include "ipsecconf/scanner.h"
 #include "ipsecconf/confread.h"
 #include "lswlog.h"
 #include "lmod.h"

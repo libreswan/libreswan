@@ -14,8 +14,14 @@
  * for more details.
  */
 
+#ifndef IPSECCONF_SCANNER_H
+#define IPSECCONF_SCANNER_H
+
 struct logger;
 
 /* declared and defined in lex.yy.c (output of flex) */
 extern FILE *yyin;
+
 extern int yylex(struct logger *logger);
+
+#endif
