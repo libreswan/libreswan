@@ -46,13 +46,9 @@ struct parser;
 #include "lswlog.h"
 #include "lswglob.h"
 #include "lswalloc.h"
+#include "ipsecconf/scanner.h"
 
 #define MAX_INCLUDE_DEPTH	10
-
-int lex_verbosity = 0;	/* how much tracing output to show */
-
-char rootdir[PATH_MAX];		/* when evaluating paths, prefix this to them */
-char rootdir2[PATH_MAX];	/* or... try this one too */
 
 static bool parser_y_eof(struct parser *parser);
 
@@ -170,7 +166,7 @@ static void glob_include(unsigned count, char **files,
 		return;
 	}
 
-	if (lex_verbosity > 0) {
+	if (context->parser->verbosity > 0) {
 		ldbg(logger, "including file '%s' ('%s') from %s:%u",
 		     context->filename, context->try,
 		     stacktop->filename,
@@ -196,21 +192,12 @@ static void glob_include(unsigned count, char **files,
 
 void parser_y_include (const char *filename, struct parser *parser)
 {
-	/*
-	 * If there is no rootdir, but there is a rootdir2, swap them.
-	 * This reduces the number of cases to be handled.
-	 */
-	if (rootdir[0] == '\0' && rootdir2[0] != '\0') {
-		strcpy(rootdir, rootdir2);
-		rootdir2[0] = '\0';
-	}
-
 	struct lswglob_context context = {
 		.filename = filename,
 		.parser = parser,
 	};
 
-	if (filename[0] != '/' || rootdir[0] == '\0') {
+	if (filename[0] != '/' || parser->rootdir == NULL) {
 		/* try plain name, with no rootdirs */
 		context.try = filename;
 		if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
@@ -228,28 +215,29 @@ void parser_y_include (const char *filename, struct parser *parser)
 	}
 
 	/* try prefixing with rootdir */
-	char newname[PATH_MAX];
-	snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
+	char *newname = alloc_printf("%s%s", parser->rootdir[0], filename); /* must free */
 	context.try = newname;
 
 	if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
+		pfree(newname);
 		return;
 	}
 
-	if (rootdir2[0] == '\0') {
+	if (parser->rootdir[1] == NULL) {
 		/* not a wildcard, throw error */
 		parser_warning(parser, /*errno*/0,
 			       "could not open include filename '%s' (tried '%s')",
 			       filename, newname);
+		pfree(newname);
 		return;
 	}
 
 	/* try again, prefixing with rootdir2 */
-	char newname2[PATH_MAX];
-	snprintf(newname2, sizeof(newname2),
-		 "%s%s", rootdir2, filename);
+	char *newname2 = alloc_printf("%s%s", parser->rootdir[1], filename); /* must free */
 	context.try = newname2;
 	if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
+		pfree(newname);
+		pfree(newname2);
 		return;
 	}
 
@@ -257,6 +245,8 @@ void parser_y_include (const char *filename, struct parser *parser)
 		       "could not open include filename: '%s' (tried '%s' and '%s')",
 		       filename, newname, newname2);
 
+	pfree(newname);
+	pfree(newname2);
 	return;
 }
 
@@ -269,7 +259,7 @@ static bool parser_y_eof(struct parser *parser)
 	if (!parser_y_nextglobfile(stacktop, parser)) {
 		/* no more glob'ed files to process */
 
-		if (lex_verbosity > 0) {
+		if (parser->verbosity > 0) {
 			int stackp = ic_private.stack_ptr;
 
 			ldbg(parser->logger, "end of file %s", stacktop->filename);

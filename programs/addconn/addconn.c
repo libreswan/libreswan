@@ -29,7 +29,6 @@
 #include "lswtool.h"
 #include "whack.h"
 #include "sparse_names.h"
-#include "ipsecconf/parser-controls.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
@@ -317,10 +316,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* some variables depend on verbose */
-	lex_verbosity = verbose;
-	yydebug = (verbose >= 4);
-
 	if (configfile == NULL) {
 		configfile = IPSEC_CONF;
 	}
@@ -328,7 +323,7 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, configsetup, logger);
+	struct starter_config *cfg = confread_load(configfile, configsetup, logger, verbose, NULL);
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);

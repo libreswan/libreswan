@@ -28,7 +28,6 @@
 #include "lswlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/parser-controls.h"
 #include "optarg.h"
 
 /*
@@ -39,10 +38,9 @@
 enum opt {
 	OPT_VERBOSE = 256,
 	OPT_DEBUG,
+	OPT_ROOTDIR,
 	OPT_CONFIG = 'C',
 	OPT_CONN = 'c',
-	OPT_ROOTDIR = 'R',
-	OPT_ROOTDIR2 = 'S',
 	OPT_HELP = 'h',
 	OPT_NOSETUP = 'n',
 };
@@ -54,7 +52,7 @@ const struct option optarg_options[] =
 	{ "debug\0",             no_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
 	{ "rootdir\0<dir>",      required_argument, NULL, OPT_ROOTDIR },
-	{ "rootdir2\0<dir2>",    required_argument, NULL, OPT_ROOTDIR2 },
+	{ "rootdir2\0>rootdir",  required_argument, NULL, OPT_ROOTDIR },
 	{ "nosetup",             no_argument, NULL, OPT_NOSETUP },
 	{ "help",                no_argument, NULL, OPT_HELP },
 	{ 0, 0, 0, 0 }
@@ -69,8 +67,8 @@ int main(int argc, char *argv[])
 	char *name = NULL;
 	bool setup = true;
 
-	rootdir[0] = '\0';
-	rootdir2[0] = '\0';
+	unsigned nr_rootdirs = 0;
+	const char *rootdir[2];
 
 	while (true) {
 		int c = optarg_getopt(logger, argc, argv, "");
@@ -101,13 +99,13 @@ int main(int argc, char *argv[])
 
 		case OPT_ROOTDIR:
 			printf("#setting rootdir=%s\n", optarg);
-			jam_str(rootdir, sizeof(rootdir), optarg);
+			if (nr_rootdirs >= elemsof(rootdir)) {
+				llog(ERROR_STREAM, logger, "too many root dirs");
+				exit(1);
+			}
+			rootdir[nr_rootdirs++] = optarg;
 			continue;
 
-		case OPT_ROOTDIR2:
-			printf("#setting rootdir2=%s\n", optarg);
-			jam_str(rootdir2, sizeof(rootdir2), optarg);
-			continue;
 		case OPT_CONN:
 			name = optarg;
 			continue;
@@ -121,10 +119,6 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	/* update fields dependent on VERBOSE */
-	yydebug = (verbose >= 4);
-	lex_verbosity = verbose;
-
 	/* logged when true */
 	ldbg(logger, "debugging mode enabled");
 
@@ -135,7 +129,8 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, false, logger);
+	struct starter_config *cfg = confread_load(configfile, false, logger, verbose,
+						   (nr_rootdirs > 0 ? rootdir : NULL));
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
