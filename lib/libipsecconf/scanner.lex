@@ -51,99 +51,108 @@ struct parser;
 
 #define MAX_INCLUDE_DEPTH	10
 
-static bool parser_y_eof(struct parser *parser);
+static bool scanner_next_file(struct parser *parser);
 
 /* we want no actual output! */
 #define ECHO
 
-struct ic_inputsource {
-	YY_BUFFER_STATE state;
+struct input_source {
+	YY_BUFFER_STATE saved_buffer;
 	FILE *file;
+	char *filename;
 	unsigned int line;
 	bool once;
-	char *filename;
-	int fileglobcnt;
-	char **fileglob;
+	unsigned current;
+	char **includes;
+	unsigned level;
+	struct input_source *next;
 };
 
-static struct {
-	int stack_ptr;
-	struct ic_inputsource stack[MAX_INCLUDE_DEPTH];
-} ic_private;
-
-static struct ic_inputsource *stacktop;
-
-void jam_scanner_file_line(struct jambuf *buf)
+void jam_scanner_file_line(struct jambuf *buf, struct parser *parser)
 {
-	jam(buf, "%s:%u: ", stacktop->filename, stacktop->line);
+	jam(buf, "%s:%u: ", parser->input->filename, parser->input->line);
 }
 
-void parser_y_init (const char *name, FILE *f)
+void scanner_init(struct parser *parser, const char *name, int start)
 {
-	memset(&ic_private, 0, sizeof(ic_private));
-	ic_private.stack[0].line = 1;
-	ic_private.stack[0].once = true;
-	ic_private.stack[0].file = f;
-	ic_private.stack[0].filename = clone_str(name, "filename");
-	stacktop = &ic_private.stack[0];
-	ic_private.stack_ptr = 0;
-	yyin = f;
+	parser->input = alloc_thing(struct input_source, __func__);
+	parser->input->line = start;
+	parser->input->once = true;
+	parser->input->level = 1;
+	parser->input->filename = clone_str(name, "filename");
 }
 
-static void parser_y_close(struct ic_inputsource *iis)
+bool scanner_open(struct parser *parser, const char *file)
 {
-	pfreeany(iis->filename);
-	if (iis->file != NULL) {
-		fclose(iis->file);
-		iis->file = NULL;
-	}
-	if (iis->fileglob != NULL) {
-		for (char **p = iis->fileglob; *p; p++) {
-			pfree(*p);
-		}
-		pfreeany(iis->fileglob);
-	}
-}
-
-static bool parser_y_nextglobfile(struct ic_inputsource *iis, struct parser *parser)
-{
-	if (iis->fileglob == NULL) {
-		/* EOF */
-		ldbg(parser->logger, "EOF: no .fileglob");
-		return false;
-	}
-
-	if (iis->fileglob[iis->fileglobcnt] == NULL) {
-		/* EOF */
-		ldbg(parser->logger, "EOF: .fileglob[%u] == NULL", iis->fileglobcnt);
-		return false;
-	}
-
-	/* increment for next time */
-	int fcnt = iis->fileglobcnt++;
-
-	if (iis->file != NULL) {
-		fclose(iis->file);
-		iis->file = NULL;
-	}
-	pfreeany(iis->filename);
-
-	iis->line = 1;
-	iis->once = true;
-	iis->filename = clone_str(iis->fileglob[fcnt], "fileglob");
-
-	/* open the file */
-	FILE *f = fopen(iis->filename, "r");
+	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") :
+		   fopen(file, "r"));
 	if (f == NULL) {
+		llog(RC_LOG, parser->logger, "can't load file '%s'", file);
+		false;
+	}
+
+	scanner_init(parser, file, 1);
+	parser->input->file = f;
+	yyin = f;
+	return true;
+}
+
+void scanner_close(struct parser *parser)
+{
+	passert(parser->input->next == NULL);
+	if (parser->input->file != NULL) {
+		fclose(parser->input->file);
+	}
+	pfree(parser->input->filename);
+	pfree(parser->input);
+	parser->input = NULL;
+}
+
+void scanner_next_line(struct parser *parser)
+{
+	parser->input->line++;
+}
+
+static bool scanner_next_include_file(struct parser *parser)
+{
+	if (parser->verbosity > 0) {
+		ldbg(parser->logger, "including next file after '%s' for %s:%u level %u",
+		     parser->input->filename,
+		     parser->input->next->filename,
+		     parser->input->next->line,
+		     parser->input->next->level);
+	}
+
+	/*
+	 * Clean up the previous include file.
+	 */
+	fclose(parser->input->file);
+	parser->input->file = NULL;
+	yy_delete_buffer(YY_CURRENT_BUFFER);
+
+	parser->input->current++; /* advance */
+	parser->input->filename = parser->input->includes[parser->input->current];
+	if (parser->input->filename == NULL) {
+		ldbg(parser->logger, "EOF: .includes[] == NULL");
+		return false;
+	}
+
+	/* advance to the new include file */
+	parser->input->line = 1;
+	parser->input->once = true;
+
+	/* open the new file */
+	parser->input->file = fopen(parser->input->filename, "r");
+	if (parser->input->file == NULL) {
 		int e = errno;
 		parser_warning(parser, e,
 			       "cannot open include filename: '%s'",
-			       iis->fileglob[fcnt]);
+			       parser->input->filename);
 		return false;
 	}
-	iis->file = f;
 
-	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
+	/* Switch YY_CURRENT_BUFFER to the new buffer */
+	yy_switch_to_buffer(yy_create_buffer(parser->input->file, YY_BUF_SIZE));
 
 	return true;
 }
@@ -154,13 +163,13 @@ struct lswglob_context {
 	const char *try;
 };
 
-static void glob_include(unsigned count, char **files,
-			  struct lswglob_context *context,
-			  struct logger *logger)
+static void glob_include_callback(unsigned count, char **files,
+				  struct lswglob_context *context,
+				  struct logger *logger)
 {
 	/* success */
 
-	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH - 1) {
+	if (context->parser->input->level >= MAX_INCLUDE_DEPTH) {
 		parser_warning(context->parser, /*errno*/0,
 			       "including '%s' exceeds max inclusion depth of %u",
 			       context->filename, MAX_INCLUDE_DEPTH);
@@ -168,30 +177,63 @@ static void glob_include(unsigned count, char **files,
 	}
 
 	if (context->parser->verbosity > 0) {
-		ldbg(logger, "including file '%s' ('%s') from %s:%u",
+		ldbg(logger, "including files '%s' ('%s') from %s:%u level %u",
 		     context->filename, context->try,
-		     stacktop->filename,
-		     stacktop->line);
+		     context->parser->input->filename,
+		     context->parser->input->line,
+		     context->parser->input->level);
 	}
 
-	PASSERT(logger, ic_private.stack_ptr < sizeof(ic_private.stack) - 1);
-	++ic_private.stack_ptr;
-	stacktop = &ic_private.stack[ic_private.stack_ptr];
-	stacktop->state = YY_CURRENT_BUFFER;
-	stacktop->file = NULL;
-	stacktop->filename = NULL;
-	stacktop->fileglobcnt = 0;
+	/*
+	 * Try to open the first of the files.  No point continuing
+	 * when it fails.
+	 *
+	 * When the glob doesn't match, this code is not called.
+	 */
+	PASSERT(logger, count > 0);
+	FILE *file = fopen(files[0], "r");
+	if (file == NULL) {
+		int e = errno;
+		parser_warning(context->parser, e,
+			       "cannot open include file '%s' ('%s') from %s:%u level %u",
+			       files[0], context->filename,
+			       context->parser->input->filename,
+			       context->parser->input->line,
+			       context->parser->input->level);
+		return;
+	}
 
-	stacktop->fileglob = alloc_things(char *, count + 1, "globs");
+	/*
+	 * Since the file is ok, build a new input_source, and in it
+	 * the list of expanded files needing to be included.
+	 */
+	struct input_source *iis = alloc_thing(struct input_source, __func__);
+	iis->includes = alloc_things(char *, count + 1, "includes"); /* NULL terminated */
 	for (unsigned i = 0; i < count; i++) {
-		stacktop->fileglob[i] = clone_str(files[i], "glob");
+		iis->includes[i] = clone_str(files[i], "include");
 	}
-	stacktop->fileglob[count] = NULL;
+	iis->line = 1;
+	iis->includes[count] = NULL;
+	iis->current = 0;
+	iis->file = file;
+	iis->level = context->parser->input->level + 1;
+	iis->filename = iis->includes[0];
 
-	parser_y_eof(context->parser);
+	/*
+	 * Save current buffer and switch YY_CURRENT_BUFFER to a new
+	 * one.
+	 */
+	iis->saved_buffer = YY_CURRENT_BUFFER;
+	yy_switch_to_buffer(yy_create_buffer(iis->file, YY_BUF_SIZE));
+
+	/*
+	 * Finally push the new input_source.
+	 */
+	iis->next = context->parser->input;
+	context->parser->input = iis;
 }
 
-void parser_y_include (const char *filename, struct parser *parser)
+void scanner_include(const char *filename, struct parser *parser)
 {
 	struct lswglob_context context = {
 		.filename = filename,
@@ -201,7 +243,7 @@ void parser_y_include (const char *filename, struct parser *parser)
 	if (filename[0] != '/' || parser->rootdir == NULL) {
 		/* try plain name, with no rootdirs */
 		context.try = filename;
-		if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
+		if (lswglob(context.try, "ipsec.conf", glob_include_callback, &context, parser->logger)) {
 			return;
 		}
 		/*
@@ -219,7 +261,7 @@ void parser_y_include (const char *filename, struct parser *parser)
 	char *newname = alloc_printf("%s%s", parser->rootdir[0], filename); /* must free */
 	context.try = newname;
 
-	if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
+	if (lswglob(context.try, "ipsec.conf", glob_include_callback, &context, parser->logger)) {
 		pfree(newname);
 		return;
 	}
@@ -236,7 +278,7 @@ void parser_y_include (const char *filename, struct parser *parser)
 	/* try again, prefixing with rootdir2 */
 	char *newname2 = alloc_printf("%s%s", parser->rootdir[1], filename); /* must free */
 	context.try = newname2;
-	if (lswglob(context.try, "ipsec.conf", glob_include, &context, parser->logger)) {
+	if (lswglob(context.try, "ipsec.conf", glob_include_callback, &context, parser->logger)) {
 		pfree(newname);
 		pfree(newname2);
 		return;
@@ -251,39 +293,42 @@ void parser_y_include (const char *filename, struct parser *parser)
 	return;
 }
 
-static bool parser_y_eof(struct parser *parser)
+static bool scanner_next_file(struct parser *parser)
 {
-	if (stacktop->state != YY_CURRENT_BUFFER) {
-		yy_delete_buffer(YY_CURRENT_BUFFER);
-	}
-
-	if (!parser_y_nextglobfile(stacktop, parser)) {
-		/* no more glob'ed files to process */
-
-		if (parser->verbosity > 0) {
-			int stackp = ic_private.stack_ptr;
-
-			ldbg(parser->logger, "end of file %s", stacktop->filename);
-
-			if (stackp > 0) {
-				ldbg(parser->logger, "resuming %s:%u",
-				     ic_private.stack[stackp-1].filename,
-				     ic_private.stack[stackp-1].line);
-			}
-		}
-
-		if (stacktop->state != YY_CURRENT_BUFFER) {
-			yy_switch_to_buffer(stacktop->state);
-		}
-
-		parser_y_close(stacktop);
-
-		if (--ic_private.stack_ptr < 0) {
+	if (parser->input->next != NULL) {
+		if (scanner_next_include_file(parser)) {
 			return true;
 		}
-		stacktop = &ic_private.stack[ic_private.stack_ptr];
+		ldbg(parser->logger, "resuming %s:%u level %u",
+		     parser->input->next->filename,
+		     parser->input->next->line,
+		     parser->input->next->level);
+	} else {
+		ldbg(parser->logger, "no more include files");
 	}
-	return false;
+
+	/* no more include files to process */
+
+	if (parser->input->next == NULL) {
+		return false;
+	}
+
+	/* Restore YY_CURRENT_BUFFER. */
+	yy_switch_to_buffer(parser->input->saved_buffer);
+
+	/* Cleanup */
+	for (char **p = parser->input->includes; *p; p++) {
+		pfree(*p);
+	}
+	pfreeany(parser->input->includes);
+
+	/* pop the stack */
+	struct input_source *stacktop = parser->input;
+	parser->input = parser->input->next;
+
+	pfree(stacktop);
+
+	return true;
 }
 
 /*
@@ -398,36 +443,38 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 %%
 
 <<EOF>>	{
-	ldbg(parser->logger, "EOF: stacktop->filename = %s",
-	     stacktop->filename == NULL ? "<null>" : stacktop->filename);
+	ldbg(parser->logger, "EOF: input->filename = %s",
+	     parser->input->filename == NULL ? "<null>" : parser->input->filename);
 
 	/*
-	 * Add a newline at the end of the file in case one was missing.
-	 * This code assumes that EOF is sticky:
-	 * that it can be detected repeatedly.
+	 * Add a newline at the end of the file in case one was
+	 * missing.
+	 *
+	 * This code assumes that EOF is sticky: that it can be
+	 * detected repeatedly.
 	 */
-	if (stacktop->once) {
-		stacktop->once = false;
+	if (parser->input->once) {
+		parser->input->once = false;
 		return EOL;
 	}
 
 	/*
-	 * we've finished this file:
-	 * continue with the file it was included from (if any)
+	 * We've finished this file.  Continue with the next include
+	 * file, or the file doing the including.
 	 */
-	if (parser_y_eof(parser)) {
+	if (!scanner_next_file(parser)) {
 		yyterminate();
 	}
 }
 
 ^[\t ]*#.*\n		{
 				/* eat comment lines */
-				stacktop->line++;
+				scanner_next_line(parser);
 			}
 
 ^[\t ]*\n		{
 				/* eat blank lines */
-				stacktop->line++;
+				scanner_next_line(parser);
 			}
 
 ^[\t ]+			return FIRST_SPACES;
@@ -444,7 +491,7 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 <KEY>[\t ]	/* eat blanks */
 <KEY>\n	{
 				/* missing equals? */
-				stacktop->line++;
+				scanner_next_line(parser);
 				BEGIN INITIAL;
 				return EOL;
 			}
@@ -453,7 +500,7 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 <VALUE>[\t ]		/* eat blanks (not COMMENT_VALUE) */
 <VALUE>\n		{
 				/* missing value? (not COMMENT_VALUE) */
-				stacktop->line++;
+				scanner_next_line(parser);
 				BEGIN INITIAL;
 				return EOL;
 			}
@@ -501,7 +548,7 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 			}
 
 <INITIAL>\n		{
-				stacktop->line++;
+				scanner_next_line(parser);
 				return EOL;
 			}
 
@@ -529,7 +576,7 @@ include			{ BEGIN VALUE; return INCLUDE; }
 			}
 <COMMENT_KEY>\n		{
 				/* missing equals? */
-				stacktop->line++;
+				scanner_next_line(parser);
 				BEGIN INITIAL;
 				return EOL;
 			}

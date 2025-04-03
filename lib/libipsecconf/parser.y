@@ -125,7 +125,7 @@ section_or_include:
 
 	} kw_sections
 	| INCLUDE STRING EOL {
-		parser_y_include($2, parser);
+		scanner_include($2, parser);
 		/* free strings allocated by lexer */
 		pfreeany($2)
 	}
@@ -186,7 +186,7 @@ void parser_warning(struct parser *parser, int error, const char *s, ...)
 {
 	if (parser->error_stream != NO_STREAM) {
 		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
-			jam_scanner_file_line(buf);
+			jam_scanner_file_line(buf, parser);
 			jam_string(buf, "warning: ");
 			va_list ap;
 			va_start(ap, s);
@@ -207,7 +207,7 @@ void parser_fatal(struct parser *parser, int error, const char *s, ...)
                                                 NULL/*where*/,
 						FATAL_STREAM);
         {
-		jam_scanner_file_line(buf);
+		jam_scanner_file_line(buf, parser);
 		va_list ap;
 		va_start(ap, s);
 		jam_va_list(buf, s, ap);
@@ -235,7 +235,7 @@ void parser_kw_warning(struct parser *parser, struct keyword *kw, const char *yy
 {
 	if (parser->error_stream != NO_STREAM) {
 		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
-			jam_scanner_file_line(buf);
+			jam_scanner_file_line(buf, parser);
 			jam_string(buf, "warning: ");
 			/* message */
 			va_list ap;
@@ -256,7 +256,7 @@ void yyerror(struct parser *parser, const char *s)
 {
 	if (parser->error_stream != NO_STREAM) {
 		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
-			jam_scanner_file_line(buf);
+			jam_scanner_file_line(buf, parser);
 			jam_string(buf, s);
 		}
 	}
@@ -284,15 +284,9 @@ struct config_parsed *parser_load_conf(const char *file,
 
 	ldbg(logger, "allocated config %p", parser.cfg);
 
-	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") :
-		   fopen(file, "r"));
-
-	if (f == NULL) {
-		llog(RC_LOG, logger, "can't load file '%s'", file);
+	if (!scanner_open(&parser, file)) {
 		goto err;
 	}
-
-	parser_y_init(file, f);
 
 	if (yyparse(&parser) != 0) {
 		/* suppress errors */
@@ -300,6 +294,8 @@ struct config_parsed *parser_load_conf(const char *file,
 		do {} while (yyparse(&parser) != 0);
 		goto err;
 	}
+
+	scanner_close(&parser);
 
 	/**
 	 * Config valid
@@ -309,6 +305,7 @@ struct config_parsed *parser_load_conf(const char *file,
 
 err:
 	parser_freeany_config_parsed(&parser.cfg);
+	scanner_close(&parser);
 
 	return NULL;
 }

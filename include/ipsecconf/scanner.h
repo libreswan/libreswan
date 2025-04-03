@@ -23,6 +23,13 @@ struct parser;
 extern int yylex(struct parser *parser);
 
 /* "<FILE>:<LINE>: " */
-void jam_scanner_file_line(struct jambuf *buf);
+void jam_scanner_file_line(struct jambuf *buf, struct parser *parser);
+
+void scanner_next_line(struct parser *parser);
+
+void scanner_init(struct parser *parser, const char *name, int start);
+bool scanner_open(struct parser *parser, const char *filename);
+void scanner_close(struct parser *parser);
+void scanner_include(const char *filename, struct parser *parser);
 
 #endif
