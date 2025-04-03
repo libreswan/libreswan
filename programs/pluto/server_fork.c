@@ -197,7 +197,8 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	shunk_t output = shunk2(buf, len);
 	append_chunk_hunk("output", &pid_entry->output, output);
 
-	if (pid_entry->stream != 0) {
+	if (pid_entry->stream != 0 &&
+	    pid_entry->stream != NO_STREAM) {
 		/*
 		 * Split the output into lines and then send it to the log
 		 * file only.
@@ -224,25 +225,151 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	return true; /* try again */
 }
 
+static void child_output_listener(int fd, void *arg, struct logger *logger)
+{
+	struct pid_entry *pid_entry = arg;
+	PASSERT(logger, pid_entry->fdl != NULL);
+	PASSERT(logger, pid_entry->fd == fd);
+	drain_fd(pid_entry);
+}
+
+static pid_t child_pipeline(const char *name,
+			    so_serial_t serialno, struct msg_digest *md,
+			    shunk_t input, enum stream output_stream,
+			    server_fork_cb *callback, void *callback_context,
+			    struct logger *logger)
+{
+	/*
+	 * Create a pipe so that child can feed us its output.
+	 *
+	 * After the fork() O_CLOEXEC will need to be stripped from
+	 * the parent's FDS[] (which dup2() does automatically).
+	 */
+	int fdpipe[2]; /*0=read,1=write*/
+#define FD_IN 0
+#define FD_OUT 1
+	if (pipe2(fdpipe, O_CLOEXEC) < 0) {
+		llog_error(logger, errno, "pipe2() failed");
+		return -1;
+	}
+
+	pid_t pid = fork();
+
+	switch (pid) {
+
+	case -1:
+	{
+		llog_error(logger, errno, "fork failed");
+		return -1;
+	}
+
+	case 0:
+	{
+		/*
+		 * CHILD
+		 *
+		 * Redirect STDIN/STDOUT/STDERR then return 0.  Caller
+		 * will run command.
+		 */
+
+		/* redirect CHILD's STDIN to fdpipe[FD_IN] */
+		PASSERT(logger, fdpipe[FD_IN] != STDIN_FILENO);
+		dup2(fdpipe[FD_IN], STDIN_FILENO);
+		close(fdpipe[FD_IN]);
+
+		/* redirect CHILD's STDOUT/STDERR to fdpipe[FD_OUT] */
+		PASSERT(logger, fdpipe[FD_OUT] != STDOUT_FILENO);
+		PASSERT(logger, fdpipe[FD_OUT] != STDERR_FILENO);
+		dup2(fdpipe[FD_OUT], STDOUT_FILENO);
+		dup2(fdpipe[FD_OUT], STDERR_FILENO);
+		close(fdpipe[FD_OUT]);
+		/* caller executes command */
+		return 0;
+	}
+
+	default:
+	{
+		/*
+		 * PARENT
+		 *
+		 * Write INPUT to FD_OUT, then close.  Set up a
+		 * listener on FD_IN.
+		 */
+		ldbg(logger, "created %s helper (pid:%d) using fork()", name, pid);
+		PASSERT(logger, pid > 0);
+
+		/* send INPUT to fdpipe[FD_OUT] */
+		if (input.len > 0) {
+			ssize_t n = write(fdpipe[FD_OUT], input.ptr, input.len);
+			if (n < 0) {
+				llog_error(logger, errno, "write to %d failed", pid);
+			} else if (n != (ssize_t)input.len) {
+				llog_error(logger, 0, "write to %d truncated", pid);
+			}
+		}
+		close(fdpipe[FD_OUT]);
+
+		struct pid_entry *entry = add_pid(name, serialno, md, pid,
+						  callback, callback_context,
+						  logger);
+
+		/* add listener to fdpipe[FD_IN] */
+		entry->stream = output_stream; /* what to do with the output */
+		entry->fd = fdpipe[FD_IN];
+		int flags = fcntl(fdpipe[FD_IN], F_GETFL);
+		fcntl(fdpipe[FD_IN], F_SETFL, flags|O_NONBLOCK);
+		attach_fd_read_listener(&entry->fdl, fdpipe[FD_IN], "fork",
+					child_output_listener, entry);
+		return pid;
+	}
+
+	}
+
+	/* never happens */
+	bad_case(pid);
+}
+
 pid_t server_fork(const char *name,
 		  so_serial_t serialno,
 		  struct msg_digest *md,
 		  server_fork_op *op,
-		  server_fork_cb *callback, void *context,
+		  server_fork_cb *callback, void *callback_context,
 		  struct logger *logger)
 {
-	pid_t pid = fork();
-	switch (pid) {
-	case -1:
-		llog_error(logger, errno, "fork failed");
-		return -1;
-	case 0: /* child */
-		exit(op(context, logger));
-		break;
-	default: /* parent */
-		add_pid(name, serialno, md, pid, callback, context, logger);
-		return pid;
+	pid_t pid = child_pipeline(name, serialno, md,
+				   null_shunk, (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM),
+				   callback, callback_context,
+				   logger);
+
+	if (pid == 0) {
+		/* child */
+		int status = op(callback_context, logger);
+		exit(status);
 	}
+
+	return pid;
+}
+
+pid_t server_fork_exec(const char *path,
+		       char *argv[], char *envp[],
+		       shunk_t input,
+		       enum stream output_stream,
+		       server_fork_cb *callback,
+		       void *callback_context,
+		       struct logger *logger)
+{
+	pid_t pid = child_pipeline(argv[0], SOS_NOBODY, NULL,
+				   input, output_stream,
+				   callback, callback_context,
+				   logger);
+	if (pid == 0) {
+		/* child */
+		execve(path, argv, envp);
+		/* really can't printf() */
+		_exit(42);
+	}
+
+	return pid;
 }
 
 static void jam_status(struct jambuf *buf, int status)
@@ -357,102 +484,6 @@ void server_fork_sigchld_handler(struct logger *logger)
 			continue;
 		}
 	}
-}
-
-/*
- * fork()+exec().
- */
-
-static void child_output_listener(int fd, void *arg, struct logger *logger)
-{
-	struct pid_entry *pid_entry = arg;
-	PASSERT(logger, pid_entry->fdl != NULL);
-	PASSERT(logger, pid_entry->fd == fd);
-	drain_fd(pid_entry);
-}
-
-pid_t server_fork_exec(const char *path,
-		       char *argv[], char *envp[],
-		       shunk_t input,
-		       enum stream output_stream,
-		       server_fork_cb *callback,
-		       void *callback_context,
-		       struct logger *logger)
-{
-	const char *what = argv[0];
-	/*
-	 * Create a pipe so that child can feed us its output.  After
-	 * the fork O_CLOEXEC will need to be stripped (which dup2()
-	 * does automatically).
-	 */
-	int fds[2]; /*0=read,1=write*/
-	if (pipe2(fds, O_CLOEXEC) < 0) {
-		llog_error(logger, errno, "pipe2() failed");
-		return -1;
-	}
-
-#if USE_VFORK
-	int pid = vfork(); /* for better, for worse, in sickness and health..... */
-#elif USE_FORK
-	int pid = fork();
-#else
-#error "server_fork_exec() requires USE_VFORK or USE_FORK"
-#endif
-	if (pid < 0) {
-		llog_error(logger, errno, "fork failed");
-		return -1;
-	}
-
-	if (pid == 0) {
-		/*
-		 * child
-		 *
-		 * close input; dup2() the write end of the pipe
-		 * stdout/stderr, the act of dup2()ing strips
-		 * O_CLOEXEC.
-		 */
-		close(fds[0/*read-fd*/]);
-		int write_fd = fds[1];
-		PASSERT(logger, write_fd != STDOUT_FILENO);
-		PASSERT(logger, write_fd != STDERR_FILENO);
-		close(STDIN_FILENO);
-		dup2(write_fd, STDOUT_FILENO);
-		dup2(write_fd, STDERR_FILENO);
-		close(write_fd);
-		/* go */
-		execve(path, argv, envp);
-		/* really can't printf() */
-		_exit(42);
-	}
-
-	/* parent */
-	ldbg(logger, "created %s helper (pid:%d) using %s+execve",
-	     what, pid, USE_VFORK ? "vfork" : "fork");
-
-	/* send the input; then close */
-	if (input.len > 0) {
-		ssize_t n = write(fds[1/*write-fd*/], input.ptr, input.len);
-		if (n < 0) {
-			llog_error(logger, errno, "write to %d failed", pid);
-		} else if (n != (ssize_t)input.len) {
-			llog_error(logger, 0, "write to %d truncated", pid);
-		}
-	}
-	close(fds[1/*write-fd*/]);
-
-	struct pid_entry *entry = add_pid(what, SOS_NOBODY, /*md*/NULL,
-					  pid, callback, callback_context, logger);
-	/* save stream */
-	entry->stream = output_stream;
-	/* save the FD */
-	entry->fd = fds[0/*read-fd*/];
-	/* enable nonblock */
-	int flags = fcntl(entry->fd, F_GETFL);
-	fcntl(entry->fd, F_SETFL, flags|O_NONBLOCK);
-	/* listen */
-	attach_fd_read_listener(&entry->fdl, entry->fd, "fork-exec",
-				child_output_listener, entry);
-	return pid;
 }
 
 void init_server_fork(struct logger *logger)
