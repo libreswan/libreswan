@@ -69,6 +69,7 @@ const struct enum_names shunt_kind_names = {
 const struct sparse_names failure_shunt_names = {
 	.list = {
 		SPARSE("none",        SHUNT_NONE),
+		SPARSE("pass", SHUNT_PASS),
 		SPARSE("passthrough", SHUNT_PASS),
 		SPARSE("drop",        SHUNT_DROP),
 		SPARSE("hold",        NAME_IMPLEMENTED_AS|SHUNT_DROP), /* alias */
@@ -83,6 +84,7 @@ const struct sparse_names failure_shunt_names = {
 
 const struct sparse_names negotiation_shunt_names = {
 	.list = {
+		SPARSE("pass", SHUNT_PASS),
 		SPARSE("passthrough", SHUNT_PASS),
 		SPARSE("drop",        SHUNT_HOLD), /* alias */
 		SPARSE("hold",        SHUNT_HOLD),
