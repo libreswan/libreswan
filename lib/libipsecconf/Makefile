@@ -64,7 +64,7 @@ $(OBJS): $(builddir)/parser.tab.h
 
 LEX = flex
 
-$(builddir)/lex.yy.c: parser.lex
+$(builddir)/lex.yy.c: scanner.lex
 	: no space between -o and scratch output file
 	$(LEX) -o$@ --stdout $< | sed \
 		-e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
