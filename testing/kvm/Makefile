@@ -375,6 +375,8 @@ $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log
 $(KVM_FRESH_BOOT_FILE): | $(KVM_POOLDIR)
 	touch $@
 
+KVM_HOST_OK += $(KVM_FRESH_BOOT_FILE)
+
 #
 # Check that there is enough entoropy for running the domains.
 #
@@ -785,23 +787,27 @@ kvm-uninstall-gateway:
 ## Build the base domains
 ##
 ##
+## The reverse of BASE is PURGE
 
 KVM_BASE_CPUS = 1
 KVM_BASE_MEMORY ?= 2048
 
-.PHONY: kvm-base
+.PHONY: kvm-base kvm-purge
 kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
+kvm-purge: $(patsubst %, kvm-purge-%, $(KVM_OS))
 
 $(patsubst %, kvm-base-%, $(KVM_PLATFORMS)): \
-kvm-base-%:
-	: $@
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
-	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
-	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
-	: generated dependencies
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
+kvm-base-%: kvm-purge-%
+	: $@ build a-new
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
+
+$(patsubst %, kvm-purge-%, $(KVM_PLATFORMS)): \
+kvm-purge-%: kvm-downgrade-%
+	: $@=$*
+	./kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
+	: delete generated dependencies
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-base: \
@@ -1200,22 +1206,27 @@ $(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.disk
 ## this repo) are accessible (/source and /testing which may point
 ## elsewhere are not accessible, see above and below).
 ##
+## The reverse of UPGRADE is DOWNGRADE
 
 KVM_UPGRADE_CPUS = 1
 KVM_UPGRADE_MEMORY ?= 2048
 
-.PHONY: kvm-upgrade
+.PHONY: kvm-upgrade kvm-downgrade
 kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
+kvm-downgrade: $(patsubst %, kvm-downgrade-%, $(KVM_OS))
 
 $(patsubst %, kvm-upgrade-%, $(KVM_PLATFORMS)): \
-kvm-upgrade-%:
-	: $@
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
-	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
-	: generated dependencies
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
+kvm-upgrade-%: kvm-downgrade-%
+	: $@ build a-new
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+
+$(patsubst %, kvm-downgrade-%, $(KVM_PLATFORMS)): \
+kvm-downgrade-%: kvm-uninstall-%
+	: $@=$*
+	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
+	: delete generated dependencies
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: \
@@ -1260,19 +1271,26 @@ KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_
 ## $(KVM_TESTINGDIR) available to the VM.  Setting these during
 ## transmogrify means changing them only requires a re-transmogrify
 ## and not a full domain rebuild.
+##
+## The reverse of TRANSMOGRIFY is UNINSTALL
 
-.PHONY: kvm-transmogrify
+.PHONY: kvm-transmogrify kvm-uninstall
 kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
+kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
 
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORMS)): \
-kvm-transmogrify-%:
+kvm-transmogrify-%: kvm-uninstall-%
 	: $@
+	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
+
+$(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
+kvm-uninstall-%:
+	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)
-	: generated dependencies
+	: delete generated dependencies
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
-	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)
 
 # start at 2gb and go up
 KVM_BUILD_CPUS = $(KVM_WORKERS)
@@ -1514,36 +1532,15 @@ kvm-clean: kvm-clean-check
 .PHONY: kvm-uninstall
 
 kvm-uninstall: kvm-uninstall-test-networks
-kvm-uninstall: $(foreach os, $(KVM_OS), kvm-uninstall-$(os))
-
-$(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
-kvm-uninstall-%:
-	: $@=$*
-	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
-	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 
 .PHONY: kvm-downgrade
 
 kvm-downgrade: kvm-clean
-kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
-
-$(patsubst %, kvm-downgrade-%, $(KVM_PLATFORMS)): \
-kvm-downgrade-%: kvm-uninstall-%
-	: $@=$*
-	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
 
 .PHONY: kvm-purge
 
 kvm-purge: kvm-clean
-kvm-purge: $(foreach os, $(KVM_OS), kvm-purge-$(os))
 	rm -f $(KVM_HOST_OK)
-
-$(patsubst %, kvm-purge-%, $(KVM_PLATFORMS)): \
-kvm-purge-%: kvm-downgrade-%
-	: $@=$*
-	./kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
-	: things like ISOs
-	rm -vf $(KVM_$($*)_BASE_DOMAIN).*
 
 .PHONY: kvm-demolish
 
