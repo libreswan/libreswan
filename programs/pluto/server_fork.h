@@ -26,60 +26,50 @@ enum stream;
 struct whack_message;
 
 /*
- * Create a child process using fork()
+ * Run code as a child process in the background.
  *
- * server_fork() is 
+ * SERVER_FORK(): calls the function FORK_OP() within the child
+ * process (the value returned is passed to exit()).  This is used to
+ * perform a thread unfriendly operation, such as calling PAM.
  *
- * server_fork_exec(), with a more traditional subprocess, is used as
- * an alternative to popen() et.al.
+ * SERVER_FORK_EXEC(): runs PROGRAM passing ARGV[].
+
+ * On exit CALLBACK(ST, MD, WSTATUS, OUTPUT, CALLBACK_CONTEXT, ...) is
+ * called where WSTATUS was returned by waitpid() and OUTPUT contains
+ * all the accumulated output from the process.
  *
- * On callback:
+ * When INPUT is non-empty, it is written to the Child's STDIN.
  *
- * ST either points at the state matching SERIALNO, or NULL (SERIALNO
- * is either SOS_NOBODY or the state doesn't exist).  A CB expecting a
- * state back MUST check ST before processing.
- *
- * STATUS is the child processes exit code as returned by things like
- * waitpid().
+ * When OUTPUT_STREAM is not NO_STREAM, the child processes output is
+ * logged as it is captured (as a special case, output is only logged
+ * to DEBUG_STREAM, when debugging is enabled).
  */
 
 typedef stf_status server_fork_cb(struct state *st,
 				  struct msg_digest *md,
 				  int wstatus, shunk_t output,
-				  void *context,
+				  void *callback_context,
 				  struct logger *logger);
 
-/*
- * Call OP() within a child process.  OP() returns the exit code.
- *
- * Used to perform a thread unfriendly operation, such as calling PAM.
- */
-
-typedef int server_fork_op(void *context, struct logger *logger);
+typedef int server_fork_op(void *callback_context, struct logger *logger);
 pid_t server_fork(const char *name,
+		  server_fork_op *fork_op,
 		  so_serial_t serialno,
 		  struct msg_digest *md,
-		  server_fork_op *op,
+		  shunk_t input,
+		  enum stream output_stream,
 		  server_fork_cb *callback,
 		  void *callback_context,
 		  struct logger *logger);
 
-/*
- * Run a program as a child process in the background.
- *
- * INPUT is written to the child process after it has been created.
- *
- * LOG_OUTPUT, when non-zero, is where to send subprocess output.
- *
- * On exit CALLBACK(wstatus, output, context, ...) is called.  WSTATUS
- * was returned by waitpid(); OUTPUT contains all the accumulated
- * output from the process.
- */
-
 pid_t server_fork_exec(const char *path,
-		       char *argv[], char *envp[],
+		       char *argv[], char *envp[], /*op*/
+#if 0
+		       so_serial_t serialno,
+		       struct msg_digest *md,
+#endif
 		       shunk_t input,
-		       enum stream log_output,
+		       enum stream output_stream,
 		       server_fork_cb *callback,
 		       void *callback_context,
 		       struct logger *logger);

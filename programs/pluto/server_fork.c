@@ -314,7 +314,9 @@ static pid_t child_pipeline(const char *name,
 						  logger);
 
 		/* add listener to fdpipe[FD_IN] */
-		entry->stream = output_stream; /* what to do with the output */
+		entry->stream = (output_stream == DEBUG_STREAM
+				 ? (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM)
+				 : output_stream); /* what to do with the output */
 		entry->fd = fdpipe[FD_IN];
 		int flags = fcntl(fdpipe[FD_IN], F_GETFL);
 		fcntl(fdpipe[FD_IN], F_SETFL, flags|O_NONBLOCK);
@@ -329,15 +331,14 @@ static pid_t child_pipeline(const char *name,
 	bad_case(pid);
 }
 
-pid_t server_fork(const char *name,
-		  so_serial_t serialno,
-		  struct msg_digest *md,
-		  server_fork_op *op,
+pid_t server_fork(const char *name, server_fork_op *op,
+		  so_serial_t serialno, struct msg_digest *md,
+		  shunk_t input, enum stream output_stream,
 		  server_fork_cb *callback, void *callback_context,
 		  struct logger *logger)
 {
 	pid_t pid = child_pipeline(name, serialno, md,
-				   null_shunk, (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM),
+				   input, output_stream,
 				   callback, callback_context,
 				   logger);
 
@@ -350,12 +351,9 @@ pid_t server_fork(const char *name,
 	return pid;
 }
 
-pid_t server_fork_exec(const char *path,
-		       char *argv[], char *envp[],
-		       shunk_t input,
-		       enum stream output_stream,
-		       server_fork_cb *callback,
-		       void *callback_context,
+pid_t server_fork_exec(const char *path, char *argv[], char *envp[],
+		       shunk_t input, enum stream output_stream,
+		       server_fork_cb *callback, void *callback_context,
 		       struct logger *logger)
 {
 	pid_t pid = child_pipeline(argv[0], SOS_NOBODY, NULL,

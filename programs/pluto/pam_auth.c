@@ -201,8 +201,9 @@ bool pam_auth_fork_request(struct ike_sa *ike,
 
 	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
 	    pamauth->serialno, pamauth->ptarg.name);
-	pamauth->child = server_fork("pamauth", pamauth->serialno, md,
-				     pam_child,
+	pamauth->child = server_fork("pamauth", pam_child,
+				     pamauth->serialno, md,
+				     /*input*/null_shunk, DEBUG_STREAM,
 				     pam_callback, pamauth,
 				     ike->sa.logger);
 	if (pamauth->child < 0) {
