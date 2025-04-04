@@ -142,7 +142,7 @@ road #
  # is installed.  Wait for that.
 road #
  ../../guestbin/wait-for.sh --match %pass -- ipsec whack --shuntstatus
-192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  # With %pass installed, there's no tunnel yet pings work
 road #
@@ -168,7 +168,7 @@ road #
  ipsec whack --shuntstatus
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  ipsec _kernel policy
 src 192.1.3.209/32 dst 192.1.2.23/32
