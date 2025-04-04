@@ -51,6 +51,9 @@
 #include "whack.h" /* for DEFAULT_CTL_SOCKET */
 #include "lswlog.h"
 
+const char *rootdir;	/* when evaluating paths, prefix this to them */
+const char *rootdir2;	/* or... try this one too */
+
 static bool translate_conn(struct starter_conn *conn,
 			   const struct config_parsed *cfgp,
 			   struct section_list *sl,
@@ -920,12 +923,14 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
-				     struct logger *logger)
+				     struct logger *logger,
+				     unsigned verbosity,
+				     const char **rootdirs)
 {
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, logger);
+	struct config_parsed *cfgp = parser_load_conf(file, logger, verbosity, rootdirs);
 	if (cfgp == NULL)
 		return NULL;
 
