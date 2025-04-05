@@ -925,13 +925,12 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,
 				     struct logger *logger,
-				     unsigned verbosity,
-				     const char **rootdirs)
+				     unsigned verbosity)
 {
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, logger, verbosity, rootdirs);
+	struct config_parsed *cfgp = parser_load_conf(file, logger, verbosity);
 	if (cfgp == NULL)
 		return NULL;
 

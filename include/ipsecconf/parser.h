@@ -69,7 +69,6 @@ struct parser {
 	struct logger *logger;
 	enum stream error_stream;
 	unsigned verbosity;
-	const char **rootdir; /* NULL terminated */
 	struct input_source *input;
 };
 
@@ -86,7 +85,7 @@ void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, struct parser *parser);
 
 struct config_parsed *parser_load_conf(const char *file, struct logger *logger,
-				       unsigned verbosity, const char *rootdirs[]);
+				       unsigned verbosity);
 struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start, struct logger *logger);
 
 void parser_freeany_config_parsed(struct config_parsed **cfg);

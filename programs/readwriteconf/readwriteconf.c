@@ -38,7 +38,6 @@
 enum opt {
 	OPT_VERBOSE = 256,
 	OPT_DEBUG,
-	OPT_ROOTDIR,
 	OPT_CONFIG = 'C',
 	OPT_CONN = 'c',
 	OPT_HELP = 'h',
@@ -51,8 +50,8 @@ const struct option optarg_options[] =
 	{ "conn\0<conn-name>",   required_argument, NULL, OPT_CONN },
 	{ "debug\0",             no_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
-	{ "rootdir\0<dir>",      required_argument, NULL, OPT_ROOTDIR },
-	{ "rootdir2\0>rootdir",  required_argument, NULL, OPT_ROOTDIR },
+	{ "rootdir"METAOPT_OBSOLETE, no_argument, NULL, 0, },
+	{ "rootdir2"METAOPT_OBSOLETE, no_argument, NULL, 0, },
 	{ "nosetup",             no_argument, NULL, OPT_NOSETUP },
 	{ "help",                no_argument, NULL, OPT_HELP },
 	{ 0, 0, 0, 0 }
@@ -66,9 +65,6 @@ int main(int argc, char *argv[])
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
 	bool setup = true;
-
-	unsigned nr_rootdirs = 0;
-	const char *rootdir[2];
 
 	while (true) {
 		int c = optarg_getopt(logger, argc, argv, "");
@@ -97,15 +93,6 @@ int main(int argc, char *argv[])
 			configfile = clone_str(optarg, "config file name");
 			continue;
 
-		case OPT_ROOTDIR:
-			printf("#setting rootdir=%s\n", optarg);
-			if (nr_rootdirs >= elemsof(rootdir)) {
-				llog(ERROR_STREAM, logger, "too many root dirs");
-				exit(1);
-			}
-			rootdir[nr_rootdirs++] = optarg;
-			continue;
-
 		case OPT_CONN:
 			name = optarg;
 			continue;
@@ -129,8 +116,7 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, false, logger, verbose,
-						   (nr_rootdirs > 0 ? rootdir : NULL));
+	struct starter_config *cfg = confread_load(configfile, false, logger, verbose);
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
