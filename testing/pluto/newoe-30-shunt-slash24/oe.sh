@@ -24,7 +24,8 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 
 echo : ${args} LOADING CONNECTION
-RUN ipsec whack --name road \
+RUN ipsec addconn \
+    --name road \
     --retransmit-timeout 5s \
     --retransmit-interval 5s \
     --host 192.1.3.209 \
@@ -38,6 +39,7 @@ RUN ipsec whack --name road \
     --id %null
 ipsec route road
 ipsec listen
+
 echo : ${args} TRAPPING `cat policy`
 ipsec _kernel policy
 

@@ -31,7 +31,8 @@ RUN ipsec start
 ipsec whack --impair suppress_retransmits
 ipsec whack --impair revival
 
-RUN ipsec whack --name ${conn} \
+RUN ipsec addconn \
+    --name ${conn} \
     --host=192.1.2.45 \
     --id=%fromcert \
     --sendcert=always \

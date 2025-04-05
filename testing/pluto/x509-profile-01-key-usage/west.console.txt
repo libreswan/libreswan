@@ -51,7 +51,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-ku-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-missing --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-ku-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-missing --to --host=192.1.2.23 --id=%any
 "west-ku-missing": added IKEv2 connection
  ipsec up west-ku-missing
 "west-ku-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -104,7 +104,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-ku-digitalSignature --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-digitalSignature --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-ku-digitalSignature --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-digitalSignature --to --host=192.1.2.23 --id=%any
 "west-ku-digitalSignature": added IKEv2 connection
  ipsec up west-ku-digitalSignature
 "west-ku-digitalSignature" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -157,7 +157,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-ku-nonRepudiation --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-nonRepudiation --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-ku-nonRepudiation --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-nonRepudiation --to --host=192.1.2.23 --id=%any
 "west-ku-nonRepudiation": added IKEv2 connection
  ipsec up west-ku-nonRepudiation
 "west-ku-nonRepudiation" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -210,7 +210,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-ku-certSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-certSigning --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-ku-certSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-certSigning --to --host=192.1.2.23 --id=%any
 "west-ku-certSigning": added IKEv2 connection
  ipsec up west-ku-certSigning
 "west-ku-certSigning" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -267,7 +267,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-ku-digitalSignature-certSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-digitalSignature-certSigning --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-ku-digitalSignature-certSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-ku-digitalSignature-certSigning --to --host=192.1.2.23 --id=%any
 "west-ku-digitalSignature-certSigning": added IKEv2 connection
  ipsec up west-ku-digitalSignature-certSigning
 "west-ku-digitalSignature-certSigning" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

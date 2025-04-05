@@ -53,7 +53,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-bc-ca-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-missing --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-bc-ca-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-missing --to --host=192.1.2.23 --id=%any
 "west-bc-ca-missing": added IKEv2 connection
  ipsec up west-bc-ca-missing
 "west-bc-ca-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -108,7 +108,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-bc-ca-n --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-bc-ca-n --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n --to --host=192.1.2.23 --id=%any
 "west-bc-ca-n": added IKEv2 connection
  ipsec up west-bc-ca-n
 "west-bc-ca-n" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -164,7 +164,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-bc-ca-n-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n-critical --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-bc-ca-n-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-n-critical --to --host=192.1.2.23 --id=%any
 "west-bc-ca-n-critical": added IKEv2 connection
  ipsec up west-bc-ca-n-critical
 "west-bc-ca-n-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -219,7 +219,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-bc-ca-y --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-bc-ca-y --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y --to --host=192.1.2.23 --id=%any
 "west-bc-ca-y": added IKEv2 connection
  ipsec up west-bc-ca-y
 "west-bc-ca-y" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -278,7 +278,7 @@ Certificate:
             User
  ipsec start
 Redirecting to: [initsystem]
- ipsec whack --name west-bc-ca-y-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y-critical --to --host=192.1.2.23 --id=%any
+ ipsec addconn --name west-bc-ca-y-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-bc-ca-y-critical --to --host=192.1.2.23 --id=%any
 "west-bc-ca-y-critical": added IKEv2 connection
  ipsec up west-bc-ca-y-critical
 "west-bc-ca-y-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

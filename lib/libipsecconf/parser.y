@@ -310,6 +310,102 @@ err:
 	return NULL;
 }
 
+struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start,
+				       struct logger *logger)
+{
+	struct config_parsed *cfgp = alloc_config_parsed();
+
+	/* there's only one */
+	struct section_list *section = alloc_thing(struct section_list, __func__);
+	TAILQ_INSERT_TAIL(&cfgp->sections, section, link);
+	section->name = clone_str(name, __func__);
+
+	struct parser parser = {
+		.cfg = cfgp,
+		.section = SECTION_CONN,
+		.kw = &section->kw,
+		.logger = logger,
+	};
+
+	scanner_init(&parser, "argv", start);
+
+	/* for options that should have an end, but don't */
+	enum end default_end = LEFT_END;
+
+	for (char **argp = argv + start; (*argp) != NULL; argp++) {
+
+		const char *arg = (*argp);
+		/* toss any leading -- */
+		eat(arg, "--");
+
+		shunk_t cursor = shunk1(arg);
+
+		/* whack's --to switches ends */
+		if (hunk_streq(cursor, "to")) {
+			default_end++;
+			if (default_end >= END_ROOF) {
+				llog(ERROR_STREAM, logger, "too many 'to's");
+				parser_freeany_config_parsed(&cfgp);
+				exit(1);
+			}
+			scanner_next_line(&parser);
+			continue;
+		}
+
+		/*
+		 * Parse KEY=VALUE or, when there's no '=', KEY VALUE.
+		 *
+		 * VALUE is a string to avoid need to pass shunk_t
+		 * into parser_kw().
+		 */
+
+		char sep;
+		shunk_t key = shunk_token(&cursor, &sep, "=");
+		const char *value;
+		if (sep == '=') {
+			/* skip key and '=' */
+			value = arg + key.len + 1;
+		} else if (hunk_strcasestarteq(key, "nego")) { /*negoPASS*/
+			/* hack */
+			key = shunk1("negotiationshunt");
+			value = arg + strlen("nego");
+		} else if (hunk_strcasestarteq(key, "fail")) { /*failNONE*/
+			/* hack */
+			key = shunk1("failureshunt");
+			value = arg + strlen("fail");
+		} else {
+			/* no '=' */
+			if (argp[1] == NULL) {
+				llog(ERROR_STREAM, logger, "missing parameter for %s", arg);
+				parser_freeany_config_parsed(&cfgp);
+				return NULL;
+			}
+			value = argp[1];
+			scanner_next_line(&parser);
+			argp++;
+		}
+
+		/* map --host onto left/right */
+		if (hunk_strcaseeq(key, "host")) {
+			key = shunk1(default_end == LEFT_END ? "left" :
+				     default_end == RIGHT_END ? "right" :
+				     "???");
+		} else if (hunk_strcaseeq(key, "authby")) {
+			/* XXX: whack's authby semantics */
+			key = shunk1("auth");
+		}
+
+		struct keyword kw;
+		parser_find_keyword(key, default_end, &kw, &parser); /* can exit(1) */
+ 		parser_kw(&parser, &kw, value);
+		scanner_next_line(&parser);
+	}
+
+	scanner_close(&parser);
+
+	return cfgp;
+}
+
 static void parser_free_kwlist(struct kw_list *list)
 {
 	while (list != NULL) {
