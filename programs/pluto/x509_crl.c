@@ -331,8 +331,7 @@ void fetch_crl(struct crl_distribution_point *wip, int wstatus, shunk_t output,
 	     argv[0], argv[1], argv[2], argv[3]);
 
 	char *envp[] = { NULL, };
-	server_fork_exec(argv[0], argv, envp, null_shunk,
-			 (DBGP(DBG_BASE) ? DEBUG_STREAM : NO_STREAM),
+	server_fork_exec(argv[0], argv, envp, null_shunk, DEBUG_STREAM,
 			 fork_cb, (*current), logger);
 }
 
