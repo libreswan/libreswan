@@ -30,7 +30,7 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match oe-failing -- ipsec shuntstatus
-192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  ipsec trafficstatus
 road #

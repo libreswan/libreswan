@@ -62,14 +62,14 @@ road #
  ipsec whack --shuntstatus
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  sleep 30
 road #
  ipsec whack --shuntstatus
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  # ping should go out in the clear now and get a reply
 road #
@@ -81,7 +81,7 @@ road #
  ipsec whack --shuntstatus
 Bare Shunt list:
  
-192.1.3.209/32 -0-> 192.1.2.23/32 => %passthrough    oe-failing
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
  ipsec _kernel state
 road #
