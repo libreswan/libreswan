@@ -240,56 +240,18 @@ void scanner_include(const char *filename, struct parser *parser)
 		.parser = parser,
 	};
 
-	if (filename[0] != '/' || parser->rootdir == NULL) {
-		/* try plain name, with no rootdirs */
-		context.try = filename;
-		if (lswglob(context.try, "ipsec.conf", glob_include_callback, &context, parser->logger)) {
-			return;
-		}
-		/*
-		 * Not a wildcard, throw error.
-		 *
-		 * XXX: throw?
-		 */
-		parser_warning(parser, /*errno*/0,
-			       "could not open include filename: '%s'",
-			       filename);
-		return;
-	}
-
-	/* try prefixing with rootdir */
-	char *newname = alloc_printf("%s%s", parser->rootdir[0], filename); /* must free */
-	context.try = newname;
-
+	context.try = filename;
 	if (lswglob(context.try, "ipsec.conf", glob_include_callback, &context, parser->logger)) {
-		pfree(newname);
 		return;
 	}
-
-	if (parser->rootdir[1] == NULL) {
-		/* not a wildcard, throw error */
-		parser_warning(parser, /*errno*/0,
-			       "could not open include filename '%s' (tried '%s')",
-			       filename, newname);
-		pfree(newname);
-		return;
-	}
-
-	/* try again, prefixing with rootdir2 */
-	char *newname2 = alloc_printf("%s%s", parser->rootdir[1], filename); /* must free */
-	context.try = newname2;
-	if (lswglob(context.try, "ipsec.conf", glob_include_callback, &context, parser->logger)) {
-		pfree(newname);
-		pfree(newname2);
-		return;
-	}
-
+	/*
+	 * Not a wildcard, throw error.
+	 *
+	 * XXX: throw?
+	 */
 	parser_warning(parser, /*errno*/0,
-		       "could not open include filename: '%s' (tried '%s' and '%s')",
-		       filename, newname, newname2);
-
-	pfree(newname);
-	pfree(newname2);
+		       "could not open include filename: '%s'",
+		       filename);
 	return;
 }
 

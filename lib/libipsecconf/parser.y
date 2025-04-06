@@ -271,15 +271,13 @@ static struct config_parsed *alloc_config_parsed(void)
 
 struct config_parsed *parser_load_conf(const char *file,
 				       struct logger *logger,
-				       unsigned verbosity,
-				       const char *rootdirs[])
+				       unsigned verbosity)
 {
 	struct parser parser = {
 		.logger = logger,
 		.cfg = alloc_config_parsed(),
 		.error_stream = ERROR_STREAM,
 		.verbosity = verbosity,
-		rootdirs = rootdirs,
 	};
 
 	ldbg(logger, "allocated config %p", parser.cfg);

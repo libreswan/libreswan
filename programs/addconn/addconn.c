@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
 		}
 		cfg = confread_argv(name, argv, optind, logger);
 	} else {
-		cfg = confread_load(configfile, configsetup, logger, verbose, NULL);
+		cfg = confread_load(configfile, configsetup, logger, verbose);
 	}
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
