@@ -57,9 +57,8 @@ def add_arguments(parser):
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
     # (avoiding Makefile, OBJ, README, ... :-).
-    group.add_argument("--backup-directory", metavar="DIRECTORY",
-                       default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
-                       help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
+    group.add_argument("--backup-directory", metavar="DIRECTORY", default="BACKUP",
+                       help="backup existing <test>/OUTPUT to %(metavar)s/<test>/<date> (default: %(default)s)")
 
 
 def log_arguments(logger, args):
@@ -174,12 +173,13 @@ def _ignore_test(task, args, result_stats, logger):
         # The isdir() test followed by a simple move, while racy,
         # should be good enough.
         if os.path.isdir(test.output_directory):
-            test_backup_directory = os.path.join(args.backup_directory, task.test.name)
-
+            test_backup_directory = os.path.join(test_backup_directory,
+                                                 task.test.name,
+                                                 timing.START_TIME.strftime("%Y-%m-%d-%H%M%S"))
             logger.info("moving '%s' to '%s'", test.output_directory,
                         test_backup_directory)
-            # create BACKUP/ then move OUTPUT/ to BACKUP/<test>
-            os.makedirs(args.backup_directory, exist_ok=True)
+            # create BACKUP/<test> then move OUTPUT/ to BACKUP/<test>/<date>
+            os.makedirs(os.path.basename(test_backup_directory), exist_ok=True)
             os.rename(test.output_directory, test_backup_directory)
         result_stats.add_ignored(test, ignored)
         publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
@@ -285,10 +285,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
             try:
                 os.mkdir(test.output_directory)
             except FileExistsError:
-                test_backup_directory = os.path.join(args.backup_directory, task.test.name)
+                test_backup_directory = os.path.join(args.backup_directory,
+                                                     task.test.name,
+                                                     timing.START_TIME.strftime("%Y-%m-%d-%H%M%S"))
                 logger.info("moving contents of '%s' to '%s'",
                             test.output_directory, test_backup_directory)
-                # Even if OUTPUT/ is empty, move it.
+                # Even if OUTPUT/ is empty, create a backup.
                 os.makedirs(test_backup_directory, exist_ok=True)
                 for name in os.listdir(test.output_directory):
                     src = os.path.join(test.output_directory, name)
