@@ -492,6 +492,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 							      ike->sa.logger);
 				if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
 					dbg("found matching PPK, send PPK_IDENTITY back");
+					ppk = ppk_candidate;
 					/* we have a match, send PPK_IDENTITY back */
 					struct ppk_id_payload ppk_id_p = { .type = 0, };
 					create_ppk_id_payload(&payl.ppk_id_payl.ppk_id, &ppk_id_p);
