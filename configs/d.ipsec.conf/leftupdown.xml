@@ -20,7 +20,9 @@
       eg leftupdown="" or leftupdown="%disabled".
     </para>
     <para>
-      Connections with type= set to passthrough, reject or drop never run updown.
+      Connections with <option>type=</option> set to
+      <option>passthrough</option>, <option>reject</option> or
+      <option>drop</option> never run <command>ipsec _updown</command>.
     </para>
     <para>
       See
