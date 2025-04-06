@@ -122,28 +122,6 @@ west #
          jam_enum_short 252: SHA2_256_TRUNCBUG OK
          jam_enum_human 252: sha2-256-truncbug OK
          match SHA2_256_TRUNCBUG [short]: OK
-  allow_global_redirect_names: [1..4)
-    1 -> no
-         jam_enum 1: no OK
-         search no: OK
-         match no: OK
-         short_name 1: no OK
-         jam_enum_short 1: no OK
-         jam_enum_human 1: no OK
-    2 -> yes
-         jam_enum 2: yes OK
-         search yes: OK
-         match yes: OK
-         short_name 2: yes OK
-         jam_enum_short 2: yes OK
-         jam_enum_human 2: yes OK
-    3 -> auto
-         jam_enum 3: auto OK
-         search auto: OK
-         match auto: OK
-         short_name 3: auto OK
-         jam_enum_short 3: auto OK
-         jam_enum_human 3: auto OK
   attr_msg_type_names: [1..5)
     1 -> ISAKMP_CFG_REQUEST
          jam_enum 1: ISAKMP_CFG_REQUEST OK

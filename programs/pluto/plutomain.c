@@ -1881,7 +1881,7 @@ void show_setup_plutomain(struct show *s)
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, "global-redirect=");
-		jam_enum(buf, &allow_global_redirect_names, global_redirect);
+		jam_sparse(buf, &global_redirect_names, global_redirect);
 		jam_string(buf, ", ");
 		jam_string(buf, "global-redirect-to=");
 		jam_string(buf, (strlen(global_redirect_to()) > 0 ? global_redirect_to() :

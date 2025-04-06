@@ -146,22 +146,6 @@ enum_names natt_method_names = {
 	NULL
 };
 
-static const char *const allow_global_redirect_name[] = {
-#define R(E,S) [E - GLOBAL_REDIRECT_NO] = S
-	R(GLOBAL_REDIRECT_NO, "no"),
-	R(GLOBAL_REDIRECT_YES, "yes"),
-	R(GLOBAL_REDIRECT_AUTO, "auto"),
-#undef R
-};
-
-enum_names allow_global_redirect_names = {
-	GLOBAL_REDIRECT_NO,
-	GLOBAL_REDIRECT_AUTO,
-	ARRAY_REF(allow_global_redirect_name),
-	NULL,
-	NULL
-};
-
 static const char *const dns_auth_level_name[] = {
 #define S(E) [E - PUBKEY_LOCAL] = #E
 	S(PUBKEY_LOCAL),

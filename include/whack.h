@@ -44,6 +44,7 @@
 #include "constants.h"		/* for enum keyword_auth; et.al. */
 #include "end.h"
 #include "shunt.h"
+#include "global_redirect.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -115,6 +116,9 @@ enum whack_command {
 	WHACK_SECCOMP_CRASHTEST,
 #endif
 	WHACK_SHUTDOWN_LEAVE_STATE,
+	/**/
+	WHACK_ACTIVE_REDIRECT,
+	WHACK_GLOBAL_REDIRECT,
 };
 
 /*
@@ -456,9 +460,10 @@ struct whack_message {
 	char *ppk_ids;
 
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
-	enum allow_global_redirect global_redirect;
-	char *global_redirect_to;
-	char *redirect_to;		/* either for connection or active */
+	enum global_redirect global_redirect;
+	char *redirect_to;	/* used by WHACK_ADD,
+				 * WHACK_ACTIVE_REDIRECT and
+				 * WHACK_GLOBAL_REDIRECT */
 	enum yn_options accept_redirect;
 	char *accept_redirect_to;
 	enum yna_options send_redirect;

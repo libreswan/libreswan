@@ -17,8 +17,7 @@
 #ifndef _IKEV2_REDIRECT_H
 #define _IKEV2_REDIRECT_H
 
-
-extern enum allow_global_redirect global_redirect;
+extern enum global_redirect global_redirect;
 
 extern const char *global_redirect_to(void);
 
