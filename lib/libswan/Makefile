@@ -53,6 +53,7 @@ OBJS += connection_owner_names.o
 OBJS += sa_kind_names.o
 OBJS += keyword_host_names.o
 OBJS += shunt_names.o
+OBJS += global_redirect_names.o
 
 OBJS += fips_mode.o
 OBJS += fips_mode_names.o

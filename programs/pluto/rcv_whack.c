@@ -36,6 +36,7 @@
 #include "pluto_seccomp.h"
 #endif
 
+#include "sparse_names.h"
 #include "initiate.h"			/* for initiate_connection() */
 #include "acquire.h"			/* for initiate_ondemand() */
 #include "keys.h"			/* for load_preshared_secrets() */
@@ -779,10 +780,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
 			global_redirect = m->global_redirect;
-			enum_buf rn;
+			name_buf rn;
 			llog(RC_LOG, logger,
 			     "set global redirect to %s",
-			     str_enum(&allow_global_redirect_names, global_redirect, &rn));
+			     str_sparse(&global_redirect_names, global_redirect, &rn));
 		}
 		dbg_whack(s, "global_redirect: stop: %d", m->global_redirect);
 	}
