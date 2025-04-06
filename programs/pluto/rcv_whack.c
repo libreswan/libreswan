@@ -56,6 +56,7 @@
 #include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
+#include "sparse_names.h"
 
 #include "whack_add.h"
 #include "whack_briefconnectionstatus.h"
@@ -318,6 +319,68 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 			va_end(ap);
 			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
 		}
+	}
+}
+
+static void jam_redirect(struct jambuf *buf, const struct whack_message *wm)
+{
+	if (wm->redirect_to != NULL) {
+		jam_string(buf, " redirect-to=");
+		jam_string(buf, wm->redirect_to);
+	}
+	if (wm->global_redirect != 0) {
+		jam_string(buf, " redirect_to=");
+		jam_sparse(buf, &yna_option_names, wm->global_redirect);
+	}
+}
+
+static void whack_active_redirect(const struct whack_message *wm, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	/*
+	 * We are redirecting all peers of one or all connections.
+	 *
+	 * Whack's --redirect-to is ambitious - is it part of an ADD
+	 * or a global op?  Checking .whack_add.
+	 */
+	find_and_active_redirect_states(wm->name, wm->redirect_to, logger);
+}
+
+static void whack_global_redirect(const struct whack_message *wm, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	if (wm->redirect_to != NULL) {
+		if (streq(wm->redirect_to, "")) {
+			set_global_redirect_dests("");
+			global_redirect = GLOBAL_REDIRECT_NO;
+			llog(RC_LOG, logger,
+			     "cleared global redirect targets and disabled global redirects");
+		} else {
+			set_global_redirect_dests(wm->redirect_to);
+			llog(RC_LOG, logger,
+			     "set global redirect target to %s", global_redirect_to());
+		}
+	}
+
+	switch (wm->global_redirect) {
+	case GLOBAL_REDIRECT_NO:
+		global_redirect = GLOBAL_REDIRECT_NO;
+		llog(RC_LOG, logger, "set global redirect to 'no'");
+		break;
+	case GLOBAL_REDIRECT_YES:
+	case GLOBAL_REDIRECT_AUTO:
+		if (strlen(global_redirect_to()) == 0) {
+			llog(RC_LOG, logger,
+			     "ipsec whack: --global-redirect set to no as there are no active redirect targets");
+			global_redirect = GLOBAL_REDIRECT_NO;
+		} else {
+			global_redirect = wm->global_redirect;
+			enum_buf rn;
+			llog(RC_LOG, logger,
+			     "set global redirect to %s",
+			     str_sparse(&global_redirect_names, global_redirect, &rn));
+		}
+		break;
 	}
 }
 
@@ -629,6 +692,16 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "shutdown(leave-state)",
 			.op = whack_shutdown_leave_state,
 		},
+		[WHACK_GLOBAL_REDIRECT] = {
+			.jam = jam_redirect,
+			.name = "global-redirect",
+			.op = whack_global_redirect,
+		},
+		[WHACK_ACTIVE_REDIRECT] = {
+			.jam = jam_redirect,
+			.name = "active-redirect",
+			.op = whack_active_redirect,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -742,50 +815,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_command != 0) {
 		dispatch_command(m, s);
-	}
-
-	if (m->redirect_to != NULL && m->whack_command != WHACK_ADD) {
-		/*
-		 * We are redirecting all peers of one or all
-		 * connections.
-		 *
-		 * Whack's --redirect-to is ambitious - is it part of
-		 * an ADD or a global op?  Checking .whack_add.
-		 */
-		dbg_whack(s, "redirect_to: start: '%s'", (m->name == NULL ? "<null>" : m->name));
-		find_and_active_redirect_states(m->name, m->redirect_to, logger);
-		dbg_whack(s, "redirect_to: stop: '%s'", (m->name == NULL ? "<null>" : m->name));
-	}
-
-	if (m->global_redirect_to) {
-		dbg_whack(s, "global_redirect_to: start: %s", m->global_redirect_to);
-		if (streq(m->global_redirect_to, "<none>")) {
-			set_global_redirect_dests("");
-			global_redirect = GLOBAL_REDIRECT_NO;
-			llog(RC_LOG, logger,
-				"cleared global redirect targets and disabled global redirects");
-		} else {
-			set_global_redirect_dests(m->global_redirect_to);
-			llog(RC_LOG, logger,
-				"set global redirect target to %s", global_redirect_to());
-		}
-		dbg_whack(s, "global_redirect_to: stop: %s", m->global_redirect_to);
-	}
-
-	if (m->global_redirect) {
-		dbg_whack(s, "global_redirect: start: %d", m->global_redirect);
-		if (m->global_redirect != GLOBAL_REDIRECT_NO && strlen(global_redirect_to()) == 0) {
-			llog(RC_LOG, logger,
-			    "ipsec whack: --global-redirect set to no as there are no active redirect targets");
-			global_redirect = GLOBAL_REDIRECT_NO;
-		} else {
-			global_redirect = m->global_redirect;
-			name_buf rn;
-			llog(RC_LOG, logger,
-			     "set global redirect to %s",
-			     str_sparse(&global_redirect_names, global_redirect, &rn));
-		}
-		dbg_whack(s, "global_redirect: stop: %d", m->global_redirect);
 	}
 
 	if (m->whack_key) {

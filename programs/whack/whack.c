@@ -1342,27 +1342,18 @@ int main(int argc, char **argv)
 
 		case OPT_REDIRECT_TO:	/* --redirect-to */
 			/* either active, or or add */
+			/* .whack_command deciphered below */
 			msg.redirect_to = optarg;
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
-			if (streq(optarg, "yes")) {
-				msg.global_redirect = GLOBAL_REDIRECT_YES;
-			} else if (streq(optarg, "no")) {
-				msg.global_redirect = GLOBAL_REDIRECT_NO;
-			} else if (streq(optarg, "auto")) {
-				msg.global_redirect = GLOBAL_REDIRECT_AUTO;
-			} else {
-				diagw("invalid option argument for --global-redirect (allowed arguments: yes, no, auto)");
-			}
+			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
+			msg.global_redirect = optarg_sparse(logger, 0, &global_redirect_names);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
-			if (!strlen(optarg)) {
-				msg.global_redirect_to = strdup("<none>");
-			} else {
-				msg.global_redirect_to = optarg;
-			}
+			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
+			msg.redirect_to = optarg; /* could be empty string */
 			continue;
 
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
@@ -1725,6 +1716,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TO:	/* --to */
+			whack_command(&msg, WHACK_ADD);
 			/*
 			 * Move .right to .left, so further END
 			 * options.  Reset what was seen so more
@@ -2545,6 +2537,9 @@ int main(int argc, char **argv)
 			diagw("connection description option, but no --to");
 		}
 
+		/* set by --to! */
+		PASSERT(logger, msg.whack_command == WHACK_ADD);
+
 		if (!seen[END_HOST]) {
 			/* must be after --to as --to scrubs seen[END_*] */
 			diagw("connection missing --host after --to");
@@ -2570,8 +2565,27 @@ int main(int argc, char **argv)
 			     msg.end[RIGHT_END].subnet != NULL))
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
+	}
 
-		whack_command(&msg, WHACK_ADD);
+	/*
+	 * Does --redirect-to have a matching command?  When it
+	 * doesn't it must be an active redirect.
+	 *
+	 * --to sets WHACK_ADD and global-redirect-to sets
+	 * --WHACK_GLOBAL_REDIRECT.
+	 */
+	if (msg.redirect_to != NULL) {
+		switch (msg.whack_command) {
+		case 0:
+			whack_command(&msg, WHACK_ACTIVE_REDIRECT);
+			break;
+		case WHACK_ADD:
+		case WHACK_ACTIVE_REDIRECT:
+		case WHACK_GLOBAL_REDIRECT:
+			break;
+		default:
+			diagw("unexpected --redirect-to");
+		}
 	}
 
 	/*
@@ -2618,9 +2632,6 @@ int main(int argc, char **argv)
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
 	      msg.whack_key ||
-	      msg.redirect_to != NULL ||
-	      msg.global_redirect ||
-	      msg.global_redirect_to ||
 	      msg.whack_listen ||
 	      msg.whack_unlisten ||
 	      msg.ike_buf_size ||

@@ -365,7 +365,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->ipsec_interface) &&
 		PICKLE_STRING(&wp->msg->remote_host) &&
 		PICKLE_STRING(&wp->msg->ppk_ids) &&
-		PICKLE_STRING(&wp->msg->global_redirect_to) &&
 		PICKLE_STRING(&wp->msg->redirect_to) &&
 		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
 		PICKLE_CHUNK(&wp->msg->keyval) &&
