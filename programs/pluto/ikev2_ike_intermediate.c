@@ -256,18 +256,18 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	struct connection *const c = ike->sa.st_connection;
-	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
-	chunk_t ppk_id;
-	bool found_one = false;
-
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		struct connection *const c = ike->sa.st_connection;
+		struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
+		chunk_t ppk_id;
+		bool found_one = false;
+
 		if (ppk_ids_shunks == NULL) {
 			/* find any matching PPK and PPK_ID */
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk_and_ppk_id(c);
-			ppk_id = ppk->id;
 			if (ppk != NULL) {
+				ppk_id = ppk->id;
 				found_one = true;
 				chunk_t ppk_confirmation =
 					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
@@ -356,7 +356,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	if (!encrypt_v2SK_payload(&request.sk)) {
 		llog(RC_LOG, request.logger,
 		     "error encrypting response");
-		return false;
+		return STF_INTERNAL_ERROR;
 	}
 
 	record_v2_message(&request.message, request.story, request.outgoing_fragments);
@@ -465,63 +465,66 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	const struct payload_digest *ppk_id_key_payls = md->pd[PD_v2N_PPK_IDENTITY_KEY];
-	bool found_one = false;		/* found one matching PPK? */
 	const struct secret_ppk_stuff *ppk = NULL;
 
-	while (ppk_id_key_payls != NULL && !found_one && ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
-		dbg("received PPK_IDENTITY_KEY");
-		struct ppk_id_key_payload payl;
-		if (!extract_v2N_ppk_id_key(&ppk_id_key_payls->pbs, &payl, ike)) {
-			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
-			return STF_FATAL;
-		}
+	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		const struct payload_digest *ppk_id_key_payls = md->pd[PD_v2N_PPK_IDENTITY_KEY];
 
-		ppk = get_connection_ppk(ike->sa.st_connection,
-		                         /*ppk_id*/&payl.ppk_id_payl.ppk_id,
-					 /*index*/0);
-
-		if (ppk != NULL) {
-			chunk_t ppk_confirmation =
-				calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
-						      &ppk->key,
-						      ike->sa.st_ni, ike->sa.st_nr,
-						      &ike->sa.st_ike_spis,
-						      ike->sa.logger);
-			if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
-				dbg("found matching PPK, send PPK_IDENTITY back");
-				found_one = true;
-				/* we have a match, send PPK_IDENTITY back */
-				struct ppk_id_payload ppk_id_p = { .type = 0, }; 
-				create_ppk_id_payload(&payl.ppk_id_payl.ppk_id, &ppk_id_p);
-
-				struct pbs_out ppks;
-				if (!open_v2N_output_pbs(response.pbs, v2N_PPK_IDENTITY, &ppks)) {
-					return STF_INTERNAL_ERROR;
-				}
-				if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
-					return STF_INTERNAL_ERROR;
-				}
-				close_output_pbs(&ppks);
+		while (ppk_id_key_payls != NULL && ppk == NULL) {
+			dbg("received PPK_IDENTITY_KEY");
+			struct ppk_id_key_payload payl;
+			if (!extract_v2N_ppk_id_key(&ppk_id_key_payls->pbs, &payl, ike)) {
+				dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+				return STF_FATAL;
 			}
-			free_chunk_content(&ppk_confirmation);
-		}
-		free_chunk_content(&payl.ppk_id_payl.ppk_id);
-		free_chunk_content(&payl.ppk_confirmation);
-		ppk_id_key_payls = ppk_id_key_payls->next;
-	}
 
-	if (md->pd[PD_v2N_PPK_IDENTITY_KEY] == NULL || !found_one) {
-		if (ike->sa.st_connection->config->ppk.insist) {
-			llog_sa(RC_LOG, ike, "No matching (PPK_ID, PPK) found and connection requires \
+			const struct secret_ppk_stuff *ppk_candidate =
+				get_connection_ppk(ike->sa.st_connection,
+						   /*ppk_id*/&payl.ppk_id_payl.ppk_id,
+						   /*index*/0);
+
+			if (ppk_candidate != NULL) {
+				chunk_t ppk_confirmation =
+					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
+							      &ppk_candidate->key,
+							      ike->sa.st_ni, ike->sa.st_nr,
+							      &ike->sa.st_ike_spis,
+							      ike->sa.logger);
+				if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
+					dbg("found matching PPK, send PPK_IDENTITY back");
+					ppk = ppk_candidate;
+					/* we have a match, send PPK_IDENTITY back */
+					struct ppk_id_payload ppk_id_p = { .type = 0, };
+					create_ppk_id_payload(&payl.ppk_id_payl.ppk_id, &ppk_id_p);
+
+					struct pbs_out ppks;
+					if (!open_v2N_output_pbs(response.pbs, v2N_PPK_IDENTITY, &ppks)) {
+						return STF_INTERNAL_ERROR;
+					}
+					if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
+						return STF_INTERNAL_ERROR;
+					}
+					close_output_pbs(&ppks);
+				}
+				free_chunk_content(&ppk_confirmation);
+			}
+			free_chunk_content(&payl.ppk_id_payl.ppk_id);
+			free_chunk_content(&payl.ppk_confirmation);
+			ppk_id_key_payls = ppk_id_key_payls->next;
+		}
+
+		if (md->pd[PD_v2N_PPK_IDENTITY_KEY] == NULL || ppk == NULL) {
+			if (ike->sa.st_connection->config->ppk.insist) {
+				llog_sa(RC_LOG, ike, "No matching (PPK_ID, PPK) found and connection requires \
 					      a valid PPK. Abort!");
-			record_v2N_response(ike->sa.logger, ike, md,
-					v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
-					ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
-		} else {
-			llog_sa(RC_LOG, ike,
-				"failed to find a matching PPK, continuing without PPK");
+				record_v2N_response(ike->sa.logger, ike, md,
+						    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
+						    ENCRYPTED_PAYLOAD);
+				return STF_FATAL;
+			} else {
+				llog_sa(RC_LOG, ike,
+					"failed to find a matching PPK, continuing without PPK");
+			}
 		}
 	}
 
@@ -541,12 +544,12 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	if (!encrypt_v2SK_payload(&response.sk)) {
 		llog(RC_LOG, response.logger,
 		     "error encrypting response");
-		return false;
+		return STF_INTERNAL_ERROR;
 	}
 
 	record_v2_message(&response.message, response.story, response.outgoing_fragments);
 
-	if (found_one) {
+	if (ppk != NULL) {
 		recalc_v2_ppk_interm_keymat(ike, ppk->key,
 					    &ike->sa.st_ike_spis,
 					    HERE);
