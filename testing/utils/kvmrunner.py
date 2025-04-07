@@ -30,7 +30,7 @@ from fab import skip
 from fab import ignore
 from fab import timing
 from fab import publish
-
+from fab import argutil
 
 
 def main():
@@ -59,16 +59,8 @@ def main():
     logutil.config(args, sys.stdout)
     logger = logutil.getLogger("kvmrunner")
 
-    logger.info("Options:")
-    logger.info("  directories: %s", args.directories)
-    logger.info("  verbose: %s", args.verbose)
-    logger.info("  pid-file: %s", args.pid_file)
-    testsuite.log_arguments(logger, args)
-    runner.log_arguments(logger, args)
-    logutil.log_arguments(logger, args)
-    skip.log_arguments(logger, args)
-    ignore.log_arguments(logger, args)
-    publish.log_arguments(logger, args)
+    argutil.log_args(logger, args)
+    publish.process_arguments(logger, args)
 
     if args.pid_file:
         pid = os.getpid()

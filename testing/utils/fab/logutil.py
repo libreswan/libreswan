@@ -125,12 +125,6 @@ def add_arguments(parser):
                              "; append '+' to append-to instead of overwrite %(metavar)s"))
 
 
-def log_arguments(logger, args):
-    logger.info("Logging arguments:")
-    logger.info("  log-level: '%s'", args.log_level)
-    logger.info("  debug: '%s'", args.debug)
-
-
 _DEBUG_STREAM = None
 _DEBUG_FORMATTER = logging.Formatter("%(levelname)s %(message)s")
 

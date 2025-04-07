@@ -104,6 +104,11 @@ def boolean(arg):
         return False
     raise Exception(f"unrecognized boolean {arg}")
 
+def log_args(logger, args):
+    logger.info("Arguments:")
+    for key, value in vars(args).items():
+        logger.info(f"  {key}: {value}")
+
 def add_redirect_argument(parser, what, *args, **kwargs):
     # Can't use '-FILE' as the argument as the parser doesn't like it.
     # The prefix syntax is hacky.

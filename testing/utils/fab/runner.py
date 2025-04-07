@@ -64,15 +64,6 @@ def add_arguments(parser):
                        help="backup existing <test>/OUTPUT to %(metavar)s/<test>/<date> (default: %(default)s)")
 
 
-def log_arguments(logger, args):
-    logger.info("Test Runner arguments:")
-    logger.info("  prefix: %s", args.prefix)
-    logger.info("  parallel: %s", args.parallel)
-    logger.info("  backup-directory: %s", args.backup_directory)
-    logger.info("  run-post-mortem: %s", args.run_post_mortem)
-    logger.info("  log-console-output: %s", args.log_console_output)
-
-
 class Task:
     def __init__(self, test, test_nr, nr_tests):
         self.test_nr = test_nr

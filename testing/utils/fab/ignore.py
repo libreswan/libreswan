@@ -32,14 +32,6 @@ def add_arguments(parser):
                        help="Select tests with all platforms matching %(metavar)s (default: '%(default)s')")
 
 
-def log_arguments(logger, args):
-    logger.info("Test filter arguments:")
-    logger.info("  test-kind: '%s'" , args.test_kind.pattern)
-    logger.info("  test-status: '%s'" , args.test_status.pattern)
-    logger.info("  test-name: '%s'" , args.test_name.pattern)
-    logger.info("  test-platform: '%s'" , args.test_platform.pattern)
-
-
 def test(logger, args, test):
 
     """Identify tests that should be ignored due to filters
