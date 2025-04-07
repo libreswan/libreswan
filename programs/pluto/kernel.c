@@ -926,8 +926,6 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		/*
-		 * Pass +0: Lookup the status of each SPD.
-		 *
 		 * Still call find_spd_conflicts() when a sec_label so that
 		 * the structure is zeroed (sec_labels ignore conflicts).
 		 */
@@ -940,26 +938,13 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 			break;
 		}
 
-		spd->wip.ok = true;
-
 		/*
-		 * When overlap isn't supported, the old clashing bare
-		 * shunt needs to be deleted before the new one can be
-		 * installed.  Else it can be deleted after.
-		 *
-		 * For linux this also requires SA_MARKS to be set
-		 * uniquely.
+		 * Install/replace the policy.
 		 */
 
+		spd->wip.ok = true;
 		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.bare_shunt != NULL) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.bare_shunt,
-							KERNEL_POLICY_PRESENT,
-							c->logger, where);
-			/* if everything succeeds, delete below */
-		}
 
-		PEXPECT(c->logger, spd->wip.ok);
 		ok &= spd->wip.installed.kernel_policy =
 			install_prospective_kernel_policy(spd, routing_shunt_kind(new_routing),
 							  c->logger, where);
@@ -968,7 +953,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		}
 
 		/*
-		 * Pass +2: add the route.
+		 * Add the route.
 		 */
 
 		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
@@ -984,6 +969,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
+
 		if (!ok) {
 			break;
 		}
