@@ -251,10 +251,9 @@ relative=
 
 if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
     if test $# -eq 0 ; then
-	set -- check $PWD
-    else
-	relative=$PWD
+	set -- check
     fi
+    relative=$PWD
     cd $(dirname $0)
 fi
 
@@ -404,7 +403,11 @@ if test -n "${modified}" ; then
     fi
     directories=(${modified})
 elif test ${#directories[@]} -eq 0 ; then
-    directories=(${kvm_testingdir})
+    if test -n "${relative}" ; then
+	directories=(${relative})
+    else
+	directories=(${kvm_testingdir})
+    fi
 fi
 
 if test -z "${ops[*]}" ; then

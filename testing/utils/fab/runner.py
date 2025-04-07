@@ -35,6 +35,7 @@ from fab import ignore
 from fab import publish
 from fab.hosts import GUESTS
 from fab import printer
+from fab import argutil
 
 PREFIX = "******"
 SUFFIX = "******"
@@ -51,22 +52,16 @@ def add_arguments(parser):
                        help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
-    group.add_argument("--run-post-mortem", default=None, action=argparse.BooleanOptionalAction,
+    group.add_argument("--run-post-mortem", default=None, metavar="Y|N", type=argutil.boolean,
                        help="run the post-mortem script; by default, when there is only one test, the script post-mortem.sh is skipped")
+    group.add_argument("--log-console-output", default=None, metavar="Y|N", type=argutil.boolean,
+                       help="log output from commands; by default, when there is only one test, the output is logged")
 
     # Default to BACKUP under the current directory.  Name is
     # arbitrary, chosen for its hopefully unique first letter
     # (avoiding Makefile, OBJ, README, ... :-).
     group.add_argument("--backup-directory", metavar="DIRECTORY", default="BACKUP",
                        help="backup existing <test>/OUTPUT to %(metavar)s/<test>/<date> (default: %(default)s)")
-
-
-def log_arguments(logger, args):
-    logger.info("Test Runner arguments:")
-    logger.info("  prefix: %s", args.prefix)
-    logger.info("  parallel: %s", args.parallel)
-    logger.info("  backup-directory: %s", args.backup_directory)
-    logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
 class Task:
@@ -338,11 +333,11 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                         for command in test.commands:
 
-                            # The per-guest command has no guest?
+                            # The per-guest command has a blank guest.
                             #
-                            # i.e., blank or None.  It's a comment
-                            # from all.console.txt.  Skip executing it
-                            # and save it in the shared
+                            # i.e., "" or None.  It's a comment from
+                            # all.console.txt.  Skip executing it and
+                            # save it in the shared
                             # all.console.verbose.txt file.
 
                             if not command.guest:
@@ -355,8 +350,8 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             #
                             # i.e., it starts with '#'.  Skip
                             # executing it and save it in the output
-                            # file.  (for per-GUEST output also need
-                            # to fake up a new prompt).
+                            # file (for per-GUEST output also need to
+                            # fake up a new prompt).
 
                             test_domain = test_domains[command.guest.name]
                             guest_verbose_txt = test_domain.verbose_txt
@@ -374,7 +369,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 all_verbose_txt.write("\n");
                             last_was_comment = False
 
-                            # ALL gets the new prompt
+                            # ALL gets the new-style prompt
                             all_verbose_txt.write(command.guest.name)
                             all_verbose_txt.write("# ")
                             # both get the command
@@ -387,8 +382,12 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             if output:
                                 # All gets a blank line
                                 all_verbose_txt.write("\n")
+                                ascii = output.decode()
                                 for txt in (all_verbose_txt, guest_verbose_txt):
-                                    txt.write(output.decode()) # convert byte to string
+                                    txt.write(ascii) # convert byte to string
+                                if args.log_console_output:
+                                    for line in ascii.splitlines():
+                                        test_domain.logger.info(line)
 
                             if status is post.Issues.TIMEOUT:
                                 # A timeout while running a
@@ -453,8 +452,9 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                 status, output = test_domain.run(script, timeout=POST_MORTEM_TIMEOUT)
                                 if output:
                                     all_verbose_txt.write("\n")
+                                    ascii = output.decode()
                                     for txt in (all_verbose_txt, guest_verbose_txt):
-                                        txt.write(output.decode()) # convert byte to string
+                                        txt.write(ascii) # convert byte to string
                                         txt.write("\n")
 
                                 if status is post.Issues.TIMEOUT:

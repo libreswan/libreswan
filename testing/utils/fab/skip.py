@@ -32,11 +32,6 @@ def add_arguments(parser):
                        default=list(), choices=_RESULTS,
                        help="include test with previous result; default: '%(default)s'")
 
-def log_arguments(logger, args):
-    logger.info("Result arguments:")
-    logger.info("  skip: %s", args.skip)
-    logger.info("  result: %s", args.result)
-
 def result(logger, args, result):
     if result.resolution in args.skip:
         return result.resolution
