@@ -937,7 +937,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		struct spd_owner owner;
 		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.shunt,
+						 &spd->wip.conflicting.bare_shunt,
 						 c->logger);
 		if (!ok) {
 			break;
@@ -952,7 +952,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		PEXPECT(logger, spd->wip.ok);
 		enum kernel_policy_op op =
-			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
+			(spd->wip.conflicting.bare_shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
 			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
@@ -1047,7 +1047,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		}
 
 		PEXPECT(logger, spd->wip.ok);
-		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
+		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
 		}

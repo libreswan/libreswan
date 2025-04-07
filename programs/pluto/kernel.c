@@ -872,7 +872,7 @@ void revert_kernel_policy(struct spd *spd,
 	 */
 
 	PEXPECT(logger, spd->wip.ok);
-	if (spd->wip.conflicting.shunt == NULL) {
+	if (spd->wip.conflicting.bare_shunt == NULL) {
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
 		/* go back to old routing */
@@ -893,7 +893,7 @@ void revert_kernel_policy(struct spd *spd,
 
 	/* only one - shunt set when no policy */
 	PEXPECT(logger, spd->wip.ok);
-	PASSERT(logger, spd->wip.conflicting.shunt != NULL);
+	PASSERT(logger, spd->wip.conflicting.bare_shunt != NULL);
 
 	/*
 	 * If there's a bare shunt, restore it.
@@ -902,7 +902,7 @@ void revert_kernel_policy(struct spd *spd,
 	 */
 
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
-	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
+	struct bare_shunt *bs = *spd->wip.conflicting.bare_shunt;
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, logger);
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
@@ -934,7 +934,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 		struct spd_owner owner;
 		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.shunt,
+						 &spd->wip.conflicting.bare_shunt,
 						 c->logger);
 		if (!ok) {
 			break;
@@ -952,8 +952,8 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		 */
 
 		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.shunt != NULL) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
+		if (spd->wip.conflicting.bare_shunt != NULL) {
+			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.bare_shunt,
 							KERNEL_POLICY_PRESENT,
 							c->logger, where);
 			/* if everything succeeds, delete below */
@@ -1008,7 +1008,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		PEXPECT(c->logger, spd->wip.ok);
-		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
+		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
 		}
