@@ -83,8 +83,12 @@ def main():
         return 1
 
     if len(tests) == 1 and args.run_post_mortem is None:
-        logger.warning("skipping post-mortem.sh as only one test; use --run-post-mortem true to override this")
+        logger.warning("disabling post-mortem.sh as only one test; use --run-post-mortem true to override this")
         args.run_post_mortem = False
+
+    if len(tests) == 1 and args.log_console_output is None:
+        logger.warning("enabling --log-console-output as only one test; use --log-console-output false to override this")
+        args.log_console_output = True
 
     result_stats = stats.Results()
 

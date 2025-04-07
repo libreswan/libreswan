@@ -561,6 +561,7 @@ STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 KVM_TEST_PLATFORM += $(KVM_OS)
 KVM_TEST_STATUS += good
 KVM_RUN_POST_MORTEM ?=
+KVM_LOG_CONSOLE_OUTPUT ?=
 
 STRIPPED_KVM_TEST_PLATFORM = $(subst $(sp),|,$(sort $(KVM_TEST_PLATFORM)))
 STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
@@ -592,8 +593,8 @@ kvm-%: kvm-ready kvm-web
 		$(if $(STRIPPED_KVM_TEST_NAME),     --test-name     '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(STRIPPED_KVM_TEST_PLATFORM), --test-platform '$(STRIPPED_KVM_TEST_PLATFORM)') \
 		$(if $(filter kvm-re%, $@), --skip passed) \
-		$(if $(filter true, $(KVM_RUN_POST_MORTEM)), --run-post-mortem, \
-		$(if $(filter false, $(KVM_RUN_POST_MORTEM)), --no-run-post-mortem)) \
+		$(if $(KVM_RUN_POST_MORTEM),    --run-post-mortem=$(KVM_RUN_POST_MORTEM)) \
+		$(if $(KVM_LOG_CONSOLE_OUTPUT), --log-console-output=$(KVM_LOG_CONSOLE_OUTPUT)) \
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
