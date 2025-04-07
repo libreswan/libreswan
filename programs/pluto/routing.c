@@ -713,10 +713,10 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
-						      SHUNT_KIND_ONDEMAND,
-						      KERNEL_POLICY_PRESENT,
-						      logger, where);
+		uninstall_ipsec_kernel_policy(child, c, spd, &owner,
+					      SHUNT_KIND_ONDEMAND,
+					      KERNEL_POLICY_PRESENT,
+					      logger, where);
 	}
 
 	set_routing(child->sa.st_connection, RT_ROUTED_ONDEMAND);
@@ -742,10 +742,10 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
-						      SHUNT_KIND_FAILURE,
-						      KERNEL_POLICY_PRESENT,
-						      logger, where);
+		uninstall_ipsec_kernel_policy(child, c, spd, &owner,
+					      SHUNT_KIND_FAILURE,
+					      KERNEL_POLICY_PRESENT,
+					      logger, where);
 	}
 
 	set_routing(child->sa.st_connection, RT_ROUTED_FAILURE);
@@ -965,10 +965,10 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
-						      SHUNT_KIND_ONDEMAND,
-						      KERNEL_POLICY_PRESENT,
-						      logger, where);
+		uninstall_ipsec_kernel_policy(child, c, spd, &owner,
+					      SHUNT_KIND_ONDEMAND,
+					      KERNEL_POLICY_PRESENT,
+					      logger, where);
 	}
 
 	do_updown_child(UPDOWN_ROUTE, child);
@@ -995,10 +995,10 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 						   logger, where);
 
 		delete_cat_kernel_policies(spd, &owner, logger, where);
-		replace_ipsec_with_bare_kernel_policy(child, c, spd, &owner,
-						      SHUNT_KIND_FAILURE,
-						      KERNEL_POLICY_PRESENT,
-						      logger, where);
+		uninstall_ipsec_kernel_policy(child, c, spd, &owner,
+					      SHUNT_KIND_FAILURE,
+					      KERNEL_POLICY_PRESENT,
+					      logger, where);
 	}
 
 	do_updown_child(UPDOWN_ROUTE, child);

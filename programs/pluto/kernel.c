@@ -898,9 +898,7 @@ void revert_kernel_policy(struct spd *spd,
 	/*
 	 * If there's a bare shunt, restore it.
 	 *
-	 * I don't think that this case is very likely.  Normally a
-	 * bare shunt would have been assigned to a connection before
-	 * we've gotten this far.
+	 * I don't think that this case is very likely.
 	 */
 
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
