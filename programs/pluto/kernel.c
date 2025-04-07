@@ -918,16 +918,6 @@ void revert_kernel_policy(struct spd *spd,
 
 bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where)
 {
-	/*
-	 * If this is a transport SA, and overlapping SAs are
-	 * supported, then this route is not necessary at all.
-	 */
-	PEXPECT(c->logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-		ldbg(c->logger, "route-unnecessary: overlap and transport");
-		return true;
-	}
-
 	clear_connection_spd_conflicts(c);
 
 	/*
@@ -964,8 +954,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		 */
 
 		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.shunt != NULL &&
-		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
+		if (spd->wip.conflicting.shunt != NULL) {
 			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
 							KERNEL_POLICY_PRESENT,
 							c->logger, where);
@@ -978,15 +967,6 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 							    c->logger, where);
 		if (!ok) {
 			break;
-		}
-
-		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.shunt != NULL &&
-		    PBAD(c->logger, kernel_ops->overlap_supported)) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							KERNEL_POLICY_PRESENT,
-							c->logger, where);
-			/* if everything succeeds, delete below */
 		}
 
 		/*
@@ -1794,15 +1774,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 	     pri_where(where));
 
 	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-		ldbg(logger, "route-unnecessary: overlap and transport");
-	}
-
-	/*
 	 * The IKEv1 alias-01 test triggers a pexpect() because the
 	 * claimed route owner hasn't been installed
 	 *
@@ -1832,20 +1803,10 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 			       struct do_updown updown, where_t where)
 {
 	struct logger *logger = child->sa.logger;
-	struct connection *c = child->sa.st_connection;
 
 	ldbg(logger, "kernel: %s() for "PRI_SO": outbound "PRI_WHERE,
 	     __func__, pri_so(child->sa.st_serialno),
 	     pri_where(where));
-
-	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-		ldbg(logger, "route-unnecessary: overlap and transport");
-	}
 
 	/* (attempt to) actually set up the SA group */
 

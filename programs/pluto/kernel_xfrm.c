@@ -3346,7 +3346,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.directional_ipsec_sa_is_enabled = xfrm_directional_ipsec_sa_is_enabled,
 	.iptfs_ipsec_sa_is_enabled = xfrm_iptfs_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
-	.overlap_supported = false,
 	.sha2_truncbug_support = true,
 	.poke_ipsec_policy_hole = netlink_poke_ipsec_policy_hole,
 	.detect_nic_offload = xfrm_detect_nic_offload,
