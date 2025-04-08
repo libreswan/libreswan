@@ -174,11 +174,6 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
-#ifndef GLOBAL_LOGGER
-extern struct logger global_logger;
-#define GLOBAL_LOGGER &global_logger
-#endif
-
 struct logger {
 	/* support up to two whacks */
 	struct fd *whackfd[2];
