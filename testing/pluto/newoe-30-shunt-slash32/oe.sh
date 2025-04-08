@@ -2,12 +2,19 @@
 
 set -e
 
-conn=oe$(echo "$@" | sed -e 's/--/./g' -e 's/ /-/g')
-args="$@"
+# --negopass --failnone --ike aes
+what=$1 ; shift
+conn=$(echo "oe $@ ${what}" | sed -e 's/ --/./g' -e 's/ /-/g')
+
+case ${what} in
+    *pass* ) set -- "$@" ;;
+    *fail-ike ) set -- "$@" --ike aes ;;
+    *fail-child ) set -- "$@" --esp aes ;;
+esac
 
 echo :
 echo :
-echo : OE testing: ${args} ${conn}
+echo : OE testing: ${conn} -- "$@"
 echo :
 echo :
 
@@ -16,14 +23,15 @@ RUN() {
     "$@"
 }
 
-echo : ${args} RESTARTING PLUTO
-ipsec stop
+echo : ${conn} RESTARTING PLUTO
+ipsec whack --shutdown
 rm OUTPUT/road.pluto.log
 ln -s road.pluto.${conn}.log OUTPUT/road.pluto.log
-ipsec start
+# frequent shunt checks; also needs shuntlifetime 10s
+ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 5s --leak-detective
 ../../guestbin/wait-until-pluto-started
 
-echo : ${args} LOADING CONNECTION
+echo : ${conn} LOADING CONNECTION
 RUN ipsec addconn \
     --name road \
     --retransmit-timeout 5s \
@@ -39,9 +47,10 @@ RUN ipsec addconn \
     --id %null
 ipsec route road
 ipsec listen
-echo : ${args} TRAPPING `cat policy`
+
+echo : ${conn} EXPECT TRAP KERNEL POLICY FOR `cat policy`
 ipsec _kernel policy
 
-echo : ${args} TRIGGERING OE
+echo : ${conn} TRIGGERING OE
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: sent IKE_SA_INIT request'

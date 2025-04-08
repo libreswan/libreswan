@@ -1,17 +1,11 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 road #
- # ensure for tests acquires expire before our failureshunt=2m
-road #
- echo 30 > /proc/sys/net/core/xfrm_acq_expires
-road #
- ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
-[x] PID
-road #
  cp policy /etc/ipsec.d/policies/road
 road #
- ipsec start
-Redirecting to: [initsystem]
+ # need to use pluto
+road #
+ ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 5s --leak-detective
 road #
  ../../guestbin/wait-until-pluto-started
 road #
@@ -60,30 +54,30 @@ road #
  ./oe-pass.sh        --negopass --failnone
 :
 :
-: OE testing: --negopass --failnone oe.negopass-.failnone
+: OE testing: oe.negopass.failnone-pass -- --negopass --failnone
 :
 :
-: --negopass --failnone RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --failnone LOADING CONNECTION
+: oe.negopass.failnone-pass RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.failnone-pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --failnone TRAPPING 192.1.2.23/32
+: oe.negopass.failnone-pass EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failnone TRIGGERING OE
+: oe.negopass.failnone-pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --failnone ESTABLISH
+: oe.negopass.failnone-pass ESTABLISH
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
+: oe.negopass.failnone-pass EXPECT IPSEC POLICY
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -96,19 +90,21 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid 16397 mode tunnel
+: oe.negopass.failnone-pass EXPECT ONE PACKET
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+: oe.negopass.failnone-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negopass --failnone SHUTDOWN
+: oe.negopass.failnone-pass SHUTDOWN
 "road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-: --negopass --failnone NO STATES
-: --negopass --failnone NO SHUNTS
+: oe.negopass.failnone-pass EXPECT NO STATES
+: oe.negopass.failnone-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negopass --failnone TRAP POLICY
+: oe.negopass.failnone-pass EXPECT TRAP POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -117,115 +113,127 @@ road #
  ./oe-fail-ike.sh    --negopass --failnone
 :
 :
-: OE testing: --negopass --failnone --ike aes oe.negopass-.failnone-.ike-aes
+: OE testing: oe.negopass.failnone-fail-ike -- --negopass --failnone --ike aes
 :
 :
-: --negopass --failnone --ike aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --failnone --ike aes LOADING CONNECTION
+: oe.negopass.failnone-fail-ike RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.failnone-fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --failnone --ike aes TRAPPING 192.1.2.23/32
+: oe.negopass.failnone-fail-ike EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failnone --ike aes TRIGGERING OE
+: oe.negopass.failnone-fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --failnone --ike aes NEGOTIATION KERNEL POLICY
+: oe.negopass.failnone-fail-ike EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
-: --negopass --failnone --ike aes NEGOTIATION PING
+: oe.negopass.failnone-fail-ike TRY NEGOTIATION PING
 up
-: --negopass --failnone --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+: oe.negopass.failnone-fail-ike WAIT FOR IKE_SA_INIT TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
-: --negopass --failnone --ike aes FAILURE KERNEL POLICY
+: oe.negopass.failnone-fail-ike WAIT FOR ACQUIRE TO EXPIRE
+: oe.negopass.failnone-fail-ike FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failnone --ike aes FAILURE SHUNTS
+: oe.negopass.failnone-fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
-: --negopass --failnone --ike aes FAILURE STATES -- NONE
-: --negopass --failnone --ike aes FAILURE PING
+: oe.negopass.failnone-fail-ike EXPECT NO FAILURE STATES
+: oe.negopass.failnone-fail-ike TRY FAILURE PING
+: oe.negopass.failnone-fail-ike WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-fail-child.sh  --negopass --failnone
 :
 :
-: OE testing: --negopass --failnone --esp aes oe.negopass-.failnone-.esp-aes
+: OE testing: oe.negopass.failnone-fail-child -- --negopass --failnone --esp aes
 :
 :
-: --negopass --failnone --esp aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --failnone --esp aes LOADING CONNECTION
+: oe.negopass.failnone-fail-child RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.failnone-fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --failnone --esp aes TRAPPING 192.1.2.23/32
+: oe.negopass.failnone-fail-child EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failnone --esp aes TRIGGERING OE
+: oe.negopass.failnone-fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --failnone --esp aes NEGOTIATION SHUNT
+: oe.negopass.failnone-fail-child EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failnone --esp aes WAIT FOR IKE_AUTH TO FAIL
+: oe.negopass.failnone-fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-: --negopass --failnone --esp aes FAILURE KERNEL POLICY
+: oe.negopass.failnone-fail-child WAIT FOR ACQUIRE TO EXPIRE
+: oe.negopass.failnone-fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failnone --esp aes FAILURE SHUNTS
+: oe.negopass.failnone-fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
-: --negopass --failnone --esp aes FAILURE STATES -- NONE
+: oe.negopass.failnone-fail-child EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-: --negopass --failnone --esp aes FAILURE PING
+: oe.negopass.failnone-fail-child TRY FAILURE PING
+: oe.negopass.failnone-fail-child WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-pass.sh        --negopass --faildrop
 :
 :
-: OE testing: --negopass --faildrop oe.negopass-.faildrop
+: OE testing: oe.negopass.faildrop-pass -- --negopass --faildrop
 :
 :
-: --negopass --faildrop RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --faildrop LOADING CONNECTION
+: oe.negopass.faildrop-pass RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.faildrop-pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --faildrop TRAPPING 192.1.2.23/32
+: oe.negopass.faildrop-pass EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --faildrop TRIGGERING OE
+: oe.negopass.faildrop-pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --faildrop ESTABLISH
+: oe.negopass.faildrop-pass ESTABLISH
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
+: oe.negopass.faildrop-pass EXPECT IPSEC POLICY
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -238,19 +246,21 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid 16397 mode tunnel
+: oe.negopass.faildrop-pass EXPECT ONE PACKET
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+: oe.negopass.faildrop-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negopass --faildrop SHUTDOWN
+: oe.negopass.faildrop-pass SHUTDOWN
 "road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-: --negopass --faildrop NO STATES
-: --negopass --faildrop NO SHUNTS
+: oe.negopass.faildrop-pass EXPECT NO STATES
+: oe.negopass.faildrop-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negopass --faildrop TRAP POLICY
+: oe.negopass.faildrop-pass EXPECT TRAP POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -259,119 +269,131 @@ road #
  ./oe-fail-ike.sh    --negopass --faildrop
 :
 :
-: OE testing: --negopass --faildrop --ike aes oe.negopass-.faildrop-.ike-aes
+: OE testing: oe.negopass.faildrop-fail-ike -- --negopass --faildrop --ike aes
 :
 :
-: --negopass --faildrop --ike aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --faildrop --ike aes LOADING CONNECTION
+: oe.negopass.faildrop-fail-ike RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.faildrop-fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --faildrop --ike aes TRAPPING 192.1.2.23/32
+: oe.negopass.faildrop-fail-ike EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --faildrop --ike aes TRIGGERING OE
+: oe.negopass.faildrop-fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --faildrop --ike aes NEGOTIATION KERNEL POLICY
+: oe.negopass.faildrop-fail-ike EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
-: --negopass --faildrop --ike aes NEGOTIATION PING
+: oe.negopass.faildrop-fail-ike TRY NEGOTIATION PING
 up
-: --negopass --faildrop --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+: oe.negopass.faildrop-fail-ike WAIT FOR IKE_SA_INIT TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
-: --negopass --faildrop --ike aes FAILURE KERNEL POLICY
+: oe.negopass.faildrop-fail-ike WAIT FOR ACQUIRE TO EXPIRE
+: oe.negopass.faildrop-fail-ike FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --faildrop --ike aes FAILURE SHUNTS
+: oe.negopass.faildrop-fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
-: --negopass --faildrop --ike aes FAILURE STATES -- NONE
-: --negopass --faildrop --ike aes FAILURE PING
+: oe.negopass.faildrop-fail-ike EXPECT NO FAILURE STATES
+: oe.negopass.faildrop-fail-ike TRY FAILURE PING
 down
+: oe.negopass.faildrop-fail-ike WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-fail-child.sh  --negopass --faildrop
 :
 :
-: OE testing: --negopass --faildrop --esp aes oe.negopass-.faildrop-.esp-aes
+: OE testing: oe.negopass.faildrop-fail-child -- --negopass --faildrop --esp aes
 :
 :
-: --negopass --faildrop --esp aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --faildrop --esp aes LOADING CONNECTION
+: oe.negopass.faildrop-fail-child RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.faildrop-fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --faildrop --esp aes TRAPPING 192.1.2.23/32
+: oe.negopass.faildrop-fail-child EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --faildrop --esp aes TRIGGERING OE
+: oe.negopass.faildrop-fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --faildrop --esp aes NEGOTIATION SHUNT
+: oe.negopass.faildrop-fail-child EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --faildrop --esp aes WAIT FOR IKE_AUTH TO FAIL
+: oe.negopass.faildrop-fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-: --negopass --faildrop --esp aes FAILURE KERNEL POLICY
+: oe.negopass.faildrop-fail-child WAIT FOR ACQUIRE TO EXPIRE
+: oe.negopass.faildrop-fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --faildrop --esp aes FAILURE SHUNTS
+: oe.negopass.faildrop-fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
-: --negopass --faildrop --esp aes FAILURE STATES -- NONE
+: oe.negopass.faildrop-fail-child EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-: --negopass --faildrop --esp aes FAILURE PING
+: oe.negopass.faildrop-fail-child TRY FAILURE PING
 down
+: oe.negopass.faildrop-fail-child WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-pass.sh        --negopass --failpass
 :
 :
-: OE testing: --negopass --failpass oe.negopass-.failpass
+: OE testing: oe.negopass.failpass-pass -- --negopass --failpass
 :
 :
-: --negopass --failpass RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --failpass LOADING CONNECTION
+: oe.negopass.failpass-pass RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.failpass-pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --failpass TRAPPING 192.1.2.23/32
+: oe.negopass.failpass-pass EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failpass TRIGGERING OE
+: oe.negopass.failpass-pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --failpass ESTABLISH
+: oe.negopass.failpass-pass ESTABLISH
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
+: oe.negopass.failpass-pass EXPECT IPSEC POLICY
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -384,19 +406,21 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid 16397 mode tunnel
+: oe.negopass.failpass-pass EXPECT ONE PACKET
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+: oe.negopass.failpass-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negopass --failpass SHUTDOWN
+: oe.negopass.failpass-pass SHUTDOWN
 "road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-: --negopass --failpass NO STATES
-: --negopass --failpass NO SHUNTS
+: oe.negopass.failpass-pass EXPECT NO STATES
+: oe.negopass.failpass-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negopass --failpass TRAP POLICY
+: oe.negopass.failpass-pass EXPECT TRAP POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -405,113 +429,125 @@ road #
  ./oe-fail-ike.sh    --negopass --failpass
 :
 :
-: OE testing: --negopass --failpass --ike aes oe.negopass-.failpass-.ike-aes
+: OE testing: oe.negopass.failpass-fail-ike -- --negopass --failpass --ike aes
 :
 :
-: --negopass --failpass --ike aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --failpass --ike aes LOADING CONNECTION
+: oe.negopass.failpass-fail-ike RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.failpass-fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --failpass --ike aes TRAPPING 192.1.2.23/32
+: oe.negopass.failpass-fail-ike EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failpass --ike aes TRIGGERING OE
+: oe.negopass.failpass-fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --failpass --ike aes NEGOTIATION KERNEL POLICY
+: oe.negopass.failpass-fail-ike EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
-: --negopass --failpass --ike aes NEGOTIATION PING
+: oe.negopass.failpass-fail-ike TRY NEGOTIATION PING
 up
-: --negopass --failpass --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+: oe.negopass.failpass-fail-ike WAIT FOR IKE_SA_INIT TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
-: --negopass --failpass --ike aes FAILURE KERNEL POLICY
+: oe.negopass.failpass-fail-ike WAIT FOR ACQUIRE TO EXPIRE
+: oe.negopass.failpass-fail-ike FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
-: --negopass --failpass --ike aes FAILURE SHUNTS
+: oe.negopass.failpass-fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
-: --negopass --failpass --ike aes FAILURE STATES -- NONE
-: --negopass --failpass --ike aes FAILURE PING
+: oe.negopass.failpass-fail-ike EXPECT NO FAILURE STATES
+: oe.negopass.failpass-fail-ike TRY FAILURE PING
 up
+: oe.negopass.failpass-fail-ike WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-fail-child.sh  --negopass --failpass
 :
 :
-: OE testing: --negopass --failpass --esp aes oe.negopass-.failpass-.esp-aes
+: OE testing: oe.negopass.failpass-fail-child -- --negopass --failpass --esp aes
 :
 :
-: --negopass --failpass --esp aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negopass --failpass --esp aes LOADING CONNECTION
+: oe.negopass.failpass-fail-child RESTARTING PLUTO
+Pluto is shutting down
+: oe.negopass.failpass-fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negopass --failpass --esp aes TRAPPING 192.1.2.23/32
+: oe.negopass.failpass-fail-child EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negopass --failpass --esp aes TRIGGERING OE
+: oe.negopass.failpass-fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negopass --failpass --esp aes NEGOTIATION SHUNT
+: oe.negopass.failpass-fail-child EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
-: --negopass --failpass --esp aes WAIT FOR IKE_AUTH TO FAIL
+: oe.negopass.failpass-fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-: --negopass --failpass --esp aes FAILURE KERNEL POLICY
+: oe.negopass.failpass-fail-child WAIT FOR ACQUIRE TO EXPIRE
+: oe.negopass.failpass-fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
-: --negopass --failpass --esp aes FAILURE SHUNTS
+: oe.negopass.failpass-fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
-: --negopass --failpass --esp aes FAILURE STATES -- NONE
+: oe.negopass.failpass-fail-child EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-: --negopass --failpass --esp aes FAILURE PING
+: oe.negopass.failpass-fail-child TRY FAILURE PING
 up
+: oe.negopass.failpass-fail-child WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-pass.sh        --negodrop --failnone
 :
 :
-: OE testing: --negodrop --failnone oe.negodrop-.failnone
+: OE testing: oe.negodrop.failnone-pass -- --negodrop --failnone
 :
 :
-: --negodrop --failnone RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --failnone LOADING CONNECTION
+: oe.negodrop.failnone-pass RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.failnone-pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --failnone TRAPPING 192.1.2.23/32
+: oe.negodrop.failnone-pass EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone TRIGGERING OE
+: oe.negodrop.failnone-pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --failnone ESTABLISH
+: oe.negodrop.failnone-pass ESTABLISH
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
+: oe.negodrop.failnone-pass EXPECT IPSEC POLICY
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -524,19 +560,21 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid 16397 mode tunnel
+: oe.negodrop.failnone-pass EXPECT ONE PACKET
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+: oe.negodrop.failnone-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negodrop --failnone SHUTDOWN
+: oe.negodrop.failnone-pass SHUTDOWN
 "road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-: --negodrop --failnone NO STATES
-: --negodrop --failnone NO SHUNTS
+: oe.negodrop.failnone-pass EXPECT NO STATES
+: oe.negodrop.failnone-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negodrop --failnone TRAP POLICY
+: oe.negodrop.failnone-pass EXPECT TRAP POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -545,117 +583,129 @@ road #
  ./oe-fail-ike.sh    --negodrop --failnone
 :
 :
-: OE testing: --negodrop --failnone --ike aes oe.negodrop-.failnone-.ike-aes
+: OE testing: oe.negodrop.failnone-fail-ike -- --negodrop --failnone --ike aes
 :
 :
-: --negodrop --failnone --ike aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --failnone --ike aes LOADING CONNECTION
+: oe.negodrop.failnone-fail-ike RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.failnone-fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --failnone --ike aes TRAPPING 192.1.2.23/32
+: oe.negodrop.failnone-fail-ike EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone --ike aes TRIGGERING OE
+: oe.negodrop.failnone-fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --failnone --ike aes NEGOTIATION KERNEL POLICY
+: oe.negodrop.failnone-fail-ike EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 3850432 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone --ike aes NEGOTIATION PING
+: oe.negodrop.failnone-fail-ike TRY NEGOTIATION PING
 down
-: --negodrop --failnone --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+: oe.negodrop.failnone-fail-ike WAIT FOR IKE_SA_INIT TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
-: --negodrop --failnone --ike aes FAILURE KERNEL POLICY
+: oe.negodrop.failnone-fail-ike WAIT FOR ACQUIRE TO EXPIRE
+: oe.negodrop.failnone-fail-ike FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone --ike aes FAILURE SHUNTS
+: oe.negodrop.failnone-fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
-: --negodrop --failnone --ike aes FAILURE STATES -- NONE
-: --negodrop --failnone --ike aes FAILURE PING
+: oe.negodrop.failnone-fail-ike EXPECT NO FAILURE STATES
+: oe.negodrop.failnone-fail-ike TRY FAILURE PING
+: oe.negodrop.failnone-fail-ike WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-fail-child.sh  --negodrop --failnone
 :
 :
-: OE testing: --negodrop --failnone --esp aes oe.negodrop-.failnone-.esp-aes
+: OE testing: oe.negodrop.failnone-fail-child -- --negodrop --failnone --esp aes
 :
 :
-: --negodrop --failnone --esp aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --failnone --esp aes LOADING CONNECTION
+: oe.negodrop.failnone-fail-child RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.failnone-fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --failnone --esp aes TRAPPING 192.1.2.23/32
+: oe.negodrop.failnone-fail-child EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone --esp aes TRIGGERING OE
+: oe.negodrop.failnone-fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --failnone --esp aes NEGOTIATION SHUNT
+: oe.negodrop.failnone-fail-child EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone --esp aes WAIT FOR IKE_AUTH TO FAIL
+: oe.negodrop.failnone-fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-: --negodrop --failnone --esp aes FAILURE KERNEL POLICY
+: oe.negodrop.failnone-fail-child WAIT FOR ACQUIRE TO EXPIRE
+: oe.negodrop.failnone-fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failnone --esp aes FAILURE SHUNTS
+: oe.negodrop.failnone-fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
-: --negodrop --failnone --esp aes FAILURE STATES -- NONE
+: oe.negodrop.failnone-fail-child EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-: --negodrop --failnone --esp aes FAILURE PING
+: oe.negodrop.failnone-fail-child TRY FAILURE PING
+: oe.negodrop.failnone-fail-child WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-pass.sh        --negodrop --faildrop
 :
 :
-: OE testing: --negodrop --faildrop oe.negodrop-.faildrop
+: OE testing: oe.negodrop.faildrop-pass -- --negodrop --faildrop
 :
 :
-: --negodrop --faildrop RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --faildrop LOADING CONNECTION
+: oe.negodrop.faildrop-pass RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.faildrop-pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --faildrop TRAPPING 192.1.2.23/32
+: oe.negodrop.faildrop-pass EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop TRIGGERING OE
+: oe.negodrop.faildrop-pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --faildrop ESTABLISH
+: oe.negodrop.faildrop-pass ESTABLISH
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
+: oe.negodrop.faildrop-pass EXPECT IPSEC POLICY
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -668,19 +718,21 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid 16397 mode tunnel
+: oe.negodrop.faildrop-pass EXPECT ONE PACKET
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+: oe.negodrop.faildrop-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negodrop --faildrop SHUTDOWN
+: oe.negodrop.faildrop-pass SHUTDOWN
 "road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-: --negodrop --faildrop NO STATES
-: --negodrop --faildrop NO SHUNTS
+: oe.negodrop.faildrop-pass EXPECT NO STATES
+: oe.negodrop.faildrop-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negodrop --faildrop TRAP POLICY
+: oe.negodrop.faildrop-pass EXPECT TRAP POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -689,121 +741,133 @@ road #
  ./oe-fail-ike.sh    --negodrop --faildrop
 :
 :
-: OE testing: --negodrop --faildrop --ike aes oe.negodrop-.faildrop-.ike-aes
+: OE testing: oe.negodrop.faildrop-fail-ike -- --negodrop --faildrop --ike aes
 :
 :
-: --negodrop --faildrop --ike aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --faildrop --ike aes LOADING CONNECTION
+: oe.negodrop.faildrop-fail-ike RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.faildrop-fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --faildrop --ike aes TRAPPING 192.1.2.23/32
+: oe.negodrop.faildrop-fail-ike EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop --ike aes TRIGGERING OE
+: oe.negodrop.faildrop-fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --faildrop --ike aes NEGOTIATION KERNEL POLICY
+: oe.negodrop.faildrop-fail-ike EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 3850432 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop --ike aes NEGOTIATION PING
+: oe.negodrop.faildrop-fail-ike TRY NEGOTIATION PING
 down
-: --negodrop --faildrop --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+: oe.negodrop.faildrop-fail-ike WAIT FOR IKE_SA_INIT TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
-: --negodrop --faildrop --ike aes FAILURE KERNEL POLICY
+: oe.negodrop.faildrop-fail-ike WAIT FOR ACQUIRE TO EXPIRE
+: oe.negodrop.faildrop-fail-ike FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop --ike aes FAILURE SHUNTS
+: oe.negodrop.faildrop-fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
-: --negodrop --faildrop --ike aes FAILURE STATES -- NONE
-: --negodrop --faildrop --ike aes FAILURE PING
+: oe.negodrop.faildrop-fail-ike EXPECT NO FAILURE STATES
+: oe.negodrop.faildrop-fail-ike TRY FAILURE PING
 down
+: oe.negodrop.faildrop-fail-ike WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-fail-child.sh  --negodrop --faildrop
 :
 :
-: OE testing: --negodrop --faildrop --esp aes oe.negodrop-.faildrop-.esp-aes
+: OE testing: oe.negodrop.faildrop-fail-child -- --negodrop --faildrop --esp aes
 :
 :
-: --negodrop --faildrop --esp aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --faildrop --esp aes LOADING CONNECTION
+: oe.negodrop.faildrop-fail-child RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.faildrop-fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --faildrop --esp aes TRAPPING 192.1.2.23/32
+: oe.negodrop.faildrop-fail-child EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop --esp aes TRIGGERING OE
+: oe.negodrop.faildrop-fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --faildrop --esp aes NEGOTIATION SHUNT
+: oe.negodrop.faildrop-fail-child EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop --esp aes WAIT FOR IKE_AUTH TO FAIL
+: oe.negodrop.faildrop-fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-: --negodrop --faildrop --esp aes FAILURE KERNEL POLICY
+: oe.negodrop.faildrop-fail-child WAIT FOR ACQUIRE TO EXPIRE
+: oe.negodrop.faildrop-fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 0 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --faildrop --esp aes FAILURE SHUNTS
+: oe.negodrop.faildrop-fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
-: --negodrop --faildrop --esp aes FAILURE STATES -- NONE
+: oe.negodrop.faildrop-fail-child EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-: --negodrop --faildrop --esp aes FAILURE PING
+: oe.negodrop.faildrop-fail-child TRY FAILURE PING
 down
+: oe.negodrop.faildrop-fail-child WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-pass.sh        --negodrop --failpass
 :
 :
-: OE testing: --negodrop --failpass oe.negodrop-.failpass
+: OE testing: oe.negodrop.failpass-pass -- --negodrop --failpass
 :
 :
-: --negodrop --failpass RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --failpass LOADING CONNECTION
+: oe.negodrop.failpass-pass RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.failpass-pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --failpass TRAPPING 192.1.2.23/32
+: oe.negodrop.failpass-pass EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failpass TRIGGERING OE
+: oe.negodrop.failpass-pass TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --failpass ESTABLISH
+: oe.negodrop.failpass-pass ESTABLISH
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
+: oe.negodrop.failpass-pass EXPECT IPSEC POLICY
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority 3850432 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -816,19 +880,21 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850432 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid 16397 mode tunnel
+: oe.negodrop.failpass-pass EXPECT ONE PACKET
 #2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+: oe.negodrop.failpass-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negodrop --failpass SHUTDOWN
+: oe.negodrop.failpass-pass SHUTDOWN
 "road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-: --negodrop --failpass NO STATES
-: --negodrop --failpass NO SHUNTS
+: oe.negodrop.failpass-pass EXPECT NO STATES
+: oe.negodrop.failpass-pass EXPECT NO SHUNTS
 Bare Shunt list:
  
-: --negodrop --failpass TRAP POLICY
+: oe.negodrop.failpass-pass EXPECT TRAP POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -837,86 +903,98 @@ road #
  ./oe-fail-ike.sh    --negodrop --failpass
 :
 :
-: OE testing: --negodrop --failpass --ike aes oe.negodrop-.failpass-.ike-aes
+: OE testing: oe.negodrop.failpass-fail-ike -- --negodrop --failpass --ike aes
 :
 :
-: --negodrop --failpass --ike aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --failpass --ike aes LOADING CONNECTION
+: oe.negodrop.failpass-fail-ike RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.failpass-fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --failpass --ike aes TRAPPING 192.1.2.23/32
+: oe.negodrop.failpass-fail-ike EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failpass --ike aes TRIGGERING OE
+: oe.negodrop.failpass-fail-ike TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --failpass --ike aes NEGOTIATION KERNEL POLICY
+: oe.negodrop.failpass-fail-ike EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out action block priority 3850432 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failpass --ike aes NEGOTIATION PING
+: oe.negodrop.failpass-fail-ike TRY NEGOTIATION PING
 down
-: --negodrop --failpass --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+: oe.negodrop.failpass-fail-ike WAIT FOR IKE_SA_INIT TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
-: --negodrop --failpass --ike aes FAILURE KERNEL POLICY
+: oe.negodrop.failpass-fail-ike WAIT FOR ACQUIRE TO EXPIRE
+: oe.negodrop.failpass-fail-ike FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
-: --negodrop --failpass --ike aes FAILURE SHUNTS
+: oe.negodrop.failpass-fail-ike FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
-: --negodrop --failpass --ike aes FAILURE STATES -- NONE
-: --negodrop --failpass --ike aes FAILURE PING
+: oe.negodrop.failpass-fail-ike EXPECT NO FAILURE STATES
+: oe.negodrop.failpass-fail-ike TRY FAILURE PING
 up
+: oe.negodrop.failpass-fail-ike WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  ./oe-fail-child.sh  --negodrop --failpass
 :
 :
-: OE testing: --negodrop --failpass --esp aes oe.negodrop-.failpass-.esp-aes
+: OE testing: oe.negodrop.failpass-fail-child -- --negodrop --failpass --esp aes
 :
 :
-: --negodrop --failpass --esp aes RESTARTING PLUTO
-Redirecting to: [initsystem]
-Redirecting to: [initsystem]
-: --negodrop --failpass --esp aes LOADING CONNECTION
+: oe.negodrop.failpass-fail-child RESTARTING PLUTO
+Pluto is shutting down
+: oe.negodrop.failpass-fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
 listening for IKE messages
 loading secrets from "/etc/ipsec.secrets"
 loading group "/etc/ipsec.d/policies/road"
-: --negodrop --failpass --esp aes TRAPPING 192.1.2.23/32
+: oe.negodrop.failpass-fail-child EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 3850433 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-: --negodrop --failpass --esp aes TRIGGERING OE
+: oe.negodrop.failpass-fail-child TRIGGERING OE
 fired and forgotten
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-: --negodrop --failpass --esp aes NEGOTIATION SHUNT
+: oe.negodrop.failpass-fail-child EXPECT NEGOTIATION KERNEL POLICY
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
-: --negodrop --failpass --esp aes WAIT FOR IKE_AUTH TO FAIL
+: oe.negodrop.failpass-fail-child WAIT FOR IKE_AUTH TO FAIL
 "road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
-: --negodrop --failpass --esp aes FAILURE KERNEL POLICY
+: oe.negodrop.failpass-fail-child WAIT FOR ACQUIRE TO EXPIRE
+: oe.negodrop.failpass-fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
-: --negodrop --failpass --esp aes FAILURE SHUNTS
+: oe.negodrop.failpass-fail-child FAILURE SHUNT - WHEN failpass OR faildrop
 Bare Shunt list:
  
 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
-: --negodrop --failpass --esp aes FAILURE STATES -- NONE
+: oe.negodrop.failpass-fail-child EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
 #1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-: --negodrop --failpass --esp aes FAILURE PING
+: oe.negodrop.failpass-fail-child TRY FAILURE PING
 up
+: oe.negodrop.failpass-fail-child WAIT FOR FAILURE SHUNT TO EXPIRE
+: EXPECT TRAP KERNEL POLICY FOR 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
 road #
  

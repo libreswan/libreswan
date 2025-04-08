@@ -1,12 +1,9 @@
 /testing/guestbin/swan-prep --nokeys
 
-# ensure for tests acquires expire before our failureshunt=2m
-echo 30 > /proc/sys/net/core/xfrm_acq_expires
-ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
-
 cp policy /etc/ipsec.d/policies/road
 
-ipsec start
+# need to use pluto
+ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 5s --leak-detective
 ../../guestbin/wait-until-pluto-started
 
 # Load and dump an ipsec.conf connection.  The whack command should
