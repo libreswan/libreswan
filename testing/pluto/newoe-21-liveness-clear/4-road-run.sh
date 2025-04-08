@@ -13,7 +13,6 @@ ipsec start
 sleep 10 # waiting for what?
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-# ensure for tests acquires expire before our failureshunt=2m
 # ping should succeed through tunnel
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23

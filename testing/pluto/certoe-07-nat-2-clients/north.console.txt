@@ -24,8 +24,6 @@ north #
 north #
  # ensure for tests acquires expire before our failureshunt=2m
 north #
- echo 30 > /proc/sys/net/core/xfrm_acq_expires
-north #
  # give OE policies time to load
 north #
  ../../guestbin/wait-for.sh --match 'loaded 9,' -- ipsec auto --status

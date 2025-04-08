@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- echo 3 > /proc/sys/net/core/xfrm_acq_expires
-east #
  # build install se module
 east #
  ../../guestbin/semodule.sh ipsecspd-full-perm.te

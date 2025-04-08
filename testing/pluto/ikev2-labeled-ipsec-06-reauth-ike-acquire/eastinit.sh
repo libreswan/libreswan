@@ -1,5 +1,4 @@
 /testing/guestbin/swan-prep
-echo 3 > /proc/sys/net/core/xfrm_acq_expires
 # build install se module
 ../../guestbin/semodule.sh ipsecspd-full-perm.te
 # get pluto going

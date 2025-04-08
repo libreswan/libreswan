@@ -25,10 +25,6 @@ road #
 road #
  ipsec auto --route passthrough-out
 road #
- # ensure for tests acquires expire before our failureshunt=2m
-road #
- echo 30 > /proc/sys/net/core/xfrm_acq_expires
-road #
  echo "initdone"
 initdone
 road #

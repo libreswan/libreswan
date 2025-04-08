@@ -9,6 +9,4 @@ ipsec auto --add passthrough-in
 ipsec auto --route passthrough-in
 ipsec auto --add passthrough-out
 ipsec auto --route passthrough-out
-# ensure for tests acquires expire before our failureshunt=2m
-echo 30 > /proc/sys/net/core/xfrm_acq_expires
 echo "initdone"

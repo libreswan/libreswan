@@ -4,8 +4,6 @@ east #
 east #
  # ensure for tests acquires expire before our failureshunt=2m
 east #
- echo 30 > /proc/sys/net/core/xfrm_acq_expires
-east #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
 [x] PID
 east #
