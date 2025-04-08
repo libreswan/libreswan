@@ -43,9 +43,10 @@ static bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct 
 						 enum kernel_policy_op op, where_t where);
 
 /*
- * A kernel policy that does not have a state.  Typically constructed
- * from a bare shunt but can also be for a prospective shunt when
- * sec_label gets involved.
+ * A kernel policy that does not have a state.
+ *
+ * Typically constructed from a bare shunt but can also be for a
+ * prospective shunt when sec_label gets involved.
  */
 
 static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
@@ -772,16 +773,17 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				const struct nic_offload *nic_offload,
 				struct logger *logger, where_t where)
 {
+	/*
+	 * Note: bare shunt are not associated with any connection so
+	 * no security label.  Hence NULL_SHUNK.
+	 */
+
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(src, dst,
 					/*always*/DIRECTION_OUTBOUND,
 					highest_spd_priority,
 					shunt_kind, shunt_policy,
 					/*sa_marks*/NULL, /*xfrmi*/NULL,
-					/* bare shunt are not
-					 * associated with any
-					 * connection so no
-					 * security label */
 					/*sec_label*/null_shunk,
 					nic_offload,
 					where);
@@ -794,13 +796,13 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     logger, where, "install bare policy");
 }
 
-void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
-					   struct connection *c,
-					   struct spd *spd,
-					   const struct spd_owner *owner,
-					   enum shunt_kind shunt_kind,
-					   enum expect_kernel_policy expect_inbound_policy,
-					   struct logger *logger, where_t where)
+void uninstall_ipsec_kernel_policy(struct child_sa *child,
+				   struct connection *c,
+				   struct spd *spd,
+				   const struct spd_owner *owner,
+				   enum shunt_kind shunt_kind,
+				   enum expect_kernel_policy expect_inbound_policy,
+				   struct logger *logger, where_t where)
 {
 	PEXPECT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
 	if (spd->local->child->has_cat) {
@@ -935,7 +937,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		struct spd_owner owner;
 		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.shunt,
+						 &spd->wip.conflicting.bare_shunt,
 						 c->logger);
 		if (!ok) {
 			break;
@@ -950,7 +952,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		PEXPECT(logger, spd->wip.ok);
 		enum kernel_policy_op op =
-			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
+			(spd->wip.conflicting.bare_shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
 			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
@@ -1045,7 +1047,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		}
 
 		PEXPECT(logger, spd->wip.ok);
-		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
+		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
 		}

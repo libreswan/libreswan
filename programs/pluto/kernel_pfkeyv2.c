@@ -1799,7 +1799,6 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.protostack_names = pfkeyv2_protostack_names,
 	.updown_name = "bsd",
 	.interface_name = "PF_KEY v2",
-	.overlap_supported = false,	/* XXX: delete this? */
 	.sha2_truncbug_support = false,
 #ifdef SADB_X_SAFLAGS_ESN /* FreeBSD OpenBSD */
 	.esn_supported = true,		/* FreeBSD and OpenBSD? */

@@ -1518,22 +1518,6 @@ static void terminate_conflicts(struct child_sa *child)
 			    co->iface == c->iface)
 				break;  /* existing route is compatible */
 
-			if (kernel_ops->overlap_supported) {
-				/*
-				 * Both are transport mode, allow overlapping.
-				 * [bart] not sure if this is actually
-				 * intended, but am leaving it in to make it
-				 * behave like before
-				 */
-				if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
-				    co->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT)
-					break;
-
-				/* Both declared that overlapping is OK. */
-				if (c->config->overlapip && co->config->overlapip)
-					break;
-			}
-
 			address_buf b;
 			connection_buf cib;
 			llog_sa(RC_LOG, child,

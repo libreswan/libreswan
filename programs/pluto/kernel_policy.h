@@ -240,23 +240,33 @@ void delete_cat_kernel_policies(const struct spd *spd,
 				struct logger *logger,
 				where_t where);
 
-void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
-					   struct connection *c,
-					   struct spd *spd,
-					   const struct spd_owner *owner,
-					   enum shunt_kind shunt_kind,
-					   enum expect_kernel_policy expect_inbound_policy,
-					   struct logger *logger, where_t where);
-
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,
 				enum shunt_policy shunt_policy,
 				const struct nic_offload *nic_offload,
 				struct logger *logger, where_t where);
 
+/*
+ * IKEv1 splits the installation of the inbound and outbound IPsec
+ * policies, hence the two calls.
+ *
+ * The code is responsible for replacing any existing policy.
+ */
 bool install_inbound_ipsec_kernel_policies(struct child_sa *child);
 bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 					    enum routing new_routing,
 					    struct do_updown updown);
+
+/*
+ * The reverse, parameters include what should replace the installed
+ * IPsec policy.
+ */
+void uninstall_ipsec_kernel_policy(struct child_sa *child,
+				   struct connection *c,
+				   struct spd *spd,
+				   const struct spd_owner *owner,
+				   enum shunt_kind shunt_kind,
+				   enum expect_kernel_policy expect_inbound_policy,
+				   struct logger *logger, where_t where);
 
 #endif

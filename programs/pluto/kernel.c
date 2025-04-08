@@ -188,21 +188,14 @@ spd_priority_t spd_priority(const struct spd *spd)
 }
 
 /*
- * Add an outbound bare kernel policy, aka shunt.
+ * Install either an ONDEMAND or NEVER_NEGOTIATE kernel policy.
  *
- * Such a kernel policy determines the fate of packets without the use
- * of any SAs.  These are defaults, in effect.  If a negotiation has
- * not been attempted, use %trap.  If negotiation has failed, the
- * choice between %trap/%pass/%drop/%reject is specified in the policy
- * of connection c.
- *
- * The kernel policy is referred to as bare (naked, global) as it is
- * not paired with a kernel state.
+ * Note that, for the latter, both inbound and outbound policies are
+ * installed.
  */
-
-static bool install_prospective_kernel_policies(const struct spd *spd,
-						enum shunt_kind shunt_kind,
-						struct logger *logger, where_t where)
+static bool install_prospective_kernel_policy(const struct spd *spd,
+					      enum shunt_kind shunt_kind,
+					      struct logger *logger, where_t where)
 {
 	const struct connection *c = spd->connection;
 
@@ -274,8 +267,15 @@ struct bare_shunt {
 	 */
 	const char *why;
 
-	/* The connection to restore when the bare_shunt expires.  */
-	co_serial_t restore_serialno;
+	/*
+	 * The template connection to restore when the bare_shunt
+	 * expires.
+	 *
+	 * Because the template instance's failure shunt exactly
+	 * overlaps the template's shunt.  The template shunt needs to
+	 * be restored when the shunt expires.
+	 */
+	co_serial_t template_serialno;
 
 	struct bare_shunt *next;
 };
@@ -289,8 +289,8 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, "    %s", bs->why);
-	if (bs->restore_serialno != COS_NOBODY) {
-		jam(buf, " "PRI_CO, pri_co(bs->restore_serialno));
+	if (bs->template_serialno != COS_NOBODY) {
+		jam(buf, " "PRI_CO, pri_co(bs->template_serialno));
 	}
 }
 
@@ -321,7 +321,7 @@ static void ldbg_bare_shunt(const struct logger *logger, const char *op, const s
 static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 					 const ip_selector *peer_client,
 					 enum shunt_policy shunt_policy,
-					 co_serial_t restore_serialno,
+					 co_serial_t template_serialno,
 					 const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
@@ -341,7 +341,7 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 	const struct ip_protocol *transport_proto = selector_protocol(*our_client);
 	pexpect(transport_proto == selector_protocol(*peer_client));
 	bs->transport_proto = transport_proto;
-	bs->restore_serialno = restore_serialno;
+	bs->template_serialno = template_serialno;
 
 	bs->shunt_policy = shunt_policy;
 	bs->count = 0;
@@ -872,7 +872,7 @@ void revert_kernel_policy(struct spd *spd,
 	 */
 
 	PEXPECT(logger, spd->wip.ok);
-	if (spd->wip.conflicting.shunt == NULL) {
+	if (spd->wip.conflicting.bare_shunt == NULL) {
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
 		/* go back to old routing */
@@ -893,18 +893,16 @@ void revert_kernel_policy(struct spd *spd,
 
 	/* only one - shunt set when no policy */
 	PEXPECT(logger, spd->wip.ok);
-	PASSERT(logger, spd->wip.conflicting.shunt != NULL);
+	PASSERT(logger, spd->wip.conflicting.bare_shunt != NULL);
 
 	/*
 	 * If there's a bare shunt, restore it.
 	 *
-	 * I don't think that this case is very likely.  Normally a
-	 * bare shunt would have been assigned to a connection before
-	 * we've gotten this far.
+	 * I don't think that this case is very likely.
 	 */
 
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
-	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
+	struct bare_shunt *bs = *spd->wip.conflicting.bare_shunt;
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, logger);
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
@@ -918,16 +916,6 @@ void revert_kernel_policy(struct spd *spd,
 
 bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where)
 {
-	/*
-	 * If this is a transport SA, and overlapping SAs are
-	 * supported, then this route is not necessary at all.
-	 */
-	PEXPECT(c->logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-		ldbg(c->logger, "route-unnecessary: overlap and transport");
-		return true;
-	}
-
 	clear_connection_spd_conflicts(c);
 
 	/*
@@ -938,59 +926,34 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		/*
-		 * Pass +0: Lookup the status of each SPD.
-		 *
 		 * Still call find_spd_conflicts() when a sec_label so that
 		 * the structure is zeroed (sec_labels ignore conflicts).
 		 */
 
 		struct spd_owner owner;
 		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.shunt,
+						 &spd->wip.conflicting.bare_shunt,
 						 c->logger);
 		if (!ok) {
 			break;
 		}
 
-		spd->wip.ok = true;
-
 		/*
-		 * When overlap isn't supported, the old clashing bare
-		 * shunt needs to be deleted before the new one can be
-		 * installed.  Else it can be deleted after.
-		 *
-		 * For linux this also requires SA_MARKS to be set
-		 * uniquely.
+		 * Install/replace the policy.
 		 */
 
+		spd->wip.ok = true;
 		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.shunt != NULL &&
-		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							KERNEL_POLICY_PRESENT,
-							c->logger, where);
-			/* if everything succeeds, delete below */
-		}
 
-		PEXPECT(c->logger, spd->wip.ok);
 		ok &= spd->wip.installed.kernel_policy =
-			install_prospective_kernel_policies(spd, routing_shunt_kind(new_routing),
-							    c->logger, where);
+			install_prospective_kernel_policy(spd, routing_shunt_kind(new_routing),
+							  c->logger, where);
 		if (!ok) {
 			break;
 		}
 
-		PEXPECT(c->logger, spd->wip.ok);
-		if (spd->wip.conflicting.shunt != NULL &&
-		    PBAD(c->logger, kernel_ops->overlap_supported)) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							KERNEL_POLICY_PRESENT,
-							c->logger, where);
-			/* if everything succeeds, delete below */
-		}
-
 		/*
-		 * Pass +2: add the route.
+		 * Add the route.
 		 */
 
 		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
@@ -1006,6 +969,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
+
 		if (!ok) {
 			break;
 		}
@@ -1030,7 +994,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		PEXPECT(c->logger, spd->wip.ok);
-		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
+		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
 		}
@@ -1112,9 +1076,9 @@ void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s)
 			jam_sparse(buf, &failure_shunt_names, bs->shunt_policy);
 			jam_string(buf, "    ");
 			jam_string(buf, bs->why);
-			if (bs->restore_serialno != COS_NOBODY) {
+			if (bs->template_serialno != COS_NOBODY) {
 				jam_string(buf, " ");
-				jam_co(buf, bs->restore_serialno);
+				jam_co(buf, bs->template_serialno);
 			}
 		}
 	}
@@ -1794,15 +1758,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, enum routing new_routing, 
 	     pri_where(where));
 
 	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-		ldbg(logger, "route-unnecessary: overlap and transport");
-	}
-
-	/*
 	 * The IKEv1 alias-01 test triggers a pexpect() because the
 	 * claimed route owner hasn't been installed
 	 *
@@ -1832,20 +1787,10 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 			       struct do_updown updown, where_t where)
 {
 	struct logger *logger = child->sa.logger;
-	struct connection *c = child->sa.st_connection;
 
 	ldbg(logger, "kernel: %s() for "PRI_SO": outbound "PRI_WHERE,
 	     __func__, pri_so(child->sa.st_serialno),
 	     pri_where(where));
-
-	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
-	if (kernel_ops->overlap_supported && c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT) {
-		ldbg(logger, "route-unnecessary: overlap and transport");
-	}
 
 	/* (attempt to) actually set up the SA group */
 
@@ -2190,13 +2135,13 @@ void orphan_holdpass(struct connection *c,
 		 * XXX: as a quick and dirty hack, assume there's only
 		 * one selector.
 		 */
-		co_serial_t restore;
+		co_serial_t template_serialno;
 		struct connection *t = c->clonedfrom;
 		if (selector_eq_selector(src, t->local->child.selectors.proposed.list[0]) &&
 		    selector_eq_selector(dst, t->remote->child.selectors.proposed.list[0])) {
-			restore = t->serialno;
+			template_serialno = t->serialno;
 		} else {
-			restore = COS_NOBODY;
+			template_serialno = COS_NOBODY;
 		}
 
 		/*
@@ -2208,7 +2153,7 @@ void orphan_holdpass(struct connection *c,
 		struct bare_shunt *bs =
 			add_bare_shunt(&src, &dst,
 				       c->config->failure_shunt,
-				       restore,
+				       template_serialno,
 				       why, logger);
 		ldbg_bare_shunt(logger, "replace", bs);
 	} else {
@@ -2222,39 +2167,57 @@ void orphan_holdpass(struct connection *c,
 static void expire_bare_shunts(struct logger *logger)
 {
 	dbg("kernel: checking for aged bare shunts from shunt table to expire");
-	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
+	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; /*see-loop*/) {
 		struct bare_shunt *bsp = *bspp;
-		time_t age = deltasecs(monotime_diff(mononow(), bsp->last_activity));
+		deltatime_t age = monotime_diff(mononow(), bsp->last_activity);
 
-		if (age > deltasecs(pluto_shunt_lifetime)) {
-			ldbg_bare_shunt(logger, "expiring old", bsp);
-			if (bsp->restore_serialno != COS_NOBODY) {
-				/*
-				 * Time to restore the connection's
-				 * shunt.  Presumably the bare shunt
-				 * was a place holder while things
-				 * were given time to rest (back-off).
-				 */
-				struct connection *c = connection_by_serialno(bsp->restore_serialno);
-				if (c != NULL) {
-					enum shunt_kind shunt_kind = (never_negotiate(c) ? SHUNT_KIND_NEVER_NEGOTIATE :
-								      SHUNT_KIND_ONDEMAND);
-					if (!install_prospective_kernel_policies(c->spd,
-										 shunt_kind,
-										 logger, HERE)) {
-						llog(RC_LOG, logger,
-						     "trap shunt install failed ");
-					}
-				}
-			} else {
-				delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-								logger, HERE);
-			}
-			free_bare_shunt(bspp);
-		} else {
+		if (deltatime_cmp(age, <, pluto_shunt_lifetime)) {
 			ldbg_bare_shunt(logger, "keeping recent", bsp);
 			bspp = &bsp->next;
+			continue;
 		}
+
+		if (bsp->template_serialno == COS_NOBODY) {
+			ldbg_bare_shunt(logger, "expiring old (no template connection)", bsp);
+			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
+							logger, HERE);
+			free_bare_shunt(bspp);
+			continue;
+		}
+
+		/*
+		 * Time to restore the template connection's shunt.
+		 *
+		 * The template's shunt was was replaced by the
+		 * connection instance's failure shunt because they
+		 * exactly overlapped.
+		 */
+		struct connection *c = connection_by_serialno(bsp->template_serialno);
+		if (c == NULL) {
+			ldbg_bare_shunt(logger, "expiring old (template connection disappeard)", bsp);
+			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
+							logger, HERE);
+			free_bare_shunt(bspp);
+			continue;
+		}
+
+		PEXPECT(logger, is_template(c));
+		if (!kernel_policy_installed(c)) {
+			ldbg_bare_shunt(logger, "expiring old (template connection has no kernel_policy_installed())", bsp);
+			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
+							logger, HERE);
+			free_bare_shunt(bspp);
+			continue;
+		}
+
+		/*
+		 * It passed all checks; need to replace.
+		 */
+		ldbg_bare_shunt(logger, "expiring old (restoring template connection)", bsp);
+		install_prospective_kernel_policy(c->spd,
+						  SHUNT_KIND_ONDEMAND,
+						  logger, HERE);
+		free_bare_shunt(bspp);
 	}
 }
 

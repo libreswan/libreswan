@@ -697,7 +697,7 @@ struct spd {
 	struct spd_wip {
 		bool ok;
 		struct {
-			struct bare_shunt **shunt;
+			struct bare_shunt **bare_shunt; /* aka orphan_kernel_policy */
 		} conflicting;
 		struct {
 			bool kernel_policy;

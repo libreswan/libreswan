@@ -226,7 +226,6 @@ struct kernel_ops {
 	 */
 	const char *interface_name;
 
-	bool overlap_supported;
 	bool sha2_truncbug_support;
 	bool esn_supported;
 	uintmax_t max_replay_window;
