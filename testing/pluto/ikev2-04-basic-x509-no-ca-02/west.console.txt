@@ -4,18 +4,25 @@ west #
  # only the end, both ends hardcode certs
 west #
  /testing/x509/import.sh real/mainca/west.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n west
+"west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -O -n east
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # load a distraction CA and Cert
 west #
- /testing/x509/import.sh real/otherca/otherwest.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
+ /testing/x509/import.sh otherca/otherwest.p12
+ ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n otherwest
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "otherwest" [E=user-otherwest@testing.libreswan.org,CN=otherwest.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # check result
 west #
@@ -98,7 +105,7 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -117,7 +124,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

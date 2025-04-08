@@ -1,10 +1,13 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- /testing/x509/import.sh real/mainca/`hostname`.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+ /testing/x509/import.sh real/mainca/`hostname`.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -18,6 +21,6 @@ east #
 initdone
 east #
  grep '^[^|].*ERROR:' /tmp/pluto.log
-"east"[6] 192.1.2.45 #11: NSS: ERROR: IPsec certificate E=user-west-eku-codeSigning@testing.libreswan.org,CN=west-eku-codeSigning.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_INADEQUATE_CERT_TYPE: Certificate type not approved for application.
+"east"[10] 192.1.2.45 #19: NSS: ERROR: IPsec certificate E=user-west-eku-codeSigning@testing.libreswan.org,CN=west-eku-codeSigning.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_INADEQUATE_CERT_TYPE: Certificate type not approved for application.
 east #
  

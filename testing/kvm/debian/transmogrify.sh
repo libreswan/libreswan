@@ -33,8 +33,8 @@ cat /etc/fstab
 : systemd
 :
 
-. /bench/testing/kvm/systemd/transmogrify.sh
-
+. /bench/testing/kvm/systemd/transmogrify-networkd.sh
+. /bench/testing/kvm/systemd/transmogrify-hostnamer.sh
 
 :
 : bash

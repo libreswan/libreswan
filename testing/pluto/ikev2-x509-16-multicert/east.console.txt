@@ -3,17 +3,23 @@ Creating empty NSS database
 east #
  # add first identity/cert
 east #
- /testing/x509/import.sh real/mainca/east.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  # add second identity/cert
 east #
- /testing/x509/import.sh real/otherca/othereast.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/othereast.all.p12
+ /testing/x509/import.sh otherca/othereast.p12
+ ipsec pk12util -w nss-pw -i otherca/othereast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n othereast
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "othereast" [E=user-othereast@testing.libreswan.org,CN=othereast.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  # check
 east #

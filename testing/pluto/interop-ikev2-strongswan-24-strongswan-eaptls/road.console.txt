@@ -2,7 +2,7 @@
 road #
  cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 road #
- cp /testing/x509/real/mainca/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
+ cp /testing/x509/real/mainca/`hostname`.key /etc/strongswan/ipsec.d/private/`hostname`.key
 road #
  cp /testing/x509/real/mainca/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 road #
@@ -121,9 +121,9 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:

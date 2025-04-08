@@ -70,7 +70,7 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
-
+#include "sparse_names.h"
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "ip_info.h"
@@ -1096,7 +1096,7 @@ unsigned shunt_count(void)
 	return i;
 }
 
-void show_shunt_status(struct show *s)
+void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
 	show(s, "Bare Shunt list:");
@@ -1108,8 +1108,8 @@ void show_shunt_status(struct show *s)
 			jam_selector_range_port(buf, &(bs)->our_client);
 			jam(buf, " -%d-> ", bs->transport_proto->ipproto);
 			jam_selector_range_port(buf, &(bs)->peer_client);
-			jam_string(buf, " => ");
-			jam_enum(buf, &shunt_policy_percent_names, bs->shunt_policy);
+			jam_string(buf, " => %");
+			jam_sparse(buf, &failure_shunt_names, bs->shunt_policy);
 			jam_string(buf, "    ");
 			jam_string(buf, bs->why);
 			if (bs->restore_serialno != COS_NOBODY) {
@@ -1931,7 +1931,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 #endif
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_state->kind == STATE_QUICK_I1 &&
-			   child->sa.st_sa_type_when_established == CHILD_SA) {
+			   child->sa.st_sa_kind_when_established == CHILD_SA) {
 			uninstall_kernel_states(child);
 		}
 		break;
@@ -1950,7 +1950,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 #endif
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_sa_role == SA_INITIATOR &&
-			   child->sa.st_sa_type_when_established == CHILD_SA) {
+			   child->sa.st_sa_kind_when_established == CHILD_SA) {
 			/*
 			 * XXX: so much for dreams of becoming an
 			 * established Child SA.

@@ -2,9 +2,9 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 nic #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 nic #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 nic #

@@ -54,7 +54,7 @@ ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No su
 west #
  # expect the on-demand kernel policy
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -70,13 +70,13 @@ west #
  ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
 "west-east" #3: IMPAIR: revival: skip scheduling revival event
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.0.1.254 dst 192.0.2.254
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
 	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

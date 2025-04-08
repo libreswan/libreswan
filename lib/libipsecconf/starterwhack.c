@@ -133,10 +133,7 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->sourceip = l->values[KSCF_SOURCEIP].string; /* could be NULL */
-
-	if (cidr_is_specified(l->vti_ip))
-		w->host_vtiip = l->vti_ip;
-
+	w->vti = l->values[KSCF_VTI].string; /* could be NULL */
 	w->interface_ip = l->values[KSCF_INTERFACE_IP].string; /* could be NULL */
 
 	/* validate the KSCF_SUBNET */
@@ -312,7 +309,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 {
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_add = true,
+		.whack_command = WHACK_ADD,
 		.name = conn->name,
 	};
 

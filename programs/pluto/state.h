@@ -50,7 +50,7 @@
 #include "ip_endpoint.h"
 #include "ip_selector.h"
 #include "kernel_mode.h"
-#include "sa_type.h"
+#include "sa_kind.h"
 #include "quirks.h"
 #include "list_entry.h"
 #include "retransmit.h"
@@ -240,7 +240,7 @@ struct state {
 	 * new_state() could use clone_thing(const state on stack).
 	 */
 #define st_ike_version st_connection->config->ike_version
-	/*const*/ enum sa_type st_sa_type_when_established;	/* where is this state going? */
+	/*const*/ enum sa_kind st_sa_kind_when_established;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
 
@@ -481,29 +481,9 @@ struct state {
 	const struct finite_state *st_state;	/* Current FSM state */
 
 	/*
-	 * Account for why an SA is is started, established, and
-	 * finished (deleted).
-	 *
-	 * SA_TYPE indicates the type of SA (IKE or CHILD) that will
-	 * eventually be established.  For instance, when re-keying an
-	 * IKE SA where the state is treated like a child until it is
-	 * emancipated (it has a parent), SA_TYPE=IKE_SA.  While it
-	 * might technically be possible to extract this information
-	 * from enum state_kind this is far more robust.
-	 *
-	 * DELETE_REASON, if the SA establishes it contains
-	 * REASON_COMPLETED, else it is explicitly set to failure
-	 * indication (or defaults to REASON_UNKNOWN).  Note that the
-	 * information can't be reliably extracted from enum
-	 * state_kind in delete_state() because, by that point, state
-	 * may have further transitioned to STATE_V2_IKE_SA_DELETE etc.
-	 * Also, note that the information can't be reliably set in
-	 * complete*transition() as, at least in the case of IKEv2,
-	 * there can be two states involved where one success and one
-	 * fails.
+	 * Account for why an SA is terminated.  Used by pstats.
 	 */
 	struct {
-		enum sa_type sa_type;
 		enum terminate_reason terminate_reason;
 	} st_pstats;
 
@@ -800,7 +780,7 @@ struct ike_sa *new_v2_ike_sa_responder(struct connection *c,
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
-				 enum sa_type sa_type, /*where is this going?*/
+				 enum sa_kind sa_kind, /*where is this going?*/
 				 enum sa_role sa_role,
 				 enum state_kind kind);
 
@@ -849,7 +829,7 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 						  uint8_t protoid,
 						  ipsec_spi_t outbound_spi);
 
-extern void show_brief_status(struct show *s);
+extern void whack_briefstatus(const struct whack_message *wm, struct show *s);
 
 extern ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries);
 

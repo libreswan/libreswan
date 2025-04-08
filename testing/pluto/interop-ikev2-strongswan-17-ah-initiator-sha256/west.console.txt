@@ -45,12 +45,12 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # cannot use ../../guestbin/ipsec-kernel-state.sh
+ # cannot use ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh for strongswan
+ ipsec _kernel policy for strongswan
 grep: strongswan: No such file or directory
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec align4
@@ -62,54 +62,38 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha256) 0xHASHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
 west #
- ip xfrm policy
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto ah spi 0xSPISPI reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid REQID mode tunnel
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir out priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:

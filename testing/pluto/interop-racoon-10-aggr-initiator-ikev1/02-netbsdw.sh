@@ -14,7 +14,7 @@ echo "spdadd ${leftsubnet}[any] ${rightsubnet}[any] any -P out ipsec esp/tunnel/
 echo "spdadd ${rightsubnet}[any] ${leftsubnet}[any] any -P in  ipsec esp/tunnel/${right}-${left}/require;" | setkey -c
 racoonctl establish-sa -w esp inet ${leftsubnet}/255 ${rightsubnet}/255 any
 
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

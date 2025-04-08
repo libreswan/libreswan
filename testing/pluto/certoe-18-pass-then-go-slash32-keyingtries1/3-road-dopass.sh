@@ -3,6 +3,6 @@
 ../../guestbin/wait-for.sh --match oe-failing -- ipsec shuntstatus
 ipsec trafficstatus
 # verify xfrm policy got added for %pass
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy
 echo "waiting on east to start ipsec and OE initiate to us"

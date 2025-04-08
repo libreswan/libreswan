@@ -913,7 +913,7 @@ void llog_vendorids(lset_t rc_flags, struct logger *logger)
 		enum_buf idb;
 		llog(rc_flags, logger, "[%s]%s", str_vendorid(id, &idb),
 		     (v->entry->kind == VID_SUBSTRING ? " (prefix match)" : ""));
-		llog_dump_hunk(rc_flags, logger, vid);
+		llog_hunk(rc_flags, logger, vid);
 		enum known_vendorid r = vendorid_by_shunk(vid);
 		passert(r != VID_none);
 		if (r != id) {

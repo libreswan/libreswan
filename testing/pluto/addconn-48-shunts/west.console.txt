@@ -1,0 +1,107 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add negotiationshunt=
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"negotiationshunt=": added IKEv2 connection
+west #
+ ipsec add negotiationshunt=passthrough
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"negotiationshunt=passthrough": added IKEv2 connection
+west #
+ ipsec add negotiationshunt=drop
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"negotiationshunt=drop": added IKEv2 connection
+west #
+ ipsec add negotiationshunt=hold
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"negotiationshunt=hold": added IKEv2 connection
+west #
+ ipsec add failureshunt=
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"failureshunt=": added IKEv2 connection
+west #
+ ipsec add failureshunt=none
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"failureshunt=none": added IKEv2 connection
+west #
+ ipsec add failureshunt=passthrough
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"failureshunt=passthrough": added IKEv2 connection
+west #
+ ipsec add failureshunt=drop
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"failureshunt=drop": added IKEv2 connection
+west #
+ ipsec add failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"failureshunt=hold": added IKEv2 connection
+west #
+ ipsec add failureshunt=reject
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"failureshunt=reject": added IKEv2 connection
+west #
+ ipsec add type=drop
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"type=drop": added drop connection
+west #
+ ipsec add type=reject
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"type=reject": added drop connection
+west #
+ ipsec add type=passthrough
+ipsec addconn: /etc/ipsec.conf:35: warning: hold implemented as drop: failureshunt=hold
+ipsec addconn: /etc/ipsec.conf:44: warning: reject implemented as drop: failureshunt=reject
+ipsec addconn: warning: type=%reject implemented as type=%drop
+"type=passthrough": added passthrough connection
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(DROP\).*/\1 \2/p' | sort -u
+"failureshunt=drop":   policy: DROP
+"failureshunt=hold":   policy: DROP
+"failureshunt=reject":   policy: DROP
+"type=drop":   policy: DROP
+"type=reject":   policy: DROP
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(PASS\).*/\1 \2/p' | sort -u
+"failureshunt=passthrough":   policy: PASS
+"negotiationshunt=passthrough":   policy: PASS
+"type=passthrough":   policy: PASS
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(NEGO_[_A-Z]*\).*/\1 \2/p' | sort -u
+"negotiationshunt=passthrough":   policy: NEGO_PASS
+west #
+ ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(failure[_A-Z]*\).*/\1 \2/p' | sort -u
+"failureshunt=drop":   policy: failureDROP
+"failureshunt=hold":   policy: failureDROP
+"failureshunt=passthrough":   policy: failurePASS
+"failureshunt=reject":   policy: failureDROP
+west #
+ 

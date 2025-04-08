@@ -12,9 +12,9 @@ east #
 east #
  ipsec whack --impair install_ipsec_sa_outbound_state
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 east #
  ipsec unroute west-east
 "west-east": terminating SAs using this connection

@@ -1,2 +1,2 @@
 ipsec showstates
-ip xfrm policy
+ipsec _kernel policy

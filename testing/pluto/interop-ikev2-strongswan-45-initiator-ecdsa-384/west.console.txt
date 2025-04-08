@@ -4,7 +4,7 @@ west #
 west #
  cp /testing/x509/real/mainec/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 west #
- cp /testing/x509/real/mainec/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
+ cp /testing/x509/real/mainec/`hostname`.key /etc/strongswan/ipsec.d/private/`hostname`.key
 west #
  chmod 600 /etc/strongswan/ipsec.d/*/*
 west #
@@ -76,9 +76,9 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:

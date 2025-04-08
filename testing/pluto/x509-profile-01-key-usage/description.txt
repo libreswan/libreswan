@@ -12,13 +12,33 @@ See https://datatracker.ietf.org/doc/html/rfc4945#section-5.1.3.2
 
    o  If none of the above, continue.
 
-this tests:
+See `westrun.sh` for the combinations tried.
 
-  west-ku-missing                        establish
-  west-ku-nonRepudiation                 establish
-  west-ku-digitalSignature               establish
-  west-ku-digitalSignature-certSigning   establish
-  west-ku-certSigning                    reject
+The script ku.sh
 
-Note: the basic certs all have KU=digitalSignature so the test with
-west-ku-digitalSignature is redundant.
+  - generates a cert using `ipsec certutil` with KU based on param
+
+  - dumps the cert for visual verification
+
+  - starts pluto
+
+  - generates a connection with name based on param
+
+  - tries to establish the connection
+
+  - shuts down pluto
+
+For instance:
+
+      ./ku.sh digitalSignature-certSigning
+
+generate the cert with:
+
+   ipsec certutil -n west-ku-codeSigning-ipsecIKE --keyUsage digitalSignature,certSigning
+
+and the connection with:
+
+   ipsec whack --name west-ku-digitalSignature-certSigning --cert=west-ku-digitalSignature-certSigning ...
+
+Note: pluto is started a-fresh so that each exchange uses the state
+serial numbers #1 and #2.

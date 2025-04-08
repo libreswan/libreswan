@@ -23,7 +23,7 @@ west #
 "west" #1: sent Main Mode I2
 "west" #1: sent Main Mode I3
 "west" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP1536}
-"west" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
 "west" #2: sent Quick Mode request
 "west" #2: STATE_QUICK_I1: 60 second timeout exceeded after 7 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -34,8 +34,8 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

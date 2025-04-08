@@ -34,9 +34,9 @@ west #
 "labeled"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "labeled"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir in priority PRIORITY ptype main
@@ -68,7 +68,7 @@ Bare Shunt list:
 west #
  # let larval state expire
 west #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 west #
  echo done
 done

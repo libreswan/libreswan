@@ -35,7 +35,7 @@ west #
  ipsec trafficstatus
 #2: "eastnet-westnet-ikev2", type=ESP, add_time=1234567890, id='@east'
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
 	authkey 0xHASHKEY \
 	enckey 0x
@@ -83,7 +83,7 @@ west #
 		0 packets dropped on output
 	replay: rpl 2
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 @0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 @1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 west #

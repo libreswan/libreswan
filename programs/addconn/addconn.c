@@ -29,7 +29,6 @@
 #include "lswtool.h"
 #include "whack.h"
 #include "sparse_names.h"
-#include "ipsecconf/parser-controls.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
@@ -170,6 +169,7 @@ enum opt {
 	OPT_LISTSTACK,
 	OPT_CHECKCONFIG,
 	OPT_NOEXPORT,
+	OPT_NAME,
 };
 
 const struct option optarg_options[] =
@@ -195,6 +195,7 @@ const struct option optarg_options[] =
 	/* obsoleted, eat and ignore for compatibility */
 	{"defaultroute\0!", required_argument, NULL, 0, },
 	{"defaultroutenexthop\0!", required_argument, NULL, 0, },
+	{"name\0", required_argument, NULL, OPT_NAME, },
 	{ 0, 0, 0, 0 }
 };
 
@@ -218,6 +219,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
+	const char *name = NULL;
 
 #if 0
 	/* efence settings */
@@ -228,7 +230,11 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 
-	while (true) {
+	/*
+	 * NAME terminates argument list early.
+	 */
+
+	while (name == NULL) {
 
 		int c = optarg_getopt(logger, argc, argv, "");
 		if (c < 0) {
@@ -305,6 +311,9 @@ int main(int argc, char *argv[])
 			varprefix = optarg;
 			continue;
 
+		case OPT_NAME:
+			name = optarg;
+			continue;
 		}
 
 		bad_case(c);
@@ -317,10 +326,6 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* some variables depend on verbose */
-	lex_verbosity = verbose;
-	yydebug = (verbose >= 4);
-
 	if (configfile == NULL) {
 		configfile = IPSEC_CONF;
 	}
@@ -328,19 +333,38 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, configsetup, logger);
+	struct starter_config *cfg;
+	if (name != NULL) {
+		if (configsetup) {
+			llog(ERROR_STREAM, logger, "--conn %s conflicts with --configsetup", name);
+			exit(1);
+		}
+		if (autoall) {
+			llog(ERROR_STREAM, logger, "--conn %s conflicts with --autoall", name);
+			exit(1);
+		}
+		cfg = confread_argv(name, argv, optind, logger);
+	} else {
+		cfg = confread_load(configfile, configsetup, logger, verbose);
+	}
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
 	}
 
 	if (checkconfig) {
+		/* call is NO-OP when CONFIGSETUP */
+		if (!confread_validate_conns(cfg, logger)) {
+			/* already logged? */
+			llog(RC_LOG, logger, "cannot validate config file '%s'", configfile);
+			exit(3);
+		}
 		confread_free(cfg);
 		exit(0);
 	}
 
 #ifdef USE_SECCOMP
-	switch (cfg->values[KBF_SECCOMP].option) {
+	switch (cfg->setup[KBF_SECCOMP].option) {
 		case SECCOMP_ENABLED:
 			init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
@@ -350,14 +374,14 @@ int main(int argc, char *argv[])
 	case SECCOMP_DISABLED:
 		break;
 	default:
-		bad_case(cfg->values[KBF_SECCOMP].option);
+		bad_case(cfg->setup[KBF_SECCOMP].option);
 	}
 #endif
 
 #ifdef USE_DNSSEC
-	unbound_sync_init(cfg->values[KBF_DO_DNSSEC].option,
-			  cfg->values[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
-			  cfg->values[KSF_PLUTO_DNSSEC_ANCHORS].string,
+	unbound_sync_init(cfg->setup[KBF_DO_DNSSEC].option,
+			  cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
+			  cfg->setup[KSF_PLUTO_DNSSEC_ANCHORS].string,
 			  logger);
 #endif
 
@@ -375,26 +399,38 @@ int main(int argc, char *argv[])
 		if (verbose > 0)
 			printf("  Step #1: Loading auto=add, auto=keep, auto=route, auto=up and auto=start connections\n");
 
-		for (struct starter_conn *conn = cfg->conns.tqh_first;
-		     conn != NULL; conn = conn->link.tqe_next) {
+		struct starter_conn *conn = NULL;
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
 			enum autostart autostart = conn->values[KNCF_AUTO].option;
 			switch (autostart) {
 			case AUTOSTART_UNSET:
 			case AUTOSTART_IGNORE:
-				break;
+#if 0
+				if (verbose > 0) {
+					printf("    %s ignored\n", conn->name);
+				}
+#endif
+				continue;
 			case AUTOSTART_ADD:
 			case AUTOSTART_ROUTE:
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
 			case AUTOSTART_START:
-				if (verbose > 0)
-					printf("    %s\n", conn->name);
-				resolve_default_routes(conn, logger);
-				starter_whack_add_conn(ctlsocket,
-						       conn, logger);
 				break;
 			}
+
+			if (!confread_validate_conn(conn, logger)) {
+				llog(ERROR_STREAM, logger, "conn %s did not validaten",
+				     conn->name);
+				continue;
+			}
+
+			if (verbose > 0) {
+				printf("    %s\n", conn->name);
+			}
+			resolve_default_routes(conn, logger);
+			starter_whack_add_conn(ctlsocket, conn, logger);
 		}
 
 		/*
@@ -412,6 +448,20 @@ int main(int argc, char *argv[])
 
 		if (verbose > 0)
 			printf("\n");
+	} else if (name != NULL) {
+
+		struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
+		if (conn == NULL) {
+			llog(ERROR_STREAM, logger, "no conn %s to load", name);
+			exit(1);
+		}
+		if (!confread_validate_conn(conn, logger)) {
+			llog(ERROR_STREAM, logger, "%s did not validate", conn->name);
+			exit(1);
+		}
+		resolve_default_routes(conn, logger);
+		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
+
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;
@@ -433,8 +483,7 @@ int main(int argc, char *argv[])
 
 			/* find first name match, if any */
 			struct starter_conn *conn = NULL;
-			for (conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			TAILQ_FOREACH(conn, &cfg->conns, link)  {
 				if (streq(conn->name, connname)) {
 					break;
 				}
@@ -447,8 +496,7 @@ int main(int argc, char *argv[])
 				p2 = connname;
 				p3 = " ";
 
-				for (conn = cfg->conns.tqh_first;
-				     conn != NULL; conn = conn->link.tqe_next) {
+				TAILQ_FOREACH(conn, &cfg->conns, link) {
 					if (lsw_alias_cmp(connname,
 						conn->values[KSCF_CONNALIAS].string)) {
 						break;
@@ -479,6 +527,13 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
+			if (!confread_validate_conn(conn, logger)) {
+				fprintf(stderr, "\n%s%s%sconn %s did not validate\n",
+					p1, p2, p3,
+					conn->name);
+				continue;
+			}
+
 			/*
 			 * Scrub AUTOSTART; conns will need to be
 			 * started manually.
@@ -502,69 +557,79 @@ int main(int argc, char *argv[])
 	}
 
 	if (listall) {
-		if (verbose > 0)
-			printf("listing all conns\n");
-		for (struct starter_conn *conn = cfg->conns.tqh_first;
-		     conn != NULL; conn = conn->link.tqe_next)
-			printf("%s ", conn->name);
-		printf("\n");
-	} else {
-		if (listadd) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=add\n");
 
+		if (verbose > 0) {
+			printf("listing all conns\n");
+		}
+		struct starter_conn *conn;
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
+			printf("%s ", conn->name);
+		}
+		printf("\n");
+
+	} else {
+
+		if (listadd) {
 			/* list all conns marked as auto=add */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=add\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_ADD)
+				if (autostart == AUTOSTART_ADD) {
 					printf("%s ", conn->name);
+				}
 			}
 		}
-		if (listroute) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=route and auto=up\n");
 
+		if (listroute) {
 			/*
 			 * list all conns marked as auto=route or start or
 			 * better
 			 */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=route and auto=up\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
 				    autostart == AUTOSTART_START ||
 				    autostart == AUTOSTART_ROUTE ||
-				    autostart == AUTOSTART_ONDEMAND)
+				    autostart == AUTOSTART_ONDEMAND) {
 					printf("%s ", conn->name);
+				}
 			}
 		}
 
 		if (liststart && !listroute) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=up\n");
-
 			/* list all conns marked as auto=up */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=up\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START)
+				    autostart == AUTOSTART_START) {
 					printf("%s ", conn->name);
+				}
 			}
 		}
 
 		if (listignore) {
-			if (verbose > 0)
-				printf("listing all conns marked as auto=ignore\n");
-
 			/* list all conns marked as auto=up */
-			for (struct starter_conn *conn = cfg->conns.tqh_first;
-			     conn != NULL; conn = conn->link.tqe_next) {
+			if (verbose > 0) {
+				printf("listing all conns marked as auto=ignore\n");
+			}
+			struct starter_conn *conn;
+			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_IGNORE ||
-				    autostart == AUTOSTART_UNSET)
+				    autostart == AUTOSTART_UNSET) {
 					printf("%s ", conn->name);
+				}
 			}
 			printf("\n");
 		}
@@ -572,12 +637,11 @@ int main(int argc, char *argv[])
 
 	if (liststack) {
 		const struct keyword_def *kd;
-
 		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
-				if (cfg->values[kd->field].string) {
+				if (cfg->setup[kd->field].string) {
 					printf("%s\n",
-						cfg->values[kd->field].string);
+						cfg->setup[kd->field].string);
 				} else {
 					/* implicit default */
 					printf("xfrm\n");
@@ -609,28 +673,28 @@ int main(int argc, char *argv[])
 			case kt_filename:
 			case kt_dirname:
 			case kt_host:
-				if (cfg->values[kd->field].string) {
+				if (cfg->setup[kd->field].string) {
 					printf("%s %s%s='%s'\n",
 						export, varprefix, safe_kwname,
-						cfg->values[kd->field].string);
+						cfg->setup[kd->field].string);
 				}
 				break;
 
 			case kt_bool:
 				printf("%s %s%s='%s'\n", export, varprefix,
 					safe_kwname,
-					bool_str(cfg->values[kd->field].option));
+					bool_str(cfg->setup[kd->field].option));
 				break;
 
 			case kt_obsolete:
 				break;
 
 			default:
-				if (cfg->values[kd->field].option ||
-					cfg->values[kd->field].set) {
+				if (cfg->setup[kd->field].option ||
+					cfg->setup[kd->field].set) {
 					printf("%s %s%s='%jd'\n",
 						export, varprefix, safe_kwname,
-						cfg->values[kd->field].option);
+						cfg->setup[kd->field].option);
 				}
 				break;
 			}

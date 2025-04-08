@@ -2,8 +2,8 @@ ipsec auto --up road-eastnet
 ping -n -q -W 1 -c 2 192.1.2.23
 ipsec whack --trafficstatus
 # note this end should be 192.1.3.209
-../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+ipsec _kernel state
+ipsec _kernel policy
 sleep 5
 # remove this end ip next one will take over
 ../../guestbin/ip.sh address show scope global dev eth0 | grep -v valid_lft

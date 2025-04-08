@@ -255,7 +255,11 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 		hb_index_ < hb_hunk_.len ? hb_byte_[INDEX] : -1;	\
 	})
 
-/* hunk[FLOOR..ROOF) */
+/*
+ * hunk[FLOOR..ROOF)
+ *
+ * For instance: hunk_slice(s, 1, s.len);
+ */
 
 #define hunk_slice(HUNK, FLOOR, ROOF)			\
 	({						\

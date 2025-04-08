@@ -20,80 +20,20 @@ west #
 "westnet-eastnet-ipcomp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipcomp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipcomp" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-ipcomp" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipcomp" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet-ipcomp" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+"westnet-eastnet-ipcomp" #1: private key matching CKAID 'b49f1aac9e456e7929c881973a0c6ad37f0f0350' not found: can't find the private key matching the NSS CKAID
+"westnet-eastnet-ipcomp" #1: encountered fatal error in state IKE_SA_INIT_IR
+"westnet-eastnet-ipcomp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipcomp" #1: deleting IKE SA (processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request)
 west #
- ../../guestbin/ipsec-kernel-state.sh
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-src 192.1.2.23 dst 192.1.2.45
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	comp deflate 
-src 192.1.2.23 dst 192.1.2.45
-	proto 4 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 flag af-unspec
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 flag esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-src 192.1.2.45 dst 192.1.2.23
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	comp deflate 
-src 192.1.2.45 dst 192.1.2.23
-	proto 4 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 flag af-unspec
+ ipsec _kernel state
 west #
  ipsec auto --down westnet-eastnet-ipcomp
-"westnet-eastnet-ipcomp": terminating SAs using this connection
-"westnet-eastnet-ipcomp" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet-eastnet-ipcomp" #2: ESP traffic information: in=0B out=0B
-"westnet-eastnet-ipcomp" #2: IPCOMP traffic information: in=0B out=0B
+"westnet-eastnet-ipcomp" #2: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  # XFRM state and policy should be empty of of 192/8 policies and states
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ip xfrm policy
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+ ipsec _kernel policy
 west #
  

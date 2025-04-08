@@ -94,7 +94,7 @@ Bare Shunt list:
 west #
  # let larval state expire
 west #
- ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 west #
  echo done
 done

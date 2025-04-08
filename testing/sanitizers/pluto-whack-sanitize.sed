@@ -3,6 +3,7 @@
 #why filter? /^002 .*received Vendor ID Payload/d
 
 # IKEv1
+/inbound IPsec SA installed/ s/ESP=>0x[a-f0-9]* <0x[a-f0-9]*/ESP=>0xESPESP <0xESPESP/
 s/\(IPsec SA established .* mode\) \([^ ]*ESP[^>]*>\)0x[a-f0-9]* <0x[a-f0-9]* \(xfrm.[^ ]* IPCOMP.>0x\)[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3ESPESP <0xESPESP \4/
 s/\(IPsec SA established .* mode\) \([^ ]*ESP[^=]*=>\)0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3/
 s/\(IPsec SA established .* mode\) \([^ ]*AH[^ ]*\)0x[a-f0-9]* \(.*\)0x[a-f0-9]* \(.*\)$/\1 \20xAHAH \30xAHAH \4/
@@ -21,11 +22,7 @@ s/\(rekeyed Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHA
 s/ \([0-9]\)[0-9][0-9][0-9]-bit RSA/ \1nnn-bit RSA/
 s/ \([0-9]\)[0-9][0-9]-bit RSA/ \1nn-bit RSA/
 
-s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
-s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
-s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
-s/\(sent Quick Mode reply, .*\) {.*/\1/
-/msgid=00000000/! { s,msgid=[0-9a-z]*,msgid=MSGID, ; }
+/msgid[:=]00000000/! { s,msgid\([:=]\)[0-9a-z]*,msgid\1MSGID, ; }
 
 s,; \([a-z0-9A-Z_]\+\) in [0-9]\+s,; \1 in XXs,g
 s, remaining life [0-9][0-9\.]*s, remaining life XXs,

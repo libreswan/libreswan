@@ -67,54 +67,30 @@ done
 road #
  # should show two full sets of policies on both road and east
 road #
- ip xfrm policy
-src 100.64.0.2/32 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
-	tmpl src 192.1.3.210 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 100.64.0.2/32 
-	dir fwd priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.210
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 100.64.0.2/32 
-	dir in priority PRIORITY ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.210
-		proto esp reqid REQID mode tunnel
-src 100.64.0.1/32 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 100.64.0.1/32 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 100.64.0.1/32 
-	dir fwd priority PRIORITY ptype main 
+src 100.64.0.2/32 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.210 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 100.64.0.1/32
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 100.64.0.1/32 
-	dir in priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 100.64.0.1/32
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.0.2.0/24 dst 100.64.0.2/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.210
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 100.64.0.2/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.210
+		proto esp reqid REQID mode tunnel
 road #
  

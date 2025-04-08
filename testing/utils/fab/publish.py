@@ -51,14 +51,7 @@ def add_arguments(parser):
     group.add_argument("--publish-source-url", metavar="URL",
                        help="point test source files at %(metavar)/testing/pluto/...")
 
-def log_arguments(logger, args):
-    logger.info("Publish arguments:")
-    logger.info("  publish-resultsdir: '%s'", args.publish_resultsdir)
-    logger.info("  publish-result-html: '%s'", args.publish_result_html)
-    logger.info("  publish-source-url: '%s'", args.publish_source_url)
-    logger.info("  publish-status: '%s'", args.publish_status)
-    logger.info("  publish-summary: '%s'", args.publish_summary)
-    logger.info("  publish-hash: '%s'", args.publish_hash)
+def process_arguments(logger, args):
 
     # sneak in some fields
     if not args.publish_resultsdir:
@@ -135,7 +128,7 @@ def test_files(logger, args, result, files={}):
     if not testdir:
         return None
     test = result.test
-    ignore = re.compile(r"[~]$")
+    ignore = re.compile(r"[~]$|OUTPUT")
     for name in os.listdir(test.directory):
         if ignore.search(name):
             continue

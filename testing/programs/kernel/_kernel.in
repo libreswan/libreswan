@@ -1,0 +1,157 @@
+#!@@SHELL_BINARY@@
+# -*- mode: sh; sh-shell: sh -*-
+# ipsec kernel commands
+#
+# Copyright (C) 2023,2025 Andrew Cagney
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+
+if test $# -lt 1 ; then
+    echo "usage: $0 { state | policy }" 1>&2
+    exit 1
+fi
+
+case $1 in
+    state | policy )
+	op=$1 ; shift
+	;;
+    * )
+	echo "$1: unknown operation" 1>&2
+	exit 1
+	;;
+esac
+
+# Join/Split related lines using <> as the separator so that they can
+# be fed to things like sort.  While at it strip out any trailing
+# spaces.
+#
+# Note: OpenBSD's SED doesn't support \t or \s
+#
+# Note: kernel-{state,policy}.sh have identical code
+
+join_lines()
+{
+    sed -n -e '
+s/[ 	]*$//
+1 { h; n; }
+/^[^ 	]/ { x; s,\n,<>,g; p; n; }
+s/[ 	]*$//
+H
+$ { x; s,\n,<>,g; p; }'
+}
+
+split_lines()
+{
+    sed -e 's,<>,\
+,g'
+}
+
+# deal with the different systems
+
+xfrm_state()
+{
+    ip xfrm state
+}
+
+xfrm_policy()
+{
+    # Force the order by feeding sort with lines prefixed by '[46]
+    # TYPE PRIORITY |'.
+    #
+    # XXX: should this also sort the direction?
+    {
+	ip xfrm policy
+    } | {
+	join_lines
+    } | {
+	# Eliminate socket lines vis:
+	#
+	#     src 0.0.0.0/0 dst 0.0.0.0/0
+	#            socket out priority 0 ptype main
+	sed -e '/socket/d'
+    } | {
+	# Prefix each line with:
+	#
+	#   <[46]> <priority> |
+	#
+	# so it is easy to sort.
+	#
+	# With each field, start with the assumption that the value is
+	# unknown (setting it to the default), and then adjust it as
+	# necessary.  For instance, for the protocol, start out
+	# assuming it is '4' (IPv4) and then if the line contains a
+	# ':' switch the prefix to '6' (IPv6).
+	sed -e 's/^/| /' \
+	    \
+	    -e 's/^/0 /' \
+	    -e 's/^0 \(.* priority \([0-9][0-9]*\)\)/\2 \1/' \
+	    \
+	    -e 's/^/4 /' \
+	    -e 's/^4 \(.* | src [0-9a-f:/]* \)/6 \1/'
+    } | {
+	# sort by each of the prefixes individually, and then by the
+	# rest of the line.  Shorter forms like -n and -k1,3n don't do
+	# what is wanted.
+	sort -b -k1,1n -k2,2n -k4V
+    } | {
+	# strip the sort prefixes
+	sed -e 's/^.* | //'
+    } | {
+	if test "$#" -gt 0 ; then
+	    grep "$@"
+	else
+	    cat
+	fi
+    } | {
+	split_lines
+    }
+}
+
+setkey_state()
+{
+    setkey -D
+}
+
+setkey_policy()
+{
+    setkey -DP
+}
+
+ipsecctl_state()
+{
+    ipsecctl -k -v -v -s sa | \
+	join_lines | \
+	sort | \
+	split_lines
+}
+
+ipsecctl_policy()
+{
+    ipsecctl -k -v -v -s flow
+}
+
+uname=$(uname)
+case ${uname} in
+    Linux )
+	xfrm_${op} "$@"
+	;;
+    NetBSD | FreeBSD )
+	setkey_${op} "$@"
+	;;
+    OpenBSD )
+	ipsecctl_${op} "$@"
+	;;
+    *)
+	echo "${uname}: unknown OS" 1>&2
+	exit 1
+	;;
+esac

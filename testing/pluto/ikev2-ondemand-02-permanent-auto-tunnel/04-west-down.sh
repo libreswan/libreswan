@@ -1,6 +1,6 @@
 ipsec auto --down west
 
 # only trap
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 # everything cleared out
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel state

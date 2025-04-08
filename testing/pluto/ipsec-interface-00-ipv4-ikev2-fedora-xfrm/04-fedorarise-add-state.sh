@@ -6,5 +6,5 @@
 ../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir in  tmpl src 198.18.1.15 dst 198.18.1.12 proto esp reqid 2345 mode tunnel
 #../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 1 dir fwd tmpl src 198.18.1.15 dst 198.18.1.12 proto esp reqid 2345 mode tunnel
 
-../../guestbin/ipsec-kernel-state.sh
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel state
+ipsec _kernel policy

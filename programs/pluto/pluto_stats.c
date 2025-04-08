@@ -129,11 +129,11 @@ PLUTO_STAT(ikev2_recv_notifies_s, &v2_notification_names,
  *  started->established->completed
  */
 
-static unsigned long pstats_sa_started[IKE_VERSION_ROOF][SA_TYPE_ROOF];
-static unsigned long pstats_sa_finished[IKE_VERSION_ROOF][SA_TYPE_ROOF][TERMINATE_REASON_ROOF];
-static unsigned long pstats_sa_established[IKE_VERSION_ROOF][SA_TYPE_ROOF];
+static unsigned long pstats_sa_started[IKE_VERSION_ROOF][SA_KIND_ROOF];
+static unsigned long pstats_sa_finished[IKE_VERSION_ROOF][SA_KIND_ROOF][TERMINATE_REASON_ROOF];
+static unsigned long pstats_sa_established[IKE_VERSION_ROOF][SA_KIND_ROOF];
 
-static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
+static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_KIND_ROOF] = {
 	[IKEv1] = {
 		[IKE_SA] = "ikev1.isakmp",
 		[CHILD_SA] = "ikev1.ipsec",
@@ -144,20 +144,21 @@ static const char *pstats_sa_names[IKE_VERSION_ROOF][SA_TYPE_ROOF] = {
 	},
 };
 
-void pstat_sa_started(struct state *st, enum sa_type sa_type)
+void pstat_sa_started(struct state *st)
 {
-	st->st_pstats.sa_type = sa_type;
 	st->st_pstats.terminate_reason = REASON_UNKNOWN;
 
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	dbg("pstats #%lu %s started", st->st_serialno, name);
 
-	pstats_sa_started[st->st_ike_version][st->st_pstats.sa_type]++;
+	pstats_sa_started[st->st_ike_version][sa_kind]++;
 }
 
 void pstat_sa_failed(struct state *st, enum terminate_reason r)
 {
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
 	const char *reason = str_enum(&terminate_reason_names, r, &rb);
 	if (st->st_pstats.terminate_reason == REASON_UNKNOWN) {
@@ -170,12 +171,13 @@ void pstat_sa_failed(struct state *st, enum terminate_reason r)
 
 void pstat_sa_deleted(struct state *st)
 {
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
 	const char *reason = str_enum(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
 	ldbg(st->logger, "pstats #%lu %s deleted %s", st->st_serialno, name, reason);
 
-	pstats_sa_finished[st->st_ike_version][st->st_pstats.sa_type][st->st_pstats.terminate_reason]++;
+	pstats_sa_finished[st->st_ike_version][sa_kind][st->st_pstats.terminate_reason]++;
 
 	/*
 	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
@@ -295,9 +297,10 @@ static void pstat_child_sa_established(struct state *st)
 
 void pstat_sa_established(struct state *st)
 {
-	const char *name = pstats_sa_names[st->st_ike_version][st->st_pstats.sa_type];
+	enum sa_kind sa_kind = st->st_sa_kind_when_established;
+	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	dbg("pstats #%lu %s established", st->st_serialno, name);
-	pstats_sa_established[st->st_ike_version][st->st_pstats.sa_type]++;
+	pstats_sa_established[st->st_ike_version][sa_kind]++;
 
 	/*
 	 * Check for double billing.  Only care that IKEv2 gets this
@@ -307,7 +310,7 @@ void pstat_sa_established(struct state *st)
 		st->st_pstats.terminate_reason == REASON_UNKNOWN);
 	st->st_pstats.terminate_reason = REASON_COMPLETED;
 
-	switch (st->st_pstats.sa_type) {
+	switch (sa_kind) {
 	case IKE_SA: pstat_ike_sa_established(st); break;
 	case CHILD_SA: pstat_child_sa_established(st); break;
 	}
@@ -383,7 +386,7 @@ static void show_bytes(struct show *s, const char *prefix, const struct pstats_b
 	show(s, "%s.out=%"PRIu64, prefix, bytes->out);
 }
 
-void show_pluto_stats(struct show *s)
+void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show(s, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
 	show(s, "total.ipsec.type.esp=%lu", pstats_ipsec_esp);
@@ -415,7 +418,7 @@ void show_pluto_stats(struct show *s)
 
 	/* new */
 	for (enum ike_version v = IKE_VERSION_FLOOR; v < IKE_VERSION_ROOF; v++) {
-		for (enum sa_type t = SA_TYPE_FLOOR; t < SA_TYPE_ROOF; t++) {
+		for (enum sa_kind t = SA_KIND_FLOOR; t < SA_KIND_ROOF; t++) {
 			const char *name = pstats_sa_names[v][t];
 			pexpect(name != NULL);
 			show(s, "total.%s.started=%lu",
@@ -484,7 +487,7 @@ void show_pluto_stats(struct show *s)
 	show_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
 }
 
-void clear_pluto_stats(void)
+void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s UNUSED)
 {
 	dbg("clearing pluto stats");
 

@@ -12,9 +12,9 @@ reading from file OUTPUT/nic.newoe-15-portpass.eth1.tcpdump.pcap, link-type EN10
 PLAINTEXT
 PLAINTEXT
 nic #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 nic #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 nic #
  # A tunnel should have established
 nic #

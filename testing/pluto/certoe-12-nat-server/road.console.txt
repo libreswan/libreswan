@@ -58,7 +58,7 @@ road #
  hostname | grep nic > /dev/null || ipsec trafficstatus
 #2: "private-or-clear#192.1.3.128/27"[1] ...192.1.3.130, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.3.130
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -83,7 +83,7 @@ src 192.1.3.209 dst 192.1.3.130
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.3.130/32 proto icmp type 8 code 0 dev eth0 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.3.130/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.3.130 dst 192.1.3.209

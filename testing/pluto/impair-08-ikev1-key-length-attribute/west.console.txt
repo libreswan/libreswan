@@ -27,7 +27,7 @@ west #
 "aes128" #1: sent Main Mode I3
 "aes128" #1: Peer ID is ID_FQDN: '@east'
 "aes128" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #2: sent Quick Mode request
 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -74,7 +74,7 @@ west #
 "aes128" #4: sent Main Mode I3
 "aes128" #4: Peer ID is ID_FQDN: '@east'
 "aes128" #4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#4 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #5: IMPAIR: stripping key-length
 "aes128" #5: IMPAIR: duplicating key-length
 "aes128" #5: sent Quick Mode request
@@ -121,7 +121,7 @@ west #
 "aes128" #7: sent Main Mode I3
 "aes128" #7: Peer ID is ID_FQDN: '@east'
 "aes128" #7: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #8: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #8: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#7 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #8: IMPAIR: stripping key-length
 "aes128" #8: IMPAIR: sending key-length attribute value 0
 "aes128" #8: sent Quick Mode request
@@ -150,7 +150,7 @@ west #
 "aes128" #9: sent Main Mode I3
 "aes128" #9: Peer ID is ID_FQDN: '@east'
 "aes128" #9: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #10: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #10: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#9 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #10: sent Quick Mode request
 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -175,7 +175,7 @@ west #
 "aes128" #11: sent Main Mode I3
 "aes128" #11: Peer ID is ID_FQDN: '@east'
 "aes128" #11: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #12: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #12: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#11 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #12: IMPAIR: stripping key-length
 "aes128" #12: IMPAIR: not sending key-length attribute
 "aes128" #12: sent Quick Mode request
@@ -206,7 +206,7 @@ west #
 "aes128" #13: sent Main Mode I3
 "aes128" #13: Peer ID is ID_FQDN: '@east'
 "aes128" #13: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #14: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #14: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#13 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #14: sent Quick Mode request
 "aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -233,7 +233,7 @@ west #
 "aes128" #15: sent Main Mode I3
 "aes128" #15: Peer ID is ID_FQDN: '@east'
 "aes128" #15: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"aes128" #16: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"aes128" #16: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#15 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "aes128" #16: IMPAIR: stripping key-length
 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
 "aes128" #16: sent Quick Mode request
@@ -264,7 +264,7 @@ west #
 "3des" #17: sent Main Mode I3
 "3des" #17: Peer ID is ID_FQDN: '@east'
 "3des" #17: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-"3des" #18: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"3des" #18: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#17 msgid:MSGID proposal=3DES_CBC-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "3des" #18: sent Quick Mode request
 "3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
@@ -313,7 +313,7 @@ west #
 "3des" #20: sent Main Mode I3
 "3des" #20: Peer ID is ID_FQDN: '@east'
 "3des" #20: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
-"3des" #21: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"3des" #21: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#20 msgid:MSGID proposal=3DES_CBC-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "3des" #21: sent Quick Mode request
 "3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive

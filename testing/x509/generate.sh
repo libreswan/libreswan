@@ -89,6 +89,60 @@ serial()
     echo ${serial}
 }
 
+dump_cert()
+{
+    local certdir=$1 ; shift
+    local cert=$1 ; shift
+
+    # private key + cert chain
+
+    pk12util \
+	-d ${certdir} \
+	-n ${cert} \
+	-W ${PASSPHRASE} \
+	-o ${certdir}/${cert}.p12
+
+    # end cert
+
+    certutil \
+	-L \
+	-d ${certdir} \
+	-n ${cert} \
+	-a > ${certdir}/${cert}.crt # PEM
+    cp ${certdir}/${cert}.crt ${certdir}/${cert}.end.cert
+
+    # private key (tests expect it unprotected)
+
+    openssl pkcs12 \
+	-passin pass:${PASSPHRASE} \
+	-noenc \
+	-nocerts \
+	-in  ${certdir}/${cert}.p12 \
+	-out ${certdir}/${cert}.key
+    cp ${certdir}/${cert}.key ${certdir}/${cert}.end.key
+}
+
+log_cert()
+{
+    local certdir=$1 ; shift
+    local cert=$1 ; shift
+
+    # this goes to log file
+
+    certutil \
+	-L \
+	-d ${certdir} \
+	-n ${cert}
+
+    local chain=$(certutil \
+		      -O \
+		      -d ${certdir} \
+		      -n ${cert}) || exit 1
+
+    # this goes to console
+    printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
+}
+
 generate_root_ca()
 (
     set -x
@@ -145,29 +199,17 @@ generate_root_ca()
 	     --extAIA \
 	     < ${cfg}
 
-    # root key + cert
+    # dump .p12 and .crt files
 
-    pk12util \
-	-d ${certdir} \
-	-n ${ca} \
-	-W ${PASSPHRASE} \
-	-o ${certdir}/root.p12
+    dump_cert ${certdir} ${cert}
 
-    # root cert
+    # useful names
+    cp ${certdir}/${cert}.p12 ${certdir}/root.p12
+    cp ${certdir}/${cert}.crt ${certdir}/root.cert
 
-    certutil \
-	-L \
-	-d ${certdir} \
-	-n ${ca} \
-	-a > ${certdir}/root.cert # PEM
+    # dump the cert, log the chain
 
-    # print the chain
-
-    chain=$(certutil \
-		-O \
-		-d ${certdir} \
-		-n ${ca}) || exit 1
-    printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
+    log_cert ${certdir} ${cert}
 )
 
 east_ipv4=192.1.2.23
@@ -271,54 +313,23 @@ generate_cert()
 	     ${param} \
 	     < ${cfg}
 
-    # private key + cert chain
+    # dump .p12 and .crt files
 
-    pk12util \
-	-d ${certdir} \
-	-n ${cert} \
-	-W ${PASSPHRASE} \
-	-o ${certdir}/${cert}.all.p12
+    dump_cert ${certdir} ${cert}
 
-    # end cert
-
-    certutil \
-	-L \
-	-d ${certdir} \
-	-n ${cert} \
-	-a > ${certdir}/${cert}.end.cert # PEM
-
-    # private key (tests expect it unprotected)
-
-    openssl pkcs12 \
-	-passin pass:${PASSPHRASE} \
-	-noenc \
-	-nocerts \
-	-in  ${certdir}/${cert}.all.p12 \
-	-out ${certdir}/${cert}.end.key
-
-    # private key + end cert
+    # build private key + end cert
 
     openssl pkcs12 \
 	-export \
 	-passout pass:${PASSPHRASE} \
-	-in ${certdir}/${cert}.end.cert \
-	-inkey ${certdir}/${cert}.end.key \
+	-in ${certdir}/${cert}.crt \
+	-inkey ${certdir}/${cert}.key \
 	-name ${cert} \
 	-out ${certdir}/${cert}.end.p12
 
     # dump the cert, log the chain
 
-    certutil \
-	-L \
-	-d ${certdir} \
-	-n ${cert}
-
-    chain=$(certutil \
-		-O \
-		-d ${certdir} \
-		-n ${cert}) || exit 1
-    printf "\n%s\n\n" "${chain}" | sed -e 's/^/  /' 1>&3
-
+    log_cert ${certdir} ${cert}
 )
 
 # generate ca directories
@@ -358,9 +369,9 @@ real/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical
 fake/mainca   mainca   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 real/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
 fake/mainec   mainec   testing.libreswan.org  Y  certSigning,crlSigning,critical  /  -k ec  -Z SHA256 -q secp384r1
-real/otherca  otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
+otherca       otherca  other.libreswan.org    Y  certSigning,crlSigning,critical  /  -k rsa -Z SHA256 -g 3072
 # broken root CA, can't be used to verify
-real/bc-n-ca  bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
+bc-n-ca       bc-n-ca  testing.libreswan.org  n  /                                /  -k rsa -Z SHA256 -g 3072
 EOF
 
 # generate end certs where needed
@@ -401,21 +412,9 @@ real        mainca           key4096                              1 1 1 / digita
 real        mainca           {east,west}-nosan                    0 1 1 / digitalSignature  /
 real        mainca           semiroad                             1 1 1 / digitalSignature  /
 real        mainca           nic-no-ocsp                          1 0 1 / digitalSignature  /
-real        otherca          other{east,west}                     1 1 1 / digitalSignature  /
-# Key Usage aka KU
-real        mainca           west-ku-missing                      1 1 1 / /                             /
-real        mainca           west-ku-digitalSignature             1 1 1 / digitalSignature              /
-real        mainca           west-ku-nonRepudiation               1 1 1 / nonRepudiation                /
-real        mainca           west-ku-digitalSignature-certSigning 1 1 1 / digitalSignature,certSigning  /
-real        mainca           west-ku-certSigning                  1 1 1 / certSigning                   /
-# Extended Key Usage aka EKU
-real        mainca           west-eku-missing                     1 1 1 / digitalSignature /
-real        mainca           west-eku-ipsecIKE                    1 1 1 / digitalSignature ipsecIKE
-real        mainca           west-eku-x509Any                     1 1 1 / digitalSignature x509Any
-real        mainca           west-eku-serverAuth                  1 1 1 / digitalSignature serverAuth
-real        mainca           west-eku-clientAuth                  1 1 1 / digitalSignature clientAuth
-real        mainca           west-eku-codeSigning                 1 1 1 / digitalSignature codeSigning
-real        mainca           west-eku-ipsecIKE-codeSigning        1 1 1 / digitalSignature ipsecIKE,codeSigning
+.           otherca          other{east,west}                     1 1 1 / digitalSignature  /
+# Use the (broken) CA with BC=n to sign a cert
+.           bc-n-ca          bc-n-ca-west                         1 1 1 / /                 /
 EOF
 
 while read subdir ca cert add_san add_ocsp add_crl bc ku eku param ; do
@@ -447,14 +446,7 @@ real/mainca  east_chain_int_1           east_chain_int_2           1 1 1 Y  cert
 real/mainca  west_chain_int_1           west_chain_int_2           1 1 1 Y  certSigning,critical  /
 real/mainca  east_chain_int_2           east_chain_endcert         1 1 1 /  digitalSignature      /
 real/mainca  west_chain_int_2           west_chain_endcert         1 1 1 /  digitalSignature      /
-# Basic Constraints aka BC
-real/mainca  mainca                     west-bc-missing            1 1 1 /  /                     /
-real/mainca  mainca                     west-bc-ca-n               1 1 1 n  /                     /
-real/mainca  mainca                     west-bc-ca-n-critical      1 1 1 N  /                     /
-real/mainca  mainca                     west-bc-ca-y               1 1 1 Y  /                     /
-real/mainca  mainca                     west-bc-ca-y-critical      1 1 1 Y  /                     /
+# Cert chain with intermediate BC CA=Y missing
 real/mainca  mainca                     west-bc-missing-chain-int  1 1 1 /  certSigning,critical  /
 real/mainca  west-bc-missing-chain-int  west-bc-missing-chain-end  1 1 1 /  /                     /
-# Use the CA with BC=n to sign some certs
-real/bc-n-ca bc-n-ca                    bc-n-ca-west               1 1 1 /  /                     /
 EOF

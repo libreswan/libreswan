@@ -31,8 +31,8 @@ nhelpers=-1, uniqueids=yes, dnssec-enable=yes, shuntlifetime=900s, xfrmlifetime=
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
-ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
-ocsp-trust-name=<unset>
+ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2
+ocsp-uri=<unset>, ocsp-trust-name=<unset>
 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 global-redirect=no, global-redirect-to=<unset>
 debug ...
@@ -131,7 +131,7 @@ east #
  ../../guestbin/wait-for-pluto.sh '^".*#2: IPsec SA established'
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -149,7 +149,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

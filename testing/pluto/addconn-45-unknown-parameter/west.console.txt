@@ -11,6 +11,7 @@ west #
 west #
  journalctl --output cat -xeu ipsec.service | grep FATAL
 FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
+FATAL ERROR: ipsec pluto: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
 FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
 west #
  # and addconn

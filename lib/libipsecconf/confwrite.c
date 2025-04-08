@@ -307,12 +307,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 	}
 
-	if (cidr_is_specified(end->vti_ip)) {
-		cidr_buf as;
-		fprintf(out, "\t%svti=%s\n", side,
-			str_cidr(&end->vti_ip, &as));
-	}
-
 	if (end->values[KSCF_PROTOPORT].set)
 		fprintf(out, "\t%sprotoport=%s\n", side,
 			end->values[KSCF_PROTOPORT].string);
@@ -453,10 +447,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwf("type", "drop");
 			break;
 
-		case SHUNT_REJECT:
-			cwf("type", "reject");
-			break;
-
 		case SHUNT_IPSEC:
 			cwf("type", "ipsec"); /* can't happen */
 			break
@@ -493,17 +483,14 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	/* output config setup section */
 	if (setup) {
 		fprintf(out, "config setup\n");
-		confwrite_int(out, "", kv_config,
-			      cfg->values);
-		confwrite_str(out, "", kv_config,
-			      cfg->values);
-
+		confwrite_int(out, "", kv_config, cfg->setup);
+		confwrite_str(out, "", kv_config, cfg->setup);
 		fprintf(out, "\n");
 	}
 
 	/* output connections */
-	for (struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
-	     conn != NULL; conn = TAILQ_NEXT(conn, link)) {
+	struct starter_conn *conn;
+	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (name == NULL || streq(name, conn->name)) {
 			confwrite_conn(out, conn, verbose);
 		}

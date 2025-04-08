@@ -456,14 +456,6 @@ DOCKER_PLUTONOFORK ?= --nofork
 # SHELL_BINARY is used for sh scripts shebang
 SHELL_BINARY ?= /bin/sh
 
-# used by _stackmanager
-#
-# What command to use to load the modules. openwrt does not have modprobe
-# Using -b enables blacklisting - this is needed for some known bad
-# versions of crypto acceleration modules.
-MODPROBEBIN ?= modprobe
-MODPROBEARGS ?= --quiet --use-blacklist
-
 ### misc installation stuff
 
 # what program to use when installing things
@@ -550,6 +542,10 @@ endif
 # Figure out ipsec.service file Type= option
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE ?= notify
+# Set WatchdogSec to the amount of time (in seconds) that systemd will wait
+# before restarting an unresponsive pluto.
+# EVENT_SD_WATCHDOG updates the heartbeat every 15 seconds, recommended values
+# are 60, 90, 120. WatchdogSec=0 disables the action, Our default is 200
 SD_WATCHDOGSEC ?= 200
 else
 SD_TYPE ?= simple
@@ -629,8 +625,6 @@ TRANSFORM_VARIABLES = $(SED) \
 			-e "s:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g" \
 			-e "s:@@INITSYSTEM@@:$(INITSYSTEM):g" \
 			-e "s:@@IPSECVERSION@@:$(IPSECVERSION):g" \
-			-e "s:@@MODPROBEARGS@@:$(MODPROBEARGS):g" \
-			-e "s:@@MODPROBEBIN@@:$(MODPROBEBIN):g" \
 			-e "s:@@SD_PLUTO_OPTIONS@@:$(SD_PLUTO_OPTIONS):g" \
 			-e "s:@@SD_RESTART_TYPE@@:$(SD_RESTART_TYPE):g" \
 			-e "s:@@SD_TYPE@@:$(SD_TYPE):g" \

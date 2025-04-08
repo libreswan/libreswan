@@ -14,15 +14,11 @@ extern enum_names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */
 extern enum_names sd_action_names;
 extern enum_names stf_status_names;
 extern enum_names keyword_auth_names;
-extern enum_names keyword_host_names;
 
 extern const enum_names debug_names;
 extern const enum_names debug_help;
 extern const struct lmod_info debug_lmod_info;
 
-extern enum_names shunt_policy_names;		/* SHUNT_... */
-extern enum_names shunt_policy_percent_names;	/* %... */
-extern enum_names connection_kind_names;
 extern enum_names certpolicy_type_names;
 extern enum_names oakley_attr_names;
 extern enum_names oakley_attr_bit_names;
@@ -78,7 +74,6 @@ extern enum_names ikev2_ts_type_names;
 extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
 extern enum_names ikev2_redirect_gw_names;
-extern enum_names allow_global_redirect_names;
 
 extern enum_names dns_auth_level_names;
 

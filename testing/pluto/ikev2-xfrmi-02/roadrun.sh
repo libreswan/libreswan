@@ -7,11 +7,11 @@ ipsec auto --up road
 ../../guestbin/ip.sh rule show
 ../../guestbin/ip.sh route show table 50
 ../../guestbin/ip.sh route
-# check if_id and mark in ip xfrm state
-../../guestbin/ipsec-kernel-state.sh
+# check if_id and mark in ipsec _kernel state
+ipsec _kernel state
 ipsec trafficstatus
 # check if delete removes all policies without errors
 ipsec auto --delete road
-../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+ipsec _kernel state
+ipsec _kernel policy
 echo done

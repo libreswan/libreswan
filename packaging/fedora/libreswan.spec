@@ -7,12 +7,15 @@
 %global unbound_version 1.6.6
 # Libreswan config options
 %global libreswan_config \\\
+    INITSYSTEM=systemd \\\
     LIBEXECDIR=%{_libexecdir}/ipsec \\\
     MANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
-    INITSYSTEM=systemd \\\
     SBINDIR=%{_sbindir} \\\
+    SYSTEMTMPFILESDIR=%{_tmpfilesdir} \\\
+    SYSTEMUNITDIR=%{_unitdir} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
+    USE_AUTHPAM=true \\\
     USE_DNSSEC=true \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
@@ -21,7 +24,6 @@
     USE_LINUX_AUDIT=true \\\
     USE_NM=true \\\
     USE_SECCOMP=true \\\
-    USE_AUTHPAM=true \\\
 %{nil}
 
 #global prever rc2

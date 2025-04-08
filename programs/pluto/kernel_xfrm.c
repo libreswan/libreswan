@@ -908,11 +908,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		xfrm_action = XFRM_POLICY_BLOCK;
 		policy_name = "%drop(block)";
 		break;
-	case SHUNT_REJECT:
-		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
-		xfrm_action = XFRM_POLICY_BLOCK;
-		policy_name = "%reject(block)";
-		break;
 	case SHUNT_HOLD:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;

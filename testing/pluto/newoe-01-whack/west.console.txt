@@ -23,7 +23,9 @@ west #
  ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23 --oppoproto 1 --opposport 8 --oppodport 0
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: initiate on-demand for packet 192.1.2.45:8-ICMP->192.1.2.23:0 by whack
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -38,7 +40,7 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -57,7 +59,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 127.0.0.1/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main
 src 127.0.0.1/32 dst 192.1.2.45/32

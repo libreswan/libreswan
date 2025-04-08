@@ -1,0 +1,80 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ /testing/x509/import.sh real/mainca/`hostname`.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ # Import a broken root CA (lacks BasicConstraint ca=y)
+east #
+ /testing/x509/import.sh bc-n-ca/root.p12
+ ipsec pk12util -w nss-pw -i bc-n-ca/root.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n bc-n-ca -t CT,,
+ ipsec certutil -O -n bc-n-ca
+"bc-n-ca" [E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec certutil -L -n bc-n-ca
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: SERIAL
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=
+            Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU
+            =Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Authority Information Access
+            Method: PKIX Online Certificate Status Protocol
+            Location: 
+                URI: "http://nic.testing.libreswan.org:2560"
+            Name: CRL Distribution Points
+            Distribution point:
+                URI: "http://nic.testing.libreswan.org/revoked.crl"
+            Name: Certificate Basic Constraints
+            Data: Is not a CA.
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Valid CA
+            Trusted CA
+            User
+            Trusted Client CA
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add east
+"east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ grep '^[^|].*ERROR:' /tmp/pluto.log
+"east"[1] 192.1.2.45 #1: NSS: ERROR: IPsec certificate E=west-bc-missing-chain-end@testing.libreswan.org,CN=west-bc-missing-chain-end.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
+"east"[2] 192.1.2.45 #2: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_CA_CERT_INVALID: Issuer certificate is invalid.
+east #
+ 

@@ -28,7 +28,7 @@
 
 /* look up enum names in a sparse_names */
 
-const struct sparse_name *sparse_lookup(const struct sparse_names *names, shunk_t name)
+const struct sparse_name *sparse_lookup_by_name(const struct sparse_names *names, shunk_t name)
 {
 	for (const struct sparse_name *sn = names->list; sn->name != NULL; sn++) {
 		if (hunk_strcaseeq(name, sn->name)) {

@@ -16,7 +16,7 @@ set #
  ../../guestbin/ip.sh link show ipsec1
 X: ipsec1@eth2: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 set #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 set #
  ip -4 route add 198.18.12.0/24 dev ipsec1
 set #
@@ -32,7 +32,7 @@ set #
 set #
  ../../guestbin/ip.sh xfrm policy add src 0.0.0.0/0 dst 0.0.0.0/0 if_id 0x1 dir out tmpl src 198.18.1.15 dst 198.18.1.12 proto esp reqid 2345 mode tunnel
 set #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 198.18.1.15 dst 198.18.1.12
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
@@ -48,7 +48,7 @@ src 198.18.1.12 dst 198.18.1.15
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 set #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir in priority 0 ptype main
 	tmpl src 198.18.1.12 dst 198.18.1.15
@@ -63,7 +63,7 @@ set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 up
 set #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 198.18.1.15 dst 198.18.1.12
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
@@ -81,7 +81,7 @@ src 198.18.1.12 dst 198.18.1.15
 	if_id 0x1
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 set #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 0.0.0.0/0 dst 0.0.0.0/0
 	dir in priority 0 ptype main
 	tmpl src 198.18.1.12 dst 198.18.1.15

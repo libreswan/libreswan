@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 
-/testing/x509/import.sh real/mainca/semiroad.all.p12
+/testing/x509/import.sh real/mainca/semiroad.p12
 
 cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 cp policies/* /etc/ipsec.d/policies/

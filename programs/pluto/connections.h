@@ -52,6 +52,7 @@
 #include "ip_index.h"
 #include "routing.h"
 #include "connection_owner.h"
+#include "connection_kind.h"
 
 /*
  * Note that we include this even if not X509, because we do not want
@@ -159,6 +160,10 @@ struct child_end_config {
 	 * Given interface-ip= and sourceip= are incompatible and the
 	 * ipsec-interface code checks for a sourceip=, is this
 	 * completely redundant?
+	 *
+	 * The interface-ip is added, during orientation, when the
+	 * interface is created.  The source-ip is added after the
+	 * connection establishes.
 	 */
 	ip_cidr ipsec_interface_ip;
 
@@ -166,8 +171,10 @@ struct child_end_config {
 	 * Weird host related client stuff.
 	 *
 	 * It's only used when there's a Child SA.
+	 *
+	 * UPDOWN variable is called VTI_IP, hence name.
 	 */
-	ip_cidr host_vtiip;
+	ip_cidr vti_ip;
 	struct virtual_ip *virt;
 };
 
@@ -932,6 +939,10 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c);
 size_t jam_connection_short(struct jambuf *buf, const struct connection *c);
 const char *str_connection_short(const struct connection *c);
 
+typedef struct {
+	char buf[512];/*arbitrary*/
+} policy_buf;
+
 size_t jam_connection_policies(struct jambuf *buf, const struct connection *c);
 const char *str_connection_policies(const struct connection *c, policy_buf *buf);
 
@@ -1137,7 +1148,7 @@ bool is_template(const struct connection *c);
  * permanent and template-instance connections allow both, but labeled
  * connections are XOR.
  */
-bool can_have_sa(const struct connection *c, enum sa_type sa_type);
+bool can_have_sa(const struct connection *c, enum sa_kind sa_kind);
 
 bool never_negotiate(const struct connection *c);
 
@@ -1154,9 +1165,9 @@ bool is_xauth(const struct connection *c);
 bool is_v1_cisco_split(const struct spd *spd, where_t where);
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
-const char *connection_sa_name(const struct connection *c, enum sa_type sa_type);
+const char *connection_sa_name(const struct connection *c, enum sa_kind sa_kind);
 /* IKE | ISAKMP || Child | IPsec */
-const char *connection_sa_short_name(const struct connection *c, enum sa_type sa_type);
+const char *connection_sa_short_name(const struct connection *c, enum sa_kind sa_kind);
 
 struct child_policy child_sa_policy(const struct connection *c);
 

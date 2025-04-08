@@ -2,8 +2,8 @@ strongswan up road-east
 ../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
 strongswan status
 # note this end should be 192.1.3.209
-../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+ipsec _kernel state
+ipsec _kernel policy
 sleep 5
 # remove this end ip next one will take over
 ../../guestbin/ip.sh route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
@@ -14,8 +14,8 @@ sleep 10
 # both ends updated MOBIKE ping should work
 # note this end should be 192.1.33.222
 strongswan status
-../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+ipsec _kernel state
+ipsec _kernel policy
 ../../guestbin/ping-once.sh --up -I 192.0.3.10 192.0.2.254
 grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
 echo done

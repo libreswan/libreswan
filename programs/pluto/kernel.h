@@ -353,7 +353,7 @@ extern const struct kernel_ops *const kernel_stacks[];
 extern deltatime_t bare_shunt_interval;
 extern deltatime_t pluto_shunt_lifetime;
 
-extern void show_shunt_status(struct show *);
+void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s);
 extern unsigned shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,

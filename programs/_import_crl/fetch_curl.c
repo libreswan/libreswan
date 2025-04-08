@@ -57,11 +57,17 @@ static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
  * fetches a binary blob from a url with libcurl
  */
 
-err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
+err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
+		 struct verbose verbose)
 {
 	char errorbuffer[CURL_ERROR_SIZE] = "?";
 	chunk_t response = EMPTY_CHUNK;	/* managed by realloc/free */
-	long timeout = deltasecs(crl_fetch_timeout);
+
+	/* init curl */
+	int status = curl_global_init(CURL_GLOBAL_DEFAULT);
+	if (status != 0) {
+		vfatal("libcurl could not be initialized, status = %d", status);
+	}
 
 	/* get it with libcurl */
 	CURL *curl = curl_easy_init();
@@ -69,7 +75,8 @@ err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 	if (curl == NULL)
 		return "cannot initialize curl";
 
-	dbg("Trying cURL '%s' with connect timeout of %ld", url, timeout);
+	vdbg("Trying cURL '%s' with connect timeout of %ld",
+	     url, (long)timeout);
 
 	CURLcode res = CURLE_OK;
 
@@ -77,7 +84,7 @@ err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 		if (res == CURLE_OK) { \
 			res = curl_easy_setopt(curl, optype, optarg); \
 			if (res != CURLE_OK) { \
-				dbg("curl_easy_setopt " #optype " failed %d", res); \
+				vdbg("curl_easy_setopt " #optype " failed %d", res); \
 			} \
 		} \
 	}
@@ -108,14 +115,15 @@ err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 		errorbuffer[0] = '\0';
 		*blob = clone_hunk(response, "curl blob");
 	} else {
-		llog(RC_LOG, logger,
+		llog(RC_LOG, verbose.logger,
 		     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);
 	}
 	curl_easy_cleanup(curl);
+	curl_global_cleanup();
 
 	/* ??? where/how should this be logged? */
 	if (errorbuffer[0] != '\0') {
-		dbg("libcurl(%s) yielded %s", url, errorbuffer);
+		vdbg("libcurl(%s) yielded %s", url, errorbuffer);
 	}
 
 	if (response.ptr != NULL)
@@ -123,19 +131,4 @@ err_t fetch_curl(const char *url, chunk_t *blob, struct logger *logger)
 
 	/* ??? should this return errorbuffer instead? */
 	return strlen(errorbuffer) > 0 ? "libcurl error" : NULL;
-}
-
-void init_curl(struct logger *logger)
-{
-	/* init curl */
-	int status = curl_global_init(CURL_GLOBAL_DEFAULT);
-	if (status != 0) {
-		fatal(PLUTO_EXIT_FAIL, logger,
-		      "libcurl could not be initialized, status = %d", status);
-	}
-}
-
-void shutdown_curl(void)
-{
-	curl_global_cleanup();
 }

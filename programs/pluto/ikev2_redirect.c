@@ -43,7 +43,7 @@
 
 static emit_v2_INFORMATIONAL_request_payload_fn add_redirect_payload; /* type check */
 
-enum allow_global_redirect global_redirect = GLOBAL_REDIRECT_NO;
+enum global_redirect global_redirect = GLOBAL_REDIRECT_NO;
 
 struct redirect_dests {
 	char *whole;

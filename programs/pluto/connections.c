@@ -1452,15 +1452,19 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(wm->ike_version);
 	}
 
-	child_config->host_vtiip = src->host_vtiip;
-
-	if (never_negotiate_wm(wm)) {
-		if (src->interface_ip != NULL) {
-			llog(RC_LOG, logger,
-			     "warning: %sinterface-ip=%s ignored when never negotiate",
-			     leftright, src->interface_ip);
+	if (can_extract_str(leftright, "vti", src->vti, wm, logger)) {
+		err_t oops = ttocidr_num(shunk1(src->vti), NULL,
+					 &child_config->vti_ip);
+		if (oops != NULL) {
+			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
 		}
-	} else if (src->interface_ip != NULL) {
+		oops = cidr_check(child_config->vti_ip);
+		if (oops != NULL) {
+			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
+		}
+	}
+
+	if (can_extract_str(leftright, "interface-ip", src->interface_ip, wm, logger)) {
 		err_t oops = ttocidr_num(shunk1(src->interface_ip), NULL,
 					 &child_config->ipsec_interface_ip);
 		if (oops != NULL) {
@@ -2286,13 +2290,13 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 		},
 		[SHUNT_KIND_NEVER_NEGOTIATE] = {
 			[SHUNT_UNSET] = true,
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		[SHUNT_KIND_NEGOTIATION] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false,
 		},
 		[SHUNT_KIND_FAILURE] = {
-			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		/* hard-wired */
 		[SHUNT_KIND_IPSEC] = { [SHUNT_IPSEC] = true, },
@@ -5320,12 +5324,12 @@ bool is_labeled_child_where(const struct connection *c, where_t where)
 }
 
 bool can_have_sa(const struct connection *c, 
-		 enum sa_type sa_type)
+		 enum sa_kind sa_kind)
 {
 	if (c == NULL) {
 		return false;
 	}
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		switch (c->local->kind) {
 		case CK_INVALID:
@@ -5357,7 +5361,7 @@ bool can_have_sa(const struct connection *c,
 		}
 		bad_enum(c->logger, &connection_kind_names, c->local->kind);
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }
 
 /*
@@ -5390,27 +5394,27 @@ bool is_v1_cisco_split(const struct spd *spd UNUSED, where_t where UNUSED)
 
 
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
-const char *connection_sa_name(const struct connection *c, enum sa_type sa_type)
+const char *connection_sa_name(const struct connection *c, enum sa_kind sa_kind)
 {
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		return c->config->ike_info->parent_sa_name;
 	case CHILD_SA:
 		return c->config->ike_info->child_sa_name;
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }
 
 /* IKE | ISAKMP || Child | IPsec */
-const char *connection_sa_short_name(const struct connection *c, enum sa_type sa_type)
+const char *connection_sa_short_name(const struct connection *c, enum sa_kind sa_kind)
 {
-	switch (sa_type) {
+	switch (sa_kind) {
 	case IKE_SA:
 		return c->config->ike_info->parent_name;
 	case CHILD_SA:
 		return c->config->ike_info->child_name;
 	}
-	bad_case(sa_type);
+	bad_case(sa_kind);
 }
 
 struct child_policy child_sa_policy(const struct connection *c)

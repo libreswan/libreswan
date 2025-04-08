@@ -35,7 +35,7 @@
 
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser.h"	/* includes parser.tab.h" */
-#include "ipsecconf/parser-flex.h"
+#include "ipsecconf/scanner.h"
 #include "ipsecconf/confread.h"
 #include "lswlog.h"
 #include "lmod.h"
@@ -45,27 +45,15 @@
 #define YYERROR_VERBOSE
 #define ERRSTRING_LEN	256
 
-/**
- * Static Globals
- */
-static bool save_errors;
-
-static struct parser {
-	struct config_parsed *cfg;
-	struct kw_list **kw;
-	enum section { SECTION_CONFIG_SETUP, SECTION_CONN_DEFAULT, SECTION_CONN, } section;
-	struct starter_comments_list *comments;
-} parser;
-
-static void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
+static void parser_kw_warning(struct parser *parser, struct keyword *kw, const char *yytext,
 			      const char *s, ...) PRINTF_LIKE(4);
 
-void parser_kw(struct keyword *kw, const char *string, struct logger *logger);
+void parser_kw(struct parser *parser, struct keyword *kw, const char *string);
 
-static void yyerror(struct logger *logger, const char *msg);
-static void new_parser_kw(struct keyword *keyword, const char *string,
-			  uintmax_t number, deltatime_t time,
-			  struct logger *logger);
+static void yyerror(struct parser *parser, const char *msg);
+static void new_parser_kw(struct parser *parser,
+			  struct keyword *keyword, const char *string,
+			  uintmax_t number, deltatime_t time);
 
 /**
  * Functions
@@ -73,7 +61,7 @@ static void new_parser_kw(struct keyword *keyword, const char *string,
 
 %}
 
-%param {struct logger *logger}
+%param {struct parser *parser}
 
 %union {
 	char *s;
@@ -112,32 +100,32 @@ sections: /* NULL */
 
 section_or_include:
 	CONFIG SETUP EOL {
-		parser.kw = &parser.cfg->config_setup;
-		parser.section = SECTION_CONFIG_SETUP;
-		ldbg(logger, "reading config setup");
+		parser->kw = &parser->cfg->config_setup;
+		parser->section = SECTION_CONFIG_SETUP;
+		ldbg(parser->logger, "reading config setup");
 	} kw_sections
 	| CONN STRING EOL {
 		struct section_list *section = alloc_thing(struct section_list, "section list");
-		PASSERT(logger, section != NULL);
+		PASSERT(parser->logger, section != NULL);
 
 		section->name = clone_str($2, "section->name");
 		section->kw = NULL;
 
-		TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
+		TAILQ_INSERT_TAIL(&parser->cfg->sections, section, link);
 
 		/* setup keyword section to record values */
-		parser.kw = &section->kw;
-		parser.section = (streq(section->name, "%default") ? SECTION_CONN_DEFAULT :
+		parser->kw = &section->kw;
+		parser->section = (streq(section->name, "%default") ? SECTION_CONN_DEFAULT :
 				  SECTION_CONN);
 
-		ldbg(logger, "reading conn %s", section->name);
+		ldbg(parser->logger, "reading conn %s", section->name);
 
 		/* free strings allocated by lexer */
 		pfreeany($2);
 
 	} kw_sections
 	| INCLUDE STRING EOL {
-		parser_y_include($2, logger);
+		scanner_include($2, parser);
 		/* free strings allocated by lexer */
 		pfreeany($2)
 	}
@@ -161,46 +149,45 @@ statement_kw:
 		 */
 		struct keyword kw = $1;
 		const char *value = $3.keydef->keyname;
-		parser_kw(&kw, value, logger);
+		parser_kw(parser, &kw, value);
 	}
 	| KEYWORD EQUAL STRING {
 		struct keyword kw = $1;
 		const char *string = $3;
-		parser_kw(&kw, string, logger);
+		parser_kw(parser, &kw, string);
 		/* free strings allocated by lexer */
 		pfreeany($3);
 	}
 	| KEYWORD EQUAL {
 		struct keyword kw = $1;
-		parser_kw(&kw, "", logger);
+		parser_kw(parser, &kw, "");
 	}
 
 	| COMMENT EQUAL STRING {
-		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=%s", $1, $3);
+		parser_warning(parser, 0/*error*/, "X- style comment ignored: %s=%s", $1, $3);
 		/* free strings allocated by lexer */
 		pfreeany($1);
 		pfreeany($3);
 	}
 	| COMMENT EQUAL {
-		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s=", $1);
+		parser_warning(parser, 0/*error*/, "X- style comment ignored: %s=", $1);
 		/* free strings allocated by lexer */
 		pfreeany($1);
 	}
 	| COMMENT {
-		parser_warning(logger, 0/*error*/, "X- style comment ignored: %s", $1);
+		parser_warning(parser, 0/*error*/, "X- style comment ignored: %s", $1);
 		/* free strings allocated by lexer */
 		pfreeany($1);
 	}
 	;
 %%
 
-void parser_warning(struct logger *logger, int error, const char *s, ...)
+void parser_warning(struct parser *parser, int error, const char *s, ...)
 {
-	if (save_errors) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "%s:%u: warning: ",
-			    parser_cur_filename(),
-			    parser_cur_line());
+	if (parser->error_stream != NO_STREAM) {
+		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+			jam_scanner_file_line(buf, parser);
+			jam_string(buf, "warning: ");
 			va_list ap;
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
@@ -212,15 +199,15 @@ void parser_warning(struct logger *logger, int error, const char *s, ...)
 	}
 }
 
-void parser_fatal(struct logger *logger, int error, const char *s, ...)
+void parser_fatal(struct parser *parser, int error, const char *s, ...)
 {
         struct logjam logjam;
-        struct jambuf *buf = jambuf_from_logjam(&logjam, logger, PLUTO_EXIT_FAIL,
-                                                NULL/*where*/, FATAL_STREAM);
+        struct jambuf *buf = jambuf_from_logjam(&logjam, parser->logger,
+						PLUTO_EXIT_FAIL,
+                                                NULL/*where*/,
+						FATAL_STREAM);
         {
-		jam(buf, "%s:%u: ",
-		    parser_cur_filename(),
-		    parser_cur_line());
+		jam_scanner_file_line(buf, parser);
 		va_list ap;
 		va_start(ap, s);
 		jam_va_list(buf, s, ap);
@@ -243,18 +230,19 @@ static const char *leftright(struct keyword *kw)
 	return "";
 }
 
-void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yytext,
+void parser_kw_warning(struct parser *parser, struct keyword *kw, const char *yytext,
 		       const char *s, ...)
 {
-	if (save_errors) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "%s:%u: warning: ",
-			    parser_cur_filename(),
-			    parser_cur_line());
+	if (parser->error_stream != NO_STREAM) {
+		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+			jam_scanner_file_line(buf, parser);
+			jam_string(buf, "warning: ");
+			/* message */
 			va_list ap;
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
 			va_end(ap);
+			/* what was specified */
 			jam_string(buf, ": ");
 			jam_string(buf, leftright(kw));
 			jam_string(buf, kw->keydef->keyname);
@@ -264,56 +252,156 @@ void parser_kw_warning(struct logger *logger, struct keyword *kw, const char *yy
 	}
 }
 
-void yyerror(struct logger *logger, const char *s)
+void yyerror(struct parser *parser, const char *s)
 {
-	if (save_errors) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "%s:%u: ",
-			    parser_cur_filename(),
-			    parser_cur_line());
+	if (parser->error_stream != NO_STREAM) {
+		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+			jam_scanner_file_line(buf, parser);
 			jam_string(buf, s);
 		}
 	}
 }
 
-struct config_parsed *parser_load_conf(const char *file,
-				       struct logger *logger)
+static struct config_parsed *alloc_config_parsed(void)
 {
-	parser.cfg = alloc_thing(struct config_parsed, __func__);
-	PASSERT(logger, parser.cfg != NULL);
+	struct config_parsed *cfgp = alloc_thing(struct config_parsed, __func__);
+	TAILQ_INIT(&cfgp->sections);
+	return cfgp;
+}
+
+struct config_parsed *parser_load_conf(const char *file,
+				       struct logger *logger,
+				       unsigned verbosity)
+{
+	struct parser parser = {
+		.logger = logger,
+		.cfg = alloc_config_parsed(),
+		.error_stream = ERROR_STREAM,
+		.verbosity = verbosity,
+	};
+
 	ldbg(logger, "allocated config %p", parser.cfg);
 
-	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") :
-		   fopen(file, "r"));
-
-	if (f == NULL) {
-		llog(RC_LOG, logger, "can't load file '%s'", file);
+	if (!scanner_open(&parser, file)) {
 		goto err;
 	}
 
-	yyin = f;
-	parser_y_init(file, f);
-	save_errors = true;
-	TAILQ_INIT(&parser.cfg->sections);
-
-	if (yyparse(logger) != 0) {
-		save_errors = false;
-		do {} while (yyparse(logger) != 0);
+	if (yyparse(&parser) != 0) {
+		/* suppress errors */
+		parser.error_stream = (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
+		do {} while (yyparse(&parser) != 0);
 		goto err;
 	}
+
+	scanner_close(&parser);
 
 	/**
 	 * Config valid
 	 */
-	struct config_parsed *cfg = parser.cfg;
-	parser.cfg = NULL;
-	ldbg(logger, "allocated config %p", cfg->conn_default.kw);
-	return cfg;
+	ldbg(logger, "allocated config %p", parser.cfg->conn_default.kw);
+	return parser.cfg;
 
 err:
 	parser_freeany_config_parsed(&parser.cfg);
+	scanner_close(&parser);
 
 	return NULL;
+}
+
+struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start,
+				       struct logger *logger)
+{
+	struct config_parsed *cfgp = alloc_config_parsed();
+
+	/* there's only one */
+	struct section_list *section = alloc_thing(struct section_list, __func__);
+	TAILQ_INSERT_TAIL(&cfgp->sections, section, link);
+	section->name = clone_str(name, __func__);
+
+	struct parser parser = {
+		.cfg = cfgp,
+		.section = SECTION_CONN,
+		.kw = &section->kw,
+		.logger = logger,
+	};
+
+	scanner_init(&parser, "argv", start);
+
+	/* for options that should have an end, but don't */
+	enum end default_end = LEFT_END;
+
+	for (char **argp = argv + start; (*argp) != NULL; argp++) {
+
+		const char *arg = (*argp);
+		/* toss any leading -- */
+		eat(arg, "--");
+
+		shunk_t cursor = shunk1(arg);
+
+		/* whack's --to switches ends */
+		if (hunk_streq(cursor, "to")) {
+			default_end++;
+			if (default_end >= END_ROOF) {
+				llog(ERROR_STREAM, logger, "too many 'to's");
+				parser_freeany_config_parsed(&cfgp);
+				exit(1);
+			}
+			scanner_next_line(&parser);
+			continue;
+		}
+
+		/*
+		 * Parse KEY=VALUE or, when there's no '=', KEY VALUE.
+		 *
+		 * VALUE is a string to avoid need to pass shunk_t
+		 * into parser_kw().
+		 */
+
+		char sep;
+		shunk_t key = shunk_token(&cursor, &sep, "=");
+		const char *value;
+		if (sep == '=') {
+			/* skip key and '=' */
+			value = arg + key.len + 1;
+		} else if (hunk_strcasestarteq(key, "nego")) { /*negoPASS*/
+			/* hack */
+			key = shunk1("negotiationshunt");
+			value = arg + strlen("nego");
+		} else if (hunk_strcasestarteq(key, "fail")) { /*failNONE*/
+			/* hack */
+			key = shunk1("failureshunt");
+			value = arg + strlen("fail");
+		} else {
+			/* no '=' */
+			if (argp[1] == NULL) {
+				llog(ERROR_STREAM, logger, "missing parameter for %s", arg);
+				parser_freeany_config_parsed(&cfgp);
+				return NULL;
+			}
+			value = argp[1];
+			scanner_next_line(&parser);
+			argp++;
+		}
+
+		/* map --host onto left/right */
+		if (hunk_strcaseeq(key, "host")) {
+			key = shunk1(default_end == LEFT_END ? "left" :
+				     default_end == RIGHT_END ? "right" :
+				     "???");
+		} else if (hunk_strcaseeq(key, "authby")) {
+			/* XXX: whack's authby semantics */
+			key = shunk1("auth");
+		}
+
+		struct keyword kw;
+		parser_find_keyword(key, default_end, &kw, &parser); /* can exit(1) */
+ 		parser_kw(&parser, &kw, value);
+		scanner_next_line(&parser);
+	}
+
+	scanner_close(&parser);
+
+	return cfgp;
 }
 
 static void parser_free_kwlist(struct kw_list *list)
@@ -334,12 +422,10 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 		struct config_parsed *cfg = (*cfgp);
 		parser_free_kwlist(cfg->config_setup);
 
-		for (struct section_list *seci = TAILQ_FIRST(&cfg->sections);
-		     seci != NULL; ) {
-			/* step off */
-			struct section_list *sec = seci;
-			seci = TAILQ_NEXT(seci, link);
-
+		/* keep deleting the first entry */
+		struct section_list *sec;
+		while ((sec = TAILQ_FIRST(&cfg->sections)) != NULL) {
+			TAILQ_REMOVE(&cfg->sections, sec, link);
 			pfreeany(sec->name);
 			parser_free_kwlist(sec->kw);
 			pfree(sec);
@@ -349,19 +435,19 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 	}
 }
 
-static void new_parser_kw(struct keyword *kw,
-			  const char *yytext,
-			  uintmax_t number,
-			  deltatime_t deltatime,
-			  struct logger *logger)
+void new_parser_kw(struct parser *parser,
+		   struct keyword *kw,
+		   const char *yytext,
+		   uintmax_t number,
+		   deltatime_t deltatime)
 {
 	/* both means no prefix */
 	const char *section = "???";
-	switch (parser.section) {
+	switch (parser->section) {
 	case SECTION_CONFIG_SETUP:
 		section = "'config setup'";
 		if ((kw->keydef->validity & kv_config) == LEMPTY) {
-			parser_kw_warning(logger, kw, yytext,
+			parser_kw_warning(parser, kw, yytext,
 					  "invalid %s keyword ignored",
 					  section);
 			/* drop it on the floor */
@@ -371,7 +457,7 @@ static void new_parser_kw(struct keyword *kw,
 	case SECTION_CONN:
 		section = "conn";
 		if ((kw->keydef->validity & kv_conn) == LEMPTY) {
-			parser_kw_warning(logger, kw, yytext,
+			parser_kw_warning(parser, kw, yytext,
 					  "invalid %s keyword ignored", section);
 			/* drop it on the floor */
 			return;
@@ -381,7 +467,7 @@ static void new_parser_kw(struct keyword *kw,
 		section = "'conn %%default'";
 		if ((kw->keydef->validity & kv_conn) == LEMPTY ||
 		    kw->keydef->field == KSCF_ALSO) {
-			parser_kw_warning(logger, kw, yytext,
+			parser_kw_warning(parser, kw, yytext,
 					  "invalid %s keyword ignored", section);
 			/* drop it on the floor */
 			return;
@@ -391,7 +477,7 @@ static void new_parser_kw(struct keyword *kw,
 
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
-	for (end = parser.kw; (*end) != NULL; end = &(*end)->next) {
+	for (end = parser->kw; (*end) != NULL; end = &(*end)->next) {
 		if ((*end)->keyword.keydef != kw->keydef) {
 			continue;
 		}
@@ -403,8 +489,8 @@ static void new_parser_kw(struct keyword *kw,
 			continue;
 		}
 		/* note the weird behaviour! */
-		if (parser.section == SECTION_CONFIG_SETUP) {
-			parser_kw_warning(logger, kw, yytext,
+		if (parser->section == SECTION_CONFIG_SETUP) {
+			parser_kw_warning(parser, kw, yytext,
 					  "overriding earlier %s keyword with new value", section);
 			pfreeany((*end)->string);
 			(*end)->string = clone_str(yytext, "keyword.string"); /*handles NULL*/
@@ -412,7 +498,7 @@ static void new_parser_kw(struct keyword *kw,
 			(*end)->deltatime = deltatime;
 			return;
 		}
-		parser_kw_warning(logger, kw, yytext, "ignoring duplicate %s keyword", section);
+		parser_kw_warning(parser, kw, yytext, "ignoring duplicate %s keyword", section);
 		return;
 	}
 
@@ -428,7 +514,7 @@ static void new_parser_kw(struct keyword *kw,
 		.deltatime = deltatime,
 	};
 
-	ldbgf(DBG_TMI, logger, "  %s%s=%s number=%ju field=%u", kw->keydef->keyname,
+	ldbgf(DBG_TMI, parser->logger, "  %s%s=%s number=%ju field=%u", kw->keydef->keyname,
 	      leftright(kw), new->string, new->number,
 	      kw->keydef->field);
 
@@ -437,22 +523,22 @@ static void new_parser_kw(struct keyword *kw,
 }
 
 static bool parser_kw_unsigned(struct keyword *kw, const char *yytext,
-			       uintmax_t *number, struct logger *logger)
+			       uintmax_t *number, struct parser *parser)
 {
 	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, number);
 	if (err != NULL) {
-		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", err);
+		parser_kw_warning(parser, kw, yytext, "%s, keyword ignored", err);
 		return false;
 	}
 	return true;
 }
 
 static bool parser_kw_bool(struct keyword *kw, const char *yytext,
-			   uintmax_t *number, struct logger *logger)
+			   uintmax_t *number, struct parser *parser)
 {
-	const struct sparse_name *name = sparse_lookup(&yn_option_names, shunk1(yytext));
+	const struct sparse_name *name = sparse_lookup_by_name(&yn_option_names, shunk1(yytext));
 	if (name == NULL) {
-		parser_kw_warning(logger, kw, yytext, "invalid boolean, keyword ignored");
+		parser_kw_warning(parser, kw, yytext, "invalid boolean, keyword ignored");
 		return false;
 	}
 	enum yn_options yn = name->value;
@@ -472,11 +558,11 @@ static bool parser_kw_bool(struct keyword *kw, const char *yytext,
 static bool parser_kw_deltatime(struct keyword *kw, const char *yytext,
 				enum timescale default_timescale,
 				deltatime_t *deltatime,
-				struct logger *logger)
+				struct parser *parser)
 {
 	diag_t diag = ttodeltatime(yytext, deltatime, default_timescale);
 	if (diag != NULL) {
-		parser_kw_warning(logger, kw, yytext, "%s, keyword ignored", str_diag(diag));
+		parser_kw_warning(parser, kw, yytext, "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
 		return false;
 	}
@@ -484,24 +570,24 @@ static bool parser_kw_deltatime(struct keyword *kw, const char *yytext,
 }
 
 static bool parser_kw_percent(struct keyword *kw, const char *yytext,
-			      uintmax_t *number, struct logger *logger)
+			      uintmax_t *number, struct parser *parser)
 {
 	shunk_t end;
 	err_t err = shunk_to_uintmax(shunk1(yytext), &end, /*base*/10, number);
 	if (err != NULL) {
-		parser_kw_warning(logger, kw, yytext, "%s, percent keyword ignored", err);
+		parser_kw_warning(parser, kw, yytext, "%s, percent keyword ignored", err);
 		return false;
 	}
 
 	if (!hunk_streq(end, "%")) {
-		parser_kw_warning(logger, kw, yytext,
+		parser_kw_warning(parser, kw, yytext,
 				  "bad percentage multiplier \""PRI_SHUNK"\", keyword ignored",
 				  pri_shunk(end));
 		return false;
 	}
 
 	if ((*number) > UINT_MAX) {
-		parser_kw_warning(logger, kw, yytext,
+		parser_kw_warning(parser, kw, yytext,
 				  "percentage way too large, keyword ignored");
 		return false;
 	}
@@ -511,11 +597,11 @@ static bool parser_kw_percent(struct keyword *kw, const char *yytext,
 
 
 static bool parser_kw_binary(struct keyword *kw, const char *yytext,
-			     uintmax_t *number, struct logger *logger)
+			     uintmax_t *number, struct parser *parser)
 {
 	diag_t diag = ttobinary(yytext, number, 0 /* no B prefix */);
 	if (diag != NULL) {
-		parser_kw_warning(logger, kw, yytext,
+		parser_kw_warning(parser, kw, yytext,
 				  "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
 		return false;
@@ -525,11 +611,11 @@ static bool parser_kw_binary(struct keyword *kw, const char *yytext,
 }
 
 static bool parser_kw_byte(struct keyword *kw, const char *yytext,
-			   uintmax_t *number, struct logger *logger)
+			   uintmax_t *number, struct parser *parser)
 {
 	diag_t diag = ttobinary(yytext, number, 1 /* with B prefix */);
 	if (diag != NULL) {
-		parser_kw_warning(logger, kw, yytext,
+		parser_kw_warning(parser, kw, yytext,
 				  "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
 		return false;
@@ -539,7 +625,7 @@ static bool parser_kw_byte(struct keyword *kw, const char *yytext,
 }
 
 static bool parser_kw_lset(struct keyword *kw, const char *yytext,
-			   uintmax_t *number, struct logger *logger)
+			   uintmax_t *number, struct parser *parser)
 {
 	lmod_t result = {0};
 
@@ -555,55 +641,72 @@ static bool parser_kw_lset(struct keyword *kw, const char *yytext,
 		 * XXX: the error diagnostic is a little vague -
 		 * should lmod_arg() instead return the error?
 		 */
-		parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
+		parser_kw_warning(parser, kw, yytext, "invalid, keyword ignored");
 		return false;
 	}
 
 	/* no truncation */
-	PEXPECT(logger, sizeof(*number) == sizeof(result.set));
+	PEXPECT(parser->logger, sizeof(*number) == sizeof(result.set));
 	(*number) = result.set;
 	return true;
 }
 
 static bool parser_kw_sparse_name(struct keyword *kw, const char *yytext,
-				  uintmax_t *number, struct logger *logger)
+				  uintmax_t *number, struct parser *parser)
 {
-	PASSERT(logger, kw->keydef->sparse_names != NULL);
+	const struct sparse_names *names = kw->keydef->sparse_names;
+	PASSERT(parser->logger, names != NULL);
 
-	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_names, shunk1(yytext));
-	if (sn != NULL) {
-		(*number) = sn->value;
+	const struct sparse_name *sn = sparse_lookup_by_name(names, shunk1(yytext));
+	if (sn == NULL) {
+		/*
+		 * We didn't find anything, complain.
+		 *
+		 * XXX: call jam_sparse_names() to list what is valid?
+		 */
+		parser_kw_warning(parser, kw, yytext, "invalid, keyword ignored");
+		return false;
+	}
+
+	enum name_flags flags = (sn->value & NAME_FLAGS);
+	(*number) = sn->value & ~NAME_FLAGS;
+	name_buf new_name;
+
+	switch (flags) {
+	case NAME_IMPLEMENTED_AS:
+		parser_kw_warning(parser, kw, yytext, "%s implemented as %s",
+				  yytext, str_sparse_short(names, (*number), &new_name));
+		return true;
+	case NAME_RENAMED_TO:
+		parser_kw_warning(parser, kw, yytext, "%s renamed to %s",
+				  yytext, str_sparse_short(names, (*number), &new_name));
 		return true;
 	}
 
-	/*
-	 * We didn't find anything, complain.
-	 *
-	 * XXX: call jam_sparse_names() to list what is valid?
-	 */
-	parser_kw_warning(logger, kw, yytext, "invalid, keyword ignored");
-	return false;
-}
-
-static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
-					uintmax_t *number, struct logger *logger)
-{
-	PASSERT(logger, (kw->keydef->type == kt_host ||
-			 kw->keydef->type == kt_pubkey));
-	PASSERT(logger, kw->keydef->sparse_names != NULL);
-
-	const struct sparse_name *sn = sparse_lookup(kw->keydef->sparse_names, shunk1(yytext));
-	if (sn != NULL) {
-		PASSERT(logger, sn->value != LOOSE_ENUM_OTHER);
-		(*number) = sn->value;
-		return true;
-	}
-
-	(*number) = LOOSE_ENUM_OTHER; /* i.e., use string value */
 	return true;
 }
 
-void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
+static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
+					uintmax_t *number, struct parser *parser)
+{
+	PASSERT(parser->logger, (kw->keydef->type == kt_host ||
+				 kw->keydef->type == kt_pubkey));
+	PASSERT(parser->logger, kw->keydef->sparse_names != NULL);
+
+	const struct sparse_name *sn = sparse_lookup_by_name(kw->keydef->sparse_names,
+							     shunk1(yytext));
+	if (sn == NULL) {
+		(*number) = LOOSE_ENUM_OTHER; /* i.e., use string value */
+		return true;
+	}
+
+	PASSERT(parser->logger, sn->value != LOOSE_ENUM_OTHER);
+	(*number) = sn->value;
+	return true;
+
+}
+
+void parser_kw(struct parser *parser, struct keyword *kw, const char *string)
 {
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
@@ -611,14 +714,14 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 
 	switch (kw->keydef->type) {
 	case kt_lset:
-		ok = parser_kw_lset(kw, string, &number, logger);
+		ok = parser_kw_lset(kw, string, &number, parser);
 		break;
 	case kt_sparse_name:
-		ok = parser_kw_sparse_name(kw, string, &number, logger);
+		ok = parser_kw_sparse_name(kw, string, &number, parser);
 		break;
 	case kt_pubkey:
 	case kt_host:
-		ok = parser_kw_loose_sparse_name(kw, string, &number, logger);
+		ok = parser_kw_loose_sparse_name(kw, string, &number, parser);
 		break;
 	case kt_string:
 	case kt_also:
@@ -634,44 +737,44 @@ void parser_kw(struct keyword *kw, const char *string, struct logger *logger)
 		break;
 
 	case kt_unsigned:
-		ok = parser_kw_unsigned(kw, string, &number, logger);
+		ok = parser_kw_unsigned(kw, string, &number, parser);
 		break;
 
 	case kt_seconds:
 		ok = parser_kw_deltatime(kw, string, TIMESCALE_SECONDS,
-					 &deltatime, logger);
+					 &deltatime, parser);
 		break;
 
 	case kt_milliseconds:
 		ok = parser_kw_deltatime(kw, string, TIMESCALE_MILLISECONDS,
-					 &deltatime, logger);
+					 &deltatime, parser);
 		break;
 
 	case kt_bool:
-		ok = parser_kw_bool(kw, string, &number, logger);
+		ok = parser_kw_bool(kw, string, &number, parser);
 		break;
 
 	case kt_percent:
-		ok = parser_kw_percent(kw, string, &number, logger);
+		ok = parser_kw_percent(kw, string, &number, parser);
 		break;
 
 	case kt_binary:
-		ok = parser_kw_binary(kw, string, &number, logger);
+		ok = parser_kw_binary(kw, string, &number, parser);
 		break;
 
 	case kt_byte:
-		ok = parser_kw_byte(kw, string, &number, logger);
+		ok = parser_kw_byte(kw, string, &number, parser);
 		break;
 
 	case kt_obsolete:
 		/* drop it on the floor */
-		parser_kw_warning(logger, kw, string, "obsolete keyword ignored");
+		parser_kw_warning(parser, kw, string, "obsolete keyword ignored");
 		ok = false;
 		break;
 
 	}
 
 	if (ok) {
-		new_parser_kw(kw, string, number, deltatime, logger);
+		new_parser_kw(parser, kw, string, number, deltatime);
 	}
 }

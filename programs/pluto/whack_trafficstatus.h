@@ -19,6 +19,6 @@
 struct whack_message;
 struct show;
 
-void whack_trafficstatus(const struct whack_message *m, struct show *s);
+void whack_trafficstatus(const struct whack_message *wm, struct show *s);
 
 #endif

@@ -1,20 +1,28 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
+ # ready for signing other certs!
+west #
+ /testing/x509/import.sh real/mainca/root.p12
+ ipsec pk12util -w nss-pw -i real/mainca/root.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+west #
  echo done
 done
 west #
- run() { local l=$1 ; /testing/x509/import.sh real/mainca/$l.all.p12 ; set ipsec certutil -L -n $l ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $l ; }
+ # these all work
 west #
- run west-eku-missing
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-missing.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ./eku.sh
+ ipsec certutil -S -n west-eku-missing -c mainca -s E=user-west-eku-missing@testing.libreswan.org,CN=west-eku-missing.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature
+Generating key.  This may take a few moments...
  ipsec certutil -L -n west-eku-missing
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -30,16 +38,6 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-missing.testing.libreswan.org"
-            RFC822 Name: "west-eku-missing@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -49,34 +47,35 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-missing
+ ipsec addconn --name west-eku-missing --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-missing --to --host=192.1.2.23 --id=%any
 "west-eku-missing": added IKEv2 connection
-+ ipsec up west-eku-missing
+ ipsec up west-eku-missing
 "west-eku-missing" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-eku-missing" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-eku-missing" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-eku-missing" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-missing" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-missing" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-eku-missing" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-+ ipsec stop
+ ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-eku-ipsecIKE
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-ipsecIKE.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ./eku.sh ipsecIKE
+ ipsec certutil -S -n west-eku-ipsecIKE -c mainca -s E=user-west-eku-ipsecIKE@testing.libreswan.org,CN=west-eku-ipsecIKE.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage ipsecIKE
+Generating key.  This may take a few moments...
  ipsec certutil -L -n west-eku-ipsecIKE
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -92,16 +91,6 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-ipsecIKE.testing.libreswan.org"
-            RFC822 Name: "west-eku-ipsecIKE@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Extended Key Usage
                 IPsec IKE Certificate
             Name: Certificate Key Usage
@@ -113,34 +102,35 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-ipsecIKE
+ ipsec addconn --name west-eku-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-ipsecIKE --to --host=192.1.2.23 --id=%any
 "west-eku-ipsecIKE": added IKEv2 connection
-+ ipsec up west-eku-ipsecIKE
+ ipsec up west-eku-ipsecIKE
 "west-eku-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-eku-ipsecIKE" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-eku-ipsecIKE" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-eku-ipsecIKE" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-ipsecIKE" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-ipsecIKE" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-eku-ipsecIKE" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-+ ipsec stop
+ ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-eku-x509Any
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-x509Any.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ./eku.sh x509Any
+ ipsec certutil -S -n west-eku-x509Any -c mainca -s E=user-west-eku-x509Any@testing.libreswan.org,CN=west-eku-x509Any.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage x509Any
+Generating key.  This may take a few moments...
  ipsec certutil -L -n west-eku-x509Any
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -156,16 +146,6 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-x509Any.testing.libreswan.org"
-            RFC822 Name: "west-eku-x509Any@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Extended Key Usage
                 Any Extended Key Usage
             Name: Certificate Key Usage
@@ -177,34 +157,37 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-x509Any
+ ipsec addconn --name west-eku-x509Any --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-x509Any --to --host=192.1.2.23 --id=%any
 "west-eku-x509Any": added IKEv2 connection
-+ ipsec up west-eku-x509Any
+ ipsec up west-eku-x509Any
 "west-eku-x509Any" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-eku-x509Any" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-eku-x509Any" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-eku-x509Any" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-x509Any" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-x509Any" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-eku-x509Any" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-+ ipsec stop
+ ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-eku-serverAuth
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-serverAuth.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ # only those containing ipsecIKE should work
+west #
+ ./eku.sh serverAuth
+ ipsec certutil -S -n west-eku-serverAuth -c mainca -s E=user-west-eku-serverAuth@testing.libreswan.org,CN=west-eku-serverAuth.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage serverAuth
+Generating key.  This may take a few moments...
  ipsec certutil -L -n west-eku-serverAuth
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -220,16 +203,6 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-serverAuth.testing.libreswan.org"
-            RFC822 Name: "west-eku-serverAuth@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Extended Key Usage
                 TLS Web Server Authentication Certificate
             Name: Certificate Key Usage
@@ -241,34 +214,147 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-serverAuth
+ ipsec addconn --name west-eku-serverAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth --to --host=192.1.2.23 --id=%any
 "west-eku-serverAuth": added IKEv2 connection
-+ ipsec up west-eku-serverAuth
+ ipsec up west-eku-serverAuth
 "west-eku-serverAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-eku-serverAuth" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-eku-serverAuth" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-eku-serverAuth" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-serverAuth" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-serverAuth" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-eku-serverAuth" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-+ ipsec stop
+ ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-eku-clientAuth
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-clientAuth.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ./eku.sh serverAuth-ipsecIKE
+ ipsec certutil -S -n west-eku-serverAuth-ipsecIKE -c mainca -s E=user-west-eku-serverAuth-ipsecIKE@testing.libreswan.org,CN=west-eku-serverAuth-ipsecIKE.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage serverAuth,ipsecIKE
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-serverAuth-ipsecIKE
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-eku-serverAuth-ipsecIKE@testing.libreswan.org,C
+            N=west-eku-serverAuth-ipsecIKE.testing.libreswan.org,OU=Test Depa
+            rtment,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Extended Key Usage
+                TLS Web Server Authentication Certificate
+                IPsec IKE Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name west-eku-serverAuth-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth-ipsecIKE --to --host=192.1.2.23 --id=%any
+"west-eku-serverAuth-ipsecIKE": added IKEv2 connection
+ ipsec up west-eku-serverAuth-ipsecIKE
+"west-eku-serverAuth-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-serverAuth-ipsecIKE" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-serverAuth-ipsecIKE" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-serverAuth-ipsecIKE" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-serverAuth-ipsecIKE" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-serverAuth-ipsecIKE" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./eku.sh serverAuth-critical
+ ipsec certutil -S -n west-eku-serverAuth-critical -c mainca -s E=user-west-eku-serverAuth-critical@testing.libreswan.org,CN=west-eku-serverAuth-critical.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage serverAuth,critical
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-serverAuth-critical
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-eku-serverAuth-critical@testing.libreswan.org,C
+            N=west-eku-serverAuth-critical.testing.libreswan.org,OU=Test Depa
+            rtment,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Extended Key Usage
+            Critical: True
+                TLS Web Server Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name west-eku-serverAuth-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-serverAuth-critical --to --host=192.1.2.23 --id=%any
+"west-eku-serverAuth-critical": added IKEv2 connection
+ ipsec up west-eku-serverAuth-critical
+"west-eku-serverAuth-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-serverAuth-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-serverAuth-critical" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-serverAuth-critical" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-serverAuth-critical" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-serverAuth-critical" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./eku.sh clientAuth
+ ipsec certutil -S -n west-eku-clientAuth -c mainca -s E=user-west-eku-clientAuth@testing.libreswan.org,CN=west-eku-clientAuth.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage clientAuth
+Generating key.  This may take a few moments...
  ipsec certutil -L -n west-eku-clientAuth
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -284,16 +370,6 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-clientAuth.testing.libreswan.org"
-            RFC822 Name: "west-eku-clientAuth@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Extended Key Usage
                 TLS Web Client Authentication Certificate
             Name: Certificate Key Usage
@@ -305,34 +381,149 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-clientAuth
+ ipsec addconn --name west-eku-clientAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth --to --host=192.1.2.23 --id=%any
 "west-eku-clientAuth": added IKEv2 connection
-+ ipsec up west-eku-clientAuth
+ ipsec up west-eku-clientAuth
 "west-eku-clientAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-eku-clientAuth" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-eku-clientAuth" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-eku-clientAuth" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-clientAuth" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-clientAuth" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-eku-clientAuth" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-+ ipsec stop
+ ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-eku-codeSigning
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-codeSigning.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ./eku.sh clientAuth-ipsecIKE
+ ipsec certutil -S -n west-eku-clientAuth-ipsecIKE -c mainca -s E=user-west-eku-clientAuth-ipsecIKE@testing.libreswan.org,CN=west-eku-clientAuth-ipsecIKE.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage clientAuth,ipsecIKE
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-clientAuth-ipsecIKE
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-eku-clientAuth-ipsecIKE@testing.libreswan.org,C
+            N=west-eku-clientAuth-ipsecIKE.testing.libreswan.org,OU=Test Depa
+            rtment,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Extended Key Usage
+                TLS Web Client Authentication Certificate
+                IPsec IKE Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name west-eku-clientAuth-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth-ipsecIKE --to --host=192.1.2.23 --id=%any
+"west-eku-clientAuth-ipsecIKE": added IKEv2 connection
+ ipsec up west-eku-clientAuth-ipsecIKE
+"west-eku-clientAuth-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-clientAuth-ipsecIKE" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-clientAuth-ipsecIKE" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-clientAuth-ipsecIKE" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-clientAuth-ipsecIKE" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-clientAuth-ipsecIKE" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./eku.sh clientAuth-critical
+ ipsec certutil -S -n west-eku-clientAuth-critical -c mainca -s E=user-west-eku-clientAuth-critical@testing.libreswan.org,CN=west-eku-clientAuth-critical.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage clientAuth,critical
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-clientAuth-critical
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-eku-clientAuth-critical@testing.libreswan.org,C
+            N=west-eku-clientAuth-critical.testing.libreswan.org,OU=Test Depa
+            rtment,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Extended Key Usage
+            Critical: True
+                TLS Web Client Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name west-eku-clientAuth-critical --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-clientAuth-critical --to --host=192.1.2.23 --id=%any
+"west-eku-clientAuth-critical": added IKEv2 connection
+ ipsec up west-eku-clientAuth-critical
+"west-eku-clientAuth-critical" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-clientAuth-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-clientAuth-critical" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-clientAuth-critical" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-clientAuth-critical" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-clientAuth-critical" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ # only those containing ipsecIKE should work
+west #
+ ./eku.sh codeSigning
+ ipsec certutil -S -n west-eku-codeSigning -c mainca -s E=user-west-eku-codeSigning@testing.libreswan.org,CN=west-eku-codeSigning.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage codeSigning
+Generating key.  This may take a few moments...
  ipsec certutil -L -n west-eku-codeSigning
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
@@ -348,16 +539,6 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-codeSigning.testing.libreswan.org"
-            RFC822 Name: "west-eku-codeSigning@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Extended Key Usage
                 Code Signing Certificate
             Name: Certificate Key Usage
@@ -369,16 +550,18 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-codeSigning
+ ipsec addconn --name west-eku-codeSigning --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning --to --host=192.1.2.23 --id=%any
 "west-eku-codeSigning": added IKEv2 connection
-+ ipsec up west-eku-codeSigning
+ ipsec up west-eku-codeSigning
 "west-eku-codeSigning" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-eku-codeSigning" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-eku-codeSigning" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -388,26 +571,25 @@ Redirecting to: [initsystem]
 "west-eku-codeSigning" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-eku-codeSigning" #2: IMPAIR: revival: skip scheduling revival event
 "west-eku-codeSigning" #1: deleting IKE SA (sent IKE_AUTH request)
-+ ipsec stop
+ ipsec stop
 Redirecting to: [initsystem]
 west #
- run west-eku-ipsecIKE-codeSigning
-ipsec pk12util -w nss-pw -i real/mainca/west-eku-ipsecIKE-codeSigning.all.p12
-pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
- ipsec certutil -L -n west-eku-ipsecIKE-codeSigning
+ ./eku.sh codeSigning-ipsecIKE
+ ipsec certutil -S -n west-eku-codeSigning-ipsecIKE -c mainca -s E=user-west-eku-codeSigning-ipsecIKE@testing.libreswan.org,CN=west-eku-codeSigning-ipsecIKE.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage codeSigning,ipsecIKE
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-codeSigning-ipsecIKE
 Certificate:
     Data:
         Version: 3 (0x2)
-        Serial Number: SERIAL
+        Serial Number:
         Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
         Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
             est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
         Validity:
             Not Before: TIMESTAMP
             Not After : TIMESTAMP
-        Subject: "E=user-west-eku-ipsecIKE-codeSigning@testing.libreswan.org,
-            CN=west-eku-ipsecIKE-codeSigning.testing.libreswan.org,OU=Test De
+        Subject: "E=user-west-eku-codeSigning-ipsecIKE@testing.libreswan.org,
+            CN=west-eku-codeSigning-ipsecIKE.testing.libreswan.org,OU=Test De
             partment,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
         Subject Public Key Info:
             Public Key Algorithm: PKCS #1 RSA Encryption
@@ -415,19 +597,9 @@ Certificate:
                 Modulus:
                 Exponent: 65537 (0x10001)
         Signed Extensions:
-            Name: Certificate Subject Alt Name
-            DNS name: "west-eku-ipsecIKE-codeSigning.testing.libreswan.org"
-            RFC822 Name: "west-eku-ipsecIKE-codeSigning@testing.libreswan.org"
-            Name: Authority Information Access
-            Method: PKIX Online Certificate Status Protocol
-            Location: 
-                URI: "http://nic.testing.libreswan.org:2560"
-            Name: CRL Distribution Points
-            Distribution point:
-                URI: "http://nic.testing.libreswan.org/revoked.crl"
             Name: Extended Key Usage
-                IPsec IKE Certificate
                 Code Signing Certificate
+                IPsec IKE Certificate
             Name: Certificate Key Usage
             Usages: Digital Signature
     Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
@@ -437,23 +609,137 @@ Certificate:
     Mozilla-CA-Policy: false (attribute missing)
     Certificate Trust Flags:
         SSL Flags:
+            Terminal Record
+            Trusted
             User
         Email Flags:
             User
         Object Signing Flags:
             User
-+ ipsec start
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-eku-ipsecIKE-codeSigning
-"west-eku-ipsecIKE-codeSigning": added IKEv2 connection
-+ ipsec up west-eku-ipsecIKE-codeSigning
-"west-eku-ipsecIKE-codeSigning" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"west-eku-ipsecIKE-codeSigning" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-eku-ipsecIKE-codeSigning" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-eku-ipsecIKE-codeSigning" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
-"west-eku-ipsecIKE-codeSigning" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"west-eku-ipsecIKE-codeSigning" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-+ ipsec stop
+ ipsec addconn --name west-eku-codeSigning-ipsecIKE --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-ipsecIKE --to --host=192.1.2.23 --id=%any
+"west-eku-codeSigning-ipsecIKE": added IKEv2 connection
+ ipsec up west-eku-codeSigning-ipsecIKE
+"west-eku-codeSigning-ipsecIKE" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-codeSigning-ipsecIKE" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-codeSigning-ipsecIKE" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-codeSigning-ipsecIKE" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-codeSigning-ipsecIKE" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-codeSigning-ipsecIKE" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./eku.sh codeSigning-serverAuth
+ ipsec certutil -S -n west-eku-codeSigning-serverAuth -c mainca -s E=user-west-eku-codeSigning-serverAuth@testing.libreswan.org,CN=west-eku-codeSigning-serverAuth.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage codeSigning,serverAuth
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-codeSigning-serverAuth
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-eku-codeSigning-serverAuth@testing.libreswan.or
+            g,CN=west-eku-codeSigning-serverAuth.testing.libreswan.org,OU=Tes
+            t Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Extended Key Usage
+                Code Signing Certificate
+                TLS Web Server Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name west-eku-codeSigning-serverAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-serverAuth --to --host=192.1.2.23 --id=%any
+"west-eku-codeSigning-serverAuth": added IKEv2 connection
+ ipsec up west-eku-codeSigning-serverAuth
+"west-eku-codeSigning-serverAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-codeSigning-serverAuth" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-codeSigning-serverAuth" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-codeSigning-serverAuth" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-codeSigning-serverAuth" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-codeSigning-serverAuth" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ./eku.sh codeSigning-clientAuth
+ ipsec certutil -S -n west-eku-codeSigning-clientAuth -c mainca -s E=user-west-eku-codeSigning-clientAuth@testing.libreswan.org,CN=west-eku-codeSigning-clientAuth.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA -z ./eku.sh -t P,, --keyUsage digitalSignature --extKeyUsage codeSigning,clientAuth
+Generating key.  This may take a few moments...
+ ipsec certutil -L -n west-eku-codeSigning-clientAuth
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+        Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+        Issuer: "E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=T
+            est Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Validity:
+            Not Before: TIMESTAMP
+            Not After : TIMESTAMP
+        Subject: "E=user-west-eku-codeSigning-clientAuth@testing.libreswan.or
+            g,CN=west-eku-codeSigning-clientAuth.testing.libreswan.org,OU=Tes
+            t Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA"
+        Subject Public Key Info:
+            Public Key Algorithm: PKCS #1 RSA Encryption
+            RSA Public Key:
+                Modulus:
+                Exponent: 65537 (0x10001)
+        Signed Extensions:
+            Name: Extended Key Usage
+                Code Signing Certificate
+                TLS Web Client Authentication Certificate
+            Name: Certificate Key Usage
+            Usages: Digital Signature
+    Signature Algorithm: PKCS #1 SHA-256 With RSA Encryption
+    Signature:
+    Fingerprint (SHA-256):
+    Fingerprint (SHA1):
+    Mozilla-CA-Policy: false (attribute missing)
+    Certificate Trust Flags:
+        SSL Flags:
+            Terminal Record
+            Trusted
+            User
+        Email Flags:
+            User
+        Object Signing Flags:
+            User
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name west-eku-codeSigning-clientAuth --host=192.1.2.45 --id=%fromcert --sendcert=always --cert=west-eku-codeSigning-clientAuth --to --host=192.1.2.23 --id=%any
+"west-eku-codeSigning-clientAuth": added IKEv2 connection
+ ipsec up west-eku-codeSigning-clientAuth
+"west-eku-codeSigning-clientAuth" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-eku-codeSigning-clientAuth" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-eku-codeSigning-clientAuth" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-eku-codeSigning-clientAuth" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west-eku-codeSigning-clientAuth" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west-eku-codeSigning-clientAuth" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec stop
 Redirecting to: [initsystem]
 west #
  grep '^[^|].*ERROR:' /tmp/pluto.log

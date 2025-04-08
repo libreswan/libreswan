@@ -64,7 +64,7 @@ $(OBJS): $(builddir)/parser.tab.h
 
 LEX = flex
 
-$(builddir)/lex.yy.c: parser.lex
+$(builddir)/lex.yy.c: scanner.lex
 	: no space between -o and scratch output file
 	$(LEX) -o$@ --stdout $< | sed \
 		-e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
@@ -95,9 +95,11 @@ endif
 
 $(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
 	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v --defines=$*.tab.h -o $*.tab.c.tmp $(abs_srcdir)/$*.y
-	sed -e '/^ *#/s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' \
-	    -e '/^ *#/s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
-	    < $(builddir)/$*.tab.c.tmp >  $(builddir)/$*.tab.c.sedtmp
+	sed -i -e '/^#line/ s;"$*.tab.h";"$(builddir)/$*.tab.h";' $(builddir)/$*.tab.h
+	sed -i -e '/^#line/ s;"$*.tab.c.tmp";"$(builddir)/$*.tab.c";' $(builddir)/$*.tab.c.tmp
+	sed -e '/^ *#/ s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' \
+	    -e '/^ *#/ s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' \
+	    < $(builddir)/$*.tab.c.tmp > $(builddir)/$*.tab.c.sedtmp
 	rm $(builddir)/$*.tab.c.tmp
 	mv $(builddir)/$*.tab.c.sedtmp $(builddir)/$*.tab.c
 

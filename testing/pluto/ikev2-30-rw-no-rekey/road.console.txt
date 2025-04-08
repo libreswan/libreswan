@@ -48,9 +48,9 @@ road #
  echo done
 done
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.2.100/32 dst 0.0.0.0/0
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

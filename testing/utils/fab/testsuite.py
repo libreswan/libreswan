@@ -201,11 +201,6 @@ def add_arguments(parser):
                        help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
 
-def log_arguments(logger, args):
-    logger.info("Testsuite arguments:")
-    logger.info("  testing-directory: '%s'", args.testing_directory)
-
-
 def is_test_directory(directory):
     """Heuristic to detect an individual test directory"""
     for h in ["description.txt", "eastinit.sh"]:

@@ -5,9 +5,8 @@
   <listitem>
     <para>
       what to do with packets when negotiation fails.  The default is
-      <option>none</option>: no shunt;
-      <option>passthrough</option>,
-      <option>drop</option>,
-      and <option>reject</option> have the obvious meanings.</para>
+      <option>none</option>: no shunt; <option>pass</option>,
+      <option>drop</option>, and <option>reject</option> have the
+      obvious meanings.</para>
   </listitem>
 </varlistentry>

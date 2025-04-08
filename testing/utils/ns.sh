@@ -256,19 +256,6 @@ prepare_mount()
 host_tweaks ()
 {
 
-	# load XFRM stack on host
-	# ipsec _stackmanager start --config /testing/pluto/ikev2-34-netns/west.conf
-	if [ -z "$(ipsec version | grep XFRM)" ]; then
-		echo "WARNING no XFRM stack found trying to start"
-	     	ipsec _stackmanager start
-		if [ -z "$(ipsec version | grep XFRM)" ]; then
-			#echo "abort attempt to load XFRM stack failed"
-			echo "cannot find XFRM stack"
-			echo "ipsec _stackmanager start ; may help"
-			exit 1
-		fi
-	fi
-
 	#  both all and default versions of the following
 
 	sysctl -w net.ipv4.conf.all.rp_filter=0

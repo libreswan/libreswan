@@ -28,7 +28,6 @@
 #include "lswlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/parser-controls.h"
 #include "optarg.h"
 
 /*
@@ -41,8 +40,6 @@ enum opt {
 	OPT_DEBUG,
 	OPT_CONFIG = 'C',
 	OPT_CONN = 'c',
-	OPT_ROOTDIR = 'R',
-	OPT_ROOTDIR2 = 'S',
 	OPT_HELP = 'h',
 	OPT_NOSETUP = 'n',
 };
@@ -53,8 +50,8 @@ const struct option optarg_options[] =
 	{ "conn\0<conn-name>",   required_argument, NULL, OPT_CONN },
 	{ "debug\0",             no_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
-	{ "rootdir\0<dir>",      required_argument, NULL, OPT_ROOTDIR },
-	{ "rootdir2\0<dir2>",    required_argument, NULL, OPT_ROOTDIR2 },
+	{ "rootdir"METAOPT_OBSOLETE, no_argument, NULL, 0, },
+	{ "rootdir2"METAOPT_OBSOLETE, no_argument, NULL, 0, },
 	{ "nosetup",             no_argument, NULL, OPT_NOSETUP },
 	{ "help",                no_argument, NULL, OPT_HELP },
 	{ 0, 0, 0, 0 }
@@ -68,9 +65,6 @@ int main(int argc, char *argv[])
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
 	bool setup = true;
-
-	rootdir[0] = '\0';
-	rootdir2[0] = '\0';
 
 	while (true) {
 		int c = optarg_getopt(logger, argc, argv, "");
@@ -99,15 +93,6 @@ int main(int argc, char *argv[])
 			configfile = clone_str(optarg, "config file name");
 			continue;
 
-		case OPT_ROOTDIR:
-			printf("#setting rootdir=%s\n", optarg);
-			jam_str(rootdir, sizeof(rootdir), optarg);
-			continue;
-
-		case OPT_ROOTDIR2:
-			printf("#setting rootdir2=%s\n", optarg);
-			jam_str(rootdir2, sizeof(rootdir2), optarg);
-			continue;
 		case OPT_CONN:
 			name = optarg;
 			continue;
@@ -121,10 +106,6 @@ int main(int argc, char *argv[])
 		exit(4);
 	}
 
-	/* update fields dependent on VERBOSE */
-	yydebug = (verbose >= 4);
-	lex_verbosity = verbose;
-
 	/* logged when true */
 	ldbg(logger, "debugging mode enabled");
 
@@ -135,18 +116,23 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg = confread_load(configfile, false, logger);
+	struct starter_config *cfg = confread_load(configfile, false, logger, verbose);
 	if (cfg == NULL) {
 		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
 		exit(3);
 	}
 
+	if (!confread_validate_conns(cfg, logger)) {
+		/* already logged? */
+		llog(RC_LOG, logger, "cannot validate config file '%s'", configfile);
+		exit(3);
+	}
+
 	/* load all conns marked as auto=add or better */
 	if (verbose) {
-		for (conn = cfg->conns.tqh_first;
-		     conn != NULL;
-		     conn = conn->link.tqe_next)
-				printf("#conn %s loaded\n", conn->name);
+		TAILQ_FOREACH(conn, &cfg->conns, link) {
+			printf("#conn %s loaded\n", conn->name);
+		}
 	}
 
 	confwrite(cfg, stdout, setup, name, verbose);

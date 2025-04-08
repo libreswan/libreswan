@@ -215,6 +215,12 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
 void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger)
 {
 	add_crl_fetch_request(issuer_dn, /*URL*/null_shunk, logger);
+
+	if (impair.event_check_crls) {
+		llog(RC_LOG, logger, "IMPAIR: not initiating FETCH_CRL");
+		return;
+	}
+
 	fetch_crl(NULL, 0, null_shunk, logger);
 }
 
@@ -337,7 +343,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		llog_error(logger, 0,
 			   "CRL: importing %s failed, helper aborted with waitpid status %d",
 			   dp->url, wstatus);
-		llog_dump_hunk(RC_LOG, logger, output);
+		llog_hunk(RC_LOG, logger, output);
 		return false;
 	}
 
@@ -346,7 +352,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		llog_error(logger, 0,
 			   "CRL: importing %s failed, helper exited with non-zero status %d",
 			   dp->url, ret);
-		llog_dump_hunk(RC_LOG, logger, output);
+		llog_hunk(RC_LOG, logger, output);
 		return false;
 	}
 
@@ -418,11 +424,6 @@ stf_status fork_cb(struct state *st UNUSED,
 
 static void event_check_crls(struct logger *logger)
 {
-	if (deltasecs(x509_crl.check_interval) <= 0) {
-		llog(RC_LOG, logger, "config crlcheckinterval= is unset");
-		return;
-	}
-
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -485,9 +486,19 @@ static void event_check_crls(struct logger *logger)
 }
 
 /*
+ * Command-line trigger of fetch crls.
+ */
+
+void fetch_x509_crls(struct show *s)
+{
+	event_check_crls(show_logger(s));
+}
+
+/*
  * initializes curl and starts the fetching thread
  */
-void init_x509_crl_queue(struct logger *logger)
+
+bool init_x509_crl_queue(struct logger *logger)
 {
 	/*
 	 * XXX: CRT checking is probably really a periodic timer,
@@ -497,13 +508,13 @@ void init_x509_crl_queue(struct logger *logger)
 	 */
 	init_oneshot_timer(EVENT_CHECK_CRLS, event_check_crls);
 	if (deltasecs(x509_crl.check_interval) <= 0) {
-		dbg("CRL: checking disabled");
-		return;
+		ldbg(logger, "CRL: checking disabled as check-interval is zero");
+		return false;
 	}
 
 	if (impair.event_check_crls) {
 		llog(RC_LOG, logger, "IMPAIR: not scheduling EVENT_CHECK_CRLS");
-		return;
+		return true; /*technically still enabled*/
 	}
 
 	/*
@@ -514,6 +525,7 @@ void init_x509_crl_queue(struct logger *logger)
 	 * latter, use impair.event_check_crls).
 	 */
 	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
+	return true;
 }
 
 void shutdown_x509_crl_queue(struct logger *logger)

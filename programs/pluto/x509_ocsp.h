@@ -23,8 +23,10 @@
 #include "ocsp_method.h"
 
 struct logger;
+struct show;
 
-extern diag_t init_x509_ocsp(struct logger *logger);
+void show_x509_ocsp(struct show *s);
+diag_t init_x509_ocsp(struct logger *logger);
 
 struct x509_ocsp_config {
 	bool enable;

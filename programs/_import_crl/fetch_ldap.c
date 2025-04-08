@@ -32,7 +32,7 @@
  * parses the result returned by an ldap query
  */
 static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
-			       struct logger *logger)
+			       struct verbose verbose)
 {
 	err_t ugh = NULL;
 
@@ -54,8 +54,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
 						values[0]->bv_len,
 						"ldap blob");
 					if (values[1] != NULL)
-						llog(RC_LOG, logger,
-							    "warning: more than one value was fetched from LDAP URL");
+						vlog("warning: more than one value was fetched from LDAP URL");
 				} else {
 					ugh = "no values in attribute";
 				}
@@ -79,13 +78,14 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
 /*
  * fetches a binary blob from an ldap url
  */
-err_t fetch_ldap(const char *url, chunk_t *blob, struct logger *logger)
+err_t fetch_ldap(const char *url, time_t timeout, chunk_t *blob, struct verbose verbose)
 {
 	LDAPURLDesc *lurl;
 	err_t ugh = NULL;
 	int rc;
 
-	dbg("Trying LDAP URL '%s'", url);
+	vdbg("trying LDAP URL '%s'", url);
+	verbose.level++;
 
 	rc = ldap_url_parse(url, &lurl);
 
@@ -93,20 +93,20 @@ err_t fetch_ldap(const char *url, chunk_t *blob, struct logger *logger)
 		LDAP *ldap = ldap_init(lurl->lud_host, lurl->lud_port);
 
 		if (ldap != NULL) {
-			struct timeval timeout;
-
-			timeout.tv_sec  = deltasecs(crl_fetch_timeout);
-			timeout.tv_usec = 0;
+			struct timeval ldap_timeout = {
+				.tv_sec  = timeout,
+			};
 			const int ldap_version = LDAP_VERSION3;
 			ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION,
 					&ldap_version);
 			ldap_set_option(ldap, LDAP_OPT_NETWORK_TIMEOUT,
-					&timeout);
+					&ldap_timeout);
 
 			int msgid = ldap_simple_bind(ldap, NULL, NULL);
 
+			/* XXX: LDAP_TIMEOUT can't be const!?! */
 			LDAPMessage *result;
-			rc = ldap_result(ldap, msgid, 1, &timeout, &result);
+			rc = ldap_result(ldap, msgid, 1, &ldap_timeout, &result);
 
 			switch (rc) {
 			case -1:
@@ -119,20 +119,21 @@ err_t fetch_ldap(const char *url, chunk_t *blob, struct logger *logger)
 
 			case LDAP_RES_BIND:
 				ldap_msgfree(result);
-				timeout.tv_sec = deltasecs(crl_fetch_timeout);
-				timeout.tv_usec = 0;
+				ldap_timeout = (struct timeval) {
+					.tv_sec = timeout,
+				};
 
 				rc = ldap_search_st(ldap, lurl->lud_dn,
 						    lurl->lud_scope,
 						    lurl->lud_filter,
 						    lurl->lud_attrs,
-						    0, &timeout, &result);
+						    0, &ldap_timeout, &result);
 
 				if (rc == LDAP_SUCCESS) {
 					ugh = parse_ldap_result(ldap,
 								result,
 								blob,
-								logger);
+								verbose);
 					ldap_msgfree(result);
 				} else {
 					ugh = ldap_err2string(rc);

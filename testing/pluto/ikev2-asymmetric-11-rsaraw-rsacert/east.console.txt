@@ -1,10 +1,13 @@
 /testing/guestbin/swan-prep --hostkeys
 Creating NSS database containing host keys
 east #
- /testing/x509/import.sh real/mainca/east.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  ipsec certutil -L
 Certificate Nickname                                         Trust Attributes

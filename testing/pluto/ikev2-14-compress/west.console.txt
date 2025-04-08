@@ -87,7 +87,7 @@ west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
 #2: "westnet-eastnet-ipcomp", type=ESP, add_time=1234567890, inBytes=1nn, outBytes=1nn, maxBytes=2^63B, id='@east'
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -125,7 +125,7 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 flag af-unspec
 	lastused YYYY-MM-DD HH:MM:SS
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

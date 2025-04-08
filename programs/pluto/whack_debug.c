@@ -88,7 +88,7 @@ void whack_debug(const struct whack_message *m, struct show *s)
 				       "+", new_debugging);
 		}
 		set_debugging(new_debugging);
-	} else if (!m->whack_add/*connection*/) {
+	} else if (m->whack_command != WHACK_ADD) {
 		whack_connection(m, s, whack_debug_connection,
 				 /*alias_order*/OLD2NEW,
 				 (struct each) {

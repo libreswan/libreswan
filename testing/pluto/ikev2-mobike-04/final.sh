@@ -1,6 +1,6 @@
 ipsec whack --trafficstatus
-../../guestbin/ipsec-kernel-state.sh
-ip xfrm policy
+ipsec _kernel state
+ipsec _kernel policy
 grep "MOBIKE " /tmp/pluto.log | sed -e '/Message ID:/ s/;.*//'
 sleep 7
 : ==== cut ====

@@ -19,7 +19,7 @@ west #
 "westnet-eastnet-default" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-default" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
 	seq=0x00000000 replay=16 flags=0x00000400 state=mature 
 west #
@@ -44,7 +44,7 @@ west #
 "westnet-eastnet-0" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 west #
@@ -69,7 +69,7 @@ west #
 "westnet-eastnet-64" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-64" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	seq=0x00000000 replay=8 flags=0x00000400 state=mature 
 	seq=0x00000000 replay=8 flags=0x00000400 state=mature 
 west #
@@ -94,7 +94,7 @@ west #
 "westnet-eastnet-256" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-256" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ipsec-kernel-state.sh | grep 'replay[-_=]'
+ ipsec _kernel state | grep 'replay[-_=]'
 	seq=0x00000000 replay=32 flags=0x00000400 state=mature 
 	seq=0x00000000 replay=32 flags=0x00000400 state=mature 
 west #

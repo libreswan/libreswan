@@ -2,8 +2,7 @@
 # communication should be encrypted when possible, but will fallback
 # to in the clear otherwise.
 #
-# This is enforced (and can be tweaked) by setting the failureshunt=
-# to passthrough.
+# This is enforced (and can be tweaked) by setting failureshunt=pass.
 #
 # One IPv4 or IPv6 CIDR per line, optionally specifying a further
 # narrowing of protocol, source port and destination port

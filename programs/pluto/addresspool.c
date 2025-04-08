@@ -1040,7 +1040,7 @@ diag_t install_addresspool(const ip_range pool_range,
 	return NULL;
 }
 
-void show_addresspool_status(struct show *s)
+void whack_addresspoolstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
 #define CHECK(A, B)							\

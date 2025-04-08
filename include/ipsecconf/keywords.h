@@ -27,15 +27,11 @@
  *
  */
 
-#ifndef _KEYWORDS_H_
-#define _KEYWORDS_H_
+#ifndef IPSECCONF_KEYWORDS_H
+#define IPSECCONF_KEYWORDS_H
 
-#include <sys/queue.h>		/* for TAILQ_ENTRY() et.al. */
-#include <stdint.h>		/* for uintmax_t */
-
-#include "lset.h"
-#include "constants.h"
-#include "deltatime.h"
+#include "lset.h"	/* for LELEM() */
+#include "constants.h"	/* for LOOSE_ENUM_OTHER ULGH! */
 
 /*
  * Keyword value indexes.  The value is stored in:
@@ -156,7 +152,7 @@ enum keywords {
 	KSCF_CA,	/* left/right */
 	KSCF_PROTOPORT,	/* left/right */
 	KSCF_SOURCEIP,	/* left/right */
-	KSCF_VTI_IP,	/* left/right */
+	KSCF_VTI,	/* left/right */
 	KSCF_INTERFACE_IP,  /* left/right */
 	KSCF_USERNAME,	/* left/right */
 	KSCF_ADDRESSPOOL,	/* left/right */
@@ -314,6 +310,7 @@ enum keyword_valid {
  * This is internal to the config parser and doesn't belong in whack
  * or on the wire.
  */
+
 enum keyword_pubkey {
 	PUBKEY_NOTSET       = 0,
 	PUBKEY_DNSONDEMAND  = 1,
@@ -356,39 +353,6 @@ struct keyword_def {
 	const struct lmod_info *info;
 };
 
-struct keyword {
-	const struct keyword_def *keydef;
-	bool keyleft;
-	bool keyright;
-	char *string;
-};
-
-/* note: these lists are dynamic */
-struct kw_list {
-	struct kw_list *next;
-	struct keyword keyword;
-	char *string;
-	uintmax_t number;
-	deltatime_t deltatime;
-};
-
-struct section_list {
-	TAILQ_ENTRY(section_list) link;
-
-	char *name;
-	struct kw_list *kw;
-	bool beenhere;
-};
-
-struct config_parsed {
-	struct kw_list *config_setup;
-
-	TAILQ_HEAD(sectionhead, section_list) sections;
-	int ipsec_conf_version;
-
-	struct section_list conn_default;
-};
-
-extern const struct keyword_def ipsec_conf_keywords[];
+extern const struct keyword_def ipsec_conf_keywords[]; /*NULL terminated*/
 
 #endif /* _KEYWORDS_H_ */

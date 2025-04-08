@@ -72,7 +72,6 @@ extern enum pluto_ddos_mode ddos_mode;
 extern bool pluto_drop_oppo_null;
 
 extern void show_debug_status(struct show *s);
-extern void show_fips_status(struct show *s);
 extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
 
 /* XXX: grr, need pointer to function else NEVER_RETURNS is ignored */
@@ -164,6 +163,7 @@ void schedule_callback(const char *story, deltatime_t delay,
 
 void whack_impair_call_global_event_handler(enum global_timer type,
 					    struct logger *logger);
+void call_global_event_handler(enum global_timer type, struct logger *logger);
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
 

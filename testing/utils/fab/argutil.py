@@ -96,6 +96,19 @@ def directory_file(arg):
         return arg
     raise Exception("directory '%d' for file '%s' not found" % (d, b))
 
+def boolean(arg):
+    l = arg.lower()
+    if l in ("yes", "true", "1", "y"):
+        return True
+    if l in ("no", "false", "0", "n"):
+        return False
+    raise Exception(f"unrecognized boolean {arg}")
+
+def log_args(logger, args):
+    logger.info("Arguments:")
+    for key, value in vars(args).items():
+        logger.info(f"  {key}: {value}")
+
 def add_redirect_argument(parser, what, *args, **kwargs):
     # Can't use '-FILE' as the argument as the parser doesn't like it.
     # The prefix syntax is hacky.

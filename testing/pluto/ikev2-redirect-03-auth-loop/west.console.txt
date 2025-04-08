@@ -107,9 +107,9 @@ done
 west #
  sleep 2
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  # confirm east is in unrouted state again
 west #

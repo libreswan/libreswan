@@ -91,7 +91,7 @@ Connection list:
  
 Total IPsec connections: loaded 3, active 2
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -125,7 +125,7 @@ src 192.1.3.33 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.2.101/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.3.33

@@ -11,7 +11,7 @@ sleep 15
 # Setting up block; because the tunnel is up the ping doesn't trigger
 # a trap
 ../../guestbin/ip.sh route add unreachable 192.1.2.23
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 ../../guestbin/ping-once.sh --error 192.1.2.23
 
 # wait for liveness/dpd to trigger: tunnel should be down with a %trap
@@ -21,12 +21,12 @@ conntrack -L -n
 conntrack -F
 ipsec shuntstatus
 ipsec connectionstatus westnet-eastnet-ikev2
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # now let the revival kick in; the trap should be replaced by a %hold(block)
 ipsec whack --async --impair trigger_revival:1
 ipsec connectionstatus westnet-eastnet-ikev2
-../../guestbin/ipsec-kernel-policy.sh
+ipsec _kernel policy
 
 # Remove the null route; things should recover (after a few
 # retransmits) without a trigger

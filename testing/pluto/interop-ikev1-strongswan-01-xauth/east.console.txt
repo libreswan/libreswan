@@ -5,9 +5,12 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ ../../guestbin/wait-for.sh --match 'CHILD_SA .* established' -- cat /tmp/charon.log | sed -e 's/.*\(CHILD.*established\).*/\1/'
+CHILD_SA westnet-eastnet-ikev1{1} established
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:

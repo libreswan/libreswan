@@ -92,19 +92,10 @@ def main():
     logger = logutil.getLogger("kvmresults")
 
     if args.dump_args:
-        logger.info("Arguments:")
-        logger.info("  Stats: %s", args.stats)
-        logger.info("  Print: %s", args.print)
-        logger.info("  Json: %s", args.json)
-        logger.info("  Quick: %s", args.quick)
-        logger.info("  Update: %s", args.update)
-        logger.info("  Exit OK: %s", args.exit_ok)
-        testsuite.log_arguments(logger, args)
-        logutil.log_arguments(logger, args)
-        skip.log_arguments(logger, args)
-        ignore.log_arguments(logger, args)
-        publish.log_arguments(logger, args)
+        argutils.log_args(logger, args)
         return 0
+
+    publish.process_arguments(logger, args)
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args)
     # And check

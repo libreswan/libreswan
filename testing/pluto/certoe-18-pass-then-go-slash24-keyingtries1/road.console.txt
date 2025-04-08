@@ -36,13 +36,13 @@ road #
 road #
  # verify xfrm policy got added for %pass
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32
@@ -93,7 +93,7 @@ road #
 Bare Shunt list:
  
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -116,7 +116,7 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
@@ -160,7 +160,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 road #
  # letting 60s shunt expire
 road #
- ../../guestbin/wait-for.sh --timeout 60 --no-match ' spi 0x00000000 ' -- ../../guestbin/ipsec-kernel-state.sh
+ ../../guestbin/wait-for.sh --timeout 60 --no-match ' spi 0x00000000 ' -- ipsec _kernel state
 road #
  # we should have 1 or 2 tunnels, no shunts
 road #
@@ -173,7 +173,7 @@ Bare Shunt list:
 road #
  # we should see one of each in/fwd/out (confirming %pass shunt delete didn't take out dir out tunnel policy
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209

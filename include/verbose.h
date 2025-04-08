@@ -50,9 +50,9 @@ struct verbose {
 };
 
 /*
- * vlog() output indented logs
  * verbose() outputs indented logs
  * vdbg() outputs indented debug logs when DBG_BASE
+ * vfatal() outputs flat log
  */
 #define VERBOSE_LOG(LOGGER, MESSAGE, ...)		\
 	struct verbose verbose = {			\
@@ -64,7 +64,6 @@ struct verbose {
 	verbose.level++;
 
 /*
- * vlog() outputs flat logs
  * verbose() outputs indented debug logs when DBG_BASE
  * vdbg() outputs indented debug logs when DBG_BASE
  */
@@ -83,9 +82,17 @@ struct verbose {
 /*
  * Normal logging: the message is always logged (no indentation); just
  * a wrapper around llog(verbose.logger)
+ *
+ * verror(), like perror() adds ": ", before ERROR.
  */
-#define vlog(FMT, ...)					\
+#define vlog(FMT, ...)						\
 	llog(RC_LOG, verbose.logger, FMT, ##__VA_ARGS__);
+
+#define vfatal(FMT, ...)						\
+	fatal(PLUTO_EXIT_FAIL, verbose.logger, FMT, ##__VA_ARGS__)
+
+#define verror(ERROR, FMT, ...)			\
+	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
 
 /*
  * Debug-logging: when the logger has debugging enabled, the message is

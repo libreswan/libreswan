@@ -8,9 +8,9 @@
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>
-    <kernel>@@POOLDIR@@/@@PREFIX@@linux-transmogrify.vmlinuz</kernel>
-    <initrd>@@POOLDIR@@/@@PREFIX@@linux-transmogrify.initramfs</initrd>
-    <cmdline>root=/dev/vda2 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200</cmdline>
+    <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
+    <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
+    <cmdline>root=/dev/vda2 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=west</cmdline>
   </os>
   <features>
     <acpi/>

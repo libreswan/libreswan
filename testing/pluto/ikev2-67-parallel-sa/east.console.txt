@@ -18,6 +18,7 @@ east #
 "northnet-eastnet/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "northnet-eastnet/0x1":   sec_label:unset;
 "northnet-eastnet/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"northnet-eastnet/0x1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "northnet-eastnet/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "northnet-eastnet/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "northnet-eastnet/0x1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -30,14 +31,15 @@ east #
 "northnet-eastnet/0x1":   routing: unrouted;
 "northnet-eastnet/0x1":   conn serial: $1;
 "northnet-eastnet/0x1":   aliases: northnet-eastnet
-"northnet-eastnet/0x2": 192.0.2.0/24===192.1.2.23[@east]...192.1.3.33[@north]===192.0.3.0/24; unrouted; eroute owner: #0
-"northnet-eastnet/0x2":     oriented; my_ip=unset; their_ip=unset;
+"northnet-eastnet/0x2": 192.0.2.0/24===192.1.2.23[@east]...192.1.3.33[@north]===192.0.3.0/24; unrouted; my_ip=unset; their_ip=unset;
+"northnet-eastnet/0x2":   host: oriented; local: 192.1.2.23; remote: 192.1.3.33;
 "northnet-eastnet/0x2":   my_updown=ipsec _updown;
 "northnet-eastnet/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 "northnet-eastnet/0x2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "northnet-eastnet/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "northnet-eastnet/0x2":   sec_label:unset;
 "northnet-eastnet/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"northnet-eastnet/0x2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "northnet-eastnet/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "northnet-eastnet/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "northnet-eastnet/0x2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -58,11 +60,19 @@ initdone
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
 #2: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@north'
-#3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@north'
+#3: "northnet-eastnet/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
 east #
  # policies and state should be multiple
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 0, bitmap-length 0
 src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -76,66 +86,30 @@ src 192.1.2.23 dst 192.1.3.33
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	 replay_window 0, bitmap-length 0
 src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.23 dst 192.1.3.33
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
- ip xfrm policy
-src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir fwd priority PRIORITY ptype main 
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir in priority PRIORITY ptype main 
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 east #
  

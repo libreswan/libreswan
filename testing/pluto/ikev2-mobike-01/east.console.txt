@@ -15,7 +15,7 @@ east #
  ipsec whack --trafficstatus
 #2: "eastnet-northnet"[1] 192.1.8.22, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='192.1.3.33'
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.8.22 dst 192.1.2.23
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
@@ -28,15 +28,15 @@ src 192.1.2.23 dst 192.1.8.22
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 east #
- ip xfrm policy
-src 192.0.2.0/24 dst 192.0.3.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.0.3.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.8.22
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir fwd priority PRIORITY ptype main 
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.8.22 dst 192.1.2.23
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir in priority PRIORITY ptype main 
+src 192.0.3.0/24 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.8.22 dst 192.1.2.23
 east #
  

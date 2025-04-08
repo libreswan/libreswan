@@ -24,61 +24,61 @@
 #include <certdb.h>
 #include <nss.h>		/* for NSS_Shutdown() */
 
+#include "import_crl.h"
+
 #include "lswconf.h"
 #include "lswnss.h"
 #include "lswtool.h"
 #include "lswalloc.h"
 #include "lswlog.h"		/* for fatal() */
-#include "import_crl.h"
 #include "pem.h"
-#include "timescale.h"
 
-#ifdef __clang__
-/*
- * clang complains about these from nss.h, gcc does not?
- */
-extern SECStatus NSS_Shutdown(void);
-extern SECStatus NSS_InitReadWrite(const char *configdir);
-#endif
-
-static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logger)
+static err_t fetch_blob(const char *url, time_t timeout, chunk_t *blob,
+			struct verbose verbose)
 {
-	err_t ugh = "CRL support not built in";
-
-	*blob = EMPTY_CHUNK;
-	if (startswith(url, "ldap:")) {
+	vdbg("fetching %s with timeout %ld", url, (long)timeout);
+	verbose.level++;
 #ifdef USE_LDAP
-		ugh = fetch_ldap(url, blob, logger);
-#endif
-	} else {
-#ifdef USE_LIBCURL
-		init_curl(logger);
-		ugh = fetch_curl(url, blob, logger);
-		shutdown_curl();
-#endif
+	if (startswith(url, "ldap:")) {
+		return fetch_ldap(url, timeout, blob, verbose);
 	}
+#endif
+#ifdef USE_LIBCURL
+	return fetch_curl(url, timeout, blob, verbose);
+#endif
+	return "build is not configured with CRL support";
+}
+
+static err_t decode_blob(chunk_t *blob, struct verbose verbose)
+{
+	vdbg("decoding %zu byte blob", blob->len);
+	verbose.level++;
+
+	err_t ugh = asn1_ok(ASN1(*blob));
+	if (ugh == NULL) {
+		vdbg("fetched blob already DER");
+		return NULL;
+	}
+
+	vdbg("fetched blob is not DER: %s", ugh);
+	ugh = pemtobin(blob);
 	if (ugh != NULL) {
-		free_chunk_content(blob);
+		vdbg("fetched blob is not PEM: %s", ugh);
 		return ugh;
 	}
 
+	vdbg("fetched blob is PEM");
 	ugh = asn1_ok(ASN1(*blob));
-	if (ugh == NULL) {
-		dbg("  fetched blob coded in DER format");
-	} else {
-		ugh = pemtobin(blob);
-		if (ugh != NULL) {
-		} else if (asn1_ok(ASN1(*blob)) == NULL) {
-			dbg("  fetched blob coded in PEM format");
-		} else {
-			ugh = "Blob coded in unknown format (within PEM)";
-		}
+	if (ugh != NULL) {
+		vdbg("fetched blob in PEM format does not contain DER: %s", ugh);
+		return ugh;
 	}
-	if (ugh == NULL && blob->len == 0)
+
+	if (blob->len == 0) {
 		ugh = "empty ASN.1 blob";
-	if (ugh != NULL)
-		free_chunk_content(blob);
-	return ugh;
+	}
+
+	return NULL;
 }
 
 /*
@@ -87,28 +87,29 @@ static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logg
  */
 int main(int argc, char *argv[])
 {
+	err_t err;
 	struct logger *logger = tool_logger(argc, argv);
+	VERBOSE_DBGP(DBG_BASE, logger, "import_crl()");
 
 	if (argc != 4) {
 		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <crl-fetch-timeout> <curl-iface>");
 	}
 
-	/* <url */
+	/* lazy parsing, assume pluto isn't broken */
 	char *url = argv[1];
-
-	/* crl_fetch_timeout */
-	diag_t d = ttodeltatime(argv[2], &crl_fetch_timeout, TIMESCALE_SECONDS);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "invalid crl_fetch_timeout %s: %s",
-		      argv[2], str_diag(d));
-	}
-
+	time_t timeout = atol(argv[2]);
 	curl_iface = (argv[3][0] == '\0' ? NULL : argv[3]);
 
 	chunk_t blob;
-	err_t e = fetch_asn1_blob(url, &blob, logger);
-	if (e != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "fetch failed: %s", e);
+	err = fetch_blob(url, timeout, &blob, verbose);
+	if (err != NULL) {
+		fatal(PLUTO_EXIT_FAIL, logger, "fetch failed: %s", err);
+	}
+
+	err = decode_blob(&blob, verbose);
+	if (err != NULL) {
+		free_chunk_content(&blob);
+		fatal(PLUTO_EXIT_FAIL, logger, "fetch invalid: %s", err);
 	}
 
 	const struct lsw_conf_options *oco = lsw_init_options();
@@ -143,5 +144,4 @@ int main(int argc, char *argv[])
 }
 
 /* globals */
-deltatime_t crl_fetch_timeout;
 char *curl_iface;

@@ -1,13 +1,19 @@
 /testing/guestbin/swan-prep --46 --nokeys
 Creating empty NSS database
 east #
- /testing/x509/import.sh real/mainca/east.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/east.all.p12
+ /testing/x509/import.sh real/mainca/east.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n east
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  /testing/x509/import.sh real/mainca/key4096.end.cert
-ipsec certutil -A -n key4096 -t P,, -i real/mainca/key4096.end.cert
+ ipsec certutil -A -n key4096 -t P,, -i real/mainca/key4096.end.cert
+ ipsec certutil -O -n key4096
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "key4096" [E=user-key4096@testing.libreswan.org,CN=key4096.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  ../../guestbin/ip.sh link set dev eth1 mtu 1480
 east #
@@ -22,7 +28,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -39,7 +45,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

@@ -4,19 +4,27 @@ west #
  # what we send to peer
 west #
  /testing/x509/import.sh real/mainca/west_chain_endcert.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n west_chain_endcert
+"west_chain_endcert" [E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  /testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
-ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
+ ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
+ ipsec certutil -O -n west_chain_int_2
+"west_chain_int_2" [E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # how we authenticate peer
 west #
  /testing/x509/import.sh real/mainca/east_chain_int_1.end.cert
-ipsec certutil -A -n east_chain_int_1 -t P,, -i real/mainca/east_chain_int_1.end.cert
+ ipsec certutil -A -n east_chain_int_1 -t P,, -i real/mainca/east_chain_int_1.end.cert
+ ipsec certutil -O -n east_chain_int_1
+"east_chain_int_1" [E=east_chain_int_1@testing.libreswan.org,CN=east_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  /testing/x509/import.sh real/mainca/root.cert
-ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
+ ipsec certutil -A -n mainca -t CT,, -i real/mainca/root.cert
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -64,7 +72,7 @@ west #
 "nss-cert-chain" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org'
 "nss-cert-chain" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=east_chain_int_2@testing.libreswan.org'
 "nss-cert-chain" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"nss-cert-chain" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"nss-cert-chain" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===192.0.2.254/32}
 "nss-cert-chain" #2: sent Quick Mode request
 "nss-cert-chain" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #

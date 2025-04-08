@@ -23,49 +23,60 @@ struct msg_digest;
 struct state;
 struct show;
 enum stream;
+struct whack_message;
 
 /*
- * Create a child process using fork()
+ * Run code as a child process in the background.
  *
- * Typically used to perform a thread unfriendly operation, such as
- * calling PAM.
+ * SERVER_FORK(): calls the function FORK_OP() within the child
+ * process (the value returned is passed to exit()).  This is used to
+ * perform a thread unfriendly operation, such as calling PAM.
  *
- * On callback:
+ * SERVER_FORK_EXEC(): runs PROGRAM passing ARGV[].
+
+ * On exit CALLBACK(ST, MD, WSTATUS, OUTPUT, CALLBACK_CONTEXT, ...) is
+ * called where WSTATUS was returned by waitpid() and OUTPUT contains
+ * all the accumulated output from the process.
  *
- * ST either points at the state matching SERIALNO, or NULL (SERIALNO
- * is either SOS_NOBODY or the state doesn't exist).  A CB expecting a
- * state back MUST check ST before processing.  Caller sets CUR_STATE
- * so don't play with that.
+ * When INPUT is non-empty, it is written to the Child's STDIN.
  *
- * STATUS is the child processes exit code as returned by things like
- * waitpid().
+ * When OUTPUT_STREAM is not NO_STREAM, the child processes output is
+ * logged as it is captured (as a special case, output is only logged
+ * to DEBUG_STREAM, when debugging is enabled).
  */
 
 typedef stf_status server_fork_cb(struct state *st,
 				  struct msg_digest *md,
-				  int status, shunk_t output,
-				  void *context,
+				  int wstatus, shunk_t output,
+				  void *callback_context,
 				  struct logger *logger);
-typedef int server_fork_op(void *context, struct logger *logger);
 
-extern int server_fork(const char *name,
+typedef int server_fork_op(void *callback_context, struct logger *logger);
+pid_t server_fork(const char *name,
+		  server_fork_op *fork_op,
+		  so_serial_t serialno,
+		  struct msg_digest *md,
+		  shunk_t input,
+		  enum stream output_stream,
+		  server_fork_cb *callback,
+		  void *callback_context,
+		  struct logger *logger);
+
+pid_t server_fork_exec(const char *path,
+		       char *argv[], char *envp[], /*op*/
+#if 0
 		       so_serial_t serialno,
 		       struct msg_digest *md,
-		       server_fork_op *op,
+#endif
+		       shunk_t input,
+		       enum stream output_stream,
 		       server_fork_cb *callback,
 		       void *callback_context,
 		       struct logger *logger);
 
-void server_fork_exec(const char *path,
-		      char *argv[], char *envp[],
-		      shunk_t input, enum stream output,
-		      server_fork_cb *callback,
-		      void *callback_context,
-		      struct logger *logger);
-
 void server_fork_sigchld_handler(struct logger *logger);
 void init_server_fork(struct logger *logger);
 void check_server_fork(struct logger *logger);
-void show_process_status(struct show *s);
+void whack_processstatus(const struct whack_message *wm, struct show *s);
 
-#endif /* _SERVER_H */
+#endif

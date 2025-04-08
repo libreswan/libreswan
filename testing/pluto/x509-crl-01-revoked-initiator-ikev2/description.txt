@@ -1,0 +1,4 @@
+IKEv2 initiator sends REVOKED cert; responder, with up-to-date CRL, rejects
+
+Since the responder has an up-to-date and preloaded CRL it is able to
+immediately reject the AUTH request containing the REVOKED cert.

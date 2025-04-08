@@ -1,0 +1,53 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ # Import the root CA, and use that to generate a cert+pubkey that's
+east #
+ # valid in 1 month (-w 1) and expires in 12 months (-v 12).
+east #
+ /testing/x509/import.sh real/mainca/root.p12
+ ipsec pk12util -w nss-pw -i real/mainca/root.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec certutil -m 2 -S -k rsa -c mainca -n `hostname`-notyetvalid -s CN=`hostname`-notyetvalid -w 1 -v 12 -t CT,, -z east.conf
+Generating key.  This may take a few moments...
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+mainca                                                       CTu,u,u
+east-notyetvalid                                             CTu,u,u
+east #
+ # verify the result
+east #
+ ipsec certutil -L -a -n `hostname`-notyetvalid -o OUTPUT/`hostname`-notyetvalid.crt
+east #
+ ! ipsec vfychain -v -u 12 -p -p -p -a OUTPUT/`hostname`-notyetvalid.crt
+Chain is bad!
+PROBLEM WITH THE CERT CHAIN:
+CERT 0. east-notyetvalid :
+  ERROR -8181: Peer's Certificate has expired.
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # beware the groundhog!
+east #
+ ipsec add nss-cert
+"nss-cert": WARNING: right is a groundhog
+"nss-cert": WARNING: groundhog right certificate 'east-notyetvalid' is not yet valid
+"nss-cert": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # only expected to show failure on west
+east #
+ grep -e '^[^|].*ERROR' /tmp/pluto.log
+east #
+ 

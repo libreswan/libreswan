@@ -3,10 +3,10 @@
 ../../guestbin/wait-for.sh --match north -- ipsec trafficstatus
 
 # let larval state expire
-../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ../../guestbin/ipsec-kernel-state.sh
+../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ipsec _kernel state
 
-../../guestbin/ipsec-kernel-policy.sh
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel policy
+ipsec _kernel state
 
 # confirm flow
 ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
@@ -14,5 +14,5 @@ ipsec trafficstatus
 
 # confirm shutdown/cleanup
 ipsec auto --down north
-../../guestbin/ipsec-kernel-policy.sh
-../../guestbin/ipsec-kernel-state.sh
+ipsec _kernel policy
+ipsec _kernel state

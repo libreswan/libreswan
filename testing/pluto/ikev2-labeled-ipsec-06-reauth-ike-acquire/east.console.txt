@@ -27,7 +27,7 @@ east #
 east #
  # with same reqid.
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
@@ -77,7 +77,7 @@ east #
 east #
  # ipsec_spd_t label, and no outgoing %trap policy
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.1.2.23/32 dst 192.1.2.45/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority PRIORITY ptype main

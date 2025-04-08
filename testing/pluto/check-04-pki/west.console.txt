@@ -3,15 +3,21 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- /testing/x509/import.sh real/mainca/west.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/west.all.p12
+ /testing/x509/import.sh real/mainca/west.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
- /testing/x509/import.sh real/mainca/nic.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/nic.all.p12
+ /testing/x509/import.sh real/mainca/nic.p12
+ ipsec pk12util -w nss-pw -i real/mainca/nic.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n nic
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "nic" [E=user-nic@testing.libreswan.org,CN=nic.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec_cert mainca west nic
 Certificate Nickname                                         Trust Attributes
@@ -169,10 +175,13 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- /testing/x509/import.sh real/otherca/otherwest.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
+ /testing/x509/import.sh otherca/otherwest.p12
+ ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n otherwest
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "otherwest" [E=user-otherwest@testing.libreswan.org,CN=otherwest.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec_cert otherca otherwest
 Certificate Nickname                                         Trust Attributes
@@ -281,7 +290,9 @@ west #
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/west_chain_int_1.end.cert
-ipsec certutil -A -n west_chain_int_1 -t P,, -i real/mainca/west_chain_int_1.end.cert
+ ipsec certutil -A -n west_chain_int_1 -t P,, -i real/mainca/west_chain_int_1.end.cert
+ ipsec certutil -O -n west_chain_int_1
+"west_chain_int_1" [E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec_cert west_chain_int_1
 Certificate Nickname                                         Trust Attributes
@@ -344,7 +355,9 @@ west #
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/west_chain_int_2.end.cert
-ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
+ ipsec certutil -A -n west_chain_int_2 -t P,, -i real/mainca/west_chain_int_2.end.cert
+ ipsec certutil -O -n west_chain_int_2
+"west_chain_int_2" [E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec_cert west_chain_int_2
 Certificate Nickname                                         Trust Attributes
@@ -407,10 +420,15 @@ west #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- /testing/x509/import.sh real/mainca/west_chain_endcert.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.all.p12
+ /testing/x509/import.sh real/mainca/west_chain_endcert.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west_chain_endcert.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west_chain_endcert
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west_chain_int_1" [E=west_chain_int_1@testing.libreswan.org,CN=west_chain_int_1.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+    "west_chain_int_2" [E=west_chain_int_2@testing.libreswan.org,CN=west_chain_int_2.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+      "west_chain_endcert" [E=west_chain_endcert@testing.libreswan.org,CN=west_chain_endcert.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec_cert west_chain_endcert
 Certificate Nickname                                         Trust Attributes

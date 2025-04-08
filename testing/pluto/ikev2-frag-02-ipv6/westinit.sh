@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --46 --nokeys
 
-/testing/x509/import.sh real/mainca/key4096.all.p12
+/testing/x509/import.sh real/mainca/key4096.p12
 /testing/x509/import.sh real/mainca/east.end.cert
 
 ipsec start

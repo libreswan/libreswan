@@ -2,20 +2,27 @@
 Creating empty NSS database
 west #
  /testing/x509/import.sh real/mainca/east.end.cert
-ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -A -n east -t P,, -i real/mainca/east.end.cert
+ ipsec certutil -O -n east
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # WEST will send NORTHs cert
 west #
  /testing/x509/import.sh real/mainca/north.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/north.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/north.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n north
+"north" [E=user-north@testing.libreswan.org,CN=north.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # I guess this is a distraction?
 west #
- /testing/x509/import.sh real/otherca/otherwest.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
+ /testing/x509/import.sh otherca/otherwest.p12
+ ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n otherwest
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "otherwest" [E=user-otherwest@testing.libreswan.org,CN=otherwest.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  # check
 west #
@@ -79,8 +86,8 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 west #
  

@@ -4,13 +4,17 @@ east #
  # import real west end cert
 east #
  /testing/x509/import.sh real/mainca/west.end.cert
-ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
+ ipsec certutil -A -n west -t P,, -i real/mainca/west.end.cert
+ ipsec certutil -O -n west
+"west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  # import fake east end cert
 east #
  /testing/x509/import.sh fake/mainca/east.end.p12
-ipsec pk12util -w nss-pw -i fake/mainca/east.end.p12
+ ipsec pk12util -w nss-pw -i fake/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n east
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  # confirm
 east #
@@ -31,7 +35,7 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -48,7 +52,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23

@@ -1152,7 +1152,7 @@ v2_notification_t process_v2SA_payload(const char *what,
 				       bool expect_ike,
 				       bool expect_spi,
 				       bool expect_accepted,
-				       bool opportunistic,
+				       bool limit_logging/*because-oe*/,
 				       struct ikev2_proposal **chosen_proposal,
 				       const struct ikev2_proposals *local_proposals,
 				       struct logger *logger)
@@ -1219,7 +1219,7 @@ v2_notification_t process_v2SA_payload(const char *what,
 					jam_jambuf(buf, remote_jam_buf);
 				}
 			} else {
-				if (opportunistic) {
+				if (limit_logging) {
 					LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);

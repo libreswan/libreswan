@@ -31,8 +31,8 @@ terminated 2 connections
 road #
  ipsec trafficstatus
 road #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 road #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 road #
  

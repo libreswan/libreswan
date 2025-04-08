@@ -1,0 +1,127 @@
+#!@@SHELL_BINARY@@
+# -*- mode: sh; sh-shell: sh -*-
+# iproute2 version, default updown script
+#
+# Copyright (C) 2003-2004 Nigel Metheringham
+# Copyright (C) 2002-2007 Michael Richardson <mcr@xelerance.com>
+# Copyright (C) 2003-2013 Tuomo Soini <tis@foobar.fi>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+
+# CAUTION:  Installing a new version of Libreswan will install a new
+# copy of this script, wiping out any custom changes you make.  If
+# you need changes, make a copy of this under another name, and customize
+# that, and use the (left/right)updown parameters in ipsec.conf to make
+# Libreswan use yours instead of this default one.
+
+test $IPSEC_INIT_SCRIPT_DEBUG && set -v -x
+
+LC_ALL=C
+export LC_ALL
+
+# things that this script gets (from ipsec_pluto(8) man page)
+#
+#
+#	PLUTO_VERB
+#		specifies the name of the operation to be performed
+#		(prepare-host, prepare-client, up-host, up-client,
+#		down-host, or down-client).  If the address family
+#		for security gateway to security gateway communications
+#		is IPv6, then a suffix of -v6 is added to the
+#		verb.
+#
+#	PLUTO_CONNECTION
+#		is the name of the  connection  for  which  we  are
+#		routing.
+#
+#	PLUTO_CONNECTION_TYPE
+#		is type of the connection, "tunnel" or "transport".
+#
+#	PLUTO_CONN_POLICY
+#		the policy of the connection, as in:
+#		RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failureDROP+lKOD+rKOD
+#
+#	PLUTO_NEXT_HOP
+#		is the next hop to which packets bound for the peer
+#		must be sent.
+#
+#	PLUTO_INTERFACE
+#		is the name of the ipsec interface to be used.
+#
+#	PLUTO_ME
+#		is the IP address of our host.
+#
+#	PLUTO_MY_CLIENT
+#		is the IP address / count of our client subnet.  If
+#		the  client  is  just  the  host,  this will be the
+#		host's own IP address / mask (where max is  32  for
+#		IPv4 and 128 for IPv6).
+#
+#	PLUTO_MY_CLIENT_NET
+#		is the IP address of our client net.  If the client
+#		is just the host, this will be the  host's  own  IP
+#		address.
+#
+#	PLUTO_MY_CLIENT_MASK
+#		is  the  mask for our client net.  If the client is
+#		just the host, this will be 255.255.255.255.
+#
+#	PLUTO_MY_SOURCEIP
+#		if non-empty, then the source address for the route will be
+#		set to this IP address.
+#
+#	PLUTO_MY_PROTOCOL
+#		is the protocol  for this  connection.  Useful  for
+#		firewalling.
+#
+#	PLUTO_MY_PORT
+#		is the port. Useful for firewalling.
+#
+#	PLUTO_PEER
+#		is the IP address of our peer.
+#
+#	PLUTO_PEER_CLIENT
+#		is the IP address / count of the peer's client subnet.
+#		If the client is just the peer, this will be
+#		the peer's own IP address / mask (where  max  is  32
+#		for IPv4 and 128 for IPv6).
+#
+#	PLUTO_PEER_CLIENT_NET
+#		is the IP address of the peer's client net.  If the
+#		client is just the peer, this will  be  the  peer's
+#		own IP address.
+#
+#	PLUTO_PEER_CLIENT_MASK
+#		is  the  mask  for  the  peer's client net.  If the
+#		client   is   just   the   peer,   this   will   be
+#		255.255.255.255.
+#
+#	PLUTO_PEER_PROTOCOL
+#		is  the  protocol  set  for  remote  end  with port
+#		selector.
+#
+#	PLUTO_PEER_PORT
+#		is the peer's port. Useful for firewalling.
+#
+#	PLUTO_STACK
+#		The kernel level IPstack used (see protostack=)
+#
+#	PLUTO_SA_REQID
+#		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
+
+if [ -x @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} ]; then
+    exec @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@
+else
+    echo "FATAL: Could not execute @@IPSEC_EXECDIR@@/_updown.${PLUTO_STACK} $@"
+fi
+
+exit 3

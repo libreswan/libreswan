@@ -9,4 +9,4 @@ rightsubnets=192.0.2.0/24,192.0.2.0/24
 
 This test need kernel/xfrm support to distribute traffic over parallel SA.
 
-NOTE: Looks like we do not get two full sets of ip xfrm policy
+NOTE: Looks like we do not get two full sets of ipsec _kernel policy

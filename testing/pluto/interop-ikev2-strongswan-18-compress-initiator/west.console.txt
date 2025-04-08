@@ -69,9 +69,9 @@ west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
 ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
@@ -82,7 +82,7 @@ westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o, IPCOMP CPIs: CPI_i CPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -113,54 +113,38 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	lastused YYYY-MM-DD HH:MM:SS
 west #
- ip xfrm policy
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority PRIORITY ptype main 
+ ipsec _kernel policy
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.1.0/24
+	dir out priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir in priority PRIORITY ptype main
+src 192.1.2.0/24 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp spi 0xSPISPI reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp spi 0xSPISPI reqid REQID mode transport
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.1.2.0/24 dst 192.1.2.0/24 
-	dir out priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir fwd priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir in priority PRIORITY ptype main 
-src 192.0.1.0/24 dst 192.0.1.0/24 
-	dir out priority PRIORITY ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 west #
  

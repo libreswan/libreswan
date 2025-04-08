@@ -19,7 +19,7 @@ west #
 west #
  ip xfrm policy add src 10.0.2.0/24 dst 10.0.1.0/24 dir in tmpl src 2.2.2.2 dst 1.1.1.1 proto esp reqid $ID mode tunnel
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2.2.2.2 dst 1.1.1.1
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
@@ -31,7 +31,7 @@ src 1.1.1.1 dst 2.2.2.2
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src 10.0.1.0/24 dst 10.0.2.0/24
 	dir out priority 0 ptype main
 	tmpl src 1.1.1.1 dst 2.2.2.2
@@ -53,9 +53,9 @@ west #
 west #
  # check policy/state gone
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

@@ -1,10 +1,13 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 road #
- /testing/x509/import.sh real/mainca/semiroad.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/semiroad.all.p12
+ /testing/x509/import.sh real/mainca/semiroad.p12
+ ipsec pk12util -w nss-pw -i real/mainca/semiroad.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n semiroad
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "semiroad" [E=user-semiroad@testing.libreswan.org,CN=semiroad.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 road #
  cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 road #

@@ -1,0 +1,58 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ # Import the root CA, and use that to generate a cert+pubkey that's
+east #
+ # valid in 1 month (-w 1) and expires in 12 months (-v 12).
+east #
+ /testing/x509/import.sh real/mainca/root.p12
+ ipsec pk12util -w nss-pw -i real/mainca/root.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n mainca
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+east #
+ ipsec certutil -m 2 -S -k rsa -c mainca -n east-expired -s CN=east-expired -w -12 -v 6 -t CT,, -z ipsec.conf
+Generating key.  This may take a few moments...
+east #
+ ipsec certutil -L
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+mainca                                                       CTu,u,u
+east-expired                                                 CTu,u,u
+east #
+ # verify the result
+east #
+ ipsec certutil -L -a -n east-expired -o OUTPUT/east-expired.crt
+east #
+ ! ipsec vfychain -v -u 12 -p -p -p -a OUTPUT/east-expired.crt
+Chain is bad!
+PROBLEM WITH THE CERT CHAIN:
+CERT 0. east-expired :
+  ERROR -8181: Peer's Certificate has expired.
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # beware the groundhog!
+east #
+ ipsec add east
+"east": WARNING: right is a groundhog
+"east": WARNING: groundhog right certificate 'east-expired' has expired
+"east": added IKEv2 connection
+east #
+ ipsec checkpubkeys
+TIMESTAMP, 2048 RSA Key AwXXXXXXX (has private key), until TIMESTAMP fatal (expired)
+       ID_DER_ASN1_DN 'CN=east-expired'
+       Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+east #
+ echo "initdone"
+initdone
+east #
+ # only expected to show failure on west
+east #
+ grep -e '^[^|].*ERROR' /tmp/pluto.log
+east #
+ 

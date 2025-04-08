@@ -351,7 +351,7 @@ static void drip_message(const struct direction_impairment *direction,
 	     "IMPAIR: start processing %s %s packet %u",
 	     direction->name, reason, m->nr);
 	if (DBGP(DBG_BASE)) {
-		llog_dump_hunk(DEBUG_STREAM, logger, m->body);
+		llog_hunk(DEBUG_STREAM, logger, m->body);
 	}
 
 	direction->drip(m, logger);

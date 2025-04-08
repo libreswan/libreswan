@@ -6,12 +6,13 @@
     <para>
       What to do with packets during the IKE negotiation.  Valid
       options are <option>hold</option> (the default) or
-      <option>passthrough</option>. This should almost always be left
-      to the default hold value to avoid cleartext packet leaking. The
-      only reason to set this to passthrough is if plaintext service
-      availability is more important than service security or privacy,
-      a scenario that also implies failureshunt=passthrough and most
-      likely authby=%null using Opportunistic Encryption.
+      <option>pass</option>. This should almost always be left to the
+      default <option>hold</option> value to avoid cleartext packet
+      leaking. The only reason to set this to <option>pass</option> is
+      if plaintext service availability is more important than service
+      security or privacy, a scenario that also implies
+      <option>failureshunt=pass</option> and most likely
+      <option>authby=%null</option> using Opportunistic Encryption.
     </para>
   </listitem>
 </varlistentry>

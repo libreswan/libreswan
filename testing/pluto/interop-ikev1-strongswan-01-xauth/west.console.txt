@@ -43,18 +43,20 @@ west #
 "westnet-eastnet-ikev1" #1: modecfg: Sending IP request (MODECFG_I1)
 "westnet-eastnet-ikev1" #1: Received IPv4 address: 192.0.1.254/32
 "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
-"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-ikev1" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===0.0.0.0/0}
 "westnet-eastnet-ikev1" #2: sent Quick Mode request
 "westnet-eastnet-ikev1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=active username=use3}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # wait for a few DPDs
+ ipsec trafficstatus
+#2: "westnet-eastnet-ikev1", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, lease=192.0.1.254/32
 west #
- sleep 11
+ # wait for a DPD; XXX: this is a debug line!
 west #
- grep "R_U_THERE_ACK, seqno received" /tmp/pluto.log >/dev/null || echo DPD failed
+ ../../guestbin/wait-for.sh --match 'R_U_THERE_ACK, seqno received' -- cat /tmp/pluto.log | sed -e 's/received:.*/received:/'
+| "westnet-eastnet-ikev1" #1: DPD: R_U_THERE_ACK, seqno received:
 west #
  # confirm --down is processed properly too
 west #
@@ -67,9 +69,9 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 west #

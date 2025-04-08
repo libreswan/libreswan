@@ -24,7 +24,7 @@ start()
     else
 	key=nic
     fi
-    run cp /testing/x509/real/mainca/${key}.end.key /etc/ocspd/private/nic_key.pem
+    run cp /testing/x509/real/mainca/${key}.key /etc/ocspd/private/nic_key.pem
     run cp /testing/x509/real/mainca/${key}.end.cert /etc/ocspd/certs/nic.pem
     run cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
     run cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf

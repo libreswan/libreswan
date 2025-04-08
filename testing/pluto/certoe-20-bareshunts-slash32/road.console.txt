@@ -27,7 +27,7 @@ road #
 road #
  # 192.1.2.23/32 group-instance
 road #
- ../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ ipsec _kernel policy 192.1.2.23
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -49,7 +49,7 @@ road #
  ../../guestbin/wait-for-pluto.sh '^".*#1: .*retransmission; will wait 0.5 seconds'
 "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: IKE_SA_INIT_I: retransmission; will wait 0.5 seconds for response
 road #
- ../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ ipsec _kernel policy 192.1.2.23
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 road #
@@ -81,7 +81,7 @@ road #
  ../../guestbin/wait-for-pluto.sh '^".*#1:.* 5 second timeout exceeded'
 "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: IKE_SA_INIT_I: 5 second timeout exceeded after 4 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 road #
- ../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ ipsec _kernel policy 192.1.2.23
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
 road #
@@ -105,7 +105,7 @@ road #
 road #
  ../../guestbin/wait-for.sh --no-match oe-failing -- ipsec whack --shuntstatus
 road #
- ../../guestbin/ipsec-kernel-policy.sh 192.1.2.23
+ ipsec _kernel policy 192.1.2.23
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0

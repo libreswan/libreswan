@@ -19,6 +19,9 @@
 #ifndef _PLUTO_STATS_H
 #define _PLUTO_STATS_H
 
+struct whack_message;
+struct show;
+
 enum sa_type;
 enum terminate_reason;
 
@@ -70,8 +73,8 @@ extern unsigned long pstats_pamauth_aborted;
 extern unsigned long pstats_ikev2_redirect_failed;
 extern unsigned long pstats_ikev2_redirect_completed;
 
-extern void show_pluto_stats(struct show *s);
-extern void clear_pluto_stats(void);
+extern void whack_showstats(const struct whack_message *wm, struct show *s);
+extern void whack_clearstats(const struct whack_message *wm, struct show *s);
 
 /*
  * This (assuming it works) is less evil then an array index
@@ -108,7 +111,7 @@ extern void clear_pluto_stats(void);
 		}							\
 	}
 
-void pstat_sa_started(struct state *st, enum sa_type sa_type);
+void pstat_sa_started(struct state *st);
 void pstat_sa_failed(struct state *st, enum terminate_reason reason);
 void pstat_sa_established(struct state *st);
 void pstat_sa_deleted(struct state *st);

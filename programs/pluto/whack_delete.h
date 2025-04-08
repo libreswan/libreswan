@@ -26,6 +26,7 @@ struct whack_message;
 struct show;
 struct logger;
 
-void whack_delete(const struct whack_message *m, struct show *s, bool log_unknown_name);
+void whack_addconn_delete(const struct whack_message *wm, struct show *s);
+void whack_delete(const struct whack_message *wm, struct show *s);
 
 #endif

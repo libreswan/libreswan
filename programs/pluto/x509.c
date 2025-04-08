@@ -1001,7 +1001,7 @@ const char *cert_nickname(const cert_t *cert)
 	return cert != NULL && cert->nss_cert != NULL ? cert->nss_cert->nickname : NULL;
 }
 
-void clear_ocsp_cache(void)
+void whack_purgeocsp(const struct whack_message *wm UNUSED, struct show *s UNUSED)
 {
 	dbg("calling NSS to clear OCSP cache");
 	(void)CERT_ClearOCSPCache();

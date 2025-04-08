@@ -3,6 +3,18 @@ See also https://libreswan.org/
 v5.3 (unreleased)
 * config:
   - Obsoleted virtual_private and plutostderrlog keywords [Tuomo]
+  - drop undocumented --rootdir{,2} option to `ipsec readwriteconf` [Andrew, #2152]
+* PKIX (Public Key Infrastructure X.509)
+  - moved cURL and LDAP CRL download code out of pluto [Andrew]
+  - replaced CRL thread with libevent [Andrew]
+  - fixed `ipsec checkcrls` [Andrew]
+  - when configured, use cURL to download LDAP CRLs [Andrew]
+  - verify using NSS's IPsec profile aka certificateUsageIPsec [Andrew]
+* initsystem:
+  - remove unused _stackmanager [Tuomo #2080]
+* Testing:
+  - eliminated all pyOpenSSL dependencies [Andrew]
+  - review PKIX test coverage [Andrew]
 
 v5.2 (Feb 26, 2025)
 * IKEv2:

@@ -30,7 +30,7 @@ west #
 "v6-transport" #1: Peer ID is ID_FQDN: '@east'
 "v6-transport" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "v6-transport" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"v6-transport" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"v6-transport" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 2001:db8:1:2::45/128/UDP/1701===2001:db8:1:2::23/128/UDP/1701}
 "v6-transport" #2: sent Quick Mode request
 "v6-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -40,7 +40,7 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -58,7 +58,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 00000000 00000000 00000000 XXXXXXXX 
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 proto udp sport 1701 dport 1701 
 west #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135

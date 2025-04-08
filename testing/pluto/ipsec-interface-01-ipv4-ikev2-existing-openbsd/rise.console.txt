@@ -14,9 +14,9 @@ sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
 	groups: sec
 	inet 198.18.12.12 --> 198.18.15.15 netmask 0xffffff00
 rise #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 rise #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 rise #
  ipsec start
 Redirecting to: [initsystem]
@@ -46,7 +46,7 @@ rise #
  ../../guestbin/ping-once.sh --up -I 198.18.12.12 198.18.15.15
 up
 rise #
- ../../guestbin/ipsec-kernel-state.sh
+ ipsec _kernel state
 @0 esp tunnel from 198.18.1.12 to 198.18.1.15 spi 0xSPISPI auth hmac-sha1 enc aes \
 	authkey 0xHASHKEY \
 	enckey 0xENCKEY
@@ -96,7 +96,7 @@ rise #
 	replay: rpl 2
 	interface: sec1 direction in
 rise #
- ../../guestbin/ipsec-kernel-policy.sh
+ ipsec _kernel policy
 rise #
  ifconfig sec1 destroy
 rise #

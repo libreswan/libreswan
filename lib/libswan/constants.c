@@ -131,62 +131,6 @@ enum_names perspective_names = {
 	NULL,
 };
 
-static const char *const shunt_policy_name[] = {
-#define S(E) [E - SHUNT_UNSET] = #E
-	S(SHUNT_UNSET),
-	S(SHUNT_IPSEC),
-	S(SHUNT_HOLD),
-	S(SHUNT_NONE),
-	S(SHUNT_PASS),
-	S(SHUNT_DROP),
-	S(SHUNT_REJECT),
-	S(SHUNT_TRAP),
-#undef S
-};
-
-enum_names shunt_policy_names = {
-	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
-	ARRAY_REF(shunt_policy_name),
-	"SHUNT_", /* prefix */
-	NULL,
-};
-
-static const char *const shunt_kind_name[] = {
-#define S(E) [E - SHUNT_KIND_NONE] = #E
-	S(SHUNT_KIND_NONE),
-	S(SHUNT_KIND_NEVER_NEGOTIATE),
-	S(SHUNT_KIND_ONDEMAND),
-	S(SHUNT_KIND_NEGOTIATION),
-	S(SHUNT_KIND_IPSEC),
-	S(SHUNT_KIND_FAILURE),
-	S(SHUNT_KIND_BLOCK),
-#undef S
-};
-
-enum_names shunt_kind_names = {
-	0, SHUNT_KIND_ROOF-1,
-	ARRAY_REF(shunt_kind_name),
-	"SHUNT_KIND_", /*PREFIX*/
-	NULL,
-};
-
-static const char *const shunt_policy_percent_name[] = {
-	[SHUNT_UNSET] = "<shunt-unset>",
-	[SHUNT_HOLD] = "%hold",
-	[SHUNT_NONE] = "%none",
-	[SHUNT_PASS] = "%pass",
-	[SHUNT_DROP] = "%drop",
-	[SHUNT_REJECT] = "%reject",
-	[SHUNT_TRAP] = "%trap",
-};
-
-enum_names shunt_policy_percent_names = {
-	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
-	ARRAY_REF(shunt_policy_percent_name),
-	"%"/*prefix*/,
-	NULL,
-};
-
 /* NAT methods */
 static const char *const natt_method_name[] = {
 	[NAT_TRAVERSAL_METHOD_none] = "none",
@@ -199,22 +143,6 @@ enum_names natt_method_names = {
 	NAT_TRAVERSAL_METHOD_none, NAT_TRAVERSAL_METHOD_IETF_RFC,
 	ARRAY_REF(natt_method_name),
 	NULL, /* prefix */
-	NULL
-};
-
-static const char *const allow_global_redirect_name[] = {
-#define R(E,S) [E - GLOBAL_REDIRECT_NO] = S
-	R(GLOBAL_REDIRECT_NO, "no"),
-	R(GLOBAL_REDIRECT_YES, "yes"),
-	R(GLOBAL_REDIRECT_AUTO, "auto"),
-#undef R
-};
-
-enum_names allow_global_redirect_names = {
-	GLOBAL_REDIRECT_NO,
-	GLOBAL_REDIRECT_AUTO,
-	ARRAY_REF(allow_global_redirect_name),
-	NULL,
 	NULL
 };
 
@@ -304,39 +232,6 @@ enum_names stf_status_names = {
 	NULL
 };
 
-static const char *const keyword_host_name_ipaddr[] = {
-#define S(E) [E - KH_IPADDR] = #E
-	S(KH_IPADDR),
-#undef S
-};
-
-static enum_names keyword_host_names_ipaddr = {
-	KH_IPADDR, KH_IPADDR,
-	ARRAY_REF(keyword_host_name_ipaddr),
-	"KH_", /* prefix */
-	NULL
-};
-
-static const char *const keyword_host_name[] = {
-#define S(E) [E - KH_NOTSET] = #E
-	S(KH_NOTSET),
-	S(KH_DEFAULTROUTE),
-	S(KH_ANY),
-	S(KH_IFACE),
-	S(KH_OPPO),
-	S(KH_OPPOGROUP),
-	S(KH_GROUP),
-	S(KH_IPHOSTNAME),
-#undef S
-};
-
-enum_names keyword_host_names = {
-	KH_NOTSET, KH_IPHOSTNAME,
-	ARRAY_REF(keyword_host_name),
-	"KH_", /* prefix */
-	&keyword_host_names_ipaddr,
-};
-
 /* version */
 static const char *const version_name_1[] = {
 	"ISAKMP Version 1.0 (rfc2407)",
@@ -394,28 +289,6 @@ enum_names doi_names = {
 	ISAKMP_DOI_IPSEC,
 	ARRAY_REF(doi_name),
 	NULL, /* prefix */
-	NULL
-};
-
-/* kind of struct connection */
-static const char *const connection_kind_name[] = {
-#define S(E) [E - CK_INVALID] = #E
-	S(CK_INVALID),
-	S(CK_GROUP),		/* policy group: instantiates to template */
-	S(CK_TEMPLATE),		/* abstract connection, with wildcard */
-	S(CK_PERMANENT),	/* normal connection */
-	S(CK_INSTANCE),		/* instance of template */
-	S(CK_LABELED_TEMPLATE),
-	S(CK_LABELED_PARENT),
-	S(CK_LABELED_CHILD),
-#undef S
-};
-
-enum_names connection_kind_names = {
-	CK_INVALID,
-	CONNECTION_KIND_ROOF - 1,
-	ARRAY_REF(connection_kind_name),
-	"CK_", /* prefix */
 	NULL
 };
 

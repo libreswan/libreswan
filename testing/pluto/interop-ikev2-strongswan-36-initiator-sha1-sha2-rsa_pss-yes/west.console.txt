@@ -2,7 +2,7 @@
 west #
  cp /testing/x509/real/mainca/root.cert /etc/strongswan/ipsec.d/cacerts/mainca.crt
 west #
- cp /testing/x509/real/mainca/`hostname`.end.key /etc/strongswan/ipsec.d/private/`hostname`.key
+ cp /testing/x509/real/mainca/`hostname`.key /etc/strongswan/ipsec.d/private/`hostname`.key
 west #
  cp /testing/x509/real/mainca/`hostname`.end.cert /etc/strongswan/ipsec.d/certs/`hostname`.crt
 west #
@@ -89,9 +89,9 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-state.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-kernel-policy.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 west #
  # expect state #2, state #1 responded with INVALID_KE
 west #

@@ -4,17 +4,22 @@ east #
  # east, but without root
 east #
  /testing/x509/import.sh real/mainca/east.end.p12
-ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
+ ipsec pk12util -w nss-pw -i real/mainca/east.end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
+ ipsec certutil -O -n east
+"east" [E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  # Add a distracting CA; avoids NSS aborting for having no CA at all
 east #
  # (?!?)
 east #
- /testing/x509/import.sh real/otherca/othereast.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/othereast.all.p12
+ /testing/x509/import.sh otherca/othereast.p12
+ ipsec pk12util -w nss-pw -i otherca/othereast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n othereast
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "othereast" [E=user-othereast@testing.libreswan.org,CN=othereast.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 east #
  # check
 east #

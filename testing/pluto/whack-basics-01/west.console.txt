@@ -1,0 +1,12 @@
+../../guestbin/prep.sh
+'west.conf' -> '/etc/ipsec.conf'
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --checkpubkeys --listcrls    # conflicting commands
+whack error: conflicing command options '--checkpubkeys' and '--listcrls'
+west #
+ 

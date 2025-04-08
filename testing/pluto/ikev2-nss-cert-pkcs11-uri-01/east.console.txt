@@ -44,7 +44,7 @@ The token has been initialized and is reassigned to slot XXXXX
 east #
  p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-certificate /testing/x509/real/mainca/east.end.cert --label eastCert --login
 east #
- p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/real/mainca/east.end.key --label eastKey --login
+ p11tool --provider PATH/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privkey /testing/x509/real/mainca/east.key --label eastKey --login
 east #
  # note: --trusted --ca does not seem to set the trust bits needed for CA for nss - so fixup afterwards
 east #

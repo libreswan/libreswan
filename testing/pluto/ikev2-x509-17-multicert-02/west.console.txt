@@ -1,15 +1,21 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- /testing/x509/import.sh real/mainca/west.all.p12
-ipsec pk12util -w nss-pw -i real/mainca/west.all.p12
+ /testing/x509/import.sh real/mainca/west.p12
+ ipsec pk12util -w nss-pw -i real/mainca/west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -M -n mainca -t CT,,
+ ipsec certutil -O -n west
+"mainca" [E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "west" [E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
- /testing/x509/import.sh real/otherca/otherwest.all.p12
-ipsec pk12util -w nss-pw -i real/otherca/otherwest.all.p12
+ /testing/x509/import.sh otherca/otherwest.p12
+ ipsec pk12util -w nss-pw -i otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
-ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -M -n otherca -t CT,,
+ ipsec certutil -O -n otherwest
+"otherca" [E=testing@libreswan.org,CN=Libreswan test CA for otherca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+  "otherwest" [E=user-otherwest@testing.libreswan.org,CN=otherwest.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
 west #
  ipsec checknss --settrusts
 west #

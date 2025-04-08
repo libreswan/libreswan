@@ -41,6 +41,8 @@ OBJS += x509dn.o asn1.o oid.o
 
 OBJS += authby.o
 OBJS += rnd.o
+
+OBJS += connection_kind_names.o
 OBJS += option_names.o
 OBJS += encap_type_names.o
 OBJS += encap_mode_names.o
@@ -48,7 +50,11 @@ OBJS += encap_proto_names.o
 OBJS += initiated_by_names.o
 OBJS += ocsp_method_names.o
 OBJS += connection_owner_names.o
-OBJS += sa_type.o
+OBJS += sa_kind_names.o
+OBJS += keyword_host_names.o
+OBJS += shunt_names.o
+OBJS += global_redirect_names.o
+
 OBJS += fips_mode.o
 OBJS += fips_mode_names.o
 OBJS += state_category_names.o

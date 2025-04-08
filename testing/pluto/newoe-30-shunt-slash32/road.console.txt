@@ -1,0 +1,922 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out & sleep 1
+[x] PID
+road #
+ cp policy /etc/ipsec.d/policies/road
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ # Load and dump an ipsec.conf connection.  The whack command should
+road #
+ # define something identical, it doesn't:
+road #
+ #
+road #
+ #   - whack, because of %opportunisticgroup sets +rKOD aka remote DNS
+road #
+ #     key on-demand
+road #
+ #
+road #
+ #   - addconn adds CERT_ALWAYSSEND; whack defaults to CERT_SENDIFASKED
+road #
+ ipsec add road
+"road": added IKEv2 connection
+road #
+ ipsec connectionstatus road
+"road": 192.1.3.209[ID_NULL]...%opportunisticgroup[ID_NULL]; unrouted; my_ip=unset; their_ip=unset;
+"road":   host: oriented; local: 192.1.3.209; remote: %opportunisticgroup;
+"road":   my_updown=ipsec _updown;
+"road":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"road":   our auth:null, their auth:null, our autheap:none, their autheap:none;
+"road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"road":   sec_label:unset;
+"road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"road":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"road":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"road":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP;
+"road":   v2-auth-hash-policy: none;
+"road":   conn_prio: 32,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"road":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"road":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
+"road":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
+"road":   nat-traversal: encapsulation:auto; keepalive:20s
+"road":   routing: unrouted;
+"road":   conn serial: $1;
+road #
+ echo "initdone"
+initdone
+road #
+ ./oe-pass.sh        --negopass --failnone
+:
+:
+: OE testing: --negopass --failnone oe.negopass-.failnone
+:
+:
+: --negopass --failnone RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --failnone LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --failnone TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failnone TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --failnone ESTABLISH
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+up
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+Bare Shunt list:
+ 
+: --negopass --failnone SHUTDOWN
+"road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+: --negopass --failnone NO STATES
+: --negopass --failnone NO SHUNTS
+Bare Shunt list:
+ 
+: --negopass --failnone TRAP POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ ./oe-fail-ike.sh    --negopass --failnone
+:
+:
+: OE testing: --negopass --failnone --ike aes oe.negopass-.failnone-.ike-aes
+:
+:
+: --negopass --failnone --ike aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --failnone --ike aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --failnone --ike aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failnone --ike aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --failnone --ike aes NEGOTIATION KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+: --negopass --failnone --ike aes NEGOTIATION PING
+up
+: --negopass --failnone --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+: --negopass --failnone --ike aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failnone --ike aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+: --negopass --failnone --ike aes FAILURE STATES -- NONE
+: --negopass --failnone --ike aes FAILURE PING
+road #
+ ./oe-fail-child.sh  --negopass --failnone
+:
+:
+: OE testing: --negopass --failnone --esp aes oe.negopass-.failnone-.esp-aes
+:
+:
+: --negopass --failnone --esp aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --failnone --esp aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --failnone --esp aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failnone --esp aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --failnone --esp aes NEGOTIATION SHUNT
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failnone --esp aes WAIT FOR IKE_AUTH TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+: --negopass --failnone --esp aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failnone --esp aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+: --negopass --failnone --esp aes FAILURE STATES -- NONE
+#1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+: --negopass --failnone --esp aes FAILURE PING
+road #
+ ./oe-pass.sh        --negopass --faildrop
+:
+:
+: OE testing: --negopass --faildrop oe.negopass-.faildrop
+:
+:
+: --negopass --faildrop RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --faildrop LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --faildrop TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --faildrop TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --faildrop ESTABLISH
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+up
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+Bare Shunt list:
+ 
+: --negopass --faildrop SHUTDOWN
+"road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+: --negopass --faildrop NO STATES
+: --negopass --faildrop NO SHUNTS
+Bare Shunt list:
+ 
+: --negopass --faildrop TRAP POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ ./oe-fail-ike.sh    --negopass --faildrop
+:
+:
+: OE testing: --negopass --faildrop --ike aes oe.negopass-.faildrop-.ike-aes
+:
+:
+: --negopass --faildrop --ike aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --faildrop --ike aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --faildrop --ike aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --faildrop --ike aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --faildrop --ike aes NEGOTIATION KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+: --negopass --faildrop --ike aes NEGOTIATION PING
+up
+: --negopass --faildrop --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+: --negopass --faildrop --ike aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --faildrop --ike aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
+: --negopass --faildrop --ike aes FAILURE STATES -- NONE
+: --negopass --faildrop --ike aes FAILURE PING
+down
+road #
+ ./oe-fail-child.sh  --negopass --faildrop
+:
+:
+: OE testing: --negopass --faildrop --esp aes oe.negopass-.faildrop-.esp-aes
+:
+:
+: --negopass --faildrop --esp aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --faildrop --esp aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --faildrop --esp aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --faildrop --esp aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --faildrop --esp aes NEGOTIATION SHUNT
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --faildrop --esp aes WAIT FOR IKE_AUTH TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+: --negopass --faildrop --esp aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --faildrop --esp aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
+: --negopass --faildrop --esp aes FAILURE STATES -- NONE
+#1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+: --negopass --faildrop --esp aes FAILURE PING
+down
+road #
+ ./oe-pass.sh        --negopass --failpass
+:
+:
+: OE testing: --negopass --failpass oe.negopass-.failpass
+:
+:
+: --negopass --failpass RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --failpass LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --failpass TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failpass TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --failpass ESTABLISH
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+up
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+Bare Shunt list:
+ 
+: --negopass --failpass SHUTDOWN
+"road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+: --negopass --failpass NO STATES
+: --negopass --failpass NO SHUNTS
+Bare Shunt list:
+ 
+: --negopass --failpass TRAP POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ ./oe-fail-ike.sh    --negopass --failpass
+:
+:
+: OE testing: --negopass --failpass --ike aes oe.negopass-.failpass-.ike-aes
+:
+:
+: --negopass --failpass --ike aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --failpass --ike aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --failpass --ike aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failpass --ike aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --failpass --ike aes NEGOTIATION KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+: --negopass --failpass --ike aes NEGOTIATION PING
+up
+: --negopass --failpass --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+: --negopass --failpass --ike aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+: --negopass --failpass --ike aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+: --negopass --failpass --ike aes FAILURE STATES -- NONE
+: --negopass --failpass --ike aes FAILURE PING
+up
+road #
+ ./oe-fail-child.sh  --negopass --failpass
+:
+:
+: OE testing: --negopass --failpass --esp aes oe.negopass-.failpass-.esp-aes
+:
+:
+: --negopass --failpass --esp aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negopass --failpass --esp aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negopass --failpass --esp aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negopass --failpass --esp aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negopass --failpass --esp aes NEGOTIATION SHUNT
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+: --negopass --failpass --esp aes WAIT FOR IKE_AUTH TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+: --negopass --failpass --esp aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+: --negopass --failpass --esp aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+: --negopass --failpass --esp aes FAILURE STATES -- NONE
+#1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+: --negopass --failpass --esp aes FAILURE PING
+up
+road #
+ ./oe-pass.sh        --negodrop --failnone
+:
+:
+: OE testing: --negodrop --failnone oe.negodrop-.failnone
+:
+:
+: --negodrop --failnone RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --failnone LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --failnone TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --failnone ESTABLISH
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+up
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+Bare Shunt list:
+ 
+: --negodrop --failnone SHUTDOWN
+"road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+: --negodrop --failnone NO STATES
+: --negodrop --failnone NO SHUNTS
+Bare Shunt list:
+ 
+: --negodrop --failnone TRAP POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ ./oe-fail-ike.sh    --negodrop --failnone
+:
+:
+: OE testing: --negodrop --failnone --ike aes oe.negodrop-.failnone-.ike-aes
+:
+:
+: --negodrop --failnone --ike aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --failnone --ike aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --failnone --ike aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone --ike aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --failnone --ike aes NEGOTIATION KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 3850432 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone --ike aes NEGOTIATION PING
+down
+: --negodrop --failnone --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+: --negodrop --failnone --ike aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone --ike aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+: --negodrop --failnone --ike aes FAILURE STATES -- NONE
+: --negodrop --failnone --ike aes FAILURE PING
+road #
+ ./oe-fail-child.sh  --negodrop --failnone
+:
+:
+: OE testing: --negodrop --failnone --esp aes oe.negodrop-.failnone-.esp-aes
+:
+:
+: --negodrop --failnone --esp aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --failnone --esp aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --failnone --esp aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone --esp aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --failnone --esp aes NEGOTIATION SHUNT
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone --esp aes WAIT FOR IKE_AUTH TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+: --negodrop --failnone --esp aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failnone --esp aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+: --negodrop --failnone --esp aes FAILURE STATES -- NONE
+#1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+: --negodrop --failnone --esp aes FAILURE PING
+road #
+ ./oe-pass.sh        --negodrop --faildrop
+:
+:
+: OE testing: --negodrop --faildrop oe.negodrop-.faildrop
+:
+:
+: --negodrop --faildrop RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --faildrop LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --faildrop TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --faildrop ESTABLISH
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+up
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+Bare Shunt list:
+ 
+: --negodrop --faildrop SHUTDOWN
+"road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+: --negodrop --faildrop NO STATES
+: --negodrop --faildrop NO SHUNTS
+Bare Shunt list:
+ 
+: --negodrop --faildrop TRAP POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ ./oe-fail-ike.sh    --negodrop --faildrop
+:
+:
+: OE testing: --negodrop --faildrop --ike aes oe.negodrop-.faildrop-.ike-aes
+:
+:
+: --negodrop --faildrop --ike aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --faildrop --ike aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --faildrop --ike aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop --ike aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --faildrop --ike aes NEGOTIATION KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 3850432 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop --ike aes NEGOTIATION PING
+down
+: --negodrop --faildrop --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+: --negodrop --faildrop --ike aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop --ike aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
+: --negodrop --faildrop --ike aes FAILURE STATES -- NONE
+: --negodrop --faildrop --ike aes FAILURE PING
+down
+road #
+ ./oe-fail-child.sh  --negodrop --faildrop
+:
+:
+: OE testing: --negodrop --faildrop --esp aes oe.negodrop-.faildrop-.esp-aes
+:
+:
+: --negodrop --faildrop --esp aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --faildrop --esp aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --faildrop --esp aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop --esp aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --faildrop --esp aes NEGOTIATION SHUNT
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop --esp aes WAIT FOR IKE_AUTH TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+: --negodrop --faildrop --esp aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 0 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --faildrop --esp aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %drop    oe-failing $2
+: --negodrop --faildrop --esp aes FAILURE STATES -- NONE
+#1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+: --negodrop --faildrop --esp aes FAILURE PING
+down
+road #
+ ./oe-pass.sh        --negodrop --failpass
+:
+:
+: OE testing: --negodrop --failpass oe.negodrop-.failpass
+:
+:
+: --negodrop --failpass RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --failpass LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --failpass TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failpass TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --failpass ESTABLISH
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+up
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 3850432 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid 16397 mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850432 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+#2: "road#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+Bare Shunt list:
+ 
+: --negodrop --failpass SHUTDOWN
+"road#192.1.2.23/32"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+: --negodrop --failpass NO STATES
+: --negodrop --failpass NO SHUNTS
+Bare Shunt list:
+ 
+: --negodrop --failpass TRAP POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+road #
+ ./oe-fail-ike.sh    --negodrop --failpass
+:
+:
+: OE testing: --negodrop --failpass --ike aes oe.negodrop-.failpass-.ike-aes
+:
+:
+: --negodrop --failpass --ike aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --failpass --ike aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --failpass --ike aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failpass --ike aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --failpass --ike aes NEGOTIATION KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out action block priority 3850432 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failpass --ike aes NEGOTIATION PING
+down
+: --negodrop --failpass --ike aes WAIT FOR IKE_SA_INIT TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: deleting IKE SA (sent IKE_SA_INIT request)
+: --negodrop --failpass --ike aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+: --negodrop --failpass --ike aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+: --negodrop --failpass --ike aes FAILURE STATES -- NONE
+: --negodrop --failpass --ike aes FAILURE PING
+up
+road #
+ ./oe-fail-child.sh  --negodrop --failpass
+:
+:
+: OE testing: --negodrop --failpass --esp aes oe.negodrop-.failpass-.esp-aes
+:
+:
+: --negodrop --failpass --esp aes RESTARTING PLUTO
+Redirecting to: [initsystem]
+Redirecting to: [initsystem]
+: --negodrop --failpass --esp aes LOADING CONNECTION
+ ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
+"road": added IKEv2 connection
+listening for IKE messages
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/road"
+: --negodrop --failpass --esp aes TRAPPING 192.1.2.23/32
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 3850433 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+: --negodrop --failpass --esp aes TRIGGERING OE
+fired and forgotten
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+: --negodrop --failpass --esp aes NEGOTIATION SHUNT
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+: --negodrop --failpass --esp aes WAIT FOR IKE_AUTH TO FAIL
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+: --negodrop --failpass --esp aes FAILURE KERNEL POLICY
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+: --negodrop --failpass --esp aes FAILURE SHUNTS
+Bare Shunt list:
+ 
+192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing $2
+: --negodrop --failpass --esp aes FAILURE STATES -- NONE
+#1: "road#192.1.2.23/32"[1] ...192.1.2.23:500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+: --negodrop --failpass --esp aes FAILURE PING
+up
+road #
+ 

@@ -165,7 +165,7 @@ if ! ${pluto} ; then
     SKIP as pluto was not running
 else
     log=${log_prefix}.kernel-state.log
-    $(dirname $0)/ipsec-kernel-state.sh | tee -a ${log}
+    ipsec _kernel state | tee -a ${log}
     if test -s ${log} ; then
 	FAIL
     else
@@ -180,7 +180,7 @@ if ! ${pluto} ; then
     SKIP as pluto was not running
 else
     log=${log_prefix}.kernel-policy.log
-    $(dirname $0)/ipsec-kernel-policy.sh | tee -a ${log}
+    ipsec _kernel policy | tee -a ${log}
     if test -s ${log} ; then
 	FAIL
     else
@@ -244,7 +244,7 @@ fi
 CHECK system logs
 
 if test -x /usr/bin/journalctl ; then
-    journalctl --dmesg --boot -0 > ${log_prefix}.journal.log
+    journalctl --boot -0 > ${log_prefix}.journal.log
     PASS
 else
     SKIP

@@ -39,7 +39,7 @@ done
 : systemd-networkd
 :
 
-. /bench/testing/kvm/systemd/transmogrify.sh
+. /bench/testing/kvm/systemd/transmogrify-networkd.sh
 
 systemctl disable NetworkManager
 
@@ -162,6 +162,7 @@ sysctl -q -p || true # still expected to fail!
 TITLE run unbound-keygen once
 
 systemctl start unbound-keygen.service
+systemctl disable unbound-anchor.timer
 
 
 TITLE Clobber some annoying services
@@ -196,12 +197,12 @@ done
 
 TITLE save the latest kernels
 
-# Saved kernel is called linux-transmogrify.* so that cleaning up
-# transmogrify cleans up the files
+# Saved kernel is called linux.transmogrify.* so that cleaning up
+# transmogrify, using make uninstall, cleans up the files
 kernel=$(ls /boot/vmlinuz-* | sort -V | tail -1)
-cp -vf ${kernel} /pool/${PREFIX}linux-transmogrify.vmlinuz
+cp -vf ${kernel} /pool/${PREFIX}linux.vmlinuz
 ramfs=$(ls /boot/initramfs-*.img | sort -V | tail -1)
-cp -vf ${ramfs} /pool/${PREFIX}linux-transmogrify.initramfs
+cp -vf ${ramfs} /pool/${PREFIX}linux.initramfs
 
 
 TITLE finally ... SElinux fixup with errors in /tmp/chcon.log
