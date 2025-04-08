@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 road #
- echo 3 >/proc/sys/net/core/xfrm_acq_expires
-road #
  cp policies/* /etc/ipsec.d/policies/
 road #
  echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
