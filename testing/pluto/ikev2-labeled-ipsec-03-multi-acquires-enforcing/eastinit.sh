@@ -7,6 +7,5 @@ setenforce 1
 # get pluto going
 ipsec start
 ../../guestbin/wait-until-pluto-started
-echo 1 > /proc/sys/net/core/xfrm_acq_expires
 ipsec auto --add labeled
 echo "initdone"

@@ -15,8 +15,6 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- echo 1 > /proc/sys/net/core/xfrm_acq_expires
-east #
  ipsec auto --add labeled
 "labeled": added IKEv2 connection
 east #
