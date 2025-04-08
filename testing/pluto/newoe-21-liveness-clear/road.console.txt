@@ -9,10 +9,6 @@ Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- # ensure for tests acquires expire before our failureshunt=2m
-road #
- echo 30 > /proc/sys/net/core/xfrm_acq_expires
-road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 10' -- ipsec auto --status
