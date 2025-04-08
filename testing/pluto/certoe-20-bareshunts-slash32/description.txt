@@ -1,3 +1,0 @@
-Testing the specific /32 OE conn turning into bare shunt, turning back into
-a /32 %trap
-

@@ -723,7 +723,6 @@ kvmplutotest	certoe-18-pass-then-go-slash32		wip
 kvmplutotest	certoe-18-pass-then-go-slash24-keyingtries1	good
 kvmplutotest	certoe-18-pass-then-go-slash32-keyingtries1	wip	github:530
 kvmplutotest	certoe-19-bareshunts-expire		good
-kvmplutotest	certoe-20-bareshunts-slash32		good	github/1042
 
 kvmplutotest	rawrsaoe-asymmetric-nat			good
 kvmplutotest	rawrsaoe-asymmetric-01			good
