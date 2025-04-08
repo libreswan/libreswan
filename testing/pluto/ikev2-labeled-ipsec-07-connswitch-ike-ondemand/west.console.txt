@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- echo 3 > /proc/sys/net/core/xfrm_acq_expires
-west #
  # install selinux; generated in OUTPUT by east
 west #
  semodule -i OUTPUT/ipsecspd-full-perm.pp
