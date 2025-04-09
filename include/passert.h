@@ -28,19 +28,11 @@
 #include "where.h"
 #include "lset.h"
 #include "logjam.h"
+#include "global_logger.h"
 
 struct logger;
 
 /* our versions of assert: log result */
-
-/*
- * Preferred: can log with prefix to whack from a thread.
- */
-
-#ifndef GLOBAL_LOGGER
-extern struct logger global_logger;
-#define GLOBAL_LOGGER &global_logger
-#endif
 
 /*
  * XXX: GCC, at least can't understand that LLOG_PASSERT_JAMBUF()

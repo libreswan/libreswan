@@ -46,9 +46,13 @@ static struct {
 	uint8_t bytes[SHA2_256_DIGEST_SIZE];
 } ike_spi_secret;
 
-void refresh_ike_spi_secret(void)
+void refresh_ike_spi_secret(struct logger *logger)
 {
 	get_rnd_bytes(&ike_spi_secret, sizeof(ike_spi_secret));
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s:", __func__);
+		LDBG_thing(logger, ike_spi_secret);
+	}
 }
 
 /*

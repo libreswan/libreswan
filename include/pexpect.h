@@ -34,6 +34,8 @@
 #include "impair.h"
 #include "logjam.h"
 
+#include "global_logger.h"
+
 struct jambuf;
 
 /*

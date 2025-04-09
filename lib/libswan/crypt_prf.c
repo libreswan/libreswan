@@ -114,8 +114,8 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
 					const char *key_name, PK11SymKey *key,
 					struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s init %s-key@%p (size %zd)",
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s PRF %s init %s-key@%p (size %zd)",
 			name, prf_desc->common.fqn,
 			key_name, key, sizeof_symkey(key));
 		LDBG_symkey(logger, name, key_name, key);
@@ -133,8 +133,8 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name,
 void crypt_prf_update_symkey(struct crypt_prf *prf,
 			     const char *name, PK11SymKey *update)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s update %s-key@%p (size %zd)",
+	if (LDBGP(DBG_CRYPT, prf->logger)) {
+		LDBG_log(prf->logger, "%s PRF %s update %s-key@%p (size %zd)",
 			prf->name, prf->desc->common.fqn,
 			name, update, sizeof_symkey(update));
 		LDBG_symkey(prf->logger, prf->name, name, update);
@@ -145,11 +145,11 @@ void crypt_prf_update_symkey(struct crypt_prf *prf,
 void crypt_prf_update_byte(struct crypt_prf *prf,
 			   const char *name, uint8_t update)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s update %s 0x%"PRIx8" (%"PRIu8")",
-			prf->name, prf->desc->common.fqn,
-			name, update, update);
-		DBG_dump_thing(NULL, update);
+	if (LDBGP(DBG_CRYPT, prf->logger)) {
+		LDBG_log(prf->logger, "%s PRF %s update %s 0x%"PRIx8" (%"PRIu8")",
+			 prf->name, prf->desc->common.fqn,
+			 name, update, update);
+		LDBG_thing(prf->logger, update);
 	}
 	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, &update, 1);
 }
@@ -157,15 +157,15 @@ void crypt_prf_update_byte(struct crypt_prf *prf,
 void crypt_prf_update_bytes(struct crypt_prf *prf,
 			    const char *name, const void *update, size_t sizeof_update)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, prf->logger)) {
 		/*
 		 * XXX: don't log UPDATE using @POINTER syntax as it
 		 * might be bogus - confusing refcnt.awk.
 		 */
-		DBG_log("%s PRF %s update %s (%p length %zu)",
-			prf->name, prf->desc->common.fqn,
-			name, update, sizeof_update);
-		DBG_dump(NULL, update, sizeof_update);
+		LDBG_log(prf->logger, "%s PRF %s update %s (%p length %zu)",
+			 prf->name, prf->desc->common.fqn,
+			 name, update, sizeof_update);
+		LDBG_dump(prf->logger, update, sizeof_update);
 	}
 	prf->desc->prf_mac_ops->digest_bytes(prf->context, name, update, sizeof_update);
 }
@@ -175,7 +175,7 @@ PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp)
 	struct crypt_prf *prf = *prfp;
 	struct logger *logger = (*prfp)->logger;
 	PK11SymKey *tmp = prf->desc->prf_mac_ops->final_symkey(&prf->context);
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, prf->logger)) {
 		LDBG_log(logger, "%s PRF %s final-key@%p (size %zu)",
 			 (*prfp)->name, (*prfp)->desc->common.fqn,
 			 tmp, sizeof_symkey(tmp));
@@ -191,11 +191,11 @@ void crypt_prf_final_bytes(struct crypt_prf **prfp,
 {
 	struct crypt_prf *prf = *prfp;
 	prf->desc->prf_mac_ops->final_bytes(&prf->context, bytes, sizeof_bytes);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s final-bytes@%p (length %zu)",
-			(*prfp)->name, (*prfp)->desc->common.fqn,
-			bytes, sizeof_bytes);
-		DBG_dump(NULL, bytes, sizeof_bytes);
+	if (LDBGP(DBG_CRYPT, prf->logger)) {
+		LDBG_log(prf->logger, "%s PRF %s final-bytes@%p (length %zu)",
+			 (*prfp)->name, (*prfp)->desc->common.fqn,
+			 bytes, sizeof_bytes);
+		LDBG_dump(prf->logger, bytes, sizeof_bytes);
 	}
 	pfree(*prfp);
 	*prfp = prf = NULL;
@@ -219,11 +219,11 @@ struct crypt_mac crypt_prf_final_mac(struct crypt_prf **prfp, const struct integ
 	passert(prf->desc->prf_output_size <= sizeof(output.ptr/*array*/));
 	prf->desc->prf_mac_ops->final_bytes(&prf->context, output.ptr,
 					    prf->desc->prf_output_size);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s PRF %s final length %zu",
-			(*prfp)->name, (*prfp)->desc->common.fqn,
-			output.len);
-		DBG_dump_hunk(NULL, output);
+	if (LDBGP(DBG_CRYPT, prf->logger)) {
+		LDBG_log(prf->logger, "%s PRF %s final length %zu",
+			 (*prfp)->name, (*prfp)->desc->common.fqn,
+			 output.len);
+		LDBG_hunk(prf->logger, output);
 	}
 	/* clean up */
 	pfree(*prfp);

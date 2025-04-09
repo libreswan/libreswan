@@ -174,11 +174,6 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
-#ifndef GLOBAL_LOGGER
-extern struct logger global_logger;
-#define GLOBAL_LOGGER &global_logger
-#endif
-
 struct logger {
 	/* support up to two whacks */
 	struct fd *whackfd[2];
@@ -330,7 +325,6 @@ void DBG_dump(const char *label, const void *p, size_t len);
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		DBG_dump(LABEL, hunk_->ptr, hunk_->len);		\
 	}
-#define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
 /*
  * XXX: unlike dbg_dump() et.al., these don't take a prefix; instead

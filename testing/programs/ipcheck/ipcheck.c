@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 	ip_info_check();
 	ip_protoport_check();
 	ip_selector_check(logger);
-	ip_sockaddr_check();
+	ip_sockaddr_check(logger);
 	ip_port_check();
 	ip_port_range_check();
 	ip_cidr_check();

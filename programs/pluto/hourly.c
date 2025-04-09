@@ -34,8 +34,8 @@ static void refresh_secrets(struct logger *logger)
 	 * Generate the secret value for responder cookies, and
 	 * schedule an event for refresh.
 	 */
-	refresh_ike_spi_secret();
-	refresh_v2_cookie_secret();
+	refresh_ike_spi_secret(logger);
+	refresh_v2_cookie_secret(logger);
 	refresh_v2_ike_session_resume(logger);
 }
 

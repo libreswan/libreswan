@@ -53,10 +53,10 @@ struct crypt_hash *crypt_hash_init(const char *name, const struct hash_desc *has
 void crypt_hash_digest_symkey(struct crypt_hash *hash,
 			      const char *name, PK11SymKey *symkey)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s digest %s-key@%p (size %zu)",
-			hash->name, hash->desc->common.fqn,
-			name, symkey, sizeof_symkey(symkey));
+	if (LDBGP(DBG_CRYPT, hash->logger)) {
+		LDBG_log(hash->logger, "%s hash %s digest %s-key@%p (size %zu)",
+			 hash->name, hash->desc->common.fqn,
+			 name, symkey, sizeof_symkey(symkey));
 		LDBG_symkey(hash->logger, hash->name, name, symkey);
 	}
 	hash->desc->hash_ops->digest_symkey(hash->context, name, symkey);
@@ -65,11 +65,11 @@ void crypt_hash_digest_symkey(struct crypt_hash *hash,
 void crypt_hash_digest_byte(struct crypt_hash *hash,
 			    const char *name, uint8_t byte)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s digest %s 0x%"PRIx8" (%"PRIu8")",
-			hash->name, hash->desc->common.fqn,
-			name, byte, byte);
-		DBG_dump_thing(NULL, byte);
+	if (LDBGP(DBG_CRYPT, hash->logger)) {
+		LDBG_log(hash->logger, "%s hash %s digest %s 0x%"PRIx8" (%"PRIu8")",
+			 hash->name, hash->desc->common.fqn,
+			 name, byte, byte);
+		LDBG_thing(hash->logger, byte);
 	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, &byte, 1);
 }
@@ -79,15 +79,15 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
 			     const void *bytes,
 			     size_t sizeof_bytes)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, hash->logger)) {
 		/*
 		 * XXX: don't log BYTES using @POINTER syntax as it
 		 * might be bogus - confusing refcnt.awk.
 		 */
-		DBG_log("%s hash %s digest %s (%p length %zu)",
-			hash->name, hash->desc->common.fqn,
-			name, bytes, sizeof_bytes);
-		DBG_dump(NULL, bytes, sizeof_bytes);
+		LDBG_log(hash->logger, "%s hash %s digest %s (%p length %zu)",
+			 hash->name, hash->desc->common.fqn,
+			 name, bytes, sizeof_bytes);
+		LDBG_dump(hash->logger, bytes, sizeof_bytes);
 	}
 	hash->desc->hash_ops->digest_bytes(hash->context, name, bytes, sizeof_bytes);
 }
@@ -99,11 +99,11 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 	/* Must be correct, else hash code can crash. */
 	passert(sizeof_bytes == hash->desc->hash_digest_size);
 	hash->desc->hash_ops->final_bytes(&hash->context, bytes, sizeof_bytes);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s final bytes@%p (length %zu)",
-			hash->name, hash->desc->common.fqn,
-			bytes, sizeof_bytes);
-		DBG_dump(NULL, bytes, sizeof_bytes);
+	if (LDBGP(DBG_CRYPT, hash->logger)) {
+		LDBG_log(hash->logger, "%s hash %s final bytes@%p (length %zu)",
+			 hash->name, hash->desc->common.fqn,
+			 bytes, sizeof_bytes);
+		LDBG_dump(hash->logger, bytes, sizeof_bytes);
 	}
 	pfree(*hashp);
 	*hashp = hash = NULL;
@@ -115,10 +115,10 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 	struct crypt_mac output = { .len = hash->desc->hash_digest_size, };
 	passert(output.len <= sizeof(output.ptr/*array*/));
 	hash->desc->hash_ops->final_bytes(&hash->context, output.ptr, output.len);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s hash %s final length %zu",
-			hash->name, hash->desc->common.fqn, output.len);
-		DBG_dump_hunk(NULL, output);
+	if (LDBGP(DBG_CRYPT, hash->logger)) {
+		LDBG_log(hash->logger, "%s hash %s final length %zu",
+			 hash->name, hash->desc->common.fqn, output.len);
+		LDBG_hunk(hash->logger, output);
 	}
 	pfree(*hashp);
 	*hashp = hash = NULL;
