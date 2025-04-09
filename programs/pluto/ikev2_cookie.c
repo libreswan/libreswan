@@ -51,11 +51,12 @@ typedef struct {
 
 static v2_cookie_t v2_cookie_secret;
 
-void refresh_v2_cookie_secret(void)
+void refresh_v2_cookie_secret(struct logger *logger)
 {
 	get_rnd_bytes(&v2_cookie_secret, sizeof(v2_cookie_secret));
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_thing("v2_cookie_secret", v2_cookie_secret);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s:", __func__);
+		LDBG_thing(logger, v2_cookie_secret);
 	}
 }
 

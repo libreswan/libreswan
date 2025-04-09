@@ -20,11 +20,11 @@
 #include "ip_info.h"
 #include "ip_protocol.h"
 
-#include "lswlog.h"		/* for DBG_dump_thing() */
+#include "lswlog.h"		/* for LDBG_thing() */
 
 #include "ipcheck.h"
 
-static void check_sockaddr_as_endpoint(void)
+static void check_sockaddr_as_endpoint(struct logger *logger)
 {
 	static const struct test {
 		int line;
@@ -123,8 +123,8 @@ static void check_sockaddr_as_endpoint(void)
 					esa.len, sizeof(esa.sa));
 			} else if (!memeq(&esa.sa, &raw.sa.sa, sizeof(esa.sa))) {
 				/* compare the entire buffer, not just size */
-				DBG_dump_thing("esa.sa", esa.sa);
-				DBG_dump_thing("sa.sa", raw.sa.sa);
+				LDBG_log(logger, "esa.sa"); LDBG_thing(logger, esa.sa);
+				LDBG_log(logger, "sa.sa"); LDBG_thing(logger, raw.sa.sa);
 				FAIL("endpoint_to_sockaddr() returned a different value");
 			}
 		} else {
@@ -136,8 +136,8 @@ static void check_sockaddr_as_endpoint(void)
 	}
 }
 
-void ip_sockaddr_check(void)
+void ip_sockaddr_check(struct logger *logger)
 {
-	check_sockaddr_as_endpoint();
+	check_sockaddr_as_endpoint(logger);
 }
 

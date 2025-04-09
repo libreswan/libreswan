@@ -325,7 +325,6 @@ void DBG_dump(const char *label, const void *p, size_t len);
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		DBG_dump(LABEL, hunk_->ptr, hunk_->len);		\
 	}
-#define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
 /*
  * XXX: unlike dbg_dump() et.al., these don't take a prefix; instead

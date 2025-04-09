@@ -416,8 +416,11 @@ stf_status main_inI1_outR1(struct state *null_st,
 
 	check_nat_traversal_vid(ike, md);
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_thing("  ICOOKIE-DUMP:", ike->sa.st_ike_spis.initiator);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "  ICOOKIE-DUMP:");
+		LDBG_thing(ike->sa.logger, ike->sa.st_ike_spis.initiator);
+		LDBG_log(ike->sa.logger, "  ICOOKIE-DUMP:");
+		LDBG_thing(ike->sa.logger, ike->sa.st_ike_spis.initiator);
 	}
 
 	if (is_instance(c)) {

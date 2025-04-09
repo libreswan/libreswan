@@ -24,7 +24,7 @@ struct msg_digest;
 struct ike_sa;
 struct child_sa;
 
-void refresh_v2_cookie_secret(void);
+void refresh_v2_cookie_secret(struct logger *logger);
 
 bool v2_rejected_initiator_cookie(struct msg_digest *md,
 				  bool me_want_cookies);

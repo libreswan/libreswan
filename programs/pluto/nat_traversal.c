@@ -108,14 +108,14 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	crypt_hash_digest_thing(ctx, "PORT", np);
 	struct crypt_mac hash = crypt_hash_final_mac(&ctx);
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log("natd_hash: hasher=%p(%d)", hasher,
-			(int)hasher->hash_digest_size);
-		DBG_dump_thing("natd_hash: icookie=", spis->initiator);
-		DBG_dump_thing("natd_hash: rcookie=", spis->responder);
-		DBG_dump_hunk("natd_hash: ip=", ap);
-		DBG_dump_thing("natd_hash: port=", np);
-		DBG_dump_hunk("natd_hash: hash=", hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "natd_hash: hasher=%p(%d)", hasher,
+			 (int)hasher->hash_digest_size);
+		LDBG_log(logger, "icookie:"); LDBG_thing(logger, spis->initiator);
+		LDBG_log(logger, "rcookie:"); LDBG_thing(logger, spis->responder);
+		LDBG_log(logger, "ip:"); LDBG_thing(logger, ap);
+		LDBG_log(logger, "port:"); LDBG_thing(logger, np);
+		LDBG_log(logger, "hash:"); LDBG_thing(logger, hash);
 	}
 	return hash;
 }
