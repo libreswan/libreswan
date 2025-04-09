@@ -41,7 +41,7 @@ void init_crypt_symkey(struct logger *logger)
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 				       NULL, 128/8, NULL);
 	PK11_FreeSlot(slot); /* reference counted */
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_symkey(logger, SPACES, "ephemeral", ephemeral_symkey);
 	}
 }
@@ -98,13 +98,13 @@ void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK
 		jam_symkey(buf, name, key);
 	}
 #if 0
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		if (is_fips_mode()) {
-			DBG_log("%s secured by FIPS", prefix);
+			LDBG_log(logger, "%s secured by FIPS", prefix);
 		} else {
 			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
 			/* NULL suppresses the dump header */
-			DBG_dump_hunk(NULL, bytes);
+			LDBG_hunk(logger, bytes);
 			free_chunk_content(&bytes);
 		}
 	}
@@ -118,44 +118,44 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			 where_t where, struct logger *logger)
 {
 #define DBG_DERIVE()							\
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 		jam_nss_ckm(buf, derive);				\
 		jam_string(buf, ":");					\
 	}								\
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 		jam_string(buf, SPACES"target: ");			\
 		jam_nss_ckm(buf, target_mechanism);			\
 	}								\
 	if (flags != 0) {						\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
 			jam_string(buf, SPACES"flags: ");		\
 			jam_nss_ckf(buf, flags);			\
 		}							\
 	}								\
 	if (key_size != 0) {						\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
 			jam(buf, SPACES "key_size: %d-bytes",		\
 			    key_size);					\
 		}							\
 	}								\
-	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {				\
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
 		jam_string(buf, SPACES"base: ");			\
 		jam_symkey(buf, "base", base_key);			\
 	}								\
 	if (operation != CKA_DERIVE) {					\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
 			jam_string(buf, SPACES"operation: ");		\
 			jam_nss_cka(buf, operation);			\
 		}							\
 	}								\
 	if (params != NULL) {						\
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {			\
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {		\
 			jam(buf, SPACES "params: %d-bytes@%p",		\
 			    params->len, params->data);			\
 		}							\
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		DBG_DERIVE();
 	}
 
@@ -260,9 +260,9 @@ static PK11SymKey *symkey_from_symkey(const char *result_name,
 	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
 	CK_ATTRIBUTE_TYPE operation = CKA_FLAGS_ONLY;
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log(SPACES "key-offset: %zd, key-size: %zd",
-			key_offset, key_size);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, SPACES "key-offset: %zd, key-size: %zd",
+			 key_offset, key_size);
 	}
 
 	return crypt_derive(base_key, derive, &param,
@@ -286,7 +286,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	}
 
 	size_t sizeof_bytes = sizeof_symkey(symkey);
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s extracting all %zd bytes of key@%p",
 			 name, sizeof_bytes, symkey);
 		LDBG_symkey(logger, name, "symkey", symkey);
@@ -326,7 +326,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	status = PK11_WrapSymKey(CKM_AES_ECB, NULL, ephemeral_key, slot_key,
 				 &wrapped_key);
 	passert(status == SECSuccess);
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "wrapper: ");
 			jam_nss_secitem(buf, &wrapped_key);
@@ -343,9 +343,9 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 	passert(status == SECSuccess);
 	passert(out_len >= sizeof_bytes);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s extracted len %d bytes at %p", name, out_len, bytes);
-		DBG_dump("unwrapped:", bytes, out_len);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s extracted len %d bytes at %p; unwrapped", name, out_len, bytes);
+		LDBG_dump(logger, bytes, out_len);
 	}
 
 	return (chunk_t) {
