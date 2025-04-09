@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	time_t timeout = atol(argv[2]);
 	curl_iface = (argv[3][0] == '\0' ? NULL : argv[3]);
 
-	chunk_t blob;
+	chunk_t blob = NULL_HUNK;
 	err = fetch_blob(url, timeout, &blob, verbose);
 	if (err != NULL) {
 		fatal(PLUTO_EXIT_FAIL, logger, "fetch failed: %s", err);
