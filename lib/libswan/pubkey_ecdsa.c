@@ -295,7 +295,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 	ldbgf(DBG_CRYPT, logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -328,11 +328,12 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 	signature.len = raw_signature.len;
 	SECITEM_FreeItem(&raw_signature, PR_FALSE/*only-data*/);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("PK11_Sign()", signature);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "signed hash:");
+		LDBG_hunk(logger, signature);
 	}
 
-	dbg("%s: signed hash", __func__);
+	ldbg(logger, "%s: signed hash", __func__);
 	return signature;
 }
 
@@ -360,7 +361,7 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		.len = hash->len,
 	};
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte raw ESCSA signature: ",
 			    raw_signature.len);
@@ -386,7 +387,7 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		return false;
 	}
 
-	dbg("%s: verified signature", __func__);
+	ldbg(logger, "%s: verified signature", __func__);
 
 	*fatal_diag = NULL;
 	return true;
@@ -419,7 +420,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 {
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -440,7 +441,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 		.data = raw_signature_data,
 	};
 	passert(raw_signature.len <= sizeof(raw_signature_data));
-	dbg("ECDSA signature.len %d", raw_signature.len);
+	ldbg(logger, "ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
@@ -494,7 +495,7 @@ static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, sh
 		.len = hash->len,
 	};
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte DER encoded ECDSA signature: ",
 			    signature_item.len);

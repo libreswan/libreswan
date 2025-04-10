@@ -348,14 +348,14 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 					       const struct hash_desc *hash_algo,
 					       struct logger *logger)
 {
-	dbg("%s: started using NSS", __func__);
+	ldbg(logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
 		return (struct hash_signature) { .len = 0, };
 	}
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -381,7 +381,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("%s: ended using NSS", __func__);
+	ldbg(logger, "%s: ended using NSS", __func__);
 	return sig;
 }
 
@@ -401,9 +401,9 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
+		LDBG_hunk(logger, *expected_hash);
 	}
 
 	/*
@@ -429,12 +429,12 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
 			       lsw_nss_get_password_context(logger)) != SECSuccess) {
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		dbg("NSS RSA verify: decrypting signature is failed");
+		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "NSS RSA verify: decrypted sig: ");
 			jam_nss_secitem(buf, &decrypted_signature);
@@ -451,7 +451,7 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 			  + decrypted_signature.len
 			  - expected_hash->len);
 	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-		dbg("RSA Signature NOT verified");
+		ldbg(logger, "RSA Signature NOT verified");
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
 		*fatal_diag = NULL;
 		return false;
@@ -487,10 +487,10 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 						     const struct hash_desc *hash_algo,
 						     struct logger *logger)
 {
-	dbg("%s: started using NSS", __func__);
+	ldbg(logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -526,7 +526,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 	memcpy(signature.ptr, signature_result.data, signature.len);
 	PORT_Free(signature_result.data);
 
-	dbg("%s: ended using NSS", __func__);
+	ldbg(logger, "%s: ended using NSS", __func__);
 	return signature;
 }
 
@@ -546,9 +546,9 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
+		LDBG_hunk(logger, *expected_hash);
 	}
 
 	/*
@@ -574,12 +574,12 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
 			       lsw_nss_get_password_context(logger)) != SECSuccess) {
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		dbg("NSS RSA verify: decrypting signature is failed");
+		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "NSS RSA verify: decrypted sig: ");
 			jam_nss_secitem(buf, &decrypted_signature);
@@ -596,7 +596,7 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 			  + decrypted_signature.len
 			  - expected_hash->len);
 	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-		dbg("RSA Signature NOT verified");
+		ldbg(logger, "RSA Signature NOT verified");
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
 		*fatal_diag = NULL;
 		return false;
@@ -631,10 +631,10 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
 {
-	dbg("%s: started using NSS", __func__);
+	ldbg(logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -674,7 +674,7 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("%s: ended using NSS", __func__);
+	ldbg(logger, "%s: ended using NSS", __func__);
 	return sig;
 }
 
@@ -694,9 +694,9 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
+		LDBG_hunk(logger, *expected_hash);
 	}
 
 	/*
@@ -714,7 +714,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 	 */
 	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
 	if (!pexpect(mech != NULL)) {
-		dbg("NSS RSA verify: hash algorithm not supported");
+		ldbg(logger, "NSS RSA verify: hash algorithm not supported");
 		/* internal error? */
 		*fatal_diag = NULL;
 		return false;
@@ -737,7 +737,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 				     &hash_mech_item, &encrypted_signature,
 				     &expected_hash_item,
 				     lsw_nss_get_password_context(logger)) != SECSuccess) {
-		dbg("NSS RSA verify: decrypting signature is failed");
+		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
