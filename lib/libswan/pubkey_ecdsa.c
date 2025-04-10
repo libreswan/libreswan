@@ -242,7 +242,8 @@ static err_t ECDSA_extract_pubkey_content(struct pubkey_content *pkc,
 }
 
 static bool ECDSA_pubkey_same(const struct pubkey_content *lhs,
-			    const struct pubkey_content *rhs)
+			      const struct pubkey_content *rhs,
+			      const struct logger *logger)
 {
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -261,8 +262,8 @@ static bool ECDSA_pubkey_same(const struct pubkey_content *lhs,
 	 */
 	bool e = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.ec.publicValue),
 			 same_secitem_as_shunk(rhs->public_key->u.ec.publicValue));
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("e did %smatch", e ? "" : "NOT ");
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "e did %smatch", e ? "" : "NOT ");
 	}
 
 	return lhs == rhs || e;

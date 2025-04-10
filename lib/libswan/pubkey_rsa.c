@@ -294,7 +294,8 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 }
 
 static bool RSA_pubkey_same(const struct pubkey_content *lhs,
-			    const struct pubkey_content *rhs)
+			    const struct pubkey_content *rhs,
+			    const struct logger *logger)
 {
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -315,9 +316,9 @@ static bool RSA_pubkey_same(const struct pubkey_content *lhs,
 			 same_secitem_as_shunk(rhs->public_key->u.rsa.publicExponent));
 	bool n = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.rsa.modulus),
 			 same_secitem_as_shunk(rhs->public_key->u.rsa.modulus));
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("n did %smatch", n ? "" : "NOT ");
-		DBG_log("e did %smatch", e ? "" : "NOT ");
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "n did %smatch", n ? "" : "NOT ");
+		LDBG_log(logger, "e did %smatch", e ? "" : "NOT ");
 	}
 
 	return lhs == rhs || (e && n);

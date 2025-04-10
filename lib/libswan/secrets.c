@@ -264,7 +264,9 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 	return NULL;
 }
 
-bool secret_pubkey_same(const struct secret *lhs, const struct secret *rhs)
+bool secret_pubkey_same(const struct secret *lhs,
+			const struct secret *rhs,
+			const struct logger *logger)
 {
 	/* should be == SECRET_PKI */
 	const struct secret_pubkey_stuff *lpk = secret_pubkey_stuff(lhs);
@@ -281,7 +283,7 @@ bool secret_pubkey_same(const struct secret *lhs, const struct secret *rhs)
 		return false;
 	}
 
-	return lpk->content.type->pubkey_same(&lpk->content, &rpk->content);
+	return lpk->content.type->pubkey_same(&lpk->content, &rpk->content, logger);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -290,6 +292,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				     const struct id *remote_id,
 				     bool asym)
 {
+	const struct logger *logger = &global_logger;
 	enum {
 		match_none = 0,
 
@@ -405,7 +408,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
-				same = secret_pubkey_same(s, best);
+				same = secret_pubkey_same(s, best, logger);
 				break;
 			case SECRET_XAUTH:
 				/*
