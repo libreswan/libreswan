@@ -1104,7 +1104,8 @@ static diag_t extract_host_end(struct host_end *host,
 				bad_case(src->pubkey_alg);
 			}
 
-			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc);
+			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
+									  logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				enum_buf pkb;

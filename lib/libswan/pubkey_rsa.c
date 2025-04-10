@@ -160,10 +160,9 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 }
 
 static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc)
+						   struct pubkey_content *pkc,
+						   const struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
-
 	/* unpack */
 	shunk_t exponent;
 	shunk_t modulus;
@@ -237,16 +236,16 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 
 	pkc->type = &pubkey_type_rsa;
 	pkc->public_key = seckey;
-	dbg_alloc("rsa->public_key", pkc->public_key, HERE);
+	ldbg_alloc(logger, "rsa->public_key", pkc->public_key, HERE);
 
 	/* generate the CKAID */
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", str_keyid(pkc->keyid));
-		DBG_dump_hunk("  n", modulus);
-		DBG_dump_hunk("  e", exponent);
-		DBG_dump_hunk("  CKAID", pkc->ckaid);
+		LDBG_log(logger, "keyid: *%s", str_keyid(pkc->keyid));
+		LDBG_log(logger, "  n:"); LDBG_hunk(logger, modulus);
+		LDBG_log(logger, "  e:"); LDBG_hunk(logger, exponent);
+		LDBG_log(logger, "  CKAID:"); LDBG_hunk(logger, pkc->ckaid);
 	}
 
 	return NULL;

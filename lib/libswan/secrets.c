@@ -1097,6 +1097,8 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 			   struct pubkey **pkp,
 			   struct pubkey_list **head)
 {
+	const struct logger *logger = &global_logger;
+
 	/*
 	 * First: unpack the raw public key.
 	 */
@@ -1122,7 +1124,8 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 &scratch_pkc);
+									 &scratch_pkc,
+									 logger);
 		if (d != NULL) {
 			return d;
 		}

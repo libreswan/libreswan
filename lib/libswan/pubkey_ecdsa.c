@@ -45,10 +45,9 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
-						     struct pubkey_content *pkc)
+						     struct pubkey_content *pkc,
+						     const struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
-
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
 		&ike_alg_dh_secp384r1,
@@ -182,7 +181,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 
 	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = seckey;
-	dbg_alloc("pkc->public_key(ecdsa)", seckey, HERE);
+	ldbg_alloc(logger, "pkc->public_key(ecdsa)", seckey, HERE);
 
 	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */

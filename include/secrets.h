@@ -158,7 +158,8 @@ struct pubkey_type {
 	void (*free_pubkey_content)(struct pubkey_content *pkc);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
 	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc);
+						   struct pubkey_content *pkc,
+						   const struct logger *logger);
 	err_t (*pubkey_content_to_ipseckey_rdata)(const struct pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
