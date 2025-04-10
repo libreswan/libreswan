@@ -1,0 +1,104 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec auto --add xauth-road-eastnet
+"xauth-road-eastnet": added IKEv1 connection
+road #
+ echo done
+done
+road #
+ ipsec whack --impair suppress_retransmits
+road #
+ ipsec whack --xauthname 'baduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
+"xauth-road-eastnet" #1: initiating IKEv1 Main Mode connection
+"xauth-road-eastnet" #1: sent Main Mode request
+"xauth-road-eastnet" #1: sent Main Mode I2
+"xauth-road-eastnet" #1: sent Main Mode I3
+"xauth-road-eastnet" #1: Peer ID is ID_FQDN: '@east'
+"xauth-road-eastnet" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
+"xauth-road-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"xauth-road-eastnet" #1: prompt for Username:
+"xauth-road-eastnet" #1: prompt for Password:
+"xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='baduser'
+"xauth-road-eastnet" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"xauth-road-eastnet" #1: Received Cisco XAUTH status: FAIL
+"xauth-road-eastnet" #1: xauth: xauth_client_ackstatus() returned STF_OK
+"xauth-road-eastnet" #1: XAUTH: aborting entire IKE Exchange
+"xauth-road-eastnet" #1: encountered fatal error in state STATE_XAUTH_I1
+"xauth-road-eastnet" #1: deleting ISAKMP SA (XAUTH_I1) and sending notification
+"xauth-road-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+road #
+ # prevent revive race, establishing two connections
+road #
+ # prevent false positive on deleting I1 or I2 by redirecting to /dev/null
+road #
+ ipsec auto --add xauth-road-eastnet > /dev/null
+road #
+ ipsec whack --xauthname 'gooduser' --xauthpass 'use1pass' --name xauth-road-eastnet --initiate
+"xauth-road-eastnet" #3: initiating IKEv1 Main Mode connection
+"xauth-road-eastnet" #3: sent Main Mode request
+"xauth-road-eastnet" #3: sent Main Mode I2
+"xauth-road-eastnet" #3: sent Main Mode I3
+"xauth-road-eastnet" #3: Peer ID is ID_FQDN: '@east'
+"xauth-road-eastnet" #3: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
+"xauth-road-eastnet" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"xauth-road-eastnet" #3: prompt for Username:
+"xauth-road-eastnet" #3: prompt for Password:
+"xauth-road-eastnet" #3: XAUTH: Answering XAUTH challenge with user='gooduser'
+"xauth-road-eastnet" #3: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"xauth-road-eastnet" #3: XAUTH: Successfully Authenticated
+"xauth-road-eastnet" #3: XAUTH completed; ModeCFG skipped as per configuration
+"xauth-road-eastnet" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+"xauth-road-eastnet" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#3 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.1.3.209/32===192.0.2.0/24}
+"xauth-road-eastnet" #4: sent Quick Mode request
+"xauth-road-eastnet" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=gooduser}
+road #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+road #
+ ipsec trafficstatus
+#4: "xauth-road-eastnet", username=gooduser, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
+road #
+ echo done
+done
+road #
+ ipsec _kernel state
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+road #
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+road #
+ grep 'HI from ' /tmp/pluto.log
+road #
+ 

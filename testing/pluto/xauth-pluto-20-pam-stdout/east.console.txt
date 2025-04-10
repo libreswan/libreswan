@@ -1,0 +1,56 @@
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
+east #
+ cp pluto.sh  /etc/pam.d/pluto.sh
+east #
+ cp pluto.pam /etc/pam.d/pluto
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add xauth-road-eastnet
+"xauth-road-eastnet": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec _kernel state
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+east #
+ grep 'HI from ' /tmp/pluto.log
+| pamauth: HI from /etc/pam.d/pluto.sh PAM_USER=baduser PAM_TYPE=auth
+| pamauth: HI from /etc/pam.d/pluto.sh PAM_USER=gooduser PAM_TYPE=auth
+| pamauth: HI from /etc/pam.d/pluto.sh PAM_USER=gooduser PAM_TYPE=account
+east #
+ 

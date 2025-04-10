@@ -1,0 +1,5 @@
+xauth test using pam_exec.so which invokes pluto.sh
+
+The script says HI, dumps the PAM environment, and then exits based on
+${PAM_USER} being bad.
+

@@ -1,0 +1,4 @@
+#%PAM-1.0
+
+auth required pam_exec.so expose_authtok stdout /etc/pam.d/pluto.sh
+account required pam_exec.so stdout /etc/pam.d/pluto.sh

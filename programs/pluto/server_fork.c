@@ -165,6 +165,8 @@ static void free_pid_entry(struct pid_entry **p)
 
 /*
  * Drain PID_ENTRY's output FD, saving output, and possibly logging.
+ *
+ * Return FALSE when there's no more output.
  */
 
 static bool drain_fd(struct pid_entry *pid_entry)
@@ -192,7 +194,7 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	}
 
 	/*
-	 * Accumulate output.
+	 * Append to output accumulated so far.
 	 */
 	shunk_t output = shunk2(buf, len);
 	append_chunk_hunk("output", &pid_entry->output, output);
@@ -200,11 +202,12 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	if (pid_entry->stream != 0 &&
 	    pid_entry->stream != NO_STREAM) {
 		/*
-		 * Split the output into lines and then send it to the log
-		 * file only.
+		 * Split the output into lines and then send it to the
+		 * log file only.
 		 *
-		 * .stream can't include WHACK/ADDCONN as they copy it
-		 * to stdout causing it to end up back here!
+		 * Can't log output to ADDCONN (and WHACK?) as, when
+		 * running under pluto, those programs the log message
+		 * to stdout, which then ends up back here.
 		 */
 		PEXPECT(pid_entry->logger, (pid_entry->stream != WHACK_STREAM &&
 					    pid_entry->stream != ALL_STREAMS));

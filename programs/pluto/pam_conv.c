@@ -35,17 +35,6 @@
 #include "log.h"
 #include "pam_conv.h"
 
-/* BEWARE: This code is multi-threaded.
- *
- * Any static object is likely shared and probably has to be protected by
- * a lock.
- * Any other shared object needs to be protected.
- * Beware of calling functions that are not thread-safe.
- *
- * Non-thread-safe functions:
- * - ??? pam_*?
- */
-
 /*
  * PAM conversation
  *
@@ -55,56 +44,65 @@
  * @param appdata_ptr Pointer to data struct (as we are using threads)
  * @return int PAM Return Code (possibly fudged)
  */
-static int pam_conv(int num_msg,
-		    const struct pam_message **msgm,
-		    struct pam_response **response,
-		    void *appdata_ptr)
+
+static int pam_conversation(int nr_messages,
+			    const struct pam_message **messages,
+			    struct pam_response **responses,
+			    void *appdata_ptr)
 {
 	struct pam_thread_arg *const arg = appdata_ptr;
 	int count = 0;
 	struct pam_response *reply;
 
-	if (num_msg <= 0)
+	if (nr_messages <= 0) {
 		return PAM_CONV_ERR;
+	}
 
 	/*
-	 *   According to pam_conv(3), caller will free(3) reply
-	 *   so we must allocate it with malloc.
+	 * According to pam_conv(3), caller will free(3) reply so we
+	 * must allocate it with malloc.
 	 */
-	reply = malloc(num_msg * sizeof(struct pam_response));
+	reply = calloc(nr_messages, sizeof(struct pam_response)); /* i.e., malloc() */
 
-	for (count = 0; count < num_msg; ++count) {
+	for (count = 0; count < nr_messages; ++count) {
+
+		const struct pam_message *message = messages[count];
+		struct pam_response *response = &reply[count];
+
 		const char *s = NULL;
-
-		switch (msgm[count]->msg_style) {
+		switch (message->msg_style) {
 		case PAM_PROMPT_ECHO_OFF:
 			s = arg->password;
 			break;
 		case PAM_PROMPT_ECHO_ON:
 			s = arg->name;
 			break;
+		case PAM_ERROR_MSG:
+			/* YES, stderr, points at stdout */
+			fprintf(stderr, "%s\n", message->msg);
+			fflush(stdout); /* redundant */
+			break;
+		case PAM_TEXT_INFO:
+			fprintf(stdout, "%s\n", message->msg);
+			/* else next fork()/exec() prints it again */
+			fflush(stdout);
+			break;
 		}
-
-		reply[count].resp_retcode = 0;
-		reply[count].resp = NULL;       /* for unhandled case */
 
 		if (s != NULL) {
 			/*
 			 * Add s to list of responses.
+			 *
 			 * According to pam_conv(3), our caller will
-			 * use free(3) to free these arguments so
-			 * we must allocate them with malloc,
+			 * use free(3) to free these arguments so we
+			 * must allocate them with malloc() et.al.,
 			 * not our own allocators.
 			 */
-			size_t len = strlen(s) + 1;
-			char *t = malloc(len);	/* must be malloced */
-
-			memcpy(t, s, len);
-			reply[count].resp = t;
+			response->resp = strdup(s); /* i.e., malloc() */
 		}
 	}
 
-	*response = reply;
+	*responses = reply;
 	return PAM_SUCCESS;
 }
 
@@ -130,15 +128,15 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 	const char *what;
 
 	/*
-	 * This do-while structure is designed to allow a logical cascade
-	 * without excessive indentation.  No actual looping happens.
-	 * Failure is handled by "break".
+	 * This do-while structure is designed to allow a logical
+	 * cascade without excessive indentation.  No actual looping
+	 * happens.  Failure is handled by "break".
 	 */
 	do {
-		struct pam_conv conv;
-
-		conv.conv = pam_conv;
-		conv.appdata_ptr = arg;
+		struct pam_conv conv = {
+			.conv = pam_conversation,
+			.appdata_ptr = arg,
+		};
 
 		what = "pam_start";
 		retval = pam_start("pluto", arg->name, &conv, &pamh);
@@ -176,10 +174,10 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 
 	/* common failure code */
 	llog(RC_LOG, logger,
-		    "%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
-		    arg->atype, what, pam_strerror(pamh, retval),
-		    arg->st_serialno, arg->c_name, arg->c_instance_serial,
-		    arg->name);
+	     "%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
+	     arg->atype, what, pam_strerror(pamh, retval),
+	     arg->st_serialno, arg->c_name, arg->c_instance_serial,
+	     arg->name);
 	pam_end(pamh, retval);
 	return false;
 }
