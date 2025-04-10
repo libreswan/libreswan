@@ -260,7 +260,8 @@ static void RSA_free_pubkey_content(struct pubkey_content *rsa)
 
 static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 					SECKEYPublicKey *seckey_public,
-					SECItem *cert_ckaid)
+					SECItem *cert_ckaid,
+					const struct logger *logger)
 {
 	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
@@ -288,7 +289,7 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 	/* now allocate */
 	pkc->type = &pubkey_type_rsa;
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("rsa->public_key", pkc->public_key, HERE);
+	ldbg_alloc(logger, "rsa->public_key", pkc->public_key, HERE);
 	pkc->ckaid = ckaid_from_secitem(cert_ckaid);
 	return NULL;
 }

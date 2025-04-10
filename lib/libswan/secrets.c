@@ -1200,8 +1200,10 @@ static err_t add_private_key(struct secret **secrets,
 			     const struct pubkey_type *type,
 			     SECKEYPrivateKey *private_key)
 {
+	const struct logger *logger = &global_logger;
+
 	struct pubkey_content content;
-	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss);
+	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss, logger);
 	if (err != NULL) {
 		return err;
 	}
@@ -1401,7 +1403,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	}
 
 	struct pubkey_content pkc = {0};
-	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss);
+	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss, logger);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		id_buf idb;

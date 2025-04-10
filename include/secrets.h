@@ -165,7 +165,9 @@ struct pubkey_type {
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
 	err_t (*extract_pubkey_content)(struct pubkey_content *pkc,
-					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
+					SECKEYPublicKey *pubkey_nss,
+					SECItem *ckaid_nss,
+					const struct logger *logger);
 	bool (*pubkey_same)(const struct pubkey_content *lhs,
 			    const struct pubkey_content *rhs,
 			    const struct logger *logger);

@@ -217,20 +217,21 @@ static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa)
 
 static err_t ECDSA_extract_pubkey_content(struct pubkey_content *pkc,
 					  SECKEYPublicKey *seckey_public,
-					  SECItem *ckaid_nss)
+					  SECItem *ckaid_nss,
+					  const struct logger *logger)
 {
 	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("pkc->public_key(ecdsa)", pkc->public_key, HERE);
+	ldbg_alloc(logger, "pkc->public_key(ecdsa)", pkc->public_key, HERE);
 	pkc->ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(pkc->ckaid.ptr, pkc->ckaid.len, &pkc->keyid);
 	passert(e == NULL);
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		ckaid_buf cb;
-		DBG_log("ECDSA keyid *%s", str_keyid(pkc->keyid));
-		DBG_log("ECDSA keyid *%s", str_ckaid(&pkc->ckaid, &cb));
+		LDBG_log(logger, "ECDSA keyid *%s", str_keyid(pkc->keyid));
+		LDBG_log(logger, "ECDSA keyid *%s", str_ckaid(&pkc->ckaid, &cb));
 	}
 
 	/*
