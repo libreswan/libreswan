@@ -10,6 +10,7 @@ v5.3 (unreleased)
   - fixed `ipsec checkcrls` [Andrew]
   - when configured, use cURL to download LDAP CRLs [Andrew]
   - verify using NSS's IPsec profile aka certificateUsageIPsec [Andrew]
+  - only verify using certificateUsageSSL{Client,Server} when USE_NSS_SSL_SECURITY_PROFILE [Andrew]
 * initsystem:
   - remove unused _stackmanager [Tuomo #2080]
 * Testing:
