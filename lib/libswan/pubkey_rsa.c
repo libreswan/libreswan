@@ -251,10 +251,11 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	return NULL;
 }
 
-static void RSA_free_pubkey_content(struct pubkey_content *rsa)
+static void RSA_free_pubkey_content(struct pubkey_content *rsa,
+				    const struct logger *logger)
 {
 	SECKEY_DestroyPublicKey(rsa->public_key);
-	dbg_free("rsa->public_key", rsa->public_key, HERE);
+	ldbg_free(logger, "rsa->public_key", rsa->public_key, HERE);
 	rsa->public_key = NULL;
 }
 

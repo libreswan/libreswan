@@ -208,9 +208,10 @@ static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content 
 	return NULL;
 }
 
-static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa)
+static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa,
+				      const struct logger *logger)
 {
-	dbg_free("ecdsa->public_key", ecdsa->public_key, HERE);
+	ldbg_free(logger, "ecdsa->public_key", ecdsa->public_key, HERE);
 	SECKEY_DestroyPublicKey(ecdsa->public_key);
 	ecdsa->public_key = NULL;
 }

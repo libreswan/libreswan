@@ -408,7 +408,7 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 		}
 
 		SECKEY_DestroyPrivateKey(pks.private_key); /* destroy reference */
-		type->free_pubkey_content(&pks.content);
+		type->free_pubkey_content(&pks.content, logger);
 
 		if (ret < 0) {
 			break;

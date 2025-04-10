@@ -998,7 +998,7 @@ void pubkey_delref_where(struct pubkey **pkp, where_t where)
 	if (pk != NULL) {
 		free_id_content(&pk->id);
 		/* algorithm-specific freeing */
-		pk->content.type->free_pubkey_content(&pk->content);
+		pk->content.type->free_pubkey_content(&pk->content, logger);
 		pfree(pk);
 	}
 }
@@ -1186,10 +1186,11 @@ struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuf
 
 void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
 {
-	struct secret_pubkey_stuff *last = delref_where(pks, &global_logger, where);
+	const struct logger *logger = &global_logger;
+	struct secret_pubkey_stuff *last = delref_where(pks, logger, where);
 	if (last != NULL) {
 		SECKEY_DestroyPrivateKey(last->private_key);
-		last->content.type->free_pubkey_content(&last->content);
+		last->content.type->free_pubkey_content(&last->content, logger);
 		pfree(last);
 	}
 }
