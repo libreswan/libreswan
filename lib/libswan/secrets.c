@@ -264,7 +264,9 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 	return NULL;
 }
 
-bool secret_pubkey_same(const struct secret *lhs, const struct secret *rhs)
+bool secret_pubkey_same(const struct secret *lhs,
+			const struct secret *rhs,
+			const struct logger *logger)
 {
 	/* should be == SECRET_PKI */
 	const struct secret_pubkey_stuff *lpk = secret_pubkey_stuff(lhs);
@@ -281,7 +283,7 @@ bool secret_pubkey_same(const struct secret *lhs, const struct secret *rhs)
 		return false;
 	}
 
-	return lpk->content.type->pubkey_same(&lpk->content, &rpk->content);
+	return lpk->content.type->pubkey_same(&lpk->content, &rpk->content, logger);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -290,6 +292,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				     const struct id *remote_id,
 				     bool asym)
 {
+	const struct logger *logger = &global_logger;
 	enum {
 		match_none = 0,
 
@@ -405,7 +408,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
-				same = secret_pubkey_same(s, best);
+				same = secret_pubkey_same(s, best, logger);
 				break;
 			case SECRET_XAUTH:
 				/*
@@ -995,7 +998,7 @@ void pubkey_delref_where(struct pubkey **pkp, where_t where)
 	if (pk != NULL) {
 		free_id_content(&pk->id);
 		/* algorithm-specific freeing */
-		pk->content.type->free_pubkey_content(&pk->content);
+		pk->content.type->free_pubkey_content(&pk->content, logger);
 		pfree(pk);
 	}
 }
@@ -1097,6 +1100,8 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 			   struct pubkey **pkp,
 			   struct pubkey_list **head)
 {
+	const struct logger *logger = &global_logger;
+
 	/*
 	 * First: unpack the raw public key.
 	 */
@@ -1122,7 +1127,8 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 &scratch_pkc);
+									 &scratch_pkc,
+									 logger);
 		if (d != NULL) {
 			return d;
 		}
@@ -1180,10 +1186,11 @@ struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuf
 
 void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
 {
-	struct secret_pubkey_stuff *last = delref_where(pks, &global_logger, where);
+	const struct logger *logger = &global_logger;
+	struct secret_pubkey_stuff *last = delref_where(pks, logger, where);
 	if (last != NULL) {
 		SECKEY_DestroyPrivateKey(last->private_key);
-		last->content.type->free_pubkey_content(&last->content);
+		last->content.type->free_pubkey_content(&last->content, logger);
 		pfree(last);
 	}
 }
@@ -1194,8 +1201,10 @@ static err_t add_private_key(struct secret **secrets,
 			     const struct pubkey_type *type,
 			     SECKEYPrivateKey *private_key)
 {
+	const struct logger *logger = &global_logger;
+
 	struct pubkey_content content;
-	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss);
+	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss, logger);
 	if (err != NULL) {
 		return err;
 	}
@@ -1395,7 +1404,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	}
 
 	struct pubkey_content pkc = {0};
-	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss);
+	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss, logger);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		id_buf idb;

@@ -155,17 +155,23 @@ struct hash_signature {
 struct pubkey_type {
 	const char *name;
 	enum secret_kind private_key_kind;
-	void (*free_pubkey_content)(struct pubkey_content *pkc);
+	void (*free_pubkey_content)(struct pubkey_content *pkc,
+				    const struct logger *logger);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
 	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc);
+						   struct pubkey_content *pkc,
+						   const struct logger *logger);
 	err_t (*pubkey_content_to_ipseckey_rdata)(const struct pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
 	err_t (*extract_pubkey_content)(struct pubkey_content *pkc,
-					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
-	bool (*pubkey_same)(const struct pubkey_content *lhs, const struct pubkey_content *rhs);
+					SECKEYPublicKey *pubkey_nss,
+					SECItem *ckaid_nss,
+					const struct logger *logger);
+	bool (*pubkey_same)(const struct pubkey_content *lhs,
+			    const struct pubkey_content *rhs,
+			    const struct logger *logger);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
 };
@@ -275,7 +281,9 @@ struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where);
 extern void pubkey_delref_where(struct pubkey **pkp, where_t where);
 #define pubkey_delref(PKP) pubkey_delref_where(PKP, HERE)
 
-bool secret_pubkey_same(const struct secret *lhs, const struct secret *rhs);
+bool secret_pubkey_same(const struct secret *lhs,
+			const struct secret *rhs,
+			const struct logger *logger);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_file,
 				       struct logger *logger);

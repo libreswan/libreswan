@@ -381,7 +381,7 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		type->extract_pubkey_content(&pks.content, pubk, ckaid_nss);
+		type->extract_pubkey_content(&pks.content, pubk, ckaid_nss, logger);
 
 		/*
 		 * Only count private keys that get processed.
@@ -408,7 +408,7 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 		}
 
 		SECKEY_DestroyPrivateKey(pks.private_key); /* destroy reference */
-		type->free_pubkey_content(&pks.content);
+		type->free_pubkey_content(&pks.content, logger);
 
 		if (ret < 0) {
 			break;

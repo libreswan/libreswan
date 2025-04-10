@@ -45,10 +45,9 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
-						     struct pubkey_content *pkc)
+						     struct pubkey_content *pkc,
+						     const struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
-
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
 		&ike_alg_dh_secp384r1,
@@ -182,7 +181,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 
 	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = seckey;
-	dbg_alloc("pkc->public_key(ecdsa)", seckey, HERE);
+	ldbg_alloc(logger, "pkc->public_key(ecdsa)", seckey, HERE);
 
 	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
@@ -209,29 +208,31 @@ static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content 
 	return NULL;
 }
 
-static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa)
+static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa,
+				      const struct logger *logger)
 {
-	dbg_free("ecdsa->public_key", ecdsa->public_key, HERE);
+	ldbg_free(logger, "ecdsa->public_key", ecdsa->public_key, HERE);
 	SECKEY_DestroyPublicKey(ecdsa->public_key);
 	ecdsa->public_key = NULL;
 }
 
 static err_t ECDSA_extract_pubkey_content(struct pubkey_content *pkc,
 					  SECKEYPublicKey *seckey_public,
-					  SECItem *ckaid_nss)
+					  SECItem *ckaid_nss,
+					  const struct logger *logger)
 {
 	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("pkc->public_key(ecdsa)", pkc->public_key, HERE);
+	ldbg_alloc(logger, "pkc->public_key(ecdsa)", pkc->public_key, HERE);
 	pkc->ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(pkc->ckaid.ptr, pkc->ckaid.len, &pkc->keyid);
 	passert(e == NULL);
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		ckaid_buf cb;
-		DBG_log("ECDSA keyid *%s", str_keyid(pkc->keyid));
-		DBG_log("ECDSA keyid *%s", str_ckaid(&pkc->ckaid, &cb));
+		LDBG_log(logger, "ECDSA keyid *%s", str_keyid(pkc->keyid));
+		LDBG_log(logger, "ECDSA keyid *%s", str_ckaid(&pkc->ckaid, &cb));
 	}
 
 	/*
@@ -243,7 +244,8 @@ static err_t ECDSA_extract_pubkey_content(struct pubkey_content *pkc,
 }
 
 static bool ECDSA_pubkey_same(const struct pubkey_content *lhs,
-			    const struct pubkey_content *rhs)
+			      const struct pubkey_content *rhs,
+			      const struct logger *logger)
 {
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -262,8 +264,8 @@ static bool ECDSA_pubkey_same(const struct pubkey_content *lhs,
 	 */
 	bool e = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.ec.publicValue),
 			 same_secitem_as_shunk(rhs->public_key->u.ec.publicValue));
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("e did %smatch", e ? "" : "NOT ");
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "e did %smatch", e ? "" : "NOT ");
 	}
 
 	return lhs == rhs || e;
@@ -293,7 +295,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 	ldbgf(DBG_CRYPT, logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -326,11 +328,12 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 	signature.len = raw_signature.len;
 	SECITEM_FreeItem(&raw_signature, PR_FALSE/*only-data*/);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("PK11_Sign()", signature);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "signed hash:");
+		LDBG_hunk(logger, signature);
 	}
 
-	dbg("%s: signed hash", __func__);
+	ldbg(logger, "%s: signed hash", __func__);
 	return signature;
 }
 
@@ -358,7 +361,7 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		.len = hash->len,
 	};
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte raw ESCSA signature: ",
 			    raw_signature.len);
@@ -384,7 +387,7 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		return false;
 	}
 
-	dbg("%s: verified signature", __func__);
+	ldbg(logger, "%s: verified signature", __func__);
 
 	*fatal_diag = NULL;
 	return true;
@@ -417,7 +420,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 {
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -438,7 +441,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 		.data = raw_signature_data,
 	};
 	passert(raw_signature.len <= sizeof(raw_signature_data));
-	dbg("ECDSA signature.len %d", raw_signature.len);
+	ldbg(logger, "ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
@@ -492,7 +495,7 @@ static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, sh
 		.len = hash->len,
 	};
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte DER encoded ECDSA signature: ",
 			    signature_item.len);

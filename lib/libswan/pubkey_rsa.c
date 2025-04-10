@@ -160,10 +160,9 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 }
 
 static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc)
+						   struct pubkey_content *pkc,
+						   const struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
-
 	/* unpack */
 	shunk_t exponent;
 	shunk_t modulus;
@@ -237,31 +236,33 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 
 	pkc->type = &pubkey_type_rsa;
 	pkc->public_key = seckey;
-	dbg_alloc("rsa->public_key", pkc->public_key, HERE);
+	ldbg_alloc(logger, "rsa->public_key", pkc->public_key, HERE);
 
 	/* generate the CKAID */
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", str_keyid(pkc->keyid));
-		DBG_dump_hunk("  n", modulus);
-		DBG_dump_hunk("  e", exponent);
-		DBG_dump_hunk("  CKAID", pkc->ckaid);
+		LDBG_log(logger, "keyid: *%s", str_keyid(pkc->keyid));
+		LDBG_log(logger, "  n:"); LDBG_hunk(logger, modulus);
+		LDBG_log(logger, "  e:"); LDBG_hunk(logger, exponent);
+		LDBG_log(logger, "  CKAID:"); LDBG_hunk(logger, pkc->ckaid);
 	}
 
 	return NULL;
 }
 
-static void RSA_free_pubkey_content(struct pubkey_content *rsa)
+static void RSA_free_pubkey_content(struct pubkey_content *rsa,
+				    const struct logger *logger)
 {
 	SECKEY_DestroyPublicKey(rsa->public_key);
-	dbg_free("rsa->public_key", rsa->public_key, HERE);
+	ldbg_free(logger, "rsa->public_key", rsa->public_key, HERE);
 	rsa->public_key = NULL;
 }
 
 static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 					SECKEYPublicKey *seckey_public,
-					SECItem *cert_ckaid)
+					SECItem *cert_ckaid,
+					const struct logger *logger)
 {
 	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
@@ -289,13 +290,14 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 	/* now allocate */
 	pkc->type = &pubkey_type_rsa;
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("rsa->public_key", pkc->public_key, HERE);
+	ldbg_alloc(logger, "rsa->public_key", pkc->public_key, HERE);
 	pkc->ckaid = ckaid_from_secitem(cert_ckaid);
 	return NULL;
 }
 
 static bool RSA_pubkey_same(const struct pubkey_content *lhs,
-			    const struct pubkey_content *rhs)
+			    const struct pubkey_content *rhs,
+			    const struct logger *logger)
 {
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -316,9 +318,9 @@ static bool RSA_pubkey_same(const struct pubkey_content *lhs,
 			 same_secitem_as_shunk(rhs->public_key->u.rsa.publicExponent));
 	bool n = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.rsa.modulus),
 			 same_secitem_as_shunk(rhs->public_key->u.rsa.modulus));
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("n did %smatch", n ? "" : "NOT ");
-		DBG_log("e did %smatch", e ? "" : "NOT ");
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "n did %smatch", n ? "" : "NOT ");
+		LDBG_log(logger, "e did %smatch", e ? "" : "NOT ");
 	}
 
 	return lhs == rhs || (e && n);
@@ -346,14 +348,14 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 					       const struct hash_desc *hash_algo,
 					       struct logger *logger)
 {
-	dbg("%s: started using NSS", __func__);
+	ldbg(logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
 		return (struct hash_signature) { .len = 0, };
 	}
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -379,7 +381,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("%s: ended using NSS", __func__);
+	ldbg(logger, "%s: ended using NSS", __func__);
 	return sig;
 }
 
@@ -399,9 +401,9 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
+		LDBG_hunk(logger, *expected_hash);
 	}
 
 	/*
@@ -427,12 +429,12 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
 			       lsw_nss_get_password_context(logger)) != SECSuccess) {
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		dbg("NSS RSA verify: decrypting signature is failed");
+		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "NSS RSA verify: decrypted sig: ");
 			jam_nss_secitem(buf, &decrypted_signature);
@@ -449,7 +451,7 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 			  + decrypted_signature.len
 			  - expected_hash->len);
 	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-		dbg("RSA Signature NOT verified");
+		ldbg(logger, "RSA Signature NOT verified");
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
 		*fatal_diag = NULL;
 		return false;
@@ -485,10 +487,10 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 						     const struct hash_desc *hash_algo,
 						     struct logger *logger)
 {
-	dbg("%s: started using NSS", __func__);
+	ldbg(logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -524,7 +526,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 	memcpy(signature.ptr, signature_result.data, signature.len);
 	PORT_Free(signature_result.data);
 
-	dbg("%s: ended using NSS", __func__);
+	ldbg(logger, "%s: ended using NSS", __func__);
 	return signature;
 }
 
@@ -544,9 +546,9 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
+		LDBG_hunk(logger, *expected_hash);
 	}
 
 	/*
@@ -572,12 +574,12 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
 			       lsw_nss_get_password_context(logger)) != SECSuccess) {
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
-		dbg("NSS RSA verify: decrypting signature is failed");
+		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "NSS RSA verify: decrypted sig: ");
 			jam_nss_secitem(buf, &decrypted_signature);
@@ -594,7 +596,7 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 			  + decrypted_signature.len
 			  - expected_hash->len);
 	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-		dbg("RSA Signature NOT verified");
+		ldbg(logger, "RSA Signature NOT verified");
 		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
 		*fatal_diag = NULL;
 		return false;
@@ -629,10 +631,10 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
 {
-	dbg("%s: started using NSS", __func__);
+	ldbg(logger, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
+		ldbg(logger, "no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
@@ -672,7 +674,7 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("%s: ended using NSS", __func__);
+	ldbg(logger, "%s: ended using NSS", __func__);
 	return sig;
 }
 
@@ -692,9 +694,9 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
+		LDBG_hunk(logger, *expected_hash);
 	}
 
 	/*
@@ -712,7 +714,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 	 */
 	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
 	if (!pexpect(mech != NULL)) {
-		dbg("NSS RSA verify: hash algorithm not supported");
+		ldbg(logger, "NSS RSA verify: hash algorithm not supported");
 		/* internal error? */
 		*fatal_diag = NULL;
 		return false;
@@ -735,7 +737,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 				     &hash_mech_item, &encrypted_signature,
 				     &expected_hash_item,
 				     lsw_nss_get_password_context(logger)) != SECSuccess) {
-		dbg("NSS RSA verify: decrypting signature is failed");
+		ldbg(logger, "NSS RSA verify: decrypting signature is failed");
 		*fatal_diag = NULL;
 		return false;
 	}
