@@ -219,6 +219,8 @@ void llog_dump(lset_t rc_flags,
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
 	}
+#define llog_thing(RC_FLAGS, LOGGER, THING)			\
+	llog_dump(RC_FLAGS, LOGGER, &(THING), sizeof(THING))
 
 void llog_base64_bytes(lset_t rc_flags,
 		       const struct logger *log,
@@ -319,41 +321,31 @@ void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
-void DBG_dump(const char *label, const void *p, size_t len);
+
 #define DBG_dump_hunk(LABEL, HUNK)					\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		DBG_dump(LABEL, hunk_->ptr, hunk_->len);		\
+		LDBG_log(&global_logger, "%s", LABEL);			\
+		LDBG_hunk(&global_logger, HUNK);			\
 	}
 
-/*
- * XXX: unlike dbg_dump() et.al., these don't take a prefix; instead
- * caller should log that separately.
- */
-#define LDBG_dump(LOGGER, DATA, LEN)				\
-	{							\
-		llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN);	\
-	}
-#define LDBG_hunk(LOGGER, HUNK)						\
-	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(DEBUG_STREAM, LOGGER, hunk_->ptr, hunk_->len); \
-	}
-#define LDBG_thing(LOGGER, THING)					\
-	{								\
-		llog_dump(DEBUG_STREAM, LOGGER, &(THING), sizeof(THING)); \
-	}
+#define LDBG_dump(LOGGER, DATA, LEN)			\
+	llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN)
+#define LDBG_hunk(LOGGER, HUNK)				\
+	llog_hunk(DEBUG_STREAM, LOGGER, HUNK);
+#define LDBG_thing(LOGGER, THING)			\
+	llog_thing(DEBUG_STREAM, LOGGER, THING);
+
 #define ldbg_dump(LOGGER, DATA, LEN)			\
 	{						\
 		if (DBGP(DBG_BASE)) {			\
 			LDBG_dump(LOGGER, DATA, LEN);	\
 		}					\
 	}
-#define ldbg_hunk(LOGGER, HUNK)					\
-	{							\
-		if (DBGP(DBG_BASE)) {				\
-			LDBG_hunk(LOGGER, HUNK);		\
-		}						\
+#define ldbg_hunk(LOGGER, HUNK)				\
+	{						\
+		if (DBGP(DBG_BASE)) {			\
+			LDBG_hunk(LOGGER, HUNK);	\
+		}					\
 	}
 #define ldbg_thing(LOGGER, THING)			\
 	{						\

@@ -162,6 +162,8 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 						   struct pubkey_content *pkc)
 {
+	const struct logger *logger = &global_logger;
+
 	/* unpack */
 	shunk_t exponent;
 	shunk_t modulus;
@@ -219,9 +221,9 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
 	}
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("computed rsa CKAID",
-			 nss_ckaid->data, nss_ckaid->len);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "computed rsa CKAID");
+		LDBG_dump(logger, nss_ckaid->data, nss_ckaid->len);
 	}
 	pkc->ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);

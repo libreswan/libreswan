@@ -41,11 +41,11 @@ size_t jam_HEX_bytes(struct jambuf *buf, const void *ptr, size_t size)
 }
 
 /*
- * Roughly mimic DBG_dump(): use a space separator; and after the 4th
+ * Roughly mimic LDBG_dump(): use a space separator; and after the 4th
  * byte, a double space separator.
  *
- * This is so that values dumped by DBG_dump() and lswlog_bytes() have
- * the same 'look' - make searching and grepping easier.
+ * This is so that values dumped by LDBG_dump() and lswlog_bytes()
+ * have the same 'look' - make searching and grepping easier.
  */
 
 size_t jam_dump_bytes(struct jambuf *buf, const void *bytes, size_t size)

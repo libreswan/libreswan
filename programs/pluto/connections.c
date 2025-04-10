@@ -1007,7 +1007,7 @@ static diag_t extract_host_end(struct host_end *host,
 					llog(RC_LOG, logger,
 					     "error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					DBG_dump_hunk(NULL, host_config->ca);
+					LDBG_hunk(logger, host_config->ca);
 				}
 			}
 

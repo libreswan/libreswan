@@ -62,9 +62,9 @@ bool unpack_KE(chunk_t *dest, const char *val_name,
 		return false;
 	}
 	replace_chunk(dest, pbs_in_left(pbs), val_name);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("DH public value received:");
-		DBG_dump_hunk(NULL, *dest);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "DH public value received:");
+		LDBG_hunk(logger, *dest);
 	}
 	return true;
 }

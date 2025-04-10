@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
 
 	FOR_EACH_ELEMENT(t, tests) {
 		shunk_t vid = shunk1(t->vid);
-		if (DBGP(DBG_TMI)) {
+		if (LDBGP(DBG_TMI, logger)) {
 			enum_buf tidb;
-			DBG_log("looking up %d [%s]",
-				t->id, str_vendorid(t->id, &tidb));
-			DBG_dump_hunk(NULL, vid);
+			LDBG_log(logger, "looking up %d [%s]",
+				 t->id, str_vendorid(t->id, &tidb));
+			LDBG_hunk(logger, vid);
 		}
 
 		enum known_vendorid id = vendorid_by_shunk(vid);

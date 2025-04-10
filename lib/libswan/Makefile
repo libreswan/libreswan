@@ -181,7 +181,6 @@ OBJS += debug.o
 OBJS += impair.o
 
 OBJS += ldbg.o
-OBJS += DBG_dump.o
 OBJS += DBG_log.o
 
 OBJS += llog_base64_bytes.o

@@ -222,9 +222,9 @@ static chunk_t calc_ppk_confirmation(const struct prf_desc *prf_desc,
 	crypt_prf_update_hunk(prf, "SPIr", THING_AS_SHUNK(ike_spis->responder));
 	struct crypt_mac ppk_confirmation = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)", ppk_confirmation.ptr,
-			prf_desc->prf_output_size);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger,"prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)");
+		LDBG_dump(logger, ppk_confirmation.ptr, prf_desc->prf_output_size);
 	}
 
 	symkey_delref(logger, "PPK Keying material", &ppk_key);

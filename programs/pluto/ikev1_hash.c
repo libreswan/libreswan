@@ -65,6 +65,8 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 		   msgid_t msgid, const uint8_t *roof)
 {
+	const struct logger *logger = &global_logger;
+
 	if (fixup->impair >= IMPAIR_EMIT_ROOF) {
 		unsigned byte = fixup->impair - IMPAIR_EMIT_ROOF;
 		llog(RC_LOG, fixup->logger,
@@ -119,9 +121,9 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 	/* stuff result into hash_data */
 	passert(fixup->hash_data.len == st->st_oakley.ta_prf->prf_output_size);
 	crypt_prf_final_bytes(&hash, fixup->hash_data.ptr, fixup->hash_data.len);
-	if (DBGP(DBG_BASE)) {
-		DBG_log("%s HASH(%u):", fixup->what, fixup->hash_type);
-		DBG_dump_hunk(NULL, fixup->hash_data);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "%s HASH(%u):", fixup->what, fixup->hash_type);
+		LDBG_hunk(logger, fixup->hash_data);
 	}
 }
 
@@ -166,15 +168,15 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
 	/* does it match? */
 	if (!hunk_eq(received_hash, computed_hash)) {
-		if (DBGP(DBG_BASE)) {
-			DBG_log("received %s HASH_DATA:", what);
-			DBG_dump_hunk(NULL, received_hash);
+		if (LDBGP(DBG_BASE, st->logger)) {
+			LDBG_log(st->logger, "received %s HASH_DATA:", what);
+			LDBG_hunk(st->logger, received_hash);
 		}
 		log_state(RC_LOG, st,
 		       "received '%s' message HASH(%u) data does not match computed value",
 		       what, type);
 		return false;
 	}
-	dbg("received '%s' message HASH(%u) data ok", what, type);
+	ldbg(st->logger, "received '%s' message HASH(%u) data ok", what, type);
 	return true;
 }

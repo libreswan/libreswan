@@ -47,6 +47,8 @@
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
 						     struct pubkey_content *pkc)
 {
+	const struct logger *logger = &global_logger;
+
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
 		&ike_alg_dh_secp384r1,
@@ -182,12 +184,14 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 	pkc->public_key = seckey;
 	dbg_alloc("pkc->public_key(ecdsa)", seckey, HERE);
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("ECDSA Key:");
-		DBG_log("keyid: *%s", str_keyid(pkc->keyid));
-		DBG_dump("pub", ec->publicValue.data, ec->publicValue.len);
-		DBG_dump_hunk("CKAID", pkc->ckaid);
+		LDBG_log(logger, "ECDSA Key:");
+		LDBG_log(logger, "keyid: *%s", str_keyid(pkc->keyid));
+		LDBG_log(logger, "pub");
+		LDBG_dump(logger, ec->publicValue.data, ec->publicValue.len);
+		LDBG_log(logger, "CKAID");
+		LDBG_hunk(logger, pkc->ckaid);
 	}
 
 	return NULL;
@@ -313,8 +317,9 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 			       "ECDSA SGN_Digest function failed");
 		return (struct hash_signature) { .len = 0, };
 	}
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("SGN_Digest()", raw_signature.data, raw_signature.len);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "SGN_Digest() returned:");
+		LDBG_dump(logger, raw_signature.data, raw_signature.len);
 	}
 	passert(sizeof(signature.ptr/*array*/) >= raw_signature.len);
 	memcpy(signature.ptr, raw_signature.data, raw_signature.len);
@@ -437,8 +442,9 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 
 	/* create the raw signature */
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "PK11_Sign() returned:");
+		LDBG_dump(logger, raw_signature.data, raw_signature.len);
 	}
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */

@@ -177,9 +177,9 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	bool found_remote = false;
 
 	for (const struct payload_digest *p = hd; p != NULL; p = p->next) {
-		if (DBGP(DBG_BASE)) {
-			DBG_dump("received NAT-D:", p->pbs.cur,
-				 pbs_left(&p->pbs));
+		if (LDBGP(DBG_BASE, st->logger)) {
+			LDBG_log(st->logger, "received NAT-D:");
+			LDBG_dump(st->logger, p->pbs.cur, pbs_left(&p->pbs));
 		}
 
 		shunk_t left = pbs_in_left(&p->pbs);

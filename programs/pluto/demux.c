@@ -293,17 +293,17 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 
 	if (md != NULL) {
 
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			endpoint_buf sb;
 			endpoint_buf lb;
-			DBG_log("*received %zu bytes from %s on %s %s using %s",
-				pbs_in_all(&md->packet_pbs).len,
-				str_endpoint(&md->sender, &sb),
-				md->iface->ip_dev->real_device_name,
-				str_endpoint(&md->iface->local_endpoint, &lb),
-				md->iface->io->protocol->name);
+			LDBG_log(logger, "*received %zu bytes from %s on %s %s using %s",
+				 pbs_in_all(&md->packet_pbs).len,
+				 str_endpoint(&md->sender, &sb),
+				 md->iface->ip_dev->real_device_name,
+				 str_endpoint(&md->iface->local_endpoint, &lb),
+				 md->iface->io->protocol->name);
 			shunk_t packet = pbs_in_all(&md->packet_pbs);
-			DBG_dump_hunk(NULL, packet);
+			LDBG_hunk(logger, packet);
 		}
 
 		pstats_ike_bytes.in += pbs_in_all(&md->packet_pbs).len;

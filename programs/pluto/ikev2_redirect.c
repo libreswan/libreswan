@@ -453,9 +453,11 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		if (len > 0)
 			return "unexpected extra bytes in Notify data after GW data - nonce should have been omitted";
 	} else if (nonce->len != len || !memeq(nonce->ptr, input_pbs.cur, len)) {
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk("expected nonce", *nonce);
-			DBG_dump("received nonce", input_pbs.cur, len);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "expected nonce");
+			LDBG_hunk(logger, *nonce);
+			LDBG_log(logger, "received nonce");
+			LDBG_dump(logger, input_pbs.cur, len);
 		}
 		return "received nonce does not match our expected nonce Ni (spoofed packet?)";
 	}

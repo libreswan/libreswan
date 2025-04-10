@@ -2328,6 +2328,8 @@ int pbs_peek_byte(const struct pbs_in *ins)
 
 diag_t pbs_in_shunk(struct pbs_in *ins, size_t len, shunk_t *shunk, const char *name)
 {
+	const struct logger *logger = &global_logger;
+
 	if (pbs_left(ins) < len) {
 		return diag("less than %zu bytes left to get %s from %s",
 			    len, name, ins->name);
@@ -2337,10 +2339,10 @@ diag_t pbs_in_shunk(struct pbs_in *ins, size_t len, shunk_t *shunk, const char *
 		.ptr = ins->cur,
 		.len = len,
 	};
-	if (DBGP(DBG_BASE)) {
-		DBG_log("parsing %zu raw bytes of %s into %s",
-			len, ins->name, name);
-		DBG_dump_hunk(NULL, *shunk);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "parsing %zu raw bytes of %s into %s",
+			 len, ins->name, name);
+		LDBG_hunk(logger, *shunk);
 	}
 	ins->cur += len;
 	return NULL;
@@ -2898,15 +2900,17 @@ static bool space_for(struct pbs_out *outs, size_t len, const char *what, const 
 
 bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char *name)
 {
+	const struct logger *logger = &global_logger;
+
 	if (!space_for(outs, len, "raw", name, HERE)) {
 		/* already logged */
 		return false;
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		DBG_log("emitting %zu raw bytes of %s into %s", len, name, outs->name);
 		if (len > 16) { /* arbitrary */
-			DBG_dump(NULL, bytes, len);
+			LDBG_dump(logger, bytes, len);
 		} else {
 			LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 				jam(buf, "%s: ", name);

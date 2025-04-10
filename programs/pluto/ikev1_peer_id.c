@@ -257,9 +257,9 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 		 */
 		if (pbs_left(hash_pbs) != hash.len ||
 			!memeq(hash_pbs->cur, hash.ptr, hash.len)) {
-			if (DBGP(DBG_CRYPT)) {
-				DBG_dump("received HASH:",
-					 hash_pbs->cur, pbs_left(hash_pbs));
+			if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+				LDBG_log(ike->sa.logger, "received HASH:");
+				LDBG_dump(ike->sa.logger, hash_pbs->cur, pbs_left(hash_pbs));
 			}
 			llog(RC_LOG, ike->sa.logger,
 			     "received Hash Payload does not match computed value");

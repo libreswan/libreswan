@@ -269,8 +269,8 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		 */
 		llog(LOG_STREAM/*not-whack*/, logger,
 		     "add keyid %s", msg->keyid);
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk(NULL, msg->keyval);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_hunk(logger, msg->keyval);
 		}
 
 		/* add the public key */

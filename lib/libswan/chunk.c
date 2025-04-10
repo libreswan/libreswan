@@ -17,7 +17,7 @@
 
 #include "chunk.h"
 #include "lswalloc.h"
-#include "lswlog.h"	/* for DBG_dump() */
+#include "lswlog.h"		/* for LDBG_dump() */
 #include <stdlib.h>		/* for strtoul() */
 
 const chunk_t empty_chunk = NULL_HUNK;

@@ -550,14 +550,14 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 				ifp->ip_dev->real_device_name);
 		}
 
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			if (packet_len > 0) {
-				DBG_log("rejected packet:");
-				DBG_dump(NULL, buffer, packet_len);
+				LDBG_log(logger, "rejected packet:");
+				LDBG_dump(logger, buffer, packet_len);
 			}
-			DBG_log("control:");
-			DBG_dump(NULL, emh.msg_control,
-				 emh.msg_controllen);
+			LDBG_log(logger, "control:");
+			LDBG_dump(logger, emh.msg_control,
+				  emh.msg_controllen);
 		}
 
 		struct state *sender = find_likely_sender((size_t) packet_len,
@@ -570,9 +570,9 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		 * Perhaps in 2.2.18/2.4.0.
 		 */
 		passert(emh.msg_name == &from.sa);
-		if (DBGP(DBG_BASE)) {
-			DBG_log("name:");
-			DBG_dump(NULL, emh.msg_name, emh.msg_namelen);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "name:");
+			LDBG_dump(logger, emh.msg_name, emh.msg_namelen);
 		}
 
 		const struct ip_info *afi = aftoinfo(from.sa.sa.sa_family);

@@ -156,9 +156,9 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 								   g_xy, protocol, SPI,
 								   Ni_b, Nr_b, required_keymat,
 								   logger);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s.%s() returns:", prf_desc->prf_ikev1_ops->backend, __func__);
-		DBG_dump_hunk(NULL, result);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "%s.%s() returns:", prf_desc->prf_ikev1_ops->backend, __func__);
+		LDBG_hunk(logger, result);
 	}
 	return result;
 }

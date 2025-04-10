@@ -115,14 +115,15 @@ static const struct message *save_message(struct direction_impairment *direction
 					  const struct iface_endpoint *outbound_interface,
 					  const ip_endpoint outbound_endpoint)
 {
+	const struct logger *logger = &global_logger;
 	unsigned nr = 0;
 	struct message *old;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(old, &direction->messages) {
 		nr++;
 		if (hunk_eq(old->body, message)) {
-			if (DBGP(DBG_BASE)) {
-				DBG_log("matching %u", nr);
-				DBG_dump_hunk(NULL, old->body);
+			if (LDBGP(DBG_BASE, logger)) {
+				LDBG_log(logger, "matching %u", nr);
+				LDBG_hunk(logger, old->body);
 			}
 			old->count++;
 			return old;
