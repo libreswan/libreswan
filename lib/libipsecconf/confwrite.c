@@ -51,16 +51,27 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 	}
 }
 
-static void confwrite_int(FILE *out,
-			  const char *side,
-			  unsigned int context,
-			  keyword_values values)
+static void confwrite_value(FILE *out,
+			    const char *side, /* never NULL! */
+			    enum keyword_valid type,
+			    keyword_values values)
 {
 	const struct keyword_def *k;
 
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-		if ((k->validity & KV_CONTEXT_MASK) != context)
+		/* exact match */
+		if ((k->validity & (kv_config|kv_conn)) != type) {
 			continue;
+		}
+#define KV_END_MASK (kv_leftright | kv_both)
+		if (side[0] == '\0' && (k->validity & KV_END_MASK) != LEMPTY) {
+			/* no side, so skip left|right */
+			continue;
+		}
+		if (side[0] != '\0' && (k->validity & KV_END_MASK) == LEMPTY) {
+			/* side requires left|right */
+			continue;
+		}
 
 		/* do not output aliases or things handled elsewhere */
 		if (k->validity & (kv_alias | kv_policy | kv_processed))
@@ -74,21 +85,39 @@ static void confwrite_int(FILE *out,
 #endif
 
 		switch (k->type) {
-		case kt_string:
 		case kt_also:
-		case kt_appendstring:
 		case kt_appendlist:
+			if (values[k->field].set)
+				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
+					values[k->field].string);
+			break;
+
+		case kt_string:
+		case kt_appendstring:
 		case kt_filename:
 		case kt_dirname:
-		case kt_pubkey:
+			/* these are strings */
 
+			if (values[k->field].set) {
+				const char *quote =
+					strchr(values[k->field].string, ' ') == NULL ?
+						"" : "\"";
+
+				fprintf(out, "\t%s%s=%s%s%s\n", side, k->keyname,
+					quote,
+					values[k->field].string,
+					quote);
+			}
+			break;
+
+		case kt_pubkey:
 		case kt_percent:
 		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
 		case kt_bitstring:
-			/* none of these are valid number types */
+			/* none of these are valid number/string types */
 			break;
 
 		case kt_bool:
@@ -164,82 +193,6 @@ static void confwrite_int(FILE *out,
 	}
 }
 
-static void confwrite_str(FILE *out,
-			  const char *side,
-			  unsigned int context,
-			  keyword_values values)
-{
-	const struct keyword_def *k;
-
-	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-		if ((k->validity & KV_CONTEXT_MASK) != context)
-			continue;
-
-		/* do not output aliases or settings handled elsewhere */
-		if (k->validity & (kv_alias | kv_policy | kv_processed))
-			continue;
-
-		switch (k->type) {
-		case kt_also:
-		case kt_appendlist:
-			if (values[k->field].set)
-				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
-					values[k->field].string);
-			break;
-
-		case kt_string:
-		case kt_appendstring:
-		case kt_filename:
-		case kt_dirname:
-			/* these are strings */
-
-			if (values[k->field].set) {
-				const char *quote =
-					strchr(values[k->field].string, ' ') == NULL ?
-						"" : "\"";
-
-				fprintf(out, "\t%s%s=%s%s%s\n", side, k->keyname,
-					quote,
-					values[k->field].string,
-					quote);
-			}
-			break;
-
-		case kt_pubkey:
-		case kt_ipaddr:
-		case kt_range:
-		case kt_subnet:
-		case kt_idtype:
-		case kt_bitstring:
-			break;
-
-		case kt_bool:
-		case kt_sparse_name:
-		case kt_lset:
-		case kt_host:
-			/* special enumeration */
-			break;
-
-		case kt_binary:
-		case kt_byte:
-			/* special number, not a string */
-			break;
-
-		case kt_seconds:
-		case kt_milliseconds:
-			/* special value in .deltatime */
-			break;
-
-		case kt_percent:
-		case kt_unsigned:
-			break;
-
-		case kt_obsolete:
-			break;
-		}
-	}
-}
-
 static void confwrite_side(FILE *out, struct starter_end *end)
 {
 	const char *side = end->leftright;
@@ -311,11 +264,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		fprintf(out, "\t%sprotoport=%s\n", side,
 			end->values[KSCF_PROTOPORT].string);
 
-	confwrite_int(out, side,
-		      kv_conn | kv_leftright,
-		      end->values);
-	confwrite_str(out, side, kv_conn | kv_leftright,
-		      end->values);
+	confwrite_value(out, side, kv_conn, end->values);
 }
 
 static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
@@ -332,10 +281,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	fprintf(out, "conn %s\n", conn->name);
 	confwrite_side(out, &conn->end[LEFT_END]);
 	confwrite_side(out, &conn->end[RIGHT_END]);
-	/* fprintf(out, "# confwrite_int:\n"); */
-	confwrite_int(out, "", kv_conn, conn->values);
-	/* fprintf(out, "# confwrite_str:\n"); */
-	confwrite_str(out, "", kv_conn, conn->values);
+	confwrite_value(out, "", kv_conn, conn->values);
 
 	if (conn->values[KNCF_AUTO].option != 0) {
 		sparse_buf sb;
@@ -483,8 +429,7 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	/* output config setup section */
 	if (setup) {
 		fprintf(out, "config setup\n");
-		confwrite_int(out, "", kv_config, cfg->setup);
-		confwrite_str(out, "", kv_config, cfg->setup);
+		confwrite_value(out, "", kv_config, cfg->setup);
 		fprintf(out, "\n");
 	}
 

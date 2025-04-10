@@ -302,7 +302,6 @@ enum keyword_valid {
 					 * overwritten */
 #endif
 };
-#define KV_CONTEXT_MASK (kv_config | kv_conn | kv_leftright)
 
 /*
  * Potential keyword values for fields like {left,right}rsasigkey=.
