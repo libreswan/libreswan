@@ -484,7 +484,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ah",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },
   { "phase2alg",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* obsolete */
 
-  { "phase2",  kv_conn | kv_policy,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names, NULL, },
+  { "phase2",  kv_conn,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names, NULL, },
 
   { "compress",  kv_conn,  kt_sparse_name,  KNCF_COMPRESS, &yn_option_names, NULL, },
 

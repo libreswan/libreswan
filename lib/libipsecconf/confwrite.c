@@ -74,7 +74,7 @@ static void confwrite_value(FILE *out,
 		}
 
 		/* do not output aliases or things handled elsewhere */
-		if (k->validity & (kv_alias | kv_policy | kv_processed))
+		if (k->validity & (kv_alias | kv_processed))
 			continue;
 
 #if 0
