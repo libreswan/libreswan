@@ -333,7 +333,29 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 
 		if (hunk_strcaseeq(s, k->keyname)) {
 
-			/* for instance --auth ... --to ... */
+			/*
+			 * Given a KEY with BOTH|LEFTRIGHT, BOTH
+			 * trumps LEFTRIGHT.
+			 *
+			 * For instance:
+			 *
+			 *   --key=value --to ...
+			 *
+			 * sets left-key and right-key.  To only set
+			 * one end, specify:
+			 *
+			 *   --right-key=value --to ...
+			 *
+			 */
+			if (k->validity & kv_both) {
+				left = true;
+				right = true;
+				break;
+			}
+
+			/*
+			 * For instance --auth=... --to ...
+			 */
 			if (k->validity & kv_leftright) {
 				if (default_end == LEFT_END) {
 					left = true;
@@ -343,12 +365,6 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 					right = true;
 					break;
 				}
-			}
-
-			if ((k->validity & kv_both) == kv_both) {
-				left = true;
-				right = true;
-				break;
 			}
 
 			if (k->validity & kv_leftright) {
