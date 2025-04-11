@@ -1,0 +1,27 @@
+name: check-retval
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    name: CI on Fedora
+    runs-on: ubuntu-latest
+
+    container:
+      image: fedora:latest
+
+    steps:
+      - name: Install Dependencies
+        run: |
+          dnf -y install bear clang python3-clang
+          dnf -y builddep libreswan
+      - uses: actions/checkout@v4
+        name: Checkout Repository
+      - name: Build
+        run: |
+          bear -- make -j$(nproc)
+      - name: Check
+        run: |
+          .github/check-retval.py --clang-resource-dir="$(clang -print-resource-dir)"

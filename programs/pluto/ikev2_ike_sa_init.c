@@ -462,7 +462,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED (and maybe USE_PPK_INT) Notify payload */
 	if (c->config->intermediate) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, request.pbs))
-			return STF_INTERNAL_ERROR;
+			return false;
 		if (c->config->ppk.allow) {
 			if (!emit_v2N(v2N_USE_PPK_INT, request.pbs))
 				return false;
@@ -529,7 +529,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (c->local->host.config->authby.null ||
 	    c->remote->host.config->authby.null) {
 		if (!emit_v2VID(request.pbs, VID_OPPORTUNISTIC))
-			return STF_INTERNAL_ERROR;
+			return false;
 	}
 
 	if (!close_and_record_v2_message(&request)) {
