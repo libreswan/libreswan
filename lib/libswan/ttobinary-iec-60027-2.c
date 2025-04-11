@@ -27,11 +27,11 @@
 #include "ip_encap.h"
 #include "jambuf.h"
 
-diag_t ttobinary(const char *t, uint64_t *r, bool prefix_B)
+diag_t ttobinary(const char *t, uintmax_t *r, bool byte_scale)
 {
 	*r = 0;
 	shunk_t cursor = shunk1(t);
-	const char *suffix = (prefix_B ? " Bytes" : "");
+	const char *suffix = (byte_scale ? " Bytes" : "");
 
 	uint64_t decimal, numerator, denominator;
 	err_t err = shunk_to_decimal(cursor, &cursor, &decimal,
@@ -42,7 +42,7 @@ diag_t ttobinary(const char *t, uint64_t *r, bool prefix_B)
 	}
 
 	const struct scale *scale =
-		(prefix_B ? ttobinarybytesscale(cursor) :
+		(byte_scale ? ttobinarybytesscale(cursor) :
 		 ttobinaryscale(cursor));
 
 	if (scale == NULL) {
