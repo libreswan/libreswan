@@ -287,12 +287,12 @@ enum keywords {
 enum keyword_valid {
 	kv_config = LELEM(0),           /* may be present in config section */
 	kv_conn   = LELEM(1),           /* may be present in conn section */
-	kv_leftright = LELEM(2),        /* comes in leftFOO and rightFOO variants */
-	kv_both = LELEM(2) | LELEM(3),	/* also comes in FOO meaning left-FOO and right-FOO */
-
+	kv_leftright = LELEM(2),        /* comes in left-FOO and right-FOO variants */
+	kv_both = LELEM(3),		/* FOO means left-FOO and
+					 * right-FOO */
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
-	kv_policy = LELEM(6),           /* is a policy affecting verb, processed specially */
-	kv_processed = LELEM(7),        /* is processed, do not output literal string */
+	kv_processed = LELEM(7),        /* is processed, do not output
+					 * literal string */
 	kv_duplicateok = LELEM(8),	/* within a connection, the
 					 * item can be duplicated
 					 * (notably also=) */
@@ -302,7 +302,6 @@ enum keyword_valid {
 					 * overwritten */
 #endif
 };
-#define KV_CONTEXT_MASK (kv_config | kv_conn | kv_leftright)
 
 /*
  * Potential keyword values for fields like {left,right}rsasigkey=.

@@ -614,7 +614,8 @@ static bool translate_conn(struct starter_conn *conn,
 	bool ok = true;
 
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
-		if (kw->keyword.keydef->validity & kv_leftright) {
+		if ((kw->keyword.keydef->validity & kv_leftright) ||
+		    (kw->keyword.keydef->validity & kv_both)) {
 			if (kw->keyword.keyleft) {
 				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
 							  kw, &conn->end[LEFT_END],
