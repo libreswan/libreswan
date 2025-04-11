@@ -545,7 +545,7 @@ const struct option optarg_options[] = {
 	{ "listen\0<ifaddr>", required_argument, NULL, OPT_LISTEN },
 	{ "listen-tcp\0", no_argument, NULL, OPT_LISTEN_TCP },
 	{ "no-listen-udp\0", no_argument, NULL, OPT_NO_LISTEN_UDP },
-	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
+	{ "ike-socket-bufsize\0<bytes>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
 	{ "ike-socket-no-errqueue\0", no_argument, NULL, OPT_IKE_SOCKET_NO_ERRQUEUE },
 #ifdef USE_NFLOG
 	{ "nflog-all\0<group-number>", required_argument, NULL, OPT_NFLOG_ALL },
@@ -1034,19 +1034,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
-		{
-			uintmax_t u = optarg_uintmax(logger);
-			/* 64k is max size for UDP */
-			if (u > 0xffff) {
-				optarg_fatal(logger, "too big, more than 0xffff");
-			}
-			/* but it must be >= 10?!? */
-			if (u == 0) {
-				optarg_fatal(logger, "must not be 0");
-			}
-			pluto_sock_bufsize = u;
+			pluto_sock_bufsize = optarg_udp_bufsize(logger);
 			continue;
-		}
 
 		case OPT_NO_LISTEN_UDP:	/* --no-listen-udp */
 			pluto_listen_udp = false;

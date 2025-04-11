@@ -26,6 +26,7 @@
 #include "names_constant.h"		/* for debug_lmod_info */
 #include "timescale.h"
 #include "lswversion.h"
+#include "binary-iec-60027-2.h"
 
 int optarg_index = -1;
 unsigned verbose;
@@ -223,6 +224,24 @@ uintmax_t optarg_uintmax(const struct logger *logger)
 		optarg_fatal(logger, "%s", err);
 	}
 	return val;
+}
+
+uintmax_t optarg_udp_bufsize(const struct logger *logger)
+{
+	uintmax_t u;
+	diag_t d = ttobinary(optarg, &u, /*byte-scale*/true);
+	if (d != NULL) {
+		/* leaks D; oops */
+		optarg_fatal(logger, "%s", str_diag(d));
+	}
+	/* 64k is max size for UDP */
+	if (u > 0xffff) {
+		optarg_fatal(logger, "too big, more than 64KiB");
+	}
+	if (u < 1500) {
+		optarg_fatal(logger, "too small, less than 1500");
+	}
+	return u;
 }
 
 /*

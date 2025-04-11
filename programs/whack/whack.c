@@ -388,7 +388,7 @@ enum opt {
 	OPT_DELETEUSER,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
-	OPT_IKEBUF,
+	OPT_IKE_SOCKET_BUFSIZE,
 	OPT_IKE_MSGERR,
 
 	OPT_REKEY_IKE,
@@ -693,7 +693,7 @@ const struct option optarg_options[] = {
 	{ "crash\0", required_argument, NULL, OPT_DELETECRASH },
 	{ "listen\0", no_argument, NULL, OPT_LISTEN },
 	{ "unlisten\0", no_argument, NULL, OPT_UNLISTEN },
-	{ "ike-socket-bufsize\0", required_argument, NULL, OPT_IKEBUF},
+	{ "ike-socket-bufsize\0<bytes>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE},
 	{ "ike-socket-errqueue-toggle\0", no_argument, NULL, OPT_IKE_MSGERR },
 
 	{ "redirect-to\0", required_argument, NULL, OPT_REDIRECT_TO },
@@ -1210,17 +1210,10 @@ int main(int argc, char **argv)
 			msg.keyid = optarg;	/* decoded by Pluto */
 			continue;
 
-		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
-		{
-			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole < 1500) {
-				diagw("Ignoring extremely unwise IKE buffer size choice");
-			} else {
-				msg.ike_buf_size = opt_whole;
-				msg.whack_listen = true;
-			}
+		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bytes> */
+			msg.ike_socket_bufsize = optarg_udp_bufsize(logger);
+			msg.whack_listen = true;
 			continue;
-		}
 
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
 			msg.ike_sock_err_toggle = true;
@@ -2634,7 +2627,6 @@ int main(int argc, char **argv)
 	      msg.whack_key ||
 	      msg.whack_listen ||
 	      msg.whack_unlisten ||
-	      msg.ike_buf_size ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0)) {
 		diagw("no action specified; try --help for hints");
