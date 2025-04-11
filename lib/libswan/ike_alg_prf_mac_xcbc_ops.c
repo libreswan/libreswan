@@ -67,16 +67,16 @@ static chunk_t derive_ki(const struct prf_desc *prf,
 static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			chunk_t bytes, struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("XCBC: data", bytes);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "XCBC: data:"); LDBG_hunk(logger, bytes);
 		chunk_t k = chunk_from_symkey("K", key, logger);
-		DBG_dump_hunk("XCBC: K:", k);
+		LDBG_log(logger, "XCBC: K:"); LDBG_hunk(logger, k);
 		free_chunk_content(&k);
 	}
 
 	chunk_t k1t = derive_ki(prf, key, 1, logger);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("XCBC: K1", k1t);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "XCBC: K1:"); LDBG_hunk(logger, k1t);
 	}
 	PK11SymKey *k1 = prf_key_from_hunk("k1", prf, k1t, logger);
 	free_chunk_content(&k1t);
@@ -112,11 +112,11 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	m.len = bytes.ptr + bytes.len - m.ptr;
 	if (m.len == prf->prf_key_size) {
 		chunk_t k2 = derive_ki(prf, key, 2, logger);
-		if (DBGP(DBG_CRYPT)) {
-			DBG_log("XCBC: Computing E[%d] using K2", n);
-			DBG_dump_hunk("XCBC: K2", k2);
-			DBG_dump_hunk("XCBC: E[n-1]", e);
-			DBG_dump_hunk("XCBC: M[n]", m);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log(logger, "XCBC: Computing E[%d] using K2", n);
+			LDBG_log(logger, "XCBC: K2:"); LDBG_hunk(logger, k2);
+			LDBG_log(logger, "XCBC: E[n-1]"); LDBG_hunk(logger, e);
+			LDBG_log(logger, "XCBC: M[n]:"); LDBG_hunk(logger, m);
 		}
 		/*
 		 *      a)  If the blocksize of M[n] is 128 bits:
@@ -126,17 +126,17 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		for (unsigned j = 0; j < prf->prf_key_size; j++) {
 			t.ptr[j] = m.ptr[j] ^ e.ptr[j] ^ k2.ptr[j];
 		}
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("XCBC: M[n]^E[n-1]^K2", t);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log(logger, "XCBC: M[n]^E[n-1]^K2:"); LDBG_hunk(logger, t);
 		}
 		free_chunk_content(&k2);
 	} else {
 		chunk_t k3 = derive_ki(prf, key, 3, logger);
-		if (DBGP(DBG_CRYPT)) {
-			DBG_log("Computing E[%d] using K3", n);
-			DBG_dump_hunk("XCBC: K3", k3);
-			DBG_dump_hunk("XCBC: E[n-1]", e);
-			DBG_dump_hunk("XCBC: M[n]", m);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log(logger, "Computing E[%d] using K3", n);
+			LDBG_log(logger, "XCBC: K3"); LDBG_hunk(logger, k3);
+			LDBG_log(logger, "XCBC: E[n-1]:"); LDBG_hunk(logger, e);
+			LDBG_log(logger, "XCBC: M[n]:"); LDBG_hunk(logger, m);
 		}
 		/*
 		 *      b)  If the blocksize of M[n] is less than 128 bits:
@@ -156,16 +156,16 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		for (; j < prf->prf_key_size; j++) {
 			t.ptr[j] = 0x00 ^ e.ptr[j] ^ k3.ptr[j];
 		}
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("XCBC: M[n]", m);
-			DBG_dump_hunk("XCBC: M[n]:80...^E[n-1]^K3", t);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log(logger, "XCBC: M[n]:"); LDBG_hunk(logger, m);
+			LDBG_log(logger, "XCBC: M[n]:80...^E[n-1]^K3:"); LDBG_hunk(logger, t);
 		}
 		free_chunk_content(&k3);
 	}
 
 	encrypt("K1(M[n]^E[n-1]^K2)", e, t, prf, k1, logger);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("XCBC: MAC", e);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "XCBC: MAC:"); LDBG_hunk(logger, e);
 	}
 
 	symkey_delref(logger, "k1", &k1);

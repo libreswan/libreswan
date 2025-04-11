@@ -223,12 +223,14 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 					  int id, enum_buf *b,
 					  lset_t debug)
 {
+	struct logger *logger = &global_logger;
+
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
 			/* Note: .enum_name[key] can be NULL so don't
 			 * bother with .enum_name[] lookup.  */
-			ldbgf(debug, &global_logger,
+			ldbgf(debug, logger,
 			      "%s %s algorithm %s id: %u found by %s()",
 			      ike_alg_key_name(key),
 			      type->name, alg->fqn, id, __func__);
@@ -241,11 +243,11 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	/*
 	 * Even though the lookup failed, b->buf must still be set.
 	 *
-	 * When .enum_names[] is NULL then the enum_name() call will
-	 * set it to the numeric value.
+	 * When .enum_names[] is NULL the enum_long() call will set it
+	 * to the numeric value.
 	 */
-	bool known = enum_name(type->enum_names[key], id, b);
-	ldbgf(debug, &global_logger,
+	bool known = enum_long(type->enum_names[key], id, b);
+	ldbgf(debug, logger,
 	      "%s %s id: %u, not found by %s(); %s %s",
 	      ike_alg_key_name(key), type->name, id, __func__,
 	      b->buf,
@@ -975,7 +977,7 @@ static void check_enum_name(const char *what,
 				     alg->fqn, what);
 		}
 		enum_buf enum_name;
-		bool ok = enum_name_short(enum_names, id, &enum_name);
+		bool ok = enum_short(enum_names, id, &enum_name);
 		ldbgf(DBG_CRYPT, logger, "%s id: %d enum name: %s",
 		      what, id, enum_name.buf);
 		pexpect_ike_alg_has_name(logger, HERE, alg,

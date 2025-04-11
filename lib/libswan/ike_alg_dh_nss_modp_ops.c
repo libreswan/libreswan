@@ -36,9 +36,9 @@ static void nss_modp_calc_local_secret(const struct dh_desc *group,
 	chunk_t prime = chunk_from_hex(group->modp, group->modp);
 	chunk_t base = chunk_from_hex(group->gen, group->gen);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("NSS: Value of Prime:", prime);
-		DBG_dump_hunk("NSS: Value of base:", base);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "NSS: Value of Prime:"); LDBG_hunk(logger, prime);
+		LDBG_log(logger, "NSS: Value of base:"); LDBG_hunk(logger, base);
 	}
 
 	SECKEYDHParams dh_params = {
@@ -124,7 +124,7 @@ static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
 		return diag_nss_error("shared key calculation using MODP failed");
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_symkey(logger, "newref ", "g_ir", *shared_secret);
 	}
 	return NULL;

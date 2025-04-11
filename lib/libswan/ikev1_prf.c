@@ -20,8 +20,8 @@
 #include "ikev1_prf.h"
 #include "ike_alg.h"
 #include "ike_alg_prf_ikev1_ops.h"
-#include "crypt_symkey.h"		/* for DBG_symkey() */
-#include "lswlog.h"			/* for DBGP() et.al. */
+#include "crypt_symkey.h"		/* for LDBG_symkey() */
+#include "lswlog.h"			/* for LDBGP() et.al. */
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
@@ -34,7 +34,7 @@ PK11SymKey *ikev1_signature_skeyid(const struct prf_desc *prf_desc,
 				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
 				   struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
@@ -51,7 +51,7 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct prf_desc *prf_desc,
 					chunk_t Ni, chunk_t Nr,
 					struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
@@ -69,7 +69,7 @@ PK11SymKey *ikev1_skeyid_d(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
@@ -87,7 +87,7 @@ PK11SymKey *ikev1_skeyid_a(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
@@ -105,7 +105,7 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 			   chunk_t cky_i, chunk_t cky_r,
 			   struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
@@ -120,7 +120,7 @@ PK11SymKey *ikev1_appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				      unsigned required_keymat,
 				      struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		ldbg(logger, "calling %s.%s():", prf_desc->prf_ikev1_ops->backend, __func__);
 
 	}
@@ -138,7 +138,7 @@ chunk_t ikev1_section_5_keymat(const struct prf_desc *prf_desc,
 			       unsigned required_keymat,
 			       struct logger *logger)
 {
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "calling %s.%s():",
 			 prf_desc->prf_ikev1_ops->backend, __func__);
 		LDBG_symkey(logger, __func__, "SKEYID_d:", SKEYID_d);

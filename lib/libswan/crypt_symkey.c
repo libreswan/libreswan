@@ -171,7 +171,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			jam_nss_error_code(buf, PR_GetError());
 		}
 		DBG_DERIVE();
-	} else if (DBGP(DBG_REFCNT)) {
+	} else if (LDBGP(DBG_REFCNT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
@@ -308,7 +308,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 		PK11_FreeSlot(slot); /* reference counted */
 		passert(slot_key != NULL);
 	}
-	if (DBGP(DBG_REFCNT)) {
+	if (LDBGP(DBG_REFCNT, logger)) {
 	    if (slot_key == symkey) {
 		    /* output should mimic symkey_addref() */
 		    LDBG_log(logger, "%s: slot-key@%p: addref sym-key@%p",

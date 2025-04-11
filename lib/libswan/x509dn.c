@@ -543,15 +543,17 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 size_t jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
 		  bool nss_compatible)
 {
+	struct logger *logger = &global_logger;
+
 	size_t s = 0;
 	/* save start in case things screw up */
 	jampos_t pos = jambuf_get_pos(buf);
 	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible, &s);
 	if (ugh != NULL) {
 		/* error: print DN as hex string */
-		if (DBGP(DBG_BASE)) {
-			dbg("error in DN parsing: %s", ugh);
-			DBG_dump_hunk("Bad DN:", dn);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "error in DN parsing: %s; bad DN:", ugh);
+			LDBG_hunk(logger, dn);
 		}
 		/* reset the buffer */
 		jambuf_set_pos(buf, &pos);
@@ -632,6 +634,8 @@ const char *str_dn(asn1_t dn, dn_buf *dst)
 
 err_t atodn(const char *src, chunk_t *dn)
 {
+	struct logger *logger = &global_logger;
+
 	dbg("ASCII to DN <= \"%s\"", src);
 	*dn = empty_chunk;
 
@@ -836,8 +840,8 @@ err_t atodn(const char *src, chunk_t *dn)
 	END_OBJ(ASN1_SEQUENCE);	/* 0 */
 
 	*dn = clone_bytes_as_chunk(dn_buf, dn_ptr - dn_buf, "atodn");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("ASCII to DN =>", *dn);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "ASCII to DN =>"); LDBG_hunk(logger, *dn);
 	}
 	return NULL;
 

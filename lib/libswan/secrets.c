@@ -137,6 +137,8 @@ struct id_list *lsw_get_idlist(const struct secret *s)
  */
 void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize)
 {
+	struct logger *logger = &global_logger;
+
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {
 		/*
@@ -155,8 +157,7 @@ void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize)
 		 * - but wouldn't that be redundant?  The direct n==n
 		 * test would pick up the difference.
 		 */
-		ldbgf(DBG_CRYPT, &global_logger,
-		      "XXX: adjusted modulus length %zu->%zu",
+		ldbgf(DBG_CRYPT, logger, "XXX: adjusted modulus length %zu->%zu",
 		      n.len, n.len - 1);
 		n.ptr++;
 		n.len--;
@@ -306,15 +307,13 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	struct secret *best = NULL;
 
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
-		if (DBGP(DBG_BASE)) {
-			id_buf idl;
-			enum_buf kb, skb;
-			DBG_log("line %d: key type %s(%s) to type %s",
-				s->line,
-				str_enum(&secret_kind_names, kind, &kb),
-				str_id(local_id, &idl),
-				str_enum(&secret_kind_names, s->kind, &skb));
-		}
+		id_buf idl;
+		enum_buf kb, skb;
+		ldbg(logger, "line %d: key type %s(%s) to type %s",
+		     s->line,
+		     str_enum(&secret_kind_names, kind, &kb),
+		     str_id(local_id, &idl),
+		     str_enum(&secret_kind_names, s->kind, &skb));
 
 		if (s->kind != kind) {
 			dbg("  wrong kind");
@@ -362,17 +361,15 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					}
 				}
 
-				if (DBGP(DBG_BASE)) {
-					id_buf idi;
-					id_buf idl;
-					id_buf idr;
-					DBG_log("%d: compared key %s to %s / %s -> "PRI_LSET,
-						idnum,
-						str_id(&i->id, &idi),
-						str_id(local_id, &idl),
-						(remote_id == NULL ? "" : str_id(remote_id, &idr)),
-						match);
-				}
+				id_buf idi;
+				id_buf idl;
+				id_buf idr;
+				ldbg(logger, "%d: compared key %s to %s / %s -> "PRI_LSET,
+				     idnum,
+				     str_id(&i->id, &idi),
+				     str_id(local_id, &idl),
+				     (remote_id == NULL ? "" : str_id(remote_id, &idr)),
+				     match);
 			}
 
 			/*

@@ -80,7 +80,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 				  "DH ECP private key creation failed");
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
 			    (*pubk)->keyType,
@@ -100,6 +100,8 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 static shunk_t nss_ecp_local_secret_ke(const struct dh_desc *group,
 				       const SECKEYPublicKey *local_pubk)
 {
+	struct logger *logger = &global_logger;
+
 	if (group->nss_adds_ec_point_form_uncompressed) {
 		passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
 		passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
@@ -111,7 +113,7 @@ static shunk_t nss_ecp_local_secret_ke(const struct dh_desc *group,
 	 * needs to go over the wire.
 	 */
 	passert(local_pubk->u.ec.publicValue.len == group->bytes);
-	dbg("putting NSS raw CURVE25519 public key blob on wire");
+	ldbg(logger, "putting NSS raw CURVE25519 public key blob on wire");
 	return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
 }
 
