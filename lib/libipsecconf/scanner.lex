@@ -365,13 +365,15 @@ void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, st
 					right = true;
 					break;
 				}
-			}
 
-			if (k->validity & kv_leftright) {
 #if 0 /* see github#663 */
-				left = true;
-#endif
+				continue;
+#else
+				llog(RC_LOG, parser->logger,
+				     "warning: %s= is being treated as right-%s=",
+				     k->keyname, k->keyname);
 				right = true;
+#endif
 			}
 			break;
 		}
