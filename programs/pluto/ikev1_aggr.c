@@ -773,7 +773,8 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 
 	if (!v1_decode_certs(md)) {
 		llog(RC_LOG, ike->sa.logger, "X509: CERT payload bogus or revoked");
-		return false;
+		/* XXX notification is in order! */
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	/*
