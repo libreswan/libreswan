@@ -9,45 +9,6 @@ road #
 road #
  ../../guestbin/wait-until-pluto-started
 road #
- # Load and dump an ipsec.conf connection.  The whack command should
-road #
- # define something identical, it doesn't:
-road #
- #
-road #
- #   - whack, because of %opportunisticgroup sets +rKOD aka remote DNS
-road #
- #     key on-demand
-road #
- #
-road #
- #   - addconn adds CERT_ALWAYSSEND; whack defaults to CERT_SENDIFASKED
-road #
- ipsec add road
-"road": added IKEv2 connection
-road #
- ipsec connectionstatus road
-"road": 192.1.3.209[ID_NULL]...%opportunisticgroup[ID_NULL]; unrouted; my_ip=unset; their_ip=unset;
-"road":   host: oriented; local: 192.1.3.209; remote: %opportunisticgroup;
-"road":   my_updown=ipsec _updown;
-"road":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-"road":   our auth:null, their auth:null, our autheap:none, their autheap:none;
-"road":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"road":   sec_label:unset;
-"road":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"road":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
-"road":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-"road":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"road":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP;
-"road":   v2-auth-hash-policy: none;
-"road":   conn_prio: 32,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"road":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
-"road":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
-"road":   nat-traversal: encapsulation:auto; keepalive:20s
-"road":   routing: unrouted;
-"road":   conn serial: $1;
-road #
  echo "initdone"
 initdone
 road #
