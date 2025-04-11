@@ -25,6 +25,15 @@
  *
  */
 
+#include "whack_pubkey.h"
+
+#include "show.h"
+#include "log.h"
+#include "whack.h"
+#include "secrets.h"
+#include "keys.h"
+#include "ttodata.h"
+
 /*
  * Handle: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
  *
@@ -39,80 +48,65 @@
  *     invalid as public key is missing (keyval.len is 0)
  */
 
-#include "whack_pubkey.h"
-
-#include "show.h"
-#include "log.h"
-#include "whack.h"
-#include "secrets.h"
-#include "keys.h"
-
-void key_add_request(const struct whack_message *msg, struct logger *logger)
+void key_add_request(const struct whack_message *wm, struct logger *logger)
 {
-	bool given_key = msg->keyval.len > 0;
+	err_t err;
+
+	enum_buf pkb;
+	ldbg(logger, "processing key=%s addkey=%s keyid=%s pubkey_alg=%s(%d) pubkey=%s",
+	     bool_str(wm->whack_key),
+	     bool_str(wm->whack_addkey),
+	     (wm->keyid == NULL ? "" : wm->keyid),
+	     str_enum(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
+	     wm->pubkey_alg,
+	     (wm->pubkey == NULL ? "" : wm->pubkey));
+
+	if (wm->keyid == NULL) {
+		/* must be a keyid */
+		llog_pexpect(logger, HERE, "missing keyid");
+		return;
+	}
+
+	if (wm->whack_addkey && wm->pubkey == NULL) {
+		/* add requires pubkey */
+		llog_pexpect(logger, HERE, "addkey missing pubkey");
+		return;
+	}
 
 	/*
 	 * Figure out the key type.
 	 */
 
-	const struct pubkey_type *type;
-	switch (msg->pubkey_alg) {
-	case IPSECKEY_ALGORITHM_RSA:
-		type = &pubkey_type_rsa;
-		break;
-	case IPSECKEY_ALGORITHM_ECDSA:
-		type = &pubkey_type_ecdsa;
-		break;
-	case IPSECKEY_ALGORITHM_X_PUBKEY:
-		type = NULL;
-		break;
-	default:
-		if (msg->pubkey_alg != 0) {
-			llog_pexpect(logger, HERE, "unrecognized algorithm type %u", msg->pubkey_alg);
-			return;
-		}
-		type = NULL;
-	}
-
-	enum_buf pkb;
-	dbg("processing key=%s addkey=%s given_key=%s alg=%s(%d)",
-	    bool_str(msg->whack_key),
-	    bool_str(msg->whack_addkey),
-	    bool_str(given_key),
-	    str_enum(&ipseckey_algorithm_config_names, msg->pubkey_alg, &pkb),
-	    msg->pubkey_alg);
-
-	/*
-	 * Adding must have a public key.
-	 */
-	if (msg->whack_addkey && !given_key) {
-		llog(RC_LOG, logger,
-		     "error: key to add is empty (needs DNS lookup?)");
-		return;
-	}
-
-	struct id keyid; /* must free keyid */
-	err_t ugh = atoid(msg->keyid, &keyid); /* must free keyid */
-	if (ugh != NULL) {
-		llog(RC_BADID, logger,
-		     "bad --keyid \"%s\": %s", msg->keyid, ugh);
+	const struct pubkey_type *type = pubkey_alg_type(wm->pubkey_alg);
+	struct id keyid; /* must free_id_content() */
+	err = atoid(wm->keyid, &keyid);
+	if (err != NULL) {
+		llog(RC_BADID, logger, "bad --keyid \"%s\": %s", wm->keyid, err);
 		return;
 	}
 
 	/*
 	 * Delete any old key.
 	 *
+	 * No --addkey with a key means replace.
+	 *
 	 * No --addkey just means that is no existing key to delete.
 	 * For instance !add with a key means replace.
 	 */
-	if (!msg->whack_addkey) {
-		if (!given_key) {
-			/* XXX: this gets called by "add" so be silent */
+	if (!wm->whack_addkey) {
+		if (wm->pubkey == NULL) {
+			/*
+			 * XXX: this gets called by "add" so be
+			 * silent.
+			 */
 			llog(LOG_STREAM/*not-whack*/, logger,
-			     "delete keyid %s", msg->keyid);
+			     "delete keyid %s", wm->keyid);
 		}
 		delete_public_keys(&pluto_pubkeys, &keyid, type);
-		/* XXX: what about private keys; suspect not easy as not 1:1? */
+		/*
+		 * XXX: what about private keys; suspect not easy as
+		 * not 1:1?
+		 */
 	}
 
 	/*
@@ -120,31 +114,54 @@ void key_add_request(const struct whack_message *msg, struct logger *logger)
 	 *
 	 * No --addkey with a key means replace.
 	 */
- 	if (given_key) {
+ 	if (wm->pubkey != NULL) {
+
+		int base;
+		switch (wm->pubkey_alg) {
+		case IPSECKEY_ALGORITHM_RSA:
+		case IPSECKEY_ALGORITHM_ECDSA:
+			base = 0; /* figure it out */
+			break;
+		case IPSECKEY_ALGORITHM_X_PUBKEY:
+			base = 64; /* dam it */
+			break;
+		default:
+			bad_case(wm->pubkey_alg);
+		}
+
+		chunk_t rawkey = NULL_HUNK; /* must free_chunk_content() */
+		err = ttochunk(shunk1(wm->pubkey), base, &rawkey);
+		if (err != NULL) {
+			enum_buf pkb;
+			llog_error(logger, 0, "malformed %s pubkey %s: %s",
+				   str_enum(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
+				   wm->pubkey,
+				   err);
+			free_id_content(&keyid);
+			return;
+		}
 
 		/*
 		 * A key was given: add it.
 		 *
 		 * XXX: this gets called by "add" so be silent.
 		 */
-		llog(LOG_STREAM/*not-whack*/, logger,
-		     "add keyid %s", msg->keyid);
-		if (LDBGP(DBG_BASE, logger)) {
-			LDBG_hunk(logger, msg->keyval);
-		}
+		llog(LOG_STREAM/*not-whack*/, logger, "add keyid %s", wm->keyid);
+		ldbg(logger, "pubkey: %s", wm->pubkey);
 
 		/* add the public key */
 		struct pubkey *pubkey = NULL; /* must-delref */
-		diag_t d = unpack_dns_ipseckey(&keyid, PUBKEY_LOCAL, msg->pubkey_alg,
+		diag_t d = unpack_dns_ipseckey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
 					       /*install_time*/realnow(),
 					       /*until_time*/realtime_epoch,
 					       /*ttl*/0,
-					       HUNK_AS_SHUNK(msg->keyval),
+					       HUNK_AS_SHUNK(rawkey),
 					       &pubkey/*new-public-key:must-delref*/,
 					       &pluto_pubkeys);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "%s", str_diag(d));
 			pfree_diag(&d);
+			free_chunk_content(&rawkey);
 			free_id_content(&keyid);
 			return;
 		}
@@ -153,15 +170,17 @@ void key_add_request(const struct whack_message *msg, struct logger *logger)
 		bool load_needed;
 		const ckaid_t *ckaid = pubkey_ckaid(pubkey);
 		pubkey_delref(&pubkey);
-		err_t err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
+		err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
 		if (err != NULL) {
 			dbg("no private key: %s", err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			llog(LOG_STREAM/*not-whack-for-now*/, logger,
-				    "loaded private key matching CKAID %s",
-				    str_ckaid(ckaid, &ckb));
+			     "loaded private key matching CKAID %s",
+			     str_ckaid(ckaid, &ckb));
 		}
+
+		free_chunk_content(&rawkey);
 	}
 	free_id_content(&keyid);
 }

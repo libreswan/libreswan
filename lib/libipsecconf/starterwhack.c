@@ -243,49 +243,26 @@ static int starter_whack_add_pubkey(const char *leftright,
 				    const char *ctlsocket,
 				    const struct starter_conn *conn,
 				    char *keyid,
-				    const char *pubkey,
+				    char *pubkey,
 				    enum ipseckey_algorithm_type pubkey_alg,
 				    struct logger *logger)
 {
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_ADDCONN,
+		.whack_addkey = false, /* i.e., replace */
 		.whack_key = true,
 		.pubkey_alg = pubkey_alg,
 		.keyid = keyid,
+		.pubkey = pubkey,
 	};
-
-	int base;
-	switch (pubkey_alg) {
-	case IPSECKEY_ALGORITHM_RSA:
-	case IPSECKEY_ALGORITHM_ECDSA:
-		base = 0; /* figure it out */
-		break;
-	case IPSECKEY_ALGORITHM_X_PUBKEY:
-		base = 64; /* dam it */
-		break;
-	default:
-		bad_case(pubkey_alg);
-	}
-
-	chunk_t keyspace = NULL_HUNK; /* must free */
-	err_t err = ttochunk(shunk1(pubkey), base, &keyspace);
-	if (err != NULL) {
-		enum_buf pkb;
-		llog_error(logger, 0, "conn %s: %s%s malformed [%s]",
-			   conn->name, leftright,
-			   str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
-			   err);
-		return 1;
-	}
 
 	enum_buf pkb;
 	ldbg(logger, "\tsending %s %s%s=%s",
 	     conn->name, leftright,
 	     str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
 	     pubkey);
-	msg.keyval = keyspace;
+
 	int ret = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
-	free_chunk_content(&keyspace);
 
 	if (ret < 0) {
 		return ret;
@@ -513,8 +490,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	 * Save the "computed" pubkeys and IDs before the pointers in
 	 * MSG are pickled.
 	 */
-	const char *left_pubkey = msg.end[LEFT_END].pubkey;
-	const char *right_pubkey = msg.end[RIGHT_END].pubkey;
+	char *left_pubkey = msg.end[LEFT_END].pubkey;
+	char *right_pubkey = msg.end[RIGHT_END].pubkey;
 	char *left_id = msg.end[LEFT_END].id;
 	char *right_id = msg.end[RIGHT_END].id;
 

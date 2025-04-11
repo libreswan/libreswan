@@ -350,7 +350,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 	return (PICKLE_STRING(&wp->msg->name) && /* first */
 		pickle_whack_end(wp, "left", &wp->msg->end[LEFT_END], pickle, logger) &&
 		pickle_whack_end(wp, "right",&wp->msg->end[RIGHT_END], pickle, logger) &&
-		PICKLE_STRING(&wp->msg->keyid) &&
 		PICKLE_STRING(&wp->msg->ike) &&
 		PICKLE_STRING(&wp->msg->esp) &&
 		PICKLE_STRING(&wp->msg->connalias) &&
@@ -367,7 +366,8 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->ppk_ids) &&
 		PICKLE_STRING(&wp->msg->redirect_to) &&
 		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
-		PICKLE_CHUNK(&wp->msg->keyval) &&
+		PICKLE_STRING(&wp->msg->keyid) &&
+		PICKLE_STRING(&wp->msg->pubkey) &&
 		PICKLE_THINGS(&wp->msg->impairments.list, wp->msg->impairments.len) &&
 		PICKLE_STRING(&wp->msg->sec_label) &&
 		PICKLE_IP_INFO(&wp->msg->host_afi) &&

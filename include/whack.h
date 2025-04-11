@@ -404,7 +404,7 @@ struct whack_message {
 	bool whack_addkey;
 	char *keyid;	/* string 8 */
 	enum ipseckey_algorithm_type pubkey_alg;
-	chunk_t keyval;	/* chunk */
+	char *pubkey;
 
 	/* for REMOTE_HOST */
 	char *remote_host;
