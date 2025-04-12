@@ -935,6 +935,7 @@ static diag_t extract_host_end(struct host_end *host,
 			       struct logger *logger/*connection "..."*/)
 {
 	err_t err;
+	diag_t d;
 	const char *leftright = host_config->leftright;
 
 	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
@@ -1066,52 +1067,23 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free */
-		struct pubkey_content pkc;
-		if (src->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY) {
-			/* XXX: lifted from starter_whack_add_pubkey() */
-			err = ttochunk(shunk1(src->pubkey), 64/*damit*/, &keyspace);
-			if (err != NULL) {
-				enum_buf pkb;
-				return diag("%s%s invalid: %s",
-					    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-					    err);
-			}
-			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc);
-			if (d != NULL) {
-				free_chunk_content(&keyspace);
-				enum_buf pkb;
-				return diag_diag(&d, "%s%s invalid, ",
-						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-			}
-		} else {
-			/* XXX: lifted from starter_whack_add_pubkey() */
-			err = ttochunk(shunk1(src->pubkey), 0/*figure-it-out*/, &keyspace);
-			if (err != NULL) {
-				enum_buf pkb;
-				return diag("%s%s invalid: %s",
-					    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-					    err);
-			}
-			const struct pubkey_type *type;
-			switch (src->pubkey_alg) {
-			case IPSECKEY_ALGORITHM_RSA:
-				type = &pubkey_type_rsa;
-				break;
-			case IPSECKEY_ALGORITHM_ECDSA:
-				type = &pubkey_type_ecdsa;
-				break;
-			default:
-				bad_case(src->pubkey_alg);
-			}
+		err = ttochunk(shunk1(src->pubkey),
+			       (src->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? 64/*damit*/ : 0),
+			       &keyspace);
+		if (err != NULL) {
+			enum_buf pkb;
+			return diag("%s%s invalid: %s",
+				    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+				    err);
+		}
 
-			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
-									  logger);
-			if (d != NULL) {
-				free_chunk_content(&keyspace);
-				enum_buf pkb;
-				return diag_diag(&d, "%s%s invalid, ",
-						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-			}
+		struct pubkey_content pkc;
+		d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(keyspace), &pkc, logger);
+		if (d != NULL) {
+			free_chunk_content(&keyspace);
+			enum_buf pkb;
+			return diag_diag(&d, "%s%s invalid, ",
+					 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		}
 
 		passert(pkc.type != NULL);
