@@ -18,10 +18,16 @@
 #define WHACK_PUBKEY_H
 
 #include "where.h"
+#include "chunk.h"
+#include "err.h"
 
 struct whack_message;
 struct show;
 struct logger;
+enum ipseckey_algorithm_type;
+
+err_t whack_pubkey_to_chunk(enum ipseckey_algorithm_type algorithm_type,
+			    const char *pubkey_in, chunk_t *pubkey_out);
 
 void key_add_request(const struct whack_message *msg, struct logger *logger);
 

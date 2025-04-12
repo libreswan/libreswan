@@ -34,6 +34,25 @@
 #include "keys.h"
 #include "ttodata.h"
 
+err_t whack_pubkey_to_chunk(enum ipseckey_algorithm_type pubkey_alg,
+			    const char *pubkey_in, chunk_t *pubkey_out)
+{
+	int base;
+	switch (pubkey_alg) {
+	case IPSECKEY_ALGORITHM_RSA:
+	case IPSECKEY_ALGORITHM_ECDSA:
+		base = 0; /* figure it out */
+		break;
+	case IPSECKEY_ALGORITHM_X_PUBKEY:
+		base = 64; /* dam it */
+		break;
+	default:
+		bad_case(pubkey_alg);
+	}
+
+	return ttochunk(shunk1(pubkey_in), base, pubkey_out);
+}
+
 /*
  * Handle: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
  *
@@ -116,21 +135,8 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 */
  	if (wm->pubkey != NULL) {
 
-		int base;
-		switch (wm->pubkey_alg) {
-		case IPSECKEY_ALGORITHM_RSA:
-		case IPSECKEY_ALGORITHM_ECDSA:
-			base = 0; /* figure it out */
-			break;
-		case IPSECKEY_ALGORITHM_X_PUBKEY:
-			base = 64; /* dam it */
-			break;
-		default:
-			bad_case(wm->pubkey_alg);
-		}
-
-		chunk_t rawkey = NULL_HUNK; /* must free_chunk_content() */
-		err = ttochunk(shunk1(wm->pubkey), base, &rawkey);
+		chunk_t rawkey = NULL_HUNK;
+		err = whack_pubkey_to_chunk(wm->pubkey_alg, wm->pubkey, &rawkey);
 		if (err != NULL) {
 			enum_buf pkb;
 			llog_error(logger, 0, "malformed %s pubkey %s: %s",

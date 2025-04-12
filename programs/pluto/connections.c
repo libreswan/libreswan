@@ -104,6 +104,7 @@
 #include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
 #include "sparse_names.h"
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
+#include "whack_pubkey.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -1067,9 +1068,7 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free */
-		err = ttochunk(shunk1(src->pubkey),
-			       (src->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? 64/*damit*/ : 0),
-			       &keyspace);
+		err = whack_pubkey_to_chunk(src->pubkey_alg, src->pubkey, &keyspace);
 		if (err != NULL) {
 			enum_buf pkb;
 			return diag("%s%s invalid: %s",
