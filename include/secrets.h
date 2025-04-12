@@ -260,6 +260,11 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 
+diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
+				 shunk_t dnssec_pubkey,
+				 struct pubkey_content *pkc,
+				 const struct logger *logger);
+
 diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 			   enum dns_auth_level dns_auth_level,
 			   enum ipseckey_algorithm_type algorithm_type,

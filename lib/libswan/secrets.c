@@ -1091,25 +1091,14 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	return pk;
 }
 
-diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
-			   enum dns_auth_level dns_auth_level,
-			   enum ipseckey_algorithm_type algorithm_type,
-			   realtime_t install_time, realtime_t until_time,
-			   uint32_t ttl,
-			   const shunk_t dnssec_pubkey,
-			   struct pubkey **pkp,
-			   struct pubkey_list **head)
+diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
+				 const shunk_t dnssec_pubkey,
+				 struct pubkey_content *pubkey_content,
+				 const struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
-
-	/*
-	 * First: unpack the raw public key.
-	 */
-
-	struct pubkey_content scratch_pkc;
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
-		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc);
+		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, pubkey_content);
 		if (d != NULL) {
 			return d;
 		}
@@ -1127,13 +1116,37 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 &scratch_pkc,
+									 pubkey_content,
 									 logger);
 		if (d != NULL) {
 			return d;
 		}
 	}
-	passert(scratch_pkc.type != NULL);
+	passert(pubkey_content->type != NULL);
+	return NULL;
+}
+
+diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
+			   enum dns_auth_level dns_auth_level,
+			   enum ipseckey_algorithm_type algorithm_type,
+			   realtime_t install_time, realtime_t until_time,
+			   uint32_t ttl,
+			   const shunk_t dnssec_pubkey,
+			   struct pubkey **pkp,
+			   struct pubkey_list **head)
+{
+	const struct logger *logger = &global_logger;
+
+	/*
+	 * First: unpack the raw public key.
+	 */
+
+	struct pubkey_content scratch_pkc;
+	diag_t d = unpack_dns_pubkey_content(algorithm_type, dnssec_pubkey,
+					     &scratch_pkc, logger);
+	if (d != NULL) {
+		return d;
+	}
 
 	/*
 	 * Second: use extracted information to create the pubkey.
