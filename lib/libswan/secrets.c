@@ -1124,16 +1124,15 @@ diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
 	return NULL;
 }
 
-diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
-			   enum dns_auth_level dns_auth_level,
-			   enum ipseckey_algorithm_type algorithm_type,
-			   realtime_t install_time, realtime_t until_time,
-			   uint32_t ttl,
-			   const shunk_t dnssec_pubkey,
-			   struct pubkey **pkp,
-			   struct pubkey_list **head)
+diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
+			 enum dns_auth_level dns_auth_level,
+			 enum ipseckey_algorithm_type algorithm_type,
+			 realtime_t install_time, realtime_t until_time,
+			 uint32_t ttl,
+			 const shunk_t dnssec_pubkey,
+			 struct pubkey **pubkey,
+			 struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
 
 	/*
 	 * First: unpack the raw public key.
@@ -1150,17 +1149,11 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 	 * Second: use extracted information to create the pubkey.
 	 */
 
-	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level,
-					     install_time, until_time, ttl,
-					     &scratch_pkc,
-					     null_shunk,	/* raw keys have no issuer */
-					     HERE);
-	add_pubkey(pubkey, head);
-	if (pkp != NULL) {
-		*pkp = pubkey; /* return ref */
-	} else {
-		pubkey_delref(&pubkey);
-	}
+	(*pubkey) = alloc_pubkey(id, dns_auth_level,
+				 install_time, until_time, ttl,
+				 &scratch_pkc,
+				 null_shunk,	/* raw keys have no issuer */
+				 HERE);
 	return NULL;
 }
 

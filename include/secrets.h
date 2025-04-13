@@ -265,14 +265,14 @@ diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
 				 struct pubkey_content *pkc,
 				 const struct logger *logger);
 
-diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
-			   enum dns_auth_level dns_auth_level,
-			   enum ipseckey_algorithm_type algorithm_type,
-			   realtime_t install_time, realtime_t until_time,
-			   uint32_t ttl,
-			   shunk_t dnssec_pubkey,
-			   struct pubkey **pubkey,
-			   struct pubkey_list **head);
+diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
+			 enum dns_auth_level dns_auth_level,
+			 enum ipseckey_algorithm_type algorithm_type,
+			 realtime_t install_time, realtime_t until_time,
+			 uint32_t ttl,
+			 shunk_t dnssec_pubkey,
+			 struct pubkey **pubkey,
+			 struct logger *logger);
 
 void add_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
 /*add+delete-using-content*/

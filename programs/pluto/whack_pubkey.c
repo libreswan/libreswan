@@ -157,13 +157,13 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 
 		/* add the public key */
 		struct pubkey *pubkey = NULL; /* must-delref */
-		diag_t d = unpack_dns_ipseckey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
-					       /*install_time*/realnow(),
-					       /*until_time*/realtime_epoch,
-					       /*ttl*/0,
-					       HUNK_AS_SHUNK(rawkey),
-					       &pubkey/*new-public-key:must-delref*/,
-					       &pluto_pubkeys);
+		diag_t d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
+					     /*install_time*/realnow(),
+					     /*until_time*/realtime_epoch,
+					     /*ttl*/0,
+					     HUNK_AS_SHUNK(rawkey),
+					     &pubkey/*new-public-key:must-delref*/,
+					     logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -171,6 +171,9 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 			free_id_content(&keyid);
 			return;
 		}
+
+		/* possibly deleted above */
+		add_pubkey(pubkey, &pluto_pubkeys);
 
 		/* try to pre-load the private key */
 		bool load_needed;
