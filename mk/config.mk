@@ -938,20 +938,20 @@ ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
 endif
 
-# Enable NSS's SSL server and client security profiles.
+# Enable NSS's TLS server and client security profiles.
 #
 # In addition to authenticating certificates using NSS's IPsec
 # security profile (defined by RFC-4945), try to authenticate the
-# certificate using NSS's SSL client/server security profiles.
+# certificate using NSS's TLS client/server security profiles.
 #
-# v5.3 disabled the SSL profiles as testing demonstrated that the
+# v5.3 disabled the TLS profiles as testing demonstrated that the
 # NSS's IPsec security profile accepted an Extended Key Usage (EKU)
-# with either serverAuth or clientAuth (aka SSL client/server
+# with either serverAuth or clientAuth (aka TLS client/server
 # profiles).
 
-USE_NSS_SSL_SECURITY_PROFILE ?= false
-ifeq ($(USE_NSS_SSL_SECURITY_PROFILE),true)
-USERLAND_CFLAGS += -DUSE_NSS_SSL_SECURITY_PROFILE
+USE_NSS_TLS_SECURITY_PROFILE ?= false
+ifeq ($(USE_NSS_TLS_SECURITY_PROFILE),true)
+USERLAND_CFLAGS += -DUSE_NSS_TLS_SECURITY_PROFILE
 endif
 
 #
