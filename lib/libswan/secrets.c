@@ -1024,18 +1024,19 @@ void free_public_keys(struct pubkey_list **keys)
 }
 
 /*
- * XXX: this gets called, via replace_public_key() with a PK that is
- * still pointing into a cert.  Hence the "how screwed up is this?"
- * :-(
+ * XXX: this gets called, via replace_pubkey() with a PK that is still
+ * pointing into a cert.  Hence the "how screwed up is this?"  :-(
+ *
+ * XXX: Old comment?
  */
-static void install_public_key(struct pubkey **pk, struct pubkey_list **head)
+
+void add_pubkey(struct pubkey *pubkey, struct pubkey_list **head)
 {
 	struct pubkey_list *p = alloc_thing(struct pubkey_list, "pubkey entry");
 	/* install new key at front */
-	p->key = *pk;
+	p->key = pubkey_addref(pubkey);
 	p->next = *head;
 	*head = p;
-	*pk = NULL; /* stolen */
 }
 
 void delete_public_keys(struct pubkey_list **head,
@@ -1054,13 +1055,10 @@ void delete_public_keys(struct pubkey_list **head,
 	}
 }
 
-void replace_public_key(struct pubkey_list **pubkey_db,
-			struct pubkey **pk)
+void replace_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db)
 {
-	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->content.type);
-	install_public_key(pk, pubkey_db);
-	passert(*pk == NULL); /* stolen */
+	delete_public_keys(pubkey_db, &pubkey->id, pubkey->content.type);
+	add_pubkey(pubkey, pubkey_db);
 }
 
 static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
@@ -1157,11 +1155,12 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 					     &scratch_pkc,
 					     null_shunk,	/* raw keys have no issuer */
 					     HERE);
+	add_pubkey(pubkey, head);
 	if (pkp != NULL) {
-		*pkp = pubkey_addref(pubkey);
+		*pkp = pubkey; /* return ref */
+	} else {
+		pubkey_delref(&pubkey);
 	}
-	install_public_key(&pubkey, head);
-	passert(pubkey == NULL); /* stolen */
 	return NULL;
 }
 

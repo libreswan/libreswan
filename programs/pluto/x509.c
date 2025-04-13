@@ -438,7 +438,9 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 				passert(pk == NULL);
 				return;
 			}
-			replace_public_key(pubkey_db, &pk/*stolen*/);
+			replace_pubkey(pk, pubkey_db);
+			pubkey_delref(&pk);
+			PASSERT(logger, pk == NULL); /*released*/
 		}
 	}
 
@@ -480,8 +482,9 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 		return false;
 	}
 
-	replace_public_key(pubkey_db, &pk);
-	PASSERT(logger, pk == NULL); /*stolen*/
+	replace_pubkey(pk, pubkey_db);
+	pubkey_delref(&pk);
+	PASSERT(logger, pk == NULL); /*released*/
 
 	/*
 	 * Add further pubkeys using the cert's subject-alt-name aka
@@ -509,7 +512,9 @@ bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			pfree_diag(&d);
 			/* ignore? */
 		} else {
-			replace_public_key(pubkey_db, &pk2);
+			replace_pubkey(pk2, pubkey_db);
+			pubkey_delref(&pk2);
+			PASSERT(logger, pk2 == NULL); /*released*/
 		}
 	}
 	return true;

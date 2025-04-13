@@ -274,8 +274,10 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 			   struct pubkey **pubkey,
 			   struct pubkey_list **head);
 
-void replace_public_key(struct pubkey_list **pubkey_db,
-			struct pubkey **pk);
+void add_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
+/*add+delete-using-content*/
+void replace_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
+
 void delete_public_keys(struct pubkey_list **head,
 			const struct id *id,
 			const struct pubkey_type *type);
