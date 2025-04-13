@@ -1195,7 +1195,7 @@ void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
 	struct secret_pubkey_stuff *last = delref_where(pks, logger, where);
 	if (last != NULL) {
 		SECKEY_DestroyPrivateKey(last->private_key);
-		last->content.type->free_pubkey_content(&last->content, logger);
+		free_pubkey_content(&last->content, logger);
 		pfree(last);
 	}
 }
@@ -1462,4 +1462,10 @@ diag_t create_pubkey_from_cert(const struct id *id,
 	diag_t d = create_pubkey_from_cert_1(id, cert, pubkey_nss, pk, logger);
 	SECKEY_DestroyPublicKey(pubkey_nss);
 	return d;
+}
+
+void free_pubkey_content(struct pubkey_content *pubkey_content,
+			 const struct logger *logger)
+{
+	pubkey_content->type->free_pubkey_content(pubkey_content, logger);
 }

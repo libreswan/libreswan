@@ -1094,7 +1094,7 @@ static diag_t extract_host_end(struct host_end *host,
 		    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		host_config->ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
 		free_chunk_content(&keyspace);
-		pkc.type->free_pubkey_content(&pkc, logger);
+		free_pubkey_content(&pkc, logger);
 
 		/* try to pre-load the private key */
 		bool load_needed;

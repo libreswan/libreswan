@@ -51,6 +51,8 @@ struct cert;
  *
  * While this is abstracted as a SECKEYPublicKey, it can be thought of
  * as the Subject Public Key Info.
+ *
+ * Danger: this is often stolen.
  */
 
 struct pubkey_content {
@@ -59,6 +61,9 @@ struct pubkey_content {
 	ckaid_t ckaid;
 	SECKEYPublicKey *public_key;
 };
+
+void free_pubkey_content(struct pubkey_content *pubkey_content,
+			 const struct logger *logger);
 
 /*
  * private key types
