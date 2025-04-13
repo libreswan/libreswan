@@ -105,91 +105,99 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	}
 
 	/*
-	 * Delete any old key.
+	 * Delete old key.
 	 *
-	 * No --addkey with a key means replace.
+	 * No --addkey with a key means replace (see below).
 	 *
 	 * No --addkey just means that is no existing key to delete.
 	 * For instance !add with a key means replace.
 	 */
-	if (!wm->whack_addkey) {
-		if (wm->pubkey == NULL) {
-			/*
-			 * XXX: this gets called by "add" so be
-			 * silent.
-			 */
-			llog(LOG_STREAM/*not-whack*/, logger,
-			     "delete keyid %s", wm->keyid);
-		}
+	if (wm->pubkey == NULL) {
+		/*
+		 * XXX: this gets called by "add" so be
+		 * silent.
+		 */
+		llog(LOG_STREAM/*not-whack*/, logger,
+		     "delete keyid %s", wm->keyid);
 		delete_public_keys(&pluto_pubkeys, &keyid, type);
+		free_id_content(&keyid);
 		/*
 		 * XXX: what about private keys; suspect not easy as
 		 * not 1:1?
 		 */
+		return;
 	}
 
 	/*
-	 * Add the new key.
+	 * Replace old key with new.
 	 *
 	 * No --addkey with a key means replace.
 	 */
- 	if (wm->pubkey != NULL) {
 
-		chunk_t rawkey = NULL_HUNK;
-		err = whack_pubkey_to_chunk(wm->pubkey_alg, wm->pubkey, &rawkey);
-		if (err != NULL) {
-			enum_buf pkb;
-			llog_error(logger, 0, "malformed %s pubkey %s: %s",
-				   str_enum(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
-				   wm->pubkey,
-				   err);
-			free_id_content(&keyid);
-			return;
-		}
-
-		/*
-		 * A key was given: add it.
-		 *
-		 * XXX: this gets called by "add" so be silent.
-		 */
-		llog(LOG_STREAM/*not-whack*/, logger, "add keyid %s", wm->keyid);
-		ldbg(logger, "pubkey: %s", wm->pubkey);
-
-		/* add the public key */
-		struct pubkey *pubkey = NULL; /* must-delref */
-		diag_t d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
-					     /*install_time*/realnow(),
-					     /*until_time*/realtime_epoch,
-					     /*ttl*/0,
-					     HUNK_AS_SHUNK(rawkey),
-					     &pubkey/*new-public-key:must-delref*/,
-					     logger);
-		if (d != NULL) {
-			llog(RC_LOG, logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			free_chunk_content(&rawkey);
-			free_id_content(&keyid);
-			return;
-		}
-
-		/* possibly deleted above */
-		add_pubkey(pubkey, &pluto_pubkeys);
-
-		/* try to pre-load the private key */
-		bool load_needed;
-		const ckaid_t *ckaid = pubkey_ckaid(pubkey);
-		pubkey_delref(&pubkey);
-		err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
-		if (err != NULL) {
-			dbg("no private key: %s", err);
-		} else if (load_needed) {
-			ckaid_buf ckb;
-			llog(LOG_STREAM/*not-whack-for-now*/, logger,
-			     "loaded private key matching CKAID %s",
-			     str_ckaid(ckaid, &ckb));
-		}
-
-		free_chunk_content(&rawkey);
+	chunk_t rawkey = NULL_HUNK;
+	err = whack_pubkey_to_chunk(wm->pubkey_alg, wm->pubkey, &rawkey);
+	if (err != NULL) {
+		enum_buf pkb;
+		llog_error(logger, 0, "malformed %s pubkey %s: %s",
+			   str_enum(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
+			   wm->pubkey,
+			   err);
+		free_id_content(&keyid);
+		return;
 	}
+
+	/*
+	 * A key was given: add it.
+	 *
+	 * XXX: this gets called by "add" so be silent.
+	 */
+	llog(LOG_STREAM/*not-whack*/, logger,
+	     "%s keyid %s", (wm->whack_addkey ? "add" : "replace"),
+	     wm->keyid);
+	ldbg(logger, "pubkey: %s", wm->pubkey);
+
+	/* add the public key */
+	struct pubkey *pubkey = NULL; /* must-delref */
+	diag_t d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
+				     /*install_time*/realnow(),
+				     /*until_time*/realtime_epoch,
+				     /*ttl*/0,
+				     HUNK_AS_SHUNK(rawkey),
+				     &pubkey/*new-public-key:must-delref*/,
+				     logger);
+	if (d != NULL) {
+		llog(RC_LOG, logger, "%s", str_diag(d));
+		pfree_diag(&d);
+		free_chunk_content(&rawkey);
+		free_id_content(&keyid);
+		return;
+	}
+
+	/*
+	 * XXX: why would there be multiple pubkeys with the same ID?
+	 * Perhaps when they have different CKAIDs or expiration
+	 * dates?
+	 */
+	if (wm->whack_addkey) {
+		add_pubkey(pubkey, &pluto_pubkeys);
+	} else {
+		replace_pubkey(pubkey, &pluto_pubkeys);
+	}
+
+	/* try to pre-load the private key */
+	bool load_needed;
+	const ckaid_t *ckaid = pubkey_ckaid(pubkey);
+	pubkey_delref(&pubkey);
+	err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
+	if (err != NULL) {
+		dbg("no private key: %s", err);
+	} else if (load_needed) {
+		ckaid_buf ckb;
+		llog(LOG_STREAM/*not-whack-for-now*/, logger,
+		     "loaded private key matching CKAID %s",
+		     str_ckaid(ckaid, &ckb));
+	}
+
+	free_chunk_content(&rawkey);
 	free_id_content(&keyid);
 }
