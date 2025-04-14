@@ -1598,14 +1598,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
-		{
-			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole <= 0 || opt_whole >= 0x10000) {
-				optarg_fatal(logger, "must be a number between 1 and 65535");
-			}
-			end->host_ikeport = opt_whole;
+			end->ikeport = optarg;
 			continue;
-		}
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			if (streq(optarg, "%direct")) {

@@ -1341,13 +1341,16 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
-	if (src->host_ikeport > 65535) {
-		llog(RC_BADID, logger,
-			    "%sikeport=%u must be between 1..65535, ignored",
-			    leftright, src->host_ikeport);
-		host_config->ikeport = unset_port;
-	} else if (src->host_ikeport > 0) {
-		host_config->ikeport = ip_hport(src->host_ikeport);
+
+	if (can_extract_str(leftright, "ikeport", src->ikeport, wm, logger)) {
+		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
+		if (err != NULL) {
+			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
+		}
+		if (!port_is_specified(host_config->ikeport)) {
+			return diag("%sikeport=%s invalid, must be in range 1-65535",
+				    leftright, src->ikeport);
+		}
 	}
 
 	/*
