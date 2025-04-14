@@ -81,21 +81,24 @@ OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
 
 OBJS += sparse_names.o
+
 OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
 OBJS += ttoaddresses_num.o
+OBJS += ttobinary-iec-60027-2.o
+OBJS += ttobool.o
 OBJS += ttocidr_num.o
+OBJS += ttoips_num.o
+OBJS += ttoport.o
 OBJS += ttoprotocol.o
+OBJS += ttoprotoport.o
 OBJS += ttorange_num.o
 OBJS += ttoranges_num.o
 OBJS += ttoselector_num.o
 OBJS += ttoselectors_num.o
 OBJS += ttosubnet_num.o
 OBJS += ttosubnets_num.o
-OBJS += ttoips_num.o
-OBJS += ttobool.o
-OBJS += ttobinary-iec-60027-2.o
-OBJS += ttoport.o
+
 OBJS += binaryscale-iec-60027-2.o
 OBJS += alloc.o
 OBJS += alloc_printf.o

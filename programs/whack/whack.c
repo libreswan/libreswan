@@ -1666,7 +1666,7 @@ int main(int argc, char **argv)
 
 		/* --clientprotoport <protocol>/<port> */
 		case END_CLIENTPROTOPORT:
-			diagq(ttoprotoport(optarg, &end->protoport), optarg);
+			diagq(ttoprotoport(shunk1(optarg), &end->protoport), optarg);
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */

@@ -152,7 +152,7 @@ static err_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
 	}
 
 	ip_protoport protoport;
-	err = ttoprotoport(s->protoport, &protoport);
+	err = ttoprotoport(shunk1(s->protoport), &protoport);
 	if (err != NULL) {
 		return err;
 	}
@@ -193,7 +193,7 @@ static err_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
 	}
 
 	ip_protoport protoport;
-	err = ttoprotoport(s->protoport, &protoport);
+	err = ttoprotoport(shunk1(s->protoport), &protoport);
 	if (err != NULL) {
 		return err;
 	}
