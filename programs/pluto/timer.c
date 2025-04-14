@@ -179,7 +179,7 @@ void delete_state_event(struct state_event **evp, where_t where)
 	/* first the event */
 	destroy_timeout(&e->timeout);
 	/* then the structure */
-	dbg_free("state-event", e, where);
+	ldbg_free(&global_logger, "state-event", e, where);
 	pfree(e);
 	*evp = NULL;
 

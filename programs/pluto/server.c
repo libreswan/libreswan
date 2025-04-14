@@ -545,7 +545,7 @@ void schedule_timeout(const char *name,
 		      void *arg)
 {
 	*tt = alloc_thing(struct timeout, name);
-	dbg_alloc("tt", *tt, HERE);
+	ldbg_alloc(&global_logger, "tt", *tt, HERE);
 	(*tt)->name = name;
 	(*tt)->cb = cb;
 	(*tt)->arg = arg;
@@ -563,7 +563,7 @@ void destroy_timeout(struct timeout **tt)
 	passert(in_main_thread());
 	if (*tt != NULL) {
 		EVENT_DEL(*tt);
-		dbg_free("tt", *tt, HERE);
+		ldbg_free(&global_logger, "tt", *tt, HERE);
 		pfree(*tt);
 		*tt = NULL;
 	}
@@ -809,7 +809,7 @@ void attach_fd_read_listener(struct fd_read_listener **fdl,
 	passert(fd >= 0);
 	/* create the listener */
 	*fdl = alloc_thing(struct fd_read_listener, name);
-	dbg_alloc("fdl", *fdl, HERE);
+	ldbg_alloc(&global_logger, "fdl", *fdl, HERE);
 	(*fdl)->name = name;
 	(*fdl)->arg = arg;
 	(*fdl)->cb = cb;
@@ -823,7 +823,7 @@ void detach_fd_read_listener(struct fd_read_listener **fdl)
 {
 	if (*fdl != NULL) {
 		EVENT_DEL(*fdl);
-		dbg_free("fdl", *fdl, HERE);
+		ldbg_free(&global_logger, "fdl", *fdl, HERE);
 		pfree(*fdl);
 		*fdl = NULL;
 	}
@@ -867,7 +867,7 @@ void attach_fd_accept_listener(const char *name,
 	passert(*fdl == NULL);
 	passert(fd >= 0);
 	*fdl = alloc_thing(struct fd_accept_listener, name);
-	dbg_alloc("fdl", *fdl, HERE);
+	ldbg_alloc(&global_logger, "fdl", *fdl, HERE);
 	(*fdl)->cb = cb;
 	(*fdl)->arg = arg;
 	(*fdl)->name = name;
@@ -881,7 +881,7 @@ void detach_fd_accept_listener(struct fd_accept_listener **fdl)
 	if (*fdl != NULL) {
 		evconnlistener_free((*fdl)->ev);
 		(*fdl)->ev = NULL;
-		dbg_free("fdl", *fdl, HERE);
+		ldbg_free(&global_logger, "fdl", *fdl, HERE);
 		pfree(*fdl);
 		*fdl = NULL;
 	}
@@ -958,23 +958,23 @@ static stf_status addconn_exited(struct state *null_st UNUSED,
 static void *libevent_malloc(size_t size)
 {
 	void *ptr = uninitialized_malloc(size, __func__);
-	dbg_alloc("libevent", ptr, HERE);
+	ldbg_alloc(&global_logger, "libevent", ptr, HERE);
 	return ptr;
 }
 static void *libevent_realloc(void *old, size_t size)
 {
 	if (old != NULL) {
-		dbg_free("libevent", old, HERE);
+		ldbg_free(&global_logger, "libevent", old, HERE);
 	}
 	void *new = uninitialized_realloc(old, size, __func__);
 	if (new != NULL) {
-		dbg_alloc("libevent", new, HERE);
+		ldbg_alloc(&global_logger, "libevent", new, HERE);
 	}
 	return new;
 }
 static void libevent_free(void *ptr)
 {
-	dbg_free("libevent", ptr, HERE);
+	ldbg_free(&global_logger, "libevent", ptr, HERE);
 	pfree(ptr);
 }
 #endif

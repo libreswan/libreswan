@@ -81,16 +81,6 @@ void ldbg_delref_where(const struct logger *logger, const char *what,
 	}
 }
 
-void dbg_alloc(const char *what, const void *pointer, where_t where)
-{
-	ldbg_alloc(NULL, what, pointer, where);
-}
-
-void dbg_free(const char *what, const void *pointer, where_t where)
-{
-	ldbg_free(NULL, what, pointer, where);
-}
-
 /* -- */
 
 void refcnt_init(const void *pointer, struct refcnt *refcnt,
