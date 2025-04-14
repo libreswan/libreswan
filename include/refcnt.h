@@ -158,7 +158,4 @@ void ldbg_free(const struct logger *logger, const char *what, const void *pointe
 void ldbg_addref_where(const struct logger *logger, const char *what, const void *pointer, where_t where);
 void ldbg_delref_where(const struct logger *logger, const char *what, const void *pointer, where_t where);
 
-void dbg_alloc(const char *what, const void *pointer, where_t where);
-void dbg_free(const char *what, const void *pointer, where_t where);
-
 #endif

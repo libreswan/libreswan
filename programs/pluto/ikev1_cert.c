@@ -194,8 +194,9 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 	{
 		asn1_t ca_name = pbs_in_left(pbs);
 
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk("CR", ca_name);
+		if (LDBGP(DBG_BASE, ike->sa.logger)) {
+			LDBG_log(ike->sa.logger, "CR:");
+			LDBG_hunk(ike->sa.logger, ca_name);
 		}
 
 		if (ca_name.len > 0) {

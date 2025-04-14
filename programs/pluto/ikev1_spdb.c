@@ -89,7 +89,7 @@ static void free_sa_prop_conj(struct db_prop_conj *pc)
 
 void free_sa(struct db_sa **sapp)
 {
-	dbg_free("sadb", *sapp, HERE);
+	ldbg_free(&global_logger, "sadb", *sapp, HERE);
 	struct db_sa *f = *sapp;
 
 	if (f != NULL) {
@@ -147,7 +147,7 @@ static void unshare_propconj(struct db_prop_conj *pc)
 struct db_sa *sa_copy_sa(const struct db_sa *sa, where_t where)
 {
 	struct db_sa *nsa = clone_const_thing(*sa, "sa copy prop_conj (sa_copy_sa)");
-	dbg_alloc("sadb", nsa, where);
+	ldbg_alloc(&global_logger, "sadb", nsa, where);
 	nsa->dynamic = true;
 	nsa->parentSA = sa->parentSA;
 
@@ -176,7 +176,7 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 	}
 
 	struct db_sa *n = clone_thing(*a, "conjoin sa (sa_merge_proposals)");
-	dbg_alloc("sadb", n, HERE);
+	ldbg_alloc(&global_logger, "sadb", n, HERE);
 
 	passert(a->prop_conj_cnt == b->prop_conj_cnt);
 	passert(a->prop_conj_cnt == 1);

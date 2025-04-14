@@ -168,9 +168,11 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	struct crypt_mac hash_remote = natd_hash(hasher, &st->st_ike_spis,
 						 md->sender, st->logger);
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("expected NAT-D(local):", hash_local);
-		DBG_dump_hunk("expected NAT-D(remote):", hash_remote);
+	if (LDBGP(DBG_BASE, st->logger)) {
+		LDBG_log(st->logger, "expected NAT-D(local):");
+		LDBG_hunk(st->logger, hash_local);
+		LDBG_log(st->logger, "expected NAT-D(remote):");
+		LDBG_hunk(st->logger, hash_remote);
 	}
 
 	bool found_local = false;
@@ -289,9 +291,10 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	/* Take first */
 	p = md->chain[ISAKMP_NEXT_NATOA_RFC];
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		shunk_t nat_ao = pbs_in_all(&p->pbs);
-		DBG_dump_hunk("NAT-OA:", nat_ao);
+		LDBG_log(logger, "NAT-OA:");
+		LDBG_hunk(logger, nat_ao);
 	}
 
 	ip_address ip;

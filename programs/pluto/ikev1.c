@@ -2682,42 +2682,44 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	}
 }
 
-void doi_log_cert_thinking(uint16_t auth,
-			   enum ike_cert_type certtype,
-			   enum certpolicy policy,
-			   bool gotcertrequest,
-			   bool send_cert,
-			   bool send_chain)
+void ldbg_doi_cert_thinking(struct ike_sa *ike,
+			    enum ike_cert_type certtype,
+			    bool gotcertrequest,
+			    bool send_cert,
+			    bool send_chain)
 {
-	if (DBGP(DBG_BASE)) {
-		DBG_log("thinking about whether to send my certificate:");
+	struct logger *logger = ike->sa.logger;
+	struct connection *c = ike->sa.st_connection;
+
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "thinking about whether to send my certificate:");
 
 		esb_buf oan;
 		esb_buf ictn;
-		DBG_log("  I have RSA key: %s cert.type: %s ",
-			str_enum(&oakley_auth_names, auth, &oan),
-			str_enum(&ike_cert_type_names, certtype, &ictn));
+		LDBG_log(logger, "  I have RSA key: %s cert.type: %s ",
+			 str_enum(&oakley_auth_names, ike->sa.st_oakley.auth, &oan),
+			 str_enum(&ike_cert_type_names, certtype, &ictn));
 
 		esb_buf cptn;
-		DBG_log("  sendcert: %s and I did%s get a certificate request ",
-			str_enum(&certpolicy_type_names, policy, &cptn),
-			gotcertrequest ? "" : " not");
+		LDBG_log(logger, "  sendcert: %s and I did%s get a certificate request ",
+			 str_enum(&certpolicy_type_names, c->local->host.config->sendcert, &cptn),
+			 gotcertrequest ? "" : " not");
 
-		DBG_log("  so %ssend cert.", send_cert ? "" : "do not ");
+		LDBG_log(logger, "  so %ssend cert.", send_cert ? "" : "do not ");
 
 		if (!send_cert) {
-			if (auth == OAKLEY_PRESHARED_KEY) {
-				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)");
+			if (ike->sa.st_oakley.auth == OAKLEY_PRESHARED_KEY) {
+				LDBG_log(logger, "I did not send a certificate because digital signatures are not being used. (PSK)");
 			} else if (certtype == CERT_NONE) {
-				DBG_log("I did not send a certificate because I do not have one.");
-			} else if (policy == CERT_SENDIFASKED) {
-				DBG_log("I did not send my certificate because I was not asked to.");
+				LDBG_log(logger, "I did not send a certificate because I do not have one.");
+			} else if (c->local->host.config->sendcert == CERT_SENDIFASKED) {
+				LDBG_log(logger, "I did not send my certificate because I was not asked to.");
 			} else {
-				DBG_log("INVALID AUTH SETTING: %d", auth);
+				LDBG_log(logger, "INVALID AUTH SETTING: %d", ike->sa.st_oakley.auth);
 			}
 		}
 		if (send_chain)
-			DBG_log("Sending one or more authcerts");
+			LDBG_log(logger, "Sending one or more authcerts");
 	}
 }
 

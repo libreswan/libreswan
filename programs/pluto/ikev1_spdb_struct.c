@@ -54,7 +54,7 @@
 #include "ikev1_message.h"
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
-#include "refcnt.h"		/* for dbg_alloc()+dbg_free() */
+#include "refcnt.h"		/* for ldbg_alloc(&global_logger, )+ldbg_free(&global_logger, ) */
 #include "secrets.h"
 
 /** output an attribute (within an SA) */
@@ -96,10 +96,10 @@ static bool out_attr(int type,
 
 		close_output_pbs(&val_pbs);
 	}
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, pbs->logger)) {
 		enum_buf b;
 		if (enum_enum_name(attr_value_names, type, val, &b)) {
-			DBG_log("    [%lu is %s]", val, b.buf);
+			LDBG_log(pbs->logger, "    [%lu is %s]", val, b.buf);
 		}
 	}
 	return true;

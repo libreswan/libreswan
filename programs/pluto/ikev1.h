@@ -55,12 +55,11 @@ struct crypt_mac main_mode_hash(struct ike_sa *ike,
 				enum sa_role role,
 				shunk_t id_payload);  /* ID payload, including header */
 
-void doi_log_cert_thinking(uint16_t auth,
-			   enum ike_cert_type certtype,
-			   enum certpolicy policy,
-			   bool gotcertrequest,
-			   bool send_cert,
-			   bool send_chain);
+void ldbg_doi_cert_thinking(struct ike_sa *ike,
+			    enum ike_cert_type certtype,
+			    bool gotcertrequest,
+			    bool send_cert,
+			    bool send_chain);
 
 /* Parent capable of sending messages.  */
 struct ike_sa *established_isakmp_sa_for_state(struct state *st, bool viable_parent);
