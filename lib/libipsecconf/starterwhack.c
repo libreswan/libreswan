@@ -239,38 +239,6 @@ static bool set_whack_end(struct whack_end *w,
 	return true;
 }
 
-static int starter_whack_add_pubkey(const char *leftright,
-				    const char *ctlsocket,
-				    const struct starter_conn *conn,
-				    char *keyid,
-				    char *pubkey,
-				    enum ipseckey_algorithm_type pubkey_alg,
-				    struct logger *logger)
-{
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_addkey = false, /* i.e., replace */
-		.whack_key = true,
-		.pubkey_alg = pubkey_alg,
-		.keyid = keyid,
-		.pubkey = pubkey,
-	};
-
-	enum_buf pkb;
-	ldbg(logger, "\tsending %s %s%s=%s",
-	     conn->name, leftright,
-	     str_enum(&ipseckey_algorithm_config_names, pubkey_alg, &pkb),
-	     pubkey);
-
-	int ret = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
-
-	if (ret < 0) {
-		return ret;
-	}
-
-	return 0;
-}
-
 static void conn_log_val(struct logger *logger,
 			 const struct starter_conn *conn,
 			 const char *name, const char *value)
@@ -486,43 +454,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.esp = conn->values[KSCF_ESP].string;
 	msg.ike = conn->values[KSCF_IKE].string;
 
-	/*
-	 * Save the "computed" pubkeys and IDs before the pointers in
-	 * MSG are pickled.
-	 */
-	char *left_pubkey = msg.end[LEFT_END].pubkey;
-	char *right_pubkey = msg.end[RIGHT_END].pubkey;
-	char *left_id = msg.end[LEFT_END].id;
-	char *right_id = msg.end[RIGHT_END].id;
-
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
 		return r;
-
-	/*
-	 * XXX: the above sent over the pubkeys, why repeat?
-	 *
-	 * Because the above sending over pubkeys is a hack (but still
-	 * the right thing to do).
-	 */
-	if (left_id != NULL && left_pubkey != NULL) {
-		int r = starter_whack_add_pubkey("left", ctlsocket, conn,
-						 left_id, left_pubkey,
-						 msg.end[LEFT_END].pubkey_alg,
-						 logger);
-		if (r != 0) {
-			return r;
-		}
-	}
-	if (right_id != NULL && right_pubkey != NULL) {
-		int r = starter_whack_add_pubkey("right", ctlsocket, conn,
-						 right_id, right_pubkey,
-						 msg.end[RIGHT_END].pubkey_alg,
-						 logger);
-		if (r != 0) {
-			return r;
-		}
-	}
 
 	return 0;
 }
