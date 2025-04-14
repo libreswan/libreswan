@@ -17,8 +17,10 @@
 #ifndef TTOBINARY_H
 #define TTOBINARY_H    /* seen it, no need to see it again */
 
+#include <stdint.h>	/* for uintmax_t */
+
 #include "diag.h"
 
-diag_t ttobinary(const char *t,  uint64_t *b, bool prefix_B);
+diag_t ttobinary(const char *t,  uintmax_t *b, bool prefix_B);
 
 #endif

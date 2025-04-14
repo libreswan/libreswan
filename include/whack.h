@@ -427,7 +427,7 @@ struct whack_message {
 	long unsigned int whack_nfloggroup;
 
 	/* for WHACK_LISTEN: */
-	long unsigned int ike_buf_size;	/* IKE socket recv/snd buffer size */
+	long unsigned int ike_socket_bufsize;	/* IKE socket recv/snd buffer size */
 	bool ike_sock_err_toggle; /* toggle MSG_ERRQUEUE on IKE socket */
 
 	/* for DDOS modes */

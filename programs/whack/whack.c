@@ -388,7 +388,7 @@ enum opt {
 	OPT_DELETEUSER,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
-	OPT_IKEBUF,
+	OPT_IKE_SOCKET_BUFSIZE,
 	OPT_IKE_MSGERR,
 
 	OPT_REKEY_IKE,
@@ -693,7 +693,7 @@ const struct option optarg_options[] = {
 	{ "crash\0", required_argument, NULL, OPT_DELETECRASH },
 	{ "listen\0", no_argument, NULL, OPT_LISTEN },
 	{ "unlisten\0", no_argument, NULL, OPT_UNLISTEN },
-	{ "ike-socket-bufsize\0", required_argument, NULL, OPT_IKEBUF},
+	{ "ike-socket-bufsize\0<bytes>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE},
 	{ "ike-socket-errqueue-toggle\0", no_argument, NULL, OPT_IKE_MSGERR },
 
 	{ "redirect-to\0", required_argument, NULL, OPT_REDIRECT_TO },
@@ -1101,8 +1101,7 @@ int main(int argc, char **argv)
 			 * also added to "opts_seen".
 			 */
 			if (seen[c]) {
-				diagq("duplicated flag",
-				      optarg_options[optarg_index].name);
+				optarg_fatal(logger, "duplicated flag");
 			}
 			seen[c] = true;
 			opts_seen |= NORMAL_OPT_SEEN;
@@ -1128,9 +1127,9 @@ int main(int argc, char **argv)
 			 * Since END options are also conn options,
 			 * CONN_OPT_SEEN is also set.
 			 */
-			if (seen[c])
-				diagq("duplicated flag",
-				      optarg_options[optarg_index].name);
+			if (seen[c]) {
+				optarg_fatal(logger, "duplicated flag");
+			}
 			seen[c] = true;
 			opts_seen |= END_OPT_SEEN;
 			opts_seen |= CONN_OPT_SEEN;
@@ -1139,9 +1138,9 @@ int main(int argc, char **argv)
 			 * CD_* options are added to seen[].  Repeated
 			 * options are rejected.
 			 */
-			if (seen[c])
-				diagq("duplicated flag",
-				      optarg_options[optarg_index].name);
+			if (seen[c]) {
+				optarg_fatal(logger, "duplicated flag");
+			}
 			seen[c] = true;
 			opts_seen |= CONN_OPT_SEEN;
 #if 0
@@ -1207,16 +1206,10 @@ int main(int argc, char **argv)
 			msg.keyid = optarg;	/* decoded by Pluto */
 			continue;
 
-		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
-		{
-			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole < 1500) {
-				diagw("Ignoring extremely unwise IKE buffer size choice");
-			}
+		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bytes> */
 			whack_command(&msg, WHACK_LISTEN);
-			msg.ike_buf_size = opt_whole;
+			msg.ike_socket_bufsize = optarg_udp_bufsize(logger);
 			continue;
-		}
 
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
 			whack_command(&msg, WHACK_LISTEN);
@@ -1304,10 +1297,11 @@ int main(int argc, char **argv)
 			whack_command(&msg, WHACK_CRASH);
 			msg.whack_crash_peer = optarg_address_dns(logger, &host_family);
 			if (!address_is_specified(msg.whack_crash_peer)) {
-				/* either :: or 0.0.0.0; unset already rejected */
+				/* either :: or 0.0.0.0; unset already
+				 * rejected */
 				address_buf ab;
-				diagq("invalid --crash <address>",
-				      str_address(&msg.whack_crash_peer, &ab));
+				optarg_fatal(logger, "invalid address %s",
+					     str_address(&msg.whack_crash_peer, &ab));
 			}
 			continue;
 
@@ -1456,8 +1450,8 @@ int main(int argc, char **argv)
 			if (!address_is_specified(msg.oppo.local.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
-				diagq("invalid --opphere <address>",
-				      str_address(&msg.oppo.local.address, &ab));
+				optarg_fatal(logger, "invalid address %s",
+					     str_address(&msg.oppo.local.address, &ab));
 			}
 			continue;
 
@@ -1466,8 +1460,8 @@ int main(int argc, char **argv)
 			if (!address_is_specified(msg.oppo.remote.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
-				diagq("invalid --oppothere <address>",
-				      str_address(&msg.oppo.remote.address, &ab));
+				optarg_fatal(logger, "invalid address %s",
+					     str_address(&msg.oppo.remote.address, &ab));
 			}
 			continue;
 
@@ -1583,21 +1577,15 @@ int main(int argc, char **argv)
 			} else if (streq(optarg, "ifasked")) {
 				end->sendcert = CERT_SENDIFASKED;
 			} else {
-				diagq("whack sendcert value is not legal",
-				      optarg);
-				continue;
+				optarg_fatal(logger, "whack sendcert value is not legal");
 			}
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			if (end->ckaid != NULL)
-				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			end->cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			if (end->cert != NULL)
-				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			end->ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
@@ -1613,8 +1601,7 @@ int main(int argc, char **argv)
 		{
 			uintmax_t opt_whole = optarg_uintmax(logger);
 			if (opt_whole <= 0 || opt_whole >= 0x10000) {
-				diagq("<port-number> must be a number between 1 and 65535",
-					optarg);
+				optarg_fatal(logger, "must be a number between 1 and 65535");
 			}
 			end->host_ikeport = opt_whole;
 			continue;
@@ -1679,8 +1666,7 @@ int main(int argc, char **argv)
 
 		/* --clientprotoport <protocol>/<port> */
 		case END_CLIENTPROTOPORT:
-			diagq(ttoprotoport(optarg, &end->protoport),
-				optarg);
+			diagq(ttoprotoport(optarg, &end->protoport), optarg);
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
@@ -2133,7 +2119,7 @@ int main(int argc, char **argv)
 
 			if (host_family.used_by != NULL) {
 				/* i.e., --host ::1 --ipv4; useful? wrong message? */
-				diagq("--ipv4 must precede", host_family.used_by);
+				optarg_fatal(logger, "must precede %s", host_family.used_by);
 			}
 			host_family.used_by = optarg_options[optarg_index].name;
 			host_family.type = &ipv4_info;
@@ -2152,7 +2138,7 @@ int main(int argc, char **argv)
 
 			if (host_family.used_by != NULL) {
 				/* i.e., --host 0.0.0.1 --ipv6; useful? wrong message? */
-				diagq("--ipv6 must precede", host_family.used_by);
+				optarg_fatal(logger, "must precede %s", host_family.used_by);
 			}
 			host_family.used_by = optarg_options[optarg_index].name;
 			host_family.type = &ipv6_info;
@@ -2162,8 +2148,9 @@ int main(int argc, char **argv)
 			if (seen[CD_TUNNELIPV6]) {
 				diagw("--tunnelipv4 conflicts with --tunnelipv6");
 			}
-			if (child_family.used_by != NULL)
-				diagq("--tunnelipv4 must precede", child_family.used_by);
+			if (child_family.used_by != NULL) {
+				optarg_fatal(logger, "must precede %s", child_family.used_by);
+			}
 			child_family.used_by = optarg_options[optarg_index].name;
 			child_family.type = &ipv4_info;
 			continue;
@@ -2172,8 +2159,9 @@ int main(int argc, char **argv)
 			if (seen[CD_TUNNELIPV4]) {
 				diagw("--tunnelipv6 conflicts with --tunnelipv4");
 			}
-			if (child_family.used_by != NULL)
-				diagq("--tunnelipv6 must precede", child_family.used_by);
+			if (child_family.used_by != NULL) {
+				optarg_fatal(logger, "must precede %s", child_family.used_by);
+			}
 			child_family.used_by = optarg_options[optarg_index].name;
 			child_family.type = &ipv6_info;
 			continue;
@@ -2269,7 +2257,7 @@ int main(int argc, char **argv)
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
 			} else {
-				diagq("whack: unknown xauthby method", optarg);
+				optarg_fatal(logger, "unknown method");
 			}
 			continue;
 
@@ -2314,14 +2302,8 @@ int main(int argc, char **argv)
 		case CD_NFLOG_GROUP:	/* --nflog-group */
 		{
 			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole <= 0  ||
-			    opt_whole > 65535) {
-				char buf[120];
-
-				snprintf(buf, sizeof(buf),
-					"invalid nflog-group value - range must be 1-65535 \"%s\"",
-					optarg);
-				diagw(buf);
+			if (opt_whole <= 0  || opt_whole > 65535) {
+				optarg_fatal(logger, "nflog group must be in 1-65535");
 			}
 			msg.nflog_group = opt_whole;
 			continue;
@@ -2330,17 +2312,9 @@ int main(int argc, char **argv)
 		case CD_REQID:	/* --reqid */
 		{
 			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole <= 0  ||
-			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
-				char buf[120];
-
-				snprintf(buf, sizeof(buf),
-					"invalid reqid value - range must be 1-%u \"%s\"",
-					IPSEC_MANUAL_REQID_MAX,
-					optarg);
-				diagw(buf);
+			if (opt_whole <= 0 || opt_whole > IPSEC_MANUAL_REQID_MAX) {
+				optarg_fatal(logger, "reqid be in 1-%u", IPSEC_MANUAL_REQID_MAX);
 			}
-
 			msg.sa_reqid = opt_whole;
 			continue;
 		}

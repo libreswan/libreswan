@@ -68,6 +68,9 @@ deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default
 
 uintmax_t optarg_uintmax(const struct logger *logger);
 
+/* >1500<64k */
+uintmax_t optarg_udp_bufsize(const struct logger *logger);
+
 /* non-zero OPTIONAL provides default */
 uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const struct sparse_names *names);
 
