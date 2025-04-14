@@ -113,7 +113,7 @@ void jam_end_host(struct jambuf *buf,
 		 * valid, any hardwired IKEPORT or a port other than
 		 * IKE_UDP_PORT.
 		 */
-		bool include_port = (end->config->ikeport != 0 ||
+		bool include_port = (port_is_specified(end->config->ikeport) ||
 				     end->port != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */

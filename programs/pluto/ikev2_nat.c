@@ -211,9 +211,10 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 * redundant, but logging is useful.
 	 */
 	unsigned remote_hport = endpoint_hport(ike->sa.st_remote_endpoint);
-	if (ike->sa.st_connection->remote->host.config->ikeport != 0) {
-		dbg("NAT: #%lu not floating remote port; hardwired to ikeport=%u "PRI_WHERE,
-		    ike->sa.st_serialno, ike->sa.st_connection->remote->host.config->ikeport,
+	if (port_is_specified(ike->sa.st_connection->remote->host.config->ikeport)) {
+		dbg("NAT: #%lu not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
+		    ike->sa.st_serialno,
+		    pri_hport(ike->sa.st_connection->remote->host.config->ikeport),
 		    pri_where(where));
 	} else if (remote_hport != IKE_UDP_PORT) {
 		dbg("NAT: #%lu not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
