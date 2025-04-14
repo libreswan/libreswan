@@ -568,9 +568,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 			send_authcerts = false;
 	}
 
-	doi_log_cert_thinking(ike->sa.st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.config->sendcert, cert_requested,
-			      send_cert, send_authcerts);
+	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
+			       cert_requested,
+			       send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
 	bool send_cr = send_cert && !remote_has_preloaded_pubkey(ike);
@@ -906,9 +906,9 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 			send_authcerts = false;
 	}
 
-	doi_log_cert_thinking(ike->sa.st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.config->sendcert, cert_requested,
-			      send_cert, send_authcerts);
+	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
+			       cert_requested,
+			       send_cert, send_authcerts);
 
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 

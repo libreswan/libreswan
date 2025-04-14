@@ -285,9 +285,9 @@ static void main_mode_hash_body(struct ike_sa *ike,
 		bad_case(role);
 	}
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("hashing %zu bytes of SA",
-			ike->sa.st_p1isa.len - sizeof(struct isakmp_generic));
+	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "hashing %zu bytes of SA",
+			 ike->sa.st_p1isa.len - sizeof(struct isakmp_generic));
 	}
 
 	/* SA_b */
@@ -971,9 +971,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 			send_authcerts = false;
 	}
 
-	doi_log_cert_thinking(ike->sa.st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.config->sendcert, cert_requested,
-			      send_cert, send_authcerts);
+	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
+			       cert_requested, send_cert, send_authcerts);
 
 	/*
 	 * send certificate request, if we don't have a preloaded RSA
@@ -1213,9 +1212,8 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 			send_authcerts = false;
 	}
 
-	doi_log_cert_thinking(ike->sa.st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.config->sendcert, cert_requested,
-			      send_cert, send_authcerts);
+	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
+			       cert_requested, send_cert, send_authcerts);
 
 	/*
 	 * Build output packet HDR*;IDir;HASH/SIG_R

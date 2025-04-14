@@ -705,7 +705,7 @@ void init_ikev1_states(struct logger *logger)
 		const struct finite_state *to = finite_states[next_state];
 		passert(to != NULL);
 
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			if (from->v1.nr_transitions == 0) {
 				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 					jam_string(buf, "  ");
@@ -714,9 +714,9 @@ void init_ikev1_states(struct logger *logger)
 				}
 			}
 			enum_buf eb;
-			DBG_log("    -> %s %s (%s)", to->short_name,
-				str_enum_short(&event_type_names, t->timeout_event, &eb),
-				t->message);
+			LDBG_log(logger, "    -> %s %s (%s)", to->short_name,
+				 str_enum_short(&event_type_names, t->timeout_event, &eb),
+				 t->message);
 		}
 
 		/*

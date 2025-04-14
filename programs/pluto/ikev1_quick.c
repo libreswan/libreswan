@@ -304,10 +304,12 @@ static bool compute_proto_keymat(struct ike_sa *ike,
 						     child->sa.logger);
 	PASSERT(child->sa.logger, pi->outbound.keymat.len == needed_len);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("%s KEYMAT", satypename);
-		DBG_dump_hunk("  inbound:", pi->inbound.keymat);
-		DBG_dump_hunk("  outbound:", pi->outbound.keymat);
+	if (LDBGP(DBG_CRYPT, child->sa.logger)) {
+		LDBG_log(child->sa.logger, "%s KEYMAT", satypename);
+		LDBG_log(child->sa.logger, "  inbound:");
+		LDBG_hunk(child->sa.logger, pi->inbound.keymat);
+		LDBG_log(child->sa.logger, "  outbound:");
+		LDBG_hunk(child->sa.logger, pi->outbound.keymat);
 	}
 
 	return true;
