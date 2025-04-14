@@ -1033,7 +1033,6 @@ int main(int argc, char **argv)
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int usernamelen = 0;	/* includes '\0' */
 	int xauthpasslen = 0;	/* includes '\0' */
-	const char *ugh;
 	bool ignore_errors = false;
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
@@ -1051,8 +1050,6 @@ int main(int argc, char **argv)
 	msg.remote_host = NULL;
 	msg.dnshostname = NULL;
 
-	msg.keyid = NULL;
-	msg.keyval.ptr = NULL;
 	msg.esp = NULL;
 	msg.ike = NULL;
 	msg.pfsgroup = NULL;
@@ -1232,38 +1229,18 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
-			if (msg.keyval.ptr != NULL)
+			if (msg.pubkey != NULL) {
 				diagq("only one RSA public-key allowed", optarg);
-
-			/* let msg.keyval leak */
-			ugh = ttochunk(shunk1(optarg), 0, &msg.keyval);
-			if (ugh != NULL) {
-				/* perhaps enough space */
-				char ugh_space[80];
-
-				snprintf(ugh_space, sizeof(ugh_space),
-					 "RSA public-key data malformed (%s)",
-					 ugh);
-				diagq(ugh_space, optarg);
 			}
+			msg.pubkey = optarg;
 			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
 			continue;
 
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
-			if (msg.keyval.ptr != NULL)
+			if (msg.pubkey != NULL) {
 				diagq("only one ECDSA public-key allowed", optarg);
-
-			/* let msg.keyval leak */
-			ugh = ttochunk(shunk1(optarg), 0, &msg.keyval);
-			if (ugh != NULL) {
-				/* perhaps enough space */
-				char ugh_space[80];
-
-				snprintf(ugh_space, sizeof(ugh_space),
-					 "ECDSA public-key data malformed (%s)",
-					 ugh);
-				diagq(ugh_space, optarg);
 			}
+			msg.pubkey = optarg;
 			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
 			continue;
 

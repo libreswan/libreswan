@@ -1021,18 +1021,19 @@ void free_public_keys(struct pubkey_list **keys)
 }
 
 /*
- * XXX: this gets called, via replace_public_key() with a PK that is
- * still pointing into a cert.  Hence the "how screwed up is this?"
- * :-(
+ * XXX: this gets called, via replace_pubkey() with a PK that is still
+ * pointing into a cert.  Hence the "how screwed up is this?"  :-(
+ *
+ * XXX: Old comment?
  */
-static void install_public_key(struct pubkey **pk, struct pubkey_list **head)
+
+void add_pubkey(struct pubkey *pubkey, struct pubkey_list **head)
 {
 	struct pubkey_list *p = alloc_thing(struct pubkey_list, "pubkey entry");
 	/* install new key at front */
-	p->key = *pk;
+	p->key = pubkey_addref(pubkey);
 	p->next = *head;
 	*head = p;
-	*pk = NULL; /* stolen */
 }
 
 void delete_public_keys(struct pubkey_list **head,
@@ -1051,13 +1052,10 @@ void delete_public_keys(struct pubkey_list **head,
 	}
 }
 
-void replace_public_key(struct pubkey_list **pubkey_db,
-			struct pubkey **pk)
+void replace_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db)
 {
-	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->content.type);
-	install_public_key(pk, pubkey_db);
-	passert(*pk == NULL); /* stolen */
+	delete_public_keys(pubkey_db, &pubkey->id, pubkey->content.type);
+	add_pubkey(pubkey, pubkey_db);
 }
 
 static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
@@ -1088,25 +1086,14 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	return pk;
 }
 
-diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
-			   enum dns_auth_level dns_auth_level,
-			   enum ipseckey_algorithm_type algorithm_type,
-			   realtime_t install_time, realtime_t until_time,
-			   uint32_t ttl,
-			   const shunk_t dnssec_pubkey,
-			   struct pubkey **pkp,
-			   struct pubkey_list **head)
+diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
+				 const shunk_t dnssec_pubkey,
+				 struct pubkey_content *pubkey_content,
+				 const struct logger *logger)
 {
-	const struct logger *logger = &global_logger;
-
-	/*
-	 * First: unpack the raw public key.
-	 */
-
-	struct pubkey_content scratch_pkc;
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
-		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc);
+		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, pubkey_content);
 		if (d != NULL) {
 			return d;
 		}
@@ -1124,28 +1111,46 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 &scratch_pkc,
+									 pubkey_content,
 									 logger);
 		if (d != NULL) {
 			return d;
 		}
 	}
-	passert(scratch_pkc.type != NULL);
+	passert(pubkey_content->type != NULL);
+	return NULL;
+}
+
+diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
+			 enum dns_auth_level dns_auth_level,
+			 enum ipseckey_algorithm_type algorithm_type,
+			 realtime_t install_time, realtime_t until_time,
+			 uint32_t ttl,
+			 const shunk_t dnssec_pubkey,
+			 struct pubkey **pubkey,
+			 struct logger *logger)
+{
+
+	/*
+	 * First: unpack the raw public key.
+	 */
+
+	struct pubkey_content scratch_pkc;
+	diag_t d = unpack_dns_pubkey_content(algorithm_type, dnssec_pubkey,
+					     &scratch_pkc, logger);
+	if (d != NULL) {
+		return d;
+	}
 
 	/*
 	 * Second: use extracted information to create the pubkey.
 	 */
 
-	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level,
-					     install_time, until_time, ttl,
-					     &scratch_pkc,
-					     null_shunk,	/* raw keys have no issuer */
-					     HERE);
-	if (pkp != NULL) {
-		*pkp = pubkey_addref(pubkey);
-	}
-	install_public_key(&pubkey, head);
-	passert(pubkey == NULL); /* stolen */
+	(*pubkey) = alloc_pubkey(id, dns_auth_level,
+				 install_time, until_time, ttl,
+				 &scratch_pkc,
+				 null_shunk,	/* raw keys have no issuer */
+				 HERE);
 	return NULL;
 }
 
@@ -1187,7 +1192,7 @@ void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
 	struct secret_pubkey_stuff *last = delref_where(pks, logger, where);
 	if (last != NULL) {
 		SECKEY_DestroyPrivateKey(last->private_key);
-		last->content.type->free_pubkey_content(&last->content, logger);
+		free_pubkey_content(&last->content, logger);
 		pfree(last);
 	}
 }
@@ -1454,4 +1459,10 @@ diag_t create_pubkey_from_cert(const struct id *id,
 	diag_t d = create_pubkey_from_cert_1(id, cert, pubkey_nss, pk, logger);
 	SECKEY_DestroyPublicKey(pubkey_nss);
 	return d;
+}
+
+void free_pubkey_content(struct pubkey_content *pubkey_content,
+			 const struct logger *logger)
+{
+	pubkey_content->type->free_pubkey_content(pubkey_content, logger);
 }

@@ -51,6 +51,8 @@ struct cert;
  *
  * While this is abstracted as a SECKEYPublicKey, it can be thought of
  * as the Subject Public Key Info.
+ *
+ * Danger: this is often stolen.
  */
 
 struct pubkey_content {
@@ -59,6 +61,9 @@ struct pubkey_content {
 	ckaid_t ckaid;
 	SECKEYPublicKey *public_key;
 };
+
+void free_pubkey_content(struct pubkey_content *pubkey_content,
+			 const struct logger *logger);
 
 /*
  * private key types
@@ -260,17 +265,24 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 
-diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
-			   enum dns_auth_level dns_auth_level,
-			   enum ipseckey_algorithm_type algorithm_type,
-			   realtime_t install_time, realtime_t until_time,
-			   uint32_t ttl,
-			   shunk_t dnssec_pubkey,
-			   struct pubkey **pubkey,
-			   struct pubkey_list **head);
+diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
+				 shunk_t dnssec_pubkey,
+				 struct pubkey_content *pkc,
+				 const struct logger *logger);
 
-void replace_public_key(struct pubkey_list **pubkey_db,
-			struct pubkey **pk);
+diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
+			 enum dns_auth_level dns_auth_level,
+			 enum ipseckey_algorithm_type algorithm_type,
+			 realtime_t install_time, realtime_t until_time,
+			 uint32_t ttl,
+			 shunk_t dnssec_pubkey,
+			 struct pubkey **pubkey,
+			 struct logger *logger);
+
+void add_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
+/*add+delete-using-content*/
+void replace_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
+
 void delete_public_keys(struct pubkey_list **head,
 			const struct id *id,
 			const struct pubkey_type *type);

@@ -104,6 +104,7 @@
 #include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
 #include "sparse_names.h"
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
+#include "whack_pubkey.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -935,6 +936,7 @@ static diag_t extract_host_end(struct host_end *host,
 			       struct logger *logger/*connection "..."*/)
 {
 	err_t err;
+	diag_t d;
 	const char *leftright = host_config->leftright;
 
 	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
@@ -1023,12 +1025,14 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Should this instead cross check?
 	 */
 	if (src->cert != NULL) {
+
 		if (src->ckaid != NULL) {
 			llog(RC_LOG, logger,
 				    "warning: ignoring %s ckaid '%s' and using %s certificate '%s'",
 				    leftright, src->cert,
 				    leftright, src->cert);
 		}
+
 		if (src->pubkey != NULL) {
 			enum_buf pkb;
 			llog(RC_LOG, logger,
@@ -1038,6 +1042,7 @@ static diag_t extract_host_end(struct host_end *host,
 			     src->pubkey,
 			     leftright, src->cert);
 		}
+
 		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert, logger);
 		if (cert == NULL) {
 			return diag("%s certificate '%s' not found in the NSS database",
@@ -1050,11 +1055,30 @@ static diag_t extract_host_end(struct host_end *host,
 			CERT_DestroyCertificate(cert);
 			return diag;
 		}
+
 	} else if (src->pubkey != NULL) {
 
 		/*
-		 * XXX: hack: whack will load the actual key in a
-		 * second message, this code just extracts the ckaid.
+		 * Extract the CKAID from the PUBKEY.  When there's an
+		 * ID, also save the pubkey under that name (later,
+		 * during oritentation, the the missing ID will be
+		 * filled in with HOST or left alone and treated like
+		 * "null").
+		 *
+		 * Not adding the PUBKEY when there's no ID is very
+		 * old behaviour.
+		 *
+		 * Extracting the CKAID from the PUBKEY and using that
+		 * to find the private key is a somewhat more recent
+		 * behaviour.
+		 *
+		 * There are OE tests where the missing ID is treated
+		 * like "null".  Since the private key isn't needed,
+		 * missing key is ignored.
+		 *
+		 * Are there tests where the ID defaults to HOST?
+		 * Presumably the saved CKAID would be used to find
+		 * the host key?
 		 */
 
 		if (src->ckaid != NULL) {
@@ -1065,65 +1089,87 @@ static diag_t extract_host_end(struct host_end *host,
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		}
 
-		chunk_t keyspace = NULL_HUNK; /* must free */
-		struct pubkey_content pkc;
-		if (src->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY) {
-			/* XXX: lifted from starter_whack_add_pubkey() */
-			err = ttochunk(shunk1(src->pubkey), 64/*damit*/, &keyspace);
-			if (err != NULL) {
-				enum_buf pkb;
-				return diag("%s%s invalid: %s",
-					    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-					    err);
-			}
-			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc);
-			if (d != NULL) {
-				free_chunk_content(&keyspace);
-				enum_buf pkb;
-				return diag_diag(&d, "%s%s invalid, ",
-						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-			}
-		} else {
-			/* XXX: lifted from starter_whack_add_pubkey() */
-			err = ttochunk(shunk1(src->pubkey), 0/*figure-it-out*/, &keyspace);
-			if (err != NULL) {
-				enum_buf pkb;
-				return diag("%s%s invalid: %s",
-					    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-					    err);
-			}
-			const struct pubkey_type *type;
-			switch (src->pubkey_alg) {
-			case IPSECKEY_ALGORITHM_RSA:
-				type = &pubkey_type_rsa;
-				break;
-			case IPSECKEY_ALGORITHM_ECDSA:
-				type = &pubkey_type_ecdsa;
-				break;
-			default:
-				bad_case(src->pubkey_alg);
-			}
-
-			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
-									  logger);
-			if (d != NULL) {
-				free_chunk_content(&keyspace);
-				enum_buf pkb;
-				return diag_diag(&d, "%s%s invalid, ",
-						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-			}
+		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
+		err = whack_pubkey_to_chunk(src->pubkey_alg, src->pubkey, &keyspace);
+		if (err != NULL) {
+			enum_buf pkb;
+			return diag("%s%s invalid: %s",
+				    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+				    err);
 		}
 
-		passert(pkc.type != NULL);
+		/* must-free keyspace */
 
-		ckaid_buf ckb;
-		enum_buf pkb;
-		dbg("saving CKAID %s extracted from %s%s",
-		    str_ckaid(&pkc.ckaid, &ckb),
-		    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-		host_config->ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
-		free_chunk_content(&keyspace);
-		pkc.type->free_pubkey_content(&pkc, logger);
+		if (src->id == NULL) {
+
+			struct pubkey_content pubkey_content; /* must free_pubkey_content() */
+			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(keyspace),
+						      &pubkey_content, logger);
+			if (d != NULL) {
+				free_chunk_content(&keyspace);
+				enum_buf pkb;
+				return diag_diag(&d, "%s%s invalid, ",
+						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+			}
+
+			/* must free keyspace pubkey_content */
+			passert(pubkey_content.type != NULL);
+
+			ckaid_buf ckb;
+			enum_buf pkb;
+			ldbg(logger, "saving CKAID %s extracted from %s%s",
+			     str_ckaid(&pubkey_content.ckaid, &ckb),
+			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+			host_config->ckaid = clone_const_thing(pubkey_content.ckaid, "raw pubkey's ckaid");
+
+			free_chunk_content(&keyspace);
+			free_pubkey_content(&pubkey_content, logger);
+
+			/* must-free keyspace */
+
+		} else {
+
+			/* must-free keyspace */
+
+			struct id keyid; /* must free_id_content() */
+			err = atoid(src->id, &keyid);
+			if (err != NULL) {
+				free_chunk_content(&keyspace);
+				return diag("%sid=\"%s\": %s", leftright, src->id, err);
+			}
+
+			/* must-free keyspace keyid */
+
+			/* add the public key */
+			struct pubkey *pubkey = NULL; /* must pubkey_delref() */
+			diag_t d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL,
+						     src->pubkey_alg,
+						     /*install_time*/realnow(),
+						     /*until_time*/realtime_epoch,
+						     /*ttl*/0,
+						     HUNK_AS_SHUNK(keyspace),
+						     &pubkey, logger);
+			if (d != NULL) {
+				free_chunk_content(&keyspace);
+				free_id_content(&keyid);
+				return d;
+			}
+
+			/* must-free keyspace keyid pubkey */
+
+			replace_pubkey(pubkey, &pluto_pubkeys);
+			const ckaid_t *ckaid = pubkey_ckaid(pubkey);
+			host_config->ckaid = clone_const_thing(*ckaid, "pubkey ckaid");
+			pubkey_delref(&pubkey);
+			free_id_content(&keyid);
+
+			/* must-free keyspace */
+		}
+
+		/* saved */
+		PEXPECT(logger, host_config->ckaid != NULL);
+
+		/* must-free keyspace */
 
 		/* try to pre-load the private key */
 		bool load_needed;
@@ -1140,6 +1186,8 @@ static diag_t extract_host_end(struct host_end *host,
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     str_ckaid(host_config->ckaid, &ckb));
 		}
+
+		free_chunk_content(&keyspace);
 
 	} else if (src->ckaid != NULL) {
 		diag_t d = extract_host_ckaid(host_config, src, same_ca, logger);
