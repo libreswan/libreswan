@@ -465,7 +465,7 @@ int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_listen = true,
+		.whack_command = WHACK_LISTEN,
 	};
 	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }

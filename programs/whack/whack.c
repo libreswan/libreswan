@@ -1212,16 +1212,15 @@ int main(int argc, char **argv)
 			uintmax_t opt_whole = optarg_uintmax(logger);
 			if (opt_whole < 1500) {
 				diagw("Ignoring extremely unwise IKE buffer size choice");
-			} else {
-				msg.ike_buf_size = opt_whole;
-				msg.whack_listen = true;
 			}
+			whack_command(&msg, WHACK_LISTEN);
+			msg.ike_buf_size = opt_whole;
 			continue;
 		}
 
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
+			whack_command(&msg, WHACK_LISTEN);
 			msg.ike_sock_err_toggle = true;
-			msg.whack_listen = true;
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
@@ -1353,11 +1352,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_LISTEN:	/* --listen */
-			msg.whack_listen = true;
+			whack_command(&msg, WHACK_LISTEN);
 			continue;
 
 		case OPT_UNLISTEN:	/* --unlisten */
-			msg.whack_unlisten = true;
+			whack_command(&msg, WHACK_UNLISTEN);
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
@@ -2609,9 +2608,6 @@ int main(int argc, char **argv)
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
 	      msg.whack_key ||
-	      msg.whack_listen ||
-	      msg.whack_unlisten ||
-	      msg.ike_buf_size ||
 	      !lmod_empty(msg.debugging) ||
 	      msg.impairments.len > 0)) {
 		diagw("no action specified; try --help for hints");

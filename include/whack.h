@@ -119,6 +119,9 @@ enum whack_command {
 	/**/
 	WHACK_ACTIVE_REDIRECT,
 	WHACK_GLOBAL_REDIRECT,
+	/**/
+	WHACK_LISTEN,
+	WHACK_UNLISTEN,
 };
 
 /*
@@ -424,7 +427,6 @@ struct whack_message {
 	long unsigned int whack_nfloggroup;
 
 	/* for WHACK_LISTEN: */
-	bool whack_listen, whack_unlisten;
 	long unsigned int ike_buf_size;	/* IKE socket recv/snd buffer size */
 	bool ike_sock_err_toggle; /* toggle MSG_ERRQUEUE on IKE socket */
 

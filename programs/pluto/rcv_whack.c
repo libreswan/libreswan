@@ -81,6 +81,13 @@
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
 
+static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	llog(RC_LOG, logger, "no longer listening for IKE messages");
+	listening = false;
+}
+
 static void whack_ddos(const struct whack_message *wm, struct show *s)
 {
 	set_whack_pluto_ddos(wm->whack_ddos, show_logger(s));
@@ -157,24 +164,6 @@ static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *w
 	    bool_str(wm->whack_async));
 }
 
-static void do_whacklisten(struct logger *logger)
-{
-	fflush(stderr);
-	fflush(stdout);
-#ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
-#endif
-	llog(RC_LOG, logger, "listening for IKE messages");
-	listening = true;
-	find_ifaces(true /* remove dead interfaces */, logger);
-
-	load_preshared_secrets(logger);
-	load_groups(logger);
-#ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
-#endif
-}
-
 PRINTF_LIKE(2)
 static void dbg_whack(struct show *s, const char *fmt, ...)
 {
@@ -189,6 +178,37 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 			jam(buf, " ("PRI_LOGGER")", pri_logger(logger));
 		}
 	}
+}
+
+static void whack_listen(const struct whack_message *wm, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	/*
+	 * Update MSG_ERRQUEUE setting before size before calling
+	 * listen.
+	 */
+	if (wm->ike_sock_err_toggle) {
+		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_sock_errqueue));
+		pluto_sock_errqueue = !pluto_sock_errqueue;
+		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
+		     pluto_sock_errqueue ? "enabling" : "disabling");
+		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_sock_errqueue));
+	}
+
+	fflush(stderr);
+	fflush(stdout);
+#ifdef USE_SYSTEMD_WATCHDOG
+	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
+#endif
+	llog(RC_LOG, logger, "listening for IKE messages");
+	listening = true;
+	find_ifaces(true /* remove dead interfaces */, logger);
+
+	load_preshared_secrets(logger);
+	load_groups(logger);
+#ifdef USE_SYSTEMD_WATCHDOG
+	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
+#endif
 }
 
 static void jam_redirect(struct jambuf *buf, const struct whack_message *wm)
@@ -571,6 +591,15 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.name = "active-redirect",
 			.op = whack_active_redirect,
 		},
+		/**/
+		[WHACK_LISTEN] = {
+			.name = "listen",
+			.op = whack_listen,
+		},
+		[WHACK_UNLISTEN] = {
+			.name = "unlisten",
+			.op = whack_unlisten,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -652,30 +681,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "impair: start: %d impairments", m->impairments.len);
 		whack_impair(m, s);
 		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
-	}
-
-	/* update MSG_ERRQUEUE setting before size before calling listen */
-	if (m->ike_sock_err_toggle) {
-		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_sock_errqueue));
-		pluto_sock_errqueue = !pluto_sock_errqueue;
-		llog(RC_LOG, logger,
-			    "%s IKE socket MSG_ERRQUEUEs",
-			    pluto_sock_errqueue ? "enabling" : "disabling");
-		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_sock_errqueue));
-	}
-
-	/* process "listen" before any operation that could require it */
-	if (m->whack_listen) {
-		dbg_whack(s, "listen: start:");
-		do_whacklisten(logger);
-		dbg_whack(s, "listen: stop:");
-	}
-
-	if (m->whack_unlisten) {
-		dbg_whack(s, "unlisten: start:");
-		llog(RC_LOG, logger, "no longer listening for IKE messages");
-		listening = false;
-		dbg_whack(s, "unlisten: stop:");
 	}
 
 	/*
