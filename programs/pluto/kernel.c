@@ -360,7 +360,9 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 	return bs;
 }
 
-static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
+static reqid_t get_proto_reqid(reqid_t base,
+			       const struct ip_protocol *proto,
+			       struct logger *logger)
 {
 	if (proto == &ip_protocol_ipcomp)
 		return reqid_ipcomp(base);
@@ -371,8 +373,7 @@ static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 	if (proto == &ip_protocol_ah)
 		return reqid_ah(base);
 
-	llog_passert(&global_logger, HERE,
-		     "bad protocol %s", proto->name);
+	llog_passert(logger, HERE, "bad protocol %s", proto->name);
 }
 
 static const char *said_str(const ip_address dst,
@@ -394,7 +395,7 @@ ipsec_spi_t get_ipsec_spi(const struct connection *c,
 					/*src*/&c->remote->host.addr,
 					/*dst*/&c->local->host.addr,
 					proto,
-					get_proto_reqid(c->child.reqid, proto),
+					get_proto_reqid(c->child.reqid, proto, logger),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
 					"SPI", logger);
 }
@@ -413,7 +414,7 @@ ipsec_spi_t get_ipsec_cpi(const struct connection *c, struct logger *logger)
 					/*src*/&c->remote->host.addr,
 					/*dst*/&c->local->host.addr,
 					&ip_protocol_ipcomp,
-					get_proto_reqid(c->child.reqid, &ip_protocol_ipcomp),
+					get_proto_reqid(c->child.reqid, &ip_protocol_ipcomp, logger),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
 					"CPI", logger);
@@ -537,7 +538,7 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 		       const ip_selector *local, const ip_selector *remote,
 		       enum routing routing, const char *who)
 {
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 
 		enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 
@@ -845,7 +846,7 @@ void revert_kernel_policy(struct spd *spd,
 		PEXPECT(logger, child != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
 		if (!do_updown(UPDOWN_DOWN, c, spd, child, logger)) {
-			dbg("kernel: down command returned an error");
+			ldbg(logger, "kernel: down command returned an error");
 		}
 		spd->wip.installed.up = false;
 	}
@@ -996,7 +997,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		PEXPECT(c->logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
-			free_bare_shunt(bspp);
+			free_bare_shunt(bspp, c->logger);
 		}
 	}
 
@@ -1019,12 +1020,14 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const char *why)
 
 {
+	struct logger *logger = &global_logger;
+
 	selector_pair_buf sb;
-	dbg("kernel: %s looking for %s",
-	    why, str_selector_pair(our_client, peer_client, &sb));
+	ldbg(logger, "kernel: %s looking for %s",
+	     why, str_selector_pair(our_client, peer_client, &sb));
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
-		ldbg_bare_shunt(&global_logger, "comparing", p);
+		ldbg_bare_shunt(logger, "comparing", p);
 		if (selector_in_selector(*our_client, p->our_client) &&
 		    selector_in_selector(*peer_client, p->peer_client)) {
 			return pp;
@@ -1036,7 +1039,7 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 /*
  * Free a bare_shunt entry, given a pointer to the pointer.
  */
-void free_bare_shunt(struct bare_shunt **pp)
+void free_bare_shunt(struct bare_shunt **pp, struct logger *logger)
 {
 	struct bare_shunt *p;
 
@@ -1045,7 +1048,7 @@ void free_bare_shunt(struct bare_shunt **pp)
 	p = *pp;
 
 	*pp = p->next;
-	ldbg_bare_shunt(&global_logger, "delete", p);
+	ldbg_bare_shunt(logger, "delete", p);
 	pfree(p);
 }
 
@@ -1145,7 +1148,7 @@ void clear_narrow_holds(const ip_selector *src_client,
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 							logger, HERE);
-			free_bare_shunt(bspp);
+			free_bare_shunt(bspp, logger);
 		} else {
 			bspp = &(*bspp)->next;
 		}
@@ -1249,17 +1252,17 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	address_buf sab, dab;
 	selector_buf scb, dcb;
 	enum_buf dnb, rmb;
-	dbg("kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
-	    __func__,
-	    str_enum_short(&direction_names, said_boilerplate.direction, &dnb),
-	    str_selector(&said_boilerplate.src.route, &scb),
-	    str_address(&said_boilerplate.src.address, &sab),
-	    str_enum_short(&kernel_mode_names, route.mode, &rmb),
-	    str_address(&said_boilerplate.dst.address, &dab),
-	    str_selector(&said_boilerplate.dst.route, &dcb),
-	    /* see above */
-	    pri_shunk(said_boilerplate.sec_label),
-	    (c->child.sec_label.len > 0 ? " (IKEv2 this)" : ""))
+	ldbg(c->logger, "kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
+	     __func__,
+	     str_enum_short(&direction_names, said_boilerplate.direction, &dnb),
+	     str_selector(&said_boilerplate.src.route, &scb),
+	     str_address(&said_boilerplate.src.address, &sab),
+	     str_enum_short(&kernel_mode_names, route.mode, &rmb),
+	     str_address(&said_boilerplate.dst.address, &dab),
+	     str_selector(&said_boilerplate.dst.route, &dcb),
+	     /* see above */
+	     pri_shunk(said_boilerplate.sec_label),
+	     (c->child.sec_label.len > 0 ? " (IKEv2 this)" : ""));
 
 	/* set up IPCOMP SA, if any */
 
@@ -1311,12 +1314,12 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			default:
 				bad_case(direction);
 			}
-			dbg("kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
-			    pri_ip_encap(encap_type), encap_sport, encap_dport);
+			ldbg(child->sa.logger, "kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+			     pri_ip_encap(encap_type), encap_sport, encap_dport);
 		}
 
-		dbg("kernel: looking for alg with encrypt: %s keylen: %d integ: %s",
-		    ta->ta_encrypt->common.fqn, ta->enckeylen, ta->ta_integ->common.fqn);
+		ldbg(child->sa.logger, "kernel: looking for alg with encrypt: %s keylen: %d integ: %s",
+		     ta->ta_encrypt->common.fqn, ta->enckeylen, ta->ta_integ->common.fqn);
 
 		/*
 		 * Check that both integrity and encryption are
@@ -1358,23 +1361,24 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 			/* Grrrrr.... f*cking 7 bits jurassic algos */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
 			if (encrypt_keymat_size == 21) {
-				dbg("kernel: %s requires a 7-bit jurassic adjust",
-				    ta->ta_encrypt->common.fqn);
+				ldbg(child->sa.logger,
+				     "kernel: %s requires a 7-bit jurassic adjust",
+				     ta->ta_encrypt->common.fqn);
 				encrypt_keymat_size = 24;
 			}
 		}
 #endif
 
 		if (ta->ta_encrypt->salt_size > 0) {
-			dbg("kernel: %s requires %zu salt bytes",
-			    ta->ta_encrypt->common.fqn, ta->ta_encrypt->salt_size);
+			ldbg(child->sa.logger, "kernel: %s requires %zu salt bytes",
+			     ta->ta_encrypt->common.fqn, ta->ta_encrypt->salt_size);
 			encrypt_keymat_size += ta->ta_encrypt->salt_size;
 		}
 
 		size_t integ_keymat_size = ta->ta_integ->integ_keymat_size; /* BYTES */
 
-		dbg("kernel: child->sa.st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
-		    esp_keymat.len, encrypt_keymat_size, integ_keymat_size);
+		ldbg(child->sa.logger, "kernel: child->sa.st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
+		     esp_keymat.len, encrypt_keymat_size, integ_keymat_size);
 
 		PASSERT(child->sa.logger, esp_keymat.len == encrypt_keymat_size + integ_keymat_size);
 
@@ -1438,7 +1442,8 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 						"Error: sha2-truncbug=yes is not allowed in FIPS mode");
 					goto fail;
 				}
-				dbg("kernel:  authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
+				ldbg(child->sa.logger,
+				     "kernel:  authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
 				/*
 				 * We need to tell the kernel to mangle
 				 * the sha2_256, as instructed by the user
@@ -1453,7 +1458,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		}
 #endif
 		if (child->sa.st_esp.trans_attrs.esn_enabled) {
-			dbg("kernel: Enabling ESN");
+			ldbg(child->sa.logger, "kernel: Enabling ESN");
 			said_next->esn = true;
 		}
 
@@ -1478,9 +1483,12 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 					    &ip_protocol_esp,
 					    esp_spi, &text_esp);
 
-		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("ESP encrypt key:",  said_next->encrypt_key);
-			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
+		if (LDBGP(DBG_PRIVATE, child->sa.logger) ||
+		    LDBGP(DBG_CRYPT, child->sa.logger)) {
+			LDBG_log(child->sa.logger, "ESP encrypt key:");
+			LDBG_hunk(child->sa.logger, said_next->encrypt_key);
+			LDBG_log(child->sa.logger, "ESP integrity key:");
+			LDBG_hunk(child->sa.logger, said_next->integ_key);
 		}
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
@@ -1542,12 +1550,14 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		     c->config->child_sa.replay_window);
 
 		if (child->sa.st_ah.trans_attrs.esn_enabled) {
-			dbg("kernel: Enabling ESN");
+			ldbg(child->sa.logger, "kernel: Enabling ESN");
 			said_next->esn = true;
 		}
 
-		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("AH authkey:", said_next->integ_key);
+		if (LDBGP(DBG_PRIVATE, child->sa.logger) ||
+		    LDBGP(DBG_CRYPT, child->sa.logger)) {
+			LDBG_log(child->sa.logger, "AH authkey:");
+			LDBG_hunk(child->sa.logger, said_next->integ_key);
 		}
 
 		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);
@@ -2086,7 +2096,7 @@ void orphan_holdpass(struct connection *c,
 	 * shunt.
 	 */
 
-	dbg("kernel: installing bare_shunt/failure_shunt");
+	ldbg(logger, "kernel: installing bare_shunt/failure_shunt");
 
 	/* fudge up parameter list */
 	const ip_address *src_address = &sr->local->host->addr;
@@ -2102,8 +2112,8 @@ void orphan_holdpass(struct connection *c,
 	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
 	selector_pair_buf sb;
-	dbg("kernel: replace bare shunt %s for %s",
-	    str_selector_pair(&src, &dst, &sb), why);
+	ldbg(logger, "kernel: replace bare shunt %s for %s",
+	     str_selector_pair(&src, &dst, &sb), why);
 
 	/*
 	 * ??? this comment might be obsolete.
@@ -2166,7 +2176,7 @@ void orphan_holdpass(struct connection *c,
 
 static void expire_bare_shunts(struct logger *logger)
 {
-	dbg("kernel: checking for aged bare shunts from shunt table to expire");
+	ldbg(logger, "kernel: checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; /*see-loop*/) {
 		struct bare_shunt *bsp = *bspp;
 		deltatime_t age = monotime_diff(mononow(), bsp->last_activity);
@@ -2181,7 +2191,7 @@ static void expire_bare_shunts(struct logger *logger)
 			ldbg_bare_shunt(logger, "expiring old (no template connection)", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 							logger, HERE);
-			free_bare_shunt(bspp);
+			free_bare_shunt(bspp, logger);
 			continue;
 		}
 
@@ -2197,7 +2207,7 @@ static void expire_bare_shunts(struct logger *logger)
 			ldbg_bare_shunt(logger, "expiring old (template connection disappeard)", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 							logger, HERE);
-			free_bare_shunt(bspp);
+			free_bare_shunt(bspp, logger);
 			continue;
 		}
 
@@ -2206,7 +2216,7 @@ static void expire_bare_shunts(struct logger *logger)
 			ldbg_bare_shunt(logger, "expiring old (template connection has no kernel_policy_installed())", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 							logger, HERE);
-			free_bare_shunt(bspp);
+			free_bare_shunt(bspp, logger);
 			continue;
 		}
 
@@ -2217,18 +2227,18 @@ static void expire_bare_shunts(struct logger *logger)
 		install_prospective_kernel_policy(c->spd,
 						  SHUNT_KIND_ONDEMAND,
 						  logger, HERE);
-		free_bare_shunt(bspp);
+		free_bare_shunt(bspp, logger);
 	}
 }
 
 static void delete_bare_shunt_kernel_policies(struct logger *logger)
 {
-	dbg("kernel: emptying bare shunt table");
+	ldbg(logger, "kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
 		delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
 						logger, HERE);
-		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
+		free_bare_shunt(&bare_shunts, logger); /* also updates BARE_SHUNTS */
 	}
 }
 
@@ -2297,8 +2307,8 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 
 	if ((already_softexpired && expire == SA_SOFT_EXPIRED)  ||
 	    (already_hardexpired && expire == SA_HARD_EXPIRED)) {
-		dbg("#%lu one of the SA has already expired ignore this %s EXPIRE",
-		    child->sa.st_serialno, hard ? "hard" : "soft");
+		ldbg(logger, ""PRI_SO" one of the SA has already expired ignore this %s EXPIRE",
+		     pri_so(child->sa.st_serialno), hard ? "hard" : "soft");
 		/*
 		 * likely the other direction SA EXPIRED, it triggered a rekey first.
 		 * It should be safe to ignore the second one. No need to log.

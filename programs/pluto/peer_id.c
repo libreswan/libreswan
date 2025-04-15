@@ -298,12 +298,12 @@ static bool score_host_connection(const struct ike_sa *ike,
 		esb_buf tzesb;
 		vdbg("peer expects us to be %s (%s) according to its IDr (tarzan) payload",
 		     str_id(responder_id, &tzb),
-		     str_enum(&ike_id_type_names, responder_id->kind, &tzesb));
+		     str_enum_short(&ike_id_type_names, responder_id->kind, &tzesb));
 		id_buf usb;
 		esb_buf usesb;
 		vdbg("this connection's local id is %s (%s)",
 		     str_id(&d->local->host.id, &usb),
-		     str_enum(&ike_id_type_names, d->local->host.id.kind, &usesb));
+		     str_enum_short(&ike_id_type_names, d->local->host.id.kind, &usesb));
 		/* ??? pexpect(d->spd->spd_next == NULL); */
 		if (!idr_wildmatch(&d->local->host, responder_id, ike->sa.logger)) {
 			vdbg("skipping because peer IDr (tarzan) payload does not match our expected ID");
@@ -801,13 +801,14 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
        /* end cert is at the front; move to where? */
        struct certs *certs = ike->sa.st_remote_certs.verified;
        CERTCertificate *end_cert = certs->cert;
-       dbg("rhc: comparing certificate: %s", end_cert->subjectName);
+       ldbg(ike->sa.logger,
+	    "rhc: comparing certificate: %s", end_cert->subjectName);
 
        struct id remote_cert_id = empty_id;
        diag_t d = match_peer_id_cert(certs, &c->remote->host.id, &remote_cert_id);
 
        if (d == NULL) {
-	       dbg("X509: CERT and ID matches current connection");
+	       ldbg(ike->sa.logger, "X509: CERT and ID matches current connection");
 	       if (remote_cert_id.kind != ID_NONE) {
 		       replace_connection_that_id(c, &remote_cert_id);
 	       }
@@ -854,20 +855,22 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		}
 #endif
 		id_buf idb;
-		dbg("rhc: %%fromcert and no certificate payload - continuing with peer ID %s",
-		    str_id(peer_id, &idb));
+		ldbg(ike->sa.logger,
+		     "rhc: %%fromcert and no certificate payload - continuing with peer ID %s",
+		     str_id(peer_id, &idb));
 		replace_connection_that_id(c, peer_id);
 	} else if (same_id(&c->remote->host.id, peer_id)) {
 		id_buf idb;
-		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
-		    str_id(peer_id, &idb));
+		ldbg(ike->sa.logger,
+		     "rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
+		     str_id(peer_id, &idb));
 	} else if (c->remote->host.config->authby.null &&
 		   tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
 		id_buf peer_idb;
 		llog_sa(RC_LOG, ike,
 			"Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
 			str_id(peer_id, &peer_idb));
-		dbg("rhc: setting .st_peer_wants_null");
+		ldbg(ike->sa.logger, "rhc: setting .st_peer_wants_null");
 		ike->sa.st_peer_wants_null = true;
 	} else {
 		id_buf peer_idb;
@@ -938,7 +941,8 @@ bool compare_connection_id(const struct connection *c,
  * the peer's RSA key or ID.
  */
 
-diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
+diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs,
+		 struct logger *logger)
 {
 	struct pbs_in in_pbs = *id_pbs; /* local copy */
 	shunk_t name = pbs_in_left(&in_pbs);
@@ -961,15 +965,15 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 #if 0
 		if (memchr(name.ptr, '@', name.len) == NULL) {
 			llog(RC_LOG, logger,
-				    "peer's ID_USER_FQDN contains no @: %.*s",
-				    (int) left, id_pbs->cur);
+			     "peer's ID_USER_FQDN contains no @: %.*s",
+			     (int) left, id_pbs->cur);
 			/* return false; */
 		}
 #endif
 		if (memchr(name.ptr, '\0', name.len) != NULL) {
 			esb_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
-				    str_enum(&ike_id_type_names, kind, &b));
+				    str_enum_short(&ike_id_type_names, kind, &b));
 		}
 		/* ??? ought to do some more sanity check, but what? */
 		peer->name = name;
@@ -979,7 +983,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		if (memchr(name.ptr, '\0', name.len) != NULL) {
 			esb_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
-				    str_enum(&ike_id_type_names, kind, &b));
+				    str_enum_short(&ike_id_type_names, kind, &b));
 		}
 		/* ??? ought to do some more sanity check, but what? */
 		peer->name = name;
@@ -987,22 +991,25 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 
 	case ID_KEY_ID:
 		peer->name = name;
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk("KEY ID:", peer->name);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "KEY ID:");
+			LDBG_hunk(logger, peer->name);
 		}
 		break;
 
 	case ID_DER_ASN1_DN:
 		peer->name = name;
-		if (DBGP(DBG_BASE)) {
-		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "DER ASN1 DN:");
+			LDBG_hunk(logger, peer->name);
 		}
 		break;
 
 	case ID_NULL:
 		if (name.len != 0) {
-			if (DBGP(DBG_BASE)) {
-				DBG_dump_hunk("unauthenticated NULL ID:", name);
+			if (LDBGP(DBG_BASE, logger)) {
+				LDBG_log(logger, "unauthenticated NULL ID:");
+				LDBG_hunk(logger, name);
 			}
 		}
 		break;
@@ -1011,7 +1018,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 	{
 		esb_buf b;
 		return diag("Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
-			    str_enum(&ike_id_type_names, kind, &b));
+			    str_enum_short(&ike_id_type_names, kind, &b));
 	}
 	}
 
