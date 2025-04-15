@@ -32,6 +32,7 @@
 struct jambuf;
 
 typedef struct {
+	bool is_set;
 	/*
 	 * XXX: 0 is interpreted as either 0, or any-port (is this a
 	 * good idea?); host-byte ordered.
@@ -47,8 +48,7 @@ ip_port ip_nport(unsigned nport);
 unsigned hport(ip_port port);
 unsigned nport(ip_port port);
 
-bool port_is_unset(ip_port port);
-#define port_is_set !port_is_unset
+bool port_is_specified(ip_port p);
 #define port_eq(L,R) ((L).hport == (R).hport)
 
 err_t ttoport(shunk_t text, ip_port *port);

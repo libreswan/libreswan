@@ -22,6 +22,7 @@
 #include <stddef.h>		/* for size_t */
 
 #include "err.h"
+#include "shunk.h"
 #include "ip_port.h"
 #include "ip_protocol.h"
 
@@ -36,7 +37,7 @@ typedef struct {
 
 extern const ip_protoport unset_protoport;
 
-err_t ttoprotoport(const char *src, ip_protoport *protoport);
+err_t ttoprotoport(shunk_t src, ip_protoport *protoport);
 
 typedef struct {
 	char buf[32+1+32+1+1];

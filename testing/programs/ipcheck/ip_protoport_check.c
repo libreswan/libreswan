@@ -47,7 +47,7 @@ static void check__ttoprotoport(void)
 		      t->in, t->ipproto, t->hport, bool_str(t->ok));
 
 		ip_protoport out;
-		err_t err = ttoprotoport(t->in, &out);
+		err_t err = ttoprotoport(shunk1(t->in), &out);
 
 		if (!t->ok && err == NULL) {
 			FAIL("%s expected error, got none", t->in);

@@ -87,9 +87,9 @@ static void add_iface_endpoint(bool listening,
 			       struct connection *c,
 			       const struct iface_io *io)
 {
-	ip_port local_port = ip_hport(c->local->config->host.ikeport);
+	ip_port local_port = c->local->config->host.ikeport;
 
-	if (local_port.hport == 0) {
+	if (!port_is_specified(local_port)) {
 		address_buf ab;
 		ldbg(c->logger, "  skipping %s %s; no custom %s port",
 		     c->iface->real_device_name,
@@ -204,12 +204,12 @@ static void LDBG_orient_end(struct connection *c, enum end end)
 	address_buf ab;
 	name_buf enb;
 	sparse_buf tcpb;
-	LDBG_log(c->logger, "  %s host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s tcp=%s",
+	LDBG_log(c->logger, "  %s host type=%s address=%s port="PRI_HPORT" ikeport="PRI_HPORT" encap=%s tcp=%s",
 		 this->config->leftright,
 		 str_sparse_short(&keyword_host_names, this->config->type, &enb),
 		 str_address(&this->addr, &ab),
 		 pri_hport(end_host_port(this, that)),
-		 this->config->ikeport,
+		 pri_hport(this->config->ikeport),
 		 bool_str(this->encap),
 		 str_sparse(&tcp_option_names, c->local->config->host.iketcp, &tcpb));
 }

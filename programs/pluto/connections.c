@@ -579,14 +579,14 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 {
-	unsigned port;
-	if (this->config->ikeport != 0) {
+	ip_port port;
+	if (port_is_specified(this->config->ikeport)) {
 		/*
 		 * The END's IKEPORT was specified in the config file.
 		 * Use that.
 		 */
 		port = this->config->ikeport;
-	} else if (that->config->ikeport != 0) {
+	} else if (port_is_specified(that->config->ikeport)) {
 		/*
 		 * The other end's IKEPORT was specified in the config
 		 * file.  Since specifying an IKEPORT implies ESP
@@ -594,24 +594,24 @@ ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 		 * ESP=0 prefix), send packets from the encapsulating
 		 * NAT_IKE_UDP_PORT.
 		 */
-		port = NAT_IKE_UDP_PORT;
+		port = ip_hport(NAT_IKE_UDP_PORT);
 	} else if (that->encap) {
 		/*
 		 * See above.  Presumably an instance which previously
 		 * had a natted port and is being revived.
 		 */
-		port = NAT_IKE_UDP_PORT;
+		port = ip_hport(NAT_IKE_UDP_PORT);
 	} else if (this->config->iketcp == IKE_TCP_ONLY) {
 		/*
 		 * RFC 8229: Implementations MUST support TCP
 		 * encapsulation on TCP port 4500, which is reserved
 		 * for IPsec NAT traversal.
 		*/
-		port = NAT_IKE_UDP_PORT;
+		port = ip_hport(NAT_IKE_UDP_PORT);
 	} else {
-		port = IKE_UDP_PORT;
+		port = ip_hport(IKE_UDP_PORT);
 	}
-	return ip_hport(port);
+	return port;
 }
 
 ip_port local_host_port(const struct connection *c)
@@ -1341,12 +1341,16 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
-	host_config->ikeport = src->host_ikeport;
-	if (src->host_ikeport > 65535) {
-		llog(RC_BADID, logger,
-			    "%sikeport=%u must be between 1..65535, ignored",
-			    leftright, src->host_ikeport);
-		host_config->ikeport = 0;
+
+	if (can_extract_str(leftright, "ikeport", src->ikeport, wm, logger)) {
+		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
+		if (err != NULL) {
+			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
+		}
+		if (!port_is_specified(host_config->ikeport)) {
+			return diag("%sikeport=%s invalid, must be in range 1-65535",
+				    leftright, src->ikeport);
+		}
 	}
 
 	/*

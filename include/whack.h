@@ -154,7 +154,7 @@ struct whack_end {
 
 	enum keyword_host host_type;
 	ip_address host_addr;
-	unsigned host_ikeport;
+	char *ikeport;			/* host */
 	ip_address nexthop;		/* host */
 	char *sourceip;
 	char *vti;			/* host */

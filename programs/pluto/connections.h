@@ -85,7 +85,7 @@ struct host_end_config {
 	char *addr_name;	/* string version from whack */
 
 	ip_address nexthop;
-	unsigned ikeport;
+	ip_port ikeport;
 	enum keyword_host type;
 	enum tcp_options iketcp;	/* Allow TCP as fallback,
 					 * insist on TCP(YES) or stick

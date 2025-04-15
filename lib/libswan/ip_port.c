@@ -26,7 +26,10 @@ const ip_port unset_port; /* aka all ports? */
 
 ip_port ip_hport(unsigned hport)
 {
-	ip_port port = { .hport = hport, };
+	ip_port port = {
+		.is_set = true,
+		.hport = hport,
+	};
 	return port;
 }
 
@@ -45,9 +48,9 @@ unsigned nport(const ip_port port)
 	return htons(port.hport);
 }
 
-bool port_is_unset(ip_port port)
+bool port_is_specified(ip_port port)
 {
-	return thingeq(port, unset_port);
+	return (port.is_set && port.hport != 0); /* assumes udp/tcp */
 }
 
 size_t jam_hport(struct jambuf *buf, ip_port port)

@@ -147,11 +147,11 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->subnets = l->values[KSCF_SUBNETS].string;
-	w->host_ikeport = l->values[KNCF_IKEPORT].option;
+	w->ikeport = l->values[KNCF_IKEPORT].string;
 
 	if (l->values[KSCF_PROTOPORT].set) {
 		char *value = l->values[KSCF_PROTOPORT].string;
-		err_t ugh = ttoprotoport(value, &w->protoport);
+		err_t ugh = ttoprotoport(shunk1(value), &w->protoport);
 
 		if (ugh != NULL) {
 			llog_error(logger, 0, "bad %sprotoport=%s [%s]",
