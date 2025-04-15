@@ -868,6 +868,34 @@ static char *extract_str(const char *leftright, const char *name,
 	return NULL;
 }
 
+static uintmax_t extract_uintmax(const char *leftright,
+				 const char *name,
+				 const char *value,
+				 uintmax_t min,
+				 uintmax_t max,
+				 const struct whack_message *wm,
+				 diag_t *d,
+				 struct logger *logger)
+{
+	(*d) = NULL;
+	if (!can_extract_str(leftright, name, value, wm, logger)) {
+		return 0;
+	}
+
+	uintmax_t uintmax;
+	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &uintmax);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		return 0;
+	}
+	if (uintmax < min || uintmax > max) {
+		(*d) = diag("%s%s=%ju invalid, must be in the range %ju-%ju",
+			    leftright, name, uintmax, min, max);
+		return 0;
+	}
+	return uintmax;
+}
+
 static diag_t extract_host_ckaid(struct host_end_config *host_config,
 				 const struct whack_end *src,
 				 bool *same_ca,
@@ -3815,19 +3843,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 #endif
 
 #ifdef USE_NFLOG
-	if (can_extract_str("", "nflog-group", wm->nflog_group, wm, c->logger)) {
-		uintmax_t nflog_group;
-		err_t err = shunk_to_uintmax(shunk1(wm->nflog_group), NULL/*all*/,
-					     10, &nflog_group);
-		if (err != NULL) {
-			return diag("nflog-group=%s invalid, %s",
-				    wm->nflog_group, err);
-		}
-		if (nflog_group < 1 || nflog_group > 65535) {
-			return diag("nflog-group=%s must be in range 1-65535",
-				    wm->nflog_group);
-		}
-		c->nflog_group = nflog_group;
+	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,
+					 1, 65535, wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
 	}
 #endif
 
