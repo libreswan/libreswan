@@ -125,7 +125,8 @@ bool ikev1_decode_peer_id_main_mode_responder(struct ike_sa *ike, struct msg_dig
 	case OAKLEY_ECDSA_P384:
 	case OAKLEY_ECDSA_P521:
 	default:
-		dbg("ikev1 ike_decode_peer_id bad_case due to not supported policy");
+		ldbg(ike->sa.logger,
+		     "ikev1 ike_decode_peer_id bad_case due to not supported policy");
 		return false;
 	}
 
@@ -183,8 +184,9 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
 	    id->isaid_doi_specific_a == IPPROTO_UDP &&
 	    (id->isaid_doi_specific_b == 0 ||
 	     id->isaid_doi_specific_b == NAT_IKE_UDP_PORT)) {
-		dbg("protocol/port in Phase 1 ID Payload is %d/%d. accepted with port_floating NAT-T",
-		    id->isaid_doi_specific_a, id->isaid_doi_specific_b);
+		ldbg(ike->sa.logger,
+		     "protocol/port in Phase 1 ID Payload is %d/%d. accepted with port_floating NAT-T",
+		     id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else if (!(id->isaid_doi_specific_a == 0 &&
 		     id->isaid_doi_specific_b == 0) &&
 		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
@@ -202,7 +204,7 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
 		/* return false; */
 	}
 
-	diag_t d = unpack_id(id->isaid_idtype, peer, &id_pld->pbs);
+	diag_t d = unpack_id(id->isaid_idtype, peer, &id_pld->pbs, ike->sa.logger);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -219,7 +221,7 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
 	id_buf buf;
 	enum_buf b;
 	llog(RC_LOG, ike->sa.logger, "Peer ID is %s: '%s'",
-	     str_enum(&ike_id_type_names, id->isaid_idtype, &b),
+	     str_enum_short(&ike_id_type_names, id->isaid_idtype, &b),
 	     str_id(peer, &buf));
 
 	return true;
@@ -246,7 +248,7 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 	switch (ike->sa.st_oakley.auth) {
 	case OAKLEY_PRESHARED_KEY:
 	{
-		struct pbs_in *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
+		shunk_t pbs_hash = pbs_in_left(&md->chain[ISAKMP_NEXT_HASH]->pbs);
 
 		/*
 		 * XXX: looks a lot like the hack CHECK_QUICK_HASH(),
@@ -255,21 +257,20 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 		 * function and also not magically force caller to
 		 * return.
 		 */
-		if (pbs_left(hash_pbs) != hash.len ||
-			!memeq(hash_pbs->cur, hash.ptr, hash.len)) {
+		if (hunk_eq(pbs_hash, hash)) {
+			ldbg(ike->sa.logger, "received message HASH_%s data ok",
+			     (sa_role == SA_INITIATOR ? "I" :
+			      sa_role == SA_RESPONDER ? "R" :
+			      "???"));
+		} else {
 			if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 				LDBG_log(ike->sa.logger, "received HASH:");
-				LDBG_dump(ike->sa.logger, hash_pbs->cur, pbs_left(hash_pbs));
+				LDBG_hunk(ike->sa.logger, pbs_hash);
 			}
 			llog(RC_LOG, ike->sa.logger,
 			     "received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
 			r = STF_FAIL_v1N + v1N_INVALID_HASH_INFORMATION;
-		} else {
-			ldbg(ike->sa.logger, "received message HASH_%s data ok",
-			     (sa_role == SA_INITIATOR ? "I" :
-			      sa_role == SA_RESPONDER ? "R" :
-			      "???"));
 		}
 		break;
 	}

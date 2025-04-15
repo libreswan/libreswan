@@ -40,27 +40,32 @@
 #include "peer_id.h"
 #include "ikev2_certreq.h"
 
-static diag_t decode_v2ID(const char *peer, const struct payload_digest *const pd, struct id *id)
+static diag_t decode_v2ID(const char *peer,
+			  const struct payload_digest *const pd,
+			  struct id *id,
+			  struct logger *logger)
 {
 	if (pbad(pd == NULL)) {
 		return diag("INTERNAL ERROR");
 	}
 
-	diag_t d = unpack_id(/*ID kind*/pd->payload.v2id.isai_type, id, &pd->pbs);
+	diag_t d = unpack_id(/*ID kind*/pd->payload.v2id.isai_type,
+			     id, &pd->pbs, logger);
 	if (d != NULL) {
 		return diag_diag(&d, "authentication failed: %s ID payload invalid: ", peer);
 	}
 
 	id_buf idb;
 	esb_buf esb;
-	dbg("%s ID is %s: '%s'", peer,
-	    str_enum(&ike_id_type_names, id->kind, &esb),
-	    str_id(id, &idb));
+	ldbg(logger, "%s ID is %s: '%s'", peer,
+	     str_enum_short(&ike_id_type_names, id->kind, &esb),
+	     str_id(id, &idb));
 
 	return NULL;
 }
 
-diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike, struct msg_digest *md,
+diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike,
+					    struct msg_digest *md,
 					    struct id *initiator_id,
 					    struct id *responder_id)
 {
@@ -74,7 +79,7 @@ diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike, struct msg_diges
 		return diag("authentication failed: initiator did not include IDi payload");
 	}
 
-	diag_t d = decode_v2ID("initiator", IDi, initiator_id);
+	diag_t d = decode_v2ID("initiator", IDi, initiator_id, ike->sa.logger);
 	if (d != NULL) {
 		return d;
 	}
@@ -82,7 +87,7 @@ diag_t ikev2_responder_decode_v2ID_payloads(struct ike_sa *ike, struct msg_diges
 	/* You Tarzan, me Jane? */
 	const struct payload_digest *IDr = md->chain[ISAKMP_NEXT_v2IDr];
 	if (IDr != NULL) {
-		diag_t d = decode_v2ID("responder", IDr, responder_id);
+		diag_t d = decode_v2ID("responder", IDr, responder_id, ike->sa.logger);
 		if (d != NULL) {
 			return d;
 		}
@@ -104,7 +109,7 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 	}
 
 	struct id responder_id;
- 	diag_t d = decode_v2ID("responder", IDr, &responder_id);
+ 	diag_t d = decode_v2ID("responder", IDr, &responder_id, ike->sa.logger);
 	if (d != NULL) {
 		return d;
 	}
