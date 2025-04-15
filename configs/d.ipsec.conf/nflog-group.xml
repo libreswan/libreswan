@@ -1,0 +1,24 @@
+<varlistentry>
+  <term>
+    <option>nflog-group</option>
+  </term>
+  <listitem>
+    <para>
+      If set, the NFLOG group number to log this connection's
+      pre-crypt and post-decrypt traffic to.  The default value of
+      <option>0</option> means no logging at all.  This option is only
+      available on linux kernel 2.6.14 and later.  It allows common
+      network utilities such as tcpdump, wireshark and dumpcap, to use
+      nflog:XXX pseudo interfaces where XXX is the nflog group
+      number. During the updown phase of a connection, iptables will
+      be used to add and remove the source/destination pair to the
+      nflog group specified.  The rules are setup with the
+      nflog-prefix matching the connection name. See also the global
+      <option>nflog-all</option> option.
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.3, this option was called
+      <option>nflog</option>.
+    </para>
+  </listitem>
+</varlistentry>

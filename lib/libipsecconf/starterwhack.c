@@ -320,8 +320,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.tfc = conn->values[KNCF_TFC].option;
 	if (conn->values[KNCF_NO_ESP_TFC].set)
 		msg.send_no_esp_tfc = conn->values[KNCF_NO_ESP_TFC].option;
-	if (conn->values[KNCF_NFLOG_CONN].set)
-		msg.nflog_group = conn->values[KNCF_NFLOG_CONN].option;
+	msg.nflog_group = conn->values[KNCF_NFLOG_GROUP].string;
 
 	if (conn->values[KNCF_REQID].set) {
 		if (conn->values[KNCF_REQID].option <= 0 ||

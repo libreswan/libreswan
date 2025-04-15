@@ -271,7 +271,7 @@ enum keywords {
 	KNCF_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
-	KNCF_NFLOG_CONN,	/* Enable per-conn nflog device */
+	KNCF_NFLOG_GROUP,	/* Enable per-conn nflog device */
 	KNCF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KNCF_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
