@@ -338,7 +338,7 @@ extern const struct kernel_ops *const kernel_stacks[];
  */
 
 #define SHUNT_SCAN_INTERVAL_SECONDS (2*10)
-#define SHUNT_SCAN_INTERVAL     deltatime(SHUNT_SCAN_INTERVAL_SECONDS)   /* time between scans of eroutes */
+#define SHUNT_SCAN_INTERVAL     DELTATIME_INIT(SHUNT_SCAN_INTERVAL_SECONDS)   /* time between scans of eroutes */
 
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
@@ -347,7 +347,7 @@ extern const struct kernel_ops *const kernel_stacks[];
  */
 #define SHUNT_PATIENCE  deltatime(SHUNT_SCAN_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
 
-#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT deltatime(15 * secs_per_minute)
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT DELTATIME_INIT(15 * secs_per_minute)
 
 extern deltatime_t bare_shunt_interval;
 extern deltatime_t pluto_shunt_lifetime;

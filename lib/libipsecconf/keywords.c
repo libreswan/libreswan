@@ -321,6 +321,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL, NULL, },
   { "nhelpers",  kv_config,  kt_unsigned,  KBF_NHELPERS, NULL, NULL, },
   { "drop-oppo-null",  kv_config,  kt_bool,  KBF_DROP_OPPO_NULL, NULL, NULL, },
+  { "expire-shunt-interval", kv_config, kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL, NULL, NULL, },
+
   { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, NULL, }, /* obsoleted but often present keyword */
 
   /* these options are obsoleted (and not old aliases) */

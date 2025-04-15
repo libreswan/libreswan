@@ -1,0 +1,25 @@
+<varlistentry>
+  <term>
+    <option>expire-shunt-interval=<replaceable>seconds</replaceable></option>
+  </term>
+  <listitem>
+    <para>
+      How often to scan for Opportunistic Encryption failure shunts
+      (kernel policies) that have expired and should be removed.
+    </para>
+    <para>
+      When an Opportuistic Encryption negotiation fails, a failure
+      shunt is installed to either block (<option>drop</option>) or
+      allows(<option>pass</option>) traffic to the peer.  These shunts
+      are given a lifetime of 15 minutes (see
+      <option>shuntlifetime</option>) after which time they expire and
+      should be removed.  The option
+      <option>expire-shunt-interval</option> determines how frequently
+      these shunts are checked.  The default interval is 20 seconds.
+    </para>
+    <para>
+      Note: because these shunts (kernel policies) are not
+      bound to a connection instance they are refered to as bare.
+    </para>
+  </listitem>
+</varlistentry>
