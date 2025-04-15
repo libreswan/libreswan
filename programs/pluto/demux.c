@@ -125,11 +125,12 @@ void process_md(struct msg_digest *md)
 		 * an additional 16 bytes of zero bytes - Complain but
 		 * accept it
 		 */
-		if (DBGP(DBG_BASE)) {
-			DBG_log("size (%zu) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-				packet.len, md->hdr.isa_length);
+		if (LDBGP(DBG_BASE, md->logger)) {
+			LDBG_log(md->logger, "size (%zu) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+				 packet.len, md->hdr.isa_length);
 			shunk_t tail = hunk_slice(packet, message.len, packet.len);
-			DBG_dump_hunk("extraneous bytes:", tail);
+			LDBG_log(md->logger, "extraneous bytes:");
+			LDBG_hunk(md->logger, tail);
 		}
 	}
 
@@ -184,7 +185,7 @@ void process_md(struct msg_digest *md)
 		ldbg(md->logger,
 		     " processing version=%u.%u packet with exchange type=%s (%d)",
 		     vmaj, vmin,
-		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&ikev1_exchange_names, md->hdr.isa_xchg, &xb),
 		     md->hdr.isa_xchg);
 		process_v1_packet(md);
 		/* our caller will md_delref(mdp) */
@@ -207,7 +208,7 @@ void process_md(struct msg_digest *md)
 		pdbg(md->logger,
 		     " processing version=%u.%u packet with exchange type=%s (%d)",
 		     vmaj, vmin,
-		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     md->hdr.isa_xchg);
 		ikev2_process_packet(md);
 		break;
@@ -438,9 +439,9 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 		case ISAKMP_NEXT_v2N:
 		{
 			enum_buf name;
-			if (enum_name_short(&v2_notification_names,
-					    pd->payload.v2n.isan_type,
-					    &name)) {
+			if (enum_short(&v2_notification_names,
+				       pd->payload.v2n.isan_type,
+				       &name)) {
 				jam(buf, "(%s)", name.buf);
 			}
 			break;
