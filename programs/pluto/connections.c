@@ -836,11 +836,11 @@ static enum yna_options extract_yna(const char *leftright, const char *name,
 
 /* terrible name */
 
-static bool can_extract_str(const char *leftright,
-			    const char *name,
-			    const char *value,
-			    const struct whack_message *wm,
-			    struct logger *logger)
+static bool can_extract_string(const char *leftright,
+			       const char *name,
+			       const char *value,
+			       const struct whack_message *wm,
+			       struct logger *logger)
 {
 	if (value == NULL) {
 		return false;
@@ -856,16 +856,16 @@ static bool can_extract_str(const char *leftright,
 	return true;
 }
 
-static char *extract_str(const char *leftright, const char *name,
-			 const char *str,
-			 const struct whack_message *wm,
-			 struct logger *logger)
+static char *extract_string(const char *leftright, const char *name,
+			    const char *string,
+			    const struct whack_message *wm,
+			    struct logger *logger)
 {
-	if (can_extract_str(leftright, name, str, wm, logger)) {
-		return clone_str(str, name);
+	if (!can_extract_string(leftright, name, string, wm, logger)) {
+		return NULL;
 	}
 
-	return NULL;
+	return clone_str(string, name);
 }
 
 static uintmax_t extract_uintmax(const char *leftright,
@@ -878,7 +878,7 @@ static uintmax_t extract_uintmax(const char *leftright,
 				 struct logger *logger)
 {
 	(*d) = NULL;
-	if (!can_extract_str(leftright, name, value, wm, logger)) {
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
 		return 0;
 	}
 
@@ -1370,7 +1370,7 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
 
-	if (can_extract_str(leftright, "ikeport", src->ikeport, wm, logger)) {
+	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, logger)) {
 		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
 		if (err != NULL) {
 			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
@@ -1533,7 +1533,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(wm->ike_version);
 	}
 
-	if (can_extract_str(leftright, "vti", src->vti, wm, logger)) {
+	if (can_extract_string(leftright, "vti", src->vti, wm, logger)) {
 		err_t oops = ttocidr_num(shunk1(src->vti), NULL,
 					 &child_config->vti_ip);
 		if (oops != NULL) {
@@ -1545,7 +1545,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		}
 	}
 
-	if (can_extract_str(leftright, "interface-ip", src->interface_ip, wm, logger)) {
+	if (can_extract_string(leftright, "interface-ip", src->interface_ip, wm, logger)) {
 		err_t oops = ttocidr_num(shunk1(src->interface_ip), NULL,
 					 &child_config->ipsec_interface_ip);
 		if (oops != NULL) {
@@ -3516,8 +3516,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		     "warning: length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
 		     wm->vti_interface, (unsigned) IFNAMSIZ);
 	}
-	config->vti.interface = extract_str("",  "vti-interface", wm->vti_interface,
-					    wm, c->logger);
+	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
+					       wm, c->logger);
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->nic_offload != NIC_OFFLOAD_UNSET) {
@@ -3758,7 +3758,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->modecfg.pull = extract_yn("", "modecfgpull", wm->modecfgpull,
 					  /*default*/false, wm, c->logger);
 
-	if (can_extract_str("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
+	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
@@ -3768,7 +3768,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (can_extract_str("", "modecfgdomains", wm->modecfgdomains, wm, c->logger)) {
+	if (can_extract_string("", "modecfgdomains", wm->modecfgdomains, wm, c->logger)) {
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
 							     ", ", HERE);
 		if (wm->ike_version == IKEv1 &&
@@ -3781,8 +3781,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->modecfg.banner = extract_str("", "modecfgbanner", wm->modecfgbanner,
-					     wm, c->logger);
+	config->modecfg.banner = extract_string("", "modecfgbanner", wm->modecfgbanner,
+						wm, c->logger);
 
 	/*
 	 * Marks.
@@ -3802,12 +3802,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_str("", "mark", wm->mark, wm, c->logger)) {
+	if (can_extract_string("", "mark", wm->mark, wm, c->logger)) {
 		mark_parse(wm->mark, &c->sa_marks.in, c->logger);
 		mark_parse(wm->mark, &c->sa_marks.out, c->logger);
 	}
 
-	if (can_extract_str("", "mark-in", wm->mark_in, wm, c->logger)) {
+	if (can_extract_string("", "mark-in", wm->mark_in, wm, c->logger)) {
 		if (wm->mark != NULL) {
 			llog(RC_LOG, c->logger, "warning: mark-in=%s overrides mark=%s",
 			     wm->mark_in, wm->mark);
@@ -3815,7 +3815,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		mark_parse(wm->mark_in, &c->sa_marks.in, c->logger);
 	}
 
-	if (can_extract_str("", "mark-out", wm->mark_out, wm, c->logger)) {
+	if (can_extract_string("", "mark-out", wm->mark_out, wm, c->logger)) {
 		if (wm->mark != NULL) {
 			llog(RC_LOG, c->logger, "warning: mark-out=%s overrides mark=%s",
 			     wm->mark_out, wm->mark);
@@ -3828,7 +3828,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_str("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
+	if (can_extract_string("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
 		diag_t d;
 		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, c->logger);
 		if (d != NULL) {
