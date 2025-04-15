@@ -3891,18 +3891,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Since security labels use the same REQID for everything,
 	 * pre-assign it.
+	 *
+	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
-	config->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
+
+	uintmax_t reqid = extract_uintmax("", "reqid", wm->reqid,
+					  1, IPSEC_MANUAL_REQID_MAX, wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	config->sa_reqid = (reqid != 0 ? reqid :
 			    wm->sec_label != NULL ? gen_reqid() :
 			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, c->logger) :
 			    /*generated later*/0);
+
 	ldbg(c->logger,
-	     "c->sa_reqid="PRI_REQID" because wm->sa_reqid="PRI_REQID" and sec-label=%s",
+	     "c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
 	     pri_reqid(config->sa_reqid),
-	     pri_reqid(wm->sa_reqid),
-	     (wm->ike_version != IKEv2 ? "not-IKEv2" :
-	      wm->sec_label != NULL ? wm->sec_label :
-	      "n/a"));
+	     (wm->reqid != NULL ? wm->reqid : "n/a"),
+	     (wm->sec_label != NULL ? wm->sec_label : "n/a"));
 
 	/*
 	 * Set both end's sec_label to the same value.

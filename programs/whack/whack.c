@@ -884,7 +884,7 @@ const struct option optarg_options[] = {
 	{ "tfc\0", required_argument, NULL, CD_TFC },
 	{ "send-no-esp-tfc\0", no_argument, NULL, CD_SEND_TFCPAD },
 	{ "pfs\0", optional_argument, NULL, CD_PFS },
-	{ "reqid\0", required_argument, NULL, CD_REQID },
+	{ "reqid\01-65535", required_argument, NULL, CD_REQID },
 #ifdef USE_NFLOG
 	{ "nflog-group\0", required_argument, NULL, CD_NFLOG_GROUP },
 #endif
@@ -2298,14 +2298,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REQID:	/* --reqid */
-		{
-			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole <= 0 || opt_whole > IPSEC_MANUAL_REQID_MAX) {
-				optarg_fatal(logger, "reqid be in 1-%u", IPSEC_MANUAL_REQID_MAX);
-			}
-			msg.sa_reqid = opt_whole;
+			msg.reqid = optarg;
 			continue;
-		}
 
 		case DBGOPT_NONE:	/* --debug-none (obsolete) */
 			/*

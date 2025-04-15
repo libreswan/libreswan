@@ -321,17 +321,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_NO_ESP_TFC].set)
 		msg.send_no_esp_tfc = conn->values[KNCF_NO_ESP_TFC].option;
 	msg.nflog_group = conn->values[KNCF_NFLOG_GROUP].string;
-
-	if (conn->values[KNCF_REQID].set) {
-		if (conn->values[KNCF_REQID].option <= 0 ||
-		    conn->values[KNCF_REQID].option > IPSEC_MANUAL_REQID_MAX) {
-			llog_error(logger, 0,
-				   "ignoring reqid value - range must be 1-%u",
-				   IPSEC_MANUAL_REQID_MAX);
-		} else {
-			msg.sa_reqid = conn->values[KNCF_REQID].option;
-		}
-	}
+	msg.reqid = conn->values[KNCF_REQID].string;
 
 	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
 		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;

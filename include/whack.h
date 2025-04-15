@@ -387,7 +387,7 @@ struct whack_message {
 	deltatime_t iptfs_drop_time;
 	deltatime_t iptfs_init_delay;
 
-	reqid_t sa_reqid;
+	char *reqid;
 	char *nflog_group;
 
 	char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
