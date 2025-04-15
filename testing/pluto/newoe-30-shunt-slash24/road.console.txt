@@ -3,9 +3,8 @@ Creating empty NSS database
 road #
  cp policy /etc/ipsec.d/policies/road
 road #
- # need to use pluto
-road #
- ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 5s --leak-detective
+ ipsec start
+Redirecting to: [initsystem]
 road #
  ../../guestbin/wait-until-pluto-started
 road #
@@ -19,7 +18,10 @@ road #
 :
 :
 : oe.negopass.failnone.pass RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.failnone.pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -82,7 +84,10 @@ road #
 :
 :
 : oe.negopass.failnone.fail-ike RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.failnone.fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -134,7 +139,10 @@ road #
 :
 :
 : oe.negopass.failnone.fail-child RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.failnone.fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -183,7 +191,10 @@ road #
 :
 :
 : oe.negopass.faildrop.pass RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.faildrop.pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -246,7 +257,10 @@ road #
 :
 :
 : oe.negopass.faildrop.fail-ike RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.faildrop.fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -304,7 +318,10 @@ road #
 :
 :
 : oe.negopass.faildrop.fail-child RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.faildrop.fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -363,7 +380,10 @@ road #
 :
 :
 : oe.negopass.failpass.pass RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.failpass.pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -426,7 +446,10 @@ road #
 :
 :
 : oe.negopass.failpass.fail-ike RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.failpass.fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -482,7 +505,10 @@ road #
 :
 :
 : oe.negopass.failpass.fail-child RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negopass.failpass.fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negopass --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -537,7 +563,10 @@ road #
 :
 :
 : oe.negodrop.failnone.pass RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.failnone.pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -600,7 +629,10 @@ road #
 :
 :
 : oe.negodrop.failnone.fail-ike RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.failnone.fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -654,7 +686,10 @@ road #
 :
 :
 : oe.negodrop.failnone.fail-child RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.failnone.fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failnone --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -703,7 +738,10 @@ road #
 :
 :
 : oe.negodrop.faildrop.pass RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.faildrop.pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -766,7 +804,10 @@ road #
 :
 :
 : oe.negodrop.faildrop.fail-ike RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.faildrop.fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -826,7 +867,10 @@ road #
 :
 :
 : oe.negodrop.faildrop.fail-child RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.faildrop.fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --faildrop --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -885,7 +929,10 @@ road #
 :
 :
 : oe.negodrop.failpass.pass RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.failpass.pass LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -948,7 +995,10 @@ road #
 :
 :
 : oe.negodrop.failpass.fail-ike RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.failpass.fail-ike LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --ike aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection
@@ -1006,7 +1056,10 @@ road #
 :
 :
 : oe.negodrop.failpass.fail-child RESTARTING PLUTO
-Pluto is shutting down
+ ipsec stop
+Redirecting to: [initsystem]
+ ipsec start
+Redirecting to: [initsystem]
 : oe.negodrop.failpass.fail-child LOADING CONNECTION
  ipsec addconn --name road --retransmit-timeout 5s --retransmit-interval 5s --host 192.1.3.209 --nexthop 192.1.3.254 --authby null --id %null --negodrop --failpass --esp aes --to --host %opportunisticgroup --authby null --id %null
 "road": added IKEv2 connection

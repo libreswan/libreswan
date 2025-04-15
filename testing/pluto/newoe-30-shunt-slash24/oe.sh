@@ -24,11 +24,10 @@ RUN() {
 }
 
 echo : ${conn} RESTARTING PLUTO
-ipsec whack --shutdown
+RUN ipsec stop
 rm OUTPUT/road.pluto.log
 ln -s road.pluto.${conn}.log OUTPUT/road.pluto.log
-# frequent shunt checks; also needs shuntlifetime 10s
-ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 5s --leak-detective
+RUN ipsec start
 ../../guestbin/wait-until-pluto-started
 
 echo : ${conn} LOADING CONNECTION
