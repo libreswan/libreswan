@@ -1,7 +1,7 @@
-/* table structure used by enum_name() and friends.
+/* table structure used by enum_{short,long}() and friends.
  *
- * Note: this structure is opaque to all files that don't
- * define tables for enum_name() and friends.
+ * Note: this structure is opaque to all files that don't define
+ * tables for enum_{short,long}() and friends.
  *
  * To simplify initializing
  *	en_names, en_checklen

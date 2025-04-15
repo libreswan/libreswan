@@ -169,7 +169,7 @@ static const char *find_enum(const struct enum_names *en, unsigned long val, boo
 	return enum_range_name(range, val, prefix, shorten);
 }
 
-bool enum_long(enum_names *ed, unsigned long val, enum_buf *b)
+bool enum_long(enum_names *ed, unsigned long val, name_buf *b)
 {
 	/* can be NULL; handled here */
 	b->buf = find_enum(ed, val, /*shorten?*/false);
@@ -181,7 +181,7 @@ bool enum_long(enum_names *ed, unsigned long val, enum_buf *b)
 	return true;
 }
 
-bool enum_short(enum_names *ed, unsigned long val, enum_buf *b)
+bool enum_short(enum_names *ed, unsigned long val, name_buf *b)
 {
 	/* can be NULL; handled here */
 	b->buf = find_enum(ed, val, /*shorten?*/true);
@@ -193,13 +193,13 @@ bool enum_short(enum_names *ed, unsigned long val, enum_buf *b)
 	return true;
 }
 
-const char *str_enum_long(enum_names *ed, unsigned long val, enum_buf *b)
+const char *str_enum_long(enum_names *ed, unsigned long val, name_buf *b)
 {
 	enum_long(ed, val, b);
 	return b->buf;
 }
 
-const char *str_enum_short(enum_names *ed, unsigned long val, enum_buf *b)
+const char *str_enum_short(enum_names *ed, unsigned long val, name_buf *b)
 {
 	enum_short(ed, val, b);
 	return b->buf;
@@ -324,7 +324,7 @@ static const struct enum_names *enum_enum_table(enum_enum_names *een,
 }
 
 bool enum_enum_name(enum_enum_names *een, unsigned long table,
-		    unsigned long val, enum_buf *b)
+		    unsigned long val, name_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -337,14 +337,14 @@ bool enum_enum_name(enum_enum_names *een, unsigned long table,
 }
 
 const char *str_enum_enum(enum_enum_names *een, unsigned long table,
-			  unsigned long val, enum_buf *b)
+			  unsigned long val, name_buf *b)
 {
 	enum_enum_name(een, table, val, b);
 	return b->buf;
 }
 
 const char *str_enum_enum_short(enum_enum_names *een, unsigned long table,
-				unsigned long val, enum_buf *b)
+				unsigned long val, name_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
@@ -389,7 +389,7 @@ void check_enum_names(const struct enum_names_check *checklist)
 		 * a value that isn't covered.  -42 is probably not
 		 * covered.
 		 */
-		enum_buf b;
+		name_buf b;
 		enum_name(c->enum_names, -42UL, &b);
 	}
 }

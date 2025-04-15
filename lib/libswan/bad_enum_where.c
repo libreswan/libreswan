@@ -23,7 +23,7 @@
 void bad_enum_where(const struct logger *logger, const struct enum_names *en,
 		    unsigned long value, where_t where)
 {
-	enum_buf eb;
+	name_buf eb;
 	llog_passert(logger, where,
 		     "enum %s (%ld) unexpected",
 		     str_enum(en, value, &eb), value);

@@ -61,7 +61,7 @@ static const char *find_sparse(const struct sparse_names *sn, unsigned long val,
 	return NULL;
 }
 
-bool sparse_long(const struct sparse_names *sn, unsigned long val, sparse_buf *b)
+bool sparse_long(const struct sparse_names *sn, unsigned long val, name_buf *b)
 {
 	b->buf = find_sparse(sn, val, /*shorten*/false);
 	if (b->buf != NULL) {
@@ -72,7 +72,7 @@ bool sparse_long(const struct sparse_names *sn, unsigned long val, sparse_buf *b
 	return false;
 }
 
-bool sparse_short(const struct sparse_names *sn, unsigned long val, sparse_buf *b)
+bool sparse_short(const struct sparse_names *sn, unsigned long val, name_buf *b)
 {
 	b->buf = find_sparse(sn, val, /*shorten*/true);
 	if (b->buf != NULL) {
@@ -103,13 +103,13 @@ size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sn, unsig
 	return jam_bad(buf, sn->prefix, val);
 }
 
-const char *str_sparse_long(const struct sparse_names *sn, unsigned long val, sparse_buf *b)
+const char *str_sparse_long(const struct sparse_names *sn, unsigned long val, name_buf *b)
 {
 	sparse_long(sn, val, b);
 	return b->buf;
 }
 
-const char *str_sparse_short(const struct sparse_names *sn, unsigned long val, sparse_buf *b)
+const char *str_sparse_short(const struct sparse_names *sn, unsigned long val, name_buf *b)
 {
 	sparse_short(sn, val, b);
 	return b->buf;

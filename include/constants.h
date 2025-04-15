@@ -194,22 +194,10 @@ extern char *add_str(char *buf, size_t size, const char *src);
  * An enum_names table describes an enumeration (a correspondence
  * between integer values and names).
  *
- * Recommended for determining an enum's validity:
- *
- *   enum_name*() returns true when known, and sets enum_buf to a
- *   non-NULL string.
- *
- * Recommended for logging:
- *
- *   str_enum*() is similar to enum_name, except it formats a numeric
- *   representation for any unnamed value in a caller-supplied buffer.
- *
- *   jam_enum() appends the name of an enum value; if unnamed, append
- *   a mashup of the standard prefix and the numeric value.
- *
- * {*}_short() same as for root, but with any standard prefix removed.
- *
  * Caller-allocated buffer
+ *
+ * All these functions (ignoring jam*()) use a caller allocated buffer
+ * to store the string value.
  *
  * Enough space for decimal rep of any unsigned long + "??"  sizeof
  * yields log-base-256 of maximum value.  Multiplying by 241/100
@@ -218,27 +206,69 @@ extern char *add_str(char *buf, size_t size, const char *src);
  * ensures that the division rounds up to an integer rather than
  * truncates.
  *
- * The .name field points either at buf[] or some internal string.  It
- * is never NULL.  DANGER: enum_buf can't be returned as that moves
- * the struct invalidating the internal pointer.
+ * The .buf field points either at .tmp[] or some static string.  It
+ * is never NULL.  DANGER: name_buf can't be struct-returned as that
+ * moves the struct invalidating the internal pointer.
  */
 
 #define enum_buf name_buf
 #define esb_buf  name_buf /* XXX: TBD */
 
-typedef const struct enum_names enum_names;
+typedef const struct enum_names enum_names; /*TBD?*/
 
-bool enum_long(const struct enum_names *en, unsigned long val, enum_buf *b);
-const char *str_enum_long(const struct enum_names *en, unsigned long val, enum_buf *b);
+/*
+ * Recommended for determining an enum's validity:
+ *
+ * When the numeric value is known, return TRUE and set name_buf.buf
+ * to the name.
+ *
+ * When the numeric value is unknown, return FALSE and set
+ * name_buf.buf to the decimal string representation of the numeric
+ * value.
+ *
+ * Since enum_short() discards the name's prefix returning a shorter
+ * string, it is prefered when logging.  Since enum_long() is
+ * oh-so-slightly faster it prefered when the result is debug-logged.
+ */
+
+bool enum_long(const struct enum_names *en, unsigned long val, name_buf *b);
+bool enum_short(const struct enum_names *en, unsigned long val, name_buf *b);
+
+/*
+ * Recommended for logging:
+ *
+ * str_enum_{short,long}() are identical to enum_{short,long}(),
+ * except the value (stored in name_buf) is also returned.  Hence the
+ * are used:
+ *
+ *   enum the_enum { THE_ENUM_FIRST_VALUE = 1, } the_enum;
+ *   name_buf teb;
+ *   ldbg(logger, "the_enum is %s",
+ *        str_enum_short(the_enum_names, the_enum, &teb);
+ *
+ * jam_enum_{short,long}() instead append the value to the JAMBUF, or
+ * a mashup of the standard prefix and the numeric value when unknown.
+ *
+ * jam_enum_human() transforms the value into something more friendly:
+ *
+ *    - any prefix is dropped
+ *    - uppercase is converted to lower case
+ *    - '_' is replaced by '-'
+ *
+ * For instance, "THE_ENUM_FIRST_VALUE" with prefix "THE_ENUM_",
+ * becomes "first-value".
+ */
+
+const char *str_enum_long(const struct enum_names *en, unsigned long val, name_buf *b);
+const char *str_enum_short(const struct enum_names *en, unsigned long val, name_buf *b);
+
 size_t jam_enum_long(struct jambuf *, const struct enum_names *en, unsigned long val);
+size_t jam_enum_short(struct jambuf *, const struct enum_names *en, unsigned long val);
 
 #define jam_enum jam_enum_long /* legacy */
 #define str_enum str_enum_long /* legacy */
-#define enum_name enum_long /* legacy */
 
-bool enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);
-const char *str_enum_short(const struct enum_names *en, unsigned long val, enum_buf *b);
-size_t jam_enum_short(struct jambuf *, const struct enum_names *en, unsigned long val);
+#define enum_name enum_long /* legacy */
 
 #define enum_name_short enum_short
 
@@ -296,12 +326,12 @@ const char *enum_range_name(enum_names *range, unsigned long val, const char *pr
 typedef const struct enum_enum_names enum_enum_names;
 
 bool enum_enum_name(enum_enum_names *e, unsigned long table,
-		    unsigned long val, enum_buf *buf);
+		    unsigned long val, name_buf *buf);
 
 const char *str_enum_enum(enum_enum_names *e, unsigned long table,
-			  unsigned long val, enum_buf *buf);
+			  unsigned long val, name_buf *buf);
 const char *str_enum_enum_short(enum_enum_names *e, unsigned long table,
-				unsigned long val, enum_buf *buf);
+				unsigned long val, name_buf *buf);
 
 size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
 		     unsigned long table, unsigned long val);
