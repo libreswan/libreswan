@@ -896,6 +896,35 @@ static uintmax_t extract_uintmax(const char *leftright,
 	return uintmax;
 }
 
+static ip_cidr extract_cidr_num(const char *leftright,
+				const char *name,
+				const char *value,
+				const struct whack_message *wm,
+				diag_t *d,
+				struct logger *logger)
+{
+	err_t err;
+	(*d) = NULL;
+
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
+		return unset_cidr;
+	}
+
+	ip_cidr cidr;
+	err = ttocidr_num(shunk1(value), NULL, &cidr);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		return unset_cidr;
+	}
+
+	err = cidr_check(cidr);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+	}
+
+	return cidr;
+}
+
 static diag_t extract_host_ckaid(struct host_end_config *host_config,
 				 const struct whack_end *src,
 				 bool *same_ca,
@@ -1513,6 +1542,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				       struct child_end_config *child_config,
 				       struct logger *logger)
 {
+	diag_t d = NULL;
 	const char *leftright = src->leftright;
 
 	switch (wm->ike_version) {
@@ -1533,30 +1563,16 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(wm->ike_version);
 	}
 
-	if (can_extract_string(leftright, "vti", src->vti, wm, logger)) {
-		err_t oops = ttocidr_num(shunk1(src->vti), NULL,
-					 &child_config->vti_ip);
-		if (oops != NULL) {
-			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
-		}
-		oops = cidr_check(child_config->vti_ip);
-		if (oops != NULL) {
-			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
-		}
+	child_config->vti_ip =
+		extract_cidr_num(leftright, "vti", src->vti, wm, &d, logger);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_string(leftright, "interface-ip", src->interface_ip, wm, logger)) {
-		err_t oops = ttocidr_num(shunk1(src->interface_ip), NULL,
-					 &child_config->ipsec_interface_ip);
-		if (oops != NULL) {
-			return diag("%sinterface-ip=%s invalid, %s",
-				    leftright, src->interface_ip, oops);
-		}
-		oops = cidr_check(child_config->ipsec_interface_ip);
-		if (oops != NULL) {
-			return diag("bad addr %sinterface-ip=%s, %s",
-				    leftright, src->interface_ip, oops);
-		}
+	child_config->ipsec_interface_ip =
+		extract_cidr_num(leftright, "interface-ip", src->interface_ip, wm, &d, logger);
+	if (d != NULL) {
+		return d;
 	}
 
 	/* save some defaults */
