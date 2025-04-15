@@ -3815,7 +3815,20 @@ static diag_t extract_connection(const struct whack_message *wm,
 #endif
 
 #ifdef USE_NFLOG
-	c->nflog_group = wm->nflog_group;
+	if (can_extract_str("", "nflog-group", wm->nflog_group, wm, c->logger)) {
+		uintmax_t nflog_group;
+		err_t err = shunk_to_uintmax(shunk1(wm->nflog_group), NULL/*all*/,
+					     10, &nflog_group);
+		if (err != NULL) {
+			return diag("nflog-group=%s invalid, %s",
+				    wm->nflog_group, err);
+		}
+		if (nflog_group < 1 || nflog_group > 65535) {
+			return diag("nflog-group=%s must be in range 1-65535",
+				    wm->nflog_group);
+		}
+		c->nflog_group = nflog_group;
+	}
 #endif
 
 	if (wm->priority > UINT32_MAX) {

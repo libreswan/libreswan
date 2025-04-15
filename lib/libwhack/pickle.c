@@ -375,6 +375,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_IP_INFO(&wp->msg->child_afi) &&
 		PICKLE_STRING(&wp->msg->dpdtimeout) &&
 		PICKLE_STRING(&wp->msg->dpddelay) &&
+		PICKLE_STRING(&wp->msg->nflog_group) &&
 		true);
 }
 

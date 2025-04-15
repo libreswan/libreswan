@@ -306,9 +306,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL, NULL, },
   { "ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKEBUF, NULL, NULL, },
   { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE, NULL, NULL, },
-#if defined(USE_NFLOG)
-  { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, NULL, },
-#endif
 #ifdef XFRM_LIFETIME_DEFAULT
   { "xfrmlifetime",  kv_config,  kt_unsigned,  KBF_XFRMLIFETIME, NULL, NULL, },
 #endif
@@ -504,7 +501,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "tfc",  kv_conn,  kt_unsigned,  KNCF_TFC, NULL, NULL, },
   { "reqid",  kv_conn,  kt_unsigned,  KNCF_REQID, NULL, NULL, },
 #if defined(USE_NFLOG)
-  { "nflog",  kv_conn,  kt_unsigned,  KNCF_NFLOG_CONN, NULL, NULL, },
+  { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, NULL, },
+  { "nflog-group",  kv_conn,  kt_string,  KNCF_NFLOG_GROUP, NULL, NULL, },
+  { "nflog",  kv_conn|kv_alias,  kt_string,  KNCF_NFLOG_GROUP, NULL, NULL, }, /* old-name */
 #endif
 
   { "aggressive",  kv_conn,  kt_sparse_name,  KNCF_AGGRESSIVE, &yn_option_names, NULL, },

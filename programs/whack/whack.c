@@ -2294,14 +2294,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
-		{
-			uintmax_t opt_whole = optarg_uintmax(logger);
-			if (opt_whole <= 0  || opt_whole > 65535) {
-				optarg_fatal(logger, "nflog group must be in 1-65535");
-			}
-			msg.nflog_group = opt_whole;
+			msg.nflog_group = optarg;
 			continue;
-		}
 
 		case CD_REQID:	/* --reqid */
 		{

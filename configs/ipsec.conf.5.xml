@@ -126,7 +126,7 @@
 <!ENTITY nat-ikev1-method SYSTEM "d.ipsec.conf/nat-ikev1-method.xml">
 <!ENTITY nat-keepalive SYSTEM "d.ipsec.conf/nat-keepalive.xml">
 <!ENTITY negotiationshunt SYSTEM "d.ipsec.conf/negotiationshunt.xml">
-<!ENTITY nflog SYSTEM "d.ipsec.conf/nflog.xml">
+<!ENTITY nflog-group SYSTEM "d.ipsec.conf/nflog-group.xml">
 <!ENTITY nflog-all SYSTEM "d.ipsec.conf/nflog-all.xml">
 <!ENTITY nhelpers SYSTEM "d.ipsec.conf/nhelpers.xml">
 <!ENTITY nic-offload SYSTEM "d.ipsec.conf/nic-offload.xml">
@@ -355,7 +355,7 @@
 	&mtu;
 	&tfc;
 	&send-no-esp-tfc;
-	&nflog;
+	&nflog-group;
 	&mark;
 	&mark-in;
 	&mark-out;

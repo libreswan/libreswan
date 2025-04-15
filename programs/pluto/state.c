@@ -80,9 +80,10 @@ static void delete_state(struct state *st);
 bool uniqueIDs = false;
 
 /*
- * default global NFLOG group - 0 means no logging
- * Note: variable is only used to display in ipsec status
- * actual work is done outside pluto, by ipsec checknflog
+ * Default global NFLOG group - 0 means no logging
+ *
+ * Note: variable is only used to display in ipsec status actual work
+ * is done outside pluto, by ipsec checknflog
  */
 uint16_t pluto_nflog_group = 0;
 
