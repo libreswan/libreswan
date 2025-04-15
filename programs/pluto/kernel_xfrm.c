@@ -2369,7 +2369,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 		     "can't find expected bare shunt to delete: %s",
 		     str_selector_pair_sensitive(&src, &dst, &sb));
 	} else {
-		free_bare_shunt(bs_pp);
+		free_bare_shunt(bs_pp, logger);
 		ldbg(logger, "netlink_shunt_expire() called delete_bare_shunt() with success");
 	}
 }
