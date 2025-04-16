@@ -155,6 +155,11 @@ def _test_domains(logger, test, domains):
 
     return test_domains
 
+def _backup_directory(args, task):
+    return os.path.join(args.backup_directory,
+                        task.test.name,
+                        timing.START_TIME.strftime("%Y-%m-%d-%H%M%S"))
+
 def _ignore_test(task, args, result_stats, logger):
 
     test = task.test
@@ -168,13 +173,11 @@ def _ignore_test(task, args, result_stats, logger):
         # The isdir() test followed by a simple move, while racy,
         # should be good enough.
         if os.path.isdir(test.output_directory):
-            test_backup_directory = os.path.join(test_backup_directory,
-                                                 task.test.name,
-                                                 timing.START_TIME.strftime("%Y-%m-%d-%H%M%S"))
+            test_backup_directory = _backup_directory(args, task)
             logger.info("moving '%s' to '%s'", test.output_directory,
                         test_backup_directory)
             # create BACKUP/<test> then move OUTPUT/ to BACKUP/<test>/<date>
-            os.makedirs(os.path.basename(test_backup_directory), exist_ok=True)
+            os.makedirs(os.path.dirname(test_backup_directory), exist_ok=True)
             os.rename(test.output_directory, test_backup_directory)
         result_stats.add_ignored(test, ignored)
         publish.everything(logger, args, post.mortem(test, args, logger, quick=True))
@@ -280,9 +283,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
             try:
                 os.mkdir(test.output_directory)
             except FileExistsError:
-                test_backup_directory = os.path.join(args.backup_directory,
-                                                     task.test.name,
-                                                     timing.START_TIME.strftime("%Y-%m-%d-%H%M%S"))
+                test_backup_directory = _backup_directory(args, task);
                 logger.info("moving contents of '%s' to '%s'",
                             test.output_directory, test_backup_directory)
                 # Even if OUTPUT/ is empty, create a backup.
@@ -456,6 +457,9 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write(ascii) # convert byte to string
                                         txt.write("\n")
+                                    if args.log_console_output:
+                                        for line in ascii.splitlines():
+                                            test_domain.logger.info(line)
 
                                 if status is post.Issues.TIMEOUT:
                                     # A post-mortem ending with a
