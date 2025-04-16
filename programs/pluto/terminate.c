@@ -158,6 +158,9 @@ static void terminate_v2_states(struct connection *c,
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case CONNECTION_CUCKOO_CHILD:
+		state_attach(&(*child)->sa, c->logger);
+		connection_teardown_child(child, REASON_DELETED, HERE);
+		return;
 	case CONNECTION_ORPHAN_CHILD:
 		state_attach(&(*child)->sa, c->logger);
 		PEXPECT(c->logger, ike == NULL);
