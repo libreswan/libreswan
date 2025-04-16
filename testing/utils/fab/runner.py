@@ -457,6 +457,9 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     for txt in (all_verbose_txt, guest_verbose_txt):
                                         txt.write(ascii) # convert byte to string
                                         txt.write("\n")
+                                    if args.log_console_output:
+                                        for line in ascii.splitlines():
+                                            test_domain.logger.info(line)
 
                                 if status is post.Issues.TIMEOUT:
                                     # A post-mortem ending with a
