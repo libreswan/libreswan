@@ -751,6 +751,7 @@ int main(int argc, char **argv)
 #endif
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
+	lset_t new_debugging = LEMPTY;
 
 	/* handle arguments */
 	for (;; ) {
@@ -1081,14 +1082,6 @@ int main(int argc, char **argv)
 			lsw_conf_nssdir(optarg, logger);
 			continue;
 
-		case OPT_DEBUG_NONE:	/* --debug-none */
-			cur_debugging = DBG_NONE;
-			continue;
-
-		case OPT_DEBUG_ALL:	/* --debug-all */
-			cur_debugging = DBG_ALL;
-			continue;
-
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
 		{
 			ip_address rip;
@@ -1309,7 +1302,7 @@ int main(int argc, char **argv)
 			config_ipsec_interface(cfg->setup[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			nhelpers = cfg->setup[KBF_NHELPERS].option;
-			cur_debugging = cfg->setup[KW_DEBUG].option;
+			new_debugging = cfg->setup[KW_DEBUG].option;
 
 			char *protostack = cfg->setup[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
@@ -1359,6 +1352,14 @@ int main(int argc, char **argv)
 #endif
 			continue;
 
+		case OPT_DEBUG_NONE:	/* --debug-none */
+			cur_debugging = DBG_NONE;
+			continue;
+
+		case OPT_DEBUG_ALL:	/* --debug-all */
+			cur_debugging = DBG_ALL;
+			continue;
+
 		case OPT_DEBUG:
 		{
 			lmod_t mod = empty_lmod;
@@ -1366,7 +1367,7 @@ int main(int argc, char **argv)
 				cur_debugging = lmod(cur_debugging, mod);
 			} else {
 				llog(RC_LOG, logger, "unrecognized --debug '%s' option ignored",
-					    optarg);
+				     optarg);
 			}
 			continue;
 		}
@@ -1511,7 +1512,9 @@ int main(int argc, char **argv)
 	 * only the expected ones are open.  STDERR is detached later
 	 * when the logger is switched.
 	 *
-	 * (Debugging was set while loading the config file above).
+	 * (Debugging is enabled when either the config file sets
+	 * LOG_PARAM.DEBUGGING, or a --debug option sets
+	 * CUR_DEBUGGING.
 	 */
 
 	close(STDIN_FILENO);
@@ -1519,7 +1522,7 @@ int main(int argc, char **argv)
 	PASSERT(logger, open("/dev/null", O_RDONLY) == STDIN_FILENO);
 	PASSERT(logger, dup2(0, STDOUT_FILENO) == STDOUT_FILENO);
 
-	if (DBGP(DBG_BASE)) {
+	if (cur_debugging || new_debugging) {
 		for (int fd = getdtablesize() - 1; fd >= 0; fd--) {
 			if (fd == ctl_fd ||
 			    fd == STDIN_FILENO ||
@@ -1539,7 +1542,8 @@ int main(int argc, char **argv)
 	}
 
 	/*
-	 * Switch to the real FILE/STDERR/SYSLOG logger.
+	 * Switch to the real FILE/STDERR/SYSLOG logger (but first
+	 * switch debugging flags when specified).
 	 */
 
 	switch_log(log_param, &logger);
@@ -1548,8 +1552,26 @@ int main(int argc, char **argv)
 	 * Forking done; logging enabled.  Time to announce things to
 	 * the world.
 	 */
+
 	llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
 	     ipsec_version_code(), compile_time_interop_options, getpid());
+
+	/*
+	 * Enable debugging from the config file and announce it.
+	 */
+	cur_debugging = (new_debugging ? new_debugging : cur_debugging);
+	if (cur_debugging) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "debug: ");
+			jam_lset_short(buf, &debug_names, "+", cur_debugging);
+		}
+	}
+	if (have_impairments()) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "impair: ");
+			jam_impairments(buf, "+");
+		}
+	}
 
 	init_kernel_info(logger);
 
