@@ -481,7 +481,7 @@ results_command()
 
 diffs_command()
 {
-    kvmresults --stats none --print diffs "${directories[@]}"
+    kvmresults --no-summary --print diffs "${directories[@]}"
     status=$?
 }
 

@@ -92,8 +92,7 @@ def main():
         logger.exception("**** interrupted ****")
         exit_code = 1
 
-    result_stats.log_details(logger.info, header="final test details:", prefix="  ")
-    result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
+    result_stats.log_details(logger.info)
 
     stop_time = datetime.now()
     logger.info("run finished at %s after %s", stop_time, stop_time - timing.START_TIME)

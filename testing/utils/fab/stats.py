@@ -19,6 +19,8 @@ import threading
 
 from fab import logutil
 
+_INTERESTING = ("total/failed", "total/unresolved")
+
 class Results:
 
     def __init__(self):
@@ -37,15 +39,36 @@ class Results:
             # log_details.
             self.counts[key][value].add(domain)
 
-    def log_summary(self, log, header=None, footer=None, prefix=""):
+    def log_summary(self, log):
         with self.lock:
             if len(self.counts):
-                header and log(header)
+                log("Summary:")
                 for key, values in sorted(self.counts.items()):
-                    log("%s%s: %d", prefix, key, len(values))
-                footer and log(footer)
+                    log(f"  {key}: {len(values)}")
 
-    def log_details(self, log, header=None, footer=None, prefix=""):
+    def log_progress(self, log):
+        with self.lock:
+            if len(self.counts):
+                log("Progress:")
+                for key, values in sorted(self.counts.items()):
+                    if key in _INTERESTING:
+                        log(f"  {key}: {len(values)} {" ".join(values)}")
+                    else:
+                        log(f"  {key}: {len(values)}")
+
+    def log_details(self, log):
+        with self.lock:
+            if len(self.counts):
+                log("Details:")
+                for key in _INTERESTING:
+                    if key in self.counts:
+                        values = self.counts[key]
+                        log(f"  {key}: {" ".join(values)}")
+                log("Summary:")
+                for key, values in sorted(self.counts.items()):
+                    log(f"  {key}: {len(values)}")
+
+    def log_tmi(self, log, header=None, footer=None, prefix=""):
         with self.lock:
             if len(self.counts):
                 header and log(header)
@@ -67,8 +90,8 @@ class Results:
                 footer and log(footer)
 
     def _count_result(self, result):
-        self._add("total",                                              result.test.name)
-        self._add("total",                                 str(result), result.test.name)
+        self._add("total",                                             result.test.name)
+        self._add("total",                                str(result), result.test.name)
         self._add("tests", result.test.status, "results", str(result), result.test.name)
         # details
         for issue in result.issues:

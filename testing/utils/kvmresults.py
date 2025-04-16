@@ -35,14 +35,6 @@ from fab import publish
 from fab import resolution
 
 
-class Stats(Enum):
-    def __str__(self):
-        return self.value
-    details = "details"
-    summary = "summary"
-    none = "none"
-
-
 def main():
 
     # If SIGUSR1, backtrace all threads; hopefully this is early
@@ -70,9 +62,8 @@ def main():
                         type=printer.Print, metavar=str(printer.Print),
                         help="comma separated list of attributes to print for each test; default: '%(default)s'")
 
-    parser.add_argument("--stats", action="store", default=Stats.summary, type=Stats,
-                        choices=[c for c in Stats],
-                        help="provide overview statistics; default: \"%(default)s\"");
+    parser.add_argument("--summary", action=argparse.BooleanOptionalAction, default=True,
+                        help="provide summary statistics; default: \"%(default)s\"");
 
     parser.add_argument("--json", action="store_true",
                         help="output each result as an individual json object (pipe the output through 'jq -s .' to convert it to a well formed json list")
@@ -108,10 +99,8 @@ def main():
     try:
         exit_code = results(logger, tests, args, result_stats)
     finally:
-        if args.stats is Stats.details:
-            result_stats.log_details(stderr_log, header="Details:", prefix="  ")
-        if args.stats in [Stats.details, Stats.summary]:
-            result_stats.log_summary(stderr_log, header="Summary:", prefix="  ")
+        if args.summary:
+            result_stats.log_summary(stderr_log);
 
     return exit_code
 

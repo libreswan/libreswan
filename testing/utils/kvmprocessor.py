@@ -89,12 +89,7 @@ def main():
         logger.exception("**** interrupted ****")
         exit_code = 1
 
-    test_stats.log_details(args.verbose and logger.info or logger.debug,
-                           header="final stat details:", prefix="  ")
-    result_stats.log_details(logger.info, header="final test details:", prefix="  ")
-
-    test_stats.log_summary(logger.info, header="final test stats:", prefix="  ")
-    result_stats.log_summary(logger.info, header="final test results:", prefix="  ")
+    result_stats.log_details(logger.info)
 
     stop_time = datetime.now()
     logger.info("run finished at %s after %s", stop_time, stop_time - timing.START_TIME)

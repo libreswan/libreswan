@@ -532,7 +532,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
             publish.json_status(logger, args, "finished %s" % task.prefix)
 
             result_stats.add_result(result, old_result)
-            result_stats.log_summary(logger.info, header="updated test results:", prefix="  ")
+            result_stats.log_progress(logger.info)
 
 
 def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_stats):
