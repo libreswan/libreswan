@@ -28,7 +28,6 @@ static const char *const shunt_policy_name[] = {
 #define S(E) [E - SHUNT_UNSET] = #E
 	S(SHUNT_UNSET),
 	S(SHUNT_IPSEC),
-	S(SHUNT_HOLD),
 	S(SHUNT_NONE),
 	S(SHUNT_PASS),
 	S(SHUNT_DROP),
@@ -69,11 +68,11 @@ const struct enum_names shunt_kind_names = {
 const struct sparse_names failure_shunt_names = {
 	.list = {
 		SPARSE("none",        SHUNT_NONE),
-		SPARSE("pass", SHUNT_PASS),
-		SPARSE("passthrough", SHUNT_PASS),
+		SPARSE("pass", 	      SHUNT_PASS),
+		SPARSE("passthrough", SHUNT_PASS), /* alias */
 		SPARSE("drop",        SHUNT_DROP),
 		SPARSE("hold",        NAME_IMPLEMENTED_AS|SHUNT_DROP), /* alias */
-		SPARSE("reject",      NAME_IMPLEMENTED_AS|SHUNT_DROP),
+		SPARSE("reject",      NAME_IMPLEMENTED_AS|SHUNT_DROP), /* alias */
 		SPARSE_NULL
 	},
 };
@@ -86,8 +85,22 @@ const struct sparse_names negotiation_shunt_names = {
 	.list = {
 		SPARSE("pass", SHUNT_PASS),
 		SPARSE("passthrough", SHUNT_PASS),
-		SPARSE("drop",        SHUNT_HOLD), /* alias */
-		SPARSE("hold",        SHUNT_HOLD),
+		SPARSE("hold",        SHUNT_DROP),
+		SPARSE("drop",        SHUNT_DROP), /* alias */
 		SPARSE_NULL
 	},
+};
+
+/*
+ * Values when never negotiating.
+ */
+
+const struct sparse_names never_negotiate_shunt_names = {
+	.list = {
+		SPARSE("pass",        SHUNT_PASS),
+		SPARSE("passthrough", SHUNT_PASS), /* alias */
+		SPARSE("drop",        SHUNT_DROP),
+		SPARSE("reject",      NAME_IMPLEMENTED_AS|SHUNT_DROP), /* alias */
+		SPARSE_NULL,
+	}
 };

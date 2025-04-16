@@ -35,7 +35,6 @@ enum shunt_policy {
 	SHUNT_UNSET,
 	SHUNT_IPSEC,	/* only valid with KIND IPSEC */
 	SHUNT_NONE,
-	SHUNT_HOLD,	/* during negotiation, don't change */
 	SHUNT_TRAP,
 	SHUNT_PASS,
 	SHUNT_DROP,
