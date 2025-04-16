@@ -376,6 +376,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wp->msg->dpdtimeout) &&
 		PICKLE_STRING(&wp->msg->dpddelay) &&
 		PICKLE_STRING(&wp->msg->nflog_group) &&
+		PICKLE_STRING(&wp->msg->reqid) &&
 		true);
 }
 

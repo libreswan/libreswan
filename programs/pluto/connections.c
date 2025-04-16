@@ -836,11 +836,11 @@ static enum yna_options extract_yna(const char *leftright, const char *name,
 
 /* terrible name */
 
-static bool can_extract_str(const char *leftright,
-			    const char *name,
-			    const char *value,
-			    const struct whack_message *wm,
-			    struct logger *logger)
+static bool can_extract_string(const char *leftright,
+			       const char *name,
+			       const char *value,
+			       const struct whack_message *wm,
+			       struct logger *logger)
 {
 	if (value == NULL) {
 		return false;
@@ -856,16 +856,73 @@ static bool can_extract_str(const char *leftright,
 	return true;
 }
 
-static char *extract_str(const char *leftright, const char *name,
-			 const char *str,
-			 const struct whack_message *wm,
-			 struct logger *logger)
+static char *extract_string(const char *leftright, const char *name,
+			    const char *string,
+			    const struct whack_message *wm,
+			    struct logger *logger)
 {
-	if (can_extract_str(leftright, name, str, wm, logger)) {
-		return clone_str(str, name);
+	if (!can_extract_string(leftright, name, string, wm, logger)) {
+		return NULL;
 	}
 
-	return NULL;
+	return clone_str(string, name);
+}
+
+static uintmax_t extract_uintmax(const char *leftright,
+				 const char *name,
+				 const char *value,
+				 uintmax_t min,
+				 uintmax_t max,
+				 const struct whack_message *wm,
+				 diag_t *d,
+				 struct logger *logger)
+{
+	(*d) = NULL;
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
+		return 0;
+	}
+
+	uintmax_t uintmax;
+	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &uintmax);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		return 0;
+	}
+	if (uintmax < min || uintmax > max) {
+		(*d) = diag("%s%s=%ju invalid, must be in the range %ju-%ju",
+			    leftright, name, uintmax, min, max);
+		return 0;
+	}
+	return uintmax;
+}
+
+static ip_cidr extract_cidr_num(const char *leftright,
+				const char *name,
+				const char *value,
+				const struct whack_message *wm,
+				diag_t *d,
+				struct logger *logger)
+{
+	err_t err;
+	(*d) = NULL;
+
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
+		return unset_cidr;
+	}
+
+	ip_cidr cidr;
+	err = ttocidr_num(shunk1(value), NULL, &cidr);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		return unset_cidr;
+	}
+
+	err = cidr_check(cidr);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+	}
+
+	return cidr;
 }
 
 static diag_t extract_host_ckaid(struct host_end_config *host_config,
@@ -1342,7 +1399,7 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
 
-	if (can_extract_str(leftright, "ikeport", src->ikeport, wm, logger)) {
+	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, logger)) {
 		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
 		if (err != NULL) {
 			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
@@ -1485,6 +1542,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				       struct child_end_config *child_config,
 				       struct logger *logger)
 {
+	diag_t d = NULL;
 	const char *leftright = src->leftright;
 
 	switch (wm->ike_version) {
@@ -1505,30 +1563,16 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(wm->ike_version);
 	}
 
-	if (can_extract_str(leftright, "vti", src->vti, wm, logger)) {
-		err_t oops = ttocidr_num(shunk1(src->vti), NULL,
-					 &child_config->vti_ip);
-		if (oops != NULL) {
-			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
-		}
-		oops = cidr_check(child_config->vti_ip);
-		if (oops != NULL) {
-			return diag("%svti=%s invalid, %s", leftright, src->vti, oops);
-		}
+	child_config->vti_ip =
+		extract_cidr_num(leftright, "vti", src->vti, wm, &d, logger);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (can_extract_str(leftright, "interface-ip", src->interface_ip, wm, logger)) {
-		err_t oops = ttocidr_num(shunk1(src->interface_ip), NULL,
-					 &child_config->ipsec_interface_ip);
-		if (oops != NULL) {
-			return diag("%sinterface-ip=%s invalid, %s",
-				    leftright, src->interface_ip, oops);
-		}
-		oops = cidr_check(child_config->ipsec_interface_ip);
-		if (oops != NULL) {
-			return diag("bad addr %sinterface-ip=%s, %s",
-				    leftright, src->interface_ip, oops);
-		}
+	child_config->ipsec_interface_ip =
+		extract_cidr_num(leftright, "interface-ip", src->interface_ip, wm, &d, logger);
+	if (d != NULL) {
+		return d;
 	}
 
 	/* save some defaults */
@@ -3488,8 +3532,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		     "warning: length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
 		     wm->vti_interface, (unsigned) IFNAMSIZ);
 	}
-	config->vti.interface = extract_str("",  "vti-interface", wm->vti_interface,
-					    wm, c->logger);
+	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
+					       wm, c->logger);
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->nic_offload != NIC_OFFLOAD_UNSET) {
@@ -3730,7 +3774,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->modecfg.pull = extract_yn("", "modecfgpull", wm->modecfgpull,
 					  /*default*/false, wm, c->logger);
 
-	if (can_extract_str("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
+	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
@@ -3740,7 +3784,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (can_extract_str("", "modecfgdomains", wm->modecfgdomains, wm, c->logger)) {
+	if (can_extract_string("", "modecfgdomains", wm->modecfgdomains, wm, c->logger)) {
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
 							     ", ", HERE);
 		if (wm->ike_version == IKEv1 &&
@@ -3753,8 +3797,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->modecfg.banner = extract_str("", "modecfgbanner", wm->modecfgbanner,
-					     wm, c->logger);
+	config->modecfg.banner = extract_string("", "modecfgbanner", wm->modecfgbanner,
+						wm, c->logger);
 
 	/*
 	 * Marks.
@@ -3774,12 +3818,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_str("", "mark", wm->mark, wm, c->logger)) {
+	if (can_extract_string("", "mark", wm->mark, wm, c->logger)) {
 		mark_parse(wm->mark, &c->sa_marks.in, c->logger);
 		mark_parse(wm->mark, &c->sa_marks.out, c->logger);
 	}
 
-	if (can_extract_str("", "mark-in", wm->mark_in, wm, c->logger)) {
+	if (can_extract_string("", "mark-in", wm->mark_in, wm, c->logger)) {
 		if (wm->mark != NULL) {
 			llog(RC_LOG, c->logger, "warning: mark-in=%s overrides mark=%s",
 			     wm->mark_in, wm->mark);
@@ -3787,7 +3831,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		mark_parse(wm->mark_in, &c->sa_marks.in, c->logger);
 	}
 
-	if (can_extract_str("", "mark-out", wm->mark_out, wm, c->logger)) {
+	if (can_extract_string("", "mark-out", wm->mark_out, wm, c->logger)) {
 		if (wm->mark != NULL) {
 			llog(RC_LOG, c->logger, "warning: mark-out=%s overrides mark=%s",
 			     wm->mark_out, wm->mark);
@@ -3800,7 +3844,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_str("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
+	if (can_extract_string("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
 		diag_t d;
 		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, c->logger);
 		if (d != NULL) {
@@ -3815,19 +3859,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 #endif
 
 #ifdef USE_NFLOG
-	if (can_extract_str("", "nflog-group", wm->nflog_group, wm, c->logger)) {
-		uintmax_t nflog_group;
-		err_t err = shunk_to_uintmax(shunk1(wm->nflog_group), NULL/*all*/,
-					     10, &nflog_group);
-		if (err != NULL) {
-			return diag("nflog-group=%s invalid, %s",
-				    wm->nflog_group, err);
-		}
-		if (nflog_group < 1 || nflog_group > 65535) {
-			return diag("nflog-group=%s must be in range 1-65535",
-				    wm->nflog_group);
-		}
-		c->nflog_group = nflog_group;
+	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,
+					 1, 65535, wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
 	}
 #endif
 
@@ -3856,18 +3891,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Since security labels use the same REQID for everything,
 	 * pre-assign it.
+	 *
+	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
-	config->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
+
+	uintmax_t reqid = extract_uintmax("", "reqid", wm->reqid,
+					  1, IPSEC_MANUAL_REQID_MAX, wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	config->sa_reqid = (reqid != 0 ? reqid :
 			    wm->sec_label != NULL ? gen_reqid() :
 			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, c->logger) :
 			    /*generated later*/0);
+
 	ldbg(c->logger,
-	     "c->sa_reqid="PRI_REQID" because wm->sa_reqid="PRI_REQID" and sec-label=%s",
+	     "c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
 	     pri_reqid(config->sa_reqid),
-	     pri_reqid(wm->sa_reqid),
-	     (wm->ike_version != IKEv2 ? "not-IKEv2" :
-	      wm->sec_label != NULL ? wm->sec_label :
-	      "n/a"));
+	     (wm->reqid != NULL ? wm->reqid : "n/a"),
+	     (wm->sec_label != NULL ? wm->sec_label : "n/a"));
 
 	/*
 	 * Set both end's sec_label to the same value.

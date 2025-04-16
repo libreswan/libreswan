@@ -499,7 +499,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "mtu",  kv_conn,  kt_unsigned,  KNCF_MTU, NULL, NULL, },
   { "priority",  kv_conn,  kt_unsigned,  KNCF_PRIORITY, NULL, NULL, },
   { "tfc",  kv_conn,  kt_unsigned,  KNCF_TFC, NULL, NULL, },
-  { "reqid",  kv_conn,  kt_unsigned,  KNCF_REQID, NULL, NULL, },
+  { "reqid",  kv_conn,  kt_string,  KNCF_REQID, NULL, NULL, },
 #if defined(USE_NFLOG)
   { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, NULL, },
   { "nflog-group",  kv_conn,  kt_string,  KNCF_NFLOG_GROUP, NULL, NULL, },
