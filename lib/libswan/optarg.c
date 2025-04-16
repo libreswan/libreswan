@@ -92,13 +92,25 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	exit(PLUTO_EXIT_FAIL);
 }
 
+struct line {
+	char buf[72];
+};
+
+static void newline(FILE *stream, struct line *line)
+{
+	if (!streq(line->buf, "\t")) {
+		fprintf(stream, "%s\n", line->buf);
+	}
+	jam_str(line->buf, sizeof(line->buf), "\t");
+}
+
 void optarg_usage(const char *progname, const char *arguments,
 		  const char *details)
 {
 	FILE *stream = stdout;
 
-	char line[72];
-	snprintf(line, sizeof(line), "Usage: %s", progname);
+	struct line line;
+	snprintf(line.buf, sizeof(line.buf), "Usage: %s", progname);
 
 	for (const struct option *opt = optarg_options; opt->name != NULL; opt++) {
 
@@ -109,13 +121,23 @@ void optarg_usage(const char *progname, const char *arguments,
 		 *
 		 * A zero length option string.  Assume the meta is a
 		 * heading.
+		 *
+		 * Experimental, is this portable?
 		 */
 		if (*nm == '\0') {
-			/* dump current line */
-			fprintf(stream, "%s\n", line);
-			jam_str(line, sizeof(line), "\t");
+			newline(stream, &line);
 			/* output heading */
-			fprintf(stream, "    %s\n", nm + 1);
+			fprintf(stream, "%s\n", nm + 1);
+			continue;
+		}
+
+		if (startswith(nm, METAOPT_HEADING)) {
+			newline(stream, &line);
+			/* now print any heading */
+			nm += strlen(METAOPT_HEADING);
+			if (strlen(nm) > 0) {
+				fprintf(stream, "%s\n", nm);
+			}
 			continue;
 		}
 
@@ -137,61 +159,45 @@ void optarg_usage(const char *progname, const char *arguments,
 			continue;
 		}
 
-		bool nl = false; /* true is sticky */
-		if (memeq(meta, METAOPT_NEWLINE, 2)) {
-			/*
-			 * Option should appear on a new line.
-			 */
-			nl = true;
-			meta += 2; /* skip '\0^' */
-		} else if (meta[1] == '<') {
-			/*
-			 * Looks like the argument to an option, skip
-			 * '\0'.
-			 */
-			meta++; /* skip \0 */
-		}
+		/* assume an option; more checks? */
+		meta++; /* skip \0 */
 
 		/* handle entry that forgot the argument */
 		const char *argument = (*meta == '\0' ? "<argument>" : meta);
 
-		char chunk[sizeof(line) - 1];
+		char option[sizeof(line) - 1];
 		switch (opt->has_arg) {
 		case no_argument:
-			snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
+			snprintf(option, sizeof(option),  "[--%s]", nm);
 			break;
 		case optional_argument:
-			snprintf(chunk, sizeof(chunk),  "[--%s[=%s]]", nm, argument);
+			snprintf(option, sizeof(option),  "[--%s[=%s]]", nm, argument);
 			break;
 		case required_argument:
-			snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, argument);
+			snprintf(option, sizeof(option),  "[--%s %s]", nm, argument);
 			break;
 		default:
 			bad_case(opt->has_arg);
 		}
 
 		/* enough space? allow for separator, and null? */
-		if (strlen(line) + strlen(chunk) + 2 >= sizeof(line)) {
-			nl = true;
+		if (strlen(line.buf) + strlen(option) + 2 >= sizeof(line)) {
+			/* finish current line */
+			newline(stream, &line);
+		} else if (!streq(line.buf, "\t")) {
+			add_str(line.buf, sizeof(line.buf), " ");
 		}
 
-		if (nl) {
-			fprintf(stream, "%s\n", line);
-			jam_str(line, sizeof(line), "\t");
-		} else {
-			add_str(line, sizeof(line), " ");
-		}
-
-		add_str(line, sizeof(line), chunk);
+		add_str(line.buf, sizeof(line.buf), option);
 	}
 
 	if (arguments == NULL || strlen(arguments) == 0) {
-		fprintf(stream, "%s\n", line);
-	} else if (strlen(line) + strlen(arguments) + 2 >= sizeof(line)) {
-		fprintf(stream, "%s\n", line);
+		fprintf(stream, "%s\n", line.buf);
+	} else if (strlen(line.buf) + strlen(arguments) + 2 >= sizeof(line.buf)) {
+		fprintf(stream, "%s\n", line.buf);
 		fprintf(stream, "\t%s\n", arguments);
 	} else {
-		fprintf(stream, "%s %s\n", line, arguments);
+		fprintf(stream, "%s %s\n", line.buf, arguments);
 	}
 
 	if (details != NULL) {

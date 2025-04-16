@@ -435,6 +435,8 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 enum opt {
 	OPT_EFENCE_PROTECT = 256, /* larger than a character */
 	OPT_DEBUG,
+	OPT_DEBUG_NONE,
+	OPT_DEBUG_ALL,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
 	OPT_DNSSEC_TRUSTED,
@@ -498,92 +500,102 @@ enum opt {
 	OPT_VENDORID,
 	OPT_SELFTEST,
 	OPT_LEAK_DETECTIVE,
-	OPT_DEBUG_NONE,
-	OPT_DEBUG_ALL,
 };
 
 const struct option optarg_options[] = {
 	/* name, has_arg, flag, val */
-	{ "help\0", no_argument, NULL, OPT_HELP },
-	{ "version\0", no_argument, NULL, OPT_VERSION },
-	{ "config\0<filename>", required_argument, NULL, OPT_CONFIG },
-	{ "nofork\0", no_argument, NULL, OPT_NOFORK },
-	{ "stderrlog\0", no_argument, NULL, OPT_STDERRLOG },
-	{ "logfile\0<filename>", required_argument, NULL, OPT_LOGFILE },
+	{ OPT("help"), no_argument, NULL, OPT_HELP },
+	{ OPT("version"), no_argument, NULL, OPT_VERSION },
+	{ OPT("nofork"), no_argument, NULL, OPT_NOFORK },
+	{ OPT("config", "<filename>"), required_argument, NULL, OPT_CONFIG },
+
+	HEADING_OPT("  Configuration:"),
+	{ OPT("rundir", "<dirname>"), required_argument, NULL, OPT_RUNDIR }, /* was ctlbase */
+	{ OPT("secretsfile", "<secrets-file>"), required_argument, NULL, OPT_SECRETSFILE },
+	{ RENAME_OPT("coredir", "dumpdir"), required_argument, NULL, OPT_DUMPDIR },	/* redundant spelling */
+	{ OPT("dumpdir", "<dirname>"), required_argument, NULL, OPT_DUMPDIR },
+	{ OPT("statsbin", "<filename>"), required_argument, NULL, OPT_STATSBIN },
+	{ OPT("ipsecdir", "<dirname>"), required_argument, NULL, OPT_IPSECDIR },
+	{ RENAME_OPT("foodgroupsdir", "ipsecdir"), required_argument, NULL, OPT_IPSECDIR },	/* redundant spelling */
+	{ OPT("nssdir", "<dirname>"), required_argument, NULL, OPT_NSSDIR },	/* nss-tools use -d */
+	{ OPT("nhelpers", "<number>"), required_argument, NULL, OPT_NHELPERS },
+	{ OPT("leak-detective"), no_argument, NULL, OPT_LEAK_DETECTIVE },
+	{ OPT("efence-protect"), no_argument, NULL, OPT_EFENCE_PROTECT, },
+
 #ifdef USE_DNSSEC
-	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
-	{ "dnssec-trusted\0<filename>", required_argument, NULL, OPT_DNSSEC_TRUSTED },
+	{ OPT("dnssec-rootkey-file", "<filename>"), required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
+	{ OPT("dnssec-trusted", "<filename>"), required_argument, NULL, OPT_DNSSEC_TRUSTED },
 #endif
-	{ "log-no-time\0", no_argument, NULL, OPT_LOG_NO_TIME }, /* was --plutostderrlogtime */
-	{ "log-no-append\0", no_argument, NULL, OPT_LOG_NO_APPEND },
-	{ "log-no-ip\0", no_argument, NULL, OPT_LOG_NO_IP },
-	{ "log-no-audit\0", no_argument, NULL, OPT_LOG_NO_AUDIT },
-	{ "force-busy\0", no_argument, NULL, OPT_FORCE_BUSY },
-	{ "force-unlimited\0", no_argument, NULL, OPT_FORCE_UNLIMITED },
-	{ "crl-strict\0", no_argument, NULL, OPT_CRL_STRICT },
-	{ "ocsp-strict\0", no_argument, NULL, OPT_OCSP_STRICT },
-	{ "ocsp-enable\0", no_argument, NULL, OPT_OCSP_ENABLE },
-	{ "ocsp-uri\0", required_argument, NULL, OPT_OCSP_URI },
-	{ "ocsp-timeout\0", required_argument, NULL, OPT_OCSP_TIMEOUT },
-	{ "ocsp-trustname\0", required_argument, NULL, OPT_OCSP_TRUSTNAME },
-	{ "ocsp-cache-size\0", required_argument, NULL, OPT_OCSP_CACHE_SIZE },
-	{ "ocsp-cache-min-age\0", required_argument, NULL, OPT_OCSP_CACHE_MIN_AGE },
-	{ "ocsp-cache-max-age\0", required_argument, NULL, OPT_OCSP_CACHE_MAX_AGE },
-	{ "ocsp-method\0", required_argument, NULL, OPT_OCSP_METHOD },
-	{ "crlcheckinterval\0", required_argument, NULL, OPT_CRLCHECKINTERVAL },
-	{ "uniqueids\0", no_argument, NULL, OPT_UNIQUEIDS },
-	{ "no-dnssec\0", no_argument, NULL, OPT_NO_DNSSEC },
+	{ OPT("force-busy"), no_argument, NULL, OPT_FORCE_BUSY },
+	{ OPT("force-unlimited"), no_argument, NULL, OPT_FORCE_UNLIMITED },
+	{ OPT("uniqueids"), no_argument, NULL, OPT_UNIQUEIDS },
+	{ OPT("no-dnssec"), no_argument, NULL, OPT_NO_DNSSEC },
 #ifdef KERNEL_PFKEYV2
-	{ "use-pfkeyv2\0",   no_argument, NULL, OPT_USE_PFKEYV2 },
+	{ OPT("use-pfkeyv2"),   no_argument, NULL, OPT_USE_PFKEYV2 },
 #endif
 #ifdef KERNEL_XFRM
-	{ "use-xfrm\0", no_argument, NULL, OPT_USE_XFRM },
+	{ OPT("use-xfrm"), no_argument, NULL, OPT_USE_XFRM },
 #endif
-	{ "interface"METAOPT_OBSOLETE"<ifname|ifaddr>", required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
-	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, OPT_CURL_IFACE },
-	{ "curl-timeout\0<secs>", required_argument, NULL, OPT_CURL_TIMEOUT }, /* legacy */
-	{ "listen\0<ifaddr>", required_argument, NULL, OPT_LISTEN },
-	{ "listen-tcp\0", no_argument, NULL, OPT_LISTEN_TCP },
-	{ "no-listen-udp\0", no_argument, NULL, OPT_NO_LISTEN_UDP },
-	{ "ike-socket-bufsize\0<bytes>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
-	{ "ike-socket-no-errqueue\0", no_argument, NULL, OPT_IKE_SOCKET_NO_ERRQUEUE },
+	{ OBSOLETE_OPT("interface", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
+	{ OPT("listen", "<ifaddr>"), required_argument, NULL, OPT_LISTEN },
+	{ OPT("listen-tcp"), no_argument, NULL, OPT_LISTEN_TCP },
+	{ OPT("no-listen-udp"), no_argument, NULL, OPT_NO_LISTEN_UDP },
+	{ OPT("ike-socket-bufsize", "<bytes>"), required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
+	{ OPT("ike-socket-no-errqueue"), no_argument, NULL, OPT_IKE_SOCKET_NO_ERRQUEUE },
 #ifdef USE_NFLOG
-	{ "nflog-all\0<group-number>", required_argument, NULL, OPT_NFLOG_ALL },
+	{ OPT("nflog-all", "<group-number>"), required_argument, NULL, OPT_NFLOG_ALL },
 #endif
-	{ "rundir\0<path>", required_argument, NULL, OPT_RUNDIR }, /* was ctlbase */
-	{ "secretsfile\0<secrets-file>", required_argument, NULL, OPT_SECRETSFILE },
-	{ "global-redirect\0", required_argument, NULL, OPT_GLOBAL_REDIRECT},
-	{ "global-redirect-to\0", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO},
-	{ "coredir\0>dumpdir", required_argument, NULL, OPT_DUMPDIR },	/* redundant spelling */
-	{ "dumpdir\0<dirname>", required_argument, NULL, OPT_DUMPDIR },
-	{ "statsbin\0<filename>", required_argument, NULL, OPT_STATSBIN },
-	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, OPT_IPSECDIR },
-	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, OPT_IPSECDIR },	/* redundant spelling */
-	{ "nssdir\0<path>", required_argument, NULL, OPT_NSSDIR },	/* nss-tools use -d */
-	{ "keep-alive\0<delay_secs>", required_argument, NULL, OPT_KEEP_ALIVE },
-	{ "virtual-private\0<network_list>", required_argument, NULL, OPT_VIRTUAL_PRIVATE },
-	{ "nhelpers\0<number>", required_argument, NULL, OPT_NHELPERS },
-	{ "expire-shunt-interval\0<secs>", required_argument, NULL, OPT_EXPIRE_SHUNT_INTERVAL },
-	{ "seedbits\0<number>", required_argument, NULL, OPT_SEEDBITS },
+
+	{ OPT("keep-alive", "<delay-seconds>"), required_argument, NULL, OPT_KEEP_ALIVE },
+	{ OPT("virtual-private", "<network-list>"), required_argument, NULL, OPT_VIRTUAL_PRIVATE },
+	{ OPT("expire-shunt-interval", "<seconds>"), required_argument, NULL, OPT_EXPIRE_SHUNT_INTERVAL },
+	{ OPT("seedbits", "number"), required_argument, NULL, OPT_SEEDBITS },
 	/* really an attribute type, not a value */
-	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, OPT_IKEV1_SECCTX_ATTR_TYPE },
-	{ "ikev1-reject\0", no_argument, NULL, OPT_IKEV1_REJECT },
-	{ "ikev1-drop\0", no_argument, NULL, OPT_IKEV1_DROP },
+	{ OPT("ikev1-secctx-attr-type", "<number>"), required_argument, NULL, OPT_IKEV1_SECCTX_ATTR_TYPE },
+	{ OPT("ikev1-reject"), no_argument, NULL, OPT_IKEV1_REJECT },
+	{ OPT("ikev1-drop"), no_argument, NULL, OPT_IKEV1_DROP },
+	{ OPT("vendorid", "vendorid>"), required_argument, NULL, OPT_VENDORID },
+	{ OPT("drop-oppo-null"), no_argument, NULL, OPT_DROP_OPPO_NULL, },
+
+	HEADING_OPT("  Logging:"),
+	{ OPT("logfile", "<filename>"), required_argument, NULL, OPT_LOGFILE },
+	{ OPT("stderrlog"), no_argument, NULL, OPT_STDERRLOG },
+	{ OPT("log-no-time"), no_argument, NULL, OPT_LOG_NO_TIME }, /* was --plutostderrlogtime */
+	{ OPT("log-no-append"), no_argument, NULL, OPT_LOG_NO_APPEND },
+	{ OPT("log-no-ip"), no_argument, NULL, OPT_LOG_NO_IP },
+	{ OPT("log-no-audit"), no_argument, NULL, OPT_LOG_NO_AUDIT },
+
+	HEADING_OPT("  Redirection:"),
+	{ OPT("global-redirect", "yes|no|auto"), required_argument, NULL, OPT_GLOBAL_REDIRECT},
+	{ OPT("global-redirect-to", "<destination>"), required_argument, NULL, OPT_GLOBAL_REDIRECT_TO},
+
 #ifdef USE_SECCOMP
-	{ "seccomp-enabled\0", no_argument, NULL, OPT_SECCOMP_ENABLED },
-	{ "seccomp-tolerant\0", no_argument, NULL, OPT_SECCOMP_TOLERANT },
+	HEADING_OPT("  Secure Computing:"),
+	{ OPT("seccomp-enabled"), no_argument, NULL, OPT_SECCOMP_ENABLED },
+	{ OPT("seccomp-tolerant"), no_argument, NULL, OPT_SECCOMP_TOLERANT },
 #endif
-	{ "vendorid\0<vendorid>", required_argument, NULL, OPT_VENDORID },
 
-	{ "selftest\0", no_argument, NULL, OPT_SELFTEST },
+	HEADING_OPT("  PKI X.509:"),
+	{ OPT("ocsp-enable"), no_argument, NULL, OPT_OCSP_ENABLE },
+	{ OPT("ocsp-strict"), no_argument, NULL, OPT_OCSP_STRICT },
+	{ OPT("ocsp-uri", "<uri>"), required_argument, NULL, OPT_OCSP_URI },
+	{ OPT("ocsp-timeout", "<seconds>"), required_argument, NULL, OPT_OCSP_TIMEOUT },
+	{ OPT("ocsp-trustname", "<name>"), required_argument, NULL, OPT_OCSP_TRUSTNAME },
+	{ OPT("ocsp-cache-size", "<bytes>"), required_argument, NULL, OPT_OCSP_CACHE_SIZE },
+	{ OPT("ocsp-cache-min-age", "<seconds>"), required_argument, NULL, OPT_OCSP_CACHE_MIN_AGE },
+	{ OPT("ocsp-cache-max-age", "<seconds>"), required_argument, NULL, OPT_OCSP_CACHE_MAX_AGE },
+	{ OPT("ocsp-method", "<method>"), required_argument, NULL, OPT_OCSP_METHOD },
+	{ OPT("crl-strict"), no_argument, NULL, OPT_CRL_STRICT },
+	{ OPT("crlcheckinterval", "<seconds>"), required_argument, NULL, OPT_CRLCHECKINTERVAL },
+	{ OPT("curl-iface", "<ifname>|<ifaddr>"), required_argument, NULL, OPT_CURL_IFACE },
+	{ OPT("curl-timeout", "<seconds>"), required_argument, NULL, OPT_CURL_TIMEOUT }, /* legacy */
 
-	{ "leak-detective\0", no_argument, NULL, OPT_LEAK_DETECTIVE },
-	{ "efence-protect\0", no_argument, NULL, OPT_EFENCE_PROTECT, },
-	{ "drop-oppo-null", no_argument, NULL, OPT_DROP_OPPO_NULL, },
-	{ "debug-none"METAOPT_NEWLINE, no_argument, NULL, OPT_DEBUG_NONE },
-	{ "debug-all\0", no_argument, NULL, OPT_DEBUG_ALL },
-	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
-	{ "impair\0", required_argument, NULL, OPT_IMPAIR, },
+	HEADING_OPT("  Debuging:"),
+	{ OPT("debug-none"), no_argument, NULL, OPT_DEBUG_NONE },
+	{ OPT("debug-all"), no_argument, NULL, OPT_DEBUG_ALL },
+	{ OPT("debug", "help|<debug-flags>"), required_argument, NULL, OPT_DEBUG, },
+	{ OPT("impair", "help|<impairment>"), required_argument, NULL, OPT_IMPAIR, },
+	{ OPT("selftest"), no_argument, NULL, OPT_SELFTEST },
 
 	{ 0, 0, 0, 0 }
 };

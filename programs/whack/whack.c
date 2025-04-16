@@ -891,7 +891,7 @@ const struct option optarg_options[] = {
 	{ "conn-mark\0", required_argument, NULL, CD_CONN_MARK },
 	{ "conn-mark-in\0", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out\0", required_argument, NULL, CD_CONN_MARK_OUT },
-	{ "vtiip"METAOPT_RENAME"vti",  required_argument, NULL, END_VTI }, /* backward compat */
+	{ RENAME_OPT("vtiip", "vti"),  required_argument, NULL, END_VTI }, /* backward compat */
 	{ "vti\0",  required_argument, NULL, END_VTI },
 	{ "vti-iface\0", required_argument, NULL, CD_VTI_INTERFACE }, /* backward compat */
 	{ "vti-interface\0", required_argument, NULL, CD_VTI_INTERFACE },
