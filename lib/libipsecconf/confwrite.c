@@ -293,126 +293,85 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("ppk", str_sparse(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
 	}
 
-	if (conn->never_negotiate_shunt != SHUNT_UNSET ||
-	    conn->values[KNCF_PHASE2].option != 0) {
+	if (conn->never_negotiate_shunt != SHUNT_UNSET) {
+		name_buf nb;
+		cwf("type", str_sparse_long(&never_negotiate_shunt_names,
+					    conn->never_negotiate_shunt,
+					    &nb));
+	} else if (conn->values[KNCF_PHASE2].option != 0) {
 		enum encap_proto encap_proto = conn->values[KNCF_PHASE2].option;
-		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
 		enum type_options satype = conn->values[KNCF_TYPE].option;
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
-		 * config-write-policy-bit: short-cut for writing out a field that is a policy
-		 * bit.
-		 *
-		 * config-write-policy-bit-flipped: cwpbf() flips the
-		 * sense of the bit.
-		 *
 		 * config-write-yn: for writing out optional
 		 * yn_options fields.
 		 */
-#		define cwpb(name, p)  { cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); }
-#		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
 #define cwyn(NAME, KNCF)						\
 		{							\
-			if (conn->values[KNCF].option != YN_UNSET)		\
+			if (conn->values[KNCF].option != YN_UNSET)	\
 				cwf(NAME, noyes[conn->values[KNCF].option == YN_YES]); \
 		}
-		switch (shunt_policy) {
-		case SHUNT_UNSET:
-			switch (satype) {
-			case KS_TUNNEL:
-				cwf("type", "tunnel");
-				break;
-			case KS_TRANSPORT:
-				cwf("type", "transport");
-				break;
-			default:
-				break;
-			}
-
-			cwyn("compress", KNCF_COMPRESS);
-			cwyn("pfs", KNCF_PFS);
-			cwyn("ikepad", KNCF_IKEPAD);
-
-			if (conn->end[LEFT_END].values[KNCF_AUTH].option == k_unset ||
-			    conn->end[RIGHT_END].values[KNCF_AUTH].option == k_unset) {
-				authby_buf ab;
-				cwf("authby", str_authby(conn->authby, &ab));
-			}
-
-			if (encap_proto != ENCAP_PROTO_UNSET) {
-				/* story is lower-case */
-				enum_buf eb;
-				cwf("phase2", str_enum_short(&encap_proto_story, encap_proto, &eb));
-			}
-
-			/* ikev2= */
-			{
-				const char *v2ps;
-				switch (conn->ike_version) {
-				case IKEv1:
-					v2ps = "no";
-					break;
-				case IKEv2:
-					v2ps = "yes";
-					break;
-				default:
-					v2ps = "UNKNOWN";
-					break;
-				}
-				cwf("ikev2", v2ps);
-			}
-
-			/* esn= */
-			if (conn->values[KNCF_ESN].option != YNE_UNSET) {
-				name_buf nb;
-				cwf("esn", str_sparse(&yne_option_names,
-						      conn->values[KNCF_ESN].option, &nb));
-			}
-
-			switch (conn->values[KNCF_FRAGMENTATION].option) {
-			case YNF_UNSET:
-				/* it's the default, do not print anything */
-				break;
-			case YNF_FORCE:
-				cwf("fragmentation", "force");
-				break;
-			case YNF_NO:
-				cwf("fragmentation", "no");
-				break;
-			case YNF_YES:
-				cwf("fragmentation", "yes");
-			}
-
-			break; /* end of case UNSET aka SHUNT_TRAP? */
-
-		case SHUNT_PASS:
-			cwf("type", "passthrough");
+		switch (satype) {
+		case KS_TUNNEL:
+			cwf("type", "tunnel");
 			break;
-
-		case SHUNT_DROP:
-			cwf("type", "drop");
+		case KS_TRANSPORT:
+			cwf("type", "transport");
 			break;
-
-		case SHUNT_IPSEC:
-			cwf("type", "ipsec"); /* can't happen */
-			break
-;
-		case SHUNT_TRAP:
-			cwf("type", "trap"); /* can't happen */
+		default:
 			break;
-
-		case SHUNT_NONE:
-			cwf("type", "none"); /* can't happen */
-			break;
-
-		case SHUNT_HOLD:
-			cwf("type", "hold"); /* can't happen */
-			break;
-
 		}
 
-#undef cwpb
-#undef cwpbf
+		cwyn("compress", KNCF_COMPRESS);
+		cwyn("pfs", KNCF_PFS);
+		cwyn("ikepad", KNCF_IKEPAD);
+
+		if (conn->end[LEFT_END].values[KNCF_AUTH].option == k_unset ||
+		    conn->end[RIGHT_END].values[KNCF_AUTH].option == k_unset) {
+			authby_buf ab;
+			cwf("authby", str_authby(conn->authby, &ab));
+		}
+
+		if (encap_proto != ENCAP_PROTO_UNSET) {
+			/* story is lower-case */
+			enum_buf eb;
+			cwf("phase2", str_enum_short(&encap_proto_story, encap_proto, &eb));
+		}
+
+		/* key-exchange= */
+
+		switch (conn->ike_version) {
+		case IKEv1:
+			cwf("key-exchange", "ikev1");
+			break;
+		case IKEv2:
+			cwf("key-exchange", "ikev2");
+			break;
+		default:
+			break;
+		}
+
+		/* esn= */
+		if (conn->values[KNCF_ESN].option != YNE_UNSET) {
+			name_buf nb;
+			cwf("esn", str_sparse(&yne_option_names,
+					      conn->values[KNCF_ESN].option, &nb));
+		}
+
+		switch (conn->values[KNCF_FRAGMENTATION].option) {
+		case YNF_UNSET:
+			/* it's the default, do not print anything */
+			break;
+		case YNF_FORCE:
+			cwf("fragmentation", "force");
+			break;
+		case YNF_NO:
+			cwf("fragmentation", "no");
+			break;
+		case YNF_YES:
+			cwf("fragmentation", "yes");
+		}
+
 #undef cwyn
 	}
 

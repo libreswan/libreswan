@@ -175,7 +175,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND ||
 				 dir == DIRECTION_INBOUND));
 		PASSERT(logger, policy->nr_rules > 0);
-		PASSERT(logger, (policy->kind == SHUNT_KIND_FAILURE ||
+		PASSERT(logger, (policy->kind == SHUNT_KIND_NEGOTIATION ||
+				 policy->kind == SHUNT_KIND_FAILURE ||
 				 policy->kind == SHUNT_KIND_NEVER_NEGOTIATE ||
 				 policy->kind == SHUNT_KIND_BLOCK));
 		break;
@@ -183,11 +184,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
 		PASSERT(logger, policy->nr_rules > 0);
 		PASSERT(logger, (policy->kind == SHUNT_KIND_ONDEMAND));
-		break;
-	case SHUNT_HOLD:
-		PASSERT(logger, (dir == DIRECTION_OUTBOUND));
-		PASSERT(logger, policy->nr_rules > 0);
-		PASSERT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
 		break;
 	case SHUNT_NONE:
 		/*

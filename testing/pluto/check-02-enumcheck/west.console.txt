@@ -6078,7 +6078,7 @@ name for -1 present (should be absent)
          jam_enum_short 6: BLOCK OK
          jam_enum_human 6: block OK
          match BLOCK [short]: OK
-  shunt_policy_names: [0..7)
+  shunt_policy_names: [0..6)
     0 -> SHUNT_UNSET
          jam_enum 0: SHUNT_UNSET OK
          search SHUNT_UNSET: OK
@@ -6103,37 +6103,29 @@ name for -1 present (should be absent)
          jam_enum_short 2: NONE OK
          jam_enum_human 2: none OK
          match NONE [short]: OK
-    3 -> SHUNT_HOLD
-         jam_enum 3: SHUNT_HOLD OK
-         search SHUNT_HOLD: OK
-         match SHUNT_HOLD: OK
-         short_name 3: HOLD OK
-         jam_enum_short 3: HOLD OK
-         jam_enum_human 3: hold OK
-         match HOLD [short]: OK
-    4 -> SHUNT_TRAP
-         jam_enum 4: SHUNT_TRAP OK
+    3 -> SHUNT_TRAP
+         jam_enum 3: SHUNT_TRAP OK
          search SHUNT_TRAP: OK
          match SHUNT_TRAP: OK
-         short_name 4: TRAP OK
-         jam_enum_short 4: TRAP OK
-         jam_enum_human 4: trap OK
+         short_name 3: TRAP OK
+         jam_enum_short 3: TRAP OK
+         jam_enum_human 3: trap OK
          match TRAP [short]: OK
-    5 -> SHUNT_PASS
-         jam_enum 5: SHUNT_PASS OK
+    4 -> SHUNT_PASS
+         jam_enum 4: SHUNT_PASS OK
          search SHUNT_PASS: OK
          match SHUNT_PASS: OK
-         short_name 5: PASS OK
-         jam_enum_short 5: PASS OK
-         jam_enum_human 5: pass OK
+         short_name 4: PASS OK
+         jam_enum_short 4: PASS OK
+         jam_enum_human 4: pass OK
          match PASS [short]: OK
-    6 -> SHUNT_DROP
-         jam_enum 6: SHUNT_DROP OK
+    5 -> SHUNT_DROP
+         jam_enum 5: SHUNT_DROP OK
          search SHUNT_DROP: OK
          match SHUNT_DROP: OK
-         short_name 6: DROP OK
-         jam_enum_short 6: DROP OK
-         jam_enum_human 6: drop OK
+         short_name 5: DROP OK
+         jam_enum_short 5: DROP OK
+         jam_enum_human 5: drop OK
          match DROP [short]: OK
   sit_bit_names: [0..3)
     0 -> SIT_IDENTITY_ONLY

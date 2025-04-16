@@ -287,7 +287,7 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam(buf, "bare shunt %p ", bs);
 	jam_selector_pair(buf, &bs->our_client, &bs->peer_client);
 	jam(buf, " => ");
-	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
+	jam_sparse_short(buf, &failure_shunt_names, bs->shunt_policy);
 	jam(buf, "    %s", bs->why);
 	if (bs->template_serialno != COS_NOBODY) {
 		jam(buf, " "PRI_CO, pri_co(bs->template_serialno));
@@ -1142,7 +1142,7 @@ void clear_narrow_holds(const ip_selector *src_client,
 		 * is bsp->{local,remote} within {local,remote}.
 		 */
 		struct bare_shunt *bsp = *bspp;
-		if (bsp->shunt_policy == SHUNT_HOLD &&
+		if (bsp->shunt_policy == SHUNT_DROP &&
 		    transport_proto == bsp->transport_proto &&
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {

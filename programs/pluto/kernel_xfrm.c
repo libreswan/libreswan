@@ -908,16 +908,10 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		xfrm_action = XFRM_POLICY_BLOCK;
 		policy_name = "%drop(block)";
 		break;
-	case SHUNT_HOLD:
-		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
-		xfrm_action = XFRM_POLICY_BLOCK;
-		policy_name = "%hold(block)";
-		break;
 	case SHUNT_NONE:
+	case SHUNT_UNSET:
 		/* FAILURE=NONE should have been turned into
 		 * NEGOTIATION */
-		bad_case(policy->shunt);
-	case SHUNT_UNSET:
 		bad_case(policy->shunt);
 	}
 	PASSERT(logger, xfrm_action != UINT_MAX);

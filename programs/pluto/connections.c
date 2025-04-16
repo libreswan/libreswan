@@ -2387,13 +2387,13 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 		},
 		[SHUNT_KIND_NEVER_NEGOTIATE] = {
 			[SHUNT_UNSET] = true,
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
+			[SHUNT_NONE] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		[SHUNT_KIND_NEGOTIATION] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false,
+			[SHUNT_NONE] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		[SHUNT_KIND_FAILURE] = {
-			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
+			[SHUNT_NONE] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,
 		},
 		/* hard-wired */
 		[SHUNT_KIND_IPSEC] = { [SHUNT_IPSEC] = true, },
@@ -2406,6 +2406,7 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 static diag_t extract_shunt(struct config *config,
 			    const struct whack_message *wm,
 			    enum shunt_kind shunt_kind,
+			    const struct sparse_names *shunt_names,
 			    enum shunt_policy unset_shunt)
 {
 	enum shunt_policy shunt_policy = wm->shunt[shunt_kind];
@@ -2416,7 +2417,7 @@ static diag_t extract_shunt(struct config *config,
 		JAMBUF(buf) {
 			jam_enum_human(buf, &shunt_kind_names, shunt_kind);
 			jam_string(buf, "shunt=");
-			jam_enum_human(buf, &shunt_policy_names, shunt_policy);
+			jam_sparse_long(buf, shunt_names, shunt_policy);
 			jam_string(buf, " invalid");
 			return diag_jambuf(buf);
 		}
@@ -2737,7 +2738,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			authby_buf ab;
 			enum_buf sb;
 			return diag("kind=%s shunt connection cannot have authby=%s authentication",
-				    str_enum_short(&shunt_policy_names, wm->never_negotiate_shunt, &sb),
+				    str_sparse_short(&never_negotiate_shunt_names, wm->never_negotiate_shunt, &sb),
 				    str_authby(wm->authby, &ab));
 		}
 	}
@@ -3215,13 +3216,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	d = extract_shunt(config, wm, SHUNT_KIND_NEVER_NEGOTIATE,
-			  /*unset*/SHUNT_UNSET);
+			  &never_negotiate_shunt_names, /*unset*/SHUNT_UNSET);
 	if (d != NULL) {
 		return d;
 	}
 
 	d = extract_shunt(config, wm, SHUNT_KIND_NEGOTIATION,
-			  /*unset*/SHUNT_HOLD);
+			  &negotiation_shunt_names, /*unset*/SHUNT_DROP);
 	if (d != NULL) {
 		return d;
 	}
@@ -3230,12 +3231,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 		enum_buf sb;
 		llog(RC_LOG, c->logger,
 		     "FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
-		     str_enum_short(&shunt_policy_names, config->negotiation_shunt, &sb));
-		config->negotiation_shunt = SHUNT_HOLD;
+		     str_sparse_short(&negotiation_shunt_names, config->negotiation_shunt, &sb));
+		config->negotiation_shunt = SHUNT_DROP;
 	}
 
 	d = extract_shunt(config, wm, SHUNT_KIND_FAILURE,
-			  /*unset*/SHUNT_NONE);
+			  &failure_shunt_names, /*unset*/SHUNT_NONE);
 	if (d != NULL) {
 		return d;
 	}
@@ -3249,7 +3250,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		enum_buf eb;
 		llog(RC_LOG, c->logger,
 		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
-		     str_enum_short(&shunt_policy_names, config->failure_shunt, &eb));
+		     str_sparse_short(&failure_shunt_names, config->failure_shunt, &eb));
 		config->failure_shunt = SHUNT_NONE;
 	}
 
@@ -4569,15 +4570,29 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	shunt = c->config->never_negotiate_shunt;
 	if (shunt != SHUNT_UNSET) {
 		s += jam_string(buf, sep);
+		/*
+		 * Keep tests happy, this needs a re-think.
+		 */
+#if 0
+		s += jam_sparse_short(buf, &never_negotiate_shunt_names, shunt);
+#else
 		s += jam_enum_short(buf, &shunt_policy_names, shunt);
+#endif
 		sep = "+";
 	}
 
 	shunt = c->config->negotiation_shunt;
-	if (shunt != SHUNT_HOLD) {
+	if (shunt != SHUNT_DROP) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "NEGO_");
+		/*
+		 * Keep tests happy, this needs a re-think.
+		 */
+#if 0
+		s += jam_sparse_short(buf, &negotiation_shunt_names, shunt);
+#else
 		s += jam_enum_short(buf, &shunt_policy_names, shunt);
+#endif
 		sep = "+";
 	}
 
@@ -4585,7 +4600,14 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	if (shunt != SHUNT_NONE) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "failure");
+		/*
+		 * Keep tests happy, this needs a re-think.
+		 */
+#if 0
+		s += jam_sparse_short(buf, &failure_shunt_names, shunt);
+#else
 		s += jam_enum_short(buf, &shunt_policy_names, shunt);
+#endif
 		sep = "+";
 	}
 

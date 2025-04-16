@@ -544,7 +544,7 @@ bool delete_spd_kernel_policy(const struct spd *spd,
 		if (owner->bare_policy != NULL) {
 			const struct connection *oc = owner->bare_policy->connection;
 			if (BROKEN_TRANSITION &&
-			    oc->config->negotiation_shunt == SHUNT_HOLD &&
+			    oc->config->negotiation_shunt == SHUNT_DROP &&
 			    oc->routing.state == RT_ROUTED_NEGOTIATION) {
 				ldbg(oc->logger, "%s() skipping NEGOTIATION=HOLD", __func__);
 				return true;

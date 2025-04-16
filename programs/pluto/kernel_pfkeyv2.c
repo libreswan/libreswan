@@ -1384,10 +1384,6 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = SADB_X_FLOW_TYPE_DENY;
 		policy_name = "%drop(deny)";
 		break;
-	case SHUNT_HOLD:
-		policy_type = SADB_X_FLOW_TYPE_DENY;
-		policy_name = "%hold(deny)";
-		break;
 	case SHUNT_NONE:
 		/* FAILURE=NONE should have been turned into
 		 * NEGOTIATION */
@@ -1490,15 +1486,10 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		policy_type = IPSEC_POLICY_DISCARD;
 		policy_name = "%drop(discard)";
 		break;
-	case SHUNT_HOLD:
-		policy_type = IPSEC_POLICY_DISCARD;
-		policy_name = "%hold(discard)";
-		break;
 	case SHUNT_NONE:
+	case SHUNT_UNSET:
 		/* FAILURE=NONE should have been turned into
 		 * NEGOTIATION */
-		bad_case(policy->shunt);
-	case SHUNT_UNSET:
 		bad_case(policy->shunt);
 	}
 	PASSERT(logger, policy_type != UINT_MAX);

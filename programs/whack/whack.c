@@ -1870,7 +1870,7 @@ int main(int argc, char **argv)
 			msg.negotiation_shunt = SHUNT_PASS;
 			continue;
 		case CDS_NEGOTIATION_HOLD:	/* --negohold */
-			msg.negotiation_shunt = SHUNT_HOLD;
+			msg.negotiation_shunt = SHUNT_DROP;
 			continue;
 
 		case CDS_FAILURE_NONE:		/* --failnone */
