@@ -740,9 +740,6 @@ int main(int argc, char **argv)
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
 
-	pluto_shunt_lifetime = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
-	bare_shunt_interval = SHUNT_SCAN_INTERVAL;
-
 	/* handle arguments */
 	for (;; ) {
 
@@ -1324,6 +1321,11 @@ int main(int argc, char **argv)
 					     "protostack=%s ignored, using protostack=%s",
 					     protostack, kernel_ops->protostack_names[0]);
 				}
+			}
+
+			if (cfg->setup[KSF_EXPIRE_SHUNT_INTERVAL].set) {
+				bare_shunt_interval = cfg->setup[KSF_EXPIRE_SHUNT_INTERVAL].deltatime;
+				check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
 			}
 
 			confread_free(cfg);

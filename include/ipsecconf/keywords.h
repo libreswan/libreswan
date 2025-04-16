@@ -94,6 +94,7 @@ enum keywords {
 	KSF_LISTEN,
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
+	KSF_EXPIRE_SHUNT_INTERVAL,
 
 	/*
 	 * By convention, these are global configuration numeric (and

@@ -4,7 +4,7 @@ set -e
 
 # --negopass --failnone --ike aes
 what=$1 ; shift
-conn=$(echo "oe $@ ${what}" | sed -e 's/ --/./g' -e 's/ /-/g')
+conn=$(echo "oe $@.${what}" | sed -e 's/ --/./g' -e 's/ /-/g')
 
 case ${what} in
     *pass* ) set -- "$@" ;;
@@ -24,11 +24,11 @@ RUN() {
 }
 
 echo : ${conn} RESTARTING PLUTO
-ipsec whack --shutdown
+ipsec stop
 rm OUTPUT/road.pluto.log
 ln -s road.pluto.${conn}.log OUTPUT/road.pluto.log
 # frequent shunt checks; also needs shuntlifetime 10s
-ipsec pluto --config /etc/ipsec.conf --expire-shunt-interval 5s --leak-detective
+ipsec start
 ../../guestbin/wait-until-pluto-started
 
 echo : ${conn} LOADING CONNECTION

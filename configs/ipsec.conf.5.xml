@@ -53,6 +53,7 @@
 <!ENTITY esn SYSTEM "d.ipsec.conf/esn.xml">
 <!ENTITY esp SYSTEM "d.ipsec.conf/esp.xml">
 <!ENTITY exampleleftright SYSTEM "d.ipsec.conf/exampleleftright.xml">
+<!ENTITY expire-shunt-interval SYSTEM "d.ipsec.conf/expire-shunt-interval.xml">
 <!ENTITY failureshunt SYSTEM "d.ipsec.conf/failureshunt.xml">
 <!ENTITY fake-strongswan SYSTEM "d.ipsec.conf/fake-strongswan.xml">
 <!ENTITY files SYSTEM "d.ipsec.conf/files.xml">
@@ -433,6 +434,7 @@
       &global-redirect;
       &global-redirect-to;
       &max-halfopen-ike;
+      &expire-shunt-interval;
       &shuntlifetime;
       &xfrmlifetime;
       &dumpdir;

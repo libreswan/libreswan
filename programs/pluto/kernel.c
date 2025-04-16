@@ -2375,8 +2375,8 @@ const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
 
 static bool kernel_initialized = false;
 
-deltatime_t bare_shunt_interval;
-deltatime_t pluto_shunt_lifetime;
+deltatime_t bare_shunt_interval = SHUNT_SCAN_INTERVAL;
+deltatime_t pluto_shunt_lifetime = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
 
 static global_timer_cb kernel_scan_shunts;
 
