@@ -36,13 +36,15 @@ s/\[root@\([^ ]*\) .*\]# /[\1]# /
 #
 
 /==== end ====/ {
-  s/\[\([a-z][a-z]*\)\]# .*/\1 # /
+  s/\[\([a-z][a-z]*\)\]# .*/\1 #/
   q
 }
 
 
 #
-# Strip out any empty commands (but not for the last prompt)
+# Strip out any empty command lines (but not for the final prompt at
+# the end of the file)
+#
 
 $! { /^\[\([a-z][a-z]*\)\]# $/d }
 
@@ -57,4 +59,5 @@ $! { /^\[\([a-z][a-z]*\)\]# $/d }
 #    /^ COMMAND/,/^HOST #/ { do stuff }
 # works?
 
-s/^\[\([a-z][a-z]*\)\]# /\1 #\n /
+$! s/^\[\([a-z][a-z]*\)\]# /\1 #\n /
+$ s/^\[\([a-z][a-z]*\)\]# /\1 #\n/
