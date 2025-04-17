@@ -256,9 +256,10 @@ def _skip_test(task, args, result_stats, logger):
 
     return False
 
-def _write_guest_prompt(f, command, test):
+def _write_guest_prompt(domain, test):
+    f = domain.verbose_txt
     f.write("[root@");
-    f.write(command.guest.host.name)
+    f.write(domain.guest.name)
     f.write(" ")
     f.write(test.name)
     f.write("]# ")
@@ -408,7 +409,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     txt.write(command.line)
                                     txt.write("\n");
                                 # fudge the prompt
-                                _write_guest_prompt(test_domain.verbose_txt, command, test)
+                                _write_guest_prompt(test_domain, test)
                                 continue
 
                             if last_was_comment:
@@ -431,7 +432,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             # as ping, are expected to fail.
 
                             # GUEST then gets the next prompt
-                            _write_guest_prompt(test_domain.verbose_txt, command, test)
+                            _write_guest_prompt(test_domain, test)
 
                             all_verbose_txt.write("\n")
 
@@ -465,7 +466,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     continue # to next teardown
 
                                 # GUEST finishes with the old prompt
-                                _write_guest_prompt(domain.verbose_txt, command, test)
+                                _write_guest_prompt(domain, test)
 
                                 # close the post-mortem marker (only
                                 # when command succeeds).
