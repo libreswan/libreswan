@@ -44,19 +44,29 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
  * Using OPTARG_OPTIONS[] table, which is assumed to contain METAOPT
  * suffixes, generate a usage message.
  *
- * Danger: at time of writing, only pluto had the correctly structured
- * table.
- *
  * Note: this function always writes to STDOUT.  This is so that:
  *    cmd -h | more
  * always works.
+ *
+ * Note: there are two hacks for forcing new lines and doing:
+ *
+ * - any option starting with METAOPT_HEADING
+ *   don't tell anyone that --\r\a\n\t will match
+ *   prefered for now
+ *
+ * - an empty option
+ *   which seems to be ignored?
+ *
  */
 
-#define METAOPT_RENAME "\0>"		/* warn that option was renamed */
+#define METAOPT_RENAME   "\0>"		/* warn that option was renamed */
 #define METAOPT_OBSOLETE "\0!"		/* warn, and ignore, option */
-#define METAOPT_NEWLINE "\0^"
-/* heading: \0HEADING */
-/* argument: \0<argument> */
+#define METAOPT_HEADING  "\r\a\n\t"	/* new line with heading */
+
+#define RENAME_OPT(OLD, NEW, ...)	OLD METAOPT_RENAME NEW
+#define OBSOLETE_OPT(OLD, ...)		OLD METAOPT_OBSOLETE
+#define HEADING_OPT(HEADING)		{ METAOPT_HEADING HEADING, no_argument, NULL, 0, }
+#define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__
 
 void optarg_usage(const char *progname, const char *arguments,
 		  const char *details) NEVER_RETURNS;
