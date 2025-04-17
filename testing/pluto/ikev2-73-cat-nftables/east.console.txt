@@ -54,4 +54,3 @@ src 192.0.2.0/24 dst 10.0.10.1/32
 east #
  nft list ruleset
 east #
- 

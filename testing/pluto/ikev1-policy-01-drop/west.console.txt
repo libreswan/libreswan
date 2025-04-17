@@ -31,4 +31,3 @@ west #
 west #
  hostname | grep east > /dev/null && (grep "sending notification INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo "A reply SHOULD NOT have been sent")
 west #
- 

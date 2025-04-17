@@ -53,4 +53,3 @@ road #
 road #
  hostname | grep east > /dev/null && ../../guestbin/ip.sh route
 road #
- 

@@ -25,4 +25,3 @@ west #
 west #
  grep 'dropping packet' /tmp/pluto.log
 west #
- 

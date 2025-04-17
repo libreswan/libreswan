@@ -16,5 +16,3 @@ west #
 	# rsakey <<KEYID#1>>
 	leftrsasigkey=0s<<RAW-PUBKEY#1>>
 west #
- 
-

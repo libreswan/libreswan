@@ -77,4 +77,3 @@ east #
 "east"[1] 192.1.2.45 #1: NSS: ERROR: IPsec certificate E=west-bc-missing-chain-end@testing.libreswan.org,CN=west-bc-missing-chain-end.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 "east"[2] 192.1.2.45 #2: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_CA_CERT_INVALID: Issuer certificate is invalid.
 east #
- 

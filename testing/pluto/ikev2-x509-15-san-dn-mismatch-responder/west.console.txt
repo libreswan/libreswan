@@ -38,4 +38,3 @@ west #
 west #
  grep "RSA authentication failed" /tmp/pluto.log
 west #
- 

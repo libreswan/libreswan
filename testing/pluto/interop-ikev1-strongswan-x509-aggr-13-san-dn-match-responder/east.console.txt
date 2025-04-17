@@ -16,4 +16,3 @@ east #
  grep "ID type" /tmp/pluto.log | sort | uniq
 grep: /tmp/pluto.log: No such file or directory
 east #
- 

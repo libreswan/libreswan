@@ -2166,4 +2166,3 @@ IPCOMP algorithms:
   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS             
   LZJH                              IKEv1:             IKEv2:     ESP AH  FIPS             
 west #
- 

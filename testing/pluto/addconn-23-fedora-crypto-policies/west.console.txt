@@ -58,4 +58,3 @@ west #
 west #
  rm /tmp/west-add.conf
 west #
- 

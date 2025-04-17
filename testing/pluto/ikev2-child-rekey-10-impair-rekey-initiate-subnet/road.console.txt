@@ -55,4 +55,3 @@ road #
  grep "Notify Message Type: v2N_TS_UNACCEPTABLE" /tmp/pluto.log
 |    Notify Message Type: v2N_TS_UNACCEPTABLE (0x26)
 road #
- 

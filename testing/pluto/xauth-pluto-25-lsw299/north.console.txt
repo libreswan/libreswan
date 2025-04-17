@@ -46,4 +46,3 @@ north #
 north #
  hostname | grep east > /dev/null && ipsec stop
 north #
- 

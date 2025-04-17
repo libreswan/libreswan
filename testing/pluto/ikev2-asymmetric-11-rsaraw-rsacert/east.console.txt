@@ -29,4 +29,3 @@ east #
  ../../guestbin/wait-for-pluto.sh '#1: .* established IKE SA'
 "westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer using preloaded certificate '@west' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 east #
- 

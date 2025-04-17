@@ -68,4 +68,3 @@ westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, reqid 2, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2b{2}:   192.0.100.0/24 === 192.0.200.0/24
 west #
- 

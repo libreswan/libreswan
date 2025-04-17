@@ -46,4 +46,3 @@ src 192.0.4.0/24 dst 192.0.2.0/24
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
- 

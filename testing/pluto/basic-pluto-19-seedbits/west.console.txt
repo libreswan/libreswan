@@ -64,4 +64,3 @@ west #
 RELRO           STACK CANARY      NX            PIE             RPATH      RUNPATH      FILE
 Full RELRO      Canary found      NX enabled    PIE enabled     No RPATH   No RUNPATH   PATH/libexec/ipsec/pluto
 west #
- 

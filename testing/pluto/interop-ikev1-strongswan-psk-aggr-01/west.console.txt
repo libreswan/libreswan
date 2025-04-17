@@ -17,4 +17,3 @@ west #
 west #
  hostname | grep east > /dev/null &&  grep "ID type" /tmp/pluto.log | sort | uniq
 west #
- 

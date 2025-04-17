@@ -281,4 +281,3 @@ resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 20
 resolving family=IPv6 src=2001:db8:1:2::23 gateway=<not-set> peer 2001:db8:1:3::209
   seeking NOTHING
 road #
- 

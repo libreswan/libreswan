@@ -57,4 +57,3 @@ west #
 "whack--compress":   policy: COMPRESS
 "whack--compress=yes":   policy: COMPRESS
 west #
- 

@@ -39,4 +39,3 @@ east #
 east #
  grep 'remote accepted' /tmp/pluto.log
 east #
- 

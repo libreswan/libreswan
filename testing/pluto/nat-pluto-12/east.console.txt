@@ -49,4 +49,3 @@ src 192.1.2.254 dst 192.1.2.23
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 east #
- 

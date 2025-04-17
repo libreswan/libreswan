@@ -38,4 +38,3 @@ west #
 | processing informational NO_PROPOSAL_CHOSEN (14)
 "westnet-eastnet-ipv4-psk-ikev1" #1: ignoring secured informational payload NO_PROPOSAL_CHOSEN, msgid=MSGID, length=12
 west #
- 

@@ -47,4 +47,3 @@ up
 "udp" #2: ESP traffic information: in=84B out=84B
 "udp" #1: deleting IKE SA (established IKE SA)
 west #
- 

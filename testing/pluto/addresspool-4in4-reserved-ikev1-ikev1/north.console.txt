@@ -50,4 +50,3 @@ bind: Cannot assign requested address
 north #
  ipsec whack --trafficstatus
 north #
- 

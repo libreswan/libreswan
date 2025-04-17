@@ -50,4 +50,3 @@ west #
 #3: "west-east-auto2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 #4: "west-east-auto2":500 STATE_MAIN_R3 (ISAKMP SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 west #
- 

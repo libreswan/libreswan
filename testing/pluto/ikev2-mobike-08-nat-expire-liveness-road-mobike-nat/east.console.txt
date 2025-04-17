@@ -14,4 +14,3 @@ east #
 ipsec addconn: /etc/ipsec.conf:20: warning: invalid, keyword ignored: mobike=nat
 "east": added IKEv2 connection
 east #
- 

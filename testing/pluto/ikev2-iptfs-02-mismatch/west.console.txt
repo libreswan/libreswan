@@ -85,4 +85,3 @@ west #
 | sendrecv_xfrm_msg() sending 16 Add SA IPTFS Support Probe
 | sendrecv_xfrm_msg() netlink response for Add SA IPTFS Support Probe included non-error error
 | kernel: IPTFS supported
-

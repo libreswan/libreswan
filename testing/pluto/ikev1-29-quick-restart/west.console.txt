@@ -75,4 +75,3 @@ west #
 "west-to-east" #2: sent Quick Mode request
 "west-to-east" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- 

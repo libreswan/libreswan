@@ -95,4 +95,3 @@ north #
 #4: "north-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
 north #
- 

@@ -23,4 +23,3 @@ east #
  grep '^[^|].*ERROR:' /tmp/pluto.log
 "east"[10] 192.1.2.45 #19: NSS: ERROR: IPsec certificate E=user-west-eku-codeSigning@testing.libreswan.org,CN=west-eku-codeSigning.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_INADEQUATE_CERT_TYPE: Certificate type not approved for application.
 east #
- 

@@ -70,4 +70,3 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 east #
- 

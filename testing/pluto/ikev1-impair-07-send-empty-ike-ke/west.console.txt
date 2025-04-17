@@ -72,4 +72,3 @@ west #
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
 | state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 west #
- 

@@ -48,4 +48,3 @@ west #
 west #
  test ! -r /tmp/pluto.log || grep -E -e '^[^|].* remain up' /tmp/pluto.log
 west #
- 

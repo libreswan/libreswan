@@ -54,4 +54,3 @@ east #
  grep "initiating Child SA using IKE SA" OUTPUT/$(hostname).pluto.log || echo "success"
 success
 east #
- 

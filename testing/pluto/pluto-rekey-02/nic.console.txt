@@ -21,5 +21,4 @@ SNAT       udp  --  192.1.3.0/24         anywhere             to:192.1.2.254:400
 nic #
  echo done.
 done.
-nic # 
-
+nic #

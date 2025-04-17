@@ -110,4 +110,3 @@ west #
  ipsec auto --delete westnet-eastnet
 "westnet-eastnet": delete ipsec-interface ipsec1@NONE added by pluto
 west #
- 

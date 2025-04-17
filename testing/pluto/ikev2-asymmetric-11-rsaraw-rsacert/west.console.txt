@@ -59,4 +59,3 @@ west #
  ../../guestbin/wait-for-pluto.sh '#1: .* established IKE SA'
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 west #
- 

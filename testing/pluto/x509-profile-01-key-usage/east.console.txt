@@ -23,4 +23,3 @@ east #
  grep '^[^|].*ERROR:' /tmp/pluto.log
 "east"[4] 192.1.2.45 #7: NSS: ERROR: IPsec certificate E=user-west-ku-certSigning@testing.libreswan.org,CN=west-ku-certSigning.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_INADEQUATE_KEY_USAGE: Certificate key usage inadequate for attempted operation.
 east #
- 

@@ -34,4 +34,3 @@ west #
 west #
  hostname | grep east && grep '^[^|].* switched ' /tmp/pluto.log
 west #
- 

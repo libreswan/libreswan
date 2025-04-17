@@ -63,4 +63,3 @@ east #
  grep 'Result using RFC 3947' /tmp/pluto.log
 | NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 east #
- 

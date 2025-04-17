@@ -28,4 +28,3 @@ west #
 west #
  ipsec delete west
 west #
- 

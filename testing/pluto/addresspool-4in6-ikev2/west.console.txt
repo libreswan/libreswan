@@ -29,4 +29,3 @@ west #
  ipsec trafficstatus
 #2: "west"[1] 2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.3.1.0/32
 west #
- 

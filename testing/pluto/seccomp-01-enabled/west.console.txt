@@ -57,4 +57,3 @@ west #
 west #
  rm /run/pluto/pluto.ctl
 west #
- 

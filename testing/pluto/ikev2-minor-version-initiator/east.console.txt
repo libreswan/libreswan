@@ -48,4 +48,3 @@ east #
  grep "minor version" /tmp/pluto.log >/dev/null && echo payload found
 payload found
 east #
- 

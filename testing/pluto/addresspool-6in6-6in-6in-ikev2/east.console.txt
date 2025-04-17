@@ -51,4 +51,3 @@ src ::/0 dst ::/0 proto ipv6-icmp type 136
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #
- 

@@ -50,5 +50,3 @@ east #
  ipsec auto --add hostkey
 "hostkey": added IKEv2 connection
 east #
- 
-

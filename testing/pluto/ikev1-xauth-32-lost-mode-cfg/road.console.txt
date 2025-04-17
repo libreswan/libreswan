@@ -80,4 +80,3 @@ road #
  ipsec whack --trafficstatus
 #4: "road-east-modecfg-no", username=xroad, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 road #
- 

@@ -54,4 +54,3 @@ east #
  grep -e '^"distraction".*switched' /tmp/pluto.log
 "distraction"[1] 192.1.2.45 #1: switched to "westnet-eastnet"[1] 192.1.2.45
 east #
- 

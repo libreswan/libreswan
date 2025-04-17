@@ -42,4 +42,3 @@ west #
 "udp" #1: IMPAIR: revival: skip scheduling revival event
 "udp" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
- 

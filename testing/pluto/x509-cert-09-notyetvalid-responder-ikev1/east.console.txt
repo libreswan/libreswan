@@ -50,4 +50,3 @@ east #
 east #
  grep -e '^[^|].*ERROR' /tmp/pluto.log
 east #
- 

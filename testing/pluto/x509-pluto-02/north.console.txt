@@ -100,4 +100,3 @@ src 192.0.3.0/24 dst 192.0.2.0/24
 	tmpl src 192.1.3.33 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 north #
- 

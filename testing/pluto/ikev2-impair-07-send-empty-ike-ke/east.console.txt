@@ -24,4 +24,3 @@ east #
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: sending an empty KE value
 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT response to 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}
 east #
- 

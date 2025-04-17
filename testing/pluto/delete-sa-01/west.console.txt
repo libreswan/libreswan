@@ -69,4 +69,3 @@ west #
 west #
  grep "received and ignored empty informational" /tmp/pluto.log
 west #
- 

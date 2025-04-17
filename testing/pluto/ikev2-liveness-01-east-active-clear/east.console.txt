@@ -14,4 +14,3 @@ east #
  ../../guestbin/wait-for-pluto.sh 'liveness action .* clear'
 "westnet-eastnet-ipv4-psk-ikev2" #1: liveness action - clearing connection kind CK_PERMANENT
 east #
- 

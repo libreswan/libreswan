@@ -59,4 +59,3 @@ west #
 "whack--iptfs=no":   policy: PFS
 "whack":   policy: PFS
 west #
- 

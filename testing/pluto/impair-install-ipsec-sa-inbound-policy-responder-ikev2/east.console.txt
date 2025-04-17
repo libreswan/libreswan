@@ -36,4 +36,3 @@ east #
 "west-east": terminating SAs using this connection
 "west-east" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 east #
- 

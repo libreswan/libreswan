@@ -40,4 +40,3 @@ bind: Cannot assign requested address
 road #
  ipsec whack --trafficstatus
 road #
- 

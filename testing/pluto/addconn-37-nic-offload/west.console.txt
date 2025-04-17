@@ -79,4 +79,3 @@ west #
 "whack--passthrough--nic-offload=packet": nic-offload:no
 "whack--passthrough--nic-offload=yes": nic-offload:no
 west #
- 

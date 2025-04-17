@@ -161,4 +161,3 @@ west #
  hostname | grep west > /dev/null && grep "sent IKE_SA_INIT request" /tmp/pluto.log
 "westnet-eastnet-ikev2a" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 west #
- 

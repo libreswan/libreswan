@@ -7,4 +7,3 @@ east #
  echo "initdone"
 initdone
 east #
- 

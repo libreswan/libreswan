@@ -38,4 +38,3 @@ west #
  grep '^[^|].*INVALID_MAJOR_VERSION' /tmp/pluto.log
 "westnet-eastnet-ikev2-major" #1: ignoring IKE_SA_INIT response containing INVALID_MAJOR_VERSION notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 west #
- 

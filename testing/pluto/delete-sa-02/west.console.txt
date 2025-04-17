@@ -35,4 +35,3 @@ west #
 "west-east" #2: ESP traffic information: in=0B out=0B
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
- 

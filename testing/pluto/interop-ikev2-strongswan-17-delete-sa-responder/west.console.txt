@@ -67,4 +67,3 @@ Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Security Associations (0 up, 0 connecting):
   none
 west #
- 

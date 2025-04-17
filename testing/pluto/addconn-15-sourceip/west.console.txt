@@ -83,4 +83,3 @@ west #
  add sourceip-ipv6-ipv4-ipv6
 "sourceip-ipv6-ipv4-ipv6": failed to add connection: leftsourceip=1::1,1.0.0.1,1::2 invalid, multiple IPv6 addresses (1::1 and 1::2) specified
 west #
- 

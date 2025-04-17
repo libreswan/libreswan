@@ -33,4 +33,3 @@ west #
 west #
  hostname | grep east && grep "Signature check" /tmp/pluto.log
 west #
- 

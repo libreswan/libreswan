@@ -30,4 +30,3 @@ west #
 "order-test":   routing: unrouted;
 "order-test":   conn serial: $1;
 west #
- 

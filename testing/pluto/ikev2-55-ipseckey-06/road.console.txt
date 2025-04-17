@@ -71,4 +71,3 @@ TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- 
 road #
  ipsec whack --trafficstatus
 road #
- 

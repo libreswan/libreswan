@@ -16,5 +16,4 @@ target     prot opt source               destination
 nic #
  echo done
 done
-nic # 
-
+nic #

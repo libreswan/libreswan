@@ -23,4 +23,3 @@ west #
 west #
  hostname |grep east > /dev/null && ipsec whack --shutdown
 west #
- 

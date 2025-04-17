@@ -218,4 +218,3 @@ west #
  echo "for nspr logs, look at the verbose console log in OUTPUT"
 for nspr logs, look at the verbose console log in OUTPUT
 west #
- 

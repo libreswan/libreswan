@@ -61,4 +61,3 @@ west #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_IPV6_ADDR (0x5)
 west #
- 

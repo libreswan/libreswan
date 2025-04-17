@@ -6,4 +6,3 @@ nic #
 nic #
  iptables -I FORWARD -s 0.0.0.0/0 -d 0.0.0.0/0 -p icmp -j DROP
 nic #
- 

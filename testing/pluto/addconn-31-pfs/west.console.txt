@@ -59,4 +59,3 @@ west #
 "whack--pfs=yes":   policy: PFS
 "whack":   policy: PFS
 west #
- 

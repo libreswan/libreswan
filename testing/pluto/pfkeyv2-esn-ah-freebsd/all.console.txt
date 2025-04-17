@@ -118,4 +118,3 @@ freebsdw# ipsec _kernel state
 
 freebsdw# dmesg | grep ipsec
 
-

@@ -73,4 +73,3 @@ west #
 west #
  if [ "$HEAD" = "$TAIL" ]; then echo "ERROR: inbound and outbound key are the same!"; fi
 west #
- 

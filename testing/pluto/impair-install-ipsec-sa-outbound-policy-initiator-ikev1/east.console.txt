@@ -55,4 +55,3 @@ ERROR: "west-east" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.45: No su
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 "west-east" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 east #
- 

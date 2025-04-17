@@ -100,4 +100,3 @@ west #
  grep "flags: RESERVED" /tmp/pluto.log >/dev/null && echo payload found
 payload found
 west #
- 

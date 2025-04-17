@@ -120,4 +120,3 @@ east #
 "clear-or-private#192.1.3.0/24"[1] 192.1.3.130/32=== ...192.1.3.209 #1: responder established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #
- 

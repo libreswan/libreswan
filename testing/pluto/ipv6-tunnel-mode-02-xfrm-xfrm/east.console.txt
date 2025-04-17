@@ -178,4 +178,3 @@ src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 east #
- 

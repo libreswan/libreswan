@@ -21,4 +21,3 @@ east #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_USER_FQDN (0x3)
 east #
- 

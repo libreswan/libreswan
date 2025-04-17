@@ -73,4 +73,3 @@ road #
 |    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using preloaded certificate '192.1.2.23' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 road #
- 

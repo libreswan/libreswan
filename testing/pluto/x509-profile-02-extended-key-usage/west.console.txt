@@ -744,4 +744,3 @@ Redirecting to: [initsystem]
 west #
  grep '^[^|].*ERROR:' /tmp/pluto.log
 west #
- 

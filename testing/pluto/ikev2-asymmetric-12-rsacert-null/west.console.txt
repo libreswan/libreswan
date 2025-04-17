@@ -81,4 +81,3 @@ west #
  grep -e "^[^|].* established IKE SA" /tmp/pluto.log
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 west #
- 

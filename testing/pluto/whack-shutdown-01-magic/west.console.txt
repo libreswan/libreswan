@@ -33,4 +33,3 @@ west #
  ipsec whack --shutdown --magic 1869114161 | sed -e 's/should be [0-9]*/should be .../'
 ignoring message from whack with bad magic 1869114161; should be ...; Mismatched versions of userland tools.
 west #
- 

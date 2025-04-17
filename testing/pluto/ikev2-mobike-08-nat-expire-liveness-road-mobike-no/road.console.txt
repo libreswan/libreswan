@@ -43,4 +43,3 @@ road #
  ipsec trafficstatus
 #4: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east.testing.libreswan.org', lease=100.64.0.1/32
 road #
- 

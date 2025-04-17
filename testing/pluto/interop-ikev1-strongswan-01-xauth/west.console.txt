@@ -79,4 +79,3 @@ west #
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then grep "processing failed" /tmp/charon.log; fi
 west #
- 

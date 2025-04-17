@@ -49,4 +49,3 @@ west #
 west #
  ipsec delete --config $PWD/ipsec.conf west
 west #
- 

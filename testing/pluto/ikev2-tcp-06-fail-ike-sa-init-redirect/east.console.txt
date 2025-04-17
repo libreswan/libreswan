@@ -25,4 +25,3 @@ east #
 east #
  hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 east #
- 

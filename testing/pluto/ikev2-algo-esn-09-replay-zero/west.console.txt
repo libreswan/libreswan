@@ -57,4 +57,3 @@ west #
  grep "netlink response" OUTPUT/$(hostname).pluto.log
 | netlink response for Del SA esp.ESPSPIi@192.1.2.45 included non-error error
 west #
- 

@@ -119,4 +119,3 @@ road #
  grep "^[^|].* established Child SA" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32/TCP===192.1.2.23/32/TCP/7] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
- 

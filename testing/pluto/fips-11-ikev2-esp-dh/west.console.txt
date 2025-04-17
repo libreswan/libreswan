@@ -57,4 +57,3 @@ west #
 "ikev2-base" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "ikev2-base" #2: ESP traffic information: in=84B out=84B
 west #
- 

@@ -42,4 +42,3 @@ north #
  echo initdone
 initdone
 north #
- 

@@ -37,4 +37,3 @@ west #
 west #
  ipsec whack --rekey-ike --name west-cuckold --asynchronous
 west #
- 

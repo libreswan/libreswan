@@ -98,4 +98,3 @@ west #
 west #
  grep -e '^"distraction".*switched' /tmp/pluto.log
 west #
- 

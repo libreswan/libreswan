@@ -16,5 +16,4 @@ table ip ipsec-nat {
 		ip saddr 192.1.3.0/24 snat to 192.1.2.254
 	}
 }
-nic # 
-
+nic #

@@ -33,4 +33,3 @@ west #
 west #
  hostname | grep east > /dev/null && grep "reserved: 00 00 01" /tmp/pluto.log
 west #
- 

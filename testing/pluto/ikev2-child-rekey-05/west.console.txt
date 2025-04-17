@@ -56,4 +56,3 @@ west #
  ipsec whack --trafficstatus
 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
- 

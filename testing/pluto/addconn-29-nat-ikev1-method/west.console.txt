@@ -47,4 +47,3 @@ west #
 "whack--none": ikev1-method: none
 "whack--rfc": ikev1-method: rfc
 west #
- 

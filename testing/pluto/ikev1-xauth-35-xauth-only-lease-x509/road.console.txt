@@ -42,4 +42,3 @@ road #
  ipsec whack --trafficstatus
 #2: "road-east", username=gooduser90, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
 road #
- 

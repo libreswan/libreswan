@@ -43,4 +43,3 @@ west #
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 |    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
 west #
- 

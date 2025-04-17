@@ -16,4 +16,3 @@ east #
 east #
  ipsec showstates
 east #
- 

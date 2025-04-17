@@ -25,4 +25,3 @@ west #
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
 west #
- 

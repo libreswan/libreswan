@@ -43,4 +43,3 @@ east #
 | byte at offset 1 (45) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
 | byte at offset 5 (49) of 'IKEv2 Transform Substructure Payload'.'reserved' is 0x01 but should have been zero (ignored)
 east #
- 

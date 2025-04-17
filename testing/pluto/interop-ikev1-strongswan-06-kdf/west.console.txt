@@ -73,4 +73,3 @@ westnet-eastnet-aes_ctr{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPIS
 westnet-eastnet-aes_ctr{1}:  AES_CTR_128/HMAC_SHA2_384_192/MODP_2048, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-aes_ctr{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
- 

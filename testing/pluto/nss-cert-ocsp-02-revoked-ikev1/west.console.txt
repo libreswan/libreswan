@@ -79,4 +79,3 @@ done
 west #
  grep -i -e "^[^|].*SEC_ERROR" /tmp/pluto.log
 west #
- 

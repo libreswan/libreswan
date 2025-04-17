@@ -19,4 +19,3 @@ east #
 #3: "westnet-eastnet-ikev2":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 #4: "westnet-eastnet-ikev2":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
 east #
- 

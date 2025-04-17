@@ -36,4 +36,3 @@ unexpected status 2
 # ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
 west #
- 

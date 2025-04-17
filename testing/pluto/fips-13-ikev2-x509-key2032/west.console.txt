@@ -44,4 +44,3 @@ done
 west #
  grep '^[^|].*FIPS: ' /tmp/pluto.log
 west #
- 

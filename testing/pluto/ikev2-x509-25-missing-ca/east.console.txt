@@ -46,4 +46,3 @@ east #
  grep -e '^[^|].*ERROR' /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_UNKNOWN_ISSUER: Peer's Certificate issuer is not recognized.
 east #
- 

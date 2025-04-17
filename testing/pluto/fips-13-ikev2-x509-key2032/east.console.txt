@@ -25,4 +25,3 @@ east #
  grep '^[^|].*FIPS: ' /tmp/pluto.log
 "westnet-eastnet-ikev2" #1: FIPS: rejecting peer cert with key size 2032 under 2048: E=user-key2032@testing.libreswan.org,CN=key2032.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 east #
- 

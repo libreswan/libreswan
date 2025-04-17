@@ -153,4 +153,3 @@ src 192.0.3.10/32 dst 0.0.0.0/0
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.33.222 dst 192.1.2.23
 road #
- 

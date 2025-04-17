@@ -47,4 +47,3 @@ east #
  ipsec whack --trafficstatus
 #2: "main"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
 east #
- 

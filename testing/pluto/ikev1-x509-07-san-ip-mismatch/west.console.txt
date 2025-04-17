@@ -38,4 +38,3 @@ west #
  grep "ID type" /tmp/pluto.log | sort | uniq
 |    ID type: ID_IPV4_ADDR (0x1)
 west #
- 

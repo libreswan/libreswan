@@ -127,4 +127,3 @@ west #
 west #
  ipsec whack --trafficstatus
 west #
- 

@@ -93,4 +93,3 @@ OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 west #
- 

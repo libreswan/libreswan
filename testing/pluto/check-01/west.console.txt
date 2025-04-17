@@ -25,4 +25,3 @@ west #
  valgrind --quiet $(ipsec -n _ipcheck --dns=hosts-file) > /dev/null || echo failed
 ipsec _ipcheck: leak detective found no leaks
 west #
- 

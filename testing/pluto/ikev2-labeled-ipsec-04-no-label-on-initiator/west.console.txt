@@ -41,4 +41,3 @@ west #
 west #
  grep "no IKEv2 connection found" /tmp/pluto.log
 west #
- 

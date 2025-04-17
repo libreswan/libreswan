@@ -27,4 +27,3 @@ east #
 "west-east-auto" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-east-auto": reviving connection which received Delete/Notify but must remain up per local policy (serial $1)
 east #
- 

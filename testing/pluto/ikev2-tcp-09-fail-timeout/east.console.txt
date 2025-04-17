@@ -52,4 +52,3 @@ connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: timeout out
 east #
  eagain=$(grep EAGAIN /tmp/pluto.log | wc -l) ; test ${eagain} -gt 30 && echo "${eagain} is too much EAGAIN?"
 east #
- 

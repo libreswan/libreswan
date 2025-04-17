@@ -69,4 +69,3 @@ east #
 | received IKE fragment id '1', number '2'(last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
 east #
- 

@@ -61,4 +61,3 @@ east #
 "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254 #3: responder established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #
- 

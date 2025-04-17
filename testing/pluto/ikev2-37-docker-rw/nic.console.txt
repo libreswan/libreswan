@@ -30,5 +30,4 @@ nic #
 done
 ++ x=0
 ++ test 0 -ne 0
-nic # 
-
+nic #

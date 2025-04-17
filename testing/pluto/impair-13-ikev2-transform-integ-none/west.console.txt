@@ -194,4 +194,3 @@ west #
 | remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;DH=MODP2048;ESN=YES[first-match]
 west #
- 

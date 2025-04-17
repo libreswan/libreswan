@@ -26,4 +26,3 @@ east #
  ipsec status |grep RETRANSMIT | sed "s/RETRANSMIT in .*$/RETRANSMIT in .../"
 #5: "west-east-auto":500 STATE_MAIN_I1 (sent Main Mode request); RETRANSMIT in ...
 east #
- 

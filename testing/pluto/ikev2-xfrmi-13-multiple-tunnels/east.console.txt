@@ -75,4 +75,3 @@ X: ipsec23@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
 X: ipsec24@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     xfrm if_id 0x18 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535 tso_max_size 65536 tso_max_segs 65535 gro_max_size 65536 gso_ipv4_max_size 65536 gro_ipv4_max_size 65536 
 east #
- 

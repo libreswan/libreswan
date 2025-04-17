@@ -38,5 +38,3 @@ west #
 ...
 -----END PUBLIC KEY-----
 west #
- 
-

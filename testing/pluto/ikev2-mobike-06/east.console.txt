@@ -41,4 +41,3 @@ src 192.0.3.10/32 dst 0.0.0.0/0
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 east #
- 

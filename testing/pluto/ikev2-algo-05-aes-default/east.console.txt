@@ -81,4 +81,3 @@ east #
 |    af+type: AF+IKEv2_KEY_LENGTH (0x800e)
 |    length/value: 128 (00 80)
 east #
- 

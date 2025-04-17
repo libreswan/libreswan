@@ -26,4 +26,3 @@ west #
 west #
  ../../guestbin/ip.sh link set eth1 up
 west #
- 

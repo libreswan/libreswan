@@ -63,4 +63,3 @@ west #
  grep ": AUTHENTICATION_FAILED" /tmp/pluto.log
 "ikev2-westnet-eastnet-x509-cr" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 west #
- 

@@ -112,4 +112,3 @@ src 192.0.2.0/24 dst 10.9.2.209/32
 	tmpl src 192.1.2.23 dst 192.1.3.194
 		proto esp reqid REQID mode tunnel
 road #
- 

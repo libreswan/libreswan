@@ -5,5 +5,4 @@ nic #
  # NAT to NIC's address
 nic #
  iptables -t nat -A POSTROUTING -s 192.1.3.0/24 -j SNAT --to-source 192.1.2.254
-nic # 
-
+nic #

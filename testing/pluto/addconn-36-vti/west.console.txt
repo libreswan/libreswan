@@ -136,4 +136,3 @@ west #
 "whack--vti-shared": vti-shared:yes
 "whack--vti-shared=yes": vti-shared:yes
 west #
- 

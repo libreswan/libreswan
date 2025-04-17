@@ -74,4 +74,3 @@ west #
  ipsec auto --add s2ss2-s1
 "s2ss2-s1": failed to add connection: multi-selector leftsubnet="2.2.2.1/32,2.2.2.2/32" combined with leftsubnets="2.2.2.3/32,2.2.2.4/32"
 west #
- 

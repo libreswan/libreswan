@@ -15,4 +15,3 @@ west #
  echo "initdone"
 initdone
 west #
- 

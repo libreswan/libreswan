@@ -9,4 +9,3 @@ east #
  ipsec auto --add east
 "east": added IKEv2 connection
 east #
- 

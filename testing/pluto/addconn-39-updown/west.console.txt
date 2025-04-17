@@ -60,4 +60,3 @@ west #
 "whack--pass--updown=from": leftupdown=<disabled>; rightupdown=<disabled>;
 "whack--updown=from": leftupdown=from; rightupdown=ipsec _updown;
 west #
- 

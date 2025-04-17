@@ -9,4 +9,3 @@ west #
  ipsec whack --checkpubkeys --listcrls    # conflicting commands
 whack error: conflicing command options '--checkpubkeys' and '--listcrls'
 west #
- 

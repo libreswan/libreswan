@@ -18,4 +18,3 @@ west #
  ipsec auto --add test2
 "test2": added IKEv2 connection
 west #
- 

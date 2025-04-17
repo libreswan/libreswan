@@ -27,4 +27,3 @@ east #
 east #
  grep "no IKEv2 connection found" /tmp/pluto.log
 east #
- 

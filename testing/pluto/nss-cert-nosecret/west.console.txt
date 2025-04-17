@@ -205,5 +205,3 @@ Root CA certificate "mainca" - SN: 0xXX
 List of CRLs:
  
 west #
- 
-
