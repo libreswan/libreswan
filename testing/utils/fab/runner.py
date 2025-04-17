@@ -593,7 +593,7 @@ def run_tests(logger, args, tests, result_stats):
         test_queue.put(Task(test, test_nr, len(tests)), block=False)
 
     domain_prefixes = args.prefix or [""]
-    if args.parallel or len(domain_prefixes) > 1:
+    if args.parallel or (len(domain_prefixes) > 1 and len(tests) > 1):
         logger.info("using the parallel test processor and domain prefixes %s to run %d tests", domain_prefixes, len(tests))
         _parallel_test_processor(domain_prefixes, test_queue, len(tests), args, result_stats, logger)
     else:
