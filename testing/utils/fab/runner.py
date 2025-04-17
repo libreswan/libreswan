@@ -454,8 +454,10 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                                 domain = test_domains[guest.name]
 
-                                # open the post-mortem marker
-                                domain.verbose_txt.write(f"{post.LHS} post-mortem {post.LHS}")
+                                # Open post-mortem.  Make the the
+                                # marker look like a command
+                                domain.verbose_txt.write(f": {post.LHS} post-mortem {post.LHS}\n")
+                                _write_guest_prompt(domain, test)
 
                                 status = _run_command(args, domain, script,
                                                       all_verbose_txt,
@@ -465,12 +467,14 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                     post_mortem_ok = False
                                     continue # to next teardown
 
-                                # GUEST finishes with the old prompt
+                                # Close post-mortem.  Again make the
+                                # marker look like a command.
                                 _write_guest_prompt(domain, test)
+                                domain.verbose_txt.write(f": {post.RHS} post-mortem {post.RHS}\n")
 
-                                # close the post-mortem marker (only
-                                # when command succeeds).
-                                domain.verbose_txt.write(f"{post.RHS} post-mortem {post.RHS}")
+                                # Finally end the file with a hanging
+                                # prompt
+                                _write_guest_prompt(domain, test)
 
                             if post_mortem_ok:
                                 all_verbose_txt.write(f"{post.RHS} post-mortem {post.RHS}")
