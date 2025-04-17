@@ -4,4 +4,3 @@ ipsec _kernel policy
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-: ==== end ====

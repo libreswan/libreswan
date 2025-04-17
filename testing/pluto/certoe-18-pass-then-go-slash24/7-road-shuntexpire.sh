@@ -11,4 +11,3 @@ ipsec _kernel policy
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec trafficstatus
-: ==== end ====

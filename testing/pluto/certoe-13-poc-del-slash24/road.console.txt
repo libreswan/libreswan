@@ -177,4 +177,4 @@ road #
  ipsec whack --trafficstatus
 #4: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 road #
-
+ 

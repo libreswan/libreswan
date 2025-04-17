@@ -58,4 +58,5 @@ west #
  # C=`ip -o route show scope global |wc -l`; echo "Global routes $C"
 west #
  # ipsec addconn --verbose test
-
+west #
+ 

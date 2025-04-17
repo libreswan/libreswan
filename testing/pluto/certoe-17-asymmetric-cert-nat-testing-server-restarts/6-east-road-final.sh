@@ -5,4 +5,3 @@ grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established I
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-: ==== end ====

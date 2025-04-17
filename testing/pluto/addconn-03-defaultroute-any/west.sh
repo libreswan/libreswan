@@ -8,5 +8,4 @@ ipsec addconn --verbose test
 # ipsec start
 # C=`ip -o route show scope global |wc -l`; echo "Global routes $C"
 # ipsec addconn --verbose test
-: ==== end ====
 

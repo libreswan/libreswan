@@ -5,4 +5,3 @@ grep "auth method: IKEv2_AUTH_" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
-: ==== end ====

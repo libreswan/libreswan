@@ -523,4 +523,5 @@ east #
 |    SPI size: 16 (10)
 |    number of SPIs: 1 (00 01)
 | received 'informational' message HASH(1) data ok
-
+east #
+ 
