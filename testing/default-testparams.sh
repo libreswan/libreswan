@@ -7,10 +7,9 @@ REF_CONSOLE_FIXUPS="nocr.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS kernel.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS kernel-failed-to-disable-lr0.sed"
 
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS cut-postfinal.sed"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-prompt-sanitize.sed"
+# basic prompt et.al. cleanup
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS prompt.sed"
 
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS cutout.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS wilog.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS routes.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pluto-whack-sanitize.sed"
@@ -45,8 +44,6 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-certutil.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-taskset.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-auto-up.sed-n"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pem.sed-n"
-# this is last
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-prompt-double.sed"
 
 # all.console.txt gets it's own list; add as necessary.  .sed-f
 # scripts are all run from a single sed!
