@@ -1,3 +1,4 @@
 echo "done."
 done.
+nic # 
 

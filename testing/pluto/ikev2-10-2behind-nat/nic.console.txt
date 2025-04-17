@@ -42,4 +42,5 @@ DROP       all  --  0.0.0.0/0            192.0.2.0/24
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
+nic # 
 

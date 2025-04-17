@@ -31,16 +31,14 @@ s/\[root@\([^ ]*\) .*\]# /[\1]# /
 
 
 #
-# deal with === end ===
-#
-# This should leave the prompt behind, but currently it doesn't.
+# Discard from === end === to the end, being careful to leave the
+# prompt behind.
 #
 
-/==== end ====/,$ d
-# /==== end ====/ {
-#     s/\(\[[a-z][a-z]*\]\)# .*/\1# /
-#     q
-#}
+/==== end ====/ {
+  s/\[\([a-z][a-z]*\)\]# .*/\1 # /
+  q
+}
 
 
 #

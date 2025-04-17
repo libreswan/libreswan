@@ -12,4 +12,5 @@ target     prot opt source               destination
 nic #
  echo initdone
 initdone
+nic # 
 

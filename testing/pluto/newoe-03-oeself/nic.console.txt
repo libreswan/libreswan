@@ -1,4 +1,5 @@
 # PATH/sbin/named
 nic #
  iptables -F
+nic # 
 

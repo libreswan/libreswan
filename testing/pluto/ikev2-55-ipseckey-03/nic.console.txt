@@ -8,4 +8,5 @@ Found 2 records
 nic #
  echo done
 done
+nic # 
 
