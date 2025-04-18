@@ -4,5 +4,5 @@ ipsec whack --trafficstatus
 # test rekey
 ipsec whack --rekey-child --name ipv4-psk-ikev2-transport
 # confirm transport mode is still part after rekey
-ip xfrm state |grep mode
+ipsec _kernel state | grep mode
 echo done

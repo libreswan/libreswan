@@ -78,7 +78,7 @@ west #
 west #
  # confirm transport mode is still part after rekey
 west #
- ip xfrm state |grep mode
+ ipsec _kernel state | grep mode
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	proto esp spi 0xSPISPI reqid REQID mode transport
 west #

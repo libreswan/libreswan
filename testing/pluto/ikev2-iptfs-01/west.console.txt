@@ -35,7 +35,7 @@ west #
  ipsec whack --trafficstatus
 #2: "ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=88, outBytes=88, maxBytes=2^63B, id='@east'
 west #
- ip xfrm state |grep iptfs
+ ipsec _kernel state | grep iptfs
 	proto esp spi 0xSPISPI reqid REQID mode iptfs
 	iptfs-opts init-delay 0 max-queue-size 10485760 pkt-size 0
 	proto esp spi 0xSPISPI reqid REQID mode iptfs

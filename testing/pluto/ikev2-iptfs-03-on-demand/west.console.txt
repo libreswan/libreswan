@@ -28,7 +28,7 @@ west #
  ../../guestbin/ping-once.sh --fire-and-forget -I 192.1.2.45 192.1.2.23
 fired and forgotten
 west #
- ip xfrm state |grep iptfs
+ ipsec _kernel state | grep iptfs
 	proto esp spi 0xSPISPI reqid REQID mode iptfs
 	iptfs-opts init-delay 0 max-queue-size 10485760 pkt-size 0
 	proto esp spi 0xSPISPI reqid REQID mode iptfs

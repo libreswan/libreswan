@@ -52,7 +52,7 @@ west #
 west #
  # should be empty as the test is supposed to fail
 west #
- ip xfrm state |grep replay
+ ipsec _kernel state | grep replay
 west #
  grep "netlink response" OUTPUT/$(hostname).pluto.log
 | netlink response for Del SA esp.ESPSPIi@192.1.2.45 included non-error error

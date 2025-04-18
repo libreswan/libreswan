@@ -47,7 +47,7 @@ west #
  ipsec whack --trafficstatus
 #2: "xfrm", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- ip xfrm state |grep dscp
+ ipsec _kernel state | grep dscp
 	replay-window 0 flag decap-dscp af-unspec esn
 west #
  echo done
