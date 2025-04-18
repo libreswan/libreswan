@@ -80,7 +80,8 @@ class TestDomain:
         self.domain = domain
         self.verbose_txt = None
         self.console = None
-        self.guest = domain.guest
+        self.host = domain.guest.host # east, west ...
+        self.guest = domain.guest     # netbsde, ...
         self.name = domain.name
 
     def __str__(self):
@@ -259,7 +260,7 @@ def _skip_test(task, args, result_stats, logger):
 def _write_guest_prompt(domain, test):
     f = domain.verbose_txt
     f.write("[root@");
-    f.write(domain.guest.name)
+    f.write(domain.host.name)
     f.write(" ")
     f.write(test.name)
     f.write("]# ")
@@ -350,7 +351,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                 # boot the domains
                 with logger.time("booting domains"):
                     for test_domain in test_domains.values():
-                        with logger.time("booting %s domain" % test_domain.domain.name):
+                        with logger.time("booting %s domain" % test_domain.name):
                             if not test_domain.start():
                                 # final will clean up
                                 return
@@ -492,7 +493,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                 logger.info("single test run; leaving domains running");
             else:
                 logger.info("stopping domains: %s",
-                            " ".join(test_domain.domain.name for test_domain in test_domains.values()))
+                            " ".join(test_domain.name for test_domain in test_domains.values()))
                 for test_domain in test_domains.values():
                     test_domain.stop()
 
