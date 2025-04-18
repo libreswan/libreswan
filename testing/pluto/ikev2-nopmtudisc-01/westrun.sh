@@ -1,5 +1,5 @@
 ipsec auto --up xfrm
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
-ip xfrm state |grep nopmtudisc
+ipsec _kernel state | grep nopmtudisc
 echo done

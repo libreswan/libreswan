@@ -36,7 +36,7 @@ done
 road #
  # this should show encap tunnel on both ends
 road #
- ip xfrm state |grep encap
+ ipsec _kernel state | grep encap
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 road #

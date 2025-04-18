@@ -17,7 +17,7 @@ initdone
 east #
  # replay-window will show up as 0 when ESN is enabled, while replay_window shows the real value
 east #
- ip xfrm state |grep replay
+ ipsec _kernel state | grep replay
 	replay-window 0 flag af-unspec esn
 	anti-replay esn context:
 	 replay_window 0, bitmap-length 0

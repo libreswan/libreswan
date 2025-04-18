@@ -42,7 +42,7 @@ road #
 road #
  # confirm we got transport mode, not tunnel mode
 road #
- ip xfrm state | grep mode
+ ipsec _kernel state | grep mode
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	proto esp spi 0x00000000 reqid 0 mode transport

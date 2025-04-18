@@ -23,7 +23,7 @@ east #
 east #
  # should be empty as the test is supposed to fail
 east #
- ip xfrm state |grep replay
+ ipsec _kernel state | grep replay
 	replay-window 0 
 east #
  grep "netlink response" OUTPUT/$(hostname).pluto.log

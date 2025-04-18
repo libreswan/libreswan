@@ -35,7 +35,7 @@ west #
  ipsec whack --trafficstatus
 #2: "ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- (ip xfrm state |grep iptfs) || echo "ok, no iptfs"
+ (ipsec _kernel state | grep iptfs) || echo "ok, no iptfs"
 ok, no iptfs
 west #
  (ip xfrm pol |grep iptfs) || echo "ok, no iptfs"

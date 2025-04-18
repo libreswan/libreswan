@@ -44,7 +44,7 @@ done
 west #
  # replay-window will show up as 0 when ESN is enabled due to kernel bug.
 west #
- ip xfrm state |grep replay-window
+ ipsec _kernel state | grep replay-window
 	replay-window 0 flag af-unspec esn
 	replay-window 0 flag af-unspec esn
 west #

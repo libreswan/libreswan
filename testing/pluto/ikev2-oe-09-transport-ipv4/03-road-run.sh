@@ -4,5 +4,5 @@
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 # confirm we got transport mode, not tunnel mode
-ip xfrm state | grep mode
+ipsec _kernel state | grep mode
 echo done

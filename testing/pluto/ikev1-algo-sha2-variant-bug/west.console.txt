@@ -67,9 +67,9 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 west #
- HEAD=$(ip xfrm state |grep "enc "|head -1)
+ HEAD=$(ipsec _kernel state | grep "enc "|head -1)
 west #
- TAIL=$(ip xfrm state |grep "enc "|tail -1)
+ TAIL=$(ipsec _kernel state | grep "enc "|tail -1)
 west #
  if [ "$HEAD" = "$TAIL" ]; then echo "ERROR: inbound and outbound key are the same!"; fi
 west #
