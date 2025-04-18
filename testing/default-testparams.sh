@@ -39,7 +39,6 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-state.sed"		# includes ip x
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-policy.sed"	# includes ip xfrm policy
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS nft.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ephemeral-ports.sed"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS swan-prep.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-certutil.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-taskset.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-auto-up.sed-n"
