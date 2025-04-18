@@ -19,7 +19,7 @@ from fab import utilsdir
 
 class Host:
     def __init__(self, name):
-        self.name = name
+        self.name = name	# east, e, rise, ...
     def __str__(self):
         return self.name
     def __lt__(self, peer):
@@ -27,9 +27,9 @@ class Host:
 
 class Guest:
     def __init__(self, host, platform=None, guest=None):
-        self.platform = platform	# netbsd, freebsd, ...
-        self.host = host		# east, west, ...
-        self.name = guest or host.name
+        self.platform = platform  # Platform("netbsd"), ...
+        self.host = host	  # see Host("east"), ...
+        self.name = guest	  # netbsde, ...
     def __str__(self):
         return self.name
     def __lt__(self, peer):
@@ -50,7 +50,7 @@ for xml in utilsdir.glob("../kvm/vm/*.xml"):
 # should have kvm/platform/*
 PLATFORMS = Set()
 for t in utilsdir.glob("../kvm/*/upgrade.sh"):
-    # after the "*" in pattern
+    # what matched "*" in above pattern
     p = path.basename(path.dirname(t))
     PLATFORMS.add(p)
 
@@ -58,14 +58,17 @@ GUESTS = Set()
 for host in HOSTS:
     if host.name in ("rise", "set"):
         for platform in PLATFORMS:
-            GUESTS.add(Guest(host, platform, platform+host.name))
+            if platform not in "linux":
+                GUESTS.add(Guest(host, platform, guest=platform+host.name))
         continue
     if host.name in ("east", "west"):
-        GUESTS.add(Guest(host))
+        GUESTS.add(Guest(host, platform="linux", guest=host.name))
         for platform in PLATFORMS:
-            GUESTS.add(Guest(host, platform, platform+host.name[0:1]))
+            if platform not in "linux":
+                # netbsde et.al.
+                GUESTS.add(Guest(host, platform, guest=platform+host.name[0:1]))
         continue
-    GUESTS.add(Guest(host))
+    GUESTS.add(Guest(host, platform="linux", guest=host.name))
 
 # A dictionary, with GUEST_NAME (as used to manipulate the domain
 # externally) as the KEY and HOST_NAME (what `hostname` within the
