@@ -56,4 +56,3 @@ east #
 east #
  grep -v '^|' /tmp/pluto.log | grep "^[^|].* established Child SA"
 east #
- 

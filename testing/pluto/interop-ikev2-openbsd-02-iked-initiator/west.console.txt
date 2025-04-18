@@ -78,4 +78,3 @@ west #
 @4 flow esp out from 192.0.1.0/24 to 192.1.2.23 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 @5 flow esp out from 192.1.2.45 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 west #
- 

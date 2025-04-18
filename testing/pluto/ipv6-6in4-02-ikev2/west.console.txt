@@ -122,4 +122,3 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 west #
- 

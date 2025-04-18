@@ -78,4 +78,3 @@ west #
  grep "^[^|].* established Child SA" /tmp/pluto.log
 "tfc" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- 

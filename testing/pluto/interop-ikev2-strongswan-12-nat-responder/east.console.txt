@@ -32,4 +32,3 @@ road-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SP
 road-eastnet-ikev2{1}:  AES_CBC_256/HMAC_SHA2_256_128, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 road-eastnet-ikev2{1}:   192.0.2.0/24 === 192.1.3.209/32
 east #
- 

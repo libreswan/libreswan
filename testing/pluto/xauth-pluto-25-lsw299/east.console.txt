@@ -30,4 +30,3 @@ east #
  hostname | grep east > /dev/null && ipsec stop
 Redirecting to: [initsystem]
 east #
- 

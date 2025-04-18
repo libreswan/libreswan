@@ -23,4 +23,3 @@ INFO::CORE::Connection from [192.1.2.23]
 request for certificate serial <WEST>
 status VALID for <WEST>
 nic #
- 

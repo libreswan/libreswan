@@ -22,4 +22,3 @@ refreshed session resume keys, issuing key 3
 IMPAIR: injecting timer event EVENT_REINIT_SECRET
 refreshed session resume keys, issuing key 4
 east #
- 

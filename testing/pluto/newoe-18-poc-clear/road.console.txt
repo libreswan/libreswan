@@ -138,4 +138,3 @@ road #
 road #
  grep -v '^|' /tmp/pluto.log | grep "^[^|].* established Child SA"
 road #
- 

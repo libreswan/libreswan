@@ -53,4 +53,3 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 east #
  grep IPTFS /tmp/pluto.log
 "ipv4-psk-ikev2" #2: policy does not allow IPTFS Mode, ignoring peer's request for IPTFS
-

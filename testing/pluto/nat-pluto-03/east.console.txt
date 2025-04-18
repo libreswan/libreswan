@@ -21,4 +21,3 @@ east #
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 east #
- 

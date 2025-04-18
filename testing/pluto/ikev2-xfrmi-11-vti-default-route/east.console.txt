@@ -18,4 +18,3 @@ east #
  ../../guestbin/xfrmcheck.sh
 ERROR: east: XfrmInTmplMismatch      	1
 east #
- 

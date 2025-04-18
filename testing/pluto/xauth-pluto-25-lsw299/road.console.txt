@@ -48,4 +48,3 @@ road #
 road #
  hostname | grep east > /dev/null && ipsec stop
 road #
- 

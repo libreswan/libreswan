@@ -64,4 +64,3 @@ Redirecting to: [initsystem]
 Redirecting to: [initsystem]
 ran 20 times
 west #
- 

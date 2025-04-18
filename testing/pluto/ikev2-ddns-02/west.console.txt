@@ -61,4 +61,3 @@ west #
 west #
  rm -f /etc/systemd/system/unbound.service
 west #
- 

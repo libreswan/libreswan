@@ -232,4 +232,3 @@ road #
  ipsec trafficstatus
 #3: "private-or-clear#192.1.2.0/24"[2] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
- 

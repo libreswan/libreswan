@@ -98,4 +98,3 @@ west #
 "new-west" #8: ESP traffic information: in=0B out=0B
 "new-west" #7: deleting IKE SA (established IKE SA)
 west #
- 

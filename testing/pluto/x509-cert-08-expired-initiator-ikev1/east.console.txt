@@ -29,4 +29,3 @@ east #
  grep -e '^[^|].*ERROR' /tmp/pluto.log
 "east" #1: NSS: ERROR: IPsec certificate CN=west-expired invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 east #
- 

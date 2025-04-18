@@ -152,4 +152,3 @@ netbsdw# ipsec _kernel state
 
 netbsdw# dmesg | grep ipsec
 
-

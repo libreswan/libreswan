@@ -50,4 +50,3 @@ west #
 west #
  # not read issuing --ready
 west #
- 

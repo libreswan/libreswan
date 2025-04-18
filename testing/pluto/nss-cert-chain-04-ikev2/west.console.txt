@@ -81,4 +81,3 @@ west #
  ipsec trafficstatus
 #2: "road-chain-B", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east.testing.libreswan.org'
 west #
- 

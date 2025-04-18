@@ -53,4 +53,3 @@ east #
 | pamauth: HI from /etc/pam.d/pluto.sh PAM_USER=gooduser PAM_TYPE=auth
 | pamauth: HI from /etc/pam.d/pluto.sh PAM_USER=gooduser PAM_TYPE=account
 east #
- 

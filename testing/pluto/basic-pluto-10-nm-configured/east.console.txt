@@ -162,4 +162,3 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 east #
  grep "NetworkManager" /tmp/pluto.log
 east #
- 

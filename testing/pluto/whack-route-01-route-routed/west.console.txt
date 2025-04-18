@@ -19,4 +19,3 @@ west #
  ipsec auto --route westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": connection is already routed
 west #
- 

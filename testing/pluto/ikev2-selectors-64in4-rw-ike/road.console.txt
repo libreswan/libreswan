@@ -130,4 +130,3 @@ road #
  ipsec trafficstatus
 #4: "road", type=ESP, add_time=1234567890, inBytes=188, outBytes=188, maxBytes=2^63B, id='@east'
 road #
- 

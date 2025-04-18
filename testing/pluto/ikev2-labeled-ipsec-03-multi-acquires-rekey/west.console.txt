@@ -371,4 +371,3 @@ Unloading ipsecspd
 semodule -r ipsecspd
 libsemanage.semanage_direct_remove_key: Removing last ipsecspd module (no other ipsecspd module exists at another priority).
 west #
- 

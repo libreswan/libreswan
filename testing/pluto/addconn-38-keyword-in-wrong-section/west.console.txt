@@ -17,4 +17,3 @@ ipsec addconn: /etc/ipsec.conf:16: warning: invalid 'conn %%default' keyword ign
 ipsec addconn: /etc/ipsec.conf:24: warning: invalid conn keyword ignored: dumpdir=/tmp
 "west": added IKEv1 connection
 west #
- 

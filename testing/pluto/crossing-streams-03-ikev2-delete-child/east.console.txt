@@ -17,4 +17,3 @@ east #
 east #
  # now back to WEST
 east #
- 

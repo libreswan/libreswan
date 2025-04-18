@@ -31,4 +31,3 @@ west #
 "whack--allow-narrowing":   policy: ALLOW_NARROWING
 "whack--narrowing=yes":   policy: ALLOW_NARROWING
 west #
- 

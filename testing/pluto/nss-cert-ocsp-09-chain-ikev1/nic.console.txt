@@ -32,4 +32,3 @@ INFO::CORE::Connection from [192.1.2.45]
 request for certificate serial <EAST_CHAIN_ENDCERT>
 request for non recognized CA [serial <EAST_CHAIN_ENDCERT>]
 nic #
- 

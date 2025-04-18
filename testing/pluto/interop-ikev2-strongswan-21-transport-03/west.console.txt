@@ -61,4 +61,3 @@ westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI
 westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA1_96, XX bytes_i, XX bytes_o, rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.1.2.45/32 === 192.1.2.23/32
 west #
- 

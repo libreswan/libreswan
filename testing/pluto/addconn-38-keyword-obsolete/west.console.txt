@@ -15,4 +15,3 @@ ipsec addconn: /etc/ipsec.conf:11: warning: obsolete keyword ignored: interfaces
 ipsec addconn: /etc/ipsec.conf:12: warning: obsolete keyword ignored: ikev1-secctx-attr-type=yes
 "west": added IKEv1 connection
 west #
- 

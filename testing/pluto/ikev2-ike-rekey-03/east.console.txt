@@ -40,4 +40,3 @@ east #
 east #
  hostname | grep west > /dev/null && grep "sent IKE_SA_INIT request" /tmp/pluto.log
 east #
- 

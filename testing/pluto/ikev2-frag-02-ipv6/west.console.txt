@@ -91,4 +91,3 @@ src 2001:2222:222:2200::/56 dst 2001:111:1111::/48
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
 west #
- 

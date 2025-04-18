@@ -41,4 +41,3 @@ listening for IKE messages
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 east #
- 

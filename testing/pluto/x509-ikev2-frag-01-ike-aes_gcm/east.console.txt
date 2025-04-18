@@ -46,4 +46,3 @@ east #
 |    fragment number: 5 (00 05)
 |    total fragments: 5 (00 05)
 east #
- 

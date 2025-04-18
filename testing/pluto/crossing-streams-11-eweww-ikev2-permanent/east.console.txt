@@ -27,4 +27,3 @@ east #
  ipsec trafficstatus
 #2: "east-west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
 east #
- 

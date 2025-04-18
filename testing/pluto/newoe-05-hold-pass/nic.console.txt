@@ -3,5 +3,4 @@ nic #
  iptables -F
 nic #
  ifconfig lo:2 7.7.7.7/24 up
-nic # 
-
+nic #

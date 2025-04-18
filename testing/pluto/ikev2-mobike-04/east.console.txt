@@ -47,4 +47,3 @@ east #
 east #
  sleep 7
 east #
- 

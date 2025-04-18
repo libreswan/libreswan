@@ -60,4 +60,3 @@ west #
 "west-to-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 "west-to-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
- 

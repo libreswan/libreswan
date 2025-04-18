@@ -84,4 +84,3 @@ east #
 east #
  grep "received .* EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
 east #
- 

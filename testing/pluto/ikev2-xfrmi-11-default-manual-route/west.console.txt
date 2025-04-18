@@ -191,4 +191,3 @@ IPsec SAs: total(1), authenticated(1), anonymous(0)
 Bare Shunt list:
  
 west #
- 

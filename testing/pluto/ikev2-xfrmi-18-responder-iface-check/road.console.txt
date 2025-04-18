@@ -27,4 +27,3 @@ road #
 "road" #2: ESP traffic information: in=0B out=0B
 "road" #1: deleting IKE SA (established IKE SA)
 road #
- 

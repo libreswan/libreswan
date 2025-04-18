@@ -91,4 +91,3 @@ west #
 "hog-west" #7: ESP traffic information: in=0B out=0B
 "hog-west" #6: deleting IKE SA (established IKE SA)
 west #
- 

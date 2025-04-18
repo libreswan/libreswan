@@ -40,4 +40,3 @@ connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: 0 byte firs
 connection from 192.1.2.45:EPHEM: IKETCP ACCEPTED: socket XX: accepted connection
 connection from 192.1.2.45:EPHEM: IKETCP PREFIX_RECEIVED: socket XX: 0 byte first packet indicates EOF
 east #
- 

@@ -24,4 +24,3 @@ west #
  ipsec whack --trafficstatus
 #2: "algo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- 

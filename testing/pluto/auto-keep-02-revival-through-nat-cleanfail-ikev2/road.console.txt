@@ -42,4 +42,3 @@ road #
 road #
  ipsec status | grep "conn serial"
 road #
- 

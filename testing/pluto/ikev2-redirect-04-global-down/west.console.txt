@@ -46,4 +46,3 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: redirect: skip scheduling redirect event
 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #
- 

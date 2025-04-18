@@ -56,4 +56,3 @@ west #
  ipsec whack --shutdown
 Pluto is shutting down --leave-state
 west #
- 

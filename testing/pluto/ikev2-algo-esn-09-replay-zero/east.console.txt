@@ -29,4 +29,3 @@ east #
  grep "netlink response" OUTPUT/$(hostname).pluto.log
 "east" #2: ERROR: netlink response for Add SA esp.ESPSPIi@192.1.2.45 included errno 22: Invalid argument
 east #
- 

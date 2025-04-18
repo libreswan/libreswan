@@ -16,4 +16,3 @@ ipsec addconn: /etc/ipsec.conf:8: warning: X- style comment ignored: x-something
 ipsec addconn: /etc/ipsec.conf:9: warning: X- style comment ignored: x_something=  
 Failed to load connection left= is not set
 west #
- 

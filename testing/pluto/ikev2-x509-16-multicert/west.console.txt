@@ -59,4 +59,3 @@ west #
  ipsec whack --trafficstatus
 #2: "other", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@othereast.other.libreswan.org'
 west #
- 

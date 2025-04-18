@@ -18,4 +18,3 @@ west #
  ipsec auto --add west
 "west": added IKEv1 connection
 west #
- 

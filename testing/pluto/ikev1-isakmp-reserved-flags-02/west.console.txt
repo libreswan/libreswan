@@ -107,4 +107,3 @@ west #
  grep ISAKMP_FLAG_MSG_RESERVED_BIT6 /tmp/pluto.log | wc -l
 4
 west #
- 

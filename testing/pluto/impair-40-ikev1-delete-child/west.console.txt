@@ -39,4 +39,3 @@ west #
 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 "west-east" #1: IMPAIR: emitting duplicate ISKMP delete payloads
 west #
- 

@@ -7,4 +7,3 @@
  restorecon -R /etc/ocspd
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #
- 

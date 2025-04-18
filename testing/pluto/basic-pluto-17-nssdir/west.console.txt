@@ -33,5 +33,3 @@ The public key can be displayed using: ipsec showhostkey --left --ckaid <<CKAID#
 west #
  rm -rf ${IPSEC_TEST_DIR}
 west #
- 
-

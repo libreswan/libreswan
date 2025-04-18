@@ -14,4 +14,3 @@ nic #
  grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" /tmp/pluto.log
 grep: /tmp/pluto.log: No such file or directory
 nic #
- 

@@ -121,4 +121,3 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- 

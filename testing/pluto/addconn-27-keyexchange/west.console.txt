@@ -57,4 +57,3 @@ west #
 "keyexchange=ikev2-ikev2=y": ikev2=yes has been replaced by keyexchange=ikev2
 "keyexchange=ikev2-ikev2=y": added IKEv2 connection
 west #
- 

@@ -4,4 +4,3 @@ nic #
 east : ok=N changed=3 unreachable=0 failed=N skipped=N rescued=0 ignored=0 
 west : ok=N changed=3 unreachable=0 failed=N skipped=N rescued=0 ignored=0 
 nic #
- 

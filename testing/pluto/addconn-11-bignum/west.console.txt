@@ -9,4 +9,3 @@ west #
  ipsec addconn --config 2.32+1.conf --configsetup | grep nhelpers
 export nhelpers='4294967297'
 west #
- 

@@ -25,4 +25,3 @@ east #
 east #
  ../../guestbin/wait-for.sh --no-match 'received message response 0' -- sed -n -e 's/ (.*/ (...)/p' /tmp/pluto.log
 east #
- 

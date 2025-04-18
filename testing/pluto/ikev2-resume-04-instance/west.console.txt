@@ -94,4 +94,3 @@ west #
 west #
  grep -e ': switched to ' /tmp/pluto.log
 west #
- 

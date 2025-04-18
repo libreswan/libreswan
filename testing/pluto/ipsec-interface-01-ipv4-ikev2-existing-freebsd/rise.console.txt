@@ -133,4 +133,3 @@ rise #
 rise #
  ifconfig ipsec1 destroy
 rise #
- 

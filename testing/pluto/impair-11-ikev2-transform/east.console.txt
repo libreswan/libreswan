@@ -16,4 +16,3 @@ initdone
 east #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 east #
- 

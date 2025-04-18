@@ -28,4 +28,3 @@ set #
  ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
 up
 set #
- 

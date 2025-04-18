@@ -29,4 +29,3 @@ INFO::CORE::Connection from [192.1.2.45]
 request for certificate serial <EAST>
 status VALID for <EAST>
 nic #
- 

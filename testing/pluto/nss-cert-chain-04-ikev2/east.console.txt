@@ -87,4 +87,3 @@ east #
  ipsec trafficstatus
 #2: "road-chain-B"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west_chain_endcert.testing.libreswan.org'
 east #
- 

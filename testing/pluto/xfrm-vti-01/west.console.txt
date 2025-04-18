@@ -101,4 +101,3 @@ west #
 6: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
     link/ipip 192.1.2.45 peer 192.1.2.23
 west #
- 

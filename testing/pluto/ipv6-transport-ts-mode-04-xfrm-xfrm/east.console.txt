@@ -55,4 +55,3 @@ src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto udp sport 1701 dport 170
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 east #
- 

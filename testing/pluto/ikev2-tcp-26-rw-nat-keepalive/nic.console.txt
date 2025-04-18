@@ -57,5 +57,4 @@ DROP       all  --  0.0.0.0/0            0.0.0.0/0
 nic #
  echo "initdone"
 initdone
-nic # 
-
+nic #

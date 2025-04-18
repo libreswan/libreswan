@@ -37,4 +37,3 @@ road #
  ipsec whack --trafficstatus
 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 road #
- 

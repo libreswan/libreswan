@@ -41,4 +41,3 @@ east #
 "road-eastnet-nonat"[1] 192.1.3.209 #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "road-eastnet-nonat"[1] 192.1.3.209 #2: ESP traffic information: in=84B out=84B
 east #
- 

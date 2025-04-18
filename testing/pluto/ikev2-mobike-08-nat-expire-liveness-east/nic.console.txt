@@ -41,4 +41,3 @@ IP 192.1.2.254.54500 > 192.1.2.23.ipsec-nat-t: UDP-encap: ESP(spi=0xSPISPI,seq=0
 IP 192.1.2.23.ipsec-nat-t > 192.1.2.254.44500: UDP-encap: ESP(spi=0xSPISPI,seq=0x2), length XXX
 IP 192.1.2.254 > 192.1.2.23: ICMP 192.1.2.254 udp port 44500 unreachable, length 156
 nic #
- 

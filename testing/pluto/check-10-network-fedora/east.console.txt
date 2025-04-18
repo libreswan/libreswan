@@ -26,4 +26,3 @@ east #
 east #
  ../../guestbin/ip.sh link set eth1 up
 east #
- 

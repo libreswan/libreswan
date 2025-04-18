@@ -36,4 +36,3 @@ west #
 "west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-cuckoo" #3: IMPAIR: revival: skip scheduling revival event
 west #
- 

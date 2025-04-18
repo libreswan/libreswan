@@ -30,4 +30,3 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- 

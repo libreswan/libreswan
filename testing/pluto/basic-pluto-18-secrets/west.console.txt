@@ -50,5 +50,3 @@ west #
 west #
  rm -rf OUTPUT/nss
 west #
- 
-

@@ -6,5 +6,4 @@ nic #
 nic #
  echo initdone
 initdone
-nic # 
-
+nic #

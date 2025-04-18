@@ -56,5 +56,3 @@ west #
 "hostkey" #1: initiator established IKE SA; authenticated peer using preloaded certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "hostkey" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- 
-

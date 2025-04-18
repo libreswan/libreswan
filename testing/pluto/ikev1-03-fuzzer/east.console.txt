@@ -24,4 +24,3 @@ packet from 192.1.2.45:EPHEM: sending notification INVALID_PAYLOAD_TYPE to 192.1
 packet from 192.1.2.45:EPHEM: message ignored because it contains a payload type (ISAKMP_NEXT_SIG) unexpected by state STATE_MAIN_R0
 packet from 192.1.2.45:EPHEM: sending notification INVALID_PAYLOAD_TYPE to 192.1.2.45:EPHEM
 east #
- 

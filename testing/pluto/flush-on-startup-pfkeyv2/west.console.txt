@@ -52,4 +52,3 @@ west #
  ipsec _kernel policy
 No SPD entries.
 west #
- 

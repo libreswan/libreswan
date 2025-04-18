@@ -9,4 +9,3 @@ nic #
 nic #
  test -r /tmp/pluto.log && ipsec crlutil -L
 nic #
- 

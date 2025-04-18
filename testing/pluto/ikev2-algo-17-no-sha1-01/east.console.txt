@@ -134,4 +134,3 @@ east #
  hostname |grep west > /dev/null || ipsec stop
 Redirecting to: [initsystem]
 east #
- 

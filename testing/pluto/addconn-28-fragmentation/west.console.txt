@@ -84,4 +84,3 @@ west #
 "addconn--ikev1--fragmentation-force":   policy: IKE_FRAG_FORCE
 "whack--ikev1--fragmentation-force":   policy: IKE_FRAG_FORCE
 west #
- 

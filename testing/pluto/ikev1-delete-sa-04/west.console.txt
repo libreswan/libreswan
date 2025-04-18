@@ -48,4 +48,3 @@ west #
 west #
  ipsec status |grep RETRANSMIT | sed "s/RETRANSMIT in .*$/RETRANSMIT in .../"
 west #
- 

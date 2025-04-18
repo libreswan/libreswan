@@ -84,4 +84,3 @@ rise #
 rise #
  ifconfig sec1 destroy
 rise #
- 

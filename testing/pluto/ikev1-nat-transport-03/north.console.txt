@@ -63,4 +63,3 @@ north #
  ipsec trafficstatus
 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=200, maxBytes=2^63B, id='@east'
 north #
- 

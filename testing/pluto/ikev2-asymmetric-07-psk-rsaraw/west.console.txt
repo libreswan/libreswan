@@ -70,4 +70,3 @@ west #
  grep -e "^[^|].* established IKE SA" /tmp/pluto.log
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 west #
- 

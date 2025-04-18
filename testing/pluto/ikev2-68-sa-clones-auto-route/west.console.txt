@@ -61,4 +61,3 @@ west #
  ipsec auto --status | grep westnet-eastnet
 ERROR: ipsec whack: Pluto is not running (no "/run/pluto/pluto.ctl"): No such file or directory (errno 2)
 west #
- 

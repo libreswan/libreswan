@@ -70,4 +70,3 @@ road #
 | received IKE fragment id '1', number '5'(last)
 |  updated IKE fragment state to respond using fragments without waiting for re-transmits
 road #
- 

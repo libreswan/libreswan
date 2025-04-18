@@ -15,4 +15,3 @@ east #
  ipsec trafficstatus
 #2: "east"[2] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=188, outBytes=188, maxBytes=2^63B, id='@west', lease=192.3.1.0/32,2001:db8:0:3:1::/128
 east #
- 

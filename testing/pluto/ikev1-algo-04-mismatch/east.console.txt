@@ -20,4 +20,3 @@ east #
 |    Notify Message Type: v1N_NO_PROPOSAL_CHOSEN (0xe)
 | state transition function for STATE_QUICK_R0 failed: NO_PROPOSAL_CHOSEN
 east #
- 

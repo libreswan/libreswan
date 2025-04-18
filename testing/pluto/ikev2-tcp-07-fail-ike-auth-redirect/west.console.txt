@@ -88,4 +88,3 @@ west #
 west #
  hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 west #
- 

@@ -51,5 +51,4 @@ DROP       all  --  0.0.0.0/0            0.0.0.0/0
 nic #
  echo done.
 done.
-nic # 
-
+nic #

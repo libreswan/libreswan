@@ -270,4 +270,3 @@ src ::/0 dst 2001:db8:0:3:1::/128
 road #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 road #
- 

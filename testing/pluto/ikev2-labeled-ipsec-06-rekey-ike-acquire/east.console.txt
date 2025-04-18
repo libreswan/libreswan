@@ -71,4 +71,3 @@ east #
 #3: "labeled"[1][1] 192.1.2.45:500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #2; idle;
 #3: "labeled"[1][1] 192.1.2.45 esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
 east #
- 

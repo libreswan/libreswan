@@ -60,4 +60,3 @@ src ::/0 dst ::/0 proto ipv6-icmp type 136
 src ::/0 dst ::/0 proto ipv6-icmp type 136
 	dir out priority PRIORITY ptype main
 east #
- 

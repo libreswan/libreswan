@@ -15,5 +15,4 @@ Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination         
-nic # 
-
+nic #

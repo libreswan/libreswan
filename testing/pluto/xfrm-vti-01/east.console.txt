@@ -26,4 +26,3 @@ east #
  ../../guestbin/ip.sh address show vti0
 Device "vti0" does not exist.
 east #
- 

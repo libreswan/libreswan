@@ -85,4 +85,3 @@ west #
 |    af+type: AF+KEY_LENGTH (0x8006)
 |    length/value: 128 (00 80)
 west #
- 

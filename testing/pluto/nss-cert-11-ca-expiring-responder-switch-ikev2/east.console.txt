@@ -88,4 +88,3 @@ east #
  ipsec auto --add old-east
 "old-east": added IKEv2 connection
 east #
- 

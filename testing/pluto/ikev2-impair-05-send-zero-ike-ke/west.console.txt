@@ -64,4 +64,3 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: NSS: shared key calculation using ECP failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
 "westnet-eastnet-ipv4-psk-ikev2" #2: NSS: shared key calculation using ECP failed: SEC_ERROR_INVALID_KEY: The key does not support the requested operation.
 west #
- 

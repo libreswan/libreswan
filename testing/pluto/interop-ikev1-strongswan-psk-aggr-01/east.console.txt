@@ -18,4 +18,3 @@ east #
 |    ID type: ID_FQDN (0x2)
 |    ID type: ID_IPV4_ADDR (0x1)
 east #
- 

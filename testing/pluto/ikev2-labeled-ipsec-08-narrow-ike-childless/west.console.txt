@@ -116,4 +116,3 @@ src 192.1.2.45/32 dst 0.0.0.0/0
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 west #
- 

@@ -19,4 +19,3 @@ west #
 ipsec addconn: /etc/ipsec.conf:21: warning: could not open include filename: '/etc/file-not-found.conf'
 "west": added IKEv1 connection
 west #
- 

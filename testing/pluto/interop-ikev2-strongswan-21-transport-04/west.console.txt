@@ -58,4 +58,3 @@ westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2
 westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i* SPISPI_r, pre-shared key reauthentication in 2 hours
 westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
 west #
- 

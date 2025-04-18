@@ -88,4 +88,3 @@ east #
  ipsec status | grep "conn serial"
 "road-eastnet-ikev2":   conn serial: $1;
 east #
- 

@@ -88,4 +88,3 @@ west #
 west #
  nft list ruleset
 west #
- 

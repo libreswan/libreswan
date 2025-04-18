@@ -135,4 +135,3 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 west #
- 

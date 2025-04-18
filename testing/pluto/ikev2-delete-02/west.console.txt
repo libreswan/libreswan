@@ -108,4 +108,3 @@ west #
 west #
  ipsec delete west-east-delete1
 west #
- 

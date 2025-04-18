@@ -97,4 +97,3 @@ east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
 "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #2: negotiated connection [192.1.2.23/32->192.1.3.209/32]
 east #
- 

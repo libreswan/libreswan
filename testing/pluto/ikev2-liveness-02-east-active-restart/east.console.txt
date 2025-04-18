@@ -20,4 +20,3 @@ east #
 east #
  hostname | grep west > /dev/null || grep "IKEv2 liveness:" /tmp/pluto.log
 east #
- 

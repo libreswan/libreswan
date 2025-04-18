@@ -19,4 +19,3 @@ east #
  grep "no IKEv2 connection found" /tmp/pluto.log
 "labeled" #2: no IKEv2 connection found with compatible Traffic Selectors
 east #
- 

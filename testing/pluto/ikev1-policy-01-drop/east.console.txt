@@ -29,4 +29,3 @@ packet from 192.1.2.45:500: ignoring IKEv1 packet as global policy is set to sil
 east #
  hostname | grep east > /dev/null && (grep "sending notification INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo "A reply SHOULD NOT have been sent")
 east #
- 

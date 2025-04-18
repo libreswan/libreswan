@@ -49,4 +49,3 @@ west #
 #3: "west":500 ESTABLISHED_IKE_SA (established IKE SA); REPLACE in XXs; newest; idle;
 #4: "west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
 west #
- 

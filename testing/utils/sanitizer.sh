@@ -11,19 +11,18 @@ if test $# -lt 1; then
     cat <<EOF 1>&2
 Usage:
 
-    $0 <all.console.verbose.txt> [ <test-directory> [ <fixup-directory> ... ] ]
+    $0 <console.verbose.txt> [ <test-directory> [ <fixup-directory> ... ] ]
 
-Sanitizes the file <all.console.verbose.txt> using fixup scripts
-specified by testparams.sh (or default-testparams.sh).  The result is
-written to STDOUT.
+Sanitizes the file <console.verbose.txt> using fixup scripts specified
+by testparams.sh (or default-testparams.sh).  The result is written to
+STDOUT.
 
 <test-directory>
 
 	The directory containing testparams.sh
 
 	Only required when when the unsanitized file
-	<all.console.verbose.txt> is not under OUTPUT/ in the build
-	tree.
+	<console.verbose.txt> is not under OUTPUT/ in the build tree.
 
 	By default, the test under directory:
 		${testingdir}
@@ -180,7 +179,4 @@ cleanups="${cleanups}${sedups}"
 eval $cleanups
 status=$?
 
-# The "known-good" output contains an extra trailing blank line so add
-# one here.
-echo
 exit $status

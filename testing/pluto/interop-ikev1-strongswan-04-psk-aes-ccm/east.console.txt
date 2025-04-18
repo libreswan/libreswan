@@ -32,4 +32,3 @@ westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI
 westnet-eastnet-ikev1{1}:  AES_CCM_16_256/MODP_2048, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev1{1}:   192.0.2.0/24 === 192.0.1.0/24
 east #
- 

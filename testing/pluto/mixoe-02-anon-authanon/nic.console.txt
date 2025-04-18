@@ -2,4 +2,3 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- 

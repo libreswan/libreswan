@@ -81,4 +81,3 @@ west #
 west #
  ipsec trafficstatus
 west #
- 

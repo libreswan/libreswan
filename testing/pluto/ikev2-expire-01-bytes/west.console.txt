@@ -130,4 +130,3 @@ west #
 "west" #3: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
 "west" #3: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
 west #
- 

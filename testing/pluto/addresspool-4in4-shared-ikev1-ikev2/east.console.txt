@@ -26,4 +26,3 @@ east #
 #2: "north-any-east"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north', lease=192.0.2.101/32
 #4: "road-any-east"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road', lease=192.0.2.102/32
 east #
- 

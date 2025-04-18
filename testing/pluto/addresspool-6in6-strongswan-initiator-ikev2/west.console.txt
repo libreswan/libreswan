@@ -69,4 +69,3 @@ rw-eastnet-ipv6[1]: ESTABLISHED XXX second ago, 2001:db8:1:2::45[west]...2001:db
 rw-eastnet-ipv6{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 rw-eastnet-ipv6{1}:   2001:db8:0:3:1::/128 === 2001:db8:0:2::/64
 west #
- 

@@ -49,4 +49,3 @@ west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-6in6", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@east'
 west #
- 

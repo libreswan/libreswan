@@ -36,4 +36,3 @@ west #
 "ikev1-ikepad=no":   policy: IKEPAD_NO
 "ikev1-ikepad=yes":   policy: IKEPAD_YES
 west #
- 

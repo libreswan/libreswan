@@ -98,4 +98,3 @@ east #
 #2: "east-any"[2] 192.1.2.254, username=use1, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, lease=192.0.2.101/32
 #4: "east-any"[3] 192.1.2.254, username=xroad, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, lease=192.0.2.102/32
 east #
- 

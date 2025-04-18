@@ -64,4 +64,3 @@ down
 west #
  ipsec whack --trafficstatus
 west #
- 

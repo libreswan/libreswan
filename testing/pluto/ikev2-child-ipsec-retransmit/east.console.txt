@@ -26,4 +26,3 @@ east #
 | sending 225 bytes for Responder: process IKE_AUTH request through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 | sending 177 bytes for process create Child SA request (CREATE_CHILD_SA) through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 east #
- 

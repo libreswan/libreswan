@@ -89,4 +89,3 @@ west #
 "6in6-good": 1:2:3::/64===10:11:12:13::...20:21:22:23::===::/0; unoriented; my_ip=unset; their_ip=unset;
 "6in6-protoport": 1:2:3::/64===10:11:12:13::...20:21:22:23::===20:21:22:23::/128/TCP/22; unoriented; my_ip=unset; their_ip=unset;
 west #
- 

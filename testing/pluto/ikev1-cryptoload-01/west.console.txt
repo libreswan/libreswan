@@ -31,4 +31,3 @@ west #
  ../../guestbin/wait-for.sh --timeout 180 --match 'loaded 37, active 37' -- ipsec status
 Total IPsec connections: loaded 37, active 37
 west #
- 

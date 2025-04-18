@@ -62,4 +62,3 @@ packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward pack
 "westnet-eastnet" #1: deleting IKE SA (established IKE SA)
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 4
 east #
- 

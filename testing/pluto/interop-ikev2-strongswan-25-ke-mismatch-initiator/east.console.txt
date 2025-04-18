@@ -18,4 +18,3 @@ westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24
 east #
- 

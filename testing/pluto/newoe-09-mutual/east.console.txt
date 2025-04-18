@@ -89,4 +89,3 @@ src 192.1.2.23/32 dst 7.0.0.0/8
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 east #
- 

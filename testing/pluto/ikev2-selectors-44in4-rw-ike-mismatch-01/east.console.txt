@@ -24,4 +24,3 @@ east #
  ipsec trafficstatus
 #2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@road'
 east #
- 

@@ -50,4 +50,3 @@ east #
 east #
  ipsec whack --trafficstatus
 east #
- 

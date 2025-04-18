@@ -26,4 +26,3 @@ east #
  hostname | grep east > /dev/null && ipsec status | grep "[.][.][.]"
 "westnet-eastnet-ipv4-psk-ikev2": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 east #
- 

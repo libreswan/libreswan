@@ -74,4 +74,3 @@ east #
 east #
  hostname | grep nic || grep "retransmitting in response" /tmp/pluto.log
 east #
- 

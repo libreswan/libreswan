@@ -30,4 +30,3 @@ east #
  grep '#1: sending encrypted notification' /tmp/pluto.log
 "any-east"[1] 192.1.2.254 #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.254:EPHEM
 east #
- 
