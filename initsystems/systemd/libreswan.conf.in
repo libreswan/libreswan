@@ -1,1 +1,3 @@
 d @@RUNDIR@@ 755 root root -
+d /var/lib/ipsec 0700 root root -
+d /var/lib/ipsec/nss 0700 root root -

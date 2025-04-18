@@ -188,6 +188,8 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0644,root,root) %config(noreplace) %{_sysctldir}/50-libreswan.conf
 %attr(0755,root,root) %dir %{_rundir}/pluto
+%ghost %attr(0700,root,root) %verify(not owner group) %{_sharedstatedir}/ipsec
+%ghost %attr(0700,root,root) %verify(not owner group) %{_sharedstatedir}/ipsec/nss
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
