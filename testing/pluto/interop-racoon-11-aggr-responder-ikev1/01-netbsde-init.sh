@@ -1,3 +1,3 @@
 ../../guestbin/prep.sh
-racoon -l /tmp/racoon.log
+../../guestbin/start-racoon.sh
 echo "initdone"

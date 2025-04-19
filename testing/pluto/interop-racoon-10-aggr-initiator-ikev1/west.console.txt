@@ -10,7 +10,7 @@ west #
 west #
  rightsubnet=192.0.2.0/24
 west #
- racoon -l /tmp/racoon.log
+ ../../guestbin/start-racoon.sh
 west #
  # create a partial state on east, don't hold the hack for retransmit
 west #

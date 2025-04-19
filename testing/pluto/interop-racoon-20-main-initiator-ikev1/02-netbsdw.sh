@@ -5,7 +5,7 @@ right=192.1.2.23
 leftsubnet=192.0.1.0/24
 rightsubnet=192.0.2.0/24
 
-racoon -l /tmp/racoon.log
+../../guestbin/start-racoon.sh
 
 # create a partial state on east, don't hold the hack for retransmit
 racoonctl establish-sa -w isakmp inet ${left} ${right}

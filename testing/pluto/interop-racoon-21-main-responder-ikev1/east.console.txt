@@ -2,7 +2,7 @@
 east.racoon.conf -> /etc/racoon/racoon.conf
 east.psk.txt -> /etc/racoon/psk.txt
 east #
- racoon -l /tmp/racoon.log
+ ../../guestbin/start-racoon.sh
 east #
  echo "initdone"
 initdone
