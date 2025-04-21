@@ -274,17 +274,18 @@ struct config_parsed *parser_load_conf(const char *file,
 {
 	struct parser parser = {
 		.logger = logger,
-		.cfg = alloc_config_parsed(),
 		.error_stream = ERROR_STREAM,
 		.verbosity = verbosity,
 		.setuponly = setuponly,
 	};
 
-	ldbg(logger, "allocated config %p", parser.cfg);
-
 	if (!scanner_open(&parser, file)) {
-		goto err;
+		return NULL;
 	}
+
+	/* i.e., parser_init() */
+	parser.cfg = alloc_config_parsed(),
+	ldbg(logger, "allocated config %p", parser.cfg);
 
 	if (yyparse(&parser) != 0) {
 		/* suppress errors */
