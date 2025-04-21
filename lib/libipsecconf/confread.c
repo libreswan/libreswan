@@ -931,7 +931,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, logger, verbosity);
+	struct config_parsed *cfgp = parser_load_conf(file, logger, setuponly, verbosity);
 	if (cfgp == NULL)
 		return NULL;
 
