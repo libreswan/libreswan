@@ -1,5 +1,9 @@
 /testing/guestbin/swan-prep
 
+# broken invocation
+ipsec addconn --config /dne.conf  # nothing to do
+ipsec addconn --config /dne.conf connection # no file
+
 # expect both to fail?
 ipsec pluto --config bad-setup-key.conf
 ipsec pluto --config bad-setup-value.conf

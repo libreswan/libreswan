@@ -1,5 +1,14 @@
 /testing/guestbin/swan-prep
 west #
+ # broken invocation
+west #
+ ipsec addconn --config /dne.conf  # nothing to do
+ipsec addconn: nothing to do, see --help
+west #
+ ipsec addconn --config /dne.conf connection # no file
+ERROR: ipsec addconn: could not open '/dne.conf': No such file or directory (errno 2)
+ipsec addconn: loading config file '/dne.conf' failed
+west #
  # expect both to fail?
 west #
  ipsec pluto --config bad-setup-key.conf

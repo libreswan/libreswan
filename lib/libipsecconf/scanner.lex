@@ -84,11 +84,10 @@ void scanner_init(struct parser *parser, const char *name, int start)
 
 bool scanner_open(struct parser *parser, const char *file)
 {
-	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") :
-		   fopen(file, "r"));
+	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") : fopen(file, "r"));
 	if (f == NULL) {
-		llog(RC_LOG, parser->logger, "can't load file '%s'", file);
-		false;
+		llog_error(parser->logger, errno, "could not open '%s'", file);
+		return false;
 	}
 
 	scanner_init(parser, file, 1);

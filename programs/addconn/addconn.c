@@ -344,13 +344,19 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		cfg = confread_argv(name, argv, optind, logger);
+		if (cfg == NULL) {
+			llog(RC_LOG, logger, "parsing config arguments failed");
+			exit(3);
+		}
 	} else {
 		cfg = confread_load(configfile, configsetup, logger, verbose);
+		if (cfg == NULL) {
+			llog(RC_LOG, logger, "loading config file '%s' failed", configfile);
+			exit(3);
+		}
 	}
-	if (cfg == NULL) {
-		llog(RC_LOG, logger, "cannot load config file '%s'", configfile);
-		exit(3);
-	}
+
+	PASSERT(logger, cfg != NULL);
 
 	if (checkconfig) {
 		/* call is NO-OP when CONFIGSETUP */

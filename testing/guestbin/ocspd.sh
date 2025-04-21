@@ -46,11 +46,15 @@ log()
     } | {
 	tee OUTPUT/`hostname`.ocspd.log
     } | {
+	# strip date prefix before replacing certificate serial
+	# numbers; else pattern will match date/time instead.
 	sed \
 	    -e '/: OpenCA OCSPD/,/: Configuration loaded/d' \
 	    -e '/ got connd /d' \
 	    -e '/: INFO::Local Address/d' \
 	    -e '/: INFO::OPENCA_SRV_INFO_TREAD/d' \
+	    \
+	    -e 's;^.*: ;;' \
 	    \
     	    -e 's;\([ ]\)'${east}'$;\1<EAST>;' \
 	    -e 's;\([ ]\)'${west}'$;\1<WEST>;' \
@@ -64,9 +68,7 @@ log()
 	    -e 's;\([ ]\)'${nic}'\([] ]\);\1<NIC>\2;' \
 	    -e 's;\([ ]\)'${revoked}'\([] ]\);\1<REVOKED>\2;' \
 	    -e 's;\([ ]\)'${east_chain_endcert}'\([] ]\);\1<EAST_CHAIN_ENDCERT>\2;' \
-	    -e 's;\([ ]\)'${west_chain_endcert}'\([] ]\);\1<WEST_CHAIN_ENDCERT>\2;' \
-	    \
-	    -e 's;^.*: ;;'
+	    -e 's;\([ ]\)'${west_chain_endcert}'\([] ]\);\1<WEST_CHAIN_ENDCERT>\2;'
     }
 }
 
