@@ -48,7 +48,8 @@
 static void parser_kw_warning(struct parser *parser, struct keyword *kw, const char *yytext,
 			      const char *s, ...) PRINTF_LIKE(4);
 
-void parser_kw(struct parser *parser, struct keyword *kw, const char *string);
+void parse_key_value(struct parser *parser, enum end default_end,
+		     shunk_t key, const char *string);
 
 static void yyerror(struct parser *parser, const char *msg);
 static void new_parser_kw(struct parser *parser,
@@ -65,12 +66,10 @@ static void new_parser_kw(struct parser *parser,
 
 %union {
 	char *s;
-	bool boolean;
-	struct keyword k;
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
-%token <k>      KEYWORD
+%token <s>      KEYWORD
 %token <s>      COMMENT
 %%
 
@@ -147,20 +146,24 @@ statement_kw:
 		 * There should be a way to stop the lexer converting
 		 * the third field into a keyword.
 		 */
-		struct keyword kw = $1;
-		const char *value = $3.keydef->keyname;
-		parser_kw(parser, &kw, value);
+		char *key = $1; /* must free? */
+		char *value = $3; /* must free */
+		parse_key_value(parser, END_ROOF, shunk1(key), value);
+		pfreeany(key);
+		pfreeany(value);
 	}
 	| KEYWORD EQUAL STRING {
-		struct keyword kw = $1;
-		const char *string = $3;
-		parser_kw(parser, &kw, string);
+		char *key = $1;
+		char *value = $3;
+		parse_key_value(parser, END_ROOF, shunk1(key), value);
 		/* free strings allocated by lexer */
-		pfreeany($3);
+		pfreeany(key);
+		pfreeany(value);
 	}
 	| KEYWORD EQUAL {
-		struct keyword kw = $1;
-		parser_kw(parser, &kw, "");
+		char *key = $1;
+		parse_key_value(parser, END_ROOF, shunk1(key), "");
+		pfreeany(key);
 	}
 
 	| COMMENT EQUAL STRING {
@@ -201,12 +204,7 @@ void parser_warning(struct parser *parser, int error, const char *s, ...)
 
 void parser_fatal(struct parser *parser, int error, const char *s, ...)
 {
-        struct logjam logjam;
-        struct jambuf *buf = jambuf_from_logjam(&logjam, parser->logger,
-						PLUTO_EXIT_FAIL,
-                                                NULL/*where*/,
-						FATAL_STREAM);
-        {
+	LLOG_FATAL_JAMBUF(PLUTO_EXIT_FAIL, parser->logger, buf) {
 		jam_scanner_file_line(buf, parser);
 		va_list ap;
 		va_start(ap, s);
@@ -216,7 +214,7 @@ void parser_fatal(struct parser *parser, int error, const char *s, ...)
 			jam_errno(buf, error);
 		}
         }
-        fatal_logjam_to_logger(&logjam);
+	abort(); /* gcc doesn't believe above always exits */
 }
 
 static const char *leftright(struct keyword *kw)
@@ -271,6 +269,7 @@ static struct config_parsed *alloc_config_parsed(void)
 
 struct config_parsed *parser_load_conf(const char *file,
 				       struct logger *logger,
+				       bool setuponly,
 				       unsigned verbosity)
 {
 	struct parser parser = {
@@ -278,6 +277,7 @@ struct config_parsed *parser_load_conf(const char *file,
 		.cfg = alloc_config_parsed(),
 		.error_stream = ERROR_STREAM,
 		.verbosity = verbosity,
+		.setuponly = setuponly,
 	};
 
 	ldbg(logger, "allocated config %p", parser.cfg);
@@ -323,6 +323,7 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 		.section = SECTION_CONN,
 		.kw = &section->kw,
 		.logger = logger,
+		.setuponly = false,
 	};
 
 	scanner_init(&parser, "argv", start);
@@ -393,9 +394,7 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 			key = shunk1("auth");
 		}
 
-		struct keyword kw;
-		parser_find_keyword(key, default_end, &kw, &parser); /* can exit(1) */
- 		parser_kw(&parser, &kw, value);
+		parse_key_value(&parser, default_end, key, value);
 		scanner_next_line(&parser);
 	}
 
@@ -706,8 +705,133 @@ static bool parser_kw_loose_sparse_name(struct keyword *kw, const char *yytext,
 
 }
 
-void parser_kw(struct parser *parser, struct keyword *kw, const char *string)
+/*
+ * Look for one of the tokens, and set the value up right.
+ */
+
+static bool parse_leftright(shunk_t s,
+			    const struct keyword_def *k,
+			    const char *leftright)
 {
+	/* gobble up "left|right" */
+	if (!hunk_strcaseeat(&s, leftright)) {
+		return false;
+	}
+
+	/* if present and kw non-empty, gobble up "-" */
+	if (strlen(k->keyname) > 0) {
+		hunk_streat(&s, "-");
+	}
+
+	/* keyword matches? */
+	if (!hunk_strcaseeq(s, k->keyname)) {
+		return false;
+	}
+
+	/* success */
+	return true;
+}
+
+/* type is really "token" type, which is actually int */
+static bool parser_find_keyword(shunk_t s, enum end default_end,
+				struct keyword *kw, struct parser *parser)
+{
+	bool left = false;
+	bool right = false;
+
+	zero(kw);
+
+	const struct keyword_def *k;
+	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
+
+		if (hunk_strcaseeq(s, k->keyname)) {
+
+			/*
+			 * Given a KEY with BOTH|LEFTRIGHT, BOTH
+			 * trumps LEFTRIGHT.
+			 *
+			 * For instance:
+			 *
+			 *   --key=value --to ...
+			 *
+			 * sets left-key and right-key.  To only set
+			 * one end, specify:
+			 *
+			 *   --right-key=value --to ...
+			 *
+			 */
+			if (k->validity & kv_both) {
+				left = true;
+				right = true;
+				break;
+			}
+
+			/*
+			 * For instance --auth=... --to ...
+			 */
+			if (k->validity & kv_leftright) {
+				if (default_end == LEFT_END) {
+					left = true;
+					break;
+				}
+				if (default_end == RIGHT_END) {
+					right = true;
+					break;
+				}
+
+#if 0 /* see github#663 */
+				continue;
+#else
+				parser_warning(parser, 0, "%s= is being treated as right-%s=",
+					       k->keyname, k->keyname);
+				right = true;
+#endif
+			}
+			break;
+		}
+
+		if (k->validity & kv_leftright) {
+			left = parse_leftright(s, k, "left");
+			if (left) {
+				break;
+			}
+			right = parse_leftright(s, k, "right");
+			if (right) {
+				break;
+			}
+		}
+	}
+
+	/* if we still found nothing */
+	if (k->keyname == NULL) {
+#define FAIL(FUNC) FUNC(parser, /*errno*/0, "unrecognized '%s' keyword '"PRI_SHUNK"'", \
+			str_parser_section(parser), pri_shunk(s))
+		if (parser->section == SECTION_CONFIG_SETUP ||
+		    !parser->setuponly) {
+			FAIL(parser_fatal);
+			/* never returns */
+		}
+		FAIL(parser_warning);
+		/* never returns */
+		return false;
+#undef FAIL
+	}
+
+	/* else, set up llval.k to point, and return KEYWORD */
+	kw->keydef = k;
+	kw->keyleft = left;
+	kw->keyright = right;
+	return true;
+}
+
+void parse_key_value(struct parser *parser, enum end default_end,
+		     shunk_t key, const char *string)
+{
+	struct keyword kw[1];
+	if (!parser_find_keyword(key, default_end, kw, parser)) {
+		return;
+	}
+
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
 	bool ok = true;

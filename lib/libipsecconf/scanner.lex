@@ -293,115 +293,6 @@ static bool scanner_next_file(struct parser *parser)
 	return true;
 }
 
-/*
- * Look for one of the tokens, and set the value up right.
- */
-
-static bool parse_leftright(shunk_t s,
-			    const struct keyword_def *k,
-			    const char *leftright)
-{
-	/* gobble up "left|right" */
-	if (!hunk_strcaseeat(&s, leftright)) {
-		return false;
-	}
-
-	/* if present and kw non-empty, gobble up "-" */
-	if (strlen(k->keyname) > 0) {
-		hunk_streat(&s, "-");
-	}
-
-	/* keyword matches? */
-	if (!hunk_strcaseeq(s, k->keyname)) {
-		return false;
-	}
-
-	/* success */
-	return true;
-}
-
-/* type is really "token" type, which is actually int */
-void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, struct parser *parser)
-{
-	bool left = false;
-	bool right = false;
-
-	(*kw) = (struct keyword) {0};
-
-	const struct keyword_def *k;
-	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-
-		if (hunk_strcaseeq(s, k->keyname)) {
-
-			/*
-			 * Given a KEY with BOTH|LEFTRIGHT, BOTH
-			 * trumps LEFTRIGHT.
-			 *
-			 * For instance:
-			 *
-			 *   --key=value --to ...
-			 *
-			 * sets left-key and right-key.  To only set
-			 * one end, specify:
-			 *
-			 *   --right-key=value --to ...
-			 *
-			 */
-			if (k->validity & kv_both) {
-				left = true;
-				right = true;
-				break;
-			}
-
-			/*
-			 * For instance --auth=... --to ...
-			 */
-			if (k->validity & kv_leftright) {
-				if (default_end == LEFT_END) {
-					left = true;
-					break;
-				}
-				if (default_end == RIGHT_END) {
-					right = true;
-					break;
-				}
-
-#if 0 /* see github#663 */
-				continue;
-#else
-				llog(RC_LOG, parser->logger,
-				     "warning: %s= is being treated as right-%s=",
-				     k->keyname, k->keyname);
-				right = true;
-#endif
-			}
-			break;
-		}
-
-		if (k->validity & kv_leftright) {
-			left = parse_leftright(s, k, "left");
-			if (left) {
-				break;
-			}
-			right = parse_leftright(s, k, "right");
-			if (right) {
-				break;
-			}
-		}
-	}
-
-	/* if we still found nothing */
-	if (k->keyname == NULL) {
-		parser_fatal(parser, /*errno*/0, "unrecognized keyword '"PRI_SHUNK"'",
-			     pri_shunk(s));
-	}
-
-	/* else, set up llval.k to point, and return KEYWORD */
-	kw->keydef = k;
-	kw->keyleft = left;
-	kw->keyright = right;
-}
-
 %}
 
 /* lexical states:
@@ -572,8 +463,7 @@ include			{ BEGIN VALUE; return INCLUDE; }
 
 [^\"= \t\n]+		{
 				zero(&yylval);
-				/* does not return when lookup fails */
-				parser_find_keyword(shunk1(yytext), END_ROOF, &yylval.k, parser);
+				yylval.s = clone_str(yytext, "key");
 				BEGIN KEY;
 				return KEYWORD;
 			}

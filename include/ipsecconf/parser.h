@@ -65,10 +65,16 @@ struct parser {
 	struct config_parsed *cfg;
 	struct kw_list **kw;
 	enum section { SECTION_CONFIG_SETUP, SECTION_CONN_DEFAULT, SECTION_CONN, } section;
+#define str_parser_section(PARSER)					\
+	((PARSER)->section == SECTION_CONFIG_SETUP ? "config setup" :	\
+	 (PARSER)->section == SECTION_CONN_DEFAULT ? "conn %default" :	\
+	 (PARSER)->section == SECTION_CONN ? "conn" :		      \
+	 "???")
 	struct starter_comments_list *comments;
 	struct logger *logger;
 	enum stream error_stream;
 	unsigned verbosity;
+	bool setuponly;
 	struct input_source *input;
 };
 
@@ -82,10 +88,8 @@ void parser_warning(struct parser *parser, int eerror/*can be 0*/,
 void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 		  const char *s, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
-void parser_find_keyword(shunk_t s, enum end default_end, struct keyword *kw, struct parser *parser);
-
 struct config_parsed *parser_load_conf(const char *file, struct logger *logger,
-				       unsigned verbosity);
+				       bool setuponly, unsigned verbosity);
 struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start, struct logger *logger);
 
 void parser_freeany_config_parsed(struct config_parsed **cfg);

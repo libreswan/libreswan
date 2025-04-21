@@ -1,21 +1,39 @@
 /testing/guestbin/swan-prep
 west #
- # expect this to fail
+ # expect both to fail?
+west #
+ ipsec pluto --config bad-setup-key.conf
+FATAL ERROR: ipsec pluto: bad-setup-key.conf:9: unrecognized 'config setup' keyword 'unknown'
+west #
+ ipsec pluto --config bad-setup-value.conf
+ipsec pluto: bad-setup-value.conf:8: warning: invalid, keyword ignored: plutodebug=aksdfjasd;fklj
+west #
+ # expect this to work; but to be grumpy
+west #
+ ipsec pluto --config /etc/ipsec.conf
+ipsec pluto: /etc/ipsec.conf:11: warning: unrecognized 'conn' keyword 'unknown'
+ipsec pluto: /etc/ipsec.conf:14: warning: invalid, keyword ignored: debug=asdlfasdfj
 west #
  ipsec start
 Redirecting to: [initsystem]
-Job for ipsec.service failed because the control process exited with error code.
-See "systemctl status ipsec.service" and "journalctl -xeu ipsec.service" for details.
 west #
  # and why; --output==format
 west #
- journalctl --output cat -xeu ipsec.service | grep FATAL
-FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
-FATAL ERROR: ipsec pluto: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
-FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
+ journalctl --output cat -xeu ipsec.service | grep -e FATAL -e warning
+ipsec addconn: /etc/ipsec.conf:11: warning: unrecognized 'conn' keyword 'unknown'
+ipsec addconn: /etc/ipsec.conf:14: warning: invalid, keyword ignored: debug=asdlfasdfj
+ipsec pluto: /etc/ipsec.conf:11: warning: unrecognized 'conn' keyword 'unknown'
+ipsec pluto: /etc/ipsec.conf:14: warning: invalid, keyword ignored: debug=asdlfasdfj
 west #
  # and addconn
 west #
  ipsec addconn --checkconfig --config /etc/ipsec.conf
-FATAL ERROR: ipsec addconn: /etc/ipsec.conf:13: unrecognized keyword 'unrecognized'
+FATAL ERROR: ipsec addconn: /etc/ipsec.conf:11: unrecognized 'conn' keyword 'unknown'
+west #
+ ipsec addconn --config bad-conn-key.conf    bad-conn-key
+FATAL ERROR: ipsec addconn: bad-conn-key.conf:11: unrecognized 'conn' keyword 'unknown'
+west #
+ ipsec addconn --config bad-conn-value.conf  bad-conn-value
+ipsec addconn: bad-conn-value.conf:11: warning: invalid, keyword ignored: debug=asdlfasdfj
+"bad-conn-value": added IKEv2 connection
 west #
