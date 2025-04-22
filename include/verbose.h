@@ -50,23 +50,57 @@ struct verbose {
 };
 
 /*
- * verbose() outputs indented logs
- * vdbg() outputs indented debug logs when DBG_BASE
- * vfatal() outputs flat log
+ * The verbose() function is configured using VERBOSE(STREAM, LOGGER,
+ * PREFIX):
+ *
+ *   VERBOSE(NO_STREAM, logger, prefix):
+ *
+ *     With NO_STREAM, verbose() does not emit any output.
+ *
+ *   VERBOSE(DEBUG_STREAM, logger, prefix):
+ *
+ *     With DEBUG_STREAM, and provided DBG_BASE debugging is enabled,
+ *     verbose() emits a debug-log with PREFIX and indentation
+ *     prepended.
+ *
+ *     i.e., verbose() and vdbg() become identical
+ *
+ *   VERBOSE(RC_LOG, logger, prefix):
+ *   VERBOSE(LOG_STREAM, logger, prefix):
+ *
+ *     With some other stream, verbose() emits the log message with
+ *     PREFIX and indentation prepended using that stream.
+ *
+ * The other functions are not affected by VERBOSE()'s STREAM/RC
+ * parameter:
+ *
+ *   vdbg(): provided DBG_BASE debugging is enabled, emits a debug-log
+ *   with with both PREFIX and indentation prepended (else nothing is
+ *   emitted)
+ *
+ *   vlog(), vfatal(), et.al.: emits a log message using RC_LOG with
+ *   NO PREFIX and NO indentation (i.e., a shortcut for llog(RC_LOG,
+ *   verbose.logger, ...).
+ *
+ * Use GNU ?: formatting, shh.
  */
-#define VERBOSE_LOG(LOGGER, MESSAGE, ...)		\
-	struct verbose verbose = {			\
-		.logger = (LOGGER),			\
-		.rc_flags = RC_LOG,			\
-		.prefix = "",				\
-	};						\
-	verbose(MESSAGE, ##__VA_ARGS__);		\
-	verbose.level++;
+
+#define VERBOSE(RC_FLAGS, LOGGER, PREFIX)				\
+	{								\
+		.logger = LOGGER,					\
+			.prefix = PREFIX,				\
+			.rc_flags = ((lset_t)RC_FLAGS == (lset_t)DEBUG_STREAM \
+				     ? (LDBGP(DBG_BASE, LOGGER)		\
+					? DEBUG_STREAM			\
+					: NO_STREAM)			\
+				     : RC_FLAGS),			\
+			}
 
 /*
- * verbose() outputs indented debug logs when DBG_BASE
- * vdbg() outputs indented debug logs when DBG_BASE
+ * verbose() outputs indented debug logs when DBG_<COND> vdbg()
+ * outputs indented debug logs when DBG_BASE
  */
+
 #define VERBOSE_DBGP(COND, LOGGER, MESSAGE, ...)			\
 	struct verbose verbose = {					\
 		.logger = (LOGGER),					\
@@ -76,8 +110,12 @@ struct verbose {
 	verbose(MESSAGE, ##__VA_ARGS__);				\
 	verbose.level++;
 
+/*
+ * Format the prefix, handle poorly constructed struct verbose.
+ */
+
 #define PRI_VERBOSE "%s%*s"
-#define pri_verbose "", (verbose.level * 2), ""
+#define pri_verbose (verbose.prefix == NULL ? "" : verbose.prefix), (verbose.level * 2), ""
 
 /*
  * Normal logging: the message is always logged (no indentation); just
@@ -91,12 +129,12 @@ struct verbose {
 #define vfatal(FMT, ...)						\
 	fatal(PLUTO_EXIT_FAIL, verbose.logger, FMT, ##__VA_ARGS__)
 
-#define verror(ERROR, FMT, ...)			\
+#define verror(ERROR, FMT, ...)					\
 	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
 
 /*
- * Debug-logging: when the logger has debugging enabled, the message is
- * logged, prefixed by indentation.
+ * Debug-logging: when the logger has debugging enabled, the message
+ * is logged, prefixed by indentation.
  */
 
 #define vdbg(FMT, ...)							\
@@ -114,11 +152,14 @@ struct verbose {
  *
  * Use this for messages that, depending on the caller, should be
  * suppressed, pretty-logged or pretty-debug-logged.
+ *
+ * XXX: handle poorly constructed struct verbose.
  */
 
-#define verbose(FMT, ...)							\
+#define verbose(FMT, ...)						\
 	{								\
-		if (verbose.rc_flags != 0) {				\
+		if (verbose.rc_flags != 0 &&				\
+		    verbose.rc_flags != NO_STREAM) {			\
 			llog(verbose.rc_flags, verbose.logger,		\
 			     PRI_VERBOSE""FMT,				\
 			     pri_verbose, ##__VA_ARGS__);		\
