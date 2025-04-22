@@ -1,27 +1,55 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
  # broken invocation
 west #
- ipsec addconn --config /dne.conf  # nothing to do
+ # fail as nothing to do
+west #
+ ipsec addconn --config /dne.conf
 ipsec addconn: nothing to do, see --help
 west #
- ipsec addconn --config /dne.conf connection # no file
+ # fail as file not found
+west #
+ ipsec addconn --config /dne.conf connection
 ERROR: ipsec addconn: could not open '/dne.conf': No such file or directory (errno 2)
 ipsec addconn: loading config file '/dne.conf' failed
 west #
- # expect both to fail?
+ # broken config setup
 west #
- ipsec pluto --config bad-setup-key.conf
-FATAL ERROR: ipsec pluto: bad-setup-key.conf:9: unrecognized 'config setup' keyword 'unknown'
+ # will fail
 west #
- ipsec pluto --config bad-setup-value.conf
-ipsec pluto: bad-setup-value.conf:8: warning: invalid, keyword ignored: plutodebug=aksdfjasd;fklj
+ ipsec pluto --config bad-config-setup-key.conf
+FATAL ERROR: ipsec pluto: bad-config-setup-key.conf:7: unrecognized 'config setup' keyword 'unknown'
 west #
- # expect this to work; but to be grumpy
+ # should fail but doesn't, hence shutdown
 west #
- ipsec pluto --config /etc/ipsec.conf
-ipsec pluto: /etc/ipsec.conf:11: warning: unrecognized 'conn' keyword 'unknown'
-ipsec pluto: /etc/ipsec.conf:14: warning: invalid, keyword ignored: debug=asdlfasdfj
+ ipsec pluto --config bad-config-setup-value.conf
+ipsec pluto: bad-config-setup-value.conf:6: warning: invalid, keyword ignored: plutodebug=aksdfjasd;fklj
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ cp /tmp/pluto.log OUTPUT/bad-config-setup-value.log
+west #
+ # broken conn section; should be grumpy but ignored
+west #
+ ipsec pluto --config bad-conn-key.conf
+ipsec pluto: bad-conn-key.conf:9: warning: unrecognized 'conn' keyword 'unknown'
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ cp /tmp/pluto.log OUTPUT/bad-conn-key.log
+west #
+ ipsec pluto --config bad-conn-value.conf
+ipsec pluto: bad-conn-value.conf:9: warning: invalid, keyword ignored: debug=asdlfasdfj
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ cp /tmp/pluto.log OUTPUT/bad-conn-value.log
+west #
+ # now try to add the corresponding conn
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -29,20 +57,11 @@ west #
  # and why; --output==format
 west #
  journalctl --output cat -xeu ipsec.service | grep -e FATAL -e warning
-ipsec addconn: /etc/ipsec.conf:11: warning: unrecognized 'conn' keyword 'unknown'
-ipsec addconn: /etc/ipsec.conf:14: warning: invalid, keyword ignored: debug=asdlfasdfj
-ipsec pluto: /etc/ipsec.conf:11: warning: unrecognized 'conn' keyword 'unknown'
-ipsec pluto: /etc/ipsec.conf:14: warning: invalid, keyword ignored: debug=asdlfasdfj
-west #
- # and addconn
-west #
- ipsec addconn --checkconfig --config /etc/ipsec.conf
-FATAL ERROR: ipsec addconn: /etc/ipsec.conf:11: unrecognized 'conn' keyword 'unknown'
 west #
  ipsec addconn --config bad-conn-key.conf    bad-conn-key
-FATAL ERROR: ipsec addconn: bad-conn-key.conf:11: unrecognized 'conn' keyword 'unknown'
+FATAL ERROR: ipsec addconn: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
 west #
  ipsec addconn --config bad-conn-value.conf  bad-conn-value
-ipsec addconn: bad-conn-value.conf:11: warning: invalid, keyword ignored: debug=asdlfasdfj
-"bad-conn-value": added IKEv2 connection
+ipsec addconn: bad-conn-value.conf:9: warning: invalid, keyword ignored: debug=asdlfasdfj
+"bad-conn-value": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=0.0.0.0 match an interface)
 west #

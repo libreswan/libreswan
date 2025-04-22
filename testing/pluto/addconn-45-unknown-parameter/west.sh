@@ -1,20 +1,36 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
 
 # broken invocation
-ipsec addconn --config /dne.conf  # nothing to do
-ipsec addconn --config /dne.conf connection # no file
 
-# expect both to fail?
-ipsec pluto --config bad-setup-key.conf
-ipsec pluto --config bad-setup-value.conf
+# fail as nothing to do
+ipsec addconn --config /dne.conf
+# fail as file not found
+ipsec addconn --config /dne.conf connection
 
-# expect this to work; but to be grumpy
-ipsec pluto --config /etc/ipsec.conf
+# broken config setup
+
+# will fail
+ipsec pluto --config bad-config-setup-key.conf
+# should fail but doesn't, hence shutdown
+ipsec pluto --config bad-config-setup-value.conf
+ipsec whack --shutdown
+cp /tmp/pluto.log OUTPUT/bad-config-setup-value.log
+
+# broken conn section; should be grumpy but ignored
+
+ipsec pluto --config bad-conn-key.conf
+ipsec whack --shutdown
+cp /tmp/pluto.log OUTPUT/bad-conn-key.log
+
+ipsec pluto --config bad-conn-value.conf
+ipsec whack --shutdown
+cp /tmp/pluto.log OUTPUT/bad-conn-value.log
+
+# now try to add the corresponding conn
+
 ipsec start
 # and why; --output==format
 journalctl --output cat -xeu ipsec.service | grep -e FATAL -e warning
 
-# and addconn
-ipsec addconn --checkconfig --config /etc/ipsec.conf
 ipsec addconn --config bad-conn-key.conf    bad-conn-key
 ipsec addconn --config bad-conn-value.conf  bad-conn-value
