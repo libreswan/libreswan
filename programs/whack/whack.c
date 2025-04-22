@@ -564,7 +564,7 @@ enum opt {
 	CD_IKE,
 	CD_TCP,
 	CD_TCP_REMOTE_PORT,
-	CD_SEND_CA,
+	CD_SENDCA,
 	CD_PFSGROUP,
 	CD_REMOTE_PEER_TYPE,
 	CD_SHA2_TRUNCBUG,
@@ -899,7 +899,7 @@ const struct option optarg_options[] = {
 	{ "vti-shared\0", optional_argument, NULL, CD_VTI_SHARED },
 	{ "ipsec-interface\0", required_argument, NULL, CD_IPSEC_INTERFACE },
 	{ "sendcert\0", required_argument, NULL, END_SENDCERT },
-	{ "sendca\0", required_argument, NULL, CD_SEND_CA },
+	{ "sendca\0", required_argument, NULL, CD_SENDCA },
 	{ "ipv4\0", no_argument, NULL, CD_CONNIPV4 },
 	{ "ipv6\0", no_argument, NULL, CD_CONNIPV6 },
 	{ "ikelifetime\0", required_argument, NULL, CD_IKE_LIFETIME },
@@ -1930,13 +1930,8 @@ int main(int argc, char **argv)
 			msg.replay_window = optarg_uintmax(logger);
 			continue;
 
-		case CD_SEND_CA:	/* --sendca */
-			if (streq(optarg, "issuer"))
-				msg.send_ca = CA_SEND_ISSUER;
-			else if (streq(optarg, "all"))
-				msg.send_ca = CA_SEND_ALL;
-			else
-				msg.send_ca = CA_SEND_NONE;
+		case CD_SENDCA:	/* --sendca */
+			msg.sendca = optarg;
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */

@@ -367,10 +367,9 @@ struct whack_message {
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
 
-
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;
-	enum send_ca_policy send_ca;
+	char *sendca;
 
 	/* Force the MTU for this connection */
 	int mtu;

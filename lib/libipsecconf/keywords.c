@@ -130,19 +130,6 @@ static const struct sparse_names kw_auth_names = {
 };
 
 /*
- * Values for sendca={none,issuer,all}
- */
-
-static const struct sparse_names kw_sendca_names = {
-	.list = {
-		SPARSE("none",	CA_SEND_NONE),
-		SPARSE("issuer",	CA_SEND_ISSUER),
-		SPARSE("all",	CA_SEND_ALL),
-		SPARSE_NULL
-	},
-};
-
-/*
  * Values for addrfamily={ipv4,ipv6}
  */
 static const struct sparse_names kw_addrfamily_names = {
@@ -497,7 +484,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KSCF_DPDTIMEOUT, NULL, NULL, }, /* old name */
   { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, NULL, },
 
-  { "sendca",      kv_conn,  kt_sparse_name,  KNCF_SEND_CA, &kw_sendca_names, NULL, },
+  { "sendca",      kv_conn,  kt_string,  KNCF_SENDCA, NULL, NULL, },
 
   { "mtu",  kv_conn,  kt_unsigned,  KNCF_MTU, NULL, NULL, },
   { "priority",  kv_conn,  kt_unsigned,  KNCF_PRIORITY, NULL, NULL, },
