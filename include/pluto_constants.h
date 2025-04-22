@@ -84,12 +84,6 @@ enum ike_version {
 
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
 
-enum send_ca_policy {
-	CA_SEND_NONE = 0,
-	CA_SEND_ISSUER = 1,
-	CA_SEND_ALL = 2,
-};
-
 /* values for auto={add,start,{route,ondemand},ignore} */
 
 enum autostart {

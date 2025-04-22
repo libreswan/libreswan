@@ -45,6 +45,7 @@
 #include "end.h"
 #include "shunt.h"
 #include "global_redirect.h"
+#include "send_ca_policy.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
