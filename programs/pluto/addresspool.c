@@ -257,20 +257,15 @@ static err_t pool_lease_to_address(const struct addresspool *pool, const struct 
 	return range_offset_to_address(pool->r, lease - pool->leases, address);
 }
 
-PRINTF_LIKE(4)
+PRINTF_LIKE(3)
 static void vdbg_pool(struct verbose verbose,
 		      const struct addresspool *pool,
-		      struct connection *c,
 		      const char *format, ...)
 {
 	LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam(buf, "pool ");
 		jam_range(buf, &pool->r);
-		if (c != NULL) {
-			jam_connection(buf, c);
-			jam_string(buf, " ");
-		}
 		jam(buf, ": ");
 		va_list args;
 		va_start(args, format);
@@ -572,7 +567,7 @@ static err_t grow_addresspool(struct addresspool *pool,
 {
 	/* try to grow the address pool */
 	if (pool->nr_leases >= pool->size) {
-		vdbg_pool(verbose, pool, NULL, "address pool exhausted: %u >= %u",
+		vdbg_pool(verbose, pool, "address pool exhausted: %u >= %u",
 			  pool->nr_leases, pool->size);
 		return "address pool exhausted";
 	}
@@ -585,9 +580,8 @@ static err_t grow_addresspool(struct addresspool *pool,
 	}
 	realloc_things(pool->leases, old_nr_leases, pool->nr_leases, "leases");
 
-	range_buf rb;
-	llog(RC_LOG, verbose.logger, "pool %s: growing address pool from %u to %u",
-	     str_range(&pool->r, &rb), old_nr_leases, pool->nr_leases);
+	vdbg_pool(verbose, pool, "growing address pool from %u to %u",
+		  old_nr_leases, pool->nr_leases);
 
 	/* initialize new leases (and add to free list) */
 	for (unsigned l = old_nr_leases; l < pool->nr_leases; l++) {
@@ -665,15 +659,17 @@ static bool unfree_lease(struct addresspool *pool,
 }
 
 /*
- * returns ERR_T when something fatal happens, else leaves NEW_LEASE
- * NULL when lease can't be assigned.
+ * Returns ERR_T when failure is fatal.
+ *
+ * Returns NULL and NEW_LEASE==NULL when lease can't be assigned.
+ *
+ * Returns NULL and NEW_LEASE!=NULL when lease can be assigned.
  */
 static err_t assign_requested_lease(struct connection *c,
 				    struct addresspool *pool,
 				    char **reusable_id,
 				    const ip_address *lease_address,
 				    struct lease **new_lease,
-				    const char **story,
 				    struct verbose verbose)
 {
 	address_buf lab;
@@ -732,16 +728,25 @@ static err_t assign_requested_lease(struct connection *c,
 
 		vassert((*reusable_id) == NULL); /* ownership transferred to lease */
 		(*new_lease) = lease;
-		(*story) = "request available";
 		return NULL;
 	}
 
 	/* grow the lease if necessary */
+
 	while (offset >= pool->nr_leases) {
-		grow_addresspool(pool, verbose);
+		err_t e = grow_addresspool(pool, verbose);
+		/*
+		 * Since, above checks that OFFSET fits in the address
+		 * pool, growing the address pool to accomodate the
+		 * offset can never fail.
+		 */
+		vassert(e == NULL);
 	}
 
+	/* re-stating above */
+	vassert(pool->nr_leases <= pool->size);
 	vassert(offset < pool->nr_leases);
+
 	struct lease *lease = &pool->leases[offset];
 	if (!pexpect(lease->assigned_to == COS_NOBODY)) {
 		return "confused, just allocated lease in use";
@@ -754,7 +759,6 @@ static err_t assign_requested_lease(struct connection *c,
 
 	vassert((*reusable_id) == NULL); /* ownership transferred to lease */
 	(*new_lease) = lease;
-	(*story) = "request grown";
 	return NULL;
 }
 
@@ -795,12 +799,13 @@ err_t assign_remote_lease(struct connection *c,
 		reusable_id = alloc_printf("%s%s", remote_id, (xauth_username != NULL ? xauth_username : ""));
 	}
 
-	vdbg_pool(verbose, pool, c,
+	vdbg_pool(verbose, pool,
 		  "requesting lease with reusable ID '%s'",
 		  (reusable_id == NULL ? "" : reusable_id));
 
 	struct lease *new_lease = NULL;
 	const char *story = NULL;
+	unsigned old_growth = pool->nr_leases;
 
 	/*
 	 * Using the mangled ID (THATSTR), see of there is an existing
@@ -819,10 +824,13 @@ err_t assign_remote_lease(struct connection *c,
 	 */
 	if (new_lease == NULL && is_set(lease_address)) {
 		err_t e = assign_requested_lease(c, pool, &reusable_id, lease_address,
-						 &new_lease, &story, verbose);
+						 &new_lease, verbose);
 		if (e != NULL) {
 			pfreeany(reusable_id);
 			return e;
+		}
+		if (new_lease != NULL) {
+			story = "requested";
 		}
 	}
 
@@ -845,11 +853,12 @@ err_t assign_remote_lease(struct connection *c,
 		story = (unfree_lease(pool, &reusable_id, new_lease, verbose)
 			 ? "stolen"
 			 : "unused");
-		vassert(reusable_id == NULL); /* stolen */
+		vassert(reusable_id == NULL); /* ownership transfered to new_lease */
 	}
 
 	/*
-	 * No lease (above should have returned), but play save.
+	 * When no lease is assigned, the above should have returned,
+	 * but play save.
 	 */
 
 	if (vbad(new_lease == NULL)) {
@@ -866,7 +875,8 @@ err_t assign_remote_lease(struct connection *c,
 	}
 
 	/*
-	 * Convert the leases offset into range, into an IP_address.
+	 * Convert the leases offset into the address pool's range,
+	 * into an IP_address.
 	 */
 	ip_address ia;
 	err_t err = pool_lease_to_address(pool, new_lease, &ia);
@@ -879,13 +889,21 @@ err_t assign_remote_lease(struct connection *c,
 	scribble_remote_lease(c, ia, next_lease_nr, logger, HERE);
 	new_lease->assigned_to = c->serialno;
 
-	address_buf ab;
-	vdbg_lease(verbose, pool, new_lease, c,
-		   "assign %s lease to "PRI_CO" with reusable ID '%s' and that.lease %s",
-		   story,
-		   pri_co(new_lease->assigned_to),
-		   (new_lease->reusable_name == NULL ? "" : new_lease->reusable_name),
-		   str_address(&ia, &ab));
+	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+		jam_string(buf, "assigning ");
+		jam_string(buf, story);
+		if (new_lease->reusable_name) {
+			jam_string(buf, " recoverable");
+		}
+		jam_string(buf, " lease ");
+		jam_address_sensitive(buf, &ia);
+		jam_string(buf, " from addresspool ");
+		jam_range(buf, &pool->r);
+		if (old_growth != pool->nr_leases) {
+			jam(buf, "; addresspool grown from %u to %u leases",
+			    old_growth, pool->nr_leases);
+		}
+	}
 
 	return NULL;
 }
@@ -906,7 +924,7 @@ void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
 				return;
 			}
 		}
-		vdbg_pool(verbose, pool, NULL, "pool %p not found in list of pools", pool);
+		vdbg_pool(verbose, pool, "pool %p not found in list of pools", pool);
 	}
 }
 
@@ -1016,7 +1034,7 @@ diag_t install_addresspool(const ip_range pool_range,
 
 	if (existing_pool != NULL) {
 		/* re-use existing pool */
-		vdbg_pool(verbose, existing_pool, NULL, "reusing existing address pool@%p", existing_pool);
+		vdbg_pool(verbose, existing_pool, "reusing existing address pool@%p", existing_pool);
 		addresspool[afi->ip_index] = addresspool_addref(existing_pool);
 		return NULL;
 	}
@@ -1034,7 +1052,7 @@ diag_t install_addresspool(const ip_range pool_range,
 	new_pool->next = pluto_pools;
 	pluto_pools = new_pool;
 
-	vdbg_pool(verbose, new_pool, NULL, "creating new address pool@%p", new_pool);
+	vdbg_pool(verbose, new_pool, "creating new address pool@%p", new_pool);
 
 	addresspool[afi->ip_index] = new_pool;
 	return NULL;
