@@ -1972,8 +1972,8 @@ static struct connection *fc_try(const struct connection *c,
 {
 	selector_pair_buf spb;
 	address_buf lb, rb;
-	vdbg("%s() %s<-%s %s",
-	     __func__,
+	verbose.prefix = "rhc: "; /* it was long ago */
+	vdbg("%s<-%s %s",
 	     str_address(&local_address, &lb), str_address(&remote_address, &rb),
 	     str_selector_pair(local_client, remote_client, &spb));
 	verbose.level++;

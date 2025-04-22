@@ -725,12 +725,11 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  const struct id *responder_id)
 {
 	connection_buf cib;
-	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
-		     "looking for an %s connection more refined than "PRI_CONNECTION"",
-		     ike->sa.st_connection->config->ike_info->version_name,
-		     pri_connection(ike->sa.st_connection, &cib));
-	verbose.prefix = "rhc:";
-	verbose.level = 1;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "rfc: ");
+	vdbg("looking for an %s connection more refined than "PRI_CONNECTION"",
+	     ike->sa.st_connection->config->ike_info->version_name,
+	     pri_connection(ike->sa.st_connection, &cib));
+	verbose.level++;
 
 	struct connection *r = refine_host_connection_on_responder(ike,
 								   proposed_authbys,

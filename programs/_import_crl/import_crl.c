@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 {
 	err_t err;
 	struct logger *logger = tool_logger(argc, argv);
-	VERBOSE_DBGP(DBG_BASE, logger, "import_crl()");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "");
+	vdbg("%s:", argv[0]);
 
 	if (argc != 4) {
 		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <crl-fetch-timeout> <curl-iface>");
