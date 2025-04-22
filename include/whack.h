@@ -174,7 +174,6 @@ struct whack_end {
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 	enum certpolicy sendcert;
 	enum eap_options eap;
-	bool send_ca;
 	enum ike_cert_type certtype;
 
 	enum yn_options modecfgserver;	/* for MODECFG */
