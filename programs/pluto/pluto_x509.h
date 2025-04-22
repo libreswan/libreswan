@@ -35,6 +35,7 @@ struct msg_digest;
 struct certs;
 struct ike_sa;
 struct cert;
+enum send_ca_policy;
 
 diag_t match_peer_id_cert(const struct certs *peer_certs,
 			  const struct id *peer_id,
@@ -51,7 +52,9 @@ extern bool match_v1_requested_ca(const struct ike_sa *ike,
 				  struct verbose verbose);
 
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
-			  const struct cert *end_cert, bool full_chain);
+			  const struct cert *end_cert,
+			  enum send_ca_policy send_policy);
+
 extern void free_auth_chain(chunk_t *chain, int chain_len);
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)

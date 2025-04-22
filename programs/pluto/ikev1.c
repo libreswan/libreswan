@@ -2686,7 +2686,7 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 			    enum ike_cert_type certtype,
 			    bool gotcertrequest,
 			    bool send_cert,
-			    bool send_chain)
+			    unsigned send_chain)
 {
 	struct logger *logger = ike->sa.logger;
 	struct connection *c = ike->sa.st_connection;
@@ -2718,8 +2718,8 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 				LDBG_log(logger, "INVALID AUTH SETTING: %d", ike->sa.st_oakley.auth);
 			}
 		}
-		if (send_chain)
-			LDBG_log(logger, "Sending one or more authcerts");
+		if (send_chain > 0)
+			LDBG_log(logger, "Sending %u authcerts", send_chain);
 	}
 }
 

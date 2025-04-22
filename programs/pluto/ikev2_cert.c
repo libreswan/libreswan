@@ -73,19 +73,9 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 		return STF_OK;
 	}
 
-	/*****
-	 * From here on, if send_authcerts, we are obligated to:
-	 * free_auth_chain(auth_chain, chain_len);
-	 *****/
-
+	/* must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-					   mycert,
-					   send_full_chain ? true : false);
-	}
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
 
 	const struct ikev2_cert certhdr = {
 		.isac_critical = build_ikev2_critical(false, outpbs->logger),
