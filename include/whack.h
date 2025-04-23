@@ -172,7 +172,7 @@ struct whack_end {
 	bool xauth_client;
 	char *xauth_username;
 	enum yn_options cat;		/* IPv4 Client Address Translation */
-	enum sendcert_policy sendcert;
+	char *sendcert;
 	enum eap_options eap;
 	enum ike_cert_type certtype;
 

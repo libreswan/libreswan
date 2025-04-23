@@ -127,6 +127,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "crypt_hash.h"
+#include "sparse_names.h"
 
 #include "defs.h"
 #include "ike_spi.h"
@@ -2700,9 +2701,9 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 			 str_enum(&oakley_auth_names, ike->sa.st_oakley.auth, &oan),
 			 str_enum(&ike_cert_type_names, certtype, &ictn));
 
-		esb_buf cptn;
+		name_buf cptn;
 		LDBG_log(logger, "  sendcert: %s and I did%s get a certificate request ",
-			 str_enum(&sendcert_policy_names, c->local->host.config->sendcert, &cptn),
+			 str_sparse(&sendcert_policy_names, c->local->host.config->sendcert, &cptn),
 			 gotcertrequest ? "" : " not");
 
 		LDBG_log(logger, "  so %ssend cert.", send_cert ? "" : "do not ");

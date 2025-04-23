@@ -868,13 +868,13 @@ static char *extract_string(const char *leftright, const char *name,
 	return clone_str(string, name);
 }
 
-static unsigned extract_enum(const char *leftright,
-			     const char *name,
-			     const char *value, unsigned unset,
-			     const struct enum_names *names,
-			     const struct whack_message *wm,
-			     diag_t *d,
-			     struct logger *logger)
+static unsigned extract_enum_name(const char *leftright,
+				  const char *name,
+				  const char *value, unsigned unset,
+				  const struct enum_names *names,
+				  const struct whack_message *wm,
+				  diag_t *d,
+				  struct logger *logger)
 {
 	(*d) = NULL;
 
@@ -900,6 +900,40 @@ static unsigned extract_enum(const char *leftright,
 	}
 
 	return match;
+}
+
+static unsigned extract_sparse_name(const char *leftright,
+				    const char *name,
+				    const char *value, unsigned unset,
+				    const struct sparse_names *names,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct logger *logger)
+{
+	(*d) = NULL;
+
+	if (never_negotiate_wm(wm)) {
+		if (value != NULL) {
+			llog(RC_LOG, logger,
+			     "warning: %s%s=%s ignored for never-negotiate connection",
+			     leftright, name, value);
+		}
+		return unset;
+	}
+
+	if (value == NULL) {
+		return unset;
+	}
+
+	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
+	if (sparse == NULL) {
+		/* include allowed names? */
+		(*d) = diag("%s%s=%s invalid, '%s' unrecognized",
+			    leftright, name, value, value);
+		return 0;
+	}
+
+	return sparse->value;
 }
 
 static uintmax_t extract_uintmax(const char *leftright,
@@ -1431,7 +1465,13 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	host_config->sendcert = src->sendcert == 0 ? SENDCERT_IFASKED : src->sendcert;
+
+	host_config->sendcert = extract_sparse_name(leftright, "sendcert", src->sendcert,
+						    cert_defaultcertpolicy, &sendcert_policy_names,
+						    wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
 
 	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, logger)) {
 		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
@@ -3789,10 +3829,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_vid_fake_strongswan = wm->fake_strongswan;
 		config->send_vendorid = wm->send_vendorid;
 
-		config->send_ca = extract_enum("", "sendca", wm->sendca,
-					       CA_SEND_ALL,
-					       &send_ca_policy_names,
-					       wm, &d, c->logger);
+		config->send_ca = extract_enum_name("", "sendca", wm->sendca,
+						    CA_SEND_ALL,
+						    &send_ca_policy_names,
+						    wm, &d, c->logger);
 		if (d != NULL) {
 			return d;
 		}

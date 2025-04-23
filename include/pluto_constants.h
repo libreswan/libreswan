@@ -727,6 +727,8 @@ enum sendcert_policy {
 /* this is the default setting. */
 #define cert_defaultcertpolicy SENDCERT_ALWAYS
 
+extern const struct sparse_names sendcert_policy_names;
+
 enum ikev1_natt_policy {
 	NATT_BOTH = 1, /* the default */
 	NATT_RFC = 2,

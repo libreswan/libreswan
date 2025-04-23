@@ -208,10 +208,7 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->ca = l->values[KSCF_CA].string;
-	if (l->values[KNCF_SENDCERT].set)
-		w->sendcert = l->values[KNCF_SENDCERT].option;
-	else
-		w->sendcert = cert_defaultcertpolicy;
+	w->sendcert = l->values[KNCF_SENDCERT].string;
 
 	if (l->values[KNCF_AUTH].set)
 		w->auth = l->values[KNCF_AUTH].option;

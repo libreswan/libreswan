@@ -19,7 +19,6 @@ extern const enum_names debug_names;
 extern const enum_names debug_help;
 extern const struct lmod_info debug_lmod_info;
 
-extern enum_names sendcert_policy_names;
 extern enum_names oakley_attr_names;
 extern enum_names oakley_attr_bit_names;
 extern enum_names encapsulation_mode_names;
