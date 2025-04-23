@@ -220,8 +220,7 @@ void jam_end_client(struct jambuf *buf,
 }
 
 static void jam_end_id(struct jambuf *buf,
-		       const struct host_end *host,
-		       const struct child_end *child)
+		       const struct host_end *host)
 {
 	/* id, if different from host */
 	bool open_paren = false;
@@ -250,8 +249,6 @@ static void jam_end_id(struct jambuf *buf,
 			jam_string(buf, "MS");
 		if (host->config->modecfg.client)
 			jam_string(buf, "+MC");
-		if (child->config->has_client_address_translation)
-			jam_string(buf, "+CAT");
 		if (host->config->xauth.server)
 			jam_string(buf, "+XS");
 		if (host->config->xauth.client)
@@ -309,7 +306,7 @@ static void jam_client_end(struct jambuf *buf, const struct connection *c,
 		/* HOST */
 		jam_end_host(buf, c, this->host);
 		/* [ID+OPTS] */
-		jam_end_id(buf, this->host, this->child);
+		jam_end_id(buf, this->host);
 		/* ---NEXTHOP */
 		jam_end_nexthop(buf, this->host, that->host, skip_next_hop, side);
 		break;
@@ -319,7 +316,7 @@ static void jam_client_end(struct jambuf *buf, const struct connection *c,
 		/* HOST */
 		jam_end_host(buf, c, this->host);
 		/* [ID+OPTS] */
-		jam_end_id(buf, this->host, this->child);
+		jam_end_id(buf, this->host);
 		/* ===CLIENT/PROTOCOL:PORT */
 		jam_end_client(buf, c, this, side, END_SEPARATOR);
 		break;
