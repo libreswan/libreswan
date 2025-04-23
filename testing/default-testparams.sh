@@ -44,7 +44,7 @@ REF_CONSOLE_FIXUPS+=" ephemeral-ports.sed"
 REF_CONSOLE_FIXUPS+=" ipsec-certutil.sed"
 REF_CONSOLE_FIXUPS+=" guest-taskset.sed"
 REF_CONSOLE_FIXUPS+=" ipsec-auto-up.sed-n"
-REF_CONSOLE_FIXUPS+=" pem.sed-n"
+REF_CONSOLE_FIXUPS+=" pem.sed"
 
 # all.console.txt gets it's own list; add as necessary.  .sed-f
 # scripts are all run from a single sed!

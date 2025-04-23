@@ -30,11 +30,9 @@ west #
 west #
  ipsec showhostkey --pem --ckaid "${ckaid}"
 -----BEGIN PUBLIC KEY-----
-...
 -----END PUBLIC KEY-----
 west #
  ipsec showhostkey --pem --ckaid "${ckaid}" | openssl pkey -inform PEM -pubin
 -----BEGIN PUBLIC KEY-----
-...
 -----END PUBLIC KEY-----
 west #
