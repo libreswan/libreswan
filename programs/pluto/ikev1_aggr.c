@@ -197,8 +197,8 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 	bool send_cr = (mycert != NULL &&
 			!remote_has_preloaded_pubkey(ike) &&
-			(c->local->host.config->sendcert == CERT_SENDIFASKED ||
-			 c->local->host.config->sendcert == CERT_ALWAYSSEND));
+			(c->local->host.config->sendcert == SENDCERT_IFASKED ||
+			 c->local->host.config->sendcert == SENDCERT_ALWAYS));
 
 	dbg("aggr_outI1_tail for #%lu", ike->sa.st_serialno);
 
@@ -547,8 +547,8 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	 * to always send one.
 	 */
 	bool send_cert = (ike->sa.st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == SENDCERT_IFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == SENDCERT_ALWAYS)));
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested,
@@ -855,8 +855,8 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	 * to always send one.
 	 */
 	bool send_cert = (ike->sa.st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == SENDCERT_IFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == SENDCERT_ALWAYS)));
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested,

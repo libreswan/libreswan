@@ -907,18 +907,18 @@ enum_names ikev2_cert_type_names = {
 /*
  * certificate request payload policy
  */
-static const char *const certpolicy_type_name[] = {
-#define S(E) [E - CERT_NEVERSEND] = #E
-	S(CERT_NEVERSEND),
-	S(CERT_SENDIFASKED),
-	S(CERT_ALWAYSSEND),
+static const char *const sendcert_policy_name[] = {
+#define S(E) [E - SENDCERT_NEVER] = #E
+	S(SENDCERT_NEVER),
+	S(SENDCERT_IFASKED),
+	S(SENDCERT_ALWAYS),
 #undef S
 };
 
-enum_names certpolicy_type_names = {
-	CERT_NEVERSEND,
-	CERT_ALWAYSSEND,
-	ARRAY_REF(certpolicy_type_name),
+enum_names sendcert_policy_names = {
+	SENDCERT_NEVER,
+	SENDCERT_ALWAYS,
+	ARRAY_REF(sendcert_policy_name),
 	"CERT_", /* prefix */
 	NULL
 };

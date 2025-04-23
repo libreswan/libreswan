@@ -1431,7 +1431,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
+	host_config->sendcert = src->sendcert == 0 ? SENDCERT_IFASKED : src->sendcert;
 
 	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, logger)) {
 		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
