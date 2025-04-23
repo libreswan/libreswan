@@ -153,9 +153,6 @@ sedup() {
 for fixup in ${REF_CONSOLE_FIXUPS}; do
     # now add the fixup to the pipeline
     case $fixup in
-	*.sed-n) # -n sanitizers suppress output
-	    cleanup ${fixup} sed -n
-	    ;;
 	*.sed)
 	    cleanup ${fixup} sed
 	    ;;
