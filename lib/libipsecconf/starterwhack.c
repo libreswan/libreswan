@@ -335,11 +335,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.dpddelay = conn->values[KSCF_DPDDELAY].string;
 	msg.dpdtimeout = conn->values[KSCF_DPDTIMEOUT].string;
 
-	if (conn->values[KNCF_SEND_CA].set)
-		msg.send_ca = conn->values[KNCF_SEND_CA].option;
-	else
-		msg.send_ca = CA_SEND_NONE;
-
+	msg.sendca = conn->values[KNCF_SENDCA].string;
 
 	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
 

@@ -45,6 +45,7 @@
 #include "end.h"
 #include "shunt.h"
 #include "global_redirect.h"
+#include "send_ca_policy.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -174,7 +175,6 @@ struct whack_end {
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 	enum certpolicy sendcert;
 	enum eap_options eap;
-	bool send_ca;
 	enum ike_cert_type certtype;
 
 	enum yn_options modecfgserver;	/* for MODECFG */
@@ -367,10 +367,9 @@ struct whack_message {
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum keyword_xauthby xauthby;
 
-
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;
-	enum send_ca_policy send_ca;
+	char *sendca;
 
 	/* Force the MTU for this connection */
 	int mtu;

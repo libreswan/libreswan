@@ -6021,6 +6021,31 @@ name for -1 present (should be absent)
          jam_enum_short 7: INVALID OK
          jam_enum_human 7: invalid OK
          match INVALID [short]: OK
+  send_ca_policy_names: [0..3)
+    0 -> CA_SEND_NONE
+         jam_enum 0: CA_SEND_NONE OK
+         search CA_SEND_NONE: OK
+         match CA_SEND_NONE: OK
+         short_name 0: NONE OK
+         jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
+         match NONE [short]: OK
+    1 -> CA_SEND_ISSUER
+         jam_enum 1: CA_SEND_ISSUER OK
+         search CA_SEND_ISSUER: OK
+         match CA_SEND_ISSUER: OK
+         short_name 1: ISSUER OK
+         jam_enum_short 1: ISSUER OK
+         jam_enum_human 1: issuer OK
+         match ISSUER [short]: OK
+    2 -> CA_SEND_ALL
+         jam_enum 2: CA_SEND_ALL OK
+         search CA_SEND_ALL: OK
+         match CA_SEND_ALL: OK
+         short_name 2: ALL OK
+         jam_enum_short 2: ALL OK
+         jam_enum_human 2: all OK
+         match ALL [short]: OK
   shunt_kind_names: [0..7)
     0 -> SHUNT_KIND_NONE
          jam_enum 0: SHUNT_KIND_NONE OK

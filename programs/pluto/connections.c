@@ -868,6 +868,40 @@ static char *extract_string(const char *leftright, const char *name,
 	return clone_str(string, name);
 }
 
+static unsigned extract_enum(const char *leftright,
+			     const char *name,
+			     const char *value, unsigned unset,
+			     const struct enum_names *names,
+			     const struct whack_message *wm,
+			     diag_t *d,
+			     struct logger *logger)
+{
+	(*d) = NULL;
+
+	if (never_negotiate_wm(wm)) {
+		if (value != NULL) {
+			llog(RC_LOG, logger,
+			     "warning: %s%s=%s ignored for never-negotiate connection",
+			     leftright, name, value);
+		}
+		return unset;
+	}
+
+	if (value == NULL) {
+		return unset;
+	}
+
+	int match = enum_match(names, shunk1(value));
+	if (match < 0) {
+		/* include allowed names? */
+		(*d) = diag("%s%s=%s invalid, '%s' unrecognized",
+			    leftright, name, value, value);
+		return 0;
+	}
+
+	return match;
+}
+
 static uintmax_t extract_uintmax(const char *leftright,
 				 const char *name,
 				 const char *value,
@@ -3754,7 +3788,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_vid_cisco_unity = wm->cisco_unity;
 		config->send_vid_fake_strongswan = wm->fake_strongswan;
 		config->send_vendorid = wm->send_vendorid;
-		config->send_ca = wm->send_ca;
+
+		config->send_ca = extract_enum("", "sendca", wm->sendca, CA_SEND_NONE,
+					       &send_ca_policy_names,
+					       wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
+
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
