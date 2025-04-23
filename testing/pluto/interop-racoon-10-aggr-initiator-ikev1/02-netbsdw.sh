@@ -12,7 +12,12 @@ racoonctl establish-sa -w isakmp inet ${left} ${right}
 
 echo "spdadd ${leftsubnet}[any] ${rightsubnet}[any] any -P out ipsec esp/tunnel/${left}-${right}/require;" | setkey -c
 echo "spdadd ${rightsubnet}[any] ${leftsubnet}[any] any -P in  ipsec esp/tunnel/${right}-${left}/require;" | setkey -c
-racoonctl establish-sa -w esp inet ${leftsubnet}/255 ${rightsubnet}/255 any
+
+# can't use -w as it is fakey, see NetBSD 59347
+racoonctl establish-sa esp inet ${leftsubnet}/255 ${rightsubnet}/255 any
+# so instead wait for the SAs to appear
+../../guestbin/wait-for.sh --match "${left} ${right}" -- ipsec _kernel state
+../../guestbin/wait-for.sh --match "${right} ${left}" -- ipsec _kernel state
 
 ipsec _kernel state
 ipsec _kernel policy
