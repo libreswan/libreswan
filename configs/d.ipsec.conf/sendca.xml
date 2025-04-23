@@ -4,12 +4,18 @@
   </term>
   <listitem>
     <para>
-      How much of our available X.509 trust chain to send with the End
-      certificate, excluding any root CA's. Specifying
-      <option>issuer</option> sends just the issuing intermediate CA,
-      while <option> all</option> will send the entire chain of
-      intermediate CA's.<option>none</option> (the default) will not
-      send any CA certs.
+      How many of the available X.509 intermediate CA certificates to
+      send with the End certificate (root CA's are never sent).
+      Specifying <option>none</option> sends no intermediate
+      certificates, <option>issuer</option> sends the End
+      certificate's issuing intermediate CA, and <option>all</option>
+      sends all intermediate CAs (the default).
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.3, the default was
+      <option>none</option> (that is, no intermediate CAs were sent).
+      &Libreswan; never sends intermediate certificates when
+      establishing a connection using IKEv1's Agressive Mode.
     </para>
   </listitem>
 </varlistentry>
