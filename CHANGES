@@ -6,6 +6,7 @@ v5.3 (unreleased)
   - drop undocumented --rootdir{,2} option to `ipsec readwriteconf` [Andrew, #2152]
   - warn when END-option= has no END [Andrew #663]
   - nflog= made an alias to nflog-group= [Andrew]
+  - default whack --sendcert to "always" like addconn [Andrew #2176]
 * PKIX (Public Key Infrastructure X.509)
   - moved cURL and LDAP CRL download code out of pluto [Andrew]
   - replaced CRL thread with libevent [Andrew]
