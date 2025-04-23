@@ -3789,7 +3789,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_vid_fake_strongswan = wm->fake_strongswan;
 		config->send_vendorid = wm->send_vendorid;
 
-		config->send_ca = extract_enum("", "sendca", wm->sendca, CA_SEND_NONE,
+		config->send_ca = extract_enum("", "sendca", wm->sendca,
+					       CA_SEND_ALL,
 					       &send_ca_policy_names,
 					       wm, &d, c->logger);
 		if (d != NULL) {
