@@ -43,6 +43,7 @@
 #include "verbose.h"
 #include "end.h"
 #include "send_ca_policy.h"
+#include "sendcert_policy.h"
 
 #include "defs.h"
 #include "proposals.h"

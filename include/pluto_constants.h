@@ -718,17 +718,6 @@ extern const struct enum_names perspective_names;
 #define IS_PARENT_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY) /* IKEv1 or IKEv2 */
 #define IS_PARENT_SA_ESTABLISHED(ST) (IS_IKE_SA_ESTABLISHED(ST) || IS_ISAKMP_SA_ESTABLISHED(ST))
 
-enum sendcert_policy {
-	SENDCERT_NEVER   = 1,
-	SENDCERT_IFASKED = 2,
-	SENDCERT_ALWAYS  = 3,
-};
-
-/* this is the default setting. */
-#define cert_defaultcertpolicy SENDCERT_ALWAYS
-
-extern const struct sparse_names sendcert_policy_names;
-
 enum ikev1_natt_policy {
 	NATT_BOTH = 1, /* the default */
 	NATT_RFC = 2,

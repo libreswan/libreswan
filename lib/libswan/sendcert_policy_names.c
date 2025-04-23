@@ -13,7 +13,7 @@
  * for more details.
  */
 
-#include "constants.h"
+#include "sendcert_policy.h"
 #include "sparse_names.h"
 
 /*
