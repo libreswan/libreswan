@@ -14,22 +14,25 @@
 
 b end-ipsec-up
 
-:match-ipsec-up
+:drop-ipsec-up
 
-  p
+  # append line into PATTERN space; strip out current line
+  N
+  s/^.*\n//
+  b match-ipsec-up
 
-:noprint-ipsec-up
+:next-ipsec-up
+
+  # replace PATTERN space with next line (printing current)
 
   n
 
-  /^\(\(east\|west\|road\|north\|nic\) #\)$/ b end-ipsec-up
+:match-ipsec-up
 
-  /retransmission; will wait/ b noprint-ipsec-up
+  /^[a-z][a-z]* #$/ b end-ipsec-up
 
-b match-ipsec-up
+  /retransmission; will wait/ b drop-ipsec-up
+
+b next-ipsec-up
 
 :end-ipsec-up
-
-p
-
-:skip-ipsec-up
