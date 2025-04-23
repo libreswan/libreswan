@@ -255,13 +255,13 @@ static void jam_end_id(struct jambuf *buf,
 			jam_string(buf, "+XC");
 
 		switch (host->config->sendcert) {
-		case CERT_NEVERSEND:
+		case SENDCERT_NEVER:
 			jam(buf, "+S-C");
 			break;
-		case CERT_SENDIFASKED:
+		case SENDCERT_IFASKED:
 			jam(buf, "+S?C");
 			break;
-		case CERT_ALWAYSSEND:
+		case SENDCERT_ALWAYS:
 			jam(buf, "+S=C");
 			break;
 		default:

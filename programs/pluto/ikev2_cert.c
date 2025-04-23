@@ -153,13 +153,13 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		return false;
 	}
 
-	if (c->local->host.config->sendcert == CERT_SENDIFASKED &&
+	if (c->local->host.config->sendcert == SENDCERT_IFASKED &&
 	    ike->sa.st_v2_ike_seen_certreq) {
 		dbg("IKEv2 CERT: OK to send certificate (send if asked)");
 		return true;
 	}
 
-	if (c->local->host.config->sendcert == CERT_ALWAYSSEND) {
+	if (c->local->host.config->sendcert == SENDCERT_ALWAYS) {
 		dbg("IKEv2 CERT: OK to send a certificate (always)");
 		return true;
 	}

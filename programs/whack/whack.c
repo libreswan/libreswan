@@ -1569,16 +1569,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SENDCERT:	/* --sendcert */
-			if (streq(optarg, "yes") || streq(optarg, "always")) {
-				end->sendcert = CERT_ALWAYSSEND;
-			} else if (streq(optarg,
-					 "no") || streq(optarg, "never")) {
-				end->sendcert = CERT_NEVERSEND;
-			} else if (streq(optarg, "ifasked")) {
-				end->sendcert = CERT_SENDIFASKED;
-			} else {
-				optarg_fatal(logger, "whack sendcert value is not legal");
-			}
+			end->sendcert = optarg;
 			continue;
 
 		case END_CERT:	/* --cert <path> */

@@ -288,31 +288,6 @@ west #
          jam_enum_short 252: HMAC_SHA2_256_TRUNCBUG OK
          jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
-  certpolicy_type_names: [1..4)
-    1 -> CERT_NEVERSEND
-         jam_enum 1: CERT_NEVERSEND OK
-         search CERT_NEVERSEND: OK
-         match CERT_NEVERSEND: OK
-         short_name 1: NEVERSEND OK
-         jam_enum_short 1: NEVERSEND OK
-         jam_enum_human 1: neversend OK
-         match NEVERSEND [short]: OK
-    2 -> CERT_SENDIFASKED
-         jam_enum 2: CERT_SENDIFASKED OK
-         search CERT_SENDIFASKED: OK
-         match CERT_SENDIFASKED: OK
-         short_name 2: SENDIFASKED OK
-         jam_enum_short 2: SENDIFASKED OK
-         jam_enum_human 2: sendifasked OK
-         match SENDIFASKED [short]: OK
-    3 -> CERT_ALWAYSSEND
-         jam_enum 3: CERT_ALWAYSSEND OK
-         search CERT_ALWAYSSEND: OK
-         match CERT_ALWAYSSEND: OK
-         short_name 3: ALWAYSSEND OK
-         jam_enum_short 3: ALWAYSSEND OK
-         jam_enum_human 3: alwayssend OK
-         match ALWAYSSEND [short]: OK
   connection_event_kind_names: [1..2)
     1 -> CONNECTION_REVIVAL
          jam_enum 1: CONNECTION_REVIVAL OK

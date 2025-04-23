@@ -718,15 +718,6 @@ extern const struct enum_names perspective_names;
 #define IS_PARENT_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY) /* IKEv1 or IKEv2 */
 #define IS_PARENT_SA_ESTABLISHED(ST) (IS_IKE_SA_ESTABLISHED(ST) || IS_ISAKMP_SA_ESTABLISHED(ST))
 
-enum certpolicy {
-	CERT_NEVERSEND   = 1,
-	CERT_SENDIFASKED = 2,   /* the default */
-	CERT_ALWAYSSEND  = 3,
-};
-
-/* this is the default setting. */
-#define cert_defaultcertpolicy CERT_ALWAYSSEND
-
 enum ikev1_natt_policy {
 	NATT_BOTH = 1, /* the default */
 	NATT_RFC = 2,

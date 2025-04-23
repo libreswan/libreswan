@@ -950,8 +950,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	 * to always send one.
 	 */
 	bool send_cert = (ike->sa.st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == SENDCERT_IFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == SENDCERT_ALWAYS)));
 
 	bool send_authcerts = (send_cert &&
 			       c->config->send_ca != CA_SEND_NONE);
@@ -1181,8 +1181,8 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	pexpect(ike->sa.st_clonedfrom == SOS_NOBODY); /* ISAKMP */
 	bool cert_requested = (ike->sa.st_v1_requested_ca != NULL);
 	bool send_cert = (ike->sa.st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == SENDCERT_IFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == SENDCERT_ALWAYS)));
 
 	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
 

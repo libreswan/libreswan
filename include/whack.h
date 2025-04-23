@@ -45,7 +45,6 @@
 #include "end.h"
 #include "shunt.h"
 #include "global_redirect.h"
-#include "send_ca_policy.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -173,7 +172,7 @@ struct whack_end {
 	bool xauth_client;
 	char *xauth_username;
 	enum yn_options cat;		/* IPv4 Client Address Translation */
-	enum certpolicy sendcert;
+	char *sendcert;
 	enum eap_options eap;
 	enum ike_cert_type certtype;
 

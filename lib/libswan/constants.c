@@ -905,25 +905,6 @@ enum_names ikev2_cert_type_names = {
 };
 
 /*
- * certificate request payload policy
- */
-static const char *const certpolicy_type_name[] = {
-#define S(E) [E - CERT_NEVERSEND] = #E
-	S(CERT_NEVERSEND),
-	S(CERT_SENDIFASKED),
-	S(CERT_ALWAYSSEND),
-#undef S
-};
-
-enum_names certpolicy_type_names = {
-	CERT_NEVERSEND,
-	CERT_ALWAYSSEND,
-	ARRAY_REF(certpolicy_type_name),
-	"CERT_", /* prefix */
-	NULL
-};
-
-/*
  * Oakley transform attributes
  * oakley_attr_bit_names does double duty: it is used for enum names
  * and bit names.

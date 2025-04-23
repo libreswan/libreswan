@@ -127,6 +127,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "crypt_hash.h"
+#include "sparse_names.h"
 
 #include "defs.h"
 #include "ike_spi.h"
@@ -2700,9 +2701,9 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 			 str_enum(&oakley_auth_names, ike->sa.st_oakley.auth, &oan),
 			 str_enum(&ike_cert_type_names, certtype, &ictn));
 
-		esb_buf cptn;
+		name_buf cptn;
 		LDBG_log(logger, "  sendcert: %s and I did%s get a certificate request ",
-			 str_enum(&certpolicy_type_names, c->local->host.config->sendcert, &cptn),
+			 str_sparse(&sendcert_policy_names, c->local->host.config->sendcert, &cptn),
 			 gotcertrequest ? "" : " not");
 
 		LDBG_log(logger, "  so %ssend cert.", send_cert ? "" : "do not ");
@@ -2712,7 +2713,7 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 				LDBG_log(logger, "I did not send a certificate because digital signatures are not being used. (PSK)");
 			} else if (certtype == CERT_NONE) {
 				LDBG_log(logger, "I did not send a certificate because I do not have one.");
-			} else if (c->local->host.config->sendcert == CERT_SENDIFASKED) {
+			} else if (c->local->host.config->sendcert == SENDCERT_IFASKED) {
 				LDBG_log(logger, "I did not send my certificate because I was not asked to.");
 			} else {
 				LDBG_log(logger, "INVALID AUTH SETTING: %d", ike->sa.st_oakley.auth);

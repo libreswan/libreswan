@@ -341,6 +341,7 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_STRING(&end->subnet) &&
 		PICKLE_STRING(&end->subnets) &&
 		PICKLE_STRING(&end->sourceip) &&
+		PICKLE_STRING(&end->sendcert) &&
 		true);
 }
 
