@@ -59,7 +59,7 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 			    enum ike_cert_type certtype,
 			    bool gotcertrequest,
 			    bool send_cert,
-			    bool send_chain);
+			    unsigned send_chain);
 
 /* Parent capable of sending messages.  */
 struct ike_sa *established_isakmp_sa_for_state(struct state *st, bool viable_parent);

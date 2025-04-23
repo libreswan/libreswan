@@ -956,23 +956,12 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	bool send_authcerts = (send_cert &&
 			       c->config->send_ca != CA_SEND_NONE);
 
-	/*****
-	 * From here on, if send_authcerts, we are obligated to:
-	 * free_auth_chain(auth_chain, chain_len);
-	 *****/
-
+	/* must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->config->send_ca == CA_SEND_ALL);
-		if (chain_len == 0)
-			send_authcerts = false;
-	}
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
-			       cert_requested, send_cert, send_authcerts);
+			       cert_requested, send_cert, chain_len);
 
 	/*
 	 * send certificate request, if we don't have a preloaded RSA
@@ -1197,23 +1186,12 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
 
-	/*****
-	 * From here on, if send_authcerts, we are obligated to:
-	 * free_auth_chain(auth_chain, chain_len);
-	 *****/
-
+	/* Must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->config->send_ca == CA_SEND_ALL);
-		if (chain_len == 0)
-			send_authcerts = false;
-	}
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
-			       cert_requested, send_cert, send_authcerts);
+			       cert_requested, send_cert, chain_len);
 
 	/*
 	 * Build output packet HDR*;IDir;HASH/SIG_R

@@ -532,10 +532,13 @@ void free_auth_chain(chunk_t *chain, int chain_len)
 }
 
 int get_auth_chain(chunk_t *out_chain, int chain_max,
-		   const struct cert *cert, bool full_chain)
+		   const struct cert *cert,
+		   enum send_ca_policy send_policy)
 {
-	if (cert == NULL)
+	if (cert == NULL) {
 		return 0;
+	}
+
 	CERTCertificate *end_cert = cert->nss_cert;
 	if (end_cert == NULL) {
 		return 0;
@@ -550,43 +553,61 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
 
-	if (!full_chain) {
+	switch (send_policy) {
+
+	case CA_SEND_NONE:
+		return 0;
+
+	case CA_SEND_ISSUER:
+	{
 		/*
-		 * just the issuer unless it's a root
+		 * Just the issuer unless it's a root
 		 */
-		CERTCertificate *is = CERT_FindCertByName(handle,
-					&end_cert->derIssuer);
-		if (is == NULL || is->isRoot)
+		CERTCertificate *is = CERT_FindCertByName(handle, &end_cert->derIssuer);
+		if (is == NULL) {
 			return 0;
+		}
+
+		if (is->isRoot) {
+			CERT_DestroyCertificate(is);
+			return 0;
+		}
 
 		out_chain[0] = clone_secitem_as_chunk(is->derCert, "derCert");
-		CERT_DestroyCertificate(is);
 		return 1;
 	}
 
-	CERTCertificateList *chain =
-		CERT_CertChainFromCert(end_cert, certUsageAnyCA, PR_FALSE);
+	case CA_SEND_ALL:
+	{
+		CERTCertificateList *chain =
+			CERT_CertChainFromCert(end_cert, certUsageAnyCA, PR_FALSE);
 
-	if (chain == NULL)
-		return 0;
+		if (chain == NULL)
+			return 0;
 
-	if (chain->len < 1)
-		return 0;
+		if (chain->len < 1)
+			return 0;
 
-	int n = chain->len < chain_max ? chain->len : chain_max;
-	int i, j;
+		int n = chain->len < chain_max ? chain->len : chain_max;
+		int i, j;
 
-	/* only non-root CAs in the resulting chain */
-	for (i = 0, j = 0; i < n; i++) {
-		if (!CERT_IsRootDERCert(&chain->certs[i]) &&
-				CERT_IsCADERCert(&chain->certs[i], NULL)) {
-			out_chain[j++] = clone_secitem_as_chunk(chain->certs[i], "cert");
+		/* only non-root CAs in the resulting chain */
+		for (i = 0, j = 0; i < n; i++) {
+			if (!CERT_IsRootDERCert(&chain->certs[i]) &&
+			    CERT_IsCADERCert(&chain->certs[i], NULL)) {
+				out_chain[j++] = clone_secitem_as_chunk(chain->certs[i], "cert");
+			}
 		}
+
+		CERT_DestroyCertificateList(chain);
+		return j;
 	}
 
-	CERT_DestroyCertificateList(chain);
+	default:
+		bad_case(send_policy);
+	}
 
-	return j;
+	return 0;
 }
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)

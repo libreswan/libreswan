@@ -550,27 +550,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
 			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
-	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
-
-	/*****
-	 * From here on, if send_authcerts, we are obligated to:
-	 * free_auth_chain(auth_chain, chain_len);
-	 *****/
-
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->config->send_ca == CA_SEND_ALL);
-
-		if (chain_len == 0)
-			send_authcerts = false;
-	}
-
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested,
-			       send_cert, send_authcerts);
+			       send_cert, 0/*chain_len*/);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
 	bool send_cr = send_cert && !remote_has_preloaded_pubkey(ike);
@@ -596,9 +578,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
-			free_auth_chain(auth_chain, chain_len);
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -613,7 +593,6 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody,
 				&r_sa_pbs)) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -622,7 +601,6 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 							    &sa_pd->payload.sa,
 							    &r_sa_pbs, false, ike);
 		if (rn != v1N_NOTHING_WRONG) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL_v1N + rn;
 		}
 	}
@@ -636,13 +614,11 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 
 	/* KE */
 	if (!ikev1_justship_KE(ike->sa.logger, &ike->sa.st_gr, &rbody)) {
-		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* Nr */
 	if (!ikev1_justship_nonce(&ike->sa.st_nr, &rbody, "Nr")) {
-		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -656,7 +632,6 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
 		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -675,15 +650,10 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 				&rbody,
 				&cert_pbs) ||
 		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&cert_pbs);
 	}
-
-	free_auth_chain(auth_chain, chain_len);
-
-	/***** obligation to free_auth_chain has been discharged *****/
 
 	/* CERTREQ out */
 	if (send_cr) {
@@ -888,27 +858,9 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
 			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
-	bool send_authcerts = (send_cert && c->config->send_ca != CA_SEND_NONE);
-
-	/*****
-	 * From here on, if send_authcerts, we are obligated to:
-	 * free_auth_chain(auth_chain, chain_len);
-	 *****/
-
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
-					   c->config->send_ca == CA_SEND_ALL);
-
-		if (chain_len == 0)
-			send_authcerts = false;
-	}
-
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested,
-			       send_cert, send_authcerts);
+			       send_cert, 0/*chain_len*/);
 
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
 
@@ -931,7 +883,6 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&rbody)) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -953,16 +904,11 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 				&rbody,
 				&cert_pbs) ||
 		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
 		close_output_pbs(&cert_pbs);
 	}
-
-	free_auth_chain(auth_chain, chain_len);
-
-	/***** obligation to free_auth_chain has been discharged *****/
 
 	/* [ NAT-D, NAT-D ] */
 	/* ??? why does this come before AUTH payload? */
