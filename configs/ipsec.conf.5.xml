@@ -189,7 +189,7 @@
 <!ENTITY vti-shared SYSTEM "d.ipsec.conf/vti-shared.xml">
 <!ENTITY xauthby SYSTEM "d.ipsec.conf/xauthby.xml">
 <!ENTITY xauthfail SYSTEM "d.ipsec.conf/xauthfail.xml">
-<!ENTITY xfrmlifetime SYSTEM "d.ipsec.conf/xfrmlifetime.xml">
+<!ENTITY expire-lifetime SYSTEM "d.ipsec.conf/expire-lifetime.xml">
 
 <!ENTITY Libreswan '<application>Libreswan</application>'>
 <!ENTITY Linux '<application>Linux</application>'>
@@ -436,7 +436,7 @@
       &max-halfopen-ike;
       &expire-shunt-interval;
       &shuntlifetime;
-      &xfrmlifetime;
+      &expire-lifetime;
       &dumpdir;
       &statsbin;
       &ipsecdir;
