@@ -2,9 +2,16 @@
 
 /^ [a-z ]*certutil /,/^[a-z][a-z]* #$/ {
 
-  # strip out any raw keys
+  # strip out any raw keys or blank lines
 :ipsec-certutil-strip
+
   /^ *[^a-fA-F0-9][a-fA-F0-9][a-fA-F0-9]:/ {
+    N
+    s/.*\n//
+    b ipsec-certutil-strip
+  }
+
+  /^$/ {
     N
     s/.*\n//
     b ipsec-certutil-strip
