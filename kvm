@@ -428,7 +428,7 @@ kvm_test_flags=$(print-kvm-variable KVM_TEST_FLAGS)
 
 run()
 {
-    echo "$@"
+    echo "$@" 1>&2
     if test -z "${echo}" ; then
 	"$@"
     fi
