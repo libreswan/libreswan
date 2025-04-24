@@ -40,6 +40,7 @@ west #
 "westnet-eastnet-compress":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-compress":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-compress":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-compress":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-compress":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-compress":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-compress":   routing: unrouted;

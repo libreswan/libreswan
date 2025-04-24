@@ -114,6 +114,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 0,0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-ipv4-psk-ikev2":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;

@@ -117,6 +117,7 @@ Connection list:
 "west-east":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west-east":   our idtype: ID_NULL; our id=ID_NULL; their idtype: ID_NULL; their id=ID_NULL
+"west-east":   sendca: all; our sendcert: always; their sendcert: always;
 "west-east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "west-east":   nat-traversal: encapsulation:auto; keepalive:20s
 "west-east":   routing: routed-ondemand;

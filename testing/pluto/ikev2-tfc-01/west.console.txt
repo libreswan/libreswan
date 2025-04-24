@@ -42,6 +42,7 @@ west #
 "tfc":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "tfc":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "tfc":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"tfc":   sendca: all; our sendcert: always; their sendcert: always;
 "tfc":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "tfc":   nat-traversal: encapsulation:auto; keepalive:20s
 "tfc":   routing: unrouted;

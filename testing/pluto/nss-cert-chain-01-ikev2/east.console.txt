@@ -37,6 +37,7 @@ east #
 "nss-cert-chain":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "nss-cert-chain":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"nss-cert-chain":   sendca: all; our sendcert: always; their sendcert: always;
 "nss-cert-chain":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "nss-cert-chain":   nat-traversal: encapsulation:auto; keepalive:20s
 "nss-cert-chain":   routing: unrouted;

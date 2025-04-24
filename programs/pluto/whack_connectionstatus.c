@@ -912,6 +912,25 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_id(buf, &c->remote->host.id);
 	}
 
+	/* sendcert+sendca */
+
+	SHOW_JAMBUF(s, buf) {
+		jam_connection_short(buf, c);
+		jam_string(buf, ":  ");
+		jam_string(buf, " sendca: ");
+		jam_enum_human(buf, &send_ca_policy_names, c->config->send_ca);
+		jam_string(buf, ";");
+		const char *who = "our";
+		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
+			jam_string(buf, " ");
+			jam_string(buf, who);
+			jam_string(buf, " sendcert: ");
+			jam_sparse(buf, &sendcert_policy_names, end->sendcert);
+			jam_string(buf, ";");
+			who = "their";
+		}
+	}
+
 	switch (c->config->ike_version) {
 	case IKEv1:
 		SHOW_JAMBUF(s, buf) {

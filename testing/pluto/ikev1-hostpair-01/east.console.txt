@@ -31,6 +31,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "roadnet-eastnet-ipv4-psk-ikev1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "roadnet-eastnet-ipv4-psk-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"roadnet-eastnet-ipv4-psk-ikev1":   sendca: all; our sendcert: always; their sendcert: always;
 "roadnet-eastnet-ipv4-psk-ikev1":   dpd: passive; delay:0s; timeout:0s
 "roadnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "roadnet-eastnet-ipv4-psk-ikev1":   routing: unrouted;
@@ -51,6 +52,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   conn_prio: 32,32,1; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   sendca: all; our sendcert: always; their sendcert: always;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   dpd: passive; delay:0s; timeout:0s
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   routing: routed-tunnel; owner: IPsec SA #4; established ISAKMP SA: #3; established IPsec SA: #4;

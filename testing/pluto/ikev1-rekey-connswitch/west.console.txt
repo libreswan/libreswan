@@ -141,6 +141,7 @@ west #
 "TUNNEL-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-A":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
@@ -162,6 +163,7 @@ west #
 "TUNNEL-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "TUNNEL-B":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-B":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-B":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-B":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-B":   routing: unrouted;
@@ -182,6 +184,7 @@ west #
 "TUNNEL-C":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-C":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-C":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
@@ -214,6 +217,7 @@ west #
 "TUNNEL-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-A":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-A":   routing: routed-tunnel; established IPsec SA: #2;
@@ -235,6 +239,7 @@ west #
 "TUNNEL-C":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-C":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-C":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "TUNNEL-C":   routing: routed-tunnel; established IPsec SA: #4;
