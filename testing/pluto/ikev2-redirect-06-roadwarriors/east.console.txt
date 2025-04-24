@@ -42,7 +42,7 @@ east #
  ipsec connectionstatus
 Connection list:
  
-"east-any": 0.0.0.0/0===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+S=C]...%any[%fromcert,+MC+S=C]==={192.0.2.101-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
+"east-any": 0.0.0.0/0===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS]...%any[%fromcert,+MC]==={192.0.2.101-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "east-any":   host: oriented; local: 192.1.2.23; remote: %any;
 "east-any":   mycert=east; my_updown=ipsec _updown;
 "east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

@@ -235,8 +235,7 @@ static void jam_end_id(struct jambuf *buf,
 	if (host->config->modecfg.server ||
 	    host->config->modecfg.client ||
 	    host->config->xauth.server ||
-	    host->config->xauth.client ||
-	    host->config->sendcert != cert_defaultcertpolicy) {
+	    host->config->xauth.client) {
 
 		if (open_paren) {
 			jam_string(buf, ",");
@@ -254,19 +253,6 @@ static void jam_end_id(struct jambuf *buf,
 		if (host->config->xauth.client)
 			jam_string(buf, "+XC");
 
-		switch (host->config->sendcert) {
-		case SENDCERT_NEVER:
-			jam(buf, "+S-C");
-			break;
-		case SENDCERT_IFASKED:
-			jam(buf, "+S?C");
-			break;
-		case SENDCERT_ALWAYS:
-			jam(buf, "+S=C");
-			break;
-		default:
-			jam(buf, "+UNKNOWN");
-		}
 	}
 
 	if (open_paren) {

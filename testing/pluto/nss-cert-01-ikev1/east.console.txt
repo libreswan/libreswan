@@ -10,7 +10,7 @@ east #
 "nss-cert": added IKEv1 connection
 east #
  ipsec auto --status |grep nss-cert
-"nss-cert": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,+S-C]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org,+S-C]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=192.0.1.254;
+"nss-cert": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=192.0.1.254;
 "nss-cert":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "nss-cert":   mycert=east; peercert=west; my_updown=ipsec _updown;
 "nss-cert":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
