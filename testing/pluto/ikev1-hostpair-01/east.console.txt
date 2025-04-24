@@ -15,7 +15,7 @@ east #
 initdone
 east #
  ipsec status | grep eastnet
-"roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...%any[%fromcert,+MC+XS+S=C]==={192.0.2.1-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
+"roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS]...%any[%fromcert,+MC+XS]==={192.0.2.1-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "roadnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: %any;
 "roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
 "roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
@@ -36,7 +36,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "roadnet-eastnet-ipv4-psk-ikev1":   routing: unrouted;
 "roadnet-eastnet-ipv4-psk-ikev1":   conn serial: $1;
-"roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS+S=C]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS+S=C]==={192.0.2.1/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
+"roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS+XS]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+XS]==={192.0.2.1/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established ISAKMP SA: #3;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]

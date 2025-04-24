@@ -101,7 +101,7 @@ stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs=
  
 Connection list:
  
-"rw-eastnet-ipv6": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS+S=C]...%any[+MC+S=C]==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;
+"rw-eastnet-ipv6": 2001:db8:0:2::/64===2001:db8:1:2::23[@east,MS]...%any[+MC]==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;
 "rw-eastnet-ipv6":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "rw-eastnet-ipv6":   my_updown=ipsec _updown;
 "rw-eastnet-ipv6":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]

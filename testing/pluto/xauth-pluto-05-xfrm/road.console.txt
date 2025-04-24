@@ -20,7 +20,7 @@ road #
 "modecfg-road-eastnet-psk": added IKEv1 connection
 road #
  ipsec whack --status | grep modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": 192.1.3.194[@roadrandom,+MC+XC+S=C]---192.1.3.254...192.1.2.23[@east,MS+XS+S=C]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"modecfg-road-eastnet-psk": 192.1.3.194[@roadrandom,+MC+XC]---192.1.3.254...192.1.2.23[@east,MS+XS]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "modecfg-road-eastnet-psk":   host: oriented; local: 192.1.3.194; remote: 192.1.2.23;
 "modecfg-road-eastnet-psk":   my_updown=ipsec _updown;
 "modecfg-road-eastnet-psk":   xauth us:client, xauth them:server,  my_username=[any]; their_username=[any]
