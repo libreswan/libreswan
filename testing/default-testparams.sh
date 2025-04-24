@@ -7,7 +7,6 @@ REF_CONSOLE_FIXUPS=""
 REF_CONSOLE_FIXUPS+=" nocr.sed"
 
 REF_CONSOLE_FIXUPS+=" kernel.sed"
-REF_CONSOLE_FIXUPS+=" kernel-failed-to-disable-lr0.sed"
 
 # basic prompt et.al. cleanup
 REF_CONSOLE_FIXUPS+=" prompt.sed"
