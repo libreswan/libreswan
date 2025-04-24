@@ -1235,9 +1235,9 @@ int main(int argc, char **argv)
 			pluto_nflog_group = cfg->setup[KBF_NFLOG_ALL].option;
 #endif
 
-#ifdef XFRM_LIFETIME_DEFAULT
-			pluto_expire_lifetime = cfg->setup[KBF_EXPIRE_LIFETIME].option;
-#endif
+			if (cfg->setup[KBF_EXPIRE_LIFETIME].deltatime.is_set) {
+				pluto_expire_lifetime = cfg->setup[KBF_EXPIRE_LIFETIME].deltatime;
+			}
 
 			/* no config option: rundir */
 			/* secretsfile= */
@@ -1876,9 +1876,7 @@ void show_setup_plutomain(struct show *s)
 		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
 		jam(buf, ", dnssec-enable=%s", bool_str(do_dnssec));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
-#ifdef XFRM_LIFETIME_DEFAULT
-		jam(buf, ", xfrmlifetime=%jds", (intmax_t) pluto_expire_lifetime);
-#endif
+		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
 	}
 
 	show_log(s);
