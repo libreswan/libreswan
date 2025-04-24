@@ -72,7 +72,7 @@ north #
  ipsec connectionstatus
 Connection list:
  
-"north-east": 192.0.2.102/32===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org,+MC]---192.1.3.254...192.1.2.45<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS]===0.0.0.0/0; routed-tunnel; my_ip=192.0.2.102; their_ip=unset;
+"north-east": 192.0.2.102/32===192.1.3.33[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]---192.1.3.254...192.1.2.45<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; routed-tunnel; my_ip=192.0.2.102; their_ip=unset;
 "north-east":   host: oriented; local: 192.1.3.33; remote: 192.1.2.45<192.1.2.23>; established IKE SA: #3;
 "north-east":   mycert=north; my_updown=ipsec _updown;
 "north-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
