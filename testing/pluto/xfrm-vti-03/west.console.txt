@@ -83,7 +83,7 @@ west #
  # our two ranges should orute into the vti device
 west #
  ../../guestbin/ip.sh route list
-default via 192.1.2.254 dev eth1
+default via 192.1.2.254 dev eth1 proto static
 10.0.2.0/24 dev ipsec0 scope link
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 dev ipsec0 scope link

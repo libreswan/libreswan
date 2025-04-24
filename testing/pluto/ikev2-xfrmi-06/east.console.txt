@@ -45,8 +45,8 @@ east #
 32767:	from all lookup default
 east #
  ../../guestbin/ip.sh route show
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
+default via 192.1.2.254 dev eth1 proto static
+192.0.1.0/24 via 192.1.2.45 dev eth1 proto static onlink
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
 192.0.2.1 dev ipsec1 scope link
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23

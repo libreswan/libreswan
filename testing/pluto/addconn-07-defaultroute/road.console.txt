@@ -1,13 +1,13 @@
 /testing/guestbin/swan-prep --46
 road #
  ../../guestbin/ip.sh -4 route
-default via 192.1.3.254 dev eth0
+default via 192.1.3.254 dev eth0 proto static
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
  ../../guestbin/ip.sh -6 route
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
-default via 2001:db8:1:3::254 dev eth0
+default via 2001:db8:1:3::254 dev eth0 proto static
 road #
  # %any
 road #
@@ -16,7 +16,7 @@ local 0.0.0.0 dev lo src 127.0.0.1 uid 0
     cache <local>
 road #
  ../../guestbin/ip.sh -6 route get to ::
-:: from :: via 2001:db8:1:3::254 dev eth0
+:: from :: via 2001:db8:1:3::254 dev eth0 proto static src fe80::1000:ff:feab:cd02 metric 1024 pref medium
 road #
  # gateway
 road #
@@ -34,7 +34,7 @@ road #
     cache
 road #
  ../../guestbin/ip.sh -6 route get to 2001:db8:1:2::23
-2001:db8:1:2::23 from :: via 2001:db8:1:3::254 dev eth0
+2001:db8:1:2::23 from :: via 2001:db8:1:3::254 dev eth0 proto static src 2001:db8:1:3::209 metric 1024 pref medium
 road #
  # simple case, peer known
 road #
@@ -179,7 +179,7 @@ road #
  ../../guestbin/ip.sh -6 route   add dev eth0 2001:db8:1:2::23 via 2001:db8:1:3::254 src 2001:db8:0:2::1
 road #
  ../../guestbin/ip.sh -4 route
-default via 192.1.3.254 dev eth0
+default via 192.1.3.254 dev eth0 proto static
 192.1.2.23 via 192.1.3.254 dev eth0 src 192.0.2.1
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
@@ -188,7 +188,7 @@ road #
 2001:db8:1:2::23 via 2001:db8:1:3::254 dev eth0 src 2001:db8:0:2::1 metric 1024 pref medium
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
-default via 2001:db8:1:3::254 dev eth0
+default via 2001:db8:1:3::254 dev eth0 proto static
 road #
  ipsec addconn --verbose ipv4-src-group 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
   overriding auto=ignore with auto=add
@@ -241,13 +241,13 @@ road #
  ip -6 address del dev eth0  2001:db8:0:2::1
 road #
  ../../guestbin/ip.sh -4 route
-default via 192.1.3.254 dev eth0
+default via 192.1.3.254 dev eth0 proto static
 192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
 road #
  ../../guestbin/ip.sh -6 route
 2001:db8:1:3::/64 dev eth0 proto kernel metric 256 pref medium
 fe80::/64 dev eth0 proto kernel metric 256 pref medium
-default via 2001:db8:1:3::254 dev eth0
+default via 2001:db8:1:3::254 dev eth0 proto static
 road #
  # messed up default (see ipv6-addresspool-05-dual-stack)
 road #

@@ -19,7 +19,7 @@ north #
  # add default gw, it could have been deleted due address changes
 north #
  ../../guestbin/ip.sh route | grep default || ip route add default via 192.1.3.254
-default via 192.1.3.254 dev eth1
+default via 192.1.3.254 dev eth1 proto static
 north #
  # routes and addresses setup for the test
 north #
@@ -81,7 +81,7 @@ north #
  # remove this end ip next one will take over
 north #
  ../../guestbin/ip.sh route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
-default via 192.1.3.254 dev eth1
+default via 192.1.3.254 dev eth1 proto static
 north #
  ../../guestbin/ip.sh route show scope global | grep 192.1.8.254 || ip route add default via 192.1.8.254
 north #
