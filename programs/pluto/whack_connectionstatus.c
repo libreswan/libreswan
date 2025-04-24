@@ -223,39 +223,11 @@ static void jam_end_id(struct jambuf *buf,
 		       const struct host_end *host)
 {
 	/* id, if different from host */
-	bool open_paren = false;
 	if (!(host->id.kind == ID_NONE ||
 	      (id_is_ipaddr(&host->id) &&
 	       sameaddr(&host->id.ip_addr, &host->addr)))) {
-		open_paren = true;
 		jam_string(buf, "[");
 		jam_id_bytes(buf, &host->id, jam_sanitized_bytes);
-	}
-
-	if (host->config->modecfg.server ||
-	    host->config->modecfg.client ||
-	    host->config->xauth.server ||
-	    host->config->xauth.client) {
-
-		if (open_paren) {
-			jam_string(buf, ",");
-		} else {
-			open_paren = true;
-			jam_string(buf, "[");
-		}
-
-		if (host->config->modecfg.server)
-			jam_string(buf, "MS");
-		if (host->config->modecfg.client)
-			jam_string(buf, "+MC");
-		if (host->config->xauth.server)
-			jam_string(buf, "+XS");
-		if (host->config->xauth.client)
-			jam_string(buf, "+XC");
-
-	}
-
-	if (open_paren) {
 		jam_string(buf, "]");
 	}
 }

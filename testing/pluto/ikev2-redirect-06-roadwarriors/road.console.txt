@@ -72,7 +72,7 @@ road #
  ipsec connectionstatus
 Connection list:
  
-"road-east": 192.0.2.101/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC]---192.1.3.254...192.1.2.45<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org,MS]===0.0.0.0/0; routed-tunnel; my_ip=192.0.2.101; their_ip=unset;
+"road-east": 192.0.2.101/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]---192.1.3.254...192.1.2.45<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; routed-tunnel; my_ip=192.0.2.101; their_ip=unset;
 "road-east":   host: oriented; local: 192.1.3.209; remote: 192.1.2.45<192.1.2.23>; established IKE SA: #3;
 "road-east":   mycert=road; my_updown=ipsec _updown;
 "road-east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
