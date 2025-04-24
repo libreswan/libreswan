@@ -11,7 +11,6 @@ REF_CONSOLE_FIXUPS+=" kernel.sed"
 # basic prompt et.al. cleanup
 REF_CONSOLE_FIXUPS+=" prompt.sed"
 
-REF_CONSOLE_FIXUPS+=" wilog.sed"
 REF_CONSOLE_FIXUPS+=" routes.sed"
 REF_CONSOLE_FIXUPS+=" pluto-whack-sanitize.sed"
 REF_CONSOLE_FIXUPS+=" host-ping-sanitize.sed"

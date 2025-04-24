@@ -45,6 +45,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: I am sending my cert
 "ikev2-westnet-eastnet-x509-cr" #1: I am sending a certificate request
 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode I3
+"ikev2-westnet-eastnet-x509-cr" #1: Peer ID is ID_IPV4_ADDR: '192.1.2.23'
 "ikev2-westnet-eastnet-x509-cr" #1: peer certificate contains no subjectAltName extension to match ID_IPV4_ADDR '192.1.2.23'
 "ikev2-westnet-eastnet-x509-cr" #1: X509: connection allows unmatched IKE ID and certificate SAN
 "ikev2-westnet-eastnet-x509-cr" #1: authenticated peer certificate '192.1.2.23' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
