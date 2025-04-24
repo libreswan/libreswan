@@ -53,7 +53,7 @@ Error: ipv4: FIB table does not exist.
 Dump terminated
 east #
  ../../guestbin/ip.sh route
-default via 192.1.2.254 dev eth1
+default via 192.1.2.254 dev eth1 proto static
 192.0.1.0/24 dev ipsec1 scope link
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
 192.0.3.0/24 dev ipsec1 scope link

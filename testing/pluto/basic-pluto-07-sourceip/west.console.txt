@@ -27,9 +27,9 @@ west #
 "westnet-east-sourceip" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ../../guestbin/ip.sh route list
-default via 192.1.2.254 dev eth1
+default via 192.1.2.254 dev eth1 proto static
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
+192.0.2.0/24 via 192.1.2.23 dev eth1 proto static onlink
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 192.1.2.23 dev eth1 scope link src 10.199.199.254
 west #

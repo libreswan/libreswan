@@ -121,7 +121,7 @@ X: ipsec0@NONE: <NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
     link/ipip 192.1.2.45 brd 0.0.0.0
 west #
  ../../guestbin/ip.sh route show
-default via 192.1.2.254 dev eth1
+default via 192.1.2.254 dev eth1 proto static
 10.0.2.0/24 dev ipsec0 scope link
 192.0.1.0/24 dev ipsec0 proto kernel scope link src 192.0.1.254
 192.0.2.0/24 dev ipsec0 scope link

@@ -169,9 +169,9 @@ west #
 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ip.sh route list
-default via 192.1.2.254 dev eth1
+default via 192.1.2.254 dev eth1 proto static
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
+192.0.2.0/24 via 192.1.2.23 dev eth1 proto static onlink
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
 west #
  ipsec _kernel state
