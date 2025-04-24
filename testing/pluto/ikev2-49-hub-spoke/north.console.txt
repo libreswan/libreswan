@@ -122,6 +122,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
+"northnet-westnet-ipv4-psk":   sendca: all; our sendcert: always; their sendcert: always;
 "northnet-westnet-ipv4-psk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s
 "northnet-westnet-ipv4-psk":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;

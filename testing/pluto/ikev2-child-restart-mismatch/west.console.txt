@@ -94,6 +94,7 @@ west #
 "westnet-eastnet-ikev2b":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-ikev2b":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-ikev2b":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2b":   routing: unrouted;
@@ -114,6 +115,7 @@ west #
 "westnet-eastnet-ikev2c":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-ikev2c":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-ikev2c":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ikev2c":   routing: unrouted;

@@ -51,6 +51,7 @@ Connection list:
 "east-any":   conn_prio: 0,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"east-any":   sendca: all; our sendcert: always; their sendcert: always;
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;

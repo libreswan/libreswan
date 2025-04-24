@@ -50,6 +50,7 @@ Connection list:
 "east-any":   conn_prio: 0,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
+"east-any":   sendca: all; our sendcert: always; their sendcert: always;
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;
@@ -71,6 +72,7 @@ Connection list:
 "east-any"[1]:   conn_prio: 0,32,1; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
+"east-any"[1]:   sendca: all; our sendcert: always; their sendcert: always;
 "east-any"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "east-any"[1]:   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #1; established Child SA: #2;
@@ -94,6 +96,7 @@ Connection list:
 "east-any"[2]:   conn_prio: 0,32,1; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any"[2]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any"[2]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
+"east-any"[2]:   sendca: all; our sendcert: always; their sendcert: always;
 "east-any"[2]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "east-any"[2]:   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any"[2]:   routing: routed-tunnel; owner: Child SA #4; established IKE SA: #3; established Child SA: #4;

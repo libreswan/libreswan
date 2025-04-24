@@ -51,6 +51,7 @@ east #
 "road-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-A":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id=@someone.testing.libreswan.org
+"road-A":   sendca: none; our sendcert: always; their sendcert: always;
 "road-A":   dpd: passive; delay:0s; timeout:0s
 "road-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "road-A":   routing: unrouted;
@@ -71,6 +72,7 @@ east #
 "road-chain-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-chain-B":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id=@west_chain_endcert.testing.libreswan.org
+"road-chain-B":   sendca: none; our sendcert: always; their sendcert: always;
 "road-chain-B":   dpd: passive; delay:0s; timeout:0s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "road-chain-B":   routing: unrouted;

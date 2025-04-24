@@ -26,6 +26,7 @@ east #
 "east-any":   conn_prio: 32,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "east-any":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
+"east-any":   sendca: all; our sendcert: always; their sendcert: always;
 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "east-any":   nat-traversal: encapsulation:auto; keepalive:20s
 "east-any":   routing: unrouted;

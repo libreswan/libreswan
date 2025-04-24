@@ -47,6 +47,7 @@ west #
 "road-chain-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "road-chain-B":   our idtype: ID_FQDN; our id=@west_chain_endcert.testing.libreswan.org; their idtype: ID_FQDN; their id=@east.testing.libreswan.org
+"road-chain-B":   sendca: all; our sendcert: always; their sendcert: always;
 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s
 "road-chain-B":   routing: unrouted;

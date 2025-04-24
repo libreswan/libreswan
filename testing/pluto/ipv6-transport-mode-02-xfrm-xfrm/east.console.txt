@@ -117,6 +117,7 @@ Connection list:
 "v6-transport":   conn_prio: 128,128,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "v6-transport":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"v6-transport":   sendca: all; our sendcert: always; their sendcert: always;
 "v6-transport":   dpd: passive; delay:0s; timeout:0s
 "v6-transport":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "v6-transport":   routing: unrouted;

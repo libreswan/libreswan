@@ -39,6 +39,7 @@ east #
 "north-eastnets/0x1":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "north-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-eastnets/0x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
+"north-eastnets/0x1":   sendca: all; our sendcert: always; their sendcert: always;
 "north-eastnets/0x1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "north-eastnets/0x1":   nat-traversal: encapsulation:auto; keepalive:20s
 "north-eastnets/0x1":   routing: unrouted;
@@ -61,6 +62,7 @@ east #
 "north-eastnets/0x2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "north-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "north-eastnets/0x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
+"north-eastnets/0x2":   sendca: all; our sendcert: always; their sendcert: always;
 "north-eastnets/0x2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "north-eastnets/0x2":   nat-traversal: encapsulation:auto; keepalive:20s
 "north-eastnets/0x2":   routing: unrouted;

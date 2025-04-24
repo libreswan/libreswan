@@ -59,6 +59,7 @@ interface eth1 192.1.2.23:UDP/500
 "192.1.2.23-to-192.1.2.45":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "192.1.2.23-to-192.1.2.45":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "192.1.2.23-to-192.1.2.45":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %fromcert; their id=%fromcert
+"192.1.2.23-to-192.1.2.45":   sendca: all; our sendcert: always; their sendcert: always;
 "192.1.2.23-to-192.1.2.45":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "192.1.2.23-to-192.1.2.45":   nat-traversal: encapsulation:auto; keepalive:20s
 "192.1.2.23-to-192.1.2.45":   routing: routed-ondemand;

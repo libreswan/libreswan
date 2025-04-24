@@ -25,6 +25,7 @@ east #
 "westnet-eastnet-aggr":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-aggr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-aggr":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"westnet-eastnet-aggr":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-aggr":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-aggr":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
 "westnet-eastnet-aggr":   routing: unrouted;

@@ -112,6 +112,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"westnet-eastnet-ipv4-psk-ikev2-gcm-c":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   routing: unrouted;

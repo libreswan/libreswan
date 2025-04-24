@@ -25,6 +25,7 @@ west #
 "order-test":   conn_prio: 128,128,0; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "order-test":   our idtype: ID_FQDN; our id=@foo; their idtype: ID_FQDN; their id=@bar
+"order-test":   sendca: all; our sendcert: always; their sendcert: always;
 "order-test":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "order-test":   nat-traversal: encapsulation:auto; keepalive:20s
 "order-test":   routing: unrouted;

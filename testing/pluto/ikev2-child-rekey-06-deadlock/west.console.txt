@@ -51,6 +51,7 @@ west #
 "west":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "west":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
 "west":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west":   sendca: all; our sendcert: always; their sendcert: always;
 "west":   liveness: passive; dpddelay:0s; retransmit-timeout:15s
 "west":   nat-traversal: encapsulation:auto; keepalive:20s
 "west":   routing: unrouted;
