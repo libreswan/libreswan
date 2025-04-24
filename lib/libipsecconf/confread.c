@@ -91,7 +91,7 @@ static struct starter_config *alloc_starter_config(void)
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
 	SOPT(KBF_IKE_ERRQUEUE, true);
 #ifdef XFRM_LIFETIME_DEFAULT
-	SOPT(KBF_XFRMLIFETIME, XFRM_LIFETIME_DEFAULT); /* not used by pluto itself */
+	SOPT(KBF_EXPIRE_LIFETIME, XFRM_LIFETIME_DEFAULT);
 #endif
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
 

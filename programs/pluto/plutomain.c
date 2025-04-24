@@ -1236,7 +1236,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef XFRM_LIFETIME_DEFAULT
-			pluto_xfrmlifetime = cfg->setup[KBF_XFRMLIFETIME].option;
+			pluto_expire_lifetime = cfg->setup[KBF_EXPIRE_LIFETIME].option;
 #endif
 
 			/* no config option: rundir */
@@ -1877,7 +1877,7 @@ void show_setup_plutomain(struct show *s)
 		jam(buf, ", dnssec-enable=%s", bool_str(do_dnssec));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
 #ifdef XFRM_LIFETIME_DEFAULT
-		jam(buf, ", xfrmlifetime=%jds", (intmax_t) pluto_xfrmlifetime);
+		jam(buf, ", xfrmlifetime=%jds", (intmax_t) pluto_expire_lifetime);
 #endif
 	}
 

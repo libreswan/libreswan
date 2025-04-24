@@ -92,7 +92,7 @@ uint16_t pluto_nflog_group = 0;
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, via sysctl interface.
  */
-uint16_t pluto_xfrmlifetime = 30;
+uint16_t pluto_expire_lifetime = 30;
 #endif
 
 /*

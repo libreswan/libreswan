@@ -328,14 +328,14 @@ static void kernel_xfrm_init(struct logger *logger)
 	} else {
 		close(fd);
 		lifetime = atoi(line);
-		if (lifetime != 0 && lifetime != pluto_xfrmlifetime) {
+		if (lifetime != 0 && lifetime != pluto_expire_lifetime) {
 			fd = open(XFRM_ACQ_EXPIRES, O_WRONLY);
 			if (fd == -1) {
 				llog_error(logger, errno, "Failed to open %s for writing- ignoring xfrmlifetime= option", XFRM_ACQ_EXPIRES);
 			} else {
 				char numstr[255];
 
-				sprintf(numstr,"%d", pluto_xfrmlifetime);
+				sprintf(numstr,"%d", pluto_expire_lifetime);
 				n = write(fd, numstr, strlen(numstr));
 				if (n == -1) {
 					llog_error(logger, errno, "Failed to write %s - ignoring xfrmlifetime= option", XFRM_ACQ_EXPIRES);
