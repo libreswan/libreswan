@@ -114,13 +114,19 @@ ip_address optarg_any(struct optarg_family *family);
 void optarg_verbose(const struct logger *logger, lset_t start);
 
 /*
- * parse --debug and --no-debug options
+ * parse --debug and --no-debug options.  The option may be followed
+ * by an argument.
  *
  * First variant updates CUR_DEBUGGING; second maintains a set of
  * updates - see whack.c.
  */
 
-void optarg_debug(bool enable);
-void optarg_debug_lmod(bool enable, lmod_t *debugging);
+enum optarg_debug {
+	OPTARG_DEBUG_YES = 1,
+	OPTARG_DEBUG_NO,
+};
+
+void optarg_debug(enum optarg_debug);
+void optarg_debug_lmod(enum optarg_debug, lmod_t *debugging);
 
 #endif

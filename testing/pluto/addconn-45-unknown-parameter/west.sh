@@ -6,6 +6,12 @@
 ipsec addconn --config /dne.conf
 # fail as file not found
 ipsec addconn --config /dne.conf connection
+# fail as nothing to do
+ipsec addconn --debug
+# fail as nothing to do, --debug= ignored
+ipsec addconn --debug=asdfasdf
+# fail as nothing to do, --config not eaten
+ipsec addconn --debug --config /dne.conf
 
 # broken config setup
 

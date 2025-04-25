@@ -1353,24 +1353,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DEBUG_NONE:	/* --debug-none */
-			cur_debugging = DBG_NONE;
+			optarg_debug(OPTARG_DEBUG_NO);
 			continue;
-
 		case OPT_DEBUG_ALL:	/* --debug-all */
-			cur_debugging = DBG_ALL;
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
-
 		case OPT_DEBUG:
-		{
-			lmod_t mod = empty_lmod;
-			if (lmod_arg(&mod, &debug_lmod_info, optarg, true/*enable*/)) {
-				cur_debugging = lmod(cur_debugging, mod);
-			} else {
-				llog(RC_LOG, logger, "unrecognized --debug '%s' option ignored",
-				     optarg);
-			}
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
-		}
 
 		case OPT_IMPAIR:
 		{

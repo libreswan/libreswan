@@ -123,7 +123,7 @@ const struct option optarg_options[] = {
 	{ "left",       no_argument,            NULL,   OPT_LEFT, },
 	{ "right",      no_argument,            NULL,   OPT_RIGHT, },
 	{ "dump",       no_argument,            NULL,   OPT_DUMP, },
-	{ "debug",      no_argument,            NULL,   OPT_DEBUG, },
+	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "list",       no_argument,            NULL,   OPT_LIST, },
 	{ "ipseckey",   no_argument,            NULL,   OPT_IPSECKEY, },
 	{ "gateway",    required_argument,      NULL,   OPT_GATEWAY, },
@@ -535,7 +535,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_DEBUG:
-			cur_debugging = -1;
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 
 		case OPT_VERSION:

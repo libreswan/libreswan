@@ -2323,10 +2323,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_DEBUG:	/* --debug */
-			optarg_debug_lmod(/*enable*/true, &msg.debugging);
+			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.debugging);
 			continue;
 		case DBGOPT_NO_DEBUG:	/* --no-debug */
-			optarg_debug_lmod(/*enable*/false, &msg.debugging);
+			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.debugging);
 			continue;
 
 		case DBGOPT_IMPAIR:	/* --impair */

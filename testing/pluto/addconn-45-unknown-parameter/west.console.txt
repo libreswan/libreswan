@@ -14,6 +14,22 @@ west #
 ERROR: ipsec addconn: could not open '/dne.conf': No such file or directory (errno 2)
 ipsec addconn: loading config file '/dne.conf' failed
 west #
+ # fail as nothing to do
+west #
+ ipsec addconn --debug
+ipsec addconn: nothing to do, see --help
+west #
+ # fail as nothing to do, --debug= ignored
+west #
+ ipsec addconn --debug=asdfasdf
+whack: unrecognized --debug='asdfasdf' option ignored
+ipsec addconn: nothing to do, see --help
+west #
+ # fail as nothing to do, --config not eaten
+west #
+ ipsec addconn --debug --config /dne.conf
+ipsec addconn: nothing to do, see --help
+west #
  # broken config setup
 west #
  # will fail
