@@ -344,7 +344,7 @@ void optarg_verbose(const struct logger *logger, lset_t start)
 	}
 }
 
-void optarg_debug_lmod(bool enable, lmod_t *mods)
+void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 {
 	if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
 		fprintf(stderr, "aliases:\n");
@@ -376,16 +376,25 @@ void optarg_debug_lmod(bool enable, lmod_t *mods)
 	}
 
 	/* work through the updates */
-	if (!lmod_arg(mods, &debug_lmod_info, optarg, enable)) {
-		fprintf(stderr, "whack: unrecognized -%s-debug '%s' option ignored\n",
-			enable ? "" : "-no", optarg);
+	const struct option *option = &optarg_options[optarg_index];
+	if (!lmod_arg(mods, &debug_lmod_info, optarg, debug == OPTARG_DEBUG_YES)) {
+		fprintf(stderr, "whack: unrecognized --%s%s'%s' option ignored\n",
+			option->name,
+			(option->has_arg == optional_argument ? "=" : " "),
+			optarg);
 	}
 }
 
-void optarg_debug(bool enable)
+void optarg_debug(enum optarg_debug debug)
 {
-	lmod_t mods = {0};
-	optarg_debug_lmod(enable, &mods);
-	cur_debugging = lmod(cur_debugging, mods);
+	if (optarg == NULL) {
+		cur_debugging = (debug == OPTARG_DEBUG_YES ? DBG_ALL :
+				 debug == OPTARG_DEBUG_NO ? DBG_NONE :
+				 0);
+	} else {
+		lmod_t mods = {0};
+		optarg_debug_lmod(debug, &mods);
+		cur_debugging = lmod(cur_debugging, mods);
+	}
 }
 
