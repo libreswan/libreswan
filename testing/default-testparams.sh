@@ -11,6 +11,11 @@ REF_CONSOLE_FIXUPS+=" kernel.sed"
 # basic prompt et.al. cleanup
 REF_CONSOLE_FIXUPS+=" prompt.sed"
 
+REF_CONSOLE_FIXUPS+=" ipsec-start.sed"
+REF_CONSOLE_FIXUPS+=" ipsec-pluto.sed"
+REF_CONSOLE_FIXUPS+=" ipsec-stop.sed"
+REF_CONSOLE_FIXUPS+=" ipsec-restart.sed"
+
 REF_CONSOLE_FIXUPS+=" pluto-whack-sanitize.sed"
 REF_CONSOLE_FIXUPS+=" host-ping-sanitize.sed"
 REF_CONSOLE_FIXUPS+=" namespace.sed"
@@ -32,8 +37,6 @@ REF_CONSOLE_FIXUPS+=" strongswan.sed"
 REF_CONSOLE_FIXUPS+=" linux-audit.sed"
 
 # The following sanitizers are written to only modify specific commands
-REF_CONSOLE_FIXUPS+=" ipsec-start.sed"
-REF_CONSOLE_FIXUPS+=" ipsec-stop.sed"
 REF_CONSOLE_FIXUPS+=" ipsec-kernel-state.sed"		# includes ip xfrm state
 REF_CONSOLE_FIXUPS+=" ipsec-kernel-policy.sed"	# includes ip xfrm policy
 REF_CONSOLE_FIXUPS+=" nft.sed"
