@@ -27,7 +27,6 @@ s/ \([0-9]\)[0-9][0-9]-bit RSA/ \1nn-bit RSA/
 s,; \([a-z0-9A-Z_]\+\) in [0-9]\+s,; \1 in XXs,g
 s, remaining life [0-9][0-9\.]*s, remaining life XXs,
 
-/WARNING: calc_dh_shared(): for OAKLEY_GROUP_MODP/d
 s/add_time=[0-9]*,/add_time=1234567890,/
 s/, age=[^,]*,/, age=XXX,/
 s/SN: 0x[a-f0-9]*/SN: 0xXX/

@@ -5,7 +5,6 @@ s/^\[[0-9]\] [0-9]*$/[x] PID/
 #[1] 2209
 /^ nc .*\&$/ {N; s/^ nc \(.*\&\)\n\[[0-9]*\] [0-9]*$/ nc \1\n[B] PID/g}
 # versions of tools used
-s/SSH-2.0-OpenSSH_.*$/SSH-2.0-OpenSSH_XXX/
 /^ *Electric Fence.*$/d
 /^.*anti-replay context:.*$/d
 
@@ -15,8 +14,6 @@ s/conntrack v[0-9]*\.[0-9]*\.[0-9]* /conntrack vA.B.C /
 s/ip_vti0@NONE: <NOARP> mtu [0-9]* /ip_vti0@NONE: <NOARP> mtu XXXX /
 # this prevents us seeing race conditions between namespaces / kvm
 /^.*Terminated.*ip -s xfrm monitor.*$/d
-# sshd on fedora 30 and 31 have slightly different error msgs
-s/^Protocol mismatch\.$/Invalid SSH identification string./g
 /^.*for ASN.1 blob for method.*$/d
 # nss picks up softhsm/opendnssec token?
 /^.* for token "OpenDNSSEC".*$/d
@@ -35,12 +32,9 @@ s/ socket [0-9][0-9]*: / socket XX: /g
 
 s/encap type 7 sport/encap type espintcp sport/g
 s/unbound-control.[0-9]*:[0-9]*./unbound-control[XXXXXX:X] /g 
-s/ping: connect: Network is unreachable/connect: Network is unreachable/g
 # softhsm - pkcs-uri ephemerals
 s/serial=[^;]*;token=libreswan/serial=XXXXXXXX;token=libreswan/g
 s/and is reassigned to slot .*$/and is reassigned to slot XXXXX/g
-
-s/tcpdump: listening on .*$/tcpdump: listening on INTERFACE DETAILS/
 
 # prevent stray packets from changing counters
 s/\t 00000000 00000000 00000000 .*$/\t 00000000 00000000 00000000 XXXXXXXX /g
